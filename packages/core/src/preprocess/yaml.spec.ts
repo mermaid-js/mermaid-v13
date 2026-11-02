@@ -175,3 +175,96 @@ describe('parseYaml: depth cap', () => {
     expect(r.diagnostics.map((d) => d.code)).toEqual(['YAML_TOO_DEEP']);
   });
 });
+
+/**
+ * Found by the #17 fuzz differential against mermaid@12 (front matter and shape data): js-yaml
+ * results captured as literals, errors by their js-yaml reason and 1-based line:column.
+ */
+describe('js-yaml parity found by fuzzing (#17)', () => {
+  it.each<[string, unknown]>([
+    // A plain scalar continues on any line indented more than its parent, not only lines as
+    // indented as its first one.
+    [
+      'description:\n  first line\n less indented\nconfig: 1\n',
+      { description: 'first line less indented', config: 1 },
+    ],
+    ['top\n less\n', 'top less'],
+    // A plain key may hold `:` (not followed by a blank) and `#` (not after a blank).
+    [
+      'co%0ajavascript:alert(1)nfig:\n  layout: dagre\n',
+      { 'co%0ajavascript:alert(1)nfig': { layout: 'dagre' } },
+    ],
+    ['a:b: c\n', { 'a:b': 'c' }],
+    ['a#b: c\n', { 'a#b': 'c' }],
+    ['k: a:b\n', { k: 'a:b' }],
+    ['k: a :b\n', { k: 'a :b' }],
+    // Quoted text may hold anything but C0 controls; comments are not checked.
+    ['{ label: "x\ud800y" }', { label: 'x\ud800y' }],
+    ["k: 'a\u007fb\uffff'\n", { k: 'a\u007fb\uffff' }],
+    ['k: x # \u0001\n', { k: 'x' }],
+    // A comment line ends a multi-line plain value only if more text follows it.
+    ['k: a\n  # c\nnext: 1\n', { k: 'a', next: 1 }],
+    ['k:\n  a\n  # c\n', { k: 'a' }],
+    // Indicators inside a plain value, or starting a continuation line, are text.
+    ['k: x]\n', { k: 'x]' }],
+    ['k: a\n  ]b\n', { k: 'a ]b' }],
+    ['k: -x\n', { k: '-x' }],
+    ['k: ?x\n', { k: '?x' }],
+    ['k: :x\n', { k: ':x' }],
+    ['k: a\n  - b\n', { k: 'a - b' }],
+    ['k: a\n ---\n', { k: 'a ---' }],
+    ['k: a\n  \tb\n', { k: 'a b' }],
+  ])('reads %j as js-yaml does', (src, expected) => {
+    const r = parseYaml(src);
+    expect(r.diagnostics).toEqual([]);
+    expect(r.value).toEqual(expected);
+  });
+
+  it.each<[string, string, string]>([
+    ['a:\n  b: 1\n c: 2\n', 'bad indentation of a mapping entry', '3:2'],
+    ['k: x: y\n', 'bad indentation of a mapping entry', '1:5'],
+    ['k: text (x):\n  more\n', 'bad indentation of a mapping entry', '1:12'],
+    ['k: ends with colon:\n', 'bad indentation of a mapping entry', '1:19'],
+    ['k:\n  - a: b: c\n', 'bad indentation of a mapping entry', '2:9'],
+    ['k:  shape: stadium, label: "x"\n', 'bad indentation of a mapping entry', '1:10'],
+    ['k: x\u0001y\n', 'the stream contains non-printable characters', '1:5'],
+    ['k: x\u0000y\n', 'null byte is not allowed in input', '1:5'],
+    ['k: x\uffffy\n', 'the stream contains non-printable characters', '1:5'],
+    ['k: \ud800\n', 'the stream contains non-printable characters', '1:4'],
+    ['{ label: x\u0001 }', 'the stream contains non-printable characters', '1:11'],
+    ['{ label: "x\u0001y" }', 'expected valid JSON character', '1:12'],
+    ['k: |\n  a\u007fb\n', 'the stream contains non-printable characters', '2:4'],
+    ['k: a\n  b\uffff\n', 'the stream contains non-printable characters', '2:4'],
+    // A comment ends a multi-line plain value.
+    ['k: a\n  # c\n  b\n', 'bad indentation of a mapping entry', '3:3'],
+    ['k: a # c\n  b\n', 'bad indentation of a mapping entry', '2:3'],
+    ['k: a\n\n  # c\n  b\n', 'bad indentation of a mapping entry', '4:3'],
+    // A mapping indicator on a continuation line, whatever starts the line.
+    // (a `key:` line is reported from its start, where js-yaml points at the `:`)
+    ['k: a\n  b: \n', 'bad indentation of a mapping entry', '2:3'],
+    ['k: a\n  b:\n', 'bad indentation of a mapping entry', '2:3'],
+    ['k: a\n  "x": y\n', 'bad indentation of a mapping entry', '2:3'],
+    ['k: a\n  **b** when:\n', 'bad indentation of a mapping entry', '2:13'],
+    // Characters that cannot start a plain value in a block.
+    ['k: ]x\n', 'bad indentation of a mapping entry', '1:4'],
+    ['k: }x\n', 'bad indentation of a mapping entry', '1:4'],
+    ['k: ,x\n', 'bad indentation of a mapping entry', '1:4'],
+    ['k: %x\n', 'bad indentation of a mapping entry', '1:4'],
+    ['k:\n  ]x\n', 'bad indentation of a mapping entry', '2:3'],
+    ['k: ? x\n', 'bad indentation of a mapping entry', '1:4'],
+    ['k: - x\n', 'bad indentation of a mapping entry', '1:4'],
+    ['k: |x\n', 'a line break is expected', '1:4'],
+    ['k: >x\n', 'a line break is expected', '1:4'],
+    ['k: a\n\tb\n', 'tab characters must not be used in indentation', '2:1'],
+    // An indented `---` is text, not a document marker.
+    ['config:\n  a:\n    b: 1\n ---\n', 'bad indentation of a mapping entry', '4:2'],
+  ])('rejects %j: %s', (src, reason, at) => {
+    const r = parseYaml(src);
+    expect(r.value).toBeNull();
+    const d = r.diagnostics[0]!;
+    expect(d.message).toBe(`Invalid YAML: ${reason}.`);
+    const pos = new LineIndex(src).position(d.range.start);
+    // js-yaml reports where its scan stopped; v13 points at the offending character.
+    expect(`${pos.line + 1}:${pos.column + 1}`).toBe(at);
+  });
+});
