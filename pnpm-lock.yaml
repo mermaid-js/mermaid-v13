@@ -181,6 +181,9 @@ importers:
       esbuild:
         specifier: ^0.25.12
         version: 0.25.12
+      mermaid:
+        specifier: workspace:*
+        version: link:../mermaid
       tsx:
         specifier: ^4.20.6
         version: 4.20.6

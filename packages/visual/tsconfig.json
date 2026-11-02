@@ -3,11 +3,7 @@
   "compilerOptions": {
     // src/browser runs in the page; the server, gallery builder and specs run in Node.
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["node"],
-    // The browser canvas measurer is not a public export of `mermaid` (#9); the late-font
-    // browser test reaches it through this alias (esbuild reads it too). #15 can drop it once
-    // render() selects the measurer itself.
-    "paths": { "mermaid-internal/measurer": ["../mermaid/src/measurer.ts"] }
+    "types": ["node"]
   },
   "include": ["src"]
 }

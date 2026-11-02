@@ -8,7 +8,9 @@
   "scripts": {
     "serve": "tsx --conditions=mermaid-source src/cli/serve.ts",
     "gallery": "tsx --conditions=mermaid-source src/cli/gallery.ts",
-    "typecheck": "tsc -p tsconfig.json && tsc -p ../../e2e/tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json && tsc -p ../../e2e/tsconfig.json",
+    "smoke:build": "tsx src/smoke/build.ts",
+    "smoke:deno": "npx --yes deno@2.9.4 run --no-prompt dist/smoke/smoke.mjs"
   },
   "devDependencies": {
     "@fontsource/noto-sans-sc": "^5.3.1",
@@ -16,6 +18,7 @@
     "@mermaid-js/diagram-flowchart": "workspace:^",
     "@types/node": "^22.19.21",
     "esbuild": "^0.25.12",
+    "mermaid": "workspace:*",
     "tsx": "^4.20.6"
   }
 }

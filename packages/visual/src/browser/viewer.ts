@@ -5,7 +5,6 @@
  *   code with `mermaid` as integrator config into `#block`, then sets `window.rendered`.
  * - Always: exposes `window.v13` for the browser specs in `e2e/browser/`.
  */
-import { canvasMeasurer } from 'mermaid-internal/measurer';
 import { renderDiagram, type RenderOptions, type RenderOutput } from '../adapter.ts';
 
 interface GraphObject {
@@ -18,8 +17,7 @@ type PageRenderOptions = Omit<RenderOptions, 'measurer'> & { measurer?: 'canvas'
 const api = {
   /** Renders and returns the SVG text (no DOM insertion). */
   async render(code: string, options: PageRenderOptions = {}): Promise<RenderOutput> {
-    const measurer = options.measurer === 'canvas' ? (canvasMeasurer() ?? undefined) : undefined;
-    return renderDiagram(code, { ...options, measurer });
+    return renderDiagram(code, options);
   },
   /** Renders into a fresh `<div>` appended to `parent` (default body) and returns it. */
   async mount(
