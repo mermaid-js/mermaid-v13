@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import config from '../../vitest.config.ts';
 
 const root = join(import.meta.dirname, '..', '..');
 
@@ -49,5 +50,11 @@ describe('workspace layout (DESIGN §2)', () => {
     });
     expect(tracked).toBe('');
     expect(existsSync(join(root, 'packages/parser/package.json'))).toBe(false);
+  });
+
+  it('runs every test, core included, in plain Node with no DOM shim (R-ARCH-1)', () => {
+    expect(config.test?.environment).toBe('node');
+    expect(config.test?.setupFiles).toBeUndefined();
+    expect(typeof (globalThis as { document?: unknown }).document).toBe('undefined');
   });
 });
