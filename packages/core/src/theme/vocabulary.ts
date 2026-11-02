@@ -96,7 +96,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   clusterStrokeWidth: def('cw', 'length', F),
   radius: def('r', 'length', CF),
   fontWeight: def('fw', 'weight', C),
-  spacing1: def('g1', 'length', C),
-  spacing2: def('g2', 'length', C),
-  spacing3: def('g3', 'length', C),
+  spacing1: def('g1', 'length', CF),
+  spacing2: def('g2', 'length', CF),
+  spacing3: def('g3', 'length', CF),
 };
