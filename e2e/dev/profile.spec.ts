@@ -18,7 +18,7 @@ const tab = (page: Page) => page.locator('dev-tab-profile');
 async function openProfile(page: Page, file: string): Promise<void> {
   const path = file.slice(0, file.lastIndexOf('/'));
   await page.goto(`/dev/?path=${path}&file=${file}&tab=profile`);
-  await expect(page.locator('dev-tab-diagram svg')).toBeAttached();
+  await expect(page.locator('dev-tab-diagram .canvas > svg')).toBeAttached();
 }
 
 async function run(page: Page, scope: 'diagram' | 'folder', iterations: number): Promise<void> {

@@ -6,13 +6,12 @@
  * still reaches the real console and is also kept here (newest `MAX_LOGS`). `%c` markers and
  * their css arguments are dropped. `dev-console-panel` shows the entries with level toggles
  * (debug = lines with mermaid's `: DEBUG :` marker), a text filter, copy and clear.
- *
- * No Shoelace control here draws an icon (native checkboxes, no `clearable`, no button
- * icons): the e2e specs locate the diagram as `dev-tab-diagram svg`, which pierces shadow
- * roots, so this panel must contain no `svg`.
+ * The controls are v12's: Shoelace checkboxes, a clearable filter and icon buttons.
  */
 import '@shoelace-style/shoelace/dist/components/badge/badge.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
+import '@shoelace-style/shoelace/dist/components/checkbox/checkbox.js';
+import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
 import { css, html, LitElement } from 'lit';
 
@@ -164,17 +163,6 @@ export class DevConsolePanel extends LitElement {
       flex: 1 1 120px;
       min-width: 100px;
     }
-    .toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: var(--sl-font-size-small);
-      cursor: pointer;
-    }
-    .toggle input {
-      margin: 0;
-      accent-color: var(--sl-color-primary-600);
-    }
     .body {
       flex: 1;
       min-height: 0;
@@ -259,15 +247,14 @@ export class DevConsolePanel extends LitElement {
 
   #toggle(level: DisplayLevel, label: string, checked: boolean) {
     const key = SHOW_KEY[level];
-    return html`<label class="toggle"
-      ><input
-        type="checkbox"
-        data-toggle=${level}
-        .checked=${checked}
-        @change=${(e: Event) => {
-          this[key] = (e.target as HTMLInputElement).checked;
-        }}
-      />${label}</label
+    return html`<sl-checkbox
+      size="small"
+      data-toggle=${level}
+      ?checked=${checked}
+      @sl-change=${(e: Event) => {
+        this[key] = (e.target as HTMLInputElement).checked;
+      }}
+      >${label}</sl-checkbox
     >`;
   }
 
@@ -278,6 +265,7 @@ export class DevConsolePanel extends LitElement {
         <sl-input
           size="small"
           placeholder="filter…"
+          clearable
           data-filter
           .value=${this.filterText}
           @sl-input=${(e: Event) => {
@@ -289,9 +277,13 @@ export class DevConsolePanel extends LitElement {
         ${this.#toggle('warn', 'warn', this.showWarn)}
         ${this.#toggle('error', 'error', this.showError)}
         <sl-button size="small" data-action="copy" @click=${() => void this.#copy()}>
+          <sl-icon slot="prefix" name="clipboard"></sl-icon>
           Copy
         </sl-button>
-        <sl-button size="small" data-action="clear" @click=${clearLogs}> Clear </sl-button>
+        <sl-button size="small" data-action="clear" @click=${clearLogs}>
+          <sl-icon slot="prefix" name="trash"></sl-icon>
+          Clear
+        </sl-button>
       </div>
       <div class="body">
         ${visible.length === 0

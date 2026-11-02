@@ -24,7 +24,7 @@ test.afterEach(async () => {
 const codeTab = (page: Page) => page.locator('dev-tab-code');
 const editor = (page: Page) => page.locator('dev-tab-code .cm-content');
 const status = (page: Page) => page.locator('dev-tab-code [data-status]');
-const diagram = (page: Page) => page.locator('dev-tab-diagram svg');
+const diagram = (page: Page) => page.locator('dev-tab-diagram .canvas > svg');
 
 async function openCode(page: Page): Promise<void> {
   await page.goto(`${explorer.url(FILE)}&tab=code`);

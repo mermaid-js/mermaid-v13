@@ -41,7 +41,7 @@ test('a syntax error lists its diagnostic at line:column; clicking opens Code th
   page,
 }) => {
   await page.goto(explorer.url('a/error.mmd'));
-  await expect(tab(page).locator('svg')).toHaveCount(0);
+  await expect(diagramSvg(page)).toHaveCount(0);
   const diagnostic = messages(page).filter({ hasText: 'UNCLOSED' });
   await expect(diagnostic).toHaveCount(1);
   await expect(diagnostic).toHaveAttribute('data-severity', 'error');
@@ -63,9 +63,21 @@ test('a clean render says there are no messages', async ({ page }) => {
   await page.goto(explorer.url('a/ok.mmd'));
   await expect(diagramSvg(page)).toContainText('Alpha');
   await expect(messages(page)).toHaveCount(0);
-  // The svg is the only one in the tab (other specs locate `dev-tab-diagram svg`).
-  await expect(tab(page).locator('svg')).toHaveCount(1);
   await expect(tab(page).locator('[data-messages-empty]')).toBeVisible();
+});
+
+test('the Messages panel has v12 controls: checkboxes, a clearable filter, icon buttons', async ({
+  page,
+}) => {
+  await page.goto(explorer.url('a/ok.mmd'));
+  await expect(diagramSvg(page)).toContainText('Alpha');
+  const panel = tab(page).locator('dev-console-panel');
+  await expect(panel.locator('sl-checkbox[data-toggle]')).toHaveCount(4);
+  await expect(panel.locator('sl-input[data-filter][clearable]')).toHaveCount(1);
+  await expect(panel.locator('sl-button[data-action="copy"] sl-icon[name="clipboard"]')).toHaveCount(1);
+  await expect(panel.locator('sl-button[data-action="clear"] sl-icon[name="trash"]')).toHaveCount(1);
+  // Icons draw svgs; the diagram is still the one svg on the canvas.
+  await expect(tab(page).locator('.canvas > svg')).toHaveCount(1);
 });
 
 test('console output is captured; toggles, the filter and clear narrow it', async ({ page }) => {
@@ -90,10 +102,10 @@ test('console output is captured; toggles, the filter and clear narrow it', asyn
   await filter.fill('dev-capture');
   await expect(captured).toHaveCount(3);
 
-  await tab(page).locator('dev-console-panel input[data-toggle="warn"]').click();
+  await tab(page).locator('dev-console-panel sl-checkbox[data-toggle="warn"]').click();
   await expect(captured).toHaveCount(1);
   await expect(captured).toContainText('dev-capture gamma');
-  await tab(page).locator('dev-console-panel input[data-toggle="warn"]').click();
+  await tab(page).locator('dev-console-panel sl-checkbox[data-toggle="warn"]').click();
   await expect(captured).toHaveCount(3);
 
   await tab(page).locator('dev-console-panel sl-button[data-action="clear"]').click();

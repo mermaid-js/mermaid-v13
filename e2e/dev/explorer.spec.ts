@@ -13,7 +13,7 @@ const edgeFiles = readdirSync(`e2e/diagrams/${EDGES}`)
   .filter((name) => name.endsWith('.mmd'))
   .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
-const diagram = (page: Page) => page.locator('dev-tab-diagram svg');
+const diagram = (page: Page) => page.locator('dev-tab-diagram .canvas > svg');
 const open = (page: Page, file: string) =>
   page.goto(`/dev/?path=${EDGES}&file=${EDGES}/${file}`);
 
