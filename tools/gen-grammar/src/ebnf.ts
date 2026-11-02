@@ -16,6 +16,10 @@
  *   counts towards the next / previous token's range, e.g. the quotes around a string).
  * - `:scope` is the highlighting scope (keyword, string, operator, …) for the highlighters.
  *
+ * `@trivia`: rules in the same format for text the preprocess layer removes before lexing
+ * (comments, directives). The reference lexer never sees them; highlighters add them to
+ * every mode.
+ *
  * `@grammar`: EBNF rules over those token names.
  *
  *     name = a b | c [ d ] { e } f? g* h+ ( i | j ) ;
@@ -64,6 +68,8 @@ export interface Grammar {
   doc: string | undefined;
   modes: string[];
   lexRules: LexRule[];
+  /** Highlighting-only rules for text removed before lexing. */
+  triviaRules: LexRule[];
   /** Every token name the lexer can emit, in first-declared order. */
   tokens: string[];
   rules: GrammarRule[];
@@ -113,7 +119,7 @@ function tokenize(src: string): { toks: Tok[]; fileDoc: string | undefined } {
         const text = body
           .slice(1)
           .split('\n')
-          .map((l) => l.replace(/^\s*\*?\s?/, ''))
+          .map((l) => l.trim())
           .join('\n')
           .trim();
         if (toks.length === 0 && fileDoc === undefined) fileDoc = text;
@@ -196,19 +202,20 @@ export function parseGrammar(src: string): Grammar {
 
   const modes: string[] = [];
   const lexRules: LexRule[] = [];
+  const triviaRules: LexRule[] = [];
   const tokens: string[] = [];
   const rules: GrammarRule[] = [];
-  let section: 'lexer' | 'grammar' | undefined;
+  let section: 'lexer' | 'trivia' | 'grammar' | undefined;
 
   while (p < toks.length) {
     const t = toks[p] as Tok;
-    if (t.k === 'at' && (t.v === 'lexer' || t.v === 'grammar')) {
+    if (t.k === 'at' && (t.v === 'lexer' || t.v === 'trivia' || t.v === 'grammar')) {
       section = t.v;
       p++;
       continue;
     }
-    if (section === undefined) err('expected @lexer or @grammar');
-    if (section === 'lexer') {
+    if (section === undefined) err('expected @lexer, @trivia or @grammar');
+    if (section === 'lexer' || section === 'trivia') {
       if (t.k === 'at' && t.v === 'modes') {
         p++;
         while (peek()?.k === 'word') modes.push((toks[p++] as Tok).v);
@@ -254,9 +261,10 @@ export function parseGrammar(src: string): Grammar {
       } catch (e) {
         err(`bad regex: ${(e as Error).message}`, re);
       }
-      if (name !== undefined && !tokens.includes(name)) tokens.push(name);
-      lexRules.push({
-        index: lexRules.length,
+      const into = section === 'trivia' ? triviaRules : lexRules;
+      if (section === 'lexer' && name !== undefined && !tokens.includes(name)) tokens.push(name);
+      into.push({
+        index: into.length,
         modes: ruleModes,
         name,
         pattern: (re as Tok).v,
@@ -318,7 +326,15 @@ export function parseGrammar(src: string): Grammar {
 
   const first = rules[0];
   if (!first) throw new SyntaxError('grammar: no grammar rules');
-  const g: Grammar = { doc: fileDoc, modes, lexRules, tokens, rules, start: first.name };
+  const g: Grammar = {
+    doc: fileDoc,
+    modes,
+    lexRules,
+    triviaRules,
+    tokens,
+    rules,
+    start: first.name,
+  };
   checkGrammar(g);
   return g;
 }

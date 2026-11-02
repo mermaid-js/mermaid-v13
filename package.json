@@ -18,9 +18,11 @@
     "gen:config": "tsx tools/gen-config/src/cli.ts",
     "check:config": "tsx tools/gen-config/src/cli.ts --check",
     "gen:theme": "tsx tools/gen-config/src/theme-cli.ts",
+    "gen:grammar": "tsx tools/gen-grammar/src/cli.ts",
+    "check:grammar": "tsx tools/gen-grammar/src/cli.ts --check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "pnpm lint && pnpm typecheck && pnpm check:deps && pnpm check:config && pnpm test",
+    "check": "pnpm lint && pnpm typecheck && pnpm check:deps && pnpm check:config && pnpm check:grammar && pnpm test",
     "e2e": "playwright test",
     "prepare": "husky",
     "pre-commit": "lint-staged"

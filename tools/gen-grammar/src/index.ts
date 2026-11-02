@@ -12,3 +12,15 @@ export { astOf, buildParser, flatten } from './earley.ts';
 export type { AstShape, ParseNode, Production, ReferenceParser } from './earley.ts';
 export { buildGenerator, emptyModel, learnDerivation, learnToken } from './sentences.ts';
 export type { GenerateOptions, Sentence, SentenceGenerator, SentenceModel } from './sentences.ts';
+export {
+  lezerGrammar,
+  lezerTokenNames,
+  lezerTokens,
+  monarch,
+  nonCapturing,
+  textMate,
+} from './highlight.ts';
+export type { HighlightNames } from './highlight.ts';
+export { ebnfText, syntaxDoc } from './syntax-doc.ts';
+export { GRAMMARS, generate, generateFor, generatedDir, grammarPath } from './generate.ts';
+export type { GrammarTarget } from './generate.ts';

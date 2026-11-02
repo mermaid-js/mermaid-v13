@@ -203,6 +203,12 @@ NEWLINE                   /(?:\r?\n)+/ ;
 SPACE                     /[^\S\n\r]+/ ;
 EOF                       /$/ ;
 
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. *)
+COMMENT                   /%%(?!\{)[^\n]*/                 :comment ;
+DIRECTIVE                 /%%\{.*?\}%%/                     :meta ;
+
 @grammar
 
 (** A diagram is a header line, then statements separated by line breaks or `;`. *)

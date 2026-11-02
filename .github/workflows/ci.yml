@@ -30,6 +30,8 @@ jobs:
           - { name: Runtime dependencies, run: pnpm check:deps }
           # R-CONF-4: generated config types, defaults and docs match the schema.
           - { name: Generated config, run: pnpm check:config }
+          # R-PARSE-9: highlighters and syntax docs match the grammar files.
+          - { name: Generated grammar files, run: pnpm check:grammar }
           - { name: Build, run: pnpm build }
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
