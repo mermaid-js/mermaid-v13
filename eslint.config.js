@@ -27,6 +27,7 @@ export default tseslint.config(
       '**/generated/',
       '**/coverage/',
       '.claude/',
+      '.tmp/',
       // v12 Playwright harness and corpus, parked until the visual-baseline ticket revives it.
       'e2e/',
       'playwright.config.ts',
