@@ -64,7 +64,12 @@ test.describe('run()', () => {
         return { rejected: true, name: err.name, code: err.code, seen };
       }
     });
-    expect(outcome).toEqual({ rejected: true, name: 'MermaidError', code: 'SYNTAX', seen: ['SYNTAX'] });
+    expect(outcome).toEqual({
+      rejected: true,
+      name: 'MermaidError',
+      code: 'SYNTAX',
+      seen: ['SYNTAX'],
+    });
     await expect(page.locator('#d0 > svg.mermaid-flowchart')).toHaveCount(1);
     await expect(page.locator('#d1 > svg.mermaid-error')).toHaveCount(1);
     await expect(page.locator('#d2 > svg.mermaid-flowchart')).toHaveCount(1);
@@ -129,7 +134,9 @@ test.describe('run()', () => {
         {
           id: 'probe',
           afterMount(el: Element, result: { diagramType: string }) {
-            calls.push(`${el.id}:${el.querySelector('svg') ? 'svg' : 'none'}:${result.diagramType}`);
+            calls.push(
+              `${el.id}:${el.querySelector('svg') ? 'svg' : 'none'}:${result.diagramType}`
+            );
           },
         },
       ]);
@@ -195,7 +202,11 @@ test.describe('mount()', () => {
       const before = rect();
       el.style.setProperty('--mermaid-primaryColor', '#ff0000');
       await new Promise((r) => setTimeout(r, 200));
-      return { before, after: rect(), same: el.firstElementChild === svg && el.innerHTML === markup };
+      return {
+        before,
+        after: rect(),
+        same: el.firstElementChild === svg && el.innerHTML === markup,
+      };
     }, VALID);
     expect(out.before).toBe('rgb(236, 236, 255)'); // default theme primaryColor #ececff
     expect(out.after).toBe('rgb(255, 0, 0)');
@@ -263,7 +274,7 @@ test('mount() re-measures after a late web font loads', async ({ page }) => {
     page.evaluate((s) => document.querySelector(`${s} > svg`)!.getAttribute('viewBox'), sel);
   await page.evaluate(async () => {
     const style = document.createElement('style');
-    style.textContent = "@font-face { font-family: LateFont; src: url(/late-font.ttf); }";
+    style.textContent = '@font-face { font-family: LateFont; src: url(/late-font.ttf); }';
     document.head.appendChild(style);
     const el = document.createElement('div');
     el.id = 'late';

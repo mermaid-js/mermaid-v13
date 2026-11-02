@@ -1,6 +1,7 @@
 /**
  * Typed errors of the render pipeline (DESIGN §11, R-ERR-1, R-COMPAT-7, R-API-2).
  */
+import { isLimitCode } from '../limits/index.ts';
 import { formatDiagnostic } from '../parser-kit/format.ts';
 import { LineIndex } from '../parser-kit/positions.ts';
 import type { Diagnostic } from '../parser-kit/diagnostics.ts';
@@ -95,7 +96,6 @@ const SEMANTIC: ReadonlySet<string> = new Set([
   'LINK_STYLE_INDEX',
   'UNKNOWN_DIRECTION',
 ]);
-const LIMIT: ReadonlySet<string> = new Set(['EDGE_LIMIT']);
 
 /**
  * The error for a parse whose diagnostics include errors, or undefined when there are none.
@@ -105,7 +105,10 @@ export function errorFromDiagnostics(
   source: string,
   diagnostics: readonly Diagnostic[]
 ): MermaidError | undefined {
-  const errors = diagnostics.filter((d) => d.severity === 'error');
+  const all = diagnostics.filter((d) => d.severity === 'error');
+  // A breached limit is the primary error even when other errors come first (R-SEC-5).
+  const limit = all.find((d) => isLimitCode(d.code));
+  const errors = limit ? [limit, ...all.filter((d) => d !== limit)] : all;
   const first = errors[0];
   if (!first) return undefined;
   const lines = new LineIndex(source);
@@ -113,7 +116,7 @@ export function errorFromDiagnostics(
   if (errors.length > 1) {
     message += `\n(${errors.length - 1} more error${errors.length > 2 ? 's' : ''})`;
   }
-  const code = LIMIT.has(first.code) ? 'LIMIT' : SEMANTIC.has(first.code) ? 'SEMANTIC' : 'SYNTAX';
+  const code = isLimitCode(first.code) ? 'LIMIT' : SEMANTIC.has(first.code) ? 'SEMANTIC' : 'SYNTAX';
   return new MermaidError(code, message, {
     source,
     offset: first.range.start,

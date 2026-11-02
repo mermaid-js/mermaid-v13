@@ -1,0 +1,7 @@
+---
+description: long plain labels wrap at flowchart.wrappingWidth in nodes and edge labels
+---
+flowchart LR
+  A[This is a long node label that has to wrap over several lines to fit] -- an edge label that is long enough to wrap too --> B(Short)
+  B --> C{A decision with a fairly long question in it?}
+  C --> D[Line one<br>Line two<br>Line three]

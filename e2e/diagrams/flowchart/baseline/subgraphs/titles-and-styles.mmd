@@ -1,0 +1,15 @@
+---
+description: subgraph titles wider than their content, styled subgraphs and an empty one
+---
+flowchart LR
+  subgraph s1 [A subgraph title that is much wider than its only child]
+    a
+  end
+  subgraph s2 [Styled]
+    b
+  end
+  subgraph s3 [Empty]
+  end
+  a --> b
+  classDef warm fill:#ffe,stroke:#f66,stroke-width:2px,stroke-dasharray: 5 5
+  class s2 warm

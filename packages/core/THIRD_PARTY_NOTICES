@@ -4,9 +4,21 @@ Third-party notices for @mermaid-js/core
 Pele
 ----
 
-The layered and compound layout in src/layout/layered/ (layered.ts, compound.ts, and the
-availableWidth handling in index.ts) is ported from Pele, https://github.com/obsidianmd/pele,
-at commit 3a2f075 (release 1.13.0), under the MIT License:
+The files below are ported from, or based on, Pele (https://github.com/obsidianmd/pele) at
+commit 3a2f075 (release 1.13.0). Each file's header says what it took and what changed. Pele is
+used under the MIT License:
+
+  src/layout/layered/compound.ts
+  src/layout/layered/index.ts
+  src/layout/layered/layered.ts
+  src/parser-kit/chars.ts
+  src/preprocess/yaml.ts
+  src/svg/escape.ts
+  src/svg/inert.ts
+  src/svg/testing/index.ts
+  src/svg/url.ts
+  src/text/label.ts
+  src/text/table.ts
 
 MIT License
 

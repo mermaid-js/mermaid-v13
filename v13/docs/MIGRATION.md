@@ -40,7 +40,8 @@ What most integrators have to change:
 | v12 | v13 | Why |
 | --- | --- | --- |
 | One `mermaid` package with every diagram type and its dependencies (d3, dagre, DOMPurify, khroma, KaTeX, …) | `mermaid` depends on `@mermaid-js/core` (pipeline, parser kit, layout, SVG writer, text, themes, config) and one `@mermaid-js/diagram-<type>` package per diagram type. `mermaid` has no other runtime dependencies | Small, DOM-free bundles (R-PERF-1, R-PERF-2) |
-| ESM, IIFE (`mermaid.min.js`) and "tiny" builds | ESM only in the alpha, Node 20 or newer. The browser bundle comes with the release pipeline _(later in M1)_ | |
+| ESM, IIFE (`mermaid.min.js`) and "tiny" builds | ESM only in the alpha: each package ships its compiled modules (`dist/`), Node 20 or newer. The release pipeline publishes no IIFE, `mermaid.min.js` or tiny build; bundle `mermaid` with your own bundler | |
+| `mermaid@latest`, released from `develop` | Alphas are released from `mermaid-v13` on every merge, with dist-tag `alpha` only, so `mermaid@latest` stays v12: install `mermaid@alpha`. Public `mermaid@13.0.0-alpha.N` starts once M1 meets R-PERF-1…4 (until then alphas are published privately as `@mermaid-chart/*`) | R-REL-2, R-REL-3, D28 |
 | `@mermaid-js/layout-elk` | No ELK package yet. `layout: elk` draws with the built-in engine ([Layout](#layout)) | R-PLUG-8 |
 | ZenUML, tidy-tree and the example diagram package | Not ported in M1 | |
 
@@ -70,7 +71,8 @@ test checks them against the mermaid@12 declarations.
 | `registerIconPacks(...)` | Accepted and ignored; renders carry an `ICON_PACKS_UNSUPPORTED` warning until the icons plugin exists | R-API-3 |
 | `setParseErrorHandler(fn)` gets the raw error | Deprecated; `fn` gets the `MermaidError` of a failed `parse()` | R-API-4 |
 | `initialize()` replaces the site config | Same: it swaps in a new frozen defaults object; renders already started keep the old one | R-ARCH-4, D72 |
-| Integrator options beyond the schema | `initialize()` also takes `measurer`, `deterministic`, `linkSchemes` and `output.cssVariables`; diagram text can never set them | R-SEC-5, R-SEC-6 |
+| Integrator options beyond the schema | `initialize()` also takes `measurer`, `deterministic`, `linkSchemes`, `output.cssVariables` and `limits`; diagram text can never set them | R-SEC-5, R-SEC-6 |
+| Text over `maxTextSize` renders a "Maximum text size in diagram exceeded" placeholder diagram; over `maxEdges` throws an `Error` | Both reject with `MermaidError { code: 'LIMIT' }`, as do the new caps (see Limits) | R-SEC-5, D31 |
 | `RenderResult.bindFunctions` is set when the diagram has click callbacks | Set only when `@mermaid-js/plugin-interactions` is installed | R-PLUG-9 |
 
 ### securityLevel
@@ -92,6 +94,22 @@ them through `@braintree/sanitize-url`, which also normalised them (`https://exa
 became `https://example.com/`). A link target other than `_self`, `_blank`, `_parent` or
 `_top` is dropped with `LINK_TARGET_DROPPED`, and `_blank` links get
 `rel="noopener noreferrer"`.
+
+### Limits
+
+Every render is bounded (R-SEC-5, D31). The integrator sets the limits with `initialize({ limits })`
+or a per-call `config.limits`; v12's `maxTextSize` and `maxEdges` still work and an explicit
+`limits` entry wins over them. Front matter and directives cannot change any of them (the attempt
+is reported as a `CONFIG_SECURE_KEY` warning). Over a limit, the render rejects with
+`MermaidError { code: 'LIMIT' }`.
+
+| Limit | Default | v12 |
+| --- | --- | --- |
+| `maxSourceLength` | 50,000 characters, front matter included (checked before the text is read) | `maxTextSize` 50,000, placeholder diagram |
+| `maxEdges` | 5,000 (`A & B --> C & D` counts four; refused before any is made) | `maxEdges` 500 |
+| `maxNodes` | 10,000 | none |
+| `maxDepth` | subgraphs nested 100 deep; a stack overflow in any stage is reported as this limit | none |
+| `maxOutputLength` | 4,000,000 characters of SVG | none |
 
 ### Errors and the error image
 
@@ -157,6 +175,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | --- | --- | --- |
 | `theme` | `"redux"` | The default changes from `default` to `redux` (D55). 13.0 ships `redux`, `default`, `dark`, `forest`, `neutral` and `base`; the other v12 names stand in for one of them with a warning, except `redux-color` (the flowchart default), which renders `redux`. |
 | `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 values `dagre`, `elk` and `elk.<algorithm>` stay valid and map to `layered` until an ELK plugin exists (R-PLUG-8); other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. |
+| `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
 
 <!-- END GENERATED CONFIG SECTION -->
@@ -265,8 +284,8 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 - **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown
   property or unsafe value (`url(`, `expression(`, `javascript:`, `@import`, …) is dropped with
   `STYLE_PROPERTY_DROPPED` or `STYLE_VALUE_DROPPED`. `color` sets the label's fill.
-- **`maxEdges`** (default 500, as in v12) is still the edge limit; going over it fails with a
-  `LIMIT` error.
+- **`maxEdges`** (default 5,000; v12 had 500) is still the edge limit; going over it fails
+  with a `LIMIT` error. See Limits under Public API.
 
 ## Front matter and directives
 

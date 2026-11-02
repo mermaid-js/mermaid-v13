@@ -1,0 +1,24 @@
+{
+  "name": "@mermaid-js/visual",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Visual baseline (R-TEST-5) and theme gallery (R-TEST-6): browser render adapter, e2e page server and gallery builder.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "serve": "tsx --conditions=mermaid-source src/cli/serve.ts",
+    "gallery": "tsx --conditions=mermaid-source src/cli/gallery.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p ../../e2e/tsconfig.json",
+    "smoke:build": "tsx src/smoke/build.ts",
+    "smoke:deno": "npx --yes deno@2.9.4 run --no-prompt dist/smoke/smoke.mjs"
+  },
+  "devDependencies": {
+    "@fontsource/noto-sans-sc": "^5.3.1",
+    "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@types/node": "^22.19.21",
+    "esbuild": "^0.25.12",
+    "mermaid": "workspace:*",
+    "tsx": "^4.20.6"
+  }
+}

@@ -1,0 +1,114 @@
+name: Nightly fuzz
+
+# R-SEC-7, R-TEST-8: fuzz the parsers and the SVG writer every night with a fresh seed. A
+# crash, a hang, malformed XML or an allow-list violation fails the run and opens (or comments
+# on) one `fuzz` issue that names the seed and case, so the failure can be replayed locally:
+#   FUZZ_SEED=<seed> FUZZ_CASE=<case> pnpm --filter @mermaid-js/conformance fuzz
+# The mermaid@12 differential is informational: its clusters go to the job summary.
+
+on:
+  schedule:
+    - cron: '41 2 * * *' # every day 02:41 UTC
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: Seed to replay (default a fresh one)
+        required: false
+      count:
+        description: Mutated inputs
+        required: false
+        default: '200000'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: fuzz-nightly
+  cancel-in-progress: false
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      - name: Pick the seed
+        id: seed
+        env:
+          INPUT_SEED: ${{ inputs.seed }}
+        run: |
+          seed="${INPUT_SEED:-$(( (GITHUB_RUN_ID * 31 + GITHUB_RUN_ATTEMPT) % 2147483647 ))}"
+          echo "seed=$seed" >> "$GITHUB_OUTPUT"
+          echo "Fuzz seed: \`$seed\`" >> "$GITHUB_STEP_SUMMARY"
+      - name: Fuzz
+        id: fuzz
+        timeout-minutes: 20
+        env:
+          FUZZ_SEED: ${{ steps.seed.outputs.seed }}
+          FUZZ: ${{ inputs.count || '200000' }}
+          FUZZ_ORACLE: '20000'
+          FUZZ_REPORT: ${{ runner.temp }}/fuzz-report.json
+          FUZZ_ORACLE_REPORT: ${{ runner.temp }}/fuzz-oracle.json
+          FUZZ_CURRENT: ${{ runner.temp }}/fuzz-current.json
+        run: pnpm --filter @mermaid-js/conformance fuzz
+      - name: Summarise
+        if: always()
+        env:
+          REPORT: ${{ runner.temp }}/fuzz-report.json
+          ORACLE: ${{ runner.temp }}/fuzz-oracle.json
+          CURRENT: ${{ runner.temp }}/fuzz-current.json
+        run: |
+          set -uo pipefail
+          if [ -f "$REPORT" ]; then
+            jq -r '"\(.count) inputs: \(.outcomes | tostring), \(.failures | length) failures"' "$REPORT" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '.failures[] | "- **\(.kind)** in \(.stage), case \(.index): `FUZZ_SEED=\(.seed) FUZZ_CASE=\(.index)`"' "$REPORT" >> "$GITHUB_STEP_SUMMARY"
+          elif [ -f "$CURRENT" ]; then
+            # No report: the run was killed (a real hang or the job timeout). Name the input.
+            jq -r '"Killed during case \(.index) (`FUZZ_SEED=\(.seed) FUZZ_CASE=\(.index)`): a hang."' "$CURRENT" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [ -f "$ORACLE" ]; then
+            echo "### mermaid@12 differential (informational)" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '"\(.divergent) of \(.count) inputs differ; compare with packages/conformance/src/fuzz/decided.ts"' "$ORACLE" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '.clusters[] | "- \(.count)x \(.title)"' "$ORACLE" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: fuzz-${{ steps.seed.outputs.seed }}
+          path: |
+            ${{ runner.temp }}/fuzz-report.json
+            ${{ runner.temp }}/fuzz-oracle.json
+            ${{ runner.temp }}/fuzz-current.json
+          if-no-files-found: ignore
+      - name: Open or update the fuzz issue
+        if: failure() && github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SEED: ${{ steps.seed.outputs.seed }}
+          REPORT: ${{ runner.temp }}/fuzz-report.json
+          CURRENT: ${{ runner.temp }}/fuzz-current.json
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          gh label create fuzz --color B60205 --description 'Nightly fuzz failure' 2>/dev/null || true
+          if [ -f "$REPORT" ]; then
+            cases=$(jq -r '.failures[:20][] | "- \(.kind) in \(.stage), case \(.index): `FUZZ_SEED=\(.seed) FUZZ_CASE=\(.index)`\n  ```\n  \(.message | split("\n")[0])\n  ```"' "$REPORT")
+          elif [ -f "$CURRENT" ]; then
+            cases=$(jq -r '"- hang (run killed) in case \(.index): `FUZZ_SEED=\(.seed) FUZZ_CASE=\(.index)`"' "$CURRENT")
+          else
+            cases="- the run failed before the first case; see the log"
+          fi
+          body=$(printf 'The nightly fuzz run with seed `%s` failed.\n\n%s\n\nReplay one case: `FUZZ_SEED=<seed> FUZZ_CASE=<case> pnpm --filter @mermaid-js/conformance fuzz`. Inputs are in the run artifact.\n\nRun: %s\n' "$SEED" "$cases" "$RUN_URL")
+          open=$(gh issue list --state open --label fuzz --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --body "$body"
+          else
+            gh issue create --title "Nightly fuzz failure (seed $SEED)" --label fuzz --body "$body"
+          fi

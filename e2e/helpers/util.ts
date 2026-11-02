@@ -4,10 +4,18 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 import { expect, type Page, type TestInfo } from '@playwright/test';
 import { Buffer } from 'buffer';
-import type { MermaidConfig } from '../../packages/mermaid/src/config.type.js';
-import { applitoolsBatch, applitoolsTestName } from './applitools.ts';
 import { buildCaptureMetadata, writeArgosMetadataSidecar } from './argos-metadata.ts';
-import { collectCoverage, startCoverage } from './coverage.js';
+
+// v13: the page is packages/visual/www/e2e.html (served by `pnpm --filter @mermaid-js/visual
+// serve`); it renders through packages/visual/src/adapter.ts. Integrator config is a plain
+// object until the public config types land (#15).
+type MermaidConfig = Record<string, any> & {
+  securityLevel?: string;
+  /** `output.cssVariables` (page option). */
+  cssVariables?: boolean;
+  /** `canvas` measures with the browser canvas; default is the deterministic table. */
+  measurer?: 'canvas' | 'table';
+};
 
 interface E2EConfig {
   listUrl?: boolean;
@@ -50,9 +58,6 @@ export const mermaidUrl = (
   options: E2EMermaidConfig,
   api: boolean
 ): string => {
-  options.handDrawnSeed = 1;
-  options.architecture = { seed: 1, ...(options.architecture ?? {}) };
-  options.cynefin = { seed: 1, ...(options.cynefin ?? {}) };
   const codeObject: CodeObject = {
     code: graphStr,
     mermaid: options,
@@ -78,18 +83,8 @@ export const imgSnapshotTest = async (
   api = false,
   validation?: any
 ): Promise<void> => {
-  const options: E2EMermaidConfig = {
-    ..._options,
-    fontFamily: _options.fontFamily ?? 'courier',
-    // @ts-ignore TODO: Fix type of fontSize
-    fontSize: _options.fontSize ?? '16px',
-    sequence: {
-      ...(_options.sequence ?? {}),
-      actorFontFamily: 'courier',
-      noteFontFamily: _options.sequence?.noteFontFamily ?? 'courier',
-      messageFontFamily: 'courier',
-    },
-  };
+  // v13 keeps the theme's own fonts (v12 forced courier): the baseline shows what users get.
+  const options: E2EMermaidConfig = { ..._options };
 
   const url: string = mermaidUrl(graphStr, options, api);
   await openURLAndVerifyRendering(page, testInfo, url, options, validation);
@@ -100,6 +95,7 @@ export const urlSnapshotTest = async (
   testInfo: TestInfo,
   url: string,
   options: E2EMermaidConfig = {},
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for the v12 call sites
   _api = false,
   validation?: any
 ): Promise<void> => {
@@ -147,7 +143,6 @@ export const openURLAndVerifyRendering = async (
     }
   });
 
-  await startCoverage(page);
   await page.goto(url);
 
   // Prefer the explicit rendered flag from viewer.js; fall back to SVG visibility.
@@ -167,6 +162,11 @@ export const openURLAndVerifyRendering = async (
       }
       throw error;
     }
+  }
+
+  const renderError = await page.evaluate(() => (window as any).renderError as string | undefined);
+  if (renderError && rejectErrorDiagram) {
+    throw new Error(`Diagram did not render: ${renderError}`);
   }
 
   // xssAttack() throws after injecting #the-malware and still leaves an SVG, so a
@@ -200,8 +200,6 @@ export const openURLAndVerifyRendering = async (
   if (screenshot) {
     await verifyScreenshot(page, testInfo, name, options.screenshotPath, url);
   }
-
-  await collectCoverage(page, testInfo);
 };
 
 export const verifyScreenshot = async (
@@ -211,7 +209,6 @@ export const verifyScreenshot = async (
   screenshotPath?: string,
   pageUrl?: string
 ): Promise<void> => {
-  const useAppli = !!process.env.USE_APPLI;
   const useArgos = process.env.RUN_VISUAL_TEST === 'true';
 
   // Capture only the rendered diagram SVG so each screenshot is a tight crop of
@@ -222,32 +219,6 @@ export const verifyScreenshot = async (
   const hasSvg = (await svg.count()) > 0;
   const target = hasSvg ? svg : page;
   const specRelPath = relative(testInfo.project.testDir, testInfo.file).split(sep).join('/');
-
-  if (useAppli) {
-    // One Applitools batch per diagram folder or spec file, a check per screenshot
-    // scoped to the diagram SVG (full window when there is none). API key, branch,
-    // and parent branch are read from the APPLITOOLS_* env vars by the SDK.
-    // Imported lazily so the SDK is only loaded for Applitools runs.
-    const { Eyes, ClassicRunner, Target } = await import('@applitools/eyes-playwright');
-    const runId = process.env.APPLITOOLS_BATCH_ID;
-    if (!runId) {
-      throw new Error(
-        'APPLITOOLS_BATCH_ID is unset; playwright.config.ts should seed it for USE_APPLI runs'
-      );
-    }
-    const eyes = new Eyes(new ClassicRunner());
-    eyes.setConfiguration({
-      appName: 'Mermaid',
-      batch: applitoolsBatch(runId, specRelPath, screenshotPath),
-    });
-    await eyes.open(page, 'Mermaid', applitoolsTestName(name, specRelPath, screenshotPath));
-    await eyes.check(
-      'Click!',
-      hasSvg ? Target.region('svg[aria-roledescription]') : Target.window().fully()
-    );
-    await eyes.close(true);
-    return;
-  }
 
   if (useArgos) {
     // Capture a native PNG; a dedicated CI job composites these into sheets
@@ -290,7 +261,10 @@ export const verifyScreenshot = async (
       return;
     }
 
-    await expect(target).toHaveScreenshot(snapshotName);
+    await expect(target).toHaveScreenshot(snapshotName, {
+      animations: 'disabled',
+      scale: 'device',
+    });
   }
 };
 

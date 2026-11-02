@@ -1,4 +1,5 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
+import type { Limits } from '@mermaid-js/core/limits';
 import type { LayoutGraph, LayoutModel } from '@mermaid-js/core/layout';
 import type { SecurityLevel } from '@mermaid-js/core/svg';
 import type { Measurer } from '@mermaid-js/core/text';
@@ -20,6 +21,8 @@ export interface FlowRenderContext {
   /** One render's theme: it records the variables used, so it is never shared. */
   readonly theme: Theme;
   warn(warning: FlowWarning): void;
+  /** Integrator limits (R-SEC-5); the parse took its caps from the same object. */
+  readonly limits?: Limits;
   /** The layout engine named by `layout` config. Defaults to core's `layered`. */
   layout?(graph: LayoutGraph): LayoutModel;
   /** Prefix of the root's only ids, `${idPrefix}-title` and `${idPrefix}-desc` (R-A11Y-1). */

@@ -191,7 +191,7 @@ describe('secure and integrator-only keys', () => {
     });
     expect(config.securityLevel).toBe('default');
     expect(config.maxTextSize).toBe(50000);
-    expect(config.maxEdges).toBe(500);
+    expect(config.maxEdges).toBe(5000);
     expect(config.secure).toEqual(CORE_DEFAULTS.secure);
     for (const key of ['deterministic', 'idPrefix', 'output', 'limits', 'linkSchemes']) {
       expect(config).not.toHaveProperty(key);
@@ -347,7 +347,7 @@ describe('the resolved config is frozen (R-ARCH-5)', () => {
 });
 
 describe('CORE_DEFAULTS', () => {
-  it('are the v12.2.0 top-level defaults, with redux, layered and securityLevel default (D75) as the new defaults', () => {
+  it('are the v12.2.0 top-level defaults, with redux, layered, securityLevel default (D75) and 5,000 edges (D31) as the new defaults', () => {
     // Read from mermaid@12.2.0's `mermaidAPI.defaultConfig` (objects and functions left out).
     const v12 = {
       theme: 'default',
@@ -382,6 +382,7 @@ describe('CORE_DEFAULTS', () => {
       theme: 'redux',
       layout: 'layered',
       securityLevel: 'default',
+      maxEdges: 5000,
     });
   });
 });
