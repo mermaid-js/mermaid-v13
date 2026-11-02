@@ -11,6 +11,8 @@ export interface ParitySuite {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- adapters of any model type
   adapter: DiagramAdapter<any>;
   corpusDirs: string[];
+  /** JSON files of `CorpusItem[]` (relative to the repo root), e.g. harvested spec strings. */
+  corpusFiles?: string[];
 }
 
 /** Every `.mmd` file under `dir`, sorted by path, with ids `<idPrefix>/<path relative to dir>`. */
@@ -37,6 +39,9 @@ export async function* resolveCorpus(
   }
   const dirs = [...new Set(suites.flatMap((s) => s.corpusDirs))];
   for (const dir of dirs) yield* corpusFromDir(join(REPO_ROOT, dir), dir);
+  for (const file of new Set(suites.flatMap((s) => s.corpusFiles ?? []))) {
+    yield* JSON.parse(await readFile(join(REPO_ROOT, file), 'utf8')) as CorpusItem[];
+  }
 }
 
 async function mmdFiles(dir: string): Promise<string[]> {

@@ -6,7 +6,11 @@ import { flowchartAdapter } from './flowchart/v13.ts';
  * `{ adapter: flowchartAdapter, corpusDirs: ['e2e/diagrams/flowchart'] }` (ticket #8).
  */
 export const PARITY_SUITES: ParitySuite[] = [
-  { adapter: flowchartAdapter, corpusDirs: ['e2e/diagrams/flowchart'] },
+  {
+    adapter: flowchartAdapter,
+    corpusDirs: ['e2e/diagrams/flowchart'],
+    corpusFiles: ['packages/conformance/corpus/flowchart-v12-specs.json'],
+  },
 ];
 
 /** The committed divergence list (R-COMPAT-4). */
