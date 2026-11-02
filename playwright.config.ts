@@ -73,7 +73,9 @@ export default defineConfig({
   },
   projects: [
     // The baseline and browser specs; the smoke render needs the bundle (`smoke:build`).
-    { name: 'chromium', testIgnore: ['**/helpers/**', 'smoke/**'] },
+    { name: 'chromium', testIgnore: ['**/helpers/**', 'smoke/**', 'dev/**'] },
+    // The dev explorer specs (#64), their own CI job: `pnpm e2e:dev`.
+    { name: 'dev', testMatch: 'dev/**/*.spec.ts' },
     // CI smoke-render, one runtime per job: `--project smoke-<browser>`.
     ...(['chromium', 'firefox', 'webkit'] as const).map((browser) => ({
       name: `smoke-${browser}`,

@@ -4,8 +4,11 @@
  * same settings; the version and the pixel diff (D) live in the URL.
  *
  * The right pane needs network (cdn.jsdelivr.net and registry.npmjs.org). Those specs pin
- * exact `mermaid@12` versions and skip, saying so, when either can't be reached.
+ * exact `mermaid@12` versions and skip, saying so, when either can't be reached. On GitHub
+ * Actions the reason is also a `::warning` annotation and a line in the job summary (#64),
+ * since the CI reporters don't print skip reasons.
  */
+import { appendFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { startExplorerServer, type ExplorerServer } from './explorer-server.ts';
 
@@ -33,7 +36,16 @@ test.beforeAll(async () => {
     }
     if (offline) break;
   }
+  if (offline) announceOffline(`Offline, skipping the CDN side of the Compare tab: ${offline}`);
 });
+
+/** Makes the skip reason visible in the GitHub Actions run (once per worker). */
+function announceOffline(reason: string): void {
+  if (!process.env.GITHUB_ACTIONS) return;
+  process.stdout.write(`::warning title=Compare tab CDN specs skipped::${reason}\n`);
+  const summary = process.env.GITHUB_STEP_SUMMARY;
+  if (summary) appendFileSync(summary, `- :warning: ${reason}\n`);
+}
 
 test.afterAll(async () => {
   await explorer.close();
