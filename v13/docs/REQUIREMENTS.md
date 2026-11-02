@@ -34,7 +34,7 @@ v13 closes the gap on **size, speed, theming and security** while keeping Mermai
 | --- | --- | --- |
 | **M1** | Core pipeline, flowchart only, built-in layered layout, SVG backend, themes (light/dark + v12 names), parser kit, parity oracle, benchmarks in CI, DOM adapter | D8, D18, D37 |
 | **M2** | ASCII/Unicode text output backend for flowcharts: text-grid kit in core, unit profile, API and CLI | D11, D24, D57, D58, D76–D87 |
-| **M2.5** | `@mermaid-js/language-service` + CodeMirror/Monaco adapters | D37 |
+| **M2.5** | `@mermaid-js/language-service` + CodeMirror/Monaco adapters + LSP server (flowchart first) | D37, D88–D99 |
 | **M3** | sequence, class, state, ER | D34 |
 | **M4** | gantt, pie, mindmap, timeline, gitGraph, journey, quadrant | D34 |
 | **M5** | Remaining v12 diagram types | D34 |
@@ -64,6 +64,9 @@ v13 closes the gap on **size, speed, theming and security** while keeping Mermai
 - **Glyph set:** the characters one charset uses for lines, corners, junctions and arrowheads (`unicode` or `ascii`).
 - **Repair router:** the cell-space A\* that re-routes only edge segments that collide after snapping.
 - **Upstream golden:** a mermaid-ascii fixture's expected output, kept beside v13's own golden and checked structurally only.
+- **Language service:** `@mermaid-js/language-service`, the pure, editor-agnostic engine behind the editor adapters and the LSP server (§20).
+- **Language facet:** what a diagram package exports from its `./language` subpath so the language service can support that type: parser entry, token kind → category table, completion table, hover docs and symbol namespace rules (R-LANG-8).
+- **Probe:** a parse run with `probe: offset`, which records the token kinds the parser would accept at that offset, the lexer mode and the typed prefix; it drives completion (R-LANG-7).
 
 ## 4. How to read the requirements
 
@@ -276,9 +279,14 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 
 | ID | Requirement | Pri | MS | Src | Acceptance |
 | --- | --- | --- | --- | --- | --- |
-| R-LANG-1 | `@mermaid-js/language-service`, built only on the parser kit outputs, provides diagnostics, definition, references, rename, hover, folding, semantic tokens and completion (keywords and node ids). | Must | M2.5 | D37 | Specs per feature on flowchart |
-| R-LANG-2 | CodeMirror 6 and Monaco adapters, plus a thin LSP server wrapper. | Should | M2.5 | D37 | Example editors in CI |
-| R-LANG-3 | Every diagram type ported after M2.5 ships language-service support. | Must | M3+ | D37 | Port checklist |
+| R-LANG-1 | `@mermaid-js/language-service` is pure, editor-agnostic and has zero runtime dependencies. Built only on the parser kit outputs, it provides diagnostics (passed through from preprocess and parse), definition, references and validated rename (per-diagram symbol namespaces), hover, folding, semantic tokens (categories generated from the grammar file) and completion (keywords, node/subgraph ids, class names, directions, shapes, link targets, arrows). A type with no language facet gets an info diagnostic and generic features only. | Must | M2.5 | D37, D88, D90–D95 | Golden specs per feature on flowchart; R-PARSE-5 expectations re-run through the service; CI test that semantic tokens and the TextMate/Monarch/Lezer grammars agree per token over the corpus |
+| R-LANG-2 | CodeMirror 6 and Monaco adapters set up the whole language in one call (highlighter from the grammar file plus every service feature). A thin LSP server (`mermaid-language-server`, stdio) offers every service feature for `.mmd`/`.mermaid` files. | Should | M2.5 | D37, D88, D98 | Playwright runs CodeMirror and Monaco example editors with a live preview in CI; a scripted LSP client runs against the server |
+| R-LANG-3 | Every diagram type ported after M2.5 ships language-service support: a language facet (R-LANG-8) that passes the shared golden suite. | Must | M3+ | D37, D89 | Port checklist |
+| R-LANG-4 | `update` plus all queries take ≤ 10 ms for a 50,000-character document on the reference runner, with a full re-parse per change. No query throws at any offset. | Must | M2.5 | D90, D99 | Corpus property test (every query at every token boundary) and a bench fixture |
+| R-LANG-5 | Front-matter config gets completion, hover and unknown-key warnings against the config JSON schema, scoped to the detected diagram type. `%%{init}%%` directives get diagnostics only. | Should | M2.5 | D96 | Golden specs; YAML reader returns key/value ranges and recovers after an error |
+| R-LANG-6 | `astAt(offset)` and `rangeOf(astId)` map between source positions and AST ids, so a host can highlight `[data-ast]` elements from the cursor and jump from an element to its source. | Must | M2.5 | D97 | Spec over the corpus; example editor syncs cursor and preview |
+| R-LANG-7 | The parser kit has a probe mode: `parse(text, { probe: offset })` returns the token kinds acceptable at the offset, the lexer mode and the typed prefix, with normal recovery for the rest of the document and zero cost when unset. | Must | M2.5 | D95 | Kit specs with the tiny test grammar; flowchart probe specs; bench shows no cost without a probe |
+| R-LANG-8 | Each diagram package exports a language facet from `./language` (parser entry with no renderer imports, kind → category table, completion table, hover docs, symbol namespaces), listed in its manifest and found through a generated first-party table. | Must | M2.5 | D89 | Flowchart facet; import-boundary lint shows no renderer import from `./language` |
 
 ## 21. Testing and quality (R-TEST)
 
