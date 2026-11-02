@@ -13,7 +13,7 @@ export const CORE_DEFAULTS: MermaidConfig = {
   "darkMode": false,
   "fontFamily": "\"trebuchet ms\", verdana, arial, sans-serif;",
   "logLevel": 5,
-  "securityLevel": "strict",
+  "securityLevel": "default",
   "startOnLoad": true,
   "arrowMarkerAbsolute": false,
   "secure": [

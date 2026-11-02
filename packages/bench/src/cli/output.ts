@@ -12,8 +12,13 @@ import { baselineFrom } from '../report.ts';
 
 export const REPORTS_DIR = fileURLToPath(new URL('../../dist/reports/', import.meta.url));
 
+/**
+ * The gate mode: `enforce` by default now that the pipeline exists, so a probe that breaks
+ * fails instead of dropping back to report mode. `auto` (report while there is no pipeline)
+ * and `report` stay available through `--mode` / BENCH_GATES.
+ */
 export function modeSetting(cli: string | undefined): GateModeSetting {
-  const v = cli ?? process.env.BENCH_GATES ?? 'auto';
+  const v = cli ?? process.env.BENCH_GATES ?? 'enforce';
   if (v === 'auto' || v === 'report' || v === 'enforce') return v;
   throw new Error(`Unknown gate mode "${v}" (auto, report or enforce)`);
 }

@@ -1,18 +1,17 @@
 /**
  * The flowchart fuzz run (R-SEC-7, R-TEST-8): seeded mutations of the e2e corpus, the v12 spec
  * strings and grammar-generated sentences (#21), each pushed through preprocess, the lexer,
- * the parse and, when it parses, the renderer. A case fails on a crash (anything thrown but a
- * `LimitError`), a hang (a case over `hangMs`) or output that is not well-formed or breaks
- * the allow-list (`assertInert`). Every failure carries the seed and case index that
+ * the parse, then the public API (`prepare` + `renderSync`). A case fails on a crash (a
+ * stage throwing, or an `INTERNAL` MermaidError), a hang (a case over `hangMs`) or output
+ * that is not well-formed or breaks the allow-list (`assertInert`). Every failure carries the seed and case index that
  * reproduce it: `FUZZ_SEED=<seed> FUZZ_CASE=<index> pnpm --filter @mermaid-js/conformance fuzz`.
  */
 import { SaxesParser } from 'saxes';
 import { buildGenerator } from '@mermaid-js/gen-grammar';
-import { asLimitError, checkSource, DEFAULT_LIMITS, isLimitCode } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { inertProblem } from '@mermaid-js/core/svg';
 import { flowchartTokens, parseFlowchart } from '@mermaid-js/diagram-flowchart';
-import { renderForTest } from '@mermaid-js/diagram-flowchart/testing';
+import { createMermaid, MermaidError } from 'mermaid';
 import { flowchartCorpus } from '../flowchart/grammar/corpus.ts';
 import { learnSentenceModel, referenceParser } from '../flowchart/grammar/reference.ts';
 import { FLOWCHART_FRAGMENTS, mutator, random } from './mutator.ts';
@@ -81,31 +80,30 @@ function wellFormed(svg: string): string | undefined {
 
 type CaseResult = FuzzOutcome | { kind: FuzzFailureKind; stage: FuzzStage; message: string };
 
-/** One input through every stage. Never throws. */
+let api: ReturnType<typeof createMermaid> | undefined;
+
+/** One input through every stage, then through the public API. Never throws. */
 export async function fuzzCase(source: string): Promise<CaseResult> {
   let stage: FuzzStage = 'preprocess';
   try {
-    checkSource(source, DEFAULT_LIMITS);
+    // The stages on their own first, so a crash is pinned to one of them.
     const pre = preprocess(source);
     stage = 'lex';
     flowchartTokens(source);
     stage = 'parse';
-    const parsed = parseFlowchart(source, { preprocessed: pre });
-    const errors = parsed.diagnostics.filter((d) => d.severity === 'error');
-    if (errors.some((d) => isLimitCode(d.code))) return 'limit';
-    if (errors.length > 0) return 'rejected';
+    parseFlowchart(source, { preprocessed: pre });
     stage = 'render';
+    api ??= createMermaid();
     let svg: string;
     let themeStyle = false;
     try {
-      const out = await renderForTest(source);
-      svg = out.svg;
+      const prepared = await api.prepare(source, { id: 'fuzz' });
+      svg = api.renderSync(source, { id: 'fuzz' }).svg;
       // theme 'auto' writes a custom-properties-only <style> (R-THEME-8).
-      themeStyle = String(out.config.theme) === 'auto';
+      themeStyle = String(prepared.config.theme) === 'auto';
     } catch (error) {
-      // renderForTest resolves config, which can only refuse through a limit.
-      if (asLimitError(error)) return 'limit';
-      throw error;
+      if (!(error instanceof MermaidError) || error.code === 'INTERNAL') throw error;
+      return error.code === 'LIMIT' ? 'limit' : 'rejected';
     }
     const malformed = wellFormed(svg);
     if (malformed) return { kind: 'malformed', stage, message: malformed };
@@ -113,8 +111,9 @@ export async function fuzzCase(source: string): Promise<CaseResult> {
     if (unsafe) return { kind: 'allow-list', stage, message: unsafe };
     return 'rendered';
   } catch (error) {
-    if (asLimitError(error)) return 'limit';
-    const e = error as Error;
+    const e = (
+      error instanceof MermaidError && error.cause instanceof Error ? error.cause : error
+    ) as Error;
     return { kind: 'crash', stage, message: `${e?.name}: ${e?.message}\n${e?.stack ?? ''}` };
   }
 }

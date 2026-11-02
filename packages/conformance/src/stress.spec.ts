@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { asLimitError, LimitError } from '@mermaid-js/core/limits';
+import { LIMIT_CODES, LimitError, type Limits } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { assertInert } from '@mermaid-js/core/svg';
 import { flowchartTokens, parseFlowchart } from '@mermaid-js/diagram-flowchart';
-import { renderForTest } from '@mermaid-js/diagram-flowchart/testing';
+import { createMermaid, MermaidError, type InitializeConfig } from 'mermaid';
 
 /**
  * Stress suite (R-PARSE-7, R-SEC-5, DESIGN §10), run in PR CI as part of `pnpm test`.
  * Inputs built for worst cases (regex backtracking, quadratic scans, deep recursion,
  * multiplying edges, oversized output), after Pele's `tests/stress.test.ts`. Each one must
  * finish inside the bound and either succeed or fail cleanly: a parse with error
- * diagnostics, or a `LimitError`. Anything else thrown is a crash. The bounds are loose: a
+ * diagnostics, or a `MermaidError` other than INTERNAL. Anything else thrown is a crash. The bounds are loose: a
  * regression here is seconds or a hang, not milliseconds.
  */
 
@@ -30,8 +30,20 @@ const repeat = (count: number, line: (i: number) => string): string =>
   Array.from({ length: count }, (_, i) => line(i)).join('');
 const parse = (src: string) =>
   parseFlowchart(src, { maxEdges: Infinity, maxNodes: Infinity, maxDepth: Infinity });
-const render = (src: string, options: Parameters<typeof renderForTest>[1] = NO_LIMITS) =>
-  renderForTest(src, options);
+/** One isolated API object per config, as a page would set it up with initialize(). */
+const render = (src: string, config: InitializeConfig = NO_LIMITS) => {
+  const m = createMermaid();
+  m.initialize(config);
+  return m.render('stress', src);
+};
+
+/** Which limit a LIMIT error reports: a thrown LimitError, or the parse's limit diagnostic. */
+function limitOf(e: MermaidError): string {
+  if (e.cause instanceof LimitError) return e.cause.limit;
+  const code = e.diagnostics[0]?.code;
+  const name = (Object.keys(LIMIT_CODES) as (keyof Limits)[]).find((k) => LIMIT_CODES[k] === code);
+  return name ?? 'unknown';
+}
 
 const CASES: [string, () => unknown][] = [
   // Preprocess: front matter, comments, directives.
@@ -195,10 +207,8 @@ async function attempt(run: () => unknown): Promise<string> {
     }
     return 'ok';
   } catch (error) {
-    const limit = asLimitError(error);
-    if (limit) return `limit ${limit.limit}`;
-    if (error instanceof Error && error.message.startsWith('parse failed')) return 'rejected';
-    throw error;
+    if (!(error instanceof MermaidError) || error.code === 'INTERNAL') throw error;
+    return error.code === 'LIMIT' ? `limit ${limitOf(error)}` : 'rejected';
   }
 }
 
@@ -215,7 +225,7 @@ describe('stress: worst-case inputs finish in bounded time without crashing', ()
 });
 
 describe('stress: default limits refuse oversized input', () => {
-  it('reports each as a LimitError', async () => {
+  it('reports each as a LIMIT error', async () => {
     const outcome = async (name: string) => attempt(CASES.find(([n]) => n === name)![1]);
     expect(await outcome('source over the default limit')).toBe('limit maxSourceLength');
     expect(await outcome('four million edges asked for by one line')).toBe('limit maxEdges');
@@ -228,9 +238,9 @@ describe('stress: default limits refuse oversized input', () => {
     expect(['rendered', 'limit maxDepth']).toContain(result);
   }, 30_000);
 
-  it('LimitError is what renderForTest throws for a limit', async () => {
+  it('a limit is a MermaidError with code LIMIT', async () => {
     await expect(render('graph TD\nA-->B\nB-->C\n', { limits: { maxEdges: 1 } })).rejects.toThrow(
-      LimitError
+      expect.objectContaining({ code: 'LIMIT' })
     );
   });
 });

@@ -62,9 +62,10 @@ export class LimitError extends RangeError {
     limit: LimitName,
     max: number | undefined,
     found: number | undefined,
-    message: string
+    message: string,
+    options?: { cause?: unknown }
   ) {
-    super(message);
+    super(message, options);
     this.name = 'LimitError';
     this.limit = limit;
     this.max = max;
@@ -154,7 +155,8 @@ export function asLimitError(error: unknown): LimitError | undefined {
       'maxDepth',
       undefined,
       undefined,
-      'The diagram is nested too deeply to draw.'
+      'The diagram is nested too deeply to draw.',
+      { cause: error }
     );
   }
   return undefined;

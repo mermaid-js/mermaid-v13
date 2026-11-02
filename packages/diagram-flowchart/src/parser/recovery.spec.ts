@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LineIndex } from '@mermaid-js/core/parser-kit';
-import { flowchart } from '../index.ts';
+import { parseFlowchart } from '../index.ts';
 
 /**
  * Recovery set (R-PARSE-4): documents with N independent errors give N error diagnostics,
@@ -225,7 +225,7 @@ describe('flowchart recovery (R-PARSE-4)', () => {
 
   it.each(CASES)('$name', ({ lines, errors, keeps }) => {
     const src = lines.join('\n');
-    const r = flowchart.parse(src);
+    const r = parseFlowchart(src);
     const at = new LineIndex(src);
     const got = r.diagnostics
       .filter((d) => d.severity === 'error')

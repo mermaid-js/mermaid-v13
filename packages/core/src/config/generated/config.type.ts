@@ -239,9 +239,11 @@ altFontFamily?: string
  */
 logLevel?: ("trace" | 0 | "debug" | 1 | "info" | 2 | "warn" | 3 | "error" | 4 | "fatal" | 5)
 /**
- * Level of trust for parsed diagram
+ * Level of trust for parsed diagram. `default` allows `http`, `https`, `mailto` and
+ * relative link URLs; `strict` allows relative links only (R-SEC-4, R-SEC-6).
+ * 
  */
-securityLevel?: ("strict" | "loose" | "antiscript" | "sandbox")
+securityLevel?: ("default" | "strict" | "loose" | "antiscript" | "sandbox")
 /**
  * Dictates whether mermaid starts on Page load
  */

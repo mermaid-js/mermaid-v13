@@ -7,7 +7,6 @@ import {
   checkLinkTarget,
   checkUrl,
   px,
-  resolveSecurityLevel,
   styleText,
   themeStyleSheet,
   translate,
@@ -80,7 +79,7 @@ export function renderFlowchart(
   const { theme, config } = ctx;
   const flow = layout.flow ?? prepare(model, ctx);
   const warn = ctx.warn;
-  const securityLevel = resolveSecurityLevel(config.securityLevel);
+  const securityLevel = ctx.securityLevel ?? 'default';
   const prefix = ctx.idPrefix ?? 'mermaid';
   const labelled = flow.edges.some((e) => e.label.width > 0);
 

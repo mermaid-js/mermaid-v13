@@ -39,7 +39,7 @@ describe('resolveConfig precedence (mirrors v12 config.spec.ts)', () => {
     const { config, warnings } = resolve();
     expect(config.theme).toBe('redux');
     expect(config.fontSize).toBe(16);
-    expect(config.securityLevel).toBe('strict');
+    expect(config.securityLevel).toBe('default');
     expect(warnings).toEqual([]);
   });
 
@@ -166,7 +166,7 @@ describe('secure and integrator-only keys', () => {
       initialize: { secure: ['fontSize'] },
       frontMatter: { securityLevel: 'loose', maxTextSize: 1e9 },
     });
-    expect(config.securityLevel).toBe('strict');
+    expect(config.securityLevel).toBe('default');
     expect(config.maxTextSize).toBe(50000);
     expect(config.secure).toContain('securityLevel');
     expect(config.secure).toContain('fontSize');
@@ -189,7 +189,7 @@ describe('secure and integrator-only keys', () => {
       frontMatter,
       directives: [frontMatter],
     });
-    expect(config.securityLevel).toBe('strict');
+    expect(config.securityLevel).toBe('default');
     expect(config.maxTextSize).toBe(50000);
     expect(config.maxEdges).toBe(5000);
     expect(config.secure).toEqual(CORE_DEFAULTS.secure);
@@ -347,7 +347,7 @@ describe('the resolved config is frozen (R-ARCH-5)', () => {
 });
 
 describe('CORE_DEFAULTS', () => {
-  it('are the v12.2.0 top-level defaults, with redux, layered and 5,000 edges as the new defaults', () => {
+  it('are the v12.2.0 top-level defaults, with redux, layered, securityLevel default (D75) and 5,000 edges (D31) as the new defaults', () => {
     // Read from mermaid@12.2.0's `mermaidAPI.defaultConfig` (objects and functions left out).
     const v12 = {
       theme: 'default',
@@ -377,7 +377,12 @@ describe('CORE_DEFAULTS', () => {
       markdownAutoWrap: true,
       suppressErrorRendering: false,
     };
-    // maxEdges: 500 → 5,000 (D31, R-SEC-5).
-    expect(CORE_DEFAULTS).toEqual({ ...v12, theme: 'redux', layout: 'layered', maxEdges: 5000 });
+    expect(CORE_DEFAULTS).toEqual({
+      ...v12,
+      theme: 'redux',
+      layout: 'layered',
+      securityLevel: 'default',
+      maxEdges: 5000,
+    });
   });
 });
