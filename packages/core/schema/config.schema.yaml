@@ -3059,7 +3059,7 @@ $defs:
       diagramPadding:
         $ref: '#/$defs/ErDiagramConfig/properties/diagramPadding'
         default: 8
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       htmlLabels:
         description: |
           **DEPRECATED: Use global `htmlLabels` instead.**
@@ -3086,7 +3086,7 @@ $defs:
         type: integer
         default: 50
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       rankSpacing:
         description: |
           Defines the spacing between nodes on different levels
@@ -3096,7 +3096,7 @@ $defs:
         type: integer
         default: 50
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       curve:
         description: |
           Defines how mermaid renders curves for flowcharts.
@@ -3118,7 +3118,13 @@ $defs:
             'rounded',
           ]
         default: 'basis'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped
+            routes; `rounded` draws straight segments with rounded corners; every other value draws
+            S-curves (the layout engine routes edges, not a d3 curve factory).
 
       padding:
         description: |
@@ -3136,7 +3142,7 @@ $defs:
           value sets the max width of a text before it continues on a new line.
         type: number
         default: 120
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       minNodeWidth:
         description: |
           Minimum width of the label area of a node.
@@ -3147,7 +3153,7 @@ $defs:
           affected.
         type: number
         default: 120
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
 
       stepDuration:
         description: |

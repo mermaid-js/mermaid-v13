@@ -468,6 +468,7 @@ interface ExtensionPlugin {
 - `postLayout` hooks that only understand graphs act on `kind: 'graph'` and pass other layouts through unchanged. A hook written for one diagram type checks `diagram`. The runner rejects a hook result whose `kind` differs from its input.
 - `postRender` runs on the compact tree; core then re-checks the allow-list, so a hook can't introduce `<script>`, `on*` or unsafe URLs (R-SEC-2).
 - `afterMount` exists only in `mermaid`'s DOM adapter (`run`, `mount`, `bindFunctions`). Core never calls DOM code.
+- As built in M1: hooks get `HookContext` = the frozen `RenderContext` plus `diagram` (the plugin id) and `state`, the extension's own scratch object for that render, which `afterMount(el, result, state)` also gets (how `postParse` hands click callbacks to `afterMount`). Core's `HookRunner` runs the hooks; `RenderResult.bindFunctions` is set when an extension has `afterMount` and is the adapter's entry point. A failing hook, a changed `kind` or an allow-list failure after `postRender` rejects with `MermaidError('INTERNAL')` naming the extension.
 
 ### 12.3 Interactions plugin (R-PLUG-9, D47)
 
