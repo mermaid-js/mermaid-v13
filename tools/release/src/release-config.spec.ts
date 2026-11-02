@@ -118,3 +118,29 @@ describe('release workflow (R-REL-2, R-REL-3)', () => {
     }
   });
 });
+
+describe('workflow branches (R-REL-1)', () => {
+  const wf = (name: string) =>
+    parse(readFileSync(join(root, '.github/workflows', name), 'utf8')) as {
+      on: Record<string, { branches?: string[]; 'branches-ignore'?: string[] } | null>;
+      jobs: Record<string, Job>;
+    };
+
+  it('runs CodeQL and Scorecard on mermaid-v13, not develop', () => {
+    expect(wf('codeql.yml').on.push?.branches).toEqual(['mermaid-v13']);
+    expect(wf('codeql.yml').on.pull_request?.branches).toEqual(['mermaid-v13']);
+    expect(wf('scorecard.yml').on.push?.branches).toEqual(['mermaid-v13']);
+  });
+
+  it('leaves mermaid-v13 to the Renovate app, like v12 did for develop', () => {
+    expect(wf('renovatebot-config-lint.yml').on.push?.['branches-ignore']).toEqual([
+      'mermaid-v13',
+      'renovate/**',
+    ]);
+  });
+
+  it('compares Argos screenshots with the mermaid-v13 baseline', () => {
+    const upload = wf('ci.yml').jobs.visual!.steps.find((s) => /argos upload/.test(s.run ?? ''));
+    expect(upload?.env?.ARGOS_REFERENCE_BRANCH).toBe('mermaid-v13');
+  });
+});

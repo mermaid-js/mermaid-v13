@@ -7,10 +7,10 @@ on:
       - '.github/workflows/renovatebot-config-lint.yml'
   push:
     branches-ignore:
-      # The Renovatebot App will warn us about issues on `develop`
+      # The Renovatebot App will warn us about issues on `mermaid-v13`
       # or `renovate/**` branches:
       # See https://docs.renovatebot.com/config-validation/#validation-of-renovate-config-change-prs
-      - develop
+      - mermaid-v13
       - 'renovate/**'
     paths:
       - 'renovate.json'
