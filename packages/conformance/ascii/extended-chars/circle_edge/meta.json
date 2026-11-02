@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/circle_edge.txt",
+  "charset": "unicode"
+}

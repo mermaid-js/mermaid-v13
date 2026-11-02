@@ -1,0 +1,6 @@
+{
+  "source": "pkg/graph/testdata/ascii/backlink_with_short_y_padding.txt",
+  "charset": "ascii",
+  "paddingX": 5,
+  "paddingY": 3
+}

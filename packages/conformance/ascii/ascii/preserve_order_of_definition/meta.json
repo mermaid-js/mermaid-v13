@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/preserve_order_of_definition.txt",
+  "charset": "ascii"
+}

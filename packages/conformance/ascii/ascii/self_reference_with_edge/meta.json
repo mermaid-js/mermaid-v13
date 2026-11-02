@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/self_reference_with_edge.txt",
+  "charset": "ascii"
+}

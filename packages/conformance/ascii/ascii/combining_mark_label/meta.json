@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/combining_mark_label.txt",
+  "charset": "ascii"
+}

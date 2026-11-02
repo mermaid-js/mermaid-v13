@@ -1,0 +1,6 @@
+{
+  "source": "pkg/graph/testdata/ascii/subgraph_td_multiple_paddingy.txt",
+  "charset": "ascii",
+  "paddingX": 3,
+  "paddingY": 3
+}

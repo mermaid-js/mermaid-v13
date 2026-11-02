@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/two_nodes_longer_names.txt",
+  "charset": "unicode"
+}

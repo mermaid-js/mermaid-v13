@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/preserve_order_of_definition.txt",
+  "charset": "unicode"
+}

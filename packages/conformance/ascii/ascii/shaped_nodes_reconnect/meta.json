@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/shaped_nodes_reconnect.txt",
+  "charset": "ascii"
+}

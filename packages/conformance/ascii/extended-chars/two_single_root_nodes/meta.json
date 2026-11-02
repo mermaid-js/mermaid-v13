@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/two_single_root_nodes.txt",
+  "charset": "unicode"
+}

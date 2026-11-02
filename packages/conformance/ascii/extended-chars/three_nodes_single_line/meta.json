@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/three_nodes_single_line.txt",
+  "charset": "unicode"
+}

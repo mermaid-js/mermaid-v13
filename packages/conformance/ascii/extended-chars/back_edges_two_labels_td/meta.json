@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/back_edges_two_labels_td.txt",
+  "charset": "unicode"
+}

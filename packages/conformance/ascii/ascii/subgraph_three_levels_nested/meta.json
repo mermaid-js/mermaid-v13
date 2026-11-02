@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/subgraph_three_levels_nested.txt",
+  "charset": "ascii"
+}

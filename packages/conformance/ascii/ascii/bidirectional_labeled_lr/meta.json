@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/bidirectional_labeled_lr.txt",
+  "charset": "ascii"
+}

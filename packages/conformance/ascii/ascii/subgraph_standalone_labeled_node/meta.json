@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/subgraph_standalone_labeled_node.txt",
+  "charset": "ascii"
+}

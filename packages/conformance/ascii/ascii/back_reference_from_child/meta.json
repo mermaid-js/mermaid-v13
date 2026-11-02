@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/back_reference_from_child.txt",
+  "charset": "ascii"
+}
