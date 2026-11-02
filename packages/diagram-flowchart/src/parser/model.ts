@@ -592,6 +592,11 @@ export class FlowBuilder {
     return id;
   }
 
+  /** The subgraph with this id (a map lookup: a scan made many subgraphs quadratic). */
+  subgraph(id: string): FlowModelSubgraph | undefined {
+    return this.subgraphById.get(id);
+  }
+
   model(warnings: Diagnostic[]): FlowModel {
     const model: FlowModel = {
       direction: this.direction,

@@ -1070,7 +1070,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
       }
     }
     st.endStatement(frame.span, end);
-    const sg = db.subgraphs.find((s) => s.id === sgId);
+    const sg = db.subgraph(sgId);
     const node: FlowSubgraph = {
       id: sg?.ast ?? ids.subgraph(sgId),
       type: 'Subgraph',

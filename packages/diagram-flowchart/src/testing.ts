@@ -6,6 +6,7 @@
  */
 import { CORE_DEFAULTS, resolveConfig, type ResolvedConfig } from '@mermaid-js/core/config';
 import {
+  asLimitError,
   checkOutput,
   checkSource,
   isLimitCode,
@@ -105,17 +106,17 @@ export async function renderForTest(
     idPrefix: options.idPrefix ?? 'mermaid-0',
     version: TEST_VERSION,
   };
-  const layout = layoutFlowchart(parse.model, ctx);
-  if (options.stream) {
-    const w = streamWriter();
+  // A stack overflow in a recursive stage is a depth limit, not a crash (#15: same rule).
+  try {
+    const layout = layoutFlowchart(parse.model, ctx);
+    const tw = options.stream ? undefined : treeWriter();
+    const w = tw ?? streamWriter();
     renderFlowchart(parse.model, layout, ctx, w);
     const svg = w.finish();
     checkOutput(svg, limits);
-    return { svg, tree: treeWriter().tree, warnings, parse, layout, config, limits };
+    const tree = (tw ?? treeWriter()).tree;
+    return { svg, tree, warnings, parse, layout, config, limits };
+  } catch (error) {
+    throw asLimitError(error) ?? error;
   }
-  const w = treeWriter();
-  renderFlowchart(parse.model, layout, ctx, w);
-  const svg = w.finish();
-  checkOutput(svg, limits);
-  return { svg, tree: w.tree, warnings, parse, layout, config, limits };
 }
