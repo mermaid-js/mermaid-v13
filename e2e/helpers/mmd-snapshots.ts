@@ -1,10 +1,33 @@
-import { globby } from 'globby';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { load } from 'js-yaml';
+import * as discovery from '../../packages/dev/src/fixture-discovery.ts';
 import { FIRST_PARTY } from '../../packages/mermaid/src/generated/registry.gen.ts';
 
-export const DIAGRAMS_DIR = 'e2e/diagrams';
+const { DIAGRAMS_DIR } = discovery;
+
+// Which fixtures run lives in packages/dev, so the dev explorer lists exactly what CI snapshots.
+export {
+  collectMmdFixtures,
+  DIAGRAMS_DIR,
+  FIXTURE_FOLDER_TYPES,
+} from '../../packages/dev/src/fixture-discovery.ts';
+
+/** The diagram types that have a v13 package: registry rows with a `load`. */
+export const SUPPORTED_TYPES: ReadonlySet<string> = new Set(
+  FIRST_PARTY.filter((entry) => entry.load).map((entry) => entry.type)
+);
+
+export type DiscoveryOptions = Omit<discovery.DiscoveryOptions, 'supportedTypes'> &
+  Partial<Pick<discovery.DiscoveryOptions, 'supportedTypes'>>;
+
+/** `discovery.supportedFixtureFolders`, by default with every type that has a v13 package. */
+export const supportedFixtureFolders = (options: Omit<DiscoveryOptions, 'tiers'> = {}): string[] =>
+  discovery.supportedFixtureFolders({ supportedTypes: SUPPORTED_TYPES, ...options });
+
+/** `discovery.discoverMmdFixtures`, by default with every type that has a v13 package. */
+export const discoverMmdFixtures = (options: DiscoveryOptions = {}): Promise<string[]> =>
+  discovery.discoverMmdFixtures({ supportedTypes: SUPPORTED_TYPES, ...options });
 
 /**
  * Free-form, test-tooling-only metadata read out of a fixture's own mermaid
@@ -107,13 +130,6 @@ export const buildFixtureTree = (relativePaths: readonly string[]): FixtureTree 
   return root;
 };
 
-export const collectMmdFixtures = async (
-  diagramsDir = DIAGRAMS_DIR,
-  pattern: string | string[] = '**/*.mmd'
-): Promise<string[]> => {
-  return globby(pattern, { cwd: diagramsDir, onlyFiles: true });
-};
-
 /**
  * Mirrors the snapshot-name flattening in helpers/util.ts: the screenshot name
  * is the test's title path (folder segments + base name) with every run of
@@ -147,104 +163,4 @@ export const assertUniqueSnapshotNames = (relativePaths: readonly string[]): voi
         collisions.map((paths) => `  ${paths.join('  ==  ')}`).join('\n')
     );
   }
-};
-
-/**
- * The v12 diagram types (as `detectType` reports them) that each top-level fixture folder
- * holds. A folder runs only when every type it lists has a v13 package. The spec checks this
- * table against `detectType` over every fixture, so a new folder or a stray type fails there.
- */
-export const FIXTURE_FOLDER_TYPES: Readonly<Record<string, readonly string[]>> = {
-  agentflow: ['agentflow'],
-  architecture: ['architecture'],
-  block: ['block'],
-  c4: ['c4'],
-  'class-diagram': ['classDiagram'],
-  'conf-and-directives': ['flowchart-v2'],
-  cynefin: ['cynefin'],
-  'er-diagram': ['er'],
-  eventmodeling: ['eventmodeling'],
-  flowchart: ['flowchart-v2'],
-  gantt: ['gantt'],
-  git: ['gitGraph'],
-  info: ['info'],
-  ishikawa: ['ishikawa'],
-  journey: ['journey'],
-  kanban: ['kanban'],
-  katex: ['flowchart-v2'],
-  mindmap: ['mindmap'],
-  packet: ['packet'],
-  pie: ['pie'],
-  'quadrant-chart': ['quadrantChart'],
-  radar: ['radar'],
-  railroad: ['railroad', 'railroadEbnf', 'railroadAbnf', 'railroadPeg'],
-  requirement: ['requirement'],
-  sankey: ['sankey'],
-  sequence: ['sequence'],
-  'state-diagram': ['stateDiagram'],
-  // One fixture here is an `info` diagram.
-  'state-diagram-v2': ['stateDiagram', 'info'],
-  swimlanes: ['swimlane'],
-  timeline: ['timeline'],
-  'tree-view': ['treeView'],
-  treemap: ['treemap'],
-  usecase: ['usecase'],
-  venn: ['venn'],
-  wardley: ['wardley'],
-  xychart: ['xychart'],
-  // An external plugin in v12; not in the first-party registry.
-  zenuml: ['zenuml'],
-};
-
-/** The diagram types that have a v13 package: registry rows with a `load`. */
-export const SUPPORTED_TYPES: ReadonlySet<string> = new Set(
-  FIRST_PARTY.filter((entry) => entry.load).map((entry) => entry.type)
-);
-
-export interface DiscoveryOptions {
-  diagramsDir?: string;
-  /** Comma-separated tier folders (`MERMAID_E2E_FIXTURE_TIER`). Unset or empty means all. */
-  tiers?: string;
-  supportedTypes?: ReadonlySet<string>;
-  folderTypes?: Readonly<Record<string, readonly string[]>>;
-}
-
-/**
- * The top-level fixture folders whose diagram types all have a v13 package, sorted. Throws on
- * a folder missing from `folderTypes`. The dev explorer lists these same folders.
- */
-export const supportedFixtureFolders = ({
-  diagramsDir = DIAGRAMS_DIR,
-  supportedTypes = SUPPORTED_TYPES,
-  folderTypes = FIXTURE_FOLDER_TYPES,
-}: Omit<DiscoveryOptions, 'tiers'> = {}): string[] => {
-  const folders = readdirSync(diagramsDir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name)
-    .sort();
-  const undeclared = folders.filter((folder) => !Object.hasOwn(folderTypes, folder));
-  if (undeclared.length > 0) {
-    throw new Error(
-      `Fixture folders with no entry in FIXTURE_FOLDER_TYPES (e2e/helpers/mmd-snapshots.ts): ${undeclared.join(', ')}`
-    );
-  }
-  return folders.filter((folder) => folderTypes[folder]!.every((type) => supportedTypes.has(type)));
-};
-
-/**
- * The fixtures the snapshot run renders, as paths relative to `diagramsDir`, sorted: every
- * tier of every supported folder (as v12 develop collects them), narrowed by `tiers`.
- */
-export const discoverMmdFixtures = async (options: DiscoveryOptions = {}): Promise<string[]> => {
-  const { diagramsDir = DIAGRAMS_DIR, tiers } = options;
-  const tierList = (tiers ?? '')
-    .split(',')
-    .map((tier) => tier.trim())
-    .filter(Boolean);
-  const below = tierList.length > 0 ? tierList.map((tier) => `${tier}/**/*.mmd`) : ['**/*.mmd'];
-  const patterns = supportedFixtureFolders(options).flatMap((folder) =>
-    below.map((pattern) => `${folder}/${pattern}`)
-  );
-  if (patterns.length === 0) return [];
-  return (await collectMmdFixtures(diagramsDir, patterns)).sort();
 };

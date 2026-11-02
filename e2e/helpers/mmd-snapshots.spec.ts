@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, beforeAll, describe, it, expect } from 'vitest';
-import { detectType } from '../../packages/mermaid/src/index.ts';
+import { detectType, supportsFormat } from '../../packages/mermaid/src/index.ts';
 import {
   assertUniqueSnapshotNames,
   buildFixtureTree,
@@ -13,7 +13,10 @@ import {
   supportedFixtureFolders,
   fixtureBaseName,
   snapshotNameKey,
+  SUPPORTED_TYPES,
 } from './mmd-snapshots.ts';
+import * as discovery from '../../packages/dev/src/fixture-discovery.ts';
+import * as helpers from './mmd-snapshots.ts';
 
 describe('fixtureBaseName', () => {
   it('returns the filename without extension', () => {
@@ -147,5 +150,22 @@ describe('the real fixture folders', () => {
       if (!FIXTURE_FOLDER_TYPES[folder]?.includes(type)) undeclared.push(`${file}: ${type}`);
     }
     expect(undeclared).toEqual([]);
+  });
+});
+
+describe('the discovery source', () => {
+  it('is packages/dev (the dev explorer lists the same folders), re-exported here', () => {
+    expect(helpers.FIXTURE_FOLDER_TYPES).toBe(discovery.FIXTURE_FOLDER_TYPES);
+    expect(helpers.collectMmdFixtures).toBe(discovery.collectMmdFixtures);
+  });
+
+  it('agrees with mermaid on which types have a v13 package', () => {
+    expect(discovery.supportedTypesOf((type) => supportsFormat(type, 'svg'))).toEqual(
+      new Set(
+        Object.values(FIXTURE_FOLDER_TYPES)
+          .flat()
+          .filter((type) => SUPPORTED_TYPES.has(type))
+      )
+    );
   });
 });

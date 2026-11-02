@@ -193,6 +193,9 @@ importers:
       esbuild:
         specifier: ^0.25.12
         version: 0.25.12
+      globby:
+        specifier: ^14.1.0
+        version: 14.1.0
       lit:
         specifier: ^3.3.3
         version: 3.3.3

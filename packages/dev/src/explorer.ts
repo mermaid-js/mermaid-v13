@@ -19,8 +19,8 @@ import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 // The e2e snapshot discovery itself (#63), so the explorer lists exactly what CI snapshots.
-// eslint-disable-next-line mermaid/import-boundaries -- private dev tool; e2e/helpers has no package entry
-import { supportedFixtureFolders } from '../../../e2e/helpers/mmd-snapshots.ts';
+import { supportsFormat } from 'mermaid';
+import { supportedFixtureFolders, supportedTypesOf } from './fixture-discovery.ts';
 import { REPO_ROOT } from './fixtures.ts';
 import { readBody, sendFile, type Route } from './routes.ts';
 import type { ServerOptions } from './server.ts';
@@ -129,7 +129,11 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
   const folders =
     options.folders ??
     (root === DEFAULT_EXPLORER_ROOT
-      ? () => supportedFixtureFolders({ diagramsDir: root })
+      ? () =>
+          supportedFixtureFolders({
+            diagramsDir: root,
+            supportedTypes: supportedTypesOf((type) => supportsFormat(type, 'svg')),
+          })
       : undefined);
 
   /** A `.mmd` path below the root, or a 400 (answered here) and `undefined`. */

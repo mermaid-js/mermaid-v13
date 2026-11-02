@@ -29,6 +29,7 @@
     "codemirror-lang-mermaid": "^0.5.0",
     "dotenv": "^17.4.2",
     "esbuild": "^0.25.12",
+    "globby": "^14.1.0",
     "lit": "^3.3.3",
     "mermaid": "workspace:*",
     "pixelmatch": "^7.2.0",
