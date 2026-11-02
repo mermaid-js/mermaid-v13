@@ -261,43 +261,52 @@ const FONT = [
   '/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf',
 ].find((f) => existsSync(f));
 
-test('mount() re-measures after a late web font loads', async ({ page }) => {
-  test.skip(!FONT, 'no monospace font file on this machine');
-  let release!: () => void;
-  const released = new Promise<void>((r) => (release = r));
-  await page.route('**/late-font.ttf', async (route) => {
-    await released;
-    await route.fulfill({ body: readFileSync(FONT!), contentType: 'font/ttf' });
-  });
-  await open(page);
-  const widthOf = (sel: string) =>
-    page.evaluate((s) => document.querySelector(`${s} > svg`)!.getAttribute('viewBox'), sel);
-  await page.evaluate(async () => {
-    const style = document.createElement('style');
-    style.textContent = '@font-face { font-family: LateFont; src: url(/late-font.ttf); }';
-    document.head.appendChild(style);
-    const el = document.createElement('div');
-    el.id = 'late';
-    document.body.appendChild(el);
-    const m = window.mermaid.mount(el, 'flowchart LR\n  A((iiiiiiii))', {
-      config: { fontFamily: 'LateFont, serif' },
+// WebKit fires `loading` on document.fonts but never `loadingdone`; the second case drops
+// `loadingdone` so every engine sees what WebKit does.
+for (const dropLoadingDone of [false, true]) {
+  test(`mount() re-measures after a late web font loads${dropLoadingDone ? ' (no loadingdone event)' : ''}`, async ({
+    page,
+  }) => {
+    test.skip(!FONT, 'no monospace font file on this machine');
+    let release!: () => void;
+    const released = new Promise<void>((r) => (release = r));
+    await page.route('**/late-font.ttf', async (route) => {
+      await released;
+      await route.fulfill({ body: readFileSync(FONT!), contentType: 'font/ttf' });
     });
-    await m.ready;
-    // The SVG asks for LateFont, which starts the (held) download.
-    void document.fonts.load('16px LateFont');
+    await open(page);
+    const widthOf = (sel: string) =>
+      page.evaluate((s) => document.querySelector(`${s} > svg`)!.getAttribute('viewBox'), sel);
+    await page.evaluate(async (drop) => {
+      if (drop) {
+        document.fonts.addEventListener('loadingdone', (e) => e.stopImmediatePropagation());
+      }
+      const style = document.createElement('style');
+      style.textContent = '@font-face { font-family: LateFont; src: url(/late-font.ttf); }';
+      document.head.appendChild(style);
+      const el = document.createElement('div');
+      el.id = 'late';
+      document.body.appendChild(el);
+      const m = window.mermaid.mount(el, 'flowchart LR\n  A((iiiiiiii))', {
+        config: { fontFamily: 'LateFont, serif' },
+      });
+      await m.ready;
+      // The SVG asks for LateFont, which starts the (held) download.
+      void document.fonts.load('16px LateFont');
+    }, dropLoadingDone);
+    const early = await widthOf('#late');
+    release();
+    await page.evaluate(() => document.fonts.ready);
+    await expect.poll(() => widthOf('#late')).not.toBe(early);
+    // The re-measured width is what a fresh mount measures with the font loaded.
+    await page.evaluate(async () => {
+      const el = document.createElement('div');
+      el.id = 'fresh';
+      document.body.appendChild(el);
+      await window.mermaid.mount(el, 'flowchart LR\n  A((iiiiiiii))', {
+        config: { fontFamily: 'LateFont, serif' },
+      }).ready;
+    });
+    expect(await widthOf('#late')).toBe(await widthOf('#fresh'));
   });
-  const early = await widthOf('#late');
-  release();
-  await page.evaluate(() => document.fonts.ready);
-  await expect.poll(() => widthOf('#late')).not.toBe(early);
-  // The re-measured width is what a fresh mount measures with the font loaded.
-  await page.evaluate(async () => {
-    const el = document.createElement('div');
-    el.id = 'fresh';
-    document.body.appendChild(el);
-    await window.mermaid.mount(el, 'flowchart LR\n  A((iiiiiiii))', {
-      config: { fontFamily: 'LateFont, serif' },
-    }).ready;
-  });
-  expect(await widthOf('#late')).toBe(await widthOf('#fresh'));
-});
+}

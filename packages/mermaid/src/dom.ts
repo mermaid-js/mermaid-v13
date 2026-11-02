@@ -243,9 +243,15 @@ export function createDomAdapter(host: DomHost) {
       });
       observer.observe(el);
     }
-    // A web font that finishes loading changes canvas widths (R-TEXT-5): measure again.
+    // A web font that finishes loading changes canvas widths (R-TEXT-5): measure again once
+    // `fonts.ready` settles. WebKit fires `loading` but never `loadingdone`, so a load is
+    // seen when it starts, and one already running at mount is waited for too.
     const fonts = typeof document === 'undefined' ? undefined : document.fonts;
-    fonts?.addEventListener?.('loadingdone', background);
+    const afterLoad = (): void => {
+      fonts?.ready?.then(background, background);
+    };
+    fonts?.addEventListener?.('loading', afterLoad);
+    if (fonts?.status === 'loading') afterLoad();
 
     const ready = refresh();
     ready.catch(() => undefined);
@@ -266,7 +272,7 @@ export function createDomAdapter(host: DomHost) {
       destroy() {
         destroyed = true;
         observer?.disconnect();
-        fonts?.removeEventListener?.('loadingdone', background);
+        fonts?.removeEventListener?.('loading', afterLoad);
       },
     };
   }
