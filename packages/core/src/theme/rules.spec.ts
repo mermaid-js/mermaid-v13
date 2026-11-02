@@ -24,6 +24,21 @@ describe('diagram plugin rule tables (DESIGN §12.1)', () => {
     expect(t.color('b')).toBe('white');
   });
 
+  it('writes invert and contrast as CSS that follows the variable they derive from (R-THEME-4)', () => {
+    const rules = { a: 'invert(primaryColor)', b: 'contrast(primaryColor, #333333, white)' };
+    const t = createTheme(base, { rules });
+    t.color('a');
+    t.color('b');
+    const root = t.rootStyle();
+    expect(root['--_a']).toBe(
+      'var(--mermaid-a,color(from var(--_p) srgb calc(1 - r) calc(1 - g) calc(1 - b) / alpha))'
+    );
+    expect(root['--_b']).toMatch(
+      /^var\(--mermaid-b,color\(from color\(from var\(--_p\) srgb-linear /
+    );
+    expect(root['--_p']).toBe('var(--mermaid-primaryColor,#fff4dd)');
+  });
+
   it('rejects malformed rules and cycles', () => {
     const bad = (rule: string) => () =>
       createTheme(base, { rules: { x: rule }, cssVariables: false }).color('x');

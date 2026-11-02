@@ -6,12 +6,12 @@
  *   lighten(a, 15%)     mix(a, white, 15%)
  *   darken(a, 15%)      mix(a, black, 15%)
  *   alpha(a, 80%)       a at 80% opacity, `color-mix(in srgb, a 80%, transparent)`
- *   contrast(bg, a, b)  a, unless b reads better on bg (WCAG ratio); picked when the theme
- *                       is built, so it is a light/dark ink pair rather than live CSS
- *   invert(a)           the sRGB inverse, computed when the theme is built
+ *   contrast(bg, a, b)  a, unless it misses AA on bg and b reads better (WCAG ratio); in CSS
+ *                       the choice follows bg live, between a's and b's theme values
+ *   invert(a)           the sRGB inverse, `color(from a srgb calc(1 - r) …)`
  *
  * An identifier is a theme variable when the table knows it, otherwise a CSS colour name.
- * Each rule compiles to a CSS expression over the private aliases and to the same value in
+ * Each rule compiles to a CSS expression over the private aliases (DESIGN §8.1 item 2) and to the same value in
  * JS (`color.ts`), so `output.cssVariables: false` writes the colour a browser would compute.
  */
 
