@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { detectFlowchart } from '@mermaid-js/diagram-flowchart';
 import { loadOracle } from '../../oracle.ts';
 import { flowchartCorpus } from './corpus.ts';
-import { handWrittenVerdict, referenceVerdict } from './reference.ts';
+import { handWrittenVerdict, v12Syntax, referenceVerdict } from './reference.ts';
 
 /**
  * Grammar differential (R-PARSE-9, DESIGN §13): the reference parser generated from
@@ -20,9 +20,9 @@ describe('flowchart grammar differential', () => {
       const ref = referenceVerdict(item.source);
       const hand = handWrittenVerdict(item.source);
       const v12 = await oracle.parse(item.source);
-      if (!hand.semanticError && ref.accepted !== v12.accepted) {
+      if (v12Syntax(v12) === !ref.accepted) {
         diffs.push(
-          `${item.id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, mermaid@12 ${v12.accepted ? 'accepts' : 'rejects'}`
+          `${item.id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, mermaid@12 ${ref.accepted ? 'rejects' : 'accepts'}`
         );
       }
       if (ref.accepted !== hand.accepted) {

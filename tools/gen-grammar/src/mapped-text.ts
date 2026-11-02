@@ -22,8 +22,9 @@ export function mapped(src: string): MappedText {
 }
 
 /**
- * `text.replace(re, fn)` (re must be global). Replacement characters map to the whole match;
- * when the replacement keeps the match's length, character i maps to match character i.
+ * `text.replace(re, fn)` (re must be global). The characters a replacement shares with the
+ * start and end of its match map 1:1 (all of them when the length is kept); the rest map to
+ * the part of the match they replaced. Deleted text extends the character before it.
  */
 export function replaceMapped(
   m: MappedText,
@@ -42,17 +43,34 @@ export function replaceMapped(
     out.from.push(...m.from.slice(last, at));
     out.to.push(...m.to.slice(last, at));
     parts.push(rep);
-    if (rep.length === whole.length) {
-      out.from.push(...m.from.slice(at, at + whole.length));
-      out.to.push(...m.to.slice(at, at + whole.length));
-    } else {
-      const s = whole.length > 0 ? (m.from[at] ?? 0) : (m.from[at] ?? m.to[at - 1] ?? 0);
-      const e = whole.length > 0 ? (m.to[at + whole.length - 1] ?? s) : s;
-      for (let k = 0; k < rep.length; k++) {
-        out.from.push(s);
-        out.to.push(e);
-      }
+    // Characters the replacement keeps at either end map 1:1; the rest maps to what it replaced.
+    let pre = 0;
+    while (pre < rep.length && pre < whole.length && rep[pre] === whole[pre]) pre++;
+    if (rep.length === whole.length) pre = rep.length;
+    let suf = 0;
+    while (
+      suf < rep.length - pre &&
+      suf < whole.length - pre &&
+      rep[rep.length - 1 - suf] === whole[whole.length - 1 - suf]
+    )
+      suf++;
+    out.from.push(...m.from.slice(at, at + pre));
+    out.to.push(...m.to.slice(at, at + pre));
+    const midFrom = at + pre;
+    const midTo = at + whole.length - suf;
+    const s0 =
+      midTo > midFrom ? (m.from[midFrom] ?? 0) : (m.to[midFrom - 1] ?? m.from[midFrom] ?? 0);
+    const e0 = midTo > midFrom ? (m.to[midTo - 1] ?? s0) : s0;
+    for (let k = pre; k < rep.length - suf; k++) {
+      out.from.push(s0);
+      out.to.push(e0);
     }
+    // Deleted text belongs to the character before it.
+    if (rep.length - suf === pre && midTo > midFrom && out.to.length > 0) {
+      out.to[out.to.length - 1] = e0;
+    }
+    out.from.push(...m.from.slice(midTo, at + whole.length));
+    out.to.push(...m.to.slice(midTo, at + whole.length));
     last = at + whole.length;
   }
   parts.push(m.text.slice(last));

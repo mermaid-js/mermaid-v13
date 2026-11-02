@@ -28,6 +28,8 @@ export interface ParseNode {
 }
 
 export interface ReferenceParser {
+  /** The start rule. */
+  start: string;
   productions: Production[];
   tokens: ReadonlySet<string>;
   /** Parse a token-name sequence; undefined when the grammar rejects it. */
@@ -197,7 +199,7 @@ export function buildParser(g: Grammar): ReferenceParser {
     return node(g.start, 0, n);
   };
 
-  return { productions, tokens, parse };
+  return { start: g.start, productions, tokens, parse };
 }
 
 export interface AstShape {

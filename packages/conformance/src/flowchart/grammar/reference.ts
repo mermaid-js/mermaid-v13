@@ -3,8 +3,15 @@
  * the reference parser built from the grammar, and project the result to an AST shape that
  * the hand-written parser's AST can be compared with. Dev and CI only.
  */
-import { astOf, buildParser, sourceRange } from '@mermaid-js/gen-grammar';
-import type { AstShape, ReferenceParser } from '@mermaid-js/gen-grammar';
+import {
+  astOf,
+  buildParser,
+  emptyModel,
+  learnDerivation,
+  learnToken,
+  sourceRange,
+} from '@mermaid-js/gen-grammar';
+import type { AstShape, ReferenceParser, SentenceModel } from '@mermaid-js/gen-grammar';
 import { parseFlowchart } from '@mermaid-js/diagram-flowchart';
 import type { FlowDocument, FlowStatementNode } from '@mermaid-js/diagram-flowchart';
 import { preprocess } from '@mermaid-js/core/preprocess';
@@ -100,4 +107,36 @@ function handWrittenShapes(source: string, doc: FlowDocument): Shape[] {
     return shape;
   };
   return doc.children.map(statement);
+}
+
+/** A sentence model learnt from corpus sources the grammar accepts. */
+export function learnSentenceModel(sources: readonly string[]): SentenceModel {
+  const model = emptyModel(referenceParser());
+  for (const source of sources) {
+    const lexed = grammarTokens(source);
+    if (lexed.error !== undefined) continue;
+    const tree = referenceParser().parse(lexed.tokens.map((t) => t.name));
+    if (!tree) continue;
+    learnDerivation(model, tree);
+    let prev = '';
+    let prevEnd = 0;
+    for (const t of lexed.tokens) {
+      const r = sourceRange(lexed.input, prevEnd, t.outerEnd);
+      learnToken(model, prev, t.name, source.slice(r.start, r.end));
+      prev = t.name;
+      prevEnd = t.outerEnd;
+    }
+  }
+  return model;
+}
+
+/**
+ * Whether mermaid@12 accepted the syntax: true when it accepted, false on a jison parse or
+ * lexical error, undefined when it stopped for another reason (YAML in shape data, a link
+ * index, an unknown shape), which can hide a later syntax error. The grammar covers the
+ * syntax only.
+ */
+export function v12Syntax(result: { accepted: boolean; error?: string }): boolean | undefined {
+  if (result.accepted) return true;
+  return /Parse error|Lexical error|Expecting /.test(result.error ?? '') ? false : undefined;
 }

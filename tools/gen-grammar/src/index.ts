@@ -10,3 +10,5 @@ export { appendMapped, mapped, replaceMapped, sliceMapped, sourceRange } from '.
 export type { MappedText } from './mapped-text.ts';
 export { astOf, buildParser, flatten } from './earley.ts';
 export type { AstShape, ParseNode, Production, ReferenceParser } from './earley.ts';
+export { buildGenerator, emptyModel, learnDerivation, learnToken } from './sentences.ts';
+export type { GenerateOptions, Sentence, SentenceGenerator, SentenceModel } from './sentences.ts';
