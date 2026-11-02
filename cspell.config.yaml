@@ -23,6 +23,7 @@ ignorePaths:
   - '*.csv'
   - '*.patch'
   - 'docs/**/*.html'
+  - 'v13/docs/agents/runs/**' # archived agent run notes, not prose docs
   - 'e2e/platform/**'
 dictionaries:
   - misc-terms

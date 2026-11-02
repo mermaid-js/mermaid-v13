@@ -187,3 +187,4 @@ yytext
 zenuml
 oklab
 oklch
+subpaths
