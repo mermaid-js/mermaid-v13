@@ -7,6 +7,7 @@ import { mkdtempSync, realpathSync, rmSync, utimesSync, writeFileSync } from 'no
 import { request, type IncomingMessage } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { startServer, type DevServer } from './server.ts';
 
@@ -95,6 +96,28 @@ describe('the dev bundle', () => {
     expect(res.body).toMatch(/export\s*\{[^}]*\binteractions\b/);
     // One file: no chunk imports.
     expect(res.body).not.toMatch(/from\s*["']\.\/chunk-/);
+  });
+
+  it('has stage timing on: a render records parse, layout and serialise', async () => {
+    const res = await get('/mermaid.esm.mjs');
+    const dir = mkdtempSync(join(tmpdir(), 'dev-timing-'));
+    try {
+      const file = join(dir, 'mermaid.esm.mjs');
+      writeFileSync(file, res.body);
+      const bundle = (await import(pathToFileURL(file).href)) as {
+        STAGE_TIMING: boolean;
+        installStageClock(clock: { now(): number; record(stage: string, ms: number): void }): void;
+        createMermaid(): { render(id: string, text: string): Promise<{ svg: string }> };
+      };
+      expect(bundle.STAGE_TIMING).toBe(true);
+      const stages: string[] = [];
+      let tick = 0;
+      bundle.installStageClock({ now: () => ++tick, record: (stage) => stages.push(stage) });
+      await bundle.createMermaid().render('timing', 'flowchart LR\n  A --> B\n');
+      expect([...new Set(stages)].sort()).toEqual(['layout', 'parse', 'serialise']);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('serves the reload client at /dev/reload.js', async () => {

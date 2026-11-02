@@ -120,11 +120,14 @@ export async function startServer(port: number, options: ServerOptions = {}): Pr
   });
   const esb = await ctx.serve({ servedir: WWW, host: '127.0.0.1' });
 
-  // mermaid + plugin-interactions as one file (no splitting, so no chunk URLs to serve).
+  // mermaid + plugin-interactions as one file (no splitting, so no chunk URLs to serve). Stage
+  // timing (`@mermaid-js/core/timing`) is on in this bundle only, for the Profile tab; the
+  // production bundles never define the flag, so theirs stays off.
   const mermaidCtx = await context({
     ...shared,
     entryPoints: [options.bundleEntry ?? join(BROWSER, 'mermaid.ts')],
     outfile: join(WWW, 'mermaid.esm.mjs'),
+    define: { __MERMAID_BENCH__: 'true' },
   });
   let bundle: { code?: Uint8Array; error?: string } = {};
   const buildMermaid = async (): Promise<void> => {
