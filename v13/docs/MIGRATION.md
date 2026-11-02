@@ -61,7 +61,9 @@ test checks them against the mermaid@12 declarations.
 | `parse()` → `{ diagramType, config }` | Adds `warnings`; `config` (front matter and directives) leaves out the integrator-only keys. `parse(text, { suppressErrors: true })` still resolves to `false` | R-SEC-5 |
 | Logging to the console | Nothing is written to the console; warnings are in `RenderResult.warnings` | R-ERR-4 |
 | — | New: `prepare(text)` + `renderSync(text, options)`, `preload({ types, layouts, themes })`, `supportsFormat(type, format)`, `createMermaid()` (an API object with its own registry and defaults) | R-API-2, R-ASCII-5 |
-| `run()`, `startOnLoad`, `contentLoaded()` | `run()` keeps its signature; it and the DOM adapter `mount()` come with the DOM adapter _(later in M1)_. `startOnLoad` is pending until then | R-COMPAT-5 |
+| `run()`, `startOnLoad`, `contentLoaded()` | Same: `run()` renders every unprocessed `.mermaid` element (marking it `data-processed`), puts the error image in place of a failing one, carries on, and rejects with the first `MermaidError` at the end unless `suppressErrors`. `startOnLoad` runs it on `window` load. Diagram ids are `mermaid-<n>` from a counter (v12 used `Date.now()` unless `deterministicIds`). Elements inside a drawn `<svg>` are skipped, because v13's svg root has class `mermaid` | R-API-6, R-ERR-3 |
+| — | New: `mount(el, text, { availableWidth?, config?, id? })` → `{ ready, result, error, update(text), destroy() }`. It re-renders when the element is resized only with `availableWidth: true`, re-measures after a web font loads, and needs no re-render on theme change (set `--mermaid-*` on a parent) | R-API-7, D33 |
+| — | New: `renderSync(text, { availableWidth })` fits graph layouts to a width (R-LAYOUT-5) | R-LAYOUT-5 |
 | `registerExternalDiagrams([{ id, detector, loader }])` where the loader returns a v12 `DiagramDefinition` (parser, db, D3 renderer) | Same call shape, but the loader returns a v13 diagram plugin `{ id, detector, parse, layout?, render }`. v12 diagram definitions do not run in v13 | D35, R-PLUG-2 |
 | `registerLayoutLoaders([{ name, loader, algorithm? }])` where the loader returns a DOM renderer | `registerLayoutLoaders([{ name, loader }])` where the loader returns a layout engine `(graph, ctx?) → LayoutModel`; selected with `layout:` | R-LAYOUT-2 |
 | `layout: elk` / `elk.<algorithm>` uses the ELK package | Draw with the built-in `layered` engine until an ELK plugin is registered | DESIGN §6.1 |
@@ -94,11 +96,12 @@ became `https://example.com/`). A link target other than `_self`, `_blank`, `_pa
 ### Errors and the error image
 
 v12's `render()` drew the "Syntax error in text" bomb image into the page and then threw,
-unless `suppressErrorRendering` was set. v13 has no DOM to draw into: `render()` only throws
-the `MermaidError`. To show an image, draw one yourself with
+unless `suppressErrorRendering` was set. In v13 `render()` never touches the DOM: it only
+throws the `MermaidError`, also when given a `container`. The DOM adapter (`run()` and
+`mount()`) puts the error image in the failing element unless `suppressErrorRendering` is
+set, as v12's `run()` did. Elsewhere, draw one yourself with
 `renderErrorSvg(error, { version? })`, which returns an inert SVG string with the error code
-and message. `suppressErrorRendering` is therefore pending until the DOM adapter, which is
-where an error image is inserted into the page.
+and message.
 
 `render()` loads what the diagram needs before drawing. The new synchronous
 `renderSync(text, options)` throws `NotLoadedError` when a diagram, layout or theme is

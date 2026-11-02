@@ -1,7 +1,7 @@
 /**
  * Public mermaid API (DESIGN §3): render, prepare, renderSync, preload, parse, initialize,
  * detectType, supportsFormat and the register functions. The v12 `mermaidAPI` object is
- * removed (R-API-5). `run` and `mount` (the DOM adapter) come with #16.
+ * removed (R-API-5). `run` and `mount` are the DOM adapter (dom.ts).
  */
 import { createMermaid } from './api.ts';
 
@@ -35,6 +35,7 @@ export {
   type RenderOptions,
   type RenderResult,
 } from './api.ts';
+export type { Mounted, MountOptions, RunOptions } from './dom.ts';
 export type { ExternalDiagram, LayoutLoader, LazyDiagram, ManifestPlugin } from './registry.ts';
 
 const mermaid = createMermaid();
@@ -46,6 +47,9 @@ export const {
   preload,
   parse,
   initialize,
+  run,
+  mount,
+  contentLoaded,
   detectType,
   supportsFormat,
   registerExternalDiagrams,
@@ -53,5 +57,10 @@ export const {
   registerIconPacks,
   setParseErrorHandler,
 } = mermaid;
+
+// v12's `startOnLoad`: in a browser, `run()` once the page has loaded.
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('load', mermaid.contentLoaded, false);
+}
 
 export default mermaid;

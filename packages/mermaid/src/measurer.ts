@@ -114,6 +114,10 @@ export function canvasMeasurer(): Measurer | null {
         if (!cache) widths.set(css, (cache = new Map()));
         if (cache.size >= MAX_CACHED) cache.delete(cache.keys().next().value as string);
         cache.set(text, w);
+      } else {
+        // The context resolved the font to a fallback when `font` was set; set it again
+        // next time so the loaded face is picked up (Chromium keeps the fallback otherwise).
+        current = '';
       }
       return w;
     },
@@ -132,6 +136,7 @@ export function canvasMeasurer(): Measurer | null {
         lineHeight: m.fontBoundingBoxAscent + m.fontBoundingBoxDescent,
       };
       if (hasFont(fonts, css, 'Mg')) vertical.set(css, out);
+      else current = '';
       return out;
     },
   };

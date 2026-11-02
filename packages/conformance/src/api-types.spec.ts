@@ -30,9 +30,10 @@ describe('public API types against the mermaid@12 .d.ts (R-COMPAT-5)', () => {
     expectTypeOf(initialize).toBeFunction();
   });
 
-  it('run(options?) keeps v12 RunOptions (the DOM adapter, #16)', () => {
-    // `run` lands with the DOM adapter (#16); until then the options type is pinned here.
-    expectTypeOf<v12.RunOptions>().toHaveProperty('querySelector');
-    expectTypeOf<V12['run']>().parameters.toEqualTypeOf<[options?: v12.RunOptions]>();
+  it('run(options?) accepts v12 RunOptions and resolves to void (the DOM adapter)', () => {
+    const run: V12['run'] = v13.run;
+    expectTypeOf(run).toBeFunction();
+    expectTypeOf<v13.RunOptions>().toEqualTypeOf<v12.RunOptions>();
+    expectTypeOf(v13.run).returns.resolves.toBeVoid();
   });
 });
