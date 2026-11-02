@@ -24,6 +24,18 @@ function idsByName(root: AstNode): Record<string, string[]> {
 }
 
 describe('flowchart parse', () => {
+  it('puts click callbacks on the Click statement of the AST, not links (DESIGN §12.3)', () => {
+    const r = parse(
+      'flowchart LR\n  A --> B\n  click A callback "tip"\n  click B call go("x", 2)\n  click A "https://x.example"\n'
+    );
+    const clicks = (r.ast.children ?? []).filter((n) => n.type === 'Click');
+    expect(clicks.map((n) => (n as { callback?: unknown }).callback)).toEqual([
+      { targets: ['A'], name: 'callback' },
+      { targets: ['B'], name: 'go', args: '"x", 2' },
+      undefined,
+    ]);
+  });
+
   it('builds the model in insertion order', () => {
     const r = parse(
       [

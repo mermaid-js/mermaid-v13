@@ -3,7 +3,7 @@
  * names (`n:A`, `n:A@2`, `e:A>B`, `e:A>B#2`, `s:one`), or `<kind>:<n>` for statements without
  * a name (`style:1`, `classDef:2`, …), and a range into the original source.
  */
-import type { AstNode, Range } from '@mermaid-js/core/parser-kit';
+import type { AstCallback, AstNode, Range } from '@mermaid-js/core/parser-kit';
 import type { LabelType } from './model.ts';
 
 /** A label as written: its text (as v12 read it) and the range of its tokens. */
@@ -62,6 +62,8 @@ export type FlowSimpleKind =
 export interface FlowSimpleStmt extends AstNode<FlowSimpleKind> {
   /** Ids the statement refers to (nodes, classes), as written. */
   refs: string[];
+  /** `click … callback` / `call`: what the interactions plugin binds (DESIGN §12.3). */
+  callback?: AstCallback;
 }
 
 /** `graph TD` / `flowchart LR`. */

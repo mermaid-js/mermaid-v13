@@ -18,7 +18,13 @@ import {
   LineIndex,
   ParseState,
 } from '@mermaid-js/core/parser-kit';
-import type { ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type {
+  AstCallback,
+  ParseOptions,
+  ParseResult,
+  Range,
+  TokenStream,
+} from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult, YamlMap, YamlValue } from '@mermaid-js/core/preprocess';
@@ -847,7 +853,8 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     return fail([T.Str, ...also]);
   };
 
-  const clickStatement = (out: string[]): void => {
+  /** Returns the callback of a `click … callback` / `call` statement, for the AST. */
+  const clickStatement = (out: string[]): AstCallback | undefined => {
     const at = i;
     const id = raw(i++);
     refs(id, range(at), 'node', 'ref', out);
@@ -862,7 +869,9 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
       }
       db.setClickEvent(id, name, span(at), args);
       if (tooltip !== undefined) db.setTooltip(id, tooltip);
-      return;
+      return args === undefined
+        ? { targets: id.split(','), name }
+        : { targets: id.split(','), name, args };
     }
     let url: string;
     if (k === T.Href) {
@@ -878,7 +887,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
       }
       db.setClickEvent(id, name, span(at));
       if (tooltip !== undefined) db.setTooltip(id, tooltip);
-      return;
+      return { targets: id.split(','), name };
     }
     if (kind() !== T.Space) {
       db.setLink(id, url, span(at));
@@ -960,11 +969,14 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
         separator();
         return NO_ITEMS;
       }
-      case T.Click:
-        clickStatement(refList);
-        out.push(simple('Click', from, refList));
+      case T.Click: {
+        const callback = clickStatement(refList);
+        const stmt = simple('Click', from, refList);
+        if (callback !== undefined) stmt.callback = callback;
+        out.push(stmt);
         separator();
         return NO_ITEMS;
+      }
       case T.DirectionTB:
       case T.DirectionBT:
       case T.DirectionRL:
