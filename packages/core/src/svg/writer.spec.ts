@@ -95,3 +95,37 @@ describe('SvgWriter (streaming)', () => {
     expect(() => w.text('x')).toThrow(TypeError);
   });
 });
+
+describe('SvgWriter label', () => {
+  it('centres each line on the point by default', () => {
+    const w = streamWriter();
+    w.label(
+      { lines: [[{ text: 'ab' }], [{ text: 'c' }]], lineHeight: 10, height: 20, baseline: 8 },
+      50,
+      20
+    );
+    expect(w.finish()).toBe(
+      '<text text-anchor="middle" xml:space="preserve"><tspan x="50" y="18">ab</tspan><tspan x="50" y="28">c</tspan></text>'
+    );
+  });
+
+  it('draws a left-aligned label (bullet lists) from the box edge plus each line indent', () => {
+    const w = streamWriter();
+    w.label(
+      {
+        lines: [[{ text: '• ab' }], [{ text: 'cd' }]],
+        lineHeight: 10,
+        height: 20,
+        baseline: 8,
+        left: true,
+        width: 40,
+        indents: [0, 7.5],
+      },
+      50,
+      20
+    );
+    expect(w.finish()).toBe(
+      '<text text-anchor="start" xml:space="preserve"><tspan x="30" y="18">• ab</tspan><tspan x="37.5" y="28">cd</tspan></text>'
+    );
+  });
+});
