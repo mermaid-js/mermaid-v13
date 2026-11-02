@@ -18,3 +18,7 @@ Unmet criteria and cross-ticket items, listed under the ticket that owns them.
 ## After #60
 - Review pass: the e2e/dev specs find the diagram with `dev-tab-diagram svg`, which also matches Shoelace icon svgs, so the Messages panel avoids icons. Narrow the specs to `dev-tab-diagram .canvas > svg` and drop that constraint.
 - Warnings show no line:column, because v13 `Warning` has no position (diagnostics do).
+
+## After #61
+- Maintainer to confirm: on the npm side of Compare, v13 `layered` is sent as v12 `dagre`, and `auto` becomes `dark`/`default` from the colour scheme.
+- If COOP/COEP are adopted for Profile timers, the Compare CDN import needs CORP or `credentialless`.
