@@ -70,6 +70,52 @@ jobs:
           path: packages/bench/dist/reports/
           if-no-files-found: ignore
 
+  visual:
+    # R-TEST-5: the v13 visual baseline (e2e/diagrams/flowchart/baseline, tier `baseline`) plus the
+    # browser adapter specs (e2e/browser), in the Playwright image so fonts and rendering are fixed.
+    # Screenshots go to Argos, which compares them with the develop baseline on PRs. R-TEST-6: the
+    # theme gallery is built from the same fixtures and kept as an artifact.
+    name: Visual baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Keep this tag in sync with @playwright/test in package.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
+    env:
+      RUN_VISUAL_TEST: 'true'
+      MERMAID_PORT: '9000'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      - name: Playwright (baseline + browser specs)
+        run: pnpm e2e
+      - name: Upload screenshots to Argos
+        if: ${{ !cancelled() && github.event_name != 'merge_group' }}
+        env:
+          # Empty on forks; Argos falls back to tokenless upload for public repositories.
+          ARGOS_TOKEN: ${{ secrets.ARGOS_TOKEN }}
+        run: pnpm exec argos upload e2e/screenshots
+      - name: Build the theme gallery
+        run: pnpm --filter @mermaid-js/visual gallery
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: ${{ !cancelled() }}
+        with:
+          name: theme-gallery
+          path: packages/visual/dist/gallery/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: ${{ failure() }}
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 3
+          if-no-files-found: ignore
+
   smoke-render:
     # Placeholder matrix: each target renders a fixture through the public `mermaid` package
     # once the render API exists (DESIGN §15 item 14). Until then the job only reserves the

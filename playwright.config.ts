@@ -25,19 +25,15 @@ const port = resolveE2EPort();
 process.env.MERMAID_PORT ??= port;
 process.env.MERMAID_DEV_PORT ??= port;
 
-const devCommand = process.env.E2E_COVERAGE ? 'pnpm dev:coverage' : 'pnpm dev';
-
-// Seeded in the runner process so every worker inherits the same id.
-if (process.env.USE_APPLI) {
-  process.env.APPLITOOLS_BATCH_ID ??= Date.now().toString();
-}
+// The v13 page server (packages/visual): bundles the browser adapter and serves e2e.html.
+const devCommand = 'pnpm --filter @mermaid-js/visual serve';
 
 export default defineConfig({
   testDir: 'e2e',
-  testMatch: '**/*.spec.{js,ts}',
-  // e2e/helpers holds Vitest unit tests for the e2e helpers (e.g.
-  // mmd-snapshots.spec.ts imports from 'vitest'); they must not be collected by
-  // Playwright. Vitest runs them (vite.config.ts excludes only e2e/rendering + e2e/other).
+  // v13 runs the curated visual baseline (R-TEST-5) and the browser adapter specs only. The
+  // other specs under e2e/ are the parked v12 suite.
+  testMatch: ['rendering/mmd-snapshots.spec.ts', 'browser/**/*.spec.ts'],
+  // e2e/helpers holds Vitest unit tests for the e2e helpers; Playwright must not collect them.
   testIgnore: '**/helpers/**',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -50,11 +46,9 @@ export default defineConfig({
       maxDiffPixelRatio: 0.01,
     },
   },
-  reporter: [
-    // 'github' emits ::error:: file/line annotations; 'line' adds newline-flushed
-    // progress so CI logs stream per-test instead of buffering like 'dot'.
-    ...(process.env.CI ? [['github'], ['line']] : [['list']]),
-  ],
+  // 'github' emits ::error:: file/line annotations; 'line' adds newline-flushed
+  // progress so CI logs stream per-test instead of buffering like 'dot'.
+  reporter: process.env.CI ? [['github'], ['line']] : [['list']],
   use: {
     baseURL: `http://localhost:${port}`,
     ...devices['Desktop Chrome'],
@@ -72,7 +66,6 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   snapshotPathTemplate: '{testDir}/__snapshots__/{testFilePath}/{arg}{ext}',
-  globalTeardown: process.env.E2E_COVERAGE ? './e2e/global-teardown.ts' : undefined,
   webServer: {
     command: devCommand,
     url: `http://localhost:${port}/`,
