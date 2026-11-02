@@ -43,6 +43,7 @@ describe('workspace layout (DESIGN §2)', () => {
         '.',
         './config',
         './layout',
+        './limits',
         './parser-kit',
         './preprocess',
         './svg',

@@ -51,6 +51,11 @@
       "types": "./dist/config/index.d.ts",
       "default": "./dist/config/index.js"
     },
+    "./limits": {
+      "mermaid-source": "./src/limits/index.ts",
+      "types": "./dist/limits/index.d.ts",
+      "default": "./dist/limits/index.js"
+    },
     "./timing": {
       "mermaid-source": "./src/timing/index.ts",
       "types": "./dist/timing/index.d.ts",

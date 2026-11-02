@@ -111,14 +111,20 @@ properties:
     description: The maximum allowed size of the users text diagram
     type: number
     default: 50000
-    x-mermaid: { status: pending }
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+      reason: 'Integrator-only. Sets the `maxSourceLength` render limit (R-SEC-5); an explicit `limits.maxSourceLength` wins. Over the limit, render() rejects with a `LIMIT` error instead of drawing a placeholder.'
   maxEdges:
     description: |
       Defines the maximum number of edges that can be drawn in a graph.
     type: integer
-    default: 500
+    default: 5000
     minimum: 0
-    x-mermaid: { status: pending }
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+      reason: 'Integrator-only. The default rises from 500 to 5,000 (D31). Sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error.'
   elk:
     type: object
     properties:

@@ -19,6 +19,7 @@ import {
   ParseState,
 } from '@mermaid-js/core/parser-kit';
 import type { ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult, YamlMap, YamlValue } from '@mermaid-js/core/preprocess';
 import type {
@@ -42,8 +43,12 @@ import { KIND_COUNT, T } from './tokens.ts';
 export interface FlowParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
   preprocessed?: PreprocessResult;
-  /** v12 `maxEdges` (default 500). */
+  /** Edge cap (core `DEFAULT_LIMITS.maxEdges`, 5,000; v12's `maxEdges` was 500). */
   maxEdges?: number;
+  /** Vertex cap (core `DEFAULT_LIMITS.maxNodes`). */
+  maxNodes?: number;
+  /** Subgraph nesting cap (core `DEFAULT_LIMITS.maxDepth`). */
+  maxDepth?: number;
   /** v12 `flowchart.inheritDir`. */
   inheritDir?: boolean;
   /** Features claimed by extension plugins; `callbacks` silences `CALLBACK_IGNORED`. */
@@ -245,7 +250,8 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
   const lines = new LineIndex(src);
   const lineOf = (at: number) => lines.position(at).line + 1;
   const db = new FlowBuilder({
-    maxEdges: options.maxEdges ?? 500,
+    maxEdges: options.maxEdges ?? DEFAULT_LIMITS.maxEdges,
+    maxNodes: options.maxNodes ?? DEFAULT_LIMITS.maxNodes,
     inheritDir: options.inheritDir ?? false,
     error: (code, message, range) => {
       st.diagnostics.error(code, message, range);
@@ -1002,6 +1008,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
 
   const children: FlowStatementNode[] = [];
   const frames: Frame[] = [];
+  const maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
   let list: DocItem[] = [];
   let collect = false;
   let body = children;
@@ -1043,6 +1050,13 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     list = [];
     collect = true;
     body = (frames[frames.length - 1] as Frame).children;
+    if (frames.length === maxDepth + 1) {
+      st.diagnostics.error(
+        LIMIT_CODES.maxDepth,
+        `Subgraphs are nested ${frames.length} deep here, over the limit of ${maxDepth}. The limit is set by the page or app that renders the diagram.`,
+        opener
+      );
+    }
   };
 
   const closeSubgraph = (frame: Frame, end: number): void => {

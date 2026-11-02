@@ -5,6 +5,16 @@
  * query the result.
  */
 import { CORE_DEFAULTS, resolveConfig, type ResolvedConfig } from '@mermaid-js/core/config';
+import {
+  checkOutput,
+  checkSource,
+  isLimitCode,
+  LIMIT_CODES,
+  LimitError,
+  resolveLimits,
+  type LimitName,
+  type Limits,
+} from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { streamWriter, treeWriter, type SvgTree } from '@mermaid-js/core/svg';
 import { tableMeasurer } from '@mermaid-js/core/text';
@@ -20,6 +30,8 @@ export interface RenderForTestOptions {
   readonly idPrefix?: string;
   /** Write through the streaming writer instead of the tree (for backing checks). */
   readonly stream?: boolean;
+  /** Integrator limits (R-SEC-5), over v12's `maxTextSize`/`maxEdges` in `config`. */
+  readonly limits?: Partial<Limits>;
 }
 
 export interface RenderedForTest {
@@ -30,7 +42,12 @@ export interface RenderedForTest {
   parse: FlowParseResult;
   layout: FlowLayout;
   config: ResolvedConfig;
+  limits: Readonly<Limits>;
 }
+
+const LIMIT_NAMES = new Map(
+  (Object.entries(LIMIT_CODES) as [LimitName, string][]).map(([name, code]) => [code, name])
+);
 
 export const TEST_VERSION = '13.0.0-alpha.0';
 
@@ -40,6 +57,12 @@ export async function renderForTest(
 ): Promise<RenderedForTest> {
   const warnings: FlowWarning[] = [];
   const warn = (w: FlowWarning): void => void warnings.push({ code: w.code, message: w.message });
+  // Limits come from the integrator alone, and the source check runs before any reading.
+  const limits = resolveLimits(
+    options.config as { maxTextSize?: number; maxEdges?: number } | undefined,
+    options.limits
+  );
+  checkSource(text, limits);
   const pre = preprocess(text);
   const directives = pre.directives
     .filter((d) => d.kind === 'init' && d.args !== null && typeof d.args === 'object')
@@ -54,10 +77,18 @@ export async function renderForTest(
   );
   const parse = parseFlowchart(text, {
     preprocessed: pre,
-    maxEdges: config.maxEdges,
+    maxEdges: limits.maxEdges,
+    maxNodes: limits.maxNodes,
+    maxDepth: limits.maxDepth,
     inheritDir: config.flowchart?.inheritDir,
   });
   const errors = parse.diagnostics.filter((d) => d.severity === 'error');
+  // A breached limit is reported as such even when other errors come first (#15: same rule).
+  const breach = errors.find((d) => isLimitCode(d.code));
+  if (breach) {
+    const name = LIMIT_NAMES.get(breach.code)!;
+    throw new LimitError(name, limits[name], undefined, breach.message);
+  }
   if (errors.length > 0) throw new Error(`parse failed: ${errors[0]!.message}`);
   const choice = resolveThemeName(config.theme, warn);
   const theme = createTheme(await loadTheme(choice.name), {
@@ -70,6 +101,7 @@ export async function renderForTest(
     measurer: tableMeasurer,
     theme,
     warn,
+    limits,
     idPrefix: options.idPrefix ?? 'mermaid-0',
     version: TEST_VERSION,
   };
@@ -77,9 +109,13 @@ export async function renderForTest(
   if (options.stream) {
     const w = streamWriter();
     renderFlowchart(parse.model, layout, ctx, w);
-    return { svg: w.finish(), tree: treeWriter().tree, warnings, parse, layout, config };
+    const svg = w.finish();
+    checkOutput(svg, limits);
+    return { svg, tree: treeWriter().tree, warnings, parse, layout, config, limits };
   }
   const w = treeWriter();
   renderFlowchart(parse.model, layout, ctx, w);
-  return { svg: w.finish(), tree: w.tree, warnings, parse, layout, config };
+  const svg = w.finish();
+  checkOutput(svg, limits);
+  return { svg, tree: w.tree, warnings, parse, layout, config, limits };
 }
