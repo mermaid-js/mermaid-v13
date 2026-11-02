@@ -11,7 +11,16 @@
  * Every scan is linear in the text it consumes (R-PARSE-7).
  */
 // cspell:words kepano invis segs virt
-import { isSpace, isUnicodeLetter, isWord, Kind, TokenWriter } from '@mermaid-js/core/parser-kit';
+import {
+  charTable,
+  hasClass,
+  isDigit,
+  isSpace,
+  isUnicodeLetter,
+  isWord,
+  Kind,
+  TokenWriter,
+} from '@mermaid-js/core/parser-kit';
 import type { TokenStream } from '@mermaid-js/core/parser-kit';
 import { DROP, firstHole, QUOTE } from './source.ts';
 import type { SourceView } from './source.ts';
@@ -39,14 +48,24 @@ const S = {
   shapeDataStr: 17,
 } as const;
 
-/** Characters of jison's NODE_STRING (`-` and `=` are handled separately). */
-const NODE_CHAR = /* @__PURE__ */ (() => {
-  const t = new Uint8Array(128);
-  for (const ch of 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!"#$%&\'*+.`?\\_/') {
-    t[ch.charCodeAt(0)] = 1;
-  }
-  return t;
-})();
+// Character classes of flow.jison's lexer rules.
+/** jison's NODE_STRING (`-` and `=` are handled separately). */
+const NODE = 1;
+/** Ends a run of `<text>`. */
+const TEXT_STOP = 2;
+/** Ends a run of `<ellipseText>`. */
+const ELLIPSE_STOP = 4;
+/** Ends a run of `<trapText>`. */
+const TRAP_STOP = 8;
+/** Ends a run of `<shapeData>`. */
+const SHAPE_DATA_STOP = 16;
+const CHARS = /* @__PURE__ */ charTable(
+  [NODE, 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!"#$%&\'*+.`?\\_/'],
+  [TEXT_STOP, '[](){}|'],
+  [ELLIPSE_STOP, '()[]{}'],
+  [TRAP_STOP, '\\[](){}/'],
+  [SHAPE_DATA_STOP, '}^']
+);
 
 const RE_ACC_TITLE = /accTitle\s*:\s*/y;
 const RE_ACC_DESCR = /accDescr\s*:\s*/y;
@@ -312,7 +331,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
       const ch = text.charCodeAt(q);
       // v12 had turned `#name;` into an entity placeholder, which ends a node string.
       if (ch === 35 && entityAt(q)) break;
-      if (ch < 128 && NODE_CHAR[ch] === 1) {
+      if (hasClass(CHARS, ch, NODE)) {
         q++;
       } else if (ch === 45 && q + 1 < n) {
         const d = text.charCodeAt(q + 1);
@@ -543,12 +562,8 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
       }
     }
 
-    if (c >= 48 && c <= 57) {
-      emit(
-        T.Num,
-        p,
-        scanRun(p + 1, (ch) => ch >= 48 && ch <= 57)
-      );
+    if (isDigit(c)) {
+      emit(T.Num, p, scanRun(p + 1, isDigit));
       return true;
     }
 
@@ -810,18 +825,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         let q = p + 1;
         while (q < lim) {
           const ch = text.charCodeAt(q);
-          if (
-            ch === 91 ||
-            ch === 93 ||
-            ch === 40 ||
-            ch === 41 ||
-            ch === 123 ||
-            ch === 125 ||
-            ch === 124 ||
-            (ch === 34 && isQuote(q))
-          ) {
-            break;
-          }
+          if (hasClass(CHARS, ch, TEXT_STOP) || (ch === 34 && isQuote(q))) break;
           q++;
         }
         emit(T.Text, p, q);
@@ -845,17 +849,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           let q = p + 1;
           while (q < lim) {
             const ch = text.charCodeAt(q);
-            if (
-              (ch === 34 && isQuote(q)) ||
-              ch === 40 ||
-              ch === 41 ||
-              ch === 91 ||
-              ch === 93 ||
-              ch === 123 ||
-              ch === 125
-            ) {
-              break;
-            }
+            if (hasClass(CHARS, ch, ELLIPSE_STOP) || (ch === 34 && isQuote(q))) break;
             if ((ch === 45 || ch === 47) && text.charCodeAt(q + 1) === 41) break;
             if ((ch === 126 || isSpace(ch)) && invisAhead(q) && at(RE_INVIS_LINK, q) >= 0) break;
             q++;
@@ -914,18 +908,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         let q = p + 1;
         while (q < lim) {
           const ch = text.charCodeAt(q);
-          if (
-            ch === 92 ||
-            ch === 91 ||
-            ch === 93 ||
-            ch === 40 ||
-            ch === 41 ||
-            ch === 123 ||
-            ch === 125 ||
-            ch === 47
-          ) {
-            break;
-          }
+          if (hasClass(CHARS, ch, TRAP_STOP)) break;
           q++;
         }
         emit(T.Text, p, q);
@@ -984,7 +967,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           let q = p + 1;
           while (q < lim) {
             const ch = text.charCodeAt(q);
-            if (ch === 125 || ch === 94 || (ch === 34 && isQuote(q))) break;
+            if (hasClass(CHARS, ch, SHAPE_DATA_STOP) || (ch === 34 && isQuote(q))) break;
             q++;
           }
           emit(T.ShapeData, p, q);
