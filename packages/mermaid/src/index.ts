@@ -10,14 +10,20 @@ export {
   NotLoadedError,
   renderErrorSvg,
   UnsupportedFormatError,
+  readManifest,
   type DiagramPlugin,
+  type ExtensionClaim,
+  type HookContext,
+  type LaidOut,
   type MermaidErrorCode,
+  type PluginManifest,
   type Resource,
   type Warning,
 } from '@mermaid-js/core';
 export type { MermaidConfig } from '@mermaid-js/core/config';
 export {
   createMermaid,
+  type ExtensionPlugin,
   type InitializeConfig,
   type IntegratorOptions,
   type Mermaid,
@@ -29,7 +35,7 @@ export {
   type RenderOptions,
   type RenderResult,
 } from './api.ts';
-export type { ExternalDiagram, LayoutLoader } from './registry.ts';
+export type { ExternalDiagram, LayoutLoader, LazyDiagram, ManifestPlugin } from './registry.ts';
 
 const mermaid = createMermaid();
 
