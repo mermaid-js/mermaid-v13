@@ -1,27 +1,20 @@
 /**
- * `pnpm dev`: the dev server. Port by v12's rule (`resolveDevPort`: `MERMAID_DEV_PORT`, else
- * 9000 for an `alana-mermaid` checkout, else 9000 + sha1(root) % 100), after loading `.env`
- * from the checkout root. Listens on all interfaces and prints every address it answers on.
- * Watches the workspace sources and the explorer root (`MERMAID_DEV_EXPLORER_ROOT`, default
- * `e2e/diagrams`): a change rebuilds and reloads open pages (`/events`). The Dev Explorer is at
- * `/dev/`, the e2e page at `/e2e.html`.
+ * `pnpm dev`: runs the dev server (`dev-server.ts`) in a child process and restarts it when the
+ * server's own code changes (`packages/dev/src` outside `browser/`; see `../supervise.ts`).
+ * Browser code and the other packages rebuild live inside the running server.
  */
 import { join } from 'node:path';
-import { config } from 'dotenv';
 import { REPO_ROOT } from '../fixtures.ts';
-import { explorerServerOptions, resolveExplorerRoot } from '../explorer.ts';
-import { resolveDevPort } from '../listen.ts';
-import { startServer } from '../server.ts';
+import { spawnServer, superviseServer, watchServerSources } from '../supervise.ts';
 
-config({ path: join(REPO_ROOT, '.env'), quiet: true });
+const supervisor = superviseServer({
+  start: () => spawnServer(join(import.meta.dirname, 'dev-server.ts')),
+  watch: (onChange) => watchServerSources(REPO_ROOT, onChange),
+  note: (text) => process.stdout.write(`${text}\n`),
+});
 
-const explorer = explorerServerOptions(resolveExplorerRoot(process.env));
-const server = await startServer(resolveDevPort(process.env, REPO_ROOT), explorer);
-process.stdout.write(
-  [
-    '',
-    `mermaid dev server (checkout: ${REPO_ROOT}), listening on:`,
-    ...server.urls.map((url) => `  ${url}dev/`),
-    '',
-  ].join('\n')
-);
+for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+  process.once(signal, () => {
+    void supervisor.close().then(() => process.exit(0));
+  });
+}
