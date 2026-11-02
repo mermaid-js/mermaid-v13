@@ -3,8 +3,7 @@ import { test } from '@playwright/test';
 import {
   assertUniqueSnapshotNames,
   buildFixtureTree,
-  collectMmdFixtures,
-  DIAGRAMS_DIR,
+  discoverMmdFixtures,
   fixtureBaseName,
   fixturePath,
   readFixtureMetadata,
@@ -12,18 +11,10 @@ import {
 } from '../helpers/mmd-snapshots.ts';
 import { imgSnapshotTest } from '../helpers/util.ts';
 
-// A comma-separated tier list narrows fixture collection to each diagram's matching
-// subfolder(s). v13 defaults to the curated `baseline` tier (R-TEST-5,
-// e2e/diagrams/flowchart/baseline); the other tiers are v12 fixtures that v13 does not
-// render yet (other diagram types) and are not part of the v13 baseline.
-const fixtureTiers = (process.env.MERMAID_E2E_FIXTURE_TIER ?? 'baseline')
-  .split(',')
-  .map((tier) => tier.trim())
-  .filter(Boolean);
-const fixtures = await collectMmdFixtures(
-  DIAGRAMS_DIR,
-  fixtureTiers.map((tier) => `*/${tier}/**/*.mmd`)
-);
+// Every tier of every fixture folder whose diagram types have a v13 package, as v12
+// develop collects them; the rest join when their package lands (see the helper). CI may
+// set MERMAID_E2E_FIXTURE_TIER to a comma-separated tier list (e.g. 'pr-check') to narrow it.
+const fixtures = await discoverMmdFixtures({ tiers: process.env.MERMAID_E2E_FIXTURE_TIER });
 // Fail fast if two fixtures would share a screenshot baseline (see helper).
 assertUniqueSnapshotNames(fixtures);
 const fixtureTree = buildFixtureTree(fixtures);

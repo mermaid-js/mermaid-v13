@@ -31,8 +31,8 @@ const devCommand = 'pnpm --filter @mermaid-js/dev serve';
 
 export default defineConfig({
   testDir: 'e2e',
-  // v13 runs the curated visual baseline (R-TEST-5) and the browser adapter specs only. The
-  // other specs under e2e/ are the parked v12 suite.
+  // v13 runs the .mmd fixtures of the diagram types it has packages for (R-TEST-5), the
+  // browser adapter and dev specs. The other specs under e2e/ are the parked v12 suite.
   testMatch: [
     'rendering/mmd-snapshots.spec.ts',
     'browser/**/*.spec.ts',

@@ -1,7 +1,16 @@
-import { describe, it, expect } from 'vitest';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { afterAll, beforeAll, describe, it, expect } from 'vitest';
+import { detectType } from '../../packages/mermaid/src/index.ts';
 import {
   assertUniqueSnapshotNames,
   buildFixtureTree,
+  collectMmdFixtures,
+  discoverMmdFixtures,
+  FIXTURE_FOLDER_TYPES,
+  fixturePath,
+  supportedFixtureFolders,
   fixtureBaseName,
   snapshotNameKey,
 } from './mmd-snapshots.ts';
@@ -52,5 +61,91 @@ describe('assertUniqueSnapshotNames', () => {
     expect(() =>
       assertUniqueSnapshotNames(['flowchart/elk/foo.mmd', 'flowchart/elk-foo.mmd'])
     ).toThrow(/same snapshot name/);
+  });
+});
+
+describe('discoverMmdFixtures', () => {
+  let dir: string;
+  beforeAll(() => {
+    dir = mkdtempSync(join(tmpdir(), 'mmd-discovery-'));
+    for (const file of [
+      'flowchart/baseline/a.mmd',
+      'flowchart/pr-check/b.mmd',
+      'flowchart/nightly-check/c.mmd',
+      'pie/pr-check/p.mmd',
+      'railroad/pr-check/r.mmd',
+    ]) {
+      mkdirSync(dirname(join(dir, file)), { recursive: true });
+      writeFileSync(join(dir, file), 'graph TD\n');
+    }
+  });
+  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+  const folderTypes = {
+    flowchart: ['flowchart-v2'],
+    pie: ['pie'],
+    railroad: ['railroad', 'railroadEbnf'],
+  };
+  const discover = (tiers?: string, supportedTypes = new Set(['flowchart-v2'])) =>
+    discoverMmdFixtures({ diagramsDir: dir, tiers, supportedTypes, folderTypes });
+
+  it('collects every tier of a supported type by default', async () => {
+    expect(await discover()).toEqual([
+      'flowchart/baseline/a.mmd',
+      'flowchart/nightly-check/c.mmd',
+      'flowchart/pr-check/b.mmd',
+    ]);
+  });
+
+  it('narrows to a comma-separated tier list', async () => {
+    expect(await discover(' pr-check , baseline')).toEqual([
+      'flowchart/baseline/a.mmd',
+      'flowchart/pr-check/b.mmd',
+    ]);
+    expect(await discover('')).toHaveLength(3);
+  });
+
+  it('includes a folder only once every type it holds is supported', async () => {
+    expect(await discover('pr-check', new Set(['flowchart-v2', 'pie', 'railroad']))).toEqual([
+      'flowchart/pr-check/b.mmd',
+      'pie/pr-check/p.mmd',
+    ]);
+  });
+
+  it('throws on a folder with no declared types', async () => {
+    await expect(
+      discoverMmdFixtures({ diagramsDir: dir, supportedTypes: new Set(), folderTypes: {} })
+    ).rejects.toThrow(/FIXTURE_FOLDER_TYPES.*flowchart/);
+  });
+
+  it('lists the folders it would collect from', async () => {
+    expect(
+      supportedFixtureFolders({ diagramsDir: dir, supportedTypes: new Set(['pie']), folderTypes })
+    ).toEqual(['pie']);
+  });
+});
+
+describe('the real fixture folders', () => {
+  it('runs flowchart and skips types without a v13 package', async () => {
+    const folders = supportedFixtureFolders();
+    expect(folders).toContain('flowchart');
+    expect(folders).not.toContain('sequence');
+    expect(folders).not.toContain('zenuml');
+  });
+
+  it('declares the types each folder actually holds (detected by mermaid)', async () => {
+    const files = await collectMmdFixtures();
+    const undeclared: string[] = [];
+    for (const file of files) {
+      const folder = file.split('/')[0]!;
+      let type: string;
+      try {
+        type = detectType(readFileSync(fixturePath(file), 'utf8'));
+      } catch {
+        continue; // Undetectable fixtures (zenuml, bad frontmatter) say nothing about the folder.
+      }
+      if (!FIXTURE_FOLDER_TYPES[folder]?.includes(type)) undeclared.push(`${file}: ${type}`);
+    }
+    expect(undeclared).toEqual([]);
   });
 });
