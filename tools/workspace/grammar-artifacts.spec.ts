@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -15,6 +15,7 @@ interface PackageJson {
 }
 
 const published = readdirSync(join(root, 'packages'))
+  .filter((dir) => existsSync(join(root, 'packages', dir, 'package.json')))
   .map((dir) => ({
     dir,
     pkg: JSON.parse(
