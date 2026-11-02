@@ -1,0 +1,60 @@
+/**
+ * `ThemeSpec`: a theme as data (DESIGN §8.1 item 1). Base values, shape tokens, the few
+ * derived values a v12 theme hard-codes, and rules that override the shared derivation
+ * table. Built-in specs live in `specs/`, one lazily imported file each.
+ */
+import type { BaseVariable, TokenVariable } from './vocabulary.ts';
+
+/** Derivation rules by variable name, in the DSL of `dsl.ts`. */
+export type ThemeRuleTable = Readonly<Record<string, string>>;
+
+export interface ThemeSpec {
+  readonly name: string;
+  /** Derive with the dark rules (borders lighten instead of darken, and so on). */
+  readonly dark: boolean;
+  readonly base: Readonly<Record<BaseVariable, string>>;
+  readonly tokens: Readonly<Record<TokenVariable, number | string>>;
+  /** Literal values for derived variables, where v12 hard-codes them for this theme. */
+  readonly values?: Readonly<Record<string, string>>;
+  /** Rules that replace the shared ones for this theme. */
+  readonly rules?: ThemeRuleTable;
+}
+
+/** Shared derivation for light themes, approximating v12's khroma rules (D71). */
+export const LIGHT_RULES: ThemeRuleTable = {
+  primaryBorderColor: 'mix(primaryColor, black, 15%)',
+  secondaryBorderColor: 'mix(secondaryColor, black, 15%)',
+  tertiaryBorderColor: 'mix(tertiaryColor, black, 15%)',
+  secondaryTextColor: 'contrast(secondaryColor, primaryTextColor, background)',
+  tertiaryTextColor: 'contrast(tertiaryColor, primaryTextColor, background)',
+  textColor: 'primaryTextColor',
+  mainBkg: 'primaryColor',
+  nodeBorder: 'primaryBorderColor',
+  nodeTextColor: 'contrast(mainBkg, textColor, background)',
+  clusterBkg: 'tertiaryColor',
+  clusterBorder: 'tertiaryBorderColor',
+  titleColor: 'contrast(clusterBkg, textColor, background)',
+  edgeLabelBackground: 'secondaryColor',
+  arrowheadColor: 'lineColor',
+  defaultLinkColor: 'lineColor',
+  border1: 'primaryBorderColor',
+  border2: 'tertiaryBorderColor',
+  noteBkgColor: '#fff5ad',
+  noteTextColor: 'contrast(noteBkgColor, textColor, background)',
+  noteBorderColor: 'mix(noteBkgColor, black, 30%)',
+  errorBkgColor: '#552222',
+  errorTextColor: 'contrast(background, #552222, #ffdddd)',
+};
+
+/** Shared derivation for dark themes. */
+export const DARK_RULES: ThemeRuleTable = {
+  ...LIGHT_RULES,
+  primaryBorderColor: 'mix(primaryColor, white, 20%)',
+  secondaryBorderColor: 'mix(secondaryColor, white, 20%)',
+  tertiaryBorderColor: 'mix(tertiaryColor, white, 20%)',
+  edgeLabelBackground: 'mix(secondaryColor, black, 30%)',
+  noteBkgColor: 'secondaryColor',
+  noteBorderColor: 'mix(noteBkgColor, white, 30%)',
+  errorBkgColor: '#a44141',
+  errorTextColor: 'contrast(background, #dddddd, #552222)',
+};

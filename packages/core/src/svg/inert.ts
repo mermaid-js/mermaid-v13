@@ -17,14 +17,23 @@ import {
   SVG_NS,
 } from './allowlist.ts';
 import { RE_INVALID_XML } from './escape.ts';
-import { RE_UNSAFE_STYLE, STYLE_TEXT_PROPERTIES } from './style.ts';
+import { RE_UNSAFE_STYLE, STYLE_TEXT_PROPERTIES, styleSheetProblem } from './style.ts';
 import type { SecurityLevel } from './url.ts';
 
 export interface InertOptions {
   readonly securityLevel?: SecurityLevel;
   /** The integrator's link schemes, when not the default http, https and mailto. */
   readonly linkSchemes?: readonly string[];
+  /**
+   * Accept one `<style>` directly under the root `<svg>` holding a `theme: 'auto'` sheet
+   * (R-THEME-8): custom properties only, as `themeStyleSheet()` builds it. Any other
+   * `<style>` is still rejected.
+   */
+  readonly themeStyle?: boolean;
 }
+
+const STYLE_OPEN = '<style>';
+const STYLE_CLOSE = '</style>';
 
 const RE_NUMBER = /^-?\d{1,15}(?:\.\d{1,15})?(?:e[-+]?\d{1,3})?$/;
 const RE_PERCENT = /^\d{1,15}(?:\.\d{1,15})?%$/;
@@ -172,6 +181,7 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
   const stack: string[] = [];
   let i = 0;
   const n = svg.length;
+  let sheets = 0;
   while (i < n) {
     const lt = svg.indexOf('<', i);
     const text = svg.slice(i, lt === -1 ? n : lt);
@@ -187,6 +197,19 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
     const tag = svg.slice(nameStart, i);
     if (tag === '' || !/^[A-Za-z]/.test(tag))
       return `markup ${JSON.stringify(svg.slice(lt, lt + 20))}`;
+    if (tag === 'style' && options.themeStyle && !closing) {
+      if (svg.slice(lt, lt + STYLE_OPEN.length) !== STYLE_OPEN) return '<style> with attributes';
+      if (stack.length !== 1 || stack[0] !== 'svg') return '<style> that is not a child of <svg>';
+      if (++sheets > 1) return 'a second <style>';
+      const end = svg.indexOf(STYLE_CLOSE, lt);
+      if (end === -1) return 'unclosed <style>';
+      const css = svg.slice(lt + STYLE_OPEN.length, end);
+      if (css.includes('<') || css.includes('&')) return 'markup in <style>';
+      const problem = styleSheetProblem(css);
+      if (problem !== undefined) return `<style> holds ${problem}`;
+      i = end + STYLE_CLOSE.length;
+      continue;
+    }
     if (!ALLOWED_TAGS.has(tag)) return `element <${tag}>`;
     if (closing) {
       while (i < n && /\s/.test(svg[i] as string)) i++;

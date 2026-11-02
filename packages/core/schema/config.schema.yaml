@@ -66,11 +66,18 @@ properties:
     $ref: '#/$defs/BaseDiagramConfig/properties/theme'
     default: 'redux'
     x-mermaid:
-      status: pending
-      reason: Honoured when core/theme lands. The default changes from `default` to `redux` (D55).
+      status: honoured
+      since: 13.0.0
+      reason: >-
+        The default changes from `default` to `redux` (D55). 13.0 ships `redux`, `default`, `dark`,
+        `forest`, `neutral` and `base`; the other v12 names stand in for one of them with a
+        warning, except `redux-color` (the flowchart default), which renders `redux`.
   themeVariables:
     tsType: any
-    x-mermaid: { status: pending }
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+      reason: Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md).
   themeCSS:
     type: string
     x-mermaid:

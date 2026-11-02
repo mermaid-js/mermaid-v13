@@ -26,6 +26,8 @@ export type PathData = Brand<string, 'PathData'>;
 export type Transform = Brand<string, 'Transform'>;
 /** A `style` attribute value built by `styleText()`. */
 export type StyleText = Brand<string, 'StyleText'>;
+/** A `theme: 'auto'` style sheet built by `themeStyleSheet()` (R-THEME-8). */
+export type ThemeStyleSheet = Brand<string, 'ThemeStyleSheet'>;
 /** A free-form, plain value that passed a property validator (font-family, keywords). */
 export type SafeValue = Brand<string, 'SafeValue'>;
 
@@ -57,6 +59,8 @@ export interface AttrTypes {
   'data-ast': string;
   'data-mermaid-version': string;
   'data-look': string;
+  /** The render's id prefix, which a `theme: 'auto'` style sheet is scoped to. */
+  'data-p': string;
   style: StyleText;
   transform: Transform;
   'pointer-events': 'none' | 'all' | 'visiblePainted';

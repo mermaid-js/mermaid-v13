@@ -16,8 +16,8 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux"` | pending | Honoured when core/theme lands. The default changes from `default` to `redux` (D55). | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `themeVariables` | any |  | pending |  |  |
+| `theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux"` | honoured (13.0.0) | The default changes from `default` to `redux` (D55). 13.0 ships `redux`, `default`, `dark`, `forest`, `neutral` and `base`; the other v12 names stand in for one of them with a warning, except `redux-color` (the flowchart default), which renders `redux`. | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `themeVariables` | any |  | honoured (13.0.0) | Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). |  |
 | `themeCSS` | string |  | ignored (13.0.0) | v13 output carries no author stylesheet (R-SEC-2). Replacement: `themeVariables`, or `--mermaid-*` CSS variables set by the host page. |  |
 | `look` | "classic" \\| "handDrawn" \\| "neo" | `"classic"` | pending |  | Defines which main look to use for the diagram. |
 | `handDrawnSeed` | number | `0` | pending |  | Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed. |

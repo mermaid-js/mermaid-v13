@@ -8,7 +8,7 @@ import { checkTag, formatValue } from './encode.ts';
 import { esc } from './escape.ts';
 import { pathBuilder, type PathBuilder } from './path.ts';
 import { CompactTree, type SvgTree } from './tree.ts';
-import type { AllowedTag, Attrs } from './types.ts';
+import type { AllowedTag, Attrs, ThemeStyleSheet } from './types.ts';
 
 /** One run of text with uniform emphasis. */
 export interface LabelSpan {
@@ -55,6 +55,16 @@ export interface SvgWriter {
   label(box: LabelBox, x: number, y: number, attrs?: Attrs): void;
   /** A builder for `d` values; numbers are formatted to two decimals. */
   path(): PathBuilder;
+  /**
+   * The `theme: 'auto'` style sheet, as a `<style>` child of the root `<svg>` (R-THEME-8).
+   * `assertInert` accepts it only with `themeStyle: true`.
+   */
+  styleSheet(css: ThemeStyleSheet): void;
+}
+
+function checkSheetParent(top: string | undefined, depth: number): void {
+  if (top !== 'svg' || depth !== 1)
+    throw new TypeError('A theme style sheet must be a child of the root <svg>');
 }
 
 export interface StreamSvgWriter extends SvgWriter {
@@ -204,6 +214,12 @@ class Stream implements StreamSvgWriter {
     return pathBuilder();
   }
 
+  styleSheet(css: ThemeStyleSheet): void {
+    checkSheetParent(this.stack[this.stack.length - 1], this.stack.length);
+    this.flush();
+    this.out += '<style>' + esc(css) + '</style>';
+  }
+
   finish(): string {
     if (this.stack.length > 0)
       throw new Error(`SvgWriter.finish() with <${this.stack[this.stack.length - 1]}> still open`);
@@ -246,6 +262,11 @@ class Tree implements TreeSvgWriter {
 
   path(): PathBuilder {
     return pathBuilder();
+  }
+
+  styleSheet(css: ThemeStyleSheet): void {
+    checkSheetParent(this.compact.tagOf(this.current), this.stack.length - 1);
+    this.compact.appendStyleSheet(this.current, css);
   }
 
   finish(): string {

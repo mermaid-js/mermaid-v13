@@ -12,6 +12,7 @@ import type {
   SafeValue,
   StyleText,
   ThemeRef,
+  ThemeStyleSheet,
   Warn,
 } from './types.ts';
 
@@ -280,4 +281,71 @@ export function styleText(
     out += (out === '' ? '' : ';') + prop + ':' + text;
   }
   return out as StyleText;
+}
+
+const RE_SCOPE = /^[A-Za-z_][\w-]{0,63}$/;
+const MEDIA_DARK = '@media (prefers-color-scheme:dark){';
+
+function sheetBlock(scope: string, decls: Readonly<Record<string, ThemeRef>>): string {
+  let body = '';
+  for (const prop in decls) {
+    const value = decls[prop as keyof typeof decls];
+    if (!RE_CUSTOM_PROP.test(prop) || typeof value !== 'string' || !safeSheetValue(value))
+      throw new TypeError(`${JSON.stringify(prop)} cannot go in a theme style sheet`);
+    body += (body === '' ? '' : ';') + prop + ':' + value;
+  }
+  return `svg[data-p=${scope}]{${body}}`;
+}
+
+function safeSheetValue(value: string): boolean {
+  return (
+    value.trim() !== '' &&
+    !RE_UNSAFE_STYLE.test(value) &&
+    !RE_INVALID_XML.test(value) &&
+    !/["'&]/.test(value)
+  );
+}
+
+/**
+ * The only `<style>` content the writer emits (R-THEME-8, DESIGN §8.1 item 6): custom
+ * property declarations scoped to `svg[data-p=<scope>]`, once for light and once under
+ * `prefers-color-scheme: dark`.
+ */
+export function themeStyleSheet(
+  scope: string,
+  light: Readonly<Record<string, ThemeRef>>,
+  dark: Readonly<Record<string, ThemeRef>>
+): ThemeStyleSheet {
+  if (!RE_SCOPE.test(scope)) throw new TypeError(`${JSON.stringify(scope)} is not a style scope`);
+  return (sheetBlock(scope, light) + MEDIA_DARK + sheetBlock(scope, dark) + '}') as ThemeStyleSheet;
+}
+
+const RE_BLOCK_HEAD = /^svg\[data-p=[A-Za-z_][\w-]{0,63}\]\{/;
+
+/** Why `css` is not a sheet `themeStyleSheet` could have built, or undefined when it is. */
+export function styleSheetProblem(css: string): string | undefined {
+  let rest = css;
+  const block = (): string | undefined => {
+    const head = RE_BLOCK_HEAD.exec(rest);
+    if (!head) return 'a style rule that is not svg[data-p=…]';
+    const end = rest.indexOf('}');
+    if (end === -1) return 'an unclosed style rule';
+    const body = rest.slice(head[0].length, end);
+    rest = rest.slice(end + 1);
+    if (body.includes('{')) return 'a nested style rule';
+    if (body === '') return undefined;
+    for (const decl of body.split(';')) {
+      const at = decl.indexOf(':');
+      if (at < 0 || !RE_CUSTOM_PROP.test(decl.slice(0, at)) || !safeSheetValue(decl.slice(at + 1)))
+        return `style declaration ${JSON.stringify(decl.slice(0, 40))}`;
+    }
+    return undefined;
+  };
+  const first = block();
+  if (first) return first;
+  if (!rest.startsWith(MEDIA_DARK)) return 'a style sheet without the dark-scheme rule';
+  rest = rest.slice(MEDIA_DARK.length);
+  const second = block();
+  if (second) return second;
+  return rest === '}' ? undefined : 'extra style sheet content';
 }
