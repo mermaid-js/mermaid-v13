@@ -22,6 +22,7 @@ export { LineIndex } from './positions.ts';
 export type { Position, Range } from './positions.ts';
 export { Diagnostics, ExpectedTable, formatExpected, MAX_EXPECTED } from './diagnostics.ts';
 export type { Diagnostic, DiagnosticExtra, RelatedInfo, Severity } from './diagnostics.ts';
+export { formatDiagnostic } from './format.ts';
 export { inKindSet, kindSet, TokenCursor, TRIVIA } from './cursor.ts';
 export type { KindSet } from './cursor.ts';
 export { syncTo } from './recovery.ts';

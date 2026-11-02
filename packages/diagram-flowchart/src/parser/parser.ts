@@ -18,13 +18,7 @@ import {
   LineIndex,
   ParseState,
 } from '@mermaid-js/core/parser-kit';
-import type {
-  Diagnostic,
-  ParseOptions,
-  ParseResult,
-  Range,
-  TokenStream,
-} from '@mermaid-js/core/parser-kit';
+import type { ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult, YamlMap, YamlValue } from '@mermaid-js/core/preprocess';
 import type {
@@ -135,6 +129,8 @@ const STATEMENT_START = [
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
+  ['`&`', [T.Amp]],
+  ['a link number such as `0`', [T.Num]],
   ['a node id', ID_KINDS],
   ['a link such as `-->`', [T.Link, T.StartLink, T.LinkId]],
   [
@@ -225,6 +221,17 @@ interface Opener {
 
 const NO_ITEMS: string[] = [];
 
+/** How each statement is written, for errors inside it. */
+const STATEMENT_HINTS: Record<number, string> = {
+  [T.Style]: 'write it as `style <node id> <styles>`, e.g. `style A fill:#f9f,stroke:#333`',
+  [T.ClassDef]: 'write it as `classDef <name> <styles>`, e.g. `classDef hot fill:#f96`',
+  [T.Class]: 'write it as `class <node ids> <class name>`, e.g. `class A,B hot`',
+  [T.LinkStyle]:
+    'write it as `linkStyle <link numbers or default> <styles>`, e.g. `linkStyle 0,1 stroke:red`',
+  [T.Click]:
+    'write it as `click <node id> <callback>` or `click <node id> "<url>"`, e.g. `click A "https://example.com"`',
+};
+
 /** Parse a flowchart. Never throws: problems are error diagnostics. */
 export function parseFlowchart(src: string, options: FlowParseOptions = {}): FlowParseResult {
   const pre = options.preprocessed ?? preprocess(src);
@@ -305,6 +312,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     end: i > from ? tokEnd(i - 1) : tokStart(from),
   });
   const opens: Opener[] = [];
+  let stmtHint: string | undefined;
   let restartFrom = -1;
 
   const found = (j = i): string => {
@@ -313,40 +321,124 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     if (k === Kind.Newline) return 'a line break';
     if (k === T.Space) return 'a space';
     if (k === Kind.Error) return `the character \`${raw(j)}\``;
-    const t = raw(j).trim();
+    const t = (k === T.Str || k === T.MdStr ? src.slice(tokStart(j), tokEnd(j)) : raw(j)).trim();
     return t.length > 24 ? `\`${t.slice(0, 24)}…\`` : `\`${t}\``;
   };
+
+  /** Offset of the line break ending the line that holds `at`. */
+  const lineBreakAfter = (at: number) => {
+    let e = at;
+    while (e < src.length && src[e] !== '\n' && src[e] !== '\r') e++;
+    return e;
+  };
+  // Lexing restarts in the initial state after an error inside a label or other lexer mode,
+  // which would otherwise swallow the following lines.
+  let lastRestart = -1;
+  let restarts = 0;
+  const restartAt = (at: number) => {
+    if (at > lastRestart && at <= src.length && restarts < 64) restartFrom = at;
+  };
+  /** The next statement boundary (`;` or line break) at or after `at`. */
+  const boundaryAfter = (at: number) => {
+    let e = at;
+    while (e < src.length && src[e] !== '\n' && src[e] !== '\r' && src[e] !== ';') e++;
+    return e;
+  };
+  const LEXER_MODE = set(
+    T.Text,
+    T.EdgeText,
+    T.Str,
+    T.MdStr,
+    T.ShapeData,
+    T.Click,
+    T.CallbackName,
+    T.CallbackArgs
+  );
 
   const fail = (want: readonly number[], hint?: string): never => {
     const k = kind();
     const where = range(i);
     const open = opens[opens.length - 1];
-    if (k === Kind.EOF && open) {
+    const prev = i - 1;
+    if (
+      k === Kind.EOF &&
+      (K[prev] === T.Str || K[prev] === T.MdStr) &&
+      (E[prev] ?? 0) >= src.length
+    ) {
+      // A string ran to the end of the text.
+      const q = { start: tokStart(prev), end: S[prev] ?? 0 };
+      st.diagnostics.error(
+        'UNCLOSED_STRING',
+        K[prev] === T.MdStr
+          ? `Unclosed markdown string: the string opened at line ${lineOf(q.start)} has no closing backtick and quote.`
+          : `Unclosed string: the string opened at line ${lineOf(q.start)} has no closing quote.`,
+        q,
+        { related: [{ message: 'The text ends here.', range: where }] }
+      );
+      restartAt(lineBreakAfter(q.end));
+      throw STOP;
+    }
+    if (open && (k === Kind.EOF || lineOf(where.start) > lineOf(open.range.start))) {
+      const got = k === Kind.EOF ? '' : ` before ${found()} at line ${lineOf(where.start)}`;
       st.diagnostics.error(
         'UNCLOSED',
-        `Unclosed ${open.what}: the \`${src.slice(open.range.start, open.range.end)}\` at line ${lineOf(open.range.start)} has no closing ${open.closer}.`,
-        where,
-        { related: [{ message: `The ${open.what} starts here.`, range: open.range }] }
+        `Unclosed ${open.what}: the \`${src.slice(open.range.start, open.range.end)}\` at line ${lineOf(open.range.start)} has no closing ${open.closer}${got}. Add ${open.closer} to close it.`,
+        open.range,
+        {
+          expected: EXPECTED.names(want),
+          related: [
+            { message: k === Kind.EOF ? 'The text ends here.' : 'Found here.', range: where },
+          ],
+        }
       );
-      // Lexing went on to the end inside the label: start again on the next line.
-      let next = open.range.end;
-      while (next < src.length && src[next] !== '\n' && src[next] !== '\r') next++;
-      if (next > restartFrom && next < src.length) restartFrom = next;
+      // The label swallowed the lines after it: carry on from the line after its opener.
+      restartAt(lineBreakAfter(open.range.end));
+      throw STOP;
+    }
+    // The tokens after an error may come from a lexer mode the bad text opened (`>` starts a
+    // label, for one): lex again from the next statement boundary.
+    restartAt(
+      opens.length > 0 || LEXER_MODE[k] === 1 || (k === Kind.Error && raw() === '#')
+        ? lineBreakAfter(where.start)
+        : boundaryAfter(where.start)
+    );
+    if (
+      k === Kind.Error &&
+      raw() === '#' &&
+      /^#\w+;/.test(src.slice(where.start, where.start + 40))
+    ) {
+      st.diagnostics.error(
+        'ENTITY_OUTSIDE_LABEL',
+        'Entities such as `#quot;` work only inside labels: put the text in a label, e.g. `A["#quot;"]`.',
+        where
+      );
       throw STOP;
     }
     if (k === Kind.Error) {
       st.diagnostics.error(
         'UNEXPECTED_CHARACTER',
-        `Unexpected character \`${raw()}\`${hint ? `; ${hint}` : ''}.`,
-        where
+        `Unexpected character \`${raw()}\`${(hint ?? hintFor(raw())) ? `; ${hint ?? hintFor(raw())}` : ''}.`,
+        where,
+        { expected: EXPECTED.names(want) }
       );
       throw STOP;
     }
-    st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), found());
-    if (hint) {
-      const d = st.diagnostics.list[st.diagnostics.list.length - 1] as Diagnostic;
-      d.message = `${d.message.slice(0, -1)}; ${hint}.`;
-    }
+    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), found());
+    const bracket = open && /^[[\](){}|]/.test(raw());
+    const quoted = open && (k === T.Str || k === T.MdStr);
+    const why =
+      hint ??
+      (bracket
+        ? 'to use brackets in a label, put it in quotes, e.g. `A["a (b)"]`'
+        : quoted
+          ? 'to use quotes in a label, quote it all and write them as `#quot;`, e.g. `A["say #quot;hi#quot;"]`'
+          : (hintFor(raw()) ??
+            (k === T.End || k === T.Graph || k === T.Subgraph
+              ? `\`${raw().trim()}\` is a keyword: use another node id, and \`${raw().trim()}\` as its label if needed, e.g. \`X[${raw().trim()}]\``
+              : want === LINE_END && ID[k] === 1
+                ? 'put each statement on its own line, or separate them with `;`'
+                : stmtHint)));
+    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
     throw STOP;
   };
 
@@ -462,9 +554,10 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
   const nodeAst = (name: string) => db.vertices.get(name)?.ast ?? new AstIds().node(name);
   let chain: (FlowNodeStmt | FlowEdge)[] = [];
 
+  /** A mention that may create the vertex: its definition when it does. */
   const nodeSymbol = (name: string, r: Range) => {
-    const known = db.vertices.has(name);
-    st.symbol(name, 'node', r, known ? 'ref' : 'def');
+    const creates = !db.vertices.has(name) && !db.hasEdge(name) && name.trim() !== '';
+    st.symbol(name, 'node', r, creates ? 'def' : 'ref');
   };
 
   const SHAPES: Record<number, [shape: string, close: number, what: string, closeText: string]> = {
@@ -586,7 +679,11 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
       while (kind() === T.Space);
       if (kind() !== T.Amp) {
         // Blanks after shape data must lead to `&` (v12 drops them before a line break).
-        if (data !== undefined) fail([T.Amp]);
+        if (data !== undefined)
+          fail(
+            [T.Amp],
+            'after shape data `@{ … }` only `&` and another node may follow on the line'
+          );
         return nodes;
       }
       i++;
@@ -700,8 +797,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     const exact = src.slice(r.start, r.end) === list;
     for (const part of list.split(',')) {
       const pr = exact ? { start: at, end: at + part.length } : r;
-      if (kindName === 'node') nodeSymbol(part, pr);
-      else st.symbol(part, kindName, pr, role);
+      st.symbol(part, kindName, pr, role);
       out.push(part);
       at += part.length + 1;
     }
@@ -810,6 +906,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
   /** One statement. Returns what v12's grammar adds to an enclosing subgraph's list. */
   const statement = (collect: boolean, out: FlowStatementNode[]): DocItem => {
     const t = kind();
+    stmtHint = STATEMENT_HINTS[t];
     const from = i;
     const refList: string[] = [];
     switch (t) {
@@ -981,6 +1078,8 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     if (restartFrom >= 0) {
       const from = restartFrom;
       restartFrom = -1;
+      lastRestart = from;
+      restarts++;
       tokens = lex(src, from, view, false);
       load(tokens);
       i = 0;
@@ -1004,7 +1103,13 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
         if (t === T.End) {
           const frame = frames.pop();
           if (frame === undefined) {
-            fail(STATEMENT_START, 'there is no open subgraph for this `end`');
+            const r = { start: S[i] ?? 0, end: (S[i] ?? 0) + 3 };
+            st.diagnostics.error(
+              'UNEXPECTED_END',
+              'Unexpected `end`: there is no open subgraph to close. Remove it, or add a `subgraph` above.',
+              r
+            );
+            i++;
           } else {
             i++;
             closeSubgraph(frame, tokEnd(i - 1));
@@ -1013,6 +1118,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
           if (collect) list.push(raw());
           i++;
         } else if (t === T.Subgraph) {
+          stmtHint = 'write a subgraph as `subgraph id`, or `subgraph id [title]`, on its own line';
           subgraphHeader();
         } else {
           const item = statement(collect, body);
@@ -1028,8 +1134,12 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
       st.diagnostics.error(
         'UNCLOSED_SUBGRAPH',
         `Unclosed subgraph: the subgraph opened at line ${lineOf(frame.opener.start)} has no \`end\`. Add \`end\` to close it.`,
-        { start: src.length, end: src.length },
-        { related: [{ message: 'The subgraph starts here.', range: frame.opener }] }
+        frame.opener,
+        {
+          related: [
+            { message: 'The text ends here.', range: { start: src.length, end: src.length } },
+          ],
+        }
       );
       frames.pop();
       closeSubgraph(frame, src.length);
@@ -1048,6 +1158,20 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
         i++;
         db.setDirection('TB');
       } else {
+        if (kind() === Kind.Error) {
+          const at = S[i] ?? 0;
+          let w = at;
+          while (w < src.length && /\s/.test(src[w] ?? '')) w++;
+          let e = w;
+          while (e < src.length && !/\s/.test(src[e] ?? '')) e++;
+          st.diagnostics.error(
+            'UNKNOWN_DIRECTION',
+            `Unknown direction \`${src.slice(w, e)}\`: use TB, TD, BT, LR or RL (or \`>\`, \`<\`, \`^\`, \`v\`).`,
+            { start: w, end: e },
+            { expected: EXPECTED.names([T.Dir]) }
+          );
+          throw STOP;
+        }
         dir = raw(expect(T.Dir, T.NoDir));
         let t = kind();
         if (t === T.Space) {
@@ -1097,6 +1221,14 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     children,
   };
   return st.result(model, ast, fullTokens, options);
+}
+
+/** A fix hint for common slips, from the text found where the error is. */
+function hintFor(text: string): string | undefined {
+  if (/^\s*[-=.<>ox~]+\s*$/.test(text) && /[-=.~]/.test(text)) {
+    return 'links are written like `-->`, `---`, `-.->`, `==>` or `~~~`';
+  }
+  return undefined;
 }
 
 function isYamlMap(v: YamlValue): v is YamlMap {

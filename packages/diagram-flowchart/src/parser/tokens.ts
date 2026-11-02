@@ -2,7 +2,7 @@
  * Flowchart token kinds. They mirror the terminals of v12's `flow.jison`, so the lexer can
  * be checked token by token against it. Kinds are plain numbers (TS enums are banned).
  */
-import { FIRST_DIAGRAM_KIND, Kind } from '@mermaid-js/core/parser-kit';
+import { FIRST_DIAGRAM_KIND } from '@mermaid-js/core/parser-kit';
 
 const F = FIRST_DIAGRAM_KIND;
 
@@ -89,86 +89,3 @@ export const T = {
 
 /** One past the largest flowchart kind, for lookup tables. */
 export const KIND_COUNT = F + 75;
-
-/**
- * The v12 `flow.jison` terminal each kind stands for (dev and test use: the lexer-parity
- * gate compares token streams by these names). Never shown to users (R-ERR-5).
- */
-export const JISON_NAMES: Readonly<Record<number, string>> = {
-  [T.AccTitle]: 'acc_title',
-  [T.AccTitleValue]: 'acc_title_value',
-  [T.AccDescr]: 'acc_descr',
-  [T.AccDescrValue]: 'acc_descr_value',
-  [T.AccDescrMultilineValue]: 'acc_descr_multiline_value',
-  [T.ShapeData]: 'SHAPE_DATA',
-  [T.CallbackName]: 'CALLBACKNAME',
-  [T.CallbackArgs]: 'CALLBACKARGS',
-  [T.MdStr]: 'MD_STR',
-  [T.Str]: 'STR',
-  [T.Style]: 'STYLE',
-  [T.Default]: 'DEFAULT',
-  [T.LinkStyle]: 'LINKSTYLE',
-  [T.Interpolate]: 'INTERPOLATE',
-  [T.ClassDef]: 'CLASSDEF',
-  [T.Class]: 'CLASS',
-  [T.Href]: 'HREF',
-  [T.Click]: 'CLICK',
-  [T.Graph]: 'GRAPH',
-  [T.Subgraph]: 'subgraph',
-  [T.End]: 'end',
-  [T.LinkTarget]: 'LINK_TARGET',
-  [T.NoDir]: 'NODIR',
-  [T.Dir]: 'DIR',
-  [T.DirectionTB]: 'direction_tb',
-  [T.DirectionBT]: 'direction_bt',
-  [T.DirectionRL]: 'direction_rl',
-  [T.DirectionLR]: 'direction_lr',
-  [T.DirectionTD]: 'direction_td',
-  [T.LinkId]: 'LINK_ID',
-  [T.Num]: 'NUM',
-  [T.Brkt]: 'BRKT',
-  [T.StyleSeparator]: 'STYLE_SEPARATOR',
-  [T.Colon]: 'COLON',
-  [T.Amp]: 'AMP',
-  [T.Semi]: 'SEMI',
-  [T.Comma]: 'COMMA',
-  [T.Mult]: 'MULT',
-  [T.Link]: 'LINK',
-  [T.StartLink]: 'START_LINK',
-  [T.EdgeText]: 'EDGE_TEXT',
-  [T.EllipseEnd]: '-)',
-  [T.Text]: 'TEXT',
-  [T.EllipseStart]: '(-',
-  [T.StadiumEnd]: 'STADIUMEND',
-  [T.StadiumStart]: 'STADIUMSTART',
-  [T.SubroutineEnd]: 'SUBROUTINEEND',
-  [T.SubroutineStart]: 'SUBROUTINESTART',
-  [T.VertexWithPropsStart]: 'VERTEX_WITH_PROPS_START',
-  [T.TagEnd]: 'TAGEND',
-  [T.CylinderEnd]: 'CYLINDEREND',
-  [T.CylinderStart]: 'CYLINDERSTART',
-  [T.DoubleCircleEnd]: 'DOUBLECIRCLEEND',
-  [T.DoubleCircleStart]: 'DOUBLECIRCLESTART',
-  [T.TrapEnd]: 'TRAPEND',
-  [T.InvTrapEnd]: 'INVTRAPEND',
-  [T.TrapStart]: 'TRAPSTART',
-  [T.InvTrapStart]: 'INVTRAPSTART',
-  [T.TagStart]: 'TAGSTART',
-  [T.Up]: 'UP',
-  [T.Sep]: 'SEP',
-  [T.Down]: 'DOWN',
-  [T.NodeString]: 'NODE_STRING',
-  [T.Minus]: 'MINUS',
-  [T.UnicodeText]: 'UNICODE_TEXT',
-  [T.Pipe]: 'PIPE',
-  [T.PE]: 'PE',
-  [T.PS]: 'PS',
-  [T.SQE]: 'SQE',
-  [T.SQS]: 'SQS',
-  [T.DiamondStop]: 'DIAMOND_STOP',
-  [T.DiamondStart]: 'DIAMOND_START',
-  [Kind.Newline]: 'NEWLINE',
-  [T.Space]: 'SPACE',
-  [T.Eof]: 'EOF',
-  [Kind.Error]: 'INVALID',
-};

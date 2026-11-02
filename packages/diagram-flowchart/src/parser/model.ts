@@ -241,6 +241,11 @@ export class FlowBuilder {
 
   constructor(private readonly options: BuilderOptions) {}
 
+  /** Whether `id` names an edge (`id@`), which v12 never turns into a vertex. */
+  hasEdge(id: string): boolean {
+    return this.edgeById.has(id);
+  }
+
   /** v12 `addVertex`. `data` is the parsed `@{…}` block. Returns whether it created a vertex. */
   addVertex(
     id: string,
@@ -404,9 +409,13 @@ export class FlowBuilder {
     if (!edge) {
       this.options.error(
         'LINK_STYLE_INDEX',
-        `The index ${pos} for linkStyle is out of bounds. Valid indices for linkStyle are between 0 and ${
-          this.edges.length - 1
-        }. (Help: Ensure that the index is within the range of existing edges.)`,
+        this.edges.length === 0
+          ? `linkStyle ${pos} refers to a link, but there are no links above it.`
+          : `linkStyle ${pos} refers to a link that does not exist: there ${
+              this.edges.length === 1
+                ? 'is 1 link above it, number 0'
+                : `are ${this.edges.length} links above it, numbered from 0 to ${this.edges.length - 1}`
+            }.`,
         at
       );
     }

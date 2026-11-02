@@ -3,7 +3,8 @@ export type { FlowParseOptions, FlowParseResult } from './parser.ts';
 export { detectFlowchart } from './detect.ts';
 export { flowchartTokens } from './tokens-api.ts';
 export type { FlowToken } from './tokens-api.ts';
-export { JISON_NAMES, T as FlowTokenKind } from './tokens.ts';
+export { JISON_NAMES } from './jison-names.ts';
+export { T as FlowTokenKind } from './tokens.ts';
 export type { FlowchartType } from './detect.ts';
 export type {
   FlowCallback,
