@@ -30,6 +30,8 @@ export interface FlowLexerOracle {
    * with `['INVALID', '']`.
    */
   tokens(source: string): Promise<JisonToken[] | undefined>;
+  /** The exact text v12's flowchart lexer received for `source`, or undefined. */
+  input(source: string): Promise<string | undefined>;
 }
 
 let loading: Promise<FlowLexerOracle> | undefined;
@@ -52,11 +54,15 @@ async function load(): Promise<FlowLexerOracle> {
     captured = input;
     setInput(input, yy);
   };
+  const capture = async (source: string) => {
+    captured = undefined;
+    await oracle.parse(source);
+    return captured;
+  };
   return {
+    input: capture,
     async tokens(source) {
-      captured = undefined;
-      await oracle.parse(source);
-      const input = captured;
+      const input = await capture(source);
       if (input === undefined) return undefined;
       setInput(input, new FlowDB());
       const out: JisonToken[] = [];
