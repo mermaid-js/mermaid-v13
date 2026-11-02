@@ -18,6 +18,7 @@ export type {
   StyleText,
   SvgWarning,
   ThemeRef,
+  ThemeStyleSheet,
   Transform,
   Warn,
 } from './types.ts';
@@ -48,6 +49,7 @@ export {
   px,
   styleText,
   themeRef,
+  themeStyleSheet,
   STYLE_PROPERTIES,
   type CheckedStyle,
 } from './style.ts';

@@ -104,6 +104,17 @@ export class CompactTree implements SvgTree {
     return n;
   }
 
+  /** The tag of node `n` as stored, for the writer's checks. */
+  tagOf(n: number): string | undefined {
+    return this.tags[n];
+  }
+
+  /** Appends a `<style>` holding a theme style sheet; used by the writer only. */
+  appendStyleSheet(parent: number, css: string): void {
+    const n = this.link(parent, 'style', '');
+    this.link(n, TEXT, css);
+  }
+
   /** Appends a text node unless the text escapes to nothing. */
   appendTextNode(parent: number, text: string): void {
     if (!TEXT_HOLDERS.has(this.tags[parent] as string)) {
