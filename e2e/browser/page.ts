@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-/** Opens the empty e2e page and waits for the `window.v13` test API (packages/visual viewer). */
+/** Opens the empty e2e page and waits for the `window.v13` test API (packages/dev viewer). */
 export async function openHarness(page: Page): Promise<void> {
   await page.goto('/e2e.html');
   await page.waitForFunction(() => typeof window.v13?.render === 'function');

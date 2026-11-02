@@ -1,6 +1,6 @@
 /**
  * CI `smoke-render` for the browser runtimes (chromium, firefox, webkit) and a Web Worker: the
- * single-file bundle of the built `mermaid` package (packages/visual `smoke:build`) renders
+ * single-file bundle of the built `mermaid` package (packages/dev `smoke:build`) renders
  * one fixture through `render()`. Run per browser with `--project`.
  */
 import { expect, test } from '@playwright/test';

@@ -33,6 +33,8 @@ export default tseslint.config(
       'e2e/**/*',
       '!e2e/browser/',
       '!e2e/browser/**',
+      '!e2e/dev/',
+      '!e2e/dev/**',
       '!e2e/smoke/',
       '!e2e/smoke/**',
       '!e2e/dom/',

@@ -1,6 +1,6 @@
 /**
- * `pnpm --filter @mermaid-js/visual gallery [outDir]`: writes the theme gallery (R-TEST-6) to
- * `outDir/index.html` (default `packages/visual/dist/gallery`). Fails when a fixture does not
+ * `pnpm --filter @mermaid-js/dev gallery [outDir]`: writes the theme gallery (R-TEST-6) to
+ * `outDir/index.html` (default `packages/dev/dist/gallery`). Fails when a fixture does not
  * render, so a broken gallery is never published.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';

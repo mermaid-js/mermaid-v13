@@ -1,4 +1,7 @@
-/** `pnpm --filter @mermaid-js/visual serve`: the Playwright web server (port MERMAID_PORT, default 9000). */
+/**
+ * `pnpm --filter @mermaid-js/dev serve`: the Playwright web server, on MERMAID_PORT (default
+ * 9000; `playwright.config.ts` sets it). `pnpm dev` is the same server with v12's port rule.
+ */
 import { startServer } from '../server.ts';
 
 const port = Number(process.env.MERMAID_PORT ?? 9000);

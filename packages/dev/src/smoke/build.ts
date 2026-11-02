@@ -1,5 +1,5 @@
 /**
- * `pnpm --filter @mermaid-js/visual smoke:build`: bundles `entry.ts` against the BUILT packages
+ * `pnpm --filter @mermaid-js/dev smoke:build`: bundles `entry.ts` against the BUILT packages
  * (`dist/`, so run `pnpm build` first) into `dist/smoke/smoke.mjs`, a single self-contained ES
  * module that Deno, a Web Worker and the three browsers load as is. `--source` bundles the
  * TypeScript sources instead (local runs without a build).

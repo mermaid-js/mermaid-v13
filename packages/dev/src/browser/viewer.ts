@@ -2,13 +2,15 @@
  * The page script of `www/e2e.html` (bundled by the dev server).
  *
  * - `?graph=<base64 JSON {code, mermaid}>` (what `e2e/helpers/util.ts` builds): renders the
- *   code with `mermaid` as integrator config into `#block`, then sets `window.rendered`.
+ *   code with `mermaid` as integrator config into `#block`, then sets `window.rendered`. A
+ *   `code: string[]` renders each block in order into `#block0`, `#block1`, … (as v12's
+ *   `e2e/platform/viewer.js` did).
  * - Always: exposes `window.v13` for the browser specs in `e2e/browser/`.
  */
 import { renderDiagram, type RenderOptions, type RenderOutput } from '../adapter.ts';
 
 interface GraphObject {
-  code: string;
+  code: string | string[];
   mermaid?: Record<string, unknown> & { cssVariables?: boolean; measurer?: 'canvas' | 'table' };
 }
 
@@ -54,16 +56,16 @@ async function main(): Promise<void> {
   if (!graph) return;
   const obj = JSON.parse(b64ToUtf8(decodeURIComponent(graph))) as GraphObject;
   const { cssVariables, measurer, ...config } = obj.mermaid ?? {};
-  const theme = config.theme ?? /^\s*theme:\s*([\w-]+)/m.exec(obj.code)?.[1];
+  const blocks = Array.isArray(obj.code)
+    ? obj.code.map((code, i) => ({ code, id: `block${i}` }))
+    : [{ code: obj.code, id: 'block' }];
+  const theme = config.theme ?? /^\s*theme:\s*([\w-]+)/m.exec(blocks[0]?.code ?? '')?.[1];
   if (theme === 'dark') document.body.classList.add('dark');
   try {
-    const { div } = await api.mount(obj.code, {
-      config,
-      cssVariables,
-      measurer,
-      idPrefix: 'block',
-    });
-    div.id = 'block';
+    for (const { code, id } of blocks) {
+      const { div } = await api.mount(code, { config, cssVariables, measurer, idPrefix: id });
+      div.id = id;
+    }
   } catch (error) {
     window.renderError = error instanceof Error ? error.message : String(error);
     throw error;

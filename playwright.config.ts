@@ -25,14 +25,20 @@ const port = resolveE2EPort();
 process.env.MERMAID_PORT ??= port;
 process.env.MERMAID_DEV_PORT ??= port;
 
-// The v13 page server (packages/visual): bundles the browser adapter and serves e2e.html.
-const devCommand = 'pnpm --filter @mermaid-js/visual serve';
+// The v13 page server (packages/dev, the same server as `pnpm dev`): bundles the browser
+// adapter and serves e2e.html.
+const devCommand = 'pnpm --filter @mermaid-js/dev serve';
 
 export default defineConfig({
   testDir: 'e2e',
   // v13 runs the curated visual baseline (R-TEST-5) and the browser adapter specs only. The
   // other specs under e2e/ are the parked v12 suite.
-  testMatch: ['rendering/mmd-snapshots.spec.ts', 'browser/**/*.spec.ts', 'smoke/**/*.spec.ts'],
+  testMatch: [
+    'rendering/mmd-snapshots.spec.ts',
+    'browser/**/*.spec.ts',
+    'dev/**/*.spec.ts',
+    'smoke/**/*.spec.ts',
+  ],
   // e2e/helpers holds Vitest unit tests for the e2e helpers; Playwright must not collect them.
   testIgnore: '**/helpers/**',
   fullyParallel: true,

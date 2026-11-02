@@ -1,7 +1,7 @@
 name: Theme gallery
 
 # R-TEST-6: publish the flowchart theme gallery (every baseline fixture in every M1 theme) for
-# each alpha. Built from e2e/diagrams/flowchart/baseline by `pnpm --filter @mermaid-js/visual
+# each alpha. Built from e2e/diagrams/flowchart/baseline by `pnpm --filter @mermaid-js/dev
 # gallery`; deployed to GitHub Pages.
 on:
   push:
@@ -27,11 +27,11 @@ jobs:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @mermaid-js/visual gallery dist/pages
+      - run: pnpm --filter @mermaid-js/dev gallery dist/pages
       - uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
-          path: packages/visual/dist/pages
+          path: packages/dev/dist/pages
 
   deploy:
     needs: build
