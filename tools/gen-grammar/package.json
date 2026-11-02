@@ -1,0 +1,11 @@
+{
+  "name": "@mermaid-js/gen-grammar",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Grammar file to oracle parser, fuzz sentences, highlighters and syntax docs (DESIGN §4.4).",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

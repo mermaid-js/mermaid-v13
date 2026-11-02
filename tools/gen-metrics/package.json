@@ -1,0 +1,11 @@
+{
+  "name": "@mermaid-js/gen-metrics",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Font metric table generator (DESIGN §5.2).",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

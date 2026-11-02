@@ -1,0 +1,55 @@
+{
+  "name": "@mermaid-js/core",
+  "version": "0.0.0",
+  "description": "DOM-free Mermaid core: pipeline, parser kit, text measurement, layout, SVG writer, theme and config.",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./parser-kit": {
+      "mermaid-source": "./src/parser-kit/index.ts",
+      "types": "./dist/parser-kit/index.d.ts",
+      "default": "./dist/parser-kit/index.js"
+    },
+    "./layout": {
+      "mermaid-source": "./src/layout/index.ts",
+      "types": "./dist/layout/index.d.ts",
+      "default": "./dist/layout/index.js"
+    },
+    "./svg": {
+      "mermaid-source": "./src/svg/index.ts",
+      "types": "./dist/svg/index.d.ts",
+      "default": "./dist/svg/index.js"
+    },
+    "./text": {
+      "mermaid-source": "./src/text/index.ts",
+      "types": "./dist/text/index.d.ts",
+      "default": "./dist/text/index.js"
+    },
+    "./theme": {
+      "mermaid-source": "./src/theme/index.ts",
+      "types": "./dist/theme/index.d.ts",
+      "default": "./dist/theme/index.js"
+    },
+    "./config": {
+      "mermaid-source": "./src/config/index.ts",
+      "types": "./dist/config/index.d.ts",
+      "default": "./dist/config/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

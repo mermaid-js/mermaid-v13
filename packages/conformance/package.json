@@ -1,0 +1,17 @@
+{
+  "name": "@mermaid-js/conformance",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Parity oracle against mermaid@12, corpus runners and normalisers.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/diagram-flowchart": "workspace:^",
+    "mermaid": "workspace:*",
+    "mermaid-v12": "npm:mermaid@^12.2.0"
+  }
+}

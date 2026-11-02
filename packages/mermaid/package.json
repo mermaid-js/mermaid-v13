@@ -1,0 +1,29 @@
+{
+  "name": "mermaid",
+  "version": "13.0.0-alpha.0",
+  "description": "Markdown-ish syntax for generating flowcharts and other diagrams.",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/diagram-flowchart": "workspace:^"
+  }
+}
