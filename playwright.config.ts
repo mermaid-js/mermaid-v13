@@ -32,7 +32,7 @@ export default defineConfig({
   testDir: 'e2e',
   // v13 runs the curated visual baseline (R-TEST-5) and the browser adapter specs only. The
   // other specs under e2e/ are the parked v12 suite.
-  testMatch: ['rendering/mmd-snapshots.spec.ts', 'browser/**/*.spec.ts'],
+  testMatch: ['rendering/mmd-snapshots.spec.ts', 'browser/**/*.spec.ts', 'smoke/**/*.spec.ts'],
   // e2e/helpers holds Vitest unit tests for the e2e helpers; Playwright must not collect them.
   testIgnore: '**/helpers/**',
   fullyParallel: true,
@@ -65,6 +65,25 @@ export default defineConfig({
     trace: process.env.CI ? 'on-first-retry' : 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
+  projects: [
+    // The baseline and browser specs; the smoke render needs the bundle (`smoke:build`).
+    { name: 'chromium', testIgnore: ['**/helpers/**', 'smoke/**'] },
+    // CI smoke-render, one runtime per job: `--project smoke-<browser>`.
+    ...(['chromium', 'firefox', 'webkit'] as const).map((browser) => ({
+      name: `smoke-${browser}`,
+      testMatch: 'smoke/**/*.spec.ts',
+      use: {
+        ...devices[
+          browser === 'chromium'
+            ? 'Desktop Chrome'
+            : browser === 'firefox'
+              ? 'Desktop Firefox'
+              : 'Desktop Safari'
+        ],
+        deviceScaleFactor: browser === 'firefox' ? 1 : 2,
+      },
+    })),
+  ],
   snapshotPathTemplate: '{testDir}/__snapshots__/{testFilePath}/{arg}{ext}',
   webServer: {
     command: devCommand,

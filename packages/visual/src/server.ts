@@ -5,7 +5,8 @@
  *
  * - `POST /node-render` `{ code, options }` → the same adapter's output rendered in Node, for
  *   the Node-vs-browser equality spec;
- * - `GET /fonts/<file>` → the `@fontsource/noto-sans-sc` files, for the late-font spec.
+ * - `GET /fonts/<file>` → the `@fontsource/noto-sans-sc` files, for the late-font spec;
+ * - `GET /smoke.mjs` → the smoke bundle (`smoke:build`), for the browser and worker smoke renders.
  */
 import { createReadStream, existsSync } from 'node:fs';
 import { createServer, request, type IncomingMessage, type Server } from 'node:http';
@@ -15,6 +16,7 @@ import { context } from 'esbuild';
 import { renderDiagram, type RenderOptions } from './adapter.ts';
 
 const WWW = join(import.meta.dirname, '..', 'www');
+const SMOKE = join(import.meta.dirname, '..', 'dist', 'smoke', 'smoke.mjs');
 const FONTS = join(
   dirname(createRequire(import.meta.url).resolve('@fontsource/noto-sans-sc/package.json')),
   'files'
@@ -66,6 +68,18 @@ export async function startServer(port: number): Promise<PageServer> {
           res.writeHead(500, { 'content-type': 'text/plain' });
           res.end(error instanceof Error ? error.message : String(error));
         });
+      return;
+    }
+    if (url.pathname === '/smoke.mjs') {
+      if (!existsSync(SMOKE)) {
+        res.writeHead(404, { 'content-type': 'text/plain' });
+        res.end(
+          'no smoke bundle: run `pnpm build && pnpm --filter @mermaid-js/visual smoke:build`'
+        );
+        return;
+      }
+      res.writeHead(200, { 'content-type': 'text/javascript', 'cache-control': 'no-store' });
+      createReadStream(SMOKE).pipe(res);
       return;
     }
     if (url.pathname.startsWith('/fonts/')) {

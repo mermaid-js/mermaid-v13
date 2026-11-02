@@ -33,6 +33,8 @@ export default tseslint.config(
       'e2e/**/*',
       '!e2e/browser/',
       '!e2e/browser/**',
+      '!e2e/smoke/',
+      '!e2e/smoke/**',
       '!e2e/helpers/',
       '!e2e/helpers/util.ts',
       '!e2e/helpers/mmd-snapshots.ts',

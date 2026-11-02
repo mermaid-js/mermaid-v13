@@ -10,6 +10,7 @@
   // Only the parts of e2e/ the v13 visual baseline runs; the rest is the parked v12 suite.
   "include": [
     "browser",
+    "smoke",
     "helpers/util.ts",
     "helpers/mmd-snapshots.ts",
     "helpers/mmd-snapshots.spec.ts",
