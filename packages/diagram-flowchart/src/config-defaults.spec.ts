@@ -4,7 +4,8 @@ import { flowchartConfigDefaults } from './index.ts';
 describe('flowchartConfigDefaults', () => {
   it('are the v12 flowchart section defaults without htmlLabels', () => {
     // mermaid@12.2.0 `mermaidAPI.defaultConfig.flowchart`, minus the removed `htmlLabels`,
-    // plus `stepDuration`/`stepNumbers`, which the v12 schema at the v13 branch point adds.
+    // plus `stepDuration`/`stepNumbers`, which the v12 schema at the v13 branch point adds,
+    // and `curve: rounded` (v12 `basis`), the look of v12's default ELK layout.
     expect(flowchartConfigDefaults).toEqual({
       useMaxWidth: true,
       theme: 'redux-color',
@@ -14,7 +15,7 @@ describe('flowchartConfigDefaults', () => {
       diagramPadding: 8,
       nodeSpacing: 50,
       rankSpacing: 50,
-      curve: 'basis',
+      curve: 'rounded',
       padding: 15,
       wrappingWidth: 120,
       minNodeWidth: 120,

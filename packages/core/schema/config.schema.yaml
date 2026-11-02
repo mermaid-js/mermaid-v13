@@ -3157,12 +3157,14 @@ $defs:
             'stepBefore',
             'rounded',
           ]
-        default: 'basis'
+        default: 'rounded'
         x-mermaid:
           status: honoured
           since: 13.0.0
           reason: >-
-            `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped
+            The default changes from `basis` to `rounded`, the look of v12's default ELK layout:
+            stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis`
+            to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped
             routes; `rounded` draws straight segments with rounded corners; every other value draws
             S-curves (the layout engine routes edges, not a d3 curve factory).
 
