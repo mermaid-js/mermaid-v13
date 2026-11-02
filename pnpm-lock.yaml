@@ -166,6 +166,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      mermaid:
+        specifier: workspace:*
+        version: link:../mermaid
 
   packages/visual:
     devDependencies:

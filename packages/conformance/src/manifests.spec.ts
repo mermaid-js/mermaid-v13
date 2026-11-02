@@ -20,5 +20,6 @@ describe('first-party plugin manifests (R-PLUG-3)', () => {
       read.push(dir);
     }
     expect(read).toContain('diagram-flowchart');
+    expect(read).toContain('plugin-interactions');
   });
 });
