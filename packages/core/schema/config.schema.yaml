@@ -125,7 +125,7 @@ properties:
     x-mermaid:
       status: honoured
       since: 13.0.0
-      reason: 'Integrator-only. The default rises from 500 to 5,000 (D31). Sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error.'
+      reason: 'The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error.'
   elk:
     type: object
     properties:

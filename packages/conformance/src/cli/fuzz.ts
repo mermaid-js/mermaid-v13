@@ -6,11 +6,13 @@
  * - `FUZZ_REPORT`: write the JSON report here
  * - `FUZZ_CURRENT`: before each case, write `{seed, index, source}` here, so a run killed by
  *   a real hang (the job timeout) still names its input
+ * - `FUZZ_ORACLE`: also run this many mutated inputs against mermaid@12 and write the
+ *   clustered differences to `FUZZ_ORACLE_REPORT` (informational: never fails the run)
  *
  * Exits 1 when any case failed. Usage: `pnpm --filter @mermaid-js/conformance fuzz`.
  */
 import { writeFileSync } from 'node:fs';
-import { formatFailure, fuzzFlowchart } from '../fuzz/run.ts';
+import { formatFailure, fuzzFlowchart, fuzzOracle } from '../fuzz/run.ts';
 
 const env = process.env;
 const seed = env.FUZZ_SEED ? Number(env.FUZZ_SEED) : Date.now() % 2_147_483_647;
@@ -37,4 +39,14 @@ process.stdout.write(
 );
 for (const f of report.failures) process.stdout.write(formatFailure(f) + '\n');
 if (env.FUZZ_REPORT) writeFileSync(env.FUZZ_REPORT, JSON.stringify(report, null, 2) + '\n');
+if (env.FUZZ_ORACLE && only === undefined) {
+  const oracle = await fuzzOracle(seed, Number(env.FUZZ_ORACLE));
+  process.stdout.write(
+    `fuzz oracle: ${oracle.divergent} of ${oracle.count} inputs differ from mermaid@12 in ${oracle.clusters.length} clusters\n`
+  );
+  for (const c of oracle.clusters) process.stdout.write(`  ${c.count}x ${c.title}\n`);
+  if (env.FUZZ_ORACLE_REPORT) {
+    writeFileSync(env.FUZZ_ORACLE_REPORT, JSON.stringify(oracle, null, 2) + '\n');
+  }
+}
 process.exitCode = report.failures.length > 0 ? 1 : 0;

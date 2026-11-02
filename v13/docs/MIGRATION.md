@@ -30,6 +30,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | --- | --- | --- |
 | `theme` | `"redux"` | The default changes from `default` to `redux` (D55). 13.0 ships `redux`, `default`, `dark`, `forest`, `neutral` and `base`; the other v12 names stand in for one of them with a warning, except `redux-color` (the flowchart default), which renders `redux`. |
 | `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 values `dagre`, `elk` and `elk.<algorithm>` stay valid and map to `layered` until an ELK plugin exists (R-PLUG-8); other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. |
+| `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
 
 <!-- END GENERATED CONFIG SECTION -->
@@ -78,7 +79,24 @@ test checks them against the mermaid@12 declarations.
 | `registerIconPacks(...)` | Accepted and ignored; renders carry an `ICON_PACKS_UNSUPPORTED` warning until the icons plugin exists | R-API-3 |
 | `setParseErrorHandler(fn)` gets the raw error | Deprecated; `fn` gets the `MermaidError` of a failed `parse()` | R-API-4 |
 | `initialize()` replaces the site config | Same: it swaps in a new frozen defaults object; renders already started keep the old one | R-ARCH-4, D72 |
-| Integrator options beyond the schema | `initialize()` also takes `measurer`, `deterministic`, `linkSchemes` and `output.cssVariables`; diagram text can never set them | R-SEC-5, R-SEC-6 |
+| Integrator options beyond the schema | `initialize()` also takes `measurer`, `deterministic`, `linkSchemes`, `output.cssVariables` and `limits`; diagram text can never set them | R-SEC-5, R-SEC-6 |
+| Text over `maxTextSize` renders a "Maximum text size in diagram exceeded" placeholder diagram; over `maxEdges` throws an `Error` | Both reject with `MermaidError { code: 'LIMIT' }`, as do the new caps below | R-SEC-5, D31 |
+
+### Limits
+
+Every render is bounded (R-SEC-5, D31). The integrator sets the limits with `initialize({ limits })`
+or a per-call `config.limits`; v12's `maxTextSize` and `maxEdges` still work and an explicit
+`limits` entry wins over them. Front matter and directives cannot change any of them (the attempt
+is reported as a `CONFIG_SECURE_KEY` warning). Over a limit, the render rejects with
+`MermaidError { code: 'LIMIT' }`.
+
+| Limit | Default | v12 |
+| --- | --- | --- |
+| `maxSourceLength` | 50,000 characters, front matter included (checked before the text is read) | `maxTextSize` 50,000, placeholder diagram |
+| `maxEdges` | 5,000 (`A & B --> C & D` counts four; refused before any is made) | `maxEdges` 500 |
+| `maxNodes` | 10,000 | none |
+| `maxDepth` | subgraphs nested 100 deep; a stack overflow in any stage is reported as this limit | none |
+| `maxOutputLength` | 4,000,000 characters of SVG | none |
 
 ### securityLevel
 

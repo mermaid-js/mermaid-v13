@@ -12,7 +12,10 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { inertProblem } from '@mermaid-js/core/svg';
 import { flowchartTokens, parseFlowchart } from '@mermaid-js/diagram-flowchart';
 import { createMermaid, MermaidError } from 'mermaid';
+import { clusterDivergences, type DivergenceCluster } from '../cluster.ts';
 import { flowchartCorpus } from '../flowchart/grammar/corpus.ts';
+import { PARITY_SUITES } from '../registry.ts';
+import { runParity } from '../runner.ts';
 import { learnSentenceModel, referenceParser } from '../flowchart/grammar/reference.ts';
 import { FLOWCHART_FRAGMENTS, mutator, random } from './mutator.ts';
 
@@ -159,4 +162,39 @@ export function formatFailure(f: FuzzFailure): string {
     `(FUZZ_SEED=${f.seed} FUZZ_CASE=${f.index}): ${f.message.split('\n')[0]}\n` +
     `  source: ${JSON.stringify(f.source)}`
   );
+}
+
+export interface OracleFuzzReport {
+  seed: number;
+  count: number;
+  divergent: number;
+  /** Clusters of v12/v13 differences, each with up to 5 example sources. */
+  clusters: (Omit<DivergenceCluster, 'ids'> & { examples: string[]; count: number })[];
+}
+
+/**
+ * The informational half of the nightly run: mutated inputs through mermaid@12 and v13, the
+ * differences clustered as the oracle-bump job does. Not a failure by itself: compare the
+ * clusters with `FUZZ_DECISIONS` (decided.ts) and file or decide anything new.
+ */
+export async function fuzzOracle(seed: number, count: number): Promise<OracleFuzzReport> {
+  const base = await fuzzCorpus();
+  const corpus = [...base, ...grammarSentences(base, seed, 300)];
+  const next = mutator(corpus, FLOWCHART_FRAGMENTS, random(seed ^ 0x5bd1e995));
+  const items = Array.from({ length: count }, (_, i) => ({
+    id: `fuzz/${seed}/${i}`,
+    source: next(),
+  }));
+  const sources = new Map(items.map((i) => [i.id, i.source]));
+  const report = await runParity({ adapters: PARITY_SUITES.map((s) => s.adapter), corpus: items });
+  return {
+    seed,
+    count,
+    divergent: report.unlisted.length,
+    clusters: clusterDivergences(report.unlisted).map(({ ids, ...c }) => ({
+      ...c,
+      count: ids.length,
+      examples: ids.slice(0, 5).map((id) => sources.get(id) ?? ''),
+    })),
+  };
 }
