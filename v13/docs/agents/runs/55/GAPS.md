@@ -14,3 +14,7 @@ Unmet criteria and cross-ticket items, listed under the ticket that owns them.
 ## After #62
 - Review pass: the Profile tab reads sibling files through `api.ts` directly (against the #58 tab contract). Add `siblings`/`read` to `ViewerContext` in the shell and switch the tab to it.
 - Profile timers on `/dev/` are coarse (about 0.1 ms); COOP/COEP would sharpen them but may affect the Compare tab CDN iframes, so they were left off.
+
+## After #60
+- Review pass: the e2e/dev specs find the diagram with `dev-tab-diagram svg`, which also matches Shoelace icon svgs, so the Messages panel avoids icons. Narrow the specs to `dev-tab-diagram .canvas > svg` and drop that constraint.
+- Warnings show no line:column, because v13 `Warning` has no position (diagnostics do).
