@@ -7,3 +7,5 @@ export type { Oracle, OracleResult } from './oracle.ts';
 export { diffPaths, runParity } from './runner.ts';
 export type { RunParityOptions } from './runner.ts';
 export { inputHash, loadDivergences, parseDivergences } from './divergences.ts';
+export { REPO_ROOT, corpusFromDir, resolveCorpus } from './corpus.ts';
+export type { ParitySuite } from './corpus.ts';
