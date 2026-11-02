@@ -151,7 +151,7 @@ describe('flowchart render: features', () => {
   it('writes the theme: auto style sheet as the first child, scoped by data-p', async () => {
     const { tree, svg } = await draw('flowchart TD\n  A --> B', {
       // `auto` is a v13 theme name the v12 schema enum does not list yet.
-      config: { theme: 'auto' as 'dark' },
+      config: { theme: 'auto' },
       idPrefix: 'p7',
     });
     const root = tree.find({ tag: 'svg' })[0]!;

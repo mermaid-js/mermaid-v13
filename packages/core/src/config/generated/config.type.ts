@@ -62,7 +62,7 @@ export interface MermaidConfig {
  * You may also use `themeCSS` to override this value.
  * 
  */
-theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "auto" | "null")
 themeVariables?: any
 themeCSS?: string
 /**
