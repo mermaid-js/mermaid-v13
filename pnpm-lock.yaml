@@ -181,6 +181,12 @@ importers:
 
   tools/gen-metrics: {}
 
+  tools/release:
+    devDependencies:
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
+
 packages:
 
   '@antfu/install-pkg@2.1.0':
