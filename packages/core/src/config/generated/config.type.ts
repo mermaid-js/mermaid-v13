@@ -78,8 +78,9 @@ handDrawnSeed?: number
 /**
  * Defines which layout algorithm to use for rendering the diagram.
  * 
- * Defaults to `dagre`, the layered layout built into core. ELK is an
- * optional plugin.
+ * Defaults to `layered`, the layout engine built into core (DESIGN §6.1).
+ * The v12 names `dagre` and `elk` are still accepted and map to `layered`
+ * until an ELK plugin is installed.
  * 
  */
 layout?: string

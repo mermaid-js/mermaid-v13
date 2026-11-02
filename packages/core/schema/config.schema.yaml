@@ -93,12 +93,13 @@ properties:
     description: |
       Defines which layout algorithm to use for rendering the diagram.
 
-      Defaults to `dagre`, the layered layout built into core. ELK is an
-      optional plugin.
-    default: 'dagre'
+      Defaults to `layered`, the layout engine built into core (DESIGN §6.1).
+      The v12 names `dagre` and `elk` are still accepted and map to `layered`
+      until an ELK plugin is installed.
+    default: 'layered'
     x-mermaid:
       status: pending
-      reason: 'The default changes from `elk` to `dagre`: ELK becomes an optional plugin (R-PLUG-8).'
+      reason: 'The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 values `dagre` and `elk` stay valid and map to `layered` until an ELK plugin exists (R-PLUG-8).'
   maxTextSize:
     description: The maximum allowed size of the users text diagram
     type: number

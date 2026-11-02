@@ -21,7 +21,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `themeCSS` | string |  | ignored (13.0.0) | v13 output carries no author stylesheet (R-SEC-2). Replacement: `themeVariables`, or `--mermaid-*` CSS variables set by the host page. |  |
 | `look` | "classic" \\| "handDrawn" \\| "neo" | `"classic"` | pending |  | Defines which main look to use for the diagram. |
 | `handDrawnSeed` | number | `0` | pending |  | Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed. |
-| `layout` | string | `"dagre"` | pending | The default changes from `elk` to `dagre`: ELK becomes an optional plugin (R-PLUG-8). | Defines which layout algorithm to use for rendering the diagram. Defaults to `dagre`, the layered layout built into core. ELK is an optional plugin. |
+| `layout` | string | `"layered"` | pending | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 values `dagre` and `elk` stay valid and map to `layered` until an ELK plugin exists (R-PLUG-8). | Defines which layout algorithm to use for rendering the diagram. Defaults to `layered`, the layout engine built into core (DESIGN §6.1). The v12 names `dagre` and `elk` are still accepted and map to `layered` until an ELK plugin is installed. |
 | `maxTextSize` | number | `50000` | pending |  | The maximum allowed size of the users text diagram |
 | `maxEdges` | integer | `500` | pending |  | Defines the maximum number of edges that can be drawn in a graph. |
 | `darkMode` | boolean | `false` | pending |  |  |

@@ -93,13 +93,23 @@ describe('resolveConfig precedence (mirrors v12 config.spec.ts)', () => {
       initialize: { layout: undefined },
       directives: [{ fontFamily: undefined }],
     });
-    expect(config.layout).toBe('dagre');
+    expect(config.layout).toBe('layered');
     expect(config.fontFamily).toBe(CORE_DEFAULTS.fontFamily);
   });
 
   it('copies a fontFamily set in diagram text into themeVariables, as v12 directives did', () => {
     const { config } = resolve({ frontMatter: { fontFamily: 'Courier' } });
     expect(config.themeVariables).toEqual({ fontFamily: 'Courier' });
+  });
+});
+
+describe('v12 layout names', () => {
+  it('accepts layout: dagre and elk from diagram text unchanged and without warnings', () => {
+    for (const layout of ['dagre', 'elk']) {
+      const { config, warnings } = resolve({ frontMatter: { layout } });
+      expect(config.layout).toBe(layout);
+      expect(warnings).toEqual([]);
+    }
   });
 });
 
@@ -337,7 +347,7 @@ describe('the resolved config is frozen (R-ARCH-5)', () => {
 });
 
 describe('CORE_DEFAULTS', () => {
-  it('are the v12.2.0 top-level defaults, with redux and dagre as the new defaults', () => {
+  it('are the v12.2.0 top-level defaults, with redux and layered as the new defaults', () => {
     // Read from mermaid@12.2.0's `mermaidAPI.defaultConfig` (objects and functions left out).
     const v12 = {
       theme: 'default',
@@ -367,6 +377,6 @@ describe('CORE_DEFAULTS', () => {
       markdownAutoWrap: true,
       suppressErrorRendering: false,
     };
-    expect(CORE_DEFAULTS).toEqual({ ...v12, theme: 'redux', layout: 'dagre' });
+    expect(CORE_DEFAULTS).toEqual({ ...v12, theme: 'redux', layout: 'layered' });
   });
 });

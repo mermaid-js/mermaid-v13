@@ -7,7 +7,7 @@ export const CORE_DEFAULTS: MermaidConfig = {
   "theme": "redux",
   "look": "classic",
   "handDrawnSeed": 0,
-  "layout": "dagre",
+  "layout": "layered",
   "maxTextSize": 50000,
   "maxEdges": 500,
   "darkMode": false,

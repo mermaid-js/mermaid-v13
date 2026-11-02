@@ -29,6 +29,6 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | Key | v13 default | Reason |
 | --- | --- | --- |
 | `theme` | `"redux"` | Honoured when core/theme lands. The default changes from `default` to `redux` (D55). |
-| `layout` | `"dagre"` | The default changes from `elk` to `dagre`: ELK becomes an optional plugin (R-PLUG-8). |
+| `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 values `dagre` and `elk` stay valid and map to `layered` until an ELK plugin exists (R-PLUG-8). |
 
 <!-- END GENERATED CONFIG SECTION -->
