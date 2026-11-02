@@ -28,9 +28,21 @@ export default tseslint.config(
       '**/coverage/',
       '.claude/',
       '.tmp/',
-      // v12 Playwright harness and corpus, parked until the visual-baseline ticket revives it.
-      'e2e/',
-      'playwright.config.ts',
+      // The v12 Playwright harness and corpus stay parked; only the parts the v13 visual
+      // baseline (R-TEST-5) runs are linted.
+      'e2e/**/*',
+      '!e2e/browser/',
+      '!e2e/browser/**',
+      '!e2e/smoke/',
+      '!e2e/smoke/**',
+      '!e2e/helpers/',
+      '!e2e/helpers/util.ts',
+      '!e2e/helpers/mmd-snapshots.ts',
+      '!e2e/helpers/mmd-snapshots.spec.ts',
+      '!e2e/helpers/argos-metadata.ts',
+      '!e2e/helpers/argos-metadata.spec.ts',
+      '!e2e/rendering/',
+      '!e2e/rendering/mmd-snapshots.spec.ts',
       // Lint-rule fixtures are linted on purpose by tools/eslint-plugin tests only.
       'tools/**/fixtures/',
     ],

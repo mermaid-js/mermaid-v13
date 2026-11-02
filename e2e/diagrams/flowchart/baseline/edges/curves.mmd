@@ -1,0 +1,14 @@
+---
+description: per-edge curve styles through edge ids
+---
+flowchart LR
+  A e1@--> B
+  A e2@--> C
+  A e3@--> D
+  A e4@--> E
+  A e5@--> F
+  e1@{ curve: linear }
+  e2@{ curve: basis }
+  e3@{ curve: step }
+  e4@{ curve: rounded }
+  e5@{ curve: natural }

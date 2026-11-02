@@ -1,0 +1,17 @@
+---
+description: three levels of nested subgraphs with edges in and out
+---
+flowchart TB
+  out1[Outside] --> a1
+  subgraph one [Level one]
+    a1 --> a2
+    subgraph two [Level two]
+      b1 --> b2
+      subgraph three [Level three]
+        c1 --> c2
+      end
+    end
+  end
+  a2 --> b1
+  b2 --> c1
+  c2 --> out2[Outside]

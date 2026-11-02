@@ -1,0 +1,13 @@
+---
+description: subgraphs with their own direction inside a TB chart
+---
+flowchart TB
+  subgraph lr [Left to right]
+    direction LR
+    a1 --> a2 --> a3
+  end
+  subgraph bt [Bottom to top]
+    direction BT
+    b1 --> b2
+  end
+  lr --> bt
