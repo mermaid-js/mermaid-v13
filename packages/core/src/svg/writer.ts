@@ -34,6 +34,15 @@ export interface LabelBox {
   readonly height: number;
   /** Distance from the top of a line box to its baseline. */
   readonly baseline: number;
+  /**
+   * Draw the lines left-aligned as one block (bullet lists): each line starts `indents[i]` from
+   * the left edge of a box `width` wide centred on the point. Needs `width`.
+   */
+  readonly left?: boolean;
+  /** Width of the widest line, its indent included. */
+  readonly width?: number;
+  /** Offset of each line from the left edge of the box. */
+  readonly indents?: readonly number[];
 }
 
 export interface SvgWriter {
@@ -104,19 +113,25 @@ function writeLabel(
     w.close();
     return;
   }
-  w.open('text', { ...attrs, 'text-anchor': 'middle', 'xml:space': 'preserve' });
+  const left = box.left === true && box.width !== undefined ? cx - box.width / 2 : undefined;
+  w.open('text', {
+    ...attrs,
+    'text-anchor': left === undefined ? 'middle' : 'start',
+    'xml:space': 'preserve',
+  });
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i] as readonly LabelSpan[];
     const y = top + i * box.lineHeight + box.baseline;
+    const x = left === undefined ? cx : left + (box.indents?.[i] ?? 0);
     if (line.length === 0) {
-      w.open('tspan', { x: cx, y });
+      w.open('tspan', { x, y });
       w.text(' ');
       w.close();
       continue;
     }
     for (let j = 0; j < line.length; j++) {
       const span = line[j] as LabelSpan;
-      w.open('tspan', spanAttrs(span, j === 0 ? { x: cx, y } : undefined));
+      w.open('tspan', spanAttrs(span, j === 0 ? { x, y } : undefined));
       w.text(span.text);
       w.close();
     }

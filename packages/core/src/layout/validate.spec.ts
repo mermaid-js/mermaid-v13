@@ -1,0 +1,125 @@
+import { describe, expect, it } from 'vitest';
+import type { LayoutGraph, LayoutModel } from './types.ts';
+import { countCrossings, validateLayout } from './validate.ts';
+
+const graph: LayoutGraph = {
+  direction: 'TB',
+  nodes: [
+    { id: 'a', width: 40, height: 20 },
+    { id: 'b', width: 40, height: 20, parent: 'g' },
+  ],
+  edges: [{ id: 'e', source: 'a', target: 'b', minLen: 1 }],
+  groups: [{ id: 'g', padding: { top: 10, right: 10, bottom: 10, left: 10 } }],
+  spacing: { node: 50, rank: 50, edge: 20 },
+};
+
+function good(): LayoutModel {
+  return {
+    width: 100,
+    height: 120,
+    direction: 'TB',
+    nodes: new Map([
+      ['a', { x: 50, y: 10, width: 40, height: 20 }],
+      ['b', { x: 50, y: 90, width: 40, height: 20 }],
+    ]),
+    groups: new Map([['g', { x: 50, y: 90, width: 60, height: 40, title: { x: 50, y: 75 } }]]),
+    edges: new Map([
+      [
+        'e',
+        {
+          points: [
+            { x: 50, y: 20, axis: 'v' },
+            { x: 50, y: 80, axis: 'v' },
+          ],
+          ports: { source: 'bottom', target: 'top' },
+        },
+      ],
+    ]),
+  };
+}
+
+describe('validateLayout', () => {
+  it('accepts a valid model', () => {
+    expect(validateLayout(graph, good())).toEqual([]);
+  });
+
+  it('reports overlapping nodes', () => {
+    const model = good();
+    model.nodes.set('a', { x: 50, y: 80, width: 40, height: 20 });
+    expect(validateLayout(graph, model)).toContainEqual(expect.stringContaining('overlap'));
+  });
+
+  it('reports NaN and Infinity', () => {
+    const model = good();
+    model.nodes.set('a', { x: NaN, y: 10, width: 40, height: 20 });
+    model.width = Infinity;
+    const problems = validateLayout(graph, model);
+    expect(problems).toContainEqual(expect.stringContaining("node 'a'"));
+    expect(problems).toContainEqual(expect.stringContaining('width'));
+  });
+
+  it('reports a child outside its group', () => {
+    const model = good();
+    model.groups.set('g', { x: 50, y: 100, width: 60, height: 10, title: { x: 50, y: 95 } });
+    expect(validateLayout(graph, model)).toContainEqual(expect.stringContaining('outside'));
+  });
+
+  it('reports missing nodes and edges ends away from their nodes', () => {
+    const model = good();
+    model.nodes.delete('a');
+    model.edges.get('e')!.points[1] = { x: 0, y: 0, axis: 'v' };
+    const problems = validateLayout(graph, model);
+    expect(problems).toContainEqual(expect.stringContaining("missing node 'a'"));
+    expect(problems).toContainEqual(expect.stringContaining('target'));
+  });
+});
+
+describe('validateLayout labels', () => {
+  it('reports an edge label over a node', () => {
+    const labelled: LayoutGraph = {
+      ...graph,
+      edges: [{ id: 'e', source: 'a', target: 'b', minLen: 1, label: { width: 30, height: 16 } }],
+    };
+    const model = good();
+    model.edges.get('e')!.label = { x: 50, y: 50 };
+    expect(validateLayout(labelled, model)).toEqual([]);
+    model.edges.get('e')!.label = { x: 50, y: 15 };
+    expect(validateLayout(labelled, model)).toContainEqual(
+      expect.stringContaining("label of edge 'e'")
+    );
+  });
+});
+
+describe('countCrossings', () => {
+  it('counts proper crossings between edge routes', () => {
+    const model = good();
+    model.edges.set('x', {
+      points: [
+        { x: 0, y: 0, axis: 'v' },
+        { x: 100, y: 100, axis: 'v' },
+      ],
+      ports: { source: 'bottom', target: 'top' },
+    });
+    model.edges.set('y', {
+      points: [
+        { x: 100, y: 0, axis: 'v' },
+        { x: 0, y: 100, axis: 'v' },
+      ],
+      ports: { source: 'bottom', target: 'top' },
+    });
+    // x crosses y and the vertical edge e; y crosses e too; they all meet once in the middle.
+    expect(countCrossings(model)).toBe(3);
+  });
+
+  it('does not count edges that share an end', () => {
+    const model = good();
+    model.edges.set('f', {
+      points: [
+        { x: 50, y: 20, axis: 'v' },
+        { x: 90, y: 80, axis: 'v' },
+      ],
+      ports: { source: 'bottom', target: 'top' },
+    });
+    expect(countCrossings(model)).toBe(0);
+  });
+});

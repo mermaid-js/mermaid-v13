@@ -1,0 +1,1608 @@
+{
+  "syncedAt": "2026-10-30T10:46:44.188Z",
+  "mermaidCommit": "7b981f640c63cacd06742a95a55c1351c5440582",
+  "diagrams": [
+    {
+      "id": "pr-check/1-shapes-layout-default",
+      "file": "pr-check/1-shapes-layout-default.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/1-shapes-layout-default.mmd",
+      "group": "pr-check",
+      "tier": "regular",
+      "lines": 36,
+      "bytes": 839,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "pr-check/2-layout-dagre-subgraphs",
+      "file": "pr-check/2-layout-dagre-subgraphs.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/2-layout-dagre-subgraphs.mmd",
+      "group": "pr-check",
+      "tier": "regular",
+      "lines": 21,
+      "bytes": 524,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "pr-check/3-layout-elk-subgraphs",
+      "file": "pr-check/3-layout-elk-subgraphs.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/3-layout-elk-subgraphs.mmd",
+      "group": "pr-check",
+      "tier": "regular",
+      "lines": 23,
+      "bytes": 682,
+      "features": ["subgraph", "frontmatter", "elk"]
+    },
+    {
+      "id": "pr-check/4-classdef-style",
+      "file": "pr-check/4-classdef-style.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/4-classdef-style.mmd",
+      "group": "pr-check",
+      "tier": "tiny",
+      "lines": 12,
+      "bytes": 424,
+      "features": ["classDef", "style", "frontmatter"]
+    },
+    {
+      "id": "pr-check/5-icon-shape-bundled",
+      "file": "pr-check/5-icon-shape-bundled.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/5-icon-shape-bundled.mmd",
+      "group": "pr-check",
+      "tier": "tiny",
+      "lines": 11,
+      "bytes": 458,
+      "features": ["shape-syntax", "icon", "frontmatter"]
+    },
+    {
+      "id": "pr-check/6-markdown-label-html-true",
+      "file": "pr-check/6-markdown-label-html-true.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/6-markdown-label-html-true.mmd",
+      "group": "pr-check",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 601,
+      "features": ["markdown", "frontmatter"]
+    },
+    {
+      "id": "pr-check/7-markdown-label-html-false",
+      "file": "pr-check/7-markdown-label-html-false.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/7-markdown-label-html-false.mmd",
+      "group": "pr-check",
+      "tier": "tiny",
+      "lines": 14,
+      "bytes": 637,
+      "features": ["markdown", "frontmatter"]
+    },
+    {
+      "id": "pr-check/12-should-render-a-flowchart-with-long-names-and-class-definitions",
+      "file": "pr-check/12-should-render-a-flowchart-with-long-names-and-class-definitions.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/12-should-render-a-flowchart-with-long-names-and-class-definitions.mmd",
+      "group": "pr-check",
+      "tier": "regular",
+      "lines": 102,
+      "bytes": 3997,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "pr-check/52-handle-nested-subgraphs-in-several-levels",
+      "file": "pr-check/52-handle-nested-subgraphs-in-several-levels.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/52-handle-nested-subgraphs-in-several-levels.mmd",
+      "group": "pr-check",
+      "tier": "regular",
+      "lines": 25,
+      "bytes": 411,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "pr-check/60-handle-styling-for-all-node-shapes",
+      "file": "pr-check/60-handle-styling-for-all-node-shapes.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/60-handle-styling-for-all-node-shapes.mmd",
+      "group": "pr-check",
+      "tier": "regular",
+      "lines": 29,
+      "bytes": 1197,
+      "features": ["style", "linkStyle", "frontmatter"]
+    },
+    {
+      "id": "pr-check/8368-elk-label-parallel-edge",
+      "file": "pr-check/8368-elk-label-parallel-edge.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/8368-elk-label-parallel-edge.mmd",
+      "group": "pr-check",
+      "tier": "tiny",
+      "lines": 4,
+      "bytes": 295,
+      "features": ["directive", "elk"]
+    },
+    {
+      "id": "pr-check/circle-content-sizing",
+      "file": "pr-check/circle-content-sizing.mmd",
+      "source": "e2e/diagrams/flowchart/pr-check/circle-content-sizing.mmd",
+      "group": "pr-check",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 466,
+      "features": ["subgraph"]
+    },
+    {
+      "id": "nightly/8292-elk-edge-label-jog",
+      "file": "nightly/8292-elk-edge-label-jog.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/8292-elk-edge-label-jog.mmd",
+      "group": "nightly",
+      "tier": "tiny",
+      "lines": 7,
+      "bytes": 149,
+      "features": ["edge-label"]
+    },
+    {
+      "id": "nightly/8326-should-merge-repeated-subgraph-id-with-nested-subgraph",
+      "file": "nightly/8326-should-merge-repeated-subgraph-id-with-nested-subgraph.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/8326-should-merge-repeated-subgraph-id-with-nested-subgraph.mmd",
+      "group": "nightly",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 166,
+      "features": ["subgraph"]
+    },
+    {
+      "id": "nightly/8326-should-merge-repeated-subgraph-ids",
+      "file": "nightly/8326-should-merge-repeated-subgraph-ids.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/8326-should-merge-repeated-subgraph-ids.mmd",
+      "group": "nightly",
+      "tier": "tiny",
+      "lines": 7,
+      "bytes": 129,
+      "features": ["subgraph"]
+    },
+    {
+      "id": "dagre/01-7-dagre-should-render-a-flowchart-when-usemaxwidth-is-true-default",
+      "file": "dagre/01-7-dagre-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/01-7-dagre-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 428,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "dagre/02-1-dagre-should-render-a-simple-flowchart",
+      "file": "dagre/02-1-dagre-should-render-a-simple-flowchart.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/02-1-dagre-should-render-a-simple-flowchart.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 14,
+      "bytes": 422,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "dagre/2-dagre-should-render-a-simple-flowchart-with-diagrampadding-set-to-0",
+      "file": "dagre/2-dagre-should-render-a-simple-flowchart-with-diagrampadding-set-to-0.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/2-dagre-should-render-a-simple-flowchart-with-diagrampadding-set-to-0.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 454,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "dagre/03-1-dagre-should-render-a-simple-flowchart",
+      "file": "dagre/03-1-dagre-should-render-a-simple-flowchart.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/03-1-dagre-should-render-a-simple-flowchart.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 14,
+      "bytes": 427,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "dagre/3-dagre-a-link-with-correct-arrowhead-to-a-subgraph",
+      "file": "dagre/3-dagre-a-link-with-correct-arrowhead-to-a-subgraph.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/3-dagre-a-link-with-correct-arrowhead-to-a-subgraph.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 19,
+      "bytes": 341,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/04-8-dagre-should-render-a-flowchart-when-usemaxwidth-is-false",
+      "file": "dagre/04-8-dagre-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/04-8-dagre-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 441,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "dagre/4-dagre-length-of-edges",
+      "file": "dagre/4-dagre-length-of-edges.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/4-dagre-length-of-edges.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 20,
+      "bytes": 456,
+      "features": ["edge-label", "frontmatter"]
+    },
+    {
+      "id": "dagre/05-dagre-should-include-classes-on-the-edges",
+      "file": "dagre/05-dagre-should-include-classes-on-the-edges.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/05-dagre-should-include-classes-on-the-edges.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 248,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "dagre/5-dagre-should-render-escaped-without-html-labels",
+      "file": "dagre/5-dagre-should-render-escaped-without-html-labels.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/5-dagre-should-render-escaped-without-html-labels.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 335,
+      "features": ["html", "frontmatter"]
+    },
+    {
+      "id": "dagre/6-dagre-should-render-non-escaped-with-html-labels",
+      "file": "dagre/6-dagre-should-render-non-escaped-with-html-labels.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/6-dagre-should-render-non-escaped-with-html-labels.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 14,
+      "bytes": 369,
+      "features": ["html", "frontmatter"]
+    },
+    {
+      "id": "dagre/06-should-render-a-flowchart-with-title",
+      "file": "dagre/06-should-render-a-flowchart-with-title.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/06-should-render-a-flowchart-with-title.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 11,
+      "bytes": 208,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "dagre/07-render-with-stylized-arrows",
+      "file": "dagre/07-render-with-stylized-arrows.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/07-render-with-stylized-arrows.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 14,
+      "bytes": 363,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "dagre/50-dagre-handle-nested-subgraphs-in-reverse-order",
+      "file": "dagre/50-dagre-handle-nested-subgraphs-in-reverse-order.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/50-dagre-handle-nested-subgraphs-in-reverse-order.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 20,
+      "bytes": 414,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/51-dagre-handle-nested-subgraphs-in-reverse-order",
+      "file": "dagre/51-dagre-handle-nested-subgraphs-in-reverse-order.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/51-dagre-handle-nested-subgraphs-in-reverse-order.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 20,
+      "bytes": 404,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/52-dagre-handle-nested-subgraphs-in-several-levels",
+      "file": "dagre/52-dagre-handle-nested-subgraphs-in-several-levels.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/52-dagre-handle-nested-subgraphs-in-several-levels.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 26,
+      "bytes": 447,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/53-dagre-handle-nested-subgraphs-with-edges-in-and-out",
+      "file": "dagre/53-dagre-handle-nested-subgraphs-with-edges-in-and-out.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/53-dagre-handle-nested-subgraphs-with-edges-in-and-out.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 36,
+      "bytes": 666,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/54-dagre-handle-nested-subgraphs-with-outgoing-links",
+      "file": "dagre/54-dagre-handle-nested-subgraphs-with-outgoing-links.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/54-dagre-handle-nested-subgraphs-with-outgoing-links.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 20,
+      "bytes": 516,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/55-dagre-handle-nested-subgraphs-with-outgoing-links-2",
+      "file": "dagre/55-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/55-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 25,
+      "bytes": 587,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/56-dagre-handle-nested-subgraphs-with-outgoing-links-3",
+      "file": "dagre/56-dagre-handle-nested-subgraphs-with-outgoing-links-3.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/56-dagre-handle-nested-subgraphs-with-outgoing-links-3.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 21,
+      "bytes": 490,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2",
+      "file": "dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-2.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 26,
+      "bytes": 457,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-4",
+      "file": "dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-4.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/57-dagre-handle-nested-subgraphs-with-outgoing-links-4.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 19,
+      "bytes": 401,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/57-x-handle-nested-subgraphs-with-outgoing-links-5",
+      "file": "dagre/57-x-handle-nested-subgraphs-with-outgoing-links-5.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/57-x-handle-nested-subgraphs-with-outgoing-links-5.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 22,
+      "bytes": 649,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/58-dagre-handle-styling-with-style-expressions",
+      "file": "dagre/58-dagre-handle-styling-with-style-expressions.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/58-dagre-handle-styling-with-style-expressions.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 454,
+      "features": ["style", "frontmatter"]
+    },
+    {
+      "id": "dagre/59-dagre-handle-styling-of-subgraphs-and-links",
+      "file": "dagre/59-dagre-handle-styling-of-subgraphs-and-links.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/59-dagre-handle-styling-of-subgraphs-and-links.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 26,
+      "bytes": 643,
+      "features": ["subgraph", "classDef", "linkStyle", "frontmatter"]
+    },
+    {
+      "id": "dagre/60-dagre-handle-styling-for-all-node-shapes-v2",
+      "file": "dagre/60-dagre-handle-styling-for-all-node-shapes-v2.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/60-dagre-handle-styling-for-all-node-shapes-v2.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 40,
+      "bytes": 1738,
+      "features": ["style", "linkStyle", "frontmatter"]
+    },
+    {
+      "id": "dagre/61-dagre-fontawesome-icons-in-edge-labels",
+      "file": "dagre/61-dagre-fontawesome-icons-in-edge-labels.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/61-dagre-fontawesome-icons-in-edge-labels.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 322,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "dagre/62-dagre-should-render-styled-subgraphs",
+      "file": "dagre/62-dagre-should-render-styled-subgraphs.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/62-dagre-should-render-styled-subgraphs.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 37,
+      "bytes": 677,
+      "features": ["subgraph", "style", "frontmatter"]
+    },
+    {
+      "id": "dagre/63-dagre-title-on-subgraphs-should-be-themeable",
+      "file": "dagre/63-dagre-title-on-subgraphs-should-be-themeable.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/63-dagre-title-on-subgraphs-should-be-themeable.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 19,
+      "bytes": 474,
+      "features": ["subgraph", "frontmatter", "directive"]
+    },
+    {
+      "id": "dagre/65-dagre-text-color-from-classes",
+      "file": "dagre/65-dagre-text-color-from-classes.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/65-dagre-text-color-from-classes.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 440,
+      "features": ["classDef", "frontmatter"]
+    },
+    {
+      "id": "dagre/66-dagre-more-nested-subgraph-cases-tb",
+      "file": "dagre/66-dagre-more-nested-subgraph-cases-tb.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/66-dagre-more-nested-subgraph-cases-tb.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 21,
+      "bytes": 440,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/67-dagre-more-nested-subgraph-cases-rl",
+      "file": "dagre/67-dagre-more-nested-subgraph-cases-rl.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/67-dagre-more-nested-subgraph-cases-rl.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 21,
+      "bytes": 440,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/68-dagre-more-nested-subgraph-cases-bt",
+      "file": "dagre/68-dagre-more-nested-subgraph-cases-bt.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/68-dagre-more-nested-subgraph-cases-bt.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 21,
+      "bytes": 440,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/69-dagre-more-nested-subgraph-cases-lr",
+      "file": "dagre/69-dagre-more-nested-subgraph-cases-lr.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/69-dagre-more-nested-subgraph-cases-lr.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 21,
+      "bytes": 440,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/70-dagre-handle-nested-subgraph-cases-tb-link-out-and-link-between-subgraphs",
+      "file": "dagre/70-dagre-handle-nested-subgraph-cases-tb-link-out-and-link-between-subgraphs.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/70-dagre-handle-nested-subgraph-cases-tb-link-out-and-link-between-subgraphs.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 21,
+      "bytes": 432,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/71-dagre-handle-nested-subgraph-cases-rl-link-out-and-link-between-subgraphs",
+      "file": "dagre/71-dagre-handle-nested-subgraph-cases-rl-link-out-and-link-between-subgraphs.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/71-dagre-handle-nested-subgraph-cases-rl-link-out-and-link-between-subgraphs.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 21,
+      "bytes": 432,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/72-dagre-handle-nested-subgraph-cases-bt-link-out-and-link-between-subgraphs",
+      "file": "dagre/72-dagre-handle-nested-subgraph-cases-bt-link-out-and-link-between-subgraphs.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/72-dagre-handle-nested-subgraph-cases-bt-link-out-and-link-between-subgraphs.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 21,
+      "bytes": 432,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/74-dagre-handle-labels-for-multiple-edges-from-and-to-the-same-couple-of-nodes",
+      "file": "dagre/74-dagre-handle-labels-for-multiple-edges-from-and-to-the-same-couple-of-nodes.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/74-dagre-handle-labels-for-multiple-edges-from-and-to-the-same-couple-of-nodes.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 17,
+      "bytes": 389,
+      "features": ["subgraph", "edge-label", "frontmatter"]
+    },
+    {
+      "id": "dagre/74-dagre-handle-nested-subgraph-cases-rl-link-out-and-link-between-subgraphs",
+      "file": "dagre/74-dagre-handle-nested-subgraph-cases-rl-link-out-and-link-between-subgraphs.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/74-dagre-handle-nested-subgraph-cases-rl-link-out-and-link-between-subgraphs.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 21,
+      "bytes": 429,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/76-dagre-handle-unicode-encoded-character-with-html-labels-true",
+      "file": "dagre/76-dagre-handle-unicode-encoded-character-with-html-labels-true.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/76-dagre-handle-unicode-encoded-character-with-html-labels-true.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 15,
+      "bytes": 516,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "dagre/1433-dagre-should-render-a-titled-flowchart-with-titletopmargin-set-to-0",
+      "file": "dagre/1433-dagre-should-render-a-titled-flowchart-with-titletopmargin-set-to-0.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/1433-dagre-should-render-a-titled-flowchart-with-titletopmargin-set-to-0.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 11,
+      "bytes": 261,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "dagre/2050-dagre-handling-of-different-rendering-direction-in-subgraphs",
+      "file": "dagre/2050-dagre-handling-of-different-rendering-direction-in-subgraphs.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/2050-dagre-handling-of-different-rendering-direction-in-subgraphs.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 26,
+      "bytes": 481,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/2388-dagre-handling-default-in-the-node-name",
+      "file": "dagre/2388-dagre-handling-default-in-the-node-name.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/2388-dagre-handling-default-in-the-node-name.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 443,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "dagre/2824-dagre-clipping-of-edges",
+      "file": "dagre/2824-dagre-clipping-of-edges.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/2824-dagre-clipping-of-edges.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 369,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "dagre/6080-should-handle-diamond-shape-intersections",
+      "file": "dagre/6080-should-handle-diamond-shape-intersections.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/6080-should-handle-diamond-shape-intersections.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 43,
+      "bytes": 1109,
+      "features": ["subgraph", "shape-syntax", "edge-label", "icon", "frontmatter"]
+    },
+    {
+      "id": "dagre/6088-1-should-handle-diamond-shape-intersections",
+      "file": "dagre/6088-1-should-handle-diamond-shape-intersections.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/6088-1-should-handle-diamond-shape-intersections.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 20,
+      "bytes": 512,
+      "features": ["subgraph", "edge-label", "icon", "frontmatter"]
+    },
+    {
+      "id": "dagre/6088-2-should-handle-diamond-shape-intersections",
+      "file": "dagre/6088-2-should-handle-diamond-shape-intersections.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/6088-2-should-handle-diamond-shape-intersections.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 29,
+      "bytes": 595,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/6088-3-should-handle-diamond-shape-intersections",
+      "file": "dagre/6088-3-should-handle-diamond-shape-intersections.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/6088-3-should-handle-diamond-shape-intersections.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 369,
+      "features": ["edge-label", "icon", "frontmatter"]
+    },
+    {
+      "id": "dagre/6088-4-should-handle-diamond-shape-intersections",
+      "file": "dagre/6088-4-should-handle-diamond-shape-intersections.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/6088-4-should-handle-diamond-shape-intersections.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 42,
+      "bytes": 1086,
+      "features": ["subgraph", "shape-syntax", "edge-label", "icon", "frontmatter"]
+    },
+    {
+      "id": "dagre/6088-5-should-handle-diamond-shape-intersections",
+      "file": "dagre/6088-5-should-handle-diamond-shape-intersections.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/6088-5-should-handle-diamond-shape-intersections.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 12,
+      "bytes": 351,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "dagre/6088-6-should-handle-diamond-shape-intersections",
+      "file": "dagre/6088-6-should-handle-diamond-shape-intersections.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/6088-6-should-handle-diamond-shape-intersections.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 15,
+      "bytes": 337,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/6647-dagre-should-keep-node-order-when-using-dagre-layout-unless-it-would-add-crossings",
+      "file": "dagre/6647-dagre-should-keep-node-order-when-using-dagre-layout-unless-it-would-add-crossings.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/6647-dagre-should-keep-node-order-when-using-dagre-layout-unless-it-would-add-crossings.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 336,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "dagre/7213-should-render-dagre-edges-with-right-angles-not-curves",
+      "file": "dagre/7213-should-render-dagre-edges-with-right-angles-not-curves.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/7213-should-render-dagre-edges-with-right-angles-not-curves.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 27,
+      "bytes": 565,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/dagre-recursive-flow-with-dagre-keepentrynodeontop-false-keeps-the-default-layout-7827",
+      "file": "dagre/dagre-recursive-flow-with-dagre-keepentrynodeontop-false-keeps-the-default-layout-7827.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/dagre-recursive-flow-with-dagre-keepentrynodeontop-false-keeps-the-default-layout-7827.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 510,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "dagre/dagre-should-keep-the-entry-node-on-top-of-a-recursive-flow-nested-in-a-subgraph-with-dagre-keepentrynodeontop-true-7827",
+      "file": "dagre/dagre-should-keep-the-entry-node-on-top-of-a-recursive-flow-nested-in-a-subgraph-with-dagre-keepentrynodeontop-true-7827.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/dagre-should-keep-the-entry-node-on-top-of-a-recursive-flow-nested-in-a-subgraph-with-dagre-keepentrynodeontop-true-7827.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 17,
+      "bytes": 625,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/dagre-should-keep-the-entry-node-on-top-when-a-flow-recurses-with-dagre-keepentrynodeontop-true-7827",
+      "file": "dagre/dagre-should-keep-the-entry-node-on-top-when-a-flow-recurses-with-dagre-keepentrynodeontop-true-7827.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/dagre-should-keep-the-entry-node-on-top-when-a-flow-recurses-with-dagre-keepentrynodeontop-true-7827.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 488,
+      "features": ["frontmatter"]
+    },
+    {
+      "id": "dagre/dagre-should-merge-edges-within-subgraphs-when-dagre-mergeedges-is-true-7659",
+      "file": "dagre/dagre-should-merge-edges-within-subgraphs-when-dagre-mergeedges-is-true-7659.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/dagre-should-merge-edges-within-subgraphs-when-dagre-mergeedges-is-true-7659.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 18,
+      "bytes": 358,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "dagre/new-line-in-node-and-formatted-edge-label-2",
+      "file": "dagre/new-line-in-node-and-formatted-edge-label-2.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/new-line-in-node-and-formatted-edge-label-2.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 381,
+      "features": ["markdown", "frontmatter", "directive"]
+    },
+    {
+      "id": "dagre/new-line-in-node-and-formatted-edge-label",
+      "file": "dagre/new-line-in-node-and-formatted-edge-label.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/new-line-in-node-and-formatted-edge-label.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 379,
+      "features": ["markdown", "frontmatter", "directive"]
+    },
+    {
+      "id": "dagre/sub-graphs-and-markdown-strings-2",
+      "file": "dagre/sub-graphs-and-markdown-strings-2.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/sub-graphs-and-markdown-strings-2.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 19,
+      "bytes": 520,
+      "features": ["subgraph", "markdown", "edge-label", "frontmatter", "directive"]
+    },
+    {
+      "id": "dagre/sub-graphs-and-markdown-strings",
+      "file": "dagre/sub-graphs-and-markdown-strings.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/sub-graphs-and-markdown-strings.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 19,
+      "bytes": 518,
+      "features": ["subgraph", "markdown", "edge-label", "frontmatter", "directive"]
+    },
+    {
+      "id": "dagre/sub-graphs",
+      "file": "dagre/sub-graphs.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/sub-graphs.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 18,
+      "bytes": 476,
+      "features": ["subgraph", "edge-label", "frontmatter"]
+    },
+    {
+      "id": "dagre/v2-dagre-16-render-stadium-shape",
+      "file": "dagre/v2-dagre-16-render-stadium-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/v2-dagre-16-render-stadium-shape.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 23,
+      "bytes": 777,
+      "features": ["classDef", "click", "html", "frontmatter"]
+    },
+    {
+      "id": "dagre/with-formatting-in-a-node-2",
+      "file": "dagre/with-formatting-in-a-node-2.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/with-formatting-in-a-node-2.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 19,
+      "bytes": 488,
+      "features": ["markdown", "edge-label", "frontmatter", "directive"]
+    },
+    {
+      "id": "dagre/with-formatting-in-a-node",
+      "file": "dagre/with-formatting-in-a-node.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/with-formatting-in-a-node.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 19,
+      "bytes": 486,
+      "features": ["markdown", "edge-label", "frontmatter", "directive"]
+    },
+    {
+      "id": "dagre/with-styling-and-classes-2",
+      "file": "dagre/with-styling-and-classes-2.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/with-styling-and-classes-2.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 583,
+      "features": ["classDef", "style", "markdown", "frontmatter", "directive"]
+    },
+    {
+      "id": "dagre/with-styling-and-classes",
+      "file": "dagre/with-styling-and-classes.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/with-styling-and-classes.mmd",
+      "group": "dagre",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 581,
+      "features": ["classDef", "style", "markdown", "frontmatter", "directive"]
+    },
+    {
+      "id": "dagre/wrapping-long-text-with-a-new-line-2",
+      "file": "dagre/wrapping-long-text-with-a-new-line-2.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/wrapping-long-text-with-a-new-line-2.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 14,
+      "bytes": 701,
+      "features": ["markdown", "frontmatter", "directive"]
+    },
+    {
+      "id": "dagre/wrapping-long-text-with-a-new-line",
+      "file": "dagre/wrapping-long-text-with-a-new-line.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/dagre/wrapping-long-text-with-a-new-line.mmd",
+      "group": "dagre",
+      "tier": "tiny",
+      "lines": 14,
+      "bytes": 699,
+      "features": ["markdown", "frontmatter", "directive"]
+    },
+    {
+      "id": "shape-alias/01-all-process-rect-proc-rectangle-should-render-same-shape",
+      "file": "shape-alias/01-all-process-rect-proc-rectangle-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/01-all-process-rect-proc-rectangle-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 313,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/02-all-event-rounded-should-render-same-shape",
+      "file": "shape-alias/02-all-event-rounded-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/02-all-event-rounded-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 226,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/03-all-stadium-pill-terminal-should-render-same-shape",
+      "file": "shape-alias/03-all-stadium-pill-terminal-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/03-all-stadium-pill-terminal-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 264,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/04-all-fr-rect-subproc-subprocess-framed-rectangle-subroutine-should-render-same-shape",
+      "file": "shape-alias/04-all-fr-rect-subproc-subprocess-framed-rectangle-subroutine-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/04-all-fr-rect-subproc-subprocess-framed-rectangle-subroutine-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 11,
+      "bytes": 423,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/05-all-db-database-cylinder-cyl-should-render-same-shape",
+      "file": "shape-alias/05-all-db-database-cylinder-cyl-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/05-all-db-database-cylinder-cyl-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 303,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/06-all-diam-decision-diamond-should-render-same-shape",
+      "file": "shape-alias/06-all-diam-decision-diamond-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/06-all-diam-decision-diamond-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 257,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/07-all-hex-hexagon-prepare-should-render-same-shape",
+      "file": "shape-alias/07-all-hex-hexagon-prepare-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/07-all-hex-hexagon-prepare-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 264,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/08-all-lean-l-lean-left-out-in-should-render-same-shape",
+      "file": "shape-alias/08-all-lean-l-lean-left-out-in-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/08-all-lean-l-lean-left-out-in-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 291,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/09-all-lean-r-lean-right-in-out-should-render-same-shape",
+      "file": "shape-alias/09-all-lean-r-lean-right-in-out-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/09-all-lean-r-lean-right-in-out-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 295,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/10-all-trap-b-trapezoid-bottom-priority-should-render-same-shape",
+      "file": "shape-alias/10-all-trap-b-trapezoid-bottom-priority-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/10-all-trap-b-trapezoid-bottom-priority-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 311,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/11-all-trap-t-trapezoid-top-manual-should-render-same-shape",
+      "file": "shape-alias/11-all-trap-t-trapezoid-top-manual-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/11-all-trap-t-trapezoid-top-manual-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 294,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/12-all-dbl-circ-double-circle-should-render-same-shape",
+      "file": "shape-alias/12-all-dbl-circ-double-circle-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/12-all-dbl-circ-double-circle-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 235,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/13-all-notched-rectangle-card-notch-rect-should-render-same-shape",
+      "file": "shape-alias/13-all-notched-rectangle-card-notch-rect-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/13-all-notched-rectangle-card-notch-rect-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 299,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/14-all-sm-circ-small-circle-start-should-render-same-shape",
+      "file": "shape-alias/14-all-sm-circ-small-circle-start-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/14-all-sm-circ-small-circle-start-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 280,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/15-all-lin-rect-lined-rectangle-lin-proc-lined-process-shaded-process-should-render-same-shape",
+      "file": "shape-alias/15-all-lin-rect-lined-rectangle-lin-proc-lined-process-shaded-process-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/15-all-lin-rect-lined-rectangle-lin-proc-lined-process-shaded-process-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 12,
+      "bytes": 452,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/16-all-fr-circ-framed-circle-stop-should-render-same-shape",
+      "file": "shape-alias/16-all-fr-circ-framed-circle-stop-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/16-all-fr-circ-framed-circle-stop-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 280,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/17-all-comment-brace-l-should-render-same-shape",
+      "file": "shape-alias/17-all-comment-brace-l-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/17-all-comment-brace-l-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 221,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/18-all-fork-join-should-render-same-shape",
+      "file": "shape-alias/18-all-fork-join-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/18-all-fork-join-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 198,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/19-all-bolt-com-link-lightning-bolt-should-render-same-shape",
+      "file": "shape-alias/19-all-bolt-com-link-lightning-bolt-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/19-all-bolt-com-link-lightning-bolt-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 295,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/20-all-doc-document-should-render-same-shape",
+      "file": "shape-alias/20-all-doc-document-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/20-all-doc-document-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 200,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/21-all-delay-half-rounded-rectangle-should-render-same-shape",
+      "file": "shape-alias/21-all-delay-half-rounded-rectangle-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/21-all-delay-half-rounded-rectangle-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 257,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/22-all-h-cyl-das-horizontal-cylinder-should-render-same-shape",
+      "file": "shape-alias/22-all-h-cyl-das-horizontal-cylinder-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/22-all-h-cyl-das-horizontal-cylinder-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 313,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/23-all-lin-cyl-disk-lined-cylinder-should-render-same-shape",
+      "file": "shape-alias/23-all-lin-cyl-disk-lined-cylinder-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/23-all-lin-cyl-disk-lined-cylinder-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 286,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/24-all-curv-trap-display-curved-trapezoid-should-render-same-shape",
+      "file": "shape-alias/24-all-curv-trap-display-curved-trapezoid-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/24-all-curv-trap-display-curved-trapezoid-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 304,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/25-all-div-rect-div-proc-divided-rectangle-divided-process-should-render-same-shape",
+      "file": "shape-alias/25-all-div-rect-div-proc-divided-rectangle-divided-process-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/25-all-div-rect-div-proc-divided-rectangle-divided-process-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 384,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/26-all-extract-tri-triangle-should-render-same-shape",
+      "file": "shape-alias/26-all-extract-tri-triangle-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/26-all-extract-tri-triangle-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 254,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/27-all-win-pane-internal-storage-window-pane-should-render-same-shape",
+      "file": "shape-alias/27-all-win-pane-internal-storage-window-pane-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/27-all-win-pane-internal-storage-window-pane-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 317,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/28-all-f-circ-junction-filled-circle-should-render-same-shape",
+      "file": "shape-alias/28-all-f-circ-junction-filled-circle-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/28-all-f-circ-junction-filled-circle-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 287,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/29-all-lin-doc-lined-document-should-render-same-shape",
+      "file": "shape-alias/29-all-lin-doc-lined-document-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/29-all-lin-doc-lined-document-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 225,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/30-all-notch-pent-loop-limit-notched-pentagon-should-render-same-shape",
+      "file": "shape-alias/30-all-notch-pent-loop-limit-notched-pentagon-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/30-all-notch-pent-loop-limit-notched-pentagon-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 323,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/31-all-flip-tri-manual-file-flipped-triangle-should-render-same-shape",
+      "file": "shape-alias/31-all-flip-tri-manual-file-flipped-triangle-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/31-all-flip-tri-manual-file-flipped-triangle-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 317,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/32-all-sl-rect-manual-input-sloped-rectangle-should-render-same-shape",
+      "file": "shape-alias/32-all-sl-rect-manual-input-sloped-rectangle-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/32-all-sl-rect-manual-input-sloped-rectangle-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 318,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/33-all-docs-documents-st-doc-stacked-document-should-render-same-shape",
+      "file": "shape-alias/33-all-docs-documents-st-doc-stacked-document-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/33-all-docs-documents-st-doc-stacked-document-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 351,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/34-all-procs-processes-st-rect-stacked-rectangle-should-render-same-shape",
+      "file": "shape-alias/34-all-procs-processes-st-rect-stacked-rectangle-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/34-all-procs-processes-st-rect-stacked-rectangle-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 360,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/35-all-flag-paper-tape-should-render-same-shape",
+      "file": "shape-alias/35-all-flag-paper-tape-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/35-all-flag-paper-tape-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 216,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/36-all-bow-rect-stored-data-bow-tie-rectangle-should-render-same-shape",
+      "file": "shape-alias/36-all-bow-rect-stored-data-bow-tie-rectangle-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/36-all-bow-rect-stored-data-bow-tie-rectangle-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 321,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/37-all-cross-circ-summary-crossed-circle-should-render-same-shape",
+      "file": "shape-alias/37-all-cross-circ-summary-crossed-circle-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/37-all-cross-circ-summary-crossed-circle-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 9,
+      "bytes": 299,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/38-all-tag-doc-tagged-document-should-render-same-shape",
+      "file": "shape-alias/38-all-tag-doc-tagged-document-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/38-all-tag-doc-tagged-document-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 229,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/39-all-tag-rect-tag-proc-tagged-rectangle-tagged-process-should-render-same-shape",
+      "file": "shape-alias/39-all-tag-rect-tag-proc-tagged-rectangle-tagged-process-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/39-all-tag-rect-tag-proc-tagged-rectangle-tagged-process-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 377,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/40-all-collate-hourglass-should-render-same-shape",
+      "file": "shape-alias/40-all-collate-hourglass-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/40-all-collate-hourglass-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 213,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/41-all-datastore-data-store-should-render-same-shape",
+      "file": "shape-alias/41-all-datastore-data-store-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/41-all-datastore-data-store-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 242,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "shape-alias/42-all-folder-directory-should-render-same-shape",
+      "file": "shape-alias/42-all-folder-directory-should-render-same-shape.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/shape-alias/42-all-folder-directory-should-render-same-shape.mmd",
+      "group": "shape-alias",
+      "tier": "tiny",
+      "lines": 8,
+      "bytes": 209,
+      "features": ["shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "v2/01-7-should-render-a-flowchart-when-usemaxwidth-is-true-default",
+      "file": "v2/01-7-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/v2/01-7-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+      "group": "v2",
+      "tier": "tiny",
+      "lines": 15,
+      "bytes": 467,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "v2/02-8-should-render-a-flowchart-when-usemaxwidth-is-false",
+      "file": "v2/02-8-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/v2/02-8-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+      "group": "v2",
+      "tier": "tiny",
+      "lines": 15,
+      "bytes": 433,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "v2/03-should-render-raw-strings",
+      "file": "v2/03-should-render-raw-strings.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/v2/03-should-render-raw-strings.mmd",
+      "group": "v2",
+      "tier": "regular",
+      "lines": 19,
+      "bytes": 806,
+      "features": ["subgraph", "markdown", "edge-label", "frontmatter"]
+    },
+    {
+      "id": "v2/04-should-render-raw-strings-with-htmllabels-false",
+      "file": "v2/04-should-render-raw-strings-with-htmllabels-false.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/v2/04-should-render-raw-strings-with-htmllabels-false.mmd",
+      "group": "v2",
+      "tier": "regular",
+      "lines": 20,
+      "bytes": 754,
+      "features": ["subgraph", "markdown", "edge-label", "frontmatter"]
+    },
+    {
+      "id": "v2/05-should-wrap-edge-labels-markdownautowrap-true-htmllabels-true",
+      "file": "v2/05-should-wrap-edge-labels-markdownautowrap-true-htmllabels-true.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/v2/05-should-wrap-edge-labels-markdownautowrap-true-htmllabels-true.mmd",
+      "group": "v2",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 850,
+      "features": ["markdown", "edge-label", "frontmatter"]
+    },
+    {
+      "id": "v2/06-should-wrap-edge-labels-markdownautowrap-true-htmllabels-false",
+      "file": "v2/06-should-wrap-edge-labels-markdownautowrap-true-htmllabels-false.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/v2/06-should-wrap-edge-labels-markdownautowrap-true-htmllabels-false.mmd",
+      "group": "v2",
+      "tier": "regular",
+      "lines": 16,
+      "bytes": 894,
+      "features": ["markdown", "edge-label", "frontmatter"]
+    },
+    {
+      "id": "v2/07-should-wrap-edge-labels-markdownautowrap-false-htmllabels-true",
+      "file": "v2/07-should-wrap-edge-labels-markdownautowrap-false-htmllabels-true.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/v2/07-should-wrap-edge-labels-markdownautowrap-false-htmllabels-true.mmd",
+      "group": "v2",
+      "tier": "regular",
+      "lines": 17,
+      "bytes": 921,
+      "features": ["markdown", "edge-label", "frontmatter"]
+    },
+    {
+      "id": "classic/01-38-should-render-a-flowchart-when-usemaxwidth-is-true-default",
+      "file": "classic/01-38-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/classic/01-38-should-render-a-flowchart-when-usemaxwidth-is-true-default.mmd",
+      "group": "classic",
+      "tier": "tiny",
+      "lines": 15,
+      "bytes": 412,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "classic/02-39-should-render-a-flowchart-when-usemaxwidth-is-false",
+      "file": "classic/02-39-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/classic/02-39-should-render-a-flowchart-when-usemaxwidth-is-false.mmd",
+      "group": "classic",
+      "tier": "tiny",
+      "lines": 15,
+      "bytes": 412,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "classic/03-40-should-add-edge-animation",
+      "file": "classic/03-40-should-add-edge-animation.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd",
+      "group": "classic",
+      "tier": "tiny",
+      "lines": 12,
+      "bytes": 448,
+      "features": ["style", "shape-syntax", "frontmatter"]
+    },
+    {
+      "id": "icon/01-should-render-registered-icons-on-theme-default",
+      "file": "icon/01-should-render-registered-icons-on-theme-default.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/icon/01-should-render-registered-icons-on-theme-default.mmd",
+      "group": "icon",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 294,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "icon/02-should-render-icons-from-fontawesome-library-on-theme-default",
+      "file": "icon/02-should-render-icons-from-fontawesome-library-on-theme-default.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/icon/02-should-render-icons-from-fontawesome-library-on-theme-default.mmd",
+      "group": "icon",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 490,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "icon/03-should-render-icons-from-fontawesome-library-on-theme-dark",
+      "file": "icon/03-should-render-icons-from-fontawesome-library-on-theme-dark.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/icon/03-should-render-icons-from-fontawesome-library-on-theme-dark.mmd",
+      "group": "icon",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 484,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "icon/04-should-render-registered-icons-on-theme-forest",
+      "file": "icon/04-should-render-registered-icons-on-theme-forest.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/icon/04-should-render-registered-icons-on-theme-forest.mmd",
+      "group": "icon",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 292,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "icon/05-should-render-registered-icons-on-theme-dark",
+      "file": "icon/05-should-render-registered-icons-on-theme-dark.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/icon/05-should-render-registered-icons-on-theme-dark.mmd",
+      "group": "icon",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 288,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "icon/06-should-render-icons-from-fontawesome-library-on-theme-base",
+      "file": "icon/06-should-render-icons-from-fontawesome-library-on-theme-base.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/icon/06-should-render-icons-from-fontawesome-library-on-theme-base.mmd",
+      "group": "icon",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 484,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "icon/07-should-render-registered-icons-on-theme-base",
+      "file": "icon/07-should-render-registered-icons-on-theme-base.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/icon/07-should-render-registered-icons-on-theme-base.mmd",
+      "group": "icon",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 288,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "icon/08-should-render-icons-from-fontawesome-library-on-theme-forest",
+      "file": "icon/08-should-render-icons-from-fontawesome-library-on-theme-forest.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/icon/08-should-render-icons-from-fontawesome-library-on-theme-forest.mmd",
+      "group": "icon",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 488,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "icon/09-should-render-icons-from-fontawesome-library-on-theme-neutral",
+      "file": "icon/09-should-render-icons-from-fontawesome-library-on-theme-neutral.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/icon/09-should-render-icons-from-fontawesome-library-on-theme-neutral.mmd",
+      "group": "icon",
+      "tier": "tiny",
+      "lines": 13,
+      "bytes": 490,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "icon/10-should-render-registered-icons-on-theme-neutral",
+      "file": "icon/10-should-render-registered-icons-on-theme-neutral.mmd",
+      "source": "e2e/diagrams/flowchart/nightly-check/icon/10-should-render-registered-icons-on-theme-neutral.mmd",
+      "group": "icon",
+      "tier": "tiny",
+      "lines": 10,
+      "bytes": 294,
+      "features": ["icon", "frontmatter"]
+    },
+    {
+      "id": "perf/huge1",
+      "file": "perf/huge1.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/huge1.mmd",
+      "group": "perf",
+      "tier": "huge",
+      "lines": 2403,
+      "bytes": 244352,
+      "features": []
+    },
+    {
+      "id": "perf/huge2",
+      "file": "perf/huge2.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/huge2.mmd",
+      "group": "perf",
+      "tier": "huge",
+      "lines": 1708,
+      "bytes": 136003,
+      "features": ["subgraph", "frontmatter"]
+    },
+    {
+      "id": "perf/huge3",
+      "file": "perf/huge3.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/huge3.mmd",
+      "group": "perf",
+      "tier": "huge",
+      "lines": 189,
+      "bytes": 152649,
+      "features": ["subgraph", "classDef", "html"]
+    },
+    {
+      "id": "perf/huge5",
+      "file": "perf/huge5.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/huge5.mmd",
+      "group": "perf",
+      "tier": "huge",
+      "lines": 769,
+      "bytes": 120658,
+      "features": ["subgraph", "classDef", "edge-label", "html", "directive"]
+    },
+    {
+      "id": "perf/large1",
+      "file": "perf/large1.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/large1.mmd",
+      "group": "perf",
+      "tier": "huge",
+      "lines": 810,
+      "bytes": 72714,
+      "features": [
+        "subgraph",
+        "classDef",
+        "style",
+        "shape-syntax",
+        "edge-label",
+        "html",
+        "frontmatter",
+        "handDrawn"
+      ]
+    },
+    {
+      "id": "perf/large2",
+      "file": "perf/large2.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/large2.mmd",
+      "group": "perf",
+      "tier": "huge",
+      "lines": 104,
+      "bytes": 75513,
+      "features": ["subgraph", "classDef", "edge-label", "html"]
+    },
+    {
+      "id": "perf/large4",
+      "file": "perf/large4.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/large4.mmd",
+      "group": "perf",
+      "tier": "huge",
+      "lines": 116,
+      "bytes": 73901,
+      "features": ["subgraph"]
+    },
+    {
+      "id": "perf/large5",
+      "file": "perf/large5.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/large5.mmd",
+      "group": "perf",
+      "tier": "huge",
+      "lines": 810,
+      "bytes": 72722,
+      "features": [
+        "subgraph",
+        "classDef",
+        "style",
+        "shape-syntax",
+        "edge-label",
+        "html",
+        "frontmatter",
+        "handDrawn"
+      ]
+    },
+    {
+      "id": "perf/medium1",
+      "file": "perf/medium1.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/medium1.mmd",
+      "group": "perf",
+      "tier": "large",
+      "lines": 674,
+      "bytes": 50460,
+      "features": ["classDef"]
+    },
+    {
+      "id": "perf/medium2",
+      "file": "perf/medium2.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/medium2.mmd",
+      "group": "perf",
+      "tier": "large",
+      "lines": 800,
+      "bytes": 46120,
+      "features": ["classDef", "style", "shape-syntax", "edge-label", "html", "icon"]
+    },
+    {
+      "id": "perf/medium3",
+      "file": "perf/medium3.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/medium3.mmd",
+      "group": "perf",
+      "tier": "large",
+      "lines": 564,
+      "bytes": 48606,
+      "features": ["subgraph", "classDef", "edge-label", "html"]
+    },
+    {
+      "id": "perf/medium4",
+      "file": "perf/medium4.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/medium4.mmd",
+      "group": "perf",
+      "tier": "large",
+      "lines": 591,
+      "bytes": 48170,
+      "features": []
+    },
+    {
+      "id": "perf/medium5",
+      "file": "perf/medium5.mmd",
+      "source": "e2e/platform/dev-diagrams/performance/flowcharts/medium5.mmd",
+      "group": "perf",
+      "tier": "large",
+      "lines": 482,
+      "bytes": 48039,
+      "features": ["subgraph", "style", "linkStyle", "shape-syntax", "edge-label", "html"]
+    }
+  ],
+  "skipped": [
+    "e2e/platform/dev-diagrams/performance/flowcharts/huge4.mmd (duplicate of e2e/platform/dev-diagrams/performance/flowcharts/huge2.mmd)",
+    "e2e/platform/dev-diagrams/performance/flowcharts/large3.mmd (duplicate of e2e/platform/dev-diagrams/performance/flowcharts/large1.mmd)"
+  ]
+}

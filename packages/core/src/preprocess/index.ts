@@ -1,0 +1,11 @@
+/**
+ * Preprocess (DESIGN §4.1, D67): locate front matter and `%%{…}%%` directives without
+ * rewriting the source. Everything returned is a range into the original text.
+ */
+export { preprocess } from './preprocess.ts';
+export type { PreprocessResult } from './preprocess.ts';
+export type { FrontMatter } from './frontmatter.ts';
+export { MAX_DIRECTIVE_DEPTH } from './directives.ts';
+export type { Directive, DirectiveKind } from './directives.ts';
+export { MAX_YAML_DEPTH, parseYaml } from './yaml.ts';
+export type { YamlMap, YamlOptions, YamlResult, YamlValue } from './yaml.ts';

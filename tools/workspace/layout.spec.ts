@@ -44,10 +44,12 @@ describe('workspace layout (DESIGN §2)', () => {
         './config',
         './layout',
         './parser-kit',
+        './preprocess',
         './svg',
         './svg/testing',
         './text',
         './theme',
+        './timing',
       ].sort()
     );
   });

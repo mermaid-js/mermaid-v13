@@ -1,4 +1,31 @@
 /**
- * Shared layered and compound layout engine (DESIGN §6).
+ * Shared layout contract for graph diagrams and the default `layered` engine (DESIGN §6).
  */
-export {};
+export type {
+  Box,
+  Dir,
+  EdgeRouting,
+  LayoutContext,
+  LayoutEdge,
+  LayoutEngine,
+  LayoutGraph,
+  LayoutGroup,
+  LayoutModel,
+  LayoutModelEdge,
+  LayoutModelGroup,
+  LayoutModelNode,
+  LayoutNode,
+  LayoutSpacing,
+  Point,
+  RoutePoint,
+  Side,
+  Size,
+} from './types.ts';
+export {
+  layered,
+  layoutSettings,
+  TURN_BREAKPOINT,
+  V12_SPACING,
+  type SpacingConfig,
+} from './layered/index.ts';
+export { countCrossings, validateLayout } from './validate.ts';
