@@ -241,6 +241,8 @@ export class FlowBuilder {
   private subCount = 0;
   /** Limits already reported, so a breach is one diagnostic, not one per item. */
   private readonly limitHit = new Set<'edges' | 'nodes'>();
+  /** `style X` on an id nothing defined yet; warned at the end unless X is a subgraph. */
+  private readonly unknownStyles: { id: string; at: Range }[] = [];
 
   constructor(private readonly options: BuilderOptions) {}
 
@@ -289,13 +291,9 @@ export class FlowBuilder {
 
     let vertex = this.vertices.get(id);
     if (vertex === undefined) {
-      if (label === undefined && type === undefined && styles !== undefined) {
-        this.options.warn(
-          'STYLE_UNKNOWN_NODE',
-          `Style applied to unknown node "${id}". This may indicate a typo. The node will be created automatically.`,
-          at
-        );
-      }
+      // Reported in finish(): a subgraph with this id (defined before or after) takes the style.
+      if (label === undefined && type === undefined && styles !== undefined)
+        this.unknownStyles.push({ id, at });
       if (this.vertices.size >= this.options.maxNodes) {
         if (!this.limitHit.has('nodes')) {
           this.limitHit.add('nodes');
@@ -595,6 +593,18 @@ export class FlowBuilder {
   /** The subgraph with this id (a map lookup: a scan made many subgraphs quadratic). */
   subgraph(id: string): FlowModelSubgraph | undefined {
     return this.subgraphById.get(id);
+  }
+
+  /** Reports what needs the whole document: STYLE_UNKNOWN_NODE for ids that are not subgraphs. */
+  finish(): void {
+    for (const { id, at } of this.unknownStyles) {
+      if (this.subgraphById.has(id)) continue;
+      this.options.warn(
+        'STYLE_UNKNOWN_NODE',
+        `Style applied to unknown node "${id}". This may indicate a typo. The node will be created automatically.`,
+        at
+      );
+    }
   }
 
   model(warnings: Diagnostic[]): FlowModel {

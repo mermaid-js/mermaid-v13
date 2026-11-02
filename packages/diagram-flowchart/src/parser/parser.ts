@@ -1228,6 +1228,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
 
   header();
   document();
+  db.finish();
 
   const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
   const model = db.model(warnings);

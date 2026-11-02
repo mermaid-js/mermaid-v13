@@ -24,6 +24,18 @@ function idsByName(root: AstNode): Record<string, string[]> {
 }
 
 describe('flowchart parse', () => {
+  it('does not warn STYLE_UNKNOWN_NODE for a style on a subgraph id, defined before or after', () => {
+    const codes = (src: string) =>
+      parse(src)
+        .diagnostics.map((d) => d.code)
+        .filter((c) => c === 'STYLE_UNKNOWN_NODE');
+    expect(codes('flowchart TD\n  subgraph S\n    A\n  end\n  style S fill:red\n')).toEqual([]);
+    expect(codes('flowchart TD\n  style S fill:red\n  subgraph S\n    A\n  end\n')).toEqual([]);
+    expect(codes('flowchart TD\n  subgraph S\n    A\n  end\n  style T fill:red\n')).toEqual([
+      'STYLE_UNKNOWN_NODE',
+    ]);
+  });
+
   it('puts click callbacks on the Click statement of the AST, not links (DESIGN §12.3)', () => {
     const r = parse(
       'flowchart LR\n  A --> B\n  click A callback "tip"\n  click B call go("x", 2)\n  click A "https://x.example"\n'
