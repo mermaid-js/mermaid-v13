@@ -47,13 +47,15 @@ export const readFixtureMetadata = (
     return undefined;
   }
 
-  const indent = match[1];
+  // Both groups always match; `?? ''` is for packages/dev's stricter tsconfig, which imports this.
+  const indent = match[1] ?? '';
+  const body = match[2] ?? '';
   const yamlBody = indent
-    ? match[2]
+    ? body
         .split('\n')
         .map((line) => (line.startsWith(indent) ? line.slice(indent.length) : line))
         .join('\n')
-    : match[2];
+    : body;
 
   const parsed: unknown = load(yamlBody);
   if (parsed === null || parsed === undefined) {

@@ -1,7 +1,7 @@
 /**
  * The built-in routes of the dev server:
  *
- * - `GET /` → a link to the e2e page;
+ * - `GET /` → links to the Dev Explorer and the e2e page;
  * - `POST /node-render` `{ code, options }` → the same adapter's output rendered in Node, for
  *   the Node-vs-browser equality spec;
  * - `GET /fonts/<file>` → the `@fontsource/noto-sans-sc` files, for the late-font spec;
@@ -55,7 +55,7 @@ export const builtInRoutes: readonly Route[] = [
     method: 'GET',
     handle: (_req, res) => {
       res.writeHead(200, { 'content-type': 'text/html' });
-      res.end('<a href="/e2e.html">e2e.html</a>');
+      res.end('<a href="/dev/">Dev Explorer</a> · <a href="/e2e.html">e2e.html</a>');
     },
   },
   {
