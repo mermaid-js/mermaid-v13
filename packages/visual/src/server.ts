@@ -102,7 +102,9 @@ export async function startServer(port: number): Promise<PageServer> {
         port: esb.port,
         path: req.url,
         method: req.method,
-        headers: req.headers,
+        // esbuild's serve rejects any Host but its own, so a browser on another machine
+        // (another hostname or the IP) would get 403. Name esbuild's own address instead.
+        headers: { ...req.headers, host: `127.0.0.1:${esb.port}` },
       },
       (upstream) => {
         res.writeHead(upstream.statusCode ?? 502, upstream.headers);
