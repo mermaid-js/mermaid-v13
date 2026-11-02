@@ -77,6 +77,21 @@ describe('markdown report', () => {
     expect(md).toMatch(/\| v12-frozen \| 12\.2\.0 \| 36 ms \|/);
   });
 
+  it('lists fixtures of types without a v13 package apart from the results', () => {
+    const withUnsupported: BenchReport = {
+      ...report,
+      unsupported: [{ id: 'pele/sequence', set: 'pele', type: 'sequence' }],
+    };
+    const out = formatMarkdown(
+      withUnsupported,
+      evaluateGates({ report: withUnsupported, baseline: undefined, mode: 'report', corpusSize: 1 })
+    );
+    expect(out).toContain('## Not run: no v13 package for the type');
+    expect(out).toContain('| pele/sequence | pele | sequence |');
+    expect(out.split('\n').filter((l) => l.startsWith('| pele/sequence'))).toHaveLength(1);
+    expect(md).not.toContain('Not run');
+  });
+
   it('says the gates are only reporting while the pipeline is missing', () => {
     expect(md).toContain('Gates: report');
     expect(md).toMatch(/\| R-PERF-1 \| Loaded size, core \+ flowchart \(gzip\) \| pass \| no \|/);
