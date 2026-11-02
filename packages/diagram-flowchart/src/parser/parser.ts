@@ -554,7 +554,10 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
         st.diagnostics.error('SHAPE_DATA', d.message, r);
       } else st.diagnostics.warning(d.code, d.message, r);
     }
-    if (result.diagnostics.some((d) => d.severity === 'error')) throw STOP;
+    // A semantic error: the tokens are fine, so parse on and report later errors in the same
+    // statement too (R-PARSE-4). The node keeps no data.
+    if (result.diagnostics.some((d) => d.severity === 'error'))
+      return { value: null, range: whole };
     const value = result.value;
     return { value: isYamlMap(value) ? value : null, range: whole };
   };
@@ -831,7 +834,8 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     expect(T.Space);
     if (kind() !== T.Interpolate) {
       const styles = stylesOpt();
-      if (!db.updateLink(positions, styles, span(at))) throw STOP;
+      // An index error is semantic: the statement parses on (R-PARSE-4).
+      db.updateLink(positions, styles, span(at));
       return;
     }
     i++;
@@ -840,9 +844,9 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     if (kind() === T.Space) {
       i++;
       const styles = stylesOpt();
-      if (!db.updateLinkInterpolate(positions, interpolate, span(at))) throw STOP;
-      if (!db.updateLink(positions, styles, span(at))) throw STOP;
-    } else if (!db.updateLinkInterpolate(positions, interpolate, span(at))) throw STOP;
+      if (db.updateLinkInterpolate(positions, interpolate, span(at)))
+        db.updateLink(positions, styles, span(at));
+    } else db.updateLinkInterpolate(positions, interpolate, span(at));
   };
 
   const strText = (j: number) => cook(src, S[j] ?? 0, E[j] ?? 0, view);

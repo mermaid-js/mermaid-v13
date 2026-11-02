@@ -199,6 +199,41 @@ const CASES: Case[] = [
     keeps: ['G', 'H'],
   },
   {
+    name: 'bad YAML then a missing separator in the same statement',
+    lines: ['flowchart TD', 'A@{ shape: [rect } B', 'C --> D'],
+    errors: [
+      ['SHAPE_DATA', 2],
+      ['UNEXPECTED', 2],
+    ],
+    keeps: ['C', 'D'],
+  },
+  {
+    name: 'bad YAML on both nodes of an & group',
+    lines: ['flowchart TD', 'A@{ shape: [rect } & B@{ x: , , }', 'C'],
+    errors: [
+      ['SHAPE_DATA', 2],
+      ['SHAPE_DATA', 2],
+    ],
+    keeps: ['C'],
+  },
+  {
+    name: 'linkStyle index then a stray character in the same statement',
+    lines: [
+      'flowchart TD',
+      'A --> B',
+      'linkStyle 5 stroke:red )',
+      'linkStyle 6 interpolate basis stroke:red )',
+      'C',
+    ],
+    errors: [
+      ['LINK_STYLE_INDEX', 3],
+      ['UNEXPECTED_CHARACTER', 3],
+      ['LINK_STYLE_INDEX', 4],
+      ['UNEXPECTED_CHARACTER', 4],
+    ],
+    keeps: ['C'],
+  },
+  {
     name: 'a mixed bag',
     lines: [
       'flowchart TD',
