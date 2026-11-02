@@ -480,6 +480,8 @@ interface ExtensionPlugin {
 
 Its config keys (moved from the core schema) live in its own schema section.
 
+As built in M1: hooks see the AST, not the model, so the AST node of a `click … callback` / `call` statement carries `callback: AstCallback` (`{ targets, name, args? }`, from `@mermaid-js/core/parser-kit`); the plugin collects every such node in `postParse` into its `state` and binds `g.node[data-id]` elements in `afterMount`, once per element. v12 had no click-callback config keys (`securityLevel: loose` gated them), so the plugin has no schema section, and callbacks do not depend on `securityLevel`.
+
 ### 12.4 Discovery
 
 **Discovery paths:**

@@ -141,9 +141,34 @@ attributes. Without the plugin:
 - `click A "url"` and `click A href "url"` still draw links (they are SVG `<a>` elements, not
   script) and tooltips become SVG `<title>` elements.
 
-The interactions plugin is an empty placeholder package in 13.0.0-alpha.0; it is released with
-the extension plugin API _(later in M1)_. v12 had no click-callback config keys, so no schema key
-is `moved` for it.
+With the plugin, callbacks work as in v12. Register it once; diagram text alone can never turn
+it on:
+
+```js
+import mermaid from 'mermaid';
+import interactions from '@mermaid-js/plugin-interactions';
+
+await mermaid.registerExternalDiagrams([interactions]);
+await mermaid.run(); // binds the callbacks of every diagram it draws
+
+// or, at a v12 render() call site:
+const { svg, bindFunctions } = await mermaid.render('id', text);
+element.innerHTML = svg;
+bindFunctions?.(element);
+```
+
+- Function names are looked up on `window` as in v12 (`fn`, `app.handlers.fn`); a missing name
+  does nothing. `call fn("a, b", 2)` passes the strings `a, b` and `2`; `callback` and `call fn()`
+  pass the node id.
+- `run()` and `mount()` call `bindFunctions` for you. Calling it again on the same element binds
+  nothing twice.
+- Unlike v12, callbacks do not depend on `securityLevel` (v12 ran them only with `loose`):
+  installing the plugin is the opt-in.
+- The plugin does not change the SVG; it adds click listeners to the rendered `g.node[data-id]`
+  elements inside the element you pass.
+
+v12 had no click-callback config keys (only `securityLevel` gated them), so no schema key is
+`moved` to the plugin and it has no config section.
 
 <!-- BEGIN GENERATED CONFIG SECTION: pnpm gen:config -->
 
