@@ -26,6 +26,7 @@ import {
   type ResolvedConfig,
 } from '@mermaid-js/core/config';
 import type { LayoutEngine } from '@mermaid-js/core/layout';
+import { asLimitError, checkSource, resolveLimits, type Limits } from '@mermaid-js/core/limits';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { resolveSecurityLevel } from '@mermaid-js/core/svg';
@@ -57,6 +58,11 @@ export interface IntegratorOptions {
   /** Replaces the default link schemes (http, https, mailto). */
   linkSchemes?: readonly string[];
   output?: { cssVariables?: boolean };
+  /**
+   * Resource limits (R-SEC-5); each wins over v12's `maxTextSize`/`maxEdges`. Over a limit,
+   * render rejects with `MermaidError { code: 'LIMIT' }`. Diagram text cannot change them.
+   */
+  limits?: Partial<Limits>;
 }
 
 /** `initialize()` input: the schema config plus the integrator-only options. */
@@ -128,7 +134,7 @@ export interface PreloadRequest {
 /** @deprecated v12 compatibility: receives the `MermaidError` of a failed `parse`. */
 export type ParseErrorHandler = (error: MermaidError) => void;
 
-const INTEGRATOR_KEYS = ['measurer', 'deterministic', 'linkSchemes', 'output'] as const;
+const INTEGRATOR_KEYS = ['measurer', 'deterministic', 'linkSchemes', 'output', 'limits'] as const;
 
 type Plain = Record<string, unknown>;
 const isPlain = (v: unknown): v is Plain =>
@@ -155,6 +161,15 @@ function freeze<T>(value: T): T {
 interface Snapshot {
   readonly config: Readonly<MermaidConfig>;
   readonly options: Readonly<IntegratorOptions>;
+  /** From the integrator's config alone, before any diagram text is read. */
+  readonly limits: Readonly<Limits>;
+}
+
+function withLimits(
+  config: Readonly<MermaidConfig>,
+  options: Readonly<IntegratorOptions>
+): Snapshot {
+  return { config, options, limits: resolveLimits(config, options.limits) };
 }
 
 function snapshot(input: InitializeConfig = {}): Snapshot {
@@ -171,16 +186,20 @@ function snapshot(input: InitializeConfig = {}): Snapshot {
     if (vars.fontFamily === undefined)
       merged.themeVariables = { ...vars, fontFamily: merged.fontFamily };
   }
-  return { config: freeze(merged), options: Object.freeze(options) as IntegratorOptions };
+  return withLimits(freeze(merged), Object.freeze(options) as IntegratorOptions);
 }
 
 function overlay(base: Snapshot, extra: InitializeConfig | undefined): Snapshot {
   if (!extra) return base;
   const next = snapshot(extra);
-  return {
-    config: freeze(mergeInto(mergeInto({}, base.config as Plain), next.config as Plain)),
-    options: Object.freeze({ ...base.options, ...next.options }),
-  };
+  const limits =
+    base.options.limits || next.options.limits
+      ? { ...base.options.limits, ...next.options.limits }
+      : undefined;
+  return withLimits(
+    freeze(mergeInto(mergeInto({}, base.config as Plain), next.config as Plain)),
+    Object.freeze({ ...base.options, ...next.options, ...(limits ? { limits } : {}) })
+  );
 }
 
 /** Init directive config in source order (v12's `config` key moved into the section). */
@@ -221,7 +240,10 @@ const toWarning = (w: {
 
 function internal(e: unknown): MermaidError {
   if (e instanceof MermaidError) return e;
-  if (e instanceof RangeError) return new MermaidError('LIMIT', e.message, { cause: e });
+  // A LimitError (source/output size, a stack overflow from deep nesting) is LIMIT; any other
+  // RangeError (e.g. a NaN coordinate from the writer) is an internal error.
+  const limit = asLimitError(e);
+  if (limit) return new MermaidError('LIMIT', limit.message, { cause: limit });
   return new MermaidError('INTERNAL', e instanceof Error ? e.message : String(e), { cause: e });
 }
 
@@ -279,7 +301,9 @@ export function createMermaid() {
     const claims = hooks.claims();
     const parse = plugin.parse(
       text,
-      claims.length > 0 ? { config, preprocessed: pre, claims } : { config, preprocessed: pre }
+      claims.length > 0
+        ? { config, preprocessed: pre, limits: snap.limits, claims }
+        : { config, preprocessed: pre, limits: snap.limits }
     );
     stageEnd('parse', t);
     const error = errorFromDiagnostics(text, [...pre.diagnostics, ...parse.diagnostics]);
@@ -292,7 +316,9 @@ export function createMermaid() {
     };
   }
 
-  function detect(text: string): { detected: Detected; pre: PreprocessResult } {
+  function detect(text: string, s: Snapshot): { detected: Detected; pre: PreprocessResult } {
+    // DESIGN §3 step 1: the source limit, before the text is read at all.
+    checkSource(text, s.limits);
     const pre = preprocess(text);
     const error = errorFromDiagnostics(
       text,
@@ -359,7 +385,7 @@ export function createMermaid() {
       await loadResources(missingFor(hit));
       return hit;
     }
-    const { detected, pre } = detect(text);
+    const { detected, pre } = detect(text, s);
     const plugin = detected.id === undefined ? undefined : await registry.load(detected.id);
     if (!plugin) throw unsupported(detected);
     const analysis = analyse(text, s, plugin, detected, pre);
@@ -380,7 +406,7 @@ export function createMermaid() {
     if (options?.format !== undefined && options.format !== 'svg') {
       const type = (() => {
         try {
-          return detect(text).detected.type;
+          return detect(text, s).detected.type;
         } catch {
           return 'unknown';
         }
@@ -389,7 +415,7 @@ export function createMermaid() {
     }
     let analysis = cached(text, s);
     if (!analysis) {
-      const { detected, pre } = detect(text);
+      const { detected, pre } = detect(text, s);
       if (detected.id === undefined) throw unsupported(detected);
       const plugin = registry.plugin(detected.id);
       if (!plugin) {
@@ -460,6 +486,7 @@ export function createMermaid() {
       idPrefix: options?.id ?? 'mermaid',
       version: VERSION,
       linkSchemes: s.options.linkSchemes,
+      limits: s.limits,
       layout: (graph) => {
         if (!layoutEngine) throw new TypeError(`${plugin.id} has no graph layout`);
         return layoutEngine(graph);
@@ -510,7 +537,7 @@ export function createMermaid() {
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12 | false> {
     const s = site;
     try {
-      const { detected, pre } = detect(text);
+      const { detected, pre } = detect(text, s);
       const plugin = detected.id === undefined ? undefined : await registry.load(detected.id);
       if (!plugin) throw unsupported(detected);
       const a = cached(text, s) ?? analyse(text, s, plugin, detected, pre);
@@ -542,7 +569,7 @@ export function createMermaid() {
   function detectType(text: string, config?: MermaidConfig): string {
     void config; // v12 passed it to detectors; v13 detection reads the text only.
     try {
-      return detect(text).detected.type;
+      return detect(text, site).detected.type;
     } catch (e) {
       throw internal(e);
     }

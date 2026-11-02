@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { preprocess } from './index.ts';
 
 /** Fastest of `trials` timings of `reps` runs, in ms (Date.now: core has no Node types). */
-const fastest = (run: () => unknown, reps: number, trials = 2): number => {
+const fastest = (run: () => unknown, reps: number, trials = 5): number => {
   let best = Infinity;
   for (let t = 0; t < trials; t++) {
     const t0 = Date.now();

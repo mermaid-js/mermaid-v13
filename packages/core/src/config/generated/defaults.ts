@@ -9,7 +9,7 @@ export const CORE_DEFAULTS: MermaidConfig = {
   "handDrawnSeed": 0,
   "layout": "layered",
   "maxTextSize": 50000,
-  "maxEdges": 500,
+  "maxEdges": 5000,
   "darkMode": false,
   "fontFamily": "\"trebuchet ms\", verdana, arial, sans-serif;",
   "logLevel": 5,

@@ -107,15 +107,22 @@ function splitKey(line: string): { key: string; length: number } | null {
     while (isBlank(line[colon])) colon++;
     if (line[colon] !== ':') return null;
   } else {
-    if (first === undefined || RE_KEY_START.test(first)) return null;
-    if (
-      first === '-' &&
-      (line.length < 2 || isBlank(line[1]) || line[1] === ':' || line[1] === '#')
-    ) {
+    if (first === undefined) return null;
+    // `-`, `?` and `:` start a plain key when a non-blank follows (js-yaml readPlainScalar).
+    const indicator = first === '-' || first === '?' || first === ':';
+    if (!indicator && RE_KEY_START.test(first)) return null;
+    if (indicator && (line.length < 2 || isBlank(line[1]) || line[1] === ':' || line[1] === '#')) {
       return null;
     }
+    // js-yaml: the key ends at a `:` followed by a blank or the line end; `a:b` and `a#b`
+    // are part of it, and `#` starts a comment only after a blank.
     colon = 1;
-    while (colon < line.length && line[colon] !== ':' && line[colon] !== '#') colon++;
+    while (colon < line.length) {
+      const c = line[colon];
+      if (c === ':' && (colon + 1 >= line.length || isBlank(line[colon + 1]))) break;
+      if (c === '#' && isBlank(line[colon - 1])) return null;
+      colon++;
+    }
     if (line[colon] !== ':') return null;
     end = colon;
     while (isBlank(line[end - 1])) end--;
@@ -187,6 +194,44 @@ function stripComment(s: string): string {
   return s;
 }
 
+/**
+ * Offset of a `:` that is followed by a blank or ends `s` (js-yaml reads a mapping entry
+ * there), or -1. With `value`, `s` starts a value, and a quoted or flow start is not plain.
+ */
+function mappingIndicator(s: string, value: boolean): number {
+  const first = s[0];
+  if (value && (first === '"' || first === "'" || first === '{' || first === '[')) return -1;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === ':' && (i + 1 === s.length || isBlank(s[i + 1]))) return i;
+  }
+  return -1;
+}
+
+/**
+ * The first character in `[start, end)` that js-yaml's PATTERN_NON_PRINTABLE refuses (C0/C1
+ * controls but tab, LF, CR and NEL; U+FFFE/U+FFFF; unpaired surrogates), or -1. A loop over
+ * the range only: a regex would scan on to the end of the whole source on every call.
+ */
+function nonPrintable(src: string, start: number, end: number): number {
+  for (let i = start; i < end; i++) {
+    const c = src.charCodeAt(i);
+    if (c < 0x20) {
+      if (c !== 0x09 && c !== 0x0a && c !== 0x0d) return i;
+    } else if (c >= 0x7f && c <= 0x9f) {
+      if (c !== 0x85) return i;
+    } else if (c === 0xfffe || c === 0xffff) {
+      return i;
+    } else if (c >= 0xd800 && c <= 0xdbff) {
+      const next = i + 1 < end ? src.charCodeAt(i + 1) : 0;
+      if (next < 0xdc00 || next > 0xdfff) return i;
+      i++;
+    } else if (c >= 0xdc00 && c <= 0xdfff) {
+      return i;
+    }
+  }
+  return -1;
+}
+
 function leading(s: string): number {
   return s.length - s.trimStart().length;
 }
@@ -240,7 +285,8 @@ class Reader {
   skipBlank(): void {
     while (this.i < this.lines.length) {
       const t = (this.lines[this.i] ?? '').trim();
-      if (t !== '' && t[0] !== '#' && t !== '---') break;
+      // `---` is a document marker only at the start of a line; indented, it is text.
+      if (t !== '' && t[0] !== '#' && (this.lines[this.i] ?? '') !== '---') break;
       this.i++;
     }
   }
@@ -334,6 +380,34 @@ class Reader {
     return out;
   }
 
+  /** Characters that cannot start a plain value in a block (js-yaml readPlainScalar). */
+  plainStart(text: string, at: number): void {
+    const c = text[0];
+    if (c === ']' || c === '}' || c === ',' || c === '%') {
+      this.fail('bad indentation of a mapping entry', at);
+    }
+    if ((c === '?' || c === '-') && isBlank(text[1])) {
+      this.fail('bad indentation of a mapping entry', at);
+    }
+    if (c === '|' || c === '>') this.fail('a line break is expected', at);
+  }
+
+  /** js-yaml: plain and block scalar text must be printable (comments are not checked). */
+  printable(start: number, end: number): void {
+    const bad = nonPrintable(this.src, start, end);
+    if (bad >= 0) this.fail('the stream contains non-printable characters', bad);
+  }
+
+  /** js-yaml: quoted text may hold any character but C0 controls other than tab. */
+  printableQuoted(start: number, end: number): void {
+    for (let i = start; i < end; i++) {
+      const c = this.src.charCodeAt(i);
+      if (c < 0x20 && c !== 0x09 && c !== 0x0a && c !== 0x0d) {
+        this.fail('expected valid JSON character', i);
+      }
+    }
+  }
+
   skip(pos: number, limit: number): number {
     const s = this.src;
     while (pos < limit) {
@@ -398,6 +472,7 @@ class Reader {
       let end = pos + 1;
       while (end < limit && s[end] !== '"') end += s[end] === '\\' ? 2 : 1;
       if (end >= limit) this.fail('this double quoted value is never closed', open);
+      this.printableQuoted(pos + 1, end);
       return [this.unquoteDouble(s.slice(pos + 1, end), open), end + 1];
     }
     if (ch === "'") {
@@ -410,6 +485,7 @@ class Reader {
         end++;
       }
       if (end >= limit) this.fail('this single quoted value is never closed', open);
+      this.printableQuoted(pos + 1, end);
       return [fold(s.slice(pos + 1, end)).replace(/''/g, "'"), end + 1];
     }
     let end = pos;
@@ -430,11 +506,13 @@ class Reader {
         break;
       }
       if (c === '#' && end > pos && RE_SPACE.test(s[end - 1] ?? '')) {
+        this.printable(pos, end);
         const value = this.scalar(fold(s.slice(pos, end).trim()), pos);
         return [value, Math.min(lineEnd(s, end), limit)];
       }
       end++;
     }
+    this.printable(pos, end);
     return [this.scalar(fold(s.slice(pos, end).trim()), pos), end];
   }
 
@@ -457,6 +535,8 @@ class Reader {
         indent = k;
       }
       if (k < indent) break;
+      const lineAt = this.at[this.i] ?? 0;
+      this.printable(lineAt, lineAt + line.length);
       out.push(line.slice(indent));
       this.i++;
     }
@@ -507,7 +587,15 @@ class Reader {
       this.i = line + 1;
       return value;
     }
-    let text = stripComment(rest).trim();
+    const body = stripComment(rest);
+    let text = body.trim();
+    this.printable(at, at + text.length);
+    this.plainStart(text, at);
+    const indicator = mappingIndicator(text, true);
+    // `k: a: b` or `k: a:` at a line end: js-yaml reads a second mapping entry and fails.
+    if (indicator >= 0) this.fail('bad indentation of a mapping entry', at + indicator);
+    // js-yaml: a comment ends a plain value; more of it after the comment is an error.
+    let commented = body.length < rest.length;
     while (this.i < this.lines.length) {
       const line = this.lines[this.i] ?? '';
       if (line.trim() === '') {
@@ -519,13 +607,31 @@ class Reader {
         continue;
       }
       if (leading(line) <= indent) break;
-      const more = stripComment(line).trim();
-      if (splitKey(more) !== null) {
-        this.fail('bad indentation of a mapping entry', ...this.lineRange(this.i));
+      const from = this.lineRange(this.i)[0];
+      if (line[0] === '\t') this.fail('tab characters must not be used in indentation', from - 1);
+      if (line.trimStart()[0] === '#') {
+        commented = true;
+        this.i++;
+        continue;
       }
+      if (commented) this.fail('bad indentation of a mapping entry', from);
+      const lineBody = stripComment(line);
+      const more = lineBody.trim();
+      if (lineBody.length < line.length) commented = true;
+      const colon = mappingIndicator(more, false);
+      if (colon >= 0) {
+        // A `key:` line is reported from its start, other text at the `:`.
+        const where = splitKey(more) !== null ? from : from + colon;
+        this.fail('bad indentation of a mapping entry', where);
+      }
+      this.printable(from, from + more.length);
       text += (text.endsWith('\n') ? '' : ' ') + more;
       this.i++;
     }
+    // Blank lines kept for a continuation that never came are not part of the value.
+    let cut = text.length;
+    while (cut > 0 && text.charCodeAt(cut - 1) === 10) cut--;
+    text = text.slice(0, cut);
     return this.scalar(text, at);
   }
 
@@ -567,7 +673,8 @@ class Reader {
 
     if (splitKey(line) === null) {
       this.i++;
-      return this.inlineValue(line.trim(), lineAt, indent - 1, depth);
+      // A plain scalar continues on any line indented more than its parent node.
+      return this.inlineValue(line.trim(), lineAt, minIndent - 1, depth);
     }
 
     const out: YamlMap = {};
@@ -630,6 +737,8 @@ export function parseYaml(src: string, options: YamlOptions = {}): YamlResult {
   const diagnostics = new Diagnostics();
   const reader = new Reader(src, start, end, options.indent ?? '', diagnostics);
   try {
+    const nul = src.indexOf('\0', start);
+    if (nul >= 0 && nul < end) reader.fail('null byte is not allowed in input', nul);
     return { value: reader.read(), diagnostics: diagnostics.list };
   } catch (err) {
     if (!(err instanceof YamlError)) throw err;

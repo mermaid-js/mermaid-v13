@@ -3,6 +3,7 @@
  */
 import type { ResolvedConfig } from '../config/resolve.ts';
 import type { LayoutGraph, LayoutModel } from '../layout/types.ts';
+import type { Limits } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
 import type { ParseResult } from '../parser-kit/result.ts';
 import type { PreprocessResult } from '../preprocess/preprocess.ts';
@@ -28,6 +29,8 @@ export interface DiagramParseContext {
   readonly preprocessed: PreprocessResult;
   /** Features extension plugins handle (e.g. `callbacks`). */
   readonly claims?: readonly string[];
+  /** Integrator limits (R-SEC-5) the parse enforces (edges, nodes, depth); defaults when absent. */
+  readonly limits?: Limits;
 }
 
 /**
@@ -49,6 +52,8 @@ export interface RenderContext {
   readonly linkSchemes?: readonly string[];
   /** The layout engine named by `layout` config. */
   layout(graph: LayoutGraph): LayoutModel;
+  /** Integrator-only limits (R-SEC-5): `resolveLimits(initialize config, limits option)`. */
+  readonly limits: Limits;
   warn(warning: Warning): void;
 }
 

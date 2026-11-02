@@ -140,6 +140,7 @@ export type DocItem = string | string[] | { stmt: 'dir'; value: string };
 
 export interface BuilderOptions {
   maxEdges: number;
+  maxNodes: number;
   inheritDir: boolean;
   error(code: string, message: string, range: Range): void;
   warn(code: string, message: string, range: Range): void;
@@ -238,6 +239,8 @@ export class FlowBuilder {
   private readonly pairCount = new Map<string, number>();
   private readonly members = new Set<string>();
   private subCount = 0;
+  /** Limits already reported, so a breach is one diagnostic, not one per item. */
+  private readonly limitHit = new Set<'edges' | 'nodes'>();
 
   constructor(private readonly options: BuilderOptions) {}
 
@@ -293,6 +296,17 @@ export class FlowBuilder {
           at
         );
       }
+      if (this.vertices.size >= this.options.maxNodes) {
+        if (!this.limitHit.has('nodes')) {
+          this.limitHit.add('nodes');
+          this.options.error(
+            'NODE_LIMIT',
+            `Node limit exceeded: the diagram has more than ${this.options.maxNodes} nodes. The limit is set by the page or app that renders the diagram.`,
+            at
+          );
+        }
+        return;
+      }
       vertex = { id, ast, text: id, labelType: 'text', styles: [], classes: [], props: {} };
       this.vertices.set(id, vertex);
     }
@@ -344,8 +358,7 @@ export class FlowBuilder {
     end: string,
     info: LinkInfo,
     id: string | undefined,
-    ast: AstId,
-    at: Range
+    ast: AstId
   ): void {
     const edge: FlowModelEdge = {
       id: '',
@@ -371,14 +384,6 @@ export class FlowBuilder {
       edge.id = id;
       edge.isUserDefinedId = true;
     } else edge.id = `L_${start}_${end}_${count === 0 ? 0 : count + 1}`;
-    if (this.edges.length >= this.options.maxEdges) {
-      this.options.error(
-        'EDGE_LIMIT',
-        `Edge limit exceeded. ${this.edges.length} edges found, but the limit is ${this.options.maxEdges}. Raise maxEdges in the configuration passed to initialize() to allow more edges.`,
-        at
-      );
-      return;
-    }
     this.edges.push(edge);
     this.pairCount.set(pair, count + 1);
     if (!this.edgeById.has(edge.id)) this.edgeById.set(edge.id, edge);
@@ -392,13 +397,26 @@ export class FlowBuilder {
     astFor: (start: string, end: string) => AstId,
     at: Range
   ): void {
+    if (this.limitHit.has('edges')) return;
+    // Checked before making any: `A & … --> B & …` multiplies, so one short line can ask
+    // for millions of edges (v12 checked one edge at a time, with the same message).
+    const max = this.options.maxEdges;
+    if (this.edges.length + starts.length * ends.length > max) {
+      this.limitHit.add('edges');
+      this.options.error(
+        'EDGE_LIMIT',
+        `Edge limit exceeded. ${max} edges found, but the limit is ${max}. Raise maxEdges in the configuration passed to initialize() to allow more edges.`,
+        at
+      );
+      return;
+    }
     const id = info.id?.replace('@', '');
     const lastStart = starts[starts.length - 1];
     const firstEnd = ends[0];
     for (const start of starts) {
       for (const end of ends) {
         const own = start === lastStart && end === firstEnd ? id : undefined;
-        this.addSingleLink(start, end, info, own, astFor(start, end), at);
+        this.addSingleLink(start, end, info, own, astFor(start, end));
       }
     }
   }
@@ -572,6 +590,11 @@ export class FlowBuilder {
     else this.subgraphs.push(subgraph);
     this.subgraphById.set(id, existing ?? subgraph);
     return id;
+  }
+
+  /** The subgraph with this id (a map lookup: a scan made many subgraphs quadratic). */
+  subgraph(id: string): FlowModelSubgraph | undefined {
+    return this.subgraphById.get(id);
   }
 
   model(warnings: Diagnostic[]): FlowModel {
