@@ -330,13 +330,13 @@ function contrastCss(bg: string, a: Rgba, b: Rgba, la: number, lb: number): stri
   const below = Math.max(lo, la > lb ? mid : -Infinity);
   const L = '(0.2126*r + 0.7152*g + 0.0722*b)';
   const step = (expr: string) => `clamp(0,(${expr})*1e9,1)`;
-  const conds: string[] = [];
-  if (above <= 1) conds.push(step(`${L} - ${dec(above)}`));
-  if (below >= 0) conds.push(step(`${dec(below)} - ${L}`));
-  if (conds.length === 0) return formatColor(b);
+  const checks: string[] = [];
+  if (above <= 1) checks.push(step(`${L} - ${dec(above)}`));
+  if (below >= 0) checks.push(step(`${dec(below)} - ${L}`));
+  if (checks.length === 0) return formatColor(b);
   const [ar, ag, ab, aa] = unit(a);
   const [br, bgr, bb, ba] = unit(b);
-  const t = `color(from ${bg} srgb-linear calc(1 - max(${conds.join(',')})) 0 0)`;
+  const t = `color(from ${bg} srgb-linear calc(1 - max(${checks.join(',')})) 0 0)`;
   const ch = (x: number, y: number) => (x === y ? dec(x) : `calc(${dec(x)} + ${dec(y - x)}*r)`);
   const alpha = aa === ba ? (aa >= 1 ? '' : ` / ${dec(aa)}`) : ` / ${ch(aa, ba)}`;
   return `color(from ${t} srgb ${ch(ar, br)} ${ch(ag, bgr)} ${ch(ab, bb)}${alpha})`;
