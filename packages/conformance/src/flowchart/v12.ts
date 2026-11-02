@@ -103,7 +103,7 @@ export function flowchartV12Snapshot(dbValue: unknown): FlowSnapshot {
       length: typeof e.length === 'number' ? e.length : undefined,
       text: text(e.text),
       labelType: str(e.labelType),
-      id: str(e.id),
+      id: text(e.id),
       classes: strings(e.classes),
       style: Array.isArray(e.style) ? strings(e.style) : undefined,
       interpolate: str(e.interpolate),

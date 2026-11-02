@@ -101,6 +101,9 @@ importers:
 
   packages/conformance:
     devDependencies:
+      '@braintree/sanitize-url':
+        specifier: 7.1.2
+        version: 7.1.2
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core

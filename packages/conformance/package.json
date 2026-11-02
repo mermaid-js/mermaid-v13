@@ -11,6 +11,7 @@
     "oracle:report": "tsx --conditions=mermaid-source src/cli/oracle-report.ts"
   },
   "devDependencies": {
+    "@braintree/sanitize-url": "7.1.2",
     "@mermaid-js/core": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
     "@types/js-yaml": "^4.0.9",

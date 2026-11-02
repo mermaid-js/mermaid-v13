@@ -64,6 +64,7 @@ const RE_INF = /^[-+]?\.(?:inf|Inf|INF)$/;
 const RE_NAN = /^\.(?:nan|NaN|NAN)$/;
 const RE_KEY_START = /[\s#:,[\]{}&*!|>'"%@`]/;
 const RE_FLOW_KEY_END = /[\s,[\]{}]/;
+const RE_FLOW_INDICATOR = /[,[\]{}]/;
 const RE_SPACE = /\s/;
 const RE_LEADING_BLANK = /^[ \t]/;
 const RE_BLOCK_HEADER = /^[|>][-+0-9]*\s*(?:#.*)?$/;
@@ -412,10 +413,18 @@ class Reader {
       return [fold(s.slice(pos + 1, end)).replace(/''/g, "'"), end + 1];
     }
     let end = pos;
+    // Inside a flow collection a plain value ends at any flow indicator (and in a mapping at
+    // `: `), and
+    // cannot start with a block indicator (js-yaml readPlainScalar).
+    const inFlow = stops !== '';
+    if (inFlow && (ch === '>' || ch === '|' || ch === '%')) {
+      this.fail(`\`${ch}\` cannot start a plain value inside \`{…}\` or \`[…]\``, pos);
+    }
     while (end < limit) {
       const c = s[end] ?? '';
       if (
-        stops.includes(c) &&
+        (stops.includes(c) ||
+          (inFlow && ((c === ':' && stops.includes('}')) || RE_FLOW_INDICATOR.test(c)))) &&
         (c !== ':' || end + 1 >= limit || RE_FLOW_KEY_END.test(s[end + 1] ?? ''))
       ) {
         break;
