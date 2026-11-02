@@ -10,7 +10,7 @@
  *
  * Every scan is linear in the text it consumes (R-PARSE-7).
  */
-// cspell:words kepano
+// cspell:words kepano invis segs virt
 import { isSpace, isUnicodeLetter, isWord, Kind, TokenWriter } from '@mermaid-js/core/parser-kit';
 import type { TokenStream } from '@mermaid-js/core/parser-kit';
 import { DROP, firstHole, QUOTE } from './source.ts';
@@ -72,6 +72,7 @@ const RE_DOTTED_LINK = /\s*[xo<]?-?\.+-[xo>]?\s*/y;
 const RE_DOTTED_START = /\s*[xo<]?-\.\s*/y;
 const RE_INVIS_LINK = /\s*~~~+\s*/y;
 const RE_SPACE = /[^\S\n\r]+/y;
+const RE_END = /end\s*/y;
 const RE_EMPTY_CALL = /\(\s*\)/y;
 const RE_ENTITY = /#\w+;/y;
 
@@ -129,10 +130,29 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
   const pop = (): void => {
     state = stack.pop() ?? S.INITIAL;
   };
+  /** End of the run of `pred` characters from `q`, continuing over removed spans. */
+  const scanRun = (q: number, pred: (ch: number, at: number) => boolean): number => {
+    let j = q;
+    let k = hole;
+    while (j < n) {
+      while ((holes[k]?.end ?? n + 1) <= j) k++;
+      const h = holes[k];
+      if (h && h.start === j) j = h.end;
+      else if (pred(text.charCodeAt(j), j)) j++;
+      else break;
+    }
+    return j;
+  };
+  const blankUpTo = (q: number, e: number): boolean => {
+    for (let j = q; j < e; j++) if (!isSpace(text.charCodeAt(j))) return false;
+    return true;
+  };
   const at = (re: RegExp, q: number): number => {
     re.lastIndex = q;
-    if (!re.test(text)) return -1;
-    if (re.lastIndex < lim || (re.lastIndex === lim && lim >= n)) return re.lastIndex;
+    const ok = re.test(text);
+    if (ok && (re.lastIndex < lim || (re.lastIndex === lim && lim >= n))) return re.lastIndex;
+    // Blanks up to a removed span: the pattern may go on after it.
+    if (!ok && !(lim < n && lim - q < 4096 && blankUpTo(q, lim))) return -1;
     // The match runs into a removed span. v12 matched the text with it removed: match the
     // text around the next removed spans, then map the end back to a source offset.
     const segs: [number, number][] = [[q, lim]];
@@ -156,14 +176,16 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
   const noDirEnd = (q: number): number => {
     let last = -1;
     for (let j = q; j < lim && isSpace(text.charCodeAt(j)); j++) {
-      if (text.charCodeAt(j) === 10) last = j;
+      const ch = text.charCodeAt(j);
+      // A lone CR was a line feed to v12.
+      if (ch === 10 || (ch === 13 && text.charCodeAt(j + 1) !== 10)) last = j;
     }
     return last < 0 ? -1 : last + 1;
   };
   // jison `(\r?\n)+` (a lone CR, which v12 turned into LF, counts too).
+  // A run of line breaks continues over removed lines, which v12 no longer saw.
   const newlineEnd = (q: number): number => {
-    let j = q;
-    while (j < lim && isNl(text.charCodeAt(j))) j++;
+    const j = isNl(text.charCodeAt(q)) ? scanRun(q, isNl) : q;
     return j > q ? j : -1;
   };
   const entityAt = (q: number): boolean => {
@@ -174,11 +196,19 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
     text.startsWith(word, p) && !isWord(text.charCodeAt(p + word.length));
 
   // First character after any run of whitespace starting at q, skipping one optional x, o or <.
+  // Blanks continue over removed spans, as in the text v12 lexed.
   const skipWs = (q: number): number => {
     if (q >= wsFrom && q <= wsTo) return wsTo;
     let j = q;
     if (isSpace(text.charCodeAt(q))) {
-      while (j < lim && isSpace(text.charCodeAt(j))) j++;
+      let k = hole;
+      while (j < n) {
+        while ((holes[k]?.end ?? n + 1) <= j) k++;
+        const h = holes[k];
+        if (h && h.start === j) j = h.end;
+        else if (isSpace(text.charCodeAt(j))) j++;
+        else break;
+      }
       wsFrom = q;
       wsTo = j;
     }
@@ -269,7 +299,16 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
 
   const nodeString = (): boolean => {
     let q = p;
-    while (q < lim) {
+    let k = hole;
+    while (q < n) {
+      // A removed span inside a run joins its two halves, as in v12's text.
+      while ((holes[k]?.end ?? n + 1) <= q) k++;
+      const h = holes[k];
+      if (h && h.start === q) {
+        if (q === p) break;
+        q = h.end;
+        continue;
+      }
       const ch = text.charCodeAt(q);
       // v12 had turned `#name;` into an entity placeholder, which ends a node string.
       if (ch === 35 && entityAt(q)) break;
@@ -278,8 +317,6 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
       } else if (ch === 45 && q + 1 < n) {
         const d = text.charCodeAt(q + 1);
         if (d === 62 || d === 45 || d === 46) break;
-        q++;
-      } else if (ch === 61 && text.charCodeAt(q + 1) !== 61) {
         q++;
       } else {
         break;
@@ -446,9 +483,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         break;
       case 101:
         if (kw('end')) {
-          e = p + 3;
-          while (e < lim && isSpace(text.charCodeAt(e))) e++;
-          emit(T.End, p, e);
+          emit(T.End, p, Math.max(p + 3, at(RE_END, p)));
           return true;
         }
         break;
@@ -509,13 +544,11 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
     }
 
     if (c >= 48 && c <= 57) {
-      let q = p + 1;
-      while (q < lim) {
-        const ch = text.charCodeAt(q);
-        if (ch < 48 || ch > 57) break;
-        q++;
-      }
-      emit(T.Num, p, q);
+      emit(
+        T.Num,
+        p,
+        scanRun(p + 1, (ch) => ch >= 48 && ch <= 57)
+      );
       return true;
     }
 
@@ -558,7 +591,8 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         emit(T.Minus, p, p + 1);
         return true;
       case 61:
-        return link(c) || nodeString();
+        // flow.jison's `=(?!=)` in NODE_STRING compiles to `(?!)` in mermaid@12: `=` never joins an id.
+        return link(c);
       case 46:
         return link(c) || nodeString();
       case 126:
@@ -598,12 +632,11 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
     if (isSpace(c)) {
       // v12 rewrote `}\s*\n` to `}\n` before lexing.
       if (text.charCodeAt(p - 1) === 125 && p > from) {
-        let q = p;
         let nl = -1;
-        while (q < lim && isSpace(text.charCodeAt(q))) {
-          if (isNl(text.charCodeAt(q))) nl = q;
-          q++;
-        }
+        scanRun(p, (ch, at) => {
+          if (isNl(ch)) nl = at;
+          return isSpace(ch);
+        });
         if (nl > p) {
           if (text.charCodeAt(nl) === 10 && text.charCodeAt(nl - 1) === 13) nl--;
           p = nl;
@@ -911,7 +944,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           quote();
         } else if (isSpace(c)) {
           pop();
-          p++;
+          p += c === 13 && text.charCodeAt(p + 1) === 10 ? 2 : 1;
         } else {
           let q = p + 1;
           while (q < lim && !isSpace(text.charCodeAt(q))) q++;
@@ -968,13 +1001,40 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
     return false;
   };
 
+  // v12 trimmed leading blanks (after removing comments) before lexing.
+  if (graphKeyword) {
+    while (p < len) {
+      const h = holes[hole];
+      if (h && p >= h.start) {
+        if (h.kind !== 'drop') {
+          w.push(
+            h.kind === 'comment' ? Kind.Comment : Kind.Directive,
+            h.start,
+            h.end,
+            src.slice(h.start, h.end)
+          );
+        }
+        p = Math.max(p, h.end);
+        hole++;
+        lim = holes[hole]?.start ?? n;
+      } else if (isSpace(text.charCodeAt(p))) p++;
+      else break;
+    }
+  }
   while (true) {
     if (p >= lim) {
       const h = holes[hole];
       if (h && p >= h.start && p < n) {
         // Skip a removed span; it is trivia in the stream.
         const end = Math.max(p, h.end);
-        w.push(h.comment ? Kind.Comment : Kind.Directive, h.start, end, src.slice(h.start, end));
+        if (h.kind !== 'drop') {
+          w.push(
+            h.kind === 'comment' ? Kind.Comment : Kind.Directive,
+            h.start,
+            end,
+            src.slice(h.start, end)
+          );
+        }
         p = end;
         hole++;
         lim = holes[hole]?.start ?? n;

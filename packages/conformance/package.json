@@ -8,7 +8,8 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "oracle": "vitest run --root ../.. packages/conformance/src/parity.spec.ts",
-    "oracle:report": "tsx --conditions=mermaid-source src/cli/oracle-report.ts"
+    "oracle:report": "tsx --conditions=mermaid-source src/cli/oracle-report.ts",
+    "harvest:flowchart": "tsx --conditions=mermaid-source src/cli/harvest-flowchart.ts"
   },
   "devDependencies": {
     "@braintree/sanitize-url": "7.1.2",

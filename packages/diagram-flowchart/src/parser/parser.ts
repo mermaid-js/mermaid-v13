@@ -9,7 +9,7 @@
  * (R-PARSE-4). An unclosed label or string, which swallows the rest of the text, is reported
  * at its opener and lexing restarts on the following line.
  */
-// cspell:words kepano
+// cspell:words kepano LALR yytexts
 import {
   AstIds,
   ExpectedTable,

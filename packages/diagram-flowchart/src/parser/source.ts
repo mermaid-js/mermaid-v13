@@ -29,7 +29,8 @@ export interface SourceView {
 }
 
 export interface Hole extends Range {
-  comment: boolean;
+  /** A line comment, a directive, or a `;` that `encodeEntities` dropped. */
+  kind: 'comment' | 'directive' | 'drop';
 }
 
 const isNl = (c: number) => c === 10 || c === 13;
@@ -44,7 +45,20 @@ export function sourceView(src: string, from: number, directives: readonly Range
   };
   markTagQuotes(src, from, mark);
   markDroppedSemicolons(src, from, mark, () => mask);
-  return { mask, holes: holes(src, from, directives) };
+  const removed = holes(src, from, directives);
+  const m = mask as Uint8Array | undefined;
+  if (m) {
+    const spans = removed.length;
+    let k = 0;
+    for (let i = from; i < m.length; i++) {
+      if (!((m[i] ?? 0) & DROP)) continue;
+      while (k < spans && (removed[k]?.end ?? 0) <= i) k++;
+      const h = k < spans ? removed[k] : undefined;
+      if (!h || h.start > i) removed.push({ start: i, end: i + 1, kind: 'drop' });
+    }
+    removed.sort((a, b) => a.start - b.start);
+  }
+  return { mask, holes: removed };
 }
 
 /** `<(\w+)([^>]*)>` then `="([^"]*)"` inside the attributes: both quotes become `'`. */
@@ -152,7 +166,7 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
       while (e < src.length && !isNl(src.charCodeAt(e))) e++;
       if (src.charCodeAt(e) === 13) e++;
       if (src.charCodeAt(e) === 10) e++;
-      out.push({ start: ls, end: e, comment: true });
+      out.push({ start: ls, end: e, kind: 'comment' });
       ls = e;
       continue;
     }
@@ -167,7 +181,7 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
   for (const r of directives) {
     if (r.start < from) continue;
     if (!out.some((h) => h.start <= r.start && r.end <= h.end)) {
-      all.push({ start: r.start, end: r.end, comment: false });
+      all.push({ start: r.start, end: r.end, kind: 'directive' });
     }
   }
   return all.sort((a, b) => a.start - b.start);
@@ -181,7 +195,13 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
 export function cook(src: string, start: number, end: number, view: SourceView): string {
   const raw = src.slice(start, end);
   const mask = view.mask;
-  if (!/[\r#}]/.test(raw) && !hasHole(view, start, end) && !masked(mask, start, end)) return raw;
+  if (
+    !/[\r#}]/.test(raw) &&
+    src.charCodeAt(start - 1) !== 125 &&
+    !hasHole(view, start, end) &&
+    !masked(mask, start, end)
+  )
+    return raw;
   let out = '';
   let h = firstHole(view, start);
   for (let i = start; i < end; i++) {
@@ -213,18 +233,27 @@ export function cook(src: string, start: number, end: number, view: SourceView):
         continue;
       }
     }
-    if (c === 125) {
-      let j = i + 1;
+    if (c === 125 || (i === start && src.charCodeAt(i - 1) === 125 && isSpace(c))) {
+      const at = c === 125 ? i + 1 : i;
+      if (c === 125) out += '}';
+      let j = at;
       let nl = -1;
       while (j < end && isSpace(src.charCodeAt(j))) {
         if (isNl(src.charCodeAt(j))) nl = j;
         j++;
       }
+      // v12 appended a line break, so blanks up to the end of the text reach one too; the
+      // final line break itself belongs to no source text.
+      if (j >= src.length) {
+        i = j - 1;
+        continue;
+      }
       if (nl >= 0) {
-        out += '}\n';
+        out += '\n';
         i = src.charCodeAt(nl) === 13 && src.charCodeAt(nl + 1) === 10 ? nl + 1 : nl;
         continue;
       }
+      if (c === 125) continue;
     }
     out += src[i];
   }

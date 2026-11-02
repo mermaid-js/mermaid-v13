@@ -1,0 +1,128 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { flowchartTokens, FlowTokenKind, JISON_NAMES } from '@mermaid-js/diagram-flowchart';
+import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
+import type { CorpusItem } from '../types.ts';
+import { decodeEntities } from './v12.ts';
+import { loadFlowLexerOracle } from './jison-lexer.ts';
+import type { JisonToken } from './jison-lexer.ts';
+
+/**
+ * Lexer-parity gate (notes/07): the v13 flowchart lexer emits the same terminals, with the same
+ * images, as mermaid@12's jison lexer on the text v12 lexed.
+ *
+ * Normalisation, both sides:
+ * - runs of `TEXT`, `EDGE_TEXT`, `STR` and `MD_STR` are merged (jison splits some per
+ *   character; v13 splits strings where a removed comment line was);
+ * - images are compared as v12's parser read them: entity placeholders decoded, CRLF as LF;
+ * - v12 appended a `\n` before lexing; v13 lexes a sentinel line break there whose image is
+ *   clipped to the source, so that last character is taken off v12's last token.
+ *
+ * Deliberate differences: the `@{` opener keeps its image in v13 (jison clears it); v13 also emits the closing `}` of shape data (jison drops it), and
+ * comments and directives as trivia; both are left out. After a lexical error jison stops, so
+ * both streams are cut at the first `INVALID`.
+ */
+const MERGED = new Set(['TEXT', 'EDGE_TEXT', 'STR', 'MD_STR']);
+
+function normalise(tokens: JisonToken[]): JisonToken[] {
+  const out: JisonToken[] = [];
+  for (const [name, image] of tokens) {
+    const last = out[out.length - 1];
+    if (last && last[0] === name && MERGED.has(name)) last[1] += image;
+    else out.push([name, image]);
+    if (name === 'INVALID') {
+      out[out.length - 1] = ['INVALID', ''];
+      break;
+    }
+  }
+  return out;
+}
+
+function v13Tokens(source: string): JisonToken[] {
+  let quoted = false;
+  return normalise(
+    flowchartTokens(source).flatMap((t): JisonToken[] => {
+      const name = JISON_NAMES[t.kind];
+      if (!name) return [];
+      if (t.kind !== FlowTokenKind.ShapeData) return [[name, t.text]];
+      // jison clears the image of the `@{` opener, and folds line breaks inside a quoted
+      // shape-data value into `<br/>`; v13 keeps the source text (the parser folds).
+      if (t.text === '@{') return [[name, '']];
+      if (t.text === '"') quoted = !quoted;
+      else if (quoted) {
+        // At the end of the text v12's appended line break folded in too (and is taken off).
+        const atEnd = t.range.end === source.length;
+        const folded = (atEnd ? t.text + '\n' : t.text).replace(/\n\s*/g, '<br/>');
+        return [[name, atEnd ? folded.replace(/<br\/>$/, '') : folded]];
+      }
+      return [[name, t.text]];
+    })
+  );
+}
+
+/** jison lexes the `ﬂ` of an entity placeholder outside labels, then fails on `°`. */
+function cutEntityError(tokens: JisonToken[]): JisonToken[] {
+  const i = tokens.findIndex(
+    ([n, img], k) => n === 'UNICODE_TEXT' && img === 'ﬂ' && tokens[k + 1]?.[0] === 'INVALID'
+  );
+  return i < 0 ? tokens : [...tokens.slice(0, i), ['INVALID', '']];
+}
+
+/** The last non-empty image of a stream that lexed to the end held v12's appended `\n`. */
+function dropAppendedNewline(tokens: JisonToken[]): void {
+  if (tokens[tokens.length - 1]?.[0] === 'INVALID') return;
+  for (let k = tokens.length - 1; k >= 0 && k >= tokens.length - 3; k--) {
+    const t = tokens[k];
+    if (!t || t[1] === '') continue;
+    if (t[1].endsWith('\n')) t[1] = t[1].slice(0, -1);
+    // Inside an unclosed quoted shape-data value it was folded into `<br/>`.
+    else if (t[0] === 'SHAPE_DATA' && t[1].endsWith('<br/>')) t[1] = t[1].slice(0, -5);
+    return;
+  }
+}
+
+async function corpus(): Promise<CorpusItem[]> {
+  const items: CorpusItem[] = [];
+  for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/flowchart'), 'e2e')) {
+    items.push(item);
+  }
+  const specs = JSON.parse(
+    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/flowchart-v12-specs.json'), 'utf8')
+  ) as CorpusItem[];
+  return [...items, ...specs];
+}
+
+describe('flowchart lexer parity with mermaid@12 (jison)', () => {
+  it('emits the same tokens over the e2e fixtures and the v12 spec strings', async () => {
+    const oracle = await loadFlowLexerOracle();
+    const items = await corpus();
+    const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
+    let compared = 0;
+    for (const item of items) {
+      const v12 = await oracle.tokens(item.source);
+      if (!v12) continue;
+      compared++;
+      const expected = normalise(
+        cutEntityError(v12).map(([n, i]): JisonToken => [n, decodeEntities(i)])
+      );
+      dropAppendedNewline(expected);
+      const actual = v13Tokens(item.source);
+      if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
+      let at = 0;
+      while (JSON.stringify(expected[at]) === JSON.stringify(actual[at])) at++;
+      diffs.push({
+        id: item.id,
+        at,
+        v12: expected.slice(Math.max(0, at - 2), at + 3),
+        v13: actual.slice(Math.max(0, at - 2), at + 3),
+      });
+    }
+    process.stdout.write(`lexer parity: ${compared} of ${items.length} sources lexed by v12\n`);
+    expect(compared).toBeGreaterThan(700);
+    const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
+    expect(
+      diffs.map((d) => `${d.id} @${d.at}\n  v12 ${show(d.v12)}\n  v13 ${show(d.v13)}`)
+    ).toEqual([]);
+  }, 120_000);
+});
