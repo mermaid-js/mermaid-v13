@@ -1,5 +1,6 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { LayoutGraph, LayoutModel } from '@mermaid-js/core/layout';
+import type { SecurityLevel } from '@mermaid-js/core/svg';
 import type { Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
 
@@ -11,7 +12,7 @@ export interface FlowWarning {
 
 /**
  * What the flowchart's layout and render stages read (DESIGN §3 `RenderContext`). The
- * pipeline's context (#15) satisfies it structurally; tests build one with `renderForTest`.
+ * pipeline's `RenderContext` satisfies it structurally.
  */
 export interface FlowRenderContext {
   readonly config: ResolvedConfig;
@@ -25,6 +26,8 @@ export interface FlowRenderContext {
   readonly idPrefix?: string;
   /** Written as `data-mermaid-version`. */
   readonly version?: string;
+  /** Resolved once per render by the pipeline (D75); `default` when absent. */
+  readonly securityLevel?: SecurityLevel;
   /** Integrator link schemes for `click` URLs (default http, https, mailto). */
   readonly linkSchemes?: readonly string[];
 }

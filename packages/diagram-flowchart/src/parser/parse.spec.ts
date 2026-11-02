@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { Kind, LineIndex } from '@mermaid-js/core/parser-kit';
 import type { AstNode, Range } from '@mermaid-js/core/parser-kit';
-import { flowchart } from '../index.ts';
-import type { FlowNodeStmt } from '../index.ts';
+import { flowchart, parseFlowchart } from '../index.ts';
+import type { FlowNodeStmt, FlowParseOptions } from '../index.ts';
 
-const parse = (src: string, options?: Parameters<typeof flowchart.parse>[1]) =>
-  flowchart.parse(src, options);
+const parse = (src: string, options?: FlowParseOptions) => parseFlowchart(src, options);
 const text = (src: string, r: Range) => src.slice(r.start, r.end);
 const errors = (src: string) =>
   parse(src)
