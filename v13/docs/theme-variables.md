@@ -45,6 +45,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart |
 | `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core |
-| `spacing1` | `--mermaid-spacing1` | token | length | | | all | core |
-| `spacing2` | `--mermaid-spacing2` | token | length | | | all | core |
-| `spacing3` | `--mermaid-spacing3` | token | length | | | all | core |
+| `spacing1` | `--mermaid-spacing1` | token | length | | | all | core, flowchart |
+| `spacing2` | `--mermaid-spacing2` | token | length | | | all | core, flowchart |
+| `spacing3` | `--mermaid-spacing3` | token | length | | | all | core, flowchart |
