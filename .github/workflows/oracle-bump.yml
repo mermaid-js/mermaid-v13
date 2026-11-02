@@ -1,0 +1,61 @@
+name: Oracle bump
+
+# R-COMPAT-8: run the parity oracle against the newest mermaid@12 every week and open one
+# issue per new failure cluster, so syntax added to v12 reaches v13 as tickets. The bump is
+# not committed here; the dependency update itself goes through the normal renovate flow.
+
+on:
+  schedule:
+    - cron: '17 4 * * 1' # Mondays 04:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: oracle-bump
+  cancel-in-progress: false
+
+jobs:
+  oracle-bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      - name: Bump mermaid@12 to the newest 12.x
+        run: pnpm --filter @mermaid-js/conformance add --save-dev 'mermaid-v12@npm:mermaid@^12'
+      - name: Run the oracle
+        run: pnpm --filter @mermaid-js/conformance oracle:report "$RUNNER_TEMP/oracle-report.json"
+      - name: Open one issue per new failure cluster
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT: ${{ runner.temp }}/oracle-report.json
+        run: |
+          set -euo pipefail
+          version=$(jq -r .oracleVersion "$REPORT")
+          gh label create oracle-bump --color FBCA04 --description 'New mermaid@12 oracle divergence' 2>/dev/null || true
+          jq -c '.clusters[]' "$REPORT" | while read -r cluster; do
+            title=$(jq -r .title <<<"$cluster")
+            if gh issue list --state open --label oracle-bump --limit 500 --json title --jq '.[].title' | grep -Fxq -- "$title"; then
+              echo "Already open: $title"
+              continue
+            fi
+            body=$(jq -r --arg version "$version" '
+              "The weekly oracle run against `mermaid@\($version)` found sources where v13 diverges from v12.\n\n" +
+              "- Diagram: `\(.adapter)`\n- Kind: `\(.kind)`\n- Signature: `\(.signature)`\n- Sources (\(.ids | length)):\n" +
+              (.ids[:50] | map("  - `\(.)`") | join("\n")) +
+              "\n\nReproduce: `pnpm --filter @mermaid-js/conformance oracle` after bumping `mermaid-v12`. " +
+              "Fix v13, or list the divergence in `packages/conformance/divergences.json` with a reason and an owner."
+            ' <<<"$cluster")
+            gh issue create --title "$title" --label oracle-bump --body "$body"
+          done
+          disappeared=$(jq '.disappeared | length' "$REPORT")
+          if [ "$disappeared" != "0" ]; then
+            echo "::warning::$disappeared listed divergences no longer diverge with mermaid@$version; prune divergences.json."
+          fi
