@@ -76,7 +76,7 @@ jobs:
   visual:
     # R-TEST-5: the v13 visual baseline (e2e/diagrams/flowchart/baseline, tier `baseline`) plus the
     # browser adapter specs (e2e/browser), in the Playwright image so fonts and rendering are fixed.
-    # Screenshots go to Argos, which compares them with the develop baseline on PRs. R-TEST-6: the
+    # Screenshots go to Argos, which compares them with the mermaid-v13 baseline on PRs (R-REL-1). R-TEST-6: the
     # theme gallery is built from the same fixtures and kept as an artifact.
     name: Visual baseline
     runs-on: ubuntu-latest
@@ -102,6 +102,7 @@ jobs:
         env:
           # Empty on forks; Argos falls back to tokenless upload for public repositories.
           ARGOS_TOKEN: ${{ secrets.ARGOS_TOKEN }}
+          ARGOS_REFERENCE_BRANCH: mermaid-v13
         run: pnpm exec argos upload e2e/screenshots
       - name: Build the theme gallery
         run: pnpm --filter @mermaid-js/visual gallery

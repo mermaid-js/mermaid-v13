@@ -7,6 +7,7 @@
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { fixturePath } from '../helpers/mmd-snapshots.ts';
+import { createTheme, loadTheme } from '../../packages/core/src/theme/index.ts';
 import { channels, computedPaints, openHarness } from './page.ts';
 
 const SIMPLE = 'flowchart LR\n  A[Start] --> B{Choice}\n  B -- yes --> C[(Store)]';
@@ -28,6 +29,69 @@ test('setting --mermaid-primaryColor on the host re-themes without re-rendering'
   );
   expect(await page.evaluate(firstRectFill)).toBe('rgb(255, 0, 0)');
   expect(await page.locator('.diagram').innerHTML()).toBe(markup);
+});
+
+test('contrast text follows a host override of the base colour it sits on (R-THEME-4)', async ({
+  page,
+}) => {
+  await openHarness(page);
+  await page.evaluate((code) => window.v13.mount(code, { config: { theme: 'default' } }), SIMPLE);
+  const label = `getComputedStyle(document.querySelector('.diagram svg .node text')).fill`;
+  expect(channels(await page.evaluate(label))).toEqual([51, 51, 51, 1]); // textColor #333 on #ececff
+  await page.evaluate(() =>
+    document
+      .querySelector<HTMLElement>('.diagram')!
+      .style.setProperty('--mermaid-primaryColor', '#000000')
+  );
+  // #333 on black fails AA, so the ink flips to the background colour (white).
+  expect(channels(await page.evaluate(label))).toEqual([255, 255, 255, 1]);
+});
+
+test('contrast() and invert() CSS equals the JS-computed literal on many backgrounds', async ({
+  page,
+}) => {
+  await openHarness(page);
+  const base = await loadTheme('base');
+  const cases: [string, string][] = [];
+  for (const bg of ['#000000', '#ffffff', '#777777', '#3366cc', '#fff5ad', '#552222', '#c0ffee']) {
+    const rules = {
+      inv: 'invert(primaryColor)',
+      ink: 'contrast(primaryColor, #333333, #ffffff)',
+      ink2: 'contrast(primaryColor, #ffffff, #333333)',
+    };
+    for (const name of ['inv', 'ink', 'ink2']) {
+      const vars = createTheme(base, { rules });
+      vars.color(name);
+      const style = Object.entries({ ...vars.rootStyle(), '--mermaid-primaryColor': bg })
+        .map(([k, v]) => `${k}:${v}`)
+        .join(';');
+      const lit = createTheme(base, {
+        rules,
+        cssVariables: false,
+        themeVariables: { primaryColor: bg },
+      }).color(name);
+      cases.push([`${style};color:var(--_${name})`, lit]);
+    }
+  }
+  const got = await page.evaluate(
+    (all) =>
+      all.map(([style, lit]) => {
+        const a = document.createElement('div');
+        const b = document.createElement('div');
+        a.setAttribute('style', style);
+        b.style.color = lit;
+        document.body.append(a, b);
+        return [getComputedStyle(a).color, getComputedStyle(b).color];
+      }),
+    cases
+  );
+  const off = got.filter(([css, lit]) => {
+    const [x, y] = [channels(css!), channels(lit!)];
+    return (
+      typeof x === 'string' || typeof y === 'string' || x.some((v, i) => Math.abs(v - y[i]!) > 1)
+    );
+  });
+  expect(off).toEqual([]);
 });
 
 test("theme 'auto' follows prefers-color-scheme without re-rendering", async ({ page }) => {

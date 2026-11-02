@@ -115,6 +115,46 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
+  it('requires the upstream notice and listing for a file ported from @braintree/sanitize-url', () => {
+    const header =
+      '// Port of @braintree/sanitize-url (MIT, (c) 2017 Braintree) via Pele (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).\n';
+    const braintree = `@braintree/sanitize-url\n-----------------------\nMIT License\n\nCopyright (c) 2017 Braintree\n`;
+    const files = {
+      'packages/core/package.json': manifest(),
+      'packages/core/src/svg/url.ts': `${header}export {};\n`,
+    };
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/core/THIRD_PARTY_NOTICES': `${MIT_NOTICE}\n  src/svg/url.ts\n`,
+        })
+      )
+    ).toEqual([
+      'packages/core/THIRD_PARTY_NOTICES: must contain the MIT License text with "Copyright (c) 2017 Braintree"',
+      'packages/core/src/svg/url.ts: not listed under @braintree/sanitize-url in packages/core/THIRD_PARTY_NOTICES',
+    ]);
+    expect(
+      checkLicenses(
+        workspace({
+          ...files,
+          'packages/core/THIRD_PARTY_NOTICES': `${MIT_NOTICE}\n  src/svg/url.ts\n\n${braintree}\n  src/svg/url.ts\n`,
+        })
+      )
+    ).toEqual([]);
+  });
+
+  it('requires core/svg/url.ts to credit both Pele and @braintree/sanitize-url', () => {
+    const root = workspace({
+      'packages/core/package.json': manifest(),
+      'packages/core/THIRD_PARTY_NOTICES': `${MIT_NOTICE}\n  src/svg/url.ts\n`,
+      'packages/core/src/svg/url.ts': `${GOOD_HEADER}export {};\n`,
+    });
+    expect(checkLicenses(root)).toEqual([
+      'packages/core/src/svg/url.ts: header must credit @braintree/sanitize-url',
+    ]);
+  });
+
   it('passes on this repository', () => {
     expect(checkLicenses(join(import.meta.dirname, '..', '..', '..'))).toEqual([]);
   });

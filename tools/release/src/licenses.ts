@@ -1,19 +1,51 @@
 /**
- * License check (R-REL-4, D12): code ported from Pele carries MIT attribution.
+ * License check (R-REL-4, D12): ported code carries its upstreams' MIT attribution.
  *
- * A file is Pele-derived when its leading comment block links to Pele's repository. Then:
- * - that header names the MIT license and the copyright holder ("kepano");
+ * `UPSTREAMS` maps each upstream to the marker that credits it in a file's leading comment
+ * block (Pele's repository URL; Braintree's sanitize-url package name). A file is derived from an upstream
+ * when its header has that marker. Then:
+ * - that header names the MIT license and the upstream's copyright holder;
  * - in a published package (`packages/*` without `"private": true`), the package root has a
- *   `THIRD_PARTY_NOTICES` that holds the MIT text, lists the file by its package-relative path
+ *   `THIRD_PARTY_NOTICES` that holds the upstream's MIT copyright line, lists the file by its
+ *   package-relative path (in that upstream's section, when the notices have one per upstream)
  *   and is in the package's `"files"`, so it ships in the tarball;
- * - every path the notices list still exists.
+ * - every path the notices list still exists;
+ * - the files in `REQUIRED_CREDITS` credit the upstreams listed for them.
  * Spec files are not published and are skipped. Tools are not published either, so only their
  * headers are checked.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
-const PELE_URL = 'https://github.com/obsidianmd/pele';
+interface Upstream {
+  /** The section heading in THIRD_PARTY_NOTICES. */
+  readonly name: string;
+  /** Text in a file header that marks the file as derived from this upstream. */
+  readonly marker: string;
+  readonly holder: string;
+  readonly copyright: string;
+}
+
+export const UPSTREAMS: readonly Upstream[] = [
+  {
+    name: 'Pele',
+    marker: 'https://github.com/obsidianmd/pele',
+    holder: 'kepano',
+    copyright: 'Copyright (c) 2026 kepano',
+  },
+  {
+    name: '@braintree/sanitize-url',
+    marker: '@braintree/sanitize-url',
+    holder: 'Braintree',
+    copyright: 'Copyright (c) 2017 Braintree',
+  },
+];
+
+/** Workspace-relative files that must credit these upstreams (checked when the file exists). */
+export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
+  'packages/core/src/svg/url.ts': ['Pele', '@braintree/sanitize-url'],
+};
+
 const NOTICES = 'THIRD_PARTY_NOTICES';
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'fixtures', '__fixtures__']);
 
@@ -58,20 +90,53 @@ const childDirs = (dir: string) =>
         .sort()
     : [];
 
-/** Package-relative paths of the Pele-derived files under `dir`; header problems go to `problems`. */
-function derivedFiles(root: string, dir: string, problems: string[]): string[] {
-  const derived: string[] = [];
+interface Derived {
+  readonly file: string;
+  readonly upstream: Upstream;
+}
+
+/** The derived files under `dir` (package-relative); header problems go to `problems`. */
+function derivedFiles(root: string, dir: string, problems: string[]): Derived[] {
+  const derived: Derived[] = [];
   for (const file of sourceFiles(dir)) {
     const header = leadingComment(readFileSync(file, 'utf8'));
-    if (!header.includes(PELE_URL)) continue;
-    if (!/\bMIT\b/.test(header) || !header.includes('kepano'))
-      problems.push(
-        `${relative(root, file)}: Pele-derived header must name the MIT license and "kepano"`
-      );
-    derived.push(relative(dir, file));
+    const rel = relative(root, file);
+    for (const name of REQUIRED_CREDITS[rel] ?? []) {
+      const upstream = UPSTREAMS.find((u) => u.name === name)!;
+      if (!header.includes(upstream.marker))
+        problems.push(`${rel}: header must credit ${upstream.name}`);
+    }
+    for (const upstream of UPSTREAMS) {
+      if (!header.includes(upstream.marker)) continue;
+      if (!/\bMIT\b/.test(header) || !header.includes(upstream.holder))
+        problems.push(
+          `${rel}: ${upstream.name}-derived header must name the MIT license and "${upstream.holder}"`
+        );
+      derived.push({ file: relative(dir, file), upstream });
+    }
   }
   return derived;
 }
+
+/**
+ * The part of the notices under `name`'s heading line. Without that heading it is empty,
+ * except for Pele, the first upstream, whose notices may predate per-upstream sections.
+ */
+function section(notices: string, name: string): string {
+  const lines = notices.split('\n');
+  const headings = UPSTREAMS.map((u) => u.name);
+  const start = lines.findIndex((l) => l.trim() === name);
+  if (start < 0) return name === 'Pele' ? notices : '';
+  let end = lines.length;
+  for (let i = start + 1; i < lines.length; i++)
+    if (headings.includes(lines[i]!.trim())) {
+      end = i;
+      break;
+    }
+  return lines.slice(start, end).join('\n');
+}
+
+const listedIn = (text: string) => new Set(text.match(/(?<=^\s*)src\/\S+\.(?:ts|js|mjs)$/gm) ?? []);
 
 /** Problems found under `root` (a workspace root); empty when R-REL-4 holds. */
 export function checkLicenses(root: string): string[] {
@@ -95,16 +160,26 @@ export function checkLicenses(root: string): string[] {
     }
 
     const notices = readFileSync(noticesPath, 'utf8');
-    if (!notices.includes('MIT License') || !notices.includes('Copyright (c) 2026 kepano'))
-      problems.push(
-        `${pkg}/${NOTICES}: must contain the MIT License text with "Copyright (c) 2026 kepano"`
-      );
+    const used = UPSTREAMS.filter(
+      (u) => u.name === 'Pele' || derived.some((d) => d.upstream === u)
+    );
+    for (const u of used)
+      if (!notices.includes('MIT License') || !notices.includes(u.copyright))
+        problems.push(`${pkg}/${NOTICES}: must contain the MIT License text with "${u.copyright}"`);
     if (!(manifest.files ?? []).includes(NOTICES))
       problems.push(`${pkg}/package.json: "files" must include ${NOTICES}`);
 
-    const listed = new Set(notices.match(/(?<=^\s*)src\/\S+\.(?:ts|js|mjs)$/gm) ?? []);
-    for (const file of derived)
-      if (!listed.has(file)) problems.push(`${pkg}/${file}: not listed in ${pkg}/${NOTICES}`);
+    const listed = listedIn(notices);
+    for (const { file, upstream } of derived) {
+      if (!listed.has(file)) {
+        if (upstream.name === 'Pele')
+          problems.push(`${pkg}/${file}: not listed in ${pkg}/${NOTICES}`);
+        else
+          problems.push(`${pkg}/${file}: not listed under ${upstream.name} in ${pkg}/${NOTICES}`);
+      } else if (!listedIn(section(notices, upstream.name)).has(file)) {
+        problems.push(`${pkg}/${file}: not listed under ${upstream.name} in ${pkg}/${NOTICES}`);
+      }
+    }
     for (const file of listed)
       if (!existsSync(join(pkgDir, file)))
         problems.push(`${pkg}/${NOTICES}: lists ${file}, which does not exist`);

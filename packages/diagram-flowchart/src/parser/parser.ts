@@ -18,7 +18,13 @@ import {
   LineIndex,
   ParseState,
 } from '@mermaid-js/core/parser-kit';
-import type { ParseOptions, ParseResult, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type {
+  AstCallback,
+  ParseOptions,
+  ParseResult,
+  Range,
+  TokenStream,
+} from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult, YamlMap, YamlValue } from '@mermaid-js/core/preprocess';
@@ -548,7 +554,10 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
         st.diagnostics.error('SHAPE_DATA', d.message, r);
       } else st.diagnostics.warning(d.code, d.message, r);
     }
-    if (result.diagnostics.some((d) => d.severity === 'error')) throw STOP;
+    // A semantic error: the tokens are fine, so parse on and report later errors in the same
+    // statement too (R-PARSE-4). The node keeps no data.
+    if (result.diagnostics.some((d) => d.severity === 'error'))
+      return { value: null, range: whole };
     const value = result.value;
     return { value: isYamlMap(value) ? value : null, range: whole };
   };
@@ -825,7 +834,8 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     expect(T.Space);
     if (kind() !== T.Interpolate) {
       const styles = stylesOpt();
-      if (!db.updateLink(positions, styles, span(at))) throw STOP;
+      // An index error is semantic: the statement parses on (R-PARSE-4).
+      db.updateLink(positions, styles, span(at));
       return;
     }
     i++;
@@ -834,9 +844,9 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     if (kind() === T.Space) {
       i++;
       const styles = stylesOpt();
-      if (!db.updateLinkInterpolate(positions, interpolate, span(at))) throw STOP;
-      if (!db.updateLink(positions, styles, span(at))) throw STOP;
-    } else if (!db.updateLinkInterpolate(positions, interpolate, span(at))) throw STOP;
+      if (db.updateLinkInterpolate(positions, interpolate, span(at)))
+        db.updateLink(positions, styles, span(at));
+    } else db.updateLinkInterpolate(positions, interpolate, span(at));
   };
 
   const strText = (j: number) => cook(src, S[j] ?? 0, E[j] ?? 0, view);
@@ -847,7 +857,8 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     return fail([T.Str, ...also]);
   };
 
-  const clickStatement = (out: string[]): void => {
+  /** Returns the callback of a `click … callback` / `call` statement, for the AST. */
+  const clickStatement = (out: string[]): AstCallback | undefined => {
     const at = i;
     const id = raw(i++);
     refs(id, range(at), 'node', 'ref', out);
@@ -862,7 +873,9 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
       }
       db.setClickEvent(id, name, span(at), args);
       if (tooltip !== undefined) db.setTooltip(id, tooltip);
-      return;
+      return args === undefined
+        ? { targets: id.split(','), name }
+        : { targets: id.split(','), name, args };
     }
     let url: string;
     if (k === T.Href) {
@@ -878,7 +891,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
       }
       db.setClickEvent(id, name, span(at));
       if (tooltip !== undefined) db.setTooltip(id, tooltip);
-      return;
+      return { targets: id.split(','), name };
     }
     if (kind() !== T.Space) {
       db.setLink(id, url, span(at));
@@ -960,11 +973,14 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
         separator();
         return NO_ITEMS;
       }
-      case T.Click:
-        clickStatement(refList);
-        out.push(simple('Click', from, refList));
+      case T.Click: {
+        const callback = clickStatement(refList);
+        const stmt = simple('Click', from, refList);
+        if (callback !== undefined) stmt.callback = callback;
+        out.push(stmt);
         separator();
         return NO_ITEMS;
+      }
       case T.DirectionTB:
       case T.DirectionBT:
       case T.DirectionRL:
@@ -1216,6 +1232,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
 
   header();
   document();
+  db.finish();
 
   const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
   const model = db.model(warnings);

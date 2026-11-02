@@ -145,19 +145,19 @@ export function canvasMeasurer(): Measurer | null {
 let shared: Measurer | undefined;
 
 export interface MeasurerOptions {
-  /** An integrator-supplied measurer. It is used as given, even with `deterministic`. */
+  /** An integrator-supplied measurer. `deterministic` overrides it (R-TEXT-7). */
   measurer?: Measurer;
-  /** Forces the table measurer in every environment (R-TEXT-7). */
+  /** Forces the table measurer in every environment, even over `measurer` (R-TEXT-7). */
   deterministic?: boolean;
 }
 
 /**
- * The measurer for a render: the integrator's, else the table measurer when
- * `deterministic`, else the shared canvas measurer in a browser, else the table measurer.
+ * The measurer for a render: the table measurer when `deterministic`, else the integrator's,
+ * else the shared canvas measurer in a browser, else the table measurer.
  */
 export function selectMeasurer(options: MeasurerOptions = {}): Measurer {
-  if (options.measurer) return options.measurer;
   if (options.deterministic) return tableMeasurer;
+  if (options.measurer) return options.measurer;
   shared ??= canvasMeasurer() ?? undefined;
   return shared ?? tableMeasurer;
 }

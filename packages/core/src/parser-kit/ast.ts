@@ -33,6 +33,20 @@ export interface AstNode<T extends string = string> {
   children?: AstNode[];
 }
 
+/**
+ * A `click … callback` / `call` statement as an AST node carries it (R-SVG-5, DESIGN §12.3):
+ * the AST node of the statement has a `callback` field of this shape. Diagram-agnostic, so
+ * an extension (the interactions plugin) can find callbacks in any diagram's AST.
+ */
+export interface AstCallback {
+  /** Ids of the elements the callback is bound to (the rendered `data-id`), as written. */
+  targets: string[];
+  /** The function name as written (`fn`, `app.handlers.fn`). */
+  name: string;
+  /** The text between the parentheses of `call fn(…)`, as written. */
+  args?: string;
+}
+
 function esc(name: string): string {
   return /[%>@#]/.test(name)
     ? name.replace(/[%>@#]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)

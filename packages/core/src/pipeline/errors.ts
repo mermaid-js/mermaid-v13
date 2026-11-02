@@ -1,7 +1,7 @@
 /**
  * Typed errors of the render pipeline (DESIGN §11, R-ERR-1, R-COMPAT-7, R-API-2).
  */
-import { isLimitCode } from '../limits/index.ts';
+import { isLimitCode, LIMIT_CODES, LimitError, type LimitName } from '../limits/index.ts';
 import { formatDiagnostic } from '../parser-kit/format.ts';
 import { LineIndex } from '../parser-kit/positions.ts';
 import type { Diagnostic } from '../parser-kit/diagnostics.ts';
@@ -32,7 +32,13 @@ export interface MermaidErrorInit {
   readonly expected?: readonly string[];
   readonly diagnostics?: readonly Diagnostic[];
   readonly cause?: unknown;
+  /** The breached limit of a `LIMIT` error; derived from `cause` or the diagnostics if unset. */
+  readonly limit?: LimitName;
 }
+
+const LIMIT_BY_CODE = new Map(
+  (Object.entries(LIMIT_CODES) as [LimitName, string][]).map(([name, code]) => [code, name])
+);
 
 /** The one error type `render`, `renderSync`, `prepare` and `parse` reject or throw with. */
 export class MermaidError extends Error {
@@ -46,6 +52,8 @@ export class MermaidError extends Error {
   readonly expected?: readonly string[];
   /** Every diagnostic; the first is the primary one. */
   readonly diagnostics: readonly Diagnostic[];
+  /** For `code: 'LIMIT'`: which limit was breached (`maxEdges`, `maxSourceLength`, …). */
+  readonly limit?: LimitName;
 
   constructor(code: MermaidErrorCode, message: string, init: MermaidErrorInit = {}) {
     super(message, init.cause === undefined ? undefined : { cause: init.cause });
@@ -59,6 +67,13 @@ export class MermaidError extends Error {
     this.column = at ? at.column + 1 : 1;
     if (init.expected) this.expected = init.expected;
     this.diagnostics = init.diagnostics ?? [];
+    if (code === 'LIMIT') {
+      const limit =
+        init.limit ??
+        (init.cause instanceof LimitError ? init.cause.limit : undefined) ??
+        this.diagnostics.map((d) => LIMIT_BY_CODE.get(d.code)).find((n) => n !== undefined);
+      if (limit !== undefined) this.limit = limit;
+    }
   }
 }
 

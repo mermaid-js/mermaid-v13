@@ -52,7 +52,7 @@ import { VERSION } from './version.ts';
 
 /** Options only the integrator can set; never read from diagram text (R-SEC-5, R-SEC-6). */
 export interface IntegratorOptions {
-  /** Measures label text. Wins over `deterministic` (DESIGN §5.1). */
+  /** Measures label text. Ignored under `deterministic: true` (R-TEXT-7, DESIGN §5.1). */
   measurer?: Measurer;
   /** Use the built-in metric tables, never the canvas (R-TEXT-7). */
   deterministic?: boolean;
@@ -70,7 +70,12 @@ export interface IntegratorOptions {
 export type InitializeConfig = MermaidConfig & IntegratorOptions;
 
 export interface RenderOptions {
-  /** Prefix of the ids in the output (`render(id)` passes its id). Default `mermaid`. */
+  /**
+   * Prefix of the ids in the output (`render(id)` passes its id). Without one, the prefix is
+   * `mermaid-<hash>`, a stable hash of the source text and the resolved config, so different
+   * diagrams on one page get distinct ids and the same input stays byte-identical (R-SVG-3,
+   * R-ARCH-6). Pass an `id` to render the same text twice on one page.
+   */
   id?: string;
   /** Per-call integrator config, merged over `initialize()`'s. */
   config?: InitializeConfig;
@@ -184,6 +189,32 @@ function withLimits(
   options: Readonly<IntegratorOptions>
 ): Snapshot {
   return { config, options, limits: resolveLimits(config, options.limits) };
+}
+
+/** Keys sorted, so equal configs serialise equally whatever their key order. */
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
+  if (value && typeof value === 'object') {
+    const entries = Object.keys(value)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stableJson((value as Plain)[k])}`);
+    return `{${entries.join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'null';
+}
+
+/**
+ * `mermaid-<FNV-1a 32 of text + resolved config + integrator options>`: distinct per diagram,
+ * deterministic (R-SVG-3, R-ARCH-6). Functions (measurer) serialise as null.
+ */
+function defaultIdPrefix(text: string, config: unknown, options: unknown): string {
+  const input = `${text}\u0000${stableJson(config)}\u0000${stableJson(options)}`;
+  let h = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    h ^= input.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return `mermaid-${(h >>> 0).toString(36)}`;
 }
 
 function snapshot(input: InitializeConfig = {}): Snapshot {
@@ -506,7 +537,7 @@ export function createMermaid() {
       }),
       theme,
       securityLevel: resolveSecurityLevel(config.securityLevel, warn),
-      idPrefix: options?.id ?? 'mermaid',
+      idPrefix: options?.id ?? defaultIdPrefix(text, config, s.options),
       version: VERSION,
       linkSchemes: s.options.linkSchemes,
       limits: s.limits,

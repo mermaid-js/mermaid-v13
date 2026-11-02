@@ -54,8 +54,8 @@ test checks them against the mermaid@12 declarations.
 | --- | --- | --- |
 | `mermaidAPI` object (`getConfig`, `setConfig`, `reset`, …) | Removed | No global render state (R-API-5); config goes through `initialize()` |
 | `render(id, text, container?)` → `{ svg, diagramType, bindFunctions? }` | Same call; the result adds `width`, `height` and `warnings`. `container` is accepted and ignored (v13 measures without the DOM) | R-API-1, R-ERR-4 |
-| `render(id)` sets the root `<svg id>` | `id` prefixes the ids the output writes (`<id>-title`, `<id>-desc`); the root has no `id` | Ids stay unique per render |
-| `render()` needs a browser DOM (or jsdom) to measure text | Renders in Node, Deno, workers and browsers without a DOM. Text is measured with canvas when it exists, otherwise with built-in font tables; `initialize({ deterministic: true })` always uses the tables, `initialize({ measurer })` plugs in your own | R-TEXT-4, R-ARCH-1 |
+| `render(id)` sets the root `<svg id>` | `id` prefixes the ids the output writes (`<id>-title`, `<id>-desc`); the root has no `id`. Without an `id` (`renderSync`, SSR) the prefix is `mermaid-<hash>` of the text and resolved config | Ids stay unique per diagram and output stays deterministic; pass an `id` to show the same text twice on a page |
+| `render()` needs a browser DOM (or jsdom) to measure text | Renders in Node, Deno, workers and browsers without a DOM. Text is measured with canvas when it exists, otherwise with built-in font tables; `initialize({ deterministic: true })` always uses the tables (even over a `measurer`), `initialize({ measurer })` plugs in your own | R-TEXT-4, R-ARCH-1 |
 | Errors are `Error`s with jison text (`Parse error on line 3 … Expecting 'SQE'`) and `hash.loc` | `MermaidError { code, message, line, column, offset, length, expected?, diagnostics }`; `code` is `SYNTAX`, `SEMANTIC`, `UNSUPPORTED_DIAGRAM`, `UNSUPPORTED_FORMAT`, `NOT_LOADED`, `LIMIT` or `INTERNAL`; lines count from the top of the source, front matter included | R-ERR-1, R-ERR-2, D68 |
 | A diagram type without a renderer, or unknown text, throws `UnknownDiagramError` | `MermaidError` with `code: 'UNSUPPORTED_DIAGRAM'` (every v12 type is still detected, in v12 order) | R-COMPAT-7 |
 | `detectType(text)` throws `UnknownDiagramError` | Throws `MermaidError` (`UNSUPPORTED_DIAGRAM`) | R-ERR-1 |
@@ -141,9 +141,34 @@ attributes. Without the plugin:
 - `click A "url"` and `click A href "url"` still draw links (they are SVG `<a>` elements, not
   script) and tooltips become SVG `<title>` elements.
 
-The interactions plugin is an empty placeholder package in 13.0.0-alpha.0; it is released with
-the extension plugin API _(later in M1)_. v12 had no click-callback config keys, so no schema key
-is `moved` for it.
+With the plugin, callbacks work as in v12. Register it once; diagram text alone can never turn
+it on:
+
+```js
+import mermaid from 'mermaid';
+import interactions from '@mermaid-js/plugin-interactions';
+
+await mermaid.registerExternalDiagrams([interactions]);
+await mermaid.run(); // binds the callbacks of every diagram it draws
+
+// or, at a v12 render() call site:
+const { svg, bindFunctions } = await mermaid.render('id', text);
+element.innerHTML = svg;
+bindFunctions?.(element);
+```
+
+- Function names are looked up on `window` as in v12 (`fn`, `app.handlers.fn`); a missing name
+  does nothing. `call fn("a, b", 2)` passes the strings `a, b` and `2`; `callback` and `call fn()`
+  pass the node id.
+- `run()` and `mount()` call `bindFunctions` for you. Calling it again on the same element binds
+  nothing twice.
+- Unlike v12, callbacks do not depend on `securityLevel` (v12 ran them only with `loose`):
+  installing the plugin is the opt-in.
+- The plugin does not change the SVG; it adds click listeners to the rendered `g.node[data-id]`
+  elements inside the element you pass.
+
+v12 had no click-callback config keys (only `securityLevel` gated them), so no schema key is
+`moved` to the plugin and it has no config section.
 
 <!-- BEGIN GENERATED CONFIG SECTION: pnpm gen:config -->
 
@@ -228,7 +253,7 @@ Removed and ignored keys, with what to use instead:
 | Default theme `default` | Default theme `redux` (D55). Set `theme: 'default'` for v12's default colours | D55 |
 | Themes `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`, `null` | 13.0 ships `redux`, `default`, `dark`, `forest`, `neutral` and `base`. `redux-color` (v12's flowchart default) renders `redux` silently; `redux-dark`, `redux-dark-color` and `neo-dark` render `dark`, `neo` renders `redux` and `null` renders `base`, each with a `THEME_UNAVAILABLE` warning (theme packages for them may follow, R-THEME-7). An unknown name renders `redux` with the same warning | R-THEME-6 |
 | — | `theme: 'auto'`: `redux`, switching to `dark` under `prefers-color-scheme: dark` through a small custom-property `<style>` | R-THEME-8 |
-| Colours computed once in JS (khroma) and written into a `<style>` element | Colours are presentation attributes reading CSS variables: every theme variable is `--mermaid-<name>` on the host page, with the theme value as fallback; derived colours use `color-mix()`. A page can re-theme rendered SVGs with CSS. `initialize({ output: { cssVariables: false } })` writes literal colours instead | R-THEME-2, R-THEME-3, R-THEME-4 |
+| Colours computed once in JS (khroma) and written into a `<style>` element | Colours are presentation attributes reading CSS variables: every theme variable is `--mermaid-<name>` on the host page, with the theme value as fallback; derived colours use `color-mix()`, and contrast text and `invert()` use relative colour syntax (`color(from …)`), so they follow a host override of the colour they derive from. A page can re-theme rendered SVGs with CSS. Limit: contrast text picks between the theme's two ink values; overriding the ink variables themselves (`--mermaid-textColor`) does not change contrast-derived text such as `nodeTextColor` (set `--mermaid-nodeTextColor` directly) `initialize({ output: { cssVariables: false } })` writes literal colours instead | R-THEME-2, R-THEME-3, R-THEME-4 |
 | `themeVariables` from diagram text checked against a character set only | Values are checked by kind (colour, length, font, weight) and a bad one is dropped with `THEME_VARIABLE_DROPPED`. Names v13 does not use are ignored | R-SEC-3 |
 | `themeCSS` | Ignored; see [Config behaviour](#config-behaviour) | R-SEC-2 |
 | Label text colour fixed by the theme | When a `style`/`classDef` fill makes the theme's text colour unreadable, the label switches to black or white | R-THEME-12 |

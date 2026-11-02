@@ -207,7 +207,7 @@ type StyleBits = number;  // Bold|Italic|Mono|Sub|Sup|Underline
 ```
 
 - **`canvasMeasurer`** is the browser default. It measures the whole string with `measureText` (OffscreenCanvas when available), keeps an LRU cache of 20k entries per font, and doesn't cache widths while `document.fonts.check` is false. The cache is cleared when `document.fonts.size` changes. Core doesn't import it; `mermaid` injects it, so core stays free of the DOM (R-ARCH-1).
-- **`tableMeasurer`** is the Node default and the `deterministic: true` default. It sums packed advance widths and applies the wide, zero-width and default-width rules. It is used in all tests.
+- **`tableMeasurer`** is the Node default and is always used under `deterministic: true`, even when an integrator passes a `measurer` (R-TEXT-7). It sums packed advance widths and applies the wide, zero-width and default-width rules. It is used in all tests.
 - **Vertical metrics** come from the table (ascent/descent), not a fixed 0.35 em shift. This is an improvement on Pele: labels centre correctly for fonts with unusual metrics.
 
 ### 5.2 Fonts ⚠ review
@@ -344,7 +344,8 @@ themeVariables (config)  ──►  ThemeSpec  ──►  root style aliases  �
 1. **Built-in themes**: **all 11 v12 themes are kept** (R-THEME-6, R-THEME-7 Must; O-2 resolved 2026-11-02). M1 ships `redux`, `default`, `dark`, `forest`, `neutral` and `base`. The remaining v12 themes (`redux-dark`, the redux colour variants and the rest) follow by M3. Each theme is a `ThemeSpec` data file: a table of base values plus a derivation table, not a class with khroma code. Adding a theme is cheap, so all of them live in core. Each is its own lazily imported file, so an unused theme costs no bundle size. **`redux` is the default** when no theme is set (R-THEME-6, D55).
    - A `ThemeSpec` also carries **shape tokens**, not only colours: stroke widths, corner radii, font weights and sizes, and spacing steps. Diagram renderers read sizes from these tokens instead of hard-coding them, so every diagram type rendered in redux looks like one family (R-THEME-11). Tokens are exposed as CSS variables like the colours (`--mermaid-strokeWidth`, `--mermaid-radius`, …).
    - The redux palette and tokens are taken from the v12 redux themes (`redux`, `redux-dark`, and their colour variants), so P1 applies to them like the others.
-2. **Derivation rules** are expressions in a tiny DSL: `mix(primaryColor, black, 15%)`, `contrast(primaryColor)`, `invert(…)`. Each rule compiles to two things: a CSS expression (`color-mix(in srgb, …)` or a `light/dark` ink pair), and a JS-computed fallback value, from the same formula in `core/theme/color.ts` (sRGB mixing, WCAG luminance; about 1 KB). Using `in srgb` means the JS fallback and the browser result are **numerically identical**, so `deterministic` output stays exact.
+2. **Derivation rules** are expressions in a tiny DSL: `mix(primaryColor, black, 15%)`, `contrast(primaryColor)`, `invert(…)`. Each rule compiles to two things: a CSS expression (`color-mix(in srgb, …)`, or relative colour syntax for `contrast`/`invert`), and a JS-computed fallback value, from the same formula in `core/theme/color.ts` (sRGB mixing, WCAG luminance; about 1 KB). Using `in srgb` means the JS fallback and the browser result are **numerically identical**, so `deterministic` output stays exact.
+   - **Live contrast (R-THEME-4).** `invert(a)` is `color(from a srgb calc(1 - r) …)`. `contrast(bg, a, b)` reads bg's WCAG luminance in the browser (`color(from bg srgb-linear …)`, exact WCAG weights) and compares it with thresholds precomputed from the two inks (AA either side of a, and the midpoint where a's ratio beats b's), so the ink flips when a host overrides the background's base variable. Equal to the JS choice except within 1e-9 of a threshold. **Limits:** CSS can't pick between two *live* colours, so the inks are the theme's resolved values (a host override of `--mermaid-textColor` doesn't reach `nodeTextColor`; set that variable directly), and bg's own alpha is ignored (JS composites it over `background`). Relative colour syntax is in every evergreen engine of the last two years (R-ARCH-8); an older engine drops the declaration.
 3. **Matching v12's colours.** v12 derives with khroma's `darken`/`lighten`/`adjust` in HSL. A `color-mix` in sRGB doesn't reproduce those exactly. Rules are chosen to resemble v12's derived colours, with values from `mermaid@12` as the reference. There is no automated colour-match test: all diagrams, colours included, are reviewed by hand at the end of the process. Exact equality isn't required (P2), but resemblance is (R-THEME-6). WCAG AA contrast (R-THEME-9) is still checked automatically, because that is a requirement in its own right. **[ADR-4]**
 4. **Precedence when resolving:** a `themeVariables` key set explicitly by the author is used as a literal fallback, and the CSS var still wins; otherwise the derived rule is used. The CSS variable name is always `--mermaid-<v12 name>` (R-THEME-2).
 5. **Alias layer:** short private aliases (`--_pf`) keep output small, and only the aliases actually used are written to the root (from Pele).
@@ -398,6 +399,7 @@ class MermaidError extends Error {
   code: 'SYNTAX' | 'SEMANTIC' | 'UNSUPPORTED_DIAGRAM' | 'UNSUPPORTED_FORMAT' | 'NOT_LOADED' | 'LIMIT' | 'INTERNAL';
   line: number; column: number; offset: number; length: number;   // original source, 1-based line/col
   expected?: string[]; diagnostics: Diagnostic[];                   // all diagnostics, first is primary
+  limit?: 'maxSourceLength' | 'maxEdges' | 'maxNodes' | 'maxDepth' | 'maxOutputLength'; // code LIMIT
 }
 ```
 
@@ -479,6 +481,8 @@ interface ExtensionPlugin {
 - provides `RenderResult.bindFunctions`, so v12 call sites that call `bindFunctions(el)` after `render()` keep working.
 
 Its config keys (moved from the core schema) live in its own schema section.
+
+As built in M1: hooks see the AST, not the model, so the AST node of a `click … callback` / `call` statement carries `callback: AstCallback` (`{ targets, name, args? }`, from `@mermaid-js/core/parser-kit`); the plugin collects every such node in `postParse` into its `state` and binds `g.node[data-id]` elements in `afterMount`, once per element. v12 had no click-callback config keys (`securityLevel: loose` gated them), so the plugin has no schema section, and callbacks do not depend on `securityLevel`.
 
 ### 12.4 Discovery
 

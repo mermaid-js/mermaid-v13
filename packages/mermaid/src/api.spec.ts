@@ -135,6 +135,29 @@ describe('prepare and renderSync (R-API-2)', () => {
     expect(m.renderSync(text, { id: 'same' })).toEqual(viaRender);
   });
 
+  it('gives each diagram its own id prefix when no id is passed, deterministically (R-SVG-3, R-ARCH-6)', async () => {
+    const one = 'flowchart LR\n  accTitle: One\n  A --> B';
+    const two = 'flowchart LR\n  accTitle: Two\n  C --> D';
+    const m = createMermaid();
+    await m.prepare(one);
+    await m.prepare(two);
+    const ids = (svg: string) => [...svg.matchAll(/\bid="([^"]+)"/g)].map((x) => x[1]);
+    const a = ids(m.renderSync(one).svg);
+    const b = ids(m.renderSync(two).svg);
+    expect(a.length).toBeGreaterThan(0);
+    expect(a.filter((id) => b.includes(id))).toEqual([]);
+    expect(a[0]).toMatch(/^mermaid-[0-9a-z]+-title$/);
+    // Same input, same options: byte-identical output, also from a fresh instance.
+    expect(m.renderSync(one).svg).toBe(m.renderSync(one).svg);
+    const fresh = createMermaid();
+    await fresh.prepare(one);
+    expect(fresh.renderSync(one).svg).toBe(m.renderSync(one).svg);
+    // Different resolved options give a different prefix.
+    const dark = { config: { theme: 'dark' as const } };
+    await m.prepare(one, dark);
+    expect(ids(m.renderSync(one, dark).svg)[0]).not.toBe(a[0]);
+  });
+
   it('throws NotLoadedError naming the diagram package before anything is loaded', () => {
     const m = createMermaid();
     const e = thrown(() => m.renderSync(FLOW));
@@ -368,11 +391,10 @@ describe('layout engines (R-LAYOUT-2)', () => {
 });
 
 describe('measurer selection (R-TEXT-5, R-TEXT-7)', () => {
-  it('uses an integrator measurer, even with deterministic set', async () => {
+  it('uses an integrator measurer', async () => {
     const widths: string[] = [];
     const m = createMermaid();
     m.initialize({
-      deterministic: true,
       measurer: {
         id: 'fixed',
         width: (text) => {
@@ -386,6 +408,19 @@ describe('measurer selection (R-TEXT-5, R-TEXT-7)', () => {
     expect(widths).toContain('Start');
     // Words wider than the wrapping width break over several lines.
     expect(custom.height).toBeGreaterThan((await render('m', FLOW)).height);
+  });
+
+  it('ignores an integrator measurer under deterministic: true', async () => {
+    const m = createMermaid();
+    m.initialize({
+      deterministic: true,
+      measurer: {
+        id: 'fixed',
+        width: (t) => t.length * 100,
+        metrics: () => ({ ascent: 10, descent: 4, lineHeight: 14 }),
+      },
+    });
+    expect((await m.render('m', FLOW)).svg).toBe((await render('m', FLOW)).svg);
   });
 
   it('is deterministic without a canvas: the same input gives the same bytes', async () => {
