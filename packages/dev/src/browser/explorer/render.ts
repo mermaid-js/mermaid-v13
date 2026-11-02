@@ -4,7 +4,8 @@
  * `render`, `RenderResult.warnings`, `MermaidError`).
  *
  * Each build is imported once, as `/mermaid.esm.mjs?build=<n>`: after a rebuild the shell
- * passes a new `build` and gets the new code, with no page reload.
+ * passes a new `build` and gets the new code, with no page reload. Only the current and the
+ * previous build stay loaded.
  */
 import type * as DevBundleModule from '../mermaid.ts';
 import type { MermaidError, RenderResult, Warning } from '../mermaid.ts';
@@ -20,24 +21,53 @@ export interface DevMermaid {
   readonly instance: ReturnType<DevBundle['createMermaid']>;
 }
 
-const loaded = new Map<number, Promise<DevMermaid>>();
+export interface BuildCache<T> {
+  /** Build `build`, loaded on first use. */
+  get(build: number): Promise<T>;
+  /** The builds held, least recently used first. */
+  builds(): number[];
+}
+
+/**
+ * Loads each build once and holds the `keep` most recently used (the current build and the
+ * previous one, which a render in flight may still use). A failed load is forgotten.
+ */
+export function createBuildCache<T>(load: (build: number) => Promise<T>, keep = 2): BuildCache<T> {
+  const held = new Map<number, Promise<T>>();
+  return {
+    get(build) {
+      let pending = held.get(build);
+      if (pending) {
+        held.delete(build);
+      } else {
+        pending = load(build);
+        pending.catch(() => {
+          if (held.get(build) === pending) held.delete(build);
+        });
+      }
+      held.set(build, pending);
+      for (const old of held.keys()) {
+        if (held.size <= keep) break;
+        held.delete(old);
+      }
+      return pending;
+    },
+    builds: () => [...held.keys()],
+  };
+}
+
+const loaded = createBuildCache(async (build): Promise<DevMermaid> => {
+  const url = `/mermaid.esm.mjs?build=${build}`;
+  const module = (await import(/* @vite-ignore */ url)) as DevBundle;
+  const instance = module.createMermaid();
+  instance.registerLayoutLoaders(module.devLayoutLoaders);
+  await instance.registerExternalDiagrams([module.interactions]);
+  return { build, module, instance };
+});
 
 /** The dev build numbered `build` (0 = the one served at page load). */
 export function loadMermaid(build: number): Promise<DevMermaid> {
-  let pending = loaded.get(build);
-  if (!pending) {
-    pending = (async () => {
-      const url = `/mermaid.esm.mjs?build=${build}`;
-      const module = (await import(/* @vite-ignore */ url)) as DevBundle;
-      const instance = module.createMermaid();
-      instance.registerLayoutLoaders(module.devLayoutLoaders);
-      await instance.registerExternalDiagrams([module.interactions]);
-      return { build, module, instance };
-    })();
-    pending.catch(() => loaded.delete(build));
-    loaded.set(build, pending);
-  }
-  return pending;
+  return loaded.get(build);
 }
 
 /** What one render produced: the result, or the error. */

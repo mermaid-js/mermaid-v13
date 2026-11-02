@@ -12,16 +12,14 @@
  * Every timed run re-initializes first, so the API's parse cache never hits and parse is
  * timed every time. Runs use their own `createMermaid()` instance, so the shell's site config is untouched. A
  * new `/events` message (a rebuild) cancels a running profile; the results stay, labelled with
- * their build. Folder mode reads the folder's files with the file API's read-only `GET`s
- * (the context only carries the open file); the open file uses `ctx.text`, unsaved edits
- * included.
+ * their build. Folder mode reads the folder's files through `ctx.siblings()` and `ctx.read()`;
+ * the open file uses `ctx.text`, unsaved edits included.
  *
  * Its state is the storage keys `devExplorer.profile.scope|iterations|layouts`.
  */
 import '@shoelace-style/shoelace/dist/components/checkbox/checkbox.js';
 import { css, html, nothing, type PropertyValues } from 'lit';
 import type { Stage, StageClock } from '../../mermaid.ts';
-import { listFiles, parentDir, readFile } from '../api.ts';
 import { readStorage, renderConfig, writeStorage } from '../settings.ts';
 import { ViewerTabElement, type DevMermaid } from './context.ts';
 
@@ -308,12 +306,10 @@ export class ProfileTab extends ViewerTabElement {
     const ctx = this.ctx;
     if (!ctx?.file) return [];
     if (this.scope === 'diagram') return [{ path: ctx.file, text: ctx.text }];
-    const listing = await listFiles(parentDir(ctx.file));
-    const paths = listing.entries.filter((e) => e.kind === 'file').map((e) => e.path);
     const diagrams: { path: string; text: string }[] = [];
-    for (const path of paths) {
+    for (const path of await ctx.siblings()) {
       if (path === ctx.file) diagrams.push({ path, text: ctx.text });
-      else diagrams.push({ path, text: await readFile(path) });
+      else diagrams.push({ path, text: await ctx.read(path) });
     }
     return diagrams;
   }

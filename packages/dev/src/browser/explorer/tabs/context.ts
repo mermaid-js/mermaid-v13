@@ -65,6 +65,13 @@ export interface ViewerContext {
   /** The current dev build: `module` (the whole public API, `@mermaid-js/core/timing` …) and a
    * ready `createMermaid()` instance. */
   mermaid(): Promise<DevMermaid>;
+  /**
+   * The `.mmd` files in the open file's folder (root-relative, in listing order, the open file
+   * included), listed now.
+   */
+  siblings(): Promise<readonly string[]>;
+  /** A file's text on disk (root-relative path). Rejects when it can't be read. */
+  read(path: string): Promise<string>;
   /** Replaces `text` (unsaved edits); the shell re-renders and updates `dirty`. */
   setText(text: string): void;
   /** Writes `text` to disk (`PUT`). Resolves `false` and shows the banner on failure. */

@@ -276,6 +276,11 @@ export class DevDiagramViewer extends LitElement {
         return renderText(text, settings, this.build);
       },
       mermaid: () => loadMermaid(this.build),
+      siblings: async () =>
+        (await listFiles(parentDir(this.filePath))).entries
+          .filter((e) => e.kind === 'file')
+          .map((e) => e.path),
+      read: (path) => readFile(path),
       setText: (text) => {
         if (text === this.text) return;
         this.text = text;
