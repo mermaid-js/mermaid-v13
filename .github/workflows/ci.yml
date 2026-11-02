@@ -45,8 +45,7 @@ jobs:
     # R-TEST-7: the bench gates (packages/bench): loaded size (R-PERF-1), warm geomean vs frozen
     # mermaid@12.2.0 dagre (R-PERF-3), corpus OK count (R-PERF-4), stage regression against the
     # baseline stored for this runner (R-PERF-7) and "Ready at" (R-PERF-9, reported only).
-    # Gate mode is `auto`: the gates report while `mermaid` has no working render() and enforce
-    # once it does. No baseline is stored for GitHub-hosted runners yet (O-4), so R-PERF-7
+    # Gate mode defaults to `enforce` (the pipeline probe must pass). No baseline is stored for GitHub-hosted runners yet (O-4), so R-PERF-7
     # reports here until one is.
     name: Bench gates
     runs-on: ubuntu-latest
@@ -71,9 +70,9 @@ jobs:
           if-no-files-found: ignore
 
   smoke-render:
-    # Placeholder matrix: each target renders a fixture through the public `mermaid` package
-    # once the render API exists (DESIGN §15 item 14). Until then the job only reserves the
-    # runtimes so the matrix is visible and required from the start.
+    # Each target renders a fixture through the public `mermaid` package. node20 runs the
+    # source through tsx; the other runtimes need the published bundle and a browser harness
+    # (#18) and only reserve their slot for now.
     name: Smoke render (${{ matrix.runtime }})
     runs-on: ubuntu-latest
     strategy:
@@ -82,5 +81,15 @@ jobs:
         runtime: [node20, deno, worker, chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - if: matrix.runtime == 'node20'
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - if: matrix.runtime == 'node20'
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version: 20
+      - if: matrix.runtime == 'node20'
+        run: pnpm install --frozen-lockfile && pnpm --filter @mermaid-js/conformance smoke
       - name: Smoke render
-        run: echo "Smoke render on ${{ matrix.runtime }} is not implemented yet (needs the render API)."
+        if: matrix.runtime != 'node20'
+        run: echo "Smoke render on ${{ matrix.runtime }} is not implemented yet (needs the bundle harness, #18)."
