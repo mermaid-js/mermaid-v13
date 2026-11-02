@@ -28,6 +28,8 @@ jobs:
           - { name: Unit tests, run: pnpm test }
           # R-PERF-2: core and first-party diagram packages declare no runtime dependencies.
           - { name: Runtime dependencies, run: pnpm check:deps }
+          # R-REL-4: ported Pele code has MIT headers and is listed in THIRD_PARTY_NOTICES.
+          - { name: Licenses, run: pnpm check:licenses }
           # R-CONF-4: generated config types, defaults and docs match the schema.
           - { name: Generated config, run: pnpm check:config }
           # R-PARSE-9: highlighters and syntax docs match the grammar files.

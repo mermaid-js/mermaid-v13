@@ -40,7 +40,8 @@ What most integrators have to change:
 | v12 | v13 | Why |
 | --- | --- | --- |
 | One `mermaid` package with every diagram type and its dependencies (d3, dagre, DOMPurify, khroma, KaTeX, …) | `mermaid` depends on `@mermaid-js/core` (pipeline, parser kit, layout, SVG writer, text, themes, config) and one `@mermaid-js/diagram-<type>` package per diagram type. `mermaid` has no other runtime dependencies | Small, DOM-free bundles (R-PERF-1, R-PERF-2) |
-| ESM, IIFE (`mermaid.min.js`) and "tiny" builds | ESM only in the alpha, Node 20 or newer. The browser bundle comes with the release pipeline _(later in M1)_ | |
+| ESM, IIFE (`mermaid.min.js`) and "tiny" builds | ESM only in the alpha: each package ships its compiled modules (`dist/`), Node 20 or newer. The release pipeline publishes no IIFE, `mermaid.min.js` or tiny build; bundle `mermaid` with your own bundler | |
+| `mermaid@latest`, released from `develop` | Alphas are released from `mermaid-v13` on every merge, with dist-tag `alpha` only, so `mermaid@latest` stays v12: install `mermaid@alpha`. Public `mermaid@13.0.0-alpha.N` starts once M1 meets R-PERF-1…4 (until then alphas are published privately as `@mermaid-chart/*`) | R-REL-2, R-REL-3, D28 |
 | `@mermaid-js/layout-elk` | No ELK package yet. `layout: elk` draws with the built-in engine ([Layout](#layout)) | R-PLUG-8 |
 | ZenUML, tidy-tree and the example diagram package | Not ported in M1 | |
 

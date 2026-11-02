@@ -1,0 +1,17 @@
+{
+  "mode": "pre",
+  "tag": "alpha",
+  "initialVersions": {
+    "@mermaid-js/bench": "0.0.0",
+    "@mermaid-js/conformance": "0.0.0",
+    "@mermaid-js/core": "0.0.0",
+    "@mermaid-js/diagram-flowchart": "0.0.0",
+    "mermaid": "13.0.0-alpha.0",
+    "@mermaid-js/plugin-interactions": "0.0.0",
+    "@mermaid-js/gen-config": "0.0.0",
+    "@mermaid-js/gen-grammar": "0.0.0",
+    "@mermaid-js/gen-metrics": "0.0.0",
+    "@mermaid-js/release": "0.0.0"
+  },
+  "changesets": []
+}
