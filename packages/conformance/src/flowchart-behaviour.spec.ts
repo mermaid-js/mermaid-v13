@@ -1,10 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { assertInert, type SvgNode, type SvgTree } from '@mermaid-js/core/svg';
-import { renderForTest } from '../testing.ts';
+import { assertInert } from '@mermaid-js/core/svg';
+import { createMermaid, type InitializeConfig, type RenderResult } from 'mermaid';
+import { parseSvg, type SvgElement, type SvgView } from './svg-tree.ts';
 
-const byAst = (tree: SvgTree, id: string): SvgNode[] =>
+/**
+ * Flowchart rendering behaviour through the public `render()` (spec #1 primary seam): the
+ * returned SVG is parsed and queried.
+ */
+async function draw(
+  text: string,
+  options: { config?: InitializeConfig; idPrefix?: string } = {}
+): Promise<RenderResult & { tree: SvgView }> {
+  const m = createMermaid();
+  m.initialize({ deterministic: true, ...options.config });
+  const result = await m.render(options.idPrefix ?? 'mermaid-0', text);
+  return { ...result, tree: parseSvg(result.svg) };
+}
+
+const byAst = (tree: SvgView, id: string): SvgElement[] =>
   tree.find((n, t) => t.getAttr(n, 'data-ast') === id);
-const textIn = (tree: SvgTree, node: SvgNode): string =>
+const textIn = (tree: SvgView, node: SvgElement): string =>
   tree
     .children(node)
     .map((c) => tree.textOf(c) ?? textIn(tree, c))
@@ -12,7 +27,7 @@ const textIn = (tree: SvgTree, node: SvgNode): string =>
 
 describe('flowchart render: document root (DESIGN §7.2)', () => {
   it('writes the root with viewBox, max-width, role and the v12 group classes', async () => {
-    const { svg, tree } = await renderForTest('flowchart TD\n  A[Start] --> B(End)');
+    const { svg, tree } = await draw('flowchart TD\n  A[Start] --> B(End)');
     expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')).toBe(true);
     const root = tree.find({ tag: 'svg' })[0]!;
     expect(tree.getAttr(root, 'role')).toBe('img');
@@ -27,7 +42,7 @@ describe('flowchart render: document root (DESIGN §7.2)', () => {
   });
 
   it('writes width and height instead of max-width when useMaxWidth is off', async () => {
-    const { tree } = await renderForTest('flowchart TD\n  A --> B', {
+    const { tree } = await draw('flowchart TD\n  A --> B', {
       config: { flowchart: { useMaxWidth: false } },
     });
     const root = tree.find({ tag: 'svg' })[0]!;
@@ -38,7 +53,7 @@ describe('flowchart render: document root (DESIGN §7.2)', () => {
   });
 
   it('labels the root from accTitle and accDescr with prefixed ids', async () => {
-    const { tree } = await renderForTest(
+    const { tree } = await draw(
       'flowchart LR\n  accTitle: Big flow\n  accDescr: How it goes\n  A --> B',
       { idPrefix: 'd1' }
     );
@@ -51,7 +66,7 @@ describe('flowchart render: document root (DESIGN §7.2)', () => {
   });
 
   it('declares every theme alias the body uses on the root', async () => {
-    const { svg } = await renderForTest(
+    const { svg } = await draw(
       'flowchart TD\n  subgraph S[Group]\n    A -- yes --> B{ok?}\n  end\n  B --> C[(db)]'
     );
     const style = /<svg[^>]* style="([^"]*)"/.exec(svg)![1]!;
@@ -63,7 +78,7 @@ describe('flowchart render: document root (DESIGN §7.2)', () => {
 
 describe('flowchart render: nodes, edges and clusters', () => {
   it('writes one data-ast element per vertex, edge and subgraph, with v12 classes', async () => {
-    const { tree } = await renderForTest(
+    const { tree } = await draw(
       'flowchart TD\n  subgraph one[One]\n    A:::hot --> B\n  end\n  classDef hot fill:#f00'
     );
     const node = byAst(tree, 'n:A');
@@ -79,7 +94,7 @@ describe('flowchart render: nodes, edges and clusters', () => {
   });
 
   it('draws arrowheads as inline paths, with no defs or markers', async () => {
-    const { svg, tree } = await renderForTest('flowchart LR\n  A --> B\n  C --o D\n  E --x F');
+    const { svg, tree } = await draw('flowchart LR\n  A --> B\n  C --o D\n  E --x F');
     expect(svg).not.toMatch(/<defs|<marker|marker-end/);
     for (const ast of ['e:A>B', 'e:C>D', 'e:E>F']) {
       const edge = byAst(tree, ast)[0]!;
@@ -88,7 +103,7 @@ describe('flowchart render: nodes, edges and clusters', () => {
   });
 
   it('applies classDef and style through the allow-list, with ink that reads on the fill', async () => {
-    const { tree, warnings } = await renderForTest(
+    const { tree, warnings } = await draw(
       'flowchart TD\n  A[x]\n  style A fill:#000000,stroke:#ff0000,cursor:pointer'
     );
     const node = byAst(tree, 'n:A')[0]!;
@@ -100,9 +115,8 @@ describe('flowchart render: nodes, edges and clusters', () => {
   });
 
   it('wraps a node with click href in a link and its tooltip in a title', async () => {
-    const { tree } = await renderForTest(
-      'flowchart TD\n  A --> B\n  click A "https://example.com" "Go there" _blank',
-      { config: { securityLevel: 'loose' } }
+    const { tree } = await draw(
+      'flowchart TD\n  A --> B\n  click A "https://example.com" "Go there" _blank'
     );
     const node = byAst(tree, 'n:A')[0]!;
     const [title, link] = tree.children(node);
@@ -113,9 +127,10 @@ describe('flowchart render: nodes, edges and clusters', () => {
     expect(tree.getAttr(link!, 'rel')).toBe('noopener noreferrer');
   });
 
-  it('keeps only relative links under the default strict securityLevel', async () => {
-    const { tree, warnings } = await renderForTest(
-      'flowchart TD\n  A --> B\n  click A "/docs/a"\n  click B "https://example.com"'
+  it('keeps only relative links under securityLevel strict', async () => {
+    const { tree, warnings } = await draw(
+      'flowchart TD\n  A --> B\n  click A "/docs/a"\n  click B "https://example.com"',
+      { config: { securityLevel: 'strict' } }
     );
     const links = tree.find({ tag: 'a' });
     expect(links.map((a) => tree.getAttr(a, 'href'))).toEqual(['/docs/a']);
@@ -123,7 +138,7 @@ describe('flowchart render: nodes, edges and clusters', () => {
   });
 
   it('drops a refused link with a warning and still draws the node', async () => {
-    const { tree, warnings } = await renderForTest(
+    const { tree, warnings } = await draw(
       'flowchart TD\n  A --> B\n  click A "javascript:alert(1)"'
     );
     expect(tree.find({ tag: 'a' })).toHaveLength(0);
@@ -134,8 +149,9 @@ describe('flowchart render: nodes, edges and clusters', () => {
 
 describe('flowchart render: features', () => {
   it('writes the theme: auto style sheet as the first child, scoped by data-p', async () => {
-    const { tree, svg } = await renderForTest('flowchart TD\n  A --> B', {
-      config: { theme: 'auto' },
+    const { tree, svg } = await draw('flowchart TD\n  A --> B', {
+      // `auto` is a v13 theme name the v12 schema enum does not list yet.
+      config: { theme: 'auto' as 'dark' },
       idPrefix: 'p7',
     });
     const root = tree.find({ tag: 'svg' })[0]!;
@@ -145,7 +161,7 @@ describe('flowchart render: features', () => {
   });
 
   it('draws a collapsed subgraph as one node and redirects edges to it', async () => {
-    const { tree } = await renderForTest(
+    const { tree } = await draw(
       'flowchart TD\n  X --> P\n  subgraph grp[Group]\n    P --> Q\n  end\n  grp@{ view: collapsed }'
     );
     expect(byAst(tree, 'n:P')).toHaveLength(0);
@@ -157,16 +173,15 @@ describe('flowchart render: features', () => {
   });
 
   it('keeps an invisible edge as an empty element, laid out but not drawn', async () => {
-    const { tree } = await renderForTest('flowchart LR\n  A ~~~ B');
+    const { tree } = await draw('flowchart LR\n  A ~~~ B');
     const edge = byAst(tree, 'e:A>B')[0]!;
     expect(tree.children(edge)).toHaveLength(0);
     expect(tree.getAttr(edge, 'class')).toContain('edge-thickness-invisible');
   });
 
   it('draws images through the URL check', async () => {
-    const { tree, warnings } = await renderForTest(
-      'flowchart TD\n  A@{ img: "/a.png", label: "pic", w: 60, h: 40 }\n  B@{ img: "javascript:x" }',
-      { config: { securityLevel: 'loose' } }
+    const { tree, warnings } = await draw(
+      'flowchart TD\n  A@{ img: "/a.png", label: "pic", w: 60, h: 40 }\n  B@{ img: "javascript:x" }'
     );
     const images = tree.find({ tag: 'image' });
     expect(images.map((i) => tree.getAttr(i, 'href'))).toEqual(['/a.png']);
@@ -175,8 +190,8 @@ describe('flowchart render: features', () => {
   });
 
   it('draws linear, stepped and curved edges differently', async () => {
-    const d = async (curve: string): Promise<string> => {
-      const { tree } = await renderForTest('flowchart TD\n  A --> B & C', {
+    const d = async (curve: 'linear' | 'step' | 'basis'): Promise<string> => {
+      const { tree } = await draw('flowchart TD\n  A --> B & C', {
         config: { flowchart: { curve } },
       });
       return tree.getAttr(tree.children(byAst(tree, 'e:A>C')[0]!)[0]!, 'd')!;
@@ -187,7 +202,7 @@ describe('flowchart render: features', () => {
   });
 
   it('lays markdown labels out with bold runs and wraps them at wrappingWidth', async () => {
-    const { tree } = await renderForTest(
+    const { tree } = await draw(
       'flowchart TD\n  A["`**bold** and a rather long label that has to wrap somewhere`"]'
     );
     const text = tree.find({ tag: 'text' })[0]!;
@@ -197,12 +212,13 @@ describe('flowchart render: features', () => {
   });
 
   it('renders classDef text styles: colour and font size on the label', async () => {
-    const small = await renderForTest('flowchart TD\n  A[Label]');
-    const big = await renderForTest(
+    const small = await draw('flowchart TD\n  A[Label]');
+    const big = await draw(
       'flowchart TD\n  A[Label]:::big\n  classDef big color:#ff0000,font-size:40px'
     );
-    const width = (r: typeof small): number => r.layout.nodes.get('A')!.height;
-    expect(width(big)).toBeGreaterThan(width(small));
+    const height = (r: typeof small): number =>
+      Number(r.tree.getAttr(r.tree.children(byAst(r.tree, 'n:A')[0]!)[0]!, 'height'));
+    expect(height(big)).toBeGreaterThan(height(small));
     const text = big.tree.find({ tag: 'text' })[0]!;
     expect(big.tree.getAttr(text, 'fill')).toBe('#ff0000');
     expect(big.tree.getAttr(text, 'font-size')).toBe('40px');

@@ -105,8 +105,9 @@ properties:
       until an ELK plugin is installed.
     default: 'layered'
     x-mermaid:
-      status: pending
-      reason: 'The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 values `dagre` and `elk` stay valid and map to `layered` until an ELK plugin exists (R-PLUG-8).'
+      status: honoured
+      since: 13.0.0
+      reason: 'The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 values `dagre`, `elk` and `elk.<algorithm>` stay valid and map to `layered` until an ELK plugin exists (R-PLUG-8); other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning.'
   maxTextSize:
     description: The maximum allowed size of the users text diagram
     type: number
@@ -118,7 +119,7 @@ properties:
     type: integer
     default: 500
     minimum: 0
-    x-mermaid: { status: pending }
+    x-mermaid: { status: honoured, since: 13.0.0 }
   elk:
     type: object
     properties:
@@ -329,7 +330,10 @@ properties:
       See https://developer.mozilla.org/en-US/docs/Web/CSS/font-family
     type: string
     default: '"trebuchet ms", verdana, arial, sans-serif;'
-    x-mermaid: { status: pending }
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+      reason: 'As in v12, a `fontFamily` set by `initialize()` or diagram text also sets `themeVariables.fontFamily`, which drawing and measuring use.'
   altFontFamily:
     # TODO: seems to be unused, except for in tests
     type: string
@@ -369,25 +373,27 @@ properties:
       since: 13.0.0
       reason: v13 does not log; problems are returned in `RenderResult.warnings`.
   securityLevel:
-    description: Level of trust for parsed diagram
+    description: |
+      Level of trust for parsed diagram. `default` allows `http`, `https`, `mailto` and
+      relative link URLs; `strict` allows relative links only (R-SEC-4, R-SEC-6).
     type: string
     enum:
+      - default
       - strict
       - loose
       - antiscript
       - sandbox
     meta:enum:
-      strict: (**default**) HTML tags in the text are encoded and click functionality is disabled.
-      antiscript: HTML tags in text are allowed (only script elements are removed), and click functionality is enabled.
-      loose: HTML tags in text are allowed and click functionality is enabled.
-      sandbox: |
-        With this security level, all rendering takes place in a sandboxed iframe.
-        This prevent any JavaScript from running in the context.
-        This may hinder interactive functionality of the diagram, like scripts, popups in the sequence diagram, or links to other tabs or targets, etc.
-    default: strict
+      default: (**default**) Link URLs may use `http`, `https`, `mailto` or be relative.
+      strict: Only relative link URLs are kept; absolute links are dropped with a warning.
+      antiscript: No longer supported; treated as `default`, with a warning.
+      loose: No longer supported; treated as `default`, with a warning.
+      sandbox: No longer supported; treated as `default`, with a warning.
+    default: default
     x-mermaid:
-      status: pending
-      reason: Kept with two levels; `loose`, `antiscript` and `sandbox` act as the default with a warning (D48).
+      status: honoured
+      since: 13.0.0
+      reason: "The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning."
   startOnLoad:
     description: Dictates whether mermaid starts on Page load
     type: boolean
@@ -3168,7 +3174,7 @@ $defs:
         description: |
           If true, subgraphs without explicit direction will inherit the global graph direction
           (e.g., LR, TB, RL, BT). Defaults to false to preserve legacy layout behavior.
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
 
   SankeyLinkColor:
     description: |
