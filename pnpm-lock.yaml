@@ -110,6 +110,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/gen-grammar':
+        specifier: workspace:^
+        version: link:../../tools/gen-grammar
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
