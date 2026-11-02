@@ -54,6 +54,11 @@ export interface ServerOptions {
    * and the broadcast still goes out.
    */
   readonly onRebuild?: (paths: readonly string[]) => void | Promise<void>;
+  /**
+   * The entry bundled as `/mermaid.esm.mjs`. Default: `browser/mermaid.ts` (mermaid plus
+   * plugin-interactions). The specs point it at a fixture module in a temp directory.
+   */
+  readonly bundleEntry?: string;
 }
 
 export interface DevServer {
@@ -118,7 +123,7 @@ export async function startServer(port: number, options: ServerOptions = {}): Pr
   // mermaid + plugin-interactions as one file (no splitting, so no chunk URLs to serve).
   const mermaidCtx = await context({
     ...shared,
-    entryPoints: [join(BROWSER, 'mermaid.ts')],
+    entryPoints: [options.bundleEntry ?? join(BROWSER, 'mermaid.ts')],
     outfile: join(WWW, 'mermaid.esm.mjs'),
   });
   let bundle: { code?: Uint8Array; error?: string } = {};

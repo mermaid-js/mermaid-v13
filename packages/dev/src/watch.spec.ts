@@ -1,22 +1,21 @@
 /**
  * Live reload at the HTTP seam: the mermaid bundle served at `/mermaid.esm.mjs` and the SSE
- * broadcast at `/events` after a source change in a workspace package.
+ * broadcast at `/events` after a source change. The change specs watch a temp directory and
+ * bundle a fixture module there, so no real source file is ever modified.
  */
-import { readFileSync, utimesSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, realpathSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
 import { request, type IncomingMessage } from 'node:http';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { REPO_ROOT } from './fixtures.ts';
 import { startServer, type DevServer } from './server.ts';
 
 const PORT = 9612;
-// A module the mermaid bundle includes. The specs only touch it or append a legal comment
-// (kept by esbuild at the end of the bundle), and restore it afterwards.
-const SOURCE = join(REPO_ROOT, 'packages', 'core', 'src', 'index.ts');
+const FIXTURE_PORT = 9613;
 
-function get(path: string): Promise<{ status: number; type: string; body: string }> {
+function get(path: string, port = PORT): Promise<{ status: number; type: string; body: string }> {
   return new Promise((resolve, reject) => {
-    request({ host: '127.0.0.1', port: PORT, path }, (res) => {
+    request({ host: '127.0.0.1', port, path }, (res) => {
       let body = '';
       res.setEncoding('utf8');
       res.on('data', (chunk: string) => (body += chunk));
@@ -35,12 +34,12 @@ interface Events {
   close(): void;
 }
 
-function events(): Promise<Events> {
+function events(port: number): Promise<Events> {
   return new Promise((resolve, reject) => {
     const waiting: ((data: string) => void)[] = [];
     const queued: string[] = [];
     let buffer = '';
-    const req = request({ host: '127.0.0.1', port: PORT, path: '/events' }, (res) => {
+    const req = request({ host: '127.0.0.1', port, path: '/events' }, (res) => {
       expect(res.headers['content-type']).toBe('text/event-stream');
       res.setEncoding('utf8');
       res.on('data', (chunk: string) => {
@@ -79,14 +78,12 @@ function events(): Promise<Events> {
   });
 }
 
-describe('live reload', () => {
+describe('the dev bundle', () => {
   let server: DevServer;
-  const original = readFileSync(SOURCE, 'utf8');
   beforeAll(async () => {
-    server = await startServer(PORT, { watch: true });
+    server = await startServer(PORT);
   }, 60_000);
   afterAll(async () => {
-    writeFileSync(SOURCE, original);
     await server.close();
   });
 
@@ -106,14 +103,33 @@ describe('live reload', () => {
     expect(res.type).toContain('javascript');
     expect(res.body).toContain('/events');
   });
+});
 
-  it('sends an SSE event after a touched packages/core/src file is rebuilt', async () => {
-    const stream = await events();
+describe('live reload', () => {
+  let server: DevServer;
+  let dir: string;
+  let entry: string;
+  beforeAll(async () => {
+    dir = realpathSync(mkdtempSync(join(tmpdir(), 'mermaid-dev-watch-')));
+    entry = join(dir, 'entry.js');
+    writeFileSync(entry, "export const probe = 'before';\n");
+    server = await startServer(FIXTURE_PORT, {
+      watch: { paths: [dir] },
+      bundleEntry: entry,
+    });
+  }, 60_000);
+  afterAll(async () => {
+    await server.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('sends an SSE event after a touched watched file is rebuilt', async () => {
+    const stream = await events(FIXTURE_PORT);
     try {
       const now = new Date();
-      utimesSync(SOURCE, now, now);
+      utimesSync(entry, now, now);
       const data = JSON.parse(await stream.next()) as { time: number; paths: string[] };
-      expect(data.paths).toContain('packages/core/src/index.ts');
+      expect(data.paths).toContain(entry.split('\\').join('/'));
       expect(typeof data.time).toBe('number');
     } finally {
       stream.close();
@@ -121,16 +137,14 @@ describe('live reload', () => {
   });
 
   it('serves a source change in /mermaid.esm.mjs once the event arrives', async () => {
-    const probe = `dev-watch-probe-${Date.now()}`;
-    const stream = await events();
+    const stream = await events(FIXTURE_PORT);
     try {
-      expect((await get('/mermaid.esm.mjs')).body).not.toContain(probe);
-      writeFileSync(SOURCE, `${original}\n/*! ${probe} */\n`);
+      expect((await get('/mermaid.esm.mjs', FIXTURE_PORT)).body).toContain('before');
+      writeFileSync(entry, "export const probe = 'after';\n");
       await stream.next();
-      expect((await get('/mermaid.esm.mjs')).body).toContain(probe);
-      writeFileSync(SOURCE, original);
-      await stream.next();
-      expect((await get('/mermaid.esm.mjs')).body).not.toContain(probe);
+      const body = (await get('/mermaid.esm.mjs', FIXTURE_PORT)).body;
+      expect(body).toContain('after');
+      expect(body).not.toContain('before');
     } finally {
       stream.close();
     }

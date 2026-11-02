@@ -4,11 +4,14 @@
  * then every connected page gets one event.
  */
 import type { ServerResponse } from 'node:http';
-import { relative, sep } from 'node:path';
+import { isAbsolute, relative, sep } from 'node:path';
 import { watch, type FSWatcher } from 'chokidar';
 import type { Route } from './routes.ts';
 
-/** The data of every `/events` message: when, and which files (repo-relative, posix). */
+/**
+ * The data of every `/events` message: when, and which files (repo-relative, posix; absolute
+ * for watched paths outside the repo).
+ */
 export interface ReloadEvent {
   readonly time: number;
   readonly paths: readonly string[];
@@ -79,7 +82,9 @@ export async function watchSources(
   let timer: NodeJS.Timeout | undefined;
   watcher.on('all', (event, path) => {
     if (event !== 'add' && event !== 'change' && event !== 'unlink') return;
-    changed.add(relative(root, path).split(sep).join('/'));
+    const rel = relative(root, path);
+    const shown = rel.startsWith('..') || isAbsolute(rel) ? path : rel;
+    changed.add(shown.split(sep).join('/'));
     clearTimeout(timer);
     timer = setTimeout(() => {
       const paths = [...changed].sort();
