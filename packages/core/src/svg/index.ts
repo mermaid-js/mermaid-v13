@@ -51,3 +51,4 @@ export {
   STYLE_PROPERTIES,
   type CheckedStyle,
 } from './style.ts';
+export { assertInert, inertProblem, type InertOptions } from './inert.ts';
