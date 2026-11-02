@@ -74,8 +74,9 @@ jobs:
           if-no-files-found: ignore
 
   visual:
-    # R-TEST-5: the v13 visual baseline (e2e/diagrams/flowchart/baseline, tier `baseline`) plus the
-    # browser adapter specs (e2e/browser), in the Playwright image so fonts and rendering are fixed.
+    # R-TEST-5: every .mmd tier of the fixture folders whose diagram types have a v13 package
+    # (e2e/helpers/mmd-snapshots.ts) plus the browser adapter specs (e2e/browser), in the
+    # Playwright image so fonts and rendering are fixed.
     # Screenshots go to Argos, which compares them with the mermaid-v13 baseline on PRs (R-REL-1). R-TEST-6: the
     # theme gallery is built from the same fixtures and kept as an artifact.
     name: Visual baseline
