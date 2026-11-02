@@ -52,7 +52,7 @@ import { VERSION } from './version.ts';
 
 /** Options only the integrator can set; never read from diagram text (R-SEC-5, R-SEC-6). */
 export interface IntegratorOptions {
-  /** Measures label text. Wins over `deterministic` (DESIGN §5.1). */
+  /** Measures label text. Ignored under `deterministic: true` (R-TEXT-7, DESIGN §5.1). */
   measurer?: Measurer;
   /** Use the built-in metric tables, never the canvas (R-TEXT-7). */
   deterministic?: boolean;

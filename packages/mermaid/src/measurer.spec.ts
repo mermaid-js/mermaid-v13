@@ -102,7 +102,17 @@ describe('selectMeasurer', () => {
       metrics: () => ({ ascent: 1, descent: 0, lineHeight: 1 }),
     };
     expect(selectMeasurer({ measurer: custom })).toBe(custom);
-    expect(selectMeasurer({ measurer: custom, deterministic: true })).toBe(custom);
+  });
+
+  it('ignores an integrator measurer under deterministic: true (R-TEXT-7)', async () => {
+    browser.install();
+    const { selectMeasurer } = await freshModule();
+    const custom: Measurer = {
+      id: 'custom',
+      width: (text) => text.length,
+      metrics: () => ({ ascent: 1, descent: 0, lineHeight: 1 }),
+    };
+    expect(selectMeasurer({ measurer: custom, deterministic: true }).id).toBe('table');
   });
 });
 

@@ -391,11 +391,10 @@ describe('layout engines (R-LAYOUT-2)', () => {
 });
 
 describe('measurer selection (R-TEXT-5, R-TEXT-7)', () => {
-  it('uses an integrator measurer, even with deterministic set', async () => {
+  it('uses an integrator measurer', async () => {
     const widths: string[] = [];
     const m = createMermaid();
     m.initialize({
-      deterministic: true,
       measurer: {
         id: 'fixed',
         width: (text) => {
@@ -409,6 +408,19 @@ describe('measurer selection (R-TEXT-5, R-TEXT-7)', () => {
     expect(widths).toContain('Start');
     // Words wider than the wrapping width break over several lines.
     expect(custom.height).toBeGreaterThan((await render('m', FLOW)).height);
+  });
+
+  it('ignores an integrator measurer under deterministic: true', async () => {
+    const m = createMermaid();
+    m.initialize({
+      deterministic: true,
+      measurer: {
+        id: 'fixed',
+        width: (t) => t.length * 100,
+        metrics: () => ({ ascent: 10, descent: 4, lineHeight: 14 }),
+      },
+    });
+    expect((await m.render('m', FLOW)).svg).toBe((await render('m', FLOW)).svg);
   });
 
   it('is deterministic without a canvas: the same input gives the same bytes', async () => {

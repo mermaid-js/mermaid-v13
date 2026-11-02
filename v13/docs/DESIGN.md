@@ -207,7 +207,7 @@ type StyleBits = number;  // Bold|Italic|Mono|Sub|Sup|Underline
 ```
 
 - **`canvasMeasurer`** is the browser default. It measures the whole string with `measureText` (OffscreenCanvas when available), keeps an LRU cache of 20k entries per font, and doesn't cache widths while `document.fonts.check` is false. The cache is cleared when `document.fonts.size` changes. Core doesn't import it; `mermaid` injects it, so core stays free of the DOM (R-ARCH-1).
-- **`tableMeasurer`** is the Node default and the `deterministic: true` default. It sums packed advance widths and applies the wide, zero-width and default-width rules. It is used in all tests.
+- **`tableMeasurer`** is the Node default and is always used under `deterministic: true`, even when an integrator passes a `measurer` (R-TEXT-7). It sums packed advance widths and applies the wide, zero-width and default-width rules. It is used in all tests.
 - **Vertical metrics** come from the table (ascent/descent), not a fixed 0.35 em shift. This is an improvement on Pele: labels centre correctly for fonts with unusual metrics.
 
 ### 5.2 Fonts ⚠ review
