@@ -61,6 +61,9 @@ vite.config.ts.timestamp-*
 
 # autogenereated by langium-cli
 generated/
+# Generated from the config schema by tools/gen-config, committed so CI can check staleness
+!packages/core/src/config/generated/
+!packages/diagram-*/src/generated/
 
 
 /CLAUDE.md
