@@ -23,9 +23,12 @@ import { supportedFixtureFolders } from '../../../e2e/helpers/mmd-snapshots.ts';
 import { REPO_ROOT } from './fixtures.ts';
 import { readBody, sendFile, type Route } from './routes.ts';
 import type { ServerOptions } from './server.ts';
+import { versionsRoute } from './versions.ts';
 
 export const DEFAULT_EXPLORER_ROOT = join(REPO_ROOT, 'e2e', 'diagrams');
 export const EXPLORER_ENTRY = join(import.meta.dirname, 'browser', 'explorer', 'app.ts');
+/** The Compare tab's iframe script (`www/dev/compare-pane.html` loads `/build/compare-pane.js`). */
+export const COMPARE_PANE_ENTRY = join(import.meta.dirname, 'browser', 'compare-pane.ts');
 
 /** Written by a `POST` with an empty body (v12's starter). */
 export const NEW_DIAGRAM = 'flowchart TD\n  A[Start] --> B[End]\n';
@@ -253,16 +256,16 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
 }
 
 /**
- * Everything the explorer adds to `startServer`: its routes, its page script and a watch on
- * the root (a `.mmd` change rebuilds and reaches the page on `/events`).
+ * Everything the explorer adds to `startServer`: its routes (plus the Compare tab's
+ * `/dev/api/versions`), its page scripts and a watch on the root (a `.mmd` change rebuilds and reaches the page on `/events`).
  */
 export function explorerServerOptions(
   root: string,
   options: ExplorerOptions = {}
 ): Pick<ServerOptions, 'routes' | 'entries' | 'watch'> {
   return {
-    routes: explorerRoutes(root, options),
-    entries: { explorer: EXPLORER_ENTRY },
+    routes: [...explorerRoutes(root, options), versionsRoute()],
+    entries: { explorer: EXPLORER_ENTRY, 'compare-pane': COMPARE_PANE_ENTRY },
     watch: { paths: [root] },
   };
 }

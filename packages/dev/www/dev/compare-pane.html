@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mermaid compare pane</title>
+    <!-- One side of the Compare tab; the protocol is in src/browser/compare-pane.ts. -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        padding: 12px;
+        box-sizing: border-box;
+      }
+      #stage {
+        position: relative;
+        display: inline-block;
+      }
+      #stage svg {
+        display: block;
+        max-width: none !important;
+      }
+      #overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+        image-rendering: pixelated;
+      }
+      #msg {
+        font-size: 13px;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        color: #6b7280;
+        margin-bottom: 8px;
+      }
+      #msg.error {
+        color: #b91c1c;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 6px;
+        padding: 8px 10px;
+      }
+      #msg:empty {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="msg">Waiting for a version…</div>
+    <div id="stage"><div id="svg-host"></div></div>
+    <script type="module" src="/build/compare-pane.js"></script>
+  </body>
+</html>
