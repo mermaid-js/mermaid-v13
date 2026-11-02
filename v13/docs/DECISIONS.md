@@ -20,7 +20,7 @@ Later decisions supersede earlier ones where they conflict; superseded text is m
 | D10 | Targets (core+flowchart): ≤ 80 KB gz, 0 runtime deps, ≥ 50× geomean vs Mermaid 12 dagre on the corpus, 100% corpus renders; measured in CI via the approaches harness. |
 | D11 | ASCII backend is a v13 requirement (milestone 2); layout output must be a renderer-neutral data structure. *(Amended by D57.)* |
 | D12 | Porting Pele code allowed with MIT attribution (THIRD_PARTY_NOTICES + headers); default to reimplementing. *(Amended by D66.)* |
-| D13 | Requirements/design/ADRs as markdown in repo under `v13/docs/`; research reports move there; tickets as GitHub issues in Mermaid-Chart/mermaid-v13 labelled `v13` + milestone. |
+| D13 | Requirements/design/ADRs as markdown in repo under `v13/docs/`; research reports move there; ~~tickets as GitHub issues in Mermaid-Chart/mermaid-v13~~ tickets as GitHub issues in **mermaid-js/mermaid-v13** (amended 2026-11-02, when v13 moved there) labelled `v13` + milestone. |
 
 ## Round 2
 
