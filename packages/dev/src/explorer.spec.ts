@@ -3,7 +3,7 @@
  * `.mmd` only, inside the explorer root (v12's traversal guard), POST never overwrites.
  */
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { request } from 'node:http';
+import { request, type IncomingHttpHeaders } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -17,11 +17,20 @@ interface Reply {
   status: number;
   type: string;
   body: string;
+  headers: IncomingHttpHeaders;
 }
 
-function call(path: string, method = 'GET', body?: string): Promise<Reply> {
+/** What the explorer page sends on a write (`browser/explorer/api.ts`). */
+const PAGE = { 'x-mermaid-dev': '1', origin: `http://127.0.0.1:${PORT}` };
+
+function call(
+  path: string,
+  method = 'GET',
+  body?: string,
+  headers: Record<string, string> = method === 'GET' ? {} : PAGE
+): Promise<Reply> {
   return new Promise((resolve, reject) => {
-    const req = request({ host: '127.0.0.1', port: PORT, path, method }, (res) => {
+    const req = request({ host: '127.0.0.1', port: PORT, path, method, headers }, (res) => {
       let text = '';
       res.setEncoding('utf8');
       res.on('data', (chunk: string) => (text += chunk));
@@ -30,6 +39,7 @@ function call(path: string, method = 'GET', body?: string): Promise<Reply> {
           status: res.statusCode ?? 0,
           type: String(res.headers['content-type'] ?? ''),
           body: text,
+          headers: res.headers,
         })
       );
     });
@@ -166,6 +176,81 @@ describe('the explorer file API', () => {
     ])('refuses %s', async (_what, path) => {
       expect((await call(file(path), 'PUT', 'overwritten')).status).toBe(400);
       expect(readFileSync(join(parent, 'outside.mmd'), 'utf8')).toBe('flowchart TD\n  secret\n');
+    });
+  });
+
+  describe('write protection', () => {
+    it.each(['POST', 'PUT'])('%s without the X-Mermaid-Dev header is a 403', async (method) => {
+      writeFileSync(join(root, 'guarded.mmd'), 'flowchart LR\n  G\n');
+      const path = method === 'POST' ? 'guarded-new.mmd' : 'guarded.mmd';
+      const reply = await call(file(path), method, 'flowchart LR\n  X\n', {
+        origin: `http://127.0.0.1:${PORT}`,
+      });
+      expect(reply.status).toBe(403);
+      expect(readFileSync(join(root, 'guarded.mmd'), 'utf8')).toBe('flowchart LR\n  G\n');
+      expect(() => readFileSync(join(root, 'guarded-new.mmd'))).toThrow();
+    });
+
+    it.each(['POST', 'PUT'])('%s from a foreign Origin is a 403', async (method) => {
+      writeFileSync(join(root, 'guarded.mmd'), 'flowchart LR\n  G\n');
+      const path = method === 'POST' ? 'guarded-new.mmd' : 'guarded.mmd';
+      const reply = await call(file(path), method, 'flowchart LR\n  X\n', {
+        'x-mermaid-dev': '1',
+        origin: 'https://evil.example',
+      });
+      expect(reply.status).toBe(403);
+      expect(readFileSync(join(root, 'guarded.mmd'), 'utf8')).toBe('flowchart LR\n  G\n');
+    });
+
+    it('a write from the page on another host (the tailnet) works', async () => {
+      writeFileSync(join(root, 'remote.mmd'), 'flowchart LR\n  old\n');
+      const reply = await call(file('remote.mmd'), 'PUT', 'flowchart LR\n  R\n', {
+        'x-mermaid-dev': '1',
+        host: `devbox.example.test:${PORT}`,
+        origin: `http://devbox.example.test:${PORT}`,
+      });
+      expect(reply.status).toBe(200);
+      expect(readFileSync(join(root, 'remote.mmd'), 'utf8')).toBe('flowchart LR\n  R\n');
+    });
+
+    it('grants no CORS preflight', async () => {
+      const reply = await call(file('remote.mmd'), 'OPTIONS', undefined, {
+        origin: 'https://evil.example',
+        'access-control-request-method': 'PUT',
+        'access-control-request-headers': 'x-mermaid-dev',
+      });
+      expect(reply.status).toBe(403);
+      expect(reply.headers['access-control-allow-origin']).toBeUndefined();
+    });
+  });
+
+  describe('body size', () => {
+    // 600 000 characters, 1 200 000 bytes: over the 1 MiB limit only when counted in bytes.
+    const big = 'flowchart LR\n%% ' + 'é'.repeat(600_000);
+
+    it('a PUT over 1 MiB (in bytes) is a 413 and changes nothing', async () => {
+      writeFileSync(join(root, 'big.mmd'), 'flowchart LR\n  small\n');
+      expect((await call(file('big.mmd'), 'PUT', big)).status).toBe(413);
+      expect(readFileSync(join(root, 'big.mmd'), 'utf8')).toBe('flowchart LR\n  small\n');
+    });
+
+    it('a POST over 1 MiB is a 413 and creates nothing', async () => {
+      expect((await call(file('big-new.mmd'), 'POST', big)).status).toBe(413);
+      expect(() => readFileSync(join(root, 'big-new.mmd'))).toThrow();
+    });
+
+    it('/node-render over 1 MiB is a 413', async () => {
+      const body = JSON.stringify({ code: big });
+      expect((await call('/node-render', 'POST', body, {})).status).toBe(413);
+    });
+  });
+
+  describe('names that start with two dots', () => {
+    it('are inside the root, and can be created and read', async () => {
+      expect((await call(file('..notes.mmd'), 'POST', 'flowchart LR\n  D\n')).status).toBe(201);
+      expect(readFileSync(join(root, '..notes.mmd'), 'utf8')).toBe('flowchart LR\n  D\n');
+      expect((await call(file('flowchart/..b.mmd'), 'POST', '')).status).toBe(201);
+      expect((await call(file('..notes.mmd'))).body).toBe('flowchart LR\n  D\n');
     });
   });
 

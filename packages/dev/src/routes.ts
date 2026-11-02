@@ -3,7 +3,7 @@
  *
  * - `GET /` → links to the Dev Explorer and the e2e page;
  * - `POST /node-render` `{ code, options }` → the same adapter's output rendered in Node, for
- *   the Node-vs-browser equality spec;
+ *   the Node-vs-browser equality spec (bodies over `MAX_BODY_BYTES` are a 413);
  * - `GET /fonts/<file>` → the `@fontsource/noto-sans-sc` files, for the late-font spec;
  * - `GET /smoke.mjs` → the smoke bundle (`smoke:build`), for the browser and worker smoke renders.
  */
@@ -32,10 +32,40 @@ export interface Route {
   handle(req: IncomingMessage, res: ServerResponse, url: URL): void | Promise<void>;
 }
 
-export async function readBody(req: IncomingMessage): Promise<string> {
-  const chunks: Buffer[] = [];
-  for await (const chunk of req) chunks.push(chunk as Buffer);
-  return Buffer.concat(chunks).toString('utf8');
+/** The largest request body any route accepts, in bytes. */
+export const MAX_BODY_BYTES = 1024 * 1024;
+
+/**
+ * The request body as UTF-8, read as it streams in. Past `limit` bytes it stops keeping it,
+ * answers 413 (closing the connection) and resolves `undefined`: the caller just returns.
+ */
+export function readBody(
+  req: IncomingMessage,
+  res: ServerResponse,
+  limit = MAX_BODY_BYTES
+): Promise<string | undefined> {
+  return new Promise((done, reject) => {
+    const chunks: Buffer[] = [];
+    let size = 0;
+    const onData = (chunk: Buffer): void => {
+      size += chunk.length;
+      if (size <= limit) {
+        chunks.push(chunk);
+        return;
+      }
+      req.off('data', onData);
+      req.off('end', onEnd);
+      // The rest is discarded unread, so the client can finish sending and read the 413.
+      req.resume();
+      res.writeHead(413, { 'content-type': 'application/json', connection: 'close' });
+      res.end(JSON.stringify({ error: 'Body too large' }));
+      done(undefined);
+    };
+    const onEnd = (): void => done(Buffer.concat(chunks).toString('utf8'));
+    req.on('data', onData);
+    req.on('end', onEnd);
+    req.on('error', reject);
+  });
 }
 
 /** Streams `file` with `type`, or answers 404 when it does not exist. */
@@ -62,7 +92,9 @@ export const builtInRoutes: readonly Route[] = [
     path: '/node-render',
     method: 'POST',
     handle: async (req, res) => {
-      const { code, options } = JSON.parse(await readBody(req)) as {
+      const body = await readBody(req, res);
+      if (body === undefined) return;
+      const { code, options } = JSON.parse(body) as {
         code: string;
         options?: RenderOptions;
       };

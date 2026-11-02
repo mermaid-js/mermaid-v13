@@ -20,6 +20,12 @@ const endpoint = (name: 'files' | 'file', path: string): URL => {
   return url;
 };
 
+/**
+ * Sent on every write: the server refuses writes without it (`src/explorer.ts`), and a cross-site
+ * page can't add it without a CORS preflight the server never grants.
+ */
+const WRITE_HEADERS = { 'content-type': 'text/plain; charset=utf-8', 'x-mermaid-dev': '1' };
+
 async function failure(res: Response): Promise<Error> {
   const text = await res.text();
   let message = text;
@@ -47,7 +53,7 @@ export async function readFile(path: string): Promise<string> {
 export async function saveFile(path: string, text: string): Promise<void> {
   const res = await fetch(endpoint('file', path), {
     method: 'PUT',
-    headers: { 'content-type': 'text/plain; charset=utf-8' },
+    headers: WRITE_HEADERS,
     body: text,
   });
   if (!res.ok) throw await failure(res);
@@ -60,7 +66,7 @@ export async function createFile(
 ): Promise<{ path: string } | { exists: true }> {
   const res = await fetch(endpoint('file', path), {
     method: 'POST',
-    headers: { 'content-type': 'text/plain; charset=utf-8' },
+    headers: WRITE_HEADERS,
     body: text,
   });
   if (res.status === 409) return { exists: true };

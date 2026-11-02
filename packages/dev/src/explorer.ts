@@ -9,13 +9,14 @@
  * - `GET /dev/api/file?path=<file.mmd>` → the text; `PUT` overwrites an existing file; `POST`
  *   creates one (starter text when the body is empty) and answers 409 if it exists.
  *
- * Every path is relative to the root; anything that resolves outside it, or isn't `.mmd`, is a
+ * Writes need `X-Mermaid-Dev: 1` and a same-origin (or no) `Origin`, else 403; a body over
+ * `MAX_BODY_BYTES` is a 413. Every path is relative to the root; anything that resolves outside it, or isn't `.mmd`, is a
  * 400. `root` in the listing is how `/events` reports paths below it (repo-relative posix, or
  * absolute outside the checkout), so the page can match a change to the open file.
  */
 import { createRequire } from 'node:module';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
-import type { ServerResponse } from 'node:http';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 // The e2e snapshot discovery itself (#63), so the explorer lists exactly what CI snapshots.
 // eslint-disable-next-line mermaid/import-boundaries -- private dev tool; e2e/helpers has no package entry
@@ -37,7 +38,6 @@ export const NEW_DIAGRAM = 'flowchart TD\n  A[Start] --> B[End]\n';
 const SHOELACE = dirname(
   dirname(createRequire(import.meta.url).resolve('@shoelace-style/shoelace/dist/themes/dark.css'))
 );
-const MAX_BODY = 1024 * 1024;
 
 /** `MERMAID_DEV_EXPLORER_ROOT` (relative to the checkout), else the e2e fixture folders. */
 export function resolveExplorerRoot(env: Readonly<Record<string, string | undefined>>): string {
@@ -62,6 +62,29 @@ export interface ExplorerEntry {
 
 const posix = (p: string): string => p.split(sep).join('/');
 
+/** `relative()` left the base: `..` or `../…` (a name like `..notes.mmd` stays inside). */
+const escapes = (rel: string): boolean =>
+  rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel);
+
+/**
+ * Writes come only from the explorer page: they carry `X-Mermaid-Dev: 1` (a custom header, so
+ * a cross-site browser request needs a CORS preflight, which is never granted) and, when the
+ * browser sends an `Origin`, it names the host the request reached. The page may be on another
+ * machine (the tailnet), so the check is same-origin, not localhost.
+ */
+export const WRITE_HEADER = 'x-mermaid-dev';
+
+function sameOriginWrite(req: IncomingMessage): boolean {
+  if (req.headers[WRITE_HEADER] !== '1') return false;
+  const origin = req.headers.origin;
+  if (origin === undefined) return true;
+  try {
+    return new URL(origin).host === req.headers.host;
+  } catch {
+    return false;
+  }
+}
+
 class BadPath extends Error {}
 
 /** v12's guard: resolve below `root`, refuse NUL and anything that escapes it. */
@@ -73,7 +96,7 @@ export function resolveWithin(
   if (raw.includes('\0')) throw new BadPath('Invalid path');
   const abs = resolve(root, raw.replaceAll('\\', '/').replace(/^\/+/, ''));
   const rel = relative(root, abs);
-  if (rel.startsWith('..') || isAbsolute(rel)) throw new BadPath('Path escapes the explorer root');
+  if (escapes(rel)) throw new BadPath('Path escapes the explorer root');
   return { abs, rel: posix(rel) };
 }
 
@@ -83,11 +106,13 @@ function json(res: ServerResponse, status: number, body: unknown): void {
 }
 
 const refuse = (res: ServerResponse, error: string): void => json(res, 400, { error });
+const forbid = (res: ServerResponse): void =>
+  json(res, 403, { error: 'Writes are accepted only from the explorer page' });
 
 /** Where `/events` reports files below `root`: repo-relative posix, or absolute outside. */
 function eventRoot(root: string): string {
   const rel = relative(REPO_ROOT, root);
-  return rel.startsWith('..') || isAbsolute(rel) ? posix(root) : posix(rel);
+  return escapes(rel) ? posix(root) : posix(rel);
 }
 
 const byName = (a: string, b: string): number =>
@@ -154,6 +179,13 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
       },
     },
     {
+      // No CORS preflight is ever granted, so a cross-site page can't send the write header.
+      path: '/dev/api/',
+      prefix: true,
+      method: 'OPTIONS',
+      handle: (_req, res) => forbid(res),
+    },
+    {
       path: '/dev/api/files',
       method: 'GET',
       handle: async (_req, res, url) => {
@@ -211,13 +243,11 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
       path: '/dev/api/file',
       method: 'POST',
       handle: async (req, res, url) => {
+        if (!sameOriginWrite(req)) return forbid(res);
         const target = mmd(res, url);
         if (!target) return;
-        const body = await readBody(req);
-        if (body.length > MAX_BODY) {
-          refuse(res, 'Body too large');
-          return;
-        }
+        const body = await readBody(req, res);
+        if (body === undefined) return;
         const content = body.length > 0 ? body : NEW_DIAGRAM;
         await mkdir(dirname(target.abs), { recursive: true });
         try {
@@ -237,17 +267,15 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
       path: '/dev/api/file',
       method: 'PUT',
       handle: async (req, res, url) => {
+        if (!sameOriginWrite(req)) return forbid(res);
         const target = mmd(res, url);
         if (!target) return;
         if (!(await isFile(target.abs))) {
           refuse(res, 'Not a file');
           return;
         }
-        const body = await readBody(req);
-        if (body.length > MAX_BODY) {
-          refuse(res, 'Body too large');
-          return;
-        }
+        const body = await readBody(req, res);
+        if (body === undefined) return;
         await writeFile(target.abs, body, 'utf8');
         json(res, 200, { path: target.rel, bytes: Buffer.byteLength(body) });
       },
