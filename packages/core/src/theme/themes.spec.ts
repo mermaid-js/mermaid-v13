@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CORE_DEFAULTS, resolveConfig } from '../config/index.ts';
 import {
   BASE_VARIABLES,
   THEME_NAMES,
@@ -104,6 +105,20 @@ describe('theme names', () => {
   it('defaults to redux, which is always loaded for renderSync (D55)', () => {
     expect(resolveThemeName(undefined)).toEqual({ name: 'redux' });
     expect(loadedTheme('redux')?.name).toBe('redux');
+  });
+
+  it('renders a flowchart with no user theme in redux (D55)', () => {
+    // The flowchart section keeps v12's default `theme: redux-color`, which wins over the
+    // top-level `redux` in the defaults layer; it resolves to the redux spec.
+    const config = resolveConfig(CORE_DEFAULTS, undefined, undefined, [], {
+      flowchart: { theme: 'redux-color' },
+    });
+    expect(config.theme).toBe('redux-color');
+    expect(resolveThemeName(config.theme)).toEqual({ name: 'redux' });
+    const chosen = resolveConfig(CORE_DEFAULTS, undefined, { theme: 'forest' }, [], {
+      flowchart: { theme: 'redux-color' },
+    });
+    expect(resolveThemeName(chosen.theme)).toEqual({ name: 'forest' });
   });
 
   it('resolves the v12 flowchart section default redux-color to redux, silently', () => {
