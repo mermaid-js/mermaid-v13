@@ -48,6 +48,7 @@ describe('workspace layout (DESIGN §2)', () => {
         './svg/testing',
         './text',
         './theme',
+        './timing',
       ].sort()
     );
   });

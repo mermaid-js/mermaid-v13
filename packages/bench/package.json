@@ -6,11 +6,19 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
+    "bench": "tsx --conditions=mermaid-source src/cli/bench.ts",
+    "gates": "tsx --conditions=mermaid-source src/cli/gates.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
-    "mermaid": "workspace:*"
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^22.19.21",
+    "esbuild": "^0.25.12",
+    "mermaid": "workspace:*",
+    "mermaid-v12": "npm:mermaid@^12.2.0",
+    "mermaid-v12-frozen": "npm:mermaid@12.2.0",
+    "tsx": "^4.20.6"
   }
 }
