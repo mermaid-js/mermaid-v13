@@ -33,7 +33,7 @@ v13 closes the gap on **size, speed, theming and security** while keeping Mermai
 | Milestone | Content | Decisions |
 | --- | --- | --- |
 | **M1** | Core pipeline, flowchart only, built-in layered layout, SVG backend, themes (light/dark + v12 names), parser kit, parity oracle, benchmarks in CI, DOM adapter | D8, D18, D37 |
-| **M2** | ASCII output backend (flowchart first) | D11, D24 |
+| **M2** | ASCII/Unicode text output backend for flowcharts: text-grid kit in core, unit profile, API and CLI | D11, D24, D57, D58, D76–D87 |
 | **M2.5** | `@mermaid-js/language-service` + CodeMirror/Monaco adapters | D37 |
 | **M3** | sequence, class, state, ER | D34 |
 | **M4** | gantt, pie, mindmap, timeline, gitGraph, journey, quadrant | D34 |
@@ -57,6 +57,13 @@ v13 closes the gap on **size, speed, theming and security** while keeping Mermai
 - **Corpus:** the test diagrams (§21).
 - **Integrator:** an app embedding Mermaid.
 - **Author:** a person writing diagram text.
+- **Cell:** one character position in text output; the unit of ASCII layout (one column wide, one row high; wide characters take two).
+- **Unit profile (`UnitProfile`):** the injected table of every length constant layout uses (paddings, spacing, label patch, head room, track pitches, turn threshold). `px` for SVG, `cell` for ASCII. Layout depends on the measurer and the unit profile, never on a backend (R-ARCH-3).
+- **Grid quantum:** `LayoutGraph.grid`; when set, the engine places boxes, ports and tracks on whole multiples of it (1 for ASCII).
+- **Text-grid kit:** `@mermaid-js/core/ascii`: the character canvas, glyph sets, junction merging, cell measurer and repair router that diagram `ascii` hooks draw with.
+- **Glyph set:** the characters one charset uses for lines, corners, junctions and arrowheads (`unicode` or `ascii`).
+- **Repair router:** the cell-space A\* that re-routes only edge segments that collide after snapping.
+- **Upstream golden:** a mermaid-ascii fixture's expected output, kept beside v13's own golden and checked structurally only.
 
 ## 4. How to read the requirements
 
@@ -93,7 +100,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | --- | --- | --- | --- | --- | --- |
 | R-ARCH-1 | Core renders `(text, options) → { svg: string, warnings, … }` with no DOM, `window` or `document` access. | Must | M1 | D4 | Core test suite runs in Node with no DOM shim; a lint rule bans DOM globals in `packages/core` and `packages/diagram-*` |
 | R-ARCH-2 | The pipeline has explicit stages with plain-data boundaries: preprocess, detect, parse → model, layout → layout model, render → SVG node tree, serialise. | Must | M1 | D3, D11 | DESIGN.md defines each stage's type; each stage is unit-testable in isolation |
-| R-ARCH-3 | The layout model is independent of the renderer: layout depends only on an injected measurer, never on a backend. Every backend (SVG, ASCII) consumes the same LayoutModel type and never measures itself; ASCII gets its sizes by running layout with a character-grid measurer. | Must | M1 | D11, D24, D57 | ASCII backend (M2) uses no SVG-specific data |
+| R-ARCH-3 | The layout model is independent of the renderer: layout depends only on an injected measurer and an injected unit profile, never on a backend. Every length constant in a diagram's graph builder and in the layout engine comes from the unit profile (`px` or `cell`). Every backend (SVG, ASCII) consumes the same LayoutModel type and never measures itself; ASCII gets its sizes by running layout with the cell measurer and the cell profile. | Must | M1 | D11, D24, D57, D77 | ASCII backend (M2) uses no SVG-specific data. Checked at M2: a lint/spec finds no length literal in the flowchart graph builder or the layered engine outside the px profile; SVG output is byte-identical before and after the profile is introduced |
 | R-ARCH-4 | There is no module-level mutable state in core or diagram packages. Two renders with different configs can run concurrently and interleaved without affecting each other. | Must | M1 | D22, D42 | Concurrency spec: interleaved renders with different themes produce byte-identical output to sequential renders |
 | R-ARCH-5 | Config is resolved once per render into a frozen object and passed explicitly to every stage. Core and diagram packages have no global config lookup. | Must | M1 | D42 | Lint rule; mutating the resolved config throws in tests |
 | R-ARCH-6 | Output is byte-identical for the same input, options and measurer. | Must | M1 | D23 | Property test: render twice and compare, over the corpus |
@@ -247,11 +254,15 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 
 | ID | Requirement | Pri | MS | Src | Acceptance |
 | --- | --- | --- | --- | --- | --- |
-| R-ASCII-1 | An ASCII/Unicode text backend renders flowcharts from the shared layout model, using a monospace measurer and orthogonal routing snapped to a character grid. | Must | M2 | D11, D24 | Golden-file tests |
-| R-ASCII-2 | mermaid-ascii's golden files are ported as tests. Divergences are recorded. | Must | M2 | D24 | Ported tests |
+| R-ASCII-1 | An ASCII/Unicode text backend renders flowcharts from the shared layout model. Layout runs with the cell measurer and the cell unit profile, `stepped` routing and an integer grid quantum; routes are snapped to cells and only colliding segments are re-routed by the repair router. The flowchart draws through its `ascii` hook with the `core/ascii` text-grid kit. | Must | M2 | D11, D24, D76, D77, D78 | Golden-file tests; every direction, edge type, subgraph case and shape in the corpus renders |
+| R-ASCII-2 | mermaid-ascii's 142 flowchart golden files are ported as fixtures. v13's own `expected.txt` goldens compare exactly; the upstream output is checked structurally only. Inputs Mermaid rejects or reads differently, and structural failures, are listed in `ascii-divergences.json` with a reason; an unlisted failure or a stale entry fails CI. | Must | M2 | D24, D83 | Ported fixtures and divergence list in CI |
 | R-ASCII-3 | Diagram types may provide a native cell layout (e.g. sequence, ER) through the `ascii` hook. | Could | M3 | D24, D35 | Contract supports it |
-| R-ASCII-4 | ASCII output is available via API (`render(text, { format: 'ascii' })`) and a CLI. | Should | M2 | D11 | Specs |
-| R-ASCII-5 | ASCII support is opt-in per diagram type. A type supports it through the ascii hook, or by being graph-based on the shared layout, and declares it in its manifest. supportsFormat(type, 'ascii') lets hosts check up front. Requesting ASCII for an unsupported type throws a typed UnsupportedFormatError and never produces an approximation. Within a supported type, features with no text form (colours, images, icons, curves) are dropped with a warning. The docs carry a type × format support matrix. | Must | M2 | D58 | Specs: unsupported type throws UnsupportedFormatError; supportsFormat matches manifests; dropped features produce warnings; matrix generated from manifests |
+| R-ASCII-4 | ASCII output is available via API (`render(id, text, { format: 'ascii' })`, `renderSync(text, { format: 'ascii' })`, returning `TextRenderResult { format, text, columns, rows, diagramType, warnings }`) and the zero-dependency `mermaid` CLI bin (`mermaid render [file\|-] --format ascii\|svg [--charset ascii] [--width N\|auto]`). Text uses `\n`, has no trailing spaces and is byte-deterministic. The CLI writes diagnostics to stderr and exits 1 on an error, 2 on an unsupported format. | Must | M2 | D11, D80, D85 | Specs; CLI specs over stdin and files |
+| R-ASCII-5 | ASCII support is opt-in per diagram type. A type supports it through the ascii hook, or by being graph-based on the shared layout, and declares it in its manifest. supportsFormat(type, 'ascii') lets hosts check up front. Requesting ASCII for an unsupported type throws a typed UnsupportedFormatError and never produces an approximation. Within a supported type, features with no text form (colours, styles, images, icons, curves, links, bold/italic) are dropped with one `ASCII_DROPPED` warning per feature kind; shapes without their own text form are drawn as boxes with one `ASCII_SHAPE` warning. The docs carry a type × format support matrix. | Must | M2 | D58, D82 | Specs: unsupported type throws UnsupportedFormatError; supportsFormat matches manifests; dropped features produce warnings; matrix generated from manifests |
+| R-ASCII-6 | Two glyph sets: `unicode` box drawing (default) and pure `ascii`, chosen by `ascii.charset` (diagram text may set it). Solid, dotted and thick edges, every arrowhead kind, tees and all junctions (heavy and dashed included) have a glyph in both sets. | Must | M2 | D79 | Glyph-table specs; goldens in both sets |
+| R-ASCII-7 | The cell measurer counts grapheme clusters: East Asian Wide/Fullwidth and emoji take 2 cells, combining marks and ZWJ 0, for node, edge and subgraph labels alike. Each label line is one row; wrapping honours `wrappingWidth` converted to cells. | Must | M2 | D81 | Specs with CJK, emoji, ZWJ sequences, flags and combining marks |
+| R-ASCII-8 | `ascii.maxWidth` (columns) drives `availableWidth` in cells. Output is never cropped; an `ASCII_TOO_WIDE` warning is added when it still doesn't fit. | Should | M2 | D84 | Specs at several widths |
+| R-ASCII-9 | The `core/ascii` kit plus the flowchart's ascii entry stay within 15 KB gzip and are never loaded for an SVG render. ASCII render properties run over the whole in-repo flowchart corpus in both charsets in PR CI (no throw where SVG renders, deterministic, labels present, no overlapping boxes, row widths match `columns`, no trailing spaces). | Must | M2 | D87 | Size check; bundle test (SVG flowchart page loads no ascii chunk); property suite |
 
 ## 19. Accessibility (R-A11Y)
 

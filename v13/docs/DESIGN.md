@@ -22,7 +22,7 @@ This document describes how v13 is built. It is written for the people who will 
                                         │
                                         └──► ParseResult also carries spans, symbols,
                                              diagnostics ──► language-service (M2.5)
-                                   LayoutModel ──► ascii backend (M2)
+                                   LayoutModel ──► diagram ascii hook + core/ascii (M2, §6.3)
 ```
 
 The core rules:
@@ -47,7 +47,7 @@ tools/
   gen-grammar/          grammar file → dev-only oracle parser, fuzz sentences, highlighters, syntax docs (§4.4)
 ```
 
-Later milestones add `packages/ascii` (M2), `packages/language-service` (M2.5), `packages/diagram-<type>` (M3+) and `packages/plugin-elk|math|icons|handdrawn`.
+Later milestones add the `core/ascii` subpath and a `mermaid` CLI bin (M2, §6.3), `packages/language-service` (M2.5), `packages/diagram-<type>` (M3+) and `packages/plugin-elk|math|icons|handdrawn`.
 
 `core` exports these subpaths so diagram packages can import only what they need:
 
@@ -57,6 +57,7 @@ Later milestones add `packages/ascii` (M2), `packages/language-service` (M2.5), 
 - `/text`
 - `/theme`
 - `/config`
+- `/ascii` (M2): the text-grid kit (§6.3), never imported by an SVG render
 
 **Allowed dependency directions:**
 
@@ -70,8 +71,10 @@ Later milestones add `packages/ascii` (M2), `packages/language-service` (M2.5), 
 ```ts
 // packages/mermaid
 render(id: string, text: string, container?: Element): Promise<RenderResult>   // v12 signature kept; = prepare + renderSync
+render(id: string, text: string, options: RenderOptions & { format: 'ascii' }): Promise<TextRenderResult>   // M2 (D80)
 prepare(text: string, options?: RenderOptions): Promise<Prepared>              // new (R-API-2): detect, parse, load resources
 renderSync(text: string, options?: RenderOptions): RenderResult                 // new (R-API-2): sync, pure, loaded resources only
+renderSync(text: string, options: RenderOptions & { format: 'ascii' }): TextRenderResult   // M2 (D80)
 preload(req: { types?: string[]; iconPacks?: string[]; layouts?: string[]; math?: boolean }): Promise<void>  // new (R-API-2)
 supportsFormat(type: string, format: 'svg' | 'ascii'): boolean                  // new (R-ASCII-5)
 parse(text: string, parseOptions?: { suppressErrors?: boolean }): Promise<ParseResult | false>
@@ -89,6 +92,11 @@ interface RenderResult {
   width: number; height: number;
   warnings: Warning[];
   bindFunctions?: (el: Element) => void;       // set only when the interactions plugin is installed (§12.3)
+}
+interface TextRenderResult {                   // M2 (R-ASCII-4, D80)
+  format: 'ascii'; text: string;               // '\n' line ends, no trailing spaces, byte-deterministic
+  columns: number; rows: number;
+  diagramType: string; warnings: Warning[];
 }
 ```
 
@@ -259,8 +267,80 @@ type LayoutEngine = (g: LayoutGraph, ctx: LayoutContext) => LayoutModel;
 The rules:
 
 - The graph and the result are plain data, so the ASCII backend (M2) and DDLT-style fixtures can use them directly (R-ARCH-3).
-- Measurement happens **before** layout: diagram code fills in `width` and `height` using the injected measurer, and the engine never measures. Layout depends on the measurer only, never on a backend (R-ARCH-3, D57). For ASCII the same code runs with a character-grid measurer (widths in cells, heights in lines), so the ASCII backend receives a normal `LayoutModel` and never measures itself.
+- Measurement happens **before** layout: diagram code fills in `width` and `height` using the injected measurer, and the engine never measures. Layout depends on the measurer and the unit profile only, never on a backend (R-ARCH-3, D57, D77). For ASCII the same code runs with the cell measurer and the cell profile (widths in cells, heights in rows), so the ASCII path receives a normal `LayoutModel` and never measures itself (§6.3).
 - The engine is selected by the `layout` config key. `layered` is the default. Other engines are registered via `registerLayoutLoaders` (R-LAYOUT-2).
+
+### 6.3 Text output: unit profile, grid and the text-grid kit (M2, D76–D87)
+
+**Unit profile (D77).** A cell measurer alone does not give a layout in cells: the graph builder and the engine also use length constants. Every one of them comes from an injected `UnitProfile`, carried in `RenderContext.units` next to `measurer`:
+
+```ts
+interface UnitProfile {
+  readonly id: 'px' | 'cell';                  // part of the determinism key (R-ARCH-6)
+  readonly pxPerUnit: { x: number; y: number }; // px: 1 × 1; cell: 8 × 16 (converts px config values)
+  readonly builder: {                           // read by the diagram's graph builder
+    nodePad: { x: number; y: number }; groupPad: number; titlePad: number;
+    labelPatch: { x: number; y: number }; headRoom: number; wrapWidth: number; edgeWrap: number;
+  };
+  readonly engine: LayoutMetrics;               // passed through LayoutGraph.metrics
+  readonly grid?: number;                       // grid quantum, 1 for cells
+}
+interface LayoutMetrics {                       // today's layered constants; px values are the current ones
+  portPitch: number; minPitch: number; trackMargin: number; trackPitch: number; trackSpread: number;
+  levelMargin: number; levelPitch: number; levelLead: number; levelClear: number; levelTouch: number;
+  snap: number; bendSnap: number; leanClear: number; fan: number; loop: number; loopGap: number;
+  corner: number; turnBreakpoint: number;
+}
+```
+
+- `LayoutGraph` gains `metrics?: LayoutMetrics` (defaults to the px values, so callers that don't pass it keep today's output) and `grid?: number`. With `grid` set, the engine rounds node centres, box edges, ports and tracks to whole multiples of it; odd and even box widths are handled so the box edges, not the centre, land on the grid.
+- The px profile reproduces today's numbers exactly: introducing it must not change one SVG byte.
+- Shape geometry: with the px profile the builder sizes nodes with the flowchart's `shapeSize`; with the cell profile every shape is a text-form box (label + 2·`nodePad.x` + 2 wide, lines + 2·`nodePad.y` + 2 high), because the text forms (D82) are all boxes. This is the one place the builder branches on `units.id`.
+- Config px values (`nodeSpacing`, `rankSpacing`, `wrappingWidth`, `diagramPadding`) are divided by `pxPerUnit` and clamped to a minimum (node spacing ≥ 2, rank spacing ≥ 3 cells).
+- Cell profile, `ascii.padding: 'compact'` (default): node box label + 4 wide × lines + 2 high; node spacing 2, rank spacing 4, edge spacing 1; label patch label + 2; group padding 1; title band 0 (the title sits on the top border); head room 1. `'roomy'` gives mermaid-ascii-like spacing (box padding 1 each way, gaps of 5).
+
+**Drawing (D76).** A diagram that supports ASCII draws in its `ascii` hook with the text-grid kit in `@mermaid-js/core/ascii`:
+
+| Piece | Role |
+| --- | --- |
+| `cellMeasurer` | `Measurer` over grapheme clusters (`Intl.Segmenter`): East Asian Wide/Fullwidth and emoji 2, combining marks and ZWJ 0; `metrics().lineHeight` = 1 (D81) |
+| `Canvas` | rows × columns of cells; a wide grapheme takes its cell and a continuation cell; `toString()` trims trailing spaces |
+| `GlyphSet` | `unicode` and `ascii` tables for lines (solid, dotted, thick), corners, tees, heads (`▲▼◄►`/`^v<>`, `●`/`o`, `✕`/`x`) (D79) |
+| `junction(a, b)` | one lookup that merges any two line glyphs, heavy and dashed included |
+| `snapRoute(points, grid)` | `RoutePoint[]` → cell polyline |
+| `repairRoute` | A\* over free cells, Manhattan + turn penalty, for segments that hit a box, label, frame or another edge after snapping (D78) |
+| `drawBox`, `drawText` | box forms (square, rounded, double side, `═` caps) and cell text |
+
+Ported from mermaid-ascii's canvas, glyph, junction and cell-text code (MIT, attribution in headers and `THIRD_PARTY_NOTICES`); its placement, router and parser are not (research/mermaid-ascii.md §8.11).
+
+**Flowchart `ascii` entry.** `@mermaid-js/diagram-flowchart/ascii` exports the hook. The manifest names it (`"ascii": "./dist/ascii.js"`) and lists `"formats": ["svg", "ascii"]`; `prepare` loads it only for `format: 'ascii'`. Pipeline: `prepare(model)` with `ctx.units = cellProfile`, `ctx.measurer = cellMeasurer`, `routing: 'stepped'`, `grid: 1` → layered engine → snap and repair → draw groups (outermost first, title on the top border), edges, edge labels on their longest straight segment, nodes through the shape → text-form table, front-matter title on line 1 → `Canvas.toString()`.
+
+**What is dropped (D82).** Colours and styles, curves, images/icons (label kept), bold/italic, links/tooltips/callbacks, accTitle/accDescr: one `ASCII_DROPPED { feature, astIds }` warning per feature kind; shapes outside the table: one `ASCII_SHAPE` warning. Width: `ascii.maxWidth` → `availableWidth` in cells; never cropped; `ASCII_TOO_WIDE` (D84).
+
+**Config (`ascii` section, `x-mermaid` status `honoured` since M2):** `charset: 'unicode' | 'ascii'`, `padding: 'compact' | 'roomy'`, `maxWidth?: number`. Diagram text may set all three.
+
+**Hooks (D86).** `postParse` and `postLayout` run; `LaidOut` gains `units: 'px' | 'cell'`. No `postRender` or `afterMount`. The DOM adapter stays SVG-only in M2.
+
+**CLI (D85).** `packages/mermaid` gets a `bin` `mermaid`: `mermaid render [file|-] --format ascii|svg [--charset ascii] [--width N|auto] [--warnings]`. Table measurer, stdout output, diagnostics to stderr, exit 1 on error and 2 on `UNSUPPORTED_FORMAT`. No runtime dependencies (R-PERF-2).
+
+**Tests (D83, D87).** `packages/conformance/ascii/` holds the 142 ported mermaid-ascii fixtures (`input.mmd`, `upstream.txt`, `expected.txt`, header metadata) and `ascii-divergences.json`; corpus-wide ASCII render properties in both charsets; a size check for kit + entry (≤ 15 KB gz) and a bundle test that an SVG flowchart never loads them.
+
+**M2 work breakdown** (tickets under the M2 spec issue):
+
+| # | Work item | R-ids | Depends |
+| --- | --- | --- | --- |
+| 1 | Grid-snapping prototype: cell-unit `LayoutGraph`s from the ported fixtures through today's engine with `stepped`, snap, report collisions (throwaway, answers how much repair is needed) | R-ASCII-1 | – (uses M1 code as is) |
+| 2 | Port the 142 mermaid-ascii fixtures: `input.mmd` + `upstream.txt` + metadata, attribution, rejected/reinterpreted triage | R-ASCII-2 | – |
+| 3 | `UnitProfile` + `LayoutMetrics` in core; px profile = today's constants; `RenderContext.units` | R-ARCH-3 | M1 #9, #11 |
+| 4 | Layered engine reads `LayoutGraph.metrics` and honours `grid` | R-ARCH-3, R-ASCII-1 | 3, M1 #11 |
+| 5 | Flowchart graph builder takes every constant from `ctx.units` | R-ARCH-3 | 3, M1 #14 |
+| 6 | `core/ascii` kit: canvas, glyph sets, junction merge, box/text drawing, cell measurer | R-ASCII-6, -7 | M1 #2, #9 |
+| 7 | Route snapping + repair router | R-ASCII-1 | 4, 6 |
+| 8 | Flowchart `ascii` entry: shapes table, edges, labels, subgraphs, title, drop warnings | R-ASCII-1, -5 | 5, 7, M1 #8 |
+| 9 | API: `format: 'ascii'`, `TextRenderResult`, lazy ascii entry, `ascii` config section, `UnsupportedFormatError` paths, `LaidOut.units` | R-ASCII-4, -5, -8 | 8, M1 #7, #15, #22 |
+| 10 | Golden suite: our `expected.txt`, upstream structural check, `ascii-divergences.json`, corpus properties both charsets | R-ASCII-2, -9 | 2, 8 |
+| 11 | `mermaid` CLI bin | R-ASCII-4 | 9 |
+| 12 | Size budget + bundle test, generated type × format matrix, ASCII docs page | R-ASCII-5, -9 | 9, M1 #3 |
 
 ### 6.2 `layered` engine (`core/layout/layered`): port per O-7
 
@@ -431,7 +511,7 @@ interface DiagramPlugin<M = unknown, L = LayoutModel> {
   resources?(ast: AstNode, ctx: RenderContext): Resource[];   // icon packs, math, layout engine (R-API-2)
   layout?(model: M, ctx: RenderContext): L;     // graph: may use ctx.layout(graph); custom: own algorithm
   render(model: M, layout: L, ctx: RenderContext, w: SvgWriter): void;
-  ascii?(model: M, layout: L, ctx: RenderContext): string;   // M2
+  ascii?(model: M, layout: L, ctx: RenderContext): string;   // M2: lazily loaded entry, draws with core/ascii (§6.3)
   configDefaults?: object;                      // its schema section defaults
   themeVariables?: ThemeRuleTable;              // its derived vars
 }
@@ -442,6 +522,7 @@ interface DiagramPlugin<M = unknown, L = LayoutModel> {
 
 ```json
 "mermaid": { "plugin": "diagram", "id": "gantt", "formats": ["svg"], "detector": "./dist/detector.js", "entry": "./dist/index.js" }
+"mermaid": { "plugin": "diagram", "id": "flowchart", "formats": ["svg", "ascii"], "detector": "…", "entry": "…", "ascii": "./dist/ascii.js" }
 "mermaid": { "plugin": "extension", "id": "interactions", "entry": "./dist/index.js" }
 ```
 
@@ -453,8 +534,8 @@ interface DiagramPlugin<M = unknown, L = LayoutModel> {
 
 ```ts
 type LaidOut =
-  | { kind: 'graph'; diagram: string; layout: LayoutModel }
-  | { kind: 'custom'; diagram: string; layout: unknown };
+  | { kind: 'graph'; diagram: string; layout: LayoutModel; units: 'px' | 'cell' }   // units: M2 (D86)
+  | { kind: 'custom'; diagram: string; layout: unknown; units: 'px' | 'cell' };
 
 interface ExtensionPlugin {
   id: string;
@@ -600,7 +681,7 @@ Only core has its own published size budget (R-PERF-8, D59). Later diagram packa
 | 22 | Interactions plugin: callbacks, `bindFunctions`, moved config keys | R-PLUG-9, R-SVG-5 | 15,21 |
 | 23 | Non-graph contract check: a stub non-graph plugin (Sankey or pie) with its own layout type L and a postLayout fixture hook, in a type-level + runtime test, so the plugin API can't silently become flowchart-only | R-PLUG-1/2, R-ARCH-3 | 14, 21 |
 
-R-COMPAT-10 (drop-in upgrade) and R-ASCII-5 are not M1 work: the first is release step two, the second lands with M2.
+R-COMPAT-10 (drop-in upgrade) and R-ASCII-5 are not M1 work: the first is release step two, the second lands with M2 (§6.3).
 
 The parallel tracks after item 1:
 
@@ -623,6 +704,8 @@ The parallel tracks after item 1:
 | ADR-10 | Extension plugins and hooks; interactions plugin | from D47, D52 |
 | ADR-11 | Normative grammar files and generated dev-only tooling | from D54 |
 | ADR-12 | AST ids and the `data-ast` source ↔ diagram mapping | from D53 |
+| ADR-13 | Unit profile: layout depends on measurer + `UnitProfile`, every length constant in builder and engine comes from it | from D77 (M2) |
+| ADR-14 | Text output: diagram `ascii` hooks over the shared layout, `core/ascii` kit, snapped stepped routes with a repair router | from D76, D78 (M2) |
 
 ## 17. Points for review
 
