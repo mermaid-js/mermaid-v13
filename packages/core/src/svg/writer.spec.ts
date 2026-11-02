@@ -1,0 +1,97 @@
+import { describe, expect, it } from 'vitest';
+import { streamWriter } from './index.ts';
+
+describe('SvgWriter (streaming)', () => {
+  it('writes nested elements, leaves and text in call order', () => {
+    const w = streamWriter();
+    w.open('g', { class: 'nodes' });
+    w.leaf('rect', { x: 1, y: 2, width: 30, height: 40 });
+    w.open('text', { x: 5, y: 6 });
+    w.text('hi');
+    w.close();
+    w.close();
+    expect(w.finish()).toBe(
+      '<g class="nodes"><rect x="1" y="2" width="30" height="40"/><text x="5" y="6">hi</text></g>'
+    );
+  });
+
+  it('escapes text content', () => {
+    const w = streamWriter();
+    w.open('text');
+    w.text('a < b && c > "d" \'e\'');
+    w.close();
+    expect(w.finish()).toBe("<text>a &lt; b &amp;&amp; c &gt; &quot;d&quot; 'e'</text>");
+  });
+
+  it('escapes attribute values so they cannot break out of the quotes', () => {
+    const w = streamWriter();
+    w.leaf('g', { class: 'x" onload="alert(1)', 'data-id': '<script>&' });
+    expect(w.finish()).toBe(
+      '<g class="x&quot; onload=&quot;alert(1)" data-id="&lt;script&gt;&amp;"/>'
+    );
+  });
+
+  it('drops characters that are not allowed in XML', () => {
+    const w = streamWriter();
+    w.open('text');
+    w.text('a\u0000b\u0008c\u000bd\u001fe\u007ff￾g￿h\ud800i\tj\nk');
+    w.close();
+    expect(w.finish()).toBe('<text>abcdefghi\tj\nk</text>');
+  });
+
+  it('keeps astral characters (valid surrogate pairs)', () => {
+    const w = streamWriter();
+    w.open('text');
+    w.text('😀 𝄞');
+    w.close();
+    expect(w.finish()).toBe('<text>😀 𝄞</text>');
+  });
+
+  it('formats numbers to at most two decimals without trailing zeros', () => {
+    const w = streamWriter();
+    w.leaf('rect', { x: 0, y: -0, width: 1.5, height: 2.006 });
+    w.leaf('rect', { x: 10.1, y: -3.14159, width: 1e-9, height: 123456.789 });
+    w.leaf('rect', { x: 0.1 + 0.2, y: -0.004, width: 7.999, height: 2.05 });
+    expect(w.finish()).toBe(
+      '<rect x="0" y="0" width="1.5" height="2.01"/>' +
+        '<rect x="10.1" y="-3.14" width="0" height="123456.79"/>' +
+        '<rect x="0.3" y="0" width="8" height="2.05"/>'
+    );
+  });
+
+  it('refuses non-finite numbers', () => {
+    const w = streamWriter();
+    expect(() => w.leaf('rect', { x: Number.NaN })).toThrow(RangeError);
+    expect(() => w.leaf('rect', { y: Number.POSITIVE_INFINITY })).toThrow(RangeError);
+  });
+
+  it('skips attributes whose value is undefined', () => {
+    const w = streamWriter();
+    w.leaf('rect', { x: 1, y: undefined, class: 'a' });
+    expect(w.finish()).toBe('<rect x="1" class="a"/>');
+  });
+
+  it('refuses tags and attributes outside the allow-list at runtime too', () => {
+    const w = streamWriter();
+    // @ts-expect-error -- not an allowed tag
+    expect(() => w.open('script')).toThrow(TypeError);
+    // @ts-expect-error -- not an allowed tag
+    expect(() => w.leaf('foreignObject')).toThrow(TypeError);
+    // @ts-expect-error -- not an allowed attribute
+    expect(() => w.leaf('g', { onload: 'alert(1)' })).toThrow(TypeError);
+  });
+
+  it('refuses unbalanced close and unfinished elements', () => {
+    const w = streamWriter();
+    expect(() => w.close()).toThrow(Error);
+    const v = streamWriter();
+    v.open('g');
+    expect(() => v.finish()).toThrow(Error);
+  });
+
+  it('rejects text outside an element that can hold it', () => {
+    const w = streamWriter();
+    w.open('rect');
+    expect(() => w.text('x')).toThrow(TypeError);
+  });
+});

@@ -26,6 +26,11 @@
       "types": "./dist/svg/index.d.ts",
       "default": "./dist/svg/index.js"
     },
+    "./svg/testing": {
+      "mermaid-source": "./src/svg/testing/index.ts",
+      "types": "./dist/svg/testing/index.d.ts",
+      "default": "./dist/svg/testing/index.js"
+    },
     "./text": {
       "mermaid-source": "./src/text/index.ts",
       "types": "./dist/text/index.d.ts",
