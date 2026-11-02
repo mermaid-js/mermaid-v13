@@ -334,6 +334,33 @@ describe('layout engines (R-LAYOUT-2)', () => {
     expect((await render('l', `flowchart-elk LR\n  A --> B`)).warnings).toEqual([]);
   });
 
+  it('passes RenderOptions.availableWidth to the engine, which fits the drawing (R-LAYOUT-5)', async () => {
+    const seen: (number | undefined)[] = [];
+    const spy: LayoutEngine = (graph, ctx) => {
+      seen.push(graph.availableWidth);
+      return layered(graph, ctx);
+    };
+    const m = createMermaid();
+    m.registerLayoutLoaders([{ name: 'spy', loader: () => Promise.resolve(spy) }]);
+    const wide = 'flowchart LR\n  A[Alpha node] --> B[Bravo node] --> C[Charlie node] --> D[Delta]';
+    const text = `---\nconfig:\n  layout: spy\n---\n${wide}`;
+    await m.prepare(text);
+    const free = m.renderSync(text);
+    const fitted = m.renderSync(text, { availableWidth: 200 });
+    expect(seen).toEqual([undefined, 200]);
+    expect(free.width).toBeGreaterThan(200);
+    expect(fitted.width).toBeLessThanOrEqual(200);
+  });
+
+  it('parses once for prepare + renderSync with the same per-call options object', async () => {
+    const m = createMermaid();
+    await m.preload({ types: ['flowchart'] });
+    const options = { config: { theme: 'default' as const } };
+    const first = await m.prepare(FLOW, options);
+    m.renderSync(FLOW, options);
+    expect(await m.prepare(FLOW, options)).toBe(first);
+  });
+
   it('falls back to the built-in engine with a warning for an unknown name', async () => {
     const r = await render('l', `---\nconfig:\n  layout: nope\n---\n${FLOW}`);
     expect(r.warnings.map((w) => w.code)).toEqual(['LAYOUT_UNKNOWN']);

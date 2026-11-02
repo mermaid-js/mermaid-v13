@@ -38,6 +38,7 @@ import {
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { stageEnd, stageStart } from '@mermaid-js/core/timing';
+import { createDomAdapter } from './dom.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
   Registry,
@@ -71,6 +72,12 @@ export interface RenderOptions {
   placeholders?: boolean;
   /** Output format. Only `svg` exists in M1. */
   format?: 'svg' | 'ascii';
+  /**
+   * Width in px the drawing should fit (R-LAYOUT-5): graph layouts tighten their spacing and
+   * may turn LR into TB. Off by default; `mount(…, { availableWidth: true })` passes the
+   * element's width.
+   */
+  availableWidth?: number;
 }
 
 export interface RenderResult {
@@ -110,10 +117,17 @@ export interface ParseOptions {
 export interface ParseResult12 {
   /** The v12 diagram type, e.g. `flowchart-v2`. */
   diagramType: string;
-  /** The config given in front matter and directives, without the integrator-only keys. */
-  config: Omit<MermaidConfig, 'securityLevel'>;
+  /**
+   * The config given in front matter and directives, without the integrator-only keys.
+   * `theme` keeps v12's type so v12 callers still compile (R-COMPAT-5); a diagram that asks
+   * for v13's `theme: 'auto'` reports it as the string `'auto'` all the same.
+   */
+  config: Omit<MermaidConfig, 'securityLevel' | 'theme'> & { theme?: V12Theme };
   warnings: Warning[];
 }
+
+/** The `theme` names v12 declared: every v13 name except `auto`. */
+type V12Theme = Exclude<MermaidConfig['theme'], 'auto'>;
 
 export interface PreloadRequest {
   /** Diagram types or plugin ids. */
@@ -349,8 +363,17 @@ export function createMermaid() {
     );
   }
 
+  // The same per-call config object over the same defaults gives the same snapshot, so
+  // `prepare(text, o)` then `renderSync(text, o)` hits the parse cache.
+  const overlays = new WeakMap<InitializeConfig, { base: Snapshot; snap: Snapshot }>();
   function snap(options?: RenderOptions): Snapshot {
-    return overlay(site, options?.config);
+    const extra = options?.config;
+    if (!extra) return site;
+    const hit = overlays.get(extra);
+    if (hit && hit.base === site) return hit.snap;
+    const s = overlay(site, extra);
+    overlays.set(extra, { base: site, snap: s });
+    return s;
   }
 
   async function prepareWith(text: string, s: Snapshot): Promise<Analysis> {
@@ -462,7 +485,12 @@ export function createMermaid() {
       linkSchemes: s.options.linkSchemes,
       layout: (graph) => {
         if (!layoutEngine) throw new TypeError(`${plugin.id} has no graph layout`);
-        return layoutEngine(graph);
+        const width = options?.availableWidth;
+        return layoutEngine(
+          width !== undefined && graph.availableWidth === undefined
+            ? { ...graph, availableWidth: width }
+            : graph
+        );
       },
       warn,
     };
@@ -524,7 +552,7 @@ export function createMermaid() {
       for (const key of INTEGRATOR_ONLY_KEYS) delete config[key];
       return {
         diagramType: a.prepared.diagramType,
-        config: config as Omit<MermaidConfig, 'securityLevel'>,
+        config: config as ParseResult12['config'],
         warnings: [...a.prepared.warnings],
       };
     } catch (e) {
@@ -598,6 +626,14 @@ export function createMermaid() {
     parseErrorHandler = handler;
   }
 
+  // The DOM adapter (run, mount) reads the defaults at the start of each call, like render.
+  const { run, mount, contentLoaded } = createDomAdapter({
+    prepare,
+    renderSync,
+    siteConfig: () => site.config,
+    onParseError: (error) => parseErrorHandler?.(error),
+  });
+
   return {
     render,
     prepare,
@@ -605,6 +641,9 @@ export function createMermaid() {
     preload,
     parse,
     initialize,
+    run,
+    mount,
+    contentLoaded,
     detectType,
     supportsFormat,
     registerExternalDiagrams,
