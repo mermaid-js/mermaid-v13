@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/cjk_matrix.txt",
+  "charset": "ascii"
+}

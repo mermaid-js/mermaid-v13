@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/ampersand_lhs.txt",
+  "charset": "unicode"
+}

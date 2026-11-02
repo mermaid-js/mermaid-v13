@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/mixed_edge_operators_chain.txt",
+  "charset": "unicode"
+}

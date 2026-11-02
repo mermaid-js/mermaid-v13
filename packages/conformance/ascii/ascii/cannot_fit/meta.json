@@ -1,0 +1,5 @@
+{
+  "source": "pkg/graph/testdata/ascii/cannot_fit.txt",
+  "charset": "ascii",
+  "maxWidth": 5
+}

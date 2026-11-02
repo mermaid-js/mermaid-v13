@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/two_layer_single_graph.txt",
+  "charset": "ascii"
+}

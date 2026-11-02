@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/mixed_operators_td.txt",
+  "charset": "unicode"
+}

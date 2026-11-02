@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/backlink_from_top.txt",
+  "charset": "unicode"
+}

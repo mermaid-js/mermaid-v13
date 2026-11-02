@@ -10,6 +10,9 @@ export const ARROW = 8;
 const LEAD = 6;
 // The most a corner is rounded by in a stepped route.
 const CORNER = 12;
+// The radius of the arc at a corner of a rounded route (v12's `rounded` curve), less where a
+// leg is too short for it.
+const RADIUS = 5;
 // How far the handles of a wide turn reach along its two legs.
 const HANDLE = 0.62;
 
@@ -192,13 +195,15 @@ export function routePath(
     }
     let before = turns(i - 1) ? length(i) / 2 : length(i);
     let after = turns(i + 1) ? length(i + 1) / 2 : length(i + 1);
-    if (cornered) before = after = Math.min(CORNER, before, after);
+    if (cornered) before = after = Math.min(kind === 'rounded' ? RADIUS : CORNER, before, after);
     const [ux, uy] = unit(i - 1, i, axes[i]!);
     const [vx, vy] = unit(i, i + 1, axes[i + 1]!);
     lineTo(x - ux * before, y - uy * before);
     atX = x + vx * after;
     atY = y + vy * after;
-    if (cornered) b.quadTo(x, y, atX, atY);
+    // A right-angle turn, so the arc's radius is its leg; the sweep follows the turn (y down).
+    if (kind === 'rounded') b.arcTo(before, before, 0, false, ux * vy - uy * vx > 0, atX, atY);
+    else if (cornered) b.quadTo(x, y, atX, atY);
     else
       b.curveTo(
         x - ux * before * (1 - HANDLE),

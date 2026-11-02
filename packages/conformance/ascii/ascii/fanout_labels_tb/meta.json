@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/fanout_labels_tb.txt",
+  "charset": "ascii"
+}
