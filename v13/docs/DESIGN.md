@@ -399,6 +399,7 @@ class MermaidError extends Error {
   code: 'SYNTAX' | 'SEMANTIC' | 'UNSUPPORTED_DIAGRAM' | 'UNSUPPORTED_FORMAT' | 'NOT_LOADED' | 'LIMIT' | 'INTERNAL';
   line: number; column: number; offset: number; length: number;   // original source, 1-based line/col
   expected?: string[]; diagnostics: Diagnostic[];                   // all diagnostics, first is primary
+  limit?: 'maxSourceLength' | 'maxEdges' | 'maxNodes' | 'maxDepth' | 'maxOutputLength'; // code LIMIT
 }
 ```
 

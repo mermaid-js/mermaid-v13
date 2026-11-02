@@ -59,6 +59,19 @@ describe('render limits (R-SEC-5)', () => {
     );
   });
 
+  it('names the breached limit on the error', async () => {
+    const text = 'flowchart TD\n' + 'A-->B\n'.repeat(10000);
+    expect((await limit(text)).limit).toBe('maxSourceLength');
+    expect((await limit(chain(11), { limits: { maxEdges: 10 } })).limit).toBe('maxEdges');
+    expect((await limit(chain(11), { limits: { maxNodes: 5 } })).limit).toBe('maxNodes');
+    expect((await limit(nested(3), { limits: { maxDepth: 2 } })).limit).toBe('maxDepth');
+    expect((await limit(chain(3), { limits: { maxOutputLength: 100 } })).limit).toBe(
+      'maxOutputLength'
+    );
+    const other = await outcome('flowchart TD\nA[unclosed\n');
+    expect(typeof other !== 'string' && other.limit).toBeUndefined();
+  });
+
   it('reports a limit before other errors in the same text', async () => {
     const e = await limit(chain(11) + 'A[unclosed\n', { limits: { maxEdges: 10 } });
     expect(e.diagnostics[0]?.code).toBe('EDGE_LIMIT');
