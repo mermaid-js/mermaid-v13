@@ -77,7 +77,7 @@ const escapes = (rel: string): boolean =>
  * Writes come only from the explorer page: they carry `X-Mermaid-Dev: 1` (a custom header, so
  * a cross-site browser request needs a CORS preflight, which is never granted) and, when the
  * browser sends an `Origin`, it names the host the request reached. The page may be on another
- * machine (the tailnet), so the check is same-origin, not localhost.
+ * machine (over a VPN or the LAN), so the check is same-origin, not localhost.
  */
 export const WRITE_HEADER = 'x-mermaid-dev';
 
