@@ -1,5 +1,129 @@
 # Migrating from Mermaid v12 to v13
 
+This guide lists every removed feature, changed default and config key in v13, each with its
+replacement (R-COMPAT-9). It is written for integrators: sites, editors and tools that call
+Mermaid, style its SVG or read its config. Diagram authors mostly need the sections on
+[labels](#labels-and-text), [flowchart syntax](#flowchart-syntax) and
+[front matter](#front-matter-and-directives).
+
+Requirement (`R-…`) and decision (`D…`) ids point into [REQUIREMENTS.md](./REQUIREMENTS.md) and
+[DECISIONS.md](./DECISIONS.md). The config section is generated from the schema; the per-key
+status of every config key is in [config-reference.md](./config-reference.md), and every theme
+variable is in [theme-variables.md](./theme-variables.md).
+
+> **Status: 13.0 alpha (milestone M1).** Flowchart is the only diagram type with a v13 renderer.
+> Every other v12 type is still detected, and rendering it fails with `UNSUPPORTED_DIAGRAM`
+> until its package is ported. Some replacements named here are not released yet; they are
+> marked _(later in M1)_ or with their milestone.
+
+## At a glance
+
+What most integrators have to change:
+
+1. Replace `mermaidAPI.*` calls with the top-level functions ([Public API](#public-api)).
+2. Stop relying on `htmlLabels`, `<foreignObject>` labels and `dompurifyConfig`: labels are SVG
+   text ([Labels](#labels-and-text)).
+3. Click callbacks (`click A callback`, `call fn()`) and `bindFunctions` need
+   `@mermaid-js/plugin-interactions` ([Click callbacks](#click-callbacks-and-bindfunctions)).
+4. `securityLevel: 'loose'` (and `antiscript`, `sandbox`) now means `default`; `strict` now
+   allows relative links only ([securityLevel](#securitylevel)).
+5. CSS that targets element ids, `<marker>`, `.label-container` or the `<style>` element inside
+   the SVG must move to the kept class names and `--mermaid-*` CSS variables
+   ([Flowchart SVG structure](#flowchart-svg-structure), [Themes](#themes)).
+6. The default theme is `redux` and the default layout is `layered`; set `theme: 'default'` to
+   keep v12 colours ([Changed defaults](#changed-defaults)).
+7. Render errors are thrown as `MermaidError`; nothing is drawn into the page for you
+   ([Errors](#errors-and-the-error-image)).
+
+## Packages
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| One `mermaid` package with every diagram type and its dependencies (d3, dagre, DOMPurify, khroma, KaTeX, …) | `mermaid` depends on `@mermaid-js/core` (pipeline, parser kit, layout, SVG writer, text, themes, config) and one `@mermaid-js/diagram-<type>` package per diagram type. `mermaid` has no other runtime dependencies | Small, DOM-free bundles (R-PERF-1, R-PERF-2) |
+| ESM, IIFE (`mermaid.min.js`) and "tiny" builds | ESM only in the alpha, Node 20 or newer. The browser bundle comes with the release pipeline _(later in M1)_ | |
+| `@mermaid-js/layout-elk` | No ELK package yet. `layout: elk` draws with the built-in engine ([Layout](#layout)) | R-PLUG-8 |
+| ZenUML, tidy-tree and the example diagram package | Not ported in M1 | |
+
+## Public API
+
+`render`, `parse`, `initialize` and `run` keep their v12 call signatures (R-COMPAT-5); a type
+test checks them against the mermaid@12 declarations.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| `mermaidAPI` object (`getConfig`, `setConfig`, `reset`, …) | Removed | No global render state (R-API-5); config goes through `initialize()` |
+| `render(id, text, container?)` → `{ svg, diagramType, bindFunctions? }` | Same call; the result adds `width`, `height` and `warnings`. `container` is accepted and ignored (v13 measures without the DOM) | R-API-1, R-ERR-4 |
+| `render(id)` sets the root `<svg id>` | `id` prefixes the ids the output writes (`<id>-title`, `<id>-desc`); the root has no `id` | Ids stay unique per render |
+| `render()` needs a browser DOM (or jsdom) to measure text | Renders in Node, Deno, workers and browsers without a DOM. Text is measured with canvas when it exists, otherwise with built-in font tables; `initialize({ deterministic: true })` always uses the tables, `initialize({ measurer })` plugs in your own | R-TEXT-4, R-ARCH-1 |
+| Errors are `Error`s with jison text (`Parse error on line 3 … Expecting 'SQE'`) and `hash.loc` | `MermaidError { code, message, line, column, offset, length, expected?, diagnostics }`; `code` is `SYNTAX`, `SEMANTIC`, `UNSUPPORTED_DIAGRAM`, `UNSUPPORTED_FORMAT`, `NOT_LOADED`, `LIMIT` or `INTERNAL`; lines count from the top of the source, front matter included | R-ERR-1, R-ERR-2, D68 |
+| A diagram type without a renderer, or unknown text, throws `UnknownDiagramError` | `MermaidError` with `code: 'UNSUPPORTED_DIAGRAM'` (every v12 type is still detected, in v12 order) | R-COMPAT-7 |
+| `detectType(text)` throws `UnknownDiagramError` | Throws `MermaidError` (`UNSUPPORTED_DIAGRAM`) | R-ERR-1 |
+| `parse()` → `{ diagramType, config }` | Adds `warnings`; `config` (front matter and directives) leaves out the integrator-only keys. `parse(text, { suppressErrors: true })` still resolves to `false` | R-SEC-5 |
+| Logging to the console | Nothing is written to the console; warnings are in `RenderResult.warnings` | R-ERR-4 |
+| — | New: `prepare(text)` + `renderSync(text, options)`, `preload({ types, layouts, themes })`, `supportsFormat(type, format)`, `createMermaid()` (an API object with its own registry and defaults) | R-API-2, R-ASCII-5 |
+| `run()`, `startOnLoad`, `contentLoaded()` | `run()` keeps its signature; it and the DOM adapter `mount()` come with the DOM adapter _(later in M1)_. `startOnLoad` is pending until then | R-COMPAT-5 |
+| `registerExternalDiagrams([{ id, detector, loader }])` where the loader returns a v12 `DiagramDefinition` (parser, db, D3 renderer) | Same call shape, but the loader returns a v13 diagram plugin `{ id, detector, parse, layout?, render }`. v12 diagram definitions do not run in v13 | D35, R-PLUG-2 |
+| `registerLayoutLoaders([{ name, loader, algorithm? }])` where the loader returns a DOM renderer | `registerLayoutLoaders([{ name, loader }])` where the loader returns a layout engine `(graph, ctx?) → LayoutModel`; selected with `layout:` | R-LAYOUT-2 |
+| `layout: elk` / `elk.<algorithm>` uses the ELK package | Draw with the built-in `layered` engine until an ELK plugin is registered | DESIGN §6.1 |
+| `registerIconPacks(...)` | Accepted and ignored; renders carry an `ICON_PACKS_UNSUPPORTED` warning until the icons plugin exists | R-API-3 |
+| `setParseErrorHandler(fn)` gets the raw error | Deprecated; `fn` gets the `MermaidError` of a failed `parse()` | R-API-4 |
+| `initialize()` replaces the site config | Same: it swaps in a new frozen defaults object; renders already started keep the old one | R-ARCH-4, D72 |
+| Integrator options beyond the schema | `initialize()` also takes `measurer`, `deterministic`, `linkSchemes` and `output.cssVariables`; diagram text can never set them | R-SEC-5, R-SEC-6 |
+| `RenderResult.bindFunctions` is set when the diagram has click callbacks | Set only when `@mermaid-js/plugin-interactions` is installed | R-PLUG-9 |
+
+### securityLevel
+
+`securityLevel` has two levels (D48, D75). The new default, `default`, keeps `http`, `https`,
+`mailto` and relative link URLs, which is what v12's default `strict` kept. **`strict` now keeps
+relative links only**: an integrator who set `securityLevel: 'strict'` explicitly loses absolute
+links and gets a `URL_REFUSED` warning per dropped link. Set `securityLevel: 'default'` (or
+leave it unset) to keep them. `loose`, `antiscript` and `sandbox` act as `default` with a
+`SECURITY_LEVEL` warning; there is no sandbox iframe mode and no HTML in labels.
+
+In v12, `loose` was also what allowed click callbacks and HTML labels. In v13 neither depends on
+`securityLevel`: HTML labels are gone, and callbacks depend on the interactions plugin. Only
+`initialize()` can set `securityLevel`; front matter and directives cannot (as in v12, where it
+was in `secure`). `initialize({ linkSchemes: [...] })` replaces the scheme list of `default`.
+
+Link URLs are written as given, with control characters and entity codes removed; v12 passed
+them through `@braintree/sanitize-url`, which also normalised them (`https://example.com`
+became `https://example.com/`). A link target other than `_self`, `_blank`, `_parent` or
+`_top` is dropped with `LINK_TARGET_DROPPED`, and `_blank` links get
+`rel="noopener noreferrer"`.
+
+### Errors and the error image
+
+v12's `render()` drew the "Syntax error in text" bomb image into the page and then threw,
+unless `suppressErrorRendering` was set. v13 has no DOM to draw into: `render()` only throws
+the `MermaidError`. To show an image, draw one yourself with
+`renderErrorSvg(error, { version? })`, which returns an inert SVG string with the error code
+and message. `suppressErrorRendering` is therefore pending until the DOM adapter, which is
+where an error image is inserted into the page.
+
+`render()` loads what the diagram needs before drawing. The new synchronous
+`renderSync(text, options)` throws `NotLoadedError` when a diagram, layout or theme is
+registered but not loaded yet (`await preload(...)` or `await prepare(text)` first), unless
+`placeholders: true` is passed: it then draws the error image (missing diagram) or a built-in
+stand-in (missing layout or theme) and adds a `PLACEHOLDER` warning.
+
+### Click callbacks and bindFunctions
+
+v12 ran click callbacks (`click A callback`, `click A call fn(arg)`) when `securityLevel` was
+`loose`, and returned `bindFunctions` to attach them to the inserted SVG. In v13 core output
+contains no script (R-SVG-4): callbacks move to `@mermaid-js/plugin-interactions` (D47,
+R-PLUG-9), which binds handlers to the rendered DOM after render, using the stable `data-id`
+attributes. Without the plugin:
+
+- `click … callback` and `call` statements are still parsed (and errors in them still
+  reported), draw nothing, and add one `CALLBACK_IGNORED` warning;
+- `RenderResult.bindFunctions` is `undefined`, so `bindFunctions?.(element)` is a no-op;
+- `click A "url"` and `click A href "url"` still draw links (they are SVG `<a>` elements, not
+  script) and tooltips become SVG `<title>` elements.
+
+The interactions plugin is an empty placeholder package in 13.0.0-alpha.0; it is released with
+the extension plugin API _(later in M1)_. v12 had no click-callback config keys, so no schema key
+is `moved` for it.
+
 <!-- BEGIN GENERATED CONFIG SECTION: pnpm gen:config -->
 
 ## Config
@@ -34,6 +158,136 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 
 <!-- END GENERATED CONFIG SECTION -->
 
+## Config behaviour
+
+The v12 schema is kept (R-CONF-1): a v12 config object is a valid v13 config object, and keys of
+diagram types that are not ported yet are accepted silently and take effect once their type is
+ported (status `pending`, R-CONF-5).
+
+- **Precedence is v12's**: defaults, then the diagram's own defaults, `initialize()`, front
+  matter, then `%%{init}%%` directives in source order. Arrays merge as a union, and `null` or
+  `undefined` never override.
+- **Config is frozen.** The resolved config is deep-frozen and shared; there is no
+  `getConfig()`/`setConfig()` to change it during a render (D72).
+- **Diagram text is checked.** In front matter and directives, keys in `secure`, the
+  integrator-only options, unknown keys and removed keys are dropped with a warning
+  (`CONFIG_SECURE_KEY`, `CONFIG_UNKNOWN_KEY`, `CONFIG_REMOVED_KEY`, `CONFIG_MOVED_KEY`). v12
+  kept unknown keys. Values v12 considered unsafe (containing `<` or `>`, `url(data:`, theme
+  variables outside v12's character set, unbalanced CSS in font keys) are dropped with
+  `CONFIG_UNSAFE_VALUE`. `__proto__`, `constructor` and `prototype` keys are skipped from every
+  source. `initialize()` keeps unknown keys but still warns.
+- **Warnings, not logs.** Every config warning is in `RenderResult.warnings` (and
+  `parse()`'s `warnings`) with a `code` and a `path`.
+- **An init `config` key** is moved into the detected diagram's section, as in v12
+  (`%%{init: {"config": {"curve": "linear"}}}%%` in a flowchart sets `flowchart.curve`).
+- **`fontFamily`** from `initialize()` or diagram text also sets `themeVariables.fontFamily`,
+  as in v12.
+
+Removed and ignored keys, with what to use instead:
+
+- `htmlLabels`, `flowchart.htmlLabels`, `class.htmlLabels`: removed. Labels are always SVG text
+  (D5); markdown strings cover bold, italic, code and lists ([Labels](#labels-and-text)).
+- `dompurifyConfig`: removed. There is no HTML sanitizer to configure; the SVG writer only
+  emits allow-listed elements and attributes, and `assertInert` checks the output (R-SEC-1).
+- `themeCSS`: ignored. The output carries no author stylesheet (R-SEC-2). Use `themeVariables`,
+  `classDef`, or CSS on the host page (`--mermaid-*` variables and the kept class names).
+- `logLevel`: ignored. Nothing is logged; read `RenderResult.warnings`.
+- `altFontFamily`: ignored; no v12 renderer used it either.
+- `arrowMarkerAbsolute` (top level and in every diagram section): ignored. Arrowheads are
+  inline paths, so there are no `url(#…)` marker references to make absolute.
+- `deterministicIds` and `deterministicIDSeed` are pending but have nothing to do in a
+  flowchart: v13 writes no generated ids, and the output is byte-identical for the same input
+  and config when the measurer is deterministic.
+
+## Themes
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Default theme `default` | Default theme `redux` (D55). Set `theme: 'default'` for v12's default colours | D55 |
+| Themes `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`, `null` | 13.0 ships `redux`, `default`, `dark`, `forest`, `neutral` and `base`. `redux-color` (v12's flowchart default) renders `redux` silently; `redux-dark`, `redux-dark-color` and `neo-dark` render `dark`, `neo` renders `redux` and `null` renders `base`, each with a `THEME_UNAVAILABLE` warning (theme packages for them may follow, R-THEME-7). An unknown name renders `redux` with the same warning | R-THEME-6 |
+| — | `theme: 'auto'`: `redux`, switching to `dark` under `prefers-color-scheme: dark` through a small custom-property `<style>` | R-THEME-8 |
+| Colours computed once in JS (khroma) and written into a `<style>` element | Colours are presentation attributes reading CSS variables: every theme variable is `--mermaid-<name>` on the host page, with the theme value as fallback; derived colours use `color-mix()`. A page can re-theme rendered SVGs with CSS. `initialize({ output: { cssVariables: false } })` writes literal colours instead | R-THEME-2, R-THEME-3, R-THEME-4 |
+| `themeVariables` from diagram text checked against a character set only | Values are checked by kind (colour, length, font, weight) and a bad one is dropped with `THEME_VARIABLE_DROPPED`. Names v13 does not use are ignored | R-SEC-3 |
+| `themeCSS` | Ignored; see [Config behaviour](#config-behaviour) | R-SEC-2 |
+| Label text colour fixed by the theme | When a `style`/`classDef` fill makes the theme's text colour unreadable, the label switches to black or white | R-THEME-12 |
+| `look: neo` / `look: handDrawn` | `look` is pending: one look is drawn, with the theme's shape tokens (stroke width, corner radius, spacing). No hand-drawn strokes, gradients or drop shadows | |
+| Numbered palettes (`cScale*`, `pie*`, `git*`) | Not in the 13.0 inventory; they come with the diagram types that use them | R-CONF-5 |
+
+Colours are close to, but not byte-equal with, v12. Where a v12 colour pair failed WCAG AA
+contrast, v13 changes it (for example the dark theme's `edgeLabelBackground`).
+
+## Layout
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Default layout `elk` (12.2.0), formerly `dagre` | Default `layered`, the engine built into core | DESIGN §6.1 |
+| `layout: dagre`, `layout: elk`, `elk.<algorithm>`, `flowchart-elk` header | Accepted and drawn with `layered` until an ELK plugin is registered under that name | R-PLUG-8 |
+| An unknown layout name falls back to `dagre` with a console warning | Falls back to `layered` with a `LAYOUT_UNKNOWN` warning | R-ERR-4 |
+| `nodeSpacing`, `rankSpacing`, `diagramPadding` | Honoured with v12's defaults (50, 50, 8) | |
+| `curve` picks a d3 curve factory | The engine routes edges: `linear` draws straight segments, `step`/`stepBefore`/`stepAfter` stepped ones, `rounded` straight segments with rounded corners, every other value S-curves | |
+| dagre adds 25 px of rank spacing inside subgraphs | Not reproduced: subgraphs are slightly more compact | |
+
+Node positions differ from v12's dagre and ELK output; layouts are deterministic for the same
+input.
+
+## Labels and text
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| HTML labels in `<foreignObject>` (`htmlLabels: true`) or SVG text | SVG `<text>`/`<tspan>` only | D5 |
+| Any HTML in labels, sanitised by DOMPurify | `<b>`/`<strong>` and `<i>`/`<em>` are drawn bold and italic, `<br>` breaks the line. Other HTML element tags are dropped and their text kept (`<img>` draws nothing, `<a>` is not a link, `<sub>`/`<sup>`/`<u>` draw plain text). Text that only looks like a tag, such as `List<T>`, is shown as written | R-TEXT-3 |
+| Markdown strings (`` "`**bold**`" ``) | Same subset: `**`/`__` bold, `*`/`_` italic, `` `code` `` (monospace), `- ` and `* ` bullet lists (one nesting level), backslash escapes, `<br>` and newlines | R-TEXT-2 |
+| Entities: Mermaid's `#quot;`/`#35;` and HTML `&…;` | Both decoded; about 45 named HTML entities plus numeric ones. Unknown entities stay literal | |
+| KaTeX math (`$$…$$`) | Not rendered in M1 (`legacyMathML` and `forceLegacyMathML` are pending); math comes back as an optional plugin emitting SVG | D5 |
+| Text measured by the browser | Measured by canvas when present, else by built-in tables for Trebuchet MS, Verdana and Arial; line height comes from the font, so labels are not pixel-equal with v12 | R-TEXT-4 |
+| Labels wrap at `flowchart.wrappingWidth` (HTML labels) | Node labels, plain and markdown alike, wrap at `wrappingWidth` (120) and are widened to `minNodeWidth` (120), except circles; edge labels wrap at 200. CJK text breaks between characters, and a word wider than the box is split | |
+
+## Flowchart syntax
+
+The flowchart parser accepts exactly the v12 language: a differential test runs v12 and v13
+over every e2e fixture and the v12 spec and docs examples, and the grammar is published in
+[syntax/flowchart.md](./syntax/flowchart.md). The differences:
+
+- **Error messages** are new: they name what was expected in words (``Expected an arrow such
+  as `-->` …``), show the line with a caret, and never mention token or rule names. Every error
+  in the text is reported, not only the first (R-PARSE-4).
+- **A bare `subgraph`** (no id) is accepted; v12 crashed with a `TypeError`.
+- **Shape data** (`A@{ shape: … }`) is read with v13's YAML reader: YAML anchors (`&a`) are
+  rejected, which js-yaml accepted. A few malformed values that js-yaml rejected are accepted.
+- **Shapes** not in the documented shape list (`classBox`, `erBox`, `usecase*`, `bpmn-*`,
+  `kanbanItem`, mindmap shapes) draw as a rectangle. Icon shapes draw their frame only, with an
+  `ICON_UNAVAILABLE` warning, until the icons plugin exists.
+- **Step animation** (`step` on edges, `flowchart.stepNumbers`, `flowchart.stepDuration`) and
+  edge `animate`/`animation` are parsed but not drawn.
+- **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown
+  property or unsafe value (`url(`, `expression(`, `javascript:`, `@import`, …) is dropped with
+  `STYLE_PROPERTY_DROPPED` or `STYLE_VALUE_DROPPED`. `color` sets the label's fill.
+- **`maxEdges`** (default 500, as in v12) is still the edge limit; going over it fails with a
+  `LIMIT` error.
+
+## Front matter and directives
+
+Front matter (`---` … `---`) and `%%{init: …}%%` directives are read as in v12, without
+rewriting the source: every position in an error refers to the text you wrote. The
+differences, all checked against v12 over the e2e corpus:
+
+- The first closing `---` line ends the front matter (v12's regex could close at a later one).
+- A closing `---` at the end of the text without a final newline is accepted.
+- Blank lines before the opening `---` are accepted (v12 `render()` rejected them; `run()`
+  trimmed them).
+- YAML anchors are rejected, and `__proto__`/`constructor`/`prototype` keys are dropped with a
+  warning.
+- A `config` that is not a mapping is ignored with a `FRONT_MATTER_CONFIG` warning.
+- One invalid directive (bad JSON) is dropped with `INVALID_DIRECTIVE`; v12 dropped all of
+  them.
+- An unclosed `%%{` is an error that ends at its line, instead of swallowing the rest of the
+  text.
+- Directive names match exactly: `%%{init: …}%%` and `%%{initialize: …}%%` set config,
+  `%%{wrap}%%` sets `wrap: true`; v12 matched `init` anywhere in the name.
+- An unclosed front matter block is an error pointing at the opening `---`.
+
+The legacy top-level `displayMode` in front matter still moves to `gantt.displayMode`.
+
 ## Flowchart SVG structure
 
 What changed in the flowchart's SVG compared with v12, and why (DESIGN §7.2). Group class names
@@ -56,35 +310,3 @@ them keep working.
 | `style`/`classDef`/`linkStyle` as a `style` attribute | Presentation attributes (`fill`, `stroke`, …) after the allow-list (R-SEC-3) | Unknown properties and unsafe values are dropped with a warning |
 | `click A "url"` wraps the node in `<a xlink:href>`; tooltips are an HTML hover div | `<a href>` inside the node group (only URLs that pass `securityLevel`); tooltips are an SVG `<title>`; `click … callback` draws nothing (interactions plugin) | No script in output (R-SVG-4, R-SVG-5) |
 | `viewBox` may start at negative coordinates | `viewBox="0 0 w h"` | Layout places the drawing at the origin |
-
-## Public API
-
-`render`, `parse`, `initialize` and `run` keep their v12 call signatures (R-COMPAT-5); a type
-test checks them against the mermaid@12 declarations.
-
-| v12 | v13 | Why |
-| --- | --- | --- |
-| `mermaidAPI` object (`getConfig`, `setConfig`, `reset`, …) | Removed | No global render state (R-API-5); config goes through `initialize()` |
-| `render(id, text, container?)` → `{ svg, diagramType, bindFunctions? }` | Same call; the result adds `width`, `height` and `warnings`. `container` is accepted and ignored (v13 measures without the DOM) | R-API-1, R-ERR-4 |
-| `render(id)` sets the root `<svg id>` | `id` prefixes the ids the output writes (`<id>-title`, `<id>-desc`); the root has no `id` | Ids stay unique per render |
-| Errors are `Error`s with jison text (`Parse error on line 3 … Expecting 'SQE'`) and `hash.loc` | `MermaidError { code, message, line, column, offset, length, expected?, diagnostics }`; `code` is `SYNTAX`, `SEMANTIC`, `UNSUPPORTED_DIAGRAM`, `UNSUPPORTED_FORMAT`, `NOT_LOADED`, `LIMIT` or `INTERNAL`; lines count from the top of the source, front matter included | R-ERR-1, R-ERR-2, D68 |
-| A diagram type without a renderer, or unknown text, throws `UnknownDiagramError` | `MermaidError` with `code: 'UNSUPPORTED_DIAGRAM'` (every v12 type is still detected, in v12 order) | R-COMPAT-7 |
-| `detectType(text)` throws `UnknownDiagramError` | Throws `MermaidError` (`UNSUPPORTED_DIAGRAM`) | R-ERR-1 |
-| `parse()` → `{ diagramType, config }` | Adds `warnings`; `config` (front matter and directives) leaves out the integrator-only keys | R-SEC-5 |
-| Logging to the console | Nothing is written to the console; warnings are in `RenderResult.warnings` | R-ERR-4 |
-| — | New: `prepare(text)` + `renderSync(text, options)`, `preload({ types, layouts, themes })`, `supportsFormat(type, format)`, `createMermaid()` (an API object with its own registry and defaults) | R-API-2, R-ASCII-5 |
-| `registerLayoutLoaders([{ name, loader, algorithm? }])` where the loader returns a DOM renderer | `registerLayoutLoaders([{ name, loader }])` where the loader returns a layout engine `(graph, ctx?) → LayoutModel`; selected with `layout:` | R-LAYOUT-2 |
-| `layout: elk` / `elk.<algorithm>` uses the ELK package | Draw with the built-in `layered` engine until an ELK plugin is registered | DESIGN §6.1 |
-| `registerIconPacks(...)` | Accepted and ignored; renders carry an `ICON_PACKS_UNSUPPORTED` warning until the icons plugin exists | R-API-3 |
-| `setParseErrorHandler(fn)` gets the raw error | Deprecated; `fn` gets the `MermaidError` of a failed `parse()` | R-API-4 |
-| `initialize()` replaces the site config | Same: it swaps in a new frozen defaults object; renders already started keep the old one | R-ARCH-4, D72 |
-| Integrator options beyond the schema | `initialize()` also takes `measurer`, `deterministic`, `linkSchemes` and `output.cssVariables`; diagram text can never set them | R-SEC-5, R-SEC-6 |
-
-### securityLevel
-
-`securityLevel` has two levels (D48, D75). The new default, `default`, keeps `http`, `https`,
-`mailto` and relative link URLs, which is what v12's default `strict` kept. **`strict` now keeps
-relative links only**: an integrator who set `securityLevel: 'strict'` explicitly loses absolute
-links and gets a `URL_REFUSED` warning per dropped link. Set `securityLevel: 'default'` (or
-leave it unset) to keep them. `loose`, `antiscript` and `sandbox` act as `default` with a
-`SECURITY_LEVEL` warning; there is no sandbox iframe mode and no HTML in labels.
