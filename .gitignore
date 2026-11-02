@@ -64,6 +64,7 @@ generated/
 # Generated from the config schema by tools/gen-config, committed so CI can check staleness
 !packages/core/src/config/generated/
 !packages/diagram-*/src/generated/
+!packages/mermaid/src/generated/
 
 
 /CLAUDE.md

@@ -18,6 +18,7 @@
     "gen:config": "tsx tools/gen-config/src/cli.ts",
     "check:config": "tsx tools/gen-config/src/cli.ts --check",
     "gen:theme": "tsx tools/gen-config/src/theme-cli.ts",
+    "gen:registry": "tsx tools/gen-config/src/registry-cli.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "pnpm lint && pnpm typecheck && pnpm check:deps && pnpm check:config && pnpm test",
