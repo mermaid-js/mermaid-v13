@@ -15,6 +15,7 @@
     "lint:spell": "cspell --no-progress --no-summary --gitignore --gitignore-root . \"packages/**/*.ts\" \"tools/**/*.{ts,js}\"",
     "typecheck": "tsc -p tools/tsconfig.json && pnpm -r --parallel run typecheck",
     "check:deps": "tsx tools/check-deps/cli.ts",
+    "gen:theme": "tsx tools/gen-config/src/theme-cli.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "pnpm lint && pnpm typecheck && pnpm check:deps && pnpm test",
