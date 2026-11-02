@@ -70,7 +70,7 @@ const RE_LEADING_BLANK = /^[ \t]/;
 const RE_BLOCK_HEADER = /^[|>][-+0-9]*\s*(?:#.*)?$/;
 const RE_INDENT_DIGIT = /[1-9]/;
 
-function isBlank(ch: string | undefined): boolean {
+function isSpaceOrBreak(ch: string | undefined): boolean {
   return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
 }
 
@@ -104,14 +104,17 @@ function splitKey(line: string): { key: string; length: number } | null {
     }
     end = i + 1;
     colon = end;
-    while (isBlank(line[colon])) colon++;
+    while (isSpaceOrBreak(line[colon])) colon++;
     if (line[colon] !== ':') return null;
   } else {
     if (first === undefined) return null;
     // `-`, `?` and `:` start a plain key when a non-blank follows (js-yaml readPlainScalar).
     const indicator = first === '-' || first === '?' || first === ':';
     if (!indicator && RE_KEY_START.test(first)) return null;
-    if (indicator && (line.length < 2 || isBlank(line[1]) || line[1] === ':' || line[1] === '#')) {
+    if (
+      indicator &&
+      (line.length < 2 || isSpaceOrBreak(line[1]) || line[1] === ':' || line[1] === '#')
+    ) {
       return null;
     }
     // js-yaml: the key ends at a `:` followed by a blank or the line end; `a:b` and `a#b`
@@ -119,17 +122,17 @@ function splitKey(line: string): { key: string; length: number } | null {
     colon = 1;
     while (colon < line.length) {
       const c = line[colon];
-      if (c === ':' && (colon + 1 >= line.length || isBlank(line[colon + 1]))) break;
-      if (c === '#' && isBlank(line[colon - 1])) return null;
+      if (c === ':' && (colon + 1 >= line.length || isSpaceOrBreak(line[colon + 1]))) break;
+      if (c === '#' && isSpaceOrBreak(line[colon - 1])) return null;
       colon++;
     }
     if (line[colon] !== ':') return null;
     end = colon;
-    while (isBlank(line[end - 1])) end--;
+    while (isSpaceOrBreak(line[end - 1])) end--;
   }
   let length = colon + 1;
-  if (length < line.length && !isBlank(line[length])) return null;
-  while (isBlank(line[length])) length++;
+  if (length < line.length && !isSpaceOrBreak(line[length])) return null;
+  while (isSpaceOrBreak(line[length])) length++;
   return { key: line.slice(0, end), length };
 }
 
@@ -202,7 +205,7 @@ function mappingIndicator(s: string, value: boolean): number {
   const first = s[0];
   if (value && (first === '"' || first === "'" || first === '{' || first === '[')) return -1;
   for (let i = 0; i < s.length; i++) {
-    if (s[i] === ':' && (i + 1 === s.length || isBlank(s[i + 1]))) return i;
+    if (s[i] === ':' && (i + 1 === s.length || isSpaceOrBreak(s[i + 1]))) return i;
   }
   return -1;
 }
@@ -386,7 +389,7 @@ class Reader {
     if (c === ']' || c === '}' || c === ',' || c === '%') {
       this.fail('bad indentation of a mapping entry', at);
     }
-    if ((c === '?' || c === '-') && isBlank(text[1])) {
+    if ((c === '?' || c === '-') && isSpaceOrBreak(text[1])) {
       this.fail('bad indentation of a mapping entry', at);
     }
     if (c === '|' || c === '>') this.fail('a line break is expected', at);

@@ -1,13 +1,15 @@
 // Ported from Pele (https://github.com/obsidianmd/pele), src/layout/compound.ts at 3a2f075.
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
-// noUncheckedIndexedAccess. The algorithm is unchanged.
+// noUncheckedIndexedAccess. `snapshot`/`restore` copy objects instead of packed arrays, and the
+// layout cache keys on `layoutInputs`. The algorithm is unchanged.
 // cspell:ignore kepano lnode lnodes cnode
 //
 import {
   Kind,
   ease,
   layered,
+  layoutInputs,
   ledge,
   lnode,
   orient,
@@ -103,10 +105,9 @@ const FLAT_SLACK = 1.5;
 const FLAT_SPARE = 4;
 
 interface Snapshot {
-  nodes: number[];
-  routes: number[][];
-  labels: number[];
-  levels: number[];
+  nodes: Pick<CNode, 'x' | 'y' | 'w' | 'h'>[];
+  edges: Pick<CEdge, 'route' | 'labelX' | 'labelY'>[];
+  levels: { x: number; y: number; ports: Pick<PortEdge, 'px' | 'py'>[] }[];
   total: CompoundResult;
 }
 
@@ -116,39 +117,27 @@ function snapshot(
   levels: Level[],
   total: CompoundResult
 ): Snapshot {
-  const at: number[] = [];
-  for (const c of nodes) at.push(c.x, c.y, c.w, c.h);
-  const labels: number[] = [];
-  for (const e of edges) labels.push(e.labelX, e.labelY);
-  const places: number[] = [];
-  for (const level of levels) {
-    places.push(level.x, level.y);
-    for (const port of level.ports) places.push(port.px, port.py);
-  }
-  return { nodes: at, routes: edges.map((e) => e.route), labels, levels: places, total };
+  return {
+    nodes: nodes.map(({ x, y, w, h }) => ({ x, y, w, h })),
+    edges: edges.map(({ route, labelX, labelY }) => ({ route, labelX, labelY })),
+    levels: levels.map(({ x, y, ports }) => ({
+      x,
+      y,
+      ports: ports.map(({ px, py }) => ({ px, py })),
+    })),
+    total,
+  };
 }
 
 function restore(s: Snapshot, nodes: CNode[], edges: CEdge[], levels: Level[]): CompoundResult {
-  nodes.forEach((c, i) => {
-    c.x = s.nodes[4 * i]!;
-    c.y = s.nodes[4 * i + 1]!;
-    c.w = s.nodes[4 * i + 2]!;
-    c.h = s.nodes[4 * i + 3]!;
+  nodes.forEach((c, i) => Object.assign(c, s.nodes[i]));
+  edges.forEach((e, i) => Object.assign(e, s.edges[i]));
+  levels.forEach((level, i) => {
+    const saved = s.levels[i]!;
+    level.x = saved.x;
+    level.y = saved.y;
+    level.ports.forEach((port, j) => Object.assign(port, saved.ports[j]));
   });
-  edges.forEach((e, i) => {
-    e.route = s.routes[i]!;
-    e.labelX = s.labels[2 * i]!;
-    e.labelY = s.labels[2 * i + 1]!;
-  });
-  let k = 0;
-  for (const level of levels) {
-    level.x = s.levels[k++]!;
-    level.y = s.levels[k++]!;
-    for (const port of level.ports) {
-      port.px = s.levels[k++]!;
-      port.py = s.levels[k++]!;
-    }
-  }
   return s.total;
 }
 
@@ -799,20 +788,7 @@ export function compoundLayout(
     ledges: LEdge[]
   ): { lnodes: LNode[]; ledges: LEdge[]; size: LayeredResult } => {
     if (!ordered) return { lnodes, ledges, size: layered(lnodes, ledges, opt) };
-    const given: number[] = [];
-    for (const ln of lnodes) given.push(ln.w, ln.h, ln.kind, ln.pin, ln.hint, ln.key, ln.span);
-    for (const le of ledges)
-      given.push(
-        le.tail,
-        le.head,
-        le.minlen,
-        le.labelW,
-        le.labelH,
-        le.tailDx,
-        le.headDx,
-        +le.tailFixed,
-        +le.headFixed
-      );
+    const given = layoutInputs(lnodes, ledges);
     let past = laid.get(level.id);
     if (!past) laid.set(level.id, (past = []));
     for (const p of past) {
