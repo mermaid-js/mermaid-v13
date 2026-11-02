@@ -59,6 +59,12 @@ export interface ServerOptions {
    * plugin-interactions). The specs point it at a fixture module in a temp directory.
    */
   readonly bundleEntry?: string;
+  /**
+   * GET pathnames any origin may read (`access-control-allow-origin: *`): exact, or every
+   * pathname below one that ends in `/`. For pages in a sandboxed iframe (an opaque origin),
+   * such as the Compare panes. Default: none.
+   */
+  readonly cors?: readonly string[];
 }
 
 export interface DevServer {
@@ -212,8 +218,15 @@ export async function startServer(port: number, options: ServerOptions = {}): Pr
     req.pipe(proxied);
   }
 
+  const cors = options.cors ?? [];
+  const corsAllowed = (pathname: string): boolean =>
+    cors.some((p) => (p.endsWith('/') ? pathname.startsWith(p) : pathname === p));
+
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
+    if (req.method === 'GET' && corsAllowed(url.pathname)) {
+      res.setHeader('access-control-allow-origin', '*');
+    }
     const route = routes.find((r) => matches(r, req.method ?? 'GET', url.pathname));
     if (!route) {
       proxy(req, res);

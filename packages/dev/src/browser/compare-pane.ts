@@ -5,7 +5,12 @@
  * the CDN (its default export). The two never share globals; a different version or build is
  * a fresh iframe.
  *
- * Protocol (postMessage, same origin; both ends check `event.source`):
+ * The iframe is `sandbox="allow-scripts"`: an opaque origin, so the published mermaid running
+ * here can't read or write through the dev server's API. It loads only `/build/compare-pane.js`,
+ * `/mermaid.esm.mjs` and `/fonts/` from the server, which send CORS headers for it.
+ *
+ * Protocol (postMessage to `'*'`, since the pane's origin is opaque; both ends check
+ * `event.source` identity):
  *
  *     pane   → parent  { type: 'ready' }
  *     parent → pane    { type: 'load', bundle: { kind: 'dev' | 'npm', url, label } }
@@ -113,7 +118,7 @@ function start(): void {
   let chain: Promise<void> = Promise.resolve();
 
   const post = (message: PaneMessage): void => {
-    window.parent.postMessage(message, window.location.origin);
+    window.parent.postMessage(message, '*');
   };
   const show = (text: string, error = false): void => {
     msg.textContent = text;
@@ -194,7 +199,7 @@ function start(): void {
   }
 
   window.addEventListener('message', (event: MessageEvent<ParentMessage | null>) => {
-    if (event.source !== window.parent || event.origin !== window.location.origin) return;
+    if (event.source !== window.parent) return;
     const m = event.data;
     if (!m || typeof m !== 'object') return;
     if (m.type === 'load') {

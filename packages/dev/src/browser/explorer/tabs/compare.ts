@@ -239,7 +239,8 @@ export class CompareTab extends ViewerTabElement {
   }
 
   #post(side: Side, message: ParentMessage): void {
-    this.#iframe(side)?.contentWindow?.postMessage(message, window.location.origin);
+    // The pane's origin is opaque (sandboxed), so it can't be named: '*' to that one window.
+    this.#iframe(side)?.contentWindow?.postMessage(message, '*');
   }
 
   #setState(patch: { version?: string; diff?: boolean }): void {
@@ -300,7 +301,7 @@ export class CompareTab extends ViewerTabElement {
   }
 
   #onMessage = (event: MessageEvent<PaneMessage | null>): void => {
-    if (event.origin !== window.location.origin) return;
+    // Matched by window identity: a sandboxed pane's origin is 'null'.
     const side = SIDES.find((s) => this.#iframe(s)?.contentWindow === event.source);
     const m = event.data;
     if (!side || !m || typeof m !== 'object') return;
@@ -452,6 +453,7 @@ export class CompareTab extends ViewerTabElement {
             html`<iframe
               data-side=${side}
               title=${`${side} pane: ${title}`}
+              sandbox="allow-scripts"
               src="/dev/compare-pane.html"
             ></iframe>`
           )

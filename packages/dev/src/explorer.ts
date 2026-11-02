@@ -31,6 +31,13 @@ export const EXPLORER_ENTRY = join(import.meta.dirname, 'browser', 'explorer', '
 /** The Compare tab's iframe script (`www/dev/compare-pane.html` loads `/build/compare-pane.js`). */
 export const COMPARE_PANE_ENTRY = join(import.meta.dirname, 'browser', 'compare-pane.ts');
 
+/** What a Compare pane loads from this server: its script, the dev bundle and its fonts. */
+export const COMPARE_PANE_FILES: readonly string[] = [
+  '/build/compare-pane.js',
+  '/mermaid.esm.mjs',
+  '/fonts/',
+];
+
 /** Written by a `POST` with an empty body (v12's starter). */
 export const NEW_DIAGRAM = 'flowchart TD\n  A[Start] --> B[End]\n';
 
@@ -288,16 +295,19 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
 }
 
 /**
- * Everything the explorer adds to `startServer`: its routes (plus the Compare tab's
+ * Everything the explorer adds to `startServer`: its routes, the Compare panes' CORS files (plus the Compare tab's
  * `/dev/api/versions`), its page scripts and a watch on the root (a `.mmd` change rebuilds and reaches the page on `/events`).
  */
 export function explorerServerOptions(
   root: string,
   options: ExplorerOptions = {}
-): Pick<ServerOptions, 'routes' | 'entries' | 'watch'> {
+): Pick<ServerOptions, 'routes' | 'entries' | 'watch' | 'cors'> {
   return {
     routes: [...explorerRoutes(root, options), versionsRoute()],
     entries: { explorer: EXPLORER_ENTRY, 'compare-pane': COMPARE_PANE_ENTRY },
     watch: { paths: [root] },
+    // The Compare panes run in `sandbox="allow-scripts"` iframes (an opaque origin, so the npm
+    // code there can't use the file API); these are the only files they load from here.
+    cors: COMPARE_PANE_FILES,
   };
 }

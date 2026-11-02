@@ -8,7 +8,7 @@
  * Actions the reason is also a `::warning` annotation and a line in the job summary (#64),
  * since the CI reporters don't print skip reasons.
  */
-import { appendFileSync } from 'node:fs';
+import { appendFileSync, readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { startExplorerServer, type ExplorerServer } from './explorer-server.ts';
 
@@ -77,6 +77,39 @@ test('the left pane renders the dev build, unsaved edits included', async ({ pag
 
   await setText(page, 'flowchart LR\n  A[Delta] --> B[Beta]\n');
   await expect(svg(page, 'left')).toContainText('Delta');
+});
+
+test('the panes are sandboxed: an opaque origin that cannot reach the file API', async ({
+  page,
+}) => {
+  await open(page, { version: PINNED });
+  await expect(pane(page, 'left')).toHaveAttribute('data-status', 'rendered');
+  for (const side of ['left', 'right'] as const) {
+    await expect(page.locator(`dev-tab-compare iframe[data-side="${side}"]`)).toHaveAttribute(
+      'sandbox',
+      'allow-scripts'
+    );
+  }
+  const left = page.frames().find((f) => f.url().endsWith('/dev/compare-pane.html'));
+  expect(left).toBeDefined();
+  expect(await left!.evaluate(() => window.origin)).toBe('null');
+  const reach = await left!.evaluate(async () => {
+    const outcomes: string[] = [];
+    for (const init of [
+      { method: 'GET' },
+      { method: 'PUT', headers: { 'x-mermaid-dev': '1' }, body: 'flowchart LR\n  X' },
+    ]) {
+      outcomes.push(
+        await fetch('/dev/api/file?path=a/one.mmd', init).then(
+          (r) => `read ${r.status}`,
+          () => 'blocked'
+        )
+      );
+    }
+    return outcomes;
+  });
+  expect(reach).toEqual(['blocked', 'blocked']);
+  expect(readFileSync(explorer.path(FILE), 'utf8')).toBe(SOURCE);
 });
 
 test('a render error shows on its own side', async ({ page }) => {

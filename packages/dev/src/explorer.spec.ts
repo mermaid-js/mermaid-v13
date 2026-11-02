@@ -254,6 +254,30 @@ describe('the explorer file API', () => {
     });
   });
 
+  describe('the Compare pane (a sandboxed iframe, opaque origin)', () => {
+    const NULL_ORIGIN = { origin: 'null' };
+    it.each([
+      '/build/compare-pane.js',
+      '/mermaid.esm.mjs',
+      '/fonts/noto-sans-sc-100-100-normal.woff2',
+    ])('may load %s cross-origin', async (path) => {
+      const reply = await call(path, 'GET', undefined, NULL_ORIGIN);
+      expect(reply.status).toBe(200);
+      expect(reply.headers['access-control-allow-origin']).toBe('*');
+    });
+
+    it.each([
+      '/dev/api/files',
+      file('top.mmd'),
+      '/dev/api/versions',
+      '/build/explorer.js',
+      '/dev/',
+    ])('may not read %s', async (path) => {
+      const reply = await call(path, 'GET', undefined, NULL_ORIGIN);
+      expect(reply.headers['access-control-allow-origin']).toBeUndefined();
+    });
+  });
+
   describe('the explorer page', () => {
     it('serves /dev/ and its script', async () => {
       expect(await call('/dev')).toMatchObject({ status: 302 });
