@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>mermaid v13 run() on load</title>
+    <script type="module" src="./build/page.js"></script>
+  </head>
+  <body>
+    <pre class="mermaid" id="first">
+      flowchart LR
+        A[First] --&gt; B
+    </pre>
+    <pre class="mermaid" id="broken">
+      flowchart LR
+        A[unclosed --&gt; B
+    </pre>
+    <div class="mermaid" id="last">
+      flowchart TB
+        C[Last] --&gt; D
+    </div>
+  </body>
+</html>

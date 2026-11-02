@@ -73,8 +73,9 @@ jobs:
 
   smoke-render:
     # Each target renders a fixture through the public `mermaid` package. node20 runs the
-    # source through tsx; the other runtimes need the published bundle and a browser harness
-    # (#18) and only reserve their slot for now.
+    # source through tsx. chromium, firefox and webkit run the DOM adapter specs (e2e/dom:
+    # run, mount, error image, afterMount, plus the smoke render) in that browser. deno and
+    # worker still need the bundle harness and only reserve their slot for now.
     name: Smoke render (${{ matrix.runtime }})
     runs-on: ubuntu-latest
     strategy:
@@ -92,6 +93,19 @@ jobs:
           node-version: 20
       - if: matrix.runtime == 'node20'
         run: pnpm install --frozen-lockfile && pnpm --filter @mermaid-js/conformance smoke
+      - if: contains(fromJSON('["chromium","firefox","webkit"]'), matrix.runtime)
+        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - if: contains(fromJSON('["chromium","firefox","webkit"]'), matrix.runtime)
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - name: Smoke render and DOM adapter specs
+        if: contains(fromJSON('["chromium","firefox","webkit"]'), matrix.runtime)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps ${{ matrix.runtime }}
+          pnpm e2e:dom --project=${{ matrix.runtime }}
       - name: Smoke render
-        if: matrix.runtime != 'node20'
+        if: matrix.runtime == 'deno' || matrix.runtime == 'worker'
         run: echo "Smoke render on ${{ matrix.runtime }} is not implemented yet (needs the bundle harness, #18)."
