@@ -16,6 +16,11 @@
       "types": "./dist/parser-kit/index.d.ts",
       "default": "./dist/parser-kit/index.js"
     },
+    "./preprocess": {
+      "mermaid-source": "./src/preprocess/index.ts",
+      "types": "./dist/preprocess/index.d.ts",
+      "default": "./dist/preprocess/index.js"
+    },
     "./layout": {
       "mermaid-source": "./src/layout/index.ts",
       "types": "./dist/layout/index.d.ts",
