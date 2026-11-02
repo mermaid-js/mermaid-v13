@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/three_nodes_single_line.txt",
+  "charset": "ascii"
+}

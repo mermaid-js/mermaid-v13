@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/graph_tb_direction.txt",
+  "charset": "ascii"
+}

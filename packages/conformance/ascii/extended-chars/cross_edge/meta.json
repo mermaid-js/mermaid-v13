@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/cross_edge.txt",
+  "charset": "unicode"
+}

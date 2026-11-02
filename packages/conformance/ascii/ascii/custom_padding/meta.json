@@ -1,0 +1,6 @@
+{
+  "source": "pkg/graph/testdata/ascii/custom_padding.txt",
+  "charset": "ascii",
+  "paddingX": 2,
+  "paddingY": 1
+}

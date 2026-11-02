@@ -1,0 +1,6 @@
+{
+  "source": "pkg/graph/testdata/ascii/fanout_labels_tb_wide.txt",
+  "charset": "ascii",
+  "paddingX": 1,
+  "paddingY": 1
+}

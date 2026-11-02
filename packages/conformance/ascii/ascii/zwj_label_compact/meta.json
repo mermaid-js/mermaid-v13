@@ -1,0 +1,5 @@
+{
+  "source": "pkg/graph/testdata/ascii/zwj_label_compact.txt",
+  "charset": "ascii",
+  "maxWidth": 12
+}

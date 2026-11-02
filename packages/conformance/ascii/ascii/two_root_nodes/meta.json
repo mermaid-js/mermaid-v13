@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/two_root_nodes.txt",
+  "charset": "ascii"
+}

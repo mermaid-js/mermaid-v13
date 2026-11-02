@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/subgraph_empty.txt",
+  "charset": "ascii"
+}

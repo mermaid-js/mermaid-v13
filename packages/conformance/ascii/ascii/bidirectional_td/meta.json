@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/bidirectional_td.txt",
+  "charset": "ascii"
+}

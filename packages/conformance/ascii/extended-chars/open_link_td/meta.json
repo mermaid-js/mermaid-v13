@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/open_link_td.txt",
+  "charset": "unicode"
+}
