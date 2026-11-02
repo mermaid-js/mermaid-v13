@@ -3,6 +3,7 @@ Ashish Jain
 cpettitt
 Dong Cai
 fourcube
+kepano
 knsv
 Knut Sveidqvist
 Nikolay Rozhkov
@@ -10,3 +11,4 @@ Peng Xiao
 Per Brolin
 Sidharth Vinod
 subhash-halder
+kepano
