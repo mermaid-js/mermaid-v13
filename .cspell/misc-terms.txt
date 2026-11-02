@@ -2,6 +2,7 @@ BRANDES
 browserlist
 Buzan
 circo
+geomean
 GHSA
 handDrawn
 KOEPF
