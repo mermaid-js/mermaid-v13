@@ -185,3 +185,5 @@ yaxis
 yfunc
 yytext
 zenuml
+oklab
+oklch
