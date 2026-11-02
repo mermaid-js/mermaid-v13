@@ -1,6 +1,7 @@
 /**
  * Core pipeline: the diagram plugin contract, the render context, typed errors, the error
- * image and the synchronous draw step (DESIGN §3, §11, §12.1). Imports nothing.
+ * image, the synchronous draw step, extension hooks and plugin manifests (DESIGN §3, §11,
+ * §12.1, §12.2). Imports nothing.
  */
 export {
   errorFromDiagnostics,
@@ -12,7 +13,22 @@ export {
   type Resource,
 } from './pipeline/errors.ts';
 export { renderErrorSvg, type ErrorSvgContext } from './pipeline/error-svg.ts';
-export { drawDiagram, type Drawn } from './pipeline/draw.ts';
+export { drawDiagram, type DrawHooks, type Drawn } from './pipeline/draw.ts';
+export {
+  HookRunner,
+  type ExtensionClaim,
+  type ExtensionPlugin,
+  type HookContext,
+  type HookRun,
+  type LaidOut,
+} from './pipeline/extensions.ts';
+export {
+  readManifest,
+  type DiagramManifest,
+  type ExtensionManifest,
+  type PluginFormat,
+  type PluginManifest,
+} from './pipeline/manifest.ts';
 export type {
   DiagramParseContext,
   DiagramPlugin,
