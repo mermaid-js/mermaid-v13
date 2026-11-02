@@ -107,11 +107,11 @@ function splitKey(line: string): { key: string; length: number } | null {
     while (isBlank(line[colon])) colon++;
     if (line[colon] !== ':') return null;
   } else {
-    if (first === undefined || RE_KEY_START.test(first)) return null;
-    if (
-      first === '-' &&
-      (line.length < 2 || isBlank(line[1]) || line[1] === ':' || line[1] === '#')
-    ) {
+    if (first === undefined) return null;
+    // `-`, `?` and `:` start a plain key when a non-blank follows (js-yaml readPlainScalar).
+    const indicator = first === '-' || first === '?' || first === ':';
+    if (!indicator && RE_KEY_START.test(first)) return null;
+    if (indicator && (line.length < 2 || isBlank(line[1]) || line[1] === ':' || line[1] === '#')) {
       return null;
     }
     // js-yaml: the key ends at a `:` followed by a blank or the line end; `a:b` and `a#b`

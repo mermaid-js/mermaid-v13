@@ -196,6 +196,9 @@ describe('js-yaml parity found by fuzzing (#17)', () => {
     ],
     ['a:b: c\n', { 'a:b': 'c' }],
     ['a#b: c\n', { 'a#b': 'c' }],
+    [':a: 1\n', { ':a': 1 }],
+    ['?a: 1\n', { '?a': 1 }],
+    ['k:\n:a,:b  c#1;x:y: 0\n', { k: null, ':a,:b  c#1;x:y': 0 }],
     ['k: a:b\n', { k: 'a:b' }],
     ['k: a :b\n', { k: 'a :b' }],
     // Quoted text may hold anything but C0 controls; comments are not checked.
