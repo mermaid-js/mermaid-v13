@@ -7,10 +7,12 @@
 import {
   drawDiagram,
   errorFromDiagnostics,
+  HookRunner,
   MermaidError,
   NotLoadedError,
   renderErrorSvg,
   UnsupportedFormatError,
+  type ExtensionPlugin as CoreExtensionPlugin,
   type RenderContext,
   type Resource,
   type Warning,
@@ -83,9 +85,19 @@ export interface RenderResult {
   width: number;
   height: number;
   warnings: Warning[];
-  /** Set only when the interactions plugin is installed (DESIGN §12.3). */
+  /**
+   * Set only when a registered extension has an `afterMount` hook (the interactions plugin,
+   * DESIGN §12.3): runs those hooks on the element the svg was mounted in. The DOM adapter
+   * (`run`/`mount`, #16) calls it after inserting the svg.
+   */
   bindFunctions?: (element: Element) => void;
 }
+
+/**
+ * An extension plugin (DESIGN §12.2): hooks for every diagram type, registered through
+ * `registerExternalDiagrams`. `afterMount` runs only in the DOM adapter (`bindFunctions`).
+ */
+export type ExtensionPlugin = CoreExtensionPlugin<Element, RenderResult>;
 
 /** What `prepare` found: cached so `renderSync` right after does not parse again. */
 export interface Prepared {
@@ -251,6 +263,7 @@ const CACHE_SIZE = 32;
 /** One `mermaid` API object with its own registry and defaults. */
 export function createMermaid() {
   const registry = new Registry();
+  const hooks = new HookRunner<Element, RenderResult>();
   let site: Snapshot = snapshot();
   let parseErrorHandler: ParseErrorHandler | undefined;
   let iconPacksRequested = false;
@@ -285,7 +298,13 @@ export function createMermaid() {
       { warn, section }
     );
     const t = stageStart();
-    const parse = plugin.parse(text, { config, preprocessed: pre, limits: snap.limits });
+    const claims = hooks.claims();
+    const parse = plugin.parse(
+      text,
+      claims.length > 0
+        ? { config, preprocessed: pre, limits: snap.limits, claims }
+        : { config, preprocessed: pre, limits: snap.limits }
+    );
     stageEnd('parse', t);
     const error = errorFromDiagnostics(text, [...pre.diagnostics, ...parse.diagnostics]);
     if (error) throw error;
@@ -474,8 +493,16 @@ export function createMermaid() {
       },
       warn,
     };
-    const drawn = drawDiagram(plugin, prepared.parse.model, ctx);
-    return { ...drawn, diagramType: prepared.diagramType, warnings };
+    if (hooks.size === 0) {
+      const drawn = drawDiagram(plugin, prepared.parse.model, ctx);
+      return { ...drawn, diagramType: prepared.diagramType, warnings };
+    }
+    const run = hooks.start(ctx, plugin.id);
+    const drawn = drawDiagram(plugin, prepared.parse.model, ctx, { run, ast: prepared.parse.ast });
+    const result: RenderResult = { ...drawn, diagramType: prepared.diagramType, warnings };
+    // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
+    if (run.mounts) result.bindFunctions = (element) => run.afterMount(element, result);
+    return result;
   }
 
   function renderSync(text: string, options?: RenderOptions): RenderResult {
@@ -578,7 +605,8 @@ export function createMermaid() {
     { lazyLoad = true }: { lazyLoad?: boolean } = {}
   ): Promise<void> {
     cache.clear();
-    await registry.registerExternal(diagrams, lazyLoad);
+    const extensions = await registry.registerExternal(diagrams, lazyLoad);
+    for (const e of extensions) hooks.register(e as ExtensionPlugin);
   }
 
   function registerLayoutLoaders(loaders: readonly LayoutLoader[]): void {
