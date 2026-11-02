@@ -39,7 +39,7 @@ describe('workspace layout (DESIGN §2)', () => {
 
   it('exposes the core subpaths diagram packages build on', () => {
     expect(Object.keys(readPackage('packages/core').exports ?? {}).sort()).toEqual(
-      ['.', './config', './layout', './parser-kit', './svg', './text', './theme'].sort()
+      ['.', './config', './layout', './parser-kit', './svg', './text', './theme', './timing'].sort()
     );
   });
 

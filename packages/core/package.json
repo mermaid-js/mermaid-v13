@@ -40,6 +40,11 @@
       "mermaid-source": "./src/config/index.ts",
       "types": "./dist/config/index.d.ts",
       "default": "./dist/config/index.js"
+    },
+    "./timing": {
+      "mermaid-source": "./src/timing/index.ts",
+      "types": "./dist/timing/index.d.ts",
+      "default": "./dist/timing/index.js"
     }
   },
   "files": [
