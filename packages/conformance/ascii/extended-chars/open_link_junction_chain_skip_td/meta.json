@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/open_link_junction_chain_skip_td.txt",
+  "charset": "unicode"
+}

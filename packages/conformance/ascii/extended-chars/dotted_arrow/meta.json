@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/dotted_arrow.txt",
+  "charset": "unicode"
+}

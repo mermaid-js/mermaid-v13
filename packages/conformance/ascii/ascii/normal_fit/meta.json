@@ -1,0 +1,5 @@
+{
+  "source": "pkg/graph/testdata/ascii/normal_fit.txt",
+  "charset": "ascii",
+  "maxWidth": 100
+}

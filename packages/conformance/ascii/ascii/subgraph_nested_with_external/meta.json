@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/subgraph_nested_with_external.txt",
+  "charset": "ascii"
+}

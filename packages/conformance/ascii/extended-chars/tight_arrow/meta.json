@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/tight_arrow.txt",
+  "charset": "unicode"
+}

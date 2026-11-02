@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/explicit_label_after_bare_reference.txt",
+  "charset": "ascii"
+}

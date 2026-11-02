@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/bidirectional_lr.txt",
+  "charset": "unicode"
+}

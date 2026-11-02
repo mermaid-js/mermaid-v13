@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/thick_edge_corners_chain_skip_lr.txt",
+  "charset": "unicode"
+}

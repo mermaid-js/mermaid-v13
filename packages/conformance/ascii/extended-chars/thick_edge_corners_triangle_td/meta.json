@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/thick_edge_corners_triangle_td.txt",
+  "charset": "unicode"
+}

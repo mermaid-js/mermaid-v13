@@ -1,0 +1,17 @@
+[
+  {
+    "fixture": "ascii/shaped_node_boundary_labels",
+    "kind": "rejected-input",
+    "reason": "`A{literal\"}` puts an unquoted `\"` inside a diamond label. mermaid@12 and v13 both reject it (v12: \"got 'STR'\"; v13: UNEXPECTED, put the label in quotes). mermaid-ascii keeps the text verbatim and also draws `C{bad}}` as a box labelled `C{bad}}`."
+  },
+  {
+    "fixture": "ascii/shaped_node_unmatched_quote",
+    "kind": "rejected-input",
+    "reason": "`A{bad\\\"}}` has an escaped quote and an unmatched `}` in a diamond label. mermaid@12 and v13 both reject it at the `\"` (v12: \"got 'STR'\"; v13: UNEXPECTED). mermaid-ascii draws the three nodes with their raw text, e.g. `A{bad\\\"}}`."
+  },
+  {
+    "fixture": "ascii/subgraph_empty",
+    "kind": "reinterpreted",
+    "reason": "`subgraph one` / `end` with no members is an empty subgraph: mermaid@12 and v13 both keep it in the model (subgraph `one`, no nodes), so Mermaid draws a box titled `one`. mermaid-ascii drops it, so upstream.txt shows only `A --> B`."
+  }
+]

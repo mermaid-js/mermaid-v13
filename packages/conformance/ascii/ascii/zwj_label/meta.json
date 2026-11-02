@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/zwj_label.txt",
+  "charset": "ascii"
+}

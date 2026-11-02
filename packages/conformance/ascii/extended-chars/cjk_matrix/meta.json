@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/extended-chars/cjk_matrix.txt",
+  "charset": "unicode"
+}

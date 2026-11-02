@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/multibyte/cyrillic_node_and_edge_labels.txt",
+  "charset": "ascii"
+}

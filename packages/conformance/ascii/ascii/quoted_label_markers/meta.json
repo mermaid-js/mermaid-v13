@@ -1,0 +1,4 @@
+{
+  "source": "pkg/graph/testdata/ascii/quoted_label_markers.txt",
+  "charset": "ascii"
+}
