@@ -26,6 +26,7 @@ This document describes how v13 is built. It is written for the people who will 
 ```
 
 The core rules:
+
 - Every stage is a pure function of its inputs: plain data in, plain data out (R-ARCH-1, -2, -4).
 - Nothing is global. Plugin registration is held by a `Registry` instance that the public `mermaid` package owns (§12).
 
@@ -49,6 +50,7 @@ tools/
 Later milestones add `packages/ascii` (M2), `packages/language-service` (M2.5), `packages/diagram-<type>` (M3+) and `packages/plugin-elk|math|icons|handdrawn`.
 
 `core` exports these subpaths so diagram packages can import only what they need:
+
 - `@mermaid-js/core/parser-kit`
 - `/layout`
 - `/svg`
@@ -57,6 +59,7 @@ Later milestones add `packages/ascii` (M2), `packages/language-service` (M2.5), 
 - `/config`
 
 **Allowed dependency directions:**
+
 - `diagram-*` → `core`.
 - `mermaid` → `core` + `diagram-*`.
 - `core` imports nothing.
@@ -94,17 +97,19 @@ interface RenderResult {
 **Two phases (R-API-2, D51).** Everything that can wait on the network happens in `prepare`; everything after it is synchronous and pure.
 
 `prepare(text)` (async):
+
 1. `limits.checkSource(text)` (R-SEC-5).
-2. `preprocess(text)` returns `{ body, frontMatter, directives, sourceMap }` (§4.1).
+2. `preprocess(text)` returns `{ bodyStart, frontMatter, directives }` (§4.1).
 3. `registry.detect(body)` returns the plugin manifest; its entry is imported if not loaded.
 4. `resolveConfig(…)` and `plugin.parse(body, ctx)` run once to find the **resource set**: the diagram package, the layout engine named by config, icon packs referenced by the AST, and math if any label uses it. Each plugin reports its needs through an optional `resources(ast, ctx)` method.
 5. Missing resources are loaded in parallel. The parse result is cached against the text, so `renderSync` right after `prepare` doesn't parse twice.
 
 `renderSync(text)` (sync):
+
 1. Steps 1–3 above, without loading. A missing resource throws `NotLoadedError { missing: Resource[] }`, unless `options.placeholders` is set, in which case a placeholder is drawn (e.g. an empty icon box) and a warning added.
 2. `resolveConfig(defaults, initializeConfig, frontMatter.config, directives, pluginDefaults)` returns a frozen `ResolvedConfig` (§9).
 3. `plugin.parse(body, ctx)` returns `ParseResult<Model>` (§4). If it has error diagnostics, throw `MermaidError`. Extension `postParse` hooks run on the AST (§12.2).
-4. `plugin.layout?(model, ctx)` returns `LayoutModel`, or the plugin uses the shared engine through `ctx.layout(graph)` (§6). `postLayout` hooks run.
+4. `plugin.layout?(model, ctx)` returns the plugin's layout `L`. For graph diagrams that is a `LayoutModel`, usually from the shared engine through `ctx.layout(graph)` (§6). `postLayout` hooks run on `{ kind, diagram, layout }` (§12.2).
 5. `plugin.render(layout, model, ctx, writer)` writes into an `SvgWriter` (§7). `postRender` hooks run on the node tree.
 6. `writer.finish(root)` produces the string; `limits.checkOutput`.
 7. The result is `{ svg, warnings: ctx.warnings, … }`.
@@ -117,23 +122,24 @@ interface RenderResult {
 
 ### 4.1 Preprocess (core)
 
-Preprocessing reproduces the v12 text pipeline exactly (P1):
-- CRLF normalisation
-- front matter extraction using v12's fence regex
-- `%%{init|initialize|wrap}%%` directives
-- `%%` comment stripping
-- entity encoding
+Preprocessing keeps v12's semantics (P1) but **never rewrites the source text**. It scans and returns ranges into the original string, so every offset, line and column the parser sees is the user's own:
+
+- CRLF: the lexer treats `\r\n` and `\r` as one newline; the text is not normalised
+- **Front matter: one shared parser** in core (`core/frontmatter`), built on the parser kit like the diagram parsers instead of v12's fence regex. A line scanner finds the opening `---` (first non-blank line) and the closing `---` line. An unclosed fence is an error diagnostic whose `related` points at the opener. The YAML reader (below) reports diagnostics with real ranges, so a front-matter typo is reported at its own line like any diagram error. Every diagram type gets this for free, and no diagram parser ever sees front matter. Where it differs from v12's regex on edge inputs (e.g. no newline after the closing fence), the parity corpus finds the case and we decide each one.
+- `%%{init|initialize|wrap}%%` directives are located by range and read, then left in place; the lexer skips them as trivia
+- `%%` comments are **not stripped**. The parser kit has one shared `Comment` trivia token kind; lexers emit it and parsers skip it, so line numbers stay exact. v12's stripping is what breaks line numbers today, so v13 does not repeat it. Editors can still read comments from the token stream.
+- entity decoding happens per label at parse time, on that label's own range
 
 It is done in **linear-time scans only** (R-PARSE-7). Front matter is parsed by a built-in YAML subset reader, ported from Pele's `util/yaml.ts` with attribution (R-REL-4). That reader has prototype-key protection and a depth cap of 64.
 
-Every rewrite is recorded as an `Edit { at, removed, inserted }` in a `SourceMap`. Mapping back to original positions is lazy: it happens only when a diagnostic or a span is requested. Pele does the same (`errors.ts:27-48`).
+Because nothing is rewritten, there is **no SourceMap**: diagnostics, symbols, statements and AST ranges use original offsets directly. If a later step ever has to rewrite text, it must record `Edit { at, removed, inserted }` and map back lazily, as Pele does (`errors.ts:27-48`), and that needs an ADR.
 
 ### 4.2 Parser kit (`core/parser-kit`)
 
 The kit has no grammar abstraction. It is a set of building blocks for hand-written lexers and recursive-descent parsers:
 
 | Piece | Shape | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `TokenStream` | parallel arrays `kind: Uint16Array`, `start: Uint32Array`, `end: Uint32Array`, `text: string[]` | No token objects. Kinds are numeric `const` objects (not TS `enum`, per lint rules). |
 | `CharClass` | `Uint8Array(128)` tables + Unicode id-letter table (base-36 RLE, generated from `flow.jison`) | Port of Pele's `util/unicode.ts` approach. |
 | `Scanner` | sticky-regex helpers + linear matchers | Regexes on user input must pass a "no nested quantifier" lint (R-PARSE-7). |
@@ -156,9 +162,14 @@ interface ParseResult<M> {
 
 Spans cost almost nothing (the research measured 2 bytes gzipped for identifier spans), so they are always produced. Only the token stream, which can be large, is opt-in.
 
-**AST and source ↔ diagram mapping (R-PARSE-8, D53).** `AstNode = { id: AstId, type, range, children? , … }`, with one exported type per node kind per diagram (`FlowNodeStmt`, `FlowEdge`, `FlowSubgraph`, …). `AstId` is a short string that is stable for the same source: the node kind plus the start offset of its range (`n:42`), so it survives re-parses of an unchanged document. The model keeps the `AstId` of every vertex, edge and subgraph, and the renderer writes it as `data-ast` on the element it draws (`data-ast` is in the attribute allow-list). An editor maps a cursor to elements with `querySelectorAll('[data-ast="…"]')` and an element back to source through `ast` lookup by id. `data-id` (R-SVG-2) stays the user's id, which edges and repeated node mentions don't have uniquely.
+**AST and source ↔ diagram mapping (R-PARSE-8, D53).** `AstNode = { id: AstId, type, range, children? , … }`, with one exported type per node kind per diagram (`FlowNodeStmt`, `FlowEdge`, `FlowSubgraph`, …). `AstId` is a short **semantic** id built from the user's own names, not from offsets, so it survives edits elsewhere in the text, including edits to the element's own label:
 
-**jison compatibility shim (R-PARSE-6).** `MermaidError.hash = { loc: { first_line, last_line, first_column, last_column }, text, token, expected }`, generated from the first error diagnostic.
+- node: `n:A`; its second mention in the text: `n:A@2`
+- edge: `e:A>B`; a second parallel edge between the same nodes: `e:A>B#2`
+- subgraph: `s:<id>`
+- statements without a user name (`style`, `classDef`, `linkStyle`, …): kind plus ordinal among its siblings, e.g. `st:3`
+
+An id changes only when the element itself is renamed, or when a parallel edge or a same-kind anonymous statement is inserted before it. Both are edits the editor made, so it knows. Ids are computed in the parser with no extra pass. Each diagram defines its scheme in its AST types, and flowchart's is the one above. The model keeps the `AstId` of every vertex, edge and subgraph, and the renderer writes it as `data-ast` on the element it draws (`data-ast` is in the attribute allow-list). An editor maps a cursor to elements with `querySelectorAll('[data-ast="…"]')` and an element back to source through `ast` lookup by id. For a UI edit, such as a label text box, the editor patches the text at the node's current `range`, re-parses, and gets the same id back, so selection and focus survive. `data-id` (R-SVG-2) stays the user's id, which edges and repeated node mentions don't have uniquely.
 
 ### 4.3 Flowchart parser (`diagram-flowchart/src/parser/`)
 
@@ -173,7 +184,7 @@ Spans cost almost nothing (the research measured 2 bytes gzipped for identifier 
 Each diagram package has `grammar/<type>.ebnf`: a concise EBNF with lexer modes (the equivalent of jison start conditions). It is the normative definition of the syntax; the hand-written parser is the fast implementation of it. `tools/gen-grammar` turns it into:
 
 | Output | Used for | Ships? |
-|---|---|---|
+| --- | --- | --- |
 | A generated reference parser (table-driven, slow is fine) | Differential test against the hand-written parser in CI: same accept/reject and same AST shape on the corpus and on generated sentences | No (dev/CI only) |
 | A sentence generator (bounded depth, weighted by corpus frequency) | Fuzz input for R-SEC-7 and the differential test | No |
 | TextMate, Monarch and Lezer grammars | Syntax highlighting in VS Code, Monaco, CodeMirror (R-LANG-2) | As separate artefacts, not in core |
@@ -202,6 +213,7 @@ type StyleBits = number;  // Bold|Italic|Mono|Sub|Sup|Underline
 ### 5.2 Fonts ⚠ review
 
 The v12 default is `"trebuchet ms", verdana, arial, sans-serif` (P1). The table measurer needs one concrete table per family, so this design proposes:
+
 - Ship tables for **Trebuchet MS, Verdana and Arial**, regular and bold, printable ASCII plus Latin-1. That is about 190 characters per weight per family, roughly 2 KB gzipped in total.
 - Resolve the first family in the stack that has a table.
 - For an unknown family, fall back to the Arial table.
@@ -212,6 +224,7 @@ Open question: Trebuchet MS isn't installed on most Linux systems, so browser ou
 ### 5.3 Labels
 
 `layoutLabel(raw, font, maxWidth, measurer) → LabelBox { lines: Run[][], width, height }`:
+
 - **Fast path:** a plain label without `<`, `&`, `*`, `_` or `` ` `` is measured once and wrapped only if it overflows (from Pele).
 - **Markdown strings:** bold, italic, inline code and line breaks (R-TEXT-2), plus bullet lists (R-TEXT-11): a line starting with `- ` or `* ` inside a markdown string becomes a list run, with one nesting level from leading indentation. It is drawn as a `•` (or `◦` when nested) followed by a hanging indent of the bullet width plus one space; wrapped continuation lines align to the text, not the bullet. Plain labels never treat `- ` as a bullet.
 - **HTML subset:** `<br>`, `<b>`, `<strong>`, `<i>`, `<em>` become style bits. Other known tags are dropped and their text kept. Anything else stays as literal text (R-TEXT-3). The final list waits on O-5.
@@ -241,16 +254,20 @@ interface LayoutModel {
 type LayoutEngine = (g: LayoutGraph, ctx: LayoutContext) => LayoutModel;
 ```
 
+**Scope.** `LayoutGraph` and `LayoutModel` are the shared contract for **graph diagrams** (flowchart, class, state, ER, …) that call `ctx.layout(graph)`. They are not the universal layout output. A non-graph diagram (Sankey, pie, gantt, xychart, …) defines its own layout type `L` and computes it in `plugin.layout` (§12.1). It may reuse `core/layout` primitives, such as rank assignment for Sankey columns, without the whole engine. Measurement-before-layout applies to every `L`. DDLT-style fixtures and the shared ASCII path apply to `LayoutModel` only.
+
 The rules:
+
 - The graph and the result are plain data, so the ASCII backend (M2) and DDLT-style fixtures can use them directly (R-ARCH-3).
 - Measurement happens **before** layout: diagram code fills in `width` and `height` using the injected measurer, and the engine never measures. Layout depends on the measurer only, never on a backend (R-ARCH-3, D57). For ASCII the same code runs with a character-grid measurer (widths in cells, heights in lines), so the ASCII backend receives a normal `LayoutModel` and never measures itself.
 - The engine is selected by the `layout` config key. `layered` is the default. Other engines are registered via `registerLayoutLoaders` (R-LAYOUT-2).
 
-### 6.2 `layered` engine (`core/layout/layered`) ⚠ pending O-7
+### 6.2 `layered` engine (`core/layout/layered`): port per O-7
 
-O-7 asks whether to port Pele's layout or depend on Pele's package. This design assumes a **port**, because R-PERF-2 forbids runtime dependencies and the changes listed below (v12 config values, `minLen`, routes as data, determinism) need control over the code. If O-7 goes the other way, the interface in §6.1 stays and only this engine changes.
+O-7 is decided (2026-11-02): **port**. Pele's layered layout is ported into core and owned by us, with MIT attribution (R-REL). It is not a dependency on Pele's package, because R-PERF-2 forbids runtime dependencies and the changes listed below (v12 config values, `minLen`, routes as data, determinism) need control over the code. The trade-off we accept: upstream Pele fixes don't arrive for free and have to be brought over by hand.
 
 This is a port of Pele's `layout/layered.ts` and `layout/compound.ts`, with attribution and Pele's ranked aesthetic-goal header kept:
+
 - DFS cycle removal in declaration order;
 - longest-path ranking with a balancing pass, giving labelled edges a middle rank;
 - dummy nodes, capped;
@@ -261,6 +278,7 @@ This is a port of Pele's `layout/layered.ts` and `layout/compound.ts`, with attr
 - typed arrays and CSR adjacency throughout.
 
 What changes in the port:
+
 1. Config values (spacing, padding) come from `ResolvedConfig`, using v12's defaults (R-LAYOUT-6, P1). Pele's constants don't apply.
 2. `minLen` from `---->`-style edges is honoured, matching v12.
 3. Edge routes are returned as data. Path strings are built in the renderer, so ASCII can reuse the routes.
@@ -270,7 +288,7 @@ The engine is checked with DDLT-style tests on `LayoutGraph` fixtures captured f
 
 ## 7. SVG output (R-SVG-*, R-SEC-2, D6, D35)
 
-### 7.1 SvgWriter ⚠ review — reading of D35 and D52
+### 7.1 SvgWriter: reading of D35 and D52
 
 D35 says plugins return an "SvgNode tree" so escaping is guaranteed, and D52 adds a `postRender(svgTree)` hook that edits that tree before serialisation. A tree of objects costs allocations on large diagrams, while Pele's string building is a large part of its speed. This design keeps both guarantees with one writer API and two backings: **[ADR-3]**
 
@@ -309,7 +327,7 @@ type Attrs = Partial<Record<AllowedAttr, string | number | ThemeRef | SafeUrl>>;
 </svg>
 ```
 
-- Group class names follow v12 (`nodes`, `edgePaths`, `edgeLabels`, `clusters`, `node`, `edge`, `cluster`, plus user `classDef` classes) where possible. This reduces breakage for integrators who style or query the SVG (P1).
+- Group class names follow v12 (`nodes`, `edgePaths`, `edgeLabels`, `clusters`, `node`, `edge`, `cluster`, plus user `classDef` classes) where possible. This reduces breakage for integrators who style or query the SVG (P1). The element structure may change, but only for a stated reason (for example, inline arrowheads instead of `<marker>`). Each change and its reason is listed in MIGRATION.md.
 - `useMaxWidth` keeps its v12 meaning (R-SVG-7).
 
 ## 8. Theming (R-THEME-*, D20, D39)
@@ -323,23 +341,16 @@ themeVariables (config)  ──►  ThemeSpec  ──►  root style aliases  �
                                                     color-mix(in srgb, var(--_pf) 85%, black));
 ```
 
-1. **Built-in themes** (`redux`, `default`, `dark`, `forest`, `neutral`, `base`) are `ThemeSpec` data files. Each is a table of base values plus a derivation table, not a class with khroma code. **`redux` is the default** when no theme is set (R-THEME-6, D55).
+1. **Built-in themes**: **all 11 v12 themes are kept** (R-THEME-6, R-THEME-7 Must; O-2 resolved 2026-11-02). M1 ships `redux`, `default`, `dark`, `forest`, `neutral` and `base`. The remaining v12 themes (`redux-dark`, the redux colour variants and the rest) follow by M3. Each theme is a `ThemeSpec` data file: a table of base values plus a derivation table, not a class with khroma code. Adding a theme is cheap, so all of them live in core. Each is its own lazily imported file, so an unused theme costs no bundle size. **`redux` is the default** when no theme is set (R-THEME-6, D55).
    - A `ThemeSpec` also carries **shape tokens**, not only colours: stroke widths, corner radii, font weights and sizes, and spacing steps. Diagram renderers read sizes from these tokens instead of hard-coding them, so every diagram type rendered in redux looks like one family (R-THEME-11). Tokens are exposed as CSS variables like the colours (`--mermaid-strokeWidth`, `--mermaid-radius`, …).
    - The redux palette and tokens are taken from the v12 redux themes (`redux`, `redux-dark`, and their colour variants), so P1 applies to them like the others.
-2. **Derivation rules** are expressions in a tiny DSL: `mix(primaryColor, black, 15%)`, `contrast(primaryColor)`, `invert(…)`. Each rule compiles to two things:
-   - a CSS expression: `color-mix(in srgb, …)` or a `light/dark` ink pair;
-   - a JS-computed fallback value, from the same formula in `core/theme/color.ts` (sRGB mixing, WCAG luminance; about 1 KB).
-
-   Using `in srgb` means the JS fallback and the browser result are **numerically identical**, so `deterministic` output stays exact.
-3. **Matching v12's colours.** v12 derives with khroma's `darken`/`lighten`/`adjust` in HSL. A `color-mix` in sRGB doesn't reproduce those exactly. Rules are chosen to stay within ΔE < 5 of v12's derived colours for the five built-in themes, checked by a test that compares against values extracted from `mermaid@12`. Exact equality isn't required (P2), but resemblance is (R-THEME-6). **[ADR-4]**
-4. **Precedence when resolving:**
-   - a `themeVariables` key set explicitly by the author is used as a literal fallback, and the CSS var still wins;
-   - otherwise the derived rule is used.
-   - The CSS variable name is always `--mermaid-<v12 name>` (R-THEME-2).
+2. **Derivation rules** are expressions in a tiny DSL: `mix(primaryColor, black, 15%)`, `contrast(primaryColor)`, `invert(…)`. Each rule compiles to two things: a CSS expression (`color-mix(in srgb, …)` or a `light/dark` ink pair), and a JS-computed fallback value, from the same formula in `core/theme/color.ts` (sRGB mixing, WCAG luminance; about 1 KB). Using `in srgb` means the JS fallback and the browser result are **numerically identical**, so `deterministic` output stays exact.
+3. **Matching v12's colours.** v12 derives with khroma's `darken`/`lighten`/`adjust` in HSL. A `color-mix` in sRGB doesn't reproduce those exactly. Rules are chosen to resemble v12's derived colours, with values from `mermaid@12` as the reference. There is no automated colour-match test: all diagrams, colours included, are reviewed by hand at the end of the process. Exact equality isn't required (P2), but resemblance is (R-THEME-6). WCAG AA contrast (R-THEME-9) is still checked automatically, because that is a requirement in its own right. **[ADR-4]**
+4. **Precedence when resolving:** a `themeVariables` key set explicitly by the author is used as a literal fallback, and the CSS var still wins; otherwise the derived rule is used. The CSS variable name is always `--mermaid-<v12 name>` (R-THEME-2).
 5. **Alias layer:** short private aliases (`--_pf`) keep output small, and only the aliases actually used are written to the root (from Pele).
 6. **`theme: 'auto'`** (Could): emits a `<style>` containing only `@media (prefers-color-scheme: dark){ svg[data-p="{p}"]{ --mermaid-…: … } }` from the dark spec. The allow-list test permits `<style>` only in this mode, and only with variable declarations.
 
-### 8.2 Non-browser consumers ⚠ review
+### 8.2 Non-browser consumers
 
 `fill="var(--_pf)"` works in browsers. resvg, librsvg, Inkscape and some image proxies don't resolve CSS variables. This design adds `output.cssVariables: false` (integrator option), which emits the computed literal colours instead. The output is then still themed, but can't be re-themed by host CSS. The default is `true`. **[ADR-4]**
 
@@ -354,15 +365,19 @@ themeVariables (config)  ──►  ThemeSpec  ──►  root style aliases  �
 - **Resolution:** `resolveConfig()` deep-merges in v12's order: defaults → initialize → front matter → directives (R-CONF-3).
   - The secure-key filter is applied to front matter and directives.
   - Unknown and removed keys go to `ctx.warn` (R-CONF-2).
-  - The result is deep-frozen once.
   - This replaces v12's per-call deep cloning, the cost #8635 measured.
+- **Lifecycle: resolved early, then frozen.** Config is settled before the diagram body is parsed: `preprocess` extracts front matter and `%%{init}%%` directives, `resolveConfig` merges them (plugin section defaults included, once detect has named the plugin) and deep-freezes the result. From that point it is read-only for the rest of the call:
+  - Parse, layout, render and every hook receive the frozen object through `ctx`. Nothing downstream can write config: no `setConfig` / `updateSiteConfig` from diagram code, as v12 allowed.
+  - Frozen means shared by reference, never cloned per stage or per call: reads are plain property reads, and a hostile or buggy plugin cannot change what later stages see.
+  - `prepare` caches the frozen config with the parse result; `renderSync` reuses it, keyed on text plus the defaults snapshot.
+  - `initialize()` swaps in a new frozen defaults object instead of mutating the old one, so a render already in flight keeps the snapshot it started with.
 - **Integrator-only options** never come from diagram text: limits, measurer, `deterministic`, `output.cssVariables`, `idPrefix`, `securityLevel`, link schemes (R-SEC-5, R-SEC-6).
 - **Config reference doc (R-CONF-4, D60):** generated from the JSON schema alone. Each key in `config.schema.yaml` carries an `x-mermaid` annotation: `{ status: honoured | ignored | pending | removed | moved, since?: '13.0.0', movedTo?: '@mermaid-js/plugin-interactions', replacement?: string, reason?: string }`. CI fails if the generated doc is stale or a key has no annotation. MIGRATION.md's config section is generated from the same data. Click-callback keys are `moved` to the interactions plugin (R-CONF-1).
 
 ## 10. Security (R-SEC-*)
 
 | Threat | Control | Where |
-|---|---|---|
+| --- | --- | --- |
 | Markup injection via labels | Labels are text runs and every value is escaped by the writer. No HTML mode exists. | §5.3, §7.1 |
 | Script / event handlers | Tag and attr unions exclude them; property test over corpus + ported v12 XSS pages | §7.1, R-SEC-2 |
 | CSS injection via `style`/`classDef`/`linkStyle` | Property allow-list; values matching `url( expression( javascript: @import image-set /* [<>{};\\]` are dropped; output as presentation attrs (`SafeColor`, `SafeLength`) | `core/svg/style.ts` |
@@ -383,13 +398,13 @@ class MermaidError extends Error {
   code: 'SYNTAX' | 'SEMANTIC' | 'UNSUPPORTED_DIAGRAM' | 'UNSUPPORTED_FORMAT' | 'NOT_LOADED' | 'LIMIT' | 'INTERNAL';
   line: number; column: number; offset: number; length: number;   // original source, 1-based line/col
   expected?: string[]; diagnostics: Diagnostic[];                   // all diagnostics, first is primary
-  hash: JisonHash;                                                  // compat shim (R-PARSE-6)
 }
 ```
 
 `NotLoadedError` (`code: 'NOT_LOADED'`, `missing: Resource[]`) and `UnsupportedFormatError` (`code: 'UNSUPPORTED_FORMAT'`) are subclasses.
 
 **Messages (R-ERR-2, R-ERR-5, D50).** Messages are written for authors, not parser developers:
+
 - They name the construct in Mermaid terms ("unclosed node label started at line 3"), never a token kind or grammar rule. The `Expected` table (§4.2) maps every token kind to a human name, and a test fails if a message contains a raw token or rule name.
 - They add a fix hint where the cause is clear ("add `end` to close the subgraph opened at line 2").
 - They include the snippet with a caret, at most 5 grouped expectations, and the opener's position for unclosed constructs.
@@ -404,19 +419,21 @@ There are two kinds of plugin, both pure: **diagram** plugins (one diagram type 
 ### 12.1 Diagram plugins
 
 ```ts
-interface DiagramPlugin<M = unknown> {
+interface DiagramPlugin<M = unknown, L = LayoutModel> {
   id: string;                                   // 'flowchart'
   aliases?: string[];                           // 'graph', 'flowchart-v2', 'flowchart-elk'
   detector: (text: string, config: ResolvedConfig) => boolean;
   formats: ('svg' | 'ascii')[];                 // R-ASCII-5; also in the manifest
+  layoutKind: 'graph' | 'custom';               // 'graph' requires L = LayoutModel (§6.1)
   parse(text: string, ctx: RenderContext): ParseResult<M>;
   resources?(ast: AstNode, ctx: RenderContext): Resource[];   // icon packs, math, layout engine (R-API-2)
-  layout?(model: M, ctx: RenderContext): LayoutModel;          // or use ctx.layout(graph)
-  render(model: M, layout: LayoutModel, ctx: RenderContext, w: SvgWriter): void;
-  ascii?(model: M, layout: LayoutModel, ctx: RenderContext): string;   // M2
+  layout?(model: M, ctx: RenderContext): L;     // graph: may use ctx.layout(graph); custom: own algorithm
+  render(model: M, layout: L, ctx: RenderContext, w: SvgWriter): void;
+  ascii?(model: M, layout: L, ctx: RenderContext): string;   // M2
   configDefaults?: object;                      // its schema section defaults
   themeVariables?: ThemeRuleTable;              // its derived vars
 }
+// e.g. DiagramPlugin<SankeyModel, SankeyLayout>: columns, node bands, link ribbons
 ```
 
 **Manifest** in the plugin's `package.json`:
@@ -433,10 +450,14 @@ interface DiagramPlugin<M = unknown> {
 ### 12.2 Extension plugins and hooks
 
 ```ts
+type LaidOut =
+  | { kind: 'graph'; diagram: string; layout: LayoutModel }
+  | { kind: 'custom'; diagram: string; layout: unknown };
+
 interface ExtensionPlugin {
   id: string;
   postParse?(ast: AstNode, ctx: RenderContext): AstNode;
-  postLayout?(layout: LayoutModel, ctx: RenderContext): LayoutModel;
+  postLayout?(l: LaidOut, ctx: RenderContext): LaidOut;      // must return the same kind
   postRender?(tree: SvgTree, ctx: RenderContext): void;        // edits in place, before serialisation (§7.1)
   afterMount?(el: Element, result: RenderResult): void;         // DOM adapter only
   claims?: ('callbacks')[];                                    // features it handles, to silence core's warning
@@ -444,12 +465,14 @@ interface ExtensionPlugin {
 ```
 
 - Hooks run in registration order. Each gets the frozen context, so they can't change config.
+- `postLayout` hooks that only understand graphs act on `kind: 'graph'` and pass other layouts through unchanged. A hook written for one diagram type checks `diagram`. The runner rejects a hook result whose `kind` differs from its input.
 - `postRender` runs on the compact tree; core then re-checks the allow-list, so a hook can't introduce `<script>`, `on*` or unsafe URLs (R-SEC-2).
 - `afterMount` exists only in `mermaid`'s DOM adapter (`run`, `mount`, `bindFunctions`). Core never calls DOM code.
 
 ### 12.3 Interactions plugin (R-PLUG-9, D47)
 
 `@mermaid-js/plugin-interactions` restores v12 `click X callback` / `call` from M1. Core keeps callbacks in the model and emits `data-id`/`data-ast` on every node. The plugin:
+
 - reads the callbacks from the parse result through `postParse` (and claims `callbacks`, so core doesn't warn);
 - binds click handlers in `afterMount`, resolving function names the way v12 did. This includes looking names up on `window`, which is why it is opt-in by installation only and diagram text can't enable it;
 - provides `RenderResult.bindFunctions`, so v12 call sites that call `bindFunctions(el)` after `render()` keep working.
@@ -461,7 +484,7 @@ Its config keys (moved from the core schema) live in its own schema section.
 **Discovery paths:**
 
 | Environment | Mechanism |
-|---|---|
+| --- | --- |
 | First-party, any env | `mermaid` depends on all `@mermaid-js/diagram-*`. A generated `registry.gen.ts` holds `{ id, detector (static import, tiny), load: () => import('@mermaid-js/diagram-x') }`. Bundlers code-split per type (R-PLUG-4). |
 | Node / SSR, third-party | On first `render`, `mermaid/node` scans `node_modules` (`require.resolve` paths) for packages with a `mermaid.plugin` manifest, then caches the result. |
 | Bundlers, third-party | `mermaid/plugin` (unplugin) does the same scan at build time and provides `virtual:mermaid-plugins`, which `mermaid` imports if present. |
@@ -476,19 +499,21 @@ Its config keys (moved from the core schema) live in its own schema section.
 
 ```
 corpus source ──► mermaid@12 (jsdom-free: parser + db only, via its diagram API) ──► normalise ──┐
-            └───► v13 plugin.parse ──────────────────────────────────────────────► normalise ──┴─► deep-equal | divergences.json
+            └───► v13 plugin.parse ──────────────────────────────────────────────────────────────────────────────► normalise ──┴─► deep-equal | divergences.json
 ```
 
 - **Reference pattern:** the Chevrotain branch (`flow.parse-corpus.spec.ts` with `PARSE_FIXTURE_PATH`, `flow.db-parity.spec.ts` snapshot functions). The normaliser for flowchart is literally its `snapshotVertex` / `snapshotEdge` shape.
 - **Tiers:**
   - PR CI: in-repo corpus (e2e `.mmd`, docs examples, ported spec strings, the 158-diagram bench corpus).
-  - Nightly: the external 10k+ set via `PARSE_FIXTURE_PATH` (O-3) plus fuzzing with a seeded mutator (from Pele's `tests/support/corpus.ts` approach).
+  - Nightly CI: fuzzing with a seeded mutator (from Pele's `tests/support/corpus.ts` approach).
+  - QA, not CI: the external 10k+ set via `PARSE_FIXTURE_PATH`, run by quality assurance with the same runner (R-TEST-1, O-3). Where QA reads the set from is still open.
 - **`divergences.json`:** `{ id, inputHash, kind: 'accept'|'reject'|'model', reason, owner, since }`. Unlisted divergences fail; listed ones that disappear fail too, so the list stays honest (R-COMPAT-4).
 - **Oracle bump job:** a weekly workflow bumps `mermaid@12` and opens an issue per new failure cluster (R-COMPAT-8).
 
 ### 13.2 Render properties (vitest, every corpus input)
 
 These run with `deterministic: true` and the table measurer:
+
 - well-formed XML;
 - the allow-list check (`assertInert`, tags/attrs/style props/URLs);
 - determinism, by rendering twice;
@@ -513,7 +538,7 @@ A Playwright/Argos baseline on a curated subset: per shape, per edge type, per t
 **Size budget, core + flowchart ≤ 80 KB gz.** These are estimates, to be tracked from the first PR. Pele's whole core + flowchart is 57 KB gz, and its flowchart parser alone is 7.2 KB.
 
 | Part | Budget (gz) |
-|---|---|
+| --- | --- |
 | preprocess + YAML + config resolve + limits | 6 KB |
 | parser kit | 2 KB |
 | text: label layout + measurer + metric tables | 6 KB |
@@ -529,11 +554,13 @@ Shapes are the biggest risk, because v12 has 113 of them. If they go over budget
 Only core has its own published size budget (R-PERF-8, D59). Later diagram packages are optional plugins and have none for now; R-PERF-1 still holds for core + flowchart.
 
 **Speed:**
+
 - **Per-stage timing:** `bench` wraps each stage with `performance.now()` behind a build flag that is compiled out of production (R-PERF-5).
 - **Fixtures:** the #8635 / Pele set plus the 158-diagram corpus (R-PERF-6).
 - **Regression baselines** are stored per runner (O-4).
 
 **Rules carried over from Pele:**
+
 - no work in module scope;
 - typed arrays in layout;
 - no per-call config cloning;
@@ -543,19 +570,19 @@ Only core has its own published size budget (R-PERF-8, D59). Later diagram packa
 ## 15. Milestone M1 work breakdown (→ tickets)
 
 | # | Work item | R-ids | Depends |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 1 | Branch scaffolding: delete v12 sources, create packages, lint rules (DOM ban, import boundaries, console ban, regex lint), CI skeleton | R-ARCH-9, R-PLUG-1 | – |
 | 2 | `bench` package from approaches harness + size/stage gates | R-PERF-1…7, R-TEST-7 | 1 |
-| 3 | `conformance` package: oracle runner, normaliser API, divergences, nightly external corpus | R-COMPAT-2…4, R-TEST-1…3 | 1 |
-| 4 | Preprocess + YAML + SourceMap | R-COMPAT-6, R-PARSE-7 | 1 |
-| 5 | Parser kit, AST types and ids | R-PARSE-2…6, -8 | 1 |
+| 3 | `conformance` package: oracle runner, normaliser API, divergences, `PARSE_FIXTURE_PATH` mode for QA's external corpus runs | R-COMPAT-2…4, R-TEST-1…3 | 1 |
+| 4 | Preprocess (no text rewrites) + front-matter parser + YAML | R-COMPAT-6, R-PARSE-7 | 1 |
+| 5 | Parser kit, AST types and ids | R-PARSE-2…5, -8 | 1 |
 | 6 | Config: schema move, `x-mermaid` annotations, gen-config, resolveConfig, generated config reference | R-CONF-* | 1 |
 | 7 | Flowchart lexer + parser + FlowModel + AST, oracle-green | R-COMPAT-2/3, R-PARSE-3/4/8 | 3,4,5 |
 | 8 | Measurer interface + table measurer + gen-metrics + canvas measurer | R-TEXT-4…7, -9 | 1 |
 | 9 | Label layout (markdown incl. bullets, HTML subset, wrapping) | R-TEXT-1…3, -8, -11 | 8 |
-| 10 | Layered + compound layout port, DDLT-style tests (after O-7) | R-LAYOUT-1…6 | 1 |
+| 10 | Layered + compound layout port, DDLT-style tests | R-LAYOUT-1…6 | 1 |
 | 11 | SvgWriter (streaming + tree backing, `SvgTree` view), url/style/colour safety, `securityLevel`, allow-list test | R-SVG-1, R-SEC-1…4, -6 | 1 |
-| 12 | Theme specs incl. redux and shape tokens, derivation DSL, CSS vars, ΔE test vs v12 | R-THEME-* | 11 |
+| 12 | Theme specs incl. redux and shape tokens, derivation DSL, CSS vars | R-THEME-* | 11 |
 | 13 | Flowchart renderer: shapes, edges, clusters, labels, links, `data-ast`, a11y | R-LAYOUT-4, R-SVG-*, R-A11Y-*, R-PARSE-8 | 7,9,10,11,12 |
 | 14 | `mermaid` API: render/prepare/renderSync/preload/parse/initialize, Registry, errors and messages | R-API-1…5, R-ERR-* | 6,13 |
 | 15 | DOM adapter: run, mount, error image, `afterMount` | R-API-6/7, R-ERR-3 | 14 |
@@ -566,17 +593,19 @@ Only core has its own published size budget (R-PERF-8, D59). Later diagram packa
 | 20 | Flowchart grammar file + gen-grammar (reference parser, sentence generator, highlighters, syntax doc) + differential CI test | R-PARSE-9 | 5,7 |
 | 21 | Extension plugin API: manifest `kind`, hook runner, fixture extension plugin | R-PLUG-2/3 | 11,14 |
 | 22 | Interactions plugin: callbacks, `bindFunctions`, moved config keys | R-PLUG-9, R-SVG-5 | 15,21 |
+| 23 | Non-graph contract check: a stub non-graph plugin (Sankey or pie) with its own layout type L and a postLayout fixture hook, in a type-level + runtime test, so the plugin API can't silently become flowchart-only | R-PLUG-1/2, R-ARCH-3 | 14, 21 |
 
 R-COMPAT-10 (drop-in upgrade) and R-ASCII-5 are not M1 work: the first is release step two, the second lands with M2.
 
 The parallel tracks after item 1:
+
 - (2, 3), (4, 5, 6), 8→9, 10, 11→12 can all run side by side.
 - Item 13 is the join point. 20 runs alongside 7; 21→22 follow 14/15.
 
 ## 16. ADRs to write
 
 | ADR | Title | Status |
-|---|---|---|
+| --- | --- | --- |
 | ADR-1 | Hand-written parsers with a parser kit; Chevrotain/jison as test oracles only | from D14 |
 | ADR-2 | DOM-free core; measurement via injected `Measurer` | from D4, D17 |
 | ADR-3 | Typed `SvgWriter` with a streaming backing and a compact tree backing (used only when `postRender` hooks exist) | **⚠ reading of D35, D52** |
@@ -592,12 +621,11 @@ The parallel tracks after item 1:
 
 ## 17. Points for review
 
-1. **§7.1 / ADR-3:** one typed writer, streaming by default, tree-backed only when a `postRender` hook is registered. It gives the same safety and keeps the fast path. OK?
-2. **§8.2:** the new `output.cssVariables: false` option for SVG-to-PNG and other non-browser pipelines. OK?
-3. **§8.1(3):** v12 derived colours reproduced to within ΔE < 5, not exactly. OK?
-4. **§5.2:** metric tables for Trebuchet MS, Verdana and Arial to keep v12's default font. Alternatively, switch the v13 default to `system-ui`, which goes against P1 but looks more modern.
-5. **§3 / §12.3:** `RenderResult.bindFunctions` is set by the interactions plugin and undefined without it, so v12 call sites keep working when the plugin is installed.
-6. **§7.2:** keep v12 class names (`nodes`, `edgePaths`, `node`, …) rather than new ones.
-7. **§4.2:** AST ids as kind + start offset (`n:42`), written to `data-ast`. Stable for unchanged text, but ids after an edit point shift. Good enough for editors, or do we need ids that survive edits?
-8. **§12.3:** the interactions plugin resolves callback names on `window`, as v12 did. Keep that for compatibility, or require integrators to register the functions explicitly?
-9. **§6.2:** the design assumes O-7 is answered with "port".
+1. **§7.1 / ADR-3:** one typed writer, streaming by default, tree-backed only when a `postRender` hook is registered. It gives the same safety and keeps the fast path. Confirmed 2026-11-02.
+2. **§8.2:** the new `output.cssVariables: false` option for SVG-to-PNG and other non-browser pipelines. Confirmed 2026-11-02.
+3. **§5.2:** metric tables for Trebuchet MS, Verdana and Arial to keep v12's default font. `system-ui` is ruled out as the default: it maps to a different face per OS (and per Linux desktop), so no single metric table can match it and the table measurer would be wrong everywhere but one platform. Decided 2026-11-02: Trebuchet MS / Verdana / Arial tables for M1. The final default is settled before the 13.0 release, and changing it means regenerating metric tables and baselines, not changing code.
+4. **§3 / §12.3:** `RenderResult.bindFunctions` is set only by the interactions plugin. The field is already optional in v12's RenderResult type, so v12 call sites written as bindFunctions?.(el) keep working either way: without the plugin the call is a no-op, and with it click callbacks work as before. Call sites that call it unguarded need the plugin installed. Confirmed 2026-11-02.
+5. **§7.2:** keep v12 class names (`nodes`, `edgePaths`, `node`, …) rather than new ones. Confirmed 2026-11-02.
+6. **§4.2:** AST ids are semantic (`n:A`, `e:A>B#2`, `s:id`, `st:3`), not offset-based, so they survive edits and editors keep UI state across re-parses. Decided 2026-11-02.
+7. **§12.3:** the interactions plugin resolves callback names on `window`, as v12 did. Decided 2026-11-02: keep resolving callback names as v12 does, for compatibility. The safeguard stays as §12.3 describes it: the lookup only exists when the integrator installs the plugin.
+8. **§6.1 / §12.1 / §12.2:** layout output is generic per plugin (`L`). `LayoutModel` is the contract for graph diagrams only. `postLayout` hooks get `{ kind, diagram, layout }`, and M1 item 23 keeps a non-graph stub in CI. Confirmed 2026-11-02.

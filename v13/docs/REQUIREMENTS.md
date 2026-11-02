@@ -124,7 +124,6 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-PARSE-3 | Every parse returns, besides the model: token spans, identifier occurrences (definitions and references), statement spans, and a list of diagnostics with ranges. | Must | M1 | D14, D37 | Spec on the flowchart corpus |
 | R-PARSE-4 | Parsers recover at statement boundaries. A document with N independent errors yields N diagnostics. | Must | M1 | D14 | Recovery test set (≥ 20 cases) |
 | R-PARSE-5 | Go-to-definition, find-references and fold ranges computed from parse output are correct on the corpus. | Must | M1 | D14 | Tooling spec with expectations generated from the oracle model |
-| R-PARSE-6 | A jison-style `hash.loc` compatibility shape is available on parse errors for existing editor integrations. | Should | M1 | D14 | Spec |
 | R-PARSE-7 | Parse time is linear in input size. There are no backtracking regexes on user input. | Must | M1 | D6 | Fuzz and stress test with pathological input under a time bound; regex lint |
 | R-PARSE-8 | Parse output includes a typed, documented AST usable by editors. Every AST node has a stable id and a source span. Every rendered element that comes from an AST node carries that id (an allow-listed data attribute). An editor can then go both ways: from a diagram element to its source range, and from a cursor position to the diagram elements. | Must | M1 | D53 | Round-trip spec over the corpus: every node, edge and subgraph maps source ↔ SVG element; AST types published in the API docs |
 | R-PARSE-9 | Each diagram type has a concise grammar file (EBNF with lexer modes) that is the normative definition of its syntax. The hand-written parser must conform to it. A parser generated from the grammar is used only in dev and CI, as a differential oracle and to generate fuzz sentences. The grammar also generates the syntax highlighters (TextMate, Monarch, Lezer) and the syntax reference docs. | Must | M1 | D54 | Flowchart grammar committed; CI differential test (grammar parser vs hand-written) green over corpus + generated sentences; highlighters built from it |
@@ -179,7 +178,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-THEME-4 | Derived colours (borders, hover, secondary and tertiary fills, contrast text) are computed in CSS with `color-mix()`/`var()` from the base variables, with a computed fallback. Overriding a base variable updates its derived colours. | Must | M1 | D39 | Browser test overriding `--mermaid-primaryColor` |
 | R-THEME-5 | A theme can be fully specified with a small set of base variables (target ≤ 8: primary, secondary, tertiary, background, text, line, font family, font size). | Must | M1 | D20 | Doc + spec: base-only theme renders fully |
 | R-THEME-6 | Built-in themes redux (the default when no theme is set), `default`, `dark`, `forest`, `neutral` and `base` are supported, with recognisably the same palettes as v12. | Must | M1 | D20, D55, P1 | Visual baseline |
-| R-THEME-7 | The remaining v12 themes are supported as well, either in core or as theme packages. | Should | M3 | P1 | See open item O-2 |
+| R-THEME-7 | The remaining v12 themes are supported as well, either in core or as theme packages. | Must | M3 | P1, D64 | See open item O-2 |
 | R-THEME-8 | Optional `theme: 'auto'` follows the OS light/dark setting via a variables-only `<style>` with `prefers-color-scheme`. | Could | M1 | D20 | Browser test with emulated colour scheme |
 | R-THEME-9 | Built-in themes meet WCAG AA contrast for text on fills, in both light and dark. | Must | M1 | D29 | Automated contrast check over theme tokens |
 | R-THEME-10 | Colour handling has no runtime dependency (no khroma). | Must | M1 | D10, D39 | R-PERF-2 |
@@ -274,7 +273,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 
 | ID | Requirement | Pri | MS | Src | Acceptance |
 | --- | --- | --- | --- | --- | --- |
-| R-TEST-1 | A parity oracle runs v13 against `mermaid@12` over the external 10,000+ diagram set, following the Chevrotain branch pattern (`PARSE_FIXTURE_PATH` corpus run + DB-snapshot parity). | Must | M1 | D15 | Oracle job; corpus location documented |
+| R-TEST-1 | A parity oracle runs v13 against `mermaid@12` over the external 10,000+ diagram set, following the Chevrotain branch pattern (`PARSE_FIXTURE_PATH` corpus run + DB-snapshot parity). | Must | M1 | D15, D65 | Oracle job run by QA (not in CI); corpus location documented |
 | R-TEST-2 | In-repo corpora include e2e `.mmd` fixtures, docs examples and the 158-diagram benchmark corpus. | Must | M1 | D15, D26 | Runs in PR CI |
 | R-TEST-3 | v12 unit specs are ported for each ported diagram type. | Must | M1 | D15 | Ported spec count reported |
 | R-TEST-4 | Property tests run over the whole corpus: well-formed SVG, the allow-list, determinism, and no NaN or Infinity. | Must | M1 | D26 | Vitest suite |
@@ -304,13 +303,13 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 
 ## 24. Open items and assumptions to confirm
 
-- **O-1. Theme variable inventory.** v12 has about 270 theme variables. R-THEME-2 exposes "every variable a diagram uses". DESIGN must decide which ones are base and which derived, and how per-diagram variables (e.g. `pie1…pie12`, `git0…7`) map to CSS.
-- **O-2. The other v12 themes.** v12 ships 11 themes. This draft makes the 5 documented ones Must and the rest Should (R-THEME-7). Confirm which of the other 6 matter.
-- **O-3. Parity-corpus location and licensing.** The 10,000+ diagram set lives outside the repo. Decide where CI reads it from and whether any of it can be committed.
+- **O-1. Theme variable inventory.** v12 has about 270 theme variables. R-THEME-2 exposes "every variable a diagram uses". DESIGN must decide which ones are base and which derived, and how per-diagram variables (e.g. `pie1…pie12`, `git0…7`) map to CSS. Confirmed 2026-11-02: settled in DESIGN.
+- **O-2. The other v12 themes.** v12 ships 11 themes. This draft makes the 5 documented ones Must and the rest Should (R-THEME-7). Resolved 2026-11-02: keep all 11 for parity; R-THEME-7 is now Must.
+- **O-3. Parity-corpus location and licensing.** The 10,000+ diagram set lives outside the repo. Decided 2026-11-02: it is not run in CI. Quality assurance runs it; CI uses the in-repo corpora. Still open: where QA reads it from and whether any of it can be committed.
 - **O-4. Reference runner.** R-PERF-7 needs a stable machine for per-stage regression checks. GitHub-hosted runners vary by ±20%.
 - **O-5. HTML subset in labels.** R-TEXT-3 lists a minimal subset. Check the corpus for other tags in real use (`<sub>`, `<sup>`, `<u>`, `<a>`) before freezing the list.
-- **O-6. Number targets.** R-PERF-9 (≤ 15 ms ready) and R-THEME-5 (≤ 8 base variables) are my proposals and were not discussed.
-- **O-7. Pele layout: port or depend.** The layered layout (R-LAYOUT) is derived from Pele. Decide whether to port the code into core (we own and adapt it; MIT attribution per R-REL) or depend on Pele's published package (upstream fixes for free, but an external runtime dependency against R-PERF-2, and less control over the API and determinism).
+- **O-6. Number targets.** R-PERF-9 (≤ 15 ms ready) and R-THEME-5 (≤ 8 base variables) are my proposals. Accepted 2026-11-02.
+- **O-7. Pele layout: port or depend.** The layered layout (R-LAYOUT) is derived from Pele. Decide whether to port the code into core (we own and adapt it; MIT attribution per R-REL) or depend on Pele's published package (upstream fixes for free, but an external runtime dependency against R-PERF-2, and less control over the API and determinism). Decided 2026-11-02: port.
 
 ## 25. Open questions for alpha
 
