@@ -1,0 +1,3962 @@
+# Used for VS Code's YAML plugin to automatically error on invalid types
+# yaml-language-server: $schema=https://json-schema.org/draft/2019-09/schema
+
+# The MermaidConfig JSON Schema, moved here from v12's
+# `packages/mermaid/src/schemas/config.schema.yaml`. It is the single source of truth
+# for config (R-CONF-4, D60). `pnpm gen:config` generates from it:
+#   - `packages/core/src/config/generated/config.type.ts`: the `MermaidConfig` types
+#   - `packages/core/src/config/generated/defaults.ts`: top-level defaults
+#   - `packages/core/src/config/generated/keys.ts`: the key tree resolveConfig checks against
+#   - `packages/diagram-<type>/src/generated/config-defaults.ts`: each ported diagram's section
+#   - `v13/docs/config-reference.md` and the config section of `v13/docs/MIGRATION.md`
+# `pnpm check` fails when any of them is stale or a key lacks an annotation.
+#
+# Every key under any `properties:` carries an `x-mermaid` annotation:
+#   status: honoured | ignored | pending | removed | moved
+#     honoured  v13 implements it
+#     ignored   accepted, has no effect in v13 (give `reason`)
+#     pending   accepted, honoured once its diagram type or feature lands (R-CONF-5)
+#     removed   warns and is dropped (give `reason` or `replacement`); left out of the types
+#     moved     warns; lives in the package named by `movedTo`
+#   since, movedTo, replacement, reason: optional strings
+# A key reached through a YAML alias shares its anchor's annotation.
+#
+# Useful things to know when editing this file
+# - Use the `|` character for multi-line strings
+# - Use `meta:enum` to document enum values
+# - Use `tsType` to override the TypeScript type (from json-schema-to-typescript)
+$id: https://mermaid.js.org/schemas/config.schema.json
+$schema: https://json-schema.org/draft/2019-09/schema
+title: Mermaid Config
+type: object
+additionalProperties: false
+required:
+  - fontFamily
+  - logLevel
+  - securityLevel
+  - startOnLoad
+  - arrowMarkerAbsolute
+  - flowchart
+  - sequence
+  - gantt
+  - journey
+  - class
+  - state
+  - er
+  - pie
+  - quadrantChart
+  - xyChart
+  - requirement
+  - architecture
+  - mindmap
+  - kanban
+  - gitGraph
+  - c4
+  - sankey
+  - packet
+  - block
+  - treeView
+  - look
+  - eventmodeling
+  - radar
+  - usecase
+  - venn
+properties:
+  theme:
+    $ref: '#/$defs/BaseDiagramConfig/properties/theme'
+    default: 'redux'
+    x-mermaid:
+      status: pending
+      reason: Honoured when core/theme lands. The default changes from `default` to `redux` (D55).
+  themeVariables:
+    tsType: any
+    x-mermaid: { status: pending }
+  themeCSS:
+    type: string
+    x-mermaid:
+      status: ignored
+      since: 13.0.0
+      reason: v13 output carries no author stylesheet (R-SEC-2).
+      replacement: '`themeVariables`, or `--mermaid-*` CSS variables set by the host page'
+  look:
+    $ref: '#/$defs/BaseDiagramConfig/properties/look'
+    default: 'classic'
+    x-mermaid: { status: pending }
+  handDrawnSeed:
+    description: |
+      Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed.
+    type: number
+    default: 0
+    x-mermaid: { status: pending }
+  layout:
+    $ref: '#/$defs/BaseDiagramConfig/properties/layout'
+    description: |
+      Defines which layout algorithm to use for rendering the diagram.
+
+      Defaults to `dagre`, the layered layout built into core. ELK is an
+      optional plugin.
+    default: 'dagre'
+    x-mermaid:
+      status: pending
+      reason: 'The default changes from `elk` to `dagre`: ELK becomes an optional plugin (R-PLUG-8).'
+  maxTextSize:
+    description: The maximum allowed size of the users text diagram
+    type: number
+    default: 50000
+    x-mermaid: { status: pending }
+  maxEdges:
+    description: |
+      Defines the maximum number of edges that can be drawn in a graph.
+    type: integer
+    default: 500
+    minimum: 0
+    x-mermaid: { status: pending }
+  elk:
+    type: object
+    properties:
+      mergeEdges:
+        description: |
+          Elk specific option that allows edges to share path where it convenient. It can make for pretty diagrams but can also make it harder to read the diagram.
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      nodePlacementStrategy:
+        description: |
+          Elk specific option affecting how nodes are placed.
+        type: string
+        enum:
+          - SIMPLE
+          - NETWORK_SIMPLEX
+          - LINEAR_SEGMENTS
+          - BRANDES_KOEPF
+        x-mermaid: { status: pending }
+        # Default comes from `elk.preset` unless set explicitly.
+      nodePlacementAlignment:
+        description: |
+          Elk specific option affecting Brandes-Koepf node placement alignment.
+          BALANCED combines the four directional alignments; NONE picks the
+          smallest result. Defaults to BALANCED for the default preset and NONE
+          for named non-default presets.
+        type: string
+        enum:
+          - NONE
+          - LEFTUP
+          - LEFTDOWN
+          - RIGHTUP
+          - RIGHTDOWN
+          - BALANCED
+        x-mermaid: { status: pending }
+        # Default comes from `elk.preset` unless set explicitly.
+      preset:
+        description: |
+          Named combination of layering, node placement, placement alignment
+          and cycle breaking options. Explicit options override the preset for
+          that option; the remaining preset values still apply.
+
+          `default` — network simplex layering, balanced Brandes-Koepf placement
+          at the top level and inside subgraphs, and depth-first cycle breaking.
+          Balanced placement favors centered branches and composite-state entries,
+          sometimes at the cost of a wider or taller drawing. It does not
+          guarantee that every edge attaches to the center of its target.
+
+          `legacy` — Brandes-Koepf placement with NONE alignment and ELK's own
+          greedy cycle breaking. Reproduces the rendering before presets existed.
+
+          `modelOrder` — network simplex layering and top-level placement,
+          Brandes-Koepf placement inside subgraphs, NONE alignment, and greedy
+          model-order cycle breaking, which favors declaration order.
+
+          `depthFirst` — the previous default: network simplex layering and
+          top-level placement, Brandes-Koepf placement inside subgraphs, NONE
+          alignment, and depth-first cycle breaking.
+
+          Setting `layeringStrategy`, `nodePlacementStrategy`,
+          `nodePlacementAlignment` or `cycleBreakingStrategy` explicitly overrides
+          the preset for that option, including an explicit NONE alignment.
+        type: string
+        enum:
+          - default
+          - legacy
+          - modelOrder
+          - depthFirst
+        default: default
+        x-mermaid: { status: pending }
+      straightenEdges:
+        description: |
+          Straightens an edge that leaves or enters a node with a tiny step.
+
+          ELK spreads an edge's port evenly along a node's side but routes the
+          edge down a channel whose row rarely lines up with that port exactly,
+          leaving a staircase of a few pixels right at the border. With rounded
+          corners the two micro-bends land on top of each other and read as a
+          kink. Enabling this moves the channel onto the port's row and drops
+          the step, so the edge draws as one straight line and both ports stay
+          exactly where the layout put them.
+
+          Only the step next to a node is touched, and only when the edge
+          continues the same way afterwards, so a real turn is never collapsed.
+          An edge is left alone entirely when moving its run would drag the far
+          port, or would introduce a crossing.
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      lineHops:
+        description: |
+          Renders edge crossings as small arcs ("hops") or visible gaps, so that
+          it is clear which line passes over which where two edges meet.
+
+          The edge that gives way loses its corner rounding for the segment
+          carrying the hop, which is the trade for a readable crossing. Curved
+          edges are skipped rather than rewritten, to avoid corrupting their
+          geometry. Set to `false` to draw plain crossings.
+        oneOf:
+          - type: boolean
+          - type: string
+            enum: ['arc', 'gap']
+        default: true
+        x-mermaid: { status: pending }
+      layeringStrategy:
+        description: |
+          Elk specific option deciding which layer each node is assigned to — the
+          column in a left-to-right diagram, the row in a top-down one. This is
+          the coarsest of the three placement decisions, so changing it moves
+          nodes further than anything else short of altering spacing.
+
+          NETWORK_SIMPLEX aims for the fewest long edges. LONGEST_PATH pushes
+          every node as late as it can go. COFFMAN_GRAHAM bounds how many nodes
+          share a layer, giving a more even, block-like shape on wide graphs.
+          MIN_WIDTH and STRETCH_WIDTH trade edge length for a narrower or wider
+          drawing. INTERACTIVE honours positions already on the nodes.
+        type: string
+        enum:
+          - NETWORK_SIMPLEX
+          - LONGEST_PATH
+          - LONGEST_PATH_SOURCE
+          - COFFMAN_GRAHAM
+          - MIN_WIDTH
+          - STRETCH_WIDTH
+          - INTERACTIVE
+        x-mermaid: { status: pending }
+        # Default comes from `elk.preset` unless set explicitly.
+      layeringLayerBound:
+        description: |
+          Elk specific option capping how many nodes COFFMAN_GRAHAM will put in
+          one layer. Ignored by every other layering strategy. Lower values give
+          a taller, narrower drawing.
+        type: number
+        default: 4
+        x-mermaid: { status: pending }
+      cycleBreakingStrategy:
+        description: |
+          This strategy decides how to find cycles in the graph and deciding which edges need adjustment to break loops.
+        type: string
+        enum:
+          - GREEDY
+          - DEPTH_FIRST
+          - INTERACTIVE
+          - MODEL_ORDER
+          - GREEDY_MODEL_ORDER
+        x-mermaid: { status: pending }
+        # Default comes from `elk.preset` unless set explicitly.
+      forceNodeModelOrder:
+        description: |
+          The node order given by the model does not change to produce a better layout. E.g. if node A is before node B in the model this is not changed during crossing minimization. This assumes that the node model order is already respected before crossing minimization. This can be achieved by setting considerModelOrder.strategy to NODES_AND_EDGES.
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      considerModelOrder:
+        description: |
+          Preserves the order of nodes and edges in the model file if this does not lead to additional edge crossings. Depending on the strategy this is not always possible since the node and edge order might be conflicting.
+        type: string
+        enum:
+          - NONE
+          - NODES_AND_EDGES
+          - PREFER_EDGES
+          - PREFER_NODES
+        default: 'NODES_AND_EDGES'
+        x-mermaid: { status: pending }
+      keepEntryNodeOnTop:
+        description: |
+          Elk specific option that keeps the entry node of a recursive flow at the top of the layout.
+
+          When a flow loops back on itself (a back-edge to an earlier node), ELK's degree-based cycle-breaking has no notion of an "entry point" and may rank the first-declared node in the middle, scrambling the reading order. When enabled, the entry node of each cyclic component is pinned to the first layer so the diagram still reads from its entry. Acyclic flows always have a natural source, so this has no effect on them.
+
+          Only applies when the cyclic flow has no node without incoming edges: if the loop is fed from outside (e.g. a start node pointing into it), that component already has a natural source and nothing is pinned. Detection is also scoped per container, so cycles that cross a subgraph boundary are not detected.
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      orientFeedbackEdges:
+        description: |
+          Routes an edge that re-enters a subgraph downstream instead of around the subgraph.
+
+          ELK lays out a subgraph as one node of its parent graph. A node outside a subgraph that both receives an edge from it and sends one back into it therefore closes a cycle there, even when the nodes inside do not. ELK breaks that cycle by reversing one of the edges and routes it into the subgraph's input side, around the outside of the subgraph.
+
+          When enabled, such edges are found before layout, on the graph with each subgraph collapsed, and handed to ELK in the other direction. The edge is drawn with its arrowhead at its real target. Cycles between plain nodes are left to `cycleBreakingStrategy`.
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+    x-mermaid:
+      status: pending
+      reason: ELK layout moves to an optional plugin package (R-PLUG-8).
+  darkMode:
+    type: boolean
+    default: false
+    x-mermaid: { status: pending }
+  htmlLabels:
+    description: |
+      Flag for setting whether or not a html tag should be used for rendering labels on nodes and edges.
+      **Note:** Diagram-specific `htmlLabels` settings (e.g., `flowchart.htmlLabels`) are deprecated.
+      Use this root-level `htmlLabels` setting instead. The root-level `htmlLabels` takes precedence
+      over any diagram-specific settings.
+    type: boolean
+    x-mermaid:
+      status: removed
+      since: 13.0.0
+      reason: Labels are SVG text only; there is no HTML label mode (D5).
+      replacement: none; labels support a markdown subset rendered as SVG text
+  fontFamily:
+    description: |
+      Specifies the font to be used in the rendered diagrams.
+      Can be any possible CSS `font-family`.
+      See https://developer.mozilla.org/en-US/docs/Web/CSS/font-family
+    type: string
+    default: '"trebuchet ms", verdana, arial, sans-serif;'
+    x-mermaid: { status: pending }
+  altFontFamily:
+    # TODO: seems to be unused, except for in tests
+    type: string
+    x-mermaid:
+      status: ignored
+      since: 13.0.0
+      reason: Unused by every renderer, also in v12.
+  logLevel:
+    description: |
+      This option decides the amount of logging to be used by mermaid.
+    type:
+      - string
+      - number
+    enum:
+      - trace
+      - 0
+      - debug
+      - 1
+      - info
+      - 2
+      - warn
+      - 3
+      - error
+      - 4
+      - fatal
+      - 5
+    meta:enum:
+      trace: Equivalent to 0
+      debug: Equivalent to 1
+      info: Equivalent to 2
+      warn: Equivalent to 3
+      error: Equivalent to 4
+      fatal: Equivalent to 5 (default)
+    default: 5
+    x-mermaid:
+      status: ignored
+      since: 13.0.0
+      reason: v13 does not log; problems are returned in `RenderResult.warnings`.
+  securityLevel:
+    description: Level of trust for parsed diagram
+    type: string
+    enum:
+      - strict
+      - loose
+      - antiscript
+      - sandbox
+    meta:enum:
+      strict: (**default**) HTML tags in the text are encoded and click functionality is disabled.
+      antiscript: HTML tags in text are allowed (only script elements are removed), and click functionality is enabled.
+      loose: HTML tags in text are allowed and click functionality is enabled.
+      sandbox: |
+        With this security level, all rendering takes place in a sandboxed iframe.
+        This prevent any JavaScript from running in the context.
+        This may hinder interactive functionality of the diagram, like scripts, popups in the sequence diagram, or links to other tabs or targets, etc.
+    default: strict
+    x-mermaid:
+      status: pending
+      reason: Kept with two levels; `loose`, `antiscript` and `sandbox` act as the default with a warning (D48).
+  startOnLoad:
+    description: Dictates whether mermaid starts on Page load
+    type: boolean
+    default: true
+    x-mermaid: { status: pending }
+  arrowMarkerAbsolute:
+    # YAML anchor, can be used later with `*arrowMarkerAbsolute`
+    &arrowMarkerAbsolute
+    description: |
+      Controls whether or arrow markers in html code are absolute paths or anchors.
+      This matters if you are using base tag settings.
+    type: boolean
+    default: false
+    x-mermaid:
+      status: ignored
+      since: 13.0.0
+      reason: Arrowheads are inline paths, not `<marker>` references.
+  secure:
+    description: |
+      This option controls which `currentConfig` keys are considered secure and
+      can only be changed via call to `mermaid.initialize`.
+      This prevents malicious graph directives from overriding a site's default security.
+    default:
+      [
+        'secure',
+        'securityLevel',
+        'startOnLoad',
+        'maxTextSize',
+        'suppressErrorRendering',
+        'maxEdges',
+      ]
+    type: array
+    items:
+      type: string
+    uniqueItems: false # Should be enabled, but it may be a breaking change from the old config
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+  legacyMathML:
+    description: |
+      This option specifies if Mermaid can expect the dependent to include KaTeX stylesheets for browsers
+      without their own MathML implementation. If this option is disabled and MathML is not supported, the math
+      equations are replaced with a warning. If this option is enabled and MathML is not supported, Mermaid will
+      fall back to legacy rendering for KaTeX.
+    type: boolean
+    default: false
+    x-mermaid: { status: pending }
+  forceLegacyMathML:
+    description: |
+      This option forces Mermaid to rely on KaTeX's own stylesheet for rendering MathML. Due to differences between OS
+      fonts and browser's MathML implementation, this option is recommended if consistent rendering is important.
+      If set to true, ignores legacyMathML.
+    type: boolean
+    default: false
+    x-mermaid: { status: pending }
+  deterministicIds:
+    description: |
+      This option controls if the generated ids of nodes in the SVG are
+      generated randomly or based on a seed.
+      If set to `false`, the IDs are generated based on the current date and
+      thus are not deterministic. This is the default behavior.
+
+      This matters if your files are checked into source control e.g. git and
+      should not change unless content is changed.
+    type: boolean
+    default: false
+    x-mermaid: { status: pending }
+  deterministicIDSeed:
+    description: |
+      This option is the optional seed for deterministic ids.
+      If set to `undefined` but deterministicIds is `true`, a simple number iterator is used.
+      You can set this attribute to base the seed on a static string.
+    type: string
+    x-mermaid: { status: pending }
+  flowchart:
+    $ref: '#/$defs/FlowchartDiagramConfig'
+    x-mermaid: { status: pending }
+  swimlane:
+    $ref: '#/$defs/SwimlaneDiagramConfig'
+    x-mermaid: { status: pending }
+  agentflow:
+    $ref: '#/$defs/AgentflowDiagramConfig'
+    x-mermaid: { status: pending }
+  sequence:
+    $ref: '#/$defs/SequenceDiagramConfig'
+    x-mermaid: { status: pending }
+  gantt:
+    $ref: '#/$defs/GanttDiagramConfig'
+    x-mermaid: { status: pending }
+  journey:
+    $ref: '#/$defs/JourneyDiagramConfig'
+    x-mermaid: { status: pending }
+  timeline:
+    $ref: '#/$defs/TimelineDiagramConfig'
+    x-mermaid: { status: pending }
+  class:
+    $ref: '#/$defs/ClassDiagramConfig'
+    x-mermaid: { status: pending }
+  state:
+    $ref: '#/$defs/StateDiagramConfig'
+    x-mermaid: { status: pending }
+  er:
+    $ref: '#/$defs/ErDiagramConfig'
+    x-mermaid: { status: pending }
+  pie:
+    $ref: '#/$defs/PieDiagramConfig'
+    x-mermaid: { status: pending }
+  quadrantChart:
+    $ref: '#/$defs/QuadrantChartConfig'
+    x-mermaid: { status: pending }
+  xyChart:
+    $ref: '#/$defs/XYChartConfig'
+    x-mermaid: { status: pending }
+  requirement:
+    $ref: '#/$defs/RequirementDiagramConfig'
+    x-mermaid: { status: pending }
+  architecture:
+    $ref: '#/$defs/ArchitectureDiagramConfig'
+    x-mermaid: { status: pending }
+  mindmap:
+    $ref: '#/$defs/MindmapDiagramConfig'
+    x-mermaid: { status: pending }
+  ishikawa:
+    $ref: '#/$defs/IshikawaDiagramConfig'
+    x-mermaid: { status: pending }
+  kanban:
+    $ref: '#/$defs/KanbanDiagramConfig'
+    x-mermaid: { status: pending }
+  gitGraph:
+    $ref: '#/$defs/GitGraphDiagramConfig'
+    x-mermaid: { status: pending }
+  c4:
+    $ref: '#/$defs/C4DiagramConfig'
+    x-mermaid: { status: pending }
+  sankey:
+    $ref: '#/$defs/SankeyDiagramConfig'
+    x-mermaid: { status: pending }
+  packet:
+    $ref: '#/$defs/PacketDiagramConfig'
+    x-mermaid: { status: pending }
+  block:
+    $ref: '#/$defs/BlockDiagramConfig'
+    x-mermaid: { status: pending }
+  eventmodeling:
+    $ref: '#/$defs/EventModelingDiagramConfig'
+    x-mermaid: { status: pending }
+  treeView:
+    $ref: '#/$defs/TreeViewDiagramConfig'
+    x-mermaid: { status: pending }
+  radar:
+    $ref: '#/$defs/RadarDiagramConfig'
+    x-mermaid: { status: pending }
+  usecase:
+    $ref: '#/$defs/UsecaseDiagramConfig'
+    x-mermaid: { status: pending }
+  venn:
+    $ref: '#/$defs/VennDiagramConfig'
+    x-mermaid: { status: pending }
+  wardley-beta:
+    $ref: '#/$defs/WardleyDiagramConfig'
+    x-mermaid: { status: pending }
+  cynefin:
+    $ref: '#/$defs/CynefinDiagramConfig'
+    x-mermaid: { status: pending }
+  railroad:
+    $ref: '#/$defs/RailroadDiagramConfig'
+    x-mermaid: { status: pending }
+  dompurifyConfig:
+    title: DOM Purify Configuration
+    description: Configuration options to pass to the `dompurify` library.
+    type: object
+    tsType: "import('dompurify').Config"
+    x-mermaid:
+      status: removed
+      since: 13.0.0
+      reason: 'v13 has no HTML sanitizer: output is safe by construction (R-SEC-1).'
+      replacement: none
+  wrap:
+    type: boolean
+    x-mermaid: { status: pending }
+  fontSize:
+    type: number
+    default: 16
+    x-mermaid: { status: pending }
+  markdownAutoWrap:
+    type: boolean
+    default: true
+    x-mermaid: { status: pending }
+  suppressErrorRendering:
+    type: boolean
+    default: false
+    description: |
+      Suppresses inserting 'Syntax error' diagram in the DOM.
+      This is useful when you want to control how to handle syntax errors in your application.
+    x-mermaid: { status: pending }
+
+$defs:
+  # JSON Schema definition (maybe we should move these to a separate file)
+  BaseDiagramConfig:
+    # TODO: More config needs to be moved here
+    title: Base Diagram Config
+    type: object
+    properties:
+      useWidth:
+        type: number
+        x-mermaid: { status: pending }
+      useMaxWidth:
+        description: |
+          When this flag is set to `true`, the height and width is set to 100%
+          and is then scaled with the available space.
+          If set to `false`, the absolute space required is used.
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      # Declared here as well as at the top level so a diagram type can carry its own
+      # default; the top-level properties `$ref` these, keeping the enums written once.
+      # Resolution, highest first: frontmatter/directive, `initialize()`, this diagram
+      # type's default, the top-level default. Diagram-scoped beats global within a layer.
+      theme:
+        description: |
+          Theme, the CSS style sheet.
+          You may also use `themeCSS` to override this value.
+        type: string
+        enum:
+          - default
+          - base
+          - dark
+          - forest
+          - neutral
+          - neo
+          - neo-dark
+          - redux
+          - redux-dark
+          - redux-color
+          - redux-dark-color
+          - 'null' # should this be a `null`-type?
+        meta:enum:
+          'null': Can be set to disable any pre-defined mermaid theme
+        x-mermaid: { status: pending }
+      look:
+        description: |
+          Defines which main look to use for the diagram.
+        type: string
+        enum:
+          - classic
+          - handDrawn
+          - neo
+        x-mermaid: { status: pending }
+      layout:
+        description: |
+          Defines which layout algorithm to use for rendering the diagram.
+        type: string
+        x-mermaid: { status: pending }
+  C4DiagramConfig:
+    title: C4 Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for c4 diagrams
+    type: object
+    unevaluatedProperties: false
+    required:
+      - diagramMarginX
+      - diagramMarginY
+      - c4ShapeMargin
+      - c4ShapePadding
+      - width
+      - height
+      - boxMargin
+      - useMaxWidth
+      - c4ShapeInRow
+      - c4BoundaryInRow
+    properties:
+      diagramMarginX:
+        description: |
+          Margin to the right and left of the c4 diagram, must be a positive value.
+        type: integer
+        default: 50
+        minimum: 0
+        x-mermaid: { status: pending }
+      diagramMarginY:
+        description: |
+          Margin to the over and under the c4 diagram, must be a positive value.
+        type: integer
+        default: 10
+        minimum: 0
+        x-mermaid: { status: pending }
+      c4ShapeMargin:
+        description: Margin between shapes
+        type: integer
+        default: 50
+        minimum: 0
+        x-mermaid: { status: pending }
+      c4ShapePadding:
+        description: Padding between shapes
+        type: integer
+        default: 20
+        minimum: 0
+        x-mermaid: { status: pending }
+      width:
+        description: Width of person boxes
+        type: integer
+        default: 216
+        minimum: 0
+        x-mermaid: { status: pending }
+      height:
+        description: Height of person boxes
+        type: integer
+        default: 60
+        minimum: 0
+        x-mermaid: { status: pending }
+      boxMargin:
+        description: Margin around boxes
+        type: integer
+        default: 10
+        minimum: 0
+        x-mermaid: { status: pending }
+      c4ShapeInRow:
+        description: How many shapes to place in each row.
+        type: integer
+        default: 4
+        minimum: 0
+        x-mermaid: { status: pending }
+      nextLinePaddingX:
+        # TODO: add description
+        type: number
+        default: 0
+        x-mermaid: { status: pending }
+      c4BoundaryInRow:
+        description: How many boundaries to place in each row.
+        type: integer
+        default: 2
+        minimum: 0
+        x-mermaid: { status: pending }
+
+      # --------------------------------------------------------------------- #
+      # Default font values
+      # --------------------------------------------------------------------- #
+      personFontSize:
+        description: This sets the font size of Person shape for the diagram
+        type: &fontSizeType ['string', 'number'] # YAML anchor
+        default: 14
+        x-mermaid: { status: pending }
+      personFontFamily:
+        description: This sets the font weight of Person shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      personFontWeight:
+        description: This sets the font weight of Person shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      external_personFontSize:
+        description: This sets the font size of External Person shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      external_personFontFamily:
+        description: This sets the font family of External Person shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      external_personFontWeight:
+        description: This sets the font weight of External Person shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      systemFontSize:
+        description: This sets the font size of System shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      systemFontFamily:
+        description: This sets the font family of System shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      systemFontWeight:
+        description: This sets the font weight of System shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      external_systemFontSize:
+        description: This sets the font size of External System shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      external_systemFontFamily:
+        description: This sets the font family of External System shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      external_systemFontWeight:
+        description: This sets the font weight of External System shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      system_dbFontSize:
+        description: This sets the font size of System DB shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      system_dbFontFamily:
+        description: This sets the font family of System DB shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      system_dbFontWeight:
+        description: This sets the font weight of System DB shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      external_system_dbFontSize:
+        description: This sets the font size of External System DB shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      external_system_dbFontFamily:
+        description: This sets the font family of External System DB shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      external_system_dbFontWeight:
+        description: This sets the font weight of External System DB shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      system_queueFontSize:
+        description: This sets the font size of System Queue shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      system_queueFontFamily:
+        description: This sets the font family of System Queue shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      system_queueFontWeight:
+        description: This sets the font weight of System Queue shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      external_system_queueFontSize:
+        description: This sets the font size of External System Queue shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      external_system_queueFontFamily:
+        description: This sets the font family of External System Queue shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      external_system_queueFontWeight:
+        description: This sets the font weight of External System Queue shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      boundaryFontSize:
+        description: This sets the font size of Boundary shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      boundaryFontFamily:
+        description: This sets the font family of Boundary shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      boundaryFontWeight:
+        description: This sets the font weight of Boundary shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      messageFontSize:
+        description: This sets the font size of Message shape for the diagram
+        type: *fontSizeType
+        default: 12
+        x-mermaid: { status: pending }
+      messageFontFamily:
+        description: This sets the font family of Message shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      messageFontWeight:
+        description: This sets the font weight of Message shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+
+      containerFontSize:
+        description: This sets the font size of Container shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      containerFontFamily:
+        description: This sets the font family of Container shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      containerFontWeight:
+        description: This sets the font weight of Container shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      external_containerFontSize:
+        description: This sets the font size of External Container shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      external_containerFontFamily:
+        description: This sets the font family of External Container shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      external_containerFontWeight:
+        description: This sets the font weight of External Container shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+
+      container_dbFontSize:
+        description: This sets the font size of Container DB shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      container_dbFontFamily:
+        description: This sets the font family of Container DB shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      container_dbFontWeight:
+        description: This sets the font weight of Container DB shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      external_container_dbFontSize:
+        description: This sets the font size of External Container DB shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      external_container_dbFontFamily:
+        description: This sets the font family of External Container DB shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      external_container_dbFontWeight:
+        description: This sets the font weight of External Container DB shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+
+      container_queueFontSize:
+        description: This sets the font size of Container Queue shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      container_queueFontFamily:
+        description: This sets the font family of Container Queue shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      container_queueFontWeight:
+        description: This sets the font weight of Container Queue shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      external_container_queueFontSize:
+        description: This sets the font size of External Container Queue shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      external_container_queueFontFamily:
+        description: This sets the font family of External Container Queue shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      external_container_queueFontWeight:
+        description: This sets the font weight of External Container Queue shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+
+      componentFontSize:
+        description: This sets the font size of Component shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      componentFontFamily:
+        description: This sets the font family of Component shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      componentFontWeight:
+        description: This sets the font weight of Component shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      external_componentFontSize:
+        description: This sets the font size of External Component shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      external_componentFontFamily:
+        description: This sets the font family of External Component shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      external_componentFontWeight:
+        description: This sets the font weight of External Component shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+
+      component_dbFontSize:
+        description: This sets the font size of Component DB shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      component_dbFontFamily:
+        description: This sets the font family of Component DB shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      component_dbFontWeight:
+        description: This sets the font weight of Component DB shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      external_component_dbFontSize:
+        description: This sets the font size of External Component DB shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      external_component_dbFontFamily:
+        description: This sets the font family of External Component DB shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      external_component_dbFontWeight:
+        description: This sets the font weight of External Component DB shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+
+      component_queueFontSize:
+        description: This sets the font size of Component Queue shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      component_queueFontFamily:
+        description: This sets the font family of Component Queue shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      component_queueFontWeight:
+        description: This sets the font weight of Component Queue shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+      external_component_queueFontSize:
+        description: This sets the font size of External Component Queue shape for the diagram
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      external_component_queueFontFamily:
+        description: This sets the font family of External Component Queue shape for the diagram
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      external_component_queueFontWeight:
+        description: This sets the font weight of External Component Queue shape for the diagram
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
+
+      wrap:
+        description: This sets the auto-wrap state for the diagram
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      wrapPadding:
+        description: This sets the auto-wrap padding for the diagram (sides only)
+        type: number
+        default: 10
+        x-mermaid: { status: pending }
+
+      # --------------------------------------------------------------------- #
+      # Colors
+      # --------------------------------------------------------------------- #
+      person_bg_color:
+        type: string
+        default: '#08427B'
+        x-mermaid: { status: pending }
+      person_border_color:
+        type: string
+        default: '#073B6F'
+        x-mermaid: { status: pending }
+      external_person_bg_color:
+        type: string
+        default: '#686868'
+        x-mermaid: { status: pending }
+      external_person_border_color:
+        type: string
+        default: '#8A8A8A'
+        x-mermaid: { status: pending }
+      system_bg_color:
+        type: string
+        default: '#1168BD'
+        x-mermaid: { status: pending }
+      system_border_color:
+        type: string
+        default: '#3C7FC0'
+        x-mermaid: { status: pending }
+      system_db_bg_color:
+        type: string
+        default: '#1168BD'
+        x-mermaid: { status: pending }
+      system_db_border_color:
+        type: string
+        default: '#3C7FC0'
+        x-mermaid: { status: pending }
+      system_queue_bg_color:
+        type: string
+        default: '#1168BD'
+        x-mermaid: { status: pending }
+      system_queue_border_color:
+        type: string
+        default: '#3C7FC0'
+        x-mermaid: { status: pending }
+      external_system_bg_color:
+        type: string
+        default: '#999999'
+        x-mermaid: { status: pending }
+      external_system_border_color:
+        type: string
+        default: '#8A8A8A'
+        x-mermaid: { status: pending }
+      external_system_db_bg_color:
+        type: string
+        default: '#999999'
+        x-mermaid: { status: pending }
+      external_system_db_border_color:
+        type: string
+        default: '#8A8A8A'
+        x-mermaid: { status: pending }
+      external_system_queue_bg_color:
+        type: string
+        default: '#999999'
+        x-mermaid: { status: pending }
+      external_system_queue_border_color:
+        type: string
+        default: '#8A8A8A'
+        x-mermaid: { status: pending }
+      container_bg_color:
+        type: string
+        default: '#438DD5'
+        x-mermaid: { status: pending }
+      container_border_color:
+        type: string
+        default: '#3C7FC0'
+        x-mermaid: { status: pending }
+      container_db_bg_color:
+        type: string
+        default: '#438DD5'
+        x-mermaid: { status: pending }
+      container_db_border_color:
+        type: string
+        default: '#3C7FC0'
+        x-mermaid: { status: pending }
+      container_queue_bg_color:
+        type: string
+        default: '#438DD5'
+        x-mermaid: { status: pending }
+      container_queue_border_color:
+        type: string
+        default: '#3C7FC0'
+        x-mermaid: { status: pending }
+      external_container_bg_color:
+        type: string
+        default: '#B3B3B3'
+        x-mermaid: { status: pending }
+      external_container_border_color:
+        type: string
+        default: '#A6A6A6'
+        x-mermaid: { status: pending }
+      external_container_db_bg_color:
+        type: string
+        default: '#B3B3B3'
+        x-mermaid: { status: pending }
+      external_container_db_border_color:
+        type: string
+        default: '#A6A6A6'
+        x-mermaid: { status: pending }
+      external_container_queue_bg_color:
+        type: string
+        default: '#B3B3B3'
+        x-mermaid: { status: pending }
+      external_container_queue_border_color:
+        type: string
+        default: '#A6A6A6'
+        x-mermaid: { status: pending }
+      component_bg_color:
+        type: string
+        default: '#85BBF0'
+        x-mermaid: { status: pending }
+      component_border_color:
+        type: string
+        default: '#78A8D8'
+        x-mermaid: { status: pending }
+      component_db_bg_color:
+        type: string
+        default: '#85BBF0'
+        x-mermaid: { status: pending }
+      component_db_border_color:
+        type: string
+        default: '#78A8D8'
+        x-mermaid: { status: pending }
+      component_queue_bg_color:
+        type: string
+        default: '#85BBF0'
+        x-mermaid: { status: pending }
+      component_queue_border_color:
+        type: string
+        default: '#78A8D8'
+        x-mermaid: { status: pending }
+      external_component_bg_color:
+        type: string
+        default: '#CCCCCC'
+        x-mermaid: { status: pending }
+      external_component_border_color:
+        type: string
+        default: '#BFBFBF'
+        x-mermaid: { status: pending }
+      external_component_db_bg_color:
+        type: string
+        default: '#CCCCCC'
+        x-mermaid: { status: pending }
+      external_component_db_border_color:
+        type: string
+        default: '#BFBFBF'
+        x-mermaid: { status: pending }
+      external_component_queue_bg_color:
+        type: string
+        default: '#CCCCCC'
+        x-mermaid: { status: pending }
+      external_component_queue_border_color:
+        type: string
+        default: '#BFBFBF'
+        x-mermaid: { status: pending }
+
+      # Font Calculators
+      # By default, these all return the values from this configuration.
+      personFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      external_personFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      systemFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      external_systemFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      system_dbFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      external_system_dbFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      system_queueFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      external_system_queueFont:
+        { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      containerFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      external_containerFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      container_dbFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      external_container_dbFont:
+        { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      container_queueFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      external_container_queueFont:
+        { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      componentFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      external_componentFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      component_dbFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      external_component_dbFont:
+        { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      component_queueFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      external_component_queueFont:
+        { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      boundaryFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      messageFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+
+  GitGraphDiagramConfig:
+    title: Git Graph Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    type: object
+    unevaluatedProperties: false
+    required:
+      - titleTopMargin
+    properties:
+      titleTopMargin:
+        # TODO: I've removed the `Git` part from this description, so that I
+        # could $ref: "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin"
+        # this field in other diagrams
+        description: Margin top for the text over the diagram
+        type: integer
+        default: 25
+        minimum: 0
+        x-mermaid: { status: pending }
+      diagramPadding:
+        type: number
+        default: 8
+        x-mermaid: { status: pending }
+      nodeLabel:
+        allOf: [{ $ref: '#/$defs/NodeLabel' }]
+        type: object
+        default:
+          width: 75
+          height: 100
+          x: -25
+          y: 0
+        x-mermaid: { status: pending }
+      mainBranchName:
+        type: string
+        default: 'main'
+        x-mermaid: { status: pending }
+      mainBranchOrder:
+        type: number
+        default: 0
+        x-mermaid: { status: pending }
+      showCommitLabel:
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      showBranches:
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      rotateCommitLabel:
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      parallelCommits:
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      # YAML anchor reference, don't use $ref since ajv doesn't load defaults
+      arrowMarkerAbsolute: *arrowMarkerAbsolute
+
+  NodeLabel:
+    title: Node Label
+    type: object
+    properties:
+      width:
+        type: number
+        x-mermaid: { status: pending }
+      height:
+        type: number
+        x-mermaid: { status: pending }
+      x:
+        type: number
+        x-mermaid: { status: pending }
+      y:
+        type: number
+        x-mermaid: { status: pending }
+
+  RequirementDiagramConfig:
+    title: Requirement Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for req diagrams
+    type: object
+    unevaluatedProperties: false
+    required:
+      - useMaxWidth
+    properties:
+      theme:
+        $ref: '#/$defs/BaseDiagramConfig/properties/theme'
+        default: 'redux-color'
+        x-mermaid: { status: pending }
+      look:
+        $ref: '#/$defs/BaseDiagramConfig/properties/look'
+        default: 'neo'
+        x-mermaid: { status: pending }
+      rect_fill:
+        type: string
+        default: '#f9f9f9'
+        x-mermaid: { status: pending }
+      text_color:
+        type: string
+        default: '#333'
+        x-mermaid: { status: pending }
+      rect_border_size:
+        type: string
+        default: '0.5px'
+        x-mermaid: { status: pending }
+      rect_border_color:
+        type: string
+        default: '#bbb'
+        x-mermaid: { status: pending }
+      rect_min_width:
+        type: number
+        default: 200
+        x-mermaid: { status: pending }
+      rect_min_height:
+        type: number
+        default: 200
+        x-mermaid: { status: pending }
+      fontSize:
+        type: number # TODO, should this be `type: *fontSizeType` (aka string too)
+        default: 14
+        x-mermaid: { status: pending }
+      rect_padding:
+        type: number
+        default: 10
+        x-mermaid: { status: pending }
+      line_height:
+        type: number
+        default: 20
+        x-mermaid: { status: pending }
+
+  ArchitectureDiagramConfig:
+    title: Architecture Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for architecture diagrams
+    type: object
+    unevaluatedProperties: false
+    required:
+      - useMaxWidth
+      - padding
+      - iconSize
+      - fontSize
+      - randomize
+      - nodeSeparation
+      - idealEdgeLengthMultiplier
+      - edgeElasticity
+      - numIter
+      - seed
+    properties:
+      padding:
+        type: number
+        default: 40
+        x-mermaid: { status: pending }
+      iconSize:
+        type: number
+        default: 80
+        x-mermaid: { status: pending }
+      fontSize:
+        type: number
+        default: 16
+        x-mermaid: { status: pending }
+      randomize:
+        description: |
+          Whether to randomize initial node positions before running the layout algorithm.
+          When false (default), nodes start at deterministic seed positions. When true, nodes
+          start at random positions, which may produce varied but potentially better-spaced
+          layouts. Note: `randomize: false` alone does NOT guarantee identical renders, because
+          the underlying fcose layout still uses `Math.random()` internally during its
+          constraint solver — use the `seed` option for full determinism.
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      nodeSeparation:
+        description: |
+          Minimum separation (in pixels) between sibling nodes in the same group, passed through to the
+          underlying fcose layout. Increase to spread overlapping siblings apart when many edges share the
+          same port direction.
+        type: number
+        default: 75
+        x-mermaid: { status: pending }
+      idealEdgeLengthMultiplier:
+        description: |
+          Multiplier applied to `iconSize` to compute the ideal length of edges between nodes within the
+          same group. Increase to add breathing room; decrease to pack the diagram tighter. Edges crossing
+          group boundaries are unaffected and use a fixed shorter length.
+        type: number
+        default: 1.5
+        x-mermaid: { status: pending }
+      edgeElasticity:
+        description: |
+          Spring elasticity (0–1) applied to edges between nodes within the same group, passed through to
+          fcose. Higher values pull connected nodes closer together; lower values let the layout spread them
+          out. Edges crossing group boundaries are unaffected.
+        type: number
+        default: 0.45
+        x-mermaid: { status: pending }
+      numIter:
+        description: |
+          Maximum number of iterations the fcose layout algorithm runs before stopping. Increase for higher
+          quality on large or densely-connected diagrams at the cost of render time.
+        type: number
+        default: 2500
+        x-mermaid: { status: pending }
+      seed:
+        description: |
+          Deterministic seed for the fcose layout. Defaults to 1, which makes every render of the
+          same diagram produce the same layout — required for visual regression tests to be stable.
+          Set to 0 to opt out and use the unstubbed Math.random (the layout will still differ
+          slightly between renders, matching pre-fix behavior). Any other number selects a
+          different reproducible layout variant.
+        type: number
+        default: 1
+        x-mermaid: { status: pending }
+
+  MindmapDiagramConfig:
+    title: Mindmap Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for mindmap diagrams
+    type: object
+    unevaluatedProperties: false
+    required:
+      - useMaxWidth
+      - colorBy
+      - padding
+      - maxNodeWidth
+      - layoutAlgorithm
+    properties:
+      colorBy:
+        description: |
+          Color nodes by their top-level branch or by their depth in the tree.
+          Depth is counted from the root, independently of indentation width.
+        type: string
+        enum: ['branch', 'depth']
+        meta:enum:
+          branch: Descendants inherit the color of their top-level branch.
+          depth: Nodes at the same distance from the root share a color across branches.
+        default: 'branch'
+        x-mermaid: { status: pending }
+      padding:
+        type: number
+        default: 10
+        x-mermaid: { status: pending }
+      maxNodeWidth:
+        type: number
+        default: 200
+        x-mermaid: { status: pending }
+      layoutAlgorithm:
+        description: Layout algorithm to use for positioning mindmap nodes
+        type: string
+        default: 'cose-bilkent'
+        x-mermaid: { status: pending }
+
+  IshikawaDiagramConfig:
+    title: Ishikawa Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for ishikawa diagrams
+    type: object
+    properties:
+      diagramPadding:
+        description: |
+          The amount of padding around the diagram as a whole so that embedded
+          diagrams have margins, expressed in pixels.
+        type: integer
+        default: 20
+        minimum: 0
+        x-mermaid: { status: pending }
+      useMaxWidth:
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+
+  KanbanDiagramConfig:
+    title: Kanban Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for kanban diagrams
+    type: object
+    unevaluatedProperties: false
+    properties:
+      padding:
+        type: number
+        default: 8
+        x-mermaid: { status: pending }
+      sectionWidth:
+        type: number
+        default: 200
+        x-mermaid: { status: pending }
+      ticketBaseUrl:
+        type: string
+        default: ''
+        x-mermaid: { status: pending }
+
+  PieDiagramConfig:
+    title: Pie Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    type: object
+    unevaluatedProperties: false
+    properties:
+      textPosition:
+        type: number
+        minimum: 0
+        maximum: 1
+        description: |
+          Axial position of slice's label from zero at the center to 1 at the outside edges.
+        default: 0.75
+        x-mermaid: { status: pending }
+      donutHole:
+        type: number
+        minimum: 0
+        maximum: 0.9
+        description: |
+          Donut hole ratio. Valid value are from 0 to 0.9. Default to 0.
+        default: 0
+        x-mermaid: { status: pending }
+      legendPosition:
+        type: string
+        enum: ['top', 'bottom', 'left', 'right', 'center']
+        description: |
+          Legend's position relative to the chart. Default to right.
+        default: 'right'
+        x-mermaid: { status: pending }
+      highlightSlice:
+        type: string
+        description: |
+          Highlight specific slice with matching label. Set to 'hover' to highlight hovered slice.
+        default: ''
+        x-mermaid: { status: pending }
+
+  QuadrantChartConfig:
+    title: Quadrant Chart Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    type: object
+    unevaluatedProperties: false
+    required:
+      - chartWidth
+      - chartHeight
+      - titleFontSize
+      - titlePadding
+      - quadrantPadding
+      - xAxisLabelPadding
+      - yAxisLabelPadding
+      - xAxisLabelFontSize
+      - yAxisLabelFontSize
+      - quadrantLabelFontSize
+      - quadrantTextTopPadding
+      - pointTextPadding
+      - pointLabelFontSize
+      - pointRadius
+      - xAxisPosition
+      - yAxisPosition
+      - quadrantInternalBorderStrokeWidth
+      - quadrantExternalBorderStrokeWidth
+      - useMaxWidth
+    properties:
+      chartWidth:
+        description: Width of the chart
+        type: number
+        minimum: 0
+        default: 500
+        x-mermaid: { status: pending }
+      chartHeight:
+        description: Height of the chart
+        type: number
+        minimum: 0
+        default: 500
+        x-mermaid: { status: pending }
+      titleFontSize:
+        description: Chart title top and bottom padding
+        type: number
+        minimum: 0
+        default: 20
+        x-mermaid: { status: pending }
+      titlePadding:
+        description: Padding around the quadrant square
+        type: number
+        minimum: 0
+        default: 10
+        x-mermaid: { status: pending }
+      quadrantPadding:
+        description: quadrant title padding from top if the quadrant is rendered on top
+        type: number
+        minimum: 0
+        default: 5
+        x-mermaid: { status: pending }
+      xAxisLabelPadding:
+        description: Padding around x-axis labels
+        type: number
+        minimum: 0
+        default: 5
+        x-mermaid: { status: pending }
+      yAxisLabelPadding:
+        description: Padding around y-axis labels
+        type: number
+        minimum: 0
+        default: 5
+        x-mermaid: { status: pending }
+      xAxisLabelFontSize:
+        description: x-axis label font size
+        type: number
+        minimum: 0
+        default: 16
+        x-mermaid: { status: pending }
+      yAxisLabelFontSize:
+        description: y-axis label font size
+        type: number
+        minimum: 0
+        default: 16
+        x-mermaid: { status: pending }
+      quadrantLabelFontSize:
+        description: quadrant title font size
+        type: number
+        minimum: 0
+        default: 16
+        x-mermaid: { status: pending }
+      quadrantTextTopPadding:
+        description: quadrant title padding from top if the quadrant is rendered on top
+        type: number
+        minimum: 0
+        default: 5
+        x-mermaid: { status: pending }
+      pointTextPadding:
+        description: padding between point and point label
+        type: number
+        minimum: 0
+        default: 5
+        x-mermaid: { status: pending }
+      pointLabelFontSize:
+        description: point title font size
+        type: number
+        minimum: 0
+        default: 12
+        x-mermaid: { status: pending }
+      pointRadius:
+        description: radius of the point to be drawn
+        type: number
+        minimum: 0
+        default: 5
+        x-mermaid: { status: pending }
+      xAxisPosition:
+        description: position of x-axis labels
+        type: string
+        enum:
+          - top
+          - bottom
+        default: top
+        x-mermaid: { status: pending }
+      yAxisPosition:
+        description: position of y-axis labels
+        type: string
+        enum:
+          - left
+          - right
+        default: left
+        x-mermaid: { status: pending }
+      quadrantInternalBorderStrokeWidth:
+        description: stroke width of edges of the box that are inside the quadrant
+        type: number
+        minimum: 0
+        default: 1
+        x-mermaid: { status: pending }
+      quadrantExternalBorderStrokeWidth:
+        description: stroke width of edges of the box that are outside the quadrant
+        type: number
+        minimum: 0
+        default: 2
+        x-mermaid: { status: pending }
+
+  XYChartAxisConfig:
+    title: XYChart axis config
+    description: This object contains configuration for XYChart axis config
+    type: object
+    unevaluatedProperties: true
+    required:
+      - showLabel
+      - labelFontSize
+      - labelPadding
+      - showTitle
+      - titleFontSize
+      - titlePadding
+      - showTick
+      - tickLength
+      - tickWidth
+      - showAxisLine
+      - axisLineWidth
+      - labelRotation
+    properties:
+      showLabel:
+        description: Should show the axis labels (tick text)
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      labelFontSize:
+        description: font size of the axis labels (tick text)
+        type: number
+        default: 14
+        minimum: 1
+        x-mermaid: { status: pending }
+      labelPadding:
+        description: top and bottom space from axis label (tick text)
+        type: number
+        default: 5
+        minimum: 0
+        x-mermaid: { status: pending }
+      showTitle:
+        description: Should show the axis title
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      titleFontSize:
+        description: font size of the axis title
+        type: number
+        default: 16
+        minimum: 1
+        x-mermaid: { status: pending }
+      titlePadding:
+        description: top and bottom space from axis title
+        type: number
+        default: 5
+        minimum: 0
+        x-mermaid: { status: pending }
+      showTick:
+        description: Should show the axis tick lines
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      tickLength:
+        description: length of the axis tick lines
+        type: number
+        default: 5
+        minimum: 1
+        x-mermaid: { status: pending }
+      tickWidth:
+        description: width of the axis tick lines
+        type: number
+        default: 2
+        minimum: 1
+        x-mermaid: { status: pending }
+      showAxisLine:
+        description: Show line across the axis
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      axisLineWidth:
+        description: Width of the axis line
+        type: number
+        default: 2
+        minimum: 1
+        x-mermaid: { status: pending }
+      labelRotation:
+        description: Label rotation in degrees
+        type: number
+        default: 0
+        minimum: -90
+        maximum: 90
+        x-mermaid: { status: pending }
+
+  XYChartConfig:
+    title: XYChart Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: This object contains configuration specific to XYCharts
+    type: object
+    unevaluatedProperties: false
+    required:
+      - width
+      - height
+      - titleFontSize
+      - titlePadding
+      - xAxis
+      - yAxis
+      - showTitle
+      - chartOrientation
+      - plotReservedSpacePercent
+    properties:
+      width:
+        description: width of the chart
+        type: number
+        default: 700
+        minimum: 1
+        x-mermaid: { status: pending }
+      height:
+        description: height of the chart
+        type: number
+        default: 500
+        minimum: 1
+        x-mermaid: { status: pending }
+      titleFontSize:
+        description: Font size of the chart title
+        type: number
+        default: 20
+        minimum: 1
+        x-mermaid: { status: pending }
+      titlePadding:
+        description: Top and bottom space from the chart title
+        type: number
+        default: 10
+        minimum: 0
+        x-mermaid: { status: pending }
+      showDataLabel:
+        description: Should show the value corresponding to the bar within the bar
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      showDataLabelOutsideBar:
+        description: If showing data label then show it outside the bar
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      showTitle:
+        description: Should show the chart title
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      showLegend:
+        description: Should show a legend for named plots
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      legendFontSize:
+        description: Font size of the legend text
+        type: number
+        default: 14
+        minimum: 1
+        x-mermaid: { status: pending }
+      legendPadding:
+        description: Padding around the legend
+        type: number
+        default: 10
+        minimum: 0
+        x-mermaid: { status: pending }
+      xAxis:
+        $ref: '#/$defs/XYChartAxisConfig'
+        default: { '$ref': '#/$defs/XYChartAxisConfig' }
+        x-mermaid: { status: pending }
+      yAxis:
+        $ref: '#/$defs/XYChartAxisConfig'
+        default: { '$ref': '#/$defs/XYChartAxisConfig' }
+        x-mermaid: { status: pending }
+      chartOrientation:
+        description: How to plot will be drawn horizontal or vertical
+        tsType: '"vertical" | "horizontal"'
+        default: 'vertical'
+        x-mermaid: { status: pending }
+      plotReservedSpacePercent:
+        description: Minimum percent of space plots of the chart will take
+        type: number
+        default: 50
+        minimum: 30
+        x-mermaid: { status: pending }
+
+  ErDiagramConfig:
+    title: Er Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for entity relationship diagrams
+    type: object
+    unevaluatedProperties: false
+    required:
+      - titleTopMargin
+      - diagramPadding
+      - layoutDirection
+      - minEntityWidth
+      - minEntityHeight
+      - entityPadding
+      - stroke
+      - fill
+      # TODO: fontSize is the only property that is not required, is this correct?
+      - useMaxWidth
+    properties:
+      theme:
+        $ref: '#/$defs/BaseDiagramConfig/properties/theme'
+        default: 'redux-color'
+        x-mermaid: { status: pending }
+      look:
+        $ref: '#/$defs/BaseDiagramConfig/properties/look'
+        default: 'neo'
+        x-mermaid: { status: pending }
+      titleTopMargin:
+        $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
+        default: 25
+        x-mermaid: { status: pending }
+      diagramPadding:
+        description: |
+          The amount of padding around the diagram as a whole so that embedded
+          diagrams have margins, expressed in pixels.
+        type: integer
+        default: 20
+        minimum: 0
+        x-mermaid: { status: pending }
+      layoutDirection:
+        description: Directional bias for layout of entities
+        type: string
+        enum: ['TB', 'BT', 'LR', 'RL']
+        meta:enum:
+          TB: Top-Bottom
+          BT: Bottom-Top
+          LR: Left-Right
+          RL: Right to Left
+        default: TB
+        x-mermaid: { status: pending }
+      minEntityWidth:
+        description: The minimum width of an entity box. Expressed in pixels.
+        type: integer
+        default: 100
+        minimum: 0
+        x-mermaid: { status: pending }
+      minEntityHeight:
+        description: The minimum height of an entity box. Expressed in pixels.
+        type: integer
+        default: 75
+        minimum: 0
+        x-mermaid: { status: pending }
+      entityPadding:
+        description: |
+          The minimum internal padding between text in an entity box and the enclosing box borders.
+          Expressed in pixels.
+        type: integer
+        default: 15
+        minimum: 0
+        x-mermaid: { status: pending }
+      nodeSpacing:
+        type: integer
+        default: 140
+        minimum: 0
+        x-mermaid: { status: pending }
+      rankSpacing:
+        type: integer
+        default: 80
+        minimum: 0
+        x-mermaid: { status: pending }
+      stroke:
+        description: Stroke color of box edges and lines.
+        type: string
+        default: gray
+        x-mermaid: { status: pending }
+      fill:
+        description: Fill color of entity boxes
+        type: string
+        default: honeydew
+        x-mermaid: { status: pending }
+      fontSize:
+        description: Font size (expressed as an integer representing a number of pixels)
+        type: integer
+        default: 12
+        minimum: 0
+        x-mermaid: { status: pending }
+
+  StateDiagramConfig:
+    title: State Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for entity relationship diagrams
+    type: object
+    unevaluatedProperties: false
+    required:
+      - titleTopMargin
+      - useMaxWidth
+      - wrappingWidth
+      - minNodeWidth
+    properties:
+      theme:
+        $ref: '#/$defs/BaseDiagramConfig/properties/theme'
+        default: 'redux-color'
+        x-mermaid: { status: pending }
+      look:
+        $ref: '#/$defs/BaseDiagramConfig/properties/look'
+        default: 'neo'
+        x-mermaid: { status: pending }
+      layout:
+        $ref: '#/$defs/BaseDiagramConfig/properties/layout'
+        default: 'elk'
+        x-mermaid: { status: pending }
+      wrappingWidth:
+        description: |
+          Width of nodes where text is wrapped.
+
+          When using markdown strings the text is wrapped automatically, this
+          value sets the max width of a text before it continues on a new line.
+        type: number
+        default: 120
+        x-mermaid: { status: pending }
+      minNodeWidth:
+        description: |
+          Minimum width of the label area of a node.
+
+          Labels narrower than this are widened to it, so nodes with short text
+          get a uniform width; the node's own padding is added on top, the same
+          way it is for `wrappingWidth`. Nodes with an explicit width are not
+          affected.
+        type: number
+        default: 120
+        x-mermaid: { status: pending }
+      titleTopMargin:
+        $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
+        default: 25
+        x-mermaid: { status: pending }
+      arrowMarkerAbsolute:
+        # TODO: use $ref: '#/properties/arrowMarkerAbsolute' to copy main setting
+        type: boolean
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: Arrowheads are inline paths, not `<marker>` references.
+      dividerMargin:
+        type: number
+        default: 10
+        x-mermaid: { status: pending }
+      sizeUnit:
+        type: number
+        default: 5
+        x-mermaid: { status: pending }
+      padding:
+        type: number
+        default: 8
+        x-mermaid: { status: pending }
+      textHeight:
+        type: number
+        default: 10
+        x-mermaid: { status: pending }
+      titleShift:
+        type: number
+        default: -15
+        x-mermaid: { status: pending }
+      noteMargin:
+        type: number
+        default: 10
+        x-mermaid: { status: pending }
+      nodeSpacing:
+        type: integer
+        minimum: 0
+        x-mermaid: { status: pending }
+      rankSpacing:
+        type: integer
+        minimum: 0
+        x-mermaid: { status: pending }
+      forkWidth:
+        type: number
+        default: 70
+        x-mermaid: { status: pending }
+      forkHeight:
+        type: number
+        default: 7
+        x-mermaid: { status: pending }
+      # Used
+      miniPadding:
+        type: number
+        default: 2
+        x-mermaid: { status: pending }
+      fontSizeFactor:
+        description: |
+          Font size factor, this is used to guess the width of the edges labels
+          before rendering by dagre layout.
+          This might need updating if/when switching font
+        type: number
+        default: 5.02
+        x-mermaid: { status: pending }
+      fontSize:
+        type: number
+        default: 24
+        x-mermaid: { status: pending }
+      labelHeight:
+        type: number
+        default: 16
+        x-mermaid: { status: pending }
+      edgeLengthFactor:
+        type: string
+        default: '20'
+        x-mermaid: { status: pending }
+      compositTitleSize:
+        type: number
+        default: 35
+        x-mermaid: { status: pending }
+      radius:
+        type: number
+        default: 5
+        x-mermaid: { status: pending }
+  ClassDiagramConfig:
+    title: Class Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    type: object
+    unevaluatedProperties: false
+    required:
+      - titleTopMargin
+      - useMaxWidth
+    properties:
+      theme:
+        $ref: '#/$defs/BaseDiagramConfig/properties/theme'
+        default: 'redux-color'
+        x-mermaid: { status: pending }
+      look:
+        $ref: '#/$defs/BaseDiagramConfig/properties/look'
+        default: 'neo'
+        x-mermaid: { status: pending }
+      titleTopMargin:
+        $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
+        default: 25
+        x-mermaid: { status: pending }
+      # YAML anchor reference, don't use $ref since ajv doesn't load defaults
+      arrowMarkerAbsolute: *arrowMarkerAbsolute
+      dividerMargin:
+        type: number
+        default: 10
+        x-mermaid: { status: pending }
+      padding:
+        type: number
+        default: 5
+        x-mermaid: { status: pending }
+      textHeight:
+        type: number
+        default: 10
+        x-mermaid: { status: pending }
+      nodeSpacing:
+        type: integer
+        minimum: 0
+        x-mermaid: { status: pending }
+      rankSpacing:
+        type: integer
+        minimum: 0
+        x-mermaid: { status: pending }
+      diagramPadding:
+        $ref: '#/$defs/ErDiagramConfig/properties/diagramPadding'
+        x-mermaid: { status: pending }
+      htmlLabels:
+        type: boolean
+        default: false
+        x-mermaid:
+          status: removed
+          since: 13.0.0
+          reason: Labels are SVG text only; there is no HTML label mode (D5).
+          replacement: none; labels support a markdown subset rendered as SVG text
+      hideEmptyMembersBox:
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      hierarchicalNamespaces:
+        type: boolean
+        default: true
+        description: |
+          When true (default), nested namespaces render as hierarchical clusters,
+          with each segment of a dotted name (e.g. `A.B.C`) becoming its own nested
+          box. When false, namespaces render in compact mode: only explicitly
+          declared namespaces are emitted and their full qualified name is used as
+          a single flat label.
+        x-mermaid: { status: pending }
+
+  JourneyDiagramConfig:
+    title: Journey Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: |
+      The object containing configurations specific for journey diagrams
+    type: object
+    unevaluatedProperties: false
+    required:
+      - diagramMarginX
+      - diagramMarginY
+      - leftMargin
+      - width
+      - height
+      - boxMargin
+      - boxTextMargin
+      - noteMargin
+      - messageMargin
+      - messageAlign
+      - bottomMarginAdj
+      - useMaxWidth
+      - rightAngles
+      - titleColor
+      - titleFontFamily
+      - titleFontSize
+    properties:
+      diagramMarginX:
+        $ref: '#/$defs/C4DiagramConfig/properties/diagramMarginX'
+        default: 50
+        x-mermaid: { status: pending }
+      diagramMarginY:
+        $ref: '#/$defs/C4DiagramConfig/properties/diagramMarginY'
+        default: 10
+        x-mermaid: { status: pending }
+      leftMargin:
+        description: Margin between actors
+        type: integer
+        default: 150
+        minimum: 0
+        x-mermaid: { status: pending }
+      maxLabelWidth:
+        description: Maximum width of actor labels
+        type: integer
+        default: 360
+        x-mermaid: { status: pending }
+      width:
+        description: Width of actor boxes
+        type: integer
+        default: 150
+        minimum: 0
+        x-mermaid: { status: pending }
+      height:
+        description: Height of actor boxes
+        type: integer
+        default: 50
+        minimum: 0
+        x-mermaid: { status: pending }
+      boxMargin:
+        description: Margin around loop boxes
+        type: integer
+        default: 10
+        minimum: 0
+        x-mermaid: { status: pending }
+      boxTextMargin:
+        description: Margin around the text in loop/alt/opt boxes
+        type: integer
+        default: 5
+        minimum: 0
+        x-mermaid: { status: pending }
+      noteMargin:
+        description: Margin around notes
+        type: integer
+        default: 10
+        minimum: 0
+        x-mermaid: { status: pending }
+      messageMargin:
+        description: Space between messages.
+        type: integer
+        default: 35
+        minimum: 0
+        x-mermaid: { status: pending }
+      messageAlign:
+        description: Multiline message alignment
+        type: string
+        enum:
+          - left
+          - center
+          - right
+        default: center
+        x-mermaid: { status: pending }
+      bottomMarginAdj:
+        description: |
+          Prolongs the edge of the diagram downwards.
+
+          Depending on css styling this might need adjustment.
+        type: integer
+        default: 1
+        minimum: 0
+        x-mermaid: { status: pending }
+      rightAngles:
+        description: |
+          Curved Arrows become Right Angles
+
+          This will display arrows that start and begin at the same node as
+          right angles, rather than as curves.
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      taskFontSize:
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      taskFontFamily:
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      taskMargin:
+        type: number
+        default: 50
+        x-mermaid: { status: pending }
+      activationWidth:
+        description: Width of activation box
+        type: number
+        default: 10
+        x-mermaid: { status: pending }
+      textPlacement:
+        description: |
+          text placement as: tspan | fo | old only text as before
+        type: string
+        # TODO, should this be an enum?
+        default: fo
+        x-mermaid: { status: pending }
+      actorColours:
+        type: array
+        items:
+          type: string
+        default: ['#8FBC8F', '#7CFC00', '#00FFFF', '#20B2AA', '#B0E0E6', '#FFFFE0']
+        x-mermaid: { status: pending }
+      sectionFills:
+        type: array
+        items:
+          type: string
+        default: ['#191970', '#8B008B', '#4B0082', '#2F4F4F', '#800000', '#8B4513', '#00008B']
+        x-mermaid: { status: pending }
+      sectionColours:
+        type: array
+        items:
+          type: string
+        default: ['#fff']
+        x-mermaid: { status: pending }
+      titleColor:
+        description: Color of the title text in Journey Diagrams
+        type: string
+        default: ''
+        x-mermaid: { status: pending }
+      titleFontFamily:
+        description: Font family to be used for the title text in Journey Diagrams
+        type: string
+        default: '"trebuchet ms", verdana, arial, sans-serif'
+        x-mermaid: { status: pending }
+      titleFontSize:
+        description: Font size to be used for the title text in Journey Diagrams
+        type: string
+        default: '4ex'
+        x-mermaid: { status: pending }
+
+  TimelineDiagramConfig:
+    # added by https://github.com/mermaid-js/mermaid/commit/0d5246fbc730bf15463d7183fe4400a1e2fc492c
+    title: Timeline Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    type: object
+    unevaluatedProperties: false
+    required:
+      - diagramMarginX
+      - diagramMarginY
+      - leftMargin
+      - width
+      - height
+      - boxMargin
+      - boxTextMargin
+      - noteMargin
+      - messageMargin
+      - messageAlign
+      - bottomMarginAdj
+      - useMaxWidth
+    properties:
+      diagramMarginX:
+        $ref: '#/$defs/C4DiagramConfig/properties/diagramMarginX'
+        default: 50
+        x-mermaid: { status: pending }
+      diagramMarginY:
+        $ref: '#/$defs/C4DiagramConfig/properties/diagramMarginY'
+        default: 10
+        x-mermaid: { status: pending }
+      leftMargin:
+        description: Margin between actors
+        type: integer
+        default: 150
+        minimum: 0
+        x-mermaid: { status: pending }
+      width:
+        description: Width of actor boxes
+        type: integer
+        default: 150
+        minimum: 0
+        x-mermaid: { status: pending }
+      height:
+        description: Height of actor boxes
+        type: integer
+        default: 50
+        minimum: 0
+        x-mermaid: { status: pending }
+      padding:
+        type: number
+        x-mermaid: { status: pending }
+        # should the default value be 50?
+        # see https://github.com/mermaid-js/mermaid/blob/7647ae317a7b2130e32777248d25a9c4d24b8f9f/packages/mermaid/src/diagrams/timeline/timelineRenderer.ts#L237
+      boxMargin:
+        description: Margin around loop boxes
+        type: integer
+        default: 10
+        minimum: 0
+        x-mermaid: { status: pending }
+      boxTextMargin:
+        description: Margin around the text in loop/alt/opt boxes
+        type: integer
+        default: 5
+        minimum: 0
+        x-mermaid: { status: pending }
+      noteMargin:
+        description: Margin around notes
+        type: integer
+        default: 10
+        minimum: 0
+        x-mermaid: { status: pending }
+      messageMargin:
+        description: Space between messages.
+        type: integer
+        default: 35
+        minimum: 0
+        x-mermaid: { status: pending }
+      messageAlign:
+        description: Multiline message alignment
+        type: string
+        enum:
+          - left
+          - center
+          - right
+        default: center
+        x-mermaid: { status: pending }
+      bottomMarginAdj:
+        description: |
+          Prolongs the edge of the diagram downwards.
+
+          Depending on css styling this might need adjustment.
+        type: integer
+        default: 1
+        minimum: 0
+        x-mermaid: { status: pending }
+      rightAngles:
+        description: |
+          Curved Arrows become Right Angles
+
+          This will display arrows that start and begin at the same node as
+          right angles, rather than as curves.
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      taskFontSize:
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      taskFontFamily:
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      taskMargin:
+        type: number
+        default: 50
+        x-mermaid: { status: pending }
+      activationWidth:
+        description: Width of activation box
+        type: number
+        default: 10
+        x-mermaid: { status: pending }
+      textPlacement:
+        description: |
+          text placement as: tspan | fo | old only text as before
+        type: string
+        # TODO, should this be an enum?
+        default: fo
+        x-mermaid: { status: pending }
+      actorColours:
+        type: array
+        items:
+          type: string
+        default: ['#8FBC8F', '#7CFC00', '#00FFFF', '#20B2AA', '#B0E0E6', '#FFFFE0']
+        x-mermaid: { status: pending }
+      sectionFills:
+        type: array
+        items:
+          type: string
+        default: ['#191970', '#8B008B', '#4B0082', '#2F4F4F', '#800000', '#8B4513', '#00008B']
+        x-mermaid: { status: pending }
+      sectionColours:
+        type: array
+        items:
+          type: string
+        default: ['#fff']
+        x-mermaid: { status: pending }
+      disableMulticolor:
+        # added by https://github.com/mermaid-js/mermaid/commit/652a42fe1aed7911a781a84716940a973b995639
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+
+  GanttDiagramConfig:
+    title: Gantt Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: |
+      The object containing configurations specific for gantt diagrams
+    type: object
+    unevaluatedProperties: false
+    required:
+      - titleTopMargin
+      - barHeight
+      - topPadding
+      - rightPadding
+      - leftPadding
+      - gridLineStartPadding
+      - fontSize
+      - sectionFontSize
+      - numberSectionStyles
+      - axisFormat
+      - useMaxWidth
+      - topAxis
+      - weekday
+    properties:
+      titleTopMargin:
+        $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
+        default: 25
+        x-mermaid: { status: pending }
+      barHeight:
+        description: The height of the bars in the graph
+        type: integer
+        default: 20
+        minimum: 0
+        x-mermaid: { status: pending }
+      barGap:
+        description: The margin between the different activities in the gantt diagram
+        type: integer
+        default: 4
+        minimum: 0
+        x-mermaid: { status: pending }
+      topPadding:
+        description: |
+          Margin between title and gantt diagram and between axis and gantt diagram.
+        type: integer
+        default: 50
+        minimum: 0
+        x-mermaid: { status: pending }
+      rightPadding:
+        description: |
+          The space allocated for the section name to the right of the activities
+        type: integer
+        default: 75
+        minimum: 0
+        x-mermaid: { status: pending }
+      leftPadding:
+        description: |
+          The space allocated for the section name to the left of the activities
+        type: integer
+        default: 75
+        minimum: 0
+        x-mermaid: { status: pending }
+      gridLineStartPadding:
+        description: Vertical starting position of the grid lines
+        type: integer
+        default: 35
+        minimum: 0
+        x-mermaid: { status: pending }
+      fontSize:
+        description: Font size
+        type: integer
+        default: 11
+        minimum: 0
+        x-mermaid: { status: pending }
+      sectionFontSize:
+        description: Font size for sections
+        type: integer
+        # TODO: typescript type for this also allows strings, but the docs say only integers
+        tsType: 'string | number'
+        default: 11
+        minimum: 0
+        x-mermaid: { status: pending }
+      numberSectionStyles:
+        description: The number of alternating section styles
+        type: integer
+        default: 4
+        minimum: 0
+        x-mermaid: { status: pending }
+      axisFormat:
+        description: |
+          Date/time format of the axis
+
+          This might need adjustment to match your locale and preferences.
+        type: string
+        default: '%Y-%m-%d'
+        x-mermaid: { status: pending }
+      tickInterval:
+        description: |
+          axis ticks
+
+          Pattern is:
+
+          ```javascript
+          /^([1-9][0-9]*)(millisecond|second|minute|hour|day|week|month)$/
+          ```
+        type: string
+        pattern: ^([1-9][0-9]*)(millisecond|second|minute|hour|day|week|month)$
+        x-mermaid: { status: pending }
+      topAxis:
+        description: |
+          When this flag is set, date labels will be added to the top of the chart
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      displayMode:
+        description: |
+          Controls the display mode.
+        type: string
+        enum:
+          - ''
+          - compact
+        meta:enum:
+          compact: Enables displaying multiple tasks on the same row.
+        default: ''
+        x-mermaid: { status: pending }
+      weekday:
+        description: |
+          On which day a week-based interval should start
+        type: string
+        enum:
+          - monday
+          - tuesday
+          - wednesday
+          - thursday
+          - friday
+          - saturday
+          - sunday
+        default: sunday
+        x-mermaid: { status: pending }
+
+  SequenceDiagramConfig:
+    title: Sequence Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for sequence diagrams
+    type: object
+    unevaluatedProperties: false
+    required:
+      - activationWidth
+      - diagramMarginX
+      - diagramMarginY
+      - actorMargin
+      - width
+      - height
+      - boxMargin
+      - boxTextMargin
+      - noteMargin
+      - messageMargin
+      - messageAlign
+      - mirrorActors
+      - forceMenus
+      - bottomMarginAdj
+      - useMaxWidth
+      - rightAngles
+      - showSequenceNumbers
+      - actorFontSize
+      - actorFontFamily
+      - actorFontWeight
+      - noteFontSize
+      - noteFontFamily
+      - noteFontWeight
+      - noteAlign
+      - messageFontSize
+      - messageFontFamily
+      - messageFontWeight
+    properties:
+      theme:
+        $ref: '#/$defs/BaseDiagramConfig/properties/theme'
+        default: 'redux-color'
+        x-mermaid: { status: pending }
+      look:
+        $ref: '#/$defs/BaseDiagramConfig/properties/look'
+        default: 'neo'
+        x-mermaid: { status: pending }
+      arrowMarkerAbsolute:
+        type: boolean # TODO, is this actually used here (it has no default value but was in types)
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: Arrowheads are inline paths, not `<marker>` references.
+      hideUnusedParticipants:
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      activationWidth:
+        description: Width of the activation rect
+        type: integer
+        default: 10
+        minimum: 0
+        x-mermaid: { status: pending }
+      diagramMarginX:
+        description: Margin to the right and left of the sequence diagram
+        type: integer
+        default: 50
+        minimum: 0
+        x-mermaid: { status: pending }
+      diagramMarginY:
+        description: Margin to the over and under the sequence diagram
+        type: integer
+        default: 10
+        minimum: 0
+        x-mermaid: { status: pending }
+      actorMargin:
+        description: Margin between actors
+        type: integer
+        default: 50
+        minimum: 0
+        x-mermaid: { status: pending }
+      width:
+        $ref: '#/$defs/JourneyDiagramConfig/properties/width'
+        default: 150
+        x-mermaid: { status: pending }
+      height:
+        $ref: '#/$defs/JourneyDiagramConfig/properties/height'
+        default: 65
+        x-mermaid: { status: pending }
+      boxMargin:
+        $ref: '#/$defs/JourneyDiagramConfig/properties/boxMargin'
+        default: 10
+        x-mermaid: { status: pending }
+      boxTextMargin:
+        $ref: '#/$defs/JourneyDiagramConfig/properties/boxTextMargin'
+        default: 5
+        x-mermaid: { status: pending }
+      noteMargin:
+        $ref: '#/$defs/JourneyDiagramConfig/properties/noteMargin'
+        default: 10
+        x-mermaid: { status: pending }
+      messageMargin:
+        $ref: '#/$defs/JourneyDiagramConfig/properties/messageMargin'
+        default: 35
+        x-mermaid: { status: pending }
+      messageAlign:
+        $ref: '#/$defs/JourneyDiagramConfig/properties/messageAlign'
+        default: center
+        x-mermaid: { status: pending }
+      mirrorActors:
+        description: |
+          Mirror actors under diagram
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      forceMenus:
+        description: |
+          forces actor popup menus to always be visible (to support E2E testing).
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      bottomMarginAdj:
+        $ref: '#/$defs/JourneyDiagramConfig/properties/bottomMarginAdj'
+        default: 1
+        x-mermaid: { status: pending }
+      rightAngles:
+        $ref: '#/$defs/JourneyDiagramConfig/properties/rightAngles'
+        default: false
+        x-mermaid: { status: pending }
+      showSequenceNumbers:
+        description: This will show the node numbers
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      actorFontSize:
+        description: This sets the font size of the actor's description
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      actorFontFamily:
+        description: This sets the font family of the actor's description
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      actorFontWeight:
+        description: This sets the font weight of the actor's description
+        type: ['string', 'number']
+        default: 400
+        x-mermaid: { status: pending }
+
+      noteFontSize:
+        description: This sets the font size of actor-attached notes
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      noteFontFamily:
+        description: This sets the font family of actor-attached notes
+        type: string
+        default: '"trebuchet ms", verdana, arial, sans-serif'
+        x-mermaid: { status: pending }
+      noteFontWeight:
+        description: This sets the font weight of actor-attached notes
+        type: ['string', 'number']
+        default: 400
+        x-mermaid: { status: pending }
+      noteAlign:
+        description: This sets the text alignment of actor-attached notes
+        type: string
+        enum: ['left', 'center', 'right']
+        default: 'center'
+        x-mermaid: { status: pending }
+
+      messageFontSize:
+        description: This sets the font size of actor messages
+        type: *fontSizeType
+        default: 16
+        x-mermaid: { status: pending }
+      messageFontFamily:
+        description: This sets the font family of actor messages
+        type: string
+        default: '"trebuchet ms", verdana, arial, sans-serif'
+        x-mermaid: { status: pending }
+      messageFontWeight:
+        description: This sets the font weight of actor messages
+        type: ['string', 'number']
+        default: 400
+        x-mermaid: { status: pending }
+
+      wrap:
+        description: This sets the auto-wrap state for the diagram
+        type: boolean
+        default: false # different from C4 Diagram
+        x-mermaid: { status: pending }
+      wrapPadding:
+        $ref: '#/$defs/C4DiagramConfig/properties/wrapPadding'
+        default: 10
+        x-mermaid: { status: pending }
+      labelBoxWidth:
+        description: This sets the width of the loop-box (loop, alt, opt, par)
+        type: number
+        default: 50
+        x-mermaid: { status: pending }
+      labelBoxHeight:
+        description: This sets the height of the loop-box (loop, alt, opt, par)
+        type: number
+        default: 20
+        x-mermaid: { status: pending }
+      messageFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      noteFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+      actorFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+
+  SwimlaneDiagramConfig:
+    title: Swimlane Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: |
+      The object containing configurations specific for the swimlanes diagram type.
+
+      Swimlanes reuses the flowchart renderer and flowchart config for shared
+      options (curve, htmlLabels, spacing, …); this block holds the knobs that
+      only affect the swimlanes layout pipeline.
+    type: object
+    unevaluatedProperties: false
+    properties:
+      theme:
+        $ref: '#/$defs/BaseDiagramConfig/properties/theme'
+        default: 'redux-color'
+        x-mermaid: { status: pending }
+      look:
+        $ref: '#/$defs/BaseDiagramConfig/properties/look'
+        default: 'neo'
+        x-mermaid: { status: pending }
+      layout:
+        $ref: '#/$defs/BaseDiagramConfig/properties/layout'
+        # Swimlanes differ from flowcharts only in the layout engine, so the engine is the
+        # diagram type. Declared here, not forced by the renderer, so an override still wins.
+        default: 'swimlane'
+        x-mermaid: { status: pending }
+      lineHops:
+        description: |
+          Renders edge crossings as small arcs ("hops") or visible gaps so that
+          overlapping edges are easier to read. Set to `false` to disable. Edges
+          rendered as curves are skipped to avoid corrupting the geometry.
+        oneOf:
+          - type: boolean
+          - type: string
+            enum: ['arc', 'gap']
+        default: 'arc'
+        x-mermaid: { status: pending }
+      ignoreCrossLaneEdges:
+        description: |
+          Ignores edges that cross swimlane boundaries during swimlane layer
+          assignment. This can improve rank quality for diagrams with many
+          cross-lane links.
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      optimizeRanksByCrossings:
+        description: |
+          Enables a crossing-aware rank optimization pass for swimlane layouts.
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      automaticLaneOrdering:
+        description: |
+          Automatically reorders top-level swimlanes with a deterministic
+          weighted-linear-arrangement heuristic. Disabled by default because
+          source swimlane order can carry semantic meaning.
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+
+  AgentflowDiagramConfig:
+    title: Agentflow Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: |
+      The object containing configurations specific for the agentflow diagram type.
+
+      Agentflow renders through the shared unified renderer, so it owns the same
+      spacing and padding knobs a flowchart does. They live in their own block so
+      that agentflow can be tuned without moving every flowchart on the page.
+    type: object
+    unevaluatedProperties: false
+    properties:
+      theme:
+        $ref: '#/$defs/BaseDiagramConfig/properties/theme'
+        default: 'redux-color'
+        x-mermaid: { status: pending }
+      look:
+        $ref: '#/$defs/BaseDiagramConfig/properties/look'
+        default: 'neo'
+        x-mermaid: { status: pending }
+      titleTopMargin:
+        description: Margin top for the text over the diagram
+        type: integer
+        minimum: 0
+        default: 25
+        x-mermaid: { status: pending }
+      diagramPadding:
+        description: |
+          The amount of padding around the diagram as a whole so that embedded
+          diagrams have margins, expressed in pixels.
+        type: integer
+        minimum: 0
+        default: 8
+        x-mermaid: { status: pending }
+      nodeSpacing:
+        description: |
+          Defines the spacing between nodes on the same level.
+
+          Pertains to horizontal spacing for TB (top to bottom) or BT (bottom to top) graphs,
+          and the vertical spacing for LR as well as RL graphs.
+        type: integer
+        minimum: 0
+        default: 50
+        x-mermaid: { status: pending }
+      rankSpacing:
+        description: |
+          Defines the spacing between nodes on different levels.
+
+          Pertains to vertical spacing for TB (top to bottom) or BT (bottom to top), and the
+          horizontal spacing for LR as well as RL graphs.
+        type: integer
+        minimum: 0
+        default: 50
+        x-mermaid: { status: pending }
+      wrappingWidth:
+        description: |
+          Width of nodes where text is wrapped.
+
+          When using markdown strings the text is wrapped automatically, this
+          value sets the max width of a text before it continues on a new line.
+        type: number
+        default: 120
+        x-mermaid: { status: pending }
+      minNodeWidth:
+        description: |
+          Minimum width of the label area of a node.
+
+          Labels narrower than this are widened to it, so nodes with short text
+          get a uniform width; the node's own padding is added on top, the same
+          way it is for `wrappingWidth`. Nodes with an explicit width are not
+          affected.
+        type: number
+        default: 120
+        x-mermaid: { status: pending }
+
+  FlowchartDiagramConfig:
+    title: Flowchart Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for flowcharts
+    type: object
+    unevaluatedProperties: false
+    required:
+      - titleTopMargin
+      - subGraphTitleMargin
+      - diagramPadding
+      - nodeSpacing
+      - rankSpacing
+      - curve
+      - useMaxWidth
+      - wrappingWidth
+      - minNodeWidth
+    properties:
+      theme:
+        $ref: '#/$defs/BaseDiagramConfig/properties/theme'
+        default: 'redux-color'
+        x-mermaid: { status: pending }
+      look:
+        $ref: '#/$defs/BaseDiagramConfig/properties/look'
+        default: 'neo'
+        x-mermaid: { status: pending }
+      titleTopMargin:
+        $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
+        default: 25
+        x-mermaid: { status: pending }
+      subGraphTitleMargin:
+        description: |
+          Defines a top/bottom margin for subgraph titles
+        type: object
+        properties:
+          top:
+            type: integer
+            minimum: 0
+            x-mermaid: { status: pending }
+          bottom:
+            type: integer
+            minimum: 0
+            x-mermaid: { status: pending }
+        default:
+          top: 0
+          bottom: 0
+        x-mermaid: { status: pending }
+      arrowMarkerAbsolute:
+        type: boolean # TODO, is this actually used here (it has no default value but was in types)
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: Arrowheads are inline paths, not `<marker>` references.
+      diagramPadding:
+        $ref: '#/$defs/ErDiagramConfig/properties/diagramPadding'
+        default: 8
+        x-mermaid: { status: pending }
+      htmlLabels:
+        description: |
+          **DEPRECATED: Use global `htmlLabels` instead.**
+
+          Flag for setting whether or not a html tag should be used for rendering labels on nodes and edges.
+          This property is deprecated.
+          Please use the global `htmlLabels` configuration instead.
+        type:
+          - boolean
+          - 'null'
+        deprecated: true
+        default: null
+        x-mermaid:
+          status: removed
+          since: 13.0.0
+          reason: Labels are SVG text only; there is no HTML label mode (D5).
+          replacement: none; labels support a markdown subset rendered as SVG text
+      nodeSpacing:
+        description: |
+          Defines the spacing between nodes on the same level
+
+          Pertains to horizontal spacing for TB (top to bottom) or BT (bottom to top) graphs,
+          and the vertical spacing for LR as well as RL graphs.
+        type: integer
+        default: 50
+        minimum: 0
+        x-mermaid: { status: pending }
+      rankSpacing:
+        description: |
+          Defines the spacing between nodes on different levels
+
+          Pertains to horizontal spacing for TB (top to bottom) or BT (bottom to top) graphs,
+          and the vertical spacing for LR as well as RL graphs.
+        type: integer
+        default: 50
+        minimum: 0
+        x-mermaid: { status: pending }
+      curve:
+        description: |
+          Defines how mermaid renders curves for flowcharts.
+        type: string
+        enum:
+          [
+            'basis',
+            'bumpX',
+            'bumpY',
+            'cardinal',
+            'catmullRom',
+            'linear',
+            'monotoneX',
+            'monotoneY',
+            'natural',
+            'step',
+            'stepAfter',
+            'stepBefore',
+            'rounded',
+          ]
+        default: 'basis'
+        x-mermaid: { status: pending }
+
+      padding:
+        description: |
+          Represents the padding between the labels and the shape
+
+          **Only used in new experimental rendering.**
+        type: number
+        default: 15
+        x-mermaid: { status: pending }
+      wrappingWidth:
+        description: |
+          Width of nodes where text is wrapped.
+
+          When using markdown strings the text is wrapped automatically, this
+          value sets the max width of a text before it continues on a new line.
+        type: number
+        default: 120
+        x-mermaid: { status: pending }
+      minNodeWidth:
+        description: |
+          Minimum width of the label area of a node.
+
+          Labels narrower than this are widened to it, so nodes with short text
+          get a uniform width; the node's own padding is added on top, the same
+          way it is for `wrappingWidth`. Nodes with an explicit width are not
+          affected.
+        type: number
+        default: 120
+        x-mermaid: { status: pending }
+
+      stepDuration:
+        description: |
+          Seconds the travelling dot spends on each step of the step-by-step
+          flow animation (edges with a `step` number). Diagrams without `step`
+          edges are not affected.
+        type: number
+        exclusiveMinimum: 0
+        default: 1
+        x-mermaid: { status: pending }
+
+      stepNumbers:
+        description: |
+          If true, each edge with a `step` number shows that number in a small
+          badge, so the order of the step-by-step flow can be read without
+          watching the animation.
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+
+      inheritDir:
+        type: boolean
+        default: false
+        description: |
+          If true, subgraphs without explicit direction will inherit the global graph direction
+          (e.g., LR, TB, RL, BT). Defaults to false to preserve legacy layout behavior.
+        x-mermaid: { status: pending }
+
+  SankeyLinkColor:
+    description: |
+      Picks the color of the sankey diagram links, using the colors of the source and/or target of the links.
+    type: string
+    enum:
+      - source
+      - target
+      - gradient
+    meta:enum:
+      source: Use the source of sankey link for the color of the link.
+      target: Use the target of sankey link for the color of the link.
+      gradient: Use a gradient of the source and target for the color of the link.
+    default: gradient
+  SankeyLabelStyle:
+    description: |
+      The style of labels in the sankey diagram.
+    type: string
+    enum:
+      - legacy
+      - outlined
+    meta:enum:
+      legacy: Plain text labels (original style).
+      outlined: Labels with a white outline for better readability against colored backgrounds.
+    default: legacy
+
+  SankeyNodeAlignment:
+    description: |
+      Controls the alignment of the Sankey diagrams.
+
+      See <https://github.com/d3/d3-sankey#alignments>.
+    type: string
+    enum:
+      - left
+      - right
+      - center
+      - justify
+    meta:enum:
+      left: Align all inputs to the left.
+      right: Align all outputs to the right.
+      center: Like `left`, except that nodes without any incoming links are moved as right as possible.
+      justify: Like `left`, except that nodes without any outgoing links are moved to the far right.
+    default: justify
+
+  SankeyDiagramConfig:
+    title: Sankey Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for sankey diagrams.
+    type: object
+    unevaluatedProperties: false
+    properties:
+      width:
+        type: number
+        default: 600
+        x-mermaid: { status: pending }
+      height:
+        type: number
+        default: 400
+        x-mermaid: { status: pending }
+      linkColor:
+        description: |
+          The color of the links in the sankey diagram.
+        anyOf:
+          - $ref: '#/$defs/SankeyLinkColor'
+          - description: An arbitrary [CSS color](https://developer.mozilla.org/en-US/docs/Web/CSS/color_value)
+            type: string
+        default: gradient
+        x-mermaid: { status: pending }
+      nodeAlignment:
+        $ref: '#/$defs/SankeyNodeAlignment'
+        default: justify
+        x-mermaid: { status: pending }
+      useMaxWidth:
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      showValues:
+        description: |
+          Toggle to display or hide values along with title.
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      prefix:
+        description: |
+          The prefix to use for values
+        type: string
+        default: ''
+        x-mermaid: { status: pending }
+      suffix:
+        description: |
+          The suffix to use for values
+        type: string
+        default: ''
+        x-mermaid: { status: pending }
+      nodeWidth:
+        description: |
+          The width of the nodes in the sankey diagram.
+        type: number
+        default: 10
+        x-mermaid: { status: pending }
+      nodePadding:
+        description: |
+          The padding between nodes in the sankey diagram.
+        type: number
+        default: 12
+        x-mermaid: { status: pending }
+      labelStyle:
+        description: |
+          The style of labels in the sankey diagram. 'outlined' provides better readability with a white stroke behind the text.
+        $ref: '#/$defs/SankeyLabelStyle'
+        default: legacy
+        x-mermaid: { status: pending }
+      nodeColors:
+        description: |
+          A mapping of node IDs to their colors. Nodes not specified will use the default color scheme.
+        type: object
+        additionalProperties:
+          type: string
+        x-mermaid: { status: pending }
+
+  PacketDiagramConfig:
+    title: Packet Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for packet diagrams.
+    type: object
+    unevaluatedProperties: false
+    properties:
+      rowHeight:
+        description: The height of each row in the packet diagram.
+        type: number
+        minimum: 1
+        default: 32
+        x-mermaid: { status: pending }
+      bitWidth:
+        description: The width of each bit in the packet diagram.
+        type: number
+        minimum: 1
+        default: 32
+        x-mermaid: { status: pending }
+      bitsPerRow:
+        description: The number of bits to display per row.
+        type: number
+        minimum: 1
+        default: 32
+        x-mermaid: { status: pending }
+      showBits:
+        description: Toggle to display or hide bit numbers.
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      bitOrder:
+        description: |
+          The direction each row is numbered in. `descending` mirrors every row so it reads from
+          that row's highest bit on the left down to its lowest bit on the right, the convention
+          used for hardware registers. Fields are still declared lowest bit first, and keep their
+          width.
+        type: string
+        enum:
+          - ascending
+          - descending
+        meta:enum:
+          ascending: Number each row from its lowest bit on the left up to its highest bit on the right.
+          descending: Number each row from its highest bit on the left down to its lowest bit on the right.
+        default: ascending
+        x-mermaid: { status: pending }
+      paddingX:
+        description: The horizontal padding between the blocks in a row.
+        type: number
+        minimum: 0
+        default: 5
+        x-mermaid: { status: pending }
+      paddingY:
+        description: The vertical padding between the rows.
+        type: number
+        minimum: 0
+        default: 5
+        x-mermaid: { status: pending }
+
+  BlockDiagramConfig:
+    title: Block Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for block diagrams.
+    type: object
+    unevaluatedProperties: false
+    properties:
+      padding:
+        type: number
+        minimum: 0
+        default: 8
+        x-mermaid: { status: pending }
+
+  EventModelingDiagramConfig:
+    title: Event Modeling Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for Event Modeling diagrams.
+    type: object
+    unevaluatedProperties: false
+    properties:
+      padding:
+        description: The padding around the Event Modeling diagram.
+        type: number
+        default: 30
+        x-mermaid: { status: pending }
+      rowHeight:
+        description: The height of each row in the Event Modeling diagram.
+        type: number
+        minimum: 1
+        default: 32
+        x-mermaid: { status: pending }
+  TreeViewDiagramConfig:
+    title: TreeView Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for treeView diagrams.
+    type: object
+    unevaluatedProperties: false
+    properties:
+      rowIndent:
+        description: Horizontal distance between rows differing by one level
+        type: number
+        minimum: 0
+        default: 10
+        x-mermaid: { status: pending }
+      paddingX:
+        description: Horizontal padding of label
+        type: number
+        minimum: 0
+        default: 5
+        x-mermaid: { status: pending }
+      paddingY:
+        description: Vertical padding of label
+        type: number
+        minimum: 0
+        default: 5
+        x-mermaid: { status: pending }
+      lineThickness:
+        description: Thickness of the line
+        type: number
+        minimum: 0
+        default: 1
+        x-mermaid: { status: pending }
+      showIcons:
+        description: |
+          Whether to show the default file/folder icons next to labels.
+          Explicit `icon()` annotations always render, regardless of this setting.
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      defaultIconPack:
+        description: |
+          Name of a registered iconify pack used to resolve unprefixed icon
+          references — `icon(name)` annotations and `filenameIcons`/
+          `extensionIcons` values without a `pack:` prefix. The pack must be
+          registered with `registerIconPacks`. When empty, unprefixed names
+          resolve to the built-in file/folder icons.
+        type: string
+        default: ''
+        x-mermaid: { status: pending }
+      filenameIcons:
+        description: |
+          Exact-filename → icon map used to pick a file's icon when
+          `showIcons` is enabled, e.g.
+          `{ "Dockerfile": "material-icon-theme:docker" }`.
+          Values are resolved like `icon()` references: `pack:name` is used
+          as-is, unprefixed names resolve via `defaultIconPack`, and `none`
+          hides the icon for matching files.
+        type: object
+        additionalProperties:
+          type: string
+        default: {}
+        x-mermaid: { status: pending }
+      extensionIcons:
+        description: |
+          File-extension → icon map used to pick a file's icon when
+          `showIcons` is enabled, e.g.
+          `{ ".ts": "material-icon-theme:typescript" }`. Keys are
+          lowercase and may include or omit the leading dot.
+          Values are resolved like `icon()` references: `pack:name` is used
+          as-is, unprefixed names resolve via `defaultIconPack`, and `none`
+          hides the icon for matching files.
+        type: object
+        additionalProperties:
+          type: string
+        default: {}
+        x-mermaid: { status: pending }
+
+  RadarDiagramConfig:
+    title: Radar Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for radar diagrams.
+    type: object
+    unevaluatedProperties: false
+    properties:
+      width:
+        description: The size of the radar diagram.
+        type: number
+        minimum: 1
+        default: 600
+        x-mermaid: { status: pending }
+      height:
+        description: The size of the radar diagram.
+        type: number
+        minimum: 1
+        default: 600
+        x-mermaid: { status: pending }
+      marginTop:
+        description: The margin from the top of the radar diagram.
+        type: number
+        minimum: 0
+        default: 50
+        x-mermaid: { status: pending }
+      marginRight:
+        description: The margin from the right of the radar diagram.
+        type: number
+        minimum: 0
+        default: 50
+        x-mermaid: { status: pending }
+      marginBottom:
+        description: The margin from the bottom of the radar diagram.
+        type: number
+        minimum: 0
+        default: 50
+        x-mermaid: { status: pending }
+      marginLeft:
+        description: The margin from the left of the radar diagram.
+        type: number
+        minimum: 0
+        default: 50
+        x-mermaid: { status: pending }
+      axisScaleFactor:
+        description: The scale factor of the axis.
+        type: number
+        minimum: 0
+        default: 1
+        x-mermaid: { status: pending }
+      axisLabelFactor:
+        description: The scale factor of the axis label.
+        type: number
+        minimum: 0
+        default: 1.05
+        x-mermaid: { status: pending }
+      curveTension:
+        description: The tension factor for the Catmull-Rom spline conversion to cubic Bézier curves.
+        type: number
+        minimum: 0
+        maximum: 1
+        default: 0.17
+        x-mermaid: { status: pending }
+
+  UsecaseDiagramConfig:
+    title: Usecase Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for usecase diagrams.
+    type: object
+    unevaluatedProperties: false
+    required:
+      - useMaxWidth
+      - wrappingWidth
+      - minNodeWidth
+    properties:
+      theme:
+        $ref: '#/$defs/BaseDiagramConfig/properties/theme'
+        default: 'redux-color'
+        x-mermaid: { status: pending }
+      look:
+        $ref: '#/$defs/BaseDiagramConfig/properties/look'
+        default: 'neo'
+        x-mermaid: { status: pending }
+      wrappingWidth:
+        $ref: '#/$defs/FlowchartDiagramConfig/properties/wrappingWidth'
+        default: 120
+        x-mermaid: { status: pending }
+      minNodeWidth:
+        $ref: '#/$defs/FlowchartDiagramConfig/properties/minNodeWidth'
+        default: 120
+        x-mermaid: { status: pending }
+      actorFontSize:
+        description: Font size for actor labels
+        type: number
+        minimum: 1
+        default: 14
+        x-mermaid: { status: pending }
+      actorFontFamily:
+        description: |
+          Font family for actor labels.
+
+          Written verbatim into an inline CSS custom property, so the characters that could
+          terminate a declaration or open a new one are excluded: `;`, `<`, `>`, `(`, `)`,
+          `{`, `}`, and `\`. Quotes, commas, and spaces stay allowed for font stacks such as
+          `"Open Sans", sans-serif`.
+        type: string
+        pattern: &cssFontFamilyPattern '^[^;<>(){}\\]*$'
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      actorFontWeight:
+        description: |
+          Font weight for actor labels.
+
+          Restricted to the CSS `font-weight` keywords and numeric weights, since this value
+          is written verbatim into an inline CSS custom property.
+        type: string
+        pattern: &cssFontWeightPattern '^(normal|bold|bolder|lighter|inherit|initial|revert|unset|[1-9][0-9]{0,3})$'
+        default: 'normal'
+        x-mermaid: { status: pending }
+      usecaseFontSize:
+        description: Font size for usecase labels
+        type: number
+        minimum: 1
+        default: 12
+        x-mermaid: { status: pending }
+      usecaseFontFamily:
+        description: |
+          Font family for usecase labels.
+
+          Constrained the same way as `actorFontFamily`.
+        type: string
+        pattern: *cssFontFamilyPattern
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      usecaseFontWeight:
+        description: |
+          Font weight for usecase labels.
+
+          Constrained the same way as `actorFontWeight`.
+        type: string
+        pattern: *cssFontWeightPattern
+        default: 'normal'
+        x-mermaid: { status: pending }
+      nodeSpacing:
+        description: Spacing between nodes on the same level
+        type: number
+        minimum: 0
+        default: 50
+        x-mermaid: { status: pending }
+      rankSpacing:
+        description: Spacing between nodes on different levels
+        type: number
+        minimum: 0
+        default: 50
+        x-mermaid: { status: pending }
+      diagramPadding:
+        description: Padding around the entire diagram
+        type: number
+        minimum: 0
+        default: 20
+        x-mermaid: { status: pending }
+      colorScheme:
+        description: |
+          How a use case diagram takes its colours from the active theme.
+
+          `role` (the default) gives every element of a kind one colour, read from the
+          `usecaseActorBkg` / `usecaseActorBorder`, `usecaseBkg` / `usecaseBorder`, and
+          `usecaseBoundaryBkg` / `usecaseBoundaryBorder` theme variables. Colour then says
+          what an element *is*, and it is invariant under insertion, reordering, and
+          renaming -- adding one use case in the middle does not recolour the ones after it,
+          so diffs, documentation screenshots, and visual baselines stay stable.
+
+          `rotate` instead gives each actor, use case, and system boundary its own slot from
+          the theme's categorical palette (`borderColorArray` / `bkgColorArray`), the way ER
+          entities and class boxes are coloured. Actors and use cases share one cycle, and
+          system boundaries run a second one from zero, so a boundary is never forced to
+          match an element inside it. Within the shared cycle the actors are numbered first
+          and the use cases after them, each in declaration order -- an interleaved
+          `actor A`, `usecase U`, `actor B` is therefore numbered A, B, U rather than
+          A, U, B. This buys per-instance variety at the cost of the stability `role` has:
+          inserting an element shifts the colour of every later element of its own kind, and
+          inserting an actor shifts the use cases too. Only the colour themes
+          (`redux-color`, `redux-dark-color`) carry a palette, so on every other theme the
+          two settings render identically.
+
+          `classDef` and `style` keep overriding both, whichever is set.
+        type: string
+        enum:
+          - role
+          - rotate
+        default: role
+        x-mermaid: { status: pending }
+  VennDiagramConfig:
+    title: Venn Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for Venn diagrams.
+    type: object
+    unevaluatedProperties: false
+    properties:
+      theme:
+        $ref: '#/$defs/BaseDiagramConfig/properties/theme'
+        default: 'redux-color'
+        x-mermaid: { status: pending }
+      look:
+        $ref: '#/$defs/BaseDiagramConfig/properties/look'
+        default: 'neo'
+        x-mermaid: { status: pending }
+      width:
+        description: The width of the Venn diagram.
+        type: number
+        minimum: 1
+        default: 800
+        x-mermaid: { status: pending }
+      height:
+        description: The height of the Venn diagram.
+        type: number
+        minimum: 1
+        default: 450
+        x-mermaid: { status: pending }
+      padding:
+        type: number
+        minimum: 0
+        default: 8
+        x-mermaid: { status: pending }
+      useDebugLayout:
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+
+  WardleyDiagramConfig:
+    title: Wardley Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: The object containing configurations specific for Wardley Maps diagrams.
+    type: object
+    unevaluatedProperties: false
+    required:
+      - width
+      - height
+      - padding
+      - nodeRadius
+      - labelFontSize
+      - axisFontSize
+    properties:
+      width:
+        description: The width of the Wardley diagram canvas.
+        type: number
+        minimum: 1
+        default: 900
+        x-mermaid: { status: pending }
+      height:
+        description: The height of the Wardley diagram canvas.
+        type: number
+        minimum: 1
+        default: 600
+        x-mermaid: { status: pending }
+      padding:
+        description: The padding around the Wardley diagram.
+        type: number
+        minimum: 0
+        default: 48
+        x-mermaid: { status: pending }
+      nodeRadius:
+        description: The radius of component nodes.
+        type: number
+        minimum: 0
+        default: 6
+        x-mermaid: { status: pending }
+      nodeLabelOffset:
+        description: The offset distance for node labels.
+        type: number
+        minimum: 0
+        default: 8
+        x-mermaid: { status: pending }
+      axisFontSize:
+        description: The font size for axis labels.
+        type: number
+        minimum: 0
+        default: 12
+        x-mermaid: { status: pending }
+      labelFontSize:
+        description: The font size for component labels.
+        type: number
+        minimum: 0
+        default: 10
+        x-mermaid: { status: pending }
+      showGrid:
+        description: Whether to display a background grid.
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+
+  CynefinDiagramConfig:
+    title: Cynefin Diagram Config
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    description: Configuration for Cynefin framework diagrams.
+    type: object
+    unevaluatedProperties: false
+    properties:
+      width:
+        description: The width of the Cynefin diagram.
+        type: number
+        minimum: 1
+        default: 800
+        x-mermaid: { status: pending }
+      height:
+        description: The height of the Cynefin diagram.
+        type: number
+        minimum: 1
+        default: 600
+        x-mermaid: { status: pending }
+      padding:
+        description: Padding around the diagram.
+        type: number
+        minimum: 0
+        default: 40
+        x-mermaid: { status: pending }
+      showDomainDescriptions:
+        description: Show decision model and practice type labels.
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      boundaryAmplitude:
+        description: Waviness amplitude of domain boundaries (0 for straight).
+        type: number
+        minimum: 0
+        maximum: 50
+        default: 8
+        x-mermaid: { status: pending }
+      seed:
+        description: |
+          Deterministic seed for boundary waviness. When 0 (default) the seed is derived
+          from the diagram's SVG element id, which varies per render. Set any non-zero
+          number to produce identical boundaries on every render — required for visual
+          regression tests to be stable.
+        type: number
+        default: 0
+        x-mermaid: { status: pending }
+
+  RailroadDiagramConfig:
+    title: Railroad Diagram Config
+    description: Configuration for Railroad (Syntax) Diagrams
+    allOf: [{ $ref: '#/$defs/BaseDiagramConfig' }]
+    type: object
+    unevaluatedProperties: false
+    properties:
+      compactMode:
+        description: Use compact layout mode
+        type: boolean
+        default: false
+        x-mermaid: { status: pending }
+      padding:
+        description: Padding around elements
+        type: number
+        minimum: 0
+        default: 10
+        x-mermaid: { status: pending }
+      verticalSeparation:
+        description: Vertical separation between elements
+        type: number
+        minimum: 0
+        default: 8
+        x-mermaid: { status: pending }
+      horizontalSeparation:
+        description: Horizontal separation between elements
+        type: number
+        minimum: 0
+        default: 10
+        x-mermaid: { status: pending }
+      arcRadius:
+        description: Radius for curved paths
+        type: number
+        minimum: 0
+        default: 10
+        x-mermaid: { status: pending }
+      fontSize:
+        description: Font size for text
+        type: number
+        minimum: 0
+        default: 14
+        x-mermaid: { status: pending }
+      fontFamily:
+        description: Font family for text
+        type: string
+        default: 'monospace'
+        x-mermaid: { status: pending }
+      terminalFill:
+        description: Fill color for terminal elements
+        type: string
+        default: '#FFFFC0'
+        x-mermaid: { status: pending }
+      terminalStroke:
+        description: Stroke color for terminal elements
+        type: string
+        default: '#000000'
+        x-mermaid: { status: pending }
+      terminalTextColor:
+        description: Text color for terminal elements
+        type: string
+        default: '#000000'
+        x-mermaid: { status: pending }
+      nonTerminalFill:
+        description: Fill color for non-terminal elements
+        type: string
+        default: '#FFFFFF'
+        x-mermaid: { status: pending }
+      nonTerminalStroke:
+        description: Stroke color for non-terminal elements
+        type: string
+        default: '#000000'
+        x-mermaid: { status: pending }
+      nonTerminalTextColor:
+        description: Text color for non-terminal elements
+        type: string
+        default: '#000000'
+        x-mermaid: { status: pending }
+      lineColor:
+        description: Color for connection lines
+        type: string
+        default: '#000000'
+        x-mermaid: { status: pending }
+      strokeWidth:
+        description: Width of strokes
+        type: number
+        minimum: 0
+        default: 2
+        x-mermaid: { status: pending }
+      markerFill:
+        description: Fill color for start/end markers
+        type: string
+        default: '#000000'
+        x-mermaid: { status: pending }
+      commentFill:
+        description: Fill color for comments
+        type: string
+        default: '#E8E8E8'
+        x-mermaid: { status: pending }
+      commentStroke:
+        description: Stroke color for comments
+        type: string
+        default: '#888888'
+        x-mermaid: { status: pending }
+      commentTextColor:
+        description: Text color for comments
+        type: string
+        default: '#666666'
+        x-mermaid: { status: pending }
+      specialFill:
+        description: Fill color for special sequences
+        type: string
+        default: '#F0E0FF'
+        x-mermaid: { status: pending }
+      specialStroke:
+        description: Stroke color for special sequences
+        type: string
+        default: '#8800CC'
+        x-mermaid: { status: pending }
+      ruleNameColor:
+        description: Color for rule names
+        type: string
+        default: '#000066'
+        x-mermaid: { status: pending }
+      showMarkers:
+        description: Show start/end markers
+        type: boolean
+        default: true
+        x-mermaid: { status: pending }
+      markerRadius:
+        description: Radius of start/end markers
+        type: number
+        minimum: 0
+        default: 5
+        x-mermaid: { status: pending }
+
+  FontCalculator:
+    title: Font Calculator
+    description: |
+      JavaScript function that returns a `FontConfig`.
+
+      By default, these return the appropriate `*FontSize`, `*FontFamily`, `*FontWeight`
+      values.
+
+      For example, the font calculator called `boundaryFont` might be defined as:
+
+      ```javascript
+      boundaryFont: function () {
+        return {
+          fontFamily: this.boundaryFontFamily,
+          fontSize: this.boundaryFontSize,
+          fontWeight: this.boundaryFontWeight,
+        };
+      }
+      ```
+    tsType: '() => Partial<FontConfig>'
+
+  FontConfig:
+    title: Font Config
+    type: object
+    additionalProperties: false
+    properties:
+      fontSize:
+        title: CSS Font Size
+        description: The font size to use
+        type: *fontSizeType
+        default: 14
+        x-mermaid: { status: pending }
+      fontFamily:
+        description: The CSS [`font-family`](https://developer.mozilla.org/en-US/docs/Web/CSS/font-family) to use.
+        type: string
+        default: '"Open Sans", sans-serif'
+        x-mermaid: { status: pending }
+      fontWeight:
+        description: The font weight to use.
+        type: ['string', 'number']
+        default: normal
+        x-mermaid: { status: pending }
