@@ -66,6 +66,17 @@ export interface RenderContext {
   warn(warning: Warning): void;
 }
 
+/**
+ * What a diagram's `ascii` hook gets (DESIGN §6.3, D82): the render context, laid out in
+ * cells (`units.id === 'cell'`, the cell measurer), plus the front-matter title and the AST.
+ */
+export interface TextRenderContext extends RenderContext {
+  /** The front-matter `title`; a hook prints it centred on the first line (D82). */
+  readonly title?: string;
+  /** The parse's AST, for the AST ids of drop warnings. */
+  readonly ast?: AstNode;
+}
+
 /** A diagram plugin (DESIGN §12.1). `M` is its model, `L` its layout. */
 export interface DiagramPlugin<M = unknown, L = unknown> {
   /** Also the config section that holds its options (`flowchart`). */
@@ -85,4 +96,9 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
   layout?(model: M, ctx: RenderContext): L;
   /** Writes the whole `<svg>` document. */
   render(model: M, layout: L, ctx: RenderContext, w: SvgWriter): void;
+  /**
+   * Text output (D76): the drawing as text, `\n` line ends, no trailing spaces. First-party
+   * plugins ship it as a separate lazily loaded entry (manifest key `ascii`) instead.
+   */
+  ascii?(model: M, layout: L, ctx: TextRenderContext): string;
 }

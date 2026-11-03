@@ -13,7 +13,7 @@
 import { MermaidError, renderErrorSvg } from '@mermaid-js/core';
 import type { MermaidConfig } from '@mermaid-js/core/config';
 import { resolveFontFamily } from '@mermaid-js/core/text';
-import type { InitializeConfig, Prepared, RenderOptions, RenderResult } from './api.ts';
+import type { InitializeConfig, Prepared, RenderResult, SvgRenderOptions } from './api.ts';
 import { VERSION } from './version.ts';
 
 /** v12's `RunOptions`, unchanged (R-COMPAT-5). */
@@ -58,10 +58,10 @@ export interface Mounted {
   destroy(): void;
 }
 
-/** What the adapter needs from its API object. */
+/** What the adapter needs from its API object. SVG only (D86): it never asks for text. */
 export interface DomHost {
-  prepare(text: string, options?: RenderOptions): Promise<Prepared>;
-  renderSync(text: string, options?: RenderOptions): RenderResult;
+  prepare(text: string, options?: SvgRenderOptions): Promise<Prepared>;
+  renderSync(text: string, options?: SvgRenderOptions): RenderResult;
   /** The `initialize()` config, read at the start of each call. */
   siteConfig(): Readonly<MermaidConfig>;
   onParseError(error: MermaidError): void;
@@ -114,7 +114,7 @@ function fontConfig(el: Element, base: InitializeConfig | undefined): Initialize
 export function createDomAdapter(host: DomHost) {
   let counter = 0;
 
-  async function draw(text: string, options: RenderOptions): Promise<RenderResult> {
+  async function draw(text: string, options: SvgRenderOptions): Promise<RenderResult> {
     await host.prepare(text, options);
     return host.renderSync(text, options);
   }
@@ -190,7 +190,7 @@ export function createDomAdapter(host: DomHost) {
     async function once(): Promise<RenderResult> {
       const availableWidth = width();
       if (availableWidth !== undefined) lastWidth = Math.round(availableWidth);
-      const renderOptions: RenderOptions = {
+      const renderOptions: SvgRenderOptions = {
         id,
         config: fontConfig(el, options.config),
         ...(options.placeholders ? { placeholders: true } : {}),

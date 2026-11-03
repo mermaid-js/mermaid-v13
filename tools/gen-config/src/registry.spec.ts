@@ -21,6 +21,45 @@ describe('first-party diagram registry (DESIGN §12.4)', () => {
     expect(out.indexOf("'flowchart-elk'")).toBeLessThan(out.indexOf("'gantt'"));
   });
 
+  it('loads the ascii entry through its exports subpath, separately (D76)', () => {
+    const out = generateRegistry([
+      {
+        name: '@x/diagram-flowchart',
+        exports: { '.': { default: './dist/index.js' }, './ascii': { default: './dist/ascii.js' } },
+        manifest: {
+          plugin: 'diagram',
+          id: 'flowchart',
+          types: ['flowchart-v2'],
+          formats: ['svg', 'ascii'],
+          export: 'flowchart',
+          ascii: './dist/ascii.js',
+        },
+      },
+    ]);
+    expect(out).toContain(
+      "    loadAscii: () => import('@x/diagram-flowchart/ascii').then((m) => m.ascii),"
+    );
+  });
+
+  it('rejects an ascii entry no exports subpath serves', () => {
+    expect(() =>
+      generateRegistry([
+        {
+          name: '@x/diagram-flowchart',
+          exports: { '.': { default: './dist/index.js' } },
+          manifest: {
+            plugin: 'diagram',
+            id: 'flowchart',
+            types: ['flowchart-v2'],
+            formats: ['svg', 'ascii'],
+            export: 'flowchart',
+            ascii: './dist/ascii.js',
+          },
+        },
+      ])
+    ).toThrow(/no exports subpath/);
+  });
+
   it('rejects a manifest type v12 does not have', () => {
     expect(() =>
       generateRegistry([

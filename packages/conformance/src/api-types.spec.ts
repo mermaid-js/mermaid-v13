@@ -36,4 +36,25 @@ describe('public API types against the mermaid@12 .d.ts (R-COMPAT-5)', () => {
     expectTypeOf<v13.RunOptions>().toEqualTypeOf<v12.RunOptions>();
     expectTypeOf(v13.run).returns.resolves.toBeVoid();
   });
+
+  it("render and renderSync are typed by format: TextRenderResult for 'ascii' (D80)", () => {
+    const text = (t: string) => v13.renderSync(t, { format: 'ascii' });
+    expectTypeOf(text).returns.toEqualTypeOf<v13.TextRenderResult>();
+    const svg = (t: string) => v13.renderSync(t, { format: 'svg' });
+    expectTypeOf(svg).returns.toEqualTypeOf<v13.RenderResult>();
+    const plain = (t: string) => v13.renderSync(t);
+    expectTypeOf(plain).returns.toEqualTypeOf<v13.RenderResult>();
+    const asyncText = (t: string) => v13.render('id', t, { format: 'ascii' });
+    expectTypeOf(asyncText).returns.resolves.toEqualTypeOf<v13.TextRenderResult>();
+    const element = (t: string, el: Element) => v13.render('id', t, el);
+    expectTypeOf(element).returns.resolves.toEqualTypeOf<v13.RenderResult>();
+    expectTypeOf<v13.TextRenderResult>().toMatchTypeOf<{
+      format: 'ascii';
+      text: string;
+      columns: number;
+      rows: number;
+      diagramType: string;
+      warnings: v13.Warning[];
+    }>();
+  });
 });

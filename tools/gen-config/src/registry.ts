@@ -67,11 +67,28 @@ export interface DiagramManifest {
   readonly formats: readonly string[];
   /** The named export holding the plugin object. */
   readonly export: string;
+  /** Module path of the lazily loaded text-output entry; its `ascii` export is the hook (D76). */
+  readonly ascii?: string;
 }
+
+/** A package.json `exports` map: subpath → conditions → file. */
+type Exports = Readonly<Record<string, Readonly<Record<string, string>> | string>>;
 
 export interface ManifestSource {
   readonly name: string;
   readonly manifest: DiagramManifest;
+  /** The package's `exports`; resolves the `ascii` entry's file to an import subpath. */
+  readonly exports?: Exports;
+}
+
+/** The import specifier serving `file` (`./dist/ascii.js` → `<name>/ascii`). */
+function specifierFor(source: ManifestSource, file: string): string {
+  for (const [subpath, target] of Object.entries(source.exports ?? {})) {
+    const files = typeof target === 'string' ? [target] : Object.values(target);
+    if (files.includes(file))
+      return subpath === '.' ? source.name : `${source.name}${subpath.slice(1)}`;
+  }
+  throw new Error(`${source.name}: no exports subpath serves the ascii entry "${file}"`);
 }
 
 /** Reads the manifests of `packages/diagram-*`. */
@@ -84,8 +101,10 @@ export function readManifests(root = ROOT): ManifestSource[] {
     const pkg = JSON.parse(readFileSync(path, 'utf8')) as {
       name: string;
       mermaid?: DiagramManifest;
+      exports?: Exports;
     };
-    if (pkg.mermaid?.plugin === 'diagram') out.push({ name: pkg.name, manifest: pkg.mermaid });
+    if (pkg.mermaid?.plugin === 'diagram')
+      out.push({ name: pkg.name, manifest: pkg.mermaid, exports: pkg.exports });
   }
   return out;
 }
@@ -121,9 +140,13 @@ export function generateRegistry(manifests: readonly ManifestSource[]): string {
       `    pattern: ${pattern},`,
       `    id: '${m.manifest.id}',`,
       `    formats: [${formats}],`,
-      `    load: () => import('${m.name}').then((m) => m.${m.manifest.export}),`,
-      `  },`
+      `    load: () => import('${m.name}').then((m) => m.${m.manifest.export}),`
     );
+    if (m.manifest.ascii !== undefined) {
+      const ascii = specifierFor(m, m.manifest.ascii);
+      lines.push(`    loadAscii: () => import('${ascii}').then((m) => m.ascii),`);
+    }
+    lines.push(`  },`);
   }
   lines.push('];', '');
   return lines.join('\n');

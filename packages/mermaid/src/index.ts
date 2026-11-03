@@ -18,6 +18,7 @@ export {
   type MermaidErrorCode,
   type PluginManifest,
   type Resource,
+  type TextRenderContext,
   type Warning,
 } from '@mermaid-js/core';
 export type { MermaidConfig } from '@mermaid-js/core/config';
@@ -34,6 +35,9 @@ export {
   type PreloadRequest,
   type RenderOptions,
   type RenderResult,
+  type SvgRenderOptions,
+  type TextRenderOptions,
+  type TextRenderResult,
 } from './api.ts';
 export type { Mounted, MountOptions, RunOptions } from './dom.ts';
 export type { ExternalDiagram, LayoutLoader, LazyDiagram, ManifestPlugin } from './registry.ts';
