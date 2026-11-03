@@ -1,0 +1,44 @@
+name: Nightly bench
+
+# The full browser bench (packages/bench, `pnpm bench`) on mermaid-v13 every night: the corpus
+# through v13, its instrumented build, mermaid@12 (frozen 12.2.0 and the newest 12.x) and Pele
+# in Chromium. It measures what the PR check does not: speed over the corpus against mermaid@12
+# (R-PERF-3, reported only on shared runners, D150), per-stage times and Pele by time. The
+# report is the run's artifact and job summary. Also runs on demand.
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bench-nightly
+  cancel-in-progress: true
+
+jobs:
+  bench:
+    name: Full bench
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 60
+    env:
+      BENCH_RUNNER: blacksmith-4vcpu-ubuntu-2404
+      BENCH_REPORT_ONLY: speed
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @mermaid-js/bench exec playwright install --with-deps chromium
+      # No v13-base: the nightly measures the branch itself, not a change.
+      - run: pnpm --filter @mermaid-js/bench bench --renderers v13,v13-stages,v12-frozen,v12-current,pele
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: bench-nightly-report
+          path: packages/bench/dist/reports/
+          if-no-files-found: ignore

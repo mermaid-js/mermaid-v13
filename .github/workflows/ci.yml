@@ -33,19 +33,17 @@ jobs:
       - run: pnpm build
 
   bench:
-    # R-TEST-7: the bench gates (packages/bench). Loaded size (R-PERF-1), corpus OK count
-    # (R-PERF-4) and stage regression (R-PERF-7) enforce; speed against mermaid@12.2.0
-    # (R-PERF-3) is reported only, as shared runners measure 25-32x against 50x (D150).
-    # v13-base (this PR's base branch, the merge commit's first parent) and pele are
-    # informational: the comparison measures the PR against both. v12-current is informational and is
-    # skipped here; the release bench still runs it. Both environments run (the --env default):
-    # the browser, which the gates read, and Node (reported only; mermaid@12 is browser-only).
-    # In each, the renderers run alternating, diagram by diagram, so runner noise hits all.
-    # On a PR from this repository the condensed report is posted as a PR comment, updated in
-    # place on every run. Fork PRs get a read-only token, so they only get the artifact.
+    # R-TEST-7, the PR check (packages/bench/src/pr-check.ts), about two minutes:
+    # - Loaded size (R-PERF-1) and corpus renders (R-PERF-4, once each in Node) enforce.
+    # - v13 against this PR's base branch (the merge commit's first parent) and Pele: CPU
+    #   instruction counts in Node, steady to ~1% on a shared runner. Reported only.
+    # - A small browser run of v13 and mermaid@12 on 5 diagrams: Ready at (R-PERF-9), indicative speed.
+    # Speed over the corpus (R-PERF-3) and stage timings run in the nightly and release bench
+    # (bench-nightly.yml, release.yml). On a PR from this repository the result is posted as a
+    # PR comment, updated in place on every run; fork PRs get a read-only token and only the artifact.
     name: Bench gates
     runs-on: blacksmith-4vcpu-ubuntu-2404
-    timeout-minutes: 60
+    timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: write
@@ -68,16 +66,14 @@ jobs:
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @mermaid-js/bench exec playwright install --with-deps chromium
-      # perf for the Node comparison's instruction counts (packages/bench/src/instruction-counts.ts),
-      # which are far steadier than times on a shared runner. Without it, Node falls back to times.
+      # perf for the instruction counts (packages/bench/src/instruction-counts.ts). Without it
+      # they are skipped and the comment says so.
       - name: Install perf and allow user-space counters
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq linux-tools-common linux-tools-generic > /dev/null || true
           sudo sysctl -w kernel.perf_event_paranoid=1 || true
-      # Corpus pass (the gates) with v13 and mermaid@12; then the comparison the PR comment
-      # shows: 5 diagrams over 20 rounds of fresh sessions with v13-base and Pele too.
-      - run: pnpm --filter @mermaid-js/bench bench --renderers v13,v13-stages,v12-frozen --base HEAD^1
+      - run: pnpm --filter @mermaid-js/bench pr --base HEAD^1
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -94,7 +90,7 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
           BODY: packages/bench/dist/reports/comment.md
         run: |
-          # The comment starts with a marker line (COMMENT_MARKER in packages/bench/src/markdown.ts).
+          # The comment starts with a marker line (COMMENT_MARKER in packages/bench/src/pr-markdown.ts).
           id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
             --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- mermaid-v13-bench -->"))) | .id' | head -n 1)
           if [ -n "$id" ]; then

@@ -65,6 +65,10 @@ export interface GateInput {
   reportOnly?: readonly GateId[];
   /** Number of diagrams in the flowchart corpus (the OK count must equal it). */
   corpusSize: number;
+  /** Corpus diagrams rendered, when counted elsewhere than the browser runs (the PR check). */
+  corpusOk?: number;
+  /** Gates not measured by this run, with the reason: reported as skipped, never failing. */
+  skip?: Partial<Record<GateId, string>>;
 }
 
 export function resolveMode(setting: GateModeSetting, pipeline: PipelineState): GateMode {
@@ -128,6 +132,8 @@ export function evaluateGates({
   mode,
   reportOnly = [],
   corpusSize,
+  corpusOk,
+  skip = {},
 }: GateInput): GateOutcome {
   const v13 = rendererRun(report, 'v13');
   const enforces = (id: GateId) => mode === 'enforce' && !reportOnly.includes(id);
@@ -165,7 +171,8 @@ export function evaluateGates({
         : `${s.value}× over ${s.common} common diagrams (need ≥ ${LIMITS.minSpeedup}×)`,
   });
 
-  const ok = (v13?.results ?? []).filter((r) => r.set === 'corpus' && r.status === 'ok').length;
+  const ok =
+    corpusOk ?? (v13?.results ?? []).filter((r) => r.set === 'corpus' && r.status === 'ok').length;
   gates.push({
     id: 'ok-count',
     title: 'Corpus diagrams rendered',
@@ -248,6 +255,11 @@ export function evaluateGates({
         : `${kb(ascii.gzip)} in ${ascii.files.length} chunk(s) an SVG render never loads (limit ${kb(LIMITS.asciiGzipBytes)})`,
   });
 
+  for (const g of gates) {
+    const reason = skip[g.id];
+    if (reason === undefined) continue;
+    Object.assign(g, { status: 'skip', enforced: false, actual: null, detail: reason });
+  }
   const exitCode = gates.some((g) => g.enforced && g.status === 'fail') ? 1 : 0;
   return { mode, gates, exitCode };
 }
