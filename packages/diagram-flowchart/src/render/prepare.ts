@@ -10,12 +10,14 @@ import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-j
 import type { FlowModel, FlowModelEdge, FlowModelSubgraph, FlowVertex } from '../parser/index.ts';
 import type { FlowRenderContext } from './context.ts';
 import { curveKind, type CurveKind } from './edges.ts';
+import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
+import { assetSize } from './assets.ts';
 import {
-  assetSize,
   canonicalShape,
   shapeHasLabel,
   shapeSize,
   shapeSpan,
+  type PadXY,
   type Pads,
 } from './shapes.ts';
 
@@ -36,6 +38,12 @@ export interface NodeView {
   vertex?: FlowVertex;
   /** Nesting depth of a cluster (0 at the top). */
   depth: number;
+  /**
+   * A subgraph's place in source order (pre-order over nesting, as v12 `declarationIndex`).
+   * Subgraphs hidden inside a collapsed one still count, so collapsing does not shift the
+   * palette cycle. The renderer turns it into a palette slot (#86).
+   */
+  order?: number;
 }
 
 export interface EdgeView {
@@ -59,6 +67,10 @@ export interface Prepared {
   edges: EdgeView[];
   pads: Pads;
 }
+
+// The smallest hexagonSlant drawn (a ratio, not a length): each pointed end as deep as the
+// hexagon is tall.
+const MIN_SLANT = 1;
 
 const ROUTING: Readonly<Partial<Record<CurveKind, 'straight' | 'curved'>>> = {
   linear: 'straight',
@@ -116,10 +128,29 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     size: theme.number('fontSize'),
     weight: 400,
   };
+  // flowchart.padding: the classic themes' padding variables are multiples of it (D152).
+  const pad = size(flow.padding, flowchartConfigDefaults.padding);
+  const padOf = (name: string) => theme.padding(name, pad);
+  const xy = (shape: string): PadXY => ({
+    x: padOf(`${shape}PaddingX`),
+    y: padOf(`${shape}PaddingY`),
+  });
   const pads: Pads = {
-    x: theme.number('spacing3'),
-    y: theme.number('spacing2') + theme.number('spacing1'),
+    node: xy('node'),
     r: theme.number('radius'),
+    pad,
+    stadium: xy('stadium'),
+    hexagon: xy('hexagon'),
+    // A slant of 0 would put the hexagon's points at infinity.
+    hexagonSlant: Math.max(theme.number('hexagonSlant'), MIN_SLANT),
+    subroutine: xy('subroutine'),
+    cylinder: xy('cylinder'),
+    lean: xy('lean'),
+    odd: xy('odd'),
+    ringGap: theme.number('doubleCircleGap'),
+    ringPad: padOf('doubleCirclePadding'),
+    circlePad: padOf('circlePadding'),
+    circleMin: theme.number('circleMinDiameter'),
   };
   const wrap = fromPx(units, size(flow.wrappingWidth), 'x') || b.wrapWidth;
   const minWidth = size(flow.minNodeWidth);
@@ -208,11 +239,18 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
       view.dy = 0;
       return;
     }
-    const round = view.shape === 'circle' || view.shape === 'dbl-circ';
+    // v12 widens vertex labels to minNodeWidth; round shapes and collapsed subgraphs keep theirs.
+    const keepWidth =
+      view.shape === 'circle' || view.shape === 'dbl-circ' || view.shape === 'collapsedGroup';
     const s =
       v?.img || v?.icon
         ? assetSize(v, lw, lh)
-        : shapeSize(view.shape, lw > 0 && has && !round ? Math.max(lw, minWidth) : lw, lh, pads);
+        : shapeSize(
+            view.shape,
+            lw > 0 && has && !keepWidth ? Math.max(lw, minWidth) : lw,
+            lh,
+            pads
+          );
     view.w = s.w;
     view.h = s.h;
     view.dy = s.dy;
@@ -232,12 +270,30 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     depth: depthOf(id),
   });
 
+  // Palette order follows the source. `model.subgraphs` is in closing order (a nested
+  // subgraph lands before its parent), so walk the nesting forest pre-order like v12.
+  const order = new Map<string, number>();
+  const childrenOf = new Map<string, string[]>();
+  for (const sg of model.subgraphs) {
+    const p = sgParent.get(sg.id);
+    if (p !== undefined) childrenOf.set(p, [...(childrenOf.get(p) ?? []), sg.id]);
+  }
+  const walk = (id: string): void => {
+    if (order.has(id)) return;
+    order.set(id, order.size);
+    for (const c of childrenOf.get(id) ?? []) walk(c);
+  };
+  for (const sg of model.subgraphs) if (!sgParent.has(sg.id)) walk(sg.id);
+  // Subgraphs that only sit in a membership cycle have no root; number them last.
+  for (const sg of model.subgraphs) walk(sg.id);
+
   for (const sg of model.subgraphs) {
     if (collapsedInto.has(sg.id)) continue;
     const collapsed = isCollapsed(sg.id);
     const view = blank(sg.id, sg.ast, !collapsed, collapsed ? 'collapsedGroup' : 'rect');
     view.classes = sg.classes;
     view.style = styleOf(sg.classes);
+    view.order = order.get(sg.id);
     views.set(sg.id, view);
     if (collapsed) nodes.push(view);
     else groups.push(view);
@@ -270,7 +326,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     const [f, bits] = textStyle(view.style, font);
     view.label = label(sg.title, sg.labelType === 'markdown', f, Infinity, bits);
   }
-  groups.sort((a, b) => a.depth - b.depth);
+  groups.sort((g, h) => g.depth - h.depth);
 
   const edges: EdgeView[] = [];
   const ids = new Set<string>();

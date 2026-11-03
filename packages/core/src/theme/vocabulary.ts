@@ -6,8 +6,12 @@
  * diagram reads is accepted and ignored (R-CONF-5).
  */
 
-/** How a variable's value is checked and written. */
-export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight';
+/**
+ * How a variable's value is checked and written. A `padding` is a px length or a multiple of
+ * the diagram's own `padding` config (`padding`, `2 * padding`), resolved at render time
+ * because the classic themes follow `flowchart.padding` (D152).
+ */
+export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter' | 'padding';
 
 export interface ThemeVarDef {
   /** The short private alias written on the root, without the leading `--_`. */
@@ -34,6 +38,24 @@ export const BASE_VARIABLES = [
 
 export type BaseVariable = (typeof BASE_VARIABLES)[number];
 
+/**
+ * Arrowhead geometry (D152): sizes and gaps of the point, circle and cross arrowheads, read
+ * as numbers at render time (`Theme.number`), so overriding their CSS variables has no effect.
+ * Redux themes carry v12 `look: neo` values, classic themes v12 classic values.
+ */
+export const ARROWHEAD_VARIABLES = [
+  'arrowheadGap',
+  'arrowheadLength',
+  'arrowheadWidth',
+  'circleArrowheadSize',
+  'circleArrowheadGap',
+  'crossArrowheadSize',
+  'crossArrowheadGap',
+  'crossArrowheadStrokeWidth',
+] as const;
+
+export type ArrowheadVariable = (typeof ARROWHEAD_VARIABLES)[number];
+
 /** Shape tokens (R-THEME-11): sizes every diagram type reads instead of hard-coding them. */
 export const TOKEN_VARIABLES = [
   'strokeWidth',
@@ -43,9 +65,44 @@ export const TOKEN_VARIABLES = [
   'spacing1',
   'spacing2',
   'spacing3',
+  ...ARROWHEAD_VARIABLES,
+  // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
+  'nodePaddingX',
+  'nodePaddingY',
+  'stadiumPaddingX',
+  'stadiumPaddingY',
+  'hexagonPaddingX',
+  'hexagonPaddingY',
+  'hexagonSlant',
+  'doubleCircleGap',
+  'doubleCirclePadding',
+  'circlePadding',
+  'circleMinDiameter',
+  // Shapes with their own v12 padding (#89), totals added to the label box.
+  'subroutinePaddingX',
+  'subroutinePaddingY',
+  'cylinderPaddingX',
+  'cylinderPaddingY',
+  'leanPaddingX',
+  'leanPaddingY',
+  'oddPaddingX',
+  'oddPaddingY',
 ] as const;
 
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
+
+/**
+ * Palettes (D151, D152): lists of colours a theme carries as data. `themeVariables` replaces
+ * a whole list (an array of colours, or a comma-separated string), and v12's numbered names
+ * `cScale0`–`cScale11` replace one entry of `cScale`. Palettes are read as literal colours,
+ * not CSS variables.
+ */
+export const PALETTE_VARIABLES = ['borderColorArray', 'bkgColorArray', 'cScale'] as const;
+
+export type PaletteVariable = (typeof PALETTE_VARIABLES)[number];
+
+/** How many `cScaleN` names v12 has (`THEME_COLOR_LIMIT`). */
+export const PALETTE_LIMIT = 12;
 
 const F = ['flowchart'];
 const C = ['core'];
@@ -99,4 +156,36 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   spacing1: def('g1', 'length', CF),
   spacing2: def('g2', 'length', CF),
   spacing3: def('g3', 'length', CF),
+  // arrowhead geometry (numbers only)
+  arrowheadGap: def('ag', 'length', F),
+  arrowheadLength: def('al', 'length', F),
+  arrowheadWidth: def('aw', 'length', F),
+  circleArrowheadSize: def('ocs', 'length', F),
+  circleArrowheadGap: def('ocg', 'length', F),
+  crossArrowheadSize: def('xs', 'length', F),
+  crossArrowheadGap: def('xg', 'length', F),
+  crossArrowheadStrokeWidth: def('xw', 'length', F),
+  // Node padding, read as numbers at render time (D152), so their aliases are never written.
+  nodePaddingX: def('npx', 'padding', F),
+  nodePaddingY: def('npy', 'padding', F),
+  stadiumPaddingX: def('spx', 'padding', F),
+  stadiumPaddingY: def('spy', 'padding', F),
+  hexagonPaddingX: def('hpx', 'padding', F),
+  hexagonPaddingY: def('hpy', 'padding', F),
+  hexagonSlant: def('hs', 'length', F),
+  doubleCircleGap: def('dcg', 'length', F),
+  doubleCirclePadding: def('dcp', 'padding', F),
+  circlePadding: def('cp', 'padding', F),
+  circleMinDiameter: def('cmd', 'length', F),
+  subroutinePaddingX: def('srx', 'padding', F),
+  subroutinePaddingY: def('sry', 'padding', F),
+  cylinderPaddingX: def('cyx', 'padding', F),
+  cylinderPaddingY: def('cyy', 'padding', F),
+  leanPaddingX: def('lnx', 'padding', F),
+  leanPaddingY: def('lny', 'padding', F),
+  oddPaddingX: def('odx', 'padding', F),
+  oddPaddingY: def('ody', 'padding', F),
+  // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
+  // that sets no value has no shadow.
+  dropShadow: def('ds', 'filter', F),
 };

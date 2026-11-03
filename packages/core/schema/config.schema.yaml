@@ -86,20 +86,291 @@ properties:
     meta:enum:
       'null': Can be set to disable any pre-defined mermaid theme
       auto: 'New in v13: the default theme, and `dark` under `prefers-color-scheme: dark` (R-THEME-8)'
-    default: 'redux'
+    default: 'redux-color'
     x-mermaid:
       status: honoured
       since: 13.0.0
       reason: >-
-        The default changes from `default` to `redux` (D55). 13.0 ships `redux`, `default`, `dark`,
-        `forest`, `neutral` and `base`; the other v12 names stand in for one of them with a
-        warning, except `redux-color` (the flowchart default), which renders `redux`.
+        The default changes from `default` to `redux-color`, the theme v12's flowchart renders by
+        default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`,
+        `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`,
+        `neutral` and `base`. `neo` renders `redux-color`, `neo-dark` renders `redux-dark-color`
+        and `null` renders `base`, each with a `THEME_UNAVAILABLE` warning.
   themeVariables:
     tsType: any
     x-mermaid:
       status: honoured
       since: 13.0.0
-      reason: Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md).
+      reason: >-
+        Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference
+        between the redux and classic theme families is a theme variable (D152), listed here as
+        redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and
+        `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in
+        `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8;
+        `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 /
+        ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2;
+        `crossArrowheadStrokeWidth` 2 / 2; `nodePaddingX` (per side) 16 / 2 × padding;
+        `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding;
+        `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding;
+        `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5;
+        `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 /
+        none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding;
+        `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` /
+        `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY`
+        (totals) 42 / 24 and padding; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
+        on the dark redux themes) / `none`. "padding" is `flowchart.padding`. Plain `redux` and
+        `redux-dark` carry no palette. Geometry variables are read as numbers at render time,
+        because they feed layout, so overriding their CSS variables has no effect;
+        `dropShadow` is a CSS value.
+    # Named variables are documented here; any other name is still accepted (R-CONF-5).
+    type: object
+    additionalProperties: true
+    properties:
+      borderColorArray:
+        description: |
+          Per-subgraph border colours, used by slot (declaration order, cycling). A list of
+          colours, or one comma-separated string. Empty or unset: no per-subgraph colour.
+        type: [array, string]
+        items:
+          type: string
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            Tailwind-400 × 12 in `redux-color` and `redux-dark-color`; empty in every other
+            theme (D151). Read as literal colours, not CSS variables. An unsafe colour drops
+            the whole list with `THEME_VARIABLE_DROPPED`.
+      bkgColorArray:
+        description: |
+          Per-subgraph fill colours, by the same slot as `borderColorArray`. A list of colours,
+          or one comma-separated string. Empty: subgraphs are coloured on the border only.
+        type: [array, string]
+        items:
+          type: string
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            Tailwind-50 × 12 in `redux-color`; empty in `redux-dark-color` and every other theme
+            (D151). Read as literal colours, not CSS variables. An unsafe colour drops the whole
+            list with `THEME_VARIABLE_DROPPED`.
+      arrowheadGap:
+        description: |
+          Space in px between a point arrowhead's tip and the node outline.
+        type: [number, string]
+        x-mermaid: &arrowhead
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            Arrowhead geometry (D152): a number or a px length, redux / classic value in the
+            `themeVariables` notes. Read as a number at render time, so overriding its CSS
+            variable has no effect.
+      arrowheadLength:
+        description: |
+          Length in px of a point arrowhead, from tip to base.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      arrowheadWidth:
+        description: |
+          Width in px of a point arrowhead's base.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      circleArrowheadSize:
+        description: |
+          Diameter in px of a circle arrowhead.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      circleArrowheadGap:
+        description: |
+          Space in px between a circle arrowhead and the node outline.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      crossArrowheadSize:
+        description: |
+          Side in px of the square a cross arrowhead's arms span.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      crossArrowheadGap:
+        description: |
+          Space in px between a cross arrowhead and the node outline.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      crossArrowheadStrokeWidth:
+        description: |
+          Stroke width in px of a cross arrowhead's arms.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      nodePaddingX:
+        description: |
+          Room left and right of a node label, per side, for the rectangle and the shapes that share its padding. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            16 in the redux themes; `2 * padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      nodePaddingY:
+        description: |
+          Room above and below a node label, per side. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            12 in the redux themes; `padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      stadiumPaddingX:
+        description: |
+          Stadium padding added to the width, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            40 in the redux themes; `padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      stadiumPaddingY:
+        description: |
+          Stadium padding added to the height, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            24 in the redux themes; `padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      hexagonPaddingX:
+        description: |
+          Hexagon padding added to the width, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            70 in the redux themes; `padding` in the classic themes. v12 adds it to the height; v13 corrects the axes (D151). Read as a number at render time (D152), so its CSS variable has no effect.
+      hexagonPaddingY:
+        description: |
+          Hexagon padding added to the height, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            32 in the redux themes; `padding` in the classic themes. v12 adds it to the width; v13 corrects the axes (D151). Read as a number at render time (D152), so its CSS variable has no effect.
+      hexagonSlant:
+        description: |
+          Hexagon slant factor: each pointed end is the height divided by this.
+        type: number
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            3.5 in the redux themes; 4 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      doubleCircleGap:
+        description: |
+          Gap between the two rings of a double circle.
+        type: number
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            12 in the redux themes; 5 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      doubleCirclePadding:
+        description: |
+          Room between the label diagonal and the inner ring of a double circle, per side. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            16 in the redux themes; `padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      circlePadding:
+        description: |
+          Added to the label's diagonal to give a circle's diameter. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            16 in the redux themes (v13's earlier value, kept, D151); `padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      circleMinDiameter:
+        description: |
+          The smallest circle diameter.
+        type: number
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            44 in the redux themes; 0 (none) in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      subroutinePaddingX:
+        description: |
+          Subroutine padding added to the width, in total, inside its two 8px frames. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            28 in the redux themes; `padding` in the classic themes (v12 `subroutine.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      subroutinePaddingY:
+        description: |
+          Subroutine padding added to the height, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            12 in the redux themes; `padding` in the classic themes (v12 `subroutine.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      cylinderPaddingX:
+        description: |
+          Cylinder (database) padding added to the width, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            24 in the redux themes; `padding` in the classic themes (v12 `cylinder.ts`). The lined cylinder uses it too. Read as a number at render time (D152), so its CSS variable has no effect.
+      cylinderPaddingY:
+        description: |
+          Cylinder (database) padding added to the height, in total, besides the caps. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            24 in the redux themes; `padding` in the classic themes (v12 `cylinder.ts`). The lined cylinder uses it too. Read as a number at render time (D152), so its CSS variable has no effect.
+      leanPaddingX:
+        description: |
+          Parallelogram and trapezoid padding added to the width, in total (on each side for the inverted trapezoid `[\text/]`, as v12). A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `2 * padding` in the redux themes; `padding` in the classic themes (v12 `leanRight.ts`, `trapezoid.ts`, `invertedTrapezoid.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      leanPaddingY:
+        description: |
+          Parallelogram and trapezoid padding added to the height, in total (on each side for the inverted trapezoid). A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `padding` in every theme, kept so the pair is complete (v12 `leanRight.ts`, `trapezoid.ts`, `invertedTrapezoid.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      oddPaddingX:
+        description: |
+          Asymmetric shape (`>text]`) padding added to the width, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            42 (21 per side) in the redux themes; `padding` in the classic themes (v12 `rectLeftInvArrow.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      oddPaddingY:
+        description: |
+          Asymmetric shape padding added to the height, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            24 (12 per side) in the redux themes; `padding` in the classic themes (v12 `rectLeftInvArrow.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
   themeCSS:
     type: string
     x-mermaid:
@@ -109,8 +380,14 @@ properties:
       replacement: '`themeVariables`, or `--mermaid-*` CSS variables set by the host page'
   look:
     $ref: '#/$defs/BaseDiagramConfig/properties/look'
-    default: 'classic'
-    x-mermaid: { status: pending }
+    x-mermaid:
+      status: ignored
+      since: 13.0.0
+      reason: >-
+        `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED`
+        warning per render. The v12 neo and classic geometry is theme data instead: the redux
+        themes carry neo geometry and the classic themes carry classic geometry (D152).
+      replacement: '`theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8)'
   handDrawnSeed:
     description: |
       Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed.
@@ -724,7 +1001,14 @@ $defs:
           - classic
           - handDrawn
           - neo
-        x-mermaid: { status: pending }
+        deprecated: true
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       layout:
         description: |
           Defines which layout algorithm to use for rendering the diagram.
@@ -1444,8 +1728,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       rect_fill:
         type: string
         default: '#f9f9f9'
@@ -2024,8 +2313,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
@@ -2114,8 +2408,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       layout:
         $ref: '#/$defs/BaseDiagramConfig/properties/layout'
         default: 'elk'
@@ -2239,8 +2538,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
@@ -2786,8 +3090,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       arrowMarkerAbsolute:
         type: boolean # TODO, is this actually used here (it has no default value but was in types)
         x-mermaid:
@@ -2970,8 +3279,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       layout:
         $ref: '#/$defs/BaseDiagramConfig/properties/layout'
         # Swimlanes differ from flowcharts only in the layout engine, so the engine is the
@@ -3030,8 +3344,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       titleTopMargin:
         description: Margin top for the text over the diagram
         type: integer
@@ -3110,8 +3429,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render. The
+            redux themes carry v12's `look: neo` geometry (D152).
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
@@ -3218,7 +3542,15 @@ $defs:
           **Only used in new experimental rendering.**
         type: number
         default: 15
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The "padding" of the classic themes' node, stadium, hexagon, double-circle and
+            circle padding variables (D151, D152), and of the diamond in every theme (side =
+            label width + label height + 2 × padding). The redux themes use their own fixed
+            padding variables (see `themeVariables`); a padding variable set to `padding` or
+            `<n> * padding` follows this value in any theme.
       wrappingWidth:
         description: |
           Width of nodes where text is wrapped.
@@ -3631,8 +3963,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       wrappingWidth:
         $ref: '#/$defs/FlowchartDiagramConfig/properties/wrappingWidth'
         default: 120
@@ -3755,8 +4092,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       width:
         description: The width of the Venn diagram.
         type: number

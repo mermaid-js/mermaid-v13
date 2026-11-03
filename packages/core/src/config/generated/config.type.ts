@@ -66,6 +66,7 @@ theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark"
 themeVariables?: any
 themeCSS?: string
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */
@@ -376,6 +377,7 @@ export interface FlowchartDiagramConfig extends BaseDiagramConfig {
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */
@@ -486,6 +488,7 @@ useMaxWidth?: boolean
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */
@@ -515,6 +518,7 @@ export interface SwimlaneDiagramConfig extends BaseDiagramConfig {
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */
@@ -570,6 +574,7 @@ export interface AgentflowDiagramConfig extends BaseDiagramConfig {
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */
@@ -633,6 +638,7 @@ export interface SequenceDiagramConfig extends BaseDiagramConfig {
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */
@@ -1046,6 +1052,7 @@ export interface ClassDiagramConfig extends BaseDiagramConfig {
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */
@@ -1096,6 +1103,7 @@ export interface StateDiagramConfig extends BaseDiagramConfig {
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */
@@ -1166,6 +1174,7 @@ export interface ErDiagramConfig extends BaseDiagramConfig {
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */
@@ -1445,6 +1454,7 @@ export interface RequirementDiagramConfig extends BaseDiagramConfig {
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */
@@ -2220,6 +2230,7 @@ export interface UsecaseDiagramConfig extends BaseDiagramConfig {
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */
@@ -2336,6 +2347,7 @@ export interface VennDiagramConfig extends BaseDiagramConfig {
  */
 theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 /**
+ * @deprecated
  * Defines which main look to use for the diagram.
  * 
  */

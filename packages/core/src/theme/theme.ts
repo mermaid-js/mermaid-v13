@@ -10,8 +10,8 @@
  * follow (R-THEME-3, -4). With `cssVariables: false` the same values are written as
  * literals for renderers that do not resolve CSS variables.
  */
-import { checkColor, checkStyle } from '../svg/style.ts';
-import type { Length, Paint, SafeColor, SafeValue, ThemeRef } from '../svg/types.ts';
+import { checkColor, checkFilter, checkStyle, splitTopLevel } from '../svg/style.ts';
+import type { Length, Paint, SafeColor, SafeFilter, SafeValue, ThemeRef } from '../svg/types.ts';
 import { num } from '../svg/escape.ts';
 import {
   composite,
@@ -25,7 +25,14 @@ import {
 } from './color.ts';
 import { parseRule, type Expr } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
-import { THEME_VARIABLES, type ThemeVarDef, type ThemeVarKind } from './vocabulary.ts';
+import {
+  PALETTE_LIMIT,
+  PALETTE_VARIABLES,
+  THEME_VARIABLES,
+  type PaletteVariable,
+  type ThemeVarDef,
+  type ThemeVarKind,
+} from './vocabulary.ts';
 
 export interface ThemeWarning {
   readonly code: 'THEME_VARIABLE_DROPPED' | 'THEME_UNAVAILABLE';
@@ -61,8 +68,15 @@ export interface Theme {
   length(name: string): Length;
   /** A length or size variable as a number, for geometry and measuring. */
   number(name: string): number;
+  /**
+   * A `padding` variable as a number (D152): a px value as is, or a multiple of the diagram's
+   * own `padding` config, which the caller passes.
+   */
+  padding(name: string, padding: number): number;
   /** The font family, for `font-family`. */
   font(name?: string): SafeValue | ThemeRef;
+  /** A filter variable (`dropShadow`) for the `filter` attribute: `var(--_x)` or the literal. */
+  filter(name: string): SafeFilter | ThemeRef;
   /** The variable's computed value as written in literal mode. */
   value(name: string): string;
   /** The variable's colour channels, when JS can compute them. */
@@ -77,6 +91,11 @@ export interface Theme {
   rootStyle(): Readonly<Record<AliasName, ThemeRef>>;
   /** The colour aliases for light and dark, for `theme: 'auto'`; undefined otherwise. */
   autoDeclarations(): AutoDeclarations | undefined;
+  /**
+   * A palette as literal colours (D151, D152): the author's `themeVariables` list if valid,
+   * else the theme's; empty when the theme carries none.
+   */
+  palette(name: PaletteVariable): readonly SafeColor[];
 }
 
 export interface AutoDeclarations {
@@ -95,6 +114,8 @@ interface Resolved {
 }
 
 const RE_SIZE = /^(\d{1,6}(?:\.\d{1,6})?)(?:px)?$/;
+/** A multiple of the diagram's padding: `padding` or `<n> * padding`. */
+const RE_PADDING = /^(?:(\d{1,6}(?:\.\d{1,6})?)\s*\*\s*)?padding$/;
 const WEIGHTS = new Set([
   'normal',
   'bold',
@@ -116,7 +137,9 @@ const own = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.c
 
 function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
   if (typeof raw === 'number')
-    return kind === 'length' || kind === 'weight' ? checkValue(kind, String(raw)) : undefined;
+    return kind === 'length' || kind === 'padding' || kind === 'weight'
+      ? checkValue(kind, String(raw))
+      : undefined;
   if (typeof raw !== 'string') return undefined;
   const v = raw.trim();
   switch (kind) {
@@ -124,10 +147,14 @@ function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
       return checkColor(v);
     case 'length':
       return RE_SIZE.test(v) ? v : undefined;
+    case 'padding':
+      return RE_SIZE.test(v) || RE_PADDING.test(v) ? v : undefined;
     case 'weight':
       return WEIGHTS.has(v.toLowerCase()) ? v.toLowerCase() : undefined;
     case 'font':
       return checkStyle(['font-family:' + v]).text['font-family'] as string | undefined;
+    case 'filter':
+      return checkFilter(v);
   }
 }
 
@@ -175,7 +202,14 @@ class Resolver {
 
   private literal(name: string, text: string): Resolved {
     const kind = this.defs[name]?.kind ?? 'color';
-    if (kind === 'length') {
+    if (kind === 'padding') {
+      const m = RE_PADDING.exec(text);
+      if (m) {
+        const lit = `${num(Number(m[1] ?? 1))}*padding`;
+        return { css: lit, lit, rgba: undefined, deps: [] };
+      }
+    }
+    if (kind === 'length' || kind === 'padding') {
       const n = Number(RE_SIZE.exec(text)?.[1] ?? 0);
       return { css: num(n) + 'px', lit: num(n), rgba: undefined, deps: [] };
     }
@@ -191,9 +225,8 @@ class Resolver {
       if (r.rgba !== undefined || this.defs[name]?.kind !== 'color') return r;
       return { ...r, rgba: this.fromSpec(name)?.rgba };
     }
-    return (
-      this.fromSpec(name) ?? { css: 'currentColor', lit: 'currentColor', rgba: undefined, deps: [] }
-    );
+    const fallback = this.defs[name]?.kind === 'filter' ? 'none' : 'currentColor';
+    return this.fromSpec(name) ?? { css: fallback, lit: fallback, rgba: undefined, deps: [] };
   }
 
   private fromSpec(name: string): Resolved | undefined {
@@ -367,6 +400,58 @@ function checkOverrides(
   return out;
 }
 
+const MAX_PALETTE = 64;
+const RE_C_SCALE = /^cScale(\d{1,2})$/;
+
+/** A palette override as a list: an array as given, or a comma-separated string. */
+function paletteItems(raw: unknown): readonly unknown[] | undefined {
+  if (Array.isArray(raw)) return raw as unknown[];
+  return typeof raw === 'string' ? splitTopLevel(raw, 'comma') : undefined;
+}
+/**
+ * The palettes for one render: the spec's lists with the author's overrides applied. A whole
+ * list (`borderColorArray`, `bkgColorArray`, `cScale`) is an array or a comma-separated string;
+ * `cScale0`–`cScale11` replace one entry of the theme's `cScale`. Any unsafe colour drops
+ * that override with a warning.
+ */
+function resolvePalettes(
+  spec: ThemeSpec,
+  vars: Readonly<Record<string, unknown>> | undefined,
+  warn: ThemeOptions['warn']
+): Record<PaletteVariable, readonly SafeColor[]> {
+  const drop = (name: string, raw: unknown) =>
+    warn?.({
+      code: 'THEME_VARIABLE_DROPPED',
+      message: `themeVariables.${name} value ${JSON.stringify(String(raw).slice(0, 60))} is not allowed and was dropped.`,
+    });
+  const out = {} as Record<PaletteVariable, SafeColor[]>;
+  for (const name of PALETTE_VARIABLES) {
+    out[name] = (spec.palettes?.[name] ?? []).map((c) => checkColor(c) as SafeColor);
+    const raw = vars && own(vars, name) ? vars[name] : undefined;
+    if (raw === undefined || raw === null) continue;
+    const checked = paletteItems(raw)?.map((c) =>
+      typeof c === 'string' ? checkColor(c) : undefined
+    );
+    if (!checked || checked.length > MAX_PALETTE || checked.includes(undefined)) {
+      drop(name, raw);
+      continue;
+    }
+    out[name] = checked as SafeColor[];
+  }
+  for (const key of vars ? Object.keys(vars) : []) {
+    const m = RE_C_SCALE.exec(key);
+    const i = m ? Number(m[1]) : NaN;
+    if (Number.isNaN(i) || i >= PALETTE_LIMIT) continue;
+    const raw = (vars as Record<string, unknown>)[key];
+    if (raw === undefined || raw === null || raw === '') continue;
+    const c = typeof raw === 'string' ? checkColor(raw) : undefined;
+    if (c === undefined) drop(key, raw);
+    // An entry the theme has no colour for is accepted and ignored (R-CONF-5).
+    else if (i < out.cScale.length) out.cScale[i] = c;
+  }
+  return out;
+}
+
 /** Builds one render's theme. */
 export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme {
   const tv = options.themeVariables;
@@ -386,6 +471,7 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
     options.dark && new Resolver(options.dark, rulesFor(options.dark, true), overrides, defs);
   const vars = options.cssVariables !== false;
   const used = new Set<string>();
+  const palettes = resolvePalettes(spec, tv, options.warn);
 
   const def = (name: string): ThemeVarDef => {
     const d = own(defs, name) ? defs[name] : undefined;
@@ -425,11 +511,22 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
       return vars ? ref(name) : Number(main.get(name).lit);
     },
     number(name) {
-      if (def(name).kind !== 'length') throw new TypeError(`${name} is not a length`);
+      const kind = def(name).kind;
+      if (kind !== 'length' && kind !== 'padding') throw new TypeError(`${name} is not a length`);
       return Number(main.get(name).lit);
+    },
+    padding(name, padding) {
+      if (def(name).kind !== 'padding') throw new TypeError(`${name} is not a padding`);
+      const lit = main.get(name).lit;
+      const m = RE_PADDING.exec(lit);
+      return m ? Number(m[1] ?? 1) * padding : Number(lit);
     },
     font(name = 'fontFamily') {
       return vars ? ref(name) : (main.get(name).lit as SafeValue);
+    },
+    filter(name) {
+      if (def(name).kind !== 'filter') throw new TypeError(`${name} is not a filter`);
+      return vars ? ref(name) : (main.get(name).lit as SafeFilter);
     },
     value: (name) => main.get(name).lit,
     rgba: (name) => main.get(name).rgba,
@@ -448,5 +545,6 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
       vars && night
         ? { light: decls(main, used, true), dark: decls(night, used, true) }
         : undefined,
+    palette: (name) => palettes[name],
   };
 }

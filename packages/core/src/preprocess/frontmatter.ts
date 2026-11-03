@@ -153,9 +153,9 @@ function interpret(
   }
   if (displayMode) {
     const cfg = (fm.config ??= {});
-    const gantt = cfg['gantt'];
-    if (gantt === undefined || gantt === null) cfg['gantt'] = { displayMode: String(displayMode) };
-    else if (isMap(gantt as YamlValue)) (gantt as YamlMap)['displayMode'] = String(displayMode);
+    const gantt = cfg.gantt;
+    if (gantt === undefined || gantt === null) cfg.gantt = { displayMode: String(displayMode) };
+    else if (isMap(gantt as YamlValue)) (gantt as YamlMap).displayMode = String(displayMode);
   }
   return fm;
 }

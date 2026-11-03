@@ -45,7 +45,7 @@ export async function draw(src: string, options: DrawOptions = {}): Promise<Draw
     title: pre.frontMatter?.title,
     ast: parse.ast,
   };
-  const model = parse.model!;
+  const model = parse.model;
   const layout = flowchart.layout(
     model,
     cells ? { ...ctx, measurer: cellMeasurer, units: cellProfile(options.padding) } : ctx

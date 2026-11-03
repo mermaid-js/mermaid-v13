@@ -156,4 +156,4 @@ export function annotationOf(node: SchemaNode): Annotation {
   return node['x-mermaid'] as Annotation;
 }
 
-export const isRemoved = (node: SchemaNode) => annotationOf(node).status === 'removed';
+export const isRemoved = (node: SchemaNode): boolean => annotationOf(node).status === 'removed';

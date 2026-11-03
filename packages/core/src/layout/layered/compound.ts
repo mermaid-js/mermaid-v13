@@ -8,10 +8,10 @@
 //
 import {
   Kind,
-  down,
+  floorTo,
   ease,
   edgeOn,
-  line,
+  midCell,
   layered,
   layoutInputs,
   ledge,
@@ -352,7 +352,7 @@ export function routeCrossings(
   for (let band = 0; band < bands; band++) {
     const bandEnd = bandStart[band + 1]!;
     if (bandEnd - bandStart[band]! > MAX_INSERT)
-      inBand.subarray(bandStart[band]!, bandEnd).sort((p, q) => ax[p]! - ax[q]! || p - q);
+      inBand.subarray(bandStart[band], bandEnd).sort((p, q) => ax[p]! - ax[q]! || p - q);
     else {
       for (let i = bandStart[band]! + 1; i < bandEnd; i++) {
         const p = inBand[i]!;
@@ -439,7 +439,7 @@ function freeTop(b: CNode, edges: CEdge[], grid: number, pitch: number): number 
     for (const k of r.length >= 6 ? [0, r.length - 3] : [])
       if (Math.abs(r[k + 1]! - top) < 1e-6 && r[k]! >= lo && r[k]! <= hi) used.push(r[k]!);
   }
-  const mid = line(b.x, grid);
+  const mid = midCell(b.x, grid);
   const cells: number[] = [];
   for (let x = lo; x <= hi + 1e-6; x += grid) cells.push(x);
   cells.sort((p, q) => Math.abs(p - mid) - Math.abs(q - mid) || p - q);
@@ -888,7 +888,7 @@ export function compoundLayout(
       const padTop = group ? group.padTop : 0;
       const boxW = Math.max(contentW + 2 * padX, group ? group.minW : 0);
       const boxH = contentH + padTop + (group ? group.padBottom : 0);
-      const offX = grid ? down((boxW - contentW) / 2, grid) : (boxW - contentW) / 2;
+      const offX = grid ? floorTo((boxW - contentW) / 2, grid) : (boxW - contentW) / 2;
       const offY = padTop;
       const across = (ly: number): number => (flip ? size.height - ly : ly);
       const tx = (lx: number, ly: number): number => offX + (vertical ? lx : across(ly));
@@ -945,8 +945,8 @@ export function compoundLayout(
         else ix += item.w / 2;
         // On the grid, a line runs through the middle of a cell (D78).
         if (grid && !(item.isGroup && endpointBelow(port.inner, edges[port.e]!, port.out))) {
-          if (port.side === Side.Top || port.side === Side.Bottom) ix = line(ix, grid);
-          else iy = line(iy, grid);
+          if (port.side === Side.Top || port.side === Side.Bottom) ix = midCell(ix, grid);
+          else iy = midCell(iy, grid);
         }
         let bx = ix;
         let by = iy;

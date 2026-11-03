@@ -193,9 +193,8 @@ describe('ascii.maxWidth (R-ASCII-8, D84)', () => {
     const r = await at(8);
     expect(r.columns).toBeGreaterThan(8);
     expect(r.text).toContain('Charlie three');
-    expect(r.warnings).toEqual([
-      expect.objectContaining({ code: 'ASCII_TOO_WIDE', message: expect.stringContaining('8') }),
-    ]);
+    expect(r.warnings).toEqual([expect.objectContaining({ code: 'ASCII_TOO_WIDE' })]);
+    expect(r.warnings[0]?.message).toContain('8');
   });
 });
 

@@ -108,8 +108,8 @@ export function drawText<M, L>(
 ): string {
   let text: string;
   try {
+    if (hooks?.run) hooks.run.postParse(hooks.ast);
     const run = hooks?.run;
-    if (run && hooks) run.postParse(hooks.ast);
     let t = stageStart();
     const layout = laidOut(plugin, model, ctx, run);
     stageEnd('layout', t);

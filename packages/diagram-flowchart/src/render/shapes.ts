@@ -3,15 +3,40 @@
 // Pele's src/svg/shapes.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano),
 // with v12's shape names and the theme's padding and radius tokens.
 // cspell:ignore kepano
-import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { translate, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
 import { SHAPE_GROUPS } from '../parser/shapes.ts';
 
-/** Room around the label, from the theme tokens. */
+/** Padding added across (`x`) and down (`y`). */
+export interface PadXY {
+  readonly x: number;
+  readonly y: number;
+}
+
+/** Room around the label, from the theme's padding variables (D152) and `flowchart.padding`. */
 export interface Pads {
-  x: number;
-  y: number;
+  /** `nodePaddingX` / `nodePaddingY`, per side: the rectangle and the shapes that share it. */
+  readonly node: PadXY;
   /** Corner radius of rounded shapes. */
-  r: number;
+  readonly r: number;
+  /** `flowchart.padding`: the diamond and rounded rectangle use it in every theme. */
+  readonly pad: number;
+  /** `stadiumPaddingX` / `stadiumPaddingY`, totals. */
+  readonly stadium: PadXY;
+  /** `hexagonPaddingX` (to the width) / `hexagonPaddingY` (to the height), totals. */
+  readonly hexagon: PadXY;
+  /** `hexagonSlant`: each pointed end of a hexagon is its height over this. */
+  readonly hexagonSlant: number;
+  /** `subroutinePadding*`, `cylinderPadding*`, `leanPadding*`, `oddPadding*`: totals. */
+  readonly subroutine: PadXY;
+  readonly cylinder: PadXY;
+  readonly lean: PadXY;
+  readonly odd: PadXY;
+  /** `doubleCircleGap` (between the rings) / `doubleCirclePadding` (label to inner ring). */
+  readonly ringGap: number;
+  readonly ringPad: number;
+  /** `circlePadding` (added to the label diagonal) / `circleMinDiameter`. */
+  readonly circlePad: number;
+  readonly circleMin: number;
 }
 
 export interface ShapeSize {
@@ -24,7 +49,7 @@ export interface ShapeSize {
 type Sizer = (tw: number, th: number, p: Pads) => ShapeSize;
 type Drawer = (w: SvgWriter, W: number, H: number, a: Attrs, line: Attrs, p: Pads) => void;
 // Distance from the box to the outline on a side (0 top, 1 right, 2 bottom, 3 left), `t` along the side.
-type Inset = (W: number, H: number, side: number, t: number) => number;
+type Inset = (W: number, H: number, side: number, t: number, p: Pads) => number;
 // How much of a side edges may spread along (top/bottom, or left/right when sideways).
 type Span = (W: number, H: number, sideways: boolean) => number;
 
@@ -57,18 +82,46 @@ const capRy = (W: number): number => Math.min(12, Math.max(6, W / 14));
 const capInset: Inset = (W, _H, side, t) => (side & 1 ? 0 : bulge(t, W / 2, capRy(W)));
 const leanInset: Inset = (_W, H, side) => (side & 1 ? H / 8 : 0);
 const waveInset: Inset = (_W, _H, side) => (side === 2 ? 10 : 0);
+// A rounded corner of radius r on a side of length `len`: how far in the outline is at `t`.
+const cornerInset = (len: number, t: number, r: number): number => {
+  const k = Math.abs(t) - (len / 2 - r);
+  return r > 0 && k > 0 ? r - Math.sqrt(Math.max(0, r * r - Math.min(k, r) ** 2)) : 0;
+};
+
+// The collapsed-subgraph card (v12 collapsedGroup): fixed padding, gap and indicator row.
+const CARD_PAD = 8;
+const CARD_GAP = 8;
+const CARD_ROW = 20;
+const CARD_MIN_W = 80;
+const cardRadius = (W: number, H: number, p: Pads): number => Math.min(p.r, W / 2, H / 2);
 
 const fixed =
   (w: number, h: number): Sizer =>
   () => ({ w, h, dy: 0 });
-const box: Sizer = (tw, th, p) => ({ w: Math.max(tw, 12) + 2 * p.x, h: th + 2 * p.y, dy: 0 });
+const box: Sizer = (tw, th, p) => ({
+  w: Math.max(tw, 12) + 2 * p.node.x,
+  h: th + 2 * p.node.y,
+  dy: 0,
+});
 // A box `ex` wider and `ey` taller than the label box, label shifted by `dy`.
 const grown =
   (ex: number, ey: number, dy = 0, exH = 0): Sizer =>
   (tw, th, p) => {
-    const h = th + 2 * p.y + ey;
-    return { w: tw + 2 * p.x + ex + exH * h, h, dy };
+    const h = th + 2 * p.node.y + ey;
+    return { w: tw + 2 * p.node.x + ex + exH * h, h, dy };
   };
+
+// A shape with its own total padding (v12's per-shape `labelPaddingX/Y`): `ex` wider and
+// `exH` × its height more for slanted sides. `each` applies the padding on each side instead.
+const padded =
+  (pick: (p: Pads) => PadXY, ex = 0, exH = 0, each = false): Sizer =>
+  (tw, th, p) => {
+    const { x, y } = pick(p);
+    const k = each ? 2 : 1;
+    const h = th + k * y;
+    return { w: tw + k * x + ex + exH * h, h, dy: 0 };
+  };
+const lean = padded((p) => p.lean, 0, 0.5);
 
 function rect(w: SvgWriter, x: number, y: number, W: number, H: number, a: Attrs, rx?: number) {
   w.leaf('rect', { x, y, width: W, height: H, rx, ...a });
@@ -139,6 +192,14 @@ function cylinder(w: SvgWriter, W: number, H: number, a: Attrs, line: Attrs, ext
   w.leaf('path', { d: b.done(), ...line, fill: 'none' });
 }
 
+// v12 cylinder: the padding plus a cap height on top of the label (the body between the caps'
+// front edges is label + padding + ry), `extra` more for the lined cylinder's second rim.
+function cylinderSize(tw: number, th: number, p: Pads, extra: number): ShapeSize {
+  const w = Math.max(tw + p.cylinder.x, 56);
+  const ry = capRy(w);
+  return { w, h: th + p.cylinder.y + 3 * ry + extra, dy: ry / 2 + extra / 2 };
+}
+
 function triSize(tw: number, th: number, flip: boolean): ShapeSize {
   const w = Math.max(1.6 * tw + 40, 80);
   const h = (th + 10) / (1 - (tw + 8) / w);
@@ -149,22 +210,27 @@ function triSize(tw: number, th: number, flip: boolean): ShapeSize {
 const S: Record<string, ShapeDef> = {
   rect: { size: box, span: flat, draw: (w, W, H, a) => centred(w, W, H, a) },
   rounded: {
-    size: box,
+    // v12 roundedRect: `padding` per side in every theme.
+    size: (tw, th, p) => ({ w: Math.max(tw, 12) + 2 * p.pad, h: th + 2 * p.pad, dy: 0 }),
     span: flat,
     draw: (w, W, H, a, _l, p) => centred(w, W, H, a, Math.min(p.r, H / 2)),
   },
   stadium: {
     inset: (_W, H, side, t) => (side & 1 ? bulge(t, H / 2, H / 2) : 0),
     span: (W, H, s) => (s ? H * 0.6 : W - H),
+    // v12 stadiumDimensions: room for the label inside the caps, at least 1.5 × the height.
     size: (tw, th, p) => {
-      const h = th + 2 * p.y;
-      return { w: tw + h * 0.5 + 2 * p.x - 8, h, dy: 0 };
+      const { x, y } = p.stadium;
+      const h = th + y;
+      const cap = Math.sqrt(Math.max(0, h * h - th * th));
+      return { w: Math.max(tw + h / 4 + x, 1.5 * h, tw + x + h - cap), h, dy: 0 };
     },
     draw: (w, W, H, a) => centred(w, W, H, a, H / 2),
   },
   'fr-rect': {
     span: flat,
-    size: grown(16, 0),
+    // v12 subroutine: the padding inside the two 8px frames.
+    size: padded((p) => p.subroutine, 16),
     draw: (w, W, H, a, line) => {
       const x = W / 2 - 8;
       centred(w, W, H, a);
@@ -174,28 +240,20 @@ const S: Record<string, ShapeDef> = {
   cyl: {
     inset: capInset,
     span: (W, H, s) => (s ? H - 2 * CORNER - 12 : W * 0.6),
-    size: (tw, th, p) => {
-      const w = Math.max(tw + 2 * p.x, 56);
-      const ry = capRy(w);
-      return { w, h: th + 2 * p.y + 2 * ry, dy: ry / 2 };
-    },
+    size: (tw, th, p) => cylinderSize(tw, th, p, 0),
     draw: (w, W, H, a, line) => cylinder(w, W, H, a, line, 0),
   },
   'lin-cyl': {
     inset: capInset,
     span: (W, H, s) => (s ? H - 2 * CORNER - 20 : W * 0.6),
-    size: (tw, th, p) => {
-      const w = Math.max(tw + 2 * p.x, 56);
-      const ry = capRy(w);
-      return { w, h: th + 2 * p.y + 2 * ry + 8, dy: ry / 2 + 4 };
-    },
+    size: (tw, th, p) => cylinderSize(tw, th, p, 8),
     draw: (w, W, H, a, line) => cylinder(w, W, H, a, line, 8),
   },
   circle: {
     inset: roundInset,
     span: roundSpan,
-    size: (tw, th) => {
-      const d = Math.max(Math.hypot(tw, th) + 16, 44);
+    size: (tw, th, p) => {
+      const d = Math.max(Math.hypot(tw, th) + p.circlePad, p.circleMin);
       return { w: d, h: d, dy: 0 };
     },
     draw: (w, W, _H, a) => circle(w, W / 2, a),
@@ -203,37 +261,42 @@ const S: Record<string, ShapeDef> = {
   'dbl-circ': {
     inset: roundInset,
     span: roundSpan,
-    size: (tw, th) => {
-      const d = Math.max(Math.hypot(tw, th) + 26, 54);
+    // v12: the inner ring clears the label diagonal by ringPad, the outer ring is ringGap out.
+    size: (tw, th, p) => {
+      const d = Math.hypot(tw, th) + 2 * (p.ringPad + p.ringGap);
       return { w: d, h: d, dy: 0 };
     },
-    draw: (w, W, _H, a, line) => {
+    draw: (w, W, _H, a, line, p) => {
       circle(w, W / 2, a);
-      circle(w, W / 2 - 5, { ...line, fill: 'none' });
+      circle(w, Math.max(0, W / 2 - p.ringGap), { ...line, fill: 'none' });
     },
   },
   ellipse: {
     inset: roundInset,
     span: roundSpan,
-    size: (tw, th, p) => ({ w: tw * 1.3 + 2 * p.x, h: th * 1.2 + 2 * p.y, dy: 0 }),
+    size: (tw, th, p) => ({ w: tw * 1.3 + 2 * p.node.x, h: th * 1.2 + 2 * p.node.y, dy: 0 }),
     draw: (w, W, H, a) => w.leaf('ellipse', { rx: W / 2, ry: H / 2, ...a }),
   },
   diam: {
     inset: (W, H, side, t) => (side & 1 ? (Math.abs(t) * W) / H : (Math.abs(t) * H) / W),
     span: roundSpan,
-    size: (tw, th) => {
-      const a = tw + 16;
-      const b = th + 8;
-      return { w: a + 1.6 * b, h: a / 1.6 + b, dy: 0 };
+    // v12 question: a square rhombus, side = label width + label height + 2 × padding.
+    size: (tw, th, p) => {
+      const s = tw + th + 2 * p.pad;
+      return { w: s, h: s, dy: 0 };
     },
     draw: (w, W, H, a) => poly(w, [0, -H / 2, W / 2, 0, 0, H / 2, -W / 2, 0], a),
   },
   hex: {
-    inset: (_W, _H, side, t) => (side & 1 ? Math.abs(t) / 2 : 0),
+    inset: (_W, _H, side, t, p) => (side & 1 ? (2 * Math.abs(t)) / p.hexagonSlant : 0),
     span: (W, H, s) => (s ? H * 0.5 : W - H / 2 - CORNER),
-    size: grown(0, 0, 0, 0.5),
-    draw: (w, W, H, a) => {
-      const m = H / 4;
+    // v12 hexagon with the axes corrected (D151): X padding to the width, Y to the height.
+    size: (tw, th, p) => {
+      const h = th + p.hexagon.y;
+      return { w: tw + 2 * (h / p.hexagonSlant) + p.hexagon.x, h, dy: 0 };
+    },
+    draw: (w, W, H, a, _l, p) => {
+      const m = H / p.hexagonSlant;
       const x = W / 2;
       const y = H / 2;
       poly(w, [-x + m, -y, x - m, -y, x, 0, x - m, y, -x + m, y, -x, 0], a);
@@ -242,7 +305,8 @@ const S: Record<string, ShapeDef> = {
   odd: {
     inset: (_W, H, side) => (side === 3 ? H / 4 : 0),
     span: flatAcross(() => 0),
-    size: grown(0, 0, 0, 0.25),
+    // v12 rect_left_inv_arrow.
+    size: padded((p) => p.odd, 0, 0.25),
     draw: (w, W, H, a) => {
       const x = W / 2;
       const y = H / 2;
@@ -267,7 +331,7 @@ const S: Record<string, ShapeDef> = {
     inset: roundInset,
     span: roundSpan,
     size: fixed(14, 14),
-    draw: (w, W, _H, _a, line) => circle(w, W / 2, { ...line, fill: line.stroke }),
+    draw: (w, W, _H, a, line) => circle(w, W / 2, { ...line, fill: line.stroke, filter: a.filter }),
   },
   'fr-circ': {
     noLabel: true,
@@ -283,7 +347,8 @@ const S: Record<string, ShapeDef> = {
     noLabel: true,
     span: (W, H, s) => (s ? H : W) - 8,
     size: fixed(72, 8),
-    draw: (w, W, H, _a, line) => centred(w, W, H, { ...line, fill: line.stroke }, 2),
+    draw: (w, W, H, a, line) =>
+      centred(w, W, H, { ...line, fill: line.stroke, filter: a.filter }, 2),
   },
   hourglass: {
     noLabel: true,
@@ -338,7 +403,7 @@ const S: Record<string, ShapeDef> = {
   'lean-r': {
     inset: leanInset,
     span: flatAcross((H) => H / 4),
-    size: grown(0, 0, 0, 0.5),
+    size: lean,
     draw: (w, W, H, a) => {
       const s = H / 4;
       poly(w, [-W / 2 + s, -H / 2, W / 2, -H / 2, W / 2 - s, H / 2, -W / 2, H / 2], a);
@@ -347,7 +412,7 @@ const S: Record<string, ShapeDef> = {
   'lean-l': {
     inset: leanInset,
     span: flatAcross((H) => H / 4),
-    size: grown(0, 0, 0, 0.5),
+    size: lean,
     draw: (w, W, H, a) => {
       const s = H / 4;
       poly(w, [-W / 2, -H / 2, W / 2 - s, -H / 2, W / 2, H / 2, -W / 2 + s, H / 2], a);
@@ -356,7 +421,7 @@ const S: Record<string, ShapeDef> = {
   'trap-b': {
     inset: leanInset,
     span: flatAcross((H) => H / 4),
-    size: grown(0, 0, 0, 0.5),
+    size: lean,
     draw: (w, W, H, a) => {
       const s = H / 4;
       poly(w, [-W / 2 + s, -H / 2, W / 2 - s, -H / 2, W / 2, H / 2, -W / 2, H / 2], a);
@@ -365,7 +430,8 @@ const S: Record<string, ShapeDef> = {
   'trap-t': {
     inset: leanInset,
     span: flatAcross((H) => H / 4),
-    size: grown(0, 0, 0, 0.5),
+    // v12 inv_trapezoid pads each side.
+    size: padded((p) => p.lean, 0, 0.5, true),
     draw: (w, W, H, a) => {
       const s = H / 4;
       poly(w, [-W / 2, -H / 2, W / 2, -H / 2, W / 2 - s, H / 2, -W / 2 + s, H / 2], a);
@@ -465,8 +531,8 @@ const S: Record<string, ShapeDef> = {
   },
   'h-cyl': {
     size: (tw, th, p) => {
-      const h = th + 2 * p.y;
-      return { w: tw + 2 * p.x + 2 * Math.min(12, h / 4), h, dy: 0 };
+      const h = th + 2 * p.node.y;
+      return { w: tw + 2 * p.node.x + 2 * Math.min(12, h / 4), h, dy: 0 };
     },
     draw: (w, W, H, a, line) => {
       const ry = H / 2;
@@ -606,7 +672,7 @@ const S: Record<string, ShapeDef> = {
     },
   },
   folder: {
-    size: (tw, th, p) => ({ w: Math.max(tw + 2 * p.x, 64), h: th + 2 * p.y + 8, dy: 4 }),
+    size: (tw, th, p) => ({ w: Math.max(tw + 2 * p.node.x, 64), h: th + 2 * p.node.y + 8, dy: 4 }),
     draw: (w, W, H, a) => {
       const x = W / 2;
       const y = H / 2;
@@ -640,7 +706,7 @@ const S: Record<string, ShapeDef> = {
   },
   console: {
     span: flat,
-    size: (tw, th, p) => ({ w: Math.max(tw + 2 * p.x, 72), h: th + 2 * p.y + 12, dy: 6 }),
+    size: (tw, th, p) => ({ w: Math.max(tw + 2 * p.node.x, 72), h: th + 2 * p.node.y + 12, dy: 6 }),
     draw: (w, W, H, a, line) => {
       const x = -W / 2;
       const y = -H / 2;
@@ -651,7 +717,7 @@ const S: Record<string, ShapeDef> = {
   },
   browser: {
     span: flat,
-    size: (tw, th, p) => ({ w: Math.max(tw + 2 * p.x, 72), h: th + 2 * p.y + 12, dy: 6 }),
+    size: (tw, th, p) => ({ w: Math.max(tw + 2 * p.node.x, 72), h: th + 2 * p.node.y + 12, dy: 6 }),
     draw: (w, W, H, a, line) => {
       centred(w, W, H, a);
       lines(w, [-W / 2, -H / 2 + 12, W / 2, -H / 2 + 12], line);
@@ -660,7 +726,11 @@ const S: Record<string, ShapeDef> = {
     },
   },
   person: {
-    size: (tw, th, p) => ({ w: Math.max(tw + 2 * p.x, 56), h: th + 2 * p.y + 26, dy: 13 }),
+    size: (tw, th, p) => ({
+      w: Math.max(tw + 2 * p.node.x, 56),
+      h: th + 2 * p.node.y + 26,
+      dy: 13,
+    }),
     draw: (w, W, H, a) => {
       rect(w, -W / 2, -H / 2 + 26, W, H - 26, a, 12);
       circle(w, 13, a, undefined, -H / 2 + 14);
@@ -698,11 +768,41 @@ const S: Record<string, ShapeDef> = {
       w.leaf('path', { d, ...a });
     },
   },
+  // v12's collapsedGroup: a rounded card, the label above a dashed separator and an indicator
+  // row of three dots. Padding is v12's fixed 8, not the theme's; `line` carries clusterBorder.
   collapsedGroup: {
-    size: grown(8, 8, -2),
-    draw: (w, W, H, a) => {
-      rect(w, -W / 2 + 6, -H / 2 + 8, W - 12, H - 8, a);
-      rect(w, -W / 2, -H / 2, W, H - 4, a);
+    span: flat,
+    inset: (W, H, side, t, p) => cornerInset(side & 1 ? H : W, t, cardRadius(W, H, p)),
+    size: (tw, th) => ({
+      w: Math.max(tw + 2 * CARD_PAD, CARD_MIN_W),
+      h: th + CARD_GAP + CARD_ROW + 2 * CARD_PAD,
+      dy: -(CARD_GAP + CARD_ROW) / 2,
+    }),
+    draw: (w, W, H, a, line, p) => {
+      const x = -W / 2;
+      const y = -H / 2;
+      rect(w, x, y, W, H, a, cardRadius(W, H, p));
+      const th = H - CARD_GAP - CARD_ROW - 2 * CARD_PAD;
+      const sy = y + CARD_PAD + th + CARD_GAP;
+      w.leaf('line', {
+        class: 'collapsed-separator',
+        x1: x + CARD_PAD,
+        y1: sy,
+        x2: x + W - CARD_PAD,
+        y2: sy,
+        stroke: line.stroke,
+        'stroke-width': 0.75,
+        'stroke-dasharray': '3,3' as SafeValue,
+      });
+      for (let i = -1; i <= 1; i++)
+        w.leaf('circle', {
+          class: 'collapsed-indicator',
+          cx: i * 10,
+          cy: sy + CARD_ROW / 2,
+          r: 2.5,
+          fill: line.stroke,
+          opacity: 0.6,
+        });
     },
   },
 };
@@ -716,30 +816,6 @@ const def = (shape: string): ShapeDef => BY_NAME.get(shape) ?? FALLBACK;
 export const shapeSize = (shape: string, tw: number, th: number, p: Pads): ShapeSize =>
   def(shape).size(tw, th, p);
 
-/** An image or icon node's asset and label, in px (`img`, `icon`, `assetWidth`, `pos`). */
-export interface AssetNode {
-  img?: string;
-  assetWidth?: number;
-  assetHeight?: number;
-  pos?: string;
-}
-
-const IMG = 80;
-const ICON = 48;
-const asset = (v: number | undefined, fallback: number): number =>
-  v !== undefined && v > 0 && v <= 4000 ? v : fallback;
-
-/** The box of an image or icon node: the asset with its label above or below it. */
-export function assetSize(v: AssetNode, tw: number, th: number): ShapeSize {
-  const aw = asset(v.assetWidth, v.img ? IMG : ICON);
-  const ah = asset(v.assetHeight, v.img ? IMG : ICON);
-  const top = v.pos === 't';
-  return {
-    w: Math.max(aw, tw + 8),
-    h: ah + (th > 0 ? th + 6 : 0),
-    dy: th > 0 ? (top ? -ah / 2 : ah / 2) - (top ? 3 : -3) : 0,
-  };
-}
 export const drawShape = (
   shape: string,
   w: SvgWriter,
@@ -749,8 +825,14 @@ export const drawShape = (
   line: Attrs,
   p: Pads
 ): void => def(shape).draw(w, W, H, a, line, p);
-export const shapeInset = (shape: string, W: number, H: number, side: number, t: number): number =>
-  def(shape).inset?.(W, H, side, t) ?? 0;
+export const shapeInset = (
+  shape: string,
+  W: number,
+  H: number,
+  side: number,
+  t: number,
+  p: Pads
+): number => def(shape).inset?.(W, H, side, t, p) ?? 0;
 export const shapeSpan = (shape: string, W: number, H: number, sideways: boolean): number =>
   Math.max(0, def(shape).span?.(W, H, sideways) ?? 0);
 export const shapeHasLabel = (shape: string): boolean => def(shape).noLabel !== true;

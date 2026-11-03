@@ -4,7 +4,7 @@
  * keeps `?path=<dir>&file=<file>` in the URL (pushState, so back/forward work; popstate
  * restores). It listens on `/events` and hands each message to the open view.
  */
-import { LitElement, html } from 'lit';
+import { LitElement, html, type TemplateResult } from 'lit';
 import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path.js';
 import '@shoelace-style/shoelace/dist/components/breadcrumb/breadcrumb.js';
 import '@shoelace-style/shoelace/dist/components/breadcrumb-item/breadcrumb-item.js';
@@ -61,7 +61,7 @@ export class DevExplorerApp extends LitElement {
     setBasePath('/dev/vendor/shoelace');
   }
 
-  override createRenderRoot() {
+  override createRenderRoot(): this {
     return this;
   }
 
@@ -96,7 +96,7 @@ export class DevExplorerApp extends LitElement {
     };
   }
 
-  #onPopState = (): void => {
+  readonly #onPopState = (): void => {
     const { dir, file } = urlState();
     this.dir = dir;
     this.file = file;
@@ -114,7 +114,7 @@ export class DevExplorerApp extends LitElement {
     pushUrlState({ dir: this.dir, file });
   }
 
-  override render() {
+  override render(): TemplateResult {
     return html`
       <div class="app">
         ${this.file

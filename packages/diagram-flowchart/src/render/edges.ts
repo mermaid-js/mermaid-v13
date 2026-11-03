@@ -4,8 +4,37 @@
 // cspell:ignore kepano
 import type { RoutePoint } from '@mermaid-js/core/layout';
 import type { Attrs, PathData, SvgWriter } from '@mermaid-js/core/svg';
+import type { Theme } from '@mermaid-js/core/theme';
 
-export const ARROW = 8;
+/**
+ * Arrowhead geometry for one render, from the theme (D152). A gap is the space between the
+ * node outline and the nearest point of the arrowhead.
+ */
+export interface Arrowheads {
+  readonly gap: number;
+  readonly length: number;
+  readonly width: number;
+  readonly circleSize: number;
+  readonly circleGap: number;
+  readonly crossSize: number;
+  readonly crossGap: number;
+  readonly crossStrokeWidth: number;
+}
+
+/** Reads the arrowhead variables as numbers (they never become CSS variables). */
+export function arrowheads(theme: Theme): Arrowheads {
+  return {
+    gap: theme.number('arrowheadGap'),
+    length: theme.number('arrowheadLength'),
+    width: theme.number('arrowheadWidth'),
+    circleSize: theme.number('circleArrowheadSize'),
+    circleGap: theme.number('circleArrowheadGap'),
+    crossSize: theme.number('crossArrowheadSize'),
+    crossGap: theme.number('crossArrowheadGap'),
+    crossStrokeWidth: theme.number('crossArrowheadStrokeWidth'),
+  };
+}
+
 // How far an edge runs straight before a marker at its end, where it has the room.
 const LEAD = 6;
 // The most a corner is rounded by in a stepped route.
@@ -41,17 +70,6 @@ export interface EdgePath {
   ey: number;
   edx: number;
   edy: number;
-}
-
-/** How much an end marker of this v12 type shortens the line. */
-const MARKER_TRIM: ReadonlyMap<string, number> = new Map([
-  ['arrow_point', ARROW - 1],
-  ['arrow_circle', ARROW],
-  ['arrow_cross', 4],
-]);
-
-export function markerTrim(type: string): number {
-  return MARKER_TRIM.get(type) ?? 0;
 }
 
 // The S-curve handle factor of the layered engine's `ease`.
@@ -224,53 +242,114 @@ export function routePath(
   return { d: b.done(), sx, sy, sdx: -sdx, sdy: -sdy, ex, ey, edx, edy };
 }
 
-/** Draws a v12 end marker whose tip is at (x, y), pointing along (dx, dy). */
+/** Where a line meets a node outline, and the unit direction it travels there. */
+export interface LineEnd {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+}
+
+/** One v12 arrowhead type: how far it shortens the line, and how it is drawn. */
+interface HeadKind {
+  /**
+   * How far the line stops short of the node outline: past the gap and under the arrowhead,
+   * so the line never shows between the tip and the node. That also keeps dashed and dotted
+   * lines from needing a special case.
+   */
+  trim(g: Arrowheads): number;
+  /** Draws the arrowhead for a line meeting the outline at (x, y), pointing along (dx, dy). */
+  draw(w: SvgWriter, tip: LineEnd, paint: Attrs, g: Arrowheads): void;
+}
+
+const HEADS: ReadonlyMap<string, HeadKind> = /* @__PURE__ */ new Map<string, HeadKind>([
+  [
+    'arrow_point',
+    {
+      trim: (g) => g.gap + Math.max(0, g.length - 1),
+      draw(w, { x, y, dx, dy }, paint, g) {
+        const tipX = x - dx * g.gap;
+        const tipY = y - dy * g.gap;
+        const baseX = tipX - dx * g.length;
+        const baseY = tipY - dy * g.length;
+        // Half the base, across the line.
+        const acrossX = -dy * (g.width / 2);
+        const acrossY = dx * (g.width / 2);
+        const d = w
+          .path()
+          .moveTo(tipX, tipY)
+          .lineTo(baseX + acrossX, baseY + acrossY)
+          .lineTo(baseX - acrossX, baseY - acrossY)
+          .close()
+          .done();
+        w.leaf('path', { class: 'marker', d, ...paint, stroke: 'none' });
+      },
+    },
+  ],
+  [
+    'arrow_circle',
+    {
+      trim: (g) => g.circleGap + g.circleSize / 2,
+      draw(w, { x, y, dx, dy }, paint, g) {
+        const r = g.circleSize / 2;
+        const back = g.circleGap + r;
+        w.leaf('circle', {
+          class: 'marker',
+          cx: x - dx * back,
+          cy: y - dy * back,
+          r,
+          ...paint,
+          stroke: 'none',
+        });
+      },
+    },
+  ],
+  [
+    'arrow_cross',
+    {
+      trim: (g) => g.crossGap + g.crossSize / 2,
+      // The arms are the diagonals of a square of side `crossSize`, `crossGap` from the outline.
+      draw(w, { x, y, dx, dy }, paint, g) {
+        const half = g.crossSize / 2;
+        const cx = x - dx * (g.crossGap + half);
+        const cy = y - dy * (g.crossGap + half);
+        // Half of each diagonal: along the line plus or minus across it.
+        const ux = (dx - dy) * half;
+        const uy = (dy + dx) * half;
+        const vx = (dx + dy) * half;
+        const vy = (dy - dx) * half;
+        const d = w
+          .path()
+          .moveTo(cx - ux, cy - uy)
+          .lineTo(cx + ux, cy + uy)
+          .moveTo(cx - vx, cy - vy)
+          .lineTo(cx + vx, cy + vy)
+          .done();
+        w.leaf('path', {
+          class: 'marker',
+          d,
+          stroke: paint.fill,
+          'stroke-width': g.crossStrokeWidth,
+        });
+      },
+    },
+  ],
+]);
+
+/** How far an end marker of this v12 type shortens the line from the node outline. */
+export const markerTrim = (type: string, geometry: Arrowheads): number =>
+  HEADS.get(type)?.trim(geometry) ?? 0;
+
+/**
+ * Draws a v12 end marker for a line that meets the node outline at `end` (x, y), pointing
+ * along (dx, dy). The marker sits its gap before the outline; `paint` gives its colour as `fill`.
+ */
 export function marker(
   w: SvgWriter,
   type: string,
-  x: number,
-  y: number,
-  dx: number,
-  dy: number,
-  a: Attrs
+  end: LineEnd,
+  paint: Attrs,
+  geometry: Arrowheads
 ): void {
-  const nx = -dy;
-  const ny = dx;
-  if (type === 'arrow_point') {
-    const bx = x - dx * ARROW;
-    const by = y - dy * ARROW;
-    const half = ARROW * 0.42;
-    const d = w
-      .path()
-      .moveTo(x, y)
-      .lineTo(bx + nx * half, by + ny * half)
-      .lineTo(bx - nx * half, by - ny * half)
-      .close()
-      .done();
-    w.leaf('path', { class: 'marker', d, ...a, stroke: 'none' });
-  } else if (type === 'arrow_circle') {
-    w.leaf('circle', {
-      class: 'marker',
-      cx: x - dx * 4,
-      cy: y - dy * 4,
-      r: 3.5,
-      ...a,
-      stroke: 'none',
-    });
-  } else if (type === 'arrow_cross') {
-    const cx = x - dx * 4;
-    const cy = y - dy * 4;
-    const ux = (dx + nx) * 3.5;
-    const uy = (dy + ny) * 3.5;
-    const vx = (dx - nx) * 3.5;
-    const vy = (dy - ny) * 3.5;
-    const d = w
-      .path()
-      .moveTo(cx - ux, cy - uy)
-      .lineTo(cx + ux, cy + uy)
-      .moveTo(cx - vx, cy - vy)
-      .lineTo(cx + vx, cy + vy)
-      .done();
-    w.leaf('path', { class: 'marker', d, stroke: a.fill, 'stroke-width': 1.5 });
-  }
+  HEADS.get(type)?.draw(w, end, paint, geometry);
 }

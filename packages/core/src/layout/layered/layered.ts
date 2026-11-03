@@ -538,12 +538,12 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   for (let i = 0; i < real; i++) if (nodes[i]!.pin !== 0) pinned = true;
   if (pinned) {
     for (let r = 0; r <= maxRank; r++) {
-      const layer = Array.from(order.subarray(layerStart[r]!, layerStart[r + 1]!));
+      const layer = Array.from(order.subarray(layerStart[r], layerStart[r + 1]));
       const index = new Map<number, number>();
       layer.forEach((v, i) => index.set(v, i));
       const pinOf = (v: number): number => (v < real ? nodes[v]!.pin : 0);
       layer.sort((a, b) => pinOf(a) - pinOf(b) || index.get(a)! - index.get(b)!);
-      order.set(layer, layerStart[r]!);
+      order.set(layer, layerStart[r]);
     }
   }
   // Preserve port order to avoid crossings outside the group.
@@ -679,7 +679,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
       let x = xs[EF[firstSeg[ei]!]!]! + EFD[firstSeg[ei]!]!;
       let rank = RANK[EF[firstSeg[ei]!]!]!;
       for (let d = d0, end = d0 < 0 ? d0 : d0 + span[ei]! - 1; d < end; d++) {
-        if (empty && empty[RANK[d]!]!) continue;
+        if (empty?.[RANK[d]!]) continue;
         pieces.from.push(x);
         pieces.to.push(xs[d]!);
         pieces.rank.push(rank);
@@ -750,10 +750,10 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   if (pieces) {
     const room = new Float64Array(maxRank + 1);
     for (let r = 0; r < maxRank; r++) {
-      if (empty && empty[r]!) continue;
+      if (empty?.[r]) continue;
       let next = r + 1;
       room[r] = gapUnder[r]!;
-      while (next < maxRank && empty && empty[next]!) room[r]! += gapUnder[next++]!;
+      while (next < maxRank && empty?.[next]) room[r]! += gapUnder[next++]!;
       below[r] = next;
     }
     for (let k = 0; k < pieces.from.length; k++)
@@ -769,7 +769,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
         gapUnder[r]! += Math.max(0, Math.min(MAX_GAP * opt.rankSep, tall[r]!) - room[r]!);
     }
   }
-  if (grid) for (let r = 0; r < maxRank; r++) gapUnder[r] = up(gapUnder[r]!, grid);
+  if (grid) for (let r = 0; r < maxRank; r++) gapUnder[r] = ceilTo(gapUnder[r]!, grid);
   let y = 0;
   for (let r = 0; r <= maxRank; r++) {
     let h = 0;
@@ -798,7 +798,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
       const lo = bandBottom[r]! + 1.5 * grid;
       const hi = bandTop[below[r]!]! - 1.5 * grid;
       for (let t = 0; t < count; t++) {
-        const at = Math.min(Math.max(line(trackAt(r, count, t), grid), lo), hi);
+        const at = Math.min(Math.max(midCell(trackAt(r, count, t), grid), lo), hi);
         list.push(t > 0 && at < list[t - 1]! + grid ? list[t - 1]! + grid : at);
       }
       for (let t = count - 1; t >= 0; t--) if (list[t]! > hi) list[t] = hi - (count - 1 - t) * grid;
@@ -820,8 +820,8 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     if (xs[i]! + half > maxX) maxX = xs[i]! + half;
   }
   if (grid) {
-    minX = down(minX, grid);
-    maxX = up(maxX, grid);
+    minX = floorTo(minX, grid);
+    maxX = ceilTo(maxX, grid);
   }
   // Where edges spread along their nodes, a rank whose nodes only send edges on stands on one
   // line, and a rank whose nodes only receive them hangs from one, so that the edges of nodes of
@@ -842,7 +842,8 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     else if (KIND[i]! === Kind.Node && arrives[r]! && !leaves[r]!)
       node.y = bandTop[r]! + node.h / 2;
     else if (grid)
-      node.y = bandTop[r]! + down((bandBottom[r]! - bandTop[r]! - node.h) / 2, grid) + node.h / 2;
+      node.y =
+        bandTop[r]! + floorTo((bandBottom[r]! - bandTop[r]! - node.h) / 2, grid) + node.h / 2;
     else node.y = (bandTop[r]! + bandBottom[r]!) / 2;
   }
 
@@ -896,7 +897,8 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
       e.labelY = (bandTop[RANK[ln]!]! + bandBottom[RANK[ln]!]!) / 2;
       if (grid) {
         const top = bandTop[RANK[ln]!]!;
-        e.labelY = top + down((bandBottom[RANK[ln]!]! - top - e.labelH) / 2, grid) + e.labelH / 2;
+        e.labelY =
+          top + floorTo((bandBottom[RANK[ln]!]! - top - e.labelH) / 2, grid) + e.labelH / 2;
       }
     } else if (e.labelW > 0) {
       e.labelX = (pts[0]! + pts[pts.length - 2]!) / 2;
@@ -907,15 +909,15 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   return { width: maxX - minX, height };
 }
 
-// Grid helpers (D78): `q` drops float noise so that values that agree keep agreeing, `down`/`up`
-// round to the grid, `edge` puts a box edge on it and `line` puts a line in the middle of a cell
-// (ties go up, so equal inputs give equal cells).
-const q = (v: number): number => Math.round(v * 1e6) / 1e6;
-export const down = (v: number, grid: number): number => grid * Math.floor(q(v / grid));
-const up = (v: number, grid: number): number => grid * Math.ceil(q(v / grid));
-export const edgeOn = (v: number, grid: number): number => grid * Math.round(q(v / grid));
-export const line = (v: number, grid: number): number =>
-  grid * (Math.round(q(v / grid - 0.5)) + 0.5);
+// Grid helpers (D78): `dropNoise` drops float noise so that values that agree keep agreeing,
+// `floorTo`/`ceilTo` round to the grid, `edgeOn` puts a box edge on it and `midCell` puts a
+// line in the middle of a cell (ties go up, so equal inputs give equal cells).
+const dropNoise = (v: number): number => Math.round(v * 1e6) / 1e6;
+export const floorTo = (v: number, grid: number): number => grid * Math.floor(dropNoise(v / grid));
+const ceilTo = (v: number, grid: number): number => grid * Math.ceil(dropNoise(v / grid));
+export const edgeOn = (v: number, grid: number): number => grid * Math.round(dropNoise(v / grid));
+export const midCell = (v: number, grid: number): number =>
+  grid * (Math.round(dropNoise(v / grid - 0.5)) + 0.5);
 
 // Puts the cross-flow positions on the grid (D78, D140): box edges on it, bends and port nodes
 // on the middle of a cell, and each edge end on a cell of its own along its node's side (see
@@ -933,10 +935,10 @@ function onGrid(
   const labelAt = new Float64Array(n);
   for (let i = 0; i < n; i++) {
     if (KIND[i]! === Kind.Label) {
-      xs[i] = line(was[i]!, grid);
+      xs[i] = midCell(was[i]!, grid);
       labelAt[i] = edgeOn(xs[i]! - W[i]! / 2, grid) + W[i]! / 2;
     } else if (W[i]! > 0) xs[i] = edgeOn(was[i]! - W[i]! / 2, grid) + W[i]! / 2;
-    else xs[i] = line(was[i]!, grid);
+    else xs[i] = midCell(was[i]!, grid);
   }
   const pitch = Math.max(grid, edgeOn(M.portPitch, grid));
   for (let v = 0; v < real; v++) {
@@ -954,7 +956,7 @@ function onGrid(
       const ends: number[] = [];
       for (let k = start[v]!; k < start[v + 1]!; k++) ends.push(list[k]!);
       if (ends.length === 0) continue;
-      const want = (e: number): number => line(was[v]! + dx[e]!, grid);
+      const want = (e: number): number => midCell(was[v]! + dx[e]!, grid);
       ends.sort((a, b) => want(a) - want(b) || dx[a]! - dx[b]! || a - b);
       // A held end moves with its node: its offset leads to a cell the caller placed.
       const fixed = ends.map((e) => held[e]! === 1);
@@ -980,7 +982,7 @@ function spreadOnGrid(
   grid: number
 ): void {
   const fits = (step: number): { fit: number[]; ok: boolean } => {
-    const fit = at.slice();
+    const fit = [...at];
     for (let i = 1; i < fit.length; i++)
       if (!fixed[i] && fit[i]! < fit[i - 1]! + step) fit[i] = fit[i - 1]! + step;
     let ok = true;
@@ -2466,7 +2468,7 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   if (!small) return [best, declared];
   for (let i = 0; i < real; i++) if (nodes[i]!.pin !== 0) return [best, declared];
   if (chosenOut === 0 || fixed[0]! || fixed[maxRank]!) return [best, declared];
-  for (let r = 0; r <= maxRank; r++) order.subarray(layerStart[r]!, layerStart[r + 1]!).reverse();
+  for (let r = 0; r <= maxRank; r++) order.subarray(layerStart[r], layerStart[r + 1]).reverse();
   settlePositions();
   if (count() > best || outOfOrder() >= chosenOut) order.set(bestOrder);
   return [best, declared];
@@ -2704,11 +2706,7 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
       a = c;
       c = t;
     }
-    if (b > d) {
-      t = b;
-      b = d;
-      d = t;
-    }
+    if (b > d) b = d;
     if (b > c) {
       t = b;
       b = c;

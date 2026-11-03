@@ -17,9 +17,9 @@ import {
 } from '@mermaid-js/core/svg';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext } from './context.ts';
-import { marker, markerTrim, routePath } from './edges.ts';
+import { arrowheads, marker, markerTrim, routePath } from './edges.ts';
 import { prepare, type NodeView, type Prepared } from './prepare.ts';
-import { drawShape, shapeFilled, shapeInset } from './shapes.ts';
+import { drawShape, shapeFilled, shapeInset, type Pads } from './shapes.ts';
 
 /** The flowchart's layout: the engine's LayoutModel, plus the measured views when they are fresh. */
 export interface FlowLayout extends LayoutModel {
@@ -51,22 +51,49 @@ const cls = (names: readonly string[]): string => {
 function inset(
   p: RoutePoint,
   view: NodeView | undefined,
-  box: LayoutModelNode | undefined
+  box: LayoutModelNode | undefined,
+  pads: Pads
 ): RoutePoint {
   if (!view || !box || view.group) return p;
   const dx = p.x - box.x;
   const dy = p.y - box.y;
   if (Math.abs(Math.abs(dy) - box.height / 2) < 0.5) {
     const side = dy < 0 ? 0 : 2;
-    const a = shapeInset(view.shape, view.w, view.h, side, dx) + (box.height - view.h) / 2;
+    const a = shapeInset(view.shape, view.w, view.h, side, dx, pads) + (box.height - view.h) / 2;
     return { ...p, y: p.y + (side === 0 ? a : -a) };
   }
   if (Math.abs(Math.abs(dx) - box.width / 2) < 0.5) {
     const side = dx < 0 ? 3 : 1;
-    const a = shapeInset(view.shape, view.w, view.h, side, dy) + (box.width - view.w) / 2;
+    const a = shapeInset(view.shape, view.w, view.h, side, dy, pads) + (box.width - view.w) / 2;
     return { ...p, x: p.x + (side === 3 ? a : -a) };
   }
   return p;
+}
+
+interface Tint {
+  readonly id: `color-${number}`;
+  readonly stroke: Paint;
+  readonly fill?: Paint;
+}
+
+/**
+ * Per-subgraph palette colour (#86, v12 flowchart `genColor`). On only when the theme carries
+ * a non-empty `borderColorArray`, never by theme name (D152). The slot is the subgraph's source
+ * order modulo the palette length; the fill comes from `bkgColorArray` only when that is not
+ * empty, so `redux-dark-color` colours borders only.
+ */
+function paletteSlots(theme: FlowRenderContext['theme']): (view: NodeView) => Tint | undefined {
+  const border = theme.palette('borderColorArray');
+  const bkg = theme.palette('bkgColorArray');
+  return (view) => {
+    if (view.order === undefined || border.length === 0) return undefined;
+    const slot = view.order % border.length;
+    return {
+      id: `color-${slot}`,
+      stroke: border[slot]!,
+      fill: bkg.length > 0 ? bkg[view.order % bkg.length] : undefined,
+    };
+  };
 }
 
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
@@ -82,6 +109,7 @@ export function renderFlowchart(
   const securityLevel = ctx.securityLevel ?? 'default';
   const prefix = ctx.idPrefix ?? 'mermaid';
   const labelled = flow.edges.some((e) => e.label.width > 0);
+  const headGeometry = arrowheads(theme);
 
   // Every theme variable the body uses is looked up here, before the root is written, so the
   // root `style` can declare exactly the aliases used (theme.rootStyle()).
@@ -94,6 +122,10 @@ export function renderFlowchart(
     sw: theme.length('strokeWidth'),
     line: theme.color('lineColor'),
     arrow: theme.color('arrowheadColor'),
+    // The theme's drop shadow (#85), a CSS filter on node outlines, icons, subgraph rects and
+    // the collapsed card; never on edges, labels or a collapsed card's dots. A theme with
+    // `none` (the classic themes) writes no filter at all.
+    shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
   };
   const G =
     flow.groups.length > 0
@@ -104,6 +136,11 @@ export function renderFlowchart(
           text: theme.color('titleColor'),
         }
       : undefined;
+  // A collapsed subgraph's separator and dots take clusterBorder (v12 `.collapsed-*` rules).
+  const collapsedLine = flow.nodes.some((v) => v.shape === 'collapsedGroup')
+    ? { stroke: theme.color('clusterBorder') }
+    : undefined;
+  const slotOf = paletteSlots(theme);
   const L = labelled
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
@@ -148,15 +185,23 @@ export function renderFlowchart(
       const box = layout.groups.get(g.id);
       if (!box) continue;
       const fill = g.style.shape.fill;
-      w.open('g', { class: 'cluster' + cls(g.classes), 'data-id': g.id, 'data-ast': g.ast });
+      const slot = slotOf(g);
+      w.open('g', {
+        class: 'cluster' + cls(g.classes),
+        'data-id': g.id,
+        'data-ast': g.ast,
+        'data-color-id': slot?.id,
+      });
+      // The author's `style` / `classDef` still wins over the palette (spread after).
       w.leaf('rect', {
         x: box.x - box.width / 2,
         y: box.y - box.height / 2,
         width: box.width,
         height: box.height,
-        fill: G.fill,
-        stroke: G.stroke,
+        fill: slot?.fill ?? G.fill,
+        stroke: slot?.stroke ?? G.stroke,
         'stroke-width': G.sw,
+        filter: P.shadow,
         ...g.style.shape,
       });
       w.label(g.label, box.title.x, box.title.y, {
@@ -197,14 +242,19 @@ export function renderFlowchart(
     if (route && route.points.length > 1 && edge.stroke !== 'invisible') {
       const points = route.points.slice();
       const last = points.length - 1;
-      points[0] = inset(points[0]!, views.get(e.source), layout.nodes.get(e.source));
-      points[last] = inset(points[last]!, views.get(e.target), layout.nodes.get(e.target));
+      points[0] = inset(points[0]!, views.get(e.source), layout.nodes.get(e.source), flow.pads);
+      points[last] = inset(
+        points[last]!,
+        views.get(e.target),
+        layout.nodes.get(e.target),
+        flow.pads
+      );
       const path = routePath(
         w,
         points,
         e.source === e.target ? 'rounded' : e.curve,
-        markerTrim(e.start),
-        markerTrim(e.end)
+        markerTrim(e.start, headGeometry),
+        markerTrim(e.end, headGeometry)
       );
       w.leaf('path', {
         d: path.d,
@@ -213,9 +263,21 @@ export function renderFlowchart(
         ...e.style.shape,
         fill: 'none',
       });
-      const head: Attrs = { fill: (e.style.shape.stroke as Paint | undefined) ?? P.arrow };
-      marker(w, e.start, path.sx, path.sy, path.sdx, path.sdy, head);
-      marker(w, e.end, path.ex, path.ey, path.edx, path.edy, head);
+      const headPaint: Attrs = { fill: e.style.shape.stroke ?? P.arrow };
+      marker(
+        w,
+        e.start,
+        { x: path.sx, y: path.sy, dx: path.sdx, dy: path.sdy },
+        headPaint,
+        headGeometry
+      );
+      marker(
+        w,
+        e.end,
+        { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy },
+        headPaint,
+        headGeometry
+      );
     }
     w.close();
   }
@@ -247,12 +309,14 @@ export function renderFlowchart(
     const box = layout.nodes.get(view.id);
     if (!box) continue;
     const v = view.vertex;
+    const slot = slotOf(view);
     w.open('g', {
       class:
         (view.shape === 'collapsedGroup' ? 'node cluster collapsed' : 'node default') +
         cls(view.classes),
       'data-id': view.id,
       'data-ast': view.ast,
+      'data-color-id': slot?.id,
       transform: translate(box.x, box.y),
     });
     const tip = tips.get(view.id);
@@ -266,16 +330,22 @@ export function renderFlowchart(
         ? undefined
         : checkUrl(v.link, { securityLevel, linkSchemes: ctx.linkSchemes, warn });
     if (href) w.open('a', { href, target: checkLinkTarget(v?.linkTarget, warn) });
+    // A collapsed subgraph takes its palette slot; the author's style still wins (spread after).
     const shapeAttrs: Attrs = {
-      fill: P.fill,
-      stroke: P.stroke,
+      fill: slot?.fill ?? P.fill,
+      stroke: slot?.stroke ?? P.stroke,
       'stroke-width': P.sw,
+      filter: P.shadow,
       ...view.style.shape,
     };
-    const lineAttrs: Attrs = {
+    // Inner lines follow the outline, except a collapsed card's separator and dots, which take
+    // the palette slot's border or else clusterBorder.
+    let lineAttrs: Attrs = {
       stroke: shapeAttrs.stroke,
       'stroke-width': shapeAttrs['stroke-width'],
     };
+    if (collapsedLine && view.shape === 'collapsedGroup')
+      lineAttrs = slot ? { stroke: slot.stroke } : collapsedLine;
     if (v?.img) drawImage(w, view, v.img, securityLevel, ctx);
     else if (v?.icon) drawIcon(w, view, shapeAttrs, ctx);
     else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);

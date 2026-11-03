@@ -189,7 +189,7 @@ describe('preprocess: front matter diagnostics are at original positions', () =>
     const src = '---\nconfig:\n  __proto__:\n    polluted: true\n---\ngraph TD\n';
     const r = preprocess(src);
     expect(r.frontMatter?.config).toEqual({});
-    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
     expect(r.diagnostics.map((d) => [d.code, at(src, d.range.start)])).toEqual([
       ['YAML_UNSAFE_KEY', { line: 2, column: 2 }],
     ]);

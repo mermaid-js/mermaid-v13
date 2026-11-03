@@ -90,10 +90,12 @@ async function structuralProblems(f: Fixture): Promise<string[]> {
     ['ours', ours],
     ['upstream', theirs],
   ] as const) {
-    if (s.missingNodes.length) problems.push(`${who}: node labels in no box: ${s.missingNodes}`);
+    if (s.missingNodes.length)
+      problems.push(`${who}: node labels in no box: ${s.missingNodes.join(',')}`);
     if (s.missingEdgeLabels.length)
-      problems.push(`${who}: edge labels missing: ${s.missingEdgeLabels}`);
-    if (s.dangling.length) problems.push(`${who}: edge lines with a free end at ${s.dangling}`);
+      problems.push(`${who}: edge labels missing: ${s.missingEdgeLabels.join(',')}`);
+    if (s.dangling.length)
+      problems.push(`${who}: edge lines with a free end at ${s.dangling.join(',')}`);
   }
   if (ours.heads !== theirs.heads)
     problems.push(`arrowheads: ours ${ours.heads}, upstream ${theirs.heads}`);

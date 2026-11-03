@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   assertInert,
   checkColor,
+  checkFilter,
   checkLinkTarget,
   checkStyle,
   checkUrl,
@@ -127,6 +128,12 @@ describe('assertInert', () => {
     '<a href="/relative"><text x="0" y="0">a &lt; b &amp; &#169;</text></a>',
     '<svg style="max-width:10px;--_pf:var(--mermaid-primaryColor,#fff)"/>',
     '<path d="M0,0L10,10C1,2 3,4 5,6Z" transform="translate(1,2) rotate(45)"/>',
+    '<rect filter="var(--_ds)"/>',
+    '<rect filter="drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))"/>',
+    '<rect filter="none"/>',
+    '<g data-color-id="color-0"/>',
+    '<g data-color-id="color-11"/>',
+    '<svg style="--_ds:var(--mermaid-dropShadow,drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06)))"/>',
   ];
   for (const svg of OK) {
     it(`accepts ${svg.slice(0, 60)}`, () => {
@@ -154,6 +161,16 @@ describe('assertInert', () => {
     '<a href="https://example.com" target="frame"/>',
     '<g href="https://example.com"/>',
     '<rect fill="url(https://evil.example/x.svg#a)"/>',
+    '<rect filter="url(#drop-shadow)"/>',
+    '<rect filter="url(https://evil.example/f.svg#x)"/>',
+    '<rect filter="blur(2px)"/>',
+    '<rect filter="var(--evil)"/>',
+    '<rect filter="drop-shadow(4px 4px 0 red) url(#x)"/>',
+    '<rect filter="drop-shadow(4px 4px 0 red);x:y"/>',
+    '<rect filter="drop-shadow(999999px 999999px 999999px red)"/>',
+    '<g data-color-id="red"/>',
+    '<g data-color-id="color-1;x"/>',
+    '<g data-color-id="color-1234"/>',
     '<rect style="background:url(x)"/>',
     '<rect style="background:red"/>',
     '<rect style="fill:red;}body{x:y"/>',
@@ -198,5 +215,80 @@ describe('assertInert', () => {
     // An untyped hook gets past the type system; the post-hook check still catches it.
     w.tree.setAttr(link!, 'href', 'javascript:alert(1)' as never);
     expect(() => assertInert(w.finish())).toThrow(/scheme/);
+  });
+});
+
+describe('checkFilter: the drop-shadow allow-list (#85)', () => {
+  const OK: [string, string][] = [
+    ['none', 'none'],
+    ['drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))', 'drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))'],
+    ['  drop-shadow(4px 4px 0px #000)  ', 'drop-shadow(4px 4px 0px #000)'],
+    ['drop-shadow(-2px 3px)', 'drop-shadow(-2px 3px)'],
+    [
+      'drop-shadow(1px 1px 2px red) drop-shadow(0 0 1px blue)',
+      'drop-shadow(1px 1px 2px red) drop-shadow(0 0 1px blue)',
+    ],
+    [
+      'drop-shadow(4px 4px 0 var(--mermaid-shadowColor))',
+      'drop-shadow(4px 4px 0 var(--mermaid-shadowColor))',
+    ],
+  ];
+  it.each(OK)('accepts %s', (input, out) => {
+    expect(checkFilter(input)).toBe(out);
+  });
+
+  it.each([
+    '',
+    'url(#drop-shadow)',
+    'url(https://evil.example/f.svg#x)',
+    'drop-shadow(4px 4px 0 red) url(#x)',
+    'blur(2px)',
+    'drop-shadow(4px)',
+    'drop-shadow(4px 4px 0 1px red)',
+    'drop-shadow(4px 4px 0 url(x))',
+    'drop-shadow(4px 4px 0 expression(alert(1)))',
+    'drop-shadow(4px 4px 0 var(--evil))',
+    'drop-shadow(4px 4px 0 red',
+    'drop-shadow(4px 4px 0 red))',
+    'drop-shadow(4px 4px 0 red);fill:red',
+    'drop-shadow(4px 4px 0 "red")',
+    'javascript:alert(1)',
+    'none none',
+    ...PAYLOADS,
+  ])('refuses %j', (input) => {
+    expect(checkFilter(input)).toBeUndefined();
+  });
+
+  it('caps every shadow length at 100px, so a filter cannot cost unbounded render time', () => {
+    expect(checkFilter('drop-shadow(100px -100px 100px red)')).toBe(
+      'drop-shadow(100px -100px 100px red)'
+    );
+    expect(checkFilter('drop-shadow(6em 6rem 6.25em)')).toBe('drop-shadow(6em 6rem 6.25em)');
+    for (const v of [
+      'drop-shadow(101px 0)',
+      'drop-shadow(0 -101px)',
+      'drop-shadow(0 0 101px red)',
+      'drop-shadow(7em 0)',
+      'drop-shadow(0 0 7rem)',
+      'drop-shadow(999999px 999999px 999999px red)',
+      Array(4).fill('drop-shadow(999999px 999999px 999999px red)').join(' '),
+    ])
+      expect(checkFilter(v), v).toBeUndefined();
+  });
+
+  it('refuses a negative blur radius, which CSS does not allow', () => {
+    expect(checkFilter('drop-shadow(1px 1px -2px red)')).toBeUndefined();
+  });
+
+  it('refuses more than four shadows', () => {
+    expect(checkFilter(Array(5).fill('drop-shadow(1px 1px)').join(' '))).toBeUndefined();
+  });
+
+  it('keeps hostile payloads out of the written filter attribute', () => {
+    const w = streamWriter();
+    w.open('svg', { xmlns: 'http://www.w3.org/2000/svg' });
+    for (const p of PAYLOADS) w.leaf('rect', { filter: checkFilter(p) });
+    w.close();
+    assertInert(w.finish());
   });
 });

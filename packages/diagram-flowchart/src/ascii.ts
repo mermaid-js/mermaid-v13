@@ -42,7 +42,7 @@ interface AsciiOptions {
 }
 
 const options = (ctx: FlowRenderContext): AsciiOptions =>
-  ((ctx.config as { ascii?: AsciiOptions }).ascii ?? {}) as AsciiOptions;
+  (ctx.config as { ascii?: AsciiOptions }).ascii ?? {};
 
 const glyphsFor = (ctx: FlowRenderContext): GlyphSet =>
   options(ctx).charset === 'ascii' ? asciiGlyphs : unicode;

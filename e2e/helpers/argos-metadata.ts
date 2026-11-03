@@ -85,7 +85,7 @@ export function annotationFromScreenshotRelPath(relPath: string): ArgosTestAnnot
   const specIdx = parts.findIndex((p) => SPEC_SEGMENT_RE.test(p));
   if (specIdx >= 0 && specIdx < parts.length - 1) {
     const specRel = parts.slice(0, specIdx + 1).join('/');
-    const testSlug = parts[parts.length - 1]!;
+    const testSlug = parts[parts.length - 1];
     const specFile = `e2e/${specRel}`;
     const title = formatTileTitle(testSlug);
     return {

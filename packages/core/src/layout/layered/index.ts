@@ -22,7 +22,7 @@ import {
   type CEdge,
   type CNode,
 } from './compound.ts';
-import { down, edgeOn, type LayeredOptions } from './layered.ts';
+import { edgeOn, floorTo, type LayeredOptions } from './layered.ts';
 import { pxProfile, type LayoutMetrics } from '../units.ts';
 
 // Length constants (port and loop sizes, corners, the turn breakpoint) come from
@@ -179,7 +179,6 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
       for (const [side, n] of Object.entries(crossings(g, model, grid)) as [Side, number][])
         for (let i = 0; i < n; i++) add(id, side);
     }
-    let more = false;
     // The size each side of `id` needs for its ends, at least `width` × `height`.
     const need = (id: string, width: number, height: number): [number, number] => {
       const c = count.get(id);
@@ -194,7 +193,6 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
     const nodes = current.nodes.map((n) => {
       const [width, height] = need(n.id, n.width, n.height);
       if (width === n.width && height === n.height) return n;
-      more = true;
       return { ...n, width, height };
     });
     // A group (an empty one, mostly) grows by padding: sideways evenly, downwards at the bottom
@@ -206,11 +204,13 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
       const dx = Math.max(Math.ceil((width - placed.width) / 2), crowded.has(g.id) ? 2 * grid : 0);
       const dy = height - placed.height;
       if (dx === 0 && dy === 0) return g;
-      more = true;
       const { top, right, bottom, left } = g.padding;
       return { ...g, padding: { top, right: right + dx, bottom: bottom + dy, left: left + dx } };
     });
-    if (!more) break;
+    const grew =
+      nodes.some((n, i) => n !== current.nodes[i]) ||
+      groups.some((g, i) => g !== current.groups[i]);
+    if (!grew) break;
     current = { ...current, nodes, groups };
     model = run(current, dir, tight);
   }
@@ -591,7 +591,7 @@ function gridLoop(
   // The `nth` of `count` pairs of cells, all `pitch` apart, around the middle of a side and off
   // its corners (the side has grown to hold them, D140).
   const pair = (lo: number, hi: number): [number, number] => {
-    const first = Math.max(lo + grid, down((lo + hi - (2 * count - 1) * pitch) / 2, grid));
+    const first = Math.max(lo + grid, floorTo((lo + hi - (2 * count - 1) * pitch) / 2, grid));
     const a = Math.min(hi - grid, first + 2 * nth * pitch);
     return [a, Math.min(hi - grid, a + pitch)];
   };
@@ -611,7 +611,7 @@ function gridLoop(
       ports: { source: 'bottom', target: 'bottom' },
     };
     if (label) {
-      const l = left + down((b.width - label.width) / 2, grid);
+      const l = left + floorTo((b.width - label.width) / 2, grid);
       placed.label = {
         x: l + label.width / 2 - grid / 2,
         y: out + grid + gap + label.height / 2 - grid / 2,
@@ -632,7 +632,7 @@ function gridLoop(
     ports: { source: 'right', target: 'right' },
   };
   if (label) {
-    const t = down((y0 + y1 + grid - label.height) / 2, grid);
+    const t = floorTo((y0 + y1 + grid - label.height) / 2, grid);
     placed.label = {
       x: out + grid + gap + label.width / 2 - grid / 2,
       y: t + label.height / 2 - grid / 2,

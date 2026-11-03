@@ -4,7 +4,7 @@
  * bundle a fixture module there, so no real source file is ever modified.
  */
 import { mkdtempSync, realpathSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
-import { request, type IncomingMessage } from 'node:http';
+import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -71,7 +71,7 @@ function events(port: number): Promise<Events> {
               done(d);
             });
           }),
-        close: () => (res as IncomingMessage).destroy(),
+        close: () => res.destroy(),
       });
     });
     req.on('error', reject);

@@ -18,7 +18,7 @@
  * Its state is the storage keys `devExplorer.profile.scope|iterations|layouts`.
  */
 import '@shoelace-style/shoelace/dist/components/checkbox/checkbox.js';
-import { css, html, nothing, type PropertyValues } from 'lit';
+import { css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import type { Stage, StageClock } from '../../mermaid.ts';
 import { readStorage, renderConfig, writeStorage } from '../settings.ts';
 import { ViewerTabElement, type DevMermaid } from './context.ts';
@@ -439,7 +439,7 @@ export class ProfileTab extends ViewerTabElement {
     this.#copyTimer = setTimeout(() => (this.copyMessage = ''), 2500);
   }
 
-  override render() {
+  override render(): TemplateResult {
     const ctx = this.ctx;
     return html`
       <div class="controls">

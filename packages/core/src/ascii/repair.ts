@@ -248,15 +248,15 @@ interface Path {
   ys: number[];
 }
 
-function expand(field: Field, corners: readonly Point[]): Path {
+function expand(field: Field, bends: readonly Point[]): Path {
   const path: Path = { cells: [], xs: [], ys: [] };
   const add = (x: number, y: number): void => {
     path.cells.push(field.index(x, y));
     path.xs.push(x);
     path.ys.push(y);
   };
-  corners.forEach((p, k) => {
-    const q = corners[k - 1];
+  bends.forEach((p, k) => {
+    const q = bends[k - 1];
     if (!q) return add(p.x, p.y);
     const dx = Math.sign(p.x - q.x);
     const dy = Math.sign(p.y - q.y);

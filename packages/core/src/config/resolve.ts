@@ -38,7 +38,9 @@ export type ConfigWarningCode =
   /** Diagram text tried to set a secure or integrator-only key. */
   | 'CONFIG_SECURE_KEY'
   /** Diagram text gave a value v12's directive sanitiser rejects. */
-  | 'CONFIG_UNSAFE_VALUE';
+  | 'CONFIG_UNSAFE_VALUE'
+  /** `look` was set somewhere; it is ignored (D153). At most one per resolve. */
+  | 'LOOK_REMOVED';
 
 export interface ConfigWarning {
   readonly code: ConfigWarningCode;
@@ -53,7 +55,7 @@ export interface ResolveConfigOptions {
   readonly warn?: (warning: ConfigWarning) => void;
   /**
    * The config section of the diagram being rendered (e.g. `flowchart`), for the
-   * diagram-scoped `theme`, `look` and `layout`. Defaults to the single top-level key
+   * diagram-scoped `theme` and `layout`. Defaults to the single top-level key
    * of `pluginDefaults`, when it has exactly one.
    */
   readonly section?: string;
@@ -83,9 +85,7 @@ export const INTEGRATOR_ONLY_KEYS: readonly string[] = Object.freeze([
 /** Never copied from any source: they would reach `Object.prototype` on assignment. */
 const POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-const APPEARANCE_KEYS = ['theme', 'look', 'layout'] as const;
-/** v12 `config.ts` LOOKS; kept in step with the schema's `look` enum. */
-const LOOKS = new Set(['classic', 'handDrawn', 'neo']);
+const APPEARANCE_KEYS = ['theme', 'layout'] as const;
 
 /** v12 `sanitizeDirective`: theme variables from diagram text must match this. */
 const THEME_VARIABLE_VALUE = /^[\d "#%(),.;A-Za-z]+$/;
@@ -120,7 +120,8 @@ export function resolveConfig(
   options: ResolveConfigOptions = {}
 ): ResolvedConfig {
   const warn = options.warn ?? (() => {});
-  const plugin = clone(pluginDefaults ?? {}) as Plain;
+  const looks = lookStripper(warn);
+  const plugin = looks.strip(clone(pluginDefaults ?? {}) as Plain);
   // A section the plugin brings that the schema does not know (a third-party diagram)
   // is its own business: accept whatever keys it gets.
   const tree: Record<string, KeyTree> = { ...(KEY_TREE as Record<string, KeyTree>) };
@@ -128,9 +129,14 @@ export function resolveConfig(
     tree[key] ??= 'open';
   }
 
-  const base = clone(defaults) as Plain;
+  const base = looks.strip(clone(defaults) as Plain);
   merge(base, plugin);
-  const site = check(initialize ?? {}, tree, 'initialize', warn);
+  const site = check(
+    looks.strip(clone(initialize ?? {}) as Plain, 'initialize'),
+    tree,
+    'initialize',
+    warn
+  );
   merge(base, site);
 
   // Secure keys come from the integrator's side only, merged as v12 merged arrays (union),
@@ -148,7 +154,7 @@ export function resolveConfig(
       continue;
     }
     const allowed: Plain = {};
-    for (const [key, value] of Object.entries(input)) {
+    for (const [key, value] of Object.entries(looks.strip({ ...input }, source))) {
       if (secure.has(key)) {
         warn({
           code: 'CONFIG_SECURE_KEY',
@@ -171,16 +177,61 @@ export function resolveConfig(
   merge(base, text);
 
   const section = options.section ?? soleKey(plugin);
-  resolveAppearance(base, section, [text, site, plugin, clone(defaults) as Plain]);
+  resolveAppearance(base, section, [text, site, plugin, looks.strip(clone(defaults) as Plain)]);
   return deepFreeze(base) as ResolvedConfig;
 }
 
 /**
- * v12 `resolveAppearance`: `theme`, `look` and `layout` land on the top level, highest
- * first: diagram text, `initialize()`, the diagram's default, the global default.
- * Within a layer the diagram-scoped value beats the global one. A `look` this build does
- * not know is passed over, as in v12. (v12 also passed over unknown theme names; that
- * check belongs with the theme registry, core/theme.)
+ * `look` is removed (D153): whatever value it has, at the top level or in any section, it
+ * is dropped before the schema check, so it is never a `CONFIG_UNKNOWN_KEY` and never reaches
+ * the resolved config. The first one a user source sets earns one `LOOK_REMOVED` warning;
+ * defaults (core or plugin) are stripped silently. A plugin that wants `look: handDrawn` as
+ * an alias claims it through the plugin config mechanism (D153), not here.
+ */
+function lookStripper(warn: (w: ConfigWarning) => void) {
+  let warned = false;
+  const report = (path: string, source: ConfigSource | undefined) => {
+    if (warned || source === undefined) {
+      return;
+    }
+    warned = true;
+    const note = KEY_NOTES.look;
+    warn({
+      code: 'LOOK_REMOVED',
+      path,
+      source,
+      message: [
+        `Config key "${path}" is ignored: \`look\` was removed in ${note?.since ?? 'v13'}.`,
+        note?.replacement === undefined ? undefined : `Replacement: ${note.replacement}.`,
+      ]
+        .filter((s) => s !== undefined)
+        .join(' '),
+    });
+  };
+  /** Removes `look` from `config` and its sections in place; `source` undefined = silent. */
+  const strip = (config: Plain, source?: ConfigSource): Plain => {
+    if ('look' in config) {
+      delete config.look;
+      report('look', source);
+    }
+    for (const [key, value] of Object.entries(config)) {
+      if (key !== 'themeVariables' && isPlainObject(value) && 'look' in value) {
+        const copy = { ...value };
+        delete copy.look;
+        config[key] = copy;
+        report(`${key}.look`, source);
+      }
+    }
+    return config;
+  };
+  return { strip };
+}
+
+/**
+ * v12 `resolveAppearance`: `theme` and `layout` land on the top level, highest first:
+ * diagram text, `initialize()`, the diagram's default, the global default. Within a layer
+ * the diagram-scoped value beats the global one. (v12 also passed over unknown theme names;
+ * that check belongs with the theme registry, core/theme.)
  */
 function resolveAppearance(config: Plain, section: string | undefined, layers: Plain[]) {
   const scopedOf = (layer: Plain): Plain | undefined => {
@@ -190,9 +241,7 @@ function resolveAppearance(config: Plain, section: string | undefined, layers: P
   const scoped = scopedOf(config);
   for (const key of APPEARANCE_KEYS) {
     for (const layer of layers) {
-      const value = [scopedOf(layer)?.[key], layer[key]].find(
-        (v) => typeof v === 'string' && (key !== 'look' || LOOKS.has(v))
-      );
+      const value = [scopedOf(layer)?.[key], layer[key]].find((v) => typeof v === 'string');
       if (value === undefined) {
         continue;
       }

@@ -42,7 +42,7 @@ async function context(text: string, options: AsciiOptions) {
     config,
     measurer: undefined as never, // `layoutAscii` puts in the cell measurer
     theme,
-    warn: () => {},
+    warn: () => undefined,
     title: preprocess(text).frontMatter?.title,
     ast: parse.ast,
     // R-ASCII-8: `maxWidth` is the layout's `availableWidth` in cells (#47 does this in api.ts).

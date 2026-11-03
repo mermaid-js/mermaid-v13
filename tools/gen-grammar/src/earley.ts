@@ -66,7 +66,8 @@ export function flatten(g: Grammar): Production[] {
         add(lhs, [lhs, item], ast, rule);
         return;
       }
-      default:
+      case 'sym':
+      case 'seq':
         add(lhs, sequence(e, rule), ast, rule);
     }
   };
@@ -122,8 +123,7 @@ export function buildParser(g: Grammar): ReferenceParser {
     for (const p of byLhs.get(g.start) ?? []) addItem(0, p, 0, 0);
     for (let k = 0; k <= n; k++) {
       const set = sets[k] as [Production, number, number][];
-      for (let x = 0; x < set.length; x++) {
-        const [p, dot, origin] = set[x] as [Production, number, number];
+      for (const [p, dot, origin] of set) {
         const next = p.rhs[dot];
         if (next === undefined) {
           // complete

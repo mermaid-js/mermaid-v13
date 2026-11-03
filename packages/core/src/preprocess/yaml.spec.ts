@@ -141,7 +141,7 @@ describe('parseYaml: prototype keys', () => {
       const r = parseYaml(src);
       expect(r.value).toEqual({ b: {}, c: {}, d: 'ok' });
       expect(Object.getPrototypeOf(r.value)).toBe(Object.prototype);
-      expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
       expect(
         r.diagnostics.map((d) => [d.severity, d.code, src.slice(d.range.start, d.range.end)])
       ).toEqual([

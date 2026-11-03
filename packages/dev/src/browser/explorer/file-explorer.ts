@@ -3,7 +3,7 @@
  * a breadcrumb, Up and "New diagram" (v12 `file-explorer.ts`). It emits `navigate` and
  * `open-file` (`detail.path`); the app owns the URL. `refresh` bumps re-list the folder.
  */
-import { LitElement, html, nothing, type PropertyValues } from 'lit';
+import { LitElement, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { createFile, listFiles, parentDir, type Entry } from './api.ts';
 
 const segments = (path: string): string[] => path.split('/').filter(Boolean);
@@ -50,7 +50,7 @@ export class DevFileExplorer extends LitElement {
   }
 
   // Light DOM, so www/dev/styles.css applies.
-  override createRenderRoot() {
+  override createRenderRoot(): this {
     return this;
   }
 
@@ -109,7 +109,7 @@ export class DevFileExplorer extends LitElement {
     }
   }
 
-  override render() {
+  override render(): TemplateResult {
     const parts = segments(this.path);
     return html`
       <div class="header">

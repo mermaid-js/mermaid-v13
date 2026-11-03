@@ -86,9 +86,9 @@ test('contrast() and invert() CSS equals the JS-computed literal on many backgro
     cases
   );
   const off = got.filter(([css, lit]) => {
-    const [x, y] = [channels(css!), channels(lit!)];
+    const [x, y] = [channels(css), channels(lit)];
     return (
-      typeof x === 'string' || typeof y === 'string' || x.some((v, i) => Math.abs(v - y[i]!) > 1)
+      typeof x === 'string' || typeof y === 'string' || x.some((v, i) => Math.abs(v - y[i]) > 1)
     );
   });
   expect(off).toEqual([]);
@@ -99,7 +99,7 @@ test("theme 'auto' follows prefers-color-scheme without re-rendering", async ({ 
   await openHarness(page);
   await page.evaluate((code) => window.v13.mount(code, { config: { theme: 'auto' } }), SIMPLE);
   const light = await computedPaints(page);
-  expect(await page.evaluate(firstRectFill)).toBe('rgb(255, 255, 255)'); // redux mainBkg
+  expect(await page.evaluate(firstRectFill)).toBe('rgb(255, 255, 255)'); // redux-color mainBkg
 
   await page.emulateMedia({ colorScheme: 'dark' });
   const dark = await computedPaints(page);
@@ -114,9 +114,9 @@ function samePaint(a: string, b: string): boolean {
   const close = (x: string, y: string) => {
     const [cx, cy] = [channels(x), channels(y)];
     if (typeof cx === 'string' || typeof cy === 'string') return x === y;
-    return cx.every((v, i) => Math.abs(v - cy[i]!) <= (i === 3 ? 0.01 : 1));
+    return cx.every((v, i) => Math.abs(v - cy[i]) <= (i === 3 ? 0.01 : 1));
   };
-  return tagA === tagB && close(fillA!, fillB!) && close(strokeA!, strokeB!);
+  return tagA === tagB && close(fillA, fillB) && close(strokeA, strokeB);
 }
 
 const THEMED = readFileSync(fixturePath('flowchart/baseline/themes/redux.mmd'), 'utf8').replace(
@@ -124,7 +124,17 @@ const THEMED = readFileSync(fixturePath('flowchart/baseline/themes/redux.mmd'), 
   ''
 );
 
-for (const theme of ['redux', 'default', 'dark', 'forest', 'neutral', 'base']) {
+for (const theme of [
+  'redux-color',
+  'redux',
+  'redux-dark',
+  'redux-dark-color',
+  'default',
+  'dark',
+  'forest',
+  'neutral',
+  'base',
+]) {
   for (const themeVariables of [undefined, { primaryColor: '#3366cc', lineColor: '#aa5500' }]) {
     const label = themeVariables ? ' with overrides' : '';
     test(`${theme}${label}: literal colours equal the browser's computed CSS-variable colours`, async ({
@@ -147,7 +157,7 @@ for (const theme of ['redux', 'default', 'dark', 'forest', 'neutral', 'base']) {
       expect(literal.length).toBeGreaterThan(10);
       expect(literal.length).toBe(vars.length);
       // Same paint per element, each channel within 1/255 (sRGB rounding).
-      const off = literal.filter((lit, i) => !samePaint(lit, vars[i]!));
+      const off = literal.filter((lit, i) => !samePaint(lit, vars[i]));
       expect(off.map((lit) => `${lit}  vs  ${vars[literal.indexOf(lit)]}`)).toEqual([]);
     });
   }

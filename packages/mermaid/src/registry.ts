@@ -14,10 +14,9 @@ import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { diagramStart, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { FIRST_PARTY } from './generated/registry.gen.ts';
 
-// The registry holds plugins of every model and layout type.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- the registry holds plugins of every model and layout type
 export type AnyPlugin = DiagramPlugin<any, any>;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- the registry holds ascii hooks of every model and layout type
 type AnyAsciiHook = AsciiHook<any, any>;
 
 /** A row of the generated first-party table. Rows without `load` have no v13 package yet. */
@@ -55,7 +54,7 @@ export interface ManifestPlugin {
   readonly detector?: (text: string) => boolean;
   load(): Promise<unknown>;
   /** Imports the manifest's `ascii` entry (diagrams with one); its `ascii` export is the hook. */
-  loadAscii?(): Promise<unknown>;
+  readonly loadAscii?: () => Promise<unknown>;
 }
 
 /** `registerExternalDiagrams` input: a diagram, an extension, or either by manifest. */
@@ -107,11 +106,11 @@ function kindOf(def: ExternalDiagram): 'plugin' | 'lazy' | 'manifest' | 'extensi
 }
 
 const unwrap = <T>(m: T | { diagram: T } | { layout: T } | { default: T }): T =>
-  (typeof m === 'object' && m !== null && ('diagram' in m || 'layout' in m || 'default' in m)
+  typeof m === 'object' && m !== null && ('diagram' in m || 'layout' in m || 'default' in m)
     ? ((m as { diagram?: T }).diagram ??
       (m as { layout?: T }).layout ??
       (m as { default: T }).default)
-    : m) as T;
+    : m;
 
 const HOOKS = ['postParse', 'postLayout', 'postRender', 'afterMount'] as const;
 
@@ -286,7 +285,10 @@ export class Registry {
           manifest.ascii === undefined || !loadAscii
             ? undefined
             : async () => {
-                const m = (await loadAscii()) as { ascii?: AnyAsciiHook } | AnyAsciiHook;
+                const m = (await loadAscii()) as
+                  | { ascii?: AnyAsciiHook }
+                  | AnyAsciiHook
+                  | undefined;
                 return (typeof m === 'function' ? m : m?.ascii) as AnyAsciiHook;
               }
         );

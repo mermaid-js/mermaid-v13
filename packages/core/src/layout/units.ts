@@ -121,8 +121,9 @@ const PX_ENGINE: LayoutMetrics = freeze({
 });
 
 /**
- * The px profile: today's numbers. `nodePad` is the default theme's (`spacing3`,
- * `spacing2 + spacing1`); the flowchart reads the theme's own values with this profile.
+ * The px profile: today's numbers. `nodePad` is the default theme's node padding; with this
+ * profile the flowchart reads the theme's own per-shape padding (`nodePaddingX`, …, D152).
+ * `headRoom` is theme-independent, so the layout does not move with the arrowhead (D154).
  */
 export const pxProfile: UnitProfile = freeze({
   id: 'px',

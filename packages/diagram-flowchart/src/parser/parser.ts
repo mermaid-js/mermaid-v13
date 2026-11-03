@@ -1183,7 +1183,6 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
       if (kind() !== T.Graph)
         fail([T.Graph], 'a flowchart starts with `flowchart` or `graph` and a direction');
       i++;
-      let dir = 'TB';
       if (kind() === T.NoDir) {
         i++;
         db.setDirection('TB');
@@ -1202,7 +1201,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
           );
           throw STOP;
         }
-        dir = raw(expect(T.Dir, T.NoDir));
+        const dir = raw(expect(T.Dir, T.NoDir));
         let t = kind();
         if (t === T.Space) {
           do i++;

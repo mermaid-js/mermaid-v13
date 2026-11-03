@@ -71,7 +71,9 @@ function problems(check: (c: Case) => unknown[]): Record<string, unknown[]> {
 }
 
 const perCharset = (check: (c: Case, charset: Charset) => unknown[]) =>
-  problems((c) => CHARSETS.flatMap((charset) => check(c, charset).map((p) => `${charset}: ${p}`)));
+  problems((c) =>
+    CHARSETS.flatMap((charset) => check(c, charset).map((p) => `${charset}: ${String(p)}`))
+  );
 
 describe('ascii corpus properties (D87, R-ASCII-9)', () => {
   it('renders every flowchart that renders to SVG', () => {

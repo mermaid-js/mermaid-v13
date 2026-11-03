@@ -2,10 +2,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildLexer, parseGrammar } from '@mermaid-js/gen-grammar';
-import type { Grammar, LexToken, ModeLexer } from '@mermaid-js/gen-grammar';
+import type { Grammar, LexToken, MappedText, ModeLexer } from '@mermaid-js/gen-grammar';
 import { REPO_ROOT } from '../../corpus.ts';
 import { flowchartLexerInput } from './lexer-input.ts';
-import type { MappedText } from '@mermaid-js/gen-grammar';
 
 export const FLOWCHART_GRAMMAR_PATH = join(
   REPO_ROOT,

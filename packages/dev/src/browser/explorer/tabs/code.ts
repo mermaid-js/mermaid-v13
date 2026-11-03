@@ -36,7 +36,7 @@ import {
   requirementTags,
   sequenceTags,
 } from 'codemirror-lang-mermaid';
-import { css, html, nothing, type PropertyValues } from 'lit';
+import { css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { ViewerTabElement, type ViewerContext } from './context.ts';
 
 /** v12's palette, unchanged. */
@@ -229,7 +229,7 @@ export class CodeTab extends ViewerTabElement {
   }
 
   /** Mod-s while the tab shows but the editor isn't focused (the editor's keymap handles it there). */
-  #onDocumentKeyDown = (e: KeyboardEvent): void => {
+  readonly #onDocumentKeyDown = (e: KeyboardEvent): void => {
     if (!this.active || e.defaultPrevented || !isSaveKey(e)) return;
     e.preventDefault();
     void this.#save();
@@ -330,7 +330,7 @@ export class CodeTab extends ViewerTabElement {
     view.focus();
   }
 
-  override render() {
+  override render(): TemplateResult {
     const ctx = this.ctx;
     const status = this.#status;
     return html`

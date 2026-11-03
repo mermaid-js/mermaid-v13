@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ESLint } from 'eslint';
+import tseslint from 'typescript-eslint';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 // Each architecture lint rule is proven by linting a fixture as if it lived at a given
@@ -10,7 +11,16 @@ const fixture = (name: string) => readFileSync(join(import.meta.dirname, 'fixtur
 
 let eslint: ESLint;
 beforeAll(() => {
-  eslint = new ESLint({ cwd: root, ignore: false });
+  // The fixtures are linted at paths no tsconfig contains, so type-aware rules are off, and
+  // they are snippets, not modules with a typed API.
+  eslint = new ESLint({
+    cwd: root,
+    ignore: false,
+    overrideConfig: [
+      tseslint.configs.disableTypeChecked,
+      { rules: { '@typescript-eslint/explicit-module-boundary-types': 'off' } },
+    ],
+  });
 });
 
 async function ruleIds(name: string, asFile: string): Promise<string[]> {
