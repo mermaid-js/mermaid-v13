@@ -2,11 +2,12 @@
 /**
  * Local eslint plugin holding the v13 architecture in place (DESIGN §2, R-ARCH-1/5, R-PARSE-7).
  *
- * - `mermaid/import-boundaries`: diagram-* → core, mermaid → core + diagram-*, core → nothing.
+ * - `mermaid/import-boundaries`: diagram-* → core, mermaid → core + diagram-*, core → nothing;
+ *   `core/ascii` imports no SVG code and only ASCII code imports it (DESIGN §6.3).
  * - `mermaid/no-global-config`: no getConfig-style global config lookup.
  * - `mermaid/no-nested-quantifier`: no quantifier nested in an unbounded/variable quantifier.
  */
-import { dirname, relative, resolve, sep } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { RegExpParser, visitRegExpAST } from '@eslint-community/regexpp';
 
 /** @typedef {import('eslint').Rule.RuleModule} RuleModule */
@@ -35,6 +36,26 @@ function packageOf(filename) {
 const isCore = (s) => s === CORE || s.startsWith(`${CORE}/`);
 /** @param {string} s */
 const isDiagram = (s) => s.startsWith('@mermaid-js/diagram-');
+/** @param {string} s */
+const isCoreAscii = (s) => s === `${CORE}/ascii` || s.startsWith(`${CORE}/ascii/`);
+/**
+ * ASCII code: a path inside the package with an `ascii` directory or an `ascii.*` file.
+ *
+ * @param {string} dir
+ * @param {string} filename
+ */
+const isAsciiCode = (dir, filename) =>
+  relative(dir, filename)
+    .split(sep)
+    .some((part) => part === 'ascii' || part.startsWith('ascii.'));
+/**
+ * @param {string} dir
+ * @param {string} path
+ */
+const isInside = (dir, path) => {
+  const rel = relative(dir, path);
+  return !rel.startsWith('..') && !isAbsolute(rel);
+};
 /** @param {string} filename */
 const isTestFile = (filename) => /\.(spec|test)\.[cm]?[jt]s$/.test(filename);
 /** @param {string} s */
@@ -98,9 +119,18 @@ const importBoundaries = {
       let reason;
       if (specifier.startsWith('.')) {
         const target = resolve(dirname(filename), specifier);
+        const src = join(pkg.dir, 'src');
         if (relative(pkg.dir, target).startsWith('..')) {
           reason = 'relative imports must stay inside the package; import its public entry';
+        } else if (pkg.name === 'core' && isInside(join(src, 'ascii'), filename)) {
+          if (isInside(join(src, 'svg'), target)) {
+            reason = 'core/ascii never imports SVG code (DESIGN §6.3)';
+          }
+        } else if (pkg.name === 'core' && !inTest && isInside(join(src, 'ascii'), target)) {
+          reason = 'only ASCII code imports core/ascii (DESIGN §6.3)';
         }
+      } else if (isCoreAscii(specifier) && !inTest && !isAsciiCode(pkg.dir, filename)) {
+        reason = `only ASCII code imports ${CORE}/ascii (DESIGN §6.3)`;
       } else {
         reason = bareImportViolation(pkg.name, specifier, inTest);
       }
