@@ -127,6 +127,9 @@ const WILD = 4; // an edge label: joins the lines on either side of it
 /** Reads `text` (drawn in `charset`) against what the diagram should show. */
 export function readStructure(text: string, charset: Charset, expected: Expected): Structure {
   const d = new Drawing(text, charset);
+  for (const t of expected.texts) {
+    for (const line of t.split('\n')) if (line.trim()) d.maskTitle(line.trim());
+  }
   const boxes = d.findBoxes();
   d.markBoxes(boxes);
   // The ASCII charset draws a markdown bullet as `-`.
@@ -150,6 +153,8 @@ class Drawing {
   private readonly grid: Grid;
   private readonly table: ReadonlyMap<string, number>;
   private kind: number[][] = [];
+  /** Cells of titles written on a border (`y,x`): text, though ASCII `-`, `.` or `I` are lines. */
+  private readonly titled = new Set<string>();
 
   constructor(
     text: string,
@@ -166,14 +171,40 @@ class Drawing {
   /** The line arms of the glyph at (x, y); 0 for text, space or nothing. */
   private armsOf(x: number, y: number): number {
     const c = this.at(x, y);
-    if (c === null || c === undefined) return 0;
+    if (c === null || c === undefined || this.titled.has(`${y},${x}`)) return 0;
     const arms = this.table.get(c) ?? 0;
     if (arms && this.charset === 'ascii' && LETTERS.has(c)) {
       const l = this.at(x - 1, y);
       const r = this.at(x + 1, y);
-      if ((l && WORD.test(l)) || (r && WORD.test(r))) return 0;
+      // A vertical glyph a line runs into from above or below is a line, whatever sits beside
+      // it (two heads side by side read `vv`).
+      const joined =
+        arms === V &&
+        ((this.table.get(this.at(x, y - 1) ?? '') ?? 0) & DOWN ||
+          (this.table.get(this.at(x, y + 1) ?? '') ?? 0) & UP);
+      if (!joined && ((l && WORD.test(l)) || (r && WORD.test(r)))) return 0;
     }
     return arms;
+  }
+
+  /**
+   * Marks every run of `title` that sits on a horizontal line: the nearest glyph either side,
+   * past blanks, is a line running towards it. Such a run is text even where its characters
+   * are line glyphs in the charset (`P1.5`, `a-b-c`, a title `I`).
+   */
+  maskTitle(title: string): void {
+    const want = toGrid(title)[0]!;
+    this.grid.forEach((row, y) => {
+      for (let x = 0; x + want.length <= row.length; x++) {
+        if (!want.every((c, i) => row[x + i] === c)) continue;
+        let l = x - 1;
+        while (row[l] === ' ') l--;
+        let r = x + want.length;
+        while (row[r] === ' ') r++;
+        if (!(this.armsOf(l, y) & RIGHT) || !(this.armsOf(r, y) & LEFT)) continue;
+        for (let i = 0; i < want.length; i++) this.titled.add(`${y},${x + i}`);
+      }
+    });
   }
 
   /** A border cell: a line glyph (a side an edge was drawn across keeps its box) or a mark. */

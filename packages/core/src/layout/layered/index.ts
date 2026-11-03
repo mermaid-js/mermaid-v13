@@ -12,6 +12,7 @@ import type {
   LayoutModelEdge,
   LayoutModelGroup,
   LayoutModelNode,
+  Point,
   RoutePoint,
   Side,
 } from '../types.ts';
@@ -200,8 +201,9 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
     const groups = current.groups.map((g) => {
       const placed = model.groups.get(g.id)!;
       const [width, height] = need(g.id, placed.width, placed.height);
-      // A title with no room on the border between the edges that cross it gets more.
-      const dx = Math.max(Math.ceil((width - placed.width) / 2), crowded.has(g.id) ? 2 * grid : 0);
+      // A title with no room on the border between the edges that cross it gets more: each side
+      // grows by what the title lacks beside the outermost crossings.
+      const dx = Math.max(Math.ceil((width - placed.width) / 2), crowded.get(g.id) ?? 0);
       const dy = height - placed.height;
       if (dx === 0 && dy === 0) return g;
       const { top, right, bottom, left } = g.padding;
@@ -219,10 +221,13 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
 }
 
 // On the grid a group's title sits on its top border row, and no edge may end or cross there
-// under it: each title moves along the border, from the middle, to the nearest run of cells no
-// route touches (off the corners). Returns the groups whose titles found none.
-function placeTitles(graph: LayoutGraph, model: LayoutModel, grid: number): Set<string> {
-  const crowded = new Set<string>();
+// under it (nor in the blank cell either side, `┌─ one ───┐`). Each title moves along the border,
+// from the middle, to the nearest run of cells no route touches (off the corners). Failing that,
+// the group's own edges that end above its top border step aside along the row above, so the title
+// keeps a run of its own. Returns the groups whose titles still found none, each with the cells it
+// should grow by on both sides.
+function placeTitles(graph: LayoutGraph, model: LayoutModel, grid: number): Map<string, number> {
+  const crowded = new Map<string, number>();
   for (const g of graph.groups) {
     const width = g.title?.width ?? 0;
     const placed = model.groups.get(g.id)!;
@@ -230,33 +235,135 @@ function placeTitles(graph: LayoutGraph, model: LayoutModel, grid: number): Set<
     const left = placed.x - placed.width / 2 + grid / 2;
     const right = left + placed.width - grid;
     const row = placed.y - placed.height / 2 + grid / 2;
-    const used = new Set<number>();
+    // Cells of the border row routes run through.
+    const crossed = new Set<number>();
     for (const e of model.edges.values()) {
       const p = e.points;
       for (let i = 0; i < p.length; i++) {
         const a = p[Math.max(0, i - 1)]!;
         const b = p[i]!;
         if (Math.min(a.y, b.y) > row || Math.max(a.y, b.y) < row) continue;
-        for (let x = Math.min(a.x, b.x); x <= Math.max(a.x, b.x); x += grid) used.add(x);
+        for (let x = Math.min(a.x, b.x); x <= Math.max(a.x, b.x); x += grid) crossed.add(x);
       }
     }
+    // The group's own edges off its top side end on the row above: their tee is on the border.
+    const ends = topEnds(graph, model, g.id, row - grid);
+    const used = new Set([...crossed, ...ends.map((end) => end.x)]);
     const middle = Math.round(placed.title.x - width / 2 + grid / 2);
-    const free = (lo: number): boolean => {
-      for (let x = lo; x < lo + width; x += grid) if (used.has(x)) return false;
+    const band = (lo: number, x: number): boolean => x >= lo - grid && x <= lo + width;
+    const clear = (lo: number, cells: ReadonlySet<number>): boolean => {
+      for (let x = lo - grid; x <= lo + width; x += grid) if (cells.has(x)) return false;
       return true;
     };
-    let best: number | undefined;
-    for (let lo = left + grid; lo + width - grid <= right - grid; lo += grid) {
-      if (!free(lo)) continue;
-      if (best === undefined || Math.abs(lo - middle) < Math.abs(best - middle)) best = lo;
+    const runs: number[] = [];
+    for (let lo = left + grid; lo + width - grid <= right - grid; lo += grid) runs.push(lo);
+    runs.sort((a, b) => Math.abs(a - middle) - Math.abs(b - middle) || a - b);
+    let best = runs.find((lo) => clear(lo, used));
+    if (best === undefined) {
+      // Ends under the title move to the nearest cell of the row above outside its band.
+      for (const lo of runs) {
+        if (!clear(lo, crossed)) continue;
+        const moves = stepAside(ends, crossed, {
+          inBand: (x) => band(lo, x),
+          min: left + grid,
+          max: right - grid,
+          grid,
+        });
+        if (!moves) continue;
+        for (const [end, x] of moves) moveEnd(model, end, x);
+        best = lo;
+        break;
+      }
     }
     if (best === undefined) {
-      if (!free(middle)) crowded.add(g.id);
+      if (!clear(middle, used)) {
+        const inner = [...crossed].filter((x) => x > left && x < right);
+        if (inner.length === 0) {
+          // Only the group's own ends: room for the title, its blank cells and each end.
+          const room = right - left - grid;
+          const need = width + 2 * grid + ends.length * grid;
+          crowded.set(g.id, Math.max(grid, Math.ceil((need - room) / 2)));
+        } else {
+          const first = Math.min(...inner);
+          const last = Math.max(...inner);
+          // Free cells between the corner's gap and the first crossing, on either side.
+          const room = Math.max(first - (left + grid), right - grid - last, 0) - grid;
+          crowded.set(g.id, Math.max(grid, Math.ceil(width - room)));
+        }
+      }
       continue;
     }
     placed.title = { ...placed.title, x: best + width / 2 - grid / 2 };
   }
   return crowded;
+}
+
+interface TopEnd {
+  edge: string;
+  end: 'source' | 'target';
+  x: number;
+  /** Whether the route runs straight for two cells or more from the end: room for a jog. */
+  jog: boolean;
+}
+
+// The ends of a group's own edges that sit on `row`, above its top border.
+function topEnds(graph: LayoutGraph, model: LayoutModel, id: string, row: number): TopEnd[] {
+  const out: TopEnd[] = [];
+  for (const e of graph.edges) {
+    const placed = model.edges.get(e.id)!;
+    const p = placed.points;
+    const jog = (a: Point, b: Point | undefined): boolean =>
+      b !== undefined && a.x === b.x && Math.abs(b.y - a.y) >= 2;
+    const first = p[0]!;
+    const last = p.at(-1)!;
+    if (e.source === id && placed.ports.source === 'top' && first.y === row)
+      out.push({ edge: e.id, end: 'source', x: first.x, jog: jog(first, p[1]) });
+    if (e.target === id && placed.ports.target === 'top' && last.y === row)
+      out.push({ edge: e.id, end: 'target', x: last.x, jog: jog(last, p.at(-2)) });
+  }
+  return out;
+}
+
+// New cells for the ends under a title band: the nearest free cell of the row each, off the
+// corners and the band; only ends whose last stretch runs straight for two cells or more can jog.
+function stepAside(
+  ends: TopEnd[],
+  crossed: ReadonlySet<number>,
+  row: { inBand: (x: number) => boolean; min: number; max: number; grid: number }
+): [TopEnd, number][] | undefined {
+  const { inBand, min, max, grid } = row;
+  const taken = new Set([...crossed, ...ends.filter((e) => !inBand(e.x)).map((e) => e.x)]);
+  const moves: [TopEnd, number][] = [];
+  for (const end of ends) {
+    if (!inBand(end.x)) continue;
+    if (!end.jog) return undefined;
+    let to: number | undefined;
+    for (let d = grid; to === undefined && (end.x - d >= min || end.x + d <= max); d += grid) {
+      for (const x of [end.x - d, end.x + d])
+        if (to === undefined && x >= min && x <= max && !inBand(x) && !taken.has(x)) to = x;
+    }
+    if (to === undefined) return undefined;
+    taken.add(to);
+    moves.push([end, to]);
+  }
+  return moves;
+}
+
+// Moves one end along its row to `x`, with a jog in the cell before it (the route's straight
+// last stretch keeps its other cells).
+function moveEnd(model: LayoutModel, end: TopEnd, x: number): void {
+  const placed = model.edges.get(end.edge)!;
+  const p = end.end === 'target' ? [...placed.points].reverse() : [...placed.points];
+  const a = p[0]!;
+  const b = p[1]!;
+  const y = a.y + Math.sign(b.y - a.y);
+  const jog: RoutePoint[] = [
+    { ...a, x },
+    { x, y, axis: 'v' },
+    { x: a.x, y, axis: 'h' },
+  ];
+  const points = [...jog, ...p.slice(1)];
+  placed.points = end.end === 'target' ? points.reverse() : points;
 }
 
 // How many route segments cross each side of a group's border (grid mode, in cells).

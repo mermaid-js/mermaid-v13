@@ -12,9 +12,9 @@ import { readStructure, type Charset } from './structure.ts';
 
 // ASCII render properties over the whole in-repo flowchart corpus, in both charsets (D87,
 // R-ASCII-9): renders wherever SVG renders, deterministic, every visible node label inside a
-// box and every edge label present, no overlapping boxes, no edge through a box or an edge
-// label, `rows` lines none wider than `columns` and one exactly that wide, no trailing spaces.
-// Group titles are left out of the edge check: a few stay crowded (GAPS.md, #45).
+// box and every edge label present, every edge line connected box to box, no overlapping boxes,
+// no edge through a box, an edge label or a group title, `rows` lines none wider than `columns`
+// and one exactly that wide, no trailing spaces.
 
 const CHARSETS: Charset[] = ['unicode', 'ascii'];
 
@@ -97,6 +97,15 @@ describe('ascii corpus properties (D87, R-ASCII-9)', () => {
     ).toEqual({});
   });
 
+  it('connects every edge line box to box (no free end, none ending on a title)', () => {
+    expect(
+      perCharset((c, cs) => {
+        const s = readStructure(c.out[cs].text, cs, expectedOf(c.layout, c.layout.title));
+        return s.dangling.map((at) => `edge line with a free end at ${at}`);
+      })
+    ).toEqual({});
+  });
+
   it('has `rows` lines, none wider than `columns` and one exactly that wide, no trailing spaces', () => {
     expect(
       perCharset((c, cs) => {
@@ -120,15 +129,14 @@ describe('ascii corpus properties (D87, R-ASCII-9)', () => {
     expect(problems((c) => overlaps(c.layout))).toEqual({});
   });
 
-  // #45 (D78, R-ASCII-1): after the repair router no edge passes through a node box or another
-  // edge's label.
-  it('routes no edge through a node box or an edge label', () => {
+  // #45 (D78, R-ASCII-1): after the repair router no edge passes through a node box, another
+  // edge's label or a group title (titles are labels owned by their group).
+  it('routes no edge through a node box, an edge label or a group title', () => {
     expect(
       problems((c) => {
         const graph = c.layout.flow.graph;
-        const labels = new Set(graph.edges.map((e) => e.id));
         return routeCollisions(graph, c.layout, repairRoutes(graph, c.layout).routes).filter(
-          (l) => l.kind === 'box' || (l.kind === 'label' && labels.has(l.with))
+          (l) => l.kind === 'box' || l.kind === 'label'
         );
       })
     ).toEqual({});

@@ -91,6 +91,44 @@ describe('readStructure', () => {
     expect(upstream.missingNodes).toEqual([]);
   });
 
+  it('reads ASCII frame titles that hold line glyphs (`P1.5`, `a-b-c`, `I`)', () => {
+    for (const title of ['P1.5', 'a-b-c', 'I']) {
+      const top = `+-- ${title} --+`;
+      const w = top.length;
+      const row = (inner: string) => `|${inner.padEnd(w - 2)}|`;
+      const s = read(
+        [top, row(''), row(' +---+'), row(' | b |'), row(' +---+'), `+${'-'.repeat(w - 2)}+`],
+        'ascii',
+        want(['b'], [], [title])
+      );
+      expect(
+        s.boxes.map((b) => b.frame),
+        title
+      ).toEqual([true, false]);
+      expect(s.dangling, title).toEqual([]);
+    }
+  });
+
+  it('reads two ASCII heads side by side (`vv`) as heads, not a word', () => {
+    const s = read(
+      [
+        '+---+ +---+',
+        '| A | | B |',
+        '+-+-+ +-+-+',
+        '  |     |',
+        '  +----+|',
+        '       ||',
+        '       vv',
+        '    +-----+',
+        '    |  C  |',
+        '    +-----+',
+      ],
+      'ascii',
+      want(['A', 'B', 'C'])
+    );
+    expect(s).toMatchObject({ heads: 2, dangling: [] });
+  });
+
   it('does not read a box out of edge corners or a crossing (ASCII `+`)', () => {
     const s = read(
       [

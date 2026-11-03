@@ -790,18 +790,17 @@ describe('repairRoutes (D78, R-ASCII-1)', () => {
     );
   });
 
-  // The engine's own routes on the cell fixtures (#42): after repair, no edge passes through a box
-  // or another edge's label, every route stays square with its ends in place, and whatever is
-  // left is reported (R-ASCII-1; the corpus property is #48's).
+  // The engine's own routes on the cell fixtures (#42): after repair, no edge passes through a box,
+  // another edge's label or a group title, every route stays square with its ends in place, and
+  // whatever is left is reported (R-ASCII-1; the corpus property is #48's).
   it('repairs the engine routes on the cell fixtures', () => {
     const fixtures = [...cellFixtures(), ...randomCellFixtures(200), ...randomGroupFixtures(200)];
-    const edgeIds = new Set(fixtures.flatMap((f) => f.graph.edges.map((e) => e.id)));
     for (const { name, graph } of fixtures) {
       const model = layered(graph);
       const result = repairRoutes(graph, model);
       const left = routeCollisions(graph, model, result.routes);
       expect(
-        left.filter((c) => c.kind === 'box' || (c.kind === 'label' && edgeIds.has(c.with))),
+        left.filter((c) => c.kind === 'box' || c.kind === 'label'),
         name
       ).toEqual([]);
       expect(left.length, name).toBeLessThanOrEqual(result.unresolved.length);

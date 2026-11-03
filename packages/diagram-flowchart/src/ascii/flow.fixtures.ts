@@ -11,6 +11,7 @@ import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { parseFlowchart } from '../parser/index.ts';
 import { flowchart } from '../plugin.ts';
 import type { FlowWarning } from '../render/context.ts';
+import type { FlowLayout } from '../render/render.ts';
 
 export interface Drawn {
   text: string;
@@ -22,6 +23,8 @@ export interface DrawOptions {
   padding?: 'compact' | 'roomy';
   /** Lay out in cells before the hook, as the API does once it sets `ctx.units` (#47). */
   cells?: boolean;
+  /** Changes the cell layout before the hook draws it (to stage what repair cannot free). */
+  tweak?: (layout: FlowLayout) => void;
 }
 
 let theme: Theme | undefined;
@@ -32,7 +35,7 @@ export async function draw(src: string, options: DrawOptions = {}): Promise<Draw
   const resolved = resolveConfig(CORE_DEFAULTS, {}, pre.frontMatter?.config, [], {
     flowchart: flowchartConfigDefaults,
   } as never);
-  const { cells, ...section } = options;
+  const { cells, tweak, ...section } = options;
   const config = { ...resolved, ascii: section } as unknown as ResolvedConfig;
   const parse = parseFlowchart(src, { preprocessed: pre });
   const warnings: FlowWarning[] = [];
@@ -48,8 +51,9 @@ export async function draw(src: string, options: DrawOptions = {}): Promise<Draw
   const model = parse.model;
   const layout = flowchart.layout(
     model,
-    cells ? { ...ctx, measurer: cellMeasurer, units: cellProfile(options.padding) } : ctx
+    cells || tweak ? { ...ctx, measurer: cellMeasurer, units: cellProfile(options.padding) } : ctx
   );
+  tweak?.(layout);
   return { text: ascii(model, layout, ctx), warnings };
 }
 

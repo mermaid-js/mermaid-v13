@@ -23,7 +23,9 @@ function problems(graph: LayoutGraph, model: LayoutModel): string[] {
 }
 
 // Route cells on a group's top border row under its title (cells round(x − w/2 + ½) on, `width`
-// of them): the title is text, so no edge may end or cross there.
+// of them): the title is text, so no edge may end or cross there. An edge of the group's own
+// that leaves or enters its top side ends on the cell above the border: the border cell under that
+// end is where the drawing puts its tee, so it must not be under the title either.
 function underTitles(graph: LayoutGraph, model: LayoutModel): string[] {
   const out: string[] = [];
   for (const g of graph.groups) {
@@ -32,6 +34,16 @@ function underTitles(graph: LayoutGraph, model: LayoutModel): string[] {
     const row = placed.y - placed.height / 2 + 0.5;
     const lo = Math.round(placed.title.x - g.title.width / 2 + 0.5);
     const hi = lo + g.title.width - 1;
+    for (const e of graph.edges) {
+      const placedEdge = model.edges.get(e.id)!;
+      const ends = [
+        [e.source, placedEdge.ports.source, placedEdge.points[0]!],
+        [e.target, placedEdge.ports.target, placedEdge.points.at(-1)!],
+      ] as const;
+      for (const [end, side, p] of ends)
+        if (end === g.id && side === 'top' && lo <= p.x && p.x <= hi)
+          out.push(`edge '${e.id}' ends on the title of '${g.id}'`);
+    }
     for (const [id, e] of model.edges) {
       const p = e.points;
       for (let i = 0; i < p.length; i++) {

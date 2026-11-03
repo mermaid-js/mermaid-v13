@@ -90,6 +90,8 @@ function writeLabel(
 }
 
 interface End {
+  /** The node or group the edge ends at. */
+  at: string;
   cell: Point;
   /** Direction from the end cell into its box. */
   into: Dir;
@@ -110,8 +112,8 @@ function drawEdge(
   const weight = e.edge.stroke === 'thick' ? 2 : 1;
   const dotted = e.edge.stroke === 'dotted' ? glyphs.dotted : undefined;
   const last = cells.length - 1;
-  const source = { cell: cells[0]!, into: INTO[ports.source], marker: e.start };
-  const target = { cell: cells[last]!, into: INTO[ports.target], marker: e.end };
+  const source = { at: e.source, cell: cells[0]!, into: INTO[ports.source], marker: e.start };
+  const target = { at: e.target, cell: cells[last]!, into: INTO[ports.target], marker: e.end };
   cells.forEach((c, i) => {
     let arms = 0;
     const arm = (d: Dir): void => void (arms |= weight << SHIFT[d]);
@@ -226,7 +228,21 @@ export function drawFlowchart(
     const top = r.y + Math.floor((r.height - lines) / 2);
     writeLabel(canvas, n.label, r.x + 1, top, r.width - 2, glyphs);
   }
-  for (const end of ends) if (!markerGlyph(glyphs, end)) tee(canvas, glyphs, end);
+  // An edge between a group and its own member ends on the group's frame (#42): the line
+  // already joins the border there, so there is no tee to add.
+  const onFrame = (end: End): boolean => {
+    const g = layout.groups.get(end.at);
+    if (!g) return false;
+    const r = cellRect(g);
+    const { x, y } = end.cell;
+    const inX = x >= r.x && x < r.x + r.width;
+    const inY = y >= r.y && y < r.y + r.height;
+    return (
+      (inX && (y === r.y || y === r.y + r.height - 1)) ||
+      (inY && (x === r.x || x === r.x + r.width - 1))
+    );
+  };
+  for (const end of ends) if (!markerGlyph(glyphs, end) && !onFrame(end)) tee(canvas, glyphs, end);
 
   return finish(canvas, options.title);
 }

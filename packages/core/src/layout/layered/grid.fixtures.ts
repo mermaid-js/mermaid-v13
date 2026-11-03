@@ -174,6 +174,7 @@ export function cellFixtures(): LayoutFixture[] {
     },
     ...groupFixtures(),
     ...reviewFixtures(),
+    ...titleFixtures(),
   ];
 }
 
@@ -422,4 +423,70 @@ export function randomGroupFixtures(count: number): LayoutFixture[] {
     out.push({ name: `random groups ${k} ${g.direction}`, graph: g });
   }
   return out;
+}
+
+// What the flowchart builder makes for a subgraph in cells: the title a row of its own on the top
+// border (padding top 0), padding 1 on the other sides.
+function titled(id: string, title: string, parent?: string): LayoutGroup {
+  return {
+    id,
+    padding: { top: 0, right: 1, bottom: 1, left: 1 },
+    title: { width: [...title].length, height: 1 },
+    ...(parent ? { parent } : {}),
+  };
+}
+
+// The final #37 review's corpus cases where an edge met a group title: a group's own edge ending
+// on its top border under the title (`66-more-nested-subgraph-cases`), and wide titles over
+// every edge crossing the border (`62-should-render-styled-subgraphs`).
+export function titleFixtures(): LayoutFixture[] {
+  return [
+    {
+      name: 'title over a group edge end TB',
+      graph: graph(
+        'TB',
+        [sized('b1', 6, 'two'), sized('c2', 6, 'three')],
+        [edge('three', 'two'), edge('two', 'c2')],
+        [titled('two', 'two'), titled('three', 'three')]
+      ),
+    },
+    {
+      name: 'title over a group edge end BT',
+      graph: graph(
+        'BT',
+        [sized('b1', 6, 'two'), sized('c2', 6, 'three')],
+        [edge('three', 'two'), edge('two', 'c2')],
+        [titled('two', 'two'), titled('three', 'three')]
+      ),
+    },
+    {
+      name: 'wide titles over crossing edges',
+      graph: graph(
+        'TB',
+        [
+          sized('A', 5),
+          sized('B', 5),
+          sized('C', 5, 'foo'),
+          sized('D', 5, 'foo'),
+          sized('E', 5, 'bar'),
+          sized('F', 5, 'bar'),
+          sized('G', 5),
+        ],
+        [
+          edge('A', 'B'),
+          edge('B', 'C'),
+          edge('C', 'D'),
+          edge('B', 'D'),
+          edge('D', 'E'),
+          edge('E', 'A'),
+          edge('E', 'F'),
+          edge('F', 'D'),
+          edge('F', 'G'),
+          edge('B', 'G'),
+          edge('G', 'D'),
+        ],
+        [titled('foo', 'Foo SubGraph'), titled('bar', 'Bar SubGraph')]
+      ),
+    },
+  ];
 }

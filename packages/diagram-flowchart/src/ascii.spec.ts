@@ -120,6 +120,20 @@ describe('subgraphs', () => {
     expect(at('│ y │')[1]).toBe(at('│ x │')[1]);
   });
 
+  it('starts a group-to-member edge on the frame, with no tee below it', async () => {
+    const src = 'flowchart TB\nsubgraph Sub\n In\nend\nSub --> In';
+    for (const charset of ['unicode', 'ascii'] as const) {
+      const rows = (await text(src, { charset, cells: true })).split('\n');
+      const head = charset === 'ascii' ? 'v' : '▼';
+      const y = rows.findIndex((r) => r.includes(head));
+      const x = rows[y]!.indexOf(head);
+      const bar = charset === 'ascii' ? '|' : '│';
+      // From the head up to the frame: a plain line, the frame row a junction.
+      for (let k = y - 1; k > 0; k--) expect(rows[k]![x], `${charset} row ${k}`).toBe(bar);
+      expect(rows[0]![x]).toBe(charset === 'ascii' ? '+' : '┬');
+    }
+  });
+
   it('draws a collapsed subgraph as a box with a + marker', async () => {
     const src = 'flowchart LR\nsubgraph c [Box]\n q --> r\nend\nc@{ view: "collapsed" }\nz --> c';
     expect(await text(src)).toBe(
@@ -239,35 +253,18 @@ describe('warnings', () => {
   });
 
   it('turns routes the repair router could not free into one warning', async () => {
-    // e2e visual-check/11: the back edge E → A finds no lane past the two groups and the
-    // fan of edges into D, so repair keeps its snapped stretch (D78).
-    const src = [
-      'graph TB',
-      'A',
-      'B',
-      'subgraph foo[Foo SubGraph]',
-      ' C',
-      ' D',
-      'end',
-      'subgraph bar[Bar SubGraph]',
-      ' E',
-      ' F',
-      'end',
-      'G',
-      'A-->B',
-      'B-->C',
-      'C-->D',
-      'B-->D',
-      'D-->E',
-      'E-->A',
-      'E-->F',
-      'F-->D',
-      'F-->G',
-      'B-->G',
-      'G-->D',
-    ].join('\n');
-    const route = (await draw(src)).warnings.filter((w) => w.code === 'ASCII_ROUTE');
-    expect(route.map((w) => w.astIds)).toEqual([['e:E>A']]);
+    // No lane frees an edge end under a box: repair keeps the snapped route and reports it
+    // (D78). The engine never puts one there, so the layout is staged: C moves onto A → B's
+    // last cell.
+    const { warnings } = await draw('flowchart LR\nA --> B\nC', {
+      tweak: (layout) => {
+        const end = layout.edges.get('L_A_B_0')!.points.at(-1)!;
+        const c = layout.nodes.get('C')!;
+        layout.nodes.set('C', { ...c, x: end.x, y: end.y });
+      },
+    });
+    const route = warnings.filter((w) => w.code === 'ASCII_ROUTE');
+    expect(route.map((w) => w.astIds)).toEqual([['e:A>B']]);
   });
 });
 
