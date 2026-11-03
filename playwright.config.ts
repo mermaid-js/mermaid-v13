@@ -25,14 +25,20 @@ const port = resolveE2EPort();
 process.env.MERMAID_PORT ??= port;
 process.env.MERMAID_DEV_PORT ??= port;
 
-// The v13 page server (packages/visual): bundles the browser adapter and serves e2e.html.
-const devCommand = 'pnpm --filter @mermaid-js/visual serve';
+// The v13 page server (packages/dev, the same server as `pnpm dev`): bundles the browser
+// adapter and serves e2e.html.
+const devCommand = 'pnpm --filter @mermaid-js/dev serve';
 
 export default defineConfig({
   testDir: 'e2e',
-  // v13 runs the curated visual baseline (R-TEST-5) and the browser adapter specs only. The
-  // other specs under e2e/ are the parked v12 suite.
-  testMatch: ['rendering/mmd-snapshots.spec.ts', 'browser/**/*.spec.ts', 'smoke/**/*.spec.ts'],
+  // v13 runs the .mmd fixtures of the diagram types it has packages for (R-TEST-5), the
+  // browser adapter and dev specs. The other specs under e2e/ are the parked v12 suite.
+  testMatch: [
+    'rendering/mmd-snapshots.spec.ts',
+    'browser/**/*.spec.ts',
+    'dev/**/*.spec.ts',
+    'smoke/**/*.spec.ts',
+  ],
   // e2e/helpers holds Vitest unit tests for the e2e helpers; Playwright must not collect them.
   testIgnore: '**/helpers/**',
   fullyParallel: true,
@@ -67,7 +73,9 @@ export default defineConfig({
   },
   projects: [
     // The baseline and browser specs; the smoke render needs the bundle (`smoke:build`).
-    { name: 'chromium', testIgnore: ['**/helpers/**', 'smoke/**'] },
+    { name: 'chromium', testIgnore: ['**/helpers/**', 'smoke/**', 'dev/**'] },
+    // The dev explorer specs (#64); `pnpm e2e` runs them with `chromium`.
+    { name: 'dev', testMatch: 'dev/**/*.spec.ts' },
     // CI smoke-render, one runtime per job: `--project smoke-<browser>`.
     ...(['chromium', 'firefox', 'webkit'] as const).map((browser) => ({
       name: `smoke-${browser}`,

@@ -1,9 +1,33 @@
-import { globby } from 'globby';
 import { readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { load } from 'js-yaml';
+import * as discovery from '../../packages/dev/src/fixture-discovery.ts';
+import { FIRST_PARTY } from '../../packages/mermaid/src/generated/registry.gen.ts';
 
-export const DIAGRAMS_DIR = 'e2e/diagrams';
+const { DIAGRAMS_DIR } = discovery;
+
+// Which fixtures run lives in packages/dev, so the dev explorer lists exactly what CI snapshots.
+export {
+  collectMmdFixtures,
+  DIAGRAMS_DIR,
+  FIXTURE_FOLDER_TYPES,
+} from '../../packages/dev/src/fixture-discovery.ts';
+
+/** The diagram types that have a v13 package: registry rows with a `load`. */
+export const SUPPORTED_TYPES: ReadonlySet<string> = new Set(
+  FIRST_PARTY.filter((entry) => entry.load).map((entry) => entry.type)
+);
+
+export type DiscoveryOptions = Omit<discovery.DiscoveryOptions, 'supportedTypes'> &
+  Partial<Pick<discovery.DiscoveryOptions, 'supportedTypes'>>;
+
+/** `discovery.supportedFixtureFolders`, by default with every type that has a v13 package. */
+export const supportedFixtureFolders = (options: Omit<DiscoveryOptions, 'tiers'> = {}): string[] =>
+  discovery.supportedFixtureFolders({ supportedTypes: SUPPORTED_TYPES, ...options });
+
+/** `discovery.discoverMmdFixtures`, by default with every type that has a v13 package. */
+export const discoverMmdFixtures = (options: DiscoveryOptions = {}): Promise<string[]> =>
+  discovery.discoverMmdFixtures({ supportedTypes: SUPPORTED_TYPES, ...options });
 
 /**
  * Free-form, test-tooling-only metadata read out of a fixture's own mermaid
@@ -46,13 +70,15 @@ export const readFixtureMetadata = (
     return undefined;
   }
 
-  const indent = match[1];
+  // Both groups always match; `?? ''` is for packages/dev's stricter tsconfig, which imports this.
+  const indent = match[1] ?? '';
+  const body = match[2] ?? '';
   const yamlBody = indent
-    ? match[2]
+    ? body
         .split('\n')
         .map((line) => (line.startsWith(indent) ? line.slice(indent.length) : line))
         .join('\n')
-    : match[2];
+    : body;
 
   const parsed: unknown = load(yamlBody);
   if (parsed === null || parsed === undefined) {
@@ -102,13 +128,6 @@ export const buildFixtureTree = (relativePaths: readonly string[]): FixtureTree 
   }
 
   return root;
-};
-
-export const collectMmdFixtures = async (
-  diagramsDir = DIAGRAMS_DIR,
-  pattern: string | string[] = '**/*.mmd'
-): Promise<string[]> => {
-  return globby(pattern, { cwd: diagramsDir, onlyFiles: true });
 };
 
 /**

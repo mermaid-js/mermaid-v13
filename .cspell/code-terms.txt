@@ -80,6 +80,7 @@ JDBC
 jison
 Kaufmann
 keyify
+keymap
 LABELPOS
 LABELTYPE
 layoutstop

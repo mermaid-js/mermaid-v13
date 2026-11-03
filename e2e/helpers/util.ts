@@ -6,8 +6,8 @@ import { expect, type Page, type TestInfo } from '@playwright/test';
 import { Buffer } from 'buffer';
 import { buildCaptureMetadata, writeArgosMetadataSidecar } from './argos-metadata.ts';
 
-// v13: the page is packages/visual/www/e2e.html (served by `pnpm --filter @mermaid-js/visual
-// serve`); it renders through packages/visual/src/adapter.ts. Integrator config is a plain
+// v13: the page is packages/dev/www/e2e.html (served by `pnpm --filter @mermaid-js/dev
+// serve`); it renders through packages/dev/src/adapter.ts. Integrator config is a plain
 // object until the public config types land (#15).
 type MermaidConfig = Record<string, any> & {
   securityLevel?: string;

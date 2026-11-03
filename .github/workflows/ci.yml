@@ -77,8 +77,9 @@ jobs:
           if-no-files-found: ignore
 
   visual:
-    # R-TEST-5: the v13 visual baseline (e2e/diagrams/flowchart/baseline, tier `baseline`) plus the
-    # browser adapter specs (e2e/browser), in the Playwright image so fonts and rendering are fixed.
+    # R-TEST-5: every .mmd tier of the fixture folders whose diagram types have a v13 package
+    # (e2e/helpers/mmd-snapshots.ts) plus the browser adapter specs (e2e/browser), in the
+    # Playwright image so fonts and rendering are fixed.
     # Screenshots go to Argos, which compares them with the mermaid-v13 baseline on PRs (R-REL-1). R-TEST-6: the
     # theme gallery is built from the same fixtures and kept as an artifact.
     name: Visual baseline
@@ -100,7 +101,10 @@ jobs:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      - name: Playwright (baseline + browser specs)
+      # `pnpm e2e` also runs the dev explorer specs (e2e/dev, project `dev`; #64). The Compare
+      # tab's CDN specs need cdn.jsdelivr.net and registry.npmjs.org; without them they skip,
+      # with a warning annotation and a job summary line giving the reason.
+      - name: Playwright (baseline, browser and dev explorer specs)
         run: pnpm e2e
       - name: Upload screenshots to Argos
         if: ${{ !cancelled() && github.event_name != 'merge_group' }}
@@ -110,12 +114,12 @@ jobs:
           ARGOS_REFERENCE_BRANCH: mermaid-v13
         run: pnpm exec argos upload e2e/screenshots
       - name: Build the theme gallery
-        run: pnpm --filter @mermaid-js/visual gallery
+        run: pnpm --filter @mermaid-js/dev gallery
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: ${{ !cancelled() }}
         with:
           name: theme-gallery
-          path: packages/visual/dist/gallery/
+          path: packages/dev/dist/gallery/
           if-no-files-found: error
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: ${{ failure() }}
@@ -149,7 +153,7 @@ jobs:
   smoke-render:
     # Each target renders a fixture through the public `mermaid` package. node20 runs the
     # source through tsx. The others load the BUILT package as one bundled ES module
-    # (packages/visual `smoke:build`): Deno runs it directly; the browsers and a Web Worker
+    # (packages/dev `smoke:build`): Deno runs it directly; the browsers and a Web Worker
     # (in Chromium) load it from the e2e page server (e2e/smoke/smoke.spec.ts).
     name: Smoke render (${{ matrix.runtime }})
     runs-on: ubuntu-latest
@@ -173,9 +177,9 @@ jobs:
         run: pnpm --filter @mermaid-js/conformance smoke
       - name: Build the package and the smoke bundle
         if: matrix.runtime != 'node20'
-        run: pnpm build && pnpm --filter @mermaid-js/visual smoke:build
+        run: pnpm build && pnpm --filter @mermaid-js/dev smoke:build
       - if: matrix.runtime == 'deno'
-        run: pnpm --filter @mermaid-js/visual smoke:deno
+        run: pnpm --filter @mermaid-js/dev smoke:deno
       - name: Install the browser
         if: contains(fromJSON('["worker","chromium","firefox","webkit"]'), matrix.runtime)
         run: pnpm exec playwright install --with-deps ${{ matrix.runtime == 'worker' && 'chromium' || matrix.runtime }}

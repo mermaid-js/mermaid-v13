@@ -1,0 +1,38 @@
+{
+  "name": "@mermaid-js/dev",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The v13 dev server (`pnpm dev`) and e2e page server, the browser render adapter, the visual baseline (R-TEST-5), the theme gallery (R-TEST-6) and the smoke bundle.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsx --conditions=mermaid-source src/cli/dev.ts",
+    "serve": "tsx --conditions=mermaid-source src/cli/serve.ts",
+    "gallery": "tsx --conditions=mermaid-source src/cli/gallery.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p ../../e2e/tsconfig.json",
+    "smoke:build": "tsx src/smoke/build.ts",
+    "smoke:deno": "npx --yes deno@2.9.4 run --no-prompt dist/smoke/smoke.mjs"
+  },
+  "devDependencies": {
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@fontsource/noto-sans-sc": "^5.3.1",
+    "@lezer/highlight": "^1.2.5",
+    "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/plugin-interactions": "workspace:^",
+    "@shoelace-style/shoelace": "^2.20.1",
+    "@types/node": "^22.19.21",
+    "chokidar": "^5.0.0",
+    "codemirror-lang-mermaid": "^0.5.0",
+    "dotenv": "^17.4.2",
+    "esbuild": "^0.25.12",
+    "globby": "^14.1.0",
+    "lit": "^3.3.3",
+    "mermaid": "workspace:*",
+    "pixelmatch": "^7.2.0",
+    "tsx": "^4.20.6"
+  }
+}
