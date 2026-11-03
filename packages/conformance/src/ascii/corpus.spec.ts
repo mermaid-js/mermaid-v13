@@ -112,7 +112,14 @@ describe('ascii corpus properties (D87, R-ASCII-9)', () => {
         const { text, rows, columns } = c.out[cs];
         // An empty diagram (`graph TD;`) is no lines: rows 0, columns 0.
         const lines = text === '' ? [] : text.split('\n');
-        const widest = Math.max(0, ...lines.map((l) => cellWidth(l)));
+        // Measured apart from the API's `cellWidth` where that is possible: a line of printable
+        // ASCII, box drawing and the arrowhead/marker shapes is one column per code point.
+        // Lines with other text (CJK, emoji, combining marks) fall back to `cellWidth`; there
+        // the check is a contract check of `columns` against the kit's own measure, whose
+        // widths have table tests in core/ascii (measurer.spec.ts, R-ASCII-3).
+        const narrow = /^[\x20-\x7e\u2500-\u25ff\u2715]*$/u;
+        const width = (l: string) => (narrow.test(l) ? [...l].length : cellWidth(l));
+        const widest = Math.max(0, ...lines.map(width));
         const found: string[] = [];
         if (lines.length !== rows) found.push(`${lines.length} lines, rows ${rows}`);
         if (widest !== columns) found.push(`widest ${widest}, columns ${columns}`);
