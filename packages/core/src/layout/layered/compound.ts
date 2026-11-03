@@ -679,8 +679,10 @@ export function compoundLayout(
       const sw = node.w + node.loopW;
       const sh = node.h + node.loopH;
       const ln = sized ? lnode(vertical ? sw : sh, vertical ? sh : sw) : lnode(0, 0);
+      // On the grid a group's ends may use its whole side off the corners, which it grows for.
+      const inset = grid ? M.corner : node.padX;
       ln.span = node.isGroup
-        ? Math.min(node.span, (vertical ? node.w : node.h) - 2 * node.padX)
+        ? Math.min(node.span, (vertical ? node.w : node.h) - 2 * inset)
         : node.span;
       ln.key = keyed ? key[item]! : NaN;
       lnodes.push(ln);

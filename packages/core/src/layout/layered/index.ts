@@ -373,11 +373,12 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     const c = cnode(0, 0);
     c.isGroup = true;
     c.dir = g.direction;
-    c.padX = scaled(Math.max(g.padding.left, g.padding.right), padScale);
+    // On the grid the frame takes a cell of its own, and the padding is blank cells inside it.
+    c.padX = scaled(Math.max(g.padding.left, g.padding.right), padScale) + grid;
     const padTop = scaled(g.padding.top, padScale);
     padTops.push(padTop);
-    c.padTop = padTop + (g.title?.height ?? 0);
-    c.padBottom = scaled(g.padding.bottom, padScale);
+    c.padTop = padTop + (g.title?.height ?? 0) + grid;
+    c.padBottom = scaled(g.padding.bottom, padScale) + grid;
     c.minW = (g.title?.width ?? 0) + 2 * c.padX;
     c.seq = nodeCount + j;
     c.span = Infinity;

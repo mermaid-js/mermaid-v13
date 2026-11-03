@@ -47,7 +47,47 @@ function underTitles(graph: LayoutGraph, model: LayoutModel): string[] {
   return [...new Set(out)];
 }
 
+// Blank cells between each group's frame (its outermost cells) and each direct member, short of
+// the group's `padding` on any side.
+function tightFrames(graph: LayoutGraph, model: LayoutModel): string[] {
+  const out: string[] = [];
+  const cells = (b: { x: number; y: number; width: number; height: number }) => ({
+    left: b.x - b.width / 2 + 0.5,
+    top: b.y - b.height / 2 + 0.5,
+    right: b.x + b.width / 2 - 0.5,
+    bottom: b.y + b.height / 2 - 0.5,
+  });
+  const members = [
+    ...graph.nodes.map((n) => [n.id, n.parent, model.nodes.get(n.id)!] as const),
+    ...graph.groups.map((g) => [g.id, g.parent, model.groups.get(g.id)!] as const),
+  ];
+  for (const g of graph.groups) {
+    const f = cells(model.groups.get(g.id)!);
+    for (const [id, parent, box] of members) {
+      if (parent !== g.id) continue;
+      const m = cells(box);
+      const blank = {
+        left: m.left - f.left - 1,
+        right: f.right - m.right - 1,
+        top: m.top - f.top - 1,
+        bottom: f.bottom - m.bottom - 1,
+      };
+      for (const side of ['left', 'right', 'top', 'bottom'] as const)
+        if (blank[side] < g.padding[side])
+          out.push(`'${id}' is ${blank[side]} cells from the ${side} of '${g.id}'`);
+    }
+  }
+  return out;
+}
+
 describe('layered: grid (cells)', () => {
+  it.each(FIXTURES.map((f) => [f.name, f] as const))(
+    '%s keeps group padding in blank cells inside the frame',
+    (_, fixture) => {
+      expect(tightFrames(fixture.graph, layered(fixture.graph))).toEqual([]);
+    }
+  );
+
   it.each([...FIXTURES, ...randomGroupFixtures(200)].map((f) => [f.name, f] as const))(
     '%s keeps edges off group titles',
     (_, fixture) => {
