@@ -213,13 +213,13 @@ describe('PR comment', () => {
     baseLabel: 'mermaid-v13',
   });
 
-  it('is short: a title, one table, slowdowns and the link to the full report', () => {
+  it('is short: a title, one table and the link to the full report', () => {
     const lines = comment.split('\n');
     expect(lines[0]).toBe(COMMENT_MARKER);
     expect(lines[1]).toBe('### Bench: gates pass · `abcdef1` vs `mermaid-v13` (`abc123456`)');
     expect(comment).not.toContain('Per-diagram');
     expect(comment).not.toContain('### Gates');
-    expect(lines.length).toBeLessThan(30);
+    expect(lines.length).toBeLessThan(15);
     expect(comment).toContain('[this run](https://ci.example/run/1)');
   });
 
@@ -232,11 +232,9 @@ describe('PR comment', () => {
     expect(comment).toContain('| Loaded size (gzip) | 50 KB (+1 KB) | – |');
   });
 
-  it('lists only real slowdowns: 20% or more, on diagrams of at least 1 ms', () => {
-    expect(comment).toContain('1 diagram 20% or more slower than the base');
-    expect(comment).toContain('| corpus/b | browser | 2 ms | 2.5 ms | +25% |');
-    // corpus/a doubled, but at 0.1 ms that is noise.
-    expect(comment).not.toContain('| corpus/a |');
+  it('leaves per-diagram times to the full report', () => {
+    expect(comment).not.toContain('<details>');
+    expect(comment).not.toContain('| corpus/');
   });
 
   it('names failed gates and diagrams v13 did not render, and only then', () => {

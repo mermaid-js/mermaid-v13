@@ -180,11 +180,6 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
 
 /** Hidden first line of the PR comment, so CI updates its own comment instead of adding one. */
 export const COMMENT_MARKER = '<!-- mermaid-v13-bench -->';
-/** A slowdown is listed only from this much, on diagrams at least `SLOW_MIN_MS` long. */
-const SLOW_CHANGE = 0.2;
-const SLOW_MIN_MS = 1;
-const SLOW_SHOWN = 5;
-
 /** `2% slower` / `4% faster` / `same` from a geomean speedup (above 1 means v13 is faster). */
 function relative(speed: number | null): string {
   if (speed === null) return dash;
@@ -197,24 +192,6 @@ function relative(speed: number | null): string {
 function factor(speed: number | null): string {
   if (speed === null) return dash;
   return speed >= 1 ? `${round(speed, 1)}× faster` : `${round(1 / speed, 1)}× slower`;
-}
-
-/** Diagrams whose v13 warm time grew by at least SLOW_CHANGE over the base, slowest first. */
-function slowdowns(runs: RendererRun[]): { id: string; then: number; now: number }[] {
-  const ready = (id: RendererId) => runs.find((r) => r.renderer === id && r.status === 'ready');
-  const now = ready('v13');
-  const then = ready('v13-base');
-  if (!now || !then) return [];
-  const warm = new Map(then.results.map((r) => [r.id, r.status === 'ok' ? r.warmMs : null]));
-  return now.results
-    .flatMap((r) => {
-      const t = warm.get(r.id) ?? null;
-      return r.status === 'ok' && r.warmMs !== null && t !== null && t >= SLOW_MIN_MS
-        ? [{ id: r.id, then: t, now: r.warmMs }]
-        : [];
-    })
-    .filter((x) => x.now / x.then - 1 >= SLOW_CHANGE)
-    .sort((x, y) => y.now / y.then - x.now / x.then);
 }
 
 export interface CommentOptions {
@@ -289,38 +266,11 @@ function problemLines(report: BenchReport, failed: GateOutcome['gates']): string
   return lines.length > 0 ? [...lines, ''] : [];
 }
 
-/** The folded list of real slowdowns against the base, when there are any. */
-function slowdownLines(report: BenchReport): string[] {
-  const slow = [
-    { env: 'browser', list: slowdowns(report.renderers) },
-    { env: 'Node', list: report.node ? slowdowns(report.node.renderers) : [] },
-  ].filter((x) => x.list.length > 0);
-  if (slow.length === 0) return [];
-  const total = slow.reduce((n, x) => n + x.list.length, 0);
-  const cut = slow.some((x) => x.list.length > SLOW_SHOWN)
-    ? ` (slowest ${SLOW_SHOWN} per environment shown)`
-    : '';
-  const pct = (x: { then: number; now: number }) => `+${Math.round((x.now / x.then - 1) * 100)}%`;
-  return [
-    `<details><summary>${plural(total, 'diagram')} ${Math.round(SLOW_CHANGE * 100)}% or more slower than the base${cut}</summary>`,
-    '',
-    row(['Diagram', 'Env', 'Base', 'v13', 'Change']),
-    row(Array<string>(5).fill('---')),
-    ...slow.flatMap(({ env, list }) =>
-      list.slice(0, SLOW_SHOWN).map((x) => row([x.id, env, ms(x.then), ms(x.now), pct(x)]))
-    ),
-    '',
-    `Diagrams under ${SLOW_MIN_MS} ms are left out: a single run of those is mostly noise.`,
-    '</details>',
-    '',
-  ];
-}
-
 /**
- * The PR comment: only what a reviewer acts on. The verdict, v13 against the base branch,
+ * The PR comment: only the overall picture. The verdict, v13's geomean against the base branch,
  * Mermaid 12 and Pele in each environment, the loaded size, and, only when there are any,
- * failed gates, diagrams v13 failed to render and real slowdowns. Everything else is in the
- * full report, which the comment links to.
+ * failed gates and diagrams v13 failed to render. Per-diagram times are in the full report,
+ * which the comment links to: one CI run of a single diagram is too noisy to act on.
  */
 export function formatComment(
   report: BenchReport,
@@ -335,7 +285,6 @@ export function formatComment(
     '',
     ...summaryTable(report),
     ...problemLines(report, failed),
-    ...slowdownLines(report),
     `Full report: \`bench-report\` artifact of ${run}.`,
   ].join('\n');
 }
