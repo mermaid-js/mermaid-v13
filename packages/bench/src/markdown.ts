@@ -54,7 +54,7 @@ function headerLines(report: BenchReport): string[] {
     rendererRun(report, 'v13-base') ??
     report.node?.renderers.find((r) => r.renderer === 'v13-base');
   return [
-    `Runner \`${report.runner}\`${report.browser ? `, ${report.browser}` : ''}${report.node ? `, ${report.node.runtime}` : ''}${report.commit ? `, commit \`${report.commit}\`` : ''}.`,
+    `Runner \`${report.runner}\`${report.browser ? `, ${report.browser}` : ''}${report.node ? `, ${report.node.runtime}` : ''}${report.commit ? `, commit \`${report.commit}\`` : ''}${report.mergeCommit ? ` (built as \`${report.mergeCommit}\`, its merge with the base branch)` : ''}.`,
     ...(base?.status === 'ready' && typeof report.options.base === 'string'
       ? [`v13-base is \`${report.options.base}\` = ${base.version}.`]
       : []),
@@ -214,7 +214,8 @@ function titleLine(report: BenchReport, failed: number, baseLabel: string | unde
   const verdict = failed === 0 ? 'gates pass' : `**${plural(failed, 'gate')} failed**`;
   const base = baseRunOf(report);
   const sha = base?.status === 'ready' ? /\(([0-9a-f]+)\)$/.exec(base.version)?.[1] : undefined;
-  const label = baseLabel ? `\`${baseLabel}\` ` : '';
+  const ref = baseLabel ?? (typeof report.options.base === 'string' ? report.options.base : '');
+  const label = ref ? `\`${ref}\` ` : '';
   const against = sha ? ` vs ${label}(\`${sha}\`)` : '';
   const commit = report.commit ? ` · \`${report.commit}\`` : '';
   return `### Bench: ${verdict}${commit}${against}`;
@@ -225,7 +226,10 @@ function sizeCell(report: BenchReport): string {
   const size = rendererRun(report, 'v13')?.size?.gzip;
   const base = baseRunOf(report)?.size?.gzip;
   if (size === undefined || base === undefined) return kb(size);
-  const delta = size === base ? '±0' : `${size > base ? '+' : '−'}${kb(Math.abs(size - base))}`;
+  const d = Math.abs(size - base);
+  // Under 1 KB the change is shown in bytes, so a few bytes do not read as "−0 KB".
+  const amount = d < 1024 ? `${d} B` : kb(d);
+  const delta = d === 0 ? '±0' : `${size > base ? '+' : '−'}${amount}`;
   return `${kb(size)} (${delta})`;
 }
 

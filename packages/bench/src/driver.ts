@@ -16,6 +16,8 @@ import { extractBase } from './base.ts';
 import { benchDefine, bundle, sizeOf, summarise } from './build.ts';
 import type { Bundle } from './build.ts';
 import type { Fixture } from './fixtures.ts';
+import type { Session } from './interleave.ts';
+import { runAll } from './interleave.ts';
 import { stripMermaidOnlyConfig } from './normalize.ts';
 import { emptyStages, STAGES } from './report.ts';
 import type { DiagramResult, RendererId, RendererRun, SizeSummary, SizedFile } from './report.ts';
@@ -248,7 +250,7 @@ export interface DriveOptions {
   timeoutMs: number;
   liftLimits: boolean;
   strip: boolean;
-  log(line: string): void;
+  log: (line: string) => void;
 }
 
 interface BenchPage {
@@ -309,15 +311,51 @@ export function fromReply(f: Fixture, reply: RenderReply): DiagramResult {
   };
 }
 
-/** Runs every fixture through one renderer. */
-export async function drive(o: DriveOptions): Promise<RendererRun> {
+/** Renders one fixture on an open page, with a timeout; a page that timed out is replaced. */
+async function measureOn(
+  o: DriveOptions,
+  holder: { runner: BenchPage },
+  f: Fixture
+): Promise<DiagramResult> {
+  const source = o.strip ? stripMermaidOnlyConfig(f.source).source : f.source;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<'timeout'>(
+    (resolve) => (timer = setTimeout(() => resolve('timeout'), o.timeoutMs))
+  );
+  const reply = await Promise.race([
+    holder.runner.page
+      .evaluate(
+        ([s, r, b]) => (window as unknown as { __bench: BenchWindow }).__bench.render(s, r, b),
+        [source, o.reps, o.budgetMs] as const
+      )
+      .catch(
+        (e: unknown): RenderReply => ({
+          ok: false,
+          error: e instanceof Error ? e.message : String(e),
+        })
+      ),
+    timeout,
+  ]);
+  clearTimeout(timer);
+  if (reply !== 'timeout') return fromReply(f, reply);
+  // The page is still busy with this diagram; start a fresh one for the rest.
+  await holder.runner.context.close();
+  holder.runner = await openRunner(o);
+  return result(f, 'timeout', `no result within ${o.timeoutMs} ms`);
+}
+
+/**
+ * Opens one renderer's page. Returns a session that measures fixtures one at a time, or a
+ * finished run (every fixture missing or failed) when the renderer could not start.
+ */
+export async function openBrowserSession(o: DriveOptions): Promise<Session | RendererRun> {
   if (o.renderer === 'v13-base' && !o.site.base) {
     const run = unbuiltBase(o.site, o.fixtures);
     o.log(`  v13-base: not built: ${run.error}`);
     return run;
   }
   const version = o.renderer === 'v13-base' ? o.site.base!.version : versionOf(o.renderer);
-  let runner = await openRunner(o);
+  const holder = { runner: await openRunner(o) };
   const base: Omit<RendererRun, 'status' | 'results'> = {
     renderer: o.renderer,
     version,
@@ -333,68 +371,49 @@ export async function drive(o: DriveOptions): Promise<RendererRun> {
         )
       : null;
 
-  if (!runner.ready.ok) {
-    const { missing, error } = runner.ready;
-    await runner.context.close();
-    o.log(`  ${o.renderer}: ${missing ? 'pipeline missing' : 'init failed'}: ${error}`);
+  const ready = holder.runner.ready;
+  if (!ready.ok) {
+    await holder.runner.context.close();
+    o.log(`  ${o.renderer}: ${ready.missing ? 'pipeline missing' : 'init failed'}: ${ready.error}`);
     return {
       ...base,
-      status: missing ? 'missing' : 'init-error',
-      error,
+      status: ready.missing ? 'missing' : 'init-error',
+      error: ready.error,
       size: v13Static(),
-      results: o.fixtures.map((f) => result(f, missing ? 'missing' : 'error', error)),
+      results: o.fixtures.map((f) => result(f, ready.missing ? 'missing' : 'error', ready.error)),
     };
   }
 
   const prefix = `/r/${o.renderer}/`;
-  const loaded = runner.ready.resources
+  const loaded = ready.resources
     .map((r) => new URL(r.name).pathname)
     .filter((p) => p.startsWith(prefix))
     .map((p) => o.server.size(p))
     .filter((s): s is SizedFile => s !== undefined);
-  const run: RendererRun = {
-    ...base,
-    status: 'ready',
-    readyAtMs: runner.ready.readyAt,
-    initMs: runner.ready.initMs,
-    size: loaded.length > 0 ? summarise(loaded, 'loaded') : v13Static(),
-    results: [],
+  return {
+    renderer: o.renderer,
+    run: {
+      ...base,
+      status: 'ready',
+      readyAtMs: ready.readyAt,
+      initMs: ready.initMs,
+      size: loaded.length > 0 ? summarise(loaded, 'loaded') : v13Static(),
+      results: [],
+    },
+    measure: (f) => measureOn(o, holder, f),
+    close: () => holder.runner.context.close(),
   };
+}
 
-  for (const [i, f] of o.fixtures.entries()) {
-    const source = o.strip ? stripMermaidOnlyConfig(f.source).source : f.source;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const timeout = new Promise<'timeout'>(
-      (resolve) => (timer = setTimeout(() => resolve('timeout'), o.timeoutMs))
-    );
-    const reply = await Promise.race([
-      runner.page
-        .evaluate(
-          ([s, r, b]) => (window as unknown as { __bench: BenchWindow }).__bench.render(s, r, b),
-          [source, o.reps, o.budgetMs] as const
-        )
-        .catch(
-          (e: unknown): RenderReply => ({
-            ok: false,
-            error: e instanceof Error ? e.message : String(e),
-          })
-        ),
-      timeout,
-    ]);
-    clearTimeout(timer);
-    if (reply === 'timeout') {
-      run.results.push(result(f, 'timeout', `no result within ${o.timeoutMs} ms`));
-      // The page is still busy with this diagram; start a fresh one for the rest.
-      await runner.context.close();
-      runner = await openRunner(o);
-    } else {
-      run.results.push(fromReply(f, reply));
-    }
-    const last = run.results[run.results.length - 1]!;
-    o.log(
-      `  ${o.renderer} ${i + 1}/${o.fixtures.length} ${f.id}: ${last.status}${last.warmMs !== null ? ` ${last.warmMs.toFixed(3)} ms` : ''}`
-    );
-  }
-  await runner.context.close();
-  return run;
+export type BrowserDriveOptions = Omit<DriveOptions, 'renderer'> & { renderers: RendererId[] };
+
+/** Runs every fixture through every renderer in the browser, alternating (`interleave.ts`). */
+export function driveBrowser(o: BrowserDriveOptions): Promise<RendererRun[]> {
+  return runAll(
+    o.renderers,
+    (renderer) => openBrowserSession({ ...o, renderer }),
+    o.fixtures,
+    o.log,
+    'browser'
+  );
 }

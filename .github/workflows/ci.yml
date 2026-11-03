@@ -40,6 +40,7 @@ jobs:
     # informational: the report compares the PR with both. v12-current is informational and is
     # skipped here; the release bench still runs it. Both environments run (the --env default):
     # the browser, which the gates read, and Node (reported only; mermaid@12 is browser-only).
+    # In each, the renderers run alternating, diagram by diagram, so runner noise hits all.
     # On a PR from this repository the condensed report is posted as a PR comment, updated in
     # place on every run. Fork PRs get a read-only token, so they only get the artifact.
     name: Bench gates
@@ -51,6 +52,9 @@ jobs:
     env:
       BENCH_RUNNER: blacksmith-4vcpu-ubuntu-2404
       BENCH_REPORT_ONLY: speed
+      # The commit the report names: on a PR its head, as GitHub shows it. The checkout itself
+      # is the merge of the PR into the base (refs/pull/N/merge), which the report notes.
+      BENCH_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:

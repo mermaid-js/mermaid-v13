@@ -83,7 +83,10 @@ export interface BenchReport {
   createdAt: string;
   /** Baselines are stored per runner (O-4). */
   runner: string;
+  /** The commit the report is for: `BENCH_COMMIT` (on a PR, its head), else HEAD. */
   commit?: string;
+  /** What was built when that is not `commit`: on a PR, the merge of the PR into its base. */
+  mergeCommit?: string;
   browser?: string;
   options: Record<string, unknown>;
   pipeline: PipelineState;

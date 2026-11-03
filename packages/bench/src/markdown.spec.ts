@@ -230,6 +230,15 @@ describe('PR comment', () => {
     expect(comment).toMatch(/\| vs mermaid@12\.2\.0 \| \d+(\.\d)?× faster \| – \|/);
     expect(comment).toContain('| vs Pele | 2× slower | – |');
     expect(comment).toContain('| Loaded size (gzip) | 50 KB (+1 KB) | – |');
+    const bytes: BenchReport = {
+      ...withBase,
+      renderers: withBase.renderers.map((r) =>
+        r.renderer === 'v13-base' && r.size
+          ? { ...r, size: { ...r.size, gzip: 50 * 1024 - 12 } }
+          : r
+      ),
+    };
+    expect(formatComment(bytes, outcome)).toContain('| Loaded size (gzip) | 50 KB (+12 B) | – |');
   });
 
   it('leaves per-diagram times to the full report', () => {

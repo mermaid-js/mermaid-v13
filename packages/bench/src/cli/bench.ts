@@ -17,6 +17,7 @@
  * `v13-base` is v13 built from `--base` (else BENCH_BASE_REF, else origin/mermaid-v13): the
  * branch a PR merges into. CI passes the PR merge commit's first parent.
  *
+ * BENCH_COMMIT names the commit the report is for (CI: the PR head, as HEAD is a merge commit).
  * BENCH_RUNNER names the machine for baselines (O-4); BENCH_GATES sets the default mode;
  * BENCH_REPORT_ONLY lists gates that are reported but never fail the job.
  */
@@ -25,7 +26,7 @@ import { chromium } from '@playwright/test';
 import { asciiSize } from '../ascii-size.ts';
 import { DEFAULT_BASE_REF, resolveRef } from '../base.ts';
 import { runnerId } from '../baseline.ts';
-import { buildSite, drive, serve } from '../driver.ts';
+import { buildSite, driveBrowser, serve } from '../driver.ts';
 import { loadFixtures } from '../fixtures.ts';
 import { detectPipeline } from '../pipeline.ts';
 import { driveNode } from '../node-driver.ts';
@@ -90,17 +91,28 @@ if (unsupported.length > 0)
 
 const site = await buildSite(renderers.includes('v13-base') ? { baseRef } : {});
 if (site.base) log(`v13-base: ${baseRef} = ${site.base.version}`);
-let commit: string | undefined;
-try {
-  commit = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
-} catch {
-  commit = undefined;
-}
+const short = (rev: string): string | undefined => {
+  try {
+    return execFileSync('git', ['rev-parse', '--short', rev], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch {
+    return undefined;
+  }
+};
+// On a PR, CI checks out a merge of the PR into its base, so HEAD is not the commit GitHub shows
+// for the PR. BENCH_COMMIT names that commit (the PR head); HEAD is kept as what was built.
+const head = short('HEAD');
+const named = process.env.BENCH_COMMIT || undefined;
+const commit = named === undefined ? head : (short(named) ?? named.slice(0, 7));
+const mergeCommit = named !== undefined && head !== undefined && head !== commit ? head : undefined;
 const report: BenchReport = {
   schema: 1,
   createdAt: new Date().toISOString(),
   runner: runnerId(),
   ...(commit !== undefined && { commit }),
+  ...(mergeCommit !== undefined && { mergeCommit }),
   options: {
     ...options,
     envs,
@@ -123,12 +135,15 @@ if (envs.includes('browser')) {
   const browser = await chromium.launch({ headless: !args.flag('headed') });
   try {
     report.browser = `chromium ${browser.version()}`;
-    for (const renderer of renderers) {
-      log(`Running ${renderer} in the browser over ${fixtures.length} fixtures`);
-      report.renderers.push(
-        await drive({ browser, server, site, renderer, fixtures, ...options, log })
-      );
-    }
+    report.renderers = await driveBrowser({
+      browser,
+      server,
+      site,
+      renderers,
+      fixtures,
+      ...options,
+      log,
+    });
   } finally {
     await browser.close();
     await server.close();
@@ -140,10 +155,7 @@ if (envs.includes('node')) {
   const inNode = renderers.filter((r) => !BROWSER_ONLY.includes(r));
   const skipped = renderers.filter((r) => BROWSER_ONLY.includes(r));
   if (skipped.length > 0) log(`Not run in Node (needs a DOM): ${skipped.join(', ')}`);
-  for (const renderer of inNode) {
-    log(`Running ${renderer} in Node over ${fixtures.length} fixtures`);
-    report.node.renderers.push(await driveNode({ site, renderer, fixtures, ...options, log }));
-  }
+  report.node.renderers = await driveNode({ site, renderers: inNode, fixtures, ...options, log });
 }
 
 // Every gate reads the browser runs; without them they can only be reported.

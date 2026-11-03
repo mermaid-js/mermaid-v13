@@ -1,16 +1,19 @@
 /**
  * Node side of the Node environment: one child process per renderer (own heap and JIT, like a
- * browser context per renderer), fed one fixture at a time. A fixture that times out kills the
- * process and the rest run in a fresh one, as the browser driver does with its page.
+ * browser context per renderer), all open at once and fed the fixtures alternating
+ * (`interleave.ts`). A fixture that times out kills that process and the rest run in a fresh
+ * one, as the browser driver does with its page.
  */
 import { fork } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import type { Site } from './driver.ts';
 import { NODE_RUNNER, fromReply, nodeEntry, result, unbuiltBase, versionOf } from './driver.ts';
 import type { Fixture } from './fixtures.ts';
+import type { Session } from './interleave.ts';
+import { runAll } from './interleave.ts';
 import { stripMermaidOnlyConfig } from './normalize.ts';
 import type { FromRunner, NodeReady, NodeRunnerArgs, ToRunner } from './node/protocol.ts';
-import type { RendererId, RendererRun } from './report.ts';
+import type { DiagramResult, RendererId, RendererRun } from './report.ts';
 import type { RenderReply } from './runner/protocol.ts';
 
 export interface NodeDriveOptions {
@@ -73,8 +76,40 @@ function startRunner(args: NodeRunnerArgs, log: (line: string) => void): Promise
   );
 }
 
-/** Runs every fixture through one renderer in Node. Browser-only renderers are not passed in. */
-export async function driveNode(o: NodeDriveOptions): Promise<RendererRun> {
+/** Renders one fixture in the child, with a timeout; a child that timed out or died is replaced. */
+async function measureIn(
+  o: NodeDriveOptions,
+  args: NodeRunnerArgs,
+  holder: { runner: Runner },
+  f: Fixture
+): Promise<DiagramResult> {
+  const source = o.strip ? stripMermaidOnlyConfig(f.source).source : f.source;
+  const message: ToRunner = { type: 'render', source, reps: o.reps, budgetMs: o.budgetMs };
+  holder.runner.child.send(message);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<'timeout'>(
+    (resolve) => (timer = setTimeout(() => resolve('timeout'), o.timeoutMs))
+  );
+  const reply = await Promise.race([
+    holder.runner.next().catch((e: unknown): RenderReply => ({ ok: false, error: String(e) })),
+    timeout,
+  ]);
+  clearTimeout(timer);
+  if (reply === 'timeout') {
+    holder.runner.child.kill();
+    holder.runner = await startRunner(args, o.log);
+    return result(f, 'timeout', `no result within ${o.timeoutMs} ms`);
+  }
+  // A crashed runner (out of memory, say) is replaced for the remaining fixtures.
+  if (holder.runner.child.exitCode !== null) holder.runner = await startRunner(args, o.log);
+  return fromReply(f, reply);
+}
+
+/**
+ * Starts one renderer's child process. Returns a session that measures fixtures one at a time,
+ * or a finished run when the renderer could not start. Browser-only renderers are not passed in.
+ */
+export async function openNodeSession(o: NodeDriveOptions): Promise<Session | RendererRun> {
   if (o.renderer === 'v13-base' && !o.site.base) return unbuiltBase(o.site, o.fixtures);
   const entry = nodeEntry(o.site, o.renderer);
   if (entry === undefined) throw new Error(`${o.renderer} does not run in Node`);
@@ -85,50 +120,41 @@ export async function driveNode(o: NodeDriveOptions): Promise<RendererRun> {
     readyAtMs: null,
     size: null,
   };
-  let runner = await startRunner(args, o.log);
-  if (!runner.ready.ok) {
-    const { missing, error } = runner.ready;
-    runner.child.kill();
-    o.log(`  ${o.renderer} (node): ${missing ? 'pipeline missing' : 'init failed'}: ${error}`);
+  const holder = { runner: await startRunner(args, o.log) };
+  const ready = holder.runner.ready;
+  if (!ready.ok) {
+    holder.runner.child.kill();
+    o.log(
+      `  ${o.renderer} (node): ${ready.missing ? 'pipeline missing' : 'init failed'}: ${ready.error}`
+    );
     return {
       ...base,
       initMs: null,
-      status: missing ? 'missing' : 'init-error',
-      error,
-      results: o.fixtures.map((f) => result(f, missing ? 'missing' : 'error', error)),
+      status: ready.missing ? 'missing' : 'init-error',
+      error: ready.error,
+      results: o.fixtures.map((f) => result(f, ready.missing ? 'missing' : 'error', ready.error)),
     };
   }
-  const run: RendererRun = { ...base, initMs: runner.ready.initMs, status: 'ready', results: [] };
-  try {
-    for (const [i, f] of o.fixtures.entries()) {
-      const source = o.strip ? stripMermaidOnlyConfig(f.source).source : f.source;
-      const message: ToRunner = { type: 'render', source, reps: o.reps, budgetMs: o.budgetMs };
-      runner.child.send(message);
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      const timeout = new Promise<'timeout'>(
-        (resolve) => (timer = setTimeout(() => resolve('timeout'), o.timeoutMs))
-      );
-      const reply = await Promise.race([
-        runner.next().catch((e: unknown): RenderReply => ({ ok: false, error: String(e) })),
-        timeout,
-      ]);
-      clearTimeout(timer);
-      if (reply === 'timeout') {
-        run.results.push(result(f, 'timeout', `no result within ${o.timeoutMs} ms`));
-        runner.child.kill();
-        runner = await startRunner(args, o.log);
-      } else {
-        run.results.push(fromReply(f, reply));
-        // A crashed runner (out of memory, say) is replaced for the remaining fixtures.
-        if (runner.child.exitCode !== null) runner = await startRunner(args, o.log);
-      }
-      const last = run.results[run.results.length - 1]!;
-      o.log(
-        `  ${o.renderer} (node) ${i + 1}/${o.fixtures.length} ${f.id}: ${last.status}${last.warmMs !== null ? ` ${last.warmMs.toFixed(3)} ms` : ''}`
-      );
-    }
-  } finally {
-    runner.child.kill();
-  }
-  return run;
+  return {
+    renderer: o.renderer,
+    run: { ...base, initMs: ready.initMs, status: 'ready', results: [] },
+    measure: (f) => measureIn(o, args, holder, f),
+    close: () => {
+      holder.runner.child.kill();
+      return Promise.resolve();
+    },
+  };
+}
+
+export type NodeDriveAllOptions = Omit<NodeDriveOptions, 'renderer'> & { renderers: RendererId[] };
+
+/** Runs every fixture through every given renderer in Node, alternating (`interleave.ts`). */
+export function driveNode(o: NodeDriveAllOptions): Promise<RendererRun[]> {
+  return runAll(
+    o.renderers,
+    (renderer) => openNodeSession({ ...o, renderer }),
+    o.fixtures,
+    o.log,
+    'Node'
+  );
 }
