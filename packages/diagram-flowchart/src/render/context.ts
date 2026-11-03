@@ -1,6 +1,6 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Limits } from '@mermaid-js/core/limits';
-import type { LayoutGraph, LayoutModel } from '@mermaid-js/core/layout';
+import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
 import type { SecurityLevel } from '@mermaid-js/core/svg';
 import type { Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
@@ -18,6 +18,8 @@ export interface FlowWarning {
 export interface FlowRenderContext {
   readonly config: ResolvedConfig;
   readonly measurer: Measurer;
+  /** Lengths for layout (D77): `pxProfile` for SVG, a cell profile for ASCII. Defaults to px. */
+  readonly units?: UnitProfile;
   /** One render's theme: it records the variables used, so it is never shared. */
   readonly theme: Theme;
   warn(warning: FlowWarning): void;
