@@ -10,7 +10,7 @@
  * follow (R-THEME-3, -4). With `cssVariables: false` the same values are written as
  * literals for renderers that do not resolve CSS variables.
  */
-import { checkColor, checkFilter, checkStyle } from '../svg/style.ts';
+import { checkColor, checkFilter, checkStyle, splitTopLevel } from '../svg/style.ts';
 import type { Length, Paint, SafeColor, SafeFilter, SafeValue, ThemeRef } from '../svg/types.ts';
 import { num } from '../svg/escape.ts';
 import {
@@ -399,24 +399,6 @@ function checkOverrides(
   return out;
 }
 
-/** Splits a comma-separated colour list, keeping commas inside `rgb(…)` and the like. */
-function splitList(text: string): string[] {
-  const out: string[] = [];
-  let depth = 0;
-  let start = 0;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (c === '(') depth++;
-    else if (c === ')') depth--;
-    else if (c === ',' && depth === 0) {
-      out.push(text.slice(start, i));
-      start = i + 1;
-    }
-  }
-  out.push(text.slice(start));
-  return out.map((t) => t.trim()).filter((t) => t !== '');
-}
-
 const MAX_PALETTE = 64;
 const RE_C_SCALE = /^cScale(\d{1,2})$/;
 
@@ -441,7 +423,11 @@ function resolvePalettes(
     out[name] = (spec.palettes?.[name] ?? []).map((c) => checkColor(c) as SafeColor);
     const raw = vars && own(vars, name) ? vars[name] : undefined;
     if (raw === undefined || raw === null) continue;
-    const items = Array.isArray(raw) ? raw : typeof raw === 'string' ? splitList(raw) : undefined;
+    const items = Array.isArray(raw)
+      ? raw
+      : typeof raw === 'string'
+        ? splitTopLevel(raw, 'comma')
+        : undefined;
     const checked = items?.map((c) => (typeof c === 'string' ? checkColor(c) : undefined));
     if (!checked || checked.length > MAX_PALETTE || checked.some((c) => c === undefined)) {
       drop(name, raw);

@@ -115,28 +115,35 @@ function shadowLength(word: string, blur: boolean): boolean {
   return px <= MAX_SHADOW_PX;
 }
 
-/** Splits on whitespace outside parentheses; undefined when the parentheses don't balance. */
-function topLevelWords(text: string): string[] | undefined {
+/**
+ * Splits on whitespace (`'space'`) or commas (`'comma'`) outside parentheses, so `rgb(0 0 0)`
+ * stays one part. Parts are trimmed and empty ones dropped; undefined when the parentheses
+ * don't balance.
+ */
+export function splitTopLevel(text: string, sep: 'space' | 'comma'): string[] | undefined {
   const out: string[] = [];
   let depth = 0;
-  let word = '';
+  let part = '';
+  const flush = () => {
+    const t = part.trim();
+    if (t !== '') out.push(t);
+    part = '';
+  };
   for (const c of text) {
     if (c === '(') depth++;
     else if (c === ')' && --depth < 0) return undefined;
-    if (depth === 0 && /\s/.test(c)) {
-      if (word !== '') out.push(word);
-      word = '';
-    } else word += c;
+    if (depth === 0 && (sep === 'comma' ? c === ',' : /\s/.test(c))) flush();
+    else part += c;
   }
   if (depth !== 0) return undefined;
-  if (word !== '') out.push(word);
+  flush();
   return out;
 }
 
 /** One `drop-shadow(<x> <y> [<blur>] [<colour>])`, normalised, or undefined. */
 function checkShadow(fn: string): string | undefined {
   if (!fn.toLowerCase().startsWith(SHADOW_HEAD) || !fn.endsWith(')')) return undefined;
-  const args = topLevelWords(fn.slice(SHADOW_HEAD.length, -1));
+  const args = splitTopLevel(fn.slice(SHADOW_HEAD.length, -1), 'space');
   if (!args) return undefined;
   let lengths = 0;
   while (lengths < args.length && lengths < 3 && RE_SHADOW_LENGTH.test(args[lengths] as string)) {
@@ -161,7 +168,7 @@ export function checkFilter(value: string): SafeFilter | undefined {
   if (v === '' || v.length > 400 || RE_UNSAFE_STYLE.test(v) || RE_INVALID_XML.test(v))
     return undefined;
   if (v.toLowerCase() === 'none') return 'none' as SafeFilter;
-  const fns = topLevelWords(v);
+  const fns = splitTopLevel(v, 'space');
   if (!fns || fns.length === 0 || fns.length > MAX_SHADOWS) return undefined;
   const out: string[] = [];
   for (const fn of fns) {

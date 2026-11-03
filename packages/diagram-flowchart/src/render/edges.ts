@@ -72,21 +72,6 @@ export interface EdgePath {
   edy: number;
 }
 
-/**
- * How much an end marker of this v12 type shortens the line from the node outline: past the
- * gap and under the arrowhead, so the line never shows between the tip and the node. That
- * also keeps dashed and dotted lines from needing a special case.
- */
-export function markerTrim(type: string, a: Arrowheads): number {
-  return type === 'arrow_point'
-    ? a.gap + Math.max(0, a.length - 1)
-    : type === 'arrow_circle'
-      ? a.circleGap + a.circleSize / 2
-      : type === 'arrow_cross'
-        ? a.crossGap + a.crossSize / 2
-        : 0;
-}
-
 // The S-curve handle factor of the layered engine's `ease`.
 const ease = (across: number, along: number): number =>
   Math.max(0.25, Math.min(0.5, (4 * Math.abs(along)) / (Math.abs(across) || 1)));
@@ -250,9 +235,107 @@ export function routePath(
   return { d: b.done(), sx, sy, sdx: -sdx, sdy: -sdy, ex, ey, edx, edy };
 }
 
+/** One v12 arrowhead type: how far it shortens the line, and how it is drawn. */
+interface HeadKind {
+  /**
+   * How far the line stops short of the node outline: past the gap and under the arrowhead,
+   * so the line never shows between the tip and the node. That also keeps dashed and dotted
+   * lines from needing a special case.
+   */
+  trim(g: Arrowheads): number;
+  /** Draws the arrowhead for a line meeting the outline at (x, y), pointing along (dx, dy). */
+  draw(
+    w: SvgWriter,
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+    paint: Attrs,
+    g: Arrowheads
+  ): void;
+}
+
+const HEADS: ReadonlyMap<string, HeadKind> = /* @__PURE__ */ new Map<string, HeadKind>([
+  [
+    'arrow_point',
+    {
+      trim: (g) => g.gap + Math.max(0, g.length - 1),
+      draw(w, x, y, dx, dy, paint, g) {
+        const tipX = x - dx * g.gap;
+        const tipY = y - dy * g.gap;
+        const baseX = tipX - dx * g.length;
+        const baseY = tipY - dy * g.length;
+        // Half the base, across the line.
+        const acrossX = -dy * (g.width / 2);
+        const acrossY = dx * (g.width / 2);
+        const d = w
+          .path()
+          .moveTo(tipX, tipY)
+          .lineTo(baseX + acrossX, baseY + acrossY)
+          .lineTo(baseX - acrossX, baseY - acrossY)
+          .close()
+          .done();
+        w.leaf('path', { class: 'marker', d, ...paint, stroke: 'none' });
+      },
+    },
+  ],
+  [
+    'arrow_circle',
+    {
+      trim: (g) => g.circleGap + g.circleSize / 2,
+      draw(w, x, y, dx, dy, paint, g) {
+        const r = g.circleSize / 2;
+        const back = g.circleGap + r;
+        w.leaf('circle', {
+          class: 'marker',
+          cx: x - dx * back,
+          cy: y - dy * back,
+          r,
+          ...paint,
+          stroke: 'none',
+        });
+      },
+    },
+  ],
+  [
+    'arrow_cross',
+    {
+      trim: (g) => g.crossGap + g.crossSize / 2,
+      // The arms are the diagonals of a square of side `crossSize`, `crossGap` from the outline.
+      draw(w, x, y, dx, dy, paint, g) {
+        const half = g.crossSize / 2;
+        const cx = x - dx * (g.crossGap + half);
+        const cy = y - dy * (g.crossGap + half);
+        // Half of each diagonal: along the line plus or minus across it.
+        const ux = (dx - dy) * half;
+        const uy = (dy + dx) * half;
+        const vx = (dx + dy) * half;
+        const vy = (dy - dx) * half;
+        const d = w
+          .path()
+          .moveTo(cx - ux, cy - uy)
+          .lineTo(cx + ux, cy + uy)
+          .moveTo(cx - vx, cy - vy)
+          .lineTo(cx + vx, cy + vy)
+          .done();
+        w.leaf('path', {
+          class: 'marker',
+          d,
+          stroke: paint.fill,
+          'stroke-width': g.crossStrokeWidth,
+        });
+      },
+    },
+  ],
+]);
+
+/** How far an end marker of this v12 type shortens the line from the node outline. */
+export const markerTrim = (type: string, geometry: Arrowheads): number =>
+  HEADS.get(type)?.trim(geometry) ?? 0;
+
 /**
  * Draws a v12 end marker for a line that meets the node outline at (x, y), pointing along
- * (dx, dy). The marker sits its gap before the outline.
+ * (dx, dy). The marker sits its gap before the outline; `paint` gives its colour as `fill`.
  */
 export function marker(
   w: SvgWriter,
@@ -261,56 +344,8 @@ export function marker(
   y: number,
   dx: number,
   dy: number,
-  attrs: Attrs,
-  a: Arrowheads
+  paint: Attrs,
+  geometry: Arrowheads
 ): void {
-  const nx = -dy;
-  const ny = dx;
-  if (type === 'arrow_point') {
-    const tx = x - dx * a.gap;
-    const ty = y - dy * a.gap;
-    const bx = tx - dx * a.length;
-    const by = ty - dy * a.length;
-    const half = a.width / 2;
-    const d = w
-      .path()
-      .moveTo(tx, ty)
-      .lineTo(bx + nx * half, by + ny * half)
-      .lineTo(bx - nx * half, by - ny * half)
-      .close()
-      .done();
-    w.leaf('path', { class: 'marker', d, ...attrs, stroke: 'none' });
-  } else if (type === 'arrow_circle') {
-    const r = a.circleSize / 2;
-    w.leaf('circle', {
-      class: 'marker',
-      cx: x - dx * (a.circleGap + r),
-      cy: y - dy * (a.circleGap + r),
-      r,
-      ...attrs,
-      stroke: 'none',
-    });
-  } else if (type === 'arrow_cross') {
-    // The arms are the diagonals of a square of side `crossSize`, `crossGap` from the outline.
-    const half = a.crossSize / 2;
-    const cx = x - dx * (a.crossGap + half);
-    const cy = y - dy * (a.crossGap + half);
-    const ux = (dx + nx) * half;
-    const uy = (dy + ny) * half;
-    const vx = (dx - nx) * half;
-    const vy = (dy - ny) * half;
-    const d = w
-      .path()
-      .moveTo(cx - ux, cy - uy)
-      .lineTo(cx + ux, cy + uy)
-      .moveTo(cx - vx, cy - vy)
-      .lineTo(cx + vx, cy + vy)
-      .done();
-    w.leaf('path', {
-      class: 'marker',
-      d,
-      stroke: attrs.fill,
-      'stroke-width': a.crossStrokeWidth,
-    });
-  }
+  HEADS.get(type)?.draw(w, x, y, dx, dy, paint, geometry);
 }
