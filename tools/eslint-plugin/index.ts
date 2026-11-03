@@ -2,6 +2,7 @@
  * Local eslint plugin holding the v13 architecture in place (DESIGN §2, R-ARCH-1/5, R-PARSE-7).
  *
  * - `mermaid/import-boundaries`: diagram-* → core, mermaid → core + diagram-*, core → nothing;
+ *   the mermaid bin (`src/cli.ts`, D85) may also import `node:` builtins;
  *   `core/ascii` imports no SVG code and only ASCII code imports it (DESIGN §6.3).
  * - `mermaid/no-global-config`: no getConfig-style global config lookup.
  * - `mermaid/no-magic-char-code`: char codes are compared with named constants, not numbers.
@@ -41,9 +42,21 @@ const isTestFile = (filename: string) => /\.(spec|test)\.[cm]?[jt]s$/.test(filen
 const isTestOnly = (s: string) =>
   s === 'vitest' || s.startsWith('vitest/') || s.startsWith('node:');
 
+/** The mermaid package's `bin` entry (D85): the one non-test file that runs only in node. */
+const isBin = (pkg: string, dir: string, filename: string) =>
+  pkg === 'mermaid' && relative(dir, filename) === join('src', 'cli.ts');
+
 /** Why `specifier` may not be imported from package `pkg`, or undefined when allowed. */
-function bareImportViolation(pkg: string, specifier: string, inTest: boolean): string | undefined {
+function bareImportViolation(
+  pkg: string,
+  specifier: string,
+  inTest: boolean,
+  inBin = false
+): string | undefined {
   if (inTest && isTestOnly(specifier)) {
+    return undefined;
+  }
+  if (inBin && specifier.startsWith('node:')) {
     return undefined;
   }
   if (pkg === 'core') {
@@ -103,7 +116,12 @@ const importBoundaries: Rule.RuleModule = {
       } else if (isCoreAscii(specifier) && !inTest && !isAsciiCode(pkg.dir, filename)) {
         reason = `only ASCII code imports ${CORE}/ascii (DESIGN §6.3)`;
       } else {
-        reason = bareImportViolation(pkg.name, specifier, inTest);
+        reason = bareImportViolation(
+          pkg.name,
+          specifier,
+          inTest,
+          isBin(pkg.name, pkg.dir, filename)
+        );
       }
       if (reason) {
         context.report({ node: source, messageId: 'forbidden', data: { specifier, reason } });
