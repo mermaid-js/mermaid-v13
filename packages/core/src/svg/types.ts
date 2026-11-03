@@ -60,6 +60,8 @@ export interface AttrTypes {
   'data-mermaid-version': string;
   /** The render's id prefix, which a `theme: 'auto'` style sheet is scoped to. */
   'data-p': string;
+  /** A palette slot, `color-<n>`, so tests and user CSS can target it (v12 `data-color-id`). */
+  'data-color-id': `color-${number}`;
   style: StyleText;
   transform: Transform;
   'pointer-events': 'none' | 'all' | 'visiblePainted';
