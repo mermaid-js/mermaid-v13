@@ -344,7 +344,7 @@ export function routeCrossings(
   for (let band = 0; band < bands; band++) {
     const bandEnd = bandStart[band + 1]!;
     if (bandEnd - bandStart[band]! > MAX_INSERT)
-      inBand.subarray(bandStart[band]!, bandEnd).sort((p, q) => ax[p]! - ax[q]! || p - q);
+      inBand.subarray(bandStart[band], bandEnd).sort((p, q) => ax[p]! - ax[q]! || p - q);
     else {
       for (let i = bandStart[band]! + 1; i < bandEnd; i++) {
         const p = inBand[i]!;

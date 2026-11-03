@@ -76,12 +76,12 @@ export interface Grammar {
   start: string;
 }
 
-type Tok = {
+interface Tok {
   k: 'word' | 'at' | 'regex' | 'scope' | 'modes' | 'punct';
   v: string;
   line: number;
   doc?: string;
-};
+}
 
 const PUNCT = new Set(['=', '|', '(', ')', '[', ']', '{', '}', ';', '*', '+', '?', '-']);
 
@@ -361,7 +361,8 @@ function checkGrammar(g: Grammar): void {
       case 'alt':
         e.alts.forEach(visit);
         return;
-      default:
+      case 'opt':
+      case 'rep':
         visit(e.e);
     }
   };
@@ -383,7 +384,8 @@ export function symbolsOf(e: Expr, out: string[] = []): string[] {
     case 'alt':
       e.alts.forEach((x) => symbolsOf(x, out));
       break;
-    default:
+    case 'opt':
+    case 'rep':
       symbolsOf(e.e, out);
   }
   return out;

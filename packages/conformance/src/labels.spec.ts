@@ -31,7 +31,10 @@ interface CorpusLabel {
   markdown: boolean;
 }
 
-type V12Word = { content: string; type: 'normal' | 'strong' | 'em' };
+interface V12Word {
+  content: string;
+  type: 'normal' | 'strong' | 'em';
+}
 interface V12Text {
   markdownToLines(markdown: string): V12Word[][];
 }

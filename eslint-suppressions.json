@@ -2,14 +2,6 @@
   "e2e/browser/page.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 3
-    },
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 3
-    }
-  },
-  "e2e/browser/theme.spec.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 9
     }
   },
   "e2e/dev/explorer-server.ts": {
@@ -44,16 +36,10 @@
   "e2e/helpers/argos-metadata.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 5
-    },
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
     }
   },
   "e2e/helpers/mmd-snapshots.spec.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    },
-    "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 1
     }
   },
@@ -63,30 +49,14 @@
     }
   },
   "e2e/helpers/util.ts": {
-    "@eslint-community/eslint-comments/disable-enable-pair": {
-      "count": 1
-    },
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    },
     "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 4
+      "count": 3
     },
     "@typescript-eslint/no-unsafe-call": {
       "count": 2
     },
     "@typescript-eslint/no-unsafe-member-access": {
       "count": 2
-    }
-  },
-  "packages/bench/src/baseline.ts": {
-    "@typescript-eslint/prefer-nullish-coalescing": {
-      "count": 1
-    }
-  },
-  "packages/bench/src/cli/args.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
     }
   },
   "packages/bench/src/cli/bench.ts": {
@@ -99,25 +69,12 @@
       "count": 1
     }
   },
-  "packages/bench/src/cli/output.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    }
-  },
-  "packages/bench/src/driver.ts": {
-    "@typescript-eslint/consistent-type-definitions": {
-      "count": 1
-    }
-  },
   "packages/bench/src/fixtures.ts": {
     "@typescript-eslint/no-unnecessary-type-parameters": {
       "count": 1
     }
   },
   "packages/bench/src/gates.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    },
     "complexity": {
       "count": 1
     },
@@ -161,25 +118,6 @@
       "count": 1
     }
   },
-  "packages/conformance/src/flowchart-render.spec.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
-    "@typescript-eslint/prefer-string-starts-ends-with": {
-      "count": 1
-    },
-    "sonarjs/no-collapsible-if": {
-      "count": 1
-    },
-    "unicorn/no-lonely-if": {
-      "count": 1
-    }
-  },
-  "packages/conformance/src/flowchart/grammar/flowchart-grammar.ts": {
-    "no-duplicate-imports": {
-      "count": 1
-    }
-  },
   "packages/conformance/src/flowchart/grammar/grammar-lexer.spec.ts": {
     "tsdoc/syntax": {
       "count": 1
@@ -214,9 +152,6 @@
     }
   },
   "packages/conformance/src/flowchart/symbols.spec.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
     "tsdoc/syntax": {
       "count": 1
     }
@@ -250,9 +185,6 @@
     }
   },
   "packages/conformance/src/labels.spec.ts": {
-    "@typescript-eslint/consistent-type-definitions": {
-      "count": 1
-    },
     "tsdoc/syntax": {
       "count": 1
     }
@@ -271,9 +203,6 @@
     }
   },
   "packages/core/src/ascii/glyphs.spec.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
     "@typescript-eslint/no-unsafe-argument": {
       "count": 8
     },
@@ -290,9 +219,6 @@
     }
   },
   "packages/core/src/layout/layered/compound.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
     "complexity": {
       "count": 3
     },
@@ -307,14 +233,6 @@
     },
     "no-param-reassign": {
       "count": 2
-    },
-    "unicorn/no-for-loop": {
-      "count": 3
-    }
-  },
-  "packages/core/src/layout/layered/index.ts": {
-    "sonarjs/no-inverted-boolean-check": {
-      "count": 2
     }
   },
   "packages/core/src/layout/layered/layered.fixtures.ts": {
@@ -328,12 +246,6 @@
     },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
-    },
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 5
-    },
-    "@typescript-eslint/prefer-optional-chain": {
-      "count": 3
     },
     "complexity": {
       "count": 7
@@ -353,12 +265,6 @@
     "no-param-reassign": {
       "count": 8
     },
-    "sonarjs/no-dead-store": {
-      "count": 1
-    },
-    "unicorn/no-for-loop": {
-      "count": 6
-    },
     "unicorn/prefer-spread": {
       "count": 9
     }
@@ -376,11 +282,6 @@
   "packages/core/src/parser-kit/diagnostics.ts": {
     "tsdoc/syntax": {
       "count": 2
-    }
-  },
-  "packages/core/src/parser-kit/recovery.spec.ts": {
-    "unicorn/no-for-loop": {
-      "count": 1
     }
   },
   "packages/core/src/parser-kit/tiny-grammar.spec.ts": {
@@ -404,38 +305,17 @@
       "count": 1
     }
   },
-  "packages/core/src/preprocess/directives.spec.ts": {
-    "@typescript-eslint/dot-notation": {
-      "count": 1
-    }
-  },
   "packages/core/src/preprocess/directives.ts": {
     "@typescript-eslint/only-throw-error": {
       "count": 1
     }
   },
-  "packages/core/src/preprocess/divergences.spec.ts": {
-    "unicorn/no-for-loop": {
-      "count": 1
-    }
-  },
   "packages/core/src/preprocess/frontmatter.ts": {
-    "@typescript-eslint/dot-notation": {
-      "count": 3
-    },
     "@typescript-eslint/no-base-to-string": {
       "count": 3
     }
   },
-  "packages/core/src/preprocess/preprocess.spec.ts": {
-    "@typescript-eslint/dot-notation": {
-      "count": 1
-    }
-  },
   "packages/core/src/preprocess/yaml.spec.ts": {
-    "@typescript-eslint/dot-notation": {
-      "count": 1
-    },
     "tsdoc/syntax": {
       "count": 1
     }
@@ -447,14 +327,8 @@
     "@typescript-eslint/only-throw-error": {
       "count": 1
     },
-    "@typescript-eslint/prefer-string-starts-ends-with": {
-      "count": 3
-    },
     "complexity": {
       "count": 6
-    },
-    "sonarjs/no-inverted-boolean-check": {
-      "count": 1
     },
     "tsdoc/syntax": {
       "count": 1
@@ -479,16 +353,7 @@
     }
   },
   "packages/core/src/svg/style.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
     "complexity": {
-      "count": 1
-    },
-    "sonarjs/no-collapsible-if": {
-      "count": 1
-    },
-    "unicorn/no-lonely-if": {
       "count": 1
     }
   },
@@ -505,22 +370,11 @@
       "count": 2
     }
   },
-  "packages/core/src/svg/writer.ts": {
-    "unicorn/no-for-loop": {
-      "count": 2
-    }
-  },
   "packages/core/src/text/label.ts": {
     "@typescript-eslint/no-shadow": {
       "count": 1
     },
-    "@typescript-eslint/prefer-includes": {
-      "count": 1
-    },
     "complexity": {
-      "count": 1
-    },
-    "unicorn/prefer-includes": {
       "count": 1
     }
   },
@@ -537,11 +391,6 @@
       "count": 2
     }
   },
-  "packages/core/src/theme/themes.spec.ts": {
-    "sonarjs/no-inverted-boolean-check": {
-      "count": 1
-    }
-  },
   "packages/dev/src/browser/compare-pane.ts": {
     "@typescript-eslint/no-base-to-string": {
       "count": 1
@@ -553,51 +402,15 @@
       "count": 16
     }
   },
-  "packages/dev/src/browser/explorer/app.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 2
-    },
-    "@typescript-eslint/prefer-readonly": {
-      "count": 1
-    }
-  },
-  "packages/dev/src/browser/explorer/file-explorer.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 2
-    }
-  },
-  "packages/dev/src/browser/explorer/tabs/code.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    },
-    "@typescript-eslint/prefer-readonly": {
-      "count": 1
-    }
-  },
   "packages/dev/src/browser/explorer/tabs/compare.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    },
     "@typescript-eslint/no-shadow": {
       "count": 1
-    },
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 2
-    },
-    "@typescript-eslint/prefer-nullish-coalescing": {
-      "count": 1
-    },
-    "@typescript-eslint/prefer-readonly": {
-      "count": 2
     },
     "tsdoc/syntax": {
       "count": 2
     }
   },
   "packages/dev/src/browser/explorer/tabs/console-panel.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 3
     }
@@ -607,31 +420,12 @@
       "count": 6
     }
   },
-  "packages/dev/src/browser/explorer/tabs/diagram.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    }
-  },
   "packages/dev/src/browser/explorer/tabs/profile.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 3
     },
     "max-depth": {
       "count": 2
-    }
-  },
-  "packages/dev/src/browser/explorer/viewer.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 2
-    },
-    "@typescript-eslint/prefer-readonly": {
-      "count": 2
-    },
-    "unicorn/prefer-includes": {
-      "count": 1
     }
   },
   "packages/dev/src/explorer.ts": {
@@ -647,31 +441,6 @@
   "packages/dev/src/routes.ts": {
     "@typescript-eslint/explicit-module-boundary-types": {
       "count": 10
-    }
-  },
-  "packages/dev/src/server.spec.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 2
-    }
-  },
-  "packages/dev/src/server.ts": {
-    "@typescript-eslint/prefer-nullish-coalescing": {
-      "count": 1
-    }
-  },
-  "packages/dev/src/smoke/entry.ts": {
-    "sonarjs/no-inverted-boolean-check": {
-      "count": 1
-    }
-  },
-  "packages/dev/src/watch.spec.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/scripts/port-v12-specs.ts": {
-    "unicorn/prefer-default-parameters": {
-      "count": 1
     }
   },
   "packages/diagram-flowchart/src/parser/lexer.ts": {
@@ -693,13 +462,7 @@
     "max-lines-per-function": {
       "count": 3
     },
-    "sonarjs/no-collapsible-if": {
-      "count": 1
-    },
     "tsdoc/syntax": {
-      "count": 1
-    },
-    "unicorn/no-lonely-if": {
       "count": 1
     }
   },
@@ -716,13 +479,7 @@
     "max-params": {
       "count": 1
     },
-    "sonarjs/no-collapsible-if": {
-      "count": 1
-    },
     "tsdoc/syntax": {
-      "count": 1
-    },
-    "unicorn/no-lonely-if": {
       "count": 1
     }
   },
@@ -753,9 +510,6 @@
     "max-lines-per-function": {
       "count": 1
     },
-    "sonarjs/no-dead-store": {
-      "count": 1
-    },
     "tsdoc/syntax": {
       "count": 1
     },
@@ -764,9 +518,6 @@
     }
   },
   "packages/diagram-flowchart/src/parser/source.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
     "complexity": {
       "count": 2
     }
@@ -794,12 +545,6 @@
     }
   },
   "packages/diagram-flowchart/src/render/render.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    },
-    "@typescript-eslint/prefer-nullish-coalescing": {
-      "count": 1
-    },
     "@typescript-eslint/unbound-method": {
       "count": 2
     },
@@ -822,85 +567,7 @@
     }
   },
   "packages/diagram-flowchart/src/v12-specs/adapter.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    },
     "@typescript-eslint/no-empty-function": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-arrows.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-comments.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-direction.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-edges.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-huge.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-interactions.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-lines.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-md-string.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-node-data.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-singlenode.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-style.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-text.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow-vertice-chaining.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/flow.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
-  "packages/diagram-flowchart/src/v12-specs/subgraph.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
       "count": 1
     }
   },
@@ -932,25 +599,14 @@
       "count": 1
     }
   },
-  "packages/mermaid/src/measurer.spec.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    }
-  },
   "packages/mermaid/src/measurer.ts": {
     "@typescript-eslint/no-unsafe-argument": {
       "count": 1
     }
   },
   "packages/mermaid/src/registry.ts": {
-    "@eslint-community/eslint-comments/require-description": {
-      "count": 1
-    },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 3
-    },
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
     },
     "@typescript-eslint/unbound-method": {
       "count": 2
@@ -969,42 +625,17 @@
       "count": 1
     }
   },
-  "tools/gen-config/src/generate.ts": {
-    "unicorn/prefer-default-parameters": {
-      "count": 1
-    }
-  },
   "tools/gen-config/src/registry.ts": {
     "tsdoc/syntax": {
       "count": 1
     }
   },
   "tools/gen-config/src/schema.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
     }
   },
-  "tools/gen-grammar/src/earley.ts": {
-    "@typescript-eslint/prefer-for-of": {
-      "count": 1
-    },
-    "@typescript-eslint/switch-exhaustiveness-check": {
-      "count": 1
-    },
-    "unicorn/no-for-loop": {
-      "count": 1
-    }
-  },
   "tools/gen-grammar/src/ebnf.ts": {
-    "@typescript-eslint/consistent-type-definitions": {
-      "count": 1
-    },
-    "@typescript-eslint/switch-exhaustiveness-check": {
-      "count": 2
-    },
     "tsdoc/syntax": {
       "count": 4
     }
@@ -1014,28 +645,8 @@
       "count": 1
     }
   },
-  "tools/gen-grammar/src/generate.ts": {
-    "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 2
-    }
-  },
   "tools/gen-grammar/src/highlight.ts": {
     "tsdoc/syntax": {
-      "count": 1
-    }
-  },
-  "tools/gen-grammar/src/mapped-text.ts": {
-    "@typescript-eslint/no-unnecessary-type-assertion": {
-      "count": 1
-    }
-  },
-  "tools/gen-grammar/src/mode-lexer.ts": {
-    "@typescript-eslint/switch-exhaustiveness-check": {
-      "count": 1
-    }
-  },
-  "tools/release/src/public-gate-cli.ts": {
-    "@typescript-eslint/prefer-nullish-coalescing": {
       "count": 1
     }
   },
@@ -1045,9 +656,6 @@
     }
   },
   "tools/release/src/publish-cli.ts": {
-    "@typescript-eslint/prefer-nullish-coalescing": {
-      "count": 1
-    },
     "tsdoc/syntax": {
       "count": 3
     }
@@ -1055,16 +663,6 @@
   "tools/release/src/publish.ts": {
     "tsdoc/syntax": {
       "count": 2
-    }
-  },
-  "tools/release/src/release-config.spec.ts": {
-    "@typescript-eslint/prefer-includes": {
-      "count": 2
-    }
-  },
-  "tools/workspace/grammar-artifacts.spec.ts": {
-    "@typescript-eslint/prefer-string-starts-ends-with": {
-      "count": 1
     }
   }
 }

@@ -181,7 +181,11 @@ export interface DriveOptions {
   log(line: string): void;
 }
 
-type BenchPage = { page: Page; context: BrowserContext; ready: ReadyInfo };
+interface BenchPage {
+  page: Page;
+  context: BrowserContext;
+  ready: ReadyInfo;
+}
 
 async function openRunner(o: DriveOptions): Promise<BenchPage> {
   const context = await o.browser.newContext({ viewport: { width: 1600, height: 1000 } });

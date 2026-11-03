@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseFlowchart } from '@mermaid-js/diagram-flowchart';
-import type { FlowStatementNode, FlowSubgraph } from '@mermaid-js/diagram-flowchart';
+import type { FlowSubgraph } from '@mermaid-js/diagram-flowchart';
 import type { AstNode, StatementSpan } from '@mermaid-js/core/parser-kit';
 import { loadOracle } from '../oracle.ts';
 import { resolveCorpus } from '../corpus.ts';
@@ -66,7 +66,7 @@ describe('flowchart symbols and fold ranges match the v12 model', () => {
           if (n.children) walkAst(n.children);
         }
       };
-      walkAst(r.ast.children as FlowStatementNode[]);
+      walkAst(r.ast.children);
       const isVertex = new Set(vertices);
       for (const s of model.subGraphs) {
         const mine = bodies.get(s.id) ?? [];

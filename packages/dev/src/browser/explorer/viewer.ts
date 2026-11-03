@@ -7,7 +7,7 @@
  * Inputs: `filePath` (root-relative) and `event` (the last `/events` message, from the app).
  * It emits `open-file` (`detail.path`) and `back`.
  */
-import { LitElement, html, nothing, type PropertyValues } from 'lit';
+import { LitElement, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { eventPathToFile, listFiles, parentDir, readFile, saveFile } from './api.ts';
 import { loadMermaid, renderText, type RenderOutcome } from './render.ts';
 import {
@@ -88,7 +88,7 @@ export class DevDiagramViewer extends LitElement {
   #renderSeq = 0;
   #loadSeq = 0;
   /** Resolves once the dev build has said which themes and layouts it offers. */
-  #ready: Promise<void>;
+  readonly #ready: Promise<void>;
 
   constructor() {
     super();
@@ -123,7 +123,7 @@ export class DevDiagramViewer extends LitElement {
   }
 
   // Light DOM, so www/dev/styles.css applies. Tabs use their own shadow roots.
-  override createRenderRoot() {
+  override createRenderRoot(): this {
     return this;
   }
 
@@ -137,7 +137,7 @@ export class DevDiagramViewer extends LitElement {
     document.removeEventListener('keydown', this.#onKeyDown);
   }
 
-  #onKeyDown = (e: KeyboardEvent): void => {
+  readonly #onKeyDown = (e: KeyboardEvent): void => {
     const action = arrowAction(e);
     if (!action) return;
     e.preventDefault();
@@ -209,7 +209,7 @@ export class DevDiagramViewer extends LitElement {
       void this.#loadSiblings();
     }
     // Anything but a fixture is a source change: the dev build was rebuilt.
-    const sources = paths.length === 0 || files.some((f) => f === undefined);
+    const sources = paths.length === 0 || files.includes(undefined);
     if (sources) this.build = time;
     if (changedFiles.includes(this.filePath)) {
       if (this.#dirty) {
@@ -350,7 +350,7 @@ export class DevDiagramViewer extends LitElement {
     return nothing;
   }
 
-  override render() {
+  override render(): TemplateResult {
     const i = this.#index;
     const ctx = this.#context;
     return html`

@@ -29,7 +29,7 @@ function sources(dir: string): string[] {
   for (const entry of readdirSync(dir)) {
     const path = join(dir, entry);
     if (statSync(path).isDirectory()) out.push(...sources(path));
-    else if (/\.(ts|js|mjs)$/.test(entry) && !/\.spec\.ts$/.test(entry)) out.push(path);
+    else if (/\.(ts|js|mjs)$/.test(entry) && !entry.endsWith('.spec.ts')) out.push(path);
   }
   return out;
 }

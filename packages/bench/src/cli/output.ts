@@ -57,7 +57,7 @@ export function publish(
   report: BenchReport,
   outcome: GateOutcome,
   opts: { updateBaseline: boolean; write: boolean }
-) {
+): void {
   const md = formatMarkdown(report, outcome);
   if (opts.write) {
     mkdirSync(REPORTS_DIR, { recursive: true });

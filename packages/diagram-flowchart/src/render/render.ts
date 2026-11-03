@@ -11,7 +11,6 @@ import {
   themeStyleSheet,
   translate,
   type Attrs,
-  type Paint,
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
@@ -213,7 +212,7 @@ export function renderFlowchart(
         ...e.style.shape,
         fill: 'none',
       });
-      const head: Attrs = { fill: (e.style.shape.stroke as Paint | undefined) ?? P.arrow };
+      const head: Attrs = { fill: e.style.shape.stroke ?? P.arrow };
       marker(w, e.start, path.sx, path.sy, path.sdx, path.sdy, head);
       marker(w, e.end, path.ex, path.ey, path.edx, path.edy, head);
     }

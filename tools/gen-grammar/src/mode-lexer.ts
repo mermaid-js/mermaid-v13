@@ -92,7 +92,8 @@ export function buildLexer(g: Grammar): ModeLexer {
             case 'fold':
               image = image.replace(/\n\s*/g, '<br/>');
               break;
-            default:
+            case 'attach-next':
+            case 'attach-prev':
               break;
           }
         }

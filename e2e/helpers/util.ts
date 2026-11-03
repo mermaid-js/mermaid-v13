@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any -- the v12 harness helpers pass untyped options through */
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
-import { expect, type Page, type TestInfo } from '@playwright/test';
+import { expect, type Locator, type Page, type TestInfo } from '@playwright/test';
 import { Buffer } from 'buffer';
 import { buildCaptureMetadata, writeArgosMetadataSidecar } from './argos-metadata.ts';
 
@@ -113,7 +113,7 @@ export const renderGraph = async (
 };
 
 /** Root mermaid diagram SVG — excludes nested icon/asset SVGs (e.g. architecture services). */
-export const diagramSvg = (page: Page) => page.locator('svg[aria-roledescription]');
+export const diagramSvg = (page: Page): Locator => page.locator('svg[aria-roledescription]');
 
 /** Assert the page shows a real diagram, not mermaid's syntax-error fallback SVG. */
 export const assertDiagramNotError = async (page: Page): Promise<void> => {

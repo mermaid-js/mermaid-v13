@@ -13,7 +13,7 @@ import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/checkbox/checkbox.js';
 import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/input/input.js';
-import { css, html, LitElement } from 'lit';
+import { css, html, LitElement, type TemplateResult } from 'lit';
 
 export type LogLevel = 'info' | 'warn' | 'error';
 
@@ -258,7 +258,7 @@ export class DevConsolePanel extends LitElement {
     >`;
   }
 
-  override render() {
+  override render(): TemplateResult {
     const visible = this.visibleLogs();
     return html`
       <div class="toolbar">

@@ -59,7 +59,7 @@ type Edges = Record<string, unknown>[] & { defaultStyle?: string[]; defaultInter
 
 export class FlowDB {
   private model: FlowModel | undefined;
-  lex = { firstGraph: () => true };
+  lex = { firstGraph: (): boolean => true };
 
   clear(): void {
     this.model = undefined;

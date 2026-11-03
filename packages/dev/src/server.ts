@@ -185,7 +185,7 @@ export async function startServer(port: number, options: ServerOptions = {}): Pr
       hub.broadcast(event);
     }));
 
-  const watchOptions = options.watch === true ? {} : options.watch || undefined;
+  const watchOptions = options.watch === true ? {} : options.watch;
   const watcher: SourceWatcher | undefined = watchOptions
     ? await watchSources(
         REPO_ROOT,

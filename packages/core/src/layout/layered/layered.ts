@@ -535,12 +535,12 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   for (let i = 0; i < real; i++) if (nodes[i]!.pin !== 0) pinned = true;
   if (pinned) {
     for (let r = 0; r <= maxRank; r++) {
-      const layer = Array.from(order.subarray(layerStart[r]!, layerStart[r + 1]!));
+      const layer = Array.from(order.subarray(layerStart[r], layerStart[r + 1]));
       const index = new Map<number, number>();
       layer.forEach((v, i) => index.set(v, i));
       const pinOf = (v: number): number => (v < real ? nodes[v]!.pin : 0);
       layer.sort((a, b) => pinOf(a) - pinOf(b) || index.get(a)! - index.get(b)!);
-      order.set(layer, layerStart[r]!);
+      order.set(layer, layerStart[r]);
     }
   }
   // Preserve port order to avoid crossings outside the group.
@@ -661,7 +661,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
       let x = xs[EF[firstSeg[ei]!]!]! + EFD[firstSeg[ei]!]!;
       let rank = RANK[EF[firstSeg[ei]!]!]!;
       for (let d = d0, end = d0 < 0 ? d0 : d0 + span[ei]! - 1; d < end; d++) {
-        if (empty && empty[RANK[d]!]!) continue;
+        if (empty?.[RANK[d]!]) continue;
         pieces.from.push(x);
         pieces.to.push(xs[d]!);
         pieces.rank.push(rank);
@@ -732,10 +732,10 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   if (pieces) {
     const room = new Float64Array(maxRank + 1);
     for (let r = 0; r < maxRank; r++) {
-      if (empty && empty[r]!) continue;
+      if (empty?.[r]) continue;
       let next = r + 1;
       room[r] = gapUnder[r]!;
-      while (next < maxRank && empty && empty[next]!) room[r]! += gapUnder[next++]!;
+      while (next < maxRank && empty?.[next]) room[r]! += gapUnder[next++]!;
       below[r] = next;
     }
     for (let k = 0; k < pieces.from.length; k++)
@@ -2323,7 +2323,7 @@ function reduceCrossings(g: Graph, nodes: LNode[]): [number, number] {
   if (!small) return [best, declared];
   for (let i = 0; i < real; i++) if (nodes[i]!.pin !== 0) return [best, declared];
   if (chosenOut === 0 || fixed[0]! || fixed[maxRank]!) return [best, declared];
-  for (let r = 0; r <= maxRank; r++) order.subarray(layerStart[r]!, layerStart[r + 1]!).reverse();
+  for (let r = 0; r <= maxRank; r++) order.subarray(layerStart[r], layerStart[r + 1]).reverse();
   settlePositions();
   if (count() > best || outOfOrder() >= chosenOut) order.set(bestOrder);
   return [best, declared];
@@ -2561,11 +2561,7 @@ function position(g: Graph, opt: LayeredOptions): Float64Array {
       a = c;
       c = t;
     }
-    if (b > d) {
-      t = b;
-      b = d;
-      d = t;
-    }
+    if (b > d) b = d;
     if (b > c) {
       t = b;
       b = c;

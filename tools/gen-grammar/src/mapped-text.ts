@@ -38,7 +38,7 @@ export function replaceMapped(
   for (const match of m.text.matchAll(re)) {
     const at = match.index;
     const whole = match[0];
-    const rep = fn(whole, ...(match.slice(1) as string[]));
+    const rep = fn(whole, ...match.slice(1));
     parts.push(m.text.slice(last, at));
     out.from.push(...m.from.slice(last, at));
     out.to.push(...m.to.slice(last, at));

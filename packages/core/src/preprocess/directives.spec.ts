@@ -138,7 +138,7 @@ describe('preprocess: directive diagnostics are at original positions', () => {
     const src = `%%{init: {"${key}": {"polluted": true}, "flowchart": {'${key}': 1}, "theme": "dark"}}%%`;
     const r = preprocess(src);
     expect(r.directives[0]?.args).toEqual({ flowchart: {}, theme: 'dark' });
-    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
     expect(r.diagnostics.map((d) => [d.code, src.slice(d.range.start, d.range.end)])).toEqual([
       ['DIRECTIVE_UNSAFE_KEY', `"${key}"`],
       ['DIRECTIVE_UNSAFE_KEY', `'${key}'`],

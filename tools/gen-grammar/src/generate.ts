@@ -16,8 +16,9 @@ export interface GrammarTarget {
 /** Diagram types that have a grammar file, `packages/diagram-<type>/grammar/<type>.ebnf`. */
 export const GRAMMARS: GrammarTarget[] = [{ type: 'flowchart', title: 'Flowchart syntax' }];
 
-export const grammarPath = (type: string) => `packages/diagram-${type}/grammar/${type}.ebnf`;
-export const generatedDir = (type: string) => `packages/diagram-${type}/grammar/generated`;
+export const grammarPath = (type: string): string =>
+  `packages/diagram-${type}/grammar/${type}.ebnf`;
+export const generatedDir = (type: string): string => `packages/diagram-${type}/grammar/generated`;
 
 /** Repo-relative path → content, for one grammar file's text. */
 export function generateFor(target: GrammarTarget, text: string): Map<string, string> {

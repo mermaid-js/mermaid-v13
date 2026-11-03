@@ -74,7 +74,7 @@ export function speedup(
   report: BenchReport,
   renderer: RendererId = 'v13',
   against: RendererId = 'v12-frozen'
-) {
+): { value: number | null; common: number } {
   const base = new Map(
     (rendererRun(report, against)?.results ?? []).filter(okWarm).map((r) => [r.id, r.warmMs])
   );

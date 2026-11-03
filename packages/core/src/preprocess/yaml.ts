@@ -308,7 +308,7 @@ class Reader {
     while (this.i < this.lines.length) {
       const t = (this.lines[this.i] ?? '').trim();
       // `---` is a document marker only at the start of a line; indented, it is text.
-      if (t !== '' && t[0] !== '#' && (this.lines[this.i] ?? '') !== '---') break;
+      if (t !== '' && !t.startsWith('#') && (this.lines[this.i] ?? '') !== '---') break;
       this.i++;
     }
   }
@@ -632,8 +632,9 @@ class Reader {
       }
       if (leading(line) <= indent) break;
       const from = this.lineRange(this.i)[0];
-      if (line[0] === '\t') this.fail('tab characters must not be used in indentation', from - 1);
-      if (line.trimStart()[0] === '#') {
+      if (line.startsWith('\t'))
+        this.fail('tab characters must not be used in indentation', from - 1);
+      if (line.trimStart().startsWith('#')) {
         commented = true;
         this.i++;
         continue;

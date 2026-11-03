@@ -13,8 +13,7 @@ import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { diagramStart, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { FIRST_PARTY } from './generated/registry.gen.ts';
 
-// The registry holds plugins of every model and layout type.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- the registry holds plugins of every model and layout type
 export type AnyPlugin = DiagramPlugin<any, any>;
 
 /** A row of the generated first-party table. Rows without `load` have no v13 package yet. */
@@ -99,11 +98,11 @@ function kindOf(def: ExternalDiagram): 'plugin' | 'lazy' | 'manifest' | 'extensi
 }
 
 const unwrap = <T>(m: T | { diagram: T } | { layout: T } | { default: T }): T =>
-  (typeof m === 'object' && m !== null && ('diagram' in m || 'layout' in m || 'default' in m)
+  typeof m === 'object' && m !== null && ('diagram' in m || 'layout' in m || 'default' in m)
     ? ((m as { diagram?: T }).diagram ??
       (m as { layout?: T }).layout ??
       (m as { default: T }).default)
-    : m) as T;
+    : m;
 
 const HOOKS = ['postParse', 'postLayout', 'postRender', 'afterMount'] as const;
 

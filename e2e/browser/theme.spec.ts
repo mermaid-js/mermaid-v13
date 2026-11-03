@@ -86,9 +86,9 @@ test('contrast() and invert() CSS equals the JS-computed literal on many backgro
     cases
   );
   const off = got.filter(([css, lit]) => {
-    const [x, y] = [channels(css!), channels(lit!)];
+    const [x, y] = [channels(css), channels(lit)];
     return (
-      typeof x === 'string' || typeof y === 'string' || x.some((v, i) => Math.abs(v - y[i]!) > 1)
+      typeof x === 'string' || typeof y === 'string' || x.some((v, i) => Math.abs(v - y[i]) > 1)
     );
   });
   expect(off).toEqual([]);
@@ -114,9 +114,9 @@ function samePaint(a: string, b: string): boolean {
   const close = (x: string, y: string) => {
     const [cx, cy] = [channels(x), channels(y)];
     if (typeof cx === 'string' || typeof cy === 'string') return x === y;
-    return cx.every((v, i) => Math.abs(v - cy[i]!) <= (i === 3 ? 0.01 : 1));
+    return cx.every((v, i) => Math.abs(v - cy[i]) <= (i === 3 ? 0.01 : 1));
   };
-  return tagA === tagB && close(fillA!, fillB!) && close(strokeA!, strokeB!);
+  return tagA === tagB && close(fillA, fillB) && close(strokeA, strokeB);
 }
 
 const THEMED = readFileSync(fixturePath('flowchart/baseline/themes/redux.mmd'), 'utf8').replace(
@@ -147,7 +147,7 @@ for (const theme of ['redux', 'default', 'dark', 'forest', 'neutral', 'base']) {
       expect(literal.length).toBeGreaterThan(10);
       expect(literal.length).toBe(vars.length);
       // Same paint per element, each channel within 1/255 (sRGB rounding).
-      const off = literal.filter((lit, i) => !samePaint(lit, vars[i]!));
+      const off = literal.filter((lit, i) => !samePaint(lit, vars[i]));
       expect(off.map((lit) => `${lit}  vs  ${vars[literal.indexOf(lit)]}`)).toEqual([]);
     });
   }

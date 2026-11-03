@@ -57,7 +57,7 @@ export function sourceView(src: string, from: number, directives: readonly Range
   markTagQuotes(src, from, mark);
   markDroppedSemicolons(src, from, mark, () => mask);
   const removed = holes(src, from, directives);
-  const m = mask as Uint8Array | undefined;
+  const m = mask;
   if (m) {
     const spans = removed.length;
     let k = 0;

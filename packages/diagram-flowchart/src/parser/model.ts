@@ -276,11 +276,9 @@ export class FlowBuilder {
   ): void {
     if (!id || id.trim().length === 0) return;
     let doc: YamlMap | undefined;
-    if (data !== undefined) {
-      if (isMap(data)) {
-        doc = { ...data };
-        for (const key of INTERNAL_METADATA_KEYS) delete doc[key];
-      }
+    if (data !== undefined && isMap(data)) {
+      doc = { ...data };
+      for (const key of INTERNAL_METADATA_KEYS) delete doc[key];
     }
 
     const subgraph = this.subgraphById.get(id);

@@ -11,7 +11,7 @@
  * - Below that, `dev-console-panel` (`./console-panel.ts`) captures `console.*`.
  */
 import '@shoelace-style/shoelace/dist/components/split-panel/split-panel.js';
-import { css, html, nothing, type PropertyValues } from 'lit';
+import { css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { effectiveTheme, isDarkTheme, readStorage, writeStorage } from '../settings.ts';
 import './console-panel.ts';
 import { ViewerTabElement, type RenderOutcome } from './context.ts';
@@ -205,7 +205,7 @@ export class DiagramTab extends ViewerTabElement {
     </button>`;
   }
 
-  override render() {
+  override render(): TemplateResult {
     const ctx = this.ctx;
     const svg = ctx?.outcome?.ok ? ctx.outcome.result.svg : '';
     const dark = isDarkTheme(effectiveTheme(ctx?.settings.theme, ctx?.text ?? ''));

@@ -241,8 +241,8 @@ async function typesSource(root: RootSchema): Promise<string> {
 
 // ---------------------------------------------------------------------------- docs
 
-const cell = (text: string | undefined) =>
-  (text ?? '')
+const cell = (text = '') =>
+  text
     .replace(/\s*\n\s*/g, ' ')
     .replace(/\|/g, '\\|')
     .trim();
