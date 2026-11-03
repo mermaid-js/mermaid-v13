@@ -117,7 +117,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | --- | --- | --- | --- | --- | --- |
 | R-PERF-1 | Core + flowchart, as loaded for a flowchart render, is ≤ 80 KB gzip. | Must | M1 | D10 | Approaches harness "Loaded" size in CI |
 | R-PERF-2 | Core and every first-party diagram package have **zero** runtime npm dependencies. | Must | M1 | D10 | CI check on `dependencies` of published packages |
-| R-PERF-3 | Warm render is ≥ 50× faster than frozen `mermaid@12.2.0` with dagre, as a geomean over the corpus. | Must | M1 | D10, D45 | Approaches harness geomean in CI; current v12 also reported |
+| R-PERF-3 | Warm render is ≥ 50× faster than frozen `mermaid@12.2.0` with dagre, as a geomean over the corpus. | Must | M1 | D10, D45, D150 | Approaches harness geomean, reported in CI and enforced on a local run (D150); current v12 also reported |
 | R-PERF-4 | 100% of the flowchart corpus renders without error, including the large and huge tiers. | Must | M1 | D10 | Harness OK count = corpus size |
 | R-PERF-5 | Benchmarks report time per stage: parse, measure, layout and serialise. | Must | M1 | D43 | Harness output contains stage columns |
 | R-PERF-6 | The fixed benchmark fixtures include the Pele/#8635 set (7-, 50- and 500-node flowcharts, sequence, class) plus the 158-diagram corpus. | Must | M1 | D43 | Fixtures committed |

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadBaseline, saveBaseline } from '../baseline.ts';
 import { loadFixtures } from '../fixtures.ts';
-import type { GateModeSetting, GateOutcome } from '../gates.ts';
+import type { GateId, GateModeSetting, GateOutcome } from '../gates.ts';
 import { evaluateGates, resolveMode } from '../gates.ts';
 import { formatMarkdown } from '../markdown.ts';
 import type { BenchReport } from '../report.ts';
@@ -23,12 +23,32 @@ export function modeSetting(cli: string | undefined): GateModeSetting {
   throw new Error(`Unknown gate mode "${v}" (auto, report or enforce)`);
 }
 
-export function gate(report: BenchReport, setting: GateModeSetting): GateOutcome {
+const GATE_IDS: readonly GateId[] = ['size', 'speed', 'ok-count', 'stage-regression', 'ready-at'];
+
+/** Gate ids from a comma list (`--report-only`, else BENCH_REPORT_ONLY) that never fail the job. */
+export function reportOnlyGates(cli: string | undefined): GateId[] {
+  const v = cli ?? process.env.BENCH_REPORT_ONLY ?? '';
+  const ids = v
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  for (const id of ids)
+    if (!GATE_IDS.includes(id as GateId))
+      throw new Error(`Unknown gate "${id}" (${GATE_IDS.join(', ')})`);
+  return ids as GateId[];
+}
+
+export function gate(
+  report: BenchReport,
+  setting: GateModeSetting,
+  reportOnly: readonly GateId[] = []
+): GateOutcome {
   const corpusSize = loadFixtures().filter((f) => f.set === 'corpus').length;
   return evaluateGates({
     report,
     baseline: loadBaseline(report.runner),
     mode: resolveMode(setting, report.pipeline),
+    reportOnly,
     corpusSize,
   });
 }
