@@ -353,7 +353,8 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     })),
     spacing,
     diagramPadding: fromConfig(flow.diagramPadding, b.diagramPadding, 'x', 0),
-    routing: ROUTING[curve] ?? 'stepped',
+    // On the grid routes are always square (D78): curves have no text form (D82).
+    routing: units.grid === undefined ? (ROUTING[curve] ?? 'stepped') : 'stepped',
     headRoom: b.headRoom,
     metrics: units.engine,
   };

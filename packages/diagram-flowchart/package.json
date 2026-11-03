@@ -10,6 +10,11 @@
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./ascii": {
+      "mermaid-source": "./src/ascii.ts",
+      "types": "./dist/ascii.d.ts",
+      "default": "./dist/ascii.js"
     }
   },
   "files": [
@@ -38,8 +43,10 @@
       "flowchart-v2"
     ],
     "formats": [
-      "svg"
+      "svg",
+      "ascii"
     ],
-    "export": "flowchart"
+    "export": "flowchart",
+    "ascii": "./dist/ascii.js"
   }
 }

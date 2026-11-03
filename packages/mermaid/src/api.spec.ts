@@ -207,13 +207,14 @@ describe('prepare and renderSync (R-API-2)', () => {
     expect(m.renderSync(text).svg).toContain('<svg');
   });
 
+  // The flowchart declares ascii (#46); the API draws it from #47 on, and throws until then.
   it('throws UnsupportedFormatError for ascii (M2)', async () => {
     await prepare(FLOW);
     const e = thrown(() => renderSync(FLOW, { format: 'ascii' }));
     expect(e).toBeInstanceOf(UnsupportedFormatError);
     expect(e.code).toBe('UNSUPPORTED_FORMAT');
     expect(mermaid.supportsFormat('flowchart-v2', 'svg')).toBe(true);
-    expect(mermaid.supportsFormat('flowchart', 'ascii')).toBe(false);
+    expect(mermaid.supportsFormat('flowchart', 'ascii')).toBe(true);
     expect(mermaid.supportsFormat('gantt', 'svg')).toBe(false);
   });
 });
