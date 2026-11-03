@@ -7,7 +7,7 @@
  */
 
 /** How a variable's value is checked and written. */
-export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight';
+export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter';
 
 export interface ThemeVarDef {
   /** The short private alias written on the root, without the leading `--_`. */
@@ -140,4 +140,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   crossArrowheadSize: def('xs', 'length', F),
   crossArrowheadGap: def('xg', 'length', F),
   crossArrowheadStrokeWidth: def('xw', 'length', F),
+  // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
+  // that sets no value has no shadow.
+  dropShadow: def('ds', 'filter', F),
 };

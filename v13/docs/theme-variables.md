@@ -56,6 +56,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart |
 | `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart |
 | `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart |
+| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color | flowchart |
 
 ## Palettes
 

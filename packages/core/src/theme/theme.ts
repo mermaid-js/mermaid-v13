@@ -10,8 +10,8 @@
  * follow (R-THEME-3, -4). With `cssVariables: false` the same values are written as
  * literals for renderers that do not resolve CSS variables.
  */
-import { checkColor, checkStyle } from '../svg/style.ts';
-import type { Length, Paint, SafeColor, SafeValue, ThemeRef } from '../svg/types.ts';
+import { checkColor, checkFilter, checkStyle } from '../svg/style.ts';
+import type { Length, Paint, SafeColor, SafeFilter, SafeValue, ThemeRef } from '../svg/types.ts';
 import { num } from '../svg/escape.ts';
 import {
   composite,
@@ -70,6 +70,8 @@ export interface Theme {
   number(name: string): number;
   /** The font family, for `font-family`. */
   font(name?: string): SafeValue | ThemeRef;
+  /** A filter variable (`dropShadow`) for the `filter` attribute: `var(--_x)` or the literal. */
+  filter(name: string): SafeFilter | ThemeRef;
   /** The variable's computed value as written in literal mode. */
   value(name: string): string;
   /** The variable's colour channels, when JS can compute them. */
@@ -140,6 +142,8 @@ function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
       return WEIGHTS.has(v.toLowerCase()) ? v.toLowerCase() : undefined;
     case 'font':
       return checkStyle(['font-family:' + v]).text['font-family'] as string | undefined;
+    case 'filter':
+      return checkFilter(v);
   }
 }
 
@@ -203,9 +207,8 @@ class Resolver {
       if (r.rgba !== undefined || this.defs[name]?.kind !== 'color') return r;
       return { ...r, rgba: this.fromSpec(name)?.rgba };
     }
-    return (
-      this.fromSpec(name) ?? { css: 'currentColor', lit: 'currentColor', rgba: undefined, deps: [] }
-    );
+    const fallback = this.defs[name]?.kind === 'filter' ? 'none' : 'currentColor';
+    return this.fromSpec(name) ?? { css: fallback, lit: fallback, rgba: undefined, deps: [] };
   }
 
   private fromSpec(name: string): Resolved | undefined {
@@ -506,6 +509,10 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
     },
     font(name = 'fontFamily') {
       return vars ? ref(name) : (main.get(name).lit as SafeValue);
+    },
+    filter(name) {
+      if (def(name).kind !== 'filter') throw new TypeError(`${name} is not a filter`);
+      return vars ? ref(name) : (main.get(name).lit as SafeFilter);
     },
     value: (name) => main.get(name).lit,
     rgba: (name) => main.get(name).rgba,
