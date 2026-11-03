@@ -160,7 +160,6 @@ properties:
       replacement: '`themeVariables`, or `--mermaid-*` CSS variables set by the host page'
   look:
     $ref: '#/$defs/BaseDiagramConfig/properties/look'
-    default: 'classic'
     x-mermaid:
       status: ignored
       since: 13.0.0
@@ -739,7 +738,14 @@ $defs:
           - classic
           - handDrawn
           - neo
-        x-mermaid: { status: pending }
+        deprecated: true
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       layout:
         description: |
           Defines which layout algorithm to use for rendering the diagram.
@@ -1459,8 +1465,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       rect_fill:
         type: string
         default: '#f9f9f9'
@@ -2039,8 +2050,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
@@ -2129,8 +2145,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       layout:
         $ref: '#/$defs/BaseDiagramConfig/properties/layout'
         default: 'elk'
@@ -2254,8 +2275,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
@@ -2801,8 +2827,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       arrowMarkerAbsolute:
         type: boolean # TODO, is this actually used here (it has no default value but was in types)
         x-mermaid:
@@ -2985,8 +3016,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       layout:
         $ref: '#/$defs/BaseDiagramConfig/properties/layout'
         # Swimlanes differ from flowcharts only in the layout engine, so the engine is the
@@ -3045,8 +3081,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       titleTopMargin:
         description: Margin top for the text over the diagram
         type: integer
@@ -3125,7 +3166,6 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
         x-mermaid:
           status: ignored
           since: 13.0.0
@@ -3658,8 +3698,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       wrappingWidth:
         $ref: '#/$defs/FlowchartDiagramConfig/properties/wrappingWidth'
         default: 120
@@ -3782,8 +3827,13 @@ $defs:
         x-mermaid: { status: pending }
       look:
         $ref: '#/$defs/BaseDiagramConfig/properties/look'
-        default: 'neo'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
+            whatever the diagram section.
+          replacement: '`theme`, or the geometry and `dropShadow` theme variables'
       width:
         description: The width of the Venn diagram.
         type: number

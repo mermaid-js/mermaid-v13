@@ -19,7 +19,7 @@ import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext } from './context.ts';
 import { marker, markerTrim, routePath } from './edges.ts';
 import { prepare, type NodeView, type Prepared } from './prepare.ts';
-import { drawShape, shapeFilled, shapeInset } from './shapes.ts';
+import { drawShape, shapeFilled, shapeInset, type Pads } from './shapes.ts';
 
 /** The flowchart's layout: the engine's LayoutModel, plus the measured views when they are fresh. */
 export interface FlowLayout extends LayoutModel {
@@ -51,19 +51,20 @@ const cls = (names: readonly string[]): string => {
 function inset(
   p: RoutePoint,
   view: NodeView | undefined,
-  box: LayoutModelNode | undefined
+  box: LayoutModelNode | undefined,
+  pads: Pads
 ): RoutePoint {
   if (!view || !box || view.group) return p;
   const dx = p.x - box.x;
   const dy = p.y - box.y;
   if (Math.abs(Math.abs(dy) - box.height / 2) < 0.5) {
     const side = dy < 0 ? 0 : 2;
-    const a = shapeInset(view.shape, view.w, view.h, side, dx) + (box.height - view.h) / 2;
+    const a = shapeInset(view.shape, view.w, view.h, side, dx, pads) + (box.height - view.h) / 2;
     return { ...p, y: p.y + (side === 0 ? a : -a) };
   }
   if (Math.abs(Math.abs(dx) - box.width / 2) < 0.5) {
     const side = dx < 0 ? 3 : 1;
-    const a = shapeInset(view.shape, view.w, view.h, side, dy) + (box.width - view.w) / 2;
+    const a = shapeInset(view.shape, view.w, view.h, side, dy, pads) + (box.width - view.w) / 2;
     return { ...p, x: p.x + (side === 3 ? a : -a) };
   }
   return p;
@@ -104,6 +105,10 @@ export function renderFlowchart(
           text: theme.color('titleColor'),
         }
       : undefined;
+  // A collapsed subgraph's separator and dots take clusterBorder (v12 `.collapsed-*` rules).
+  const C = flow.nodes.some((v) => v.shape === 'collapsedGroup')
+    ? { stroke: theme.color('clusterBorder') }
+    : undefined;
   const L = labelled
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
@@ -197,8 +202,13 @@ export function renderFlowchart(
     if (route && route.points.length > 1 && edge.stroke !== 'invisible') {
       const points = route.points.slice();
       const last = points.length - 1;
-      points[0] = inset(points[0]!, views.get(e.source), layout.nodes.get(e.source));
-      points[last] = inset(points[last]!, views.get(e.target), layout.nodes.get(e.target));
+      points[0] = inset(points[0]!, views.get(e.source), layout.nodes.get(e.source), flow.pads);
+      points[last] = inset(
+        points[last]!,
+        views.get(e.target),
+        layout.nodes.get(e.target),
+        flow.pads
+      );
       const path = routePath(
         w,
         points,
@@ -272,10 +282,10 @@ export function renderFlowchart(
       'stroke-width': P.sw,
       ...view.style.shape,
     };
-    const lineAttrs: Attrs = {
-      stroke: shapeAttrs.stroke,
-      'stroke-width': shapeAttrs['stroke-width'],
-    };
+    const lineAttrs: Attrs =
+      C && view.shape === 'collapsedGroup'
+        ? C
+        : { stroke: shapeAttrs.stroke, 'stroke-width': shapeAttrs['stroke-width'] };
     if (v?.img) drawImage(w, view, v.img, securityLevel, ctx);
     else if (v?.icon) drawIcon(w, view, shapeAttrs, ctx);
     else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);

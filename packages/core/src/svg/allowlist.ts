@@ -41,7 +41,6 @@ const ATTR_TABLE: Record<AllowedAttr, true> = {
   'data-id': true,
   'data-ast': true,
   'data-mermaid-version': true,
-  'data-look': true,
   'data-p': true,
   style: true,
   transform: true,
