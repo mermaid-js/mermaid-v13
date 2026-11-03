@@ -169,96 +169,111 @@ describe('markdown report', () => {
 });
 
 describe('PR comment', () => {
-  const run = (renderer: 'v13-base' | 'pele', results: DiagramResult[], gzipKb?: number) => ({
-    renderer,
-    version: renderer === 'v13-base' ? '13.0.0-alpha.0 (abc123456)' : '1.13.0',
-    status: 'ready' as const,
-    readyAtMs: 5,
-    initMs: 1,
-    size:
-      gzipKb === undefined
-        ? null
-        : { raw: 0, gzip: gzipKb * 1024, brotli: 0, source: 'loaded' as const, files: [] },
-    results,
-  });
-  const v13 = report.renderers[0]!;
-  const withBase: BenchReport = {
+  const rounds = 20;
+  const series = (ms: number, jitter = 0.01) =>
+    Array.from({ length: rounds }, (_, i) => ms * (1 + (i % 2 ? jitter : -jitter)));
+  const cmpReport: BenchReport = {
     ...report,
     commit: 'abcdef1',
-    renderers: [
-      { ...v13, results: [ok('corpus/a', 0.2), ok('corpus/b', 2.5)] },
-      ...report.renderers.slice(1).map((r) => ({
-        ...r,
-        results: [...r.results, ok('corpus/b', r.renderer === 'v12-frozen' ? 50 : 2.5)],
-      })),
-      run('v13-base', [ok('corpus/a', 0.1), ok('corpus/b', 2)], 49),
-      run('pele', [ok('corpus/a', 0.1), ok('corpus/b', 1.25)]),
-    ],
-    node: {
-      runtime: 'node v24.16.0',
-      renderers: [
-        { ...v13, size: null, results: [ok('corpus/a', 0.1), ok('corpus/b', 1)] },
-        run('v13-base', [ok('corpus/a', 0.1), ok('corpus/b', 1)]),
+    options: { ...report.options, base: 'HEAD^1' },
+    compare: {
+      diagrams: [
+        { id: 'pele/flowchart-7', label: 'Small (7 nodes)' },
+        { id: 'perf/medium3', label: 'Subgraphs and edge labels' },
       ],
+      browser: {
+        rounds,
+        renderers: [
+          {
+            renderer: 'v13',
+            version: '13.0.0-alpha.0',
+            size: { raw: 0, gzip: 70 * 1024, brotli: 0, source: 'loaded', files: [] },
+          },
+          {
+            renderer: 'v13-base',
+            version: '13.0.0-alpha.0 (abc123456)',
+            size: { raw: 0, gzip: 70 * 1024 - 12, brotli: 0, source: 'loaded', files: [] },
+          },
+          { renderer: 'v12-frozen', version: '12.2.0', size: null },
+          { renderer: 'pele', version: '1.13.0', size: null },
+        ],
+        warm: {
+          'pele/flowchart-7': {
+            v13: series(0.4),
+            'v13-base': series(0.4),
+            'v12-frozen': series(20).map((x, i) => (i % 7 === 0 ? x : null)),
+            pele: series(0.2),
+          },
+          'perf/medium3': {
+            v13: series(33),
+            'v13-base': series(30),
+            'v12-frozen': series(1600).map((x, i) => (i % 7 === 0 ? x : null)),
+            pele: series(22),
+          },
+        },
+      },
+      node: {
+        rounds,
+        renderers: [
+          { renderer: 'v13', version: '13.0.0-alpha.0', size: null },
+          { renderer: 'v13-base', version: '13.0.0-alpha.0 (abc123456)', size: null },
+          { renderer: 'pele', version: '1.13.0', size: null },
+        ],
+        warm: {
+          'pele/flowchart-7': { v13: series(0.3), 'v13-base': series(0.3), pele: series(0.1) },
+          'perf/medium3': { v13: series(25), 'v13-base': series(25), pele: series(10) },
+        },
+      },
     },
   };
   const outcome = evaluateGates({
-    report: withBase,
+    report: cmpReport,
     baseline: undefined,
     mode: 'report',
-    corpusSize: 2,
+    corpusSize: 1,
   });
-  const comment = formatComment(withBase, outcome, {
+  const comment = formatComment(cmpReport, outcome, {
     runUrl: 'https://ci.example/run/1',
     baseLabel: 'mermaid-v13',
   });
 
-  it('is short: a title, one table and the link to the full report', () => {
+  it('starts with the marker and a title naming the commit and the base', () => {
     const lines = comment.split('\n');
     expect(lines[0]).toBe(COMMENT_MARKER);
     expect(lines[1]).toBe('### Bench: gates pass · `abcdef1` vs `mermaid-v13` (`abc123456`)');
-    expect(comment).not.toContain('Per-diagram');
-    expect(comment).not.toContain('### Gates');
-    expect(lines.length).toBeLessThan(15);
     expect(comment).toContain('[this run](https://ci.example/run/1)');
   });
 
-  it('compares v13 with the base, mermaid@12 and Pele in each environment', () => {
-    expect(comment).toContain('| v13 warm time (geomean) | Browser | Node |');
-    // Browser: 0.2 vs 0.1 and 2.5 vs 2 → geomean speed 0.56, so 77% slower; Node: same.
-    expect(comment).toMatch(/\| vs base branch \| \d+% slower \| same \|/);
-    expect(comment).toMatch(/\| vs mermaid@12\.2\.0 \| \d+(\.\d)?× faster \| – \|/);
-    expect(comment).toContain('| vs Pele | 2× slower | – |');
-    expect(comment).toContain('| Loaded size (gzip) | 50 KB (+1 KB) | – |');
-    const bytes: BenchReport = {
-      ...withBase,
-      renderers: withBase.renderers.map((r) =>
-        r.renderer === 'v13-base' && r.size
-          ? { ...r, size: { ...r.size, gzip: 50 * 1024 - 12 } }
-          : r
-      ),
-    };
-    expect(formatComment(bytes, outcome)).toContain('| Loaded size (gzip) | 50 KB (+12 B) | – |');
+  it('has one row per comparison diagram and environment, nothing per corpus diagram', () => {
+    expect(comment).toContain('**Browser** (20 rounds; mermaid@12 in 3)');
+    expect(comment).toContain('| Diagram | v13 | vs base | vs mermaid@12.2.0 | vs Pele |');
+    expect(comment).toContain('**Node** (20 rounds)');
+    expect(comment).toContain('| Diagram | v13 | vs base | vs Pele |');
+    expect(comment).not.toContain('corpus/a');
+    expect(comment.split('\n').length).toBeLessThan(30);
   });
 
-  it('leaves per-diagram times to the full report', () => {
-    expect(comment).not.toContain('<details>');
-    expect(comment).not.toContain('| corpus/');
+  it('says "same" when the interval includes no change, and names a real change', () => {
+    expect(comment).toMatch(
+      /\| Small \(7 nodes\) \| 0\.4 ms \| same \(±\d+%\) \| 50× faster \| 2× slower \|/
+    );
+    expect(comment).toMatch(/\| Subgraphs and edge labels \| 33 ms \| 10% slower \(±\d+%\) \|/);
+    expect(comment).toContain('Loaded size (gzip): 70 KB (+12 B) against the base.');
   });
 
-  it('names failed gates and diagrams v13 did not render, and only then', () => {
+  it('names failed gates and corpus diagrams v13 did not render, and only then', () => {
     expect(comment).not.toMatch(/^- /m);
     const broken: BenchReport = {
-      ...withBase,
+      ...cmpReport,
       renderers: [
         {
-          ...withBase.renderers[0]!,
+          ...report.renderers[0]!,
           results: [
             ok('corpus/a', 0.2),
             { ...ok('corpus/b', 1), status: 'error', warmMs: null, error: 'boom' },
           ],
         },
-        ...withBase.renderers.slice(1),
+        ...report.renderers.slice(1),
       ],
     };
     const failing = evaluateGates({
@@ -271,5 +286,10 @@ describe('PR comment', () => {
     expect(c.split('\n')[1]).toMatch(/^### Bench: \*\*\d+ gates? failed\*\*/);
     expect(c).toMatch(/^- \*\*R-PERF-4\*\* Corpus diagrams rendered: /m);
     expect(c).toContain('- v13 did not render 1 diagram in browser: `corpus/b` (error)');
+  });
+
+  it('falls back to the geomean table when no comparison ran', () => {
+    const c = formatComment({ ...cmpReport, compare: undefined }, outcome);
+    expect(c).toContain('| v13 warm time (geomean) | Browser |');
   });
 });

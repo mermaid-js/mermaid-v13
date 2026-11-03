@@ -104,6 +104,42 @@ export interface BenchReport {
    * string. Reported only; no gate reads them. Absent when the Node environment did not run.
    */
   node?: NodeRuns;
+  /**
+   * The comparison (`--compare-rounds`): a few chosen diagrams measured over many rounds, each in
+   * fresh pages and processes, renderers alternating. What the PR comment shows.
+   */
+  compare?: Comparison;
+}
+
+/** One diagram of the comparison, with the name the comment shows for it. */
+export interface CompareDiagram {
+  id: string;
+  label: string;
+}
+
+export interface CompareRenderer {
+  renderer: RendererId;
+  version: string;
+  /** Loaded size in the browser (from the first round that started); null in Node. */
+  size: SizeSummary | null;
+  /** Why the renderer did not start, in the first round where it did not. */
+  error?: string;
+}
+
+export interface CompareEnv {
+  rounds: number;
+  renderers: CompareRenderer[];
+  /**
+   * Warm median (ms) per round: `warm[diagram id][renderer][round]`. Null where the renderer did
+   * not run that round (Mermaid 12 runs only some) or the diagram did not render.
+   */
+  warm: Record<string, Partial<Record<RendererId, (number | null)[]>>>;
+}
+
+export interface Comparison {
+  diagrams: CompareDiagram[];
+  browser?: CompareEnv;
+  node?: CompareEnv;
 }
 
 export const ENVS = ['browser', 'node'] as const;
