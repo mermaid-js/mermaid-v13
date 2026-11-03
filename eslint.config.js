@@ -4,7 +4,7 @@ import prettier from 'eslint-config-prettier';
 import noOnlyTests from 'eslint-plugin-no-only-tests';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import mermaid from './tools/eslint-plugin/index.js';
+import mermaid from './tools/eslint-plugin/index.ts';
 
 // Browser-only globals: everything in the browser set that Node and the language do not
 // also provide (so `URL`, `TextEncoder`, `performance`, timers stay usable), plus
@@ -75,6 +75,21 @@ export default tseslint.config(
     rules: {
       'mermaid/import-boundaries': 'error',
       'mermaid/no-nested-quantifier': 'error',
+    },
+  },
+  {
+    // Readability limits. Existing violations live in eslint-suppressions.json; new ones fail.
+    files: ['packages/*/src/**/*.{ts,js}'],
+    ignores: ['**/*.spec.ts'],
+    rules: {
+      'mermaid/no-magic-char-code': 'error',
+      'no-nested-ternary': 'error',
+      'no-param-reassign': 'error',
+      complexity: ['error', 25],
+      'max-depth': ['error', 4],
+      'max-params': ['error', 6],
+      'max-lines-per-function': ['error', { max: 150, skipBlankLines: true, skipComments: true }],
+      'max-lines': ['error', { max: 800, skipBlankLines: true, skipComments: true }],
     },
   },
   {
