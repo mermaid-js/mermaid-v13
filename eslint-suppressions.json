@@ -80,11 +80,6 @@
       "count": 1
     }
   },
-  "packages/core/src/parser-kit/chars.ts": {
-    "mermaid/no-magic-char-code": {
-      "count": 1
-    }
-  },
   "packages/core/src/parser-kit/cursor.ts": {
     "no-param-reassign": {
       "count": 1
@@ -93,16 +88,6 @@
   "packages/core/src/parser-kit/format.ts": {
     "no-nested-ternary": {
       "count": 1
-    }
-  },
-  "packages/core/src/parser-kit/positions.ts": {
-    "mermaid/no-magic-char-code": {
-      "count": 6
-    }
-  },
-  "packages/core/src/parser-kit/scanner.ts": {
-    "mermaid/no-magic-char-code": {
-      "count": 5
     }
   },
   "packages/core/src/pipeline/errors.ts": {
@@ -116,9 +101,6 @@
     }
   },
   "packages/core/src/preprocess/directives.ts": {
-    "mermaid/no-magic-char-code": {
-      "count": 11
-    },
     "no-nested-ternary": {
       "count": 1
     },
@@ -126,17 +108,9 @@
       "count": 3
     }
   },
-  "packages/core/src/preprocess/frontmatter.ts": {
-    "mermaid/no-magic-char-code": {
-      "count": 2
-    }
-  },
   "packages/core/src/preprocess/yaml.ts": {
     "complexity": {
       "count": 6
-    },
-    "mermaid/no-magic-char-code": {
-      "count": 22
     },
     "no-nested-ternary": {
       "count": 2
@@ -173,11 +147,6 @@
   "packages/core/src/text/label.ts": {
     "complexity": {
       "count": 1
-    }
-  },
-  "packages/core/src/text/table.ts": {
-    "mermaid/no-magic-char-code": {
-      "count": 2
     }
   },
   "packages/core/src/theme/theme.ts": {
@@ -231,9 +200,6 @@
     "max-lines-per-function": {
       "count": 3
     },
-    "mermaid/no-magic-char-code": {
-      "count": 96
-    },
     "no-nested-ternary": {
       "count": 5
     },
@@ -269,9 +235,6 @@
   "packages/diagram-flowchart/src/parser/source.ts": {
     "complexity": {
       "count": 2
-    },
-    "mermaid/no-magic-char-code": {
-      "count": 27
     }
   },
   "packages/diagram-flowchart/src/render/edges.ts": {

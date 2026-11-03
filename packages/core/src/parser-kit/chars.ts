@@ -4,6 +4,7 @@
  * `util/chars.ts`, the Unicode table approach from Pele's `util/unicode.ts`
  * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
  */
+import { ASCII_MAX } from './char-codes.ts';
 import { UNICODE_LETTERS } from './unicode-table.ts';
 
 /**
@@ -23,7 +24,7 @@ export function charTable(
   for (const [flag, chars] of classes) {
     for (let i = 0; i < chars.length; i++) {
       const c = chars.charCodeAt(i);
-      if (c > 127) throw new RangeError(`charTable: non-ASCII character ${chars[i]}`);
+      if (c > ASCII_MAX) throw new RangeError(`charTable: non-ASCII character ${chars[i]}`);
       table[c] = (table[c] ?? 0) | flag;
     }
   }
