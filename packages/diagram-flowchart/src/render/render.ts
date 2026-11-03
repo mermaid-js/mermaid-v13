@@ -4,9 +4,11 @@
 import type { LayoutModel, LayoutModelNode, RoutePoint } from '@mermaid-js/core/layout';
 import { layered } from '@mermaid-js/core/layout';
 import {
+  checkImageUrl,
   checkLinkTarget,
   checkUrl,
   px,
+  styleScope,
   styleText,
   themeStyleSheet,
   translate,
@@ -163,12 +165,12 @@ export function renderFlowchart(
     'aria-labelledby': title ? `${prefix()}-title` : undefined,
     'aria-describedby': desc ? `${prefix()}-desc` : undefined,
     'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? prefix() : undefined,
+    'data-p': auto ? styleScope(prefix()) : undefined,
     style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
     'font-family': P.ff,
     'font-size': P.fs,
   });
-  if (auto) w.styleSheet(themeStyleSheet(prefix(), auto.light, auto.dark));
+  if (auto) w.styleSheet(themeStyleSheet(styleScope(prefix()), auto.light, auto.dark));
   if (title) {
     w.open('title', { id: `${prefix()}-title` });
     w.text(title);
@@ -290,7 +292,7 @@ export function renderFlowchart(
       const at = layout.edges.get(e.id)?.label;
       if (!at || e.label.width === 0) continue;
       const lw = e.label.width + 2 * LABEL_PAD;
-      w.open('g', { class: 'edgeLabel', 'data-id': e.edge.id });
+      w.open('g', { class: 'edgeLabel', 'data-id': e.edge.id, 'data-ast': e.edge.ast });
       w.leaf('rect', {
         x: at.x - lw / 2,
         y: at.y - e.label.height / 2,
@@ -376,7 +378,7 @@ function drawImage(
   ctx: FlowRenderContext
 ): void {
   const v = view.vertex!;
-  const href = checkUrl(url, { securityLevel, linkSchemes: ctx.linkSchemes, warn: ctx.warn });
+  const href = checkImageUrl(url, { securityLevel, warn: ctx.warn });
   const aw = v.assetWidth && v.assetWidth > 0 && v.assetWidth <= 4000 ? v.assetWidth : 80;
   const ah = v.assetHeight && v.assetHeight > 0 && v.assetHeight <= 4000 ? v.assetHeight : 80;
   if (!href) return;
@@ -390,14 +392,16 @@ function drawImage(
   });
 }
 
-// Icon packs are not part of M1: the icon's frame is drawn and the glyph is left out.
+// Icon packs are not part of M1: the glyph is left out, and its frame drawn when it has a form.
 function drawIcon(w: SvgWriter, view: NodeView, a: Attrs, ctx: FlowRenderContext): void {
   const v = view.vertex!;
   const size = v.assetHeight && v.assetHeight > 0 && v.assetHeight <= 4000 ? v.assetHeight : 48;
   const top = assetTop(view, size);
   ctx.warn({
     code: 'ICON_UNAVAILABLE',
-    message: `The icon ${JSON.stringify(v.icon!.slice(0, 60))} is not available; its frame is drawn without it.`,
+    message: `The icon ${JSON.stringify(v.icon!.slice(0, 60))} is not available; ${
+      v.form ? 'its frame is drawn without it' : 'it is left out'
+    }.`,
   });
   if (v.form === 'circle') w.leaf('circle', { cy: top + size / 2, r: size / 2, ...a });
   else if (v.form === 'square' || v.form === 'rounded')
