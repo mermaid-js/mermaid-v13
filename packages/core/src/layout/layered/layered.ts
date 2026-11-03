@@ -95,6 +95,9 @@ export interface LayeredOptions {
   orderOnly?: boolean;
   // The length constants (D77); the px profile's when absent.
   metrics?: LayoutMetrics;
+  // Grid quantum (D78, D140). Box edges land on whole multiples of it and every line (edge ends,
+  // bends, tracks) on the middle of a cell, and each end on a side gets a cell of its own.
+  grid?: number;
 }
 
 export interface LayeredResult {
@@ -368,6 +371,9 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   const ETK = spans ? new Uint8Array(segments) : undefined;
   const firstSeg = new Int32Array(m).fill(-1);
   const lastSeg = new Int32Array(m).fill(-1);
+  // Segment ends held where their offset puts them (grid mode moves only the others).
+  const EFH = new Uint8Array(segments);
+  const ETH = new Uint8Array(segments);
   const KEY = new Float64Array(n).fill(NaN);
   for (let i = 0; i < real; i++) KEY[i] = nodes[i]!.key;
   let offsets = false;
@@ -399,6 +405,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
       let prev = a;
       if (rb - ra > 1) firstDummy[ei] = next;
       firstSeg[ei] = ce;
+      EFH[ce] = (e.reversed ? e.headFixed : e.tailFixed) ? 1 : 0;
       if (EFK && !(e.reversed ? e.headFixed : e.tailFixed))
         EFK[ce] = e.reversed ? End.Arrives : End.Leaves;
       for (let r = ra + 1; r < rb; r++) {
@@ -424,6 +431,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
       ET[ce] = b;
       EFD[ce] = prev === a ? aDx : 0;
       ETD[ce] = bDx;
+      ETH[ce] = (e.reversed ? e.tailFixed : e.headFixed) ? 1 : 0;
       if (ETK && !(e.reversed ? e.tailFixed : e.headFixed))
         ETK[ce] = e.reversed ? End.Leaves : End.Arrives;
       lastSeg[ei] = ce;
@@ -623,6 +631,20 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   }
 
   alignPorts(g, xs, empty);
+  const grid = opt.grid !== undefined && opt.grid > 0 ? opt.grid : 0;
+  // In grid mode a label's line runs through the middle of a cell inside the label's box, and the
+  // box itself sits on the grid: `labelAt` holds the box's middle.
+  const labelAt = grid ? onGrid(g, nodes, xs, EFH, ETH, grid) : undefined;
+  if (grid) {
+    for (let ei = 0; ei < m; ei++) {
+      if (direct[ei]!) continue;
+      const e = edges[ei]!;
+      const aDx = EFD[firstSeg[ei]!]!;
+      const bDx = ETD[lastSeg[ei]!]!;
+      e.tailDx = e.reversed ? bDx : aDx;
+      e.headDx = e.reversed ? aDx : bDx;
+    }
+  }
 
   // A rank that holds nothing but the bends of edges is only there because some other edge has a
   // label or a twin. Its bends move onto the straight line between the ends of their edges, and
@@ -747,6 +769,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
         gapUnder[r]! += Math.max(0, Math.min(MAX_GAP * opt.rankSep, tall[r]!) - room[r]!);
     }
   }
+  if (grid) for (let r = 0; r < maxRank; r++) gapUnder[r] = up(gapUnder[r]!, grid);
   let y = 0;
   for (let r = 0; r <= maxRank; r++) {
     let h = 0;
@@ -759,13 +782,34 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   const height = y;
   // Where a piece runs across its gap, or would on another track of its group: its tracks sit
   // in the middle of the gap, the first at the top.
-  const trackY = (piece: number, onTrack = pieces!.track[piece]!): number => {
-    const r = pieces!.rank[piece]!;
+  const trackAt = (r: number, count: number, onTrack: number): number => {
     const top = bandBottom[r]!;
     const bottom = bandTop[below[r]!]!;
-    const count = opt.tracks ? trackCount[r]! : pieces!.levels[piece]!;
     const pitch = count > 1 ? Math.min(mostPitch, (bottom - top - 2 * margin) / (count - 1)) : 0;
     return (top + bottom) / 2 + (onTrack - (count - 1) / 2) * pitch;
+  };
+  // In grid mode each track of a gap takes a row of its own, clear of the rows the ends use.
+  const rows = new Map<number, number[]>();
+  const gridTrack = (r: number, count: number, onTrack: number): number => {
+    const key = r * 65536 + count;
+    let list = rows.get(key);
+    if (!list) {
+      list = [];
+      const lo = bandBottom[r]! + 1.5 * grid;
+      const hi = bandTop[below[r]!]! - 1.5 * grid;
+      for (let t = 0; t < count; t++) {
+        const at = Math.min(Math.max(line(trackAt(r, count, t), grid), lo), hi);
+        list.push(t > 0 && at < list[t - 1]! + grid ? list[t - 1]! + grid : at);
+      }
+      for (let t = count - 1; t >= 0; t--) if (list[t]! > hi) list[t] = hi - (count - 1 - t) * grid;
+      rows.set(key, list);
+    }
+    return list[onTrack]!;
+  };
+  const trackY = (piece: number, onTrack = pieces!.track[piece]!): number => {
+    const r = pieces!.rank[piece]!;
+    const count = opt.tracks ? trackCount[r]! : pieces!.levels[piece]!;
+    return grid ? gridTrack(r, count, onTrack) : trackAt(r, count, onTrack);
   };
 
   let minX = Infinity;
@@ -774,6 +818,10 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     const half = W[i]! / 2;
     if (xs[i]! - half < minX) minX = xs[i]! - half;
     if (xs[i]! + half > maxX) maxX = xs[i]! + half;
+  }
+  if (grid) {
+    minX = down(minX, grid);
+    maxX = up(maxX, grid);
   }
   // Where edges spread along their nodes, a rank whose nodes only send edges on stands on one
   // line, and a rank whose nodes only receive them hangs from one, so that the edges of nodes of
@@ -793,6 +841,8 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     if (KIND[i]! === Kind.Node && leaves[r]! && !arrives[r]!) node.y = bandBottom[r]! - node.h / 2;
     else if (KIND[i]! === Kind.Node && arrives[r]! && !leaves[r]!)
       node.y = bandTop[r]! + node.h / 2;
+    else if (grid)
+      node.y = bandTop[r]! + down((bandBottom[r]! - bandTop[r]! - node.h) / 2, grid) + node.h / 2;
     else node.y = (bandTop[r]! + bandBottom[r]!) / 2;
   }
 
@@ -842,8 +892,12 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     e.points = pts;
     const ln = labelNode[ei]!;
     if (ln >= 0) {
-      e.labelX = xs[ln]! - minX;
+      e.labelX = (labelAt ? labelAt[ln]! : xs[ln]!) - minX;
       e.labelY = (bandTop[RANK[ln]!]! + bandBottom[RANK[ln]!]!) / 2;
+      if (grid) {
+        const top = bandTop[RANK[ln]!]!;
+        e.labelY = top + down((bandBottom[RANK[ln]!]! - top - e.labelH) / 2, grid) + e.labelH / 2;
+      }
     } else if (e.labelW > 0) {
       e.labelX = (pts[0]! + pts[pts.length - 2]!) / 2;
       e.labelY = (pts[1]! + pts[pts.length - 1]!) / 2;
@@ -851,6 +905,93 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   }
 
   return { width: maxX - minX, height };
+}
+
+// Grid helpers (D78): `q` drops float noise so that values that agree keep agreeing, `down`/`up`
+// round to the grid, `edge` puts a box edge on it and `line` puts a line in the middle of a cell
+// (ties go up, so equal inputs give equal cells).
+const q = (v: number): number => Math.round(v * 1e6) / 1e6;
+export const down = (v: number, grid: number): number => grid * Math.floor(q(v / grid));
+const up = (v: number, grid: number): number => grid * Math.ceil(q(v / grid));
+export const edgeOn = (v: number, grid: number): number => grid * Math.round(q(v / grid));
+export const line = (v: number, grid: number): number =>
+  grid * (Math.round(q(v / grid - 0.5)) + 0.5);
+
+// Puts the cross-flow positions on the grid (D78, D140): box edges on it, bends and port nodes
+// on the middle of a cell, and each edge end on a cell of its own along its node's side (see
+// `spreadOnGrid`). Returns the middle of each label's box.
+function onGrid(
+  g: Graph,
+  nodes: LNode[],
+  xs: Float64Array,
+  EFH: Uint8Array,
+  ETH: Uint8Array,
+  grid: number
+): Float64Array {
+  const { n, real, W, KIND, EFD, ETD, succStart, succE, predStart, predE, M } = g;
+  const was = Float64Array.from(xs);
+  const labelAt = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    if (KIND[i]! === Kind.Label) {
+      xs[i] = line(was[i]!, grid);
+      labelAt[i] = edgeOn(xs[i]! - W[i]! / 2, grid) + W[i]! / 2;
+    } else if (W[i]! > 0) xs[i] = edgeOn(was[i]! - W[i]! / 2, grid) + W[i]! / 2;
+    else xs[i] = line(was[i]!, grid);
+  }
+  const pitch = Math.max(grid, edgeOn(M.portPitch, grid));
+  for (let v = 0; v < real; v++) {
+    if (W[v]! <= 0 || nodes[v]!.kind !== Kind.Node) continue;
+    const lo = xs[v]! - W[v]! / 2 + 1.5 * grid;
+    const hi = xs[v]! + W[v]! / 2 - 1.5 * grid;
+    for (let side = 0; side < 2; side++) {
+      const start = side === 0 ? predStart : succStart;
+      const list = side === 0 ? predE : succE;
+      const dx = side === 0 ? ETD : EFD;
+      const held = side === 0 ? ETH : EFH;
+      const ends: number[] = [];
+      for (let k = start[v]!; k < start[v + 1]!; k++) ends.push(list[k]!);
+      if (ends.length === 0) continue;
+      const want = (e: number): number => line(was[v]! + dx[e]!, grid);
+      ends.sort((a, b) => want(a) - want(b) || dx[a]! - dx[b]! || a - b);
+      // A held end moves with its node: its offset leads to a cell the caller placed.
+      const fixed = ends.map((e) => held[e]! === 1);
+      const at = ends.map((e, i) =>
+        fixed[i] ? xs[v]! + dx[e]! : Math.min(Math.max(want(e), lo), hi)
+      );
+      spreadOnGrid(at, fixed, lo, hi, pitch, grid);
+      ends.forEach((e, i) => (dx[e] = at[i]! - xs[v]!));
+    }
+  }
+  return labelAt;
+}
+
+// Spreads the ends along one side, in order, between the cells `lo` and `hi` (the side less its
+// corners): at `pitch` where every free end fits between the held ones, else one cell apart
+// (D140; the caller grows a side that is still too short and lays out again).
+function spreadOnGrid(
+  at: number[],
+  fixed: boolean[],
+  lo: number,
+  hi: number,
+  pitch: number,
+  grid: number
+): void {
+  const fits = (step: number): { fit: number[]; ok: boolean } => {
+    const fit = at.slice();
+    for (let i = 1; i < fit.length; i++)
+      if (!fixed[i] && fit[i]! < fit[i - 1]! + step) fit[i] = fit[i - 1]! + step;
+    let ok = true;
+    for (let i = fit.length - 1; i >= 0; i--) {
+      if (fixed[i]) continue;
+      const cap = i + 1 < fit.length ? Math.min(hi, fit[i + 1]! - step) : hi;
+      fit[i] = Math.min(fit[i]!, cap);
+      if (fit[i]! < lo || (i > 0 && fit[i]! < fit[i - 1]! + step)) ok = false;
+    }
+    return { fit, ok };
+  };
+  const wide = pitch > grid ? fits(pitch) : undefined;
+  const { fit } = wide?.ok ? wide : fits(grid);
+  for (let i = 0; i < at.length; i++) if (!fixed[i]) at[i] = Math.max(lo, Math.min(hi, fit[i]!));
 }
 
 // The pieces of edges that each cross one gap: where they leave the rank above and reach the

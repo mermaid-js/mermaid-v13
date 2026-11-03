@@ -110,6 +110,11 @@ export interface LayoutGraph {
   /**
    * Grid quantum (D77, D140): node boxes, ports and tracks land on whole multiples of it, and
    * each edge end gets its own cell. Set to 1 for character cells.
+   *
+   * With it set, the model is in cells: a route point `(c, r)` is the cell in column `c`, row
+   * `r`; a box of width `w` centred at `x` covers columns `x − w/2 + ½` to `x + w/2 − ½`. Each
+   * edge end is the cell just outside its side, off the corners, and no two ends share a cell
+   * once the sides have grown (D140, the model reports grown sizes).
    */
   grid?: number;
 }

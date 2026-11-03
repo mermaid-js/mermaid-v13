@@ -22,7 +22,7 @@ import {
   type CEdge,
   type CNode,
 } from './compound.ts';
-import type { LayeredOptions } from './layered.ts';
+import { down, edgeOn, type LayeredOptions } from './layered.ts';
 import { pxProfile, type LayoutMetrics } from '../units.ts';
 
 // Length constants (port and loop sizes, corners, the turn breakpoint) come from
@@ -82,10 +82,10 @@ function runsAcross(dir: Dir): boolean {
 
 // Lays out with room to spare, and tightly instead when that does not fit and tight is narrower.
 function tighten(graph: LayoutGraph, dir: Dir): LayoutModel {
-  const loose = run(graph, dir, false);
+  const loose = grown(graph, dir, false);
   const available = graph.availableWidth;
   if (available === undefined || !(available > 0) || loose.width <= available) return loose;
-  const tight = run(graph, dir, true);
+  const tight = grown(graph, dir, true);
   return tight.width < loose.width ? tight : loose;
 }
 
@@ -138,8 +138,85 @@ function check(graph: LayoutGraph): void {
   if (graph.headRoom !== undefined) finite(graph.headRoom, 'headRoom');
 }
 
+function gridOf(graph: LayoutGraph): number {
+  return graph.grid !== undefined && graph.grid > 0 ? graph.grid : 0;
+}
+
+// The room `k` edge ends take along one side on the grid: a cell each, `portPitch` apart, and
+// clear of both corners (D140).
+function sideRoom(k: number, pitch: number, grid: number): number {
+  return (k - 1) * pitch + 3 * grid;
+}
+
+// In grid mode every edge end gets a cell of its own on its side (D140). A side with more ends
+// than it has room for grows (wider for top and bottom, taller for left and right), and the
+// layout runs again with the grown boxes, which the model reports. Ends are never bundled.
+function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
+  const grid = gridOf(graph);
+  let model = run(graph, dir, tight);
+  if (!grid) return model;
+  const M = graph.metrics ?? pxProfile.engine;
+  const pitch = Math.max(grid, edgeOn(M.portPitch, grid));
+  let current = graph;
+  for (let pass = 0; pass < 3; pass++) {
+    const count = new Map<string, Record<Side, number>>();
+    const add = (id: string, side: Side): void => {
+      let c = count.get(id);
+      if (!c) count.set(id, (c = { top: 0, right: 0, bottom: 0, left: 0 }));
+      c[side]++;
+    };
+    for (const e of current.edges) {
+      const placed = model.edges.get(e.id)!;
+      add(e.source, placed.ports.source);
+      add(e.target, placed.ports.target);
+    }
+    let more = false;
+    const nodes = current.nodes.map((n) => {
+      const c = count.get(n.id);
+      if (!c) return n;
+      const across = Math.max(c.top, c.bottom);
+      const along = Math.max(c.left, c.right);
+      const width = across > 1 ? Math.max(n.width, sideRoom(across, pitch, grid)) : n.width;
+      const height = along > 1 ? Math.max(n.height, sideRoom(along, pitch, grid)) : n.height;
+      if (width === n.width && height === n.height) return n;
+      more = true;
+      return { ...n, width, height };
+    });
+    if (!more) break;
+    current = { ...current, nodes };
+    model = run(current, dir, tight);
+  }
+  return model;
+}
+
+// The groups as laid out; the title sits midway down the top padding.
+function groupModels(
+  graph: LayoutGraph,
+  cgroups: CNode[],
+  padTops: number[],
+  pad: number
+): Map<string, LayoutModelGroup> {
+  const groups = new Map<string, LayoutModelGroup>();
+  graph.groups.forEach((g, j) => {
+    const c = cgroups[j]!;
+    const x = c.x + pad;
+    const y = c.y + pad;
+    const top = y - c.h / 2;
+    const titleY = top + padTops[j]! / 2 + (g.title?.height ?? 0) / 2;
+    groups.set(g.id, { x, y, width: c.w, height: c.h, title: { x, y: titleY } });
+  });
+  return groups;
+}
+
+// A length scaled for a tight layout; on the grid it stays a whole multiple of it.
+function scaleOn(v: number, scale: number, grid: number): number {
+  return grid && scale !== 1 ? Math.max(grid, edgeOn(v * scale, grid)) : v * scale;
+}
+
 function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
   const M = graph.metrics ?? pxProfile.engine;
+  const grid = gridOf(graph);
+  const scaled = (v: number, scale: number): number => scaleOn(v, scale, grid);
   const padScale = tight ? TIGHT_PAD : 1;
   const nodeCount = graph.nodes.length;
   const index = new Map<string, number>();
@@ -157,11 +234,11 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     const c = cnode(0, 0);
     c.isGroup = true;
     c.dir = g.direction;
-    c.padX = Math.max(g.padding.left, g.padding.right) * padScale;
-    const padTop = g.padding.top * padScale;
+    c.padX = scaled(Math.max(g.padding.left, g.padding.right), padScale);
+    const padTop = scaled(g.padding.top, padScale);
     padTops.push(padTop);
     c.padTop = padTop + (g.title?.height ?? 0);
-    c.padBottom = g.padding.bottom * padScale;
+    c.padBottom = scaled(g.padding.bottom, padScale);
     c.minW = (g.title?.width ?? 0) + 2 * c.padX;
     c.seq = nodeCount + j;
     c.span = Infinity;
@@ -226,32 +303,26 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
 
   const routing = graph.routing ?? 'curved';
   const opt: LayeredOptions = {
-    nodeSep: graph.spacing.node * (tight ? TIGHT_NODE : 1),
+    nodeSep: scaled(graph.spacing.node, tight ? TIGHT_NODE : 1),
     edgeSep: graph.spacing.edge,
-    rankSep: graph.spacing.rank * (tight ? TIGHT_RANK : 1),
+    rankSep: scaled(graph.spacing.rank, tight ? TIGHT_RANK : 1),
     portSep: M.portSep,
     tracks: routing === 'stepped',
     straight: routing === 'straight',
     headRoom: graph.headRoom ?? 0,
     metrics: M,
+    ...(grid ? { grid } : {}),
   };
   const total = compoundLayout(cnodes, cedges, rootDir, opt);
 
-  const pad = graph.diagramPadding ?? 0;
+  const margin = graph.diagramPadding ?? 0;
+  const pad = margin - grid / 2; // on the grid, a coordinate is a cell index (D78)
   const nodes = new Map<string, LayoutModelNode>();
   graph.nodes.forEach((n, i) => {
     const c = cnodes[i]!;
     nodes.set(n.id, { x: c.x + pad, y: c.y + pad, width: n.width, height: n.height });
   });
-  const groups = new Map<string, LayoutModelGroup>();
-  graph.groups.forEach((g, j) => {
-    const c = cnodes[nodeCount + j]!;
-    const x = c.x + pad;
-    const y = c.y + pad;
-    const top = y - c.h / 2;
-    const titleY = top + padTops[j]! / 2 + (g.title?.height ?? 0) / 2;
-    groups.set(g.id, { x, y, width: c.w, height: c.h, title: { x, y: titleY } });
-  });
+  const groups = groupModels(graph, cnodes.slice(nodeCount), padTops, pad);
 
   const box = (i: number): LayoutModelNode => {
     const c = cnodes[i]!;
@@ -263,7 +334,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     const ce = cedges[k]!;
     const [src, dst] = ends[k]!;
     if (src === dst) {
-      edges.set(e.id, selfLoop(box(src), loopSide[src] === 2, e.label, M));
+      const loop = grid ? gridLoop : selfLoop;
+      edges.set(e.id, loop(box(src), loopSide[src] === 2, e.label, M, grid));
       return;
     }
     const points: RoutePoint[] = [];
@@ -274,20 +346,19 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
         axis: ce.route[p + 2] === 1 ? 'h' : 'v',
       });
     }
+    const source = sideOf(box(src), points[0], flowEnd(rootDir));
+    const target = sideOf(box(dst), points[points.length - 1], flowStart(rootDir));
     const model: LayoutModelEdge = {
-      points,
-      ports: {
-        source: sideOf(box(src), points[0], flowEnd(rootDir)),
-        target: sideOf(box(dst), points[points.length - 1], flowStart(rootDir)),
-      },
+      points: grid ? ontoCells(points, source, target, grid) : points,
+      ports: { source, target },
     };
     if (ce.labelW > 0 || ce.labelH > 0) model.label = { x: ce.labelX + pad, y: ce.labelY + pad };
     edges.set(e.id, model);
   });
 
   return {
-    width: total.width + 2 * pad,
-    height: total.height + 2 * pad,
+    width: total.width + 2 * margin,
+    height: total.height + 2 * margin,
     nodes,
     edges,
     groups,
@@ -321,6 +392,103 @@ function sideOf(b: LayoutModelNode, p: RoutePoint | undefined, fallback: Side): 
   if (rx < 1e-6 && ry < 1e-6) return fallback;
   if (ry >= rx) return dy < 0 ? 'top' : 'bottom';
   return dx < 0 ? 'left' : 'right';
+}
+
+// A route on the grid, in cells: each end moves half a cell out of its box, onto the cell just
+// outside its side, and points that repeat or sit midway along a straight run are dropped.
+function ontoCells(points: RoutePoint[], from: Side, to: Side, grid: number): RoutePoint[] {
+  if (points.length === 0) return points;
+  const out = (p: RoutePoint, side: Side): RoutePoint => {
+    const h = grid / 2;
+    if (side === 'top') return { ...p, y: p.y - h };
+    if (side === 'bottom') return { ...p, y: p.y + h };
+    if (side === 'left') return { ...p, x: p.x - h };
+    return { ...p, x: p.x + h };
+  };
+  const pts = points.map((p) => ({ ...p }));
+  pts[0] = out(pts[0]!, from);
+  pts[pts.length - 1] = out(pts[pts.length - 1]!, to);
+  const kept: RoutePoint[] = [];
+  for (const p of pts) {
+    const last = kept[kept.length - 1];
+    if (last && last.x === p.x && last.y === p.y) continue;
+    const before = kept[kept.length - 2];
+    if (
+      last &&
+      before &&
+      ((before.x === last.x && last.x === p.x) || (before.y === last.y && last.y === p.y))
+    )
+      kept.pop();
+    kept.push(p);
+  }
+  if (kept.length === 1) kept.push({ ...kept[0]! });
+  return kept;
+}
+
+// A self-loop on the grid, in cells (research/ascii-snapping.md §6): out of one side and back
+// into it two cells further along, so the box needs room for two ends there (D140). Beside the
+// node across the flow, `loop` cells out; its label sits `loopGap` past the loop.
+function gridLoop(
+  b: LayoutModelNode,
+  below: boolean,
+  label: { width: number; height: number } | undefined,
+  M: LayoutMetrics,
+  grid: number
+): LayoutModelEdge {
+  const pitch = Math.max(grid, edgeOn(M.portPitch, grid));
+  const left = b.x - b.width / 2 + grid / 2;
+  const top = b.y - b.height / 2 + grid / 2;
+  const right = left + b.width - grid;
+  const bottom = top + b.height - grid;
+  // Two cells `pitch` apart around the middle of a side, off its corners.
+  const pair = (lo: number, hi: number): [number, number] => {
+    const a = Math.max(lo + grid, down((lo + hi - pitch) / 2, grid));
+    return [a, Math.min(hi - grid, a + pitch)];
+  };
+  const reach = Math.max(grid, edgeOn(M.loop, grid)) - grid;
+  const gap = edgeOn(M.loopGap, grid);
+  if (below) {
+    const [x0, x1] = pair(left, right);
+    const y = bottom + grid;
+    const out = y + reach;
+    const placed: LayoutModelEdge = {
+      points: [
+        { x: x0, y, axis: 'v' },
+        { x: x0, y: out, axis: 'v' },
+        { x: x1, y: out, axis: 'h' },
+        { x: x1, y, axis: 'v' },
+      ],
+      ports: { source: 'bottom', target: 'bottom' },
+    };
+    if (label) {
+      const l = left + down((b.width - label.width) / 2, grid);
+      placed.label = {
+        x: l + label.width / 2 - grid / 2,
+        y: out + grid + gap + label.height / 2 - grid / 2,
+      };
+    }
+    return placed;
+  }
+  const [y0, y1] = pair(top, bottom);
+  const x = right + grid;
+  const out = x + reach;
+  const placed: LayoutModelEdge = {
+    points: [
+      { x, y: y0, axis: 'h' },
+      { x: out, y: y0, axis: 'h' },
+      { x: out, y: y1, axis: 'v' },
+      { x, y: y1, axis: 'h' },
+    ],
+    ports: { source: 'right', target: 'right' },
+  };
+  if (label) {
+    const t = down((y0 + y1 + grid - label.height) / 2, grid);
+    placed.label = {
+      x: out + grid + gap + label.width / 2 - grid / 2,
+      y: t + label.height / 2 - grid / 2,
+    };
+  }
+  return placed;
 }
 
 // A loop out of one side of a node and back, beside it across the flow.

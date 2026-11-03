@@ -8,7 +8,9 @@
 //
 import {
   Kind,
+  down,
   ease,
+  line,
   layered,
   layoutInputs,
   ledge,
@@ -479,6 +481,7 @@ export function compoundLayout(
   opt: LayeredOptions
 ): CompoundResult {
   const M = opt.metrics ?? pxProfile.engine;
+  const grid = opt.grid !== undefined && opt.grid > 0 ? opt.grid : 0;
   const n = nodes.length;
   const levelOf = new Map<number, Level>();
   const order: Level[] = [];
@@ -854,7 +857,7 @@ export function compoundLayout(
       const padTop = group ? group.padTop : 0;
       const boxW = Math.max(contentW + 2 * padX, group ? group.minW : 0);
       const boxH = contentH + padTop + (group ? group.padBottom : 0);
-      const offX = (boxW - contentW) / 2;
+      const offX = grid ? down((boxW - contentW) / 2, grid) : (boxW - contentW) / 2;
       const offY = padTop;
       const across = (ly: number): number => (flip ? size.height - ly : ly);
       const tx = (lx: number, ly: number): number => offX + (vertical ? lx : across(ly));
@@ -909,6 +912,11 @@ export function compoundLayout(
         else if (port.side === Side.Bottom) iy += item.h / 2;
         else if (port.side === Side.Left) ix -= item.w / 2;
         else ix += item.w / 2;
+        // On the grid, a line runs through the middle of a cell (D78).
+        if (grid && !(item.isGroup && endpointBelow(port.inner, edges[port.e]!, port.out))) {
+          if (port.side === Side.Top || port.side === Side.Bottom) ix = line(ix, grid);
+          else iy = line(iy, grid);
+        }
         let bx = ix;
         let by = iy;
         if (port.side === Side.Top) by = 0;
@@ -1056,6 +1064,13 @@ export function compoundLayout(
     e.route = [a.x, a.y, 0, b.x, b.y, 0];
     e.labelX = (a.x + b.x) / 2;
     e.labelY = (a.y + b.y) / 2;
+    if (grid) {
+      // From the group's top border straight down to its member's top (repair is #45's, D78).
+      const x = line(b.x, grid);
+      e.route = [x, a.y - a.h / 2, 0, x, b.y - b.h / 2, 0];
+      e.labelX = x;
+      e.labelY = (a.y - a.h / 2 + b.y - b.h / 2) / 2;
+    }
   }
   for (const ei of loops) {
     const e = edges[ei]!;
