@@ -55,6 +55,8 @@ export interface GateInput {
   /** The stored baseline for `report.runner`, if there is one. */
   baseline: Baseline | undefined;
   mode: GateMode;
+  /** Gates computed and printed but never failing the job, whatever the mode. */
+  reportOnly?: readonly GateId[];
   /** Number of diagrams in the flowchart corpus (the OK count must equal it). */
   corpusSize: number;
 }
@@ -109,9 +111,15 @@ export function stageRatios(
 
 const kb = (bytes: number) => `${round(bytes / 1024, 1)} KB`;
 
-export function evaluateGates({ report, baseline, mode, corpusSize }: GateInput): GateOutcome {
+export function evaluateGates({
+  report,
+  baseline,
+  mode,
+  reportOnly = [],
+  corpusSize,
+}: GateInput): GateOutcome {
   const v13 = rendererRun(report, 'v13');
-  const enforcing = mode === 'enforce';
+  const enforces = (id: GateId) => mode === 'enforce' && !reportOnly.includes(id);
   const gates: GateResult[] = [];
 
   const size = v13?.size ?? null;
@@ -121,7 +129,7 @@ export function evaluateGates({ report, baseline, mode, corpusSize }: GateInput)
     requirement: 'R-PERF-1',
     level: 'must',
     status: size !== null && size.gzip <= LIMITS.loadedGzipBytes ? 'pass' : 'fail',
-    enforced: enforcing,
+    enforced: enforces('size'),
     actual: size?.gzip ?? null,
     limit: LIMITS.loadedGzipBytes,
     detail:
@@ -137,7 +145,7 @@ export function evaluateGates({ report, baseline, mode, corpusSize }: GateInput)
     requirement: 'R-PERF-3',
     level: 'must',
     status: s.value !== null && s.value >= LIMITS.minSpeedup ? 'pass' : 'fail',
-    enforced: enforcing,
+    enforced: enforces('speed'),
     actual: s.value,
     limit: LIMITS.minSpeedup,
     detail:
@@ -153,7 +161,7 @@ export function evaluateGates({ report, baseline, mode, corpusSize }: GateInput)
     requirement: 'R-PERF-4',
     level: 'must',
     status: ok === corpusSize ? 'pass' : 'fail',
-    enforced: enforcing,
+    enforced: enforces('ok-count'),
     actual: ok,
     limit: corpusSize,
     detail: `${ok}/${corpusSize} rendered`,
@@ -185,7 +193,7 @@ export function evaluateGates({ report, baseline, mode, corpusSize }: GateInput)
       requirement: 'R-PERF-7',
       level: 'must',
       status: entries.length === 0 ? 'skip' : regressed.length > 0 ? 'fail' : 'pass',
-      enforced: enforcing && entries.length > 0,
+      enforced: enforces('stage-regression') && entries.length > 0,
       actual: worst?.[1] ?? null,
       limit: LIMITS.maxStageRatio,
       detail:

@@ -202,6 +202,24 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
     });
     expect(outcome.exitCode).toBe(0);
   });
+
+  it('reports a report-only gate without failing while the others still enforce', () => {
+    const report = healthy();
+    report.renderers[0]!.results = ids.map((id) => result(id, 0.25));
+    const outcome = evaluateGates({
+      report,
+      baseline: baseline(),
+      mode: 'enforce',
+      reportOnly: ['speed'],
+      corpusSize: CORPUS,
+    });
+    expect(outcome.gates.find((g) => g.id === 'speed')).toMatchObject({
+      status: 'fail',
+      enforced: false,
+    });
+    expect(outcome.gates.find((g) => g.id === 'size')).toMatchObject({ enforced: true });
+    expect(outcome.exitCode).toBe(0);
+  });
 });
 
 describe('gate mode', () => {

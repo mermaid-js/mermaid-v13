@@ -5,9 +5,10 @@
  *   pnpm --filter @mermaid-js/bench bench [--renderers v13,v13-stages,v12-frozen,v12-current]
  *     [--set corpus,pele] [--filter text] [--tiers tiny,regular,large,huge] [--reps 10]
  *     [--budget 1000] [--timeout 30] [--headed] [--lift-limits false] [--strip false]
- *     [--mode auto|report|enforce] [--update-baseline]
+ *     [--mode auto|report|enforce] [--report-only speed,...] [--update-baseline]
  *
- * BENCH_RUNNER names the machine for baselines (O-4); BENCH_GATES sets the default mode.
+ * BENCH_RUNNER names the machine for baselines (O-4); BENCH_GATES sets the default mode;
+ * BENCH_REPORT_ONLY lists gates that are reported but never fail the job.
  */
 import { execFileSync } from 'node:child_process';
 import { chromium } from '@playwright/test';
@@ -18,7 +19,7 @@ import { detectPipeline } from '../pipeline.ts';
 import type { BenchReport, RendererId } from '../report.ts';
 import { classifyFixtures } from '../support.ts';
 import { parseArgs } from './args.ts';
-import { gate, modeSetting, publish } from './output.ts';
+import { gate, modeSetting, publish, reportOnlyGates } from './output.ts';
 
 const ALL: RendererId[] = ['v13', 'v13-stages', 'v12-frozen', 'v12-current'];
 const args = parseArgs(process.argv.slice(2));
@@ -44,6 +45,7 @@ const options = {
   strip: args.get('strip') !== 'false',
 };
 const setting = modeSetting(args.get('mode'));
+const reportOnly = reportOnlyGates(args.get('report-only'));
 const log = (line: string) => process.stdout.write(line + '\n');
 
 // "Render works" is decided in Node through the public API, independent of the browser run.
@@ -79,7 +81,7 @@ try {
       await drive({ browser, server, site, renderer, fixtures, ...options, log })
     );
   }
-  const outcome = gate(report, setting);
+  const outcome = gate(report, setting, reportOnly);
   publish(report, outcome, { updateBaseline: args.flag('update-baseline'), write: true });
   process.exitCode = outcome.exitCode;
 } finally {
