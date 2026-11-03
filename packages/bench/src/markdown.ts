@@ -46,33 +46,40 @@ function sum(
   return picked.length === 0 ? null : picked.reduce((a, r) => a + r[key]!, 0);
 }
 
-export function formatMarkdown(report: BenchReport, outcome: GateOutcome): string {
-  const common = commonIds(report.renderers);
-  const out: string[] = [];
-  out.push(`# Bench report ${report.createdAt}`, '');
-  out.push(
-    `Runner \`${report.runner}\`${report.browser ? `, ${report.browser}` : ''}${report.commit ? `, commit \`${report.commit}\`` : ''}.`
-  );
-  out.push(
+type Heading = '##' | '###';
+const times = (v: number | null) => (v === null ? dash : `${v}×`);
+
+function headerLines(report: BenchReport): string[] {
+  const base =
+    rendererRun(report, 'v13-base') ??
+    report.node?.renderers.find((r) => r.renderer === 'v13-base');
+  return [
+    `Runner \`${report.runner}\`${report.browser ? `, ${report.browser}` : ''}${report.node ? `, ${report.node.runtime}` : ''}${report.commit ? `, commit \`${report.commit}\`` : ''}.`,
+    ...(base?.status === 'ready' && typeof report.options.base === 'string'
+      ? [`v13-base is \`${report.options.base}\` = ${base.version}.`]
+      : []),
     `Pipeline ${report.pipeline.present ? 'present' : 'missing'}: ${report.pipeline.reason}.`,
-    ''
-  );
+    '',
+  ];
+}
 
-  out.push(
-    `## Gates: ${outcome.mode}${outcome.mode === 'report' ? ' (computed, never fail the job)' : ''}`,
-    ''
-  );
-  out.push(
+function gatesLines(outcome: GateOutcome, h: Heading): string[] {
+  return [
+    `${h} Gates: ${outcome.mode}${outcome.mode === 'report' ? ' (computed, never fail the job)' : ''}`,
+    '',
     row(['Requirement', 'Gate', 'Status', 'Enforced', 'Detail']),
-    row(['---', '---', '---', '---', '---'])
-  );
-  for (const g of outcome.gates)
-    out.push(row([g.requirement, g.title, g.status, g.enforced ? 'yes' : 'no', g.detail]));
-  out.push('');
+    row(['---', '---', '---', '---', '---']),
+    ...outcome.gates.map((g) =>
+      row([g.requirement, g.title, g.status, g.enforced ? 'yes' : 'no', g.detail])
+    ),
+    '',
+  ];
+}
 
-  const baseRun = rendererRun(report, 'v13-base');
-  const hasBase = baseRun?.status === 'ready';
-  out.push('## Renderers', '');
+function browserRenderersLines(report: BenchReport, h: Heading): string[] {
+  const common = commonIds(report.renderers);
+  const hasBase = rendererRun(report, 'v13-base')?.status === 'ready';
+  const out: string[] = [`${h} Renderers`, ''];
   out.push(
     `Σ columns and the geomean use the ${common.size} diagrams every ready renderer rendered. Counts are ok/error/timeout/missing.`,
     ''
@@ -93,9 +100,7 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
     row(Array<string>(hasBase ? 10 : 9).fill('---'))
   );
   const notes: string[] = [];
-  const times = (v: number | null) => (v === null ? dash : `${v}×`);
   for (const r of report.renderers) {
-    const s = speedup(report, r.renderer, 'v12-frozen').value;
     out.push(
       row([
         r.renderer,
@@ -106,37 +111,177 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
         counts(r.results),
         ms(sum(r.results, common, 'warmMs')),
         ms(sum(r.results, common, 'firstMs')),
-        times(s),
+        times(speedup(report, r.renderer, 'v12-frozen').value),
         ...(hasBase ? [times(speedup(report, r.renderer, 'v13-base').value)] : []),
       ])
     );
     if (r.error) notes.push(`- ${r.renderer}: ${r.error}`);
   }
   out.push('', ...notes, ...(notes.length > 0 ? [''] : []));
+  return out;
+}
 
-  out.push('## Diagrams', '');
-  out.push(
-    'Times are per render. Stage columns are medians from the instrumented `v13-stages` build. "Speedup" and "vs …" are that renderer\'s warm time over v13\'s (above 1× means v13 is faster).',
-    ''
-  );
-  out.push(
+const DIAGRAMS_NOTE =
+  'Times are per render. Stage columns are medians from the instrumented `v13-stages` build. "Speedup" and "vs …" are that renderer\'s warm time over v13\'s (above 1× means v13 is faster).';
+
+function browserDiagramsLines(report: BenchReport): string[] {
+  return [
+    DIAGRAMS_NOTE,
+    '',
     ...diagramsTable(report.renderers, [
       { id: 'v12-frozen', ratio: 'Speedup', always: true },
       { id: 'v13-base', ratio: 'vs base' },
       { id: 'pele', ratio: 'vs pele' },
-    ])
-  );
+    ]),
+  ];
+}
 
-  if (report.node) out.push(...nodeSection(report, report.node));
+function nodeDiagramsLines(node: NodeRuns): string[] {
+  return diagramsTable(node.renderers, [
+    { id: 'v13-base', ratio: 'vs base' },
+    { id: 'pele', ratio: 'vs pele' },
+  ]);
+}
 
+function unsupportedLines(report: BenchReport, h: Heading): string[] {
   const unsupported = report.unsupported ?? [];
-  if (unsupported.length > 0) {
-    out.push('## Not run: no v13 package for the type', '');
-    out.push(row(['Diagram', 'Set', 'Type']), row(Array<string>(3).fill('---')));
-    for (const u of unsupported) out.push(row([u.id, u.set, u.type]));
-    out.push('');
-  }
-  return out.join('\n');
+  if (unsupported.length === 0) return [];
+  return [
+    `${h} Not run: no v13 package for the type`,
+    '',
+    row(['Diagram', 'Set', 'Type']),
+    row(Array<string>(3).fill('---')),
+    ...unsupported.map((u) => row([u.id, u.set, u.type])),
+    '',
+  ];
+}
+
+export function formatMarkdown(report: BenchReport, outcome: GateOutcome): string {
+  return [
+    `# Bench report ${report.createdAt}`,
+    '',
+    ...headerLines(report),
+    ...gatesLines(outcome, '##'),
+    ...browserRenderersLines(report, '##'),
+    '## Diagrams',
+    '',
+    ...browserDiagramsLines(report),
+    ...(report.node
+      ? [
+          ...nodeSummaryLines(report, report.node, '##'),
+          '### Node diagrams',
+          '',
+          ...nodeDiagramsLines(report.node),
+        ]
+      : []),
+    ...unsupportedLines(report, '##'),
+  ].join('\n');
+}
+
+/** Hidden first line of the PR comment, so CI updates its own comment instead of adding one. */
+export const COMMENT_MARKER = '<!-- mermaid-v13-bench -->';
+/** GitHub rejects comments over 65 536 characters; keep a margin. */
+const COMMENT_LIMIT = 60_000;
+/** A warm-time change below this is noise for a single CI run. */
+const CHANGE_THRESHOLD = 0.1;
+const CHANGES_SHOWN = 5;
+
+/** The diagrams whose v13 warm time moved most against v13-base, in one environment. */
+function changesLines(runs: RendererRun[], env: string, h: Heading): string[] {
+  const find = (id: RendererId) => runs.find((r) => r.renderer === id && r.status === 'ready');
+  const now = find('v13');
+  const then = find('v13-base');
+  if (!now || !then) return [];
+  const okWarm = (x: DiagramResult | undefined) =>
+    x?.status === 'ok' && x.warmMs !== null && x.warmMs > 0 ? x.warmMs : null;
+  const before = new Map(then.results.map((r) => [r.id, okWarm(r)]));
+  const pairs = now.results.flatMap((r) => {
+    const a = before.get(r.id) ?? null;
+    const b = okWarm(r);
+    return a === null || b === null ? [] : [{ id: r.id, then: a, now: b, change: b / a - 1 }];
+  });
+  const slower = pairs
+    .filter((p) => p.change > CHANGE_THRESHOLD)
+    .sort((x, y) => y.change - x.change);
+  const faster = pairs
+    .filter((p) => p.change < -CHANGE_THRESHOLD)
+    .sort((x, y) => x.change - y.change);
+  const pct = (c: number) => `${c > 0 ? '+' : ''}${Math.round(c * 100)}%`;
+  const out = [
+    `${h} Largest changes vs v13-base (${env})`,
+    '',
+    `Warm medians of ${pairs.length} diagrams: ${slower.length} more than ${CHANGE_THRESHOLD * 100}% slower, ${faster.length} more than ${CHANGE_THRESHOLD * 100}% faster. Sub-millisecond diagrams are noisy in a single run.`,
+    '',
+  ];
+  const shown = [...slower.slice(0, CHANGES_SHOWN), ...faster.slice(0, CHANGES_SHOWN)];
+  if (shown.length > 0)
+    out.push(
+      row(['Diagram', 'v13-base warm', 'v13 warm', 'Change']),
+      row(Array<string>(4).fill('---')),
+      ...shown.map((p) => row([p.id, num(p.then), num(p.now), pct(p.change)])),
+      ''
+    );
+  return out;
+}
+
+const details = (summary: string, lines: string[]) => [
+  `<details><summary>${summary}</summary>`,
+  '',
+  ...lines,
+  '</details>',
+  '',
+];
+
+export interface CommentOptions {
+  /** Link to the CI run whose artifact holds the full report. */
+  runUrl?: string;
+  maxChars?: number;
+}
+
+/**
+ * The PR comment: the verdict, gates, renderer summaries of both environments and the largest
+ * changes against the base branch. Per-diagram tables are folded, and dropped (pointing at the
+ * full report) when they would take the comment over GitHub's size limit.
+ */
+export function formatComment(
+  report: BenchReport,
+  outcome: GateOutcome,
+  options: CommentOptions = {}
+): string {
+  const failed = outcome.gates.filter((g) => g.status === 'fail' && g.enforced);
+  const warned = outcome.gates.filter((g) => g.status === 'fail' && !g.enforced);
+  const verdict =
+    failed.length > 0
+      ? `${failed.length} gate${failed.length === 1 ? '' : 's'} failed (${failed.map((g) => g.requirement).join(', ')})`
+      : `gates pass${warned.length > 0 ? `, ${warned.length} reported only (${warned.map((g) => g.requirement).join(', ')})` : ''}`;
+  const full = options.runUrl
+    ? `Full report: the \`bench-report\` artifact of [this run](${options.runUrl}).`
+    : 'Full report: the `bench-report` artifact of this run.';
+  const head = [
+    COMMENT_MARKER,
+    `## Bench: ${verdict}`,
+    '',
+    ...headerLines(report),
+    ...gatesLines(outcome, '###'),
+    ...browserRenderersLines(report, '###'),
+    ...changesLines(report.renderers, 'browser', '###'),
+    ...(report.node
+      ? [
+          ...nodeSummaryLines(report, report.node, '###'),
+          ...changesLines(report.node.renderers, 'Node', '###'),
+        ]
+      : []),
+  ];
+  const folded = [
+    ...details('Per-diagram times (browser)', browserDiagramsLines(report)),
+    ...(report.node ? details('Per-diagram times (Node)', nodeDiagramsLines(report.node)) : []),
+  ];
+  const limit = options.maxChars ?? COMMENT_LIMIT;
+  const withTables = [...head, ...folded, full].join('\n');
+  if (withTables.length <= limit) return withTables;
+  return [...head, 'Per-diagram tables are left out to fit the comment size limit.', full].join(
+    '\n'
+  );
 }
 
 interface Comparison {
@@ -198,14 +343,14 @@ function diagramsTable(runs: RendererRun[], comparisons: Comparison[]): string[]
   return out;
 }
 
-/** The Node environment: a renderer summary and the per-diagram table. Reported only. */
-function nodeSection(report: BenchReport, node: NodeRuns): string[] {
+/** The Node environment's renderer summary. Reported only. */
+function nodeSummaryLines(report: BenchReport, node: NodeRuns, h: Heading): string[] {
   const runs = node.renderers;
   const common = commonIds(runs);
   // speedup() reads `renderers`; point it at the Node runs.
   const asReport: BenchReport = { ...report, renderers: runs };
   const hasBase = runs.some((r) => r.renderer === 'v13-base' && r.status === 'ready');
-  const out: string[] = ['## Node', ''];
+  const out: string[] = [`${h} Node`, ''];
   out.push(
     `Runtime \`${node.runtime}\`. Each renderer runs in its own child process and is timed to the SVG string: no document and no layout, so these times are not comparable with the browser's. mermaid@12 needs a DOM and does not run here. Pele measures text with its built-in Arial table in Node, and with a canvas in the browser. Nothing here is gated.`,
     ''
@@ -243,12 +388,5 @@ function nodeSection(report: BenchReport, node: NodeRuns): string[] {
     if (r.error) notes.push(`- ${r.renderer}: ${r.error}`);
   }
   out.push('', ...notes, ...(notes.length > 0 ? [''] : []));
-  out.push('### Node diagrams', '');
-  out.push(
-    ...diagramsTable(runs, [
-      { id: 'v13-base', ratio: 'vs base' },
-      { id: 'pele', ratio: 'vs pele' },
-    ])
-  );
   return out;
 }

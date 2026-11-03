@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { evaluateGates } from './gates.ts';
-import { formatMarkdown } from './markdown.ts';
+import { COMMENT_MARKER, formatComment, formatMarkdown } from './markdown.ts';
 import type { BenchReport, DiagramResult } from './report.ts';
 
 function ok(id: string, warmMs: number, stages?: DiagramResult['stages']): DiagramResult {
@@ -157,11 +157,81 @@ describe('markdown report', () => {
     );
     expect(node).not.toContain('v12-frozen');
     // The browser table is unchanged by the Node runs.
-    expect(out.startsWith(md.trimEnd())).toBe(true);
+    // The browser tables are unchanged by the Node runs; the header names the Node runtime.
+    expect(out).toContain(md.slice(md.indexOf('## Gates')).trimEnd());
+    expect(out).toContain(', node v24.16.0.');
   });
 
   it('says the gates are only reporting while the pipeline is missing', () => {
     expect(md).toContain('Gates: report');
     expect(md).toMatch(/\| R-PERF-1 \| Loaded size, core \+ flowchart \(gzip\) \| pass \| no \|/);
+  });
+});
+
+describe('PR comment', () => {
+  const run = (renderer: 'v13' | 'v13-base', results: DiagramResult[]) => ({
+    renderer,
+    version: renderer === 'v13-base' ? '13.0.0-alpha.0 (abc123456)' : '13.0.0-alpha.0',
+    status: 'ready' as const,
+    readyAtMs: 5,
+    initMs: 1,
+    size: null,
+    results,
+  });
+  const withBase: BenchReport = {
+    ...report,
+    options: { ...report.options, base: 'HEAD^1' },
+    renderers: [
+      ...report.renderers.map((r) =>
+        r.renderer === 'v13' ? { ...r, results: [ok('corpus/a', 0.2), ok('corpus/b', 1)] } : r
+      ),
+      run('v13-base', [ok('corpus/a', 0.4), ok('corpus/b', 1.02)]),
+    ],
+  };
+  const outcome = evaluateGates({
+    report: withBase,
+    baseline: undefined,
+    mode: 'report',
+    corpusSize: 1,
+  });
+
+  it('starts with the marker CI finds its own comment by, then the verdict', () => {
+    const c = formatComment(withBase, outcome, { runUrl: 'https://ci.example/run/1' });
+    const [marker, title] = c.split('\n');
+    expect(marker).toBe(COMMENT_MARKER);
+    expect(title).toMatch(/^## Bench: /);
+    expect(c).toContain('v13-base is `HEAD^1` = 13.0.0-alpha.0 (abc123456).');
+    expect(c).toContain('[this run](https://ci.example/run/1)');
+  });
+
+  it('names failed enforced gates in the verdict', () => {
+    const failing = evaluateGates({
+      report: withBase,
+      baseline: undefined,
+      mode: 'enforce',
+      corpusSize: 5,
+    });
+    expect(formatComment(withBase, failing).split('\n')[1]).toMatch(
+      /^## Bench: \d+ gates? failed \(.*R-PERF-4.*\)$/
+    );
+  });
+
+  it('lists diagrams that moved more than 10% against the base, not the noise', () => {
+    const c = formatComment(withBase, outcome);
+    expect(c).toContain('### Largest changes vs v13-base (browser)');
+    expect(c).toContain(
+      'Warm medians of 2 diagrams: 0 more than 10% slower, 1 more than 10% faster.'
+    );
+    expect(c).toContain('| corpus/a | 0.4 | 0.2 | -50% |');
+    expect(c).not.toContain('| corpus/b | 1.02');
+  });
+
+  it('folds the per-diagram tables, and drops them when they would not fit', () => {
+    const c = formatComment(withBase, outcome);
+    expect(c).toContain('<details><summary>Per-diagram times (browser)</summary>');
+    const small = formatComment(withBase, outcome, { maxChars: c.length - 1 });
+    expect(small).not.toContain('<details>');
+    expect(small).toContain('Per-diagram tables are left out to fit the comment size limit.');
+    expect(small).toContain('### Renderers');
   });
 });

@@ -40,9 +40,14 @@ jobs:
     # informational: the report compares the PR with both. v12-current is informational and is
     # skipped here; the release bench still runs it. Both environments run (the --env default):
     # the browser, which the gates read, and Node (reported only; mermaid@12 is browser-only).
+    # On a PR from this repository the condensed report is posted as a PR comment, updated in
+    # place on every run. Fork PRs get a read-only token, so they only get the artifact.
     name: Bench gates
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: write
     env:
       BENCH_RUNNER: blacksmith-4vcpu-ubuntu-2404
       BENCH_REPORT_ONLY: speed
@@ -66,6 +71,24 @@ jobs:
           name: bench-report
           path: packages/bench/dist/reports/
           if-no-files-found: ignore
+      - name: Post the bench report on the PR
+        if: >-
+          !cancelled() && github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository &&
+          hashFiles('packages/bench/dist/reports/comment.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          BODY: packages/bench/dist/reports/comment.md
+        run: |
+          # The comment starts with a marker line (COMMENT_MARKER in packages/bench/src/markdown.ts).
+          id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR/comments" \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- mermaid-v13-bench -->"))) | .id' | head -n 1)
+          if [ -n "$id" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F "body=@$BODY" > /dev/null
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F "body=@$BODY" > /dev/null
+          fi
 
   visual:
     # R-TEST-5: every .mmd tier of the fixture folders whose diagram types have a v13 package

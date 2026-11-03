@@ -6,7 +6,7 @@ import { loadBaseline, saveBaseline } from '../baseline.ts';
 import { loadFixtures } from '../fixtures.ts';
 import type { GateId, GateModeSetting, GateOutcome } from '../gates.ts';
 import { evaluateGates, resolveMode } from '../gates.ts';
-import { formatMarkdown } from '../markdown.ts';
+import { formatComment, formatMarkdown } from '../markdown.ts';
 import type { BenchReport } from '../report.ts';
 import { baselineFrom } from '../report.ts';
 
@@ -60,6 +60,12 @@ export function gate(
   });
 }
 
+/** The GitHub Actions run this bench is part of, when it is one. */
+function ciRunUrl(): string | undefined {
+  const { GITHUB_SERVER_URL: server, GITHUB_REPOSITORY: repo, GITHUB_RUN_ID: id } = process.env;
+  return server && repo && id ? `${server}/${repo}/actions/runs/${id}` : undefined;
+}
+
 export function publish(
   report: BenchReport,
   outcome: GateOutcome,
@@ -76,6 +82,11 @@ export function publish(
       );
       writeFileSync(join(REPORTS_DIR, `${name}.md`), md);
     }
+    // The PR comment CI posts (condensed: GitHub caps comments at 65 536 characters).
+    writeFileSync(
+      join(REPORTS_DIR, 'comment.md'),
+      formatComment(report, outcome, { runUrl: ciRunUrl() }) + '\n'
+    );
     process.stdout.write(`Report: ${join(REPORTS_DIR, `${stamp}.md`)}\n`);
   }
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, md + '\n');
