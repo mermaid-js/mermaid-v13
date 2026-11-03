@@ -294,7 +294,7 @@ Removed and ignored keys, with what to use instead:
 | `themeCSS` | Ignored; see [Config behaviour](#config-behaviour) | R-SEC-2 |
 | Label text colour fixed by the theme | When a `style`/`classDef` fill makes the theme's text colour unreadable, the label switches to black or white | R-THEME-12 |
 | `look: neo` / `look: classic` | `look` is removed: the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. What `look` switched in v12 is theme data: the redux themes carry v12's neo geometry and the classic themes (`default`, `dark`, `forest`, `neutral`, `base`) carry v12's classic geometry. For a mix, override the variables ([Theme geometry](#theme-geometry)) | D152, D153 |
-| `look: handDrawn` | Ignored with a warning that the hand-drawn plugin is not installed; hand-drawn strokes come from that optional plugin | D7, D153, R-PLUG-8 |
+| `look: handDrawn` | Ignored like any other `look`, with the same generic `LOOK_REMOVED` warning; core names no plugin. Hand-drawn strokes will come from an optional plugin, which will claim `look: handDrawn` as a legacy alias of its own key once plugins can declare config | D7, D153, R-PLUG-8 |
 | Neo gradients (`useGradient`, `gradientStart`, `gradientStop`) | Not in 13.0. They come back as theme variables of the `neo` theme when it is ported | D151 |
 | Drop shadow under `look: neo` | A hard drop shadow in the redux themes only, as the CSS `filter` from the `dropShadow` theme variable: offset 4px, no blur, 6% opacity, black on light themes and white on dark. It is on node outlines, icons, subgraphs and collapsed groups, not on edges, edge labels or swimlanes. The classic themes set `dropShadow: none`. No `<defs>` and no ids, so several diagrams on a page never collide | D151, D152 |
 | Per-subgraph colour in `redux-color` | Each subgraph takes a palette slot by declaration order, cycling after twelve: border from `borderColorArray`, fill from `bkgColorArray`. `redux-dark-color` has an empty fill palette, so its subgraphs are coloured on the border only. `redux` and the classic themes carry no palette. Colour is on whenever the theme has a non-empty `borderColorArray` (a `themeVariables` palette turns it on in any theme), and a collapsed subgraph's card, separator and dots take its slot too. As in v12 the slot is written as `data-color-id="color-<n>"` on the cluster or collapsed node, and an author `style` / `classDef` still wins. Swimlanes are not drawn yet, so there is nothing to colour there | D151, D152 |
@@ -358,7 +358,13 @@ so it counts twice towards the diameter compared with the per-side node padding.
 - **Diamonds** are the v12 square rhombus in every theme, with side = label width + label
   height + 2 × padding. Being the same everywhere, the diamond has no theme variable.
 - **Collapsed subgraphs** are drawn as in v12 in every theme: a rounded card, a dashed separator
-  and three dots.
+  and three dots. The dots are flat: filled with the separator colour at 0.6 opacity, with no
+  stroke and no shadow, which is what v12's stylesheet asks for. v12 neo draws them with a dark
+  2px outline and a drop shadow only because a generic `.node circle` rule beats its own
+  `.collapsed-indicator` rule on specificity (D154).
+- **Layout room for arrowheads is fixed.** The layout leaves 7px for an arrowhead in a crossed
+  gap whatever the arrowhead variables say, so changing `arrowheadLength` or the other
+  arrowhead variables redraws the arrowheads but never moves a node (D154).
 
 ## Layout
 

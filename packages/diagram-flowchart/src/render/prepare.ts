@@ -76,7 +76,7 @@ const EDGE_WRAP = 200;
 const IMG = 80;
 const ICON = 48;
 // Room the layout leaves in a crossed gap for an arrowhead (v13's former 8px point less 1). It
-// stays theme-independent, so the layout does not move with the arrowhead variables.
+// stays theme-independent, so the layout does not move with the arrowhead variables (D154).
 const HEAD_ROOM = 7;
 // The smallest hexagonSlant drawn: each pointed end as deep as the hexagon is tall.
 const MIN_SLANT = 1;
