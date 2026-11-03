@@ -63,3 +63,10 @@ Unmet acceptance criteria and announced shared contracts, grouped by the ticket 
 - `LaidOut` declares `LayoutModel` but the flowchart's postLayout value is `FlowLayout` (pre-existing type mismatch, surfaced by #47).
 - Text output ignores px `options.availableWidth`; only `ascii.maxWidth` counts (documented in tickets/47.md).
 - SVG path +562 B gz for the lazy ascii loader (size pass at M1 close).
+
+## #48
+
+- Closed: the #45 corpus property moved to `conformance/src/ascii/corpus.spec.ts` (both charsets, e2e + v12 specs).
+- Open (not a D87 property): edges connected box to box fails on 17 corpus renders, mostly an edge through
+  a group title (`66/68-more-nested-subgraph-cases`); see tickets/48.md.
+- `paddingX`/`paddingY` in fixture meta have no config home; ignored. Decide if `roomy` should map.
