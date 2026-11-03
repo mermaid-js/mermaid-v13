@@ -31,7 +31,13 @@ export type RenderReply =
 export interface BenchWindow {
   renderer: RendererId;
   ready: Promise<ReadyInfo>;
-  render(source: string, reps: number, budgetMs: number): Promise<RenderReply>;
+  render(
+    source: string,
+    reps: number,
+    budgetMs: number,
+    minTotalMs?: number,
+    minSampleMs?: number
+  ): Promise<RenderReply>;
 }
 
 /** Where the server publishes each renderer and which file the adapter imports. */

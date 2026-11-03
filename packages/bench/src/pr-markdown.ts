@@ -116,7 +116,7 @@ function problemLines(report: PrReport, outcome: GateOutcome): string[] {
 }
 
 const NOTE =
-  'Instructions: CPU instructions per warm render, the median of 3 fresh `node --single-threaded` processes counted with `perf`. They vary by about 1% between runs, so changes under 2% are noise (2% and over is in bold). Browser: one Chromium session per renderer, alternating, so its times against the base can move by 10% or more between runs; trust the instruction column for small changes. The full browser bench (corpus speed for R-PERF-3, Pele, stages) runs nightly and at release.';
+  'Instructions: CPU instructions per warm render, the median of 3 fresh `node --single-threaded` processes counted with `perf`. They vary by about 1% between runs, so changes under 2% are noise (2% and over is in bold). Browser: one Chromium session per renderer, alternating, at least 1 s of samples per diagram; against the base its times move by about 3% (up to 7%) between runs, so trust the instruction column for small changes. The full browser bench (corpus speed for R-PERF-3, Pele, stages) runs nightly and at release.';
 
 /** The PR comment: verdict, one 5-row table, one status line, problems when there are any. */
 export function formatPrComment(

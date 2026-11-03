@@ -10,7 +10,8 @@ import type { RenderReply } from './protocol.ts';
 
 // Timers are coarse (about 0.1 ms in a browser), and v13 renders tiny diagrams well under that,
 // so each warm sample times a batch of renders sized to last at least 2 ms.
-const MIN_SAMPLE_MS = 2;
+/** Default shortest warm sample: renders are batched until a sample lasts at least this. */
+export const MIN_SAMPLE_MS = 2;
 const MAX_BATCH = 500;
 
 export interface SampleOptions {
@@ -22,27 +23,35 @@ export interface SampleOptions {
   cleanup?(): void;
 }
 
-/** A cold render, a probe that sizes the batch, then warm samples until reps or the budget. */
+/** Hard cap on warm samples, whatever `minTotalMs` asks for. */
+const MAX_SAMPLES = 5000;
+
+/**
+ * A cold render, a probe that sizes the batch, then warm samples until `reps` or the budget,
+ * and in any case until at least `minTotalMs` of warm samples (0: no floor).
+ */
 export async function sample(
   o: SampleOptions,
   source: string,
   reps: number,
-  budgetMs: number
+  budgetMs: number,
+  minTotalMs = 0,
+  minSampleMs = MIN_SAMPLE_MS
 ): Promise<RenderReply> {
   try {
     const firstMs = await o.renderOnce(source);
     let batch = 1;
     if (reps > 0) {
       const probe = await o.renderOnce(source);
-      if (probe < MIN_SAMPLE_MS)
-        batch = Math.min(MAX_BATCH, Math.ceil(MIN_SAMPLE_MS / Math.max(probe, 0.02)));
+      if (probe < minSampleMs)
+        batch = Math.min(MAX_BATCH, Math.ceil(minSampleMs / Math.max(probe, 0.02)));
     }
     const samples: number[] = [];
     const stageSamples: Partial<Record<Stage, number[]>> = {};
     let spent = 0;
-    for (let i = 0; i < reps; i++) {
-      // Always take at least one warm sample; then stop once the budget is spent.
-      if (i > 0 && spent > budgetMs) break;
+    for (let i = 0; i < MAX_SAMPLES && (i < reps || spent < minTotalMs); i++) {
+      // Always take at least one warm sample; past the time floor, stop once the budget is spent.
+      if (i > 0 && spent > budgetMs && spent >= minTotalMs) break;
       o.adapter.takeStages?.();
       const t0 = performance.now();
       for (let b = 0; b < batch; b++) await o.renderOnce(source);

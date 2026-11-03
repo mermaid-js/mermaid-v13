@@ -73,8 +73,14 @@ const sampler = {
 // Requests are handled strictly one at a time.
 let queue: Promise<unknown> = Promise.resolve();
 
-function render(source: string, reps: number, budgetMs: number): Promise<RenderReply> {
-  const job = queue.then(() => sample(sampler, source, reps, budgetMs));
+function render(
+  source: string,
+  reps: number,
+  budgetMs: number,
+  minTotalMs = 0,
+  minSampleMs?: number
+): Promise<RenderReply> {
+  const job = queue.then(() => sample(sampler, source, reps, budgetMs, minTotalMs, minSampleMs));
   queue = job;
   return job;
 }

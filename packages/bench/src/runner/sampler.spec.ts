@@ -58,4 +58,26 @@ describe('sample', () => {
     );
     expect(reply.ok && reply.stageSamples.parse).toEqual([0.4, 0.4]);
   });
+
+  it('keeps sampling until the warm samples add up to minTotalMs, past reps and the budget', async () => {
+    const slow = () => new Promise<number>((r) => setTimeout(() => r(3), 3));
+    const reply = await sample({ renderOnce: slow, adapter, errorText }, 's', 2, 1, 60);
+    expect(reply.ok).toBe(true);
+    if (!reply.ok) return;
+    // reps is 2 and the budget 1 ms, but sampling went on until 60 ms of samples.
+    expect(reply.samples.length).toBeGreaterThan(2);
+    expect(reply.samples.reduce((a, x) => a + x, 0)).toBeGreaterThanOrEqual(60);
+  });
+
+  it('batches renders up to minSampleMs per warm sample', async () => {
+    const reply = await sample(
+      { renderOnce: () => Promise.resolve(0.1), adapter, errorText },
+      's',
+      1,
+      1000,
+      0,
+      20
+    );
+    expect(reply.ok && reply.batch).toBe(200);
+  });
 });
