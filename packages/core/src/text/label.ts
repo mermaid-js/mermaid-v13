@@ -258,7 +258,7 @@ function inline(source: string, base: StyleBits, tags: Tags, markdown: boolean):
       const next = source[i + len] ?? ' ';
       const opening = (marked & bit) === 0;
       const can = opening
-        ? next.trim() !== '' && source.indexOf(double ? ch + ch : ch, i + len + 1) !== -1
+        ? next.trim() !== '' && source.includes(double ? ch + ch : ch, i + len + 1)
         : prev.trim() !== '';
       const intraWord = ch === '_' && RE_WORD.test(prev) && RE_WORD.test(next);
       if (can && !intraWord) {

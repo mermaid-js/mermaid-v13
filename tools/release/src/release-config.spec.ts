@@ -82,7 +82,9 @@ describe('release workflow (R-REL-2, R-REL-3)', () => {
   it('publishes the private alpha to GitHub Packages after versioning', () => {
     const p = job('private');
     expect(needs(p)).toContain('version');
-    const publish = p.steps.find((s) => /pnpm release:publish --target private/.test(s.run ?? ''));
+    const publish = p.steps.find((s) =>
+      (s.run ?? '').includes('pnpm release:publish --target private')
+    );
     expect(publish?.env?.NODE_AUTH_TOKEN).toBe('${{ secrets.MERMAID_CHART_PACKAGES_TOKEN }}');
     expect(stepIndex(p, /pnpm build/)).toBeLessThan(stepIndex(p, /release:publish/));
   });
@@ -128,7 +130,9 @@ describe('workflow branches (R-REL-1)', () => {
     };
 
   it('compares Argos screenshots with the mermaid-v13 baseline', () => {
-    const upload = wf('ci.yml').jobs.visual!.steps.find((s) => /argos upload/.test(s.run ?? ''));
+    const upload = wf('ci.yml').jobs.visual!.steps.find((s) =>
+      (s.run ?? '').includes('argos upload')
+    );
     expect(upload?.env?.ARGOS_REFERENCE_BRANCH).toBe('mermaid-v13');
   });
 });

@@ -440,11 +440,9 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         emit(T.StartLink, p, e);
         return true;
       }
-    } else if (d === 46) {
-      if ((e = at(RE_DOTTED_LINK, p)) >= 0) {
-        emit(T.Link, p, e);
-        return true;
-      }
+    } else if (d === 46 && (e = at(RE_DOTTED_LINK, p)) >= 0) {
+      emit(T.Link, p, e);
+      return true;
     }
     return c !== 45 && c !== 61 && c !== 46 && invisLink();
   };

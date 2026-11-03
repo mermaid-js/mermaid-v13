@@ -110,7 +110,7 @@ describe('junction (D79): one lookup for every pair', () => {
       '+ + + + + + + +',
     ].map((row) => row.split(' ').filter(Boolean));
     const [, ...cols] = table[0] as string[];
-    for (const [a, ...merged] of table.slice(1) as string[][]) {
+    for (const [a, ...merged] of table.slice(1)) {
       cols.forEach((b, i) => expect(junction(a as string, b), `${a} + ${b}`).toBe(merged[i]));
     }
   });

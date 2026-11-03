@@ -111,7 +111,6 @@ export default tseslint.config(
       'unicorn/better-regex': 'error',
       'unicorn/no-abusive-eslint-disable': 'error',
       'unicorn/no-array-push-push': 'error',
-      'unicorn/no-for-loop': 'error',
       'unicorn/no-instanceof-array': 'error',
       'unicorn/no-lonely-if': 'error',
       'unicorn/no-typeof-undefined': 'error',
@@ -132,6 +131,14 @@ export default tseslint.config(
       // v12's stylistic set prefers `x!` to `x as T`, and flags `a! === b`; v13 keeps both.
       '@typescript-eslint/non-nullable-type-assertion-style': 'off',
       '@typescript-eslint/no-confusing-non-null-assertion': 'off',
+      // Its fix rewrites index loops to `.entries()`, which allocates per element in hot loops;
+      // `prefer-for-of` covers the loops that only read the element.
+      'unicorn/no-for-loop': 'off',
+      // `s || fallback` on a string means "empty counts as missing", which `??` would change.
+      '@typescript-eslint/prefer-nullish-coalescing': [
+        'error',
+        { ignorePrimitives: { string: true } },
+      ],
 
       // Added for v13: type-aware checks, and the slips generated code tends to make.
       eqeqeq: 'error',
@@ -151,7 +158,7 @@ export default tseslint.config(
       '@typescript-eslint/no-useless-empty-export': 'error',
       '@typescript-eslint/prefer-readonly': 'error',
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
-      '@eslint-community/eslint-comments/disable-enable-pair': 'error',
+      '@eslint-community/eslint-comments/disable-enable-pair': ['error', { allowWholeFile: true }],
       '@eslint-community/eslint-comments/no-unlimited-disable': 'error',
       '@eslint-community/eslint-comments/require-description': 'error',
       'sonarjs/no-all-duplicated-branches': 'error',
@@ -160,7 +167,6 @@ export default tseslint.config(
       'sonarjs/no-gratuitous-expressions': 'error',
       'sonarjs/no-identical-conditions': 'error',
       'sonarjs/no-identical-functions': 'error',
-      'sonarjs/no-inverted-boolean-check': 'error',
       'sonarjs/no-redundant-boolean': 'error',
       'sonarjs/no-redundant-jump': 'error',
       'sonarjs/no-unused-collection': 'error',
@@ -187,6 +193,7 @@ export default tseslint.config(
     rules: {
       '@eslint-community/eslint-comments/disable-enable-pair': 'off',
       '@eslint-community/eslint-comments/no-unlimited-disable': 'off',
+      '@eslint-community/eslint-comments/require-description': 'off',
       'unicorn/no-abusive-eslint-disable': 'off',
     },
   },

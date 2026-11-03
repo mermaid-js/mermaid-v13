@@ -93,12 +93,11 @@ function extents(tree: SvgTree): { x: number; y: number }[] {
       const d = tree.getAttr(node, 'd') ?? '';
       for (const seg of d.match(/[MLCQAZ][^MLCQAZ]*/g) ?? []) {
         const p = nums(seg.slice(1));
-        if (seg[0] === 'A') put(p[5]!, p[6]!);
+        if (seg.startsWith('A')) put(p[5]!, p[6]!);
         else for (let i = 0; i + 1 < p.length; i += 2) put(p[i]!, p[i + 1]!);
       }
-    } else if (tag === 'text' || tag === 'tspan') {
-      if (tree.getAttr(node, 'x') !== undefined) put(at('x'), at('y'));
-    }
+    } else if ((tag === 'text' || tag === 'tspan') && tree.getAttr(node, 'x') !== undefined)
+      put(at('x'), at('y'));
     for (const c of tree.children(node)) walk(c, dx, dy);
   };
   walk(tree.root, 0, 0);
@@ -149,7 +148,7 @@ describe('flowchart render properties over the e2e corpus', () => {
     for (const c of cases) {
       const { tree } = c.result;
       const root = tree.find({ tag: 'svg' })[0]!;
-      const [, , w, h] = tree.getAttr(root, 'viewBox')!.split(' ').map(Number) as number[];
+      const [, , w, h] = tree.getAttr(root, 'viewBox')!.split(' ').map(Number);
       const out = extents(tree).filter(
         (p) => p.x < -0.5 || p.y < -0.5 || p.x > w! + 0.5 || p.y > h! + 0.5
       );

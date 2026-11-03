@@ -67,9 +67,9 @@ for (const file of files) {
     .filter((line) => !/^import .* from ['"]/.test(line))
     .join('\n');
   const notes: string[] = [];
-  body = body.replace(JISON_MESSAGE, (_m, error: string | undefined) => {
+  body = body.replace(JISON_MESSAGE, (_m, error = '') => {
     notes.push('// rewritten: a jison message check keeps only the rejection (R-ERR-5)');
-    return `.toThrow${error ?? ''}()`;
+    return `.toThrow${error}()`;
   });
   for (const [title, reason] of Object.entries(SKIP[name] ?? {})) {
     let hit = 0;

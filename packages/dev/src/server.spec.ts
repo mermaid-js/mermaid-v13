@@ -67,7 +67,7 @@ describe('startServer', () => {
     const v4 = Object.values(networkInterfaces())
       .flat()
       .filter((nic) => nic?.family === 'IPv4')
-      .map((nic) => `http://${nic!.address}:${PORT}/`);
+      .map((nic) => `http://${nic.address}:${PORT}/`);
     expect(server.urls).toEqual(expect.arrayContaining(v4));
     expect(server.urls).toContain(`http://127.0.0.1:${PORT}/`);
   });
@@ -76,7 +76,7 @@ describe('startServer', () => {
     const v4 = Object.values(networkInterfaces())
       .flat()
       .filter((nic) => nic?.family === 'IPv4')
-      .map((nic) => nic!.address);
+      .map((nic) => nic.address);
     for (const address of v4) {
       expect((await call('/e2e.html', { address, host: `${address}:${PORT}` })).status).toBe(200);
     }

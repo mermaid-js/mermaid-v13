@@ -1,5 +1,13 @@
+export interface ParsedArgs {
+  positional: string[];
+  flag(name: string): boolean;
+  get(name: string): string | undefined;
+  num(name: string, fallback: number): number;
+  list(name: string): string[] | undefined;
+}
+
 /** Minimal `--name value` / `--flag` parsing for the bench CLIs. */
-export function parseArgs(argv: string[]) {
+export function parseArgs(argv: string[]): ParsedArgs {
   const values = new Map<string, string>();
   const flags = new Set<string>();
   const positional: string[] = [];

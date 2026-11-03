@@ -17,7 +17,7 @@
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/option/option.js';
 import '@shoelace-style/shoelace/dist/components/select/select.js';
-import { css, html, nothing } from 'lit';
+import { css, html, nothing, type TemplateResult } from 'lit';
 import { keyed } from 'lit/directives/keyed.js';
 import type { PaneBundle, PaneMessage, ParentMessage } from '../../compare-pane.ts';
 import { diffRenders, type DiffResult, type RenderedSvg } from '../compare-diff.ts';
@@ -300,7 +300,7 @@ export class CompareTab extends ViewerTabElement {
     }
   }
 
-  #onMessage = (event: MessageEvent<PaneMessage | null>): void => {
+  readonly #onMessage = (event: MessageEvent<PaneMessage | null>): void => {
     // Matched by window identity: a sandboxed pane's origin is 'null'.
     const side = SIDES.find((s) => this.#iframe(s)?.contentWindow === event.source);
     const m = event.data;
@@ -329,7 +329,7 @@ export class CompareTab extends ViewerTabElement {
     }
   };
 
-  #onKey = (e: KeyboardEvent): void => {
+  readonly #onKey = (e: KeyboardEvent): void => {
     if (!this.active || (e.key !== 'd' && e.key !== 'D')) return;
     if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat || e.defaultPrevented) return;
     const owned = e
@@ -367,7 +367,7 @@ export class CompareTab extends ViewerTabElement {
     const seq = ++this.#diffSeq;
     this.diffError = '';
     try {
-      const result = await diffRenders(left.result!, right.result!, this.#background);
+      const result = await diffRenders(left.result, right.result, this.#background);
       if (seq !== this.#diffSeq) return;
       this.diffResult = result;
       this.#post('right', { type: 'overlay', dataUrl: result.dataUrl });
@@ -461,7 +461,7 @@ export class CompareTab extends ViewerTabElement {
     </div>`;
   }
 
-  override render() {
+  override render(): TemplateResult | typeof nothing {
     if (!this.active) return nothing;
     return html`
       <div class="toolbar">

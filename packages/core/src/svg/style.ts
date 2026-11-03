@@ -91,9 +91,7 @@ export function checkColor(value: string): SafeColor | undefined {
       if (!COLOR_FUNCS.has(name)) return undefined;
       if (name === 'var' && !RE_VAR_ARG.test(v.slice(i + 1))) return undefined;
       if (++depth > 8) return undefined;
-    } else if (c === ')') {
-      if (--depth < 0) return undefined;
-    }
+    } else if (c === ')' && --depth < 0) return undefined;
   }
   return depth === 0 ? (v as SafeColor) : undefined;
 }
@@ -371,7 +369,7 @@ const MEDIA_DARK = '@media (prefers-color-scheme:dark){';
 function sheetBlock(scope: string, decls: Readonly<Record<string, ThemeRef>>): string {
   let body = '';
   for (const prop in decls) {
-    const value = decls[prop as keyof typeof decls];
+    const value = decls[prop];
     if (!RE_CUSTOM_PROP.test(prop) || typeof value !== 'string' || !safeSheetValue(value))
       throw new TypeError(`${JSON.stringify(prop)} cannot go in a theme style sheet`);
     body += (body === '' ? '' : ';') + prop + ':' + value;

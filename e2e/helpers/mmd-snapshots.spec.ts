@@ -140,7 +140,7 @@ describe('the real fixture folders', () => {
     const files = await collectMmdFixtures();
     const undeclared: string[] = [];
     for (const file of files) {
-      const folder = file.split('/')[0]!;
+      const folder = file.split('/')[0];
       let type: string;
       try {
         type = detectType(readFileSync(fixturePath(file), 'utf8'));

@@ -263,7 +263,7 @@ export function renderFlowchart(
         ...e.style.shape,
         fill: 'none',
       });
-      const headPaint: Attrs = { fill: (e.style.shape.stroke as Paint | undefined) ?? P.arrow };
+      const headPaint: Attrs = { fill: e.style.shape.stroke ?? P.arrow };
       marker(
         w,
         e.start,

@@ -10,7 +10,7 @@ class FakeBrowser {
   measured = 0;
 
   install(): void {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- the stubbed globals' callbacks need the fake browser
     const browser = this;
     vi.stubGlobal(
       'OffscreenCanvas',
