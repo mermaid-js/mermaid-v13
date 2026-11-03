@@ -16,13 +16,14 @@
 #                                           (GitHub Packages, scope @mermaid-chart)
 #             NPM_TOKEN                     npm automation token allowed to publish `mermaid` and
 #                                           `@mermaid-js/*` (secret of the npm-alpha environment)
+#   variable  RELEASE_ALPHA = 'true'        turns releases on (off by default)
 #   variable  PUBLIC_ALPHA = 'true'         turns the public job on (off by default)
 #   environment npm-alpha                   restrict to branch mermaid-v13; reviewers optional
 name: Release
 
-# Automatic triggers are off: this private repo has no paid Actions minutes.
-# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
+  push:
+    branches: [mermaid-v13]
   workflow_dispatch:
 
 concurrency:
@@ -35,8 +36,8 @@ permissions:
 jobs:
   version:
     name: Version packages
-    if: github.repository == 'mermaid-js/mermaid-v13' && !startsWith(github.event.head_commit.message, 'chore(release):')
-    runs-on: ubuntu-latest
+    if: vars.RELEASE_ALPHA == 'true' && github.repository == 'mermaid-js/mermaid-v13' && !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: write
     outputs:
@@ -74,7 +75,7 @@ jobs:
   private:
     name: Private alpha (GitHub Packages)
     needs: version
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     permissions:
       contents: read
     steps:
@@ -100,14 +101,14 @@ jobs:
     name: Public alpha (npm), gated on R-PERF-1…4
     needs: [version, private]
     if: vars.PUBLIC_ALPHA == 'true'
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 90
     environment: npm-alpha
     permissions:
       contents: read
       id-token: write # npm provenance
     env:
-      BENCH_RUNNER: github-ubuntu-latest
+      BENCH_RUNNER: blacksmith-4vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:

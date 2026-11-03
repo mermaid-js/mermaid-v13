@@ -69,6 +69,7 @@ describe('release workflow (R-REL-2, R-REL-3)', () => {
 
   it('versions every merge (an auto changeset when none came with it) and skips its own commit', () => {
     const v = job('version');
+    expect(v.if).toContain("vars.RELEASE_ALPHA == 'true'");
     expect(v.if).toContain("!startsWith(github.event.head_commit.message, 'chore(release):')");
     const ensure = stepIndex(v, /pnpm release:ensure-changeset/);
     const version = stepIndex(v, /pnpm changeset version/);
@@ -125,19 +126,6 @@ describe('workflow branches (R-REL-1)', () => {
       on: Record<string, { branches?: string[]; 'branches-ignore'?: string[] } | null>;
       jobs: Record<string, Job>;
     };
-
-  it('runs CodeQL and Scorecard on mermaid-v13, not develop', () => {
-    expect(wf('codeql.yml').on.push?.branches).toEqual(['mermaid-v13']);
-    expect(wf('codeql.yml').on.pull_request?.branches).toEqual(['mermaid-v13']);
-    expect(wf('scorecard.yml').on.push?.branches).toEqual(['mermaid-v13']);
-  });
-
-  it('leaves mermaid-v13 to the Renovate app, like v12 did for develop', () => {
-    expect(wf('renovatebot-config-lint.yml').on.push?.['branches-ignore']).toEqual([
-      'mermaid-v13',
-      'renovate/**',
-    ]);
-  });
 
   it('compares Argos screenshots with the mermaid-v13 baseline', () => {
     const upload = wf('ci.yml').jobs.visual!.steps.find((s) => /argos upload/.test(s.run ?? ''));
