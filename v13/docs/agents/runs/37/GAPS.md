@@ -47,3 +47,12 @@ Unmet acceptance criteria and announced shared contracts, grouped by the ticket 
 
 - Review-6 spec in `core/ascii/repair.spec.ts` asserts a wall-clock bound (< 800 ms). Timing specs break determinism (spec: no wall-clock time). Final code-review should replace it with a work-count assertion or move it to bench.
 - Engine: edge end cells can land on a group title (2 F3 fixtures, 5/200 random). Sent back to #42; the F3 cases are pinned in repair.spec.ts until then.
+
+## #46
+
+- Closed: grown-box label centring (drawer centres in the model's box); titles drawn at
+  `round(x − w/2 + ½)`; `unresolved` → one `ASCII_ROUTE` warning; manifest + `ASCII_DROPPED`/`ASCII_SHAPE`.
+- **#47 owns:** `toWarning` in api.ts must keep `feature`/`shapes`/`astIds`; pass `title` and `ast`
+  in the hook context; api.spec ascii test flips to rendering.
+- Engine (#42): group frames sit one cell off their content (right padding 0 beside a node in LR
+  groups, `┌───┐│`). Seen in tickets/46.md examples.

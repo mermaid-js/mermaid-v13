@@ -22,6 +22,12 @@ export interface Warning {
   readonly path?: string;
   /** Where a config value came from (`initialize`, `frontMatter`, `directive`). */
   readonly source?: string;
+  /** Text output (D82): the feature kind an `ASCII_DROPPED` warning is about. */
+  readonly feature?: string;
+  /** Text output (D82): the shapes an `ASCII_SHAPE` warning lists. */
+  readonly shapes?: readonly string[];
+  /** AST ids of what the warning is about (`ASCII_DROPPED`, `ASCII_SHAPE`, `ASCII_ROUTE`). */
+  readonly astIds?: readonly string[];
 }
 
 /** What `parse` gets: the frozen config and the source already preprocessed. */
