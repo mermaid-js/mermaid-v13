@@ -28,3 +28,6 @@ docs/
 .github/
 .changeset/
 *.md
+
+# Written by `eslint --suppress-all` / `--prune-suppressions`.
+eslint-suppressions.json

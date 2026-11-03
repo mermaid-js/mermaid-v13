@@ -1,3 +1,4 @@
+import { CR, LF } from './char-codes.ts';
 /**
  * Scanner helpers for hand-written lexers. Everything here runs in time linear in the text
  * it consumes. Regexes must be sticky (`/y`): they match at one offset and never search
@@ -36,7 +37,7 @@ export function lineEnd(src: string, at: number): number {
   let i = at;
   while (i < src.length) {
     const c = src.charCodeAt(i);
-    if (c === 10 || c === 13) break;
+    if (c === LF || c === CR) break;
     i++;
   }
   return i;
@@ -45,7 +46,7 @@ export function lineEnd(src: string, at: number): number {
 /** Length of the line break at `at`: 2 for `\r\n`, 1 for `\n` or `\r`, else 0. */
 export function newlineAt(src: string, at: number): 0 | 1 | 2 {
   const c = src.charCodeAt(at);
-  if (c === 10) return 1;
-  if (c !== 13) return 0;
-  return src.charCodeAt(at + 1) === 10 ? 2 : 1;
+  if (c === LF) return 1;
+  if (c !== CR) return 0;
+  return src.charCodeAt(at + 1) === LF ? 2 : 1;
 }

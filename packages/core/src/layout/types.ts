@@ -2,6 +2,8 @@
 // diagram measures every box before layout, the engine never measures, and every backend
 // (SVG now, ASCII later) reads the same LayoutModel (R-ARCH-3).
 
+import type { LayoutMetrics } from './units.ts';
+
 /** Flow direction: top to bottom, bottom to top, left to right, right to left. */
 export type Dir = 'TB' | 'BT' | 'LR' | 'RL';
 
@@ -100,6 +102,16 @@ export interface LayoutGraph {
    * LR/RL drawing is turned to TB when the budget is under 640 and that is narrower.
    */
   availableWidth?: number;
+  /**
+   * The engine's length constants, from the diagram's unit profile (D77). Defaults to the px
+   * values, so a graph without them lays out as before.
+   */
+  metrics?: LayoutMetrics;
+  /**
+   * Grid quantum (D77, D140): node boxes, ports and tracks land on whole multiples of it, and
+   * each edge end gets its own cell. Set to 1 for character cells.
+   */
+  grid?: number;
 }
 
 export interface LayoutModelNode {

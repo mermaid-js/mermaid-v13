@@ -50,6 +50,8 @@ describe('architecture lint rules fire', () => {
     ['global-config.ts', DIAGRAM, 'mermaid/no-global-config'],
     ['nested-quantifier.ts', CORE, 'mermaid/no-nested-quantifier'],
     ['nested-quantifier.ts', DIAGRAM, 'mermaid/no-nested-quantifier'],
+    ['magic-char-code.ts', CORE, 'mermaid/no-magic-char-code'],
+    ['magic-char-code.ts', DIAGRAM, 'mermaid/no-magic-char-code'],
   ])('%s in %s reports %s', async (name, asFile, ruleId) => {
     expect(await ruleIds(name, asFile)).toEqual([ruleId]);
   });
@@ -63,6 +65,10 @@ describe('architecture lint rules fire', () => {
       filePath: join(root, CORE),
     });
     expect(config?.messages).toHaveLength(2);
+    const [chars] = await eslint.lintText(fixture('magic-char-code.ts'), {
+      filePath: join(root, DIAGRAM),
+    });
+    expect(chars?.messages).toHaveLength(3);
   });
 });
 
@@ -77,6 +83,7 @@ describe('architecture lint rules allow the intended directions', () => {
     ['import-core-ascii.ts', DIAGRAM_ASCII],
     ['import-core-ascii.ts', DIAGRAM_ASCII_ENTRY],
     ['linear-regex.ts', CORE],
+    ['named-char-code.ts', DIAGRAM],
     ['dom-in-adapter.ts', MERMAID],
   ])('%s in %s is clean', async (name, asFile) => {
     expect(await ruleIds(name, asFile)).toEqual([]);

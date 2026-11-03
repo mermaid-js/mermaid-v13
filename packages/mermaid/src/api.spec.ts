@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { layered, type LayoutEngine, type LayoutGraph } from '@mermaid-js/core/layout';
+import {
+  cellProfile,
+  layered,
+  pxProfile,
+  type LayoutEngine,
+  type LayoutGraph,
+} from '@mermaid-js/core/layout';
 import { assertInert, type SvgWriter } from '@mermaid-js/core/svg';
 import mermaid, {
   createMermaid,
@@ -12,6 +18,7 @@ import mermaid, {
   prepare,
   UnsupportedFormatError,
 } from './index.ts';
+import { defaultIdPrefix } from './api.ts';
 
 const FLOW = 'flowchart LR\n  A[Start] --> B(End)\n';
 
@@ -510,5 +517,13 @@ describe('no console output (R-ERR-4)', () => {
     await rejection(m.render('q', 'flowchart TD\n  A['));
     await rejection(m.render('q', 'gantt'));
     for (const spy of spies) expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+describe('determinism key (R-ARCH-6, D77)', () => {
+  it('includes the unit profile id, leaving px ids as they were', () => {
+    const px = defaultIdPrefix('flowchart TD\n  A', {}, {}, pxProfile);
+    expect(px).toBe('mermaid-1uh2sg');
+    expect(defaultIdPrefix('flowchart TD\n  A', {}, {}, cellProfile())).not.toBe(px);
   });
 });
