@@ -9,6 +9,12 @@ import { build } from 'esbuild';
 import type { Metafile } from 'esbuild';
 import type { SizeSummary, SizedFile } from './report.ts';
 
+/**
+ * esbuild's working directory: the repo root, wherever the bench runs from. Metafile paths are
+ * relative to it, and `isAsciiModule` matches them as `packages/<pkg>/src/ascii…` (R-ASCII-9).
+ */
+const ROOT = new URL('../../../', import.meta.url).pathname;
+
 /** The define that turns stage timing on (bench) or compiles it out (production). */
 export function benchDefine(bench: boolean): Record<string, string> {
   return { __MERMAID_BENCH__: bench ? 'true' : 'false' };
@@ -80,6 +86,7 @@ export async function bundle({ entry, outdir, bench }: BundleOptions): Promise<B
     target: 'es2022',
     minify: true,
     metafile: true,
+    absWorkingDir: ROOT,
     logLevel: 'silent',
     // Workspace packages bundle from their TypeScript sources, as tests and typecheck see them.
     conditions: ['mermaid-source'],
@@ -89,8 +96,8 @@ export async function bundle({ entry, outdir, bench }: BundleOptions): Promise<B
     define: benchDefine(bench),
   });
   const outputs = Object.keys(result.metafile.outputs).filter((p) => !p.endsWith('.map'));
-  // Output paths in the metafile are relative to the working directory.
-  const abs = (p: string) => new URL(p, `file://${process.cwd()}/`).pathname;
+  // Output paths in the metafile are relative to esbuild's working directory.
+  const abs = (p: string) => new URL(p, `file://${ROOT}`).pathname;
   // Lazily imported chunks have an `entryPoint` too and may come first in the metafile.
   const entryOut = outputs.find(
     (p) =>

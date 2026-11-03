@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -44,6 +45,29 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
     expect(inputs.some((i) => i.includes('diagram-flowchart/src/ascii.ts'))).toBe(true);
   });
+
+  // The bench CLI runs from packages/bench, the specs from the repo root: the split must not
+  // depend on the working directory, or the gate measures nothing.
+  it('finds the ascii chunks when built from the bench package directory', () => {
+    const probe = [
+      "import { mkdtempSync } from 'node:fs';",
+      "import { tmpdir } from 'node:os';",
+      "import { join } from 'node:path';",
+      "import { bundle } from './src/build.ts';",
+      "import { asciiSize } from './src/ascii-size.ts';",
+      "const b = await bundle({ entry: new URL('../mermaid/src/index.ts', 'file://' + process.cwd() + '/').pathname, outdir: mkdtempSync(join(tmpdir(), 'mermaid-ascii-cwd-')), bench: false });",
+      'process.stdout.write(String(asciiSize(b).files.length));',
+    ].join('\n');
+    const out = execFileSync(
+      process.execPath,
+      ['--import', 'tsx', '--input-type=module', '-e', probe],
+      {
+        cwd: fileURLToPath(new URL('..', import.meta.url)),
+        encoding: 'utf8',
+      }
+    );
+    expect(Number(out)).toBeGreaterThan(0);
+  }, 60_000);
 
   // D87: the 15 KB budget is soft. The size is measured here and reported by the bench's
   // `ascii-size` gate (report-only); only the SVG path above is a hard check.
