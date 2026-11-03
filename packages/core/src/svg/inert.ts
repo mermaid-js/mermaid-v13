@@ -41,6 +41,8 @@ const RE_NUMBER_LIST = /^[\d\s,.eE+-]*$/;
 // cspell:disable-next-line
 const RE_PATH = /^[MLHVCSQTAZmlhvcsqtaz\d\s,.eE+-]*$/;
 const RE_ALIAS_REF = /^var\(--_[A-Za-z0-9_-]{1,64}\)$/;
+// A palette slot as `AllowedAttr['data-color-id']` types it, `color-<n>`.
+const RE_COLOR_ID = /^color-\d{1,3}$/;
 const RE_TRANSFORM_CHARS = /^[a-zA-Z(),.\d\s+-]*$/;
 const TRANSFORMS: ReadonlySet<string> = new Set([
   'translate',
@@ -159,6 +161,8 @@ function attrProblem(
         if (!TRANSFORMS.has(word)) return `transform="${value}"`;
       return undefined;
     }
+    case 'data-color-id':
+      return RE_COLOR_ID.test(value) ? undefined : `data-color-id="${value}"`;
     case 'filter':
       // A theme alias, or a drop-shadow list: never url(), which could load or reference.
       return RE_ALIAS_REF.test(value) || checkFilter(value) !== undefined

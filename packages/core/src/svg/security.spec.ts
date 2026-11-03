@@ -131,6 +131,8 @@ describe('assertInert', () => {
     '<rect filter="var(--_ds)"/>',
     '<rect filter="drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))"/>',
     '<rect filter="none"/>',
+    '<g data-color-id="color-0"/>',
+    '<g data-color-id="color-11"/>',
     '<svg style="--_ds:var(--mermaid-dropShadow,drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06)))"/>',
   ];
   for (const svg of OK) {
@@ -165,6 +167,10 @@ describe('assertInert', () => {
     '<rect filter="var(--evil)"/>',
     '<rect filter="drop-shadow(4px 4px 0 red) url(#x)"/>',
     '<rect filter="drop-shadow(4px 4px 0 red);x:y"/>',
+    '<rect filter="drop-shadow(999999px 999999px 999999px red)"/>',
+    '<g data-color-id="red"/>',
+    '<g data-color-id="color-1;x"/>',
+    '<g data-color-id="color-1234"/>',
     '<rect style="background:url(x)"/>',
     '<rect style="background:red"/>',
     '<rect style="fill:red;}body{x:y"/>',
@@ -251,6 +257,27 @@ describe('checkFilter: the drop-shadow allow-list (#85)', () => {
     ...PAYLOADS,
   ])('refuses %j', (input) => {
     expect(checkFilter(input)).toBeUndefined();
+  });
+
+  it('caps every shadow length at 100px, so a filter cannot cost unbounded render time', () => {
+    expect(checkFilter('drop-shadow(100px -100px 100px red)')).toBe(
+      'drop-shadow(100px -100px 100px red)'
+    );
+    expect(checkFilter('drop-shadow(6em 6rem 6.25em)')).toBe('drop-shadow(6em 6rem 6.25em)');
+    for (const v of [
+      'drop-shadow(101px 0)',
+      'drop-shadow(0 -101px)',
+      'drop-shadow(0 0 101px red)',
+      'drop-shadow(7em 0)',
+      'drop-shadow(0 0 7rem)',
+      'drop-shadow(999999px 999999px 999999px red)',
+      Array(4).fill('drop-shadow(999999px 999999px 999999px red)').join(' '),
+    ])
+      expect(checkFilter(v), v).toBeUndefined();
+  });
+
+  it('refuses a negative blur radius, which CSS does not allow', () => {
+    expect(checkFilter('drop-shadow(1px 1px -2px red)')).toBeUndefined();
   });
 
   it('refuses more than four shadows', () => {

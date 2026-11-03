@@ -98,9 +98,22 @@ export function checkColor(value: string): SafeColor | undefined {
   return depth === 0 ? (v as SafeColor) : undefined;
 }
 
-const RE_SHADOW_LENGTH = /^-?(?:\d{1,6}(?:\.\d{1,6})?|\.\d{1,6})(?:px|em|rem)?$/i;
+const RE_SHADOW_LENGTH = /^(-?)(\d{1,6}(?:\.\d{1,6})?|\.\d{1,6})(px|em|rem)?$/i;
 const SHADOW_HEAD = 'drop-shadow(';
 const MAX_SHADOWS = 4;
+// The largest shadow offset or blur, in px (an em or rem counted as 16px). A blur costs render
+// time with its radius, so an unbounded one is a denial of service on whoever views the SVG.
+const MAX_SHADOW_PX = 100;
+const PX_PER_EM = 16;
+
+/** A shadow offset or blur within MAX_SHADOW_PX (a blur also not negative). */
+function shadowLength(word: string, blur: boolean): boolean {
+  const m = RE_SHADOW_LENGTH.exec(word);
+  if (!m) return false;
+  if (blur && m[1] === '-') return false;
+  const px = Number(m[2]) * (m[3] && m[3].toLowerCase() !== 'px' ? PX_PER_EM : 1);
+  return px <= MAX_SHADOW_PX;
+}
 
 /** Splits on whitespace outside parentheses; undefined when the parentheses don't balance. */
 function topLevelWords(text: string): string[] | undefined {
@@ -126,8 +139,10 @@ function checkShadow(fn: string): string | undefined {
   const args = topLevelWords(fn.slice(SHADOW_HEAD.length, -1));
   if (!args) return undefined;
   let lengths = 0;
-  while (lengths < args.length && lengths < 3 && RE_SHADOW_LENGTH.test(args[lengths] as string))
+  while (lengths < args.length && lengths < 3 && RE_SHADOW_LENGTH.test(args[lengths] as string)) {
+    if (!shadowLength(args[lengths] as string, lengths === 2)) return undefined;
     lengths++;
+  }
   // At most one colour after the lengths, a single word such as `red` or `rgb(0 0 0 / 0.06)`.
   if (lengths < 2 || args.length > lengths + 1) return undefined;
   const colour = args[lengths];
@@ -138,8 +153,8 @@ function checkShadow(fn: string): string | undefined {
 /**
  * A CSS `filter` value for the theme's drop shadow (#85), or undefined when it is not
  * allowed: `none`, or one to four `drop-shadow(<x> <y> [<blur>] [<colour>])` functions with
- * the colour through `checkColor`. Nothing else, so no `url()` reference can load a resource
- * or reach an element outside the diagram.
+ * every length within 100px and the colour through `checkColor`. Nothing else, so no `url()`
+ * reference can load a resource or reach an element outside the diagram.
  */
 export function checkFilter(value: string): SafeFilter | undefined {
   const v = value.trim();
