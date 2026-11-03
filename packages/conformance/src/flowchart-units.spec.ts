@@ -110,7 +110,8 @@ describe('flowchart graph builder with the cell profile', () => {
     expect(g.nodes.find((n) => n.id === 'B')).toMatchObject({ width: 9, height: 4 });
     // 8 px / 8 = 1 → at least 2; 16 px / 16 = 1 → at least 3.
     expect(g.spacing).toEqual({ node: 2, rank: 3, edge: 1 });
-    expect(g.diagramPadding).toBe(1);
+    // The drawer trims the margin, so cells use the profile's 0, not 8 px → 1 (#47, D84).
+    expect(g.diagramPadding).toBe(0);
     const roomy = await build(prepared, cellProfile('roomy'));
     expect(roomy.nodes.find((n) => n.id === 'A')).toMatchObject({ width: 9, height: 5 });
   });

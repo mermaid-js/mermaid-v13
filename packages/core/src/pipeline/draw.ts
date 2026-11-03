@@ -10,7 +10,7 @@ import { streamWriter, treeWriter } from '../svg/writer.ts';
 import { stageEnd, stageStart } from '../timing/index.ts';
 import { MermaidError } from './errors.ts';
 import type { HookRun, LaidOut } from './extensions.ts';
-import type { DiagramPlugin, RenderContext } from './types.ts';
+import type { DiagramPlugin, RenderContext, TextRenderContext } from './types.ts';
 
 export interface Drawn {
   readonly svg: string;
@@ -28,6 +28,20 @@ export interface DrawHooks {
 // The root's viewBox is `0 0 W H` (DESIGN §7.2).
 const VIEW_BOX = /^<svg\b[^>]*?\sviewBox="(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+)"/;
 
+/** Layout, then the `postLayout` hooks with the profile's units (D86). */
+function laidOut<M, L>(
+  plugin: DiagramPlugin<M, L>,
+  model: M,
+  ctx: RenderContext,
+  run?: HookRun
+): L {
+  const layout = plugin.layout ? plugin.layout(model, ctx) : (undefined as L);
+  if (!run) return layout;
+  const units = ctx.units.id;
+  return run.postLayout({ kind: plugin.layoutKind, diagram: plugin.id, units, layout } as LaidOut)
+    .layout as L;
+}
+
 export function drawDiagram<M, L>(
   plugin: DiagramPlugin<M, L>,
   model: M,
@@ -40,11 +54,7 @@ export function drawDiagram<M, L>(
     // The AST is data for hooks only; the renderer draws the model (DESIGN §12.2).
     if (run && hooks) run.postParse(hooks.ast);
     let t = stageStart();
-    let layout = plugin.layout ? plugin.layout(model, ctx) : (undefined as L);
-    if (run) {
-      const laidOut = { kind: plugin.layoutKind, diagram: plugin.id, layout } as LaidOut;
-      layout = run.postLayout(laidOut).layout as L;
-    }
+    const layout = laidOut(plugin, model, ctx, run);
     stageEnd('layout', t);
     t = stageStart();
     if (run?.editsTree) {
@@ -75,4 +85,40 @@ export function drawDiagram<M, L>(
   checkOutput(svg, ctx.limits);
   const box = VIEW_BOX.exec(svg);
   return { svg, width: box ? Number(box[3]) : 0, height: box ? Number(box[4]) : 0 };
+}
+
+/** A diagram's `ascii` hook: `(model, layout, ctx) → text` (D76). */
+export type AsciiHook<M = unknown, L = unknown> = (
+  model: M,
+  layout: L,
+  ctx: TextRenderContext
+) => string;
+
+/**
+ * The text counterpart of {@link drawDiagram} (DESIGN §6.3): layout with `ctx` (the cell
+ * profile and measurer), then the `ascii` hook. With hooks, `postParse` and `postLayout` run as
+ * for SVG and `postRender` never does (D86). `ctx.limits.maxOutputLength` caps the text.
+ */
+export function drawText<M, L>(
+  plugin: DiagramPlugin<M, L>,
+  ascii: AsciiHook<M, L>,
+  model: M,
+  ctx: TextRenderContext,
+  hooks?: DrawHooks
+): string {
+  let text: string;
+  try {
+    const run = hooks?.run;
+    if (run && hooks) run.postParse(hooks.ast);
+    let t = stageStart();
+    const layout = laidOut(plugin, model, ctx, run);
+    stageEnd('layout', t);
+    t = stageStart();
+    text = ascii(model, layout, ctx);
+    stageEnd('serialise', t);
+  } catch (error) {
+    throw asLimitError(error) ?? error;
+  }
+  checkOutput(text, ctx.limits);
+  return text;
 }

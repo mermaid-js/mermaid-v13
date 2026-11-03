@@ -93,6 +93,33 @@ maxTextSize?: number
  * 
  */
 maxEdges?: number
+/**
+ * Text output (`format: 'ascii'`, DESIGN §6.3). Diagram text may set every key
+ * (front matter, directives). No defaults here, so SVG renders (and their default ids,
+ * which hash the resolved config) are unchanged; the text backend applies `unicode` and
+ * `compact` when a key is unset.
+ * 
+ */
+ascii?: {
+/**
+ * Glyph set: `unicode` box drawing (the default) or pure `ascii` (D79, R-ASCII-6).
+ * 
+ */
+charset?: ("unicode" | "ascii")
+/**
+ * Cell padding preset: `compact` (the default; box padding 1 across, 0 down; gaps 2 and 4) or
+ * `roomy` (mermaid-ascii-like: padding 1 each way, gaps of 5) (D77).
+ * 
+ */
+padding?: ("compact" | "roomy")
+/**
+ * Columns the drawing should fit. It becomes the layout's `availableWidth` in cells
+ * (tighten, then turn LR into TB). Output is never cropped; an `ASCII_TOO_WIDE`
+ * warning says when it still does not fit (D84, R-ASCII-8).
+ * 
+ */
+maxWidth?: number
+}
 elk?: {
 /**
  * Elk specific option that allows edges to share path where it convenient. It can make for pretty diagrams but can also make it harder to read the diagram.

@@ -17,6 +17,11 @@ export interface DiagramManifest {
   readonly entry?: string;
   /** The named export holding the plugin (default: the module's default export). */
   readonly export?: string;
+  /**
+   * Module path of the lazily loaded text-output entry (D76), loaded only for
+   * `format: 'ascii'`. Its `ascii` export is the hook. Needs `ascii` in `formats`.
+   */
+  readonly ascii?: string;
 }
 
 export interface ExtensionManifest {
@@ -61,6 +66,7 @@ export function readManifest(value: unknown): PluginManifest {
   if (m.plugin === 'extension') {
     if (m.detector !== undefined) fail(`extension "${id}" must not have a detector`);
     if (m.formats !== undefined) fail(`extension "${id}" has no formats`);
+    if (m.ascii !== undefined) fail(`extension "${id}" has no ascii entry`);
     return { plugin: 'extension', ...common };
   }
   if (m.plugin !== 'diagram') return fail('"plugin" must be "diagram" or "extension"');
@@ -70,10 +76,14 @@ export function readManifest(value: unknown): PluginManifest {
   for (const f of formats as unknown[])
     if (typeof f !== 'string' || !FORMATS.has(f)) fail(`unknown format ${JSON.stringify(f)}`);
   const detector = optionalString(m, 'detector');
+  const ascii = optionalString(m, 'ascii');
+  if (ascii !== undefined && !(formats as unknown[]).includes('ascii'))
+    fail(`"${id}" has an ascii entry but no "ascii" in formats`);
   return {
     plugin: 'diagram',
     ...common,
     formats: [...new Set(formats as PluginFormat[])],
     ...(detector !== undefined ? { detector } : {}),
+    ...(ascii !== undefined ? { ascii } : {}),
   };
 }

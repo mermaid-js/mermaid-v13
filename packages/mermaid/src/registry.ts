@@ -5,6 +5,7 @@
 import {
   MermaidError,
   readManifest,
+  type AsciiHook,
   type DiagramPlugin,
   type ExtensionPlugin,
   type PluginManifest,
@@ -16,6 +17,8 @@ import { FIRST_PARTY } from './generated/registry.gen.ts';
 // The registry holds plugins of every model and layout type.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type AnyPlugin = DiagramPlugin<any, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyAsciiHook = AsciiHook<any, any>;
 
 /** A row of the generated first-party table. Rows without `load` have no v13 package yet. */
 export interface FirstPartyEntry {
@@ -27,6 +30,8 @@ export interface FirstPartyEntry {
   readonly id?: string;
   readonly formats?: readonly string[];
   readonly load?: () => Promise<AnyPlugin>;
+  /** The lazily loaded text-output hook (manifest key `ascii`, D76). */
+  readonly loadAscii?: () => Promise<AnyAsciiHook>;
 }
 
 /** A lazy third-party diagram: detected eagerly, loaded on first use. */
@@ -49,6 +54,8 @@ export interface ManifestPlugin {
   /** The detector module's function (diagrams only). */
   readonly detector?: (text: string) => boolean;
   load(): Promise<unknown>;
+  /** Imports the manifest's `ascii` entry (diagrams with one); its `ascii` export is the hook. */
+  loadAscii?(): Promise<unknown>;
 }
 
 /** `registerExternalDiagrams` input: a diagram, an extension, or either by manifest. */
@@ -66,6 +73,7 @@ interface Entry {
   readonly formats: readonly string[];
   readonly detect: (text: string, body: string) => boolean;
   readonly load?: () => Promise<AnyPlugin>;
+  readonly loadAscii?: () => Promise<AnyAsciiHook>;
 }
 
 export interface Detected {
@@ -122,6 +130,7 @@ export class Registry {
   private readonly external: Entry[] = [];
   private readonly plugins = new Map<string, AnyPlugin>();
   private readonly loading = new Map<string, Promise<AnyPlugin>>();
+  private readonly asciiHooks = new Map<string, AnyAsciiHook>();
   private readonly layoutLoaders = new Map<string, LayoutLoader['loader']>();
   private readonly layouts = new Map<string, LayoutEngine>([['layered', layered]]);
 
@@ -133,6 +142,7 @@ export class Registry {
         formats: e.formats ?? [],
         detect: (_text, body) => e.pattern.test(body),
         load: e.load,
+        loadAscii: e.loadAscii,
       });
     }
   }
@@ -190,6 +200,33 @@ export class Registry {
     return pending;
   }
 
+  /**
+   * Loads the text-output hook of `typeOrId` (D76, only for `format: 'ascii'`): the plugin's
+   * own `ascii` method, else its lazily loaded `ascii` entry. Undefined when it has neither.
+   */
+  async loadAscii(typeOrId: string): Promise<AnyAsciiHook | undefined> {
+    const entry = this.entryFor(typeOrId);
+    const id = entry?.id;
+    if (!entry || id === undefined) return undefined;
+    const have = this.ascii(id);
+    if (have) return have;
+    if (!(await this.load(id)) || this.ascii(id)) return this.ascii(id);
+    if (!entry.loadAscii) return undefined;
+    const hook = await entry.loadAscii();
+    if (typeof hook !== 'function')
+      throw new TypeError(`The ascii entry of "${id}" has no ascii function`);
+    this.asciiHooks.set(id, hook);
+    return hook;
+  }
+
+  /** The loaded text-output hook of plugin `id`, if any. */
+  ascii(id: string): AnyAsciiHook | undefined {
+    const plugin = this.plugins.get(id);
+    if (typeof plugin?.ascii === 'function')
+      return (model, layout, ctx) => plugin.ascii!(model, layout, ctx);
+    return this.asciiHooks.get(id);
+  }
+
   formats(typeOrId: string): readonly string[] {
     const entry = this.entryFor(typeOrId);
     if (!entry?.id) return [];
@@ -227,6 +264,9 @@ export class Registry {
         }
         if (typeof detector !== 'function')
           throw new TypeError(`Diagram "${manifest.id}" needs its detector function`);
+        const { loadAscii } = def as ManifestPlugin;
+        if (manifest.ascii !== undefined && typeof loadAscii !== 'function')
+          throw new TypeError(`Diagram "${manifest.id}" needs loadAscii for its ascii entry`);
         await this.addDiagram(
           {
             id: manifest.id,
@@ -242,7 +282,13 @@ export class Registry {
             },
           },
           false,
-          lazyLoad
+          lazyLoad,
+          manifest.ascii === undefined || !loadAscii
+            ? undefined
+            : async () => {
+                const m = (await loadAscii()) as { ascii?: AnyAsciiHook } | AnyAsciiHook;
+                return (typeof m === 'function' ? m : m?.ascii) as AnyAsciiHook;
+              }
         );
         continue;
       }
@@ -254,7 +300,8 @@ export class Registry {
   private async addDiagram(
     def: AnyPlugin | LazyDiagram,
     isPlugin: boolean,
-    lazyLoad: boolean
+    lazyLoad: boolean,
+    loadAscii?: () => Promise<AnyAsciiHook>
   ): Promise<void> {
     const load = isPlugin
       ? () => Promise.resolve(def as AnyPlugin)
@@ -265,12 +312,14 @@ export class Registry {
       formats: def.formats ?? ['svg'],
       detect: (text) => def.detector(text),
       load,
+      ...(loadAscii ? { loadAscii } : {}),
     };
     const at = this.external.findIndex((e) => e.id === def.id);
     if (at >= 0) this.external[at] = entry;
     else this.external.push(entry);
     this.plugins.delete(def.id);
     this.loading.delete(def.id);
+    this.asciiHooks.delete(def.id);
     if (isPlugin) this.plugins.set(def.id, def as AnyPlugin);
     else if (!lazyLoad) await this.load(def.id);
   }

@@ -35,7 +35,7 @@ export interface FlowAsciiContext extends FlowRenderContext {
   readonly ast?: AstNode;
 }
 
-/** The `ascii` config section (DESIGN §6.3); its schema arrives with the API wiring. */
+/** The `ascii` config section (DESIGN §6.3, `config.schema.yaml`); unset keys default. */
 interface AsciiOptions {
   charset?: unknown;
   padding?: unknown;
