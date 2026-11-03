@@ -104,6 +104,11 @@ export class UnsupportedFormatError extends MermaidError {
   }
 }
 
+function errorClass(code: string): 'LIMIT' | 'SEMANTIC' | 'SYNTAX' {
+  if (isLimitCode(code)) return 'LIMIT';
+  return SEMANTIC.has(code) ? 'SEMANTIC' : 'SYNTAX';
+}
+
 // Parser codes that are about meaning rather than syntax, and the limit codes.
 const SEMANTIC: ReadonlySet<string> = new Set([
   'UNKNOWN_SHAPE',
@@ -131,7 +136,7 @@ export function errorFromDiagnostics(
   if (errors.length > 1) {
     message += `\n(${errors.length - 1} more error${errors.length > 2 ? 's' : ''})`;
   }
-  const code = isLimitCode(first.code) ? 'LIMIT' : SEMANTIC.has(first.code) ? 'SEMANTIC' : 'SYNTAX';
+  const code = errorClass(first.code);
   return new MermaidError(code, message, {
     source,
     offset: first.range.start,

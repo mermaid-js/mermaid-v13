@@ -79,6 +79,11 @@ export interface TreeSvgWriter extends SvgWriter {
   finish(): string;
 }
 
+function textDecoration(span: LabelSpan): Attrs['text-decoration'] {
+  if (span.underline) return 'underline';
+  return span.strike ? 'line-through' : span.attrs?.['text-decoration'];
+}
+
 function spanAttrs(span: LabelSpan, pos: Attrs | undefined): Attrs | undefined {
   if (!span.bold && !span.italic && !span.underline && !span.strike && !span.attrs) return pos;
   return {
@@ -86,11 +91,7 @@ function spanAttrs(span: LabelSpan, pos: Attrs | undefined): Attrs | undefined {
     ...span.attrs,
     'font-weight': span.bold ? 'bold' : span.attrs?.['font-weight'],
     'font-style': span.italic ? 'italic' : span.attrs?.['font-style'],
-    'text-decoration': span.underline
-      ? 'underline'
-      : span.strike
-        ? 'line-through'
-        : span.attrs?.['text-decoration'],
+    'text-decoration': textDecoration(span),
   };
 }
 

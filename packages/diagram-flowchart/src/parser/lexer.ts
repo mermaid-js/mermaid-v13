@@ -90,6 +90,26 @@ const S = {
   shapeDataStr: 17,
 } as const;
 
+// jison's <<EOF>> in states whose value rule matches the empty string: the empty value token.
+function eofValueKind(state: number): number {
+  switch (state) {
+    case S.acc_title:
+      return T.AccTitleValue;
+    case S.acc_descr:
+      return T.AccDescrValue;
+    case S.acc_descr_multiline:
+      return T.AccDescrMultilineValue;
+    case S.click:
+      return T.Click;
+    case S.callbackname:
+      return T.CallbackName;
+    case S.callbackargs:
+      return T.CallbackArgs;
+    default:
+      return -1;
+  }
+}
+
 // Character classes of flow.jison's lexer rules.
 /** jison's NODE_STRING (`-` and `=` are handled separately). */
 const NODE = 1;
@@ -1068,21 +1088,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         continue;
       }
       if (p >= n) {
-        // jison's <<EOF>> in states whose value rule matches the empty string.
-        const kind =
-          state === S.acc_title
-            ? T.AccTitleValue
-            : state === S.acc_descr
-              ? T.AccDescrValue
-              : state === S.acc_descr_multiline
-                ? T.AccDescrMultilineValue
-                : state === S.click
-                  ? T.Click
-                  : state === S.callbackname
-                    ? T.CallbackName
-                    : state === S.callbackargs
-                      ? T.CallbackArgs
-                      : -1;
+        const kind = eofValueKind(state);
         if (kind !== -1) emit(kind, len, len);
         if (state === S.INITIAL) emit(T.Eof, len, len);
         break;

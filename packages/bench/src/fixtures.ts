@@ -46,7 +46,8 @@ function readJson<T>(path: string): T {
 
 function tierOf(source: string): Tier {
   const lines = source.split('\n').length;
-  return lines <= 20 ? 'tiny' : lines <= 1000 ? 'regular' : 'large';
+  if (lines <= 20) return 'tiny';
+  return lines <= 1000 ? 'regular' : 'large';
 }
 
 /** Every fixture, corpus first, in manifest order. */

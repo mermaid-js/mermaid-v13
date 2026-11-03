@@ -297,12 +297,20 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
   };
 }
 
+const FLOW_START: Readonly<Record<Dir, Side>> = {
+  TB: 'top',
+  BT: 'bottom',
+  LR: 'left',
+  RL: 'right',
+};
+const FLOW_END: Readonly<Record<Dir, Side>> = { TB: 'bottom', BT: 'top', LR: 'right', RL: 'left' };
+
 function flowStart(dir: Dir): Side {
-  return dir === 'TB' ? 'top' : dir === 'BT' ? 'bottom' : dir === 'LR' ? 'left' : 'right';
+  return FLOW_START[dir];
 }
 
 function flowEnd(dir: Dir): Side {
-  return dir === 'TB' ? 'bottom' : dir === 'BT' ? 'top' : dir === 'LR' ? 'right' : 'left';
+  return FLOW_END[dir];
 }
 
 // The side of a box that a route end lies on, or the nearest one.

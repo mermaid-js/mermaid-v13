@@ -338,7 +338,8 @@ function contrastCss(bg: string, a: Rgba, b: Rgba, la: number, lb: number): stri
   const [br, bgr, bb, ba] = unit(b);
   const t = `color(from ${bg} srgb-linear calc(1 - max(${checks.join(',')})) 0 0)`;
   const ch = (x: number, y: number) => (x === y ? dec(x) : `calc(${dec(x)} + ${dec(y - x)}*r)`);
-  const alpha = aa === ba ? (aa >= 1 ? '' : ` / ${dec(aa)}`) : ` / ${ch(aa, ba)}`;
+  const opaque = aa === ba && aa >= 1;
+  const alpha = opaque ? '' : ` / ${ch(aa, ba)}`;
   return `color(from ${t} srgb ${ch(ar, br)} ${ch(ag, bgr)} ${ch(ab, bb)}${alpha})`;
 }
 

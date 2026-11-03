@@ -151,6 +151,8 @@ function splitKey(line: string): { key: string; length: number } | null {
   return { key: line.slice(0, end), length };
 }
 
+const HEX_ESCAPE_LENGTH: Readonly<Record<'x' | 'u' | 'U', number>> = { x: 2, u: 4, U: 8 };
+
 const ESCAPES: Record<string, string> = {
   '0': '\0',
   a: '\x07',
@@ -385,7 +387,7 @@ class Reader {
       }
       const e = s[++i] ?? '';
       if (e === 'x' || e === 'u' || e === 'U') {
-        const len = e === 'x' ? 2 : e === 'u' ? 4 : 8;
+        const len = HEX_ESCAPE_LENGTH[e];
         const hex = s.slice(i + 1, i + 1 + len);
         const code = /^[0-9a-fA-F]+$/.test(hex) && hex.length === len ? parseInt(hex, 16) : NaN;
         if (!(code <= 0x10ffff)) this.fail('invalid escape sequence in a double quoted value', at);
@@ -538,7 +540,9 @@ class Reader {
 
   blockScalar(header: string, parentIndent: number): string {
     const folded = header.startsWith('>');
-    const chomp = header.includes('-') ? '-' : header.includes('+') ? '+' : '';
+    let chomp = '';
+    if (header.includes('-')) chomp = '-';
+    else if (header.includes('+')) chomp = '+';
     const explicit = RE_INDENT_DIGIT.exec(header);
     let indent = explicit ? parentIndent + Number(explicit[0]) : -1;
     const out: string[] = [];

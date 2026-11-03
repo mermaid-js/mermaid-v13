@@ -44,6 +44,12 @@ export const MAX_DIRECTIVE_DEPTH = 64;
 
 const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
+const DIRECTIVE_KINDS: ReadonlyMap<string, DirectiveKind> = new Map([
+  ['init', 'init'],
+  ['initialize', 'init'],
+  ['wrap', 'wrap'],
+]);
+
 function isJsonSpace(c: number): boolean {
   return c === 32 || c === 9 || c === 10 || c === 13;
 }
@@ -87,8 +93,7 @@ function read(
   const nameStart = i;
   while (i < contentEnd && isWord(src.charCodeAt(i))) i++;
   const name = src.slice(nameStart, i);
-  const kind: DirectiveKind =
-    name === 'init' || name === 'initialize' ? 'init' : name === 'wrap' ? 'wrap' : 'other';
+  const kind: DirectiveKind = DIRECTIVE_KINDS.get(name) ?? 'other';
   const directive: Directive = { kind, name, range: { start: open, end } };
 
   let a = i;

@@ -111,6 +111,11 @@ export function stageRatios(
 
 const kb = (bytes: number) => `${round(bytes / 1024, 1)} KB`;
 
+function stageStatus(compared: number, regressed: number): GateStatus {
+  if (compared === 0) return 'skip';
+  return regressed > 0 ? 'fail' : 'pass';
+}
+
 export function evaluateGates({
   report,
   baseline,
@@ -192,7 +197,7 @@ export function evaluateGates({
       title: 'Stage regression vs stored baseline',
       requirement: 'R-PERF-7',
       level: 'must',
-      status: entries.length === 0 ? 'skip' : regressed.length > 0 ? 'fail' : 'pass',
+      status: stageStatus(entries.length, regressed.length),
       enforced: enforces('stage-regression') && entries.length > 0,
       actual: worst?.[1] ?? null,
       limit: LIMITS.maxStageRatio,

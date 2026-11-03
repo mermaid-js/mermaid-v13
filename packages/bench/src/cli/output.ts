@@ -73,8 +73,8 @@ export function publish(
   }
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, md + '\n');
   for (const g of outcome.gates) {
-    const mark =
-      g.status === 'pass' ? 'PASS' : g.status === 'skip' ? 'SKIP' : g.enforced ? 'FAIL' : 'WARN';
+    const failMark = g.enforced ? 'FAIL' : 'WARN';
+    const mark = g.status === 'fail' ? failMark : g.status.toUpperCase();
     process.stdout.write(`${mark.padEnd(4)} ${g.requirement.padEnd(17)} ${g.title}: ${g.detail}\n`);
   }
   process.stdout.write(
