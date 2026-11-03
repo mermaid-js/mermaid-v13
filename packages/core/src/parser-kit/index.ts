@@ -3,7 +3,7 @@
  * parsers. There is no grammar abstraction. Nothing here holds module-level mutable state;
  * every stateful helper is an instance created per parse.
  */
-export { FIRST_DIAGRAM_KIND, Kind, TokenWriter } from './tokens.ts';
+export { FIRST_DIAGRAM_KIND, Kind, tokenText, TokenWriter } from './tokens.ts';
 export type { TokenKind, TokenStream } from './tokens.ts';
 export {
   charTable,

@@ -268,27 +268,44 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
   const fullTokens = lex(src, pre.bodyStart, view);
   let tokens: TokenStream = fullTokens;
   // Significant tokens (comments and directives dropped) as parallel arrays.
-  let K: number[] = [];
-  let S: number[] = [];
-  let E: number[] = [];
-  let gap: boolean[] = [];
+  // Without trivia these are the stream's own arrays.
+  let K: Uint16Array = new Uint16Array(0);
+  let S: Uint32Array = new Uint32Array(0);
+  let E: Uint32Array = new Uint32Array(0);
+  /** 1 where trivia came right before the token; undefined when the stream has none. */
+  let gap: Uint8Array | undefined;
   const load = (stream: TokenStream) => {
-    K = [];
-    S = [];
-    E = [];
-    gap = [];
-    let trivia = false;
+    let trivia = 0;
+    for (let j = 0; j < stream.length; j++) {
+      const k = stream.kind[j];
+      if (k === Kind.Comment || k === Kind.Directive) trivia++;
+    }
+    if (trivia === 0) {
+      K = stream.kind;
+      S = stream.start;
+      E = stream.end;
+      gap = undefined;
+      return;
+    }
+    const n = stream.length - trivia;
+    K = new Uint16Array(n);
+    S = new Uint32Array(n);
+    E = new Uint32Array(n);
+    gap = new Uint8Array(n);
+    let after = 0;
+    let o = 0;
     for (let j = 0; j < stream.length; j++) {
       const k = stream.kind[j] ?? Kind.EOF;
       if (k === Kind.Comment || k === Kind.Directive) {
-        trivia = true;
+        after = 1;
         continue;
       }
-      K.push(k);
-      S.push(stream.start[j] ?? 0);
-      E.push(stream.end[j] ?? 0);
-      gap.push(trivia);
-      trivia = false;
+      K[o] = k;
+      S[o] = stream.start[j] ?? 0;
+      E[o] = stream.end[j] ?? 0;
+      gap[o] = after;
+      after = 0;
+      o++;
     }
   };
   load(tokens);
@@ -498,7 +515,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     if (k === T.Str || k === T.MdStr) {
       type = k === T.Str ? strType : 'markdown';
       i++;
-      while (kind() === k && gap[i]) i++;
+      while (kind() === k && gap?.[i] === 1) i++;
     } else if (inKindSet(first, k)) {
       type = 'text';
       i++;

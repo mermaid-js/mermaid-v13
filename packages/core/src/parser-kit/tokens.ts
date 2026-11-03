@@ -36,35 +36,63 @@ export interface TokenStream {
   readonly kind: Uint16Array;
   readonly start: Uint32Array;
   readonly end: Uint32Array;
-  readonly text: readonly string[];
+  /** The text the offsets point into; a token's text is {@link tokenText}. */
+  readonly source: string;
   /** Number of tokens, including the final EOF. */
   readonly length: number;
 }
 
+/** A token's text: `source.slice(start, end)`. Computed on demand, so lexing slices nothing. */
+export function tokenText(tokens: TokenStream, i: number): string {
+  return tokens.source.slice(tokens.start[i] ?? 0, tokens.end[i] ?? 0);
+}
+
 /** Append-only builder for a {@link TokenStream}; create one per lex. */
 export class TokenWriter {
-  private readonly k: number[] = [];
-  private readonly s: number[] = [];
-  private readonly e: number[] = [];
-  private readonly t: string[] = [];
+  private kind: Uint16Array;
+  private start: Uint32Array;
+  private end: Uint32Array;
+  private n = 0;
 
-  /** Append one token. `text` is usually `source.slice(start, end)`. */
-  push(kind: TokenKind, start: number, end: number, text: string): void {
-    this.k.push(kind);
-    this.s.push(start);
-    this.e.push(end);
-    this.t.push(text);
+  /** `capacity` is a guess at the token count; the arrays grow past it. */
+  constructor(capacity = 16) {
+    const size = Math.max(4, capacity | 0);
+    this.kind = new Uint16Array(size);
+    this.start = new Uint32Array(size);
+    this.end = new Uint32Array(size);
   }
 
-  /** Append the EOF token at `sourceLength` and return the finished stream. */
-  finish(sourceLength: number): TokenStream {
-    this.push(Kind.EOF, sourceLength, sourceLength, '');
+  push(kind: TokenKind, start: number, end: number): void {
+    if (this.n === this.kind.length) this.grow();
+    this.kind[this.n] = kind;
+    this.start[this.n] = start;
+    this.end[this.n] = end;
+    this.n++;
+  }
+
+  /** Append the EOF token at `source.length` and return the finished stream. */
+  finish(source: string): TokenStream {
+    this.push(Kind.EOF, source.length, source.length);
+    const n = this.n;
     return {
-      kind: Uint16Array.from(this.k),
-      start: Uint32Array.from(this.s),
-      end: Uint32Array.from(this.e),
-      text: this.t,
-      length: this.t.length,
+      kind: this.kind.subarray(0, n),
+      start: this.start.subarray(0, n),
+      end: this.end.subarray(0, n),
+      source,
+      length: n,
     };
+  }
+
+  private grow(): void {
+    const size = this.kind.length * 2;
+    const kind = new Uint16Array(size);
+    kind.set(this.kind);
+    this.kind = kind;
+    const start = new Uint32Array(size);
+    start.set(this.start);
+    this.start = start;
+    const end = new Uint32Array(size);
+    end.set(this.end);
+    this.end = end;
   }
 }

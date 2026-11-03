@@ -16,6 +16,7 @@
  * `%`, `>`, `@` and `#` inside names are percent-encoded (`%25`, `%3E`, `%40`, `%23`).
  * Renderers write the id as `data-ast`.
  */
+import { AT, GT, HASH, PERCENT } from './char-codes.ts';
 import type { Range } from './positions.ts';
 
 /** Semantic AST id, e.g. `n:A`, `e:A>B#2`, `st:3`. */
@@ -48,9 +49,19 @@ export interface AstCallback {
 }
 
 function esc(name: string): string {
-  return /[%>@#]/.test(name)
-    ? name.replace(/[%>@#]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
-    : name;
+  for (let i = 0; i < name.length; i++) {
+    const c = name.charCodeAt(i);
+    if (c === PERCENT || c === GT || c === AT || c === HASH) {
+      return name.replace(/[%>@#]/g, (ch) => `%${ch.charCodeAt(0).toString(16).toUpperCase()}`);
+    }
+  }
+  return name;
+}
+
+function bump<K>(seen: Map<K, number>, key: K): number {
+  const n = (seen.get(key) ?? 0) + 1;
+  seen.set(key, n);
+  return n;
 }
 
 /** `n:<name>`: the id of a node's first mention, which is also its vertex's id. */
@@ -58,39 +69,42 @@ export function nodeId(name: string): AstId {
   return `n:${esc(name)}`;
 }
 
-/** Hands out the ids of one parse. Create one per parse; ids depend on call order. */
+/**
+ * Hands out the ids of one parse. Create one per parse; ids depend on call order. Mentions are
+ * counted by the names as written, per kind: escaping is one-to-one, so this counts the same
+ * as counting the ids without building them first.
+ */
 export class AstIds {
-  private readonly seen = new Map<string, number>();
-
-  private count(key: string): number {
-    const n = (this.seen.get(key) ?? 0) + 1;
-    this.seen.set(key, n);
-    return n;
-  }
+  private readonly nodes = new Map<string, number>();
+  private readonly edges = new Map<string, Map<string, number>>();
+  private readonly subgraphs = new Map<string, number>();
+  private readonly statements = new Map<string, number>();
 
   /** `n:<name>`, then `n:<name>@2`, `@3`, … for later mentions. */
   node(name: string): AstId {
+    const n = bump(this.nodes, name);
     const id = nodeId(name);
-    const n = this.count(id);
     return n === 1 ? id : `${id}@${n}`;
   }
 
   /** `e:<from>><to>`, then `#2`, `#3`, … for parallel edges. */
   edge(from: string, to: string): AstId {
+    let ends = this.edges.get(from);
+    if (!ends) this.edges.set(from, (ends = new Map<string, number>()));
+    const n = bump(ends, to);
     const id = `e:${esc(from)}>${esc(to)}`;
-    const n = this.count(id);
     return n === 1 ? id : `${id}#${n}`;
   }
 
   /** `s:<id>`, then `@2`, … if the same subgraph id is opened again. */
   subgraph(name: string): AstId {
+    const n = bump(this.subgraphs, name);
     const id = `s:${esc(name)}`;
-    const n = this.count(id);
     return n === 1 ? id : `${id}@${n}`;
   }
 
   /** `<kind>:<n>`: 1-based ordinal among the statements of `kind` with no user name. */
   statement(kind: string): AstId {
-    return `${kind}:${this.count(`\0${kind}`)}`;
+    return `${kind}:${bump(this.statements, kind)}`;
   }
 }

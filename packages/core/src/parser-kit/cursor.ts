@@ -3,7 +3,7 @@
  * on a significant token: trivia kinds are skipped on every move. One cursor per parse.
  */
 import type { Range } from './positions.ts';
-import { Kind } from './tokens.ts';
+import { Kind, tokenText } from './tokens.ts';
 import type { TokenKind, TokenStream } from './tokens.ts';
 
 /** Membership table for token kinds: `set[kind] === 1`. Build with {@link kindSet}. */
@@ -44,7 +44,7 @@ export class TokenCursor {
   }
 
   get text(): string {
-    return this.tokens.text[this.pos] ?? '';
+    return tokenText(this.tokens, this.pos);
   }
 
   get start(): number {

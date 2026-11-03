@@ -99,6 +99,22 @@ function markTagQuotes(src: string, from: number, mark: (i: number, bit: number)
 }
 
 /**
+ * The first line break (LF or CR) at or after `q`, or the end. Found with `indexOf`, keeping the
+ * next of each, so calls with non-decreasing `q` cost one pass over the text in total.
+ */
+function lineEnds(src: string): (q: number) => number {
+  let lf = -2;
+  let cr = -2;
+  return (q) => {
+    if (lf !== -1 && lf < q) lf = src.indexOf('\n', q);
+    if (cr !== -1 && cr < q) cr = src.indexOf('\r', q);
+    const a = lf === -1 ? src.length : lf;
+    const b = cr === -1 ? src.length : cr;
+    return a < b ? a : b;
+  };
+}
+
+/**
  * `style.*:\S*#.*;` then `classDef.*:\S*#.*;` (each global, `.` stops at line ends): the
  * match ends at the line's last `;`, which `encodeEntities` cut off.
  */
@@ -112,10 +128,10 @@ function markDroppedSemicolons(
     return;
   const words = ['style', 'classDef'];
   const next = [-2, -2];
+  const lineEnd = lineEnds(src);
   let ls = from;
   while (ls <= src.length) {
-    let le = ls;
-    while (le < src.length && !isNl(src.charCodeAt(le))) le++;
+    const le = lineEnd(ls);
     for (let w = 0; w < 2; w++) {
       const word = words[w] ?? '';
       if ((next[w] ?? 0) !== -1 && (next[w] ?? 0) < ls) next[w] = src.indexOf(word, ls);
@@ -127,7 +143,7 @@ function markDroppedSemicolons(
       let hash = -1;
       for (let j = k + word.length; j < le; j++) {
         const c = src.charCodeAt(j);
-        if (gone(j)) continue;
+        if (m !== undefined && ((m[j] ?? 0) & DROP) !== 0) continue;
         if (c === COLON) colon = true;
         else if (c === HASH && colon) {
           hash = j;
@@ -158,15 +174,20 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
     const r = directives[d];
     return r && r.start === i ? r : undefined;
   };
+  const lineEnd = lineEnds(src);
   let ls = from;
   while (ls < src.length) {
     // Skip whitespace (and removed directives) from this line start.
     let q = ls;
-    while (q < src.length) {
-      const r = dirAt(q);
-      if (r) q = r.end;
-      else if (isSpace(src.charCodeAt(q))) q++;
-      else break;
+    if (directives.length === 0) {
+      while (q < src.length && isSpace(src.charCodeAt(q))) q++;
+    } else {
+      while (q < src.length) {
+        const r = dirAt(q);
+        if (r) q = r.end;
+        else if (isSpace(src.charCodeAt(q))) q++;
+        else break;
+      }
     }
     if (
       src.charCodeAt(q) === PERCENT &&
@@ -175,8 +196,7 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
       q + 2 < src.length &&
       !isNl(src.charCodeAt(q + 2))
     ) {
-      let e = q + 2;
-      while (e < src.length && !isNl(src.charCodeAt(e))) e++;
+      let e = lineEnd(q + 2);
       if (src.charCodeAt(e) === CR) e++;
       if (src.charCodeAt(e) === LF) e++;
       out.push({ start: ls, end: e, kind: 'comment' });
@@ -184,8 +204,7 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
       continue;
     }
     // No comment from any line start up to q; continue at the first line start after q.
-    let e = q;
-    while (e < src.length && !isNl(src.charCodeAt(e))) e++;
+    const e = lineEnd(q);
     if (e >= src.length) break;
     ls = e + (src.charCodeAt(e) === CR && src.charCodeAt(e + 1) === LF ? 2 : 1);
   }
