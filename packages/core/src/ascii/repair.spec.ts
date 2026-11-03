@@ -816,13 +816,6 @@ describe('repairRoutes (D78, R-ASCII-1)', () => {
     }
   });
 
-  // Known engine placements the router cannot change, because an end cell is fixed: the engine
-  // puts an edge end under a group title on the border row (reported for #42; GAPS.md #45).
-  const ENGINE_TITLE_ENDS: Record<string, string[]> = {
-    'F3 group to its member at the top edge': ['g->A#1 label 4,0 g'],
-    'F3 member to its outer group LR': ['A->g#1 label 19,2 h'],
-  };
-
   it('repairs every collision on the hand-built cell fixtures', () => {
     for (const { name, graph } of cellFixtures()) {
       const model = layered(graph);
@@ -830,7 +823,7 @@ describe('repairRoutes (D78, R-ASCII-1)', () => {
       expect(
         left.map((c) => `${c.edge} ${c.kind} ${c.cell.x},${c.cell.y} ${c.with}`),
         name
-      ).toEqual(ENGINE_TITLE_ENDS[name] ?? []);
+      ).toEqual([]);
     }
   });
 });

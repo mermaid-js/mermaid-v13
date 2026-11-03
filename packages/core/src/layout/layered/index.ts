@@ -162,6 +162,7 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
   const pitch = Math.max(grid, edgeOn(M.portPitch, grid));
   let current = graph;
   for (let pass = 0; pass < 3; pass++) {
+    const crowded = placeTitles(current, model, grid);
     const count = new Map<string, Record<Side, number>>();
     const add = (id: string, side: Side): void => {
       let c = count.get(id);
@@ -201,7 +202,8 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
     const groups = current.groups.map((g) => {
       const placed = model.groups.get(g.id)!;
       const [width, height] = need(g.id, placed.width, placed.height);
-      const dx = Math.ceil((width - placed.width) / 2);
+      // A title with no room on the border between the edges that cross it gets more.
+      const dx = Math.max(Math.ceil((width - placed.width) / 2), crowded.has(g.id) ? 2 * grid : 0);
       const dy = height - placed.height;
       if (dx === 0 && dy === 0) return g;
       more = true;
@@ -212,7 +214,49 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
     current = { ...current, nodes, groups };
     model = run(current, dir, tight);
   }
+  placeTitles(current, model, grid);
   return model;
+}
+
+// On the grid a group's title sits on its top border row, and no edge may end or cross there
+// under it: each title moves along the border, from the middle, to the nearest run of cells no
+// route touches (off the corners). Returns the groups whose titles found none.
+function placeTitles(graph: LayoutGraph, model: LayoutModel, grid: number): Set<string> {
+  const crowded = new Set<string>();
+  for (const g of graph.groups) {
+    const width = g.title?.width ?? 0;
+    const placed = model.groups.get(g.id)!;
+    if (width <= 0) continue;
+    const left = placed.x - placed.width / 2 + grid / 2;
+    const right = left + placed.width - grid;
+    const row = placed.y - placed.height / 2 + grid / 2;
+    const used = new Set<number>();
+    for (const e of model.edges.values()) {
+      const p = e.points;
+      for (let i = 0; i < p.length; i++) {
+        const a = p[Math.max(0, i - 1)]!;
+        const b = p[i]!;
+        if (Math.min(a.y, b.y) > row || Math.max(a.y, b.y) < row) continue;
+        for (let x = Math.min(a.x, b.x); x <= Math.max(a.x, b.x); x += grid) used.add(x);
+      }
+    }
+    const middle = Math.round(placed.title.x - width / 2 + grid / 2);
+    const free = (lo: number): boolean => {
+      for (let x = lo; x < lo + width; x += grid) if (used.has(x)) return false;
+      return true;
+    };
+    let best: number | undefined;
+    for (let lo = left + grid; lo + width - grid <= right - grid; lo += grid) {
+      if (!free(lo)) continue;
+      if (best === undefined || Math.abs(lo - middle) < Math.abs(best - middle)) best = lo;
+    }
+    if (best === undefined) {
+      if (!free(middle)) crowded.add(g.id);
+      continue;
+    }
+    placed.title = { ...placed.title, x: best + width / 2 - grid / 2 };
+  }
+  return crowded;
 }
 
 // How many route segments cross each side of a group's border (grid mode, in cells).
