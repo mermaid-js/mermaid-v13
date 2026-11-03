@@ -6,8 +6,12 @@
  * diagram reads is accepted and ignored (R-CONF-5).
  */
 
-/** How a variable's value is checked and written. */
-export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter';
+/**
+ * How a variable's value is checked and written. A `padding` is a px length or a multiple of
+ * the diagram's own `padding` config (`padding`, `2 * padding`), resolved at render time
+ * because the classic themes follow `flowchart.padding` (D152).
+ */
+export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter' | 'padding';
 
 export interface ThemeVarDef {
   /** The short private alias written on the root, without the leading `--_`. */
@@ -62,6 +66,18 @@ export const TOKEN_VARIABLES = [
   'spacing2',
   'spacing3',
   ...ARROWHEAD_VARIABLES,
+  // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
+  'nodePaddingX',
+  'nodePaddingY',
+  'stadiumPaddingX',
+  'stadiumPaddingY',
+  'hexagonPaddingX',
+  'hexagonPaddingY',
+  'hexagonSlant',
+  'doubleCircleGap',
+  'doubleCirclePadding',
+  'circlePadding',
+  'circleMinDiameter',
 ] as const;
 
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
@@ -140,6 +156,18 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   crossArrowheadSize: def('xs', 'length', F),
   crossArrowheadGap: def('xg', 'length', F),
   crossArrowheadStrokeWidth: def('xw', 'length', F),
+  // Node padding, read as numbers at render time (D152), so their aliases are never written.
+  nodePaddingX: def('npx', 'padding', F),
+  nodePaddingY: def('npy', 'padding', F),
+  stadiumPaddingX: def('spx', 'padding', F),
+  stadiumPaddingY: def('spy', 'padding', F),
+  hexagonPaddingX: def('hpx', 'padding', F),
+  hexagonPaddingY: def('hpy', 'padding', F),
+  hexagonSlant: def('hs', 'length', F),
+  doubleCircleGap: def('dcg', 'length', F),
+  doubleCirclePadding: def('dcp', 'padding', F),
+  circlePadding: def('cp', 'padding', F),
+  circleMinDiameter: def('cmd', 'length', F),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', F),

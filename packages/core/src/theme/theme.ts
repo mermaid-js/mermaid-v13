@@ -68,6 +68,11 @@ export interface Theme {
   length(name: string): Length;
   /** A length or size variable as a number, for geometry and measuring. */
   number(name: string): number;
+  /**
+   * A `padding` variable as a number (D152): a px value as is, or a multiple of the diagram's
+   * own `padding` config, which the caller passes.
+   */
+  padding(name: string, padding: number): number;
   /** The font family, for `font-family`. */
   font(name?: string): SafeValue | ThemeRef;
   /** A filter variable (`dropShadow`) for the `filter` attribute: `var(--_x)` or the literal. */
@@ -109,6 +114,8 @@ interface Resolved {
 }
 
 const RE_SIZE = /^(\d{1,6}(?:\.\d{1,6})?)(?:px)?$/;
+/** A multiple of the diagram's padding: `padding` or `<n> * padding`. */
+const RE_PADDING = /^(?:(\d{1,6}(?:\.\d{1,6})?)\s*\*\s*)?padding$/;
 const WEIGHTS = new Set([
   'normal',
   'bold',
@@ -130,7 +137,9 @@ const own = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.c
 
 function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
   if (typeof raw === 'number')
-    return kind === 'length' || kind === 'weight' ? checkValue(kind, String(raw)) : undefined;
+    return kind === 'length' || kind === 'padding' || kind === 'weight'
+      ? checkValue(kind, String(raw))
+      : undefined;
   if (typeof raw !== 'string') return undefined;
   const v = raw.trim();
   switch (kind) {
@@ -138,6 +147,8 @@ function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
       return checkColor(v);
     case 'length':
       return RE_SIZE.test(v) ? v : undefined;
+    case 'padding':
+      return RE_SIZE.test(v) || RE_PADDING.test(v) ? v : undefined;
     case 'weight':
       return WEIGHTS.has(v.toLowerCase()) ? v.toLowerCase() : undefined;
     case 'font':
@@ -191,7 +202,14 @@ class Resolver {
 
   private literal(name: string, text: string): Resolved {
     const kind = this.defs[name]?.kind ?? 'color';
-    if (kind === 'length') {
+    if (kind === 'padding') {
+      const m = RE_PADDING.exec(text);
+      if (m) {
+        const lit = `${num(Number(m[1] ?? 1))}*padding`;
+        return { css: lit, lit, rgba: undefined, deps: [] };
+      }
+    }
+    if (kind === 'length' || kind === 'padding') {
       const n = Number(RE_SIZE.exec(text)?.[1] ?? 0);
       return { css: num(n) + 'px', lit: num(n), rgba: undefined, deps: [] };
     }
@@ -504,8 +522,15 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
       return vars ? ref(name) : Number(main.get(name).lit);
     },
     number(name) {
-      if (def(name).kind !== 'length') throw new TypeError(`${name} is not a length`);
+      const kind = def(name).kind;
+      if (kind !== 'length' && kind !== 'padding') throw new TypeError(`${name} is not a length`);
       return Number(main.get(name).lit);
+    },
+    padding(name, padding) {
+      if (def(name).kind !== 'padding') throw new TypeError(`${name} is not a padding`);
+      const lit = main.get(name).lit;
+      const m = RE_PADDING.exec(lit);
+      return m ? Number(m[1] ?? 1) * padding : Number(lit);
     },
     font(name = 'fontFamily') {
       return vars ? ref(name) : (main.get(name).lit as SafeValue);

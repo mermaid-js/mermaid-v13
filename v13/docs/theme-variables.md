@@ -56,6 +56,17 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart |
 | `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart |
 | `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart |
+| `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart |
+| `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart |
+| `stadiumPaddingX` | `--mermaid-stadiumPaddingX` | token | padding | | | all | flowchart |
+| `stadiumPaddingY` | `--mermaid-stadiumPaddingY` | token | padding | | | all | flowchart |
+| `hexagonPaddingX` | `--mermaid-hexagonPaddingX` | token | padding | | | all | flowchart |
+| `hexagonPaddingY` | `--mermaid-hexagonPaddingY` | token | padding | | | all | flowchart |
+| `hexagonSlant` | `--mermaid-hexagonSlant` | token | length | | | all | flowchart |
+| `doubleCircleGap` | `--mermaid-doubleCircleGap` | token | length | | | all | flowchart |
+| `doubleCirclePadding` | `--mermaid-doubleCirclePadding` | token | padding | | | all | flowchart |
+| `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart |
+| `circleMinDiameter` | `--mermaid-circleMinDiameter` | token | length | | | all | flowchart |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color | flowchart |
 
 ## Palettes

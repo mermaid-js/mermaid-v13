@@ -2,7 +2,7 @@
  * `default`: v12's classic lavender theme (`theme-default.js`).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { CLASSIC_ARROWHEADS } from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'default',
@@ -26,6 +26,7 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
+    ...CLASSIC_PADDING,
   },
   values: {
     textColor: '#333333',

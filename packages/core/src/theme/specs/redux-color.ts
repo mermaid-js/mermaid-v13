@@ -6,7 +6,7 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { TAILWIND_300, TAILWIND_400, TAILWIND_50 } from './palettes.ts';
-import { NEO_ARROWHEADS } from './geometry.ts';
+import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'redux-color',
@@ -30,6 +30,7 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...NEO_ARROWHEADS,
+    ...REDUX_PADDING,
   },
   values: {
     // v12's hard drop shadow (insertLookDefs: dx/dy 4, no blur, 6% black) as a CSS filter.

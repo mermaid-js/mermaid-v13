@@ -2,7 +2,7 @@
  * `neutral`: v12 `theme-neutral.js`, greys for print.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { CLASSIC_ARROWHEADS } from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'neutral',
@@ -26,6 +26,7 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
+    ...CLASSIC_PADDING,
   },
   values: {
     textColor: '#000000',

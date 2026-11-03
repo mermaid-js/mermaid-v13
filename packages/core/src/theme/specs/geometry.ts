@@ -1,10 +1,15 @@
 /**
- * Geometry the two theme families share (D152), from v12 12.2.0 `markers.js` and
- * `lineWithOffset.ts`. The redux themes carry v12 `look: neo` geometry, the classic themes
- * v12 classic geometry. Sizes are in px; a gap is the space between the node outline and the
- * nearest point of the arrowhead.
+ * Geometry the two theme families share (D151, D152). The redux themes carry v12 `look: neo`
+ * geometry, the classic themes v12 classic geometry.
+ *
+ * Arrowheads come from v12 12.2.0 `markers.js` and `lineWithOffset.ts`. Sizes are in px; a gap
+ * is the space between the node outline and the nearest point of the arrowhead.
+ *
+ * Node padding in the classic themes follows the diagram's `padding` config
+ * (`flowchart.padding`). Circles keep v13's earlier redux values, and hexagon padding is
+ * applied X to width and Y to height (v12 swaps them).
  */
-import type { ArrowheadVariable } from '../vocabulary.ts';
+import type { ArrowheadVariable, TokenVariable } from '../vocabulary.ts';
 
 /**
  * v12 neo (`*-margin` markers). Point: viewBox 11.5×14 met into 10.5×14, so 10.5 long and
@@ -37,4 +42,47 @@ export const CLASSIC_ARROWHEADS: Readonly<Record<ArrowheadVariable, number>> = {
   crossArrowheadSize: 11,
   crossArrowheadGap: 2,
   crossArrowheadStrokeWidth: 2,
+};
+
+type PaddingToken = Extract<
+  TokenVariable,
+  | 'nodePaddingX'
+  | 'nodePaddingY'
+  | 'stadiumPaddingX'
+  | 'stadiumPaddingY'
+  | 'hexagonPaddingX'
+  | 'hexagonPaddingY'
+  | 'hexagonSlant'
+  | 'doubleCircleGap'
+  | 'doubleCirclePadding'
+  | 'circlePadding'
+  | 'circleMinDiameter'
+>;
+
+export const REDUX_PADDING: Readonly<Record<PaddingToken, number | string>> = {
+  nodePaddingX: 16,
+  nodePaddingY: 12,
+  stadiumPaddingX: 40,
+  stadiumPaddingY: 24,
+  hexagonPaddingX: 70,
+  hexagonPaddingY: 32,
+  hexagonSlant: 3.5,
+  doubleCircleGap: 12,
+  doubleCirclePadding: 16,
+  circlePadding: 16,
+  circleMinDiameter: 44,
+};
+
+export const CLASSIC_PADDING: Readonly<Record<PaddingToken, number | string>> = {
+  nodePaddingX: '2 * padding',
+  nodePaddingY: 'padding',
+  stadiumPaddingX: 'padding',
+  stadiumPaddingY: 'padding',
+  hexagonPaddingX: 'padding',
+  hexagonPaddingY: 'padding',
+  hexagonSlant: 4,
+  doubleCircleGap: 5,
+  doubleCirclePadding: 'padding',
+  circlePadding: 'padding',
+  circleMinDiameter: 0,
 };

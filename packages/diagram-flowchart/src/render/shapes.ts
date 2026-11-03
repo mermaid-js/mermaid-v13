@@ -6,12 +6,29 @@
 import { translate, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
 import { SHAPE_GROUPS } from '../parser/shapes.ts';
 
-/** Room around the label, from the theme tokens. */
+/** Room around the label, from the theme's padding variables (D152) and `flowchart.padding`. */
 export interface Pads {
+  /** `nodePaddingX` / `nodePaddingY`, per side. */
   x: number;
   y: number;
   /** Corner radius of rounded shapes. */
   r: number;
+  /** `flowchart.padding`, for the diamond (the same in every theme). */
+  pad: number;
+  /** `stadiumPaddingX` / `stadiumPaddingY`, totals. */
+  stadiumX: number;
+  stadiumY: number;
+  /** `hexagonPaddingX` (to the width) / `hexagonPaddingY` (to the height), totals. */
+  hexX: number;
+  hexY: number;
+  /** `hexagonSlant`: the slant is the height over this. */
+  hexSlant: number;
+  /** `doubleCircleGap` (between the rings) / `doubleCirclePadding` (label to inner ring). */
+  ringGap: number;
+  ringPad: number;
+  /** `circlePadding` (added to the label diagonal) / `circleMinDiameter`. */
+  circlePad: number;
+  circleMin: number;
 }
 
 export interface ShapeSize {
@@ -168,9 +185,11 @@ const S: Record<string, ShapeDef> = {
   stadium: {
     inset: (_W, H, side, t) => (side & 1 ? bulge(t, H / 2, H / 2) : 0),
     span: (W, H, s) => (s ? H * 0.6 : W - H),
+    // v12 stadiumDimensions: room for the label inside the caps, at least 1.5 × the height.
     size: (tw, th, p) => {
-      const h = th + 2 * p.y;
-      return { w: tw + h * 0.5 + 2 * p.x - 8, h, dy: 0 };
+      const h = th + p.stadiumY;
+      const cap = Math.sqrt(Math.max(0, h * h - th * th));
+      return { w: Math.max(tw + h / 4 + p.stadiumX, 1.5 * h, tw + p.stadiumX + h - cap), h, dy: 0 };
     },
     draw: (w, W, H, a) => centred(w, W, H, a, H / 2),
   },
@@ -206,8 +225,8 @@ const S: Record<string, ShapeDef> = {
   circle: {
     inset: roundInset,
     span: roundSpan,
-    size: (tw, th) => {
-      const d = Math.max(Math.hypot(tw, th) + 16, 44);
+    size: (tw, th, p) => {
+      const d = Math.max(Math.hypot(tw, th) + p.circlePad, p.circleMin);
       return { w: d, h: d, dy: 0 };
     },
     draw: (w, W, _H, a) => circle(w, W / 2, a),
@@ -215,13 +234,14 @@ const S: Record<string, ShapeDef> = {
   'dbl-circ': {
     inset: roundInset,
     span: roundSpan,
-    size: (tw, th) => {
-      const d = Math.max(Math.hypot(tw, th) + 26, 54);
+    // v12: the inner ring clears the label diagonal by ringPad, the outer ring is ringGap out.
+    size: (tw, th, p) => {
+      const d = Math.hypot(tw, th) + 2 * (p.ringPad + p.ringGap);
       return { w: d, h: d, dy: 0 };
     },
-    draw: (w, W, _H, a, line) => {
+    draw: (w, W, _H, a, line, p) => {
       circle(w, W / 2, a);
-      circle(w, W / 2 - 5, { ...line, fill: 'none' });
+      circle(w, Math.max(0, W / 2 - p.ringGap), { ...line, fill: 'none' });
     },
   },
   ellipse: {
@@ -233,19 +253,23 @@ const S: Record<string, ShapeDef> = {
   diam: {
     inset: (W, H, side, t) => (side & 1 ? (Math.abs(t) * W) / H : (Math.abs(t) * H) / W),
     span: roundSpan,
-    size: (tw, th) => {
-      const a = tw + 16;
-      const b = th + 8;
-      return { w: a + 1.6 * b, h: a / 1.6 + b, dy: 0 };
+    // v12 question: a square rhombus, side = label width + label height + 2 × padding.
+    size: (tw, th, p) => {
+      const s = tw + th + 2 * p.pad;
+      return { w: s, h: s, dy: 0 };
     },
     draw: (w, W, H, a) => poly(w, [0, -H / 2, W / 2, 0, 0, H / 2, -W / 2, 0], a),
   },
   hex: {
-    inset: (_W, _H, side, t) => (side & 1 ? Math.abs(t) / 2 : 0),
+    inset: (_W, _H, side, t, p) => (side & 1 ? (2 * Math.abs(t)) / p.hexSlant : 0),
     span: (W, H, s) => (s ? H * 0.5 : W - H / 2 - CORNER),
-    size: grown(0, 0, 0, 0.5),
-    draw: (w, W, H, a) => {
-      const m = H / 4;
+    // v12 hexagon with the axes corrected (D151): X padding to the width, Y to the height.
+    size: (tw, th, p) => {
+      const h = th + p.hexY;
+      return { w: tw + 2 * (h / p.hexSlant) + p.hexX, h, dy: 0 };
+    },
+    draw: (w, W, H, a, _l, p) => {
+      const m = H / p.hexSlant;
       const x = W / 2;
       const y = H / 2;
       poly(w, [-x + m, -y, x - m, -y, x, 0, x - m, y, -x + m, y, -x, 0], a);
