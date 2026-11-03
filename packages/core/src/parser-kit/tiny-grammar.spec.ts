@@ -58,7 +58,7 @@ function lex(src: string): TokenStream {
     const nl = newlineAt(src, i);
     let j: number;
     if (nl) {
-      w.push(Kind.Newline, i, i + nl, src.slice(i, i + nl));
+      w.push(Kind.Newline, i, i + nl);
       i += nl;
       continue;
     }
@@ -68,27 +68,27 @@ function lex(src: string): TokenStream {
     }
     if (src.startsWith('%%', i)) {
       j = lineEnd(src, i);
-      w.push(Kind.Comment, i, j, src.slice(i, j));
+      w.push(Kind.Comment, i, j);
     } else if ((j = matchAt(ARROW, src, i)) >= 0) {
-      w.push(T.Arrow, i, j, '-->');
+      w.push(T.Arrow, i, j);
     } else if (c === 91 /* [ */) {
-      w.push(T.Open, i, i + 1, '[');
+      w.push(T.Open, i, i + 1);
       j = i + 1;
       while (j < src.length && src[j] !== ']' && !newlineAt(src, j)) j++;
-      if (j > i + 1) w.push(T.Text, i + 1, j, src.slice(i + 1, j));
-      if (src[j] === ']') w.push(T.Close, j, ++j, ']');
+      if (j > i + 1) w.push(T.Text, i + 1, j);
+      if (src[j] === ']') w.push(T.Close, j, ++j);
     } else if (c === 59 /* ; */) {
-      w.push(T.Semi, i, (j = i + 1), ';');
+      w.push(T.Semi, i, (j = i + 1));
     } else if (isIdChar(c)) {
       j = scanWhile(src, i, isIdChar);
       const word = src.slice(i, j);
-      w.push(KEYWORDS[word] ?? T.Id, i, j, word);
+      w.push(KEYWORDS[word] ?? T.Id, i, j);
     } else {
-      w.push(Kind.Error, i, (j = i + 1), src[i] ?? '');
+      w.push(Kind.Error, i, (j = i + 1));
     }
     i = j;
   }
-  return w.finish(src.length);
+  return w.finish(src);
 }
 
 const EXPECTED = new ExpectedTable([

@@ -171,7 +171,8 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
   const n = text.length;
   const mask = view.mask;
   const holes = view.holes;
-  const w = new TokenWriter();
+  // About one token per four characters of flowchart text.
+  const w = new TokenWriter(((len - from) >> 2) + 8);
   const stack: number[] = [];
   let state: number = S.INITIAL;
   let p = from;
@@ -201,7 +202,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
   const emit = (kind: number, s: number, e: number): void => {
     const a = Math.min(s, len);
     const b = Math.min(e, len);
-    w.push(kind, a, b, src.slice(a, b));
+    w.push(kind, a, b);
     p = e;
   };
   const push = (s: number): void => {
@@ -475,7 +476,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
       case AT:
         if (text.charCodeAt(p + 1) === LBRACE) {
           push(S.shapeData);
-          w.push(T.ShapeData, p, p + 2, '');
+          w.push(T.ShapeData, p, p + 2);
           p += 2;
           return true;
         }
@@ -1051,12 +1052,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
       const h = holes[hole];
       if (h && p >= h.start) {
         if (h.kind !== 'drop') {
-          w.push(
-            h.kind === 'comment' ? Kind.Comment : Kind.Directive,
-            h.start,
-            h.end,
-            src.slice(h.start, h.end)
-          );
+          w.push(h.kind === 'comment' ? Kind.Comment : Kind.Directive, h.start, h.end);
         }
         p = Math.max(p, h.end);
         hole++;
@@ -1072,12 +1068,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         // Skip a removed span; it is trivia in the stream.
         const end = Math.max(p, h.end);
         if (h.kind !== 'drop') {
-          w.push(
-            h.kind === 'comment' ? Kind.Comment : Kind.Directive,
-            h.start,
-            end,
-            src.slice(h.start, end)
-          );
+          w.push(h.kind === 'comment' ? Kind.Comment : Kind.Directive, h.start, end);
         }
         p = end;
         hole++;
@@ -1097,11 +1088,11 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
     if (!step(text.charCodeAt(p)) || p === before) {
       // No rule matches: one Error token, then resume in the initial state.
       const e = Math.min(p + 1, n);
-      w.push(Kind.Error, Math.min(p, len), Math.min(e, len), src.slice(p, e));
+      w.push(Kind.Error, Math.min(p, len), Math.min(e, len));
       p = e;
       stack.length = 0;
       state = S.INITIAL;
     }
   }
-  return w.finish(len);
+  return w.finish(src);
 }

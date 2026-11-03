@@ -22,9 +22,9 @@ function lex(src: string): TokenStream {
             : c === '%'
               ? Kind.Comment
               : Junk;
-    w.push(k, i, i + 1, c);
+    w.push(k, i, i + 1);
   }
-  return w.finish(src.length);
+  return w.finish(src);
 }
 
 describe('TokenCursor', () => {
