@@ -95,7 +95,6 @@ export const urlSnapshotTest = async (
   testInfo: TestInfo,
   url: string,
   options: E2EMermaidConfig = {},
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept for the v12 call sites
   _api = false,
   validation?: any
 ): Promise<void> => {

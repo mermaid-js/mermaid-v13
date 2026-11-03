@@ -1,7 +1,11 @@
 // @ts-check
+import comments from '@eslint-community/eslint-plugin-eslint-comments';
 import eslint from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import noOnlyTests from 'eslint-plugin-no-only-tests';
+import sonarjs from 'eslint-plugin-sonarjs';
+import tsdoc from 'eslint-plugin-tsdoc';
+import unicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 import mermaid from './tools/eslint-plugin/index.ts';
@@ -52,21 +56,138 @@ export default tseslint.config(
     ],
   },
   eslint.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.stylisticTypeChecked,
   {
+    linterOptions: { reportUnusedDisableDirectives: 'error' },
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
       globals: { ...globals.es2021, ...globals.node },
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
     },
-    plugins: { 'no-only-tests': noOnlyTests },
+    plugins: {
+      'no-only-tests': noOnlyTests,
+      '@eslint-community/eslint-comments': comments,
+      sonarjs,
+      tsdoc,
+      unicorn,
+    },
     rules: {
       'no-only-tests/no-only-tests': 'error',
-      '@typescript-eslint/consistent-type-imports': 'error',
       'no-restricted-syntax': [
         'error',
         { selector: 'TSEnumDeclaration', message: 'Use a union type instead of an enum.' },
       ],
+
+      // Carried over from v12.
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/consistent-type-definitions': 'error',
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        { 'ts-expect-error': 'allow-with-description', minimumDescriptionLength: 10 },
+      ],
+      '@typescript-eslint/naming-convention': [
+        'error',
+        {
+          selector: 'typeLike',
+          format: ['PascalCase'],
+          custom: { regex: '^I[A-Z]', match: false },
+        },
+      ],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+          caughtErrors: 'all',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
+      'tsdoc/syntax': 'error',
+      'unicorn/better-regex': 'error',
+      'unicorn/no-abusive-eslint-disable': 'error',
+      'unicorn/no-array-push-push': 'error',
+      'unicorn/no-for-loop': 'error',
+      'unicorn/no-instanceof-array': 'error',
+      'unicorn/no-lonely-if': 'error',
+      'unicorn/no-typeof-undefined': 'error',
+      'unicorn/no-unnecessary-await': 'error',
+      'unicorn/no-useless-promise-resolve-reject': 'error',
+      'unicorn/prefer-array-find': 'error',
+      'unicorn/prefer-array-flat-map': 'error',
+      'unicorn/prefer-array-index-of': 'error',
+      'unicorn/prefer-array-some': 'error',
+      'unicorn/prefer-default-parameters': 'error',
+      'unicorn/prefer-includes': 'error',
+      'unicorn/prefer-negative-index': 'error',
+      'unicorn/prefer-object-from-entries': 'error',
+      'unicorn/prefer-spread': 'error',
+      'unicorn/prefer-string-starts-ends-with': 'error',
+      'unicorn/prefer-string-trim-start-end': 'error',
+      'unicorn/string-content': 'error',
+      // v12's stylistic set prefers `x!` to `x as T`, and flags `a! === b`; v13 keeps both.
+      '@typescript-eslint/non-nullable-type-assertion-style': 'off',
+      '@typescript-eslint/no-confusing-non-null-assertion': 'off',
+
+      // Added for v13: type-aware checks, and the slips generated code tends to make.
+      eqeqeq: 'error',
+      'no-duplicate-imports': ['error', { allowSeparateTypeImports: true }],
+      'no-else-return': 'error',
+      'no-useless-concat': 'error',
+      'no-useless-rename': 'error',
+      'no-useless-return': 'error',
+      'no-warning-comments': 'error',
+      'object-shorthand': 'error',
+      '@typescript-eslint/explicit-module-boundary-types': 'error',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-import-type-side-effects': 'error',
+      '@typescript-eslint/no-shadow': 'error',
+      '@typescript-eslint/no-unnecessary-condition': 'error',
+      '@typescript-eslint/no-unnecessary-type-parameters': 'error',
+      '@typescript-eslint/no-useless-empty-export': 'error',
+      '@typescript-eslint/prefer-readonly': 'error',
+      '@typescript-eslint/switch-exhaustiveness-check': 'error',
+      '@eslint-community/eslint-comments/disable-enable-pair': 'error',
+      '@eslint-community/eslint-comments/no-unlimited-disable': 'error',
+      '@eslint-community/eslint-comments/require-description': 'error',
+      'sonarjs/no-all-duplicated-branches': 'error',
+      'sonarjs/no-collapsible-if': 'error',
+      'sonarjs/no-dead-store': 'error',
+      'sonarjs/no-gratuitous-expressions': 'error',
+      'sonarjs/no-identical-conditions': 'error',
+      'sonarjs/no-identical-functions': 'error',
+      'sonarjs/no-inverted-boolean-check': 'error',
+      'sonarjs/no-redundant-boolean': 'error',
+      'sonarjs/no-redundant-jump': 'error',
+      'sonarjs/no-unused-collection': 'error',
+      'sonarjs/prefer-single-boolean-return': 'error',
+    },
+  },
+  {
+    files: ['**/*.{js,mjs,cjs}'],
+    ...tseslint.configs.disableTypeChecked,
+  },
+  {
+    // Test doubles: stubs, unbound spies and async callbacks without awaits are normal here.
+    files: ['**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
+      '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+    },
+  },
+  {
+    // Ported verbatim from v12 by scripts/port-v12-specs.ts, which adds the blanket disable.
+    files: ['packages/diagram-flowchart/src/v12-specs/**'],
+    rules: {
+      '@eslint-community/eslint-comments/disable-enable-pair': 'off',
+      '@eslint-community/eslint-comments/no-unlimited-disable': 'off',
+      'unicorn/no-abusive-eslint-disable': 'off',
     },
   },
   {
