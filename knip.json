@@ -10,9 +10,20 @@
       "project": ["src/**/*.ts"]
     },
     "packages/bench": {
-      "entry": ["src/index.ts", "src/cli/*.ts", "src/runner/harness.ts", "src/runner/*-entry.ts"],
+      "entry": [
+        "src/index.ts",
+        "src/cli/*.ts",
+        "src/runner/harness.ts",
+        "src/runner/*-entry.ts",
+        "src/node/runner.ts"
+      ],
       "project": ["src/**/*.ts"],
-      "ignoreDependencies": ["mermaid-v12", "mermaid-v12-frozen", "@mermaid-js/diagram-flowchart"]
+      "ignoreDependencies": [
+        "mermaid-v12",
+        "mermaid-v12-frozen",
+        "pele",
+        "@mermaid-js/diagram-flowchart"
+      ]
     },
     "packages/dev": {
       "entry": [

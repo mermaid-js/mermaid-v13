@@ -11,10 +11,13 @@ export type StageTimes = Record<Stage, number | null>;
 /**
  * - `v13`: the production bundle (timing compiled out); its warm time is what R-PERF-3 compares.
  * - `v13-stages`: the same code built with the bench flag, for per-stage columns (R-PERF-5).
+ * - `v13-base`: the production bundle of the base commit (`--base`, default
+ *   `origin/mermaid-v13`), so a PR is compared with the branch it merges into. Informational.
  * - `v12-frozen`: `mermaid@12.2.0` with `layout: 'dagre'`, the R-PERF-3 baseline.
  * - `v12-current`: the newest `mermaid@12` with its own default layout, reported for information.
+ * - `pele`: the newest `pele@1` (Obsidian's Mermaid renderer), reported for information.
  */
-export type RendererId = 'v13' | 'v13-stages' | 'v12-frozen' | 'v12-current';
+export type RendererId = 'v13' | 'v13-stages' | 'v13-base' | 'v12-frozen' | 'v12-current' | 'pele';
 
 export type ResultStatus = 'ok' | 'error' | 'timeout' | 'missing';
 
@@ -80,7 +83,10 @@ export interface BenchReport {
   createdAt: string;
   /** Baselines are stored per runner (O-4). */
   runner: string;
+  /** The commit the report is for: `BENCH_COMMIT` (on a PR, its head), else HEAD. */
   commit?: string;
+  /** What was built when that is not `commit`: on a PR, the merge of the PR into its base. */
+  mergeCommit?: string;
   browser?: string;
   options: Record<string, unknown>;
   pipeline: PipelineState;
@@ -91,6 +97,21 @@ export interface BenchReport {
    * from the build's import graph (`source: 'static'`). Absent in reports older than M2.
    */
   asciiSize?: SizeSummary | null;
+  /** Browser runs (Chromium through Playwright); every gate reads these. */
+  renderers: RendererRun[];
+  /**
+   * Node runs (`--env node`): the DOM-free renderers in a child process each, timed to the SVG
+   * string. Reported only; no gate reads them. Absent when the Node environment did not run.
+   */
+  node?: NodeRuns;
+}
+
+export const ENVS = ['browser', 'node'] as const;
+export type BenchEnv = (typeof ENVS)[number];
+
+export interface NodeRuns {
+  /** `node v24.16.0` */
+  runtime: string;
   renderers: RendererRun[];
 }
 

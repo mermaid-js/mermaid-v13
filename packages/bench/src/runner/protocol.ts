@@ -38,6 +38,8 @@ export interface BenchWindow {
 export const RENDERER_ENTRY: Record<RendererId, string> = {
   v13: '/r/v13/index.js',
   'v13-stages': '/r/v13-stages/index.js',
+  'v13-base': '/r/v13-base/index.js',
   'v12-frozen': '/r/v12-frozen/mermaid.esm.min.mjs',
   'v12-current': '/r/v12-current/mermaid.esm.min.mjs',
+  pele: '/r/pele/pele.js',
 };
