@@ -14,9 +14,12 @@ export {
 export { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
 export {
   BASE_VARIABLES,
+  PALETTE_LIMIT,
+  PALETTE_VARIABLES,
   THEME_VARIABLES,
   TOKEN_VARIABLES,
   type BaseVariable,
+  type PaletteVariable,
   type ThemeVarDef,
   type ThemeVarKind,
   type TokenVariable,

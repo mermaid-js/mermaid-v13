@@ -76,6 +76,43 @@ describe('flowchart render: document root (DESIGN §7.2)', () => {
   });
 });
 
+describe('flowchart render: themes (D151)', () => {
+  const text = 'flowchart TD\n  subgraph S[Group]\n    A --> B\n  end';
+  const literal = (theme?: string) =>
+    draw(text, {
+      config: { output: { cssVariables: false }, ...(theme && { theme }) } as InitializeConfig,
+    });
+  const strokes = (r: { tree: SvgView }) =>
+    new Set(r.tree.find({ tag: 'rect' }).map((n) => r.tree.getAttr(n, 'stroke')));
+
+  it('renders in redux-color when no theme is set, with no warning', async () => {
+    const plain = await literal();
+    expect(plain.warnings).toEqual([]);
+    expect(strokes(plain)).toContain('#28253d');
+    // Same output as asking for redux-color by name.
+    expect(plain.svg).toBe((await literal('redux-color')).svg);
+  });
+
+  it.each(['redux-dark', 'redux-dark-color'])(
+    'renders %s as its own theme, with no warning',
+    async (theme) => {
+      const r = await literal(theme);
+      expect(r.warnings).toEqual([]);
+      expect(strokes(r)).toContain('#ffffff');
+      expect(r.svg).not.toBe((await literal('dark')).svg);
+    }
+  );
+
+  it.each([
+    ['neo', 'redux-color'],
+    ['neo-dark', 'redux-dark-color'],
+  ])('renders %s as %s, with THEME_UNAVAILABLE', async (theme, standIn) => {
+    const r = await literal(theme);
+    expect(r.warnings.map((w) => w.code)).toEqual(['THEME_UNAVAILABLE']);
+    expect(r.svg).toBe((await literal(standIn)).svg);
+  });
+});
+
 describe('flowchart render: nodes, edges and clusters', () => {
   it('writes one data-ast element per vertex, edge and subgraph, with v12 classes', async () => {
     const { tree } = await draw(

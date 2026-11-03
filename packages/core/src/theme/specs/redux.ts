@@ -1,5 +1,5 @@
 /**
- * `redux`: the default theme (D55), from v12 `theme-redux.js`. Its tokens (stroke width 2, radius 12)
+ * `redux`: the monochrome redux theme, from v12 `theme-redux.js`. Its tokens (stroke width 2, radius 12)
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
 import type { ThemeSpec } from '../spec.ts';

@@ -37,7 +37,7 @@ const codes = (warnings: ConfigWarning[]) => warnings.map((w) => `${w.code} ${w.
 describe('resolveConfig precedence (mirrors v12 config.spec.ts)', () => {
   it('returns the defaults when nothing else is given', () => {
     const { config, warnings } = resolve();
-    expect(config.theme).toBe('redux');
+    expect(config.theme).toBe('redux-color');
     expect(config.fontSize).toBe(16);
     expect(config.securityLevel).toBe('default');
     expect(warnings).toEqual([]);
@@ -258,6 +258,18 @@ describe('unknown, removed and not-yet-ported keys (R-CONF-2, R-CONF-5)', () => 
     expect(config.themeVariables).toEqual({ pie1: '#ff0000' });
   });
 
+  it('keeps palette theme variables, and unknown ones, as given (D152, R-CONF-5)', () => {
+    const themeVariables = {
+      borderColorArray: ['#ff0000', 'rgb(0, 128, 0)'],
+      bkgColorArray: '#111111, #222222',
+      cScale3: '#123456',
+      notAVariable: '#ff0000',
+    };
+    const { config, warnings } = resolve({ frontMatter: { themeVariables } });
+    expect(warnings).toEqual([]);
+    expect(config.themeVariables).toEqual(themeVariables);
+  });
+
   it("accepts a third-party plugin's own section", () => {
     const { config, warnings } = resolve({
       pluginDefaults: { zenuml: { width: 1 } } as MermaidConfig,
@@ -347,7 +359,7 @@ describe('the resolved config is frozen (R-ARCH-5)', () => {
 });
 
 describe('CORE_DEFAULTS', () => {
-  it('are the v12.2.0 top-level defaults, with redux, layered, securityLevel default (D75) and 5,000 edges (D31) as the new defaults', () => {
+  it('are the v12.2.0 top-level defaults, with redux-color, layered, securityLevel default (D75) and 5,000 edges (D31) as the new defaults', () => {
     // Read from mermaid@12.2.0's `mermaidAPI.defaultConfig` (objects and functions left out).
     const v12 = {
       theme: 'default',
@@ -379,7 +391,7 @@ describe('CORE_DEFAULTS', () => {
     };
     expect(CORE_DEFAULTS).toEqual({
       ...v12,
-      theme: 'redux',
+      theme: 'redux-color',
       layout: 'layered',
       securityLevel: 'default',
       maxEdges: 5000,

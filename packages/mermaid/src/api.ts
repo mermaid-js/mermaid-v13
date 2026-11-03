@@ -33,6 +33,7 @@ import { resolveSecurityLevel } from '@mermaid-js/core/svg';
 import type { Measurer } from '@mermaid-js/core/text';
 import {
   createTheme,
+  DEFAULT_THEME,
   loadedTheme,
   loadTheme,
   resolveThemeName,
@@ -520,7 +521,7 @@ export function createMermaid() {
       engine = found.engine;
     }
     const choice = resolveThemeName(config.theme, warn);
-    const spec = loadedTheme(choice.name) ?? loadedTheme('redux')!;
+    const spec = loadedTheme(choice.name) ?? loadedTheme(DEFAULT_THEME)!;
     const dark = choice.dark ? loadedTheme(choice.dark) : undefined;
     const theme = createTheme(spec, {
       themeVariables: config.themeVariables as Record<string, unknown> | undefined,

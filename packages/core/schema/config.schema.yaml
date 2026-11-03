@@ -86,7 +86,7 @@ properties:
     meta:enum:
       'null': Can be set to disable any pre-defined mermaid theme
       auto: 'New in v13: the default theme, and `dark` under `prefers-color-scheme: dark` (R-THEME-8)'
-    default: 'redux'
+    default: 'redux-color'
     x-mermaid:
       status: honoured
       since: 13.0.0
@@ -119,6 +119,38 @@ properties:
         `redux-dark` carry no palette. Geometry variables are read as numbers at render time,
         because they feed layout, so overriding their CSS variables has no effect;
         `dropShadow` is a CSS value.
+    # Named variables are documented here; any other name is still accepted (R-CONF-5).
+    type: object
+    additionalProperties: true
+    properties:
+      borderColorArray:
+        description: |
+          Per-subgraph border colours, used by slot (declaration order, cycling). A list of
+          colours, or one comma-separated string. Empty or unset: no per-subgraph colour.
+        type: [array, string]
+        items:
+          type: string
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            Tailwind-400 × 12 in `redux-color` and `redux-dark-color`; empty in every other
+            theme (D151). Read as literal colours, not CSS variables. An unsafe colour drops
+            the whole list with `THEME_VARIABLE_DROPPED`.
+      bkgColorArray:
+        description: |
+          Per-subgraph fill colours, by the same slot as `borderColorArray`. A list of colours,
+          or one comma-separated string. Empty: subgraphs are coloured on the border only.
+        type: [array, string]
+        items:
+          type: string
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            Tailwind-50 × 12 in `redux-color`; empty in `redux-dark-color` and every other theme
+            (D151). Read as literal colours, not CSS variables. An unsafe colour drops the whole
+            list with `THEME_VARIABLE_DROPPED`.
   themeCSS:
     type: string
     x-mermaid:

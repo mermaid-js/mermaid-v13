@@ -31,9 +31,26 @@ const TEXT_ON_FILL: readonly [text: string, fill: string][] = [
 ];
 
 describe('built-in themes', () => {
-  it('ships redux, default, dark, forest, neutral and base (D64), light and dark', () => {
+  it('ships the redux family and default, dark, forest, neutral and base (D64, D151)', () => {
     expect(specs.map((s) => s.name)).toEqual([...THEME_NAMES]);
-    expect(specs.filter((s) => s.dark).map((s) => s.name)).toEqual(['dark']);
+    expect([...THEME_NAMES].sort()).toEqual(
+      [
+        'redux',
+        'redux-color',
+        'redux-dark',
+        'redux-dark-color',
+        'default',
+        'dark',
+        'forest',
+        'neutral',
+        'base',
+      ].sort()
+    );
+    expect(specs.filter((s) => s.dark).map((s) => s.name)).toEqual([
+      'redux-dark',
+      'redux-dark-color',
+      'dark',
+    ]);
   });
 
   it.each(specs.map((s) => [s.name, s] as const))(
@@ -102,37 +119,45 @@ describe('built-in themes', () => {
 });
 
 describe('theme names', () => {
-  it('defaults to redux, which is always loaded for renderSync (D55)', () => {
-    expect(resolveThemeName(undefined)).toEqual({ name: 'redux' });
-    expect(loadedTheme('redux')?.name).toBe('redux');
+  it('defaults to redux-color, which is always loaded for renderSync (D151)', () => {
+    expect(resolveThemeName(undefined)).toEqual({ name: 'redux-color' });
+    expect(loadedTheme('redux-color')?.name).toBe('redux-color');
   });
 
-  it('renders a flowchart with no user theme in redux (D55)', () => {
-    // The flowchart section keeps v12's default `theme: redux-color`, which wins over the
-    // top-level `redux` in the defaults layer; it resolves to the redux spec.
+  it('renders with no user theme in redux-color, the schema default (D151)', () => {
     const config = resolveConfig(CORE_DEFAULTS, undefined, undefined, [], {
       flowchart: { theme: 'redux-color' },
     });
     expect(config.theme).toBe('redux-color');
-    expect(resolveThemeName(config.theme)).toEqual({ name: 'redux' });
+    expect(resolveThemeName(config.theme)).toEqual({ name: 'redux-color' });
     const chosen = resolveConfig(CORE_DEFAULTS, undefined, { theme: 'forest' }, [], {
       flowchart: { theme: 'redux-color' },
     });
     expect(resolveThemeName(chosen.theme)).toEqual({ name: 'forest' });
   });
 
-  it('resolves the v12 flowchart section default redux-color to redux, silently', () => {
+  it('resolves the redux family to their own specs, with no warning (D151)', () => {
     const warnings: ThemeWarning[] = [];
-    expect(resolveThemeName('redux-color', (w) => warnings.push(w))).toEqual({ name: 'redux' });
+    const warn = (w: ThemeWarning) => warnings.push(w);
+    for (const name of ['redux', 'redux-color', 'redux-dark', 'redux-dark-color'])
+      expect(resolveThemeName(name, warn)).toEqual({ name });
     expect(warnings).toEqual([]);
   });
 
-  it('stands in for v12 themes not shipped yet, and unknown names, with a warning', () => {
+  it('stands neo in for redux-color and neo-dark for redux-dark-color, with a warning', () => {
     const warnings: ThemeWarning[] = [];
     const warn = (w: ThemeWarning) => warnings.push(w);
-    expect(resolveThemeName('redux-dark', warn)).toEqual({ name: 'dark' });
-    expect(resolveThemeName('purple', warn)).toEqual({ name: 'redux' });
-    expect(resolveThemeName('__proto__', warn)).toEqual({ name: 'redux' });
+    expect(resolveThemeName('neo', warn)).toEqual({ name: 'redux-color' });
+    expect(resolveThemeName('neo-dark', warn)).toEqual({ name: 'redux-dark-color' });
+    expect(warnings.map((w) => w.code)).toEqual(['THEME_UNAVAILABLE', 'THEME_UNAVAILABLE']);
+  });
+
+  it('stands in for unknown names and null, with a warning', () => {
+    const warnings: ThemeWarning[] = [];
+    const warn = (w: ThemeWarning) => warnings.push(w);
+    expect(resolveThemeName('null', warn)).toEqual({ name: 'base' });
+    expect(resolveThemeName('purple', warn)).toEqual({ name: 'redux-color' });
+    expect(resolveThemeName('__proto__', warn)).toEqual({ name: 'redux-color' });
     expect(warnings.map((w) => w.code)).toEqual([
       'THEME_UNAVAILABLE',
       'THEME_UNAVAILABLE',
@@ -140,7 +165,7 @@ describe('theme names', () => {
     ]);
   });
 
-  it('auto pairs redux with dark (R-THEME-8)', () => {
-    expect(resolveThemeName('auto')).toEqual({ name: 'redux', dark: 'dark' });
+  it('auto pairs the default with dark (R-THEME-8)', () => {
+    expect(resolveThemeName('auto')).toEqual({ name: 'redux-color', dark: 'dark' });
   });
 });

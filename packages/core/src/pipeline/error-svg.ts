@@ -6,7 +6,7 @@ import type { SafeValue } from '../svg/types.ts';
 import { streamWriter } from '../svg/writer.ts';
 import { px, styleText } from '../svg/style.ts';
 import { createTheme, type Theme } from '../theme/theme.ts';
-import { loadedTheme } from '../theme/registry.ts';
+import { DEFAULT_THEME, loadedTheme } from '../theme/registry.ts';
 import type { MermaidError } from './errors.ts';
 
 export interface ErrorSvgContext {
@@ -23,7 +23,7 @@ const PAD = 16;
 const CHAR = 7.8;
 
 export function renderErrorSvg(error: MermaidError, ctx: ErrorSvgContext = {}): string {
-  const theme = ctx.theme ?? createTheme(loadedTheme('redux')!);
+  const theme = ctx.theme ?? createTheme(loadedTheme(DEFAULT_THEME)!);
   const fill = theme.color('errorBkgColor');
   const ink = theme.color('errorTextColor');
   const all = [`Syntax error in text (${error.code})`, ...error.message.split('\n')];

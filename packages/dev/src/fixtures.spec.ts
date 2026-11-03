@@ -58,7 +58,17 @@ describe('visual baseline fixtures (R-TEST-5)', () => {
   });
 
   it('have one fixture per M1 theme that sets that theme', () => {
-    expect(M1_THEMES).toEqual(['redux', 'default', 'dark', 'forest', 'neutral', 'base']);
+    expect(M1_THEMES).toEqual([
+      'redux-color',
+      'redux',
+      'redux-dark',
+      'redux-dark-color',
+      'default',
+      'dark',
+      'forest',
+      'neutral',
+      'base',
+    ]);
     for (const theme of M1_THEMES) {
       const f = fixtures.find((x) => x.path === `themes/${theme}.mmd`);
       expect(f?.source).toMatch(new RegExp(`theme: ${theme}\\n`));

@@ -25,7 +25,14 @@ import {
 } from './color.ts';
 import { parseRule, type Expr } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
-import { THEME_VARIABLES, type ThemeVarDef, type ThemeVarKind } from './vocabulary.ts';
+import {
+  PALETTE_LIMIT,
+  PALETTE_VARIABLES,
+  THEME_VARIABLES,
+  type PaletteVariable,
+  type ThemeVarDef,
+  type ThemeVarKind,
+} from './vocabulary.ts';
 
 export interface ThemeWarning {
   readonly code: 'THEME_VARIABLE_DROPPED' | 'THEME_UNAVAILABLE';
@@ -77,6 +84,11 @@ export interface Theme {
   rootStyle(): Readonly<Record<AliasName, ThemeRef>>;
   /** The colour aliases for light and dark, for `theme: 'auto'`; undefined otherwise. */
   autoDeclarations(): AutoDeclarations | undefined;
+  /**
+   * A palette as literal colours (D151, D152): the author's `themeVariables` list if valid,
+   * else the theme's; empty when the theme carries none.
+   */
+  palette(name: PaletteVariable): readonly SafeColor[];
 }
 
 export interface AutoDeclarations {
@@ -366,6 +378,70 @@ function checkOverrides(
   return out;
 }
 
+/** Splits a comma-separated colour list, keeping commas inside `rgb(…)` and the like. */
+function splitList(text: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '(') depth++;
+    else if (c === ')') depth--;
+    else if (c === ',' && depth === 0) {
+      out.push(text.slice(start, i));
+      start = i + 1;
+    }
+  }
+  out.push(text.slice(start));
+  return out.map((t) => t.trim()).filter((t) => t !== '');
+}
+
+const MAX_PALETTE = 64;
+const RE_C_SCALE = /^cScale(\d{1,2})$/;
+
+/**
+ * The palettes for one render: the spec's lists with the author's overrides applied. A whole
+ * list (`borderColorArray`, `bkgColorArray`, `cScale`) is an array or a comma-separated string;
+ * `cScale0`–`cScale11` replace one entry of the theme's `cScale`. Any unsafe colour drops
+ * that override with a warning.
+ */
+function resolvePalettes(
+  spec: ThemeSpec,
+  vars: Readonly<Record<string, unknown>> | undefined,
+  warn: ThemeOptions['warn']
+): Record<PaletteVariable, readonly SafeColor[]> {
+  const drop = (name: string, raw: unknown) =>
+    warn?.({
+      code: 'THEME_VARIABLE_DROPPED',
+      message: `themeVariables.${name} value ${JSON.stringify(String(raw).slice(0, 60))} is not allowed and was dropped.`,
+    });
+  const out = {} as Record<PaletteVariable, SafeColor[]>;
+  for (const name of PALETTE_VARIABLES) {
+    out[name] = (spec.palettes?.[name] ?? []).map((c) => checkColor(c) as SafeColor);
+    const raw = vars && own(vars, name) ? vars[name] : undefined;
+    if (raw === undefined || raw === null) continue;
+    const items = Array.isArray(raw) ? raw : typeof raw === 'string' ? splitList(raw) : undefined;
+    const checked = items?.map((c) => (typeof c === 'string' ? checkColor(c) : undefined));
+    if (!checked || checked.length > MAX_PALETTE || checked.some((c) => c === undefined)) {
+      drop(name, raw);
+      continue;
+    }
+    out[name] = checked as SafeColor[];
+  }
+  for (const key of vars ? Object.keys(vars) : []) {
+    const m = RE_C_SCALE.exec(key);
+    const i = m ? Number(m[1]) : NaN;
+    if (!(i < PALETTE_LIMIT)) continue;
+    const raw = (vars as Record<string, unknown>)[key];
+    if (raw === undefined || raw === null || raw === '') continue;
+    const c = typeof raw === 'string' ? checkColor(raw) : undefined;
+    if (c === undefined) drop(key, raw);
+    // An entry the theme has no colour for is accepted and ignored (R-CONF-5).
+    else if (i < out.cScale.length) out.cScale[i] = c;
+  }
+  return out;
+}
+
 /** Builds one render's theme. */
 export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme {
   const tv = options.themeVariables;
@@ -385,6 +461,7 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
     options.dark && new Resolver(options.dark, rulesFor(options.dark, true), overrides, defs);
   const vars = options.cssVariables !== false;
   const used = new Set<string>();
+  const palettes = resolvePalettes(spec, tv, options.warn);
 
   const def = (name: string): ThemeVarDef => {
     const d = own(defs, name) ? defs[name] : undefined;
@@ -447,5 +524,6 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
       vars && night
         ? { light: decls(main, used, true), dark: decls(night, used, true) }
         : undefined,
+    palette: (name) => palettes[name],
   };
 }

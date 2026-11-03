@@ -3,7 +3,7 @@
  * derived values a v12 theme hard-codes, and rules that override the shared derivation
  * table. Built-in specs live in `specs/`, one lazily imported file each.
  */
-import type { BaseVariable, TokenVariable } from './vocabulary.ts';
+import type { BaseVariable, PaletteVariable, TokenVariable } from './vocabulary.ts';
 
 /** Derivation rules by variable name, in the DSL of `dsl.ts`. */
 export type ThemeRuleTable = Readonly<Record<string, string>>;
@@ -18,6 +18,12 @@ export interface ThemeSpec {
   readonly values?: Readonly<Record<string, string>>;
   /** Rules that replace the shared ones for this theme. */
   readonly rules?: ThemeRuleTable;
+  /**
+   * Colour lists (D151, D152). A theme with a non-empty `borderColorArray` colours each
+   * subgraph from it; an empty `bkgColorArray` means border-only colour. A palette the theme
+   * leaves out is empty.
+   */
+  readonly palettes?: Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
 }
 
 /** Shared derivation for light themes, approximating v12's khroma rules (D71). */
