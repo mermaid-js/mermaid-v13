@@ -51,7 +51,7 @@ const glyphsFor = (ctx: FlowRenderContext): GlyphSet =>
  * Lays a flowchart out in cells: the cell measurer, the cell profile (`ascii.padding`) and
  * `stepped` routes on the grid, whatever `ctx` carries (D77, D78).
  */
-export function layoutAscii(model: FlowModel, ctx: FlowRenderContext): FlowLayout {
+function layoutAscii(model: FlowModel, ctx: FlowRenderContext): FlowLayout {
   const padding: CellPadding = options(ctx).padding === 'roomy' ? 'roomy' : 'compact';
   return layoutFlowchart(model, { ...ctx, measurer: cellMeasurer, units: cellProfile(padding) });
 }

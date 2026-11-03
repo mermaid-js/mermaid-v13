@@ -7,7 +7,7 @@ import { createMermaid, MermaidError } from 'mermaid';
 import { REPO_ROOT, corpusFromDir } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 import { expectedOf } from './expected.ts';
-import { layoutCells, renderAscii, type AsciiResult } from './render.ts';
+import { renderAscii, type AsciiResult, type CellLayout } from './render.ts';
 import { readStructure, type Charset } from './structure.ts';
 
 // ASCII render properties over the whole in-repo flowchart corpus, in both charsets (D87,
@@ -20,7 +20,7 @@ const CHARSETS: Charset[] = ['unicode', 'ascii'];
 
 interface Case {
   id: string;
-  layout: Awaited<ReturnType<typeof layoutCells>>;
+  layout: CellLayout;
   out: Record<Charset, AsciiResult>;
   again: Record<Charset, string>;
 }
@@ -53,7 +53,7 @@ beforeAll(async () => {
         out[charset] = await renderAscii(item.source, { charset });
         again[charset] = (await renderAscii(item.source, { charset })).text;
       }
-      cases.push({ id: item.id, layout: await layoutCells(item.source), out, again });
+      cases.push({ id: item.id, layout: out.unicode.layout, out, again });
     } catch (e) {
       failed[item.id] = String(e);
     }

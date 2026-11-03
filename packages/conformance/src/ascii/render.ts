@@ -1,16 +1,11 @@
-// The seams the ASCII conformance suites use (#48).
-//
-// `renderAscii` is the one place text is rendered: the public `format: 'ascii'` API (#47).
-//
-// `layoutCells` is the layout seam (`LayoutGraph → LayoutModel` in cells, D78), for the
-// properties the text cannot show (boxes overlapping, edges under boxes) and for what the
-// drawing should contain. It runs the flowchart's cell layout by hand, as the API does
-// (`prepare` → `layoutAscii` with `ascii.maxWidth` as `availableWidth`).
-import { layered } from '@mermaid-js/core/layout';
+// The seam the ASCII conformance suites use (#48): `renderAscii` renders text through the public
+// `format: 'ascii'` API (#47) and hands back, with the result, the cell layout that render drew
+// (`LayoutGraph → LayoutModel` in cells, D78). The layout is captured by a `postLayout`
+// extension hook (D86: the hook sees `units: 'cell'`), so the properties the text cannot show
+// (boxes overlapping, edges under boxes) are checked on the layout the API actually produced.
+import type { LaidOut } from '@mermaid-js/core';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
-import type { FlowLayout, FlowModel, FlowRenderContext } from '@mermaid-js/diagram-flowchart';
-import { layoutAscii, type FlowAsciiContext } from '@mermaid-js/diagram-flowchart/ascii';
+import type { FlowLayout } from '@mermaid-js/diagram-flowchart';
 import { createMermaid, type Mermaid, type TextRenderResult } from 'mermaid';
 
 /** The `ascii` config section (DESIGN §6.3). */
@@ -20,55 +15,42 @@ export interface AsciiOptions {
   maxWidth?: number;
 }
 
-export type AsciiResult = TextRenderResult;
+/** The flowchart's cell layout (with `flow`: the views it was built from) and its title. */
+export type CellLayout = FlowLayout & { flow: NonNullable<FlowLayout['flow']>; title?: string };
+
+export type AsciiResult = TextRenderResult & { layout: CellLayout };
 
 let mermaid: Mermaid | undefined;
-let theme: Theme | undefined;
+let captured: LaidOut | undefined;
 
-const instance = (): Mermaid => {
+async function instance(): Promise<Mermaid> {
   if (!mermaid) {
     mermaid = createMermaid();
     mermaid.initialize({ deterministic: true });
+    await mermaid.registerExternalDiagrams([
+      {
+        id: 'conformance-capture',
+        postLayout: (laidOut) => (captured = laidOut),
+      },
+    ]);
   }
   return mermaid;
-};
-
-async function context(text: string, options: AsciiOptions) {
-  const prepared = await instance().prepare(text);
-  theme ??= createTheme(await loadTheme('redux'), {});
-  const config = { ...prepared.config, ascii: { ...options } } as FlowRenderContext['config'];
-  const parse = prepared.parse as { model: FlowModel; ast: FlowAsciiContext['ast'] };
-  const ctx: FlowAsciiContext = {
-    config,
-    measurer: undefined as never, // `layoutAscii` puts in the cell measurer
-    theme,
-    warn: () => undefined,
-    title: preprocess(text).frontMatter?.title,
-    ast: parse.ast,
-    // R-ASCII-8: `maxWidth` is the layout's `availableWidth` in cells (#47 does this in api.ts).
-    layout: (g) =>
-      layered(
-        options.maxWidth !== undefined && g.availableWidth === undefined
-          ? { ...g, availableWidth: options.maxWidth }
-          : g
-      ),
-  };
-  return { ctx, model: parse.model };
 }
 
-/** `text` drawn as text through the public API (#47). Throws what `render` throws. */
+/** `text` drawn as text through the public API (#47), with its cell layout. Throws what `render` throws. */
 export async function renderAscii(text: string, options: AsciiOptions = {}): Promise<AsciiResult> {
+  const m = await instance();
   const call = { format: 'ascii', config: { ascii: { ...options } } } as const;
-  await instance().prepare(text, call);
-  return instance().renderSync(text, call);
-}
-
-/** The flowchart's cell layout of `text` (with `flow`: the views it was built from). */
-export async function layoutCells(
-  text: string,
-  options: AsciiOptions = {}
-): Promise<FlowLayout & { flow: NonNullable<FlowLayout['flow']>; title?: string }> {
-  const { ctx, model } = await context(text, options);
-  const layout = layoutAscii(model, ctx);
-  return { ...layout, flow: layout.flow!, title: ctx.title };
+  await m.prepare(text, call);
+  captured = undefined;
+  const result = m.renderSync(text, call);
+  const laid = captured as LaidOut | undefined;
+  if (laid?.kind !== 'graph' || laid.units !== 'cell')
+    throw new Error(`no cell layout captured for ${JSON.stringify(text.slice(0, 40))}`);
+  // The flowchart's postLayout value is its FlowLayout (LaidOut declares LayoutModel: GAPS.md).
+  const layout = laid.layout as FlowLayout;
+  return {
+    ...result,
+    layout: { ...layout, flow: layout.flow!, title: preprocess(text).frontMatter?.title },
+  };
 }

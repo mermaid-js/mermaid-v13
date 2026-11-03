@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectedOf } from './expected.ts';
-import { layoutCells, renderAscii, type AsciiOptions } from './render.ts';
+import { renderAscii, type AsciiOptions } from './render.ts';
 import { readStructure, type Charset } from './structure.ts';
 
 // The ASCII goldens (D83, R-ASCII-2). For each mermaid-ascii fixture Mermaid accepts:
@@ -77,9 +77,9 @@ function namesake(f: Fixture): Fixture | undefined {
 
 /** What the structural check finds wrong, ours against upstream; empty when it passes. */
 async function structuralProblems(f: Fixture): Promise<string[]> {
-  const layout = await layoutCells(f.input, f.options);
+  const { text, layout } = await renderAscii(f.input, f.options);
   const expected = expectedOf(layout, layout.title);
-  const ours = readStructure((await renderAscii(f.input, f.options)).text, f.charset, expected);
+  const ours = readStructure(text, f.charset, expected);
   const theirs = readStructure(
     readFileSync(join(f.dir, 'upstream.txt'), 'utf8'),
     f.charset,
