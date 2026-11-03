@@ -297,34 +297,33 @@ function lineWidth(runs: Run[]): number {
   return w;
 }
 
-/** Greedy word wrap. Returns lines of pieces whose trimmed width fits `max` where possible. */
+/**
+ * Greedy word wrap. Returns lines of pieces whose trimmed width fits `max` where possible. Each
+ * word is measured once; the white space around it and single characters come from `small`.
+ */
 function wrap(pieces: Piece[], font: FontKey, measurer: Measurer, max: number): Piece[][] {
   const out: Piece[][] = [];
   let current: Piece[] = [];
   let width = 0;
-  let lastText: string | undefined;
-  let lastStyle: StyleBits | undefined;
-  let lastWidth = 0;
-  const measure = (text: string, style: StyleBits): number => {
-    if (text !== lastText || style !== lastStyle) {
-      lastText = text;
-      lastStyle = style;
-      lastWidth = measurer.width(text, font, style);
-    }
-    return lastWidth;
-  };
+  const measure = (text: string, style: StyleBits): number => measurer.width(text, font, style);
+  const small = smallWidths(measure);
   const commit = (): void => {
     out.push(current);
     current = [];
     width = 0;
   };
   for (const piece of pieces) {
+    const style = piece.style;
     const parts = piece.text.match(RE_PIECE) ?? [];
     for (let p = 0; p < parts.length; p++) {
       let part = parts[p] as string;
-      const end = part.trimEnd();
+      const core = part.trim();
+      const leadLength = core === '' ? part.length : part.length - part.trimStart().length;
+      let lead = small(part.slice(0, leadLength), style);
+      const coreWidth = core === '' ? 0 : measure(core, style);
+      const trail = core === '' ? 0 : small(part.slice(leadLength + core.length), style);
       let fits: boolean;
-      if (end.endsWith(SHY) && end === part) {
+      if (part.endsWith(SHY)) {
         // A soft hyphen fits if its '-' does, or if the rest of the word does, which hides it.
         let k = p;
         while (k + 1 < parts.length && (parts[k] as string).endsWith(SHY)) k++;
@@ -334,46 +333,70 @@ function wrap(pieces: Piece[], font: FontKey, measurer: Measurer, max: number): 
           .trimEnd()
           .replace(RE_HINTS, '');
         fits =
-          width + measure(end.slice(0, -1) + '-', piece.style) <= max ||
-          width + measure(rest, piece.style) <= max;
+          width + measure(part.slice(0, -1) + '-', style) <= max ||
+          width + measure(rest, style) <= max;
       } else {
-        fits = width + measure(end, piece.style) <= max;
+        fits = width + lead + coreWidth <= max;
       }
       if (!fits && width > 0) {
         commit();
-        part = part.trimStart();
+        part = part.slice(leadLength);
+        lead = 0;
       }
-      if (width === 0 && measure(part.trimEnd(), piece.style) > max) {
-        part = split(part, piece.style, measure, max, out);
+      if (width === 0 && lead + coreWidth > max) {
+        part = split(part, style, small, max, out);
+        current.push({ text: part, style });
+        width += measure(part, style);
+        continue;
       }
-      current.push({ text: part, style: piece.style });
-      width += measure(part, piece.style);
+      current.push({ text: part, style });
+      width += lead + coreWidth + trail;
     }
   }
   if (current.length > 0 || out.length === 0) commit();
   return out;
 }
 
+type Width = (text: string, style: StyleBits) => number;
+
+/** Widths of short strings that repeat within a label (spaces, single characters), per style. */
+function smallWidths(measure: Width): Width {
+  const byStyle = new Map<StyleBits, Map<string, number>>();
+  return (text, style) => {
+    if (text === '') return 0;
+    let widths = byStyle.get(style);
+    if (!widths) byStyle.set(style, (widths = new Map<string, number>()));
+    let w = widths.get(text);
+    if (w === undefined) widths.set(text, (w = measure(text, style)));
+    return w;
+  };
+}
+
 /**
  * Splits a piece wider than the whole line at characters, pushing every full line to `out` and
- * returning the rest. Zero-width characters and the character after a ZWJ stay attached.
+ * returning the rest. Zero-width characters and the character after a ZWJ stay attached. A chunk
+ * is as wide as its characters, so each character is measured once.
  */
 function split(
   part: string,
   style: StyleBits,
-  measure: (text: string, style: StyleBits) => number,
+  charWidth: Width,
   max: number,
   out: Piece[][]
 ): string {
   let chunk = '';
+  let chunkWidth = 0;
   let prev = '';
   for (const ch of part) {
-    const joined = chunk === '' || prev === ZWJ || measure(ch, style) === 0 || ch.trim() === '';
-    if (!joined && measure(chunk + ch, style) > max) {
+    const w = charWidth(ch, style);
+    const joined = chunk === '' || prev === ZWJ || w === 0 || ch.trim() === '';
+    if (!joined && chunkWidth + w > max) {
       out.push([{ text: chunk, style }]);
       chunk = '';
+      chunkWidth = 0;
     }
     chunk += ch;
+    chunkWidth += w;
     prev = ch;
   }
   return chunk;

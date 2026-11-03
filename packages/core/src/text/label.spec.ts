@@ -50,6 +50,24 @@ describe('plain labels', () => {
     expect(texts(layout('aaaaaaaaaaaaaaaaaa', 40))).toEqual(['aaaaaaa', 'aaaaaaa', 'aaaa']);
   });
 
+  it('measures each word of a wrapped label once, and a long word once per character', () => {
+    const measured: string[] = [];
+    const counting = {
+      ...tableMeasurer,
+      width: (...a: Parameters<typeof tableMeasurer.width>) => (
+        measured.push(a[0]),
+        tableMeasurer.width(...a)
+      ),
+    };
+    const long = 'abcdefghij'.repeat(30);
+    const box = layoutLabel(`one two three ${long} four`, arial, 40, counting);
+    expect(box.lines.length).toBeGreaterThan(5);
+    const repeats = measured.filter((t, i) => t.length > 1 && measured.indexOf(t) !== i);
+    // Only the per-line run measure in finish repeats a string; nothing is measured per prefix.
+    expect(measured.filter((t) => t.length > 1).length).toBeLessThan(box.lines.length + 10);
+    expect(repeats.length).toBeLessThanOrEqual(box.lines.length);
+  });
+
   it('breaks lines at <br>, newlines and the two-character \\n', () => {
     expect(texts(layout('a<br>b<BR/>c<br />d\ne\\nf'))).toEqual(['a', 'b', 'c', 'd', 'e', 'f']);
   });
