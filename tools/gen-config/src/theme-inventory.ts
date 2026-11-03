@@ -8,6 +8,8 @@ import {
   BASE_VARIABLES,
   DARK_RULES,
   LIGHT_RULES,
+  PALETTE_LIMIT,
+  PALETTE_VARIABLES,
   THEME_NAMES,
   THEME_VARIABLES,
   TOKEN_VARIABLES,
@@ -45,6 +47,17 @@ export async function themeInventory(): Promise<string> {
     ];
     return '| ' + cells.join(' | ').replace(/ {2}/g, ' ') + ' |';
   });
+  const palettes = PALETTE_VARIABLES.map((name) => {
+    const names =
+      name === 'cScale'
+        ? `${code(name)}, ${code(name + '0')}–${code(name + String(PALETTE_LIMIT - 1))}`
+        : code(name);
+    const setBy = specs
+      .filter((s) => (s.palettes?.[name]?.length ?? 0) > 0)
+      .map((s) => s.name)
+      .join(', ');
+    return `| ${code(name)} | ${names} | ${setBy} |`;
+  });
   return [
     '# Theme variables',
     '',
@@ -60,6 +73,17 @@ export async function themeInventory(): Promise<string> {
     '| Variable | CSS variable | Role | Kind | Light rule | Dark rule | Set by themes | Used by |',
     '| --- | --- | --- | --- | --- | --- | --- | --- |',
     ...rows,
+    '',
+    '## Palettes',
+    '',
+    'Lists of colours a theme carries as data (D151, D152), read as literal colours rather than',
+    'CSS variables. In `themeVariables` a whole list is an array of colours or a comma-separated',
+    'string; `cScale0`–`cScale11` replace one entry of `cScale`. A theme not listed carries an',
+    'empty list.',
+    '',
+    '| Palette | `themeVariables` names | Set by themes |',
+    '| --- | --- | --- |',
+    ...palettes,
     '',
   ].join('\n');
 }

@@ -28,6 +28,8 @@ export type Transform = Brand<string, 'Transform'>;
 export type StyleText = Brand<string, 'StyleText'>;
 /** A `theme: 'auto'` style sheet built by `themeStyleSheet()` (R-THEME-8). */
 export type ThemeStyleSheet = Brand<string, 'ThemeStyleSheet'>;
+/** A CSS `filter` value that passed `checkFilter()`: `none` or `drop-shadow(…)` only. */
+export type SafeFilter = Brand<string, 'SafeFilter'>;
 /** A free-form, plain value that passed a property validator (font-family, keywords). */
 export type SafeValue = Brand<string, 'SafeValue'>;
 
@@ -58,9 +60,10 @@ export interface AttrTypes {
   'data-id': string;
   'data-ast': string;
   'data-mermaid-version': string;
-  'data-look': string;
   /** The render's id prefix, which a `theme: 'auto'` style sheet is scoped to. */
   'data-p': string;
+  /** A palette slot, `color-<n>`, so tests and user CSS can target it (v12 `data-color-id`). */
+  'data-color-id': `color-${number}`;
   style: StyleText;
   transform: Transform;
   'pointer-events': 'none' | 'all' | 'visiblePainted';
@@ -92,6 +95,8 @@ export interface AttrTypes {
   'stroke-miterlimit': number;
   'stroke-opacity': number | SafeValue;
   opacity: number | SafeValue;
+  /** The theme's drop shadow (#85): a checked `drop-shadow(…)` list or a theme variable. */
+  filter: SafeFilter | ThemeRef;
   color: Paint;
   'font-family': SafeValue | ThemeRef;
   'font-size': Length;

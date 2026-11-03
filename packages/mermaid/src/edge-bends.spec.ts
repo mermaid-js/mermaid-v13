@@ -148,26 +148,35 @@ describe('flowchart edge bends', () => {
     const marker = /class="marker" d="M([\d.]+),([\d.]+)L/.exec(tail)!;
     expect(Number(marker[1])).toBe(x);
     expect(Number(marker[2])).toBeGreaterThan(y);
-    expect(Number(marker[2]) - y).toBeLessThan(8);
+    // The line stops under the arrowhead, which is redux-color's 10.5 long.
+    expect(Number(marker[2]) - y).toBeLessThan(10.5);
     expect(py).toBeLessThan(y);
   });
 
   it('leaves explicit curves as they were', async () => {
-    expect(await edgePaths(CORNERED, { flowchart: { curve: 'basis' } })).toEqual([
+    // The pinned paths end where a classic-sized arrowhead with no gap trims them.
+    const HEADS = { arrowheadGap: 0, arrowheadLength: 8 };
+    expect(
+      await edgePaths(CORNERED, { flowchart: { curve: 'basis' }, themeVariables: HEADS })
+    ).toEqual([
       'M262,48.1C262,66.6 84,66.6 84,85.1L84,91.1',
       'M286,48.1L286,91.1',
       'M84,138.2C84,156.7 262,156.7 262,175.2L262,181.2',
       'M286,138.2L286,181.2',
       'M310,48.1C310,73.1 397,73.1 397,98.1L397,138.2C397,156.7 310,156.7 310,175.2L310,181.2',
     ]);
-    expect(await edgePaths(CORNERED, { flowchart: { curve: 'linear' } })).toEqual([
+    expect(
+      await edgePaths(CORNERED, { flowchart: { curve: 'linear' }, themeVariables: HEADS })
+    ).toEqual([
       'M262,48.1L90.74,96.21',
       'M286,48.1L286,91.1',
       'M84,138.2L255.26,186.31',
       'M286,138.2L286,181.2',
       'M310,48.1L397,98.1L397,138.2L316.07,184.71',
     ]);
-    expect(await edgePaths(CORNERED, { flowchart: { curve: 'step' } })).toEqual([
+    expect(
+      await edgePaths(CORNERED, { flowchart: { curve: 'step' }, themeVariables: HEADS })
+    ).toEqual([
       'M262,48.1L262,61.1Q262,73.1 250,73.1L96,73.1Q84,73.1 84,85.1L84,91.1',
       'M286,48.1L286,91.1',
       'M84,138.2L84,151.2Q84,163.2 96,163.2L250,163.2Q262,163.2 262,175.2L262,181.2',

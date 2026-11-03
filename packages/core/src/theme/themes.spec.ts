@@ -31,9 +31,26 @@ const TEXT_ON_FILL: readonly [text: string, fill: string][] = [
 ];
 
 describe('built-in themes', () => {
-  it('ships redux, default, dark, forest, neutral and base (D64), light and dark', () => {
+  it('ships the redux family and default, dark, forest, neutral and base (D64, D151)', () => {
     expect(specs.map((s) => s.name)).toEqual([...THEME_NAMES]);
-    expect(specs.filter((s) => s.dark).map((s) => s.name)).toEqual(['dark']);
+    expect([...THEME_NAMES].sort()).toEqual(
+      [
+        'redux',
+        'redux-color',
+        'redux-dark',
+        'redux-dark-color',
+        'default',
+        'dark',
+        'forest',
+        'neutral',
+        'base',
+      ].sort()
+    );
+    expect(specs.filter((s) => s.dark).map((s) => s.name)).toEqual([
+      'redux-dark',
+      'redux-dark-color',
+      'dark',
+    ]);
   });
 
   it.each(specs.map((s) => [s.name, s] as const))(
@@ -102,37 +119,45 @@ describe('built-in themes', () => {
 });
 
 describe('theme names', () => {
-  it('defaults to redux, which is always loaded for renderSync (D55)', () => {
-    expect(resolveThemeName(undefined)).toEqual({ name: 'redux' });
-    expect(loadedTheme('redux')?.name).toBe('redux');
+  it('defaults to redux-color, which is always loaded for renderSync (D151)', () => {
+    expect(resolveThemeName(undefined)).toEqual({ name: 'redux-color' });
+    expect(loadedTheme('redux-color')?.name).toBe('redux-color');
   });
 
-  it('renders a flowchart with no user theme in redux (D55)', () => {
-    // The flowchart section keeps v12's default `theme: redux-color`, which wins over the
-    // top-level `redux` in the defaults layer; it resolves to the redux spec.
+  it('renders with no user theme in redux-color, the schema default (D151)', () => {
     const config = resolveConfig(CORE_DEFAULTS, undefined, undefined, [], {
       flowchart: { theme: 'redux-color' },
     });
     expect(config.theme).toBe('redux-color');
-    expect(resolveThemeName(config.theme)).toEqual({ name: 'redux' });
+    expect(resolveThemeName(config.theme)).toEqual({ name: 'redux-color' });
     const chosen = resolveConfig(CORE_DEFAULTS, undefined, { theme: 'forest' }, [], {
       flowchart: { theme: 'redux-color' },
     });
     expect(resolveThemeName(chosen.theme)).toEqual({ name: 'forest' });
   });
 
-  it('resolves the v12 flowchart section default redux-color to redux, silently', () => {
+  it('resolves the redux family to their own specs, with no warning (D151)', () => {
     const warnings: ThemeWarning[] = [];
-    expect(resolveThemeName('redux-color', (w) => warnings.push(w))).toEqual({ name: 'redux' });
+    const warn = (w: ThemeWarning) => warnings.push(w);
+    for (const name of ['redux', 'redux-color', 'redux-dark', 'redux-dark-color'])
+      expect(resolveThemeName(name, warn)).toEqual({ name });
     expect(warnings).toEqual([]);
   });
 
-  it('stands in for v12 themes not shipped yet, and unknown names, with a warning', () => {
+  it('stands neo in for redux-color and neo-dark for redux-dark-color, with a warning', () => {
     const warnings: ThemeWarning[] = [];
     const warn = (w: ThemeWarning) => warnings.push(w);
-    expect(resolveThemeName('redux-dark', warn)).toEqual({ name: 'dark' });
-    expect(resolveThemeName('purple', warn)).toEqual({ name: 'redux' });
-    expect(resolveThemeName('__proto__', warn)).toEqual({ name: 'redux' });
+    expect(resolveThemeName('neo', warn)).toEqual({ name: 'redux-color' });
+    expect(resolveThemeName('neo-dark', warn)).toEqual({ name: 'redux-dark-color' });
+    expect(warnings.map((w) => w.code)).toEqual(['THEME_UNAVAILABLE', 'THEME_UNAVAILABLE']);
+  });
+
+  it('stands in for unknown names and null, with a warning', () => {
+    const warnings: ThemeWarning[] = [];
+    const warn = (w: ThemeWarning) => warnings.push(w);
+    expect(resolveThemeName('null', warn)).toEqual({ name: 'base' });
+    expect(resolveThemeName('purple', warn)).toEqual({ name: 'redux-color' });
+    expect(resolveThemeName('__proto__', warn)).toEqual({ name: 'redux-color' });
     expect(warnings.map((w) => w.code)).toEqual([
       'THEME_UNAVAILABLE',
       'THEME_UNAVAILABLE',
@@ -140,7 +165,89 @@ describe('theme names', () => {
     ]);
   });
 
-  it('auto pairs redux with dark (R-THEME-8)', () => {
-    expect(resolveThemeName('auto')).toEqual({ name: 'redux', dark: 'dark' });
+  it('auto pairs the default with dark (R-THEME-8)', () => {
+    expect(resolveThemeName('auto')).toEqual({ name: 'redux-color', dark: 'dark' });
+  });
+});
+
+describe('node padding per theme (#83, D151, D152)', () => {
+  const PADDING = [
+    'nodePaddingX',
+    'nodePaddingY',
+    'stadiumPaddingX',
+    'stadiumPaddingY',
+    'hexagonPaddingX',
+    'hexagonPaddingY',
+    'hexagonSlant',
+    'doubleCircleGap',
+    'doubleCirclePadding',
+    'circlePadding',
+    'circleMinDiameter',
+    'subroutinePaddingX',
+    'subroutinePaddingY',
+    'cylinderPaddingX',
+    'cylinderPaddingY',
+    'leanPaddingX',
+    'leanPaddingY',
+    'oddPaddingX',
+    'oddPaddingY',
+  ] as const;
+  // v12 neo, with v13's circle (D151).
+  const REDUX = [16, 12, 40, 24, 70, 32, 3.5, 12, 16, 16, 44, 28, 12, 24, 24, 30, 15, 42, 24];
+  // v12 classic at flowchart.padding 15 (2 × padding / padding, …, no circle minimum).
+  const CLASSIC = [30, 15, 15, 15, 15, 15, 4, 5, 15, 15, 0, 15, 15, 15, 15, 15, 15, 15, 15];
+  const expected: Record<string, number[]> = {
+    redux: REDUX,
+    'redux-color': REDUX,
+    'redux-dark': REDUX,
+    'redux-dark-color': REDUX,
+    default: CLASSIC,
+    dark: CLASSIC,
+    forest: CLASSIC,
+    neutral: CLASSIC,
+    base: CLASSIC,
+  };
+  const theme = (name: string, options: Parameters<typeof createTheme>[1] = {}) =>
+    createTheme(specs.find((s) => s.name === name)!, options);
+  const resolved = (name: string, padding: number) => {
+    const t = theme(name);
+    return PADDING.map((v) =>
+      THEME_VARIABLES[v]!.kind === 'padding' ? t.padding(v, padding) : t.number(v)
+    );
+  };
+
+  it('covers every shipped theme', () => {
+    expect(Object.keys(expected).sort()).toEqual([...THEME_NAMES].sort());
+  });
+
+  it.each(Object.entries(expected))('pins %s', (name, values) => {
+    expect(resolved(name, 15)).toEqual(values);
+  });
+
+  it('scales the classic values with the diagram padding; in redux only the lean padding', () => {
+    expect(resolved('default', 10)).toEqual([
+      20, 10, 10, 10, 10, 10, 4, 5, 10, 10, 0, 10, 10, 10, 10, 10, 10, 10, 10,
+    ]);
+    // v12 neo lean and trapezoid shapes take 2 × padding / padding too.
+    expect(resolved('redux-color', 10)).toEqual([...REDUX.slice(0, 15), 20, 10, 42, 24]);
+  });
+
+  it('takes px or a multiple of padding from themeVariables, and drops anything else', () => {
+    const warnings: ThemeWarning[] = [];
+    const t = theme('redux-color', {
+      themeVariables: { nodePaddingX: '3 * padding', nodePaddingY: '9px', circlePadding: '-4' },
+      warn: (w) => warnings.push(w),
+    });
+    expect(t.padding('nodePaddingX', 10)).toBe(30);
+    expect(t.padding('nodePaddingY', 10)).toBe(9);
+    expect(t.padding('circlePadding', 10)).toBe(16);
+    expect(warnings.map((w) => w.code)).toEqual(['THEME_VARIABLE_DROPPED']);
+  });
+
+  it('never writes a padding variable as a CSS alias (D152)', () => {
+    const t = theme('redux-color');
+    t.padding('nodePaddingX', 15);
+    t.number('hexagonSlant');
+    expect(t.rootStyle()).toEqual({});
   });
 });

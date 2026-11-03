@@ -774,9 +774,6 @@
   "packages/diagram-flowchart/src/render/edges.ts": {
     "complexity": {
       "count": 1
-    },
-    "max-params": {
-      "count": 1
     }
   },
   "packages/diagram-flowchart/src/render/prepare.ts": {

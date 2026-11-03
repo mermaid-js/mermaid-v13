@@ -143,6 +143,11 @@ function keyTreeSource(root: RootSchema): string {
     if (node.$ref !== undefined) {
       return tree({ ...resolveRef(root, node.$ref), 'x-mermaid': node['x-mermaid'] });
     }
+    // Named properties with `additionalProperties` are documentation only: any key is
+    // accepted, so the object stays open (e.g. `themeVariables`, R-CONF-5).
+    if (node.additionalProperties !== undefined && node.additionalProperties !== false) {
+      return '"open"';
+    }
     if (node.properties !== undefined || node.allOf !== undefined) {
       return objectTree(node);
     }

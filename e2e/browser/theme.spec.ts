@@ -99,7 +99,7 @@ test("theme 'auto' follows prefers-color-scheme without re-rendering", async ({ 
   await openHarness(page);
   await page.evaluate((code) => window.v13.mount(code, { config: { theme: 'auto' } }), SIMPLE);
   const light = await computedPaints(page);
-  expect(await page.evaluate(firstRectFill)).toBe('rgb(255, 255, 255)'); // redux mainBkg
+  expect(await page.evaluate(firstRectFill)).toBe('rgb(255, 255, 255)'); // redux-color mainBkg
 
   await page.emulateMedia({ colorScheme: 'dark' });
   const dark = await computedPaints(page);
@@ -124,7 +124,17 @@ const THEMED = readFileSync(fixturePath('flowchart/baseline/themes/redux.mmd'), 
   ''
 );
 
-for (const theme of ['redux', 'default', 'dark', 'forest', 'neutral', 'base']) {
+for (const theme of [
+  'redux-color',
+  'redux',
+  'redux-dark',
+  'redux-dark-color',
+  'default',
+  'dark',
+  'forest',
+  'neutral',
+  'base',
+]) {
   for (const themeVariables of [undefined, { primaryColor: '#3366cc', lineColor: '#aa5500' }]) {
     const label = themeVariables ? ' with overrides' : '';
     test(`${theme}${label}: literal colours equal the browser's computed CSS-variable colours`, async ({

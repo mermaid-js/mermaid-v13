@@ -30,9 +30,12 @@ What most integrators have to change:
 5. CSS that targets element ids, `<marker>`, `.label-container` or the `<style>` element inside
    the SVG must move to the kept class names and `--mermaid-*` CSS variables
    ([Flowchart SVG structure](#flowchart-svg-structure), [Themes](#themes)).
-6. The default theme is `redux` and the default layout is `layered`; set `theme: 'default'` to
-   keep v12 colours ([Changed defaults](#changed-defaults)).
-7. Render errors are thrown as `MermaidError`; nothing is drawn into the page for you
+6. The default theme is `redux-color`, the theme v12's flowchart renders by default, and the
+   default layout is `layered`; set `theme: 'default'` to keep v12's `default` colours and
+   classic geometry ([Changed defaults](#changed-defaults), [Themes](#themes)).
+7. `look` is ignored with a `LOOK_REMOVED` warning; neo and classic geometry now come with the
+   theme ([Themes](#themes)).
+8. Render errors are thrown as `MermaidError`; nothing is drawn into the page for you
    ([Errors](#errors-and-the-error-image)).
 
 ## Packages
@@ -181,24 +184,56 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | Key | Status | Reason | Replacement |
 | --- | --- | --- | --- |
 | `themeCSS` | ignored | v13 output carries no author stylesheet (R-SEC-2). | `themeVariables`, or `--mermaid-*` CSS variables set by the host page |
+| `look` | ignored | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes carry neo geometry and the classic themes carry classic geometry (D152). | `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8) |
 | `htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
 | `altFontFamily` | ignored | Unused by every renderer, also in v12. |  |
 | `logLevel` | ignored | v13 does not log; problems are returned in `RenderResult.warnings`. |  |
 | `arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
+| `flowchart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render. The redux themes carry v12's `look: neo` geometry (D152). | `theme`, or the geometry and `dropShadow` theme variables |
 | `flowchart.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
 | `flowchart.htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
+| `swimlane.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `agentflow.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `sequence.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `sequence.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
+| `gantt.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `journey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `class.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
 | `class.htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
+| `state.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `state.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
+| `er.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `pie.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `quadrantChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `xyChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `requirement.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `architecture.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `ishikawa.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `kanban.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `gitGraph.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `gitGraph.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
+| `c4.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `sankey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `packet.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `block.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `eventmodeling.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `treeView.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `radar.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `usecase.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `venn.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `wardley-beta.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `cynefin.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `railroad.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `dompurifyConfig` | removed | v13 has no HTML sanitizer: output is safe by construction (R-SEC-1). | none |
 
 ### Changed defaults
 
 | Key | v13 default | Reason |
 | --- | --- | --- |
-| `theme` | `"redux"` | The default changes from `default` to `redux` (D55). 13.0 ships `redux`, `default`, `dark`, `forest`, `neutral` and `base`; the other v12 names stand in for one of them with a warning, except `redux-color` (the flowchart default), which renders `redux`. |
+| `theme` | `"redux-color"` | The default changes from `default` to `redux-color`, the theme v12's flowchart renders by default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`, `neutral` and `base`. `neo` renders `redux-color`, `neo-dark` renders `redux-dark-color` and `null` renders `base`, each with a `THEME_UNAVAILABLE` warning. |
 | `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 values `dagre`, `elk` and `elk.<algorithm>` stay valid and map to `layered` until an ELK plugin exists (R-PLUG-8); other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. |
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
@@ -251,18 +286,85 @@ Removed and ignored keys, with what to use instead:
 
 | v12 | v13 | Why |
 | --- | --- | --- |
-| Default theme `default` | Default theme `redux` (D55). Set `theme: 'default'` for v12's default colours | D55 |
-| Themes `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`, `null` | 13.0 ships `redux`, `default`, `dark`, `forest`, `neutral` and `base`. `redux-color` (v12's flowchart default) renders `redux` silently; `redux-dark`, `redux-dark-color` and `neo-dark` render `dark`, `neo` renders `redux` and `null` renders `base`, each with a `THEME_UNAVAILABLE` warning (theme packages for them may follow, R-THEME-7). An unknown name renders `redux` with the same warning | R-THEME-6 |
-| — | `theme: 'auto'`: `redux`, switching to `dark` under `prefers-color-scheme: dark` through a small custom-property `<style>` | R-THEME-8 |
+| Default theme `default` (the flowchart section defaults to `redux-color` with `look: neo`) | Default theme `redux-color` for every diagram type, with v12's `look: neo` geometry. Set `theme: 'default'` for v12's default colours and classic geometry | D151 |
+| Themes `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`, `null` | 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes ported from v12, plus `default`, `dark`, `forest`, `neutral` and `base`. `neo` renders `redux-color` and `neo-dark` renders `redux-dark-color` until the neo themes are ported; `null` renders `base`. Each stand-in warns `THEME_UNAVAILABLE`. An unknown name renders the default theme with the same warning | D151, R-THEME-6, R-THEME-7 |
+| — | `theme: 'auto'`: the default theme, switching to `dark` under `prefers-color-scheme: dark` through a small custom-property `<style>` | R-THEME-8 |
 | Colours computed once in JS (khroma) and written into a `<style>` element | Colours are presentation attributes reading CSS variables: every theme variable is `--mermaid-<name>` on the host page, with the theme value as fallback; derived colours use `color-mix()`, and contrast text and `invert()` use relative colour syntax (`color(from …)`), so they follow a host override of the colour they derive from. A page can re-theme rendered SVGs with CSS. Limit: contrast text picks between the theme's two ink values; overriding the ink variables themselves (`--mermaid-textColor`) does not change contrast-derived text such as `nodeTextColor` (set `--mermaid-nodeTextColor` directly) `initialize({ output: { cssVariables: false } })` writes literal colours instead | R-THEME-2, R-THEME-3, R-THEME-4 |
 | `themeVariables` from diagram text checked against a character set only | Values are checked by kind (colour, length, font, weight) and a bad one is dropped with `THEME_VARIABLE_DROPPED`. Names v13 does not use are ignored | R-SEC-3 |
 | `themeCSS` | Ignored; see [Config behaviour](#config-behaviour) | R-SEC-2 |
 | Label text colour fixed by the theme | When a `style`/`classDef` fill makes the theme's text colour unreadable, the label switches to black or white | R-THEME-12 |
-| `look: neo` / `look: handDrawn` | `look` is pending: one look is drawn, with the theme's shape tokens (stroke width, corner radius, spacing). No hand-drawn strokes, gradients or drop shadows | |
-| Numbered palettes (`cScale*`, `pie*`, `git*`) | Not in the 13.0 inventory; they come with the diagram types that use them | R-CONF-5 |
+| `look: neo` / `look: classic` | `look` is removed: the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. What `look` switched in v12 is theme data: the redux themes carry v12's neo geometry and the classic themes (`default`, `dark`, `forest`, `neutral`, `base`) carry v12's classic geometry. For a mix, override the variables ([Theme geometry](#theme-geometry)) | D152, D153 |
+| `look: handDrawn` | Ignored like any other `look`, with the same generic `LOOK_REMOVED` warning; core names no plugin. Hand-drawn strokes will come from an optional plugin, which will claim `look: handDrawn` as a legacy alias of its own key once plugins can declare config | D7, D153, R-PLUG-8 |
+| Neo gradients (`useGradient`, `gradientStart`, `gradientStop`) | Not in 13.0. They come back as theme variables of the `neo` theme when it is ported | D151 |
+| Drop shadow under `look: neo` | A hard drop shadow in the redux themes only, as the CSS `filter` from the `dropShadow` theme variable: offset 4px, no blur, 6% opacity, black on light themes and white on dark. It is on node outlines, icons, subgraphs and collapsed groups, not on edges, edge labels or swimlanes. The classic themes set `dropShadow: none`. No `<defs>` and no ids, so several diagrams on a page never collide | D151, D152 |
+| Per-subgraph colour in `redux-color` | Each subgraph takes a palette slot by declaration order, cycling after twelve: border from `borderColorArray`, fill from `bkgColorArray`. `redux-dark-color` has an empty fill palette, so its subgraphs are coloured on the border only. `redux` and the classic themes carry no palette. Colour is on whenever the theme has a non-empty `borderColorArray` (a `themeVariables` palette turns it on in any theme), and a collapsed subgraph's card, separator and dots take its slot too. As in v12 the slot is written as `data-color-id="color-<n>"` on the cluster or collapsed node, and an author `style` / `classDef` still wins. Swimlanes are not drawn yet, so there is nothing to colour there | D151, D152 |
+| Numbered palettes (`pie*`, `git*`) | Not in the 13.0 inventory; they come with the diagram types that use them. `cScale0`–`cScale11` are set by `redux-color` (the fixed Tailwind-300 set) | R-CONF-5 |
 
 Colours are close to, but not byte-equal with, v12. Where a v12 colour pair failed WCAG AA
 contrast, v13 changes it (for example the dark theme's `edgeLabelBackground`).
+
+### Theme geometry
+
+Every difference between the redux and classic theme families is a theme variable (D152); no
+renderer checks a theme name or a look. v12 is the reference for every value, with the two
+exceptions marked below. Override any of them in `themeVariables`, for example
+`arrowheadGap: 0` on `redux-color`, or the redux padding values on `default`. Geometry
+variables feed layout, so they are read as numbers at render time and overriding their
+`--mermaid-*` CSS variables has no effect; `dropShadow` is a CSS value. "padding" is
+`flowchart.padding` (default 15), which the classic themes now honour.
+
+| Variable | Redux family (v12 neo) | Classic family (v12 classic) |
+| --- | --- | --- |
+| `borderColorArray` | Tailwind-400 × 12 (`redux-color`, `redux-dark-color`) | none |
+| `bkgColorArray` | Tailwind-50 × 12 (`redux-color`); empty (`redux-dark-color`) | none |
+| `arrowheadGap` (point) | 4 | 0 |
+| `arrowheadLength` / `arrowheadWidth` (point) | 10.5 / ≈12.8 | 8 / 8 |
+| `circleArrowheadSize` / `circleArrowheadGap` | 14 / ≈3.15 | 11 / ≈1.1 |
+| `crossArrowheadSize` / `crossArrowheadGap` / `crossArrowheadStrokeWidth` | 10.4 / ≈2.96 / 2 | 9 / ≈2 / 2 |
+| `nodePaddingX` / `nodePaddingY` (per side) | 16 / 12 | 2 × padding / padding (30 / 15 at the default) |
+| `stadiumPaddingX` / `stadiumPaddingY` (totals) | 40 / 24 | padding |
+| `hexagonPaddingX` / `hexagonPaddingY`; `hexagonSlant` | 70 / 32; 3.5 | padding; 4 |
+| `doubleCircleGap` / `doubleCirclePadding` | 12 / 16 | 5 / padding |
+| `circlePadding` / `circleMinDiameter` | 16 / 44 (v13's earlier values, kept) | padding / none |
+| `subroutinePaddingX` / `subroutinePaddingY` (totals, inside the 8px frames) | 28 / 12 | padding |
+| `cylinderPaddingX` / `cylinderPaddingY` (totals, besides the caps) | 24 / 24 | padding |
+| `leanPaddingX` / `leanPaddingY` (totals; per side for the inverted trapezoid) | 2 × padding / padding | padding |
+| `oddPaddingX` / `oddPaddingY` (totals) | 42 / 24 | padding |
+| `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color` | `none` |
+
+The palette rows apply to the two colour themes only; plain `redux` and `redux-dark` carry no
+palette. A padding variable (the `…Padding…` names) takes a px number or a multiple of
+`flowchart.padding` written `padding` or `<n> * padding`, so `nodePaddingX: '2 * padding'`
+gives a redux theme classic node padding. `circlePadding` is added to the label's diagonal,
+so it counts twice towards the diameter compared with the per-side node padding.
+
+- **Arrowheads** stop `arrowheadGap` short of the node outline, so in the redux themes a 4px gap
+  separates the tip from the node, as in v12 neo. They stay inline paths with no `<marker>`;
+  v12's `refX` and `stroke-dasharray` mechanism is not needed, and dashed and dotted edges look
+  the same as in v12. Sizes are what v12 draws, not its marker boxes: a v12 cross does not fill
+  its box, so `crossArrowheadSize` is the arm span (10.4 neo, 9 classic) and the neo stroke is
+  v12's 2.5 scaled by the marker's 0.8.
+- **Hexagon padding axes are corrected.** v12 adds the X padding to the height and the Y padding
+  to the width; v13 applies X to the width and Y to the height, so a hexagon in a redux theme is
+  wider and less tall than in v12 (D151).
+- **Circle padding stays as in v13** in the redux themes (16, minimum diameter 44), instead of
+  v12 neo's values, so circles do not grow (D151).
+- **Per-shape padding.** As in v12, only the rectangle and the shapes drawn like it use
+  `nodePaddingX` / `nodePaddingY`. The subroutine, cylinder, parallelogram and trapezoid, and
+  asymmetric shapes have their own variables (v12's per-shape `labelPadding` values), and the
+  rounded rectangle takes `padding` on each side in every theme, so it has none. The lined
+  cylinder shares the cylinder's variables (v12 neo gives it 16 across instead of 24). The
+  shapes keep v13's outlines (cap height, slant), so sizes are close to v12, not equal.
+- **Diamonds** are the v12 square rhombus in every theme, with side = label width + label
+  height + 2 × padding. Being the same everywhere, the diamond has no theme variable.
+- **Collapsed subgraphs** are drawn as in v12 in every theme: a rounded card, a dashed separator
+  and three dots. The dots are flat: filled with the separator colour at 0.6 opacity, with no
+  stroke and no shadow, which is what v12's stylesheet asks for. v12 neo draws them with a dark
+  2px outline and a drop shadow only because a generic `.node circle` rule beats its own
+  `.collapsed-indicator` rule on specificity (D154).
+- **Layout room for arrowheads is fixed.** The layout leaves 7px for an arrowhead in a crossed
+  gap whatever the arrowhead variables say, so changing `arrowheadLength` or the other
+  arrowhead variables redraws the arrowheads but never moves a node (D154).
 
 ## Layout
 

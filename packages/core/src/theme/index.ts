@@ -13,10 +13,15 @@ export {
 } from './color.ts';
 export { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
 export {
+  ARROWHEAD_VARIABLES,
   BASE_VARIABLES,
+  PALETTE_LIMIT,
+  PALETTE_VARIABLES,
   THEME_VARIABLES,
   TOKEN_VARIABLES,
+  type ArrowheadVariable,
   type BaseVariable,
+  type PaletteVariable,
   type ThemeVarDef,
   type ThemeVarKind,
   type TokenVariable,
