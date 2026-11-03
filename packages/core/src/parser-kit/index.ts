@@ -17,6 +17,7 @@ export {
   isUnicodeLetter,
   isWord,
 } from './chars.ts';
+export * from './char-codes.ts';
 export { execAt, lineEnd, matchAt, newlineAt, scanWhile } from './scanner.ts';
 export { LineIndex } from './positions.ts';
 export type { Position, Range } from './positions.ts';

@@ -1,3 +1,4 @@
+import { CR, LF } from './char-codes.ts';
 /**
  * Source positions. All kit ranges are offsets into the original source (nothing is ever
  * rewritten, DESIGN §4.1), including front matter and directives. `LineIndex` converts
@@ -23,8 +24,8 @@ export class LineIndex {
   constructor(private readonly src: string) {
     for (let i = 0; i < src.length; i++) {
       const c = src.charCodeAt(i);
-      if (c === 13 && src.charCodeAt(i + 1) === 10) i++;
-      if (c === 10 || c === 13) this.starts.push(i + 1);
+      if (c === CR && src.charCodeAt(i + 1) === LF) i++;
+      if (c === LF || c === CR) this.starts.push(i + 1);
     }
   }
 
@@ -51,7 +52,7 @@ export class LineIndex {
     const start = this.starts[Math.max(0, line)] ?? 0;
     let end = this.starts[line + 1] ?? this.src.length;
     if (line + 1 < this.starts.length) {
-      end -= this.src.charCodeAt(end - 2) === 13 && this.src.charCodeAt(end - 1) === 10 ? 2 : 1;
+      end -= this.src.charCodeAt(end - 2) === CR && this.src.charCodeAt(end - 1) === LF ? 2 : 1;
     }
     return Math.min(start + Math.max(0, column), end);
   }

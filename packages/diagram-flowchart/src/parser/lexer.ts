@@ -12,14 +12,56 @@
  */
 // cspell:words kepano invis segs virt
 import {
+  AMP,
+  ASCII_MAX,
+  AT,
+  BACKSLASH,
+  BACKTICK,
+  CARET,
   charTable,
+  COLON,
+  COMMA,
+  CR,
+  DASH,
+  DOT,
+  DQUOTE,
+  EQUALS,
+  GT,
   hasClass,
+  HASH,
   isDigit,
   isSpace,
   isUnicodeLetter,
   isWord,
   Kind,
+  LBRACE,
+  LBRACKET,
+  LF,
+  LOWER_A,
+  LOWER_C,
+  LOWER_D,
+  LOWER_E,
+  LOWER_F,
+  LOWER_G,
+  LOWER_H,
+  LOWER_I,
+  LOWER_L,
+  LOWER_O,
+  LOWER_S,
+  LOWER_V,
+  LOWER_X,
+  LPAREN,
+  LT,
+  PIPE,
+  RBRACE,
+  RBRACKET,
+  RPAREN,
+  SEMI,
+  SLASH,
+  STAR,
+  TILDE,
   TokenWriter,
+  UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
 import type { TokenStream } from '@mermaid-js/core/parser-kit';
 import { DROP, firstHole, QUOTE } from './source.ts';
@@ -146,7 +188,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
   let wsTo = -1;
 
   const bits = (i: number) => (mask ? (mask[i] ?? 0) : 0);
-  const isQuote = (i: number) => text.charCodeAt(i) === 34 && (bits(i) & QUOTE) === 0;
+  const isQuote = (i: number) => text.charCodeAt(i) === DQUOTE && (bits(i) & QUOTE) === 0;
   const nextQuote = (from: number) => {
     let e = text.indexOf('"', from);
     while (e !== -1 && e < lim && (bits(e) & QUOTE) !== 0) e = text.indexOf('"', e + 1);
@@ -217,7 +259,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
     for (let j = q; j < lim && isSpace(text.charCodeAt(j)); j++) {
       const ch = text.charCodeAt(j);
       // A lone CR was a line feed to v12.
-      if (ch === 10 || (ch === 13 && text.charCodeAt(j + 1) !== 10)) last = j;
+      if (ch === LF || (ch === CR && text.charCodeAt(j + 1) !== LF)) last = j;
     }
     return last < 0 ? -1 : last + 1;
   };
@@ -256,12 +298,12 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
   const linkChar = (q: number): number => {
     const j = skipWs(q);
     const d = text.charCodeAt(j);
-    return d === 120 || d === 111 || d === 60 ? text.charCodeAt(j + 1) : d;
+    return d === LOWER_X || d === LOWER_O || d === LT ? text.charCodeAt(j + 1) : d;
   };
-  const invisAhead = (q: number): boolean => text.charCodeAt(skipWs(q)) === 126;
+  const invisAhead = (q: number): boolean => text.charCodeAt(skipWs(q)) === TILDE;
 
   const quote = (): void => {
-    if (text.charCodeAt(p + 1) === 96) {
+    if (text.charCodeAt(p + 1) === BACKTICK) {
       push(S.md_string);
       p += 2;
     } else {
@@ -281,13 +323,13 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
   const opener = (c: number): boolean => {
     const d = text.charCodeAt(p + 1);
     if (c === 40) {
-      if (d === 45) {
+      if (d === DASH) {
         push(S.ellipseText);
         emit(T.EllipseStart, p, p + 2);
-      } else if (d === 91) {
+      } else if (d === LBRACKET) {
         push(S.text);
         emit(T.StadiumStart, p, p + 2);
-      } else if (d === 40 && text.charCodeAt(p + 2) === 40) {
+      } else if (d === LPAREN && text.charCodeAt(p + 2) === LPAREN) {
         push(S.text);
         emit(T.DoubleCircleStart, p, p + 3);
       } else {
@@ -297,16 +339,16 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
       return true;
     }
     if (c === 91) {
-      if (d === 91) {
+      if (d === LBRACKET) {
         push(S.text);
         emit(T.SubroutineStart, p, p + 2);
-      } else if (d === 40) {
+      } else if (d === LPAREN) {
         push(S.text);
         emit(T.CylinderStart, p, p + 2);
-      } else if (d === 47) {
+      } else if (d === SLASH) {
         push(S.trapText);
         emit(T.TrapStart, p, p + 2);
-      } else if (d === 92) {
+      } else if (d === BACKSLASH) {
         push(S.trapText);
         emit(T.InvTrapStart, p, p + 2);
       } else {
@@ -350,12 +392,12 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
       }
       const ch = text.charCodeAt(q);
       // v12 had turned `#name;` into an entity placeholder, which ends a node string.
-      if (ch === 35 && entityAt(q)) break;
+      if (ch === HASH && entityAt(q)) break;
       if (hasClass(CHARS, ch, NODE)) {
         q++;
-      } else if (ch === 45 && q + 1 < n) {
+      } else if (ch === DASH && q + 1 < n) {
         const d = text.charCodeAt(q + 1);
-        if (d === 62 || d === 45 || d === 46) break;
+        if (d === GT || d === DASH || d === DOT) break;
         q++;
       } else {
         break;
@@ -413,7 +455,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
   const initial = (c: number): boolean => {
     let e: number;
     switch (c) {
-      case 97:
+      case LOWER_A:
         if (text.startsWith('acc', p)) {
           if ((e = at(RE_ACC_TITLE, p)) >= 0) {
             push(S.acc_title);
@@ -432,15 +474,15 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           }
         }
         break;
-      case 64:
-        if (text.charCodeAt(p + 1) === 123) {
+      case AT:
+        if (text.charCodeAt(p + 1) === LBRACE) {
           push(S.shapeData);
           w.push(T.ShapeData, p, p + 2, '');
           p += 2;
           return true;
         }
         break;
-      case 99:
+      case LOWER_C:
         if ((e = at(RE_CALL, p)) >= 0) {
           push(S.callbackname);
           p = e;
@@ -460,13 +502,13 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           return true;
         }
         break;
-      case 34:
+      case DQUOTE:
         if (isQuote(p)) {
           quote();
           return true;
         }
         break;
-      case 115:
+      case LOWER_S:
         if (kw('style')) {
           emit(T.Style, p, p + 5);
           return true;
@@ -480,31 +522,31 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           return true;
         }
         break;
-      case 100:
+      case LOWER_D:
         if (kw('default')) {
           emit(T.Default, p, p + 7);
           return true;
         }
         break;
-      case 108:
+      case LOWER_L:
         if (kw('linkStyle')) {
           emit(T.LinkStyle, p, p + 9);
           return true;
         }
         break;
-      case 105:
+      case LOWER_I:
         if (kw('interpolate')) {
           emit(T.Interpolate, p, p + 11);
           return true;
         }
         break;
-      case 104:
+      case LOWER_H:
         if (text.startsWith('href', p) && isSpace(text.charCodeAt(p + 4))) {
           emit(T.Href, p, p + 5);
           return true;
         }
         break;
-      case 102:
+      case LOWER_F:
         if (kw('flowchart-elk')) {
           graph(13);
           return true;
@@ -514,19 +556,19 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           return true;
         }
         break;
-      case 103:
+      case LOWER_G:
         if (kw('graph')) {
           graph(5);
           return true;
         }
         break;
-      case 101:
+      case LOWER_E:
         if (kw('end')) {
           emit(T.End, p, Math.max(p + 3, at(RE_END, p)));
           return true;
         }
         break;
-      case 95:
+      case UNDERSCORE:
         for (const target of ['_self', '_blank', '_parent', '_top']) {
           if (kw(target)) {
             emit(T.LinkTarget, p, p + target.length);
@@ -567,9 +609,9 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         runAt = -1;
         if (atNext !== -1 && atNext < q) {
           for (let k = Math.min(q, n - 1) - 1; k >= atNext; k--) {
-            if (text.charCodeAt(k) !== 64) continue;
+            if (text.charCodeAt(k) !== AT) continue;
             const after = text.charCodeAt(k + 1);
-            if (after !== 123 && !(after === 34 && isQuote(k + 1))) {
+            if (after !== LBRACE && !(after === DQUOTE && isQuote(k + 1))) {
               runAt = k;
               break;
             }
@@ -588,75 +630,75 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
     }
 
     switch (c) {
-      case 35:
+      case HASH:
         // v12 turned `#name;` into an entity placeholder that no INITIAL rule matches.
         if (entityAt(p)) return false;
         emit(T.Brkt, p, p + 1);
         return true;
-      case 58:
-        if (text.charCodeAt(p + 1) === 58 && text.charCodeAt(p + 2) === 58) {
+      case COLON:
+        if (text.charCodeAt(p + 1) === COLON && text.charCodeAt(p + 2) === COLON) {
           emit(T.StyleSeparator, p, p + 3);
         } else emit(T.Colon, p, p + 1);
         return true;
-      case 38:
+      case AMP:
         emit(T.Amp, p, p + 1);
         return true;
-      case 59:
+      case SEMI:
         if (bits(p) & DROP) {
           p++;
           return true;
         }
         emit(T.Semi, p, p + 1);
         return true;
-      case 44:
+      case COMMA:
         emit(T.Comma, p, p + 1);
         return true;
-      case 42:
+      case STAR:
         emit(T.Mult, p, p + 1);
         return true;
-      case 120:
-      case 111:
+      case LOWER_X:
+      case LOWER_O:
         return link(c) || nodeString();
-      case 60:
+      case LT:
         if (link(c)) return true;
         emit(T.TagStart, p, p + 1);
         return true;
-      case 45:
+      case DASH:
         if (link(c) || nodeString()) return true;
         emit(T.Minus, p, p + 1);
         return true;
-      case 61:
+      case EQUALS:
         // flow.jison's `=(?!=)` in NODE_STRING compiles to `(?!)` in mermaid@12: `=` never joins an id.
         return link(c);
-      case 46:
+      case DOT:
         return link(c) || nodeString();
-      case 126:
+      case TILDE:
         return invisLink();
-      case 40:
+      case LPAREN:
         return opener(c);
-      case 91:
-        if (text.charCodeAt(p + 1) === 124) {
+      case LBRACKET:
+        if (text.charCodeAt(p + 1) === PIPE) {
           emit(T.VertexWithPropsStart, p, p + 2);
           return true;
         }
         return opener(c);
-      case 124:
-      case 123:
+      case PIPE:
+      case LBRACE:
         return opener(c);
-      case 62:
+      case GT:
         push(S.text);
         emit(T.TagEnd, p, p + 1);
         return true;
-      case 94:
+      case CARET:
         emit(T.Up, p, p + 1);
         return true;
-      case 92:
-        if (text.charCodeAt(p + 1) === 124) {
+      case BACKSLASH:
+        if (text.charCodeAt(p + 1) === PIPE) {
           emit(T.Sep, p, p + 2);
           return true;
         }
         return nodeString();
-      case 118:
+      case LOWER_V:
         if (!isWord(text.charCodeAt(p + 1))) {
           emit(T.Down, p, p + 1);
           return true;
@@ -666,14 +708,14 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
 
     if (isSpace(c)) {
       // v12 rewrote `}\s*\n` to `}\n` before lexing.
-      if (text.charCodeAt(p - 1) === 125 && p > from) {
+      if (text.charCodeAt(p - 1) === RBRACE && p > from) {
         let nl = -1;
         scanRun(p, (ch, at) => {
           if (isNl(ch)) nl = at;
           return isSpace(ch);
         });
         if (nl > p) {
-          if (text.charCodeAt(nl) === 10 && text.charCodeAt(nl - 1) === 13) nl--;
+          if (text.charCodeAt(nl) === LF && text.charCodeAt(nl - 1) === CR) nl--;
           p = nl;
           wsFrom = wsTo = -1;
           c = text.charCodeAt(p);
@@ -691,7 +733,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
       return false;
     }
 
-    if (c < 128) return nodeString();
+    if (c <= ASCII_MAX) return nodeString();
     if (isUnicodeLetter(c)) {
       emit(T.UnicodeText, p, p + 1);
       return true;
@@ -713,14 +755,14 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         return true;
       }
     }
-    if (c === a && (a !== 45 || text.charCodeAt(p + 1) === 45)) return false;
+    if (c === a && (a !== 45 || text.charCodeAt(p + 1) === DASH)) return false;
     let q = p + 1;
     while (q < lim) {
       const ch = text.charCodeAt(q);
-      if (ch === 34 && isQuote(q)) break;
+      if (ch === DQUOTE && isQuote(q)) break;
       if (ch === a) {
-        if (a !== 45 || text.charCodeAt(q + 1) === 45) break;
-      } else if (ch === 120 || ch === 111 || ch === 60 || ch === b || isSpace(ch)) {
+        if (a !== 45 || text.charCodeAt(q + 1) === DASH) break;
+      } else if (ch === LOWER_X || ch === LOWER_O || ch === LT || ch === b || isSpace(ch)) {
         const dd = linkChar(q);
         if ((dd === a || dd === b) && at(linkRe, q) >= 0) break;
       }
@@ -737,7 +779,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
 
       case S.string:
         if (c === 34 && isQuote(p)) {
-          if (text.charCodeAt(p + 1) === 96) {
+          if (text.charCodeAt(p + 1) === BACKTICK) {
             push(S.md_string);
             p += 2;
           } else {
@@ -764,7 +806,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           let q = p + 1;
           while (q < lim) {
             const ch = text.charCodeAt(q);
-            if (ch === 96 || (ch === 34 && isQuote(q))) break;
+            if (ch === BACKTICK || (ch === DQUOTE && isQuote(q))) break;
             q++;
           }
           emit(T.MdStr, p, q);
@@ -818,14 +860,15 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
             return true;
           case 93:
             pop();
-            if (d === 41) emit(T.StadiumEnd, p, p + 2);
-            else if (d === 93) emit(T.SubroutineEnd, p, p + 2);
+            if (d === RPAREN) emit(T.StadiumEnd, p, p + 2);
+            else if (d === RBRACKET) emit(T.SubroutineEnd, p, p + 2);
             else emit(T.SQE, p, p + 1);
             return true;
           case 41:
             pop();
-            if (d === 93) emit(T.CylinderEnd, p, p + 2);
-            else if (d === 41 && text.charCodeAt(p + 2) === 41) emit(T.DoubleCircleEnd, p, p + 3);
+            if (d === RBRACKET) emit(T.CylinderEnd, p, p + 2);
+            else if (d === RPAREN && text.charCodeAt(p + 2) === RPAREN)
+              emit(T.DoubleCircleEnd, p, p + 3);
             else emit(T.PE, p, p + 1);
             return true;
           case 124:
@@ -845,7 +888,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         let q = p + 1;
         while (q < lim) {
           const ch = text.charCodeAt(q);
-          if (hasClass(CHARS, ch, TEXT_STOP) || (ch === 34 && isQuote(q))) break;
+          if (hasClass(CHARS, ch, TEXT_STOP) || (ch === DQUOTE && isQuote(q))) break;
           q++;
         }
         emit(T.Text, p, q);
@@ -858,7 +901,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           quote();
         } else if ((c === 126 || isSpace(c)) && invisLink()) {
           return true;
-        } else if ((c === 45 || c === 47 || c === 41) && d === 41) {
+        } else if ((c === 45 || c === 47 || c === 41) && d === RPAREN) {
           pop();
           emit(T.EllipseEnd, p, p + 2);
         } else if (c === 40 || c === 91 || c === 123) {
@@ -869,9 +912,9 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           let q = p + 1;
           while (q < lim) {
             const ch = text.charCodeAt(q);
-            if (hasClass(CHARS, ch, ELLIPSE_STOP) || (ch === 34 && isQuote(q))) break;
-            if ((ch === 45 || ch === 47) && text.charCodeAt(q + 1) === 41) break;
-            if ((ch === 126 || isSpace(ch)) && invisAhead(q) && at(RE_INVIS_LINK, q) >= 0) break;
+            if (hasClass(CHARS, ch, ELLIPSE_STOP) || (ch === DQUOTE && isQuote(q))) break;
+            if ((ch === DASH || ch === SLASH) && text.charCodeAt(q + 1) === RPAREN) break;
+            if ((ch === TILDE || isSpace(ch)) && invisAhead(q) && at(RE_INVIS_LINK, q) >= 0) break;
             q++;
           }
           emit(T.Text, p, q);
@@ -888,7 +931,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         if ((c === 126 || isSpace(c)) && invisLink()) return true;
         switch (c) {
           case 40:
-            if (d === 93) {
+            if (d === RBRACKET) {
               pop();
               emit(T.TrapEnd, p, p + 2);
             } else opener(c);
@@ -898,20 +941,20 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
             opener(c);
             return true;
           case 92:
-            if (d === 93) {
+            if (d === RBRACKET) {
               pop();
               emit(T.TrapEnd, p, p + 2);
             } else emit(T.Text, p, p + 1);
             return true;
           case 47:
-            if (d === 93) {
+            if (d === RBRACKET) {
               pop();
               emit(T.InvTrapEnd, p, p + 2);
             } else emit(T.Text, p, p + 1);
             return true;
           case 93:
           case 41:
-            if (d === 93) {
+            if (d === RBRACKET) {
               pop();
               emit(T.TrapEnd, p, p + 2);
               return true;
@@ -920,7 +963,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           case 125:
             return false;
         }
-        if ((c === 63 || c === 61) && d === 93) {
+        if ((c === 63 || c === 61) && d === RBRACKET) {
           pop();
           emit(T.TrapEnd, p, p + 2);
           return true;
@@ -947,7 +990,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           quote();
         } else if (isSpace(c)) {
           pop();
-          p += c === 13 && text.charCodeAt(p + 1) === 10 ? 2 : 1;
+          p += c === 13 && text.charCodeAt(p + 1) === LF ? 2 : 1;
         } else {
           let q = p + 1;
           while (q < lim && !isSpace(text.charCodeAt(q))) q++;
@@ -987,7 +1030,7 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
           let q = p + 1;
           while (q < lim) {
             const ch = text.charCodeAt(q);
-            if (hasClass(CHARS, ch, SHAPE_DATA_STOP) || (ch === 34 && isQuote(q))) break;
+            if (hasClass(CHARS, ch, SHAPE_DATA_STOP) || (ch === DQUOTE && isQuote(q))) break;
             q++;
           }
           emit(T.ShapeData, p, q);

@@ -13,7 +13,20 @@
  * quotes and dropped semicolons (a per-offset mask). The lexer and {@link cook}, which builds
  * label text from a source range, consult them.
  */
-import { isSpace, isWord } from '@mermaid-js/core/parser-kit';
+import {
+  COLON,
+  CR,
+  DQUOTE,
+  EQUALS,
+  HASH,
+  isSpace,
+  isWord,
+  LBRACE,
+  LF,
+  PERCENT,
+  RBRACE,
+  SEMI,
+} from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 
 /** Mask bit: a `"` that v12 turned into `'` (an HTML attribute quote). */
@@ -72,9 +85,9 @@ function markTagQuotes(src: string, from: number, mark: (i: number, bit: number)
     if (gt === -1) return;
     let j = i + 1;
     while (j < gt) {
-      if (src.charCodeAt(j) === 61 && src.charCodeAt(j + 1) === 34) {
+      if (src.charCodeAt(j) === EQUALS && src.charCodeAt(j + 1) === DQUOTE) {
         let close = j + 2;
-        while (close < gt && src.charCodeAt(close) !== 34) close++;
+        while (close < gt && src.charCodeAt(close) !== DQUOTE) close++;
         if (close >= gt) break;
         mark(j + 1, QUOTE);
         mark(close, QUOTE);
@@ -114,22 +127,22 @@ function markDroppedSemicolons(
       for (let j = k + word.length; j < le; j++) {
         const c = src.charCodeAt(j);
         if (gone(j)) continue;
-        if (c === 58) colon = true;
-        else if (c === 35 && colon) {
+        if (c === COLON) colon = true;
+        else if (c === HASH && colon) {
           hash = j;
           break;
         } else if (isSpace(c)) colon = false;
       }
       if (hash < 0) continue;
       for (let j = le - 1; j > hash; j--) {
-        if (src.charCodeAt(j) === 59 && !gone(j)) {
+        if (src.charCodeAt(j) === SEMI && !gone(j)) {
           mark(j, DROP);
           break;
         }
       }
     }
     if (le >= src.length) break;
-    ls = le + (src.charCodeAt(le) === 13 && src.charCodeAt(le + 1) === 10 ? 2 : 1);
+    ls = le + (src.charCodeAt(le) === CR && src.charCodeAt(le + 1) === LF ? 2 : 1);
   }
 }
 
@@ -154,16 +167,16 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
       else break;
     }
     if (
-      src.charCodeAt(q) === 37 &&
-      src.charCodeAt(q + 1) === 37 &&
-      src.charCodeAt(q + 2) !== 123 &&
+      src.charCodeAt(q) === PERCENT &&
+      src.charCodeAt(q + 1) === PERCENT &&
+      src.charCodeAt(q + 2) !== LBRACE &&
       q + 2 < src.length &&
       !isNl(src.charCodeAt(q + 2))
     ) {
       let e = q + 2;
       while (e < src.length && !isNl(src.charCodeAt(e))) e++;
-      if (src.charCodeAt(e) === 13) e++;
-      if (src.charCodeAt(e) === 10) e++;
+      if (src.charCodeAt(e) === CR) e++;
+      if (src.charCodeAt(e) === LF) e++;
       out.push({ start: ls, end: e, kind: 'comment' });
       ls = e;
       continue;
@@ -172,7 +185,7 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
     let e = q;
     while (e < src.length && !isNl(src.charCodeAt(e))) e++;
     if (e >= src.length) break;
-    ls = e + (src.charCodeAt(e) === 13 && src.charCodeAt(e + 1) === 10 ? 2 : 1);
+    ls = e + (src.charCodeAt(e) === CR && src.charCodeAt(e + 1) === LF ? 2 : 1);
   }
   // Merge in the directives that no comment swallowed, in source order.
   const all: Hole[] = [...out];
@@ -195,7 +208,7 @@ export function cook(src: string, start: number, end: number, view: SourceView):
   const mask = view.mask;
   if (
     !/[\r#}]/.test(raw) &&
-    src.charCodeAt(start - 1) !== 125 &&
+    src.charCodeAt(start - 1) !== RBRACE &&
     !hasHole(view, start, end) &&
     !masked(mask, start, end)
   )
@@ -216,24 +229,24 @@ export function cook(src: string, start: number, end: number, view: SourceView):
       out += "'";
       continue;
     }
-    if (c === 13) {
+    if (c === CR) {
       out += '\n';
-      if (src.charCodeAt(i + 1) === 10) i++;
+      if (src.charCodeAt(i + 1) === LF) i++;
       continue;
     }
-    if (c === 35) {
+    if (c === HASH) {
       let j = i + 1;
       while (j < end && isWord(src.charCodeAt(j))) j++;
-      if (j > i + 1 && j < end && src.charCodeAt(j) === 59 && !((mask?.[j] ?? 0) & DROP)) {
+      if (j > i + 1 && j < end && src.charCodeAt(j) === SEMI && !((mask?.[j] ?? 0) & DROP)) {
         const name = src.slice(i + 1, j);
         out += /^\d+$/.test(name) ? `&#${name};` : `&${name};`;
         i = j;
         continue;
       }
     }
-    if (c === 125 || (i === start && src.charCodeAt(i - 1) === 125 && isSpace(c))) {
-      const at = c === 125 ? i + 1 : i;
-      if (c === 125) out += '}';
+    if (c === RBRACE || (i === start && src.charCodeAt(i - 1) === RBRACE && isSpace(c))) {
+      const at = c === RBRACE ? i + 1 : i;
+      if (c === RBRACE) out += '}';
       let j = at;
       let nl = -1;
       while (j < end && isSpace(src.charCodeAt(j))) {
@@ -248,10 +261,10 @@ export function cook(src: string, start: number, end: number, view: SourceView):
       }
       if (nl >= 0) {
         out += '\n';
-        i = src.charCodeAt(nl) === 13 && src.charCodeAt(nl + 1) === 10 ? nl + 1 : nl;
+        i = src.charCodeAt(nl) === CR && src.charCodeAt(nl + 1) === LF ? nl + 1 : nl;
         continue;
       }
-      if (c === 125) continue;
+      if (c === RBRACE) continue;
     }
     out += src[i];
   }

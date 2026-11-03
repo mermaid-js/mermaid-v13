@@ -14,6 +14,21 @@
  * Every step is linear in the text it reads (R-PARSE-7).
  */
 // cspell:words kepano
+import {
+  ASCII_MAX,
+  C1_LAST,
+  CR,
+  HIGH_SURROGATE_FIRST,
+  HIGH_SURROGATE_LAST,
+  LF,
+  LOW_SURROGATE_FIRST,
+  LOW_SURROGATE_LAST,
+  NEL,
+  REVERSED_BOM,
+  BMP_LAST,
+  SPACE,
+  TAB,
+} from '../parser-kit/char-codes.ts';
 import { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Diagnostic } from '../parser-kit/diagnostics.ts';
 import { lineEnd, newlineAt } from '../parser-kit/scanner.ts';
@@ -171,10 +186,12 @@ function fold(raw: string): string {
     let from = 0;
     let to = line.length;
     if (i > 0) {
-      while (from < to && (line.charCodeAt(from) === 32 || line.charCodeAt(from) === 9)) from++;
+      while (from < to && (line.charCodeAt(from) === SPACE || line.charCodeAt(from) === TAB))
+        from++;
     }
     if (i < last) {
-      while (to > from && (line.charCodeAt(to - 1) === 32 || line.charCodeAt(to - 1) === 9)) to--;
+      while (to > from && (line.charCodeAt(to - 1) === SPACE || line.charCodeAt(to - 1) === TAB))
+        to--;
     }
     lines[i] = line.slice(from, to);
   }
@@ -220,17 +237,17 @@ function mappingIndicator(s: string, value: boolean): number {
 function nonPrintable(src: string, start: number, end: number): number {
   for (let i = start; i < end; i++) {
     const c = src.charCodeAt(i);
-    if (c < 0x20) {
-      if (c !== 0x09 && c !== 0x0a && c !== 0x0d) return i;
-    } else if (c >= 0x7f && c <= 0x9f) {
-      if (c !== 0x85) return i;
-    } else if (c === 0xfffe || c === 0xffff) {
+    if (c < SPACE) {
+      if (c !== TAB && c !== LF && c !== CR) return i;
+    } else if (c >= ASCII_MAX && c <= C1_LAST) {
+      if (c !== NEL) return i;
+    } else if (c === REVERSED_BOM || c === BMP_LAST) {
       return i;
-    } else if (c >= 0xd800 && c <= 0xdbff) {
+    } else if (c >= HIGH_SURROGATE_FIRST && c <= HIGH_SURROGATE_LAST) {
       const next = i + 1 < end ? src.charCodeAt(i + 1) : 0;
-      if (next < 0xdc00 || next > 0xdfff) return i;
+      if (next < LOW_SURROGATE_FIRST || next > LOW_SURROGATE_LAST) return i;
       i++;
-    } else if (c >= 0xdc00 && c <= 0xdfff) {
+    } else if (c >= LOW_SURROGATE_FIRST && c <= LOW_SURROGATE_LAST) {
       return i;
     }
   }
@@ -407,7 +424,7 @@ class Reader {
   printableQuoted(start: number, end: number): void {
     for (let i = start; i < end; i++) {
       const c = this.src.charCodeAt(i);
-      if (c < 0x20 && c !== 0x09 && c !== 0x0a && c !== 0x0d) {
+      if (c < SPACE && c !== TAB && c !== LF && c !== CR) {
         this.fail('expected valid JSON character', i);
       }
     }
@@ -637,7 +654,7 @@ class Reader {
     }
     // Blank lines kept for a continuation that never came are not part of the value.
     let cut = text.length;
-    while (cut > 0 && text.charCodeAt(cut - 1) === 10) cut--;
+    while (cut > 0 && text.charCodeAt(cut - 1) === LF) cut--;
     text = text.slice(0, cut);
     return this.scalar(text, at);
   }
