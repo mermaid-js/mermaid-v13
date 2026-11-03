@@ -25,7 +25,7 @@ import {
   type MermaidConfig,
   type ResolvedConfig,
 } from '@mermaid-js/core/config';
-import type { LayoutEngine } from '@mermaid-js/core/layout';
+import { pxProfile, type LayoutEngine, type UnitProfile } from '@mermaid-js/core/layout';
 import { asLimitError, checkSource, resolveLimits, type Limits } from '@mermaid-js/core/limits';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -204,11 +204,18 @@ function stableJson(value: unknown): string {
 }
 
 /**
- * `mermaid-<FNV-1a 32 of text + resolved config + integrator options>`: distinct per diagram,
- * deterministic (R-SVG-3, R-ARCH-6). Functions (measurer) serialise as null.
+ * `mermaid-<FNV-1a 32 of text + resolved config + integrator options + unit profile>`: distinct
+ * per diagram, deterministic (R-SVG-3, R-ARCH-6). Functions (measurer) serialise as null. The
+ * px profile adds nothing, so SVG ids are as before units joined the key.
  */
-function defaultIdPrefix(text: string, config: unknown, options: unknown): string {
-  const input = `${text}\u0000${stableJson(config)}\u0000${stableJson(options)}`;
+export function defaultIdPrefix(
+  text: string,
+  config: unknown,
+  options: unknown,
+  units: UnitProfile
+): string {
+  const unit = units.id === 'px' ? '' : `\u0000${units.id}`;
+  const input = `${text}\u0000${stableJson(config)}\u0000${stableJson(options)}${unit}`;
   let h = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {
     h ^= input.charCodeAt(i);
@@ -529,15 +536,17 @@ export function createMermaid() {
       warn,
     });
     const layoutEngine = engine;
+    const units = pxProfile;
     const ctx: RenderContext = {
       config,
       measurer: selectMeasurer({
         measurer: s.options.measurer,
         deterministic: s.options.deterministic,
       }),
+      units,
       theme,
       securityLevel: resolveSecurityLevel(config.securityLevel, warn),
-      idPrefix: options?.id ?? defaultIdPrefix(text, config, s.options),
+      idPrefix: options?.id ?? defaultIdPrefix(text, config, s.options, units),
       version: VERSION,
       linkSchemes: s.options.linkSchemes,
       limits: s.limits,

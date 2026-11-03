@@ -355,15 +355,16 @@ interface UnitProfile {
   readonly builder: {                           // read by the diagram's graph builder
     nodePad: { x: number; y: number }; groupPad: number; titlePad: number;
     labelPatch: { x: number; y: number }; headRoom: number; wrapWidth: number; edgeWrap: number;
+    spacing: LayoutSpacing; minSpacing: LayoutSpacing; diagramPadding: number; // defaults, minimums
   };
   readonly engine: LayoutMetrics;               // passed through LayoutGraph.metrics
   readonly grid?: number;                       // grid quantum, 1 for cells
 }
 interface LayoutMetrics {                       // today's layered constants; px values are the current ones
-  portPitch: number; minPitch: number; trackMargin: number; trackPitch: number; trackSpread: number;
+  portPitch: number; minPitch: number; portSep: number; trackMargin: number; trackPitch: number; trackSpread: number;
   levelMargin: number; levelPitch: number; levelLead: number; levelClear: number; levelTouch: number;
   snap: number; bendSnap: number; leanClear: number; fan: number; loop: number; loopGap: number;
-  corner: number; turnBreakpoint: number;
+  loopLabel: number; corner: number; turnBreakpoint: number;
 }
 ```
 

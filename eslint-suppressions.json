@@ -61,11 +61,6 @@
       "count": 1
     }
   },
-  "packages/core/src/parser-kit/cursor.ts": {
-    "no-param-reassign": {
-      "count": 1
-    }
-  },
   "packages/core/src/parser-kit/positions.ts": {
     "mermaid/no-magic-char-code": {
       "count": 6
@@ -84,9 +79,6 @@
   "packages/core/src/preprocess/directives.ts": {
     "mermaid/no-magic-char-code": {
       "count": 11
-    },
-    "no-param-reassign": {
-      "count": 3
     }
   },
   "packages/core/src/preprocess/frontmatter.ts": {
@@ -100,9 +92,6 @@
     },
     "mermaid/no-magic-char-code": {
       "count": 22
-    },
-    "no-param-reassign": {
-      "count": 11
     }
   },
   "packages/core/src/svg/inert.ts": {
@@ -155,9 +144,6 @@
     },
     "mermaid/no-magic-char-code": {
       "count": 96
-    },
-    "no-param-reassign": {
-      "count": 1
     }
   },
   "packages/diagram-flowchart/src/parser/model.ts": {

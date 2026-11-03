@@ -93,6 +93,15 @@ export default tseslint.config(
     },
   },
   {
+    // Scanners advance the position they are given (`pos`, `at`) by design.
+    files: [
+      'packages/core/src/parser-kit/**/*.ts',
+      'packages/core/src/preprocess/**/*.ts',
+      'packages/diagram-*/src/parser/**/*.ts',
+    ],
+    rules: { 'no-param-reassign': 'off' },
+  },
+  {
     // The DOM-free, console-free, config-global-free layer (R-ARCH-1, R-ARCH-5, R-ERR-4).
     files: ['packages/core/src/**/*.{ts,js}', 'packages/diagram-*/src/**/*.{ts,js}'],
     languageOptions: { globals: { ...globals.es2021 } },
