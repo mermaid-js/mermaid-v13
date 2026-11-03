@@ -13,5 +13,50 @@
     "fixture": "ascii/subgraph_empty",
     "kind": "reinterpreted",
     "reason": "`subgraph one` / `end` with no members is an empty subgraph: mermaid@12 and v13 both keep it in the model (subgraph `one`, no nodes), so Mermaid draws a box titled `one`. mermaid-ascii drops it, so upstream.txt shows only `A --> B`."
+  },
+  {
+    "fixture": "ascii/ampersand_lhs_and_rhs",
+    "kind": "structural",
+    "reason": "mermaid-ascii merges edges that end at the same node side into one arrowhead (a shared trunk); v13 draws one arrowhead per edge and never merges siblings (D140). `A & B --> C & D` is four edges: upstream shows 2 heads, v13 4."
+  },
+  {
+    "fixture": "extended-chars/ampersand_lhs_and_rhs",
+    "kind": "structural",
+    "reason": "mermaid-ascii merges edges that end at the same node side into one arrowhead (a shared trunk); v13 draws one arrowhead per edge and never merges siblings (D140). `A & B --> C & D` is four edges: upstream shows 2 heads, v13 4."
+  },
+  {
+    "fixture": "ascii/backlink_from_top",
+    "kind": "structural",
+    "reason": "mermaid-ascii merges edges that end at the same node side into one arrowhead (a shared trunk); v13 draws one arrowhead per edge and never merges siblings (D140). `B --> C` and `D --> C` share upstream's `v` into C: 4 heads against v13's 5."
+  },
+  {
+    "fixture": "extended-chars/backlink_from_top",
+    "kind": "structural",
+    "reason": "mermaid-ascii merges edges that end at the same node side into one arrowhead (a shared trunk); v13 draws one arrowhead per edge and never merges siblings (D140). `B --> C` and `D --> C` share upstream's `▼` into C: 4 heads against v13's 5."
+  },
+  {
+    "fixture": "ascii/backlink_with_short_y_padding",
+    "kind": "structural",
+    "reason": "mermaid-ascii merges edges that end at the same node side into one arrowhead (a shared trunk); v13 draws one arrowhead per edge and never merges siblings (D140). `B --> C` and `D --> C` share upstream's `v` into C: 4 heads against v13's 5."
+  },
+  {
+    "fixture": "ascii/preserve_order_of_definition",
+    "kind": "structural",
+    "reason": "mermaid-ascii does not draw the self-loop `A --> A` (Mermaid draws it as a loop on A): upstream shows 3 arrowheads, v13 4."
+  },
+  {
+    "fixture": "extended-chars/preserve_order_of_definition",
+    "kind": "structural",
+    "reason": "mermaid-ascii does not draw the self-loop `A --> A` (Mermaid draws it as a loop on A): upstream shows 3 arrowheads, v13 4."
+  },
+  {
+    "fixture": "ascii/subgraph_mixed_nodes_td",
+    "kind": "structural",
+    "reason": "upstream.txt writes the subgraph title row `|  one  |` over the `X --> A` line where it enters the frame, so its line has a gap; v13 puts the title on the frame's top border and the line is unbroken."
+  },
+  {
+    "fixture": "extended-chars/thick_edge_corners_chain_skip_lr",
+    "kind": "structural",
+    "reason": "upstream.txt joins two thick edges at a `┏` just left of C (`│ B │━━┏━►│ C │`); `┏` has no left arm, so B's `━━` stroke ends free there. v13 draws each edge on its own (D140)."
   }
 ]
