@@ -1,0 +1,9 @@
+flowchart LR
+  X[Outside] --> A
+  subgraph outer [Outer]
+    subgraph inner [Inner]
+      A --> B
+    end
+    B --> C
+  end
+  C --> Y[Exit]

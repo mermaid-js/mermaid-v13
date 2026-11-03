@@ -8,7 +8,7 @@ import { loadOracle } from './oracle.ts';
 /**
  * The mermaid-ascii flowchart goldens (D83, R-ASCII-2): every folder is complete, every
  * divergence names a fixture, and the `rejected-input` entries are exactly the inputs that
- * mermaid@12 and v13 reject. Rendering against them is #48.
+ * mermaid@12 and v13 reject. Rendering against them is in `ascii/goldens.spec.ts` (#48).
  */
 const ROOT = fileURLToPath(new URL('../ascii/', import.meta.url));
 const GROUPS = { ascii: 92, 'extended-chars': 47, multibyte: 3 } as const;
