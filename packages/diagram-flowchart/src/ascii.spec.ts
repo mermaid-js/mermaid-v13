@@ -84,11 +84,13 @@ describe('subgraphs', () => {
       'flowchart TB\nsubgraph one [One]\n direction LR\n a --> b\nend\nsubgraph e [Empty]\nend';
     expect(await text(src)).toBe(
       lines(
-        '┌──── One ────┐',
-        '│┌───┐   ┌───┐│      ┌Empty┐',
-        '││ a ├──►│ b ││      └─────┘',
-        '│└───┘   └───┘│',
-        '└─────────────┘'
+        '┌───── One ─────┐',
+        '│               │      ┌ Empty ┐',
+        '│ ┌───┐   ┌───┐ │      │       │',
+        '│ │ a ├──►│ b │ │      │       │',
+        '│ └───┘   └───┘ │      └───────┘',
+        '│               │',
+        '└───────────────┘'
       )
     );
   });
