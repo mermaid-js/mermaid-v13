@@ -8,7 +8,11 @@ import type {
   RoutePoint,
   Side,
 } from '../layout/types.ts';
-import { cellFixtures, randomCellFixtures } from '../layout/layered/grid.fixtures.ts';
+import {
+  cellFixtures,
+  randomCellFixtures,
+  randomGroupFixtures,
+} from '../layout/layered/grid.fixtures.ts';
 import { layered } from '../layout/layered/index.ts';
 import { repairRoutes, routeCollisions, type CollisionKind } from './repair.ts';
 
@@ -444,6 +448,317 @@ describe('repairRoutes (D78, R-ASCII-1)', () => {
     expect(result.unresolved.map((c) => [c.kind, c.with])).toContainEqual(['box', 'X']);
   });
 
+  // #42: an edge between a group and its own member ends on the group's top border, where it
+  // meets the frame; that one cell is the edge's end, not a frame collision.
+  it.each<[string, Spec['edges'][number]]>([
+    [
+      'member to its group',
+      [
+        'e',
+        'A',
+        'g',
+        ['top', 'top'],
+        [
+          [4, 1],
+          [4, 0],
+        ],
+      ],
+    ],
+    [
+      'group to its member',
+      [
+        'e',
+        'g',
+        'A',
+        ['top', 'top'],
+        [
+          [4, 0],
+          [4, 1],
+        ],
+      ],
+    ],
+  ])('lets a %s edge end on the group border', (_, edge) => {
+    const { graph, model } = build({
+      width: 19,
+      height: 6,
+      groups: { g: [0, 0, 19, 6] },
+      nodes: { A: [1, 2, 7, 3, 'g'], B: [10, 2, 8, 3, 'g'] },
+      edges: [edge],
+    });
+    expect(routeCollisions(graph, model)).toEqual([]);
+    const result = repairRoutes(graph, model);
+    expect(result.repaired).toEqual([]);
+    expect(result.unresolved).toEqual([]);
+  });
+
+  it('still counts a run along the border before a group end', () => {
+    const { graph, model } = build({
+      width: 19,
+      height: 6,
+      groups: { g: [0, 0, 19, 6] },
+      nodes: { A: [1, 2, 7, 3, 'g'], B: [10, 2, 8, 3, 'g'] },
+      edges: [
+        [
+          'e',
+          'A',
+          'g',
+          ['top', 'top'],
+          [
+            [4, 1],
+            [4, 0],
+            [7, 0],
+          ],
+        ],
+      ],
+    });
+    expect(routeCollisions(graph, model).map((c) => [c.kind, c.cell])).toEqual([
+      ['frame', { x: 4, y: 0 }],
+      ['frame', { x: 5, y: 0 }],
+      ['frame', { x: 6, y: 0 }],
+    ]);
+  });
+
+  // Review of #45, findings 1, 2, 3, 5, 6.
+  it('never doubles back into a stretch goal (review 1)', () => {
+    const { graph, model } = build({
+      width: 7,
+      height: 14,
+      nodes: {
+        A: [0, 0, 5, 3],
+        B: [0, 11, 5, 3],
+        N: [2, 5, 1, 1],
+        C: [1, 6, 1, 1],
+        D: [3, 6, 1, 1],
+      },
+      edges: [
+        [
+          'e',
+          'A',
+          'B',
+          ['bottom', 'top'],
+          [
+            [2, 3],
+            [2, 10],
+          ],
+        ],
+      ],
+    });
+    const result = repairRoutes(graph, model);
+    expect(simple(result.routes.get('e')!)).toBe(true);
+    expect(routeCollisions(graph, model, result.routes)).toEqual([]);
+  });
+
+  it.each<[string, Spec]>([
+    [
+      'its own run',
+      {
+        width: 14,
+        height: 16,
+        nodes: {
+          A: [0, 0, 5, 3],
+          B: [7, 13, 5, 3],
+          W0: [3, 4, 1, 1],
+          W1: [9, 5, 3, 1],
+          W2: [2, 11, 3, 1],
+          W3: [11, 5, 3, 1],
+          W4: [11, 7, 2, 1],
+          W5: [4, 8, 2, 1],
+          W6: [7, 6, 2, 1],
+        },
+        edges: [
+          [
+            'e',
+            'A',
+            'B',
+            ['bottom', 'top'],
+            [
+              [2, 3],
+              [2, 5],
+              [9, 5],
+              [9, 12],
+            ],
+          ],
+        ],
+      },
+    ],
+    [
+      'its own run, without a U-turn',
+      {
+        width: 14,
+        height: 16,
+        nodes: {
+          A: [0, 0, 5, 3],
+          B: [6, 13, 5, 3],
+          W0: [12, 10, 3, 1],
+          W1: [7, 9, 2, 1],
+          W2: [9, 10, 1, 1],
+          W3: [0, 6, 3, 1],
+          W4: [10, 7, 1, 1],
+        },
+        edges: [
+          [
+            'e',
+            'A',
+            'B',
+            ['bottom', 'top'],
+            [
+              [2, 3],
+              [2, 8],
+              [8, 8],
+              [8, 12],
+            ],
+          ],
+        ],
+      },
+    ],
+  ])('never crosses %s (review 2)', (_, spec) => {
+    const { graph, model } = build(spec);
+    const result = repairRoutes(graph, model);
+    const route = result.routes.get('e')!;
+    expect(simple(route), JSON.stringify(route)).toBe(true);
+  });
+
+  it('reports a route that crosses itself (review 2)', () => {
+    const { graph, model } = build({
+      width: 12,
+      height: 14,
+      nodes: { A: [0, 0, 5, 3], B: [7, 11, 5, 3] },
+      edges: [
+        [
+          'e',
+          'A',
+          'B',
+          ['bottom', 'top'],
+          [
+            [2, 3],
+            [2, 8],
+          ],
+        ],
+      ],
+    });
+    const loop = pts([
+      [2, 3],
+      [2, 6],
+      [5, 6],
+      [5, 4],
+      [3, 4],
+      [3, 8],
+      [9, 8],
+      [9, 10],
+    ]);
+    expect(routeCollisions(graph, model, new Map([['e', loop]])).map((c) => c.kind)).toContain(
+      'shared'
+    );
+  });
+
+  it('rejects a route that is not orthogonal instead of hanging (review 3)', () => {
+    const { graph, model } = build({
+      width: 5,
+      height: 14,
+      nodes: { A: [0, 0, 5, 3], B: [0, 11, 5, 3] },
+      edges: [
+        [
+          'e',
+          'A',
+          'B',
+          ['bottom', 'top'],
+          [
+            [2, 3],
+            [2, 10],
+          ],
+        ],
+      ],
+    });
+    expect(() =>
+      routeCollisions(
+        graph,
+        model,
+        new Map([
+          [
+            'e',
+            pts([
+              [2, 3],
+              [5, 4],
+            ]),
+          ],
+        ])
+      )
+    ).toThrow(/not orthogonal/);
+  });
+
+  it.each([
+    ['e1', 'e2'],
+    ['e2', 'e1'],
+  ])('sees overlapping labels whatever the edge order (review 5: %s first)', (first, second) => {
+    const edges: Spec['edges'] = [
+      [
+        'e1',
+        'A',
+        'B',
+        ['bottom', 'top'],
+        [
+          [1, 3],
+          [1, 10],
+        ],
+        [1, 6, 3],
+      ],
+      [
+        'e2',
+        'A',
+        'B',
+        ['bottom', 'top'],
+        [
+          [3, 3],
+          [3, 10],
+        ],
+        [3, 6, 3],
+      ],
+    ];
+    const byId = new Map(edges.map((e) => [e[0], e]));
+    const { graph, model } = build({
+      width: 12,
+      height: 14,
+      nodes: { A: [0, 0, 8, 3], B: [0, 11, 8, 3] },
+      edges: [byId.get(first)!, byId.get(second)!],
+    });
+    expect(routeCollisions(graph, model).map((c) => [c.edge, c.kind])).toContainEqual([
+      'e2',
+      'label',
+    ]);
+  });
+
+  it('gives up on walled-in ends quickly among many boxes (review 6)', () => {
+    const nodes: Spec['nodes'] = {};
+    const edges: Spec['edges'] = [];
+    let k = 0;
+    for (let y = 20; y < 180; y += 4)
+      for (let x = 2; x < 258; x += 4) nodes[`w${k++}`] = [x, y, 1, 1];
+    for (let i = 0; i < 10; i++) {
+      const x = 11 + i * 24;
+      nodes[`A${i}`] = [x - 2, 0, 5, 3];
+      nodes[`B${i}`] = [x - 2, 195, 5, 3];
+      nodes[`L${i}`] = [x - 1, 193, 1, 2];
+      nodes[`R${i}`] = [x + 1, 193, 1, 2];
+      nodes[`T${i}`] = [x, 192, 1, 1];
+      edges.push([
+        `e${i}`,
+        `A${i}`,
+        `B${i}`,
+        ['bottom', 'top'],
+        [
+          [x, 3],
+          [x, 194],
+        ],
+      ]);
+    }
+    const { graph, model } = build({ width: 260, height: 200, nodes, edges });
+    const t0 = Date.now();
+    const result = repairRoutes(graph, model);
+    // About 0.2 s with a cell lookup, 1.6 s with a scan over every node per probe.
+    expect(Date.now() - t0).toBeLessThan(800);
+    expect(result.unresolved.map((c) => c.with)).toContain('T0');
+  });
+
   it('keeps the snapped stretch and reports it when there is no lane', () => {
     const { graph, model } = build({
       width: 5,
@@ -479,7 +794,7 @@ describe('repairRoutes (D78, R-ASCII-1)', () => {
   // or another edge's label, every route stays square with its ends in place, and whatever is
   // left is reported (R-ASCII-1; the corpus property is #48's).
   it('repairs the engine routes on the cell fixtures', () => {
-    const fixtures = [...cellFixtures(), ...randomCellFixtures(200)];
+    const fixtures = [...cellFixtures(), ...randomCellFixtures(200), ...randomGroupFixtures(200)];
     const edgeIds = new Set(fixtures.flatMap((f) => f.graph.edges.map((e) => e.id)));
     for (const { name, graph } of fixtures) {
       const model = layered(graph);
@@ -493,6 +808,7 @@ describe('repairRoutes (D78, R-ASCII-1)', () => {
       for (const [id, route] of result.routes) {
         const points = model.edges.get(id)!.points;
         expect(square(route), `${name} ${id}`).toBe(true);
+        expect(simple(route), `${name} ${id} visits a cell twice`).toBe(true);
         expect(route[0], `${name} ${id}`).toEqual({ x: points[0]!.x, y: points[0]!.y });
         const last = points[points.length - 1]!;
         expect(route[route.length - 1], `${name} ${id}`).toEqual({ x: last.x, y: last.y });
@@ -500,13 +816,43 @@ describe('repairRoutes (D78, R-ASCII-1)', () => {
     }
   });
 
+  // Known engine placements the router cannot change, because an end cell is fixed: the engine
+  // puts an edge end under a group title on the border row (reported for #42; GAPS.md #45).
+  const ENGINE_TITLE_ENDS: Record<string, string[]> = {
+    'F3 group to its member at the top edge': ['g->A#1 label 4,0 g'],
+    'F3 member to its outer group LR': ['A->g#1 label 19,2 h'],
+  };
+
   it('repairs every collision on the hand-built cell fixtures', () => {
     for (const { name, graph } of cellFixtures()) {
       const model = layered(graph);
-      expect(routeCollisions(graph, model, repairRoutes(graph, model).routes), name).toEqual([]);
+      const left = routeCollisions(graph, model, repairRoutes(graph, model).routes);
+      expect(
+        left.map((c) => `${c.edge} ${c.kind} ${c.cell.x},${c.cell.y} ${c.with}`),
+        name
+      ).toEqual(ENGINE_TITLE_ENDS[name] ?? []);
     }
   });
 });
+
+// No cell twice: a route never doubles back over itself.
+function simple(route: readonly Point[]): boolean {
+  const seen = new Set<string>();
+  for (let i = 0; i < route.length; i++) {
+    const p = route[i]!;
+    const q = route[i - 1] ?? p;
+    const dx = Math.sign(p.x - q.x);
+    const dy = Math.sign(p.y - q.y);
+    for (let x = q.x, y = q.y; ; x += dx, y += dy) {
+      if (i === 0 || x !== q.x || y !== q.y) {
+        if (seen.has(`${x},${y}`)) return false;
+        seen.add(`${x},${y}`);
+      }
+      if (x === p.x && y === p.y) break;
+    }
+  }
+  return true;
+}
 
 function square(route: readonly Point[]): boolean {
   return route.every((p, i) => {

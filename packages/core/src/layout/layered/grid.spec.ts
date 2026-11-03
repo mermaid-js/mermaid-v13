@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { LayoutGraph, LayoutModel } from '../types.ts';
 import { validateGrid } from '../validate-grid.ts';
-import { cellFixtures, randomCellFixtures } from './grid.fixtures.ts';
+import { cellFixtures, randomCellFixtures, randomGroupFixtures } from './grid.fixtures.ts';
 import { layered } from './index.ts';
 
 // DDLT-style checks on cell graphs with `grid: 1` (D78, D140), through `validateGrid`: whole
 // cells, square segments, each edge end in a cell of its own off a box corner.
-const FIXTURES = [...cellFixtures(), ...randomCellFixtures(60)];
+const FIXTURES = [...cellFixtures(), ...randomCellFixtures(60), ...randomGroupFixtures(120)];
 
 // Besides `validateGrid`: no route point other than its ends sits in a node box.
 function problems(graph: LayoutGraph, model: LayoutModel): string[] {
@@ -63,6 +63,30 @@ describe('layered: grid (cells)', () => {
     const a = layered(fixture.graph).nodes.get('A')!;
     expect(a.width).toBe(11);
     expect(a.height).toBe(3);
+  });
+
+  it.each(['curved', 'straight'] as const)('routes square on the grid when %s is asked', (r) => {
+    const bad = cellFixtures()
+      .map((f) => ({ ...f.graph, routing: r }))
+      .map((g) => problems(g, layered(g)))
+      .filter((p) => p.length > 0);
+    expect(bad).toEqual([]);
+  });
+
+  it.each([2, 0.5, 1.5])(
+    'rejects a grid quantum of %f: only character cells are supported',
+    (q) => {
+      const g = FIXTURES.find((f) => f.name === 'chain TB')!.graph;
+      expect(() => layered({ ...g, grid: q })).toThrow(RangeError);
+    }
+  );
+
+  it('keeps a fractional drawing margin on the grid', () => {
+    const g = {
+      ...FIXTURES.find((f) => f.name === 'F7 drawing margin')!.graph,
+      diagramPadding: 0.5,
+    };
+    expect(problems(g, layered(g))).toEqual([]);
   });
 
   it('lays out the same twice', () => {

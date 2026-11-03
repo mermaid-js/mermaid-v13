@@ -20,16 +20,18 @@ const cell = (v: number, grid: number): number =>
 export function snapRoute(points: readonly RoutePoint[], grid = 1): Point[] {
   const out: Point[] = [];
   const push = (p: Point): void => {
+    // Pop collinear and backtracked points first, then check for a duplicate, so a pop can
+    // never leave `p` next to its own copy (review 4).
+    for (;;) {
+      const last = out[out.length - 1];
+      const before = out[out.length - 2];
+      if (!last || !before) break;
+      if ((before.x === last.x) !== (last.x === p.x) || (before.y === last.y) !== (last.y === p.y))
+        break;
+      out.pop();
+    }
     const last = out[out.length - 1];
     if (last && last.x === p.x && last.y === p.y) return;
-    const before = out[out.length - 2];
-    if (
-      last &&
-      before &&
-      (before.x === last.x) === (last.x === p.x) &&
-      (before.y === last.y) === (last.y === p.y)
-    )
-      out.pop();
     out.push(p);
   };
   for (const p of points) {

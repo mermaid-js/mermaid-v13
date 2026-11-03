@@ -79,6 +79,21 @@ describe('snapRoute (D78, R-ASCII-1)', () => {
     expect(snapRoute(points, grid)).toEqual(expected);
   });
 
+  // Review of #45, finding 4: no duplicate point, even when a knee or a backtrack pops one.
+  it.each<[string, RoutePoint[], Point[]]>([
+    [
+      'a knee that backtracks',
+      [v(0, 0), h(3, 0), v(0, 2)],
+      [
+        { x: 0, y: 0 },
+        { x: 0, y: 2 },
+      ],
+    ],
+    ['a run that comes back to its start', [v(0, 0), v(0, 5), v(0, 0)], [{ x: 0, y: 0 }]],
+  ])('never repeats a point: %s', (_, points, expected) => {
+    expect(snapRoute(points)).toEqual(expected);
+  });
+
   it('keeps every engine route on the cell fixtures orthogonal and connected, ends in place', () => {
     for (const { name, graph } of [...cellFixtures(), ...randomCellFixtures(60)]) {
       for (const [id, e] of layered(graph).edges) {

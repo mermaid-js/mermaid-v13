@@ -109,7 +109,9 @@ export interface LayoutGraph {
   metrics?: LayoutMetrics;
   /**
    * Grid quantum (D77, D140): node boxes, ports and tracks land on whole multiples of it, and
-   * each edge end gets its own cell. Set to 1 for character cells.
+   * each edge end gets its own cell. Only 1 (character cells) is supported; other values throw a
+   * RangeError. With it set, every edge is routed at right angles (`stepped`) whatever `routing`
+   * says, and `diagramPadding` is rounded up to whole cells.
    *
    * With it set, the model is in cells: a route point `(c, r)` is the cell in column `c`, row
    * `r`; a box of width `w` centred at `x` covers columns `x − w/2 + ½` to `x + w/2 − ½`. Each
