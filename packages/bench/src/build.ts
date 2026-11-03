@@ -7,7 +7,7 @@ import { relative } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { build } from 'esbuild';
 import type { Metafile } from 'esbuild';
-import type { SizedFile } from './report.ts';
+import type { SizeSummary, SizedFile } from './report.ts';
 
 /** The define that turns stage timing on (bench) or compiles it out (production). */
 export function benchDefine(bench: boolean): Record<string, string> {
@@ -28,6 +28,22 @@ export interface Bundle {
   files: SizedFile[];
   /** Output files reachable from the entry through static imports only, entry first. */
   staticClosure: string[];
+  /** The import graph between output files (paths relative to `outdir`), for format splits. */
+  graph: Record<string, OutputNode>;
+}
+
+export interface OutputNode {
+  /** Source module of an entry or lazily imported chunk, relative to the working directory. */
+  entryPoint?: string;
+  imports: { path: string; kind: 'static' | 'dynamic' }[];
+  /** Source modules bundled into this file, relative to the working directory. */
+  inputs: string[];
+}
+
+/** Totals over a set of sized files. */
+export function summarise(files: SizedFile[], source: SizeSummary['source']): SizeSummary {
+  const total = (k: 'raw' | 'gzip' | 'brotli') => files.reduce((a, f) => a + f[k], 0);
+  return { raw: total('raw'), gzip: total('gzip'), brotli: total('brotli'), source, files };
 }
 
 export function sizeOf(path: string, bytes: Buffer): SizedFile {
@@ -75,7 +91,12 @@ export async function bundle({ entry, outdir, bench }: BundleOptions): Promise<B
   const outputs = Object.keys(result.metafile.outputs).filter((p) => !p.endsWith('.map'));
   // Output paths in the metafile are relative to the working directory.
   const abs = (p: string) => new URL(p, `file://${process.cwd()}/`).pathname;
-  const entryOut = outputs.find((p) => result.metafile.outputs[p]?.entryPoint !== undefined);
+  // Lazily imported chunks have an `entryPoint` too and may come first in the metafile.
+  const entryOut = outputs.find(
+    (p) =>
+      result.metafile.outputs[p]?.entryPoint !== undefined &&
+      abs(result.metafile.outputs[p].entryPoint) === abs(entry)
+  );
   if (entryOut === undefined) throw new Error(`esbuild produced no entry output for ${entry}`);
   const meta: Metafile = {
     inputs: result.metafile.inputs,
@@ -90,10 +111,27 @@ export async function bundle({ entry, outdir, bench }: BundleOptions): Promise<B
     ),
   };
   const files = outputs.map((p) => sizeOf(relative(outdir, abs(p)), readFileSync(abs(p))));
+  const graph: Record<string, OutputNode> = {};
+  for (const p of outputs) {
+    const o = result.metafile.outputs[p]!;
+    graph[relative(outdir, abs(p))] = {
+      ...(o.entryPoint !== undefined && { entryPoint: o.entryPoint }),
+      imports: o.imports
+        .filter(
+          (i) => !i.external && (i.kind === 'import-statement' || i.kind === 'dynamic-import')
+        )
+        .map((i) => ({
+          path: relative(outdir, abs(i.path)),
+          kind: i.kind === 'dynamic-import' ? 'dynamic' : 'static',
+        })),
+      inputs: Object.keys(o.inputs),
+    };
+  }
   return {
     outdir,
     entryFile: relative(outdir, abs(entryOut)),
     files,
     staticClosure: staticClosure(meta, outdir, abs(entryOut)),
+    graph,
   };
 }

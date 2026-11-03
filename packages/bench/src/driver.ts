@@ -12,7 +12,7 @@ import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 import { build } from 'esbuild';
-import { benchDefine, bundle, sizeOf } from './build.ts';
+import { benchDefine, bundle, sizeOf, summarise } from './build.ts';
 import type { Bundle } from './build.ts';
 import type { Fixture } from './fixtures.ts';
 import { stripMermaidOnlyConfig } from './normalize.ts';
@@ -160,11 +160,6 @@ export async function serve(site: Site): Promise<Server> {
     },
     close: () => new Promise<void>((resolve) => server.close(() => resolve())),
   };
-}
-
-function summarise(files: SizedFile[], source: SizeSummary['source']): SizeSummary {
-  const total = (k: 'raw' | 'gzip' | 'brotli') => files.reduce((a, f) => a + f[k], 0);
-  return { raw: total('raw'), gzip: total('gzip'), brotli: total('brotli'), source, files };
 }
 
 export interface DriveOptions {

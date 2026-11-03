@@ -12,6 +12,7 @@
  */
 import { execFileSync } from 'node:child_process';
 import { chromium } from '@playwright/test';
+import { asciiSize } from '../ascii-size.ts';
 import { runnerId } from '../baseline.ts';
 import { buildSite, drive, serve } from '../driver.ts';
 import { loadFixtures } from '../fixtures.ts';
@@ -73,6 +74,8 @@ try {
     options: { ...options, renderers, fixtures: fixtures.length, sets, tiers, filter },
     pipeline,
     unsupported,
+    // R-ASCII-9: the chunks only a text render loads, from the production build's import graph.
+    asciiSize: asciiSize(site.v13),
     renderers: [],
   };
   for (const renderer of renderers) {

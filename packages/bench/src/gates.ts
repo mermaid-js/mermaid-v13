@@ -1,5 +1,5 @@
 /**
- * CI gates over a bench report (R-PERF-1, -3, -4, -7, -9; R-TEST-7).
+ * CI gates over a bench report (R-PERF-1, -3, -4, -7, -9; R-ASCII-9; R-TEST-7).
  *
  * While the v13 render pipeline is missing the gates run in `report` mode: they are computed and
  * printed but never fail the job. `auto` switches to `enforce` as soon as `mermaid` renders.
@@ -24,11 +24,16 @@ export const LIMITS = {
   maxStageRatio: 1.1,
   /** R-PERF-9 (Should): ms from navigation start until the first render is possible. */
   readyAtMs: 15,
+  /**
+   * R-ASCII-9 / D87: what a text render loads on top of an SVG flowchart render (`core/ascii`
+   * plus the flowchart's ascii entry), gzip bytes. Kept apart from R-PERF-1, which never loads it.
+   */
+  asciiGzipBytes: 15 * 1024,
 } as const;
 
 export type GateMode = 'report' | 'enforce';
 export type GateModeSetting = GateMode | 'auto';
-export type GateId = 'size' | 'speed' | 'ok-count' | 'stage-regression' | 'ready-at';
+export type GateId = 'size' | 'speed' | 'ok-count' | 'stage-regression' | 'ready-at' | 'ascii-size';
 export type GateStatus = 'pass' | 'fail' | 'skip';
 
 export interface GateResult {
@@ -223,6 +228,22 @@ export function evaluateGates({
       ready === null
         ? 'v13 did not become ready'
         : `${round(ready, 1)} ms (target ≤ ${LIMITS.readyAtMs} ms)`,
+  });
+
+  const ascii = report.asciiSize ?? null;
+  gates.push({
+    id: 'ascii-size',
+    title: 'ASCII chunks, core/ascii + flowchart ascii entry (gzip)',
+    requirement: 'R-ASCII-9',
+    level: 'must',
+    status: ascii !== null && ascii.gzip <= LIMITS.asciiGzipBytes ? 'pass' : 'fail',
+    enforced: enforces('ascii-size'),
+    actual: ascii?.gzip ?? null,
+    limit: LIMITS.asciiGzipBytes,
+    detail:
+      ascii === null
+        ? 'no ascii size measured'
+        : `${kb(ascii.gzip)} in ${ascii.files.length} chunk(s) an SVG render never loads (limit ${kb(LIMITS.asciiGzipBytes)})`,
   });
 
   const exitCode = gates.some((g) => g.enforced && g.status === 'fail') ? 1 : 0;
