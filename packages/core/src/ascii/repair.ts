@@ -50,6 +50,11 @@ export interface RepairResult {
   repaired: string[];
   /** Collisions no route was found around; their snapped stretch is kept. */
   unresolved: Collision[];
+  /**
+   * Cells the searches expanded, all edges together: the work the repair did, bounded by
+   * `maxSearch` per search (timing is the bench's, R-PERF-5).
+   */
+  expanded: number;
 }
 
 const UP = 0;
@@ -364,6 +369,8 @@ interface Search {
   edge: EdgeInfo;
   turnPenalty: number;
   maxSearch: number;
+  /** Where the expanded cells are counted. */
+  result: RepairResult;
 }
 
 /**
@@ -380,7 +387,7 @@ interface Goal {
 }
 
 function search(
-  { field, edge, turnPenalty, maxSearch }: Search,
+  { field, edge, turnPenalty, maxSearch, result }: Search,
   s: [number, number],
   inDir: number,
   { t, tOut, window, own }: Goal
@@ -403,6 +410,7 @@ function search(
     const cur = heap.pop();
     if (cur === goal) break;
     if (++expanded > maxSearch) return undefined;
+    result.expanded++;
     const d = cur % 4;
     const local = (cur - d) / 4;
     const x = (local % ww) + window.left;
@@ -503,7 +511,7 @@ export function repairRoutes(
   );
   reserveEnds(field, edges, paths);
   const windows = options.windows ?? DEFAULT_WINDOWS;
-  const result: RepairResult = { routes: new Map(), repaired: [], unresolved: [] };
+  const result: RepairResult = { routes: new Map(), repaired: [], unresolved: [], expanded: 0 };
   for (const edge of edges) {
     const path = paths.get(edge.id)!;
     const ctx: Search = {
@@ -511,6 +519,7 @@ export function repairRoutes(
       edge,
       turnPenalty: options.turnPenalty ?? 3,
       maxSearch: options.maxSearch ?? DEFAULT_MAX_SEARCH,
+      result,
     };
     const fixed = edge.loop ? path : repair(ctx, path, windows, result);
     if (fixed !== path) result.repaired.push(edge.id);

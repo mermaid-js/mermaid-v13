@@ -727,7 +727,11 @@ describe('repairRoutes (D78, R-ASCII-1)', () => {
     ]);
   });
 
-  it('gives up on walled-in ends quickly among many boxes (review 6)', () => {
+  // Review 6, as a work bound rather than wall-clock time (D26, D87: no timing in unit specs;
+  // time is the bench's, R-PERF-5): each search stops after `maxSearch` expanded cells, so ten
+  // walled-in edges, each searched to the clean cell after the wall and to its end in three
+  // windows, cost at most 10 · 2 · 3 · maxSearch cells.
+  it('gives up on walled-in ends within its search budget among many boxes (review 6)', () => {
     const nodes: Spec['nodes'] = {};
     const edges: Spec['edges'] = [];
     let k = 0;
@@ -752,10 +756,10 @@ describe('repairRoutes (D78, R-ASCII-1)', () => {
       ]);
     }
     const { graph, model } = build({ width: 260, height: 200, nodes, edges });
-    const t0 = Date.now();
-    const result = repairRoutes(graph, model);
-    // About 0.2 s with a cell lookup, 1.6 s with a scan over every node per probe.
-    expect(Date.now() - t0).toBeLessThan(800);
+    const maxSearch = 2_000;
+    const result = repairRoutes(graph, model, { maxSearch });
+    expect(result.expanded).toBeGreaterThan(0);
+    expect(result.expanded).toBeLessThanOrEqual(10 * 2 * 3 * maxSearch);
     expect(result.unresolved.map((c) => c.with)).toContain('T0');
   });
 
