@@ -3,10 +3,9 @@ name: Theme gallery
 # R-TEST-6: publish the flowchart theme gallery (every baseline fixture in every M1 theme) for
 # each alpha. Built from e2e/diagrams/flowchart/baseline by `pnpm --filter @mermaid-js/dev
 # gallery`; deployed to GitHub Pages.
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  push:
-    tags:
-      - 'mermaid@13.*'
   workflow_dispatch:
 
 permissions:

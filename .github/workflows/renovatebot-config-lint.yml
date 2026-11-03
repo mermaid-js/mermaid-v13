@@ -1,20 +1,9 @@
 name: Renovatebot Config Lint
 
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  pull_request:
-    paths:
-      - 'renovate.json'
-      - '.github/workflows/renovatebot-config-lint.yml'
-  push:
-    branches-ignore:
-      # The Renovatebot App will warn us about issues on `mermaid-v13`
-      # or `renovate/**` branches:
-      # See https://docs.renovatebot.com/config-validation/#validation-of-renovate-config-change-prs
-      - mermaid-v13
-      - 'renovate/**'
-    paths:
-      - 'renovate.json'
-      - '.github/workflows/renovatebot-config-lint.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read

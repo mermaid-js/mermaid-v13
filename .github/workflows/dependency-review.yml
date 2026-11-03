@@ -5,7 +5,10 @@
 # Source repository: https://github.com/actions/dependency-review-action
 # Public documentation: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/about-dependency-review#dependency-review-enforcement
 name: 'Dependency Review'
-on: [pull_request]
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
+on:
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}

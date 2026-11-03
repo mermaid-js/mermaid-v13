@@ -1,15 +1,9 @@
 name: 'CodeQL'
 
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  push:
-    branches: [mermaid-v13]
-  pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [mermaid-v13]
-    types:
-      - opened
-      - synchronize
-      - ready_for_review
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}

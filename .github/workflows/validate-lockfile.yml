@@ -1,11 +1,9 @@
 name: Validate pnpm-lock.yaml
 
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  pull_request:
-    paths:
-      - 'pnpm-lock.yaml'
-      - '**/package.json'
-      - '.github/workflows/validate-lockfile.yml'
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
