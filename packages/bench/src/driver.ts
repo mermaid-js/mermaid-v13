@@ -26,8 +26,6 @@ import { median, quantile } from './stats.ts';
 
 const PKG = fileURLToPath(new URL('../', import.meta.url));
 export const SITE_DIR = join(PKG, 'dist', 'site');
-/** The child-process runner of the Node environment (`node/runner.ts`, bundled). */
-export const NODE_RUNNER = join(SITE_DIR, 'node', 'runner.mjs');
 
 export interface Site {
   v13: Bundle;
@@ -117,17 +115,6 @@ export async function buildSite(options: SiteOptions = {}): Promise<Site> {
     format: 'esm',
     platform: 'browser',
     target: 'es2022',
-    conditions: ['mermaid-source'],
-    define: benchDefine(false),
-    logLevel: 'warning',
-  });
-  await build({
-    entryPoints: [src('./node/runner.ts')],
-    outfile: NODE_RUNNER,
-    bundle: true,
-    format: 'esm',
-    platform: 'node',
-    target: 'node22',
     conditions: ['mermaid-source'],
     define: benchDefine(false),
     logLevel: 'warning',

@@ -99,20 +99,6 @@ export interface BenchReport {
   asciiSize?: SizeSummary | null;
   /** Browser runs (Chromium through Playwright); every gate reads these. */
   renderers: RendererRun[];
-  /**
-   * Node runs (`--env node`): the DOM-free renderers in a child process each, timed to the SVG
-   * string. Reported only; no gate reads them. Absent when the Node environment did not run.
-   */
-  node?: NodeRuns;
-}
-
-export const ENVS = ['browser', 'node'] as const;
-export type BenchEnv = (typeof ENVS)[number];
-
-export interface NodeRuns {
-  /** `node v24.16.0` */
-  runtime: string;
-  renderers: RendererRun[];
 }
 
 export interface UnsupportedFixture {
