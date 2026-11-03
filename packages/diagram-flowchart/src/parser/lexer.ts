@@ -216,11 +216,19 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
   const scanRun = (q: number, pred: (ch: number, at: number) => boolean): number => {
     let j = q;
     let k = hole;
+    // Start of the removed span the scan reaches next; only there are the spans looked at.
+    let hs = -1;
     while (j < n) {
-      while ((holes[k]?.end ?? n + 1) <= j) k++;
-      const h = holes[k];
-      if (h && h.start === j) j = h.end;
-      else if (pred(text.charCodeAt(j), j)) j++;
+      if (j >= hs) {
+        while ((holes[k]?.end ?? n + 1) <= j) k++;
+        const h = holes[k];
+        hs = h?.start ?? n + 1;
+        if (h && h.start === j) {
+          j = h.end;
+          continue;
+        }
+      }
+      if (pred(text.charCodeAt(j), j)) j++;
       else break;
     }
     return j;
@@ -284,11 +292,18 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
     let j = q;
     if (isSpace(text.charCodeAt(q))) {
       let k = hole;
+      let hs = -1;
       while (j < n) {
-        while ((holes[k]?.end ?? n + 1) <= j) k++;
-        const h = holes[k];
-        if (h && h.start === j) j = h.end;
-        else if (isSpace(text.charCodeAt(j))) j++;
+        if (j >= hs) {
+          while ((holes[k]?.end ?? n + 1) <= j) k++;
+          const h = holes[k];
+          hs = h?.start ?? n + 1;
+          if (h && h.start === j) {
+            j = h.end;
+            continue;
+          }
+        }
+        if (isSpace(text.charCodeAt(j))) j++;
         else break;
       }
       wsFrom = q;
@@ -382,14 +397,18 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
   const nodeString = (): boolean => {
     let q = p;
     let k = hole;
+    let hs = -1;
     while (q < n) {
       // A removed span inside a run joins its two halves, as in v12's text.
-      while ((holes[k]?.end ?? n + 1) <= q) k++;
-      const h = holes[k];
-      if (h && h.start === q) {
-        if (q === p) break;
-        q = h.end;
-        continue;
+      if (q >= hs) {
+        while ((holes[k]?.end ?? n + 1) <= q) k++;
+        const h = holes[k];
+        hs = h?.start ?? n + 1;
+        if (h && h.start === q) {
+          if (q === p) break;
+          q = h.end;
+          continue;
+        }
       }
       const ch = text.charCodeAt(q);
       // v12 had turned `#name;` into an entity placeholder, which ends a node string.
