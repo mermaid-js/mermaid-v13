@@ -250,8 +250,9 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
   );
   const st = new ParseState();
   if (!options.preprocessed) st.diagnostics.list.push(...pre.diagnostics);
-  const lines = new LineIndex(src);
-  const lineOf = (at: number) => lines.position(at).line + 1;
+  // Line numbers are only for error messages.
+  let lines: LineIndex | undefined;
+  const lineOf = (at: number) => (lines ??= new LineIndex(src)).position(at).line + 1;
   const db = new FlowBuilder({
     maxEdges: options.maxEdges ?? DEFAULT_LIMITS.maxEdges,
     maxNodes: options.maxNodes ?? DEFAULT_LIMITS.maxNodes,
