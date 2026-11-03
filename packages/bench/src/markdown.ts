@@ -158,5 +158,13 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
     );
   }
   out.push('');
+
+  const unsupported = report.unsupported ?? [];
+  if (unsupported.length > 0) {
+    out.push('## Not run: no v13 package for the type', '');
+    out.push(row(['Diagram', 'Set', 'Type']), row(Array(3).fill('---')));
+    for (const u of unsupported) out.push(row([u.id, u.set, u.type]));
+    out.push('');
+  }
   return out.join('\n');
 }
