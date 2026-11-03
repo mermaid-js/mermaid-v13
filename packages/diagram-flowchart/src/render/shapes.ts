@@ -4,6 +4,7 @@
 // with v12's shape names and the theme's padding and radius tokens.
 // cspell:ignore kepano
 import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { SHAPE_GROUPS } from '../parser/shapes.ts';
 
 /** Room around the label, from the theme tokens. */
 export interface Pads {
@@ -732,39 +733,15 @@ export const shapeFilled = (shape: string): boolean => def(shape).bare !== true;
 /** Whether the shape is drawn by its own code rather than falling back to a rectangle. */
 export const isDrawnShape = (shape: string): boolean => BY_NAME.has(shape);
 
-// v12 shape names and their aliases → the name drawn here. The first name of each group is
-// the drawn one; bracket syntax types (`square`, `round`, `lean_right`, …) are aliases too.
-const GROUPS =
-  'rect proc process rectangle squareRect square note|rounded event roundedRect round state|' +
-  'stadium terminal pill|fr-rect subprocess subproc framed-rectangle subroutine|' +
-  'cyl db database cylinder|circle circ|diam decision diamond question|hex hexagon prepare|' +
-  'lean-r lean-right in-out lean_right|lean-l lean-left out-in lean_left|' +
-  'trap-b priority trapezoid-bottom trapezoid|trap-t manual trapezoid-top inv-trapezoid inv_trapezoid|' +
-  'dbl-circ double-circle doublecircle|notch-rect card notched-rectangle|' +
-  'lin-rect lined-rectangle lined-process lin-proc shaded-process|sm-circ start small-circle stateStart|' +
-  'fr-circ stop framed-circle stateEnd|fork join forkJoin|hourglass collate|brace comment brace-l|' +
-  'bolt com-link lightning-bolt|doc document|delay half-rounded-rectangle|h-cyl das horizontal-cylinder|' +
-  'lin-cyl disk lined-cylinder|curv-trap curved-trapezoid display|' +
-  'div-rect div-proc divided-rectangle divided-process|tri extract triangle|' +
-  'win-pane internal-storage window-pane|f-circ junction filled-circle|' +
-  'notch-pent loop-limit notched-pentagon|flip-tri manual-file flipped-triangle|' +
-  'sl-rect manual-input sloped-rectangle|docs documents st-doc stacked-document|' +
-  'st-rect procs processes stacked-rectangle|bow-rect stored-data bow-tie-rectangle|' +
-  'cross-circ summary crossed-circle|tag-doc tagged-document|' +
-  'tag-rect tagged-rectangle tag-proc tagged-process|flag paper-tape|odd rect_left_inv_arrow|' +
-  'lin-doc lined-document|datastore data-store|folder directory';
-
-let canonical: Map<string, string> | undefined;
+// v12 shape names, their aliases and the bracket syntax types → the name drawn here.
+const CANONICAL: ReadonlyMap<string, string> = /* @__PURE__ */ new Map([
+  ...SHAPE_GROUPS.flatMap((names) => names.map((n) => [n, names[0]!] as const)),
+  ['square', 'rect'],
+  ['round', 'rounded'],
+]);
 
 /** The shape drawn for a v12 vertex type or `@{ shape }` name. Unknown names draw a rectangle. */
 export function canonicalShape(name: string | undefined): string {
   if (name === undefined) return 'rect';
-  if (!canonical) {
-    canonical = new Map();
-    for (const group of GROUPS.split('|')) {
-      const names = group.split(' ');
-      for (const n of names) canonical.set(n, names[0]!);
-    }
-  }
-  return canonical.get(name) ?? (BY_NAME.has(name) ? name : 'rect');
+  return CANONICAL.get(name) ?? (BY_NAME.has(name) ? name : 'rect');
 }

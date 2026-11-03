@@ -1,7 +1,8 @@
 // Ported from Pele (https://github.com/obsidianmd/pele), src/layout/layered.ts at 3a2f075.
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
-// noUncheckedIndexedAccess. The algorithm is unchanged.
+// noUncheckedIndexedAccess. `NODE_INPUTS`/`EDGE_INPUTS`/`layoutInputs` are new. The algorithm
+// is unchanged.
 // cspell:ignore kepano lnode lnodes indeg topo cand maxs Köpf
 //
 // Layered (Sugiyama-style) layout of one flat graph. Ranks run down the y axis; callers
@@ -97,6 +98,36 @@ export interface LayeredResult {
   // With `orderOnly`: final crossings and crossings before grouping or reordering.
   crossings?: number;
   declared?: number;
+}
+
+/** The fields of {@link LNode} and {@link LEdge} that `layered` reads. The others are its output. */
+export const NODE_INPUTS = [
+  'w',
+  'h',
+  'kind',
+  'pin',
+  'hint',
+  'key',
+  'span',
+] as const satisfies readonly (keyof LNode)[];
+export const EDGE_INPUTS = [
+  'tail',
+  'head',
+  'minlen',
+  'labelW',
+  'labelH',
+  'tailDx',
+  'headDx',
+  'tailFixed',
+  'headFixed',
+] as const satisfies readonly (keyof LEdge)[];
+
+/** Every input `layered` reads from `nodes` and `edges`. Equal inputs and options give equal layouts. */
+export function layoutInputs(nodes: readonly LNode[], edges: readonly LEdge[]): number[] {
+  const inputs: number[] = [];
+  for (const n of nodes) for (const f of NODE_INPUTS) inputs.push(n[f]);
+  for (const e of edges) for (const f of EDGE_INPUTS) inputs.push(+e[f]);
+  return inputs;
 }
 
 export function lnode(w: number, h: number, kind: Kind = Kind.Node): LNode {

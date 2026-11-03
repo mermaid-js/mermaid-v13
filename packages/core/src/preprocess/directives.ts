@@ -8,6 +8,7 @@
  * and otherwise `JSON.parse`s the argument after swapping every `'` for `"`. The reader below
  * gives the same values without the swap and with ranges.
  */
+import { isWord } from '../parser-kit/chars.ts';
 import type { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Range } from '../parser-kit/positions.ts';
 import { lineEnd } from '../parser-kit/scanner.ts';
@@ -31,12 +32,6 @@ export interface Directive {
 export const MAX_DIRECTIVE_DEPTH = 64;
 
 const UNSAFE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
-
-function isWordChar(c: number): boolean {
-  return (
-    (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c === 95 // 0-9 A-Z a-z _
-  );
-}
 
 function isJsonSpace(c: number): boolean {
   return c === 32 || c === 9 || c === 10 || c === 13;
@@ -79,7 +74,7 @@ function read(
   let i = open + 3;
   while (i < contentEnd && isJsonSpace(src.charCodeAt(i))) i++;
   const nameStart = i;
-  while (i < contentEnd && isWordChar(src.charCodeAt(i))) i++;
+  while (i < contentEnd && isWord(src.charCodeAt(i))) i++;
   const name = src.slice(nameStart, i);
   const kind: DirectiveKind =
     name === 'init' || name === 'initialize' ? 'init' : name === 'wrap' ? 'wrap' : 'other';
@@ -96,7 +91,7 @@ function read(
   if (!closed) return directive;
 
   let word = true;
-  for (let k = a; k < b && word; k++) word = isWordChar(src.charCodeAt(k));
+  for (let k = a; k < b && word; k++) word = isWord(src.charCodeAt(k));
   if (word) {
     directive.args = src.slice(a, b);
     return directive;

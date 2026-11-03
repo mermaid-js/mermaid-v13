@@ -4,21 +4,20 @@
  */
 
 // Characters XML 1.0 does not allow (C0 controls except tab/LF/CR, DEL, lone surrogates,
-// U+FFFE/U+FFFF). In `u` mode a surrogate range only matches unpaired halves.
-// eslint-disable-next-line no-control-regex -- invalid XML characters are matched on purpose
-const RE_NEEDS_ESC = /[&<>"\x00-\x08\x0b\x0c\x0e-\x1f\x7f\ud800-\udfff￾￿]/u;
-// eslint-disable-next-line no-control-regex -- as above
-const RE_ESC = /[&<>"]|[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\ud800-\udfff￾￿]+/gu;
+// U+FFFE/U+FFFF), as the body of a character class. In `u` mode a surrogate range only
+// matches unpaired halves.
+const INVALID_XML = '\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ud800-\\udfff\\ufffe\\uffff';
+
+/** Characters that `esc()` drops. A validator must reject them, so what was checked is what is written. */
+export const RE_INVALID_XML = new RegExp(`[${INVALID_XML}]`, 'u');
+const RE_NEEDS_ESC = new RegExp(`[&<>"${INVALID_XML}]`, 'u');
+const RE_ESC = new RegExp(`[&<>"]|[${INVALID_XML}]+`, 'gu');
 const ESC: Readonly<Record<string, string>> = {
   '&': '&amp;',
   '<': '&lt;',
   '>': '&gt;',
   '"': '&quot;',
 };
-
-/** Characters that `esc()` drops. A validator must reject them, so what was checked is what is written. */
-// eslint-disable-next-line no-control-regex -- as above
-export const RE_INVALID_XML = /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f\ud800-\udfff￾￿]/u;
 
 /** Escapes text for XML text and double-quoted attribute values, dropping invalid characters. */
 export function esc(text: string): string {
