@@ -56,3 +56,10 @@ Unmet acceptance criteria and announced shared contracts, grouped by the ticket 
   in the hook context; api.spec ascii test flips to rendering.
 - Engine (#42): group frames sit one cell off their content (right padding 0 beside a node in LR
   groups, `┌───┐│`). Seen in tickets/46.md examples.
+
+## #47 (merged) — for the final review
+
+- Width fitting: when `maxWidth` turns LR → TB, rank spacing keeps its x-axis cell value (5 rows between ranks vs 2 for native TB). Recompute spacing for the turned direction.
+- `LaidOut` declares `LayoutModel` but the flowchart's postLayout value is `FlowLayout` (pre-existing type mismatch, surfaced by #47).
+- Text output ignores px `options.availableWidth`; only `ascii.maxWidth` counts (documented in tickets/47.md).
+- SVG path +562 B gz for the lazy ascii loader (size pass at M1 close).
