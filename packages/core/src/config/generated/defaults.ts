@@ -4,8 +4,7 @@ import type { MermaidConfig } from './config.type.ts';
 
 /** Top-level defaults. Diagram sections live in their own packages. */
 export const CORE_DEFAULTS: MermaidConfig = {
-  "theme": "redux",
-  "look": "classic",
+  "theme": "redux-color",
   "handDrawnSeed": 0,
   "layout": "layered",
   "maxTextSize": 50000,

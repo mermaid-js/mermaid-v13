@@ -6,7 +6,6 @@ import type { FlowchartDiagramConfig } from '@mermaid-js/core/config';
 export const flowchartConfigDefaults: FlowchartDiagramConfig = {
   "useMaxWidth": true,
   "theme": "redux-color",
-  "look": "neo",
   "titleTopMargin": 25,
   "subGraphTitleMargin": {
     "top": 0,

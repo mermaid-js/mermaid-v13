@@ -12,6 +12,7 @@ export type {
   Paint,
   PathData,
   SafeColor,
+  SafeFilter,
   SafeLength,
   SafeUrl,
   SafeValue,
@@ -44,6 +45,7 @@ export {
 } from './url.ts';
 export {
   checkColor,
+  checkFilter,
   checkLength,
   checkStyle,
   px,

@@ -8,6 +8,7 @@ import { RE_INVALID_XML, num } from './escape.ts';
 import type {
   Attrs,
   SafeColor,
+  SafeFilter,
   SafeLength,
   SafeValue,
   StyleText,
@@ -93,6 +94,87 @@ export function checkColor(value: string): SafeColor | undefined {
     } else if (c === ')' && --depth < 0) return undefined;
   }
   return depth === 0 ? (v as SafeColor) : undefined;
+}
+
+const RE_SHADOW_LENGTH = /^(-?)(\d{1,6}(?:\.\d{1,6})?|\.\d{1,6})(px|em|rem)?$/i;
+const SHADOW_HEAD = 'drop-shadow(';
+const MAX_SHADOWS = 4;
+// The largest shadow offset or blur, in px (an em or rem counted as 16px). A blur costs render
+// time with its radius, so an unbounded one is a denial of service on whoever views the SVG.
+const MAX_SHADOW_PX = 100;
+const PX_PER_EM = 16;
+
+/** A shadow offset or blur within MAX_SHADOW_PX (a blur also not negative). */
+function shadowLength(word: string, blur: boolean): boolean {
+  const m = RE_SHADOW_LENGTH.exec(word);
+  if (!m) return false;
+  if (blur && m[1] === '-') return false;
+  const pixels = Number(m[2]) * (m[3] && m[3].toLowerCase() !== 'px' ? PX_PER_EM : 1);
+  return pixels <= MAX_SHADOW_PX;
+}
+
+/**
+ * Splits on whitespace (`'space'`) or commas (`'comma'`) outside parentheses, so `rgb(0 0 0)`
+ * stays one part. Parts are trimmed and empty ones dropped; undefined when the parentheses
+ * don't balance.
+ */
+export function splitTopLevel(text: string, sep: 'space' | 'comma'): string[] | undefined {
+  const out: string[] = [];
+  let depth = 0;
+  let part = '';
+  const flush = () => {
+    const t = part.trim();
+    if (t !== '') out.push(t);
+    part = '';
+  };
+  for (const c of text) {
+    if (c === '(') depth++;
+    else if (c === ')' && --depth < 0) return undefined;
+    if (depth === 0 && (sep === 'comma' ? c === ',' : /\s/.test(c))) flush();
+    else part += c;
+  }
+  if (depth !== 0) return undefined;
+  flush();
+  return out;
+}
+
+/** One `drop-shadow(<x> <y> [<blur>] [<colour>])`, normalised, or undefined. */
+function checkShadow(fn: string): string | undefined {
+  if (!fn.toLowerCase().startsWith(SHADOW_HEAD) || !fn.endsWith(')')) return undefined;
+  const args = splitTopLevel(fn.slice(SHADOW_HEAD.length, -1), 'space');
+  if (!args) return undefined;
+  let lengths = 0;
+  while (lengths < args.length && lengths < 3 && RE_SHADOW_LENGTH.test(args[lengths] as string)) {
+    if (!shadowLength(args[lengths] as string, lengths === 2)) return undefined;
+    lengths++;
+  }
+  // At most one colour after the lengths, a single word such as `red` or `rgb(0 0 0 / 0.06)`.
+  if (lengths < 2 || args.length > lengths + 1) return undefined;
+  const colour = args[lengths];
+  if (colour !== undefined && checkColor(colour) === undefined) return undefined;
+  return 'drop-shadow(' + args.join(' ') + ')';
+}
+
+/**
+ * A CSS `filter` value for the theme's drop shadow (#85), or undefined when it is not
+ * allowed: `none`, or one to four `drop-shadow(<x> <y> [<blur>] [<colour>])` functions with
+ * every length within 100px and the colour through `checkColor`. Nothing else, so no `url()`
+ * reference can load a resource or reach an element outside the diagram.
+ */
+export function checkFilter(value: string): SafeFilter | undefined {
+  const v = value.trim();
+  if (v === '' || v.length > 400 || RE_UNSAFE_STYLE.test(v) || RE_INVALID_XML.test(v))
+    return undefined;
+  if (v.toLowerCase() === 'none') return 'none' as SafeFilter;
+  const fns = splitTopLevel(v, 'space');
+  if (!fns || fns.length === 0 || fns.length > MAX_SHADOWS) return undefined;
+  const out: string[] = [];
+  for (const fn of fns) {
+    const s = checkShadow(fn);
+    if (s === undefined) return undefined;
+    out.push(s);
+  }
+  return out.join(' ') as SafeFilter;
 }
 
 /** A CSS length or plain number, or undefined when it is not one. */
