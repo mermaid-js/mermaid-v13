@@ -18,7 +18,8 @@
 // the output is deterministic (R-ARCH-6). Self-loops keep their layout shape. The search is
 // bounded to a window around the colliding stretch, grown a few times; when no route is found
 // the snapped route is kept and the collision reported.
-import type { LayoutGraph, LayoutModel, Point, Side } from '../layout/types.ts';
+import type { LayoutGraph, LayoutModel, Point } from '../layout/types.ts';
+import { DOWN, DX, DY, INTO, LEFT, RIGHT, UP, opposite } from './directions.ts';
 import { snapRoute } from './snap.ts';
 
 /** What a route ran into. */
@@ -57,12 +58,6 @@ export interface RepairResult {
   expanded: number;
 }
 
-const UP = 0;
-const RIGHT = 1;
-const DOWN = 2;
-const LEFT = 3;
-const DX = [0, 1, 0, -1] as const;
-const DY = [-1, 0, 1, 0] as const;
 const VERTICAL = (1 << UP) | (1 << DOWN);
 const HORIZONTAL = (1 << LEFT) | (1 << RIGHT);
 /** Reserves an edge end: anything else in that cell collides. */
@@ -70,11 +65,7 @@ const END = 0xf;
 const DEFAULT_WINDOWS = [4, 16, 64] as const;
 const DEFAULT_MAX_SEARCH = 400_000;
 
-const opposite = (d: number): number => (d + 2) % 4;
 const straight = (arms: number): boolean => arms === VERTICAL || arms === HORIZONTAL;
-
-/** The arm an end cell has into its box: an end off the top side points down into the box. */
-const BOX_ARM: Record<Side, number> = { top: DOWN, right: LEFT, bottom: UP, left: RIGHT };
 
 interface Rect {
   left: number;
@@ -464,8 +455,8 @@ function edgeInfos(graph: LayoutGraph, model: LayoutModel): EdgeInfo[] {
       index,
       source: e.source,
       target: e.target,
-      srcArm: BOX_ARM[placed.ports.source],
-      tgtArm: BOX_ARM[placed.ports.target],
+      srcArm: INTO[placed.ports.source],
+      tgtArm: INTO[placed.ports.target],
       loop: e.source === e.target,
       ends: new Set(),
     });

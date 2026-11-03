@@ -5,11 +5,20 @@
 import {
   Canvas,
   cellWidth,
+  DOWN,
   drawBox,
   drawText,
+  DX,
+  DY,
   glyphFor,
+  INTO,
   junction,
+  LEFT,
+  opposite,
+  RIGHT,
+  UP,
   type CellRect,
+  type Dir,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
 import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
@@ -17,17 +26,9 @@ import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { EdgeView, Prepared } from '../render/prepare.ts';
 import { textForm } from './shapes.ts';
 
-// Directions, and arms packed as in core/ascii glyphs.ts: up·64 + right·16 + down·4 + left.
-type Dir = 0 | 1 | 2 | 3;
-const UP: Dir = 0;
-const RIGHT: Dir = 1;
-const DOWN: Dir = 2;
-const LEFT: Dir = 3;
+// Arms packed as in core/ascii glyphs.ts, per direction (core/ascii directions.ts):
+// up·64 + right·16 + down·4 + left.
 const SHIFT = [6, 4, 2, 0] as const;
-const DX = [0, 1, 0, -1] as const;
-const DY = [-1, 0, 1, 0] as const;
-/** The direction from an end cell into the box behind it. */
-const INTO: Record<Side, Dir> = { top: DOWN, right: LEFT, bottom: UP, left: RIGHT };
 const HEAD = ['up', 'right', 'down', 'left'] as const;
 
 interface Centred {
@@ -151,7 +152,7 @@ const STUB = { light: '╵╶╷╴', thick: '╹╺╻╸' } as const;
 function tee(canvas: Canvas, glyphs: GlyphSet, end: End): void {
   const x = end.cell.x + DX[end.into];
   const y = end.cell.y + DY[end.into];
-  const out = ((end.into + 2) % 4) as Dir;
+  const out = opposite(end.into);
   const fallback = glyphs.tee[HEAD[out]];
   if (glyphs.name !== 'unicode') return void canvas.set(x, y, fallback);
   const stub = STUB[end.stroke as 'light' | 'thick'][out]!;
