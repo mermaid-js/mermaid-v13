@@ -53,6 +53,11 @@ function esc(name: string): string {
     : name;
 }
 
+/** `n:<name>`: the id of a node's first mention, which is also its vertex's id. */
+export function nodeId(name: string): AstId {
+  return `n:${esc(name)}`;
+}
+
 /** Hands out the ids of one parse. Create one per parse; ids depend on call order. */
 export class AstIds {
   private readonly seen = new Map<string, number>();
@@ -65,7 +70,7 @@ export class AstIds {
 
   /** `n:<name>`, then `n:<name>@2`, `@3`, … for later mentions. */
   node(name: string): AstId {
-    const id = `n:${esc(name)}`;
+    const id = nodeId(name);
     const n = this.count(id);
     return n === 1 ? id : `${id}@${n}`;
   }
