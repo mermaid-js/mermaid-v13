@@ -75,9 +75,10 @@ export class TokenWriter {
     this.push(Kind.EOF, source.length, source.length);
     const n = this.n;
     return {
-      kind: this.kind.subarray(0, n),
-      start: this.start.subarray(0, n),
-      end: this.end.subarray(0, n),
+      // Copies: a view of a small on-heap array moves its buffer off the heap, which costs more.
+      kind: this.kind.slice(0, n),
+      start: this.start.slice(0, n),
+      end: this.end.slice(0, n),
       source,
       length: n,
     };

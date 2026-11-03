@@ -120,6 +120,26 @@ const STYLE_PART = kindSet(T.Num, T.NodeString, T.Colon, T.Space, T.Brkt, T.Styl
 const TEXT_PART = kindSet(T.Text, T.TagStart, T.TagEnd, T.UnicodeText);
 const EDGE_PART = kindSet(T.EdgeText, T.UnicodeText);
 const NONE = kindSet();
+const LEXER_MODE = kindSet(
+  T.Text,
+  T.EdgeText,
+  T.Str,
+  T.MdStr,
+  T.ShapeData,
+  T.Click,
+  T.CallbackName,
+  T.CallbackArgs
+);
+
+const SHAPES: Record<number, [shape: string, close: number, what: string, closeText: string]> = {
+  [T.SQS]: ['square', T.SQE, 'node label', '`]`'],
+  [T.DoubleCircleStart]: ['doublecircle', T.DoubleCircleEnd, 'node label', '`)))`'],
+  [T.EllipseStart]: ['ellipse', T.EllipseEnd, 'node label', '`-)`'],
+  [T.StadiumStart]: ['stadium', T.StadiumEnd, 'node label', '`])`'],
+  [T.SubroutineStart]: ['subroutine', T.SubroutineEnd, 'node label', '`]]`'],
+  [T.CylinderStart]: ['cylinder', T.CylinderEnd, 'node label', '`)]`'],
+  [T.TagEnd]: ['odd', T.SQE, 'node label', '`]`'],
+};
 const DIRECTIONS = ['TB', 'BT', 'RL', 'LR', 'TD'];
 
 const LINE_END = [Kind.Newline, T.Semi, T.Eof];
@@ -371,17 +391,6 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     while (e < src.length && src[e] !== '\n' && src[e] !== '\r' && src[e] !== ';') e++;
     return e;
   };
-  const LEXER_MODE = kindSet(
-    T.Text,
-    T.EdgeText,
-    T.Str,
-    T.MdStr,
-    T.ShapeData,
-    T.Click,
-    T.CallbackName,
-    T.CallbackArgs
-  );
-
   const fail = (want: readonly number[], hint?: string): never => {
     const k = kind();
     const where = range(i);
@@ -591,16 +600,6 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
   const nodeSymbol = (name: string, r: Range) => {
     const creates = !db.vertices.has(name) && !db.hasEdge(name) && name.trim() !== '';
     st.symbol(name, 'node', r, creates ? 'def' : 'ref');
-  };
-
-  const SHAPES: Record<number, [shape: string, close: number, what: string, closeText: string]> = {
-    [T.SQS]: ['square', T.SQE, 'node label', '`]`'],
-    [T.DoubleCircleStart]: ['doublecircle', T.DoubleCircleEnd, 'node label', '`)))`'],
-    [T.EllipseStart]: ['ellipse', T.EllipseEnd, 'node label', '`-)`'],
-    [T.StadiumStart]: ['stadium', T.StadiumEnd, 'node label', '`])`'],
-    [T.SubroutineStart]: ['subroutine', T.SubroutineEnd, 'node label', '`]]`'],
-    [T.CylinderStart]: ['cylinder', T.CylinderEnd, 'node label', '`)]`'],
-    [T.TagEnd]: ['odd', T.SQE, 'node label', '`]`'],
   };
 
   const vertex = (): FlowNodeStmt => {

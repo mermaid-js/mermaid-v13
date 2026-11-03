@@ -87,6 +87,8 @@ const POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 const APPEARANCE_KEYS = ['theme', 'layout'] as const;
 
+const ignore = (): void => undefined;
+
 /** v12 `sanitizeDirective`: theme variables from diagram text must match this. */
 const THEME_VARIABLE_VALUE = /^[\d "#%(),.;A-Za-z]+$/;
 const CSS_KEYS = ['themeCSS', 'fontFamily', 'altFontFamily'];
@@ -105,6 +107,9 @@ const isPlainObject = (value: unknown): value is Plain =>
  * unknown keys, as v12 did, but is still warned about them. Keys of diagram types that are
  * not ported yet are schema keys and pass silently (R-CONF-5).
  *
+ * The same as `resolveText(resolveSite(…), …)`; a caller rendering many diagrams with one
+ * `initialize()` keeps the site and resolves only the text.
+ *
  * @param defaults - core defaults, normally `CORE_DEFAULTS`.
  * @param initialize - what the integrator passed to `initialize()`.
  * @param frontMatter - the `config` object of the diagram's front matter, already parsed.
@@ -119,7 +124,37 @@ export function resolveConfig(
   pluginDefaults?: DeepReadonly<MermaidConfig>,
   options: ResolveConfigOptions = {}
 ): ResolvedConfig {
-  const warn = options.warn ?? (() => {});
+  const site = resolveSite(defaults, initialize, pluginDefaults, options);
+  return resolveText(site, frontMatter, directives, options);
+}
+
+/**
+ * The integrator's side of a config, before any diagram text: core defaults, the plugin's
+ * section defaults and `initialize()`, merged and frozen. Its warnings went to the `warn` it
+ * was resolved with; a caller that keeps a site replays them itself.
+ */
+export interface ResolvedSite {
+  /** The config when the diagram text sets none. */
+  readonly plain: ResolvedConfig;
+  readonly base: Readonly<Plain>;
+  readonly site: Readonly<Plain>;
+  readonly plugin: Readonly<Plain>;
+  readonly defaults: Readonly<Plain>;
+  readonly tree: Readonly<Record<string, KeyTree>>;
+  readonly secure: ReadonlySet<string>;
+  readonly section: string | undefined;
+  /** Whether `initialize()` already earned the one `LOOK_REMOVED` warning. */
+  readonly lookWarned: boolean;
+}
+
+/** Resolves the integrator's side of a config (see {@link resolveConfig}). */
+export function resolveSite(
+  defaults: DeepReadonly<MermaidConfig>,
+  initialize?: DeepReadonly<MermaidConfig>,
+  pluginDefaults?: DeepReadonly<MermaidConfig>,
+  options: ResolveConfigOptions = {}
+): ResolvedSite {
+  const warn = options.warn ?? ignore;
   const looks = lookStripper(warn);
   const plugin = looks.strip(clone(pluginDefaults ?? {}) as Plain);
   // A section the plugin brings that the schema does not know (a third-party diagram)
@@ -142,7 +177,33 @@ export function resolveConfig(
   // Secure keys come from the integrator's side only, merged as v12 merged arrays (union),
   // so `initialize({ secure })` can extend the list but not shrink it.
   const secure = new Set<string>([...INTEGRATOR_ONLY_KEYS, ...stringList(base.secure)]);
+  const section = options.section ?? soleKey(plugin);
+  const layers = {
+    base: deepFreeze(base),
+    site: deepFreeze(site),
+    plugin: deepFreeze(plugin),
+    defaults: deepFreeze(looks.strip(clone(defaults) as Plain)),
+  };
+  return {
+    plain: layered(layers, section, {}),
+    ...layers,
+    tree,
+    secure,
+    section,
+    lookWarned: looks.warned(),
+  };
+}
 
+/** Merges diagram text (front matter, then directives) over a resolved site. */
+export function resolveText(
+  site: ResolvedSite,
+  frontMatter?: ConfigInput,
+  directives: readonly ConfigInput[] = [],
+  options: Pick<ResolveConfigOptions, 'warn'> = {}
+): ResolvedConfig {
+  if (frontMatter === undefined && directives.length === 0) return site.plain;
+  const warn = options.warn ?? ignore;
+  const looks = lookStripper(warn, site.lookWarned);
   // v12 fed front matter and directives through one `addDirective` layer.
   const text: Plain = {};
   const sources: [ConfigInput | undefined, ConfigSource][] = [
@@ -155,7 +216,7 @@ export function resolveConfig(
     }
     const allowed: Plain = {};
     for (const [key, value] of Object.entries(looks.strip({ ...input }, source))) {
-      if (secure.has(key)) {
+      if (site.secure.has(key)) {
         warn({
           code: 'CONFIG_SECURE_KEY',
           path: key,
@@ -166,7 +227,7 @@ export function resolveConfig(
         allowed[key] = value;
       }
     }
-    merge(text, check(allowed, tree, source, warn));
+    merge(text, check(allowed, site.tree, source, warn));
   }
   if (typeof text.fontFamily === 'string') {
     const vars = isPlainObject(text.themeVariables) ? text.themeVariables : {};
@@ -174,11 +235,20 @@ export function resolveConfig(
       text.themeVariables = { ...vars, fontFamily: text.fontFamily };
     }
   }
-  merge(base, text);
+  return layered(site, site.section, text);
+}
 
-  const section = options.section ?? soleKey(plugin);
-  resolveAppearance(base, section, [text, site, plugin, looks.strip(clone(defaults) as Plain)]);
-  return deepFreeze(base) as ResolvedConfig;
+// The site's base with `text` merged over it, appearance resolved, frozen. Parts `text` does
+// not touch stay shared with the (frozen) site.
+function layered(
+  layers: Pick<ResolvedSite, 'base' | 'site' | 'plugin' | 'defaults'>,
+  section: string | undefined,
+  text: Plain
+): ResolvedConfig {
+  const config: Plain = { ...layers.base };
+  merge(config, text);
+  resolveAppearance(config, section, [text, layers.site, layers.plugin, layers.defaults]);
+  return deepFreeze(config) as ResolvedConfig;
 }
 
 /**
@@ -188,8 +258,8 @@ export function resolveConfig(
  * defaults (core or plugin) are stripped silently. A plugin that wants `look: handDrawn` as
  * an alias claims it through the plugin config mechanism (D153), not here.
  */
-function lookStripper(warn: (w: ConfigWarning) => void) {
-  let warned = false;
+function lookStripper(warn: (w: ConfigWarning) => void, already = false) {
+  let warned = already;
   const report = (path: string, source: ConfigSource | undefined) => {
     if (warned || source === undefined) {
       return;
@@ -224,7 +294,7 @@ function lookStripper(warn: (w: ConfigWarning) => void) {
     }
     return config;
   };
-  return { strip };
+  return { strip, warned: () => warned };
 }
 
 /**
@@ -238,7 +308,7 @@ function resolveAppearance(config: Plain, section: string | undefined, layers: P
     const value = section === undefined ? undefined : layer[section];
     return isPlainObject(value) ? value : undefined;
   };
-  const scoped = scopedOf(config);
+  let scoped = scopedOf(config);
   for (const key of APPEARANCE_KEYS) {
     for (const layer of layers) {
       const value = [scopedOf(layer)?.[key], layer[key]].find((v) => typeof v === 'string');
@@ -246,7 +316,8 @@ function resolveAppearance(config: Plain, section: string | undefined, layers: P
         continue;
       }
       config[key] = value;
-      if (scoped?.[key] !== undefined) {
+      if (scoped?.[key] !== undefined && scoped[key] !== value) {
+        if (Object.isFrozen(scoped)) config[section as string] = scoped = { ...scoped };
         scoped[key] = value;
       }
       break;
@@ -367,7 +438,10 @@ function balancedCss(value: string): string {
   return open === close ? value : '{ /* ERROR: Unbalanced CSS */ }';
 }
 
-/** Deep-merges `src` into `dst` as v12's `assignWithDepth` did: arrays union, nullish skipped. */
+/**
+ * Deep-merges `src` into `dst` as v12's `assignWithDepth` did: arrays union, nullish skipped.
+ * Frozen objects and arrays in `dst` are shared with a resolved site: they are copied, not changed.
+ */
 function merge(dst: Plain, src: Plain): void {
   for (const [key, value] of Object.entries(src)) {
     if (value === undefined || value === null || POLLUTION_KEYS.has(key)) {
@@ -376,16 +450,20 @@ function merge(dst: Plain, src: Plain): void {
     const current = dst[key];
     if (isPlainObject(value)) {
       if (isPlainObject(current)) {
-        merge(current, value);
+        const into = Object.isFrozen(current) ? { ...current } : current;
+        dst[key] = into;
+        merge(into, value);
       } else {
         const fresh: Plain = {};
         merge(fresh, value);
         dst[key] = fresh;
       }
     } else if (Array.isArray(value) && Array.isArray(current)) {
+      const into = Object.isFrozen(current) ? [...(current as unknown[])] : current;
+      dst[key] = into;
       for (const item of value) {
-        if (!current.includes(item)) {
-          current.push(clone(item));
+        if (!into.includes(item)) {
+          into.push(clone(item));
         }
       }
     } else {
