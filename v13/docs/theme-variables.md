@@ -67,6 +67,14 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `doubleCirclePadding` | `--mermaid-doubleCirclePadding` | token | padding | | | all | flowchart |
 | `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart |
 | `circleMinDiameter` | `--mermaid-circleMinDiameter` | token | length | | | all | flowchart |
+| `subroutinePaddingX` | `--mermaid-subroutinePaddingX` | token | padding | | | all | flowchart |
+| `subroutinePaddingY` | `--mermaid-subroutinePaddingY` | token | padding | | | all | flowchart |
+| `cylinderPaddingX` | `--mermaid-cylinderPaddingX` | token | padding | | | all | flowchart |
+| `cylinderPaddingY` | `--mermaid-cylinderPaddingY` | token | padding | | | all | flowchart |
+| `leanPaddingX` | `--mermaid-leanPaddingX` | token | padding | | | all | flowchart |
+| `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart |
+| `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
+| `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color | flowchart |
 
 ## Palettes

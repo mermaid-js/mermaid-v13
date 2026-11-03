@@ -183,11 +183,19 @@ describe('node padding per theme (#83, D151, D152)', () => {
     'doubleCirclePadding',
     'circlePadding',
     'circleMinDiameter',
+    'subroutinePaddingX',
+    'subroutinePaddingY',
+    'cylinderPaddingX',
+    'cylinderPaddingY',
+    'leanPaddingX',
+    'leanPaddingY',
+    'oddPaddingX',
+    'oddPaddingY',
   ] as const;
   // v12 neo, with v13's circle (D151).
-  const REDUX = [16, 12, 40, 24, 70, 32, 3.5, 12, 16, 16, 44];
+  const REDUX = [16, 12, 40, 24, 70, 32, 3.5, 12, 16, 16, 44, 28, 12, 24, 24, 30, 15, 42, 24];
   // v12 classic at flowchart.padding 15 (2 × padding / padding, …, no circle minimum).
-  const CLASSIC = [30, 15, 15, 15, 15, 15, 4, 5, 15, 15, 0];
+  const CLASSIC = [30, 15, 15, 15, 15, 15, 4, 5, 15, 15, 0, 15, 15, 15, 15, 15, 15, 15, 15];
   const expected: Record<string, number[]> = {
     redux: REDUX,
     'redux-color': REDUX,
@@ -216,9 +224,12 @@ describe('node padding per theme (#83, D151, D152)', () => {
     expect(resolved(name, 15)).toEqual(values);
   });
 
-  it('scales the classic values with the diagram padding, not the redux ones', () => {
-    expect(resolved('default', 10)).toEqual([20, 10, 10, 10, 10, 10, 4, 5, 10, 10, 0]);
-    expect(resolved('redux-color', 10)).toEqual(REDUX);
+  it('scales the classic values with the diagram padding; in redux only the lean padding', () => {
+    expect(resolved('default', 10)).toEqual([
+      20, 10, 10, 10, 10, 10, 4, 5, 10, 10, 0, 10, 10, 10, 10, 10, 10, 10, 10,
+    ]);
+    // v12 neo lean and trapezoid shapes take 2 × padding / padding too.
+    expect(resolved('redux-color', 10)).toEqual([...REDUX.slice(0, 15), 20, 10, 42, 24]);
   });
 
   it('takes px or a multiple of padding from themeVariables, and drops anything else', () => {

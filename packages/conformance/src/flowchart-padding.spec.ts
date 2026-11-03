@@ -41,10 +41,22 @@ function firstShape(tree: SvgView, node: SvgElement): SvgElement | undefined {
   return undefined;
 }
 
+/** The width and height of a cylinder body path `M x0,top A rx,ry … L x,bottom A …`. */
+function cylinderBox(d: string): { w: number; h: number } {
+  const n = d.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+  const [x0, top, rx, ry] = n as [number, number, number, number];
+  const bottom = n[10]!;
+  return { w: 2 * Math.abs(x0) || 2 * rx, h: bottom - top + 2 * ry };
+}
+
 /** The width and height of node A's outline. */
 function outline(tree: SvgView): { w: number; h: number } {
   const node = tree.find((n, t) => t.getAttr(n, 'data-ast') === 'n:A')[0]!;
-  const shape = firstShape(tree, node)!;
+  const shape = firstShape(tree, node);
+  if (!shape) {
+    const body = tree.children(node).find((c) => tree.tag(c) === 'path')!;
+    return cylinderBox(tree.getAttr(body, 'd')!);
+  }
   const attr = (name: string) => Number(tree.getAttr(shape, name));
   switch (tree.tag(shape)) {
     case 'rect':
@@ -132,6 +144,61 @@ describe('flowchart node padding (#83)', () => {
     close(await sizeOf(`((${LABEL}))`, REDUX), { w: DIAG + 16, h: DIAG + 16 });
     close(await sizeOf('((a))', REDUX), { w: 44, h: 44 });
     close(await sizeOf(`((${LABEL}))`, CLASSIC), { w: DIAG + PAD, h: DIAG + PAD });
+  });
+
+  // #89 side-by-side: these shapes have their own v12 padding, not the rectangle's.
+  it('pads a rounded rectangle by padding per side in every theme (v12 roundedRect)', async () => {
+    for (const config of [REDUX, CLASSIC])
+      expect(await sizeOf(`(${LABEL})`, config)).toEqual({ w: TW + 2 * PAD, h: TH + 2 * PAD });
+  });
+
+  it('pads a subroutine 28 / 12 in redux, padding in classic (totals), inside its 8px frames', async () => {
+    expect(await sizeOf(`[[${LABEL}]]`, REDUX)).toEqual({ w: TW + 28 + 16, h: TH + 12 });
+    expect(await sizeOf(`[[${LABEL}]]`, CLASSIC)).toEqual({ w: TW + PAD + 16, h: TH + PAD });
+  });
+
+  it('pads a cylinder 24 in redux, padding in classic (totals), plus three cap heights', async () => {
+    const cyl = (pad: number) => {
+      const w = TW + pad;
+      const ry = Math.min(12, Math.max(6, w / 14));
+      return { w, h: TH + pad + 3 * ry };
+    };
+    close(await sizeOf(`[(${LABEL})]`, REDUX), cyl(24));
+    close(await sizeOf(`[(${LABEL})]`, CLASSIC), cyl(PAD));
+  });
+
+  it('pads a parallelogram and trapezoid 2 × padding / padding in redux, padding in classic (totals)', async () => {
+    const lean = (px: number, py: number) => {
+      const h = TH + py;
+      return { w: TW + px + h / 2, h };
+    };
+    for (const shape of [`[/${LABEL}/]`, `[\\${LABEL}\\]`, `[/${LABEL}\\]`]) {
+      close(await sizeOf(shape, REDUX), lean(2 * PAD, PAD));
+      close(await sizeOf(shape, CLASSIC), lean(PAD, PAD));
+    }
+  });
+
+  it('pads the inverted trapezoid on each side, as v12 inv_trapezoid', async () => {
+    const h = TH + 2 * PAD;
+    close(await sizeOf(`[\\${LABEL}/]`, REDUX), { w: TW + 4 * PAD + h / 2, h });
+    close(await sizeOf(`[\\${LABEL}/]`, CLASSIC), { w: TW + 2 * PAD + h / 2, h });
+  });
+
+  it('pads the asymmetric shape 42 / 24 in redux, padding in classic (totals)', async () => {
+    const odd = (px: number, py: number) => {
+      const h = TH + py;
+      return { w: TW + px + h / 4, h };
+    };
+    close(await sizeOf(`>${LABEL}]`, REDUX), odd(42, 24));
+    close(await sizeOf(`>${LABEL}]`, CLASSIC), odd(PAD, PAD));
+  });
+
+  it('takes the per-shape padding from themeVariables', async () => {
+    const got = await sizeOf(`[[${LABEL}]]`, {
+      ...REDUX,
+      themeVariables: { subroutinePaddingX: 0, subroutinePaddingY: '2 * padding' },
+    });
+    expect(got).toEqual({ w: TW + 16, h: TH + 2 * PAD });
   });
 
   it('follows flowchart.padding in classic themes, not in redux themes', async () => {

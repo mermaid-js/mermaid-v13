@@ -29,8 +29,10 @@ The flowchart introduced these variables. Reuse them before adding any. Values p
 | Point arrowhead | `arrowheadGap`, `arrowheadLength`, `arrowheadWidth` | `theme.number()` |
 | Circle arrowhead | `circleArrowheadSize`, `circleArrowheadGap` | `theme.number()` |
 | Cross arrowhead | `crossArrowheadSize`, `crossArrowheadGap`, `crossArrowheadStrokeWidth` | `theme.number()` |
-| Padding | `nodePaddingX`, `nodePaddingY`, `stadiumPaddingX`, `stadiumPaddingY`, `hexagonPaddingX`, `hexagonPaddingY`, `hexagonSlant`, `doubleCircleGap`, `doubleCirclePadding`, `circlePadding`, `circleMinDiameter` | `theme.padding()` for the `padding` kind, `theme.number()` for the rest |
+| Padding | `nodePaddingX`, `nodePaddingY`, `stadiumPaddingX`, `stadiumPaddingY`, `hexagonPaddingX`, `hexagonPaddingY`, `hexagonSlant`, `doubleCircleGap`, `doubleCirclePadding`, `circlePadding`, `circleMinDiameter`, `subroutinePaddingX`, `subroutinePaddingY`, `cylinderPaddingX`, `cylinderPaddingY`, `leanPaddingX`, `leanPaddingY`, `oddPaddingX`, `oddPaddingY` | `theme.padding()` for the `padding` kind, `theme.number()` for the rest |
 | Shadow | `dropShadow` | `theme.filter()` |
+
+v12 gives many shapes their own look-gated padding, so check each shape file the type draws, not only `squareRect.ts`; a shape whose padding is the same in both looks (v12 `roundedRect.ts`) reads the diagram's `padding` directly.
 
 A `padding` kind takes a px number or a multiple of the diagram's own `padding` config (`padding`, `2 * padding`). The caller passes that config value to `theme.padding()`, so the classic themes follow it as v12 classic did.
 

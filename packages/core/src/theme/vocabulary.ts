@@ -78,6 +78,15 @@ export const TOKEN_VARIABLES = [
   'doubleCirclePadding',
   'circlePadding',
   'circleMinDiameter',
+  // Shapes with their own v12 padding (#89), totals added to the label box.
+  'subroutinePaddingX',
+  'subroutinePaddingY',
+  'cylinderPaddingX',
+  'cylinderPaddingY',
+  'leanPaddingX',
+  'leanPaddingY',
+  'oddPaddingX',
+  'oddPaddingY',
 ] as const;
 
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
@@ -168,6 +177,14 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   doubleCirclePadding: def('dcp', 'padding', F),
   circlePadding: def('cp', 'padding', F),
   circleMinDiameter: def('cmd', 'length', F),
+  subroutinePaddingX: def('srx', 'padding', F),
+  subroutinePaddingY: def('sry', 'padding', F),
+  cylinderPaddingX: def('cyx', 'padding', F),
+  cylinderPaddingY: def('cyy', 'padding', F),
+  leanPaddingX: def('lnx', 'padding', F),
+  leanPaddingY: def('lny', 'padding', F),
+  oddPaddingX: def('odx', 'padding', F),
+  oddPaddingY: def('ody', 'padding', F),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', F),

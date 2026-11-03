@@ -7,7 +7,10 @@
  *
  * Node padding in the classic themes follows the diagram's `padding` config
  * (`flowchart.padding`). Circles keep v13's earlier redux values, and hexagon padding is
- * applied X to width and Y to height (v12 swaps them).
+ * applied X to width and Y to height (v12 swaps them). Subroutine, cylinder, lean / trapezoid
+ * and asymmetric shapes have their own v12 padding (`subroutine.ts`, `cylinder.ts`,
+ * `leanRight.ts`, `trapezoid.ts`, `rectLeftInvArrow.ts` at fa796a943), as totals; the rounded
+ * rectangle takes `padding` per side in every theme, so it has no variable.
  */
 import type { ArrowheadVariable, TokenVariable } from '../vocabulary.ts';
 
@@ -58,6 +61,14 @@ type PaddingToken = Extract<
   | 'doubleCirclePadding'
   | 'circlePadding'
   | 'circleMinDiameter'
+  | 'subroutinePaddingX'
+  | 'subroutinePaddingY'
+  | 'cylinderPaddingX'
+  | 'cylinderPaddingY'
+  | 'leanPaddingX'
+  | 'leanPaddingY'
+  | 'oddPaddingX'
+  | 'oddPaddingY'
 >;
 
 export const REDUX_PADDING: Readonly<Record<PaddingToken, number | string>> = {
@@ -72,6 +83,15 @@ export const REDUX_PADDING: Readonly<Record<PaddingToken, number | string>> = {
   doubleCirclePadding: 16,
   circlePadding: 16,
   circleMinDiameter: 44,
+  subroutinePaddingX: 28,
+  subroutinePaddingY: 12,
+  cylinderPaddingX: 24,
+  cylinderPaddingY: 24,
+  leanPaddingX: '2 * padding',
+  leanPaddingY: 'padding',
+  // v12 neo: 21 / 12 per side.
+  oddPaddingX: 42,
+  oddPaddingY: 24,
 };
 
 export const CLASSIC_PADDING: Readonly<Record<PaddingToken, number | string>> = {
@@ -86,4 +106,12 @@ export const CLASSIC_PADDING: Readonly<Record<PaddingToken, number | string>> = 
   doubleCirclePadding: 'padding',
   circlePadding: 'padding',
   circleMinDiameter: 0,
+  subroutinePaddingX: 'padding',
+  subroutinePaddingY: 'padding',
+  cylinderPaddingX: 'padding',
+  cylinderPaddingY: 'padding',
+  leanPaddingX: 'padding',
+  leanPaddingY: 'padding',
+  oddPaddingX: 'padding',
+  oddPaddingY: 'padding',
 };

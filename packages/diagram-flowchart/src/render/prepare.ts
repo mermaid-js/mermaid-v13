@@ -10,7 +10,15 @@ import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-j
 import type { FlowModel, FlowModelEdge, FlowModelSubgraph, FlowVertex } from '../parser/index.ts';
 import type { FlowRenderContext } from './context.ts';
 import { curveKind, type CurveKind } from './edges.ts';
-import { canonicalShape, shapeHasLabel, shapeSize, shapeSpan, type Pads } from './shapes.ts';
+import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
+import {
+  canonicalShape,
+  shapeHasLabel,
+  shapeSize,
+  shapeSpan,
+  type PadXY,
+  type Pads,
+} from './shapes.ts';
 
 export interface NodeView {
   id: string;
@@ -70,6 +78,8 @@ const ICON = 48;
 // Room the layout leaves in a crossed gap for an arrowhead (v13's former 8px point less 1). It
 // stays theme-independent, so the layout does not move with the arrowhead variables.
 const HEAD_ROOM = 7;
+// The smallest hexagonSlant drawn: each pointed end as deep as the hexagon is tall.
+const MIN_SLANT = 1;
 
 const DIRS: Readonly<Record<string, Dir>> = { TB: 'TB', TD: 'TB', BT: 'BT', LR: 'LR', RL: 'RL' };
 const dirOf = (d: string | undefined): Dir | undefined => (d ? DIRS[d.toUpperCase()] : undefined);
@@ -111,18 +121,24 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     weight: 400,
   };
   // flowchart.padding: the classic themes' padding variables are multiples of it (D152).
-  const pad = size(flow.padding, 15);
+  const pad = size(flow.padding, flowchartConfigDefaults.padding);
   const padOf = (name: string) => theme.padding(name, pad);
+  const xy = (shape: string): PadXY => ({
+    x: padOf(`${shape}PaddingX`),
+    y: padOf(`${shape}PaddingY`),
+  });
   const pads: Pads = {
-    x: padOf('nodePaddingX'),
-    y: padOf('nodePaddingY'),
+    node: xy('node'),
     r: theme.number('radius'),
     pad,
-    stadiumX: padOf('stadiumPaddingX'),
-    stadiumY: padOf('stadiumPaddingY'),
-    hexX: padOf('hexagonPaddingX'),
-    hexY: padOf('hexagonPaddingY'),
-    hexSlant: theme.number('hexagonSlant') || 4,
+    stadium: xy('stadium'),
+    hexagon: xy('hexagon'),
+    // A slant of 0 would put the hexagon's points at infinity.
+    hexagonSlant: Math.max(theme.number('hexagonSlant'), MIN_SLANT),
+    subroutine: xy('subroutine'),
+    cylinder: xy('cylinder'),
+    lean: xy('lean'),
+    odd: xy('odd'),
     ringGap: theme.number('doubleCircleGap'),
     ringPad: padOf('doubleCirclePadding'),
     circlePad: padOf('circlePadding'),

@@ -326,6 +326,10 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `hexagonPaddingX` / `hexagonPaddingY`; `hexagonSlant` | 70 / 32; 3.5 | padding; 4 |
 | `doubleCircleGap` / `doubleCirclePadding` | 12 / 16 | 5 / padding |
 | `circlePadding` / `circleMinDiameter` | 16 / 44 (v13's earlier values, kept) | padding / none |
+| `subroutinePaddingX` / `subroutinePaddingY` (totals, inside the 8px frames) | 28 / 12 | padding |
+| `cylinderPaddingX` / `cylinderPaddingY` (totals, besides the caps) | 24 / 24 | padding |
+| `leanPaddingX` / `leanPaddingY` (totals; per side for the inverted trapezoid) | 2 × padding / padding | padding |
+| `oddPaddingX` / `oddPaddingY` (totals) | 42 / 24 | padding |
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color` | `none` |
 
 The palette rows apply to the two colour themes only; plain `redux` and `redux-dark` carry no
@@ -345,6 +349,12 @@ so it counts twice towards the diameter compared with the per-side node padding.
   wider and less tall than in v12 (D151).
 - **Circle padding stays as in v13** in the redux themes (16, minimum diameter 44), instead of
   v12 neo's values, so circles do not grow (D151).
+- **Per-shape padding.** As in v12, only the rectangle and the shapes drawn like it use
+  `nodePaddingX` / `nodePaddingY`. The subroutine, cylinder, parallelogram and trapezoid, and
+  asymmetric shapes have their own variables (v12's per-shape `labelPadding` values), and the
+  rounded rectangle takes `padding` on each side in every theme, so it has none. The lined
+  cylinder shares the cylinder's variables (v12 neo gives it 16 across instead of 24). The
+  shapes keep v13's outlines (cap height, slant), so sizes are close to v12, not equal.
 - **Diamonds** are the v12 square rhombus in every theme, with side = label width + label
   height + 2 × padding. Being the same everywhere, the diamond has no theme variable.
 - **Collapsed subgraphs** are drawn as in v12 in every theme: a rounded card, a dashed separator

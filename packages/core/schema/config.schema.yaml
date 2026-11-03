@@ -114,7 +114,10 @@ properties:
         `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding;
         `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5;
         `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 /
-        none; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
+        none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding;
+        `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` /
+        `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY`
+        (totals) 42 / 24 and padding; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
         on the dark redux themes) / `none`. "padding" is `flowchart.padding`. Plain `redux` and
         `redux-dark` carry no palette. Geometry variables are read as numbers at render time,
         because they feed layout, so overriding their CSS variables has no effect;
@@ -296,6 +299,78 @@ properties:
           since: 13.0.0
           reason: >-
             44 in the redux themes; 0 (none) in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      subroutinePaddingX:
+        description: |
+          Subroutine padding added to the width, in total, inside its two 8px frames. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            28 in the redux themes; `padding` in the classic themes (v12 `subroutine.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      subroutinePaddingY:
+        description: |
+          Subroutine padding added to the height, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            12 in the redux themes; `padding` in the classic themes (v12 `subroutine.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      cylinderPaddingX:
+        description: |
+          Cylinder (database) padding added to the width, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            24 in the redux themes; `padding` in the classic themes (v12 `cylinder.ts`). The lined cylinder uses it too. Read as a number at render time (D152), so its CSS variable has no effect.
+      cylinderPaddingY:
+        description: |
+          Cylinder (database) padding added to the height, in total, besides the caps. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            24 in the redux themes; `padding` in the classic themes (v12 `cylinder.ts`). The lined cylinder uses it too. Read as a number at render time (D152), so its CSS variable has no effect.
+      leanPaddingX:
+        description: |
+          Parallelogram and trapezoid padding added to the width, in total (on each side for the inverted trapezoid `[\text/]`, as v12). A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `2 * padding` in the redux themes; `padding` in the classic themes (v12 `leanRight.ts`, `trapezoid.ts`, `invertedTrapezoid.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      leanPaddingY:
+        description: |
+          Parallelogram and trapezoid padding added to the height, in total (on each side for the inverted trapezoid). A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `padding` in every theme, kept so the pair is complete (v12 `leanRight.ts`, `trapezoid.ts`, `invertedTrapezoid.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      oddPaddingX:
+        description: |
+          Asymmetric shape (`>text]`) padding added to the width, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            42 (21 per side) in the redux themes; `padding` in the classic themes (v12 `rectLeftInvArrow.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      oddPaddingY:
+        description: |
+          Asymmetric shape padding added to the height, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            24 (12 per side) in the redux themes; `padding` in the classic themes (v12 `rectLeftInvArrow.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
   themeCSS:
     type: string
     x-mermaid:
