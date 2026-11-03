@@ -44,14 +44,14 @@ export interface EdgePath {
 }
 
 /** How much an end marker of this v12 type shortens the line. */
+const MARKER_TRIM: ReadonlyMap<string, number> = new Map([
+  ['arrow_point', ARROW - 1],
+  ['arrow_circle', ARROW],
+  ['arrow_cross', 4],
+]);
+
 export function markerTrim(type: string): number {
-  return type === 'arrow_point'
-    ? ARROW - 1
-    : type === 'arrow_circle'
-      ? ARROW
-      : type === 'arrow_cross'
-        ? 4
-        : 0;
+  return MARKER_TRIM.get(type) ?? 0;
 }
 
 // The S-curve handle factor of the layered engine's `ease`.
@@ -63,6 +63,13 @@ const ease = (across: number, along: number): number =>
  * not in line the route is one S along the flow (or a step in a stepped route); where the
  * route turns a corner it is rounded.
  */
+// Where a step curve turns between two coordinates: at the start, the end or halfway.
+function stepCorner(kind: CurveKind, from: number, to: number): number {
+  if (kind === 'stepBefore') return from;
+  if (kind === 'stepAfter') return to;
+  return (from + to) / 2;
+}
+
 export function routePath(
   w: SvgWriter,
   route: readonly RoutePoint[],
@@ -89,8 +96,8 @@ export function routePath(
     ) {
       const px = xs[last]!;
       const py = ys[last]!;
-      const my = kind === 'stepBefore' ? py : kind === 'stepAfter' ? p.y : (py + p.y) / 2;
-      const mx = kind === 'stepBefore' ? px : kind === 'stepAfter' ? p.x : (px + p.x) / 2;
+      const my = stepCorner(kind, py, p.y);
+      const mx = stepCorner(kind, px, p.x);
       const turns = axis === 0 ? [px, my, p.x, my] : [mx, py, mx, p.y];
       for (let k = 0; k < 4; k += 2) {
         if (near(turns[k]!, turns[k + 1]!, px, py) || near(turns[k]!, turns[k + 1]!, p.x, p.y))

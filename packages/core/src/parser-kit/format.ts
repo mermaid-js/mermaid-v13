@@ -2,7 +2,7 @@
  * Plain-text rendering of a diagnostic with a source snippet and a caret (R-ERR-2): the form
  * error messages and the error image show. Positions are 1-based for people.
  */
-import type { Diagnostic } from './diagnostics.ts';
+import type { Diagnostic, Severity } from './diagnostics.ts';
 import { LineIndex } from './positions.ts';
 import type { Range } from './positions.ts';
 
@@ -24,13 +24,19 @@ function snippet(src: string, lines: LineIndex, range: Range, gutter: number): s
  * Note at line 5, column 1: The text ends here.
  * ```
  */
+const SEVERITY_LABEL = {
+  error: 'Error',
+  warning: 'Warning',
+  info: 'Note',
+} as const satisfies Record<Severity, string>;
+
 export function formatDiagnostic(src: string, d: Diagnostic, lines = new LineIndex(src)): string {
   const at = lines.position(d.range.start);
   const related = d.related ?? [];
   const gutter = String(
     Math.max(at.line, ...related.map((r) => lines.position(r.range.start).line)) + 1
   ).length;
-  const kind = d.severity === 'error' ? 'Error' : d.severity === 'warning' ? 'Warning' : 'Note';
+  const kind = SEVERITY_LABEL[d.severity];
   const out = [`${kind} at line ${at.line + 1}, column ${at.column + 1}: ${d.message}`];
   out.push(...snippet(src, lines, d.range, gutter));
   if (d.expected?.length) out.push(`Expected: ${d.expected.join(', ')}`);

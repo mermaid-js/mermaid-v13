@@ -155,7 +155,8 @@ const MAX_INSERT = 128;
 export const Style = { Curved: 0, Stepped: 1, Linear: 2 } as const;
 export type Style = (typeof Style)[keyof typeof Style];
 export function styleOf(opt: LayeredOptions): Style {
-  return opt.tracks ? Style.Stepped : opt.straight ? Style.Linear : Style.Curved;
+  if (opt.tracks) return Style.Stepped;
+  return opt.straight ? Style.Linear : Style.Curved;
 }
 export function routeCrossings(
   nodes: CNode[],
@@ -451,14 +452,15 @@ export function cnode(w: number, h: number, parent = -1): CNode {
   };
 }
 
+const START_SIDE: Readonly<Record<Dir, Side>> = {
+  TB: Side.Top,
+  BT: Side.Bottom,
+  LR: Side.Left,
+  RL: Side.Right,
+};
+
 function startSide(dir: Dir): Side {
-  return dir === 'TB'
-    ? Side.Top
-    : dir === 'BT'
-      ? Side.Bottom
-      : dir === 'LR'
-        ? Side.Left
-        : Side.Right;
+  return START_SIDE[dir];
 }
 
 function opposite(side: Side): Side {
@@ -851,10 +853,9 @@ export function compoundLayout(
       const boxH = contentH + padTop + (group ? group.padBottom : 0);
       const offX = (boxW - contentW) / 2;
       const offY = padTop;
-      const tx = (lx: number, ly: number): number =>
-        offX + (vertical ? lx : flip ? size.height - ly : ly);
-      const ty = (lx: number, ly: number): number =>
-        offY + (vertical ? (flip ? size.height - ly : ly) : lx);
+      const across = (ly: number): number => (flip ? size.height - ly : ly);
+      const tx = (lx: number, ly: number): number => offX + (vertical ? lx : across(ly));
+      const ty = (lx: number, ly: number): number => offY + (vertical ? across(ly) : lx);
       const axis = vertical ? 0 : 1;
       const convert = (points: number[]): number[] => {
         const out: number[] = [];

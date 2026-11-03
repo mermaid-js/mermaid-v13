@@ -91,14 +91,12 @@ function entryExport(module: unknown, manifest: PluginManifest): unknown {
   return m.default ?? m.diagram ?? m.extension;
 }
 
-const kindOf = (def: ExternalDiagram): 'plugin' | 'lazy' | 'manifest' | 'extension' =>
-  'manifest' in def
-    ? 'manifest'
-    : 'parse' in def && 'render' in def
-      ? 'plugin'
-      : 'detector' in def && 'loader' in def
-        ? 'lazy'
-        : 'extension';
+function kindOf(def: ExternalDiagram): 'plugin' | 'lazy' | 'manifest' | 'extension' {
+  if ('manifest' in def) return 'manifest';
+  if ('parse' in def && 'render' in def) return 'plugin';
+  if ('detector' in def && 'loader' in def) return 'lazy';
+  return 'extension';
+}
 
 const unwrap = <T>(m: T | { diagram: T } | { layout: T } | { default: T }): T =>
   (typeof m === 'object' && m !== null && ('diagram' in m || 'layout' in m || 'default' in m)

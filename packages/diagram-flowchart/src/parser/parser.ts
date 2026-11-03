@@ -435,18 +435,21 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), found());
     const bracket = open && /^[[\](){}|]/.test(raw());
     const quoted = open && (k === T.Str || k === T.MdStr);
-    const why =
-      hint ??
-      (bracket
-        ? 'to use brackets in a label, put it in quotes, e.g. `A["a (b)"]`'
-        : quoted
-          ? 'to use quotes in a label, quote it all and write them as `#quot;`, e.g. `A["say #quot;hi#quot;"]`'
-          : (hintFor(raw()) ??
-            (k === T.End || k === T.Graph || k === T.Subgraph
-              ? `\`${raw().trim()}\` is a keyword: use another node id, and \`${raw().trim()}\` as its label if needed, e.g. \`X[${raw().trim()}]\``
-              : want === LINE_END && inKindSet(ID, k)
-                ? 'put each statement on its own line, or separate them with `;`'
-                : stmtHint)));
+    const explain = (): string | undefined => {
+      if (bracket) return 'to use brackets in a label, put it in quotes, e.g. `A["a (b)"]`';
+      if (quoted)
+        return 'to use quotes in a label, quote it all and write them as `#quot;`, e.g. `A["say #quot;hi#quot;"]`';
+      const general = hintFor(raw());
+      if (general) return general;
+      if (k === T.End || k === T.Graph || k === T.Subgraph) {
+        const word = raw().trim();
+        return `\`${word}\` is a keyword: use another node id, and \`${word}\` as its label if needed, e.g. \`X[${word}]\``;
+      }
+      if (want === LINE_END && inKindSet(ID, k))
+        return 'put each statement on its own line, or separate them with `;`';
+      return stmtHint;
+    };
+    const why = hint ?? explain();
     if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
     throw STOP;
   };

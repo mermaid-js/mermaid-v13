@@ -62,6 +62,16 @@ const EDGE_WRAP = 200;
 const IMG = 80;
 const ICON = 48;
 
+const ROUTING: Readonly<Partial<Record<CurveKind, 'straight' | 'curved'>>> = {
+  linear: 'straight',
+  curved: 'curved',
+};
+
+function vertexShape(v: FlowVertex): string {
+  if (v.img) return 'img';
+  return v.icon ? 'icon' : canonicalShape(v.type);
+}
+
 const DIRS: Readonly<Record<string, Dir>> = { TB: 'TB', TD: 'TB', BT: 'BT', LR: 'LR', RL: 'RL' };
 const dirOf = (d: string | undefined): Dir | undefined => (d ? DIRS[d.toUpperCase()] : undefined);
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
@@ -239,7 +249,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
       existing.style = styleOf(v.classes, v.styles);
       continue;
     }
-    const shape = v.img ? 'img' : v.icon ? 'icon' : canonicalShape(v.type);
+    const shape = vertexShape(v);
     const view = blank(v.id, v.ast, false, shape);
     view.vertex = v;
     view.classes = v.classes;
@@ -328,7 +338,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     })),
     spacing: settings.spacing,
     diagramPadding: settings.diagramPadding,
-    routing: curve === 'linear' ? 'straight' : curve === 'curved' ? 'curved' : 'stepped',
+    routing: ROUTING[curve] ?? 'stepped',
     headRoom: markerTrim('arrow_point'),
   };
   return { graph, groups, nodes, edges, pads };
