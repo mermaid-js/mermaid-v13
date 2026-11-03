@@ -320,7 +320,7 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `arrowheadGap` (point) | 4 | 0 |
 | `arrowheadLength` / `arrowheadWidth` (point) | 10.5 / ≈12.8 | 8 / 8 |
 | `circleArrowheadSize` / `circleArrowheadGap` | 14 / ≈3.15 | 11 / ≈1.1 |
-| `crossArrowheadSize` / `crossArrowheadGap` / `crossArrowheadStrokeWidth` | 12 / ≈2.96 / 2.5 | 11 / ≈2 / 2 |
+| `crossArrowheadSize` / `crossArrowheadGap` / `crossArrowheadStrokeWidth` | 10.4 / ≈2.96 / 2 | 9 / ≈2 / 2 |
 | `nodePaddingX` / `nodePaddingY` (per side) | 16 / 12 | 2 × padding / padding (30 / 15 at the default) |
 | `stadiumPaddingX` / `stadiumPaddingY` (totals) | 40 / 24 | padding |
 | `hexagonPaddingX` / `hexagonPaddingY`; `hexagonSlant` | 70 / 32; 3.5 | padding; 4 |
@@ -337,7 +337,9 @@ so it counts twice towards the diameter compared with the per-side node padding.
 - **Arrowheads** stop `arrowheadGap` short of the node outline, so in the redux themes a 4px gap
   separates the tip from the node, as in v12 neo. They stay inline paths with no `<marker>`;
   v12's `refX` and `stroke-dasharray` mechanism is not needed, and dashed and dotted edges look
-  the same as in v12.
+  the same as in v12. Sizes are what v12 draws, not its marker boxes: a v12 cross does not fill
+  its box, so `crossArrowheadSize` is the arm span (10.4 neo, 9 classic) and the neo stroke is
+  v12's 2.5 scaled by the marker's 0.8.
 - **Hexagon padding axes are corrected.** v12 adds the X padding to the height and the Y padding
   to the width; v13 applies X to the width and Y to the height, so a hexagon in a redux theme is
   wider and less tall than in v12 (D151).

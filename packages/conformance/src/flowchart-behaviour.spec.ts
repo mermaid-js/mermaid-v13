@@ -612,8 +612,9 @@ describe('flowchart render: arrowheads from theme variables (D152)', () => {
   });
 
   it.each([
-    ['redux-color', 12, 2.96, 2.5],
-    ['default', 11, 2, 2],
+    // v12's drawn arms, not its marker box: neo 13/15 of 12 with stroke 2.5 × 0.8; classic 9.
+    ['redux-color', 10.4, 2.96, 2],
+    ['default', 9, 2, 2],
   ])('sizes a cross arrowhead in %s as %d with gap %d', async (theme, size, gap, stroke) => {
     const { tree, head, outline } = await arrowhead('--x', theme);
     const ys = nums(tree.getAttr(head, 'd')!).filter((_, i) => i % 2 === 1);

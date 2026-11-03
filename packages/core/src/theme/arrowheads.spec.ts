@@ -9,9 +9,9 @@ const NEO = {
   arrowheadWidth: 12.78,
   circleArrowheadSize: 14,
   circleArrowheadGap: 3.15,
-  crossArrowheadSize: 12,
+  crossArrowheadSize: 10.4,
   crossArrowheadGap: 2.96,
-  crossArrowheadStrokeWidth: 2.5,
+  crossArrowheadStrokeWidth: 2,
 };
 const CLASSIC = {
   arrowheadGap: 0,
@@ -19,7 +19,7 @@ const CLASSIC = {
   arrowheadWidth: 8,
   circleArrowheadSize: 11,
   circleArrowheadGap: 1.1,
-  crossArrowheadSize: 11,
+  crossArrowheadSize: 9,
   crossArrowheadGap: 2,
   crossArrowheadStrokeWidth: 2,
 };
