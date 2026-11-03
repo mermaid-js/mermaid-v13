@@ -1,6 +1,12 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { findDependencyViolations, readWorkspace, type WorkspacePackage } from './check-deps.ts';
+import {
+  findBinImportViolations,
+  findDependencyViolations,
+  readBinSources,
+  readWorkspace,
+  type WorkspacePackage,
+} from './check-deps.ts';
 
 const pkg = (dir: string, manifest: WorkspacePackage['manifest']): WorkspacePackage => ({
   dir,
@@ -76,5 +82,48 @@ describe('runtime dependency check (R-PERF-2)', () => {
     const packages = readWorkspace(root);
     expect(packages.map((p) => p.manifest.name)).toContain('@mermaid-js/core');
     expect(findDependencyViolations(packages)).toEqual([]);
+  });
+});
+
+describe('bin import check (R-PERF-2, D85)', () => {
+  const mermaid = pkg('packages/mermaid', {
+    name: 'mermaid',
+    bin: { mermaid: './dist/cli.js' },
+    dependencies: { '@mermaid-js/core': 'workspace:^' },
+  });
+  const source = (text: string) => [{ pkg: mermaid, file: 'src/cli.ts', text }];
+
+  it('passes node builtins, relative files and workspace packages', () => {
+    const text = [
+      "import { readFile } from 'node:fs/promises';",
+      "import { createMermaid, type Warning } from './index.ts';",
+      "export { x } from '@mermaid-js/core/ascii';",
+      "const m = await import('./version.ts');",
+    ].join('\n');
+    expect(findBinImportViolations([core, mermaid], source(text))).toEqual([]);
+  });
+
+  it('fails on a third-party import, static, re-exported or dynamic', () => {
+    const text = [
+      "import yargs from 'yargs';",
+      "import type { Chalk } from 'chalk';",
+      "export * from 'commander';",
+      "const m = await import('ora');",
+      "import 'fs';",
+    ].join('\n');
+    expect(findBinImportViolations([core, mermaid], source(text))).toEqual(
+      ['yargs', 'chalk', 'commander', 'ora', 'fs'].map(
+        (dep) =>
+          `mermaid: bin src/cli.ts imports "${dep}" (bins use node: builtins and workspace packages only)`
+      )
+    );
+  });
+
+  it('maps a bin from dist to its TypeScript source and holds for the real workspace', () => {
+    const root = join(import.meta.dirname, '..', '..');
+    const packages = readWorkspace(root);
+    const sources = readBinSources(root, packages);
+    expect(sources.map((s) => `${s.pkg.dir}/${s.file}`)).toContain('packages/mermaid/src/cli.ts');
+    expect(findBinImportViolations(packages, sources)).toEqual([]);
   });
 });
