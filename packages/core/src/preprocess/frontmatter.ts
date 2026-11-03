@@ -3,6 +3,7 @@
  * first non-blank line and the closing `---` at the same indent; the YAML between them is read
  * in place. Nothing is rewritten and every range is an offset into the original source.
  */
+import { CR, LF } from '../parser-kit/char-codes.ts';
 import { isSpace } from '../parser-kit/chars.ts';
 import type { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Range } from '../parser-kit/positions.ts';
@@ -119,8 +120,8 @@ function interpret(
 ): FrontMatter {
   // The YAML ends before the line break that precedes the closing fence.
   let end = yamlEnd;
-  if (end > yamlStart && src.charCodeAt(end - 1) === 10) end--;
-  if (end > yamlStart && src.charCodeAt(end - 1) === 13) end--;
+  if (end > yamlStart && src.charCodeAt(end - 1) === LF) end--;
+  if (end > yamlStart && src.charCodeAt(end - 1) === CR) end--;
   const yamlRange = { start: yamlStart, end };
   const yaml = parseYaml(src, { start: yamlStart, end, indent });
   for (const d of yaml.diagnostics) diagnostics.list.push(d);

@@ -8,6 +8,17 @@
  * and otherwise `JSON.parse`s the argument after swapping every `'` for `"`. The reader below
  * gives the same values without the swap and with ranges.
  */
+import {
+  BACKSLASH,
+  COLON,
+  CR,
+  DIGIT_0,
+  DIGIT_9,
+  DQUOTE,
+  LF,
+  SPACE,
+  APOSTROPHE,
+} from '../parser-kit/char-codes.ts';
 import { isWord } from '../parser-kit/chars.ts';
 import type { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Range } from '../parser-kit/positions.ts';
@@ -82,7 +93,7 @@ function read(
 
   let a = i;
   while (a < contentEnd && isJsonSpace(src.charCodeAt(a))) a++;
-  if (src.charCodeAt(a) === 58 /* : */ && a < contentEnd) a++;
+  if (src.charCodeAt(a) === COLON && a < contentEnd) a++;
   while (a < contentEnd && isJsonSpace(src.charCodeAt(a))) a++;
   let b = contentEnd;
   while (b > a && isJsonSpace(src.charCodeAt(b - 1))) b--;
@@ -157,7 +168,7 @@ class JsonReader {
 
   private isQuote(at: number): boolean {
     const c = this.src.charCodeAt(at);
-    return at < this.end && (c === 34 || c === 39);
+    return at < this.end && (c === DQUOTE || c === APOSTROPHE);
   }
 
   value(at: number, depth: number): [unknown, number] {
@@ -238,10 +249,10 @@ class JsonReader {
     for (;;) {
       if (at >= this.end) this.fail('the string is never closed', open);
       const c = s.charCodeAt(at);
-      if (c === 34 || c === 39) return [out + s.slice(run, at), at + 1];
-      if (c === 10 || c === 13) this.fail('line breaks in strings must be written as `\\n`', at);
-      if (c < 32) this.fail('control characters in strings must be escaped', at);
-      if (c !== 92 /* \ */) {
+      if (c === DQUOTE || c === APOSTROPHE) return [out + s.slice(run, at), at + 1];
+      if (c === LF || c === CR) this.fail('line breaks in strings must be written as `\\n`', at);
+      if (c < SPACE) this.fail('control characters in strings must be escaped', at);
+      if (c !== BACKSLASH) {
         at++;
         continue;
       }
@@ -267,7 +278,7 @@ class JsonReader {
   private number(start: number): [number, number] {
     const s = this.src;
     const digits = (at: number) => {
-      while (at < this.end && s.charCodeAt(at) >= 48 && s.charCodeAt(at) <= 57) at++;
+      while (at < this.end && s.charCodeAt(at) >= DIGIT_0 && s.charCodeAt(at) <= DIGIT_9) at++;
       return at;
     };
     let at = start;
