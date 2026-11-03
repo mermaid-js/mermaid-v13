@@ -20,6 +20,22 @@ Unmet acceptance criteria and announced shared contracts, grouped by the ticket 
 - Open for #43/#46: the builder does not pre-size boxes from edge ends per side (D140); the engine grows 97 of 494 corpus graphs.
 - Open for #45: sibling/unrelated edges sharing track cells, runs along group frames (padding 1), corner touches, group-to-member routes.
 
+## #45
+
+- **Scope vs the ticket text: widened slightly, not narrowed.** As written, plus (from #39 and the
+  ticket comment) corner touches, group titles as walls, and every edge end cell reserved for its
+  edge. Back edges are not special-cased: like every edge, only their colliding stretch is
+  re-routed, so the rest keeps its layout shape. Self-loops are never re-routed (collisions reported).
+- Name: `repairRoutes(graph, model)` works on the whole model (model order, D78/R-ARCH-6), not one route.
+- Siblings are never merged (D140). When no lane exists the snapped stretch is kept and listed in
+  `RepairResult.unresolved` (kind `shared`); turning that into a warning is #46's.
+- Open for #46: group titles. Repair takes a title's cells as `round(x − w/2 + ½) …` (half-cell
+  centres round right). 6 of 494 corpus graphs (and perf `medium3`) keep a route through a title
+  on the frame: the engine puts ports under the title with padding 1. #46 must draw titles at the
+  same cells; a builder/engine fix would let ports avoid the title band.
+- Open for #48: the corpus property lives in `flowchart-grid.spec.ts` (no box or edge-label hit
+  after repair); titles are left out of it.
+
 ## #42 (merged)
 
 - **Size (for the M1-close size pass, not for ticket work):** grid code lives in the shared layered engine, so the SVG flowchart bundle grew 92,039 → 94,102 B gz. R-PERF-1 is 80 KB; the maintainer's tolerance was +10–15%. Maintainer decision pending.
