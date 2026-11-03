@@ -1,27 +1,20 @@
-// @ts-check
 /**
  * Local eslint plugin holding the v13 architecture in place (DESIGN §2, R-ARCH-1/5, R-PARSE-7).
  *
  * - `mermaid/import-boundaries`: diagram-* → core, mermaid → core + diagram-*, core → nothing.
  * - `mermaid/no-global-config`: no getConfig-style global config lookup.
+ * - `mermaid/no-magic-char-code`: char codes are compared with named constants, not numbers.
  * - `mermaid/no-nested-quantifier`: no quantifier nested in an unbounded/variable quantifier.
  */
 import { dirname, relative, resolve, sep } from 'node:path';
 import { RegExpParser, visitRegExpAST } from '@eslint-community/regexpp';
-
-/** @typedef {import('eslint').Rule.RuleModule} RuleModule */
-/** @typedef {import('eslint').Rule.RuleContext} RuleContext */
-/** @typedef {import('estree').Node} EsNode */
+import type { ESLint, Rule, Scope } from 'eslint';
+import type { CallExpression, Expression, NewExpression, Node as EsNode } from 'estree';
 
 const CORE = '@mermaid-js/core';
 
-/**
- * Which workspace package a file belongs to, from its path.
- *
- * @param {string} filename
- * @returns {{ name: string, dir: string } | undefined}
- */
-function packageOf(filename) {
+/** Which workspace package a file belongs to, from its path. */
+function packageOf(filename: string): { name: string; dir: string } | undefined {
   const parts = filename.split(sep);
   const at = parts.lastIndexOf('packages');
   const name = at === -1 ? undefined : parts[at + 1];
@@ -31,24 +24,14 @@ function packageOf(filename) {
   return { name, dir: parts.slice(0, at + 2).join(sep) };
 }
 
-/** @param {string} s */
-const isCore = (s) => s === CORE || s.startsWith(`${CORE}/`);
-/** @param {string} s */
-const isDiagram = (s) => s.startsWith('@mermaid-js/diagram-');
-/** @param {string} filename */
-const isTestFile = (filename) => /\.(spec|test)\.[cm]?[jt]s$/.test(filename);
-/** @param {string} s */
-const isTestOnly = (s) => s === 'vitest' || s.startsWith('vitest/') || s.startsWith('node:');
+const isCore = (s: string) => s === CORE || s.startsWith(`${CORE}/`);
+const isDiagram = (s: string) => s.startsWith('@mermaid-js/diagram-');
+const isTestFile = (filename: string) => /\.(spec|test)\.[cm]?[jt]s$/.test(filename);
+const isTestOnly = (s: string) =>
+  s === 'vitest' || s.startsWith('vitest/') || s.startsWith('node:');
 
-/**
- * Why `specifier` may not be imported from package `pkg`, or undefined when allowed.
- *
- * @param {string} pkg
- * @param {string} specifier
- * @param {boolean} inTest
- * @returns {string | undefined}
- */
-function bareImportViolation(pkg, specifier, inTest) {
+/** Why `specifier` may not be imported from package `pkg`, or undefined when allowed. */
+function bareImportViolation(pkg: string, specifier: string, inTest: boolean): string | undefined {
   if (inTest && isTestOnly(specifier)) {
     return undefined;
   }
@@ -72,8 +55,7 @@ function bareImportViolation(pkg, specifier, inTest) {
   return undefined;
 }
 
-/** @type {RuleModule} */
-const importBoundaries = {
+const importBoundaries: Rule.RuleModule = {
   meta: {
     type: 'problem',
     docs: { description: 'Enforce the v13 package dependency directions (DESIGN §2).' },
@@ -89,13 +71,12 @@ const importBoundaries = {
     const pkg = found;
     const inTest = isTestFile(filename);
 
-    /** @param {EsNode | null | undefined} source */
-    function check(source) {
+    function check(source: EsNode | null | undefined): void {
       if (!source || source.type !== 'Literal' || typeof source.value !== 'string') {
         return;
       }
       const specifier = source.value;
-      let reason;
+      let reason: string | undefined;
       if (specifier.startsWith('.')) {
         const target = resolve(dirname(filename), specifier);
         if (relative(pkg.dir, target).startsWith('..')) {
@@ -128,8 +109,19 @@ const GLOBAL_CONFIG_NAMES = new Set([
   'updateSiteConfig',
 ]);
 
-/** @type {RuleModule} */
-const noGlobalConfig = {
+/** The called function's name: `f` in `f()` and `a.f()`. */
+function calleeName(node: CallExpression): string | undefined {
+  const callee = node.callee;
+  if (callee.type === 'Identifier') {
+    return callee.name;
+  }
+  if (callee.type === 'MemberExpression' && callee.property.type === 'Identifier') {
+    return callee.property.name;
+  }
+  return undefined;
+}
+
+const noGlobalConfig: Rule.RuleModule = {
   meta: {
     type: 'problem',
     docs: { description: 'Ban global config lookup; config is passed explicitly (R-ARCH-5).' },
@@ -142,15 +134,83 @@ const noGlobalConfig = {
   create(context) {
     return {
       CallExpression(node) {
-        const callee = node.callee;
-        const name =
-          callee.type === 'Identifier'
-            ? callee.name
-            : callee.type === 'MemberExpression' && callee.property.type === 'Identifier'
-              ? callee.property.name
-              : undefined;
+        const name = calleeName(node);
         if (name && GLOBAL_CONFIG_NAMES.has(name)) {
           context.report({ node, messageId: 'forbidden', data: { name } });
+        }
+      },
+    };
+  },
+};
+
+const CHAR_CODE_METHODS = new Set(['charCodeAt', 'codePointAt']);
+const COMPARISONS = new Set(['===', '!==', '==', '!=', '<', '<=', '>', '>=']);
+
+function isCharCodeCall(node: EsNode | null | undefined): boolean {
+  if (node?.type !== 'CallExpression') {
+    return false;
+  }
+  const name = node.callee.type === 'MemberExpression' ? calleeName(node) : undefined;
+  return name !== undefined && CHAR_CODE_METHODS.has(name);
+}
+
+const noMagicCharCode: Rule.RuleModule = {
+  meta: {
+    type: 'suggestion',
+    docs: { description: 'Ban comparing char codes with bare numbers; name the character.' },
+    messages: {
+      magic:
+        'Char code {{value}} is a bare number. Name it (`const LBRACE = 0x7b;`) or use a parser-kit helper (charTable, isDigit, isSpace, isWord).',
+    },
+    schema: [],
+  },
+  create(context) {
+    /** A charCodeAt/codePointAt call, or a variable that is only ever given one. */
+    function isCharCode(node: EsNode): boolean {
+      if (isCharCodeCall(node)) {
+        return true;
+      }
+      if (node.type !== 'Identifier') {
+        return false;
+      }
+      let scope: Scope.Scope | null = context.sourceCode.getScope(node);
+      for (; scope; scope = scope.upper) {
+        const variable = scope.set.get(node.name);
+        if (!variable) {
+          continue;
+        }
+        const writes = variable.references.filter((r) => r.isWrite());
+        return writes.length > 0 && writes.every((r) => isCharCodeCall(r.writeExpr));
+      }
+      return false;
+    }
+
+    function report(node: EsNode): void {
+      if (node.type === 'Literal' && typeof node.value === 'number') {
+        context.report({ node, messageId: 'magic', data: { value: String(node.value) } });
+      }
+    }
+
+    return {
+      BinaryExpression(node) {
+        if (!COMPARISONS.has(node.operator)) {
+          return;
+        }
+        if (isCharCode(node.left)) {
+          report(node.right);
+        }
+        if (isCharCode(node.right)) {
+          report(node.left);
+        }
+      },
+      SwitchStatement(node) {
+        if (!isCharCode(node.discriminant)) {
+          return;
+        }
+        for (const c of node.cases) {
+          if (c.test) {
+            report(c.test);
+          }
         }
       },
     };
@@ -162,12 +222,8 @@ const parser = new RegExpParser({ ecmaVersion: 2025 });
 /**
  * Whether a quantifier sits inside another quantifier which can repeat (max > 1). The
  * inner one must itself be variable (min !== max); `(?:x{3})+` is linear and allowed.
- *
- * @param {string} pattern
- * @param {string} flags
- * @returns {boolean}
  */
-function hasNestedQuantifier(pattern, flags) {
+function hasNestedQuantifier(pattern: string, flags: string): boolean {
   let ast;
   try {
     ast = parser.parsePattern(pattern, 0, pattern.length, {
@@ -197,8 +253,7 @@ function hasNestedQuantifier(pattern, flags) {
   return found;
 }
 
-/** @type {RuleModule} */
-const noNestedQuantifier = {
+const noNestedQuantifier: Rule.RuleModule = {
   meta: {
     type: 'problem',
     docs: { description: 'Ban nested quantifiers, which backtrack on user input (R-PARSE-7).' },
@@ -209,27 +264,23 @@ const noNestedQuantifier = {
     schema: [],
   },
   create(context) {
-    /**
-     * @param {EsNode} node
-     * @param {string} pattern
-     * @param {string} flags
-     */
-    function check(node, pattern, flags) {
+    function check(node: EsNode, pattern: string, flags: string): void {
       if (hasNestedQuantifier(pattern, flags)) {
         context.report({ node, messageId: 'nested', data: { pattern } });
       }
     }
-    /** @param {import('estree').NewExpression | import('estree').CallExpression} node */
-    function checkConstructor(node) {
+
+    function checkConstructor(node: NewExpression | CallExpression): void {
       if (node.callee.type !== 'Identifier' || node.callee.name !== 'RegExp') {
         return;
       }
-      const [source, flags] = node.arguments;
+      const [source, flags] = node.arguments as (Expression | undefined)[];
       if (source?.type === 'Literal' && typeof source.value === 'string') {
         const f = flags?.type === 'Literal' && typeof flags.value === 'string' ? flags.value : '';
         check(node, source.value, f);
       }
     }
+
     return {
       Literal(node) {
         if ('regex' in node && node.regex) {
@@ -242,71 +293,7 @@ const noNestedQuantifier = {
   },
 };
 
-const CHAR_CODE_METHODS = new Set(['charCodeAt', 'codePointAt']);
-const COMPARISONS = new Set(['===', '!==', '==', '!=', '<', '<=', '>', '>=']);
-
-/** @param {EsNode | null | undefined} node */
-function isCharCodeCall(node) {
-  return (
-    node?.type === 'CallExpression' &&
-    node.callee.type === 'MemberExpression' &&
-    node.callee.property.type === 'Identifier' &&
-    CHAR_CODE_METHODS.has(node.callee.property.name)
-  );
-}
-
-/** @type {RuleModule} */
-const noMagicCharCode = {
-  meta: {
-    type: 'suggestion',
-    docs: { description: 'Ban comparing char codes with bare numbers; name the character.' },
-    messages: {
-      magic:
-        'Char code {{value}} is a bare number. Name it (`const LBRACE = 0x7b;`) or use a parser-kit helper (charTable, isDigit, isSpace, isWord).',
-    },
-    schema: [],
-  },
-  create(context) {
-    /**
-     * Whether a node is a char code: a charCodeAt/codePointAt call, or a variable that is
-     * only ever given one.
-     *
-     * @param {EsNode} node
-     */
-    function isCharCode(node) {
-      if (isCharCodeCall(node)) return true;
-      if (node.type !== 'Identifier') return false;
-      /** @type {import('eslint').Scope.Scope | null} */
-      let scope = context.sourceCode.getScope(node);
-      for (; scope; scope = scope.upper) {
-        const variable = scope.set.get(node.name);
-        if (!variable) continue;
-        const writes = variable.references.filter((r) => r.isWrite());
-        return writes.length > 0 && writes.every((r) => isCharCodeCall(r.writeExpr));
-      }
-      return false;
-    }
-    /** @param {EsNode} node */
-    function report(node) {
-      if (node.type === 'Literal' && typeof node.value === 'number') {
-        context.report({ node, messageId: 'magic', data: { value: String(node.value) } });
-      }
-    }
-    return {
-      BinaryExpression(node) {
-        if (!COMPARISONS.has(node.operator)) return;
-        if (isCharCode(node.left)) report(node.right);
-        if (isCharCode(node.right)) report(node.left);
-      },
-      SwitchStatement(node) {
-        if (!isCharCode(node.discriminant)) return;
-        for (const c of node.cases) if (c.test) report(c.test);
-      },
-    };
-  },
-};
-
-export default {
+const plugin: ESLint.Plugin = {
   meta: { name: 'eslint-plugin-mermaid' },
   rules: {
     'import-boundaries': importBoundaries,
@@ -315,3 +302,5 @@ export default {
     'no-nested-quantifier': noNestedQuantifier,
   },
 };
+
+export default plugin;

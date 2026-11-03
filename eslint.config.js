@@ -4,7 +4,7 @@ import prettier from 'eslint-config-prettier';
 import noOnlyTests from 'eslint-plugin-no-only-tests';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
-import mermaid from './tools/eslint-plugin/index.js';
+import mermaid from './tools/eslint-plugin/index.ts';
 
 // Browser-only globals: everything in the browser set that Node and the language do not
 // also provide (so `URL`, `TextEncoder`, `performance`, timers stay usable), plus
