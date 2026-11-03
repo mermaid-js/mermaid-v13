@@ -1,8 +1,9 @@
 // Ported from Pele (https://github.com/obsidianmd/pele), src/layout/layered.ts at 3a2f075.
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
-// noUncheckedIndexedAccess. `NODE_INPUTS`/`EDGE_INPUTS`/`layoutInputs` are new. The algorithm
-// is unchanged.
+// noUncheckedIndexedAccess. `NODE_INPUTS`/`EDGE_INPUTS`/`layoutInputs` are new. Length
+// constants come from `opt.metrics` (D77), and `opt.grid` puts the layout on a grid (D140).
+// The algorithm is otherwise unchanged.
 // cspell:ignore kepano lnode lnodes indeg topo cand maxs Köpf
 //
 // Layered (Sugiyama-style) layout of one flat graph. Ranks run down the y axis; callers
@@ -32,6 +33,8 @@
 // 7. Nodes keep the order they were written in, where nothing above says otherwise.
 // 8. The drawing stays compact. A gap between ranks grows only to hold the levels in it, or
 //    to let curves that cross do so at a clear angle.
+
+import { pxProfile, type LayoutMetrics } from '../units.ts';
 
 export const Kind = { Node: 0, Dummy: 1, Label: 2, StartPort: 3, EndPort: 4 } as const;
 export type Kind = (typeof Kind)[keyof typeof Kind];
@@ -90,6 +93,8 @@ export interface LayeredOptions {
   groups?: { of: Int32Array; parent: Int32Array };
   // Compute cross-flow positions in `x` without full routing.
   orderOnly?: boolean;
+  // The length constants (D77); the px profile's when absent.
+  metrics?: LayoutMetrics;
 }
 
 export interface LayeredResult {
@@ -158,9 +163,9 @@ const MAX_SWEEPS = 24;
 // drawn as one direct curve instead, which keeps huge graphs from exhausting time and memory.
 const MAX_DUMMIES = 20000;
 
-// The room between two edges that meet one side of a node, and the least that keeps their arrowheads apart.
-const PORT_PITCH = 16;
-const MIN_PITCH = 8;
+// Length constants come from `LayoutMetrics` (D77): `opt.metrics`, or the px profile's. Their
+// px values are Pele's. `portPitch`/`minPitch`: the room between two edges that meet one side
+// of a node, and the least that keeps their arrowheads apart.
 
 // Where edges are not given levels, a gap between ranks grows to keep the edges that cross it at
 // least this steep, up to this many times its usual height. Shallower than that, the edges of a
@@ -168,25 +173,18 @@ const MIN_PITCH = 8;
 const MIN_SLOPE = 0.125;
 const MAX_GAP = 3;
 
-// Tracks: the room kept clear between a rank and the nearest track, the room between two tracks
-// when the gap has to grow to hold them, and the most they spread to when it has room to spare.
-const TRACK_MARGIN = 18;
-const TRACK_PITCH = 10;
-const TRACK_SPREAD = 14;
+// Tracks (`trackMargin`, `trackPitch`, `trackSpread`): the room kept clear between a rank and the
+// nearest track, the room between two tracks when the gap has to grow to hold them, and the most
+// they spread to when it has room to spare.
 // A curve is one plain S unless it runs more than this many times as far across as the gap is
 // high, and so does another that it would run along. Then each turns onto a level of its own
 // to run across on. The levels of a gap keep this far from its ranks, to leave room to turn
-// in, and from each other.
+// in (`levelMargin`), and from each other (`levelPitch`).
 const LEVEL_WIDE = 2;
-const LEVEL_MARGIN = 28;
-const LEVEL_PITCH = 12;
 // Two plain curves that would pass too near each other turn at levels of their own as well:
-// nearer than LEVEL_CLEAR where one of them runs far across, since it stays near the other for
-// a long way, and otherwise nearer than LEVEL_TOUCH. LEVEL_LEAD is the room a plain curve is
+// nearer than `levelClear` where one of them runs far across, since it stays near the other for
+// a long way, and otherwise nearer than `levelTouch`. `levelLead` is the room a plain curve is
 // taken to keep straight at each end of its gap.
-const LEVEL_LEAD = 12;
-const LEVEL_CLEAR = 8;
-const LEVEL_TOUCH = 4;
 // Levels tell apart curves that run alongside each other. Where the curves of a gap cross each
 // other more often than that, runs along levels only make the crossings long and shallow, so
 // each curve is one plain S instead, and the gap is made this many times as tall as its widest
@@ -196,15 +194,11 @@ const CROSSED_SLOPE = 0.5;
 const IN_LINE = 0.5;
 // How far apart two edges may be at both ends and still count as twins.
 const TWIN = 1;
-// A node, with whatever it is already in line with, moves this far at most to bring one more of
-// its edges into line.
-const SNAP = 12;
-// Bends with no node in line with them move this far at most to bring an edge into line.
-const BEND_SNAP = 24;
-// An end that cannot be brought into line leans towards where its edge goes, but keeps this far
-// from the ends of the part of its side that edges spread along. On a narrow node that leaves
-// it in the middle.
-const LEAN_CLEAR = 40;
+// `snap`: a node, with whatever it is already in line with, moves this far at most to bring one
+// more of its edges into line. `bendSnap`: bends with no node in line with them move this far at
+// most to bring an edge into line. `leanClear`: an end that cannot be brought into line leans
+// towards where its edge goes, but keeps this far from the ends of the part of its side that
+// edges spread along. On a narrow node that leaves it in the middle.
 // Past this many edges across one gap, tracks are given out in a plain order: weighing every
 // pair of edges against each other would take too long.
 const MAX_WEIGHED = 400;
@@ -290,6 +284,7 @@ function sortByBary(
 }
 
 export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): LayeredResult {
+  const M = opt.metrics ?? pxProfile.engine;
   const real = nodes.length;
   if (real === 0) return { width: 0, height: 0 };
   const m = edges.length;
@@ -580,6 +575,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
     fixed,
     GRP,
     groupParent: opt.groups?.parent,
+    M,
   };
 
   let crossings = 0;
@@ -725,9 +721,9 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   // The rank that the pieces leaving each rank arrive at, past any that hold only bends, and
   // the room between the two, which grows to hold the gap's tracks or levels: these keep
   // `margin` from the ranks, and between `leastPitch` and `mostPitch` from each other.
-  const margin = opt.tracks ? TRACK_MARGIN : LEVEL_MARGIN;
-  const leastPitch = opt.tracks ? TRACK_PITCH : LEVEL_PITCH;
-  const mostPitch = opt.tracks ? TRACK_SPREAD : LEVEL_PITCH;
+  const margin = opt.tracks ? M.trackMargin : M.levelMargin;
+  const leastPitch = opt.tracks ? M.trackPitch : M.levelPitch;
+  const mostPitch = opt.tracks ? M.trackSpread : M.levelPitch;
   const below = new Int32Array(maxRank + 1);
   if (pieces) {
     const room = new Float64Array(maxRank + 1);
@@ -743,7 +739,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
         Math.abs(pieces.from[k]! - pieces.to[k]!) > LEVEL_WIDE * room[pieces.rank[k]!]! ? 1 : 0
       );
     const tall = new Float64Array(maxRank + 1);
-    assignTracks(pieces, trackCount, !opt.tracks, room, tall);
+    assignTracks(pieces, trackCount, !opt.tracks, room, tall, M);
     for (let r = 0; r < maxRank; r++) {
       if (trackCount[r]! > 0)
         gapUnder[r]! += Math.max(0, 2 * margin + (trackCount[r]! - 1) * leastPitch - room[r]!);
@@ -897,6 +893,7 @@ interface Graph {
   fixed: Uint8Array;
   GRP?: Int32Array;
   groupParent?: Int32Array;
+  M: LayoutMetrics;
 }
 
 // Reverses the edges that close a cycle, found by depth-first search in declaration order.
@@ -1059,6 +1056,7 @@ function sideEnds(
   ids: number[],
   room: number[]
 ): number {
+  const { M } = g;
   const start = side === 0 ? g.predStart : g.succStart;
   const list = side === 0 ? g.predE : g.succE;
   const other = side === 0 ? g.EF : g.ET;
@@ -1078,10 +1076,10 @@ function sideEnds(
     return total;
   };
   let total = fill(() => 1);
-  if (span / total < MIN_PITCH) total = fill((leaves) => (leaves ? 0.5 : 1));
-  if (span / total < MIN_PITCH) total = fill((_leaves, same) => (same ? 0 : 1));
+  if (span / total < M.minPitch) total = fill((leaves) => (leaves ? 0.5 : 1));
+  if (span / total < M.minPitch) total = fill((_leaves, same) => (same ? 0 : 1));
   if (total === 0) return 0;
-  const pitch = Math.min(PORT_PITCH, span / total);
+  const pitch = Math.min(M.portPitch, span / total);
   for (let k = 1; k < ids.length; k++) room[k]! *= pitch;
   return total * pitch;
 }
@@ -1311,7 +1309,7 @@ function settle(
   free: [Int32Array, Int32Array],
   empty: Uint8Array | undefined
 ): void {
-  const { real, W, EF, ET, EFD, ETD, succStart, succE, predStart, predE, pos } = g;
+  const { real, W, EF, ET, EFD, ETD, succStart, succE, predStart, predE, pos, M } = g;
   // Where the end of segment `e` on node `v` should be, from the middle of its side. The edge is
   // followed up from the segment (side 0) or down, past the bends in ranks that hold nothing
   // else, to where it next comes to a point that is held in place or to another node's side.
@@ -1339,7 +1337,7 @@ function settle(
     const hi = Math.min(xs[v]! + span / 2, middle + width / 2);
     // Two sides with no part in line: the end leans towards the other, if its side is long enough.
     if (lo > hi + IN_LINE) {
-      const lean = Math.max(0, span / 2 - LEAN_CLEAR);
+      const lean = Math.max(0, span / 2 - M.leanClear);
       return Math.max(-lean, Math.min(lean, point - xs[v]!));
     }
     // Both ends settle on one place in the part the two sides share: nearer the middle of the narrower.
@@ -1388,7 +1386,7 @@ function settle(
         // Free ends since the last held end occupy ids[k..k + size).
         let size = 0;
         for (let j = i - 1; j >= 0 && kinds[all[j]!]! !== End.Held; j--) size++;
-        const hi = held ? dx[all[i]!]! - PORT_PITCH : span / 2;
+        const hi = held ? dx[all[i]!]! - M.portPitch : span / 2;
         if (size > 0) {
           // Isotonic fitting preserves order and spacing by pooling neighbours that are too close.
           const sum: number[] = [];
@@ -1430,7 +1428,7 @@ function settle(
           }
           k += size;
         }
-        if (held) lo = dx[all[i]!]! + PORT_PITCH;
+        if (held) lo = dx[all[i]!]! + M.portPitch;
       }
     }
   }
@@ -1445,7 +1443,7 @@ function snap(
   empty: Uint8Array | undefined,
   opt: LayeredOptions
 ): void {
-  const { n, KIND, RANK, EF, ET, EFD, ETD, layerStart, order, pos } = g;
+  const { n, KIND, RANK, EF, ET, EFD, ETD, layerStart, order, pos, M } = g;
   const passed = (u: number): boolean =>
     empty !== undefined && KIND[u]! === Kind.Dummy && empty[RANK[u]!]! === 1;
   // Each edge from one point that is held in place to the next, past the bends in ranks that hold nothing else.
@@ -1484,7 +1482,7 @@ function snap(
   for (let k = 0; k < a.length; k++) {
     const d = Math.abs(off(k));
     if (d < 0.01) join(a[k]!, b[k]!);
-    else if (d <= BEND_SNAP) near.push(k);
+    else if (d <= M.bendSnap) near.push(k);
   }
   if (near.length === 0) return;
   near.sort((x, y) => Math.abs(off(x)) - Math.abs(off(y)) || x - y);
@@ -1516,14 +1514,14 @@ function snap(
       join(a[k]!, b[k]!);
       continue;
     }
-    if (Math.abs(d) > BEND_SNAP || block[a[k]!]! === block[b[k]!]!) continue;
+    if (Math.abs(d) > M.bendSnap || block[a[k]!]! === block[b[k]!]!) continue;
     // The smaller of the two blocks moves, if it can; else the other.
     const upper = block[a[k]!]!;
     const lower = block[b[k]!]!;
     const first = members[upper]!.length <= members[lower]!.length ? upper : lower;
     for (const id of [first, first === upper ? lower : upper]) {
       const shift = id === upper ? d : -d;
-      if (Math.abs(d) > SNAP && !members[id]!.every((v) => KIND[v]! === Kind.Dummy)) continue;
+      if (Math.abs(d) > M.snap && !members[id]!.every((v) => KIND[v]! === Kind.Dummy)) continue;
       if (!free(id, shift)) continue;
       for (const v of members[id]!) xs[v]! += shift;
       join(a[k]!, b[k]!);
@@ -1562,7 +1560,8 @@ function assignTracks(
   trackCount: Int32Array,
   curved: boolean,
   room: Float64Array,
-  tall: Float64Array
+  tall: Float64Array,
+  M: LayoutMetrics
 ): void {
   const { from, to, rank, track, levels, wide } = pieces;
   const total = from.length;
@@ -1744,7 +1743,7 @@ function assignTracks(
     return false;
   };
   const near = (a: number, b: number, height: number, limit: number): boolean => {
-    const h = Math.max(height / 2, height - 2 * LEVEL_LEAD);
+    const h = Math.max(height / 2, height - 2 * M.levelLead);
     sample(a, h, LINE_A);
     sample(b, h, LINE_B);
     return reaches(LINE_A, LINE_B, limit) || reaches(LINE_B, LINE_A, limit);
@@ -1768,7 +1767,7 @@ function assignTracks(
       const b = all[pairs[p + 1]!]!;
       if ((level.has(a) && level.has(b)) || !clash(a, b) || from[a]! < to[a]! !== from[b]! < to[b]!)
         continue;
-      if (near(a, b, room[r]!, wide[a]! === 1 || wide[b]! === 1 ? LEVEL_CLEAR : LEVEL_TOUCH))
+      if (near(a, b, room[r]!, wide[a]! === 1 || wide[b]! === 1 ? M.levelClear : M.levelTouch))
         level.add(a).add(b);
     }
     for (const k of far) {

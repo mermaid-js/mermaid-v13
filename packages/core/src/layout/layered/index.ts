@@ -23,17 +23,12 @@ import {
   type CNode,
 } from './compound.ts';
 import type { LayeredOptions } from './layered.ts';
+import { pxProfile, type LayoutMetrics } from '../units.ts';
 
-// The room between edge ends spread along one side of a node.
-const PORT_SEP = 20;
-// How far a self-loop reaches out from its node.
-const LOOP = 26;
-// Room between a self-loop and its label.
-const LOOP_GAP = 6;
-// The part of a side that edge ends keep clear of at each corner when the node sets no span.
-const CORNER = 12;
-// A drawing that runs across is turned to run down only when the width budget is under this.
-export const TURN_BREAKPOINT = 640;
+// Length constants (port and loop sizes, corners, the turn breakpoint) come from
+// `graph.metrics`, or the px profile's when absent (D77).
+/** The px profile's turn breakpoint: an across drawing turns only when the budget is under it. */
+export const TURN_BREAKPOINT = pxProfile.engine.turnBreakpoint;
 // Tight layouts (`availableWidth`): node and rank spacing and group padding are scaled by these.
 const TIGHT_NODE = 0.5;
 const TIGHT_RANK = 0.75;
@@ -72,10 +67,11 @@ export function layoutSettings(config: SpacingConfig = {}): {
 export const layered: LayoutEngine = (graph: LayoutGraph, ctx?: LayoutContext): LayoutModel => {
   void ctx;
   check(graph);
+  const M = graph.metrics ?? pxProfile.engine;
   const available = graph.availableWidth;
   const across = tighten(graph, graph.direction);
   if (available === undefined || !(available > 0) || across.width <= available) return across;
-  if (!runsAcross(graph.direction) || available >= TURN_BREAKPOINT) return across;
+  if (!runsAcross(graph.direction) || available >= M.turnBreakpoint) return across;
   const down = tighten(graph, 'TB');
   return down.width < across.width ? down : across;
 };
@@ -143,6 +139,7 @@ function check(graph: LayoutGraph): void {
 }
 
 function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
+  const M = graph.metrics ?? pxProfile.engine;
   const padScale = tight ? TIGHT_PAD : 1;
   const nodeCount = graph.nodes.length;
   const index = new Map<string, number>();
@@ -196,7 +193,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
   };
   graph.nodes.forEach((n, i) => {
     const across = sideways(i) ? n.height : n.width;
-    cnodes[i]!.span = n.span ?? Math.max(0, across - 2 * CORNER);
+    cnodes[i]!.span = n.span ?? Math.max(0, across - 2 * M.corner);
   });
 
   // A self-loop sits beside its node, across the flow; the box laid out grows to hold it.
@@ -208,10 +205,10 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     if (src === dst && src < nodeCount) {
       const c = cnodes[src]!;
       if (sideways(src)) {
-        c.h += 2 * (LOOP + (labelH > 0 ? labelH + LOOP_GAP : 0));
+        c.h += 2 * (M.loop + (labelH > 0 ? labelH + M.loopGap : 0));
         loopSide[src] = 2;
       } else {
-        c.w += 2 * (LOOP + (labelW > 0 ? labelW + LOOP_GAP : 0));
+        c.w += 2 * (M.loop + (labelW > 0 ? labelW + M.loopGap : 0));
         loopSide[src] = 1;
       }
     }
@@ -232,10 +229,11 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     nodeSep: graph.spacing.node * (tight ? TIGHT_NODE : 1),
     edgeSep: graph.spacing.edge,
     rankSep: graph.spacing.rank * (tight ? TIGHT_RANK : 1),
-    portSep: PORT_SEP,
+    portSep: M.portSep,
     tracks: routing === 'stepped',
     straight: routing === 'straight',
     headRoom: graph.headRoom ?? 0,
+    metrics: M,
   };
   const total = compoundLayout(cnodes, cedges, rootDir, opt);
 
@@ -265,7 +263,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     const ce = cedges[k]!;
     const [src, dst] = ends[k]!;
     if (src === dst) {
-      edges.set(e.id, selfLoop(box(src), loopSide[src] === 2, e.label));
+      edges.set(e.id, selfLoop(box(src), loopSide[src] === 2, e.label, M));
       return;
     }
     const points: RoutePoint[] = [];
@@ -329,11 +327,12 @@ function sideOf(b: LayoutModelNode, p: RoutePoint | undefined, fallback: Side): 
 function selfLoop(
   b: LayoutModelNode,
   below: boolean,
-  label: { width: number; height: number } | undefined
+  label: { width: number; height: number } | undefined,
+  M: LayoutMetrics
 ): LayoutModelEdge {
   if (below) {
     const y = b.y + b.height / 2;
-    const out = y + LOOP;
+    const out = y + M.loop;
     const x0 = b.x - b.width / 4;
     const x1 = b.x + b.width / 4;
     return {
@@ -343,12 +342,12 @@ function selfLoop(
         { x: x1, y: out, axis: 'h' },
         { x: x1, y, axis: 'v' },
       ],
-      ...(label ? { label: { x: b.x, y: out + LOOP_GAP + label.height / 2 } } : {}),
+      ...(label ? { label: { x: b.x, y: out + M.loopGap + label.height / 2 } } : {}),
       ports: { source: 'bottom', target: 'bottom' },
     };
   }
   const x = b.x + b.width / 2;
-  const out = x + LOOP;
+  const out = x + M.loop;
   const y0 = b.y - b.height / 4;
   const y1 = b.y + b.height / 4;
   return {
@@ -358,7 +357,7 @@ function selfLoop(
       { x: out, y: y1, axis: 'v' },
       { x, y: y1, axis: 'h' },
     ],
-    ...(label ? { label: { x: out + LOOP_GAP + label.width / 2, y: b.y } } : {}),
+    ...(label ? { label: { x: out + M.loopGap + label.width / 2, y: b.y } } : {}),
     ports: { source: 'right', target: 'right' },
   };
 }

@@ -2,7 +2,8 @@
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
 // noUncheckedIndexedAccess. `snapshot`/`restore` copy objects instead of packed arrays, and the
-// layout cache keys on `layoutInputs`. The algorithm is unchanged.
+// layout cache keys on `layoutInputs`. Length constants come from `opt.metrics` (D77). The
+// algorithm is otherwise unchanged.
 // cspell:ignore kepano lnode lnodes cnode
 //
 import {
@@ -19,6 +20,7 @@ import {
   type LayeredOptions,
   type LayeredResult,
 } from './layered.ts';
+import { pxProfile } from '../units.ts';
 
 export type Dir = 'TB' | 'BT' | 'LR' | 'RL';
 
@@ -141,8 +143,6 @@ function restore(s: Snapshot, nodes: CNode[], edges: CEdge[], levels: Level[]): 
   return s.total;
 }
 
-// Ignore crossings within this distance of a shared node.
-const FAN = 24;
 // Tolerance for collinear points.
 const IN_LINE = 0.5;
 const CURVE_PIECES = 3;
@@ -161,7 +161,9 @@ export function styleOf(opt: LayeredOptions): Style {
 export function routeCrossings(
   nodes: CNode[],
   edges: CEdge[],
-  style: Style = Style.Curved
+  style: Style = Style.Curved,
+  // Crossings within this distance of a shared node are not counted (`LayoutMetrics.fan`).
+  fan = pxProfile.engine.fan
 ): number {
   let size = 0;
   for (const e of edges)
@@ -384,15 +386,15 @@ export function routeCrossings(
         const x = ax[p]! + at * dx;
         const y = ay[p]! + at * dy;
         // Exclude fan-in and fan-out at shared nodes.
-        const fan = (v: number, pe: number, qe: number): boolean =>
+        const fanned = (v: number, pe: number, qe: number): boolean =>
           ((ends[p]! & pe) !== 0 && (ends[q]! & qe) !== 0) ||
-          (Math.abs(x - nodes[v]!.x) < nodes[v]!.w / 2 + FAN &&
-            Math.abs(y - nodes[v]!.y) < nodes[v]!.h / 2 + FAN) ||
+          (Math.abs(x - nodes[v]!.x) < nodes[v]!.w / 2 + fan &&
+            Math.abs(y - nodes[v]!.y) < nodes[v]!.h / 2 + fan) ||
           (onRun(owner[p]!, pe, x, y) && onRun(owner[q]!, qe, x, y));
-        if (ep.src === eq.src && fan(ep.src, 1, 1)) continue;
-        if (ep.src === eq.dst && fan(ep.src, 1, 2)) continue;
-        if (ep.dst === eq.src && fan(ep.dst, 2, 1)) continue;
-        if (ep.dst === eq.dst && fan(ep.dst, 2, 2)) continue;
+        if (ep.src === eq.src && fanned(ep.src, 1, 1)) continue;
+        if (ep.src === eq.dst && fanned(ep.src, 1, 2)) continue;
+        if (ep.dst === eq.src && fanned(ep.dst, 2, 1)) continue;
+        if (ep.dst === eq.dst && fanned(ep.dst, 2, 2)) continue;
         total++;
       }
     }
@@ -476,6 +478,7 @@ export function compoundLayout(
   rootDir: Dir,
   opt: LayeredOptions
 ): CompoundResult {
+  const M = opt.metrics ?? pxProfile.engine;
   const n = nodes.length;
   const levelOf = new Map<number, Level>();
   const order: Level[] = [];
@@ -987,12 +990,12 @@ export function compoundLayout(
   place();
   let crossings = -1;
   if (flat) {
-    crossings = routeCrossings(nodes, edges, style);
+    crossings = routeCrossings(nodes, edges, style, M.fan);
     if (crossings > flatCrossings * FLAT_SLACK + FLAT_SPARE) {
       const first = snapshot(nodes, edges, order, total);
       keyed = false;
       place();
-      const own = routeCrossings(nodes, edges, style);
+      const own = routeCrossings(nodes, edges, style, M.fan);
       if (own >= crossings) {
         keyed = true;
         total = restore(first, nodes, edges, order);
@@ -1036,11 +1039,11 @@ export function compoundLayout(
       for (let i = 1; i < seen.length; i++) if (seen[i - 1]![1]! > seen[i]![1]!) again = true;
     }
     if (again) {
-      const before = crossings >= 0 ? crossings : routeCrossings(nodes, edges, style);
+      const before = crossings >= 0 ? crossings : routeCrossings(nodes, edges, style, M.fan);
       const first = before > 0 ? snapshot(nodes, edges, order, total) : undefined;
       if (first) {
         place();
-        if (routeCrossings(nodes, edges, style) >= before)
+        if (routeCrossings(nodes, edges, style, M.fan) >= before)
           total = restore(first, nodes, edges, order);
       }
     }
@@ -1057,7 +1060,7 @@ export function compoundLayout(
   for (const ei of loops) {
     const e = edges[ei]!;
     const node = nodes[e.src]!;
-    e.labelX = node.x + node.w / 2 + 28 + e.labelW / 2;
+    e.labelX = node.x + node.w / 2 + M.loopLabel + e.labelW / 2;
     e.labelY = node.y;
   }
 
