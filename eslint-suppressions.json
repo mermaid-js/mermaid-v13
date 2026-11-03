@@ -1,0 +1,322 @@
+{
+  "packages/bench/src/cli/output.ts": {
+    "no-nested-ternary": {
+      "count": 2
+    }
+  },
+  "packages/bench/src/fixtures.ts": {
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "packages/bench/src/gates.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "packages/bench/src/markdown.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "packages/core/src/layout/layered/compound.ts": {
+    "complexity": {
+      "count": 3
+    },
+    "max-depth": {
+      "count": 1
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 3
+    },
+    "no-nested-ternary": {
+      "count": 5
+    },
+    "no-param-reassign": {
+      "count": 2
+    }
+  },
+  "packages/core/src/layout/layered/index.ts": {
+    "no-nested-ternary": {
+      "count": 4
+    }
+  },
+  "packages/core/src/layout/layered/layered.fixtures.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "packages/core/src/layout/layered/layered.ts": {
+    "complexity": {
+      "count": 7
+    },
+    "max-depth": {
+      "count": 14
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 4
+    },
+    "max-params": {
+      "count": 3
+    },
+    "no-nested-ternary": {
+      "count": 1
+    },
+    "no-param-reassign": {
+      "count": 8
+    }
+  },
+  "packages/core/src/layout/validate.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "packages/core/src/parser-kit/chars.ts": {
+    "mermaid/no-magic-char-code": {
+      "count": 1
+    }
+  },
+  "packages/core/src/parser-kit/cursor.ts": {
+    "no-param-reassign": {
+      "count": 1
+    }
+  },
+  "packages/core/src/parser-kit/format.ts": {
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "packages/core/src/parser-kit/positions.ts": {
+    "mermaid/no-magic-char-code": {
+      "count": 6
+    }
+  },
+  "packages/core/src/parser-kit/scanner.ts": {
+    "mermaid/no-magic-char-code": {
+      "count": 5
+    }
+  },
+  "packages/core/src/pipeline/errors.ts": {
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "packages/core/src/pipeline/extensions.ts": {
+    "no-param-reassign": {
+      "count": 1
+    }
+  },
+  "packages/core/src/preprocess/directives.ts": {
+    "mermaid/no-magic-char-code": {
+      "count": 11
+    },
+    "no-nested-ternary": {
+      "count": 1
+    },
+    "no-param-reassign": {
+      "count": 3
+    }
+  },
+  "packages/core/src/preprocess/frontmatter.ts": {
+    "mermaid/no-magic-char-code": {
+      "count": 2
+    }
+  },
+  "packages/core/src/preprocess/yaml.ts": {
+    "complexity": {
+      "count": 6
+    },
+    "mermaid/no-magic-char-code": {
+      "count": 22
+    },
+    "no-nested-ternary": {
+      "count": 2
+    },
+    "no-param-reassign": {
+      "count": 11
+    }
+  },
+  "packages/core/src/svg/escape.ts": {
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "packages/core/src/svg/inert.ts": {
+    "complexity": {
+      "count": 2
+    }
+  },
+  "packages/core/src/svg/path.ts": {
+    "max-params": {
+      "count": 1
+    }
+  },
+  "packages/core/src/svg/style.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "packages/core/src/svg/writer.ts": {
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "packages/core/src/text/label.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
+  "packages/core/src/text/table.ts": {
+    "mermaid/no-magic-char-code": {
+      "count": 2
+    }
+  },
+  "packages/core/src/theme/theme.ts": {
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "packages/dev/src/browser/explorer/compare-model.ts": {
+    "no-nested-ternary": {
+      "count": 3
+    }
+  },
+  "packages/dev/src/browser/explorer/settings.ts": {
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "packages/dev/src/browser/explorer/tabs/profile.ts": {
+    "max-depth": {
+      "count": 2
+    },
+    "no-nested-ternary": {
+      "count": 2
+    }
+  },
+  "packages/dev/src/explorer.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "packages/dev/src/fixtures.ts": {
+    "no-nested-ternary": {
+      "count": 2
+    }
+  },
+  "packages/dev/src/listen.ts": {
+    "no-nested-ternary": {
+      "count": 1
+    }
+  },
+  "packages/diagram-flowchart/src/parser/lexer.ts": {
+    "complexity": {
+      "count": 3
+    },
+    "max-depth": {
+      "count": 3
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 3
+    },
+    "mermaid/no-magic-char-code": {
+      "count": 96
+    },
+    "no-nested-ternary": {
+      "count": 5
+    },
+    "no-param-reassign": {
+      "count": 1
+    }
+  },
+  "packages/diagram-flowchart/src/parser/model.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 4
+    }
+  },
+  "packages/diagram-flowchart/src/parser/parser.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 2
+    }
+  },
+  "packages/diagram-flowchart/src/parser/source.ts": {
+    "complexity": {
+      "count": 2
+    },
+    "mermaid/no-magic-char-code": {
+      "count": 27
+    }
+  },
+  "packages/diagram-flowchart/src/render/edges.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "max-params": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 4
+    }
+  },
+  "packages/diagram-flowchart/src/render/prepare.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    },
+    "no-nested-ternary": {
+      "count": 2
+    }
+  },
+  "packages/diagram-flowchart/src/render/render.ts": {
+    "complexity": {
+      "count": 1
+    },
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "packages/diagram-flowchart/src/render/shapes.ts": {
+    "max-params": {
+      "count": 2
+    }
+  },
+  "packages/mermaid/src/api.ts": {
+    "max-lines-per-function": {
+      "count": 1
+    }
+  },
+  "packages/mermaid/src/registry.ts": {
+    "no-nested-ternary": {
+      "count": 2
+    }
+  }
+}

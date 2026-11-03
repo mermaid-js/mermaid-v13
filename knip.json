@@ -1,0 +1,49 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["tools/check-deps/cli.ts", "e2e/dom/server.ts", "e2e/dom/page.ts"],
+      "project": ["tools/**/*.{ts,js}", "e2e/{browser,dev,smoke,dom}/**/*.ts", "e2e/helpers/*.ts"]
+    },
+    "packages/*": {
+      "entry": ["src/index.ts", "src/*/index.ts", "src/cli/*.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/bench": {
+      "entry": ["src/index.ts", "src/cli/*.ts", "src/runner/harness.ts", "src/runner/*-entry.ts"],
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": ["mermaid-v12", "mermaid-v12-frozen", "@mermaid-js/diagram-flowchart"]
+    },
+    "packages/dev": {
+      "entry": [
+        "src/cli/*.ts",
+        "src/smoke/*.ts",
+        "src/browser/*.ts",
+        "src/browser/explorer/app.ts"
+      ],
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": ["@fontsource/noto-sans-sc"]
+    },
+    "tools/*": {
+      "entry": ["src/index.ts", "src/cli.ts", "src/*-cli.ts", "src/gen-unicode.ts"],
+      "project": ["src/**/*.ts"]
+    }
+  },
+  "ignore": [
+    "tools/**/fixtures/**",
+    "packages/diagram-flowchart/scripts/**",
+    "e2e/global-teardown.ts",
+    "e2e/helpers/coverage.ts",
+    "e2e/rendering/common-tests/**"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "rules": {
+    "exports": "warn",
+    "types": "warn",
+    "nsExports": "warn",
+    "nsTypes": "warn",
+    "enumMembers": "warn",
+    "classMembers": "off",
+    "duplicates": "warn"
+  }
+}

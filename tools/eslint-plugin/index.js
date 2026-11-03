@@ -242,11 +242,76 @@ const noNestedQuantifier = {
   },
 };
 
+const CHAR_CODE_METHODS = new Set(['charCodeAt', 'codePointAt']);
+const COMPARISONS = new Set(['===', '!==', '==', '!=', '<', '<=', '>', '>=']);
+
+/** @param {EsNode | null | undefined} node */
+function isCharCodeCall(node) {
+  return (
+    node?.type === 'CallExpression' &&
+    node.callee.type === 'MemberExpression' &&
+    node.callee.property.type === 'Identifier' &&
+    CHAR_CODE_METHODS.has(node.callee.property.name)
+  );
+}
+
+/** @type {RuleModule} */
+const noMagicCharCode = {
+  meta: {
+    type: 'suggestion',
+    docs: { description: 'Ban comparing char codes with bare numbers; name the character.' },
+    messages: {
+      magic:
+        'Char code {{value}} is a bare number. Name it (`const LBRACE = 0x7b;`) or use a parser-kit helper (charTable, isDigit, isSpace, isWord).',
+    },
+    schema: [],
+  },
+  create(context) {
+    /**
+     * Whether a node is a char code: a charCodeAt/codePointAt call, or a variable that is
+     * only ever given one.
+     *
+     * @param {EsNode} node
+     */
+    function isCharCode(node) {
+      if (isCharCodeCall(node)) return true;
+      if (node.type !== 'Identifier') return false;
+      /** @type {import('eslint').Scope.Scope | null} */
+      let scope = context.sourceCode.getScope(node);
+      for (; scope; scope = scope.upper) {
+        const variable = scope.set.get(node.name);
+        if (!variable) continue;
+        const writes = variable.references.filter((r) => r.isWrite());
+        return writes.length > 0 && writes.every((r) => isCharCodeCall(r.writeExpr));
+      }
+      return false;
+    }
+    /** @param {EsNode} node */
+    function report(node) {
+      if (node.type === 'Literal' && typeof node.value === 'number') {
+        context.report({ node, messageId: 'magic', data: { value: String(node.value) } });
+      }
+    }
+    return {
+      BinaryExpression(node) {
+        if (!COMPARISONS.has(node.operator)) return;
+        if (isCharCode(node.left)) report(node.right);
+        if (isCharCode(node.right)) report(node.left);
+      },
+      SwitchStatement(node) {
+        if (!isCharCode(node.discriminant)) return;
+        for (const c of node.cases) if (c.test) report(c.test);
+      },
+    };
+  },
+};
+
 export default {
   meta: { name: 'eslint-plugin-mermaid' },
   rules: {
     'import-boundaries': importBoundaries,
     'no-global-config': noGlobalConfig,
+    'no-magic-char-code': noMagicCharCode,
     'no-nested-quantifier': noNestedQuantifier,
   },
 };

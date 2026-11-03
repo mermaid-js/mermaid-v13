@@ -78,6 +78,21 @@ export default tseslint.config(
     },
   },
   {
+    // Readability limits. Existing violations live in eslint-suppressions.json; new ones fail.
+    files: ['packages/*/src/**/*.{ts,js}'],
+    ignores: ['**/*.spec.ts'],
+    rules: {
+      'mermaid/no-magic-char-code': 'error',
+      'no-nested-ternary': 'error',
+      'no-param-reassign': 'error',
+      complexity: ['error', 25],
+      'max-depth': ['error', 4],
+      'max-params': ['error', 6],
+      'max-lines-per-function': ['error', { max: 150, skipBlankLines: true, skipComments: true }],
+      'max-lines': ['error', { max: 800, skipBlankLines: true, skipComments: true }],
+    },
+  },
+  {
     // The DOM-free, console-free, config-global-free layer (R-ARCH-1, R-ARCH-5, R-ERR-4).
     files: ['packages/core/src/**/*.{ts,js}', 'packages/diagram-*/src/**/*.{ts,js}'],
     languageOptions: { globals: { ...globals.es2021 } },
