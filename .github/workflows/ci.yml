@@ -37,7 +37,7 @@ jobs:
     # (R-PERF-4) and stage regression (R-PERF-7) enforce; speed against mermaid@12.2.0
     # (R-PERF-3) is reported only, as shared runners measure 25-32x against 50x (D150).
     # v13-base (this PR's base branch, the merge commit's first parent) and pele are
-    # informational: the report compares the PR with both. v12-current is informational and is
+    # informational: the comparison measures the PR against both. v12-current is informational and is
     # skipped here; the release bench still runs it. Both environments run (the --env default):
     # the browser, which the gates read, and Node (reported only; mermaid@12 is browser-only).
     # In each, the renderers run alternating, diagram by diagram, so runner noise hits all.
@@ -68,7 +68,9 @@ jobs:
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @mermaid-js/bench exec playwright install --with-deps chromium
-      - run: pnpm --filter @mermaid-js/bench bench --renderers v13,v13-stages,v13-base,v12-frozen,pele --base HEAD^1
+      # Corpus pass (the gates) with v13 and mermaid@12; then the comparison the PR comment
+      # shows: 5 diagrams over 20 rounds of fresh sessions with v13-base and Pele too.
+      - run: pnpm --filter @mermaid-js/bench bench --renderers v13,v13-stages,v12-frozen --base HEAD^1
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:

@@ -122,7 +122,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @mermaid-js/bench exec playwright install --with-deps chromium
       - name: Full bench (report mode; the release gate decides)
-        run: pnpm --filter @mermaid-js/bench bench --mode report
+        # No comparison: a release commit has no base branch, and only the gates matter here.
+        run: pnpm --filter @mermaid-js/bench bench --mode report --compare-rounds 0
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:

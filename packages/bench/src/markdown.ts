@@ -1,7 +1,17 @@
 /** Markdown rendering of a bench report: summary, gates and the per-diagram table. */
 import type { GateOutcome } from './gates.ts';
 import { speedup } from './gates.ts';
-import type { BenchReport, DiagramResult, NodeRuns, RendererId, RendererRun } from './report.ts';
+import type { Change } from './compare-stats.ts';
+import { medianOf, medianSpeedup, pairedChange } from './compare-stats.ts';
+import type {
+  BenchReport,
+  CompareEnv,
+  Comparison,
+  DiagramResult,
+  NodeRuns,
+  RendererId,
+  RendererRun,
+} from './report.ts';
 import { STAGES, rendererRun } from './report.ts';
 import { round } from './stats.ts';
 
@@ -163,6 +173,9 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
     ...headerLines(report),
     ...gatesLines(outcome, '##'),
     ...browserRenderersLines(report, '##'),
+    ...(report.compare
+      ? ['## Comparison', '', COMPARE_NOTE, '', ...compareLines(report.compare, '###')]
+      : []),
     '## Diagrams',
     '',
     ...browserDiagramsLines(report),
@@ -203,17 +216,30 @@ export interface CommentOptions {
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-function baseRunOf(report: BenchReport): RendererRun | undefined {
+/** Version and loaded size (gzip bytes) of a renderer, from any run or the comparison. */
+function infoOf(
+  report: BenchReport,
+  id: RendererId
+): { version: string; gzip?: number } | undefined {
+  const fromRun = (r: RendererRun | undefined) =>
+    r?.status === 'ready' ? { version: r.version, gzip: r.size?.gzip } : undefined;
+  const fromCompare = (env: CompareEnv | undefined) => {
+    const r = env?.renderers.find((x) => x.renderer === id && x.error === undefined);
+    return r ? { version: r.version, gzip: r.size?.gzip } : undefined;
+  };
   return (
-    rendererRun(report, 'v13-base') ?? report.node?.renderers.find((r) => r.renderer === 'v13-base')
+    fromCompare(report.compare?.browser) ??
+    fromRun(rendererRun(report, id)) ??
+    fromCompare(report.compare?.node) ??
+    fromRun(report.node?.renderers.find((r) => r.renderer === id))
   );
 }
 
 /** The title: the gate verdict, the commit and the base it is compared with. */
 function titleLine(report: BenchReport, failed: number, baseLabel: string | undefined): string {
   const verdict = failed === 0 ? 'gates pass' : `**${plural(failed, 'gate')} failed**`;
-  const base = baseRunOf(report);
-  const sha = base?.status === 'ready' ? /\(([0-9a-f]+)\)$/.exec(base.version)?.[1] : undefined;
+  const base = infoOf(report, 'v13-base');
+  const sha = base ? /\(([0-9a-f]+)\)$/.exec(base.version)?.[1] : undefined;
   const ref = baseLabel ?? (typeof report.options.base === 'string' ? report.options.base : '');
   const label = ref ? `\`${ref}\` ` : '';
   const against = sha ? ` vs ${label}(\`${sha}\`)` : '';
@@ -223,8 +249,8 @@ function titleLine(report: BenchReport, failed: number, baseLabel: string | unde
 
 /** Loaded size of v13, with the change against the base when both were measured. */
 function sizeCell(report: BenchReport): string {
-  const size = rendererRun(report, 'v13')?.size?.gzip;
-  const base = baseRunOf(report)?.size?.gzip;
+  const size = infoOf(report, 'v13')?.gzip;
+  const base = infoOf(report, 'v13-base')?.gzip;
   if (size === undefined || base === undefined) return kb(size);
   const d = Math.abs(size - base);
   // Under 1 KB the change is shown in bytes, so a few bytes do not read as "−0 KB".
@@ -283,17 +309,87 @@ export function formatComment(
 ): string {
   const failed = outcome.gates.filter((g) => g.status === 'fail' && g.enforced);
   const run = options.runUrl ? `[this run](${options.runUrl})` : 'this run';
+  const cmp = report.compare;
+  const body = cmp
+    ? [
+        ...compareLines(cmp, '**'),
+        `Loaded size (gzip): ${sizeCell(report)} against the base.`,
+        '',
+        COMPARE_NOTE,
+        '',
+      ]
+    : summaryTable(report);
   return [
     COMMENT_MARKER,
     titleLine(report, failed.length, options.baseLabel),
     '',
-    ...summaryTable(report),
+    ...body,
     ...problemLines(report, failed),
     `Full report: \`bench-report\` artifact of ${run}.`,
   ].join('\n');
 }
 
-interface Comparison {
+const COMPARE_NOTE =
+  'Times are the median over rounds, each round in fresh pages or processes with the renderers alternating. ± is the 95% interval of the change against the base; "same" means that interval includes no change.';
+
+/** `same (±3%)` / `6% slower (±2%)` from a paired change of v13 against the base. */
+function changeCell(c: Change | null): string {
+  if (c === null) return dash;
+  const pct = (x: number) => Math.max(1, Math.round(Math.abs(x) * 100));
+  if (c.low <= 0 && c.high >= 0) return `same (±${pct(Math.max(-c.low, c.high))}%)`;
+  const word = c.median > 0 ? 'slower' : 'faster';
+  return `${pct(c.median)}% ${word} (±${pct((c.high - c.low) / 2)}%)`;
+}
+
+/** One table per environment that ran: a row per diagram, a column per comparison. */
+function compareLines(cmp: Comparison, style: '**' | '###'): string[] {
+  const out: string[] = [];
+  for (const [name, env] of [
+    ['Browser', cmp.browser],
+    ['Node', cmp.node],
+  ] as const) {
+    if (!env) continue;
+    const has = (id: RendererId) =>
+      env.renderers.some((r) => r.renderer === id && r.error === undefined);
+    if (!has('v13')) continue;
+    const series = (diagram: string, id: RendererId) => env.warm[diagram]?.[id] ?? [];
+    const v12 = has('v12-frozen');
+    const v12Rounds = v12
+      ? Math.max(
+          ...cmp.diagrams.map((d) => series(d.id, 'v12-frozen').filter((x) => x !== null).length)
+        )
+      : 0;
+    const columns = [
+      ...(has('v13-base') ? ['vs base'] : []),
+      ...(v12 ? ['vs mermaid@12.2.0'] : []),
+      ...(has('pele') ? ['vs Pele'] : []),
+    ];
+    const rounds = `${env.rounds} rounds${v12 ? `; mermaid@12 in ${v12Rounds}` : ''}`;
+    out.push(
+      style === '**' ? `**${name}** (${rounds})` : `${style} ${name} (${rounds})`,
+      '',
+      row(['Diagram', 'v13', ...columns]),
+      row(Array<string>(2 + columns.length).fill('---')),
+      ...cmp.diagrams.map((d) => {
+        const v13 = series(d.id, 'v13');
+        return row([
+          d.label,
+          ms(medianOf(v13)),
+          ...(has('v13-base') ? [changeCell(pairedChange(v13, series(d.id, 'v13-base')))] : []),
+          ...(v12 ? [factor(medianSpeedup(v13, series(d.id, 'v12-frozen')))] : []),
+          ...(has('pele') ? [factor(medianSpeedup(v13, series(d.id, 'pele')))] : []),
+        ]);
+      }),
+      ''
+    );
+    for (const r of env.renderers)
+      if (r.error !== undefined)
+        out.push(`- ${r.renderer} did not start in ${name}: ${r.error}`, '');
+  }
+  return out;
+}
+
+interface TableColumn {
   id: RendererId;
   /** Header of the ratio column. */
   ratio: string;
@@ -302,7 +398,7 @@ interface Comparison {
 }
 
 /** Per-diagram table of v13 (with v13-stages columns) and the warm time of each comparison. */
-function diagramsTable(runs: RendererRun[], comparisons: Comparison[]): string[] {
+function diagramsTable(runs: RendererRun[], comparisons: TableColumn[]): string[] {
   const find = (id: RendererId) => runs.find((r) => r.renderer === id);
   const byId = (r: RendererRun | undefined) => new Map((r?.results ?? []).map((x) => [x.id, x]));
   const v13ById = byId(find('v13'));
