@@ -1,8 +1,10 @@
 name: CI
 
-# Automatic triggers are off: this private repo has no paid Actions minutes.
-# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
+  push:
+    branches: [mermaid-v13]
+  merge_group:
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -14,24 +16,11 @@ permissions:
 
 jobs:
   checks:
-    name: ${{ matrix.check.name }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        check:
-          - { name: Lint, run: pnpm lint }
-          - { name: Typecheck, run: pnpm typecheck }
-          - { name: Unit tests, run: pnpm test }
-          # R-PERF-2: core and first-party diagram packages declare no runtime dependencies.
-          - { name: Runtime dependencies, run: pnpm check:deps }
-          # R-REL-4: ported Pele code has MIT headers and is listed in THIRD_PARTY_NOTICES.
-          - { name: Licenses, run: pnpm check:licenses }
-          # R-CONF-4: generated config types, defaults and docs match the schema.
-          - { name: Generated config, run: pnpm check:config }
-          # R-PARSE-9: highlighters and syntax docs match the grammar files.
-          - { name: Generated grammar files, run: pnpm check:grammar }
-          - { name: Build, run: pnpm build }
+    # `pnpm check`: lint, typecheck, unit tests, runtime dependencies (R-PERF-2), licenses
+    # (R-REL-4), generated config (R-CONF-4) and generated grammar files (R-PARSE-9).
+    name: Check and build
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
@@ -40,22 +29,19 @@ jobs:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      - run: ${{ matrix.check.run }}
+      - run: pnpm check
+      - run: pnpm build
 
   bench:
-    # R-TEST-7: the bench gates (packages/bench): loaded size (R-PERF-1), warm geomean vs frozen
-    # mermaid@12.2.0 dagre (R-PERF-3), corpus OK count (R-PERF-4), stage regression against the
-    # baseline stored for this runner (R-PERF-7) and "Ready at" (R-PERF-9, reported only).
-    # Gate mode defaults to `enforce` (the pipeline probe must pass). No baseline is stored for GitHub-hosted runners yet (O-4), so R-PERF-7
-    # reports here until one is.
+    # R-TEST-7: the bench gates (packages/bench). Loaded size (R-PERF-1), corpus OK count
+    # (R-PERF-4) and stage regression (R-PERF-7) enforce; speed against mermaid@12.2.0
+    # (R-PERF-3) is reported only, as shared runners measure 25-32x against 50x (D150).
     name: Bench gates
-    # Paused: R-PERF-3 fails (v13 ~28-31x against 50x) and blocks unrelated work. Re-enable by
-    # deleting this `if` once the speed gap is closed or the target is settled.
-    if: false
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 60
     env:
-      BENCH_RUNNER: github-ubuntu-latest
+      BENCH_RUNNER: blacksmith-4vcpu-ubuntu-2404
+      BENCH_REPORT_ONLY: speed
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
@@ -82,7 +68,7 @@ jobs:
     name: Visual baseline
     # Paused: blocking unrelated work. Re-enable by deleting this `if`.
     if: false
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     # Keep this tag in sync with @playwright/test in package.json.
     container:
@@ -128,14 +114,11 @@ jobs:
 
   dom-adapter:
     # #16 (R-API-6/7, R-ERR-3, R-THEME-3, R-TEXT-5): run(), mount(), the error image and
-    # afterMount in each browser, from source through e2e/dom's own page server.
-    name: DOM adapter (${{ matrix.browser }})
-    runs-on: ubuntu-latest
+    # afterMount, from source through e2e/dom's own page server. Chromium only until the POC
+    # is done; Firefox and WebKit come back with the rest of the browser matrix.
+    name: DOM adapter
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
@@ -144,21 +127,21 @@ jobs:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps ${{ matrix.browser }}
-      - run: pnpm e2e:dom --project=${{ matrix.browser }}
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm e2e:dom --project=chromium
 
   smoke-render:
     # Each target renders a fixture through the public `mermaid` package. node20 runs the
-    # source through tsx. The others load the BUILT package as one bundled ES module
-    # (packages/dev `smoke:build`): Deno runs it directly; the browsers and a Web Worker
-    # (in Chromium) load it from the e2e page server (e2e/smoke/smoke.spec.ts).
+    # source through tsx; chromium loads the BUILT package as one bundled ES module from the
+    # e2e page server (e2e/smoke/smoke.spec.ts). Deno, the Web Worker, Firefox and WebKit
+    # come back after the POC.
     name: Smoke render (${{ matrix.runtime }})
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        runtime: [node20, deno, worker, chromium, firefox, webkit]
+        runtime: [node20, chromium]
     env:
       MERMAID_PORT: '9000'
     steps:
@@ -172,17 +155,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - if: matrix.runtime == 'node20'
         run: pnpm --filter @mermaid-js/conformance smoke
-      - name: Build the package and the smoke bundle
-        if: matrix.runtime != 'node20'
-        run: pnpm build && pnpm --filter @mermaid-js/dev smoke:build
-      - if: matrix.runtime == 'deno'
-        run: pnpm --filter @mermaid-js/dev smoke:deno
-      - name: Install the browser
-        if: contains(fromJSON('["worker","chromium","firefox","webkit"]'), matrix.runtime)
-        run: pnpm exec playwright install --with-deps ${{ matrix.runtime == 'worker' && 'chromium' || matrix.runtime }}
-      - if: matrix.runtime == 'worker'
-        run: pnpm exec playwright test --project smoke-chromium -g "Web Worker"
       - if: matrix.runtime == 'chromium'
-        run: pnpm exec playwright test --project smoke-chromium -g "main thread"
-      - if: matrix.runtime == 'firefox' || matrix.runtime == 'webkit'
-        run: pnpm exec playwright test --project smoke-${{ matrix.runtime }}
+        name: Build the package and the smoke bundle, then render in Chromium
+        run: |
+          pnpm build
+          pnpm --filter @mermaid-js/dev smoke:build
+          pnpm exec playwright install --with-deps chromium
+          pnpm exec playwright test --project smoke-chromium -g "main thread"

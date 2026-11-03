@@ -6,8 +6,7 @@ name: Nightly fuzz
 #   FUZZ_SEED=<seed> FUZZ_CASE=<case> pnpm --filter @mermaid-js/conformance fuzz
 # The mermaid@12 differential is informational: its clusters go to the job summary.
 
-# Automatic triggers are off: this private repo has no paid Actions minutes.
-# Run by hand from the Actions tab, or revert this change to turn them back on.
+# Manual only while v13 is a POC; restore the daily schedule (cron '41 2 * * *') after it.
 on:
   workflow_dispatch:
     inputs:
@@ -29,7 +28,7 @@ concurrency:
 
 jobs:
   fuzz:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
