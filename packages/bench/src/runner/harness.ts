@@ -3,8 +3,7 @@
  * Initialises one renderer, then renders diagrams on request from the Node driver.
  */
 import { errorText } from '../pipeline.ts';
-import type { RendererId, Stage } from '../report.ts';
-import { STAGES } from '../report.ts';
+import type { RendererId } from '../report.ts';
 import { PipelineMissing, adapterFor } from './adapters.ts';
 import type {
   BenchWindow,
@@ -13,17 +12,19 @@ import type {
   ResourceEntry,
   RunnerOptions,
 } from './protocol.ts';
+import { RENDERER_ENTRY } from './protocol.ts';
+import { sample } from './sampler.ts';
 
 const scriptStartAt = performance.now();
-// Browser timers are coarsened to about 0.1 ms, and v13 renders tiny diagrams well under that,
-// so each warm sample times a batch of renders sized to last at least 2 ms.
-const MIN_SAMPLE_MS = 2;
-const MAX_BATCH = 500;
 
 const params = new URLSearchParams(location.search);
 const renderer = params.get('r') as RendererId;
 const options: RunnerOptions = { liftLimits: params.get('liftLimits') !== 'false' };
-const adapter = adapterFor(renderer);
+// The URL is only known at run time, so the bundler leaves the import alone.
+const adapter = adapterFor(
+  renderer,
+  (id) => import(RENDERER_ENTRY[id]) as Promise<Record<string, unknown>>
+);
 const stage = document.getElementById('stage')!;
 let seq = 0;
 
@@ -60,44 +61,20 @@ const ready: Promise<ReadyInfo> = (async () => {
   }
 })();
 
+const sampler = {
+  renderOnce,
+  adapter,
+  errorText,
+  cleanup: () => {
+    stage.innerHTML = '';
+  },
+};
+
 // Requests are handled strictly one at a time.
 let queue: Promise<unknown> = Promise.resolve();
 
 function render(source: string, reps: number, budgetMs: number): Promise<RenderReply> {
-  const job = queue.then(async (): Promise<RenderReply> => {
-    try {
-      const firstMs = await renderOnce(source);
-      let batch = 1;
-      if (reps > 0) {
-        const probe = await renderOnce(source);
-        if (probe < MIN_SAMPLE_MS)
-          batch = Math.min(MAX_BATCH, Math.ceil(MIN_SAMPLE_MS / Math.max(probe, 0.02)));
-      }
-      const samples: number[] = [];
-      const stageSamples: Partial<Record<Stage, number[]>> = {};
-      let spent = 0;
-      for (let i = 0; i < reps; i++) {
-        // Always take at least one warm sample; then stop once the budget is spent.
-        if (i > 0 && spent > budgetMs) break;
-        adapter.takeStages?.();
-        const t0 = performance.now();
-        for (let b = 0; b < batch; b++) await renderOnce(source);
-        const elapsed = performance.now() - t0;
-        samples.push(elapsed / batch);
-        spent += elapsed;
-        const st = adapter.takeStages?.() ?? {};
-        for (const s of STAGES) {
-          const v = st[s];
-          if (v !== undefined) (stageSamples[s] ??= []).push(v / batch);
-        }
-      }
-      return { ok: true, firstMs, samples, batch, stageSamples };
-    } catch (e) {
-      return { ok: false, error: errorText(e) };
-    } finally {
-      stage.innerHTML = '';
-    }
-  });
+  const job = queue.then(() => sample(sampler, source, reps, budgetMs));
   queue = job;
   return job;
 }

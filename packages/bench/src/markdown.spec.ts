@@ -124,6 +124,42 @@ describe('markdown report', () => {
     expect(row).toMatch(/\| 0\.4 \| 2× \| 0\.1 \| 0\.5× \|$/);
   });
 
+  it('adds a Node section, apart from the browser tables, when the Node env ran', () => {
+    expect(md).not.toContain('## Node');
+    const nodeRun = (renderer: 'v13' | 'v13-base' | 'pele', warmMs: number) => ({
+      renderer,
+      version: renderer === 'pele' ? '1.13.0' : '13.0.0-alpha.0',
+      status: 'ready' as const,
+      readyAtMs: null,
+      initMs: 1,
+      size: null,
+      results: [ok('corpus/a', warmMs)],
+    });
+    const withNode: BenchReport = {
+      ...report,
+      node: {
+        runtime: 'node v24.16.0',
+        renderers: [nodeRun('v13', 0.1), nodeRun('v13-base', 0.2), nodeRun('pele', 0.05)],
+      },
+    };
+    const out = formatMarkdown(
+      withNode,
+      evaluateGates({ report: withNode, baseline: undefined, mode: 'report', corpusSize: 1 })
+    );
+    const node = out.slice(out.indexOf('## Node'));
+    expect(node).toContain('Runtime `node v24.16.0`');
+    expect(node).toMatch(/\| v13 \| 13\.0\.0-alpha\.0 \| 1 ms \| 1\/0\/0\/0 \|.*\| 2× \|/);
+    expect(node).toContain('### Node diagrams');
+    const row = node.split('\n').find((l) => l.startsWith('| corpus/a'));
+    // v13 at 0.1 ms: 2× the base (0.2 ms), half of pele (0.05 ms). No v12 columns in Node.
+    expect(row).toBe(
+      '| corpus/a | corpus | ok | 0.3 | 0.1 | 0.15 | – | – | – | – | 0.2 | 2× | 0.05 | 0.5× |'
+    );
+    expect(node).not.toContain('v12-frozen');
+    // The browser table is unchanged by the Node runs.
+    expect(out.startsWith(md.trimEnd())).toBe(true);
+  });
+
   it('says the gates are only reporting while the pipeline is missing', () => {
     expect(md).toContain('Gates: report');
     expect(md).toMatch(/\| R-PERF-1 \| Loaded size, core \+ flowchart \(gzip\) \| pass \| no \|/);

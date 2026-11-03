@@ -24,6 +24,8 @@ import { median, quantile } from './stats.ts';
 
 const PKG = fileURLToPath(new URL('../', import.meta.url));
 export const SITE_DIR = join(PKG, 'dist', 'site');
+/** The child-process runner of the Node environment (`node/runner.ts`, bundled). */
+export const NODE_RUNNER = join(SITE_DIR, 'node', 'runner.mjs');
 
 export interface Site {
   v13: Bundle;
@@ -52,6 +54,34 @@ export function versionOf(id: Exclude<RendererId, 'v13-base'>): string {
   const dir = alias === undefined ? join(PKG, '..', 'mermaid') : moduleDir(alias);
   return (JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { version: string })
     .version;
+}
+
+/**
+ * The file a renderer is imported from in Node, or undefined when it only runs in a browser
+ * (Mermaid 12 needs a DOM). v13 and Pele are DOM-free; v13's bundles are the browser ones.
+ */
+export function nodeEntry(site: Site, id: RendererId): string | undefined {
+  const of = (b: Bundle | undefined) => (b === undefined ? undefined : join(b.outdir, b.entryFile));
+  if (id === 'v13') return of(site.v13);
+  if (id === 'v13-stages') return of(site.stages);
+  if (id === 'v13-base') return of(site.base);
+  if (id === 'pele') return join(moduleDir('pele'), 'dist', 'pele.js');
+  return undefined;
+}
+
+/** The run of a `v13-base` that could not be built: every fixture missing, with the reason. */
+export function unbuiltBase(site: Site, fixtures: Fixture[]): RendererRun {
+  const error = site.baseError ?? 'v13-base was not built';
+  return {
+    renderer: 'v13-base',
+    version: 'unknown',
+    status: 'missing',
+    error,
+    readyAtMs: null,
+    initMs: null,
+    size: null,
+    results: fixtures.map((f) => result(f, 'missing', error)),
+  };
 }
 
 export interface SiteOptions {
@@ -85,6 +115,17 @@ export async function buildSite(options: SiteOptions = {}): Promise<Site> {
     format: 'esm',
     platform: 'browser',
     target: 'es2022',
+    conditions: ['mermaid-source'],
+    define: benchDefine(false),
+    logLevel: 'warning',
+  });
+  await build({
+    entryPoints: [src('./node/runner.ts')],
+    outfile: NODE_RUNNER,
+    bundle: true,
+    format: 'esm',
+    platform: 'node',
+    target: 'node22',
     conditions: ['mermaid-source'],
     define: benchDefine(false),
     logLevel: 'warning',
@@ -236,7 +277,7 @@ async function openRunner(o: DriveOptions): Promise<BenchPage> {
   return { page, context, ready: await readyInfo() };
 }
 
-function result(f: Fixture, status: DiagramResult['status'], error?: string): DiagramResult {
+export function result(f: Fixture, status: DiagramResult['status'], error?: string): DiagramResult {
   return {
     id: f.id,
     set: f.set,
@@ -251,7 +292,7 @@ function result(f: Fixture, status: DiagramResult['status'], error?: string): Di
   };
 }
 
-function fromReply(f: Fixture, reply: RenderReply): DiagramResult {
+export function fromReply(f: Fixture, reply: RenderReply): DiagramResult {
   if (!reply.ok) return result(f, 'error', reply.error);
   const stages = emptyStages();
   for (const s of STAGES) stages[s] = median(reply.stageSamples[s] ?? []);
@@ -271,18 +312,9 @@ function fromReply(f: Fixture, reply: RenderReply): DiagramResult {
 /** Runs every fixture through one renderer. */
 export async function drive(o: DriveOptions): Promise<RendererRun> {
   if (o.renderer === 'v13-base' && !o.site.base) {
-    const error = o.site.baseError ?? 'v13-base was not built';
-    o.log(`  v13-base: not built: ${error}`);
-    return {
-      renderer: o.renderer,
-      version: 'unknown',
-      status: 'missing',
-      error,
-      readyAtMs: null,
-      initMs: null,
-      size: null,
-      results: o.fixtures.map((f) => result(f, 'missing', error)),
-    };
+    const run = unbuiltBase(o.site, o.fixtures);
+    o.log(`  v13-base: not built: ${run.error}`);
+    return run;
   }
   const version = o.renderer === 'v13-base' ? o.site.base!.version : versionOf(o.renderer);
   let runner = await openRunner(o);

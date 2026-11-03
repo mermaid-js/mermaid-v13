@@ -1,7 +1,7 @@
 /** Markdown rendering of a bench report: summary, gates and the per-diagram table. */
 import type { GateOutcome } from './gates.ts';
 import { speedup } from './gates.ts';
-import type { BenchReport, DiagramResult, RendererRun } from './report.ts';
+import type { BenchReport, DiagramResult, NodeRuns, RendererId, RendererRun } from './report.ts';
 import { STAGES, rendererRun } from './report.ts';
 import { round } from './stats.ts';
 
@@ -19,8 +19,8 @@ const row = (cells: (string | number)[]) => `| ${cells.join(' | ')} |`;
 const capital = (s: string) => s[0]!.toUpperCase() + s.slice(1);
 
 /** Ids every ready renderer rendered: the set Σ columns and the geomean use. */
-function commonIds(report: BenchReport): Set<string> {
-  const ready = report.renderers.filter((r) => r.status === 'ready');
+function commonIds(runs: RendererRun[]): Set<string> {
+  const ready = runs.filter((r) => r.status === 'ready');
   if (ready.length === 0) return new Set();
   const okIds = (r: RendererRun) =>
     new Set(r.results.filter((x) => x.status === 'ok').map((x) => x.id));
@@ -47,7 +47,7 @@ function sum(
 }
 
 export function formatMarkdown(report: BenchReport, outcome: GateOutcome): string {
-  const common = commonIds(report);
+  const common = commonIds(report.renderers);
   const out: string[] = [];
   out.push(`# Bench report ${report.createdAt}`, '');
   out.push(
@@ -90,7 +90,7 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
       'vs v12-frozen (geomean)',
       ...(hasBase ? ['vs v13-base (geomean)'] : []),
     ]),
-    row(Array(hasBase ? 10 : 9).fill('---'))
+    row(Array<string>(hasBase ? 10 : 9).fill('---'))
   );
   const notes: string[] = [];
   const times = (v: number | null) => (v === null ? dash : `${v}×`);
@@ -114,27 +114,55 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
   }
   out.push('', ...notes, ...(notes.length > 0 ? [''] : []));
 
-  const v13 = rendererRun(report, 'v13');
-  const stages = rendererRun(report, 'v13-stages');
-  const frozen = rendererRun(report, 'v12-frozen');
-  const byId = (r: RendererRun | undefined) => new Map((r?.results ?? []).map((x) => [x.id, x]));
-  const stageById = byId(stages);
-  const frozenById = byId(frozen);
-  const baseById = byId(hasBase ? baseRun : undefined);
-  const peleRun = rendererRun(report, 'pele');
-  const hasPele = peleRun?.status === 'ready';
-  const peleById = byId(hasPele ? peleRun : undefined);
-  const ids = (v13 ?? stages ?? frozen)?.results.map((r) => r.id) ?? [];
-  const okWarm = (x: DiagramResult | undefined) => (x?.status === 'ok' ? x.warmMs : null);
-  const ratio = (against: number | null, r: DiagramResult | undefined) =>
-    r?.warmMs && against ? `${round(against / r.warmMs, 1)}×` : dash;
-
   out.push('## Diagrams', '');
   out.push(
     'Times are per render. Stage columns are medians from the instrumented `v13-stages` build. "Speedup" and "vs …" are that renderer\'s warm time over v13\'s (above 1× means v13 is faster).',
     ''
   );
   out.push(
+    ...diagramsTable(report.renderers, [
+      { id: 'v12-frozen', ratio: 'Speedup', always: true },
+      { id: 'v13-base', ratio: 'vs base' },
+      { id: 'pele', ratio: 'vs pele' },
+    ])
+  );
+
+  if (report.node) out.push(...nodeSection(report, report.node));
+
+  const unsupported = report.unsupported ?? [];
+  if (unsupported.length > 0) {
+    out.push('## Not run: no v13 package for the type', '');
+    out.push(row(['Diagram', 'Set', 'Type']), row(Array<string>(3).fill('---')));
+    for (const u of unsupported) out.push(row([u.id, u.set, u.type]));
+    out.push('');
+  }
+  return out.join('\n');
+}
+
+interface Comparison {
+  id: RendererId;
+  /** Header of the ratio column. */
+  ratio: string;
+  /** Show the columns even when the renderer did not run (the R-PERF-3 baseline). */
+  always?: boolean;
+}
+
+/** Per-diagram table of v13 (with v13-stages columns) and the warm time of each comparison. */
+function diagramsTable(runs: RendererRun[], comparisons: Comparison[]): string[] {
+  const find = (id: RendererId) => runs.find((r) => r.renderer === id);
+  const byId = (r: RendererRun | undefined) => new Map((r?.results ?? []).map((x) => [x.id, x]));
+  const v13ById = byId(find('v13'));
+  const stageById = byId(find('v13-stages'));
+  const shown = comparisons
+    .map((c) => ({ ...c, run: find(c.id) }))
+    .filter((c) => c.always === true || c.run?.status === 'ready')
+    .map((c) => ({ ...c, byId: byId(c.run) }));
+  const okWarm = (x: DiagramResult | undefined) => (x?.status === 'ok' ? x.warmMs : null);
+  const ratio = (against: number | null, r: DiagramResult | undefined) =>
+    r?.warmMs && against ? `${round(against / r.warmMs, 1)}×` : dash;
+  const ids = (find('v13') ?? find('v13-stages') ?? shown[0]?.run)?.results.map((r) => r.id) ?? [];
+
+  const out = [
     row([
       'Diagram',
       'Set',
@@ -143,44 +171,84 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
       'Warm',
       'p95',
       ...STAGES.map(capital),
-      'v12-frozen warm',
-      'Speedup',
-      ...(hasBase ? ['v13-base warm', 'vs base'] : []),
-      ...(hasPele ? ['pele warm', 'vs pele'] : []),
+      ...shown.flatMap((c) => [`${c.id} warm`, c.ratio]),
     ]),
-    row(Array(12 + (hasBase ? 2 : 0) + (hasPele ? 2 : 0)).fill('---'))
-  );
-  const v13ById = byId(v13);
+    row(Array<string>(6 + STAGES.length + shown.length * 2).fill('---')),
+  ];
   for (const id of ids) {
     const r = v13ById.get(id);
     const st = stageById.get(id)?.stages;
-    const f = frozenById.get(id);
-    const speed =
-      r?.warmMs && f?.status === 'ok' && f.warmMs ? `${round(f.warmMs / r.warmMs, 1)}×` : dash;
     out.push(
       row([
         id,
-        r?.set ?? f?.set ?? dash,
+        r?.set ?? shown.map((c) => c.byId.get(id)?.set).find(Boolean) ?? dash,
         r?.status ?? dash,
         num(r?.firstMs),
         num(r?.warmMs),
         num(r?.p95Ms),
         ...STAGES.map((s) => num(st?.[s])),
-        num(f?.status === 'ok' ? f.warmMs : null),
-        speed,
-        ...(hasBase ? [num(okWarm(baseById.get(id))), ratio(okWarm(baseById.get(id)), r)] : []),
-        ...(hasPele ? [num(okWarm(peleById.get(id))), ratio(okWarm(peleById.get(id)), r)] : []),
+        ...shown.flatMap((c) => {
+          const w = okWarm(c.byId.get(id));
+          return [num(w), ratio(w, r)];
+        }),
       ])
     );
   }
   out.push('');
+  return out;
+}
 
-  const unsupported = report.unsupported ?? [];
-  if (unsupported.length > 0) {
-    out.push('## Not run: no v13 package for the type', '');
-    out.push(row(['Diagram', 'Set', 'Type']), row(Array(3).fill('---')));
-    for (const u of unsupported) out.push(row([u.id, u.set, u.type]));
-    out.push('');
+/** The Node environment: a renderer summary and the per-diagram table. Reported only. */
+function nodeSection(report: BenchReport, node: NodeRuns): string[] {
+  const runs = node.renderers;
+  const common = commonIds(runs);
+  // speedup() reads `renderers`; point it at the Node runs.
+  const asReport: BenchReport = { ...report, renderers: runs };
+  const hasBase = runs.some((r) => r.renderer === 'v13-base' && r.status === 'ready');
+  const out: string[] = ['## Node', ''];
+  out.push(
+    `Runtime \`${node.runtime}\`. Each renderer runs in its own child process and is timed to the SVG string: no document and no layout, so these times are not comparable with the browser's. mermaid@12 needs a DOM and does not run here. Pele measures text with its built-in Arial table in Node, and with a canvas in the browser. Nothing here is gated.`,
+    ''
+  );
+  out.push(
+    `Σ columns and the geomean use the ${common.size} diagrams every ready renderer rendered.`,
+    ''
+  );
+  out.push(
+    row([
+      'Renderer',
+      'Version',
+      'Init',
+      'Counts',
+      'Σ warm (common)',
+      'Σ first (common)',
+      ...(hasBase ? ['vs v13-base (geomean)'] : []),
+    ]),
+    row(Array<string>(hasBase ? 7 : 6).fill('---'))
+  );
+  const notes: string[] = [];
+  for (const r of runs) {
+    const s = hasBase ? speedup(asReport, r.renderer, 'v13-base').value : null;
+    out.push(
+      row([
+        r.renderer,
+        r.version,
+        ms(r.initMs, 1),
+        counts(r.results),
+        ms(sum(r.results, common, 'warmMs')),
+        ms(sum(r.results, common, 'firstMs')),
+        ...(hasBase ? [s === null ? dash : `${s}×`] : []),
+      ])
+    );
+    if (r.error) notes.push(`- ${r.renderer}: ${r.error}`);
   }
-  return out.join('\n');
+  out.push('', ...notes, ...(notes.length > 0 ? [''] : []));
+  out.push('### Node diagrams', '');
+  out.push(
+    ...diagramsTable(runs, [
+      { id: 'v13-base', ratio: 'vs base' },
+      { id: 'pele', ratio: 'vs pele' },
+    ])
+  );
+  return out;
 }

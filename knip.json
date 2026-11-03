@@ -10,7 +10,13 @@
       "project": ["src/**/*.ts"]
     },
     "packages/bench": {
-      "entry": ["src/index.ts", "src/cli/*.ts", "src/runner/harness.ts", "src/runner/*-entry.ts"],
+      "entry": [
+        "src/index.ts",
+        "src/cli/*.ts",
+        "src/runner/harness.ts",
+        "src/runner/*-entry.ts",
+        "src/node/runner.ts"
+      ],
       "project": ["src/**/*.ts"],
       "ignoreDependencies": [
         "mermaid-v12",
