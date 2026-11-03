@@ -13,7 +13,7 @@
  * quotes and dropped semicolons (a per-offset mask). The lexer and {@link cook}, which builds
  * label text from a source range, consult them.
  */
-import { isSpace } from '@mermaid-js/core/parser-kit';
+import { isSpace, isWord } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 
 /** Mask bit: a `"` that v12 turned into `'` (an HTML attribute quote). */
@@ -34,8 +34,6 @@ export interface Hole extends Range {
 }
 
 const isNl = (c: number) => c === 10 || c === 13;
-const isWordCode = (c: number) =>
-  (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c === 95;
 
 export function sourceView(src: string, from: number, directives: readonly Range[]): SourceView {
   let mask: Uint8Array | undefined;
@@ -66,7 +64,7 @@ function markTagQuotes(src: string, from: number, mark: (i: number, bit: number)
   let gt = -1;
   let i = src.indexOf('<', from);
   while (i !== -1 && i + 1 < src.length) {
-    if (!isWordCode(src.charCodeAt(i + 1))) {
+    if (!isWord(src.charCodeAt(i + 1))) {
       i = src.indexOf('<', i + 1);
       continue;
     }
@@ -225,7 +223,7 @@ export function cook(src: string, start: number, end: number, view: SourceView):
     }
     if (c === 35) {
       let j = i + 1;
-      while (j < end && isWordCode(src.charCodeAt(j))) j++;
+      while (j < end && isWord(src.charCodeAt(j))) j++;
       if (j > i + 1 && j < end && src.charCodeAt(j) === 59 && !((mask?.[j] ?? 0) & DROP)) {
         const name = src.slice(i + 1, j);
         out += /^\d+$/.test(name) ? `&#${name};` : `&${name};`;

@@ -10,7 +10,7 @@ import {
   type PluginManifest,
 } from '@mermaid-js/core';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
-import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import { diagramStart, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { FIRST_PARTY } from './generated/registry.gen.ts';
 
 // The registry holds plugins of every model and layout type.
@@ -81,26 +81,6 @@ export interface Detected {
  */
 const builtIn = (name: string): boolean =>
   name === 'layered' || name === 'dagre' || name === 'elk' || name.startsWith('elk.');
-
-/** Offset of the diagram's first line: after front matter, directives, comments and blanks. */
-export function diagramStart(src: string, pre: PreprocessResult): number {
-  let i = pre.bodyStart;
-  let d = 0;
-  while (i < src.length) {
-    const dir = pre.directives[d];
-    if (dir && dir.range.start <= i) {
-      if (dir.range.end > i) i = dir.range.end;
-      d++;
-      continue;
-    }
-    const c = src.charCodeAt(i);
-    if (c === 32 || c === 9 || c === 10 || c === 13 || c === 12 || c === 11) i++;
-    else if (src.startsWith('%%', i) && src[i + 2] !== '{') {
-      while (i < src.length && src[i] !== '\n') i++;
-    } else break;
-  }
-  return i;
-}
 
 /** The plugin a loaded entry module holds: `manifest.export`, the default export, or itself. */
 function entryExport(module: unknown, manifest: PluginManifest): unknown {

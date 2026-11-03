@@ -367,7 +367,7 @@ interface LayoutMetrics {                       // today's layered constants; px
 }
 ```
 
-- `LayoutGraph` gains `metrics?: LayoutMetrics` (defaults to the px values, so callers that don't pass it keep today's output) and `grid?: number`. With `grid` set, the engine rounds node centres, box edges, ports and tracks to whole multiples of it; odd and even box widths are handled so the box edges, not the centre, land on the grid.
+- `LayoutGraph` gains `metrics?: LayoutMetrics` (defaults to the px values, so callers that don't pass it keep today's output) and `grid?: number`. With `grid` set, the engine rounds node centres, box edges, ports and tracks to whole multiples of it; odd and even box widths are handled so the box edges, not the centre, land on the grid. In grid mode each edge end gets its own cell on its side, off the corners and at a port pitch of 2; a side with more ends than that grows (wider for top and bottom, taller for left and right) and `LayoutModel` reports the grown size. Ends are never bundled (D140). The builder pre-sizes boxes from edge counts per side so growth is rare.
 - The px profile reproduces today's numbers exactly: introducing it must not change one SVG byte.
 - Shape geometry: with the px profile the builder sizes nodes with the flowchart's `shapeSize`; with the cell profile every shape is a text-form box (label + 2·`nodePad.x` + 2 wide, lines + 2·`nodePad.y` + 2 high), because the text forms (D82) are all boxes. This is the one place the builder branches on `units.id`.
 - Config px values (`nodeSpacing`, `rankSpacing`, `wrappingWidth`, `diagramPadding`) are divided by `pxPerUnit` and clamped to a minimum (node spacing ≥ 2, rank spacing ≥ 3 cells).
