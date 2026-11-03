@@ -248,7 +248,8 @@ export class FlowBuilder {
   accDescr = '';
   private readonly subgraphById = new Map<string, FlowModelSubgraph>();
   private readonly edgeById = new Map<string, FlowModelEdge>();
-  private readonly pairCount = new Map<string, number>();
+  /** Edges so far per start, then per end. */
+  private readonly pairCount = new Map<string, Map<string, number>>();
   private readonly members = new Set<string>();
   private subCount = 0;
   /** Limits already reported, so a breach is one diagnostic, not one per item. */
@@ -386,14 +387,15 @@ export class FlowBuilder {
       edge.text = unquote(info.text.text.trim());
       edge.labelType = labelType(info.text.type);
     }
-    const pair = start + '\0' + end;
-    const count = this.pairCount.get(pair) ?? 0;
+    let ends = this.pairCount.get(start);
+    if (!ends) this.pairCount.set(start, (ends = new Map<string, number>()));
+    const count = ends.get(end) ?? 0;
     if (id && !this.edgeById.has(id)) {
       edge.id = id;
       edge.isUserDefinedId = true;
     } else edge.id = `L_${start}_${end}_${count === 0 ? 0 : count + 1}`;
     this.edges.push(edge);
-    this.pairCount.set(pair, count + 1);
+    ends.set(end, count + 1);
     if (!this.edgeById.has(edge.id)) this.edgeById.set(edge.id, edge);
   }
 
