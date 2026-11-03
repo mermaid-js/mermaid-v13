@@ -70,6 +70,8 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
     out.push(row([g.requirement, g.title, g.status, g.enforced ? 'yes' : 'no', g.detail]));
   out.push('');
 
+  const baseRun = rendererRun(report, 'v13-base');
+  const hasBase = baseRun?.status === 'ready';
   out.push('## Renderers', '');
   out.push(
     `Σ columns and the geomean use the ${common.size} diagrams every ready renderer rendered. Counts are ok/error/timeout/missing.`,
@@ -86,10 +88,12 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
       'Σ warm (common)',
       'Σ first (common)',
       'vs v12-frozen (geomean)',
+      ...(hasBase ? ['vs v13-base (geomean)'] : []),
     ]),
-    row(Array(9).fill('---'))
+    row(Array(hasBase ? 10 : 9).fill('---'))
   );
   const notes: string[] = [];
+  const times = (v: number | null) => (v === null ? dash : `${v}×`);
   for (const r of report.renderers) {
     const s = speedup(report, r.renderer, 'v12-frozen').value;
     out.push(
@@ -102,7 +106,8 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
         counts(r.results),
         ms(sum(r.results, common, 'warmMs')),
         ms(sum(r.results, common, 'firstMs')),
-        s === null ? dash : `${s}×`,
+        times(s),
+        ...(hasBase ? [times(speedup(report, r.renderer, 'v13-base').value)] : []),
       ])
     );
     if (r.error) notes.push(`- ${r.renderer}: ${r.error}`);
@@ -115,11 +120,18 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
   const byId = (r: RendererRun | undefined) => new Map((r?.results ?? []).map((x) => [x.id, x]));
   const stageById = byId(stages);
   const frozenById = byId(frozen);
+  const baseById = byId(hasBase ? baseRun : undefined);
+  const peleRun = rendererRun(report, 'pele');
+  const hasPele = peleRun?.status === 'ready';
+  const peleById = byId(hasPele ? peleRun : undefined);
   const ids = (v13 ?? stages ?? frozen)?.results.map((r) => r.id) ?? [];
+  const okWarm = (x: DiagramResult | undefined) => (x?.status === 'ok' ? x.warmMs : null);
+  const ratio = (against: number | null, r: DiagramResult | undefined) =>
+    r?.warmMs && against ? `${round(against / r.warmMs, 1)}×` : dash;
 
   out.push('## Diagrams', '');
   out.push(
-    'Times are per render. Stage columns are medians from the instrumented `v13-stages` build.',
+    'Times are per render. Stage columns are medians from the instrumented `v13-stages` build. "Speedup" and "vs …" are that renderer\'s warm time over v13\'s (above 1× means v13 is faster).',
     ''
   );
   out.push(
@@ -133,8 +145,10 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
       ...STAGES.map(capital),
       'v12-frozen warm',
       'Speedup',
+      ...(hasBase ? ['v13-base warm', 'vs base'] : []),
+      ...(hasPele ? ['pele warm', 'vs pele'] : []),
     ]),
-    row(Array(12).fill('---'))
+    row(Array(12 + (hasBase ? 2 : 0) + (hasPele ? 2 : 0)).fill('---'))
   );
   const v13ById = byId(v13);
   for (const id of ids) {
@@ -154,6 +168,8 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
         ...STAGES.map((s) => num(st?.[s])),
         num(f?.status === 'ok' ? f.warmMs : null),
         speed,
+        ...(hasBase ? [num(okWarm(baseById.get(id))), ratio(okWarm(baseById.get(id)), r)] : []),
+        ...(hasPele ? [num(okWarm(peleById.get(id))), ratio(okWarm(peleById.get(id)), r)] : []),
       ])
     );
   }

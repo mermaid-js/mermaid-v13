@@ -11,10 +11,13 @@ export type StageTimes = Record<Stage, number | null>;
 /**
  * - `v13`: the production bundle (timing compiled out); its warm time is what R-PERF-3 compares.
  * - `v13-stages`: the same code built with the bench flag, for per-stage columns (R-PERF-5).
+ * - `v13-base`: the production bundle of the base commit (`--base`, default
+ *   `origin/mermaid-v13`), so a PR is compared with the branch it merges into. Informational.
  * - `v12-frozen`: `mermaid@12.2.0` with `layout: 'dagre'`, the R-PERF-3 baseline.
  * - `v12-current`: the newest `mermaid@12` with its own default layout, reported for information.
+ * - `pele`: the newest `pele@1` (Obsidian's Mermaid renderer), reported for information.
  */
-export type RendererId = 'v13' | 'v13-stages' | 'v12-frozen' | 'v12-current';
+export type RendererId = 'v13' | 'v13-stages' | 'v13-base' | 'v12-frozen' | 'v12-current' | 'pele';
 
 export type ResultStatus = 'ok' | 'error' | 'timeout' | 'missing';
 

@@ -12,6 +12,7 @@ import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 import { build } from 'esbuild';
+import { extractBase } from './base.ts';
 import { benchDefine, bundle, sizeOf, summarise } from './build.ts';
 import type { Bundle } from './build.ts';
 import type { Fixture } from './fixtures.ts';
@@ -27,6 +28,10 @@ export const SITE_DIR = join(PKG, 'dist', 'site');
 export interface Site {
   v13: Bundle;
   stages: Bundle;
+  /** The v13 bundle of the base commit, when `v13-base` was asked for and could be built. */
+  base?: Bundle & { version: string };
+  /** Why `v13-base` could not be built (unknown ref, or the commit fails to bundle). */
+  baseError?: string;
   /** URL path prefix → directory on disk. */
   roots: Record<string, string>;
 }
@@ -35,17 +40,42 @@ function moduleDir(alias: string): string {
   return realpathSync(join(PKG, 'node_modules', alias));
 }
 
-export function versionOf(id: RendererId): string {
-  const dir =
-    id === 'v13' || id === 'v13-stages'
-      ? join(PKG, '..', 'mermaid')
-      : moduleDir(id === 'v12-frozen' ? 'mermaid-v12-frozen' : 'mermaid-v12');
+const MODULE: Partial<Record<RendererId, string>> = {
+  'v12-frozen': 'mermaid-v12-frozen',
+  'v12-current': 'mermaid-v12',
+  pele: 'pele',
+};
+
+/** Version of an npm or working-tree renderer (`v13-base` carries its own, from the build). */
+export function versionOf(id: Exclude<RendererId, 'v13-base'>): string {
+  const alias = MODULE[id];
+  const dir = alias === undefined ? join(PKG, '..', 'mermaid') : moduleDir(alias);
   return (JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { version: string })
     .version;
 }
 
-/** Builds the runner script and both v13 bundles into `dist/site`. */
-export async function buildSite(): Promise<Site> {
+export interface SiteOptions {
+  /** Build `v13-base` from this ref (a branch, tag or sha); omitted, it is not built. */
+  baseRef?: string;
+}
+
+/** Builds the base commit's production bundle; a failure is reported, not thrown. */
+async function buildBase(ref: string): Promise<Pick<Site, 'base' | 'baseError'>> {
+  try {
+    const tree = extractBase(ref);
+    const built = await bundle({
+      entry: tree.entry,
+      outdir: join(SITE_DIR, 'v13-base'),
+      bench: false,
+    });
+    return { base: { ...built, version: tree.version } };
+  } catch (e) {
+    return { baseError: e instanceof Error ? e.message.split('\n')[0]! : String(e) };
+  }
+}
+
+/** Builds the runner script and the v13 bundles (working tree, and base if asked) into `dist/site`. */
+export async function buildSite(options: SiteOptions = {}): Promise<Site> {
   rmSync(SITE_DIR, { recursive: true, force: true });
   const src = (p: string) => fileURLToPath(new URL(p, import.meta.url));
   await build({
@@ -69,15 +99,19 @@ export async function buildSite(): Promise<Site> {
     outdir: join(SITE_DIR, 'v13-stages'),
     bench: true,
   });
+  const base = options.baseRef === undefined ? {} : await buildBase(options.baseRef);
   return {
     v13,
     stages,
+    ...base,
     roots: {
       '/harness/': join(SITE_DIR, 'harness'),
       '/r/v13/': join(SITE_DIR, 'v13'),
       '/r/v13-stages/': join(SITE_DIR, 'v13-stages'),
+      ...(base.base && { '/r/v13-base/': join(SITE_DIR, 'v13-base') }),
       '/r/v12-frozen/': join(moduleDir('mermaid-v12-frozen'), 'dist'),
       '/r/v12-current/': join(moduleDir('mermaid-v12'), 'dist'),
+      '/r/pele/': join(moduleDir('pele'), 'dist'),
     },
   };
 }
@@ -236,7 +270,21 @@ function fromReply(f: Fixture, reply: RenderReply): DiagramResult {
 
 /** Runs every fixture through one renderer. */
 export async function drive(o: DriveOptions): Promise<RendererRun> {
-  const version = versionOf(o.renderer);
+  if (o.renderer === 'v13-base' && !o.site.base) {
+    const error = o.site.baseError ?? 'v13-base was not built';
+    o.log(`  v13-base: not built: ${error}`);
+    return {
+      renderer: o.renderer,
+      version: 'unknown',
+      status: 'missing',
+      error,
+      readyAtMs: null,
+      initMs: null,
+      size: null,
+      results: o.fixtures.map((f) => result(f, 'missing', error)),
+    };
+  }
+  const version = o.renderer === 'v13-base' ? o.site.base!.version : versionOf(o.renderer);
   let runner = await openRunner(o);
   const base: Omit<RendererRun, 'status' | 'results'> = {
     renderer: o.renderer,

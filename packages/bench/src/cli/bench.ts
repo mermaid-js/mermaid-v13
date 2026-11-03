@@ -2,10 +2,14 @@
  * Headless benchmark: builds the runner site, renders the fixtures in Chromium through every
  * selected renderer, writes dist/reports/<stamp>.{json,md} and applies the gates.
  *
- *   pnpm --filter @mermaid-js/bench bench [--renderers v13,v13-stages,v12-frozen,v12-current]
+ *   pnpm --filter @mermaid-js/bench bench
+ *     [--renderers v13,v13-stages,v13-base,v12-frozen,v12-current,pele] [--base <ref>]
  *     [--set corpus,pele] [--filter text] [--tiers tiny,regular,large,huge] [--reps 10]
  *     [--budget 1000] [--timeout 30] [--headed] [--lift-limits false] [--strip false]
  *     [--mode auto|report|enforce] [--report-only speed,...] [--update-baseline]
+ *
+ * `v13-base` is v13 built from `--base` (else BENCH_BASE_REF, else origin/mermaid-v13): the
+ * branch a PR merges into. CI passes the PR merge commit's first parent.
  *
  * BENCH_RUNNER names the machine for baselines (O-4); BENCH_GATES sets the default mode;
  * BENCH_REPORT_ONLY lists gates that are reported but never fail the job.
@@ -13,6 +17,7 @@
 import { execFileSync } from 'node:child_process';
 import { chromium } from '@playwright/test';
 import { asciiSize } from '../ascii-size.ts';
+import { DEFAULT_BASE_REF, resolveRef } from '../base.ts';
 import { runnerId } from '../baseline.ts';
 import { buildSite, drive, serve } from '../driver.ts';
 import { loadFixtures } from '../fixtures.ts';
@@ -22,11 +27,28 @@ import { classifyFixtures } from '../support.ts';
 import { parseArgs } from './args.ts';
 import { gate, modeSetting, publish, reportOnlyGates } from './output.ts';
 
-const ALL: RendererId[] = ['v13', 'v13-stages', 'v12-frozen', 'v12-current'];
+const ALL: RendererId[] = ['v13', 'v13-stages', 'v13-base', 'v12-frozen', 'v12-current', 'pele'];
 const args = parseArgs(process.argv.slice(2));
-const renderers = (args.list('renderers') ?? ALL) as RendererId[];
-for (const r of renderers)
+const log = (line: string) => process.stdout.write(line + '\n');
+const baseRef = args.get('base') ?? process.env.BENCH_BASE_REF ?? DEFAULT_BASE_REF;
+const asked = args.list('renderers') as RendererId[] | undefined;
+for (const r of asked ?? [])
   if (!ALL.includes(r)) throw new Error(`Unknown renderer "${r}" (${ALL.join(', ')})`);
+/**
+ * Asked for by name, v13-base always runs (and reports why when its ref is missing). In the
+ * default "every renderer" set it runs only when its ref exists here: a shallow release
+ * checkout has no base branch to compare with.
+ */
+function defaultRenderers(): RendererId[] {
+  try {
+    resolveRef(baseRef);
+    return ALL;
+  } catch (e) {
+    log(`v13-base skipped: ${(e as Error).message}`);
+    return ALL.filter((r) => r !== 'v13-base');
+  }
+}
+const renderers = asked ?? defaultRenderers();
 const sets = args.list('set');
 const tiers = args.list('tiers');
 const filter = args.get('filter');
@@ -47,15 +69,14 @@ const options = {
 };
 const setting = modeSetting(args.get('mode'));
 const reportOnly = reportOnlyGates(args.get('report-only'));
-const log = (line: string) => process.stdout.write(line + '\n');
-
 // "Render works" is decided in Node through the public API, independent of the browser run.
 const pipeline = await detectPipeline(await import('mermaid'));
 log(`Pipeline ${pipeline.present ? 'present' : 'missing'}: ${pipeline.reason}`);
 if (unsupported.length > 0)
   log(`Not run, no v13 package: ${unsupported.map((u) => `${u.id} (${u.type})`).join(', ')}`);
 
-const site = await buildSite();
+const site = await buildSite(renderers.includes('v13-base') ? { baseRef } : {});
+if (site.base) log(`v13-base: ${baseRef} = ${site.base.version}`);
 const server = await serve(site);
 const browser = await chromium.launch({ headless: !args.flag('headed') });
 let commit: string | undefined;
@@ -71,7 +92,15 @@ try {
     runner: runnerId(),
     ...(commit !== undefined && { commit }),
     browser: `chromium ${browser.version()}`,
-    options: { ...options, renderers, fixtures: fixtures.length, sets, tiers, filter },
+    options: {
+      ...options,
+      renderers,
+      ...(renderers.includes('v13-base') && { base: baseRef }),
+      fixtures: fixtures.length,
+      sets,
+      tiers,
+      filter,
+    },
     pipeline,
     unsupported,
     // R-ASCII-9: the chunks only a text render loads, from the production build's import graph.

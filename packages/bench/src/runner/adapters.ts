@@ -26,7 +26,7 @@ const LIFTED = { maxTextSize: 10_000_000, maxEdges: 1_000_000 };
 // The URL is only known at run time, so the bundler leaves the import alone.
 const load = (id: RendererId): Promise<Record<string, unknown>> => import(RENDERER_ENTRY[id]);
 
-function v13(id: 'v13' | 'v13-stages'): Adapter {
+function v13(id: 'v13' | 'v13-stages' | 'v13-base'): Adapter {
   let render: RenderFn | undefined;
   let acc: Partial<Record<Stage, number>> = {};
   return {
@@ -88,6 +88,30 @@ function v12(id: 'v12-frozen' | 'v12-current'): Adapter {
   };
 }
 
+type PeleRender = (source: string, options?: Record<string, unknown>) => { svg: string };
+
+function pele(): Adapter {
+  let render: PeleRender;
+  let options: Record<string, unknown> = {};
+  return {
+    async init({ liftLimits }) {
+      render = (await load('pele')).render as PeleRender;
+      // Pele's defaults otherwise. It is synchronous and throws a PeleError on bad input.
+      if (liftLimits)
+        options = {
+          limit: LIFTED.maxTextSize,
+          maxEdges: LIFTED.maxEdges,
+          outputLimit: Number.MAX_SAFE_INTEGER,
+        };
+    },
+    render(source) {
+      // Pele is synchronous; the adapter contract is a promise.
+      return Promise.resolve(render(source, options).svg);
+    },
+  };
+}
+
 export function adapterFor(id: RendererId): Adapter {
-  return id === 'v13' || id === 'v13-stages' ? v13(id) : v12(id);
+  if (id === 'pele') return pele();
+  return id === 'v13' || id === 'v13-stages' || id === 'v13-base' ? v13(id) : v12(id);
 }

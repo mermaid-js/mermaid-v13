@@ -92,6 +92,38 @@ describe('markdown report', () => {
     expect(md).not.toContain('Not run');
   });
 
+  it('adds v13-base and pele columns only when those renderers ran', () => {
+    expect(md).not.toContain('vs v13-base');
+    expect(md).not.toContain('pele warm');
+    const run = (renderer: 'v13-base' | 'pele', version: string, warmMs: number) => ({
+      renderer,
+      version,
+      status: 'ready' as const,
+      readyAtMs: 5,
+      initMs: 1,
+      size: null,
+      results: [ok('corpus/a', warmMs)],
+    });
+    const withBoth: BenchReport = {
+      ...report,
+      renderers: [
+        ...report.renderers,
+        run('v13-base', '13.0.0-alpha.0 (abc123456)', 0.4),
+        run('pele', '1.13.0', 0.1),
+      ],
+    };
+    const out = formatMarkdown(
+      withBoth,
+      evaluateGates({ report: withBoth, baseline: undefined, mode: 'report', corpusSize: 1 })
+    );
+    // v13 at 0.2 ms: twice as fast as the base (0.4 ms), half as fast as pele (0.1 ms).
+    expect(out).toMatch(/\| v13 \| 13\.0\.0-alpha\.0 \|.*\| 100× \| 2× \|/);
+    expect(out).toMatch(/\| v13-base \| 13\.0\.0-alpha\.0 \(abc123456\) \|.*\| 1× \|/);
+    expect(out).toMatch(/\| v13-base warm \| vs base \| pele warm \| vs pele \|$/m);
+    const row = out.split('\n').find((l) => l.startsWith('| corpus/a'));
+    expect(row).toMatch(/\| 0\.4 \| 2× \| 0\.1 \| 0\.5× \|$/);
+  });
+
   it('says the gates are only reporting while the pipeline is missing', () => {
     expect(md).toContain('Gates: report');
     expect(md).toMatch(/\| R-PERF-1 \| Loaded size, core \+ flowchart \(gzip\) \| pass \| no \|/);
