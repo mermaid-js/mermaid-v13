@@ -65,13 +65,33 @@ jobs:
           cache: pnpm
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @mermaid-js/bench exec playwright install --with-deps chromium
-      # perf for the instruction counts (packages/bench/src/instruction-counts.ts). Without it
-      # they are skipped and the comment says so.
-      - name: Install perf and allow user-space counters
+      # Chromium: the browser download is cached per Playwright version; its system packages are
+      # installed only when it cannot start (the runner image usually has them already).
+      - name: Playwright version
+        id: playwright
+        run: echo "version=$(pnpm --filter @mermaid-js/bench exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-chromium
+      - name: Chromium
+        working-directory: packages/bench
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq linux-tools-common linux-tools-generic > /dev/null || true
+          pnpm exec playwright install chromium
+          if ! node -e "require('@playwright/test').chromium.launch().then((b) => b.close())"; then
+            echo "Chromium cannot start; installing its system packages"
+            pnpm exec playwright install-deps chromium
+          fi
+      # perf for the instruction counts (packages/bench/src/instruction-counts.ts): the image's own
+      # when it has one for this kernel, else from apt. Without it the counts are skipped.
+      - name: perf and user-space counters
+        run: |
+          if ls /usr/lib/linux-tools/*/perf > /dev/null 2>&1; then
+            echo "perf already installed: $(ls -d /usr/lib/linux-tools/*/)"
+          else
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq linux-tools-common linux-tools-generic > /dev/null || true
+          fi
           sudo sysctl -w kernel.perf_event_paranoid=1 || true
       - run: pnpm --filter @mermaid-js/bench pr --base HEAD^1
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
