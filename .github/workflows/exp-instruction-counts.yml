@@ -1,0 +1,44 @@
+name: Experiment - instruction counts
+
+# Throwaway experiment (not for merge): are CPU instruction counts stable enough on the bench
+# runner to compare v13 with its base? Runs only on pushes to this branch.
+on:
+  push:
+    branches: [exp/instruction-counts]
+
+permissions:
+  contents: read
+
+jobs:
+  instructions:
+    name: Instruction counts
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    timeout-minutes: 90
+    env:
+      BENCH_RUNNER: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+      - uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          cache: pnpm
+          node-version-file: '.node-version'
+      - run: pnpm install --frozen-lockfile
+      - name: Install valgrind and perf; allow user-space counters
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq valgrind linux-tools-common linux-tools-generic > /dev/null || true
+          sudo sysctl -w kernel.perf_event_paranoid=1 || true
+          uname -r
+          valgrind --version || true
+          ls /usr/lib/linux-tools/ || true
+          for p in /usr/lib/linux-tools/*/perf; do "$p" stat -e instructions:u -- true 2>&1 | tail -4; done || true
+      - name: Count instructions
+        working-directory: packages/bench
+        run: pnpm exec tsx --conditions=mermaid-source src/experiments/instructions.ts
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: instruction-counts
+          path: packages/bench/dist/experiments/instructions.md
+          if-no-files-found: ignore
