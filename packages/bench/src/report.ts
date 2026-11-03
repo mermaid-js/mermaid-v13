@@ -84,7 +84,16 @@ export interface BenchReport {
   browser?: string;
   options: Record<string, unknown>;
   pipeline: PipelineState;
+  /** Fixtures not run because their detected type has no v13 package. */
+  unsupported?: UnsupportedFixture[];
   renderers: RendererRun[];
+}
+
+export interface UnsupportedFixture {
+  id: string;
+  set: FixtureSet;
+  /** The type `detectType` returned. */
+  type: string;
 }
 
 /** Stored per-stage medians for one runner (R-PERF-7). */

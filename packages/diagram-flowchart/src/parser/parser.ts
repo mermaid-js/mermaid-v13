@@ -13,13 +13,16 @@
 import {
   AstIds,
   ExpectedTable,
+  inKindSet,
   isSpace,
   Kind,
+  kindSet,
   LineIndex,
   ParseState,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstCallback,
+  KindSet,
   ParseOptions,
   ParseResult,
   Range,
@@ -44,7 +47,7 @@ import { destructLink, FlowBuilder } from './model.ts';
 import type { DocItem, FlowModel, LabelType, LinkInfo } from './model.ts';
 import { cook, sourceView } from './source.ts';
 import type { SourceView } from './source.ts';
-import { KIND_COUNT, T } from './tokens.ts';
+import { T } from './tokens.ts';
 
 export interface FlowParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -63,12 +66,6 @@ export interface FlowParseOptions extends ParseOptions {
 
 export type FlowParseResult = ParseResult<FlowModel, FlowDocument>;
 
-const set = (...kinds: number[]) => {
-  const s = new Uint8Array(KIND_COUNT);
-  for (const k of kinds) s[k] = 1;
-  return s;
-};
-
 const ID_KINDS = [
   T.Num,
   T.NodeString,
@@ -82,8 +79,8 @@ const ID_KINDS = [
   T.Mult,
   T.UnicodeText,
 ];
-const ID = set(...ID_KINDS);
-const ALPHANUM = set(
+const ID = kindSet(...ID_KINDS);
+const ALPHANUM = kindSet(
   T.Num,
   T.UnicodeText,
   T.NodeString,
@@ -96,7 +93,7 @@ const ALPHANUM = set(
   T.Brkt,
   T.Mult
 );
-const NO_TAGS = set(
+const NO_TAGS = kindSet(
   T.Num,
   T.NodeString,
   T.Space,
@@ -119,10 +116,10 @@ const NO_TAGS = set(
   T.Up,
   T.StartLink
 );
-const STYLE_PART = set(T.Num, T.NodeString, T.Colon, T.Space, T.Brkt, T.Style);
-const TEXT_PART = set(T.Text, T.TagStart, T.TagEnd, T.UnicodeText);
-const EDGE_PART = set(T.EdgeText, T.UnicodeText);
-const NONE = set();
+const STYLE_PART = kindSet(T.Num, T.NodeString, T.Colon, T.Space, T.Brkt, T.Style);
+const TEXT_PART = kindSet(T.Text, T.TagStart, T.TagEnd, T.UnicodeText);
+const EDGE_PART = kindSet(T.EdgeText, T.UnicodeText);
+const NONE = kindSet();
 const DIRECTIONS = ['TB', 'BT', 'RL', 'LR', 'TD'];
 
 const LINE_END = [Kind.Newline, T.Semi, T.Eof];
@@ -356,7 +353,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     while (e < src.length && src[e] !== '\n' && src[e] !== '\r' && src[e] !== ';') e++;
     return e;
   };
-  const LEXER_MODE = set(
+  const LEXER_MODE = kindSet(
     T.Text,
     T.EdgeText,
     T.Str,
@@ -410,7 +407,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     // The tokens after an error may come from a lexer mode the bad text opened (`>` starts a
     // label, for one): lex again from the next statement boundary.
     restartAt(
-      opens.length > 0 || LEXER_MODE[k] === 1 || (k === Kind.Error && raw() === '#')
+      opens.length > 0 || inKindSet(LEXER_MODE, k) || (k === Kind.Error && raw() === '#')
         ? lineBreakAfter(where.start)
         : boundaryAfter(where.start)
     );
@@ -447,7 +444,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
           : (hintFor(raw()) ??
             (k === T.End || k === T.Graph || k === T.Subgraph
               ? `\`${raw().trim()}\` is a keyword: use another node id, and \`${raw().trim()}\` as its label if needed, e.g. \`X[${raw().trim()}]\``
-              : want === LINE_END && ID[k] === 1
+              : want === LINE_END && inKindSet(ID, k)
                 ? 'put each statement on its own line, or separate them with `;`'
                 : stmtHint)));
     if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
@@ -472,10 +469,10 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     return s;
   };
 
-  const run = (table: Uint8Array, want: readonly number[]): [string, Range] => {
-    if (table[kind()] !== 1) fail(want);
+  const run = (table: KindSet, want: readonly number[]): [string, Range] => {
+    if (!inKindSet(table, kind())) fail(want);
     const from = i++;
-    while (table[kind()] === 1) i++;
+    while (inKindSet(table, kind())) i++;
     return [runText(from, i), span(from)];
   };
   const idString = () => run(ID, [T.NodeString]);
@@ -486,8 +483,8 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
    * a first text token, then more text tokens of `part` (jison's left-recursive `text`).
    */
   const labelRun = (
-    part: Uint8Array,
-    first: Uint8Array,
+    part: KindSet,
+    first: KindSet,
     want: readonly number[],
     strType: LabelType
   ): FlowLabelNode => {
@@ -498,11 +495,11 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
       type = k === T.Str ? strType : 'markdown';
       i++;
       while (kind() === k && gap[i]) i++;
-    } else if (first[k] === 1) {
+    } else if (inKindSet(first, k)) {
       type = 'text';
       i++;
     } else return fail(want);
-    while (part[kind()] === 1) i++;
+    while (inKindSet(part, kind())) i++;
     return { text: runText(from, i), type, range: span(from) };
   };
   const text = () => labelRun(TEXT_PART, TEXT_PART, [T.Text, T.Str], 'string');
@@ -792,9 +789,9 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
   // ---- other statements ---------------------------------------------------------------
 
   const style = (): string => {
-    if (STYLE_PART[kind()] !== 1) fail([T.NodeString]);
+    if (!inKindSet(STYLE_PART, kind())) fail([T.NodeString]);
     const from = i++;
-    while (STYLE_PART[kind()] === 1) i++;
+    while (inKindSet(STYLE_PART, kind())) i++;
     return runText(from, i);
   };
 
@@ -1010,7 +1007,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
         return value;
       }
       default: {
-        if (ID[t] !== 1) fail(STATEMENT_START);
+        if (!inKindSet(ID, t)) fail(STATEMENT_START);
         chain = [];
         const nodes = vertexStatement(collect);
         const r = span(from);

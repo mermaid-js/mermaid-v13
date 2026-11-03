@@ -86,6 +86,3 @@ export const T = {
   /** The `}` closing shape data (jison drops it). */
   ShapeDataEnd: F + 74,
 } as const;
-
-/** One past the largest flowchart kind, for lookup tables. */
-export const KIND_COUNT = F + 75;

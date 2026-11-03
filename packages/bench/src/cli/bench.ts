@@ -16,6 +16,7 @@ import { buildSite, drive, serve } from '../driver.ts';
 import { loadFixtures } from '../fixtures.ts';
 import { detectPipeline } from '../pipeline.ts';
 import type { BenchReport, RendererId } from '../report.ts';
+import { classifyFixtures } from '../support.ts';
 import { parseArgs } from './args.ts';
 import { gate, modeSetting, publish } from './output.ts';
 
@@ -27,11 +28,13 @@ for (const r of renderers)
 const sets = args.list('set');
 const tiers = args.list('tiers');
 const filter = args.get('filter');
-const fixtures = loadFixtures().filter(
-  (f) =>
-    (!sets || sets.includes(f.set)) &&
-    (!tiers || tiers.includes(f.tier)) &&
-    (!filter || f.id.includes(filter))
+const { supported: fixtures, unsupported } = classifyFixtures(
+  loadFixtures().filter(
+    (f) =>
+      (!sets || sets.includes(f.set)) &&
+      (!tiers || tiers.includes(f.tier)) &&
+      (!filter || f.id.includes(filter))
+  )
 );
 const options = {
   reps: args.num('reps', 10),
@@ -46,6 +49,8 @@ const log = (line: string) => process.stdout.write(line + '\n');
 // "Render works" is decided in Node through the public API, independent of the browser run.
 const pipeline = await detectPipeline(await import('mermaid'));
 log(`Pipeline ${pipeline.present ? 'present' : 'missing'}: ${pipeline.reason}`);
+if (unsupported.length > 0)
+  log(`Not run, no v13 package: ${unsupported.map((u) => `${u.id} (${u.type})`).join(', ')}`);
 
 const site = await buildSite();
 const server = await serve(site);
@@ -65,6 +70,7 @@ try {
     browser: `chromium ${browser.version()}`,
     options: { ...options, renderers, fixtures: fixtures.length, sets, tiers, filter },
     pipeline,
+    unsupported,
     renderers: [],
   };
   for (const renderer of renderers) {
