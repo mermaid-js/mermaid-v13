@@ -120,6 +120,31 @@ describe('layered: grid (cells)', () => {
     }
   });
 
+  // Final #37 review (golden `subgraph_three_levels_nested`): a frame its title makes wider than
+  // its content keeps the content centred, the same blank cells left and right.
+  it.each(['LR', 'TB'] as const)('centres a member in a frame widened by its title (%s)', (dir) => {
+    const graph = FIXTURES.find((f) => f.name === 'title over a group edge end TB')!.graph;
+    const g: LayoutGraph = {
+      ...graph,
+      direction: dir,
+      nodes: [{ id: 'A', width: 5, height: 3, parent: 'level3' }],
+      edges: [],
+      groups: [
+        {
+          id: 'level3',
+          padding: { top: 0, right: 1, bottom: 1, left: 1 },
+          title: { width: 6, height: 1 },
+        },
+      ],
+    };
+    const model = layered(g);
+    const frame = model.groups.get('level3')!;
+    const a = model.nodes.get('A')!;
+    const left = a.x - a.width / 2 - (frame.x - frame.width / 2);
+    const right = frame.x + frame.width / 2 - (a.x + a.width / 2);
+    expect(left).toBe(right);
+  });
+
   it('keeps one-line boxes in a chain at their size', () => {
     const fixture = FIXTURES.find((f) => f.name === 'chain TB')!;
     const model = layered(fixture.graph);

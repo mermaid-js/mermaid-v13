@@ -886,7 +886,11 @@ export function compoundLayout(
       const contentH = vertical ? size.height : size.width;
       const padX = group ? group.padX : 0;
       const padTop = group ? group.padTop : 0;
-      const boxW = Math.max(contentW + 2 * padX, group ? group.minW : 0);
+      let boxW = Math.max(contentW + 2 * padX, group ? group.minW : 0);
+      // On the grid a frame wider than its content (a long title) keeps the content centred:
+      // the slack is a whole number of cells either side.
+      if (grid && level.items.length > 0 && Math.round((boxW - contentW) / grid) % 2 !== 0)
+        boxW += grid;
       const boxH = contentH + padTop + (group ? group.padBottom : 0);
       const offX = grid ? floorTo((boxW - contentW) / 2, grid) : (boxW - contentW) / 2;
       const offY = padTop;
