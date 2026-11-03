@@ -22,7 +22,39 @@ function problems(graph: LayoutGraph, model: LayoutModel): string[] {
   return out;
 }
 
+// Route cells on a group's top border row under its title (cells round(x − w/2 + ½) on, `width`
+// of them): the title is text, so no edge may end or cross there.
+function underTitles(graph: LayoutGraph, model: LayoutModel): string[] {
+  const out: string[] = [];
+  for (const g of graph.groups) {
+    const placed = model.groups.get(g.id)!;
+    if (!g.title || g.title.width <= 0) continue;
+    const row = placed.y - placed.height / 2 + 0.5;
+    const lo = Math.round(placed.title.x - g.title.width / 2 + 0.5);
+    const hi = lo + g.title.width - 1;
+    for (const [id, e] of model.edges) {
+      const p = e.points;
+      for (let i = 0; i < p.length; i++) {
+        const a = p[Math.max(0, i - 1)]!;
+        const b = p[i]!;
+        const xs = [Math.min(a.x, b.x), Math.max(a.x, b.x)];
+        const ys = [Math.min(a.y, b.y), Math.max(a.y, b.y)];
+        if (ys[0]! <= row && row <= ys[1]! && xs[0]! <= hi && lo <= xs[1]!)
+          out.push(`edge '${id}' meets the title of '${g.id}'`);
+      }
+    }
+  }
+  return [...new Set(out)];
+}
+
 describe('layered: grid (cells)', () => {
+  it.each([...FIXTURES, ...randomGroupFixtures(200)].map((f) => [f.name, f] as const))(
+    '%s keeps edges off group titles',
+    (_, fixture) => {
+      expect(underTitles(fixture.graph, layered(fixture.graph))).toEqual([]);
+    }
+  );
+
   it.each(FIXTURES.map((f) => [f.name, f] as const))('%s lies on the grid', (_, fixture) => {
     expect(problems(fixture.graph, layered(fixture.graph))).toEqual([]);
   });
