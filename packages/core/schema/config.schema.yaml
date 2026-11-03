@@ -151,6 +151,52 @@ properties:
             Tailwind-50 × 12 in `redux-color`; empty in `redux-dark-color` and every other theme
             (D151). Read as literal colours, not CSS variables. An unsafe colour drops the whole
             list with `THEME_VARIABLE_DROPPED`.
+      arrowheadGap:
+        description: |
+          Space in px between a point arrowhead's tip and the node outline.
+        type: [number, string]
+        x-mermaid: &arrowhead
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            Arrowhead geometry (D152): a number or a px length, redux / classic value in the
+            `themeVariables` notes. Read as a number at render time, so overriding its CSS
+            variable has no effect.
+      arrowheadLength:
+        description: |
+          Length in px of a point arrowhead, from tip to base.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      arrowheadWidth:
+        description: |
+          Width in px of a point arrowhead's base.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      circleArrowheadSize:
+        description: |
+          Diameter in px of a circle arrowhead.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      circleArrowheadGap:
+        description: |
+          Space in px between a circle arrowhead and the node outline.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      crossArrowheadSize:
+        description: |
+          Side in px of the square a cross arrowhead's arms span.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      crossArrowheadGap:
+        description: |
+          Space in px between a cross arrowhead and the node outline.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      crossArrowheadStrokeWidth:
+        description: |
+          Stroke width in px of a cross arrowhead's arms.
+        type: [number, string]
+        x-mermaid: *arrowhead
   themeCSS:
     type: string
     x-mermaid:

@@ -2,6 +2,7 @@
  * `dark`: v12 `theme-dark.js`.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { CLASSIC_ARROWHEADS } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'dark',
@@ -24,6 +25,7 @@ const theme: ThemeSpec = {
     spacing1: 4,
     spacing2: 8,
     spacing3: 16,
+    ...CLASSIC_ARROWHEADS,
   },
   values: {
     textColor: '#cccccc',

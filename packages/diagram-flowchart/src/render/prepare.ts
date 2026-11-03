@@ -9,7 +9,7 @@ import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { FlowModel, FlowModelEdge, FlowModelSubgraph, FlowVertex } from '../parser/index.ts';
 import type { FlowRenderContext } from './context.ts';
-import { curveKind, markerTrim, type CurveKind } from './edges.ts';
+import { curveKind, type CurveKind } from './edges.ts';
 import { canonicalShape, shapeHasLabel, shapeSize, shapeSpan, type Pads } from './shapes.ts';
 
 export interface NodeView {
@@ -61,6 +61,9 @@ const TITLE_PAD = 16;
 const EDGE_WRAP = 200;
 const IMG = 80;
 const ICON = 48;
+// Room the layout leaves in a crossed gap for an arrowhead (v13's former 8px point less 1). It
+// stays theme-independent, so the layout does not move with the arrowhead variables.
+const HEAD_ROOM = 7;
 
 const DIRS: Readonly<Record<string, Dir>> = { TB: 'TB', TD: 'TB', BT: 'BT', LR: 'LR', RL: 'RL' };
 const dirOf = (d: string | undefined): Dir | undefined => (d ? DIRS[d.toUpperCase()] : undefined);
@@ -331,7 +334,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     spacing: settings.spacing,
     diagramPadding: settings.diagramPadding,
     routing: curve === 'linear' ? 'straight' : curve === 'curved' ? 'curved' : 'stepped',
-    headRoom: markerTrim('arrow_point'),
+    headRoom: HEAD_ROOM,
   };
   return { graph, groups, nodes, edges, pads };
 }

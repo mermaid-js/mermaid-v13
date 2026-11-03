@@ -4,8 +4,37 @@
 // cspell:ignore kepano
 import type { RoutePoint } from '@mermaid-js/core/layout';
 import type { Attrs, PathData, SvgWriter } from '@mermaid-js/core/svg';
+import type { Theme } from '@mermaid-js/core/theme';
 
-export const ARROW = 8;
+/**
+ * Arrowhead geometry for one render, from the theme (D152). A gap is the space between the
+ * node outline and the nearest point of the arrowhead.
+ */
+export interface Arrowheads {
+  readonly gap: number;
+  readonly length: number;
+  readonly width: number;
+  readonly circleSize: number;
+  readonly circleGap: number;
+  readonly crossSize: number;
+  readonly crossGap: number;
+  readonly crossStrokeWidth: number;
+}
+
+/** Reads the arrowhead variables as numbers (they never become CSS variables). */
+export function arrowheads(theme: Theme): Arrowheads {
+  return {
+    gap: theme.number('arrowheadGap'),
+    length: theme.number('arrowheadLength'),
+    width: theme.number('arrowheadWidth'),
+    circleSize: theme.number('circleArrowheadSize'),
+    circleGap: theme.number('circleArrowheadGap'),
+    crossSize: theme.number('crossArrowheadSize'),
+    crossGap: theme.number('crossArrowheadGap'),
+    crossStrokeWidth: theme.number('crossArrowheadStrokeWidth'),
+  };
+}
+
 // How far an edge runs straight before a marker at its end, where it has the room.
 const LEAD = 6;
 // The most a corner is rounded by in a stepped route.
@@ -43,14 +72,18 @@ export interface EdgePath {
   edy: number;
 }
 
-/** How much an end marker of this v12 type shortens the line. */
-export function markerTrim(type: string): number {
+/**
+ * How much an end marker of this v12 type shortens the line from the node outline: past the
+ * gap and under the arrowhead, so the line never shows between the tip and the node. That
+ * also keeps dashed and dotted lines from needing a special case.
+ */
+export function markerTrim(type: string, a: Arrowheads): number {
   return type === 'arrow_point'
-    ? ARROW - 1
+    ? a.gap + Math.max(0, a.length - 1)
     : type === 'arrow_circle'
-      ? ARROW
+      ? a.circleGap + a.circleSize / 2
       : type === 'arrow_cross'
-        ? 4
+        ? a.crossGap + a.crossSize / 2
         : 0;
 }
 
@@ -217,7 +250,10 @@ export function routePath(
   return { d: b.done(), sx, sy, sdx: -sdx, sdy: -sdy, ex, ey, edx, edy };
 }
 
-/** Draws a v12 end marker whose tip is at (x, y), pointing along (dx, dy). */
+/**
+ * Draws a v12 end marker for a line that meets the node outline at (x, y), pointing along
+ * (dx, dy). The marker sits its gap before the outline.
+ */
 export function marker(
   w: SvgWriter,
   type: string,
@@ -225,38 +261,44 @@ export function marker(
   y: number,
   dx: number,
   dy: number,
-  a: Attrs
+  attrs: Attrs,
+  a: Arrowheads
 ): void {
   const nx = -dy;
   const ny = dx;
   if (type === 'arrow_point') {
-    const bx = x - dx * ARROW;
-    const by = y - dy * ARROW;
-    const half = ARROW * 0.42;
+    const tx = x - dx * a.gap;
+    const ty = y - dy * a.gap;
+    const bx = tx - dx * a.length;
+    const by = ty - dy * a.length;
+    const half = a.width / 2;
     const d = w
       .path()
-      .moveTo(x, y)
+      .moveTo(tx, ty)
       .lineTo(bx + nx * half, by + ny * half)
       .lineTo(bx - nx * half, by - ny * half)
       .close()
       .done();
-    w.leaf('path', { class: 'marker', d, ...a, stroke: 'none' });
+    w.leaf('path', { class: 'marker', d, ...attrs, stroke: 'none' });
   } else if (type === 'arrow_circle') {
+    const r = a.circleSize / 2;
     w.leaf('circle', {
       class: 'marker',
-      cx: x - dx * 4,
-      cy: y - dy * 4,
-      r: 3.5,
-      ...a,
+      cx: x - dx * (a.circleGap + r),
+      cy: y - dy * (a.circleGap + r),
+      r,
+      ...attrs,
       stroke: 'none',
     });
   } else if (type === 'arrow_cross') {
-    const cx = x - dx * 4;
-    const cy = y - dy * 4;
-    const ux = (dx + nx) * 3.5;
-    const uy = (dy + ny) * 3.5;
-    const vx = (dx - nx) * 3.5;
-    const vy = (dy - ny) * 3.5;
+    // The arms are the diagonals of a square of side `crossSize`, `crossGap` from the outline.
+    const half = a.crossSize / 2;
+    const cx = x - dx * (a.crossGap + half);
+    const cy = y - dy * (a.crossGap + half);
+    const ux = (dx + nx) * half;
+    const uy = (dy + ny) * half;
+    const vx = (dx - nx) * half;
+    const vy = (dy - ny) * half;
     const d = w
       .path()
       .moveTo(cx - ux, cy - uy)
@@ -264,6 +306,11 @@ export function marker(
       .moveTo(cx - vx, cy - vy)
       .lineTo(cx + vx, cy + vy)
       .done();
-    w.leaf('path', { class: 'marker', d, stroke: a.fill, 'stroke-width': 1.5 });
+    w.leaf('path', {
+      class: 'marker',
+      d,
+      stroke: attrs.fill,
+      'stroke-width': a.crossStrokeWidth,
+    });
   }
 }

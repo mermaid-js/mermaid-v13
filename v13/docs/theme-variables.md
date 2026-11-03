@@ -48,6 +48,14 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `spacing1` | `--mermaid-spacing1` | token | length | | | all | core, flowchart |
 | `spacing2` | `--mermaid-spacing2` | token | length | | | all | core, flowchart |
 | `spacing3` | `--mermaid-spacing3` | token | length | | | all | core, flowchart |
+| `arrowheadGap` | `--mermaid-arrowheadGap` | token | length | | | all | flowchart |
+| `arrowheadLength` | `--mermaid-arrowheadLength` | token | length | | | all | flowchart |
+| `arrowheadWidth` | `--mermaid-arrowheadWidth` | token | length | | | all | flowchart |
+| `circleArrowheadSize` | `--mermaid-circleArrowheadSize` | token | length | | | all | flowchart |
+| `circleArrowheadGap` | `--mermaid-circleArrowheadGap` | token | length | | | all | flowchart |
+| `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart |
+| `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart |
+| `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart |
 
 ## Palettes
 

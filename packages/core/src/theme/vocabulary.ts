@@ -34,6 +34,24 @@ export const BASE_VARIABLES = [
 
 export type BaseVariable = (typeof BASE_VARIABLES)[number];
 
+/**
+ * Arrowhead geometry (D152): sizes and gaps of the point, circle and cross arrowheads, read
+ * as numbers at render time (`Theme.number`), so overriding their CSS variables has no effect.
+ * Redux themes carry v12 `look: neo` values, classic themes v12 classic values.
+ */
+export const ARROWHEAD_VARIABLES = [
+  'arrowheadGap',
+  'arrowheadLength',
+  'arrowheadWidth',
+  'circleArrowheadSize',
+  'circleArrowheadGap',
+  'crossArrowheadSize',
+  'crossArrowheadGap',
+  'crossArrowheadStrokeWidth',
+] as const;
+
+export type ArrowheadVariable = (typeof ARROWHEAD_VARIABLES)[number];
+
 /** Shape tokens (R-THEME-11): sizes every diagram type reads instead of hard-coding them. */
 export const TOKEN_VARIABLES = [
   'strokeWidth',
@@ -43,6 +61,7 @@ export const TOKEN_VARIABLES = [
   'spacing1',
   'spacing2',
   'spacing3',
+  ...ARROWHEAD_VARIABLES,
 ] as const;
 
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
@@ -112,4 +131,13 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   spacing1: def('g1', 'length', CF),
   spacing2: def('g2', 'length', CF),
   spacing3: def('g3', 'length', CF),
+  // arrowhead geometry (numbers only)
+  arrowheadGap: def('ag', 'length', F),
+  arrowheadLength: def('al', 'length', F),
+  arrowheadWidth: def('aw', 'length', F),
+  circleArrowheadSize: def('ocs', 'length', F),
+  circleArrowheadGap: def('ocg', 'length', F),
+  crossArrowheadSize: def('xs', 'length', F),
+  crossArrowheadGap: def('xg', 'length', F),
+  crossArrowheadStrokeWidth: def('xw', 'length', F),
 };

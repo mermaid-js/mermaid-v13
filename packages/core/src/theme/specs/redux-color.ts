@@ -6,6 +6,7 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { TAILWIND_300, TAILWIND_400, TAILWIND_50 } from './palettes.ts';
+import { NEO_ARROWHEADS } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'redux-color',
@@ -28,6 +29,7 @@ const theme: ThemeSpec = {
     spacing1: 4,
     spacing2: 8,
     spacing3: 16,
+    ...NEO_ARROWHEADS,
   },
   values: {
     primaryBorderColor: '#28253d',

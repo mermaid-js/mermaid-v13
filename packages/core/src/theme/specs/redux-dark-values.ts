@@ -3,6 +3,7 @@
  * `theme-redux-dark-color.js` at 12.2.0 (identical for every variable v13 reads).
  */
 import type { ThemeSpec } from '../spec.ts';
+import { NEO_ARROWHEADS } from './geometry.ts';
 
 export const REDUX_DARK_BASE: ThemeSpec['base'] = {
   primaryColor: '#1f2020',
@@ -23,6 +24,7 @@ export const REDUX_DARK_TOKENS: ThemeSpec['tokens'] = {
   spacing1: 4,
   spacing2: 8,
   spacing3: 16,
+  ...NEO_ARROWHEADS,
 };
 
 export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {

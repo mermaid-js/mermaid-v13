@@ -17,7 +17,7 @@ import {
 } from '@mermaid-js/core/svg';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext } from './context.ts';
-import { marker, markerTrim, routePath } from './edges.ts';
+import { arrowheads, marker, markerTrim, routePath } from './edges.ts';
 import { prepare, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, type Pads } from './shapes.ts';
 
@@ -83,6 +83,7 @@ export function renderFlowchart(
   const securityLevel = ctx.securityLevel ?? 'default';
   const prefix = ctx.idPrefix ?? 'mermaid';
   const labelled = flow.edges.some((e) => e.label.width > 0);
+  const heads = arrowheads(theme);
 
   // Every theme variable the body uses is looked up here, before the root is written, so the
   // root `style` can declare exactly the aliases used (theme.rootStyle()).
@@ -213,8 +214,8 @@ export function renderFlowchart(
         w,
         points,
         e.source === e.target ? 'rounded' : e.curve,
-        markerTrim(e.start),
-        markerTrim(e.end)
+        markerTrim(e.start, heads),
+        markerTrim(e.end, heads)
       );
       w.leaf('path', {
         d: path.d,
@@ -224,8 +225,8 @@ export function renderFlowchart(
         fill: 'none',
       });
       const head: Attrs = { fill: (e.style.shape.stroke as Paint | undefined) ?? P.arrow };
-      marker(w, e.start, path.sx, path.sy, path.sdx, path.sdy, head);
-      marker(w, e.end, path.ex, path.ey, path.edx, path.edy, head);
+      marker(w, e.start, path.sx, path.sy, path.sdx, path.sdy, head, heads);
+      marker(w, e.end, path.ex, path.ey, path.edx, path.edy, head, heads);
     }
     w.close();
   }

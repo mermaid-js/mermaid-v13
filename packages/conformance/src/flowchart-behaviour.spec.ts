@@ -298,7 +298,8 @@ describe('flowchart render: features', () => {
         return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r;
       };
     };
-    // The arrowhead's first point is its tip, where the edge meets the shape.
+    // The arrowhead's first point is its tip, where the edge meets the shape when the theme's
+    // arrowheadGap is 0.
     const tipOf = (tree: SvgView, edge: SvgElement): [number, number] => {
       const head = tree.children(edge).find((c) => tree.getAttr(c, 'class') === 'marker')!;
       const m = /^M([-\d.]+),([-\d.]+)/.exec(tree.getAttr(head, 'd')!)!;
@@ -308,7 +309,11 @@ describe('flowchart render: features', () => {
     it('ends edges on the card outline', async () => {
       const text =
         'flowchart TD\n  A & B & C --> P\n  subgraph grp[A wide collapsed group title]\n    P\n  end\n  grp@{ view: collapsed }';
-      const { tree, node, rects } = await parts(text, { theme: 'redux' });
+      // With no arrowhead gap, so the tip is where the edge meets the shape.
+      const { tree, node, rects } = await parts(text, {
+        theme: 'redux',
+        themeVariables: { arrowheadGap: 0 },
+      });
       const off = outline(tree, node, rects[0]!);
       for (const from of ['A', 'B', 'C'])
         expect(Math.abs(off(...tipOf(tree, byAst(tree, `e:${from}>P`)[0]!)))).toBeLessThan(0.5);
@@ -317,7 +322,7 @@ describe('flowchart render: features', () => {
     it('ends an edge that reaches a rounded corner on the curve, not the layout box', async () => {
       // A postLayout hook brings the edge down 3px in from the card's top-right corner.
       const m = createMermaid();
-      m.initialize({ deterministic: true, theme: 'redux' });
+      m.initialize({ deterministic: true, theme: 'redux', themeVariables: { arrowheadGap: 0 } });
       await m.registerExternalDiagrams([
         {
           id: 'to-the-corner',
@@ -411,6 +416,102 @@ describe('flowchart render: features', () => {
     expect(big.tree.getAttr(text, 'fill')).toBe('#ff0000');
     expect(big.tree.getAttr(text, 'font-size')).toBe('40px');
   });
+});
+
+describe('flowchart render: arrowheads from theme variables (D152)', () => {
+  // v12 12.2.0 markers.js and lineWithOffset.ts, worked out by hand: neo `pointEnd-margin` is
+  // a 11.5×14 viewBox met into 10.5×14 (10.5 long, 14×10.5/11.5 wide) with its tip 4 before
+  // the outline; classic `pointEnd` is 10×10 into 8×8 with its tip on the outline. Circles
+  // are 14 (neo, refX 12.25 → gap 2.25×1.4) and 11 (classic, refX 11 → gap 1×1.1). Crosses
+  // are 12 (neo, refX 17.7 → gap 3.7×0.8, stroke 2.5) and 11 (classic, refX 12 → gap 2,
+  // stroke 2).
+  const nums = (d: string): number[] => [...d.matchAll(/-?\d+(?:\.\d+)?/g)].map((m) => +m[0]);
+  const near = (n: number) => expect.closeTo(n, 1);
+
+  async function arrowhead(edge: string, theme: string, themeVariables?: Record<string, unknown>) {
+    const { svg, tree } = await draw(`flowchart TD\n  A ${edge} B`, {
+      config: { theme, themeVariables, output: { cssVariables: false } } as InitializeConfig,
+    });
+    const node = byAst(tree, 'n:B')[0]!;
+    const ty = nums(tree.getAttr(node, 'transform')!)[1]!;
+    const shape = tree.children(node)[0]!;
+    const outline = ty + Number(tree.getAttr(shape, 'y'));
+    const head = tree.find({ class: 'marker' })[0]!;
+    return { svg, tree, head, outline };
+  }
+
+  async function point(theme: string, themeVariables?: Record<string, unknown>) {
+    const { svg, tree, head, outline } = await arrowhead('-->', theme, themeVariables);
+    const [tx, ty, ax, ay, bx, by] = nums(tree.getAttr(head, 'd')!) as [
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+    ];
+    return {
+      svg,
+      gap: outline - ty,
+      length: Math.hypot(tx - (ax + bx) / 2, ty - (ay + by) / 2),
+      width: Math.hypot(ax - bx, ay - by),
+    };
+  }
+
+  it('stops a point arrowhead 4px before the node in redux-color, v12-neo sized', async () => {
+    const p = await point('redux-color');
+    expect(p.gap).toEqual(near(4));
+    expect(p.length).toEqual(near(10.5));
+    expect(p.width).toEqual(near(12.78));
+  });
+
+  it('puts a point arrowhead tip on the node in default, v12-classic sized', async () => {
+    const p = await point('default');
+    expect(p.gap).toEqual(near(0));
+    expect(p.length).toEqual(near(8));
+    expect(p.width).toEqual(near(8));
+  });
+
+  it('takes the point gap and size from themeVariables', async () => {
+    expect((await point('redux-color', { arrowheadGap: 0 })).gap).toEqual(near(0));
+    const big = await point('default', { arrowheadGap: '6px', arrowheadLength: 20 });
+    expect(big.gap).toEqual(near(6));
+    expect(big.length).toEqual(near(20));
+  });
+
+  it.each([
+    ['redux-color', 14, 3.15],
+    ['default', 11, 1.1],
+  ])('sizes a circle arrowhead in %s as %d with gap %d', async (theme, size, gap) => {
+    const { tree, head, outline } = await arrowhead('--o', theme);
+    const r = Number(tree.getAttr(head, 'r'));
+    expect(2 * r).toEqual(near(size));
+    expect(outline - (Number(tree.getAttr(head, 'cy')) + r)).toEqual(near(gap));
+  });
+
+  it.each([
+    ['redux-color', 12, 2.96, 2.5],
+    ['default', 11, 2, 2],
+  ])('sizes a cross arrowhead in %s as %d with gap %d', async (theme, size, gap, stroke) => {
+    const { tree, head, outline } = await arrowhead('--x', theme);
+    const ys = nums(tree.getAttr(head, 'd')!).filter((_, i) => i % 2 === 1);
+    expect(Math.max(...ys) - Math.min(...ys)).toEqual(near(size));
+    expect(outline - Math.max(...ys)).toEqual(near(gap));
+    expect(Number(tree.getAttr(head, 'stroke-width'))).toBe(stroke);
+  });
+
+  it.each(['redux-color', 'default'])(
+    'keeps the line under the arrowhead and writes no markers in %s',
+    async (theme) => {
+      for (const edge of ['-->', '-.->', '==>', '--o', '--x']) {
+        const { svg, tree, outline } = await arrowhead(edge, theme);
+        expect(svg).not.toMatch(/<defs|<marker|marker-end/);
+        const line = tree.find((n, t) => t.tag(n) === 'path' && !t.getAttr(n, 'class'))[0]!;
+        const end = nums(tree.getAttr(line, 'd')!).at(-1)!;
+        expect(end, edge).toBeLessThan(outline);
+      }
+    }
+  );
 });
 
 describe('flowchart render: look is removed (D153)', () => {
