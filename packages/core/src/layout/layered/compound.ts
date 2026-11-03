@@ -1094,12 +1094,19 @@ export function compoundLayout(
     e.labelX = (a.x + b.x) / 2;
     e.labelY = (a.y + b.y) / 2;
     if (grid) {
-      // From the group's top border straight down to its member's top, in a cell of the top side
-      // that no other edge ends in (D140); clearing the way is the repair router's (#45, D78).
-      const x = freeTop(b, edges, grid, edgeOn(M.portPitch, grid));
-      e.route = [x, a.y - a.h / 2, 0, x, b.y - b.h / 2, 0];
-      e.labelX = x;
-      e.labelY = (a.y - a.h / 2 + b.y - b.h / 2) / 2;
+      // Between a group and its own member, either way: down from the group's top border row
+      // (half a cell inside it, so the route stays in the drawing) to the member's top, in a cell
+      // of that side no other edge ends in (D140). Clearing the way is the repair router's (#45,
+      // D78). The label sits on the border row, just right of the line.
+      const outer = depth[e.src]! < depth[e.dst]!;
+      const group = outer ? a : b;
+      const member = outer ? b : a;
+      const x = freeTop(member, edges, grid, edgeOn(M.portPitch, grid));
+      const frame = group.y - group.h / 2 + grid;
+      const top = member.y - member.h / 2;
+      e.route = outer ? [x, frame, 0, x, top, 0] : [x, top, 0, x, frame, 0];
+      e.labelX = x + grid / 2 + e.labelW / 2;
+      e.labelY = frame - grid + e.labelH / 2;
     }
   }
   for (const ei of loops) {

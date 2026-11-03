@@ -136,6 +136,9 @@ function check(graph: LayoutGraph): void {
   finite(edge, 'spacing.edge');
   if (graph.diagramPadding !== undefined) finite(graph.diagramPadding, 'diagramPadding');
   if (graph.headRoom !== undefined) finite(graph.headRoom, 'headRoom');
+  // Only character cells: box sizes are whole cells, so a coarser quantum cannot hold them.
+  if (graph.grid !== undefined && graph.grid !== 1)
+    throw new RangeError(`layout: grid must be 1 (character cells), got ${graph.grid}`);
 }
 
 function gridOf(graph: LayoutGraph): number {
@@ -170,23 +173,72 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
       add(e.source, placed.ports.source);
       add(e.target, placed.ports.target);
     }
+    // Edges that cross a group's border take a cell of that side too.
+    for (const [id, g] of model.groups) {
+      for (const [side, n] of Object.entries(crossings(g, model, grid)) as [Side, number][])
+        for (let i = 0; i < n; i++) add(id, side);
+    }
     let more = false;
-    const nodes = current.nodes.map((n) => {
-      const c = count.get(n.id);
-      if (!c) return n;
+    // The size each side of `id` needs for its ends, at least `width` × `height`.
+    const need = (id: string, width: number, height: number): [number, number] => {
+      const c = count.get(id);
+      if (!c) return [width, height];
       const across = Math.max(c.top, c.bottom);
       const along = Math.max(c.left, c.right);
-      const width = across > 0 ? Math.max(n.width, sideRoom(across, pitch, grid)) : n.width;
-      const height = along > 0 ? Math.max(n.height, sideRoom(along, pitch, grid)) : n.height;
+      return [
+        across > 0 ? Math.max(width, sideRoom(across, pitch, grid)) : width,
+        along > 0 ? Math.max(height, sideRoom(along, pitch, grid)) : height,
+      ];
+    };
+    const nodes = current.nodes.map((n) => {
+      const [width, height] = need(n.id, n.width, n.height);
       if (width === n.width && height === n.height) return n;
       more = true;
       return { ...n, width, height };
     });
+    // A group (an empty one, mostly) grows by padding: sideways evenly, downwards at the bottom
+    // so the title stays on the top border.
+    const groups = current.groups.map((g) => {
+      const placed = model.groups.get(g.id)!;
+      const [width, height] = need(g.id, placed.width, placed.height);
+      const dx = Math.ceil((width - placed.width) / 2);
+      const dy = height - placed.height;
+      if (dx === 0 && dy === 0) return g;
+      more = true;
+      const { top, right, bottom, left } = g.padding;
+      return { ...g, padding: { top, right: right + dx, bottom: bottom + dy, left: left + dx } };
+    });
     if (!more) break;
-    current = { ...current, nodes };
+    current = { ...current, nodes, groups };
     model = run(current, dir, tight);
   }
   return model;
+}
+
+// How many route segments cross each side of a group's border (grid mode, in cells).
+function crossings(g: LayoutModelGroup, model: LayoutModel, grid: number): Record<Side, number> {
+  const left = g.x - g.width / 2 + grid / 2;
+  const top = g.y - g.height / 2 + grid / 2;
+  const right = left + g.width - grid;
+  const bottom = top + g.height - grid;
+  const out: Record<Side, number> = { top: 0, right: 0, bottom: 0, left: 0 };
+  for (const e of model.edges.values()) {
+    const p = e.points;
+    for (let i = 1; i < p.length; i++) {
+      const a = p[i - 1]!;
+      const b = p[i]!;
+      const across = (v: number, lo: number, hi: number): boolean =>
+        (lo < v && v < hi) || (hi < v && v < lo);
+      if (a.x === b.x && a.x > left && a.x < right) {
+        if (across(top, a.y, b.y)) out.top++;
+        if (across(bottom, a.y, b.y)) out.bottom++;
+      } else if (a.y === b.y && a.y > top && a.y < bottom) {
+        if (across(left, a.x, b.x)) out.left++;
+        if (across(right, a.x, b.x)) out.right++;
+      }
+    }
+  }
+  return out;
 }
 
 // The groups as laid out; the title sits midway down the top padding.
@@ -206,6 +258,49 @@ function groupModels(
     groups.set(g.id, { x, y, width: c.w, height: c.h, title: { x, y: titleY } });
   });
   return groups;
+}
+
+// Whether `inner` sits somewhere inside the group `outer`.
+function nestedIn(cnodes: CNode[], inner: number, outer: number): boolean {
+  const seen = new Set<number>();
+  for (let p = cnodes[inner]!.parent; p >= 0 && !seen.has(p); p = cnodes[p]!.parent) {
+    if (p === outer) return true;
+    seen.add(p);
+  }
+  return false;
+}
+
+// On the grid, a group with an edge to one of its own members gets a row more at the top, so the
+// edge has a cell between the group's border and the member (it runs down from the border).
+function roomForMembers(
+  cnodes: CNode[],
+  ends: readonly (readonly [number, number])[],
+  grid: number
+): void {
+  const done = new Set<number>();
+  const within = (inner: number, outer: number): boolean => nestedIn(cnodes, inner, outer);
+  for (const [a, b] of ends) {
+    for (const [g, m] of [
+      [a, b],
+      [b, a],
+    ] as const) {
+      if (!cnodes[g]!.isGroup || done.has(g) || !within(m, g)) continue;
+      cnodes[g]!.padTop += grid;
+      done.add(g);
+    }
+  }
+}
+
+// A self-loop sits beside its node, across the flow; the room laid out for the node grows to hold
+// it. `round` keeps the box's own size and puts the room round it (`loopW/H`): groups always, so
+// the loop stays inside their parent, and every node on the grid, so ports and edges from its
+// group see the box itself.
+function reserveLoop(c: CNode, below: boolean, label: number, round: boolean, M: LayoutMetrics) {
+  const room = 2 * (M.loop + (label > 0 ? label + M.loopGap : 0));
+  if (below && round) c.loopH += room;
+  else if (below) c.h += room;
+  else if (round) c.loopW += room;
+  else c.w += room;
 }
 
 // A length scaled for a tight layout; on the grid it stays a whole multiple of it.
@@ -253,6 +348,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
   graph.groups.forEach((g, j) => (cnodes[nodeCount + j]!.parent = parentOf(g.parent)));
 
   const ends = graph.edges.map((e) => [index.get(e.source)!, index.get(e.target)!] as const);
+  if (grid) roomForMembers(cnodes, ends, grid);
   inheritCrossedDirections(cnodes, ends);
 
   const sideways = (i: number): boolean => {
@@ -275,25 +371,19 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
 
   // A self-loop sits beside its node, across the flow; the box laid out grows to hold it.
   const loopSide = new Uint8Array(cnodes.length);
+  // How many self-loops each node has, and how many have been placed: on the grid each takes
+  // its own pair of cells along the side.
+  const loopCount = new Int32Array(cnodes.length);
+  const loopsSeen = new Int32Array(cnodes.length);
   const cedges: CEdge[] = graph.edges.map((e, k) => {
     const [src, dst] = ends[k]!;
     const labelW = e.label?.width ?? 0;
     const labelH = e.label?.height ?? 0;
-    // On the grid a group keeps room for its loop in its parent too, so the loop stays inside.
+    if (src === dst) loopCount[src]!++;
     if (src === dst && (src < nodeCount || grid)) {
-      const c = cnodes[src]!;
-      const group = src >= nodeCount;
-      if (sideways(src)) {
-        const room = 2 * (M.loop + (labelH > 0 ? labelH + M.loopGap : 0));
-        if (group) c.loopH += room;
-        else c.h += room;
-        loopSide[src] = 2;
-      } else {
-        const room = 2 * (M.loop + (labelW > 0 ? labelW + M.loopGap : 0));
-        if (group) c.loopW += room;
-        else c.w += room;
-        loopSide[src] = 1;
-      }
+      const below = sideways(src);
+      reserveLoop(cnodes[src]!, below, below ? labelH : labelW, src >= nodeCount || grid > 0, M);
+      loopSide[src] = below ? 2 : 1;
     }
     return {
       src,
@@ -313,15 +403,16 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     edgeSep: graph.spacing.edge,
     rankSep: scaled(graph.spacing.rank, tight ? TIGHT_RANK : 1),
     portSep: M.portSep,
-    tracks: routing === 'stepped',
-    straight: routing === 'straight',
+    // On the grid every edge runs at right angles on tracks, whatever routing asks (D78).
+    tracks: routing === 'stepped' || grid > 0,
+    straight: routing === 'straight' && !grid,
     headRoom: graph.headRoom ?? 0,
     metrics: M,
     ...(grid ? { grid } : {}),
   };
   const total = compoundLayout(cnodes, cedges, rootDir, opt);
 
-  const margin = graph.diagramPadding ?? 0;
+  const margin = grid ? Math.ceil(graph.diagramPadding ?? 0) : (graph.diagramPadding ?? 0);
   const pad = margin - grid / 2; // on the grid, a coordinate is a cell index (D78)
   const nodes = new Map<string, LayoutModelNode>();
   graph.nodes.forEach((n, i) => {
@@ -341,7 +432,9 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     const [src, dst] = ends[k]!;
     if (src === dst) {
       const loop = grid ? gridLoop : selfLoop;
-      edges.set(e.id, loop(box(src), loopSide[src] === 2, e.label, M, grid));
+      const nth = loopsSeen[src]!++;
+      const slot = { nth, count: loopCount[src]! };
+      edges.set(e.id, loop(box(src), loopSide[src] === 2, e.label, M, grid, slot));
       return;
     }
     const points: RoutePoint[] = [];
@@ -352,8 +445,11 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
         axis: ce.route[p + 2] === 1 ? 'h' : 'v',
       });
     }
-    const source = sideOf(box(src), points[0], flowEnd(rootDir));
-    const target = sideOf(box(dst), points[points.length - 1], flowStart(rootDir));
+    // On the grid an edge between a group and its own member runs down from the group's top
+    // border into the member's top (compound.ts), whatever side the ends lie nearest.
+    const own = grid > 0 && (nestedIn(cnodes, src, dst) || nestedIn(cnodes, dst, src));
+    const source = own ? 'top' : sideOf(box(src), points[0], flowEnd(rootDir));
+    const target = own ? 'top' : sideOf(box(dst), points[points.length - 1], flowStart(rootDir));
     const model: LayoutModelEdge = {
       points: grid ? ontoCells(points, source, target, grid) : points,
       ports: { source, target },
@@ -439,16 +535,19 @@ function gridLoop(
   below: boolean,
   label: { width: number; height: number } | undefined,
   M: LayoutMetrics,
-  grid: number
+  grid: number,
+  { nth, count }: { nth: number; count: number }
 ): LayoutModelEdge {
   const pitch = Math.max(grid, edgeOn(M.portPitch, grid));
   const left = b.x - b.width / 2 + grid / 2;
   const top = b.y - b.height / 2 + grid / 2;
   const right = left + b.width - grid;
   const bottom = top + b.height - grid;
-  // Two cells `pitch` apart around the middle of a side, off its corners.
+  // The `nth` of `count` pairs of cells, all `pitch` apart, around the middle of a side and off
+  // its corners (the side has grown to hold them, D140).
   const pair = (lo: number, hi: number): [number, number] => {
-    const a = Math.max(lo + grid, down((lo + hi - pitch) / 2, grid));
+    const first = Math.max(lo + grid, down((lo + hi - (2 * count - 1) * pitch) / 2, grid));
+    const a = Math.min(hi - grid, first + 2 * nth * pitch);
     return [a, Math.min(hi - grid, a + pitch)];
   };
   const reach = Math.max(grid, edgeOn(M.loop, grid)) - grid;
