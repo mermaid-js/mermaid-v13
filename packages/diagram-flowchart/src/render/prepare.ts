@@ -29,6 +29,12 @@ export interface NodeView {
   vertex?: FlowVertex;
   /** Nesting depth of a cluster (0 at the top). */
   depth: number;
+  /**
+   * A subgraph's place in source order (pre-order over nesting, as v12 `declarationIndex`).
+   * Subgraphs hidden inside a collapsed one still count, so collapsing does not shift the
+   * palette cycle. The renderer turns it into a palette slot (#86).
+   */
+  order?: number;
 }
 
 export interface EdgeView {
@@ -222,12 +228,30 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     depth: depthOf(id),
   });
 
+  // Palette order follows the source. `model.subgraphs` is in closing order (a nested
+  // subgraph lands before its parent), so walk the nesting forest pre-order like v12.
+  const order = new Map<string, number>();
+  const childrenOf = new Map<string, string[]>();
+  for (const sg of model.subgraphs) {
+    const p = sgParent.get(sg.id);
+    if (p !== undefined) childrenOf.set(p, [...(childrenOf.get(p) ?? []), sg.id]);
+  }
+  const walk = (id: string): void => {
+    if (order.has(id)) return;
+    order.set(id, order.size);
+    for (const c of childrenOf.get(id) ?? []) walk(c);
+  };
+  for (const sg of model.subgraphs) if (!sgParent.has(sg.id)) walk(sg.id);
+  // Subgraphs that only sit in a membership cycle have no root; number them last.
+  for (const sg of model.subgraphs) walk(sg.id);
+
   for (const sg of model.subgraphs) {
     if (collapsedInto.has(sg.id)) continue;
     const collapsed = isCollapsed(sg.id);
     const view = blank(sg.id, sg.ast, !collapsed, collapsed ? 'collapsedGroup' : 'rect');
     view.classes = sg.classes;
     view.style = styleOf(sg.classes);
+    view.order = order.get(sg.id);
     views.set(sg.id, view);
     if (collapsed) nodes.push(view);
     else groups.push(view);

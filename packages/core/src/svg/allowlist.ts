@@ -42,6 +42,7 @@ const ATTR_TABLE: Record<AllowedAttr, true> = {
   'data-ast': true,
   'data-mermaid-version': true,
   'data-p': true,
+  'data-color-id': true,
   style: true,
   transform: true,
   'pointer-events': true,
