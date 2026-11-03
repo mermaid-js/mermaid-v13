@@ -69,7 +69,19 @@ test('the selectors offer only what v13 supports', async ({ page }) => {
       .evaluateAll((els) => els.map((el) => el.getAttribute('value')));
   await expect
     .poll(() => values('theme'))
-    .toEqual(['unset', 'redux', 'default', 'dark', 'forest', 'neutral', 'base', 'auto']);
+    .toEqual([
+      'unset',
+      'redux-color',
+      'redux',
+      'redux-dark',
+      'redux-dark-color',
+      'default',
+      'dark',
+      'forest',
+      'neutral',
+      'base',
+      'auto',
+    ]);
   expect(await values('layout')).toEqual(['unset', 'layered']);
 });
 
