@@ -941,8 +941,11 @@ function onGrid(
   const pitch = Math.max(grid, edgeOn(M.portPitch, grid));
   for (let v = 0; v < real; v++) {
     if (W[v]! <= 0 || nodes[v]!.kind !== Kind.Node) continue;
-    const lo = xs[v]! - W[v]! / 2 + 1.5 * grid;
-    const hi = xs[v]! + W[v]! / 2 - 1.5 * grid;
+    // The box itself, not the room laid out for it: a self-loop widens that (span = box less
+    // its corners).
+    const half = Math.min(W[v]! / 2, nodes[v]!.span / 2 + M.corner);
+    const lo = xs[v]! - half + 1.5 * grid;
+    const hi = Math.max(lo, xs[v]! + half - 1.5 * grid);
     for (let side = 0; side < 2; side++) {
       const start = side === 0 ? predStart : succStart;
       const list = side === 0 ? predE : succE;
