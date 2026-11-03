@@ -180,68 +180,147 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
 
 /** Hidden first line of the PR comment, so CI updates its own comment instead of adding one. */
 export const COMMENT_MARKER = '<!-- mermaid-v13-bench -->';
-/** GitHub rejects comments over 65 536 characters; keep a margin. */
-const COMMENT_LIMIT = 60_000;
-/** A warm-time change below this is noise for a single CI run. */
-const CHANGE_THRESHOLD = 0.1;
-const CHANGES_SHOWN = 5;
+/** A slowdown is listed only from this much, on diagrams at least `SLOW_MIN_MS` long. */
+const SLOW_CHANGE = 0.2;
+const SLOW_MIN_MS = 1;
+const SLOW_SHOWN = 5;
 
-/** The diagrams whose v13 warm time moved most against v13-base, in one environment. */
-function changesLines(runs: RendererRun[], env: string, h: Heading): string[] {
-  const find = (id: RendererId) => runs.find((r) => r.renderer === id && r.status === 'ready');
-  const now = find('v13');
-  const then = find('v13-base');
-  if (!now || !then) return [];
-  const okWarm = (x: DiagramResult | undefined) =>
-    x?.status === 'ok' && x.warmMs !== null && x.warmMs > 0 ? x.warmMs : null;
-  const before = new Map(then.results.map((r) => [r.id, okWarm(r)]));
-  const pairs = now.results.flatMap((r) => {
-    const a = before.get(r.id) ?? null;
-    const b = okWarm(r);
-    return a === null || b === null ? [] : [{ id: r.id, then: a, now: b, change: b / a - 1 }];
-  });
-  const slower = pairs
-    .filter((p) => p.change > CHANGE_THRESHOLD)
-    .sort((x, y) => y.change - x.change);
-  const faster = pairs
-    .filter((p) => p.change < -CHANGE_THRESHOLD)
-    .sort((x, y) => x.change - y.change);
-  const pct = (c: number) => `${c > 0 ? '+' : ''}${Math.round(c * 100)}%`;
-  const out = [
-    `${h} Largest changes vs v13-base (${env})`,
-    '',
-    `Warm medians of ${pairs.length} diagrams: ${slower.length} more than ${CHANGE_THRESHOLD * 100}% slower, ${faster.length} more than ${CHANGE_THRESHOLD * 100}% faster. Sub-millisecond diagrams are noisy in a single run.`,
-    '',
-  ];
-  const shown = [...slower.slice(0, CHANGES_SHOWN), ...faster.slice(0, CHANGES_SHOWN)];
-  if (shown.length > 0)
-    out.push(
-      row(['Diagram', 'v13-base warm', 'v13 warm', 'Change']),
-      row(Array<string>(4).fill('---')),
-      ...shown.map((p) => row([p.id, num(p.then), num(p.now), pct(p.change)])),
-      ''
-    );
-  return out;
+/** `2% slower` / `4% faster` / `same` from a geomean speedup (above 1 means v13 is faster). */
+function relative(speed: number | null): string {
+  if (speed === null) return dash;
+  const change = 1 / speed - 1;
+  if (Math.abs(change) < 0.005) return 'same';
+  return `${Math.round(Math.abs(change) * 100)}% ${change > 0 ? 'slower' : 'faster'}`;
 }
 
-const details = (summary: string, lines: string[]) => [
-  `<details><summary>${summary}</summary>`,
-  '',
-  ...lines,
-  '</details>',
-  '',
-];
+/** `22× faster` / `2.3× slower` from a geomean speedup. */
+function factor(speed: number | null): string {
+  if (speed === null) return dash;
+  return speed >= 1 ? `${round(speed, 1)}× faster` : `${round(1 / speed, 1)}× slower`;
+}
+
+/** Diagrams whose v13 warm time grew by at least SLOW_CHANGE over the base, slowest first. */
+function slowdowns(runs: RendererRun[]): { id: string; then: number; now: number }[] {
+  const ready = (id: RendererId) => runs.find((r) => r.renderer === id && r.status === 'ready');
+  const now = ready('v13');
+  const then = ready('v13-base');
+  if (!now || !then) return [];
+  const warm = new Map(then.results.map((r) => [r.id, r.status === 'ok' ? r.warmMs : null]));
+  return now.results
+    .flatMap((r) => {
+      const t = warm.get(r.id) ?? null;
+      return r.status === 'ok' && r.warmMs !== null && t !== null && t >= SLOW_MIN_MS
+        ? [{ id: r.id, then: t, now: r.warmMs }]
+        : [];
+    })
+    .filter((x) => x.now / x.then - 1 >= SLOW_CHANGE)
+    .sort((x, y) => y.now / y.then - x.now / x.then);
+}
 
 export interface CommentOptions {
   /** Link to the CI run whose artifact holds the full report. */
   runUrl?: string;
-  maxChars?: number;
+  /** What the base is, for the title (CI passes the PR's base branch). */
+  baseLabel?: string;
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+function baseRunOf(report: BenchReport): RendererRun | undefined {
+  return (
+    rendererRun(report, 'v13-base') ?? report.node?.renderers.find((r) => r.renderer === 'v13-base')
+  );
+}
+
+/** The title: the gate verdict, the commit and the base it is compared with. */
+function titleLine(report: BenchReport, failed: number, baseLabel: string | undefined): string {
+  const verdict = failed === 0 ? 'gates pass' : `**${plural(failed, 'gate')} failed**`;
+  const base = baseRunOf(report);
+  const sha = base?.status === 'ready' ? /\(([0-9a-f]+)\)$/.exec(base.version)?.[1] : undefined;
+  const label = baseLabel ? `\`${baseLabel}\` ` : '';
+  const against = sha ? ` vs ${label}(\`${sha}\`)` : '';
+  const commit = report.commit ? ` · \`${report.commit}\`` : '';
+  return `### Bench: ${verdict}${commit}${against}`;
+}
+
+/** Loaded size of v13, with the change against the base when both were measured. */
+function sizeCell(report: BenchReport): string {
+  const size = rendererRun(report, 'v13')?.size?.gzip;
+  const base = baseRunOf(report)?.size?.gzip;
+  if (size === undefined || base === undefined) return kb(size);
+  const delta = size === base ? '±0' : `${size > base ? '+' : '−'}${kb(Math.abs(size - base))}`;
+  return `${kb(size)} (${delta})`;
+}
+
+/** One row per comparison, one column per environment that ran. */
+function summaryTable(report: BenchReport): string[] {
+  const envs: BenchReport[] = [report];
+  if (report.node) envs.push({ ...report, renderers: report.node.renderers });
+  const ready = (r: BenchReport, id: RendererId) =>
+    r.renderers.some((x) => x.renderer === id && x.status === 'ready');
+  const cells = (id: RendererId, show: (s: number | null) => string) =>
+    envs.map((r) => (ready(r, 'v13') && ready(r, id) ? show(speedup(r, 'v13', id).value) : dash));
+  return [
+    row(['v13 warm time (geomean)', 'Browser', ...(report.node ? ['Node'] : [])]),
+    row(Array<string>(envs.length + 1).fill('---')),
+    row(['vs base branch', ...cells('v13-base', relative)]),
+    row(['vs mermaid@12.2.0', ...cells('v12-frozen', factor)]),
+    row(['vs Pele', ...cells('pele', factor)]),
+    row(['Loaded size (gzip)', sizeCell(report), ...(report.node ? [dash] : [])]),
+    '',
+  ];
+}
+
+/** One line per failed enforced gate and per environment where v13 did not render a fixture. */
+function problemLines(report: BenchReport, failed: GateOutcome['gates']): string[] {
+  const v13Runs = [
+    { env: 'browser', run: rendererRun(report, 'v13') },
+    { env: 'Node', run: report.node?.renderers.find((r) => r.renderer === 'v13') },
+  ];
+  const broken = v13Runs.flatMap(({ env, run }) => {
+    const bad = (run?.results ?? []).filter((r) => r.status !== 'ok');
+    if (bad.length === 0) return [];
+    const ids = bad.slice(0, 5).map((r) => `\`${r.id}\` (${r.status})`);
+    return [
+      `- v13 did not render ${plural(bad.length, 'diagram')} in ${env}: ${ids.join(', ')}${bad.length > 5 ? ', …' : ''}`,
+    ];
+  });
+  const lines = [...failed.map((g) => `- **${g.requirement}** ${g.title}: ${g.detail}`), ...broken];
+  return lines.length > 0 ? [...lines, ''] : [];
+}
+
+/** The folded list of real slowdowns against the base, when there are any. */
+function slowdownLines(report: BenchReport): string[] {
+  const slow = [
+    { env: 'browser', list: slowdowns(report.renderers) },
+    { env: 'Node', list: report.node ? slowdowns(report.node.renderers) : [] },
+  ].filter((x) => x.list.length > 0);
+  if (slow.length === 0) return [];
+  const total = slow.reduce((n, x) => n + x.list.length, 0);
+  const cut = slow.some((x) => x.list.length > SLOW_SHOWN)
+    ? ` (slowest ${SLOW_SHOWN} per environment shown)`
+    : '';
+  const pct = (x: { then: number; now: number }) => `+${Math.round((x.now / x.then - 1) * 100)}%`;
+  return [
+    `<details><summary>${plural(total, 'diagram')} ${Math.round(SLOW_CHANGE * 100)}% or more slower than the base${cut}</summary>`,
+    '',
+    row(['Diagram', 'Env', 'Base', 'v13', 'Change']),
+    row(Array<string>(5).fill('---')),
+    ...slow.flatMap(({ env, list }) =>
+      list.slice(0, SLOW_SHOWN).map((x) => row([x.id, env, ms(x.then), ms(x.now), pct(x)]))
+    ),
+    '',
+    `Diagrams under ${SLOW_MIN_MS} ms are left out: a single run of those is mostly noise.`,
+    '</details>',
+    '',
+  ];
 }
 
 /**
- * The PR comment: the verdict, gates, renderer summaries of both environments and the largest
- * changes against the base branch. Per-diagram tables are folded, and dropped (pointing at the
- * full report) when they would take the comment over GitHub's size limit.
+ * The PR comment: only what a reviewer acts on. The verdict, v13 against the base branch,
+ * Mermaid 12 and Pele in each environment, the loaded size, and, only when there are any,
+ * failed gates, diagrams v13 failed to render and real slowdowns. Everything else is in the
+ * full report, which the comment links to.
  */
 export function formatComment(
   report: BenchReport,
@@ -249,39 +328,16 @@ export function formatComment(
   options: CommentOptions = {}
 ): string {
   const failed = outcome.gates.filter((g) => g.status === 'fail' && g.enforced);
-  const warned = outcome.gates.filter((g) => g.status === 'fail' && !g.enforced);
-  const verdict =
-    failed.length > 0
-      ? `${failed.length} gate${failed.length === 1 ? '' : 's'} failed (${failed.map((g) => g.requirement).join(', ')})`
-      : `gates pass${warned.length > 0 ? `, ${warned.length} reported only (${warned.map((g) => g.requirement).join(', ')})` : ''}`;
-  const full = options.runUrl
-    ? `Full report: the \`bench-report\` artifact of [this run](${options.runUrl}).`
-    : 'Full report: the `bench-report` artifact of this run.';
-  const head = [
+  const run = options.runUrl ? `[this run](${options.runUrl})` : 'this run';
+  return [
     COMMENT_MARKER,
-    `## Bench: ${verdict}`,
+    titleLine(report, failed.length, options.baseLabel),
     '',
-    ...headerLines(report),
-    ...gatesLines(outcome, '###'),
-    ...browserRenderersLines(report, '###'),
-    ...changesLines(report.renderers, 'browser', '###'),
-    ...(report.node
-      ? [
-          ...nodeSummaryLines(report, report.node, '###'),
-          ...changesLines(report.node.renderers, 'Node', '###'),
-        ]
-      : []),
-  ];
-  const folded = [
-    ...details('Per-diagram times (browser)', browserDiagramsLines(report)),
-    ...(report.node ? details('Per-diagram times (Node)', nodeDiagramsLines(report.node)) : []),
-  ];
-  const limit = options.maxChars ?? COMMENT_LIMIT;
-  const withTables = [...head, ...folded, full].join('\n');
-  if (withTables.length <= limit) return withTables;
-  return [...head, 'Per-diagram tables are left out to fit the comment size limit.', full].join(
-    '\n'
-  );
+    ...summaryTable(report),
+    ...problemLines(report, failed),
+    ...slowdownLines(report),
+    `Full report: \`bench-report\` artifact of ${run}.`,
+  ].join('\n');
 }
 
 interface Comparison {

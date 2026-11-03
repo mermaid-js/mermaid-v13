@@ -169,69 +169,100 @@ describe('markdown report', () => {
 });
 
 describe('PR comment', () => {
-  const run = (renderer: 'v13' | 'v13-base', results: DiagramResult[]) => ({
+  const run = (renderer: 'v13-base' | 'pele', results: DiagramResult[], gzipKb?: number) => ({
     renderer,
-    version: renderer === 'v13-base' ? '13.0.0-alpha.0 (abc123456)' : '13.0.0-alpha.0',
+    version: renderer === 'v13-base' ? '13.0.0-alpha.0 (abc123456)' : '1.13.0',
     status: 'ready' as const,
     readyAtMs: 5,
     initMs: 1,
-    size: null,
+    size:
+      gzipKb === undefined
+        ? null
+        : { raw: 0, gzip: gzipKb * 1024, brotli: 0, source: 'loaded' as const, files: [] },
     results,
   });
+  const v13 = report.renderers[0]!;
   const withBase: BenchReport = {
     ...report,
-    options: { ...report.options, base: 'HEAD^1' },
+    commit: 'abcdef1',
     renderers: [
-      ...report.renderers.map((r) =>
-        r.renderer === 'v13' ? { ...r, results: [ok('corpus/a', 0.2), ok('corpus/b', 1)] } : r
-      ),
-      run('v13-base', [ok('corpus/a', 0.4), ok('corpus/b', 1.02)]),
+      { ...v13, results: [ok('corpus/a', 0.2), ok('corpus/b', 2.5)] },
+      ...report.renderers.slice(1).map((r) => ({
+        ...r,
+        results: [...r.results, ok('corpus/b', r.renderer === 'v12-frozen' ? 50 : 2.5)],
+      })),
+      run('v13-base', [ok('corpus/a', 0.1), ok('corpus/b', 2)], 49),
+      run('pele', [ok('corpus/a', 0.1), ok('corpus/b', 1.25)]),
     ],
+    node: {
+      runtime: 'node v24.16.0',
+      renderers: [
+        { ...v13, size: null, results: [ok('corpus/a', 0.1), ok('corpus/b', 1)] },
+        run('v13-base', [ok('corpus/a', 0.1), ok('corpus/b', 1)]),
+      ],
+    },
   };
   const outcome = evaluateGates({
     report: withBase,
     baseline: undefined,
     mode: 'report',
-    corpusSize: 1,
+    corpusSize: 2,
+  });
+  const comment = formatComment(withBase, outcome, {
+    runUrl: 'https://ci.example/run/1',
+    baseLabel: 'mermaid-v13',
   });
 
-  it('starts with the marker CI finds its own comment by, then the verdict', () => {
-    const c = formatComment(withBase, outcome, { runUrl: 'https://ci.example/run/1' });
-    const [marker, title] = c.split('\n');
-    expect(marker).toBe(COMMENT_MARKER);
-    expect(title).toMatch(/^## Bench: /);
-    expect(c).toContain('v13-base is `HEAD^1` = 13.0.0-alpha.0 (abc123456).');
-    expect(c).toContain('[this run](https://ci.example/run/1)');
+  it('is short: a title, one table, slowdowns and the link to the full report', () => {
+    const lines = comment.split('\n');
+    expect(lines[0]).toBe(COMMENT_MARKER);
+    expect(lines[1]).toBe('### Bench: gates pass · `abcdef1` vs `mermaid-v13` (`abc123456`)');
+    expect(comment).not.toContain('Per-diagram');
+    expect(comment).not.toContain('### Gates');
+    expect(lines.length).toBeLessThan(30);
+    expect(comment).toContain('[this run](https://ci.example/run/1)');
   });
 
-  it('names failed enforced gates in the verdict', () => {
+  it('compares v13 with the base, mermaid@12 and Pele in each environment', () => {
+    expect(comment).toContain('| v13 warm time (geomean) | Browser | Node |');
+    // Browser: 0.2 vs 0.1 and 2.5 vs 2 → geomean speed 0.56, so 77% slower; Node: same.
+    expect(comment).toMatch(/\| vs base branch \| \d+% slower \| same \|/);
+    expect(comment).toMatch(/\| vs mermaid@12\.2\.0 \| \d+(\.\d)?× faster \| – \|/);
+    expect(comment).toContain('| vs Pele | 2× slower | – |');
+    expect(comment).toContain('| Loaded size (gzip) | 50 KB (+1 KB) | – |');
+  });
+
+  it('lists only real slowdowns: 20% or more, on diagrams of at least 1 ms', () => {
+    expect(comment).toContain('1 diagram 20% or more slower than the base');
+    expect(comment).toContain('| corpus/b | browser | 2 ms | 2.5 ms | +25% |');
+    // corpus/a doubled, but at 0.1 ms that is noise.
+    expect(comment).not.toContain('| corpus/a |');
+  });
+
+  it('names failed gates and diagrams v13 did not render, and only then', () => {
+    expect(comment).not.toMatch(/^- /m);
+    const broken: BenchReport = {
+      ...withBase,
+      renderers: [
+        {
+          ...withBase.renderers[0]!,
+          results: [
+            ok('corpus/a', 0.2),
+            { ...ok('corpus/b', 1), status: 'error', warmMs: null, error: 'boom' },
+          ],
+        },
+        ...withBase.renderers.slice(1),
+      ],
+    };
     const failing = evaluateGates({
-      report: withBase,
+      report: broken,
       baseline: undefined,
       mode: 'enforce',
-      corpusSize: 5,
+      corpusSize: 2,
     });
-    expect(formatComment(withBase, failing).split('\n')[1]).toMatch(
-      /^## Bench: \d+ gates? failed \(.*R-PERF-4.*\)$/
-    );
-  });
-
-  it('lists diagrams that moved more than 10% against the base, not the noise', () => {
-    const c = formatComment(withBase, outcome);
-    expect(c).toContain('### Largest changes vs v13-base (browser)');
-    expect(c).toContain(
-      'Warm medians of 2 diagrams: 0 more than 10% slower, 1 more than 10% faster.'
-    );
-    expect(c).toContain('| corpus/a | 0.4 | 0.2 | -50% |');
-    expect(c).not.toContain('| corpus/b | 1.02');
-  });
-
-  it('folds the per-diagram tables, and drops them when they would not fit', () => {
-    const c = formatComment(withBase, outcome);
-    expect(c).toContain('<details><summary>Per-diagram times (browser)</summary>');
-    const small = formatComment(withBase, outcome, { maxChars: c.length - 1 });
-    expect(small).not.toContain('<details>');
-    expect(small).toContain('Per-diagram tables are left out to fit the comment size limit.');
-    expect(small).toContain('### Renderers');
+    const c = formatComment(broken, failing);
+    expect(c.split('\n')[1]).toMatch(/^### Bench: \*\*\d+ gates? failed\*\*/);
+    expect(c).toMatch(/^- \*\*R-PERF-4\*\* Corpus diagrams rendered: /m);
+    expect(c).toContain('- v13 did not render 1 diagram in browser: `corpus/b` (error)');
   });
 });
