@@ -234,6 +234,10 @@ export interface DriveOptions {
   fixtures: Fixture[];
   reps: number;
   budgetMs: number;
+  /** Warm samples last at least this long in total, per diagram (ms); 0 or omitted: no floor. */
+  minTotalMs?: number;
+  /** Shortest warm sample (ms): renders are batched up to it; the sampler's 2 ms when omitted. */
+  minSampleMs?: number;
   timeoutMs: number;
   liftLimits: boolean;
   strip: boolean;
@@ -312,8 +316,15 @@ async function measureOn(
   const reply = await Promise.race([
     holder.runner.page
       .evaluate(
-        ([s, r, b]) => (window as unknown as { __bench: BenchWindow }).__bench.render(s, r, b),
-        [source, o.reps, o.budgetMs] as const
+        ([s, r, b, m, ms]) =>
+          (window as unknown as { __bench: BenchWindow }).__bench.render(
+            s,
+            r,
+            b,
+            m,
+            ms ?? undefined
+          ),
+        [source, o.reps, o.budgetMs, o.minTotalMs ?? 0, o.minSampleMs ?? null] as const
       )
       .catch(
         (e: unknown): RenderReply => ({

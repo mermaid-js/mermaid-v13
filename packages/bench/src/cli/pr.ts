@@ -4,7 +4,11 @@
  * dist/reports/pr.{json,md} and comment.md (the PR comment), and applies the gates.
  *
  *   pnpm --filter @mermaid-js/bench pr [--base <ref>] [--mode auto|report|enforce]
- *     [--report-only speed,...] [--headed]
+ *     [--report-only speed,...] [--min-total <ms>] [--min-sample <ms>] [--headed]
+ *
+ * `--min-total` keeps sampling each diagram in the browser until its warm samples add up to at
+ * least that many ms (default 1000; 0 is the full bench's up to 10 samples within 1 s).
+ * `--min-sample` batches renders until one warm sample lasts at least that many ms (default 2).
  *
  * `--base` defaults to BENCH_BASE_REF, else origin/mermaid-v13 (CI passes HEAD^1). Instruction
  * counts need Linux `perf` (BENCH_PERF names the binary); without it they are skipped.
@@ -96,6 +100,10 @@ try {
     fixtures: diagrams.map((d) => d.fixture),
     reps: 10,
     budgetMs: 1000,
+    // A 1 s floor per diagram halved the browser noise (A/A: 7% to 3% on average, worst 23% to
+    // 7%); longer samples (--min-sample 20) did not help.
+    minTotalMs: args.num('min-total', 1000),
+    minSampleMs: args.num('min-sample', 2),
     timeoutMs: 30_000,
     liftLimits: true,
     strip: true,
