@@ -152,7 +152,11 @@ export interface RenderResult {
  */
 export type ExtensionPlugin = CoreExtensionPlugin<Element, RenderResult>;
 
-/** What `prepare` found: cached so `renderSync` right after does not parse again. */
+/**
+ * What `prepare` found: cached so `renderSync` right after does not parse again. The object is the
+ * cached one, shared with later renders of the same text: read it, never change it. Only the
+ * config is frozen (by `resolveConfig`).
+ */
 export interface Prepared {
   readonly diagramType: string;
   readonly config: ResolvedConfig;
@@ -424,7 +428,7 @@ export function createMermaid() {
     return {
       detected,
       plugin,
-      prepared: freeze({ diagramType: detected.type, config, parse, warnings }) as Prepared,
+      prepared: { diagramType: detected.type, config, parse, warnings },
       ...(title !== undefined ? { title } : {}),
     };
   }

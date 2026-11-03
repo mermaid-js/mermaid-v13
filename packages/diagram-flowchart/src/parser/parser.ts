@@ -11,13 +11,13 @@
  */
 // cspell:words kepano LALR yytexts
 import {
-  AstIds,
   ExpectedTable,
   inKindSet,
   isSpace,
   Kind,
   kindSet,
   LineIndex,
+  nodeId,
   ParseState,
 } from '@mermaid-js/core/parser-kit';
 import type {
@@ -566,7 +566,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
 
   const ids = st.ids;
   /** A vertex's AST id is its first mention's: `n:<name>`. */
-  const nodeAst = (name: string) => db.vertices.get(name)?.ast ?? new AstIds().node(name);
+  const nodeAst = (name: string) => db.vertices.get(name)?.ast ?? nodeId(name);
   let chain: (FlowNodeStmt | FlowEdge)[] = [];
 
   /** A mention that may create the vertex: its definition when it does. */

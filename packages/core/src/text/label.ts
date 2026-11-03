@@ -302,7 +302,17 @@ function wrap(pieces: Piece[], font: FontKey, measurer: Measurer, max: number): 
   const out: Piece[][] = [];
   let current: Piece[] = [];
   let width = 0;
-  const measure = (text: string, style: StyleBits): number => measurer.width(text, font, style);
+  let lastText: string | undefined;
+  let lastStyle: StyleBits | undefined;
+  let lastWidth = 0;
+  const measure = (text: string, style: StyleBits): number => {
+    if (text !== lastText || style !== lastStyle) {
+      lastText = text;
+      lastStyle = style;
+      lastWidth = measurer.width(text, font, style);
+    }
+    return lastWidth;
+  };
   const commit = (): void => {
     out.push(current);
     current = [];

@@ -27,7 +27,7 @@ export { formatDiagnostic } from './format.ts';
 export { inKindSet, kindSet, TokenCursor, TRIVIA } from './cursor.ts';
 export type { KindSet } from './cursor.ts';
 export { syncTo } from './recovery.ts';
-export { AstIds } from './ast.ts';
+export { AstIds, nodeId } from './ast.ts';
 export type { AstCallback, AstId, AstNode } from './ast.ts';
 export { ParseState } from './result.ts';
 export type { ParseOptions, ParseResult, StatementSpan, SymbolOccurrence } from './result.ts';

@@ -2,7 +2,7 @@
 // Table measurer: the Node/worker default and the `deterministic: true` measurer
 // (DESIGN §5.1, R-TEXT-6, R-TEXT-7). Sums advance widths from generated font tables.
 // Based on Pele's metricsMeasurer (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
-import { ASCII_MAX, LATIN1_MAX } from '../parser-kit/char-codes.ts';
+import { ASCII_MAX, LATIN1_MAX, SPACE } from '../parser-kit/char-codes.ts';
 import { familyNames } from './fonts.ts';
 import { SMALLER, Style, type FontKey, type Measurer, type VerticalMetrics } from './measurer.ts';
 import { FACES } from './metrics.ts';
@@ -107,6 +107,10 @@ export const tableMeasurer: Measurer = {
     let units = 0;
     for (let i = 0; i < text.length; i++) {
       const c = text.charCodeAt(i);
+      if (c >= SPACE && c < ASCII_MAX) {
+        units += mono ? 600 : (table[c - SPACE] ?? other);
+        continue;
+      }
       if (isZeroWidth(c)) continue;
       if (isWide(c)) units += mono ? 1200 : 1000;
       else if (mono) units += 600;

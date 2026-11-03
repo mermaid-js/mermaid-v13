@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AstIds } from './index.ts';
+import { AstIds, nodeId } from './index.ts';
 
 describe('AstIds (semantic AST ids, D69)', () => {
   it('names nodes by user id and numbers later mentions', () => {
@@ -10,6 +10,16 @@ describe('AstIds (semantic AST ids, D69)', () => {
       'n:A@2',
       'n:A@3',
     ]);
+  });
+
+  it('nodeId is the uncounted id of a first mention, escaped the same way', () => {
+    for (const name of ['A', 'a%b', 'x>y', 'p@q#r']) {
+      expect(nodeId(name)).toBe(new AstIds().node(name));
+    }
+    const ids = new AstIds();
+    ids.node('A');
+    expect(nodeId('A')).toBe('n:A');
+    expect(ids.node('A')).toBe('n:A@2');
   });
 
   it('names edges by endpoints and numbers parallel edges; direction matters', () => {
