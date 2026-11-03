@@ -97,6 +97,8 @@ interface EdgeInfo {
   srcArm: number;
   tgtArm: number;
   loop: boolean;
+  /** The cells the edge ends in (set once its route is snapped). */
+  ends: Set<number>;
 }
 
 /** The cells of a box from its centre and size (validateGrid's convention). */
@@ -113,8 +115,11 @@ function rect(b: { x: number; y: number; width: number; height: number }, grid: 
 class Field {
   readonly width: number;
   readonly height: number;
-  private readonly box: Uint8Array;
-  private readonly labels = new Map<number, string>();
+  /** Node index + 1 per cell, 0 where there is no box (review 6: no scan per probe). */
+  private readonly box: Int32Array;
+  private readonly nodeIds: string[];
+  /** Every label and title over a cell: overlaps keep all their owners (review 5). */
+  private readonly labels = new Map<number, string[]>();
   private readonly frames = new Map<number, FrameCell[]>();
   private readonly owners = new Map<number, Owner[]>();
   private readonly parent = new Map<string, string>();
@@ -127,15 +132,18 @@ class Field {
   ) {
     this.width = Math.round(model.width / grid);
     this.height = Math.round(model.height / grid);
-    this.box = new Uint8Array(this.width * this.height);
+    this.box = new Int32Array(this.width * this.height);
+    this.nodeIds = [...model.nodes.keys()];
     for (const n of graph.nodes) if (n.parent) this.parent.set(n.id, n.parent);
     for (const g of graph.groups) if (g.parent) this.parent.set(g.id, g.parent);
-    for (const b of model.nodes.values()) this.fill(rect(b, grid), (i) => (this.box[i] = 1));
+    [...model.nodes.values()].forEach((b, k) =>
+      this.fill(rect(b, grid), (i) => (this.box[i] = k + 1))
+    );
     for (const g of graph.groups) this.addGroup(g.id, g.title);
     for (const e of graph.edges) {
       const placed = model.edges.get(e.id);
       if (e.label && placed?.label)
-        this.fill(rect({ ...placed.label, ...e.label }, grid), (i) => this.labels.set(i, e.id));
+        this.fill(rect({ ...placed.label, ...e.label }, grid), (i) => this.addLabel(i, e.id));
     }
   }
 
@@ -166,10 +174,13 @@ class Field {
   check(edge: EdgeInfo, x: number, y: number, arms: number): [CollisionKind, string] | undefined {
     if (!this.inPage(x, y)) return ['box', ''];
     const i = this.index(x, y);
-    if (this.box[i]) return ['box', this.nodeAt(x, y)];
-    const label = this.labels.get(i);
-    if (label !== undefined && label !== edge.id) return ['label', label];
+    const box = this.box[i]!;
+    if (box) return ['box', this.nodeIds[box - 1]!];
+    const label = this.labels.get(i)?.find((owner) => owner !== edge.id);
+    if (label !== undefined) return ['label', label];
     for (const f of this.frames.get(i) ?? []) {
+      // An edge between a group and its own member ends on that group's border (#42).
+      if ((f.group === edge.source || f.group === edge.target) && edge.ends.has(i)) continue;
       const crosses = this.inside(edge.source, f.group) !== this.inside(edge.target, f.group);
       if (!crosses || f.across === 0 || arms !== f.across) return ['frame', f.group];
     }
@@ -186,12 +197,10 @@ class Field {
     return straight(used) && straight(arms) ? undefined : ['corner', id];
   }
 
-  private nodeAt(x: number, y: number): string {
-    for (const [id, b] of this.model.nodes) {
-      const r = rect(b, this.grid);
-      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return id;
-    }
-    return '';
+  private addLabel(cell: number, owner: string): void {
+    const list = this.labels.get(cell);
+    if (!list) this.labels.set(cell, [owner]);
+    else if (!list.includes(owner)) list.push(owner);
   }
 
   private fill(r: Rect, f: (i: number) => void): void {
@@ -227,7 +236,7 @@ class Field {
           { ...g.title, width: title.width, height: Math.max(title.height, this.grid) },
           this.grid
         ),
-        (i) => this.labels.set(i, id)
+        (i) => this.addLabel(i, id)
       );
   }
 }
@@ -251,6 +260,10 @@ function expand(field: Field, corners: readonly Point[]): Path {
     if (!q) return add(p.x, p.y);
     const dx = Math.sign(p.x - q.x);
     const dy = Math.sign(p.y - q.y);
+    // Review 3: a diagonal would never reach its corner.
+    if (dx !== 0 && dy !== 0)
+      throw new RangeError(`route is not orthogonal: (${q.x}, ${q.y}) to (${p.x}, ${p.y})`);
+    if (dx === 0 && dy === 0) return;
     for (let x = q.x + dx, y = q.y + dy; ; x += dx, y += dy) {
       add(x, y);
       if (x === p.x && y === p.y) break;
@@ -357,13 +370,20 @@ interface Search {
  * A* over cells from `s` (reached travelling `inDir`) to `t` (left in direction `tOut`, an arm),
  * inside `window`. Returns the cells after `s` up to and including `t`, or undefined.
  */
+/** Where a search goes: cell `t`, left in direction `tOut`, inside `window`, off `own` cells. */
+interface Goal {
+  t: [number, number];
+  tOut: number;
+  window: Rect;
+  /** The edge's own route before the start and after `t`. */
+  own: ReadonlySet<number>;
+}
+
 function search(
   { field, edge, turnPenalty, maxSearch }: Search,
   s: [number, number],
   inDir: number,
-  t: [number, number],
-  tOut: number,
-  window: Rect
+  { t, tOut, window, own }: Goal
 ): [number, number][] | undefined {
   const ww = window.right - window.left + 1;
   const wh = window.bottom - window.top + 1;
@@ -396,8 +416,10 @@ function search(
       if (nx < window.left || nx > window.right || ny < window.top || ny > window.bottom) continue;
       const g2 = g + 1 + (d2 === d ? 0 : turnPenalty);
       if (nx === t[0] && ny === t[1]) {
+        // No U-turn into `t`: the route goes on in direction `tOut` from there.
+        if (d2 === opposite(tOut)) continue;
         if (field.check(edge, nx, ny, (1 << opposite(d2)) | (1 << tOut))) continue;
-        const total = g2 + (d2 === opposite(tOut) || d2 === tOut ? 0 : turnPenalty);
+        const total = g2 + (d2 === tOut ? 0 : turnPenalty);
         if (total < cost[goal]!) {
           cost[goal] = total;
           from[goal] = cur;
@@ -405,6 +427,8 @@ function search(
         }
         continue;
       }
+      // The edge's own route before `s` and after `t` is not crossed or doubled back over.
+      if (own.has(field.index(nx, ny))) continue;
       const next = state(nx, ny, d2);
       if (g2 < cost[next]!) {
         cost[next] = g2;
@@ -435,6 +459,7 @@ function edgeInfos(graph: LayoutGraph, model: LayoutModel): EdgeInfo[] {
       srcArm: BOX_ARM[placed.ports.source],
       tgtArm: BOX_ARM[placed.ports.target],
       loop: e.source === e.target,
+      ends: new Set(),
     });
   });
   return out;
@@ -444,8 +469,11 @@ function reserveEnds(field: Field, edges: EdgeInfo[], paths: Map<string, Path>):
   for (const e of edges) {
     const path = paths.get(e.id)!;
     const n = path.cells.length - 1;
-    for (const i of n > 0 ? [0, n] : [0])
-      if (field.inPage(path.xs[i]!, path.ys[i]!)) field.occupy(e, path.cells[i]!, END);
+    for (const i of n > 0 ? [0, n] : [0]) {
+      if (!field.inPage(path.xs[i]!, path.ys[i]!)) continue;
+      e.ends.add(path.cells[i]!);
+      field.occupy(e, path.cells[i]!, END);
+    }
   }
 }
 
@@ -493,10 +521,29 @@ export function repairRoutes(
   return result;
 }
 
+/**
+ * What cell `i` of a path runs into: the field, or (review 2) a cell the same route already
+ * passed, which draws a loop whether it crosses or runs over itself.
+ */
+function hitAt(
+  field: Field,
+  edge: EdgeInfo,
+  path: Path,
+  i: number,
+  seen: Set<number>
+): [CollisionKind, string] | undefined {
+  const cell = path.cells[i]!;
+  const again = seen.has(cell);
+  seen.add(cell);
+  if (again) return ['shared', edge.id];
+  return field.check(edge, path.xs[i]!, path.ys[i]!, armsAt(path, i, edge));
+}
+
 function collisions(field: Field, edge: EdgeInfo, path: Path): Collision[] {
   const out: Collision[] = [];
+  const seen = new Set<number>();
   for (let i = 0; i < path.cells.length; i++) {
-    const hit = field.check(edge, path.xs[i]!, path.ys[i]!, armsAt(path, i, edge));
+    const hit = hitAt(field, edge, path, i, seen);
     if (hit)
       out.push({
         edge: edge.id,
@@ -509,12 +556,63 @@ function collisions(field: Field, edge: EdgeInfo, path: Path): Collision[] {
 }
 
 /** Re-routes the colliding stretches of one path; returns it unchanged when nothing collides. */
+interface Stretch {
+  /** Last clean index before the collision. */
+  s: number;
+  /** First clean index after it. */
+  t: number;
+  /** How the route reaches `s`. */
+  inDir: number;
+  windows: readonly number[];
+}
+
+/**
+ * Searches around one colliding stretch of `path`: to its first clean cell after, then to the
+ * end, in windows growing by `windows`. `out` is the route so far, ending at `s`.
+ */
+function detour(
+  ctx: Search,
+  path: Path,
+  out: Path,
+  { s, t, inDir, windows }: Stretch
+): { cells: [number, number][]; end: number } | undefined {
+  const n = path.cells.length - 1;
+  const sCell: [number, number] = [path.xs[s]!, path.ys[s]!];
+  for (const end of t === n ? [n] : [t, n]) {
+    const tOut = end === n ? ctx.edge.tgtArm : step(path.xs, path.ys, end);
+    let box: Rect = { left: sCell[0], top: sCell[1], right: sCell[0], bottom: sCell[1] };
+    for (let i = s; i <= end; i++)
+      box = {
+        left: Math.min(box.left, path.xs[i]!),
+        top: Math.min(box.top, path.ys[i]!),
+        right: Math.max(box.right, path.xs[i]!),
+        bottom: Math.max(box.bottom, path.ys[i]!),
+      };
+    const own = new Set([...out.cells, ...path.cells.slice(end + 1)]);
+    for (const margin of windows) {
+      const window: Rect = {
+        left: Math.max(0, box.left - margin),
+        top: Math.max(0, box.top - margin),
+        right: Math.min(ctx.field.width - 1, box.right + margin),
+        bottom: Math.min(ctx.field.height - 1, box.bottom + margin),
+      };
+      const cells = search(ctx, sCell, inDir, {
+        t: [path.xs[end]!, path.ys[end]!],
+        tOut,
+        window,
+        own,
+      });
+      if (cells) return { cells, end };
+    }
+  }
+  return undefined;
+}
+
 function repair(ctx: Search, path: Path, windows: readonly number[], result: RepairResult): Path {
   const { field, edge } = ctx;
   const n = path.cells.length - 1;
-  const bad = path.cells.map((_, i) =>
-    field.check(edge, path.xs[i]!, path.ys[i]!, armsAt(path, i, edge))
-  );
+  const seen = new Set<number>();
+  const bad = path.cells.map((_, i) => hitAt(field, edge, path, i, seen));
   for (const i of [0, n]) {
     const hit = bad[i];
     if (hit)
@@ -551,35 +649,10 @@ function repair(ctx: Search, path: Path, windows: readonly number[], result: Rep
     while (t < n && bad[t]) t++;
     const m = out.cells.length - 1;
     const inDir = m === 0 ? opposite(edge.srcArm) : step(out.xs, out.ys, m - 1);
-    const sCell: [number, number] = [path.xs[s]!, path.ys[s]!];
-    let found: [number, number][] | undefined;
-    for (const end of t === n ? [n] : [t, n]) {
-      const tOut = end === n ? edge.tgtArm : step(path.xs, path.ys, end);
-      for (const margin of windows) {
-        let box: Rect = { left: sCell[0], top: sCell[1], right: sCell[0], bottom: sCell[1] };
-        for (let i = s; i <= end; i++)
-          box = {
-            left: Math.min(box.left, path.xs[i]!),
-            top: Math.min(box.top, path.ys[i]!),
-            right: Math.max(box.right, path.xs[i]!),
-            bottom: Math.max(box.bottom, path.ys[i]!),
-          };
-        const window: Rect = {
-          left: Math.max(0, box.left - margin),
-          top: Math.max(0, box.top - margin),
-          right: Math.min(field.width - 1, box.right + margin),
-          bottom: Math.min(field.height - 1, box.bottom + margin),
-        };
-        found = search(ctx, sCell, inDir, [path.xs[end]!, path.ys[end]!], tOut, window);
-        if (found) {
-          t = end;
-          break;
-        }
-      }
-      if (found) break;
-    }
+    const found = detour(ctx, path, out, { s, t, inDir, windows });
+    if (found) t = found.end;
     if (found) {
-      for (const [x, y] of found) add(x, y);
+      for (const [x, y] of found.cells) add(x, y);
       changed = true;
     } else {
       copy(b, t);
@@ -597,7 +670,11 @@ function repair(ctx: Search, path: Path, windows: readonly number[], result: Rep
     k = t;
     if (k >= n) break;
   }
-  return changed ? out : path;
+  if (!changed) return path;
+  // A detour may still cross its own new cells; report it rather than draw a silent loop.
+  for (const c of collisions(field, edge, out))
+    if (c.kind === 'shared' && c.with === edge.id) result.unresolved.push(c);
+  return out;
 }
 
 /**
