@@ -164,7 +164,7 @@ export function renderFlowchart(
     'aria-describedby': desc ? `${prefix()}-desc` : undefined,
     'data-mermaid-version': ctx.version ?? '13',
     'data-p': auto ? prefix() : undefined,
-    style: styleText({ ...(maxWidth ? { 'max-width': px(width) } : {}), ...theme.rootStyle() }),
+    style: styleText(maxWidth ? { 'max-width': px(width) } : {}, theme.rootStyleText()),
     'font-family': P.ff,
     'font-size': P.fs,
   });

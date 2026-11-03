@@ -346,7 +346,9 @@ export const STYLE_TEXT_PROPERTIES: ReadonlySet<string> = new Set([
  * element's `max-width` and theme aliases, DESIGN §7.2).
  */
 export function styleText(
-  declarations: Readonly<Record<string, SafeColor | SafeLength | SafeValue | ThemeRef | number>>
+  declarations: Readonly<Record<string, SafeColor | SafeLength | SafeValue | ThemeRef | number>>,
+  /** Declarations already checked by an earlier `styleText`, appended as they are. */
+  tail?: StyleText
 ): StyleText {
   let out = '';
   for (const prop in declarations) {
@@ -360,6 +362,7 @@ export function styleText(
       throw new TypeError(`Unsafe style value for ${prop}`);
     out += (out === '' ? '' : ';') + prop + ':' + text;
   }
+  if (tail) out += (out === '' ? '' : ';') + tail;
   return out as StyleText;
 }
 

@@ -41,7 +41,7 @@ export function renderErrorSvg(error: MermaidError, ctx: ErrorSvgContext = {}): 
     role: 'img',
     'aria-roledescription': 'error',
     'data-mermaid-version': ctx.version ?? '13',
-    style: styleText({ 'max-width': px(width), ...theme.rootStyle() }),
+    style: styleText({ 'max-width': px(width) }, theme.rootStyleText()),
   });
   w.leaf('rect', { class: 'error-frame', x: 0, y: 0, width, height, fill });
   w.open('text', {

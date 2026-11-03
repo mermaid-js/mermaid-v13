@@ -10,8 +10,16 @@
  * follow (R-THEME-3, -4). With `cssVariables: false` the same values are written as
  * literals for renderers that do not resolve CSS variables.
  */
-import { checkColor, checkFilter, checkStyle, splitTopLevel } from '../svg/style.ts';
-import type { Length, Paint, SafeColor, SafeFilter, SafeValue, ThemeRef } from '../svg/types.ts';
+import { checkColor, checkFilter, checkStyle, splitTopLevel, styleText } from '../svg/style.ts';
+import type {
+  Length,
+  Paint,
+  SafeColor,
+  SafeFilter,
+  SafeValue,
+  StyleText,
+  ThemeRef,
+} from '../svg/types.ts';
 import { num } from '../svg/escape.ts';
 import {
   composite,
@@ -89,6 +97,8 @@ export interface Theme {
   ink(fill: string): SafeColor | undefined;
   /** Declarations for the root `style`: the aliases used so far and what they depend on. */
   rootStyle(): Readonly<Record<AliasName, ThemeRef>>;
+  /** {@link rootStyle} as checked `style` text, to pass as the tail of `styleText`. */
+  rootStyleText(): StyleText;
   /** The colour aliases for light and dark, for `theme: 'auto'`; undefined otherwise. */
   autoDeclarations(): AutoDeclarations | undefined;
   /**
@@ -454,11 +464,16 @@ function resolvePalettes(
 
 /** Builds one render's theme. */
 interface ThemeParts {
-  defs: Record<string, ThemeVarDef>;
   darkMode: boolean;
   main: Resolver;
   night: Resolver | undefined;
   palettes: Record<PaletteVariable, readonly SafeColor[]>;
+  /** `defs` as a map, for the lookups every themed value makes. */
+  byName: ReadonlyMap<string, ThemeVarDef>;
+  /** `rootStyleText()` by the aliases used, in the order they were first used. */
+  rootTexts: Map<string, StyleText>;
+  /** Each padding variable read so far: a multiple of the diagram's padding, or px. */
+  paddings: Map<string, { readonly scale: boolean; readonly n: number }>;
 }
 
 // Without overrides or extra rules a theme derives the same values on every render, so its
@@ -484,13 +499,15 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
     ...options.rules,
   });
   const parts: ThemeParts = {
-    defs,
     darkMode,
     main: new Resolver(spec, rulesFor(spec, darkMode), overrides, defs),
     night: options.dark
       ? new Resolver(options.dark, rulesFor(options.dark, true), overrides, defs)
       : undefined,
     palettes: resolvePalettes(spec, tv, options.warn),
+    byName: new Map(Object.entries(defs)),
+    rootTexts: new Map(),
+    paddings: new Map(),
   };
   if (plain) {
     let byDark = PLAIN.get(spec);
@@ -501,12 +518,15 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
 }
 
 export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme {
-  const { defs, darkMode, main, night, palettes } = themeParts(spec, options);
+  const { byName, darkMode, main, night, palettes, rootTexts, paddings } = themeParts(
+    spec,
+    options
+  );
   const vars = options.cssVariables !== false;
   const used = new Set<string>();
 
   const def = (name: string): ThemeVarDef => {
-    const d = own(defs, name) ? defs[name] : undefined;
+    const d = byName.get(name);
     if (!d) throw new TypeError(`Unknown theme variable ${JSON.stringify(name)}`);
     return d;
   };
@@ -548,10 +568,15 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
       return Number(main.get(name).lit);
     },
     padding(name, padding) {
-      if (def(name).kind !== 'padding') throw new TypeError(`${name} is not a padding`);
-      const lit = main.get(name).lit;
-      const m = RE_PADDING.exec(lit);
-      return m ? Number(m[1] ?? 1) * padding : Number(lit);
+      let p = paddings.get(name);
+      if (!p) {
+        if (def(name).kind !== 'padding') throw new TypeError(`${name} is not a padding`);
+        const lit = main.get(name).lit;
+        const m = RE_PADDING.exec(lit);
+        p = m ? { scale: true, n: Number(m[1] ?? 1) } : { scale: false, n: Number(lit) };
+        paddings.set(name, p);
+      }
+      return p.scale ? p.n * padding : p.n;
     },
     font(name = 'fontFamily') {
       return vars ? ref(name) : (main.get(name).lit as SafeValue);
@@ -573,6 +598,16 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
       ) as SafeColor;
     },
     rootStyle: () => (vars ? decls(main, used, night ? false : undefined) : {}),
+    rootStyleText() {
+      if (!vars) return '' as StyleText;
+      const key = [...used].join(',');
+      let text = rootTexts.get(key);
+      if (text === undefined) {
+        text = styleText(decls(main, used, night ? false : undefined));
+        rootTexts.set(key, text);
+      }
+      return text;
+    },
     autoDeclarations: () =>
       vars && night
         ? { light: decls(main, used, true), dark: decls(night, used, true) }
