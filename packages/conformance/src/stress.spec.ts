@@ -81,6 +81,19 @@ const CASES: [string, () => unknown][] = [
     () => flowchartTokens('graph TD;A' + '-->D'.repeat(N / 4) + '@{shape: rect}\n'),
   ],
   ['edge text of spaces', () => flowchartTokens('graph TD;A -- ' + ' '.repeat(N) + 'x --> B')],
+  // A dash after the blanks makes every blank a possible link start.
+  [
+    'edge text of spaces before a dash',
+    () => flowchartTokens('graph TD;A -- t' + ' '.repeat(N) + '-y --> B'),
+  ],
+  [
+    'dotted edge text of spaces before a dash',
+    () => flowchartTokens('graph TD;A -. t' + ' '.repeat(N) + '-y .-> B'),
+  ],
+  [
+    'ellipse text of spaces before tildes',
+    () => flowchartTokens('graph TD;A(-x' + ' '.repeat(N) + '~~ -)'),
+  ],
   [
     'edge text of link-like characters',
     () => flowchartTokens('graph TD;A -- ' + 'xo< -'.repeat(N / 5) + ' --> B'),
@@ -261,6 +274,11 @@ describe('stress: parse is linear in input size', () => {
     ['sibling subgraphs', (n) => 'graph TD\n' + repeat(n, (i) => `subgraph s${i}\nn${i}\nend\n`)],
     ['unclosed subgraphs', (n) => 'graph TD\n' + 'subgraph s\n'.repeat(n)],
     ['unclosed labels', (n) => 'graph TD\n' + 'A[x\n'.repeat(n)],
+    [
+      'edge text of spaces before a dash',
+      (n) => 'graph TD\nA-- t' + ' '.repeat(4 * n) + '-y --> B',
+    ],
+    ['ellipse text of spaces before tildes', (n) => 'graph TD\nA(-x' + ' '.repeat(4 * n) + '~~ -)'],
     ['linkStyle lines', (n) => 'graph TD\nA-->B\n' + 'linkStyle 0 stroke:red\n'.repeat(n)],
     ['class assignments', (n) => 'graph TD\n' + repeat(n, (i) => `n${i}:::c${i % 7}\n`)],
   ];
