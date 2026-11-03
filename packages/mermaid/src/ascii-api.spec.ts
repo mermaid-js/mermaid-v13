@@ -152,6 +152,21 @@ describe('ascii config precedence (DESIGN §6.3)', () => {
     expect((await m.render('c', directive, { format: 'ascii' })).text).toContain(ASCII_BOX);
   });
 
+  it('puts explicit text options (options.ascii) over the diagram text, key by key', async () => {
+    const m = createMermaid();
+    const text = fm('unicode').replace(
+      '    charset: unicode',
+      '    charset: unicode\n    padding: roomy'
+    );
+    const r = await m.render('c', text, { format: 'ascii', ascii: { charset: 'ascii' } });
+    expect(r.text).toContain(ASCII_BOX);
+    // The diagram's own padding still applies: only charset was given.
+    expect(r.rows).toBe(5);
+    const narrow = `---\nconfig:\n  ascii:\n    maxWidth: 5\n---\n${FLOW}`;
+    const wide = await m.render('c', narrow, { format: 'ascii', ascii: { maxWidth: 80 } });
+    expect(wide.warnings).toEqual([]);
+  });
+
   it('lets diagram text set padding and maxWidth', async () => {
     const roomy = `---\nconfig:\n  ascii:\n    padding: roomy\n---\n${FLOW}`;
     const r = await createMermaid().render('c', roomy, { format: 'ascii' });

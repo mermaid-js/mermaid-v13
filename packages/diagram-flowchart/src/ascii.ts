@@ -7,12 +7,13 @@
  */
 import {
   ascii as asciiGlyphs,
+  asciiOptions,
   cellMeasurer,
   repairRoutes,
   unicode,
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
-import { cellProfile, type CellPadding } from '@mermaid-js/core/layout';
+import { cellProfile } from '@mermaid-js/core/layout';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import type { FlowModel } from './parser/index.ts';
 import type { FlowRenderContext } from './render/context.ts';
@@ -35,24 +36,16 @@ export interface FlowAsciiContext extends FlowRenderContext {
   readonly ast?: AstNode;
 }
 
-/** The `ascii` config section (DESIGN §6.3, `config.schema.yaml`); unset keys default. */
-interface AsciiOptions {
-  charset?: unknown;
-  padding?: unknown;
-}
-
-const options = (ctx: FlowRenderContext): AsciiOptions =>
-  (ctx.config as { ascii?: AsciiOptions }).ascii ?? {};
-
+// The `ascii` config section (DESIGN §6.3) through core's one resolver; unset keys default.
 const glyphsFor = (ctx: FlowRenderContext): GlyphSet =>
-  options(ctx).charset === 'ascii' ? asciiGlyphs : unicode;
+  asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
 
 /**
  * Lays a flowchart out in cells: the cell measurer, the cell profile (`ascii.padding`) and
  * `stepped` routes on the grid, whatever `ctx` carries (D77, D78).
  */
 function layoutAscii(model: FlowModel, ctx: FlowRenderContext): FlowLayout {
-  const padding: CellPadding = options(ctx).padding === 'roomy' ? 'roomy' : 'compact';
+  const { padding } = asciiOptions(ctx.config);
   return layoutFlowchart(model, { ...ctx, measurer: cellMeasurer, units: cellProfile(padding) });
 }
 

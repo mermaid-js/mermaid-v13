@@ -111,6 +111,12 @@ export interface SvgRenderOptions extends RenderOptions {
 /** Options of a text render (R-ASCII-4, D80). */
 export interface TextRenderOptions extends RenderOptions {
   format: 'ascii';
+  /**
+   * Explicit text options for this call (the CLI's `--charset` and `--width`). Each key set here
+   * wins over the same `ascii` key from any config, the diagram's front matter and directives
+   * included; unset keys fall back to the config as usual.
+   */
+  ascii?: { charset?: 'unicode' | 'ascii'; padding?: 'compact' | 'roomy'; maxWidth?: number };
 }
 
 /**
@@ -323,18 +329,6 @@ const toWarning = (w: Warning): Warning => {
 };
 
 /** The `ascii` config section with its defaults (D77, D79, D84). */
-function asciiOptions(config: ResolvedConfig): {
-  padding: 'compact' | 'roomy';
-  maxWidth: number | undefined;
-} {
-  const a = (config.ascii ?? {}) as { padding?: unknown; maxWidth?: unknown };
-  const width = a.maxWidth;
-  return {
-    padding: a.padding === 'roomy' ? 'roomy' : 'compact',
-    maxWidth: typeof width === 'number' && width > 0 ? Math.floor(width) : undefined,
-  };
-}
-
 /** `render`'s third argument: v12's container element, or an options object (D80). */
 function renderOptions(arg: unknown): RenderOptions | undefined {
   if (!isPlain(arg) || typeof arg.nodeType === 'number') return undefined;
@@ -667,15 +661,19 @@ export function createMermaid() {
     const backend = textBackend;
     if (!hook || !backend)
       throw new NotLoadedError([{ kind: 'diagram', name: `${plugin.id}/ascii` }]);
-    const { padding, maxWidth } = asciiOptions(prepared.config);
+    const explicit = (options as TextRenderOptions | undefined)?.ascii;
+    const { charset, padding, maxWidth } = backend.asciiOptions(prepared.config, explicit);
     const { ctx, warnings } = contextFor(text, s, options, analysis, {
       units: cellProfile(padding),
       measurer: backend.cellMeasurer,
       width: maxWidth,
     });
     const { title } = analysis;
+    // The diagram's text entry reads the section from the config: hand it the resolved one.
+    const ascii = { charset, padding, ...(maxWidth === undefined ? {} : { maxWidth }) };
     const textCtx: TextRenderContext = {
       ...ctx,
+      config: Object.freeze({ ...ctx.config, ascii }),
       ...(title !== undefined ? { title } : {}),
       ast: prepared.parse.ast,
     };
