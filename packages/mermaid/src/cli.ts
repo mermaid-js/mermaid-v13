@@ -7,7 +7,9 @@
  * bin's imports. Measures with the table measurer (`deterministic`, R-TEXT-7), so the output
  * is byte-identical everywhere. The diagram goes to stdout; diagnostics (R-ERR-2 snippet and
  * caret, already in `MermaidError.message`) go to stderr, warnings only with `--warnings`.
- * Exit 0 on success, 1 on an error, 2 on an unsupported format.
+ * Exit 0 on success, 1 on an error (usage errors included), 2 on the API's UNSUPPORTED_FORMAT.
+ * `--charset` and `--width` are explicit text options (`TextRenderOptions.ascii`): they win
+ * over the diagram's own `ascii` config.
  */
 import { readFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
@@ -27,17 +29,22 @@ Renders a Mermaid diagram from a file, or from stdin when the file is - or left 
 and writes it to stdout.
 
 Options:
-  --format ascii|svg   Output format (required). ascii is text in character cells.
-  --charset ascii      Text glyph set: unicode box drawing (default) or pure ascii.
-  --width N|auto       Fit text output into N columns; auto uses the terminal's width.
-  --warnings           Write warnings to stderr.
-  -h, --help           Show this help.
-  -v, --version        Show the version.
+  --format ascii|svg       Output format (required). ascii is text in character cells.
+  --charset unicode|ascii  Text glyph set: unicode box drawing (default) or pure ascii.
+  --width N|auto           Fit text output into N columns; auto uses the terminal's width.
+  --warnings               Write warnings to stderr.
+  -h, --help               Show this help.
+  -v, --version            Show the version.
 
-Errors go to stderr. Exit status: 0 on success, 1 on an error, 2 when the diagram
-type cannot be rendered in the requested format.
+--charset and --width win over ascii.charset and ascii.maxWidth set in the diagram
+(front matter or directives); without them the diagram's own settings apply.
+
+Errors go to stderr. Exit status: 0 on success, 1 on an error (a bad option or
+--format value included), 2 when the diagram type cannot be rendered in the
+requested format.
 `;
 
+const CONFIG: InitializeConfig = { deterministic: true };
 const EXIT_ERROR = 1;
 const EXIT_UNSUPPORTED = 2;
 
@@ -46,7 +53,8 @@ class UsageError extends Error {}
 interface Command {
   file: string | undefined;
   format: string;
-  config: InitializeConfig;
+  /** `--charset` and `--width`: explicit, so they win over the diagram's own `ascii` config. */
+  ascii: NonNullable<TextRenderOptions['ascii']>;
   warnings: boolean;
 }
 
@@ -101,16 +109,18 @@ function command(argv: string[]): Command | 'help' | 'version' {
   }
   if (rest.length > 0) throw new UsageError('render takes one file');
   if (values.format === undefined) throw new UsageError('--format ascii|svg is required');
+  if (values.format !== 'ascii' && values.format !== 'svg')
+    throw new UsageError(`--format must be ascii or svg, got "${values.format}"`);
   const charset = glyphs(values.charset);
   const width = maxWidth(values.width);
-  const ascii: InitializeConfig['ascii'] = {
+  const ascii: Command['ascii'] = {
     ...(charset === undefined ? {} : { charset }),
     ...(width === undefined ? {} : { maxWidth: width }),
   };
   return {
     file: file === '-' ? undefined : file,
     format: values.format,
-    config: { deterministic: true, ascii },
+    ascii,
     warnings: values.warnings,
   };
 }
@@ -134,7 +144,11 @@ async function source(file: string | undefined): Promise<string> {
 async function render(cmd: Command, text: string): Promise<RenderResult | TextRenderResult> {
   const mermaid = createMermaid();
   // The API owns the list of formats: anything but svg/ascii is its UnsupportedFormatError.
-  const options = { format: cmd.format, config: cmd.config } as unknown as TextRenderOptions;
+  const options = {
+    format: cmd.format,
+    config: CONFIG,
+    ascii: cmd.ascii,
+  } as unknown as TextRenderOptions;
   await mermaid.prepare(text, options);
   return mermaid.renderSync(text, options);
 }

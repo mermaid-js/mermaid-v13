@@ -107,6 +107,25 @@ describe('mermaid render: input and output (R-ASCII-4, D85)', () => {
   );
 
   it.concurrent(
+    '--charset and --width win over the diagram text (front matter and directives)',
+    async () => {
+      const own = `---\nconfig:\n  ascii:\n    charset: unicode\n    maxWidth: 5\n---\n${FLOW}`;
+      const directive = `%%{init: {"ascii": {"charset": "unicode"}}}%%\n${FLOW}`;
+      const [fm, dir] = await Promise.all([
+        cli(
+          ['render', '--format', 'ascii', '--charset', 'ascii', '--width', '80', '--warnings'],
+          own
+        ),
+        cli(['render', '--format', 'ascii', '--charset', 'ascii'], directive),
+      ]);
+      expect(fm).toMatchObject({ code: 0, stderr: '' });
+      expect(fm.stdout).toContain('| Start +');
+      expect(dir.stdout).toContain('| Start +');
+    },
+    T
+  );
+
+  it.concurrent(
     "--width auto uses the terminal's columns (COLUMNS off a TTY)",
     async () => {
       const [narrow, wide] = await Promise.all([
@@ -168,17 +187,6 @@ describe('mermaid render: stderr and exit codes (R-ASCII-4, D85)', () => {
   );
 
   it.concurrent(
-    'exits 2 on an unsupported format',
-    async () => {
-      const r = await cli(['render', FILE, '--format', 'png']);
-      expect(r.code).toBe(2);
-      expect(r.stdout).toBe('');
-      expect(r.stderr).toBe(`${FILE}: Diagram type "flowchart-v2" cannot be rendered as png.\n`);
-    },
-    T
-  );
-
-  it.concurrent(
     'exits 1 on a missing file',
     async () => {
       const r = await cli(['render', join(DIR, 'nope.mmd'), '--format', 'ascii']);
@@ -196,6 +204,9 @@ describe('mermaid render: stderr and exit codes (R-ASCII-4, D85)', () => {
     [['render', FILE, '--format', 'ascii', '--width', 'wide'], '--width must be'],
     [['render', FILE, '--format', 'ascii', '--charset', 'ebcdic'], '--charset must be'],
     [['render', FILE, '--format', 'ascii', '--colour'], "Unknown option '--colour'"],
+    // Only ascii and svg are formats; exit 2 is the API's UNSUPPORTED_FORMAT for a type that
+    // has no text form, and every type built into 13.0 (the flowchart) has one (ascii.md).
+    [['render', FILE, '--format', 'png'], '--format must be ascii or svg, got "png"'],
   ])(
     'exits 1 with usage help on stderr: %j',
     async (args, message) => {
@@ -215,7 +226,8 @@ describe('mermaid CLI --help', () => {
     expect(r.code).toBe(0);
     expect(r.stderr).toBe('');
     expect(r.stdout).toContain('mermaid render [file|-] --format ascii|svg');
-    expect(r.stdout).toContain('--charset');
+    expect(r.stdout).toContain('--charset unicode|ascii');
+    expect(r.stdout).toContain('win over ascii.charset and ascii.maxWidth');
     expect(r.stdout).toContain('--width');
     expect(r.stdout).toContain('--warnings');
   }, 30_000);

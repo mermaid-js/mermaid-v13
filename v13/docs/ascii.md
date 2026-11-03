@@ -78,24 +78,36 @@ and `afterMount` do not run for text, and there is no text post-processing hook 
 The `mermaid` package ships a zero-dependency `mermaid` command (D85):
 
 ```sh
-mermaid render [file|-] --format ascii|svg [--charset ascii] [--width N|auto] [--warnings]
+mermaid render [file|-] --format ascii|svg [--charset unicode|ascii] [--width N|auto] [--warnings]
 ```
 
-| Option              | Meaning                                                                    |
-| ------------------- | -------------------------------------------------------------------------- |
-| `file` or `-`       | The diagram to read. With no file, or `-`, it reads stdin.                 |
-| `--format`          | `ascii` for text, `svg` for SVG. Output goes to stdout.                    |
-| `--charset ascii`   | Pure ASCII glyphs instead of Unicode box drawing.                          |
-| `--width N`, `auto` | Fit the drawing to `N` columns (`ascii.maxWidth`); `auto` uses the terminal's width. |
-| `--warnings`        | Print warnings to stderr. Without it they are not printed.                 |
+| Option                      | Meaning                                                                    |
+| --------------------------- | -------------------------------------------------------------------------- |
+| `file` or `-`               | The diagram to read. With no file, or `-`, it reads stdin.                 |
+| `--format ascii\|svg`       | Required. `ascii` for text, `svg` for SVG. Output goes to stdout. Any other value is a usage error. |
+| `--charset unicode\|ascii`  | Glyph set: Unicode box drawing (`unicode`, the default) or pure ASCII.     |
+| `--width N`, `--width auto` | Fit the drawing to `N` columns (`ascii.maxWidth`); `auto` uses the terminal's width (`COLUMNS` off a terminal; no limit when neither is known). |
+| `--warnings`                | Print warnings to stderr. Without it they are not printed.                 |
+| `-h`, `--help`              | Print usage to stdout and exit 0.                                          |
+| `-v`, `--version`           | Print the version to stdout and exit 0.                                    |
+
+`--charset` and `--width` are explicit: each wins over the same key (`ascii.charset`,
+`ascii.maxWidth`) set in the diagram's front matter or directives. Keys without a flag, such as
+`ascii.padding`, come from the diagram as usual. The precedence, lowest first: defaults, the
+diagram's front matter, its directives, the flags. The API offers the same through
+`render(id, text, { format: 'ascii', ascii: { … } })`: keys in `ascii` win over every config
+source, key by key.
 
 Errors are printed to stderr with the source line and a caret under the problem (R-ERR-2).
 
-| Exit code | When                                                    |
-| --------- | ------------------------------------------------------- |
-| 0         | Rendered.                                               |
-| 1         | Any error: syntax, unknown diagram, unreadable file.    |
-| 2         | The diagram type does not support the asked-for format. |
+| Exit code | When                                                                                   |
+| --------- | -------------------------------------------------------------------------------------- |
+| 0         | Rendered (or `--help`, `--version`).                                                   |
+| 1         | Any error: a usage error (unknown option or command, a `--format` other than `ascii` or `svg`, a bad `--width` or `--charset`), syntax, unknown diagram, unreadable file. |
+| 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
+
+Exit 2 cannot happen with the diagram types built into 13.0: the flowchart, the only one, renders
+both as SVG and as text. It is kept for types that will not have a text form (D58).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
 font tables. It is not v12's `mmdc` (which renders through a headless browser) nor the
@@ -192,13 +204,13 @@ elements and statements involved, so an editor can point at them (D82, R-ASCII-5
 | `link`          | `click` links, tooltips and callbacks.                           |
 | `accessibility` | `accTitle` and `accDescr`.                                       |
 
-The other text warnings:
+The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the repair router, D78):
 
 | Code             | Fields            | When                                                                     |
 | ---------------- | ----------------- | ------------------------------------------------------------------------ |
 | `ASCII_SHAPE`    | `shapes`, `astIds` | Nodes with a shape that has no text form, drawn as plain boxes.          |
-| `ASCII_ROUTE`    | `astIds`          | An edge the router could not give a free lane; it may touch another line. |
-| `ASCII_TOO_WIDE` |                   | The drawing is wider than `ascii.maxWidth` after fitting.                |
+| `ASCII_ROUTE`    | `astIds`          | An edge the router could not give a free lane; it may touch another line or text (D78). |
+| `ASCII_TOO_WIDE` |                   | The drawing is wider than `ascii.maxWidth` after fitting (D84).          |
 
 ## Size
 
