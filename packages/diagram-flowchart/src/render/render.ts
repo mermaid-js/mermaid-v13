@@ -95,6 +95,10 @@ export function renderFlowchart(
     sw: theme.length('strokeWidth'),
     line: theme.color('lineColor'),
     arrow: theme.color('arrowheadColor'),
+    // The theme's drop shadow (#85), a CSS filter on node outlines, icons, subgraph rects and
+    // the collapsed card; never on edges, labels or a collapsed card's dots. A theme with
+    // `none` (the classic themes) writes no filter at all.
+    shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
   };
   const G =
     flow.groups.length > 0
@@ -162,6 +166,7 @@ export function renderFlowchart(
         fill: G.fill,
         stroke: G.stroke,
         'stroke-width': G.sw,
+        filter: P.shadow,
         ...g.style.shape,
       });
       w.label(g.label, box.title.x, box.title.y, {
@@ -280,6 +285,7 @@ export function renderFlowchart(
       fill: P.fill,
       stroke: P.stroke,
       'stroke-width': P.sw,
+      filter: P.shadow,
       ...view.style.shape,
     };
     const lineAttrs: Attrs =

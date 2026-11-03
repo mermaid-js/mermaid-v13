@@ -8,6 +8,7 @@ import { RE_INVALID_XML, num } from './escape.ts';
 import type {
   Attrs,
   SafeColor,
+  SafeFilter,
   SafeLength,
   SafeValue,
   StyleText,
@@ -95,6 +96,65 @@ export function checkColor(value: string): SafeColor | undefined {
     }
   }
   return depth === 0 ? (v as SafeColor) : undefined;
+}
+
+const RE_SHADOW_LENGTH = /^-?(?:\d{1,6}(?:\.\d{1,6})?|\.\d{1,6})(?:px|em|rem)?$/i;
+const SHADOW_HEAD = 'drop-shadow(';
+const MAX_SHADOWS = 4;
+
+/** Splits on whitespace outside parentheses; undefined when the parentheses don't balance. */
+function topLevelWords(text: string): string[] | undefined {
+  const out: string[] = [];
+  let depth = 0;
+  let word = '';
+  for (const c of text) {
+    if (c === '(') depth++;
+    else if (c === ')' && --depth < 0) return undefined;
+    if (depth === 0 && /\s/.test(c)) {
+      if (word !== '') out.push(word);
+      word = '';
+    } else word += c;
+  }
+  if (depth !== 0) return undefined;
+  if (word !== '') out.push(word);
+  return out;
+}
+
+/** One `drop-shadow(<x> <y> [<blur>] [<colour>])`, normalised, or undefined. */
+function checkShadow(fn: string): string | undefined {
+  if (!fn.toLowerCase().startsWith(SHADOW_HEAD) || !fn.endsWith(')')) return undefined;
+  const args = topLevelWords(fn.slice(SHADOW_HEAD.length, -1));
+  if (!args) return undefined;
+  let lengths = 0;
+  while (lengths < args.length && lengths < 3 && RE_SHADOW_LENGTH.test(args[lengths] as string))
+    lengths++;
+  // At most one colour after the lengths, a single word such as `red` or `rgb(0 0 0 / 0.06)`.
+  if (lengths < 2 || args.length > lengths + 1) return undefined;
+  const colour = args[lengths];
+  if (colour !== undefined && checkColor(colour) === undefined) return undefined;
+  return 'drop-shadow(' + args.join(' ') + ')';
+}
+
+/**
+ * A CSS `filter` value for the theme's drop shadow (#85), or undefined when it is not
+ * allowed: `none`, or one to four `drop-shadow(<x> <y> [<blur>] [<colour>])` functions with
+ * the colour through `checkColor`. Nothing else, so no `url()` reference can load a resource
+ * or reach an element outside the diagram.
+ */
+export function checkFilter(value: string): SafeFilter | undefined {
+  const v = value.trim();
+  if (v === '' || v.length > 400 || RE_UNSAFE_STYLE.test(v) || RE_INVALID_XML.test(v))
+    return undefined;
+  if (v.toLowerCase() === 'none') return 'none' as SafeFilter;
+  const fns = topLevelWords(v);
+  if (!fns || fns.length === 0 || fns.length > MAX_SHADOWS) return undefined;
+  const out: string[] = [];
+  for (const fn of fns) {
+    const s = checkShadow(fn);
+    if (s === undefined) return undefined;
+    out.push(s);
+  }
+  return out.join(' ') as SafeFilter;
 }
 
 /** A CSS length or plain number, or undefined when it is not one. */

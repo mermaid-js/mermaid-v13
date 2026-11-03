@@ -87,6 +87,61 @@ describe('createTheme: shape tokens (R-THEME-11)', () => {
   });
 });
 
+describe('createTheme: drop shadow (#85)', () => {
+  const BLACK_SHADOW = 'drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))';
+  const WHITE_SHADOW = 'drop-shadow(4px 4px 0 rgb(255 255 255 / 0.06))';
+
+  it.each([
+    ['redux', BLACK_SHADOW],
+    ['redux-color', BLACK_SHADOW],
+    ['redux-dark', WHITE_SHADOW],
+    ['redux-dark-color', WHITE_SHADOW],
+    ['default', 'none'],
+    ['dark', 'none'],
+    ['forest', 'none'],
+    ['neutral', 'none'],
+    ['base', 'none'],
+  ] as const)('%s has dropShadow %s', async (name, value) => {
+    const t = createTheme(await loadTheme(name), { cssVariables: false });
+    expect(t.value('dropShadow')).toBe(value);
+    expect(t.filter('dropShadow')).toBe(value);
+  });
+
+  it('references the shadow through an alias, with the theme value as fallback', async () => {
+    const t = createTheme(await loadTheme('redux-color'));
+    expect(t.filter('dropShadow')).toBe('var(--_ds)');
+    expect(t.rootStyle()).toEqual({ '--_ds': `var(--mermaid-dropShadow,${BLACK_SHADOW})` });
+    const w = streamWriter();
+    w.leaf('svg', { style: styleText(t.rootStyle()), filter: t.filter('dropShadow') });
+    assertInert(w.finish());
+  });
+
+  it('takes a themeVariables override, including none', async () => {
+    const spec = await loadTheme('redux-color');
+    const off = createTheme(spec, { themeVariables: { dropShadow: 'none' }, cssVariables: false });
+    expect(off.value('dropShadow')).toBe('none');
+    const red = createTheme(spec, {
+      themeVariables: { dropShadow: 'drop-shadow(2px 2px 0 red)' },
+      cssVariables: false,
+    });
+    expect(red.value('dropShadow')).toBe('drop-shadow(2px 2px 0 red)');
+  });
+
+  it.each(['url(#drop-shadow)', 'blur(4px)', 'drop-shadow(4px 4px 0 red) url(x)', 42])(
+    'drops an unsafe override %j with THEME_VARIABLE_DROPPED',
+    async (value) => {
+      const warnings: ThemeWarning[] = [];
+      const t = createTheme(await loadTheme('redux-color'), {
+        themeVariables: { dropShadow: value },
+        cssVariables: false,
+        warn: (w) => warnings.push(w),
+      });
+      expect(t.value('dropShadow')).toBe(BLACK_SHADOW);
+      expect(warnings.map((w) => w.code)).toEqual(['THEME_VARIABLE_DROPPED']);
+    }
+  );
+});
+
 describe('createTheme: author fills get contrasting ink (R-THEME-12)', () => {
   it('keeps the theme ink when it reads, and picks one that does otherwise', () => {
     const t = createTheme(base);

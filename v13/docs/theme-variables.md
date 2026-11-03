@@ -48,6 +48,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `spacing1` | `--mermaid-spacing1` | token | length | | | all | core, flowchart |
 | `spacing2` | `--mermaid-spacing2` | token | length | | | all | core, flowchart |
 | `spacing3` | `--mermaid-spacing3` | token | length | | | all | core, flowchart |
+| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color | flowchart |
 
 ## Palettes
 

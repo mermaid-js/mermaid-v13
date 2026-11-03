@@ -71,6 +71,7 @@ const ATTR_TABLE: Record<AllowedAttr, true> = {
   'stroke-miterlimit': true,
   'stroke-opacity': true,
   opacity: true,
+  filter: true,
   color: true,
   'font-family': true,
   'font-size': true,

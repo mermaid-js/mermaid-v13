@@ -7,7 +7,7 @@
  */
 
 /** How a variable's value is checked and written. */
-export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight';
+export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter';
 
 export interface ThemeVarDef {
   /** The short private alias written on the root, without the leading `--_`. */
@@ -112,4 +112,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   spacing1: def('g1', 'length', CF),
   spacing2: def('g2', 'length', CF),
   spacing3: def('g3', 'length', CF),
+  // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
+  // that sets no value has no shadow.
+  dropShadow: def('ds', 'filter', F),
 };

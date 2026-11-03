@@ -17,7 +17,7 @@ import {
   SVG_NS,
 } from './allowlist.ts';
 import { RE_INVALID_XML } from './escape.ts';
-import { RE_UNSAFE_STYLE, STYLE_TEXT_PROPERTIES, styleSheetProblem } from './style.ts';
+import { RE_UNSAFE_STYLE, STYLE_TEXT_PROPERTIES, checkFilter, styleSheetProblem } from './style.ts';
 import type { SecurityLevel } from './url.ts';
 
 export interface InertOptions {
@@ -40,6 +40,7 @@ const RE_PERCENT = /^\d{1,15}(?:\.\d{1,15})?%$/;
 const RE_NUMBER_LIST = /^[\d\s,.eE+-]*$/;
 // cspell:disable-next-line
 const RE_PATH = /^[MLHVCSQTAZmlhvcsqtaz\d\s,.eE+-]*$/;
+const RE_ALIAS_REF = /^var\(--_[A-Za-z0-9_-]{1,64}\)$/;
 const RE_TRANSFORM_CHARS = /^[a-zA-Z(),.\d\s+-]*$/;
 const TRANSFORMS: ReadonlySet<string> = new Set([
   'translate',
@@ -158,6 +159,11 @@ function attrProblem(
         if (!TRANSFORMS.has(word)) return `transform="${value}"`;
       return undefined;
     }
+    case 'filter':
+      // A theme alias, or a drop-shadow list: never url(), which could load or reference.
+      return RE_ALIAS_REF.test(value) || checkFilter(value) !== undefined
+        ? undefined
+        : `filter="${value}"`;
     case 'style': {
       for (const decl of value.split(';')) {
         if (decl.trim() === '') continue;
