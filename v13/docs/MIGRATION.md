@@ -329,7 +329,10 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color` | `none` |
 
 The palette rows apply to the two colour themes only; plain `redux` and `redux-dark` carry no
-palette.
+palette. A padding variable (the `…Padding…` names) takes a px number or a multiple of
+`flowchart.padding` written `padding` or `<n> * padding`, so `nodePaddingX: '2 * padding'`
+gives a redux theme classic node padding. `circlePadding` is added to the label's diagonal,
+so it counts twice towards the diameter compared with the per-side node padding.
 
 - **Arrowheads** stop `arrowheadGap` short of the node outline, so in the redux themes a 4px gap
   separates the tip from the node, as in v12 neo. They stay inline paths with no `<marker>`;

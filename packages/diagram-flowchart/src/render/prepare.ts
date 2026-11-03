@@ -101,10 +101,23 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     size: theme.number('fontSize'),
     weight: 400,
   };
+  // flowchart.padding: the classic themes' padding variables are multiples of it (D152).
+  const pad = size(flow.padding, 15);
+  const padOf = (name: string) => theme.padding(name, pad);
   const pads: Pads = {
-    x: theme.number('spacing3'),
-    y: theme.number('spacing2') + theme.number('spacing1'),
+    x: padOf('nodePaddingX'),
+    y: padOf('nodePaddingY'),
     r: theme.number('radius'),
+    pad,
+    stadiumX: padOf('stadiumPaddingX'),
+    stadiumY: padOf('stadiumPaddingY'),
+    hexX: padOf('hexagonPaddingX'),
+    hexY: padOf('hexagonPaddingY'),
+    hexSlant: theme.number('hexagonSlant') || 4,
+    ringGap: theme.number('doubleCircleGap'),
+    ringPad: padOf('doubleCirclePadding'),
+    circlePad: padOf('circlePadding'),
+    circleMin: theme.number('circleMinDiameter'),
   };
   const wrap = size(flow.wrappingWidth) || 200;
   const minWidth = size(flow.minNodeWidth);

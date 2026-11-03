@@ -3,6 +3,7 @@
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
 import type { ThemeSpec } from '../spec.ts';
+import { REDUX_PADDING } from './geometry.ts';
 
 const redux: ThemeSpec = {
   name: 'redux',
@@ -25,6 +26,7 @@ const redux: ThemeSpec = {
     spacing1: 4,
     spacing2: 8,
     spacing3: 16,
+    ...REDUX_PADDING,
   },
   values: {
     primaryBorderColor: '#28253d',

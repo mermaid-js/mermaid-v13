@@ -48,6 +48,17 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `spacing1` | `--mermaid-spacing1` | token | length | | | all | core, flowchart |
 | `spacing2` | `--mermaid-spacing2` | token | length | | | all | core, flowchart |
 | `spacing3` | `--mermaid-spacing3` | token | length | | | all | core, flowchart |
+| `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart |
+| `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart |
+| `stadiumPaddingX` | `--mermaid-stadiumPaddingX` | token | padding | | | all | flowchart |
+| `stadiumPaddingY` | `--mermaid-stadiumPaddingY` | token | padding | | | all | flowchart |
+| `hexagonPaddingX` | `--mermaid-hexagonPaddingX` | token | padding | | | all | flowchart |
+| `hexagonPaddingY` | `--mermaid-hexagonPaddingY` | token | padding | | | all | flowchart |
+| `hexagonSlant` | `--mermaid-hexagonSlant` | token | length | | | all | flowchart |
+| `doubleCircleGap` | `--mermaid-doubleCircleGap` | token | length | | | all | flowchart |
+| `doubleCirclePadding` | `--mermaid-doubleCirclePadding` | token | padding | | | all | flowchart |
+| `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart |
+| `circleMinDiameter` | `--mermaid-circleMinDiameter` | token | length | | | all | flowchart |
 
 ## Palettes
 

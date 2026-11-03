@@ -5,6 +5,7 @@
  * (`primaryBorderColor` from `#28253D`, `clusterBkg`, `clusterBorder`).
  */
 import type { ThemeSpec } from '../spec.ts';
+import { REDUX_PADDING } from './geometry.ts';
 import { TAILWIND_300, TAILWIND_400, TAILWIND_50 } from './palettes.ts';
 
 const theme: ThemeSpec = {
@@ -28,6 +29,7 @@ const theme: ThemeSpec = {
     spacing1: 4,
     spacing2: 8,
     spacing3: 16,
+    ...REDUX_PADDING,
   },
   values: {
     primaryBorderColor: '#28253d',

@@ -151,6 +151,105 @@ properties:
             Tailwind-50 × 12 in `redux-color`; empty in `redux-dark-color` and every other theme
             (D151). Read as literal colours, not CSS variables. An unsafe colour drops the whole
             list with `THEME_VARIABLE_DROPPED`.
+      nodePaddingX:
+        description: |
+          Room left and right of a node label, per side, for the rectangle and the shapes that share its padding. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            16 in the redux themes; `2 * padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      nodePaddingY:
+        description: |
+          Room above and below a node label, per side. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            12 in the redux themes; `padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      stadiumPaddingX:
+        description: |
+          Stadium padding added to the width, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            40 in the redux themes; `padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      stadiumPaddingY:
+        description: |
+          Stadium padding added to the height, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            24 in the redux themes; `padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      hexagonPaddingX:
+        description: |
+          Hexagon padding added to the width, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            70 in the redux themes; `padding` in the classic themes. v12 adds it to the height; v13 corrects the axes (D151). Read as a number at render time (D152), so its CSS variable has no effect.
+      hexagonPaddingY:
+        description: |
+          Hexagon padding added to the height, in total. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            32 in the redux themes; `padding` in the classic themes. v12 adds it to the width; v13 corrects the axes (D151). Read as a number at render time (D152), so its CSS variable has no effect.
+      hexagonSlant:
+        description: |
+          Hexagon slant factor: each pointed end is the height divided by this.
+        type: number
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            3.5 in the redux themes; 4 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      doubleCircleGap:
+        description: |
+          Gap between the two rings of a double circle.
+        type: number
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            12 in the redux themes; 5 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      doubleCirclePadding:
+        description: |
+          Room between the label diagonal and the inner ring of a double circle, per side. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            16 in the redux themes; `padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      circlePadding:
+        description: |
+          Added to the label's diagonal to give a circle's diameter. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            16 in the redux themes (v13's earlier value, kept, D151); `padding` in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      circleMinDiameter:
+        description: |
+          The smallest circle diameter.
+        type: number
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            44 in the redux themes; 0 (none) in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
   themeCSS:
     type: string
     x-mermaid:
@@ -3280,12 +3379,14 @@ $defs:
         type: number
         default: 15
         x-mermaid:
-          status: pending
+          status: honoured
+          since: 13.0.0
           reason: >-
-            Becomes honoured in the classic themes (D151, D152): it is the "padding" in their
-            node, stadium, hexagon, double-circle and circle padding variables, and the diamond
-            uses it in every theme (side = label width + label height + 2 × padding). The redux
-            themes use their own fixed padding variables (see `themeVariables`).
+            The "padding" of the classic themes' node, stadium, hexagon, double-circle and
+            circle padding variables (D151, D152), and of the diamond in every theme (side =
+            label width + label height + 2 × padding). The redux themes use their own fixed
+            padding variables (see `themeVariables`); a padding variable set to `padding` or
+            `<n> * padding` follows this value in any theme.
       wrappingWidth:
         description: |
           Width of nodes where text is wrapped.

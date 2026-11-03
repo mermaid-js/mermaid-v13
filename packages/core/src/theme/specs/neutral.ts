@@ -2,6 +2,7 @@
  * `neutral`: v12 `theme-neutral.js`, greys for print.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { CLASSIC_PADDING } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'neutral',
@@ -24,6 +25,7 @@ const theme: ThemeSpec = {
     spacing1: 4,
     spacing2: 8,
     spacing3: 16,
+    ...CLASSIC_PADDING,
   },
   values: {
     textColor: '#000000',

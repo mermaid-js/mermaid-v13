@@ -169,3 +169,74 @@ describe('theme names', () => {
     expect(resolveThemeName('auto')).toEqual({ name: 'redux-color', dark: 'dark' });
   });
 });
+
+describe('node padding per theme (#83, D151, D152)', () => {
+  const PADDING = [
+    'nodePaddingX',
+    'nodePaddingY',
+    'stadiumPaddingX',
+    'stadiumPaddingY',
+    'hexagonPaddingX',
+    'hexagonPaddingY',
+    'hexagonSlant',
+    'doubleCircleGap',
+    'doubleCirclePadding',
+    'circlePadding',
+    'circleMinDiameter',
+  ] as const;
+  // v12 neo, with v13's circle (D151).
+  const REDUX = [16, 12, 40, 24, 70, 32, 3.5, 12, 16, 16, 44];
+  // v12 classic at flowchart.padding 15 (2 × padding / padding, …, no circle minimum).
+  const CLASSIC = [30, 15, 15, 15, 15, 15, 4, 5, 15, 15, 0];
+  const expected: Record<string, number[]> = {
+    redux: REDUX,
+    'redux-color': REDUX,
+    'redux-dark': REDUX,
+    'redux-dark-color': REDUX,
+    default: CLASSIC,
+    dark: CLASSIC,
+    forest: CLASSIC,
+    neutral: CLASSIC,
+    base: CLASSIC,
+  };
+  const theme = (name: string, options: Parameters<typeof createTheme>[1] = {}) =>
+    createTheme(specs.find((s) => s.name === name)!, options);
+  const resolved = (name: string, padding: number) => {
+    const t = theme(name);
+    return PADDING.map((v) =>
+      THEME_VARIABLES[v]!.kind === 'padding' ? t.padding(v, padding) : t.number(v)
+    );
+  };
+
+  it('covers every shipped theme', () => {
+    expect(Object.keys(expected).sort()).toEqual([...THEME_NAMES].sort());
+  });
+
+  it.each(Object.entries(expected))('pins %s', (name, values) => {
+    expect(resolved(name, 15)).toEqual(values);
+  });
+
+  it('scales the classic values with the diagram padding, not the redux ones', () => {
+    expect(resolved('default', 10)).toEqual([20, 10, 10, 10, 10, 10, 4, 5, 10, 10, 0]);
+    expect(resolved('redux-color', 10)).toEqual(REDUX);
+  });
+
+  it('takes px or a multiple of padding from themeVariables, and drops anything else', () => {
+    const warnings: ThemeWarning[] = [];
+    const t = theme('redux-color', {
+      themeVariables: { nodePaddingX: '3 * padding', nodePaddingY: '9px', circlePadding: '-4' },
+      warn: (w) => warnings.push(w),
+    });
+    expect(t.padding('nodePaddingX', 10)).toBe(30);
+    expect(t.padding('nodePaddingY', 10)).toBe(9);
+    expect(t.padding('circlePadding', 10)).toBe(16);
+    expect(warnings.map((w) => w.code)).toEqual(['THEME_VARIABLE_DROPPED']);
+  });
+
+  it('never writes a padding variable as a CSS alias (D152)', () => {
+    const t = theme('redux-color');
+    t.padding('nodePaddingX', 15);
+    t.number('hexagonSlant');
+    expect(t.rootStyle()).toEqual({});
+  });
+});
