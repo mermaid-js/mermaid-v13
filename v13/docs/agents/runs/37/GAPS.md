@@ -42,3 +42,8 @@ Unmet acceptance criteria and announced shared contracts, grouped by the ticket 
 - **#45 owns:** cells shared by sibling/unrelated edges, runs along group frames, corner touches, group→own-member routes (split in tickets/42.md). Use `validateGrid` from `@mermaid-js/core/layout`.
 - **#46 owns:** keeping a grown box's label centred (the engine grows boxes in place, D140; 97/494 corpus graphs).
 - Open: the builder does not pre-size boxes from per-side edge ends (D140). `IN_LINE`/`TWIN` stay px-sized (not in `LayoutMetrics`).
+
+## #45 review round (merged, b5b1e1d86)
+
+- Review-6 spec in `core/ascii/repair.spec.ts` asserts a wall-clock bound (< 800 ms). Timing specs break determinism (spec: no wall-clock time). Final code-review should replace it with a work-count assertion or move it to bench.
+- Engine: edge end cells can land on a group title (2 F3 fixtures, 5/200 random). Sent back to #42; the F3 cases are pinned in repair.spec.ts until then.
