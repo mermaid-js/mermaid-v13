@@ -360,11 +360,15 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   };
   const along = sideways(rootDir) ? 'x' : 'y';
   const across = along === 'x' ? 'y' : 'x';
-  const spacing = {
-    node: fromConfig(flow.nodeSpacing, b.spacing.node, across, b.minSpacing.node),
-    rank: fromConfig(flow.rankSpacing, b.spacing.rank, along, b.minSpacing.rank),
+  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
+    node: fromConfig(flow.nodeSpacing, b.spacing.node, node, b.minSpacing.node),
+    rank: fromConfig(flow.rankSpacing, b.spacing.rank, rank, b.minSpacing.rank),
     edge: b.spacing.edge,
-  };
+  });
+  const spacing = spacingOn(along, across);
+  // An LR/RL drawing the engine turns to TB for `availableWidth` runs its ranks down (#47).
+  const down = spacingOn('y', 'x');
+  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
   const curve = curveKind(flow.curve);
   const graph: LayoutGraph = {
     direction: rootDir,
@@ -408,6 +412,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
         : {}),
     })),
     spacing,
+    ...(turned ? { turnedSpacing: down } : {}),
     // Text output trims the empty margin, so in cells a margin would only eat into
     // `availableWidth` (`ascii.maxWidth`, D84): the profile's own (0) applies.
     diagramPadding:

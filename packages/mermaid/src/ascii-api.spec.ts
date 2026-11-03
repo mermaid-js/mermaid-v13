@@ -182,6 +182,18 @@ describe('ascii.maxWidth (R-ASCII-8, D84)', () => {
     expect(wide.warnings).toEqual([]);
   });
 
+  it('spaces a drawing it turns to TB as a native TB drawing (rows, not columns)', async () => {
+    const turned = await at(40);
+    const native = await createMermaid().render(
+      'w',
+      chain.replace('flowchart LR', 'flowchart TB'),
+      {
+        format: 'ascii',
+      }
+    );
+    expect(turned.text).toBe(native.text);
+  });
+
   it('leaves a drawing alone at exactly its own width (no margin is budgeted)', async () => {
     const wide = await at();
     const exact = await at(wide.columns);

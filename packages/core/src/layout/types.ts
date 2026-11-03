@@ -103,6 +103,12 @@ export interface LayoutGraph {
    */
   availableWidth?: number;
   /**
+   * Spacing for an LR/RL drawing that `availableWidth` turns to TB, when it differs from
+   * `spacing`: with units that are not square (character cells) node and rank spacing swap axes,
+   * so they convert differently. Defaults to `spacing`.
+   */
+  turnedSpacing?: LayoutSpacing;
+  /**
    * The engine's length constants, from the diagram's unit profile (D77). Defaults to the px
    * values, so a graph without them lays out as before.
    */

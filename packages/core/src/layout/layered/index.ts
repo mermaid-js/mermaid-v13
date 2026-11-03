@@ -73,7 +73,8 @@ export const layered: LayoutEngine = (graph: LayoutGraph, ctx?: LayoutContext): 
   const across = tighten(graph, graph.direction);
   if (available === undefined || !(available > 0) || across.width <= available) return across;
   if (!runsAcross(graph.direction) || available >= M.turnBreakpoint) return across;
-  const down = tighten(graph, 'TB');
+  const turned = graph.turnedSpacing ? { ...graph, spacing: graph.turnedSpacing } : graph;
+  const down = tighten(turned, 'TB');
   return down.width < across.width ? down : across;
 };
 
