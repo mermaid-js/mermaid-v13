@@ -63,6 +63,8 @@ function outline(tree: SvgView): { w: number; h: number } {
       return { w: attr('width'), h: attr('height') };
     case 'circle':
       return { w: 2 * attr('r'), h: 2 * attr('r') };
+    case undefined:
+      throw new Error('node A has no outline element');
     default: {
       const nums = tree
         .getAttr(shape, 'points')!

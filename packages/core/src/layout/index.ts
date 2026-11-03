@@ -29,3 +29,12 @@ export {
   type SpacingConfig,
 } from './layered/index.ts';
 export { countCrossings, validateLayout } from './validate.ts';
+export {
+  cellProfile,
+  fromPx,
+  pxProfile,
+  type BuilderMetrics,
+  type CellPadding,
+  type LayoutMetrics,
+  type UnitProfile,
+} from './units.ts';

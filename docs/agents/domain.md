@@ -15,7 +15,7 @@ The approved baseline (always present):
 Created lazily (may not exist yet):
 
 - **`v13/docs/GLOSSARY.md`**: the domain glossary once `/domain-modeling` starts recording terms. Until it exists, REQUIREMENTS.md §3 is the glossary.
-- **`v13/docs/adr/`**: ADRs, numbered as in DESIGN.md §16 (ADR-1 … ADR-12). Read the ones touching the area you work in.
+- **`v13/docs/adr/`**: ADRs, numbered as in DESIGN.md §16 (ADR-1 … ADR-14). Read the ones touching the area you work in.
 
 If a lazily created file doesn't exist, **proceed silently**. Don't flag its absence; don't suggest creating it upfront. `/domain-modeling` (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them when terms or decisions actually get resolved, and writes them under `v13/docs/`.
 

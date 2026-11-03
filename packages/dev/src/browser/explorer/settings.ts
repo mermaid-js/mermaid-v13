@@ -134,11 +134,16 @@ const KEY_OWNING_TAGS = new Set([
  * `prev`/`next` for an unmodified ←/→ that no input, editor (contenteditable, CodeMirror's
  * `.cm-editor`) or Shoelace control on the event's composed path owns; otherwise `null`.
  */
+const ARROW_ACTIONS: ReadonlyMap<string, 'prev' | 'next'> = new Map([
+  ['ArrowLeft', 'prev'],
+  ['ArrowRight', 'next'],
+]);
+
 export function arrowAction(e: KeyboardEvent): 'prev' | 'next' | null {
   if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.repeat || e.defaultPrevented) {
     return null;
   }
-  const action = e.key === 'ArrowLeft' ? 'prev' : e.key === 'ArrowRight' ? 'next' : null;
+  const action = ARROW_ACTIONS.get(e.key);
   if (!action) return null;
   const owned = e
     .composedPath()

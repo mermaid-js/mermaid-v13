@@ -111,8 +111,8 @@ function shadowLength(word: string, blur: boolean): boolean {
   const m = RE_SHADOW_LENGTH.exec(word);
   if (!m) return false;
   if (blur && m[1] === '-') return false;
-  const px = Number(m[2]) * (m[3] && m[3].toLowerCase() !== 'px' ? PX_PER_EM : 1);
-  return px <= MAX_SHADOW_PX;
+  const pixels = Number(m[2]) * (m[3] && m[3].toLowerCase() !== 'px' ? PX_PER_EM : 1);
+  return pixels <= MAX_SHADOW_PX;
 }
 
 /**

@@ -1,0 +1,326 @@
+/**
+ * Local eslint plugin holding the v13 architecture in place (DESIGN §2, R-ARCH-1/5, R-PARSE-7).
+ *
+ * - `mermaid/import-boundaries`: diagram-* → core, mermaid → core + diagram-*, core → nothing;
+ *   `core/ascii` imports no SVG code and only ASCII code imports it (DESIGN §6.3).
+ * - `mermaid/no-global-config`: no getConfig-style global config lookup.
+ * - `mermaid/no-magic-char-code`: char codes are compared with named constants, not numbers.
+ * - `mermaid/no-nested-quantifier`: no quantifier nested in an unbounded/variable quantifier.
+ */
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { RegExpParser, visitRegExpAST } from '@eslint-community/regexpp';
+import type { ESLint, Rule, Scope } from 'eslint';
+import type { CallExpression, Expression, NewExpression, Node as EsNode } from 'estree';
+
+const CORE = '@mermaid-js/core';
+
+/** Which workspace package a file belongs to, from its path. */
+function packageOf(filename: string): { name: string; dir: string } | undefined {
+  const parts = filename.split(sep);
+  const at = parts.lastIndexOf('packages');
+  const name = at === -1 ? undefined : parts[at + 1];
+  if (!name) {
+    return undefined;
+  }
+  return { name, dir: parts.slice(0, at + 2).join(sep) };
+}
+
+const isCore = (s: string) => s === CORE || s.startsWith(`${CORE}/`);
+const isDiagram = (s: string) => s.startsWith('@mermaid-js/diagram-');
+const isCoreAscii = (s: string) => s === `${CORE}/ascii` || s.startsWith(`${CORE}/ascii/`);
+/** ASCII code: a path inside the package with an `ascii` directory or an `ascii.*` file. */
+const isAsciiCode = (dir: string, filename: string) =>
+  relative(dir, filename)
+    .split(sep)
+    .some((part) => part === 'ascii' || part.startsWith('ascii.'));
+const isInside = (dir: string, path: string) => {
+  const rel = relative(dir, path);
+  return !rel.startsWith('..') && !isAbsolute(rel);
+};
+const isTestFile = (filename: string) => /\.(spec|test)\.[cm]?[jt]s$/.test(filename);
+const isTestOnly = (s: string) =>
+  s === 'vitest' || s.startsWith('vitest/') || s.startsWith('node:');
+
+/** Why `specifier` may not be imported from package `pkg`, or undefined when allowed. */
+function bareImportViolation(pkg: string, specifier: string, inTest: boolean): string | undefined {
+  if (inTest && isTestOnly(specifier)) {
+    return undefined;
+  }
+  if (pkg === 'core') {
+    return 'core imports nothing outside itself';
+  }
+  if (pkg.startsWith('diagram-')) {
+    if (isCore(specifier)) {
+      return undefined;
+    }
+    if (isDiagram(specifier)) {
+      return 'a diagram package never imports another diagram package';
+    }
+    return `diagram packages import only ${CORE}`;
+  }
+  if (pkg === 'mermaid') {
+    return isCore(specifier) || isDiagram(specifier)
+      ? undefined
+      : `mermaid imports only ${CORE} and @mermaid-js/diagram-*`;
+  }
+  return undefined;
+}
+
+const importBoundaries: Rule.RuleModule = {
+  meta: {
+    type: 'problem',
+    docs: { description: 'Enforce the v13 package dependency directions (DESIGN §2).' },
+    messages: { forbidden: "'{{specifier}}' is not allowed here: {{reason}}." },
+    schema: [],
+  },
+  create(context) {
+    const filename = context.filename;
+    const found = packageOf(filename);
+    if (!found) {
+      return {};
+    }
+    const pkg = found;
+    const inTest = isTestFile(filename);
+
+    function check(source: EsNode | null | undefined): void {
+      if (!source || source.type !== 'Literal' || typeof source.value !== 'string') {
+        return;
+      }
+      const specifier = source.value;
+      let reason: string | undefined;
+      if (specifier.startsWith('.')) {
+        const target = resolve(dirname(filename), specifier);
+        const src = join(pkg.dir, 'src');
+        if (relative(pkg.dir, target).startsWith('..')) {
+          reason = 'relative imports must stay inside the package; import its public entry';
+        } else if (pkg.name === 'core' && isInside(join(src, 'ascii'), filename)) {
+          if (isInside(join(src, 'svg'), target)) {
+            reason = 'core/ascii never imports SVG code (DESIGN §6.3)';
+          }
+        } else if (pkg.name === 'core' && !inTest && isInside(join(src, 'ascii'), target)) {
+          reason = 'only ASCII code imports core/ascii (DESIGN §6.3)';
+        }
+      } else if (isCoreAscii(specifier) && !inTest && !isAsciiCode(pkg.dir, filename)) {
+        reason = `only ASCII code imports ${CORE}/ascii (DESIGN §6.3)`;
+      } else {
+        reason = bareImportViolation(pkg.name, specifier, inTest);
+      }
+      if (reason) {
+        context.report({ node: source, messageId: 'forbidden', data: { specifier, reason } });
+      }
+    }
+
+    return {
+      ImportDeclaration: (node) => check(node.source),
+      ExportNamedDeclaration: (node) => check(node.source),
+      ExportAllDeclaration: (node) => check(node.source),
+      ImportExpression: (node) => check(node.source),
+    };
+  },
+};
+
+const GLOBAL_CONFIG_NAMES = new Set([
+  'getConfig',
+  'getSiteConfig',
+  'getUserConfig',
+  'getEffectiveConfig',
+  'setConfig',
+  'setSiteConfig',
+  'updateSiteConfig',
+]);
+
+/** The called function's name: `f` in `f()` and `a.f()`. */
+function calleeName(node: CallExpression): string | undefined {
+  const callee = node.callee;
+  if (callee.type === 'Identifier') {
+    return callee.name;
+  }
+  if (callee.type === 'MemberExpression' && callee.property.type === 'Identifier') {
+    return callee.property.name;
+  }
+  return undefined;
+}
+
+const noGlobalConfig: Rule.RuleModule = {
+  meta: {
+    type: 'problem',
+    docs: { description: 'Ban global config lookup; config is passed explicitly (R-ARCH-5).' },
+    messages: {
+      forbidden:
+        "'{{name}}' looks up global config. Take the frozen ResolvedConfig as a parameter instead.",
+    },
+    schema: [],
+  },
+  create(context) {
+    return {
+      CallExpression(node) {
+        const name = calleeName(node);
+        if (name && GLOBAL_CONFIG_NAMES.has(name)) {
+          context.report({ node, messageId: 'forbidden', data: { name } });
+        }
+      },
+    };
+  },
+};
+
+const CHAR_CODE_METHODS = new Set(['charCodeAt', 'codePointAt']);
+const COMPARISONS = new Set(['===', '!==', '==', '!=', '<', '<=', '>', '>=']);
+
+function isCharCodeCall(node: EsNode | null | undefined): boolean {
+  if (node?.type !== 'CallExpression') {
+    return false;
+  }
+  const name = node.callee.type === 'MemberExpression' ? calleeName(node) : undefined;
+  return name !== undefined && CHAR_CODE_METHODS.has(name);
+}
+
+const noMagicCharCode: Rule.RuleModule = {
+  meta: {
+    type: 'suggestion',
+    docs: { description: 'Ban comparing char codes with bare numbers; name the character.' },
+    messages: {
+      magic:
+        'Char code {{value}} is a bare number. Name it (`const LBRACE = 0x7b;`) or use a parser-kit helper (charTable, isDigit, isSpace, isWord).',
+    },
+    schema: [],
+  },
+  create(context) {
+    /** A charCodeAt/codePointAt call, or a variable that is only ever given one. */
+    function isCharCode(node: EsNode): boolean {
+      if (isCharCodeCall(node)) {
+        return true;
+      }
+      if (node.type !== 'Identifier') {
+        return false;
+      }
+      let scope: Scope.Scope | null = context.sourceCode.getScope(node);
+      for (; scope; scope = scope.upper) {
+        const variable = scope.set.get(node.name);
+        if (!variable) {
+          continue;
+        }
+        const writes = variable.references.filter((r) => r.isWrite());
+        return writes.length > 0 && writes.every((r) => isCharCodeCall(r.writeExpr));
+      }
+      return false;
+    }
+
+    function report(node: EsNode): void {
+      if (node.type === 'Literal' && typeof node.value === 'number') {
+        context.report({ node, messageId: 'magic', data: { value: String(node.value) } });
+      }
+    }
+
+    return {
+      BinaryExpression(node) {
+        if (!COMPARISONS.has(node.operator)) {
+          return;
+        }
+        if (isCharCode(node.left)) {
+          report(node.right);
+        }
+        if (isCharCode(node.right)) {
+          report(node.left);
+        }
+      },
+      SwitchStatement(node) {
+        if (!isCharCode(node.discriminant)) {
+          return;
+        }
+        for (const c of node.cases) {
+          if (c.test) {
+            report(c.test);
+          }
+        }
+      },
+    };
+  },
+};
+
+const parser = new RegExpParser({ ecmaVersion: 2025 });
+
+/**
+ * Whether a quantifier sits inside another quantifier which can repeat (max > 1). The
+ * inner one must itself be variable (min !== max); `(?:x{3})+` is linear and allowed.
+ */
+function hasNestedQuantifier(pattern: string, flags: string): boolean {
+  let ast;
+  try {
+    ast = parser.parsePattern(pattern, 0, pattern.length, {
+      unicode: flags.includes('u'),
+      unicodeSets: flags.includes('v'),
+    });
+  } catch {
+    return false;
+  }
+  let repeatingDepth = 0;
+  let found = false;
+  visitRegExpAST(ast, {
+    onQuantifierEnter(q) {
+      if (repeatingDepth > 0 && q.min !== q.max) {
+        found = true;
+      }
+      if (q.max > 1) {
+        repeatingDepth++;
+      }
+    },
+    onQuantifierLeave(q) {
+      if (q.max > 1) {
+        repeatingDepth--;
+      }
+    },
+  });
+  return found;
+}
+
+const noNestedQuantifier: Rule.RuleModule = {
+  meta: {
+    type: 'problem',
+    docs: { description: 'Ban nested quantifiers, which backtrack on user input (R-PARSE-7).' },
+    messages: {
+      nested:
+        'Nested quantifier in /{{pattern}}/ can backtrack exponentially. Use a linear scanner or flatten the pattern.',
+    },
+    schema: [],
+  },
+  create(context) {
+    function check(node: EsNode, pattern: string, flags: string): void {
+      if (hasNestedQuantifier(pattern, flags)) {
+        context.report({ node, messageId: 'nested', data: { pattern } });
+      }
+    }
+
+    function checkConstructor(node: NewExpression | CallExpression): void {
+      if (node.callee.type !== 'Identifier' || node.callee.name !== 'RegExp') {
+        return;
+      }
+      const [source, flags] = node.arguments as (Expression | undefined)[];
+      if (source?.type === 'Literal' && typeof source.value === 'string') {
+        const f = flags?.type === 'Literal' && typeof flags.value === 'string' ? flags.value : '';
+        check(node, source.value, f);
+      }
+    }
+
+    return {
+      Literal(node) {
+        if ('regex' in node && node.regex) {
+          check(node, node.regex.pattern, node.regex.flags);
+        }
+      },
+      NewExpression: checkConstructor,
+      CallExpression: checkConstructor,
+    };
+  },
+};
+
+const plugin: ESLint.Plugin = {
+  meta: { name: 'eslint-plugin-mermaid' },
+  rules: {
+    'import-boundaries': importBoundaries,
+    'no-global-config': noGlobalConfig,
+    'no-magic-char-code': noMagicCharCode,
+    'no-nested-quantifier': noNestedQuantifier,
+  },
+};
+
+export default plugin;

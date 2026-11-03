@@ -6,8 +6,7 @@ name: Nightly fuzz
 #   FUZZ_SEED=<seed> FUZZ_CASE=<case> pnpm --filter @mermaid-js/conformance fuzz
 # The mermaid@12 differential is informational: its clusters go to the job summary.
 
-# Automatic triggers are off: this private repo has no paid Actions minutes.
-# Run by hand from the Actions tab, or revert this change to turn them back on.
+# Manual only while v13 is a POC; restore the daily schedule (cron '41 2 * * *') after it.
 on:
   workflow_dispatch:
     inputs:
@@ -29,7 +28,7 @@ concurrency:
 
 jobs:
   fuzz:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -66,18 +65,20 @@ jobs:
           CURRENT: ${{ runner.temp }}/fuzz-current.json
         run: |
           set -uo pipefail
+          {
           if [ -f "$REPORT" ]; then
-            jq -r '"\(.count) inputs: \(.outcomes | tostring), \(.failures | length) failures"' "$REPORT" >> "$GITHUB_STEP_SUMMARY"
-            jq -r '.failures[] | "- **\(.kind)** in \(.stage), case \(.index): `FUZZ_SEED=\(.seed) FUZZ_CASE=\(.index)`"' "$REPORT" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '"\(.count) inputs: \(.outcomes | tostring), \(.failures | length) failures"' "$REPORT"
+            jq -r '.failures[] | "- **\(.kind)** in \(.stage), case \(.index): `FUZZ_SEED=\(.seed) FUZZ_CASE=\(.index)`"' "$REPORT"
           elif [ -f "$CURRENT" ]; then
             # No report: the run was killed (a real hang or the job timeout). Name the input.
-            jq -r '"Killed during case \(.index) (`FUZZ_SEED=\(.seed) FUZZ_CASE=\(.index)`): a hang."' "$CURRENT" >> "$GITHUB_STEP_SUMMARY"
+            jq -r '"Killed during case \(.index) (`FUZZ_SEED=\(.seed) FUZZ_CASE=\(.index)`): a hang."' "$CURRENT"
           fi
           if [ -f "$ORACLE" ]; then
-            echo "### mermaid@12 differential (informational)" >> "$GITHUB_STEP_SUMMARY"
-            jq -r '"\(.divergent) of \(.count) inputs differ; compare with packages/conformance/src/fuzz/decided.ts"' "$ORACLE" >> "$GITHUB_STEP_SUMMARY"
-            jq -r '.clusters[] | "- \(.count)x \(.title)"' "$ORACLE" >> "$GITHUB_STEP_SUMMARY"
+            echo "### mermaid@12 differential (informational)"
+            jq -r '"\(.divergent) of \(.count) inputs differ; compare with packages/conformance/src/fuzz/decided.ts"' "$ORACLE"
+            jq -r '.clusters[] | "- \(.count)x \(.title)"' "$ORACLE"
           fi
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -105,6 +106,7 @@ jobs:
           else
             cases="- the run failed before the first case; see the log"
           fi
+          # shellcheck disable=SC2016 # backticks are Markdown, not command substitution
           body=$(printf 'The nightly fuzz run with seed `%s` failed.\n\n%s\n\nReplay one case: `FUZZ_SEED=<seed> FUZZ_CASE=<case> pnpm --filter @mermaid-js/conformance fuzz`. Inputs are in the run artifact.\n\nRun: %s\n' "$SEED" "$cases" "$RUN_URL")
           open=$(gh issue list --state open --label fuzz --limit 1 --json number --jq '.[0].number // empty')
           if [ -n "$open" ]; then

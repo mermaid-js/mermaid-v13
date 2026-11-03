@@ -28,7 +28,7 @@ export function esc(text: string): string {
 // much faster than converting a double.
 const FRACTION: string[] = [];
 for (let i = 0; i < 100; i++) {
-  FRACTION.push(i === 0 ? '' : i % 10 === 0 ? '.' + i / 10 : '.' + (i < 10 ? '0' + i : i));
+  FRACTION.push(i === 0 ? '' : '.' + String(i).padStart(2, '0').replace(/0$/, ''));
 }
 
 /** Formats a finite number to at most two decimals, without trailing zeros. */

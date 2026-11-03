@@ -160,12 +160,24 @@ function countChar(ch: string, str: string): number {
   return count;
 }
 
+// The v12 arrow type of each arrowhead character, and the start character that doubles an end.
+const ARROW_TYPE: Readonly<Record<string, string>> = {
+  '<': 'arrow_point',
+  x: 'arrow_cross',
+  o: 'arrow_circle',
+};
+const ARROW_TWIN: ReadonlyMap<string, string> = new Map([
+  ['x', 'x'],
+  ['>', '<'],
+  ['o', 'o'],
+]);
+
 function destructStartLink(raw: string): { type: string; stroke: string; length?: number } {
   let str = raw.trim();
   let type = 'arrow_open';
   const first = str[0];
   if (first === '<' || first === 'x' || first === 'o') {
-    type = first === '<' ? 'arrow_point' : first === 'x' ? 'arrow_cross' : 'arrow_circle';
+    type = ARROW_TYPE[first]!;
     str = str.slice(1);
   }
   let stroke = 'normal';
@@ -179,9 +191,9 @@ function destructEndLink(raw: string): { type: string; stroke: string; length: n
   let line = str.slice(0, -1);
   let type = 'arrow_open';
   const last = str.slice(-1);
-  const twin = last === 'x' ? 'x' : last === '>' ? '<' : last === 'o' ? 'o' : '';
+  const twin = ARROW_TWIN.get(last);
   if (twin) {
-    type = last === 'x' ? 'arrow_cross' : last === '>' ? 'arrow_point' : 'arrow_circle';
+    type = ARROW_TYPE[twin]!;
     if (str.startsWith(twin)) {
       type = 'double_' + type;
       line = line.slice(1);

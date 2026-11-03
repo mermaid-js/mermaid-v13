@@ -220,6 +220,13 @@ function isDummy(kind: number): boolean {
   return kind === Kind.Dummy || kind === Kind.Label;
 }
 
+// The room a label or bend keeps from its neighbour: a full gap from a node or between two of a
+// kind, half of one otherwise.
+function gapBetween(other: number, self: number, nodeSep: number, sep: number): number {
+  if (other === Kind.Node) return nodeSep / 2 + sep / 2;
+  return other === self ? sep : sep / 2;
+}
+
 function sortRange(
   list: Int32Array,
   from: number,
@@ -1221,13 +1228,7 @@ function alignLabels(
     const s = layerStart[RANK[v]!]!;
     const i = s + pos[v]!;
     const clear = (other: number): number =>
-      W[other]! / 2 +
-      W[v]! / 2 +
-      (KIND[other]! === Kind.Node
-        ? opt.nodeSep / 2 + sep / 2
-        : KIND[other]! === KIND[v]!
-          ? sep
-          : sep / 2);
+      W[other]! / 2 + W[v]! / 2 + gapBetween(KIND[other]!, KIND[v]!, opt.nodeSep, sep);
     return [
       i > s ? xs[order[i - 1]!]! + clear(order[i - 1]!) : -Infinity,
       i + 1 < layerStart[RANK[v]! + 1]! ? xs[order[i + 1]!]! - clear(order[i + 1]!) : Infinity,

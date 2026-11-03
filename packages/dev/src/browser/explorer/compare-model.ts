@@ -42,14 +42,14 @@ function comparePre(a: string, b: string): number {
   const bn = /^\d+$/.test(b);
   if (an && bn) return Number(a) - Number(b);
   if (an !== bn) return an ? -1 : 1;
-  return a < b ? -1 : a > b ? 1 : 0;
+  return Number(a > b) - Number(a < b);
 }
 
 /** Semver precedence; invalid versions sort below everything. */
 export function compareSemver(a: string, b: string): number {
   const pa = parse(a);
   const pb = parse(b);
-  if (!pa || !pb) return pa ? 1 : pb ? -1 : 0;
+  if (!pa || !pb) return Number(!!pa) - Number(!!pb);
   const core = pa.core.map((n, i) => n - (pb.core[i] ?? 0)).find((d) => d !== 0);
   if (core !== undefined) return core;
   if (pa.pre.length === 0 || pb.pre.length === 0) return pb.pre.length - pa.pre.length;
@@ -147,7 +147,8 @@ export function npmRenderConfig(
   settings: { readonly theme?: string; readonly layout?: string },
   prefersDark: boolean
 ): Record<string, unknown> {
-  const theme = settings.theme === 'auto' ? (prefersDark ? 'dark' : 'default') : settings.theme;
+  const autoTheme = prefersDark ? 'dark' : 'default';
+  const theme = settings.theme === 'auto' ? autoTheme : settings.theme;
   const layout = settings.layout ? (NPM_LAYOUTS[settings.layout] ?? settings.layout) : undefined;
   return {
     startOnLoad: false,

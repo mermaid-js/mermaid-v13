@@ -3,6 +3,7 @@
  */
 import type { ResolvedConfig } from '../config/resolve.ts';
 import type { LayoutGraph, LayoutModel } from '../layout/types.ts';
+import type { UnitProfile } from '../layout/units.ts';
 import type { Limits } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
 import type { ParseResult } from '../parser-kit/result.ts';
@@ -40,6 +41,8 @@ export interface DiagramParseContext {
 export interface RenderContext {
   readonly config: ResolvedConfig;
   readonly measurer: Measurer;
+  /** Lengths for layout (D77): `pxProfile` for SVG, a cell profile for ASCII. */
+  readonly units: UnitProfile;
   /** One render's theme: it records the variables used, so it is never shared. */
   readonly theme: Theme;
   /** The level resolved once per render from `config.securityLevel` (D75). */

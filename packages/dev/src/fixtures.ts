@@ -20,9 +20,10 @@ export interface Fixture {
 }
 
 function walk(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
-    e.isDirectory() ? walk(join(dir, e.name)) : e.name.endsWith('.mmd') ? [join(dir, e.name)] : []
-  );
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    if (e.isDirectory()) return walk(join(dir, e.name));
+    return e.name.endsWith('.mmd') ? [join(dir, e.name)] : [];
+  });
 }
 
 /** Every baseline fixture, sorted by path. */
@@ -32,7 +33,7 @@ export function baselineFixtures(dir = BASELINE_DIR): Fixture[] {
       path: relative(dir, file).split(sep).join('/'),
       source: readFileSync(file, 'utf8'),
     }))
-    .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+    .sort((a, b) => Number(a.path > b.path) - Number(a.path < b.path));
 }
 
 /** Whether the fixture picks its own theme (front matter or init directive). */

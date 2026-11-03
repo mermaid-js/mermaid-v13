@@ -81,6 +81,13 @@ const ease = (across: number, along: number): number =>
  * not in line the route is one S along the flow (or a step in a stepped route); where the
  * route turns a corner it is rounded.
  */
+// Where a step curve turns between two coordinates: at the start, the end or halfway.
+function stepCorner(kind: CurveKind, from: number, to: number): number {
+  if (kind === 'stepBefore') return from;
+  if (kind === 'stepAfter') return to;
+  return (from + to) / 2;
+}
+
 export function routePath(
   w: SvgWriter,
   route: readonly RoutePoint[],
@@ -107,8 +114,8 @@ export function routePath(
     ) {
       const px = xs[last]!;
       const py = ys[last]!;
-      const my = kind === 'stepBefore' ? py : kind === 'stepAfter' ? p.y : (py + p.y) / 2;
-      const mx = kind === 'stepBefore' ? px : kind === 'stepAfter' ? p.x : (px + p.x) / 2;
+      const my = stepCorner(kind, py, p.y);
+      const mx = stepCorner(kind, px, p.x);
       const turns = axis === 0 ? [px, my, p.x, my] : [mx, py, mx, p.y];
       for (let k = 0; k < 4; k += 2) {
         if (near(turns[k]!, turns[k + 1]!, px, py) || near(turns[k]!, turns[k + 1]!, p.x, p.y))
@@ -235,6 +242,14 @@ export function routePath(
   return { d: b.done(), sx, sy, sdx: -sdx, sdy: -sdy, ex, ey, edx, edy };
 }
 
+/** Where a line meets a node outline, and the unit direction it travels there. */
+export interface LineEnd {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+}
+
 /** One v12 arrowhead type: how far it shortens the line, and how it is drawn. */
 interface HeadKind {
   /**
@@ -244,15 +259,7 @@ interface HeadKind {
    */
   trim(g: Arrowheads): number;
   /** Draws the arrowhead for a line meeting the outline at (x, y), pointing along (dx, dy). */
-  draw(
-    w: SvgWriter,
-    x: number,
-    y: number,
-    dx: number,
-    dy: number,
-    paint: Attrs,
-    g: Arrowheads
-  ): void;
+  draw(w: SvgWriter, tip: LineEnd, paint: Attrs, g: Arrowheads): void;
 }
 
 const HEADS: ReadonlyMap<string, HeadKind> = /* @__PURE__ */ new Map<string, HeadKind>([
@@ -260,7 +267,7 @@ const HEADS: ReadonlyMap<string, HeadKind> = /* @__PURE__ */ new Map<string, Hea
     'arrow_point',
     {
       trim: (g) => g.gap + Math.max(0, g.length - 1),
-      draw(w, x, y, dx, dy, paint, g) {
+      draw(w, { x, y, dx, dy }, paint, g) {
         const tipX = x - dx * g.gap;
         const tipY = y - dy * g.gap;
         const baseX = tipX - dx * g.length;
@@ -283,7 +290,7 @@ const HEADS: ReadonlyMap<string, HeadKind> = /* @__PURE__ */ new Map<string, Hea
     'arrow_circle',
     {
       trim: (g) => g.circleGap + g.circleSize / 2,
-      draw(w, x, y, dx, dy, paint, g) {
+      draw(w, { x, y, dx, dy }, paint, g) {
         const r = g.circleSize / 2;
         const back = g.circleGap + r;
         w.leaf('circle', {
@@ -302,7 +309,7 @@ const HEADS: ReadonlyMap<string, HeadKind> = /* @__PURE__ */ new Map<string, Hea
     {
       trim: (g) => g.crossGap + g.crossSize / 2,
       // The arms are the diagonals of a square of side `crossSize`, `crossGap` from the outline.
-      draw(w, x, y, dx, dy, paint, g) {
+      draw(w, { x, y, dx, dy }, paint, g) {
         const half = g.crossSize / 2;
         const cx = x - dx * (g.crossGap + half);
         const cy = y - dy * (g.crossGap + half);
@@ -334,18 +341,15 @@ export const markerTrim = (type: string, geometry: Arrowheads): number =>
   HEADS.get(type)?.trim(geometry) ?? 0;
 
 /**
- * Draws a v12 end marker for a line that meets the node outline at (x, y), pointing along
- * (dx, dy). The marker sits its gap before the outline; `paint` gives its colour as `fill`.
+ * Draws a v12 end marker for a line that meets the node outline at `end` (x, y), pointing
+ * along (dx, dy). The marker sits its gap before the outline; `paint` gives its colour as `fill`.
  */
 export function marker(
   w: SvgWriter,
   type: string,
-  x: number,
-  y: number,
-  dx: number,
-  dy: number,
+  end: LineEnd,
   paint: Attrs,
   geometry: Arrowheads
 ): void {
-  HEADS.get(type)?.draw(w, x, y, dx, dy, paint, geometry);
+  HEADS.get(type)?.draw(w, end, paint, geometry);
 }

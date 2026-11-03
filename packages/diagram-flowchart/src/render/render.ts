@@ -264,8 +264,20 @@ export function renderFlowchart(
         fill: 'none',
       });
       const headPaint: Attrs = { fill: (e.style.shape.stroke as Paint | undefined) ?? P.arrow };
-      marker(w, e.start, path.sx, path.sy, path.sdx, path.sdy, headPaint, headGeometry);
-      marker(w, e.end, path.ex, path.ey, path.edx, path.edy, headPaint, headGeometry);
+      marker(
+        w,
+        e.start,
+        { x: path.sx, y: path.sy, dx: path.sdx, dy: path.sdy },
+        headPaint,
+        headGeometry
+      );
+      marker(
+        w,
+        e.end,
+        { x: path.ex, y: path.ey, dx: path.edx, dy: path.edy },
+        headPaint,
+        headGeometry
+      );
     }
     w.close();
   }

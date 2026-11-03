@@ -144,6 +144,12 @@ function resultsJson(run: ProfileRun): unknown {
 }
 
 /** A `data-ms` value: the same rounding as the JSON. */
+function cellContent(row: DiagramResult | undefined) {
+  if (row?.stats) return fmtMs(row.stats.total);
+  if (row?.failures) return html`<span class="fail" title=${row.error ?? ''}>fail</span>`;
+  return '–';
+}
+
 const dataMs = (n: number | undefined): string | typeof nothing =>
   n === undefined || !Number.isFinite(n) ? nothing : String(round3(n));
 
@@ -488,16 +494,16 @@ export class ProfileTab extends ViewerTabElement {
           : nothing}
       </div>
       ${this.error ? html`<div class="error">Error: ${this.error}</div>` : nothing}
-      ${this.result
-        ? this.#renderResult(this.result)
-        : this.running || this.error
-          ? nothing
-          : html`<p class="subtle">
-              Each ${this.scope === 'folder' ? 'diagram in the folder' : 'run'} renders
-              ${this.iterations}× per layout after one warmup; the fastest and slowest runs are
-              dropped and the rest averaged.
-            </p>`}
+      ${this.result ? this.#renderResult(this.result) : this.#renderIdle()}
     `;
+  }
+
+  #renderIdle() {
+    if (this.running || this.error) return nothing;
+    return html`<p class="subtle">
+      Each ${this.scope === 'folder' ? 'diagram in the folder' : 'run'} renders ${this.iterations}×
+      per layout after one warmup; the fastest and slowest runs are dropped and the rest averaged.
+    </p>`;
   }
 
   #renderResult(run: ProfileRun) {
@@ -584,11 +590,7 @@ export class ProfileTab extends ViewerTabElement {
                           data-layout=${r.layout}
                           data-ms=${dataMs(row?.stats?.total)}
                         >
-                          ${row?.stats
-                            ? fmtMs(row.stats.total)
-                            : row?.failures
-                              ? html`<span class="fail" title=${row.error ?? ''}>fail</span>`
-                              : '–'}
+                          ${cellContent(row)}
                         </td>`;
                       })}
                     </tr>`

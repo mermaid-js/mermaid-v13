@@ -41,6 +41,7 @@ describe('workspace layout (DESIGN §2)', () => {
     expect(Object.keys(readPackage('packages/core').exports ?? {}).sort()).toEqual(
       [
         '.',
+        './ascii',
         './config',
         './layout',
         './limits',

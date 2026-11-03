@@ -371,7 +371,8 @@ function contrastCss(bg: string, a: Rgba, b: Rgba, la: number, lb: number): stri
   const [br, bgr, bb, ba] = unit(b);
   const t = `color(from ${bg} srgb-linear calc(1 - max(${checks.join(',')})) 0 0)`;
   const ch = (x: number, y: number) => (x === y ? dec(x) : `calc(${dec(x)} + ${dec(y - x)}*r)`);
-  const alpha = aa === ba ? (aa >= 1 ? '' : ` / ${dec(aa)}`) : ` / ${ch(aa, ba)}`;
+  const opaque = aa === ba && aa >= 1;
+  const alpha = opaque ? '' : ` / ${ch(aa, ba)}`;
   return `color(from ${t} srgb ${ch(ar, br)} ${ch(ag, bgr)} ${ch(ab, bb)}${alpha})`;
 }
 
@@ -402,6 +403,11 @@ function checkOverrides(
 const MAX_PALETTE = 64;
 const RE_C_SCALE = /^cScale(\d{1,2})$/;
 
+/** A palette override as a list: an array as given, or a comma-separated string. */
+function paletteItems(raw: unknown): readonly unknown[] | undefined {
+  if (Array.isArray(raw)) return raw as unknown[];
+  return typeof raw === 'string' ? splitTopLevel(raw, 'comma') : undefined;
+}
 /**
  * The palettes for one render: the spec's lists with the author's overrides applied. A whole
  * list (`borderColorArray`, `bkgColorArray`, `cScale`) is an array or a comma-separated string;
@@ -423,13 +429,10 @@ function resolvePalettes(
     out[name] = (spec.palettes?.[name] ?? []).map((c) => checkColor(c) as SafeColor);
     const raw = vars && own(vars, name) ? vars[name] : undefined;
     if (raw === undefined || raw === null) continue;
-    const items = Array.isArray(raw)
-      ? raw
-      : typeof raw === 'string'
-        ? splitTopLevel(raw, 'comma')
-        : undefined;
-    const checked = items?.map((c) => (typeof c === 'string' ? checkColor(c) : undefined));
-    if (!checked || checked.length > MAX_PALETTE || checked.some((c) => c === undefined)) {
+    const checked = paletteItems(raw)?.map((c) =>
+      typeof c === 'string' ? checkColor(c) : undefined
+    );
+    if (!checked || checked.length > MAX_PALETTE || checked.includes(undefined)) {
       drop(name, raw);
       continue;
     }
@@ -438,7 +441,7 @@ function resolvePalettes(
   for (const key of vars ? Object.keys(vars) : []) {
     const m = RE_C_SCALE.exec(key);
     const i = m ? Number(m[1]) : NaN;
-    if (!(i < PALETTE_LIMIT)) continue;
+    if (Number.isNaN(i) || i >= PALETTE_LIMIT) continue;
     const raw = (vars as Record<string, unknown>)[key];
     if (raw === undefined || raw === null || raw === '') continue;
     const c = typeof raw === 'string' ? checkColor(raw) : undefined;

@@ -548,7 +548,7 @@ describe('flowchart render: arrowheads from theme variables (D152)', () => {
   // are 12 (neo, refX 17.7 → gap 3.7×0.8, stroke 2.5) and 11 (classic, refX 12 → gap 2,
   // stroke 2).
   const nums = (d: string): number[] => [...d.matchAll(/-?\d+(?:\.\d+)?/g)].map((m) => +m[0]);
-  const near = (n: number) => expect.closeTo(n, 1);
+  const near = (n: number): unknown => expect.closeTo(n, 1);
 
   async function arrowhead(edge: string, theme: string, themeVariables?: Record<string, unknown>) {
     const { svg, tree } = await draw(`flowchart TD\n  A ${edge} B`, {
