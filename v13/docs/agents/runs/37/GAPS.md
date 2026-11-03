@@ -19,3 +19,10 @@ Unmet acceptance criteria and announced shared contracts, grouped by the ticket 
 - Grid-mode model contract: coordinates are cell indices (doc on `LayoutGraph.grid`); `validateGrid` in core/layout checks it.
 - Open for #43/#46: the builder does not pre-size boxes from edge ends per side (D140); the engine grows 97 of 494 corpus graphs.
 - Open for #45: sibling/unrelated edges sharing track cells, runs along group frames (padding 1), corner touches, group-to-member routes.
+
+## #42 (merged)
+
+- **Size (for the M1-close size pass, not for ticket work):** grid code lives in the shared layered engine, so the SVG flowchart bundle grew 92,039 → 94,102 B gz. R-PERF-1 is 80 KB; the maintainer's tolerance was +10–15%. Maintainer decision pending.
+- **#45 owns:** cells shared by sibling/unrelated edges, runs along group frames, corner touches, group→own-member routes (split in tickets/42.md). Use `validateGrid` from `@mermaid-js/core/layout`.
+- **#46 owns:** keeping a grown box's label centred (the engine grows boxes in place, D140; 97/494 corpus graphs).
+- Open: the builder does not pre-size boxes from per-side edge ends (D140). `IN_LINE`/`TWIN` stay px-sized (not in `LayoutMetrics`).
