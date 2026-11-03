@@ -70,6 +70,32 @@ function inset(
   return p;
 }
 
+interface Tint {
+  readonly id: `color-${number}`;
+  readonly stroke: Paint;
+  readonly fill?: Paint;
+}
+
+/**
+ * Per-subgraph palette colour (#86, v12 flowchart `genColor`). On only when the theme carries
+ * a non-empty `borderColorArray`, never by theme name (D152). The slot is the subgraph's source
+ * order modulo the palette length; the fill comes from `bkgColorArray` only when that is not
+ * empty, so `redux-dark-color` colours borders only.
+ */
+function paletteSlots(theme: FlowRenderContext['theme']): (view: NodeView) => Tint | undefined {
+  const border = theme.palette('borderColorArray');
+  const bkg = theme.palette('bkgColorArray');
+  return (view) => {
+    if (view.order === undefined || border.length === 0) return undefined;
+    const slot = view.order % border.length;
+    return {
+      id: `color-${slot}`,
+      stroke: border[slot]!,
+      fill: bkg.length > 0 ? bkg[view.order % bkg.length] : undefined,
+    };
+  };
+}
+
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
 export function renderFlowchart(
   model: FlowModel,
@@ -95,6 +121,10 @@ export function renderFlowchart(
     sw: theme.length('strokeWidth'),
     line: theme.color('lineColor'),
     arrow: theme.color('arrowheadColor'),
+    // The theme's drop shadow (#85), a CSS filter on node outlines, icons, subgraph rects and
+    // the collapsed card; never on edges, labels or a collapsed card's dots. A theme with
+    // `none` (the classic themes) writes no filter at all.
+    shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
   };
   const G =
     flow.groups.length > 0
@@ -109,6 +139,7 @@ export function renderFlowchart(
   const C = flow.nodes.some((v) => v.shape === 'collapsedGroup')
     ? { stroke: theme.color('clusterBorder') }
     : undefined;
+  const tint = paletteSlots(theme);
   const L = labelled
     ? { fill: theme.color('edgeLabelBackground'), text: theme.color('textColor') }
     : undefined;
@@ -153,15 +184,23 @@ export function renderFlowchart(
       const box = layout.groups.get(g.id);
       if (!box) continue;
       const fill = g.style.shape.fill;
-      w.open('g', { class: 'cluster' + cls(g.classes), 'data-id': g.id, 'data-ast': g.ast });
+      const t = tint(g);
+      w.open('g', {
+        class: 'cluster' + cls(g.classes),
+        'data-id': g.id,
+        'data-ast': g.ast,
+        'data-color-id': t?.id,
+      });
+      // The author's `style` / `classDef` still wins over the palette (spread after).
       w.leaf('rect', {
         x: box.x - box.width / 2,
         y: box.y - box.height / 2,
         width: box.width,
         height: box.height,
-        fill: G.fill,
-        stroke: G.stroke,
+        fill: t?.fill ?? G.fill,
+        stroke: t?.stroke ?? G.stroke,
         'stroke-width': G.sw,
+        filter: P.shadow,
         ...g.style.shape,
       });
       w.label(g.label, box.title.x, box.title.y, {
@@ -257,12 +296,14 @@ export function renderFlowchart(
     const box = layout.nodes.get(view.id);
     if (!box) continue;
     const v = view.vertex;
+    const t = tint(view);
     w.open('g', {
       class:
         (view.shape === 'collapsedGroup' ? 'node cluster collapsed' : 'node default') +
         cls(view.classes),
       'data-id': view.id,
       'data-ast': view.ast,
+      'data-color-id': t?.id,
       transform: translate(box.x, box.y),
     });
     const tip = tips.get(view.id);
@@ -276,15 +317,19 @@ export function renderFlowchart(
         ? undefined
         : checkUrl(v.link, { securityLevel, linkSchemes: ctx.linkSchemes, warn });
     if (href) w.open('a', { href, target: checkLinkTarget(v?.linkTarget, warn) });
+    // A collapsed subgraph takes its palette slot; the author's style still wins (spread after).
     const shapeAttrs: Attrs = {
-      fill: P.fill,
-      stroke: P.stroke,
+      fill: t?.fill ?? P.fill,
+      stroke: t?.stroke ?? P.stroke,
       'stroke-width': P.sw,
+      filter: P.shadow,
       ...view.style.shape,
     };
     const lineAttrs: Attrs =
       C && view.shape === 'collapsedGroup'
-        ? C
+        ? t
+          ? { stroke: t.stroke }
+          : C
         : { stroke: shapeAttrs.stroke, 'stroke-width': shapeAttrs['stroke-width'] };
     if (v?.img) drawImage(w, view, v.img, securityLevel, ctx);
     else if (v?.icon) drawIcon(w, view, shapeAttrs, ctx);

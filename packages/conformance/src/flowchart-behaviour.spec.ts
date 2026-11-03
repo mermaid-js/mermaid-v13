@@ -113,6 +113,128 @@ describe('flowchart render: themes (D151)', () => {
   });
 });
 
+describe('flowchart render: per-subgraph palette colour (#86)', () => {
+  // v12 theme-redux-color.js borderColorArray (Tailwind-400) and bkgColorArray (Tailwind-50).
+  const BORDER = ['#e879f9', '#2dd4bf', '#fb923c'];
+  const FILL = ['#fdf4ff', '#f0fdfa', '#fff7ed'];
+  const subgraphs = (n: number) =>
+    'flowchart TD\n' +
+    Array.from({ length: n }, (_, i) => `  subgraph g${i}[G${i}]\n    n${i}\n  end`).join('\n');
+  const paint = async (text: string, config: InitializeConfig = {}) => {
+    const { tree } = await draw(text, {
+      config: { output: { cssVariables: false }, ...config } as InitializeConfig,
+    });
+    return (id: string) => {
+      const el = byAst(tree, `s:${id}`)[0]!;
+      const card = tree.children(el).find((c) => tree.tag(c) === 'rect')!;
+      return {
+        slot: tree.getAttr(el, 'data-color-id'),
+        stroke: tree.getAttr(card, 'stroke'),
+        fill: tree.getAttr(card, 'fill'),
+      };
+    };
+  };
+
+  it('gives the first three subgraphs slots 0, 1 and 2 in redux-color', async () => {
+    const at = await paint(subgraphs(3), { theme: 'redux-color' });
+    expect([at('g0'), at('g1'), at('g2')]).toEqual(
+      [0, 1, 2].map((i) => ({ slot: `color-${i}`, stroke: BORDER[i], fill: FILL[i] }))
+    );
+  });
+
+  it('cycles: the 13th subgraph reuses slot 0', async () => {
+    const at = await paint(subgraphs(13), { theme: 'redux-color' });
+    expect(at('g12')).toEqual(at('g0'));
+    expect(at('g12').slot).toBe('color-0');
+    expect(at('g11').slot).toBe('color-11');
+  });
+
+  it('numbers nested subgraphs in source order, parents before children', async () => {
+    const at = await paint(
+      'flowchart TD\n  subgraph outer\n    subgraph inner\n      a\n    end\n  end\n  subgraph last\n    b\n  end',
+      { theme: 'redux-color' }
+    );
+    expect(['outer', 'inner', 'last'].map((id) => at(id).slot)).toEqual([
+      'color-0',
+      'color-1',
+      'color-2',
+    ]);
+  });
+
+  it("colours a collapsed subgraph's card, separator and dots from its slot", async () => {
+    const { tree } = await draw(
+      'flowchart TD\n  subgraph a\n    x\n  end\n  subgraph grp[Group]\n    p\n  end\n  grp@{ view: collapsed }',
+      { config: { theme: 'redux-color', output: { cssVariables: false } } as InitializeConfig }
+    );
+    const node = byAst(tree, 's:grp')[0]!;
+    expect(tree.getAttr(node, 'data-color-id')).toBe('color-1');
+    const kids = tree.children(node);
+    const card = kids.find((c) => tree.tag(c) === 'rect')!;
+    expect([tree.getAttr(card, 'stroke'), tree.getAttr(card, 'fill')]).toEqual([
+      BORDER[1],
+      FILL[1],
+    ]);
+    const sep = kids.filter((c) => tree.getAttr(c, 'class') === 'collapsed-separator');
+    const dots = kids.filter((c) => tree.getAttr(c, 'class') === 'collapsed-indicator');
+    expect(sep.map((s) => tree.getAttr(s, 'stroke'))).toEqual([BORDER[1]]);
+    expect(dots.map((d) => tree.getAttr(d, 'fill'))).toEqual([BORDER[1], BORDER[1], BORDER[1]]);
+  });
+
+  it('keeps the cycle when a subgraph inside a collapsed one is hidden', async () => {
+    const at = await paint(
+      'flowchart TD\n  subgraph grp\n    subgraph hid\n      p\n    end\n  end\n  subgraph after\n    q\n  end\n  grp@{ view: collapsed }',
+      { theme: 'redux-color' }
+    );
+    expect([at('grp').slot, at('after').slot]).toEqual(['color-0', 'color-2']);
+  });
+
+  it('colours borders but not fills in redux-dark-color', async () => {
+    const at = await paint(subgraphs(3), { theme: 'redux-dark-color' });
+    const plain = (await paint(subgraphs(3), { theme: 'redux-dark' }))('g0');
+    expect([at('g0'), at('g1'), at('g2')]).toEqual(
+      [0, 1, 2].map((i) => ({ slot: `color-${i}`, stroke: BORDER[i], fill: plain.fill }))
+    );
+  });
+
+  it.each(['redux', 'redux-dark', 'default', 'dark'])(
+    'colours no subgraph in %s (no palette)',
+    async (theme) => {
+      const at = await paint(subgraphs(3), { theme } as InitializeConfig);
+      const all = [at('g0'), at('g1'), at('g2')];
+      expect(all.map((a) => a.slot)).toEqual([undefined, undefined, undefined]);
+      expect(new Set(all.map((a) => a.stroke)).size).toBe(1);
+      expect(new Set(all.map((a) => a.fill)).size).toBe(1);
+    }
+  );
+
+  it('follows a borderColorArray override from themeVariables', async () => {
+    const at = await paint(subgraphs(3), {
+      theme: 'redux-color',
+      themeVariables: { borderColorArray: ['#ff0000', '#0000ff'] },
+    } as InitializeConfig);
+    expect([at('g0'), at('g1'), at('g2')].map((a) => [a.slot, a.stroke, a.fill])).toEqual([
+      ['color-0', '#ff0000', FILL[0]],
+      ['color-1', '#0000ff', FILL[1]],
+      ['color-0', '#ff0000', FILL[2]],
+    ]);
+  });
+
+  it('turns colour on in a classic theme that is given a palette', async () => {
+    const at = await paint(subgraphs(2), {
+      theme: 'default',
+      themeVariables: { borderColorArray: ['#ff0000'] },
+    } as InitializeConfig);
+    expect([at('g0').stroke, at('g1').stroke]).toEqual(['#ff0000', '#ff0000']);
+  });
+
+  it("lets the author's subgraph style win over the palette", async () => {
+    const at = await paint(`${subgraphs(1)}\n  style g0 stroke:#123456`, {
+      theme: 'redux-color',
+    });
+    expect(at('g0')).toEqual({ slot: 'color-0', stroke: '#123456', fill: FILL[0] });
+  });
+});
+
 describe('flowchart render: nodes, edges and clusters', () => {
   it('writes one data-ast element per vertex, edge and subgraph, with v12 classes', async () => {
     const { tree } = await draw(
@@ -442,6 +564,117 @@ describe('flowchart render: look is removed (D153)', () => {
     const result = await draw(plain, { config: { look: 'neo' } });
     expect(lookWarnings(result)).toHaveLength(1);
     expect(result.svg).toBe((await draw(plain)).svg);
+  });
+});
+
+describe('flowchart render: drop shadow (#85)', () => {
+  const SHAPES = [
+    'flowchart TD',
+    '  subgraph S[Group]',
+    '    A[Rect] -- a label --> B{Diamond}',
+    '  end',
+    '  B --> C((Circle)) --> D[(Db)] --> E([Stadium]) --> H{{Hex}}',
+    '  H --> F --> G',
+    '  F@{ shape: f-circ }',
+    '  G@{ shape: fork }',
+    '  I@{ icon: "fa:user", form: "square", label: "Icon" }',
+    '  X --> P',
+    '  subgraph grp[Collapsed]',
+    '    P --> Q',
+    '  end',
+    '  grp@{ view: collapsed }',
+  ].join('\n');
+  const BLACK = 'drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))';
+  const WHITE = 'drop-shadow(4px 4px 0 rgb(255 255 255 / 0.06))';
+
+  const shadowed = (tree: SvgView) => tree.find((n, t) => t.getAttr(n, 'filter') !== undefined);
+  const within = (n: SvgElement, cls: string): boolean => {
+    for (let p = n.parent; p; p = p.parent)
+      if ((p.attrs.class ?? '').split(' ').includes(cls)) return true;
+    return false;
+  };
+  const rootStyle = (svg: string) => /<svg[^>]* style="([^"]*)"/.exec(svg)![1]!;
+
+  it('puts the shadow on every node outline, subgraph rect and collapsed card in redux-color', async () => {
+    const { svg, tree } = await draw(SHAPES, { config: { theme: 'redux-color' } });
+    expect(rootStyle(svg)).toContain(`--_ds:var(--mermaid-dropShadow,${BLACK})`);
+    for (const node of tree.find({ class: 'node' })) {
+      const kids = tree.children(node);
+      const id = tree.getAttr(node, 'data-id');
+      expect(
+        kids.some((c) => tree.getAttr(c, 'filter') === 'var(--_ds)'),
+        `node ${id}`
+      ).toBe(true);
+    }
+    const subgraphs = tree.find({ class: 'cluster' }).filter((c) => within(c, 'clusters'));
+    const clusterRects = subgraphs.flatMap((c) =>
+      tree.children(c).filter((k) => tree.tag(k) === 'rect')
+    );
+    expect(clusterRects).toHaveLength(1);
+    expect(tree.getAttr(clusterRects[0]!, 'filter')).toBe('var(--_ds)');
+    const card = byAst(tree, 's:grp')[0]!;
+    expect(tree.getAttr(tree.children(card).find((c) => tree.tag(c) === 'rect')!, 'filter')).toBe(
+      'var(--_ds)'
+    );
+  });
+
+  it('keeps the shadow off edges, edge labels, labels and the collapsed card dots', async () => {
+    const { tree } = await draw(SHAPES, { config: { theme: 'redux-color' } });
+    const all = shadowed(tree);
+    expect(all.length).toBeGreaterThan(0);
+    for (const n of all) {
+      expect(within(n, 'edgePaths') || within(n, 'edgeLabels'), tree.tag(n)).toBe(false);
+      expect(['text', 'tspan', 'g', 'svg', 'line']).not.toContain(tree.tag(n));
+      expect(tree.getAttr(n, 'class') ?? '').not.toMatch(/collapsed-/);
+    }
+  });
+
+  it('draws the shadow with CSS only: no <defs> and no <filter> element', async () => {
+    const { svg } = await draw(SHAPES, { config: { theme: 'redux-color' } });
+    expect(svg).not.toMatch(/<defs|<filter|url\(/);
+    assertInert(svg);
+  });
+
+  it('uses white at 6% in redux-dark-color', async () => {
+    const { svg, tree } = await draw(SHAPES, {
+      config: { theme: 'redux-dark-color', output: { cssVariables: false } } as InitializeConfig,
+    });
+    const values = new Set(shadowed(tree).map((n) => tree.getAttr(n, 'filter')));
+    expect([...values]).toEqual([WHITE]);
+    assertInert(svg);
+  });
+
+  it('draws no shadow in default', async () => {
+    const { svg, tree } = await draw(SHAPES, { config: { theme: 'default' } });
+    expect(shadowed(tree)).toHaveLength(0);
+    expect(svg).not.toContain('--_ds');
+  });
+
+  it('follows a themeVariables override: none removes it, another value replaces it', async () => {
+    const off = await draw(SHAPES, {
+      config: { theme: 'redux-color', themeVariables: { dropShadow: 'none' } },
+    });
+    expect(shadowed(off.tree)).toHaveLength(0);
+    expect(off.svg).not.toContain('--_ds');
+    const red = await draw(SHAPES, {
+      config: {
+        theme: 'redux-color',
+        themeVariables: { dropShadow: 'drop-shadow(2px 2px 0 red)' },
+      },
+    });
+    expect(rootStyle(red.svg)).toContain(
+      '--_ds:var(--mermaid-dropShadow,drop-shadow(2px 2px 0 red))'
+    );
+    expect(shadowed(red.tree).length).toBeGreaterThan(0);
+  });
+
+  it('drops an unsafe override with a warning and keeps the theme shadow', async () => {
+    const r = await draw(SHAPES, {
+      config: { theme: 'redux-color', themeVariables: { dropShadow: 'url(#evil)' } },
+    });
+    expect(r.warnings.map((w) => w.code)).toContain('THEME_VARIABLE_DROPPED');
+    expect(r.svg).not.toContain('url(');
+    expect(rootStyle(r.svg)).toContain(`--_ds:var(--mermaid-dropShadow,${BLACK})`);
   });
 });
 

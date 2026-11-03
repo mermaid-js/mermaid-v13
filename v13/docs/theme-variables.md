@@ -59,6 +59,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `doubleCirclePadding` | `--mermaid-doubleCirclePadding` | token | padding | | | all | flowchart |
 | `circlePadding` | `--mermaid-circlePadding` | token | padding | | | all | flowchart |
 | `circleMinDiameter` | `--mermaid-circleMinDiameter` | token | length | | | all | flowchart |
+| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color | flowchart |
 
 ## Palettes
 

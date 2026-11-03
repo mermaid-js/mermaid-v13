@@ -303,7 +303,7 @@ const S: Record<string, ShapeDef> = {
     inset: roundInset,
     span: roundSpan,
     size: fixed(14, 14),
-    draw: (w, W, _H, _a, line) => circle(w, W / 2, { ...line, fill: line.stroke }),
+    draw: (w, W, _H, a, line) => circle(w, W / 2, { ...line, fill: line.stroke, filter: a.filter }),
   },
   'fr-circ': {
     noLabel: true,
@@ -319,7 +319,8 @@ const S: Record<string, ShapeDef> = {
     noLabel: true,
     span: (W, H, s) => (s ? H : W) - 8,
     size: fixed(72, 8),
-    draw: (w, W, H, _a, line) => centred(w, W, H, { ...line, fill: line.stroke }, 2),
+    draw: (w, W, H, a, line) =>
+      centred(w, W, H, { ...line, fill: line.stroke, filter: a.filter }, 2),
   },
   hourglass: {
     noLabel: true,

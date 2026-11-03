@@ -29,6 +29,8 @@ const redux: ThemeSpec = {
     ...REDUX_PADDING,
   },
   values: {
+    // v12's hard drop shadow (insertLookDefs: dx/dy 4, no blur, 6% black) as a CSS filter.
+    dropShadow: 'drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))',
     primaryBorderColor: '#28253d',
     mainBkg: '#ffffff',
     clusterBkg: '#f9f9fb',

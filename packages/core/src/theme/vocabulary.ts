@@ -11,7 +11,7 @@
  * the diagram's own `padding` config (`padding`, `2 * padding`), resolved at render time
  * because the classic themes follow `flowchart.padding` (D152).
  */
-export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'padding';
+export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter' | 'padding';
 
 export interface ThemeVarDef {
   /** The short private alias written on the root, without the leading `--_`. */
@@ -140,4 +140,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   doubleCirclePadding: def('dcp', 'padding', F),
   circlePadding: def('cp', 'padding', F),
   circleMinDiameter: def('cmd', 'length', F),
+  // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
+  // that sets no value has no shadow.
+  dropShadow: def('ds', 'filter', F),
 };
