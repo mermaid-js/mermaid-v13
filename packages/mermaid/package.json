@@ -12,6 +12,9 @@
       "default": "./dist/index.js"
     }
   },
+  "bin": {
+    "mermaid": "./dist/cli.js"
+  },
   "files": [
     "dist",
     "THIRD_PARTY_NOTICES"

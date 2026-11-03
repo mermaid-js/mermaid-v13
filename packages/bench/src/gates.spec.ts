@@ -58,6 +58,7 @@ function healthy(): BenchReport {
     runner: 'test-runner',
     options: {},
     pipeline: { present: true, reason: 'render() returned an <svg>' },
+    asciiSize: { raw: 0, gzip: 9 * KB, brotli: 0, source: 'static', files: [] },
     renderers: [
       run(
         'v13',
@@ -116,6 +117,7 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
       ['ok-count', 'pass'],
       ['stage-regression', 'pass'],
       ['ready-at', 'pass'],
+      ['ascii-size', 'pass'],
     ]);
     expect(outcome.exitCode).toBe(0);
   });
@@ -126,6 +128,24 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
     expect(gate(report, 'size')).toMatchObject({ status: 'fail', enforced: true, exitCode: 1 });
     report.renderers[0]!.size!.gzip = 80 * KB;
     expect(gate(report, 'size').status).toBe('pass');
+  });
+
+  // D87: the 15 KB ascii budget is soft. The gate reports, like R-PERF-9's ready-at, and never
+  // fails the job, in any mode.
+  it('reports core/ascii + the flowchart ascii entry over 15 KB gzip without failing (R-ASCII-9, D87)', () => {
+    const report = healthy();
+    report.asciiSize!.gzip = 15 * KB + 1;
+    expect(gate(report, 'ascii-size')).toMatchObject({
+      status: 'fail',
+      level: 'should',
+      enforced: false,
+      limit: 15 * KB,
+      exitCode: 0,
+    });
+    report.asciiSize!.gzip = 15 * KB;
+    expect(gate(report, 'ascii-size').status).toBe('pass');
+    delete report.asciiSize;
+    expect(gate(report, 'ascii-size')).toMatchObject({ status: 'fail', actual: null });
   });
 
   it('fails when the warm geomean speedup over frozen 12.2.0 dagre is under 50×', () => {

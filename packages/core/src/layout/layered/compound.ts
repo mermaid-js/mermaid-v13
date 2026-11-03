@@ -2,12 +2,16 @@
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/core.
 // Changes from Pele: `const enum`s are `as const` objects, and index reads carry `!` for
 // noUncheckedIndexedAccess. `snapshot`/`restore` copy objects instead of packed arrays, and the
-// layout cache keys on `layoutInputs`. The algorithm is unchanged.
+// layout cache keys on `layoutInputs`. Length constants come from `opt.metrics` (D77). The
+// algorithm is otherwise unchanged.
 // cspell:ignore kepano lnode lnodes cnode
 //
 import {
   Kind,
+  floorTo,
   ease,
+  edgeOn,
+  midCell,
   layered,
   layoutInputs,
   ledge,
@@ -19,6 +23,7 @@ import {
   type LayeredOptions,
   type LayeredResult,
 } from './layered.ts';
+import { pxProfile } from '../units.ts';
 
 export type Dir = 'TB' | 'BT' | 'LR' | 'RL';
 
@@ -41,6 +46,9 @@ export interface CNode {
   seq: number;
   // How much of a side its edges may spread along, measured across the flow; 0 keeps them at its middle.
   span: number;
+  // Room kept clear around a group's box in its parent, each way (a self-loop's, on the grid).
+  loopW: number;
+  loopH: number;
   x: number;
   y: number;
 }
@@ -141,8 +149,6 @@ function restore(s: Snapshot, nodes: CNode[], edges: CEdge[], levels: Level[]): 
   return s.total;
 }
 
-// Ignore crossings within this distance of a shared node.
-const FAN = 24;
 // Tolerance for collinear points.
 const IN_LINE = 0.5;
 const CURVE_PIECES = 3;
@@ -161,7 +167,9 @@ export function styleOf(opt: LayeredOptions): Style {
 export function routeCrossings(
   nodes: CNode[],
   edges: CEdge[],
-  style: Style = Style.Curved
+  style: Style = Style.Curved,
+  // Crossings within this distance of a shared node are not counted (`LayoutMetrics.fan`).
+  fan = pxProfile.engine.fan
 ): number {
   let size = 0;
   for (const e of edges)
@@ -384,15 +392,15 @@ export function routeCrossings(
         const x = ax[p]! + at * dx;
         const y = ay[p]! + at * dy;
         // Exclude fan-in and fan-out at shared nodes.
-        const fan = (v: number, pe: number, qe: number): boolean =>
+        const fanned = (v: number, pe: number, qe: number): boolean =>
           ((ends[p]! & pe) !== 0 && (ends[q]! & qe) !== 0) ||
-          (Math.abs(x - nodes[v]!.x) < nodes[v]!.w / 2 + FAN &&
-            Math.abs(y - nodes[v]!.y) < nodes[v]!.h / 2 + FAN) ||
+          (Math.abs(x - nodes[v]!.x) < nodes[v]!.w / 2 + fan &&
+            Math.abs(y - nodes[v]!.y) < nodes[v]!.h / 2 + fan) ||
           (onRun(owner[p]!, pe, x, y) && onRun(owner[q]!, qe, x, y));
-        if (ep.src === eq.src && fan(ep.src, 1, 1)) continue;
-        if (ep.src === eq.dst && fan(ep.src, 1, 2)) continue;
-        if (ep.dst === eq.src && fan(ep.dst, 2, 1)) continue;
-        if (ep.dst === eq.dst && fan(ep.dst, 2, 2)) continue;
+        if (ep.src === eq.src && fanned(ep.src, 1, 1)) continue;
+        if (ep.src === eq.dst && fanned(ep.src, 1, 2)) continue;
+        if (ep.dst === eq.src && fanned(ep.dst, 2, 1)) continue;
+        if (ep.dst === eq.dst && fanned(ep.dst, 2, 2)) continue;
         total++;
       }
     }
@@ -417,6 +425,27 @@ export function inheritCrossedDirections(
     for (const g of a) if (!b.has(g)) nodes[g]!.dir = undefined;
     for (const g of b) if (!a.has(g)) nodes[g]!.dir = undefined;
   }
+}
+
+// The middle of a cell on the top side of `b`, off its corners, nearest the middle and at least
+// `pitch` (else one cell) from where other routes already end there.
+function freeTop(b: CNode, edges: CEdge[], grid: number, pitch: number): number {
+  const top = b.y - b.h / 2;
+  const lo = b.x - b.w / 2 + 1.5 * grid;
+  const hi = b.x + b.w / 2 - 1.5 * grid;
+  const used: number[] = [];
+  for (const e of edges) {
+    const r = e.route;
+    for (const k of r.length >= 6 ? [0, r.length - 3] : [])
+      if (Math.abs(r[k + 1]! - top) < 1e-6 && r[k]! >= lo && r[k]! <= hi) used.push(r[k]!);
+  }
+  const mid = midCell(b.x, grid);
+  const cells: number[] = [];
+  for (let x = lo; x <= hi + 1e-6; x += grid) cells.push(x);
+  cells.sort((p, q) => Math.abs(p - mid) - Math.abs(q - mid) || p - q);
+  for (const gap of [Math.max(pitch, grid), grid])
+    for (const x of cells) if (used.every((u) => Math.abs(u - x) >= gap - 1e-6)) return x;
+  return mid;
 }
 
 export function shiftLayout(nodes: CNode[], edges: CEdge[], ox: number, oy: number): void {
@@ -447,6 +476,8 @@ export function cnode(w: number, h: number, parent = -1): CNode {
     minW: 0,
     seq: 0,
     span: 0,
+    loopW: 0,
+    loopH: 0,
     x: 0,
     y: 0,
   };
@@ -476,6 +507,8 @@ export function compoundLayout(
   rootDir: Dir,
   opt: LayeredOptions
 ): CompoundResult {
+  const M = opt.metrics ?? pxProfile.engine;
+  const grid = opt.grid !== undefined && opt.grid > 0 ? opt.grid : 0;
   const n = nodes.length;
   const levelOf = new Map<number, Level>();
   const order: Level[] = [];
@@ -643,10 +676,14 @@ export function compoundLayout(
     level.items.forEach((item, i) => {
       local[item] = i;
       const node = nodes[item]!;
-      const ln = sized
-        ? lnode(vertical ? node.w : node.h, vertical ? node.h : node.w)
-        : lnode(0, 0);
-      ln.span = node.isGroup ? Math.min(node.span, ln.w - 2 * node.padX) : node.span;
+      const sw = node.w + node.loopW;
+      const sh = node.h + node.loopH;
+      const ln = sized ? lnode(vertical ? sw : sh, vertical ? sh : sw) : lnode(0, 0);
+      // On the grid a group's ends may use its whole side off the corners, which it grows for.
+      const inset = grid ? M.corner : node.padX;
+      ln.span = node.isGroup
+        ? Math.min(node.span, (vertical ? node.w : node.h) - 2 * inset)
+        : node.span;
       ln.key = keyed ? key[item]! : NaN;
       lnodes.push(ln);
     });
@@ -849,9 +886,13 @@ export function compoundLayout(
       const contentH = vertical ? size.height : size.width;
       const padX = group ? group.padX : 0;
       const padTop = group ? group.padTop : 0;
-      const boxW = Math.max(contentW + 2 * padX, group ? group.minW : 0);
+      let boxW = Math.max(contentW + 2 * padX, group ? group.minW : 0);
+      // On the grid a frame wider than its content (a long title) keeps the content centred:
+      // the slack is a whole number of cells either side.
+      if (grid && level.items.length > 0 && Math.round((boxW - contentW) / grid) % 2 !== 0)
+        boxW += grid;
       const boxH = contentH + padTop + (group ? group.padBottom : 0);
-      const offX = (boxW - contentW) / 2;
+      const offX = grid ? floorTo((boxW - contentW) / 2, grid) : (boxW - contentW) / 2;
       const offY = padTop;
       const across = (ly: number): number => (flip ? size.height - ly : ly);
       const tx = (lx: number, ly: number): number => offX + (vertical ? lx : across(ly));
@@ -906,6 +947,11 @@ export function compoundLayout(
         else if (port.side === Side.Bottom) iy += item.h / 2;
         else if (port.side === Side.Left) ix -= item.w / 2;
         else ix += item.w / 2;
+        // On the grid, a line runs through the middle of a cell (D78).
+        if (grid && !(item.isGroup && endpointBelow(port.inner, edges[port.e]!, port.out))) {
+          if (port.side === Side.Top || port.side === Side.Bottom) ix = midCell(ix, grid);
+          else iy = midCell(iy, grid);
+        }
         let bx = ix;
         let by = iy;
         if (port.side === Side.Top) by = 0;
@@ -987,12 +1033,12 @@ export function compoundLayout(
   place();
   let crossings = -1;
   if (flat) {
-    crossings = routeCrossings(nodes, edges, style);
+    crossings = routeCrossings(nodes, edges, style, M.fan);
     if (crossings > flatCrossings * FLAT_SLACK + FLAT_SPARE) {
       const first = snapshot(nodes, edges, order, total);
       keyed = false;
       place();
-      const own = routeCrossings(nodes, edges, style);
+      const own = routeCrossings(nodes, edges, style, M.fan);
       if (own >= crossings) {
         keyed = true;
         total = restore(first, nodes, edges, order);
@@ -1036,11 +1082,11 @@ export function compoundLayout(
       for (let i = 1; i < seen.length; i++) if (seen[i - 1]![1]! > seen[i]![1]!) again = true;
     }
     if (again) {
-      const before = crossings >= 0 ? crossings : routeCrossings(nodes, edges, style);
+      const before = crossings >= 0 ? crossings : routeCrossings(nodes, edges, style, M.fan);
       const first = before > 0 ? snapshot(nodes, edges, order, total) : undefined;
       if (first) {
         place();
-        if (routeCrossings(nodes, edges, style) >= before)
+        if (routeCrossings(nodes, edges, style, M.fan) >= before)
           total = restore(first, nodes, edges, order);
       }
     }
@@ -1053,11 +1099,26 @@ export function compoundLayout(
     e.route = [a.x, a.y, 0, b.x, b.y, 0];
     e.labelX = (a.x + b.x) / 2;
     e.labelY = (a.y + b.y) / 2;
+    if (grid) {
+      // Between a group and its own member, either way: down from the group's top border row
+      // (half a cell inside it, so the route stays in the drawing) to the member's top, in a cell
+      // of that side no other edge ends in (D140). Clearing the way is the repair router's (#45,
+      // D78). The label sits on the border row, just right of the line.
+      const outer = depth[e.src]! < depth[e.dst]!;
+      const group = outer ? a : b;
+      const member = outer ? b : a;
+      const x = freeTop(member, edges, grid, edgeOn(M.portPitch, grid));
+      const frame = group.y - group.h / 2 + grid;
+      const top = member.y - member.h / 2;
+      e.route = outer ? [x, frame, 0, x, top, 0] : [x, top, 0, x, frame, 0];
+      e.labelX = x + grid / 2 + e.labelW / 2;
+      e.labelY = frame - grid + e.labelH / 2;
+    }
   }
   for (const ei of loops) {
     const e = edges[ei]!;
     const node = nodes[e.src]!;
-    e.labelX = node.x + node.w / 2 + 28 + e.labelW / 2;
+    e.labelX = node.x + node.w / 2 + M.loopLabel + e.labelW / 2;
     e.labelY = node.y;
   }
 

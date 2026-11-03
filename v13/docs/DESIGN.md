@@ -390,13 +390,13 @@ Ported from mermaid-ascii's canvas, glyph, junction and cell-text code (MIT, att
 
 **Flowchart `ascii` entry.** `@mermaid-js/diagram-flowchart/ascii` exports the hook. The manifest names it (`"ascii": "./dist/ascii.js"`) and lists `"formats": ["svg", "ascii"]`; `prepare` loads it only for `format: 'ascii'`. Pipeline: `prepare(model)` with `ctx.units = cellProfile`, `ctx.measurer = cellMeasurer`, `routing: 'stepped'`, `grid: 1` → layered engine → snap and repair → draw groups (outermost first, title on the top border), edges, edge labels on their longest straight segment, nodes through the shape → text-form table, front-matter title on line 1 → `Canvas.toString()`.
 
-**What is dropped (D82).** Colours and styles, curves, images/icons (label kept), bold/italic, links/tooltips/callbacks, accTitle/accDescr: one `ASCII_DROPPED { feature, astIds }` warning per feature kind; shapes outside the table: one `ASCII_SHAPE` warning. Width: `ascii.maxWidth` → `availableWidth` in cells; never cropped; `ASCII_TOO_WIDE` (D84).
+**What is dropped (D82).** Colours and styles, curves, images/icons (label kept), bold/italic, links/tooltips/callbacks, accTitle/accDescr: one `ASCII_DROPPED { feature, astIds }` warning per feature kind; shapes outside the table: one `ASCII_SHAPE` warning; edges the repair router finds no free lane for: one `ASCII_ROUTE { astIds }` warning (D78). Width: `ascii.maxWidth` → `availableWidth` in cells; never cropped; `ASCII_TOO_WIDE` (D84).
 
 **Config (`ascii` section, `x-mermaid` status `honoured` since M2):** `charset: 'unicode' | 'ascii'`, `padding: 'compact' | 'roomy'`, `maxWidth?: number`. Diagram text may set all three.
 
 **Hooks (D86).** `postParse` and `postLayout` run; `LaidOut` gains `units: 'px' | 'cell'`. No `postRender` or `afterMount`. The DOM adapter stays SVG-only in M2.
 
-**CLI (D85).** `packages/mermaid` gets a `bin` `mermaid`: `mermaid render [file|-] --format ascii|svg [--charset ascii] [--width N|auto] [--warnings]`. Table measurer, stdout output, diagnostics to stderr, exit 1 on error and 2 on `UNSUPPORTED_FORMAT`. No runtime dependencies (R-PERF-2).
+**CLI (D85).** `packages/mermaid` gets a `bin` `mermaid`: `mermaid render [file|-] --format ascii|svg [--charset ascii] [--width N|auto] [--warnings]`. Table measurer, stdout output, diagnostics to stderr, exit 1 on error (a `--format` other than `ascii|svg` is a usage error) and 2 on `UNSUPPORTED_FORMAT`. `--charset` and `--width` are explicit text options (`TextRenderOptions.ascii`): they win over `ascii.*` from the diagram text. No runtime dependencies (R-PERF-2).
 
 **Tests (D83, D87).** `packages/conformance/ascii/` holds the 142 ported mermaid-ascii fixtures (`input.mmd`, `upstream.txt`, `expected.txt`, header metadata) and `ascii-divergences.json`; corpus-wide ASCII render properties in both charsets; a size check for kit + entry (≤ 15 KB gz) and a bundle test that an SVG flowchart never loads them.
 

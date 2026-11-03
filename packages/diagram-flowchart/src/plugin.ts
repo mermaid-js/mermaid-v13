@@ -20,7 +20,7 @@ const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
 export const flowchart = {
   id: 'flowchart',
   aliases: ['graph', 'flowchart-v2', 'flowchart-elk'] as readonly string[],
-  formats: ['svg'] as const,
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'graph' as const,
   configDefaults: flowchartConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectFlowchart(text) !== undefined,

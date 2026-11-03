@@ -137,7 +137,12 @@ describe('extension plugins (R-PLUG-2, D52, D70)', () => {
     await m.registerExternalDiagrams([
       {
         id: 'shapeshifter',
-        postLayout: (l): LaidOut => ({ kind: 'custom', diagram: l.diagram, layout: l.layout }),
+        postLayout: (l): LaidOut => ({
+          kind: 'custom',
+          diagram: l.diagram,
+          units: l.units,
+          layout: l.layout,
+        }),
       },
     ]);
     const e = await rejection(m.render('x', FLOW));
@@ -186,6 +191,37 @@ describe('extension plugins (R-PLUG-2, D52, D70)', () => {
     expect((await m.render('x', text)).warnings.map((w) => w.code)).not.toContain(
       'CALLBACK_IGNORED'
     );
+  });
+});
+
+describe('extension hooks in text output (D86)', () => {
+  it('runs postParse and postLayout with units "cell"; never postRender or afterMount', async () => {
+    const log: string[] = [];
+    const units: string[] = [];
+    const m = createMermaid();
+    await m.registerExternalDiagrams([
+      recorder('one', log),
+      { id: 'units', postLayout: (l: LaidOut) => (units.push(l.units), l) },
+    ]);
+    await m.render('x', FLOW);
+    log.length = 0;
+    const r = await m.render('x', FLOW, { format: 'ascii' });
+    expect(units).toEqual(['px', 'cell']);
+    expect(log).toEqual([
+      'one:postParse:Document:flowchart',
+      'one:postLayout:graph:flowchart:true',
+    ]);
+    expect(r).not.toHaveProperty('bindFunctions');
+    expect(r.warnings.map((w) => w.code)).not.toContain('FIXTURE');
+  });
+
+  it('rejects a postLayout result whose units changed', async () => {
+    const m = createMermaid();
+    await m.registerExternalDiagrams([
+      { id: 'resizer', postLayout: (l: LaidOut): LaidOut => ({ ...l, units: 'px' }) },
+    ]);
+    const e = await rejection(m.render('x', FLOW, { format: 'ascii' }));
+    expect(e.message).toMatch(/resizer.*postLayout.*units/);
   });
 });
 
@@ -294,6 +330,28 @@ describe('plugin manifests (R-PLUG-3, DESIGN §12.1)', () => {
     expect(loads).toBe(1);
   });
 
+  it('loads a manifest ascii entry only for text, on first use (D76)', async () => {
+    const m = createMermaid();
+    let asciiLoads = 0;
+    await m.registerExternalDiagrams([
+      {
+        ...tinypie(() => undefined),
+        manifest: { ...PIE_MANIFEST, ascii: './dist/ascii.js' },
+        loadAscii: async () => {
+          asciiLoads++;
+          return { ascii: (model: string) => `pie:${model.length}` };
+        },
+      },
+    ]);
+    const src = 'tinypie\n  "a": 1';
+    await m.render('p', src);
+    expect(asciiLoads).toBe(0);
+    const r = await m.render('p', src, { format: 'ascii' });
+    expect(r).toMatchObject({ format: 'ascii', text: `pie:${src.length}`, diagramType: 'tinypie' });
+    await m.render('p', src, { format: 'ascii' });
+    expect(asciiLoads).toBe(1);
+  });
+
   it('loads an extension by manifest on registration (its activation)', async () => {
     const m = createMermaid();
     const log: string[] = [];
@@ -328,6 +386,10 @@ describe('plugin manifests (R-PLUG-3, DESIGN §12.1)', () => {
     await expect(reg({ manifest: { plugin: 'extension', id: 'y' }, load })).rejects.toThrow(
       /id "x", its manifest says "y"/
     );
+    const asciiEntry = { plugin: 'diagram', id: 'x', formats: ['svg', 'ascii'], ascii: './a.js' };
+    await expect(reg({ manifest: asciiEntry, detector: () => false, load })).rejects.toThrow(
+      /needs loadAscii for its ascii entry/
+    );
   });
 
   it('reads manifests: kinds, default formats, unknown formats', () => {
@@ -346,6 +408,15 @@ describe('plugin manifests (R-PLUG-3, DESIGN §12.1)', () => {
     );
     expect(() => readManifest({ plugin: 'extension', id: 'i', formats: ['svg'] })).toThrow(
       /has no formats/
+    );
+    expect(
+      readManifest({ plugin: 'diagram', id: 'f', formats: ['ascii'], ascii: './a.js' })
+    ).toEqual({ plugin: 'diagram', id: 'f', formats: ['ascii'], ascii: './a.js' });
+    expect(() => readManifest({ plugin: 'diagram', id: 'f', ascii: './a.js' })).toThrow(
+      /ascii entry but no "ascii" in formats/
+    );
+    expect(() => readManifest({ plugin: 'extension', id: 'i', ascii: './a.js' })).toThrow(
+      /has no ascii entry/
     );
     expect(() => readManifest('diagram')).toThrow(TypeError);
   });

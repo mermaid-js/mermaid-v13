@@ -86,6 +86,11 @@ export interface BenchReport {
   pipeline: PipelineState;
   /** Fixtures not run because their detected type has no v13 package. */
   unsupported?: UnsupportedFixture[];
+  /**
+   * The chunks of the production v13 bundle that only `format: 'ascii'` loads (R-ASCII-9, D87),
+   * from the build's import graph (`source: 'static'`). Absent in reports older than M2.
+   */
+  asciiSize?: SizeSummary | null;
   renderers: RendererRun[];
 }
 

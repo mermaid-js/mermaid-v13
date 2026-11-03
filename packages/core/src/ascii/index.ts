@@ -3,9 +3,16 @@
  * it; SVG rendering never does.
  */
 export { Canvas } from './canvas.ts';
+export { DOWN, DX, DY, INTO, LEFT, RIGHT, UP, opposite } from './directions.ts';
+export type { Dir } from './directions.ts';
 export { drawBox, drawText } from './draw.ts';
 export type { BoxOptions, CellRect } from './draw.ts';
 export { ascii, glyphFor, junction, unicode } from './glyphs.ts';
 export type { GlyphSet, Sides, Stroke } from './glyphs.ts';
+export { repairRoutes, routeCollisions } from './repair.ts';
+export type { Collision, CollisionKind, RepairOptions, RepairResult } from './repair.ts';
+export { asciiOptions } from './options.ts';
+export type { AsciiInput, AsciiOptions } from './options.ts';
+export { snapRoute } from './snap.ts';
 export { cellMeasurer, cellWidth, graphemes, graphemeWidth } from './measurer.ts';
 export type { Grapheme } from './measurer.ts';

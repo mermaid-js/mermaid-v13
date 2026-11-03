@@ -6,6 +6,7 @@
  */
 import {
   drawDiagram,
+  drawText,
   errorFromDiagnostics,
   HookRunner,
   MermaidError,
@@ -15,6 +16,7 @@ import {
   type ExtensionPlugin as CoreExtensionPlugin,
   type RenderContext,
   type Resource,
+  type TextRenderContext,
   type Warning,
 } from '@mermaid-js/core';
 import {
@@ -25,7 +27,12 @@ import {
   type MermaidConfig,
   type ResolvedConfig,
 } from '@mermaid-js/core/config';
-import { pxProfile, type LayoutEngine, type UnitProfile } from '@mermaid-js/core/layout';
+import {
+  cellProfile,
+  pxProfile,
+  type LayoutEngine,
+  type UnitProfile,
+} from '@mermaid-js/core/layout';
 import { asLimitError, checkSource, resolveLimits, type Limits } from '@mermaid-js/core/limits';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -40,6 +47,7 @@ import {
   type ThemeName,
 } from '@mermaid-js/core/theme';
 import { stageEnd, stageStart } from '@mermaid-js/core/timing';
+import type * as TextModule from './ascii.ts';
 import { createDomAdapter } from './dom.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
@@ -82,14 +90,46 @@ export interface RenderOptions {
   config?: InitializeConfig;
   /** Draw placeholders for missing resources, with a warning, instead of throwing. */
   placeholders?: boolean;
-  /** Output format. Only `svg` exists in M1. */
+  /**
+   * Output format (R-ASCII-4, D80): `svg` (default) or `ascii`, text drawn in character cells
+   * for the types whose manifest lists it (`supportsFormat`).
+   */
   format?: 'svg' | 'ascii';
   /**
    * Width in px the drawing should fit (R-LAYOUT-5): graph layouts tighten their spacing and
    * may turn LR into TB. Off by default; `mount(…, { availableWidth: true })` passes the
-   * element's width.
+   * element's width. SVG only: text output fits `ascii.maxWidth` columns instead (D84).
    */
   availableWidth?: number;
+}
+
+/** Options of an SVG render (`format` absent or `svg`). */
+export interface SvgRenderOptions extends RenderOptions {
+  format?: 'svg';
+}
+
+/** Options of a text render (R-ASCII-4, D80). */
+export interface TextRenderOptions extends RenderOptions {
+  format: 'ascii';
+  /**
+   * Explicit text options for this call (the CLI's `--charset` and `--width`). Each key set here
+   * wins over the same `ascii` key from any config, the diagram's front matter and directives
+   * included; unset keys fall back to the config as usual.
+   */
+  ascii?: { charset?: 'unicode' | 'ascii'; padding?: 'compact' | 'roomy'; maxWidth?: number };
+}
+
+/**
+ * A text render (R-ASCII-4, D80): `\n` line ends, no trailing spaces, byte-deterministic.
+ * `columns` is the widest line in cells (a wide character takes 2), `rows` the line count.
+ */
+export interface TextRenderResult {
+  format: 'ascii';
+  text: string;
+  columns: number;
+  rows: number;
+  diagramType: string;
+  warnings: Warning[];
 }
 
 export interface RenderResult {
@@ -276,20 +316,26 @@ function directiveConfig(pre: PreprocessResult, section: string | undefined): Co
   return out;
 }
 
-const toWarning = (w: {
-  code: string;
-  message: string;
-  path?: string;
-  source?: string;
-}): Warning => {
-  const out: { code: string; message: string; path?: string; source?: string } = {
-    code: w.code,
-    message: w.message,
-  };
-  if (w.path !== undefined) out.path = w.path;
-  if (w.source !== undefined) out.source = w.source;
-  return out;
+const WARNING_KEYS = ['path', 'source', 'feature', 'shapes', 'astIds'] as const;
+
+/** A copy of a warning with only the `Warning` keys (text output adds `feature`, `shapes`, `astIds`). */
+const toWarning = (w: Warning): Warning => {
+  const out: Plain = { code: w.code, message: w.message };
+  for (const k of WARNING_KEYS) {
+    const v = w[k];
+    if (v !== undefined) out[k] = Array.isArray(v) ? [...(v as unknown[])] : v;
+  }
+  return out as unknown as Warning;
 };
+
+/** The `ascii` config section with its defaults (D77, D79, D84). */
+/** `render`'s third argument: v12's container element, or an options object (D80). */
+function renderOptions(arg: unknown): RenderOptions | undefined {
+  if (!isPlain(arg) || typeof arg.nodeType === 'number') return undefined;
+  return arg as RenderOptions;
+}
+
+type TextBackend = typeof TextModule;
 
 function internal(e: unknown): MermaidError {
   if (e instanceof MermaidError) return e;
@@ -304,6 +350,8 @@ interface Analysis {
   readonly detected: Detected;
   readonly plugin: AnyPlugin;
   readonly prepared: Prepared;
+  /** The front-matter title, for text output (D82). */
+  readonly title?: string;
 }
 
 interface CacheEntry {
@@ -313,6 +361,14 @@ interface CacheEntry {
 
 const CACHE_SIZE = 32;
 
+/** How a render measures and sizes: px for SVG, cells for text (D77, D84). */
+interface Units {
+  readonly units: UnitProfile;
+  readonly measurer?: Measurer;
+  /** `availableWidth` in the profile's units. */
+  readonly width?: number;
+}
+
 /** One `mermaid` API object with its own registry and defaults. */
 export function createMermaid() {
   const registry = new Registry();
@@ -321,6 +377,8 @@ export function createMermaid() {
   let parseErrorHandler: ParseErrorHandler | undefined;
   let iconPacksRequested = false;
   const cache = new Map<string, CacheEntry>();
+  // `core/ascii`'s cell measurer and width, loaded by the first text `prepare` (D87).
+  let textBackend: TextBackend | undefined;
 
   function sectionOf(detected: Detected, plugin?: AnyPlugin): string | undefined {
     return plugin?.id ?? detected.id;
@@ -362,10 +420,12 @@ export function createMermaid() {
     const error = errorFromDiagnostics(text, [...pre.diagnostics, ...parse.diagnostics]);
     if (error) throw error;
     for (const d of parse.diagnostics) if (d.severity === 'warning') warn(d);
+    const title = pre.frontMatter?.title;
     return {
       detected,
       plugin,
       prepared: freeze({ diagramType: detected.type, config, parse, warnings }) as Prepared,
+      ...(title !== undefined ? { title } : {}),
     };
   }
 
@@ -404,14 +464,15 @@ export function createMermaid() {
     return choice.dark ? [choice.name, choice.dark] : [choice.name];
   }
 
-  function missingFor(a: Analysis): Resource[] {
+  function missingFor(a: Analysis, text = false): Resource[] {
     const missing: Resource[] = [];
     const { config } = a.prepared;
     if (a.plugin.layoutKind === 'graph') {
       const name = String(config.layout ?? 'layered');
       if (registry.layout(name).state === 'missing') missing.push({ kind: 'layout', name });
     }
-    for (const name of themeNames(config)) {
+    // Text output draws no colours, so it needs no theme (D82).
+    for (const name of text ? [] : themeNames(config)) {
       if (!loadedTheme(name)) missing.push({ kind: 'theme', name });
     }
     for (const r of a.plugin.resources?.(a.prepared.parse, config) ?? []) missing.push(r);
@@ -441,67 +502,93 @@ export function createMermaid() {
     return s;
   }
 
-  async function prepareWith(text: string, s: Snapshot): Promise<Analysis> {
-    const hit = cached(text, s);
-    if (hit) {
-      await loadResources(missingFor(hit));
-      return hit;
+  /** Throws `UnsupportedFormatError` unless `detected` declares ascii (R-ASCII-5, D80). */
+  function checkText(detected: Detected): void {
+    if (detected.id === undefined || !registry.formats(detected.id).includes('ascii'))
+      throw new UnsupportedFormatError(detected.type, 'ascii');
+  }
+
+  /** Loads the ascii entry and the text backend (D76, D80): only for `format: 'ascii'`. */
+  async function loadText(a: Analysis): Promise<void> {
+    checkText(a.detected);
+    const [hook, backend] = await Promise.all([
+      registry.loadAscii(a.plugin.id),
+      textBackend ?? import('./ascii.ts'),
+    ]);
+    textBackend = backend;
+    if (!hook) throw new UnsupportedFormatError(a.detected.type, 'ascii');
+  }
+
+  async function prepareWith(text: string, s: Snapshot, format?: string): Promise<Analysis> {
+    const ascii = format === 'ascii';
+    let analysis = cached(text, s);
+    if (!analysis) {
+      const { detected, pre } = detect(text, s);
+      if (ascii && detected.id !== undefined) checkText(detected);
+      const plugin = detected.id === undefined ? undefined : await registry.load(detected.id);
+      if (!plugin) throw unsupported(detected);
+      analysis = analyse(text, s, plugin, detected, pre);
+      remember(text, s, analysis);
     }
-    const { detected, pre } = detect(text, s);
-    const plugin = detected.id === undefined ? undefined : await registry.load(detected.id);
-    if (!plugin) throw unsupported(detected);
-    const analysis = analyse(text, s, plugin, detected, pre);
-    await loadResources(missingFor(analysis));
-    remember(text, s, analysis);
+    if (ascii) await loadText(analysis);
+    await loadResources(missingFor(analysis, ascii));
     return analysis;
   }
 
   async function prepare(text: string, options?: RenderOptions): Promise<Prepared> {
     try {
-      return (await prepareWith(text, snap(options))).prepared;
+      return (await prepareWith(text, snap(options), options?.format)).prepared;
     } catch (e) {
       throw internal(e);
     }
   }
 
-  function draw(text: string, s: Snapshot, options: RenderOptions | undefined): RenderResult {
-    if (options?.format !== undefined && options.format !== 'svg') {
-      const type = (() => {
-        try {
-          return detect(text, s).detected.type;
-        } catch {
-          return 'unknown';
-        }
-      })();
-      throw new UnsupportedFormatError(type, options.format);
+  /** The cached or fresh analysis of `text`, or a placeholder svg for an unloaded plugin. */
+  function analysisFor(
+    text: string,
+    s: Snapshot,
+    options: RenderOptions | undefined,
+    ascii: boolean
+  ): Analysis | RenderResult {
+    const hit = cached(text, s);
+    if (hit) return hit;
+    const { detected, pre } = detect(text, s);
+    if (detected.id === undefined) throw unsupported(detected);
+    if (ascii) checkText(detected);
+    const plugin = registry.plugin(detected.id);
+    if (!plugin) {
+      const missing = new NotLoadedError([{ kind: 'diagram', name: detected.id }]);
+      if (ascii || !options?.placeholders) throw missing;
+      const drawn = renderErrorSvg(missing, { version: VERSION });
+      return {
+        svg: drawn,
+        diagramType: detected.type,
+        width: 0,
+        height: 0,
+        warnings: [{ code: 'PLACEHOLDER', message: missing.message }],
+      };
     }
-    let analysis = cached(text, s);
-    if (!analysis) {
-      const { detected, pre } = detect(text, s);
-      if (detected.id === undefined) throw unsupported(detected);
-      const plugin = registry.plugin(detected.id);
-      if (!plugin) {
-        const missing = new NotLoadedError([{ kind: 'diagram', name: detected.id }]);
-        if (!options?.placeholders) throw missing;
-        const drawn = renderErrorSvg(missing, { version: VERSION });
-        return {
-          svg: drawn,
-          diagramType: detected.type,
-          width: 0,
-          height: 0,
-          warnings: [{ code: 'PLACEHOLDER', message: missing.message }],
-        };
-      }
-      analysis = analyse(text, s, plugin, detected, pre);
-      remember(text, s, analysis);
-    }
+    const analysis = analyse(text, s, plugin, detected, pre);
+    remember(text, s, analysis);
+    return analysis;
+  }
+
+  /** The render context of one draw, and the warnings sink it writes to. */
+  function contextFor(
+    text: string,
+    s: Snapshot,
+    options: RenderOptions | undefined,
+    analysis: Analysis,
+    { units, measurer, width }: Units
+  ): { ctx: RenderContext; warnings: Warning[] } {
     const { prepared, plugin } = analysis;
     const { config } = prepared;
+    const textOutput = units.id === 'cell';
     const warnings: Warning[] = [...prepared.warnings];
-    const warn = (w: Parameters<typeof toWarning>[0]): void => void warnings.push(toWarning(w));
-    const missing = missingFor(analysis);
+    const warn = (w: Warning): void => void warnings.push(toWarning(w));
+    const missing = missingFor(analysis, textOutput);
     if (missing.length > 0) {
-      if (!options?.placeholders) throw new NotLoadedError(missing);
+      if (textOutput || !options?.placeholders) throw new NotLoadedError(missing);
       warn({
         code: 'PLACEHOLDER',
         message: `Drawn with stand-ins for what is not loaded: ${missing
@@ -536,14 +623,11 @@ export function createMermaid() {
       cssVariables: s.options.output?.cssVariables,
       warn,
     });
-    const layoutEngine = engine;
-    const units = pxProfile;
     const ctx: RenderContext = {
       config,
-      measurer: selectMeasurer({
-        measurer: s.options.measurer,
-        deterministic: s.options.deterministic,
-      }),
+      measurer:
+        measurer ??
+        selectMeasurer({ measurer: s.options.measurer, deterministic: s.options.deterministic }),
       units,
       theme,
       securityLevel: resolveSecurityLevel(config.securityLevel, warn),
@@ -552,9 +636,8 @@ export function createMermaid() {
       linkSchemes: s.options.linkSchemes,
       limits: s.limits,
       layout: (graph) => {
-        if (!layoutEngine) throw new TypeError(`${plugin.id} has no graph layout`);
-        const width = options?.availableWidth;
-        return layoutEngine(
+        if (!engine) throw new TypeError(`${plugin.id} has no graph layout`);
+        return engine(
           width !== undefined && graph.availableWidth === undefined
             ? { ...graph, availableWidth: width }
             : graph
@@ -562,6 +645,89 @@ export function createMermaid() {
       },
       warn,
     };
+    return { ctx, warnings };
+  }
+
+  /** Text output (DESIGN §6.3): cell layout, the ascii hook, columns and rows (D80, D84). */
+  function drawAscii(
+    text: string,
+    s: Snapshot,
+    options: RenderOptions | undefined,
+    analysis: Analysis
+  ): TextRenderResult {
+    const { prepared, plugin } = analysis;
+    checkText(analysis.detected);
+    const hook = registry.ascii(plugin.id);
+    const backend = textBackend;
+    if (!hook || !backend)
+      throw new NotLoadedError([{ kind: 'diagram', name: `${plugin.id}/ascii` }]);
+    const explicit = (options as TextRenderOptions | undefined)?.ascii;
+    const { charset, padding, maxWidth } = backend.asciiOptions(prepared.config, explicit);
+    const { ctx, warnings } = contextFor(text, s, options, analysis, {
+      units: cellProfile(padding),
+      measurer: backend.cellMeasurer,
+      width: maxWidth,
+    });
+    const { title } = analysis;
+    // The diagram's text entry reads the section from the config: hand it the resolved one.
+    const ascii = { charset, padding, ...(maxWidth === undefined ? {} : { maxWidth }) };
+    const textCtx: TextRenderContext = {
+      ...ctx,
+      config: Object.freeze({ ...ctx.config, ascii }),
+      ...(title !== undefined ? { title } : {}),
+      ast: prepared.parse.ast,
+    };
+    // D86: postParse and postLayout run (LaidOut.units 'cell'); postRender, afterMount never.
+    const run = hooks.size === 0 ? undefined : hooks.start(textCtx, plugin.id);
+    const out = drawText(
+      plugin,
+      hook,
+      prepared.parse.model,
+      textCtx,
+      run ? { run, ast: prepared.parse.ast } : undefined
+    );
+    const lines = out === '' ? [] : out.split('\n');
+    const columns = lines.reduce((m, l) => Math.max(m, backend.cellWidth(l)), 0);
+    // D84: never cropped; say so when it still does not fit.
+    if (maxWidth !== undefined && columns > maxWidth)
+      ctx.warn({
+        code: 'ASCII_TOO_WIDE',
+        message: `The drawing is ${columns} columns wide; ascii.maxWidth is ${maxWidth}.`,
+      });
+    return {
+      format: 'ascii',
+      text: out,
+      columns,
+      rows: lines.length,
+      diagramType: prepared.diagramType,
+      warnings,
+    };
+  }
+
+  function draw(
+    text: string,
+    s: Snapshot,
+    options: RenderOptions | undefined
+  ): RenderResult | TextRenderResult {
+    const format: string = options?.format ?? 'svg';
+    if (format !== 'svg' && format !== 'ascii') {
+      const type = (() => {
+        try {
+          return detect(text, s).detected.type;
+        } catch {
+          return 'unknown';
+        }
+      })();
+      throw new UnsupportedFormatError(type, format);
+    }
+    const analysis = analysisFor(text, s, options, format === 'ascii');
+    if (!('prepared' in analysis)) return analysis;
+    if (format === 'ascii') return drawAscii(text, s, options, analysis);
+    const { prepared, plugin } = analysis;
+    const { ctx, warnings } = contextFor(text, s, options, analysis, {
+      units: pxProfile,
+      width: options?.availableWidth,
+    });
     if (hooks.size === 0) {
       const drawn = drawDiagram(plugin, prepared.parse.model, ctx);
       return { ...drawn, diagramType: prepared.diagramType, warnings };
@@ -574,7 +740,9 @@ export function createMermaid() {
     return result;
   }
 
-  function renderSync(text: string, options?: RenderOptions): RenderResult {
+  function renderSync(text: string, options: TextRenderOptions): TextRenderResult;
+  function renderSync(text: string, options?: SvgRenderOptions): RenderResult;
+  function renderSync(text: string, options?: RenderOptions): RenderResult | TextRenderResult {
     try {
       return draw(text, snap(options), options);
     } catch (e) {
@@ -582,17 +750,28 @@ export function createMermaid() {
     }
   }
 
+  // The third argument is v12's DOM container (v13 is DOM-free and does not need it) or an
+  // options object (D80); render's `id` wins over `options.id`.
   async function render(
     id: string,
     text: string,
-    // v12 measured in a DOM container; v13 is DOM-free and does not need it.
-    container?: Element
-  ): Promise<RenderResult> {
-    void container;
-    const s = site;
+    options: TextRenderOptions
+  ): Promise<TextRenderResult>;
+  async function render(
+    id: string,
+    text: string,
+    containerOrOptions?: Element | SvgRenderOptions
+  ): Promise<RenderResult>;
+  async function render(
+    id: string,
+    text: string,
+    containerOrOptions?: Element | RenderOptions
+  ): Promise<RenderResult | TextRenderResult> {
+    const options = renderOptions(containerOrOptions);
+    const s = snap(options);
     try {
-      await prepareWith(text, s);
-      return draw(text, s, { id });
+      await prepareWith(text, s, options?.format);
+      return draw(text, s, { ...options, id });
     } catch (e) {
       throw internal(e);
     }

@@ -425,6 +425,49 @@ properties:
       status: honoured
       since: 13.0.0
       reason: 'The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error.'
+  ascii:
+    description: |
+      Text output (`format: 'ascii'`, DESIGN §6.3). Diagram text may set every key
+      (front matter, directives). No defaults here, so SVG renders (and their default ids,
+      which hash the resolved config) are unchanged; the text backend applies `unicode` and
+      `compact` when a key is unset.
+    type: object
+    additionalProperties: false
+    properties:
+      charset:
+        description: |
+          Glyph set: `unicode` box drawing (the default) or pure `ascii` (D79, R-ASCII-6).
+        type: string
+        enum:
+          - unicode
+          - ascii
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+      padding:
+        description: |
+          Cell padding preset: `compact` (the default; box padding 1 across, 0 down; gaps 2 and 4) or
+          `roomy` (mermaid-ascii-like: padding 1 each way, gaps of 5) (D77).
+        type: string
+        enum:
+          - compact
+          - roomy
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+      maxWidth:
+        description: |
+          Columns the drawing should fit. It becomes the layout's `availableWidth` in cells
+          (tighten, then turn LR into TB). Output is never cropped; an `ASCII_TOO_WIDE`
+          warning says when it still does not fit (D84, R-ASCII-8).
+        type: integer
+        minimum: 1
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
   elk:
     type: object
     properties:

@@ -13,10 +13,23 @@ import type { SvgTree } from '../svg/tree.ts';
 import { MermaidError } from './errors.ts';
 import type { RenderContext } from './types.ts';
 
-/** What `postLayout` hooks get and return: graph diagrams carry the shared `LayoutModel`. */
+/**
+ * What `postLayout` hooks get and return: graph diagrams carry the shared `LayoutModel`.
+ * `units` says what its lengths are: `px` for SVG, `cell` for text output (D86).
+ */
 export type LaidOut =
-  | { readonly kind: 'graph'; readonly diagram: string; readonly layout: LayoutModel }
-  | { readonly kind: 'custom'; readonly diagram: string; readonly layout: unknown };
+  | {
+      readonly kind: 'graph';
+      readonly diagram: string;
+      readonly units: 'px' | 'cell';
+      readonly layout: LayoutModel;
+    }
+  | {
+      readonly kind: 'custom';
+      readonly diagram: string;
+      readonly units: 'px' | 'cell';
+      readonly layout: unknown;
+    };
 
 /** Features an extension handles, so core does not warn about them. */
 export type ExtensionClaim = 'callbacks';
@@ -144,6 +157,7 @@ export class HookRunner<El = unknown, R = unknown> {
             );
           if (out.diagram !== l.diagram)
             throw new TypeError('postLayout must not change the diagram id');
+          if (out.units !== l.units) throw new TypeError('postLayout must not change the units');
           return out;
         }),
       postRender: (tree) =>

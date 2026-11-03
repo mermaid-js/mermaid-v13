@@ -4,13 +4,14 @@
 // before layout (DESIGN §6.1).
 // cspell:ignore kepano
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
-import { layoutSettings } from '@mermaid-js/core/layout';
+import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { FlowModel, FlowModelEdge, FlowModelSubgraph, FlowVertex } from '../parser/index.ts';
 import type { FlowRenderContext } from './context.ts';
 import { curveKind, type CurveKind } from './edges.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
+import { assetSize } from './assets.ts';
 import {
   canonicalShape,
   shapeHasLabel,
@@ -67,18 +68,8 @@ export interface Prepared {
   pads: Pads;
 }
 
-// The room the layout leaves around an edge label (Pele's): the label sits on a patch.
-const LABEL_W = 12;
-const LABEL_H = 4;
-const GROUP_PAD = 20;
-const TITLE_PAD = 16;
-const EDGE_WRAP = 200;
-const IMG = 80;
-const ICON = 48;
-// Room the layout leaves in a crossed gap for an arrowhead (v13's former 8px point less 1). It
-// stays theme-independent, so the layout does not move with the arrowhead variables (D154).
-const HEAD_ROOM = 7;
-// The smallest hexagonSlant drawn: each pointed end as deep as the hexagon is tall.
+// The smallest hexagonSlant drawn (a ratio, not a length): each pointed end as deep as the
+// hexagon is tall.
 const MIN_SLANT = 1;
 
 const ROUTING: Readonly<Partial<Record<CurveKind, 'straight' | 'curved'>>> = {
@@ -94,8 +85,6 @@ function vertexShape(v: FlowVertex): string {
 const DIRS: Readonly<Record<string, Dir>> = { TB: 'TB', TD: 'TB', BT: 'BT', LR: 'LR', RL: 'RL' };
 const dirOf = (d: string | undefined): Dir | undefined => (d ? DIRS[d.toUpperCase()] : undefined);
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
-const asset = (v: number | undefined, fallback: number): number =>
-  v !== undefined && v > 0 && v <= 4000 ? v : fallback;
 
 /** A config number (v12 also took numeric strings), capped; `fallback` when not one. */
 function size(value: unknown, fallback = 0): number {
@@ -106,7 +95,7 @@ function size(value: unknown, fallback = 0): number {
 function arrows(type: string, stroke: string): [string, string] {
   if (stroke === 'invisible' || type === 'arrow_open') return ['none', 'none'];
   if (type.startsWith('double_')) {
-    const single = type.slice(7);
+    const single = type.slice('double_'.length);
     return [single, single];
   }
   return ['none', type === 'arrow_circle' || type === 'arrow_cross' ? type : 'arrow_point'];
@@ -121,9 +110,18 @@ function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
   return [size > 0 && size < 1000 ? { ...font, size } : font, bits];
 }
 
-/** Measures the model and builds the graph the layout engine gets. */
+/**
+ * Measures the model and builds the graph the layout engine gets. Every length comes from the
+ * unit profile (D77, R-ARCH-3): px config values are divided by `pxPerUnit`, and the builder's
+ * own lengths are `units.builder`. With the px profile the graph is today's, byte for byte.
+ */
 export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   const { theme, measurer } = ctx;
+  const units = ctx.units ?? pxProfile;
+  const b = units.builder;
+  // Character cells draw every node as a text-form box (DESIGN §6.3); px draws the shape. This
+  // is the only place the builder looks at which profile it has.
+  const cells = units.id === 'cell';
   const flow = ctx.config.flowchart ?? {};
   const font: FontKey = {
     family: theme.value('fontFamily'),
@@ -154,7 +152,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     circlePad: padOf('circlePadding'),
     circleMin: theme.number('circleMinDiameter'),
   };
-  const wrap = size(flow.wrappingWidth) || 200;
+  const wrap = fromPx(units, size(flow.wrappingWidth), 'x') || b.wrapWidth;
   const minWidth = size(flow.minNodeWidth);
   const label = (text: string, markdown: boolean, f: FontKey, max: number, bits = 0) =>
     layoutLabel(text, f, max, measurer, { markdown, style: bits });
@@ -234,23 +232,25 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     view.label = label(has || v?.img || v?.icon ? text : '', markdown, f, wrap, bits);
     const lw = view.label.width;
     const lh = view.label.height;
-    if (v?.img || v?.icon) {
-      const aw = asset(v.assetWidth, v.img ? IMG : ICON);
-      const ah = asset(v.assetHeight, v.img ? IMG : ICON);
-      view.w = Math.max(aw, lw + 8);
-      view.h = ah + (lh > 0 ? lh + 6 : 0);
-      view.dy = lh > 0 ? (v.pos === 't' ? -ah / 2 : ah / 2) - (v.pos === 't' ? 3 : -3) : 0;
+    if (cells) {
+      // A text-form box: the label, its padding and a border cell on each side.
+      view.w = lw + 2 * (b.nodePad.x + 1);
+      view.h = view.label.lines.length + 2 * (b.nodePad.y + 1);
+      view.dy = 0;
       return;
     }
     // v12 widens vertex labels to minNodeWidth; round shapes and collapsed subgraphs keep theirs.
     const keepWidth =
       view.shape === 'circle' || view.shape === 'dbl-circ' || view.shape === 'collapsedGroup';
-    const s = shapeSize(
-      view.shape,
-      lw > 0 && has && !keepWidth ? Math.max(lw, minWidth) : lw,
-      lh,
-      pads
-    );
+    const s =
+      v?.img || v?.icon
+        ? assetSize(v, lw, lh)
+        : shapeSize(
+            view.shape,
+            lw > 0 && has && !keepWidth ? Math.max(lw, minWidth) : lw,
+            lh,
+            pads
+          );
     view.w = s.w;
     view.h = s.h;
     view.dy = s.dy;
@@ -326,7 +326,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     const [f, bits] = textStyle(view.style, font);
     view.label = label(sg.title, sg.labelType === 'markdown', f, Infinity, bits);
   }
-  groups.sort((a, b) => a.depth - b.depth);
+  groups.sort((g, h) => g.depth - h.depth);
 
   const edges: EdgeView[] = [];
   const ids = new Set<string>();
@@ -344,7 +344,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
       id,
       source,
       target,
-      label: label(e.text, e.labelType === 'markdown', font, EDGE_WRAP),
+      label: label(e.text, e.labelType === 'markdown', font, b.edgeWrap),
       style: styleOf(e.classes, [...(model.defaultStyle ?? []), ...(e.style ?? [])]),
       start,
       end,
@@ -352,19 +352,31 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     });
   });
 
-  // Config numbers may arrive as strings from front matter, as v12 accepted them.
-  const settings = layoutSettings({
-    nodeSpacing: size(flow.nodeSpacing, 50),
-    rankSpacing: size(flow.rankSpacing, 50),
-    diagramPadding: size(flow.diagramPadding, 8),
+  // Config numbers may arrive as strings from front matter, as v12 accepted them. They are px:
+  // node spacing runs across the flow and rank spacing along it.
+  const fromConfig = (value: unknown, fallback: number, axis: 'x' | 'y', min: number): number => {
+    const px = size(value, NaN);
+    return Number.isNaN(px) ? fallback : fromPx(units, px, axis, min);
+  };
+  const along = sideways(rootDir) ? 'x' : 'y';
+  const across = along === 'x' ? 'y' : 'x';
+  const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
+    node: fromConfig(flow.nodeSpacing, b.spacing.node, node, b.minSpacing.node),
+    rank: fromConfig(flow.rankSpacing, b.spacing.rank, rank, b.minSpacing.rank),
+    edge: b.spacing.edge,
   });
+  const spacing = spacingOn(along, across);
+  // An LR/RL drawing the engine turns to TB for `availableWidth` runs its ranks down (#47).
+  const down = spacingOn('y', 'x');
+  const turned = down.node !== spacing.node || down.rank !== spacing.rank;
   const curve = curveKind(flow.curve);
   const graph: LayoutGraph = {
     direction: rootDir,
     nodes: nodes.map((n): LayoutNode => {
       const node: LayoutNode = { id: n.id, width: n.w, height: n.h, shape: n.shape };
       if (n.parent !== undefined) node.parent = n.parent;
-      if (n.shape !== 'img' && n.shape !== 'icon')
+      // A text-form box leaves the span to the engine's `corner` metric.
+      if (!cells && n.shape !== 'img' && n.shape !== 'icon')
         node.span = shapeSpan(n.shape, n.w, n.h, sideways(flowDir(n.id)));
       return node;
     }),
@@ -373,10 +385,10 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
       const group: LayoutGroup = {
         id: g.id,
         padding: {
-          top: titled ? TITLE_PAD : GROUP_PAD,
-          right: GROUP_PAD,
-          bottom: GROUP_PAD,
-          left: GROUP_PAD,
+          top: titled ? b.titlePad : b.groupPad,
+          right: b.groupPad,
+          bottom: b.groupPad,
+          left: b.groupPad,
         },
       };
       if (titled) group.title = { width: g.label.width, height: g.label.height };
@@ -391,13 +403,27 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
       target: e.target,
       minLen: e.edge.length ?? 1,
       ...(e.label.width > 0
-        ? { label: { width: e.label.width + LABEL_W, height: e.label.height + LABEL_H } }
+        ? {
+            label: {
+              width: e.label.width + b.labelPatch.x,
+              height: e.label.height + b.labelPatch.y,
+            },
+          }
         : {}),
     })),
-    spacing: settings.spacing,
-    diagramPadding: settings.diagramPadding,
-    routing: ROUTING[curve] ?? 'stepped',
-    headRoom: HEAD_ROOM,
+    spacing,
+    ...(turned ? { turnedSpacing: down } : {}),
+    // Text output trims the empty margin, so in cells a margin would only eat into
+    // `availableWidth` (`ascii.maxWidth`, D84): the profile's own (0) applies.
+    diagramPadding:
+      units.grid === undefined
+        ? fromConfig(flow.diagramPadding, b.diagramPadding, 'x', 0)
+        : b.diagramPadding,
+    // On the grid routes are always square (D78): curves have no text form (D82).
+    routing: units.grid === undefined ? (ROUTING[curve] ?? 'stepped') : 'stepped',
+    headRoom: b.headRoom,
+    metrics: units.engine,
   };
+  if (units.grid !== undefined) graph.grid = units.grid;
   return { graph, groups, nodes, edges, pads };
 }

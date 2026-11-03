@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { LayoutGraph, LayoutNode } from '../types.ts';
+import { cellProfile } from '../units.ts';
 import { validateLayout } from '../validate.ts';
 import { layered } from './index.ts';
 
@@ -76,5 +77,48 @@ describe('layered: availableWidth', () => {
     const model = layered({ ...across, availableWidth: acrossWidth });
     expect(model.direction).toBe('LR');
     expect(model.width).toBe(acrossWidth);
+  });
+});
+
+// The same chain in character cells (D77): boxes label + 4 wide and 3 high, cell spacing and
+// metrics. The turn breakpoint is the cell profile's (80), not the px 640.
+const cell = (id: string): LayoutNode => ({ id, width: 9, height: 3 });
+const acrossCells: LayoutGraph = {
+  ...across,
+  nodes: 'abcdefghij'.split('').map(cell),
+  edges: 'abcdefghi'
+    .split('')
+    .map((id, i) => ({ id: `e${i}`, source: id, target: 'abcdefghij'[i + 1]!, minLen: 1 })),
+  spacing: { node: 2, rank: 4, edge: 1 },
+  diagramPadding: 0,
+  routing: 'stepped',
+  metrics: cellProfile().engine,
+  grid: 1,
+};
+
+describe('layered: availableWidth in cells', () => {
+  const natural = layered(acrossCells).width;
+
+  it('is wider than any budget below', () => {
+    expect(natural).toBeGreaterThan(90);
+  });
+
+  it.each([40, 60, 79])('turns LR to TB under the 80-cell breakpoint (budget %i)', (width) => {
+    const graph = { ...acrossCells, availableWidth: width };
+    const model = layered(graph);
+    expect(model.direction).toBe('TB');
+    expect(model.width).toBeLessThan(natural);
+    expect(validateLayout(graph, model)).toEqual([]);
+  });
+
+  it.each([80, 90])('only tightens LR at or above the breakpoint (budget %i)', (width) => {
+    const model = layered({ ...acrossCells, availableWidth: width });
+    expect(model.direction).toBe('LR');
+  });
+
+  it('keeps LR when it fits', () => {
+    const model = layered({ ...acrossCells, availableWidth: natural });
+    expect(model.direction).toBe('LR');
+    expect(model.width).toBe(natural);
   });
 });

@@ -23,7 +23,14 @@ export function modeSetting(cli: string | undefined): GateModeSetting {
   throw new Error(`Unknown gate mode "${v}" (auto, report or enforce)`);
 }
 
-const GATE_IDS: readonly GateId[] = ['size', 'speed', 'ok-count', 'stage-regression', 'ready-at'];
+const GATE_IDS: readonly GateId[] = [
+  'size',
+  'speed',
+  'ok-count',
+  'stage-regression',
+  'ready-at',
+  'ascii-size',
+];
 
 /** Gate ids from a comma list (`--report-only`, else BENCH_REPORT_ONLY) that never fail the job. */
 export function reportOnlyGates(cli: string | undefined): GateId[] {

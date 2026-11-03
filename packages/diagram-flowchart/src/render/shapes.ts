@@ -815,6 +815,7 @@ const def = (shape: string): ShapeDef => BY_NAME.get(shape) ?? FALLBACK;
 
 export const shapeSize = (shape: string, tw: number, th: number, p: Pads): ShapeSize =>
   def(shape).size(tw, th, p);
+
 export const drawShape = (
   shape: string,
   w: SvgWriter,

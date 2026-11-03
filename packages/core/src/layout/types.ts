@@ -103,13 +103,26 @@ export interface LayoutGraph {
    */
   availableWidth?: number;
   /**
+   * Spacing for an LR/RL drawing that `availableWidth` turns to TB, when it differs from
+   * `spacing`: with units that are not square (character cells) node and rank spacing swap axes,
+   * so they convert differently. Defaults to `spacing`.
+   */
+  turnedSpacing?: LayoutSpacing;
+  /**
    * The engine's length constants, from the diagram's unit profile (D77). Defaults to the px
    * values, so a graph without them lays out as before.
    */
   metrics?: LayoutMetrics;
   /**
    * Grid quantum (D77, D140): node boxes, ports and tracks land on whole multiples of it, and
-   * each edge end gets its own cell. Set to 1 for character cells.
+   * each edge end gets its own cell. Only 1 (character cells) is supported; other values throw a
+   * RangeError. With it set, every edge is routed at right angles (`stepped`) whatever `routing`
+   * says, and `diagramPadding` is rounded up to whole cells.
+   *
+   * With it set, the model is in cells: a route point `(c, r)` is the cell in column `c`, row
+   * `r`; a box of width `w` centred at `x` covers columns `x − w/2 + ½` to `x + w/2 − ½`. Each
+   * edge end is the cell just outside its side, off the corners, and no two ends share a cell
+   * once the sides have grown (D140, the model reports grown sizes).
    */
   grid?: number;
 }

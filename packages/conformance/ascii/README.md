@@ -26,11 +26,24 @@ The file format is described in `v13/docs/research/mermaid-ascii.md` §8.10.
 
 ## How they are used
 
-v13's layout differs from mermaid-ascii's, so `upstream.txt` is not compared exactly. Only a
-structural check runs against it: every node label inside a box, every edge label present, every
-edge connecting two boxes, the same number of arrowheads. Our own reviewed `expected.txt` is
-compared exactly. Both arrive with #48; until then `ascii-fixtures.spec.ts` only checks that the
-folders are complete.
+`src/ascii/goldens.spec.ts` (#48) renders every input Mermaid accepts and checks it two ways.
+
+- **Structural check against `upstream.txt`.** v13's layout differs from mermaid-ascii's, so
+  `upstream.txt` is not compared exactly. `src/ascii/structure.ts` reads both drawings back:
+  every node label inside a box, every edge label present, every edge line connected box to
+  box (no free end), the same number of arrowheads. A failure must be listed as `structural`.
+- **`expected.txt`, compared exactly:** our own reviewed output in the fixture's charset, plus
+  `expected.<charset>.txt` in the other charset when the other group has no fixture with the
+  same input (all of `multibyte/`, and the `ascii/` inputs without an `extended-chars/` twin).
+  Write them with `vitest run -u packages/conformance/src/ascii/goldens.spec.ts` and review
+  the diff by hand (checklist in `v13/docs/agents/runs/37/tickets/48.md`).
+
+`maxWidth` is passed as `ascii.maxWidth`. `paddingX`/`paddingY` have no config home
+(`ascii.padding` is `compact | roomy`), so those fixtures render with the default padding.
+
+`v13/` holds our own cases (shapes, RL/BT, nested and empty subgraphs, CJK, emoji, ZWJ and
+flags, a front-matter title, `maxWidth`), each with `input.mmd`, `meta.json`, `expected.txt`
+(Unicode) and `expected.ascii.txt`. They have no `upstream.txt`.
 
 [`ascii-divergences.json`](ascii-divergences.json) lists `{ fixture, kind, reason }` entries:
 

@@ -13,7 +13,13 @@ export {
   type Resource,
 } from './pipeline/errors.ts';
 export { renderErrorSvg, type ErrorSvgContext } from './pipeline/error-svg.ts';
-export { drawDiagram, type DrawHooks, type Drawn } from './pipeline/draw.ts';
+export {
+  drawDiagram,
+  drawText,
+  type AsciiHook,
+  type DrawHooks,
+  type Drawn,
+} from './pipeline/draw.ts';
 export {
   HookRunner,
   type ExtensionClaim,
@@ -33,5 +39,6 @@ export type {
   DiagramParseContext,
   DiagramPlugin,
   RenderContext,
+  TextRenderContext,
   Warning,
 } from './pipeline/types.ts';
