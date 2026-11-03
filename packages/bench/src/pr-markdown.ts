@@ -49,21 +49,38 @@ function peleCell(d: InstructionDiagram | undefined): string {
   return a >= b ? `${round(a / b, 1)}× more` : `${round(b / a, 1)}× fewer`;
 }
 
-function browserCells(report: PrReport, id: string): [string, string] {
-  const res = (r: RendererId) =>
-    report.renderers.find((x) => x.renderer === r)?.results.find((x) => x.id === id);
-  const v13 = res('v13');
-  const v12 = res('v12-frozen');
-  const warm = v13?.status === 'ok' ? v13.warmMs : null;
-  const old = v12?.status === 'ok' ? v12.warmMs : null;
+/** v13's warm time, its change against the base's, and the speed against Mermaid 12. */
+function browserCells(report: PrReport, id: string): [string, string, string] {
+  const warmOf = (r: RendererId) => {
+    const x = report.renderers.find((y) => y.renderer === r)?.results.find((y) => y.id === id);
+    return x?.status === 'ok' ? x.warmMs : null;
+  };
+  const warm = warmOf('v13');
+  const base = warmOf('v13-base');
+  const old = warmOf('v12-frozen');
+  // One session each: indicative only, so never bold (the instruction column is the signal).
+  const change = warm && base ? warm / base - 1 : null;
+  const vsBase =
+    change === null ? dash : `${change >= 0 ? '+' : '−'}${Math.abs(change * 100).toFixed(1)}%`;
   const speed = warm && old ? `${round(old / warm, 1)}× faster` : dash;
-  return [ms(warm), speed];
+  return [ms(warm), vsBase, speed];
+}
+
+function sizeChange(
+  size: number | undefined,
+  baseLoaded: number | undefined,
+  built: PrReport['staticGzip']
+): number | undefined {
+  if (size !== undefined && baseLoaded !== undefined) return size - baseLoaded;
+  return built.base === undefined ? undefined : built.v13 - built.base;
 }
 
 function statusLine(report: PrReport): string {
-  const size = report.renderers.find((r) => r.renderer === 'v13')?.size?.gzip;
-  const { v13, base } = report.staticGzip;
-  const d = base === undefined ? undefined : v13 - base;
+  const loaded = (r: RendererId) => report.renderers.find((x) => x.renderer === r)?.size?.gzip;
+  const size = loaded('v13');
+  const baseLoaded = loaded('v13-base');
+  // What the browser fetched when both ran there; else the build's static import closure.
+  const d = sizeChange(size, baseLoaded, report.staticGzip);
   const delta =
     d === undefined
       ? ''
@@ -99,7 +116,7 @@ function problemLines(report: PrReport, outcome: GateOutcome): string[] {
 }
 
 const NOTE =
-  'Instructions: CPU instructions per warm render, the median of 3 fresh `node --single-threaded` processes counted with `perf`. They vary by about 1% between runs, so changes under 2% are noise (2% and over is in bold). Browser: one Chromium session per renderer, indicative only. The full browser bench (corpus speed for R-PERF-3, Pele, stages) runs nightly and at release.';
+  'Instructions: CPU instructions per warm render, the median of 3 fresh `node --single-threaded` processes counted with `perf`. They vary by about 1% between runs, so changes under 2% are noise (2% and over is in bold). Browser: one Chromium session per renderer, alternating, so its times against the base can move by 10% or more between runs; trust the instruction column for small changes. The full browser bench (corpus speed for R-PERF-3, Pele, stages) runs nightly and at release.';
 
 /** The PR comment: verdict, one 5-row table, one status line, problems when there are any. */
 export function formatPrComment(
@@ -114,8 +131,16 @@ export function formatPrComment(
     COMMENT_MARKER,
     title(report, failed, options.baseLabel),
     '',
-    row(['Diagram', 'v13 instructions', 'vs base', 'vs Pele', 'v13 in browser', 'vs mermaid@12']),
-    rule(6),
+    row([
+      'Diagram',
+      'v13 instructions',
+      'vs base',
+      'vs Pele',
+      'v13 in browser',
+      'browser vs base',
+      'vs mermaid@12',
+    ]),
+    rule(7),
     ...PR_DIAGRAMS.map((d) => {
       const counted = byId.get(d.id);
       const m = counted ? medianCount(counted, 'v13') : null;

@@ -6,8 +6,8 @@
  *   bundle (v13 is DOM-free), no timing.
  * - v13 against its base branch and Pele: CPU instruction counts in Node (`instruction-counts.ts`),
  *   steady to about 1% on a shared runner, where times vary by ±10-40%. Reported, never gating.
- * - A small browser run: v13 and Mermaid 12 on the same 5 diagrams, one session each, for
- *   "Ready at" (R-PERF-9) and an indicative speed against Mermaid 12.
+ * - A small browser run: v13, its base and Mermaid 12 on the same 5 diagrams, one session each,
+ *   for "Ready at" (R-PERF-9) and indicative times against the base and Mermaid 12.
  *
  * The full browser timing bench (corpus speed against Mermaid 12 for R-PERF-3, Pele, stages)
  * runs nightly and at release (`cli/bench.ts`).
@@ -73,7 +73,7 @@ export interface PrReport {
   /** Static-import closure of the production bundle, gzip bytes, for v13 and the base. */
   staticGzip: { v13: number; base?: number };
   asciiSize: SizeSummary | null;
-  /** Browser runs of v13 and Mermaid 12 on the PR diagrams. */
+  /** Browser runs of v13, v13-base (when built) and Mermaid 12 on the PR diagrams. */
   renderers: RendererRun[];
   corpus: CorpusCheck;
   /** Absent when this machine cannot count instructions; then `instructionsSkipped` says why. */
