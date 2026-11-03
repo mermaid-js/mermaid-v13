@@ -19,7 +19,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "auto" \\| "null" | `"redux"` | honoured (13.0.0) | The default changes from `default` to `redux-color`, the theme v12's flowchart renders by default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`, `neutral` and `base`. `neo` renders `redux-color`, `neo-dark` renders `redux-dark-color` and `null` renders `base`, each with a `THEME_UNAVAILABLE` warning. | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `themeVariables` | any |  | honoured (13.0.0) | Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 12 / 11; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2.5 / 2; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`. "padding" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no palette. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value. |  |
 | `themeCSS` | string |  | ignored (13.0.0) | v13 output carries no author stylesheet (R-SEC-2). Replacement: `themeVariables`, or `--mermaid-*` CSS variables set by the host page. |  |
-| `look` | "classic" \\| "handDrawn" \\| "neo" | `"classic"` | ignored (13.0.0) | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes carry neo geometry and the classic themes carry classic geometry (D152). Replacement: `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8). | Defines which main look to use for the diagram. |
+| `look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes carry neo geometry and the classic themes carry classic geometry (D152). Replacement: `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8). | Defines which main look to use for the diagram. |
 | `handDrawnSeed` | number | `0` | pending |  | Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed. |
 | `layout` | string | `"layered"` | honoured (13.0.0) | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 values `dagre`, `elk` and `elk.<algorithm>` stay valid and map to `layered` until an ELK plugin exists (R-PLUG-8); other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. | Defines which layout algorithm to use for rendering the diagram. Defaults to `layered`, the layout engine built into core (DESIGN §6.1). The v12 names `dagre` and `elk` are still accepted and map to `layered` until an ELK plugin is installed. |
 | `maxTextSize` | number | `50000` | honoured (13.0.0) | Integrator-only. Sets the `maxSourceLength` render limit (R-SEC-5); an explicit `limits.maxSourceLength` wins. Over the limit, render() rejects with a `LIMIT` error instead of drawing a placeholder. | The maximum allowed size of the users text diagram |
@@ -70,7 +70,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `flowchart.useWidth` | number |  | pending |  |  |
 | `flowchart.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `flowchart.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `flowchart.look` | "classic" \\| "handDrawn" \\| "neo" | `"neo"` | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render. The redux themes carry v12's `look: neo` geometry (D152). Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
+| `flowchart.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render. The redux themes carry v12's `look: neo` geometry (D152). Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `flowchart.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `flowchart.titleTopMargin` | integer | `25` | pending |  | Margin top for the text over the diagram |
 | `flowchart.subGraphTitleMargin` | object | `{"top":0,"bottom":0}` | pending |  | Defines a top/bottom margin for subgraph titles |
@@ -97,7 +97,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `swimlane.useWidth` | number |  | pending |  |  |
 | `swimlane.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `swimlane.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `swimlane.look` | "classic" \\| "handDrawn" \\| "neo" | `"neo"` | pending |  | Defines which main look to use for the diagram. |
+| `swimlane.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `swimlane.layout` | string | `"swimlane"` | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `swimlane.lineHops` | any | `"arc"` | pending |  | Renders edge crossings as small arcs ("hops") or visible gaps so that overlapping edges are easier to read. Set to `false` to disable. Edges rendered as curves are skipped to avoid corrupting the geometry. |
 | `swimlane.ignoreCrossLaneEdges` | boolean | `true` | pending |  | Ignores edges that cross swimlane boundaries during swimlane layer assignment. This can improve rank quality for diagrams with many cross-lane links. |
@@ -112,7 +112,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `agentflow.useWidth` | number |  | pending |  |  |
 | `agentflow.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `agentflow.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `agentflow.look` | "classic" \\| "handDrawn" \\| "neo" | `"neo"` | pending |  | Defines which main look to use for the diagram. |
+| `agentflow.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `agentflow.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `agentflow.titleTopMargin` | integer | `25` | pending |  | Margin top for the text over the diagram |
 | `agentflow.diagramPadding` | integer | `8` | pending |  | The amount of padding around the diagram as a whole so that embedded diagrams have margins, expressed in pixels. |
@@ -129,7 +129,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `sequence.useWidth` | number |  | pending |  |  |
 | `sequence.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `sequence.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `sequence.look` | "classic" \\| "handDrawn" \\| "neo" | `"neo"` | pending |  | Defines which main look to use for the diagram. |
+| `sequence.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `sequence.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `sequence.arrowMarkerAbsolute` | boolean |  | ignored (13.0.0) | Arrowheads are inline paths, not `<marker>` references. |  |
 | `sequence.hideUnusedParticipants` | boolean | `false` | pending |  |  |
@@ -175,7 +175,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `gantt.useWidth` | number |  | pending |  |  |
 | `gantt.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `gantt.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `gantt.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `gantt.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `gantt.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `gantt.titleTopMargin` | integer | `25` | pending |  | Margin top for the text over the diagram |
 | `gantt.barHeight` | integer | `20` | pending |  | The height of the bars in the graph |
@@ -201,7 +201,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `journey.useWidth` | number |  | pending |  |  |
 | `journey.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `journey.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `journey.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `journey.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `journey.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `journey.diagramMarginX` | integer | `50` | pending |  | Margin to the right and left of the c4 diagram, must be a positive value. |
 | `journey.diagramMarginY` | integer | `10` | pending |  | Margin to the over and under the c4 diagram, must be a positive value. |
@@ -236,7 +236,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `timeline.useWidth` | number |  | pending |  |  |
 | `timeline.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `timeline.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `timeline.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `timeline.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `timeline.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `timeline.diagramMarginX` | integer | `50` | pending |  | Margin to the right and left of the c4 diagram, must be a positive value. |
 | `timeline.diagramMarginY` | integer | `10` | pending |  | Margin to the over and under the c4 diagram, must be a positive value. |
@@ -269,7 +269,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `class.useWidth` | number |  | pending |  |  |
 | `class.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `class.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `class.look` | "classic" \\| "handDrawn" \\| "neo" | `"neo"` | pending |  | Defines which main look to use for the diagram. |
+| `class.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `class.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `class.titleTopMargin` | integer | `25` | pending |  | Margin top for the text over the diagram |
 | `class.arrowMarkerAbsolute` | boolean | `false` | ignored (13.0.0) | Arrowheads are inline paths, not `<marker>` references. | Controls whether or arrow markers in html code are absolute paths or anchors. This matters if you are using base tag settings. |
@@ -291,7 +291,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `state.useWidth` | number |  | pending |  |  |
 | `state.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `state.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `state.look` | "classic" \\| "handDrawn" \\| "neo" | `"neo"` | pending |  | Defines which main look to use for the diagram. |
+| `state.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `state.layout` | string | `"elk"` | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `state.wrappingWidth` | number | `120` | pending |  | Width of nodes where text is wrapped. When using markdown strings the text is wrapped automatically, this value sets the max width of a text before it continues on a new line. |
 | `state.minNodeWidth` | number | `120` | pending |  | Minimum width of the label area of a node. Labels narrower than this are widened to it, so nodes with short text get a uniform width; the node's own padding is added on top, the same way it is for `wrappingWidth`. Nodes with an explicit width are not affected. |
@@ -323,7 +323,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `er.useWidth` | number |  | pending |  |  |
 | `er.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `er.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `er.look` | "classic" \\| "handDrawn" \\| "neo" | `"neo"` | pending |  | Defines which main look to use for the diagram. |
+| `er.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `er.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `er.titleTopMargin` | integer | `25` | pending |  | Margin top for the text over the diagram |
 | `er.diagramPadding` | integer | `20` | pending |  | The amount of padding around the diagram as a whole so that embedded diagrams have margins, expressed in pixels. |
@@ -345,7 +345,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `pie.useWidth` | number |  | pending |  |  |
 | `pie.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `pie.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `pie.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `pie.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `pie.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `pie.textPosition` | number | `0.75` | pending |  | Axial position of slice's label from zero at the center to 1 at the outside edges. |
 | `pie.donutHole` | number | `0` | pending |  | Donut hole ratio. Valid value are from 0 to 0.9. Default to 0. |
@@ -360,7 +360,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `quadrantChart.useWidth` | number |  | pending |  |  |
 | `quadrantChart.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `quadrantChart.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `quadrantChart.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `quadrantChart.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `quadrantChart.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `quadrantChart.chartWidth` | number | `500` | pending |  | Width of the chart |
 | `quadrantChart.chartHeight` | number | `500` | pending |  | Height of the chart |
@@ -389,7 +389,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `xyChart.useWidth` | number |  | pending |  |  |
 | `xyChart.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `xyChart.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `xyChart.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `xyChart.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `xyChart.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `xyChart.width` | number | `700` | pending |  | width of the chart |
 | `xyChart.height` | number | `500` | pending |  | height of the chart |
@@ -438,7 +438,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `requirement.useWidth` | number |  | pending |  |  |
 | `requirement.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `requirement.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `requirement.look` | "classic" \\| "handDrawn" \\| "neo" | `"neo"` | pending |  | Defines which main look to use for the diagram. |
+| `requirement.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `requirement.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `requirement.rect_fill` | string | `"#f9f9f9"` | pending |  |  |
 | `requirement.text_color` | string | `"#333"` | pending |  |  |
@@ -458,7 +458,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `architecture.useWidth` | number |  | pending |  |  |
 | `architecture.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `architecture.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `architecture.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `architecture.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `architecture.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `architecture.padding` | number | `40` | pending |  |  |
 | `architecture.iconSize` | number | `80` | pending |  |  |
@@ -478,7 +478,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `mindmap.useWidth` | number |  | pending |  |  |
 | `mindmap.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `mindmap.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `mindmap.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `mindmap.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `mindmap.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `mindmap.colorBy` | "branch" \\| "depth" | `"branch"` | pending |  | Color nodes by their top-level branch or by their depth in the tree. Depth is counted from the root, independently of indentation width. |
 | `mindmap.padding` | number | `10` | pending |  |  |
@@ -493,7 +493,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `ishikawa.useWidth` | number |  | pending |  |  |
 | `ishikawa.useMaxWidth` | boolean | `false` | pending |  |  |
 | `ishikawa.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `ishikawa.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `ishikawa.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `ishikawa.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `ishikawa.diagramPadding` | integer | `20` | pending |  | The amount of padding around the diagram as a whole so that embedded diagrams have margins, expressed in pixels. |
 
@@ -505,7 +505,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `kanban.useWidth` | number |  | pending |  |  |
 | `kanban.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `kanban.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `kanban.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `kanban.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `kanban.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `kanban.padding` | number | `8` | pending |  |  |
 | `kanban.sectionWidth` | number | `200` | pending |  |  |
@@ -519,7 +519,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `gitGraph.useWidth` | number |  | pending |  |  |
 | `gitGraph.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `gitGraph.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `gitGraph.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `gitGraph.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `gitGraph.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `gitGraph.titleTopMargin` | integer | `25` | pending |  | Margin top for the text over the diagram |
 | `gitGraph.diagramPadding` | number | `8` | pending |  |  |
@@ -544,7 +544,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `c4.useWidth` | number |  | pending |  |  |
 | `c4.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `c4.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `c4.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `c4.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `c4.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `c4.diagramMarginX` | integer | `50` | pending |  | Margin to the right and left of the c4 diagram, must be a positive value. |
 | `c4.diagramMarginY` | integer | `10` | pending |  | Margin to the over and under the c4 diagram, must be a positive value. |
@@ -695,7 +695,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `sankey.useWidth` | number |  | pending |  |  |
 | `sankey.useMaxWidth` | boolean | `false` | pending |  |  |
 | `sankey.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `sankey.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `sankey.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `sankey.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `sankey.width` | number | `600` | pending |  |  |
 | `sankey.height` | number | `400` | pending |  |  |
@@ -717,7 +717,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `packet.useWidth` | number |  | pending |  |  |
 | `packet.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `packet.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `packet.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `packet.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `packet.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `packet.rowHeight` | number | `32` | pending |  | The height of each row in the packet diagram. |
 | `packet.bitWidth` | number | `32` | pending |  | The width of each bit in the packet diagram. |
@@ -735,7 +735,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `block.useWidth` | number |  | pending |  |  |
 | `block.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `block.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `block.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `block.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `block.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `block.padding` | number | `8` | pending |  |  |
 
@@ -747,7 +747,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `eventmodeling.useWidth` | number |  | pending |  |  |
 | `eventmodeling.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `eventmodeling.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `eventmodeling.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `eventmodeling.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `eventmodeling.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `eventmodeling.padding` | number | `30` | pending |  | The padding around the Event Modeling diagram. |
 | `eventmodeling.rowHeight` | number | `32` | pending |  | The height of each row in the Event Modeling diagram. |
@@ -760,7 +760,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `treeView.useWidth` | number |  | pending |  |  |
 | `treeView.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `treeView.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `treeView.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `treeView.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `treeView.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `treeView.rowIndent` | number | `10` | pending |  | Horizontal distance between rows differing by one level |
 | `treeView.paddingX` | number | `5` | pending |  | Horizontal padding of label |
@@ -779,7 +779,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `radar.useWidth` | number |  | pending |  |  |
 | `radar.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `radar.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `radar.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `radar.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `radar.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `radar.width` | number | `600` | pending |  | The size of the radar diagram. |
 | `radar.height` | number | `600` | pending |  | The size of the radar diagram. |
@@ -799,7 +799,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `usecase.useWidth` | number |  | pending |  |  |
 | `usecase.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `usecase.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `usecase.look` | "classic" \\| "handDrawn" \\| "neo" | `"neo"` | pending |  | Defines which main look to use for the diagram. |
+| `usecase.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `usecase.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `usecase.wrappingWidth` | number | `120` | pending |  | Width of nodes where text is wrapped. When using markdown strings the text is wrapped automatically, this value sets the max width of a text before it continues on a new line. |
 | `usecase.minNodeWidth` | number | `120` | pending |  | Minimum width of the label area of a node. Labels narrower than this are widened to it, so nodes with short text get a uniform width; the node's own padding is added on top, the same way it is for `wrappingWidth`. Nodes with an explicit width are not affected. |
@@ -822,7 +822,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `venn.useWidth` | number |  | pending |  |  |
 | `venn.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `venn.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `venn.look` | "classic" \\| "handDrawn" \\| "neo" | `"neo"` | pending |  | Defines which main look to use for the diagram. |
+| `venn.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `venn.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `venn.width` | number | `800` | pending |  | The width of the Venn diagram. |
 | `venn.height` | number | `450` | pending |  | The height of the Venn diagram. |
@@ -837,7 +837,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `wardley-beta.useWidth` | number |  | pending |  |  |
 | `wardley-beta.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `wardley-beta.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `wardley-beta.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `wardley-beta.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `wardley-beta.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `wardley-beta.width` | number | `900` | pending |  | The width of the Wardley diagram canvas. |
 | `wardley-beta.height` | number | `600` | pending |  | The height of the Wardley diagram canvas. |
@@ -856,7 +856,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `cynefin.useWidth` | number |  | pending |  |  |
 | `cynefin.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `cynefin.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `cynefin.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `cynefin.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `cynefin.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `cynefin.width` | number | `800` | pending |  | The width of the Cynefin diagram. |
 | `cynefin.height` | number | `600` | pending |  | The height of the Cynefin diagram. |
@@ -873,7 +873,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `railroad.useWidth` | number |  | pending |  |  |
 | `railroad.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `railroad.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
-| `railroad.look` | "classic" \\| "handDrawn" \\| "neo" |  | pending |  | Defines which main look to use for the diagram. |
+| `railroad.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `railroad.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `railroad.compactMode` | boolean | `false` | pending |  | Use compact layout mode |
 | `railroad.padding` | number | `10` | pending |  | Padding around elements |
