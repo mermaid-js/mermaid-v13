@@ -1,13 +1,14 @@
-/** Writes a report with its gate outcome and prints it; shared by `bench` and `gates`. */
+/** Writes a report with its gate outcome and prints it; shared by `bench`, `pr` and `gates`. */
+import { execFileSync } from 'node:child_process';
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadBaseline, saveBaseline } from '../baseline.ts';
 import { loadFixtures } from '../fixtures.ts';
-import type { GateId, GateModeSetting, GateOutcome } from '../gates.ts';
+import type { GateId, GateInput, GateModeSetting, GateOutcome } from '../gates.ts';
 import { evaluateGates, resolveMode } from '../gates.ts';
-import { formatComment, formatMarkdown } from '../markdown.ts';
-import type { BenchReport } from '../report.ts';
+import { formatMarkdown } from '../markdown.ts';
+import type { BenchReport, PipelineState } from '../report.ts';
 import { baselineFrom } from '../report.ts';
 
 export const REPORTS_DIR = fileURLToPath(new URL('../../dist/reports/', import.meta.url));
@@ -48,7 +49,8 @@ export function reportOnlyGates(cli: string | undefined): GateId[] {
 export function gate(
   report: BenchReport,
   setting: GateModeSetting,
-  reportOnly: readonly GateId[] = []
+  reportOnly: readonly GateId[] = [],
+  extra: Pick<GateInput, 'corpusOk' | 'skip'> = {}
 ): GateOutcome {
   const corpusSize = loadFixtures().filter((f) => f.set === 'corpus').length;
   return evaluateGates({
@@ -57,13 +59,53 @@ export function gate(
     mode: resolveMode(setting, report.pipeline),
     reportOnly,
     corpusSize,
+    ...extra,
   });
 }
 
 /** The GitHub Actions run this bench is part of, when it is one. */
-function ciRunUrl(): string | undefined {
+export function ciRunUrl(): string | undefined {
   const { GITHUB_SERVER_URL: server, GITHUB_REPOSITORY: repo, GITHUB_RUN_ID: id } = process.env;
   return server && repo && id ? `${server}/${repo}/actions/runs/${id}` : undefined;
+}
+
+/** One line per gate on stdout, then the mode. */
+export function printGates(outcome: GateOutcome, pipeline: PipelineState): void {
+  for (const g of outcome.gates) {
+    const failMark = g.enforced ? 'FAIL' : 'WARN';
+    const mark = g.status === 'fail' ? failMark : g.status.toUpperCase();
+    process.stdout.write(`${mark.padEnd(4)} ${g.requirement.padEnd(17)} ${g.title}: ${g.detail}\n`);
+  }
+  process.stdout.write(
+    `Gates ${outcome.mode === 'enforce' ? 'enforced' : 'reporting only'} (pipeline ${pipeline.present ? 'present' : 'missing'}: ${pipeline.reason}).\n`
+  );
+}
+
+const shortRev = (rev: string): string | undefined => {
+  try {
+    return execFileSync('git', ['rev-parse', '--short', rev], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch {
+    return undefined;
+  }
+};
+
+/**
+ * The commit a report is for, and what was built when that differs. On a PR, CI checks out a
+ * merge of the PR into its base, so HEAD is not the commit GitHub shows for the PR: BENCH_COMMIT
+ * names that one (the PR head) and HEAD is kept as what was built.
+ */
+export function commitInfo(): { commit?: string; mergeCommit?: string } {
+  const head = shortRev('HEAD');
+  const named = process.env.BENCH_COMMIT || undefined;
+  const commit = named === undefined ? head : (shortRev(named) ?? named.slice(0, 7));
+  const merge = named !== undefined && head !== undefined && head !== commit ? head : undefined;
+  return {
+    ...(commit !== undefined && { commit }),
+    ...(merge !== undefined && { mergeCommit: merge }),
+  };
 }
 
 export function publish(
@@ -82,23 +124,10 @@ export function publish(
       );
       writeFileSync(join(REPORTS_DIR, `${name}.md`), md);
     }
-    // The PR comment CI posts: a short summary that links to the full report.
-    const comment = formatComment(report, outcome, {
-      runUrl: ciRunUrl(),
-      baseLabel: process.env.GITHUB_BASE_REF || undefined,
-    });
-    writeFileSync(join(REPORTS_DIR, 'comment.md'), comment + '\n');
     process.stdout.write(`Report: ${join(REPORTS_DIR, `${stamp}.md`)}\n`);
   }
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, md + '\n');
-  for (const g of outcome.gates) {
-    const failMark = g.enforced ? 'FAIL' : 'WARN';
-    const mark = g.status === 'fail' ? failMark : g.status.toUpperCase();
-    process.stdout.write(`${mark.padEnd(4)} ${g.requirement.padEnd(17)} ${g.title}: ${g.detail}\n`);
-  }
-  process.stdout.write(
-    `Gates ${outcome.mode === 'enforce' ? 'enforced' : 'reporting only'} (pipeline ${report.pipeline.present ? 'present' : 'missing'}: ${report.pipeline.reason}).\n`
-  );
+  printGates(outcome, report.pipeline);
   if (opts.updateBaseline) {
     const baseline = baselineFrom(report);
     if (Object.keys(baseline.stages).length === 0)

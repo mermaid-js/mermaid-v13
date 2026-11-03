@@ -7,6 +7,7 @@
   "license": "MIT",
   "scripts": {
     "bench": "tsx --conditions=mermaid-source src/cli/bench.ts",
+    "pr": "tsx --conditions=mermaid-source src/cli/pr.ts",
     "gates": "tsx --conditions=mermaid-source src/cli/gates.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
