@@ -13,3 +13,9 @@ Unmet acceptance criteria and announced shared contracts, grouped by the ticket 
 
 - Open for #46/#47: in cells `diagramPadding` converts on x only; cell label widths are not rounded and rely on `cellMeasurer` returning whole cells.
 - px node pads still come from theme tokens (byte identity); `builder.nodePad` is used only for cells.
+
+## #42
+
+- Grid-mode model contract: coordinates are cell indices (doc on `LayoutGraph.grid`); `validateGrid` in core/layout checks it.
+- Open for #43/#46: the builder does not pre-size boxes from edge ends per side (D140); the engine grows 97 of 494 corpus graphs.
+- Open for #45: sibling/unrelated edges sharing track cells, runs along group frames (padding 1), corner touches, group-to-member routes.
