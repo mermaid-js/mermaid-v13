@@ -8,3 +8,8 @@ Unmet acceptance criteria and announced shared contracts, grouped by the ticket 
 - **Warning codes:** #46 defines `ASCII_DROPPED { feature, astIds }` and `ASCII_SHAPE`; #47 defines `ASCII_TOO_WIDE`. Add them wherever the existing warning-code union lives, additively.
 - **Entry location:** the flowchart ascii hook lives at `packages/diagram-flowchart/src/ascii.ts` or `src/ascii/` (import-boundaries rule only allows `ascii`-named paths to import `@mermaid-js/core/ascii`).
 - **Junction merging** is `junction()` in core/ascii `glyphs.ts`; there is no separate junction module.
+
+## #43 (merged)
+
+- Open for #46/#47: in cells `diagramPadding` converts on x only; cell label widths are not rounded and rely on `cellMeasurer` returning whole cells.
+- px node pads still come from theme tokens (byte identity); `builder.nodePad` is used only for cells.
