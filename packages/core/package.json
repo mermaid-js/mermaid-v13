@@ -11,6 +11,11 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./ascii": {
+      "mermaid-source": "./src/ascii/index.ts",
+      "types": "./dist/ascii/index.d.ts",
+      "default": "./dist/ascii/index.js"
+    },
     "./parser-kit": {
       "mermaid-source": "./src/parser-kit/index.ts",
       "types": "./dist/parser-kit/index.d.ts",
