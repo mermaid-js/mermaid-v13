@@ -1,92 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import type { LayoutGraph, LayoutModel, RoutePoint, Side } from '../types.ts';
-import { validateLayout } from '../validate.ts';
+import type { LayoutGraph, LayoutModel } from '../types.ts';
+import { validateGrid } from '../validate-grid.ts';
 import { cellFixtures, randomCellFixtures } from './grid.fixtures.ts';
 import { layered } from './index.ts';
 
-// DDLT-style checks on cell graphs with `grid: 1` (D78, D140). In grid mode a coordinate is a
-// cell index: route point (c, r) is cell (c, r), and a box of width w centred at x covers the
-// cells from x − w/2 + ½ to x + w/2 − ½. Edge ends are the cells just outside their side.
+// DDLT-style checks on cell graphs with `grid: 1` (D78, D140), through `validateGrid`: whole
+// cells, square segments, each edge end in a cell of its own off a box corner.
 const FIXTURES = [...cellFixtures(), ...randomCellFixtures(60)];
 
-interface Cells {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
-}
-
-const cells = (b: { x: number; y: number; width: number; height: number }): Cells => ({
-  left: b.x - b.width / 2 + 0.5,
-  top: b.y - b.height / 2 + 0.5,
-  right: b.x + b.width / 2 - 0.5,
-  bottom: b.y + b.height / 2 - 0.5,
-});
-
-const inside = (c: Cells, p: { x: number; y: number }): boolean =>
-  p.x >= c.left && p.x <= c.right && p.y >= c.top && p.y <= c.bottom;
-
-// Whether `p` is the cell just outside `side` of `c`, next to one of the side's non-corner cells.
-function offSide(c: Cells, side: Side, p: RoutePoint): boolean {
-  switch (side) {
-    case 'top':
-      return p.y === c.top - 1 && p.x > c.left && p.x < c.right;
-    case 'bottom':
-      return p.y === c.bottom + 1 && p.x > c.left && p.x < c.right;
-    case 'left':
-      return p.x === c.left - 1 && p.y > c.top && p.y < c.bottom;
-    case 'right':
-      return p.x === c.right + 1 && p.y > c.top && p.y < c.bottom;
-  }
-}
-
+// Besides `validateGrid`: no route point other than its ends sits in a node box.
 function problems(graph: LayoutGraph, model: LayoutModel): string[] {
-  const out = validateLayout(graph, model);
-  const whole = (v: number): boolean => Number.isInteger(v);
-  const page: Cells = { left: 0, top: 0, right: model.width - 1, bottom: model.height - 1 };
-  for (const [id, b] of [...model.nodes, ...model.groups]) {
-    const c = cells(b);
-    if (!inside(page, { x: c.left, y: c.top }) || !inside(page, { x: c.right, y: c.bottom }))
-      out.push(`box '${id}' lies outside the drawing's cells`);
-  }
-  for (const [id, e] of model.edges)
-    if (e.points.some((p) => !inside(page, p))) out.push(`edge '${id}' leaves the drawing's cells`);
-  const boxes = new Map<string, Cells>();
-  for (const [id, b] of [...model.nodes, ...model.groups]) {
-    const c = cells(b);
-    if (![c.left, c.top, c.right, c.bottom].every(whole)) out.push(`box '${id}' is off the grid`);
-    boxes.set(id, c);
-  }
-  const nodeIds = new Set(graph.nodes.map((n) => n.id));
-  const ends = new Map<string, string>();
-  for (const e of graph.edges) {
-    const m = model.edges.get(e.id)!;
-    const pts = m.points;
-    if (pts.some((p) => !whole(p.x) || !whole(p.y))) out.push(`edge '${e.id}' is off the grid`);
-    for (let i = 1; i < pts.length; i++) {
-      const a = pts[i - 1]!;
-      const b = pts[i]!;
-      if (a.x !== b.x && a.y !== b.y) out.push(`edge '${e.id}' has a diagonal segment`);
-    }
-    if (e.label && m.label) {
-      const c = cells({ ...m.label, ...e.label });
-      if (![c.left, c.top].every(whole)) out.push(`label of '${e.id}' is off the grid`);
-    }
-    const check = (id: string, side: Side, p: RoutePoint | undefined): void => {
-      if (!p) return;
-      const key = `${p.x},${p.y}`;
-      const other = ends.get(key);
-      if (other !== undefined) out.push(`edges '${other}' and '${e.id}' end in one cell ${key}`);
-      ends.set(key, e.id);
-      if (nodeIds.has(id) && !offSide(boxes.get(id)!, side, p))
-        out.push(`edge '${e.id}' does not end off a ${side} side of '${id}' (${key})`);
-    };
-    check(e.source, m.ports.source, pts[0]);
-    check(e.target, m.ports.target, pts[pts.length - 1]);
-    // No route point other than the ends sits in a node box.
-    for (const p of pts) {
-      for (const n of graph.nodes) {
-        if (inside(boxes.get(n.id)!, p)) out.push(`edge '${e.id}' has a point in '${n.id}'`);
+  const out = validateGrid(graph, model);
+  for (const [id, e] of model.edges) {
+    for (const p of e.points) {
+      for (const [nid, b] of model.nodes) {
+        if (Math.abs(p.x - b.x) < b.width / 2 && Math.abs(p.y - b.y) < b.height / 2)
+          out.push(`edge '${id}' has a point in '${nid}'`);
       }
     }
   }

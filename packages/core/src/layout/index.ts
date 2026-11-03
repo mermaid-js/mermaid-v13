@@ -29,6 +29,7 @@ export {
   type SpacingConfig,
 } from './layered/index.ts';
 export { countCrossings, validateLayout } from './validate.ts';
+export { validateGrid } from './validate-grid.ts';
 export {
   cellProfile,
   fromPx,

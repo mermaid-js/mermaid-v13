@@ -176,8 +176,8 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
       if (!c) return n;
       const across = Math.max(c.top, c.bottom);
       const along = Math.max(c.left, c.right);
-      const width = across > 1 ? Math.max(n.width, sideRoom(across, pitch, grid)) : n.width;
-      const height = along > 1 ? Math.max(n.height, sideRoom(along, pitch, grid)) : n.height;
+      const width = across > 0 ? Math.max(n.width, sideRoom(across, pitch, grid)) : n.width;
+      const height = along > 0 ? Math.max(n.height, sideRoom(along, pitch, grid)) : n.height;
       if (width === n.width && height === n.height) return n;
       more = true;
       return { ...n, width, height };
@@ -279,13 +279,19 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     const [src, dst] = ends[k]!;
     const labelW = e.label?.width ?? 0;
     const labelH = e.label?.height ?? 0;
-    if (src === dst && src < nodeCount) {
+    // On the grid a group keeps room for its loop in its parent too, so the loop stays inside.
+    if (src === dst && (src < nodeCount || grid)) {
       const c = cnodes[src]!;
+      const group = src >= nodeCount;
       if (sideways(src)) {
-        c.h += 2 * (M.loop + (labelH > 0 ? labelH + M.loopGap : 0));
+        const room = 2 * (M.loop + (labelH > 0 ? labelH + M.loopGap : 0));
+        if (group) c.loopH += room;
+        else c.h += room;
         loopSide[src] = 2;
       } else {
-        c.w += 2 * (M.loop + (labelW > 0 ? labelW + M.loopGap : 0));
+        const room = 2 * (M.loop + (labelW > 0 ? labelW + M.loopGap : 0));
+        if (group) c.loopW += room;
+        else c.w += room;
         loopSide[src] = 1;
       }
     }

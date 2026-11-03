@@ -10,6 +10,7 @@ import {
   Kind,
   down,
   ease,
+  edgeOn,
   line,
   layered,
   layoutInputs,
@@ -45,6 +46,9 @@ export interface CNode {
   seq: number;
   // How much of a side its edges may spread along, measured across the flow; 0 keeps them at its middle.
   span: number;
+  // Room kept clear around a group's box in its parent, each way (a self-loop's, on the grid).
+  loopW: number;
+  loopH: number;
   x: number;
   y: number;
 }
@@ -423,6 +427,27 @@ export function inheritCrossedDirections(
   }
 }
 
+// The middle of a cell on the top side of `b`, off its corners, nearest the middle and at least
+// `pitch` (else one cell) from where other routes already end there.
+function freeTop(b: CNode, edges: CEdge[], grid: number, pitch: number): number {
+  const top = b.y - b.h / 2;
+  const lo = b.x - b.w / 2 + 1.5 * grid;
+  const hi = b.x + b.w / 2 - 1.5 * grid;
+  const used: number[] = [];
+  for (const e of edges) {
+    const r = e.route;
+    for (const k of r.length >= 6 ? [0, r.length - 3] : [])
+      if (Math.abs(r[k + 1]! - top) < 1e-6 && r[k]! >= lo && r[k]! <= hi) used.push(r[k]!);
+  }
+  const mid = line(b.x, grid);
+  const cells: number[] = [];
+  for (let x = lo; x <= hi + 1e-6; x += grid) cells.push(x);
+  cells.sort((p, q) => Math.abs(p - mid) - Math.abs(q - mid) || p - q);
+  for (const gap of [Math.max(pitch, grid), grid])
+    for (const x of cells) if (used.every((u) => Math.abs(u - x) >= gap - 1e-6)) return x;
+  return mid;
+}
+
 export function shiftLayout(nodes: CNode[], edges: CEdge[], ox: number, oy: number): void {
   for (const c of nodes) {
     c.x += ox;
@@ -451,6 +476,8 @@ export function cnode(w: number, h: number, parent = -1): CNode {
     minW: 0,
     seq: 0,
     span: 0,
+    loopW: 0,
+    loopH: 0,
     x: 0,
     y: 0,
   };
@@ -649,10 +676,12 @@ export function compoundLayout(
     level.items.forEach((item, i) => {
       local[item] = i;
       const node = nodes[item]!;
-      const ln = sized
-        ? lnode(vertical ? node.w : node.h, vertical ? node.h : node.w)
-        : lnode(0, 0);
-      ln.span = node.isGroup ? Math.min(node.span, ln.w - 2 * node.padX) : node.span;
+      const sw = node.w + node.loopW;
+      const sh = node.h + node.loopH;
+      const ln = sized ? lnode(vertical ? sw : sh, vertical ? sh : sw) : lnode(0, 0);
+      ln.span = node.isGroup
+        ? Math.min(node.span, (vertical ? node.w : node.h) - 2 * node.padX)
+        : node.span;
       ln.key = keyed ? key[item]! : NaN;
       lnodes.push(ln);
     });
@@ -1065,8 +1094,9 @@ export function compoundLayout(
     e.labelX = (a.x + b.x) / 2;
     e.labelY = (a.y + b.y) / 2;
     if (grid) {
-      // From the group's top border straight down to its member's top (repair is #45's, D78).
-      const x = line(b.x, grid);
+      // From the group's top border straight down to its member's top, in a cell of the top side
+      // that no other edge ends in (D140); clearing the way is the repair router's (#45, D78).
+      const x = freeTop(b, edges, grid, edgeOn(M.portPitch, grid));
       e.route = [x, a.y - a.h / 2, 0, x, b.y - b.h / 2, 0];
       e.labelX = x;
       e.labelY = (a.y - a.h / 2 + b.y - b.h / 2) / 2;
