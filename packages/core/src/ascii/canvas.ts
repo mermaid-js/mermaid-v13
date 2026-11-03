@@ -55,7 +55,15 @@ export class Canvas {
 
   /** Rows joined with `\n`, trailing spaces trimmed from each. */
   toString(): string {
-    return this.grid.map((row) => row.join('').replace(/ +$/, '')).join('\n');
+    // A loop from the end: `/ +$/` backtracks quadratically on wide rows with many space runs.
+    // Empty cells (the right half of a wide character) join to nothing, so they trim too.
+    return this.grid
+      .map((row) => {
+        let end = row.length;
+        while (end > 0 && (row[end - 1] === ' ' || row[end - 1] === '')) end--;
+        return row.slice(0, end).join('');
+      })
+      .join('\n');
   }
 
   private grow(columns: number, rows: number): void {

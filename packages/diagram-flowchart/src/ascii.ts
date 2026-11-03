@@ -19,11 +19,12 @@ import type { FlowModel } from './parser/index.ts';
 import type { FlowRenderContext } from './render/context.ts';
 import { layoutFlowchart, type FlowLayout } from './render/render.ts';
 import { drawFlowchart } from './ascii/draw.ts';
-import { asciiWarnings } from './ascii/warnings.ts';
+import { asciiWarnings, type AsciiRouteWarning } from './ascii/warnings.ts';
 
 export type {
   AsciiDroppedFeature,
   AsciiDroppedWarning,
+  AsciiRouteWarning,
   AsciiShapeWarning,
   AsciiWarning,
 } from './ascii/warnings.ts';
@@ -59,16 +60,22 @@ export function ascii(model: FlowModel, layout: FlowLayout, ctx: FlowAsciiContex
   const flow = laid.flow!;
   const glyphs = glyphsFor(ctx);
   const { routes, unresolved } = repairRoutes(flow.graph, laid);
-  for (const w of asciiWarnings(model, flow, glyphs, ctx.ast)) ctx.warn(w);
+  const curve = ctx.config.flowchart?.curve;
+  for (const w of asciiWarnings(model, flow, glyphs, ctx.ast, curve)) ctx.warn(w);
   // D78: a stretch no lane was found for stays as snapped; say which edges cross or share.
   if (unresolved.length > 0) {
     const edges = [...new Set(unresolved.map((c) => c.edge))];
     const ast = new Map(flow.edges.map((e) => [e.id, e.edge.ast]));
-    ctx.warn({
+    const warning: AsciiRouteWarning = {
       code: 'ASCII_ROUTE',
-      astIds: edges.map((id) => ast.get(id) ?? id),
+      astIds: edges.flatMap((id) => ast.get(id) ?? []),
       message: `No free lane for edges ${edges.join(', ')}; their lines touch other lines or text.`,
-    });
+    };
+    ctx.warn(warning);
   }
-  return drawFlowchart(flow, laid, routes, glyphs, { title: ctx.title });
+  const maxWidth = ctx.config.ascii?.maxWidth;
+  return drawFlowchart(flow, laid, routes, glyphs, {
+    title: ctx.title,
+    ...(maxWidth !== undefined ? { maxWidth } : {}),
+  });
 }
