@@ -7,7 +7,7 @@
  *     [--renderers v13,v13-stages,v13-base,v12-frozen,v12-current,pele] [--base <ref>]
  *     [--compare-rounds 20] [--compare-reps 10] [--v12-rounds 3]
  *     [--compare-renderers v13,v13-base,v12-frozen,pele]
- *     [--compare id,id,...]
+ *     [--compare id,id,...] [--node-metric auto|time|instructions]
  *     [--set corpus,pele] [--filter text] [--tiers tiny,regular,large,huge] [--reps 10]
  *     [--budget 1000] [--timeout 30] [--headed] [--lift-limits false] [--strip false]
  *     [--mode auto|report|enforce] [--report-only speed,...] [--update-baseline]
@@ -21,7 +21,9 @@
  * `--filter`) through `--renderers`, alternating; every gate reads it. The comparison
  * (`compare.ts`) then measures a few chosen diagrams over `--compare-rounds` rounds of fresh
  * sessions, with Mermaid 12 in only `--v12-rounds` of them; the PR comment shows it.
- * `--compare-rounds 0` turns it off.
+ * `--compare-rounds 0` turns it off. In Node the comparison counts CPU instructions instead of
+ * timing when `perf` can (`instruction-counts.ts`; BENCH_PERF names the binary), as they are far
+ * steadier; `--node-metric time` keeps timing.
  *
  * `v13-base` is v13 built from `--base` (else BENCH_BASE_REF, else origin/mermaid-v13): the
  * branch a PR merges into. CI passes the PR merge commit's first parent.
@@ -37,6 +39,7 @@ import { DEFAULT_BASE_REF, resolveRef } from '../base.ts';
 import { runnerId } from '../baseline.ts';
 import { COMPARE_DIAGRAMS, compareRounds } from '../compare.ts';
 import { buildSite, driveBrowser, openBrowserSession, serve } from '../driver.ts';
+import { INSTRUCTION_DEFAULTS, countInstructions, findPerf } from '../instruction-counts.ts';
 import { loadFixtures } from '../fixtures.ts';
 import { detectPipeline } from '../pipeline.ts';
 import { driveNode, openNodeSession } from '../node-driver.ts';
@@ -223,7 +226,28 @@ if (envs.includes('node')) {
   const skipped = renderers.filter((r) => BROWSER_ONLY.includes(r));
   if (skipped.length > 0) log(`Not run in Node (needs a DOM): ${skipped.join(', ')}`);
   report.node.renderers = await driveNode({ site, renderers: inNode, fixtures, ...options, log });
-  if (comparing) {
+  // Instruction counts where the machine has hardware counters (--node-metric auto|time|instructions).
+  const metric = args.get('node-metric') ?? 'auto';
+  if (!['auto', 'time', 'instructions'].includes(metric))
+    throw new Error(`Unknown --node-metric "${metric}" (auto, time or instructions)`);
+  const perf = metric === 'time' ? undefined : findPerf();
+  if (metric === 'instructions' && !perf)
+    throw new Error('--node-metric instructions: no perf that can count instructions here');
+  if (comparing && perf) {
+    report.compare = {
+      diagrams: compareSet,
+      ...report.compare,
+      node: countInstructions({
+        perf,
+        site,
+        renderers: compareRenderers.filter((r) => !BROWSER_ONLY.includes(r)),
+        diagrams: compareDiagrams,
+        ...INSTRUCTION_DEFAULTS,
+        log,
+      }),
+    };
+  } else if (comparing) {
+    if (metric === 'auto') log('Node comparison by time: no perf that can count instructions here');
     const nodeCompare = await compareRounds({
       renderers: compareRenderers.filter((r) => !BROWSER_ONLY.includes(r)),
       diagrams: compareDiagrams,

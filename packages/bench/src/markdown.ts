@@ -330,15 +330,29 @@ export function formatComment(
 }
 
 const COMPARE_NOTE =
-  'Times are the median over rounds, each round in fresh pages or processes with the renderers alternating. ± is the 95% interval of the change against the base; "same" means that interval includes no change.';
+  'Times are the median over rounds, each round in fresh pages or processes with the renderers alternating. Instruction counts are per warm render in fresh `node --single-threaded` processes, measured with `perf`. ± is the 95% interval of the change against the base; "same" means that interval includes no change.';
+
+/** Words for a change: time is slower/faster, instruction counts are more/fewer. */
+interface Words {
+  up: string;
+  down: string;
+}
+const TIME: Words = { up: 'slower', down: 'faster' };
+const INSTRUCTIONS: Words = { up: 'more', down: 'fewer' };
 
 /** `same (±3%)` / `6% slower (±2%)` from a paired change of v13 against the base. */
-function changeCell(c: Change | null): string {
+function changeCell(c: Change | null, words: Words = TIME): string {
   if (c === null) return dash;
   const pct = (x: number) => Math.max(1, Math.round(Math.abs(x) * 100));
   if (c.low <= 0 && c.high >= 0) return `same (±${pct(Math.max(-c.low, c.high))}%)`;
-  const word = c.median > 0 ? 'slower' : 'faster';
+  const word = c.median > 0 ? words.up : words.down;
   return `${pct(c.median)}% ${word} (±${pct((c.high - c.low) / 2)}%)`;
+}
+
+/** `2× faster` / `1.5× more` from a median ratio (above 1: v13 needs less). */
+function factorIn(speed: number | null, words: Words): string {
+  if (speed === null) return dash;
+  return speed >= 1 ? `${round(speed, 1)}× ${words.down}` : `${round(1 / speed, 1)}× ${words.up}`;
 }
 
 /** One table per environment that ran: a row per diagram, a column per comparison. */
@@ -364,7 +378,16 @@ function compareLines(cmp: Comparison, style: '**' | '###'): string[] {
       ...(v12 ? ['vs mermaid@12.2.0'] : []),
       ...(has('pele') ? ['vs Pele'] : []),
     ];
-    const rounds = `${env.rounds} rounds${v12 ? `; mermaid@12 in ${v12Rounds}` : ''}`;
+    const counted = env.metric === 'instructions';
+    const words = counted ? INSTRUCTIONS : TIME;
+    const rounds = counted
+      ? `CPU instructions per render, ${env.rounds} repeats`
+      : `${env.rounds} rounds${v12 ? `; mermaid@12 in ${v12Rounds}` : ''}`;
+    const v13Cell = (xs: (number | null)[]) => {
+      const m = medianOf(xs);
+      if (!counted) return ms(m);
+      return m === null ? dash : `${round(m / 1e6, 1)} M`;
+    };
     out.push(
       style === '**' ? `**${name}** (${rounds})` : `${style} ${name} (${rounds})`,
       '',
@@ -374,17 +397,18 @@ function compareLines(cmp: Comparison, style: '**' | '###'): string[] {
         const v13 = series(d.id, 'v13');
         return row([
           d.label,
-          ms(medianOf(v13)),
-          ...(has('v13-base') ? [changeCell(pairedChange(v13, series(d.id, 'v13-base')))] : []),
-          ...(v12 ? [factor(medianSpeedup(v13, series(d.id, 'v12-frozen')))] : []),
-          ...(has('pele') ? [factor(medianSpeedup(v13, series(d.id, 'pele')))] : []),
+          v13Cell(v13),
+          ...(has('v13-base')
+            ? [changeCell(pairedChange(v13, series(d.id, 'v13-base')), words)]
+            : []),
+          ...(v12 ? [factorIn(medianSpeedup(v13, series(d.id, 'v12-frozen')), words)] : []),
+          ...(has('pele') ? [factorIn(medianSpeedup(v13, series(d.id, 'pele')), words)] : []),
         ]);
       }),
       ''
     );
     for (const r of env.renderers)
-      if (r.error !== undefined)
-        out.push(`- ${r.renderer} did not start in ${name}: ${r.error}`, '');
+      if (r.error !== undefined) out.push(`- ${r.renderer} failed in ${name}: ${r.error}`, '');
   }
   return out;
 }

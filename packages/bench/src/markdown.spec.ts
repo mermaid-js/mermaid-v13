@@ -288,6 +288,42 @@ describe('PR comment', () => {
     expect(c).toContain('- v13 did not render 1 diagram in browser: `corpus/b` (error)');
   });
 
+  it('shows Node instruction counts as instructions, with more/fewer instead of slower/faster', () => {
+    const counts: BenchReport = {
+      ...cmpReport,
+      compare: {
+        ...cmpReport.compare!,
+        node: {
+          rounds: 5,
+          metric: 'instructions',
+          renderers: cmpReport.compare!.node!.renderers,
+          warm: {
+            'pele/flowchart-7': {
+              v13: [7.3e6, 7.31e6, 7.29e6, 7.3e6, 7.3e6],
+              'v13-base': [7.3e6, 7.3e6, 7.31e6, 7.29e6, 7.3e6],
+              pele: [3.6e6, 3.6e6, 3.6e6, 3.6e6, 3.6e6],
+            },
+            'perf/medium3': {
+              v13: [301e6, 301e6, 301.1e6, 300.9e6, 301e6],
+              'v13-base': [273.6e6, 273.7e6, 273.5e6, 273.6e6, 273.6e6],
+              pele: [137e6, 137e6, 137e6, 137e6, 137e6],
+            },
+          },
+        },
+      },
+    };
+    const c = formatComment(counts, outcome);
+    expect(c).toContain('**Node** (CPU instructions per render, 5 repeats)');
+    expect(c).toMatch(/\| Small \(7 nodes\) \| 7\.3 M \| same \(±\d+%\) \| 2× more \|/);
+    expect(c).toMatch(
+      /\| Subgraphs and edge labels \| 301 M \| 10% more \(±\d+%\) \| 2\.2× more \|/
+    );
+    // The browser table keeps time words.
+    expect(c).toMatch(
+      /\| Small \(7 nodes\) \| 0\.4 ms \| same \(±\d+%\) \| 50× faster \| 2× slower \|/
+    );
+  });
+
   it('falls back to the geomean table when no comparison ran', () => {
     const c = formatComment({ ...cmpReport, compare: undefined }, outcome);
     expect(c).toContain('| v13 warm time (geomean) | Browser |');

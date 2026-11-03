@@ -127,7 +127,10 @@ export interface CompareRenderer {
 }
 
 export interface CompareEnv {
+  /** Rounds of fresh sessions (time), or repeats of each count (instructions). */
   rounds: number;
+  /** What `warm` holds: warm-render ms (default), or CPU instructions per warm render. */
+  metric?: 'time' | 'instructions';
   renderers: CompareRenderer[];
   /**
    * Warm median (ms) per round: `warm[diagram id][renderer][round]`. Null where the renderer did
