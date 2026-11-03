@@ -66,8 +66,8 @@ jobs:
     # Screenshots go to Argos, which compares them with the mermaid-v13 baseline on PRs (R-REL-1). R-TEST-6: the
     # theme gallery is built from the same fixtures and kept as an artifact.
     name: Visual baseline
-    # Paused: blocking unrelated work. Re-enable by deleting this `if`.
-    if: false
+    # Paused until the baseline settles: set the repository variable VISUAL_BASELINE to 'true'.
+    if: vars.VISUAL_BASELINE == 'true'
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     # Keep this tag in sync with @playwright/test in package.json.
