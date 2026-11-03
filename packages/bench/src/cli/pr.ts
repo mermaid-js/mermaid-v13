@@ -1,6 +1,6 @@
 /*
  * The PR check (`pr-check.ts`): sizes, one Node render of the corpus, instruction counts of v13
- * against its base and Pele, and a small browser run of v13 and mermaid@12. Writes
+ * against its base and Pele, and a small browser run of v13, its base and mermaid@12. Writes
  * dist/reports/pr.{json,md} and comment.md (the PR comment), and applies the gates.
  *
  *   pnpm --filter @mermaid-js/bench pr [--base <ref>] [--mode auto|report|enforce]
@@ -80,7 +80,8 @@ const instructions = perf
   : undefined;
 if (!perf) log('Instruction counts skipped: no perf that can count instructions here');
 
-// 3. A small browser run: v13 and mermaid@12 on the PR diagrams (size, Ready at, speed).
+// 3. A small browser run: v13, its base and mermaid@12 on the PR diagrams, alternating
+// (size, Ready at, indicative times against the base and mermaid@12).
 const server = await serve(site);
 const browser = await chromium.launch({ headless: !args.flag('headed') });
 let renderers: BenchReport['renderers'];
@@ -91,7 +92,7 @@ try {
     browser,
     server,
     site,
-    renderers: ['v13', 'v12-frozen'],
+    renderers: site.base ? ['v13', 'v13-base', 'v12-frozen'] : ['v13', 'v12-frozen'],
     fixtures: diagrams.map((d) => d.fixture),
     reps: 10,
     budgetMs: 1000,

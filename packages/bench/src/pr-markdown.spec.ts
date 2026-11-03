@@ -18,9 +18,13 @@ const ok = (id: string, warmMs: number): DiagramResult => ({
   samples: 10,
   stages: emptyStages(),
 });
-const run = (renderer: 'v13' | 'v12-frozen', factor: number, gzip?: number): RendererRun => ({
+const run = (
+  renderer: 'v13' | 'v13-base' | 'v12-frozen',
+  factor: number,
+  gzip?: number
+): RendererRun => ({
   renderer,
-  version: renderer === 'v13' ? '13.0.0-alpha.0' : '12.2.0',
+  version: renderer === 'v12-frozen' ? '12.2.0' : '13.0.0-alpha.0',
   status: 'ready',
   readyAtMs: renderer === 'v13' ? 7.46 : 12,
   initMs: 1,
@@ -63,7 +67,11 @@ const report: PrReport = {
   node: 'node v24.16.0',
   staticGzip: { v13: 70 * 1024, base: 70 * 1024 - 12 },
   asciiSize: null,
-  renderers: [run('v13', 0.5, 70 * 1024), run('v12-frozen', 25)],
+  renderers: [
+    run('v13', 0.5, 70 * 1024),
+    run('v13-base', 0.5 / 1.04, 70 * 1024 - 12),
+    run('v12-frozen', 25),
+  ],
   corpus: { ok: 158, total: 158, failures: [] },
   instructions,
 };
@@ -96,17 +104,19 @@ describe('PR comment', () => {
     expect(lines[0]).toBe(COMMENT_MARKER);
     expect(lines[1]).toBe('### Bench: gates pass · `abcdef1` vs `mermaid-v13` (`abc123456`)');
     expect(comment).toContain(
-      '| Diagram | v13 instructions | vs base | vs Pele | v13 in browser | vs mermaid@12 |'
+      '| Diagram | v13 instructions | vs base | vs Pele | v13 in browser | browser vs base | vs mermaid@12 |'
     );
     expect(lines.filter((l) => l.startsWith('| ') && !l.startsWith('| Diagram'))).toHaveLength(6);
     expect(comment).toContain('[this run](https://ci.example/run/1)');
     expect(lines.length).toBeLessThan(20);
   });
 
-  it('shows instruction changes as percentages, bold from 2%', () => {
-    expect(comment).toContain('| Small (7 nodes) | 10 M | +0.0% | 2× more | 0.5 ms | 50× faster |');
+  it('shows instruction changes as percentages, bold from 2%; browser changes never bold', () => {
     expect(comment).toContain(
-      '| Subgraphs and edge labels | 42 M | **+5.0%** | 2.1× more | 2 ms | 50× faster |'
+      '| Small (7 nodes) | 10 M | +0.0% | 2× more | 0.5 ms | +4.0% | 50× faster |'
+    );
+    expect(comment).toContain(
+      '| Subgraphs and edge labels | 42 M | **+5.0%** | 2.1× more | 2 ms | +4.0% | 50× faster |'
     );
   });
 
@@ -132,7 +142,7 @@ describe('PR comment', () => {
     const { instructions: _, ...rest } = report;
     const noPerf: PrReport = { ...rest, instructionsSkipped: 'no perf here' };
     const c = formatPrComment(noPerf, outcomeOf(noPerf));
-    expect(c).toContain('| Small (7 nodes) | – | – | – | 0.5 ms | 50× faster |');
+    expect(c).toContain('| Small (7 nodes) | – | – | – | 0.5 ms | +4.0% | 50× faster |');
     expect(c).toContain('Instruction counts not measured: no perf here.');
   });
 });
