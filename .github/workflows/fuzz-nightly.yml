@@ -6,9 +6,9 @@ name: Nightly fuzz
 #   FUZZ_SEED=<seed> FUZZ_CASE=<case> pnpm --filter @mermaid-js/conformance fuzz
 # The mermaid@12 differential is informational: its clusters go to the job summary.
 
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  schedule:
-    - cron: '41 2 * * *' # every day 02:41 UTC
   workflow_dispatch:
     inputs:
       seed:

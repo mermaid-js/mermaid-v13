@@ -20,9 +20,9 @@
 #   environment npm-alpha                   restrict to branch mermaid-v13; reviewers optional
 name: Release
 
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  push:
-    branches: [mermaid-v13]
   workflow_dispatch:
 
 concurrency:

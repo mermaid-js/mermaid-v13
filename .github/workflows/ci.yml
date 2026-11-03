@@ -1,11 +1,8 @@
 name: CI
 
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  push:
-    branches-ignore:
-      - 'renovate/**'
-  merge_group:
-  pull_request:
   workflow_dispatch:
 
 concurrency:

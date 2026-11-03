@@ -1,15 +1,8 @@
 name: Apply labels to PR
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  pull_request_target:
-    # required for pr-labeler to support PRs from forks
-    # ===================== ⛔ ☢️ 🚫 ⚠️ Warning ⚠️ 🚫 ☢️ ⛔ =======================
-    # Be very careful what you put in this GitHub Action workflow file to avoid
-    # malicious PRs from getting access to the Mermaid-js repo.
-    #
-    # Please read the following first before reviewing/merging:
-    # - https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_target
-    # - https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
-    types: [opened, reopened, synchronize]
+  workflow_dispatch:
 
 permissions:
   contents: read

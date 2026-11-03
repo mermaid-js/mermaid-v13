@@ -11,14 +11,10 @@ name: PR Default Labels
 # comes from. This is safe specifically because these jobs never check out
 # or execute any code from the PR itself — they only call the fixed script
 # below via the GitHub API.
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  pull_request_target:
-    types:
-      - opened
-      # Retargeting an already-open PR (e.g. develop -> master) fires
-      # 'edited', never 'opened' again — without this, such a PR would never
-      # get "run release test" and would need a manual label add forever.
-      - edited
+  workflow_dispatch:
 
 permissions:
   contents: read

@@ -1,11 +1,9 @@
 name: Scorecard supply-chain security
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  branch_protection_rule:
-  push:
-    branches:
-      - mermaid-v13
-  schedule:
-    - cron: 29 15 * * 0
+  workflow_dispatch:
+
 permissions: read-all
 jobs:
   analysis:

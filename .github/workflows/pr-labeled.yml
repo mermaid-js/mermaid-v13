@@ -1,7 +1,8 @@
 name: PR Labeled
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  pull_request:
-    types: [labeled]
+  workflow_dispatch:
 
 permissions:
   contents: read

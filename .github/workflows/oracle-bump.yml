@@ -4,9 +4,9 @@ name: Oracle bump
 # issue per new failure cluster, so syntax added to v12 reaches v13 as tickets. The bump is
 # not committed here; the dependency update itself goes through the normal renovate flow.
 
+# Automatic triggers are off: this private repo has no paid Actions minutes.
+# Run by hand from the Actions tab, or revert this change to turn them back on.
 on:
-  schedule:
-    - cron: '17 4 * * 1' # Mondays 04:17 UTC
   workflow_dispatch:
 
 permissions:
