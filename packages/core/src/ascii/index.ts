@@ -7,5 +7,8 @@ export { drawBox, drawText } from './draw.ts';
 export type { BoxOptions, CellRect } from './draw.ts';
 export { ascii, glyphFor, junction, unicode } from './glyphs.ts';
 export type { GlyphSet, Sides, Stroke } from './glyphs.ts';
+export { repairRoutes, routeCollisions } from './repair.ts';
+export type { Collision, CollisionKind, RepairOptions, RepairResult } from './repair.ts';
+export { snapRoute } from './snap.ts';
 export { cellMeasurer, cellWidth, graphemes, graphemeWidth } from './measurer.ts';
 export type { Grapheme } from './measurer.ts';

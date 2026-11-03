@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cellMeasurer } from '@mermaid-js/core/ascii';
+import { cellMeasurer, repairRoutes, routeCollisions } from '@mermaid-js/core/ascii';
 import {
   cellProfile,
   layered,
@@ -66,6 +66,22 @@ describe('flowchart corpus on the grid (cells)', () => {
     const bad = cases
       .map((c) => [c.id, validateGrid(c.graph, c.model)] as const)
       .filter(([, problems]) => problems.length > 0);
+    expect(Object.fromEntries(bad)).toEqual({});
+  });
+
+  // #45 (D78, R-ASCII-1): after the repair router no edge passes through a node box or another
+  // edge's label. Group titles on the frame are left out: a few stay crowded (GAPS.md, #45).
+  it('repairs every route clear of node boxes and edge labels', () => {
+    const bad = cases
+      .map((c) => {
+        const labels = new Set(c.graph.edges.map((e) => e.id));
+        const left = routeCollisions(c.graph, c.model, repairRoutes(c.graph, c.model).routes);
+        return [
+          c.id,
+          left.filter((l) => l.kind === 'box' || (l.kind === 'label' && labels.has(l.with))),
+        ] as const;
+      })
+      .filter(([, left]) => left.length > 0);
     expect(Object.fromEntries(bad)).toEqual({});
   });
 });
