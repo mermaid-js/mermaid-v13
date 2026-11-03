@@ -237,25 +237,35 @@ describe('warnings', () => {
   });
 
   it('turns routes the repair router could not free into one warning', async () => {
-    // GAPS #45: the engine puts c1's port under the "Level three" title.
+    // e2e visual-check/11: the back edge E → A finds no lane past the two groups and the
+    // fan of edges into D, so repair keeps its snapped stretch (D78).
     const src = [
-      'flowchart TB',
-      'subgraph one [Level one]',
-      ' a1 --> a2',
-      ' subgraph two [Level two]',
-      '  b1 --> b2',
-      '  subgraph three [Level three]',
-      '   c1 --> c2',
-      '  end',
-      ' end',
+      'graph TB',
+      'A',
+      'B',
+      'subgraph foo[Foo SubGraph]',
+      ' C',
+      ' D',
       'end',
-      'out1[Outside] --> a1',
-      'a2 --> b1',
-      'b2 --> c1',
-      'c2 --> out2[Outside]',
+      'subgraph bar[Bar SubGraph]',
+      ' E',
+      ' F',
+      'end',
+      'G',
+      'A-->B',
+      'B-->C',
+      'C-->D',
+      'B-->D',
+      'D-->E',
+      'E-->A',
+      'E-->F',
+      'F-->D',
+      'F-->G',
+      'B-->G',
+      'G-->D',
     ].join('\n');
     const route = (await draw(src)).warnings.filter((w) => w.code === 'ASCII_ROUTE');
-    expect(route.map((w) => w.astIds)).toEqual([['e:b2>c1']]);
+    expect(route.map((w) => w.astIds)).toEqual([['e:E>A']]);
   });
 });
 
