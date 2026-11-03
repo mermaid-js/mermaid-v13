@@ -172,6 +172,157 @@ describe('flowchart render: features', () => {
     expect(byAst(tree, 'e:P>Q')).toHaveLength(0);
   });
 
+  describe('collapsed subgraph shape (v12 collapsedGroup)', () => {
+    const COLLAPSED =
+      'flowchart TD\n  X --> P\n  subgraph grp[Group]\n    P --> Q\n  end\n  grp@{ view: collapsed }';
+    const parts = async (text: string, config?: InitializeConfig) => {
+      const { tree } = await draw(text, { config });
+      const node = byAst(tree, 's:grp')[0]!;
+      const kids = tree.children(node);
+      return {
+        tree,
+        node,
+        rects: kids.filter((c) => tree.tag(c) === 'rect'),
+        seps: kids.filter((c) => tree.getAttr(c, 'class') === 'collapsed-separator'),
+        dots: kids.filter((c) => tree.getAttr(c, 'class') === 'collapsed-indicator'),
+      };
+    };
+    const num = (tree: SvgView, n: SvgElement, a: string): number => Number(tree.getAttr(n, a));
+
+    it('draws one rounded card, one dashed separator and three dots', async () => {
+      const { tree, rects, seps, dots } = await parts(COLLAPSED, { theme: 'default' });
+      expect(rects).toHaveLength(1);
+      expect(num(tree, rects[0]!, 'rx')).toBe(5);
+      expect(seps).toHaveLength(1);
+      expect(tree.getAttr(seps[0]!, 'stroke-dasharray')).toBe('3,3');
+      expect(dots).toHaveLength(3);
+      expect(dots.map((d) => num(tree, d, 'r'))).toEqual([2.5, 2.5, 2.5]);
+      expect(dots.map((d) => num(tree, d, 'cx'))).toEqual([-10, 0, 10]);
+    });
+
+    it('lays the card out like v12: separator inset 8, indicator row below the label', async () => {
+      const { tree, rects, seps, dots } = await parts(COLLAPSED, { theme: 'default' });
+      const r = rects[0]!;
+      const x = num(tree, r, 'x');
+      const y = num(tree, r, 'y');
+      const W = num(tree, r, 'width');
+      const H = num(tree, r, 'height');
+      expect(x).toBe(-W / 2);
+      expect(y).toBe(-H / 2);
+      const s = seps[0]!;
+      expect(num(tree, s, 'x1')).toBe(x + 8);
+      expect(num(tree, s, 'x2')).toBe(x + W - 8);
+      // height = label + 8 (gap) + 20 (indicator row) + 2 * 8; separator under label + gap.
+      const label = H - 8 - 20 - 16;
+      expect(num(tree, s, 'y1')).toBeCloseTo(y + 8 + label + 8, 1);
+      expect(num(tree, s, 'y2')).toBe(num(tree, s, 'y1'));
+      expect(num(tree, dots[0]!, 'cy')).toBeCloseTo(num(tree, s, 'y1') + 10, 1);
+    });
+
+    it('is at least 80 wide, and label width + 16 for a wide label', async () => {
+      const narrow = await parts(COLLAPSED.replace('[Group]', '[G]'));
+      expect(num(narrow.tree, narrow.rects[0]!, 'width')).toBe(80);
+      const long = 'A much longer collapsed group title';
+      const wide = await parts(COLLAPSED.replace('[Group]', `[${long}]`));
+      const W = num(wide.tree, wide.rects[0]!, 'width');
+      expect(W).toBeGreaterThan(80);
+      // The separator spans the label: W - 16 is the label width.
+      const s = wide.seps[0]!;
+      expect(num(wide.tree, s, 'x2') - num(wide.tree, s, 'x1')).toBeCloseTo(W - 16, 1);
+    });
+
+    it('colours the separator and dots with clusterBorder', async () => {
+      const { tree, seps, dots } = await parts(COLLAPSED, {
+        theme: 'default',
+        themeVariables: { clusterBorder: '#123456' },
+      });
+      const stroke = tree.getAttr(seps[0]!, 'stroke')!;
+      expect(stroke).toMatch(/#123456|var\(--/);
+      for (const d of dots) expect(tree.getAttr(d, 'fill')).toBe(stroke);
+      const nodeStroke = tree.getAttr(
+        (await parts(COLLAPSED, { theme: 'default' })).rects[0]!,
+        'stroke'
+      );
+      expect(stroke).not.toBe(nodeStroke);
+    });
+
+    // Signed distance from (x, y) to the card's rounded outline (0 on it), card at (cx, cy).
+    const outline = (tree: SvgView, node: SvgElement, card: SvgElement) => {
+      const m = /translate\(([-\d.]+),([-\d.]+)\)/.exec(tree.getAttr(node, 'transform')!)!;
+      const [cx, cy] = [Number(m[1]), Number(m[2])];
+      const [W, H, r] = ['width', 'height', 'rx'].map((a) => num(tree, card, a)) as [
+        number,
+        number,
+        number,
+      ];
+      return (x: number, y: number): number => {
+        const qx = Math.abs(x - cx) - (W / 2 - r);
+        const qy = Math.abs(y - cy) - (H / 2 - r);
+        return Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - r;
+      };
+    };
+    // The arrowhead's first point is its tip, where the edge meets the shape.
+    const tipOf = (tree: SvgView, edge: SvgElement): [number, number] => {
+      const head = tree.children(edge).find((c) => tree.getAttr(c, 'class') === 'marker')!;
+      const m = /^M([-\d.]+),([-\d.]+)/.exec(tree.getAttr(head, 'd')!)!;
+      return [Number(m[1]), Number(m[2])];
+    };
+
+    it('ends edges on the card outline', async () => {
+      const text =
+        'flowchart TD\n  A & B & C --> P\n  subgraph grp[A wide collapsed group title]\n    P\n  end\n  grp@{ view: collapsed }';
+      const { tree, node, rects } = await parts(text, { theme: 'redux' });
+      const off = outline(tree, node, rects[0]!);
+      for (const from of ['A', 'B', 'C'])
+        expect(Math.abs(off(...tipOf(tree, byAst(tree, `e:${from}>P`)[0]!)))).toBeLessThan(0.5);
+    });
+
+    it('ends an edge that reaches a rounded corner on the curve, not the layout box', async () => {
+      // A postLayout hook brings the edge down 3px in from the card's top-right corner.
+      const m = createMermaid();
+      m.initialize({ deterministic: true, theme: 'redux' });
+      await m.registerExternalDiagrams([
+        {
+          id: 'to-the-corner',
+          postLayout(l) {
+            if (l.kind !== 'graph') return l;
+            const card = l.layout.nodes.get('grp')!;
+            const x = card.x + card.width / 2 - 3;
+            const top = card.y - card.height / 2;
+            for (const e of l.layout.edges.values()) {
+              const [first, last] = [e.points[0]!, e.points.at(-1)!];
+              e.points = [
+                { ...first, x, y: top - 40 },
+                { ...last, x, y: top },
+              ];
+            }
+            return l;
+          },
+        },
+      ]);
+      const text =
+        'flowchart TD\n  X --> P\n  subgraph grp[Group]\n    P\n  end\n  grp@{ view: collapsed }';
+      const tree = parseSvg((await m.render('mermaid-0', text)).svg);
+      const node = byAst(tree, 's:grp')[0]!;
+      const card = tree.children(node).find((c) => tree.tag(c) === 'rect')!;
+      expect(num(tree, card, 'rx')).toBe(12);
+      const off = outline(tree, node, card);
+      expect(Math.abs(off(...tipOf(tree, byAst(tree, 'e:X>P')[0]!)))).toBeLessThan(0.5);
+    });
+
+    it('has the same shape across themes apart from the radius', async () => {
+      const a = await parts(COLLAPSED, { theme: 'default' });
+      const b = await parts(COLLAPSED, { theme: 'redux' });
+      expect(num(b.tree, b.rects[0]!, 'rx')).toBe(12);
+      const geom = (p: typeof a) => ({
+        seps: p.seps.length,
+        dots: p.dots.map((d) => [p.tree.getAttr(d, 'cx'), p.tree.getAttr(d, 'r')]),
+        cls: p.tree.getAttr(p.node, 'class'),
+      });
+      expect(geom(b)).toEqual(geom(a));
+    });
+  });
+
   it('keeps an invisible edge as an empty element, laid out but not drawn', async () => {
     const { tree } = await draw('flowchart LR\n  A ~~~ B');
     const edge = byAst(tree, 'e:A>B')[0]!;

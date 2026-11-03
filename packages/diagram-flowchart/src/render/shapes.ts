@@ -3,7 +3,7 @@
 // Pele's src/svg/shapes.ts @ 3a2f075 (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano),
 // with v12's shape names and the theme's padding and radius tokens.
 // cspell:ignore kepano
-import { translate, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import { translate, type Attrs, type SafeValue, type SvgWriter } from '@mermaid-js/core/svg';
 import { SHAPE_GROUPS } from '../parser/shapes.ts';
 
 /** Room around the label, from the theme tokens. */
@@ -24,7 +24,7 @@ export interface ShapeSize {
 type Sizer = (tw: number, th: number, p: Pads) => ShapeSize;
 type Drawer = (w: SvgWriter, W: number, H: number, a: Attrs, line: Attrs, p: Pads) => void;
 // Distance from the box to the outline on a side (0 top, 1 right, 2 bottom, 3 left), `t` along the side.
-type Inset = (W: number, H: number, side: number, t: number) => number;
+type Inset = (W: number, H: number, side: number, t: number, p: Pads) => number;
 // How much of a side edges may spread along (top/bottom, or left/right when sideways).
 type Span = (W: number, H: number, sideways: boolean) => number;
 
@@ -57,6 +57,18 @@ const capRy = (W: number): number => Math.min(12, Math.max(6, W / 14));
 const capInset: Inset = (W, _H, side, t) => (side & 1 ? 0 : bulge(t, W / 2, capRy(W)));
 const leanInset: Inset = (_W, H, side) => (side & 1 ? H / 8 : 0);
 const waveInset: Inset = (_W, _H, side) => (side === 2 ? 10 : 0);
+// A rounded corner of radius r on a side of length `len`: how far in the outline is at `t`.
+const cornerInset = (len: number, t: number, r: number): number => {
+  const k = Math.abs(t) - (len / 2 - r);
+  return r > 0 && k > 0 ? r - Math.sqrt(Math.max(0, r * r - Math.min(k, r) ** 2)) : 0;
+};
+
+// The collapsed-subgraph card (v12 collapsedGroup): fixed padding, gap and indicator row.
+const CARD_PAD = 8;
+const CARD_GAP = 8;
+const CARD_ROW = 20;
+const CARD_MIN_W = 80;
+const cardRadius = (W: number, H: number, p: Pads): number => Math.min(p.r, W / 2, H / 2);
 
 const fixed =
   (w: number, h: number): Sizer =>
@@ -698,11 +710,41 @@ const S: Record<string, ShapeDef> = {
       w.leaf('path', { d, ...a });
     },
   },
+  // v12's collapsedGroup: a rounded card, the label above a dashed separator and an indicator
+  // row of three dots. Padding is v12's fixed 8, not the theme's; `line` carries clusterBorder.
   collapsedGroup: {
-    size: grown(8, 8, -2),
-    draw: (w, W, H, a) => {
-      rect(w, -W / 2 + 6, -H / 2 + 8, W - 12, H - 8, a);
-      rect(w, -W / 2, -H / 2, W, H - 4, a);
+    span: flat,
+    inset: (W, H, side, t, p) => cornerInset(side & 1 ? H : W, t, cardRadius(W, H, p)),
+    size: (tw, th) => ({
+      w: Math.max(tw + 2 * CARD_PAD, CARD_MIN_W),
+      h: th + CARD_GAP + CARD_ROW + 2 * CARD_PAD,
+      dy: -(CARD_GAP + CARD_ROW) / 2,
+    }),
+    draw: (w, W, H, a, line, p) => {
+      const x = -W / 2;
+      const y = -H / 2;
+      rect(w, x, y, W, H, a, cardRadius(W, H, p));
+      const th = H - CARD_GAP - CARD_ROW - 2 * CARD_PAD;
+      const sy = y + CARD_PAD + th + CARD_GAP;
+      w.leaf('line', {
+        class: 'collapsed-separator',
+        x1: x + CARD_PAD,
+        y1: sy,
+        x2: x + W - CARD_PAD,
+        y2: sy,
+        stroke: line.stroke,
+        'stroke-width': 0.75,
+        'stroke-dasharray': '3,3' as SafeValue,
+      });
+      for (let i = -1; i <= 1; i++)
+        w.leaf('circle', {
+          class: 'collapsed-indicator',
+          cx: i * 10,
+          cy: sy + CARD_ROW / 2,
+          r: 2.5,
+          fill: line.stroke,
+          opacity: 0.6,
+        });
     },
   },
 };
@@ -724,8 +766,14 @@ export const drawShape = (
   line: Attrs,
   p: Pads
 ): void => def(shape).draw(w, W, H, a, line, p);
-export const shapeInset = (shape: string, W: number, H: number, side: number, t: number): number =>
-  def(shape).inset?.(W, H, side, t) ?? 0;
+export const shapeInset = (
+  shape: string,
+  W: number,
+  H: number,
+  side: number,
+  t: number,
+  p: Pads
+): number => def(shape).inset?.(W, H, side, t, p) ?? 0;
 export const shapeSpan = (shape: string, W: number, H: number, sideways: boolean): number =>
   Math.max(0, def(shape).span?.(W, H, sideways) ?? 0);
 export const shapeHasLabel = (shape: string): boolean => def(shape).noLabel !== true;

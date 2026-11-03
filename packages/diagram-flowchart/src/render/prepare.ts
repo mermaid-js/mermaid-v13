@@ -194,10 +194,12 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
       view.dy = lh > 0 ? (v.pos === 't' ? -ah / 2 : ah / 2) - (v.pos === 't' ? 3 : -3) : 0;
       return;
     }
-    const round = view.shape === 'circle' || view.shape === 'dbl-circ';
+    // v12 widens vertex labels to minNodeWidth; round shapes and collapsed subgraphs keep theirs.
+    const keepWidth =
+      view.shape === 'circle' || view.shape === 'dbl-circ' || view.shape === 'collapsedGroup';
     const s = shapeSize(
       view.shape,
-      lw > 0 && has && !round ? Math.max(lw, minWidth) : lw,
+      lw > 0 && has && !keepWidth ? Math.max(lw, minWidth) : lw,
       lh,
       pads
     );
