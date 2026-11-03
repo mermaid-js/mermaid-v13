@@ -21,6 +21,9 @@ permissions: # added using https://github.com/step-security/secure-repo
 jobs:
   analyze:
     name: Analyze
+    # Paused: needs GitHub Advanced Security, which this private repo won't pay for; the open-source
+    # mermaid repo runs it. Re-enable by deleting this `if`.
+    if: false
     runs-on: ubuntu-latest
     permissions:
       actions: read
