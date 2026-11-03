@@ -2,8 +2,7 @@ name: CI
 
 on:
   push:
-    branches-ignore:
-      - 'renovate/**'
+    branches: [mermaid-v13]
   merge_group:
   pull_request:
   workflow_dispatch:
