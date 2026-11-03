@@ -36,6 +36,7 @@ jobs:
     # R-TEST-7: the bench gates (packages/bench). Loaded size (R-PERF-1), corpus OK count
     # (R-PERF-4) and stage regression (R-PERF-7) enforce; speed against mermaid@12.2.0
     # (R-PERF-3) is reported only, as shared runners measure 25-32x against 50x (D150).
+    # v12-current is informational and is skipped here; the release bench still runs it.
     name: Bench gates
     runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 60
@@ -51,7 +52,7 @@ jobs:
           node-version-file: '.node-version'
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @mermaid-js/bench exec playwright install --with-deps chromium
-      - run: pnpm --filter @mermaid-js/bench bench
+      - run: pnpm --filter @mermaid-js/bench bench --renderers v13,v13-stages,v12-frozen
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
