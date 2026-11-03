@@ -113,7 +113,7 @@ describe('v12 layout names', () => {
   });
 });
 
-describe('diagram-scoped theme, look and layout', () => {
+describe('diagram-scoped theme and layout', () => {
   it('a diagram default beats the global default', () => {
     const { config } = resolve({ pluginDefaults: flowchartDefaults });
     expect(config.theme).toBe('redux-color');
@@ -130,14 +130,59 @@ describe('diagram-scoped theme, look and layout', () => {
   it('a diagram-scoped value beats the global one within a layer', () => {
     const { config } = resolve({
       pluginDefaults: flowchartDefaults,
-      frontMatter: { look: 'classic', flowchart: { look: 'handDrawn' } },
+      frontMatter: { theme: 'dark', flowchart: { theme: 'forest' } },
     });
-    expect(config.look).toBe('handDrawn');
+    expect(config.theme).toBe('forest');
+  });
+});
+
+describe('look is removed (D153)', () => {
+  const lookWarnings = (warnings: ConfigWarning[]) =>
+    warnings.filter((w) => w.code === 'LOOK_REMOVED');
+
+  it.each(['neo', 'handDrawn', 'classic', 'sketchy'])(
+    'ignores front matter `look: %s` with one LOOK_REMOVED warning',
+    (look) => {
+      const { config, warnings } = resolve({
+        pluginDefaults: flowchartDefaults,
+        frontMatter: { look },
+      });
+      expect(config).not.toHaveProperty('look');
+      expect(config.flowchart).not.toHaveProperty('look');
+      expect(codes(warnings)).toEqual(['LOOK_REMOVED look']);
+    }
+  );
+
+  it('warns once however many sources and sections set it', () => {
+    const { config, warnings } = resolve({
+      pluginDefaults: flowchartDefaults,
+      initialize: { look: 'neo', class: { look: 'neo' } },
+      frontMatter: { look: 'classic', flowchart: { look: 'handDrawn' } },
+      directives: [{ look: 'neo' }, { flowchart: { look: 'classic' } }],
+    });
+    expect(lookWarnings(warnings)).toHaveLength(1);
+    expect(warnings.map((w) => w.code)).not.toContain('CONFIG_UNKNOWN_KEY');
+    expect(config).not.toHaveProperty('look');
+    expect(config.flowchart).not.toHaveProperty('look');
+    expect(config.class).not.toHaveProperty('look');
   });
 
-  it('skips a look this build does not know', () => {
-    const { config } = resolve({ frontMatter: { look: 'sketchy' } });
-    expect(config.look).toBe('classic');
+  it('a section-only look still warns, naming its path', () => {
+    const { warnings } = resolve({ frontMatter: { flowchart: { look: 'neo' } } });
+    expect(codes(warnings)).toEqual(['LOOK_REMOVED flowchart.look']);
+  });
+
+  it('initialize({ look }) warns with source initialize', () => {
+    const { warnings } = resolve({ initialize: { look: 'neo' } });
+    expect(lookWarnings(warnings).map((w) => w.source)).toEqual(['initialize']);
+  });
+
+  it('a look carried by plugin defaults is dropped silently', () => {
+    const { config, warnings } = resolve({
+      pluginDefaults: { flowchart: { ...flowchartDefaults.flowchart, look: 'neo' } },
+    });
+    expect(config.flowchart).not.toHaveProperty('look');
+    expect(warnings).toEqual([]);
   });
 });
 
@@ -383,6 +428,7 @@ describe('CORE_DEFAULTS', () => {
       layout: 'layered',
       securityLevel: 'default',
       maxEdges: 5000,
+      look: undefined, // removed, no default (D153)
     });
   });
 });

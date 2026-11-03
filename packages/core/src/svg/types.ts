@@ -58,7 +58,6 @@ export interface AttrTypes {
   'data-id': string;
   'data-ast': string;
   'data-mermaid-version': string;
-  'data-look': string;
   /** The render's id prefix, which a `theme: 'auto'` style sheet is scoped to. */
   'data-p': string;
   style: StyleText;

@@ -376,6 +376,38 @@ describe('flowchart render: features', () => {
   });
 });
 
+describe('flowchart render: look is removed (D153)', () => {
+  const plain = 'flowchart TD\n  A[Start] --> B(End)';
+  const withLook = (look: string) => `---\nconfig:\n  look: ${look}\n---\n${plain}`;
+  const lookWarnings = (r: RenderResult) => r.warnings.filter((w) => w.code === 'LOOK_REMOVED');
+
+  it.each(['neo', 'handDrawn', 'classic'])(
+    'front matter `look: %s` renders identically to no look, with one LOOK_REMOVED warning',
+    async (look) => {
+      const without = await draw(plain);
+      const result = await draw(withLook(look));
+      expect(result.svg).toBe(without.svg);
+      expect(lookWarnings(result)).toHaveLength(1);
+      expect(result.warnings.map((w) => w.code)).not.toContain('CONFIG_UNKNOWN_KEY');
+      expect(lookWarnings(without)).toHaveLength(0);
+    }
+  );
+
+  it('warns once when look is set at top level and in the flowchart section', async () => {
+    const result = await draw(
+      `---\nconfig:\n  look: neo\n  flowchart:\n    look: classic\n---\n%%{init: {"look": "handDrawn"}}%%\n${plain}`
+    );
+    expect(lookWarnings(result)).toHaveLength(1);
+    expect(result.svg).toBe((await draw(plain)).svg);
+  });
+
+  it('initialize({ look }) does not throw and the render warns LOOK_REMOVED', async () => {
+    const result = await draw(plain, { config: { look: 'neo' } });
+    expect(lookWarnings(result)).toHaveLength(1);
+    expect(result.svg).toBe((await draw(plain)).svg);
+  });
+});
+
 function assertInertOk(svg: string, themeStyle: boolean): boolean {
   assertInert(svg, { themeStyle });
   return true;
