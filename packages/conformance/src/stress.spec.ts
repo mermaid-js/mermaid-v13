@@ -245,7 +245,12 @@ describe('stress: default limits refuse oversized input', () => {
   });
 });
 
-/** R-PARSE-7: parse time is linear. n and 4n: linear ~4x, quadratic ~16x; the bar is 8x. */
+/**
+ * R-PARSE-7: parse time is linear. n and 8n: linear ~8x (7-12x measured), quadratic ~64x; the
+ * bar is 24x, a wide margin on both sides. Times are this thread's CPU time, not wall time, so
+ * other test files competing for the CPU in a parallel run do not inflate them, and small and
+ * large parses alternate so anything left (GC, frequency changes) lands on both.
+ */
 describe('stress: parse is linear in input size', () => {
   const SHAPES: [string, (n: number) => string][] = [
     ['a chain', (n) => 'graph TD\n' + repeat(n, (i) => `n${i}-->n${i + 1}\n`)],
@@ -259,21 +264,38 @@ describe('stress: parse is linear in input size', () => {
     ['linkStyle lines', (n) => 'graph TD\nA-->B\n' + 'linkStyle 0 stroke:red\n'.repeat(n)],
     ['class assignments', (n) => 'graph TD\n' + repeat(n, (i) => `n${i}:::c${i % 7}\n`)],
   ];
-  const fastest = (run: () => unknown): number => {
-    let best = Infinity;
-    for (let t = 0; t < 3; t++) {
-      const t0 = performance.now();
-      run();
-      best = Math.min(best, performance.now() - t0);
-    }
-    return best;
+  /** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
+  const cpuMs = (): number => {
+    const u =
+      typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
+    return (u.user + u.system) / 1000;
   };
-  it.each(SHAPES)('%s', (_name, build) => {
-    const small = build(2_000);
-    const large = build(8_000);
-    parse(small); // warm up
-    const tSmall = fastest(() => parse(small));
-    const tLarge = fastest(() => parse(large));
-    expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(8);
-  });
+  const cost = (run: () => unknown): number => {
+    const t0 = cpuMs();
+    run();
+    return cpuMs() - t0;
+  };
+  it.each(SHAPES)(
+    '%s',
+    (_name, build) => {
+      const small = build(2_000);
+      const large = build(16_000);
+      parse(small); // warm up
+      parse(large);
+      let tSmall = Infinity;
+      let tLarge = Infinity;
+      for (let round = 0; round < 5; round++) {
+        tSmall = Math.min(
+          tSmall,
+          cost(() => parse(small))
+        );
+        tLarge = Math.min(
+          tLarge,
+          cost(() => parse(large))
+        );
+      }
+      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+    },
+    30_000
+  );
 });
