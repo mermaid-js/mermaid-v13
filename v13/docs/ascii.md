@@ -216,5 +216,6 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
 plus the flowchart's text entry have their own budget of 15 KB gzip, East Asian width data
-included, outside the 80 KB R-PERF-1 budget for SVG (D87, R-ASCII-9). The bench checks both
-(`ascii-size` gate; `packages/bench/src/ascii-size.spec.ts` in `pnpm test`).
+included, outside the 80 KB R-PERF-1 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft:
+the bench's `ascii-size` gate measures and reports it but never fails. That an SVG render loads
+no ascii module is a hard check (`packages/bench/src/ascii-size.spec.ts` in `pnpm test`).

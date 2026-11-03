@@ -1,6 +1,6 @@
 /**
  * Splits a production bundle by output format (R-ASCII-9, D76, D87): the files an SVG render can
- * load, and the files only `format: 'ascii'` loads. The ascii share has its own 15 KB gzip budget
+ * load, and the files only `format: 'ascii'` loads. The ascii share has its own soft 15 KB gzip budget
  * (`LIMITS.asciiGzipBytes`) and must never be reachable from the SVG path, so R-PERF-1 is not
  * charged for it.
  */

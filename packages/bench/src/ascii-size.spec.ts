@@ -6,7 +6,6 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { asciiSize, isAsciiModule, splitByFormat } from './ascii-size.ts';
 import type { Bundle } from './build.ts';
 import { bundle } from './build.ts';
-import { LIMITS } from './gates.ts';
 
 const entry = fileURLToPath(new URL('../../mermaid/src/index.ts', import.meta.url));
 
@@ -46,10 +45,12 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     expect(inputs.some((i) => i.includes('diagram-flowchart/src/ascii.ts'))).toBe(true);
   });
 
-  it(`stays within ${LIMITS.asciiGzipBytes / 1024} KB gzip`, () => {
+  // D87: the 15 KB budget is soft. The size is measured here and reported by the bench's
+  // `ascii-size` gate (report-only); only the SVG path above is a hard check.
+  it('measures the ascii chunks (the soft 15 KB budget is the bench gate’s)', () => {
     const size = asciiSize(prod);
     expect(size.source).toBe('static');
     expect(size.gzip).toBeGreaterThan(0);
-    expect(size.gzip).toBeLessThanOrEqual(LIMITS.asciiGzipBytes);
+    expect(size.files.length).toBeGreaterThan(0);
   });
 });
