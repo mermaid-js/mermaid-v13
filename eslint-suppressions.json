@@ -82,14 +82,6 @@
       "count": 1
     }
   },
-  "packages/bench/src/markdown.ts": {
-    "@typescript-eslint/no-unsafe-argument": {
-      "count": 3
-    },
-    "complexity": {
-      "count": 1
-    }
-  },
   "packages/bench/src/runner/adapters.ts": {
     "@typescript-eslint/no-unsafe-call": {
       "count": 1

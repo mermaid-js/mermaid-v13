@@ -12,9 +12,12 @@ import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Browser, BrowserContext, Page } from '@playwright/test';
 import { build } from 'esbuild';
+import { extractBase } from './base.ts';
 import { benchDefine, bundle, sizeOf, summarise } from './build.ts';
 import type { Bundle } from './build.ts';
 import type { Fixture } from './fixtures.ts';
+import type { Session } from './interleave.ts';
+import { runAll } from './interleave.ts';
 import { stripMermaidOnlyConfig } from './normalize.ts';
 import { emptyStages, STAGES } from './report.ts';
 import type { DiagramResult, RendererId, RendererRun, SizeSummary, SizedFile } from './report.ts';
@@ -23,10 +26,16 @@ import { median, quantile } from './stats.ts';
 
 const PKG = fileURLToPath(new URL('../', import.meta.url));
 export const SITE_DIR = join(PKG, 'dist', 'site');
+/** The child-process runner of the Node environment (`node/runner.ts`, bundled). */
+export const NODE_RUNNER = join(SITE_DIR, 'node', 'runner.mjs');
 
 export interface Site {
   v13: Bundle;
   stages: Bundle;
+  /** The v13 bundle of the base commit, when `v13-base` was asked for and could be built. */
+  base?: Bundle & { version: string };
+  /** Why `v13-base` could not be built (unknown ref, or the commit fails to bundle). */
+  baseError?: string;
   /** URL path prefix → directory on disk. */
   roots: Record<string, string>;
 }
@@ -35,17 +44,70 @@ function moduleDir(alias: string): string {
   return realpathSync(join(PKG, 'node_modules', alias));
 }
 
-export function versionOf(id: RendererId): string {
-  const dir =
-    id === 'v13' || id === 'v13-stages'
-      ? join(PKG, '..', 'mermaid')
-      : moduleDir(id === 'v12-frozen' ? 'mermaid-v12-frozen' : 'mermaid-v12');
+const MODULE: Partial<Record<RendererId, string>> = {
+  'v12-frozen': 'mermaid-v12-frozen',
+  'v12-current': 'mermaid-v12',
+  pele: 'pele',
+};
+
+/** Version of an npm or working-tree renderer (`v13-base` carries its own, from the build). */
+export function versionOf(id: Exclude<RendererId, 'v13-base'>): string {
+  const alias = MODULE[id];
+  const dir = alias === undefined ? join(PKG, '..', 'mermaid') : moduleDir(alias);
   return (JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as { version: string })
     .version;
 }
 
-/** Builds the runner script and both v13 bundles into `dist/site`. */
-export async function buildSite(): Promise<Site> {
+/**
+ * The file a renderer is imported from in Node, or undefined when it only runs in a browser
+ * (Mermaid 12 needs a DOM). v13 and Pele are DOM-free; v13's bundles are the browser ones.
+ */
+export function nodeEntry(site: Site, id: RendererId): string | undefined {
+  const of = (b: Bundle | undefined) => (b === undefined ? undefined : join(b.outdir, b.entryFile));
+  if (id === 'v13') return of(site.v13);
+  if (id === 'v13-stages') return of(site.stages);
+  if (id === 'v13-base') return of(site.base);
+  if (id === 'pele') return join(moduleDir('pele'), 'dist', 'pele.js');
+  return undefined;
+}
+
+/** The run of a `v13-base` that could not be built: every fixture missing, with the reason. */
+export function unbuiltBase(site: Site, fixtures: Fixture[]): RendererRun {
+  const error = site.baseError ?? 'v13-base was not built';
+  return {
+    renderer: 'v13-base',
+    version: 'unknown',
+    status: 'missing',
+    error,
+    readyAtMs: null,
+    initMs: null,
+    size: null,
+    results: fixtures.map((f) => result(f, 'missing', error)),
+  };
+}
+
+export interface SiteOptions {
+  /** Build `v13-base` from this ref (a branch, tag or sha); omitted, it is not built. */
+  baseRef?: string;
+}
+
+/** Builds the base commit's production bundle; a failure is reported, not thrown. */
+async function buildBase(ref: string): Promise<Pick<Site, 'base' | 'baseError'>> {
+  try {
+    const tree = extractBase(ref);
+    const built = await bundle({
+      entry: tree.entry,
+      outdir: join(SITE_DIR, 'v13-base'),
+      bench: false,
+    });
+    return { base: { ...built, version: tree.version } };
+  } catch (e) {
+    return { baseError: e instanceof Error ? e.message.split('\n')[0]! : String(e) };
+  }
+}
+
+/** Builds the runner script and the v13 bundles (working tree, and base if asked) into `dist/site`. */
+export async function buildSite(options: SiteOptions = {}): Promise<Site> {
   rmSync(SITE_DIR, { recursive: true, force: true });
   const src = (p: string) => fileURLToPath(new URL(p, import.meta.url));
   await build({
@@ -55,6 +117,17 @@ export async function buildSite(): Promise<Site> {
     format: 'esm',
     platform: 'browser',
     target: 'es2022',
+    conditions: ['mermaid-source'],
+    define: benchDefine(false),
+    logLevel: 'warning',
+  });
+  await build({
+    entryPoints: [src('./node/runner.ts')],
+    outfile: NODE_RUNNER,
+    bundle: true,
+    format: 'esm',
+    platform: 'node',
+    target: 'node22',
     conditions: ['mermaid-source'],
     define: benchDefine(false),
     logLevel: 'warning',
@@ -69,15 +142,19 @@ export async function buildSite(): Promise<Site> {
     outdir: join(SITE_DIR, 'v13-stages'),
     bench: true,
   });
+  const base = options.baseRef === undefined ? {} : await buildBase(options.baseRef);
   return {
     v13,
     stages,
+    ...base,
     roots: {
       '/harness/': join(SITE_DIR, 'harness'),
       '/r/v13/': join(SITE_DIR, 'v13'),
       '/r/v13-stages/': join(SITE_DIR, 'v13-stages'),
+      ...(base.base && { '/r/v13-base/': join(SITE_DIR, 'v13-base') }),
       '/r/v12-frozen/': join(moduleDir('mermaid-v12-frozen'), 'dist'),
       '/r/v12-current/': join(moduleDir('mermaid-v12'), 'dist'),
+      '/r/pele/': join(moduleDir('pele'), 'dist'),
     },
   };
 }
@@ -173,7 +250,7 @@ export interface DriveOptions {
   timeoutMs: number;
   liftLimits: boolean;
   strip: boolean;
-  log(line: string): void;
+  log: (line: string) => void;
 }
 
 interface BenchPage {
@@ -202,7 +279,7 @@ async function openRunner(o: DriveOptions): Promise<BenchPage> {
   return { page, context, ready: await readyInfo() };
 }
 
-function result(f: Fixture, status: DiagramResult['status'], error?: string): DiagramResult {
+export function result(f: Fixture, status: DiagramResult['status'], error?: string): DiagramResult {
   return {
     id: f.id,
     set: f.set,
@@ -217,7 +294,7 @@ function result(f: Fixture, status: DiagramResult['status'], error?: string): Di
   };
 }
 
-function fromReply(f: Fixture, reply: RenderReply): DiagramResult {
+export function fromReply(f: Fixture, reply: RenderReply): DiagramResult {
   if (!reply.ok) return result(f, 'error', reply.error);
   const stages = emptyStages();
   for (const s of STAGES) stages[s] = median(reply.stageSamples[s] ?? []);
@@ -234,10 +311,51 @@ function fromReply(f: Fixture, reply: RenderReply): DiagramResult {
   };
 }
 
-/** Runs every fixture through one renderer. */
-export async function drive(o: DriveOptions): Promise<RendererRun> {
-  const version = versionOf(o.renderer);
-  let runner = await openRunner(o);
+/** Renders one fixture on an open page, with a timeout; a page that timed out is replaced. */
+async function measureOn(
+  o: DriveOptions,
+  holder: { runner: BenchPage },
+  f: Fixture
+): Promise<DiagramResult> {
+  const source = o.strip ? stripMermaidOnlyConfig(f.source).source : f.source;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<'timeout'>(
+    (resolve) => (timer = setTimeout(() => resolve('timeout'), o.timeoutMs))
+  );
+  const reply = await Promise.race([
+    holder.runner.page
+      .evaluate(
+        ([s, r, b]) => (window as unknown as { __bench: BenchWindow }).__bench.render(s, r, b),
+        [source, o.reps, o.budgetMs] as const
+      )
+      .catch(
+        (e: unknown): RenderReply => ({
+          ok: false,
+          error: e instanceof Error ? e.message : String(e),
+        })
+      ),
+    timeout,
+  ]);
+  clearTimeout(timer);
+  if (reply !== 'timeout') return fromReply(f, reply);
+  // The page is still busy with this diagram; start a fresh one for the rest.
+  await holder.runner.context.close();
+  holder.runner = await openRunner(o);
+  return result(f, 'timeout', `no result within ${o.timeoutMs} ms`);
+}
+
+/**
+ * Opens one renderer's page. Returns a session that measures fixtures one at a time, or a
+ * finished run (every fixture missing or failed) when the renderer could not start.
+ */
+export async function openBrowserSession(o: DriveOptions): Promise<Session | RendererRun> {
+  if (o.renderer === 'v13-base' && !o.site.base) {
+    const run = unbuiltBase(o.site, o.fixtures);
+    o.log(`  v13-base: not built: ${run.error}`);
+    return run;
+  }
+  const version = o.renderer === 'v13-base' ? o.site.base!.version : versionOf(o.renderer);
+  const holder = { runner: await openRunner(o) };
   const base: Omit<RendererRun, 'status' | 'results'> = {
     renderer: o.renderer,
     version,
@@ -253,68 +371,49 @@ export async function drive(o: DriveOptions): Promise<RendererRun> {
         )
       : null;
 
-  if (!runner.ready.ok) {
-    const { missing, error } = runner.ready;
-    await runner.context.close();
-    o.log(`  ${o.renderer}: ${missing ? 'pipeline missing' : 'init failed'}: ${error}`);
+  const ready = holder.runner.ready;
+  if (!ready.ok) {
+    await holder.runner.context.close();
+    o.log(`  ${o.renderer}: ${ready.missing ? 'pipeline missing' : 'init failed'}: ${ready.error}`);
     return {
       ...base,
-      status: missing ? 'missing' : 'init-error',
-      error,
+      status: ready.missing ? 'missing' : 'init-error',
+      error: ready.error,
       size: v13Static(),
-      results: o.fixtures.map((f) => result(f, missing ? 'missing' : 'error', error)),
+      results: o.fixtures.map((f) => result(f, ready.missing ? 'missing' : 'error', ready.error)),
     };
   }
 
   const prefix = `/r/${o.renderer}/`;
-  const loaded = runner.ready.resources
+  const loaded = ready.resources
     .map((r) => new URL(r.name).pathname)
     .filter((p) => p.startsWith(prefix))
     .map((p) => o.server.size(p))
     .filter((s): s is SizedFile => s !== undefined);
-  const run: RendererRun = {
-    ...base,
-    status: 'ready',
-    readyAtMs: runner.ready.readyAt,
-    initMs: runner.ready.initMs,
-    size: loaded.length > 0 ? summarise(loaded, 'loaded') : v13Static(),
-    results: [],
+  return {
+    renderer: o.renderer,
+    run: {
+      ...base,
+      status: 'ready',
+      readyAtMs: ready.readyAt,
+      initMs: ready.initMs,
+      size: loaded.length > 0 ? summarise(loaded, 'loaded') : v13Static(),
+      results: [],
+    },
+    measure: (f) => measureOn(o, holder, f),
+    close: () => holder.runner.context.close(),
   };
+}
 
-  for (const [i, f] of o.fixtures.entries()) {
-    const source = o.strip ? stripMermaidOnlyConfig(f.source).source : f.source;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const timeout = new Promise<'timeout'>(
-      (resolve) => (timer = setTimeout(() => resolve('timeout'), o.timeoutMs))
-    );
-    const reply = await Promise.race([
-      runner.page
-        .evaluate(
-          ([s, r, b]) => (window as unknown as { __bench: BenchWindow }).__bench.render(s, r, b),
-          [source, o.reps, o.budgetMs] as const
-        )
-        .catch(
-          (e: unknown): RenderReply => ({
-            ok: false,
-            error: e instanceof Error ? e.message : String(e),
-          })
-        ),
-      timeout,
-    ]);
-    clearTimeout(timer);
-    if (reply === 'timeout') {
-      run.results.push(result(f, 'timeout', `no result within ${o.timeoutMs} ms`));
-      // The page is still busy with this diagram; start a fresh one for the rest.
-      await runner.context.close();
-      runner = await openRunner(o);
-    } else {
-      run.results.push(fromReply(f, reply));
-    }
-    const last = run.results[run.results.length - 1]!;
-    o.log(
-      `  ${o.renderer} ${i + 1}/${o.fixtures.length} ${f.id}: ${last.status}${last.warmMs !== null ? ` ${last.warmMs.toFixed(3)} ms` : ''}`
-    );
-  }
-  await runner.context.close();
-  return run;
+export type BrowserDriveOptions = Omit<DriveOptions, 'renderer'> & { renderers: RendererId[] };
+
+/** Runs every fixture through every renderer in the browser, alternating (`interleave.ts`). */
+export function driveBrowser(o: BrowserDriveOptions): Promise<RendererRun[]> {
+  return runAll(
+    o.renderers,
+    (renderer) => openBrowserSession({ ...o, renderer }),
+    o.fixtures,
+    o.log,
+    'browser'
+  );
 }
