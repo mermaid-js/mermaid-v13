@@ -101,13 +101,56 @@ function arrows(type: string, stroke: string): [string, string] {
   return ['none', type === 'arrow_circle' || type === 'arrow_cross' ? type : 'arrow_point'];
 }
 
+// CSS absolute-size keywords (medium = 16px) and the relative ones as a step of 1.2.
+const SIZE_KEYWORDS: Readonly<Record<string, number>> = {
+  'xx-small': 9,
+  'x-small': 10,
+  small: 13,
+  medium: 16,
+  large: 18,
+  'x-large': 24,
+  'xx-large': 32,
+};
+// px per unit; `em`, `ex`, `ch` and `%` are relative to the label's own font size.
+const PX_PER: Readonly<Record<string, number>> = {
+  '': 1,
+  px: 1,
+  pt: 4 / 3,
+  pc: 16,
+  in: 96,
+  cm: 96 / 2.54,
+  mm: 96 / 25.4,
+  rem: 16,
+};
+const RELATIVE: Readonly<Record<string, number>> = { em: 1, ex: 0.5, ch: 0.5, '%': 0.01 };
+const RE_FONT_SIZE = /^(\d+(?:\.\d+)?|\.\d+)([a-z%]*)$/i;
+
+/**
+ * A checked `font-size` in px, measured as the browser draws it: units and keywords resolved
+ * against `base`. Undefined for what has no fixed size here (`vw`, `vh`).
+ */
+function fontPx(value: unknown, base: number): number | undefined {
+  if (typeof value !== 'string' && typeof value !== 'number') return undefined;
+  const v = String(value).trim().toLowerCase();
+  if (v === 'smaller') return base / 1.2;
+  if (v === 'larger') return base * 1.2;
+  if (SIZE_KEYWORDS[v] !== undefined) return SIZE_KEYWORDS[v];
+  const m = RE_FONT_SIZE.exec(v);
+  if (!m) return undefined;
+  const n = Number(m[1]);
+  const unit = m[2] ?? '';
+  if (PX_PER[unit] !== undefined) return n * PX_PER[unit];
+  if (RELATIVE[unit] !== undefined) return n * RELATIVE[unit] * base;
+  return undefined;
+}
+
 function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
   const t = style.text;
   const weight = t['font-weight'];
   const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
   const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-  const size = parseFloat(String(t['font-size'] ?? ''));
-  return [size > 0 && size < 1000 ? { ...font, size } : font, bits];
+  const size = fontPx(t['font-size'], font.size);
+  return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
 }
 
 /**
@@ -339,13 +382,16 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     for (let n = 2; ids.has(id); n++) id = `${e.id}#${n}`;
     ids.add(id);
     const [start, end] = arrows(e.type, e.stroke);
+    const style = styleOf(e.classes, [...(model.defaultStyle ?? []), ...(e.style ?? [])]);
+    // Measured in the font the label is drawn in, as node labels are.
+    const [f, bits] = textStyle(style, font);
     edges.push({
       edge: e,
       id,
       source,
       target,
-      label: label(e.text, e.labelType === 'markdown', font, b.edgeWrap),
-      style: styleOf(e.classes, [...(model.defaultStyle ?? []), ...(e.style ?? [])]),
+      label: label(e.text, e.labelType === 'markdown', f, b.edgeWrap, bits),
+      style,
       start,
       end,
       curve: curveKind(e.interpolate ?? model.defaultInterpolate ?? flow.curve),
@@ -369,7 +415,9 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   // An LR/RL drawing the engine turns to TB for `availableWidth` runs its ranks down (#47).
   const down = spacingOn('y', 'x');
   const turned = down.node !== spacing.node || down.rank !== spacing.rank;
-  const curve = curveKind(flow.curve);
+  // How edges are routed follows the diagram's default curve: `linkStyle default interpolate`
+  // first, then config, as each edge's own drawing does.
+  const curve = curveKind(model.defaultInterpolate ?? flow.curve);
   const graph: LayoutGraph = {
     direction: rootDir,
     nodes: nodes.map((n): LayoutNode => {
