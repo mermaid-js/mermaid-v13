@@ -12,6 +12,8 @@ export type { KeyNote, KeyTree } from './keys.ts';
 export {
   INTEGRATOR_ONLY_KEYS,
   resolveConfig,
+  resolveSite,
+  resolveText,
   type ConfigInput,
   type ConfigSource,
   type ConfigWarning,
@@ -19,6 +21,7 @@ export {
   type DeepReadonly,
   type ResolveConfigOptions,
   type ResolvedConfig,
+  type ResolvedSite,
 } from './resolve.ts';
 
 /** Top-level defaults from the schema, frozen. Diagram sections come from their packages. */

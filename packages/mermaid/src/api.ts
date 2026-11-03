@@ -22,10 +22,12 @@ import {
 import {
   CORE_DEFAULTS,
   INTEGRATOR_ONLY_KEYS,
-  resolveConfig,
+  resolveSite,
+  resolveText,
   type ConfigInput,
   type MermaidConfig,
   type ResolvedConfig,
+  type ResolvedSite,
 } from '@mermaid-js/core/config';
 import {
   cellProfile,
@@ -155,7 +157,7 @@ export type ExtensionPlugin = CoreExtensionPlugin<Element, RenderResult>;
 /**
  * What `prepare` found: cached so `renderSync` right after does not parse again. The object is the
  * cached one, shared with later renders of the same text: read it, never change it. Only the
- * config is frozen (by `resolveConfig`).
+ * config is frozen (by `resolveText`).
  */
 export interface Prepared {
   readonly diagramType: string;
@@ -358,9 +360,9 @@ interface Analysis {
   readonly title?: string;
 }
 
-/** A config resolved without front matter or directives, and the warnings resolving it gave. */
-interface PlainConfig {
-  readonly config: ResolvedConfig;
+/** The integrator's side of a config, and the warnings resolving it gave. */
+interface SiteConfig {
+  readonly site: ResolvedSite;
   readonly warnings: readonly Warning[];
 }
 
@@ -387,9 +389,9 @@ export function createMermaid() {
   let parseErrorHandler: ParseErrorHandler | undefined;
   let iconPacksRequested = false;
   const cache = new Map<string, CacheEntry>();
-  // Without front matter config or directives, a diagram's config only depends on the snapshot,
-  // the plugin and the detected type: resolve it once, and replay its warnings on reuse.
-  const plainConfigs = new WeakMap<Snapshot, WeakMap<AnyPlugin, Map<string, PlainConfig>>>();
+  // Everything but the diagram text's own config depends only on the snapshot, the plugin and
+  // the detected type: resolve it once, and replay its warnings on reuse.
+  const siteConfigs = new WeakMap<Snapshot, WeakMap<AnyPlugin, Map<string, SiteConfig>>>();
   // `core/ascii`'s cell measurer and width, loaded by the first text `prepare` (D87).
   let textBackend: TextBackend | undefined;
 
@@ -409,46 +411,30 @@ export function createMermaid() {
     const warn = (w: Warning): void => void warnings.push(toWarning(w));
     for (const d of pre.diagnostics) if (d.severity === 'warning') warn(d);
     const section = sectionOf(detected, plugin);
-    const pluginDefaults: Plain = {};
-    if (plugin.configDefaults && section) pluginDefaults[section] = plugin.configDefaults;
-    // v12's flowchart-elk detector sets `layout: 'elk'` below the user's config.
-    if (detected.type === 'flowchart-elk') pluginDefaults.layout = 'elk';
     const front = pre.frontMatter?.config;
     const directives = directiveConfig(pre, section);
-    let config: ResolvedConfig;
-    if (front === undefined && directives.length === 0) {
-      let byPlugin = plainConfigs.get(snap);
-      if (!byPlugin)
-        plainConfigs.set(snap, (byPlugin = new WeakMap<AnyPlugin, Map<string, PlainConfig>>()));
-      let byType = byPlugin.get(plugin);
-      if (!byType) byPlugin.set(plugin, (byType = new Map<string, PlainConfig>()));
-      const key = `${section ?? ''}\0${detected.type}`;
-      let hit = byType.get(key);
-      if (!hit) {
-        const recorded: Warning[] = [];
-        const resolved = resolveConfig(
-          CORE_DEFAULTS,
-          snap.config,
-          undefined,
-          [],
-          pluginDefaults as MermaidConfig,
-          { warn: (w) => void recorded.push(w), section }
-        );
-        hit = { config: resolved, warnings: recorded };
-        byType.set(key, hit);
-      }
-      for (const w of hit.warnings) warn(w);
-      config = hit.config;
-    } else {
-      config = resolveConfig(
-        CORE_DEFAULTS,
-        snap.config,
-        front,
-        directives,
-        pluginDefaults as MermaidConfig,
-        { warn, section }
-      );
+    let byPlugin = siteConfigs.get(snap);
+    if (!byPlugin)
+      siteConfigs.set(snap, (byPlugin = new WeakMap<AnyPlugin, Map<string, SiteConfig>>()));
+    let byType = byPlugin.get(plugin);
+    if (!byType) byPlugin.set(plugin, (byType = new Map<string, SiteConfig>()));
+    const key = `${section ?? ''}\0${detected.type}`;
+    let hit = byType.get(key);
+    if (!hit) {
+      const pluginDefaults: Plain = {};
+      if (plugin.configDefaults && section) pluginDefaults[section] = plugin.configDefaults;
+      // v12's flowchart-elk detector sets `layout: 'elk'` below the user's config.
+      if (detected.type === 'flowchart-elk') pluginDefaults.layout = 'elk';
+      const recorded: Warning[] = [];
+      const resolved = resolveSite(CORE_DEFAULTS, snap.config, pluginDefaults as MermaidConfig, {
+        warn: (w) => void recorded.push(w),
+        section,
+      });
+      hit = { site: resolved, warnings: recorded };
+      byType.set(key, hit);
     }
+    for (const w of hit.warnings) warn(w);
+    const config: ResolvedConfig = resolveText(hit.site, front, directives, { warn });
     const t = stageStart();
     const claims = hooks.claims();
     const parse = plugin.parse(
