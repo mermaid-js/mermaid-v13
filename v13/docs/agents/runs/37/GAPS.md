@@ -76,3 +76,25 @@ Unmet acceptance criteria and announced shared contracts, grouped by the ticket 
 - Decision: fixture `paddingX`/`paddingY` stay ignored (no config key; our goldens are v13's own output, the upstream check is structural). Not mapped to `padding: 'roomy'`.
 - Engine: edges still cross group titles in nested-subgraph corpus cases (e.g. `66/68-more-nested-subgraph-cases`, `┌ thr┴e┼──┐`); 17 corpus renders fail box-to-box. Fix in the final review.
 - Engine/drawer: content in a narrow frame sits one cell left (golden `level3`).
+
+## Final review fixes (feature/37_review-fixes) — see tickets/review-fixes.md
+
+- Closed: edges through group titles (engine: title runs keep clear of own top-side ends and a blank
+  cell either side; ends step aside, frames grow otherwise) — corpus now checks titles and
+  box-to-box; narrow-frame content centred; LR → TB spacing (`LayoutGraph.turnedSpacing`);
+  repair.spec wall-clock → `RepairResult.expanded` work bound; corpus layout captured through a
+  `postLayout` hook (`layoutCells` gone); columns check independent; CLI precedence/`--format`/docs;
+  `ascii-size` gate report-only (D87); direction constants and the `ascii` resolver live once in core/ascii.
+- **Maintainer decisions (flag in the PR):** `TextRenderOptions.ascii` (new, additive): explicit
+  per-call text options that win over every config source key by key — the CLI flags use it.
+  DESIGN §6.3 CLI paragraph and ascii.md say so. Exit 2 is unreachable from the CLI with 13.0's
+  built-in types (only the flowchart, which has ascii); documented, not process-tested.
+- A title may now sit against its frame's left corner (`┌Nothing here ─┐`) when an edge end steps
+  aside to the right; the blank-cell rule only applies between a title and routes.
+- Out of scope (not fixed): `LaidOut.layout` is declared `LayoutModel` but the flowchart hands its
+  `FlowLayout` (conformance `render.ts` casts it); `units.id === 'cell'` is used as a format flag in
+  3 places; `checkText` runs up to 3× per text render path; `(text, s, options, analysis)` data
+  clump in api.ts. Other packages still time specs with `Date.now`/`performance.now`
+  (`conformance/stress.spec.ts`, `core/preprocess/stress.spec.ts`, `diagram-flowchart/limits.spec.ts`), not #37's.
+- Size (mermaid ESM, gzip -9, bench split): SVG-loadable set 102,574 → 103,275 B (+701, the
+  grid title/spacing code in the shared engine; M1-close size pass); ascii-only 9,010 → 9,236 B.
