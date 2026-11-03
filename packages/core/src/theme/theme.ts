@@ -453,8 +453,25 @@ function resolvePalettes(
 }
 
 /** Builds one render's theme. */
-export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme {
+interface ThemeParts {
+  defs: Record<string, ThemeVarDef>;
+  darkMode: boolean;
+  main: Resolver;
+  night: Resolver | undefined;
+  palettes: Record<PaletteVariable, readonly SafeColor[]>;
+}
+
+// Without overrides or extra rules a theme derives the same values on every render, so its
+// resolvers (and their memos) are kept per spec. A render's own state is only `used`.
+const PLAIN = new WeakMap<ThemeSpec, Map<ThemeSpec | undefined, ThemeParts>>();
+
+function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
   const tv = options.themeVariables;
+  const plain = (tv === undefined || Object.keys(tv).length === 0) && !options.rules;
+  if (plain) {
+    const hit = PLAIN.get(spec)?.get(options.dark);
+    if (hit) return hit;
+  }
   const defs: Record<string, ThemeVarDef> = { ...THEME_VARIABLES };
   if (options.rules)
     for (const name of Object.keys(options.rules))
@@ -466,12 +483,27 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
     ...s.rules,
     ...options.rules,
   });
-  const main = new Resolver(spec, rulesFor(spec, darkMode), overrides, defs);
-  const night =
-    options.dark && new Resolver(options.dark, rulesFor(options.dark, true), overrides, defs);
+  const parts: ThemeParts = {
+    defs,
+    darkMode,
+    main: new Resolver(spec, rulesFor(spec, darkMode), overrides, defs),
+    night: options.dark
+      ? new Resolver(options.dark, rulesFor(options.dark, true), overrides, defs)
+      : undefined,
+    palettes: resolvePalettes(spec, tv, options.warn),
+  };
+  if (plain) {
+    let byDark = PLAIN.get(spec);
+    if (!byDark) PLAIN.set(spec, (byDark = new Map<ThemeSpec | undefined, ThemeParts>()));
+    byDark.set(options.dark, parts);
+  }
+  return parts;
+}
+
+export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme {
+  const { defs, darkMode, main, night, palettes } = themeParts(spec, options);
   const vars = options.cssVariables !== false;
   const used = new Set<string>();
-  const palettes = resolvePalettes(spec, tv, options.warn);
 
   const def = (name: string): ThemeVarDef => {
     const d = own(defs, name) ? defs[name] : undefined;
