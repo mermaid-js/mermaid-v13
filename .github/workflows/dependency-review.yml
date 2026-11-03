@@ -16,6 +16,9 @@ permissions:
 
 jobs:
   dependency-review:
+    # Paused: needs GitHub Advanced Security, which this private repo won't pay for; the open-source
+    # mermaid repo runs it. Re-enable by deleting this `if`.
+    if: false
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Repository'
