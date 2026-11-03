@@ -107,7 +107,8 @@ export function renderFlowchart(
   const flow = layout.flow ?? prepare(model, ctx);
   const warn = ctx.warn;
   const securityLevel = ctx.securityLevel ?? 'default';
-  const prefix = ctx.idPrefix ?? 'mermaid';
+  // The id prefix hashes the text and config, and most diagrams never write an id.
+  const prefix = (): string => ctx.idPrefix ?? 'mermaid';
   const labelled = flow.edges.some((e) => e.label.width > 0);
   const headGeometry = arrowheads(theme);
 
@@ -159,22 +160,22 @@ export function renderFlowchart(
     height: maxWidth ? undefined : height,
     role: 'img',
     'aria-roledescription': 'flowchart',
-    'aria-labelledby': title ? `${prefix}-title` : undefined,
-    'aria-describedby': desc ? `${prefix}-desc` : undefined,
+    'aria-labelledby': title ? `${prefix()}-title` : undefined,
+    'aria-describedby': desc ? `${prefix()}-desc` : undefined,
     'data-mermaid-version': ctx.version ?? '13',
-    'data-p': auto ? prefix : undefined,
+    'data-p': auto ? prefix() : undefined,
     style: styleText({ ...(maxWidth ? { 'max-width': px(width) } : {}), ...theme.rootStyle() }),
     'font-family': P.ff,
     'font-size': P.fs,
   });
-  if (auto) w.styleSheet(themeStyleSheet(prefix, auto.light, auto.dark));
+  if (auto) w.styleSheet(themeStyleSheet(prefix(), auto.light, auto.dark));
   if (title) {
-    w.open('title', { id: `${prefix}-title` });
+    w.open('title', { id: `${prefix()}-title` });
     w.text(title);
     w.close();
   }
   if (desc) {
-    w.open('desc', { id: `${prefix}-desc` });
+    w.open('desc', { id: `${prefix()}-desc` });
     w.text(desc);
     w.close();
   }

@@ -108,7 +108,8 @@ function markDroppedSemicolons(
   mark: (i: number, bit: number) => void,
   current: () => Uint8Array | undefined
 ): void {
-  if (!src.includes(';')) return;
+  if (!src.includes(';') || (!src.includes('style', from) && !src.includes('classDef', from)))
+    return;
   const words = ['style', 'classDef'];
   const next = [-2, -2];
   let ls = from;
@@ -148,6 +149,7 @@ function markDroppedSemicolons(
 
 /** Directive spans plus the line comments v12 removed after them. */
 function holes(src: string, from: number, directives: readonly Range[]): Hole[] {
+  if (directives.length === 0 && !src.includes('%%', from)) return [];
   const out: Hole[] = [];
   let d = 0;
   // Next directive at or after `i`, as an index into `directives`.

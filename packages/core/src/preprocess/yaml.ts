@@ -16,6 +16,7 @@
 // cspell:words kepano
 import {
   ASCII_MAX,
+  BMP_LAST,
   C1_LAST,
   CR,
   HIGH_SURROGATE_FIRST,
@@ -24,8 +25,8 @@ import {
   LOW_SURROGATE_FIRST,
   LOW_SURROGATE_LAST,
   NEL,
+  NUL,
   REVERSED_BOM,
-  BMP_LAST,
   SPACE,
   TAB,
 } from '../parser-kit/char-codes.ts';
@@ -762,8 +763,9 @@ export function parseYaml(src: string, options: YamlOptions = {}): YamlResult {
   const diagnostics = new Diagnostics();
   const reader = new Reader(src, start, end, options.indent ?? '', diagnostics);
   try {
-    const nul = src.indexOf('\0', start);
-    if (nul >= 0 && nul < end) reader.fail('null byte is not allowed in input', nul);
+    for (let i = start; i < end; i++) {
+      if (src.charCodeAt(i) === NUL) reader.fail('null byte is not allowed in input', i);
+    }
     return { value: reader.read(), diagnostics: diagnostics.list };
   } catch (err) {
     if (!(err instanceof YamlError)) throw err;

@@ -151,13 +151,16 @@ class Stream implements StreamSvgWriter {
     const blank = tag === 'a' && attrs.target === '_blank';
     let rel = false;
     for (const name in attrs) {
-      let value = formatValue(tag, name, (attrs as Record<string, unknown>)[name]);
+      const raw = (attrs as Record<string, unknown>)[name];
+      let value = formatValue(tag, name, raw);
       if (value === undefined) continue;
       if (name === 'rel' && blank) {
         value = BLANK_REL;
         rel = true;
       }
-      s += ' ' + name + '="' + esc(value) + '"';
+      // Numbers and number lists format to digits, signs, points, commas and spaces only.
+      const plain = typeof raw === 'number' || Array.isArray(raw);
+      s += ' ' + name + '="' + (plain ? value : esc(value)) + '"';
     }
     if (blank && !rel) s += ' rel="' + BLANK_REL + '"';
     return s;

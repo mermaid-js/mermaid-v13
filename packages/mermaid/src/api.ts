@@ -627,6 +627,7 @@ export function createMermaid() {
       cssVariables: s.options.output?.cssVariables,
       warn,
     });
+    let idPrefix: string | undefined;
     const ctx: RenderContext = {
       config,
       measurer:
@@ -635,7 +636,9 @@ export function createMermaid() {
       units,
       theme,
       securityLevel: resolveSecurityLevel(config.securityLevel, warn),
-      idPrefix: options?.id ?? defaultIdPrefix(text, config, s.options, units),
+      get idPrefix() {
+        return (idPrefix ??= options?.id ?? defaultIdPrefix(text, config, s.options, units));
+      },
       version: VERSION,
       linkSchemes: s.options.linkSchemes,
       limits: s.limits,

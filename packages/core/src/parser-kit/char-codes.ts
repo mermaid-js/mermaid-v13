@@ -2,6 +2,7 @@
  * UTF-16 code units by name, for comparing `charCodeAt` results. Each is its own `const`, so
  * bundlers inline the number at every use.
  */
+export const NUL = 0x00;
 export const TAB = 0x09;
 export const LF = 0x0a;
 export const CR = 0x0d;
