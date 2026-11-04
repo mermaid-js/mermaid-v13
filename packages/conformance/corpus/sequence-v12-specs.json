@@ -1,0 +1,710 @@
+[
+  {
+    "id": "v12-specs/actorBandModel.spec.ts#1",
+    "source": "sequenceDiagram\n  actor User\n  participant Plain as Plain\n  participant B@{ \"type\" : \"boundary\" } as Bound\n  participant C@{ \"type\" : \"control\" } as Ctrl\n  participant E@{ \"type\" : \"entity\" } as Ent\n  participant DB@{ \"type\" : \"database\" } as Database\n  participant Q@{ \"type\" : \"queue\" } as Que\n  participant Co@{ \"type\" : \"collections\" } as Coll\n  User ->> DB: query\n"
+  },
+  {
+    "id": "v12-specs/keywordActors.spec.ts#1",
+    "source": "sequenceDiagram\n    participant A\n    participant Link as Channel\n    A->>Link: message"
+  },
+  {
+    "id": "v12-specs/keywordActors.spec.ts#2",
+    "source": "sequenceDiagram\n    participant A\n    participant Link as Channel\n    Link->>A: message"
+  },
+  {
+    "id": "v12-specs/keywordActors.spec.ts#3",
+    "source": "sequenceDiagram\n    participant A\n    participant Link as Channel\n    Link  -->>A: message"
+  },
+  {
+    "id": "v12-specs/keywordActors.spec.ts#4",
+    "source": "sequenceDiagram\n    participant A\n    participant Link as Channel\n    A->>Link : message"
+  },
+  {
+    "id": "v12-specs/keywordActors.spec.ts#5",
+    "source": "sequenceDiagram\n    participant A\n    participant LINK as Channel\n    A->>LINK: message"
+  },
+  {
+    "id": "v12-specs/keywordActors.spec.ts#6",
+    "source": "sequenceDiagram\n    participant A\n    participant B\n    A->>B: see the link page"
+  },
+  {
+    "id": "v12-specs/keywordActors.spec.ts#7",
+    "source": "sequenceDiagram\n    participant A\n    link A: Help @ https://example.com"
+  },
+  {
+    "id": "v12-specs/keywordActors.spec.ts#8",
+    "source": "sequenceDiagram\n    participant A\n    link A : Help @ https://example.com"
+  },
+  {
+    "id": "v12-specs/keywordActors.spec.ts#9",
+    "source": "sequenceDiagram\n    participant A\n    links A: {\"help\": \"https://example.com\"}"
+  },
+  {
+    "id": "v12-specs/keywordActors.spec.ts#10",
+    "source": "sequenceDiagram\n    participant A\n    properties A: {\"color\": \"red\"}"
+  },
+  {
+    "id": "v12-specs/keywordActors.spec.ts#11",
+    "source": "sequenceDiagram\n    participant A\n    details A: details-1"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#1",
+    "source": "sequenceDiagram"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#2",
+    "source": "\n        sequenceDiagram\n        Alice->Bob:Hello Bob, how are you?\n        Bob-->Alice: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#4",
+    "source": "\n        sequenceDiagram\n        Alice->John:Hello John, how are you?\n        John-->Alice: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#5",
+    "source": "\n        sequenceDiagram\n        participant Alice\n        participant Bob\n        Alice ()->>() Bob: Hello Bob, how are you?\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#6",
+    "source": "\n        sequenceDiagram\n        participant Alice\n        participant Bob\n        Alice ()-->>() Bob: Hello Bob, how are you?\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#7",
+    "source": "\n        sequenceDiagram\n        participant Alice\n        participant Bob\n        Alice ->>() Bob: Hello Bob, how are you?\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#8",
+    "source": "\n        sequenceDiagram\n        participant Alice\n        participant Bob\n        Alice ()-->> Bob: Hello Bob, how are you?\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#9",
+    "source": "\n        sequenceDiagram\n        participant Alice\n        participant Bob\n        Alice ()->> Bob: Hello Bob, how are you?\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#10",
+    "source": "\n        sequenceDiagram\n        participant Alice\n        participant Bob\n        Alice ()<<-->>() Bob: Hello Bob, how are you?\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#11",
+    "source": "\n        sequenceDiagram\n        participant Alice\n        participant Bob\n        Alice ()<<->>() Bob: Hello Bob, how are you?\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#12",
+    "source": "\n        sequenceDiagram\n        participant Alice\n        participant Bob\n        participant Charlie\n        Alice ()->>() Bob: Message 1\n        Bob ()-->> Charlie: Message 2\n        Charlie ()<<-->>() Alice: Message 3\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#13",
+    "source": "\n        sequenceDiagram\n        participant Alice\n        participant Bob\n        Alice ()-x() Bob: Cross message\n        Alice ()--x() Bob: Dotted cross message\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#14",
+    "source": "\n        sequenceDiagram\n        participant Alice\n        participant Bob\n        Alice ->> Bob: Normal message\n        Bob -->> Alice: Normal dotted message\n        Alice -x Bob: Normal cross message\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#15",
+    "source": "\nsequenceDiagram\nAlice->Bob:Hello Bob, how are you?\nNote right of Bob: Bob thinks\nBob-->Alice: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#17",
+    "source": "\nsequenceDiagram\nautonumber\nAlice->Bob:Hello Bob, how are you?\nNote right of Bob: Bob thinks\nBob-->Alice: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#18",
+    "source": "\n        sequenceDiagram\n        autonumber 10.1 .01\n        Alice->Bob:Hello Bob, how are you?\n        Note right of Bob: Bob thinks\n        Bob-->Alice: I am good thanks!\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#19",
+    "source": "\n      sequenceDiagram\n      autonumber 10.001\n      Alice->Bob:Hello Bob, how are you?\n      Note right of Bob: Bob thinks\n      Bob-->Alice: I am good thanks!\n    "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#20",
+    "source": "\nsequenceDiagram\ntitle: Diagram Title\nAlice->Bob:Hello Bob, how are you?\nNote right of Bob: Bob thinks\nBob-->Alice: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#21",
+    "source": "\nsequenceDiagram\ntitle Diagram Title\nAlice->Bob:Hello Bob, how are you?\nNote right of Bob: Bob thinks\nBob-->Alice: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#22",
+    "source": "\nsequenceDiagram\ntitle: Diagram Title\naccTitle: This is the title\naccDescr: Accessibility Description\nAlice->Bob:Hello Bob, how are you?\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#23",
+    "source": "\nsequenceDiagram\naccTitle: This is the title\naccDescr {\nAccessibility\nDescription\n}\nAlice->Bob:Hello Bob, how are you?\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#24",
+    "source": "\nsequenceDiagram\nAlice->Bob:Hello Bob, how are - you?\nBob-->Alice: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#25",
+    "source": "\nsequenceDiagram\nAlice-in-Wonderland->Bob:Hello Bob, how are - you?\nBob-->Alice-in-Wonderland:I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#26",
+    "source": "\nsequenceDiagram\nparticipant Alice-in-Wonderland\nparticipant Bob\nAlice-in-Wonderland->Bob:Hello Bob, how are - you?\nBob-->Alice-in-Wonderland:I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#27",
+    "source": "\nsequenceDiagram\nparticipant Alice=Wonderland\nparticipant Bob\nAlice=Wonderland->Bob:Hello Bob, how are - you?\nBob-->Alice=Wonderland:I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#28",
+    "source": "\nsequenceDiagram\nparticipant A as Alice\nparticipant B as Bob\nA->B:Hello Bob, how are you?\nB-->A: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#29",
+    "source": "\nsequenceDiagram\n  actor Alice as Alice2\n  actor Bob\n  participant John as John2\n  participant Mandy\n  Alice->>Bob: Hi Bob\n  Bob->>Alice: Hi Alice\n  Alice->>John: Hi John\n  John->>Mandy: Hi Mandy\n  Mandy ->>Joan: Hi Joan"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#30",
+    "source": "\nsequenceDiagram\nactor A as Alice\nactor B as Bob\nA->B:Hello Bob, how are you?\nB-->A: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#31",
+    "source": "\nsequenceDiagram\nAlice-xBob:Hello Bob, how are you?"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#32",
+    "source": "\nsequenceDiagram\nAlice--xBob:Hello Bob, how are you?"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#33",
+    "source": "\nsequenceDiagram\nAlice-)Bob:Hello Bob, how are you?"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#34",
+    "source": "\nsequenceDiagram\nAlice--)Bob:Hello Bob, how are you?"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#35",
+    "source": "\nsequenceDiagram\nAlice->>Bob:Hello Bob, how are you?"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#36",
+    "source": "sequenceDiagram\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#37",
+    "source": "\nsequenceDiagram\nAlice<<->>Bob:Hello Bob, how are you?"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#38",
+    "source": "\n    sequenceDiagram\n    Alice<<-->>Bob:Hello Bob, how are you?"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#39",
+    "source": "\nsequenceDiagram\nAlice-->>Bob:Hello Bob, how are you?\nactivate Bob\nBob-->>Alice:Hello Alice, I'm fine and  you?\ndeactivate Bob"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#40",
+    "source": "\n    sequenceDiagram\n    Alice-->>+Bob:Hello Bob, how are you?\n    Bob-->>- Alice:Hello Alice, I'm fine and  you?"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#41",
+    "source": "\n      sequenceDiagram\n      Alice-->>+Bob:Hello Bob, how are you?\n      Bob-->>+Carol:Carol, let me introduce Alice?\n      Bob-->>- Alice:Hello Alice, please meet Carol?\n      Carol->>- Bob:Oh Bob, I'm so happy to be here!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#42",
+    "source": "\n      sequenceDiagram\n      participant user as End User\n      participant Server as Server\n      participant System as System\n      participant System2 as System2\n\n      user->>+Server: Test\n      user->>+Server: Test2\n      user->>System: Test\n      Server->>-user: Test\n      Server->>-user: Test2\n\n      %% The following deactivation of Server will fail\n      Server->>-user: Test3"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#43",
+    "source": "\n      sequenceDiagram\n      Alice->Bob: Hello Bob, how are you?\n      %% Comment\n      Note right of Bob: Bob thinks\n      Bob-->Alice: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#44",
+    "source": "\n      sequenceDiagram\n      Alice->Bob: Hello Bob, how are you?\n\n      %% Comment\n      Note right of Bob: Bob thinks\n      Bob-->Alice: I am good thanks!\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#45",
+    "source": "\nsequenceDiagram;Alice->Bob: Hello Bob, how are you?;Note right of Bob: Bob thinks;Bob-->Alice: I am good thanks!;"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#46",
+    "source": "\nsequenceDiagram\n Alice->Bob: Hello Bob, how are you?\n\n%% Comment\nNote right of Bob: Bob thinks\nBob-->Alice: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#47",
+    "source": "\nsequenceDiagram\n   Alice->Bob: Hello Bob, how are you?\n\n%% Comment\nNote right of Bob: Bob thinks\nBob-->Alice: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#48",
+    "source": "\nsequenceDiagram\nparticipant Alice\nparticipant Bob\nAlice->John: Hello John, how are you?\n    loop Healthcheck\nJohn->John: Fight against hypochondria\n end\nNote right of John: Rational thoughts<br/>prevail...\n    John-->Alice: Great!\n    John->Bob: How about you?\nBob-->John: Jolly good!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#49",
+    "source": "\nsequenceDiagram\nparticipant 1 as multiline<br>text\nparticipant 2 as multiline<br/>text\nparticipant 3 as multiline<br />text\nparticipant 4 as multiline<br \t/>text\n1->>2: multiline<br>text\nnote right of 2: multiline<br>text\n2->>3: multiline<br/>text\nnote right of 3: multiline<br/>text\n3->>4: multiline<br />text\nnote right of 4: multiline<br />text\n4->>1: multiline<br \t/>text\nnote right of 1: multiline<br \t/>text\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#50",
+    "source": "\nsequenceDiagram\nparticipant 1\nparticipant 2\nparticipant 3\nparticipant 4\n1->>2: single-line text\nnote right of 2: single-line text\n2->>3:nowrap: single-line text\nnote right of 3:nowrap: single-line text\n3->>4: multiline<br/>text\nnote right of 4: multiline<br/>text\n4->>1:nowrap: multiline<br/>text\nnote right of 1:nowrap: multiline<br/>text\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#51",
+    "source": "\nsequenceDiagram\nparticipant 1\nparticipant 2\nparticipant 3\nparticipant 4\n1->>2:wrap: single-line text\nnote right of 2:wrap: single-line text\n2->>3:wrap: multiline<br/>text\nnote right of 3:wrap: multiline<br/>text\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#52",
+    "source": "\nsequenceDiagram\nparticipant 1\nparticipant 2\n1->>2: single-line text\nnote right of 2: single-line text\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#53",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nNote over Bob: Bob thinks\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#54",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nNote over Alice,Bob: confusion\nNote over Bob,Alice: resolution\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#55",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\n\n%% Comment\nNote right of Bob: Bob thinks\nloop Multiple happy responses\n\nBob-->Alice: I am good thanks!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#56",
+    "source": "\n      sequenceDiagram\n        Alice->Bob: Hello Bob, how are you?\n        %% Comment\n        rect rgb(200, 255, 200)\n        Note right of Bob: Bob thinks\n        Bob-->Alice: I am good thanks\n        end\n    "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#57",
+    "source": "\n      sequenceDiagram\n        Alice->Bob: Hello Bob, how are you?\n        %% Comment\n        rect rgb(200, 255, 200)\n        rect rgb(0, 0, 0)\n        Note right of Bob: Bob thinks\n        end\n        Bob-->Alice: I am good thanks\n        end\n    "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#58",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\n\n%% Comment\nNote right of Bob: Bob thinks\nopt Perhaps a happy response\n\nBob-->Alice: I am good thanks!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#59",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\n\n%% Comment\nNote right of Bob: Bob thinks\nalt isWell\n\nBob-->Alice: I am good thanks!\nelse isSick\nBob-->Alice: Feel sick...\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#60",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\n\n%% Comment\nNote right of Bob: Bob thinks\nalt isWell\n\nBob-->Alice: I am good thanks!\nelse isSick\nBob-->Alice: Feel sick...\nelse default\nBob-->Alice: :-)\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#61",
+    "source": "\nsequenceDiagram\n    critical Establish a connection to the DB\n        Service-->DB: connect\n    end"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#62",
+    "source": "\nsequenceDiagram\n    critical Establish a connection to the DB\n        Service-->DB: connect\n    option Network timeout\n        Service-->Service: Log error\n    option Credentials rejected\n        Service-->Service: Log different error\n    end"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#63",
+    "source": "\nsequenceDiagram\n    Consumer-->API: Book something\n    API-->BookingService: Start booking process\n    break when the booking process fails\n        API-->Consumer: show failure\n    end\n    API-->BillingService: Start billing process"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#64",
+    "source": "\nsequenceDiagram\npar Parallel one\nAlice->>Bob: Hello Bob, how are you?\nBob-->>Alice: I am good thanks!\nand Parallel two\nAlice->>Bob: Are you OK?\nBob-->>Alice: Fine!\nand Parallel three\nAlice->>Bob: What do you think about it?\nBob-->>Alice: It's good!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#65",
+    "source": "\nsequenceDiagram\npar_over Parallel overlap\nAlice ->> Bob: Message\nNote left of Alice: Alice note\nNote right of Bob: Bob note\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#67",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nNote right of Bob: -:<>,;# comment"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#68",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nloop -:<>,;# comment\nBob-->Alice: I am good thanks!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#69",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nopt -:<>,;# comment\nBob-->Alice: I am good thanks!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#70",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nalt -:<>,;# comment\nBob-->Alice: I am good thanks!\nelse ,<>:-#; comment\nBob-->Alice: I am good thanks!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#71",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\npar -:<>,;# comment\nBob-->Alice: I am good thanks!\nand ,<>:-#; comment\nBob-->Alice: I am good thanks!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#72",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nloop\nBob-->Alice: I am good thanks!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#73",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nopt # comment\nBob-->Alice: I am good thanks!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#74",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nalt;Bob-->Alice: I am good thanks!\nelse # comment\nBob-->Alice: I am good thanks!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#75",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\npar;Bob-->Alice: I am good thanks!\nand # comment\nBob-->Alice: I am good thanks!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#76",
+    "source": "\nsequenceDiagram\nparticipant a as Alice\nparticipant b as Bob\nparticipant c as Charlie\nlinks a: { \"Repo\": \"https://repo.contoso.com/\", \"Dashboard\": \"https://dashboard.contoso.com/\" }\nlinks b: { \"Dashboard\": \"https://dashboard.contoso.com/\" }\nlinks a: { \"On-Call\": \"https://oncall.contoso.com/?svc=alice\" }\nlink a: Endpoint @ https://alice.contoso.com\nlink a: Swagger @ https://swagger.contoso.com\nlink a: Tests @ https://tests.contoso.com/?svc=alice@contoso.com\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#77",
+    "source": "\nsequenceDiagram\nparticipant a as Alice\nparticipant b as Bob\nparticipant c as Charlie\nproperties a: {\"class\": \"internal-service-actor\", \"icon\": \"@clock\"}\nproperties b: {\"class\": \"external-service-actor\", \"icon\": \"@computer\"}\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#78",
+    "source": "\nsequenceDiagram\nbox green Group 1\nparticipant a as Alice\nparticipant b as Bob\nend\nparticipant c as Charlie\nlinks a: { \"Repo\": \"https://repo.contoso.com/\", \"Dashboard\": \"https://dashboard.contoso.com/\" }\nlinks b: { \"Dashboard\": \"https://dashboard.contoso.com/\" }\nlinks a: { \"On-Call\": \"https://oncall.contoso.com/?svc=alice\" }\nlink a: Endpoint @ https://alice.contoso.com\nlink a: Swagger @ https://swagger.contoso.com\nlink a: Tests @ https://tests.contoso.com/?svc=alice@contoso.com\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#79",
+    "source": "\n  sequenceDiagram\n  box Group 1\n  participant a as Alice\n  participant b as Bob\n  end\n  participant c as Charlie\n  links a: { \"Repo\": \"https://repo.contoso.com/\", \"Dashboard\": \"https://dashboard.contoso.com/\" }\n  links b: { \"Dashboard\": \"https://dashboard.contoso.com/\" }\n  links a: { \"On-Call\": \"https://oncall.contoso.com/?svc=alice\" }\n  link a: Endpoint @ https://alice.contoso.com\n  link a: Swagger @ https://swagger.contoso.com\n  link a: Tests @ https://tests.contoso.com/?svc=alice@contoso.com\n  "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#80",
+    "source": "\n  sequenceDiagram\n  box aqua\n  participant a as Alice\n  participant b as Bob\n  end\n  participant c as Charlie\n  links a: { \"Repo\": \"https://repo.contoso.com/\", \"Dashboard\": \"https://dashboard.contoso.com/\" }\n  links b: { \"Dashboard\": \"https://dashboard.contoso.com/\" }\n  links a: { \"On-Call\": \"https://oncall.contoso.com/?svc=alice\" }\n  link a: Endpoint @ https://alice.contoso.com\n  link a: Swagger @ https://swagger.contoso.com\n  link a: Tests @ https://tests.contoso.com/?svc=alice@contoso.com\n  "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#81",
+    "source": "\n  sequenceDiagram\n  participant a as Alice\n  a ->>b: Hello Bob?\n  create participant c\n  b-->>c: Hello c!\n  c ->> b: Hello b?\n  create actor d as Donald\n  a ->> d: Hello Donald?\n  "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#82",
+    "source": "\n  sequenceDiagram\n  participant a as Alice\n  a ->>b: Hello Bob?\n  destroy a\n  b-->>a: Hello Alice!\n  b ->> c: Where is Alice?\n  destroy c\n  b ->> c: Where are you?\n  "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#83",
+    "source": "\n  sequenceDiagram\n  a ->>b: Hello Bob?\n  create participant c\n  b ->>c: Hello c!\n  c ->> b: Hello b?\n  destroy c\n  b ->> c : Bye c !\n  "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#84",
+    "source": "\n      sequenceDiagram\n      Alice->Bob:Hello Bob, how are you?\n      Bob-->Alice: I am good thanks!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#85",
+    "source": "\nsequenceDiagram\nparticipant Alice"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#86",
+    "source": "\nsequenceDiagram\nparticipant Alice\nparticipant Alice\nparticipant Alice\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#87",
+    "source": "\nsequenceDiagram\nparticipant Alice\nNote over Alice: Alice thinks\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#88",
+    "source": "\nsequenceDiagram\nparticipant Alice\nNote left of Alice: Alice thinks"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#89",
+    "source": "\nsequenceDiagram\nparticipant Alice\nNote right of Alice: Alice thinks"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#90",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#91",
+    "source": "\nsequenceDiagram\nbox rgb(34, 56, 0) Group1\nparticipant Alice\nparticipant Bob\nend\nAlice->Bob: Hello Bob, how are you?"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#92",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nNote over Alice,Bob: Looks\nNote over Bob,Alice: Looks back\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#93",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nBob->Alice: Fine!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#94",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nNote right of Bob: Bob thinks\nBob->Alice: Fine!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#95",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nNote left of Alice: Bob thinks\nBob->Alice: Fine!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#96",
+    "source": "\nsequenceDiagram\nAlice->>Bob:wrap: Hello Bob, how are you? If you are not available right now, I can leave you a message. Please get back to me as soon as you can!\nNote left of Alice: Bob thinks\nBob->>Alice: Fine!"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#97",
+    "source": "\nsequenceDiagram\nAlice->Bob: Hello Bob, how are you?\nloop Cheers\nBob->Alice: Fine!\nend"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#98",
+    "source": "\n      sequenceDiagram\n        Alice->Bob: Hello Bob, are you alright?\n        rect rgb(0, 0, 0)\n          Bob->Alice: I feel surrounded by darkness\n        end\n    "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#99",
+    "source": "\n      sequenceDiagram\n      autonumber 10.01 .01\n      Alice->Bob:Hello Bob, how are you?\n      Bob-->Alice: I am good thanks!\n      Alice-->Bob: Have a good day!\n    "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#100",
+    "source": "\n      sequenceDiagram\n      autonumber 10.1 .1\n      Alice->Bob:Hello Bob, how are you?\n      Bob-->Alice: I am good thanks!\n      Alice-->Bob: Have a good day!\n    "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#103",
+    "source": "\nsequenceDiagram\nAlice->>Bob:\nBob->>Alice:Got it!\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#104",
+    "source": "\n    sequenceDiagram\n    actor Bob\n    actor Alice\n        Bob -|\\ Alice: Hello Alice, how are you?\n        Bob -|/ Alice: Hello Alice, how are you?\n        Bob -// Alice: Hello Alice, how are you?\n        Bob -\\\\ Alice: Hello Alice, how are you?\n        \n        Bob \\|- Alice: Hello Alice, how are you?\n        Bob /|- Alice: Hello Alice, how are you?\n        Bob //- Alice: Hello Alice, how are you?\n        Bob \\\\- Alice: Hello Alice, how are you?        \n    "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#105",
+    "source": "\n    sequenceDiagram\n    actor Bob\n    actor Alice\n      Alice ()<<->>() Bob: hey?\n    "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#106",
+    "source": "\n  sequenceDiagram\n      participant Alice@{ \"type\" : \"database\" }\n      participant Bob@{ \"type\" : \"database\" }\n      participant Carl@{ type: \"database\" }\n      participant David@{ \"type\" : 'database' }\n      participant Eve@{ type: 'database' }\n      participant Favela@{ \"type\" : \"database\"    }\n      Bob->>+Alice: Hi Alice\n      Alice->>+Bob: Hi Bob\n    "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#107",
+    "source": "\n  sequenceDiagram\n      participant Gina@{ \"type\" : \"database\" }\n      participant Harry @{ \"type\" : \"database\" }\n    "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#108",
+    "source": "\n    sequenceDiagram\n        participant lead\n        participant dsa@{ \"type\" : \"queue\" }\n        API->>+Database: getUserb\n        Database-->>-API: userb\n        dsa --> Database: hello\n"
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#109",
+    "source": "\n    sequenceDiagram\n        actor lead-actor@{ \"type\" : \"database\" }\n        participant order-svc@{ \"type\" : \"queue\" }\n        actor kebab-case@{ \"type\" : \"control\" } as Kebab-Cased\n        participant web-ui@{ \"type\" : \"entity\" } as Web UI\n    "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#110",
+    "source": "\n    sequenceDiagram\n      participant D@{ \"type: \"entity\" }\n      participant E@{ \"type\": \"dat\n      abase }\n  "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#111",
+    "source": "\n    sequenceDiagram\n      participant C@{ \"type\" \"control\" }\n      C ->> C: action\n  "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#112",
+    "source": "\n    sequenceDiagram\n      participant E@{ \"type\": \"entity\"\n      E ->> E: process\n  "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#113",
+    "source": "\n          sequenceDiagram\n          participant boundary@{ \"type\" : \"boundary\" }\n          boundary->boundary: test\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#114",
+    "source": "\n        sequenceDiagram\n         participant C@{ \"type\" : \"control\" }\n        C->C: test\n        "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#115",
+    "source": "\n      sequenceDiagram\n      participant E@{ \"type\" : \"entity\" }\n      E->E: test\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#116",
+    "source": "\n      sequenceDiagram\n      participant D@{ \"type\" : \"database\" }\n      D->D: test\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#117",
+    "source": "\n      sequenceDiagram\n      participant L@{ \"type\" : \"collections\" }\n      L->L: test\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#118",
+    "source": "\n      sequenceDiagram\n      participant Q@{ \"type\" : \"queue\" }\n      Q->Q: test \n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#119",
+    "source": "\n      sequenceDiagram\n      participant A@{ \"type\" : \"queue\" }\n      A->A: test\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#120",
+    "source": "\n      sequenceDiagram\n      participant P@{ \"type\" : \"database\" }\n      P->P: test\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#121",
+    "source": "\n      sequenceDiagram\n        participant Alice@{ \"type\" : \"collections\" }\n        participant Bob@{ \"type\" : \"control\" }\n        Alice->>Bob: Hello Bob, how are you?\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#122",
+    "source": "\n      sequenceDiagram\n      participant C@{ \"type\" : \"control\" }\n      C->C: test\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#124",
+    "source": "\n        sequenceDiagram\n        participant SAS MyServiceWithMoreThan20Chars <br> service decription\n       "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#125",
+    "source": "\n          sequenceDiagram\n          participant X_AutoPublishable asAAAAAAAAAAAAA:AAAAAAAAAAAAA\n        "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#126",
+    "source": "\n      sequenceDiagram\n      participant Alice@{ \"type\" : \"boundary\" } as Public API\n      participant Bob@{ \"type\" : \"control\" } as Controller\n      Alice->>Bob: Request\n      Bob-->>Alice: Response\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#127",
+    "source": "\n      sequenceDiagram\n      actor A@{ \"type\" : \"database\" } AS Database Server\n      actor B@{ \"type\" : \"queue\" } as Message Queue\n      A->>B: Send message\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#128",
+    "source": "\n      sequenceDiagram\n      participant API@{ \"type\" : \"boundary\" } AS Public API\n      API->>API: test\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#129",
+    "source": "\n      sequenceDiagram\n      participant API@{ \"type\" : \"boundary\", \"alias\": \"Public API\" }\n      participant Auth@{ \"type\" : \"control\", \"alias\": \"Auth Controller\" }\n      API->>Auth: Request\n      Auth-->>API: Response\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#130",
+    "source": "\n      sequenceDiagram\n      actor U@{ \"type\" : \"actor\", \"alias\": \"End User\" }\n      actor DB@{ \"type\" : \"database\", \"alias\": \"User Database\" }\n      U->>DB: Query\n      DB-->>U: Result\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#131",
+    "source": "\n      sequenceDiagram\n      participant API@{ \"type\" : \"boundary\", \"alias\": \"Internal Name\" } as External Name\n      API->>API: test\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#132",
+    "source": "\n      sequenceDiagram\n      participant API@{ \"alias\": \"Public API\" }\n      API->>API: test\n      "
+  },
+  {
+    "id": "v12-specs/sequenceDiagram.spec.js#133",
+    "source": "\n      sequenceDiagram\n      participant A@{ \"type\" : \"boundary\", \"alias\": \"Service A\" }\n      participant B@{ \"type\" : \"control\" } as Service B\n      participant C@{ \"type\" : \"database\" }\n      A->>B: Request\n      B->>C: Query\n      "
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#1",
+    "source": "sequenceDiagram\n    Alice->>John: Hello John, how are you?\n    John-->>Alice: Great!\n    Alice-)John: See you later!\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#2",
+    "source": "sequenceDiagram\n  autonumber\n  actor Customer\n  participant Web as Web app\n  participant API as API gateway\n  participant Bank\n  Customer->>Web: Place order\n  Web->>API: POST /orders\n  activate API\n  API->>Bank: Authorise payment\n  Bank-->>API: Approved\n  API-->>Web: 201 Created\n  deactivate API\n  Web-->>Customer: Order confirmed\n  Note over Customer,Bank: One order, one transaction\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#3",
+    "source": "---\nconfig:\n  theme: default\n  look: classic\n---\nsequenceDiagram\n  autonumber\n  actor Customer\n  participant Web as Web app\n  participant API as API gateway\n  participant Bank\n  Customer->>Web: Place order\n  Web->>API: POST /orders\n  activate API\n  API->>Bank: Authorise payment\n  Bank-->>API: Approved\n  API-->>Web: 201 Created\n  deactivate API\n  Web-->>Customer: Order confirmed\n  Note over Customer,Bank: One order, one transaction\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#4",
+    "source": "sequenceDiagram\n    participant Alice\n    participant Bob\n    Bob->>Alice: Hi Alice\n    Alice->>Bob: Hi Bob\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#5",
+    "source": "sequenceDiagram\n    actor Alice\n    actor Bob\n    Alice->>Bob: Hi Bob\n    Bob->>Alice: Hi Alice\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#6",
+    "source": "sequenceDiagram\n    participant Alice@{ \"type\" : \"boundary\" }\n    participant Bob\n    Alice->>Bob: Request from boundary\n    Bob->>Alice: Response to boundary\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#7",
+    "source": "sequenceDiagram\n    participant Alice@{ \"type\" : \"control\" }\n    participant Bob\n    Alice->>Bob: Control request\n    Bob->>Alice: Control response\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#8",
+    "source": "sequenceDiagram\n    participant Alice@{ \"type\" : \"entity\" }\n    participant Bob\n    Alice->>Bob: Entity request\n    Bob->>Alice: Entity response\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#9",
+    "source": "sequenceDiagram\n    participant Alice@{ \"type\" : \"database\" }\n    participant Bob\n    Alice->>Bob: DB query\n    Bob->>Alice: DB result\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#10",
+    "source": "sequenceDiagram\n    participant Alice@{ \"type\" : \"collections\" }\n    participant Bob\n    Alice->>Bob: Collections request\n    Bob->>Alice: Collections response\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#11",
+    "source": "sequenceDiagram\n    participant Alice@{ \"type\" : \"queue\" }\n    participant Bob\n    Alice->>Bob: Queue message\n    Bob->>Alice: Queue response\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#12",
+    "source": "sequenceDiagram\n    participant A as Alice\n    participant J as John\n    A->>J: Hello John, how are you?\n    J->>A: Great!\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#13",
+    "source": "sequenceDiagram\n    participant API@{ \"type\": \"boundary\" } as Public API\n    actor DB@{ \"type\": \"database\" } as User Database\n    participant Svc@{ \"type\": \"control\" } as Auth Service\n    API->>Svc: Authenticate\n    Svc->>DB: Query user\n    DB-->>Svc: User data\n    Svc-->>API: Token\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#14",
+    "source": "sequenceDiagram\n    participant API@{ \"type\": \"boundary\", \"alias\": \"Public API\" }\n    participant Auth@{ \"type\": \"control\", \"alias\": \"Auth Service\" }\n    participant DB@{ \"type\": \"database\", \"alias\": \"User Database\" }\n    API->>Auth: Login request\n    Auth->>DB: Query user\n    DB-->>Auth: User data\n    Auth-->>API: Access token\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#15",
+    "source": "sequenceDiagram\n    participant API@{ \"type\": \"boundary\", \"alias\": \"Internal Name\" } as External Name\n    participant DB@{ \"type\": \"database\", \"alias\": \"Internal DB\" } as External DB\n    API->>DB: Query\n    DB-->>API: Result\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#16",
+    "source": "sequenceDiagram\n    Alice->>Bob: Hello Bob, how are you ?\n    Bob->>Alice: Fine, thank you. And you?\n    create participant Carl\n    Alice->>Carl: Hi Carl!\n    create actor D as Donald\n    Carl->>D: Hi!\n    destroy Carl\n    Alice-xCarl: We are too many\n    destroy Bob\n    Bob->>Alice: I agree\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#17",
+    "source": "    sequenceDiagram\n    box Purple Alice & John\n    participant A\n    participant J\n    end\n    box Another Group\n    participant B\n    participant C\n    end\n    A->>J: Hello John, how are you?\n    J->>A: Great!\n    A->>B: Hello Bob, how is Charley?\n    B->>C: Hello Charley, how are you?\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#18",
+    "source": "sequenceDiagram\n    participant Alice\n    participant John\n    Alice->>()John: Hello John\n    Alice()->>John: How are you?\n    John()->>()Alice: Great!\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#19",
+    "source": "sequenceDiagram\n    Alice->>John: Hello John, how are you?\n    activate John\n    John-->>Alice: Great!\n    deactivate John\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#20",
+    "source": "sequenceDiagram\n    Alice->>+John: Hello John, how are you?\n    John-->>-Alice: Great!\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#21",
+    "source": "sequenceDiagram\n    Alice->>+John: Hello John, how are you?\n    Alice->>+John: John, can you hear me?\n    John-->>-Alice: Hi Alice, I can hear you!\n    John-->>-Alice: I feel great!\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#22",
+    "source": "sequenceDiagram\n    participant John\n    Note right of John: Text in note\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#23",
+    "source": "sequenceDiagram\n    Alice->John: Hello John, how are you?\n    Note over Alice,John: A typical interaction\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#24",
+    "source": "sequenceDiagram\n    Alice->John: Hello John,<br/>how are you?\n    Note over Alice,John: A typical interaction<br/>But now in two lines\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#25",
+    "source": "sequenceDiagram\n    participant Alice as Alice<br/>Johnson\n    Alice->John: Hello John,<br/>how are you?\n    Note over Alice,John: A typical interaction<br/>But now in two lines\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#26",
+    "source": "sequenceDiagram\n    Alice->John: Hello John, how are you?\n    loop Every minute\n        John-->Alice: Great!\n    end\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#27",
+    "source": "sequenceDiagram\n    Alice->>Bob: Hello Bob, how are you?\n    alt is sick\n        Bob->>Alice: Not so good :(\n    else is well\n        Bob->>Alice: Feeling fresh like a daisy\n    end\n    opt Extra response\n        Bob->>Alice: Thanks for asking\n    end\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#28",
+    "source": "sequenceDiagram\n    par Alice to Bob\n        Alice->>Bob: Hello guys!\n    and Alice to John\n        Alice->>John: Hello guys!\n    end\n    Bob-->>Alice: Hi Alice!\n    John-->>Alice: Hi Alice!\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#29",
+    "source": "sequenceDiagram\n    par Alice to Bob\n        Alice->>Bob: Go help John\n    and Alice to John\n        Alice->>John: I want this done today\n        par John to Charlie\n            John->>Charlie: Can we do this today?\n        and John to Diana\n            John->>Diana: Can you help us today?\n        end\n    end\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#30",
+    "source": "sequenceDiagram\n    critical Establish a connection to the DB\n        Service-->DB: connect\n    option Network timeout\n        Service-->Service: Log error\n    option Credentials rejected\n        Service-->Service: Log different error\n    end\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#31",
+    "source": "sequenceDiagram\n    critical Establish a connection to the DB\n        Service-->DB: connect\n    end\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#32",
+    "source": "sequenceDiagram\n    Consumer-->API: Book something\n    API-->BookingService: Start booking process\n    break when the booking process fails\n        API-->Consumer: show failure\n    end\n    API-->BillingService: Start billing process\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#33",
+    "source": "sequenceDiagram\n    participant Alice\n    participant John\n\n    rect rgb(191, 223, 255)\n    note right of Alice: Alice calls John.\n    Alice->>+John: Hello John, how are you?\n    rect rgb(200, 150, 255)\n    Alice->>+John: John, can you hear me?\n    John-->>-Alice: Hi Alice, I can hear you!\n    end\n    John-->>-Alice: I feel great!\n    end\n    Alice ->>+ John: Did you want to go to the game tonight?\n    John -->>- Alice: Yeah! See you there.\n\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#34",
+    "source": "sequenceDiagram\n    Alice->>John: Hello John, how are you?\n    %% this is a comment\n    John-->>Alice: Great!\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#35",
+    "source": "sequenceDiagram\n    A->>B: I #9829; you!\n    B->>A: I #9829; you #infin; times more!\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#36",
+    "source": "sequenceDiagram\n    autonumber\n    Alice->>John: Hello John, how are you?\n    loop HealthCheck\n        John->>John: Fight against hypochondria\n    end\n    Note right of John: Rational thoughts!\n    John-->>Alice: Great!\n    John->>Bob: How about you?\n    Bob-->>John: Jolly good!\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#37",
+    "source": "sequenceDiagram\n    participant Alice\n    participant John\n    link Alice: Dashboard @ https://dashboard.contoso.com/alice\n    link Alice: Wiki @ https://wiki.contoso.com/alice\n    link John: Dashboard @ https://dashboard.contoso.com/john\n    link John: Wiki @ https://wiki.contoso.com/john\n    Alice->>John: Hello John, how are you?\n    John-->>Alice: Great!\n    Alice-)John: See you later!\n"
+  },
+  {
+    "id": "v12-docs/sequenceDiagram.md#38",
+    "source": "sequenceDiagram\n    participant Alice\n    participant John\n    links Alice: {\"Dashboard\": \"https://dashboard.contoso.com/alice\", \"Wiki\": \"https://wiki.contoso.com/alice\"}\n    links John: {\"Dashboard\": \"https://dashboard.contoso.com/john\", \"Wiki\": \"https://wiki.contoso.com/john\"}\n    Alice->>John: Hello John, how are you?\n    John-->>Alice: Great!\n    Alice-)John: See you later!\n"
+  }
+]
