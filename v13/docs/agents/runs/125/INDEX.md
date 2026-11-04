@@ -10,7 +10,7 @@
 | T5 integration | #145 | #143, #194 | — |
 | Actor menus (plugin-interactions) | #147 | #143; never with class #158 (D112) | next, as a core-style T0: own branch from `mermaid-v13`, own draft PR into `mermaid-v13` (generic plugin side, collecting by AST node kind); sequence wiring lands on this branch; tell class #126 the PR number; merge `mermaid-v13` back after the maintainer merges it |
 | T6 language facet | #149 | #139, #29, #31 | merged |
-| T7 ASCII | #150 | #139, #141 | running |
+| T7 ASCII | #150 | #139, #141 | merged (supportsFormat + CLI wait on #145) |
 
 - `01-v12-sequence.md`: pointer notes on v12 grammar, DB, renderer, specs, corpus.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
