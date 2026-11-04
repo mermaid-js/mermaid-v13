@@ -152,6 +152,35 @@ describe('facet loading', () => {
     expect(doc.hover(text.indexOf('x'))).toBeUndefined();
   });
 
+  it('adds the preprocess diagnostics a facet does not report, once each', async () => {
+    const text = '---\nconfig:\n  theme: dark: bad\n---\n%%{init: {"a" 1}}%%\nthird\n  A[x\n';
+    // A third-party facet that leaves preprocess to the service: only its own error.
+    const own: LanguageFacet = {
+      ...fake('third'),
+      parse: (t, o) => {
+        const r = flowchartLanguage.parse(t, o);
+        return { ...r, diagnostics: r.diagnostics.filter((d) => d.code === 'UNCLOSED') };
+      },
+    };
+    const s = createLanguageService({
+      facets: [{ type: 'third', id: 'third', detector: (t) => t.startsWith('third'), facet: own }],
+    });
+    await s.preload();
+    expect(
+      s
+        .update('x', text)
+        .diagnostics()
+        .map((d) => d.code)
+    ).toEqual(['YAML_SYNTAX', 'INVALID_DIRECTIVE', 'UNCLOSED']);
+    // Flowchart reports them itself: still once each.
+    const flow = text.replace('third', 'flowchart LR');
+    expect((await open(flow)).diagnostics().map((d) => d.code)).toEqual([
+      'YAML_SYNTAX',
+      'INVALID_DIRECTIVE',
+      'UNCLOSED',
+    ]);
+  });
+
   it('keeps a replaced first-party row apart from the other rows of the same diagram id', async () => {
     const s = createLanguageService({
       facets: [

@@ -1,5 +1,5 @@
 /**
- * Diagnostics (D91): the preprocess and parser diagnostics as they are. A v12 type with no
+ * Diagnostics (D91): the preprocess and parser diagnostics as they are, each once. A v12 type with no
  * facet gets one info diagnostic on its header word, as does one whose facet was not
  * preloaded (D155); a failed load gets a warning, a facet whose parse throws an error
  * (`LANGUAGE_FACET_FAILED`); a type v12 does not know gets the renderer's
@@ -15,8 +15,28 @@ function headerRange(text: string, start: number): Range {
   return { start, end: start + (word.length > 0 ? word.length : line.trimEnd().length) };
 }
 
+const sameDiagnostic = (a: Diagnostic, b: Diagnostic) =>
+  a.code === b.code && a.range.start === b.range.start && a.range.end === b.range.end;
+
+/**
+ * The parse's diagnostics with the preprocess ones (front matter, directives) it did not
+ * report itself, in source order (preprocess first on a tie). A facet may leave preprocess
+ * to the service; flowchart reports them itself and each still shows once.
+ */
+function withPreprocess(pre: readonly Diagnostic[], own: readonly Diagnostic[]): Diagnostic[] {
+  const missing = pre.filter((p) => !own.some((d) => sameDiagnostic(p, d)));
+  if (missing.length === 0) return [...own];
+  const out: Diagnostic[] = [];
+  let i = 0;
+  for (const p of missing) {
+    while (i < own.length && own[i]!.range.start < p.range.start) out.push(own[i++]!);
+    out.push(p);
+  }
+  return [...out, ...own.slice(i)];
+}
+
 export function diagnostics(ctx: DocumentContext): Diagnostic[] {
-  if (ctx.result) return ctx.result.diagnostics;
+  if (ctx.result) return withPreprocess(ctx.pre.diagnostics, ctx.result.diagnostics);
   const out = [...ctx.pre.diagnostics];
   if (ctx.entry === undefined) {
     const body = ctx.text.slice(ctx.start);

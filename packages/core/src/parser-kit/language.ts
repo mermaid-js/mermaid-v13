@@ -46,7 +46,20 @@ export interface HoverTarget {
 export interface LanguageFacet<A extends AstNode = AstNode> {
   /** The diagram id, e.g. `flowchart`. */
   readonly id: string;
-  /** Parse with tokens kept. */
+  /**
+   * Parse the whole document `text` (front matter and directives included; every range is an
+   * offset into it) with tokens kept, and record expectations at `options.probe` when given.
+   *
+   * Contract with the service:
+   * - Diagnostics: the facet's own, in source order, N errors in, N out. Preprocess
+   *   diagnostics (`YAML_*`, `INVALID_DIRECTIVE`, …) need not be repeated: the service merges
+   *   `preprocess(text).diagnostics` in itself and drops one the facet also reports (same
+   *   code and range), so a facet that already includes them (flowchart) is fine too.
+   * - Never throws on any text. If it does, the service shows `LANGUAGE_FACET_FAILED` and
+   *   serves generic features only for that text.
+   * - Pure and synchronous: the same text gives the same result; nothing is kept between
+   *   calls, and the service never mutates the result.
+   */
   parse(text: string, options: FacetParseOptions): ParseResult<unknown, A>;
   /** Highlight category of every token kind the parser emits (D94). */
   readonly categories: Readonly<Record<TokenKind, TokenCategory>>;
