@@ -5,12 +5,15 @@
  * lint and the bench's language bundle spec hold that in place.
  */
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
+import { flowchartCompletions } from './facet/completions.ts';
+import { flowchartHover } from './facet/hover.ts';
 import { flowchartCategories } from './generated/categories.ts';
 import { flowchartTokens, parseFlowchart } from './parser/index.ts';
 import type { FlowDocument } from './parser/index.ts';
 import { T } from './parser/tokens.ts';
 
 export { flowchartCategories } from './generated/categories.ts';
+export { flowchartDocs } from './generated/docs.ts';
 export { detectFlowchart, flowchartTokens, FlowTokenKind, parseFlowchart } from './parser/index.ts';
 export type * from './parser/index.ts';
 
@@ -102,13 +105,15 @@ function invalidReason(name: string, kind = 'node'): string | undefined {
   return invalidIdReason(name);
 }
 
-/** The flowchart facet; `completions` and `hover` come with the completion/hover ticket. */
+/** The flowchart facet. */
 export const flowchartLanguage: LanguageFacet<FlowDocument> = {
   id: 'flowchart',
   parse: (text, options) => parseFlowchart(text, options),
   categories: flowchartCategories,
   namespaces: [['node', 'subgraph'], ['class'], ['edge']],
   isValidId: invalidReason,
+  completions: flowchartCompletions,
+  hover: flowchartHover,
 };
 
 /** The facet under the fixed name the language service imports (manifest `language`, D89). */

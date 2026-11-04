@@ -24,6 +24,11 @@ export interface DocumentContext {
   /** The detected type has a facet to load, but `preload` has not loaded it (D155). */
   readonly notLoaded: boolean;
   /**
+   * Every loaded facet, once each, when no type is detected: an empty document or a header
+   * being typed gets each facet's header keywords (D95). Empty when a type is detected.
+   */
+  readonly available: readonly LanguageFacet[];
+  /**
    * The config JSON schema (D96): the one passed to `createLanguageService`, else the
    * generated one once `preload` has loaded it.
    */

@@ -116,8 +116,10 @@ describe('scoping (D96)', () => {
     const text = '---\ntitle: x\n---\nflowchart TD\n  A\n';
     const doc = service.update('file:///scope.mmd', text);
     expect(doc.completions(1)).toEqual([]);
-    expect(doc.completions(text.indexOf('flowchart'))).toEqual([]);
-    expect(doc.hover(text.indexOf('flowchart'))).toBeUndefined();
+    // The facet's (#32): the header keywords, and the header keyword's doc.
+    const at = text.indexOf('flowchart');
+    expect(doc.completions(at).map((i) => i.label)).toEqual(['flowchart', 'graph']);
+    expect(doc.hover(at)?.contents).toMatch(/^\*\*`flowchart`\*\*/);
   });
 });
 

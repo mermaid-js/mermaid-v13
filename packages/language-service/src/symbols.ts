@@ -49,7 +49,7 @@ export function occurrences(ctx: DocumentContext): readonly Occurrence[] {
 }
 
 /** The occurrence under `offset`: one containing it, else one ending at it. */
-function occurrenceAt(list: readonly Occurrence[], offset: number): Occurrence | undefined {
+export function occurrenceAt(list: readonly Occurrence[], offset: number): Occurrence | undefined {
   let touching: Occurrence | undefined;
   for (const o of list) {
     if (o.range.start > offset) break;

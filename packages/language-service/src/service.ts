@@ -79,6 +79,8 @@ function isFacet(value: unknown): value is LanguageFacet {
     typeof f.id === 'string' &&
     typeof f.parse === 'function' &&
     typeof f.isValidId === 'function' &&
+    typeof f.completions === 'function' &&
+    typeof f.hover === 'function' &&
     typeof f.categories === 'object' &&
     f.categories !== null &&
     Array.isArray(f.namespaces)
@@ -149,6 +151,16 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
     return done;
   };
 
+  /** Loaded facets, each once, in detector order. */
+  const available = (): LanguageFacet[] => {
+    const out: LanguageFacet[] = [];
+    for (const e of entries) {
+      const state = e.facet ?? loaded.get(e);
+      if (state !== undefined && !('failed' in state) && !out.includes(state)) out.push(state);
+    }
+    return out;
+  };
+
   const build = (uri: string, text: string): DocumentSnapshot => {
     const pre = preprocess(text);
     const start = diagramStart(text, pre);
@@ -166,6 +178,7 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
       schema,
       loadError: state !== undefined && 'failed' in state ? state.failed : undefined,
       notLoaded: entry?.load !== undefined && state === undefined,
+      available: entry === undefined ? available() : [],
     };
     return new DocumentSnapshot(Object.freeze(context), ++version);
   };

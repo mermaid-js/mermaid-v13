@@ -1,9 +1,11 @@
 /**
  * Completion (DESIGN §4.5, D95, D96). Front matter answers first: an offset inside it gets
- * front-matter keys and values from the config schema, and nothing else. The diagram text
- * is the facet's (#32: re-parse with `probe: offset` and ask `facet.completions`).
+ * front-matter keys and values from the config schema, and nothing else. The diagram text is
+ * the facet's: the text is parsed again with `probe: offset` and the facet maps the probe to
+ * items. A text whose type is not detected (empty, or a header being typed) gets every loaded
+ * facet's answer on its first line: the diagram keywords.
  */
-import type { CompletionItem } from '@mermaid-js/core/parser-kit';
+import type { CompletionItem, LanguageFacet } from '@mermaid-js/core/parser-kit';
 import { frontMatterCompletions } from './config/completion.ts';
 import type { FrontMatterTree } from './config/front-matter.ts';
 import type { DocumentContext } from './context.ts';
@@ -13,12 +15,35 @@ export function inFrontMatter(fm: FrontMatterTree, offset: number): boolean {
   return fm.range.start <= offset && offset < fm.range.end;
 }
 
+/** `facet`'s items for `text` at `offset`. */
+function facetItems(facet: LanguageFacet, text: string, offset: number): CompletionItem[] {
+  const result = facet.parse(text, { keepTokens: true, probe: offset });
+  return result.probe ? facet.completions(result.probe, { text, result }) : [];
+}
+
+/** The header keywords of every loaded facet, on the first line of an undetected text. */
+function headerItems(ctx: DocumentContext, offset: number): CompletionItem[] {
+  const { text, start } = ctx;
+  const nl = text.slice(start).search(/[\r\n]/);
+  const lineEnd = nl < 0 ? text.length : start + nl;
+  if (offset < start || offset > lineEnd) return [];
+  const head = text.slice(0, lineEnd);
+  const out: CompletionItem[] = [];
+  for (const facet of ctx.available) {
+    for (const item of facetItems(facet, head, offset)) {
+      if (item.kind === 'keyword' && !out.some((x) => x.label === item.label)) out.push(item);
+    }
+  }
+  return out;
+}
+
 export function completions(
   ctx: DocumentContext,
   fm: FrontMatterTree | undefined,
   offset: number
 ): CompletionItem[] {
   if (fm !== undefined && inFrontMatter(fm, offset)) return frontMatterCompletions(ctx, fm, offset);
-  // #32: the facet's completions on the diagram text go here.
-  return [];
+  if (ctx.entry === undefined) return headerItems(ctx, offset);
+  if (!ctx.facet) return [];
+  return facetItems(ctx.facet, ctx.text, offset);
 }

@@ -4,7 +4,7 @@
  *
  * Adding a query: write a feature module that takes the {@link DocumentContext} and add a
  * method here that memoises it under its own key. `completions` and `hover` ask the front
- * matter first, then the facet (#32 fills in the facet side in completion.ts and hover.ts).
+ * matter first, then the facet (completion.ts and hover.ts).
  */
 import type {
   AstId,
@@ -96,14 +96,17 @@ export class DocumentSnapshot {
     });
   }
 
-  /** Completion items at `offset`: front-matter keys and values (D96), then the facet's (#32). */
+  /**
+   * Completion items at `offset`: front-matter keys and values (D96), else the facet's from a
+   * parse with `probe: offset` (D95). Not memoised: each offset parses once.
+   */
   completions(offset: number): readonly CompletionItem[] {
     return deepFreeze(completions(this.context, this.frontMatter(), offset));
   }
 
-  /** Hover at `offset`: a front-matter key's schema docs (D96), then the facet's (#32). */
+  /** Hover at `offset`: a front-matter key's schema docs (D96), else the facet's (D93). */
   hover(offset: number): Hover | undefined {
-    const h = hover(this.context, this.frontMatter(), offset);
+    const h = hover(this.context, this.frontMatter(), this.occurrences(), offset);
     return h && deepFreeze(h);
   }
 

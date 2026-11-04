@@ -95,6 +95,8 @@ function check(name: string, text: string): string[] {
     run('prepareRename', () => doc.prepareRename(at), at);
     run('rename', () => doc.rename(at, 'renamed1'), at);
     run('astAt', () => doc.astAt(at).map((id) => doc.rangeOf(id)), at);
+    run('completions', () => doc.completions(at), at);
+    run('hover', () => doc.hover(at), at);
   }
   service.close(uri);
   return problems;

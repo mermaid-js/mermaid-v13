@@ -72,7 +72,7 @@ describe('goldenCases and missingFeatures', () => {
 
   it('lists the required features a diagram has no cases for', () => {
     expect(missingFeatures(root, 'demo')).toEqual(
-      REQUIRED_FEATURES.filter((f) => f !== 'references')
+      REQUIRED_FEATURES.filter((f) => f !== 'references' && f !== 'hover')
     );
     expect(missingFeatures(root, 'absent')).toEqual([...REQUIRED_FEATURES]);
   });

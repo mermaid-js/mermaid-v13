@@ -1,0 +1,47 @@
+@ 2:6  A -|-> B
+  2:5-2:8 "-->"
+  | **`-->`** normal line with an arrow head
+  |
+  | A link, with an optional id, and text either between pipes or inside the arrow.
+@ 3:7  B -.|-> C
+  3:5-3:9 "-.->"
+  | **`-.->`** dotted line with an arrow head
+  |
+  | A link, with an optional id, and text either between pipes or inside the arrow.
+@ 4:6  C =|=> D
+  4:5-4:8 "==>"
+  | **`==>`** thick line with an arrow head
+  |
+  | A link, with an optional id, and text either between pipes or inside the arrow.
+@ 5:6  D -|- text --> E
+  5:5-5:16 "-- text -->"
+  | **`-- text -->`** normal line with an arrow head
+  |
+  | A link, with an optional id, and text either between pipes or inside the arrow.
+@ 6:14  D -- text -|-> E
+  6:5-6:16 "-- text -->"
+  | **`-- text -->`** normal line with an arrow head
+  |
+  | A link, with an optional id, and text either between pipes or inside the arrow.
+@ 7:11  D -->|te|xt| E
+  none
+@ 8:6  E -|-o F
+  8:5-8:8 "--o"
+  | **`--o`** normal line with a circle head
+  |
+  | A link, with an optional id, and text either between pipes or inside the arrow.
+@ 9:6  F <|--> G
+  9:5-9:9 "<-->"
+  | **`<-->`** normal line with an arrow head at both ends
+  |
+  | A link, with an optional id, and text either between pipes or inside the arrow.
+@ 10:6  G ~|~~ H
+  10:5-10:8 "~~~"
+  | **`~~~`** invisible link with no head
+  |
+  | A link, with an optional id, and text either between pipes or inside the arrow.
+@ 11:9  H e1@-|-> A
+  11:5-11:11 "e1@-->"
+  | **`e1@-->`** normal line with an arrow head
+  |
+  | A link, with an optional id, and text either between pipes or inside the arrow.

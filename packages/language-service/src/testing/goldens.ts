@@ -139,10 +139,7 @@ export const FEATURES: Readonly<Record<string, Render>> = {
       ),
 };
 
-/**
- * Every feature a diagram's facet must have goldens for (R-LANG-3). Completion and hover
- * (#32, #33) join the list when they land.
- */
+/** Every feature a diagram's facet must have goldens for (R-LANG-3). */
 export const REQUIRED_FEATURES: readonly string[] = Object.freeze([
   'diagnostics',
   'definition',
@@ -151,6 +148,8 @@ export const REQUIRED_FEATURES: readonly string[] = Object.freeze([
   'astAt',
   'folding',
   'semanticTokens',
+  'completions',
+  'hover',
 ]);
 
 const isRange = (v: unknown): v is Range =>

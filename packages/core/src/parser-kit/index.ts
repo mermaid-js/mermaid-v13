@@ -40,7 +40,9 @@ export type { ParseOptions, ParseResult, StatementSpan, SymbolOccurrence } from 
 export type {
   CompletionItem,
   CompletionKind,
+  DocumentView,
   FacetParseOptions,
   Hover,
+  HoverTarget,
   LanguageFacet,
 } from './language.ts';

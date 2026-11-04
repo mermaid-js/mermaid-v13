@@ -9,7 +9,8 @@
 import type { AstNode } from './ast.ts';
 import type { TokenCategory } from './categories.ts';
 import type { Range } from './positions.ts';
-import type { ParseResult } from './result.ts';
+import type { ProbeResult } from './probe.ts';
+import type { ParseResult, SymbolOccurrence } from './result.ts';
 import type { TokenKind } from './tokens.ts';
 
 /** Options the service parses with: tokens are always kept; `probe` is the completion offset. */
@@ -19,12 +20,28 @@ export interface FacetParseOptions {
   probe?: number;
 }
 
-/**
- * One diagram type's language knowledge.
- *
- * `completions` and `hover` (D93, D95) join this interface with the completion/hover ticket,
- * together with the `Probe` and document view types they take.
- */
+/** What the facet's completion and hover read of a document (DESIGN §4.5). */
+export interface DocumentView<A extends AstNode = AstNode> {
+  /** The whole text; every range is a UTF-16 offset into it. */
+  readonly text: string;
+  /** The snapshot's parse of `text`: tokens kept, no probe. */
+  readonly result: ParseResult<unknown, A>;
+}
+
+/** What is under the cursor for hover (D93). */
+export interface HoverTarget {
+  /** The hover offset. */
+  readonly offset: number;
+  /**
+   * The token of `doc.result.tokens` under the offset (one containing it, else one ending at
+   * it), when there is one that is not a blank or line break.
+   */
+  readonly token?: { readonly kind: TokenKind; readonly range: Range };
+  /** The parser's symbol occurrence under the offset, when there is one. */
+  readonly symbol?: SymbolOccurrence;
+}
+
+/** One diagram type's language knowledge. */
 export interface LanguageFacet<A extends AstNode = AstNode> {
   /** The diagram id, e.g. `flowchart`. */
   readonly id: string;
@@ -43,13 +60,31 @@ export interface LanguageFacet<A extends AstNode = AstNode> {
    * else the reason it cannot (D92).
    */
   isValidId(name: string, kind?: string): string | undefined;
+  /**
+   * Completion items at the probe (D95): `probe` is `ParseResult.probe` of a parse of
+   * `doc.text` with `probe: offset`. Items are filtered by the probe's prefix.
+   */
+  completions(probe: ProbeResult, doc: DocumentView<A>): CompletionItem[];
+  /** Hover for what is under the cursor (D93); keyword docs come from the syntax reference. */
+  hover(at: HoverTarget, doc: DocumentView<A>): Hover | undefined;
 }
 
 /**
- * What a completion item is (D95, D96). Front matter uses `property` (a key) and `value`; the
- * facet completions (#32) extend this union with their own kinds.
+ * What a completion item is (D95, D96). Front matter uses `property` (a key) and `value`;
+ * diagram text adds keywords, the user's ids (`node`, `subgraph`, `class`), `constant`s
+ * (directions, link targets), `operator`s (arrows, `:::`, `&`) and `shape`s (bracket shapes,
+ * shape names). Adapters map each to their editor's item kind.
  */
-export type CompletionKind = 'property' | 'value' | 'keyword';
+export type CompletionKind =
+  | 'property'
+  | 'value'
+  | 'keyword'
+  | 'node'
+  | 'subgraph'
+  | 'class'
+  | 'constant'
+  | 'operator'
+  | 'shape';
 
 /** One completion item (D95, D96). Editor-agnostic; adapters map it to their own type. */
 export interface CompletionItem {

@@ -1,0 +1,17 @@
+@ 2:16  A@{ shape: pr|oc }
+  2:14-2:18 "proc"
+  | **`proc`** shape (same as `rect`)
+  |
+  | Names: `rect`, `proc`, `process`, `rectangle`, `note`
+@ 3:14  B@{ shape: |cyl, label: "Store" }
+  3:14-3:17 "cyl"
+  | **`cyl`** shape
+  |
+  | Names: `cyl`, `db`, `database`, `cylinder`
+@ 4:6  A e|1@--> B
+  4:5-4:7 "e1"
+  | **edge** `e1`
+  |
+  | `A` → `B`: normal line with an arrow head
+@ 5:3  |
+  none
