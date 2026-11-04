@@ -266,7 +266,7 @@ class ClassParser extends ParserBase {
       nameRange: name.range,
       children: [],
     };
-    this.st.symbol(name.id, 'class', name.range, made ? 'def' : 'ref');
+    this.st.symbol(name.id, 'class', this.symbolRange(name), made ? 'def' : 'ref');
     this.mention(node, name.id, made);
     try {
       this.tested(AFTER_CLASS);
@@ -487,10 +487,17 @@ class ClassParser extends ParserBase {
       case T.Callback:
       case T.Link:
       case T.Click: {
-        const node = this.simple('Click', from, refs);
+        // The span is recorded once the statement is read (folding, code↔diagram highlight).
+        const node: ClassSimpleStmt = {
+          id: this.ids.statement('st'),
+          type: 'Click',
+          range: this.span(from),
+          refs,
+        };
         out.push(node);
         this.clickStatement(node);
         node.range = this.span(from);
+        st.statement('click', node.range);
         return;
       }
       case T.Style: {

@@ -147,7 +147,7 @@ const CASES: Case[] = [
     name: 'unclosed generic type, then an unknown character',
     lines: ['classDiagram', 'class A~T', 'class B', 'C ; D', 'class E'],
     errors: [
-      ['UNCLOSED', 2],
+      ['UNCLOSED_GENERIC', 2],
       ['UNEXPECTED_CHARACTER', 4],
     ],
     keeps: ['B', 'E'],

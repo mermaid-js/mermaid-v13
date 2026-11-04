@@ -1,0 +1,9 @@
+%% rename-to: Creature
+classDiagram
+  class |Animal
+  Animal <\|-- Duck
+  |Animal : +int age
+  note for Animal "every animal"
+  cssClass "Animal,Duck" hot
+  style Animal fill:#f00
+  click |Animal call onClick()

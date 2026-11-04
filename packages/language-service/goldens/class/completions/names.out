@@ -1,0 +1,40 @@
+@ 5:16  class Fish:::|
+  hot constant (style class) 5:16-5:16 "" -> "hot"
+@ 6:12  note for |
+  Animal class 6:12-6:12 "" -> "Animal"
+  Duck class 6:12-6:12 "" -> "Duck"
+  Fish class 6:12-6:12 "" -> "Fish"
+@ 7:9  style |
+  Animal class 7:9-7:9 "" -> "Animal"
+  Duck class 7:9-7:9 "" -> "Duck"
+  Fish class 7:9-7:9 "" -> "Fish"
+@ 8:19  cssClass "Fish" |
+  hot constant (style class) 8:19-8:19 "" -> "hot"
+@ 9:12  classDef |
+  hot constant (style class) 9:12-9:12 "" -> "hot"
+@ 10:5  <<|
+  interface constant (an interface) 10:5-10:5 "" -> "interface"
+  abstract constant (an abstract class) 10:5-10:5 "" -> "abstract"
+  service constant (a service class) 10:5-10:5 "" -> "service"
+  enumeration constant (an enum) 10:5-10:5 "" -> "enumeration"
+@ 11:17  <<interface>> |
+  Animal class 11:17-11:17 "" -> "Animal"
+  Duck class 11:17-11:17 "" -> "Duck"
+  Fish class 11:17-11:17 "" -> "Fish"
+@ 12:14  click Duck |
+  call keyword 12:14-12:14 "" -> "call"
+  href keyword 12:14-12:14 "" -> "href"
+@ 13:41  click Duck href "https://example.com" |
+  _self constant 13:41-13:41 "" -> "_self"
+  _blank constant 13:41-13:41 "" -> "_blank"
+  _parent constant 13:41-13:41 "" -> "_parent"
+  _top constant 13:41-13:41 "" -> "_top"
+@ 14:41  link Duck "https://example.com" "tip" |
+  _self constant 14:41-14:41 "" -> "_self"
+  _blank constant 14:41-14:41 "" -> "_blank"
+  _parent constant 14:41-14:41 "" -> "_parent"
+  _top constant 14:41-14:41 "" -> "_top"
+@ 15:9  class |
+  Animal class 15:9-15:9 "" -> "Animal"
+  Duck class 15:9-15:9 "" -> "Duck"
+  Fish class 15:9-15:9 "" -> "Fish"

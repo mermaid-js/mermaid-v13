@@ -1,0 +1,3 @@
+2:16-2:17 "{" error UNCLOSED_BODY: Unclosed class body: the `{` of class `Animal` at line 2 has no closing `}`. Add `}` before line 4.
+5:13-5:20 ": label" error UNEXPECTED: Expected a class name, got `: label`.
+6:11-6:12 "\"" error UNCLOSED_STRING: Unclosed string: the `"` at line 6 has no closing quote `"`. Add quote `"` to close it.

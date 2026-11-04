@@ -271,11 +271,11 @@ export abstract class ParserBase {
       const s = this.start(j);
       const e = this.end(j);
       if (s === e || e < src.length || this.tokEnd(j) !== e) continue;
-      const [what, closer] = UNCLOSED[this.kind(j)] ?? ['text', 'closer'];
+      const [what, closer, code] = UNCLOSED[this.kind(j)] ?? ['text', 'closer', 'UNCLOSED'];
       const opener = { start: this.tokStart(j), end: s };
       const written = src.slice(opener.start, opener.end).trim();
       this.st.diagnostics.error(
-        this.kind(j) === T.Str ? 'UNCLOSED_STRING' : 'UNCLOSED',
+        code,
         `Unclosed ${what}: the ${written ? `\`${written}\`` : 'text'} at line ${this.lineOf(s)} has no closing ${closer}. Add ${closer} to close it.`,
         opener.end > opener.start ? opener : { start: s, end: Math.min(s + 1, src.length) },
         {
@@ -460,9 +460,21 @@ export abstract class ParserBase {
     return { text, range: this.span(from) };
   }
 
+  /**
+   * The range of a name's symbol: the id alone, without the generic type written after it
+   * (`A` of `A~T~`), so that rename edits the name only (D92).
+   */
+  protected symbolRange(name: Name): Range {
+    const { start } = name.range;
+    if (name.raw === name.id || this.src.slice(start, start + name.id.length) !== name.id) {
+      return name.range;
+    }
+    return { start, end: start + name.id.length };
+  }
+
   /** A mention of a class name: its AST node (id set by {@link mentionIds}) and symbol. */
   protected ref(name: Name, created: boolean): ClassRefNode {
-    this.st.symbol(name.id, 'class', name.range, created ? 'def' : 'ref');
+    this.st.symbol(name.id, 'class', this.symbolRange(name), created ? 'def' : 'ref');
     return this.mention(
       { id: '', type: 'ClassRef', range: name.range, name: name.raw, classId: name.id },
       name.id,
@@ -522,7 +534,7 @@ export abstract class ParserBase {
 
   /** The interface end of a lollipop relationship: its AST node and symbol. */
   protected interfaceRef(name: Name, ast: AstId, index: number): ClassInterfaceRefNode {
-    this.st.symbol(name.id, 'interface', name.range, 'def');
+    this.st.symbol(name.id, 'interface', this.symbolRange(name), 'def');
     return {
       id: ast,
       type: 'InterfaceRef',
@@ -538,7 +550,10 @@ export abstract class ParserBase {
     let at = r.start + 1;
     for (const part of list.split(',')) {
       const pr = exact ? { start: at, end: at + part.length } : r;
-      this.st.symbol(splitClassName(part).id, kindName, pr, 'ref');
+      // v12 looked each part up as written: `"A, B"` names `A` and ` B`, which no class is.
+      if (part !== '' && part.trim() === part) {
+        this.st.symbol(splitClassName(part).id, kindName, pr, 'ref');
+      }
       out.push(part);
       at += part.length + 1;
     }
@@ -571,7 +586,7 @@ export abstract class ParserBase {
     const k = this.kind();
     this.i++;
     const name = this.className();
-    this.st.symbol(name.id, 'class', name.range, 'ref');
+    this.st.symbol(name.id, 'class', this.symbolRange(name), 'ref');
     node.refs.push(name.raw);
     if (k === T.Callback) {
       const fn = this.str().text;

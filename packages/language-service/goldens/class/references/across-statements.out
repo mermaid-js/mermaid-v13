@@ -1,0 +1,16 @@
+@ 2:9  class |Animal:::hot
+  2:9-2:15 "Animal"
+  3:3-3:9 "Animal"
+  4:16-4:22 "Animal"
+  5:18-5:24 "Animal"
+  7:8-7:14 "Animal"
+@ 4:21  <<abstract>> Anima|l
+  2:9-2:15 "Animal"
+  3:3-3:9 "Animal"
+  4:16-4:22 "Animal"
+  5:18-5:24 "Animal"
+  7:8-7:14 "Animal"
+@ 5:26  cssClass "Duck,Animal" |hot
+  2:18-2:21 "hot"
+  5:26-5:29 "hot"
+  6:12-6:15 "hot"

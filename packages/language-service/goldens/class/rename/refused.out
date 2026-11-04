@@ -1,0 +1,5 @@
+@ 3:3  |Animal <|-- Duck
+  prepare: 3:3-3:9 "Animal"; rename to "class":
+  refused: 'class' is a keyword.
+@ 4:5  cl|ass Duck
+  prepare: refused: There is no id or class name here to rename.
