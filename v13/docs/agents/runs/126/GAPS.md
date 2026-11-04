@@ -87,3 +87,8 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 - D125 detail: the generated `classConfigDefaults` has `padding: 12`, but the plugin's `configDefaults` leaves `padding` out, so "unset" still reaches the layout and namespaces (16) and notes (6) draw as v12. With it in, every namespace and note would be padded 12.
 - Cosmetic, not done: theme `usedBy` lists for the shared variables the class renderer reads (shared file other ports also edit).
 - Not done: class baselines are not in the dev theme gallery (`packages/dev/src/fixtures.ts` reads flowchart's only; state deferred the same to ER's `galleryFixtures`).
+
+## #157 e2e entity decoding (`asHostText`), checked 2026-11-04
+
+- Accepted by the M3 coordinator: the mmd-snapshot runner decodes HTML entities as v12's e2e page did.
+- Snapshots outside class: none change. No flowchart, ER or sequence fixture contains `&lt;`, `&gt;`, `&amp;` or `&quot;`. Block (1), mindmap (1) and usecase (4) fixtures do, but those types are not in `SUPPORTED_TYPES`, so they are not snapshotted. State's `pr-check/should-render-forks-and-joins.mmd` and `should-render-forks-in-composit-states.mmd` will be decoded once state merges (state is told).
