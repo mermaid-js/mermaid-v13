@@ -38,7 +38,9 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 
 - #136 ASCII: declare `ascii` in ER's manifest (`formats: ["svg","ascii"]`, `"ascii": "./dist/ascii.js"`, `loadAscii` → `@mermaid-js/diagram-er/ascii`'s `ascii`), regenerate the registry, then point `conformance/src/ascii/er-render.ts` at `createMermaid()` and drop its `ER_SECTION_DEFAULTS` once the generated defaults carry them (goldens unchanged). Add ER to `v13/docs/ascii.md` and the format matrix.
 
-## #136 T7 ASCII (open question)
+## #136 T7 ASCII (merged; open items)
+
+- Not done: `ascii.maxWidth` fitting for ER (D84: tighten, then LR→TB). Flowchart has it; ER drawings ignore the width limit for now.
 
 - Maintainer: should text output honour the v12 px defaults `er.nodeSpacing` 140 (≈18 columns, 9 rows across in LR), `er.rankSpacing` 80 (5 rows) and `er.minEntityWidth` 100 (13 columns)? The goldens are drawn with them, as DESIGN's "px keys still count" implies; LR drawings get 9-row gaps between components.
 
