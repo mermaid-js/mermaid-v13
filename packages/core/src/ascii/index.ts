@@ -7,7 +7,7 @@ export { DOWN, DX, DY, INTO, LEFT, RIGHT, UP, opposite } from './directions.ts';
 export type { Dir } from './directions.ts';
 export { drawBox, drawText } from './draw.ts';
 export type { BoxOptions, CellRect } from './draw.ts';
-export { ascii, glyphFor, junction, unicode } from './glyphs.ts';
+export { armOf, ascii, glyphFor, junction, sideOf, unicode } from './glyphs.ts';
 export type { GlyphSet, Sides, Stroke } from './glyphs.ts';
 export { repairRoutes, routeCollisions } from './repair.ts';
 export type { Collision, CollisionKind, RepairOptions, RepairResult } from './repair.ts';
