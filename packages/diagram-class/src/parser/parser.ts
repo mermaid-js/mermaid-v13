@@ -243,10 +243,9 @@ class ClassParser extends ParserBase {
     const from = this.i++;
     const name = this.className();
     const ast = ids.node(name.id);
-    this.tested(AFTER_CLASS);
-    const label = this.kind() === T.SQS ? this.classLabel() : undefined;
+    // The class is made before its label is read, so a bad label still leaves it in the
+    // model (v12 made it with the label; only an accepted text reaches the model there).
     const made = this.addClass(name, ast);
-    if (label) db.setClassLabel(name.raw, label.text);
     const node: ClassStmt = {
       id: ast,
       type: 'Class',
@@ -257,10 +256,15 @@ class ClassParser extends ParserBase {
       children: [],
     };
     this.st.symbol(name.id, 'class', name.range, made ? 'def' : 'ref');
-    if (label) node.label = label;
-    this.tested(label ? AFTER_LABEL : AFTER_CLASS);
-    const k = this.kind();
     try {
+      this.tested(AFTER_CLASS);
+      const label = this.kind() === T.SQS ? this.classLabel() : undefined;
+      if (label) {
+        db.setClassLabel(name.raw, label.text);
+        node.label = label;
+      }
+      this.tested(label ? AFTER_LABEL : AFTER_CLASS);
+      const k = this.kind();
       if (k === T.StyleSeparator) {
         this.i++;
         const r = this.range(this.i);
@@ -329,6 +333,7 @@ class ClassParser extends ParserBase {
         );
         this.addMembers(name, node, lines);
         node.bodyRange = { start: r.start, end: this.src.length };
+        this.ended = true;
         throw STOP;
       }
       // `{` or `[*]` inside a body: reported once each, then the body goes on.
@@ -787,6 +792,7 @@ class ClassParser extends ParserBase {
       );
     }
     while (this.frames.length > 0) this.closeFrame(this.src.length);
+    this.ended = true;
   }
 
   /** One step at the top level: a statement, or the separator after one. */
