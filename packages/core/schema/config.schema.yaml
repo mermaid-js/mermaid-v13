@@ -121,7 +121,7 @@ properties:
         `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` /
         `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY`
         (totals) 42 / 24 and padding; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
-        on the dark redux themes) / `none`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux
+        on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux
         themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`,
         `#f4f4f4` in `neutral`, `tertiaryColor` in `base`). "padding" is `flowchart.padding`. Plain `redux` and
         `redux-dark` carry no palette. Geometry variables are read as numbers at render time,
@@ -406,6 +406,16 @@ properties:
           since: 13.0.0
           reason: >-
             24 (12 per side) in the redux themes; `padding` in the classic themes (v12 `rectLeftInvArrow.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      compositeBackground:
+        description: |
+          Fill of a composite state's body (state diagram).
+        type: string
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            v12's values (D126): `#16141f` in `redux-dark` and `redux-dark-color`; `background`
+            in every other theme.
       compositeTitleBackground:
         description: |
           Fill of a composite state's title strip (state diagram).

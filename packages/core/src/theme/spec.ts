@@ -55,7 +55,8 @@ export const LIGHT_RULES: ThemeRuleTable = {
   rowEven: 'lightenHsl(mainBkg, 5%)',
   erEdgeLabelBackground: 'edgeLabelBackground',
   erMarkerFill: '#ffffff',
-  // v12 theme-base.js; the other classic themes pin altBackground (#192).
+  // v12 theme-base.js; the other classic themes pin altBackground (#192, D126).
+  compositeBackground: 'background',
   compositeTitleBackground: 'mainBkg',
   altBackground: 'tertiaryColor',
 };

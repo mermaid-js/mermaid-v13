@@ -152,7 +152,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   noteBorderColor: def('no', 'color', C),
   errorBkgColor: def('eb', 'color', C),
   errorTextColor: def('et', 'color', C),
-  // composite states (#192, D120): the title strip and the alternate (nested) body.
+  // composite states (#192, D120, D126): the body, the title strip and the alternate
+  // (nested) body.
+  compositeBackground: def('cbg', 'color', S),
   compositeTitleBackground: def('ctb', 'color', S),
   altBackground: def('alb', 'color', S),
   // tokens
