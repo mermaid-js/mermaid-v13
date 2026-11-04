@@ -26,6 +26,9 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 ## #149 T6 language facet
 
 - [x] **Accepted (D119): first-paint colours via #190.** The CodeMirror and Monaco adapters colour first paint with flowchart's grammar for every type; picking the highlighter per type is cross-type ticket #190, after the M3 facets. #149 does not change the adapters.
+- [x] **Accepted with D119: no `./monarch.json` export yet.** It only feeds the Monaco adapter's first paint; it comes with #190.
+- [ ] **TextMate: pop-then-push rules.** `tools/gen-grammar/src/highlight.ts` has no TextMate form for a rule that pops one mode and pushes another, so TextMate colours a declaration's `as` alias and `@{…}` data as statement text (documented exception in `tools/gen-grammar/src/sequence-categories.spec.ts`). Cross-type generator fix; needs a follow-up ticket or maintainer acceptance.
+- [ ] **Property and rename round-trip specs pick sequence up once #145 registers it** (run by hand over the corpus in #149: clean). Then move `packages/conformance/language-goldens/sequence/` to the shared location and delete `packages/conformance/src/sequence/language-goldens.spec.ts` (its last test fails by design once the manifest lands).
 
 ## Resolved by the maintainer
 
