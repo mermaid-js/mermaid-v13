@@ -1,10 +1,33 @@
 # Gaps, spec #126
 
-Unmet acceptance criteria and announced contracts, under the ticket that owns each one.
+Status: every ticket (#152–#159, #185, #201) is merged into `feature/126_class-diagram`. The final whole-branch review findings are being fixed on `fix/126_final-review`.
 
-## Held
+## Needs the maintainer's acceptance (finish rule 4)
 
-- Released 2026-11-04: M2.5 (#123) merged into `mermaid-v13` and into this branch (`b93d413f6`); #27, #28, #29, #31 closed. #154 (T2) started; #159 (T6) and #155 (T3) follow T2.
+Each item is unmet against a requirement or the spec, or is a core issue found here and not fixed. They are listed so the maintainer can accept or reject them before #166 goes ready.
+
+1. **R-LANG-4 language budget (#159).** One edit cycle on a 50k-character class document takes ~26 ms, against a 15 ms reference budget (D156). Flowchart took ~17.5 ms on the same loaded machine. Parse speed is milestone-close work ("measure and report, don't optimise").
+2. **Core writer, `left: true` fast path (#156).** A one-plain-run label asked to align left is drawn centred. Fixing it in core changes two flowchart SVGs (`flowchart/nightly-check/v2/03-should-render-raw-strings`, `04-…-htmllabels-false`: the one-item bullet `- x`), so core was left alone, and class writes start-anchored rows itself.
+3. **Dev theme gallery (#157).** Class baselines are not in the dev gallery, which reads flowchart only. State and ER deferred the same.
+4. **Theme `usedBy` lists (#157).** The shared variables the class renderer reads still list only `flowchart`/`core`. Cosmetic.
+5. **Namespace rename (#159).** Dotted namespaces (`namespace A.B`), any namespace that is a prefix of one, and nested namespaces have no definition, references or rename. Hover works.
+6. **Core issues found here, not class-specific:**
+   - core `layoutLabel` doesn't set `Style.Underline`;
+   - the writer leaves LF/CR/tab raw in attribute values;
+   - core preprocess reads a directive where v12 keeps text when a comment line follows `%%{` (D67);
+   - core accepts front matter with invalid YAML, which v12 rejects;
+   - the flowchart parity harness doesn't decode `#y;` in edge text.
+
+## Accepted or decided (no action)
+
+- D125 padding defaults; D127 layered default; D119 first-paint colours via #190; D48 no sandbox `_top`; e2e entity decoding (`asHostText`, accepted by the coordinator, no snapshot outside class changes).
+- #152 limits: `direct` edges get no reserved end-label room; grid group/member end label; a fan's gap can be taller than needed (~120 px instead of ~84).
+- `fixed` changeset group not used: RELEASING.md and `release-config.spec.ts` keep it empty (as state did).
+- Neo-theme marker variants are theme geometry (D152); `classEdgeLabelBackground` dropped (v12's rule never matched).
+- Empty `classDiagram` is rejected, as in v12 (UX question only).
+- Sanitising: text is escaped, not sanitised, within flowchart's precedent (MIGRATION).
+
+## Record per ticket
 
 ## Spec corrections (from 01-v12-class.md)
 
@@ -21,7 +44,7 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 
 ## #153 (T1) → later tickets
 
-- #157 (T5): `@mermaid-js/diagram-class` is `"private": true`; make it public and add it to the changeset `fixed` group.
+- #157 (T5): make the package public (done in #157); the `fixed` group was declined per RELEASING.md.
 - #154 (T2): add the class line to `PARITY_SUITES` with the model adapter. Done (`classAdapter`, `feature/154_class-parser`): 711/711 agree, no divergences listed.
 - Not class-specific, for the maintainer: with a comment line straight after a multi-line `%%{`, v12 keeps the text, but core's preprocess still reads a directive (D67). The class lexer suite excludes that injection case.
 - Lexing is ~1 µs/char on token-dense lines (linear); size/speed work is for milestone close.
@@ -61,7 +84,7 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 - #152's reserved end-label room (a fan's gap taller than needed): judged acceptable, not tuned (core change). Three labelled ends on one side: ~120 px gap instead of ~84.
 - Decided, D125 (draft PR #195), for #157 (T5): set the documented defaults `class.padding` 12 and `class.diagramPadding` 8; keep the namespace fallback at 16; add a MIGRATION.md note that the documented numbers changed from 5 and 20, citing D125.
 - For #157 (T5): if `class.layout` carries v12's `elk` default, default it to the layered layout, as state does under D127 (R-LAYOUT-7).
-- #156 (T4): end markers must stay within 12 px across; multiplicities are kept clear of them only by the engine's `endLabelAcross` offset.
+- #156 (T4): end markers must stay within 12 px across. Superseded by #201: the engine now gets marker obstacles.
 
 ## #156 (T4) renderer
 
@@ -93,7 +116,7 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 - Accepted by the M3 coordinator: the mmd-snapshot runner decodes HTML entities as v12's e2e page did.
 - Snapshots outside class: none change. No flowchart, ER or sequence fixture contains `&lt;`, `&gt;`, `&amp;` or `&quot;`. Block (1), mindmap (1) and usecase (4) fixtures do, but those types are not in `SUPPORTED_TYPES`, so they are not snapshotted. State's `pr-check/should-render-forks-and-joins.mmd` and `should-render-forks-in-composit-states.mmd` will be decoded once state merges (state is told).
 
-## #158 (interactions): contract from sequence #147 (draft PR #202, not merged yet)
+## #158 (interactions): contract from sequence #147 (PR #202, merged)
 
 - Build on #202 once it is in `mermaid-v13`: `packages/plugin-interactions/src/feature.ts` plus the `FEATURES` table in `index.ts`. Each feature owns one AST field end to end (start, collect, plan, bind). Class adds one entry and its own file. Flowchart callbacks already run through it.
 - Core gains a type-only `AstMenu` in parser-kit and a `'menus'` ExtensionClaim. Binding is scoped per diagram svg, keyed on content; `mount()` rebinds on every render.

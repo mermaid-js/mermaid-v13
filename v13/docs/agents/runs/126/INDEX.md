@@ -1,6 +1,6 @@
 # Run notes, spec #126 (class diagram)
 
-Integration: `feature/126_class-diagram`, draft PR #166 into `mermaid-v13`. T0–T6 merged; #201 running; #158 waits for sequence #147.
+Integration: `feature/126_class-diagram`, draft PR #166 into `mermaid-v13`. All tickets merged (#158 at `50cb3b44e`); final review fixes on `fix/126_final-review`.
 
 | Ticket | Title | Blocked by | Branch |
 | --- | --- | --- | --- |
@@ -10,9 +10,9 @@ Integration: `feature/126_class-diagram`, draft PR #166 into `mermaid-v13`. T0�
 | #155 | T3 layout | #152, #154 | feature/155_class-layout, merged here |
 | #156 | T4 renderer | #155 | feature/156_class-render, merged here |
 | #157 | T5 integration | #156 | feature/157_class-integration, merged here |
-| #158 | interactions (D105) | #156; not alongside #125's | waits for sequence #147 to merge (agreed with #125, D112) |
+| #158 | interactions (D105) | #156; not alongside #125's | feature/158_class-interactions, merged here (after sequence #147, D112) |
 | #159 | T6 language facet | #154, #29, #31 | feature/159_class-language, merged here |
-| #201 | multiplicities clear of markers across edges | – | fix/201_class-marker-clearance |
+| #201 | multiplicities clear of markers across edges | – | fix/201_class-marker-clearance, merged here; core half via #203 |
 | #185 | T0b core `sourceView` directive fix (D114) | – | fix/185_source-view-directives, merged via #186 |
 
 Notes:
