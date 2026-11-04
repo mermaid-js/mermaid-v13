@@ -14,6 +14,8 @@ import {
   ExpectedTable,
   inKindSet,
   isSpace,
+  LBRACE,
+  RBRACE,
   Kind,
   kindSet,
   LineIndex,
@@ -516,6 +518,16 @@ class FlowParser {
       while (b > 0 && isSpace(src.charCodeAt(b - 1))) b--;
       if (src.startsWith('click', b - 5)) return b - 5;
     }
+    if (k === T.AccDescrMultilineValue) {
+      // `accDescr {` and the blanks around `{` are consumed without a token (RE_ACC_DESCR_ML).
+      let b = s;
+      while (b > 0 && isSpace(src.charCodeAt(b - 1))) b--;
+      if (src.charCodeAt(b - 1) === LBRACE) {
+        b--;
+        while (b > 0 && isSpace(src.charCodeAt(b - 1))) b--;
+        if (src.startsWith('accDescr', b - 8)) return b - 8;
+      }
+    }
     return s;
   }
 
@@ -525,6 +537,8 @@ class FlowParser {
     if (k === T.Str && this.src[e] === '"') return e + 1;
     if (k === T.MdStr && this.src.startsWith('`"', e)) return e + 2;
     if (k === T.End) return this.start(j) + 3;
+    // The closing `}` of `accDescr { … }` is consumed without a token.
+    if (k === T.AccDescrMultilineValue && this.src.charCodeAt(e) === RBRACE) return e + 1;
     return e;
   }
 

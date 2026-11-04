@@ -154,7 +154,7 @@ describe('Monaco, the LSP server and CodeMirror agree', () => {
   it('on the folds by line, closing lines visible', async () => {
     // Front matter (keeps `---`), accDescr (keeps `}`), the label chain, the subgraph
     // (keeps `end`) and the multi-line `@{ }`.
-    expect(lsp.folds).toEqual(['0-3', '7-9', '10-11', '12-15', '14-15']);
+    expect(lsp.folds).toEqual(['0-3', '6-8', '10-11', '12-15', '14-15']);
     expect((await monacoView(DOC)).folds).toEqual(lsp.folds);
     expect((await codeMirrorView(DOC)).folds).toEqual(lsp.folds);
   });

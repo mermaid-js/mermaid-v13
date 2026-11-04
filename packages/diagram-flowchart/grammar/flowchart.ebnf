@@ -22,8 +22,8 @@ acc_title                 /accTitle\s*:\s*/                push(acc_title) :keyw
 <acc_title> acc_title_value /[^\n]*/                       pop :string ;
 acc_descr                 /accDescr\s*:\s*/                push(acc_descr) :keyword ;
 <acc_descr> acc_descr_value /[^\n]*/                       pop :string ;
--                         /accDescr\s*\{\s*/               push(acc_descr_multiline) :keyword ;
-<acc_descr_multiline> -   /\}/                             pop :keyword ;
+-                         /accDescr\s*\{\s*/               push(acc_descr_multiline) attach-next :keyword ;
+<acc_descr_multiline> -   /\}/                             pop attach-prev :keyword ;
 <acc_descr_multiline> acc_descr_multiline_value /[^}]*/    :string ;
 
 (** Shape data `@{ … }`: YAML in braces; line breaks in a quoted value read as `<br/>`. *)
