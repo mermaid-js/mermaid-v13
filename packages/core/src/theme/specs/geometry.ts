@@ -115,3 +115,12 @@ export const CLASSIC_PADDING: Readonly<Record<PaddingToken, number | string>> = 
   oddPaddingX: 'padding',
   oddPaddingY: 'padding',
 };
+
+/**
+ * Colours the redux family derives differently from the classic themes, where v12 switched on
+ * `look: neo` (D152): a class relationship label sits on `edgeLabelBackground` (v12 class
+ * `.edgeLabel[data-look="neo"]`) instead of `mainBkg`.
+ */
+export const REDUX_RULES = {
+  classEdgeLabelBackground: 'edgeLabelBackground',
+} as const;

@@ -9,3 +9,7 @@ export { classCategories } from './generated/categories.ts';
 export { classDocs } from './generated/docs.ts';
 // Layout (#155): measures every box and lays the graph out with `ctx.layout` (D106).
 export * from './layout/index.ts';
+// Renderer (#156): the whole `<svg>` through the SvgWriter, and the plugin (registered in #157).
+export { renderClass } from './render/render.ts';
+export type { ClassRenderContext, ClassWarning } from './render/context.ts';
+export { classDiagram } from './plugin.ts';

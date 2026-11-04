@@ -41,6 +41,7 @@ export const LIGHT_RULES: ThemeRuleTable = {
   clusterBorder: 'tertiaryBorderColor',
   titleColor: 'contrast(clusterBkg, textColor, background)',
   edgeLabelBackground: 'secondaryColor',
+  classEdgeLabelBackground: 'mainBkg',
   arrowheadColor: 'lineColor',
   defaultLinkColor: 'lineColor',
   border1: 'primaryBorderColor',

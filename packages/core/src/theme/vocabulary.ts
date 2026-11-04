@@ -139,6 +139,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   clusterBorder: def('cs', 'color', F),
   titleColor: def('tc', 'color', F),
   edgeLabelBackground: def('el', 'color', F),
+  // A class relationship label's background: v12 drew it on `mainBkg`, and on
+  // `edgeLabelBackground` under `look: neo`, so the redux family sets the latter (D152).
+  classEdgeLabelBackground: def('cel', 'color', ['class']),
   arrowheadColor: def('ah', 'color', F),
   defaultLinkColor: def('dl', 'color', F),
   border1: def('b1', 'color', F),

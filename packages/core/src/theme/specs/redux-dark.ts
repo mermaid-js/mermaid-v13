@@ -4,6 +4,7 @@
  * those values are pinned here rather than left to the shared dark rules.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { REDUX_RULES } from './geometry.ts';
 import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
 
 const theme: ThemeSpec = {
@@ -11,6 +12,7 @@ const theme: ThemeSpec = {
   dark: true,
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
+  rules: REDUX_RULES,
   values: REDUX_DARK_VALUES,
 };
 
