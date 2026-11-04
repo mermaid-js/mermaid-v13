@@ -1,0 +1,15 @@
+@ 4:7  B:::|
+  hot class 4:7-4:7 "" -> "hot"
+  cold class 4:7-4:7 "" -> "cold"
+@ 5:9  class |
+  A node 5:9-5:9 "" -> "A"
+  B node 5:9-5:9 "" -> "B"
+@ 6:11  class A |
+  hot class 6:11-6:11 "" -> "hot"
+  cold class 6:11-6:11 "" -> "cold"
+@ 7:12  classDef |
+  hot class 7:12-7:12 "" -> "hot"
+  cold class 7:12-7:12 "" -> "cold"
+@ 8:9  style |
+  A node 8:9-8:9 "" -> "A"
+  B node 8:9-8:9 "" -> "B"

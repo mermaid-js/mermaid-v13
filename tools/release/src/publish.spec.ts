@@ -22,10 +22,12 @@ describe('packAll (this workspace)', () => {
     expect(names).toEqual([
       '@mermaid-chart/core',
       '@mermaid-chart/diagram-flowchart',
+      '@mermaid-chart/language-service',
+      '@mermaid-chart/language-server',
       '@mermaid-chart/plugin-interactions',
       '@mermaid-chart/mermaid',
     ]);
-    const mermaid = manifestOf(packed[3]!.tarball);
+    const mermaid = manifestOf(packed.find((p) => p.name === '@mermaid-chart/mermaid')!.tarball);
     expect(mermaid.name).toBe('@mermaid-chart/mermaid');
     // Exact: a pinned alpha must not float its own packages to a newer alpha.
     expect(mermaid.dependencies?.['@mermaid-js/core']).toBe(

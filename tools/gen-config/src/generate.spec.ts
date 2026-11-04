@@ -96,6 +96,27 @@ describe('gen-config', () => {
     expect(files.get('v13/docs/config-reference.md')).toContain('| `flowchart.curve` | string |');
   });
 
+  it('writes the config JSON schema for the language service (D96), without required or tsType', async () => {
+    const { files } = await generate(
+      tinySchema('    x-mermaid: { status: pending }\n    tsType: any'),
+      () => undefined
+    );
+    const source = files.get('packages/language-service/src/generated/config-schema.gen.ts');
+    expect(source).toContain('export const configSchema: ConfigSchema = ');
+    const json = JSON.parse(source!.slice(source!.indexOf('= ') + 2).replace(/;\s*$/, '')) as {
+      properties: Record<string, Record<string, unknown>>;
+      $defs: Record<string, unknown>;
+    };
+    expect(json.properties.theme).toEqual({
+      type: 'string',
+      default: 'redux',
+      'x-mermaid': { status: 'pending' },
+    });
+    expect(json.properties.flowchart!.$ref).toBe('#/$defs/FlowchartDiagramConfig');
+    expect(Object.keys(json.$defs)).toEqual(['FlowchartDiagramConfig']);
+    expect(source).not.toContain('"$schema"');
+  });
+
   it('splices the MIGRATION.md config section between its markers', () => {
     const doc = `# Migrating\n\nBefore.\n\n${MIGRATION_BEGIN}\nold\n${MIGRATION_END}\n\nAfter.\n`;
     expect(spliceMigration(doc, `${MIGRATION_BEGIN}\nnew\n${MIGRATION_END}`)).toBe(

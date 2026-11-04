@@ -189,6 +189,8 @@ zenuml
 oklab
 oklch
 subpaths
+goldens
+memoises
 parseable
 userconfig
 htpasswd

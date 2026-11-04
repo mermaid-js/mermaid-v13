@@ -34,7 +34,31 @@ describe('runtime dependency check (R-PERF-2)', () => {
   it('fails when core declares a runtime dependency', () => {
     const bad = pkg('packages/core', { name: '@mermaid-js/core', dependencies: { khroma: '^2' } });
     expect(findDependencyViolations([bad])).toEqual([
-      '@mermaid-js/core: runtime dependency "khroma" is not allowed (core and diagram packages have zero runtime dependencies)',
+      '@mermaid-js/core: runtime dependency "khroma" is not allowed (core, diagram and language-service packages have zero runtime dependencies)',
+    ]);
+  });
+
+  it('fails when the language service declares a runtime dependency (R-LANG-1)', () => {
+    const bad = pkg('packages/language-service', {
+      name: '@mermaid-js/language-service',
+      dependencies: { '@mermaid-js/core': 'workspace:^' },
+    });
+    expect(findDependencyViolations([core, bad])).toEqual([
+      '@mermaid-js/language-service: runtime dependency "@mermaid-js/core" is not allowed (core, diagram and language-service packages have zero runtime dependencies)',
+    ]);
+  });
+
+  it('fails when an editor adapter declares a runtime dependency, even unpublished (R-LANG-2)', () => {
+    const adapter = (deps: Record<string, string>) =>
+      pkg('packages/language-service-codemirror', {
+        name: '@mermaid-js/language-service-codemirror',
+        private: true,
+        dependencies: deps,
+        peerDependencies: { '@codemirror/view': '^6', '@mermaid-js/core': 'workspace:^' },
+      });
+    expect(findDependencyViolations([core, adapter({})])).toEqual([]);
+    expect(findDependencyViolations([core, adapter({ '@codemirror/view': '^6' })])).toEqual([
+      '@mermaid-js/language-service-codemirror: runtime dependency "@codemirror/view" is not allowed (editor adapters take their editor and the service as peers)',
     ]);
   });
 
@@ -53,7 +77,7 @@ describe('runtime dependency check (R-PERF-2)', () => {
       peerDependencies: { dagre: '^1' },
     });
     expect(findDependencyViolations([core, bad])).toEqual([
-      '@mermaid-js/diagram-pie: runtime dependency "d3" is not allowed (core and diagram packages have zero runtime dependencies)',
+      '@mermaid-js/diagram-pie: runtime dependency "d3" is not allowed (core, diagram and language-service packages have zero runtime dependencies)',
       '@mermaid-js/diagram-pie: peer dependency "dagre" is not a workspace package',
     ]);
   });
@@ -75,6 +99,27 @@ describe('runtime dependency check (R-PERF-2)', () => {
       dependencies: { 'mermaid-v12': 'npm:mermaid@^12' },
     });
     expect(findDependencyViolations([core, conformance])).toEqual([]);
+  });
+
+  it('lets the language server depend on vscode-languageserver and nothing else third-party (D88)', () => {
+    const server = pkg('packages/language-server', {
+      name: '@mermaid-js/language-server',
+      dependencies: {
+        '@mermaid-js/core': 'workspace:^',
+        'vscode-languageserver': '^11',
+        chalk: '^5',
+      },
+    });
+    expect(findDependencyViolations([core, server])).toEqual([
+      '@mermaid-js/language-server: runtime dependency "chalk" is not a workspace package',
+    ]);
+    const other = pkg('packages/mermaid', {
+      name: 'mermaid',
+      dependencies: { 'vscode-languageserver': '^11' },
+    });
+    expect(findDependencyViolations([other])).toEqual([
+      'mermaid: runtime dependency "vscode-languageserver" is not a workspace package',
+    ]);
   });
 
   it('holds for the real workspace', () => {
@@ -117,6 +162,21 @@ describe('bin import check (R-PERF-2, D85)', () => {
           `mermaid: bin src/cli.ts imports "${dep}" (bins use node: builtins and workspace packages only)`
       )
     );
+  });
+
+  it('lets the language server bin import vscode-languageserver (D88)', () => {
+    const server = pkg('packages/language-server', {
+      name: '@mermaid-js/language-server',
+      bin: { 'mermaid-language-server': './dist/cli.js' },
+      dependencies: { 'vscode-languageserver': '^11' },
+    });
+    const text = [
+      "import { createConnection } from 'vscode-languageserver/node';",
+      "import yargs from 'yargs';",
+    ].join('\n');
+    expect(findBinImportViolations([server], [{ pkg: server, file: 'src/cli.ts', text }])).toEqual([
+      '@mermaid-js/language-server: bin src/cli.ts imports "yargs" (bins use node: builtins and workspace packages only)',
+    ]);
   });
 
   it('maps a bin from dist to its TypeScript source and holds for the real workspace', () => {

@@ -1,0 +1,10 @@
+@ 1:14  %%{init: {"th|eme": "dark"}}%%
+  none
+@ 3:8  A[hel|lo] --> B["world"]
+  none
+@ 3:22  A[hello] --> B["wor|ld"]
+  none
+@ 4:12  %% a comm|ent
+  none
+@ 5:11  B -->|te|xt| C
+  none

@@ -2,5 +2,6 @@ minimumReleaseAge: 4320 # 4320 minutes = 3 days
 packages:
   - 'packages/*'
   - 'tools/*'
+  - 'packages/language-service/examples/*'
 onlyBuiltDependencies:
   - esbuild

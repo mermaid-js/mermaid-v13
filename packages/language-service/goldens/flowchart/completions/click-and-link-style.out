@@ -1,0 +1,14 @@
+@ 3:11  click A |
+  href keyword 3:11-3:11 "" -> "href"
+  call keyword 3:11-3:11 "" -> "call"
+@ 4:33  click A "https://example.com" |
+  _self constant 4:33-4:33 "" -> "_self"
+  _blank constant 4:33-4:33 "" -> "_blank"
+  _parent constant 4:33-4:33 "" -> "_parent"
+  _top constant 4:33-4:33 "" -> "_top"
+@ 5:40  click B href "https://example.com" _b|
+  _blank constant 5:38-5:40 "_b" -> "_blank"
+@ 6:13  linkStyle |
+  default keyword 6:13-6:13 "" -> "default"
+@ 7:15  linkStyle 0 |
+  interpolate keyword 7:15-7:15 "" -> "interpolate"

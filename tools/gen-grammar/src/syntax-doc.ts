@@ -62,11 +62,12 @@ export function syntaxDoc(g: Grammar, title: string, source: string): string {
     ''
   );
   out.push(`Modes: ${['INITIAL', ...g.modes].map((m) => `\`${m}\``).join(', ')}.`, '');
-  out.push('| Modes | Token | Pattern | Action |', '| --- | --- | --- | --- |');
+  out.push('| Modes | Token | Pattern | Action | Doc |', '| --- | --- | --- | --- | --- |');
   for (const r of g.lexRules) {
     const pattern = r.pattern.length > 80 ? `${r.pattern.slice(0, 77)}…` : r.pattern;
+    const doc = (r.doc ?? '').replace(/\s+/g, ' ');
     out.push(
-      `| ${cell(r.modes.join(', '))} | ${r.name ?? '—'} | \`${cell(pattern)}\` | ${cell(action(r))} |`
+      `| ${cell(r.modes.join(', '))} | ${r.name ?? '—'} | \`${cell(pattern)}\` | ${cell(action(r))} | ${cell(doc)} |`
     );
   }
   out.push('');
