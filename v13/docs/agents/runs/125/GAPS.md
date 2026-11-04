@@ -48,3 +48,7 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 - [x] **Accepted (2026-11-04):** async/half/stick arrowheads in `signalColor` (v12: black); classic rect/box grey shadows dropped (shadow only where `dropShadow` is set). Listed in MIGRATION.md by #143.
 
 - [x] **D123: keep the fix.** The 3 create/destroy divergences (#139: `create-after-note`, `destroy-then-create`, `destroy-before-loop`) stand: v13 attaches `create`/`destroy` to the right message. Cited in `packages/conformance/divergences.json` and MIGRATION.md "Sequence syntax".
+
+## Final review
+
+- [ ] **Flaky margin: `packages/bench/src/language-budget-sequence.spec.ts` "a cycle costs at most four bare parses".** Failed twice in parallel full-suite runs under machine load (4.19 vs 4); passes alone under the lock. Check it uses best-of-N CPU time like flowchart's, and whether the ratio bound has the same headroom as flowchart's.
