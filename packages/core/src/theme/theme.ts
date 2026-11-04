@@ -292,7 +292,9 @@ class Resolver {
         const a = this.evaluate(x);
         const d = e.fn === 'lightenHsl' ? pct(y) : -pct(y);
         const rgba = a.rgba && adjustLightness(a.rgba, d);
-        const css = `hsl(from ${a.css} h s calc(l ${d < 0 ? '-' : '+'} ${num(Math.abs(d))}) / alpha)`;
+        // Clamped as khroma does: relative colour syntax keeps an out-of-range lightness.
+        const l = `l ${d < 0 ? '-' : '+'} ${num(Math.abs(d))}`;
+        const css = `hsl(from ${a.css} h s clamp(0, ${l}, 100) / alpha)`;
         return { css, lit: rgba ? formatColor(rgba) : a.lit, rgba, deps: a.deps };
       }
       case 'alpha': {

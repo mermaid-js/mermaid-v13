@@ -54,10 +54,10 @@ describe('diagram plugin rule tables (DESIGN §12.1)', () => {
     t.color('a');
     t.color('b');
     expect(t.rootStyle()['--_a']).toBe(
-      'var(--mermaid-a,hsl(from var(--_p) h s calc(l + 5) / alpha))'
+      'var(--mermaid-a,hsl(from var(--_p) h s clamp(0, l + 5, 100) / alpha))'
     );
     expect(t.rootStyle()['--_b']).toBe(
-      'var(--mermaid-b,hsl(from #1f2020 h s calc(l - 10) / alpha))'
+      'var(--mermaid-b,hsl(from #1f2020 h s clamp(0, l - 10, 100) / alpha))'
     );
   });
 

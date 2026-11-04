@@ -6,7 +6,7 @@
  *   lighten(a, 15%)     mix(a, white, 15%)
  *   darken(a, 15%)      mix(a, black, 15%)
  *   lightenHsl(a, 5%)   a with 5 added to its HSL lightness, clamped (khroma's `lighten`, which
- *                       v12 themes used), `hsl(from a h s calc(l + 5) / alpha)` (D117)
+ *                       v12 themes used), `hsl(from a h s clamp(0, l + 5, 100) / alpha)` (D117)
  *   darkenHsl(a, 5%)    the same, subtracting 5 (khroma's `darken`)
  *   alpha(a, 80%)       a at 80% opacity, `color-mix(in srgb, a 80%, transparent)`
  *   contrast(bg, a, b)  a, unless it misses AA on bg and b reads better (WCAG ratio); in CSS
