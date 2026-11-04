@@ -22,12 +22,11 @@ for debug drawings).
   (`A2 --> B1`, where `A2` is in region 0 and `B1` in region 1). The composite's level then sees
   an edge between two region boxes, so it ranks them, and they stack along the flow. UML does not
   allow such a transition. v12 accepts it, but no corpus fixture has one.
-- **Workaround W4 (builder side, no core change):** leave sibling-region edges out of the graph
-  the engine gets, and have the builder draw them after layout. The prototype uses a straight
-  clipped line. W4 fixes the region invariants in both cases. In the larger case (S17) the
-  straight line runs through a node in the middle region. That is acceptable for a non-UML corner
-  case, and the builder can warn about it. Better routing is a later improvement, not a
-  blocker.
+- **Workaround W4 (builder side, no core change), not adopted (D113):** leave sibling-region
+  edges out of the graph the engine gets, and have the builder draw them after layout. W4 fixes
+  the region invariants in both cases, but in S17 its straight line runs through a node. The
+  maintainer chose v12's behaviour instead: these edges go to the engine like any other edge, and
+  the regions stack. No special handling, no warning.
 - **The builder must also stretch the region frames for drawing** (no layout change). Each
   region's frame is only as big as its own content, and the engine centres the frames along the
   flow. To draw dividers that span the whole composite, the builder stretches every region along
@@ -183,10 +182,11 @@ line. They have 9 distinct bodies; the rest are theme and look variants.
 2. After `ctx.layout()`, stretch the region frames along the flow to the composite's inner
    extent. Draw a divider in the middle of each gap between neighbours, across the full
    composite. Dividers come from the region boxes; they are not engine output.
-3. Apply W4: take edges between sibling regions of one composite out of the engine's graph and
-   route them in the builder. Emit a warning, because UML does not allow them. A straight line is
-   the minimum; it can run through states (S17).
-4. Do not adopt W1, W2 or W3. Accept the v12 rule that a crossing edge drops a composite's
+3. Pass edges between sibling regions to the engine like any other edge, with no special
+   handling and no warning (D113). The regions then stack along the flow, as in v12. S7 and S17
+   are expected to fail the side-by-side check; #144's DDLT region checks skip composites with
+   such an edge.
+4. Do not adopt W1, W2, W3 or W4. Accept the v12 rule that a crossing edge drops a composite's
    `direction`; this is parity, not a defect.
 5. Keep the region checks above (side by side, divider room, region-local edges) as DDLT checks
    in #144's layout tests, next to `validateLayout`.
@@ -196,5 +196,5 @@ line. They have 9 distinct bodies; the rest are theme and look variants.
 The smallest contract that would fix S7/S17 in the engine is an edge flag that keeps an edge out
 of ranking and ordering at every level, while still routing it. For example,
 `LayoutEdge.rank?: false`: the edge gets no rank constraint, but gets a route between its ends
-after placement. Flowchart has no use for it today. Raise it as a T0 only if #144 or a user
-report shows that W4's straight line is not good enough.
+after placement. Flowchart has no use for it today. Raise it as a T0 only if a user report shows that stacked regions
+are not good enough (D113 chose v12's stacking).

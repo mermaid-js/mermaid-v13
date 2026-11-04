@@ -1,4 +1,9 @@
 /**
+ * @deprecated D114: the v12 source view moves into `@mermaid-js/core/parser-kit` (#162). This
+ * copy stays until #162 merges into `mermaid-v13`; then diagram-state adopts the kit version and
+ * deletes this file.
+ */
+/**
  * What v12 did to state text before its lexer saw it, reproduced without rewriting the source
  * (DESIGN §4.1). v12 ran, in order:
  *

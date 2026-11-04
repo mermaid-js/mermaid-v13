@@ -10,13 +10,13 @@ Unmet criteria and shared contracts, by owning ticket.
 
 - Adopt the nested-group model: each region a title-less `LayoutGroup` in its composite, no edges between regions. No state T0 (D111).
 - The builder stretches every region frame along the flow to the composite's inner size, so dividers run full length.
-- **Maintainer question (open):** a transition between two sibling regions of one composite stacks the regions (S7, S17). The prototype's W4 leaves such edges out of the engine and draws them after layout, which can route through a state (S17) and should warn. v12 lays them out normally. The corpus has none, and UML forbids them. Should T3 adopt W4 with a warning, or pass these edges to the engine and accept stacked regions? A D-id records the answer.
+- **D113 (answered):** a transition between two sibling regions goes to the engine like any other edge, with no special handling and no warning; the regions stack, as in v12. W4 is dropped. #144's region checks skip composites that have such an edge (S7, S17).
 - Soft notes: an edge crossing into a composite drops that composite's `direction` (v12 parity). A crossing edge can swap region order.
 
 ## #148 T5 integration (from #138)
 
 - `packages/diagram-state` is `"private": true` so the release pack test (`tools/release/src/publish.spec.ts`) stays green. T5 drops `private` when it adds the manifest and registry entry.
 
-## Maintainer question (from #138, open)
+## Shared source view (from #138, D114)
 
-- `diagram-state/src/parser/source.ts` repeats the flowchart's source normalisation (comment-line removal, dropped `;`, the `="x"` quote rewrite), which parity needs. Sharing it means moving it into `@mermaid-js/core`: a core change, so a state T0 (D102). Keep the copy, or move it to core in a T0?
+- D114: the v12 source view (comment-line removal, dropped `;`, the `="x"` quote rewrite) moves into the core parser kit in state T0 #162, which flowchart switches to. `diagram-state/src/parser/source.ts` stays, deprecated, until that T0 merges into `mermaid-v13`; then diagram-state adopts the kit version and deletes its copy (owner: #142, or a follow-up if #142 has merged by then).
