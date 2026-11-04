@@ -1,4 +1,4 @@
-# State spec #127: questions for the maintainer (all answered)
+# State spec #127: questions for the maintainer (question 4 open)
 
 Answers (draft PR #195): 1 → **D126 A** (v12's actual values). 2 → **D126 A** (add `compositeBackground` to #193). 3 → **D127 C** (`state.layout` defaults to layered; ELK only when an author sets it, R-LAYOUT-7).
 
@@ -34,3 +34,11 @@ v12's `state.layout` defaults to `elk`. T5 kept that default. With no ELK plugin
 - **A (recommended):** keep it as it is. It's v12 parity, and it gives the right result once the ELK plugin ships.
 - **B:** warn when the layout falls back from `elk` to `layered`, once per render, the way pitfall 22 says to warn about an option that can't be honoured.
 - **C:** change the v13 default to `layered`. That changes a v12 default.
+
+## 4. `A:::cls` that sets no class (from the final review fixes) — OPEN
+
+In v12, `extract` applies `:::` only from top-level transitions. So `A:::cls` written on its own line (any scope), or `A:::cls` inside a composite, sets no class. v13 keeps that (parity), but gives no warning, while the review fixes added no-op warnings for the other ignored statements (`IGNORED_IN_COMPOSITE`, `LINK_NOT_DRAWN`, `SCALE_IGNORED`; pitfall 22).
+
+- **A (recommended):** warn `CLASS_NOT_APPLIED` on the `:::cls` part, rendering stays the same as v12. This matches pitfall 22 and the other no-op warnings, and it's small.
+- **B:** apply the class anyway, which changes v12 output for these inputs.
+- **C:** leave it as is, silent, and list it in MIGRATION.md.

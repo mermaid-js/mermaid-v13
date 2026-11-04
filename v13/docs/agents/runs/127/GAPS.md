@@ -14,7 +14,7 @@ Unmet criteria and shared contracts, by owning ticket.
   its label out of the drawing's extent (`v2-a-compound-state-should-be-able-to-link-to-itself`,
   `Active --> Active`): the loop runs off the right edge. Pinned as `ENGINE_GAPS` in the layout
   spec; no core change from #144 (D102).
-- [ ] **Escalated (#144):** a composite with no `direction` is laid out TB in any diagram (v12's
+- [x] **Accepted (maintainer, "fine as they are"):** a composite with no `direction` is laid out TB in any diagram (v12's
   `getDir` default), and a note sits in its state's composite (v12 put notes at the top level).
 - Adopt the nested-group model: each region a title-less `LayoutGroup` in its composite, no edges between regions. No state T0 (D111).
 - The builder stretches every region frame along the flow to the composite's inner size, so dividers run full length.
