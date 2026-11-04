@@ -7,6 +7,10 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 - No unmet criteria. 4 of 2,599 sources are not compared: commented variants whose mid-line cut splits the `erDiagram` keyword, so v12 never detects them (listed in `packages/conformance/src/er/lexer-parity.spec.ts`).
 - Final `/code-review` over the lexer is deferred to the spec's finish step.
 
+## #131 T2 grammar/parser/model
+
+- **D114, shared source view.** v12 input cleanup (the offset-preserving source view, flowchart `source.ts`) moves into the core parser kit, owned by the state spec's T0 (draft PR into `mermaid-v13`). Until that T0 merges into `mermaid-v13`, keep `packages/diagram-er/src/parser/source.ts`. Once it has merged, switch diagram-er to the shared one and delete the copy, with the lexer-parity gate still green.
+
 ## Blocked (not started)
 
 - #131 T2 grammar/parser/model: blocked by M2.5 #27 (parser-kit probe) and #28 (category table), not merged into `mermaid-v13` on 2026-11-04 (D107). Held, per the run brief.
