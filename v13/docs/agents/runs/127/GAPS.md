@@ -19,9 +19,9 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## Shared source view (from #138, D114)
 
-- [ ] **Adopt the shared source view once #181 merges** (owner: #142 if still open, else a follow-up): import it from `@mermaid-js/core/parser-kit` and delete `diagram-state/src/parser/source.ts`.
+- [ ] **Adopt the shared source view: #181 merged into `mermaid-v13` (`c620c5715`) and into this branch** (owner: #142 if still open, else a follow-up): import it from `@mermaid-js/core/parser-kit` and delete `diagram-state/src/parser/source.ts`.
 
-- D114: the v12 source view (comment-line removal, dropped `;`, the `="x"` quote rewrite) moves into the core parser kit in state T0 #162, which flowchart switches to. `diagram-state/src/parser/source.ts` stays, deprecated, until that T0 merges into `mermaid-v13`; then diagram-state adopts the kit version and deletes its copy (owner: #142, or a follow-up if #142 has merged by then). #162 is in draft PR #181 into `mermaid-v13`. When adopting: the kit has no option for state's `trimStart` or appended `\n`, and state's lexer must move from its per-character `at` array to `SourceOffsets`/`localOffset` (handoff: `tickets/162.md` on `feature/162_parser-kit-source-view`).
+- D114: the v12 source view (comment-line removal, dropped `;`, the `="x"` quote rewrite) moves into the core parser kit in state T0 #162, which flowchart switches to. `diagram-state/src/parser/source.ts` stays, deprecated, until that T0 merges into `mermaid-v13`; then diagram-state adopts the kit version and deletes its copy (owner: #142, or a follow-up if #142 has merged by then). #162 merged via PR #181. When adopting: the kit has no option for state's `trimStart` or appended `\n`, and state's lexer must move from its per-character `at` array to `SourceOffsets`/`localOffset` (handoff: `tickets/162.md` on `feature/162_parser-kit-source-view`).
 
 ## Outside this spec (seen after merging `mermaid-v13` at `5a6425d8e`)
 
