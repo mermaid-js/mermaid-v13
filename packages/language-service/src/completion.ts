@@ -10,9 +10,9 @@ import { frontMatterCompletions } from './config/completion.ts';
 import type { FrontMatterTree } from './config/front-matter.ts';
 import type { DocumentContext } from './context.ts';
 
-/** Whether the front matter (fences included) owns `offset`. */
+/** Whether the front matter (fences included; an unclosed one to the end) owns `offset`. */
 export function inFrontMatter(fm: FrontMatterTree, offset: number): boolean {
-  return fm.range.start <= offset && offset < fm.range.end;
+  return fm.range.start <= offset && (offset < fm.range.end || fm.unclosed);
 }
 
 /** `facet`'s items for `text` at `offset`. */

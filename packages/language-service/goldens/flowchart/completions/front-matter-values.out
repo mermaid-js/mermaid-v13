@@ -1,6 +1,5 @@
 @ 2:14  displayMode: |
-  '' value (default) 2:14-2:14 "" -> "''"
-  compact value 2:14-2:14 "" -> "compact"
+  none
 @ 4:12  theme: re|dux
   default value 4:10-4:15 "redux" -> "default"
   base value 4:10-4:15 "redux" -> "base"
@@ -21,9 +20,7 @@
 @ 6:13  fontSize: |
   none
 @ 7:9  look: |
-  classic value 7:9-7:9 "" -> "classic"
-  handDrawn value 7:9-7:9 "" -> "handDrawn"
-  neo value 7:9-7:9 "" -> "neo"
+  none
 @ 9:12  curve: |
   basis value 9:12-9:12 "" -> "basis"
   bumpX value 9:12-9:12 "" -> "bumpX"

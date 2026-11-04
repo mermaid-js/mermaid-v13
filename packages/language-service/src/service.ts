@@ -107,7 +107,9 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
       (m) => {
         schema ??= m.configSchema;
       },
-      () => undefined
+      () => {
+        schemaLoad = undefined; // a failed load is tried again by the next preload
+      }
     ));
 
   const firstParty = new Set<FacetEntry>(firstPartyFacets);

@@ -167,6 +167,8 @@ export function generateRegistry(manifests: readonly ManifestSource[]): string {
  * detector order, so the service tells a type with no facet yet (an info diagnostic) from an
  * unknown one (`UNSUPPORTED_DIAGRAM`). A package whose manifest has a `language` entry gets a
  * lazy `load` of that subpath's `language` export (a fixed name, as `ascii` is for the text hook).
+ * `section` is the config section the renderer reads for the type: the package id, as the
+ * registry's `id` (`sectionOf` in mermaid's api.ts); a type with no package has none.
  */
 export function generateFacets(manifests: readonly ManifestSource[]): string {
   const byType = manifestsByType(manifests);
@@ -188,6 +190,7 @@ export function generateFacets(manifests: readonly ManifestSource[]): string {
       `  {`,
       `    type: '${type}',`,
       `    id: '${m.manifest.id}',`,
+      `    section: '${m.manifest.id}',`,
       `    detector: ${detector},`
     );
     if (m.manifest.language !== undefined) {

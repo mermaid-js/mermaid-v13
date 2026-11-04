@@ -47,7 +47,7 @@ export function frontMatterHover(
   if (hit === undefined) return undefined;
   const [head, ...rest] = hit.path;
   const range = hit.pair.keyRange;
-  if (rest.length === 0 && head !== undefined && head in FRONT_MATTER_KEYS) {
+  if (rest.length === 0 && head !== undefined && Object.hasOwn(FRONT_MATTER_KEYS, head)) {
     return { range, contents: `**${head}**\n\n${FRONT_MATTER_KEYS[head]}` };
   }
   if (head !== 'config' || ctx.schema === undefined) return undefined;

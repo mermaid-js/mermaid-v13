@@ -1,57 +1,132 @@
 /**
- * Front-matter config through the service (R-LANG-5, D96): warnings agree with what a render
- * warns (core `resolveConfig`), the schema loads with `preload` or comes from the options,
- * and completion stays linear in the front matter's size. The shapes are the goldens in
+ * Front-matter config through the service (R-LANG-5, D96): warnings equal what a render warns
+ * (core `resolveConfig`, over the corpus front matter and review inputs), scoping follows the
+ * renderer's config section, the schema loads with `preload` or comes from the options, and
+ * completion stays linear in the front matter's size. More shapes: the goldens in
  * goldens/flowchart (completions, hover, diagnostics).
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { CORE_DEFAULTS, resolveConfig } from '@mermaid-js/core/config';
 import type { ConfigWarning } from '@mermaid-js/core/config';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import { configSection } from './config/front-matter.ts';
 import { createLanguageService } from './index.ts';
+import type { DocumentSnapshot } from './index.ts';
 import { configSchema } from './generated/config-schema.gen.ts';
-import { readFixture } from './testing/goldens.ts';
 
 const service = createLanguageService();
 beforeAll(() => service.preload());
 
-const CONFIG_CODES = new Set(['CONFIG_UNKNOWN_KEY', 'CONFIG_REMOVED_KEY', 'CONFIG_MOVED_KEY']);
 const labels = (items: readonly { label: string }[]) => items.map((i) => i.label);
+/** Text with `|` as the cursor: the snapshot and the cursor offset. */
+const open = (src: string, uri = 'file:///fm.mmd'): [DocumentSnapshot, number] => [
+  service.update(uri, src.replace('|', '')),
+  src.indexOf('|'),
+];
 
-describe('front-matter config warnings', () => {
-  it('warn on the keys a render warns about, with the same message', () => {
-    const golden = join(import.meta.dirname, '../goldens/flowchart/diagnostics');
-    for (const file of ['front-matter-config.mmd', 'front-matter-recovery.mmd']) {
-      const text = readFixture(readFileSync(join(golden, file), 'utf8')).text;
-      const doc = service.update(`file:///${file}`, text);
-      const ours = doc
-        .diagnostics()
-        .filter((d) => CONFIG_CODES.has(d.code))
-        .map((d) => `${d.code} ${d.message.replace(/ Did you mean "[^"]*"\?$/, '')}`);
-      const rendered: ConfigWarning[] = [];
-      // The render's front-matter config is the default-mode read: whole documents only.
-      const config = preprocess(text).frontMatter?.config;
-      if (config === undefined) continue;
-      resolveConfig(
-        CORE_DEFAULTS,
-        {},
-        config,
-        [],
-        { flowchart: {} },
-        {
-          warn: (w) => rendered.push(w),
-          section: 'flowchart',
-        }
-      );
-      expect(ours, file).toEqual(
-        rendered.filter((w) => CONFIG_CODES.has(w.code)).map((w) => `${w.code} ${w.message}`)
-      );
-    }
+// ---------------------------------------------------------------------------- warnings
+
+const isConfigWarning = (code: string) => code.startsWith('CONFIG_') || code === 'LOOK_REMOVED';
+
+/** What a render warns about this text's front-matter config, as `CODE message`. */
+function rendered(doc: DocumentSnapshot): string[] {
+  const config = preprocess(doc.text).frontMatter?.config;
+  if (config === undefined) return [];
+  const section = configSection(doc.context);
+  const out: ConfigWarning[] = [];
+  resolveConfig(CORE_DEFAULTS, {}, config, [], section ? { [section]: {} } : {}, {
+    warn: (w) => out.push(w),
+    section,
+  });
+  return out.map((w) => `${w.code} ${w.message}`).sort();
+}
+
+/** The service's config warnings, `CODE message` without the "did you mean" hint. */
+function ours(doc: DocumentSnapshot): string[] {
+  return doc
+    .diagnostics()
+    .filter((d) => isConfigWarning(d.code))
+    .map((d) => `${d.code} ${d.message.replace(/ Did you mean "[^"]*"\?$/, '')}`)
+    .sort(); // the service lists them in source order, core in its walk order
+}
+
+/** Review inputs: each is the body of `config:` in a flowchart. */
+const REVIEW_CASES = [
+  'look: neo',
+  'flowchart:\n    look: neo',
+  'securityLevel: loose',
+  'secure: [a]',
+  'limits:\n    maxEdges: 1',
+  'measurer: x',
+  'linkSchemes: [a]',
+  'deterministic: true',
+  'idPrefix: x',
+  'output: {cssVariables: true}',
+  'startOnLoad: true\n  maxTextSize: 1\n  maxEdges: 1\n  suppressErrorRendering: true',
+  'flowchart: {curve: basis, bogus: 1}',
+  'flowchart:\n    - bogus: 1',
+  'flowchart:\n    - {curve: basis}\n    - [x]\n    - bogus: 2',
+  '__proto__: 1',
+  'constructor: 1',
+  'toString: 1\n  flowchart:\n    hasOwnProperty: 1',
+  '"bogus key": 1',
+  'themeVariables: {foo: 1}',
+  'flowchart:',
+  'flowchart: ~',
+  'sequence:\n    bogus: 1',
+  'classDiagram:\n    bogus: 1',
+  'flowchart:\n    htmlLabels: true',
+  'htmlLabels: true',
+  'gantt:\n    bogus: 1',
+  'fontFamily: x\n  bogus: ""',
+  'a: &x {b: 1}\n  bogus: *x',
+  'theme: dark\n  themeCSS: "x"',
+  'flowchart:\n    look: neo\n  sequence:\n    look: x',
+  'elk:\n    look: x\n    bogus: 1',
+  'layout: elk\n  elk: {mergeEdges: true}',
+  'themeCSS: "<b>"',
+  'a.b: 1',
+  // YAML with an error: the render reads no config, so there are no config warnings.
+  'bogus: 1\n  bogus: 2',
+  'theme: dark: bad\n  thme: dark',
+];
+
+describe('front-matter config warnings equal a render’s', () => {
+  it.each(REVIEW_CASES)('%j', (body) => {
+    const [doc] = open(`---\nconfig:\n  ${body}\n---\nflowchart TD\n  A --> B\n`);
+    expect(ours(doc)).toEqual(rendered(doc));
   });
 
-  it('accept a third-party diagram its own section', async () => {
+  it('over the corpus front matter', () => {
+    const root = join(import.meta.dirname, '../../../e2e/diagrams');
+    const files = (readdirSync(root, { recursive: true }) as string[]).filter((f) =>
+      f.endsWith('.mmd')
+    );
+    let compared = 0;
+    for (const file of files) {
+      const text = readFileSync(join(root, file), 'utf8');
+      if (!text.trimStart().startsWith('---')) continue;
+      const doc = service.update(`corpus:///${file}`, text);
+      expect(ours(doc), file).toEqual(rendered(doc));
+      compared++;
+    }
+    expect(compared).toBeGreaterThan(100);
+  });
+
+  it('put each warning on its key, and list items under their index', () => {
+    const [doc] = open(
+      '---\nconfig:\n  flowchart:\n    - bogus: 1\n  look: x\n---\nflowchart TD\n'
+    );
+    const at = doc
+      .diagnostics()
+      .filter((d) => isConfigWarning(d.code))
+      .map((d) => `${d.code} ${doc.text.slice(d.range.start, d.range.end)}`);
+    expect(at).toEqual(['CONFIG_UNKNOWN_KEY bogus', 'LOOK_REMOVED look']);
+  });
+
+  it('accept a third-party diagram its own section, not a first-party type name', async () => {
     const own = createLanguageService({
       facets: [{ type: 'mine', id: 'mine', detector: (t) => t.startsWith('mine') }],
     });
@@ -63,11 +138,116 @@ describe('front-matter config warnings', () => {
     expect(
       doc
         .diagnostics()
-        .filter((d) => CONFIG_CODES.has(d.code))
+        .filter((d) => isConfigWarning(d.code))
         .map((d) => d.message)
     ).toEqual(['Unknown config key "minee"; ignored.']);
   });
+
+  it('never suggest a key diagram text cannot set', () => {
+    const [doc] = open(
+      '---\nconfig:\n  securityLevl: x\n  lok: x\n  maxEdgez: 1\n---\nflowchart TD\n'
+    );
+    const messages = doc.diagnostics().map((d) => d.message);
+    expect(messages.join('\n')).not.toMatch(/Did you mean "(securityLevel|look|maxEdges)"/);
+  });
 });
+
+// ---------------------------------------------------------------------------- completion
+
+describe('completion scoping (D96)', () => {
+  const keysAt = (src: string) => {
+    const [doc, at] = open(src);
+    return labels(doc.completions(at));
+  };
+
+  it('offers the section the renderer reads (the package id), and no other', () => {
+    const flow = keysAt('---\nconfig:\n  |\n---\nflowchart TD\n  A\n');
+    expect(flow).toContain('flowchart');
+    expect(flow).not.toContain('sequence');
+    expect(flow).not.toContain('gantt');
+    // No v13 package: the renderer has no section for these types, so neither has the service.
+    for (const head of ['sequenceDiagram', 'classDiagram', 'stateDiagram-v2', 'info', 'treemap']) {
+      const keys = keysAt(`---\nconfig:\n  |\n---\n${head}\n`);
+      expect(keys, head).not.toContain('flowchart');
+      expect(keys, head).not.toContain('class');
+      expect(keys, head).not.toContain('sequence');
+      expect(keys, head).toContain('theme');
+    }
+  });
+
+  it('offers nothing inside another type’s section', () => {
+    expect(keysAt('---\nconfig:\n  sequence:\n    |\n---\nflowchart TD\n  A\n')).toEqual([]);
+  });
+
+  it('never offers integrator-only keys or `look` (D153)', () => {
+    const top = keysAt('---\nconfig:\n  |\n---\nflowchart TD\n');
+    for (const key of ['securityLevel', 'secure', 'startOnLoad', 'maxTextSize', 'maxEdges']) {
+      expect(top).not.toContain(key);
+    }
+    expect(top).not.toContain('suppressErrorRendering');
+    expect(top).not.toContain('look');
+    expect(keysAt('---\nconfig:\n  flowchart:\n    |\n---\nflowchart TD\n')).not.toContain('look');
+    expect(keysAt('---\nconfig:\n  look: |\n---\nflowchart TD\n')).toEqual([]);
+  });
+
+  it('offers top-level displayMode values only where gantt config is offered', () => {
+    expect(keysAt('---\ndisplayMode: |\n---\nflowchart TD\n')).toEqual([]);
+    expect(keysAt('---\ndisplayMode: |\n---\n')).toContain('compact');
+  });
+
+  it('leaves the diagram text to the facet, and the fences to no one', () => {
+    const text = '---\ntitle: x\n---\nflowchart TD\n  A\n';
+    const doc = service.update('file:///scope.mmd', text);
+    expect(doc.completions(1)).toEqual([]);
+    // The facet's (#32): the header keywords, and the header keyword's doc.
+    const at = text.indexOf('flowchart');
+    expect(doc.completions(at).map((i) => i.label)).toEqual(['flowchart', 'graph']);
+    expect(doc.hover(at)?.contents).toMatch(/^\*\*`flowchart`\*\*/);
+  });
+});
+
+describe('completion text', () => {
+  it('follows CRLF line ends', () => {
+    const [doc, at] = open('---\r\nconfig:\r\n  flowchart:\r\n    |\r\n---\r\nflowchart TD\r\n');
+    expect(doc.completions(at).find((i) => i.label === 'subGraphTitleMargin')?.insertText).toBe(
+      'subGraphTitleMargin:\r\n      '
+    );
+  });
+
+  it('follows tab indents', () => {
+    const [doc, at] = open('---\nconfig:\n\tflowchart:\n\t\tsub|\n---\nflowchart TD\n');
+    expect(doc.completions(at).find((i) => i.label === 'subGraphTitleMargin')?.insertText).toBe(
+      'subGraphTitleMargin:\n\t\t\t'
+    );
+  });
+});
+
+describe('unclosed front matter', () => {
+  it('runs to the end of the text, with completion and hover inside it', () => {
+    const [doc, at] = open('---\nconfig:\n  flowchart:\n    cur|');
+    expect(labels(doc.completions(at))).toContain('curve');
+    const [atEnd, end] = open('---\nconfig:\n  flowchart:\n    curve: |\n');
+    expect(labels(atEnd.completions(end))).toContain('basis');
+    const [hovered, h] = open('---\nconfig:\n  flowchart:\n    cu|rve: basis\n');
+    expect(hovered.hover(h)?.contents).toContain('**flowchart.curve**');
+  });
+});
+
+describe('hover', () => {
+  it('gives nothing on prototype names', () => {
+    for (const src of [
+      '---\ntoS|tring: x\n---\nflowchart TD\n',
+      '---\nhasOwn|Property: x\n---\nflowchart TD\n',
+      '---\nconfig:\n  const|ructor: 1\n---\nflowchart TD\n',
+      '---\nconfig:\n  flowchart:\n    toS|tring: 1\n---\nflowchart TD\n',
+    ]) {
+      const [doc, at] = open(src);
+      expect(doc.hover(at), src).toBeUndefined();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------- schema
 
 describe('the config schema', () => {
   const text = '---\nconfig:\n  \n---\nflowchart TD\n  A --> B\n';
@@ -91,37 +271,7 @@ describe('the config schema', () => {
   });
 });
 
-describe('scoping (D96)', () => {
-  it('offers config.<type> only for the detected type', () => {
-    const at = (text: string) => {
-      const doc = service.update('file:///scope.mmd', text);
-      return labels(doc.completions(text.indexOf('  \n') + 2));
-    };
-    const flow = at('---\nconfig:\n  \n---\nflowchart TD\n  A\n');
-    expect(flow).toContain('flowchart');
-    expect(flow).not.toContain('sequence');
-    expect(flow).not.toContain('gantt');
-    const seq = at('---\nconfig:\n  \n---\nsequenceDiagram\n  A->>B: hi\n');
-    expect(seq).toContain('sequence');
-    expect(seq).not.toContain('flowchart');
-  });
-
-  it('offers nothing inside another type’s section', () => {
-    const text = '---\nconfig:\n  sequence:\n    \n---\nflowchart TD\n  A\n';
-    const doc = service.update('file:///scope.mmd', text);
-    expect(doc.completions(text.indexOf('    \n') + 4)).toEqual([]);
-  });
-
-  it('leaves the diagram text to the facet, and the fences to no one', () => {
-    const text = '---\ntitle: x\n---\nflowchart TD\n  A\n';
-    const doc = service.update('file:///scope.mmd', text);
-    expect(doc.completions(1)).toEqual([]);
-    // The facet's (#32): the header keywords, and the header keyword's doc.
-    const at = text.indexOf('flowchart');
-    expect(doc.completions(at).map((i) => i.label)).toEqual(['flowchart', 'graph']);
-    expect(doc.hover(at)?.contents).toMatch(/^\*\*`flowchart`\*\*/);
-  });
-});
+// ---------------------------------------------------------------------------- stress
 
 describe('stress (R-PARSE-7)', () => {
   const fastest = (run: () => unknown): number => {
@@ -133,14 +283,16 @@ describe('stress (R-PARSE-7)', () => {
     }
     return best;
   };
+  /** `n` distinct keys of one length (a longer key is compared with more known keys). */
+  const keys = (n: number, indent: string, value: string) =>
+    Array.from({ length: n }, (_, i) => `${indent}k${String(i).padStart(6, '0')}: ${value}\n`).join(
+      ''
+    );
   const SHAPES: [string, (n: number) => string][] = [
-    ['many sibling keys', (n) => '  flowchart:\n' + '    curve: basis\n'.repeat(n)],
+    ['many sibling keys in a section', (n) => '  flowchart:\n' + keys(n, '    ', 'basis')],
     ['many blank and comment lines', (n) => '  flowchart:\n' + '\n    # c\n'.repeat(n)],
-    // Keys of one length: a longer key may be compared with more known keys ("did you mean").
-    [
-      'many unknown keys',
-      (n) => Array.from({ length: n }, (_, i) => `  k${String(i).padStart(6, '0')}: 1\n`).join(''),
-    ],
+    ['many unknown keys', (n) => keys(n, '  ', '1')],
+    ['many list items', (n) => '  flowchart:\n' + '    - bogus: 1\n'.repeat(n)],
     ['one long key', (n) => `  ${'x'.repeat(n * 10)}: 1\n`],
   ];
   it.each(SHAPES)('%s: completion and diagnostics stay linear', (_, shape) => {

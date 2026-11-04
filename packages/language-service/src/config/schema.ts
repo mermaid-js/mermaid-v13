@@ -49,7 +49,7 @@ export class SchemaView {
     let node: unknown = this.root;
     for (const part of ref.slice(2).split('/')) {
       node =
-        typeof node === 'object' && node !== null
+        typeof node === 'object' && node !== null && Object.hasOwn(node, part)
           ? (node as Record<string, unknown>)[part]
           : undefined;
     }
@@ -86,7 +86,8 @@ export class SchemaView {
   shape(node: SchemaNode): KeyShape {
     const whole = node.$ref === undefined ? undefined : WHOLE_DEF.exec(node.$ref)?.[1];
     if (whole !== undefined) {
-      const def = this.root.$defs?.[whole];
+      const defs = this.root.$defs;
+      const def = defs !== undefined && Object.hasOwn(defs, whole) ? defs[whole] : undefined;
       return def !== undefined && this.properties(def).size > 0 ? 'closed' : leafShape(def);
     }
     const n = this.resolve(node);
@@ -97,7 +98,8 @@ export class SchemaView {
 
   /** The root keys that are a diagram's config section (`flowchart`): a `$ref` to a whole def. */
   isDiagramSection(key: string): boolean {
-    const ref = this.root.properties?.[key]?.$ref;
+    const props = this.root.properties;
+    const ref = props !== undefined && Object.hasOwn(props, key) ? props[key]!.$ref : undefined;
     return ref !== undefined && WHOLE_DEF.test(ref);
   }
 

@@ -2,7 +2,6 @@
   useWidth property (number) 5:5-5:7 "cu" -> "useWidth: "
   useMaxWidth property (boolean) 5:5-5:7 "cu" -> "useMaxWidth: "
   theme property (string) 5:5-5:7 "cu" -> "theme: "
-  look property (string) 5:5-5:7 "cu" -> "look: "
   layout property (string) 5:5-5:7 "cu" -> "layout: "
   titleTopMargin property (integer) 5:5-5:7 "cu" -> "titleTopMargin: "
   subGraphTitleMargin property (object) 5:5-5:7 "cu" -> "subGraphTitleMargin:\n      "
