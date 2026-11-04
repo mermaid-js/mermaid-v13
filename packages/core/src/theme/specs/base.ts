@@ -3,7 +3,7 @@
  * variables and tokens; every other colour comes from the shared rules (R-THEME-5).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING, CLASSIC_SEQUENCE } from './geometry.ts';
 
 const base: ThemeSpec = {
   name: 'base',
@@ -28,6 +28,7 @@ const base: ThemeSpec = {
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
+    ...CLASSIC_SEQUENCE,
   },
 };
 

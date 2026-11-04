@@ -30,6 +30,8 @@ export interface ParticipantLayout {
   readonly width: number;
   /** Height of the top (and bottom) box: the row height of the header. */
   readonly height: number;
+  /** From the top of a box (`top`, `bottom`) to the centre of its label. */
+  readonly labelY: number;
   /** Top of the top box: the header row, or the creating message's row. */
   readonly top: number;
   /** Top of the mirrored bottom box (`mirrorActors`); undefined without one. */

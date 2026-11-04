@@ -2,7 +2,7 @@
  * `forest`: v12 `theme-forest.js`.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING, CLASSIC_SEQUENCE } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'forest',
@@ -27,8 +27,18 @@ const theme: ThemeSpec = {
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
+    ...CLASSIC_SEQUENCE,
   },
   values: {
+    // sequence (v12 theme-forest.js: actorBorder is darken(mainBkg, 20))
+    actorBorder: '#a6cf47',
+    actorTextColor: '#000000',
+    signalColor: '#333333',
+    signalTextColor: '#333333',
+    labelBoxBorderColor: '#326932',
+    activationBkgColor: '#f4f4f4',
+    activationBorderColor: '#666666',
+    sequenceNumberColor: '#ffffff',
     textColor: '#000000',
     nodeBorder: '#13540c',
     clusterBkg: '#cdffb2',

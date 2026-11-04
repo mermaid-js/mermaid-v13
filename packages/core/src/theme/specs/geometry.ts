@@ -115,3 +115,12 @@ export const CLASSIC_PADDING: Readonly<Record<PaddingToken, number | string>> = 
   oddPaddingX: 'padding',
   oddPaddingY: 'padding',
 };
+
+/** Sequence participant geometry: the corner radius of a participant box (v12 `svgDraw.js`). */
+export const NEO_SEQUENCE: Readonly<Record<Extract<TokenVariable, 'actorRadius'>, number>> = {
+  actorRadius: 6,
+};
+
+export const CLASSIC_SEQUENCE: Readonly<Record<Extract<TokenVariable, 'actorRadius'>, number>> = {
+  actorRadius: 3,
+};

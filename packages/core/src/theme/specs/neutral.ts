@@ -2,7 +2,7 @@
  * `neutral`: v12 `theme-neutral.js`, greys for print.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING, CLASSIC_SEQUENCE } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'neutral',
@@ -27,8 +27,17 @@ const theme: ThemeSpec = {
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
+    ...CLASSIC_SEQUENCE,
   },
   values: {
+    // sequence (v12 theme-neutral.js: actorBorder is lighten(border1, 23))
+    actorBorder: '#d4d4d4',
+    actorTextColor: '#333333',
+    signalColor: '#333333',
+    signalTextColor: '#333333',
+    activationBkgColor: '#f4f4f4',
+    activationBorderColor: '#666666',
+    sequenceNumberColor: '#ffffff',
     textColor: '#000000',
     nodeBorder: '#999999',
     clusterBkg: '#fcfcfc',

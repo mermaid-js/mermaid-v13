@@ -22,7 +22,14 @@ import {
   type BoxGeom,
   type BoxSizes,
 } from './columns.ts';
-import { centerOf, envOf, placed, type Env, type SequenceLayoutContext } from './env.ts';
+import {
+  centerOf,
+  envOf,
+  placed,
+  type Column,
+  type Env,
+  type SequenceLayoutContext,
+} from './env.ts';
 import { geometryOf } from './geometry.ts';
 import { lifelineOffset, Rows } from './rows.ts';
 import type { BoxLayout, ParticipantLayout, PlacedLabel, Rect, SequenceLayout } from './types.ts';
@@ -91,6 +98,7 @@ function participantLayouts(env: Env, footer: number): ParticipantLayout[] {
       x: c.x,
       width: c.width,
       height: c.height,
+      labelY: labelOffset(env, c),
       top: c.top,
       ...(env.mirror ? { bottom: stopy } : {}),
       lifeline: { x: centerOf(env, c), y1: c.top + lifelineOffset(env, c), y2 },
@@ -99,6 +107,13 @@ function participantLayouts(env: Env, footer: number): ParticipantLayout[] {
     });
   }
   return out;
+}
+
+/** From the top of a participant's box to the centre of its label (v12 `svgDraw.js` rows). */
+function labelOffset(env: Env, c: Column): number {
+  const { m } = env;
+  const row = c.p.kind === 'actor' && m.figureLabelHeight > 0 ? m.figureLabelHeight : c.height;
+  return (m.symbolLabelTop[c.p.kind] ?? 0) + m.half(row);
 }
 
 /** v12 draws a box from its first member's margin to its last, down to the last row. */
@@ -178,7 +193,18 @@ function enclose(box: Rect, l: Omit<SequenceLayout, 'bounds'>): Rect {
   };
   for (const p of l.participants) {
     add({ x: p.x, y: p.top, width: p.width, height: p.lifeline.y1 - p.top });
-    if (p.bottom !== undefined) add({ x: p.x, y: p.bottom, width: p.width, height: p.height });
+    // A symbol's label can hang below its box (a multi-line stick figure label).
+    const label = (top: number): Rect => ({
+      x: p.x,
+      y: top + p.labelY - p.label.height / 2,
+      width: p.width,
+      height: p.label.height,
+    });
+    add(label(p.top));
+    if (p.bottom !== undefined) {
+      add({ x: p.x, y: p.bottom, width: p.width, height: p.height });
+      add(label(p.bottom));
+    }
     add({ x: p.lifeline.x, y: p.lifeline.y1, width: 0, height: p.lifeline.y2 - p.lifeline.y1 });
   }
   for (const msg of l.messages) {

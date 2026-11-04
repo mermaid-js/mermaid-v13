@@ -89,6 +89,10 @@ export interface FixedLengths {
   readonly glyphLifeline: Readonly<Partial<Record<ParticipantKind, number>>>;
   /** A database's lifeline starts this many `boxTextMargin`s below its box. */
   readonly databaseTextMargins: number;
+  /** Where a drawn symbol's label row starts below the top of its box; 0 elsewhere. */
+  readonly symbolLabelTop: Readonly<Partial<Record<ParticipantKind, number>>>;
+  /** The stick figure's label row height (v12 `ACTOR_GLYPH_HEIGHT`); 0 takes the box height. */
+  readonly figureLabelHeight: number;
   /** Least room above and below a participant label in its box. */
   readonly actorPadY: number;
   /** Room above the drawing for the diagram title. */
@@ -161,6 +165,16 @@ const PX: MetricsTable = {
     symbolWidth: 36,
     glyphLifeline: { actor: 80, boundary: 80, control: 75, entity: 75 },
     databaseTextMargins: 2,
+    // v12 `svgDraw.js` label rows: below the stack, the cylinder, the figure or the glyph.
+    symbolLabelTop: {
+      collections: 6,
+      database: 35,
+      actor: 35,
+      control: 34,
+      entity: 36,
+      boundary: 36,
+    },
+    figureLabelHeight: 65,
     actorPadY: 0,
     titleBand: 40,
     boxLabelMargins: 8,
@@ -222,6 +236,8 @@ const CELL: MetricsTable = {
     symbolWidth: 0,
     glyphLifeline: {},
     databaseTextMargins: 0,
+    symbolLabelTop: {},
+    figureLabelHeight: 0,
     actorPadY: 1,
     titleBand: 2,
     boxLabelMargins: 2,

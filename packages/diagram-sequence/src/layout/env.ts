@@ -103,7 +103,8 @@ function weightOf(value: unknown): number {
   return Number.isFinite(n) && n > 0 ? n : FONT_WEIGHT.normal;
 }
 
-function fontsOf(ctx: SequenceLayoutContext): Fonts {
+/** The fonts labels are measured in, and so drawn in (the renderer reads them too). */
+export function fontsOf(ctx: Pick<SequenceLayoutContext, 'config' | 'theme'>): Fonts {
   const seq = (ctx.config.sequence ?? {}) as Readonly<Record<string, unknown>>;
   const family = ctx.theme.value('fontFamily');
   const size = ctx.theme.number('fontSize');

@@ -1,0 +1,159 @@
+import { beforeAll, describe, expect, it } from 'vitest';
+import type { Mermaid } from 'mermaid';
+import { asTest, sequenceApi } from './render-api.ts';
+
+/**
+ * What the sequence renderer draws (spec #125 T4), through the public `render()`: participant
+ * symbols, arrowheads as inline paths, v12 class names, and v12's theme-name and `look`
+ * branches as theme variables (D152): the palette, the shadow and `actorRadius`.
+ */
+let api: Mermaid;
+beforeAll(async () => {
+  api = await sequenceApi();
+});
+
+const render = async (body: string, config = ''): Promise<string> => {
+  const head = config ? `---\nconfig:\n${config}\n---\n` : '';
+  return (await api.render('s', asTest(`${head}sequenceDiagram\n${body}`))).svg;
+};
+const count = (svg: string, re: RegExp): number => svg.match(new RegExp(re, 'g'))?.length ?? 0;
+/** The opening tag of the first element whose attributes match `re`. */
+const tag = (svg: string, re: RegExp): string =>
+  new RegExp(`<[a-z]+[^>]*${re.source}[^>]*>`).exec(svg)?.[0] ?? '';
+
+describe('participants', () => {
+  it('draws each kind as its own symbol, at the top and mirrored at the bottom', async () => {
+    const kinds = [
+      'participant',
+      'actor',
+      'boundary',
+      'control',
+      'entity',
+      'database',
+      'collections',
+      'queue',
+    ];
+    const body = kinds.map((k, i) => `participant P${i}@{ "type": "${k}" }`).join('\n');
+    const svg = await render(`${body}\nP0->>P1: x`);
+    for (const k of kinds) expect(svg, k).toContain(`class="participant participant-${k}"`);
+    expect(count(svg, /class="(actor-man )?actor-top"/)).toBe(kinds.length);
+    expect(count(svg, /class="(actor-man )?actor-bottom"/)).toBe(kinds.length);
+    expect(count(svg, /class="actor-man actor-top"/)).toBe(4);
+    expect(count(svg, /class="actor-line"/)).toBe(kinds.length);
+  });
+
+  it('draws no bottom row without mirrorActors', async () => {
+    const svg = await render('A->>B: x', '  sequence:\n    mirrorActors: false');
+    expect(svg).not.toContain('actor-bottom');
+  });
+
+  it('takes the participant corner from actorRadius: v12 neo 6 in redux, classic 3', async () => {
+    const rx = (svg: string): string | undefined =>
+      /<rect class="actor"[^>]* rx="([\d.]+)"/.exec(svg)?.[1];
+    expect(rx(await render('A->>B: x'))).toBe('6');
+    expect(rx(await render('A->>B: x', '  theme: default'))).toBe('3');
+    expect(rx(await render('A->>B: x', '  themeVariables:\n    actorRadius: 10'))).toBe('10');
+  });
+});
+
+describe('messages', () => {
+  const heads = async (arrow: string): Promise<number> =>
+    count(await render(`A${arrow}B: x`), /class="arrowhead"/);
+
+  it('draws arrowheads as inline paths, one per v12 marker', async () => {
+    expect(await heads('->>')).toBe(1);
+    expect(await heads('-->>')).toBe(1);
+    expect(await heads('->')).toBe(0);
+    expect(await heads('-)')).toBe(1);
+    expect(await heads('-x')).toBe(2); // the cross is two strokes
+    expect(await heads('<<->>')).toBe(2);
+    expect(await heads('-|\\')).toBe(1);
+    expect(await heads('/|-')).toBe(1);
+  });
+
+  it('dashes dotted messages and classes lines as v12 did', async () => {
+    const svg = await render('A->>B: solid\nB-->>A: dotted');
+    expect(tag(svg, /class="messageLine0"/)).not.toContain('stroke-dasharray');
+    expect(tag(svg, /class="messageLine1"/)).toContain('stroke-dasharray="3, 3"');
+    expect(count(svg, /class="messageText"/)).toBe(2);
+  });
+
+  it('draws self messages as a loop and central connections as circles', async () => {
+    const svg = await render('A->>A: self\nA->>()B: c');
+    expect(tag(svg, /class="messageLine0"/)).toMatch(/^<path/);
+    expect(count(svg, /class="centralConnection"/)).toBe(1);
+  });
+
+  it('draws sequence numbers as a badge', async () => {
+    const svg = await render('autonumber 7\nA->>B: x\nB->>A: y');
+    expect(count(svg, /class="sequenceNumberCircle"/)).toBe(2);
+    expect(svg).toMatch(/class="sequenceNumber"[^>]*>7</);
+    expect(svg).toMatch(/class="sequenceNumber"[^>]*>8</);
+  });
+});
+
+describe('notes, frames, activations, rects and boxes', () => {
+  it('uses v12 class names', async () => {
+    const svg = await render(
+      'box Aqua Team\nparticipant A\nend\nrect rgb(200, 220, 255)\nalt ok\nA->>+B: x\nelse no\nB-->>-A: y\nend\nend\nNote over A,B: n'
+    );
+    for (const c of [
+      'note',
+      'noteText',
+      'loopLine',
+      'labelBox',
+      'labelText',
+      'loopText',
+      'sectionTitle',
+      'activation0',
+      'rect',
+      'box',
+    ])
+      expect(svg, c).toContain(`class="${c}"`);
+    expect(svg).toContain('fill="rgb(200, 220, 255)"');
+  });
+
+  it('warns about a rect colour it refuses and keeps the theme fill', async () => {
+    const result = await api.render('s', asTest('sequenceDiagram\nrect url(x)\nA->>B: x\nend'));
+    expect(result.warnings.map((w) => w.code)).toContain('STYLE_VALUE_DROPPED');
+    expect(result.svg).not.toContain('url(x)');
+  });
+});
+
+describe('theme variables (D152)', () => {
+  it('colours participants from the palette in redux-color only, by declaration order', async () => {
+    const svg = await render('A->>B: x');
+    expect(svg).toContain('data-color-id="color-0"');
+    expect(svg).toContain('data-color-id="color-1"');
+    const plain = await render('A->>B: x', '  theme: redux');
+    expect(plain).not.toContain('data-color-id');
+  });
+
+  it('keeps an activation opaque when the palette colours borders only', async () => {
+    const svg = await render('A->>+B: x\nB-->>-A: y', '  theme: redux-dark-color');
+    expect(tag(svg, /class="activation0"/)).toContain('fill="var(--_mb)"');
+  });
+
+  it('writes the drop shadow in the redux themes and none in the classic ones', async () => {
+    expect(await render('A->>B: x')).toContain('filter="var(--_ds)"');
+    expect(await render('A->>B: x', '  theme: default')).not.toContain('filter=');
+  });
+
+  it('reads the v12 sequence colour variables, which themeVariables override', async () => {
+    const svg = await render(
+      'A->>B: x',
+      "  themeVariables:\n    actorBkg: '#ff0000'\n    signalColor: '#00ff00'"
+    );
+    expect(svg).toContain('--_ab:var(--mermaid-actorBkg,#ff0000)');
+    expect(svg).toContain('--_sc:var(--mermaid-signalColor,#00ff00)');
+  });
+});
+
+describe('fonts', () => {
+  it('honours a set per-key font size and leaves the Mermaid font otherwise', async () => {
+    const plain = await render('A->>B: x');
+    expect(tag(plain, /class="messages"/)).not.toContain('font-size');
+    const sized = await render('A->>B: x', '  sequence:\n    messageFontSize: 20');
+    expect(tag(sized, /class="messages"/)).toContain('font-size="20"');
+  });
+});

@@ -2,7 +2,7 @@
  * `default`: v12's classic lavender theme (`theme-default.js`).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING, CLASSIC_SEQUENCE } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'default',
@@ -27,8 +27,14 @@ const theme: ThemeSpec = {
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
+    ...CLASSIC_SEQUENCE,
   },
   values: {
+    // sequence (v12 theme-default.js)
+    actorTextColor: '#000000',
+    activationBkgColor: '#f4f4f4',
+    activationBorderColor: '#666666',
+    sequenceNumberColor: '#ffffff',
     textColor: '#333333',
     nodeBorder: '#9370db',
     clusterBkg: '#ffffde',

@@ -50,6 +50,21 @@ export const LIGHT_RULES: ThemeRuleTable = {
   noteBorderColor: 'mix(noteBkgColor, black, 30%)',
   errorBkgColor: '#552222',
   errorTextColor: 'contrast(background, #552222, #ffdddd)',
+  // sequence, as v12 `theme-base.js` derives them
+  actorBkg: 'mainBkg',
+  actorBorder: 'nodeBorder',
+  actorTextColor: 'primaryTextColor',
+  actorLineColor: 'actorBorder',
+  signalColor: 'textColor',
+  signalTextColor: 'textColor',
+  labelBoxBkgColor: 'actorBkg',
+  labelBoxBorderColor: 'actorBorder',
+  labelTextColor: 'actorTextColor',
+  loopTextColor: 'actorTextColor',
+  activationBkgColor: 'secondaryColor',
+  // khroma darken(secondaryColor, 10): ten points of lightness, about 12.5% black on a grey.
+  activationBorderColor: 'mix(secondaryColor, black, 12.5%)',
+  sequenceNumberColor: 'invert(lineColor)',
 };
 
 /** Shared derivation for dark themes. */

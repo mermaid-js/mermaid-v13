@@ -87,6 +87,8 @@ export const TOKEN_VARIABLES = [
   'leanPaddingY',
   'oddPaddingX',
   'oddPaddingY',
+  // Sequence participant boxes (v12 neo rx 6, classic 3).
+  'actorRadius',
 ] as const;
 
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
@@ -107,6 +109,8 @@ export const PALETTE_LIMIT = 12;
 const F = ['flowchart'];
 const C = ['core'];
 const CF = ['core', 'flowchart'];
+const S = ['sequence'];
+const CS = ['core', 'sequence'];
 
 const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): ThemeVarDef => ({
   alias,
@@ -123,17 +127,17 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   background: def('bg', 'color', CF),
   primaryTextColor: def('pt', 'color', CF),
   lineColor: def('l', 'color', F),
-  fontFamily: def('ff', 'font', CF),
-  fontSize: def('fs', 'length', CF),
+  fontFamily: def('ff', 'font', [...CF, 'sequence']),
+  fontSize: def('fs', 'length', [...CF, 'sequence']),
   // derived
   primaryBorderColor: def('pb', 'color', CF),
   secondaryBorderColor: def('sb', 'color', CF),
   tertiaryBorderColor: def('tb', 'color', CF),
   secondaryTextColor: def('st', 'color', CF),
   tertiaryTextColor: def('tt', 'color', CF),
-  textColor: def('tx', 'color', CF),
-  mainBkg: def('mb', 'color', F),
-  nodeBorder: def('nb', 'color', F),
+  textColor: def('tx', 'color', [...CF, 'sequence']),
+  mainBkg: def('mb', 'color', [...F, 'sequence']),
+  nodeBorder: def('nb', 'color', [...F, 'sequence']),
   nodeTextColor: def('nt', 'color', F),
   clusterBkg: def('cb', 'color', F),
   clusterBorder: def('cs', 'color', F),
@@ -143,13 +147,27 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   defaultLinkColor: def('dl', 'color', F),
   border1: def('b1', 'color', F),
   border2: def('b2', 'color', F),
-  noteBkgColor: def('nk', 'color', C),
-  noteTextColor: def('nx', 'color', C),
-  noteBorderColor: def('no', 'color', C),
+  noteBkgColor: def('nk', 'color', CS),
+  noteTextColor: def('nx', 'color', CS),
+  noteBorderColor: def('no', 'color', CS),
+  // sequence (v12 names, derived as v12 `theme-base.js` derives them)
+  actorBkg: def('ab', 'color', S),
+  actorBorder: def('ar', 'color', S),
+  actorTextColor: def('at', 'color', S),
+  actorLineColor: def('alc', 'color', S),
+  signalColor: def('sc', 'color', S),
+  signalTextColor: def('stc', 'color', S),
+  labelBoxBkgColor: def('lbb', 'color', S),
+  labelBoxBorderColor: def('lbr', 'color', S),
+  labelTextColor: def('ltc', 'color', S),
+  loopTextColor: def('lpt', 'color', S),
+  activationBkgColor: def('acb', 'color', S),
+  activationBorderColor: def('acr', 'color', S),
+  sequenceNumberColor: def('snc', 'color', S),
   errorBkgColor: def('eb', 'color', C),
   errorTextColor: def('et', 'color', C),
   // tokens
-  strokeWidth: def('sw', 'length', CF),
+  strokeWidth: def('sw', 'length', [...CF, 'sequence']),
   clusterStrokeWidth: def('cw', 'length', F),
   radius: def('r', 'length', CF),
   fontWeight: def('fw', 'weight', C),
@@ -185,7 +203,8 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   leanPaddingY: def('lny', 'padding', F),
   oddPaddingX: def('odx', 'padding', F),
   oddPaddingY: def('ody', 'padding', F),
+  actorRadius: def('arx', 'length', S),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
-  dropShadow: def('ds', 'filter', F),
+  dropShadow: def('ds', 'filter', [...F, 'sequence']),
 };
