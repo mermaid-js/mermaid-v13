@@ -67,6 +67,7 @@ import {
   type AnyPlugin,
   type Detected,
   type ExternalDiagram,
+  type FirstPartyEntry,
   type LayoutLoader,
 } from './registry.ts';
 import { VERSION } from './version.ts';
@@ -315,9 +316,13 @@ function themeFor(config: ResolvedConfig, s: Snapshot, warn: (w: Warning) => voi
   });
 }
 
-/** One `mermaid` API object with its own registry and defaults. */
-export function createMermaid() {
-  const registry = new Registry();
+/**
+ * One `mermaid` API object with its own registry and defaults, detecting the types of
+ * `firstParty` in its order. `mermaid` passes the generated table with loaders, `mermaid/slim`
+ * the detectors with only the integrator's diagrams loadable.
+ */
+export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
+  const registry = new Registry(firstParty);
   const hooks = new HookRunner<Element, RenderResult>();
   let site: Snapshot = snapshot();
   let parseErrorHandler: ParseErrorHandler | undefined;

@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -27,14 +27,25 @@ describe('packAll (this workspace)', () => {
     ]);
     const mermaid = manifestOf(packed[3]!.tarball);
     expect(mermaid.name).toBe('@mermaid-chart/mermaid');
-    expect(mermaid.dependencies?.['@mermaid-js/core']).toMatch(/^npm:@mermaid-chart\/core@\^/);
+    // Exact: a pinned alpha must not float its own packages to a newer alpha.
+    expect(mermaid.dependencies?.['@mermaid-js/core']).toBe(
+      `npm:@mermaid-chart/core@${packed[0]!.version}`
+    );
+    const files = execFileSync('tar', ['-tzf', packed[3]!.tarball], { encoding: 'utf8' });
+    expect(files.split('\n')).toContain('package/LICENSE');
     expect(JSON.stringify(mermaid)).not.toContain('workspace:');
     expect(JSON.stringify(mermaid)).not.toContain('mermaid-source');
   }, 60_000);
 
   it('refuses to pack a version that is not an alpha prerelease', () => {
+    const fake = mkdtempSync(join(tmpdir(), 'release-root-'));
+    mkdirSync(join(fake, 'packages', 'x'), { recursive: true });
+    writeFileSync(
+      join(fake, 'packages', 'x', 'package.json'),
+      JSON.stringify({ name: 'x', version: '1.0.0' })
+    );
     const outDir = mkdtempSync(join(tmpdir(), 'release-pack-'));
-    expect(() => packAll(root, { target: 'public', outDir })).toThrow(/not an alpha prerelease/);
+    expect(() => packAll(fake, { target: 'public', outDir })).toThrow(/not an alpha prerelease/);
   });
 });
 
@@ -93,6 +104,29 @@ describe('publishAll', () => {
     ]);
   });
 
+  it('leaves provenance off and passes the OTP for a manual publish', () => {
+    const npm = fakeNpm([]);
+    const local = { target: 'public', url: 'http://localhost:4873/' } as const;
+    publishAll(tarballs.slice(0, 1), {
+      registry: local,
+      exec: npm.exec,
+      provenance: false,
+      otp: '123456',
+    });
+    expect(npm.calls.at(-1)).toEqual([
+      'publish',
+      '/t/core.tgz',
+      '--tag',
+      'alpha',
+      '--registry',
+      'http://localhost:4873/',
+      '--access',
+      'public',
+      '--otp',
+      '123456',
+    ]);
+  });
+
   it('dry run: looks nothing up and publishes nothing', () => {
     const npm = fakeNpm([]);
     const result = publishAll(tarballs, {
@@ -118,6 +152,24 @@ describe('release:publish CLI', () => {
     expect(out.status).toBe(1);
     expect(out.stderr).toContain('Public publish refused');
   });
+
+  it('publishes without the gate only when the release master says why', () => {
+    const out = runCli([
+      '--target',
+      'public',
+      '--skip-gate',
+      'manual alpha, bench run nightly',
+      '--no-bench-report',
+      '--no-provenance',
+      '--dry-run',
+      '--out',
+      mkdtempSync(join(tmpdir(), 'release-cli-')),
+    ]);
+    expect(out.stdout).toContain('SKIPPED by the release master: manual alpha, bench run nightly');
+    expect(out.stdout).toContain('No bench report found');
+    expect(out.stdout).toContain('would publish: mermaid@');
+    expect(out.status).toBe(0);
+  }, 60_000);
 
   it('refuses a public publish while a R-PERF gate fails, before packing anything', () => {
     const dir = mkdtempSync(join(tmpdir(), 'release-cli-'));

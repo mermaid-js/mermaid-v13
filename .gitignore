@@ -70,7 +70,9 @@ generated/
 /CLAUDE.md
 /AGENTS.md
 /assistant/
-/.claude/
+/.claude/*
+# Project skills are shared (v13/docs/RELEASING.md uses release-alpha).
+!/.claude/skills/
 packages/mermaid/src/diagrams/CLAUDE.md
 packages/parser/CLAUDE.md
 AGENTS.mermaid.md

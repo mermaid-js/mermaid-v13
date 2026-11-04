@@ -233,10 +233,10 @@ importers:
   packages/mermaid:
     dependencies:
       '@mermaid-js/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@mermaid-js/diagram-flowchart':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../diagram-flowchart
 
   packages/plugin-interactions:
@@ -279,6 +279,9 @@ importers:
 
   tools/release:
     devDependencies:
+      esbuild:
+        specifier: ^0.25.12
+        version: 0.25.12
       yaml:
         specifier: ^2.9.0
         version: 2.9.0

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { assertAlphaVersion, publishManifest, workspaceLeaks } from './manifest.ts';
+import {
+  assertAlphaVersion,
+  inexactWorkspaceRanges,
+  publishManifest,
+  workspaceLeaks,
+} from './manifest.ts';
 import type { PackedManifest } from './manifest.ts';
 
 /** `packages/mermaid/package.json` after `pnpm pack` rewrote its workspace ranges. */
@@ -74,6 +79,30 @@ describe('published manifests', () => {
         peerDependencies: { b: 'npm:b@workspace:*' },
       })
     ).toEqual(['dependencies: a@workspace:^', 'peerDependencies: b@npm:b@workspace:*']);
+  });
+
+  it("finds ranges on the set's own packages that are not its exact version", () => {
+    const versions = new Map([['@mermaid-js/core', '13.0.0-alpha.2']]);
+    expect(
+      inexactWorkspaceRanges(
+        {
+          name: 'mermaid',
+          version: '13.0.0-alpha.2',
+          dependencies: { '@mermaid-js/core': '13.0.0-alpha.2', other: '^1.0.0' },
+        },
+        versions
+      )
+    ).toEqual([]);
+    expect(
+      inexactWorkspaceRanges(
+        {
+          name: 'x',
+          version: '13.0.0-alpha.2',
+          peerDependencies: { '@mermaid-js/core': '^13.0.0-alpha.2' },
+        },
+        versions
+      )
+    ).toEqual(['peerDependencies: @mermaid-js/core@^13.0.0-alpha.2 (want exactly 13.0.0-alpha.2)']);
   });
 
   it('publishes only alpha prereleases, so the alpha tag never moves latest or a release line', () => {
