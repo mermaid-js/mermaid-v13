@@ -107,6 +107,7 @@ export const PALETTE_LIMIT = 12;
 const F = ['flowchart'];
 const C = ['core'];
 const CF = ['core', 'flowchart'];
+const S = ['state'];
 
 const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): ThemeVarDef => ({
   alias,
@@ -148,6 +149,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   noteBorderColor: def('no', 'color', C),
   errorBkgColor: def('eb', 'color', C),
   errorTextColor: def('et', 'color', C),
+  // composite states (#192, D120): the title strip and the alternate (nested) body.
+  compositeTitleBackground: def('ctb', 'color', S),
+  altBackground: def('alb', 'color', S),
   // tokens
   strokeWidth: def('sw', 'length', CF),
   clusterStrokeWidth: def('cw', 'length', F),

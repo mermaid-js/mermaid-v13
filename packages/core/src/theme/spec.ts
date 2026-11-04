@@ -50,6 +50,9 @@ export const LIGHT_RULES: ThemeRuleTable = {
   noteBorderColor: 'mix(noteBkgColor, black, 30%)',
   errorBkgColor: '#552222',
   errorTextColor: 'contrast(background, #552222, #ffdddd)',
+  // v12 theme-base.js; the other classic themes pin altBackground (#192).
+  compositeTitleBackground: 'mainBkg',
+  altBackground: 'tertiaryColor',
 };
 
 /** Shared derivation for dark themes. */
