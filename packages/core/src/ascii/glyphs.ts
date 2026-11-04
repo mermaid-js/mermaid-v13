@@ -7,6 +7,8 @@
 // only light glyphs through a 10×10 table; here every line glyph, heavy, double and dashed
 // included, is read as four arms and merged through one lookup.
 
+import type { Dir } from './directions.ts';
+
 /** The line glyphs one stroke style draws with: straight runs and the four corners. */
 export interface Stroke {
   readonly h: string;
@@ -116,6 +118,14 @@ const ASCII_ARMS = new Map<string, number>([
   ['I', V1 * 2],
   ['+', 0x55],
 ]);
+
+/** One arm pointing `d`, of `weight` 1 light, 2 heavy or 3 double, packed as `BOX` reads it. */
+export const armOf = (d: Dir, weight: number): number => weight << (6 - 2 * d);
+
+const SIDE = ['up', 'right', 'down', 'left'] as const;
+
+/** The glyph of `glyphs` for direction `d`. */
+export const sideOf = (glyphs: Sides, d: Dir): string => glyphs[SIDE[d]];
 
 /** The glyph with the given packed arms (see `BOX`), or undefined when there is none. */
 export function glyphFor(arms: number, set: GlyphSet): string | undefined {

@@ -509,33 +509,16 @@
       "count": 2
     }
   },
-  "packages/diagram-flowchart/src/render/edges.ts": {
-    "complexity": {
-      "count": 1
-    }
-  },
   "packages/diagram-flowchart/src/render/prepare.ts": {
     "@typescript-eslint/no-shadow": {
       "count": 1
     },
     "@typescript-eslint/unbound-method": {
       "count": 1
-    },
-    "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 1
     }
   },
   "packages/diagram-flowchart/src/render/render.ts": {
-    "@typescript-eslint/unbound-method": {
-      "count": 2
-    },
     "complexity": {
-      "count": 1
-    },
-    "max-lines-per-function": {
       "count": 1
     },
     "unicorn/prefer-spread": {

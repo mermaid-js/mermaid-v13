@@ -207,6 +207,43 @@ function triSize(tw: number, th: number, flip: boolean): ShapeSize {
   return { w, h, dy: flip ? -dy : dy };
 }
 
+/** A diamond with its points at the middle of each side. */
+const rhombus: Pick<ShapeDef, 'inset' | 'draw'> = {
+  inset: (W, H, side, t) => (side & 1 ? (Math.abs(t) * W) / H : (Math.abs(t) * H) / W),
+  draw: (w, W, H, a) => poly(w, [0, -H / 2, W / 2, 0, 0, H / 2, -W / 2, 0], a),
+};
+
+/**
+ * A box with some corners cut in by a quarter of its height: the lean and trapezoid shapes.
+ * Corners go clockwise from the top left.
+ */
+function slanted(tl: boolean, tr: boolean, br: boolean, bl: boolean, size = lean): ShapeDef {
+  return {
+    inset: leanInset,
+    span: flatAcross((H) => H / 4),
+    size,
+    draw: (w, W, H, a) => {
+      const s = H / 4;
+      const l = -W / 2;
+      const r = W / 2;
+      poly(
+        w,
+        [
+          tl ? l + s : l,
+          -H / 2,
+          tr ? r - s : r,
+          -H / 2,
+          br ? r - s : r,
+          H / 2,
+          bl ? l + s : l,
+          H / 2,
+        ],
+        a
+      );
+    },
+  };
+}
+
 const S: Record<string, ShapeDef> = {
   rect: { size: box, span: flat, draw: (w, W, H, a) => centred(w, W, H, a) },
   rounded: {
@@ -278,14 +315,13 @@ const S: Record<string, ShapeDef> = {
     draw: (w, W, H, a) => w.leaf('ellipse', { rx: W / 2, ry: H / 2, ...a }),
   },
   diam: {
-    inset: (W, H, side, t) => (side & 1 ? (Math.abs(t) * W) / H : (Math.abs(t) * H) / W),
+    ...rhombus,
     span: roundSpan,
     // v12 question: a square rhombus, side = label width + label height + 2 × padding.
     size: (tw, th, p) => {
       const s = tw + th + 2 * p.pad;
       return { w: s, h: s, dy: 0 };
     },
-    draw: (w, W, H, a) => poly(w, [0, -H / 2, W / 2, 0, 0, H / 2, -W / 2, 0], a),
   },
   hex: {
     inset: (_W, _H, side, t, p) => (side & 1 ? (2 * Math.abs(t)) / p.hexagonSlant : 0),
@@ -392,51 +428,20 @@ const S: Record<string, ShapeDef> = {
     },
   },
   // v12's `choice` (state diagrams): a small diamond without a label.
-  choice: {
-    noLabel: true,
-    inset: (W, H, side, t) => (side & 1 ? (Math.abs(t) * W) / H : (Math.abs(t) * H) / W),
-    size: fixed(28, 28),
-    draw: (w, W, H, a) => poly(w, [0, -H / 2, W / 2, 0, 0, H / 2, -W / 2, 0], a),
-  },
+  choice: { ...rhombus, noLabel: true, size: fixed(28, 28) },
   // v12's `anchor`: a point edges can meet, drawn as nothing.
   anchor: { noLabel: true, bare: true, size: fixed(2, 2), draw: () => {} },
-  'lean-r': {
-    inset: leanInset,
-    span: flatAcross((H) => H / 4),
-    size: lean,
-    draw: (w, W, H, a) => {
-      const s = H / 4;
-      poly(w, [-W / 2 + s, -H / 2, W / 2, -H / 2, W / 2 - s, H / 2, -W / 2, H / 2], a);
-    },
-  },
-  'lean-l': {
-    inset: leanInset,
-    span: flatAcross((H) => H / 4),
-    size: lean,
-    draw: (w, W, H, a) => {
-      const s = H / 4;
-      poly(w, [-W / 2, -H / 2, W / 2 - s, -H / 2, W / 2, H / 2, -W / 2 + s, H / 2], a);
-    },
-  },
-  'trap-b': {
-    inset: leanInset,
-    span: flatAcross((H) => H / 4),
-    size: lean,
-    draw: (w, W, H, a) => {
-      const s = H / 4;
-      poly(w, [-W / 2 + s, -H / 2, W / 2 - s, -H / 2, W / 2, H / 2, -W / 2, H / 2], a);
-    },
-  },
-  'trap-t': {
-    inset: leanInset,
-    span: flatAcross((H) => H / 4),
-    // v12 inv_trapezoid pads each side.
-    size: padded((p) => p.lean, 0, 0.5, true),
-    draw: (w, W, H, a) => {
-      const s = H / 4;
-      poly(w, [-W / 2, -H / 2, W / 2, -H / 2, W / 2 - s, H / 2, -W / 2 + s, H / 2], a);
-    },
-  },
+  'lean-r': slanted(true, false, true, false),
+  'lean-l': slanted(false, true, false, true),
+  'trap-b': slanted(true, true, false, false),
+  // v12 inv_trapezoid pads each side.
+  'trap-t': slanted(
+    false,
+    false,
+    true,
+    true,
+    padded((p) => p.lean, 0, 0.5, true)
+  ),
   'notch-rect': {
     size: box,
     span: flat,

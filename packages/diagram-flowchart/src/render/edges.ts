@@ -38,7 +38,7 @@ export function arrowheads(theme: Theme): Arrowheads {
 // How far an edge runs straight before a marker at its end, where it has the room.
 const LEAD = 6;
 // The most a corner is rounded by in a stepped route.
-const CORNER = 12;
+const STEP_CORNER = 12;
 // The radius of the arc at a corner of a rounded route (v12's `rounded` curve), less where a
 // leg is too short for it.
 const RADIUS = 5;
@@ -76,11 +76,6 @@ export interface EdgePath {
 const ease = (across: number, along: number): number =>
   Math.max(0.25, Math.min(0.5, (4 * Math.abs(along)) / (Math.abs(across) || 1)));
 
-/**
- * The path for a route, trimmed at both ends to leave room for markers. Between two points
- * not in line the route is one S along the flow (or a step in a stepped route); where the
- * route turns a corner it is rounded.
- */
 // Where a step curve turns between two coordinates: at the start, the end or halfway.
 function stepCorner(kind: CurveKind, from: number, to: number): number {
   if (kind === 'stepBefore') return from;
@@ -88,6 +83,133 @@ function stepCorner(kind: CurveKind, from: number, to: number): number {
   return (from + to) / 2;
 }
 
+const near = (ax: number, ay: number, bx: number, by: number): boolean =>
+  Math.abs(ax - bx) < 0.01 && Math.abs(ay - by) < 0.01;
+
+/** A route's points (stepped routes with their turns added) and the tests on its legs. */
+class Legs {
+  readonly xs: number[] = [];
+  readonly ys: number[] = [];
+  /** 1 where the point's leg runs across (`axis: 'h'`), else 0. */
+  readonly axes: number[] = [];
+  last = 0;
+  /** The unit vector {@link unit} found. */
+  ux = 0;
+  uy = 0;
+  private readonly linear: boolean;
+
+  constructor(
+    readonly kind: CurveKind,
+    route: readonly RoutePoint[]
+  ) {
+    this.linear = kind === 'linear';
+    const stepped = kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
+    const { xs, ys, axes } = this;
+    for (const p of route) {
+      const axis = p.axis === 'h' ? 1 : 0;
+      const last = xs.length - 1;
+      if (
+        stepped &&
+        last >= 0 &&
+        Math.abs(p.x - xs[last]!) >= 0.01 &&
+        Math.abs(p.y - ys[last]!) >= 0.01
+      ) {
+        const px = xs[last]!;
+        const py = ys[last]!;
+        // The turn: across then along, or along then across.
+        const tx = axis === 0 ? px : stepCorner(kind, px, p.x);
+        const ty = axis === 0 ? stepCorner(kind, py, p.y) : py;
+        const ux = axis === 0 ? p.x : tx;
+        const uy = axis === 0 ? ty : p.y;
+        this.turn(tx, ty, px, py, p, axis);
+        this.turn(ux, uy, px, py, p, axis);
+      }
+      xs.push(p.x);
+      ys.push(p.y);
+      axes.push(axis);
+    }
+    this.last = xs.length - 1;
+  }
+
+  private turn(x: number, y: number, px: number, py: number, p: RoutePoint, axis: number): void {
+    if (near(x, y, px, py) || near(x, y, p.x, p.y)) return;
+    this.xs.push(x);
+    this.ys.push(y);
+    this.axes.push(axis);
+  }
+
+  x(i: number): number {
+    return this.xs[i]!;
+  }
+
+  y(i: number): number {
+    return this.ys[i]!;
+  }
+
+  aligned(i: number): boolean {
+    return Math.abs(this.x(i) - this.x(i - 1)) < 0.01 || Math.abs(this.y(i) - this.y(i - 1)) < 0.01;
+  }
+
+  straight(i: number): boolean {
+    return this.linear || this.kind === 'rounded' || this.aligned(i);
+  }
+
+  /** Sets ({@link ux}, {@link uy}) to the way the line leaves point i towards point j. */
+  unit(i: number, j: number, axis: number): void {
+    if (!this.straight(Math.max(i, j))) {
+      this.ux = axis === 0 ? 0 : Math.sign(this.x(j) - this.x(i)) || 1;
+      this.uy = axis === 0 ? Math.sign(this.y(j) - this.y(i)) || 1 : 0;
+      return;
+    }
+    const dx = this.x(j) - this.x(i);
+    const dy = this.y(j) - this.y(i);
+    const len = Math.hypot(dx, dy) || 1;
+    this.ux = dx / len;
+    this.uy = dy / len;
+  }
+
+  length(i: number): number {
+    return Math.abs(this.x(i) - this.x(i - 1)) + Math.abs(this.y(i) - this.y(i - 1));
+  }
+
+  /** Whether the route turns a right angle at point i. */
+  turns(i: number): boolean {
+    return (
+      !this.linear &&
+      i > 0 &&
+      i < this.last &&
+      this.aligned(i) &&
+      this.aligned(i + 1) &&
+      this.length(i) >= 0.01 &&
+      this.length(i + 1) >= 0.01 &&
+      Math.abs(this.x(i) - this.x(i - 1)) < 0.01 !== Math.abs(this.x(i + 1) - this.x(i)) < 0.01
+    );
+  }
+
+  /** How far leg i runs along (ux, uy). */
+  along(i: number, ux: number, uy: number): number {
+    return (
+      Math.abs(this.x(i) - this.x(i - 1)) * Math.abs(ux) +
+      Math.abs(this.y(i) - this.y(i - 1)) * Math.abs(uy)
+    );
+  }
+
+  insert(at: number, x: number, y: number, axis: number): void {
+    this.xs.splice(at, 0, x);
+    this.ys.splice(at, 0, y);
+    this.axes.splice(at, 0, axis);
+    this.last++;
+  }
+}
+
+// A curve into a marker runs straight for a little way first, where there is room.
+const lead = (run: number): number => Math.min(LEAD, run / 4);
+
+/**
+ * The path for a route, trimmed at both ends to leave room for markers. Between two points
+ * not in line the route is one S along the flow (or a step in a stepped route); where the
+ * route turns a corner it is rounded.
+ */
 export function routePath(
   w: SvgWriter,
   route: readonly RoutePoint[],
@@ -95,97 +217,45 @@ export function routePath(
   startTrim: number,
   endTrim: number
 ): EdgePath {
-  const linear = kind === 'linear';
-  const stepped = kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter';
-  const cornered = stepped || kind === 'rounded';
-  const xs: number[] = [];
-  const ys: number[] = [];
-  const axes: number[] = [];
-  const near = (ax: number, ay: number, bx: number, by: number): boolean =>
-    Math.abs(ax - bx) < 0.01 && Math.abs(ay - by) < 0.01;
-  for (const p of route) {
-    const axis = p.axis === 'h' ? 1 : 0;
-    const last = xs.length - 1;
-    if (
-      stepped &&
-      last >= 0 &&
-      Math.abs(p.x - xs[last]!) >= 0.01 &&
-      Math.abs(p.y - ys[last]!) >= 0.01
-    ) {
-      const px = xs[last]!;
-      const py = ys[last]!;
-      const my = stepCorner(kind, py, p.y);
-      const mx = stepCorner(kind, px, p.x);
-      const turns = axis === 0 ? [px, my, p.x, my] : [mx, py, mx, p.y];
-      for (let k = 0; k < 4; k += 2) {
-        if (near(turns[k]!, turns[k + 1]!, px, py) || near(turns[k]!, turns[k + 1]!, p.x, p.y))
-          continue;
-        xs.push(turns[k]!);
-        ys.push(turns[k + 1]!);
-        axes.push(axis);
-      }
-    }
-    xs.push(p.x);
-    ys.push(p.y);
-    axes.push(axis);
-  }
-  let last = xs.length - 1;
-  const X = (i: number): number => xs[i]!;
-  const Y = (i: number): number => ys[i]!;
-  const aligned = (i: number): boolean =>
-    Math.abs(X(i) - X(i - 1)) < 0.01 || Math.abs(Y(i) - Y(i - 1)) < 0.01;
-  const straight = (i: number): boolean => linear || kind === 'rounded' || aligned(i);
-  const unit = (i: number, j: number, axis: number): [number, number] => {
-    if (!straight(Math.max(i, j)))
-      return axis === 0 ? [0, Math.sign(Y(j) - Y(i)) || 1] : [Math.sign(X(j) - X(i)) || 1, 0];
-    const dx = X(j) - X(i);
-    const dy = Y(j) - Y(i);
-    const len = Math.hypot(dx, dy) || 1;
-    return [dx / len, dy / len];
-  };
-  const [sdx, sdy] = unit(0, 1, axes[1] ?? 0);
-  const [edx, edy] = unit(last - 1, last, axes[last] ?? 0);
-  const sx = X(0);
-  const sy = Y(0);
-  const ex = X(last);
-  const ey = Y(last);
+  const r = new Legs(kind, route);
+  const { xs, ys, axes } = r;
+  let last = r.last;
+  r.unit(0, 1, axes[1] ?? 0);
+  const sdx = r.ux;
+  const sdy = r.uy;
+  r.unit(last - 1, last, axes[last] ?? 0);
+  const edx = r.ux;
+  const edy = r.uy;
+  const sx = r.x(0);
+  const sy = r.y(0);
+  const ex = r.x(last);
+  const ey = r.y(last);
   xs[0] = sx + sdx * startTrim;
   ys[0] = sy + sdy * startTrim;
   xs[last] = ex - edx * endTrim;
   ys[last] = ey - edy * endTrim;
-  const length = (i: number): number => Math.abs(X(i) - X(i - 1)) + Math.abs(Y(i) - Y(i - 1));
-  const turns = (i: number): boolean =>
-    !linear &&
-    i > 0 &&
-    i < last &&
-    aligned(i) &&
-    aligned(i + 1) &&
-    length(i) >= 0.01 &&
-    length(i + 1) >= 0.01 &&
-    Math.abs(X(i) - X(i - 1)) < 0.01 !== Math.abs(X(i + 1) - X(i)) < 0.01;
-  const along = (i: number, ux: number, uy: number): number =>
-    Math.abs(X(i) - X(i - 1)) * Math.abs(ux) + Math.abs(Y(i) - Y(i - 1)) * Math.abs(uy);
-  // A curve into a marker runs straight for a little way first, where there is room.
-  const lead = (run: number): number => Math.min(LEAD, run / 4);
   const arrives =
-    endTrim > 0 && (!straight(last) || turns(last - 1)) ? lead(along(last, edx, edy)) : 0;
-  const leaves = startTrim > 0 && (!straight(1) || turns(1)) ? lead(along(1, sdx, sdy)) : 0;
+    endTrim > 0 && (!r.straight(last) || r.turns(last - 1)) ? lead(r.along(last, edx, edy)) : 0;
+  const leaves = startTrim > 0 && (!r.straight(1) || r.turns(1)) ? lead(r.along(1, sdx, sdy)) : 0;
   if (arrives >= 1) {
-    xs.splice(last, 0, X(last) - edx * arrives);
-    ys.splice(last, 0, Y(last) - edy * arrives);
-    axes.splice(last, 0, axes[last]!);
+    r.insert(last, r.x(last) - edx * arrives, r.y(last) - edy * arrives, axes[last]!);
     last++;
   }
   if (leaves >= 1) {
-    xs.splice(1, 0, X(0) + sdx * leaves);
-    ys.splice(1, 0, Y(0) + sdy * leaves);
-    axes.splice(1, 0, axes[1]!);
+    r.insert(1, r.x(0) + sdx * leaves, r.y(0) + sdy * leaves, axes[1]!);
     last++;
   }
+  return { d: draw(w, r, kind), sx, sy, sdx: -sdx, sdy: -sdy, ex, ey, edx, edy };
+}
 
-  const b = w.path().moveTo(X(0), Y(0));
-  let atX = X(0);
-  let atY = Y(0);
+/** The path data through a route's points: S-curves between offset points, corners rounded. */
+function draw(w: SvgWriter, r: Legs, kind: CurveKind): PathData {
+  const cornered =
+    kind === 'step' || kind === 'stepBefore' || kind === 'stepAfter' || kind === 'rounded';
+  const last = r.last;
+  const b = w.path().moveTo(r.x(0), r.y(0));
+  let atX = r.x(0);
+  let atY = r.y(0);
   const lineTo = (x: number, y: number): void => {
     if (near(x, y, atX, atY)) return;
     b.lineTo(x, y);
@@ -193,10 +263,10 @@ export function routePath(
     atY = y;
   };
   for (let i = 1; i <= last; i++) {
-    const x = X(i);
-    const y = Y(i);
-    if (!straight(i)) {
-      const down = axes[i] === 0;
+    const x = r.x(i);
+    const y = r.y(i);
+    if (!r.straight(i)) {
+      const down = r.axes[i] === 0;
       const run = down ? y - atY : x - atX;
       const k = Math.abs(run) * ease(down ? x - atX : y - atY, run);
       const ux = down ? 0 : Math.sign(run) * k;
@@ -206,30 +276,36 @@ export function routePath(
       atY = y;
       continue;
     }
-    if (!turns(i)) {
+    if (!r.turns(i)) {
       // A point part of the way along one straight run adds nothing.
       if (
         i < last &&
-        aligned(i) &&
-        aligned(i + 1) &&
-        (x - X(i - 1)) * (X(i + 1) - x) + (y - Y(i - 1)) * (Y(i + 1) - y) > 0
+        r.aligned(i) &&
+        r.aligned(i + 1) &&
+        (x - r.x(i - 1)) * (r.x(i + 1) - x) + (y - r.y(i - 1)) * (r.y(i + 1) - y) > 0
       )
         continue;
       lineTo(x, y);
       continue;
     }
-    let before = turns(i - 1) ? length(i) / 2 : length(i);
-    let after = turns(i + 1) ? length(i + 1) / 2 : length(i + 1);
-    if (cornered) before = after = Math.min(kind === 'rounded' ? RADIUS : CORNER, before, after);
-    const [ux, uy] = unit(i - 1, i, axes[i]!);
-    const [vx, vy] = unit(i, i + 1, axes[i + 1]!);
+    let before = r.turns(i - 1) ? r.length(i) / 2 : r.length(i);
+    let after = r.turns(i + 1) ? r.length(i + 1) / 2 : r.length(i + 1);
+    if (cornered) {
+      before = after = Math.min(kind === 'rounded' ? RADIUS : STEP_CORNER, before, after);
+    }
+    r.unit(i - 1, i, r.axes[i]!);
+    const ux = r.ux;
+    const uy = r.uy;
+    r.unit(i, i + 1, r.axes[i + 1]!);
+    const vx = r.ux;
+    const vy = r.uy;
     lineTo(x - ux * before, y - uy * before);
     atX = x + vx * after;
     atY = y + vy * after;
     // A right-angle turn, so the arc's radius is its leg; the sweep follows the turn (y down).
     if (kind === 'rounded') b.arcTo(before, before, 0, false, ux * vy - uy * vx > 0, atX, atY);
     else if (cornered) b.quadTo(x, y, atX, atY);
-    else
+    else {
       b.curveTo(
         x - ux * before * (1 - HANDLE),
         y - uy * before * (1 - HANDLE),
@@ -238,8 +314,9 @@ export function routePath(
         atX,
         atY
       );
+    }
   }
-  return { d: b.done(), sx, sy, sdx: -sdx, sdy: -sdy, ex, ey, edx, edy };
+  return b.done();
 }
 
 /** Where a line meets a node outline, and the unit direction it travels there. */
