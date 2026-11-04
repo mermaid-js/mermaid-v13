@@ -29,6 +29,14 @@
       "project": ["src/**/*.ts"],
       "ignoreDependencies": ["@fontsource/noto-sans-sc"]
     },
+    "packages/language-service-codemirror": {
+      "entry": ["src/index.ts", "scripts/generate.ts"],
+      "project": ["src/**/*.ts", "scripts/**/*.ts"]
+    },
+    "packages/language-service/examples/*": {
+      "entry": ["src/main.ts", "vite.config.ts"],
+      "project": ["src/**/*.ts"]
+    },
     "tools/*": {
       "entry": ["src/index.ts", "src/cli.ts", "src/*-cli.ts", "src/gen-unicode.ts"],
       "project": ["src/**/*.ts"]
