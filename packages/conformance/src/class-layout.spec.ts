@@ -9,6 +9,7 @@ import { THEME_NAMES, createTheme, loadTheme } from '@mermaid-js/core/theme';
 import { layoutClass, parseClass, type ClassLayout } from '@mermaid-js/diagram-class';
 import {
   MARKER_ACROSS,
+  MARKER_ROOM,
   markerReach,
   markers,
   type Markers,
@@ -173,6 +174,14 @@ async function allMarkers(): Promise<Markers[]> {
 }
 
 describe('layered over parser-produced class graphs', () => {
+  it("reserves each marker's room as the built-in themes draw it, rounded up", async () => {
+    const all = await allMarkers();
+    for (const type of Object.keys(MARKER_ROOM) as (keyof typeof MARKER_ROOM)[]) {
+      const reach = Math.max(...all.map((m) => markerReach(type, m)));
+      expect(MARKER_ROOM[type], type).toBe(Math.ceil(reach));
+    }
+  });
+
   it('lays out every corpus graph validly, nested and flat, and records crossings', async () => {
     const theme = createTheme(await loadTheme('default'), {});
     const geometries = await allMarkers();

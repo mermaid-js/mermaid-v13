@@ -30,8 +30,6 @@ const redux: ThemeSpec = {
     ...NEO_ARROWHEADS,
     ...NEO_CLASS_MARKERS,
     ...TEXT_SIZES,
-    ...NEO_CLASS_MARKERS,
-    ...TEXT_SIZES,
     ...REDUX_PADDING,
   },
   rules: REDUX_RULES,

@@ -49,6 +49,21 @@ describe('class diagrams through the public API (#157)', () => {
     expect((await m.render('c', V2)).svg).toBe((await m.render('c', V1)).svg);
   });
 
+  it('gives every element its raw data-id; only data-ast is escaped (R-PARSE-8)', async () => {
+    const text =
+      'classDiagram\nclass `B#2` {\n  +x\n}\nclass `C@x`\n`B#2` --> `C@x`\nnote for `B#2` "n"\n';
+    const { svg } = await createMermaid().render('c', text);
+    const tags = (re: RegExp) => svg.match(re) ?? [];
+    expect(tags(/<g class="node default"[^>]*data-id="B#2" data-ast="n:B%232"/g)).toHaveLength(1);
+    expect(
+      tags(/<text class="member attribute" data-id="B#2#1" data-ast="m:B%232#1"/g)
+    ).toHaveLength(1);
+    expect(
+      tags(/<g class="edge relation[^"]*" data-id="id_B#2_C@x_1" data-ast="e:B%232&gt;C%40x"/g)
+    ).toHaveLength(1);
+    expect(tags(/<g class="node note" data-id="note0"/g)).toHaveLength(1);
+  });
+
   it('renders synchronously once prepared', async () => {
     const m = createMermaid();
     await m.prepare(V2);

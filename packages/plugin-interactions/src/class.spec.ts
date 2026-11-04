@@ -137,6 +137,21 @@ describe('class interactions (#158, D105)', () => {
     ]);
   });
 
+  it('binds a class whose name has characters the AST id escapes (`#`, `@`)', async () => {
+    // `data-id` is `B#2`, `data-ast` is `n:B%232`: the plugin compares the escaped forms.
+    const m = await mermaid();
+    const result = await m.render(
+      'd',
+      'classDiagram\nclass `B#2`\nclass `C@x`\nclick `B#2` call cb()\nclick `C@x` call cb()\n'
+    );
+    const dom = mounted(result.svg);
+    result.bindFunctions!(dom.el);
+    expect(clickable(dom.root)).toEqual([
+      'B#2 (node default clickable) x1',
+      'C@x (node default clickable) x1',
+    ]);
+  });
+
   it('does not bind a callback on a class that does not exist (v12 dropped it)', async () => {
     const m = await mermaid();
     const result = await m.render(

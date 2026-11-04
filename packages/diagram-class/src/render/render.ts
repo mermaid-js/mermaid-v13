@@ -317,7 +317,7 @@ function drawEdges(scene: Scene, idOf: (e: ClassEdgeView) => string): void {
       }`,
       'data-id': idOf(e),
       // A note's AST node is drawn by its box; a relationship's, by its edge.
-      'data-ast': e.kind === 'note' || e.layoutId !== e.ast ? undefined : e.ast,
+      'data-ast': e.kind === 'note' ? undefined : e.ast,
     });
     if (route && route.points.length > 1) {
       const path = routePath(
@@ -476,7 +476,11 @@ function drawClass(
     for (const row of c.rows) {
       drawRow(w, row, {
         class: c.kind === 'methods' ? 'member method' : 'member attribute',
-        'data-id': row.ast === undefined ? undefined : row.ast.replace(/^m:/, ''),
+        // The raw class id plus `#k`, as the box's `data-id` (`data-ast` escapes the name).
+        'data-id':
+          row.ast === undefined
+            ? undefined
+            : `${view.id}${row.ast.slice(row.ast.lastIndexOf('#'))}`,
         'data-ast': row.ast,
         // A static member (`$`) is underlined; core's runs carry bold and italic only.
         'text-decoration': row.style & Style.Underline ? 'underline' : undefined,

@@ -262,7 +262,7 @@ So **an alpha goes out when the release master merges the Version Packages PR.**
 **Before the switch:**
 
 - Add `mermaid-js/mermaid`'s release workflow as the npm trusted publisher of `@mermaid-js/core`, `@mermaid-js/diagram-flowchart`, `@mermaid-js/diagram-class` and `@mermaid-js/plugin-interactions` (it already is for `mermaid`).
-- Set `repository.url` in the four package.json files to `https://github.com/mermaid-js/mermaid`. npm provenance requires it to match the publishing repository, and the repository must be public.
+- Set `repository.url` in every published package.json to `https://github.com/mermaid-js/mermaid`. npm provenance requires it to match the publishing repository, and the repository must be public.
 - Set `changelog` in `.changeset/config.json` to repo `mermaid-js/mermaid`.
 - Decide whether the release job runs the full bench (`--gate`, about an hour) or relies on the nightly bench (`--skip-gate`).
 
