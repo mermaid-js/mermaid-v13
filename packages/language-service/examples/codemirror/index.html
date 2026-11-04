@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mermaid CodeMirror example</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        height: 100vh;
+      }
+      #editor {
+        border-right: 1px solid #ccc;
+        overflow: auto;
+      }
+      #editor .cm-editor {
+        height: 100%;
+      }
+      #preview {
+        overflow: auto;
+        padding: 16px;
+      }
+      #preview [data-ast] {
+        cursor: pointer;
+      }
+      #preview .ast-current {
+        outline: 2px solid #f0883e;
+        outline-offset: 2px;
+      }
+      #status {
+        position: fixed;
+        right: 8px;
+        bottom: 8px;
+        font-size: 12px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="editor"></div>
+    <div id="preview"></div>
+    <div id="status">loading…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

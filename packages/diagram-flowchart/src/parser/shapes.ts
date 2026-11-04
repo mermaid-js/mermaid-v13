@@ -67,3 +67,11 @@ const SHAPES: ReadonlySet<string> = /* @__PURE__ */ new Set([
 export function isValidShape(name: string): boolean {
   return SHAPES.has(name);
 }
+
+/**
+ * Whether `@{ shape: name }` is accepted as written: a name v12 knows, lowercase, without `_`
+ * (the model reports `UNKNOWN_SHAPE` for the others).
+ */
+export function acceptedShape(name: string): boolean {
+  return isValidShape(name) && name === name.toLowerCase() && !name.includes('_');
+}

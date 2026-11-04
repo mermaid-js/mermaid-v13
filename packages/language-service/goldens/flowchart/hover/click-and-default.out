@@ -1,0 +1,22 @@
+@ 3:12  classDef |default fill:#f00
+  3:12-3:19 "default"
+  | **class** `default`
+  |
+  | `classDef default fill:#f00`
+  |
+  | Applies to every node without a class.
+@ 4:5  cl|ick A call fn()
+  4:3-4:8 "click"
+  | **`click`**
+  |
+  | `click id callback`, `click id call fn(args)`, `click id "url"`, `click id href "url"`, each with an optional tooltip; urls take an optional target.
+@ 5:13  click B ca|ll fn()
+  5:11-5:15 "call"
+  | **`call`**
+  |
+  | `click id callback`, `click id call fn(args)`, `click id "url"`, `click id href "url"`, each with an optional tooltip; urls take an optional target.
+@ 6:5  A:|::default
+  6:4-6:7 ":::"
+  | **`:::`**
+  |
+  | `A:::name`: gives the node a class, as `class A name` does.

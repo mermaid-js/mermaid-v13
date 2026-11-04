@@ -53,10 +53,29 @@ const LEZER_TOKENS: Record<string, [name: string, tag: string]> = {
   function: ['Function', 't.function(t.variableName)'],
 };
 
+/**
+ * The highlight category of a `:scope` (D94): the Lezer token name, `Other` for none. The
+ * kind → category table and all three highlighters derive from it.
+ */
+export function categoryOf(scope = ''): string {
+  return (LEZER_TOKENS[scope] ?? ['Other'])[0];
+}
+
 const has = (r: LexRule, op: string) => r.actions.some((a) => a.op === op);
 const pushTarget = (r: LexRule) =>
   r.actions.find((a) => a.op === 'push' || a.op === 'push-once')?.mode;
 const matchesEmpty = (r: LexRule) => new RegExp(`^(?:${r.pattern})$`).test('');
+
+/**
+ * The pattern a highlighter uses for a rule that changes no mode. TextMate and Monarch cannot
+ * take a rule that matches empty text (it makes no progress): `atom*` becomes `atom+`, which
+ * matches the same non-empty text; any other pattern that can match empty is left out.
+ */
+function progressPattern(r: LexRule): string | undefined {
+  if (!matchesEmpty(r)) return r.pattern;
+  const star = /^(?:\\.|\[(?:\\.|[^\]\\])*\]|[^\\[\](){}|*+?])\*$/;
+  return star.test(r.pattern) ? `${r.pattern.slice(0, -1)}+` : undefined;
+}
 const scopeOf = (r: LexRule) => r.scope;
 
 /** Rules in effect in `mode`, trivia first, in priority order. */
@@ -118,14 +137,22 @@ export function textMate(g: Grammar, names: HighlightNames): object {
     const target = pushTarget(r);
     const name = scope(r);
     if (target === undefined) {
-      if (matchesEmpty(r)) return undefined;
+      const pattern = progressPattern(r);
+      if (pattern === undefined) return undefined;
       repository[key] = name
-        ? { match: nonCapturing(r.pattern), name }
-        : { match: nonCapturing(r.pattern) };
+        ? { match: nonCapturing(pattern), name }
+        : { match: nonCapturing(pattern) };
       return key;
     }
     const ends = rulesIn(g, target).filter((e) => isEnd(target, e) && !pushTarget(e));
-    const end = ends.length > 0 ? ends.map((e) => `(${nonCapturing(e.pattern)})`).join('|') : '$';
+    // A rule that pops and pushes another mode (Monarch's switchTo) cannot be one TextMate
+    // end: the scope ends before it, and the enclosing mode's rules read on from there.
+    const switches = rulesIn(g, target).filter((e) => isEnd(target, e) && pushTarget(e));
+    const end =
+      [
+        ...ends.map((e) => `(${nonCapturing(e.pattern)})`),
+        ...switches.map((e) => `(?=${nonCapturing(e.pattern)})`),
+      ].join('|') || '$';
     const endCaptures: Record<string, object> = {};
     ends.forEach((e, k) => {
       const s = scope(e);
@@ -167,26 +194,58 @@ export function monarch(g: Grammar, names: HighlightNames): object {
   const tokenizer: Record<string, unknown[]> = {};
   for (const mode of ['INITIAL', ...g.modes]) {
     const rules: unknown[] = [];
-    let lineEnd = false;
     for (const r of rulesIn(g, mode)) {
       const target = pushTarget(r);
       const pop = mode !== 'INITIAL' && has(r, 'pop');
-      if (matchesEmpty(r) && target === undefined && !pop) continue;
-      if (pop && r.pattern.includes('\\n')) lineEnd = true;
+      const pattern = target === undefined && !pop ? progressPattern(r) : r.pattern;
+      if (pattern === undefined) continue;
       const action: Record<string, string> = {
         token: MONARCH_TOKENS[scopeOf(r) ?? ''] ?? '',
       };
       if (pop && target !== undefined) action.switchTo = `@${state(target)}`;
       else if (pop) action.next = '@pop';
       else if (target !== undefined) action.next = `@${state(target)}`;
-      rules.push([r.pattern, action]);
+      rules.push([pattern, action]);
     }
-    // Monarch reads lines without their line break: a mode a line break closes ends here.
-    if (lineEnd) rules.push(['$', { token: '', next: '@pop' }]);
     tokenizer[state(mode)] = rules;
   }
-  return { tokenPostfix: `.${names.id}`, defaultToken: '', tokenizer };
+  Object.assign(tokenizer, MONARCH_FRONT_MATTER);
+  // `includeLF`: each line is read with its line break, so a rule that ends a mode at a line
+  // break matches it as in v12. (Monaco runs no rule at the end of a line, so a `$` rule never
+  // fires there.)
+  return {
+    tokenPostfix: `.${names.id}`,
+    defaultToken: '',
+    includeLF: true,
+    start: 'frontMatterStart',
+    tokenizer,
+  };
 }
+
+/**
+ * Front matter, as core's preprocess finds it: a `---` fence on the first non-blank line, at
+ * any indent, up to the next `---` line. The tokenizer starts in `frontMatterStart`, which
+ * passes blank lines, reads an opening fence, or moves to `root` without reading anything.
+ * Inside, fences are meta, YAML keys variables and `#` comments comments, so no YAML quote or
+ * bracket opens a diagram mode. Limits (Monarch keeps no indent and cannot look ahead): a
+ * closing fence at another indent than the opening one also closes, and an unclosed block
+ * runs to the end of the text, as it does while being typed.
+ */
+const FENCE = '^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)';
+const MONARCH_FRONT_MATTER = {
+  frontMatterStart: [
+    [FENCE, { token: 'annotation', switchTo: '@frontMatter' }],
+    // A blank line (Monaco evaluates the rules once on an empty line too).
+    ['[^\\S\\n]*(?:\\n|$)', { token: '' }],
+    ['', { token: '', switchTo: '@root' }],
+  ],
+  frontMatter: [
+    [FENCE, { token: 'annotation', switchTo: '@root' }],
+    ['[^\\S\\n]*#.*', { token: 'comment' }],
+    ['[^\\S\\n]*(?:- )?[^\\s#:\'"-][^:#]*(?=:(?:\\s|$))', { token: 'variable' }],
+    ['[^#]+', { token: '' }],
+  ],
+};
 
 // ---- Lezer -----------------------------------------------------------------------------
 
@@ -219,7 +278,7 @@ function lezerTable(g: Grammar): Record<string, [string, string, string | null, 
   for (const mode of ['INITIAL', ...g.modes]) {
     table[mode] = rulesIn(g, mode).map((r) => [
       r.pattern,
-      (LEZER_TOKENS[scopeOf(r) ?? ''] ?? ['Other'])[0],
+      categoryOf(scopeOf(r)),
       pushTarget(r) ?? null,
       mode !== 'INITIAL' && has(r, 'pop'),
     ]);
@@ -243,10 +302,20 @@ import * as TERMS from '${termsModule}';
 
 /** mode -> [pattern, token, push target, pop] in priority order. */
 const TABLE = ${JSON.stringify(lezerTable(g))};
+/** Trivia (comments, directives): no other token runs into one (the lexer never sees them). */
+const TRIVIA = ${JSON.stringify(g.triviaRules.map((r) => r.pattern))}.map(
+  (p) => new RegExp(p, p.startsWith('^') ? 'gm' : 'g')
+);
 const MODES = Object.fromEntries(
   Object.entries(TABLE).map(([mode, rules]) => [
     mode,
-    rules.map(([p, token, push, pop]) => ({ re: new RegExp(p, 'y'), term: TERMS[token], push, pop })),
+    rules.map(([p, token, push, pop]) => ({
+      re: new RegExp(p, 'y'),
+      term: TERMS[token],
+      push,
+      pop,
+      bol: p.startsWith('^'),
+    })),
   ])
 );
 
@@ -277,16 +346,33 @@ function ahead(input) {
     if (c < 0) break;
     s += String.fromCharCode(c);
   }
-  return s;
+  let cut = s.length;
+  for (const re of TRIVIA) {
+    re.lastIndex = 1;
+    const m = re.exec(s);
+    if (m && m.index < cut) cut = m.index;
+  }
+  return s.slice(0, cut);
+}
+
+/** Whether only blanks stand between the line start and the input position. */
+function atLineStart(input) {
+  let k = -1;
+  while (input.peek(k) === 32 || input.peek(k) === 9) k--;
+  const c = input.peek(k);
+  return c < 0 || c === 10 || c === 13;
 }
 
 /** The next token: [term, length, modes after it]; empty matches only change the mode. */
 function next(modes, input) {
   const text = ahead(input);
   if (text.length === 0) return undefined;
+  // A \`^\` rule matches only at a line start (the regex sees the text from here on).
+  const bol = atLineStart(input);
   for (let guard = 0; guard < 8; guard++) {
     let changed = false;
     for (const rule of MODES[modes.top] ?? []) {
+      if (rule.bol && !bol) continue;
       rule.re.lastIndex = 0;
       const m = rule.re.exec(text);
       if (!m) continue;

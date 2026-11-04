@@ -22,8 +22,8 @@ acc_title                 /accTitle\s*:\s*/                push(acc_title) :keyw
 <acc_title> acc_title_value /[^\n]*/                       pop :string ;
 acc_descr                 /accDescr\s*:\s*/                push(acc_descr) :keyword ;
 <acc_descr> acc_descr_value /[^\n]*/                       pop :string ;
--                         /accDescr\s*\{\s*/               push(acc_descr_multiline) :keyword ;
-<acc_descr_multiline> -   /\}/                             pop :keyword ;
+-                         /accDescr\s*\{\s*/               push(acc_descr_multiline) attach-next :keyword ;
+<acc_descr_multiline> -   /\}/                             pop attach-prev :keyword ;
 <acc_descr_multiline> acc_descr_multiline_value /[^}]*/    :string ;
 
 (** Shape data `@{ … }`: YAML in braces; line breaks in a quoted value read as `<br/>`. *)
@@ -52,8 +52,10 @@ SHAPE_DATA                /@\{/                            push(shapeData) empty
 
 (** Statement keywords. *)
 STYLE                     /style\b/                        :keyword ;
+(** `classDef default …` styles every node without a class; `linkStyle default …` every link. *)
 DEFAULT                   /default\b/                      :keyword ;
 LINKSTYLE                 /linkStyle\b/                    :keyword ;
+(** `linkStyle … interpolate curve`: the curve the links are drawn with (`basis`, `linear`, …). *)
 INTERPOLATE               /interpolate\b/                  :keyword ;
 CLASSDEF                  /classDef\b/                     :keyword ;
 CLASS                     /class\b/                        :keyword ;
@@ -85,6 +87,7 @@ direction_td              /.*direction\s+TD[^\n]*/         :keyword ;
 LINK_ID                   /[^\s"]+@(?=[^{"])/              :variable ;
 NUM                       /[0-9]+/                         :number ;
 BRKT                      /#/ ;
+(** `A:::name`: gives the node a class, as `class A name` does. *)
 STYLE_SEPARATOR           /:::/                            :operator ;
 COLON                     /:/ ;
 AMP                       /&/                              :operator ;
@@ -92,7 +95,8 @@ SEMI                      /;/                              :punctuation ;
 COMMA                     /,/                              :punctuation ;
 MULT                      /\*/ ;
 
-(** Links. `--`, `==` and `-.` followed by text open an edge-text mode, closed by the arrow. *)
+(** A link: `-->`, `---`, `-.->`, `==>`, `~~~`; `>`, `o` or `x` heads (`<`, `o`, `x` at the start
+too for both ends). `--`, `==` and `-.` followed by text open an edge-text mode, closed by the arrow. *)
 <INITIAL,edgeText> LINK   /\s*[xo<]?--+[-xo>]\s*/          pop :operator ;
 START_LINK                /\s*[xo<]?--\s*/                 push(edgeText) :operator ;
 <edgeText> EDGE_TEXT      /[^-]|-(?!-)/                    :string ;
@@ -205,9 +209,11 @@ EOF                       /$/ ;
 
 @trivia
 
-(** Removed before lexing (see the lexer input); listed for the highlighters. *)
-COMMENT                   /%%(?!\{)[^\n]*/                 :comment ;
-DIRECTIVE                 /%%\{.*?\}%%/                     :meta ;
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line (a `%%` after a statement is node text); both take their leading blanks so they win
+over label text that starts at the line start. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+DIRECTIVE                 /[^\S\n]*%%\{.*?\}%%/             :meta ;
 
 @grammar
 
@@ -284,9 +290,15 @@ alphaNumToken = NUM | UNICODE_TEXT | NODE_STRING | DIR | DOWN | MINUS | COMMA | 
 Subgraph @Subgraph = subgraph SPACE textNoTags [ SQS text SQE ] separator document end
   | subgraph separator document end ;
 
+(** `style id fill:#f9f,stroke:#333`: styles one node or subgraph. *)
 Style @Style = STYLE SPACE idString SPACE styles ;
+(** `classDef name fill:#f9f,color:#000`: defines a class of styles; `classDef default …`
+styles every node without a class. *)
 ClassDef @ClassDef = CLASSDEF SPACE idString SPACE styles ;
+(** `class A,B name`: gives nodes a class (as `A:::name` does). *)
 Class @Class = CLASS SPACE idString SPACE idString ;
+(** `linkStyle 0,2 stroke:#f00`: styles links by their position in the source, from 0;
+`linkStyle default …` styles every link; `interpolate curve` sets their curve. *)
 LinkStyle @LinkStyle = LINKSTYLE SPACE ( DEFAULT | numList ) SPACE
   ( styles | INTERPOLATE SPACE alphaNum [ SPACE styles ] ) ;
 numList = NUM { COMMA NUM } ;
@@ -299,6 +311,9 @@ Click @Click = CLICK ( CALLBACKNAME [ CALLBACKARGS ] [ SPACE STR ]
   | alphaNum [ SPACE STR ]
   | [ HREF ] STR [ SPACE STR ] [ SPACE LINK_TARGET ] ) ;
 
+(** `direction LR` inside a subgraph: the direction of its layout. *)
 Direction @Direction = direction_tb | direction_bt | direction_rl | direction_lr | direction_td ;
+(** `accTitle: …`: the accessible title of the diagram. *)
 AccTitle @AccTitle = acc_title acc_title_value ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description of the diagram. *)
 AccDescr @AccDescr = acc_descr acc_descr_value | acc_descr_multiline_value ;

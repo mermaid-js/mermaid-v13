@@ -1,0 +1,20 @@
+@ 3:3  |A --> B & C
+  prepare: 3:3-3:4 "A"; rename to "Start":
+  %% rename-to: Start
+  flowchart TD
+    Start --> B & C
+    Start:::hot --> D
+    style Start fill:#f00
+    class Start,B hot
+    click Start "https://example.com"
+    linkStyle 0 stroke:red
+@ 7:9  click |A "https://example.com"
+  prepare: 7:9-7:10 "A"; rename to "Start":
+  %% rename-to: Start
+  flowchart TD
+    Start --> B & C
+    Start:::hot --> D
+    style Start fill:#f00
+    class Start,B hot
+    click Start "https://example.com"
+    linkStyle 0 stroke:red

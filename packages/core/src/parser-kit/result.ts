@@ -8,6 +8,7 @@ import type { AstNode } from './ast.ts';
 import { Diagnostics } from './diagnostics.ts';
 import type { Diagnostic } from './diagnostics.ts';
 import type { Range } from './positions.ts';
+import type { Probe, ProbeResult } from './probe.ts';
 import type { TokenStream } from './tokens.ts';
 
 /** One occurrence of a user identifier: for definition, references and rename (R-PARSE-5). */
@@ -30,6 +31,8 @@ export interface StatementSpan {
 export interface ParseOptions {
   /** Also return the token stream (`config.internal.keepTokens`; for editors). */
   keepTokens?: boolean;
+  /** Record what the parser would accept at this UTF-16 offset (R-LANG-7, D95). */
+  probe?: number;
 }
 
 export interface ParseResult<M, A extends AstNode = AstNode> {
@@ -42,6 +45,8 @@ export interface ParseResult<M, A extends AstNode = AstNode> {
   statements: StatementSpan[];
   /** Only with {@link ParseOptions.keepTokens}. */
   tokens?: TokenStream;
+  /** Only with {@link ParseOptions.probe}. */
+  probe?: ProbeResult;
 }
 
 /** Collects the side outputs of one parse. Create one per parse. */
@@ -83,12 +88,16 @@ export class ParseState {
     for (const s of this.open.splice(i)) s.range.end = end;
   }
 
-  /** Assemble the {@link ParseResult}; the token stream is included only on request. */
+  /**
+   * Assemble the {@link ParseResult}; the token stream is included only on request, the probe
+   * result when the parse had a probe.
+   */
   result<M, A extends AstNode>(
     model: M,
     ast: A,
     tokens: TokenStream,
-    options?: ParseOptions
+    options?: ParseOptions,
+    probe?: Probe
   ): ParseResult<M, A> {
     const out: ParseResult<M, A> = {
       model,
@@ -98,6 +107,7 @@ export class ParseState {
       statements: this.statements,
     };
     if (options?.keepTokens) out.tokens = tokens;
+    if (probe) out.probe = probe.result();
     return out;
   }
 }

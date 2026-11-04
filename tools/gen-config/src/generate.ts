@@ -22,6 +22,8 @@ export const SCHEMA_PATH = 'packages/core/schema/config.schema.yaml';
 export const CORE_GENERATED = 'packages/core/src/config/generated';
 export const REFERENCE_DOC = 'v13/docs/config-reference.md';
 export const MIGRATION_DOC = 'v13/docs/MIGRATION.md';
+/** The config JSON schema the language service checks front matter against (D96). */
+export const SERVICE_SCHEMA = 'packages/language-service/src/generated/config-schema.gen.ts';
 
 /**
  * Config sections that belong to a package other than core. Their defaults are written
@@ -416,6 +418,39 @@ export function spliceMigration(existing: string | undefined, section: string): 
   return existing.slice(0, begin) + section + existing.slice(end + MIGRATION_END.length);
 }
 
+// ---------------------------------------------------------------------------- service schema
+
+/**
+ * The schema as plain JSON Schema for editors: `required` (it lists keys every resolved
+ * config has, not keys front matter must set), `tsType` and `$schema` left out.
+ */
+function serviceSchema(root: RootSchema): string {
+  const DROPPED = new Set(['required', 'tsType', '$schema']);
+  // `inProperties`: the keys of this object are config key names, not keywords.
+  const clean = (node: unknown, inProperties: boolean): unknown => {
+    if (Array.isArray(node)) {
+      return node.map((n) => clean(n, false));
+    }
+    if (typeof node !== 'object' || node === null) {
+      return node;
+    }
+    const out: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(node)) {
+      if (!inProperties && DROPPED.has(key)) {
+        continue;
+      }
+      out[key] = clean(value, !inProperties && (key === 'properties' || key === '$defs'));
+    }
+    return out;
+  };
+  const json = JSON.stringify(clean(root, false), null, 2);
+  return (
+    `${BANNER}import type { ConfigSchema } from '../config/schema.ts';\n\n` +
+    `/** The config JSON schema, for front-matter completion, hover and warnings (D96). */\n` +
+    `export const configSchema: ConfigSchema = ${json};\n`
+  );
+}
+
 // ---------------------------------------------------------------------------- entry
 
 const ts = (value: unknown) => JSON.stringify(value, null, 2);
@@ -472,6 +507,7 @@ export async function generate(
         `export const ${name}: ${typeName} = ${ts(defaultsOf(root, node) ?? {})};\n`
     );
   }
+  files.set(SERVICE_SCHEMA, serviceSchema(root));
   files.set(REFERENCE_DOC, referenceDoc(root));
   files.set(MIGRATION_DOC, spliceMigration(readExisting(MIGRATION_DOC), migrationSection(root)));
   return { files };

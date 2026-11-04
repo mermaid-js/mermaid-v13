@@ -1,0 +1,20 @@
+---
+title: Folding
+config:
+  theme: forest
+---
+flowchart TD
+  accTitle: one line
+  accDescr {
+    A description
+    over two lines
+  }
+  subgraph outer
+    subgraph inner
+      A --> B
+    end
+    C
+  end
+  D@{ shape: rect,
+      label: "two lines" }
+  E@{ shape: rect }

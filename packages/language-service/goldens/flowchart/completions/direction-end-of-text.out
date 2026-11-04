@@ -1,0 +1,6 @@
+@ 1:11  flowchart |
+  TB constant (top to bottom) 1:11-1:11 "" -> "TB"
+  TD constant (top down (same as TB)) 1:11-1:11 "" -> "TD"
+  BT constant (bottom to top) 1:11-1:11 "" -> "BT"
+  LR constant (left to right) 1:11-1:11 "" -> "LR"
+  RL constant (right to left) 1:11-1:11 "" -> "RL"

@@ -1,0 +1,14 @@
+@ 4:11  B --> |C
+  -> 2:13-2:14 "C"
+@ 6:10  A --> o|ne
+  -> 3:12-3:15 "one"
+@ 7:5  st|yle A fill:#f00
+  -> none
+@ 7:9  style |A fill:#f00
+  -> 2:3-2:4 "A"
+@ 8:11  class A,|B hot
+  -> 2:9-2:10 "B"
+@ 10:8  C:::h|ot
+  -> 9:12-9:15 "hot"
+@ 11:9  click |A "https://example.com"
+  -> 2:3-2:4 "A"
