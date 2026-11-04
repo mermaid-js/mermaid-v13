@@ -46,11 +46,11 @@ describe('value conversion (as v12)', () => {
         'participant A',
       ].join('\n')
     ).model;
-    expect(m.participants.map((p) => [p.id, p.label, p.alias])).toEqual([
-      ['A', 'Alice', 'Alice'],
-      ['B', 'Bob', 'Bob'],
-      ['C', 'Carol', 'Carol'],
-      ['D', 'Dee', 'Dee'],
+    expect(m.participants.map((p) => [p.id, p.label])).toEqual([
+      ['A', 'Alice'],
+      ['B', 'Bob'],
+      ['C', 'Carol'],
+      ['D', 'Dee'],
     ]);
   });
 

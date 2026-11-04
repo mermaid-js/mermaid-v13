@@ -41,8 +41,6 @@ export interface SequenceParticipant {
   readonly ast: AstId;
   /** The description: the alias when one was given, else the id. */
   readonly label: string;
-  /** The alias as written (`as …` or `@{ alias }`); undefined when none was. */
-  readonly alias?: string;
   readonly kind: ParticipantKind;
   /** `wrap:`/`nowrap:` as written; undefined follows `sequence.wrap`. */
   readonly wrap?: boolean;

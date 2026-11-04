@@ -17,7 +17,6 @@
         "mermaid-v12-frozen",
         "pele",
         "@mermaid-js/diagram-flowchart",
-        "@mermaid-js/diagram-sequence",
         "@mermaid-js/diagram-er"
       ]
     },

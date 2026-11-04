@@ -167,8 +167,6 @@ export class SequenceBuilder {
     if (old) this.sink.menusReset?.(id);
     p.label = description?.text ?? id;
     p.kind = kind ?? 'participant';
-    if (description !== undefined) p.alias = description.text;
-    else delete p.alias;
     if (description?.wrap !== undefined) p.wrap = description.wrap;
     else delete p.wrap;
     setBox(p, boxIndex);

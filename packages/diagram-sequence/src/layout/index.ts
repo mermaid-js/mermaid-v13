@@ -5,6 +5,6 @@
 export { layoutSequence } from './layout.ts';
 export { REVERSE_ARROWS, type SequenceLayoutContext } from './env.ts';
 export { sequenceLayoutViolations } from './invariants.ts';
-export { metricsTable, sequenceMetrics } from './metrics.ts';
-export type { ConfigLengths, FixedLengths, MetricsTable, SequenceMetrics, XY } from './metrics.ts';
+export { sequenceMetrics } from './metrics.ts';
+export type { SequenceMetrics } from './metrics.ts';
 export type * from './types.ts';
