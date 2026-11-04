@@ -55,3 +55,15 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 ## #159 (T6) accepted
 
 - First-paint colours via #190 (D119, accepted): the CodeMirror and Monaco adapters colour first paint with flowchart's grammar for every type. Per-type highlighter selection is cross-type ticket #190, after the M3 facets land. #159 does not change the adapters.
+
+## #155 (T3) layout
+
+- #152's reserved end-label room (a fan's gap taller than needed): judged acceptable, not tuned (core change). Three labelled ends on one side: ~120 px gap instead of ~84.
+- For the maintainer / #157 (T5): `class.padding` schema default 5 vs v12's effective 12, and `class.diagramPadding` 20 vs v12's 8. Layout uses 12 and 8 when unset; generating class defaults from the schema would change both.
+- #156 (T4): end markers must stay within 12 px across; multiplicities are kept clear of them only by the engine's `endLabelAcross` offset.
+
+## #159 (T6) language facet → later tickets
+
+- #157 (T5): with the manifest, add `"language": "./dist/language.js"` to diagram-class's `mermaid` key, add `@mermaid-js/diagram-class` to language-service's `peerDependencies`, run `gen:registry`, then delete the classDiagram row of `packages/language-service/src/testing/unlisted-facets.ts` (goldens.spec fails until it is gone). The flowchart golden `completions/empty.out` already offers `classDiagram`.
+- R-LANG-4 budget: a 50k-character class document cycles in ~26 ms (update, rename and completions are each one ~7.5 ms parse) against flowchart's ~17.5 ms on the same loaded machine (load ~13); 15 ms is the reference-runner budget (D156). Parse speed is milestone-close work.
+- Rename: a dotted namespace (`namespace A.B`), and any namespace that is a prefix of one, has no definition, references or rename (renaming it would change the namespace tree); a nested namespace has none either (its qualified id is not its text). Hover still works for both.
