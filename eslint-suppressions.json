@@ -431,25 +431,10 @@
     }
   },
   "packages/diagram-flowchart/src/parser/lexer.ts": {
-    "@typescript-eslint/no-shadow": {
-      "count": 4
-    },
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    },
     "complexity": {
       "count": 3
     },
-    "max-depth": {
-      "count": 3
-    },
     "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
-      "count": 3
-    },
-    "tsdoc/syntax": {
       "count": 1
     }
   },

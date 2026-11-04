@@ -367,6 +367,20 @@ export function styleText(
 }
 
 const RE_SCOPE = /^[A-Za-z_][\w-]{0,63}$/;
+
+/**
+ * A style-sheet scope for a render id: the id itself when it already is one, else a hash of
+ * it (`p-<base36>`), so any id (React's `:r1:`, ids with spaces) gives a valid, distinct scope.
+ */
+export function styleScope(id: string): string {
+  if (RE_SCOPE.test(id)) return id;
+  let h = 0x811c9dc5;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return `p-${(h >>> 0).toString(36)}`;
+}
 const MEDIA_DARK = '@media (prefers-color-scheme:dark){';
 
 function sheetBlock(scope: string, decls: Readonly<Record<string, ThemeRef>>): string {
