@@ -108,6 +108,9 @@ describe('first-party language facets (R-LANG-8, D89)', () => {
       "  { type: 'mindmap', id: 'mindmap', detector: (text) => /^\\s*mindmap/.test(text) },"
     );
     expect(out).toContain('    detector: (text) => /^\\s*(graph|flowchart)/.test(text),');
+    // The config section the renderer reads: the package id; a type with no package has none.
+    expect(out).toContain("    section: 'flowchart',");
+    expect(out).not.toMatch(/type: 'mindmap'.*section/);
     expect(out.indexOf("'flowchart-elk'")).toBeLessThan(out.indexOf("'mindmap'"));
     expect(out.indexOf("'sequence'")).toBeLessThan(out.indexOf("'flowchart-v2'"));
   });

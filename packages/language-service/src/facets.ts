@@ -11,6 +11,12 @@ export interface FacetEntry {
   /** The diagram id (`flowchart`); the type itself for a v12 type with no package yet. */
   readonly id: string;
   /**
+   * First-party rows: the config section the renderer reads for this type (the package id,
+   * as mermaid's registry gives it); absent for a type with no v13 package. Third-party rows
+   * leave it out: their section is their `id`, as for a registered plugin.
+   */
+  readonly section?: string;
+  /**
    * First-party rows: run on the text from the diagram's first line. Third-party rows: the
    * cleaned text (directives and `%%` comments removed) and the front-matter config, as v12.
    */

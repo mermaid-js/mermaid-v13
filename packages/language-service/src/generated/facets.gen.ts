@@ -6,6 +6,7 @@ export const firstPartyFacets: readonly FacetEntry[] = [
   {
     type: 'flowchart-elk',
     id: 'flowchart',
+    section: 'flowchart',
     detector: (text) => /^\s*flowchart-elk/.test(text),
     load: () => import('@mermaid-js/diagram-flowchart/language').then((m) => m.language),
   },
@@ -25,6 +26,7 @@ export const firstPartyFacets: readonly FacetEntry[] = [
   {
     type: 'flowchart-v2',
     id: 'flowchart',
+    section: 'flowchart',
     detector: (text) => /^\s*(graph|flowchart)/.test(text),
     load: () => import('@mermaid-js/diagram-flowchart/language').then((m) => m.language),
   },
