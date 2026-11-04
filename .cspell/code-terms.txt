@@ -193,3 +193,4 @@ parseable
 userconfig
 htpasswd
 unpushed
+EPUBLISHCONFLICT

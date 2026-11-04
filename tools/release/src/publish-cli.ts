@@ -70,6 +70,7 @@ const { published, skipped } = publishAll(tarballs, {
   dryRun: args.flag('dry-run'),
   provenance: !args.flag('no-provenance'),
   ...(args.get('otp') === undefined ? {} : { otp: args.get('otp') }),
+  log: (out) => process.stdout.write(out.endsWith('\n') || out === '' ? out : `${out}\n`),
 });
 for (const s of skipped) process.stdout.write(`already published: ${s}\n`);
 for (const s of published)

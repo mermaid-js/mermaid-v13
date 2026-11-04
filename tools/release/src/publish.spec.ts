@@ -127,6 +127,41 @@ describe('publishAll', () => {
     ]);
   });
 
+  it('counts a version npm says is already published as skipped, for a re-run on a stale cache', () => {
+    const exec: Exec = (args) => {
+      if (args[0] === 'view') throw new Error('E404');
+      throw Object.assign(new Error('Command failed: npm publish'), {
+        stderr:
+          'npm error code E403\nnpm error 403 You cannot publish over the previously published versions: 13.0.0-alpha.3.',
+      });
+    };
+    expect(publishAll(tarballs.slice(1), { registry: REGISTRIES.public, exec })).toEqual({
+      published: [],
+      skipped: ['mermaid@13.0.0-alpha.3'],
+    });
+  });
+
+  it('still fails on any other publish error, and hands npm output to the log', () => {
+    const logged: string[] = [];
+    const fail: Exec = (args) => {
+      if (args[0] === 'view') throw new Error('E404');
+      throw Object.assign(new Error('Command failed'), {
+        stderr: 'npm error code E403\nForbidden',
+      });
+    };
+    expect(() => publishAll(tarballs, { registry: REGISTRIES.public, exec: fail })).toThrow();
+    const ok: Exec = (args) => {
+      if (args[0] === 'view') throw new Error('E404');
+      return '+ mermaid@13.0.0-alpha.3\n';
+    };
+    publishAll(tarballs.slice(1), {
+      registry: REGISTRIES.public,
+      exec: ok,
+      log: (o) => logged.push(o),
+    });
+    expect(logged).toEqual(['+ mermaid@13.0.0-alpha.3\n']);
+  });
+
   it('dry run: looks nothing up and publishes nothing', () => {
     const npm = fakeNpm([]);
     const result = publishAll(tarballs, {
