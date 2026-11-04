@@ -10,6 +10,11 @@
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./testing": {
+      "mermaid-source": "./src/testing/index.ts",
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
     }
   },
   "files": [
@@ -19,7 +24,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && tsc -p tsconfig.testing.json",
     "typecheck": "tsc -p tsconfig.json"
   },
   "peerDependencies": {

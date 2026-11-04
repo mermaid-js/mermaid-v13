@@ -26,17 +26,31 @@ export { SEMANTIC_TOKEN_LEGEND } from './semantic-tokens.ts';
 export type { SemanticToken, SemanticTokenModifier, SemanticTokenType } from './semantic-tokens.ts';
 export type { PrepareRenameResult, RenameResult, TextEdit } from './symbols.ts';
 export { LineIndex } from '@mermaid-js/core/parser-kit';
+/**
+ * Everything a facet author needs (R-LANG-3): the `LanguageFacet` contract and the parser kit
+ * types its `parse`, `completions` and `hover` take and give. Write the facet against these;
+ * the parser itself is built with `@mermaid-js/core/parser-kit`.
+ */
 export type {
   AstId,
   AstNode,
   CompletionItem,
   CompletionKind,
   Diagnostic,
-  Hover,
+  DocumentView,
   FacetParseOptions,
+  Hover,
+  HoverTarget,
   LanguageFacet,
+  ParseResult,
   Position,
+  ProbeResult,
   Range,
+  RelatedInfo,
   Severity,
+  StatementSpan,
+  SymbolOccurrence,
   TokenCategory,
+  TokenKind,
+  TokenStream,
 } from '@mermaid-js/core/parser-kit';
