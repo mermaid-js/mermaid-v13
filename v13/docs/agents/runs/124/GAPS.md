@@ -14,16 +14,24 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 - Known limit: after an error, a stray `{` opens an attribute block in the lexer, so recovery skips to the next `}`.
 - Not ported, with reasons in the port script: `erDb.spec.js` (calls the DB directly, no parse) and `erRenderer.spec.ts` (T4 territory).
 
-## Pending core fix: `sourceView` directives mid-line
+## Core `sourceView` directive fix (#186, merged in)
 
-- The class session owns a core fix to `sourceView` (#181), with a draft PR into `mermaid-v13`. Two bugs: a `%%` line inside a mid-line `%%{…}%%` directive opens a comment hole past `}%%`, and text such as `"style"` inside a directive triggers the `;` drop. After it merges, merge `mermaid-v13` here and add ER forms of both to the lexer-parity harvest (for example `erDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB`, and a directive holding `"style"` before a `;`).
+- Done. Four ER directive cases added to the lexer-parity `PREPROCESSING` set; parity stays at 100% (2,607 of 2,611, same 4 undetected). Against the pre-#186 `sourceView`, the `%%`-line-inside-a-directive case fails and the two `"style"`-inside-a-directive cases already passed, so ER's `;` drop was not affected by the second bug.
 
 ## #132 T3 layout (merged)
 
 - No unmet criteria. Fixed at merge: `grammar/generated/*` was gitignored and never committed, so `check:grammar` failed in fresh worktrees (the flaky push after #131). Now force-added, as flowchart's are.
 - Core `layered` gap, not in the corpus, flowchart has it too: an edge from a group to its own member puts the label on the member (`G ||--|| A`, A in G), and a group self-loop runs outside the drawing. Belongs to a core ticket, not this spec.
 
+## #133 T4 SVG renderer (merged)
+
+- No unmet criteria. No Playwright run yet; that is T5's (`pnpm e2e` under the lock).
+- **Open question for the maintainer (visual differences from v12 classic, recorded in MIGRATION.md):** classic `rowEven` uses `lighten()` approximations of v12's HSL lightening; table strokes use `strokeWidth` (1 classic, 2 redux) where v12 classic drew 1.3; an author `fill` now fills the whole table in every theme.
+
 ## #134 T5 integration (open items)
+
+- Delete `packages/conformance/src/er/mermaid.ts`, the stand-in `createMermaid` with the `er` row made loadable and its two `import-boundaries` disables, once the manifest makes ER render through the public API.
+- Until the ER spacing defaults land (nodeSpacing 140, rankSpacing 80), short edges crowd the crow's-foot ends and labels.
 
 - Generate the ER section defaults (`SECTION_OWNERS`; v12 nodeSpacing 140, rankSpacing 80, minEntityWidth 100) and mark the keys the builder reads (`er.nodeSpacing`, `er.rankSpacing`, `er.minEntityWidth`) as honoured.
 - **D116 (maintainer, draft PR #184): honour both.** Mark `er.entityPadding` (default 15) and `er.diagramPadding` (default 20) `honoured`. In px, `entityPadding` replaces the shared node padding inside entity table cells (v12's across × down meaning) and `diagramPadding` sets the margin around the drawing; the cell profile stays at 1-cell padding. Fix the MIGRATION.md ER row that says they are ignored, and cite D116 in code and tests.
@@ -38,5 +46,4 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 
 ## Not started
 
-- #133 T4 renderer, #136 T7 ASCII: unblocked by T3; #135 T6 running.
-- #134 T5 integration: downstream of T4.
+- None. #136 T7 ASCII and #134 T5 integration are running.

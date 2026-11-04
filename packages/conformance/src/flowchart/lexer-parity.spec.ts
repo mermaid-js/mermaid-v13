@@ -104,6 +104,20 @@ const LINE_SEPARATORS: CorpusItem[] = [
   { id: 'line separators 15', source: 'flowchart LR\nA -- x\u2028--> B' },
 ];
 
+// Directives that start partway through a line (#185). v12 removed directives first, then line
+// comments from what was left, then dropped `style`/`classDef` semicolons from that.
+const MID_LINE_DIRECTIVES: CorpusItem[] = [
+  { id: 'mid-line directive 0', source: 'flowchart LR\nA %%{init: {\n  %%x "a": 1}}%%\nB' },
+  {
+    id: 'mid-line directive 1',
+    source: 'flowchart LR\nA["x %%{init: {"a":"style"}}%% :#y; z"]\nB',
+  },
+  { id: 'mid-line directive 2', source: 'flowchart LR\nA %%{init: {"a":"style"}}%% :#y;\nB' },
+  { id: 'mid-line directive 3', source: 'flowchart LR\nA\n%% c %%{init:\n{}}%% d\nB' },
+  { id: 'mid-line directive 4', source: 'flowchart LR\nA\n%%%%{init: {}}%%\nB' },
+  { id: 'mid-line directive 5', source: 'flowchart LR\nsty%%{init: {}}%%le A fill:#f00;\nB' },
+];
+
 async function corpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
   for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/flowchart'), 'e2e')) {
@@ -112,7 +126,7 @@ async function corpus(): Promise<CorpusItem[]> {
   const specs = JSON.parse(
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/flowchart-v12-specs.json'), 'utf8')
   ) as CorpusItem[];
-  const all = [...items, ...specs, ...LINE_SEPARATORS];
+  const all = [...items, ...specs, ...LINE_SEPARATORS, ...MID_LINE_DIRECTIVES];
   return [
     ...all,
     ...all.map((item) => ({ id: `${item.id} (commented)`, source: commented(item.source) })),
