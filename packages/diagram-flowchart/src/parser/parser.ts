@@ -292,8 +292,6 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
   let K: Uint16Array = new Uint16Array(0);
   let S: Uint32Array = new Uint32Array(0);
   let E: Uint32Array = new Uint32Array(0);
-  /** 1 where trivia came right before the token; undefined when the stream has none. */
-  let gap: Uint8Array | undefined;
   const load = (stream: TokenStream) => {
     let trivia = 0;
     for (let j = 0; j < stream.length; j++) {
@@ -304,27 +302,19 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
       K = stream.kind;
       S = stream.start;
       E = stream.end;
-      gap = undefined;
       return;
     }
     const n = stream.length - trivia;
     K = new Uint16Array(n);
     S = new Uint32Array(n);
     E = new Uint32Array(n);
-    gap = new Uint8Array(n);
-    let after = 0;
     let o = 0;
     for (let j = 0; j < stream.length; j++) {
       const k = stream.kind[j] ?? Kind.EOF;
-      if (k === Kind.Comment || k === Kind.Directive) {
-        after = 1;
-        continue;
-      }
+      if (k === Kind.Comment || k === Kind.Directive) continue;
       K[o] = k;
       S[o] = stream.start[j] ?? 0;
       E[o] = stream.end[j] ?? 0;
-      gap[o] = after;
-      after = 0;
       o++;
     }
   };
@@ -368,7 +358,10 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     if (k === Kind.Newline) return 'a line break';
     if (k === T.Space) return 'a space';
     if (k === Kind.Error) return `the character \`${raw(j)}\``;
-    const t = (k === T.Str || k === T.MdStr ? src.slice(tokStart(j), tokEnd(j)) : raw(j)).trim();
+    const quoted = k === T.Str || k === T.MdStr;
+    const t = (
+      quoted ? src.slice(tokStart(j), S[j]) + raw(j) + src.slice(E[j], tokEnd(j)) : raw(j)
+    ).trim();
     return t.length > 24 ? `\`${t.slice(0, 24)}…\`` : `\`${t}\``;
   };
 
@@ -524,7 +517,6 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     if (k === T.Str || k === T.MdStr) {
       type = k === T.Str ? strType : 'markdown';
       i++;
-      while (kind() === k && gap?.[i] === 1) i++;
     } else if (inKindSet(first, k)) {
       type = 'text';
       i++;

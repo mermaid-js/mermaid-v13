@@ -107,6 +107,10 @@ const CASES: [string, () => unknown][] = [
     () => flowchartTokens('graph TD;A' + '-'.repeat(N) + '.'.repeat(N) + '='.repeat(N)),
   ],
   [
+    'a string split by comment lines',
+    () => flowchartTokens('graph TD;A["' + 'x\n%% c\n'.repeat(N / 7) + '"]'),
+  ],
+  [
     'tag-like text with no closing bracket',
     () => render('graph TD\nA["' + '<a'.repeat(N / 2) + '"]'),
   ],
