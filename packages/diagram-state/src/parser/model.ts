@@ -374,7 +374,7 @@ export class StateBuilder {
   }
 
   /**
-   * `A:::cls` that sets no class (maintainer, #127 question 4): v12's `extract` applies `:::`
+   * `A:::cls` that sets no class (D128): v12's `extract` applies `:::`
    * only from a transition at the top level, so a state written on its own and any `:::` inside
    * a composite do nothing. Rendering is unchanged (v12 parity); only the warning is new.
    */

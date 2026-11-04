@@ -35,7 +35,7 @@ v12's `state.layout` defaults to `elk`. T5 kept that default. With no ELK plugin
 - **B:** warn when the layout falls back from `elk` to `layered`, once per render, the way pitfall 22 says to warn about an option that can't be honoured.
 - **C:** change the v13 default to `layered`. That changes a v12 default.
 
-## 4. `A:::cls` that sets no class (from the final review fixes) — ANSWERED: A, warn (`CLASS_NOT_APPLIED`)
+## 4. `A:::cls` that sets no class (from the final review fixes) — ANSWERED: D128, A, warn (`CLASS_NOT_APPLIED`)
 
 In v12, `extract` applies `:::` only from top-level transitions. So `A:::cls` written on its own line (any scope), or `A:::cls` inside a composite, sets no class. v13 keeps that (parity), but gives no warning, while the review fixes added no-op warnings for the other ignored statements (`IGNORED_IN_COMPOSITE`, `LINK_NOT_DRAWN`, `SCALE_IGNORED`; pitfall 22).
 

@@ -199,8 +199,8 @@ describe('state model', () => {
     expect(r.model.links).toEqual([]);
   });
 
-  // Maintainer (#127 question 4): `:::` that v12 ignores warns, and still sets no class.
-  it('warns CLASS_NOT_APPLIED for a lone `A:::cls` and for `:::` inside a composite', () => {
+  // D128: `:::` that v12 ignores warns, and still sets no class.
+  it('warns CLASS_NOT_APPLIED for a lone `A:::cls` and for `:::` inside a composite (D128)', () => {
     const src =
       'stateDiagram-v2\n  classDef c fill:#f00\n  A:::c\n  B:::c : text\n  C:::c --> D:::c\n  state X {\n    E:::c --> F\n  }\n';
     const r = parseState(src);
