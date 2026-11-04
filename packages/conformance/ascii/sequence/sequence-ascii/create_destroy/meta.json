@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/create_destroy.txt",
+  "charset": "ascii"
+}

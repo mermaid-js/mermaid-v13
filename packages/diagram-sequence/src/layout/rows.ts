@@ -274,7 +274,10 @@ export class Rows {
         ? {
             label: placed(
               label,
-              alignX(this.env, seq.messageAlign, span, label.width, m.wrapPadding),
+              // In cells a label centred on the lifeline would cut it: it starts right of it.
+              self && m.cells
+                ? g.startx + m.lifelineHalf
+                : alignX(this.env, seq.messageAlign, span, label.width, m.wrapPadding),
               starty + m.messageLead
             ),
           }
@@ -378,7 +381,9 @@ export class Rows {
     const reach = this.geometry.reach.get(s);
     if (label === '' || !reach) return undefined;
     const { m } = this.env;
-    const max = Math.max(reach.width - 2 * m.wrapPadding, m.labelBoxWidth);
+    // In cells the frame grows to hold its title instead: a title wrapped to a narrow reach
+    // would break inside its words.
+    const max = m.cells ? Infinity : Math.max(reach.width - 2 * m.wrapPadding, m.labelBoxWidth);
     // v12 skips a title that is empty once read (`loop </style>`), rather than drawing `[]`.
     const read = this.env.measure(label, this.env.fonts.message, Infinity);
     if (read.lines.every((line) => line.every((run) => run.text.trim() === ''))) return undefined;
@@ -412,9 +417,9 @@ export class Rows {
       width: Math.max(m.labelBoxWidth, kind.width + 2 * m.boxTextMargin.x),
       height: Math.max(m.labelBoxHeight, kind.height),
     };
-    // The frame is wide enough for its title right of the tab and for each section label; a
-    // cell more in cells, where halves round down.
-    const slack = m.cells ? 1 : 0;
+    // The frame is wide enough for its title right of the tab and for each section label,
+    // with room for its sides in cells.
+    const slack = m.frameLabelSlack;
     const labels = sections.map((sec) => (sec.text ? sec.text.width + slack : 0));
     const minWidth = Math.max(
       tab.width,

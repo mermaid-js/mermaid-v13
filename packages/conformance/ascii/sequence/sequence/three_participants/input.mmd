@@ -1,0 +1,8 @@
+sequenceDiagram
+    participant User
+    participant WebApp
+    participant Database
+    User->>WebApp: Login Request
+    WebApp->>Database: Query User Credentials
+    Database-->>WebApp: Return User Data
+    WebApp-->>User: Login Success

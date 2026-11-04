@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/central_connections.txt",
+  "charset": "ascii"
+}

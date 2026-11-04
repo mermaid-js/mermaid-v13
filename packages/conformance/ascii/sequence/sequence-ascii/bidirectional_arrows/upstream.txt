@@ -1,0 +1,13 @@
++---+     +---+
+| A |     | B |
++-+-+     +-+-+
+  |         |
+  | solid bidirectional
+  +<------->|
+  |         |
+  | dotted bidirectional
+  +<.......>|
+  |         |
+  | reverse solid
+  |<------->+
+  |         |

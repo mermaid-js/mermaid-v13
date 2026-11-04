@@ -18,7 +18,11 @@ export function measureColumns(
   let rowHeight = m.height;
   for (const p of model.participants) {
     const wrap = p.wrap ?? env.autoWrap;
-    const label = env.measure(p.label, fonts.actor, wrap ? m.width - 2 * m.wrapPadding : Infinity);
+    const label = env.measure(
+      p.label,
+      fonts.actor,
+      wrap ? m.wrapWidth - 2 * m.wrapPadding : Infinity
+    );
     // v12 keeps a wrapped label at `width`; a word longer than that widens the box here.
     const width = Math.max(m.width, label.width + 2 * m.wrapPadding);
     const height = Math.max(m.height, label.height + 2 * m.actorPadY);
@@ -52,6 +56,13 @@ function usedParticipants(statements: readonly SequenceStatement[]): Set<string>
   return used;
 }
 
+/**
+ * The room a self message's label needs right of its column: half of it in px, where the
+ * label is centred on the lifeline; all of it in cells, where it starts right of the lifeline
+ * (rows.ts) so as not to cut it.
+ */
+const selfRoom = (m: Env['m'], w: number): number => (m.cells ? w : m.half(w));
+
 /** The ids whose gap a message or note widens, and by how much. */
 function gapsWidened(env: Env, s: SequenceStatement): [string | undefined, number][] {
   if (s.kind !== 'message' && s.kind !== 'note') return [];
@@ -66,12 +77,12 @@ function gapsWidened(env: Env, s: SequenceStatement): [string | undefined, numbe
   const { m } = env;
   const wrap = s.wrap ?? env.autoWrap;
   const font = note ? env.fonts.note : env.fonts.message;
-  const max = wrap ? m.width - 2 * m.wrapPadding : Infinity;
+  const max = wrap ? m.wrapWidth - 2 * m.wrapPadding : Infinity;
   const w = env.measure(s.text, font, max).width + 2 * m.wrapPadding;
   if (!note) {
     if (from === next) return [[to, w]];
     if (from === prev) return [[from, w]];
-    return from === to ? [[from, m.half(w)]] : [];
+    return from === to ? [[from, selfRoom(m, w)]] : [];
   }
   if (note.placement === 'right') return [[from, w]];
   if (note.placement === 'left') return [[prev, w]];

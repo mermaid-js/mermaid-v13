@@ -1,0 +1,6 @@
+sequenceDiagram
+    User->>Server: Request
+    opt is premium
+        Server->>Server: Apply discount
+    end
+    Server-->>User: Response

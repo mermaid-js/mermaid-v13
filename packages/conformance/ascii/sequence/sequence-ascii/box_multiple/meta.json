@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/box_multiple.txt",
+  "charset": "ascii"
+}

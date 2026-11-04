@@ -152,10 +152,14 @@ describe('sequence layout in px follows v12', () => {
   it('lays out text in cells with the cell metrics', () => {
     const l = lay(hello, cellProfile(), cellMeasurer);
     const [a, b] = l.participants;
-    expect([a!.width, a!.height, b!.x]).toEqual([19, 3, 25]);
+    // A box fits its label and a space and border each side: 1 + 2 · 2 = 5. B starts the
+    // message's room (`Hello` + 2 · 2 = 9) plus actorMargin 6 past A's lifeline, less half
+    // of each box: 5 + 9 + 6 − 2 − 2 = 16.
+    expect([a!.width, a!.height, b!.x]).toEqual([5, 3, 16]);
     const [m] = l.messages;
-    // The label sits on the row below the boxes and the line right under it.
-    expect([m!.label!.y, m!.y, m!.startX, m!.stopX]).toEqual([4, 5, 10, 33]);
+    // The label sits on the row below the boxes and the line right under it, from the cell
+    // after A's lifeline (2) to the cell before B's (18), the label centred: 3 + ⌊(14 − 5) / 2⌋.
+    expect([m!.label!.y, m!.y, m!.startX, m!.stopX, m!.label!.x]).toEqual([4, 5, 3, 17, 7]);
   });
 
   it('hides participants no statement names', () => {

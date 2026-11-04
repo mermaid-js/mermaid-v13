@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/loop_empty.txt",
+  "charset": "ascii"
+}

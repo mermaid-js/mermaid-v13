@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/participant_names_dashes.txt",
+  "charset": "ascii"
+}

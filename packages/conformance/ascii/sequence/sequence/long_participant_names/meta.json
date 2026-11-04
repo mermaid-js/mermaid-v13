@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence/long_participant_names.txt",
+  "charset": "unicode"
+}

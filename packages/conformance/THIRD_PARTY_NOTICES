@@ -13,6 +13,13 @@ says how. mermaid-ascii is used under the MIT License:
   ascii/extended-chars
   ascii/multibyte
 
+The ASCII sequence goldens below are ported from the same repository at the same commit,
+cmd/testdata/{sequence-ascii,sequence}, split the same way (input.mmd, upstream.txt, meta.json);
+ascii/README.md says how:
+
+  ascii/sequence/sequence-ascii
+  ascii/sequence/sequence
+
 MIT License
 
 Copyright (c) 2023 Alexander Grooff

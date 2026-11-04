@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/alt_basic.txt",
+  "charset": "ascii"
+}

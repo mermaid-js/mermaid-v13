@@ -1,0 +1,32 @@
+┌───┐     ┌───┐
+│ A │     │ B │
+└─┬─┘     └─┬─┘
+  │         │
+  │ solid head
+  ├────────►│
+  │         │
+  │ solid open
+  ├─────────│
+  │         │
+  │ dotted head
+  ├┈┈┈┈┈┈┈┈►│
+  │         │
+  │ dotted open
+  ├┈┈┈┈┈┈┈┈┈│
+  │         │
+  │ rtl solid head
+  │◄────────┤
+  │         │
+  │ rtl solid open
+  │─────────┤
+  │         │
+  │ self solid head
+  ├──┐      │
+  │  │      │
+  │◄─┘      │
+  │         │
+  │ self dotted open
+  ├┈┈┐      │
+  │  │      │
+  │┈┈┘      │
+  │         │

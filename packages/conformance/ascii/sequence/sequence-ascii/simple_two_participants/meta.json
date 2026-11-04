@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/simple_two_participants.txt",
+  "charset": "ascii"
+}

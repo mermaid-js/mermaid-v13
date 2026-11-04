@@ -10,6 +10,11 @@
  * tab, which is as wide as its keyword; the row after a created stick figure starts below the
  * figure; a `deactivate` with nothing open is ignored; a lifeline without a bottom box ends
  * where the bottom boxes would start.
+ *
+ * In cells (text output, #150) three things differ from px beyond the metrics: a self message's
+ * label starts right of its lifeline instead of centred across it (the column gap holds all of
+ * it), fragment titles are not wrapped to the fragment's reach (the frame grows to hold them),
+ * and frames keep `frameMarginX` more room around what they hold.
  */
 import type { SequenceModel } from '../model.ts';
 import { Bounds } from './bounds.ts';
@@ -42,7 +47,8 @@ export function layoutSequence(model: SequenceModel, ctx: SequenceLayoutContext)
   actorMargins(model, env);
   const sizes = boxSizes(model, env);
 
-  const b = new Bounds(m.boxMargin);
+  // Frames keep `boxMargin` around what they hold, and in cells a little more (metrics.ts).
+  const b = new Bounds({ x: m.boxMargin.x + m.frameMarginX, y: m.boxMargin.y });
   const shown = shownBoxes(model, env);
   if (shown.length > 0) {
     b.bump(m.boxMargin.y);

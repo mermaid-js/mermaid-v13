@@ -149,7 +149,7 @@ class XPass {
     }
     const span = Math.abs(startx - stopx);
     const wrap = (s.wrap ?? this.env.autoWrap) && s.text !== '';
-    const max = wrap ? Math.max(span + 2 * m.wrapPadding, m.width) : Infinity;
+    const max = wrap ? Math.max(span + 2 * m.wrapPadding, m.wrapWidth) : Infinity;
     const label = this.env.measure(s.text, this.env.fonts.message, max);
     const all = [fromLeft, fromRight, toLeft, toRight];
     const own = wrap ? 0 : label.width + 2 * m.wrapPadding;
@@ -181,19 +181,19 @@ class XPass {
     const { m } = env;
     const wrap = (s.wrap ?? env.autoWrap) && s.text !== '';
     const font = env.fonts.note;
-    let text = env.measure(s.text, font, wrap ? m.width : Infinity);
+    let text = env.measure(s.text, font, wrap ? m.wrapWidth : Infinity);
     const pad = 2 * m.noteMargin.x;
     const halves = m.half(from.width) + m.half(to.width);
     let width: number;
     let startx: number;
     if (s.placement === 'right') {
-      width = wrap ? Math.max(m.width, text.width) : Math.max(halves, text.width + pad);
+      width = wrap ? Math.max(m.wrapWidth, text.width) : Math.max(halves, text.width + pad);
       startx = from.x + m.half(from.width + m.actorMargin);
     } else if (s.placement === 'left') {
-      width = wrap ? Math.max(m.width, text.width + pad) : Math.max(halves, text.width + pad);
+      width = wrap ? Math.max(m.wrapWidth, text.width + pad) : Math.max(halves, text.width + pad);
       startx = from.x - width + m.half(from.width - m.actorMargin);
     } else if (from === to) {
-      const wide = Math.max(m.width, from.width);
+      const wide = Math.max(wrap ? m.wrapWidth : m.width, from.width);
       text = env.measure(s.text, font, wrap ? wide : Infinity);
       width = wrap ? wide : Math.max(wide, text.width + pad);
       startx = from.x + m.half(from.width - width);

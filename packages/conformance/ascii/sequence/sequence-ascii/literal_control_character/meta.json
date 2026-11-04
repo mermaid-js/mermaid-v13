@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/literal_control_character.txt",
+  "charset": "ascii"
+}

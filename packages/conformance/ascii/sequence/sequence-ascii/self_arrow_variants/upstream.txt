@@ -1,0 +1,19 @@
++---+
+| A |
++-+-+
+  |
+  | self cross
+  +--+
+  |  |
+  |x-+
+  |
+  | self point
+  +--+
+  |  |
+  |(-+
+  |
+  | self bidirectional
+  +--+
+  |  |
+  |<-+
+  |

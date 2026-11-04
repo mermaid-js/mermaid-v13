@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence/single_message.txt",
+  "charset": "unicode"
+}

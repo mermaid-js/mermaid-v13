@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/box_basic.txt",
+  "charset": "ascii"
+}

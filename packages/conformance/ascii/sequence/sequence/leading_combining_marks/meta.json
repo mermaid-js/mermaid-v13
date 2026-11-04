@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence/leading_combining_marks.txt",
+  "charset": "unicode"
+}

@@ -1,0 +1,8 @@
+sequenceDiagram
+    participant A
+    participant B
+    A ->>() B: t1
+    A ()->> B: t2
+    A ()->>() B: t3
+    B ()--x() A: t4
+    A ()<<->>() B: t5

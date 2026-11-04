@@ -1,0 +1,19 @@
+┌───┐
+│ A │
+└─┬─┘
+  │
+  │ self cross
+  ├──┐
+  │  │
+  │×─┘
+  │
+  │ self point
+  ├──┐
+  │  │
+  │(─┘
+  │
+  │ self bidirectional
+  ├──┐
+  │  │
+  │◄─┘
+  │

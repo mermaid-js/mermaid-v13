@@ -120,6 +120,21 @@ export interface FixedLengths {
   readonly titleBand: number;
   /** A box's members are widened by this many `boxMargin`s before its label is fitted (a count). */
   readonly boxLabelMargins: number;
+  /**
+   * Room a frame adds to its title and section labels: none in px; in cells a border and a
+   * space either side, so a centred label never lands on the frame's side.
+   */
+  readonly frameLabelSlack: number;
+  /**
+   * Added to `boxMargin.x` for the room a frame keeps around what it holds: none in px; in
+   * cells two columns, so a frame's side stays a space clear of the lifeline beside it.
+   */
+  readonly frameMarginX: number;
+  /**
+   * The least width text wraps to, and a wrapped note takes: none beyond `width` in px; in
+   * cells v12's 150 px, so a box that fits its label does not wrap text one word per line.
+   */
+  readonly wrapMinWidth: number;
 }
 
 export interface MetricsTable {
@@ -209,6 +224,9 @@ const PX: MetricsTable = {
     actorPadY: 0,
     titleBand: 40,
     boxLabelMargins: 8,
+    frameLabelSlack: 0,
+    frameMarginX: 0,
+    wrapMinWidth: 0,
   },
 };
 
@@ -217,7 +235,8 @@ const PX: MetricsTable = {
 const CELL: MetricsTable = {
   defaults: {
     actorMargin: 6,
-    width: 19,
+    // A box fits its label (mermaid-ascii's look); v12's 150 px would be 19 cells.
+    width: 5,
     height: 3,
     boxMargin: xy(1, 1),
     boxTextMargin: xy(1, 0),
@@ -282,6 +301,9 @@ const CELL: MetricsTable = {
     actorPadY: 1,
     titleBand: 2,
     boxLabelMargins: 2,
+    frameLabelSlack: 4,
+    frameMarginX: 2,
+    wrapMinWidth: 19,
   },
 };
 
@@ -293,6 +315,8 @@ export function metricsTable(units: UnitProfile): MetricsTable {
 /** The sequence layout's lengths for one render, in the profile's units. */
 export interface SequenceMetrics extends ConfigLengths, FixedLengths {
   readonly cells: boolean;
+  /** What wrapped text fits: `width`, and at least `wrapMinWidth`. */
+  readonly wrapWidth: number;
   /** Half a length; whole cells round down, so columns stay on the grid. */
   half(v: number): number;
 }
@@ -345,6 +369,7 @@ export function sequenceMetrics(
   }
   const cells = units.id === 'cell';
   out.cells = cells;
+  out.wrapWidth = Math.max(out.width as number, table.fixed.wrapMinWidth);
   out.half = cells ? (v: number) => Math.floor(v / 2) : (v: number) => v / 2;
   return out as unknown as SequenceMetrics;
 }

@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence/literal_control_character.txt",
+  "charset": "unicode"
+}

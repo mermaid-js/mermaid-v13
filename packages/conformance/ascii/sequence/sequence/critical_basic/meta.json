@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence/critical_basic.txt",
+  "charset": "unicode"
+}
