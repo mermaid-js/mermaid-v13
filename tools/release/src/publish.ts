@@ -143,7 +143,7 @@ export function isPublished(exec: Exec, spec: string, registry: string): boolean
 }
 
 /**
- * Publishes the tarballs in order with dist-tag `alpha`. A version already on the registry is
+ * Publishes the tarballs in order with dist-tag `v13-alpha` (`DIST_TAG`). A version already on the registry is
  * skipped, so a re-run after a partial failure finishes the set instead of failing on the first.
  */
 export function publishAll(
