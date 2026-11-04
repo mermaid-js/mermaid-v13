@@ -9,6 +9,7 @@ Tickets (sub-issues of #127, native blocked-by links):
 | # | Ticket | Blocked by |
 | --- | --- | --- |
 | #162 | state T0: v12 source view in the core parser kit (D114); own draft PR into `mermaid-v13` | — |
+| #187 | state T0: layered counts group self-loops in the drawing size (D102); own draft PR into `mermaid-v13` | — (queued behind #151, D112) |
 | #138 | T1 lexer parity gate | — |
 | #140 | concurrency-regions prototype (D111) | — |
 | #142 | T2 grammar, parser, model, AST | #138 ✓, #27 ✓, #28 ✓ (D107). The native #162 link is stale: T2 keeps its own source view until #181 merges (D114) |
