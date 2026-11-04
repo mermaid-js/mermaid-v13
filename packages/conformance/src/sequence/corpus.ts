@@ -2,6 +2,7 @@
  * The sequence corpora: the e2e fixtures and harvested v12 spec strings, and the lexer gate's
  * set, which adds line-separator and edge cases and a commented copy of every source.
  */
+// cspell:words SEQUENCEDIAGRAM
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';

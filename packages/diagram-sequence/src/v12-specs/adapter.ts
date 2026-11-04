@@ -109,7 +109,7 @@ function wrapDefault(text: string): boolean {
 /** Rebuild v12's message list (DB `messages`) from the statement tree. */
 function rebuild(
   statements: readonly SequenceStatement[],
-  dflt: boolean,
+  byDefault: boolean,
   out: Message[],
   at: Map<string, number>
 ): void {
@@ -119,7 +119,7 @@ function rebuild(
       from,
       to: undefined,
       message: '',
-      wrap: dflt,
+      wrap: byDefault,
       type,
       activate: false,
       centralConnection: 0,
@@ -132,7 +132,7 @@ function rebuild(
         from: s.from,
         to: s.to,
         message: s.text,
-        wrap: s.wrap ?? dflt,
+        wrap: s.wrap ?? byDefault,
         type: LINETYPE[s.arrow.toUpperCase() as keyof typeof LINETYPE],
         activate: s.activation === 'activate' || s.central === 'to' || s.central === 'both',
         centralConnection: s.central ? (CENTRAL[s.central] ?? 0) : 0,
@@ -146,7 +146,7 @@ function rebuild(
         from: s.participants[0],
         to: s.participants[1] ?? s.participants[0],
         message: s.text,
-        wrap: s.wrap ?? dflt,
+        wrap: s.wrap ?? byDefault,
         type: 2,
         placement: PLACEMENTS[s.placement],
       });
@@ -161,13 +161,13 @@ function rebuild(
       });
     } else if (s.kind === 'rect') {
       signal(22, undefined, { message: s.color });
-      rebuild(s.statements, dflt, out, at);
+      rebuild(s.statements, byDefault, out, at);
       signal(23);
     } else {
       s.sections.forEach((section, i) => {
         const type = (i === 0 ? START : SECTION)[s.fragment] ?? -1;
-        signal(type, undefined, { message: section.label, wrap: section.wrap ?? dflt });
-        rebuild(section.statements, dflt, out, at);
+        signal(type, undefined, { message: section.label, wrap: section.wrap ?? byDefault });
+        rebuild(section.statements, byDefault, out, at);
       });
       signal(END[s.fragment] ?? -1);
     }
@@ -193,7 +193,7 @@ export class SequenceDB {
   readonly PLACEMENT = PLACEMENT;
   private model: SequenceModel | undefined;
   private result: SequenceParseResult | undefined;
-  private dflt = false;
+  private byDefault = false;
   private title = '';
 
   clear(): void {
@@ -205,7 +205,7 @@ export class SequenceDB {
     this.result = result;
     this.model = result.model;
     this.built = undefined;
-    this.dflt = wrapDefault(text);
+    this.byDefault = wrapDefault(text);
     const pre = preprocess(text);
     this.title = result.model.title ?? pre.frontMatter?.title ?? '';
   }
@@ -229,7 +229,7 @@ export class SequenceDB {
     if (!this.built) {
       const messages: Message[] = [];
       const at = new Map<string, number>();
-      rebuild(this.m.statements, this.dflt, messages, at);
+      rebuild(this.m.statements, this.byDefault, messages, at);
       this.built = { messages, at };
     }
     return this.built;
@@ -244,7 +244,7 @@ export class SequenceDB {
     return this.m.boxes.map((b) => ({
       name: b.label || undefined,
       fill: b.color ?? 'transparent',
-      wrap: b.wrap ?? this.dflt,
+      wrap: b.wrap ?? this.byDefault,
       actorKeys: [...b.participants],
       get actors() {
         return actors;
@@ -256,7 +256,7 @@ export class SequenceDB {
     const boxes = this.m.boxes.map((b) => ({
       name: b.label || undefined,
       fill: b.color ?? 'transparent',
-      wrap: b.wrap ?? this.dflt,
+      wrap: b.wrap ?? this.byDefault,
       actorKeys: [...b.participants],
     }));
     const actors = new Map<string, Message>();
@@ -265,7 +265,7 @@ export class SequenceDB {
         name: p.id,
         description: p.label,
         type: p.kind,
-        wrap: p.wrap ?? this.dflt,
+        wrap: p.wrap ?? this.byDefault,
         box: p.box === undefined ? undefined : boxes[p.box],
         links: {},
         properties: {},
@@ -314,7 +314,7 @@ export class SequenceDB {
   }
 
   getConfig(): Record<string, unknown> {
-    return { wrap: this.dflt };
+    return { wrap: this.byDefault };
   }
 }
 

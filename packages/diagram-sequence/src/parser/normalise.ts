@@ -4,6 +4,7 @@
  * actor menu texts (`addLinks`, `addALink`, `addProperties`). Text is otherwise kept as written:
  * v12's `sanitizeText` runs when SVG is written, not here.
  */
+// cspell:words currentcolor
 import { isSpace, LPAREN } from '@mermaid-js/core/parser-kit';
 import { isYamlMap, parseYaml } from '@mermaid-js/core/preprocess';
 import { parseColor } from '@mermaid-js/core/theme';

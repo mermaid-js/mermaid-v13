@@ -9,7 +9,7 @@
  * on (R-PARSE-4). Blocks (`loop … end`, `box … end`, …) are frames on a stack, not recursion,
  * so nesting depth is capped by a limit rather than the call stack.
  */
-// cspell:words yytext
+// cspell:words yytext LALR
 import {
   inKindSet,
   Kind,

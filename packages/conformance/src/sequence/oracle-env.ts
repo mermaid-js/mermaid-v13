@@ -9,6 +9,7 @@
  * Nothing else changes; the DB constructor binds `parseBoxData` from the prototype and
  * `apply` calls `addDetails` on it, so the patch reaches every DB the oracle makes.
  */
+// cspell:words currentcolor
 import { parseColor } from '@mermaid-js/core/theme';
 
 /** `CSS.supports('color', c)` as a browser answers it for what v12 passes. */
