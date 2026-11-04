@@ -125,7 +125,7 @@ export function readMember(line: string): MemberLine {
 
 const tildes = (s: string): number => {
   let n = 0;
-  for (let i = 0; i < s.length; i++) if (s[i] === '~') n++;
+  for (const c of s) if (c === '~') n++;
   return n;
 };
 
@@ -180,6 +180,13 @@ export function parseGenericTypes(input: string): string {
   return out.join('');
 }
 
+/** The CSS v12 gave each classifier (`parseClassifier`). */
+const CLASSIFIER_CSS: Readonly<Record<Classifier, string>> = {
+  '': '',
+  '*': 'font-style:italic;',
+  $: 'text-decoration:underline;',
+};
+
 /** The text v12's renderer drew for a member, and the CSS of its classifier (`getDisplayDetails`). */
 export function memberDisplay(m: MemberParts): { displayText: string; cssStyle: string } {
   let displayText = m.visibility + parseGenericTypes(m.name);
@@ -187,12 +194,7 @@ export function memberDisplay(m: MemberParts): { displayText: string; cssStyle: 
     displayText += `(${parseGenericTypes(m.parameters.trim())})`;
     if (m.returnType) displayText += ' : ' + parseGenericTypes(m.returnType);
   }
-  const cssStyle =
-    m.classifier === '*'
-      ? 'font-style:italic;'
-      : m.classifier === '$'
-        ? 'text-decoration:underline;'
-        : '';
+  const cssStyle = CLASSIFIER_CSS[m.classifier];
   return { displayText: displayText.trim(), cssStyle };
 }
 

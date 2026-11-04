@@ -1,5 +1,5 @@
 /**
- * The v12 side of class-diagram parity: a plain-data snapshot of mermaid@12's `ClassDB`.
+ * The v12 side of class-diagram parity: a plain-data snapshot of mermaid 12's `ClassDB`.
  *
  * Text has v12's `encodeEntities` placeholders decoded back to what the author wrote. Left
  * out: `domId` (a module-level counter v12 never resets), `text` of a class (derived from
@@ -7,7 +7,7 @@
  * `shape`, and the click bindings v12 queues only at `securityLevel: 'loose'`.
  */
 
-/** `diagram.type` values mermaid@12 reports for class sources (`classDiagram-v2` too). */
+/** `diagram.type` values mermaid 12 reports for class sources (`classDiagram-v2` too). */
 export const CLASS_V12_TYPES = ['classDiagram'];
 
 export interface ClassMemberSnapshot {
@@ -90,11 +90,11 @@ type Rec = Record<string, unknown>;
 function member(m: Rec): ClassMemberSnapshot {
   return {
     memberType: String(m.memberType),
-    visibility: String(m.visibility ?? ''),
+    visibility: typeof m.visibility === 'string' ? m.visibility : '',
     id: text(m.id) ?? '',
     parameters: text(m.parameters) ?? '',
     returnType: text(m.returnType) ?? '',
-    classifier: String(m.classifier ?? ''),
+    classifier: typeof m.classifier === 'string' ? m.classifier : '',
     text: text(m.text) ?? '',
   };
 }

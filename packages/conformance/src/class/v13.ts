@@ -1,6 +1,6 @@
 /**
  * The v13 side of class-diagram parity: the class parser and the normaliser from its
- * `ClassModel` to the {@link ClassSnapshot} that `v12.ts` takes from mermaid@12's ClassDB.
+ * `ClassModel` to the {@link ClassSnapshot} that `v12.ts` takes from mermaid 12's ClassDB.
  *
  * Bridged here instead of listed as divergences:
  * - v12 stored link URLs after `@braintree/sanitize-url` (it is not `loose` from diagram

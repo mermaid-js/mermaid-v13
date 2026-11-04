@@ -1,6 +1,6 @@
 /**
  * ClassModel: the plain-data result of a class-diagram parse (DESIGN §4.3), and the builder
- * the parser drives. The builder does what v12's `ClassDB` (`classDb.ts` @ fa796a943) did
+ * the parser drives. The builder does what v12's `ClassDB` (`classDb.ts` at fa796a943) did
  * with each parsed statement, in the same order, so the model matches v12's DB.
  *
  * Differences from v12's ClassDB: text is kept as written (no sanitising: that happens when
@@ -374,7 +374,7 @@ export class ClassBuilder {
     }
   }
 
-  setLink(ids: string, url: string, target?: string): void {
+  setLink(ids: string, url: string, target = '_blank'): void {
     const trimmed = url.trim();
     for (const part of ids.split(',')) {
       const lookup = /^\d/.test(part) ? CLASS_ID_PREFIX + part : part;
@@ -382,7 +382,7 @@ export class ClassBuilder {
       if (!node) continue;
       if (trimmed) node.link = trimmed;
       else delete node.link;
-      node.linkTarget = target ?? '_blank';
+      node.linkTarget = target;
     }
     this.setCssClass(ids, 'clickable');
   }
@@ -473,7 +473,11 @@ export class ClassBuilder {
   }
 
   /** `addClassesToNamespace`: place classes (names as written) and notes in namespace `id`. */
-  addClassesToNamespace(id: string, classNames: readonly string[], noteIds: readonly string[]) {
+  addClassesToNamespace(
+    id: string,
+    classNames: readonly string[],
+    noteIds: readonly string[]
+  ): void {
     const ns = this.namespaces.get(id);
     if (!ns) return;
     let seen = this.placed.get(id);

@@ -28,9 +28,11 @@ export interface ClassLex {
 }
 
 /** Start condition names by number, for the probe's lexer mode (jison's names). */
-const S_NAMES: readonly string[] = /* @__PURE__ */ Object.keys(S).map((k) =>
-  k === 'classBody' ? 'class-body' : k === 'namespaceBody' ? 'namespace-body' : k
-);
+const JISON_STATE: Readonly<Record<string, string>> = {
+  classBody: 'class-body',
+  namespaceBody: 'namespace-body',
+};
+const S_NAMES: readonly string[] = /* @__PURE__ */ Object.keys(S).map((k) => JISON_STATE[k] ?? k);
 
 /**
  * Lex a class source as v12 saw it (`v12`), writing v12's removed spans as trivia. `from` (a
@@ -93,7 +95,11 @@ class ClassLexer {
       }
       probe?.lexed(this.sourceStart(before), this.sourceStart(p), mode);
     }
-    probe?.lexed(this.src.length, this.src.length, S_NAMES[this.stack[this.stack.length - 1] ?? 0] ?? '');
+    probe?.lexed(
+      this.src.length,
+      this.src.length,
+      S_NAMES[this.stack[this.stack.length - 1] ?? 0] ?? ''
+    );
     this.trivia(this.src.length + 1);
     const tokens = this.w.finish(this.src);
     this.starts.push(this.v12.length);
