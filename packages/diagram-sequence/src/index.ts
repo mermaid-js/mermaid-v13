@@ -3,6 +3,16 @@
  * The plugin export and manifest land with the tickets of that spec.
  */
 import type { DiagramPlugin } from '@mermaid-js/core';
+import type { SequenceModel } from './model.ts';
+import type { SequenceLayout } from './layout/index.ts';
 
-/** The plugin's contract; the type parameters become `SequenceModel` and `SequenceLayout`. */
-export type SequencePlugin = DiagramPlugin<unknown, unknown>;
+export type * from './model.ts';
+export {
+  layoutSequence,
+  sequenceLayoutViolations,
+  type SequenceLayout,
+  type SequenceLayoutContext,
+} from './layout/index.ts';
+
+/** The plugin's contract. */
+export type SequencePlugin = DiagramPlugin<SequenceModel, SequenceLayout>;
