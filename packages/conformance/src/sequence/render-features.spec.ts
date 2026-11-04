@@ -157,3 +157,57 @@ describe('fonts', () => {
     expect(tag(sized, /class="messages"/)).toContain('font-size="20"');
   });
 });
+
+describe('review fixes (#143)', () => {
+  it('paints nested activations in start order, so the inner bar is on top', async () => {
+    const svg = await render('activate A\nactivate A\nA->>B: x\ndeactivate A\ndeactivate A');
+    const order = [...svg.matchAll(/class="activation(\d)"/g)].map((m) => m[1]);
+    expect(order).toEqual(['0', '1']);
+  });
+
+  it('moves numbered lines with central connections clear of the badge, as v12', async () => {
+    const svg = await render(
+      'participant A\nparticipant B\nautonumber\nB()<<->>A: y\nA/|-()B: r2\nB()/|-A: r3'
+    );
+    const lines = [...svg.matchAll(/<line class="messageLine0"[^>]*>/g)].map((m) => m[0]);
+    const attr = (l: string, a: string): number =>
+      Number(new RegExp(` ${a}="([^"]*)"`).exec(l)![1]);
+    expect(attr(lines[0]!, 'x1')).toBe(250.5);
+    expect(attr(lines[1]!, 'x2')).toBe(273);
+    expect([attr(lines[2]!, 'x1'), attr(lines[2]!, 'x2')]).toEqual([267.5, 85]);
+  });
+
+  it('gives a + or () activation its message id, and no data-ast', async () => {
+    const svg = await render('A->>+B: x\nB-->>-A: y');
+    const bar = tag(svg, /class="activation0"/);
+    expect(bar).toContain('data-id="m:A&gt;B"');
+    expect(bar).not.toContain('data-ast');
+  });
+
+  it('warns about a refused font family and measures in the font it draws', async () => {
+    const bad = await api.render(
+      's',
+      asTest(
+        '%%{init:{"sequence":{"actorFontFamily":"x;color:red","actorFontSize":20}}}%%\nsequenceDiagram\nA->>B: x'
+      )
+    );
+    const good = await render('A->>B: x', '  sequence:\n    actorFontSize: 20');
+    expect(bad.warnings.map((w) => w.code)).toContain('STYLE_VALUE_DROPPED');
+    expect(bad.svg).toBe(good);
+  });
+
+  it('gives participant labels a data-id', async () => {
+    const svg = await render('A->>B: x');
+    expect(svg).toMatch(/<text class="actor actor-box" data-id="A"/);
+  });
+
+  it('draws sequence numbers in the inherited font', async () => {
+    const svg = await render('autonumber\nA->>B: x');
+    expect(tag(svg, /class="sequenceNumber"/)).not.toContain('font-family');
+  });
+
+  it('draws no title for a fragment label that is empty once read', async () => {
+    const svg = await render('loop </style>\nA->>B: x\nend');
+    expect(svg).not.toContain('class="loopText"');
+  });
+});

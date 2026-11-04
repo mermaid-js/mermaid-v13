@@ -93,6 +93,27 @@ export interface FixedLengths {
   readonly symbolLabelTop: Readonly<Partial<Record<ParticipantKind, number>>>;
   /** The stick figure's label row height (v12 `ACTOR_GLYPH_HEIGHT`); 0 takes the box height. */
   readonly figureLabelHeight: number;
+  /**
+   * The sequence number badge (drawn only in SVG): its radius (v12's r 6 marker on a line
+   * whose CSS width is 2px), the baseline drop of its text, and the text size for numbers of
+   * up to 3, up to 5 and more characters.
+   */
+  readonly numberRadius: number;
+  readonly numberBaseline: number;
+  readonly numberFontSizes: readonly [number, number, number];
+  /** v12 `SEQUENCE_NUMBER_RADIUS`: how far a numbered line moves its start or end clear of it. */
+  readonly numberShift: number;
+  /** A numbered self message with a head at its start starts this far out. */
+  readonly numberSelfShift: number;
+  /** A numbered leftward bidirectional line with a central connection moves this much more. */
+  readonly numberCentralShift: number;
+  /** A numbered leftward line with a circle at its start (`()` before the arrow) moves this much. */
+  readonly numberCentralFromShift: number;
+  /** A numbered reverse arrow with a central connection ends this much further on. */
+  readonly numberCentralReverseShift: number;
+  /** A central connection's circle, and how far a numbered message moves it. */
+  readonly centralRadius: number;
+  readonly centralNumberOffset: number;
   /** Least room above and below a participant label in its box. */
   readonly actorPadY: number;
   /** Room above the drawing for the diagram title. */
@@ -175,6 +196,16 @@ const PX: MetricsTable = {
       boundary: 36,
     },
     figureLabelHeight: 65,
+    numberRadius: 12,
+    numberBaseline: 4,
+    numberFontSizes: [12, 9, 7],
+    numberShift: 6,
+    numberSelfShift: 10,
+    numberCentralShift: 5,
+    numberCentralFromShift: 7.5,
+    numberCentralReverseShift: 15,
+    centralRadius: 5,
+    centralNumberOffset: 16.5,
     actorPadY: 0,
     titleBand: 40,
     boxLabelMargins: 8,
@@ -238,6 +269,16 @@ const CELL: MetricsTable = {
     databaseTextMargins: 0,
     symbolLabelTop: {},
     figureLabelHeight: 0,
+    numberRadius: 0,
+    numberBaseline: 0,
+    numberFontSizes: [1, 1, 1],
+    numberShift: 0,
+    numberSelfShift: 0,
+    numberCentralShift: 0,
+    numberCentralFromShift: 0,
+    numberCentralReverseShift: 0,
+    centralRadius: 0,
+    centralNumberOffset: 0,
     actorPadY: 1,
     titleBand: 2,
     boxLabelMargins: 2,

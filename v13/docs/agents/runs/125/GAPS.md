@@ -31,7 +31,7 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 - [ ] **Property and rename round-trip specs pick sequence up once #145 registers it** (run by hand over the corpus in #149: clean). Then move `packages/conformance/language-goldens/sequence/` to the shared location and delete `packages/conformance/src/sequence/language-goldens.spec.ts` (its last test fails by design once the manifest lands).
 
 ## #143 T4 renderer
-- **Neo symbol geometry** not drawn (layout has none): every theme draws v12 classic symbols. Needs a maintainer decision on layout geometry variables (D152).
+- **Neo symbol geometry**: decided (maintainer), ported in a follow-up ticket after #143 merges; the inventory with fa796a943 pointers is in `tickets/143.md`. Until then every theme draws v12 classic symbols.
 - **Registry**: tests register the plugin under a swapped header (`conformance/src/sequence/render-api.ts`); #145 removes the swap once the manifest is generated.
 
 ## Resolved by the maintainer

@@ -237,6 +237,7 @@ export function drawSymbol(s: SymbolScene, position: 'top' | 'bottom'): void {
   const dx = p.kind === 'collections' ? -STACK_OFFSET : 0;
   w.label(p.label, p.x + dx + p.width / 2, s.y + p.labelY, {
     class: `actor ${figure ? 'actor-man' : 'actor-box'}`,
+    'data-id': p.id,
     fill: s.paint.text,
   });
   w.close();

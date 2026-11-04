@@ -15,6 +15,8 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import type { SequenceModel } from '../model.ts';
+import { pxProfile } from '@mermaid-js/core/layout';
+import { sequenceMetrics, type SequenceMetrics } from '../layout/index.ts';
 import type {
   BoxLayout,
   FragmentLayout,
@@ -42,6 +44,8 @@ interface Scene {
   readonly columns: ReadonlyMap<string, ParticipantLayout>;
   /** Each participant's declaration order: its palette slot. */
   readonly order: ReadonlyMap<string, number>;
+  /** The px lengths of the sequence metrics table. */
+  readonly m: SequenceMetrics;
 }
 
 /** v12 `.loopLine`: 2px, dashed 2,2; sections dashed 3,3. */
@@ -69,6 +73,7 @@ export function renderSequence(
     paint: paints(ctx, layout),
     columns: new Map(layout.participants.map((p) => [p.id, p])),
     order: new Map(model.participants.map((p, i) => [p.id, i])),
+    m: sequenceMetrics(pxProfile, ctx.config.sequence),
   };
   openRoot(scene);
   if (layout.boxes.length > 0) drawBoxes(scene);
@@ -244,7 +249,8 @@ function drawActivations(scene: Scene): void {
     const tint = paint.slotOf(scene.order.get(bar.participant) ?? 0);
     w.leaf('rect', {
       class: `activation${bar.depth % 3}`,
-      'data-id': bar.ast ?? bar.participant,
+      // An `activate` line's id, else the message whose `+` or `()` opened it.
+      'data-id': bar.ast ?? bar.message ?? bar.participant,
       'data-ast': bar.ast,
       'data-color-id': tint?.id,
       x: bar.x,
@@ -381,9 +387,9 @@ function drawMessages(scene: Scene): void {
         'data-id': m.ast,
         fill: mp.text,
       });
-    drawMessageLine(w, m, rightAngles, mp);
-    drawCentral(w, m, scene.columns, mp.line);
-    drawNumber(w, m, mp);
+    drawMessageLine(w, m, rightAngles, mp, scene.m);
+    drawCentral(w, m, scene.columns, mp.line, scene.m);
+    drawNumber(w, m, mp, scene.m);
     w.close();
   }
   w.close();

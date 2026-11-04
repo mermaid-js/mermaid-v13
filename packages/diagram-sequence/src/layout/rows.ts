@@ -47,6 +47,9 @@ interface OpenBar {
   y: number;
   readonly depth: number;
   readonly ast?: AstId;
+  readonly message?: AstId;
+  /** Start order: bars are listed in it. */
+  readonly seq: number;
 }
 
 /** As in v12, a start or step of 0 (or none) keeps the current one. */
@@ -64,6 +67,9 @@ export class Rows {
   readonly messages: MessageLayout[] = [];
   readonly notes: NoteLayout[] = [];
   readonly activations: ActivationLayout[] = [];
+  /** The start order of each entry of `activations`. */
+  private readonly barSeqs: number[] = [];
+  private started = 0;
   readonly fragments: FragmentLayout[] = [];
   readonly rects: RectLayout[] = [];
   private readonly open: OpenBar[] = [];
@@ -114,7 +120,7 @@ export class Rows {
     }
   }
 
-  private activate(actor: string, ast?: AstId): void {
+  private activate(actor: string, ast?: AstId, message?: AstId): void {
     const c = this.env.columns.get(actor);
     if (!c) return;
     const depth = this.open.filter((a) => a.actor === actor).length;
@@ -126,6 +132,8 @@ export class Rows {
       y: this.b.y + this.env.m.activationLead,
       depth,
       ...(ast !== undefined ? { ast } : {}),
+      ...(message !== undefined ? { message } : {}),
+      seq: this.started++,
     });
   }
 
@@ -139,9 +147,14 @@ export class Rows {
       a.y = end - m.activationShortLead;
       end += m.activationShortTail;
     }
-    this.activations.push({
+    // Listed in start order, though a bar is only known when it ends.
+    let at = this.barSeqs.length;
+    while (at > 0 && (this.barSeqs[at - 1] as number) > a.seq) at--;
+    this.barSeqs.splice(at, 0, a.seq);
+    this.activations.splice(at, 0, {
       participant: a.actor,
       ...(a.ast !== undefined ? { ast: a.ast } : {}),
+      ...(a.message !== undefined ? { message: a.message } : {}),
       x: a.startx,
       y: a.y,
       width: a.stopx - a.startx,
@@ -278,10 +291,10 @@ export class Rows {
     }
     // v12 rounds to two decimals against floating point drift.
     this.seqIndex = Math.round((this.seqIndex + this.seqStep) * 100) / 100;
-    if (s.activation === 'activate') this.activate(s.to);
+    if (s.activation === 'activate') this.activate(s.to, undefined, s.ast);
     else if (s.activation === 'deactivate') this.deactivate(s.from);
-    if (s.central === 'to' || s.central === 'both') this.activate(s.to);
-    if (s.central === 'from' || s.central === 'both') this.activate(s.from);
+    if (s.central === 'to' || s.central === 'both') this.activate(s.to, undefined, s.ast);
+    if (s.central === 'from' || s.central === 'both') this.activate(s.from, undefined, s.ast);
   }
 
   private selfLoop(g: MessageX, lineY: number): SelfLoop {
@@ -366,6 +379,9 @@ export class Rows {
     if (label === '' || !reach) return undefined;
     const { m } = this.env;
     const max = Math.max(reach.width - 2 * m.wrapPadding, m.labelBoxWidth);
+    // v12 skips a title that is empty once read (`loop </style>`), rather than drawing `[]`.
+    const read = this.env.measure(label, this.env.fonts.message, Infinity);
+    if (read.lines.every((line) => line.every((run) => run.text.trim() === ''))) return undefined;
     return this.env.measure(`[${label}]`, this.env.fonts.message, max);
   }
 

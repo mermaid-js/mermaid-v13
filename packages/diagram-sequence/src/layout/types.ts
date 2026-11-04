@@ -70,6 +70,8 @@ export interface ActivationLayout {
   readonly participant: string;
   /** The `activate` statement; undefined for a `+` shorthand or central connection. */
   readonly ast?: AstId;
+  /** The message whose `+` or `()` opened it; undefined for an `activate` statement. */
+  readonly message?: AstId;
   readonly x: number;
   readonly y: number;
   readonly width: number;
@@ -124,6 +126,7 @@ export interface SequenceLayout {
   readonly participants: readonly ParticipantLayout[];
   readonly boxes: readonly BoxLayout[];
   readonly messages: readonly MessageLayout[];
+  /** In the order they start (v12 appends a bar when it opens), so an inner bar is on top. */
   readonly activations: readonly ActivationLayout[];
   readonly notes: readonly NoteLayout[];
   /** In source order of their start; inner frames come after outer ones. */

@@ -5,7 +5,7 @@
 // line, scaled by the line's stroke width where v12's marker used `markerUnits="strokeWidth"`.
 import type { Attrs, Paint, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
 import type { ArrowKind } from '../model.ts';
-import type { MessageLayout, ParticipantLayout } from '../layout/index.ts';
+import type { MessageLayout, ParticipantLayout, SequenceMetrics } from '../layout/index.ts';
 import { REVERSE_ARROWS } from '../layout/index.ts';
 
 type Point = readonly [number, number];
@@ -202,14 +202,20 @@ function drawHead(w: SvgWriter, name: HeadName, at: Point, angle: number, paint:
   }
 }
 
-/** v12 drew a sequence number as a marker circle of r 6 on a line whose CSS width was 2px. */
-const NUMBER_RADIUS = 12;
-/** v12 `SEQUENCE_NUMBER_RADIUS`: how far a numbered line moves its start or end. */
-const NUMBER_SHIFT = 6;
-const NUMBER_BASELINE = 4;
-const SELF_NUMBER_SHIFT = 10;
-const CENTRAL_RADIUS = 5;
-const CENTRAL_NUMBER_OFFSET = 16.5;
+/** The renderer's lengths from the sequence metrics table (px). */
+export type DrawMetrics = Pick<
+  SequenceMetrics,
+  | 'numberRadius'
+  | 'numberBaseline'
+  | 'numberFontSizes'
+  | 'numberShift'
+  | 'numberSelfShift'
+  | 'numberCentralShift'
+  | 'numberCentralFromShift'
+  | 'numberCentralReverseShift'
+  | 'centralRadius'
+  | 'centralNumberOffset'
+>;
 
 export interface MessagePaint {
   readonly line: Paint;
@@ -217,15 +223,30 @@ export interface MessagePaint {
   readonly number?: { readonly fill: Paint; readonly text: Paint };
 }
 
-/** The x a line starts and ends at, moved clear of a sequence number as v12 moved it. */
-function lineEnds(m: MessageLayout): [number, number] {
+/**
+ * The x a line starts and ends at, moved clear of a sequence number as v12 `drawMessage`
+ * moved it, central connections included.
+ */
+function lineEnds(m: MessageLayout, d: DrawMetrics): [number, number] {
   let x1 = m.startX;
   let x2 = m.stopX;
   if (!m.number || m.self) return [x1, x2];
-  const ltr = m.startX < m.stopX;
-  if (isBidirectional(m.arrow)) x1 = ltr ? x1 + 2 * NUMBER_SHIFT : x1 - NUMBER_SHIFT;
-  else if (REVERSE_ARROWS.has(m.arrow)) x2 = ltr ? x2 - 2 * NUMBER_SHIFT : x2 - NUMBER_SHIFT;
-  else x1 += NUMBER_SHIFT;
+  // A circle at the line's start: v12 `CENTRAL_CONNECTION_REVERSE` and `_DUAL`.
+  const fromCircle = m.central === 'from' || m.central === 'both';
+  if (isBidirectional(m.arrow)) {
+    if (x1 < x2) x1 += 2 * d.numberShift;
+    else {
+      x1 -= d.numberShift + (m.central ? d.numberCentralShift : 0);
+      if (fromCircle) x1 -= d.numberCentralFromShift;
+    }
+  } else if (REVERSE_ARROWS.has(m.arrow)) {
+    if (x2 > x1) x2 -= 2 * d.numberShift;
+    else {
+      x2 -= d.numberShift;
+      if (fromCircle) x1 -= d.numberCentralFromShift;
+    }
+    if (m.central) x2 += d.numberCentralReverseShift;
+  } else x1 += d.numberShift;
   return [x1, x2];
 }
 
@@ -234,7 +255,8 @@ export function drawMessageLine(
   w: SvgWriter,
   m: MessageLayout,
   rightAngles: boolean,
-  paint: MessagePaint
+  paint: MessagePaint,
+  d: DrawMetrics
 ): void {
   const lineAttrs: Attrs = {
     class: isDotted(m.arrow) ? 'messageLine1' : 'messageLine0',
@@ -249,7 +271,7 @@ export function drawMessageLine(
     const y = m.y;
     const x = m.startX;
     const x0 =
-      x + (m.number && (start !== undefined || isBidirectional(m.arrow)) ? SELF_NUMBER_SHIFT : 0);
+      x + (m.number && (start !== undefined || isBidirectional(m.arrow)) ? d.numberSelfShift : 0);
     const { right, bottom } = m.self;
     const p = w.path().moveTo(x0, y);
     let endAngle: number;
@@ -272,7 +294,7 @@ export function drawMessageLine(
     if (start) drawHead(w, start, [x0, y], startAngle, paint.line);
     return;
   }
-  const [x1, x2] = lineEnds(m);
+  const [x1, x2] = lineEnds(m, d);
   w.leaf('line', { ...lineAttrs, x1, y1: m.y, x2, y2: m.y });
   const angle = x2 >= x1 ? 0 : Math.PI;
   if (end) drawHead(w, end, [x2, m.y], angle, paint.line);
@@ -284,7 +306,8 @@ export function drawCentral(
   w: SvgWriter,
   m: MessageLayout,
   columns: ReadonlyMap<string, ParticipantLayout>,
-  fill: Paint
+  fill: Paint,
+  d: DrawMetrics
 ): void {
   if (!m.central) return;
   const from = columns.get(m.from);
@@ -294,7 +317,7 @@ export function drawCentral(
   let toX = to.lifeline.x;
   const ltr = fromX <= toX;
   const reverse = REVERSE_ARROWS.has(m.arrow);
-  const offset = ltr ? CENTRAL_NUMBER_OFFSET : -CENTRAL_NUMBER_OFFSET;
+  const offset = ltr ? d.centralNumberOffset : -d.centralNumberOffset;
   if (m.number) {
     if (m.central === 'to' && reverse) toX -= offset;
     if (m.central === 'from' && !reverse) fromX += offset;
@@ -304,31 +327,36 @@ export function drawCentral(
     }
   }
   const circle = (cx: number): void =>
-    w.leaf('circle', { class: 'centralConnection', cx, cy: m.y, r: CENTRAL_RADIUS, fill });
+    w.leaf('circle', { class: 'centralConnection', cx, cy: m.y, r: d.centralRadius, fill });
   if (m.central === 'from' || m.central === 'both') circle(fromX);
   if (m.central === 'to' || m.central === 'both') circle(toX);
 }
 
 /** The autonumber badge: a filled circle and the number (v12 `-sequencenumber` marker). */
-export function drawNumber(w: SvgWriter, m: MessageLayout, paint: MessagePaint): void {
+export function drawNumber(
+  w: SvgWriter,
+  m: MessageLayout,
+  paint: MessagePaint,
+  d: DrawMetrics
+): void {
   if (!m.number || !paint.number) return;
   const { value, x } = m.number;
   const text = String(value);
-  let size = 12;
-  if (text.length > 5) size = 7;
-  else if (text.length > 3) size = 9;
+  const [short, medium, long] = d.numberFontSizes;
+  let size = short;
+  if (text.length > 5) size = long;
+  else if (text.length > 3) size = medium;
   w.leaf('circle', {
     class: 'sequenceNumberCircle',
     cx: x,
     cy: m.y,
-    r: NUMBER_RADIUS,
+    r: d.numberRadius,
     fill: paint.number.fill,
   });
   w.open('text', {
     class: 'sequenceNumber',
     x,
-    y: m.y + NUMBER_BASELINE,
-    'font-family': 'sans-serif' as SafeValue,
+    y: m.y + d.numberBaseline,
     'font-size': size,
     'text-anchor': 'middle',
     fill: paint.number.text,
