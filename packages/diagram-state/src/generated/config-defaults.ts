@@ -6,7 +6,7 @@ import type { StateDiagramConfig } from '@mermaid-js/core/config';
 export const stateConfigDefaults: StateDiagramConfig = {
   "useMaxWidth": true,
   "theme": "redux-color",
-  "layout": "elk",
+  "layout": "layered",
   "wrappingWidth": 120,
   "minNodeWidth": 120,
   "titleTopMargin": 25,

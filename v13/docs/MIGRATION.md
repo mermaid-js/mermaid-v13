@@ -439,8 +439,9 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 ### Layout
 
 - **Default layout:** v12 drew state diagrams with ELK by default; v13 uses `layered`, the
-  engine built into core, until an ELK plugin is registered (D106). `layout: elk` is accepted
-  and drawn with `layered`, as for flowcharts.
+  engine built into core, and keeps it even when an ELK plugin is installed (D127, R-LAYOUT-7:
+  ELK is never the default). ELK applies only when an author sets `layout: elk`; until an ELK
+  plugin is registered that is drawn with `layered` (D106), as for flowcharts.
 - **Notes** are placed along the flow: the engine has no same-rank constraint, so in a TB
   drawing `note right of X` sits below `X` and `note left of X` above it (in LR, to the right
   and left). A note sits in its state's composite; v12 put every note at the top level.
@@ -451,8 +452,8 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 ### Config
 
 - **`state` section:** `wrappingWidth`, `minNodeWidth`, `nodeSpacing`, `rankSpacing`,
-  `useMaxWidth`, `theme` and `layout` work as in v12 (`layout` keeps v12's `elk` default, drawn
-  with `layered`, see Layout).
+  `useMaxWidth`, `theme` and `layout` work as in v12, except that `layout` defaults to
+  `layered`, not v12's `elk` (D127, see Layout).
 - **Ignored:** `titleTopMargin` (no front-matter title is drawn, D122), `useWidth` (only gantt
   read it), and the sizes only v12's
   old dagre renderer read: `dividerMargin`, `sizeUnit`, `padding`, `textHeight`, `titleShift`,

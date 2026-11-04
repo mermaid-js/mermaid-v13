@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { assertInert } from '@mermaid-js/core/svg';
 import { state } from '@mermaid-js/diagram-state';
 import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
@@ -37,6 +38,21 @@ describe('state diagrams through the public API (#148)', () => {
     const v2 = await m.render('s', V2.replace('stateDiagram-v2', 'stateDiagram'));
     expect(v1.svg).toBe(v2.svg);
     expect((await m.render('s', V2)).svg).toBe(v1.svg);
+  });
+
+  it('defaults to layered even with an ELK plugin registered (D127, R-LAYOUT-7)', async () => {
+    let calls = 0;
+    const elk: LayoutEngine = (graph, ctx) => {
+      calls++;
+      return layered(graph, ctx);
+    };
+    const m = createMermaid();
+    m.registerLayoutLoaders([{ name: 'elk', loader: () => Promise.resolve(elk) }]);
+    await m.render('s', V2);
+    expect(calls).toBe(0);
+    await m.render('s', `---\nconfig:\n  layout: elk\n---\n${V2}`);
+    expect(calls).toBe(1);
+    expect(state.configDefaults.layout).toBe('layered');
   });
 
   it('renders synchronously once prepared', async () => {

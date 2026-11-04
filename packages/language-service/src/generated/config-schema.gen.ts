@@ -3388,11 +3388,11 @@ export const configSchema: ConfigSchema = {
         },
         "layout": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
-          "default": "elk",
+          "default": "layered",
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "v12's `elk` default is kept: it is drawn with `layered` until an ELK plugin is registered (D106)."
+            "reason": "Defaults to `layered`, not v12's `elk` (D127, R-LAYOUT-7: ELK is never the default). ELK applies only when an author sets it; until an ELK plugin is registered it is drawn with `layered` (D106)."
           }
         },
         "useWidth": {
