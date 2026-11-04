@@ -23,4 +23,4 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## Outside this spec (seen after merging `mermaid-v13` at `5a6425d8e`)
 
-- `.gitignore` now un-ignores `/.claude/skills/` (#129, for `release-alpha`). A worktree that holds local skill copies then fails `pnpm check`'s `prettier --check .` on untracked files (`.claude/skills/recheck-issue/scripts/*`). `.prettierignore` needs `.claude/`, or the local copies need to go. Until then, verify with prettier over `git ls-files` plus the rest of the check chain.
+- `.gitignore` now un-ignores `/.claude/skills/` (#129, for `release-alpha`). A worktree that holds local skill copies then fails `pnpm check`'s `prettier --check .` on untracked files (`.claude/skills/recheck-issue/scripts/*`). Fixed: `.claude/` added to `.prettierignore` here, identical to PR #183 into `mermaid-v13`, so the two merge cleanly.
