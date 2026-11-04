@@ -3,11 +3,13 @@
 // the AST ids of what it dropped.
 import type { Warning } from '@mermaid-js/core';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
+import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
+import type { SequenceLayout } from '../layout/index.ts';
 import type { ParticipantKind, SequenceModel, SequenceStatement } from '../model.ts';
 import { symbolForm } from './symbols.ts';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
-export type AsciiDroppedFeature = 'style' | 'link' | 'accessibility';
+export type AsciiDroppedFeature = 'style' | 'emphasis' | 'link' | 'accessibility';
 
 /** One feature kind text output dropped (D82). */
 export interface AsciiDroppedWarning extends Warning {
@@ -27,6 +29,7 @@ export type AsciiWarning = AsciiDroppedWarning | AsciiShapeWarning;
 
 const WHAT: Record<AsciiDroppedFeature, string> = {
   style: 'colours (box colours, rect highlighting)',
+  emphasis: 'bold and italic text',
   link: 'actor menus (links, properties, details)',
   accessibility: 'accTitle and accDescr',
 };
@@ -43,6 +46,7 @@ function rects(statements: readonly SequenceStatement[], out: string[]): void {
 // The statements behind each feature kind, by AST node type.
 const STATEMENTS: Record<AsciiDroppedFeature, readonly string[]> = {
   style: [],
+  emphasis: [],
   link: ['Links', 'Link', 'Properties', 'Details'],
   accessibility: ['AccTitle', 'AccDescr'],
 };
@@ -55,6 +59,28 @@ function idsByType(ast: AstNode | undefined, out: Map<string, string[]>): void {
   for (const child of ast.children ?? []) idsByType(child, out);
 }
 
+const emphasised = (label: MeasuredLabel | undefined): boolean =>
+  label?.lines.some((line) =>
+    line.some((run) => (run.style & (Style.Bold | Style.Italic)) !== 0)
+  ) ?? false;
+
+// `sequence.*FontWeight` set bold, which text cannot show either.
+const WEIGHTS = ['actorFontWeight', 'messageFontWeight', 'noteFontWeight'] as const;
+const bold = (v: unknown): boolean => v === 'bold' || v === 'bolder' || Number(v) >= 600;
+
+/** The AST ids of the drawn elements whose text is bold or italic. */
+function emphasisIds(layout: SequenceLayout): string[] {
+  const out: string[] = [];
+  for (const p of layout.participants) if (emphasised(p.label)) out.push(p.ast);
+  for (const m of layout.messages) if (emphasised(m.label?.text)) out.push(m.ast);
+  for (const n of layout.notes) if (emphasised(n.label.text)) out.push(n.ast);
+  for (const f of layout.fragments)
+    if (emphasised(f.title?.text) || f.sections.some((s) => emphasised(s.label?.text)))
+      out.push(f.ast);
+  for (const b of layout.boxes) if (emphasised(b.label?.text)) out.push(b.ast);
+  return out;
+}
+
 const hasKeys = (o: Readonly<Record<string, unknown>> | undefined): boolean =>
   o !== undefined && Object.keys(o).length > 0;
 
@@ -64,11 +90,18 @@ const hasKeys = (o: Readonly<Record<string, unknown>> | undefined): boolean =>
  */
 export function asciiWarnings(
   model: SequenceModel,
-  shown: ReadonlySet<string>,
-  ast?: AstNode
+  layout: SequenceLayout,
+  options: {
+    readonly ast?: AstNode;
+    readonly charset: 'unicode' | 'ascii';
+    readonly config: Readonly<Record<string, unknown>>;
+  }
 ): AsciiWarning[] {
+  const shown = new Set(layout.participants.map((p) => p.id));
+  const { ast } = options;
   const found: Record<AsciiDroppedFeature, string[] | undefined> = {
     style: undefined,
+    emphasis: undefined,
     link: undefined,
     accessibility: undefined,
   };
@@ -87,6 +120,9 @@ export function asciiWarnings(
       'link',
       menus.map((p) => p.ast)
     );
+  const emphasis = emphasisIds(layout);
+  if (emphasis.length > 0 || WEIGHTS.some((k) => bold(options.config[k])))
+    add('emphasis', emphasis);
   if (model.accTitle.trim() !== '' || model.accDescr.trim() !== '') add('accessibility', []);
   const stmts = new Map<string, string[]>();
   idsByType(ast, stmts);
@@ -107,19 +143,25 @@ export function asciiWarnings(
     });
   }
 
-  const shapes: ParticipantKind[] = [];
+  const shapes: (ParticipantKind | 'half-arrowhead')[] = [];
   const astIds: string[] = [];
   for (const p of model.participants) {
     if (!shown.has(p.id) || symbolForm(p.kind)) continue;
     if (!shapes.includes(p.kind)) shapes.push(p.kind);
     astIds.push(p.ast);
   }
+  // ASCII has no half arrowheads: `-|\` and friends are drawn as `>` and `<`.
+  const half = layout.messages.filter((m) => /_(?:top|bottom)/u.test(m.arrow)).map((m) => m.ast);
+  if (options.charset === 'ascii' && half.length > 0) {
+    shapes.push('half-arrowhead');
+    astIds.push(...half);
+  }
   if (shapes.length > 0)
     out.push({
       code: 'ASCII_SHAPE',
       shapes,
       astIds,
-      message: `Text output draws these participant symbols as plain boxes: ${shapes.join(', ')}.`,
+      message: `Text output draws these as plain boxes or full heads: ${shapes.join(', ')}.`,
     });
   return out;
 }

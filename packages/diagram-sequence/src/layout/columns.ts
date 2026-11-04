@@ -4,7 +4,7 @@
  * right (v12 `calculateActorMargins`, `getMaxMessageWidthPerActor`, `addActorRenderingData`).
  */
 import type { MeasuredLabel } from '@mermaid-js/core/text';
-import type { SequenceBox, SequenceModel, SequenceStatement } from '../model.ts';
+import type { SequenceBox, SequenceModel, SequenceNote, SequenceStatement } from '../model.ts';
 import type { Bounds } from './bounds.ts';
 import { nextOf, prevOf, walk, type Column, type Env } from './env.ts';
 
@@ -63,35 +63,51 @@ function usedParticipants(statements: readonly SequenceStatement[]): Set<string>
  */
 const selfRoom = (m: Env['m'], w: number): number => (m.cells ? w : m.half(w));
 
-/** The ids whose gap a message or note widens, and by how much. */
-function gapsWidened(env: Env, s: SequenceStatement): [string | undefined, number][] {
-  if (s.kind !== 'message' && s.kind !== 'note') return [];
-  const note = s.kind === 'note' ? s : undefined;
-  const from = s.kind === 'message' ? s.from : s.participants[0];
-  const to = s.kind === 'message' ? s.to : (s.participants[1] ?? from);
-  if (!env.columns.has(from) || !env.columns.has(to)) return [];
+type Gap = [string | undefined, number];
+
+/**
+ * In cells a note over two neighbours fits its text between their lifelines and an
+ * actorMargin past each (geometry.ts grows one over more columns about its middle).
+ */
+function cellNoteGaps(env: Env, a: string, b: string, w: number): Gap[] {
+  const [left, right] = (env.index.get(a) ?? 0) <= (env.index.get(b) ?? 0) ? [a, b] : [b, a];
+  return nextOf(env, left) === right ? [[left, w - 2 * env.m.actorMargin]] : [];
+}
+
+/** The gaps a note widens, `w` being its text and padding. */
+function noteGaps(env: Env, note: SequenceNote, w: number): Gap[] {
+  const { m } = env;
+  const from = note.participants[0];
+  const to = note.participants[1] ?? from;
   const prev = prevOf(env, to);
   const next = nextOf(env, to);
-  if (note?.placement === 'left' && prev === undefined) return [];
-  if (note?.placement === 'right' && next === undefined) return [];
-  const { m } = env;
-  const wrap = s.wrap ?? env.autoWrap;
-  const font = note ? env.fonts.note : env.fonts.message;
-  const max = wrap ? m.wrapWidth - 2 * m.wrapPadding : Infinity;
-  const w = env.measure(s.text, font, max).width + 2 * m.wrapPadding;
-  if (!note) {
-    if (from === next) return [[to, w]];
-    if (from === prev) return [[from, w]];
-    return from === to ? [[from, selfRoom(m, w)]] : [];
-  }
-  if (note.placement === 'right') return [[from, w]];
-  if (note.placement === 'left') return [[prev, w]];
+  if (note.placement === 'right') return next === undefined ? [] : [[from, w]];
+  if (note.placement === 'left') return prev === undefined ? [] : [[prev, w]];
+  if (m.cells && from !== to) return cellNoteGaps(env, from, to, w);
   return next === undefined
     ? [[prev, m.half(w)]]
     : [
         [prev, m.half(w)],
         [from, m.half(w)],
       ];
+}
+
+/** The ids whose gap a message or note widens, and by how much. */
+function gapsWidened(env: Env, s: SequenceStatement): Gap[] {
+  if (s.kind !== 'message' && s.kind !== 'note') return [];
+  const from = s.kind === 'message' ? s.from : s.participants[0];
+  const to = s.kind === 'message' ? s.to : (s.participants[1] ?? from);
+  if (!env.columns.has(from) || !env.columns.has(to)) return [];
+  const { m } = env;
+  const wrap = s.wrap ?? env.autoWrap;
+  const font = s.kind === 'note' ? env.fonts.note : env.fonts.message;
+  const max = wrap ? m.wrapWidth - 2 * m.wrapPadding : Infinity;
+  const text = s.kind === 'message' ? env.messageText(s) : s.text;
+  const w = env.measure(text, font, max).width + 2 * m.wrapPadding;
+  if (s.kind === 'note') return noteGaps(env, s, w);
+  if (from === nextOf(env, to)) return [[to, w]];
+  if (from === prevOf(env, to)) return [[from, w]];
+  return from === to ? [[from, selfRoom(m, w)]] : [];
 }
 
 /** Grows the gap after each column to hold the widest message or note next to it. */
@@ -143,7 +159,8 @@ export function boxSizes(model: SequenceModel, env: Env): BoxSizes {
     const text = env.measure(box.label, env.fonts.message, max);
     labels.set(box, text);
     labelHeight = Math.max(labelHeight, text.height);
-    const min = Math.max(total, text.width + 2 * m.wrapPadding);
+    // In cells the title sits on the border: room for a border run and a space either side.
+    const min = Math.max(total, text.width + 2 * m.wrapPadding + m.frameLabelSlack);
     margins.set(box, m.boxTextMargin.x + Math.max(0, m.half(min - total)));
   }
   return { labels, margins, labelHeight };
@@ -155,17 +172,29 @@ export interface BoxGeom {
   width: number;
 }
 
-/** Places the visible columns left to right, boxes around their members, at the current row. */
+/** Room a box takes beyond its margins on each side: what a first layout in cells overran. */
+export interface BoxGrowth {
+  readonly left: number;
+  readonly right: number;
+}
+
+/**
+ * Places the visible columns left to right, boxes around their members, at the current row.
+ * `grow` widens boxes on one side (cells only; layout.ts).
+ */
 export function placeColumns(
   model: SequenceModel,
   env: Env,
   sizes: BoxSizes,
-  b: Bounds
+  b: Bounds,
+  grow: ReadonlyMap<SequenceBox, BoxGrowth> = new Map()
 ): BoxGeom[] {
   const { m } = env;
   const out: BoxGeom[] = [];
   const geom = new Map<number, BoxGeom>();
-  const marginOf = (g: BoxGeom): number => sizes.margins.get(g.box) ?? 0;
+  const margin = (g: BoxGeom): number => sizes.margins.get(g.box) ?? 0;
+  const leftOf = (g: BoxGeom): number => margin(g) + (grow.get(g.box)?.left ?? 0);
+  const rightOf = (g: BoxGeom): number => margin(g) + (grow.get(g.box)?.right ?? 0);
   let prevWidth = 0;
   let prevMargin = 0;
   let prevBox: BoxGeom | undefined;
@@ -174,19 +203,19 @@ export function placeColumns(
     const index = c.p.box;
     const box = index === undefined ? undefined : model.boxes[index];
     let g = index === undefined ? undefined : geom.get(index);
-    if (prevBox && prevBox !== g) prevMargin += m.boxMargin.x + marginOf(prevBox);
+    if (prevBox && prevBox !== g) prevMargin += m.boxMargin.x + rightOf(prevBox);
     if (box && index !== undefined && !g) {
       g = { box, x: prevWidth + prevMargin, width: 0 };
       geom.set(index, g);
       out.push(g);
-      prevMargin += marginOf(g);
-    } else if (g && g !== prevBox) prevMargin += marginOf(g);
+      prevMargin += leftOf(g);
+    } else if (g && g !== prevBox) prevMargin += leftOf(g);
     if (c.p.createdBy !== undefined) prevMargin += m.half(c.width);
     c.x = prevWidth + prevMargin;
     c.top = b.y;
     b.insert(c.x, 0, c.x + c.width, c.height);
     prevWidth += c.width + prevMargin;
-    if (g) g.width = prevWidth + marginOf(g) - g.x;
+    if (g) g.width = prevWidth + rightOf(g) - g.x;
     prevMargin = c.margin;
     prevBox = g;
   }

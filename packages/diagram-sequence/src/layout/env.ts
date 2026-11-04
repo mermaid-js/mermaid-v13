@@ -6,7 +6,13 @@ import type { SequenceDiagramConfig } from '@mermaid-js/core/config';
 import type { RenderContext } from '@mermaid-js/core';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
-import type { ArrowKind, SequenceParticipant, SequenceStatement } from '../model.ts';
+import type {
+  ArrowKind,
+  SequenceMessage,
+  SequenceModel,
+  SequenceParticipant,
+  SequenceStatement,
+} from '../model.ts';
 import { FONT_WEIGHT, sequenceMetrics, type SequenceMetrics } from './metrics.ts';
 import type { PlacedLabel } from './types.ts';
 
@@ -45,7 +51,15 @@ export interface Env {
   /** `wrap` config: labels wrap unless they say `nowrap:`. */
   readonly autoWrap: boolean;
   readonly mirror: boolean;
+  /** `rightAngles` config; in cells every self loop is square, so it is not read there. */
   readonly rightAngles: boolean;
+  /** The sequence number of each numbered message (v12 `autonumber`, `showSequenceNumbers`). */
+  readonly numbers: ReadonlyMap<SequenceMessage, number>;
+  /**
+   * The text a message's label is measured and drawn from: its own, and in cells its sequence
+   * number in front (`1. Hello`), which SVG draws in a badge on the line instead.
+   */
+  messageText(s: SequenceMessage): string;
   readonly columns: ReadonlyMap<string, Column>;
   /** Participant ids in declaration order, hidden ones included: v12's neighbours. */
   readonly order: readonly string[];
@@ -145,19 +159,56 @@ export function fontsOf(
   };
 }
 
+const orKeep = (v: number | undefined, current: number): number =>
+  v === undefined || v === 0 || Number.isNaN(v) ? current : v;
+
+/**
+ * v12's message numbers: from 1 by 1, restarted by `autonumber [start [step]]`, shown while
+ * `autonumber` (or `showSequenceNumbers`) is on. A message naming an undeclared participant
+ * still takes its number (rows.ts leaves it out).
+ */
+export function sequenceNumbers(
+  statements: readonly SequenceStatement[],
+  seq: Readonly<SequenceDiagramConfig>
+): Map<SequenceMessage, number> {
+  const out = new Map<SequenceMessage, number>();
+  let index = 1;
+  let step = 1;
+  let shown = seq.showSequenceNumbers === true;
+  for (const s of walk(statements)) {
+    if (s.kind === 'autonumber') {
+      index = orKeep(s.start, index);
+      // v12: `autonumber N` restarts the step at 1.
+      step = orKeep(s.step ?? (s.start === undefined ? undefined : 1), step);
+      shown = s.visible || seq.showSequenceNumbers === true;
+    } else if (s.kind === 'message') {
+      if (shown) out.set(s, index);
+      // v12 rounds to two decimals against floating point drift.
+      index = Math.round((index + step) * 100) / 100;
+    }
+  }
+  return out;
+}
+
 /** The shared state of one layout, before the columns are measured. */
-export function envOf(
-  ctx: SequenceLayoutContext,
-  participants: readonly SequenceParticipant[]
-): Omit<Env, 'columns'> {
+export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<Env, 'columns'> {
   const seq = ctx.config.sequence ?? {};
+  const { participants } = model;
+  const m = sequenceMetrics(ctx.units, seq);
+  const numbers = sequenceNumbers(model.statements, seq);
   return {
-    m: sequenceMetrics(ctx.units, seq),
+    m,
     fonts: fontsOf(ctx, (w) => ctx.warn(w)),
     seq,
     autoWrap: ctx.config.wrap === true || seq.wrap === true,
     mirror: seq.mirrorActors !== false,
-    rightAngles: seq.rightAngles === true,
+    rightAngles: !m.cells && seq.rightAngles === true,
+    numbers,
+    messageText: (s) => {
+      const n = m.cells ? numbers.get(s) : undefined;
+      if (n === undefined) return s.text;
+      return s.text === '' ? `${n}.` : `${n}. ${s.text}`;
+    },
     order: participants.map((p) => p.id),
     index: new Map(participants.map((p, i) => [p.id, i])),
     warn: (w) => ctx.warn(w),

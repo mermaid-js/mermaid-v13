@@ -141,17 +141,19 @@ const row = (x1: number, x2: number, y: number): Cell[] => {
 const textOf = (label: MeasuredLabel, i: number): string =>
   (label.lines[i] ?? []).map((r) => r.text).join('');
 
-/** Writes each line of a placed label, centred in the label's width. */
-function writeLabel(canvas: Canvas, p: PlacedLabel, prefix = '', after = false): void {
+/** How the lines of a label sit in its box: `messageAlign` / `noteAlign`, else centred. */
+export type Align = 'left' | 'center' | 'right';
+
+/** Writes each line of a placed label in the label's width, aligned as `align` says. */
+function writeLabel(canvas: Canvas, p: PlacedLabel, align: Align = 'center'): void {
   const { text } = p;
-  const extra = cellWidth(prefix);
   text.lines.forEach((_, i) => {
-    const own = textOf(text, i);
-    const x = p.x + Math.floor((p.width - cellWidth(own)) / 2);
-    // The sequence number goes in front of the first line, into the room left of it, or
-    // pushes the line right where there is none (a self message's label, right of its lifeline).
-    if (i === 0 && extra > 0) drawText(canvas, after ? x : x - extra, p.y, prefix + own);
-    else drawText(canvas, x, p.y + i, own);
+    const line = textOf(text, i);
+    const room = p.width - cellWidth(line);
+    let x = p.x + Math.floor(room / 2);
+    if (align === 'left') x = p.x;
+    else if (align === 'right') x = p.x + room;
+    drawText(canvas, x, p.y + i, line);
   });
 }
 
@@ -161,6 +163,23 @@ function writeCentred(canvas: Canvas, label: MeasuredLabel, x: number, width: nu
     const line = textOf(label, i);
     drawText(canvas, x + Math.floor((width - cellWidth(line)) / 2), y + i, line);
   });
+}
+
+/** The first column from which `length` cells of row `y` up to `to` are plain border. */
+function plainRun(
+  canvas: Canvas,
+  glyphs: GlyphSet,
+  from: number,
+  to: number,
+  y: number,
+  length: number
+): number | undefined {
+  let run = 0;
+  for (let x = from; x <= to; x++) {
+    run = canvas.get(x, y) === glyphs.solid.h ? run + 1 : 0;
+    if (run === length) return x - length + 1;
+  }
+  return undefined;
 }
 
 /** Clears a rectangle's cells to spaces (what a filled SVG shape hides). */
@@ -189,7 +208,8 @@ class Drawing {
 
   constructor(
     private readonly layout: SequenceLayout,
-    private readonly glyphs: GlyphSet
+    private readonly glyphs: GlyphSet,
+    private readonly align: { readonly message: Align; readonly note: Align }
   ) {
     this.columns = new Map(layout.participants.map((p) => [p.id, p]));
     this.dx = -layout.bounds.x;
@@ -278,7 +298,13 @@ class Drawing {
         }
       }
       const tab = this.at(f.tab);
-      this.labels.push(() => onBorder(canvas, r.x + 2, r.y, textOf(tab.text, 0), r.x, right));
+      // The keyword goes on the first stretch of plain border it fits, so the lifeline
+      // crossings (`┼`) stay; on none, right after the corner.
+      const keyword = textOf(tab.text, 0);
+      this.labels.push(() => {
+        const at = plainRun(canvas, glyphs, r.x + 1, right - 1, r.y, cellWidth(keyword) + 2);
+        onBorder(canvas, (at ?? r.x + 1) + 1, r.y, keyword, r.x, right);
+      });
       if (f.title) {
         const title = this.at(f.title);
         this.labels.push(() => writeLabel(canvas, title));
@@ -287,19 +313,12 @@ class Drawing {
   }
 
   private message(m: MessageLayout): void {
-    const { canvas } = this;
-    const y = m.y + this.dy;
-    const startX = m.startX + this.dx;
-    const stopX = m.stopX + this.dx;
     if (m.self) this.selfLoop(m, m.self);
     else this.line(m);
-    const number = m.number ? `${m.number.value}. ` : '';
+    // The layout put the sequence number in front of the label (`1. Hello`).
     if (m.label) {
       const label = this.at(m.label);
-      this.labels.push(() => writeLabel(canvas, label, number, m.self !== undefined));
-    } else if (number) {
-      const x = Math.min(startX, stopX) + 1;
-      this.labels.push(() => drawText(canvas, x, y - 1, number.trimEnd()));
+      this.labels.push(() => writeLabel(this.canvas, label, this.align.message));
     }
   }
 
@@ -319,8 +338,12 @@ class Drawing {
     for (let j = y + 1; j <= bottom; j++) cells.push({ x: right, y: j });
     cells.push(...row(right - 1, first, bottom));
     drawRun(canvas, glyphs, cells, m.arrow.includes('dotted'));
-    if (m.central) canvas.set(lifeline, y, glyphs.circle);
+    // `A()->>A` leaves from a circle, `A->>()A` comes back to one (mermaid-ascii: both rows).
+    const fromCircle = m.central === 'from' || m.central === 'both';
+    const toCircle = m.central === 'to' || m.central === 'both';
+    if (fromCircle) canvas.set(lifeline, y, glyphs.circle);
     else stub(canvas, glyphs, first - 1, y, RIGHT);
+    if (toCircle) canvas.set(lifeline, bottom, glyphs.circle);
     if (end) canvas.set(first, bottom, headGlyph(glyphs, end, LEFT));
     if (start) canvas.set(first, y, headGlyph(glyphs, start, LEFT));
   }
@@ -357,7 +380,7 @@ class Drawing {
       clear(canvas, r);
       drawBox(canvas, glyphs, r);
       const label = this.at(n.label);
-      this.labels.push(() => writeLabel(canvas, label));
+      this.labels.push(() => writeLabel(canvas, label, this.align.note));
     }
   }
 
@@ -384,13 +407,26 @@ class Drawing {
   }
 }
 
+export interface DrawOptions {
+  /** The front-matter title, for a diagram with no `title` statement of its own. */
+  readonly title?: string;
+  readonly messageAlign?: Align;
+  readonly noteAlign?: Align;
+}
+
 /**
  * Draws a sequence layout in cells. Returns the text: `\n` line ends, no trailing spaces, the
  * empty margin around the drawing trimmed, and `title` (the front-matter title, when the
  * diagram has no `title` statement of its own) centred on the first line.
  */
-export function drawSequence(layout: SequenceLayout, glyphs: GlyphSet, title?: string): string {
-  let lines = new Drawing(layout, glyphs).draw().split('\n');
+export function drawSequence(
+  layout: SequenceLayout,
+  glyphs: GlyphSet,
+  options: DrawOptions = {}
+): string {
+  const align = { message: options.messageAlign ?? 'center', note: options.noteAlign ?? 'center' };
+  let lines = new Drawing(layout, glyphs, align).draw().split('\n');
+  const title = options.title;
   while (lines.length > 0 && lines[0] === '') lines.shift();
   while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
   const margin = Math.min(...lines.filter((l) => l !== '').map((l) => l.search(/\S/)));

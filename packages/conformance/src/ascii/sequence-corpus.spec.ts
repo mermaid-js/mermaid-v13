@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { cellWidth } from '@mermaid-js/core/ascii';
+import { cellWidth, graphemes } from '@mermaid-js/core/ascii';
 import type { ArrowKind, SequenceModel, SequenceStatement } from '@mermaid-js/diagram-sequence';
 import { MermaidError } from 'mermaid';
 import { sequenceCorpus } from '../sequence/corpus.ts';
@@ -16,6 +16,36 @@ import type { Charset } from './structure.ts';
 // glyph in ASCII output.
 
 const CHARSETS: Charset[] = ['unicode', 'ascii'];
+
+/** The top-left corner of what a layout draws: where the trimmed text starts. */
+function originOf(l: SequenceAsciiResult['layout']): { x: number; y: number } {
+  const rects = [
+    ...l.participants,
+    ...l.boxes,
+    ...l.notes,
+    ...l.fragments,
+    ...l.messages.flatMap((m) => (m.label ? [m.label] : [])),
+    ...(l.title ? [l.title] : []),
+  ];
+  return {
+    x: Math.min(...rects.map((r) => r.x), ...l.messages.map((m) => Math.min(m.startX, m.stopX))),
+    y: Math.min(...rects.map((r) => ('top' in r ? r.top : r.y))),
+  };
+}
+
+/** A line as cells: wide graphemes take two, zero-width ones join the cell before. */
+function cellsOf(line: string): string[] {
+  const out: string[] = [];
+  for (const g of graphemes(line)) {
+    if (g.width === 0) {
+      if (out.length > 0) out[out.length - 1] += g.text;
+      continue;
+    }
+    out.push(g.text);
+    if (g.width === 2) out.push('');
+  }
+  return out;
+}
 
 interface Case {
   id: string;
@@ -129,6 +159,36 @@ describe('sequence ascii corpus properties (D100, R-ASCII-9)', () => {
           if (/\s$/u.test(l)) found.push(`trailing space on line ${i + 1}`);
         });
         if (text.includes('\r')) found.push('\\r in text');
+        return found;
+      })
+    ).toEqual({});
+  });
+
+  // Pitfall 20: text never lands on a box's sides (a line crossing one merges into it).
+  it('draws nothing but lines over the sides of a box', () => {
+    const sides = { unicode: '│┼├┤┆┃╂┠┨', ascii: '|+:I' };
+    const corners = { unicode: '┌', ascii: '+' };
+    expect(
+      perCharset((c, cs) => {
+        const { text, layout } = c.out[cs];
+        const rows = text.split('\n').map((r) => cellsOf(r));
+        const found: string[] = [];
+        const origin = originOf(layout);
+        for (const b of layout.boxes) {
+          // Layout cells to text cells: the text starts at the drawing's top-left content.
+          const x = b.x - origin.x;
+          const y = b.y - origin.y;
+          if (rows[y]?.[x] !== corners[cs]) {
+            found.push(`box ${b.ast}: no corner at row ${y + 1}, column ${x + 1}`);
+            continue;
+          }
+          for (let j = y + 1; j < y + b.height - 1; j++)
+            for (const col of [x, x + b.width - 1])
+              if (!sides[cs].includes(rows[j]?.[col] ?? ' '))
+                found.push(
+                  `box ${b.ast}: ${JSON.stringify(rows[j]?.[col])} at row ${j + 1}, column ${col + 1}`
+                );
+        }
         return found;
       })
     ).toEqual({});

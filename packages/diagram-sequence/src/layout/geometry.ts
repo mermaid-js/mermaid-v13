@@ -150,7 +150,7 @@ class XPass {
     const span = Math.abs(startx - stopx);
     const wrap = (s.wrap ?? this.env.autoWrap) && s.text !== '';
     const max = wrap ? Math.max(span + 2 * m.wrapPadding, m.wrapWidth) : Infinity;
-    const label = this.env.measure(s.text, this.env.fonts.message, max);
+    const label = this.env.measure(this.env.messageText(s), this.env.fonts.message, max);
     const all = [fromLeft, fromRight, toLeft, toRight];
     const own = wrap ? 0 : label.width + 2 * m.wrapPadding;
     return {
@@ -202,6 +202,11 @@ class XPass {
       const z = centerOf(env, to);
       width = Math.abs(a - z) + m.actorMargin;
       startx = Math.min(a, z) - m.half(m.actorMargin);
+      // In cells the text would run over the sides: the note grows to it, about its middle.
+      if (m.cells && text.width + pad > width) {
+        startx -= m.half(text.width + pad - width);
+        width = text.width + pad;
+      }
     }
     if (wrap) text = env.measure(s.text, font, width - 2 * m.wrapPadding);
     return { startx, width, label: text };

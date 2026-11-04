@@ -52,15 +52,32 @@ interface OpenBar {
   readonly seq: number;
 }
 
-/** As in v12, a start or step of 0 (or none) keeps the current one. */
-const orKeep = (v: number | undefined, current: number): number =>
-  v === undefined || v === 0 || Number.isNaN(v) ? current : v;
-
 /** Where the lifeline starts below the top of a column's symbol. */
 export function lifelineOffset(env: Env, c: Column): number {
   const { m } = env;
   if (c.p.kind === 'database') return c.height + m.databaseTextMargins * m.boxTextMargin.y;
   return Math.max(c.height, m.glyphLifeline[c.p.kind] ?? 0);
+}
+
+/**
+ * `x`, or the nearest place to it where a `w` wide label keeps a cell clear of every border
+ * column: inside the message's `span` when one is free there, else past it. Without borders
+ * (px) it is `x`.
+ */
+function clearOf(
+  borders: readonly number[],
+  x: number,
+  w: number,
+  span: readonly [number, number]
+) {
+  const clear = (at: number): boolean => borders.every((c) => c < at - 1 || c > at + w);
+  if (borders.length === 0 || clear(x)) return x;
+  const reach = span[1] - span[0] + w + borders.length * w;
+  for (const inside of [true, false])
+    for (let d = 1; d <= reach; d++)
+      for (const at of [x - d, x + d])
+        if ((!inside || (at >= span[0] && at + w <= span[1])) && clear(at)) return at;
+  return x;
 }
 
 export class Rows {
@@ -75,16 +92,14 @@ export class Rows {
   private readonly open: OpenBar[] = [];
   private readonly createdBy = new Map<AstId, Column>();
   private readonly destroyedBy = new Map<AstId, Column>();
-  private seqIndex = 1;
-  private seqStep = 1;
-  private numbers: boolean;
 
   constructor(
     private readonly env: Env,
     private readonly geometry: Geometry,
-    private readonly b: Bounds
+    private readonly b: Bounds,
+    /** Box border columns (cells only): message labels are placed clear of them. */
+    private readonly borders: readonly number[] = []
   ) {
-    this.numbers = env.seq.showSequenceNumbers === true;
     for (const c of env.columns.values()) {
       if (c.p.createdBy !== undefined) this.createdBy.set(c.p.createdBy, c);
       if (c.p.destroyedBy !== undefined) this.destroyedBy.set(c.p.destroyedBy, c);
@@ -111,10 +126,7 @@ export class Rows {
           this.rect(s);
           break;
         case 'autonumber':
-          this.seqIndex = orKeep(s.start, this.seqIndex);
-          // v12: `autonumber N` restarts the step at 1.
-          this.seqStep = orKeep(s.step ?? (s.start === undefined ? undefined : 1), this.seqStep);
-          this.numbers = s.visible || this.env.seq.showSequenceNumbers === true;
+          // Numbers are counted before the rows (env.ts `sequenceNumbers`).
           break;
       }
     }
@@ -190,7 +202,7 @@ export class Rows {
       const top = b.y - m.selfLoopRise + total;
       // Room for the loop itself, which reaches further than v12 reserved with a narrow width.
       const right = Math.max(g.stopx + dx, this.selfLoop(g, lineY).right);
-      b.insert(g.startx - dx, top, right, b.y + m.selfLoopAdvance + total);
+      b.insert(g.startx - dx, top, right, b.y + m.selfLoopReserve + total);
     } else {
       total += m.boxMargin.y;
       lineY = b.y + total;
@@ -252,10 +264,10 @@ export class Rows {
     const g = this.geometry.messages.get(s);
     if (!g) {
       this.unknown(s.ast, [s.from, s.to]);
-      this.seqIndex = Math.round((this.seqIndex + this.seqStep) * 100) / 100;
       return;
     }
     const { m, seq } = this.env;
+    const number = this.env.numbers.get(s);
     const self = s.from === s.to;
     const box = this.boxAt(s);
     const [starty, lineY] = this.boundMessage(g, self, box ? m.half(box.height) : 0);
@@ -277,13 +289,18 @@ export class Rows {
               // In cells a label centred on the lifeline would cut it: it starts right of it.
               self && m.cells
                 ? g.startx + m.lifelineHalf
-                : alignX(this.env, seq.messageAlign, span, label.width, m.wrapPadding),
+                : clearOf(
+                    this.borders,
+                    alignX(this.env, seq.messageAlign, span, label.width, m.wrapPadding),
+                    label.width,
+                    span
+                  ),
               starty + m.messageLead
             ),
           }
         : {}),
       ...(self ? { self: this.selfLoop(g, lineY) } : {}),
-      ...(this.numbers ? { number: { value: this.seqIndex, x: this.numberX(s, g) } } : {}),
+      ...(number !== undefined ? { number: { value: number, x: this.numberX(s, g) } } : {}),
       ...(s.central ? { central: s.central } : {}),
     };
     this.messages.push(layout);
@@ -292,8 +309,6 @@ export class Rows {
       const l = layout.label;
       this.b.insert(l.x, l.y, l.x + l.width, l.y + l.height);
     }
-    // v12 rounds to two decimals against floating point drift.
-    this.seqIndex = Math.round((this.seqIndex + this.seqStep) * 100) / 100;
     if (s.activation === 'activate') this.activate(s.to, undefined, s.ast);
     else if (s.activation === 'deactivate') this.deactivate(s.from);
     if (s.central === 'to' || s.central === 'both') this.activate(s.to, undefined, s.ast);
@@ -445,7 +460,11 @@ export class Rows {
         ? {
             title: placed(
               title,
-              r.x + m.half(m.labelBoxWidth) + m.half(r.width) - m.half(title.width),
+              this.inFrame(
+                r,
+                r.x + m.half(m.labelBoxWidth) + m.half(r.width) - m.half(title.width),
+                title.width
+              ),
               textY(r.y)
             ),
           }
@@ -454,10 +473,21 @@ export class Rows {
         ...(sec.ast !== undefined ? { ast: sec.ast } : {}),
         y: sec.y,
         ...(sec.text
-          ? { label: placed(sec.text, r.x + m.half(r.width - sec.text.width), textY(sec.y)) }
+          ? {
+              label: placed(
+                sec.text,
+                this.inFrame(r, r.x + m.half(r.width - sec.text.width), sec.text.width),
+                textY(sec.y)
+              ),
+            }
           : {}),
       })),
     };
+  }
+
+  /** A frame label's x, moved clear of the box borders inside the frame (cells only). */
+  private inFrame(r: Rect, x: number, w: number): number {
+    return clearOf(this.borders, x, w, [r.x + 1, r.x + r.width]);
   }
 
   private rect(s: SequenceRect): void {

@@ -10,7 +10,7 @@ import { ascii as asciiGlyphs, asciiOptions, cellMeasurer, unicode } from '@merm
 import { cellProfile } from '@mermaid-js/core/layout';
 import type { SequenceModel } from './model.ts';
 import { layoutSequence, type SequenceLayout } from './layout/index.ts';
-import { drawSequence } from './ascii/draw.ts';
+import { drawSequence, type Align } from './ascii/draw.ts';
 import { asciiWarnings } from './ascii/warnings.ts';
 
 export type {
@@ -41,8 +41,16 @@ export function ascii(
 ): string {
   const laid = layout.units === 'cell' ? layout : layoutAscii(model, ctx);
   const glyphs = asciiOptions(ctx.config).charset === 'ascii' ? asciiGlyphs : unicode;
-  const shown = new Set(laid.participants.map((p) => p.id));
-  for (const w of asciiWarnings(model, shown, ctx.ast)) ctx.warn(w);
+  const config = (ctx.config.sequence ?? {}) as Readonly<Record<string, unknown>>;
+  const warnings = asciiWarnings(model, laid, { ast: ctx.ast, charset: glyphs.name, config });
+  for (const w of warnings) ctx.warn(w);
   // The diagram's own `title` statement is laid out; else the front-matter title goes on top.
-  return drawSequence(laid, glyphs, laid.title ? undefined : ctx.title);
+  const seq = ctx.config.sequence ?? {};
+  const align = (v: unknown): Align | undefined =>
+    v === 'left' || v === 'center' || v === 'right' ? v : undefined;
+  return drawSequence(laid, glyphs, {
+    ...(laid.title || ctx.title === undefined ? {} : { title: ctx.title }),
+    ...(align(seq.messageAlign) ? { messageAlign: align(seq.messageAlign) } : {}),
+    ...(align(seq.noteAlign) ? { noteAlign: align(seq.noteAlign) } : {}),
+  });
 }

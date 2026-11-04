@@ -61,6 +61,11 @@ export interface FixedLengths {
   readonly selfLoopSquareDrop: number;
   /** Room a self message takes below its line. */
   readonly selfLoopAdvance: number;
+  /**
+   * What frames and bounds hold below a self message's rows: v12 counts the advance again
+   * (px 30); in cells nothing more, so a frame closes one row below the loop.
+   */
+  readonly selfLoopReserve: number;
   /** How far above its row a self message reaches in the frame bounds. */
   readonly selfLoopRise: number;
   /** Half a lifeline's stroke: a message starts this far from the lifeline. */
@@ -187,6 +192,7 @@ const PX: MetricsTable = {
     selfLoopDrop: 20,
     selfLoopSquareDrop: 25,
     selfLoopAdvance: 30,
+    selfLoopReserve: 30,
     selfLoopRise: 10,
     lifelineHalf: 1,
     arrowGap: 3,
@@ -272,6 +278,7 @@ const CELL: MetricsTable = {
     selfLoopDrop: 1,
     selfLoopSquareDrop: 1,
     selfLoopAdvance: 2,
+    selfLoopReserve: 0,
     selfLoopRise: 1,
     lifelineHalf: 1,
     arrowGap: 0,

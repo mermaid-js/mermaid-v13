@@ -11,12 +11,15 @@
  * figure; a `deactivate` with nothing open is ignored; a lifeline without a bottom box ends
  * where the bottom boxes would start.
  *
- * In cells (text output, #150) three things differ from px beyond the metrics: a self message's
- * label starts right of its lifeline instead of centred across it (the column gap holds all of
- * it), fragment titles are not wrapped to the fragment's reach (the frame grows to hold them),
- * and frames keep `frameMarginX` more room around what they hold.
+ * In cells (text output, #150) more differs from px than the metrics: a self message's label
+ * starts right of its lifeline instead of centred across it (the column gap holds all of it);
+ * fragment titles are not wrapped to the fragment's reach (the frame grows to hold them);
+ * frames keep `frameMarginX` more room; a message label carries its sequence number (`1. `) and
+ * is measured with it; `rightAngles` is not read (text loops are square anyway); a note over
+ * two participants fits its text; message and frame labels move clear of box borders; and a
+ * box whose members' self messages or notes overran it is laid out again, wider.
  */
-import type { SequenceModel } from '../model.ts';
+import type { SequenceBox, SequenceModel } from '../model.ts';
 import { Bounds } from './bounds.ts';
 import {
   actorMargins,
@@ -25,6 +28,7 @@ import {
   measureColumns,
   placeColumns,
   type BoxGeom,
+  type BoxGrowth,
   type BoxSizes,
 } from './columns.ts';
 import {
@@ -41,7 +45,45 @@ import type { BoxLayout, ParticipantLayout, PlacedLabel, Rect, SequenceLayout } 
 
 /** Lays out a sequence diagram in the context's units. */
 export function layoutSequence(model: SequenceModel, ctx: SequenceLayoutContext): SequenceLayout {
-  const base = envOf(ctx, model.participants);
+  const first = layoutOnce(model, ctx);
+  if (first.units !== 'cell' || first.boxes.length === 0) return first;
+  // In cells a box border is a line of cells that text must not cut: a box whose own self
+  // messages or notes overran it is laid out again, that much wider.
+  const grow = boxGrowth(model, first);
+  return grow.size === 0 ? first : layoutOnce(model, ctx, grow);
+}
+
+/** How far each box's members' self messages and notes reach past its sides, and a space. */
+function boxGrowth(model: SequenceModel, layout: SequenceLayout): Map<SequenceBox, BoxGrowth> {
+  const out = new Map<SequenceBox, BoxGrowth>();
+  for (const box of layout.boxes) {
+    const members = new Set(box.participants);
+    const right = box.x + box.width - 1;
+    let lo = box.x;
+    let hi = right;
+    for (const msg of layout.messages) {
+      if (!msg.self || !members.has(msg.from)) continue;
+      const label = msg.label ? msg.label.x + msg.label.width - 1 : 0;
+      hi = Math.max(hi, msg.self.right + 2, label + 2);
+    }
+    for (const n of layout.notes) {
+      if (!n.participants.every((id) => members.has(id))) continue;
+      lo = Math.min(lo, n.x - 2);
+      hi = Math.max(hi, n.x + n.width + 1);
+    }
+    const owner = model.boxes.find((b) => b.ast === box.ast);
+    if (owner && (lo < box.x || hi > right))
+      out.set(owner, { left: box.x - lo, right: hi - right });
+  }
+  return out;
+}
+
+function layoutOnce(
+  model: SequenceModel,
+  ctx: SequenceLayoutContext,
+  grow?: ReadonlyMap<SequenceBox, BoxGrowth>
+): SequenceLayout {
+  const base = envOf(ctx, model);
   const env: Env = { ...base, columns: measureColumns(model, base) };
   const { m } = env;
   actorMargins(model, env);
@@ -54,11 +96,14 @@ export function layoutSequence(model: SequenceModel, ctx: SequenceLayoutContext)
     b.bump(m.boxMargin.y);
     if (shown.some((box) => box.label !== '')) b.bump(sizes.labelHeight);
   }
-  const boxes = placeColumns(model, env, sizes, b);
+  const boxes = placeColumns(model, env, sizes, b, grow);
   const rowHeight = [...env.columns.values()][0]?.height ?? m.height;
   b.bump(rowHeight);
 
-  const rows = new Rows(env, geometryOf(model.statements, env), b);
+  // The columns of the box borders, which labels keep clear of in cells.
+  const pad = 2 * m.boxMargin.x;
+  const borders = m.cells ? boxes.flatMap((g) => [g.x - pad, g.x + g.width + pad - 1]) : [];
+  const rows = new Rows(env, geometryOf(model.statements, env), b, borders);
   rows.statements(model.statements);
 
   // The bottom row: mirrored boxes, or where they would be; below the tail of any activation.
