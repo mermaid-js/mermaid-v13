@@ -1,40 +1,80 @@
 /**
  * Front matter in the service (DESIGN §4.5, R-LANG-5, D96): the YAML node tree of the front
  * matter (the reader's tree mode, which keeps reading after an error), the key under an
- * offset, and the unknown-key warnings of `config:` checked against the config JSON schema.
- * `%%{init}%%` directives keep their preprocess diagnostics only.
+ * offset, and the config warnings of `config:`. The warnings are core's own (`resolveText`,
+ * as a render resolves the front matter), placed on the keys they name. `%%{init}%%`
+ * directives keep their preprocess diagnostics only.
  */
+import { CORE_DEFAULTS, resolveSite, resolveText } from '@mermaid-js/core/config';
+import type { ConfigWarning, ResolvedSite } from '@mermaid-js/core/config';
 import type { Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 import { parseYaml } from '@mermaid-js/core/preprocess';
 import type { YamlMapNode, YamlNode, YamlPair } from '@mermaid-js/core/preprocess';
 import type { DocumentContext } from '../context.ts';
+import { firstPartyFacets } from '../generated/facets.gen.ts';
 import { SchemaView, annotationOf } from './schema.ts';
 import type { SchemaNode } from './schema.ts';
 
 /** The front matter of one snapshot, read once. */
 export interface FrontMatterTree {
-  /** The whole block, fences included. */
+  /** The whole block, fences included; an unclosed one runs to the end of the text. */
   readonly range: Range;
-  /** The YAML between the fences. */
+  /** The YAML between the fences (to the end of the text when unclosed). */
   readonly yamlRange: Range;
   /** The fence's indent, which every YAML line shares. */
   readonly indent: number;
+  /** No closing fence: the block runs to the end of the text, as preprocess reads it. */
+  readonly unclosed: boolean;
   /** The document's root node; `null` when nothing could be read. */
   readonly root: YamlNode | null;
 }
 
+/** Where an unclosed front matter opens (preprocess reports it, with the opener as related). */
+function unclosedOpener(ctx: DocumentContext): number | undefined {
+  const d = ctx.pre.diagnostics.find((x) => x.code === 'UNCLOSED_FRONT_MATTER');
+  return d?.related?.[0]?.range.start;
+}
+
 export function frontMatterTree(ctx: DocumentContext): FrontMatterTree | undefined {
+  const { text } = ctx;
   const fm = ctx.pre.frontMatter;
-  if (fm === undefined) return undefined;
-  const fence = ctx.text.indexOf('---', fm.range.start);
-  const indent = ctx.text.slice(fm.range.start, fence);
-  const { root } = parseYaml(ctx.text, {
-    start: fm.yamlRange.start,
-    end: fm.yamlRange.end,
-    indent,
-    tree: true,
-  });
-  return { range: fm.range, yamlRange: fm.yamlRange, indent: indent.length, root };
+  let range: Range;
+  let yamlRange: Range;
+  let dash: number;
+  if (fm === undefined) {
+    const opener = unclosedOpener(ctx);
+    if (opener === undefined) return undefined;
+    dash = opener;
+    const lineStart = text.lastIndexOf('\n', dash - 1) + 1;
+    const nl = text.indexOf('\n', dash);
+    const yamlStart = nl < 0 ? text.length : nl + 1;
+    range = { start: lineStart, end: text.length };
+    yamlRange = { start: yamlStart, end: text.length };
+  } else {
+    range = fm.range;
+    yamlRange = fm.yamlRange;
+    dash = text.indexOf('---', fm.range.start);
+  }
+  const indent = text.slice(range.start, dash);
+  const read = parseYaml(text, { start: yamlRange.start, end: yamlRange.end, indent, tree: true });
+  return {
+    range,
+    yamlRange,
+    indent: indent.length,
+    unclosed: fm === undefined,
+    root: read.root,
+  };
+}
+
+/**
+ * The config section the renderer resolves this type's config with (mermaid's `sectionOf`:
+ * the plugin id): a first-party row's generated `section` (none for a type with no v13
+ * package), a third-party row's id.
+ */
+export function configSection(ctx: DocumentContext): string | undefined {
+  const entry = ctx.entry;
+  if (entry === undefined) return undefined;
+  return firstPartyFacets.includes(entry) ? entry.section : entry.id;
 }
 
 /** The mapping at a key path from the root (the first pair of a key), if there is one. */
@@ -112,66 +152,109 @@ export function liveKeys(props: Map<string, SchemaNode>): string[] {
     .map(([k]) => k);
 }
 
+/** Keys diagram text cannot set: core's integrator-only and secure keys (R-SEC-5, R-SEC-6). */
+export function secureKeys(): ReadonlySet<string> {
+  return siteFor(undefined).secure;
+}
+
+/** Sites by section: content-keyed, and frozen by core. */
+const sites = new Map<string, ResolvedSite>();
+
+/** The integrator side a render starts from, with no `initialize()`: core defaults, and the
+ * section (a third-party one is open, as its plugin's defaults make it in a render). */
+function siteFor(section: string | undefined): ResolvedSite {
+  const key = section ?? '';
+  let site = sites.get(key);
+  if (site === undefined) {
+    site = resolveSite(CORE_DEFAULTS, undefined, section ? { [section]: {} } : {}, { section });
+    sites.set(key, site);
+  }
+  return site;
+}
+
+/** Each mapping's first pair per key, built once per mapping (linear in its pairs). */
+const pairIndex = new WeakMap<YamlMapNode, Map<string, YamlPair>>();
+function pairOf(node: YamlMapNode, key: string): YamlPair | undefined {
+  let index = pairIndex.get(node);
+  if (index === undefined) {
+    index = new Map();
+    for (const p of node.pairs) if (!index.has(p.key)) index.set(p.key, p);
+    pairIndex.set(node, index);
+  }
+  return index.get(key);
+}
+
+/** The key (or list item) a warning path names, under `node`, and the keys on the way. */
+function locate(
+  node: YamlNode | undefined,
+  segments: readonly string[]
+): { range: Range; keys: string[] } | undefined {
+  if (node === undefined || segments.length === 0) return undefined;
+  if (node.kind === 'seq') {
+    const item = node.items[Number(segments[0])];
+    if (!/^\d+$/.test(segments[0]!) || item === undefined) return undefined;
+    if (segments.length === 1) return { range: item.range, keys: [] };
+    return locate(item, segments.slice(1));
+  }
+  if (node.kind !== 'map') return undefined;
+  // A key may hold dots itself: try the longest one first.
+  for (let n = segments.length; n > 0; n--) {
+    const key = segments.slice(0, n).join('.');
+    const pair = pairOf(node, key);
+    if (pair === undefined) continue;
+    if (n === segments.length) return { range: pair.keyRange, keys: [key] };
+    const inner = locate(pair.value, segments.slice(n));
+    if (inner !== undefined) return { range: inner.range, keys: [key, ...inner.keys] };
+  }
+  return undefined;
+}
+
 /**
- * Warnings for the keys of `config:` that a render would warn about (core `resolveConfig`):
- * unknown keys (with a "did you mean"), removed and moved keys. Keys with no value are skipped,
- * as `resolveConfig` skips them; so are lists and the keys of open objects (`themeVariables`).
+ * The config warnings a render gives for this front matter (core `resolveText`: unknown,
+ * removed, moved and secure keys, `look`, unsafe values), each on the key it names, an
+ * unknown one with a "did you mean" among the keys diagram text can set. None for an
+ * unclosed front matter or YAML with errors, which a render reads no config from.
  */
 export function configDiagnostics(
   ctx: DocumentContext,
   fm: FrontMatterTree | undefined
 ): Diagnostic[] {
-  const config = mapAt(fm?.root ?? null, ['config']);
-  if (config === undefined || ctx.schema === undefined) return [];
-  const schema = new SchemaView(ctx.schema);
-  const out: Diagnostic[] = [];
-  // A third-party diagram's own section is its business, as in `resolveSite`.
-  const ownSection =
-    ctx.entry !== undefined && schema.root.properties?.[ctx.entry.id] === undefined
-      ? ctx.entry.id
-      : undefined;
-
-  const walk = (map: YamlMapNode, node: SchemaNode, path: string) => {
-    const props = schema.properties(node);
-    let live: string[] | undefined;
-    for (const pair of map.pairs) {
-      const value = pair.value;
-      if (value === undefined || (value.kind === 'scalar' && value.value === null)) continue;
-      const at = path === '' ? pair.key : `${path}.${pair.key}`;
-      const child = props.get(pair.key);
-      if (child === undefined) {
-        if (path === '' && pair.key === ownSection) continue;
-        const hint = closest(pair.key, (live ??= liveKeys(props)));
-        out.push({
-          severity: 'warning',
-          code: 'CONFIG_UNKNOWN_KEY',
-          message: `Unknown config key "${at}"; ignored.${hint === undefined ? '' : ` Did you mean "${hint}"?`}`,
-          range: pair.keyRange,
-        });
-        continue;
-      }
-      const note = annotationOf(schema.resolve(child));
-      if (note.status === 'removed' || note.status === 'moved') {
-        const moved = note.status === 'moved';
-        out.push({
-          severity: 'warning',
-          code: moved ? 'CONFIG_MOVED_KEY' : 'CONFIG_REMOVED_KEY',
-          message: [
-            moved
-              ? `Config key "${at}" moved to ${note.movedTo ?? 'another package'}.`
-              : `Config key "${at}" was removed in ${note.since ?? 'v13'} and has no effect.`,
-            note.reason,
-            note.replacement === undefined ? undefined : `Replacement: ${note.replacement}.`,
-          ]
-            .filter((s) => s !== undefined)
-            .join(' '),
-          range: pair.keyRange,
-        });
-        continue;
-      }
-      if (value.kind === 'map' && schema.shape(child) === 'closed') walk(value, child, at);
+  // The config the render reads: none from YAML with errors (those errors are shown instead).
+  const config = fm === undefined || fm.unclosed ? undefined : ctx.pre.frontMatter?.config;
+  if (fm === undefined || config === undefined) return [];
+  const site = siteFor(configSection(ctx));
+  const warnings: ConfigWarning[] = [];
+  resolveText(site, config, [], { warn: (w) => warnings.push(w) });
+  const configPair =
+    fm.root?.kind === 'map' ? fm.root.pairs.find((p) => p.key === 'config') : undefined;
+  const fallback = configPair?.keyRange ?? fm.yamlRange;
+  const schema = ctx.schema === undefined ? undefined : new SchemaView(ctx.schema);
+  // The keys a hint may name, per parent path: settable keys only (not secure, not `look`).
+  const knownAt = new Map<string, string[]>();
+  const known = (keys: readonly string[]): string[] => {
+    const at = keys.join('\0');
+    let list = knownAt.get(at);
+    if (list === undefined) {
+      const parent = schema?.at(keys);
+      list =
+        parent === undefined || schema === undefined
+          ? []
+          : liveKeys(schema.properties(parent)).filter(
+              (k) => k !== 'look' && !(keys.length === 0 && site.secure.has(k))
+            );
+      knownAt.set(at, list);
     }
+    return list;
   };
-  walk(config, schema.root, '');
-  return out;
+  const out = warnings.map((w): Diagnostic => {
+    const hit = locate(configPair?.value, w.path.split('.'));
+    let message = w.message;
+    if (w.code === 'CONFIG_UNKNOWN_KEY' && hit !== undefined) {
+      const hint = closest(hit.keys.at(-1)!, known(hit.keys.slice(0, -1)));
+      if (hint !== undefined) message += ` Did you mean "${hint}"?`;
+    }
+    return { severity: 'warning', code: w.code, message, range: hit?.range ?? fallback };
+  });
+  // Source order, for the merge with the other diagnostics.
+  return out.sort((a, b) => a.range.start - b.range.start);
 }

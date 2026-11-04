@@ -1,15 +1,17 @@
 /**
  * Front-matter completion (D96): keys and values of block-style front matter. Top level:
- * `title`, `displayMode`, `config`. Under `config`: the schema's keys (removed and moved keys
- * left out), with `config.<type>` offered only for the detected diagram type (every section
- * while no type is detected yet). Values: the key's enum, or `true`/`false` for a boolean.
+ * `title`, `displayMode`, `config`. Under `config`: the schema's keys, leaving out removed and
+ * moved keys, the keys diagram text cannot set (core's secure list) and `look` (D153); a
+ * diagram section only when it is the one the renderer reads for the detected type (every
+ * section while no type is detected yet). Values: the key's enum, or `true`/`false`.
+ * Inserted text follows the document's line ends and the line's indent (tabs or spaces).
  *
  * The cursor's place comes from the text, not the tree: a key being typed is not YAML yet.
  * The parent keys are found by one backward scan over the lines above (linear).
  */
 import type { CompletionItem, Range } from '@mermaid-js/core/parser-kit';
 import type { DocumentContext } from '../context.ts';
-import { liveKeys, mapAt } from './front-matter.ts';
+import { configSection, liveKeys, mapAt, secureKeys } from './front-matter.ts';
 import type { FrontMatterTree } from './front-matter.ts';
 import { FRONT_MATTER_KEYS } from './hover.ts';
 import { SchemaView } from './schema.ts';
@@ -76,10 +78,22 @@ function yamlString(s: string): string {
   return plain ? s : `'${s.replace(/'/g, "''")}'`;
 }
 
-/** Whether a config path is inside another diagram type's section (`sequence` in a flowchart). */
-function otherSection(schema: SchemaView, path: readonly string[], type: string | undefined) {
-  const head = path[0];
-  return type !== undefined && head !== undefined && head !== type && schema.isDiagramSection(head);
+/** Whether a root config key is offered: a diagram section only when it is the type's own. */
+function offered(ctx: DocumentContext, schema: SchemaView, key: string): boolean {
+  if (key === 'look' || secureKeys().has(key)) return false;
+  if (!schema.isDiagramSection(key) || ctx.entry === undefined) return true;
+  return key === configSection(ctx);
+}
+
+/** Whether a config path is somewhere completion offers nothing (`sequence.*` in a flowchart). */
+function closedPath(ctx: DocumentContext, schema: SchemaView, path: readonly string[]): boolean {
+  return (path.length > 0 && !offered(ctx, schema, path[0]!)) || path.includes('look');
+}
+
+/** The document's line end, and the indent one level below `indent`. */
+function layout(text: string, fm: FrontMatterTree, indent: string): [string, string] {
+  const eol = text.slice(fm.range.start, fm.range.end).includes('\r\n') ? '\r\n' : '\n';
+  return [eol, indent + (indent.includes('\t') ? '\t' : '  ')];
 }
 
 function keyItems(
@@ -88,11 +102,12 @@ function keyItems(
   parent: readonly string[],
   range: Range,
   hasColon: boolean,
-  indent: number
+  indent: string
 ): CompletionItem[] {
+  const [eol, inner] = layout(ctx.text, fm, indent);
   const insert = (key: string, object: boolean) => {
     if (hasColon) return key;
-    return object ? `${key}:\n${' '.repeat(indent + 2)}` : `${key}: `;
+    return object ? `${key}:${eol}${inner}` : `${key}: `;
   };
   // Keys already in this mapping, other than the one being typed.
   const present = new Set(
@@ -115,17 +130,13 @@ function keyItems(
   if (parent[0] !== 'config' || ctx.schema === undefined) return [];
   const schema = new SchemaView(ctx.schema);
   const path = parent.slice(1);
-  const type = ctx.entry?.id;
-  if (otherSection(schema, path, type)) return [];
+  if (closedPath(ctx, schema, path)) return [];
   const node = schema.at(path);
   if (node === undefined || schema.shape(node) !== 'closed') return [];
   const props = schema.properties(node);
   return liveKeys(props)
-    .filter((key) => !present.has(key))
-    .filter(
-      (key) =>
-        path.length > 0 || type === undefined || key === type || !schema.isDiagramSection(key)
-    )
+    .filter((key) => !present.has(key) && key !== 'look')
+    .filter((key) => path.length > 0 || offered(ctx, schema, key))
     .map((key) => {
       const child = props.get(key)!;
       const description = schema.resolve(child).description?.trim();
@@ -145,12 +156,10 @@ function valueItems(ctx: DocumentContext, path: readonly string[], range: Range)
   const schema = new SchemaView(ctx.schema);
   const config = path.slice(1);
   let at: SchemaNode | undefined;
-  if (path.length === 1 && path[0] === 'displayMode') at = schema.at(['gantt', 'displayMode']);
-  else if (
-    path[0] === 'config' &&
-    config.length > 0 &&
-    !otherSection(schema, config, ctx.entry?.id)
-  )
+  // Top-level `displayMode` is `config.gantt.displayMode`: offered where gantt config is.
+  if (path.length === 1 && path[0] === 'displayMode') {
+    if (offered(ctx, schema, 'gantt')) at = schema.at(['gantt', 'displayMode']);
+  } else if (path[0] === 'config' && config.length > 0 && !closedPath(ctx, schema, config))
     at = schema.at(config);
   if (at === undefined) return [];
   const node = schema.resolve(at);
@@ -159,7 +168,7 @@ function valueItems(ctx: DocumentContext, path: readonly string[], range: Range)
   const values = node.enum ?? (types.includes('boolean') ? [true, false] : []);
   return values.map((v) => {
     const text = typeof v === 'string' ? yamlString(v) : JSON.stringify(v);
-    const doc = typeof v === 'string' ? docs[v] : undefined;
+    const doc = typeof v === 'string' && Object.hasOwn(docs, v) ? docs[v] : undefined;
     const item: CompletionItem = { label: text, kind: 'value', insertText: text, range };
     const withDetail = v === node.default ? { ...item, detail: 'default' } : item;
     return doc === undefined ? withDetail : { ...withDetail, documentation: doc };
@@ -180,8 +189,8 @@ export function frontMatterCompletions(
 
   const key = KEY_LINE.exec(prefix);
   if (key !== null) {
-    const indent = key[1]!.length;
-    const parent = parentPath(text, fm, lineStart, indent);
+    const indent = key[1]!;
+    const parent = parentPath(text, fm, lineStart, indent.length);
     if (parent === undefined) return [];
     const end = runEnd(text, offset, lineEnd, /[\w$-]/);
     const hasColon = /^[ \t]*:/.test(text.slice(end, lineEnd));
