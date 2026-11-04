@@ -10,5 +10,6 @@
 - **#30 → owner #33: a front matter that is one flow mapping does not recover.** In YAML tree mode an error anywhere in a root flow document (`{a: 1, a: 2}`) gives `root: null`, so no key in it gets a range. Block front matter recovers per entry. Fix in #33 only if a golden needs it (recover per flow entry in `Reader.flow`).
 - **#29 → owner #31: `LanguageFacet` lives in `@mermaid-js/core/parser-kit`** (diagram packages may import only core). The language-service package re-exports it and owns the service-side types.
 - **#29 → owner #32: `completions` and `hover` are not on `LanguageFacet` yet.** Add them, with `Probe`, `DocumentView`, `CompletionItem`, `HoverTarget` and `Hover`, as in DESIGN §4.5.
-- **#29 → owner #27: `flowchartLanguage.parse` ignores `probe`.** Wire it in when the kit probe lands.
 - **#29 → owner #31: `isValidId` checks lexing only.** Rename clash checks (D92) belong to the service.
+- **#27 → owner #32: probe edges.** `flowchart |` probes as a statement start (v12 lexes the blank as `NoDir`); `A --|` gives only edge text, with mode `edgeText`. Offer directions and arrow ends from the mode/context. See tickets/27.md.
+- **#27 → maintainer: D95 wording.** The probed token skips one that ends exactly at the offset with a non-word character (`:::`), so `A:::|` completes class names. Confirm or amend D95.
