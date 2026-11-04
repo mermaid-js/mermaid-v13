@@ -1,8 +1,7 @@
-import { Kind } from '@mermaid-js/core/parser-kit';
+import { cook, Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { lex } from './lexer.ts';
-import { cook, sourceView } from './source.ts';
+import { flowSourceView, lex } from './lexer.ts';
 
 export interface FlowToken {
   /** A `T` kind or a shared `Kind`. */
@@ -18,7 +17,7 @@ export interface FlowToken {
  */
 export function flowchartTokens(src: string): FlowToken[] {
   const pre = preprocess(src);
-  const view = sourceView(
+  const view = flowSourceView(
     src,
     pre.bodyStart,
     pre.directives.map((d) => d.range)
