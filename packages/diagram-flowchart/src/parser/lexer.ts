@@ -190,14 +190,28 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
 
   const bits = (i: number) => (mask ? (mask[i] ?? 0) : 0);
   const isQuote = (i: number) => text.charCodeAt(i) === DQUOTE && (bits(i) & QUOTE) === 0;
-  const nextQuote = (from: number) => {
-    let e = text.indexOf('"', from);
-    while (e !== -1 && e < lim && (bits(e) & QUOTE) !== 0) e = text.indexOf('"', e + 1);
-    return e === -1 || e > lim ? lim : e;
+  // `ch` at or after `start` and before `lim`, else `lim`. Only searches the current segment,
+  // so a text split by many removed spans is scanned once, not once per segment.
+  const find = (ch: string, start: number): number => {
+    if (lim >= n) {
+      const e = text.indexOf(ch, start);
+      return e === -1 ? lim : e;
+    }
+    const code = ch.charCodeAt(0);
+    for (let j = start; j < lim; j++) if (text.charCodeAt(j) === code) return j;
+    return lim;
   };
-  const upTo = (ch: string, from: number) => {
-    const e = text.indexOf(ch, from);
-    return e === -1 || e > lim ? lim : e;
+  const nextQuote = (from: number) => {
+    let e = find('"', from);
+    while (e < lim && (bits(e) & QUOTE) !== 0) e = find('"', e + 1);
+    return e;
+  };
+  const upTo = (ch: string, from: number) => find(ch, from);
+  // The last blank of the run at `q`, within the current segment.
+  const blankRunEnd = (q: number): number => {
+    let j = q;
+    while (j + 1 < lim && isSpace(text.charCodeAt(j + 1))) j++;
+    return j;
   };
   const emit = (kind: number, s: number, e: number): void => {
     const a = Math.min(s, len);
@@ -560,7 +574,9 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
         break;
       case LOWER_H:
         if (text.startsWith('href', p) && isSpace(text.charCodeAt(p + 4))) {
-          emit(T.Href, p, p + 5);
+          // v12 saw CRLF as one LF: `href[\s]` took the whole line break.
+          const crlf = text.charCodeAt(p + 4) === CR && text.charCodeAt(p + 5) === LF;
+          emit(T.Href, p, p + (crlf ? 6 : 5));
           return true;
         }
         break;
@@ -783,6 +799,9 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
       } else if (ch === LOWER_X || ch === LOWER_O || ch === LT || ch === b || isSpace(ch)) {
         const dd = linkChar(q);
         if ((dd === a || dd === b) && at(linkRe, q) >= 0) break;
+        // The link pattern opens with `\s*`: from any later blank of this run it reaches the
+        // same character and fails the same way, so the run is skipped (linear, R-PARSE-7).
+        if (isSpace(ch)) q = blankRunEnd(q);
       }
       q++;
     }
@@ -933,6 +952,8 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
             if (hasClass(CHARS, ch, ELLIPSE_STOP) || (ch === DQUOTE && isQuote(q))) break;
             if ((ch === DASH || ch === SLASH) && text.charCodeAt(q + 1) === RPAREN) break;
             if ((ch === TILDE || isSpace(ch)) && invisAhead(q) && at(RE_INVIS_LINK, q) >= 0) break;
+            // As in edgeText: `\s*~~~` fails alike from every blank of the run.
+            if (isSpace(ch)) q = blankRunEnd(q);
             q++;
           }
           emit(T.Text, p, q);

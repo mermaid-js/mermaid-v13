@@ -55,7 +55,7 @@ export function sourceView(src: string, from: number, directives: readonly Range
     mask[i] = (mask[i] ?? 0) | bit;
   };
   markTagQuotes(src, from, mark);
-  markDroppedSemicolons(src, from, mark, () => mask);
+  markDroppedSemicolons(src, from, directives, mark, () => mask);
   const removed = holes(src, from, directives);
   const m = mask;
   if (m) {
@@ -116,11 +116,13 @@ function lineEnds(src: string): (q: number) => number {
 
 /**
  * `style.*:\S*#.*;` then `classDef.*:\S*#.*;` (each global, `.` stops at line ends): the
- * match ends at the line's last `;`, which `encodeEntities` cut off.
+ * match ends at the line's last `;`, which `encodeEntities` cut off. v12 ran it after removing
+ * directives, so a `;` inside a directive on the line is neither the cut one nor a stop.
  */
 function markDroppedSemicolons(
   src: string,
   from: number,
+  directives: readonly Range[],
   mark: (i: number, bit: number) => void,
   current: () => Uint8Array | undefined
 ): void {
@@ -129,9 +131,11 @@ function markDroppedSemicolons(
   const words = ['style', 'classDef'];
   const next = [-2, -2];
   const lineEnd = lineEnds(src);
+  const onLine = directivesOnLine(directives);
   let ls = from;
   while (ls <= src.length) {
     const le = lineEnd(ls);
+    const inDirective = onLine(ls, le);
     for (let w = 0; w < 2; w++) {
       const word = words[w] ?? '';
       if ((next[w] ?? 0) !== -1 && (next[w] ?? 0) < ls) next[w] = src.indexOf(word, ls);
@@ -144,6 +148,7 @@ function markDroppedSemicolons(
       for (let j = k + word.length; j < le; j++) {
         const c = src.charCodeAt(j);
         if (m !== undefined && ((m[j] ?? 0) & DROP) !== 0) continue;
+        if (inDirective(j)) continue;
         if (c === COLON) colon = true;
         else if (c === HASH && colon) {
           hash = j;
@@ -152,7 +157,7 @@ function markDroppedSemicolons(
       }
       if (hash < 0) continue;
       for (let j = le - 1; j > hash; j--) {
-        if (src.charCodeAt(j) === SEMI && !gone(j)) {
+        if (src.charCodeAt(j) === SEMI && !gone(j) && !inDirective(j)) {
           mark(j, DROP);
           break;
         }
@@ -161,6 +166,41 @@ function markDroppedSemicolons(
     if (le >= src.length) break;
     ls = le + (src.charCodeAt(le) === CR && src.charCodeAt(le + 1) === LF ? 2 : 1);
   }
+}
+
+/**
+ * For lines visited in order: whether an offset of the line `[ls, le)` is inside a directive.
+ * v12 removed directives before its style regexes ran.
+ */
+function directivesOnLine(directives: readonly Range[]) {
+  let d = 0;
+  return (ls: number, le: number): ((x: number) => boolean) => {
+    while (d < directives.length && (directives[d] as Range).end <= ls) d++;
+    const line: Range[] = [];
+    for (let i = d; i < directives.length && (directives[i] as Range).start < le; i++)
+      line.push(directives[i] as Range);
+    return line.length === 0 ? () => false : (x) => line.some((r) => r.start <= x && x < r.end);
+  };
+}
+
+// The directives no comment swallowed, merged into `comments` in source order. Both are sorted
+// and comments do not overlap, so one pass over each does it.
+function withDirectives(comments: Hole[], directives: readonly Range[], from: number): Hole[] {
+  const all: Hole[] = [];
+  let k = 0;
+  for (const r of directives) {
+    if (r.start < from) continue;
+    while (k < comments.length && (comments[k] as Hole).end <= r.start)
+      all.push(comments[k++] as Hole);
+    const h = comments[k];
+    if (h && h.start <= r.start && r.end <= h.end) continue;
+    // A comment that starts first but ends inside the directive sorts before it (as a stable
+    // sort did); it cannot reach a later directive.
+    if (h && h.start <= r.start) all.push(comments[k++] as Hole);
+    all.push({ start: r.start, end: r.end, kind: 'directive' });
+  }
+  while (k < comments.length) all.push(comments[k++] as Hole);
+  return all;
 }
 
 /** Directive spans plus the line comments v12 removed after them. */
@@ -208,15 +248,7 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
     if (e >= src.length) break;
     ls = e + (src.charCodeAt(e) === CR && src.charCodeAt(e + 1) === LF ? 2 : 1);
   }
-  // Merge in the directives that no comment swallowed, in source order.
-  const all: Hole[] = [...out];
-  for (const r of directives) {
-    if (r.start < from) continue;
-    if (!out.some((h) => h.start <= r.start && r.end <= h.end)) {
-      all.push({ start: r.start, end: r.end, kind: 'directive' });
-    }
-  }
-  return all.sort((a, b) => a.start - b.start);
+  return directives.length === 0 ? out : withDirectives(out, directives, from);
 }
 
 /**
