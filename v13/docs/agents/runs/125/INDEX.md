@@ -15,3 +15,13 @@
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
 - `GAPS.md`: unmet criteria per ticket.
 - `tickets/<n>.md`: handoffs.
+
+## Finish rule (maintainer)
+
+PR #164 stays a draft until all of these hold; then `gh pr ready 164 -R mermaid-js/mermaid-v13` (never merge it):
+1. Every ticket above is merged into `feature/125_sequence-diagram`.
+2. The final whole-branch `/code-review` has run and its findings are fixed.
+3. `pnpm check`, the full e2e suite and the bench run pass locally, under the locks.
+4. GAPS.md has nothing unmet, apart from items the maintainer accepted.
+5. The PR description carries these results and the bench load-path size (D110).
+The same report lists the `gh issue close` commands for the tickets.
