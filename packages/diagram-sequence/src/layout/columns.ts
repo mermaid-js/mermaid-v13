@@ -7,6 +7,11 @@ import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { SequenceBox, SequenceModel, SequenceNote, SequenceStatement } from '../model.ts';
 import type { Bounds } from './bounds.ts';
 import { nextOf, prevOf, walk, type Column, type Env } from './env.ts';
+import type { SequenceMetrics } from './metrics.ts';
+
+/** v12 `actorStackHeight`: glyph band, gap, label, gap. */
+export const bandStack = (m: SequenceMetrics, text: number): number =>
+  m.glyphBand + m.glyphLabelGap + text + m.labelLifelineGap;
 
 /** Measures every participant; every box gets the height of the tallest. */
 export function measureColumns(
@@ -25,7 +30,9 @@ export function measureColumns(
     );
     // v12 keeps a wrapped label at `width`; a word longer than that widens the box here.
     const width = Math.max(m.width, label.width + 2 * m.wrapPadding);
-    const height = Math.max(m.height, label.height + 2 * m.actorPadY);
+    // v12 neo: as tall as the glyph-gap-label-gap stack (`actorStackHeight`), every kind.
+    const stack = m.glyphBand > 0 ? bandStack(m, label.height) : 0;
+    const height = Math.max(m.height, label.height + 2 * m.actorPadY, stack);
     rowHeight = Math.max(rowHeight, height);
     columns.set(p.id, {
       p,

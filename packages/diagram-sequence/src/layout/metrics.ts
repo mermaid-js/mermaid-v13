@@ -11,6 +11,7 @@
  */
 import type { SequenceDiagramConfig } from '@mermaid-js/core/config';
 import { fromPx, type UnitProfile } from '@mermaid-js/core/layout';
+import type { Theme } from '@mermaid-js/core/theme';
 import type { ParticipantKind } from '../model.ts';
 
 export interface XY {
@@ -140,6 +141,14 @@ export interface FixedLengths {
    * cells v12's 150 px, so a box that fits its label does not wrap text one word per line.
    */
   readonly wrapMinWidth: number;
+  /** How far a `collections` stack's back rect sits left and below its front one. */
+  readonly stackOffset: number;
+  /** The radius of the round symbols (control, entity, boundary) in classic geometry. */
+  readonly figureRadius: number;
+  /** The band model (`ThemeLengths.glyphBand`): glyph to label (v12 `GLYPH_LABEL_GAP`). */
+  readonly glyphLabelGap: number;
+  /** The band model: label to lifeline (v12 `LABEL_LIFELINE_GAP`). */
+  readonly labelLifelineGap: number;
 }
 
 export interface MetricsTable {
@@ -208,8 +217,8 @@ const PX: MetricsTable = {
     glyphLifeline: { actor: 80, boundary: 80, control: 75, entity: 75 },
     databaseTextMargins: 2,
     // v12 `svgDraw.js` label rows: below the stack, the cylinder, the figure or the glyph.
+    // A `collections` label is centred in its front rect, `stackOffset` down.
     symbolLabelTop: {
-      collections: 6,
       database: 35,
       actor: 35,
       control: 34,
@@ -233,6 +242,10 @@ const PX: MetricsTable = {
     frameLabelSlack: 0,
     frameMarginX: 0,
     wrapMinWidth: 0,
+    stackOffset: 6,
+    figureRadius: 22,
+    glyphLabelGap: 6,
+    labelLifelineGap: 6,
   },
 };
 
@@ -311,8 +324,62 @@ const CELL: MetricsTable = {
     frameLabelSlack: 4,
     frameMarginX: 2,
     wrapMinWidth: 19,
+    stackOffset: 0,
+    figureRadius: 0,
+    glyphLabelGap: 0,
+    labelLifelineGap: 0,
   },
 };
+
+/**
+ * Lengths the theme sets (D152, #194): v12 `look: neo` geometry in the redux themes, v12
+ * classic in the classic themes, read from geometry theme variables, never from a theme name.
+ * `glyphBand` above 0 turns on v12's band model (`actorBands.ts`): every row is as tall as its
+ * tallest glyph-gap-label-gap stack (`glyphLabelGap`, `labelLifelineGap`), every lifeline starts
+ * at the row's bottom, the symbols stand on the band, scaled to it, and a `collections` stack is
+ * `stackOffset` shorter.
+ */
+export interface ThemeLengths {
+  /** `actorGlyphBand`: height of the band a symbol stands in; 0 keeps v12 classic symbols. */
+  readonly glyphBand: number;
+  /** `messageEndGap`: a message stops this far short of its target, past the arrowhead room. */
+  readonly messageEndGap: number;
+  /** `labelBoxExtraHeight`: added to a fragment's label tab. */
+  readonly labelBoxExtra: number;
+  /** `actorFooterPadding`: added below a drawing with participants. */
+  readonly footerPadding: number;
+}
+
+/** The theme variable behind each themed length. */
+const THEME_VARIABLES = {
+  glyphBand: 'actorGlyphBand',
+  messageEndGap: 'messageEndGap',
+  labelBoxExtra: 'labelBoxExtraHeight',
+  footerPadding: 'actorFooterPadding',
+} as const;
+
+// v12 classic: no band, no extras. A px layout given no theme draws this, and so does every
+// cell layout: text draws every symbol as a box, so it has no glyph band and no neo extras.
+const CLASSIC: ThemeLengths = {
+  glyphBand: 0,
+  messageEndGap: 0,
+  labelBoxExtra: 0,
+  footerPadding: 0,
+};
+
+/** The themed lengths for a profile: px from the theme's geometry variables (D152). */
+export function themeLengths(
+  units: UnitProfile,
+  theme: Pick<Theme, 'number'> | undefined
+): ThemeLengths {
+  if (units.id === 'cell' || !theme) return CLASSIC;
+  const out: Record<string, number> = { ...CLASSIC };
+  for (const [key, name] of Object.entries(THEME_VARIABLES)) {
+    const v = theme.number(name);
+    out[key] = Number.isFinite(v) && v > 0 ? Math.min(v, MAX_CONFIG) : 0;
+  }
+  return out as unknown as ThemeLengths;
+}
 
 /** The table for a unit profile. */
 export function metricsTable(units: UnitProfile): MetricsTable {
@@ -320,7 +387,7 @@ export function metricsTable(units: UnitProfile): MetricsTable {
 }
 
 /** The sequence layout's lengths for one render, in the profile's units. */
-export interface SequenceMetrics extends ConfigLengths, FixedLengths {
+export interface SequenceMetrics extends ConfigLengths, FixedLengths, ThemeLengths {
   readonly cells: boolean;
   /** What wrapped text fits: `width`, and at least `wrapMinWidth`. */
   readonly wrapWidth: number;
@@ -352,14 +419,18 @@ const SINGLE: Readonly<Record<string, Axis>> = {
 };
 const BOTH = ['boxMargin', 'boxTextMargin', 'noteMargin'] as const;
 
-/** Resolves the metrics for a profile and the `sequence` config section. */
+/**
+ * Resolves the metrics for a profile, the `sequence` config section and the theme's geometry
+ * variables (v12 classic without a theme).
+ */
 export function sequenceMetrics(
   units: UnitProfile,
-  config: Readonly<SequenceDiagramConfig> | undefined
+  config: Readonly<SequenceDiagramConfig> | undefined,
+  theme?: Pick<Theme, 'number'>
 ): SequenceMetrics {
   const table = metricsTable(units);
   const cfg = (config ?? {}) as Readonly<Record<string, unknown>>;
-  const out: Record<string, unknown> = { ...table.fixed };
+  const out: Record<string, unknown> = { ...table.fixed, ...themeLengths(units, theme) };
   const length = (key: string, axis: Axis, fallback: number, min: number): number => {
     const px = configNumber(cfg[key]);
     return px === undefined ? fallback : fromPx(units, px, axis, min);

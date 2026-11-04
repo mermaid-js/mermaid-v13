@@ -11,28 +11,36 @@ import { layoutSequence, sequenceLayoutViolations, type SequenceLayout } from '.
 
 // Inputs from the #141 review and its config fuzz, each of which broke an invariant.
 
+// `redux` carries v12 neo geometry, `default` v12 classic (#194).
 let spec: ThemeSpec;
+let classicSpec: ThemeSpec;
 beforeAll(async () => {
   spec = await loadTheme('redux');
+  classicSpec = await loadTheme('default');
 });
 
 function lay(
   m: SequenceModel,
   cell = false,
   sequence: Record<string, unknown> = {},
-  warnings: Warning[] = []
+  warnings: Warning[] = [],
+  theme: { classic?: boolean; vars?: Record<string, unknown> } = {}
 ): SequenceLayout {
   return layoutSequence(m, {
     config: { sequence } as ResolvedConfig,
     measurer: cell ? cellMeasurer : tableMeasurer,
     units: cell ? cellProfile() : pxProfile,
-    theme: createTheme(spec, {}),
+    theme: createTheme(theme.classic ? classicSpec : spec, { themeVariables: theme.vars ?? {} }),
     warn: (w) => warnings.push(w),
   });
 }
 
-const violations = (m: SequenceModel, cell = false, sequence: Record<string, unknown> = {}) =>
-  sequenceLayoutViolations(m, lay(m, cell, sequence));
+const violations = (
+  m: SequenceModel,
+  cell = false,
+  sequence: Record<string, unknown> = {},
+  theme: Parameters<typeof lay>[4] = {}
+) => sequenceLayoutViolations(m, lay(m, cell, sequence, [], theme));
 
 describe('sequence layout, review regressions', () => {
   it('a box centred on a destroying message clears the row above', () => {
@@ -180,10 +188,16 @@ describe('sequence layout, config fuzz', () => {
       if (rnd() < 0.3) cfg.mirrorActors = false;
       for (const k of ['rightAngles', 'wrap', 'hideUnusedParticipants'])
         if (rnd() < 0.3) cfg[k] = true;
+      // Both geometry sets, and now and then a glyph band of any height (#194).
+      const vars: Record<string, unknown> = {};
+      if (rnd() < 0.3) vars.actorGlyphBand = Math.floor(rnd() * 100);
+      const theme = { classic: i % 2 === 1, vars };
       for (const cell of [false, true])
         for (const [name, m] of Object.entries(FIXTURES))
-          for (const v of violations(m, cell, cfg))
-            found.add(`${cell ? 'cell' : 'px'} ${name}: ${v} ${JSON.stringify(cfg)}`);
+          for (const v of violations(m, cell, cfg, theme))
+            found.add(
+              `${cell ? 'cell' : 'px'} ${name}: ${v} ${JSON.stringify({ ...cfg, ...theme })}`
+            );
     }
     expect([...found].slice(0, 10)).toEqual([]);
   });

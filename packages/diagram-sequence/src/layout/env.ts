@@ -194,7 +194,7 @@ export function sequenceNumbers(
 export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<Env, 'columns'> {
   const seq = ctx.config.sequence ?? {};
   const { participants } = model;
-  const m = sequenceMetrics(ctx.units, seq);
+  const m = sequenceMetrics(ctx.units, seq, ctx.theme);
   const numbers = sequenceNumbers(model.statements, seq);
   return {
     m,

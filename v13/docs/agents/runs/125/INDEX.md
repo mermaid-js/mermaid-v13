@@ -6,7 +6,7 @@
 | T2 grammar, parser, model, AST | #139 | #137, #27, #28 | merged |
 | T3 custom layout | #141 | soft: #139 | merged |
 | T4 SVG renderer | #143 | #139, #141 | merged |
-| Neo geometry as theme variables | #194 | #143 | running |
+| Neo geometry as theme variables | #194 | #143 | merged |
 | T5 integration | #145 | #143, #194 | — |
 | Actor menus (plugin-interactions) | #147 | #143; never with class #158 (D112) | next, as a core-style T0: own branch from `mermaid-v13`, own draft PR into `mermaid-v13` (generic plugin side, collecting by AST node kind); sequence wiring lands on this branch; tell class #126 the PR number; merge `mermaid-v13` back after the maintainer merges it |
 | T6 language facet | #149 | #139, #29, #31 | merged |

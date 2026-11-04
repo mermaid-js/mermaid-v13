@@ -6,6 +6,7 @@ import type { SequenceModel } from '@mermaid-js/diagram-sequence';
 import { MermaidError, type Mermaid, type Prepared, type RenderResult } from 'mermaid';
 import { parseSvg, type SvgElement as SvgNode, type SvgView as SvgTree } from '../svg-tree.ts';
 import { sequenceCorpus } from './corpus.ts';
+import { pathPoints } from './path-bounds.ts';
 import { asTest, sequenceApi } from './render-api.ts';
 
 /**
@@ -14,11 +15,16 @@ import { asTest, sequenceApi } from './render-api.ts';
  * `deterministic: true`: well-formed XML, the allow-list, render-twice determinism, no
  * NaN/Infinity/undefined, every drawn coordinate inside the viewBox, no `foreignObject` and no
  * `<marker>`, and every participant, message, note, fragment, rect and box mapped to exactly
- * one `data-ast` element whose id resolves to an AST range (R-PARSE-8).
+ * one `data-ast` element whose id resolves to an AST range (R-PARSE-8). The corpus renders in
+ * a redux theme (v12 neo geometry) and a classic one (v12 classic geometry), #194.
  */
+
+/** One theme of each geometry set (D152): redux-color draws v12 neo, default v12 classic. */
+const THEMES = ['redux-color', 'default'] as const;
 
 interface Case {
   id: string;
+  theme: (typeof THEMES)[number];
   source: string;
   result: RenderResult & { tree: SvgTree };
   prepared: Prepared;
@@ -30,24 +36,29 @@ let api: Mermaid;
 
 beforeAll(async () => {
   api = await sequenceApi();
-  for (const item of await sequenceCorpus()) {
-    const source = asTest(item.source);
-    if (source === item.source) continue;
-    try {
-      const prepared = await api.prepare(source, { id: 'mermaid-0' });
-      const result = api.renderSync(source, { id: 'mermaid-0' });
-      cases.push({
-        id: item.id,
-        source,
-        result: { ...result, tree: parseSvg(result.svg) },
-        prepared,
-      });
-    } catch (e) {
-      if (!(e instanceof MermaidError)) throw new Error(`${item.id}: ${String(e)}`, { cause: e });
-      skipped.push({ id: item.id, reason: `${e.code}: ${e.message.split('\n')[0]}` });
+  const corpus = await sequenceCorpus();
+  for (const theme of THEMES) {
+    const themed = await sequenceApi(theme);
+    for (const item of corpus) {
+      const source = asTest(item.source);
+      if (source === item.source) continue;
+      try {
+        const prepared = await themed.prepare(source, { id: 'mermaid-0' });
+        const result = themed.renderSync(source, { id: 'mermaid-0' });
+        cases.push({
+          id: `${theme} ${item.id}`,
+          theme,
+          source,
+          result: { ...result, tree: parseSvg(result.svg) },
+          prepared,
+        });
+      } catch (e) {
+        if (!(e instanceof MermaidError)) throw new Error(`${item.id}: ${String(e)}`, { cause: e });
+        skipped.push({ id: item.id, reason: `${e.code}: ${e.message.split('\n')[0]}` });
+      }
     }
   }
-}, 120_000);
+}, 240_000);
 
 function wellFormed(svg: string): string | undefined {
   const parser = new SaxesParser({ xmlns: true });
@@ -57,14 +68,23 @@ function wellFormed(svg: string): string | undefined {
   return problem;
 }
 
-// Every coordinate an element draws at, in root user units (translate() only, as written).
-function extents(tree: SvgTree): { x: number; y: number }[] {
-  const out: { x: number; y: number }[] = [];
+/**
+ * v12's control symbol puts its arrowhead on top of the circle, so the head rises about 0.11 px
+ * over it; under the band model the circle touches the top of the band, so the head may poke
+ * that far past the viewBox. The only tolerance besides rounding.
+ */
+const CONTROL_HEAD_POKE = 0.12;
+
+// Every coordinate an element draws at, in root user units (translate() only, as written), and
+// how far past the viewBox it may lie.
+function extents(tree: SvgTree): { x: number; y: number; slack: number }[] {
+  const out: { x: number; y: number; slack: number }[] = [];
   const nums = (s: string | undefined): number[] =>
     s === undefined ? [] : (s.match(/-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/g) ?? []).map(Number);
-  const walk = (node: SvgNode, dx: number, dy: number): void => {
+  const walk = (node: SvgNode, dx: number, dy: number, control = false): void => {
     const tag = tree.tag(node);
     if (tag === undefined && node !== tree.root) return;
+    control ||= (tree.getAttr(node, 'class') ?? '').includes('participant-control');
     const at = (name: Parameters<SvgTree['getAttr']>[1]): number =>
       Number(tree.getAttr(node, name) ?? 0);
     const t = tree.getAttr(node, 'transform');
@@ -73,7 +93,8 @@ function extents(tree: SvgTree): { x: number; y: number }[] {
       dx += Number(m[1]);
       dy += Number(m[2]);
     }
-    const put = (x: number, y: number): void => void out.push({ x: x + dx, y: y + dy });
+    const slack = control && tag === 'polygon' ? CONTROL_HEAD_POKE : TOL;
+    const put = (x: number, y: number): void => void out.push({ x: x + dx, y: y + dy, slack });
     if (tag === 'rect') {
       put(at('x'), at('y'));
       put(at('x') + at('width'), at('y') + at('height'));
@@ -87,15 +108,11 @@ function extents(tree: SvgTree): { x: number; y: number }[] {
       const p = nums(tree.getAttr(node, 'points'));
       for (let i = 0; i + 1 < p.length; i += 2) put(p[i]!, p[i + 1]!);
     } else if (tag === 'path') {
-      const d = tree.getAttr(node, 'd') ?? '';
-      for (const seg of d.match(/[MLCQAZ][^MLCQAZ]*/g) ?? []) {
-        const p = nums(seg.slice(1));
-        if (seg.startsWith('A')) put(p[5]!, p[6]!);
-        else for (let i = 0; i + 1 < p.length; i += 2) put(p[i]!, p[i + 1]!);
-      }
+      // End points and the bulges of arcs and curves between them.
+      for (const p of pathPoints(tree.getAttr(node, 'd') ?? '')) put(p.x, p.y);
     } else if ((tag === 'text' || tag === 'tspan') && tree.getAttr(node, 'x') !== undefined)
       put(at('x'), at('y'));
-    for (const c of tree.children(node)) walk(c, dx, dy);
+    for (const c of tree.children(node)) walk(c, dx, dy, control);
   };
   walk(tree.root, 0, 0);
   return out;
@@ -111,9 +128,13 @@ function astIndex(ast: AstNode): Map<string, AstNode> {
   return index;
 }
 
+// The writer rounds coordinates to two decimals.
+const TOL = 0.01;
+
 describe('sequence render properties over the corpus', () => {
   it('renders the corpus', () => {
-    expect(cases.length).toBeGreaterThan(300);
+    for (const theme of THEMES)
+      expect(cases.filter((c) => c.theme === theme).length, theme).toBeGreaterThan(300);
     // Inputs v13 rejects are the parser's business (#139 parity); none fail to render.
     expect(skipped.filter((s) => !s.reason.startsWith('SYNTAX'))).toEqual([]);
   });
@@ -127,9 +148,10 @@ describe('sequence render properties over the corpus', () => {
   });
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
-    const m = await sequenceApi();
+    const fresh = new Map<string, Mermaid>();
+    for (const theme of THEMES) fresh.set(theme, await sequenceApi(theme));
     for (const c of cases) {
-      const again = await m.render('mermaid-0', c.source);
+      const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
     }
   });
@@ -153,10 +175,22 @@ describe('sequence render properties over the corpus', () => {
       const root = tree.find({ tag: 'svg' })[0]!;
       const [x, y, w, h] = tree.getAttr(root, 'viewBox')!.split(' ').map(Number);
       const out = extents(tree).filter(
-        (p) => p.x < x! - 0.5 || p.y < y! - 0.5 || p.x > x! + w! + 0.5 || p.y > y! + h! + 0.5
+        (p) =>
+          p.x < x! - p.slack ||
+          p.y < y! - p.slack ||
+          p.x > x! + w! + p.slack ||
+          p.y > y! + h! + p.slack
       );
       expect(out.slice(0, 3), c.id).toEqual([]);
     }
+  });
+
+  it('finds an arc bulge that an end-point walk misses', () => {
+    // A half ellipse from (0,10) to (20,10) bulging down to y 15: the end points stay at 10.
+    const ys = pathPoints('M0,10A10,5 0 0,0 20,10').map((p) => p.y);
+    expect(Math.max(...ys)).toBeCloseTo(15, 9);
+    const curve = pathPoints('M0,0C0,10 10,10 10,0').map((p) => p.y);
+    expect(Math.max(...curve)).toBeCloseTo(7.5, 9);
   });
 
   it('maps every participant, message, note, frame, rect and box to one data-ast element', () => {

@@ -73,7 +73,7 @@ export function renderSequence(
     paint: paints(ctx, layout),
     columns: new Map(layout.participants.map((p) => [p.id, p])),
     order: new Map(model.participants.map((p, i) => [p.id, i])),
-    m: sequenceMetrics(pxProfile, ctx.config.sequence),
+    m: sequenceMetrics(pxProfile, ctx.config.sequence, ctx.theme),
   };
   openRoot(scene);
   if (layout.boxes.length > 0) drawBoxes(scene);
@@ -234,7 +234,7 @@ function drawParticipant(scene: Scene, p: ParticipantLayout): void {
       stroke: paint.actor.line,
       'stroke-width': LIFELINE_STROKE,
     });
-  const symbol = { w, p, paint: paint.actor, tint, shadow: paint.shadow };
+  const symbol = { w, p, paint: paint.actor, tint, shadow: paint.shadow, m: scene.m };
   drawSymbol({ ...symbol, y: p.top }, 'top');
   if (p.bottom !== undefined) drawSymbol({ ...symbol, y: p.bottom }, 'bottom');
   w.close();
