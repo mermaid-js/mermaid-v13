@@ -22,14 +22,32 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 ## #153 (T1) → later tickets
 
 - #157 (T5): `@mermaid-js/diagram-class` is `"private": true`; make it public and add it to the changeset `fixed` group.
-- #154 (T2): add the class line to `PARITY_SUITES` with the model adapter.
+- #154 (T2): add the class line to `PARITY_SUITES` with the model adapter. Done (`classAdapter`, `feature/154_class-parser`): 711/711 agree, no divergences listed.
 - Not class-specific, for the maintainer: with a comment line straight after a multi-line `%%{`, v12 keeps the text, but core's preprocess still reads a directive (D67). The class lexer suite excludes that injection case.
 - Lexing is ~1 µs/char on token-dense lines (linear); size/speed work is for milestone close.
 
 ## #154 (T2) shared source view (D114)
+
+- 2026-11-04, #154: not switched. Core's `sourceView` gets 2 of the class lexer gate's hand-written cases wrong (see tickets/154.md); fixing it needs a core change, so `source.ts` stays until it is fixed. Asked the M3 coordinator who fixes core (state owns #181). A ready port onto `sourceView` is saved as `d114-v12-text.ts.txt` in this folder.
 
 - v12's input cleanup (offset-preserving source view, `packages/diagram-class/src/parser/source.ts`, a copy of flowchart's) moves into core's parser kit under the state spec's T0 (draft PR into `mermaid-v13`). Keep the class copy until that merges; then switch diagram-class to the shared one and delete the copy. Whichever of that T0 and #152 merges second rebases and reruns `pnpm check`.
 
 ## #153 (T1) stress spec under load
 
 - `packages/conformance/src/class/lexer-stress.spec.ts` (2 cases) failed, along with core's `preprocess/stress.spec.ts`, in one full run at load ~30 on 16 cores (2026-11-04, after merging #165). Both pass alone. Watch it; if it flakes again at normal load, give it more trials or a wider ratio.
+
+## #154 (T2) → later tickets
+
+- Front matter with invalid YAML: v12 rejects the diagram, v13 (core preprocess) accepts it. Found by mutation fuzzing; no corpus source has it. Not class-specific (core, every type).
+- v12 rejects `classDiagram` with no statement (its grammar needs one); v13 does too, for parity. A UX question for the maintainer, not a gap.
+
+## From the #154 review → #156 (T4), #158 (interactions), #157 (T5)
+
+- Sanitising: the oracle stubs DOMPurify, so parity can't see that real v12 ran `sanitizeText` on class ids, labels and member text (e.g. it likely strips `<T>` in `A : +List<T> items`). v13 escapes text in `SvgWriter` instead. #156 checks what flowchart did about this and lists the difference in MIGRATION.md. If it changes what a user sees beyond flowchart's precedent, it is a question for the maintainer.
+- Link target: under `securityLevel: 'sandbox'`, v12 forces `linkTarget` to `_top`. The model's `linkTarget` says "`_blank` when none given"; #158 must apply the sandbox rule, as for flowchart.
+- Not compared by parity: class `text`, `shape`, `domId` (render-side; #156).
+
+## #185 (core sourceView fix)
+
+- Draft PR #186 into `mermaid-v13`. After it merges, merge `mermaid-v13` here and switch diagram-class to `sourceView` (ready port: `d114-v12-text.ts.txt`), keeping class's `trimStart` and entity steps; delete `src/parser/source.ts`.
+- Not class: the flowchart parity harness never decodes v12's `#y;` placeholder in edge text (`flowchart LR\nA -- x:#y; --> B`); jison splits EDGE_TEXT per character and the harness decodes before merging tokens. No corpus string hits it.
