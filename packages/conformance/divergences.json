@@ -3,7 +3,7 @@
     "id": "sequence-cases/create-after-note",
     "inputHash": "sha256:b6e7fe70be6021ee",
     "kind": "model",
-    "reason": "v12 stored a created participant at the next row of any kind and drew it only when that row was its message, so a note between `create` and the message drew no creation; v13 draws it at the message that creates it (#139, MIGRATION.md).",
+    "reason": "v12 stored a created participant at the next row of any kind and drew it only when that row was its message, so a note between `create` and the message drew no creation; v13 draws it at the message that creates it (D123, #139, MIGRATION.md).",
     "owner": "#139",
     "since": "2026-11-04"
   },
@@ -11,7 +11,7 @@
     "id": "sequence-cases/destroy-then-create",
     "inputHash": "sha256:066a007122634d4e",
     "kind": "model",
-    "reason": "v12 stored a destroyed participant at the next row, which here is the message to the participant created in between, so it never drew the destruction; v13 ends it at the next message from or to it (#139, MIGRATION.md).",
+    "reason": "v12 stored a destroyed participant at the next row, which here is the message to the participant created in between, so it never drew the destruction; v13 ends it at the next message from or to it (D123, #139, MIGRATION.md).",
     "owner": "#139",
     "since": "2026-11-04"
   },
@@ -19,7 +19,7 @@
     "id": "sequence-cases/destroy-before-loop",
     "inputHash": "sha256:d49ac747ee4e03cb",
     "kind": "model",
-    "reason": "v12 stored a destroyed participant at the next row, here a fragment's start row, so it never drew the destruction; v13 ends it at the next message from or to it (#139, MIGRATION.md).",
+    "reason": "v12 stored a destroyed participant at the next row, here a fragment's start row, so it never drew the destruction; v13 ends it at the next message from or to it (D123, #139, MIGRATION.md).",
     "owner": "#139",
     "since": "2026-11-04"
   }

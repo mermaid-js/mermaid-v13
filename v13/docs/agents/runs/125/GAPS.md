@@ -27,6 +27,6 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 
 - [x] **Accepted (D119): first-paint colours via #190.** The CodeMirror and Monaco adapters colour first paint with flowchart's grammar for every type; picking the highlighter per type is cross-type ticket #190, after the M3 facets. #149 does not change the adapters.
 
-## Waiting on the maintainer
+## Resolved by the maintainer
 
-- The 3 listed create/destroy divergences (#139: `create-after-note`, `destroy-then-create`, `destroy-before-loop`), where v13 attaches the create/destroy to the right message and v12 drew nothing. Raised; kept as they are until answered.
+- [x] **D123: keep the fix.** The 3 create/destroy divergences (#139: `create-after-note`, `destroy-then-create`, `destroy-before-loop`) stand: v13 attaches `create`/`destroy` to the right message. Cited in `packages/conformance/divergences.json` and MIGRATION.md "Sequence syntax".
