@@ -4,11 +4,12 @@ import { erTokens } from '@mermaid-js/diagram-er';
 /**
  * Linear lexing (R-PARSE-7): every scan that can fail after reading ahead (blank runs, the
  * `.*direction` rules, `~…~` attribute types, unclosed quotes, comment lines after blank lines,
- * entities and style semicolons) is cached or skips what it read. The time for 4n characters
- * stays within a small multiple of the time for n (linear: 4, quadratic: 16), best of 7
- * after a warm-up run.
+ * entities and style semicolons) is cached or skips what it read. The time for 16n characters
+ * stays within a small multiple of the time for n (linear: 16, quadratic: 256), best of 7
+ * after a warm-up run. The wide spread keeps the bound clear of noise on a loaded machine,
+ * where a 4n/n ratio with a limit of 10 failed for scans that are linear.
  */
-const N = 40_000;
+const N = 20_000;
 const CASES: [string, (n: number) => string][] = [
   ['blanks in the initial state', (n) => 'erDiagram\nA' + ' '.repeat(n) + 'x'],
   ['an opener before a long blank run', (n) => 'erDiagram\naccTitle' + ' \n'.repeat(n) + 'x'],
@@ -39,7 +40,7 @@ function best(src: string): number {
 describe('ER lexer is linear', () => {
   it.each(CASES)('%s', { timeout: 60_000 }, (_, make) => {
     const small = best(make(N));
-    const large = best(make(4 * N));
-    expect(large / Math.max(small, 0.5)).toBeLessThan(10);
+    const large = best(make(16 * N));
+    expect(large / Math.max(small, 0.5)).toBeLessThan(64);
   });
 });
