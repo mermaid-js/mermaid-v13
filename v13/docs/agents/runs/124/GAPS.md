@@ -21,7 +21,7 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 ## #132 T3 layout (merged)
 
 - No unmet criteria. Fixed at merge: `grammar/generated/*` was gitignored and never committed, so `check:grammar` failed in fresh worktrees (the flaky push after #131). Now force-added, as flowchart's are.
-- Core `layered` gap, not in the corpus, flowchart has it too: an edge from a group to its own member puts the label on the member (`G ||--|| A`, A in G), and a group self-loop runs outside the drawing. Belongs to a core ticket, not this spec.
+- Core `layered` gap, not in the corpus, flowchart has it too: an edge from a group to its own member puts the label on the member (`G ||--|| A`, A in G). Belongs to a core ticket, not this spec. The other half, a group self-loop running outside the drawing, is fixed by #189 (merged in); `er-layout.spec.ts` now has an ER self-loop case, which fails in px without #189.
 
 ## #133 T4 SVG renderer (merged)
 
