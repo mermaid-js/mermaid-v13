@@ -7,7 +7,9 @@
  * - Peer dependencies of published packages are workspace packages only.
  * - A published package's `bin` sources import only `node:` builtins, relative files and
  *   workspace packages, so the CLI ships with no third-party code (R-PERF-2, D85).
- * - Private packages (conformance, bench, tools) are not published and are skipped.
+ * - Editor adapters (`language-service-<editor>`, R-LANG-2) declare no runtime dependencies,
+ *   published or not: the editor, the service and core are peers.
+ * - Other private packages (conformance, bench, tools) are not published and are skipped.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
@@ -32,10 +34,23 @@ const isZeroDependencyPackage = (dir: string) => {
   return name === 'core' || name === 'language-service' || name.startsWith('diagram-');
 };
 
+const isEditorAdapter = (dir: string) => basename(dir).startsWith('language-service-');
+
 export function findDependencyViolations(packages: WorkspacePackage[]): string[] {
   const workspaceNames = new Set(packages.map((p) => p.manifest.name));
   const violations: string[] = [];
   for (const { dir, manifest } of packages) {
+    if (isEditorAdapter(dir)) {
+      for (const dep of Object.keys({
+        ...manifest.dependencies,
+        ...manifest.optionalDependencies,
+      })) {
+        violations.push(
+          `${manifest.name}: runtime dependency "${dep}" is not allowed (editor adapters take their editor and the service as peers)`
+        );
+      }
+      continue;
+    }
     if (manifest.private) {
       continue;
     }

@@ -48,6 +48,20 @@ describe('runtime dependency check (R-PERF-2)', () => {
     ]);
   });
 
+  it('fails when an editor adapter declares a runtime dependency, even unpublished (R-LANG-2)', () => {
+    const adapter = (deps: Record<string, string>) =>
+      pkg('packages/language-service-codemirror', {
+        name: '@mermaid-js/language-service-codemirror',
+        private: true,
+        dependencies: deps,
+        peerDependencies: { '@codemirror/view': '^6', '@mermaid-js/core': 'workspace:^' },
+      });
+    expect(findDependencyViolations([core, adapter({})])).toEqual([]);
+    expect(findDependencyViolations([core, adapter({ '@codemirror/view': '^6' })])).toEqual([
+      '@mermaid-js/language-service-codemirror: runtime dependency "@codemirror/view" is not allowed (editor adapters take their editor and the service as peers)',
+    ]);
+  });
+
   it('fails when a diagram package depends on core at runtime instead of as a peer', () => {
     const bad = pkg('packages/diagram-flowchart', {
       name: '@mermaid-js/diagram-flowchart',
