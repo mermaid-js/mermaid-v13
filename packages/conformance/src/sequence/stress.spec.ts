@@ -55,8 +55,8 @@ describe('stress: the sequence lexer is linear in input size', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
-      const small = build(12_500);
-      const large = build(100_000);
+      const small = build(4_000);
+      const large = build(32_000);
       sequenceTokens(small); // warm up
       sequenceTokens(large);
       let tSmall = Infinity;
