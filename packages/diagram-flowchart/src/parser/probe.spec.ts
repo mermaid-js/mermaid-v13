@@ -114,6 +114,9 @@ describe('flowchart probe', () => {
     expect(probeAt('flowchart TD\nA\n\n|\n\nB').expected).toEqual(
       expect.arrayContaining(STATEMENTS)
     );
+    // A link takes the blanks after it: in them, the probe is at what follows the link.
+    expect(probeAt('flowchart TD\nA --> |\nB --> C').expected).toEqual(['NodeString', 'Pipe']);
+    expect(probeAt('flowchart TD\nA --> |').expected).toEqual(['NodeString', 'Pipe']);
     // A link may run over line breaks: past one, the probe is at the node after it.
     expect(probeAt('flowchart TD\nA -->\n|\n B').expected).toEqual(['NodeString', 'Pipe']);
   });

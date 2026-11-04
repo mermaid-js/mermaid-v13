@@ -6,8 +6,9 @@
  * The probed token: take the first significant token that ends at or after the offset; skip it
  * when it ends exactly at the offset and its kind is one the cursor follows rather than extends
  * (line breaks, blanks and the diagram's `follow` kinds: punctuation such as `:::`, `-->`, `[`),
- * or when its kind is followed and a line break lies between its start and the offset (an empty
- * line inside a run of line breaks is after the separator). If that token is part of a word, the probed token is the word's first token: a word is a run
+ * or when its kind is followed and the offset is in the blanks it took after its text (link
+ * tokens take them) or past a line break in it (an empty line inside a run of line breaks is
+ * after the separator). If that token is part of a word, the probed token is the word's first token: a word is a run
  * of adjacent tokens (no gap, no leading blank) none of which has a followed kind, so
  * `café` lexed as `caf` + `é` or `my-` as `my` + `-` is one word. The prefix is the text from
  * the probed token's start (leading blanks dropped) to the offset.
@@ -35,6 +36,8 @@ export interface ProbeResult {
   /** What was typed of the probed word before the offset; empty at a token boundary. */
   prefix: Range;
 }
+
+const isBlankOrLineEnd = (c: number) => isSpace(c) || isLineEnd(c);
 
 const NO_KINDS: KindSet = /* @__PURE__ */ new Uint8Array(0);
 
@@ -74,17 +77,16 @@ export class Probe {
   /** Whether a token is the probed token or after it, before words are joined. */
   private covers(start: number, end: number, kind: TokenKind): boolean {
     const o = this.offset;
-    if (end !== o) return end > o && !(start < o && this.follows(kind) && this.lineEndIn(start, o));
-    return start === end || !this.follows(kind);
-  }
-
-  /**
-   * Whether `[from, to)` holds a line break. A followed token (a line-break run, a link
-   * running over lines) that the offset is past a line break of is behind the cursor.
-   */
-  private lineEndIn(from: number, to: number): boolean {
-    for (let i = from; i < to; i++) if (isLineEnd(this.source.charCodeAt(i))) return true;
-    return false;
+    if (end < o || start === end) return end >= o;
+    if (!this.follows(kind)) return true;
+    if (end === o) return false;
+    // Behind the cursor: a followed token whose text (without the blanks it took after it)
+    // ends at or before the offset, or that the offset is past a line break of.
+    let text = end;
+    while (text > start && isBlankOrLineEnd(this.source.charCodeAt(text - 1))) text--;
+    if (text > start && text <= o) return false;
+    for (let i = start; i < o; i++) if (isLineEnd(this.source.charCodeAt(i))) return false;
+    return true;
   }
 
   /**

@@ -136,6 +136,20 @@ describe('Probe', () => {
     expect(hit(5)).toBe(2);
   });
 
+  it('a followed token the offset is in the trailing blanks of is behind the cursor', () => {
+    // `ab :::  |  cd`: the `:::` token took the blanks after it, as link tokens do (#32).
+    const src = 'ab :::    cd';
+    const w = new TokenWriter();
+    w.push(Word, 0, 2);
+    w.push(Kind.Space, 2, 3);
+    w.push(Colon, 3, 10);
+    w.push(Word, 10, 12);
+    const view = significantTokens(w.finish(src));
+    expect(probedIn(src, view, 5)).toBe(1); // inside `:::`
+    expect(probedIn(src, view, 6)).toBe(2); // right after it
+    expect(probedIn(src, view, 8)).toBe(2); // in its blanks
+  });
+
   it('records nothing with a cursor whose offset is inside a comment', () => {
     const src = 'a %% xy\nb';
     const w = new TokenWriter();
