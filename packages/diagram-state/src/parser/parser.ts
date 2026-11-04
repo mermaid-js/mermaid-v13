@@ -69,6 +69,7 @@ import {
 } from './tables.ts';
 import { blankAt, keyOf, multiWordMessage, trimColon } from './names.ts';
 import type { Scope } from './names.ts';
+import { clickInComposite, ignoredInComposite, scaleIgnored, undrawnNotices } from './notices.ts';
 import { splitRegions } from './regions.ts';
 import { terminals } from './terminals.ts';
 import type { Tokens } from './terminals.ts';
@@ -124,6 +125,7 @@ class StateParser {
   private readonly regionCount = new Map<string, number>();
   /** `state X` lines on their own, which v12 does not draw unless X is mentioned elsewhere. */
   private readonly declared: [string, Range][] = [];
+  private readonly clicks: [string, Range][] = []; // top-level `click` targets
   private lines: LineIndex | undefined;
   private dividers = 0;
   private hint: string | undefined;
@@ -163,16 +165,7 @@ class StateParser {
     this.document(undefined, { items, nodes: children });
     const warnings = () => st.diagnostics.list.filter((d) => d.severity === 'warning');
     const model = this.db.build(items, []);
-    const drawn = new Set(model.states.map((s) => s.id));
-    for (const [name, range] of this.declared) {
-      if (!drawn.has(name)) {
-        st.diagnostics.warning(
-          'STATE_NOT_DRAWN',
-          `\`state ${name}\` on its own declares nothing, so \`${name}\` is not drawn: mention it in a transition or give it a description, e.g. \`${name} : text\`.`,
-          range
-        );
-      }
-    }
+    undrawnNotices(this.st.diagnostics, model, this.declared, this.clicks);
     model.warnings = warnings();
     const ast: StateDocument = {
       id: 'doc',
@@ -450,6 +443,8 @@ class StateParser {
     switch (k) {
       case T.Id:
       case T.EdgeState:
+        if (k === T.Id)
+          clickInComposite(this.st.diagnostics, scope, this.text(from), this.own(from));
         return this.stateOrTransition(scope, doc);
       case T.ClassDef: {
         this.i++;
@@ -458,6 +453,7 @@ class StateParser {
         this.symbol(id, 'class', this.own(from + 1), 'def');
         items.push({ stmt: 'classDef', id, classes });
         nodes.push(this.simple('ClassDef', from, [id]));
+        ignoredInComposite(this.st.diagnostics, 'classDef', scope, nodes.at(-1)!.range);
         return;
       }
       case T.Style: {
@@ -467,6 +463,7 @@ class StateParser {
         this.refs(from + 1);
         items.push({ stmt: 'style', id, styleClass });
         nodes.push(this.simple('Style', from, id.split(',')));
+        ignoredInComposite(this.st.diagnostics, 'style', scope, nodes.at(-1)!.range);
         return;
       }
       case T.Class: {
@@ -478,6 +475,7 @@ class StateParser {
         this.symbol(styleClass, 'class', this.own(j), 'ref');
         items.push({ stmt: 'applyClass', id, styleClass });
         nodes.push(this.simple('Class', from, [...id.split(','), styleClass]));
+        ignoredInComposite(this.st.diagnostics, 'class', scope, nodes.at(-1)!.range);
         return;
       }
       case T.CompositeState: {
@@ -594,6 +592,7 @@ class StateParser {
         this.expect(WIDTH);
         items.push(NOOP);
         nodes.push(this.simple('Scale', from));
+        scaleIgnored(this.st.diagnostics, nodes.at(-1)!.range);
         return true;
       }
       default:
@@ -911,7 +910,8 @@ class StateParser {
     }
     this.expect(NL);
     const node = this.simple('Click', from, [name]);
-    doc.nodes.push(node);
     doc.items.push({ stmt: 'click', id, url, tooltip, ast: node.id });
+    doc.nodes.push(node);
+    this.clicks.push([name, node.range]); // top level only: in a composite it lexes as an id
   }
 }

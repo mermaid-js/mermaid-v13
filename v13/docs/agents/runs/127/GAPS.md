@@ -89,3 +89,10 @@ Unmet criteria and shared contracts, by owning ticket.
 ## Accepted (maintainer)
 
 - [x] **First-paint colours via #190** (D119, draft PR #191): the CodeMirror and Monaco adapters colour the first paint with flowchart's grammar for every diagram type. Choosing the highlighter per type is cross-type ticket #190, after the M3 facets land. #151 does not change the adapters.
+
+## #127 final review fixes
+
+- [ ] **Open (maintainer):** `A:::cls` as a statement on its own (any scope), and `A:::cls`
+  inside a composite, set no class: v12's `extract` applies `:::` only from top-level
+  transitions. v13 keeps that (parity) with no warning yet; the no-op warnings of the review
+  (`IGNORED_IN_COMPOSITE`, `LINK_NOT_DRAWN`, `SCALE_IGNORED`) do not cover it.

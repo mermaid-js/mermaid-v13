@@ -55,6 +55,17 @@ describe('state diagrams through the public API (#148)', () => {
     expect(state.configDefaults.layout).toBe('layered');
   });
 
+  it('warns for statements that do nothing (pitfall 22)', async () => {
+    const text =
+      'stateDiagram-v2\n  scale 300 width\n  state X {\n    a\n    class a c\n  }\n  click C "https://x" "t"\n';
+    const { warnings } = await createMermaid().render('s', text);
+    expect(warnings.map((w) => w.code)).toEqual([
+      'SCALE_IGNORED',
+      'IGNORED_IN_COMPOSITE',
+      'LINK_NOT_DRAWN',
+    ]);
+  });
+
   it('renders synchronously once prepared', async () => {
     const m = createMermaid();
     await m.prepare(V2);

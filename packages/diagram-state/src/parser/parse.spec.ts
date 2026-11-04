@@ -169,6 +169,49 @@ describe('state model', () => {
     ]);
   });
 
+  // Pitfall 22: a statement that does nothing says so.
+  it('warns for class, style, classDef and click inside a composite, which do nothing there', () => {
+    const src =
+      'stateDiagram-v2\n  classDef c fill:#f00\n  state X {\n    a:::c\n    class a c\n    style a fill:#0f0\n    classDef d fill:#00f\n    click a "https://x" "t"\n  }\n';
+    const r = parseState(src);
+    expect(r.diagnostics.map((d) => [d.severity, d.code])).toEqual([
+      ['warning', 'IGNORED_IN_COMPOSITE'],
+      ['warning', 'IGNORED_IN_COMPOSITE'],
+      ['warning', 'IGNORED_IN_COMPOSITE'],
+      ['warning', 'IGNORED_IN_COMPOSITE'],
+    ]);
+    const text = (d: { range: { start: number; end: number } }) =>
+      src.slice(d.range.start, d.range.end).trim();
+    expect(r.diagnostics.map(text)).toEqual([
+      'class a c',
+      'style a fill:#0f0',
+      'classDef d fill:#00f',
+      // v12's lexer has no `click` in a composite: the line is state names (parity), so only
+      // the word is flagged.
+      'click',
+    ]);
+    expect(r.diagnostics[0]!.message).toMatch(/`class` .*inside composite state `X`.*top level/);
+    // Still ignored, as in v12.
+    expect(r.model.states.find((s) => s.id === 'a')!.classes).toEqual([]);
+    expect(r.model.states.find((s) => s.id === 'a')!.styles).toEqual([]);
+    expect(r.model.links).toEqual([]);
+  });
+
+  it('warns for a click on a composite or on a state that is not drawn', () => {
+    const r = parseState(
+      'stateDiagram-v2\n  state X {\n    a\n  }\n  click X "https://x" "t"\n  click C href "https://y"\n  click a "https://z" "t"\n'
+    );
+    expect(r.diagnostics.map((d) => [d.code, d.message])).toEqual([
+      ['LINK_NOT_DRAWN', expect.stringMatching(/`X` is a composite state/)],
+      ['LINK_NOT_DRAWN', expect.stringMatching(/`C` is not drawn/)],
+    ]);
+  });
+
+  it('warns that scale does nothing', () => {
+    const r = parseState('stateDiagram-v2\n  scale 350 width\n  A --> B\n');
+    expect(r.diagnostics.map((d) => [d.severity, d.code])).toEqual([['warning', 'SCALE_IGNORED']]);
+  });
+
   it('drops a trailing empty region with one EMPTY_REGION warning per diagram (D115)', () => {
     const r = parseState(
       'stateDiagram-v2\n  state X {\n    A\n    --\n  }\n  state Y {\n    B\n    --\n  }\n'

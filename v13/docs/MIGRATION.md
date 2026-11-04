@@ -469,6 +469,12 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
   it) is not drawn. v12 split no regions there and drew each `--` as a stray, unlabelled
   `divider` node. v13 draws the composite without regions and gives one `EMPTY_REGION` warning
   per diagram (D115).
+- **Statements that do nothing now warn** (pitfall 22), and are accepted or rejected as in
+  v12: `classDef`, `class` and `style` inside a composite state (v12 reads them from the top
+  level only) warn `IGNORED_IN_COMPOSITE`, as does `click` there (v12's lexer reads that line
+  as state names); a top-level `click` on a composite or on a state that is not drawn warns
+  `LINK_NOT_DRAWN`; `scale … width` warns `SCALE_IGNORED`. Completion no longer offers
+  `classDef`, `class`, `style`, `click` or `scale` inside a composite.
 
 ## State diagram SVG structure
 

@@ -156,6 +156,8 @@ function byLine(c: Context): CompletionItem[] | undefined {
   return undefined;
 }
 
+const TOP_LEVEL_ONLY = new Set<number>([T.ClassDef, T.Class, T.Style, T.Click, T.Scale]);
+
 /** Keywords, operators and ids whose kinds the parser tests at the cursor. */
 function byKind(c: Context, probe: ProbeResult): CompletionItem[] {
   const from = probe.prefix.start;
@@ -165,8 +167,11 @@ function byKind(c: Context, probe: ProbeResult): CompletionItem[] {
     for (const h of HEADERS) items.add(h, 'keyword', { documentation: stateDocs[T.Sd] ?? '' });
     return items.list;
   }
+  // Inside a composite (`}` can follow) these statements do nothing (IGNORED_IN_COMPOSITE,
+  // SCALE_IGNORED): v12 reads them from the top level only, so they are not offered there.
+  const inComposite = expected.has(T.StructStop);
   for (const k of KEYWORDS) {
-    if (!expected.has(k.kind)) continue;
+    if (!expected.has(k.kind) || (inComposite && TOP_LEVEL_ONLY.has(k.kind))) continue;
     const documentation = stateDocs[k.kind];
     items.add(k.label, 'keyword', {
       insertText: k.insert ?? k.label,
