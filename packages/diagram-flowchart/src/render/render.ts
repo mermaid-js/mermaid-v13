@@ -263,10 +263,19 @@ export function renderFlowchart(
         d: path.d,
         'stroke-width': edge.stroke === 'thick' ? THICK : undefined,
         'stroke-dasharray': edge.stroke === 'dotted' ? DOTTED : undefined,
+        // v12 drew dotted edges with butt caps; the group's round caps close a 2px dash's gaps.
+        // Animated edges keep round caps, as v12's .edge-animation-* rules set them.
+        'stroke-linecap':
+          edge.stroke === 'dotted' && !edge.animate && !edge.animation ? 'butt' : undefined,
         ...e.style.shape,
         fill: 'none',
       });
-      const headPaint: Attrs = { fill: e.style.shape.stroke ?? P.arrow };
+      // The head fades with its line: opacity, and stroke-opacity as the head's fill-opacity.
+      const headPaint: Attrs = {
+        fill: e.style.shape.stroke ?? P.arrow,
+        opacity: e.style.shape.opacity,
+        'fill-opacity': e.style.shape['stroke-opacity'],
+      };
       marker(
         w,
         e.start,
