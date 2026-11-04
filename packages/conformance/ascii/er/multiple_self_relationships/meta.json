@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/er/multiple_self_relationships.txt",
+  "charset": "unicode"
+}

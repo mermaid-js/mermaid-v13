@@ -1,0 +1,13 @@
+erDiagram
+  |CUSTOMER \|\|--o{ ORDER : places
+  CUSTOMER[Customer] {
+    string name
+  }
+  style CUST|OMER fill:#f00
+  class CUSTOMER,ORDER |hot
+  classDef hot fill:#f96
+  ORDER:::hot
+  subgraph |G
+    PRODUCT
+  end
+  ORDER }\|--\|\| G| : in

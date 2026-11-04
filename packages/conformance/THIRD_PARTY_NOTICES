@@ -13,6 +13,12 @@ says how. mermaid-ascii is used under the MIT License:
   ascii/extended-chars
   ascii/multibyte
 
+The ASCII ER goldens below are ported the same way from cmd/testdata/{er,er-ascii} at the same
+commit (ascii/README.md, "ER goldens"):
+
+  ascii/er
+  ascii/er-ascii
+
 MIT License
 
 Copyright (c) 2023 Alexander Grooff

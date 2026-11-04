@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/er-ascii/classic_order_example.txt",
+  "charset": "ascii"
+}

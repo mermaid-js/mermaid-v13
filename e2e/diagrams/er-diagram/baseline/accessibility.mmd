@@ -1,0 +1,13 @@
+---
+title: Library
+description: front-matter title, accTitle and accDescr with a small schema
+---
+erDiagram
+  accTitle: Library schema
+  accDescr: Books, members and the loans between them
+  MEMBER ||--o{ LOAN : borrows
+  BOOK ||--o{ LOAN : "lent in"
+  BOOK {
+    string isbn PK
+    string title
+  }

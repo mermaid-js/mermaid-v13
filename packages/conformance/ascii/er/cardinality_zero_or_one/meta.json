@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/er/cardinality_zero_or_one.txt",
+  "charset": "unicode"
+}

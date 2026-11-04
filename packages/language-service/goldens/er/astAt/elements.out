@@ -1,0 +1,17 @@
+@ 3:5  |CUSTOMER ||--o{ ORDER : places
+  n:CUSTOMER 3:5-3:13 "CUSTOMER"
+  e:CUSTOMER>ORDER 3:5-3:35 "CUSTOMER ||--o{ ORDER : places"
+  s:G 2:3-4:6 "subgraph G [Group]\n    CUSTOMER ||--o{ ORDER : places\n  end"
+@ 3:17  CUSTOMER ||-|-o{ ORDER : places
+  e:CUSTOMER>ORDER 3:5-3:35 "CUSTOMER ||--o{ ORDER : places"
+  s:G 2:3-4:6 "subgraph G [Group]\n    CUSTOMER ||--o{ ORDER : places\n  end"
+@ 3:31  CUSTOMER ||--o{ ORDER : pl|aces
+  e:CUSTOMER>ORDER 3:5-3:35 "CUSTOMER ||--o{ ORDER : places"
+  s:G 2:3-4:6 "subgraph G [Group]\n    CUSTOMER ||--o{ ORDER : places\n  end"
+@ 6:12  string |id PK
+  a:ORDER.id 6:5-6:17 "string id PK"
+  n:ORDER@2 5:3-7:4 "ORDER {\n    string id PK\n  }"
+@ 8:24  style ORDER fill:#f00|
+  style:1 8:3-8:24 "style ORDER fill:#f00"
+@ 9:3  |
+  none

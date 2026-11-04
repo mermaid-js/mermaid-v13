@@ -1,0 +1,8 @@
+erDiagram
+    A["User account"] {
+      List~string~ roles
+      Map~K,V~ settings "per user"
+      string email UK
+    }
+    B["Profile"]
+    A ||--o| B : has

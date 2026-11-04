@@ -28,6 +28,8 @@ const theme: ThemeSpec = {
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
   },
+  // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
+  rules: { rowEven: 'lightenHsl(mainBkg, 20%)' },
   values: {
     altBackground: '#f0f0f0', // v12 (#192)
     textColor: '#000000',

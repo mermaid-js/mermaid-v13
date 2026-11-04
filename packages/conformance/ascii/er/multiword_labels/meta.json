@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/er/multiword_labels.txt",
+  "charset": "unicode"
+}

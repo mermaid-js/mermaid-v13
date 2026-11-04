@@ -1,0 +1,18 @@
+---
+description: 'classDef, class, the ::: shorthand and style on entities and a subgraph'
+---
+erDiagram
+  classDef hot fill:#ffd6d6,stroke:#cc0000,color:#660000
+  classDef cool fill:#d6e8ff,stroke:#0050cc
+  CUSTOMER:::hot ||--o{ ORDER : places
+  ORDER {
+    int id PK
+    string status
+  }
+  class ORDER cool
+  ORDER }|--|{ PRODUCT : lists
+  subgraph Store
+    PRODUCT
+  end
+  style PRODUCT fill:#fff3c4,stroke:#b38f00,stroke-width:3px
+  style Store fill:#f0fff0,stroke:#2e7d32

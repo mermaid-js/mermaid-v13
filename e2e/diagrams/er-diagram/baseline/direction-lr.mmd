@@ -1,0 +1,10 @@
+---
+description: left-to-right layout with labels, a self relationship and parallel relationships
+---
+erDiagram
+  direction LR
+  EMPLOYEE ||--o{ EMPLOYEE : manages
+  EMPLOYEE }|--|| DEPARTMENT : "works in"
+  DEPARTMENT ||--o{ PROJECT : runs
+  EMPLOYEE }o--o{ PROJECT : "assigned to"
+  EMPLOYEE }o--o{ PROJECT : leads

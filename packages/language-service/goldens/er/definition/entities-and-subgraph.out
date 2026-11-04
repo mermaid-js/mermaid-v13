@@ -1,0 +1,14 @@
+@ 2:19  CUSTOMER ||--o{ |ORDER : places
+  -> 2:19-2:24 "ORDER"
+@ 4:5  |ORDER {
+  -> 2:19-2:24 "ORDER"
+@ 8:3  |CUSTOMER }|--|| Sales : belongs
+  -> 2:3-2:11 "CUSTOMER"
+@ 8:21  CUSTOMER }|--|| Sa|les : belongs
+  -> 3:12-3:17 "Sales"
+@ 9:22  "LINE ITEM" ||--|| |CUSTOMER : x
+  -> 2:3-2:11 "CUSTOMER"
+@ 10:12  classDef |hot fill:#f96
+  -> 10:12-10:15 "hot"
+@ 11:12  ORDER:::h|ot
+  -> 10:12-10:15 "hot"

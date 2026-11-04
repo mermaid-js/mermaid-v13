@@ -1,0 +1,10 @@
+@ 2:12  subgraph |Sales [Sales team]
+  2:12-2:17 "Sales"
+  | **subgraph** `Sales`
+  |
+  | Title: `Sales team` · 2 members · Direction: `LR`
+@ 7:21  CUSTOMER ||--o{ Sa|les : in
+  7:19-7:24 "Sales"
+  | **subgraph** `Sales`
+  |
+  | Title: `Sales team` · 2 members · Direction: `LR`

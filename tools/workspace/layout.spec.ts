@@ -20,6 +20,7 @@ describe('workspace layout (DESIGN §2)', () => {
   it.each([
     ['packages/core', '@mermaid-js/core', false],
     ['packages/diagram-flowchart', '@mermaid-js/diagram-flowchart', false],
+    ['packages/diagram-er', '@mermaid-js/diagram-er', false],
     ['packages/mermaid', 'mermaid', false],
     ['packages/plugin-interactions', '@mermaid-js/plugin-interactions', false],
     ['packages/language-service', '@mermaid-js/language-service', false],

@@ -1,0 +1,10 @@
+@ 3:3  |A ||--o{ B : x
+  prepare: 3:3-3:4 "A"; rename to "B":
+  refused: 'B' is already an entity id in this diagram.
+@ 4:13  classDef h|ot fill:#f96
+  prepare: 4:12-4:15 "hot"; rename to "B":
+  %% rename-to: B
+  erDiagram
+    A ||--o{ B : x
+    classDef B fill:#f96
+    class A B
