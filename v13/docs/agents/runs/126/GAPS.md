@@ -44,7 +44,7 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 ## From the #154 review → #156 (T4), #158 (interactions), #157 (T5)
 
 - Sanitising: the oracle stubs DOMPurify, so parity can't see that real v12 ran `sanitizeText` on class ids, labels and member text (e.g. it likely strips `<T>` in `A : +List<T> items`). v13 escapes text in `SvgWriter` instead. #156 checks what flowchart did about this and lists the difference in MIGRATION.md. If it changes what a user sees beyond flowchart's precedent, it is a question for the maintainer.
-- Link target: under `securityLevel: 'sandbox'`, v12 forces `linkTarget` to `_top`. The model's `linkTarget` says "`_blank` when none given"; #158 must apply the sandbox rule, as for flowchart.
+- Link target: v12 forced `_top` under `securityLevel: 'sandbox'`. Closed by D48, which removed sandbox mode; class keeps the written target, as flowchart does (#158 asserts it).
 - Not compared by parity: class `text`, `shape`, `domId` (render-side; #156).
 
 ## #185 (core sourceView fix)
@@ -97,4 +97,9 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 
 - Build on #202 once it is in `mermaid-v13`: `packages/plugin-interactions/src/feature.ts` plus the `FEATURES` table in `index.ts`. Each feature owns one AST field end to end (start, collect, plan, bind). Class adds one entry and its own file. Flowchart callbacks already run through it.
 - Core gains a type-only `AstMenu` in parser-kit and a `'menus'` ExtensionClaim. Binding is scoped per diagram svg, keyed on content; `mount()` rebinds on every render.
-- Also #158's: the sandbox `linkTarget` rule (`_top` under `securityLevel: 'sandbox'`), and `haveCallback` / `model.callbacks`, which the renderer leaves undrawn.
+- Not applied, per D48 (sandbox mode removed; `sandbox` is treated as `default` with a warning, as for flowchart): the v12 sandbox `linkTarget` rule (`_top`). Also #158's: and `haveCallback` / `model.callbacks`, which the renderer leaves undrawn.
+
+## #158 (interactions) — done
+
+- Done (`feature/158_class-interactions`, 760d13df2): class callbacks bind through the existing `callbacks` feature (same `callback` field), no new entry, no core change; callbacks bind only the `g.node` whose `data-ast` names the id (note/interface id collisions fixed). Links, targets and tooltips were already the #156 renderer's, checked in `class.spec.ts`.
+- For the maintainer: the sandbox `_top` rule (#154 review, #156 items) is not applied, matching flowchart: D48/D75 map `sandbox` to `default` with a warning. Applying v12's rule would amend D48 for both types.
