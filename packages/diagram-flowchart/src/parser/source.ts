@@ -11,7 +11,8 @@
  * v13 keeps the source as written. Here we compute, in linear scans, *where* those rewrites
  * would have acted: removed spans (comments and directives, emitted as trivia), converted
  * quotes and dropped semicolons (a per-offset mask). The lexer and {@link cook}, which builds
- * label text from a source range, consult them.
+ * label text from a source range, read a copy with the removed spans cut out (v12's text) and
+ * map its offsets back to the source, so every token and range is a source offset.
  */
 import {
   COLON,
@@ -39,6 +40,13 @@ export interface SourceView {
   mask: Uint8Array | undefined;
   /** Removed spans in source order: directives and line comments. */
   holes: Hole[];
+  /** The source with every removed span cut out: the text v12's lexer saw. */
+  text: string;
+  /**
+   * The runs of {@link text} that are source text, as `[textStart, sourceStart]` pairs in order;
+   * undefined when nothing was cut. Read them with {@link SourceOffsets}.
+   */
+  runs: Uint32Array | undefined;
 }
 
 export interface Hole extends Range {
@@ -55,7 +63,7 @@ export function sourceView(src: string, from: number, directives: readonly Range
     mask[i] = (mask[i] ?? 0) | bit;
   };
   markTagQuotes(src, from, mark);
-  markDroppedSemicolons(src, from, mark, () => mask);
+  markDroppedSemicolons(src, from, directives, mark, () => mask);
   const removed = holes(src, from, directives);
   const m = mask;
   if (m) {
@@ -69,7 +77,55 @@ export function sourceView(src: string, from: number, directives: readonly Range
     }
     removed.sort((a, b) => a.start - b.start);
   }
-  return { mask, holes: removed };
+  return { mask, holes: removed, ...cut(src, removed) };
+}
+
+/** `src` without the removed spans (which may overlap), and where each kept run was. */
+function cut(src: string, removed: readonly Hole[]): Pick<SourceView, 'text' | 'runs'> {
+  if (removed.length === 0) return { text: src, runs: undefined };
+  const parts: string[] = [];
+  const runs = new Uint32Array(2 * removed.length + 2);
+  let n = 0;
+  let length = 0;
+  let at = 0;
+  const keep = (to: number) => {
+    if (to <= at) return;
+    parts.push(src.slice(at, to));
+    runs[n++] = length;
+    runs[n++] = at;
+    length += to - at;
+  };
+  for (const h of removed) {
+    keep(h.start);
+    if (h.end > at) at = h.end;
+  }
+  keep(src.length);
+  // All of it removed: one empty run at 0.
+  if (n === 0) n = 2;
+  return { text: parts.join(''), runs: runs.subarray(0, n) };
+}
+
+/**
+ * Source offsets of `view.text` positions. Lookups near the previous one are O(1), so a scan in
+ * either direction costs O(runs passed).
+ */
+export class SourceOffsets {
+  private k = 0;
+  private readonly last: number;
+
+  constructor(private readonly runs: Uint32Array) {
+    this.last = (runs.length >> 1) - 1;
+  }
+
+  /** The source offset of `text[i]`. */
+  source(i: number): number {
+    const r = this.runs;
+    let k = this.k;
+    while (k < this.last && (r[2 * k + 2] ?? 0) <= i) k++;
+    while (k > 0 && (r[2 * k] ?? 0) > i) k--;
+    this.k = k;
+    return (r[2 * k + 1] ?? 0) + i - (r[2 * k] ?? 0);
+  }
 }
 
 /** `<(\w+)([^>]*)>` then `="([^"]*)"` inside the attributes: both quotes become `'`. */
@@ -98,29 +154,37 @@ function markTagQuotes(src: string, from: number, mark: (i: number, bit: number)
   }
 }
 
+/** LF and CR: where v12's `[^\n]` stopped once it had turned CR into LF. */
+const BREAKS = ['\n', '\r'];
+/** What a regex `.` does not match, and what `^` (multiline) follows. */
+const LINE_ENDS = ['\n', '\r', '\u2028', '\u2029'];
+
 /**
- * The first line break (LF or CR) at or after `q`, or the end. Found with `indexOf`, keeping the
- * next of each, so calls with non-decreasing `q` cost one pass over the text in total.
+ * The first of `chars` at or after `q`, or the end. Found with `indexOf`, keeping the next of
+ * each, so calls with non-decreasing `q` cost one pass over the text in total.
  */
-function lineEnds(src: string): (q: number) => number {
-  let lf = -2;
-  let cr = -2;
+function lineEnds(src: string, chars: readonly string[] = BREAKS): (q: number) => number {
+  const next = chars.map(() => -2);
   return (q) => {
-    if (lf !== -1 && lf < q) lf = src.indexOf('\n', q);
-    if (cr !== -1 && cr < q) cr = src.indexOf('\r', q);
-    const a = lf === -1 ? src.length : lf;
-    const b = cr === -1 ? src.length : cr;
-    return a < b ? a : b;
+    let min = src.length;
+    for (let k = 0; k < chars.length; k++) {
+      let at = next[k] ?? -1;
+      if (at !== -1 && at < q) next[k] = at = src.indexOf(chars[k] ?? '', q);
+      if (at !== -1 && at < min) min = at;
+    }
+    return min;
   };
 }
 
 /**
  * `style.*:\S*#.*;` then `classDef.*:\S*#.*;` (each global, `.` stops at line ends): the
- * match ends at the line's last `;`, which `encodeEntities` cut off.
+ * match ends at the line's last `;`, which `encodeEntities` cut off. v12 ran it after removing
+ * directives, so a `;` inside a directive on the line is neither the cut one nor a stop.
  */
 function markDroppedSemicolons(
   src: string,
   from: number,
+  directives: readonly Range[],
   mark: (i: number, bit: number) => void,
   current: () => Uint8Array | undefined
 ): void {
@@ -128,10 +192,12 @@ function markDroppedSemicolons(
     return;
   const words = ['style', 'classDef'];
   const next = [-2, -2];
-  const lineEnd = lineEnds(src);
+  const lineEnd = lineEnds(src, LINE_ENDS);
+  const onLine = directivesOnLine(directives);
   let ls = from;
   while (ls <= src.length) {
     const le = lineEnd(ls);
+    const inDirective = onLine(ls, le);
     for (let w = 0; w < 2; w++) {
       const word = words[w] ?? '';
       if ((next[w] ?? 0) !== -1 && (next[w] ?? 0) < ls) next[w] = src.indexOf(word, ls);
@@ -144,6 +210,7 @@ function markDroppedSemicolons(
       for (let j = k + word.length; j < le; j++) {
         const c = src.charCodeAt(j);
         if (m !== undefined && ((m[j] ?? 0) & DROP) !== 0) continue;
+        if (inDirective(j)) continue;
         if (c === COLON) colon = true;
         else if (c === HASH && colon) {
           hash = j;
@@ -152,7 +219,7 @@ function markDroppedSemicolons(
       }
       if (hash < 0) continue;
       for (let j = le - 1; j > hash; j--) {
-        if (src.charCodeAt(j) === SEMI && !gone(j)) {
+        if (src.charCodeAt(j) === SEMI && !gone(j) && !inDirective(j)) {
           mark(j, DROP);
           break;
         }
@@ -161,6 +228,41 @@ function markDroppedSemicolons(
     if (le >= src.length) break;
     ls = le + (src.charCodeAt(le) === CR && src.charCodeAt(le + 1) === LF ? 2 : 1);
   }
+}
+
+/**
+ * For lines visited in order: whether an offset of the line `[ls, le)` is inside a directive.
+ * v12 removed directives before its style regexes ran.
+ */
+function directivesOnLine(directives: readonly Range[]) {
+  let d = 0;
+  return (ls: number, le: number): ((x: number) => boolean) => {
+    while (d < directives.length && (directives[d] as Range).end <= ls) d++;
+    const line: Range[] = [];
+    for (let i = d; i < directives.length && (directives[i] as Range).start < le; i++)
+      line.push(directives[i] as Range);
+    return line.length === 0 ? () => false : (x) => line.some((r) => r.start <= x && x < r.end);
+  };
+}
+
+// The directives no comment swallowed, merged into `comments` in source order. Both are sorted
+// and comments do not overlap, so one pass over each does it.
+function withDirectives(comments: Hole[], directives: readonly Range[], from: number): Hole[] {
+  const all: Hole[] = [];
+  let k = 0;
+  for (const r of directives) {
+    if (r.start < from) continue;
+    while (k < comments.length && (comments[k] as Hole).end <= r.start)
+      all.push(comments[k++] as Hole);
+    const h = comments[k];
+    if (h && h.start <= r.start && r.end <= h.end) continue;
+    // A comment that starts first but ends inside the directive sorts before it (as a stable
+    // sort did); it cannot reach a later directive.
+    if (h && h.start <= r.start) all.push(comments[k++] as Hole);
+    all.push({ start: r.start, end: r.end, kind: 'directive' });
+  }
+  while (k < comments.length) all.push(comments[k++] as Hole);
+  return all;
 }
 
 /** Directive spans plus the line comments v12 removed after them. */
@@ -175,6 +277,7 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
     return r && r.start === i ? r : undefined;
   };
   const lineEnd = lineEnds(src);
+  const nextLine = lineEnds(src, LINE_ENDS);
   let ls = from;
   while (ls < src.length) {
     // Skip whitespace (and removed directives) from this line start.
@@ -204,19 +307,11 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
       continue;
     }
     // No comment from any line start up to q; continue at the first line start after q.
-    const e = lineEnd(q);
+    const e = nextLine(q);
     if (e >= src.length) break;
     ls = e + (src.charCodeAt(e) === CR && src.charCodeAt(e + 1) === LF ? 2 : 1);
   }
-  // Merge in the directives that no comment swallowed, in source order.
-  const all: Hole[] = [...out];
-  for (const r of directives) {
-    if (r.start < from) continue;
-    if (!out.some((h) => h.start <= r.start && r.end <= h.end)) {
-      all.push({ start: r.start, end: r.end, kind: 'directive' });
-    }
-  }
-  return all.sort((a, b) => a.start - b.start);
+  return directives.length === 0 ? out : withDirectives(out, directives, from);
 }
 
 /**
@@ -225,76 +320,87 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
  * Removed spans inside the range are skipped.
  */
 export function cook(src: string, start: number, end: number, view: SourceView): string {
-  const raw = src.slice(start, end);
-  const mask = view.mask;
+  const { text, mask } = view;
+  const removed = view.holes;
+  const k = firstHole(view, start);
+  // A removed span inside the range, or right before it (then the text before is not src's).
+  const split = (removed[k]?.start ?? end) < end || (k > 0 && removed[k - 1]?.end === start);
   if (
-    !/[\r#}]/.test(raw) &&
+    !split &&
+    !/[\r#}]/.test(src.slice(start, end)) &&
     src.charCodeAt(start - 1) !== RBRACE &&
-    !hasHole(view, start, end) &&
     !masked(mask, start, end)
   )
-    return raw;
+    return src.slice(start, end);
+  const from = localOffset(view, start);
+  const to = localOffset(view, end);
+  const offsets = mask && view.runs ? new SourceOffsets(view.runs) : undefined;
   let out = '';
-  let h = firstHole(view, start);
-  for (let i = start; i < end; i++) {
-    while (h < view.holes.length && (view.holes[h]?.end ?? 0) <= i) h++;
-    const hole = view.holes[h];
-    if (hole && hole.start <= i) {
-      i = hole.end - 1;
-      continue;
-    }
-    const c = src.charCodeAt(i);
-    const bits = mask?.[i] ?? 0;
-    if (bits & DROP) continue;
-    if (bits & QUOTE) {
+  for (let i = from; i < to; i++) {
+    const c = text.charCodeAt(i);
+    if (((mask?.[offsets ? offsets.source(i) : i] ?? 0) & QUOTE) !== 0) {
       out += "'";
       continue;
     }
     if (c === CR) {
       out += '\n';
-      if (src.charCodeAt(i + 1) === LF) i++;
+      if (text.charCodeAt(i + 1) === LF) i++;
       continue;
     }
     if (c === HASH) {
       let j = i + 1;
-      while (j < end && isWord(src.charCodeAt(j))) j++;
-      if (j > i + 1 && j < end && src.charCodeAt(j) === SEMI && !((mask?.[j] ?? 0) & DROP)) {
-        const name = src.slice(i + 1, j);
+      while (j < to && isWord(text.charCodeAt(j))) j++;
+      if (j > i + 1 && j < to && text.charCodeAt(j) === SEMI) {
+        const name = text.slice(i + 1, j);
         out += /^\d+$/.test(name) ? `&#${name};` : `&${name};`;
         i = j;
         continue;
       }
     }
-    if (c === RBRACE || (i === start && src.charCodeAt(i - 1) === RBRACE && isSpace(c))) {
+    if (c === RBRACE || (i === from && text.charCodeAt(i - 1) === RBRACE && isSpace(c))) {
       const at = c === RBRACE ? i + 1 : i;
       if (c === RBRACE) out += '}';
       let j = at;
       let nl = -1;
-      while (j < end && isSpace(src.charCodeAt(j))) {
-        if (isNl(src.charCodeAt(j))) nl = j;
+      while (j < to && isSpace(text.charCodeAt(j))) {
+        if (isNl(text.charCodeAt(j))) nl = j;
         j++;
       }
       // v12 appended a line break, so blanks up to the end of the text reach one too; the
       // final line break itself belongs to no source text.
-      if (j >= src.length) {
+      if (j >= text.length) {
         i = j - 1;
         continue;
       }
       if (nl >= 0) {
         out += '\n';
-        i = src.charCodeAt(nl) === CR && src.charCodeAt(nl + 1) === LF ? nl + 1 : nl;
+        i = text.charCodeAt(nl) === CR && text.charCodeAt(nl + 1) === LF ? nl + 1 : nl;
         continue;
       }
       if (c === RBRACE) continue;
     }
-    out += src[i];
+    out += text[i];
   }
   return out;
 }
 
-function hasHole(view: SourceView, start: number, end: number): boolean {
-  const h = view.holes[firstHole(view, start)];
-  return h !== undefined && h.start < end;
+/** The first offset into `view.text` whose source offset is at or after `at`. */
+export function localOffset(view: SourceView, at: number): number {
+  const r = view.runs;
+  if (!r) return at;
+  // The last run that starts at or before `at`.
+  let lo = 0;
+  let hi = (r.length >> 1) - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >> 1;
+    if ((r[2 * mid + 1] ?? 0) <= at) lo = mid;
+    else hi = mid - 1;
+  }
+  const t = r[2 * lo] ?? 0;
+  const s = r[2 * lo + 1] ?? 0;
+  if (at < s) return t;
+  const end = 2 * lo + 2 < r.length ? (r[2 * lo + 2] ?? 0) : view.text.length;
+  return Math.min(t + at - s, end);
 }
 
 /** Index of the first hole that ends after `at`. */

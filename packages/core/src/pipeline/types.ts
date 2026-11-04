@@ -82,8 +82,11 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
   /** Also the config section that holds its options (`flowchart`). */
   readonly id: string;
   readonly aliases?: readonly string[];
-  /** Whole source in, as the registry's first-party table detects it otherwise. */
-  detector(text: string): boolean;
+  /**
+   * v12's detector contract (DESIGN §12.1): the text with front matter, directives and `%%`
+   * comments removed, and the integrator's config.
+   */
+  detector(text: string, config?: Readonly<Record<string, unknown>>): boolean;
   /** Output formats; `['svg']` when absent. */
   readonly formats?: readonly ('svg' | 'ascii')[];
   readonly layoutKind: 'graph' | 'custom';

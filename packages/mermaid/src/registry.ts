@@ -36,8 +36,8 @@ export interface FirstPartyEntry {
 /** A lazy third-party diagram: detected eagerly, loaded on first use. */
 export interface LazyDiagram {
   readonly id: string;
-  /** Whole source in. */
-  detector(text: string): boolean;
+  /** As `DiagramPlugin.detector`: the cleaned text and the integrator's config. */
+  detector(text: string, config?: Readonly<Record<string, unknown>>): boolean;
   loader(): Promise<AnyPlugin | { diagram: AnyPlugin }>;
   readonly formats?: readonly string[];
 }
@@ -51,7 +51,7 @@ export interface ManifestPlugin {
   /** The `mermaid` value of the plugin's package.json; checked by `readManifest`. */
   readonly manifest: unknown;
   /** The detector module's function (diagrams only). */
-  readonly detector?: (text: string) => boolean;
+  readonly detector?: (text: string, config?: Readonly<Record<string, unknown>>) => boolean;
   load(): Promise<unknown>;
   /** Imports the manifest's `ascii` entry (diagrams with one); its `ascii` export is the hook. */
   readonly loadAscii?: () => Promise<unknown>;
@@ -70,7 +70,12 @@ interface Entry {
   readonly type: string;
   readonly id: string | undefined;
   readonly formats: readonly string[];
-  readonly detect: (text: string, body: string) => boolean;
+  /** `clean` is v12's detector text (third-party detectors), built on first use. */
+  readonly detect: (
+    body: string,
+    clean: () => string,
+    config: Readonly<Record<string, unknown>> | undefined
+  ) => boolean;
   readonly load?: () => Promise<AnyPlugin>;
   readonly loadAscii?: () => Promise<AnyAsciiHook>;
 }
@@ -100,9 +105,41 @@ function entryExport(module: unknown, manifest: PluginManifest): unknown {
 
 function kindOf(def: ExternalDiagram): 'plugin' | 'lazy' | 'manifest' | 'extension' {
   if ('manifest' in def) return 'manifest';
-  if ('parse' in def && 'render' in def) return 'plugin';
   if ('detector' in def && 'loader' in def) return 'lazy';
+  // Anything with a detector, parse or render is a diagram: checkDiagram names what is missing.
+  if ('parse' in def || 'render' in def || 'detector' in def) return 'plugin';
   return 'extension';
+}
+
+function checkDiagram(def: AnyPlugin | LazyDiagram, eager: boolean): void {
+  const p = def as unknown as Record<string, unknown>;
+  if (typeof p.id !== 'string' || p.id === '')
+    throw new TypeError('A diagram plugin needs a non-empty string id');
+  const members = eager ? ['detector', 'parse', 'render'] : ['detector', 'loader'];
+  for (const m of members)
+    if (typeof p[m] !== 'function')
+      throw new TypeError(`Diagram "${p.id}": ${m} must be a function`);
+}
+
+// v12 detectType's cleaning of the text after front matter: directives removed (their ranges
+// come from preprocess), and each `%%` comment cut from its line.
+function detectText(src: string, start: number, pre: PreprocessResult): string {
+  let text = '';
+  let at = start;
+  for (const { range } of pre.directives) {
+    if (range.end <= at) continue;
+    text += src.slice(at, Math.max(at, range.start));
+    at = range.end;
+  }
+  text += src.slice(at);
+  if (!text.includes('%%')) return text;
+  return text
+    .split('\n')
+    .map((line) => {
+      const c = line.indexOf('%%');
+      return c < 0 ? line : line.slice(0, c).trimEnd();
+    })
+    .join('\n');
 }
 
 const unwrap = <T>(m: T | { diagram: T } | { layout: T } | { default: T }): T =>
@@ -139,7 +176,7 @@ export class Registry {
         type: e.type,
         id: e.id,
         formats: e.formats ?? [],
-        detect: (_text, body) => e.pattern.test(body),
+        detect: (body) => e.pattern.test(body),
         load: e.load,
         loadAscii: e.loadAscii,
       });
@@ -147,7 +184,7 @@ export class Registry {
   }
 
   /** The diagram type of `src`, or throws `MermaidError` (v12 order; first match wins). */
-  detect(src: string, pre: PreprocessResult): Detected {
+  detect(src: string, pre: PreprocessResult, config?: Readonly<Record<string, unknown>>): Detected {
     const start = diagramStart(src, pre);
     const body = src.slice(start);
     if (body.trimStart().toLowerCase().startsWith('---')) {
@@ -159,8 +196,10 @@ export class Registry {
       );
     }
     if (body.trim().toLowerCase() === 'error') return { type: 'error', id: undefined };
+    let clean: string | undefined;
+    const cleaned = () => (clean ??= detectText(src, start, pre));
     for (const e of [...this.entries, ...this.external]) {
-      if (e.detect(src, body)) return { type: e.type, id: e.id };
+      if (e.detect(body, cleaned, config)) return { type: e.type, id: e.id };
     }
     throw new MermaidError(
       'UNSUPPORTED_DIAGRAM',
@@ -305,6 +344,7 @@ export class Registry {
     lazyLoad: boolean,
     loadAscii?: () => Promise<AnyAsciiHook>
   ): Promise<void> {
+    checkDiagram(def, isPlugin);
     const load = isPlugin
       ? () => Promise.resolve(def as AnyPlugin)
       : async (): Promise<AnyPlugin> => unwrap<AnyPlugin>(await (def as LazyDiagram).loader());
@@ -312,7 +352,7 @@ export class Registry {
       type: def.id,
       id: def.id,
       formats: def.formats ?? ['svg'],
-      detect: (text) => def.detector(text),
+      detect: (_body, clean, config) => def.detector(clean(), config),
       load,
       ...(loadAscii ? { loadAscii } : {}),
     };
