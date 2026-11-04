@@ -3,25 +3,16 @@ import { assertInert } from '@mermaid-js/core/svg';
 import { PAYLOADS, V12_XSS_CASES } from '@mermaid-js/core/svg/testing';
 import { createMermaid } from 'mermaid';
 import { callbackArgs, interactions } from './index.ts';
+import { mounted as mountedDom } from './testing/fake-dom.ts';
 
 const CLICK = 'flowchart LR\n  A[Start] --> B(End)\n  click A callback\n';
 
-/** A stand-in for the element the svg was mounted in: one clickable `g.node` per node. */
+/** The svg mounted in a fake container (`testing/fake-dom.ts`), with its `g.node` per node id. */
 function mounted(svg: string) {
-  const nodes = [...svg.matchAll(/<g class="node[^"]*" data-id="([^"]*)"/g)].map(([, id]) => {
-    const listeners: (() => void)[] = [];
-    return {
-      id: id!,
-      listeners,
-      getAttribute: (name: string) => (name === 'data-id' ? id! : null),
-      addEventListener: (type: string, fn: () => void) => {
-        if (type === 'click') listeners.push(fn);
-      },
-      click: () => listeners.forEach((fn) => fn()),
-    };
-  });
-  const el = { querySelectorAll: () => nodes };
-  return { el: el as unknown as Element, node: (id: string) => nodes.find((n) => n.id === id)! };
+  const dom = mountedDom(svg);
+  const node = (id: string) =>
+    dom.groups(id).find((e) => (e.getAttribute('class') ?? '').split(' ').includes('node'))!;
+  return { el: dom.el, node };
 }
 
 const g = globalThis as Record<string, unknown>;
@@ -83,6 +74,20 @@ describe('interactions plugin (R-PLUG-9, R-SVG-5, D47)', () => {
     node('A').click();
     expect(n).toBe(1);
     expect(() => node('B').click()).not.toThrow();
+  });
+
+  it('binds once when another render with the same callbacks binds the same svg', async () => {
+    const m = createMermaid();
+    await m.registerExternalDiagrams([interactions]);
+    const result = await m.render('d', CLICK);
+    const again = await m.render('d', CLICK);
+    let n = 0;
+    g.callback = () => n++;
+    const { el, node } = mounted(result.svg);
+    result.bindFunctions!(el);
+    again.bindFunctions!(el);
+    node('A').click();
+    expect(n).toBe(1);
   });
 
   it('leaves the svg unchanged and inside the allow-list (R-SEC-2)', async () => {
