@@ -25,6 +25,7 @@ import {
   type RelationEnd,
   type RelationType,
 } from '../parser/model.ts';
+import { MARKER_ACROSS } from '../render/markers.ts';
 import { measureBox, type BoxMetrics, type ClassBoxGeometry } from './box.ts';
 import type { ClassLayoutContext } from './context.ts';
 
@@ -349,7 +350,6 @@ function interfaceView(iface: ClassInterface, build: Build): InterfaceView {
 
 function relationEdges(build: Build): ClassEdgeView[] {
   const edgeWrap = build.units.builder.edgeWrap;
-  const ids = new Set<string>();
   // A lollipop end names its interface; a class may be called `interface0` too.
   const endOf = (end: RelationEnd): string | undefined =>
     (end.type === 'lollipop' ? build.interfaceIds.get(end.id) : undefined) ??
@@ -362,14 +362,13 @@ function relationEdges(build: Build): ClassEdgeView[] {
     const source = endOf(rel.start);
     const target = endOf(rel.end);
     if (source === undefined || target === undefined) continue;
-    let layoutId = rel.ast;
-    for (let n = 2; ids.has(layoutId); n++) layoutId = `${rel.ast}#${n}`;
-    ids.add(layoutId);
     const middle = rel.label ? build.label(rel.label, edgeWrap) : undefined;
     const startLabel = multiplicity(rel.start.multiplicity);
     const endLabel = multiplicity(rel.end.multiplicity);
+    // AST ids are unique per parse (parallel relationships are `e:A>B#2`, …), so the
+    // relationship's own id is its layout id and its edge always carries its `data-ast`.
     edges.push({
-      layoutId,
+      layoutId: rel.ast,
       kind: rel.start.type === 'lollipop' || rel.end.type === 'lollipop' ? 'lollipop' : 'relation',
       ast: rel.ast,
       relation: rel,
@@ -390,9 +389,11 @@ function relationEdges(build: Build): ClassEdgeView[] {
  * The room each end marker takes out from the box, px: what the renderer draws in the built-in
  * themes, outline included, rounded up (gap + length + outline; redux's diamonds 19.75). A
  * constant, as flowchart's head room (D154), so the theme marker variables never move the
- * layout; the class layout spec checks it against every theme's drawn markers.
+ * layout. The built-in themes' marker variables live in core's theme specs, which load lazily,
+ * so this cannot be computed here; the class layout spec checks that each entry is
+ * `ceil(max markerReach)` over every built-in theme.
  */
-const MARKER_ROOM: Readonly<Record<RelationType, number>> = {
+export const MARKER_ROOM: Readonly<Record<RelationType, number>> = {
   none: 0,
   aggregation: 20,
   composition: 20,
@@ -400,8 +401,6 @@ const MARKER_ROOM: Readonly<Record<RelationType, number>> = {
   dependency: 13,
   lollipop: 14,
 };
-/** Every marker is 12 px across (render/markers.ts `MARKER_ACROSS`). */
-const MARKER_WIDTH = 12;
 
 function layoutGraph(
   model: ClassModel,
@@ -438,7 +437,7 @@ function layoutGraph(
   // Only where end labels are placed in px (class has no text output).
   const marker = (type: RelationType): EndMarker | undefined => {
     const length = MARKER_ROOM[type];
-    return units.grid === undefined && length > 0 ? { length, width: MARKER_WIDTH } : undefined;
+    return units.grid === undefined && length > 0 ? { length, width: MARKER_ACROSS } : undefined;
   };
   const node = (
     v: { layoutId: string; width: number; height: number; parent?: string },

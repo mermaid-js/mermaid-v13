@@ -19,6 +19,11 @@ const inputs = (b: Bundle) => Object.values(b.graph).flatMap((f) => f.inputs);
 const PACKAGES = [
   { name: 'flowchart', dir: 'diagram-flowchart', renderer: ['render/', 'ascii', 'plugin.ts'] },
   { name: 'state', dir: 'diagram-state', renderer: ['render/', 'layout/', 'plugin.ts'] },
+  {
+    name: 'class',
+    dir: 'diagram-class',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */
@@ -37,20 +42,17 @@ function languageEntry(dir: string): URL {
 const ER = 'packages/diagram-er/src/';
 
 const language = new Map<string, Bundle>();
-let classLanguage: Bundle;
 let erLanguage: Bundle;
 let prod: Bundle;
 beforeAll(async () => {
   const built = await Promise.all([
     build(new URL('../../mermaid/src/index.ts', import.meta.url)),
     build(languageEntry('diagram-er')),
-    build(languageEntry('diagram-class')),
     ...PACKAGES.map((p) => build(languageEntry(p.dir))),
   ]);
   prod = built[0]!;
   erLanguage = built[1]!;
-  classLanguage = built[2]!;
-  PACKAGES.forEach((p, i) => language.set(p.name, built[i + 3]!));
+  PACKAGES.forEach((p, i) => language.set(p.name, built[i + 2]!));
 }, 60_000);
 
 // R-LANG-8, D89: the language service loads a diagram's parser and tables, never its renderer.
@@ -81,36 +83,8 @@ describe.each(PACKAGES)('the $name ./language bundle', ({ name, dir, renderer })
   });
 });
 
-const CLASS = 'packages/diagram-class/src/';
-
-describe('the class ./language bundle', () => {
-  it('is the entry of the class facet', () => {
-    expect(classFacet.id).toBe('class');
-  });
-
-  it('holds the parser and the category table', () => {
-    const all = inputs(classLanguage);
-    expect(all).toContain(`${CLASS}language.ts`);
-    expect(all).toContain(`${CLASS}parser/parser.ts`);
-    expect(all).toContain(`${CLASS}generated/categories.ts`);
-  });
-
-  it('contains no layout, renderer or plugin code', () => {
-    const own = ['language.ts', 'facet/', 'parser/', 'generated/'];
-    const leaked = inputs(classLanguage).filter(
-      (i) =>
-        (i.startsWith(CLASS) && !own.some((o) => i.startsWith(`${CLASS}${o}`))) ||
-        i.includes('packages/core/src/svg/') ||
-        i.includes('packages/core/src/layout/')
-    );
-    expect(leaked).toEqual([]);
-  });
-
-  it('stays out of the mermaid bundle', () => {
-    const all = inputs(prod);
-    expect(all).not.toContain(`${CLASS}language.ts`);
-    expect(all).not.toContain(`${CLASS}generated/categories.ts`);
-  });
+it('the class ./language bundle is the entry of the class facet', () => {
+  expect(classFacet.id).toBe('class');
 });
 
 describe('the er ./language bundle', () => {

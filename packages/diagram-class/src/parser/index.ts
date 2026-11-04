@@ -6,7 +6,7 @@ export { T as ClassTokenKind } from './tokens.ts';
 export { detectClass } from './detect.ts';
 export { parseClass } from './parser.ts';
 export type { ClassParseOptions, ClassParseResult } from './parser.ts';
-export { namespaceGroups, splitClassName } from './model.ts';
+export { namespaceGroups } from './model.ts';
 export type {
   Classifier,
   ClassCallback,
@@ -24,7 +24,7 @@ export type {
   RelationType,
   Visibility,
 } from './model.ts';
-export { memberDisplay, memberText, parseGenericTypes, readMember } from './member.ts';
+export { memberDisplay, memberText, parseGenericTypes } from './member.ts';
 export type { MemberLine } from './member.ts';
 export type {
   ClassAnnotationStmt,

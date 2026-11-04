@@ -46,14 +46,6 @@ export const DIRECTIONS: readonly (readonly [dir: string, meaning: string])[] = 
   ['RL', 'right to left'],
 ];
 
-/** Direction token kinds and their value. */
-export const DIRECTION_OF: Readonly<Record<number, string>> = {
-  [T.DirectionTB]: 'TB',
-  [T.DirectionBT]: 'BT',
-  [T.DirectionLR]: 'LR',
-  [T.DirectionRL]: 'RL',
-};
-
 /** `link … "url"` and `click … href "url"` targets. */
 export const LINK_TARGETS = ['_self', '_blank', '_parent', '_top'];
 

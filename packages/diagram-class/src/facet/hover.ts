@@ -15,16 +15,9 @@ import type {
 import { classDocs } from '../generated/docs.ts';
 import type { ClassDocument, ClassRelationStmt, ClassStatementNode } from '../parser/ast.ts';
 import type { ClassModel } from '../parser/model.ts';
+import { DIRECTIONS as DIRECTION_OF } from '../parser/tables.ts';
 import { T } from '../parser/tokens.ts';
-import {
-  ARROW_PARTS,
-  code,
-  DIRECTION_OF,
-  DIRECTIONS,
-  describeRelation,
-  plural,
-  span,
-} from './tables.ts';
+import { ARROW_PARTS, code, DIRECTIONS, describeRelation, plural, span } from './tables.ts';
 
 /** Every relationship statement of the AST, namespaces included. */
 function* relations(children: readonly ClassStatementNode[]): Generator<ClassRelationStmt> {

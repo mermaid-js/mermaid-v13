@@ -18,7 +18,7 @@
  * passes the allow-list (R-SEC-2).
  */
 import type { ExtensionPlugin } from '@mermaid-js/core';
-import type { AstNode } from '@mermaid-js/core/parser-kit';
+import { nodeId, type AstNode } from '@mermaid-js/core/parser-kit';
 import { defineFeature, isBag, type AnyFeature } from './feature.ts';
 import { menus } from './menus.ts';
 import { createScope, rootsFor } from './scope.ts';
@@ -85,12 +85,15 @@ export function runFunction(name: string, args: readonly string[]): void {
  * True when `g` draws the node `id` itself: its `data-ast` (`n:A`, `n:A@2`, `s:S`) names `id`.
  * Other kinds may share a `data-id` with a node: a class note is `note0` and a lollipop
  * interface `interface0` (`data-ast` `note:1`, `i:A`), and a class can have either name.
+ * `data-id` is the raw name and `data-ast` escapes it (`B#2` is `n:B%232`), so `id` is escaped
+ * the same way before comparing.
  */
 function drawsNode(g: Element, id: string): boolean {
   const ast = g.getAttribute('data-ast');
   if (ast === null) return true;
   const named = ast.slice(ast.indexOf(':') + 1);
-  return named === id || named.startsWith(`${id}@`);
+  const escaped = nodeId(id).slice('n:'.length);
+  return named === escaped || named.startsWith(`${escaped}@`);
 }
 
 /**
