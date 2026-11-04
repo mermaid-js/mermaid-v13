@@ -1,0 +1,8 @@
+---
+description: a left-to-right class diagram
+---
+classDiagram
+  direction LR
+  Order "1" --> "*" LineItem : contains
+  LineItem --> Product
+  Order --> Customer : placed by

@@ -6,22 +6,32 @@ import { detectClass, parseClass } from './parser/index.ts';
 import type { ClassModel, ClassParseResult } from './parser/index.ts';
 import type { ClassRenderContext } from './render/context.ts';
 import { renderClass } from './render/render.ts';
+import { classConfigDefaults } from './generated/config-defaults.ts';
 
 /** The pipeline's limits, or the ones the integrator config implies (`maxEdges`). */
 const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
   ctx.limits ?? resolveLimits(ctx.config);
 
 /**
+ * The `class` section's defaults, less `padding` (D125): its documented default, 12, is what
+ * v12 padded class boxes with, but v12 padded namespaces 16 and notes 6 when the key was unset
+ * (`padding ?? 16`, `?? 6`). Left out, the layout still sees "unset" and draws all three as v12
+ * did; an author's `padding` pads all three, as in v12.
+ */
+const { padding: _documented, ...configDefaults } = classConfigDefaults;
+
+/**
  * The class diagram plugin (DESIGN §12.1). Its id is its config section, `class`. `parse` takes
  * the whole source (front matter included); `layout` measures and lays out (#155); `render`
  * writes the whole `<svg>` document into the writer. SVG only: there is no text output (D100).
- * Not in the first-party registry until its manifest lands (#157).
+ * Registered by the package's `mermaid` manifest (#157).
  */
 export const classDiagram = {
   id: 'class',
   aliases: ['classDiagram', 'classDiagram-v2'] as readonly string[],
   formats: ['svg'] as const,
   layoutKind: 'graph' as const,
+  configDefaults: configDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectClass(text) !== undefined,
   parse: (text: string, ctx: DiagramParseContext): ClassParseResult => {
     const caps = limits(ctx);

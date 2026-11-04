@@ -1,0 +1,14 @@
+---
+description: generic classes, annotations in the body and on their own line
+---
+classDiagram
+  class Repository~T~ {
+    <<interface>>
+    +find(id) T
+    +save(item T)
+  }
+  class Shape
+  <<abstract>> Shape
+  Shape : +area() double
+  class Cache~K, V~
+  Repository~T~ <|.. Cache~K, V~

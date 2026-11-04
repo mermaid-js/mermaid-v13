@@ -298,23 +298,23 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `class` | object |  | pending |  |  |
-| `class.useWidth` | number |  | pending |  |  |
-| `class.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
-| `class.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `class` | object |  | honoured (13.0.0) |  |  |
+| `class.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
+| `class.useMaxWidth` | boolean | `true` | honoured (13.0.0) | v12's class renderer read `state.useMaxWidth` instead (a v12 bug); v13 reads `class.useMaxWidth`. | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `class.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | honoured (13.0.0) |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `class.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
-| `class.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `class.titleTopMargin` | integer | `25` | pending |  | Margin top for the text over the diagram |
+| `class.layout` | string |  | honoured (13.0.0) | No class default, as in v12: the top-level `layout` applies, `layered` (D127, R-LAYOUT-7: ELK is never the default). `elk` applies only when an author sets it, and is drawn with `layered` until an ELK plugin is registered (D106). | Defines which layout algorithm to use for rendering the diagram. |
+| `class.titleTopMargin` | integer | `25` | ignored (13.0.0) | The class SVG draws no front-matter `title`, as flowchart's. | Margin top for the text over the diagram |
 | `class.arrowMarkerAbsolute` | boolean | `false` | ignored (13.0.0) | Arrowheads are inline paths, not `<marker>` references. | Controls whether or arrow markers in html code are absolute paths or anchors. This matters if you are using base tag settings. |
-| `class.dividerMargin` | number | `10` | pending |  |  |
-| `class.padding` | number | `5` | pending |  |  |
-| `class.textHeight` | number | `10` | pending |  |  |
-| `class.nodeSpacing` | integer |  | pending |  |  |
-| `class.rankSpacing` | integer |  | pending |  |  |
-| `class.diagramPadding` | integer | `20` | pending |  | The amount of padding around the diagram as a whole so that embedded diagrams have margins, expressed in pixels. |
+| `class.dividerMargin` | number | `10` | ignored (13.0.0) | Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it. |  |
+| `class.padding` | number | `12` | honoured (13.0.0) | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. | Padding inside class boxes, namespaces and notes, in pixels. Unset, class boxes are padded 12, namespaces 16 and notes 6, as v12 drew them. |
+| `class.textHeight` | number | `10` | ignored (13.0.0) | Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it. |  |
+| `class.nodeSpacing` | integer |  | honoured (13.0.0) | v12's class renderer read `state.nodeSpacing` instead (a v12 bug), else 50; v13 reads `class.nodeSpacing`, else 50. |  |
+| `class.rankSpacing` | integer |  | honoured (13.0.0) | v12's class renderer read `state.rankSpacing` instead (a v12 bug), else 50; v13 reads `class.rankSpacing`, else 50. |  |
+| `class.diagramPadding` | integer | `8` | honoured (13.0.0) | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. | The amount of padding around the diagram as a whole so that embedded diagrams have margins, expressed in pixels. |
 | `class.htmlLabels` | boolean | `false` | removed (13.0.0) | Labels are SVG text only; there is no HTML label mode (D5). Replacement: none; labels support a markdown subset rendered as SVG text. |  |
-| `class.hideEmptyMembersBox` | boolean | `false` | pending |  |  |
-| `class.hierarchicalNamespaces` | boolean | `true` | pending |  | When true (default), nested namespaces render as hierarchical clusters, with each segment of a dotted name (e.g. `A.B.C`) becoming its own nested box. When false, namespaces render in compact mode: only explicitly declared namespaces are emitted and their full qualified name is used as a single flat label. |
+| `class.hideEmptyMembersBox` | boolean | `false` | honoured (13.0.0) |  |  |
+| `class.hierarchicalNamespaces` | boolean | `true` | honoured (13.0.0) |  | When true (default), nested namespaces render as hierarchical clusters, with each segment of a dotted name (e.g. `A.B.C`) becoming its own nested box. When false, namespaces render in compact mode: only explicitly declared namespaces are emitted and their full qualified name is used as a single flat label. |
 
 ## `state`
 

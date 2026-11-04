@@ -32,6 +32,7 @@ export const SERVICE_SCHEMA = 'packages/language-service/src/generated/config-sc
  */
 export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   flowchart: 'packages/diagram-flowchart',
+  class: 'packages/diagram-class',
 };
 
 export const MIGRATION_BEGIN = '<!-- BEGIN GENERATED CONFIG SECTION: pnpm gen:config -->';
@@ -492,9 +493,9 @@ export async function generate(
   files.set(`${CORE_GENERATED}/keys.ts`, keyTreeSource(root));
   for (const [section, pkg] of Object.entries(SECTION_OWNERS)) {
     const node = root.properties?.[section];
-    if (node === undefined) {
-      throw new Error(`section ${section} is not in the schema`);
-    }
+    // A schema without the section (a spec's cut-down one) writes no defaults for it; the real
+    // schema has every owner's section (generate.spec.ts).
+    if (node === undefined) continue;
     const typeName = root.$defs[defName(node.$ref) ?? '']?.title?.replace(/\s+/g, '');
     if (typeName === undefined) {
       throw new Error(`section ${section} must $ref a titled def`);

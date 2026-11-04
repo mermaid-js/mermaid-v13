@@ -6,22 +6,20 @@ describe('fixture support', () => {
   it('takes the supported types from the generated registry: rows with a v13 package', () => {
     expect(isSupported('flowchart-v2')).toBe(true);
     expect(isSupported('flowchart-elk')).toBe(true);
+    expect(isSupported('classDiagram')).toBe(true);
     expect(isSupported('sequence')).toBe(false);
-    expect(isSupported('classDiagram')).toBe(false);
   });
 
-  it('runs every corpus diagram and the Pele flowcharts, and sets the rest aside by type', () => {
+  it('runs every corpus diagram and the Pele flowcharts and class, and sets the rest aside by type', () => {
     const { supported, unsupported } = classifyFixtures(loadFixtures());
     expect(supported.filter((f) => f.set === 'corpus')).toHaveLength(158);
     expect(supported.filter((f) => f.set === 'pele').map((f) => f.id)).toEqual([
       'pele/flowchart-7',
       'pele/flowchart-50',
       'pele/flowchart-500',
+      'pele/class',
     ]);
-    expect(unsupported).toEqual([
-      { id: 'pele/sequence', set: 'pele', type: 'sequence' },
-      { id: 'pele/class', set: 'pele', type: 'classDiagram' },
-    ]);
+    expect(unsupported).toEqual([{ id: 'pele/sequence', set: 'pele', type: 'sequence' }]);
   });
 
   it('detects through front-matter and directives, and keeps undetectable text as an error', () => {

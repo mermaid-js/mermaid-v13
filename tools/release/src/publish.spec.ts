@@ -21,6 +21,7 @@ describe('packAll (this workspace)', () => {
     const names = packed.map((p) => p.name);
     expect(names).toEqual([
       '@mermaid-chart/core',
+      '@mermaid-chart/diagram-class',
       '@mermaid-chart/diagram-flowchart',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',
@@ -33,7 +34,7 @@ describe('packAll (this workspace)', () => {
     expect(mermaid.dependencies?.['@mermaid-js/core']).toBe(
       `npm:@mermaid-chart/core@${packed[0]!.version}`
     );
-    const files = execFileSync('tar', ['-tzf', packed[3]!.tarball], { encoding: 'utf8' });
+    const files = execFileSync('tar', ['-tzf', packed[4]!.tarball], { encoding: 'utf8' });
     expect(files.split('\n')).toContain('package/LICENSE');
     expect(JSON.stringify(mermaid)).not.toContain('workspace:');
     expect(JSON.stringify(mermaid)).not.toContain('mermaid-source');

@@ -9,7 +9,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'agentflow', pattern: /^\s*agentflow-beta\b/ },
   { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },
   { type: 'kanban', pattern: /^\s*kanban/ },
-  { type: 'classDiagram', pattern: /^\s*classDiagram/ },
+  { type: 'classDiagram', pattern: /^\s*classDiagram/, id: 'class', formats: ['svg'] },
   { type: 'er', pattern: /^\s*erDiagram/ },
   { type: 'gantt', pattern: /^\s*gantt/ },
   { type: 'info', pattern: /^\s*info/ },

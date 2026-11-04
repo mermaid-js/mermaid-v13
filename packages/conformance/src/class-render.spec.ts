@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SaxesParser } from 'saxes';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { assertInert } from '@mermaid-js/core/svg';
 import type { ClassModel } from '@mermaid-js/diagram-class';
@@ -9,11 +9,6 @@ import { createMermaid, MermaidError, type Prepared, type RenderResult } from 'm
 import { REPO_ROOT, corpusFromDir } from './index.ts';
 import { parseSvg, type SvgElement as SvgNode, type SvgView as SvgTree } from './svg-tree.ts';
 import type { CorpusItem } from './types.ts';
-
-// The class plugin is not in the generated registry until #157: see class/test-registry.ts.
-vi.mock('../../mermaid/src/generated/registry.gen.ts', async (original) =>
-  (await import('./class/test-registry.ts')).withClass(await original())
-);
 
 /**
  * Render properties (DESIGN §13.2, §13.4, spec #126 T4) over the e2e class fixtures and the

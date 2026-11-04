@@ -10,13 +10,4 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [
-  // Spec #126: the manifest comes with T5 (#157).
-  {
-    type: 'classDiagram',
-    id: 'class',
-    section: 'class',
-    detector: (text) => /^\s*classDiagram/.test(text),
-    load: () => import('@mermaid-js/diagram-class/language').then((m) => m.language),
-  },
-];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [];

@@ -79,3 +79,11 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 - #157 (T5): with the manifest, add `"language": "./dist/language.js"` to diagram-class's `mermaid` key, add `@mermaid-js/diagram-class` to language-service's `peerDependencies`, run `gen:registry`, then delete the classDiagram row of `packages/language-service/src/testing/unlisted-facets.ts` (goldens.spec fails until it is gone). The flowchart golden `completions/empty.out` already offers `classDiagram`.
 - R-LANG-4 budget: a 50k-character class document cycles in ~26 ms (update, rename and completions are each one ~7.5 ms parse) against flowchart's ~17.5 ms on the same loaded machine (load ~13); 15 ms is the reference-runner budget (D156). Parse speed is milestone-close work.
 - Rename: a dotted namespace (`namespace A.B`), and any namespace that is a prefix of one, has no definition, references or rename (renaming it would change the namespace tree); a nested namespace has none either (its qualified id is not its text). Hover still works for both.
+
+## #157 (T5) integration — done
+
+- Done: package public (`13.0.0-alpha.0`, README, notices); manifest with `language`; `gen:registry`; the #156 `vi.mock`s and `class/test-registry.ts` deleted; the classDiagram row of `unlisted-facets.ts` deleted (the file stays, empty, for the next port); D125 defaults and MIGRATION note; D127 checked (v12's `class` section had no `layout` default, so the top-level `layered` applies; spec asserts an installed ELK is not used unless asked).
+- Not done, for the maintainer: the brief said "add it to the changeset `fixed` group", but RELEASING.md says `fixed` is empty on purpose and `release-config.spec.ts` enforces it. Followed RELEASING (as state #148 did): own changeset, exact `workspace:*` ranges.
+- D125 detail: the generated `classConfigDefaults` has `padding: 12`, but the plugin's `configDefaults` leaves `padding` out, so "unset" still reaches the layout and namespaces (16) and notes (6) draw as v12. With it in, every namespace and note would be padded 12.
+- Cosmetic, not done: theme `usedBy` lists for the shared variables the class renderer reads (shared file other ports also edit).
+- Not done: class baselines are not in the dev theme gallery (`packages/dev/src/fixtures.ts` reads flowchart's only; state deferred the same to ER's `galleryFixtures`).

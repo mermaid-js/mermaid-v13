@@ -1,0 +1,7 @@
+---
+description: a self-relationship with multiplicities and two edges between one pair
+---
+classDiagram
+  Node "1" --> "0..*" Node : children
+  Node --> Tree : root of
+  Tree ..> Node : walks

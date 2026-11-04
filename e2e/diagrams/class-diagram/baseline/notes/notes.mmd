@@ -1,0 +1,11 @@
+---
+description: a free note and a note attached to a class
+---
+classDiagram
+  note "Diagram-wide note"
+  class Duck {
+    +swim()
+    +quack()
+  }
+  note for Duck "can fly\ncan swim"
+  Animal <|-- Duck

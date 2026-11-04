@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import {
   createMermaid,
@@ -10,11 +10,6 @@ import {
 } from 'mermaid';
 import { REPO_ROOT } from './index.ts';
 import { parseSvg, type SvgElement, type SvgView } from './svg-tree.ts';
-
-// The class plugin is not in the generated registry until #157: see class/test-registry.ts.
-vi.mock('../../mermaid/src/generated/registry.gen.ts', async (original) =>
-  (await import('./class/test-registry.ts')).withClass(await original())
-);
 
 // The class renderer (spec #126 T4) through the public `render()`.
 

@@ -199,8 +199,12 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `gantt.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `journey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `class.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `class.titleTopMargin` | ignored | The class SVG draws no front-matter `title`, as flowchart's. |  |
 | `class.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
+| `class.dividerMargin` | ignored | Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it. |  |
+| `class.textHeight` | ignored | Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it. |  |
 | `class.htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
 | `state.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `state.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
@@ -238,6 +242,8 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
 | `flowchart.curve` | `"rounded"` | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes; `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory). |
+| `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
+| `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
 
 <!-- END GENERATED CONFIG SECTION -->
 
@@ -392,6 +398,27 @@ input.
 | Class `nodeSpacing` and `rankSpacing` were read from the `state` section (falling back to 50), and `class.diagramPadding` was ignored (8 px) | `class.nodeSpacing`, `class.rankSpacing` and `class.diagramPadding` are honoured, with v12's effective defaults (50, 50, 8) | spec #126 |
 | Class edges followed `flowchart.curve` (a d3 curve factory) | Still follow `flowchart.curve`, read as for flowcharts: `rounded` (the default) and `step`/`stepBefore`/`stepAfter` are right-angle routes, `linear` straight segments, every other value S-curves | spec #126 |
 | A lollipop interface was a top-level node, outside its class's namespace | It sits in the namespace of its class | spec #126 |
+
+### Class diagram config
+
+- **Both keywords:** `classDiagram` and `classDiagram-v2` are one type, detected by v12's one
+  `classDiagram` detector and drawn by one renderer (D101), as SVG only: `format: 'ascii'` throws
+  `UnsupportedFormatError` (D100).
+- **Honoured** in the `class` section: `theme`, `layout`, `useMaxWidth`, `padding`, `nodeSpacing`,
+  `rankSpacing`, `diagramPadding`, `hideEmptyMembersBox` and `hierarchicalNamespaces`. v12's class
+  renderer read `useMaxWidth`, `nodeSpacing` and `rankSpacing` from the `state` section (a v12
+  bug); v13 reads them from `class`.
+- **Documented defaults changed (D125):** `class.padding` is documented as 12, not 5, and
+  `class.diagramPadding` as 8, not 20. These are the numbers v12 drew with: its schema defaults
+  never reached the renderer. A diagram that sets neither looks as in v12: class boxes padded 12,
+  namespaces 16, notes 6, the diagram 8. A `class.padding` you set pads boxes, namespaces and
+  notes alike, as in v12.
+- **Layout:** `class.layout` has no default of its own, as in v12, so the top-level `layout`
+  applies: `layered`, even with an ELK plugin installed (D127, R-LAYOUT-7). `layout: elk` is
+  honoured when an author sets it.
+- **Ignored:** `titleTopMargin` (no front-matter title is drawn, as for flowcharts), `useWidth`
+  (only gantt read it), and `dividerMargin` and `textHeight`, which only v12's old class renderer
+  read; 12.2.0 sent both keywords to the unified renderer, which did not.
 
 ## Labels and text
 

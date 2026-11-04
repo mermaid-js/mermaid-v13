@@ -871,7 +871,8 @@ export const configSchema: ConfigSchema = {
     "class": {
       "$ref": "#/$defs/ClassDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "state": {
@@ -3540,7 +3541,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
           "default": "redux-color",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "look": {
@@ -3552,11 +3554,37 @@ export const configSchema: ConfigSchema = {
             "replacement": "`theme`, or the geometry and `dropShadow` theme variables"
           }
         },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "No class default, as in v12: the top-level `layout` applies, `layered` (D127, R-LAYOUT-7: ELK is never the default). `elk` applies only when an author sets it, and is drawn with `layered` until an ELK plugin is registered (D106)."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the class renderers never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's class renderer read `state.useMaxWidth` instead (a v12 bug); v13 reads `class.useMaxWidth`."
+          }
+        },
         "titleTopMargin": {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "The class SVG draws no front-matter `title`, as flowchart's."
           }
         },
         "arrowMarkerAbsolute": {
@@ -3573,41 +3601,55 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it."
           }
         },
         "padding": {
+          "description": "Padding inside class boxes, namespaces and notes, in pixels. Unset, class boxes are\npadded 12, namespaces 16 and notes 6, as v12 drew them.\n",
           "type": "number",
-          "default": 5,
+          "default": 12,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three."
           }
         },
         "textHeight": {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it."
           }
         },
         "nodeSpacing": {
           "type": "integer",
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's class renderer read `state.nodeSpacing` instead (a v12 bug), else 50; v13 reads `class.nodeSpacing`, else 50."
           }
         },
         "rankSpacing": {
           "type": "integer",
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's class renderer read `state.rankSpacing` instead (a v12 bug), else 50; v13 reads `class.rankSpacing`, else 50."
           }
         },
         "diagramPadding": {
           "$ref": "#/$defs/ErDiagramConfig/properties/diagramPadding",
+          "default": 8,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8."
           }
         },
         "htmlLabels": {
@@ -3624,7 +3666,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "hierarchicalNamespaces": {
@@ -3632,7 +3675,8 @@ export const configSchema: ConfigSchema = {
           "default": true,
           "description": "When true (default), nested namespaces render as hierarchical clusters,\nwith each segment of a dotted name (e.g. `A.B.C`) becoming its own nested\nbox. When false, namespaces render in compact mode: only explicitly\ndeclared namespaces are emitted and their full qualified name is used as\na single flat label.\n",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         }
       }

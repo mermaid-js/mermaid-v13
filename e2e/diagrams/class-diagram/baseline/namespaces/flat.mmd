@@ -1,0 +1,16 @@
+---
+config:
+  class:
+    hierarchicalNamespaces: false
+description: dotted namespaces as flat groups with hierarchicalNamespaces false
+---
+classDiagram
+  namespace Company.Sales {
+    class Lead
+    class Deal
+  }
+  namespace Company.Support {
+    class Ticket
+  }
+  Lead --> Deal
+  Deal --> Ticket

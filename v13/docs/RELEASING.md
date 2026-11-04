@@ -12,6 +12,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `mermaid/slim` | A subpath of `mermaid`, not a package: the same API with only the diagrams passed to `createMermaid({ diagrams })`. | to pick diagrams, with the `@mermaid-js/diagram-*` packages they want |
 | `@mermaid-js/core` | The DOM-free engine: plugin contract, parser kit, layout, SVG writer, theme, config. | never directly; `mermaid` brings it |
 | `@mermaid-js/diagram-flowchart` | The flowchart plugin (SVG, and text output from `/ascii`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-class` | The class diagram plugin (SVG; `classDiagram` and `classDiagram-v2`). | with `mermaid/slim` |
 | `@mermaid-js/plugin-interactions` | v12 click callbacks as an extension plugin. | when they use `click A callback` |
 
 The private workspace packages (`bench`, `conformance`, `dev`, `tools/*`) are never published.
@@ -37,8 +38,9 @@ The packages depend on each other at **exact** versions (`workspace:*` in packag
 | Changeset names | `changeset version` releases |
 | --- | --- |
 | `@mermaid-js/diagram-flowchart` | flowchart, `mermaid` |
+| `@mermaid-js/diagram-class` | class, `mermaid` |
 | `mermaid` | `mermaid` |
-| `@mermaid-js/core` | core, flowchart, interactions (they peer-depend on core), `mermaid` |
+| `@mermaid-js/core` | core, flowchart, class, interactions (they peer-depend on core), `mermaid` |
 | `@mermaid-js/plugin-interactions` | interactions |
 
 `fixed` and `linked` in `.changeset/config.json` are empty on purpose, and a spec (`tools/release/src/release-config.spec.ts`) keeps them that way.
@@ -258,7 +260,7 @@ So **an alpha goes out when the release master merges the Version Packages PR.**
 
 **Before the switch:**
 
-- Add `mermaid-js/mermaid`'s release workflow as the npm trusted publisher of `@mermaid-js/core`, `@mermaid-js/diagram-flowchart` and `@mermaid-js/plugin-interactions` (it already is for `mermaid`).
+- Add `mermaid-js/mermaid`'s release workflow as the npm trusted publisher of `@mermaid-js/core`, `@mermaid-js/diagram-flowchart`, `@mermaid-js/diagram-class` and `@mermaid-js/plugin-interactions` (it already is for `mermaid`).
 - Set `repository.url` in the four package.json files to `https://github.com/mermaid-js/mermaid`. npm provenance requires it to match the publishing repository, and the repository must be public.
 - Set `changelog` in `.changeset/config.json` to repo `mermaid-js/mermaid`.
 - Decide whether the release job runs the full bench (`--gate`, about an hour) or relies on the nightly bench (`--skip-gate`).

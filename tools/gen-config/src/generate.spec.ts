@@ -5,6 +5,7 @@ import {
   MIGRATION_BEGIN,
   MIGRATION_END,
   SCHEMA_PATH,
+  SECTION_OWNERS,
   generate,
   spliceMigration,
 } from './generate.ts';
@@ -51,6 +52,15 @@ describe('gen-config', () => {
     const { files } = await generate(read(SCHEMA_PATH)!, read);
     const stale = [...files].filter(([path, content]) => read(path) !== content).map(([p]) => p);
     expect(stale).toEqual([]);
+  });
+
+  it('writes defaults for every section owner', async () => {
+    const { files } = await generate(read(SCHEMA_PATH)!, read);
+    for (const [section, pkg] of Object.entries(SECTION_OWNERS)) {
+      expect(files.get(`${pkg}/src/generated/config-defaults.ts`), section).toContain(
+        `export const ${section}ConfigDefaults: `
+      );
+    }
   });
 
   it('fails when a key has no x-mermaid annotation', async () => {

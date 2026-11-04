@@ -1,0 +1,15 @@
+---
+description: syntactically nested and dotted namespaces with edges across them
+---
+classDiagram
+  namespace Shop {
+    class Cart
+    namespace Billing {
+      class Invoice
+    }
+  }
+  namespace Shop.Catalog {
+    class Product
+  }
+  Cart --> Product
+  Invoice --> Cart

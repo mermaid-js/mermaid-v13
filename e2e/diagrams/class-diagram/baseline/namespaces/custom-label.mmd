@@ -1,0 +1,11 @@
+---
+description: a namespace with a custom label and a generic member class
+---
+classDiagram
+  namespace Store["Store service"] {
+    class Inventory~T~ {
+      +add(item T)
+    }
+    class Clerk
+  }
+  Clerk --> Inventory~T~
