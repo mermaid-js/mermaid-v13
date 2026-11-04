@@ -20,6 +20,8 @@ export interface DocumentContext {
   readonly result: ParseResult<unknown, AstNode> | undefined;
   /** Why the detected type's facet could not be loaded, when it could not. */
   readonly loadError: string | undefined;
+  /** The detected type has a facet to load, but `preload` has not loaded it (D155). */
+  readonly notLoaded: boolean;
   /** The JSON schema of the config, as passed to `createLanguageService` (D96). */
   readonly schema: Readonly<Record<string, unknown>> | undefined;
 }

@@ -23,13 +23,10 @@ export class DocumentSnapshot {
   /**
    * @param context - What the queries read.
    * @param version - Increases with every `update` of the service.
-   * @param pending - Set while the detected type's facet loads: resolves to a snapshot of the
-   *   same text that has the facet (or, when loading failed, the info diagnostic).
    */
   constructor(
     readonly context: DocumentContext,
-    readonly version: number,
-    readonly pending?: Promise<DocumentSnapshot>
+    readonly version: number
   ) {}
 
   get uri(): string {
@@ -45,7 +42,7 @@ export class DocumentSnapshot {
     return this.context.entry?.type;
   }
 
-  /** The facet serving this text; `undefined` while it loads or for a type with none. */
+  /** The facet serving this text; `undefined` for a type with none, or not preloaded. */
   get facet(): LanguageFacet | undefined {
     return this.context.facet;
   }
@@ -65,9 +62,7 @@ export class DocumentSnapshot {
   /** Preprocess and parse diagnostics as they are (D91). */
   diagnostics(): readonly Diagnostic[] {
     // Copies: the parse result's own diagnostics stay as the parser left them.
-    return this.memo('diagnostics', () =>
-      diagnostics(this.context, this.pending !== undefined).map((d) => structuredClone(d))
-    );
+    return this.memo('diagnostics', () => diagnostics(this.context).map((d) => structuredClone(d)));
   }
 
   /** The range of the first definition of the name at `offset` (D92). */

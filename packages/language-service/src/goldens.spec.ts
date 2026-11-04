@@ -5,7 +5,7 @@
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService } from './index.ts';
 import { FEATURES, readFixture, renderGolden } from './testing/goldens.ts';
 
@@ -17,6 +17,7 @@ const dirs = (path: string) =>
     .sort();
 
 const service = createLanguageService();
+beforeAll(() => service.preload());
 
 for (const diagram of dirs(ROOT)) {
   describe(diagram, () => {
@@ -28,8 +29,7 @@ for (const diagram of dirs(ROOT)) {
       it.each(cases)(`${feature}: %s`, async (file) => {
         expect(Object.keys(FEATURES)).toContain(feature);
         const fixture = readFixture(readFileSync(join(dir, file), 'utf8'));
-        const first = service.update(`golden:///${diagram}/${feature}/${file}`, fixture.text);
-        const doc = (await first.pending) ?? first;
+        const doc = service.update(`golden:///${diagram}/${feature}/${file}`, fixture.text);
         await expect(renderGolden(feature, doc, fixture)).toMatchFileSnapshot(
           join(dir, file.replace(/\.mmd$/, '.out'))
         );

@@ -20,7 +20,18 @@ export interface LanguageServiceOptions {
   readonly schema?: Readonly<Record<string, unknown>>;
 }
 
+export interface PreloadRequest {
+  /** Diagram ids (`flowchart`) or v12 types (`flowchart-v2`); every row's facet when omitted. */
+  readonly types?: readonly string[];
+}
+
 export interface LanguageService {
+  /**
+   * Load facets before use (D155): every first-party and third-party row with a `load`, or
+   * only `types`. Never rejects: a failed load shows as `LANGUAGE_LOAD_FAILED` on update.
+   * Loads each row once, however often it is called.
+   */
+  preload(request?: PreloadRequest): Promise<void>;
   /** Re-parse `uri` as `text` and return its new snapshot. */
   update(uri: string, text: string): DocumentSnapshot;
   /** The latest snapshot of `uri`. */
@@ -52,8 +63,8 @@ function detectText(src: string, start: number, pre: PreprocessResult): string {
     .join('\n');
 }
 
-/** A row's facet once loaded, its load in flight, or why loading failed. */
-type Loaded = LanguageFacet | Promise<unknown> | { readonly failed: string };
+/** A row's facet once loaded, or why loading failed. */
+type Loaded = LanguageFacet | { readonly failed: string };
 
 /** Whether a loader's result has the shape of a {@link LanguageFacet}. */
 function isFacet(value: unknown): value is LanguageFacet {
@@ -79,6 +90,7 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
   ];
   // Keyed by row, not diagram id: a replaced `flowchart-v2` row must not serve `flowchart-elk`.
   const loaded = new Map<FacetEntry, Loaded>();
+  const loading = new Map<FacetEntry, Promise<void>>();
   const docs = new Map<string, DocumentSnapshot>();
   let version = 0;
 
@@ -98,35 +110,37 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
     });
   };
 
-  /** The entry's facet, a promise while it loads, or why it could not be loaded. */
-  const facetOf = (entry: FacetEntry | undefined): Loaded | undefined => {
-    if (!entry) return undefined;
-    if (entry.facet) return entry.facet;
-    const state = loaded.get(entry);
-    if (state !== undefined || !entry.load) return state;
-    const fail = (error: unknown) => loaded.set(entry, { failed: reason(error) });
+  /** Start (or join) loading `entry`'s facet. */
+  const load = (entry: FacetEntry): Promise<void> => {
+    if (loaded.has(entry)) return Promise.resolve();
+    const inFlight = loading.get(entry);
+    if (inFlight) return inFlight;
+    const fail = (error: unknown) => {
+      loaded.set(entry, { failed: reason(error) });
+    };
     let started: Promise<LanguageFacet>;
     try {
-      started = entry.load();
+      started = entry.load!();
     } catch (error) {
       fail(error);
-      return loaded.get(entry);
+      return Promise.resolve();
     }
-    const loading = Promise.resolve(started).then((facet) => {
-      if (isFacet(facet)) loaded.set(entry, facet);
-      else fail(new Error(`the module has no \`language\` facet export`));
-    }, fail);
-    loaded.set(entry, loading);
-    return loading;
+    const done = Promise.resolve(started)
+      .then((facet) => {
+        if (isFacet(facet)) loaded.set(entry, facet);
+        else fail(new Error('the module has no `language` facet export'));
+      }, fail)
+      .finally(() => loading.delete(entry));
+    loading.set(entry, done);
+    return done;
   };
 
   const build = (uri: string, text: string): DocumentSnapshot => {
     const pre = preprocess(text);
     const start = diagramStart(text, pre);
     const entry = detect(text, pre, start);
-    const found = facetOf(entry);
-    const facet =
-      found === undefined || found instanceof Promise || 'failed' in found ? undefined : found;
+    const state = entry && (entry.facet ?? loaded.get(entry));
+    const facet = state === undefined || 'failed' in state ? undefined : state;
     const context: DocumentContext = {
       uri,
       text,
@@ -136,21 +150,23 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
       facet,
       result: facet?.parse(text, { keepTokens: true }),
       schema: options.schema,
-      loadError: found !== undefined && 'failed' in found ? found.failed : undefined,
+      loadError: state !== undefined && 'failed' in state ? state.failed : undefined,
+      notLoaded: entry?.load !== undefined && state === undefined,
     };
-    let pending: Promise<DocumentSnapshot> | undefined;
-    if (found instanceof Promise) {
-      pending = found.then(() => {
-        const next = build(uri, text);
-        if (docs.get(uri) === snapshot) docs.set(uri, next);
-        return next;
-      });
-    }
-    const snapshot = new DocumentSnapshot(Object.freeze(context), ++version, pending);
-    return snapshot;
+    return new DocumentSnapshot(Object.freeze(context), ++version);
   };
 
   return {
+    async preload(request = {}) {
+      const { types } = request;
+      const rows = entries.filter(
+        (e) =>
+          e.load !== undefined &&
+          e.facet === undefined &&
+          (types === undefined || types.includes(e.id) || types.includes(e.type))
+      );
+      await Promise.all(rows.map(load));
+    },
     update(uri, text) {
       const doc = build(uri, text);
       docs.set(uri, doc);

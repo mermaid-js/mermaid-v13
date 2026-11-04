@@ -106,6 +106,8 @@ const noun = (kind: string) => (kind === 'class' ? 'class name' : `${kind} id`);
 /** Why `ctx` has no symbols to work with, when it has no facet. */
 function unsupported(ctx: DocumentContext): string | undefined {
   if (ctx.facet) return undefined;
+  if (ctx.entry && ctx.notLoaded)
+    return `The ${ctx.entry.id} language support is not loaded (\`service.preload()\`).`;
   if (ctx.entry && ctx.loadError !== undefined)
     return `The ${ctx.entry.id} language support could not be loaded (${ctx.loadError}).`;
   return ctx.entry
