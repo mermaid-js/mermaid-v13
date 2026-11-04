@@ -1,0 +1,7 @@
+@ 2:13  direction |
+  TB constant (top to bottom) 2:13-2:13 "" -> "TB"
+  BT constant (bottom to top) 2:13-2:13 "" -> "BT"
+  LR constant (left to right) 2:13-2:13 "" -> "LR"
+  RL constant (right to left) 2:13-2:13 "" -> "RL"
+@ 4:16  direction L|
+  LR constant (left to right) 4:15-4:16 "L" -> "LR"

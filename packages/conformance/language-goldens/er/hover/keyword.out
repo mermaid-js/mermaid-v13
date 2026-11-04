@@ -1,0 +1,40 @@
+@ 1:1  |erDiagram
+  1:1-1:10 "erDiagram"
+  | **`erDiagram`**
+  |
+  | A diagram is `erDiagram`, then statements.
+@ 2:6  sub|graph S
+  2:3-2:11 "subgraph"
+  | **`subgraph`**
+  |
+  | `subgraph id` or `subgraph id [title]`, then statements, then `end`.
+@ 3:8  dir|ection TB
+  3:5-3:17 "direction TB"
+  | **`direction TB`** direction: top to bottom
+  |
+  | `direction LR`: the layout direction of the diagram, or of the subgraph it is in.
+@ 5:4  e|nd
+  5:3-5:6 "end"
+  | **`end`**
+  |
+  | `subgraph id` or `subgraph id [title]`, then statements, then `end`.
+@ 6:6  sty|le A fill:#f00
+  6:3-6:8 "style"
+  | **`style`**
+  |
+  | `style A fill:#f9f,stroke:#333`: styles one entity or subgraph.
+@ 7:8  class|Def k fill:#0f0
+  7:3-7:11 "classDef"
+  | **`classDef`**
+  |
+  | `classDef name fill:#f9f,color:#000`: defines a class of styles.
+@ 8:6  cla|ss A k
+  8:3-8:8 "class"
+  | **`class`**
+  |
+  | `class A,B name`: gives entities a class (as `A:::name` does).
+@ 9:6  acc|Title: Title
+  9:3-9:12 "accTitle:"
+  | **`accTitle:`**
+  |
+  | `accTitle: …`: the accessible title of the diagram.

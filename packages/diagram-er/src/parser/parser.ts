@@ -231,7 +231,11 @@ class ErParser {
   ) {
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
-    this.lexed = lex(src, pre);
+    const probe =
+      options.probe === undefined
+        ? undefined
+        : (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+    this.lexed = lex(src, pre, probe);
     const diagnostics = this.st.diagnostics;
     this.db = new ErBuilder({
       maxNodes: options.maxNodes ?? DEFAULT_LIMITS.maxNodes,
@@ -243,10 +247,9 @@ class ErParser {
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
     this.body = this.children;
     const { tokens } = this.lexed;
-    if (options.probe === undefined) {
+    if (probe === undefined) {
       this.c = new TokenCursor(tokens, TRIVIA);
     } else {
-      const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
       if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
       this.c = new ProbeCursor(tokens, probe, TRIVIA);
     }

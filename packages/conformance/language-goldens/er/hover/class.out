@@ -1,0 +1,21 @@
+@ 2:12  classDef |hot fill:#f96,stroke:#333
+  2:12-2:15 "hot"
+  | **class** `hot`
+  |
+  | `classDef hot fill:#f96,stroke:#333`
+  |
+  | Used by 1 entity
+@ 3:12  classDef |default fill:#eee
+  3:12-3:19 "default"
+  | **class** `default`
+  |
+  | `classDef default fill:#eee`
+  |
+  | Applies to every entity.
+@ 5:11  class B |cold
+  5:11-5:15 "cold"
+  | **class** `cold`
+  |
+  | No `classDef` defines it.
+  |
+  | Used by 0 entities
