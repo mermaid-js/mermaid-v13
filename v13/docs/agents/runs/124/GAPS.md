@@ -40,9 +40,9 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 
 ## #136 T7 ASCII (merged; open items)
 
-- Not done: `ascii.maxWidth` fitting for ER (D84: tighten, then LR→TB). Flowchart has it; ER drawings ignore the width limit for now.
+- Done (final review, D124): ER fits `ascii.maxWidth` as flowchart does (D84: tighten, then LR→TB). The pipeline already passed it to ER's layout as `availableWidth`; it is now pinned by `er-v13/max_width` (turns at 40), `er-v13/max_width_tighten` (93 → 85 columns) and `er-api.spec.ts` (fit, `ASCII_TOO_WIDE`). Other ER goldens unchanged.
 
-- **D118 (maintainer, draft PR #191), applied in T5:** in the cell profile ER uses the profile's own spacing and minimum entity width; `er.nodeSpacing`, `er.rankSpacing` and `er.minEntityWidth` convert from px only when the author sets them (as flowchart's `fromConfig`). v12's px defaults don't convert; SVG unchanged. Re-review the ER `expected*.txt` that change, keep the structural check green.
+- **D118, amended by D124 (equal-to-default rule and the 6-cell rank floor confirmed), applied in T5:** in the cell profile ER uses the profile's own spacing and minimum entity width; `er.nodeSpacing`, `er.rankSpacing` and `er.minEntityWidth` convert from px only when the author sets them (as flowchart's `fromConfig`). v12's px defaults don't convert; SVG unchanged. Re-review the ER `expected*.txt` that change, keep the structural check green.
 
 ## #135 T6 language facet (merged; finish after T5)
 

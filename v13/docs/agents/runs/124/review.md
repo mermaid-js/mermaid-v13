@@ -9,3 +9,21 @@ Reviewed `feature/134_er-integration` (all of T1–T7) against merge-base f9fafc
 5. **The edge `data-id` is not v12's edge id** (low). `render/render.ts:271-273` builds `id_<from.name>_<to.name>_<i>` and calls it v12's. v12 used entity ids (`id_entity-CUSTOMER-0_entity-ORDER-1_0`). Fix: correct the comment and the MIGRATION "ER SVG structure" row to say v13 uses names, and give an example of each.
 
 Also in this pass: **ER `ascii.maxWidth` fitting** (D84: tighten, then switch LR to TB), as flowchart does. It was listed as open in GAPS under #136.
+
+## Fixed
+
+Each spec failed on 555507429 and passes after its commit.
+
+| Finding | Commit | Test |
+| --- | --- | --- |
+| 1. Self-loops shorter than the end marks | 119efdacc | `conformance/src/er-ends.spec.ts` "ER self-relationships" (8 cases, default and redux) |
+| 2. Ends wider than the port pitch | 119efdacc | `er-ends.spec.ts` "ER ends along one side of an entity" (3 and 7 ends, TB and LR) |
+| 3. Completions without quotes | fb54ed8f6 | `language-service/src/completion-hover.spec.ts` "ER completion of names that need quotes" |
+| 4. No changesets | 24468c63c | `tools/release/src/release-config.spec.ts` "gives every public package that has not been released a pending feat: changeset" |
+| 5. Edge `data-id` called v12's | 386d1cbea | `conformance/src/er-render.spec.ts` "ids a relationship by its entities' names" (reads the MIGRATION row) |
+| `ascii.maxWidth` | 389d5b1d2 | `er-goldens.spec.ts` `er-v13/max_width`, `max_width_tighten`; `ascii/er-api.spec.ts` |
+| D124 citations | 8b668d93b | `layout.spec.ts` pins the exact-default corner case |
+
+- 1 and 2: `layout/ends.ts` holds the px end geometry, which the renderer draws from. `erMetrics` gives px graphs `loop` = 36 (the classic zero-or-more circle's far side; D154 keeps it theme-independent) + `loopGap` = 42, and `portPitch` = 18 (span) + `minPitch` = 26. Where a side is too short anyway (seven ends on a 48 px LR side are about 4 px apart), `fitEnds` draws ends narrower so neighbours keep apart; there they are only about 3 px wide. Growing the entity to hold its ends would draw them full size but changes box sizes; left for the maintainer. Text output unchanged.
+- SVG changed for 58 of the 215 ER corpus files (every one with a self-loop or with two or more ends on one side); no ASCII golden changed, structural check and `ascii-divergences.json` green.
+- maxWidth needed no renderer change: the pipeline already hands ER's layout `availableWidth`. The gap was coverage, and the ER goldens runner ignored `maxWidth` in meta.json.
