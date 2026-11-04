@@ -34,6 +34,19 @@ export const GRAMMARS: GrammarTarget[] = [
       documented: ['Click', 'CallbackName'],
     },
   },
+  {
+    type: 'sequence',
+    title: 'Sequence diagram syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // `accDescr {` and its `}`: jison returns no token for them, the lexer does.
+      unnamed: {
+        AccDescrMultiline: { mode: 'INITIAL', pattern: '(?i:accDescr)\\s*\\{\\s*' },
+        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '\\}' },
+      },
+    },
+  },
 ];
 
 export const grammarPath = (type: string): string =>

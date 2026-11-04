@@ -12,12 +12,9 @@
 // cspell:words yytext
 import {
   inKindSet,
-  isSpace,
   Kind,
-  LBRACE,
   ParseState,
   Probe,
-  RBRACE,
   significantTokens,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
@@ -518,7 +515,7 @@ class SequenceParser extends TokenRules {
 
   /** `title …`, `title: …`, `accTitle: …`, `accDescr: …`, `accDescr { … }`. */
   private text(from: number): void {
-    const { db, st, src } = this;
+    const { db, st } = this;
     const k = this.kind();
     let type: 'Title' | 'AccTitle' | 'AccDescr';
     let text: string;
@@ -547,19 +544,33 @@ class SequenceParser extends TokenRules {
       db.accDescr = text;
     }
     const range = this.range(from, last);
-    if (k === T.AccDescrMultilineValue) {
-      // `accDescr {` and `}` have no tokens of their own here: take them into the range.
-      let b = range.start;
-      while (b > 0 && isSpace(src.charCodeAt(b - 1))) b--;
-      if (src.charCodeAt(b - 1) === LBRACE) {
-        b--;
-        while (b > 0 && isSpace(src.charCodeAt(b - 1))) b--;
-        if (src.slice(b - 8, b).toLowerCase() === 'accdescr') range.start = b - 8;
-      }
-      if (src.charCodeAt(range.end) === RBRACE) range.end++;
-    }
+    if (k === T.AccDescrMultilineValue) this.multilineRange(range);
     st.statement(type.charAt(0).toLowerCase() + type.slice(1), range);
     this.body.push({ id: this.ids.statement('st'), type, range, text });
+  }
+
+  /**
+   * `accDescr {` and its `}` are trivia to the parser (jison returns no token for them): take
+   * them into the range of the text between, from the full token stream.
+   */
+  private multilineRange(range: Range): void {
+    const t = this.fullTokens;
+    let j = 0;
+    while (
+      j < t.length &&
+      ((t.start[j] ?? 0) < range.start || t.kind[j] !== T.AccDescrMultilineValue)
+    )
+      j++;
+    for (let o = j - 1; o >= 0; o--) {
+      const k = t.kind[o];
+      if (k === T.AccDescrMultiline) range.start = t.start[o] ?? range.start;
+      if (k !== Kind.Comment && k !== Kind.Directive) break;
+    }
+    for (let c = j + 1; c < t.length; c++) {
+      const k = t.kind[c];
+      if (k === T.AccDescrMultilineEnd) range.end = t.end[c] ?? range.end;
+      if (k !== Kind.Comment && k !== Kind.Directive) break;
+    }
   }
 
   /** One statement of a document (jison `statement`), at token `from`. */
@@ -677,7 +688,7 @@ class SequenceParser extends TokenRules {
     const range = this.range(from, rest);
     const ast = this.ids.statement('st');
     db.section(fragment, ast, label);
-    if (frame.section) st.endStatement(frame.section.span, this.start(from));
+    if (frame.section) st.endStatement(frame.section.span, this.end(from - 1));
     const node: SequenceSectionStmt = {
       id: ast,
       type: 'Section',
@@ -686,7 +697,7 @@ class SequenceParser extends TokenRules {
       children: [],
     };
     const span = st.beginStatement(SECTION_NAMES[k] ?? 'section', range.start);
-    if (frame.section) frame.section.node.range.end = this.start(from);
+    if (frame.section) frame.section.node.range.end = this.end(from - 1);
     (frame.node.children as SequenceStatementNode[]).push(node);
     frame.body = node.children;
     frame.section = { node, span };
@@ -707,14 +718,16 @@ class SequenceParser extends TokenRules {
     }
     this.i++;
     const end = this.end(from);
-    this.closeFrame(frame, end);
+    this.closeFrame(frame, end, this.end(from - 1));
     if (frame.keyword === T.Box) db.closeBox();
     else db.close();
   }
 
-  private closeFrame(frame: Frame, end: number): void {
+  /** Close `frame` at `end`; its last section ends at `sectionEnd`, before the `end` line. */
+  private closeFrame(frame: Frame, end: number, sectionEnd = end): void {
     if (frame.section) {
-      frame.section.node.range.end = end;
+      frame.section.node.range.end = sectionEnd;
+      this.st.endStatement(frame.section.span, sectionEnd);
     }
     frame.node.range.end = end;
     this.st.endStatement(frame.span, end);
