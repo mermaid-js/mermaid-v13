@@ -8,7 +8,7 @@ Mermaid v13 renders without a browser DOM: in Node, Deno, web workers and browse
 ## Everything
 
 ```bash
-npm install mermaid@alpha --save-exact
+npm install mermaid@v13-alpha --save-exact
 ```
 
 ```js
@@ -22,10 +22,10 @@ Every first-party diagram type is included. Bundlers split each type into its ow
 
 ## Pick your diagrams
 
-`mermaid/slim` is the same API without the first-party diagrams. Only the diagrams you pass in are bundled. Each package has its own version. The newest `mermaid@alpha` depends on the newest `@alpha` of each diagram package, so install them together:
+`mermaid/slim` is the same API without the first-party diagrams. Only the diagrams you pass in are bundled. Each package has its own version. The newest `mermaid@v13-alpha` depends on the newest `@v13-alpha` of each diagram package, so install them together:
 
 ```bash
-npm install mermaid@alpha @mermaid-js/diagram-flowchart@alpha --save-exact
+npm install mermaid@v13-alpha @mermaid-js/diagram-flowchart@v13-alpha --save-exact
 ```
 
 ```js
@@ -43,7 +43,7 @@ Other diagram types are still detected, and reject with an `UNSUPPORTED_DIAGRAM`
 ## Command line
 
 ```bash
-npx mermaid@alpha render diagram.mmd --format ascii
+npx mermaid@v13-alpha render diagram.mmd --format ascii
 ```
 
 ## Feedback
