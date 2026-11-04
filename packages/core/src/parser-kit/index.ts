@@ -5,6 +5,8 @@
  */
 export { FIRST_DIAGRAM_KIND, Kind, tokenText, TokenWriter } from './tokens.ts';
 export type { TokenKind, TokenStream } from './tokens.ts';
+export { SHARED_CATEGORIES, TOKEN_CATEGORIES } from './categories.ts';
+export type { TokenCategory } from './categories.ts';
 export {
   charTable,
   hasClass,
