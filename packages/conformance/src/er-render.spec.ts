@@ -3,8 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { PAYLOADS } from '@mermaid-js/core/svg/testing';
 import type { ErModel } from '@mermaid-js/diagram-er';
-import { MermaidError, type Prepared, type RenderResult } from 'mermaid';
-import { erMermaid } from './er/mermaid.ts';
+import { createMermaid, MermaidError, type Prepared, type RenderResult } from 'mermaid';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
 import { astIndex, extents, wellFormed } from './svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from './svg-tree.ts';
@@ -16,6 +15,13 @@ import { parseSvg, type SvgElement, type SvgView } from './svg-tree.ts';
  * entity, attribute row, relationship and subgraph maps to exactly one `data-ast` element
  * whose id resolves to an AST range. Each fixture renders in a redux and a classic theme.
  */
+
+/** A fresh API object with `deterministic: true` (table measurer); ER comes from the registry. */
+function erMermaid(): ReturnType<typeof createMermaid> {
+  const m = createMermaid();
+  m.initialize({ deterministic: true });
+  return m;
+}
 
 interface Case {
   id: string;
@@ -217,19 +223,36 @@ describe('ER render: tables, ends and lines', () => {
     expect(tree.find({ class: 'cluster-label' }).map((t) => textIn(tree, t))).toEqual(['Orders']);
   });
 
-  it('applies style and classDef to the table, over the palette', async () => {
+  it('applies style and classDef to the table, over the palette; a fill fills every row (D117)', async () => {
     const { tree } = await render(
-      'erDiagram\n  A {\n    int x\n  }\n  classDef hot fill:#ff0000,color:#ffffff\n  class A hot\n  style A stroke:#00ff00'
+      'erDiagram\n  A {\n    int x\n    int y\n  }\n  classDef hot fill:#ff0000,color:#ffffff\n  class A hot\n  style A stroke:#00ff00',
+      'default'
     );
     const a = tree.find({ 'data-id': 'A' })[0]!;
     expect(tree.getAttr(a, 'class')).toBe('node default hot');
     const outer = tree.find({ class: 'outer-path' })[0]!;
     expect(tree.getAttr(outer, 'fill')).toBe('#ff0000');
     expect(tree.getAttr(outer, 'stroke')).toBe('#00ff00');
-    const row = tree.children(tree.find({ class: 'row-rect-odd' })[0]!)[0]!;
-    expect(tree.getAttr(row, 'fill')).toBe('#ff0000');
+    for (const cls of ['row-rect-odd', 'row-rect-even']) {
+      const row = tree.children(tree.find({ class: cls })[0]!)[0]!;
+      expect(tree.getAttr(row, 'fill'), cls).toBe('#ff0000');
+    }
     expect(tree.getAttr(tree.find({ class: 'divider' })[0]!, 'stroke')).toBe('#00ff00');
     expect(tree.getAttr(tree.find({ class: 'name' })[0]!, 'fill')).toBe('#ffffff');
+  });
+
+  it('strokes outline and rules with the theme strokeWidth: 1 classic, 2 redux (D117)', async () => {
+    const src = 'erDiagram\n  A {\n    int x\n  }';
+    const width = async (theme: 'default' | 'redux') => {
+      const m = createMermaid();
+      m.initialize({ deterministic: true, output: { cssVariables: false } });
+      const tree = parseSvg((await m.render('mermaid-0', src, { config: { theme } })).svg);
+      return ['outer-path', 'divider'].map((cls) =>
+        tree.getAttr(tree.find({ class: cls })[0]!, 'stroke-width')
+      );
+    };
+    expect(await width('default')).toEqual(['1', '1']);
+    expect(await width('redux')).toEqual(['2', '2']);
   });
 
   it('colours entities by palette slot only when the theme has a border palette (D152)', async () => {

@@ -76,8 +76,8 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart |
 | `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
 | `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart |
-| `rowOdd` | `--mermaid-rowOdd` | derived | color | `#ffffff` | `lighten(mainBkg, 6%)` | redux-color, redux, redux-dark, redux-dark-color | er |
-| `rowEven` | `--mermaid-rowEven` | derived | color | `lighten(mainBkg, 64%)` | `darken(mainBkg, 81%)` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral | er |
+| `rowOdd` | `--mermaid-rowOdd` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, neutral | er |
+| `rowEven` | `--mermaid-rowEven` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | er |
 | `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
 | `erMarkerFill` | `--mermaid-erMarkerFill` | derived | color | `#ffffff` | `#ffffff` | redux-color, redux, redux-dark, redux-dark-color | er |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color | flowchart |

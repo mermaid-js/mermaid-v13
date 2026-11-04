@@ -359,21 +359,21 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | --- | --- | --- | --- | --- | --- |
 | `er` | object |  | pending |  | The object containing configurations specific for entity relationship diagrams |
 | `er.useWidth` | number |  | pending |  |  |
-| `er.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `er.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `er.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `er.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `er.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `er.titleTopMargin` | integer | `25` | pending |  | Margin top for the text over the diagram |
-| `er.diagramPadding` | integer | `20` | pending |  | The amount of padding around the diagram as a whole so that embedded diagrams have margins, expressed in pixels. |
-| `er.layoutDirection` | "TB" \\| "BT" \\| "LR" \\| "RL" | `"TB"` | pending |  | Directional bias for layout of entities |
-| `er.minEntityWidth` | integer | `100` | pending |  | The minimum width of an entity box. Expressed in pixels. |
-| `er.minEntityHeight` | integer | `75` | pending |  | The minimum height of an entity box. Expressed in pixels. |
-| `er.entityPadding` | integer | `15` | pending |  | The minimum internal padding between text in an entity box and the enclosing box borders. Expressed in pixels. |
-| `er.nodeSpacing` | integer | `140` | pending |  |  |
-| `er.rankSpacing` | integer | `80` | pending |  |  |
-| `er.stroke` | string | `"gray"` | pending |  | Stroke color of box edges and lines. |
-| `er.fill` | string | `"honeydew"` | pending |  | Fill color of entity boxes |
-| `er.fontSize` | integer | `12` | pending |  | Font size (expressed as an integer representing a number of pixels) |
+| `er.diagramPadding` | integer | `20` | honoured (13.0.0) | The margin around the drawing, in px (D116). Text output keeps its own. | The amount of padding around the diagram as a whole so that embedded diagrams have margins, expressed in pixels. |
+| `er.layoutDirection` | "TB" \\| "BT" \\| "LR" \\| "RL" | `"TB"` | ignored (13.0.0) | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. The diagram's `direction` statement sets the direction. Replacement: `direction TB\|BT\|LR\|RL` in the diagram text. | Directional bias for layout of entities |
+| `er.minEntityWidth` | integer | `100` | honoured (13.0.0) |  | The minimum width of an entity box. Expressed in pixels. |
+| `er.minEntityHeight` | integer | `75` | ignored (13.0.0) | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. An entity is as tall as its rows. | The minimum height of an entity box. Expressed in pixels. |
+| `er.entityPadding` | integer | `15` | honoured (13.0.0) | The padding inside every entity table cell, in px, across and down, in place of the layout's node padding (D116). Text output keeps its 1-cell padding. | The minimum internal padding between text in an entity box and the enclosing box borders. Expressed in pixels. |
+| `er.nodeSpacing` | integer | `140` | honoured (13.0.0) |  |  |
+| `er.rankSpacing` | integer | `80` | honoured (13.0.0) |  |  |
+| `er.stroke` | string | `"gray"` | ignored (13.0.0) | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. Replacement: `themeVariables.nodeBorder` and `lineColor`. | Stroke color of box edges and lines. |
+| `er.fill` | string | `"honeydew"` | ignored (13.0.0) | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. Replacement: `themeVariables.mainBkg`. | Fill color of entity boxes |
+| `er.fontSize` | integer | `12` | ignored (13.0.0) | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. Entities use the theme font size. Replacement: `themeVariables.fontSize`. | Font size (expressed as an integer representing a number of pixels) |
 
 ## `pie`
 

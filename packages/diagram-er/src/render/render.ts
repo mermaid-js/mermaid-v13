@@ -3,7 +3,7 @@
 // (`relationshipLine`, `outer-path`, `row-rect-odd`/`-even`, `attribute-*`, `divider`); every
 // entity, attribute row, relationship and subgraph is one element with `data-id` and
 // `data-ast` (R-SVG-2, R-PARSE-8). Colours and sizes come from theme variables only (D152).
-import { pxProfile, type LayoutModelNode } from '@mermaid-js/core/layout';
+import type { LayoutModelNode } from '@mermaid-js/core/layout';
 import {
   px,
   styleScope,
@@ -99,6 +99,7 @@ function paints(theme: ThemeOf, er: ErPrepared): Paints {
   const table: TablePaint = {
     fill: theme.color('mainBkg'),
     stroke: theme.color('nodeBorder'),
+    // The shared token for outline and rules, not v12 classic's 1.3px (D117).
     strokeWidth: theme.length('strokeWidth'),
     text: theme.color('nodeTextColor'),
     rowOdd: rows ? theme.color('rowOdd') : undefined,
@@ -169,7 +170,7 @@ export function renderEr(
     er,
     ctx,
     paint: paints(ctx.theme, er),
-    padX: (ctx.units ?? pxProfile).builder.nodePad.x,
+    padX: er.pad.x,
   };
   openRoot(scene, model);
   // v12 numbers edge ids by the relationship's place among all of them.
@@ -368,6 +369,7 @@ function drawRows(
   text: Attrs
 ): void {
   const t = paint.table;
+  // An author's fill fills every row, in every theme (D117).
   const authorFill = view.style.shape.fill;
   for (let i = 0; i < view.rows.length; i++) {
     const row = view.rows[i]!;

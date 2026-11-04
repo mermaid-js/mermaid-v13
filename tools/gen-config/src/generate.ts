@@ -32,6 +32,7 @@ export const SERVICE_SCHEMA = 'packages/language-service/src/generated/config-sc
  */
 export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   flowchart: 'packages/diagram-flowchart',
+  er: 'packages/diagram-er',
 };
 
 export const MIGRATION_BEGIN = '<!-- BEGIN GENERATED CONFIG SECTION: pnpm gen:config -->';

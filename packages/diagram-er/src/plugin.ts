@@ -1,6 +1,7 @@
 import type { DiagramParseContext, DiagramPlugin } from '@mermaid-js/core';
 import { resolveLimits, type Limits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
+import { erConfigDefaults } from './generated/config-defaults.ts';
 import type { ErRenderContext } from './layout/context.ts';
 import { layoutEr, type ErLayout } from './layout/layout.ts';
 import { detectEr, parseEr, type ErModel, type ErParseResult } from './parser/index.ts';
@@ -13,12 +14,14 @@ const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
 /**
  * The ER diagram plugin (DESIGN §12.1). `parse` takes the whole source (front matter
  * included); every range is into the source. `layout` measures and lays out (DESIGN §6.1);
- * `render` writes the whole `<svg>` document into the writer. The registry manifest is T5's.
+ * `render` writes the whole `<svg>` document into the writer. `configDefaults` are the `er`
+ * section's generated defaults (v12's: nodeSpacing 140, rankSpacing 80, …).
  */
 export const er = {
   id: 'er',
   formats: ['svg'] as const,
   layoutKind: 'graph' as const,
+  configDefaults: erConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => detectEr(text),
   parse: (text: string, ctx: DiagramParseContext): ErParseResult => {
     const caps = limits(ctx);

@@ -51,7 +51,7 @@ describe('changesets (R-REL-1, R-REL-2)', () => {
     expect(json('.changeset/config.json').linked).toEqual([]);
     // Exact workspace ranges: Changesets bumps every dependent, so `mermaid` always ships the
     // newest set, and a pinned `mermaid` never floats onto another alpha of its packages.
-    for (const dir of ['mermaid', 'diagram-flowchart', 'plugin-interactions']) {
+    for (const dir of ['mermaid', 'diagram-flowchart', 'diagram-er', 'plugin-interactions']) {
       const pkg = json(`packages/${dir}/package.json`) as {
         dependencies?: Record<string, string>;
         peerDependencies?: Record<string, string>;

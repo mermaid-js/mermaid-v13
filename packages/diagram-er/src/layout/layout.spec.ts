@@ -119,6 +119,42 @@ describe('entity tables in px', () => {
     expect(graph.routing).toBe('stepped');
   });
 
+  it('pads each cell by er.entityPadding across and down, in px (D116)', () => {
+    const src = 'erDiagram\n  A {\n    string name PK\n  }\n  B\n';
+    const { graph, layout } = lay(src, pxProfile, { er: { entityPadding: 15 } });
+    expect(layout.er!.pad).toEqual({ x: 15, y: 15 });
+    expect(layout.er!.entities[0]!.columns.map((c) => c.size)).toEqual([
+      cell('string') + 30,
+      cell('name') + 30,
+      cell('PK') + 30,
+      0,
+    ]);
+    expect(graph.nodes[0]).toMatchObject({ height: 2 * (line() + 30) });
+    // An entity without attributes: the name cell, padded the same way.
+    expect(graph.nodes[1]).toMatchObject({ width: cell('B') + 30, height: line() + 30 });
+    const tight = lay(src, pxProfile, { er: { entityPadding: 0 } });
+    expect(tight.graph.nodes[0]).toMatchObject({
+      width: cell('string') + cell('name') + cell('PK'),
+      height: 2 * line(),
+    });
+  });
+
+  it('keeps the 1-cell padding and no margin in cells, whatever er says (D116)', () => {
+    const init = { er: { entityPadding: 40, diagramPadding: 50 } };
+    const src = 'erDiagram\n  BOOK {\n    string *title\n    id *the_Primary_Key\n  }\n';
+    const { graph, layout } = lay(src, cellProfile(), init);
+    expect(layout.er!.pad).toEqual(cellProfile().builder.nodePad);
+    expect(graph.nodes).toEqual([expect.objectContaining({ width: 29, height: 6 })]);
+    expect(graph.diagramPadding).toBe(0);
+  });
+
+  it('takes er.diagramPadding as the px margin around the drawing (D116)', () => {
+    const src = 'erDiagram\n  A ||--o{ B : x\n';
+    expect(lay(src, pxProfile).graph.diagramPadding).toBe(pxProfile.builder.diagramPadding);
+    expect(lay(src, pxProfile, { er: { diagramPadding: 20 } }).graph.diagramPadding).toBe(20);
+    expect(lay(src, pxProfile, { er: { diagramPadding: 0 } }).graph.diagramPadding).toBe(0);
+  });
+
   it('measures a name in the font its style gives it', () => {
     const plain = lay('erDiagram\n  A\n', pxProfile).graph.nodes[0]!;
     const big = lay('erDiagram\n  A\n  style A font-size:40px\n', pxProfile).graph.nodes[0]!;

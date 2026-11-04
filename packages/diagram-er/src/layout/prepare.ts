@@ -2,7 +2,13 @@
 // subgraph title measured, before layout. Groups and edge ends follow v12's `ErDB.getData`.
 // Every length comes from the unit profile (ADR-13); this file holds no length literal
 // (`packages/conformance/src/er-prepare-literals.spec.ts`).
-import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
+import type {
+  Dir,
+  LayoutGraph,
+  LayoutGroup,
+  LayoutNode,
+  UnitProfile,
+} from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
@@ -95,6 +101,8 @@ export interface ErPrepared {
   edges: EdgeView[];
   /** Outermost first. */
   groups: GroupView[];
+  /** Padding inside every table cell, per side (D116). */
+  pad: { readonly x: number; readonly y: number };
 }
 
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
@@ -163,6 +171,16 @@ interface Measure {
 }
 
 /**
+ * D116: `er.entityPadding` (px) pads every table cell, across and down, in place of the
+ * layout's node padding. Text output keeps the cell profile's 1-cell padding.
+ */
+function cellPad(units: UnitProfile, er: Readonly<Record<string, unknown>>): Measure['pad'] {
+  const px = configNumber(er.entityPadding);
+  if (units.grid !== undefined || px === undefined) return units.builder.nodePad;
+  return { x: fromPx(units, px, 'x'), y: fromPx(units, px, 'y') };
+}
+
+/**
  * Measures the model and builds the graph the layout engine gets. Every length comes from the
  * unit profile: px config values through `fromPx`, the builder's own lengths from
  * `units.builder`.
@@ -175,15 +193,15 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     size: theme.number('fontSize'),
     weight: 400,
   };
+  const er = ctx.config.er ?? {};
   const m: Measure = {
     font,
-    pad: units.builder.nodePad,
+    pad: cellPad(units, er),
     // This is the only place the builder looks at which profile it has.
     rule: units.id === 'cell' ? 1 : 0,
     label: (text, f, max, bits = 0) => layoutLabel(text, f, max, measurer, { style: bits }),
     styleOf: styleCache(model, ctx),
   };
-  const er = ctx.config.er ?? {};
   const minWidth = configNumber(er.minEntityWidth);
   const nest = nesting(model);
 
@@ -227,7 +245,7 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     });
   }
   const graph = layoutGraph(model, { entities, groups, edges }, ctx);
-  return { graph, entities, edges, groups };
+  return { graph, entities, edges, groups, pad: m.pad };
 }
 
 /** The checked style of class names plus own declarations, one per distinct list. */
@@ -467,7 +485,12 @@ function layoutGraph(
     })),
     spacing,
     ...(turned ? { turnedSpacing: down } : {}),
-    diagramPadding: b.diagramPadding,
+    // D116: er.diagramPadding (px) is the margin around the drawing. Text output trims the
+    // empty margin, so in cells the profile's own applies (as the flowchart).
+    diagramPadding:
+      units.grid === undefined
+        ? fromConfig(er.diagramPadding, b.diagramPadding, 'x', 0)
+        : b.diagramPadding,
     // v12's default ELK layout draws orthogonal routes; on the grid they are square anyway.
     routing: 'stepped',
     // Room for the cardinality marker at the head (D154): theme-independent.

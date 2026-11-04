@@ -2353,6 +2353,9 @@ $defs:
             `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
             whatever the diagram section.
           replacement: '`theme`, or the geometry and `dropShadow` theme variables'
+      useMaxWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useMaxWidth'
+        x-mermaid: { status: honoured, since: 13.0.0 }
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
@@ -2364,7 +2367,10 @@ $defs:
         type: integer
         default: 20
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: The margin around the drawing, in px (D116). Text output keeps its own.
       layoutDirection:
         description: Directional bias for layout of entities
         type: string
@@ -2375,19 +2381,30 @@ $defs:
           LR: Left-Right
           RL: Right to Left
         default: TB
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used,
+            did. The diagram's `direction` statement sets the direction.
+          replacement: '`direction TB|BT|LR|RL` in the diagram text'
       minEntityWidth:
         description: The minimum width of an entity box. Expressed in pixels.
         type: integer
         default: 100
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       minEntityHeight:
         description: The minimum height of an entity box. Expressed in pixels.
         type: integer
         default: 75
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used,
+            did. An entity is as tall as its rows.
       entityPadding:
         description: |
           The minimum internal padding between text in an entity box and the enclosing box borders.
@@ -2395,33 +2412,56 @@ $defs:
         type: integer
         default: 15
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The padding inside every entity table cell, in px, across and down, in place of the
+            layout's node padding (D116). Text output keeps its 1-cell padding.
       nodeSpacing:
         type: integer
         default: 140
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       rankSpacing:
         type: integer
         default: 80
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       stroke:
         description: Stroke color of box edges and lines.
         type: string
         default: gray
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used,
+            did.
+          replacement: '`themeVariables.nodeBorder` and `lineColor`'
       fill:
         description: Fill color of entity boxes
         type: string
         default: honeydew
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used,
+            did.
+          replacement: '`themeVariables.mainBkg`'
       fontSize:
         description: Font size (expressed as an integer representing a number of pixels)
         type: integer
         default: 12
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used,
+            did. Entities use the theme font size.
+          replacement: '`themeVariables.fontSize`'
 
   StateDiagramConfig:
     title: State Diagram Config

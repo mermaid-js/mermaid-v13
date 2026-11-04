@@ -3281,6 +3281,13 @@ export const configSchema: ConfigSchema = {
             "replacement": "`theme`, or the geometry and `dropShadow` theme variables"
           }
         },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "titleTopMargin": {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
@@ -3294,7 +3301,9 @@ export const configSchema: ConfigSchema = {
           "default": 20,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The margin around the drawing, in px (D116). Text output keeps its own."
           }
         },
         "layoutDirection": {
@@ -3314,7 +3323,10 @@ export const configSchema: ConfigSchema = {
           },
           "default": "TB",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. The diagram's `direction` statement sets the direction.",
+            "replacement": "`direction TB|BT|LR|RL` in the diagram text"
           }
         },
         "minEntityWidth": {
@@ -3323,7 +3335,8 @@ export const configSchema: ConfigSchema = {
           "default": 100,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "minEntityHeight": {
@@ -3332,7 +3345,9 @@ export const configSchema: ConfigSchema = {
           "default": 75,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. An entity is as tall as its rows."
           }
         },
         "entityPadding": {
@@ -3341,7 +3356,9 @@ export const configSchema: ConfigSchema = {
           "default": 15,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The padding inside every entity table cell, in px, across and down, in place of the layout's node padding (D116). Text output keeps its 1-cell padding."
           }
         },
         "nodeSpacing": {
@@ -3349,7 +3366,8 @@ export const configSchema: ConfigSchema = {
           "default": 140,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "rankSpacing": {
@@ -3357,7 +3375,8 @@ export const configSchema: ConfigSchema = {
           "default": 80,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "stroke": {
@@ -3365,7 +3384,10 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "gray",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did.",
+            "replacement": "`themeVariables.nodeBorder` and `lineColor`"
           }
         },
         "fill": {
@@ -3373,7 +3395,10 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "honeydew",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did.",
+            "replacement": "`themeVariables.mainBkg`"
           }
         },
         "fontSize": {
@@ -3382,7 +3407,10 @@ export const configSchema: ConfigSchema = {
           "default": 12,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. Entities use the theme font size.",
+            "replacement": "`themeVariables.fontSize`"
           }
         }
       }
