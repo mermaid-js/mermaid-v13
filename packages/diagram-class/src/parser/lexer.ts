@@ -22,14 +22,14 @@ export interface ClassLex {
   tokens: TokenStream;
   /** Start of token `i` in {@link V12Text.text}; trivia from removed spans get -1. */
   textStart: Int32Array;
-  /** End of token `i` in {@link V12Text.text}, clipped to v12's text without its final `\n`. */
+  /** End of token `i` in {@link V12Text.text} (it may include the `\n` v12 appended). */
   textEnd: Int32Array;
   v12: V12Text;
 }
 
-/** Lex the class body `src[from…]`, as v12 saw it in `v12`, with v12's removed spans `holes`. */
-export function lex(src: string, v12: V12Text, holes: readonly Hole[]): ClassLex {
-  return new ClassLexer(src, v12, holes).run();
+/** Lex a class source as v12 saw it (`v12`), writing v12's removed spans as trivia. */
+export function lex(src: string, v12: V12Text, onRule?: (rule: number) => void): ClassLex {
+  return new ClassLexer(src, v12, v12.holes, onRule).run();
 }
 
 class ClassLexer {
@@ -43,7 +43,8 @@ class ClassLexer {
   constructor(
     private readonly src: string,
     private readonly v12: V12Text,
-    private readonly holes: readonly Hole[]
+    private readonly holes: readonly Hole[],
+    private readonly onRule: ((rule: number) => void) | undefined
   ) {
     this.scan = {
       text: v12.text,
@@ -88,6 +89,7 @@ class ClassLexer {
       const rule = RULES[k] as Rule;
       const e = rule.match(this.scan, p);
       if (e < 0) continue;
+      this.onRule?.(k);
       this.act(rule);
       if (rule.action === A.popLess) return p;
       if (rule.kind >= 0) this.emit(rule.kind, p, e);
@@ -142,7 +144,6 @@ class ClassLexer {
   private trivia(at: number): void {
     const hs = this.holes;
     for (let h = hs[this.hole]; h && h.start < at; h = hs[++this.hole]) {
-      if (h.kind === 'drop') continue;
       this.w.push(h.kind === 'comment' ? Kind.Comment : Kind.Directive, h.start, h.end);
       this.starts.push(-1);
       this.ends.push(-1);
@@ -155,6 +156,6 @@ class ClassLexer {
     this.trivia(start);
     this.w.push(kind, start, end);
     this.starts.push(s);
-    this.ends.push(Math.min(e, this.v12.length));
+    this.ends.push(e);
   }
 }

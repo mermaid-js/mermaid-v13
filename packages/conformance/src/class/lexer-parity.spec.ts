@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { classTokens, JISON_NAMES } from '@mermaid-js/diagram-class';
+import { JISON_NAMES, lexClass } from '@mermaid-js/diagram-class';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 import { decodeEntities } from '../flowchart/v12.ts';
@@ -15,10 +15,8 @@ import type { JisonToken } from './jison-lexer.ts';
  * (`corpus/class-v12-specs.json`, `src/cli/harvest-class.ts`), generated line-separator cases,
  * and every one of those again with comment lines added (v12 removed them before lexing).
  *
- * Normalisation, both sides:
- * - images are compared as v12's parser read them, entity placeholders decoded;
- * - v12 appended a `\n` before lexing; v13 lexes that sentinel line break too but clips its
- *   image to the source, so that last character is taken off v12's last non-empty token.
+ * Images are compared as v12's parser read them, entity placeholders decoded, including the
+ * `\n` v12 appended (v13 lexes it too; `tokenValue` clips it off for consumers).
  *
  * Exclusions (v13 tokens with no jison terminal, left out of the comparison):
  * - comments and directives v12 removed before lexing are v13 trivia tokens;
@@ -32,24 +30,20 @@ function cut(tokens: JisonToken[]): JisonToken[] {
   return i < 0 ? tokens : [...tokens.slice(0, i), ['INVALID', '']];
 }
 
-/** The last non-empty image of a stream that lexed to the end held v12's appended `\n`. */
-function dropAppendedNewline(tokens: JisonToken[]): void {
-  if (tokens[tokens.length - 1]?.[0] === 'INVALID') return;
-  for (let k = tokens.length - 1; k >= 0; k--) {
-    const t = tokens[k];
-    if (!t || t[1] === '') continue;
-    if (t[1].endsWith('\n')) t[1] = t[1].slice(0, -1);
-    return;
-  }
-}
-
+/**
+ * v13's stream as jison names and images. Images are the token's span of v12's text as the v13
+ * lexer rebuilt it, appended `\n` included, so both sides are compared exactly.
+ */
 function v13Tokens(source: string): JisonToken[] {
-  return cut(
-    classTokens(source).flatMap((t): JisonToken[] => {
-      const name = JISON_NAMES[t.kind];
-      return name ? [[name, t.text]] : [];
-    })
-  );
+  const l = lexClass(source);
+  const out: JisonToken[] = [];
+  for (let i = 0; i < l.tokens.length - 1; i++) {
+    const name = JISON_NAMES[l.tokens.kind[i] ?? -1];
+    const s = l.textStart[i] ?? -1;
+    if (!name || s < 0) continue;
+    out.push([name, decodeEntities(l.v12.text.slice(s, l.textEnd[i] ?? s))]);
+  }
+  return cut(out);
 }
 
 // U+2028 and U+2029: a regex `.` stops at them and `^` follows them, as LF does.
@@ -70,6 +64,40 @@ const LINE_SEPARATORS: CorpusItem[] = [
   'classDiagram\nclass A["<b class="x">y</b>"]\nstyle A fill:#f00;\nA : #35; x',
 ].map((source, i) => ({ id: `line separators ${i}`, source }));
 
+/**
+ * Hand-written cases: every reachable jison rule, the start-condition edges (an unclosed body,
+ * `less(0)` out of a namespace) and preprocessing shapes found in review.
+ */
+const LEXER_CASES: CorpusItem[] = [
+  'classDiagram\n[*] --> A\nnamespace N {\n[*] --> B\n}\nclass C {\n[*]\n{\n}\n',
+  'classDiagram\nnamespace N { } }\nA',
+  'classDiagram\nnamespace N {',
+  'classDiagram\nclass A {',
+  'classDiagram\nclass A {\n+x',
+  'classDiagram\nA : \nB :\nC # % = x',
+  'classDiagram\nA :;',
+  'classDiagram\nA %% c\n\n B',
+  'classDiagram\nA é 中文',
+  'classDiagram\nA\n%%',
+  'classDiagram\naccDescr {',
+  'classDiagram\naccDescr {\n  two\n  lines\n}\nA',
+  'classDiagram\naccTitle',
+  'classDiagram\nclick A call',
+  'classDiagram\nclick A call f(',
+  'classDiagram\nclick A call f() "tip"',
+  'classDiagram\nnote "open',
+  'classDiagram\nclass A~T',
+  'classDiagram\nclass `A',
+  'classDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB',
+  'classDiagram\nA : x %%{init: {"a":"style"}}%% :#y;\nB',
+  'classDiagram\nstyle A fill:#f00;stroke:#0f0;\nclassDef x fill:#f00;\nA : #quot;y#35;',
+  'classDiagram\n%%{init: {\n  %% c\n  "x": 1}}%%\nA',
+  '%%{init: {"theme": "dark"}}%%\n  %% c\n\nclassDiagram\nA',
+  'classDiagram\nclass A {\n  %% not a comment in a body\n}',
+  'classDiagram\nA direction TB\nB direction LR x\nC',
+  'classDiagram\ndirection\n\nRL extra\nA',
+].map((source, i) => ({ id: `lexer case ${i}`, source }));
+
 async function corpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
   for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/class-diagram'), 'e2e')) {
@@ -78,7 +106,7 @@ async function corpus(): Promise<CorpusItem[]> {
   const specs = JSON.parse(
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/class-v12-specs.json'), 'utf8')
   ) as CorpusItem[];
-  const all = [...items, ...specs, ...LINE_SEPARATORS];
+  const all = [...items, ...specs, ...LINE_SEPARATORS, ...LEXER_CASES];
   return [
     ...all,
     ...all.map((item) => ({ id: `${item.id} (commented)`, source: commented(item.source) })),
@@ -89,10 +117,11 @@ async function corpus(): Promise<CorpusItem[]> {
  * `src` with nine comment lines after every line of the body, or one through the middle of a
  * one-line body. v12 removed them before lexing, so tokens must match across them.
  *
- * Exclusion: no comment lines go inside a multi-line `%%{ … }%%` directive. v12's directive
- * regex needs a word right after `%%{`, so a comment line there made v12 keep the directive as
- * text, while core's preprocess still reads it as a directive. That is a preprocess
- * difference (core, D67), not a lexer one.
+ * Exclusion: none go right after a line that ends in `%%{`. v12's directive regex needs a word
+ * right after `%%{` (blanks allowed), so a comment line there made v12 keep the whole directive
+ * as text, while core's preprocess still reads it as a directive (D67): a core preprocess
+ * difference, not a lexer one (tickets/153.md). Comment lines deeper inside a directive are
+ * kept: v12 removed those directives too.
  */
 function commented(src: string): string {
   const head = /^---[\s\S]*?\n---[^\S\n]*\n/.exec(src)?.[0] ?? '';
@@ -102,16 +131,15 @@ function commented(src: string): string {
     const mid = Math.floor(body.length / 2);
     return head + body.slice(0, mid) + '\n%% cut\n' + body.slice(mid);
   }
-  let inDirective = false;
-  const out: string[] = [];
-  for (const line of lines) {
-    if (out.length > 0 && !inDirective) out.push('  %% c\n'.repeat(9).slice(0, -1));
-    out.push(line);
-    const open = line.lastIndexOf('%%{');
-    if (open >= 0 && !line.includes('}%%', open)) inDirective = true;
-    else if (line.includes('}%%')) inDirective = false;
-  }
-  return head + out.join('\n');
+  const comments = '\n' + '  %% c\n'.repeat(9);
+  return (
+    head +
+    lines.reduce((out, line, i) => {
+      if (i === 0) return line;
+      const after = /%%\{\s*$/.test(lines[i - 1] ?? '') ? '\n' : comments;
+      return out + after + line;
+    }, '')
+  );
 }
 
 describe('class lexer parity with mermaid@12 (jison)', () => {
@@ -124,8 +152,12 @@ describe('class lexer parity with mermaid@12 (jison)', () => {
       const v12 = await oracle.tokens(item.source);
       if (!v12) continue;
       compared++;
+      const input = await oracle.input(item.source);
+      if (input !== lexClass(item.source).v12.text) {
+        diffs.push({ id: `${item.id} (lexed text)`, at: 0, v12: [['TEXT', input ?? '']], v13: [] });
+        continue;
+      }
       const expected = cut(v12.map(([n, i]): JisonToken => [n, decodeEntities(i)]));
-      dropAppendedNewline(expected);
       const actual = v13Tokens(item.source);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;
@@ -138,10 +170,25 @@ describe('class lexer parity with mermaid@12 (jison)', () => {
       });
     }
     process.stdout.write(`class lexer parity: ${compared} of ${items.length} sources lexed\n`);
-    expect(compared).toBeGreaterThan(1300);
+    expect(compared).toBeGreaterThan(1400);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(
       diffs.map((d) => `${d.id} @${d.at}\n  v12 ${show(d.v12)}\n  v13 ${show(d.v13)}`)
     ).toEqual([]);
   }, 300_000);
+
+  it('fires every reachable jison rule over the corpus', async () => {
+    const fired = new Set<number>();
+    for (const item of await corpus()) lexClass(item.source, (rule) => fired.add(rule));
+    const never = Array.from({ length: 99 }, (_, k) => k).filter((k) => !fired.has(k));
+    expect(never).toEqual(UNREACHABLE);
+  }, 120_000);
 });
+
+/**
+ * jison rules no input can fire: an earlier rule of every state they are in always matches
+ * first. 5: rule 4 (`%%[^\n]*\n*`) matches all it would. 86 and 89: duplicates of 85 (`#`) and
+ * 88 (`=`). 94 (`[0-9]+`): `\w+` (90) comes first. 96 and 97 (`\s`): in every state an earlier
+ * rule consumes blanks (the `\s+` / newline rules, or the state's value rule).
+ */
+const UNREACHABLE = [5, 86, 89, 94, 96, 97];

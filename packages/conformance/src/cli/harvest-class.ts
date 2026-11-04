@@ -80,7 +80,8 @@ for (const file of files) {
       continue;
     }
     for (const source of sources) {
-      if (!/^\s*classDiagram/.test(source)) continue;
+      // A class source, or one that opens with front matter or a directive before the header.
+      if (!/^\s*(?:classDiagram|---|%%)/.test(source) || !source.includes('classDiagram')) continue;
       add(`v12-specs/${file.slice(DIR.length + 1)}#${++n}`, source);
     }
   }

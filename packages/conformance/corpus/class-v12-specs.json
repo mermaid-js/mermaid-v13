@@ -1225,322 +1225,326 @@
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#301",
-    "source": "classDiagram\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n\n}\n%% Comment\n"
+    "source": "%% Comment\n        classDiagram\n        class Class1 {\n          int : test\n          string : foo\n          test()\n          foo()\n        }"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#302",
-    "source": "classDiagram\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}\n%% Comment"
+    "source": "classDiagram\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n\n}\n%% Comment\n"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#303",
-    "source": "classDiagram\n\n\n%% Comment\n\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}"
+    "source": "classDiagram\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}\n%% Comment"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#304",
-    "source": "classDiagram\n%% Comment Class1 <|-- Class02\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}"
+    "source": "classDiagram\n\n\n%% Comment\n\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#305",
-    "source": "classDiagram\nclass Class1 {\n%% Comment Class1 <|-- Class02\nint : test\nstring : foo\ntest()\nfoo()\n}"
+    "source": "classDiagram\n%% Comment Class1 <|-- Class02\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#306",
-    "source": "classDiagram\nclass Class1 \nclick Class1 href \"google.com\" "
+    "source": "classDiagram\nclass Class1 {\n%% Comment Class1 <|-- Class02\nint : test\nstring : foo\ntest()\nfoo()\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#307",
-    "source": "classDiagram\nclass Class1 \nclick Class1 href \"google.com\" \"A Tooltip\" "
+    "source": "classDiagram\nclass Class1 \nclick Class1 href \"google.com\" "
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#308",
-    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 href \"google.com\" \"A tooltip\" _self"
+    "source": "classDiagram\nclass Class1 \nclick Class1 href \"google.com\" \"A Tooltip\" "
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#309",
-    "source": "classDiagram\nclass Class1 \nclick Class1 call functionCall() "
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 href \"google.com\" \"A tooltip\" _self"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#310",
-    "source": "classDiagram\nclass Class1 \nclick Class1 call functionCall() \"A Tooltip\" "
+    "source": "classDiagram\nclass Class1 \nclick Class1 call functionCall() "
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#311",
-    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall(test, test1, test2)"
+    "source": "classDiagram\nclass Class1 \nclick Class1 call functionCall() \"A Tooltip\" "
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#312",
-    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall(\"test0\", test1, test2) \"A Tooltip\""
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall(test, test1, test2)"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#313",
-    "source": "classDiagram\nclass Class1\n<<interface>> Class1"
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall(\"test0\", test1, test2) \"A Tooltip\""
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#314",
-    "source": "classDiagram\nclass Class1\nClass1 : int test\nClass1 : test()\n<<interface>> Class1"
+    "source": "classDiagram\nclass Class1\n<<interface>> Class1"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#315",
-    "source": "classDiagram\nclass Class1 {\n<<interface>>\n}"
+    "source": "classDiagram\nclass Class1\nClass1 : int test\nClass1 : test()\n<<interface>> Class1"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#316",
-    "source": "classDiagram\nclass Class1 {\n<<interface>>\nint : test\ntest()\n}"
+    "source": "classDiagram\nclass Class1 {\n<<interface>>\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#317",
-    "source": "classDiagram\nclass Shape\n<<interface>> Shape\nShape : noOfVertices\nShape : draw()"
+    "source": "classDiagram\nclass Class1 {\n<<interface>>\nint : test\ntest()\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#318",
-    "source": "classDiagram\nclass Shape{\n    <<interface>>\n    noOfVertices\n    draw()\n}\nclass Color{\n    <<enumeration>>\n    RED\n    BLUE\n    GREEN\n    WHITE\n    BLACK\n}"
+    "source": "classDiagram\nclass Shape\n<<interface>> Shape\nShape : noOfVertices\nShape : draw()"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#319",
-    "source": "classDiagram\nclass Shape <<interface>>"
+    "source": "classDiagram\nclass Shape{\n    <<interface>>\n    noOfVertices\n    draw()\n}\nclass Color{\n    <<enumeration>>\n    RED\n    BLUE\n    GREEN\n    WHITE\n    BLACK\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#320",
-    "source": "classDiagram\nclass Shape <<interface>> {\n    noOfVertices\n    draw()\n}"
+    "source": "classDiagram\nclass Shape <<interface>>"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#321",
-    "source": "classDiagram\nclass Shape <<interface>> {\n}"
+    "source": "classDiagram\nclass Shape <<interface>> {\n    noOfVertices\n    draw()\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#322",
-    "source": "classDiagram\nclass Car\nCar : wheels"
+    "source": "classDiagram\nclass Shape <<interface>> {\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#323",
-    "source": "classDiagram\nCar : wheels"
+    "source": "classDiagram\nclass Car\nCar : wheels"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#324",
-    "source": "classDiagram\nCar : int wheels"
+    "source": "classDiagram\nCar : wheels"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#325",
-    "source": "classDiagram\nclass Car\nCar : int wheels"
+    "source": "classDiagram\nCar : int wheels"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#326",
-    "source": "classDiagram\nclass actual\nactual : -int privateMember\nactual : +int publicMember\nactual : #int protectedMember\nactual : ~int privatePackage"
+    "source": "classDiagram\nclass Car\nCar : int wheels"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#327",
-    "source": "classDiagram\nclass Car\nCar : -List~Wheel~ wheels"
+    "source": "classDiagram\nclass actual\nactual : -int privateMember\nactual : +int publicMember\nactual : #int protectedMember\nactual : ~int privatePackage"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#328",
-    "source": "classDiagram\nclass Car\nCar : GetSize()"
+    "source": "classDiagram\nclass Car\nCar : -List~Wheel~ wheels"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#329",
-    "source": "classDiagram\nclass Object\nObject : getObject() Object"
+    "source": "classDiagram\nclass Car\nCar : GetSize()"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#330",
-    "source": "classDiagram\nclass Object\nObject : getObjects() Object[]"
+    "source": "classDiagram\nclass Object\nObject : getObject() Object"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#331",
-    "source": "classDiagram\nclass actual\nactual : -privateMethod()\nactual : +publicMethod()\nactual : #protectedMethod()\n"
+    "source": "classDiagram\nclass Object\nObject : getObjects() Object[]"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#332",
-    "source": "classDiagram\nclass Class1\nClass1 : someMethod()*"
+    "source": "classDiagram\nclass actual\nactual : -privateMethod()\nactual : +publicMethod()\nactual : #protectedMethod()\n"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#333",
-    "source": "classDiagram\nclass Class1\nClass1 : someMethod()$"
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()*"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#334",
-    "source": "classDiagram\nclass Car\nCar : +setWheels(List~Wheel~ wheels)"
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()$"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#335",
-    "source": "classDiagram\nclass Car\nCar : +getWheels() List~Wheel~"
+    "source": "classDiagram\nclass Car\nCar : +setWheels(List~Wheel~ wheels)"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#336",
-    "source": "classDiagram\nclass Car {\nList~Wheel~ wheels\nsetWheels(List~Wheel~ wheels)\n+getWheels() List~Wheel~\n}"
+    "source": "classDiagram\nclass Car\nCar : +getWheels() List~Wheel~"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#337",
-    "source": "classDiagram\nclass EmptyClass {}"
+    "source": "classDiagram\nclass Car {\nList~Wheel~ wheels\nsetWheels(List~Wheel~ wheels)\n+getWheels() List~Wheel~\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#338",
-    "source": "classDiagram\nclass Car~T~"
+    "source": "classDiagram\nclass EmptyClass {}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#339",
-    "source": "classDiagram\nclass Car~T~\nDriver -- Car : drives >\nCar *-- Wheel : have 4 >\nCar -- Person : < owns"
+    "source": "classDiagram\nclass Car~T~"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#340",
-    "source": "classDiagram\nclass `Car`~T~\nDriver -- `Car` : drives >\n`Car` *-- Wheel : have 4 >\n`Car` -- Person : < owns"
+    "source": "classDiagram\nclass Car~T~\nDriver -- Car : drives >\nCar *-- Wheel : have 4 >\nCar -- Person : < owns"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#341",
-    "source": "classDiagram\nclass Dummy_Class~T~ {\nString data\nvoid methods()\n}\n\nclass Flight {\nInteger flightNumber\nDate departureTime\n}"
+    "source": "classDiagram\nclass `Car`~T~\nDriver -- `Car` : drives >\n`Car` *-- Wheel : have 4 >\n`Car` -- Person : < owns"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#342",
-    "source": "classDiagram\nclass `Dummy_Class`~T~ {\nString data\n  void methods()\n}\n\nclass Flight {\n   flightNumber : Integer\n   departureTime : Date\n}"
+    "source": "classDiagram\nclass Dummy_Class~T~ {\nString data\nvoid methods()\n}\n\nclass Flight {\nInteger flightNumber\nDate departureTime\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#343",
-    "source": "classDiagram\nnamespace Namespace1 { class Class1 }\nnamespace Namespace2 { class Class1\n}\nnamespace Namespace3 {\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}\n}\nnamespace Namespace4 {\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}\nclass Class2 {\nint : test\nstring : foo\ntest()\nfoo()\n}\n}\n"
+    "source": "classDiagram\nclass `Dummy_Class`~T~ {\nString data\n  void methods()\n}\n\nclass Flight {\n   flightNumber : Integer\n   departureTime : Date\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#344",
-    "source": "classDiagram\n\nnamespace space {\n    class Square~Shape~{\n        int id\n        List~int~ position\n        setPoints(List~int~ points)\n        getPoints() List~int~\n    }\n}"
+    "source": "classDiagram\nnamespace Namespace1 { class Class1 }\nnamespace Namespace2 { class Class1\n}\nnamespace Namespace3 {\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}\n}\nnamespace Namespace4 {\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}\nclass Class2 {\nint : test\nstring : foo\ntest()\nfoo()\n}\n}\n"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#345",
-    "source": "classDiagram\nClass1 <|-- Class02\nClass03 *-- Class04\nClass05 o-- Class06\nClass07 .. Class08\nClass09 -- Class1"
+    "source": "classDiagram\n\nnamespace space {\n    class Square~Shape~{\n        int id\n        List~int~ position\n        setPoints(List~int~ points)\n        getPoints() List~int~\n    }\n}"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#346",
-    "source": "classDiagram\n`Class1` <|-- Class02\nClass03 *-- Class04\nClass05 o-- Class06\nClass07 .. Class08\nClass09 -- Class1"
+    "source": "classDiagram\nClass1 <|-- Class02\nClass03 *-- Class04\nClass05 o-- Class06\nClass07 .. Class08\nClass09 -- Class1"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#347",
-    "source": "classDiagram\nClass1~T~ <|-- Class02"
+    "source": "classDiagram\n`Class1` <|-- Class02\nClass03 *-- Class04\nClass05 o-- Class06\nClass07 .. Class08\nClass09 -- Class1"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#348",
-    "source": "classDiagram\nclass Car\nDriver -- Car : drives >\nCar *-- Wheel : have 4 >\nCar -- Person : < owns"
+    "source": "classDiagram\nClass1~T~ <|-- Class02"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#349",
-    "source": "classDiagram\nClass1 <|-- Class02"
+    "source": "classDiagram\nclass Car\nDriver -- Car : drives >\nCar *-- Wheel : have 4 >\nCar -- Person : < owns"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#350",
-    "source": "classDiagram\nClass11 <|.. Class12\nClass13 --> Class14\nClass15 ..> Class16\nClass17 ..|> Class18\nClass19 <--* Class20"
+    "source": "classDiagram\nClass1 <|-- Class02"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#351",
-    "source": "classDiagram\nClass1 \"1\" *-- \"many\" Class02 : contains\nClass03 o-- Class04 : aggregation\nClass05 --> \"1\" Class06"
+    "source": "classDiagram\nClass11 <|.. Class12\nClass13 --> Class14\nClass15 ..> Class16\nClass17 ..|> Class18\nClass19 <--* Class20"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#352",
-    "source": "classDiagram\nClass11 <|.. Class12\nClass13 <.. Class14\nClass15 ..|> Class16\nClass17 ..> Class18\nClass19 .. Class20"
+    "source": "classDiagram\nClass1 \"1\" *-- \"many\" Class02 : contains\nClass03 o-- Class04 : aggregation\nClass05 --> \"1\" Class06"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#353",
-    "source": "classDiagram\nClass1 o.. Class02"
+    "source": "classDiagram\nClass11 <|.. Class12\nClass13 <.. Class14\nClass15 ..|> Class16\nClass17 ..> Class18\nClass19 .. Class20"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#354",
-    "source": "classDiagram\nClass1 *--* Class02"
+    "source": "classDiagram\nClass1 o.. Class02"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#355",
-    "source": "classDiagram\nClass1 -- Class02"
+    "source": "classDiagram\nClass1 *--* Class02"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#356",
-    "source": "classDiagram\nClass1 --|> Class02"
+    "source": "classDiagram\nClass1 -- Class02"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#357",
-    "source": "classDiagram\nClass1 <|-- Class02\nClass03 *-- Class04\nClass05 o-- Class06\nClass07 .. Class08\nClass09 -- Class10"
+    "source": "classDiagram\nClass1 --|> Class02"
   },
   {
     "id": "v12-specs/classDiagram.spec.ts#358",
+    "source": "classDiagram\nClass1 <|-- Class02\nClass03 *-- Class04\nClass05 o-- Class06\nClass07 .. Class08\nClass09 -- Class10"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#359",
     "source": "classDiagram\nClass01~T~ <|-- Class02"
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#363",
+    "id": "v12-specs/classDiagram.spec.ts#364",
     "source": "classDiagram\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}"
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#366",
+    "id": "v12-specs/classDiagram.spec.ts#367",
     "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nlink Class1 \"google.com\""
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#367",
+    "id": "v12-specs/classDiagram.spec.ts#368",
     "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 href \"google.com\""
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#368",
+    "id": "v12-specs/classDiagram.spec.ts#369",
     "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nlink Class1 \"google.com\" \"A tooltip\""
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#369",
+    "id": "v12-specs/classDiagram.spec.ts#370",
     "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 href \"google.com\" \"A tooltip\""
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#372",
+    "id": "v12-specs/classDiagram.spec.ts#373",
     "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 href \"google.com\" _self"
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#373",
+    "id": "v12-specs/classDiagram.spec.ts#374",
     "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nlink Class1 \"google.com\" \"A tooltip\" _self"
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#374",
+    "id": "v12-specs/classDiagram.spec.ts#375",
     "source": "classDiagram\nclass Class1\nClass1 : someMethod()\ncallback Class1 \"functionCall\""
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#375",
+    "id": "v12-specs/classDiagram.spec.ts#376",
     "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall()"
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#376",
+    "id": "v12-specs/classDiagram.spec.ts#377",
     "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall(\"test0\", test1, test2)"
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#377",
+    "id": "v12-specs/classDiagram.spec.ts#378",
     "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall() \"A tooltip\""
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#378",
+    "id": "v12-specs/classDiagram.spec.ts#379",
     "source": "classDiagram\nnamespace Namespace1 {\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}\nclass Class2\n}"
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#379",
+    "id": "v12-specs/classDiagram.spec.ts#380",
     "source": "classDiagram\n      A1 --> B1\n      namespace A {\n        class A1 {\n          +foo : string\n        }\n        class A2 {\n          +bar : int\n        }\n      }\n      namespace B {\n        class B1 {\n          +foo : bool\n        }\n        class B2 {\n          +bar : float\n        }\n      }\n      A2 --> B2"
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#380",
+    "id": "v12-specs/classDiagram.spec.ts#381",
     "source": "classDiagram\n  class C1[\"Class 1 with text label\"]\n  C1 -->  C2\n      "
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#381",
+    "id": "v12-specs/classDiagram.spec.ts#382",
     "source": "classDiagram\n  class C1[\"Class 1 with text label\"]\n  class C2[\"Class 2 with chars @?\"]\n  C1 -->  C2\n      "
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#382",
+    "id": "v12-specs/classDiagram.spec.ts#383",
     "source": "classDiagram\n  class C1[\"Class 1 with text label\"] {\n    +member1\n  }\n  C1 -->  C2\n      "
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#383",
+    "id": "v12-specs/classDiagram.spec.ts#384",
     "source": "classDiagram\n  class C1[\"Class 1 with text label\"] {\n    <<interface>>\n    +member1\n  }\n  C1 -->  C2\n      "
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#384",
+    "id": "v12-specs/classDiagram.spec.ts#385",
     "source": "classDiagram\nclass C1[\"Class 1 with text label\"]:::styleClass {\n  +member1\n}\nC1 -->  C2\n  "
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#385",
+    "id": "v12-specs/classDiagram.spec.ts#386",
     "source": "classDiagram\nclass C1[\"Class 1 with text label\"] {\n  +member1\n}\nC1 --> C2\ncssClass \"C1\" styleClass\n  "
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#386",
+    "id": "v12-specs/classDiagram.spec.ts#387",
     "source": "classDiagram\nclass C1[\"Class 1 with text label\"] {\n  +member1\n}\nclass C2[\"Long long long long long long long long long long label\"]\nC1 --> C2\ncssClass \"C1,C2\" styleClass\n  "
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#387",
+    "id": "v12-specs/classDiagram.spec.ts#388",
     "source": "classDiagram\nclass C1[\"Class 1 with text label\"]:::styleClass1 {\n  +member1\n}\nclass C2[\"Class 2 !@#$%^&*() label\"]:::styleClass2\nC1 --> C2\n  "
   },
   {
-    "id": "v12-specs/classDiagram.spec.ts#388",
+    "id": "v12-specs/classDiagram.spec.ts#389",
     "source": "classDiagram\nclass C1[\"Class with text label\"]\nclass C2[\"Class with text label\"]\nclass C3[\"Class with text label\"]\nC1 --> C2\nC3 ..> C2\n  "
   },
   {
