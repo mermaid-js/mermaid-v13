@@ -5,7 +5,7 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 ## #130 T1 lexer gate (merged)
 
 - No unmet criteria. 4 of 2,599 sources are not compared: commented variants whose mid-line cut splits the `erDiagram` keyword, so v12 never detects them (listed in `packages/conformance/src/er/lexer-parity.spec.ts`).
-- Final `/code-review` over the lexer is deferred to the spec's finish step.
+- Covered by the final whole-branch review (`review.md`).
 
 ## #131 T2 grammar/parser/model (merged)
 
@@ -25,33 +25,28 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 
 ## #133 T4 SVG renderer (merged)
 
-- No unmet criteria. No Playwright run yet; that is T5's (`pnpm e2e` under the lock).
-- **D117 (maintainer, draft PR #188), applied in T5:** classic `rowEven` must equal v12's HSL lightening exactly (tested against v12; its MIGRATION row goes). Keep the shared `strokeWidth` and the whole-table author fill (MIGRATION rows stay, citing D117).
+- No unmet criteria. D117 applied in T5: classic `rowEven` equals v12's HSL lightening exactly (tested against v12 through the oracle); the shared `strokeWidth` and the whole-table author fill stay, citing D117.
 
-## #134 T5 integration (open items)
+## #134 T5 integration (merged)
 
-- Delete `packages/conformance/src/er/mermaid.ts`, the stand-in `createMermaid` with the `er` row made loadable and its two `import-boundaries` disables, once the manifest makes ER render through the public API.
-- Until the ER spacing defaults land (nodeSpacing 140, rankSpacing 80), short edges crowd the crow's-foot ends and labels.
+- No unmet criteria. Manifest (svg + ascii) and registry in v12's detector order; `er` section defaults generated, every `er` key honoured or ignored with a reason (`theme`, `titleTopMargin` stay pending, as for flowchart); D116 (`entityPadding`, `diagramPadding` in px), D117, D118/D124 applied and cited; the stand-in `createMermaid` deleted; 9 baseline fixtures; MIGRATION, `ascii.md` and the format matrix updated. Numbers in `tickets/134.md` (D110, report only).
 
-- Generate the ER section defaults (`SECTION_OWNERS`; v12 nodeSpacing 140, rankSpacing 80, minEntityWidth 100) and mark the keys the builder reads (`er.nodeSpacing`, `er.rankSpacing`, `er.minEntityWidth`) as honoured.
-- **D116 (maintainer, draft PR #184): honour both.** Mark `er.entityPadding` (default 15) and `er.diagramPadding` (default 20) `honoured`. In px, `entityPadding` replaces the shared node padding inside entity table cells (v12's across × down meaning) and `diagramPadding` sets the margin around the drawing; the cell profile stays at 1-cell padding. Fix the MIGRATION.md ER row that says they are ignored, and cite D116 in code and tests.
+## #135 T6 language facet (merged; finished in T5)
 
-- #136 ASCII: declare `ascii` in ER's manifest (`formats: ["svg","ascii"]`, `"ascii": "./dist/ascii.js"`, `loadAscii` → `@mermaid-js/diagram-er/ascii`'s `ascii`), regenerate the registry, then point `conformance/src/ascii/er-render.ts` at `createMermaid()` and drop its `ER_SECTION_DEFAULTS` once the generated defaults carry them (goldens unchanged). Add ER to `v13/docs/ascii.md` and the format matrix.
+- No unmet criteria. Goldens moved to `packages/language-service/goldens/er`; flowchart's `completions/empty.out` gains only `erDiagram`; `property.spec` and `rename-round-trip.spec` cover ER; the oracle-through-service spec is added; a 50k-character ER document takes 11.5 ms per editing cycle (R-LANG-4, 15 ms budget).
+- **Accepted (D119):** first-paint colours in the CodeMirror and Monaco adapters come via #190.
 
-## #136 T7 ASCII (merged; open items)
+## #136 T7 ASCII (merged)
 
-- Done (final review, D124): ER fits `ascii.maxWidth` as flowchart does (D84: tighten, then LR→TB). The pipeline already passed it to ER's layout as `availableWidth`; it is now pinned by `er-v13/max_width` (turns at 40), `er-v13/max_width_tighten` (93 → 85 columns) and `er-api.spec.ts` (fit, `ASCII_TOO_WIDE`). Other ER goldens unchanged.
+- No unmet criteria. D118 amended by D124 applied: cells use the profile's own spacing unless the author sets a px key (a value equal to the generated default counts as not set), with a 6-cell rank floor; 140 goldens re-reviewed, structural check green. `ascii.maxWidth` fitting (D84) pinned by `er-v13/max_width`, `max_width_tighten` and `er-api.spec.ts`.
 
-- **D118, amended by D124 (equal-to-default rule and the 6-cell rank floor confirmed), applied in T5:** in the cell profile ER uses the profile's own spacing and minimum entity width; `er.nodeSpacing`, `er.rankSpacing` and `er.minEntityWidth` convert from px only when the author sets them (as flowchart's `fromConfig`). v12's px defaults don't convert; SVG unchanged. Re-review the ER `expected*.txt` that change, keep the structural check green.
+## Final review (`review.md`, all fixed)
 
-## #135 T6 language facet (merged; finish after T5)
+- Five findings fixed test-first, plus maxWidth. SVG changed for 58 of 215 ER corpus files (self-loops 42 px out instead of 26; ends along a side 26 px apart instead of 16).
 
-- Facet, probe mode (the lexer now reports its jison start condition), generated tables and the bundle check are done. These wait on the T5 manifest giving ER a `load` in `firstPartyFacets` (language.md steps 4, 6, 7):
-  - `git mv packages/conformance/language-goldens/er packages/language-service/goldens/er` and delete `packages/conformance/src/er/language-goldens.spec.ts` (its last test fails once ER has a `load`, on purpose).
-  - Regenerate flowchart's `completions/empty.out`, which gains `erDiagram`, and review it. Run `property.spec` and `rename-round-trip.spec` over the ER corpus.
-- Not done, doable after T5: the oracle-through-service spec (step 8, copy `flowchart/service-symbols.spec.ts`), and the 50k-character budget numbers (step 10, R-LANG-4).
-- **Accepted (D119):** first-paint colours in the CodeMirror and Monaco adapters come via the cross-type ticket #190 (per-type first-paint highlighting), not this spec.
+## Awaiting maintainer acceptance
 
-## Not started
-
-- None. #134 T5 integration is running.
+1. **Very crowded entity sides draw narrow ends.** Where more ends share a side than fit (seven ends on a 48 px LR side), `fitEnds` draws the crow's-feet about 3 px wide so neighbours stay apart. Growing the entity to fit full-size ends would change box sizes. Accept, or grow the box.
+2. **Core `layered` label gap** (flowchart has it too, not in the corpus): an edge from a subgraph to its own member puts the label on the member. A core ticket, not this spec.
+3. **Quoted names get no definition** in the language service: 315 ER names written only in quotes, the same shared gap as flowchart's quoted subgraph ids; the oracle spec pins the count.
+4. **Known parser limit:** after an error, a stray `{` opens an attribute block, so recovery skips to the next `}`.
