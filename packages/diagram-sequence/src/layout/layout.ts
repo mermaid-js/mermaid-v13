@@ -19,7 +19,7 @@
  * two participants fits its text; message and frame labels move clear of box borders; and a
  * box whose members' self messages or notes overran it is laid out again, wider.
  */
-import type { SequenceBox, SequenceModel } from '../model.ts';
+import type { ParticipantKind, SequenceBox, SequenceModel } from '../model.ts';
 import { Bounds } from './bounds.ts';
 import {
   actorMargins,
@@ -164,7 +164,13 @@ function participantLayouts(env: Env, footer: number): ParticipantLayout[] {
  * Kinds v12's band model stands on the glyph band; the rest fill the row as boxes. The one
  * list: the renderer draws on the band of whichever participant has one.
  */
-const GLYPHS: ReadonlySet<string> = new Set(['actor', 'boundary', 'control', 'entity', 'database']);
+const GLYPHS: ReadonlySet<ParticipantKind> = new Set<ParticipantKind>([
+  'actor',
+  'boundary',
+  'control',
+  'entity',
+  'database',
+]);
 
 /**
  * From the top of a participant's box to the centre of its label (v12 `svgDraw.js` rows), and

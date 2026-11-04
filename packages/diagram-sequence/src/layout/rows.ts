@@ -7,6 +7,7 @@ import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   FragmentKind,
+  ParticipantKind,
   SequenceFragment,
   SequenceMessage,
   SequenceNote,
@@ -28,7 +29,12 @@ import type {
 } from './types.ts';
 
 // Participant kinds drawn as a narrow symbol: a creating message stops at the symbol.
-const SYMBOL_KINDS: ReadonlySet<string> = new Set(['actor', 'control', 'entity', 'database']);
+const SYMBOL_KINDS: ReadonlySet<ParticipantKind> = new Set<ParticipantKind>([
+  'actor',
+  'control',
+  'entity',
+  'database',
+]);
 // The frame tab keyword of each fragment kind.
 const TAB: Readonly<Record<FragmentKind, string>> = {
   loop: 'loop',

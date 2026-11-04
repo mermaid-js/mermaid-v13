@@ -4,7 +4,7 @@
 // the browser placed the markers: `refX`/`refY` on the line end, the marker's x axis along the
 // line, scaled by the line's stroke width where v12's marker used `markerUnits="strokeWidth"`.
 import type { Attrs, Paint, SafeValue, SvgWriter } from '@mermaid-js/core/svg';
-import type { ArrowKind } from '../model.ts';
+import { ARROW_HEADS, type ArrowHead, type ArrowKind } from '../model.ts';
 import type { MessageLayout, ParticipantLayout, SequenceMetrics } from '../layout/index.ts';
 import { REVERSE_ARROWS } from '../layout/index.ts';
 
@@ -123,43 +123,7 @@ const HEADS = {
     stroked: true,
     strokeWidth: 1.5,
   },
-} satisfies Record<string, HeadShape>;
-
-type HeadName = keyof typeof HEADS;
-
-/** The head at the line's end (v12 `marker-end`). */
-const END: Partial<Record<ArrowKind, HeadName>> = {
-  solid: 'arrow',
-  dotted: 'arrow',
-  bidirectional_solid: 'arrow',
-  bidirectional_dotted: 'arrow',
-  solid_point: 'open',
-  dotted_point: 'open',
-  solid_cross: 'cross',
-  dotted_cross: 'cross',
-  solid_top: 'solidTop',
-  solid_top_dotted: 'solidTop',
-  solid_bottom: 'solidBottom',
-  solid_bottom_dotted: 'solidBottom',
-  stick_top: 'stickTop',
-  stick_top_dotted: 'stickTop',
-  stick_bottom: 'stickBottom',
-  stick_bottom_dotted: 'stickBottom',
-};
-
-/** The head at the line's start (v12 `marker-start`, `auto-start-reverse`). */
-const START: Partial<Record<ArrowKind, HeadName>> = {
-  bidirectional_solid: 'arrow',
-  bidirectional_dotted: 'arrow',
-  solid_arrow_top_reverse: 'solidBottom',
-  solid_arrow_top_reverse_dotted: 'solidBottom',
-  solid_arrow_bottom_reverse: 'solidTop',
-  solid_arrow_bottom_reverse_dotted: 'solidTop',
-  stick_arrow_top_reverse: 'stickBottom',
-  stick_arrow_top_reverse_dotted: 'stickBottom',
-  stick_arrow_bottom_reverse: 'stickTop',
-  stick_arrow_bottom_reverse_dotted: 'stickTop',
-};
+} satisfies Record<ArrowHead, HeadShape>;
 
 const isDotted = (arrow: ArrowKind): boolean => arrow.includes('dotted');
 const isBidirectional = (arrow: ArrowKind): boolean => arrow.startsWith('bidirectional');
@@ -183,7 +147,7 @@ export function placePoints(
   return out;
 }
 
-function drawHead(w: SvgWriter, name: HeadName, at: Point, angle: number, paint: Paint): void {
+function drawHead(w: SvgWriter, name: ArrowHead, at: Point, angle: number, paint: Paint): void {
   const head: HeadShape = HEADS[name];
   for (const path of head.paths) {
     const points = placePoints(path, head.ref, head.scale, at, angle);
@@ -269,8 +233,7 @@ export function drawMessageLine(
     'stroke-width': MESSAGE_STROKE,
     'stroke-dasharray': isDotted(m.arrow) ? DOTTED : undefined,
   };
-  const end = END[m.arrow];
-  const start = START[m.arrow];
+  const { start, end } = ARROW_HEADS[m.arrow];
   if (m.self) {
     const y = m.y;
     const x = m.startX;

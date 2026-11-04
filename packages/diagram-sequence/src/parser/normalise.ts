@@ -8,7 +8,7 @@
 import { isSpace, LPAREN } from '@mermaid-js/core/parser-kit';
 import { isYamlMap, parseYaml } from '@mermaid-js/core/preprocess';
 import { isNamedColor } from './colors.ts';
-import type { ParticipantKind } from '../model.ts';
+import { PARTICIPANT_KINDS, type ParticipantKind } from '../model.ts';
 
 /** Text and its `wrap:`/`nowrap:` prefix; `wrap` undefined follows the config. */
 export interface Wrapped {
@@ -200,16 +200,7 @@ function menuLink(text: string): Record<string, string> {
 }
 
 /** v12's participant types (`PARTICIPANT_TYPE`). */
-export const KINDS: readonly ParticipantKind[] = [
-  'participant',
-  'actor',
-  'boundary',
-  'control',
-  'entity',
-  'database',
-  'collections',
-  'queue',
-];
+export const KINDS: readonly ParticipantKind[] = PARTICIPANT_KINDS;
 
 export interface ParticipantData {
   type?: ParticipantKind;

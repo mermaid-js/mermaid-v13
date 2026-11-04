@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ARROWS } from './facet/tables.ts';
-import { language, sequenceLanguage, sequenceTokens } from './language.ts';
+import { language, parseSequence, sequenceLanguage, sequenceTokens } from './language.ts';
 
 describe('sequence language facet: isValidId (rename, D92)', () => {
   it.each([
@@ -75,11 +75,13 @@ describe('sequence language facet: parse, categories, namespaces', () => {
 });
 
 describe('sequence facet tables', () => {
-  it('lists every arrow once, each lexed as its own token kind', () => {
+  it('lists every arrow once, each lexed as its own token kind and parsed as its kind', () => {
     expect(new Set(ARROWS.map((a) => a.token)).size).toBe(26);
     for (const a of ARROWS) {
       const tokens = sequenceTokens(`sequenceDiagram\nA${a.text}B: x\n`);
       expect(tokens.find((t) => t.text === a.text)?.kind, a.text).toBe(a.token);
+      const [message] = parseSequence(`sequenceDiagram\nA${a.text}B: x\n`).model.statements;
+      expect(message?.kind === 'message' && message.arrow, a.text).toBe(a.kind);
     }
   });
 });

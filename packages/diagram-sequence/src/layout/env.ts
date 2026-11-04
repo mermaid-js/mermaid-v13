@@ -6,12 +6,14 @@ import type { SequenceDiagramConfig } from '@mermaid-js/core/config';
 import type { RenderContext } from '@mermaid-js/core';
 import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
-import type {
-  ArrowKind,
-  SequenceMessage,
-  SequenceModel,
-  SequenceParticipant,
-  SequenceStatement,
+import {
+  ARROW_HEADS,
+  type ArrowHead,
+  type ArrowKind,
+  type SequenceMessage,
+  type SequenceModel,
+  type SequenceParticipant,
+  type SequenceStatement,
 } from '../model.ts';
 import { FONT_WEIGHT, sequenceMetrics, type SequenceMetrics } from './metrics.ts';
 import type { PlacedLabel } from './types.ts';
@@ -70,47 +72,20 @@ export interface Env {
   measure(text: string, font: FontKey, max: number): MeasuredLabel;
 }
 
-// Arrows whose end needs no room for a head (v12 `buildMessageModel`).
-export const NO_HEAD_GAP: ReadonlySet<ArrowKind> = new Set<ArrowKind>([
-  'solid_open',
-  'dotted_open',
-  'stick_top',
-  'stick_bottom',
-  'stick_top_dotted',
-  'stick_bottom_dotted',
-  'solid_arrow_top_reverse_dotted',
-  'solid_arrow_bottom_reverse_dotted',
-  'stick_arrow_top_reverse',
-  'stick_arrow_bottom_reverse',
-  'stick_arrow_top_reverse_dotted',
-  'stick_arrow_bottom_reverse_dotted',
-  'solid_arrow_top_reverse',
-  'solid_arrow_bottom_reverse',
-]);
-// Arrows with a head at the start as well.
-export const START_GAP: ReadonlySet<ArrowKind> = new Set<ArrowKind>([
-  'bidirectional_solid',
-  'bidirectional_dotted',
-  'solid_arrow_top_reverse_dotted',
-  'solid_arrow_bottom_reverse_dotted',
-  'solid_arrow_top_reverse',
-  'solid_arrow_bottom_reverse',
-]);
-export const BIDIRECTIONAL: ReadonlySet<ArrowKind> = new Set<ArrowKind>([
-  'bidirectional_solid',
-  'bidirectional_dotted',
-]);
+const kindsWhere = (
+  test: (h: (typeof ARROW_HEADS)[ArrowKind]) => boolean
+): ReadonlySet<ArrowKind> =>
+  new Set((Object.keys(ARROW_HEADS) as ArrowKind[]).filter((k) => test(ARROW_HEADS[k])));
+const isStick = (h: ArrowHead | undefined): boolean => h === 'stickTop' || h === 'stickBottom';
+
+// Arrows whose end needs no room for a head (v12 `buildMessageModel`): no end head, or a
+// stick one.
+export const NO_HEAD_GAP = kindsWhere((h) => h.end === undefined || isStick(h.end));
+// Arrows with a head at the start as well, other than a stick one.
+export const START_GAP = kindsWhere((h) => h.start !== undefined && !isStick(h.start));
+export const BIDIRECTIONAL = kindsWhere((h) => h.start !== undefined && h.end !== undefined);
 /** Arrows whose head is drawn at the start (`…_reverse…`). */
-export const REVERSE_ARROWS: ReadonlySet<ArrowKind> = new Set<ArrowKind>([
-  'solid_arrow_top_reverse',
-  'solid_arrow_top_reverse_dotted',
-  'solid_arrow_bottom_reverse',
-  'solid_arrow_bottom_reverse_dotted',
-  'stick_arrow_top_reverse',
-  'stick_arrow_top_reverse_dotted',
-  'stick_arrow_bottom_reverse',
-  'stick_arrow_bottom_reverse_dotted',
-]);
+export const REVERSE_ARROWS = kindsWhere((h) => h.start !== undefined && h.end === undefined);
 
 function weightOf(value: unknown): number {
   if (value === 'bold' || value === 'bolder') return FONT_WEIGHT.bold;

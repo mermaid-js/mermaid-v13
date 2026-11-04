@@ -4,7 +4,8 @@
  * grammar file (`generated/docs.ts`).
  */
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
-import type { ArrowKind, ParticipantKind } from '../model.ts';
+import { PARTICIPANT_KINDS, type ArrowKind, type ParticipantKind } from '../model.ts';
+import { ARROW_KINDS } from '../parser/arrows.ts';
 import { T } from '../parser/tokens.ts';
 
 /** A keyword item: offered when the parser expects `kind`. */
@@ -65,93 +66,97 @@ export interface Arrow {
   readonly draws: string;
 }
 
-/** Every message arrow, the common ones first (v12 `LINETYPE`). */
-export const ARROWS: readonly Arrow[] = [
-  { text: '->>', token: T.SolidArrow, kind: 'solid', draws: 'solid line, arrowhead' },
-  { text: '-->>', token: T.DottedArrow, kind: 'dotted', draws: 'dotted line, arrowhead' },
-  { text: '->', token: T.SolidOpenArrow, kind: 'solid_open', draws: 'solid line, no arrowhead' },
+/** An arrow as written, before its model kind is looked up. */
+type Written = Omit<Arrow, 'kind'>;
+
+const WRITTEN: readonly Written[] = [
+  { text: '->>', token: T.SolidArrow, draws: 'solid line, arrowhead' },
+  { text: '-->>', token: T.DottedArrow, draws: 'dotted line, arrowhead' },
+  { text: '->', token: T.SolidOpenArrow, draws: 'solid line, no arrowhead' },
   {
     text: '-->',
     token: T.DottedOpenArrow,
-    kind: 'dotted_open',
     draws: 'dotted line, no arrowhead',
   },
-  { text: '-x', token: T.SolidCross, kind: 'solid_cross', draws: 'solid line, a cross at the end' },
+  { text: '-x', token: T.SolidCross, draws: 'solid line, a cross at the end' },
   {
     text: '--x',
     token: T.DottedCross,
-    kind: 'dotted_cross',
     draws: 'dotted line, a cross at the end',
   },
   {
     text: '-)',
     token: T.SolidPoint,
-    kind: 'solid_point',
     draws: 'solid line, an open arrowhead (async)',
   },
   {
     text: '--)',
     token: T.DottedPoint,
-    kind: 'dotted_point',
     draws: 'dotted line, an open arrowhead (async)',
   },
   {
     text: '<<->>',
     token: T.BidirectionalSolidArrow,
-    kind: 'bidirectional_solid',
     draws: 'solid line, arrowheads at both ends',
   },
   {
     text: '<<-->>',
     token: T.BidirectionalDottedArrow,
-    kind: 'bidirectional_dotted',
     draws: 'dotted line, arrowheads at both ends',
   },
   ...halfArrows(),
 ];
 
+/** Every message arrow, the common ones first (v12 `LINETYPE`); `kind` is the parser's. */
+export const ARROWS: readonly Arrow[] = WRITTEN.map((a) => ({ ...a, kind: ARROW_KINDS[a.token]! }));
+
 /** A half arrow: `solid` or `stick` head, on the `top` or `bottom`, maybe reversed or dotted. */
-function half(text: string, token: number, kind: ArrowKind): Arrow {
+function half(text: string, token: number): Written {
+  const kind = ARROW_KINDS[token]!;
   const line = kind.includes('dotted') ? 'dotted' : 'solid';
   const head = kind.startsWith('solid') ? 'solid' : 'open';
   const side = kind.includes('top') ? 'top' : 'bottom';
   const at = kind.includes('reverse') ? ', at the start' : '';
-  return { text, token, kind, draws: `${line} line, ${head} half arrowhead on the ${side}${at}` };
+  return { text, token, draws: `${line} line, ${head} half arrowhead on the ${side}${at}` };
 }
 
 /** The 16 half arrows: `-|\`, `-|/`, `-\\`, `-//`, their reverses, and the dotted forms. */
-function halfArrows(): Arrow[] {
+function halfArrows(): Written[] {
   return [
-    half('-|\\', T.SolidArrowTop, 'solid_top'),
-    half('-|/', T.SolidArrowBottom, 'solid_bottom'),
-    half('-\\\\', T.StickArrowTop, 'stick_top'),
-    half('-//', T.StickArrowBottom, 'stick_bottom'),
-    half('/|-', T.SolidArrowTopReverse, 'solid_arrow_top_reverse'),
-    half('\\|-', T.SolidArrowBottomReverse, 'solid_arrow_bottom_reverse'),
-    half('//-', T.StickArrowTopReverse, 'stick_arrow_top_reverse'),
-    half('\\\\-', T.StickArrowBottomReverse, 'stick_arrow_bottom_reverse'),
-    half('--|\\', T.SolidArrowTopDotted, 'solid_top_dotted'),
-    half('--|/', T.SolidArrowBottomDotted, 'solid_bottom_dotted'),
-    half('--\\\\', T.StickArrowTopDotted, 'stick_top_dotted'),
-    half('--//', T.StickArrowBottomDotted, 'stick_bottom_dotted'),
-    half('/|--', T.SolidArrowTopReverseDotted, 'solid_arrow_top_reverse_dotted'),
-    half('\\|--', T.SolidArrowBottomReverseDotted, 'solid_arrow_bottom_reverse_dotted'),
-    half('//--', T.StickArrowTopReverseDotted, 'stick_arrow_top_reverse_dotted'),
-    half('\\\\--', T.StickArrowBottomReverseDotted, 'stick_arrow_bottom_reverse_dotted'),
+    half('-|\\', T.SolidArrowTop),
+    half('-|/', T.SolidArrowBottom),
+    half('-\\\\', T.StickArrowTop),
+    half('-//', T.StickArrowBottom),
+    half('/|-', T.SolidArrowTopReverse),
+    half('\\|-', T.SolidArrowBottomReverse),
+    half('//-', T.StickArrowTopReverse),
+    half('\\\\-', T.StickArrowBottomReverse),
+    half('--|\\', T.SolidArrowTopDotted),
+    half('--|/', T.SolidArrowBottomDotted),
+    half('--\\\\', T.StickArrowTopDotted),
+    half('--//', T.StickArrowBottomDotted),
+    half('/|--', T.SolidArrowTopReverseDotted),
+    half('\\|--', T.SolidArrowBottomReverseDotted),
+    half('//--', T.StickArrowTopReverseDotted),
+    half('\\\\--', T.StickArrowBottomReverseDotted),
   ];
 }
 
-/** Participant types of `participant A@{ type: … }` (v12 `PARTICIPANT_TYPE`). */
-export const PARTICIPANT_TYPES: readonly (readonly [type: ParticipantKind, shape: string])[] = [
-  ['participant', 'a box'],
-  ['actor', 'a stick figure'],
-  ['boundary', 'a boundary symbol'],
-  ['control', 'a control symbol'],
-  ['entity', 'an entity symbol'],
-  ['database', 'a database cylinder'],
-  ['collections', 'a stack of boxes'],
-  ['queue', 'a queue'],
-];
+/** What each participant type draws. */
+const SHAPES: Readonly<Record<ParticipantKind, string>> = {
+  participant: 'a box',
+  actor: 'a stick figure',
+  boundary: 'a boundary symbol',
+  control: 'a control symbol',
+  entity: 'an entity symbol',
+  database: 'a database cylinder',
+  collections: 'a stack of boxes',
+  queue: 'a queue',
+};
+
+/** Participant types of `participant A@{ type: … }` (v12 `PARTICIPANT_TYPE`), in its order. */
+export const PARTICIPANT_TYPES: readonly (readonly [type: ParticipantKind, shape: string])[] =
+  PARTICIPANT_KINDS.map((k) => [k, SHAPES[k]] as const);
 
 /** Keys of a participant's `@{ … }` data that the parser reads. */
 export const PARTICIPANT_DATA_KEYS = ['type', 'alias'];

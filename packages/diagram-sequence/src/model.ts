@@ -18,16 +18,22 @@
  */
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
-/** v12's participant types (`PARTICIPANT_TYPE`). */
-export type ParticipantKind =
-  | 'participant'
-  | 'actor'
-  | 'boundary'
-  | 'control'
-  | 'entity'
-  | 'database'
-  | 'collections'
-  | 'queue';
+/**
+ * v12's participant types (`PARTICIPANT_TYPE`), in its order: the one list the parser, the
+ * language facet and the layout read.
+ */
+export const PARTICIPANT_KINDS = [
+  'participant',
+  'actor',
+  'boundary',
+  'control',
+  'entity',
+  'database',
+  'collections',
+  'queue',
+] as const;
+
+export type ParticipantKind = (typeof PARTICIPANT_KINDS)[number];
 
 export interface SequenceParticipant {
   readonly id: string;
@@ -102,6 +108,52 @@ export type ArrowKind =
   | 'solid_arrow_bottom_reverse_dotted'
   | 'stick_arrow_top_reverse_dotted'
   | 'stick_arrow_bottom_reverse_dotted';
+
+/** A head v12 drew with a marker: its marker families. */
+export type ArrowHead =
+  | 'arrow'
+  | 'open'
+  | 'cross'
+  | 'solidTop'
+  | 'solidBottom'
+  | 'stickTop'
+  | 'stickBottom';
+
+/**
+ * The heads each arrow draws (v12 `marker-start` and `marker-end`): the one table the svg and
+ * text renderers draw from and the layout's head gaps are read from. A start head is turned
+ * back along the line (`auto-start-reverse`), so a top reverse arrow starts with a bottom head.
+ */
+export const ARROW_HEADS: Readonly<
+  Record<ArrowKind, { readonly start?: ArrowHead; readonly end?: ArrowHead }>
+> = {
+  solid: { end: 'arrow' },
+  dotted: { end: 'arrow' },
+  solid_cross: { end: 'cross' },
+  dotted_cross: { end: 'cross' },
+  solid_open: {},
+  dotted_open: {},
+  solid_point: { end: 'open' },
+  dotted_point: { end: 'open' },
+  bidirectional_solid: { start: 'arrow', end: 'arrow' },
+  bidirectional_dotted: { start: 'arrow', end: 'arrow' },
+  solid_top: { end: 'solidTop' },
+  solid_bottom: { end: 'solidBottom' },
+  stick_top: { end: 'stickTop' },
+  stick_bottom: { end: 'stickBottom' },
+  solid_arrow_top_reverse: { start: 'solidBottom' },
+  solid_arrow_bottom_reverse: { start: 'solidTop' },
+  stick_arrow_top_reverse: { start: 'stickBottom' },
+  stick_arrow_bottom_reverse: { start: 'stickTop' },
+  solid_top_dotted: { end: 'solidTop' },
+  solid_bottom_dotted: { end: 'solidBottom' },
+  stick_top_dotted: { end: 'stickTop' },
+  stick_bottom_dotted: { end: 'stickBottom' },
+  solid_arrow_top_reverse_dotted: { start: 'solidBottom' },
+  solid_arrow_bottom_reverse_dotted: { start: 'solidTop' },
+  stick_arrow_top_reverse_dotted: { start: 'stickBottom' },
+  stick_arrow_bottom_reverse_dotted: { start: 'stickTop' },
+};
 
 export interface SequenceMessage {
   readonly kind: 'message';

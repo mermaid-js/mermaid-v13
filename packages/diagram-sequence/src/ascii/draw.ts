@@ -25,7 +25,7 @@ import {
   type GlyphSet,
 } from '@mermaid-js/core/ascii';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
-import type { ArrowKind } from '../model.ts';
+import { ARROW_HEADS, type ArrowHead } from '../model.ts';
 import type {
   MessageLayout,
   ParticipantLayout,
@@ -38,39 +38,17 @@ import { symbolForm } from './symbols.ts';
 /** A head drawn in one cell: v12's marker families, in text. */
 type Head = 'arrow' | 'open' | 'cross' | 'top' | 'bottom';
 
-/** The head at the line's end (v12 `marker-end`). */
-const END: Partial<Record<ArrowKind, Head>> = {
-  solid: 'arrow',
-  dotted: 'arrow',
-  bidirectional_solid: 'arrow',
-  bidirectional_dotted: 'arrow',
-  solid_point: 'open',
-  dotted_point: 'open',
-  solid_cross: 'cross',
-  dotted_cross: 'cross',
-  solid_top: 'top',
-  solid_top_dotted: 'top',
-  stick_top: 'top',
-  stick_top_dotted: 'top',
-  solid_bottom: 'bottom',
-  solid_bottom_dotted: 'bottom',
-  stick_bottom: 'bottom',
-  stick_bottom_dotted: 'bottom',
+/** The cell each head (`ARROW_HEADS`) is drawn as: a half head is a harpoon, barb up or down. */
+const CELL: Readonly<Record<ArrowHead, Head>> = {
+  arrow: 'arrow',
+  open: 'open',
+  cross: 'cross',
+  solidTop: 'top',
+  stickTop: 'top',
+  solidBottom: 'bottom',
+  stickBottom: 'bottom',
 };
-
-/** The head at the line's start (v12 `marker-start`, turned back along the line). */
-const START: Partial<Record<ArrowKind, Head>> = {
-  bidirectional_solid: 'arrow',
-  bidirectional_dotted: 'arrow',
-  solid_arrow_top_reverse: 'bottom',
-  solid_arrow_top_reverse_dotted: 'bottom',
-  stick_arrow_top_reverse: 'bottom',
-  stick_arrow_top_reverse_dotted: 'bottom',
-  solid_arrow_bottom_reverse: 'top',
-  solid_arrow_bottom_reverse_dotted: 'top',
-  stick_arrow_bottom_reverse: 'top',
-  stick_arrow_bottom_reverse_dotted: 'top',
-};
+const headOf = (h: ArrowHead | undefined): Head | undefined => (h ? CELL[h] : undefined);
 
 // Heads the glyph sets have no entry for: the async head (as mermaid-ascii draws it) and the
 // half heads as harpoons, barb up (`top`) or down (`bottom`); ASCII has only `<` and `>`.
@@ -327,8 +305,8 @@ class Drawing {
     const { canvas, glyphs } = this;
     const y = m.y + this.dy;
     const startX = m.startX + this.dx;
-    const end = END[m.arrow];
-    const start = START[m.arrow];
+    const end = headOf(ARROW_HEADS[m.arrow].end);
+    const start = headOf(ARROW_HEADS[m.arrow].start);
     const right = self.right + this.dx;
     const bottom = self.bottom + this.dy;
     const lifeline = (this.columns.get(m.from)?.lifeline.x ?? m.startX - 1) + this.dx;
@@ -355,8 +333,8 @@ class Drawing {
     const startX = m.startX + this.dx;
     const stopX = m.stopX + this.dx;
     const dotted = m.arrow.includes('dotted');
-    const end = END[m.arrow];
-    const start = START[m.arrow];
+    const end = headOf(ARROW_HEADS[m.arrow].end);
+    const start = headOf(ARROW_HEADS[m.arrow].start);
     const d = stopX >= startX ? RIGHT : LEFT;
     const step = d === RIGHT ? 1 : -1;
     const from = this.columns.get(m.from);
