@@ -14,7 +14,7 @@ import { erV12Snapshot } from './v12.ts';
  * with the quoted token's range, which the service leaves out (symbols.ts, the flowchart's
  * quoted-subgraph gap #31), so they have no definition. A change here means the gap moved.
  */
-const QUOTED_ONLY = 314;
+const QUOTED_ONLY = 315;
 
 /**
  * The oracle expectations re-run through the language service for ER (language.md step 8,
