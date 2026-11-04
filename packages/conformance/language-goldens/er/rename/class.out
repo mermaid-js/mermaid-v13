@@ -1,0 +1,7 @@
+@ 3:12  classDef |hot fill:#f96
+  prepare: 3:12-3:15 "hot"; rename to "warm":
+  %% rename-to: warm
+  erDiagram
+    classDef warm fill:#f96
+    A:::warm
+    class A,B warm

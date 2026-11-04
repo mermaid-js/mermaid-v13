@@ -1,0 +1,20 @@
+@ 2:3  |CUSTOMER ||--o{ ORDER : places
+  2:3-2:11 "CUSTOMER"
+  3:3-3:11 "CUSTOMER"
+  6:9-6:17 "CUSTOMER"
+  7:9-7:17 "CUSTOMER"
+@ 6:13  style CUST|OMER fill:#f00
+  2:3-2:11 "CUSTOMER"
+  3:3-3:11 "CUSTOMER"
+  6:9-6:17 "CUSTOMER"
+  7:9-7:17 "CUSTOMER"
+@ 7:24  class CUSTOMER,ORDER |hot
+  7:24-7:27 "hot"
+  8:12-8:15 "hot"
+  9:11-9:14 "hot"
+@ 10:12  subgraph |G
+  10:12-10:13 "G"
+  13:16-13:17 "G"
+@ 13:17  ORDER }|--|| G| : in
+  10:12-10:13 "G"
+  13:16-13:17 "G"
