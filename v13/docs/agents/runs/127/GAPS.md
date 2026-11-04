@@ -42,7 +42,7 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## #146 T4 renderer
 
-- [ ] **Escalated (theme variables), now state T0 #192 (D120), done in core elsewhere:** v12's `compositeTitleBackground` and
+- [ ] **D120, "Add them": state T0 #192, draft PR #193.** Open questions there: v12's actual values (used) vs the ticket's summary, and whether to add `compositeBackground` (v12 redux-dark `#16141f`, v13 `#333333`). When it merges, switch the renderer to read the two variables. Was escalated (state T0 candidate, theme variables): v12's `compositeTitleBackground` and
   `altBackground` are not core variables. The renderer draws both with `clusterBkg`, which is
   v12's value in the redux family (`#f9f9fb`) but not in classic (v12: `mainBkg`, `#f0f0f0`).
   Adding the two variables is a core change (vocabulary, every theme spec, schema), so not here
@@ -85,3 +85,7 @@ Unmet criteria and shared contracts, by owning ticket.
   a rename whose way back is refused, because the original id is one `isValidId` will not take
   (`State1:` from `state State1: Description` in the corpus, HTML-escaped `&lt;&lt;fork&gt;&gt;`).
   `isValidId` also refuses CJK ids outright, even where no `class`/`style` names them.
+
+## Accepted (maintainer)
+
+- [x] **First-paint colours via #190** (D119, draft PR #191): the CodeMirror and Monaco adapters colour the first paint with flowchart's grammar for every diagram type. Choosing the highlighter per type is cross-type ticket #190, after the M3 facets land. #151 does not change the adapters.
