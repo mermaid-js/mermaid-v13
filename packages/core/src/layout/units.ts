@@ -50,6 +50,10 @@ export interface LayoutMetrics {
   readonly corner: number;
   /** A drawing that runs across is turned to run down only when the width budget is under this. */
   readonly turnBreakpoint: number;
+  /** Room between a node's side and an edge-end label, along the edge (D102). */
+  readonly endLabelAlong: number;
+  /** Room between an edge's line and an edge-end label beside it (D102). */
+  readonly endLabelAcross: number;
 }
 
 /** The lengths a diagram's graph builder reads. */
@@ -118,6 +122,8 @@ const PX_ENGINE: LayoutMetrics = freeze({
   loopLabel: 28,
   corner: 12,
   turnBreakpoint: 640,
+  endLabelAlong: 4,
+  endLabelAcross: 6,
 });
 
 /**
@@ -166,6 +172,10 @@ const CELL_ENGINE: LayoutMetrics = freeze({
   loopLabel: 3,
   corner: 1,
   turnBreakpoint: 80,
+  // On the grid an end label starts in the row (or column) just off the side, with one blank
+  // cell between it and the line.
+  endLabelAlong: 0,
+  endLabelAcross: 1,
 });
 
 const CELL_COMPACT: BuilderMetrics = freeze({

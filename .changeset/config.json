@@ -7,14 +7,7 @@
     }
   ],
   "commit": false,
-  "fixed": [
-    [
-      "mermaid",
-      "@mermaid-js/core",
-      "@mermaid-js/diagram-flowchart",
-      "@mermaid-js/plugin-interactions"
-    ]
-  ],
+  "fixed": [],
   "linked": [],
   "access": "public",
   "baseBranch": "mermaid-v13",
