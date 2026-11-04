@@ -9,5 +9,5 @@ export type {
   StateShape,
 } from './prepare.ts';
 export type { StateRenderContext, StateWarning } from './context.ts';
-export { STATE_LAYOUT_DEFAULTS, stateMetrics } from './metrics.ts';
+export { stateMetrics } from './metrics.ts';
 export type { StateMetrics } from './metrics.ts';

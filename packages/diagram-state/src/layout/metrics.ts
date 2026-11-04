@@ -41,12 +41,3 @@ const CELL: StateMetrics = Object.freeze({
 export function stateMetrics(units: UnitProfile): StateMetrics {
   return units.id === 'cell' ? CELL : PX;
 }
-
-/**
- * v12's `state` config defaults the layout reads, in px (v12 `config.schema.yaml`). The plugin's
- * `configDefaults` (T5) carries the same values.
- */
-export const STATE_LAYOUT_DEFAULTS = Object.freeze({
-  wrappingWidth: 120,
-  minNodeWidth: 120,
-});

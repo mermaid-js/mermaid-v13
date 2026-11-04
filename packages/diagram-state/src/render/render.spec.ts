@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SvgNode, SvgTree } from '@mermaid-js/core/svg';
-import { renderForTest } from '../testing.ts';
+import { renderForTest } from '../testing.fixtures.ts';
 
 const root = (tree: SvgTree): SvgNode => tree.find({ tag: 'svg' })[0]!;
 const textIn = (tree: SvgTree, node: SvgNode): string =>
@@ -203,7 +203,7 @@ describe('state render: composites and concurrency regions', () => {
     }
     // The regions and dividers start below the composite's title band.
     const title = layout.groups.get('Active')!.title;
-    const label = layout.state!.views.get('Active')!.label;
+    const label = layout.state.views.get('Active')!.label;
     for (const d of layout.dividers) expect(d.y1).toBeGreaterThan(title.y + label.height / 2);
     for (const k of [1, 2, 3]) {
       const frame = layout.groups.get(`Active:region${k}`)!;

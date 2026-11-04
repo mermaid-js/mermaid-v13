@@ -1,21 +1,92 @@
 import { join } from 'node:path';
 import { SaxesParser } from 'saxes';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { createMermaid, type ExtensionPlugin } from 'mermaid';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { assertInert, type SvgNode, type SvgTree } from '@mermaid-js/core/svg';
 import { V12_XSS_CASES } from '@mermaid-js/core/svg/testing';
-import { detectState } from '@mermaid-js/diagram-state';
-import { renderForTest, type RenderedForTest } from '@mermaid-js/diagram-state/testing';
+import {
+  detectState,
+  parseState,
+  type CompleteStateLayout,
+  type StateModel,
+} from '@mermaid-js/diagram-state';
 import { REPO_ROOT, corpusFromDir } from '../index.ts';
 
 /**
  * Render properties (DESIGN §13.2, §13.4) over both e2e state corpora (#146), through the
- * plugin's own `parse` → `layout` → `render` entries with the deterministic table measurer
- * (T5 registers the plugin): well-formed XML, the allow-list, render-twice determinism, both
- * writer backings byte-identical, no NaN/Infinity/undefined, the viewBox holds every drawn
- * coordinate, and every state, composite, region, transition and note maps to exactly one
- * `data-ast` element whose id resolves to an AST range.
+ * public `createMermaid().render()` with the deterministic table measurer: well-formed XML, the
+ * allow-list, render-twice determinism, both writer backings byte-identical, no
+ * NaN/Infinity/undefined, the viewBox holds every drawn coordinate, and every state, composite,
+ * region, transition and note maps to exactly one `data-ast` element whose id resolves to an
+ * AST range.
  */
+
+interface RenderedForTest {
+  svg: string;
+  /** The tree the writer built: a `postRender` hook makes the pipeline write into one. */
+  tree: SvgTree;
+  parse: { ast: AstNode; model: StateModel };
+  /** The plugin's layout as the `postLayout` hook saw it (it passes it on unchanged). */
+  layout: CompleteStateLayout;
+  theme: unknown;
+}
+
+interface Seen {
+  ast?: AstNode;
+  layout?: CompleteStateLayout;
+  tree?: SvgTree;
+  theme?: unknown;
+}
+
+/** Records what each render's hooks see, passing everything on unchanged. */
+function recorder(into: Seen): ExtensionPlugin {
+  return {
+    id: 'record',
+    postParse(ast, ctx) {
+      into.ast = ast;
+      into.theme = ctx.config.theme;
+      return ast;
+    },
+    postLayout(l) {
+      into.layout = l.layout as CompleteStateLayout;
+      return l;
+    },
+    postRender(tree) {
+      into.tree = tree;
+    },
+  };
+}
+
+const hooked: Seen = {};
+const recorded = createMermaid();
+recorded.initialize({ deterministic: true });
+await recorded.registerExternalDiagrams([recorder(hooked)]);
+// No hooks: the pipeline writes through the streaming writer.
+const streaming = createMermaid();
+streaming.initialize({ deterministic: true });
+
+async function renderForTest(
+  source: string,
+  options: { idPrefix?: string; stream?: boolean } = {}
+): Promise<RenderedForTest> {
+  const id = options.idPrefix ?? 'mermaid-0';
+  if (options.stream) {
+    const { svg } = await streaming.render(id, source);
+    return { svg } as RenderedForTest;
+  }
+  const parsed = parseState(source);
+  const error = parsed.diagnostics.find((d) => d.severity === 'error');
+  if (error) throw new Error(`parse failed: ${error.message}`);
+  const { svg } = await recorded.render(id, source);
+  return {
+    svg,
+    tree: hooked.tree!,
+    parse: { ast: hooked.ast!, model: parsed.model },
+    layout: hooked.layout!,
+    theme: hooked.theme,
+  };
+}
 
 interface Case {
   id: string;
@@ -122,7 +193,7 @@ describe('state render properties over both e2e corpora', () => {
   it('writes well-formed XML that passes the allow-list', () => {
     for (const c of cases) {
       expect(wellFormed(c.result.svg), c.id).toBeUndefined();
-      const auto = String(c.result.config.theme) === 'auto';
+      const auto = String(c.result.theme) === 'auto';
       expect(() => assertInert(c.result.svg, { themeStyle: auto }), c.id).not.toThrow();
     }
   });
@@ -172,7 +243,7 @@ describe('state render properties over both e2e corpora', () => {
       const model = parse.model;
       for (const s of model.states) expect(seen.get(s.ast), `${c.id}: state ${s.id}`).toBe(1);
       for (const t of model.transitions) expect(seen.get(t.ast), `${c.id}: ${t.id}`).toBe(1);
-      const drawn = layout.state!;
+      const drawn = layout.state;
       for (const n of drawn.nodes) expect(seen.get(n.ast), `${c.id}: node ${n.id}`).toBe(1);
       for (const g of drawn.groups) {
         expect(seen.get(g.ast), `${c.id}: group ${g.id}`).toBe(1);

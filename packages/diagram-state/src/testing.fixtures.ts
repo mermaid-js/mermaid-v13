@@ -1,9 +1,9 @@
 /**
- * A minimal parse → layout → render pipeline for tests, until T5 (#148) registers the state
- * plugin and the public `render()` reaches it: preprocess, resolveConfig, the plugin's `parse`,
- * theme, the deterministic table measurer, `layered`, and the tree-backed writer (byte-identical
- * to the stream writer) so tests can query the result. Everything goes through the plugin
- * object's `parse`, `layout` and `render` entries, as the pipeline will call them.
+ * Test-only (not built, not exported): the plugin's own parse → layout → render entries with the
+ * config the public pipeline builds (core defaults under `state.configDefaults`, as
+ * `mermaid/src/config-snapshot.ts` passes them), the deterministic table measurer, `layered`,
+ * and the tree-backed writer, so the package's specs can query the views. Cross-package specs
+ * render through `createMermaid()` instead (`packages/conformance/src/state/render.spec.ts`).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ResolvedConfig } from '@mermaid-js/core/config';
@@ -52,7 +52,7 @@ export async function renderForTest(
     options.config,
     pre.frontMatter?.config,
     directives,
-    {},
+    { state: state.configDefaults },
     { warn, section: 'state' }
   );
   const limits = resolveLimits(config);

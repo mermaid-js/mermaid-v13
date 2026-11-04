@@ -15,7 +15,8 @@ import {
 } from '@mermaid-js/core/text';
 import type { StateModel, StateNode, StateNote, StateTransition } from '../parser/index.ts';
 import type { StateRenderContext } from './context.ts';
-import { STATE_LAYOUT_DEFAULTS, stateMetrics, type StateMetrics } from './metrics.ts';
+import { stateConfigDefaults } from '../generated/config-defaults.ts';
+import { stateMetrics, type StateMetrics } from './metrics.ts';
 
 /** What a node is drawn as. `described`: a state with several description lines (v12 `rectWithTitle`). */
 export type StateShape =
@@ -142,8 +143,8 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
       size: ctx.theme.number('fontSize'),
       weight: 400,
     },
-    wrap: fromPx(units, pxOr(cfg.wrappingWidth, STATE_LAYOUT_DEFAULTS.wrappingWidth), 'x'),
-    minWidth: fromPx(units, pxOr(cfg.minNodeWidth, STATE_LAYOUT_DEFAULTS.minNodeWidth), 'x'),
+    wrap: fromPx(units, pxOr(cfg.wrappingWidth, stateConfigDefaults.wrappingWidth!), 'x'),
+    minWidth: fromPx(units, pxOr(cfg.minNodeWidth, stateConfigDefaults.minNodeWidth!), 'x'),
     label: (text, style, max) => {
       const [f, bits] = textStyle(style, m.font);
       // v12 gives every state, note and transition label `labelType: 'markdown'`.
