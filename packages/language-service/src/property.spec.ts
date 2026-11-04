@@ -13,7 +13,7 @@
  * Budget, as a ratio (timing tests never assert absolute times): no query call takes longer
  * than {@link RATIO} times the document's own `update` (a full re-parse, best of three), best
  * of three calls, in CPU time, with a {@link FLOOR_MS} floor for timer noise on tiny documents.
- * The absolute 10 ms budget on a 50k-character document is the bench package's
+ * The absolute 15 ms budget (D156) on a 50k-character document is the bench package's
  * `language` script.
  */
 import { readdirSync, readFileSync } from 'node:fs';
