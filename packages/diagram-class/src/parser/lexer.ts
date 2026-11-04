@@ -12,7 +12,7 @@
  * Every scan is linear in the text it consumes (R-PARSE-7).
  */
 import { Kind, TokenWriter } from '@mermaid-js/core/parser-kit';
-import type { TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Probe, TokenStream } from '@mermaid-js/core/parser-kit';
 import { A, CONDITIONS, RULES, S } from './rules.ts';
 import type { Rule, Scan } from './rules.ts';
 import type { Hole, V12Text } from './source.ts';
@@ -27,9 +27,27 @@ export interface ClassLex {
   v12: V12Text;
 }
 
-/** Lex a class source as v12 saw it (`v12`), writing v12's removed spans as trivia. */
-export function lex(src: string, v12: V12Text, onRule?: (rule: number) => void): ClassLex {
-  return new ClassLexer(src, v12, v12.holes, onRule).run();
+/** Start condition names by number, for the probe's lexer mode (jison's names). */
+const S_NAMES: readonly string[] = /* @__PURE__ */ Object.keys(S).map((k) =>
+  k === 'classBody' ? 'class-body' : k === 'namespaceBody' ? 'namespace-body' : k
+);
+
+/**
+ * Lex a class source as v12 saw it (`v12`), writing v12's removed spans as trivia. `from` (a
+ * source offset) starts the lex there in the initial state, as the parser does after an error
+ * inside a string or other lexer mode, with `states` pushed over the initial state (the
+ * namespace bodies open there). With a `probe`, the start condition at the probe's
+ * offset is recorded as its mode.
+ */
+export function lex(
+  src: string,
+  v12: V12Text,
+  onRule?: (rule: number) => void,
+  probe?: Probe,
+  from = 0,
+  states: readonly number[] = []
+): ClassLex {
+  return new ClassLexer(src, v12, v12.holes, onRule).run(from, probe, states);
 }
 
 class ClassLexer {
@@ -56,11 +74,15 @@ class ClassLexer {
     this.w = new TokenWriter((v12.text.length >> 2) + 8);
   }
 
-  run(): ClassLex {
+  run(from: number, probe: Probe | undefined, states: readonly number[]): ClassLex {
     const n = this.v12.text.length;
-    let p = 0;
+    this.stack.push(...states);
+    let p = from > 0 ? this.textIndex(from) : 0;
+    while ((this.holes[this.hole]?.start ?? Infinity) < from) this.hole++;
     for (let done = false; !done; ) {
       if (p >= n) done = true;
+      const before = p;
+      const mode = probe ? (S_NAMES[this.stack[this.stack.length - 1] ?? 0] ?? '') : '';
       const at = this.step(p);
       if (at >= 0) p = at;
       else if (p < n) {
@@ -69,7 +91,9 @@ class ClassLexer {
         this.stack[0] = S.INITIAL;
         p++;
       }
+      probe?.lexed(this.sourceStart(before), this.sourceStart(p), mode);
     }
+    probe?.lexed(this.src.length, this.src.length, S_NAMES[this.stack[this.stack.length - 1] ?? 0] ?? '');
     this.trivia(this.src.length + 1);
     const tokens = this.w.finish(this.src);
     this.starts.push(this.v12.length);
@@ -125,6 +149,20 @@ class ClassLexer {
   }
 
   // --- Offsets and output -------------------------------------------------------------------
+
+  /** Index of the first character of v12's text at or after source offset `at`. */
+  private textIndex(at: number): number {
+    const v = this.v12;
+    if (!v.starts) return Math.max(0, Math.min(at - v.from, v.length));
+    let lo = 0;
+    let hi = v.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if ((v.starts[mid] ?? 0) < at) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  }
 
   /** Source offset where `text[i]` starts (the end of the source past v12's own text). */
   private sourceStart(i: number): number {

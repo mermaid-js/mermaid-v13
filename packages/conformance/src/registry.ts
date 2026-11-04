@@ -1,3 +1,4 @@
+import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
 
@@ -10,6 +11,11 @@ export const PARITY_SUITES: ParitySuite[] = [
     adapter: flowchartAdapter,
     corpusDirs: ['e2e/diagrams/flowchart'],
     corpusFiles: ['packages/conformance/corpus/flowchart-v12-specs.json'],
+  },
+  {
+    adapter: classAdapter,
+    corpusDirs: ['e2e/diagrams/class-diagram'],
+    corpusFiles: ['packages/conformance/corpus/class-v12-specs.json'],
   },
 ];
 
