@@ -271,7 +271,7 @@ test('the real sequence diagram: menus bind on its participant symbols (#145)', 
 }) => {
   await open(page);
   await page.addStyleTag({ content: '#d { width: 600px; }' });
-  const warnings = await page.evaluate(async () => {
+  const codes = await page.evaluate(async () => {
     await window.mermaid.registerExternalDiagrams([window.mermaidInteractions]);
     const text = [
       'sequenceDiagram',
@@ -289,7 +289,7 @@ test('the real sequence diagram: menus bind on its participant symbols (#145)', 
     bindFunctions?.(el);
     return warnings.map((w) => w.code);
   });
-  expect(warnings).toEqual(['URL_REFUSED']);
+  expect(codes).toEqual(['URL_REFUSED']);
   const menu = page.locator('#d > svg + div.actorPopupMenu[data-menu-for="A"]');
   await expect(menu).toBeHidden();
   await symbol(page, '#d', 'A', 'bottom').click();
