@@ -426,7 +426,7 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
 - **`create` and `destroy`** take effect at the message that creates or destroys the
   participant. v12 drew them only when that message was the very next row, so a note or a block line in
   between (or a `create` between a `destroy` and its message) silently dropped the creation
-  or the destruction.
+  or the destruction (D123).
 - **A message after the destroying one** is accepted as in v12, with a
   `SEQUENCE_AFTER_DESTROY` warning: it is drawn below the participant's end.
 - **Math** (`$$…$$`) in messages, notes, aliases, fragment and box labels is shown as written,
