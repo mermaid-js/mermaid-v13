@@ -380,6 +380,15 @@ so it counts twice towards the diameter compared with the per-side node padding.
 Node positions differ from v12's dagre and ELK output; layouts are deterministic for the same
 input.
 
+### Class diagram layout
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Class diagrams default to ELK | Laid out with `layered`, the engine built into core; `layout: elk` is accepted and drawn with `layered` until the ELK plugin (M3.5) is registered | D106 |
+| Class `nodeSpacing` and `rankSpacing` were read from the `state` section (falling back to 50), and `class.diagramPadding` was ignored (8 px) | `class.nodeSpacing`, `class.rankSpacing` and `class.diagramPadding` are honoured, with v12's effective defaults (50, 50, 8) | spec #126 |
+| Class edges followed `flowchart.curve` | Class edges are routed at right angles, the look of v12's default `rounded` curve | spec #126 |
+| A lollipop interface was a top-level node, outside its class's namespace | It sits in the namespace of its class | spec #126 |
+
 ## Labels and text
 
 | v12 | v13 | Why |
