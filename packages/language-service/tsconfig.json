@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // Node only for the golden spec's file reads; the build below drops it.
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

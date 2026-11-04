@@ -20,6 +20,7 @@
     "@mermaid-js/diagram-flowchart": "workspace:^",
     "@mermaid-js/diagram-state": "workspace:^",
     "@mermaid-js/gen-grammar": "workspace:^",
+    "@mermaid-js/language-service": "workspace:^",
     "@types/js-yaml": "^4.0.9",
     "js-yaml": "^4.3.2",
     "mermaid": "workspace:*",

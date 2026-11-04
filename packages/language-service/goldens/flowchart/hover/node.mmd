@@ -1,0 +1,8 @@
+flowchart LR
+  classDef hot fill:#f96,stroke:#333
+  |A(Start) --> B{Is it?}
+  B -->\|yes\| C:::h|ot
+  B --> D[Done]
+  D --> |A
+  |B --> D
+  C:::hot --> |C

@@ -1,0 +1,64 @@
+@ 2:3  ti|tle: Hello
+  2:1-2:6 "title"
+  | **title**
+  |
+  | The diagram title, drawn above the diagram.
+@ 4:3  co|nfig:
+  4:1-4:7 "config"
+  | **config**
+  |
+  | Config for this diagram: the keys of `initialize()`, scoped to this diagram.
+@ 5:6  the|me: dark
+  5:3-5:8 "theme"
+  | **theme**
+  |
+  | Theme, the CSS style sheet.
+  | You may also use `themeCSS` to override this value.
+  |
+  | Type: `"default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "auto" | "null"` · Default: `"redux-color"`
+  |
+  | Status: honoured (since 13.0.0). The default changes from `default` to `redux-color`, the theme v12's flowchart renders by default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`, `neutral` and `base`. `neo` renders `redux-color`, `neo-dark` renders `redux-dark-color` and `null` renders `base`, each with a `THEME_UNAVAILABLE` warning.
+@ 7:9  prim|aryColor: '#fff'
+  none
+@ 9:8  cur|ve: basis
+  9:5-9:10 "curve"
+  | **flowchart.curve**
+  |
+  | Defines how mermaid renders curves for flowcharts.
+  |
+  | Type: `"basis" | "bumpX" | "bumpY" | "cardinal" | "catmullRom" | "linear" | "monotoneX" | "monotoneY" | "natural" | "step" | "stepAfter" | "stepBefore" | "rounded"` · Default: `"rounded"`
+  |
+  | Status: honoured (since 13.0.0). The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes; `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory).
+@ 10:13  htmlLabe|ls: true
+  10:5-10:15 "htmlLabels"
+  | **flowchart.htmlLabels**
+  |
+  | **DEPRECATED: Use global `htmlLabels` instead.**
+  |
+  | Flag for setting whether or not a html tag should be used for rendering labels on nodes and edges.
+  | This property is deprecated.
+  | Please use the global `htmlLabels` configuration instead.
+  |
+  | Type: `boolean | null` · Default: `null`
+  |
+  | Status: removed (since 13.0.0). Labels are SVG text only; there is no HTML label mode (D5). Replacement: none; labels support a markdown subset rendered as SVG text.
+@ 12:13  mirrorAc|tors: false
+  12:5-12:17 "mirrorActors"
+  | **sequence.mirrorActors**
+  |
+  | Mirror actors under diagram
+  |
+  | Type: `boolean` · Default: `true`
+  |
+  | Status: pending.
+@ 13:12  dompurify|Config: {}
+  13:3-13:18 "dompurifyConfig"
+  | **dompurifyConfig**
+  |
+  | Configuration options to pass to the `dompurify` library.
+  |
+  | Type: `object`
+  |
+  | Status: removed (since 13.0.0). v13 has no HTML sanitizer: output is safe by construction (R-SEC-1). Replacement: none.
+@ 14:7  nope|: 1
+  none

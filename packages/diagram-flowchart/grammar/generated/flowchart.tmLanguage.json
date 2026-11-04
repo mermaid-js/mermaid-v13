@@ -13,11 +13,11 @@
   ],
   "repository": {
     "trivia-0": {
-      "match": "%%(?!\\{)[^\\n]*",
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
       "name": "comment.line.mermaid-flowchart"
     },
     "trivia-1": {
-      "match": "%%\\{.*?\\}%%",
+      "match": "[^\\S\\n]*%%\\{.*?\\}%%",
       "name": "meta.embedded.mermaid-flowchart"
     },
     "rule-0": {
@@ -98,7 +98,7 @@
     },
     "rule-13": {
       "begin": "call\\s+",
-      "end": "(\\(\\s*\\))",
+      "end": "(\\(\\s*\\))|(?=\\()",
       "patterns": [
         {
           "include": "#mode-callbackname"
@@ -1221,6 +1221,10 @@
         }
       ]
     },
+    "rule-6": {
+      "match": "[^}]+",
+      "name": "string.quoted.mermaid-flowchart"
+    },
     "mode-acc_descr_multiline": {
       "patterns": [
         {
@@ -1228,6 +1232,9 @@
         },
         {
           "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-6"
         },
         {
           "include": "#rule-21"
@@ -1679,6 +1686,10 @@
         }
       ]
     },
+    "rule-34": {
+      "match": "\\S+",
+      "name": "variable.other.mermaid-flowchart"
+    },
     "mode-click": {
       "patterns": [
         {
@@ -1694,6 +1705,9 @@
           "include": "#rule-24"
         },
         {
+          "include": "#rule-34"
+        },
+        {
           "include": "#rule-64"
         },
         {
@@ -1731,6 +1745,10 @@
         }
       ]
     },
+    "rule-16": {
+      "match": "[^(]+",
+      "name": "entity.name.function.mermaid-flowchart"
+    },
     "mode-callbackname": {
       "patterns": [
         {
@@ -1738,6 +1756,9 @@
         },
         {
           "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-16"
         },
         {
           "include": "#rule-21"
@@ -1783,6 +1804,10 @@
         }
       ]
     },
+    "rule-18": {
+      "match": "[^)]+",
+      "name": "string.quoted.mermaid-flowchart"
+    },
     "mode-callbackargs": {
       "patterns": [
         {
@@ -1790,6 +1815,9 @@
         },
         {
           "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-18"
         },
         {
           "include": "#rule-21"

@@ -1,0 +1,119 @@
+/**
+ * Rename round-trip (D99 suite 4, D92): over every corpus document with a facet, every symbol
+ * renamed to a fresh name re-parses to the same model modulo the name (ranges aside, since the
+ * text moved), and renaming it back gives the original text.
+ */
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { createLanguageService } from './index.ts';
+import { contextOf } from './snapshot.ts';
+import type { DocumentSnapshot, Range, TextEdit } from './index.ts';
+
+const CORPUS = join(import.meta.dirname, '..', '..', '..', 'e2e', 'diagrams');
+const FRESH = 'renamedZq7';
+
+/**
+ * Renames that change the model, found by this test and left to their owners (GAPS.md):
+ * - renaming a node renames the generated id of its edges (`L_B_D_0`), and an `L_B_D_0@{ … }`
+ *   written in the text then names an edge that no longer exists;
+ * - `class link …` for the edge id `link` is recorded as a node mention, so renaming the edge
+ *   id (or the "node") leaves the other one behind and the class moves.
+ */
+const KNOWN_MODEL_CHANGES = [
+  'flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd B@257: model',
+  'flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd D@303: model',
+  'flowchart/nightly-check/handdrawn/03-fdh49-should-add-edge-animation.mmd B@265: model',
+  'flowchart/nightly-check/handdrawn/03-fdh49-should-add-edge-animation.mmd D@311: model',
+  'flowchart/visual-check/v2-17-should-apply-class-def-colour-to-edge-label.mmd link@315: model',
+  'flowchart/visual-check/v2-17-should-apply-class-def-colour-to-edge-label.mmd link@516: model',
+];
+
+/** Refused renames: safe, but each one is listed so a new refusal is seen. */
+const KNOWN_REFUSALS = [
+  // An `L_B_D_0@{ … }` naming a generated edge id: renamed, it would name a new edge.
+  "flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd L_B_D_0@420: 'renamedZq7' would not read as the same edge id everywhere it is used.",
+  "flowchart/nightly-check/handdrawn/03-fdh49-should-add-edge-animation.mmd L_B_D_0@428: 'renamedZq7' would not read as the same edge id everywhere it is used.",
+];
+
+const corpus = (readdirSync(CORPUS, { recursive: true }) as string[])
+  .filter((f) => f.endsWith('.mmd'))
+  .sort();
+
+const service = createLanguageService();
+beforeAll(() => service.preload());
+
+function apply(text: string, edits: readonly TextEdit[]): string {
+  let out = text;
+  for (const e of [...edits].sort((a, b) => b.range.start - a.range.start))
+    out = out.slice(0, e.range.start) + e.newText + out.slice(e.range.end);
+  return out;
+}
+
+const isRange = (v: unknown): v is Range =>
+  typeof v === 'object' && v !== null && Object.keys(v).length === 2 && 'start' in v && 'end' in v;
+
+/** `value` with source ranges dropped and `from` written as `to` in every string. */
+function modulo(value: unknown, from: string, to: string): unknown {
+  if (typeof value === 'string') return value.split(from).join(to);
+  if (Array.isArray(value)) return value.map((v) => modulo(v, from, to));
+  if (typeof value === 'object' && value !== null)
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, v]) => !isRange(v))
+        .map(([k, v]) => [k, modulo(v, from, to)])
+    );
+  return value;
+}
+
+/** One position per distinct symbol: the first occurrence the service can rename. */
+function symbolPositions(doc: DocumentSnapshot): number[] {
+  const seen = new Set<string>();
+  const out: number[] = [];
+  for (const s of contextOf(doc).result?.symbols ?? []) {
+    const prepared = doc.prepareRename(s.range.start);
+    if ('refused' in prepared) continue;
+    const key = JSON.stringify(doc.references(s.range.start));
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(s.range.start);
+  }
+  return out;
+}
+
+describe('rename, re-parse, same model modulo the name', () => {
+  it('over the corpus', () => {
+    const problems: string[] = [];
+    const refused: string[] = [];
+    let renamed = 0;
+    for (const file of corpus) {
+      const text = readFileSync(join(CORPUS, file), 'utf8');
+      if (text.includes(FRESH)) continue;
+      const doc = service.update(`corpus:///${file}`, text);
+      if (!doc.facet) continue;
+      const before = modulo(contextOf(doc).result?.model, FRESH, FRESH);
+      for (const at of symbolPositions(doc)) {
+        const name = (doc.prepareRename(at) as { placeholder: string }).placeholder;
+        const where = `${file.split('\\').join('/')} ${name}@${at}`;
+        const result = doc.rename(at, FRESH);
+        if ('refused' in result) {
+          refused.push(`${where}: ${result.refused}`);
+          continue;
+        }
+        renamed++;
+        const next = service.update(`corpus:///${file}#renamed`, apply(text, result.edits));
+        const after = modulo(contextOf(next).result?.model, FRESH, name);
+        if (JSON.stringify(after) !== JSON.stringify(before)) problems.push(`${where}: model`);
+        const codes = (d: DocumentSnapshot) => d.diagnostics().map((x) => x.code);
+        if (JSON.stringify(codes(next)) !== JSON.stringify(codes(doc)))
+          problems.push(`${where}: diagnostics`);
+        const back = next.rename(result.edits[0]!.range.start, name);
+        if ('refused' in back) problems.push(`${where}: back refused: ${back.refused}`);
+        else if (apply(next.text, back.edits) !== text) problems.push(`${where}: back differs`);
+      }
+    }
+    expect(renamed).toBeGreaterThan(2000);
+    expect(problems).toEqual(KNOWN_MODEL_CHANGES);
+    expect(refused).toEqual(KNOWN_REFUSALS);
+  }, 120_000);
+});
