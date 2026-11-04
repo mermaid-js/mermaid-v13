@@ -21,6 +21,7 @@ describe('packAll (this workspace)', () => {
     const names = packed.map((p) => p.name);
     expect(names).toEqual([
       '@mermaid-chart/core',
+      '@mermaid-chart/diagram-er',
       '@mermaid-chart/diagram-flowchart',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',

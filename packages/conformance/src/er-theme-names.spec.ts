@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { THEME_NAMES } from '@mermaid-js/core/theme';
 
 // D152, D153: a diagram package never checks a theme name or `look`; every family difference
-// is a theme variable. Scans the package's runtime sources (specs and v12 ports excluded).
+// is a theme variable. Scans the package's runtime sources (specs and v12 ports excluded, and
+// the generated config defaults, whose section `theme` default is schema data, not a check).
 const SRC = fileURLToPath(new URL('../../diagram-er/src', import.meta.url));
 
 function sources(dir: string): string[] {
@@ -14,7 +15,12 @@ function sources(dir: string): string[] {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) {
       if (entry.name !== 'v12-specs') out.push(...sources(path));
-    } else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.spec.ts')) out.push(path);
+    } else if (
+      entry.name.endsWith('.ts') &&
+      !entry.name.endsWith('.spec.ts') &&
+      entry.name !== 'config-defaults.ts'
+    )
+      out.push(path);
   }
   return out;
 }

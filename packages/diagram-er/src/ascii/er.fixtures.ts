@@ -7,6 +7,7 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme } from '@mermaid-js/core/theme';
 import { ascii, type ErAsciiContext } from '../ascii.ts';
+import { erConfigDefaults } from '../generated/config-defaults.ts';
 import { parseEr } from '../parser/index.ts';
 import { layoutEr, type ErLayout, type ErWarning } from '../layout/layout.ts';
 
@@ -27,10 +28,10 @@ export interface DrawOptions {
 }
 
 /**
- * The `er` section defaults T5 generates (v12's, GAPS.md #134): the API hands them to the hook
- * once the manifest is in, so the drawings here are drawn with them already.
+ * The generated `er` section defaults, as the API hands them to the hook. v12's px sizes in
+ * them (140 / 80 / 100) do not convert in cells (D118), so the drawings use the cell profile.
  */
-export const ER_DEFAULTS = { nodeSpacing: 140, rankSpacing: 80, minEntityWidth: 100 } as const;
+const ER_DEFAULTS = erConfigDefaults;
 
 // Text output reads no theme colour; the classic one stands in for the pipeline's.
 const classic = 'default';

@@ -396,7 +396,12 @@ input.
 | Laid out by ELK, v12's default `layout` | Laid out by the built-in `layered` engine, like every graph diagram; `layout: elk` maps to it until an ELK plugin is registered | DESIGN §6.1, D106 |
 | ELK's orthogonal routes | Stepped routes (right angles), the nearest `layered` routing | |
 | Table cells padded by `er.diagramPadding` (across) and `er.entityPadding` (down), times 1.25 without HTML labels | Every cell padded by `er.entityPadding` (default 15 px) on each side, across and down; `er.diagramPadding` (default 20 px) is the margin around the drawing. Text output keeps 1 cell across and no margin | D116, ADR-13 |
-| `er.nodeSpacing` / `er.rankSpacing` (140 / 80) and `er.minEntityWidth` (100) | Honoured with the same defaults | |
+| `er.nodeSpacing` / `er.rankSpacing` (140 / 80) and `er.minEntityWidth` (100) | Honoured with the same defaults in SVG. Text output uses the cell profile's spacing and widths unless the diagram sets these keys | D118 |
+
+The `er` keys `layoutDirection`, `minEntityHeight`, `fontSize`, `stroke` and `fill` are
+ignored: mermaid 12.2.0 no longer read them either (only its legacy ER renderer did). Use the
+`direction` statement and the `fontSize`, `mainBkg`, `nodeBorder` and `lineColor` theme
+variables instead.
 | Entities with attributes and subgraph titles measured by the browser | Measured before layout with the injected measurer, in the font each is drawn in | DESIGN §6.1 |
 
 ## Labels and text

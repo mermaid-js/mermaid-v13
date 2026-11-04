@@ -183,7 +183,8 @@ describe('entity tables in px', () => {
     const c = lay(src, cellProfile(), defaults);
     expect(c.graph.spacing).toMatchObject({
       node: cellProfile().builder.spacing.node,
-      rank: cellProfile().builder.spacing.rank,
+      // The cell profile's rank gap, floored at six cells for both ends (D118).
+      rank: Math.max(cellProfile().builder.spacing.rank, 6),
     });
     // "A" in a 1-cell padded box, not widened to 100 px (13 columns).
     expect(c.graph.nodes[0]).toMatchObject({ width: 5 });

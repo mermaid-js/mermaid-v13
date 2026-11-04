@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { draw, text } from './ascii/er.fixtures.ts';
 
 // The ER diagram's `ascii` hook (#136, D76, D82, D109, R-ASCII-1, R-ASCII-5), called through
-// the `./ascii` entry as a pipeline does (parse → cell layout → hook).
+// the `./ascii` entry as a pipeline does (parse → cell layout → hook), with the generated `er`
+// defaults, which do not convert in cells: the cell profile's spacing and widths (D118).
 
 const lines = (...rows: string[]): string => rows.join('\n');
 const rowsWith = (out: string, s: string): string[] => out.split('\n').filter((r) => r.includes(s));
@@ -11,19 +12,19 @@ describe('relationships', () => {
   it('draws TB top to bottom: tees, a bar pair at the one end, ring and foot at the many end', async () => {
     expect(await text('erDiagram\n  A ||--o{ B : x')).toBe(
       lines(
-        '┌───────────┐',
-        '│     A     │',
-        '└─────┬─────┘',
-        '      ╪',
-        '      ╪',
-        '      │',
-        '      x',
-        '      │',
-        '      o',
-        '      Λ',
-        '┌─────┴─────┐',
-        '│     B     │',
-        '└───────────┘'
+        '┌───┐',
+        '│ A │',
+        '└─┬─┘',
+        '  ╪',
+        '  ╪',
+        '  │',
+        '  x',
+        '  │',
+        '  o',
+        '  Λ',
+        '┌─┴─┐',
+        '│ B │',
+        '└───┘'
       )
     );
   });
@@ -31,19 +32,19 @@ describe('relationships', () => {
   it('draws BT with the feet opening upwards, and dotted lines for non-identifying', async () => {
     expect(await text('erDiagram\ndirection BT\nA |o..|{ B : y')).toBe(
       lines(
-        '┌───────────┐',
-        '│     B     │',
-        '└─────┬─────┘',
-        '      V',
-        '      ╪',
-        '      ┆',
-        '      y',
-        '      ┆',
-        '      o',
-        '      ╪',
-        '┌─────┴─────┐',
-        '│     A     │',
-        '└───────────┘'
+        '┌───┐',
+        '│ B │',
+        '└─┬─┘',
+        '  V',
+        '  ╪',
+        '  ┆',
+        '  y',
+        '  ┆',
+        '  o',
+        '  ╪',
+        '┌─┴─┐',
+        '│ A │',
+        '└───┘'
       )
     );
   });
@@ -53,17 +54,17 @@ describe('relationships', () => {
       'erDiagram\ndirection LR\nA ||--o{ B : x\nC |o..|{ D : y\nE }|--|| F : z'
     );
     expect(rowsWith(lr, '│ ')).toEqual([
-      '│     A     ├||─── x ───o{┤     B     │',
-      '│     C     ├|o┄┄┄ y ┄┄┄|{┤     D     │',
-      '│     E     ├}|─── z ───||┤     F     │',
+      '│ A ├||─ x ─o{┤ B │',
+      '│ C ├|o┄ y ┄|{┤ D │',
+      '│ E ├}|─ z ─||┤ F │',
     ]);
     const rl = await text('erDiagram\ndirection RL\nA }o--|| B : z');
-    expect(rowsWith(rl, '│ ')).toEqual(['│     B     ├||─── z ───o{┤     A     │']);
+    expect(rowsWith(rl, '│ ')).toEqual(['│ B ├||─ z ─o{┤ A │']);
   });
 
   it('draws the MD parent end as one mark', async () => {
     const out = await text('erDiagram\ndirection LR\nG u--o| H : w');
-    expect(rowsWith(out, '│ ')).toEqual(['│     G     ├◇──── w ───o|┤     H     │']);
+    expect(rowsWith(out, '│ ')).toEqual(['│ G ├◇── w ─o|┤ H │']);
   });
 
   it('has an ascii form of every mark', async () => {
@@ -74,41 +75,33 @@ describe('relationships', () => {
       }
     );
     expect(rowsWith(lr, '| ')).toEqual([
-      '|     A     +||--- x ---o{+     B     |',
-      '|     C     +|o... y ...|{+     D     |',
-      '|     G     +*---- w ---o{+     H     |',
+      '| A +||- x -o{+ B |',
+      '| C +|o. y .|{+ D |',
+      '| G +*-- w -o{+ H |',
     ]);
     const tb = await text('erDiagram\nA ||--o{ B : x', { charset: 'ascii' });
-    expect(tb.split('\n').slice(3, 10)).toEqual([
-      '      =',
-      '      =',
-      '      |',
-      '      x',
-      '      |',
-      '      o',
-      '      ^',
-    ]);
+    expect(tb.split('\n').slice(3, 10)).toEqual(['  =', '  =', '  |', '  x', '  |', '  o', '  ^']);
     const bt = await text('erDiagram\ndirection BT\nA |o..|{ B : y', { charset: 'ascii' });
-    expect(bt.split('\n')[3]).toBe('      v');
+    expect(bt.split('\n')[3]).toBe('  v');
   });
 
   it('puts the marks of a relationship to itself on its loop, label beside it', async () => {
     expect(await text('erDiagram\nEMPLOYEE ||--o{ EMPLOYEE : manages')).toBe(
       lines(
-        '┌───────────┐',
-        '│           ├||┐',
-        '│ EMPLOYEE  │  │  manages',
-        '│           ├}o┘',
-        '└───────────┘'
+        '┌──────────┐',
+        '│          ├||┐',
+        '│ EMPLOYEE │  │  manages',
+        '│          ├}o┘',
+        '└──────────┘'
       )
     );
   });
 
   it('keeps a far mark off a corner: only the near mark where the line turns next to the box', async () => {
     const out = await text('erDiagram\nA ||--|{ B : "two words"\nA ||--|{ C : ""');
-    expect(rowsWith(out, '╪ ╪')).toEqual(['                    ╪ ╪', '                    ╪ ╪']);
+    expect(rowsWith(out, '╪ ╪')).toEqual(['      ╪ ╪', '      ╪ ╪']);
     expect(out).toContain('two words');
-    expect(rowsWith(out, 'Λ')).toEqual(['      Λ                              Λ']);
+    expect(rowsWith(out, 'Λ')).toEqual(['    Λ      Λ']);
   });
 });
 
@@ -154,9 +147,9 @@ describe('entities', () => {
     expect(await text('erDiagram\nA["Alias A"] {\n  List~int~ items\n}\nB')).toBe(
       lines(
         '┌───────────────────┐',
-        '│      Alias A      │                  ┌───────────┐',
-        '├───────────┬───────┤                  │     B     │',
-        '│ List<int> │ items │                  └───────────┘',
+        '│      Alias A      │  ┌───┐',
+        '├───────────┬───────┤  │ B │',
+        '│ List<int> │ items │  └───┘',
         '└───────────┴───────┘'
       )
     );
@@ -164,8 +157,8 @@ describe('entities', () => {
 
   it('measures in cells: wide graphemes take two', async () => {
     const out = await text('erDiagram\n"顧客" ||--o{ 注文 : 発注');
-    expect(rowsWith(out, '顧客')).toEqual(['│   顧客    │']);
-    expect(rowsWith(out, '発注')).toEqual(['     発注']);
+    expect(rowsWith(out, '顧客')).toEqual(['│ 顧客 │']);
+    expect(rowsWith(out, '発注')).toEqual(['   発注']);
   });
 });
 
@@ -175,13 +168,13 @@ describe('subgraphs', () => {
       'erDiagram\ndirection LR\nsubgraph S [Sales]\n  A ||--o{ B : has\nend\nC }|--|| A : makes';
     expect(await text(src)).toBe(
       lines(
-        '                              ┌─────────────────── Sales ───────────────────┐',
-        '                              │                                             │',
-        '┌───────────┐                 │   ┌───────────┐               ┌───────────┐ │',
-        '│     C     ├}|─── makes ─────┼─||┤     A     ├||─── has ───o{┤     B     │ │',
-        '└───────────┘                 │   └───────────┘               └───────────┘ │',
-        '                              │                                             │',
-        '                              └─────────────────────────────────────────────┘'
+        '                  ┌───────── Sales ─────────┐',
+        '                  │                         │',
+        '┌───┐             │   ┌───┐           ┌───┐ │',
+        '│ C ├}|─ makes ───┼─||┤ A ├||─ has ─o{┤ B │ │',
+        '└───┘             │   └───┘           └───┘ │',
+        '                  │                         │',
+        '                  └─────────────────────────┘'
       )
     );
   });
@@ -234,7 +227,7 @@ describe('warnings', () => {
 describe('text', () => {
   it('puts the front-matter title centred on the first line', async () => {
     const out = await text('---\ntitle: Shop\n---\nerDiagram\nCUSTOMER ||--o{ ORDER : places');
-    expect(out.split('\n').slice(0, 3)).toEqual(['    Shop', '┌───────────┐', '│ CUSTOMER  │']);
+    expect(out.split('\n').slice(0, 3)).toEqual(['    Shop', '┌──────────┐', '│ CUSTOMER │']);
   });
 
   it('redoes a layout that is not in cells', async () => {
