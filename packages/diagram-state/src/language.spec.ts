@@ -64,6 +64,12 @@ describe('state language facet: isValidId (rename, D92)', () => {
     expect(stateLanguage.isValidId(name)).toMatch(reason);
   });
 
+  // `$` patterns in a replacement string ($$, $&, $', $`) must not alter the probe text: these
+  // are state ids, refused only because `class` and `style` cannot name them (as `café`).
+  it.each(['x$$y', "a$'", 'a$&', 'a$`'])('reads %j back as written', (name) => {
+    expect(stateLanguage.isValidId(name)).toMatch(/`class`/);
+  });
+
   it('checks class names as classDef, class and ::: read them', () => {
     expect(stateLanguage.isValidId('hot', 'class')).toBeUndefined();
     expect(stateLanguage.isValidId('a,b', 'class')).toBe("'a,b' is not a class name.");

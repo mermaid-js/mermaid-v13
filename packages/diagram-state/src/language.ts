@@ -31,7 +31,7 @@ function shapeReason(name: string): string | undefined {
  */
 function readsBack(line: string, name: string, kind: string): boolean {
   const at = HEADER.length + line.indexOf('@');
-  const { diagnostics, symbols } = parseState(`${HEADER}${line.replace('@', name)}\n`);
+  const { diagnostics, symbols } = parseState(`${HEADER}${line.replace('@', () => name)}\n`);
   const hits = symbols.filter((s) => s.kind === kind && s.range.start === at);
   return (
     !diagnostics.some((d) => d.severity === 'error') &&
