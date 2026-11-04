@@ -98,18 +98,21 @@ export interface DocumentSnapshot {
 }
 
 /**
- * Freeze what memoised queries read of a parse before a facet sees it (D90): the result, its
- * diagnostics, symbols and statement spans (deep), and the token, AST-root and model objects
- * (shallow). The AST and model below their root and the token typed arrays stay as they are:
- * freezing the whole tree costs 1.3–2.6 ms on the 50k bench text (R-LANG-4); a facet treats
- * its `DocumentView` as read-only (LanguageFacet contract).
+ * Freeze what a facet could change behind the snapshot's queries before it sees the parse
+ * (D90), cheaply enough for the R-LANG-4 cycle: the result object, its diagnostics (deep; the
+ * `diagnostics` query reads them lazily), the symbol and statement arrays and the token, AST
+ * and model objects (shallow). Symbol and statement elements need no freezing: the snapshot
+ * has already copied them into its occurrences and folding ranges before a facet is called.
+ * The AST below its root and the token typed arrays stay as they are (freezing the AST costs
+ * about 1.2 ms on the 50k bench text; typed arrays cannot be frozen): a facet treats its
+ * `DocumentView` as read-only (LanguageFacet contract).
  */
 function freezeForFacet<T extends object>(result: T): T {
   const r = result as unknown as Record<string, unknown>;
-  for (const key of ['diagnostics', 'symbols', 'statements']) deepFreeze(r[key]);
-  for (const key of ['tokens', 'ast', 'model']) {
+  deepFreeze(r.diagnostics);
+  for (const key of ['symbols', 'statements', 'tokens', 'ast', 'model']) {
     const v = r[key];
-    if (typeof v === 'object' && v !== null) Object.freeze(v);
+    if (typeof v === 'object' && v !== null && !ArrayBuffer.isView(v)) Object.freeze(v);
   }
   return Object.freeze(result);
 }
@@ -135,11 +138,18 @@ class Snapshot implements DocumentSnapshot {
     return this.#version;
   }
 
-  /** The parse as a facet reads it, frozen once (only with a facet and its parse). */
+  /**
+   * The parse as a facet reads it, frozen once (only with a facet and its parse). The
+   * occurrences and folding ranges are copied out of it first, so nothing a facet does to a
+   * symbol or statement element reaches them.
+   */
   #facetView(): DocumentView | undefined {
     const { result, text } = this.#context;
     if (!result) return undefined;
-    return (this.#view ??= Object.freeze({ text, result: freezeForFacet(result) }));
+    if (this.#view) return this.#view;
+    this.#occurrences();
+    this.foldingRanges();
+    return (this.#view = Object.freeze({ text, result: freezeForFacet(result) }));
   }
 
   get uri(): string {

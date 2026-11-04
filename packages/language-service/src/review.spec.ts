@@ -275,10 +275,18 @@ describe('the snapshot hides its parse (D90)', () => {
         return undefined;
       },
     };
+    // The spy replaces flowchart's row: flowchart's parse, the spy's hover.
     const s = createLanguageService({
-      facets: [{ type: 'spy', id: 'spy', detector: (t) => t.startsWith('spy'), facet: spy }],
+      facets: [
+        {
+          type: 'flowchart-v2',
+          id: 'flowchart',
+          detector: (t) => t.startsWith('flowchart'),
+          facet: spy,
+        },
+      ],
     });
-    const text = 'spy\nflowchart TD\n  subgraph S\n    A --> B\n  end\n  A[x\n';
+    const text = 'flowchart TD\n  subgraph S\n    A --> B\n  end\n  A[x\n';
     const doc = s.update('spy', text);
     doc.hover(text.indexOf('A'));
     const result = seen!.result;
@@ -289,19 +297,28 @@ describe('the snapshot hides its parse (D90)', () => {
       result.diagnostics[0],
       result.diagnostics[0]!.range,
       result.symbols,
-      result.symbols[0],
-      result.symbols[0]!.range,
       result.statements,
-      result.statements[0],
       result.tokens,
+      result.ast,
     ])
       expect(Object.isFrozen(part)).toBe(true);
-    const before = doc.foldingRanges();
     expect(() => {
       result.statements.length = 0;
     }).toThrow(TypeError);
-    expect(doc.foldingRanges()).toBe(before);
-    expect(doc.references(text.indexOf('A')).length).toBe(2);
+    // Elements are not frozen, but the queries read their own copies, taken before the facet
+    // ran: a change made now (before folding or references were ever asked) reaches neither.
+    expect(result.symbols.length).toBeGreaterThan(2);
+    expect(result.statements.map((st) => st.kind)).toContain('subgraph');
+    for (const sym of result.symbols) sym.range.start = 999;
+    for (const st of result.statements) st.range.end = 0;
+    const sub = doc.foldingRanges().find((f) => f.kind === 'subgraph');
+    expect(sub && text.slice(sub.range.start, sub.range.end)).toBe(
+      'subgraph S\n    A --> B\n  end'
+    );
+    expect(doc.references(text.indexOf('A')).map((r) => r.start)).toEqual([
+      text.indexOf('A'),
+      text.lastIndexOf('A'),
+    ]);
   });
 });
 

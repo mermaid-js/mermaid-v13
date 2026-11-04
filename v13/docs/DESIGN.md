@@ -250,7 +250,7 @@ doc.lines();                                              // the text's LineInde
 doc.astAt(offset); doc.rangeOf(astId);                    // R-LANG-6, D97
 ```
 
-`DocumentSnapshot` is an interface: hosts cannot construct one, and the snapshot's parse is not reachable from it. Everything a query returns is frozen; a facet's hover gets a `DocumentView` whose parse is frozen where memoised queries read it (D90).
+`DocumentSnapshot` is an interface: hosts cannot construct one, and the snapshot's parse is not reachable from it. Everything a query returns is frozen; a facet's hover gets a `DocumentView` whose parse is frozen (the result, its diagnostics, the symbol and statement arrays, the token, AST and model objects), and the queries copy what they need out of it before the facet runs (D90).
 
 `update` never returns a partial snapshot. A detected type whose facet was not preloaded gets one `LANGUAGE_NOT_LOADED` info diagnostic naming the type, plus the generic features, until the host preloads it. A facet whose load failed gets a `LANGUAGE_LOAD_FAILED` warning (also when the module has no complete facet: `completions` and `hover` are required), one whose `parse` throws a `LANGUAGE_FACET_FAILED` error; both serve generic features only.
 
