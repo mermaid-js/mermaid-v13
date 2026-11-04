@@ -85,6 +85,11 @@ const PREPROCESSING: CorpusItem[] = [
   'erDiagram\nstyle A fill:rgb(1,2,3)\nB',
   'erDiagram\nA ||--o{ B : "direction TB"',
   'erDiagram\nA { string x "direction LR" }\nB direction RL x',
+  // Directives that start mid-line (#186): a `%%` line inside one, and `"style"` before a `;`.
+  'erDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB',
+  'erDiagram\nA %%{init: {\n%% c\n"theme": "dark"}}%% ||--o{ B : x',
+  'erDiagram\nA %%{init: {"style": "x;y"}}%%\nB',
+  'erDiagram\nA %%{init: {"x": "style A fill:#f00;"}}%% ||--o{ B : x;\nC',
 ].map((source, k) => ({ id: `preprocessing ${k}`, source }));
 
 /**

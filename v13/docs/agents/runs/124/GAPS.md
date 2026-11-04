@@ -14,9 +14,9 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 - Known limit: after an error, a stray `{` opens an attribute block in the lexer, so recovery skips to the next `}`.
 - Not ported, with reasons in the port script: `erDb.spec.js` (calls the DB directly, no parse) and `erRenderer.spec.ts` (T4 territory).
 
-## Pending core fix: `sourceView` directives mid-line
+## Core `sourceView` directive fix (#186, merged in)
 
-- The class session owns a core fix to `sourceView` (#181), with a draft PR into `mermaid-v13`. Two bugs: a `%%` line inside a mid-line `%%{…}%%` directive opens a comment hole past `}%%`, and text such as `"style"` inside a directive triggers the `;` drop. After it merges, merge `mermaid-v13` here and add ER forms of both to the lexer-parity harvest (for example `erDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB`, and a directive holding `"style"` before a `;`).
+- Done. Four ER directive cases added to the lexer-parity `PREPROCESSING` set; parity stays at 100% (2,607 of 2,611, same 4 undetected). Against the pre-#186 `sourceView`, the `%%`-line-inside-a-directive case fails and the two `"style"`-inside-a-directive cases already passed, so ER's `;` drop was not affected by the second bug.
 
 ## #132 T3 layout (merged)
 
