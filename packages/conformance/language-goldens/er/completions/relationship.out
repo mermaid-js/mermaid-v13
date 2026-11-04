@@ -1,0 +1,39 @@
+@ 3:12  CUSTOMER |
+  subgraph keyword 3:12-3:12 "" -> "subgraph"
+  style keyword 3:12-3:12 "" -> "style"
+  classDef keyword 3:12-3:12 "" -> "classDef"
+  class keyword 3:12-3:12 "" -> "class"
+  accTitle keyword 3:12-3:12 "" -> "accTitle: "
+  accDescr keyword 3:12-3:12 "" -> "accDescr: "
+  direction TB keyword 3:12-3:12 "" -> "direction TB"
+  direction BT keyword 3:12-3:12 "" -> "direction BT"
+  direction LR keyword 3:12-3:12 "" -> "direction LR"
+  direction RL keyword 3:12-3:12 "" -> "direction RL"
+  CUSTOMER node 3:12-3:12 "" -> "CUSTOMER"
+  ORDER node 3:12-3:12 "" -> "ORDER"
+  OR node 3:12-3:12 "" -> "OR"
+  || operator (exactly one) 3:12-3:12 "" -> "||"
+  |o operator (zero or one) 3:12-3:12 "" -> "|o"
+  }| operator (one or more) 3:12-3:12 "" -> "}|"
+  }o operator (zero or more) 3:12-3:12 "" -> "}o"
+  ::: operator 3:12-3:12 "" -> ":::"
+@ 4:13  CUSTOMER }|
+  }| operator (one or more) 4:12-4:13 "}" -> "}|"
+  }o operator (zero or more) 4:12-4:13 "}" -> "}o"
+@ 5:15  CUSTOMER ||-|
+  -- operator (identifying (solid line)) 5:14-5:15 "-" -> "--"
+@ 6:16  CUSTOMER ||--|
+  || operator (exactly one) 6:16-6:16 "" -> "||"
+  o| operator (zero or one) 6:16-6:16 "" -> "o|"
+  |{ operator (one or more) 6:16-6:16 "" -> "|{"
+  o{ operator (zero or more) 6:16-6:16 "" -> "o{"
+@ 7:19  CUSTOMER ||--o{ |
+  CUSTOMER node 7:19-7:19 "" -> "CUSTOMER"
+  ORDER node 7:19-7:19 "" -> "ORDER"
+  OR node 7:19-7:19 "" -> "OR"
+@ 8:21  CUSTOMER ||--o{ OR|
+  ORDER node 8:19-8:21 "OR" -> "ORDER"
+@ 9:25  CUSTOMER ||--o{ ORDER |
+  ::: operator 9:25-9:25 "" -> ":::"
+@ 10:27  CUSTOMER ||--o{ ORDER : |
+  none

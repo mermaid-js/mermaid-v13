@@ -16,24 +16,28 @@ const build = (entry: URL) =>
 const inputs = (b: Bundle) => Object.values(b.graph).flatMap((f) => f.inputs);
 const FLOW = 'packages/diagram-flowchart/src/';
 
-/** The `./language` source entry, read from the installed package's export map. */
-function languageEntry(): URL {
+/** The `./language` source entry of `pkg`, read from the installed package's export map. */
+function languageEntry(pkg = 'diagram-flowchart'): URL {
   // The workspace link's real path: esbuild reports inputs by it.
-  const link = new URL('../node_modules/@mermaid-js/diagram-flowchart', import.meta.url);
-  const pkg = new URL(`file://${realpathSync(link)}/`);
-  const manifest = JSON.parse(readFileSync(new URL('package.json', pkg), 'utf8')) as {
+  const link = new URL(`../node_modules/@mermaid-js/${pkg}`, import.meta.url);
+  const dir = new URL(`file://${realpathSync(link)}/`);
+  const manifest = JSON.parse(readFileSync(new URL('package.json', dir), 'utf8')) as {
     exports: Record<string, Record<string, string>>;
   };
   const source = manifest.exports['./language']?.['mermaid-source'];
-  if (source === undefined) throw new Error('diagram-flowchart exports no ./language');
-  return new URL(source, pkg);
+  if (source === undefined) throw new Error(`${pkg} exports no ./language`);
+  return new URL(source, dir);
 }
 
+const ER = 'packages/diagram-er/src/';
+
 let language: Bundle;
+let erLanguage: Bundle;
 let prod: Bundle;
 beforeAll(async () => {
-  [language, prod] = await Promise.all([
+  [language, erLanguage, prod] = await Promise.all([
     build(languageEntry()),
+    build(languageEntry('diagram-er')),
     build(new URL('../../mermaid/src/index.ts', import.meta.url)),
   ]);
 }, 60_000);
@@ -63,5 +67,31 @@ describe('the flowchart ./language bundle', () => {
     const all = inputs(prod);
     expect(all).not.toContain(`${FLOW}language.ts`);
     expect(all).not.toContain(`${FLOW}generated/categories.ts`);
+  });
+});
+
+describe('the er ./language bundle', () => {
+  it('holds the parser and the category table', () => {
+    const all = inputs(erLanguage);
+    expect(all).toContain(`${ER}language.ts`);
+    expect(all).toContain(`${ER}parser/parser.ts`);
+    expect(all).toContain(`${ER}generated/categories.ts`);
+  });
+
+  it('contains no renderer, layout, plugin or ASCII code', () => {
+    const leaked = inputs(erLanguage).filter(
+      (i) =>
+        (i.startsWith(ER) &&
+          !/^packages\/diagram-er\/src\/(language|facet\/|parser\/|generated\/)/.test(i)) ||
+        i.includes('packages/core/src/svg/') ||
+        i.includes('packages/core/src/layout/')
+    );
+    expect(leaked).toEqual([]);
+  });
+
+  it('stays out of the mermaid bundle', () => {
+    const all = inputs(prod);
+    expect(all).not.toContain(`${ER}language.ts`);
+    expect(all).not.toContain(`${ER}generated/categories.ts`);
   });
 });

@@ -1,0 +1,9 @@
+erDiagram
+  CUSTOMER |\|\|--o{ ORDER : places
+  CUSTOMER \|\|-|-o{ ORDER : places
+  CUSTOMER \|\|--o|{ ORDER : places
+  ORDER }\|..\|\| PRODUCT : has
+  A one or more |to zero or many B : x
+  ORDER {
+    string id P|K, FK
+  }

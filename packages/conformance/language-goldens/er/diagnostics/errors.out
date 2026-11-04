@@ -1,0 +1,5 @@
+2:19-2:20 ":" error UNEXPECTED: Expected an entity name, got `:`; write a relationship as `A ||--o{ B : label`, with a cardinality at each end and a label.
+4:18-4:20 "FK" error UNEXPECTED: Expected `,` between keys, e.g. `PK, FK`, got `FK`; write each attribute as `type name`, e.g. `string name PK "comment"`.
+6:8-6:8 "" error UNEXPECTED: Expected a name, got a line break; write it as `style <entity> <styles>`, e.g. `style CUSTOMER fill:#f9f`.
+7:27-7:27 "" error UNEXPECTED: Expected `:` and a label, got a line break; write a relationship as `A ||--o{ B : label`, with a cardinality at each end and a label.
+8:3-8:6 "end" error UNEXPECTED_END: `end` without a `subgraph`: remove it, or open a subgraph before it with `subgraph <id>`.

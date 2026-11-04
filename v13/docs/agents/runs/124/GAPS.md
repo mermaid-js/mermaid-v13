@@ -10,9 +10,13 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 ## #131 T2 grammar/parser/model (merged)
 
 - No unmet criteria. D114 closed: diagram-er reads core's `sourceView` through `src/parser/view.ts`; its own `source.ts` is deleted, lexer parity still 100%.
-- For T6: probe-mode `mode` is always `''` (the ER lexer does not report its state yet).
+- Closed by #135: the ER lexer reports its start condition as the probe's `mode`.
 - Known limit: after an error, a stray `{` opens an attribute block in the lexer, so recovery skips to the next `}`.
 - Not ported, with reasons in the port script: `erDb.spec.js` (calls the DB directly, no parse) and `erRenderer.spec.ts` (T4 territory).
+
+## Pending core fix: `sourceView` directives mid-line
+
+- The class session owns a core fix to `sourceView` (#181), with a draft PR into `mermaid-v13`. Two bugs: a `%%` line inside a mid-line `%%{…}%%` directive opens a comment hole past `}%%`, and text such as `"style"` inside a directive triggers the `;` drop. After it merges, merge `mermaid-v13` here and add ER forms of both to the lexer-parity harvest (for example `erDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB`, and a directive holding `"style"` before a `;`).
 
 ## #132 T3 layout (merged)
 
@@ -22,7 +26,15 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 ## #134 T5 integration (open items)
 
 - Generate the ER section defaults (`SECTION_OWNERS`; v12 nodeSpacing 140, rankSpacing 80, minEntityWidth 100) and mark the keys the builder reads (`er.nodeSpacing`, `er.rankSpacing`, `er.minEntityWidth`) as honoured.
-- **Open question for the maintainer:** T3 pads cells by the profile's node padding (16 × 12 px) and does not read `er.entityPadding` or `er.diagramPadding`. Spec user story 17 names `entityPadding` among the keys that keep working. Options: honour them in px (map them onto the cell padding), or mark them `ignored` with a reason. MIGRATION.md currently documents the second.
+- **D116 (maintainer, draft PR #184): honour both.** Mark `er.entityPadding` (default 15) and `er.diagramPadding` (default 20) `honoured`. In px, `entityPadding` replaces the shared node padding inside entity table cells (v12's across × down meaning) and `diagramPadding` sets the margin around the drawing; the cell profile stays at 1-cell padding. Fix the MIGRATION.md ER row that says they are ignored, and cite D116 in code and tests.
+
+## #135 T6 language facet (merged; finish after T5)
+
+- Facet, probe mode (the lexer now reports its jison start condition), generated tables and the bundle check are done. These wait on the T5 manifest giving ER a `load` in `firstPartyFacets` (language.md steps 4, 6, 7):
+  - `git mv packages/conformance/language-goldens/er packages/language-service/goldens/er` and delete `packages/conformance/src/er/language-goldens.spec.ts` (its last test fails once ER has a `load`, on purpose).
+  - Regenerate flowchart's `completions/empty.out`, which gains `erDiagram`, and review it. Run `property.spec` and `rename-round-trip.spec` over the ER corpus.
+- Not done, doable after T5: the oracle-through-service spec (step 8, copy `flowchart/service-symbols.spec.ts`), and the 50k-character budget numbers (step 10, R-LANG-4).
+- Step 9 (first-paint highlighters in the CodeMirror and Monaco adapters) is flowchart-only for every type until the adapters pick a highlighter per detected type. That is a shared adapter change across all M3 types, not ER's to make alone: open question for the maintainer.
 
 ## Not started
 

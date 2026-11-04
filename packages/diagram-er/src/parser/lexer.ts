@@ -46,7 +46,7 @@ import {
   LF,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Probe, TokenStream } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { erSourceView } from './view.ts';
@@ -67,6 +67,8 @@ const S = {
   accDescrMultiline: 5,
   style: 6,
 } as const;
+/** Start condition names by number, for the probe's lexer mode. */
+const S_NAMES = /* @__PURE__ */ Object.keys(S);
 
 /** No token: the rule only skips text or changes state. */
 const SKIP = -1;
@@ -258,56 +260,74 @@ class Lexer {
   }
 
   lex(): void {
-    const t = this.text;
     let i = 0;
-    for (;;) {
-      const state = this.stack[this.stack.length - 1] ?? S.INITIAL;
-      if (i >= this.n) {
-        this.atEnd(state);
-        return;
-      }
-      switch (state) {
-        case S.INITIAL:
-          i = this.initial(i);
-          break;
-        case S.block:
-          i = this.block(i);
-          break;
-        case S.blockBq: {
-          if (t.charCodeAt(i) === BACKTICK) {
-            this.stack.pop();
-            i++;
-          } else {
-            const e = t.indexOf('`', i);
-            i = this.emit(T.AttributeWord, i, e === -1 ? this.n : e);
-          }
-          break;
-        }
-        case S.accTitle:
-        case S.accDescr: {
-          this.stack.pop();
-          const e = t.indexOf('\n', i);
-          i = this.emit(
-            state === S.accTitle ? T.AccTitleValue : T.AccDescrValue,
-            i,
-            e === -1 ? this.n : e
-          );
-          break;
-        }
-        case S.accDescrMultiline: {
-          if (t.charCodeAt(i) === RBRACE) {
-            this.stack.pop();
-            i++;
-          } else {
-            const e = t.indexOf('}', i);
-            i = this.emit(T.AccDescrMultilineValue, i, e === -1 ? this.n : e);
-          }
-          break;
-        }
-        default:
-          i = this.style(i);
-      }
+    while (i < this.n) i = this.step(i);
+    this.atEnd(this.state());
+  }
+
+  /** {@link lex}, telling `probe` the start condition each step reads its text in. */
+  probedLex(probe: Probe, view: ErSourceView, srcLength: number): void {
+    let i = 0;
+    while (i < this.n) {
+      const mode = S_NAMES[this.state()] ?? '';
+      const before = i;
+      i = this.step(i);
+      probe.lexed(view.start(before), i > before ? view.end(i) : view.start(i), mode);
     }
+    probe.lexed(srcLength, srcLength, S_NAMES[this.state()] ?? '');
+    this.atEnd(this.state());
+  }
+
+  private state(): number {
+    return this.stack[this.stack.length - 1] ?? S.INITIAL;
+  }
+
+  /** One rule match from `i`: the offset after it. */
+  private step(i: number): number {
+    const t = this.text;
+    const state = this.state();
+    switch (state) {
+      case S.INITIAL:
+        i = this.initial(i);
+        break;
+      case S.block:
+        i = this.block(i);
+        break;
+      case S.blockBq: {
+        if (t.charCodeAt(i) === BACKTICK) {
+          this.stack.pop();
+          i++;
+        } else {
+          const e = t.indexOf('`', i);
+          i = this.emit(T.AttributeWord, i, e === -1 ? this.n : e);
+        }
+        break;
+      }
+      case S.accTitle:
+      case S.accDescr: {
+        this.stack.pop();
+        const e = t.indexOf('\n', i);
+        i = this.emit(
+          state === S.accTitle ? T.AccTitleValue : T.AccDescrValue,
+          i,
+          e === -1 ? this.n : e
+        );
+        break;
+      }
+      case S.accDescrMultiline: {
+        if (t.charCodeAt(i) === RBRACE) {
+          this.stack.pop();
+          i++;
+        } else {
+          const e = t.indexOf('}', i);
+          i = this.emit(T.AccDescrMultilineValue, i, e === -1 ? this.n : e);
+        }
+        break;
+      }
+      default:
+        i = this.style(i);
+    }
+    return i;
   }
 
   /** jison's last match attempt, on the empty rest of the input. */
@@ -550,15 +570,23 @@ export interface LexResult {
   view: ErSourceView;
 }
 
-/** Lex an ER source (front matter and directives located by core's preprocess). */
-export function lex(src: string, pre: PreprocessResult = preprocess(src)): LexResult {
+/**
+ * Lex an ER source (front matter and directives located by core's preprocess). With a `probe`,
+ * the start condition at the probe's offset is recorded as its mode.
+ */
+export function lex(
+  src: string,
+  pre: PreprocessResult = preprocess(src),
+  probe?: Probe
+): LexResult {
   const view = erSourceView(
     src,
     pre.bodyStart,
     pre.directives.map((d) => d.range)
   );
   const lexer = new Lexer(view.text);
-  lexer.lex();
+  if (probe) lexer.probedLex(probe, view, src.length);
+  else lexer.lex();
   const raw = lexer.out.finish(view.text);
   const count = raw.length - 1 + view.trivia.length;
   const out = new TokenWriter(count + 1);

@@ -1,0 +1,13 @@
+@ 7:5  |
+  string value (type) 7:5-7:5 "" -> "string"
+  int value (type) 7:5-7:5 "" -> "int"
+@ 10:7  st|
+  string value (type) 10:5-10:7 "st" -> "string"
+@ 13:15  string id |
+  PK constant (primary key) 13:15-13:15 "" -> "PK"
+  FK constant (foreign key) 13:15-13:15 "" -> "FK"
+  UK constant (unique key) 13:15-13:15 "" -> "UK"
+@ 16:20  string ref PK, |
+  PK constant (primary key) 16:20-16:20 "" -> "PK"
+  FK constant (foreign key) 16:20-16:20 "" -> "FK"
+  UK constant (unique key) 16:20-16:20 "" -> "UK"
