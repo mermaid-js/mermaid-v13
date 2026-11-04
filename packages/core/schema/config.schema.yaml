@@ -118,8 +118,11 @@ properties:
         `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` /
         `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY`
         (totals) 42 / 24 and padding; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
-        on the dark redux themes) / `none`; `classEdgeLabelBackground` `edgeLabelBackground` /
-        `mainBkg`. "padding" is `flowchart.padding`. Plain `redux` and
+        on the dark redux themes) / `none`; `classText` `textColor` / `primaryTextColor`; class markers
+        `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1,
+        `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap`
+        2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities)
+        is 11 in every theme. "padding" is `flowchart.padding`. Plain `redux` and
         `redux-dark` carry no palette. Geometry variables are read as numbers at render time,
         because they feed layout, so overriding their CSS variables has no effect;
         `dropShadow` is a CSS value.

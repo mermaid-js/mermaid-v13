@@ -56,6 +56,22 @@ export const ARROWHEAD_VARIABLES = [
 
 export type ArrowheadVariable = (typeof ARROWHEAD_VARIABLES)[number];
 
+/**
+ * Class relationship marker geometry (D152): v12 drew `look: neo` class markers from its
+ * `*-margin` variants, so the redux themes carry those and the classic themes v12 classic's.
+ * Read as numbers at render time. Only the quantities that differ are variables.
+ */
+export const CLASS_MARKER_VARIABLES = [
+  'classMarkerStrokeWidth',
+  'classFilledMarkerStrokeWidth',
+  'extensionMarkerLength',
+  'extensionMarkerGap',
+  'compositionMarkerGap',
+  'dependencyMarkerGap',
+] as const;
+
+export type ClassMarkerVariable = (typeof CLASS_MARKER_VARIABLES)[number];
+
 /** Shape tokens (R-THEME-11): sizes every diagram type reads instead of hard-coding them. */
 export const TOKEN_VARIABLES = [
   'strokeWidth',
@@ -66,6 +82,10 @@ export const TOKEN_VARIABLES = [
   'spacing2',
   'spacing3',
   ...ARROWHEAD_VARIABLES,
+  ...CLASS_MARKER_VARIABLES,
+  // A class relationship's multiplicities (v12 `.edgeTerminals { font-size: 11px }`); the same
+  // in every theme, a size key that keeps v12's default.
+  'classTerminalFontSize',
   // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
   'nodePaddingX',
   'nodePaddingY',
@@ -107,6 +127,7 @@ export const PALETTE_LIMIT = 12;
 const F = ['flowchart'];
 const C = ['core'];
 const CF = ['core', 'flowchart'];
+const K = ['class'];
 
 const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): ThemeVarDef => ({
   alias,
@@ -139,9 +160,8 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   clusterBorder: def('cs', 'color', F),
   titleColor: def('tc', 'color', F),
   edgeLabelBackground: def('el', 'color', F),
-  // A class relationship label's background: v12 drew it on `mainBkg`, and on
-  // `edgeLabelBackground` under `look: neo`, so the redux family sets the latter (D152).
-  classEdgeLabelBackground: def('cel', 'color', ['class']),
+  // v12 `classText`: every text of a class diagram but notes and namespace titles.
+  classText: def('ct', 'color', K),
   arrowheadColor: def('ah', 'color', F),
   defaultLinkColor: def('dl', 'color', F),
   border1: def('b1', 'color', F),
@@ -168,6 +188,14 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   crossArrowheadSize: def('xs', 'length', F),
   crossArrowheadGap: def('xg', 'length', F),
   crossArrowheadStrokeWidth: def('xw', 'length', F),
+  // class marker geometry (numbers only)
+  classMarkerStrokeWidth: def('cmw', 'length', K),
+  classFilledMarkerStrokeWidth: def('cfw', 'length', K),
+  extensionMarkerLength: def('eml', 'length', K),
+  extensionMarkerGap: def('emg', 'length', K),
+  compositionMarkerGap: def('cmg', 'length', K),
+  dependencyMarkerGap: def('dmg', 'length', K),
+  classTerminalFontSize: def('ctf', 'length', K),
   // Node padding, read as numbers at render time (D152), so their aliases are never written.
   nodePaddingX: def('npx', 'padding', F),
   nodePaddingY: def('npy', 'padding', F),

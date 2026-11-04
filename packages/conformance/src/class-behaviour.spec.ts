@@ -176,7 +176,8 @@ describe('class render: structure', () => {
           output: { cssVariables: false },
         });
         const m = tree.find((n, t) => (t.getAttr(n, 'class') ?? '').startsWith('marker '))[0]!;
-        const sw = parseFloat(attr(tree, m, 'stroke-width') ?? 'NaN');
+        // A filled redux marker has no outline.
+        const sw = parseFloat(attr(tree, m, 'stroke-width') ?? '0');
         const xs: number[] = [];
         if (tree.tag(m) === 'circle') {
           const cx = Number(attr(tree, m, 'cx'));
@@ -191,6 +192,122 @@ describe('class render: structure', () => {
         expect(across, `${theme} ${arrow}`).toBeLessThanOrEqual(12 + 1e-6);
       }
     }
+  });
+});
+
+describe('class render: marker geometry per family (D152)', () => {
+  // `A <|-- B` runs top to bottom with the marker under A: [tip gap, length, outline] for each
+  // family, from v12's classic markers and its `look: neo` `-margin` variants.
+  const cases: [string, string, string, number, number, number][] = [
+    ['redux-color', '<|--', 'extension', 8.25, 8, 2],
+    ['default', '<|--', 'extension', 0.25, 17, 1],
+    ['redux-color', '*--', 'composition', 2.75, 17, 0],
+    ['default', '*--', 'composition', 0.25, 17, 1],
+    ['redux-color', 'o--', 'aggregation', 0.25, 17, 2],
+    ['default', 'o--', 'aggregation', 0.25, 17, 1],
+  ];
+  it.each(cases)(
+    '%s %s: %s tip gap %d, length %d, outline %d',
+    async (theme, arrow, type, gap, len, sw) => {
+      const { tree } = await draw(`classDiagram\nA ${arrow} B`, {
+        theme,
+        output: { cssVariables: false },
+      });
+      const m = tree.find((n, t) => t.getAttr(n, 'class') === `marker ${type}`)[0]!;
+      expect(parseFloat(attr(tree, m, 'stroke-width') ?? '0')).toBe(sw);
+      const box = byId(tree, 'A')!;
+      const [, ty] = /translate\(([-\d.]+),([-\d.]+)\)/
+        .exec(attr(tree, box, 'transform')!)!
+        .slice(1)
+        .map(Number);
+      const rect = tree.children(box).find((n) => tree.tag(n) === 'rect')!;
+      const bottom = ty! + Number(attr(tree, rect, 'height'));
+      const ys = (attr(tree, m, 'd') ?? '')
+        .match(/-?[\d.]+/g)!
+        .map(Number)
+        .filter((_, i) => i % 2 === 1);
+      // The tip's outline reaches the gap; the path's points sit half an outline inside it.
+      expect(Math.min(...ys) - bottom).toBeCloseTo(gap + sw / 2, 1);
+      expect(Math.max(...ys) - bottom).toBeCloseTo(gap + len, 1);
+    }
+  );
+
+  it('reads the marker variables, so themeVariables override them', async () => {
+    const { tree } = await draw('classDiagram\nA <|-- B', {
+      theme: 'default',
+      themeVariables: { extensionMarkerLength: 10, classMarkerStrokeWidth: 3 },
+      output: { cssVariables: false },
+    });
+    const m = tree.find((n, t) => t.getAttr(n, 'class') === 'marker extension')[0]!;
+    expect(attr(tree, m, 'stroke-width')).toBe('3');
+    const ys = (attr(tree, m, 'd') ?? '')
+      .match(/-?[\d.]+/g)!
+      .map(Number)
+      .filter((_, i) => i % 2 === 1);
+    expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(10 - 1.5, 1);
+  });
+});
+
+describe('class render: review fixes', () => {
+  it('starts every member row at the same left edge', async () => {
+    const { tree } = await draw('classDiagram\nclass A {\n+List~int~ items\n-x$\n+move()*\n}');
+    const rows = tree.find((n, t) => (t.getAttr(n, 'class') ?? '').startsWith('member'));
+    expect(rows).toHaveLength(3);
+    const starts = rows.map((r) => {
+      const at = attr(tree, r, 'x') !== undefined ? r : tree.children(r)[0]!;
+      return [attr(tree, r, 'text-anchor'), attr(tree, at, 'x')];
+    });
+    expect(new Set(starts.map((s) => JSON.stringify(s))).size, JSON.stringify(starts)).toBe(1);
+    expect(starts[0]![0]).toBe('start');
+  });
+
+  it('checks each classDef declaration once', async () => {
+    const { warnings, tree } = await draw(
+      'classDiagram\nclass A:::hot\nclass B\nclassDef hot fill:#f00,stroke:url(x)\ncssClass "B" hot'
+    );
+    const dropped = warnings.filter((w) => w.code === 'STYLE_VALUE_DROPPED');
+    expect(dropped).toHaveLength(1);
+    const rectOf = (id: string) =>
+      tree.children(byId(tree, id)!).find((n) => tree.tag(n) === 'rect')!;
+    expect(attr(tree, rectOf('A'), 'fill')).toBe('#f00');
+    expect(attr(tree, rectOf('B'), 'fill')).toBe('#f00');
+  });
+
+  it('draws class text in classText (v12), so a themeVariables override reaches it', async () => {
+    const { tree } = await draw('classDiagram\nclass A\nA --> B : x', {
+      theme: 'default',
+      themeVariables: { classText: '#ff0000' },
+      output: { cssVariables: false },
+    });
+    const nodes = tree.find({ class: 'nodes' })[0]!;
+    expect(attr(tree, nodes, 'fill')).toBe('#ff0000');
+    const label = tree.find({ class: 'edgeLabel' })[0]!;
+    expect(attr(tree, tree.children(label).find((n) => tree.tag(n) === 'text')!, 'fill')).toBe(
+      '#ff0000'
+    );
+  });
+
+  it('gives a relationship one data-id on its line, label and multiplicities', async () => {
+    const { tree } = await draw('classDiagram\nA "1" --> "*" B : has');
+    const ids = ['edge relation', 'edgeLabel', 'edgeTerminals'].map((c) =>
+      tree
+        .find(
+          (n, t) =>
+            (t.getAttr(n, 'class') ?? '').split(' ')[0] === c.split(' ')[0] &&
+            (t.getAttr(n, 'class') ?? '').startsWith(c)
+        )
+        .map((n) => attr(tree, n, 'data-id'))
+    );
+    expect(ids).toEqual([['id_A_B_1'], ['id_A_B_1'], ['id_A_B_1']]);
+    const edge = tree.find((n, t) => (t.getAttr(n, 'class') ?? '').startsWith('edge relation'))[0]!;
+    expect(classOf(tree, edge)).toContain('edge-thickness-normal');
+  });
+
+  it('draws multiplicities at classTerminalFontSize, 11px as in v12', async () => {
+    const { tree } = await draw('classDiagram\nA "1" --> "*" B', {
+      output: { cssVariables: false },
+    });
+    expect(attr(tree, tree.find({ class: 'edgeTerminals' })[0]!, 'font-size')).toBe('11');
   });
 });
 
@@ -217,7 +334,7 @@ describe('class render: themes (D152, R-THEME-11)', () => {
     expect(attr(tree, rect, 'filter')).toBeUndefined();
   });
 
-  it('puts relationship labels on classEdgeLabelBackground: mainBkg classic, edgeLabelBackground redux', async () => {
+  it('puts relationship labels on mainBkg in every theme, as v12 did', async () => {
     const label = async (theme: string) => {
       const m = createMermaid();
       m.initialize({ deterministic: true, theme, output: { cssVariables: false } } as never);
@@ -225,7 +342,7 @@ describe('class render: themes (D152, R-THEME-11)', () => {
       return attr(tree, tree.find({ class: 'edgeLabel' })[0]!.children[0]!, 'fill');
     };
     expect(await label('default')).toBe('#ececff');
-    expect(await label('redux')).toBe('#cccccc');
+    expect(await label('redux')).toBe('#ffffff');
   });
 
   it('never reads a theme name or look', () => {

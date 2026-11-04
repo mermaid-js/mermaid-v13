@@ -3,7 +3,8 @@
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { NEO_ARROWHEADS, REDUX_PADDING, REDUX_RULES } from './geometry.ts';
+import { NEO_ARROWHEADS, NEO_CLASS_MARKERS, REDUX_PADDING, TEXT_SIZES } from './geometry.ts';
+import { REDUX_RULES } from './redux-rules.ts';
 
 const redux: ThemeSpec = {
   name: 'redux',
@@ -27,6 +28,10 @@ const redux: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...NEO_ARROWHEADS,
+    ...NEO_CLASS_MARKERS,
+    ...TEXT_SIZES,
+    ...NEO_CLASS_MARKERS,
+    ...TEXT_SIZES,
     ...REDUX_PADDING,
   },
   rules: REDUX_RULES,

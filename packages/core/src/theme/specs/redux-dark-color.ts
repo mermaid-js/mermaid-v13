@@ -4,7 +4,7 @@
  * subgraph is coloured on its border only and keeps its contrast in dark mode.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { REDUX_RULES } from './geometry.ts';
+import { REDUX_RULES } from './redux-rules.ts';
 import { TAILWIND_300, TAILWIND_400 } from './palettes.ts';
 import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
 

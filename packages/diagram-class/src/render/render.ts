@@ -32,7 +32,7 @@ import type {
 import { prepareClass } from '../layout/index.ts';
 import type { ClassModel, ClassNode } from '../parser/index.ts';
 import type { ClassRenderContext } from './context.ts';
-import { marker, markerTrim, type MarkerPaint } from './markers.ts';
+import { marker, markers, markerTrim, type Markers } from './markers.ts';
 import { routePath } from './route.ts';
 
 // v12's dash patterns: `.edge-pattern-dashed` (relationships written `..`) and
@@ -94,12 +94,14 @@ interface Paints {
    */
   readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
   readonly line: Color;
-  readonly markers: MarkerPaint;
+  readonly markers: Markers;
   readonly note?: { fill: Color; stroke: Color; text: Color };
   readonly cluster?: { fill: Color; stroke: Color; strokeWidth: Length; text: Color };
   /** Relationship labels and multiplicities, and the interface names. */
   readonly text?: Color;
   readonly edgeLabel?: Color;
+  /** Multiplicities' font size (`classTerminalFontSize`, v12 11px). */
+  readonly terminalSize?: Length;
   readonly slotOf: (order: number) => Tint | undefined;
 }
 
@@ -109,15 +111,10 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
   const box = {
     fill: theme.color('mainBkg'),
     stroke: theme.color('nodeBorder'),
-    text: theme.color('nodeTextColor'),
+    // v12 `classText`: every class-diagram text but notes and namespace titles.
+    text: theme.color('classText'),
   };
   const shadow = theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow');
-  const markers: MarkerPaint = {
-    line,
-    hollow: box.fill,
-    width: strokeWidth,
-    strokeWidth: theme.number('strokeWidth'),
-  };
   const note =
     p.notes.length > 0
       ? {
@@ -138,9 +135,12 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
   const labelled = p.edges.some((e) => e.label);
   const text =
     labelled || p.interfaces.length > 0 || p.edges.some((e) => e.startLabel ?? e.endLabel)
-      ? theme.color('textColor')
+      ? box.text
       : undefined;
-  const edgeLabel = labelled ? theme.color('classEdgeLabelBackground') : undefined;
+  const terminalSize = p.edges.some((e) => e.startLabel ?? e.endLabel)
+    ? theme.length('classTerminalFontSize')
+    : undefined;
+  const edgeLabel = labelled ? theme.color('mainBkg') : undefined;
   return {
     font: theme.font(),
     fontSize: theme.length('fontSize'),
@@ -148,11 +148,12 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
     strokeWidth,
     shadow,
     line,
-    markers,
+    markers: markers(theme, line, box.fill),
     note,
     cluster,
     text,
     edgeLabel,
+    terminalSize,
     slotOf: paletteSlots(theme),
   };
 }
@@ -177,9 +178,11 @@ export function renderClass(
   const scene: Scene = { w, layout, p, ctx, paint: paints(ctx.theme, p) };
   openRoot(scene, model);
   if (scene.paint.cluster) drawNamespaces(scene);
-  drawEdges(scene, model);
+  // One `data-id` per relationship, on its line, its label and its multiplicities.
+  const idOf = edgeIds(model);
+  drawEdges(scene, idOf);
   w.open('g', { class: 'edgeLabels' });
-  for (const e of p.edges) drawEdgeLabels(scene, e);
+  for (const e of p.edges) drawEdgeLabels(scene, e, idOf(e));
   w.close();
   w.open('g', { class: 'nodes', fill: scene.paint.box.text });
   const styles = styleCache(model, ctx);
@@ -227,16 +230,29 @@ function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id?: str
   w.close();
 }
 
-/** The checked style of a class: its CSS classes' `classDef`s, then its own declarations. */
+/**
+ * The checked style of a class, in v12's order: the `classDef`s of its CSS classes (v12's
+ * generated `.name > *` rules), then its inline `style` (the model's `styles`, which already
+ * holds the `classDef`s v12's `defineClass` copied in). A declaration is checked once: one
+ * already inline is not repeated from the class rules, and the inline one wins as in v12.
+ */
 function styleCache(model: ClassModel, ctx: ClassRenderContext): (node: ClassNode) => CheckedStyle {
   const defs = new Map<string, readonly string[]>();
   for (const sc of model.styleClasses) defs.set(sc.id, sc.styles);
   const seen = new Map<string, CheckedStyle>();
   return (node) => {
+    const inline = new Set(node.styles.map((d) => d.trim()));
     const decls: string[] = [];
+    const taken = new Set<string>();
     for (const c of node.classes) {
-      const d = defs.get(c);
-      if (d) for (const s of d) decls.push(...s.split(','));
+      for (const s of defs.get(c) ?? []) {
+        for (const d of s.split(',')) {
+          const k = d.trim();
+          if (inline.has(k) || taken.has(k)) continue;
+          taken.add(k);
+          decls.push(d);
+        }
+      }
     }
     decls.push(...node.styles);
     const key = decls.join(';');
@@ -283,9 +299,8 @@ function edgeIds(model: ClassModel): (e: ClassEdgeView) => string {
       : `edgeNote${e.note!.id.replace(/^note/, '')}`;
 }
 
-function drawEdges(scene: Scene, model: ClassModel): void {
+function drawEdges(scene: Scene, idOf: (e: ClassEdgeView) => string): void {
   const { w, layout, p, paint } = scene;
-  const idOf = edgeIds(model);
   w.open('g', {
     class: 'edgePaths',
     fill: 'none',
@@ -297,7 +312,9 @@ function drawEdges(scene: Scene, model: ClassModel): void {
     const route = layout.edges.get(e.layoutId);
     const pattern = e.kind === 'note' ? 'dotted' : e.line;
     w.open('g', {
-      class: `edge relation edge-pattern-${pattern}${e.kind === 'lollipop' ? ' lollipop' : ''}`,
+      class: `edge relation edge-thickness-normal edge-pattern-${pattern}${
+        e.kind === 'lollipop' ? ' lollipop' : ''
+      }`,
       'data-id': idOf(e),
       // A note's AST node is drawn by its box; a relationship's, by its edge.
       'data-ast': e.kind === 'note' || e.layoutId !== e.ast ? undefined : e.ast,
@@ -307,8 +324,8 @@ function drawEdges(scene: Scene, model: ClassModel): void {
         w,
         route.points,
         e.source === e.target ? 'rounded' : p.curve,
-        markerTrim(e.startMarker),
-        markerTrim(e.endMarker)
+        markerTrim(e.startMarker, paint.markers),
+        markerTrim(e.endMarker, paint.markers)
       );
       w.leaf('path', {
         d: path.d,
@@ -329,10 +346,9 @@ function drawEdges(scene: Scene, model: ClassModel): void {
   w.close();
 }
 
-function drawEdgeLabels({ w, layout, paint }: Scene, e: ClassEdgeView): void {
+function drawEdgeLabels({ w, layout, paint }: Scene, e: ClassEdgeView, id: string): void {
   const at = layout.edges.get(e.layoutId);
   if (!at) return;
-  const id = e.layoutId;
   if (e.label && at.label && paint.edgeLabel) {
     const lw = e.label.width + 2 * LABEL_PAD;
     w.open('g', { class: 'edgeLabel', 'data-id': id });
@@ -352,7 +368,12 @@ function drawEdgeLabels({ w, layout, paint }: Scene, e: ClassEdgeView): void {
     [e.endLabel, at.endLabel],
   ];
   if (!ends.some(([l, p]) => l && p)) return;
-  w.open('g', { class: 'edgeTerminals', 'data-id': id, fill: paint.text });
+  w.open('g', {
+    class: 'edgeTerminals',
+    'data-id': id,
+    fill: paint.text,
+    'font-size': paint.terminalSize,
+  });
   for (const [label, p] of ends) if (label && p) w.label(label, p.x, p.y);
   w.close();
 }
@@ -365,8 +386,22 @@ function drawRow(w: SvgWriter, row: ClassRow, attrs: Attrs): void {
     w.label(label, row.x, cy, attrs);
     return;
   }
-  if (label.lines.length === 0) {
+  const first = label.lines[0];
+  if (first === undefined) {
     w.leaf('text', attrs);
+    return;
+  }
+  const only = label.lines.length === 1 && first.length === 1 ? first[0]! : undefined;
+  if (only && !only.bold && !only.italic && !only.underline && !only.strike && !only.attrs) {
+    // One plain run: the writer would centre it, so it is written here, starting at `x`.
+    w.open('text', {
+      ...attrs,
+      x: row.x,
+      y: row.y + label.baseline,
+      'text-anchor': 'start',
+    });
+    w.text(only.text);
+    w.close();
     return;
   }
   // Left-aligned: centred on its own width, so the writer's left mode starts it at `x`.

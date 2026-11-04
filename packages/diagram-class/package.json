@@ -7,6 +7,11 @@
   "license": "MIT",
   "sideEffects": false,
   "exports": {
+    "./testing": {
+      "mermaid-source": "./src/testing.ts",
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    },
     ".": {
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
