@@ -51,11 +51,18 @@ const STATEMENTS: Record<AsciiDroppedFeature, readonly string[]> = {
   accessibility: ['AccTitle', 'AccDescr'],
 };
 
+/**
+ * The AST ids by node type. A menu statement counts only while it still carries its `menu`:
+ * a later redeclaration drops it, as v12 dropped the merged menu, and the plugin draws none.
+ */
 function idsByType(ast: AstNode | undefined, out: Map<string, string[]>): void {
   if (!ast) return;
-  const list = out.get(ast.type);
-  if (list) list.push(ast.id);
-  else out.set(ast.type, [ast.id]);
+  const dropped = STATEMENTS.link.includes(ast.type) && !('menu' in ast && ast.menu);
+  if (!dropped) {
+    const list = out.get(ast.type);
+    if (list) list.push(ast.id);
+    else out.set(ast.type, [ast.id]);
+  }
   for (const child of ast.children ?? []) idsByType(child, out);
 }
 

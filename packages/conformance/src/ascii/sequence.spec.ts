@@ -187,6 +187,19 @@ describe('sequence ascii', () => {
     // The box frame and its title stay; the rects leave no trace.
     expect(r.text.split('\n')[0]).toBe('┌─ Team ──┐');
   });
+
+  it('warns about no menu that a redeclaration dropped, as the plugin draws none', async () => {
+    const reset = await renderSequenceAscii(
+      'sequenceDiagram\nparticipant A\nlinks A: {"Old": "https://example.com/old"}\nparticipant A as Alice\nA->>B: hi'
+    );
+    expect(reset.warnings.filter((w) => w.code === 'ASCII_DROPPED')).toEqual([]);
+    const kept = await renderSequenceAscii(
+      'sequenceDiagram\nparticipant A\nlinks A: {"Old": "https://example.com/old"}\nparticipant A as Alice\nlink A: New @ https://example.com/new'
+    );
+    expect(kept.warnings.map((w) => [w.code, w.feature, w.astIds])).toEqual([
+      ['ASCII_DROPPED', 'link', ['p:A', 'st:2']],
+    ]);
+  });
 });
 
 /** The column of a frame's top-right corner in `row`, and every row down to its bottom. */
