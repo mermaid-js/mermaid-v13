@@ -5,6 +5,7 @@
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
 import { diagramStart, preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import type { ConfigSchema } from './config/schema.ts';
 import type { DocumentContext } from './context.ts';
 import type { FacetEntry } from './facets.ts';
 import { firstPartyFacets } from './generated/facets.gen.ts';
@@ -16,8 +17,11 @@ export interface LanguageServiceOptions {
    * first-party type replaces that row (e.g. to bundle a facet eagerly).
    */
   readonly facets?: readonly FacetEntry[];
-  /** The config JSON schema from gen-config, for front-matter config (D96). */
-  readonly schema?: Readonly<Record<string, unknown>>;
+  /**
+   * The config JSON schema for front-matter completion, hover and warnings (D96). When
+   * omitted, `preload` loads the one gen-config generates (`pnpm gen:config`).
+   */
+  readonly schema?: ConfigSchema;
 }
 
 export interface PreloadRequest {
@@ -29,7 +33,8 @@ export interface LanguageService {
   /**
    * Load facets before use (D155): every first-party and third-party row with a `load`, or
    * only `types`. Never rejects: a failed load shows as `LANGUAGE_LOAD_FAILED` on update.
-   * Loads each row once, however often it is called.
+   * Loads each row once, however often it is called. Also loads the generated config schema
+   * when none was passed (front-matter features have no schema before that).
    */
   preload(request?: PreloadRequest): Promise<void>;
   /** Re-parse `uri` as `text` and return its new snapshot. */
@@ -93,6 +98,15 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
   const loading = new Map<FacetEntry, Promise<void>>();
   const docs = new Map<string, DocumentSnapshot>();
   let version = 0;
+  let schema = options.schema;
+  let schemaLoad: Promise<void> | undefined;
+  const loadSchema = (): Promise<void> =>
+    (schemaLoad ??= import('./generated/config-schema.gen.ts').then(
+      (m) => {
+        schema ??= m.configSchema;
+      },
+      () => undefined
+    ));
 
   const firstParty = new Set<FacetEntry>(firstPartyFacets);
   /** First-party rows test the text from the diagram's first line; third-party rows get the
@@ -149,7 +163,7 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
       entry,
       facet,
       result: facet?.parse(text, { keepTokens: true }),
-      schema: options.schema,
+      schema,
       loadError: state !== undefined && 'failed' in state ? state.failed : undefined,
       notLoaded: entry?.load !== undefined && state === undefined,
     };
@@ -165,7 +179,7 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
           e.facet === undefined &&
           (types === undefined || types.includes(e.id) || types.includes(e.type))
       );
-      await Promise.all(rows.map(load));
+      await Promise.all([...rows.map(load), schema === undefined ? loadSchema() : undefined]);
     },
     update(uri, text) {
       const doc = build(uri, text);

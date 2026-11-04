@@ -1,0 +1,4 @@
+3:14-3:15 ":" error YAML_SYNTAX: Invalid YAML: bad indentation of a mapping entry.
+4:3-4:7 "thme" warning CONFIG_UNKNOWN_KEY: Unknown config key "thme"; ignored. Did you mean "theme"?
+5:16-5:20 "curv" warning CONFIG_UNKNOWN_KEY: Unknown config key "flowchart.curv"; ignored. Did you mean "curve"?
+9:3-9:11 "maxEdgez" warning CONFIG_UNKNOWN_KEY: Unknown config key "maxEdgez"; ignored. Did you mean "maxEdges"?
