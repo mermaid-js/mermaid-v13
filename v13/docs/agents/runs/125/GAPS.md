@@ -40,4 +40,7 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 
 ## Resolved by the maintainer
 
+- [x] **Neo geometry: port it (2026-11-04).** v12's default sequence look was `neo`; #143 draws classic geometry everywhere. Ported as geometry theme variables in follow-up ticket #194 (blocked by #143; #145 waits on it).
+- [x] **Accepted (2026-11-04):** async/half/stick arrowheads in `signalColor` (v12: black); classic rect/box grey shadows dropped (shadow only where `dropShadow` is set). Listed in MIGRATION.md by #143.
+
 - [x] **D123: keep the fix.** The 3 create/destroy divergences (#139: `create-after-note`, `destroy-then-create`, `destroy-before-loop`) stand: v13 attaches `create`/`destroy` to the right message. Cited in `packages/conformance/divergences.json` and MIGRATION.md "Sequence syntax".
