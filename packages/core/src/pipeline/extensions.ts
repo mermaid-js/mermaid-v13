@@ -31,8 +31,11 @@ export type LaidOut =
       readonly layout: unknown;
     };
 
-/** Features an extension handles, so core does not warn about them. */
-export type ExtensionClaim = 'callbacks';
+/**
+ * Features an extension handles, so a diagram does not warn about them: `callbacks`
+ * (`CALLBACK_IGNORED`), `menus` (element menus, `AstMenu`).
+ */
+export type ExtensionClaim = 'callbacks' | 'menus';
 
 /** The per-render context hooks get: the frozen render context plus two hook-only fields. */
 export interface HookContext extends RenderContext {

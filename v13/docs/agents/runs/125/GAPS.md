@@ -44,12 +44,18 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 
 ## Resolved by the maintainer
 
+- [x] **ascii-size gate: per-type max (2026-11-04).** #145 changed the bench ascii-size gate to measure each type's text path (core/ascii + that type's ascii entry) and gate on the largest (sequence 9.9 KB gz). Maintainer: keep it and amend R-ASCII-9's wording to "each type's text path". Still to do: the D-id row and the R-ASCII-9 wording (M3 docs session owns DECISIONS/REQUIREMENTS).
+
 - [x] **Neo geometry: port it (2026-11-04).** v12's default sequence look was `neo`; #143 draws classic geometry everywhere. Ported as geometry theme variables in follow-up ticket #194 (blocked by #143; #145 waits on it).
 - [x] **Accepted (2026-11-04):** async/half/stick arrowheads in `signalColor` (v12: black); classic rect/box grey shadows dropped (shadow only where `dropShadow` is set). Listed in MIGRATION.md by #143.
 
 - [x] **D123: keep the fix.** The 3 create/destroy divergences (#139: `create-after-note`, `destroy-then-create`, `destroy-before-loop`) stand: v13 attaches `create`/`destroy` to the right message. Cited in `packages/conformance/divergences.json` and MIGRATION.md "Sequence syntax".
 
 ## Final review
+
+- [ ] **#145 is done but not reviewed or merged** (branch `feature/145_sequence-integration`, head `f0e55fea7`, in `.claude/worktrees/t145`). Its review stopped on the org spend limit (2026-11-04, resets 20:00 Stockholm); resume it, then merge.
+- [ ] **#145 open items:** ASCII note spanning a box border blanks the border (baselines use `note over W,D` to avoid it); D122's "title feeds the accessible name" is not true of any SVG today; the per-key font D-id row (docs session).
+- [ ] **Sequence menu wiring after #202 merges:** `menu?: AstMenu` on `SequenceMenuStmt`; `forceMenus` from pending to honoured.
 
 - [ ] **Flaky margin: `packages/bench/src/language-budget-sequence.spec.ts` "a cycle costs at most four bare parses".** Failed twice in parallel full-suite runs under machine load (4.19 vs 4); passes alone under the lock. Check it uses best-of-N CPU time like flowchart's, and whether the ratio bound has the same headroom as flowchart's.
 

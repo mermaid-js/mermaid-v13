@@ -204,8 +204,11 @@ export function createDomAdapter(host: DomHost) {
         if (next.svg !== shown) {
           el.innerHTML = next.svg;
           shown = next.svg;
-          next.bindFunctions?.(el);
         }
+        // Bound even when the svg is the same: what extensions bind (menus, callbacks) is not
+        // in the svg, so it can change on its own. The interactions plugin binds by content,
+        // so the same interactions are not bound twice.
+        next.bindFunctions?.(el);
         return next;
       } catch (e) {
         error = toMermaidError(e);
