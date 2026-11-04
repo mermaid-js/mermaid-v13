@@ -8,6 +8,7 @@
  */
 import type { AstNode } from './ast.ts';
 import type { TokenCategory } from './categories.ts';
+import type { Range } from './positions.ts';
 import type { ParseResult } from './result.ts';
 import type { TokenKind } from './tokens.ts';
 
@@ -42,4 +43,32 @@ export interface LanguageFacet<A extends AstNode = AstNode> {
    * else the reason it cannot (D92).
    */
   isValidId(name: string, kind?: string): string | undefined;
+}
+
+/**
+ * What a completion item is (D95, D96). Front matter uses `property` (a key) and `value`; the
+ * facet completions (#32) extend this union with their own kinds.
+ */
+export type CompletionKind = 'property' | 'value' | 'keyword';
+
+/** One completion item (D95, D96). Editor-agnostic; adapters map it to their own type. */
+export interface CompletionItem {
+  /** What the list shows, and what filtering matches against. */
+  readonly label: string;
+  readonly kind: CompletionKind;
+  /** The text that replaces `range`. */
+  readonly insertText: string;
+  /** The text the item replaces: the word being typed (empty at a fresh position). */
+  readonly range: Range;
+  /** One short line next to the label (the type, `default`). */
+  readonly detail?: string;
+  /** Markdown shown for the selected item. */
+  readonly documentation?: string;
+}
+
+/** Hover contents (D93, D96): markdown for the range it describes. */
+export interface Hover {
+  readonly range: Range;
+  /** Markdown. */
+  readonly contents: string;
 }
