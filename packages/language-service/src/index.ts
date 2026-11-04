@@ -17,6 +17,7 @@ export type { LanguageService, LanguageServiceOptions, PreloadRequest } from './
 export { DocumentSnapshot } from './snapshot.ts';
 export type { DocumentContext } from './context.ts';
 export type { FacetEntry } from './facets.ts';
+export type { Annotation, ConfigSchema, SchemaNode } from './config/schema.ts';
 export { firstPartyFacets } from './generated/facets.gen.ts';
 export type { FoldingRange } from './folding.ts';
 export { SEMANTIC_TOKEN_LEGEND } from './semantic-tokens.ts';
@@ -26,7 +27,10 @@ export { LineIndex } from '@mermaid-js/core/parser-kit';
 export type {
   AstId,
   AstNode,
+  CompletionItem,
+  CompletionKind,
   Diagnostic,
+  Hover,
   FacetParseOptions,
   LanguageFacet,
   Position,

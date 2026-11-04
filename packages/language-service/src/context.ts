@@ -5,6 +5,7 @@
  */
 import type { AstNode, LanguageFacet, ParseResult } from '@mermaid-js/core/parser-kit';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import type { ConfigSchema } from './config/schema.ts';
 import type { FacetEntry } from './facets.ts';
 
 export interface DocumentContext {
@@ -22,6 +23,9 @@ export interface DocumentContext {
   readonly loadError: string | undefined;
   /** The detected type has a facet to load, but `preload` has not loaded it (D155). */
   readonly notLoaded: boolean;
-  /** The JSON schema of the config, as passed to `createLanguageService` (D96). */
-  readonly schema: Readonly<Record<string, unknown>> | undefined;
+  /**
+   * The config JSON schema (D96): the one passed to `createLanguageService`, else the
+   * generated one once `preload` has loaded it.
+   */
+  readonly schema: ConfigSchema | undefined;
 }

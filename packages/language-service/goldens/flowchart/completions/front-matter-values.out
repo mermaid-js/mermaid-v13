@@ -1,0 +1,40 @@
+@ 2:14  displayMode: |
+  '' value (default) 2:14-2:14 "" -> "''"
+  compact value 2:14-2:14 "" -> "compact"
+@ 4:12  theme: re|dux
+  default value 4:10-4:15 "redux" -> "default"
+  base value 4:10-4:15 "redux" -> "base"
+  dark value 4:10-4:15 "redux" -> "dark"
+  forest value 4:10-4:15 "redux" -> "forest"
+  neutral value 4:10-4:15 "redux" -> "neutral"
+  neo value 4:10-4:15 "redux" -> "neo"
+  neo-dark value 4:10-4:15 "redux" -> "neo-dark"
+  redux value 4:10-4:15 "redux" -> "redux"
+  redux-dark value 4:10-4:15 "redux" -> "redux-dark"
+  redux-color value (default) 4:10-4:15 "redux" -> "redux-color"
+  redux-dark-color value 4:10-4:15 "redux" -> "redux-dark-color"
+  auto value 4:10-4:15 "redux" -> "auto"
+  'null' value 4:10-4:15 "redux" -> "'null'"
+@ 5:13  darkMode: |
+  true value 5:13-5:13 "" -> "true"
+  false value (default) 5:13-5:13 "" -> "false"
+@ 6:13  fontSize: |
+  none
+@ 7:9  look: |
+  classic value 7:9-7:9 "" -> "classic"
+  handDrawn value 7:9-7:9 "" -> "handDrawn"
+  neo value 7:9-7:9 "" -> "neo"
+@ 9:12  curve: |
+  basis value 9:12-9:12 "" -> "basis"
+  bumpX value 9:12-9:12 "" -> "bumpX"
+  bumpY value 9:12-9:12 "" -> "bumpY"
+  cardinal value 9:12-9:12 "" -> "cardinal"
+  catmullRom value 9:12-9:12 "" -> "catmullRom"
+  linear value 9:12-9:12 "" -> "linear"
+  monotoneX value 9:12-9:12 "" -> "monotoneX"
+  monotoneY value 9:12-9:12 "" -> "monotoneY"
+  natural value 9:12-9:12 "" -> "natural"
+  step value 9:12-9:12 "" -> "step"
+  stepAfter value 9:12-9:12 "" -> "stepAfter"
+  stepBefore value 9:12-9:12 "" -> "stepBefore"
+  rounded value (default) 9:12-9:12 "" -> "rounded"

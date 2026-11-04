@@ -1,0 +1,23 @@
+@ 5:7  cu|
+  useWidth property (number) 5:5-5:7 "cu" -> "useWidth: "
+  useMaxWidth property (boolean) 5:5-5:7 "cu" -> "useMaxWidth: "
+  theme property (string) 5:5-5:7 "cu" -> "theme: "
+  look property (string) 5:5-5:7 "cu" -> "look: "
+  layout property (string) 5:5-5:7 "cu" -> "layout: "
+  titleTopMargin property (integer) 5:5-5:7 "cu" -> "titleTopMargin: "
+  subGraphTitleMargin property (object) 5:5-5:7 "cu" -> "subGraphTitleMargin:\n      "
+  arrowMarkerAbsolute property (boolean) 5:5-5:7 "cu" -> "arrowMarkerAbsolute: "
+  diagramPadding property (integer) 5:5-5:7 "cu" -> "diagramPadding: "
+  nodeSpacing property (integer) 5:5-5:7 "cu" -> "nodeSpacing: "
+  rankSpacing property (integer) 5:5-5:7 "cu" -> "rankSpacing: "
+  curve property (string) 5:5-5:7 "cu" -> "curve: "
+  padding property (number) 5:5-5:7 "cu" -> "padding: "
+  wrappingWidth property (number) 5:5-5:7 "cu" -> "wrappingWidth: "
+  minNodeWidth property (number) 5:5-5:7 "cu" -> "minNodeWidth: "
+  stepDuration property (number) 5:5-5:7 "cu" -> "stepDuration: "
+  stepNumbers property (boolean) 5:5-5:7 "cu" -> "stepNumbers: "
+  inheritDir property (boolean) 5:5-5:7 "cu" -> "inheritDir: "
+@ 8:12  mirrorA|
+  none
+@ 9:19  mirrorActors: |
+  none

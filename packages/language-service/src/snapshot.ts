@@ -2,14 +2,26 @@
  * The document snapshot (DESIGN §4.5, D90): one text, parsed once, with every query computed
  * on first call and memoised. A snapshot never changes; `update` makes a new one.
  *
- * Adding a query (completion #32, front-matter config #33): write a feature module that takes
- * the {@link DocumentContext} and add a method here that memoises it under its own key.
+ * Adding a query: write a feature module that takes the {@link DocumentContext} and add a
+ * method here that memoises it under its own key. `completions` and `hover` ask the front
+ * matter first, then the facet (#32 fills in the facet side in completion.ts and hover.ts).
  */
-import type { AstId, Diagnostic, LanguageFacet, Range } from '@mermaid-js/core/parser-kit';
+import type {
+  AstId,
+  CompletionItem,
+  Diagnostic,
+  Hover,
+  LanguageFacet,
+  Range,
+} from '@mermaid-js/core/parser-kit';
 import { astAt, astRanges } from './ast.ts';
+import { completions } from './completion.ts';
+import { configDiagnostics, frontMatterTree } from './config/front-matter.ts';
+import type { FrontMatterTree } from './config/front-matter.ts';
 import type { DocumentContext } from './context.ts';
 import { diagnostics } from './diagnostics.ts';
 import { foldingRanges } from './folding.ts';
+import { hover } from './hover.ts';
 import { deepFreeze } from './freeze.ts';
 import type { FoldingRange } from './folding.ts';
 import { semanticTokens } from './semantic-tokens.ts';
@@ -59,10 +71,40 @@ export class DocumentSnapshot {
     return this.memo('occurrences', () => occurrences(this.context));
   }
 
-  /** Preprocess and parse diagnostics as they are (D91). */
+  /** The front matter's YAML node tree (tree mode), read once. */
+  private frontMatter(): FrontMatterTree | undefined {
+    return this.memo('frontMatter', () => frontMatterTree(this.context));
+  }
+
+  /**
+   * Preprocess and parse diagnostics as they are (D91), with the front-matter config warnings
+   * (D96) placed in source order among them.
+   */
   diagnostics(): readonly Diagnostic[] {
     // Copies: the parse result's own diagnostics stay as the parser left them.
-    return this.memo('diagnostics', () => diagnostics(this.context).map((d) => structuredClone(d)));
+    return this.memo('diagnostics', () => {
+      const own = diagnostics(this.context).map((d) => structuredClone(d));
+      // Both lists are in source order: merge, own first on a tie.
+      const config = configDiagnostics(this.context, this.frontMatter());
+      const out: Diagnostic[] = [];
+      let i = 0;
+      for (const w of config) {
+        while (i < own.length && own[i]!.range.start <= w.range.start) out.push(own[i++]!);
+        out.push(w);
+      }
+      return [...out, ...own.slice(i)];
+    });
+  }
+
+  /** Completion items at `offset`: front-matter keys and values (D96), then the facet's (#32). */
+  completions(offset: number): readonly CompletionItem[] {
+    return deepFreeze(completions(this.context, this.frontMatter(), offset));
+  }
+
+  /** Hover at `offset`: a front-matter key's schema docs (D96), then the facet's (#32). */
+  hover(offset: number): Hover | undefined {
+    const h = hover(this.context, this.frontMatter(), offset);
+    return h && deepFreeze(h);
   }
 
   /** The range of the first definition of the name at `offset` (D92). */

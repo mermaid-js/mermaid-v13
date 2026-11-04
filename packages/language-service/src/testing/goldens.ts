@@ -6,7 +6,8 @@
  * - `%% rename-to: <name>` (a comment, so it stays in the text) is the new name for `rename`.
  * - Positions print as 1-based `line:column`; a range prints as `l:c-l:c 'text'`.
  *
- * Features with markers (definition, references, rename, astAt) print one block per marker;
+ * Features with markers (definition, references, rename, astAt, completions, hover) print one
+ * block per marker;
  * the others (diagnostics, folding, semanticTokens) print the whole document. A new query
  * adds a renderer to {@link FEATURES} and a folder of fixtures.
  */
@@ -106,6 +107,21 @@ export const FEATURES: Readonly<Record<string, Render>> = {
       const r = doc.rangeOf(id);
       return `${id} ${r ? p.range(r) : 'no range'}`;
     });
+  }),
+  completions: perMarker((doc, at, p) => {
+    const items = doc.completions(at);
+    return items.length
+      ? items.map(
+          (c) =>
+            `${c.label} ${c.kind}${c.detail === undefined ? '' : ` (${c.detail})`} ${p.range(c.range)} -> ${JSON.stringify(c.insertText)}`
+        )
+      : ['none'];
+  }),
+  hover: perMarker((doc, at, p) => {
+    const h = doc.hover(at);
+    return h
+      ? [p.range(h.range), ...h.contents.split('\n').map((l) => `| ${l}`.trimEnd())]
+      : ['none'];
   }),
   folding: (doc, _, p) =>
     doc.foldingRanges().map((f) => `${p.pos(f.range.start)}-${p.pos(f.range.end)} ${f.kind}`),
