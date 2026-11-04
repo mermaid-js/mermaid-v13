@@ -143,7 +143,7 @@ describe('folding', () => {
 describe('semantic tokens', () => {
   it('marks symbols by kind, with a class per type and modifier', async () => {
     const state = await stateOf(TEXT);
-    const marks = semanticTokenRanges(state, 0, state.doc.length).map(
+    const marks = semanticTokenRanges(state, [{ from: 0, to: state.doc.length }]).map(
       (t) => `${state.sliceDoc(t.from, t.to)}:${t.className}`
     );
     expect(marks).toContain('A:cm-mermaid-node cm-mermaid-declaration cm-mermaid-definition');
@@ -153,10 +153,74 @@ describe('semantic tokens', () => {
   it('marks only what lies in the asked range', async () => {
     const state = await stateOf(TEXT);
     const line = state.doc.line(4);
-    for (const t of semanticTokenRanges(state, line.from, line.to)) {
+    for (const t of semanticTokenRanges(state, [line])) {
       expect(t.to).toBeGreaterThan(line.from);
       expect(t.from).toBeLessThan(line.to);
     }
+  });
+});
+
+describe('semantic tokens over split visible ranges (#35 review)', () => {
+  it('gives a token that spans two visible ranges once', async () => {
+    const text = 'flowchart LR\n  A["line one\n  line two\n  line three"] --> B\n';
+    const state = await stateOf(text);
+    const label = text.indexOf('line one');
+    const end = text.indexOf('"]');
+    // A fold hides the middle line: the label runs through both visible ranges.
+    const ranges = [
+      { from: 0, to: text.indexOf('\n  line two') },
+      { from: text.indexOf('\n  line three'), to: text.length },
+    ];
+    const spans = semanticTokenRanges(state, ranges).filter((t) => t.from === label);
+    expect(spans).toHaveLength(1);
+    expect(spans[0]?.to).toBe(end);
+  });
+});
+
+describe('typing parses nothing before the debounce (#35 review)', () => {
+  /** A service that counts `update` calls. */
+  function countingService() {
+    const inner = createLanguageService();
+    const counter = { updates: 0 };
+    const service = {
+      ...inner,
+      update: (uri: string, text: string) => {
+        counter.updates++;
+        return inner.update(uri, text);
+      },
+    };
+    return { service, counter };
+  }
+
+  it('serves folds from the last snapshot, mapped through the edits', async () => {
+    const { service, counter } = countingService();
+    let state = await stateOf(TEXT, await mermaid({ service }));
+    const gutter = (s: EditorState) => {
+      for (let n = 1; n <= s.doc.lines; n++) foldable(s, s.doc.line(n).from, s.doc.line(n).to);
+    };
+    gutter(state);
+    const before = counter.updates;
+    for (let i = 0; i < 20; i++) {
+      // A keystroke above the subgraph, then the fold gutter's per-line queries.
+      state = state.update({ changes: { from: TEXT.indexOf(' --> B'), insert: 'x' } }).state;
+      gutter(state);
+    }
+    expect(counter.updates).toBe(before);
+    const line = state.doc.line(3);
+    expect(foldable(state, line.from, line.to)).toEqual({
+      from: line.to,
+      to: state.doc.line(5).to,
+    });
+  });
+
+  it('keeps the completion list while a word is typed into it', async () => {
+    const state = await stateOf(`${TEXT}C`);
+    const result = completionSource(new CompletionContext(state, state.doc.length, true));
+    const validFor = result?.validFor;
+    expect(validFor).toBeInstanceOf(RegExp);
+    expect((validFor as RegExp).test('Cab_1')).toBe(true);
+    expect((validFor as RegExp).test('C ')).toBe(false);
+    expect((validFor as RegExp).test('C-')).toBe(false);
   });
 });
 

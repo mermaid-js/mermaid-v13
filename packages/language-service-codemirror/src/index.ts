@@ -13,7 +13,8 @@
  * `mermaid()` waits for `service.preload()` (D155), then gives the Lezer highlighter from the
  * grammar file (#21), diagnostics (debounced 150 ms), completion, hover, folding,
  * semantic-token decorations and the cursor → AstId facet. Each is exported on its own too;
- * all but `mermaidLanguage` need `await mermaidService()` in the same state.
+ * all but `mermaidLanguage` need `await mermaidService()` in the same state, and
+ * `mermaidCompletion` also needs `mermaidLanguage()`: it is that language's completion source.
  */
 import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import type { Extension } from '@codemirror/state';
@@ -70,7 +71,7 @@ export async function mermaid(options: MermaidOptions = {}): Promise<Extension> 
     mermaidDiagnostics(timing),
     mermaidCompletion(),
     mermaidHover(),
-    mermaidFolding(),
+    mermaidFolding(timing),
     mermaidSemanticTokens(timing),
     mermaidCursorAst(options.onCursorAst, timing),
   ];

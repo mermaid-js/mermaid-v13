@@ -8,11 +8,11 @@ import type { Completion, CompletionContext, CompletionResult } from '@codemirro
 import { codeFolding, foldService } from '@codemirror/language';
 import { linter } from '@codemirror/lint';
 import type { Diagnostic as LintDiagnostic } from '@codemirror/lint';
-import { Facet, RangeSetBuilder } from '@codemirror/state';
+import { Facet, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state';
 import type { EditorState, Extension } from '@codemirror/state';
 import { Decoration, EditorView, hoverTooltip, ViewPlugin } from '@codemirror/view';
 import type { DecorationSet, ViewUpdate } from '@codemirror/view';
-import type { AstId, CompletionKind } from '@mermaid-js/language-service';
+import type { AstId, CompletionKind, Range } from '@mermaid-js/language-service';
 import { mermaidLanguageDefinition } from './language.ts';
 import { renderMarkdown } from './markdown.ts';
 import { mermaidSnapshot } from './service.ts';
@@ -90,10 +90,15 @@ export function completionSource(context: CompletionContext): CompletionResult |
         : item.insertText,
     };
   });
-  return { from, to: Math.max(to, context.pos), options };
+  // Typing more word characters only narrows the list: CodeMirror filters it without asking
+  // the service again (each ask is a probe re-parse).
+  return { from, to: Math.max(to, context.pos), options, validFor: /^\w*$/ };
 }
 
-/** Autocompletion from the service, as the Mermaid language's completion source. */
+/**
+ * Autocompletion from the service, as the Mermaid language's completion source: it applies
+ * only where `mermaidLanguage()` is the language (with `mermaidService()` in the state).
+ */
 export function mermaidCompletion(): Extension {
   return [mermaidLanguageDefinition.data.of({ autocomplete: completionSource }), autocompletion()];
 }
@@ -134,18 +139,46 @@ export function mermaidHover(): Extension {
 
 // --- folding -------------------------------------------------------------------------------
 
+/** New folding ranges from a settled snapshot. */
+const setFolds = StateEffect.define<readonly Range[]>();
+
+/**
+ * The folding ranges of the last settled snapshot, mapped through every edit since. The fold
+ * gutter asks for each visible line after every keystroke; answering from here keeps typing
+ * free of parses. The ranges are refreshed after the debounce.
+ */
+const foldField = StateField.define<readonly Range[]>({
+  create: (state) =>
+    mermaidSnapshot(state)
+      ?.foldingRanges()
+      .map((f) => f.range) ?? [],
+  update: (ranges, tr) => {
+    for (const e of tr.effects) if (e.is(setFolds)) return e.value;
+    if (!tr.docChanged) return ranges;
+    return ranges.map((r) => ({
+      start: tr.changes.mapPos(r.start, 1),
+      end: Math.max(tr.changes.mapPos(r.start, 1), tr.changes.mapPos(r.end, -1)),
+    }));
+  },
+});
+
 /**
  * The fold that starts on the line `[lineStart, lineEnd]`: from the line's end to the end of
- * the range's second-to-last line, so the closing line (`end`, `---`) stays visible.
+ * the range's second-to-last line, so the closing line (`end`, `---`) stays visible. Reads
+ * the debounced ranges when {@link mermaidFolding} is installed, else the current snapshot.
  */
 export function foldAt(
   state: EditorState,
   lineStart: number,
   lineEnd: number
 ): { from: number; to: number } | null {
-  const doc = mermaidSnapshot(state);
-  if (!doc) return null;
-  for (const { range } of doc.foldingRanges()) {
+  const ranges =
+    state.field(foldField, false) ??
+    mermaidSnapshot(state)
+      ?.foldingRanges()
+      .map((f) => f.range);
+  if (!ranges) return null;
+  for (const range of ranges) {
     if (range.start < lineStart || range.start > lineEnd) continue;
     const last = state.doc.lineAt(clamp(state, range.end));
     const first = state.doc.lineAt(lineStart);
@@ -155,9 +188,31 @@ export function foldAt(
   return null;
 }
 
-/** Folding from the service's folding ranges, with CodeMirror's fold state. */
-export function mermaidFolding(): Extension {
-  return [foldService.of(foldAt), codeFolding()];
+/**
+ * Folding from the service's folding ranges, with CodeMirror's fold state. The ranges follow
+ * edits by mapping and are re-read from the service after the debounce.
+ */
+export function mermaidFolding(options: DiagnosticsOptions = {}): Extension {
+  const delay = options.delay ?? DIAGNOSTICS_DELAY;
+  const refresh = ViewPlugin.fromClass(
+    class {
+      private timer: ReturnType<typeof setTimeout> | undefined;
+      constructor(private readonly view: EditorView) {}
+      update(update: ViewUpdate) {
+        if (!update.docChanged) return;
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => {
+          const doc = mermaidSnapshot(this.view.state);
+          if (doc)
+            this.view.dispatch({ effects: setFolds.of(doc.foldingRanges().map((f) => f.range)) });
+        }, delay);
+      }
+      destroy() {
+        clearTimeout(this.timer);
+      }
+    }
+  );
+  return [foldField, refresh, foldService.of(foldAt), codeFolding()];
 }
 
 // --- semantic tokens -----------------------------------------------------------------------
@@ -169,17 +224,20 @@ export interface SemanticTokenRange {
   readonly className: string;
 }
 
-/** The semantic tokens that overlap `[from, to)`, in document order. */
+/**
+ * The semantic tokens that overlap any of `ranges` (e.g. the view's visible ranges), each
+ * once and in document order, even when it spans several of them.
+ */
 export function semanticTokenRanges(
   state: EditorState,
-  from: number,
-  to: number
+  ranges: readonly { readonly from: number; readonly to: number }[]
 ): SemanticTokenRange[] {
   const doc = mermaidSnapshot(state);
   if (!doc) return [];
   const out: SemanticTokenRange[] = [];
   for (const t of doc.semanticTokens()) {
-    if (t.range.end <= from || t.range.start >= to || t.range.end <= t.range.start) continue;
+    if (t.range.end <= t.range.start) continue;
+    if (!ranges.some((r) => t.range.end > r.from && t.range.start < r.to)) continue;
     out.push({
       from: clamp(state, t.range.start),
       to: clamp(state, t.range.end),
@@ -191,10 +249,8 @@ export function semanticTokenRanges(
 
 function decorate(view: EditorView): DecorationSet {
   const builder = new RangeSetBuilder<Decoration>();
-  for (const { from, to } of view.visibleRanges) {
-    for (const t of semanticTokenRanges(view.state, from, to)) {
-      builder.add(t.from, t.to, Decoration.mark({ class: t.className }));
-    }
+  for (const t of semanticTokenRanges(view.state, view.visibleRanges)) {
+    builder.add(t.from, t.to, Decoration.mark({ class: t.className }));
   }
   return builder.finish();
 }
@@ -217,10 +273,12 @@ export function mermaidSemanticTokens(options: DiagnosticsOptions = {}): Extensi
           this.decorations = this.decorations.map(update.changes);
           clearTimeout(this.timer);
           this.timer = setTimeout(() => {
+            this.timer = undefined;
             this.decorations = decorate(this.view);
             this.view.dispatch({}); // redraw with the new set
           }, delay);
-        } else if (update.viewportChanged) {
+        } else if (update.viewportChanged && this.timer === undefined) {
+          // While an edit is pending the debounced rebuild covers the new viewport too.
           this.decorations = decorate(update.view);
         }
       }
