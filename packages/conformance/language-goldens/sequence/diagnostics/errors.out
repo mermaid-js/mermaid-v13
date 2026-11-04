@@ -1,0 +1,4 @@
+3:7-3:18 ": no target" error UNEXPECTED: Expected a participant id, got `: no target`; write a message as `<from><arrow><to>: <text>`, e.g. `Alice->>Bob: Hello`.
+4:8-4:9 "A" error UNEXPECTED: Expected a note position such as `left of`, got `A`; write it as `note left of <id>: <text>`, `note right of <id>: <text>` or `note over <id>,<id>: <text>`.
+5:3-5:7 "else" error UNEXPECTED_SECTION: Unexpected `else`: it divides `alt` blocks only.
+7:3-7:16 "loop unclosed" error UNCLOSED_BLOCK: Unclosed `loop`: the `loop` at line 7 has no `end`. Add `end` to close it.

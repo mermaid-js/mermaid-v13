@@ -1,0 +1,14 @@
+%%{init: {"theme": "dark"}}%%
+sequenceDiagram
+  %% a comment
+  title Greetings
+  autonumber 10 5
+  participant A@{ "type": "database" }
+  actor B as Bob
+  A->>+B: Hello
+  B-->>-A: Hi
+  A-)B: async
+  note right of B: thinking
+  opt maybe
+    A-xB: no
+  end

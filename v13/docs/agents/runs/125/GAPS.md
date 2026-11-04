@@ -13,6 +13,13 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 
 - [x] **Core `sourceView` mid-line directive fix (#186):** merged; six sequence forms added to the lexer-parity gate (`MID_LINE_DIRECTIVES`), parity 100%.
 
+## #149 T6 language facet
+- **Goldens run from conformance until the manifest lands (#145).** `firstPartyFacets` gets a `load` only from a manifest `language` entry, so `packages/conformance/src/sequence/language-goldens.spec.ts` passes the facet as an eager row over `packages/conformance/language-goldens/sequence/`. Its last test fails once the manifest has `language`: then `git mv` the folder to `packages/language-service/goldens/sequence/` and delete the spec (#145).
+- **Property and rename round-trip specs (recipe step 7) pick sequence up only with the manifest.** Run by hand over the 193 sequence corpus files with the eager row: no throw, no completion range off the cursor's line, every participant rename keeps the model. Re-check when #145 registers the facet.
+- **TextMate has no mode switch.** A `pop push(…)` lexer rule (participant id before `as` or `@{`, the `as`, the data's `}`) ends the TextMate scope, so TextMate colours a declaration's alias and data as statement text. Monarch and Lezer agree with the table. Documented exception in `tools/gen-grammar/src/sequence-categories.spec.ts`; the fix is in `tools/gen-grammar/src/highlight.ts` (cross-type, owner gen-grammar).
+- **Adapters colour first paint with flowchart's grammar (D119, accepted).** Picking a highlighter per type is #190.
+- No `./monarch.json` export yet (flowchart has one for the Monaco adapter); add it with #190 or #145.
+
 ## Shared contracts
 
 - **`SequenceModel`** (`packages/diagram-sequence/src/model.ts`, landed with #141): owned by #139 (T2), which is held. #141 (T3) landed the type first, shaped from the spec's model list (§Parser), as the layout's input; #139 adopts it and may extend it additively. A change that breaks #141's fixtures goes through the orchestrator.

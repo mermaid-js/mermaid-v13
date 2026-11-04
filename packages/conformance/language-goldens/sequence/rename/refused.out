@@ -1,0 +1,5 @@
+@ 3:3  |A->>B: Hello
+  prepare: 3:3-3:4 "A"; rename to "end":
+  refused: 'end' is not a participant id.
+@ 4:4  l|oop x
+  prepare: refused: There is no id or class name here to rename.

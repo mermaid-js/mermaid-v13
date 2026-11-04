@@ -1,0 +1,32 @@
+---
+title: Folding
+---
+sequenceDiagram
+  accDescr {
+    A description
+    over two lines
+  }
+  box Aqua Team
+    participant A
+    participant B
+  end
+  rect rgb(200, 220, 255)
+    loop every minute
+      A->>B: ping
+    end
+  end
+  alt ok
+    B->>A: pong
+  else failed
+    B-xA: error
+  end
+  par one
+    A->>B: x
+  and two
+    A->>B: y
+  end
+  critical go
+    A->>B: z
+  option fallback
+    A->>B: w
+  end

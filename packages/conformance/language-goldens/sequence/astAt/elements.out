@@ -1,0 +1,13 @@
+@ 3:17  participant |A
+  p:A 3:5-3:18 "participant A"
+  box:1 2:3-4:6 "box Team\n    participant A\n  end"
+@ 5:5  A-|>>B: Hello
+  m:A>B 5:3-5:15 "A->>B: Hello"
+@ 7:7  no|te over A: hi
+  note:1 7:5-7:20 "note over A: hi"
+  st:1 6:3-8:6 "rect rgb(0, 0, 255)\n    note over A: hi\n  end"
+@ 11:5  el|se z
+  st:2 11:3-12:1 "else z\n"
+  f:alt#1 9:3-12:6 "alt x\n    B->>A: y\n  else z\n  end"
+@ 13:3  |
+  none

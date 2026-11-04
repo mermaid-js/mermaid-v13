@@ -20,8 +20,9 @@ regard to case. A participant id and an invalid id lose the blanks around them. 
 NEWLINE                   /\n+/ ;
 -                         /\s+/ ;
 <ID,ALIAS,LINE> -         /(?:(?!\n)\s)+/ ;
-(** `#` to the end of the line is a comment outside messages and labels. *)
-<INITIAL,ID,ALIAS,LINE> - /#[^\n]*/                        :comment ;
+(** `#` to the end of the line is a comment outside messages and labels; an entity such as
+`#lt;` is text. *)
+<INITIAL,ID,ALIAS,LINE> - /#(?!\w+;)[^\n]*/                :comment ;
 (* jison read `\%%(?!\{)` as one `%`. *)
 -                         /%(?!\{)[^\n]*/                  :comment ;
 -                         /[^}]%%[^\n]*/                   :comment ;
@@ -29,13 +30,13 @@ NEWLINE                   /\n+/ ;
 NUM                       /(?:[0-9]+(?:\.[0-9]{1,2})?|\.[0-9]{1,2})(?=[ \n]+)/ :number ;
 
 (** Participant data `participant A@{ "type": "database" }`: YAML in braces. *)
-<ID> CONFIG_START         /@\{/                            push(CONFIG) :meta ;
+<ID> CONFIG_START         /@\{/                            pop push(CONFIG) :meta ;
 <CONFIG> CONFIG_CONTENT   /[^}]+/                          :meta ;
 <CONFIG> CONFIG_END       /\}(?=\s+(?i:as)\s)/             pop push(ALIAS) :meta ;
-<CONFIG> CONFIG_END       /\}/                             pop pop :meta ;
+<CONFIG> CONFIG_END       /\}/                             pop :meta ;
 (** A participant id after `participant`, `actor`, `destroy`, `activate` and `deactivate`. *)
 <ID> ACTOR                /[^<>:\n,;@\s]+(?=\s*@\{)/       :variable ;
-<ID> ACTOR                /[^<>:\n,;@\s]+(?=\s+(?i:as)\s)/ push(ALIAS) :variable ;
+<ID> ACTOR                /[^<>:\n,;@\s]+(?=\s+(?i:as)\s)/ pop push(ALIAS) :variable ;
 <ID> ACTOR                /[^<>:\n,;@]+(?=\s*[\n;#]|$)/    pop :variable ;
 <ID> INVALID              /[^<>:\n,;@]*<[^\n]*/            pop ;
 <ID> INVALID              /[^\n]+/                         pop ;
@@ -51,8 +52,8 @@ create                    /(?i:create)\b/                  :keyword ;
 (** `destroy A`: the participant ends at the next message, which comes from or goes to it. *)
 destroy                   /(?i:destroy)\b/                 push(ID) :keyword ;
 (** `participant A as Alice`: the label shown for the participant. *)
-<ALIAS> AS                /(?i:as)\b/                      pop pop push(LINE) :keyword ;
-<ALIAS> ALIAS_END         /(?:)/                           pop pop ;
+<ALIAS> AS                /(?i:as)\b/                      pop push(LINE) :keyword ;
+<ALIAS> ALIAS_END         /(?:)/                           pop ;
 (** `loop <text>` … `end`: a repeated part. *)
 loop                      /(?i:loop)\b/                    push(LINE) :keyword ;
 (** `rect <colour>` … `end`: a background highlight. *)
@@ -75,7 +76,7 @@ critical                  /(?i:critical)\b/                push(LINE) :keyword ;
 option                    /(?i:option)\b/                  push(LINE) :keyword ;
 (** `break <text>` … `end`: a part that ends the sequence. *)
 break                     /(?i:break)\b/                   push(LINE) :keyword ;
-<LINE> restOfLine         /(?i:(?::?(?:no)?wrap:)?)[^#\n;]*/ pop :string ;
+<LINE> restOfLine         /(?i:(?::?(?:no)?wrap:)?)(?:[^#\n;]|#\w+;)*/ pop :string ;
 (** `end`: closes a `box`, `loop`, `alt`, `rect` or other block. *)
 end                       /(?i:end)\b/                     :keyword ;
 (** `note left of A: …`: a note left of the participant. *)
@@ -99,9 +100,9 @@ activate                  /(?i:activate)\b/                push(ID) :keyword ;
 (** `deactivate A`: ends the participant's last activation bar. *)
 deactivate                /(?i:deactivate)\b/              push(ID) :keyword ;
 (** `title <text>`: the diagram title. *)
-title                     /(?i:title)\s[^#\n;]+/           :keyword ;
+title                     /(?i:title)\s(?:[^#\n;]|#\w+;)+/           :keyword ;
 (** `title: <text>`: the diagram title (older form). *)
-legacy_title              /(?i:title:)\s[^#\n;]+/          :keyword ;
+legacy_title              /(?i:title:)\s(?:[^#\n;]|#\w+;)+/          :keyword ;
 
 (** `accTitle: …` and `accDescr: …` take the rest of the line; `accDescr { … }` runs to `}`. *)
 acc_title                 /(?i:accTitle)\s*:\s*/           push(acc_title) :keyword ;
@@ -165,7 +166,7 @@ STICK_ARROW_TOP_REVERSE   /\/\/-/                          :operator ;
 STICK_ARROW_BOTTOM_REVERSE /\\\\-/                         :operator ;
 
 (** `: text` after a message or note; `wrap:` / `nowrap:` first sets wrapping. *)
-TXT                       /:(?i:(?:(?:no)?wrap:)?)[^#\n;]*/ :string ;
+TXT                       /:(?i:(?:(?:no)?wrap:)?)(?:[^#\n;]|#\w+;)*/ :string ;
 (** `A->>+B`: activates `B`. *)
 PLUS                      /\+/                             :operator ;
 (** `A->>-B`: deactivates `A`. *)
