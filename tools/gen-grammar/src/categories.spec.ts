@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { Kind, sourceView, TOKEN_CATEGORIES } from '@mermaid-js/core/parser-kit';
+import { Kind, TOKEN_CATEGORIES } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import {
   detectFlowchart,
@@ -13,6 +13,7 @@ import {
 // never from its main entry (the renderer's lazy chunk would keep it). The source view gives
 // the spans the lexer removed (comments, directives, dropped `;`).
 import { flowchartCategories } from '../../../packages/diagram-flowchart/src/generated/categories.ts';
+import { flowSourceView } from '../../../packages/diagram-flowchart/src/parser/lexer.ts';
 import { categoryTable, kindKeys } from './categories.ts';
 import { parseGrammar } from './ebnf.ts';
 import { generate, generatedDir } from './generate.ts';
@@ -147,7 +148,7 @@ const blankFrontMatter = (src: string) => {
  */
 function lexerKinds(src: string): Map<number, number> {
   const pre = preprocess(src);
-  const view = sourceView(
+  const view = flowSourceView(
     src,
     pre.bodyStart,
     pre.directives.map((d) => d.range)
