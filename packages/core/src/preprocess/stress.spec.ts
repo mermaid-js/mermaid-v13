@@ -5,7 +5,7 @@
  * Shapes include the ones that are quadratic in v12 (`regexes.spec.ts`) and unclosed input.
  */
 import { describe, expect, it } from 'vitest';
-import { preprocess } from './index.ts';
+import { parseYaml, preprocess } from './index.ts';
 
 /** Fastest of `trials` timings of `reps` runs, in ms (Date.now: core has no Node types). */
 const fastest = (run: () => unknown, reps: number, trials = 5): number => {
@@ -75,5 +75,34 @@ describe('preprocess runs in linear time', () => {
     expect(ratio).toBeLessThan(8);
     // An absolute guard too: one 20k-line input stays far below a second on any CI machine.
     expect(tLarge / reps).toBeLessThan(250);
+  });
+});
+
+/** The YAML reader's tree mode (R-LANG-5) stays linear while it recovers from an error per line. */
+const TREE_SHAPES: [string, (n: number) => string][] = [
+  [
+    'nested front matter',
+    (n) => 'config:\n' + lines(n, (i) => `  k${i}:\n    x: [1, {b: 'two'}]\n`),
+  ],
+  ['a bad entry on every line', (n) => 'a: 1\n' + lines(n, (i) => `k${i} nope\n`)],
+  ['a bad value on every nested line', (n) => 'c:\n' + lines(n, (i) => `  k${i}: @x\n`)],
+  ['an unclosed flow collection on every line', (n) => lines(n, (i) => `k${i}: {a: [1\n`)],
+  ['an unclosed quote on every line', (n) => lines(n, (i) => `k${i}: [ "\n`)],
+  ['an unclosed flow item on every line', (n) => 'l:\n' + lines(n, () => '  - {a\n')],
+  ['the same key on every line', (n) => lines(n, () => 'a: 1\n')],
+  ['a root that ends early on every other line', (n) => lines(n, (i) => `- a\nk${i}: 1\n`)],
+];
+
+describe('the YAML tree mode runs in linear time', () => {
+  it.each(TREE_SHAPES)('%s', (_name, build) => {
+    const small = build(5_000);
+    const large = build(20_000);
+    const read = (src: string) => () => parseYaml(src, { tree: true });
+    const reps = repsFor(read(small));
+    let ratio = Infinity;
+    for (let attempt = 0; attempt < 3 && ratio >= 8; attempt++) {
+      ratio = Math.min(ratio, fastest(read(large), reps) / Math.max(fastest(read(small), reps), 1));
+    }
+    expect(ratio).toBeLessThan(8);
   });
 });
