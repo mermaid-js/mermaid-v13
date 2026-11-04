@@ -53,6 +53,7 @@ describe('changesets (R-REL-1, R-REL-2)', () => {
         '@mermaid-js/diagram-flowchart',
         '@mermaid-js/plugin-interactions',
         '@mermaid-js/language-service',
+        '@mermaid-js/language-server',
       ],
     ]);
   });

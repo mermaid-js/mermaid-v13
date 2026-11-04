@@ -29,6 +29,26 @@ import type { SemanticToken } from './semantic-tokens.ts';
 import { definition, occurrences, prepareRename, references, rename } from './symbols.ts';
 import type { Occurrence, PrepareRenameResult, RenameResult } from './symbols.ts';
 
+/**
+ * A copy of a diagnostic that shares nothing with the parse result, which the snapshot then
+ * freezes (no `structuredClone`: the package stays free of runtime globals, R-LANG-1).
+ */
+function copyDiagnostic(d: Diagnostic): Diagnostic {
+  const out: Diagnostic = {
+    severity: d.severity,
+    code: d.code,
+    message: d.message,
+    range: { start: d.range.start, end: d.range.end },
+  };
+  if (d.expected) out.expected = [...d.expected];
+  if (d.related)
+    out.related = d.related.map((r) => ({
+      message: r.message,
+      range: { start: r.range.start, end: r.range.end },
+    }));
+  return out;
+}
+
 export class DocumentSnapshot {
   private readonly cache = new Map<string, unknown>();
 
@@ -83,7 +103,7 @@ export class DocumentSnapshot {
   diagnostics(): readonly Diagnostic[] {
     // Copies: the parse result's own diagnostics stay as the parser left them.
     return this.memo('diagnostics', () => {
-      const own = diagnostics(this.context).map((d) => structuredClone(d));
+      const own = diagnostics(this.context).map(copyDiagnostic);
       // Both lists are in source order: merge, own first on a tie.
       const config = configDiagnostics(this.context, this.frontMatter());
       const out: Diagnostic[] = [];

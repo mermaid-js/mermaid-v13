@@ -225,7 +225,7 @@ interface LanguageFacet<A extends AstNode = AstNode> {
 }
 ```
 
-The manifest gets `"language": "./dist/language.js"`. `firstPartyFacets` is generated like `registry.gen.ts` (§12.4): `{ id, detector, load }`, same detector order. Third-party facets are passed to `createLanguageService({ facets })`; the LSP server scans `node_modules` for manifests with `language`.
+The manifest gets `"language": "./dist/language.js"`. `firstPartyFacets` is generated like `registry.gen.ts` (§12.4): `{ id, detector, load }`, same detector order. Third-party facets are passed to `createLanguageService({ facets })`; the LSP server scans each workspace folder's own `node_modules` for manifests with `language` only when the client opts in (D157); by default it serves first-party types only.
 
 **Document model (R-LANG-4, D90, D155).**
 
