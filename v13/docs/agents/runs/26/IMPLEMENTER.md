@@ -4,6 +4,18 @@
 - Notes: this folder (v13/docs/agents/runs/26/). Read INDEX.md, GAPS.md (close the items listed for your ticket) and tickets/<dep>.md for each blocker.
 - Worktree: /Users/knsv/repos/mermaid-v13/.claude/worktrees/t<N> on branch feature/<N>_<short>. Use absolute paths; never touch the main checkout /Users/knsv/repos/mermaid-v13 or other worktrees. Run `pnpm install` first.
 - Integration branch: feature/26_language-service.
+- Pitfalls: read v13/docs/agents/port-diagram/pitfalls.md before you start. It was written for diagram ports, but these rules apply to every M2.5 ticket:
+  - 5: linear scans on long blank runs, with a stress case;
+  - 7: use the parser kit's `TokenView`/`significantTokens`/`skipTo` and don't re-implement them;
+  - 8: N errors in, N diagnostics out;
+  - 23: caches keyed on content, never on object identity;
+  - 26: run `packages/conformance` before reporting;
+  - 27: see each new test fail on the base first, and re-run a reviewer's repro yourself;
+  - 28: prove a refactor changes nothing over the corpus plus generated variants;
+  - 29: ask the oracle, don't reason about v12;
+  - 30–31: benchmark A/B in both orders plus an A/A control, and report the size cost of code shape;
+  - 32–33: escalate instead of deciding.
+  - The flowchart parser is now the `FlowParser` class (#119). Probe hooks go into its rule methods.
 
 Steps
 1. Confirm base: `git merge-base --is-ancestor feature/26_language-service HEAD`; if not, `git reset --hard feature/26_language-service`.

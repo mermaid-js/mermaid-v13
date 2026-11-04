@@ -851,3 +851,8 @@ export function parseYaml(
     return { value: null, root: null, diagnostics: diagnostics.list };
   }
 }
+
+/** A YAML mapping (not null, an array or a scalar). */
+export function isYamlMap(value: YamlValue | undefined): value is YamlMap {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
