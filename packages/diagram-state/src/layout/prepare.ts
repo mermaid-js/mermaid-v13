@@ -331,7 +331,9 @@ function scopes(model: StateModel) {
 /** The checked style of class names plus own declarations, one per distinct list. */
 function styleCache(model: StateModel, ctx: StateRenderContext): Measure['styleOf'] {
   const classDefs = new Map<string, string[]>();
-  for (const c of model.classes) classDefs.set(c.id, [...c.styles, ...c.textStyles]);
+  // `color` in `styles` already sets the label's fill (checkStyle); v12's `textStyles` repeat it
+  // as `fill`, which here would also paint the shape.
+  for (const c of model.classes) classDefs.set(c.id, c.styles);
   const styles = new Map<string, CheckedStyle>();
   return (classes, own = []) => {
     const decls: string[] = [];

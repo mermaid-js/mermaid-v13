@@ -65,7 +65,13 @@ function stretchRegions(
   groups: Map<string, LayoutModelGroup>
 ): StateDivider[] {
   const dividers: StateDivider[] = [];
-  const padding = new Map(prepared.graph.groups.map((g) => [g.id, g.padding]));
+  // The engine puts a group's title inside its top padding (`padding.top` + title height).
+  const padding = new Map(
+    prepared.graph.groups.map((g) => [
+      g.id,
+      { ...g.padding, top: g.padding.top + (g.title?.height ?? 0) },
+    ])
+  );
   for (const [comp, ids] of prepared.regions) {
     const outer = groups.get(comp);
     const boxes = ids.map((id) => groups.get(id));
