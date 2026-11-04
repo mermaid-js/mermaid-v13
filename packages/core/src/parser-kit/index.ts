@@ -34,7 +34,7 @@ export { syncTo } from './recovery.ts';
 export { significantTokens, skipTo } from './view.ts';
 export type { TokenView } from './view.ts';
 export { AstIds, nodeId } from './ast.ts';
-export type { AstCallback, AstId, AstNode } from './ast.ts';
+export type { AstCallback, AstId, AstMenu, AstNode } from './ast.ts';
 export { ParseState } from './result.ts';
 export type { ParseOptions, ParseResult, StatementSpan, SymbolOccurrence } from './result.ts';
 export {
