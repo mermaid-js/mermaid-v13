@@ -159,7 +159,7 @@ function sideRoom(k: number, pitch: number, grid: number): number {
 function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
   const grid = gridOf(graph);
   let model = run(graph, dir, tight);
-  if (!grid) return model;
+  if (!grid) return endLabels(graph, model, grid);
   const M = graph.metrics ?? pxProfile.engine;
   const pitch = Math.max(grid, edgeOn(M.portPitch, grid));
   let current = graph;
@@ -218,7 +218,7 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
     model = run(current, dir, tight);
   }
   placeTitles(current, model, grid);
-  return model;
+  return endLabels(current, model, grid);
 }
 
 // On the grid a group's title sits on its top border row, and no edge may end or cross there
@@ -544,6 +544,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
       minlen: Math.max(1, Math.round(e.minLen)),
       labelW,
       labelH,
+      ...(e.startLabel ? { start: e.startLabel } : {}),
+      ...(e.endLabel ? { end: e.endLabel } : {}),
       route: [],
       labelX: 0,
       labelY: 0,
@@ -619,6 +621,93 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     groups,
     direction: rootDir,
   };
+}
+
+// The axis a side faces along, and which way is out of the box.
+const OUTWARD: Readonly<Record<Side, { axis: 'x' | 'y'; sign: 1 | -1 }>> = {
+  top: { axis: 'y', sign: -1 },
+  bottom: { axis: 'y', sign: 1 },
+  left: { axis: 'x', sign: -1 },
+  right: { axis: 'x', sign: 1 },
+};
+
+// Edge-end labels (D102), placed once the routes are final: each sits beside the segment that
+// leaves its end's side, `endLabelAlong` out from the side (the target's also past the
+// arrowhead's room) and `endLabelAcross` off the line, on the side of the line the route does not
+// turn towards, or the other side where that would cover the edge's other labels. On the grid
+// both are whole cells: the label starts in the row or column `along` cells past the end cell,
+// `across` blank cells off the line.
+function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): LayoutModel {
+  const M = graph.metrics ?? pxProfile.engine;
+  const headRoom = graph.headRoom ?? 0;
+  for (const e of graph.edges) {
+    if (!e.startLabel && !e.endLabel) continue;
+    const placed = model.edges.get(e.id);
+    if (!placed || placed.points.length === 0) continue;
+    const taken: Rect[] = [];
+    if (e.label && placed.label) taken.push(rectOf(placed.label, e.label));
+    const { points, ports } = placed;
+    if (e.startLabel) {
+      const room = { along: M.endLabelAlong, across: M.endLabelAcross, grid };
+      const at = endLabelAt(points, ports.source, e.startLabel, room, taken);
+      placed.startLabel = at;
+      taken.push(rectOf(at, e.startLabel));
+    }
+    if (e.endLabel) {
+      const back = [...points].reverse();
+      const room = { along: M.endLabelAlong + headRoom, across: M.endLabelAcross, grid };
+      placed.endLabel = endLabelAt(back, ports.target, e.endLabel, room, taken);
+    }
+  }
+  return model;
+}
+
+interface Rect {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+function rectOf(c: Point, s: { width: number; height: number }): Rect {
+  return {
+    x0: c.x - s.width / 2,
+    y0: c.y - s.height / 2,
+    x1: c.x + s.width / 2,
+    y1: c.y + s.height / 2,
+  };
+}
+
+// The centre of a label of `size` at the end `points[0]`, whose route leaves through `side`.
+function endLabelAt(
+  points: readonly RoutePoint[],
+  side: Side,
+  size: { width: number; height: number },
+  { along, across, grid }: { along: number; across: number; grid: number },
+  taken: readonly Rect[]
+): Point {
+  const p = points[0]!;
+  const { axis, sign } = OUTWARD[side];
+  const cross = axis === 'x' ? 'y' : 'x';
+  let lean = 0;
+  for (const q of points) {
+    const d = q[cross] - p[cross];
+    if (Math.abs(d) > 1e-6) {
+      lean = Math.sign(d);
+      break;
+    }
+  }
+  const deep = axis === 'x' ? size.width : size.height;
+  const wide = axis === 'x' ? size.height : size.width;
+  const out = p[axis] + sign * (along + deep / 2 - grid / 2);
+  const at = (away: number): Point => {
+    const off = p[cross] + away * (grid / 2 + across + wide / 2);
+    return axis === 'x' ? { x: out, y: off } : { x: off, y: out };
+  };
+  const first = at(lean > 0 ? -1 : 1);
+  const r = rectOf(first, size);
+  const clear = (o: Rect): boolean => r.x1 <= o.x0 || o.x1 <= r.x0 || r.y1 <= o.y0 || o.y1 <= r.y0;
+  return taken.every(clear) ? first : at(lean > 0 ? 1 : -1);
 }
 
 const FLOW_START: Readonly<Record<Dir, Side>> = {

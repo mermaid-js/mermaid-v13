@@ -115,9 +115,10 @@ export function validateLayout(graph: LayoutGraph, model: LayoutModel): string[]
       problems.push(`missing edge '${e.id}'`);
       continue;
     }
+    const badPoint = (p: Point | undefined): boolean => !!p && (bad(p.x) || bad(p.y));
     if (
-      placed.points.some((p) => bad(p.x) || bad(p.y)) ||
-      (placed.label && (bad(placed.label.x) || bad(placed.label.y)))
+      placed.points.some(badPoint) ||
+      [placed.label, placed.startLabel, placed.endLabel].some(badPoint)
     ) {
       problems.push(`edge '${e.id}' has a non-finite coordinate`);
       continue;
@@ -139,13 +140,27 @@ export function validateLayout(graph: LayoutGraph, model: LayoutModel): string[]
     if (to && !near(to, placed.points[placed.points.length - 1]!)) {
       problems.push(`edge '${e.id}' does not end at its target`);
     }
-    if (e.label && !placed.label) problems.push(`edge '${e.id}' has a label but no label position`);
-    if (e.label && placed.label) {
-      const r = rect({ ...placed.label, ...e.label });
+    // The middle label, then the end labels (D102), which also keep clear of the edge's others.
+    const labels: [string, Rect][] = [];
+    for (const [name, size, at] of [
+      ['label', e.label, placed.label],
+      ['start label', e.startLabel, placed.startLabel],
+      ['end label', e.endLabel, placed.endLabel],
+    ] as const) {
+      if (!size) continue;
+      if (!at) {
+        problems.push(`edge '${e.id}' has a ${name} but no ${name} position`);
+        continue;
+      }
+      const r = rect({ ...at, ...size });
       for (const n of graph.nodes) {
         const b = boxes.get(n.id);
-        if (b && overlaps(r, b)) problems.push(`label of edge '${e.id}' overlaps node '${n.id}'`);
+        if (b && overlaps(r, b)) problems.push(`${name} of edge '${e.id}' overlaps node '${n.id}'`);
       }
+      for (const [other, o] of labels) {
+        if (overlaps(r, o)) problems.push(`${name} of edge '${e.id}' overlaps its ${other}`);
+      }
+      labels.push([name, r]);
     }
   }
   return problems;

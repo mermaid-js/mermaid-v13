@@ -79,7 +79,9 @@ describe('cellProfile (D77, D140)', () => {
     expect(Object.keys(cellProfile().engine).sort()).toEqual(keys);
     for (const k of keys) {
       const v = cellProfile().engine[k as keyof LayoutMetrics];
-      expect(v, k).toBeGreaterThan(0);
+      // An end label may start in the row or column just off its node's side (D102).
+      if (k === 'endLabelAlong') expect(v, k).toBe(0);
+      else expect(v, k).toBeGreaterThan(0);
       expect(v, k).toBeLessThanOrEqual(pxProfile.engine[k as keyof LayoutMetrics]);
     }
   });

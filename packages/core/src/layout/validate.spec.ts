@@ -38,6 +38,62 @@ function good(): LayoutModel {
   };
 }
 
+describe('validateLayout: edge-end labels (D102)', () => {
+  const labelled: LayoutGraph = {
+    ...graph,
+    edges: [
+      {
+        id: 'e',
+        source: 'a',
+        target: 'b',
+        minLen: 1,
+        label: { width: 20, height: 10 },
+        startLabel: { width: 10, height: 10 },
+        endLabel: { width: 10, height: 10 },
+      },
+    ],
+  };
+  const placed = (start: { x: number; y: number }, end = { x: 60, y: 72 }): LayoutModel => {
+    const model = good();
+    const e = model.edges.get('e')!;
+    model.edges.set('e', { ...e, label: { x: 50, y: 50 }, startLabel: start, endLabel: end });
+    return model;
+  };
+
+  it('accepts end labels clear of nodes and of the edge’s other labels', () => {
+    expect(validateLayout(labelled, placed({ x: 60, y: 28 }))).toEqual([]);
+  });
+
+  it('reports an end label without a position', () => {
+    const model = good();
+    model.edges.get('e')!.label = { x: 50, y: 50 };
+    expect(validateLayout(labelled, model)).toContainEqual(
+      "edge 'e' has a start label but no start label position"
+    );
+  });
+
+  it('reports an end label over a node', () => {
+    expect(validateLayout(labelled, placed({ x: 60, y: 18 }))).toContainEqual(
+      "start label of edge 'e' overlaps node 'a'"
+    );
+  });
+
+  it('reports end labels over each other or the middle label', () => {
+    expect(validateLayout(labelled, placed({ x: 55, y: 50 }))).toContainEqual(
+      "start label of edge 'e' overlaps its label"
+    );
+    expect(validateLayout(labelled, placed({ x: 60, y: 70 }))).toContainEqual(
+      "end label of edge 'e' overlaps its start label"
+    );
+  });
+
+  it('reports a non-finite end label', () => {
+    expect(validateLayout(labelled, placed({ x: NaN, y: 28 }))).toContainEqual(
+      "edge 'e' has a non-finite coordinate"
+    );
+  });
+});
+
 describe('validateLayout', () => {
   it('accepts a valid model', () => {
     expect(validateLayout(graph, good())).toEqual([]);
