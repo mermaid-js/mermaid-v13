@@ -42,7 +42,7 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 
 - Not done: `ascii.maxWidth` fitting for ER (D84: tighten, then LR→TB). Flowchart has it; ER drawings ignore the width limit for now.
 
-- Maintainer: should text output honour the v12 px defaults `er.nodeSpacing` 140 (≈18 columns, 9 rows across in LR), `er.rankSpacing` 80 (5 rows) and `er.minEntityWidth` 100 (13 columns)? The goldens are drawn with them, as DESIGN's "px keys still count" implies; LR drawings get 9-row gaps between components.
+- **D118 (maintainer, draft PR #191), applied in T5:** in the cell profile ER uses the profile's own spacing and minimum entity width; `er.nodeSpacing`, `er.rankSpacing` and `er.minEntityWidth` convert from px only when the author sets them (as flowchart's `fromConfig`). v12's px defaults don't convert; SVG unchanged. Re-review the ER `expected*.txt` that change, keep the structural check green.
 
 ## #135 T6 language facet (merged; finish after T5)
 
@@ -50,7 +50,7 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
   - `git mv packages/conformance/language-goldens/er packages/language-service/goldens/er` and delete `packages/conformance/src/er/language-goldens.spec.ts` (its last test fails once ER has a `load`, on purpose).
   - Regenerate flowchart's `completions/empty.out`, which gains `erDiagram`, and review it. Run `property.spec` and `rename-round-trip.spec` over the ER corpus.
 - Not done, doable after T5: the oracle-through-service spec (step 8, copy `flowchart/service-symbols.spec.ts`), and the 50k-character budget numbers (step 10, R-LANG-4).
-- Step 9 (first-paint highlighters in the CodeMirror and Monaco adapters) is flowchart-only for every type until the adapters pick a highlighter per detected type. That is a shared adapter change across all M3 types, not ER's to make alone: open question for the maintainer.
+- **Accepted (D119):** first-paint colours in the CodeMirror and Monaco adapters come via the cross-type ticket #190 (per-type first-paint highlighting), not this spec.
 
 ## Not started
 
