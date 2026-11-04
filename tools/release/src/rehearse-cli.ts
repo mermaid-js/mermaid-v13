@@ -8,10 +8,10 @@
  *    are pending (with none, the current versions are what ships), build, then `packAll` for npm
  *    with every publish gate except the bench (R-PERF needs CI's runner).
  * 2. Starts Verdaccio, proxying npmjs, and publishes the tarballs with `publishAll` and tag
- *    `alpha`, so `mermaid@latest` stays the real v12 and only `alpha` moves, as on npm.
+ *    `alpha`, so `mermaid@latest` stays the real v12 and only `v13-alpha` moves, as on npm.
  * 3. Installs as a user would, from fixtures/rehearsal, in fresh directories:
- *    - everything: `npm install mermaid@alpha --save-exact`, the guide's snippets on each Node,
- *      the `mermaid` bin and `npx mermaid@alpha`, an esbuild browser bundle;
+ *    - everything: `npm install mermaid@v13-alpha --save-exact`, the guide's snippets on each Node,
+ *      the `mermaid` bin and `npx mermaid@v13-alpha`, an esbuild browser bundle;
  *    - pick your diagrams: `mermaid/slim` + `@mermaid-js/diagram-flowchart`, the same checks,
  *      a bundle smaller than the full one, and the published types under `nodenext`.
  * 4. Releases again after a flowchart-only changeset: only flowchart and `mermaid` publish, and
@@ -243,7 +243,7 @@ async function main(): Promise<void> {
     assert(out === version, `bin says ${out}`);
   });
 
-  step(`Publish to a local Verdaccio (${registry}), tag alpha`);
+  step(`Publish to a local Verdaccio (${registry}), tag v13-alpha`);
   const token = await startVerdaccio(join(work, 'verdaccio'));
   const host = registry.replace(/^https?:/, '');
   const npmrc = `registry=${registry}\n${host}:_authToken=${token}\n`;
@@ -267,10 +267,10 @@ async function main(): Promise<void> {
     JSON.parse(
       run('npm', ['view', name, 'dist-tags', '--json', '--registry', registry], work, npmEnv)
     ) as Partial<Record<string, string>>;
-  check('mermaid@alpha is the new build', () => {
+  check('mermaid@v13-alpha is the new build', () => {
     const tags = tagsOf('mermaid');
-    assert(tags.alpha === version, `alpha → ${tags.alpha}`);
-    return `alpha → ${tags.alpha}`;
+    assert(tags['v13-alpha'] === version, `v13-alpha → ${tags['v13-alpha']}`);
+    return `v13-alpha → ${tags['v13-alpha']}`;
   });
   check('mermaid@latest is untouched (still v12)', () => {
     const tags = tagsOf('mermaid');
@@ -280,13 +280,21 @@ async function main(): Promise<void> {
   for (const t of tarballs.filter((p) => p.name !== 'mermaid'))
     check(`${t.name} tags`, () => {
       const tags = tagsOf(t.name);
-      assert(tags.alpha === t.version, `alpha → ${tags.alpha}, released ${t.version}`);
+      assert(
+        tags['v13-alpha'] === t.version,
+        `v13-alpha → ${tags['v13-alpha']}, released ${t.version}`
+      );
       return JSON.stringify(tags);
     });
 
-  step('Scenario "everything": npm install mermaid@alpha');
+  step('Scenario "everything": npm install mermaid@v13-alpha');
   const full = consumer('full', npmrc);
-  run('npm', ['install', 'mermaid@alpha', '--save-exact', '--no-audit', '--no-fund'], full, npmEnv);
+  run(
+    'npm',
+    ['install', 'mermaid@v13-alpha', '--save-exact', '--no-audit', '--no-fund'],
+    full,
+    npmEnv
+  );
   check('package.json pins the exact build', () => {
     const pkg = JSON.parse(readFileSync(join(full, 'package.json'), 'utf8')) as {
       dependencies: Record<string, string>;
@@ -325,13 +333,13 @@ async function main(): Promise<void> {
     const out = run('npx', ['mermaid', 'render', 'diagram.mmd', '--format', 'svg'], full, npmEnv);
     assert(out.startsWith('<svg'), out.slice(0, 200));
   });
-  check('npx mermaid@alpha without an install', () => {
+  check('npx mermaid@v13-alpha without an install', () => {
     const empty = join(work, 'consumers', 'npx');
     mkdirSync(empty, { recursive: true });
     cpSync(join(FIXTURES, 'diagram.mmd'), join(empty, 'diagram.mmd'));
     const out = run(
       'npx',
-      ['--yes', 'mermaid@alpha', 'render', 'diagram.mmd', '--format', 'ascii'],
+      ['--yes', 'mermaid@v13-alpha', 'render', 'diagram.mmd', '--format', 'ascii'],
       empty,
       npmEnv
     );
@@ -349,8 +357,8 @@ async function main(): Promise<void> {
     'npm',
     [
       'install',
-      'mermaid@alpha',
-      '@mermaid-js/diagram-flowchart@alpha',
+      'mermaid@v13-alpha',
+      '@mermaid-js/diagram-flowchart@v13-alpha',
       '--save-exact',
       '--no-audit',
       '--no-fund',
@@ -413,7 +421,7 @@ async function main(): Promise<void> {
   check('an upgrade picks up the new flowchart and keeps core', () => {
     run(
       'npm',
-      ['install', 'mermaid@alpha', '--save-exact', '--no-audit', '--no-fund'],
+      ['install', 'mermaid@v13-alpha', '--save-exact', '--no-audit', '--no-fund'],
       full,
       npmEnv
     );
