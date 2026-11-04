@@ -23,10 +23,11 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/core',
       '@mermaid-chart/diagram-flowchart',
       '@mermaid-chart/language-service',
+      '@mermaid-chart/language-server',
       '@mermaid-chart/plugin-interactions',
       '@mermaid-chart/mermaid',
     ]);
-    const mermaid = manifestOf(packed[4]!.tarball);
+    const mermaid = manifestOf(packed.find((p) => p.name === '@mermaid-chart/mermaid')!.tarball);
     expect(mermaid.name).toBe('@mermaid-chart/mermaid');
     expect(mermaid.dependencies?.['@mermaid-js/core']).toMatch(/^npm:@mermaid-chart\/core@\^/);
     expect(JSON.stringify(mermaid)).not.toContain('workspace:');

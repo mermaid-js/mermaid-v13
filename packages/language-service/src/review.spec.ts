@@ -2,6 +2,8 @@
  * Edge cases from the #31 review: rename checked in context, facet loading failures,
  * immutability and the semantic token types around subgraphs.
  */
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { flowchartLanguage } from '@mermaid-js/diagram-flowchart/language';
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
@@ -190,6 +192,34 @@ describe('snapshots are immutable', () => {
   });
 });
 
+describe('diagnostics are frozen copies', () => {
+  it('copies range, related and expected, and leaves the parse result as it was', async () => {
+    const doc = await open('flowchart TD\n  subgraph S\n    A --> B\n');
+    const own = doc.context.result!.diagnostics;
+    const d = doc.diagnostics().find((x) => x.related?.length)!;
+    expect(d.related!.length).toBeGreaterThan(0);
+    const src = own.find((x) => x.code === d.code)!;
+    expect(d).toEqual(src);
+    for (const part of [d, d.range, d.related, d.related![0], d.related![0]!.range])
+      expect(Object.isFrozen(part)).toBe(true);
+    if (d.expected) expect(Object.isFrozen(d.expected)).toBe(true);
+    expect(d.range).not.toBe(src.range);
+    expect(d.related![0]).not.toBe(src.related![0]);
+    expect(Object.isFrozen(src)).toBe(false);
+    expect(Object.isFrozen(src.range)).toBe(false);
+  });
+
+  it('copies expected', async () => {
+    const doc = await open('flowchart TD\n  A -->\n');
+    const d = doc.diagnostics().find((x) => x.expected?.length)!;
+    const src = doc.context.result!.diagnostics.find((x) => x.code === d.code)!;
+    expect(d.expected).toEqual(src.expected);
+    expect(d.expected).not.toBe(src.expected);
+    expect(Object.isFrozen(d.expected)).toBe(true);
+    expect(Object.isFrozen(src.expected)).toBe(false);
+  });
+});
+
 describe('semantic tokens around subgraphs (D94)', () => {
   const typed = (doc: DocumentSnapshot) =>
     doc
@@ -222,5 +252,42 @@ describe('semantic tokens around subgraphs (D94)', () => {
       'A node [declaration,definition]',
       'S subgraph []',
     ]);
+  });
+});
+
+describe('semantic tokens never overlap (LSP, #38)', () => {
+  const tokens = (doc: DocumentSnapshot) =>
+    doc.semanticTokens().map((t) => `${doc.text.slice(t.range.start, t.range.end)} ${t.type}`);
+
+  it('keeps a node id that spans lexer tokens whole', async () => {
+    // `default-index.js` is two lexer tokens and one node.
+    const doc = await open('flowchart LR\n  default-index.js --> b\n');
+    expect(tokens(doc)).toEqual([
+      'flowchart keyword',
+      'LR enumMember',
+      'default-index.js node',
+      '--> operator',
+      'b node',
+    ]);
+  });
+
+  it('ends a keyword before a comment its token runs over', async () => {
+    const doc = await open('flowchart LR\n  subgraph S\n    a\n  end\n\n  %% note\n  a --> b\n');
+    expect(tokens(doc)).toContain('end keyword');
+    expect(tokens(doc)).toContain('%% note comment');
+  });
+
+  it('are in order and disjoint over the corpus', () => {
+    const root = join(import.meta.dirname, '../../../e2e/diagrams');
+    const files = (readdirSync(root, { recursive: true }) as string[]).filter((f) =>
+      f.endsWith('.mmd')
+    );
+    let overlaps = 0;
+    for (const f of files) {
+      const list = service.update('x', readFileSync(join(root, f), 'utf8')).semanticTokens();
+      for (let i = 1; i < list.length; i++)
+        if (list[i]!.range.start < list[i - 1]!.range.end) overlaps++;
+    }
+    expect(overlaps).toBe(0);
   });
 });

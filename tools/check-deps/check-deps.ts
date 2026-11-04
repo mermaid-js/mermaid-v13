@@ -10,6 +10,8 @@
  * - Editor adapters (`language-service-<editor>`, R-LANG-2) declare no runtime dependencies,
  *   published or not: the editor, the service and core are peers.
  * - Other private packages (conformance, bench, tools) are not published and are skipped.
+ * - `THIRD_PARTY_ALLOWED` names the few third-party packages a published package may depend
+ *   on and import from its bin, by decision: the LSP server's `vscode-languageserver` (D88).
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
@@ -28,6 +30,14 @@ export interface WorkspacePackage {
   dir: string;
   manifest: Manifest;
 }
+
+/** Third-party runtime dependencies a published package may have, by package name. */
+export const THIRD_PARTY_ALLOWED: Readonly<Record<string, readonly string[]>> = {
+  '@mermaid-js/language-server': ['vscode-languageserver'],
+};
+
+const allowedThirdParty = (name: string, dep: string) =>
+  THIRD_PARTY_ALLOWED[name]?.some((d) => dep === d || dep.startsWith(`${d}/`)) ?? false;
 
 const isZeroDependencyPackage = (dir: string) => {
   const name = basename(dir);
@@ -63,7 +73,7 @@ export function findDependencyViolations(packages: WorkspacePackage[]): string[]
         violations.push(
           `${manifest.name}: runtime dependency "${dep}" is not allowed (core, diagram and language-service packages have zero runtime dependencies)`
         );
-      } else if (!workspaceNames.has(dep)) {
+      } else if (!workspaceNames.has(dep) && !allowedThirdParty(manifest.name, dep)) {
         violations.push(`${manifest.name}: runtime dependency "${dep}" is not a workspace package`);
       }
     }
@@ -103,14 +113,15 @@ export function findBinImportViolations(
   sources: BinSource[]
 ): string[] {
   const workspaceNames = [...new Set(packages.map((p) => p.manifest.name))];
-  const allowed = (spec: string) =>
+  const allowed = (spec: string, pkg: WorkspacePackage) =>
     spec.startsWith('node:') ||
     spec.startsWith('.') ||
-    workspaceNames.some((name) => spec === name || spec.startsWith(`${name}/`));
+    workspaceNames.some((name) => spec === name || spec.startsWith(`${name}/`)) ||
+    allowedThirdParty(pkg.manifest.name, spec);
   return sources.flatMap(({ pkg, file, text }) =>
     [...text.matchAll(SPECIFIER)]
       .map((m) => m[1] ?? '')
-      .filter((spec) => !allowed(spec))
+      .filter((spec) => !allowed(spec, pkg))
       .map(
         (spec) =>
           `${pkg.manifest.name}: bin ${file} imports "${spec}" (bins use node: builtins and workspace packages only)`

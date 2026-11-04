@@ -101,6 +101,27 @@ describe('runtime dependency check (R-PERF-2)', () => {
     expect(findDependencyViolations([core, conformance])).toEqual([]);
   });
 
+  it('lets the language server depend on vscode-languageserver and nothing else third-party (D88)', () => {
+    const server = pkg('packages/language-server', {
+      name: '@mermaid-js/language-server',
+      dependencies: {
+        '@mermaid-js/core': 'workspace:^',
+        'vscode-languageserver': '^11',
+        chalk: '^5',
+      },
+    });
+    expect(findDependencyViolations([core, server])).toEqual([
+      '@mermaid-js/language-server: runtime dependency "chalk" is not a workspace package',
+    ]);
+    const other = pkg('packages/mermaid', {
+      name: 'mermaid',
+      dependencies: { 'vscode-languageserver': '^11' },
+    });
+    expect(findDependencyViolations([other])).toEqual([
+      'mermaid: runtime dependency "vscode-languageserver" is not a workspace package',
+    ]);
+  });
+
   it('holds for the real workspace', () => {
     const root = join(import.meta.dirname, '..', '..');
     const packages = readWorkspace(root);
@@ -141,6 +162,21 @@ describe('bin import check (R-PERF-2, D85)', () => {
           `mermaid: bin src/cli.ts imports "${dep}" (bins use node: builtins and workspace packages only)`
       )
     );
+  });
+
+  it('lets the language server bin import vscode-languageserver (D88)', () => {
+    const server = pkg('packages/language-server', {
+      name: '@mermaid-js/language-server',
+      bin: { 'mermaid-language-server': './dist/cli.js' },
+      dependencies: { 'vscode-languageserver': '^11' },
+    });
+    const text = [
+      "import { createConnection } from 'vscode-languageserver/node';",
+      "import yargs from 'yargs';",
+    ].join('\n');
+    expect(findBinImportViolations([server], [{ pkg: server, file: 'src/cli.ts', text }])).toEqual([
+      '@mermaid-js/language-server: bin src/cli.ts imports "yargs" (bins use node: builtins and workspace packages only)',
+    ]);
   });
 
   it('maps a bin from dist to its TypeScript source and holds for the real workspace', () => {
