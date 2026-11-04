@@ -168,6 +168,19 @@ describe('flowchart parse', () => {
     ]);
   });
 
+  it('spans an `accDescr { … }` block from `accDescr` to its `}` (statement and AST)', () => {
+    const src = 'flowchart TD\n  accDescr {\n    two\n    lines\n  }\n  accDescr\n{one}\n  A\n';
+    const r = parse(src);
+    const acc = r.statements.filter((s) => s.kind === 'accDescr').map((s) => text(src, s.range));
+    expect(acc).toEqual(['accDescr {\n    two\n    lines\n  }', 'accDescr\n{one}']);
+    const nodes = r.ast.children.filter((n) => n.type === 'AccDescr');
+    expect(nodes.map((n) => text(src, n.range))).toEqual(acc);
+    // An unclosed block runs to the end of the text.
+    const open = 'flowchart TD\n  accDescr {\n    two';
+    const span = parse(open).statements.find((s) => s.kind === 'accDescr');
+    expect(text(open, span!.range)).toBe('accDescr {\n    two');
+  });
+
   describe('AST ids are stable under edits', () => {
     const base =
       'flowchart TD\n  A[one] --> B\n  style A fill:red\n  A --> B\n  subgraph g\n    B --> C\n  end\n';

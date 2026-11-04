@@ -2,8 +2,10 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   DETECTORS_PATH,
-  REGISTRY_PATH,
+  FACETS_PATH,
   generateDetectors,
+  generateFacets,
+  REGISTRY_PATH,
   generateRegistry,
   readManifests,
 } from './registry.ts';
@@ -103,5 +105,54 @@ describe('first-party diagram registry (DESIGN §12.4)', () => {
 
   it('has an up-to-date detector table (run `pnpm gen:registry`)', () => {
     expect(readFileSync(DETECTORS_PATH, 'utf8')).toBe(generateDetectors(readManifests()));
+  });
+});
+
+describe('first-party language facets (R-LANG-8, D89)', () => {
+  const flowchart = {
+    name: '@x/diagram-flowchart',
+    exports: {
+      '.': { default: './dist/index.js' },
+      './language': { default: './dist/language.js' },
+    },
+    manifest: {
+      plugin: 'diagram' as const,
+      id: 'flowchart',
+      types: ['flowchart-elk', 'flowchart-v2'],
+      formats: ['svg'],
+      export: 'flowchart',
+      language: './dist/language.js',
+    },
+  };
+
+  it('lists every v12 type in detector order, loading the facet through its subpath', () => {
+    const out = generateFacets([flowchart]);
+    expect(out).toContain(
+      "    load: () => import('@x/diagram-flowchart/language').then((m) => m.language),"
+    );
+    expect(out).toContain(
+      "  { type: 'mindmap', id: 'mindmap', detector: (text) => /^\\s*mindmap/.test(text) },"
+    );
+    expect(out).toContain('    detector: (text) => /^\\s*(graph|flowchart)/.test(text),');
+    // The config section the renderer reads: the package id; a type with no package has none.
+    expect(out).toContain("    section: 'flowchart',");
+    expect(out).not.toMatch(/type: 'mindmap'.*section/);
+    expect(out.indexOf("'flowchart-elk'")).toBeLessThan(out.indexOf("'mindmap'"));
+    expect(out.indexOf("'sequence'")).toBeLessThan(out.indexOf("'flowchart-v2'"));
+  });
+
+  it('gives a type whose package has no language entry no loader', () => {
+    const { language: _, ...manifest } = flowchart.manifest;
+    const out = generateFacets([{ ...flowchart, manifest }]);
+    expect(out).toContain("    id: 'flowchart',");
+    expect(out).not.toContain('load:');
+  });
+
+  it('rejects a language entry no exports subpath serves', () => {
+    expect(() => generateFacets([{ ...flowchart, exports: {} }])).toThrow(/no exports subpath/);
+  });
+
+  it('is up to date (run `pnpm gen:registry`)', () => {
+    expect(readFileSync(FACETS_PATH, 'utf8')).toBe(generateFacets(readManifests()));
   });
 });

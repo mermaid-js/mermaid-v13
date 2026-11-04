@@ -1,0 +1,43 @@
+{
+  "name": "@mermaid-js/language-service-monaco",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Monaco adapter for the Mermaid language service: language id, Monarch tokens and every provider in one call.",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/language-service": "workspace:^",
+    "monaco-editor": ">=0.50.0"
+  },
+  "devDependencies": {
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/state": "^6.7.6",
+    "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/language-server": "workspace:^",
+    "@mermaid-js/language-service": "workspace:^",
+    "@mermaid-js/language-service-codemirror": "workspace:^",
+    "@types/node": "^22.19.21",
+    "monaco-editor": "^0.57.0",
+    "vscode-languageserver": "^11.0.0",
+    "vscode-languageserver-protocol": "3.18.5"
+  }
+}

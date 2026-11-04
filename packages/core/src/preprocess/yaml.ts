@@ -11,28 +11,36 @@
  * - duplicate keys, tags, anchors, aliases and reserved indicators are errors, as in js-yaml;
  * - nesting is capped at {@link MAX_YAML_DEPTH} levels across block and flow collections.
  *
+ * Editors opt in to a tree mode (`{ tree: true }`, R-LANG-5): it also returns a {@link YamlNode}
+ * tree with a range for every key and value, and keeps reading after an error.
+ *
  * Every step is linear in the text it reads (R-PARSE-7).
  */
 // cspell:words kepano
-import {
-  ASCII_MAX,
-  BMP_LAST,
-  C1_LAST,
-  CR,
-  HIGH_SURROGATE_FIRST,
-  HIGH_SURROGATE_LAST,
-  LF,
-  LOW_SURROGATE_FIRST,
-  LOW_SURROGATE_LAST,
-  NEL,
-  NUL,
-  REVERSED_BOM,
-  SPACE,
-  TAB,
-} from '../parser-kit/char-codes.ts';
+import { CR, LF, NUL, SPACE, TAB } from '../parser-kit/char-codes.ts';
 import { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Diagnostic } from '../parser-kit/diagnostics.ts';
+import type {
+  YamlMapNode,
+  YamlNode,
+  YamlPair,
+  YamlScalarNode,
+  YamlScalarStyle,
+} from './yaml-nodes.ts';
 import { lineEnd, newlineAt } from '../parser-kit/scanner.ts';
+import {
+  isSpaceOrBreak,
+  isSeqItem,
+  lf,
+  splitKey,
+  HEX_ESCAPE_LENGTH,
+  ESCAPES,
+  fold,
+  stripComment,
+  mappingIndicator,
+  nonPrintable,
+  leading,
+} from './yaml-text.ts';
 
 export type YamlValue = null | boolean | number | string | YamlValue[] | YamlMap;
 export interface YamlMap {
@@ -53,6 +61,18 @@ export interface YamlResult {
   value: YamlValue;
   /** At most one error (the read stops there), plus warnings. Ranges are offsets into `src`. */
   diagnostics: Diagnostic[];
+}
+
+/** Options of the editor mode: the result also has the node tree. */
+export interface YamlTreeOptions extends YamlOptions {
+  tree: true;
+}
+
+export interface YamlTreeResult extends YamlResult {
+  /** The document as read: in tree mode, what could be read around the errors. */
+  value: YamlValue;
+  /** The node tree, or `null` when the document is empty or nothing could be read. */
+  root: YamlNode | null;
 }
 
 /** Maximum nesting of collections. Deeper input is an error instead of a stack overflow. */
@@ -78,186 +98,12 @@ const RE_BIN = /^[-+]?0b[01]+$/;
 const RE_FLOAT = /^[-+]?(?:[0-9][0-9]*(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][-+]?[0-9]+)?$/;
 const RE_INF = /^[-+]?\.(?:inf|Inf|INF)$/;
 const RE_NAN = /^\.(?:nan|NaN|NAN)$/;
-const RE_KEY_START = /[\s#:,[\]{}&*!|>'"%@`]/;
 const RE_FLOW_KEY_END = /[\s,[\]{}]/;
 const RE_FLOW_INDICATOR = /[,[\]{}]/;
 const RE_SPACE = /\s/;
 const RE_LEADING_BLANK = /^[ \t]/;
 const RE_BLOCK_HEADER = /^[|>][-+0-9]*\s*(?:#.*)?$/;
 const RE_INDENT_DIGIT = /[1-9]/;
-
-function isSpaceOrBreak(ch: string | undefined): boolean {
-  return ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r';
-}
-
-function isSeqItem(line: string): boolean {
-  return line === '-' || line.startsWith('- ');
-}
-
-/** `\r\n` and `\r` read as `\n` inside scalar text (offsets are not taken from it). */
-function lf(text: string): string {
-  return text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text;
-}
-
-// Splits `key: rest` at the start of a line. Returns the raw key and the offset where the value starts.
-function splitKey(line: string): { key: string; length: number } | null {
-  const first = line[0];
-  let end: number;
-  let colon: number;
-  if (first === '"' || first === "'") {
-    let i = 1;
-    for (;;) {
-      if (i >= line.length) return null;
-      const c = line[i];
-      if (first === '"' && c === '\\') {
-        i += 2;
-      } else if (c === first) {
-        if (first === '"' || line[i + 1] !== "'") break;
-        i += 2;
-      } else {
-        i++;
-      }
-    }
-    end = i + 1;
-    colon = end;
-    while (isSpaceOrBreak(line[colon])) colon++;
-    if (line[colon] !== ':') return null;
-  } else {
-    if (first === undefined) return null;
-    // `-`, `?` and `:` start a plain key when a non-blank follows (js-yaml readPlainScalar).
-    const indicator = first === '-' || first === '?' || first === ':';
-    if (!indicator && RE_KEY_START.test(first)) return null;
-    if (
-      indicator &&
-      (line.length < 2 || isSpaceOrBreak(line[1]) || line[1] === ':' || line[1] === '#')
-    ) {
-      return null;
-    }
-    // js-yaml: the key ends at a `:` followed by a blank or the line end; `a:b` and `a#b`
-    // are part of it, and `#` starts a comment only after a blank.
-    colon = 1;
-    while (colon < line.length) {
-      const c = line[colon];
-      if (c === ':' && (colon + 1 >= line.length || isSpaceOrBreak(line[colon + 1]))) break;
-      if (c === '#' && isSpaceOrBreak(line[colon - 1])) return null;
-      colon++;
-    }
-    if (line[colon] !== ':') return null;
-    end = colon;
-    while (isSpaceOrBreak(line[end - 1])) end--;
-  }
-  let length = colon + 1;
-  if (length < line.length && !isSpaceOrBreak(line[length])) return null;
-  while (isSpaceOrBreak(line[length])) length++;
-  return { key: line.slice(0, end), length };
-}
-
-const HEX_ESCAPE_LENGTH: Readonly<Record<'x' | 'u' | 'U', number>> = { x: 2, u: 4, U: 8 };
-
-const ESCAPES: Record<string, string> = {
-  '0': '\0',
-  a: '\x07',
-  b: '\b',
-  t: '\t',
-  n: '\n',
-  v: '\v',
-  f: '\f',
-  r: '\r',
-  e: '\x1b',
-  ' ': ' ',
-  '"': '"',
-  '/': '/',
-  '\\': '\\',
-  N: '\x85',
-  _: '\xa0',
-  L: ' ',
-  P: ' ',
-};
-
-// Folds the line breaks of a scalar: blanks around a break go, one break becomes a space, and
-// each further break stays. The lines are trimmed by hand, because a pattern for blanks before
-// a line break rescans a long run of blanks from every one of them.
-function fold(raw: string): string {
-  const text = lf(raw);
-  if (!text.includes('\n')) return text;
-  const lines = text.split('\n');
-  const last = lines.length - 1;
-  for (let i = 0; i <= last; i++) {
-    const line = lines[i] ?? '';
-    let from = 0;
-    let to = line.length;
-    if (i > 0) {
-      while (from < to && (line.charCodeAt(from) === SPACE || line.charCodeAt(from) === TAB))
-        from++;
-    }
-    if (i < last) {
-      while (to > from && (line.charCodeAt(to - 1) === SPACE || line.charCodeAt(to - 1) === TAB))
-        to--;
-    }
-    lines[i] = line.slice(from, to);
-  }
-  return lines
-    .join('\n')
-    .replace(/\n+/g, (m) => (m.length === 1 ? ' ' : '\n'.repeat(m.length - 1)));
-}
-
-function stripComment(s: string): string {
-  let quote = '';
-  for (let i = 0; i < s.length; i++) {
-    const c = s[i];
-    if (quote) {
-      if (c === '\\' && quote === '"') i++;
-      else if (c === quote) quote = '';
-    } else if (c === '"' || c === "'") {
-      quote = c;
-    } else if (c === '#' && (i === 0 || s[i - 1] === ' ' || s[i - 1] === '\t')) {
-      return s.slice(0, i);
-    }
-  }
-  return s;
-}
-
-/**
- * Offset of a `:` that is followed by a blank or ends `s` (js-yaml reads a mapping entry
- * there), or -1. With `value`, `s` starts a value, and a quoted or flow start is not plain.
- */
-function mappingIndicator(s: string, value: boolean): number {
-  const first = s[0];
-  if (value && (first === '"' || first === "'" || first === '{' || first === '[')) return -1;
-  for (let i = 0; i < s.length; i++) {
-    if (s[i] === ':' && (i + 1 === s.length || isSpaceOrBreak(s[i + 1]))) return i;
-  }
-  return -1;
-}
-
-/**
- * The first character in `[start, end)` that js-yaml's PATTERN_NON_PRINTABLE refuses (C0/C1
- * controls but tab, LF, CR and NEL; U+FFFE/U+FFFF; unpaired surrogates), or -1. A loop over
- * the range only: a regex would scan on to the end of the whole source on every call.
- */
-function nonPrintable(src: string, start: number, end: number): number {
-  for (let i = start; i < end; i++) {
-    const c = src.charCodeAt(i);
-    if (c < SPACE) {
-      if (c !== TAB && c !== LF && c !== CR) return i;
-    } else if (c >= ASCII_MAX && c <= C1_LAST) {
-      if (c !== NEL) return i;
-    } else if (c === REVERSED_BOM || c === BMP_LAST) {
-      return i;
-    } else if (c >= HIGH_SURROGATE_FIRST && c <= HIGH_SURROGATE_LAST) {
-      const next = i + 1 < end ? src.charCodeAt(i + 1) : 0;
-      if (next < LOW_SURROGATE_FIRST || next > LOW_SURROGATE_LAST) return i;
-      i++;
-    } else if (c >= LOW_SURROGATE_FIRST && c <= LOW_SURROGATE_LAST) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-function leading(s: string): number {
-  return s.length - s.trimStart().length;
-}
 
 /** One read of one YAML range. Lines keep their offsets into the original source. */
 class Reader {
@@ -268,13 +114,18 @@ class Reader {
   /** Offset where the raw line `i` starts (before the indent is removed). */
   readonly raw: number[] = [];
   i = 0;
+  /** Tree mode: the node of the value read last, taken by the collection that holds it. */
+  node: YamlNode | undefined;
+  /** Tree mode: lines that already have an error (one error per line). */
+  readonly errorLines = new Set<number>();
 
   constructor(
     readonly src: string,
     readonly start: number,
     readonly end: number,
     indent: string,
-    readonly diagnostics: Diagnostics
+    readonly diagnostics: Diagnostics,
+    readonly tree = false
   ) {
     let pos = start;
     for (;;) {
@@ -292,6 +143,28 @@ class Reader {
       if (e >= end) break;
       pos = e + (newlineAt(src, e) || 1);
     }
+  }
+
+  /** Tree mode: record a scalar node for the value just read. */
+  leaf(value: YamlValue, start: number, end: number, style: YamlScalarStyle): void {
+    this.node = {
+      kind: 'scalar',
+      value: value as YamlScalarNode['value'],
+      style,
+      range: { start, end },
+    };
+  }
+
+  /** Tree mode: the node of the value just read (an empty `null` at `at` if there is none). */
+  take(at: number): YamlNode {
+    const node = this.node ?? {
+      kind: 'scalar',
+      value: null,
+      style: 'plain',
+      range: { start: at, end: at },
+    };
+    this.node = undefined;
+    return node;
   }
 
   fail(message: string, start: number, end = start + 1, code = 'YAML_SYNTAX'): never {
@@ -325,6 +198,42 @@ class Reader {
     return k;
   }
 
+  /** Tree mode: report `err` unless its line already has an error. Returns its line. */
+  report(err: YamlError): number {
+    // Binary search: errors can come in any order, and there may be one per line.
+    let lo = 0;
+    let hi = this.raw.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if ((this.raw[mid] ?? 0) <= err.start) lo = mid;
+      else hi = mid - 1;
+    }
+    if (!this.errorLines.has(lo)) {
+      this.errorLines.add(lo);
+      this.diagnostics.error(err.code, `Invalid YAML: ${err.message}.`, {
+        start: err.start,
+        end: err.end,
+      });
+    }
+    return lo;
+  }
+
+  /**
+   * Tree mode: after an error in an entry of a collection at `indent`, go on at the first line
+   * from `from` that can start the next entry: skip the rest of the entry (lines indented
+   * deeper), blank and comment lines, and lines that only close a flow collection.
+   */
+  resync(from: number, indent: number): void {
+    this.i = from;
+    while (this.i < this.lines.length) {
+      const line = this.lines[this.i] ?? '';
+      const t = line.trim();
+      const c = t[0];
+      if (t !== '' && c !== '#' && c !== '}' && c !== ']' && leading(line) <= indent) break;
+      this.i++;
+    }
+  }
+
   /** Index of the line that contains `offset`. */
   lineOf(offset: number, from: number): number {
     let i = from;
@@ -332,18 +241,22 @@ class Reader {
     return i;
   }
 
-  /** Store `value` under `key`, refusing duplicate keys and dropping prototype keys. */
-  assign(target: YamlMap, key: string, value: YamlValue, start: number, end: number): void {
+  /**
+   * Store `value` under `key`, refusing duplicate keys and dropping prototype keys. Returns
+   * whether it was stored.
+   */
+  assign(target: YamlMap, key: string, value: YamlValue, start: number, end: number): boolean {
     if (UNSAFE_KEYS.has(key)) {
       this.diagnostics.warning(
         'YAML_UNSAFE_KEY',
         `The key \`${key}\` is not allowed and was ignored.`,
         { start, end }
       );
-      return;
+      return false;
     }
     if (Object.hasOwn(target, key)) this.fail(`duplicated mapping key \`${key}\``, start, end);
     target[key] = value;
+    return true;
   }
 
   depth(depth: number, at: number): void {
@@ -463,6 +376,8 @@ class Reader {
       const close = ch === '{' ? '}' : ']';
       const map: YamlMap = {};
       const list: YamlValue[] = [];
+      const pairs: YamlPair[] | undefined = this.tree && ch === '{' ? [] : undefined;
+      const items: YamlNode[] | undefined = this.tree && ch === '[' ? [] : undefined;
       pos++;
       let separated = true;
       for (;;) {
@@ -470,21 +385,35 @@ class Reader {
         if (pos >= limit) {
           this.fail(`this \`${ch}\` is never closed with \`${close}\``, open);
         }
-        if (s[pos] === close) return [ch === '{' ? map : list, pos + 1];
+        if (s[pos] === close) {
+          if (this.tree) {
+            const range = { start: open, end: pos + 1 };
+            this.node = pairs
+              ? { kind: 'map', flow: true, pairs, range }
+              : { kind: 'seq', flow: true, items: items ?? [], range };
+          }
+          return [ch === '{' ? map : list, pos + 1];
+        }
         this.entryStart(pos, separated);
         if (ch === '{') {
           const keyAt = pos;
           let key: YamlValue;
           [key, pos] = this.flow(pos, limit, ':,}', depth + 1);
           const keyEnd = pos;
+          const keyRange = this.node?.range;
+          this.node = undefined;
           pos = this.skip(pos, limit);
           let value: YamlValue = null;
           if (s[pos] === ':') [value, pos] = this.flow(pos + 1, limit, ',}', depth + 1);
-          this.assign(map, String(key), value, keyAt, keyEnd);
+          const name = String(key);
+          if (this.assign(map, name, value, keyAt, keyEnd) && pairs && keyRange) {
+            pairs.push({ key: name, keyRange, value: this.take(keyRange.end) });
+          }
         } else {
           let value: YamlValue;
           [value, pos] = this.flow(pos, limit, ',]', depth + 1);
           list.push(value);
+          if (items) items.push(this.take(pos));
         }
         pos = this.skip(pos, limit);
         separated = s[pos] === ',';
@@ -496,7 +425,9 @@ class Reader {
       while (end < limit && s[end] !== '"') end += s[end] === '\\' ? 2 : 1;
       if (end >= limit) this.fail('this double quoted value is never closed', open);
       this.printableQuoted(pos + 1, end);
-      return [this.unquoteDouble(s.slice(pos + 1, end), open), end + 1];
+      const value = this.unquoteDouble(s.slice(pos + 1, end), open);
+      if (this.tree) this.leaf(value, open, end + 1, 'double');
+      return [value, end + 1];
     }
     if (ch === "'") {
       let end = pos + 1;
@@ -509,7 +440,9 @@ class Reader {
       }
       if (end >= limit) this.fail('this single quoted value is never closed', open);
       this.printableQuoted(pos + 1, end);
-      return [fold(s.slice(pos + 1, end)).replace(/''/g, "'"), end + 1];
+      const value = fold(s.slice(pos + 1, end)).replace(/''/g, "'");
+      if (this.tree) this.leaf(value, open, end + 1, 'single');
+      return [value, end + 1];
     }
     let end = pos;
     // Inside a flow collection a plain value ends at any flow indicator (and in a mapping at
@@ -531,12 +464,21 @@ class Reader {
       if (c === '#' && end > pos && RE_SPACE.test(s[end - 1] ?? '')) {
         this.printable(pos, end);
         const value = this.scalar(fold(s.slice(pos, end).trim()), pos);
+        if (this.tree) this.plainLeaf(value, pos, end);
         return [value, Math.min(lineEnd(s, end), limit)];
       }
       end++;
     }
     this.printable(pos, end);
-    return [this.scalar(fold(s.slice(pos, end).trim()), pos), end];
+    const value = this.scalar(fold(s.slice(pos, end).trim()), pos);
+    if (this.tree) this.plainLeaf(value, pos, end);
+    return [value, end];
+  }
+
+  /** Tree mode: a plain flow scalar in `[start, end)`, without the blanks around it. */
+  plainLeaf(value: YamlValue, start: number, end: number): void {
+    while (end > start && isSpaceOrBreak(this.src[end - 1])) end--;
+    this.leaf(value, start, end, 'plain');
   }
 
   blockScalar(header: string, parentIndent: number): string {
@@ -597,7 +539,19 @@ class Reader {
   inlineValue(rest: string, at: number, indent: number, depth: number): YamlValue {
     const first = rest[0];
     if ((first === '|' || first === '>') && RE_BLOCK_HEADER.test(rest)) {
-      return this.blockScalar(rest, indent);
+      const header = this.i - 1;
+      const value = this.blockScalar(rest, indent);
+      if (this.tree) {
+        // The range runs to the end of the last line with text (or of the header).
+        let last = this.i - 1;
+        while (last > header && (this.lines[last] ?? '').trim() === '') last--;
+        const end =
+          last > header
+            ? (this.at[last] ?? 0) + (this.lines[last] ?? '').trimEnd().length
+            : at + stripComment(rest).trimEnd().length;
+        this.leaf(value, at, end, first === '|' ? 'literal' : 'folded');
+      }
+      return value;
     }
     if (first === '{' || first === '[' || first === '"' || first === "'") {
       // The value may continue on later lines: read it straight from the source.
@@ -614,7 +568,8 @@ class Reader {
     }
     const body = stripComment(rest);
     let text = body.trim();
-    this.printable(at, at + text.length);
+    let textEnd = at + text.length;
+    this.printable(at, textEnd);
     this.plainStart(text, at);
     const indicator = mappingIndicator(text, true);
     // `k: a: b` or `k: a:` at a line end: js-yaml reads a second mapping entry and fails.
@@ -652,16 +607,20 @@ class Reader {
       }
       this.printable(from, from + more.length);
       text += (text.endsWith('\n') ? '' : ' ') + more;
+      textEnd = from + more.length;
       this.i++;
     }
     // Blank lines kept for a continuation that never came are not part of the value.
     let cut = text.length;
     while (cut > 0 && text.charCodeAt(cut - 1) === LF) cut--;
     text = text.slice(0, cut);
-    return this.scalar(text, at);
+    const value = this.scalar(text, at);
+    if (this.tree) this.leaf(value, at, textEnd, 'plain');
+    return value;
   }
 
   block(minIndent: number, depth: number): YamlValue {
+    this.node = undefined;
     this.skipBlank();
     if (this.i >= this.lines.length) return null;
     const indent = this.indent();
@@ -672,27 +631,45 @@ class Reader {
 
     if (isSeqItem(line)) {
       const out: YamlValue[] = [];
+      const items: YamlNode[] | undefined = this.tree ? [] : undefined;
+      let seqEnd = lineAt + 1;
       while (this.i < this.lines.length) {
         this.skipBlank();
-        if (this.i >= this.lines.length || this.indent() !== indent) break;
-        const cur = (this.lines[this.i] ?? '').slice(indent);
-        if (!isSeqItem(cur)) break;
-        const rest = cur.slice(1);
-        const pad = leading(rest) + 1;
-        const restAt = (this.at[this.i] ?? 0) + indent + pad;
-        const body = stripComment(rest).trim();
-        if (body === '') {
-          this.i++;
-          out.push(this.block(indent + 1, depth + 1));
-        } else if (splitKey(body) !== null || isSeqItem(body)) {
-          // `- key: value` and `- - x` open a collection at the column after `- `
-          // (the rewritten line keeps its length, so offsets stay valid).
-          this.lines[this.i] = ' '.repeat(indent + pad) + rest.trimStart();
-          out.push(this.block(indent + pad, depth + 1));
-        } else {
-          this.i++;
-          out.push(this.inlineValue(rest.trim(), restAt, indent, depth + 1));
+        if (this.i >= this.lines.length) break;
+        const itemLine = this.i;
+        try {
+          if (this.indent() !== indent) break;
+          const cur = (this.lines[this.i] ?? '').slice(indent);
+          if (!isSeqItem(cur)) break;
+          const rest = cur.slice(1);
+          const pad = leading(rest) + 1;
+          const restAt = (this.at[this.i] ?? 0) + indent + pad;
+          const body = stripComment(rest).trim();
+          if (body === '') {
+            this.i++;
+            out.push(this.block(indent + 1, depth + 1));
+          } else if (splitKey(body) !== null || isSeqItem(body)) {
+            // `- key: value` and `- - x` open a collection at the column after `- `
+            // (the rewritten line keeps its length, so offsets stay valid).
+            this.lines[this.i] = ' '.repeat(indent + pad) + rest.trimStart();
+            out.push(this.block(indent + pad, depth + 1));
+          } else {
+            this.i++;
+            out.push(this.inlineValue(rest.trim(), restAt, indent, depth + 1));
+          }
+          if (items) {
+            const node = this.take(restAt - pad + 1);
+            items.push(node);
+            seqEnd = Math.max(seqEnd, restAt - pad + 1, node.range.end);
+          }
+        } catch (err) {
+          if (!this.tree || !(err instanceof YamlError)) throw err;
+          const bad = this.report(err);
+          this.resync(Math.max(this.i, bad + 1, itemLine + 1), indent);
         }
+      }
+      if (items) {
+        this.node = { kind: 'seq', flow: false, items, range: { start: lineAt, end: seqEnd } };
       }
       return out;
     }
@@ -704,35 +681,61 @@ class Reader {
     }
 
     const out: YamlMap = {};
+    const pairs: YamlPair[] | undefined = this.tree ? [] : undefined;
+    let mapEnd = lineAt;
     while (this.i < this.lines.length) {
       this.skipBlank();
       if (this.i >= this.lines.length) break;
-      const k = this.indent();
-      if (k < indent) break;
-      if (k > indent) this.fail('bad indentation of a mapping entry', ...this.lineRange(this.i));
-      const cur = (this.lines[this.i] ?? '').slice(indent);
-      const km = splitKey(cur);
-      if (!km) this.fail('can not read a block mapping entry', ...this.lineRange(this.i));
-      const keyAt = (this.at[this.i] ?? 0) + indent;
-      const keyEnd = keyAt + km.key.length;
-      const key = String(this.flow(keyAt, keyEnd, '', depth)[0]);
-      const rest = cur.slice(km.length);
-      const restAt = keyAt + km.length;
-      this.i++;
-      let value: YamlValue = null;
-      if (stripComment(rest).trim() === '') {
-        this.skipBlank();
-        if (this.i < this.lines.length) {
-          const next = this.indent();
-          const seq = isSeqItem((this.lines[this.i] ?? '').slice(next));
-          if (next > indent || (seq && next === indent)) {
-            value = this.block(seq ? indent : indent + 1, depth + 1);
+      const entryLine = this.i;
+      let keyAt = -1;
+      let keyEnd = -1;
+      let key: string | undefined;
+      try {
+        const k = this.indent();
+        if (k < indent) break;
+        if (k > indent) this.fail('bad indentation of a mapping entry', ...this.lineRange(this.i));
+        const cur = (this.lines[this.i] ?? '').slice(indent);
+        const km = splitKey(cur);
+        if (!km) this.fail('can not read a block mapping entry', ...this.lineRange(this.i));
+        keyAt = (this.at[this.i] ?? 0) + indent;
+        keyEnd = keyAt + km.key.length;
+        key = String(this.flow(keyAt, keyEnd, '', depth)[0]);
+        const rest = cur.slice(km.length);
+        const restAt = keyAt + km.length;
+        this.i++;
+        this.node = undefined;
+        let value: YamlValue = null;
+        if (stripComment(rest).trim() === '') {
+          this.skipBlank();
+          if (this.i < this.lines.length) {
+            const next = this.indent();
+            const seq = isSeqItem((this.lines[this.i] ?? '').slice(next));
+            if (next > indent || (seq && next === indent)) {
+              value = this.block(seq ? indent : indent + 1, depth + 1);
+            }
           }
+        } else {
+          value = this.inlineValue(rest.trim(), restAt, indent, depth + 1);
         }
-      } else {
-        value = this.inlineValue(rest.trim(), restAt, indent, depth + 1);
+        const node = pairs ? this.take(restAt) : undefined;
+        if (this.assign(out, key, value, keyAt, keyEnd) && pairs && node) {
+          pairs.push({ key, keyRange: { start: keyAt, end: keyEnd }, value: node });
+        }
+        // A dropped key still counts towards the span of the mapping.
+        if (node) mapEnd = Math.max(mapEnd, keyEnd + 1, node.range.end);
+      } catch (err) {
+        if (!pairs || !(err instanceof YamlError)) throw err;
+        const bad = this.report(err);
+        // The key stays (without a value) when it was read and is not a prototype key.
+        if (key !== undefined && !UNSAFE_KEYS.has(key)) {
+          pairs.push({ key, keyRange: { start: keyAt, end: keyEnd } });
+        }
+        mapEnd = Math.max(mapEnd, this.lineRange(entryLine)[1]);
+        this.resync(Math.max(this.i, bad + 1, entryLine + 1), indent);
       }
-      this.assign(out, key, value, keyAt, keyEnd);
+    }
+    if (pairs) {
+      this.node = { kind: 'map', flow: false, pairs, range: { start: lineAt, end: mapEnd } };
     }
     return out;
   }
@@ -744,6 +747,7 @@ class Reader {
       const [value, end] = this.flow(from, this.end, '', 0);
       if (this.skip(end, this.end) >= this.end) return value;
     }
+    if (this.tree) return this.readTree();
     const value = this.block(0, 0);
     this.skipBlank();
     if (this.i < this.lines.length && (this.lines[this.i] ?? '').trim() !== '...') {
@@ -751,29 +755,100 @@ class Reader {
     }
     return value;
   }
+
+  /**
+   * Tree mode: the root block, and after it ends early (a less indented line, or a mapping
+   * after a sequence), each further block from the line where the last one stopped, with one
+   * error for that line. The root is the first block that is a mapping (else the first block);
+   * later mappings add their entries to it, and other later blocks are read only for their
+   * errors.
+   */
+  readTree(): YamlValue {
+    let first: [YamlValue, YamlNode | undefined] | undefined;
+    let map: YamlMap | undefined;
+    let root: YamlMapNode | undefined;
+    for (;;) {
+      this.skipBlank();
+      if (this.i >= this.lines.length || (this.lines[this.i] ?? '').trim() === '...') break;
+      const from = this.i;
+      if (first) {
+        const [at, to] = this.lineRange(from);
+        const message = 'end of the stream or a document separator is expected';
+        this.report(new YamlError('YAML_SYNTAX', message, at, Math.max(to, at)));
+      }
+      let value: YamlValue;
+      try {
+        value = this.block(0, 0);
+      } catch (err) {
+        if (!(err instanceof YamlError)) throw err;
+        this.i = Math.max(this.i, this.report(err) + 1, from + 1);
+        continue;
+      }
+      if (this.i === from) this.i++;
+      const node = this.node;
+      first ??= [value, node];
+      if (node?.kind !== 'map') continue;
+      // A block mapping node always comes with its YamlMap value.
+      const entries = value as YamlMap;
+      if (root && map) for (const pair of node.pairs) this.merge(map, root, pair, entries);
+      else [root, map] = [node, entries];
+    }
+    this.node = root ?? first?.[1];
+    return map ?? first?.[0] ?? null;
+  }
+
+  /** Tree mode: add `pair` of a later root mapping (values in `from`) to the root. */
+  merge(map: YamlMap, root: YamlMapNode, pair: YamlPair, from: YamlMap): void {
+    root.range.end = Math.max(root.range.end, pair.value?.range.end ?? pair.keyRange.end);
+    if (Object.hasOwn(map, pair.key)) {
+      const { start, end } = pair.keyRange;
+      this.report(
+        new YamlError('YAML_SYNTAX', `duplicated mapping key \`${pair.key}\``, start, end)
+      );
+      root.pairs.push({ key: pair.key, keyRange: pair.keyRange });
+      return;
+    }
+    if (pair.value && Object.hasOwn(from, pair.key)) map[pair.key] = from[pair.key] ?? null;
+    root.pairs.push(pair);
+  }
 }
 
 /**
  * Read the YAML in `src` (or in `[options.start, options.end)` of it) with js-yaml's JSON
  * schema semantics. Never throws: errors come back as diagnostics with ranges into `src`.
+ *
+ * With `tree: true` (for editors) the result also has the node tree, with a range for every
+ * key and value, and the read goes on after an error, with at most one error per line.
  */
-export function parseYaml(src: string, options: YamlOptions = {}): YamlResult {
+export function parseYaml(src: string, options: YamlTreeOptions): YamlTreeResult;
+export function parseYaml(src: string, options?: YamlOptions): YamlResult;
+export function parseYaml(
+  src: string,
+  options: YamlOptions & { tree?: boolean } = {}
+): YamlResult | YamlTreeResult {
   const start = options.start ?? 0;
   const end = options.end ?? src.length;
   const diagnostics = new Diagnostics();
-  const reader = new Reader(src, start, end, options.indent ?? '', diagnostics);
+  const tree = options.tree === true;
+  const reader = new Reader(src, start, end, options.indent ?? '', diagnostics, tree);
   try {
     for (let i = start; i < end; i++) {
-      if (src.charCodeAt(i) === NUL) reader.fail('null byte is not allowed in input', i);
+      if (src.charCodeAt(i) !== NUL) continue;
+      const message = 'null byte is not allowed in input';
+      if (tree) reader.report(new YamlError('YAML_SYNTAX', message, i, i + 1));
+      else reader.fail(message, i);
     }
-    return { value: reader.read(), diagnostics: diagnostics.list };
+    const value = reader.read();
+    if (!tree) return { value, diagnostics: diagnostics.list };
+    return { value, root: reader.node ?? null, diagnostics: diagnostics.list };
   } catch (err) {
     if (!(err instanceof YamlError)) throw err;
     diagnostics.error(err.code, `Invalid YAML: ${err.message}.`, {
       start: err.start,
       end: err.end,
     });
-    return { value: null, diagnostics: diagnostics.list };
+    if (!tree) return { value: null, diagnostics: diagnostics.list };
+    return { value: null, root: null, diagnostics: diagnostics.list };
   }
 }
 

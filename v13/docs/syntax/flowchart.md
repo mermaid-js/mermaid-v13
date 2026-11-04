@@ -224,17 +224,27 @@ Subgraph @Subgraph = subgraph SPACE textNoTags [ SQS text SQE ] separator docume
                    | subgraph separator document end ;
 ```
 
+`style id fill:#f9f,stroke:#333`: styles one node or subgraph.
+
 ```ebnf
 Style @Style = STYLE SPACE idString SPACE styles ;
 ```
+
+`classDef name fill:#f9f,color:#000`: defines a class of styles; `classDef default …`
+styles every node without a class.
 
 ```ebnf
 ClassDef @ClassDef = CLASSDEF SPACE idString SPACE styles ;
 ```
 
+`class A,B name`: gives nodes a class (as `A:::name` does).
+
 ```ebnf
 Class @Class = CLASS SPACE idString SPACE idString ;
 ```
+
+`linkStyle 0,2 stroke:#f00`: styles links by their position in the source, from 0;
+`linkStyle default …` styles every link; `interpolate curve` sets their curve.
 
 ```ebnf
 LinkStyle @LinkStyle = LINKSTYLE SPACE ( DEFAULT | numList ) SPACE ( styles | INTERPOLATE SPACE alphaNum [ SPACE styles ] ) ;
@@ -259,6 +269,8 @@ each with an optional tooltip; urls take an optional target.
 Click @Click = CLICK ( CALLBACKNAME [ CALLBACKARGS ] [ SPACE STR ] | alphaNum [ SPACE STR ] | [ HREF ] STR [ SPACE STR ] [ SPACE LINK_TARGET ] ) ;
 ```
 
+`direction LR` inside a subgraph: the direction of its layout.
+
 ```ebnf
 Direction @Direction = direction_tb
                      | direction_bt
@@ -267,9 +279,13 @@ Direction @Direction = direction_tb
                      | direction_td ;
 ```
 
+`accTitle: …`: the accessible title of the diagram.
+
 ```ebnf
 AccTitle @AccTitle = acc_title acc_title_value ;
 ```
+
+`accDescr: …` or `accDescr { … }`: the accessible description of the diagram.
 
 ```ebnf
 AccDescr @AccDescr = acc_descr acc_descr_value
@@ -282,112 +298,112 @@ The lexer works in modes (`INITIAL` and the ones below). In each mode it tries t
 
 Modes: `INITIAL`, `string`, `md_string`, `acc_title`, `acc_descr`, `acc_descr_multiline`, `dir`, `text`, `ellipseText`, `trapText`, `edgeText`, `thickEdgeText`, `dottedEdgeText`, `click`, `callbackname`, `callbackargs`, `shapeData`, `shapeDataStr`.
 
-| Modes | Token | Pattern | Action |
-| --- | --- | --- | --- |
-| INITIAL | acc_title | `accTitle\s*:\s*` | push(acc_title) |
-| acc_title | acc_title_value | `[^\n]*` | pop |
-| INITIAL | acc_descr | `accDescr\s*:\s*` | push(acc_descr) |
-| acc_descr | acc_descr_value | `[^\n]*` | pop |
-| INITIAL | — | `accDescr\s*\{\s*` | push(acc_descr_multiline) |
-| acc_descr_multiline | — | `\}` | pop |
-| acc_descr_multiline | acc_descr_multiline_value | `[^}]*` |  |
-| INITIAL | SHAPE_DATA | `@\{` | push(shapeData) empty |
-| shapeData | SHAPE_DATA | `"` | push(shapeDataStr) |
-| shapeDataStr | SHAPE_DATA | `"` | pop |
-| shapeDataStr | SHAPE_DATA | `[^"]+` | fold |
-| shapeData | SHAPE_DATA | `[^}^"]+` |  |
-| shapeData | — | `\}` | pop |
-| INITIAL | — | `call\s+` | push(callbackname) |
-| callbackname | — | `\(\s*\)` | pop |
-| callbackname | — | `\(` | pop push(callbackargs) |
-| callbackname | CALLBACKNAME | `[^(]*` |  |
-| callbackargs | — | `\)` | pop |
-| callbackargs | CALLBACKARGS | `[^)]*` |  |
-| md_string | MD_STR | `[^`"]+` |  |
-| md_string | — | ``"` | pop |
-| * | — | `"`` | push(md_string) |
-| string | STR | `[^"]+` |  |
-| string | — | `"` | pop |
-| * | — | `"` | push(string) |
-| INITIAL | STYLE | `style\b` |  |
-| INITIAL | DEFAULT | `default\b` |  |
-| INITIAL | LINKSTYLE | `linkStyle\b` |  |
-| INITIAL | INTERPOLATE | `interpolate\b` |  |
-| INITIAL | CLASSDEF | `classDef\b` |  |
-| INITIAL | CLASS | `class\b` |  |
-| INITIAL | HREF | `href\s` |  |
-| INITIAL | — | `click\s+` | push(click) |
-| click | — | `\s` | pop |
-| click | CLICK | `\S*` |  |
-| INITIAL | GRAPH | `(?:flowchart-elk\|swimlane-beta\|graph\|flowchart)\b` | push-once(dir) |
-| INITIAL | subgraph | `subgraph\b` |  |
-| INITIAL | end | `end\b\s*` |  |
-| INITIAL | LINK_TARGET | `(?:_self\|_blank\|_parent\|_top)\b` |  |
-| dir | NODIR | `(?:\r?\n)*\s*\n` | pop |
-| dir | DIR | `\s*(?:LR\|RL\|TB\|BT\|TD\|BR)\b\|\s*[<>^]\|\s*v\b` | pop |
-| INITIAL | direction_tb | `.*direction\s+TB[^\n]*` |  |
-| INITIAL | direction_bt | `.*direction\s+BT[^\n]*` |  |
-| INITIAL | direction_rl | `.*direction\s+RL[^\n]*` |  |
-| INITIAL | direction_lr | `.*direction\s+LR[^\n]*` |  |
-| INITIAL | direction_td | `.*direction\s+TD[^\n]*` |  |
-| INITIAL | LINK_ID | `[^\s"]+@(?=[^{"])` |  |
-| INITIAL | NUM | `[0-9]+` |  |
-| INITIAL | BRKT | `#` |  |
-| INITIAL | STYLE_SEPARATOR | `:::` |  |
-| INITIAL | COLON | `:` |  |
-| INITIAL | AMP | `&` |  |
-| INITIAL | SEMI | `;` |  |
-| INITIAL | COMMA | `,` |  |
-| INITIAL | MULT | `\*` |  |
-| INITIAL, edgeText | LINK | `\s*[xo<]?--+[-xo>]\s*` | pop |
-| INITIAL | START_LINK | `\s*[xo<]?--\s*` | push(edgeText) |
-| edgeText | EDGE_TEXT | `[^-]\|-(?!-)` |  |
-| INITIAL, thickEdgeText | LINK | `\s*[xo<]?==+[=xo>]\s*` | pop |
-| INITIAL | START_LINK | `\s*[xo<]?==\s*` | push(thickEdgeText) |
-| thickEdgeText | EDGE_TEXT | `[^=]` |  |
-| INITIAL, dottedEdgeText | LINK | `\s*[xo<]?-?\.+-[xo>]?\s*` | pop |
-| INITIAL | START_LINK | `\s*[xo<]?-\.\s*` | push(dottedEdgeText) |
-| dottedEdgeText | EDGE_TEXT | `[^.]` |  |
-| * | LINK | `\s*~~~+\s*` |  |
-| ellipseText | ELLIPSE_END | `[-\/)]\)` | pop |
-| ellipseText | TEXT | `[^()[\]{}]\|!\)+` |  |
-| * | ELLIPSE_START | `\(-` | push(ellipseText) |
-| text | STADIUMEND | `\]\)` | pop |
-| * | STADIUMSTART | `\(\[` | push(text) |
-| text | SUBROUTINEEND | `\]\]` | pop |
-| * | SUBROUTINESTART | `\[\[` | push(text) |
-| INITIAL | VERTEX_WITH_PROPS_START | `\[\\|` |  |
-| INITIAL | TAGEND | `>` | push(text) |
-| text | CYLINDEREND | `\)\]` | pop |
-| * | CYLINDERSTART | `\[\(` | push(text) |
-| text | DOUBLECIRCLEEND | `\)\)\)` | pop |
-| * | DOUBLECIRCLESTART | `\(\(\(` | push(text) |
-| trapText | TRAPEND | `[\\(?=\]]\]` | pop |
-| trapText | INVTRAPEND | `\/\]` | pop |
-| trapText | TEXT | `\/(?!\])\|\\(?!\])\|[^\\[\](){}\/]+` |  |
-| * | TRAPSTART | `\[\/` | push(trapText) |
-| * | INVTRAPSTART | `\[\\` | push(trapText) |
-| INITIAL | TAGSTART | `<` |  |
-| INITIAL | UP | `\^` |  |
-| INITIAL | SEP | `\\\\|` |  |
-| INITIAL | DOWN | `v\b` |  |
-| INITIAL | NODE_STRING | `(?:[A-Za-z0-9!"#$%&'*+.`?\\_\/]\|-(?=[^>\-.]))+` |  |
-| INITIAL | MINUS | `-` |  |
-| INITIAL | UNICODE_TEXT | `[\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02C1\u02C6-\u02D1\u02E0…` |  |
-| text | PIPE | `\\|` | pop |
-| * | PIPE | `\\|` | push(text) |
-| text | PE | `\)` | pop |
-| * | PS | `\(` | push(text) |
-| text | SQE | `\]` | pop |
-| * | SQS | `\[` | push(text) |
-| text | DIAMOND_STOP | `\}` | pop |
-| * | DIAMOND_START | `\{` | push(text) |
-| text | TEXT | `[^[\](){}\|"]+` |  |
-| INITIAL | NEWLINE | `(?:\r?\n)+` |  |
-| INITIAL | SPACE | `[^\S\n\r]+` |  |
-| INITIAL | EOF | `$` |  |
+| Modes | Token | Pattern | Action | Doc |
+| --- | --- | --- | --- | --- |
+| INITIAL | acc_title | `accTitle\s*:\s*` | push(acc_title) | `accTitle: …` and `accDescr: …` take the rest of the line; `accDescr { … }` runs to `}`. |
+| acc_title | acc_title_value | `[^\n]*` | pop |  |
+| INITIAL | acc_descr | `accDescr\s*:\s*` | push(acc_descr) |  |
+| acc_descr | acc_descr_value | `[^\n]*` | pop |  |
+| INITIAL | — | `accDescr\s*\{\s*` | push(acc_descr_multiline) |  |
+| acc_descr_multiline | — | `\}` | pop |  |
+| acc_descr_multiline | acc_descr_multiline_value | `[^}]*` |  |  |
+| INITIAL | SHAPE_DATA | `@\{` | push(shapeData) empty | Shape data `@{ … }`: YAML in braces; line breaks in a quoted value read as `<br/>`. |
+| shapeData | SHAPE_DATA | `"` | push(shapeDataStr) |  |
+| shapeDataStr | SHAPE_DATA | `"` | pop |  |
+| shapeDataStr | SHAPE_DATA | `[^"]+` | fold |  |
+| shapeData | SHAPE_DATA | `[^}^"]+` |  |  |
+| shapeData | — | `\}` | pop |  |
+| INITIAL | — | `call\s+` | push(callbackname) | `call name(args)` after `click <id>`. |
+| callbackname | — | `\(\s*\)` | pop |  |
+| callbackname | — | `\(` | pop push(callbackargs) |  |
+| callbackname | CALLBACKNAME | `[^(]*` |  |  |
+| callbackargs | — | `\)` | pop |  |
+| callbackargs | CALLBACKARGS | `[^)]*` |  |  |
+| md_string | MD_STR | `[^`"]+` |  | Strings: `"…"` and markdown strings `` "`…`" ``. They open in every mode. |
+| md_string | — | ``"` | pop |  |
+| * | — | `"`` | push(md_string) |  |
+| string | STR | `[^"]+` |  |  |
+| string | — | `"` | pop |  |
+| * | — | `"` | push(string) |  |
+| INITIAL | STYLE | `style\b` |  | Statement keywords. |
+| INITIAL | DEFAULT | `default\b` |  | `classDef default …` styles every node without a class; `linkStyle default …` every link. |
+| INITIAL | LINKSTYLE | `linkStyle\b` |  |  |
+| INITIAL | INTERPOLATE | `interpolate\b` |  | `linkStyle … interpolate curve`: the curve the links are drawn with (`basis`, `linear`, …). |
+| INITIAL | CLASSDEF | `classDef\b` |  |  |
+| INITIAL | CLASS | `class\b` |  |  |
+| INITIAL | HREF | `href\s` |  |  |
+| INITIAL | — | `click\s+` | push(click) | `click <id>`: the id is the next run of non-blanks. |
+| click | — | `\s` | pop |  |
+| click | CLICK | `\S*` |  |  |
+| INITIAL | GRAPH | `(?:flowchart-elk\|swimlane-beta\|graph\|flowchart)\b` | push-once(dir) | The header keyword; only the first one opens the direction mode. |
+| INITIAL | subgraph | `subgraph\b` |  |  |
+| INITIAL | end | `end\b\s*` |  |  |
+| INITIAL | LINK_TARGET | `(?:_self\|_blank\|_parent\|_top)\b` |  |  |
+| dir | NODIR | `(?:\r?\n)*\s*\n` | pop | The header's direction, or a line break for none. |
+| dir | DIR | `\s*(?:LR\|RL\|TB\|BT\|TD\|BR)\b\|\s*[<>^]\|\s*v\b` | pop |  |
+| INITIAL | direction_tb | `.*direction\s+TB[^\n]*` |  | `direction TB` inside a subgraph: the whole line is one token. |
+| INITIAL | direction_bt | `.*direction\s+BT[^\n]*` |  |  |
+| INITIAL | direction_rl | `.*direction\s+RL[^\n]*` |  |  |
+| INITIAL | direction_lr | `.*direction\s+LR[^\n]*` |  |  |
+| INITIAL | direction_td | `.*direction\s+TD[^\n]*` |  |  |
+| INITIAL | LINK_ID | `[^\s"]+@(?=[^{"])` |  | An edge id `e1@` before a link: the run up to its last `@` not followed by `{` or `"`. |
+| INITIAL | NUM | `[0-9]+` |  |  |
+| INITIAL | BRKT | `#` |  |  |
+| INITIAL | STYLE_SEPARATOR | `:::` |  | `A:::name`: gives the node a class, as `class A name` does. |
+| INITIAL | COLON | `:` |  |  |
+| INITIAL | AMP | `&` |  |  |
+| INITIAL | SEMI | `;` |  |  |
+| INITIAL | COMMA | `,` |  |  |
+| INITIAL | MULT | `\*` |  |  |
+| INITIAL, edgeText | LINK | `\s*[xo<]?--+[-xo>]\s*` | pop | A link: `-->`, `---`, `-.->`, `==>`, `~~~`; `>`, `o` or `x` heads (`<`, `o`, `x` at the start too for both ends). `--`, `==` and `-.` followed by text open an edge-text mode, closed by the arrow. |
+| INITIAL | START_LINK | `\s*[xo<]?--\s*` | push(edgeText) |  |
+| edgeText | EDGE_TEXT | `[^-]\|-(?!-)` |  |  |
+| INITIAL, thickEdgeText | LINK | `\s*[xo<]?==+[=xo>]\s*` | pop |  |
+| INITIAL | START_LINK | `\s*[xo<]?==\s*` | push(thickEdgeText) |  |
+| thickEdgeText | EDGE_TEXT | `[^=]` |  |  |
+| INITIAL, dottedEdgeText | LINK | `\s*[xo<]?-?\.+-[xo>]?\s*` | pop |  |
+| INITIAL | START_LINK | `\s*[xo<]?-\.\s*` | push(dottedEdgeText) |  |
+| dottedEdgeText | EDGE_TEXT | `[^.]` |  |  |
+| * | LINK | `\s*~~~+\s*` |  |  |
+| ellipseText | ELLIPSE_END | `[-\/)]\)` | pop | Node shapes: an opener pushes a label mode, the matching closer pops it. |
+| ellipseText | TEXT | `[^()[\]{}]\|!\)+` |  |  |
+| * | ELLIPSE_START | `\(-` | push(ellipseText) |  |
+| text | STADIUMEND | `\]\)` | pop |  |
+| * | STADIUMSTART | `\(\[` | push(text) |  |
+| text | SUBROUTINEEND | `\]\]` | pop |  |
+| * | SUBROUTINESTART | `\[\[` | push(text) |  |
+| INITIAL | VERTEX_WITH_PROPS_START | `\[\\|` |  |  |
+| INITIAL | TAGEND | `>` | push(text) |  |
+| text | CYLINDEREND | `\)\]` | pop |  |
+| * | CYLINDERSTART | `\[\(` | push(text) |  |
+| text | DOUBLECIRCLEEND | `\)\)\)` | pop |  |
+| * | DOUBLECIRCLESTART | `\(\(\(` | push(text) |  |
+| trapText | TRAPEND | `[\\(?=\]]\]` | pop |  |
+| trapText | INVTRAPEND | `\/\]` | pop |  |
+| trapText | TEXT | `\/(?!\])\|\\(?!\])\|[^\\[\](){}\/]+` |  |  |
+| * | TRAPSTART | `\[\/` | push(trapText) |  |
+| * | INVTRAPSTART | `\[\\` | push(trapText) |  |
+| INITIAL | TAGSTART | `<` |  |  |
+| INITIAL | UP | `\^` |  |  |
+| INITIAL | SEP | `\\\\|` |  |  |
+| INITIAL | DOWN | `v\b` |  |  |
+| INITIAL | NODE_STRING | `(?:[A-Za-z0-9!"#$%&'*+.`?\\_\/]\|-(?=[^>\-.]))+` |  | Node ids. `-` joins an id unless an arrow (`>`, `-`, `.`) follows; `=` never does. |
+| INITIAL | MINUS | `-` |  |  |
+| INITIAL | UNICODE_TEXT | `[\u00AA\u00B5\u00BA\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02C1\u02C6-\u02D1\u02E0…` |  | Letters outside ASCII (v12's `UNICODE_TEXT` class), one per token. |
+| text | PIPE | `\\|` | pop | Plain label brackets, and the text inside them. |
+| * | PIPE | `\\|` | push(text) |  |
+| text | PE | `\)` | pop |  |
+| * | PS | `\(` | push(text) |  |
+| text | SQE | `\]` | pop |  |
+| * | SQS | `\[` | push(text) |  |
+| text | DIAMOND_STOP | `\}` | pop |  |
+| * | DIAMOND_START | `\{` | push(text) |  |
+| text | TEXT | `[^[\](){}\|"]+` |  |  |
+| INITIAL | NEWLINE | `(?:\r?\n)+` |  | Separators. `EOF` is the end of the text in the initial mode. |
+| INITIAL | SPACE | `[^\S\n\r]+` |  |  |
+| INITIAL | EOF | `$` |  |  |
 
 Removed before lexing (highlighted only):
 
-- COMMENT: `%%(?!\{)[^\n]*`
-- DIRECTIVE: `%%\{.*?\}%%`
+- COMMENT: `^[^\S\n]*%%(?!\{)[^\n]+`
+- DIRECTIVE: `[^\S\n]*%%\{.*?\}%%`
