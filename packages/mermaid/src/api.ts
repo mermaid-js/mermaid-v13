@@ -209,11 +209,17 @@ const isPlain = (v: unknown): v is Plain =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 const UNSAFE = new Set(['__proto__', 'constructor', 'prototype']);
 
+// Arrays are copied too: the result is frozen, and the caller's own arrays must stay theirs.
+function copyValue(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(copyValue);
+  return isPlain(v) ? mergeInto({}, v) : v;
+}
+
 function mergeInto(target: Plain, source: Plain): Plain {
   for (const [k, v] of Object.entries(source)) {
     if (UNSAFE.has(k) || v === undefined) continue;
     const t = target[k];
-    target[k] = isPlain(v) ? mergeInto(isPlain(t) ? { ...t } : {}, v) : v;
+    target[k] = isPlain(v) ? mergeInto(isPlain(t) ? { ...t } : {}, v) : copyValue(v);
   }
   return target;
 }
@@ -252,10 +258,17 @@ function stableJson(value: unknown): string {
   return JSON.stringify(value) ?? 'null';
 }
 
+/** Integrator options as they enter a key: a measurer counts by its `id` (DESIGN §5.1). */
+function optionsKey(options: Readonly<IntegratorOptions>): unknown {
+  const { measurer, ...rest } = options;
+  return measurer ? { ...rest, measurer: measurer.id } : rest;
+}
+
 /**
  * `mermaid-<FNV-1a 32 of text + resolved config + integrator options + unit profile>`: distinct
- * per diagram, deterministic (R-SVG-3, R-ARCH-6). Functions (measurer) serialise as null. The
- * px profile adds nothing, so SVG ids are as before units joined the key.
+ * per diagram, deterministic (R-SVG-3, R-ARCH-6). Pass options through `optionsKey`, so a
+ * measurer counts by its id and never by its state. The px profile adds nothing, so SVG ids
+ * are as before units joined the key.
  */
 export function defaultIdPrefix(
   text: string,
@@ -374,6 +387,7 @@ interface CacheEntry {
 }
 
 const CACHE_SIZE = 32;
+const OVERLAY_CACHE_SIZE = 16;
 
 /** How a render measures and sizes: px for SVG, cells for text (D77, D84). */
 interface Units {
@@ -381,6 +395,8 @@ interface Units {
   readonly measurer?: Measurer;
   /** `availableWidth` in the profile's units. */
   readonly width?: number;
+  /** Text output: the config with its `ascii` section, and what the text entry reads besides. */
+  readonly text?: Pick<TextRenderContext, 'config' | 'title' | 'ast'>;
 }
 
 /** One `mermaid` API object with its own registry and defaults. */
@@ -521,16 +537,37 @@ export function createMermaid() {
     );
   }
 
-  // The same per-call config object over the same defaults gives the same snapshot, so
-  // `prepare(text, o)` then `renderSync(text, o)` hits the parse cache.
-  const overlays = new WeakMap<InitializeConfig, { base: Snapshot; snap: Snapshot }>();
+  // Equal per-call configs over the same defaults give the same snapshot, so
+  // `prepare(text, o)` then `renderSync(text, o)` hits the parse cache, and a fresh but equal
+  // object (or one changed in place) is keyed by what it holds, not by its identity.
+  let overlayBase = site;
+  const overlays = new Map<string, Snapshot>();
+  const measurerIds = new WeakMap<object, number>();
+  let measurerCount = 0;
+  const overlayKey = (extra: InitializeConfig): string => {
+    const { measurer, ...rest } = extra as Plain;
+    if (measurer === undefined || measurer === null || typeof measurer !== 'object')
+      return stableJson(extra);
+    let n = measurerIds.get(measurer);
+    if (n === undefined) measurerIds.set(measurer, (n = ++measurerCount));
+    return `${n}\u0000${stableJson(rest)}`;
+  };
   function snap(options?: RenderOptions): Snapshot {
     const extra = options?.config;
     if (!extra) return site;
-    const hit = overlays.get(extra);
-    if (hit && hit.base === site) return hit.snap;
-    const s = overlay(site, extra);
-    overlays.set(extra, { base: site, snap: s });
+    if (overlayBase !== site) {
+      overlays.clear();
+      overlayBase = site;
+    }
+    const key = overlayKey(extra);
+    let s = overlays.get(key);
+    if (s) {
+      overlays.delete(key);
+    } else {
+      s = overlay(site, extra);
+      if (overlays.size >= OVERLAY_CACHE_SIZE) overlays.delete(overlays.keys().next().value!);
+    }
+    overlays.set(key, s);
     return s;
   }
 
@@ -551,8 +588,20 @@ export function createMermaid() {
     if (!hook) throw new UnsupportedFormatError(a.detected.type, 'ascii');
   }
 
+  /** `svg` or `ascii`; anything else is an `UnsupportedFormatError` in both phases (D80). */
+  function checkFormat(text: string, s: Snapshot, f = 'svg'): 'svg' | 'ascii' {
+    if (f === 'svg' || f === 'ascii') return f;
+    let type = 'unknown';
+    try {
+      type = detect(text, s).detected.type;
+    } catch {
+      // The format error wins over whatever else is wrong with the text.
+    }
+    throw new UnsupportedFormatError(type, f);
+  }
+
   async function prepareWith(text: string, s: Snapshot, format?: string): Promise<Analysis> {
-    const ascii = format === 'ascii';
+    const ascii = checkFormat(text, s, format) === 'ascii';
     let analysis = cached(text, s);
     if (!analysis) {
       const { detected, pre } = detect(text, s);
@@ -611,7 +660,7 @@ export function createMermaid() {
     s: Snapshot,
     options: RenderOptions | undefined,
     analysis: Analysis,
-    { units, measurer, width }: Units
+    { units, measurer, width, text: textOnly }: Units
   ): { ctx: RenderContext; warnings: Warning[] } {
     const { prepared, plugin } = analysis;
     const { config } = prepared;
@@ -665,7 +714,8 @@ export function createMermaid() {
       theme,
       securityLevel: resolveSecurityLevel(config.securityLevel, warn),
       get idPrefix() {
-        return (idPrefix ??= options?.id ?? defaultIdPrefix(text, config, s.options, units));
+        return (idPrefix ??=
+          options?.id ?? defaultIdPrefix(text, config, optionsKey(s.options), units));
       },
       version: VERSION,
       linkSchemes: s.options.linkSchemes,
@@ -679,6 +729,8 @@ export function createMermaid() {
         );
       },
       warn,
+      // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
+      ...textOnly,
     };
     return { ctx, warnings };
   }
@@ -698,20 +750,24 @@ export function createMermaid() {
       throw new NotLoadedError([{ kind: 'diagram', name: `${plugin.id}/ascii` }]);
     const explicit = (options as TextRenderOptions | undefined)?.ascii;
     const { charset, padding, maxWidth } = backend.asciiOptions(prepared.config, explicit);
+    const { title } = analysis;
+    // The diagram's text entry reads the section from the config: hand it the resolved one.
+    const ascii = Object.freeze({
+      charset,
+      padding,
+      ...(maxWidth === undefined ? {} : { maxWidth }),
+    });
     const { ctx, warnings } = contextFor(text, s, options, analysis, {
       units: cellProfile(padding),
       measurer: backend.cellMeasurer,
       width: maxWidth,
+      text: {
+        config: Object.freeze({ ...prepared.config, ascii }),
+        ...(title !== undefined ? { title } : {}),
+        ast: prepared.parse.ast,
+      },
     });
-    const { title } = analysis;
-    // The diagram's text entry reads the section from the config: hand it the resolved one.
-    const ascii = { charset, padding, ...(maxWidth === undefined ? {} : { maxWidth }) };
-    const textCtx: TextRenderContext = {
-      ...ctx,
-      config: Object.freeze({ ...ctx.config, ascii }),
-      ...(title !== undefined ? { title } : {}),
-      ast: prepared.parse.ast,
-    };
+    const textCtx = ctx as TextRenderContext;
     // D86: postParse and postLayout run (LaidOut.units 'cell'); postRender, afterMount never.
     const run = hooks.size === 0 ? undefined : hooks.start(textCtx, plugin.id);
     const out = drawText(
@@ -744,17 +800,7 @@ export function createMermaid() {
     s: Snapshot,
     options: RenderOptions | undefined
   ): RenderResult | TextRenderResult {
-    const format: string = options?.format ?? 'svg';
-    if (format !== 'svg' && format !== 'ascii') {
-      const type = (() => {
-        try {
-          return detect(text, s).detected.type;
-        } catch {
-          return 'unknown';
-        }
-      })();
-      throw new UnsupportedFormatError(type, format);
-    }
+    const format = checkFormat(text, s, options?.format);
     const analysis = analysisFor(text, s, options, format === 'ascii');
     if (!('prepared' in analysis)) return analysis;
     if (format === 'ascii') return drawAscii(text, s, options, analysis);
