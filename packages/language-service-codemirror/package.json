@@ -1,0 +1,50 @@
+{
+  "name": "@mermaid-js/language-service-codemirror",
+  "version": "0.0.0",
+  "private": true,
+  "description": "CodeMirror 6 adapter for the Mermaid language service: one `mermaid()` extension with highlighting, diagnostics, completion, hover, folding, semantic tokens and a cursor-to-AST facet.",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "gen": "tsx scripts/generate.ts",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@codemirror/autocomplete": "^6.18.0",
+    "@codemirror/language": "^6.10.0",
+    "@codemirror/lint": "^6.8.0",
+    "@codemirror/state": "^6.4.0",
+    "@codemirror/view": "^6.26.0",
+    "@lezer/common": "^1.2.0",
+    "@lezer/highlight": "^1.2.0",
+    "@lezer/lr": "^1.4.0",
+    "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/language-service": "workspace:^"
+  },
+  "devDependencies": {
+    "@codemirror/autocomplete": "^6.18.0",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/lint": "^6.8.0",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@lezer/common": "^1.5.4",
+    "@lezer/generator": "1.7.1",
+    "@lezer/highlight": "^1.2.5",
+    "@lezer/lr": "1.4.2",
+    "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/language-service": "workspace:^",
+    "@types/node": "^22.19.21",
+    "tsx": "^4.20.6"
+  }
+}

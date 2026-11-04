@@ -1,0 +1,13 @@
+flowchart TD
+  |A -->\|label\| B
+  subgraph one
+    A --> B
+  end
+  B --> one|
+  style A fill:#f00
+  class A,B hot
+  classDef |hot fill:#f96
+  A:::hot
+  click A callback "tip"
+  e1@--> |
+  A e1|@--> B

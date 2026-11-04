@@ -1,0 +1,9 @@
+4:3-4:7 "thme" warning CONFIG_UNKNOWN_KEY: Unknown config key "thme"; ignored. Did you mean "theme"?
+5:3-5:11 "fontsize" warning CONFIG_UNKNOWN_KEY: Unknown config key "fontsize"; ignored. Did you mean "fontSize"?
+9:5-9:9 "curv" warning CONFIG_UNKNOWN_KEY: Unknown config key "flowchart.curv"; ignored. Did you mean "curve"?
+10:5-10:15 "htmlLabels" warning CONFIG_REMOVED_KEY: Config key "flowchart.htmlLabels" was removed in 13.0.0 and has no effect. Labels are SVG text only; there is no HTML label mode (D5). Replacement: none; labels support a markdown subset rendered as SVG text.
+13:5-13:16 "mirorActors" warning CONFIG_UNKNOWN_KEY: Unknown config key "sequence.mirorActors"; ignored. Did you mean "mirrorActors"?
+14:3-14:18 "dompurifyConfig" warning CONFIG_REMOVED_KEY: Config key "dompurifyConfig" was removed in 13.0.0 and has no effect. v13 has no HTML sanitizer: output is safe by construction (R-SEC-1). Replacement: none.
+15:3-15:11 "zzzzzzzz" warning CONFIG_UNKNOWN_KEY: Unknown config key "zzzzzzzz"; ignored.
+17:3-17:11 "myPlugin" warning CONFIG_UNKNOWN_KEY: Unknown config key "myPlugin"; ignored.
+22:1-22:1 "" error UNEXPECTED: Expected a node id, got the end of the text.

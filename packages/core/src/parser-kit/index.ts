@@ -5,6 +5,8 @@
  */
 export { FIRST_DIAGRAM_KIND, Kind, tokenText, TokenWriter } from './tokens.ts';
 export type { TokenKind, TokenStream } from './tokens.ts';
+export { kindCategories, SHARED_CATEGORIES, TOKEN_CATEGORIES } from './categories.ts';
+export type { TokenCategory } from './categories.ts';
 export {
   charTable,
   hasClass,
@@ -24,7 +26,9 @@ export type { Position, Range } from './positions.ts';
 export { Diagnostics, ExpectedTable, formatExpected, MAX_EXPECTED } from './diagnostics.ts';
 export type { Diagnostic, DiagnosticExtra, RelatedInfo, Severity } from './diagnostics.ts';
 export { formatDiagnostic } from './format.ts';
-export { inKindSet, kindSet, TokenCursor, TRIVIA } from './cursor.ts';
+export { inKindSet, kindSet, ProbeCursor, TokenCursor, TRIVIA } from './cursor.ts';
+export { Probe } from './probe.ts';
+export type { ProbeResult } from './probe.ts';
 export type { KindSet } from './cursor.ts';
 export { syncTo } from './recovery.ts';
 export { significantTokens, skipTo } from './view.ts';
@@ -43,3 +47,12 @@ export {
   sourceView,
 } from './source-view.ts';
 export type { Hole, SourceView, SourceViewOptions } from './source-view.ts';
+export type {
+  CompletionItem,
+  CompletionKind,
+  DocumentView,
+  FacetParseOptions,
+  Hover,
+  HoverTarget,
+  LanguageFacet,
+} from './language.ts';

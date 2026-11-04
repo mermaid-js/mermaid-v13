@@ -307,6 +307,11 @@
       "count": 3
     }
   },
+  "packages/core/src/preprocess/yaml-text.ts": {
+    "complexity": {
+      "count": 1
+    }
+  },
   "packages/core/src/preprocess/yaml.spec.ts": {
     "tsdoc/syntax": {
       "count": 1
@@ -320,7 +325,7 @@
       "count": 1
     },
     "complexity": {
-      "count": 6
+      "count": 5
     },
     "tsdoc/syntax": {
       "count": 1

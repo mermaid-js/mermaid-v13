@@ -12,6 +12,7 @@ import { Kind } from './tokens.ts';
  * consuming it. Returns the source range skipped over (empty when already at a boundary).
  */
 export function syncTo(cursor: TokenCursor, boundaries: KindSet): Range {
+  cursor.recovering();
   const start = cursor.start;
   let end = start;
   while (cursor.kind !== Kind.EOF && boundaries[cursor.kind] !== 1) {

@@ -72,7 +72,7 @@ import {
   SourceOffsets,
   sourceView,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, Range, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Probe, Range, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 /**
@@ -107,6 +107,8 @@ const S = {
   shapeData: 16,
   shapeDataStr: 17,
 } as const;
+/** Start condition names by number, for the probe's lexer mode. */
+const S_NAMES = /* @__PURE__ */ Object.keys(S);
 
 // jison's <<EOF>> in states whose value rule matches the empty string: the empty value token.
 function eofValueKind(state: number): number {
@@ -181,10 +183,17 @@ const isNl = (c: number) => c === LF || c === CR;
 /**
  * Lex the flowchart body `src[from…]`. `view` comes from {@link sourceView}. With
  * `graphKeyword` false, a `graph` keyword no longer opens the direction state (used when
- * lexing restarts mid-document after an error).
+ * lexing restarts mid-document after an error). With a `probe`, the start condition at the
+ * probe's offset is recorded as its mode.
  */
-export function lex(src: string, from: number, view: SourceView, graphKeyword = true): TokenStream {
-  return new FlowLexer(src, from, view, graphKeyword).run();
+export function lex(
+  src: string,
+  from: number,
+  view: SourceView,
+  graphKeyword = true,
+  probe?: Probe
+): TokenStream {
+  return new FlowLexer(src, from, view, graphKeyword).run(probe);
 }
 
 /**
@@ -239,24 +248,45 @@ class FlowLexer {
     this.atNext = this.text.indexOf('@', this.p);
   }
 
-  run(): TokenStream {
-    const { text, n } = this;
+  run(probe?: Probe): TokenStream {
+    const { text } = this;
     // v12 trimmed leading blanks (after removing comments) before lexing.
     if (this.firstGraph) while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
-    while (this.p < n) {
-      const before = this.p;
-      if (!this.step(text.charCodeAt(this.p)) || this.p === before) {
-        // No rule matches: one Error token, then resume in the initial state.
-        this.emit(Kind.Error, this.p, Math.min(this.p + 1, n));
-        this.stack.length = 0;
-        this.state = S.INITIAL;
-      }
-    }
+    // Two loops, so a plain lex does no probe work per step.
+    if (probe === undefined) this.steps();
+    else this.probedSteps(probe);
     const kind = eofValueKind(this.state);
     if (kind !== -1) this.emit(kind, this.len, this.len);
     if (this.state === S.INITIAL) this.emit(T.Eof, this.len, this.len);
     this.trivia(this.src.length + 1);
     return this.w.finish(this.src);
+  }
+
+  private steps(): void {
+    const { text, n } = this;
+    while (this.p < n) {
+      const before = this.p;
+      if (!this.step(text.charCodeAt(this.p)) || this.p === before) this.noMatch();
+    }
+  }
+
+  /** {@link steps}, telling `probe` the start condition each step reads its text in. */
+  private probedSteps(probe: Probe): void {
+    const { text, n } = this;
+    while (this.p < n) {
+      const before = this.p;
+      const mode = S_NAMES[this.state] ?? '';
+      if (!this.step(text.charCodeAt(this.p)) || this.p === before) this.noMatch();
+      probe.lexed(this.source(before), this.source(this.p), mode);
+    }
+    probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
+  }
+
+  /** No rule matches: one Error token, then resume in the initial state. */
+  private noMatch(): void {
+    this.emit(Kind.Error, this.p, Math.min(this.p + 1, this.n));
+    this.stack.length = 0;
+    this.state = S.INITIAL;
   }
 
   // --- Offsets and output -------------------------------------------------------------------

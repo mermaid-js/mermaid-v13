@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    // The golden runner reads fixture folders: Node types, unlike the service itself.
+    "types": ["node"]
+  },
+  "include": ["src/testing/index.ts"],
+  "exclude": ["src/**/*.spec.ts"]
+}

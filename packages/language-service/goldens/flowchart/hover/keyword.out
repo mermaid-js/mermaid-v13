@@ -1,0 +1,48 @@
+@ 1:1  |flowchart LR
+  1:1-1:10 "flowchart"
+  | **`flowchart`**
+  |
+  | `flowchart LR`, `graph TD`, … The direction is optional (default `TB`).
+@ 1:12  flowchart L|R
+  1:11-1:13 "LR"
+  | **`LR`** direction: left to right
+@ 2:6  sub|graph S
+  2:3-2:11 "subgraph"
+  | **`subgraph`**
+  |
+  | `subgraph id`, `subgraph id [title]` or `subgraph`, then statements, then `end`.
+@ 3:8  dir|ection TB
+  3:5-3:17 "direction TB"
+  | **`direction TB`**
+  |
+  | `direction LR` inside a subgraph: the direction of its layout.
+@ 5:4  e|nd
+  5:3-5:6 "end"
+  | **`end`**
+  |
+  | `subgraph id`, `subgraph id [title]` or `subgraph`, then statements, then `end`.
+@ 6:6  sty|le A fill:#f00
+  6:3-6:8 "style"
+  | **`style`**
+  |
+  | `style id fill:#f9f,stroke:#333`: styles one node or subgraph.
+@ 7:8  class|Def k fill:#0f0
+  7:3-7:11 "classDef"
+  | **`classDef`**
+  |
+  | `classDef name fill:#f9f,color:#000`: defines a class of styles; `classDef default …` styles every node without a class.
+@ 8:6  cla|ss A k
+  8:3-8:8 "class"
+  | **`class`**
+  |
+  | `class A,B name`: gives nodes a class (as `A:::name` does).
+@ 9:7  link|Style 0 stroke:#00f
+  9:3-9:12 "linkStyle"
+  | **`linkStyle`**
+  |
+  | `linkStyle 0,2 stroke:#f00`: styles links by their position in the source, from 0; `linkStyle default …` styles every link; `interpolate curve` sets their curve.
+@ 10:6  acc|Title: Title
+  10:3-10:12 "accTitle:"
+  | **`accTitle:`**
+  |
+  | `accTitle: …`: the accessible title of the diagram.
