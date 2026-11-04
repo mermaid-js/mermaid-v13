@@ -29,4 +29,4 @@ The same report lists the `gh issue close` commands for the tickets.
 
 ## Finished (2026-11-04)
 
-All tickets merged; final review fixed; `pnpm check` 8128 passed; `pnpm e2e` 1486 passed; DOM e2e chromium/firefox 44/44, webkit 22/22 (Playwright image); bench `pr --mode report` all gates pass. GAPS.md has nothing unmet. PR #164 marked ready for review.
+All tickets merged; final review fixed; `pnpm check` 8128 passed; `pnpm e2e` 1486 passed; DOM e2e chromium/firefox 44/44, webkit 22/22 (Playwright image); bench `pr --mode report` all gates pass. GAPS.md has nothing unmet. PR #164: marking it ready (and updating its description) was blocked by a permission check; the maintainer runs `gh pr ready 164`.
