@@ -40,3 +40,9 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 
 - Front matter with invalid YAML: v12 rejects the diagram, v13 (core preprocess) accepts it. Found by mutation fuzzing; no corpus source has it. Not class-specific (core, every type).
 - v12 rejects `classDiagram` with no statement (its grammar needs one); v13 does too, for parity. A UX question for the maintainer, not a gap.
+
+## From the #154 review → #156 (T4), #158 (interactions), #157 (T5)
+
+- Sanitising: the oracle stubs DOMPurify, so parity can't see that real v12 ran `sanitizeText` on class ids, labels and member text (e.g. it likely strips `<T>` in `A : +List<T> items`). v13 escapes text in `SvgWriter` instead. #156 checks what flowchart did about this and lists the difference in MIGRATION.md. If it changes what a user sees beyond flowchart's precedent, it is a question for the maintainer.
+- Link target: under `securityLevel: 'sandbox'`, v12 forces `linkTarget` to `_top`. The model's `linkTarget` says "`_blank` when none given"; #158 must apply the sandbox rule, as for flowchart.
+- Not compared by parity: class `text`, `shape`, `domId` (render-side; #156).
