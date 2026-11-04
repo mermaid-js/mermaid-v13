@@ -99,3 +99,64 @@ describe('sequence layout invariants on parsed models', () => {
     expect(found[0]).toMatch(/^message m:A>B#3 at y \S+ is outside B$/);
   });
 });
+
+/**
+ * In cells a lifeline is a column of characters, so a message label written over it would
+ * erase it: with `wrap` on, a wrapped label stays inside the span between its lifelines, a
+ * label moved off a box border keeps off them, and a self message's label starts right of its
+ * lifeline (spec #125 final review, finding 3).
+ */
+describe('sequence message labels in cells', () => {
+  const cellLayout = (source: string) =>
+    layoutSequence(parseSequence(source).model, {
+      config: { sequence: { wrap: true } } as unknown as ResolvedConfig,
+      measurer: cellMeasurer,
+      units: cellProfile(),
+      theme: createTheme(spec, {}),
+      warn: () => {},
+    });
+
+  /**
+   * Labels written over a lifeline: one of the message's own, or one outside its span (a
+   * label between two far participants crosses the lifelines between them, as its arrow does).
+   */
+  function covered(source: string): string[] {
+    const layout = cellLayout(source);
+    const lifeline = new Map(layout.participants.map((p) => [p.id, p.lifeline.x]));
+    const out: string[] = [];
+    for (const msg of layout.messages) {
+      if (!msg.label) continue;
+      const a = lifeline.get(msg.from);
+      const b = lifeline.get(msg.to);
+      if (a === undefined || b === undefined) continue;
+      const first = msg.label.x;
+      const last = msg.label.x + msg.label.width - 1;
+      const [lo, hi] = [Math.min(a, b), Math.max(a, b)];
+      const hit = [...lifeline.values()].filter(
+        (x) => x >= first && x <= last && (x === a || x === b || x < lo || x > hi)
+      );
+      if (hit.length > 0)
+        out.push(`${msg.ast} label ${first}..${last} over lifelines ${hit.join(', ')}`);
+    }
+    return out;
+  }
+
+  it('keeps a wrapped label off the lifelines of a long message', () => {
+    expect(
+      covered(
+        'sequenceDiagram\nA->>B:wrap: one two three four five six seven eight nine ten eleven twelve\nB->>C: short'
+      )
+    ).toEqual([]);
+  });
+
+  it('keeps every label off its lifelines over the corpus, with wrap on', async () => {
+    const problems: string[] = [];
+    for (const item of await sequenceGateCorpus()) {
+      if (!detectSequence(item.source)) continue;
+      const result = parseSequence(item.source);
+      if (result.diagnostics.some((d) => d.severity === 'error')) continue;
+      for (const p of covered(item.source)) problems.push(`${item.id}: ${p}`);
+    }
+    expect(problems.slice(0, 20)).toEqual([]);
+  }, 300_000);
+});

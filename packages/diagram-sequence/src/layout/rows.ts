@@ -15,7 +15,7 @@ import type {
 } from '../model.ts';
 import type { Bounds, OpenFrame } from './bounds.ts';
 import { columnSpan } from './columns.ts';
-import { REVERSE_ARROWS, alignX, placed, type Column, type Env } from './env.ts';
+import { REVERSE_ARROWS, alignX, centerOf, placed, type Column, type Env } from './env.ts';
 import { barX, type Geometry, type MessageX } from './geometry.ts';
 import type {
   ActivationLayout,
@@ -63,22 +63,29 @@ export function lifelineOffset(env: Env, c: Column): number {
 
 /**
  * `x`, or the nearest place to it where a `w` wide label keeps a cell clear of every border
- * column: inside the message's `span` when one is free there, else past it. Without borders
- * (px) it is `x`.
+ * column and of the `keep` columns (the message's own lifelines): inside the message's `span`
+ * when one is free there, else past it, else inside the span over a border but clear of the
+ * lifelines. Without borders (px, or cells with no boxes) it is `x`.
  */
 function clearOf(
   borders: readonly number[],
   x: number,
   w: number,
-  span: readonly [number, number]
+  span: readonly [number, number],
+  keep: readonly number[] = []
 ) {
-  const clear = (at: number): boolean => borders.every((c) => c < at - 1 || c > at + w);
+  const off = (at: number): boolean => keep.every((c) => c < at - 1 || c > at + w);
+  const clear = (at: number): boolean => off(at) && borders.every((c) => c < at - 1 || c > at + w);
   if (borders.length === 0 || clear(x)) return x;
   const reach = span[1] - span[0] + w + borders.length * w;
-  for (const inside of [true, false])
+  const within = (at: number) => at >= span[0] && at + w <= span[1];
+  for (const [inside, ok] of [
+    [true, clear],
+    [false, clear],
+    [true, off],
+  ] as const)
     for (let d = 1; d <= reach; d++)
-      for (const at of [x - d, x + d])
-        if ((!inside || (at >= span[0] && at + w <= span[1])) && clear(at)) return at;
+      for (const at of [x - d, x + d]) if ((!inside || within(at)) && ok(at)) return at;
   return x;
 }
 
@@ -215,6 +222,15 @@ export class Rows {
     return [starty, lineY];
   }
 
+  /** The lifeline columns of a message's two ends, which its label keeps off (cells only). */
+  private lifelinesOf(s: SequenceMessage): number[] {
+    if (!this.env.m.cells) return [];
+    return [s.from, s.to].flatMap((id) => {
+      const c = this.env.columns.get(id);
+      return c ? [centerOf(this.env, c)] : [];
+    });
+  }
+
   /** The column a message creates, or destroys with a bottom box drawn at its row. */
   private boxAt(s: SequenceMessage): Column | undefined {
     const created = this.createdBy.get(s.ast);
@@ -295,7 +311,8 @@ export class Rows {
                     this.borders,
                     alignX(this.env, seq.messageAlign, span, label.width, m.wrapPadding),
                     label.width,
-                    span
+                    span,
+                    this.lifelinesOf(s)
                   ),
               starty + m.messageLead
             ),

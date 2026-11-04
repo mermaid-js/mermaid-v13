@@ -152,7 +152,14 @@ class XPass {
     }
     const span = Math.abs(startx - stopx);
     const wrap = (s.wrap ?? this.env.autoWrap) && s.text !== '';
-    const max = wrap ? Math.max(span + 2 * m.wrapPadding, m.wrapWidth) : Infinity;
+    // In cells a wrapped label stays inside the span, a space clear of each lifeline: written
+    // over a lifeline it would erase it. A self message's label sits right of its lifeline.
+    const inside = m.cells && s.from !== s.to;
+    let max = Infinity;
+    if (wrap)
+      max = inside
+        ? Math.max(span - 2 * m.wrapPadding, 1)
+        : Math.max(span + 2 * m.wrapPadding, m.wrapWidth);
     const label = this.env.measure(this.env.messageText(s), this.env.fonts.message, max);
     const all = [fromLeft, fromRight, toLeft, toRight];
     const own = wrap ? 0 : label.width + 2 * m.wrapPadding;
