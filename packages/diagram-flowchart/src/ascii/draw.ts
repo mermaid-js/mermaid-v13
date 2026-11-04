@@ -3,6 +3,7 @@
 // node boxes through the text-form table, tees where edges leave a box, and the front-matter
 // title on the first line.
 import {
+  armOf,
   Canvas,
   cellWidth,
   DOWN,
@@ -16,6 +17,8 @@ import {
   LEFT,
   opposite,
   RIGHT,
+  sideOf,
+  unicode,
   UP,
   type CellRect,
   type Dir,
@@ -25,11 +28,6 @@ import type { LayoutModel, Point, Side } from '@mermaid-js/core/layout';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { EdgeView, Prepared } from '../render/prepare.ts';
 import { textForm } from './shapes.ts';
-
-// Arms packed as in core/ascii glyphs.ts, per direction (core/ascii directions.ts):
-// up·64 + right·16 + down·4 + left.
-const SHIFT = [6, 4, 2, 0] as const;
-const HEAD = ['up', 'right', 'down', 'left'] as const;
 
 interface Centred {
   x: number;
@@ -118,14 +116,14 @@ function drawEdge(
   const target = { at: e.target, cell: cells[last]!, into: INTO[ports.target], marker: e.end };
   cells.forEach((c, i) => {
     let arms = 0;
-    const arm = (d: Dir): void => void (arms |= weight << SHIFT[d]);
+    const arm = (d: Dir): void => void (arms |= armOf(d, weight));
     if (i > 0) arm(dirOf(c, cells[i - 1]!));
     if (i < last) arm(dirOf(c, cells[i + 1]!));
     if (i === 0) arm(source.into);
     if (i === last) arm(target.into);
     let glyph = glyphFor(arms, glyphs);
-    if (dotted && arms === ((weight << SHIFT[LEFT]) | (weight << SHIFT[RIGHT]))) glyph = dotted.h;
-    if (dotted && arms === ((weight << SHIFT[UP]) | (weight << SHIFT[DOWN]))) glyph = dotted.v;
+    if (dotted && arms === (armOf(LEFT, weight) | armOf(RIGHT, weight))) glyph = dotted.h;
+    if (dotted && arms === (armOf(UP, weight) | armOf(DOWN, weight))) glyph = dotted.v;
     if (glyph) canvas.draw(c.x, c.y, glyph);
   });
   for (const end of [source, target])
@@ -136,7 +134,7 @@ function drawEdge(
 function markerGlyph(glyphs: GlyphSet, end: End): string | undefined {
   switch (end.marker) {
     case 'arrow_point':
-      return glyphs.head[HEAD[end.into]];
+      return sideOf(glyphs.head, end.into);
     case 'arrow_circle':
       return glyphs.circle;
     case 'arrow_cross':
@@ -146,17 +144,15 @@ function markerGlyph(glyphs: GlyphSet, end: End): string | undefined {
   }
 }
 
-// A one-armed stub per direction, light and heavy, to merge into a border as a tee.
-const STUB = { light: '╵╶╷╴', thick: '╹╺╻╸' } as const;
-
 /** The border glyph where an edge leaves a box: a tee with its stem towards the edge. */
 function tee(canvas: Canvas, glyphs: GlyphSet, end: End): void {
   const x = end.cell.x + DX[end.into];
   const y = end.cell.y + DY[end.into];
   const out = opposite(end.into);
-  const fallback = glyphs.tee[HEAD[out]];
+  const fallback = sideOf(glyphs.tee, out);
   if (glyphs.name !== 'unicode') return void canvas.set(x, y, fallback);
-  const stub = STUB[end.stroke as 'light' | 'thick'][out]!;
+  // A one-armed stub towards the edge, merged into the border as a tee.
+  const stub = glyphFor(armOf(out, end.stroke === 'thick' ? 2 : 1), unicode)!;
   const merged = junction(canvas.get(x, y), stub);
   canvas.set(x, y, merged === stub ? fallback : merged);
 }

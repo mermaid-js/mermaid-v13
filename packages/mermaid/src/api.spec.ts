@@ -17,7 +17,7 @@ import mermaid, {
   renderSync,
   prepare,
 } from './index.ts';
-import { defaultIdPrefix } from './api.ts';
+import { defaultIdPrefix } from './config-snapshot.ts';
 
 const FLOW = 'flowchart LR\n  A[Start] --> B(End)\n';
 

@@ -13,9 +13,10 @@ import {
   type FontKey,
   type MeasuredLabel,
 } from '@mermaid-js/core/text';
-import type { FlowModel, FlowModelEdge, FlowModelSubgraph, FlowVertex } from '../parser/index.ts';
+import type { FlowModel, FlowModelEdge, FlowVertex } from '../parser/index.ts';
 import type { FlowRenderContext } from './context.ts';
 import { curveKind, type CurveKind } from './edges.ts';
+import { dirOf, nesting, type Nesting } from './nesting.ts';
 import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 import { assetSize } from './assets.ts';
 import {
@@ -71,6 +72,8 @@ export interface Prepared {
   groups: NodeView[];
   nodes: NodeView[];
   edges: EdgeView[];
+  /** Every subgraph and vertex view by id, clusters included. */
+  views: ReadonlyMap<string, NodeView>;
   pads: Pads;
 }
 
@@ -88,8 +91,6 @@ function vertexShape(v: FlowVertex): string {
   return v.icon ? 'icon' : canonicalShape(v.type);
 }
 
-const DIRS: Readonly<Record<string, Dir>> = { TB: 'TB', TD: 'TB', BT: 'BT', LR: 'LR', RL: 'RL' };
-const dirOf = (d: string | undefined): Dir | undefined => (d ? DIRS[d.toUpperCase()] : undefined);
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
 
 /** A config number (v12 also took numeric strings), capped; `fallback` when not one. */
@@ -116,6 +117,25 @@ function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
   return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
 }
 
+/** Everything the views and the graph are measured with. */
+interface Measure {
+  readonly ctx: FlowRenderContext;
+  readonly font: FontKey;
+  readonly pads: Pads;
+  readonly wrap: number;
+  readonly minWidth: number;
+  /** Character cells: every node is a text-form box (DESIGN §6.3). */
+  readonly cells: boolean;
+  readonly label: (
+    text: string,
+    markdown: boolean,
+    f: FontKey,
+    max: number,
+    bits?: number
+  ) => MeasuredLabel;
+  readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
+}
+
 /**
  * Measures the model and builds the graph the layout engine gets. Every length comes from the
  * unit profile (D77, R-ARCH-3): px config values are divided by `pxPerUnit`, and the builder's
@@ -124,10 +144,6 @@ function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
 export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   const { theme, measurer } = ctx;
   const units = ctx.units ?? pxProfile;
-  const b = units.builder;
-  // Character cells draw every node as a text-form box (DESIGN §6.3); px draws the shape. This
-  // is the only place the builder looks at which profile it has.
-  const cells = units.id === 'cell';
   const flow = ctx.config.flowchart ?? {};
   const font: FontKey = {
     family: theme.value('fontFamily'),
@@ -136,12 +152,33 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   };
   // flowchart.padding: the classic themes' padding variables are multiples of it (D152).
   const pad = size(flow.padding, flowchartConfigDefaults.padding);
+  const m: Measure = {
+    ctx,
+    font,
+    pads: padsOf(ctx.theme, pad),
+    wrap: fromPx(units, size(flow.wrappingWidth), 'x') || units.builder.wrapWidth,
+    minWidth: size(flow.minNodeWidth),
+    // This is the only place the builder looks at which profile it has.
+    cells: units.id === 'cell',
+    label: (text, markdown, f, max, bits = 0) =>
+      layoutLabel(text, f, max, measurer, { markdown, style: bits }),
+    styleOf: styleCache(model, ctx),
+  };
+  const rootDir = dirOf(model.direction) ?? 'TB';
+  const nest = nesting(model, rootDir);
+  const { views, groups, nodes } = nodeViews(model, nest, m);
+  const edges = edgeViews(model, nest.collapsedInto, views, m);
+  const graph = layoutGraph(model, rootDir, nest, { groups, nodes, edges }, m);
+  return { graph, groups, nodes, edges, views, pads: m.pads };
+}
+
+function padsOf(theme: FlowRenderContext['theme'], pad: number): Pads {
   const padOf = (name: string) => theme.padding(name, pad);
   const xy = (shape: string): PadXY => ({
     x: padOf(`${shape}PaddingX`),
     y: padOf(`${shape}PaddingY`),
   });
-  const pads: Pads = {
+  return {
     node: xy('node'),
     r: theme.number('radius'),
     pad,
@@ -158,148 +195,60 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     circlePad: padOf('circlePadding'),
     circleMin: theme.number('circleMinDiameter'),
   };
-  const wrap = fromPx(units, size(flow.wrappingWidth), 'x') || b.wrapWidth;
-  const minWidth = size(flow.minNodeWidth);
-  const label = (text: string, markdown: boolean, f: FontKey, max: number, bits = 0) =>
-    layoutLabel(text, f, max, measurer, { markdown, style: bits });
+}
 
+/** The checked style of class names plus own declarations, one per distinct list. */
+function styleCache(model: FlowModel, ctx: FlowRenderContext): Measure['styleOf'] {
   const classDefs = new Map<string, string[]>();
   for (const c of model.classes) classDefs.set(c.id, [...c.styles, ...c.textStyles]);
   const styles = new Map<string, CheckedStyle>();
-  const styleOf = (classes: readonly string[], own: readonly string[] = []): CheckedStyle => {
+  return (classes, own = []) => {
     const decls: string[] = [];
-    for (const name of classes) for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
+    for (const name of classes) {
+      for (const s of classDefs.get(name) ?? []) decls.push(s.trim());
+    }
     for (const s of own) decls.push(s.trim());
     const key = decls.join(';');
     let style = styles.get(key);
     if (!style) styles.set(key, (style = checkStyle(decls, ctx.warn)));
     return style;
   };
+}
 
-  // Subgraph nesting, as v12: a subgraph listed in another one's members is its child.
-  const subgraphs = new Map<string, FlowModelSubgraph>();
-  for (const sg of model.subgraphs) subgraphs.set(sg.id, sg);
-  const sgParent = new Map<string, string>();
-  for (const sg of model.subgraphs)
-    for (const id of sg.nodes) if (subgraphs.has(id)) sgParent.set(id, sg.id);
-
-  // Collapsed subgraphs (`id@{ view: collapsed }`) stand in for everything inside them.
-  const collapsedInto = new Map<string, string>();
-  const isCollapsed = (id: string): boolean => subgraphs.get(id)?.metadata?.view === 'collapsed';
-  for (const sg of model.subgraphs) {
-    let outer: string | undefined;
-    const seen = new Set<string>();
-    for (
-      let id: string | undefined = sg.id;
-      id !== undefined && !seen.has(id);
-      id = sgParent.get(id)
-    ) {
-      seen.add(id);
-      if (isCollapsed(id)) outer = id;
-    }
-    if (outer === undefined) continue;
-    if (sg.id !== outer) collapsedInto.set(sg.id, outer);
-    for (const id of sg.nodes) if (id !== outer) collapsedInto.set(id, outer);
-  }
-
-  // The first subgraph that lists a member is its parent (v12 walks them last to first).
-  const parentOf = new Map<string, string>();
-  for (let i = model.subgraphs.length - 1; i >= 0; i--) {
-    const sg = model.subgraphs[i]!;
-    if (collapsedInto.has(sg.id)) continue;
-    for (const id of sg.nodes) parentOf.set(id, sg.id);
-  }
-  const depthOf = (id: string): number => {
-    let d = 0;
-    const seen = new Set<string>();
-    for (let p = parentOf.get(id); p !== undefined && !seen.has(p); p = parentOf.get(p)) {
-      seen.add(p);
-      d++;
-    }
-    return d;
-  };
-  const rootDir = dirOf(model.direction) ?? 'TB';
-  const flowDir = (id: string): Dir => {
-    const seen = new Set<string>();
-    for (let p = parentOf.get(id); p !== undefined && !seen.has(p); p = parentOf.get(p)) {
-      seen.add(p);
-      const d = dirOf(subgraphs.get(p)?.dir);
-      if (d) return d;
-    }
-    return rootDir;
-  };
-
+/** One view per drawn subgraph and vertex, measured; clusters sorted outermost first. */
+function nodeViews(
+  model: FlowModel,
+  nest: Nesting,
+  m: Measure
+): Pick<Prepared, 'views' | 'groups' | 'nodes'> {
+  const { collapsedInto, subgraphs } = nest;
   const views = new Map<string, NodeView>();
   const groups: NodeView[] = [];
   const nodes: NodeView[] = [];
-  const measureNode = (view: NodeView, text: string, markdown: boolean, v?: FlowVertex): void => {
-    const [f, bits] = textStyle(view.style, font);
-    const has = shapeHasLabel(view.shape);
-    view.label = label(has || v?.img || v?.icon ? text : '', markdown, f, wrap, bits);
-    const lw = view.label.width;
-    const lh = view.label.height;
-    if (cells) {
-      // A text-form box: the label, its padding and a border cell on each side.
-      view.w = lw + 2 * (b.nodePad.x + 1);
-      view.h = view.label.lines.length + 2 * (b.nodePad.y + 1);
-      view.dy = 0;
-      return;
-    }
-    // v12 widens vertex labels to minNodeWidth; round shapes and collapsed subgraphs keep theirs.
-    const keepWidth =
-      view.shape === 'circle' || view.shape === 'dbl-circ' || view.shape === 'collapsedGroup';
-    const s =
-      v?.img || v?.icon
-        ? assetSize(v, lw, lh)
-        : shapeSize(
-            view.shape,
-            lw > 0 && has && !keepWidth ? Math.max(lw, minWidth) : lw,
-            lh,
-            pads
-          );
-    view.w = s.w;
-    view.h = s.h;
-    view.dy = s.dy;
-  };
+  // Every view is measured below; until then it holds the empty label.
+  const empty = m.label('', false, m.font, 0);
   const blank = (id: string, ast: string, group: boolean, shape: string): NodeView => ({
     id,
     ast,
     group,
     shape,
-    label: label('', false, font, 0),
+    label: empty,
     w: 0,
     h: 0,
     dy: 0,
-    style: styleOf([]),
+    style: m.styleOf([]),
     classes: [],
-    parent: parentOf.get(id),
-    depth: depthOf(id),
+    parent: nest.parentOf.get(id),
+    depth: nest.depthOf(id),
   });
-
-  // Palette order follows the source. `model.subgraphs` is in closing order (a nested
-  // subgraph lands before its parent), so walk the nesting forest pre-order like v12.
-  const order = new Map<string, number>();
-  const childrenOf = new Map<string, string[]>();
-  for (const sg of model.subgraphs) {
-    const p = sgParent.get(sg.id);
-    if (p !== undefined) childrenOf.set(p, [...(childrenOf.get(p) ?? []), sg.id]);
-  }
-  const walk = (id: string): void => {
-    if (order.has(id)) return;
-    order.set(id, order.size);
-    for (const c of childrenOf.get(id) ?? []) walk(c);
-  };
-  for (const sg of model.subgraphs) if (!sgParent.has(sg.id)) walk(sg.id);
-  // Subgraphs that only sit in a membership cycle have no root; number them last.
-  for (const sg of model.subgraphs) walk(sg.id);
 
   for (const sg of model.subgraphs) {
     if (collapsedInto.has(sg.id)) continue;
-    const collapsed = isCollapsed(sg.id);
+    const collapsed = nest.isCollapsed(sg.id);
     const view = blank(sg.id, sg.ast, !collapsed, collapsed ? 'collapsedGroup' : 'rect');
     view.classes = sg.classes;
-    view.style = styleOf(sg.classes);
-    view.order = order.get(sg.id);
+    view.style = m.styleOf(sg.classes);
+    view.order = nest.order.get(sg.id);
     views.set(sg.id, view);
     if (collapsed) nodes.push(view);
     else groups.push(view);
@@ -310,57 +259,117 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     if (existing) {
       // A vertex named like a subgraph styles the subgraph (v12).
       existing.classes = v.classes;
-      existing.style = styleOf(v.classes, v.styles);
+      existing.style = m.styleOf(v.classes, v.styles);
       continue;
     }
-    const shape = vertexShape(v);
-    const view = blank(v.id, v.ast, false, shape);
+    const view = blank(v.id, v.ast, false, vertexShape(v));
     view.vertex = v;
     view.classes = v.classes;
-    view.style = styleOf(['default', 'node', ...v.classes], v.styles);
+    view.style = m.styleOf(['default', 'node', ...v.classes], v.styles);
     views.set(v.id, view);
     nodes.push(view);
   }
   for (const view of nodes) {
     const sg = subgraphs.get(view.id);
     const v = view.vertex;
-    if (sg) measureNode(view, sg.title, sg.labelType === 'markdown');
-    else if (v) measureNode(view, v.text, v.labelType === 'markdown', v);
+    if (sg) measureNode(view, sg.title, sg.labelType === 'markdown', m);
+    else if (v) measureNode(view, v.text, v.labelType === 'markdown', m, v);
   }
   for (const view of groups) {
     const sg = subgraphs.get(view.id)!;
-    const [f, bits] = textStyle(view.style, font);
-    view.label = label(sg.title, sg.labelType === 'markdown', f, Infinity, bits);
+    const [f, bits] = textStyle(view.style, m.font);
+    view.label = m.label(sg.title, sg.labelType === 'markdown', f, Infinity, bits);
   }
   groups.sort((g, h) => g.depth - h.depth);
+  return { views, groups, nodes };
+}
 
+function measureNode(
+  view: NodeView,
+  text: string,
+  markdown: boolean,
+  m: Measure,
+  v?: FlowVertex
+): void {
+  const [f, bits] = textStyle(view.style, m.font);
+  const has = shapeHasLabel(view.shape);
+  view.label = m.label(has || v?.img || v?.icon ? text : '', markdown, f, m.wrap, bits);
+  const lw = view.label.width;
+  const lh = view.label.height;
+  if (m.cells) {
+    // A text-form box: the label, its padding and a border cell on each side.
+    const pad = (m.ctx.units ?? pxProfile).builder.nodePad;
+    view.w = lw + 2 * (pad.x + 1);
+    view.h = view.label.lines.length + 2 * (pad.y + 1);
+    view.dy = 0;
+    return;
+  }
+  // v12 widens vertex labels to minNodeWidth; round shapes and collapsed subgraphs keep theirs.
+  const keepWidth =
+    view.shape === 'circle' || view.shape === 'dbl-circ' || view.shape === 'collapsedGroup';
+  const s =
+    v?.img || v?.icon
+      ? assetSize(v, lw, lh)
+      : shapeSize(
+          view.shape,
+          lw > 0 && has && !keepWidth ? Math.max(lw, m.minWidth) : lw,
+          lh,
+          m.pads
+        );
+  view.w = s.w;
+  view.h = s.h;
+  view.dy = s.dy;
+}
+
+/** One view per drawn edge; edges into a collapsed subgraph end at it, and a loop it hides goes. */
+function edgeViews(
+  model: FlowModel,
+  collapsedInto: ReadonlyMap<string, string>,
+  views: ReadonlyMap<string, NodeView>,
+  m: Measure
+): EdgeView[] {
+  const flow = m.ctx.config.flowchart ?? {};
+  const edgeWrap = (m.ctx.units ?? pxProfile).builder.edgeWrap;
   const edges: EdgeView[] = [];
   const ids = new Set<string>();
-  model.edges.forEach((e) => {
+  for (const e of model.edges) {
     const source = collapsedInto.get(e.start) ?? e.start;
     const target = collapsedInto.get(e.end) ?? e.end;
-    if (!views.has(source) || !views.has(target)) return;
-    if (source === target && (collapsedInto.has(e.start) || collapsedInto.has(e.end))) return;
+    if (!views.has(source) || !views.has(target)) continue;
+    if (source === target && (collapsedInto.has(e.start) || collapsedInto.has(e.end))) continue;
     let id = e.id;
     for (let n = 2; ids.has(id); n++) id = `${e.id}#${n}`;
     ids.add(id);
     const [start, end] = arrows(e.type, e.stroke);
-    const style = styleOf(e.classes, [...(model.defaultStyle ?? []), ...(e.style ?? [])]);
+    const style = m.styleOf(e.classes, [...(model.defaultStyle ?? []), ...(e.style ?? [])]);
     // Measured in the font the label is drawn in, as node labels are.
-    const [f, bits] = textStyle(style, font);
+    const [f, bits] = textStyle(style, m.font);
     edges.push({
       edge: e,
       id,
       source,
       target,
-      label: label(e.text, e.labelType === 'markdown', f, b.edgeWrap, bits),
+      label: m.label(e.text, e.labelType === 'markdown', f, edgeWrap, bits),
       style,
       start,
       end,
       curve: curveKind(e.interpolate ?? model.defaultInterpolate ?? flow.curve),
     });
-  });
+  }
+  return edges;
+}
 
+/** The graph the layout engine gets, every length from the unit profile. */
+function layoutGraph(
+  model: FlowModel,
+  rootDir: Dir,
+  nest: Nesting,
+  { groups, nodes, edges }: Pick<Prepared, 'groups' | 'nodes' | 'edges'>,
+  m: Measure
+): LayoutGraph {
+  const units = m.ctx.units ?? pxProfile;
+  const b = units.builder;
+  const flow = m.ctx.config.flowchart ?? {};
   // Config numbers may arrive as strings from front matter, as v12 accepted them. They are px:
   // node spacing runs across the flow and rank spacing along it.
   const fromConfig = (value: unknown, fallback: number, axis: 'x' | 'y', min: number): number => {
@@ -387,8 +396,9 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
       const node: LayoutNode = { id: n.id, width: n.w, height: n.h, shape: n.shape };
       if (n.parent !== undefined) node.parent = n.parent;
       // A text-form box leaves the span to the engine's `corner` metric.
-      if (!cells && n.shape !== 'img' && n.shape !== 'icon')
-        node.span = shapeSpan(n.shape, n.w, n.h, sideways(flowDir(n.id)));
+      if (!m.cells && n.shape !== 'img' && n.shape !== 'icon') {
+        node.span = shapeSpan(n.shape, n.w, n.h, sideways(nest.flowDir(n.id)));
+      }
       return node;
     }),
     groups: groups.map((g): LayoutGroup => {
@@ -404,7 +414,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
       };
       if (titled) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
-      const d = dirOf(subgraphs.get(g.id)?.dir);
+      const d = dirOf(nest.subgraphs.get(g.id)?.dir);
       if (d) group.direction = d;
       return group;
     }),
@@ -436,5 +446,5 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     metrics: units.engine,
   };
   if (units.grid !== undefined) graph.grid = units.grid;
-  return { graph, groups, nodes, edges, pads };
+  return graph;
 }

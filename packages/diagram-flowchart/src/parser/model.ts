@@ -9,8 +9,10 @@
  * recorded instead of bound, and errors are diagnostics instead of exceptions.
  */
 // cspell:words kepano
+import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
-import type { YamlMap, YamlValue } from '@mermaid-js/core/preprocess';
+import { isYamlMap } from '@mermaid-js/core/preprocess';
+import type { YamlMap } from '@mermaid-js/core/preprocess';
 import { isValidShape } from './shapes.ts';
 
 export type LabelType = 'text' | 'string' | 'markdown';
@@ -229,8 +231,16 @@ export function destructLink(end: string, start?: string): LinkInfo {
 
 const INTERNAL_METADATA_KEYS = ['laneRole', 'laneIndex', 'drawnExtent'];
 
-const isMap = (v: YamlValue | undefined): v is YamlMap =>
-  v !== null && typeof v === 'object' && !Array.isArray(v);
+/** What one mention of a vertex sets. */
+export interface VertexParts {
+  label?: FlowLabel;
+  /** The shape, from brackets or `@{ shape }`. */
+  type?: string;
+  styles?: string[];
+  props?: Record<string, string>;
+  /** The parsed `@{ … }` block; null when it did not parse. */
+  data?: YamlMap | null;
+}
 
 /** Collects one parse's model, in v12 FlowDB order. Create one per parse. */
 export class FlowBuilder {
@@ -264,20 +274,12 @@ export class FlowBuilder {
     return this.edgeById.has(id);
   }
 
-  /** v12 `addVertex`. `data` is the parsed `@{…}` block. Returns whether it created a vertex. */
-  addVertex(
-    id: string,
-    ast: AstId,
-    at: Range,
-    label?: FlowLabel,
-    type?: string,
-    styles?: string[],
-    props?: Record<string, string>,
-    data?: YamlMap | null
-  ): void {
+  /** v12 `addVertex`: create the vertex `id` if it is new, then apply `parts` to it. */
+  addVertex(id: string, ast: AstId, at: Range, parts: VertexParts = {}): void {
     if (!id || id.trim().length === 0) return;
+    const { label, type, styles, props, data } = parts;
     let doc: YamlMap | undefined;
-    if (data !== undefined && isMap(data)) {
+    if (data !== undefined && isYamlMap(data)) {
       doc = { ...data };
       for (const key of INTERNAL_METADATA_KEYS) delete doc[key];
     }
@@ -290,9 +292,7 @@ export class FlowBuilder {
 
     const edge = this.edgeById.get(id);
     if (edge) {
-      if (doc?.animate !== undefined) edge.animate = doc.animate as boolean;
-      if (doc?.animation !== undefined) edge.animation = doc.animation as string;
-      if (doc?.curve !== undefined) edge.interpolate = doc.curve as string;
+      if (doc) this.edgeData(edge, doc, at);
       if (doc?.step !== undefined) {
         const step = doc.step;
         if (typeof step === 'number' && Number.isInteger(step) && step > 0) edge.step = step;
@@ -309,14 +309,16 @@ export class FlowBuilder {
         if (!this.limitHit.has('nodes')) {
           this.limitHit.add('nodes');
           this.options.error(
-            'NODE_LIMIT',
+            LIMIT_CODES.maxNodes,
             `Node limit exceeded: the diagram has more than ${this.options.maxNodes} nodes. The limit is set by the page or app that renders the diagram.`,
             at
           );
         }
         return;
       }
-      vertex = { id, ast, text: id, labelType: 'text', styles: [], classes: [], props: {} };
+      // `props` keys are the author's: no prototype, so `__proto__` is a key like any other.
+      const own = Object.create(null) as Record<string, string>;
+      vertex = { id, ast, text: id, labelType: 'text', styles: [], classes: [], props: own };
       this.vertices.set(id, vertex);
     }
     if (label !== undefined) {
@@ -325,7 +327,7 @@ export class FlowBuilder {
     }
     if (type !== undefined) vertex.type = type;
     if (styles) vertex.styles.push(...styles);
-    if (props) Object.assign(vertex.props, props);
+    if (props) for (const [k, v] of Object.entries(props)) vertex.props[k] = v;
 
     if (doc === undefined) return;
     if (doc.shape) {
@@ -358,8 +360,35 @@ export class FlowBuilder {
       if (!docLabel?.trim() && vertex.text === id) vertex.text = '';
     }
     if (doc.constraint) vertex.constraint = String(doc.constraint);
-    if (doc.w) vertex.assetWidth = Number(doc.w);
-    if (doc.h) vertex.assetHeight = Number(doc.h);
+    const w = Number(doc.w);
+    const h = Number(doc.h);
+    if (doc.w && Number.isFinite(w)) vertex.assetWidth = w;
+    if (doc.h && Number.isFinite(h)) vertex.assetHeight = h;
+  }
+
+  // An edge's `@{…}` keys, typed: anything else is dropped with a warning rather than reaching
+  // the model as the wrong type (an `animation` of free text would land in the class list).
+  private edgeData(edge: FlowModelEdge, doc: Readonly<Record<string, unknown>>, at: Range): void {
+    const drop = (key: string, want: string) =>
+      this.options.warn(
+        'EDGE_DATA_DROPPED',
+        `Edge ${JSON.stringify(edge.id)}: ${key} must be ${want}; ${JSON.stringify(doc[key])} was ignored.`,
+        at
+      );
+    const { animate, animation, curve } = doc;
+    if (animate !== undefined) {
+      if (typeof animate === 'boolean') edge.animate = animate;
+      else if (animate === 'true' || animate === 'false') edge.animate = animate === 'true';
+      else drop('animate', 'true or false');
+    }
+    if (animation !== undefined) {
+      if (animation === 'fast' || animation === 'slow') edge.animation = animation;
+      else drop('animation', 'fast or slow');
+    }
+    if (curve !== undefined) {
+      if (typeof curve === 'string') edge.interpolate = curve;
+      else drop('curve', 'a curve name');
+    }
   }
 
   private addSingleLink(
@@ -409,13 +438,14 @@ export class FlowBuilder {
   ): void {
     if (this.limitHit.has('edges')) return;
     // Checked before making any: `A & … --> B & …` multiplies, so one short line can ask
-    // for millions of edges (v12 checked one edge at a time, with the same message).
+    // for millions of edges (v12 checked one edge at a time).
     const max = this.options.maxEdges;
-    if (this.edges.length + starts.length * ends.length > max) {
+    const wanted = this.edges.length + starts.length * ends.length;
+    if (wanted > max) {
       this.limitHit.add('edges');
       this.options.error(
-        'EDGE_LIMIT',
-        `Edge limit exceeded. ${max} edges found, but the limit is ${max}. Raise maxEdges in the configuration passed to initialize() to allow more edges.`,
+        LIMIT_CODES.maxEdges,
+        `Edge limit exceeded: the diagram asks for ${wanted} edges, but the limit is ${max}. The limit is set by the page or app that renders the diagram.`,
         at
       );
       return;
