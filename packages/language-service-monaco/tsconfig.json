@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // Monaco's types name DOM types; the adapter itself never touches the DOM.
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": ["src"]
+}
