@@ -1,7 +1,7 @@
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { lex } from './lexer.ts';
-import { decodeEntities } from './source.ts';
+import { decodeEntities } from './view.ts';
 
 export interface ErToken {
   /** A `T` kind or a shared `Kind`. */

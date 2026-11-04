@@ -41,7 +41,7 @@ import { lex } from './lexer.ts';
 import type { LexResult } from './lexer.ts';
 import { attributeId, ErBuilder } from './model.ts';
 import type { ErAttribute, ErCardinality, ErDirection, ErDocItem, ErModel } from './model.ts';
-import { decodeEntities } from './source.ts';
+import { decodeEntities } from './view.ts';
 import { T } from './tokens.ts';
 
 export interface ErParseOptions extends ParseOptions {

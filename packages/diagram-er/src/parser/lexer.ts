@@ -2,7 +2,7 @@
  * ER lexer: a state machine mirroring the start conditions of v12's `erDiagram.jison`
  * (DESIGN §4.3), checked token by token against it (the conformance lexer-parity gate).
  *
- * It lexes the text v12 lexed ({@link sourceView}: comments and directives cut out, CR as LF,
+ * It lexes the text v12 lexed ({@link erSourceView}: comments and directives cut out, CR as LF,
  * `encodeEntities` applied, a `\n` appended) and maps each token back to its range in the
  * source, which is never rewritten. Comments and directives are trivia tokens with their own
  * ranges, in source order.
@@ -49,8 +49,8 @@ import {
 import type { TokenStream } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import { sourceView } from './source.ts';
-import type { SourceView } from './source.ts';
+import { erSourceView } from './view.ts';
+import type { ErSourceView } from './view.ts';
 import { T } from './tokens.ts';
 
 /** Vertical tab and backspace: ENTITY_NAME leaves them out. */
@@ -547,12 +547,12 @@ export interface LexResult {
   /** Per token, its range in `view.text` (trivia: -1). */
   textStart: Int32Array;
   textEnd: Int32Array;
-  view: SourceView;
+  view: ErSourceView;
 }
 
 /** Lex an ER source (front matter and directives located by core's preprocess). */
 export function lex(src: string, pre: PreprocessResult = preprocess(src)): LexResult {
-  const view = sourceView(
+  const view = erSourceView(
     src,
     pre.bodyStart,
     pre.directives.map((d) => d.range)
