@@ -132,13 +132,13 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
     arrow: theme.color('arrowheadColor'),
     shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
   };
-  // v12's composite variables (D120, D126, #193): the title band and a nested composite's
-  // body. The top-level body stays on `background` until `compositeBackground` (#196).
+  // v12's composite variables (D120, D126, #193, #197): the title band, a top-level
+  // composite's body and a nested composite's body.
   const composite =
     s.groups.length > 0
       ? {
           title: theme.color('compositeTitleBackground'),
-          body: theme.color('background'),
+          body: theme.color('compositeBackground'),
           alt: theme.color('altBackground'),
           text: theme.color('titleColor'),
           radius: theme.number('radius'),

@@ -42,9 +42,9 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## #146 T4 renderer
 
-- [x] **Done (D120, D126, #193):** the renderer reads `compositeTitleBackground` (title band)
-  and `altBackground` (a nested composite's body) instead of `clusterBkg`; the top-level body
-  stays on `background` until `compositeBackground` (#196). Checked in
+- [x] **Done (D120, D126, #193, #197):** the renderer reads `compositeTitleBackground` (title
+  band), `compositeBackground` (a top-level composite's body) and `altBackground` (a nested
+  composite's body) instead of `clusterBkg` and `background`. Checked in
   `diagram-state/src/render/render.spec.ts`; MIGRATION.md "State diagram SVG structure" updated
   (review fixes, `feature/127_review-fixes`).
 - [x] **Accepted (D121):** v12 tinted each concurrency region with its composite's palette fill; v13

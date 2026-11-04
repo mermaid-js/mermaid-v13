@@ -268,8 +268,8 @@ describe('state render: palette slots (v12 stateDiagram-colorIndex)', () => {
 });
 
 describe('state render: composite theme variables (D120, D126, #193)', () => {
-  // The title band reads `compositeTitleBackground`, a nested composite's body `altBackground`;
-  // the top-level body stays on `background` until `compositeBackground` (#196).
+  // The title band reads `compositeTitleBackground`, a top-level composite's body
+  // `compositeBackground` and a nested one's `altBackground`.
   const src = 'stateDiagram-v2\n  state Outer {\n    state Inner {\n      [*] --> A\n    }\n  }';
   it('paints the title band and the alternate body from their own variables', async () => {
     const { tree, svg } = await renderForTest(src, {
@@ -293,7 +293,7 @@ describe('state render: composite theme variables (D120, D126, #193)', () => {
       'compositeTitleBackground',
       'compositeTitleBackground',
     ]);
-    expect(declared(body)).toBe('background');
+    expect(declared(body)).toBe('compositeBackground');
     expect(declared(alt)).toBe('altBackground');
     expect(svg).toContain('--mermaid-compositeTitleBackground,#123456)');
     expect(svg).toContain('--mermaid-altBackground,#abcdef)');
