@@ -82,7 +82,7 @@ describe('ER definition, references and folding through the service match v12', 
         let def: Range | undefined;
         for (const o of at) {
           const d = doc.definition(o.range.start);
-          if (!d || !text(doc, d) === name) return fail(`${name}: definition ${d && text(doc, d)}`);
+          if (!d || text(doc, d) !== name) return fail(`${name}: definition ${d && text(doc, d)}`);
           defs.add(`${d.start}:${d.end}`);
           def = d;
           const refs = doc.references(o.range.start);

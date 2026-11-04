@@ -10,6 +10,7 @@ import type {
   UnitProfile,
 } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
+import { erConfigDefaults } from '../generated/config-defaults.ts';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
 import {
   fontSizePx,
@@ -170,6 +171,30 @@ interface Measure {
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
 }
 
+/** Cells one relationship end draws in text output (a bar or crow's foot, then a bar or ring). */
+const END_CELLS = 2;
+/** The smallest rank gap in cells that holds both ends of a line with line cells between. */
+const ENDS_GAP = 2 * END_CELLS + 2;
+
+type SizeKey = 'nodeSpacing' | 'rankSpacing' | 'minEntityWidth';
+
+/**
+ * D118: a px size key as the builder reads it. In px every value counts, the generated v12
+ * default included. In cells only a value the author set converts; v12's px defaults (140,
+ * 80, 100) do not, and the cell profile's own spacing and width apply. The resolved config
+ * already carries the section defaults, so a value equal to the generated default counts as
+ * not set (setting it to exactly that value draws as not setting it).
+ */
+function sizeKey(
+  units: UnitProfile,
+  er: Readonly<Record<string, unknown>>,
+  key: SizeKey
+): number | undefined {
+  const px = configNumber(er[key]);
+  if (px === undefined || units.grid === undefined) return px;
+  return px === erConfigDefaults[key] ? undefined : px;
+}
+
 /**
  * D116: `er.entityPadding` (px) pads every table cell, across and down, in place of the
  * layout's node padding. Text output keeps the cell profile's 1-cell padding.
@@ -202,7 +227,7 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     label: (text, f, max, bits = 0) => layoutLabel(text, f, max, measurer, { style: bits }),
     styleOf: styleCache(model, ctx),
   };
-  const minWidth = configNumber(er.minEntityWidth);
+  const minWidth = sizeKey(units, er, 'minEntityWidth');
   const nest = nesting(model);
 
   const entities = model.entities.map((e, order) =>
@@ -433,13 +458,24 @@ function layoutGraph(
   const b = units.builder;
   const er = ctx.config.er ?? {};
   // er.nodeSpacing runs across the flow, er.rankSpacing along it (px config values).
-  const fromConfig = (value: unknown, fallback: number, axis: 'x' | 'y', min: number): number => {
-    const px = configNumber(value);
+  const fromConfig = (
+    px: number | undefined,
+    fallback: number,
+    axis: 'x' | 'y',
+    min: number
+  ): number => {
     return px === undefined ? fallback : fromPx(units, px, axis, min);
   };
+  // D118: in cells a relationship's two ends take END_CELLS cells each, and a line cell
+  // between them (or between an end and the label) keeps them readable as ends, so the rank
+  // gap is at least that, over the cell profile's own spacing. In px the markers fit headRoom.
+  const endRoom = units.grid === undefined ? 0 : ENDS_GAP;
   const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
-    node: fromConfig(er.nodeSpacing, b.spacing.node, node, b.minSpacing.node),
-    rank: fromConfig(er.rankSpacing, b.spacing.rank, rank, b.minSpacing.rank),
+    node: fromConfig(sizeKey(units, er, 'nodeSpacing'), b.spacing.node, node, b.minSpacing.node),
+    rank: Math.max(
+      fromConfig(sizeKey(units, er, 'rankSpacing'), b.spacing.rank, rank, b.minSpacing.rank),
+      endRoom
+    ),
     edge: b.spacing.edge,
   });
   const along = sideways(model.direction) ? 'x' : 'y';
@@ -489,7 +525,7 @@ function layoutGraph(
     // empty margin, so in cells the profile's own applies (as the flowchart).
     diagramPadding:
       units.grid === undefined
-        ? fromConfig(er.diagramPadding, b.diagramPadding, 'x', 0)
+        ? fromConfig(configNumber(er.diagramPadding), b.diagramPadding, 'x', 0)
         : b.diagramPadding,
     // v12's default ELK layout draws orthogonal routes; on the grid they are square anyway.
     routing: 'stepped',

@@ -10,7 +10,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },
   { type: 'kanban', pattern: /^\s*kanban/ },
   { type: 'classDiagram', pattern: /^\s*classDiagram/ },
-  { type: 'er', pattern: /^\s*erDiagram/, id: 'er', formats: ['svg'] },
+  { type: 'er', pattern: /^\s*erDiagram/, id: 'er', formats: ['svg', 'ascii'] },
   { type: 'gantt', pattern: /^\s*gantt/ },
   { type: 'info', pattern: /^\s*info/ },
   { type: 'pie', pattern: /^\s*pie/ },

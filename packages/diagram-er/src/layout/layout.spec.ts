@@ -169,11 +169,29 @@ describe('entity tables in px', () => {
       er: { nodeSpacing: 140, rankSpacing: 80 },
     });
     expect(g.graph.spacing).toMatchObject({ node: 140, rank: 80 });
-    // In cells: 140 px / 8 across an LR flow's ranks... TB: node along x (140/8 → 18), rank along y (80/16 → 5).
+    // In cells an authored value converts (D118). TB: node along x (160/8 → 20), rank along y
+    // (96/16 → 6).
     const c = lay('erDiagram\n  A ||--o{ B : x\n', cellProfile(), {
-      er: { nodeSpacing: 140, rankSpacing: 80 },
+      er: { nodeSpacing: 160, rankSpacing: 96 },
     });
-    expect(c.graph.spacing).toMatchObject({ node: 18, rank: 5 });
+    expect(c.graph.spacing).toMatchObject({ node: 20, rank: 6 });
+  });
+
+  it("keeps the cell profile's spacing and width for v12's px defaults (D118)", () => {
+    const src = 'erDiagram\n  A ||--o{ B : x\n';
+    const defaults = { er: { nodeSpacing: 140, rankSpacing: 80, minEntityWidth: 100 } };
+    const c = lay(src, cellProfile(), defaults);
+    expect(c.graph.spacing).toMatchObject({
+      node: cellProfile().builder.spacing.node,
+      rank: cellProfile().builder.spacing.rank,
+    });
+    // "A" in a 1-cell padded box, not widened to 100 px (13 columns).
+    expect(c.graph.nodes[0]).toMatchObject({ width: 5 });
+    expect(lay(src, cellProfile(), { er: { minEntityWidth: 120 } }).graph.nodes[0]).toMatchObject({
+      width: 15,
+    });
+    // In px the defaults count.
+    expect(lay(src, pxProfile, defaults).graph.spacing).toMatchObject({ node: 140, rank: 80 });
   });
 });
 

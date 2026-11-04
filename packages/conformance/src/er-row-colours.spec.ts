@@ -37,7 +37,10 @@ function v12Rows(theme: string, fill: string | undefined): [string, string] {
   return [hex(vars.rowOdd as string), hex(vars.rowEven as string)];
 }
 
-async function v13Rows(theme: string, fill: string | undefined): Promise<[string, string]> {
+async function v13Rows(
+  theme: (typeof THEMES)[number],
+  fill: string | undefined
+): Promise<[string, string]> {
   const themeVariables = fill === undefined ? {} : { primaryColor: fill, mainBkg: fill };
   const t = createTheme(await loadTheme(theme), { cssVariables: false, themeVariables });
   return [hex(t.color('rowOdd')), hex(t.color('rowEven'))];

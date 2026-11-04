@@ -33,9 +33,9 @@ describe('ER through the public API (#134)', () => {
     expect((e as MermaidError).code).toBe('SYNTAX');
   });
 
-  it('supports svg only until the ascii hook lands', () => {
+  it('supports svg and ascii (#136)', () => {
     expect(supportsFormat('er', 'svg')).toBe(true);
-    expect(supportsFormat('er', 'ascii')).toBe(false);
+    expect(supportsFormat('er', 'ascii')).toBe(true);
   });
 
   it('applies the er section defaults: v12 spacing 140 / 80', async () => {

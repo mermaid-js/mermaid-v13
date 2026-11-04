@@ -1,38 +1,27 @@
 // The seam the ER ASCII suites use (#136): `renderErAscii` renders an ER diagram as text
-// through the public `format: 'ascii'` API (#47: `prepare` + `renderSync`), on the API object
-// `er/mermaid.ts` builds until T5 lists ER in the generated registry, and hands back the cell
-// layout that render drew, captured by a `postLayout` hook (D86: `units: 'cell'`), as
-// `render.ts` does for the flowchart.
-//
-// `ER_SECTION_DEFAULTS` go in as site config: they are the `er` section defaults T5 generates
-// (GAPS.md #134). Once the generated defaults carry them, T5 drops them here and switches to
-// `createMermaid()` from `mermaid`; the goldens do not change.
+// through the public `format: 'ascii'` API (#47: `prepare` + `renderSync`) of `createMermaid()`,
+// whose generated registry lists ER (#134), and hands back the cell layout that render drew,
+// captured by a `postLayout` hook (D86: `units: 'cell'`), as `render.ts` does for the
+// flowchart. No site config: v12's px defaults for the `er` section do not convert in cells, so
+// the drawings use the cell profile's spacing and widths (D118).
 import type { LaidOut } from '@mermaid-js/core';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { ErLayout } from '@mermaid-js/diagram-er';
-import type { TextRenderResult } from 'mermaid';
-import { erMermaid } from '../er/mermaid.ts';
+import { createMermaid, type TextRenderResult } from 'mermaid';
 import type { AsciiOptions } from './render.ts';
-
-/** v12's `er` section defaults, which T5 generates (GAPS.md #134). */
-export const ER_SECTION_DEFAULTS = {
-  nodeSpacing: 140,
-  rankSpacing: 80,
-  minEntityWidth: 100,
-} as const;
 
 /** The ER cell layout (with `er`: the views it was built from) and its title. */
 export type ErCellLayout = ErLayout & { er: NonNullable<ErLayout['er']>; title?: string };
 
 export type ErAsciiResult = TextRenderResult & { layout: ErCellLayout };
 
-let mermaid: ReturnType<typeof erMermaid> | undefined;
+let mermaid: ReturnType<typeof createMermaid> | undefined;
 let captured: LaidOut | undefined;
 
-async function instance(): Promise<ReturnType<typeof erMermaid>> {
+async function instance(): Promise<ReturnType<typeof createMermaid>> {
   if (!mermaid) {
-    mermaid = erMermaid();
-    mermaid.initialize({ deterministic: true, er: ER_SECTION_DEFAULTS });
+    mermaid = createMermaid();
+    mermaid.initialize({ deterministic: true });
     await mermaid.registerExternalDiagrams([
       { id: 'conformance-capture', postLayout: (laidOut) => (captured = laidOut) },
     ]);

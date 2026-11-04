@@ -71,7 +71,10 @@ emoji, generics and aliases, self and parallel relationships), each with `expect
 cardinality, replaces the marks with line glyphs and runs the flowchart reader on what is left.
 Each entity's table must be in a box (name row, then the attribute cells), each relationship
 label present, each line connected box to box, the same ends with the same cardinalities as
-upstream, and no arrowheads. `expected.txt` files are written with
+upstream, and no arrowheads. The drawings use the cell profile's spacing and entity widths:
+`er.nodeSpacing`, `er.rankSpacing` and `er.minEntityWidth` convert from px only when a diagram
+sets them, never from v12's defaults (D118); the rank gap is at least six cells, so both ends of
+a relationship and a line cell between them fit. `expected.txt` files are written with
 `vitest run -u packages/conformance/src/ascii/er-goldens.spec.ts` and reviewed by hand.
 ER entries in `ascii-divergences.json` have fixtures under `er/` or `er-ascii/`; each suite
 reads only its own groups' entries.
