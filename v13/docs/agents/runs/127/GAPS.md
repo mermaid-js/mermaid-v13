@@ -8,6 +8,14 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## #144 T3 layout (from #140, `v13/docs/research/state-regions.md`)
 
+- [x] Done in #144: nested-group model, frame stretch, D113 edges, region checks in
+  `conformance/src/state/layout.spec.ts`. Prototype folder deleted.
+- [ ] **Engine gap (state T0 candidate, maintainer):** `layered` leaves a group's self-loop and
+  its label out of the drawing's extent (`v2-a-compound-state-should-be-able-to-link-to-itself`,
+  `Active --> Active`): the loop runs off the right edge. Pinned as `ENGINE_GAPS` in the layout
+  spec; no core change from #144 (D102).
+- [ ] **Escalated (#144):** a composite with no `direction` is laid out TB in any diagram (v12's
+  `getDir` default), and a note sits in its state's composite (v12 put notes at the top level).
 - Adopt the nested-group model: each region a title-less `LayoutGroup` in its composite, no edges between regions. No state T0 (D111).
 - The builder stretches every region frame along the flow to the composite's inner size, so dividers run full length.
 - **D113 (answered):** a transition between two sibling regions goes to the engine like any other edge, with no special handling and no warning; the regions stack, as in v12. W4 is dropped. #144's region checks skip composites that have such an edge (S7, S17).
@@ -35,3 +43,11 @@ Unmet criteria and shared contracts, by owning ticket.
 ## Outside this spec (seen after merging `mermaid-v13` at `5a6425d8e`)
 
 - `.gitignore` now un-ignores `/.claude/skills/` (#129, for `release-alpha`). A worktree that holds local skill copies then fails `pnpm check`'s `prettier --check .` on untracked files (`.claude/skills/recheck-issue/scripts/*`). Fixed: `.claude/` added to `.prettierignore` here, identical to PR #183 into `mermaid-v13`, so the two merge cleanly.
+
+## Core `sourceView` mid-line directive bugs (found by class, fix owned by class)
+
+- [ ] Two cases in core `sourceView` (#181): a `%%` line inside a mid-line `%%{…}%%` directive becomes a comment hole that runs past `}%%`, and text inside a directive triggers the `;` drop. When class's core fix merges into `mermaid-v13`, merge it here and add state forms of both strings to the lexer-parity harvest (e.g. `stateDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB` and `stateDiagram\nA : x %%{init: {"a":"style"}}%% :#y;`). Until then, if state parity shows either, list it as a known divergence pointing at the class fix.
+
+## Composite self-loop (from #144)
+
+- [ ] Maintainer: "Fix in core now". State T0 #187: the layered engine counts a group's self-loop and its label in the drawing and parent sizes. When it merges into `mermaid-v13`, merge it here and remove the case from `ENGINE_GAPS` in `conformance/src/state/layout.spec.ts`.

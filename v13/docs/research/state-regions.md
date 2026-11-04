@@ -4,10 +4,9 @@ Issue #140 (spec #127, D111). The question: can core's `layered` engine place `-
 regions side by side inside their composite, using only today's `LayoutGroup` machinery? If not,
 the state layout (#144) needs a state T0 (D102).
 
-The prototype is throwaway and lives in `v13/throwaway/140-state-regions/regions.ts`. Nothing
-imports it and no test runs it. Run it with
-`pnpm exec tsx v13/throwaway/140-state-regions/regions.ts` (`--json` for raw results, `--svg <dir>`
-for debug drawings).
+The prototype was throwaway: `v13/throwaway/140-state-regions/regions.ts`, deleted when the
+state layout (#144) landed; it is in git at `af5ebb2cd`. Its region checks live on in
+`packages/conformance/src/state/layout.spec.ts`.
 
 ## TL;DR
 
