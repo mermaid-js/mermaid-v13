@@ -40,11 +40,20 @@ class BlankedInput implements Input {
   }
 }
 
-/**
- * The front matter's end each tree was parsed with. Fragments of a tree parsed with another
- * one are not reused: the same characters read differently there.
- */
+/** The front matter's end each tree was parsed with (in that tree's positions). */
 const parsedWith = new WeakMap<Tree, number>();
+
+/**
+ * Whether a fragment reads the same with the front matter ending at `end`: each position in
+ * it is blank in both parses or in neither. An edit before a fragment shifts the old end and
+ * the fragment alike (`offset`), so a front-matter keystroke keeps the diagram's fragments.
+ */
+function reusable(f: TreeFragment, end: number): boolean {
+  const old = parsedWith.get(f.tree);
+  if (old === undefined) return false;
+  const oldEnd = old - f.offset; // in the new document's positions
+  return oldEnd === end || f.to <= Math.min(oldEnd, end) || f.from >= Math.max(oldEnd, end);
+}
 
 class FrontMatterParser extends Parser {
   constructor(private readonly inner: Parser) {
@@ -57,10 +66,9 @@ class FrontMatterParser extends Parser {
     ranges: readonly { from: number; to: number }[]
   ): PartialParse {
     const end = preprocess(input.read(0, input.length)).bodyStart;
-    const reusable = fragments.filter((f) => parsedWith.get(f.tree) === end);
     const parse = this.inner.createParse(
       end > 0 ? new BlankedInput(input, end) : input,
-      reusable.length === fragments.length ? fragments : [],
+      fragments.filter((f) => reusable(f, end)),
       ranges
     );
     return {
