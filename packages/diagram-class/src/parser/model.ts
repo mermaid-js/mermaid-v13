@@ -129,11 +129,17 @@ export interface ClassStyleClass {
   textStyles: string[];
 }
 
+/** A `callback` or `click … call` on a class that exists (v12 dropped the others). */
 export interface ClassCallback {
-  /** Class id, as written. */
+  /** Class id. */
   id: string;
+  /** The function name as written (`fn`, `app.handlers.fn`). */
   name: string;
-  args?: string;
+  /**
+   * The arguments to call it with, as v12 passed them: the text in parentheses split at
+   * commas outside double quotes, each trimmed and unquoted; `[id]` when none were written.
+   */
+  args: string[];
   range: Range;
 }
 
@@ -183,6 +189,34 @@ export function splitClassName(raw: string): { id: string; type: string } {
   if (at <= 0) return { id: raw, type: '' };
   const parts = raw.split('~');
   return { id: parts[0] ?? '', type: parts[1] ?? '' };
+}
+
+/**
+ * v12 `setClickFunc`'s argument list: `args` split at every comma followed by an even number
+ * of `"` (outside quotes), each item trimmed and stripped of one pair of surrounding quotes;
+ * `[id]` when there are no arguments.
+ */
+export function callbackArgs(args: string | undefined, id: string): string[] {
+  if (args === undefined) return [id];
+  let quotes = 0;
+  for (const c of args) if (c === '"') quotes++;
+  const out: string[] = [];
+  let from = 0;
+  let seen = 0;
+  for (let i = 0; i < args.length; i++) {
+    const c = args[i];
+    if (c === '"') seen++;
+    else if (c === ',' && (quotes - seen) % 2 === 0) {
+      out.push(args.slice(from, i));
+      from = i + 1;
+    }
+  }
+  out.push(args.slice(from));
+  return out.map((a) => {
+    const item = a.trim();
+    // `substr(1, length - 2)`: a lone `"` gives `''`.
+    return item.startsWith('"') && item.endsWith('"') ? item.slice(1, -1) : item;
+  });
 }
 
 const escMember = (cls: string): string =>
@@ -320,6 +354,10 @@ export class ClassBuilder {
     return this.classes.size;
   }
 
+  get interfaceCount(): number {
+    return this.interfaces.length;
+  }
+
   get relationCount(): number {
     return this.relations.length;
   }
@@ -390,9 +428,10 @@ export class ClassBuilder {
   setClickEvent(ids: string, name: string, range: Range, args?: string): void {
     for (const part of ids.split(',')) {
       const id = splitClassName(part).id;
-      this.callbacks.push(args === undefined ? { id, name, range } : { id, name, args, range });
       const node = this.classes.get(id);
-      if (node) node.haveCallback = true;
+      if (!node) continue;
+      this.callbacks.push({ id, name, args: callbackArgs(args, id), range });
+      node.haveCallback = true;
     }
     this.setCssClass(ids, 'clickable');
   }

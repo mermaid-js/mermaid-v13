@@ -4,14 +4,17 @@
  *
  * | element                                   | id                        |
  * | ----------------------------------------- | ------------------------- |
- * | a mention of class `A` (k-th: `@k`)       | `n:A`, `n:A@2`            |
+ * | class `A`; its other mentions             | `n:A`; `n:A@2`, `n:A@3`   |
+ * | the interface end of `A ()-- B` (k-th)    | `i:A`, `i:A@2`            |
  * | the k-th attribute or method of class `A` | `m:A#1`, `m:A#2`          |
  * | relationship `A -- B` (k-th: `#k`)        | `e:A>B`, `e:A>B#2`        |
  * | namespace `A.B` (reopened: `@k`)          | `s:A.B`, `s:A.B@2`        |
  * | the k-th note                             | `note:1`                  |
  * | the k-th other statement                  | `st:1` (the header), …    |
  *
- * Class names are the names without their generic type (`A` for `A~T~`); namespace names are
+ * `n:A` is the mention that made class `A` (the model's `ast`), wherever it is; every other
+ * mention of the name, before or after, is `n:A@k` in source order. Class names are the names
+ * without their generic type (`A` for `A~T~`); namespace names are
  * qualified (`outer.inner`). `%`, `>`, `@` and `#` in names are percent-encoded.
  */
 import type { AstCallback, AstNode, Range } from '@mermaid-js/core/parser-kit';
@@ -31,6 +34,14 @@ export interface ClassRefNode extends AstNode<'ClassRef'> {
   name: string;
   /** The class id (`A`). */
   classId: string;
+}
+
+/** The interface end of a lollipop relationship (`A ()-- B`): `i:A`, `i:A@2`, … */
+export interface ClassInterfaceRefNode extends AstNode<'InterfaceRef'> {
+  /** The name as written. */
+  name: string;
+  /** The model's interface id (`interface0`, …). */
+  interfaceId: string;
 }
 
 /** One attribute or method: a class-body line, or the text of `A : member`. */
@@ -57,8 +68,8 @@ export interface ClassStmt extends AstNode<'Class'> {
 
 /** `A "1" *-- "many" B : label`. */
 export interface ClassRelationStmt extends AstNode<'Relation'> {
-  /** The two end mentions. */
-  children: [ClassRefNode, ClassRefNode];
+  /** The two end mentions (a lollipop end is an interface). */
+  children: [ClassRefNode | ClassInterfaceRefNode, ClassRefNode | ClassInterfaceRefNode];
   /** The arrow (`<|--`, `..>`, …). */
   arrowRange: Range;
   startLabel?: ClassTextNode;

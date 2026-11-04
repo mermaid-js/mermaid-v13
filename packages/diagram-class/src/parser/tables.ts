@@ -153,6 +153,14 @@ export const EXPECTED = new ExpectedTable([
   ['the end of the text', [Kind.EOF, T.Eof, T.EofInStruct]],
 ]);
 /** The same for styles, whose parts are words, colons and labels. */
+/** The same inside a namespace body, which holds classes, notes and namespaces only. */
+export const NS_EXPECTED = new ExpectedTable([
+  ['a class such as `class A`', [T.Class]],
+  ['a note', [T.Note, T.NoteFor]],
+  ['a namespace', [T.Namespace]],
+  ['`}`', [T.StructStop]],
+  ['a line break', [Kind.Newline]],
+]);
 export const STYLE_EXPECTED = new ExpectedTable([
   ['a style such as `fill:#f9f`', STYLE_PART_KINDS],
   ['`,`', [T.Comma]],
@@ -242,3 +250,37 @@ export function trimmed(src: string, r: Range, skip = 0): Range {
   while (e > s && isSpace(src.charCodeAt(e - 1))) e--;
   return { start: s, end: e };
 }
+
+/** Statement keywords a member line can start with (`accTitle` and `accDescr` take a `:`). */
+export const STATEMENT_WORDS = new Set([
+  'class',
+  'namespace',
+  'note',
+  'style',
+  'classDef',
+  'cssClass',
+  'click',
+  'link',
+  'callback',
+  'direction',
+  'accTitle',
+  'accDescr',
+]);
+
+/** Whether a member line reads as a statement: a keyword, or a name then `--` or `..`. */
+export function looksLikeStatement(line: string): boolean {
+  const t = line.trim();
+  let w = 0;
+  while (w < t.length && /[A-Za-z]/.test(t[w] ?? '')) w++;
+  if (
+    w > 0 &&
+    STATEMENT_WORDS.has(t.slice(0, w)) &&
+    (w === t.length || /[\s:{]/.test(t[w] ?? ''))
+  ) {
+    return true;
+  }
+  return /^[\w`]/.test(t) && (t.includes('--') || t.includes('..'));
+}
+
+export const NS_HINT =
+  'only classes, notes and namespaces go inside a namespace; put relationships and members after its `}`';

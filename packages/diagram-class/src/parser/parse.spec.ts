@@ -98,6 +98,45 @@ note "n"`);
     expect(r.model.classes.map((c) => c.ast)).toEqual(['n:A', 'n:B']);
   });
 
+  it('gives a class `n:<id>` wherever it is made; interfaces and earlier mentions differ', () => {
+    const r = parseClass('classDiagram\nnote for A "x"\nA ()-- B\nclass A\nA --> B');
+    expect(ids(r.ast.children)).toEqual([
+      'st:1',
+      'note:1',
+      'n:A@2',
+      'e:A>B',
+      'i:A',
+      'n:B',
+      'n:A',
+      'e:A>B#2',
+      'n:A@3',
+      'n:B@2',
+    ]);
+    expect(r.model.classes.map((c) => [c.id, c.ast])).toEqual([
+      ['B', 'n:B'],
+      ['A', 'n:A'],
+    ]);
+    expect(r.model.interfaces[0]?.ast).toBe('i:A');
+    expect(r.symbols.filter((s) => s.name === 'A').map((s) => [s.kind, s.role])).toEqual([
+      ['class', 'ref'],
+      ['interface', 'def'],
+      ['class', 'def'],
+      ['class', 'ref'],
+    ]);
+  });
+
+  it('records callbacks for existing classes, with v12 argument lists', () => {
+    const r = parseClass(
+      'classDiagram\nclass A\nclick Z call foo()\nclick A call foo(  a , "b,c" )\ncallback A "f"\nclick A call h(")'
+    );
+    expect(r.model.callbacks.map((c) => [c.id, c.name, c.args])).toEqual([
+      ['A', 'foo', ['a', 'b,c']],
+      ['A', 'f', ['A']],
+      ['A', 'h', ['']],
+    ]);
+    expect(parseClass('classDiagram\nclass A\nclick Z call foo()').diagnostics).toEqual([]);
+  });
+
   it('gives each opening of a namespace its own id; the model keeps the first', () => {
     const r = parseClass('classDiagram\nnamespace N {\nclass A\n}\nnamespace N {\nclass B\n}');
     expect(r.ast.children.map((c) => c.id)).toEqual(['st:1', 's:N', 's:N@2']);

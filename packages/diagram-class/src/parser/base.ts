@@ -1,11 +1,12 @@
 import {
-  inKindSet,
-  isLineEnd,
-  isSpace,
   Kind,
   LineIndex,
   ParseState,
   Probe,
+  inKindSet,
+  isLineEnd,
+  isSpace,
+  nodeId,
   significantTokens,
   skipTo,
 } from '@mermaid-js/core/parser-kit';
@@ -13,35 +14,49 @@ import type { AstId, Range, TokenView } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
-import type { ClassRefNode, ClassStatementNode, ClassTextNode } from './ast.ts';
+import type {
+  ClassInterfaceRefNode,
+  ClassRefNode,
+  ClassSimpleStmt,
+  ClassStatementNode,
+  ClassTextNode,
+} from './ast.ts';
+import { ClassBuilder, splitClassName } from './model.ts';
+import { T } from './tokens.ts';
+import {
+  AFTER_URL,
+  ALPHANUM,
+  ALPHANUM_KINDS,
+  BOUNDARY,
+  CALLBACK_ARGS,
+  CLICK_ACTION,
+  COMMA,
+  EXPECTED,
+  GENERIC,
+  LINK_TARGET,
+  MODE_KINDS,
+  NAME_NEXT,
+  NAME_PART,
+  NAME_START,
+  NS_BOUNDARY,
+  NS_NEXT,
+  PROBE_FOLLOWS,
+  SQE,
+  STOP,
+  STR,
+  STYLE_EXPECTED,
+  STYLE_PART,
+  STYLE_PART_KINDS,
+  UNCLOSED,
+  significantIndex,
+} from './tables.ts';
+import type { Frame, Name } from './tables.ts';
 import { lex } from './lexer.ts';
 import type { ClassLex } from './lexer.ts';
 import { S } from './rules.ts';
-import { ClassBuilder, splitClassName } from './model.ts';
 import { v12Text } from './source.ts';
 import type { V12Text } from './source.ts';
-import { T } from './tokens.ts';
 import { tokenValue } from './tokens-api.ts';
-import type { Frame, Name } from './tables.ts';
-import {
-  ALPHANUM,
-  NAME_START,
-  NAME_PART,
-  NAME_NEXT,
-  NS_NEXT,
-  GENERIC,
-  ALPHANUM_KINDS,
-  STR,
-  SQE,
-  MODE_KINDS,
-  UNCLOSED,
-  PROBE_FOLLOWS,
-  EXPECTED,
-  STOP,
-  BOUNDARY,
-  NS_BOUNDARY,
-  significantIndex,
-} from './tables.ts';
 import type { ClassParseOptions } from './parser.ts';
 
 /**
@@ -49,7 +64,17 @@ import type { ClassParseOptions } from './parser.ts';
  * fails records a diagnostic and throws {@link STOP}; the statement loop catches it and
  * recovers.
  */
+/** A class mention whose AST id is set when the parse ends. */
+interface Mention {
+  node: { id: string };
+  classId: string;
+  made: boolean;
+}
+
 export abstract class ParserBase {
+  /** Class mentions in source order; their ids are set at the end ({@link mentionIds}). */
+  protected readonly mentions: Mention[] = [];
+  private readonly interfaces = new Map<string, number>();
   protected readonly pre: PreprocessResult;
   protected readonly v12: V12Text;
   protected readonly st = new ParseState();
@@ -435,15 +460,52 @@ export abstract class ParserBase {
     return { text, range: this.span(from) };
   }
 
-  /** A mention of a class name: its AST node and symbol. */
-  protected ref(name: Name, created: boolean, ast: AstId): ClassRefNode {
+  /** A mention of a class name: its AST node (id set by {@link mentionIds}) and symbol. */
+  protected ref(name: Name, created: boolean): ClassRefNode {
     this.st.symbol(name.id, 'class', name.range, created ? 'def' : 'ref');
-    return { id: ast, type: 'ClassRef', range: name.range, name: name.raw, classId: name.id };
+    return this.mention(
+      { id: '', type: 'ClassRef', range: name.range, name: name.raw, classId: name.id },
+      name.id,
+      created
+    );
+  }
+
+  /** Record a mention of class `classId`; `made`: the mention made the class. */
+  protected mention<N extends { id: string }>(node: N, classId: string, made: boolean): N {
+    this.mentions.push({ node, classId, made });
+    return node;
+  }
+
+  /**
+   * The mention ids, once every mention is known: the one that made class `A` is `n:A`, the
+   * others `n:A@2`, `n:A@3`, … in source order (`n:A` first when none made it).
+   */
+  protected mentionIds(): void {
+    const byName = new Map<string, Mention[]>();
+    for (const m of this.mentions) {
+      let list = byName.get(m.classId);
+      if (!list) byName.set(m.classId, (list = []));
+      list.push(m);
+    }
+    for (const [name, list] of byName) {
+      const base = nodeId(name);
+      const maker = list.find((m) => m.made) ?? list[0];
+      let k = 1;
+      for (const m of list) m.node.id = m === maker ? base : `${base}@${++k}`;
+    }
+  }
+
+  /** `i:<name>`, then `@2`, … : the AST id of a lollipop interface end. */
+  protected interfaceId(name: string): AstId {
+    const n = (this.interfaces.get(name) ?? 0) + 1;
+    this.interfaces.set(name, n);
+    const id = `i:${nodeId(name).slice(2)}`;
+    return n === 1 ? id : `${id}@${n}`;
   }
 
   /** `addClass` for a mention: whether it made the class. */
-  protected addClass(name: Name, ast: AstId): boolean {
-    const made = this.db.addClass(name.raw, ast);
+  protected addClass(name: Name): boolean {
+    const made = this.db.addClass(name.raw, nodeId(name.id));
     if (made) this.checkNodes(name.range);
     return made;
   }
@@ -456,5 +518,102 @@ export abstract class ParserBase {
         r
       );
     }
+  }
+
+  /** The interface end of a lollipop relationship: its AST node and symbol. */
+  protected interfaceRef(name: Name, ast: AstId, index: number): ClassInterfaceRefNode {
+    this.st.symbol(name.id, 'interface', name.range, 'def');
+    return {
+      id: ast,
+      type: 'InterfaceRef',
+      range: name.range,
+      name: name.raw,
+      interfaceId: `interface${index}`,
+    };
+  }
+
+  /** Comma-separated names in a string (`cssClass "A,B"`): symbols with their ranges. */
+  protected listRefs(list: string, r: Range, kindName: string, out: string[]): void {
+    const exact = this.src.slice(r.start + 1, r.end - 1) === list;
+    let at = r.start + 1;
+    for (const part of list.split(',')) {
+      const pr = exact ? { start: at, end: at + part.length } : r;
+      this.st.symbol(splitClassName(part).id, kindName, pr, 'ref');
+      out.push(part);
+      at += part.length + 1;
+    }
+  }
+
+  /** jison `stylesOpt`: styles separated by `,` (each the text of its parts, joined). */
+  protected stylesOpt(): string[] {
+    const out: string[] = [];
+    for (;;) {
+      this.tested(STYLE_PART_KINDS);
+      if (!inKindSet(STYLE_PART, this.kind()))
+        this.fail(STYLE_PART_KINDS, undefined, STYLE_EXPECTED);
+      let s = this.val(this.i++);
+      for (;;) {
+        this.tested(STYLE_PART_KINDS);
+        if (!inKindSet(STYLE_PART, this.kind())) break;
+        s += this.val(this.i++);
+      }
+      out.push(s);
+      this.tested(COMMA);
+      if (this.kind() !== T.Comma) return out;
+      this.i++;
+    }
+  }
+
+  /** `callback`, `link` and `click` statements, read into their AST node. */
+  protected clickStatement(node: ClassSimpleStmt): void {
+    const { db } = this;
+    const from = this.i;
+    const k = this.kind();
+    this.i++;
+    const name = this.className();
+    this.st.symbol(name.id, 'class', name.range, 'ref');
+    node.refs.push(name.raw);
+    if (k === T.Callback) {
+      const fn = this.str().text;
+      node.callback = { targets: [name.id], name: fn };
+      this.tested(STR);
+      if (this.kind() === T.Str) node.tooltip = this.val(this.i++);
+      db.setClickEvent(name.raw, fn, this.span(from));
+    } else if (k === T.Link) {
+      node.url = this.str().text;
+      this.link(name, node);
+      return;
+    } else {
+      this.tested(CLICK_ACTION);
+      const a = this.kind();
+      if (a === T.Href) {
+        this.i++;
+        node.url = this.str().text;
+        this.link(name, node);
+        return;
+      }
+      if (a !== T.CallbackName) this.fail(CLICK_ACTION);
+      const fn = this.val(this.i++);
+      this.tested(CALLBACK_ARGS);
+      const args = this.kind() === T.CallbackArgs ? this.val(this.i++) : undefined;
+      node.callback =
+        args === undefined
+          ? { targets: [name.id], name: fn }
+          : { targets: [name.id], name: fn, args };
+      this.tested(STR);
+      if (this.kind() === T.Str) node.tooltip = this.val(this.i++);
+      db.setClickEvent(name.raw, fn, this.span(from), args);
+    }
+    if (node.tooltip !== undefined) db.setTooltip(name.raw, node.tooltip);
+  }
+
+  /** After a link's URL: `[ "tooltip" ] [ target ]`. */
+  protected link(name: Name, node: ClassSimpleStmt): void {
+    this.tested(AFTER_URL);
+    if (this.kind() === T.Str) node.tooltip = this.val(this.i++);
+    this.tested(LINK_TARGET);
+    if (this.kind() === T.LinkTarget) node.target = this.val(this.i++);
+    this.db.setLink(name.raw, node.url ?? '', node.target);
+    if (node.tooltip !== undefined) this.db.setTooltip(name.raw, node.tooltip);
   }
 }

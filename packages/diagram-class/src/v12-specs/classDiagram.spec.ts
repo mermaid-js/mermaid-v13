@@ -10,8 +10,9 @@ type ClassMap = Map<string, any>;
 type NamespaceNode = any;
 // rewritten: a jison message check keeps only the rejection (R-ERR-5)
 // rewritten: v12's config imports come from the adapter
-// skipped: should bind link on generic class — expects the URL after `@braintree/sanitize-url`, which v12 ran at parse time; v13 keeps the URL as written and checks it when SVG is written (the parity normaliser applies the same sanitiser)
-// skipped: should parse diagram with direction — snapshots v12's `domId`, which takes a counter v12 never resets between diagrams; v13 writes no element ids from it
+// skipped assertion: expect(c1.link).toBe('https://example.com/'); — expects the URL after `@braintree/sanitize-url`, which v12 ran at parse time; v13 keeps the URL as written and checks it when SVG is written (the parity normaliser applies the same sanitiser)
+// skipped assertion: "domId": "classId-Student-154", — snapshots v12's `domId`, which takes a counter v12 never resets between diagrams; v13 writes no element ids from it
+// un-skipped: should handle a leading newline — v12 (the oracle) and v13 both accept it
 const spyOn = vi.spyOn;
 
 const staticCssStyle = 'text-decoration:underline;';
@@ -298,7 +299,7 @@ describe('given a basic class diagram, ', function () {
       expect(parser.yy.getAccDescription()).toBe('This is my multi\nline description');
     });
 
-    it.skip('should handle a leading newline', function () {
+    it('should handle a leading newline', function () {
       const str = '\nclassDiagram\n' + 'class Car';
 
       try {
@@ -523,12 +524,12 @@ describe('given a basic class diagram, ', function () {
       expect(c1.tooltip).toBe('a tip');
     });
 
-    it.skip('should bind link on generic class', () => {
+    it('should bind link on generic class', () => {
       const str = 'classDiagram\n' + 'class C1~T~\n' + 'link C1~T~ "https://example.com"';
 
       parser.parse(str);
       const c1 = classDb.getClass('C1');
-      expect(c1.link).toBe('https://example.com/');
+      // skipped assertion: expect(c1.link).toBe('https://example.com/');
       expect(c1.cssClasses).toBe('default clickable');
     });
 
@@ -696,7 +697,7 @@ class C13["With Città foreign language"]
       expect(() => parser.parse(str)).toThrowError();
     });
 
-    it.skip('should parse diagram with direction', () => {
+    it('should parse diagram with direction', () => {
       parser.parse(`classDiagram
           direction TB
           class Student {
@@ -733,7 +734,6 @@ class C13["With Città foreign language"]
         {
           "annotations": [],
           "cssClasses": "default",
-          "domId": "classId-Student-154",
           "id": "Student",
           "label": "Student",
           "members": [

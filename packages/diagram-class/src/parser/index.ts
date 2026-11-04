@@ -29,6 +29,7 @@ export type { MemberLine } from './member.ts';
 export type {
   ClassAnnotationStmt,
   ClassDocument,
+  ClassInterfaceRefNode,
   ClassMemberNode,
   ClassMemberStmt,
   ClassNamespaceStmt,

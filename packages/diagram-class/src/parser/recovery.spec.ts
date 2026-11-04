@@ -236,6 +236,24 @@ const CASES: Case[] = [
     keeps: ['C'],
   },
   {
+    name: 'unclosed class body, then statements',
+    lines: ['classDiagram', 'class A {', '+x', 'class B', 'B --> C', 'D -> E'],
+    errors: [
+      ['UNCLOSED_BODY', 2],
+      ['UNEXPECTED', 6],
+    ],
+    keeps: ['A', 'B', 'C'],
+  },
+  {
+    name: 'unclosed class body before another class',
+    lines: ['classDiagram', 'class A {', '+x', '', 'B --> C', 'class D {', '+y', '}', 'E -> F'],
+    errors: [
+      ['UNCLOSED_BODY', 2],
+      ['UNEXPECTED', 9],
+    ],
+    keeps: ['A', 'B', 'C', 'D'],
+  },
+  {
     name: 'unclosed namespace',
     lines: ['classDiagram', 'A -> B', 'namespace N {', '  class C'],
     errors: [

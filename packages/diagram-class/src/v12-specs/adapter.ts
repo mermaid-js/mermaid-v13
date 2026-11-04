@@ -29,8 +29,8 @@ export class ClassMember {
   memberType: 'method' | 'attribute';
   visibility: string;
   classifier: string;
-  parameters?: string;
-  returnType?: string;
+  declare parameters?: string;
+  declare returnType?: string;
   text: string;
   declare private readonly parts: MemberParts;
 
@@ -88,8 +88,9 @@ function v12Class(c: ClassNode): Record<string, unknown> {
     members: c.attributes.map((m) => new ClassMember(m, 'attribute')),
     annotations: [...c.annotations],
     styles: [...c.styles],
-    domId: `classId-${c.id}`,
   };
+  // v12's `domId` (`classId-<id>-<counter>`) without the counter, left out of snapshots.
+  Object.defineProperty(out, 'domId', { value: `classId-${c.id}`, enumerable: false });
   if (c.parent !== undefined) out.parent = c.parent;
   if (c.link !== undefined) out.link = c.link;
   if (c.linkTarget !== undefined) out.linkTarget = c.linkTarget;

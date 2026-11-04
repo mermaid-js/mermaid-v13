@@ -2,14 +2,13 @@
  * The v13 side of class-diagram parity: the class parser and the normaliser from its
  * `ClassModel` to the {@link ClassSnapshot} that `v12.ts` takes from mermaid 12's ClassDB.
  *
- * Bridged here instead of listed as divergences:
- * - v12 stored link URLs after `@braintree/sanitize-url` (it is not `loose` from diagram
- *   text); v13 keeps the URL as written and checks it when SVG is written. The normaliser
- *   applies v12's sanitiser to the v13 URL.
- * - v12 wrote `'none'` for a missing multiplicity; v13 leaves it out. Both read as undefined
- *   (a written `"none"` too, which v12's renderer also drew as nothing).
+ * The oracle runs class sources at `securityLevel: 'loose'` ({@link classAdapter}'s
+ * `v12Config`): v12 then keeps link URLs as written, as v13 does (v13 checks them when SVG is
+ * written), and queues its click bindings, which the snapshots compare with `callbacks`.
+ *
+ * Bridged here instead of listed as a divergence: v12 wrote `'none'` for a missing multiplicity; v13 leaves it out. Both read as undefined
+ * (a written `"none"` too, which v12's renderer also drew as nothing).
  */
-import { sanitizeUrl } from '@braintree/sanitize-url';
 import { detectClass, memberText, parseClass } from '@mermaid-js/diagram-class';
 import type { ClassMember, ClassModel } from '@mermaid-js/diagram-class';
 import type { DiagramAdapter } from '../types.ts';
@@ -31,6 +30,7 @@ const none = (s: string | undefined): string | undefined => (s === 'none' ? unde
 export function classV13Snapshot(model: ClassModel): ClassSnapshot {
   return {
     direction: model.direction,
+    callbacks: model.callbacks.map((c) => ({ id: c.id, name: c.name, args: [...c.args] })),
     accTitle: model.accTitle,
     accDescr: model.accDescr,
     classes: model.classes.map((c) => ({
@@ -43,7 +43,7 @@ export function classV13Snapshot(model: ClassModel): ClassSnapshot {
       members: c.attributes.map(member),
       methods: c.methods.map(member),
       parent: c.parent,
-      link: c.link === undefined ? undefined : sanitizeUrl(c.link),
+      link: c.link,
       linkTarget: c.linkTarget,
       tooltip: c.tooltip,
       haveCallback: c.haveCallback === true,
@@ -92,4 +92,5 @@ export const classAdapter: DiagramAdapter<ClassModel> = {
   parse: parseClassForParity,
   normaliseV13: classV13Snapshot,
   normaliseV12: classV12Snapshot,
+  v12Config: { securityLevel: 'loose' },
 };

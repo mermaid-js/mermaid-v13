@@ -15,6 +15,12 @@ export interface DiagramAdapter<M = unknown> {
   /** v13 parse: returns the model, or throws when v13 rejects the source. */
   parse(text: string): M;
   normaliseV13(model: M): unknown;
+  /**
+   * Site config the oracle parses this diagram's sources with, for `normaliseV12` (e.g.
+   * `{ securityLevel: 'loose' }`, so v12's click bindings run). Accept/reject is taken
+   * from the plain parse.
+   */
+  v12Config?: Record<string, unknown>;
   normaliseV12(db: unknown): unknown;
 }
 

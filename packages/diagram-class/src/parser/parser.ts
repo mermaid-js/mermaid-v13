@@ -10,7 +10,7 @@
  * restarts on the line after it.
  */
 // cspell:words LALR
-import { inKindSet, Kind } from '@mermaid-js/core/parser-kit';
+import { Kind, inKindSet, isLineEnd, isSpace, nodeId } from '@mermaid-js/core/parser-kit';
 import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -27,53 +27,48 @@ import type {
   ClassStmt,
   ClassTextNode,
 } from './ast.ts';
-import { splitClassName } from './model.ts';
 import type { ClassModel, RelationType } from './model.ts';
 import { T } from './tokens.ts';
 import { ParserBase } from './base.ts';
-import type { Frame, Name } from './tables.ts';
 import {
-  NAME_PART,
-  RELATION_TYPES,
-  RELATION_TYPE_KINDS,
-  LINE_KINDS,
-  RELATION_START,
-  RELATION_START_SET,
-  AFTER_NAME,
-  STR,
-  LABEL,
+  ACC_DESCR_VALUE,
+  ACC_TITLE_VALUE,
   AFTER_CLASS,
   AFTER_LABEL,
-  STRUCT_START,
-  BODY,
-  ANNOTATION_END,
+  AFTER_NAME,
   AFTER_NS_NAME,
-  STYLE_PART_KINDS,
-  STYLE_PART,
-  COMMA,
   ALPHA,
-  CLICK_ACTION,
-  CALLBACK_ARGS,
-  LINK_TARGET,
-  AFTER_URL,
+  ANNOTATION_END,
+  BODY,
   CLASS_DIAGRAM,
-  NEWLINE,
-  SEPARATOR,
-  NS_SEPARATOR,
-  ACC_TITLE_VALUE,
-  ACC_DESCR_VALUE,
-  STATEMENT_KINDS,
-  DOC_KINDS,
-  NS_ITEM_KINDS,
-  NS_BODY_KINDS,
-  NS_FIRST_KINDS,
+  COMMA,
   DIRECTIONS,
-  STYLE_EXPECTED,
+  DOC_KINDS,
+  LABEL,
+  LINE_KINDS,
+  NAME_PART,
+  NEWLINE,
+  NS_BODY_KINDS,
+  NS_EXPECTED,
+  NS_FIRST_KINDS,
+  NS_HINT,
+  NS_ITEM_KINDS,
+  NS_SEPARATOR,
+  RELATION_START,
+  RELATION_START_SET,
+  RELATION_TYPES,
+  RELATION_TYPE_KINDS,
+  SEPARATOR,
   STATEMENT_HINTS,
+  STATEMENT_KINDS,
   STOP,
+  STR,
+  STRUCT_START,
   cleanupLabel,
+  looksLikeStatement,
   trimmed,
 } from './tables.ts';
+import type { Frame, Name } from './tables.ts';
 
 export interface ClassParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -101,6 +96,7 @@ class ClassParser extends ParserBase {
     const { st, db, options } = this;
     this.header();
     this.document();
+    this.mentionIds();
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
     const model = db.model(warnings);
     if (model.callbacks.length > 0 && !options.claims?.includes('callbacks')) {
@@ -129,63 +125,10 @@ class ClassParser extends ParserBase {
     const { db, ids, st } = this;
     const from = this.i;
     const first = this.className();
-    const firstAst = ids.node(first.id);
     this.tested(AFTER_NAME);
     const k = this.kind();
     if (k === T.Str || inKindSet(RELATION_START_SET, k)) {
-      const startLabel = k === T.Str ? this.textNode(this.i++) : undefined;
-      const arrowFrom = this.i;
-      const [startType, line, endType] = this.relation();
-      const arrowRange = this.span(arrowFrom);
-      this.tested(STR);
-      const endLabel = this.kind() === T.Str ? this.textNode(this.i++) : undefined;
-      const second = this.className();
-      const secondAst = ids.node(second.id);
-      this.tested(LABEL);
-      const label =
-        this.kind() === T.Label
-          ? { text: cleanupLabel(this.val(this.i)), range: this.range(this.i++) }
-          : undefined;
-      const ast = ids.edge(first.id, second.id);
-      const had = [db.has(first.id), db.has(second.id)];
-      db.addRelation({
-        from: first.raw,
-        to: second.raw,
-        fromAst: firstAst,
-        toAst: secondAst,
-        ast,
-        startType,
-        endType,
-        line,
-        ...(startLabel ? { startLabel: startLabel.text } : {}),
-        ...(endLabel ? { endLabel: endLabel.text } : {}),
-        ...(label ? { label: label.text } : {}),
-      });
-      if (!had[0] && db.has(first.id)) this.checkNodes(first.range);
-      if (!had[1] && db.has(second.id)) this.checkNodes(second.range);
-      if (db.relationCount === this.maxEdges + 1) {
-        st.diagnostics.error(
-          LIMIT_CODES.maxEdges,
-          `The diagram has more than ${this.maxEdges} relationships, the limit. The limit is set by the page or app that renders the diagram.`,
-          this.span(from)
-        );
-      }
-      const r = this.span(from);
-      const node: ClassRelationStmt = {
-        id: ast,
-        type: 'Relation',
-        range: r,
-        children: [
-          this.ref(first, !had[0] && db.getClass(first.id)?.ast === firstAst, firstAst),
-          this.ref(second, !had[1] && db.getClass(second.id)?.ast === secondAst, secondAst),
-        ],
-        arrowRange,
-      };
-      if (startLabel) node.startLabel = startLabel;
-      if (endLabel) node.endLabel = endLabel;
-      if (label) node.label = label;
-      st.statement('relation', r);
-      out.push(node);
+      this.relationStatement(first, from, out);
       return;
     }
     if (k === T.Label) {
@@ -193,10 +136,10 @@ class ClassParser extends ParserBase {
       const text = cleanupLabel(this.val(j));
       const textRange = this.range(j);
       const had = db.has(first.id);
-      const member = db.addMember(first.raw, text, textRange, firstAst);
+      const member = db.addMember(first.raw, text, textRange, nodeId(first.id));
       if (!had) this.checkNodes(first.range);
       const r = this.span(from);
-      const owner = this.ref(first, !had, firstAst);
+      const owner = this.ref(first, !had);
       st.statement('member', r);
       out.push({
         id: ids.statement('st'),
@@ -213,7 +156,75 @@ class ClassParser extends ParserBase {
     }
     // jison `memberStatement: className`: a bare name, which v12 ignores.
     st.statement('classRef', first.range);
-    out.push(this.ref(first, false, firstAst));
+    out.push(this.ref(first, false));
+  }
+
+  /** jison `relationStatement [LABEL]`, after its first class name. */
+  protected relationStatement(first: Name, from: number, out: ClassStatementNode[]): void {
+    const { db, ids, st } = this;
+    const k = this.kind();
+    const startLabel = k === T.Str ? this.textNode(this.i++) : undefined;
+    const arrowFrom = this.i;
+    const [startType, line, endType] = this.relation();
+    const arrowRange = this.span(arrowFrom);
+    this.tested(STR);
+    const endLabel = this.kind() === T.Str ? this.textNode(this.i++) : undefined;
+    const second = this.className();
+    this.tested(LABEL);
+    const label =
+      this.kind() === T.Label
+        ? { text: cleanupLabel(this.val(this.i)), range: this.range(this.i++) }
+        : undefined;
+    const ast = ids.edge(first.id, second.id);
+    const had = [db.has(first.id), db.has(second.id)];
+    // v12 makes the lollipop end of `A ()-- B` an interface, not a class.
+    const startInterface = startType === 'lollipop' && endType === 'none';
+    const endInterface = endType === 'lollipop' && startType === 'none';
+    const fromAst = startInterface ? this.interfaceId(first.id) : nodeId(first.id);
+    const toAst = endInterface ? this.interfaceId(second.id) : nodeId(second.id);
+    const interfaceCount = db.interfaceCount;
+    db.addRelation({
+      from: first.raw,
+      to: second.raw,
+      fromAst,
+      toAst,
+      ast,
+      startType,
+      endType,
+      line,
+      ...(startLabel ? { startLabel: startLabel.text } : {}),
+      ...(endLabel ? { endLabel: endLabel.text } : {}),
+      ...(label ? { label: label.text } : {}),
+    });
+    if (!had[0] && db.has(first.id)) this.checkNodes(first.range);
+    if (!had[1] && db.has(second.id)) this.checkNodes(second.range);
+    if (db.relationCount === this.maxEdges + 1) {
+      st.diagnostics.error(
+        LIMIT_CODES.maxEdges,
+        `The diagram has more than ${this.maxEdges} relationships, the limit. The limit is set by the page or app that renders the diagram.`,
+        this.span(from)
+      );
+    }
+    const r = this.span(from);
+    const node: ClassRelationStmt = {
+      id: ast,
+      type: 'Relation',
+      range: r,
+      children: [
+        startInterface
+          ? this.interfaceRef(first, fromAst, interfaceCount)
+          : this.ref(first, !had[0] && db.has(first.id)),
+        endInterface
+          ? this.interfaceRef(second, toAst, interfaceCount)
+          : this.ref(second, !had[1] && db.has(second.id)),
+      ],
+      arrowRange,
+    };
+    if (startLabel) node.startLabel = startLabel;
+    if (endLabel) node.endLabel = endLabel;
+    if (label) node.label = label;
+    st.statement('relation', r);
+    out.push(node);
   }
 
   /** jison `relation`: `[relationType] lineType [relationType]`. */
@@ -240,15 +251,14 @@ class ClassParser extends ParserBase {
 
   /** jison `classStatement`. Returns the class name as written. */
   protected classStatement(out: ClassStatementNode[]): string {
-    const { db, ids, st } = this;
+    const { db, st } = this;
     const from = this.i++;
     const name = this.className();
-    const ast = ids.node(name.id);
     // The class is made before its label is read, so a bad label still leaves it in the
     // model (v12 made it with the label; only an accepted text reaches the model there).
-    const made = this.addClass(name, ast);
+    const made = this.addClass(name);
     const node: ClassStmt = {
-      id: ast,
+      id: '',
       type: 'Class',
       range: name.range,
       name: name.raw,
@@ -257,6 +267,7 @@ class ClassParser extends ParserBase {
       children: [],
     };
     this.st.symbol(name.id, 'class', name.range, made ? 'def' : 'ref');
+    this.mention(node, name.id, made);
     try {
       this.tested(AFTER_CLASS);
       const label = this.kind() === T.SQS ? this.classLabel() : undefined;
@@ -317,7 +328,9 @@ class ClassParser extends ParserBase {
         this.i++;
         break;
       }
-      if (k === T.EofInStruct || k === Kind.EOF || k === T.Eof) {
+      const ends = k === T.EofInStruct || k === Kind.EOF || k === T.Eof;
+      if ((ends || k === T.OpenInStruct) && this.bodyRunsOn(name, node, open, lines)) throw STOP;
+      if (ends) {
         const r = this.range(open);
         this.st.diagnostics.error(
           'UNCLOSED_BODY',
@@ -346,12 +359,40 @@ class ClassParser extends ParserBase {
     node.bodyRange = this.span(open);
   }
 
+  /**
+   * A body that fails (the text ends in it, or a `{` opens inside it) was most likely left
+   * unclosed when a member line reads as a statement (`class B`, `A --> B`): report the
+   * unclosed `{`, keep the members before that line, and lex again from it, so the following
+   * statements are read as statements. v12 rejects the text either way.
+   */
+  protected bodyRunsOn(name: Name, node: ClassStmt, open: number, lines: number[]): boolean {
+    const q = lines.findIndex((j) => looksLikeStatement(this.val(j)));
+    if (q < 0) return false;
+    const j = lines[q] ?? 0;
+    const r = this.range(open);
+    const at = trimmed(this.src, this.range(j));
+    this.st.diagnostics.error(
+      'UNCLOSED_BODY',
+      `Unclosed class body: the \`{\` of class \`${name.id}\` at line ${this.lineOf(r.start)} has no closing \`}\`. Add \`}\` before line ${this.lineOf(at.start)}.`,
+      r,
+      { related: [{ message: 'The body runs on to here.', range: at }] }
+    );
+    this.addMembers(name, node, lines.slice(0, q));
+    node.bodyRange = { start: r.start, end: at.start };
+    // Lex again from the line break before that line, which then ends the class statement.
+    let from = this.start(j);
+    while (from > 0 && !isLineEnd(this.src.charCodeAt(from - 1))) from--;
+    while (from > 0 && isLineEnd(this.src.charCodeAt(from - 1))) from--;
+    this.restartAt(from);
+    return true;
+  }
+
   /** v12 `addMembers`: each member line in order. */
   protected addMembers(name: Name, node: ClassStmt, lines: readonly number[]): void {
     for (const j of lines) {
       const text = this.val(j);
       const r = this.range(j);
-      const member = this.db.addMember(name.raw, text, trimmed(this.src, r), node.id);
+      const member = this.db.addMember(name.raw, text, trimmed(this.src, r), nodeId(name.id));
       if (member) {
         node.children.push({
           id: member.ast,
@@ -369,7 +410,6 @@ class ClassParser extends ParserBase {
     const annotation = this.alphaNumToken();
     this.expect(T.AnnotationEnd, ANNOTATION_END);
     const name = this.className();
-    const ast = this.ids.node(name.id);
     this.db.addAnnotation(name.raw, annotation, name.range);
     const r = this.span(from);
     this.st.statement('annotation', r);
@@ -378,7 +418,7 @@ class ClassParser extends ParserBase {
       type: 'Annotation',
       range: r,
       annotation,
-      children: [this.ref(name, false, ast)],
+      children: [this.ref(name, false)],
     };
     out.push(node);
   }
@@ -393,7 +433,7 @@ class ClassParser extends ParserBase {
     if (forClass) {
       const name = this.className();
       raw = name.raw;
-      ref = this.ref(name, false, this.ids.node(name.id));
+      ref = this.ref(name, false);
     }
     const text = this.str();
     const ast = this.ids.statement('note');
@@ -410,91 +450,6 @@ class ClassParser extends ParserBase {
     };
     out.push(node);
     return noteId;
-  }
-
-  /** Comma-separated names in a string (`cssClass "A,B"`): symbols with their ranges. */
-  protected listRefs(list: string, r: Range, kindName: string, out: string[]): void {
-    const exact = this.src.slice(r.start + 1, r.end - 1) === list;
-    let at = r.start + 1;
-    for (const part of list.split(',')) {
-      const pr = exact ? { start: at, end: at + part.length } : r;
-      this.st.symbol(splitClassName(part).id, kindName, pr, 'ref');
-      out.push(part);
-      at += part.length + 1;
-    }
-  }
-
-  /** jison `stylesOpt`: styles separated by `,` (each the text of its parts, joined). */
-  protected stylesOpt(): string[] {
-    const out: string[] = [];
-    for (;;) {
-      this.tested(STYLE_PART_KINDS);
-      if (!inKindSet(STYLE_PART, this.kind()))
-        this.fail(STYLE_PART_KINDS, undefined, STYLE_EXPECTED);
-      let s = this.val(this.i++);
-      for (;;) {
-        this.tested(STYLE_PART_KINDS);
-        if (!inKindSet(STYLE_PART, this.kind())) break;
-        s += this.val(this.i++);
-      }
-      out.push(s);
-      this.tested(COMMA);
-      if (this.kind() !== T.Comma) return out;
-      this.i++;
-    }
-  }
-
-  /** `callback`, `link` and `click` statements, read into their AST node. */
-  protected clickStatement(node: ClassSimpleStmt): void {
-    const { db } = this;
-    const from = this.i;
-    const k = this.kind();
-    this.i++;
-    const name = this.className();
-    this.st.symbol(name.id, 'class', name.range, 'ref');
-    node.refs.push(name.raw);
-    if (k === T.Callback) {
-      const fn = this.str().text;
-      node.callback = { targets: [name.id], name: fn };
-      this.tested(STR);
-      if (this.kind() === T.Str) node.tooltip = this.val(this.i++);
-      db.setClickEvent(name.raw, fn, this.span(from));
-    } else if (k === T.Link) {
-      node.url = this.str().text;
-      this.link(name, node);
-      return;
-    } else {
-      this.tested(CLICK_ACTION);
-      const a = this.kind();
-      if (a === T.Href) {
-        this.i++;
-        node.url = this.str().text;
-        this.link(name, node);
-        return;
-      }
-      if (a !== T.CallbackName) this.fail(CLICK_ACTION);
-      const fn = this.val(this.i++);
-      this.tested(CALLBACK_ARGS);
-      const args = this.kind() === T.CallbackArgs ? this.val(this.i++) : undefined;
-      node.callback =
-        args === undefined
-          ? { targets: [name.id], name: fn }
-          : { targets: [name.id], name: fn, args };
-      this.tested(STR);
-      if (this.kind() === T.Str) node.tooltip = this.val(this.i++);
-      db.setClickEvent(name.raw, fn, this.span(from), args);
-    }
-    if (node.tooltip !== undefined) db.setTooltip(name.raw, node.tooltip);
-  }
-
-  /** After a link's URL: `[ "tooltip" ] [ target ]`. */
-  protected link(name: Name, node: ClassSimpleStmt): void {
-    this.tested(AFTER_URL);
-    if (this.kind() === T.Str) node.tooltip = this.val(this.i++);
-    this.tested(LINK_TARGET);
-    if (this.kind() === T.LinkTarget) node.target = this.val(this.i++);
-    this.db.setLink(name.raw, node.url ?? '', node.target);
-    if (node.tooltip !== undefined) this.db.setTooltip(name.raw, node.tooltip);
   }
 
   protected simple(kind: ClassSimpleKind, from: number, refs: string[]): ClassSimpleStmt {
@@ -735,14 +690,17 @@ class ClassParser extends ParserBase {
         frame.needSeparator = false;
         return;
       }
-      if (k !== T.StructStop) this.fail(NS_SEPARATOR);
+      if (k !== T.StructStop) this.fail(NS_SEPARATOR, NS_HINT, NS_EXPECTED);
       frame.needSeparator = false;
     }
     this.tested(frame.items === 0 && !frame.leadingBreak ? NS_FIRST_KINDS : NS_BODY_KINDS);
     if (k === T.StructStop) {
       if (frame.items === 0) {
-        this.hint = 'a namespace holds at least one class or note';
-        this.fail(NS_ITEM_KINDS);
+        this.fail(
+          NS_ITEM_KINDS,
+          'a namespace holds at least one class, note or namespace',
+          NS_EXPECTED
+        );
       }
       this.i++;
       this.closeFrame(this.tokEnd(this.i - 1));
@@ -753,7 +711,7 @@ class ClassParser extends ParserBase {
       this.i++;
       return;
     }
-    this.hint = STATEMENT_HINTS[k] ?? 'only classes, notes and namespaces go inside a namespace';
+    this.hint = STATEMENT_HINTS[k] ?? NS_HINT;
     const out = frame.node.children as ClassStatementNode[];
     if (k === T.Class) {
       frame.items++;
@@ -771,7 +729,11 @@ class ClassParser extends ParserBase {
       this.namespaceHeader();
       return;
     }
-    this.fail(frame.items === 0 && !frame.leadingBreak ? NS_FIRST_KINDS : NS_BODY_KINDS);
+    this.fail(
+      frame.items === 0 && !frame.leadingBreak ? NS_FIRST_KINDS : NS_BODY_KINDS,
+      undefined,
+      NS_EXPECTED
+    );
   }
 
   /** The text ended inside namespace bodies: one error for the innermost, all closed. */
@@ -796,6 +758,17 @@ class ClassParser extends ParserBase {
     this.ended = true;
   }
 
+  /**
+   * Whether the current token could start a new statement: a statement keyword or a name,
+   * after a blank (`A B` is not, `style A font-size` is not: there `-` goes on the word).
+   */
+  protected startsStatement(): boolean {
+    const k = this.kind();
+    if (!STATEMENT_KINDS.includes(k) || this.i === 0) return false;
+    const s = this.tokStart(this.i);
+    return s > this.tokEnd(this.i - 1) && isSpace(this.src.charCodeAt(s - 1));
+  }
+
   /** One step at the top level: a statement, or the separator after one. */
   protected topItem(): void {
     const k = this.kind();
@@ -807,7 +780,7 @@ class ClassParser extends ParserBase {
         return;
       }
       if (k !== T.Eof) {
-        this.hint = inKindSet(NAME_PART, k) ? 'put each statement on its own line' : undefined;
+        if (this.startsStatement()) this.hint = 'put each statement on its own line';
         this.fail(SEPARATOR);
       }
       this.needSeparator = false;

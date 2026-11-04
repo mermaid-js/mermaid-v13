@@ -4,7 +4,12 @@
  * Text has v12's `encodeEntities` placeholders decoded back to what the author wrote. Left
  * out: `domId` (a module-level counter v12 never resets), `text` of a class (derived from
  * `label` and `type`, with `&lt;`/`&gt;` or `<`/`>` depending on whether a label was set),
- * `shape`, and the click bindings v12 queues only at `securityLevel: 'loose'`.
+ * and `shape`.
+ *
+ * The oracle parses class sources at `securityLevel: 'loose'` for this snapshot
+ * (`classAdapter.v12Config`), so v12 queues its click bindings and keeps link URLs as written.
+ * The bindings are closures: {@link clickBindings} runs each against stub `document` and
+ * `window` objects and records the function name and arguments it would call.
  */
 
 /** `diagram.type` values mermaid 12 reports for class sources (`classDiagram-v2` too). */
@@ -49,8 +54,16 @@ export interface ClassRelationSnapshot {
   title: string | undefined;
 }
 
+/** One click binding: the function a click on class `id` calls, with its arguments. */
+export interface ClassCallbackSnapshot {
+  id: string;
+  name: string;
+  args: string[];
+}
+
 export interface ClassSnapshot {
   direction: string;
+  callbacks: ClassCallbackSnapshot[];
   accTitle: string;
   accDescr: string;
   classes: ClassNodeSnapshot[];
@@ -109,11 +122,69 @@ interface ClassDbV12 {
   getNamespaces(): Map<string, Rec>;
 }
 
+/**
+ * The click bindings v12 queued (`functions`, after its tooltip setup): each is run with a
+ * stub `document` that hands it an element, whose click handler is then fired with a stub
+ * `window` that records the call (`utils.runFunc` looks the function up on `window`).
+ */
+function clickBindings(db: ClassDbV12, dbValue: unknown): ClassCallbackSnapshot[] {
+  const functions = (dbValue as { functions?: (() => void)[] }).functions ?? [];
+  const byDomId = new Map([...db.getClasses().values()].map((c) => [String(c.domId), c]));
+  const g = globalThis as Record<string, unknown>;
+  const saved = { document: g.document, window: g.window };
+  const out: ClassCallbackSnapshot[] = [];
+  const bound: { selector: string; handler: (() => void) | undefined } = {
+    selector: '',
+    handler: undefined,
+  };
+  const calls: { name: string; args: unknown[] }[] = [];
+  const at = (path: string): unknown =>
+    new Proxy(() => undefined, {
+      get: (_t, key) => at(path ? `${path}.${String(key)}` : String(key)),
+      apply: (_t, _this, args: unknown[]) => {
+        calls.push({ name: path, args });
+      },
+    });
+  g.document = {
+    querySelector: (sel: string) => {
+      bound.selector = sel;
+      return {
+        addEventListener: (_type: string, h: () => void) => {
+          bound.handler = h;
+        },
+      };
+    },
+  };
+  g.window = at('');
+  try {
+    for (const fn of functions.slice(1)) {
+      bound.handler = undefined;
+      calls.length = 0;
+      fn();
+      (bound.handler as (() => void) | undefined)?.();
+      const domId = /\[id="(.*)"\]/s.exec(bound.selector)?.[1] ?? '';
+      const cls = byDomId.get(domId);
+      for (const c of calls) {
+        out.push({
+          id: decodeEntities(typeof cls?.id === 'string' ? cls.id : domId),
+          name: decodeEntities(c.name),
+          args: c.args.map((a) => decodeEntities(String(a))),
+        });
+      }
+    }
+  } finally {
+    g.document = saved.document;
+    g.window = saved.window;
+  }
+  return out;
+}
+
 export function classV12Snapshot(dbValue: unknown): ClassSnapshot {
   const db = dbValue as ClassDbV12;
   const raw = dbValue as { interfaces?: Rec[]; styleClasses?: Map<string, Rec> };
   return {
     direction: db.getDirection(),
+    callbacks: clickBindings(db, dbValue),
     accTitle: decodeEntities(db.getAccTitle()),
     accDescr: decodeEntities(db.getAccDescription()),
     classes: [...db.getClasses().values()].map((c) => ({

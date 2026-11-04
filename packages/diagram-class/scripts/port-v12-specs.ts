@@ -33,11 +33,23 @@ const DOM_ID =
   "snapshots v12's `domId`, which takes a counter v12 never resets between diagrams; v13 writes no element ids from it";
 
 /** `file: { test or describe title (or its unique start): reason }`. Reasons are written into the file. */
-export const SKIP: Record<string, Record<string, string>> = {
-  'classDiagram.spec.ts': {
-    'should bind link on generic class': SANITIZED,
-    'should parse diagram with direction': DOM_ID,
-  },
+export const SKIP: Record<string, Record<string, string>> = {};
+
+/**
+ * Single lines taken out where one assertion needs it and the rest of the test holds:
+ * `file: [line as written (trimmed), reason]`. A line inside a snapshot is dropped; any other
+ * becomes a comment.
+ */
+export const SKIP_LINES: Record<string, [line: string, reason: string][]> = {
+  'classDiagram.spec.ts': [
+    ["expect(c1.link).toBe('https://example.com/');", SANITIZED],
+    ['"domId": "classId-Student-154",', DOM_ID],
+  ],
+};
+
+/** v12 tests skipped upstream that v12 (the oracle) and v13 both pass: `file: [title]`. */
+export const UNSKIP: Record<string, string[]> = {
+  'classDiagram.spec.ts': ['should handle a leading newline'],
 };
 
 /**
@@ -72,6 +84,22 @@ for (const [file, name] of Object.entries(FILES)) {
     notes.push("// rewritten: v12's config imports come from the adapter");
     return "await import('./adapter.ts')";
   });
+  for (const [line, reason] of SKIP_LINES[name] ?? []) {
+    const lines = body.split('\n');
+    const at = lines.findIndex((l) => l.trim() === line);
+    if (at < 0) throw new Error(`${name}: no line ${line}`);
+    const indent = /^\s*/.exec(lines[at] ?? '')?.[0] ?? '';
+    if (line.startsWith('"')) lines.splice(at, 1);
+    else lines[at] = `${indent}// skipped assertion: ${line}`;
+    body = lines.join('\n');
+    notes.push(`// skipped assertion: ${line} — ${reason}`);
+  }
+  for (const title of UNSKIP[name] ?? []) {
+    const marker = `it.skip('${title}'`;
+    if (!body.includes(marker)) throw new Error(`${name}: no skipped test ${title}`);
+    body = body.replace(marker, `it('${title}'`);
+    notes.push(`// un-skipped: ${title} — v12 (the oracle) and v13 both accept it`);
+  }
   for (const [title, reason] of Object.entries(SKIP[name] ?? {})) {
     let hit = 0;
     body = body.replace(
