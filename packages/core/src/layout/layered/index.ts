@@ -533,7 +533,7 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     const labelW = e.label?.width ?? 0;
     const labelH = e.label?.height ?? 0;
     if (src === dst) loopCount[src]!++;
-    if (src === dst && (src < nodeCount || grid)) {
+    if (src === dst) {
       const below = sideways(src);
       reserveLoop(cnodes[src]!, below, below ? labelH : labelW, src >= nodeCount || grid > 0, M);
       loopSide[src] = below ? 2 : 1;
