@@ -48,6 +48,7 @@ import {
 } from '@mermaid-js/core/parser-kit';
 import type { TokenStream } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
+import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { sourceView } from './source.ts';
 import type { SourceView } from './source.ts';
 import { T } from './tokens.ts';
@@ -550,8 +551,7 @@ export interface LexResult {
 }
 
 /** Lex an ER source (front matter and directives located by core's preprocess). */
-export function lex(src: string): LexResult {
-  const pre = preprocess(src);
+export function lex(src: string, pre: PreprocessResult = preprocess(src)): LexResult {
   const view = sourceView(
     src,
     pre.bodyStart,
