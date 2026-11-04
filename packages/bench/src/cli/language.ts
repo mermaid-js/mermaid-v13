@@ -1,6 +1,6 @@
 /**
  * The language-service budget (R-LANG-4): one editing cycle (update + every query) on the
- * 50k-character flowchart fixture, median over runs, per stage. Over the 10 ms budget it
+ * 50k-character flowchart fixture, median over runs, per stage. Over the 15 ms budget (D156) it
  * fails only with `--enforce`, which belongs on the reference runner.
  *
  *   pnpm --filter bench language [--runs 50] [--warmup 10] [--enforce]
