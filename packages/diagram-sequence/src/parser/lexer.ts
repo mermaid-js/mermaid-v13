@@ -14,6 +14,7 @@
  * only, while `\s` and `trim()` take every line terminator. Every scan is linear in the text
  * it consumes (R-PARSE-7).
  */
+// cspell:words sequencediagram acctitle accdescr
 import {
   AT,
   BACKSLASH,

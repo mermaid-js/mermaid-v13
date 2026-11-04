@@ -47,7 +47,7 @@ export interface SourceView {
   text: string;
   /**
    * {@link text} as the lexer reads it, of the same length: lone CRs are LF, and each
-   * `#name;` entity is `ﬂname¶`, so no rule takes its `#` or `;` (v12's placeholders).
+   * `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#` or `;` (v12's placeholders).
    */
   lexText: string;
   /**
