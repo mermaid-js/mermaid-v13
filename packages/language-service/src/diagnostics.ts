@@ -1,8 +1,9 @@
 /**
  * Diagnostics (D91): the preprocess and parser diagnostics as they are. A v12 type with no
  * facet gets one info diagnostic on its header word, as does one whose facet was not
- * preloaded (D155); a failed load gets a warning; a type v12 does not know gets the
- * renderer's `UNSUPPORTED_DIAGRAM` error.
+ * preloaded (D155); a failed load gets a warning, a facet whose parse throws an error
+ * (`LANGUAGE_FACET_FAILED`); a type v12 does not know gets the renderer's
+ * `UNSUPPORTED_DIAGRAM` error.
  */
 import type { Diagnostic, Range } from '@mermaid-js/core/parser-kit';
 import type { DocumentContext } from './context.ts';
@@ -23,6 +24,13 @@ export function diagnostics(ctx: DocumentContext): Diagnostic[] {
       severity: 'error',
       code: 'UNSUPPORTED_DIAGRAM',
       message: `No diagram type detected matching given configuration for text: ${body.slice(0, 200)}`,
+      range: headerRange(ctx.text, ctx.start),
+    });
+  } else if (ctx.parseError !== undefined) {
+    out.push({
+      severity: 'error',
+      code: 'LANGUAGE_FACET_FAILED',
+      message: `The ${ctx.entry.id} language support failed on this text (${ctx.parseError}); only generic features are available.`,
       range: headerRange(ctx.text, ctx.start),
     });
   } else if (ctx.notLoaded) {

@@ -168,7 +168,16 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
     const start = diagramStart(text, pre);
     const entry = detect(text, pre, start);
     const state = entry && (entry.facet ?? loaded.get(entry));
-    const facet = state === undefined || 'failed' in state ? undefined : state;
+    let facet = state === undefined || 'failed' in state ? undefined : state;
+    let result: DocumentContext['result'];
+    let parseError: string | undefined;
+    try {
+      result = facet?.parse(text, { keepTokens: true });
+    } catch (error) {
+      // A (third-party) facet whose parse throws: generic features and an error saying so.
+      facet = undefined;
+      parseError = reason(error);
+    }
     const context: DocumentContext = {
       uri,
       text,
@@ -176,7 +185,8 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
       start,
       entry,
       facet,
-      result: facet?.parse(text, { keepTokens: true }),
+      result,
+      parseError,
       schema,
       loadError: state !== undefined && 'failed' in state ? state.failed : undefined,
       notLoaded: entry?.load !== undefined && state === undefined,

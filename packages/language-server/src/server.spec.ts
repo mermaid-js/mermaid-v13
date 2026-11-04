@@ -352,7 +352,7 @@ describe('review fixes (#38)', () => {
   );
 
   it(
-    'turns a facet parse that throws into an error diagnostic and drops the old snapshot',
+    'passes on the LANGUAGE_FACET_FAILED error the service gives for a facet parse that throws',
     async () => {
       const root = workspace({
         thrower: { ...facetPackage('thrower', 'thrower'), 'language.js': THROWS },

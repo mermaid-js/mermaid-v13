@@ -19,7 +19,6 @@ import {
 } from '@mermaid-js/language-service';
 import type {
   Connection,
-  Diagnostic,
   InitializeParams,
   InitializeResult,
   Position,
@@ -63,8 +62,7 @@ interface Open {
   readonly text: string;
   readonly version: number;
   readonly index: LineIndex;
-  /** Undefined when the facet's parse threw: requests answer nothing until the next change. */
-  readonly doc: DocumentSnapshot | undefined;
+  readonly doc: DocumentSnapshot;
 }
 
 const fileDir = (uri: string): string | undefined => {
@@ -105,28 +103,13 @@ export function startServer(connection: Connection, options: ServerOptions = {})
   const update = (uri: string, text: string, version: number) => {
     if (!service) return;
     const index = new LineIndex(text);
-    let doc: DocumentSnapshot | undefined;
-    let diagnostics: Diagnostic[];
-    try {
-      doc = service.update(uri, text);
-      diagnostics = doc.diagnostics().map((d) => toDiagnostic(index, uri, d));
-    } catch (error) {
-      // A third-party facet's parse threw: forget the old snapshot, say so on the first line.
-      service.close(uri);
-      doc = undefined;
-      const message = error instanceof Error ? error.message : String(error);
-      diagnostics = [
-        {
-          range: toRange(index, { start: 0, end: index.offset(0, text.length) }),
-          severity: 1,
-          code: 'LANGUAGE_FACET_FAILED',
-          source: 'mermaid',
-          message: `The language support for this diagram failed: ${message}`,
-        },
-      ];
-    }
+    // A facet whose parse throws gives a LANGUAGE_FACET_FAILED snapshot (the service guards it).
+    const doc = service.update(uri, text);
     open.set(uri, { text, version, index, doc });
-    void connection.sendDiagnostics({ uri, diagnostics });
+    void connection.sendDiagnostics({
+      uri,
+      diagnostics: doc.diagnostics().map((d) => toDiagnostic(index, uri, d)),
+    });
   };
 
   /** The open document's snapshot and the offset of `position` in it. */
@@ -135,7 +118,7 @@ export function startServer(connection: Connection, options: ServerOptions = {})
     position: Position
   ): { doc: DocumentSnapshot; index: LineIndex; offset: number } | undefined => {
     const o = open.get(textDocument.uri);
-    return o?.doc && { doc: o.doc, index: o.index, offset: toOffset(o.index, position) };
+    return o && { doc: o.doc, index: o.index, offset: toOffset(o.index, position) };
   };
 
   connection.onInitialize(async (params): Promise<InitializeResult> => {
@@ -241,12 +224,12 @@ export function startServer(connection: Connection, options: ServerOptions = {})
 
   connection.onFoldingRanges(({ textDocument }) => {
     const o = open.get(textDocument.uri);
-    return o?.doc ? o.doc.lineFoldingRanges().map(toFoldingRange) : null;
+    return o ? o.doc.lineFoldingRanges().map(toFoldingRange) : null;
   });
 
   connection.languages.semanticTokens.on(({ textDocument }) => {
     const o = open.get(textDocument.uri);
-    return { data: o?.doc ? semanticTokenData(o.doc, multiline) : [] };
+    return { data: o ? semanticTokenData(o.doc, multiline) : [] };
   });
 
   connection.onCompletion(({ textDocument, position }) => {

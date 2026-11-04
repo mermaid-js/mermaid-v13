@@ -117,6 +117,41 @@ describe('facet loading', () => {
     expect(async.diagnostics()[0]?.message).not.toContain('not supported');
   });
 
+  it('turns a facet parse that throws into LANGUAGE_FACET_FAILED with generic features', async () => {
+    const thrower: LanguageFacet = {
+      ...fake('thrower'),
+      parse: () => {
+        throw new Error('boom');
+      },
+    };
+    const s = createLanguageService({
+      facets: [
+        {
+          type: 'thrower',
+          id: 'thrower',
+          detector: (t) => t.startsWith('thrower'),
+          facet: thrower,
+        },
+      ],
+    });
+    await s.preload();
+    const text = 'thrower\n  %% note\n  x\n';
+    const doc = s.update('x', text);
+    expect(doc.facet).toBeUndefined();
+    expect(doc.diagnostics()).toEqual([
+      expect.objectContaining({
+        severity: 'error',
+        code: 'LANGUAGE_FACET_FAILED',
+        range: { start: 0, end: 7 },
+        message: expect.stringContaining('boom') as unknown,
+      }),
+    ]);
+    // Generic features: the comment is still marked, queries answer without the facet.
+    expect(doc.semanticTokens().map((t) => t.type)).toEqual(['comment']);
+    expect(doc.completions(text.length)).toEqual([]);
+    expect(doc.hover(text.indexOf('x'))).toBeUndefined();
+  });
+
   it('keeps a replaced first-party row apart from the other rows of the same diagram id', async () => {
     const s = createLanguageService({
       facets: [
