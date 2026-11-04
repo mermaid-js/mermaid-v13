@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // An editor adapter: the DOM for tooltips and decorations; Node for the generator script
+    // and the freshness spec's file reads.
+    "lib": ["ES2022", "DOM"],
+    "types": ["node"]
+  },
+  "include": ["src", "scripts"]
+}
