@@ -338,6 +338,56 @@ describe('preview sync', () => {
     expect(seen).toHaveLength(1);
   });
 
+  it('ignores models of other languages and opens no service document for them', () => {
+    const model = fake.createModel('file:///other.ts', FLOW, 'typescript');
+    const editor = fakeEditor(model);
+    const seen: (readonly string[])[] = [];
+    const update = vi.spyOn(reg.service, 'update');
+    const d = trackAst(editor as never, reg.service, (ids) => seen.push(ids));
+    editor.setPosition(pos(3, 11));
+    model.setValue(FLOW + '  X --> Y\n');
+    vi.advanceTimersByTime(500);
+    expect(seen.every((ids) => ids.length === 0)).toBe(true);
+    expect(update).not.toHaveBeenCalled();
+    expect(reg.service.get('file:///other.ts')).toBeUndefined();
+    d.dispose();
+  });
+
+  it('re-parses after an edit once, debounced, not on every keystroke', () => {
+    const model = fake.createModel('file:///typing.mmd', FLOW);
+    const editor = fakeEditor(model);
+    const seen: (readonly string[])[] = [];
+    const d = trackAst(editor as never, reg.service, (ids) => seen.push(ids));
+    const update = vi.spyOn(reg.service, 'update');
+    model.setValue(FLOW + '  X');
+    model.setValue(FLOW + '  X -');
+    model.setValue(FLOW + '  X --> Y\n');
+    expect(update).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(150);
+    expect(update).toHaveBeenCalledTimes(1);
+    expect(seen).toHaveLength(1);
+    d.dispose();
+  });
+
+  it('closes the service documents it opened when disposed, and only those', () => {
+    const f = fakeMonaco();
+    const service = createLanguageService();
+    const mine = f.createModel('file:///alone.mmd', FLOW);
+    const editor = fakeEditor(mine);
+    const d = trackAst(editor as never, service, () => undefined);
+    editor.setPosition(pos(3, 11));
+    expect(service.get('file:///alone.mmd')).toBeDefined();
+    const theirs = f.createModel('file:///shared.mmd', FLOW);
+    service.update('file:///shared.mmd', FLOW);
+    const other = fakeEditor(theirs);
+    const d2 = trackAst(other as never, service, () => undefined);
+    other.setPosition(pos(3, 11));
+    d.dispose();
+    d2.dispose();
+    expect(service.get('file:///alone.mmd')).toBeUndefined();
+    expect(service.get('file:///shared.mmd')).toBeDefined();
+  });
+
   it('moves the cursor to the start of an AST id', () => {
     const model = fake.createModel('file:///l.mmd', FLOW);
     const editor = fakeEditor(model);
@@ -345,6 +395,36 @@ describe('preview sync', () => {
     expect(editor.getPosition()).toEqual(pos(3, 11));
     expect(editor.focus).toHaveBeenCalled();
     expect(revealAst(editor as never, reg.service, 'n:nope')).toBe(false);
+  });
+});
+
+describe('registering twice', () => {
+  it('returns the same registration for a language id, ref-counted', async () => {
+    const again = await registerMermaid(fake.monaco);
+    expect(again.service).toBe(reg.service);
+    expect(fake.provider('hover')).toBeDefined(); // still exactly one hover provider
+    const model = fake.createModel('file:///twice.mmd', 'flowchart LR\n  A[x\n');
+    expect(fake.markers.get('file:///twice.mmd')).toHaveLength(1);
+    again.dispose();
+    expect(fake.provider('hover')).toBeDefined();
+    model.setValue('flowchart LR\n  A[x\n  B(y\n');
+    vi.advanceTimersByTime(150);
+    expect(fake.markers.get('file:///twice.mmd')?.length).toBeGreaterThanOrEqual(1);
+    again.dispose(); // a second dispose of the same handle does nothing
+    expect(fake.provider('hover')).toBeDefined();
+  });
+
+  it('refuses another service for a language id already registered', async () => {
+    await expect(
+      registerMermaid(fake.monaco, { service: createLanguageService() })
+    ).rejects.toThrow(/already registered/);
+  });
+
+  it('registers another language id separately', async () => {
+    const other = await registerMermaid(fake.monaco, { languageId: 'mmd2' });
+    expect(fake.providers.get('hover')?.map((p) => p.language)).toEqual(['mermaid', 'mmd2']);
+    other.dispose();
+    expect(fake.providers.get('hover')?.map((p) => p.language)).toEqual(['mermaid']);
   });
 });
 

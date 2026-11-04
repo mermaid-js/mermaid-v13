@@ -45,6 +45,8 @@ async function start(): Promise<void> {
     'semanticHighlighting.enabled': true,
     automaticLayout: true,
     minimap: { enabled: false },
+    // Completion comes from the language service only, not from words in the text.
+    wordBasedSuggestions: 'off',
     fontSize: 14,
   });
 
@@ -95,7 +97,7 @@ async function start(): Promise<void> {
   });
 
   await render();
-  // For the Playwright spec (e2e/browser/monaco-editor.spec.ts).
+  // For the Playwright spec (e2e/language/monaco.spec.ts).
   Object.assign(window, { monaco, editor, service });
 }
 

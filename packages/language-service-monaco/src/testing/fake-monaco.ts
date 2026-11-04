@@ -3,7 +3,7 @@
  * Test double of the parts of the `monaco` namespace the adapter calls: it records what is
  * registered, holds text models (positions from `LineIndex`, as Monaco counts them: 1-based
  * lines and columns, UTF-16) and the markers set on them. Tests run in plain Node (no DOM,
- * R-ARCH-1); the real editor runs in the Playwright spec (e2e/browser/monaco-editor.spec.ts).
+ * R-ARCH-1); the real editor runs in the Playwright spec (e2e/language/monaco.spec.ts).
  */
 import { LineIndex } from '@mermaid-js/language-service';
 import type * as Monaco from 'monaco-editor';

@@ -33,6 +33,7 @@ import {
 } from './providers.ts';
 
 export { astAtCursor, revealAst, trackAst } from './ast.ts';
+export type { TrackAstOptions } from './ast.ts';
 export { snapshotOf, toRange } from './convert.ts';
 export type { MonacoApi } from './convert.ts';
 export { toMarkers, watchDiagnostics } from './markers.ts';
@@ -89,41 +90,87 @@ export interface MermaidRegistration extends Monaco.IDisposable {
   readonly languageId: string;
 }
 
+/** One language id's registration in one `monaco`, shared by every handle to it. */
+interface Shared {
+  readonly service: LanguageService;
+  ready: Promise<Monaco.IDisposable[]>;
+  handles: number;
+}
+
+/** Registrations per `monaco.languages` (the registry they live in), then per language id. */
+const registered = new WeakMap<object, Map<string, Shared>>();
+
 /**
  * Register Mermaid in `monaco` (D98): the language id, the Monarch tokens, the language
  * configuration, markers for every model of the language, and the completion, hover,
  * definition, references, rename, folding and semantic-token providers. Awaits
  * `service.preload()` first (D155), so no snapshot is taken before the facets are loaded.
- * `dispose()` removes everything it registered (Monaco cannot unregister a language id).
+ *
+ * Once per language id: calling it again for the same `monaco` and id returns a handle to the
+ * same registration (another `service` for it is refused), and the providers and markers stay
+ * until every handle is disposed. Monaco cannot unregister a language id, so that stays.
  */
 export async function registerMermaid(
   monaco: MonacoApi,
   options: MermaidMonacoOptions = {}
 ): Promise<MermaidRegistration> {
-  const service = options.service ?? createLanguageService();
   const languageId = options.languageId ?? 'mermaid';
-  await service.preload(options.preload);
   const { languages } = monaco;
-  if (!languages.getLanguages().some((l) => l.id === languageId)) {
-    languages.register({ id: languageId, extensions: ['.mmd', '.mermaid'], aliases: ['Mermaid'] });
+  let byId = registered.get(languages);
+  if (!byId) registered.set(languages, (byId = new Map<string, Shared>()));
+  let shared = byId.get(languageId);
+  if (shared && options.service && options.service !== shared.service) {
+    throw new Error(`Mermaid is already registered for "${languageId}" with another service.`);
   }
-  const disposables: Monaco.IDisposable[] = [
-    languages.setMonarchTokensProvider(languageId, monarchLanguage),
-    languages.setLanguageConfiguration(languageId, languageConfiguration),
-    languages.registerCompletionItemProvider(languageId, completionProvider(monaco, service)),
-    languages.registerHoverProvider(languageId, hoverProvider(service)),
-    languages.registerDefinitionProvider(languageId, definitionProvider(service)),
-    languages.registerReferenceProvider(languageId, referenceProvider(service)),
-    languages.registerRenameProvider(languageId, renameProvider(service)),
-    languages.registerFoldingRangeProvider(languageId, foldingRangeProvider(service)),
-    languages.registerDocumentSemanticTokensProvider(languageId, semanticTokensProvider(service)),
-    watchDiagnostics(monaco, service, languageId, options.diagnosticsDelay),
-  ];
+  if (!shared) {
+    const service = options.service ?? createLanguageService();
+    const ready = (async () => {
+      await service.preload(options.preload);
+      if (!languages.getLanguages().some((l) => l.id === languageId)) {
+        languages.register({
+          id: languageId,
+          extensions: ['.mmd', '.mermaid'],
+          aliases: ['Mermaid'],
+        });
+      }
+      return [
+        languages.setMonarchTokensProvider(languageId, monarchLanguage),
+        languages.setLanguageConfiguration(languageId, languageConfiguration),
+        languages.registerCompletionItemProvider(languageId, completionProvider(monaco, service)),
+        languages.registerHoverProvider(languageId, hoverProvider(service)),
+        languages.registerDefinitionProvider(languageId, definitionProvider(service)),
+        languages.registerReferenceProvider(languageId, referenceProvider(service)),
+        languages.registerRenameProvider(languageId, renameProvider(service)),
+        languages.registerFoldingRangeProvider(languageId, foldingRangeProvider(service)),
+        languages.registerDocumentSemanticTokensProvider(
+          languageId,
+          semanticTokensProvider(service)
+        ),
+        watchDiagnostics(monaco, service, languageId, options.diagnosticsDelay),
+      ];
+    })();
+    shared = { service, ready, handles: 0 };
+    byId.set(languageId, shared);
+  }
+  const entry = shared;
+  entry.handles++;
+  let disposables: Monaco.IDisposable[];
+  try {
+    disposables = await entry.ready;
+  } catch (error) {
+    if (--entry.handles === 0) byId.delete(languageId);
+    throw error;
+  }
+  let open = true;
   return {
-    service,
+    service: entry.service,
     languageId,
     dispose() {
-      for (const d of disposables.splice(0).reverse()) d.dispose();
+      if (!open) return;
+      open = false;
+      if (--entry.handles > 0) return;
+      byId.delete(languageId);
+      for (const d of [...disposables].reverse()) d.dispose();
     },
   };
 }
