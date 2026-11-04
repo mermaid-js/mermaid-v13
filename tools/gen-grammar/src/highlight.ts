@@ -194,13 +194,11 @@ export function monarch(g: Grammar, names: HighlightNames): object {
   const tokenizer: Record<string, unknown[]> = {};
   for (const mode of ['INITIAL', ...g.modes]) {
     const rules: unknown[] = [];
-    let lineEnd = false;
     for (const r of rulesIn(g, mode)) {
       const target = pushTarget(r);
       const pop = mode !== 'INITIAL' && has(r, 'pop');
       const pattern = target === undefined && !pop ? progressPattern(r) : r.pattern;
       if (pattern === undefined) continue;
-      if (pop && r.pattern.includes('\\n')) lineEnd = true;
       const action: Record<string, string> = {
         token: MONARCH_TOKENS[scopeOf(r) ?? ''] ?? '',
       };
@@ -209,28 +207,40 @@ export function monarch(g: Grammar, names: HighlightNames): object {
       else if (target !== undefined) action.next = `@${state(target)}`;
       rules.push([pattern, action]);
     }
-    // Monarch reads lines without their line break: a mode a line break closes ends here.
-    if (lineEnd) rules.push(['$', { token: '', next: '@pop' }]);
     tokenizer[state(mode)] = rules;
   }
   Object.assign(tokenizer, MONARCH_FRONT_MATTER);
-  return { tokenPostfix: `.${names.id}`, defaultToken: '', start: 'frontMatterStart', tokenizer };
+  // `includeLF`: each line is read with its line break, so a rule that ends a mode at a line
+  // break matches it as in v12. (Monaco runs no rule at the end of a line, so a `$` rule never
+  // fires there.)
+  return {
+    tokenPostfix: `.${names.id}`,
+    defaultToken: '',
+    includeLF: true,
+    start: 'frontMatterStart',
+    tokenizer,
+  };
 }
 
 /**
- * Front matter (a `---` first line up to the next `---` line): the tokenizer starts in
- * `frontMatterStart`, which reads an opening fence or moves to `root` without reading
- * anything. Inside, fences are meta, YAML keys variables and `#` comments comments, so no
- * YAML quote or bracket opens a diagram mode. An unclosed block runs to the end of the text
- * (Monarch cannot look ahead), as it does while being typed.
+ * Front matter, as core's preprocess finds it: a `---` fence on the first non-blank line, at
+ * any indent, up to the next `---` line. The tokenizer starts in `frontMatterStart`, which
+ * passes blank lines, reads an opening fence, or moves to `root` without reading anything.
+ * Inside, fences are meta, YAML keys variables and `#` comments comments, so no YAML quote or
+ * bracket opens a diagram mode. Limits (Monarch keeps no indent and cannot look ahead): a
+ * closing fence at another indent than the opening one also closes, and an unclosed block
+ * runs to the end of the text, as it does while being typed.
  */
+const FENCE = '^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)';
 const MONARCH_FRONT_MATTER = {
   frontMatterStart: [
-    ['---[^\\S\\n]*$', { token: 'annotation', switchTo: '@frontMatter' }],
+    [FENCE, { token: 'annotation', switchTo: '@frontMatter' }],
+    // A blank line (Monaco evaluates the rules once on an empty line too).
+    ['[^\\S\\n]*(?:\\n|$)', { token: '' }],
     ['', { token: '', switchTo: '@root' }],
   ],
   frontMatter: [
-    ['---[^\\S\\n]*$', { token: 'annotation', switchTo: '@root' }],
+    [FENCE, { token: 'annotation', switchTo: '@root' }],
     ['[^\\S\\n]*#.*', { token: 'comment' }],
     ['[^\\S\\n]*(?:- )?[^\\s#:\'"-][^:#]*(?=:(?:\\s|$))', { token: 'variable' }],
     ['[^#]+', { token: '' }],

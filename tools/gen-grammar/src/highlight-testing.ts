@@ -90,7 +90,11 @@ type MonarchRule = [string, { token: string; next?: string; switchTo?: string }]
 
 /** Highlights with a Monarch definition (JSON text), interpreted as Monaco runs it per line. */
 export function monarchCategorise(json: string): Categorise {
-  const def = JSON.parse(json) as { start?: string; tokenizer: Record<string, MonarchRule[]> };
+  const def = JSON.parse(json) as {
+    start?: string;
+    includeLF?: boolean;
+    tokenizer: Record<string, MonarchRule[]>;
+  };
   const states = def.tokenizer;
   const compiled = Object.fromEntries(
     Object.entries(states).map(([s, rules]) => [
@@ -101,10 +105,16 @@ export function monarchCategorise(json: string): Categorise {
   return (text) => {
     const out: string[] = [];
     let stack = [def.start ?? 'root'];
-    for (const line of lines(text)) {
+    const all = lines(text);
+    for (const [n, raw] of all.entries()) {
+      // `includeLF`: every line but the last is read with its line break, as Monaco does.
+      const line = def.includeLF && n < all.length - 1 ? `${raw}\n` : raw;
       const cats: string[] = Array.from({ length: line.length }, () => 'Other');
-      // A zero-width match only changes the state; a few in a row at one offset end there.
-      for (let p = 0, still = 0; p <= line.length && still < 8; ) {
+      // As Monaco's Monarch lexer: rules run while there is text left, and once on an empty
+      // line; nothing runs at the end of a non-empty line. A zero-width match only changes
+      // the state; a few in a row at one offset end there.
+      for (let p = 0, still = 0, once = true; (once || p < line.length) && still < 8; ) {
+        once = false;
         const rules = compiled[stack[stack.length - 1] ?? 'root'] ?? [];
         let width = -1;
         for (const [re, action] of rules) {
@@ -112,7 +122,8 @@ export function monarchCategorise(json: string): Categorise {
           const m = re.exec(line);
           if (!m) continue;
           const next = action.switchTo ?? action.next;
-          if (m[0].length === 0 && !next) continue;
+          // As Monaco: an empty match that changes no state only counts on an empty line.
+          if (m[0].length === 0 && !next && line.length > 0) continue;
           const c = MONARCH[action.token] ?? 'Other';
           for (let i = p; i < p + m[0].length; i++) cats[i] = c;
           if (next === '@pop') stack = stack.length > 1 ? stack.slice(0, -1) : stack;
@@ -125,10 +136,9 @@ export function monarchCategorise(json: string): Categorise {
           p += width;
           still = 0;
         } else if (width === 0) still++;
-        else if (p === line.length) break;
-        else p++;
+        else if (p < line.length) p++;
       }
-      out.push(...cats, 'Other');
+      out.push(...cats.slice(0, raw.length), 'Other');
     }
     return out.slice(0, text.length);
   };

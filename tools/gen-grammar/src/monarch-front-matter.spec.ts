@@ -31,6 +31,11 @@ const FIXTURES: [string, string][] = [
   ['string', '---\ntitle: "unclosed\nconfig:\n  theme: [dark\n---\nflowchart LR\n  A[x] --> B\n'],
   ['shape data', '---\na: A@{ shape\n---\ngraph TD\n  A --> B\n'],
   ['crlf', "---\r\ntitle: it's\r\n---\r\nflowchart LR\r\n  A --> B\r\n"],
+  // The fence is on the first non-blank line, at any indent (core preprocess, #36 review).
+  ['blank line first', "\n---\ntitle: it's (open\n---\nflowchart LR\n  A --> B\n"],
+  ['blank lines with spaces', "  \n\n \t\n---\ntitle: it's (open\n---\nflowchart LR\n  A --> B\n"],
+  ['indented fences', "  ---\n  title: it's (open\n  ---\nflowchart LR\n  A --> B\n"],
+  ['indented crlf', "\r\n  ---\r\n  title: it's\r\n  ---\r\nflowchart LR\r\n  A --> B\r\n"],
 ];
 
 const blank = (src: string, end: number) => src.slice(0, end).replace(/[^\n]/g, ' ');
