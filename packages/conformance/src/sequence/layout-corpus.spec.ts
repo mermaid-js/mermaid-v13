@@ -102,14 +102,14 @@ describe('sequence layout invariants on parsed models', () => {
 
 /**
  * In cells a lifeline is a column of characters, so a message label written over it would
- * erase it: with `wrap` on, a wrapped label stays inside the span between its lifelines, a
- * label moved off a box border keeps off them, and a self message's label starts right of its
- * lifeline (spec #125 final review, finding 3).
+ * erase it: with `wrap` on or off, a label stays inside the span between its lifelines (a
+ * wrapped one wraps to it, a wider one widens it), a label moved off a box border keeps off
+ * them, and a self message's label starts right of its lifeline (spec #125 final review).
  */
 describe('sequence message labels in cells', () => {
-  const cellLayout = (source: string) =>
+  const cellLayout = (source: string, wrap: boolean) =>
     layoutSequence(parseSequence(source).model, {
-      config: { sequence: { wrap: true } } as unknown as ResolvedConfig,
+      config: { sequence: { wrap } } as unknown as ResolvedConfig,
       measurer: cellMeasurer,
       units: cellProfile(),
       theme: createTheme(spec, {}),
@@ -120,8 +120,8 @@ describe('sequence message labels in cells', () => {
    * Labels written over a lifeline: one of the message's own, or one outside its span (a
    * label between two far participants crosses the lifelines between them, as its arrow does).
    */
-  function covered(source: string): string[] {
-    const layout = cellLayout(source);
+  function covered(source: string, wrap = true): string[] {
+    const layout = cellLayout(source, wrap);
     const lifeline = new Map(layout.participants.map((p) => [p.id, p.lifeline.x]));
     const out: string[] = [];
     for (const msg of layout.messages) {
@@ -149,14 +149,18 @@ describe('sequence message labels in cells', () => {
     ).toEqual([]);
   });
 
-  it('keeps every label off its lifelines over the corpus, with wrap on', async () => {
-    const problems: string[] = [];
-    for (const item of await sequenceGateCorpus()) {
-      if (!detectSequence(item.source)) continue;
-      const result = parseSequence(item.source);
-      if (result.diagnostics.some((d) => d.severity === 'error')) continue;
-      for (const p of covered(item.source)) problems.push(`${item.id}: ${p}`);
-    }
-    expect(problems.slice(0, 20)).toEqual([]);
-  }, 300_000);
+  it.each([true, false])(
+    'keeps every label off its lifelines over the corpus, with wrap %s',
+    async (wrap) => {
+      const problems: string[] = [];
+      for (const item of await sequenceGateCorpus()) {
+        if (!detectSequence(item.source)) continue;
+        const result = parseSequence(item.source);
+        if (result.diagnostics.some((d) => d.severity === 'error')) continue;
+        for (const p of covered(item.source, wrap)) problems.push(`${item.id}: ${p}`);
+      }
+      expect(problems.slice(0, 20)).toEqual([]);
+    },
+    300_000
+  );
 });

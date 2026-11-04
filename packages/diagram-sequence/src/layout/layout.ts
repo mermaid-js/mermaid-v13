@@ -45,12 +45,54 @@ import type { BoxLayout, ParticipantLayout, PlacedLabel, Rect, SequenceLayout } 
 
 /** Lays out a sequence diagram in the context's units. */
 export function layoutSequence(model: SequenceModel, ctx: SequenceLayoutContext): SequenceLayout {
-  const first = layoutOnce(model, ctx);
-  if (first.units !== 'cell' || first.boxes.length === 0) return first;
+  let first = layoutOnce(model, ctx);
+  if (first.units !== 'cell') return first;
+  // In cells a lifeline is a line of cells that text must not cut: a message label wider than
+  // the room between its lifelines widens the gap before its right-hand end, and the diagram
+  // is laid out again (two rounds at most, as one widening can move a label placed off a border).
+  const gaps = new Map<string, number>();
+  for (let round = 0; round < LABEL_ROUNDS; round++) {
+    const more = labelRoom(first);
+    if (more.size === 0) break;
+    for (const [id, d] of more) gaps.set(id, (gaps.get(id) ?? 0) + d);
+    first = layoutOnce(model, ctx, undefined, gaps);
+  }
+  if (first.boxes.length === 0) return first;
   // In cells a box border is a line of cells that text must not cut: a box whose own self
   // messages or notes overran it is laid out again, that much wider.
   const grow = boxGrowth(model, first);
-  return grow.size === 0 ? first : layoutOnce(model, ctx, grow);
+  return grow.size === 0 ? first : layoutOnce(model, ctx, grow, gaps);
+}
+
+/** How many times the label room is checked and the columns placed again (cells only). */
+const LABEL_ROUNDS = 2;
+
+/**
+ * The cells to add after a column so that each message label between two participants fits
+ * between their lifelines with a space on each side: the gap just left of the message's
+ * right-hand end takes the shortfall (cells only).
+ */
+function labelRoom(layout: SequenceLayout): Map<string, number> {
+  const out = new Map<string, number>();
+  const order = layout.participants.map((p) => p.id);
+  const at = new Map(layout.participants.map((p) => [p.id, p.lifeline.x]));
+  for (const msg of layout.messages) {
+    if (!msg.label || msg.from === msg.to) continue;
+    const a = at.get(msg.from);
+    const b = at.get(msg.to);
+    if (a === undefined || b === undefined) continue;
+    const [lo, hi] = a < b ? [a, b] : [b, a];
+    const first = msg.label.x;
+    const last = msg.label.x + msg.label.width - 1;
+    if (first > lo && last < hi) continue;
+    const right = a < b ? msg.to : msg.from;
+    const before = order[order.indexOf(right) - 1];
+    // The cells strictly between the lifelines hold the label, a space on each side and, as a
+    // centred label sits a cell off the middle of an arrow that stops short, one more each side.
+    const short = msg.label.width + 2 * 2 - (hi - lo - 1);
+    if (before !== undefined && short > 0) out.set(before, Math.max(out.get(before) ?? 0, short));
+  }
+  return out;
 }
 
 /** How far each box's members' self messages and notes reach past its sides, and a space. */
@@ -81,12 +123,17 @@ function boxGrowth(model: SequenceModel, layout: SequenceLayout): Map<SequenceBo
 function layoutOnce(
   model: SequenceModel,
   ctx: SequenceLayoutContext,
-  grow?: ReadonlyMap<SequenceBox, BoxGrowth>
+  grow?: ReadonlyMap<SequenceBox, BoxGrowth>,
+  gaps?: ReadonlyMap<string, number>
 ): SequenceLayout {
   const base = envOf(ctx, model);
   const env: Env = { ...base, columns: measureColumns(model, base) };
   const { m } = env;
   actorMargins(model, env);
+  for (const [id, d] of gaps ?? []) {
+    const c = env.columns.get(id);
+    if (c) c.margin += d;
+  }
   const sizes = boxSizes(model, env);
 
   // Frames keep `boxMargin` around what they hold, and in cells a little more (metrics.ts).
