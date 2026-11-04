@@ -54,6 +54,30 @@ function boxProblems(layout: ClassLayout): string[] {
   return out;
 }
 
+/** Every drawn box (class, note, interface) is the size its graph node and placed node have. */
+function sizeProblems(layout: ClassLayout): string[] {
+  const out: string[] = [];
+  const nodes = new Map(layout.class!.graph.nodes.map((n) => [n.id, n]));
+  const p = layout.class!;
+  for (const v of [...p.boxes, ...p.notes, ...p.interfaces]) {
+    for (const [what, n] of [
+      ['graph node', nodes.get(v.layoutId)],
+      ['placed node', layout.nodes.get(v.layoutId)],
+    ] as const) {
+      if (!n) out.push(`${v.kind} '${v.id}' has no ${what}`);
+      else if (Math.abs(n.width - v.width) > 1e-6 || Math.abs(n.height - v.height) > 1e-6) {
+        out.push(
+          `${v.kind} '${v.id}' is ${v.width} x ${v.height}, its ${what} ${n.width} x ${n.height}`
+        );
+      }
+    }
+  }
+  if (nodes.size !== p.boxes.length + p.notes.length + p.interfaces.length) {
+    out.push('the graph has nodes no view draws');
+  }
+  return out;
+}
+
 /** v12's end markers (markers.js): length along the line; all are at most 12 px across. */
 const MARKER_LENGTH: Readonly<Record<string, number>> = {
   aggregation: 18,
@@ -118,6 +142,7 @@ describe('layered over parser-produced class graphs', () => {
         const id = `${item.id}${hierarchical ? '' : ' (flat)'}`;
         expect(validateLayout(layout.class!.graph, layout), id).toEqual([]);
         expect(boxProblems(layout), id).toEqual([]);
+        expect(sizeProblems(layout), id).toEqual([]);
         expect(markerProblems(layout), id).toEqual([]);
         if (hierarchical) crossings[item.id] = countCrossings(layout);
         if (!hierarchical) continue;
@@ -180,6 +205,7 @@ describe('layered over parser-produced class graphs', () => {
       const layout = layoutClass(parse.model, { config, measurer: tableMeasurer, theme });
       expect(validateLayout(layout.class!.graph, layout), src).toEqual([]);
       expect(boxProblems(layout), src).toEqual([]);
+      expect(sizeProblems(layout), src).toEqual([]);
       expect(markerProblems(layout), src).toEqual([]);
       checked++;
     }

@@ -16,7 +16,7 @@ import { memberDisplay } from '../parser/member.ts';
 
 /** One line of text in a class box. */
 export interface ClassRow {
-  /** The text as drawn (before markup is read): `«interface»`, `Animal<T>`, `+eat(food) : bool`. */
+  /** The source text, before markdown is read: `«interface»`, `Animal<T>`, `+eat(food) : bool`. */
   readonly text: string;
   readonly label: MeasuredLabel;
   /**
@@ -64,8 +64,6 @@ export interface BoxMetrics {
   readonly pad: { readonly x: number; readonly y: number };
   /** Room between two member rows (v12's 3 px for SVG labels). */
   readonly rowGap: number;
-  /** Height of a compartment drawn empty. */
-  readonly empty: number;
   /** Drop both compartments of a class with no members (`class.hideEmptyMembersBox`). */
   readonly hideEmpty: boolean;
 }
@@ -76,16 +74,22 @@ const CLASSIFIER_STYLE: Readonly<Record<string, StyleBits>> = {
   $: Style.Underline,
 };
 
-/**
- * Class text is literal: `List<T>` is a generic, not a tag. Only character references are read
- * (v12 decoded entities before drawing).
- */
-const literal = (text: string): string => text.replaceAll('<', '&lt;');
-
 /** The name row's text: the label, then `<type>` for a generic class (v12 `ClassNode.text`). */
 export const classTitle = (node: ClassNode): string =>
   node.type ? `${node.label}<${node.type}>` : node.label;
 
+/**
+ * Measures one class box. Text goes through core's label layout as markdown, as v12's
+ * `addText` passed it to `createText` with markdown on: `**bold**`, `_italic_`, `<br>` and
+ * the HTML subset are read, and `List<T>` stays text (only known tags are tags).
+ *
+ * Heights follow v12's `classBox` (P = padding, rows = the compartment's text):
+ * - header: P, the annotation and the name, P;
+ * - a compartment with rows: P, rows (3 px apart), P; a methods compartment under an empty
+ *   attributes one starts 1.5 P down (v12 held P/2 for the missing attributes);
+ * - an empty compartment: 2 P, or 1.5 P each when the class has no members at all;
+ * - `hideEmptyMembersBox` and no members: the header alone.
+ */
 export function measureBox(
   node: ClassNode,
   font: FontKey,
@@ -93,8 +97,12 @@ export function measureBox(
   m: BoxMetrics
 ): ClassBoxGeometry {
   const measure = (text: string, style: StyleBits): MeasuredLabel =>
-    layoutLabel(literal(text), font, Infinity, measurer, { style });
-  let y = m.pad.y;
+    layoutLabel(text, font, Infinity, measurer, { markdown: true, style });
+  // A blank row (`class A[" "]`) still takes a line.
+  const { lineHeight } = measurer.metrics(font);
+  const tall = (label: MeasuredLabel): number => Math.max(label.height, lineHeight);
+  const P = m.pad.y;
+  let y = P;
   const centred: { text: string; label: MeasuredLabel; style: StyleBits; y: number }[] = [];
   const first = node.annotations[0];
   let annotation: (typeof centred)[number] | undefined;
@@ -102,18 +110,18 @@ export function measureBox(
     const text = `«${first}»`;
     annotation = { text, label: measure(text, 0), style: 0, y };
     centred.push(annotation);
-    y += annotation.label.height;
+    y += tall(annotation.label);
   }
   const title = classTitle(node);
   const name = { text: title, label: measure(title, Style.Bold), style: Style.Bold, y };
   centred.push(name);
-  y += name.label.height + m.pad.y;
+  y += tall(name.label) + P;
 
   let widest = Math.max(...centred.map((r) => r.label.width));
-  const members = node.attributes.length + node.methods.length;
+  const none = node.attributes.length + node.methods.length === 0;
   const compartments: ClassCompartment[] = [];
   const dividers: number[] = [];
-  if (members > 0 || !m.hideEmpty) {
+  if (!none || !m.hideEmpty) {
     for (const [kind, list] of [
       ['attributes', node.attributes],
       ['methods', node.methods],
@@ -121,7 +129,8 @@ export function measureBox(
       dividers.push(y);
       const top = y;
       const rows: ClassRow[] = [];
-      let at = top + m.pad.y;
+      const lead = kind === 'methods' && node.attributes.length === 0 ? 1.5 * P : P;
+      let at = top + lead;
       for (const member of list) {
         const { displayText } = memberDisplay(member);
         const style = CLASSIFIER_STYLE[member.classifier] ?? 0;
@@ -137,10 +146,11 @@ export function measureBox(
           member,
           ast: member.ast,
         });
-        at += label.height;
+        at += tall(label);
         widest = Math.max(widest, label.width);
       }
-      const height = rows.length > 0 ? at + m.pad.y - top : m.empty;
+      const empty = none ? 1.5 * P : 2 * P;
+      const height = rows.length > 0 ? at + P - top : empty;
       compartments.push({ kind, top, height, rows });
       y = top + height;
     }

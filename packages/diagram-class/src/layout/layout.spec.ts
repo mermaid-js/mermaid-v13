@@ -41,13 +41,35 @@ class Animal {
     expect(out.nodes.get(box.layoutId)!.height).toBeCloseTo(box.height);
   });
 
-  it('draws a member-less class with two empty compartments, or none when hideEmptyMembersBox', async () => {
-    const shown = (await lay('classDiagram\nclass A')).class!.boxes[0]!;
-    expect(shown.compartments.map((c) => [c.kind, c.rows.length, c.height])).toEqual([
-      ['attributes', 0, 12],
-      ['methods', 0, 12],
+  it('sizes compartments as v12: 1.5 P each with no members, 2 P when only one is empty', async () => {
+    const out = await lay(`classDiagram
+class A
+class B {
+  +int x
+}
+class C {
+  +run()
+}`);
+    const [a, b, c] = out.class!.boxes;
+    const parts = (box: typeof a) => box!.compartments.map((k) => [k.rows.length, k.height]);
+    // No members: label + 5 P (header P + label + P, then 1.5 P twice).
+    expect(a!.height).toBeCloseTo(LINE + 5 * 12);
+    expect(parts(a)).toEqual([
+      [0, 18],
+      [0, 18],
     ]);
-    expect(shown.height).toBeCloseTo(12 + LINE + 12 + 12 + 12);
+    // Attributes only: the empty methods compartment is 2 P.
+    expect(b!.height).toBeCloseTo(2 * LINE + 6 * 12);
+    expect(parts(b)[1]).toEqual([0, 24]);
+    // Methods only: the empty attributes compartment is 2 P, and the methods start 1.5 P down.
+    expect(c!.height).toBeCloseTo(2 * LINE + 6.5 * 12);
+    expect(parts(c)[0]).toEqual([0, 24]);
+    const methods = c!.compartments[1]!;
+    expect(methods.rows[0]!.y - methods.top).toBeCloseTo(18);
+    expect(methods.height).toBeCloseTo(18 + LINE + 12);
+  });
+
+  it('drops both compartments of a member-less class when hideEmptyMembersBox', async () => {
     const hidden = (
       await lay('classDiagram\nclass A\nclass B {\n+run()\n}', {
         class: { hideEmptyMembersBox: true },
@@ -58,6 +80,38 @@ class Animal {
     expect(hidden[0]!.height).toBeCloseTo(12 + LINE + 12);
     // Only a class with no members at all loses its compartments, as in v12.
     expect(hidden[1]!.compartments.map((c) => c.rows.length)).toEqual([0, 1]);
+  });
+
+  it('reads member and name text as markdown, as v12 did', async () => {
+    const box = (
+      await lay(
+        'classDiagram\nclass A {\n__boldmethod__()\n_italicmethod_()\n+a<br>b\n+List~T~ items\n}'
+      )
+    ).class!.boxes[0]!;
+    const [attrs, methods] = box.compartments;
+    const runs = (r: { label: { lines: { text: string; style: number }[][] } }) =>
+      r.label.lines.map((l) => l.map((x) => [x.text, x.style]));
+    expect(runs(methods!.rows[0]!)).toEqual([
+      [
+        ['boldmethod', 1],
+        ['()', 0],
+      ],
+    ]);
+    expect(runs(methods!.rows[1]!)).toEqual([
+      [
+        ['italicmethod', 2],
+        ['()', 0],
+      ],
+    ]);
+    expect(runs(attrs!.rows[0]!)).toEqual([[['+a', 0]], [['b', 0]]]);
+    expect(attrs!.rows[1]!.y - attrs!.rows[0]!.y).toBeCloseTo(2 * LINE + 3);
+    // A generic is text, not a tag.
+    expect(runs(attrs!.rows[1]!)).toEqual([[['+List<T> items', 0]]]);
+  });
+
+  it('keeps a line for a blank name', async () => {
+    const box = (await lay('classDiagram\nclass A[" "]')).class!.boxes[0]!;
+    expect(box.dividers[0]).toBeCloseTo(12 + LINE + 12);
   });
 
   it('puts the first annotation above the name, and the generic type after it', async () => {
@@ -145,6 +199,37 @@ note "floating"`);
     expect(out.class!.notes.map((n) => n.id)).toEqual(['note0', 'note1']);
     expect(out.nodes.has('t:note1')).toBe(true);
     expect(out.nodes.get('i:interface0')).toBeDefined();
+  });
+
+  it('joins a lollipop to its interface, even beside a class named like it', async () => {
+    const out = await lay('classDiagram\nclass interface0\nfoo ()-- B');
+    const edges = out.class!.edges.map((e) => [e.kind, e.source, e.target]);
+    expect(edges).toEqual([['lollipop', 'i:interface0', 'c:B']]);
+    expect(out.class!.interfaces[0]!.label.lines.flat()[0]!.text).toBe('foo');
+  });
+
+  it('pads namespaces with class.padding, 16 by default', async () => {
+    const src = 'classDiagram\nnamespace N {\nclass A\n}';
+    expect((await lay(src)).class!.graph.groups[0]!.padding).toEqual({
+      top: 16,
+      right: 16,
+      bottom: 16,
+      left: 16,
+    });
+    const padded = (await lay(src, { class: { padding: 5 } })).class!.graph.groups[0]!;
+    expect(padded.padding).toEqual({ top: 5, right: 5, bottom: 5, left: 5 });
+  });
+
+  it('routes and draws edges with flowchart.curve, rounded right angles by default', async () => {
+    const src = 'classDiagram\nA --> B';
+    const plain = (await lay(src)).class!;
+    expect([plain.curve, plain.graph.routing]).toEqual(['rounded', 'stepped']);
+    const linear = (await lay(src, { flowchart: { curve: 'linear' } })).class!;
+    expect([linear.curve, linear.graph.routing]).toEqual(['linear', 'straight']);
+    const basis = (await lay(src, { flowchart: { curve: 'basis' } })).class!;
+    expect([basis.curve, basis.graph.routing]).toEqual(['curved', 'curved']);
+    const step = (await lay(src, { flowchart: { curve: 'stepAfter' } })).class!;
+    expect([step.curve, step.graph.routing]).toEqual(['stepAfter', 'stepped']);
   });
 
   it('keeps an interface in the namespace of its class', async () => {

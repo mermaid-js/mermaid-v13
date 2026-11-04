@@ -24,9 +24,10 @@ export function layoutClass(model: ClassModel, ctx: ClassLayoutContext): ClassLa
 export type { ClassLayoutContext } from './context.ts';
 export { classTitle } from './box.ts';
 export type { ClassBoxGeometry, ClassCompartment, ClassRow } from './box.ts';
-export { prepare as prepareClass } from './prepare.ts';
+export { classCurve, prepare as prepareClass } from './prepare.ts';
 export type {
   ClassBoxView,
+  ClassCurve,
   ClassEdgeKind,
   ClassEdgeView,
   ClassNodeView,

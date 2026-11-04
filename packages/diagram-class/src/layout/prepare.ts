@@ -21,6 +21,7 @@ import {
   type ClassNote,
   type ClassRelation,
   type NamespaceGroup,
+  type RelationEnd,
   type RelationType,
 } from '../parser/model.ts';
 import { measureBox, type BoxMetrics, type ClassBoxGeometry } from './box.ts';
@@ -127,6 +128,11 @@ export interface ClassPrepared {
   readonly edges: readonly ClassEdgeView[];
   /** Every node and group view by layout id. */
   readonly views: ReadonlyMap<string, ClassNodeView | NamespaceView>;
+  /**
+   * How to draw the edges between route points: `flowchart.curve` (v12 drew class edges with
+   * it), `rounded` when unset. The graph's `routing` follows it.
+   */
+  readonly curve: ClassCurve;
 }
 
 // v12's lengths, in px (classBox.ts, shapeUtil.ts, classDb.ts getData at fa796a943).
@@ -136,6 +142,28 @@ const BOX_PAD = 12;
 const ROW_GAP = 3;
 /** `class.padding ?? 6`: room around a note's text. */
 const NOTE_PAD = 6;
+/** `class.padding ?? 16`: room between a namespace's border and its content, every side. */
+const GROUP_PAD = 16;
+
+/** How class edges are drawn: v12 drew them with `flowchart.curve` (flowchart's names). */
+export type ClassCurve = 'curved' | 'linear' | 'step' | 'stepBefore' | 'stepAfter' | 'rounded';
+
+/** v12's curve names; any other name is an S-curve (flowchart's `curveKind`). */
+export function classCurve(curve: string | undefined): ClassCurve {
+  return curve === 'linear' ||
+    curve === 'step' ||
+    curve === 'stepBefore' ||
+    curve === 'stepAfter' ||
+    curve === 'rounded'
+    ? curve
+    : 'curved';
+}
+
+/** How the engine routes each curve (flowchart's table): the rest are right angles. */
+const ROUTING: Readonly<Partial<Record<ClassCurve, 'straight' | 'curved'>>> = {
+  linear: 'straight',
+  curved: 'curved',
+};
 
 const DIRS: ReadonlySet<string> = new Set(['TB', 'BT', 'LR', 'RL']);
 const sideways = (d: Dir): boolean => d === 'LR' || d === 'RL';
@@ -146,15 +174,13 @@ function num(value: unknown): number {
   return typeof n === 'number' && n >= 0 && n < 1e4 ? n : NaN;
 }
 
-/** Literal text (`List<T>` is not a tag); character references are read. */
-const literal = (text: string): string => text.replaceAll('<', '&lt;');
-
 /** What the view builders share. */
 interface Build {
   readonly model: ClassModel;
   readonly ctx: ClassLayoutContext;
   readonly units: UnitProfile;
-  readonly label: (text: string, markdown: boolean, max?: number) => MeasuredLabel;
+  /** Every label is markdown, as v12's `createText` read it. */
+  readonly label: (text: string, max?: number) => MeasuredLabel;
   readonly px: (value: number, axis: 'x' | 'y') => number;
   /** Layout id of the group a class's or note's `parent` namespace is drawn as. */
   readonly groupOf: (ns: string | undefined) => string | undefined;
@@ -188,8 +214,7 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
     model,
     ctx,
     units,
-    label: (text, markdown, max = Infinity) =>
-      layoutLabel(markdown ? text : literal(text), font, max, ctx.measurer, { markdown }),
+    label: (text, max = Infinity) => layoutLabel(text, font, max, ctx.measurer, { markdown: true }),
     px: (value, axis) => fromPx(units, value, axis),
     groupOf: (ns) => {
       const g = parentOf(ns);
@@ -204,7 +229,6 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
   const metrics: BoxMetrics = {
     pad: { x: build.px(boxPad, 'x'), y: build.px(boxPad, 'y') },
     rowGap: build.px(ROW_GAP, 'y'),
-    empty: build.px(boxPad, 'y'),
     hideEmpty: conf.hideEmptyMembersBox === true,
   };
   const groups = groupViews(nsGroups, build);
@@ -213,8 +237,9 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
   const notes = noteViews(Number.isNaN(padding) ? NOTE_PAD : padding, build, edges);
   const interfaces = model.interfaces.map((iface) => interfaceView(iface, build));
   edges.push(...relationEdges(build));
-  const graph = layoutGraph(model, ctx, units, { boxes, notes, interfaces, groups, edges });
-  return { graph, boxes, notes, interfaces, groups, edges, views: build.views };
+  const curve = classCurve(ctx.config.flowchart?.curve ?? 'rounded');
+  const graph = layoutGraph(model, ctx, units, curve, { boxes, notes, interfaces, groups, edges });
+  return { graph, boxes, notes, interfaces, groups, edges, views: build.views, curve };
 }
 
 function groupViews(nsGroups: readonly NamespaceGroup[], build: Build): NamespaceView[] {
@@ -227,7 +252,7 @@ function groupViews(nsGroups: readonly NamespaceGroup[], build: Build): Namespac
       layoutId: `s:${g.id}`,
       id: g.id,
       ...(g.ast !== undefined ? { ast: g.ast } : {}),
-      label: build.label(g.label, false),
+      label: build.label(g.label),
       ...withParent(g.parent === undefined ? undefined : `s:${g.parent}`),
       depth,
     };
@@ -255,7 +280,7 @@ function boxView(node: ClassNode, font: FontKey, metrics: BoxMetrics, build: Bui
 /** The notes, and an edge from each to its class (v12 `edgeNote<i>`) pushed onto `edges`. */
 function noteViews(pad: number, build: Build, edges: ClassEdgeView[]): NoteView[] {
   return build.model.notes.map((note) => {
-    const text = build.label(note.text, true);
+    const text = build.label(note.text);
     const view: NoteView = {
       kind: 'note',
       layoutId: `t:${note.id}`,
@@ -289,7 +314,7 @@ function noteViews(pad: number, build: Build, edges: ClassEdgeView[]): NoteView[
 
 function interfaceView(iface: ClassInterface, build: Build): InterfaceView {
   const patch = build.units.builder.labelPatch;
-  const text = build.label(iface.label, false);
+  const text = build.label(iface.label);
   const owner = build.classIds.get(iface.classId);
   const view: InterfaceView = {
     kind: 'interface',
@@ -312,20 +337,22 @@ function interfaceView(iface: ClassInterface, build: Build): InterfaceView {
 function relationEdges(build: Build): ClassEdgeView[] {
   const edgeWrap = build.units.builder.edgeWrap;
   const ids = new Set<string>();
-  const endOf = (id: string): string | undefined =>
-    build.classIds.get(id) ?? build.interfaceIds.get(id);
+  // A lollipop end names its interface; a class may be called `interface0` too.
+  const endOf = (end: RelationEnd): string | undefined =>
+    (end.type === 'lollipop' ? build.interfaceIds.get(end.id) : undefined) ??
+    build.classIds.get(end.id);
   // A written `"none"` multiplicity drew nothing in v12.
   const multiplicity = (text: string | undefined): MeasuredLabel | undefined =>
-    text === undefined || text === '' || text === 'none' ? undefined : build.label(text, false);
+    text === undefined || text === '' || text === 'none' ? undefined : build.label(text);
   const edges: ClassEdgeView[] = [];
   for (const rel of build.model.relations) {
-    const source = endOf(rel.start.id);
-    const target = endOf(rel.end.id);
+    const source = endOf(rel.start);
+    const target = endOf(rel.end);
     if (source === undefined || target === undefined) continue;
     let layoutId = rel.ast;
     for (let n = 2; ids.has(layoutId); n++) layoutId = `${rel.ast}#${n}`;
     ids.add(layoutId);
-    const middle = rel.label ? build.label(rel.label, true, edgeWrap) : undefined;
+    const middle = rel.label ? build.label(rel.label, edgeWrap) : undefined;
     const startLabel = multiplicity(rel.start.multiplicity);
     const endLabel = multiplicity(rel.end.multiplicity);
     edges.push({
@@ -350,6 +377,7 @@ function layoutGraph(
   model: ClassModel,
   ctx: ClassLayoutContext,
   units: UnitProfile,
+  curve: ClassCurve,
   parts: Pick<ClassPrepared, 'boxes' | 'notes' | 'interfaces' | 'groups' | 'edges'>
 ): LayoutGraph {
   const b = units.builder;
@@ -372,6 +400,10 @@ function layoutGraph(
   const down = spacingOn('y', 'x');
   const turned = down.node !== spacing.node || down.rank !== spacing.rank;
   const headRoom = b.headRoom;
+  // v12 padded namespaces with `class.padding ?? 16` on every side; the title adds its height.
+  const padding = num(conf.padding);
+  const groupPx = Number.isNaN(padding) ? GROUP_PAD : padding;
+  const groupPad = { x: fromPx(units, groupPx, 'x'), y: fromPx(units, groupPx, 'y') };
   const size = (l: MeasuredLabel) => ({ width: l.width, height: l.height });
   const node = (
     v: { layoutId: string; width: number; height: number; parent?: string },
@@ -394,12 +426,7 @@ function layoutGraph(
       const titled = g.label.height > 0;
       return {
         id: g.layoutId,
-        padding: {
-          top: titled ? b.titlePad : b.groupPad,
-          right: b.groupPad,
-          bottom: b.groupPad,
-          left: b.groupPad,
-        },
+        padding: { top: groupPad.y, right: groupPad.x, bottom: groupPad.y, left: groupPad.x },
         ...(titled ? { title: { width: g.label.width, height: g.label.height } } : {}),
         ...(g.parent !== undefined ? { parent: g.parent } : {}),
       };
@@ -430,8 +457,9 @@ function layoutGraph(
       units.grid === undefined
         ? fromConfig(conf.diagramPadding, b.diagramPadding, 'x', 0)
         : b.diagramPadding,
-    // v12 drew class edges with flowchart's default `rounded` curve: right angles.
-    routing: 'stepped',
+    // `flowchart.curve`, as v12 drew class edges with it; `rounded` (right angles) by default.
+    // On the grid routes are always square (D78).
+    routing: units.grid === undefined ? (ROUTING[curve] ?? 'stepped') : 'stepped',
     headRoom,
     metrics: units.engine,
   };
