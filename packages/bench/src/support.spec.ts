@@ -7,11 +7,11 @@ describe('fixture support', () => {
     expect(isSupported('flowchart-v2')).toBe(true);
     expect(isSupported('flowchart-elk')).toBe(true);
     expect(isSupported('sequence')).toBe(true);
+    expect(isSupported('classDiagram')).toBe(true);
     expect(isSupported('journey')).toBe(false);
-    expect(isSupported('classDiagram')).toBe(false);
   });
 
-  it('runs every corpus diagram and the Pele flowcharts, and sets the rest aside by type', () => {
+  it('runs every corpus diagram and the Pele flowcharts, sequence and class, and sets the rest aside by type', () => {
     const { supported, unsupported } = classifyFixtures(loadFixtures());
     expect(supported.filter((f) => f.set === 'corpus')).toHaveLength(158);
     expect(supported.filter((f) => f.set === 'pele').map((f) => f.id)).toEqual([
@@ -19,18 +19,19 @@ describe('fixture support', () => {
       'pele/flowchart-50',
       'pele/flowchart-500',
       'pele/sequence',
+      'pele/class',
     ]);
-    expect(unsupported).toEqual([{ id: 'pele/class', set: 'pele', type: 'classDiagram' }]);
+    expect(unsupported).toEqual([]);
   });
 
   it('detects through front-matter and directives, and keeps undetectable text as an error', () => {
     const fixture = (id: string, source: string) => ({ ...loadFixtures()[0]!, id, source });
     const { supported, unsupported } = classifyFixtures([
-      fixture('x/front', '---\ntitle: t\n---\nclassDiagram\n  class A\n'),
+      fixture('x/front', '---\ntitle: t\n---\njourney\n  title j\n'),
       fixture('x/init', '%%{init: {"theme": "dark"}}%%\ngraph TD\n  A --> B\n'),
       fixture('x/junk', 'not a diagram\n'),
     ]);
-    expect(unsupported.map((u) => [u.id, u.type])).toEqual([['x/front', 'classDiagram']]);
+    expect(unsupported.map((u) => [u.id, u.type])).toEqual([['x/front', 'journey']]);
     // Text no detector claims still runs, so a broken fixture shows up as a render error.
     expect(supported.map((f) => f.id)).toEqual(['x/init', 'x/junk']);
   });

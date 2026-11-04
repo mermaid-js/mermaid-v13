@@ -1,0 +1,42 @@
+4:1-4:13 "classDiagram" keyword
+5:3-5:15 "direction LR" keyword
+6:3-6:15 "%% a comment" comment
+7:3-7:8 "class" keyword
+7:9-7:15 "Animal" class [declaration, definition]
+7:16-7:17 "T" string
+7:18-7:19 "[" operator
+7:20-7:29 "An animal" string
+7:30-7:31 "]" operator
+7:31-7:34 ":::" operator
+7:34-7:37 "hot" variable
+7:38-7:39 "{" operator
+8:5-8:13 "+int age" variable
+9:3-9:4 "}" operator
+10:3-10:5 "<<" operator
+10:5-10:13 "abstract" variable
+10:13-10:15 ">>" operator
+10:16-10:22 "Animal" class
+11:3-11:9 "Animal" class
+11:11-11:12 "1" string
+11:14-11:16 "<|" operator
+11:16-11:18 "--" operator
+11:20-11:24 "many" string
+11:26-11:30 "Duck" class [declaration, definition]
+11:31-11:37 ": is a" string
+12:3-12:7 "pond" variable [declaration, definition]
+12:8-12:10 "()" operator
+12:10-12:12 "--" operator
+12:13-12:17 "Duck" class
+13:3-13:11 "classDef" keyword
+13:12-13:15 "hot" variable [declaration, definition]
+13:16-13:20 "fill" variable
+13:20-13:25 ":#f00" string
+14:3-14:8 "click" keyword
+14:9-14:13 "Duck" class
+14:19-14:24 "quack" function
+14:25-14:31 "\"loud\"" string
+14:34-14:41 "Tooltip" string
+15:3-15:7 "link" keyword
+15:8-15:14 "Animal" class
+15:16-15:35 "https://example.com" string
+15:37-15:43 "_blank" enumMember

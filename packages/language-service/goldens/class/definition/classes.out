@@ -1,0 +1,22 @@
+@ 2:15  Animal <|-- |Duck
+  -> 2:15-2:19 "Duck"
+@ 3:9  class |Duck {
+  -> 2:15-2:19 "Duck"
+@ 6:3  |Duck : +quack()
+  -> 2:15-2:19 "Duck"
+@ 7:12  note for |Duck "quacks"
+  -> 2:15-2:19 "Duck"
+@ 8:11  style Du|ck fill:#ff0
+  -> 2:15-2:19 "Duck"
+@ 9:20  cssClass "Animal,|Duck" hot
+  -> 2:15-2:19 "Duck"
+@ 10:12  classDef |hot fill:#f00
+  -> 10:12-10:15 "hot"
+@ 11:9  click |Animal href "https://example.com"
+  -> 2:3-2:9 "Animal"
+@ 12:13  pond ()-- |Duck
+  -> 2:15-2:19 "Duck"
+@ 13:3  |pond ()-- Animal
+  -> 12:3-12:7 "pond"
+@ 14:13  namespace |Water {
+  -> 14:13-14:18 "Water"

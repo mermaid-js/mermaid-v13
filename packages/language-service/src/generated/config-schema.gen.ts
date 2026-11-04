@@ -42,7 +42,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`). \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no palette. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
+        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no palette. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
       },
       "type": "object",
       "additionalProperties": true,
@@ -1007,7 +1007,8 @@ export const configSchema: ConfigSchema = {
     "class": {
       "$ref": "#/$defs/ClassDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "state": {
@@ -3759,7 +3760,8 @@ export const configSchema: ConfigSchema = {
           "$ref": "#/$defs/BaseDiagramConfig/properties/theme",
           "default": "redux-color",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "look": {
@@ -3771,11 +3773,37 @@ export const configSchema: ConfigSchema = {
             "replacement": "`theme`, or the geometry and `dropShadow` theme variables"
           }
         },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "No class default, as in v12: the top-level `layout` applies, `layered` (D127, R-LAYOUT-7: ELK is never the default). `elk` applies only when an author sets it, and is drawn with `layered` until an ELK plugin is registered (D106)."
+          }
+        },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the class renderers never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's class renderer read `state.useMaxWidth` instead (a v12 bug); v13 reads `class.useMaxWidth`."
+          }
+        },
         "titleTopMargin": {
           "$ref": "#/$defs/GitGraphDiagramConfig/properties/titleTopMargin",
           "default": 25,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "The class SVG draws no front-matter `title`, as flowchart's."
           }
         },
         "arrowMarkerAbsolute": {
@@ -3792,41 +3820,55 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it."
           }
         },
         "padding": {
+          "description": "Padding inside class boxes, namespaces and notes, in pixels. Unset, class boxes are\npadded 12, namespaces 16 and notes 6, as v12 drew them.\n",
           "type": "number",
-          "default": 5,
+          "default": 12,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three."
           }
         },
         "textHeight": {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it."
           }
         },
         "nodeSpacing": {
           "type": "integer",
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's class renderer read `state.nodeSpacing` instead (a v12 bug), else 50; v13 reads `class.nodeSpacing`, else 50."
           }
         },
         "rankSpacing": {
           "type": "integer",
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's class renderer read `state.rankSpacing` instead (a v12 bug), else 50; v13 reads `class.rankSpacing`, else 50."
           }
         },
         "diagramPadding": {
           "$ref": "#/$defs/ErDiagramConfig/properties/diagramPadding",
+          "default": 8,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8."
           }
         },
         "htmlLabels": {
@@ -3843,7 +3885,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "hierarchicalNamespaces": {
@@ -3851,7 +3894,8 @@ export const configSchema: ConfigSchema = {
           "default": true,
           "description": "When true (default), nested namespaces render as hierarchical clusters,\nwith each segment of a dotted name (e.g. `A.B.C`) becoming its own nested\nbox. When false, namespaces render in compact mode: only explicitly\ndeclared namespaces are emitted and their full qualified name is used as\na single flat label.\n",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         }
       }

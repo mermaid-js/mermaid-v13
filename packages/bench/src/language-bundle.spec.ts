@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { language as classFacet } from '@mermaid-js/diagram-class/language';
 import type { Bundle } from './build.ts';
 import { bundle } from './build.ts';
 
@@ -18,6 +19,11 @@ const inputs = (b: Bundle) => Object.values(b.graph).flatMap((f) => f.inputs);
 const PACKAGES = [
   { name: 'flowchart', dir: 'diagram-flowchart', renderer: ['render/', 'ascii', 'plugin.ts'] },
   { name: 'state', dir: 'diagram-state', renderer: ['render/', 'layout/', 'plugin.ts'] },
+  {
+    name: 'class',
+    dir: 'diagram-class',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */
@@ -75,6 +81,10 @@ describe.each(PACKAGES)('the $name ./language bundle', ({ name, dir, renderer })
     expect(all).not.toContain(`${src}language.ts`);
     expect(all).not.toContain(`${src}generated/categories.ts`);
   });
+});
+
+it('the class ./language bundle is the entry of the class facet', () => {
+  expect(classFacet.id).toBe('class');
 });
 
 describe('the er ./language bundle', () => {

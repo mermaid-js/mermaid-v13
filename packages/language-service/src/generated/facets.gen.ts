@@ -15,7 +15,13 @@ export const firstPartyFacets: readonly FacetEntry[] = [
   { type: 'agentflow', id: 'agentflow', detector: (text) => /^\s*agentflow-beta\b/.test(text) },
   { type: 'c4', id: 'c4', detector: (text) => /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/.test(text) },
   { type: 'kanban', id: 'kanban', detector: (text) => /^\s*kanban/.test(text) },
-  { type: 'classDiagram', id: 'classDiagram', detector: (text) => /^\s*classDiagram/.test(text) },
+  {
+    type: 'classDiagram',
+    id: 'class',
+    section: 'class',
+    detector: (text) => /^\s*classDiagram/.test(text),
+    load: () => import('@mermaid-js/diagram-class/language').then((m) => m.language),
+  },
   {
     type: 'er',
     id: 'er',

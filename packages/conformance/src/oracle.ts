@@ -19,12 +19,17 @@ export type OracleResult =
 export interface Oracle {
   /** mermaid@12 version in use. */
   version: string;
-  /** Parse one source. The returned `db` is only valid until the next call. */
-  parse(text: string): Promise<OracleResult>;
+  /**
+   * Parse one source. The returned `db` is only valid until the next call. `config` is set
+   * as the site config (as `mermaid.initialize` does) for this parse only, e.g.
+   * `{ securityLevel: 'loose' }`, which diagram text cannot set.
+   */
+  parse(text: string, config?: Record<string, unknown>): Promise<OracleResult>;
 }
 
 interface MermaidV12 {
   parse(text: string): Promise<unknown>;
+  initialize(config: Record<string, unknown>): void;
   mermaidAPI: {
     getDiagramFromText(text: string): Promise<{ type: string; db: unknown }>;
     reset(): void;
@@ -73,7 +78,8 @@ async function load(): Promise<Oracle> {
 
   return {
     version,
-    async parse(text) {
+    async parse(text, config) {
+      if (config) mermaid.initialize(config);
       // Directives and front matter mutate v12's global config; start every input clean.
       mermaid.mermaidAPI.reset();
       try {
@@ -81,6 +87,8 @@ async function load(): Promise<Oracle> {
         return { accepted: true, diagramType: diagram.type, db: diagram.db };
       } catch (error) {
         return { accepted: false, error: error instanceof Error ? error.message : String(error) };
+      } finally {
+        if (config) mermaid.initialize({});
       }
     },
   };

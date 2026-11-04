@@ -1,0 +1,14 @@
+---
+description: public, private, protected and package members, static and abstract ones
+---
+classDiagram
+  class Account {
+    +String owner
+    -BigDecimal balance
+    #List~Entry~ entries
+    ~int revision
+    +count$ int
+    +deposit(amount)$
+    +audit()*
+    -recalc() void
+  }

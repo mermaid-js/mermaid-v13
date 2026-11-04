@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { test } from '@playwright/test';
 import {
+  asHostText,
   assertUniqueSnapshotNames,
   buildFixtureTree,
   discoverMmdFixtures,
@@ -77,7 +78,7 @@ const registerFixtureNode = (node: FixtureTree): void => {
       }
       // Mirror the fixture's storage path so Argos sheets group by diagram
       // folder (e.g. diagrams/packet) rather than the runner spec file.
-      await imgSnapshotTest(page, testInfo, source, {
+      await imgSnapshotTest(page, testInfo, asHostText(source), {
         screenshotPath: `diagrams/${relativePath.replace(/\.mmd$/i, '')}`,
       });
     });

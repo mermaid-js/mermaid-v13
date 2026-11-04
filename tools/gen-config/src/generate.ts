@@ -32,6 +32,7 @@ export const SERVICE_SCHEMA = 'packages/language-service/src/generated/config-sc
  */
 export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   flowchart: 'packages/diagram-flowchart',
+  class: 'packages/diagram-class',
   er: 'packages/diagram-er',
   state: 'packages/diagram-state',
 };

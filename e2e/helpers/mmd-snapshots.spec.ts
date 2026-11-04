@@ -19,6 +19,16 @@ import {
 import * as discovery from '../../packages/dev/src/fixture-discovery.ts';
 import * as helpers from './mmd-snapshots.ts';
 
+describe('asHostText', () => {
+  it("decodes HTML entities as v12's e2e page did, and leaves the rest as written", () => {
+    expect(helpers.asHostText('  &lt;&lt;interface&gt;&gt; A')).toBe('  <<interface>> A');
+    expect(helpers.asHostText('a &amp;&quot;&#65;&#x42;')).toBe('a &"AB');
+    expect(helpers.asHostText('A -- x:#y; --> B &unknown; &#0;')).toBe(
+      'A -- x:#y; --> B &unknown; &#0;'
+    );
+  });
+});
+
 describe('fixtureBaseName', () => {
   it('returns the filename without extension', () => {
     expect(fixtureBaseName('flowchart/handdrawn/fhd1-simple.mmd')).toBe('fhd1-simple');

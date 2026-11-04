@@ -35,6 +35,11 @@ export const GRAMMARS: GrammarTarget[] = [
     },
   },
   {
+    type: 'class',
+    title: 'Class diagram syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T', documented: ['CallbackName'] },
+  },
+  {
     type: 'sequence',
     title: 'Sequence diagram syntax',
     kinds: {

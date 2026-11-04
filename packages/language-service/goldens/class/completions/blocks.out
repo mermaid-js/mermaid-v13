@@ -1,0 +1,9 @@
+@ 3:5  |
+  none
+@ 6:5  |
+  class keyword 6:5-6:5 "" -> "class"
+  namespace keyword 6:5-6:5 "" -> "namespace"
+  note for keyword 6:5-6:5 "" -> "note for"
+  note keyword 6:5-6:5 "" -> "note"
+@ 7:11  class |
+  Animal class 7:11-7:11 "" -> "Animal"

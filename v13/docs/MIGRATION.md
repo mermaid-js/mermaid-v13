@@ -203,8 +203,12 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `gantt.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `journey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `class.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `class.titleTopMargin` | ignored | The class SVG draws no front-matter `title`, as flowchart's. |  |
 | `class.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
+| `class.dividerMargin` | ignored | Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it. |  |
+| `class.textHeight` | ignored | Read only by v12's old class renderer (`svgDraw.js`), which 12.2.0 no longer reached: both keywords used the unified renderer, which did not read it. |  |
 | `class.htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
 | `state.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the state renderers never did. |  |
 | `state.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -270,6 +274,8 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `sequence.noteFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
 | `sequence.messageFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.messageFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
+| `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
+| `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
 
 <!-- END GENERATED CONFIG SECTION -->
 
@@ -384,6 +390,10 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `labelBoxExtraHeight` (sequence: added to a fragment's label tab) | 15 | 0 |
 | `actorFooterPadding` (sequence: room below a drawing with participants) | 30 | 0 |
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color` | `none` |
+| `classText` (colour: class diagram text) | `textColor` | `primaryTextColor` |
+| `classMarkerStrokeWidth` / `classFilledMarkerStrokeWidth` (outline of hollow / filled class markers) | 2 / 0 | 1 / 1 |
+| `extensionMarkerLength` / `extensionMarkerGap` (inheritance triangle) | 8 / 8.25 | 17 / 0.25 |
+| `compositionMarkerGap` / `dependencyMarkerGap` | 2.75 / 4 | 0.25 / 1 |
 | `erZeroOrMoreCircleOffset` (ER, centre of a zero-or-more circle from the outline) | 28 | 30 |
 | `rowOdd` / `rowEven` (ER attribute rows) | the entity fill (`mainBkg`): v12 neo leaves rows unfilled | v12's `rowOdd` / `rowEven`, the same colours (khroma's HSL lightening, D117) |
 | `erEdgeLabelBackground` (ER relationship labels) | white (`redux-color`), `#16141f` (`redux-dark-color`); `edgeLabelBackground` in `redux` and `redux-dark` | `edgeLabelBackground` |
@@ -439,6 +449,36 @@ so it counts twice towards the diameter compared with the per-side node padding.
 
 Node positions differ from v12's dagre and ELK output; layouts are deterministic for the same
 input.
+
+### Class diagram layout
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Class diagrams default to ELK | Laid out with `layered`, the engine built into core; `layout: elk` is accepted and drawn with `layered` until the ELK plugin (M3.5) is registered | D106 |
+| Class `nodeSpacing` and `rankSpacing` were read from the `state` section (falling back to 50), and `class.diagramPadding` was ignored (8 px) | `class.nodeSpacing`, `class.rankSpacing` and `class.diagramPadding` are honoured, with v12's effective defaults (50, 50, 8) | spec #126 |
+| Class edges followed `flowchart.curve` (a d3 curve factory) | Still follow `flowchart.curve`, read as for flowcharts: `rounded` (the default) and `step`/`stepBefore`/`stepAfter` are right-angle routes, `linear` straight segments, every other value S-curves | spec #126 |
+| A lollipop interface was a top-level node, outside its class's namespace | It sits in the namespace of its class | spec #126 |
+
+### Class diagram config
+
+- **Both keywords:** `classDiagram` and `classDiagram-v2` are one type, detected by v12's one
+  `classDiagram` detector and drawn by one renderer (D101), as SVG only: `format: 'ascii'` throws
+  `UnsupportedFormatError` (D100).
+- **Honoured** in the `class` section: `theme`, `layout`, `useMaxWidth`, `padding`, `nodeSpacing`,
+  `rankSpacing`, `diagramPadding`, `hideEmptyMembersBox` and `hierarchicalNamespaces`. v12's class
+  renderer read `useMaxWidth`, `nodeSpacing` and `rankSpacing` from the `state` section (a v12
+  bug); v13 reads them from `class`.
+- **Documented defaults changed (D125):** `class.padding` is documented as 12, not 5, and
+  `class.diagramPadding` as 8, not 20. These are the numbers v12 drew with: its schema defaults
+  never reached the renderer. A diagram that sets neither looks as in v12: class boxes padded 12,
+  namespaces 16, notes 6, the diagram 8. A `class.padding` you set pads boxes, namespaces and
+  notes alike, as in v12.
+- **Layout:** `class.layout` has no default of its own, as in v12, so the top-level `layout`
+  applies: `layered`, even with an ELK plugin installed (D127, R-LAYOUT-7). `layout: elk` is
+  honoured when an author sets it.
+- **Ignored:** `titleTopMargin` (no front-matter title is drawn, as for flowcharts), `useWidth`
+  (only gantt read it), and `dividerMargin` and `textHeight`, which only v12's old class renderer
+  read; 12.2.0 sent both keywords to the unified renderer, which did not.
 
 ### ER diagrams
 
@@ -692,6 +732,36 @@ participants and `m:<from>><to>#2`, `#3`, … for the next ones, `note:<n>`, `f:
 kept. So `participant A B` is `p:A B`, `participant A#c` is `p:A%23c`, the first `A->>B#2` is
 `m:A>B%232` (no suffix: it is the first message from `A` to `B#2`), and the second `A->>B` is
 `m:A>B#2`.
+
+## Class diagram SVG structure
+
+What changed in the class diagram's SVG compared with v12's unified renderer
+(`classRenderer-v3-unified`), and why (DESIGN §7.2, spec #126). The root, `<style>`, marker,
+id and label rows of [Flowchart SVG structure](#flowchart-svg-structure) apply as they are; the
+rows below are class-specific. Group class names (`clusters`, `edgePaths`, `edgeLabels`,
+`nodes`, `node`, `cluster`, `relation`, `edge-pattern-*`, `edgeTerminals`, `outer-path`,
+`divider`, user `cssClass` / `:::` classes) are kept.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id`, `class="classDiagram"`, `role="graphics-document document"` | No root `id`; `class="mermaid mermaid-class"`, `role="img"`; `aria-roledescription="classDiagram"` is kept | R-A11Y-1, as for flowcharts |
+| Class `<g class="node default …" id="classId-A-0">` holding a rough.js `<g class="basic label-container outer-path"><path>`, `annotation-group`, `label-group`, `members-group` and `methods-group` groups of `<foreignObject>` labels, and `<g class="divider"><path>` | `<g class="node default …" data-id="A" data-ast="n:A" data-color-id transform>` holding `<rect class="outer-path">`, `<text class="annotation">`, `<text class="title">`, one `<path class="divider">` per compartment, and one `<text class="member attribute">` / `<text class="member method">` per member with `data-id="A#k"` and `data-ast="m:A#k"` | Text labels (D5); each member maps back to its source line (R-PARSE-8). Every `data-id` is the raw name (`B#2`, `B#2#1`); only `data-ast` escapes it (`n:B%232`, `m:B%232#1`) |
+| Static (`$`) and abstract (`*`) members styled by CSS on the HTML label | `text-decoration="underline"` on the member's `<text>`; `font-style="italic"` on its inner `<tspan>` | No style sheet (R-SEC-2) |
+| Relationship `<path class="edge-thickness-normal edge-pattern-solid relation" id="id_A_B_1" marker-start/-end="url(#…)">` | `<g class="edge relation edge-thickness-normal edge-pattern-solid" data-id="id_A_B_1" data-ast="e:A>B">` holding the `<path>` and its markers; `..` is `edge-pattern-dashed`; a lollipop relationship also has class `lollipop`. The classes are kept, `edge-thickness-normal` included | One element per relationship carries its ids and markers |
+| Each relationship part had its own id scheme (the path `id_A_B_1`, the labels none) | The line, its label and its multiplicities all carry `data-id="id_A_B_1"` (v12's edge id); only the line's group carries `data-ast` | One id per relationship for hosts and `plugin-interactions` |
+| `<marker>` elements `…-aggregationEnd`, `-extensionEnd`, `-compositionEnd`, `-dependencyEnd`, `-lollipopEnd`, and their `-margin` variants under `look: neo` | Inline `<path class="marker aggregation">` (and `extension`, `composition`, `dependency`) and `<circle class="marker lollipop">`. The classic themes draw v12's classic markers, the redux themes its neo `-margin` ones (a shorter inheritance triangle, the tip gaps, 2px outlines on hollow markers and none on filled ones), through the class marker variables in [Theme geometry](#theme-geometry). Each marker is narrowed by its outline so that it stays 12px across outline included, and multiplicities stay clear of it | D35, D152 |
+| Note edge `edgeNote<k>`, dotted | `<g class="edge relation edge-thickness-normal edge-pattern-dotted" data-id="edgeNote<k>">`, no `data-ast`: the note's AST id is on its box | One `data-ast` element per AST node (R-PARSE-8) |
+| Relationship label `<g class="edgeLabel">` with HTML on `mainBkg` (`.labelBkg`; the `.edgeLabel[data-look="neo"]` rule never matched, as v12 sets `data-look` on the path only) | `<g class="edgeLabel" data-id>` with an opaque background `<rect>` filled with `mainBkg`, in every theme, and a `<text>` | Text labels |
+| Multiplicities: one `<g class="edgeTerminals">` per end, HTML at 11px | One `<g class="edgeTerminals" data-id>` per relationship holding a `<text>` per end, at `classTerminalFontSize` (11px in every theme), measured at that size by the layout | Text labels |
+| Class text coloured by `classText` through the `<style>` (`.nodeLabel`, `.edgeLabel`, `.label text`) | `classText` is a theme variable and colours names, annotations, members, relationship labels, multiplicities and interface names; notes keep `noteTextColor` and namespace titles `titleColor`. On a box an author `style` fills, the text switches to black or white as in flowcharts | R-THEME-12 |
+| Note: `<g class="node …">` with the rough.js note shape | `<g class="node note" data-id="note0" data-ast="note:k">` with `<rect class="outer-path">` (`noteBkgColor`, `noteBorderColor`) and the text, left-aligned | Text labels |
+| Lollipop interface: a node with an invisible (`opacity: 0`) rect and its label | `<g class="node interface" data-id="interface0" data-ast="i:Name">` holding only the text | Nothing invisible is drawn |
+| Namespace: `<g class="cluster" id>` with `<rect>` and an HTML label | `<g class="cluster namespace" data-id="<qualified id>" data-ast="s:<id>">` with `<rect>` and `<text class="cluster-label">`. A namespace made only as the ancestor of a dotted one (`X` of `namespace X.Y`) has no `namespace` statement of its own, so it has no `data-ast` | Text labels; one `data-ast` per AST node (R-PARSE-8) |
+| Per-class colour through `[data-look][data-color-id].node .outer-path` rules in the `<style>` | `data-color-id` is kept; the colours are presentation attributes on the box and its dividers; an author `style` / `classDef` still wins | No style sheet |
+| `classDef` styles reached a class through the generated `.name > *` CSS rules, even when the class was given after the `classDef` | The `classDef` styles of every CSS class of the class, then its own `style`, as presentation attributes after the allow-list | Unknown properties and unsafe values are dropped with a warning (R-SEC-3) |
+| Class ids, labels and member text passed through `sanitizeText` (DOMPurify), so `A : +List<T> items` lost `<T>` | Text is escaped when written, never sanitised: `+List<T> items` is shown as written, and known HTML tags are read as the label subset ([Labels and text](#labels-and-text)) | R-SEC-1; the flowchart's rule |
+| `link` / `click … href` as `<a xlink:href>`; tooltip as an HTML hover div; `callback` / `click … call` bound with `bindFunctions` | `<a href target>` inside the node group (URLs that pass `securityLevel`); the tooltip is an SVG `<title>`; callbacks draw nothing (interactions plugin) | R-SVG-4, R-SVG-5 |
+| Front-matter `title` drawn above the diagram (`classDiagramTitleText`) | Not drawn, as for flowcharts | v13 renderers draw no title yet |
 
 ## ER SVG structure
 

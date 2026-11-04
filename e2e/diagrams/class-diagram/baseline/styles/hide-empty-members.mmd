@@ -1,0 +1,12 @@
+---
+config:
+  class:
+    hideEmptyMembersBox: true
+description: hideEmptyMembersBox drops the compartments of member-less classes
+---
+classDiagram
+  class Bare
+  class Full {
+    +id
+  }
+  Bare --> Full

@@ -1,0 +1,18 @@
+@ 3:13  namespace |Water {
+  prepare: 3:13-3:18 "Water"; rename to "Port":
+  %% rename-to: Port
+  classDiagram
+    namespace Port {
+      class Fish
+    }
+    plug ()-- Fish
+    plug ()-- Duck
+@ 6:3  |plug ()-- Fish
+  prepare: 6:3-6:7 "plug"; rename to "Port":
+  %% rename-to: Port
+  classDiagram
+    namespace Water {
+      class Fish
+    }
+    Port ()-- Fish
+    Port ()-- Duck

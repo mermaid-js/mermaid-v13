@@ -9,6 +9,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService } from './index.ts';
 import { contextOf } from './snapshot.ts';
 import type { DocumentSnapshot, Range, TextEdit } from './index.ts';
+import { UNLISTED_FACETS } from './testing/unlisted-facets.ts';
 
 const CORPUS = join(import.meta.dirname, '..', '..', '..', 'e2e', 'diagrams');
 const FRESH = 'renamedZq7';
@@ -74,7 +75,7 @@ const corpus = (readdirSync(CORPUS, { recursive: true }) as string[])
   .filter((f) => f.endsWith('.mmd'))
   .sort();
 
-const service = createLanguageService();
+const service = createLanguageService({ facets: UNLISTED_FACETS });
 beforeAll(() => service.preload());
 
 function apply(text: string, edits: readonly TextEdit[]): string {

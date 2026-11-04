@@ -2,7 +2,13 @@
  * `dark`: v12 `theme-dark.js`.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING, CLASSIC_SEQUENCE } from './geometry.ts';
+import {
+  CLASSIC_ARROWHEADS,
+  CLASSIC_CLASS_MARKERS,
+  CLASSIC_PADDING,
+  CLASSIC_SEQUENCE,
+  TEXT_SIZES,
+} from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'dark',
@@ -26,6 +32,8 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
+    ...CLASSIC_CLASS_MARKERS,
+    ...TEXT_SIZES,
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
   },

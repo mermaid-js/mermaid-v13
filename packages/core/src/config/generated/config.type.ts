@@ -1065,6 +1065,19 @@ theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark"
  */
 look?: ("classic" | "handDrawn" | "neo")
 /**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
+/**
  * Margin top for the text over the diagram
  */
 titleTopMargin?: number
@@ -1075,6 +1088,11 @@ titleTopMargin?: number
  */
 arrowMarkerAbsolute?: boolean
 dividerMargin?: number
+/**
+ * Padding inside class boxes, namespaces and notes, in pixels. Unset, class boxes are
+ * padded 12, namespaces 16 and notes 6, as v12 drew them.
+ * 
+ */
 padding?: number
 textHeight?: number
 nodeSpacing?: number

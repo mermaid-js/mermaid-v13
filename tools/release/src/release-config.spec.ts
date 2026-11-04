@@ -55,6 +55,7 @@ describe('changesets (R-REL-1, R-REL-2)', () => {
     for (const dir of [
       'mermaid',
       'diagram-flowchart',
+      'diagram-class',
       'diagram-er',
       'diagram-sequence',
       'plugin-interactions',

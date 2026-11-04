@@ -12,7 +12,7 @@
  * `leanRight.ts`, `trapezoid.ts`, `rectLeftInvArrow.ts` at fa796a943), as totals; the rounded
  * rectangle takes `padding` per side in every theme, so it has no variable.
  */
-import type { ArrowheadVariable, TokenVariable } from '../vocabulary.ts';
+import type { ArrowheadVariable, ClassMarkerVariable, TokenVariable } from '../vocabulary.ts';
 
 /**
  * v12 neo (`*-margin` markers). Point: viewBox 11.5×14 met into 10.5×14, so 10.5 long and
@@ -50,16 +50,6 @@ export const CLASSIC_ARROWHEADS: Readonly<Record<ArrowheadVariable, number>> = {
   crossArrowheadStrokeWidth: 2,
   // ER `zero_or_more`: refX 39, cx 9.
   erZeroOrMoreCircleOffset: 30,
-};
-
-/**
- * Rules the redux family shares (v12 neo). ER rows have no fill of their own in v12 neo, so
- * they show the entity's; the zero circle takes the node fill (`zero_or_one_neo`).
- */
-export const REDUX_RULES: Readonly<Record<string, string>> = {
-  rowOdd: 'mainBkg',
-  rowEven: 'mainBkg',
-  erMarkerFill: 'mainBkg',
 };
 
 type PaddingToken = Extract<
@@ -158,3 +148,37 @@ export const CLASSIC_SEQUENCE: Readonly<Record<SequenceGeometry, number>> = {
   labelBoxExtraHeight: 0,
   actorFooterPadding: 0,
 };
+
+/**
+ * Class relationship markers, v12 neo (`*-margin` markers in rendering-elements/markers.js at
+ * fa796a943), each measured from the node outline after `markerOffsets` shortens the line
+ * (17.25 for the diamonds and the triangle, 6 for dependency, 13.5 for the lollipop).
+ * Extension: polygon 10→18 with refX 9, so 8 long and its tip 17.25 − 9 = 8.25 short of the
+ * outline. Composition: the diamond with refX 3.5, tip 17.25 − 14.5 = 2.75 short. Dependency:
+ * refX 16, tip 6 − 2 = 4 short. Hollow markers have a 2px outline, filled ones none.
+ */
+export const NEO_CLASS_MARKERS: Readonly<Record<ClassMarkerVariable, number>> = {
+  classMarkerStrokeWidth: 2,
+  classFilledMarkerStrokeWidth: 0,
+  extensionMarkerLength: 8,
+  extensionMarkerGap: 8.25,
+  compositionMarkerGap: 2.75,
+  dependencyMarkerGap: 4,
+};
+
+/**
+ * v12 classic: every class marker has refX 1 (dependency 13) and a 1px outline (`styles.js`
+ * `.extension { stroke-width: 1 }` and so on). The diamonds and the triangle are 17 long with
+ * their tip 17.25 − 17 = 0.25 short of the outline; dependency's tip is 6 − 5 = 1 short.
+ */
+export const CLASSIC_CLASS_MARKERS: Readonly<Record<ClassMarkerVariable, number>> = {
+  classMarkerStrokeWidth: 1,
+  classFilledMarkerStrokeWidth: 1,
+  extensionMarkerLength: 17,
+  extensionMarkerGap: 0.25,
+  compositionMarkerGap: 0.25,
+  dependencyMarkerGap: 1,
+};
+
+/** Text sizes every theme shares: v12 drew class multiplicities at 11px (`.edgeTerminals`). */
+export const TEXT_SIZES = { classTerminalFontSize: 11 } as const;

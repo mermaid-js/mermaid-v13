@@ -1,0 +1,1706 @@
+[
+  {
+    "id": "v12-specs/classDiagram-styles.spec.js#1",
+    "source": "classDiagram\nclass Class01:::exClass"
+  },
+  {
+    "id": "v12-specs/classDiagram-styles.spec.js#2",
+    "source": "classDiagram\nclass Class1:::exClass {\nint : test\nstring : foo\ntest()\nfoo()\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram-styles.spec.js#3",
+    "source": "classDiagram\nClass01 <|-- Class02\ncssClass \"Class01\" exClass"
+  },
+  {
+    "id": "v12-specs/classDiagram-styles.spec.js#4",
+    "source": "classDiagram\nclass Class01\n cssClass \"Class01\" exClass"
+  },
+  {
+    "id": "v12-specs/classDiagram-styles.spec.js#5",
+    "source": "classDiagram\nclass Class01\n class Class02\n cssClass \"Class01,Class02\" exClass"
+  },
+  {
+    "id": "v12-specs/classDiagram-styles.spec.js#6",
+    "source": "classDiagram\nclass Class01\n class Class02\n style Class01 fill:#f9f,stroke:#333,stroke-width:4px"
+  },
+  {
+    "id": "v12-specs/classDiagram-styles.spec.js#7",
+    "source": "classDiagram\nclass Class01\n cssClass \"Class01\" pink\n classDef pink fill:#f9f"
+  },
+  {
+    "id": "v12-specs/classDiagram-styles.spec.js#8",
+    "source": "classDiagram\nclass Class01:::pink\n classDef pink fill:#f9f"
+  },
+  {
+    "id": "v12-specs/classDiagram-styles.spec.js#9",
+    "source": "classDiagram\nclass Class01:::pink\n classDef pink fill:#f9f,stroke:#333,stroke-width:6px"
+  },
+  {
+    "id": "v12-specs/classDiagram-styles.spec.js#10",
+    "source": "classDiagram\nclass Class01:::pink\n cssClass \"Class01\" bold\n classDef pink fill:#f9f\n classDef bold stroke:#333,stroke-width:6px"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#1",
+    "source": "classDiagram\n        namespace Company.Project {\n          class User {\n            +login(username: String, password: String)\n            +logout()\n          }\n        }\n        namespace Company.Project.Module {\n          class Admin {\n            +addUser(user: User)\n            +removeUser(user: User)\n          }\n        }"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#2",
+    "source": "classDiagram\n    namespace Company.Project.Module {\n        class GenericClass~T~ {\n            +addItem(item: T)\n            +getItem() T\n        }\n    }"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#3",
+    "source": "      classDiagram\n        namespace Company.Project.Module.SubModule {\n          class Report {\n            +generatePDF(data: List)\n            +generateCSV(data: List)\n          }\n        }\n        namespace Company.Project.Module {\n          class Admin {\n            +generateReport()\n          }\n        }\n        Admin --> Report : generates"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#4",
+    "source": "classDiagram\n        namespace Outer {\n          namespace Inner {\n            class Foo {\n              +bar()\n            }\n          }\n          class Baz {\n            +qux()\n          }\n        }"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#5",
+    "source": "classDiagram\n          namespace Company.Engineering.Backend {\n            class Developer {\n              +writeCode()\n            }\n          }\n          namespace Company {\n            class CEO {\n              +makeDecisions()\n            }\n          }"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#6",
+    "source": "classDiagram\n          namespace Company.Engineering.Backend {\n            class Developer\n          }\n          namespace Company {\n            class CEO\n          }"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#7",
+    "source": "classDiagram\n        namespace A.B {\n          class Foo\n        }"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#8",
+    "source": "classDiagram\n        namespace Auth[\"Authentication Service\"] {\n          class UserService {\n            +login()\n          }\n        }"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#9",
+    "source": "classDiagram\n            accTitle: My Title\n            accDescr: My Description"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#10",
+    "source": "classDiagram\n            accTitle: My Title\n            accDescr {\n              This is my multi\n              line description\n            }"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#11",
+    "source": "\nclassDiagram\nclass Car"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#12",
+    "source": "classDiagram\n        namespace Company.Project.Module {\n          class User\n          class Admin\n        }\n          Admin --> User : manages"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#13",
+    "source": "classDiagram\nclass `Car`"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#14",
+    "source": "classDiagram\nclass Ca-r"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#15",
+    "source": "classDiagram\nclass `A_Car`"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#16",
+    "source": "classDiagram\nclass Foo1 {\n  You can use\n  several lines\n..\nas you want\nand group\n==\nthings together.\n__\nYou can have as many groups\nas you want\n--\nEnd of class\n}\n\nclass User {\n.. Simple Getter ..\n+ getName()\n+ getAddress()\n.. Some setter ..\n+ setName()\n__ private data __\nint age\n-- encrypted --\nString password\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#17",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"]"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#18",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"]\nclass C2[\"Class 2 with chars @?\"]\n"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#19",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"]\nC1: member1"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#20",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"]\n<<interface>> C1\nC1 : int member1"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#21",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"]:::styleClass"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#22",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"]\nC1 : int member1\ncssClass \"C1\" styleClass"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#23",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"]\nC1 : int member1\nclass C2[\"Long long long long long long long long long long label\"]\ncssClass \"C1,C2\" styleClass"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#24",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"]:::styleClass1\nclass C2[\"Class 2 !@#$%^&*() label\"]:::styleClass2"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#25",
+    "source": "classDiagram\nclass C1~T~\ncssClass \"C1~T~\" styleClass"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#26",
+    "source": "classDiagram\nclass C1~T~:::styleClass"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#27",
+    "source": "classDiagram\nclass C1~T~\nclick C1~T~ call someFunction()"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#28",
+    "source": "classDiagram\nclass C1~T~\nclick C1~T~ call cb() \"a tip\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#29",
+    "source": "classDiagram\nclass C1~T~\nlink C1~T~ \"https://example.com\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#30",
+    "source": "classDiagram\nclass C1[\"Class with text label\"]\nclass C2[\"Class with text label\"]\nclass C3[\"Class with text label\"]"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#31",
+    "source": "classDiagram\nclass C1[\"OneWord\"]\nclass C2[\"With, Comma\"]\nclass C3[\"With (Brackets)\"]\nclass C4[\"With [Brackets]\"]\nclass C5[\"With {Brackets}\"]\nclass C6[\" \"]\nclass C7[\"With 1 number\"]\nclass C8[\"With . period...\"]\nclass C9[\"With - dash\"]\nclass C10[\"With _ underscore\"]\nclass C11[\"With ' single quote\"]\nclass C12[\"With ~!@#$%^&*()_+=-/?\"]\nclass C13[\"With Città foreign language\"]\n"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#32",
+    "source": "classDiagram\nClass11 <|.. Class12\nnote for Class11 \"test\"\n"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#33",
+    "source": "classDiagram\nnote \"test\"\n"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#34",
+    "source": "classDiagram"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#35",
+    "source": "classDiagram-v2"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#36",
+    "source": "classDiagram\n                     note \"This is a keyword: direction. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#37",
+    "source": "classDiagram\n                     note \"This is a keyword: classDiagram. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#38",
+    "source": "classDiagram\n                     note \"This is a keyword: classDiagram-v2. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#39",
+    "source": "classDiagram\n                     note \"This is a keyword: namespace. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#40",
+    "source": "classDiagram\n                     note \"This is a keyword: {}. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#41",
+    "source": "classDiagram\n                     note \"This is a keyword: {. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#42",
+    "source": "classDiagram\n                     note \"This is a keyword: }. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#43",
+    "source": "classDiagram\n                     note \"This is a keyword: (). It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#44",
+    "source": "classDiagram\n                     note \"This is a keyword: (. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#45",
+    "source": "classDiagram\n                     note \"This is a keyword: ). It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#46",
+    "source": "classDiagram\n                     note \"This is a keyword: []. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#47",
+    "source": "classDiagram\n                     note \"This is a keyword: [. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#48",
+    "source": "classDiagram\n                     note \"This is a keyword: ]. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#49",
+    "source": "classDiagram\n                     note \"This is a keyword: class. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#50",
+    "source": "classDiagram\n                     note \"This is a keyword: \n. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#51",
+    "source": "classDiagram\n                     note \"This is a keyword: cssClass. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#52",
+    "source": "classDiagram\n                     note \"This is a keyword: callback. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#53",
+    "source": "classDiagram\n                     note \"This is a keyword: link. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#54",
+    "source": "classDiagram\n                     note \"This is a keyword: click. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#55",
+    "source": "classDiagram\n                     note \"This is a keyword: note. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#56",
+    "source": "classDiagram\n                     note \"This is a keyword: note for. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#57",
+    "source": "classDiagram\n                     note \"This is a keyword: <<. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#58",
+    "source": "classDiagram\n                     note \"This is a keyword: >>. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#59",
+    "source": "classDiagram\n                     note \"This is a keyword: call . It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#60",
+    "source": "classDiagram\n                     note \"This is a keyword: ~. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#61",
+    "source": "classDiagram\n                     note \"This is a keyword: ~Generic~. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#62",
+    "source": "classDiagram\n                     note \"This is a keyword: _self. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#63",
+    "source": "classDiagram\n                     note \"This is a keyword: _blank. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#64",
+    "source": "classDiagram\n                     note \"This is a keyword: _parent. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#65",
+    "source": "classDiagram\n                     note \"This is a keyword: _top. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#66",
+    "source": "classDiagram\n                     note \"This is a keyword: <|. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#67",
+    "source": "classDiagram\n                     note \"This is a keyword: |>. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#68",
+    "source": "classDiagram\n                     note \"This is a keyword: >. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#69",
+    "source": "classDiagram\n                     note \"This is a keyword: <. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#70",
+    "source": "classDiagram\n                     note \"This is a keyword: *. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#71",
+    "source": "classDiagram\n                     note \"This is a keyword: o. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#72",
+    "source": "classDiagram\n                     note \"This is a keyword: \\. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#73",
+    "source": "classDiagram\n                     note \"This is a keyword: --. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#74",
+    "source": "classDiagram\n                     note \"This is a keyword: ... It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#75",
+    "source": "classDiagram\n                     note \"This is a keyword: -->. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#76",
+    "source": "classDiagram\n                     note \"This is a keyword: --|>. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#77",
+    "source": "classDiagram\n                     note \"This is a keyword: : label. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#78",
+    "source": "classDiagram\n                     note \"This is a keyword: :::. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#79",
+    "source": "classDiagram\n                     note \"This is a keyword: .. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#80",
+    "source": "classDiagram\n                     note \"This is a keyword: +. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#81",
+    "source": "classDiagram\n                     note \"This is a keyword: alphaNum. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#82",
+    "source": "classDiagram\n                     note \"This is a keyword: !. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#83",
+    "source": "classDiagram\n                     note \"This is a keyword: 0123. It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#84",
+    "source": "classDiagram\n                     note \"This is a keyword: function(). It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#85",
+    "source": "classDiagram\n                     note \"This is a keyword: function(arg1, arg2). It truly is.\"\n                  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#86",
+    "source": "classDiagram\n                      note \"direction\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#87",
+    "source": "classDiagram\n                      note \"classDiagram\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#88",
+    "source": "classDiagram\n                      note \"classDiagram-v2\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#89",
+    "source": "classDiagram\n                      note \"namespace\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#90",
+    "source": "classDiagram\n                      note \"{}\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#91",
+    "source": "classDiagram\n                      note \"{\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#92",
+    "source": "classDiagram\n                      note \"}\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#93",
+    "source": "classDiagram\n                      note \"()\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#94",
+    "source": "classDiagram\n                      note \"(\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#95",
+    "source": "classDiagram\n                      note \")\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#96",
+    "source": "classDiagram\n                      note \"[]\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#97",
+    "source": "classDiagram\n                      note \"[\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#98",
+    "source": "classDiagram\n                      note \"]\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#99",
+    "source": "classDiagram\n                      note \"class\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#100",
+    "source": "classDiagram\n                      note \"\n\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#101",
+    "source": "classDiagram\n                      note \"cssClass\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#102",
+    "source": "classDiagram\n                      note \"callback\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#103",
+    "source": "classDiagram\n                      note \"link\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#104",
+    "source": "classDiagram\n                      note \"click\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#105",
+    "source": "classDiagram\n                      note \"note\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#106",
+    "source": "classDiagram\n                      note \"note for\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#107",
+    "source": "classDiagram\n                      note \"<<\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#108",
+    "source": "classDiagram\n                      note \">>\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#109",
+    "source": "classDiagram\n                      note \"call \""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#110",
+    "source": "classDiagram\n                      note \"~\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#111",
+    "source": "classDiagram\n                      note \"~Generic~\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#112",
+    "source": "classDiagram\n                      note \"_self\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#113",
+    "source": "classDiagram\n                      note \"_blank\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#114",
+    "source": "classDiagram\n                      note \"_parent\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#115",
+    "source": "classDiagram\n                      note \"_top\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#116",
+    "source": "classDiagram\n                      note \"<|\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#117",
+    "source": "classDiagram\n                      note \"|>\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#118",
+    "source": "classDiagram\n                      note \">\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#119",
+    "source": "classDiagram\n                      note \"<\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#120",
+    "source": "classDiagram\n                      note \"*\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#121",
+    "source": "classDiagram\n                      note \"o\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#122",
+    "source": "classDiagram\n                      note \"\\\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#123",
+    "source": "classDiagram\n                      note \"--\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#124",
+    "source": "classDiagram\n                      note \"..\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#125",
+    "source": "classDiagram\n                      note \"-->\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#126",
+    "source": "classDiagram\n                      note \"--|>\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#127",
+    "source": "classDiagram\n                      note \": label\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#128",
+    "source": "classDiagram\n                      note \":::\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#129",
+    "source": "classDiagram\n                      note \".\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#130",
+    "source": "classDiagram\n                      note \"+\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#131",
+    "source": "classDiagram\n                      note \"alphaNum\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#132",
+    "source": "classDiagram\n                      note \"!\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#133",
+    "source": "classDiagram\n                      note \"0123\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#134",
+    "source": "classDiagram\n                      note \"function()\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#135",
+    "source": "classDiagram\n                      note \"function(arg1, arg2)\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#138",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: direction. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#139",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: classDiagram. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#140",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: classDiagram-v2. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#141",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: namespace. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#142",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: {}. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#143",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: {. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#144",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: }. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#145",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: (). It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#146",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: (. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#147",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: ). It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#148",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: []. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#149",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: [. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#150",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: ]. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#151",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: class. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#152",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: \n. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#153",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: cssClass. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#154",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: callback. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#155",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: link. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#156",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: click. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#157",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: note. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#158",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: note for. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#159",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: <<. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#160",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: >>. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#161",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: call . It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#162",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: ~. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#163",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: ~Generic~. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#164",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: _self. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#165",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: _blank. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#166",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: _parent. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#167",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: _top. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#168",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: <|. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#169",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: |>. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#170",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: >. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#171",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: <. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#172",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: *. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#173",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: o. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#174",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: \\. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#175",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: --. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#176",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: ... It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#177",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: -->. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#178",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: --|>. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#179",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: : label. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#180",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: :::. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#181",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: .. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#182",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: +. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#183",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: alphaNum. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#184",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: !. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#185",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: 0123. It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#186",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: function(). It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#187",
+    "source": "classDiagram\n                   class Something {\n                     int id\n                     string name\n                   }\n                   note for Something \"This is a keyword: function(arg1, arg2). It truly is.\"\n                   "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#188",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"direction\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#189",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"classDiagram\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#190",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"classDiagram-v2\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#191",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"namespace\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#192",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"{}\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#193",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"{\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#194",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"}\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#195",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"()\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#196",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"(\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#197",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \")\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#198",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"[]\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#199",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"[\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#200",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"]\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#201",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"class\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#202",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"\n\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#203",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"cssClass\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#204",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"callback\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#205",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"link\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#206",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"click\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#207",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"note\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#208",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"note for\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#209",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"<<\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#210",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \">>\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#211",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"call \"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#212",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"~\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#213",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"~Generic~\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#214",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"_self\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#215",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"_blank\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#216",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"_parent\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#217",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"_top\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#218",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"<|\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#219",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"|>\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#220",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \">\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#221",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"<\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#222",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"*\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#223",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"o\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#224",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"\\\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#225",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"--\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#226",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"..\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#227",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"-->\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#228",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"--|>\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#229",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \": label\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#230",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \":::\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#231",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \".\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#232",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"+\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#233",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"alphaNum\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#234",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"!\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#235",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"0123\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#236",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"function()\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#237",
+    "source": "classDiagram\n                    class Something {\n                      int id\n                      string name\n                    }\n                    note for Something \"function(arg1, arg2)\"\n                    "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#240",
+    "source": "classDiagram\n                   note direction"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#241",
+    "source": "classDiagram\n                   note classDiagram"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#242",
+    "source": "classDiagram\n                   note classDiagram-v2"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#243",
+    "source": "classDiagram\n                   note namespace"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#244",
+    "source": "classDiagram\n                   note {}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#245",
+    "source": "classDiagram\n                   note {"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#246",
+    "source": "classDiagram\n                   note }"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#247",
+    "source": "classDiagram\n                   note ()"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#248",
+    "source": "classDiagram\n                   note ("
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#249",
+    "source": "classDiagram\n                   note )"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#250",
+    "source": "classDiagram\n                   note []"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#251",
+    "source": "classDiagram\n                   note ["
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#252",
+    "source": "classDiagram\n                   note ]"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#253",
+    "source": "classDiagram\n                   note class"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#254",
+    "source": "classDiagram\n                   note \n"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#255",
+    "source": "classDiagram\n                   note cssClass"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#256",
+    "source": "classDiagram\n                   note callback"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#257",
+    "source": "classDiagram\n                   note link"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#258",
+    "source": "classDiagram\n                   note click"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#259",
+    "source": "classDiagram\n                   note note"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#260",
+    "source": "classDiagram\n                   note note for"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#261",
+    "source": "classDiagram\n                   note <<"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#262",
+    "source": "classDiagram\n                   note >>"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#263",
+    "source": "classDiagram\n                   note call "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#264",
+    "source": "classDiagram\n                   note ~"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#265",
+    "source": "classDiagram\n                   note ~Generic~"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#266",
+    "source": "classDiagram\n                   note _self"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#267",
+    "source": "classDiagram\n                   note _blank"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#268",
+    "source": "classDiagram\n                   note _parent"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#269",
+    "source": "classDiagram\n                   note _top"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#270",
+    "source": "classDiagram\n                   note <|"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#271",
+    "source": "classDiagram\n                   note |>"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#272",
+    "source": "classDiagram\n                   note >"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#273",
+    "source": "classDiagram\n                   note <"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#274",
+    "source": "classDiagram\n                   note *"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#275",
+    "source": "classDiagram\n                   note o"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#276",
+    "source": "classDiagram\n                   note \\"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#277",
+    "source": "classDiagram\n                   note --"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#278",
+    "source": "classDiagram\n                   note .."
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#279",
+    "source": "classDiagram\n                   note -->"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#280",
+    "source": "classDiagram\n                   note --|>"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#281",
+    "source": "classDiagram\n                   note : label"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#282",
+    "source": "classDiagram\n                   note :::"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#283",
+    "source": "classDiagram\n                   note ."
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#284",
+    "source": "classDiagram\n                   note +"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#285",
+    "source": "classDiagram\n                   note alphaNum"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#286",
+    "source": "classDiagram\n                   note !"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#287",
+    "source": "classDiagram\n                   note 0123"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#288",
+    "source": "classDiagram\n                   note function()"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#289",
+    "source": "classDiagram\n                   note function(arg1, arg2)"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#290",
+    "source": "classDiagram\n          direction TB\n          class Student {\n            -idCard : IdCard\n          }\n          class IdCard{\n            -id : int\n            -name : string\n          }\n          class Bike{\n            -id : int\n            -name : string\n          }\n          Student \"1\" --o \"1\" IdCard : carries\n          Student \"1\" --o \"1\" Bike : rides"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#291",
+    "source": "classDiagram\n          direction RL\n          class A"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#292",
+    "source": "classDiagram\n          class B"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#293",
+    "source": "classDiagram\nclass Car{\n+int wheels\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#294",
+    "source": "classDiagram\nclass Car{\n+size()\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#295",
+    "source": "classDiagram\nclass Car{\n+int wheels\n}\nCar : +ArrayList size()\n"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#296",
+    "source": "classDiagram\nclass Dummy_Class {\nString data\nvoid methods()\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#297",
+    "source": "classDiagram\nclass Flight {\nint flightNumber\ndatetime departureTime\ngetDepartureTime() datetime\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#298",
+    "source": "classDiagram\nclass Class1 {\nint testMember\ntest()\nstring fooMember\nfoo()\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#299",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"] {\n+member1\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#300",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"] {\n<<interface>>\n+member1\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#301",
+    "source": "%% Comment\n        classDiagram\n        class Class1 {\n          int : test\n          string : foo\n          test()\n          foo()\n        }"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#302",
+    "source": "classDiagram\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n\n}\n%% Comment\n"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#303",
+    "source": "classDiagram\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}\n%% Comment"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#304",
+    "source": "classDiagram\n\n\n%% Comment\n\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#305",
+    "source": "classDiagram\n%% Comment Class1 <|-- Class02\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#306",
+    "source": "classDiagram\nclass Class1 {\n%% Comment Class1 <|-- Class02\nint : test\nstring : foo\ntest()\nfoo()\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#307",
+    "source": "classDiagram\nclass Class1 \nclick Class1 href \"google.com\" "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#308",
+    "source": "classDiagram\nclass Class1 \nclick Class1 href \"google.com\" \"A Tooltip\" "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#309",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 href \"google.com\" \"A tooltip\" _self"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#310",
+    "source": "classDiagram\nclass Class1 \nclick Class1 call functionCall() "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#311",
+    "source": "classDiagram\nclass Class1 \nclick Class1 call functionCall() \"A Tooltip\" "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#312",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall(test, test1, test2)"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#313",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall(\"test0\", test1, test2) \"A Tooltip\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#314",
+    "source": "classDiagram\nclass Class1\n<<interface>> Class1"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#315",
+    "source": "classDiagram\nclass Class1\nClass1 : int test\nClass1 : test()\n<<interface>> Class1"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#316",
+    "source": "classDiagram\nclass Class1 {\n<<interface>>\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#317",
+    "source": "classDiagram\nclass Class1 {\n<<interface>>\nint : test\ntest()\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#318",
+    "source": "classDiagram\nclass Shape\n<<interface>> Shape\nShape : noOfVertices\nShape : draw()"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#319",
+    "source": "classDiagram\nclass Shape{\n    <<interface>>\n    noOfVertices\n    draw()\n}\nclass Color{\n    <<enumeration>>\n    RED\n    BLUE\n    GREEN\n    WHITE\n    BLACK\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#320",
+    "source": "classDiagram\nclass Shape <<interface>>"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#321",
+    "source": "classDiagram\nclass Shape <<interface>> {\n    noOfVertices\n    draw()\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#322",
+    "source": "classDiagram\nclass Shape <<interface>> {\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#323",
+    "source": "classDiagram\nclass Car\nCar : wheels"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#324",
+    "source": "classDiagram\nCar : wheels"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#325",
+    "source": "classDiagram\nCar : int wheels"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#326",
+    "source": "classDiagram\nclass Car\nCar : int wheels"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#327",
+    "source": "classDiagram\nclass actual\nactual : -int privateMember\nactual : +int publicMember\nactual : #int protectedMember\nactual : ~int privatePackage"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#328",
+    "source": "classDiagram\nclass Car\nCar : -List~Wheel~ wheels"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#329",
+    "source": "classDiagram\nclass Car\nCar : GetSize()"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#330",
+    "source": "classDiagram\nclass Object\nObject : getObject() Object"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#331",
+    "source": "classDiagram\nclass Object\nObject : getObjects() Object[]"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#332",
+    "source": "classDiagram\nclass actual\nactual : -privateMethod()\nactual : +publicMethod()\nactual : #protectedMethod()\n"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#333",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()*"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#334",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()$"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#335",
+    "source": "classDiagram\nclass Car\nCar : +setWheels(List~Wheel~ wheels)"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#336",
+    "source": "classDiagram\nclass Car\nCar : +getWheels() List~Wheel~"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#337",
+    "source": "classDiagram\nclass Car {\nList~Wheel~ wheels\nsetWheels(List~Wheel~ wheels)\n+getWheels() List~Wheel~\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#338",
+    "source": "classDiagram\nclass EmptyClass {}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#339",
+    "source": "classDiagram\nclass Car~T~"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#340",
+    "source": "classDiagram\nclass Car~T~\nDriver -- Car : drives >\nCar *-- Wheel : have 4 >\nCar -- Person : < owns"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#341",
+    "source": "classDiagram\nclass `Car`~T~\nDriver -- `Car` : drives >\n`Car` *-- Wheel : have 4 >\n`Car` -- Person : < owns"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#342",
+    "source": "classDiagram\nclass Dummy_Class~T~ {\nString data\nvoid methods()\n}\n\nclass Flight {\nInteger flightNumber\nDate departureTime\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#343",
+    "source": "classDiagram\nclass `Dummy_Class`~T~ {\nString data\n  void methods()\n}\n\nclass Flight {\n   flightNumber : Integer\n   departureTime : Date\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#344",
+    "source": "classDiagram\nnamespace Namespace1 { class Class1 }\nnamespace Namespace2 { class Class1\n}\nnamespace Namespace3 {\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}\n}\nnamespace Namespace4 {\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}\nclass Class2 {\nint : test\nstring : foo\ntest()\nfoo()\n}\n}\n"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#345",
+    "source": "classDiagram\n\nnamespace space {\n    class Square~Shape~{\n        int id\n        List~int~ position\n        setPoints(List~int~ points)\n        getPoints() List~int~\n    }\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#346",
+    "source": "classDiagram\nClass1 <|-- Class02\nClass03 *-- Class04\nClass05 o-- Class06\nClass07 .. Class08\nClass09 -- Class1"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#347",
+    "source": "classDiagram\n`Class1` <|-- Class02\nClass03 *-- Class04\nClass05 o-- Class06\nClass07 .. Class08\nClass09 -- Class1"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#348",
+    "source": "classDiagram\nClass1~T~ <|-- Class02"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#349",
+    "source": "classDiagram\nclass Car\nDriver -- Car : drives >\nCar *-- Wheel : have 4 >\nCar -- Person : < owns"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#350",
+    "source": "classDiagram\nClass1 <|-- Class02"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#351",
+    "source": "classDiagram\nClass11 <|.. Class12\nClass13 --> Class14\nClass15 ..> Class16\nClass17 ..|> Class18\nClass19 <--* Class20"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#352",
+    "source": "classDiagram\nClass1 \"1\" *-- \"many\" Class02 : contains\nClass03 o-- Class04 : aggregation\nClass05 --> \"1\" Class06"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#353",
+    "source": "classDiagram\nClass11 <|.. Class12\nClass13 <.. Class14\nClass15 ..|> Class16\nClass17 ..> Class18\nClass19 .. Class20"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#354",
+    "source": "classDiagram\nClass1 o.. Class02"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#355",
+    "source": "classDiagram\nClass1 *--* Class02"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#356",
+    "source": "classDiagram\nClass1 -- Class02"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#357",
+    "source": "classDiagram\nClass1 --|> Class02"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#358",
+    "source": "classDiagram\nClass1 <|-- Class02\nClass03 *-- Class04\nClass05 o-- Class06\nClass07 .. Class08\nClass09 -- Class10"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#359",
+    "source": "classDiagram\nClass01~T~ <|-- Class02"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#364",
+    "source": "classDiagram\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#367",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nlink Class1 \"google.com\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#368",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 href \"google.com\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#369",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nlink Class1 \"google.com\" \"A tooltip\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#370",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 href \"google.com\" \"A tooltip\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#373",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 href \"google.com\" _self"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#374",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nlink Class1 \"google.com\" \"A tooltip\" _self"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#375",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\ncallback Class1 \"functionCall\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#376",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall()"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#377",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall(\"test0\", test1, test2)"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#378",
+    "source": "classDiagram\nclass Class1\nClass1 : someMethod()\nclick Class1 call functionCall() \"A tooltip\""
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#379",
+    "source": "classDiagram\nnamespace Namespace1 {\nclass Class1 {\nint : test\nstring : foo\ntest()\nfoo()\n}\nclass Class2\n}"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#380",
+    "source": "classDiagram\n      A1 --> B1\n      namespace A {\n        class A1 {\n          +foo : string\n        }\n        class A2 {\n          +bar : int\n        }\n      }\n      namespace B {\n        class B1 {\n          +foo : bool\n        }\n        class B2 {\n          +bar : float\n        }\n      }\n      A2 --> B2"
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#381",
+    "source": "classDiagram\n  class C1[\"Class 1 with text label\"]\n  C1 -->  C2\n      "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#382",
+    "source": "classDiagram\n  class C1[\"Class 1 with text label\"]\n  class C2[\"Class 2 with chars @?\"]\n  C1 -->  C2\n      "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#383",
+    "source": "classDiagram\n  class C1[\"Class 1 with text label\"] {\n    +member1\n  }\n  C1 -->  C2\n      "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#384",
+    "source": "classDiagram\n  class C1[\"Class 1 with text label\"] {\n    <<interface>>\n    +member1\n  }\n  C1 -->  C2\n      "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#385",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"]:::styleClass {\n  +member1\n}\nC1 -->  C2\n  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#386",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"] {\n  +member1\n}\nC1 --> C2\ncssClass \"C1\" styleClass\n  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#387",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"] {\n  +member1\n}\nclass C2[\"Long long long long long long long long long long label\"]\nC1 --> C2\ncssClass \"C1,C2\" styleClass\n  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#388",
+    "source": "classDiagram\nclass C1[\"Class 1 with text label\"]:::styleClass1 {\n  +member1\n}\nclass C2[\"Class 2 !@#$%^&*() label\"]:::styleClass2\nC1 --> C2\n  "
+  },
+  {
+    "id": "v12-specs/classDiagram.spec.ts#389",
+    "source": "classDiagram\nclass C1[\"Class with text label\"]\nclass C2[\"Class with text label\"]\nclass C3[\"Class with text label\"]\nC1 --> C2\nC3 ..> C2\n  "
+  },
+  {
+    "id": "v12-specs/parser/class.spec.js#1",
+    "source": "classDiagram\nnamespace `A::B` {\n\tclass `IPC::Sender`\n}"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#1",
+    "source": "---\ntitle: Animal example\n---\nclassDiagram\n    note \"From Duck till Zebra\"\n    Animal <|-- Duck\n    note for Duck \"can fly<br>can swim<br>can dive<br>can help in debugging\"\n    Animal <|-- Fish\n    Animal <|-- Zebra\n    Animal : +int age\n    Animal : +String gender\n    Animal: +isMammal()\n    Animal: +mate()\n    class Duck{\n        +String beakColor\n        +swim()\n        +quack()\n    }\n    class Fish{\n        -int sizeInFeet\n        -canEat()\n    }\n    class Zebra{\n        +bool is_wild\n        +run()\n    }\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#2",
+    "source": "classDiagram\n  class Customer {\n    +String name\n    +String email\n  }\n  class Order {\n    +String id\n    +Date placedAt\n    +total() Money\n  }\n  class LineItem {\n    +int quantity\n  }\n  class Payment {\n    <<interface>>\n    +authorise() bool\n  }\n  Customer \"1\" --> \"*\" Order : places\n  Order \"1\" *-- \"*\" LineItem : contains\n  Order --> Payment : settled by\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#3",
+    "source": "---\nconfig:\n  theme: default\n  look: classic\n  layout: dagre\n---\nclassDiagram\n  class Customer {\n    +String name\n    +String email\n  }\n  class Order {\n    +String id\n    +Date placedAt\n    +total() Money\n  }\n  class LineItem {\n    +int quantity\n  }\n  class Payment {\n    <<interface>>\n    +authorise() bool\n  }\n  Customer \"1\" --> \"*\" Order : places\n  Order \"1\" *-- \"*\" LineItem : contains\n  Order --> Payment : settled by\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#4",
+    "source": "---\ntitle: Bank example\n---\nclassDiagram\n    class BankAccount\n    BankAccount : +String owner\n    BankAccount : +Bigdecimal balance\n    BankAccount : +deposit(amount)\n    BankAccount : +withdrawal(amount)\n\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#5",
+    "source": "classDiagram\n    class Animal\n    Vehicle <|-- Car\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#6",
+    "source": "classDiagram\n    class Animal[\"Animal with a label\"]\n    class Car[\"Car with *! symbols\"]\n    Animal --> Car\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#7",
+    "source": "classDiagram\n    class `Animal Class!`\n    class `Car Class`\n    `Animal Class!` --> `Car Class`\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#8",
+    "source": "classDiagram\nclass BankAccount\nBankAccount : +String owner\nBankAccount : +BigDecimal balance\nBankAccount : +deposit(amount)\nBankAccount : +withdrawal(amount)\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#9",
+    "source": "classDiagram\nclass BankAccount{\n    +String owner\n    +BigDecimal balance\n    +deposit(amount)\n    +withdrawal(amount)\n}\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#10",
+    "source": "classDiagram\nclass BankAccount{\n    +String owner\n    +BigDecimal balance\n    +deposit(amount) bool\n    +withdrawal(amount) int\n}\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#11",
+    "source": "classDiagram\nclass Square~Shape~{\n    int id\n    List~int~ position\n    setPoints(List~int~ points)\n    getPoints() List~int~\n}\n\nSquare : -List~string~ messages\nSquare : +setMessages(List~string~ messages)\nSquare : +getMessages() List~string~\nSquare : +getDistanceMatrix() List~List~int~~\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#12",
+    "source": "classDiagram\nclassA <|-- classB\nclassC *-- classD\nclassE o-- classF\nclassG <-- classH\nclassI -- classJ\nclassK <.. classL\nclassM <|.. classN\nclassO .. classP\n\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#13",
+    "source": "classDiagram\nclassA --|> classB : Inheritance\nclassC --* classD : Composition\nclassE --o classF : Aggregation\nclassG --> classH : Association\nclassI -- classJ : Link(Solid)\nclassK ..> classL : Dependency\nclassM ..|> classN : Realization\nclassO .. classP : Link(Dashed)\n\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#14",
+    "source": "classDiagram\nclassA <|-- classB : implements\nclassC *-- classD : composition\nclassE o-- classF : aggregation\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#15",
+    "source": "classDiagram\n    Animal <|--|> Zebra\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#16",
+    "source": "classDiagram\n  bar ()-- foo\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#17",
+    "source": "classDiagram\n  class Class01 {\n    int amount\n    draw()\n  }\n  Class01 --() bar\n  Class02 --() bar\n\n  foo ()-- Class01\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#18",
+    "source": "classDiagram\nnamespace BaseShapes {\n    class Triangle\n    class Rectangle {\n      double width\n      double height\n    }\n}\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#19",
+    "source": "classDiagram\n    namespace Auth[\"Authentication Service\"] {\n        class UserService {\n            +login()\n            +logout()\n        }\n    }\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#20",
+    "source": "classDiagram\n    namespace Company.Engineering.Backend {\n        class Developer {\n            +writeCode()\n        }\n    }\n    namespace Company.Engineering.Frontend {\n        class Designer {\n            +createMockup()\n        }\n    }\n    namespace Company.Engineering {\n        class TechLead {\n            +planSprint()\n        }\n    }\n    TechLead --> Developer : leads\n    TechLead --> Designer : leads\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#21",
+    "source": "classDiagram\n    namespace Platform {\n        namespace Auth {\n            class UserService {\n                +login()\n                +logout()\n            }\n        }\n        namespace Data {\n            class Repository {\n                +find()\n                +save()\n            }\n        }\n        class Gateway {\n            +route()\n        }\n    }\n    Gateway --> UserService : delegates\n    Gateway --> Repository : delegates\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#22",
+    "source": "---\nconfig:\n  class:\n    hierarchicalNamespaces: false\n---\nclassDiagram\n    namespace Company.Engineering.Backend {\n        class Developer {\n            +writeCode()\n        }\n    }\n    namespace Company.Engineering.Frontend {\n        class Designer {\n            +createMockup()\n        }\n    }\n    namespace Company {\n        class CEO {\n            +makeDecisions()\n        }\n    }\n    CEO --> Developer : oversees\n    CEO --> Designer : oversees\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#23",
+    "source": "classDiagram\n    Customer \"1\" --> \"*\" Ticket\n    Student \"1\" --> \"1..*\" Course\n    Galaxy --> \"many\" Star : Contains\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#24",
+    "source": "classDiagram\n  class Shape <<interface>>\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#25",
+    "source": "classDiagram\nclass Shape\n<<interface>> Shape\nShape : noOfVertices\nShape : draw()\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#26",
+    "source": "classDiagram\nclass Shape{\n    <<interface>>\n    noOfVertices\n    draw()\n}\nclass Color{\n    <<enumeration>>\n    RED\n    BLUE\n    GREEN\n    WHITE\n    BLACK\n}\n\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#27",
+    "source": "classDiagram\n%% This whole line is a comment classDiagram class Shape <<interface>>\nclass Shape{\n    <<interface>>\n    noOfVertices\n    draw()\n}\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#28",
+    "source": "classDiagram\n  direction RL\n  class Student {\n    -idCard : IdCard\n  }\n  class IdCard{\n    -id : int\n    -name : string\n  }\n  class Bike{\n    -id : int\n    -name : string\n  }\n  Student \"1\" --o \"1\" IdCard : carries\n  Student \"1\" --o \"1\" Bike : rides\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#29",
+    "source": "classDiagram\n    note \"This is a general note\"\n    note for MyClass \"This is a note for a class\"\n    class MyClass{\n    }\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#30",
+    "source": "classDiagram\nclass Shape\nlink Shape \"https://www.github.com\" \"This is a tooltip for a link\"\nclass Shape2\nclick Shape2 href \"https://www.github.com\" \"This is a tooltip for a link\"\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#31",
+    "source": "classDiagram\nclass Shape\ncallback Shape \"callbackFunction\" \"This is a tooltip for a callback\"\nclass Shape2\nclick Shape2 call callbackFunction() \"This is a tooltip for a callback\"\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#32",
+    "source": "classDiagram\n    class Class01\n    class Class02\n    callback Class01 \"callbackFunction\" \"Callback tooltip\"\n    link Class02 \"https://www.github.com\" \"This is a link\"\n    class Class03\n    class Class04\n    click Class03 call callbackFunction() \"Callback tooltip\"\n    click Class04 href \"https://www.github.com\" \"This is a link\"\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#33",
+    "source": "classDiagram\n  class Animal\n  class Mineral\n  style Animal fill:#f9f,stroke:#333,stroke-width:4px\n  style Mineral fill:#bbf,stroke:#f66,stroke-width:2px,color:#fff,stroke-dasharray: 5 5\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#34",
+    "source": "classDiagram\n    class Animal:::someclass\n    classDef someclass fill:#f96\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#35",
+    "source": "classDiagram\n    class Animal:::someclass {\n        -int sizeInFeet\n        -canEat()\n    }\n    classDef someclass fill:#f96\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#36",
+    "source": "classDiagram\n  class Animal:::pink\n  class Mineral\n\n  classDef default fill:#f96,color:red\n  classDef pink color:#f9f\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#37",
+    "source": "classDiagram\n    class Animal:::styleClass\n"
+  },
+  {
+    "id": "v12-docs/classDiagram.md#38",
+    "source": "---\n  config:\n    class:\n      hideEmptyMembersBox: true\n---\nclassDiagram\n  class Duck\n"
+  }
+]
