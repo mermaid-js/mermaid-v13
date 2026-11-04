@@ -292,7 +292,11 @@ function drawCluster(
   w.close();
 }
 
-/** v12's edge id (`getEdgeId` with prefix `id` and the relationship's index `i`). */
+/**
+ * The edge's `data-id`: v12's `getEdgeId` shape (prefix `id`, the relationship's index `i`)
+ * over the entity names, not v12's entity ids. `CUSTOMER ||--o{ ORDER` is `id_CUSTOMER_ORDER_0`
+ * here and was `id_entity-CUSTOMER-0_entity-ORDER-1_0` in v12 (MIGRATION "ER SVG structure").
+ */
 const edgeDataId = (e: EdgeView, i: number): string =>
   `id_${e.relationship.from.name}_${e.relationship.to.name}_${i}`;
 

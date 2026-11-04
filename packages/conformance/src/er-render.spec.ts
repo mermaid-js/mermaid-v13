@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
@@ -214,6 +215,20 @@ describe('ER render: tables, ends and lines', () => {
     expect(tree.getAttr(label, 'data-ast')).toBeUndefined();
     const text = tree.children(label).find((c) => tree.tag(c) === 'text')!;
     expect(textIn(tree, text)).toBe('places order');
+  });
+
+  it("ids a relationship by its entities' names, not v12's entity ids (MIGRATION)", async () => {
+    const { tree } = await render('erDiagram\n  CUSTOMER ||--o{ ORDER : places');
+    const edge = tree.find({ class: 'relationshipLine' })[0]!;
+    expect(tree.getAttr(edge, 'data-id')).toBe('id_CUSTOMER_ORDER_0');
+    // MIGRATION.md gives both forms: v12's `getEdgeId` over entity ids, v13's over names.
+    const migration = readFileSync(join(REPO_ROOT, 'v13/docs/MIGRATION.md'), 'utf8');
+    const row = migration
+      .slice(migration.indexOf('## ER SVG structure'))
+      .split('\n')
+      .find((l) => l.startsWith('| Edge `<path'))!;
+    expect(row).toContain('`id_entity-CUSTOMER-0_entity-ORDER-1_0`');
+    expect(row).toContain('`id_CUSTOMER_ORDER_0`');
   });
 
   it('draws subgraphs as clusters with their title', async () => {
