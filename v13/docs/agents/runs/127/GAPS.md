@@ -4,7 +4,7 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## Held (blocked outside this spec)
 
-- #142 T2, and everything after it (#144, #146, #148, #151): #27 and #28 are not merged into `mermaid-v13` yet (D107). #151 also waits on #29 and #31.
+- Nothing. M2.5 merged into `mermaid-v13` (#123 at `0045ffde0`); #27, #28, #29 and #31 are closed. T2 (#142) is not blocked by #162 (D114, per the maintainer); the native blocked-by link from #162 still has to be removed by hand (`gh api -X DELETE repos/mermaid-js/mermaid-v13/issues/142/dependencies/blocked_by/<#162 issue id>`).
 
 ## #144 T3 layout (from #140, `v13/docs/research/state-regions.md`)
 
@@ -18,6 +18,8 @@ Unmet criteria and shared contracts, by owning ticket.
 - `packages/diagram-state` is `"private": true` so the release pack test (`tools/release/src/publish.spec.ts`) stays green. T5 drops `private` when it adds the manifest and registry entry.
 
 ## Shared source view (from #138, D114)
+
+- [ ] **Adopt the shared source view once #181 merges** (owner: #142 if still open, else a follow-up): import it from `@mermaid-js/core/parser-kit` and delete `diagram-state/src/parser/source.ts`.
 
 - D114: the v12 source view (comment-line removal, dropped `;`, the `="x"` quote rewrite) moves into the core parser kit in state T0 #162, which flowchart switches to. `diagram-state/src/parser/source.ts` stays, deprecated, until that T0 merges into `mermaid-v13`; then diagram-state adopts the kit version and deletes its copy (owner: #142, or a follow-up if #142 has merged by then). #162 is in draft PR #181 into `mermaid-v13`. When adopting: the kit has no option for state's `trimStart` or appended `\n`, and state's lexer must move from its per-character `at` array to `SourceOffsets`/`localOffset` (handoff: `tickets/162.md` on `feature/162_parser-kit-source-view`).
 
