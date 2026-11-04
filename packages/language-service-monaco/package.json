@@ -29,8 +29,15 @@
     "monaco-editor": ">=0.50.0"
   },
   "devDependencies": {
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/state": "^6.7.6",
     "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/language-server": "workspace:^",
     "@mermaid-js/language-service": "workspace:^",
-    "monaco-editor": "^0.57.0"
+    "@mermaid-js/language-service-codemirror": "workspace:^",
+    "@types/node": "^22.19.21",
+    "monaco-editor": "^0.57.0",
+    "vscode-languageserver": "^11.0.0",
+    "vscode-languageserver-protocol": "3.18.5"
   }
 }

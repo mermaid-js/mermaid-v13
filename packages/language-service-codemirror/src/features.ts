@@ -12,7 +12,7 @@ import { Facet, RangeSetBuilder, StateEffect, StateField } from '@codemirror/sta
 import type { EditorState, Extension } from '@codemirror/state';
 import { Decoration, EditorView, hoverTooltip, ViewPlugin } from '@codemirror/view';
 import type { DecorationSet, ViewUpdate } from '@codemirror/view';
-import type { AstId, CompletionKind, Range } from '@mermaid-js/language-service';
+import type { AstId, CompletionKind, DocumentSnapshot, Range } from '@mermaid-js/language-service';
 import { mermaidLanguageDefinition } from './language.ts';
 import { renderMarkdown } from './markdown.ts';
 import { mermaidSnapshot } from './service.ts';
@@ -139,6 +139,19 @@ export function mermaidHover(): Extension {
 
 // --- folding -------------------------------------------------------------------------------
 
+/**
+ * The service's line folds as offsets: from the start of the fold's first line to the end of
+ * its last folded line (the closing `end`/`---` line is not in it).
+ */
+function foldRanges(doc: DocumentSnapshot | undefined): Range[] {
+  if (!doc) return [];
+  const lines = doc.lines();
+  return doc.lineFoldingRanges().map((f) => ({
+    start: lines.offset(f.startLine, 0),
+    end: lines.offset(f.endLine, Number.MAX_SAFE_INTEGER),
+  }));
+}
+
 /** New folding ranges from a settled snapshot. */
 const setFolds = StateEffect.define<readonly Range[]>();
 
@@ -148,10 +161,7 @@ const setFolds = StateEffect.define<readonly Range[]>();
  * free of parses. The ranges are refreshed after the debounce.
  */
 const foldField = StateField.define<readonly Range[]>({
-  create: (state) =>
-    mermaidSnapshot(state)
-      ?.foldingRanges()
-      .map((f) => f.range) ?? [],
+  create: (state) => foldRanges(mermaidSnapshot(state)),
   update: (ranges, tr) => {
     for (const e of tr.effects) if (e.is(setFolds)) return e.value;
     if (!tr.docChanged) return ranges;
@@ -164,26 +174,21 @@ const foldField = StateField.define<readonly Range[]>({
 
 /**
  * The fold that starts on the line `[lineStart, lineEnd]`: from the line's end to the end of
- * the range's second-to-last line, so the closing line (`end`, `---`) stays visible. Reads
- * the debounced ranges when {@link mermaidFolding} is installed, else the current snapshot.
+ * the service's last folded line (`lineFoldingRanges`), so the closing line (`end`, `---`)
+ * stays visible. Reads the debounced ranges when {@link mermaidFolding} is installed, else
+ * the current snapshot.
  */
 export function foldAt(
   state: EditorState,
   lineStart: number,
   lineEnd: number
 ): { from: number; to: number } | null {
-  const ranges =
-    state.field(foldField, false) ??
-    mermaidSnapshot(state)
-      ?.foldingRanges()
-      .map((f) => f.range);
-  if (!ranges) return null;
+  const ranges = state.field(foldField, false) ?? foldRanges(mermaidSnapshot(state));
   for (const range of ranges) {
     if (range.start < lineStart || range.start > lineEnd) continue;
-    const last = state.doc.lineAt(clamp(state, range.end));
-    const first = state.doc.lineAt(lineStart);
-    if (last.number <= first.number + 1) continue;
-    return { from: lineEnd, to: state.doc.line(last.number - 1).to };
+    const to = clamp(state, range.end);
+    if (to <= lineEnd) continue;
+    return { from: lineEnd, to };
   }
   return null;
 }
@@ -203,8 +208,7 @@ export function mermaidFolding(options: DiagnosticsOptions = {}): Extension {
         clearTimeout(this.timer);
         this.timer = setTimeout(() => {
           const doc = mermaidSnapshot(this.view.state);
-          if (doc)
-            this.view.dispatch({ effects: setFolds.of(doc.foldingRanges().map((f) => f.range)) });
+          if (doc) this.view.dispatch({ effects: setFolds.of(foldRanges(doc)) });
         }, delay);
       }
       destroy() {
@@ -225,8 +229,9 @@ export interface SemanticTokenRange {
 }
 
 /**
- * The semantic tokens that overlap any of `ranges` (e.g. the view's visible ranges), each
- * once and in document order, even when it spans several of them.
+ * The semantic tokens that overlap any of `ranges` (e.g. the view's visible ranges), cut per
+ * line as the service gives them (`lineSemanticTokens`: no continuation indentation, no
+ * overlaps), each once and in document order.
  */
 export function semanticTokenRanges(
   state: EditorState,
@@ -234,13 +239,15 @@ export function semanticTokenRanges(
 ): SemanticTokenRange[] {
   const doc = mermaidSnapshot(state);
   if (!doc) return [];
+  const lines = doc.lines();
   const out: SemanticTokenRange[] = [];
-  for (const t of doc.semanticTokens()) {
-    if (t.range.end <= t.range.start) continue;
-    if (!ranges.some((r) => t.range.end > r.from && t.range.start < r.to)) continue;
+  for (const t of doc.lineSemanticTokens()) {
+    const start = lines.offset(t.line, t.character);
+    const end = start + t.length;
+    if (!ranges.some((r) => end > r.from && start < r.to)) continue;
     out.push({
-      from: clamp(state, t.range.start),
-      to: clamp(state, t.range.end),
+      from: clamp(state, start),
+      to: clamp(state, end),
       className: [t.type, ...t.modifiers].map((n) => `cm-mermaid-${n}`).join(' '),
     });
   }

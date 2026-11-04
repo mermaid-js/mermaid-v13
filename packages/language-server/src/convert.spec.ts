@@ -7,12 +7,14 @@ import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import {
   createLanguageService,
+  encodeSemanticTokens as encodeLines,
   LineIndex,
+  lineSemanticTokens,
   SEMANTIC_TOKEN_LEGEND,
 } from '@mermaid-js/language-service';
 import type { SemanticToken } from '@mermaid-js/language-service';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { encodeSemanticTokens, toFoldingRanges, toRange } from './convert.ts';
+import { toFoldingRange, toRange } from './convert.ts';
 import { decodeTokens } from './testing/lsp-client.ts';
 
 const CORPUS = join(import.meta.dirname, '..', '..', '..', 'e2e', 'diagrams');
@@ -24,6 +26,13 @@ const legend = {
   tokenTypes: [...SEMANTIC_TOKEN_LEGEND.types],
   tokenModifiers: [...SEMANTIC_TOKEN_LEGEND.modifiers],
 };
+/** The server's encoding: the service's per-line tokens (whole with `multiline`), delta-coded. */
+const encodeSemanticTokens = (
+  index: LineIndex,
+  text: string,
+  tokens: readonly SemanticToken[],
+  multiline = false
+) => encodeLines(lineSemanticTokens(text, tokens, { index, multiline }));
 const token = (start: number, end: number, type: SemanticToken['type'] = 'string') => ({
   range: { start, end },
   type,
@@ -140,31 +149,15 @@ describe('positions and folding', () => {
     });
   });
 
-  it('folds by line, keeping a closing line (`end`, `}`, `---`) visible', () => {
-    const text = 'subgraph A\n  x\n  end\n';
-    const index = new LineIndex(text);
-    expect(
-      toFoldingRanges(index, text, [
-        { range: { start: 0, end: 20 }, kind: 'subgraph' },
-        { range: { start: 0, end: 21 }, kind: 'chain' },
-        { range: { start: 11, end: 14 }, kind: 'chain' },
-      ])
-    ).toEqual([{ startLine: 0, endLine: 1 }]);
-    const block = 'accDescr {\n  a\n  b\n}\nA["x\ny"]\n';
-    expect(
-      toFoldingRanges(new LineIndex(block), block, [
-        { range: { start: 0, end: 21 }, kind: 'accDescr' },
-        { range: { start: 22, end: 30 }, kind: 'chain' },
-      ])
-    ).toEqual([
-      { startLine: 0, endLine: 2 },
-      { startLine: 4, endLine: 5 },
-    ]);
-    // A block whose closer directly follows the opener line folds nothing.
-    expect(
-      toFoldingRanges(new LineIndex('subgraph A\nend'), 'subgraph A\nend', [
-        { range: { start: 0, end: 14 }, kind: 'subgraph' },
-      ])
-    ).toEqual([]);
+  it('passes the service line folds on, marking comment folds', () => {
+    expect(toFoldingRange({ startLine: 0, endLine: 2, kind: 'subgraph' })).toEqual({
+      startLine: 0,
+      endLine: 2,
+    });
+    expect(toFoldingRange({ startLine: 1, endLine: 3, kind: 'comment' })).toEqual({
+      startLine: 1,
+      endLine: 3,
+      kind: 'comment',
+    });
   });
 });

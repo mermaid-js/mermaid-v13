@@ -20,6 +20,8 @@ export type { FacetEntry } from './facets.ts';
 export type { Annotation, ConfigSchema, SchemaNode } from './config/schema.ts';
 export { firstPartyFacets } from './generated/facets.gen.ts';
 export type { FoldingRange } from './folding.ts';
+export { encodeSemanticTokens, lineFoldingRanges, lineSemanticTokens } from './lines.ts';
+export type { LineFoldingRange, LineSemanticToken, LineSemanticTokenOptions } from './lines.ts';
 export { SEMANTIC_TOKEN_LEGEND } from './semantic-tokens.ts';
 export type { SemanticToken, SemanticTokenModifier, SemanticTokenType } from './semantic-tokens.ts';
 export type { PrepareRenameResult, RenameResult, TextEdit } from './symbols.ts';

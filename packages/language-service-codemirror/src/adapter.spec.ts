@@ -161,7 +161,7 @@ describe('semantic tokens', () => {
 });
 
 describe('semantic tokens over split visible ranges (#35 review)', () => {
-  it('gives a token that spans two visible ranges once', async () => {
+  it('gives a token that spans lines once per visible line, without indentation', async () => {
     const text = 'flowchart LR\n  A["line one\n  line two\n  line three"] --> B\n';
     const state = await stateOf(text);
     const label = text.indexOf('line one');
@@ -171,9 +171,8 @@ describe('semantic tokens over split visible ranges (#35 review)', () => {
       { from: 0, to: text.indexOf('\n  line two') },
       { from: text.indexOf('\n  line three'), to: text.length },
     ];
-    const spans = semanticTokenRanges(state, ranges).filter((t) => t.from === label);
-    expect(spans).toHaveLength(1);
-    expect(spans[0]?.to).toBe(end);
+    const spans = semanticTokenRanges(state, ranges).filter((t) => t.from >= label && t.to <= end);
+    expect(spans.map((t) => state.sliceDoc(t.from, t.to))).toEqual(['line one', 'line three']);
   });
 });
 

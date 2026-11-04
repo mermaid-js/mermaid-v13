@@ -24,6 +24,9 @@ import { foldingRanges } from './folding.ts';
 import { hover } from './hover.ts';
 import { deepFreeze } from './freeze.ts';
 import type { FoldingRange } from './folding.ts';
+import { lineFoldingRanges, lineSemanticTokens } from './lines.ts';
+import type { LineFoldingRange, LineSemanticToken } from './lines.ts';
+import { LineIndex } from '@mermaid-js/core/parser-kit';
 import { semanticTokens } from './semantic-tokens.ts';
 import type { SemanticToken } from './semantic-tokens.ts';
 import { definition, occurrences, prepareRename, references, rename } from './symbols.ts';
@@ -51,6 +54,7 @@ function copyDiagnostic(d: Diagnostic): Diagnostic {
 
 export class DocumentSnapshot {
   private readonly cache = new Map<string, unknown>();
+  private lineIndex: LineIndex | undefined;
 
   /**
    * @param context - What the queries read.
@@ -154,9 +158,28 @@ export class DocumentSnapshot {
     return this.memo('folding', () => foldingRanges(this.context));
   }
 
+  /** The folding ranges by line, as editors fold them (closing `end`/`---` line visible). */
+  lineFoldingRanges(): readonly LineFoldingRange[] {
+    return this.memo('lineFolding', () =>
+      lineFoldingRanges(this.text, this.foldingRanges(), this.lines())
+    );
+  }
+
   /** Sorted, non-overlapping tokens; types and modifiers from {@link SEMANTIC_TOKEN_LEGEND}. */
   semanticTokens(): readonly SemanticToken[] {
     return this.memo('semanticTokens', () => semanticTokens(this.context, this.occurrences()));
+  }
+
+  /** The semantic tokens cut per line, as Monaco, LSP and CodeMirror show them. */
+  lineSemanticTokens(): readonly LineSemanticToken[] {
+    return this.memo('lineSemanticTokens', () =>
+      lineSemanticTokens(this.text, this.semanticTokens(), { index: this.lines() })
+    );
+  }
+
+  /** The text's line table. */
+  lines(): LineIndex {
+    return (this.lineIndex ??= new LineIndex(this.text));
   }
 
   /** AST ids around `offset`, innermost first (R-LANG-6). */

@@ -235,12 +235,12 @@ describe('providers', () => {
     expect(keyword.rejectReason).toMatch(/./);
   });
 
-  it('folds subgraphs and multi-line chains by 1-based line', () => {
+  it('folds subgraphs and multi-line chains by 1-based line, keeping `end` visible', () => {
     const model = fake.createModel('file:///h.mmd', FLOW);
     const folding = fake.provider('folding') as Monaco.languages.FoldingRangeProvider;
     expect(folding.provideFoldingRanges(model as never, {} as never, TOKEN)).toEqual([
       { start: 2, end: 3 },
-      { start: 4, end: 6 },
+      { start: 4, end: 5 },
     ]);
   });
 });

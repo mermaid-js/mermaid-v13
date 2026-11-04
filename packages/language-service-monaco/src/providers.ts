@@ -3,11 +3,10 @@
  * namespace where it needs Monaco's enums) and answers from the model's snapshot; register
  * them yourself to pick features one by one, or call `registerMermaid` for all of them.
  */
-import { SEMANTIC_TOKEN_LEGEND } from '@mermaid-js/language-service';
+import { encodeSemanticTokens, SEMANTIC_TOKEN_LEGEND } from '@mermaid-js/language-service';
 import type { CompletionKind, LanguageService } from '@mermaid-js/language-service';
 import type * as Monaco from 'monaco-editor';
 import { at, snapshotOf, toRange } from './convert.ts';
-import type { TextModel } from './convert.ts';
 
 type Languages = typeof Monaco.languages;
 
@@ -125,12 +124,10 @@ export function foldingRangeProvider(
 ): Monaco.languages.FoldingRangeProvider {
   return {
     provideFoldingRanges(model) {
+      // The service's line folds (closing `end`/`---` line visible), 1-based.
       return snapshotOf(service, model)
-        .foldingRanges()
-        .map(({ range }) => ({
-          start: model.getPositionAt(range.start).lineNumber,
-          end: model.getPositionAt(range.end).lineNumber,
-        }));
+        .lineFoldingRanges()
+        .map((f) => ({ start: f.startLine + 1, end: f.endLine + 1 }));
     },
   };
 }
@@ -141,49 +138,15 @@ export const SEMANTIC_TOKENS_LEGEND: Monaco.languages.SemanticTokensLegend = {
   tokenModifiers: [...SEMANTIC_TOKEN_LEGEND.modifiers],
 };
 
-/**
- * Encodes tokens as Monaco (and LSP) do: five numbers per token, line and start relative to
- * the previous token. Monaco has no multi-line tokens, so a token that spans lines (a
- * multi-line label, an `accDescr { }` body, a `@{ }` block) becomes one token per line,
- * leaving out empty pieces (a token that ends at a line start).
- */
-function encodeSemanticTokens(
-  model: TextModel,
-  tokens: ReturnType<ReturnType<LanguageService['update']>['semanticTokens']>
-): Uint32Array {
-  const data: number[] = [];
-  let prevLine = 0;
-  let prevChar = 0;
-  const push = (line: number, char: number, length: number, type: number, mods: number) => {
-    if (length <= 0) return;
-    data.push(line - prevLine, line === prevLine ? char - prevChar : char, length, type, mods);
-    prevLine = line;
-    prevChar = char;
-  };
-  const types: readonly string[] = SEMANTIC_TOKEN_LEGEND.types;
-  const modifiers: readonly string[] = SEMANTIC_TOKEN_LEGEND.modifiers;
-  for (const t of tokens) {
-    const type = types.indexOf(t.type);
-    const mods = t.modifiers.reduce((m, x) => m | (1 << modifiers.indexOf(x)), 0);
-    const start = model.getPositionAt(t.range.start);
-    const end = model.getPositionAt(t.range.end);
-    // 0-based lines and characters, as the encoding counts them.
-    for (let line = start.lineNumber; line <= end.lineNumber; line++) {
-      const from = line === start.lineNumber ? start.column : 1;
-      const to = line === end.lineNumber ? end.column : model.getLineMaxColumn(line);
-      push(line - 1, from - 1, to - from, type, mods);
-    }
-  }
-  return Uint32Array.from(data);
-}
-
 export function semanticTokensProvider(
   service: LanguageService
 ): Monaco.languages.DocumentSemanticTokensProvider {
   return {
     getLegend: () => SEMANTIC_TOKENS_LEGEND,
     provideDocumentSemanticTokens(model) {
-      return { data: encodeSemanticTokens(model, snapshotOf(service, model).semanticTokens()) };
+      // The service's per-line tokens (Monaco has no multi-line tokens), delta-coded.
+      const tokens = snapshotOf(service, model).lineSemanticTokens();
+      return { data: Uint32Array.from(encodeSemanticTokens(tokens)) };
     },
     releaseDocumentSemanticTokens() {
       // Nothing is kept per result: each request encodes the snapshot's tokens afresh.

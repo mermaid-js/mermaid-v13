@@ -311,15 +311,36 @@ importers:
 
   packages/language-service-monaco:
     devDependencies:
+      '@codemirror/language':
+        specifier: ^6.13.1
+        version: 6.13.1
+      '@codemirror/state':
+        specifier: ^6.7.6
+        version: 6.7.6
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/language-server':
+        specifier: workspace:^
+        version: link:../language-server
       '@mermaid-js/language-service':
         specifier: workspace:^
         version: link:../language-service
+      '@mermaid-js/language-service-codemirror':
+        specifier: workspace:^
+        version: link:../language-service-codemirror
+      '@types/node':
+        specifier: ^22.19.21
+        version: 22.20.1
       monaco-editor:
         specifier: ^0.57.0
         version: 0.57.0
+      vscode-languageserver:
+        specifier: ^11.0.0
+        version: 11.0.0
+      vscode-languageserver-protocol:
+        specifier: 3.18.5
+        version: 3.18.5
 
   packages/language-service/examples/codemirror:
     devDependencies:
@@ -7717,7 +7738,7 @@ snapshots:
     dependencies:
       '@babel/parser': 7.29.7
       '@babel/types': 7.29.7
-      source-map-js: 1.2.1
+      source-map-js: 1.2.2
     optional: true
 
   make-dir@4.0.0:

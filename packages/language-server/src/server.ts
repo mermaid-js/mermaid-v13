@@ -28,11 +28,11 @@ import type {
 } from 'vscode-languageserver';
 import { LSPErrorCodes, ResponseError, TextDocumentSyncKind } from 'vscode-languageserver';
 import {
-  encodeSemanticTokens,
+  semanticTokenData,
   takesMarkdown,
   toCompletionItem,
   toDiagnostic,
-  toFoldingRanges,
+  toFoldingRange,
   toMarkup,
   toOffset,
   toRange,
@@ -241,15 +241,12 @@ export function startServer(connection: Connection, options: ServerOptions = {})
 
   connection.onFoldingRanges(({ textDocument }) => {
     const o = open.get(textDocument.uri);
-    return o?.doc ? toFoldingRanges(o.index, o.text, o.doc.foldingRanges()) : null;
+    return o?.doc ? o.doc.lineFoldingRanges().map(toFoldingRange) : null;
   });
 
   connection.languages.semanticTokens.on(({ textDocument }) => {
     const o = open.get(textDocument.uri);
-    const data = o?.doc
-      ? encodeSemanticTokens(o.index, o.text, o.doc.semanticTokens(), multiline)
-      : [];
-    return { data };
+    return { data: o?.doc ? semanticTokenData(o.doc, multiline) : [] };
   });
 
   connection.onCompletion(({ textDocument, position }) => {
