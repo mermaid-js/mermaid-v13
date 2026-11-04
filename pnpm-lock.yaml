@@ -274,6 +274,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-sequence':
+        specifier: workspace:*
+        version: link:../diagram-sequence
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -296,6 +299,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-sequence':
+        specifier: workspace:*
+        version: link:../diagram-sequence
 
   packages/language-service-codemirror:
     devDependencies:
@@ -455,6 +461,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-sequence':
+        specifier: workspace:*
+        version: link:../diagram-sequence
 
   packages/plugin-interactions:
     devDependencies:

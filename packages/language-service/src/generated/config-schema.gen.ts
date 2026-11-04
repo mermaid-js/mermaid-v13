@@ -982,7 +982,8 @@ export const configSchema: ConfigSchema = {
     "sequence": {
       "$ref": "#/$defs/SequenceDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "gantt": {
@@ -4450,11 +4451,19 @@ export const configSchema: ConfigSchema = {
             "reason": "Arrowheads are inline paths, not `<marker>` references."
           }
         },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "hideUnusedParticipants": {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "activationWidth": {
@@ -4463,7 +4472,8 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "diagramMarginX": {
@@ -4472,7 +4482,8 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "diagramMarginY": {
@@ -4481,7 +4492,8 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "actorMargin": {
@@ -4490,56 +4502,65 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "width": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/width",
           "default": 150,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "height": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/height",
           "default": 65,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "boxMargin": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/boxMargin",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "boxTextMargin": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/boxTextMargin",
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "noteMargin": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/noteMargin",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "messageMargin": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/messageMargin",
           "default": 35,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's sequence renderer never read it; messages are spaced by `boxMargin` and their label height."
           }
         },
         "messageAlign": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/messageAlign",
           "default": "center",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "mirrorActors": {
@@ -4547,7 +4568,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "forceMenus": {
@@ -4555,21 +4577,24 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "pending",
+            "reason": "Takes effect with actor popup menus (plugin-interactions,"
           }
         },
         "bottomMarginAdj": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/bottomMarginAdj",
           "default": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "rightAngles": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/rightAngles",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "showSequenceNumbers": {
@@ -4577,7 +4602,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "actorFontSize": {
@@ -4586,17 +4612,19 @@ export const configSchema: ConfigSchema = {
             "string",
             "number"
           ],
-          "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "actorFontFamily": {
           "description": "This sets the font family of the actor's description",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect."
           }
         },
         "actorFontWeight": {
@@ -4607,7 +4635,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 400,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "noteFontSize": {
@@ -4616,17 +4645,19 @@ export const configSchema: ConfigSchema = {
             "string",
             "number"
           ],
-          "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "noteFontFamily": {
           "description": "This sets the font family of actor-attached notes",
           "type": "string",
-          "default": "\"trebuchet ms\", verdana, arial, sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect."
           }
         },
         "noteFontWeight": {
@@ -4637,7 +4668,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 400,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "noteAlign": {
@@ -4650,7 +4682,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "center",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "messageFontSize": {
@@ -4659,17 +4692,19 @@ export const configSchema: ConfigSchema = {
             "string",
             "number"
           ],
-          "default": 16,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "messageFontFamily": {
           "description": "This sets the font family of actor messages",
           "type": "string",
-          "default": "\"trebuchet ms\", verdana, arial, sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect."
           }
         },
         "messageFontWeight": {
@@ -4680,7 +4715,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 400,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "wrap": {
@@ -4688,14 +4724,16 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "wrapPadding": {
           "$ref": "#/$defs/C4DiagramConfig/properties/wrapPadding",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "labelBoxWidth": {
@@ -4703,7 +4741,8 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "labelBoxHeight": {
@@ -4711,25 +4750,32 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 20,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "messageFont": {
           "$ref": "#/$defs/FontCalculator",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's internal font helper; v13 reads the `messageFontSize`, `messageFontFamily` and `messageFontWeight` keys."
           }
         },
         "noteFont": {
           "$ref": "#/$defs/FontCalculator",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's internal font helper; v13 reads the `noteFontSize`, `noteFontFamily` and `noteFontWeight` keys."
           }
         },
         "actorFont": {
           "$ref": "#/$defs/FontCalculator",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's internal font helper; v13 reads the `actorFontSize`, `actorFontFamily` and `actorFontWeight` keys."
           }
         }
       }

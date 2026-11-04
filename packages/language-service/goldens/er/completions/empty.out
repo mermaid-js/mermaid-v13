@@ -2,3 +2,4 @@
   flowchart keyword 1:1-1:1 "" -> "flowchart"
   graph keyword 1:1-1:1 "" -> "graph"
   erDiagram keyword 1:1-1:1 "" -> "erDiagram"
+  sequenceDiagram keyword 1:1-1:1 "" -> "sequenceDiagram"

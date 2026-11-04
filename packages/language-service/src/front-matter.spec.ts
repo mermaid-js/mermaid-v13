@@ -166,8 +166,11 @@ describe('completion scoping (D96)', () => {
     expect(flow).toContain('flowchart');
     expect(flow).not.toContain('sequence');
     expect(flow).not.toContain('gantt');
+    const seq = keysAt('---\nconfig:\n  |\n---\nsequenceDiagram\n  A->>B: x\n');
+    expect(seq).toContain('sequence');
+    expect(seq).not.toContain('flowchart');
     // No v13 package: the renderer has no section for these types, so neither has the service.
-    for (const head of ['sequenceDiagram', 'classDiagram', 'stateDiagram-v2', 'info', 'treemap']) {
+    for (const head of ['journey', 'classDiagram', 'stateDiagram-v2', 'info', 'treemap']) {
       const keys = keysAt(`---\nconfig:\n  |\n---\n${head}\n`);
       expect(keys, head).not.toContain('flowchart');
       expect(keys, head).not.toContain('class');

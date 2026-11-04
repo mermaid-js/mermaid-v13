@@ -171,47 +171,47 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `sequence` | object |  | pending |  | The object containing configurations specific for sequence diagrams |
+| `sequence` | object |  | honoured (13.0.0) |  | The object containing configurations specific for sequence diagrams |
 | `sequence.useWidth` | number |  | pending |  |  |
-| `sequence.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `sequence.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `sequence.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `sequence.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `sequence.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
 | `sequence.arrowMarkerAbsolute` | boolean |  | ignored (13.0.0) | Arrowheads are inline paths, not `<marker>` references. |  |
-| `sequence.hideUnusedParticipants` | boolean | `false` | pending |  |  |
-| `sequence.activationWidth` | integer | `10` | pending |  | Width of the activation rect |
-| `sequence.diagramMarginX` | integer | `50` | pending |  | Margin to the right and left of the sequence diagram |
-| `sequence.diagramMarginY` | integer | `10` | pending |  | Margin to the over and under the sequence diagram |
-| `sequence.actorMargin` | integer | `50` | pending |  | Margin between actors |
-| `sequence.width` | integer | `150` | pending |  | Width of actor boxes |
-| `sequence.height` | integer | `65` | pending |  | Height of actor boxes |
-| `sequence.boxMargin` | integer | `10` | pending |  | Margin around loop boxes |
-| `sequence.boxTextMargin` | integer | `5` | pending |  | Margin around the text in loop/alt/opt boxes |
-| `sequence.noteMargin` | integer | `10` | pending |  | Margin around notes |
-| `sequence.messageMargin` | integer | `35` | pending |  | Space between messages. |
-| `sequence.messageAlign` | "left" \\| "center" \\| "right" | `"center"` | pending |  | Multiline message alignment |
-| `sequence.mirrorActors` | boolean | `true` | pending |  | Mirror actors under diagram |
-| `sequence.forceMenus` | boolean | `false` | pending |  | forces actor popup menus to always be visible (to support E2E testing). |
-| `sequence.bottomMarginAdj` | integer | `1` | pending |  | Prolongs the edge of the diagram downwards. Depending on css styling this might need adjustment. |
-| `sequence.rightAngles` | boolean | `false` | pending |  | Curved Arrows become Right Angles This will display arrows that start and begin at the same node as right angles, rather than as curves. |
-| `sequence.showSequenceNumbers` | boolean | `false` | pending |  | This will show the node numbers |
-| `sequence.actorFontSize` | string \\| number | `14` | pending |  | This sets the font size of the actor's description |
-| `sequence.actorFontFamily` | string | `"\"Open Sans\", sans-serif"` | pending |  | This sets the font family of the actor's description |
-| `sequence.actorFontWeight` | string \\| number | `400` | pending |  | This sets the font weight of the actor's description |
-| `sequence.noteFontSize` | string \\| number | `14` | pending |  | This sets the font size of actor-attached notes |
-| `sequence.noteFontFamily` | string | `"\"trebuchet ms\", verdana, arial, sans-serif"` | pending |  | This sets the font family of actor-attached notes |
-| `sequence.noteFontWeight` | string \\| number | `400` | pending |  | This sets the font weight of actor-attached notes |
-| `sequence.noteAlign` | "left" \\| "center" \\| "right" | `"center"` | pending |  | This sets the text alignment of actor-attached notes |
-| `sequence.messageFontSize` | string \\| number | `16` | pending |  | This sets the font size of actor messages |
-| `sequence.messageFontFamily` | string | `"\"trebuchet ms\", verdana, arial, sans-serif"` | pending |  | This sets the font family of actor messages |
-| `sequence.messageFontWeight` | string \\| number | `400` | pending |  | This sets the font weight of actor messages |
-| `sequence.wrap` | boolean | `false` | pending |  | This sets the auto-wrap state for the diagram |
-| `sequence.wrapPadding` | number | `10` | pending |  | This sets the auto-wrap padding for the diagram (sides only) |
-| `sequence.labelBoxWidth` | number | `50` | pending |  | This sets the width of the loop-box (loop, alt, opt, par) |
-| `sequence.labelBoxHeight` | number | `20` | pending |  | This sets the height of the loop-box (loop, alt, opt, par) |
-| `sequence.messageFont` | object |  | pending |  | JavaScript function that returns a `FontConfig`. By default, these return the appropriate `*FontSize`, `*FontFamily`, `*FontWeight` values. For example, the font calculator called `boundaryFont` might be defined as: ```javascript boundaryFont: function () { return { fontFamily: this.boundaryFontFamily, fontSize: this.boundaryFontSize, fontWeight: this.boundaryFontWeight, }; } ``` |
-| `sequence.noteFont` | object |  | pending |  | JavaScript function that returns a `FontConfig`. By default, these return the appropriate `*FontSize`, `*FontFamily`, `*FontWeight` values. For example, the font calculator called `boundaryFont` might be defined as: ```javascript boundaryFont: function () { return { fontFamily: this.boundaryFontFamily, fontSize: this.boundaryFontSize, fontWeight: this.boundaryFontWeight, }; } ``` |
-| `sequence.actorFont` | object |  | pending |  | JavaScript function that returns a `FontConfig`. By default, these return the appropriate `*FontSize`, `*FontFamily`, `*FontWeight` values. For example, the font calculator called `boundaryFont` might be defined as: ```javascript boundaryFont: function () { return { fontFamily: this.boundaryFontFamily, fontSize: this.boundaryFontSize, fontWeight: this.boundaryFontWeight, }; } ``` |
+| `sequence.hideUnusedParticipants` | boolean | `false` | honoured (13.0.0) |  |  |
+| `sequence.activationWidth` | integer | `10` | honoured (13.0.0) |  | Width of the activation rect |
+| `sequence.diagramMarginX` | integer | `50` | honoured (13.0.0) |  | Margin to the right and left of the sequence diagram |
+| `sequence.diagramMarginY` | integer | `10` | honoured (13.0.0) |  | Margin to the over and under the sequence diagram |
+| `sequence.actorMargin` | integer | `50` | honoured (13.0.0) |  | Margin between actors |
+| `sequence.width` | integer | `150` | honoured (13.0.0) |  | Width of actor boxes |
+| `sequence.height` | integer | `65` | honoured (13.0.0) |  | Height of actor boxes |
+| `sequence.boxMargin` | integer | `10` | honoured (13.0.0) |  | Margin around loop boxes |
+| `sequence.boxTextMargin` | integer | `5` | honoured (13.0.0) |  | Margin around the text in loop/alt/opt boxes |
+| `sequence.noteMargin` | integer | `10` | honoured (13.0.0) |  | Margin around notes |
+| `sequence.messageMargin` | integer | `35` | ignored (13.0.0) | v12's sequence renderer never read it; messages are spaced by `boxMargin` and their label height. | Space between messages. |
+| `sequence.messageAlign` | "left" \\| "center" \\| "right" | `"center"` | honoured (13.0.0) |  | Multiline message alignment |
+| `sequence.mirrorActors` | boolean | `true` | honoured (13.0.0) |  | Mirror actors under diagram |
+| `sequence.forceMenus` | boolean | `false` | pending | Takes effect with actor popup menus (plugin-interactions, | forces actor popup menus to always be visible (to support E2E testing). |
+| `sequence.bottomMarginAdj` | integer | `1` | honoured (13.0.0) |  | Prolongs the edge of the diagram downwards. Depending on css styling this might need adjustment. |
+| `sequence.rightAngles` | boolean | `false` | honoured (13.0.0) |  | Curved Arrows become Right Angles This will display arrows that start and begin at the same node as right angles, rather than as curves. |
+| `sequence.showSequenceNumbers` | boolean | `false` | honoured (13.0.0) |  | This will show the node numbers |
+| `sequence.actorFontSize` | string \\| number |  | honoured (13.0.0) | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. | This sets the font size of the actor's description |
+| `sequence.actorFontFamily` | string |  | honoured (13.0.0) | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. | This sets the font family of the actor's description |
+| `sequence.actorFontWeight` | string \\| number | `400` | honoured (13.0.0) |  | This sets the font weight of the actor's description |
+| `sequence.noteFontSize` | string \\| number |  | honoured (13.0.0) | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. | This sets the font size of actor-attached notes |
+| `sequence.noteFontFamily` | string |  | honoured (13.0.0) | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. | This sets the font family of actor-attached notes |
+| `sequence.noteFontWeight` | string \\| number | `400` | honoured (13.0.0) |  | This sets the font weight of actor-attached notes |
+| `sequence.noteAlign` | "left" \\| "center" \\| "right" | `"center"` | honoured (13.0.0) |  | This sets the text alignment of actor-attached notes |
+| `sequence.messageFontSize` | string \\| number |  | honoured (13.0.0) | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. | This sets the font size of actor messages |
+| `sequence.messageFontFamily` | string |  | honoured (13.0.0) | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. | This sets the font family of actor messages |
+| `sequence.messageFontWeight` | string \\| number | `400` | honoured (13.0.0) |  | This sets the font weight of actor messages |
+| `sequence.wrap` | boolean | `false` | honoured (13.0.0) |  | This sets the auto-wrap state for the diagram |
+| `sequence.wrapPadding` | number | `10` | honoured (13.0.0) |  | This sets the auto-wrap padding for the diagram (sides only) |
+| `sequence.labelBoxWidth` | number | `50` | honoured (13.0.0) |  | This sets the width of the loop-box (loop, alt, opt, par) |
+| `sequence.labelBoxHeight` | number | `20` | honoured (13.0.0) |  | This sets the height of the loop-box (loop, alt, opt, par) |
+| `sequence.messageFont` | object |  | ignored (13.0.0) | v12's internal font helper; v13 reads the `messageFontSize`, `messageFontFamily` and `messageFontWeight` keys. | JavaScript function that returns a `FontConfig`. By default, these return the appropriate `*FontSize`, `*FontFamily`, `*FontWeight` values. For example, the font calculator called `boundaryFont` might be defined as: ```javascript boundaryFont: function () { return { fontFamily: this.boundaryFontFamily, fontSize: this.boundaryFontSize, fontWeight: this.boundaryFontWeight, }; } ``` |
+| `sequence.noteFont` | object |  | ignored (13.0.0) | v12's internal font helper; v13 reads the `noteFontSize`, `noteFontFamily` and `noteFontWeight` keys. | JavaScript function that returns a `FontConfig`. By default, these return the appropriate `*FontSize`, `*FontFamily`, `*FontWeight` values. For example, the font calculator called `boundaryFont` might be defined as: ```javascript boundaryFont: function () { return { fontFamily: this.boundaryFontFamily, fontSize: this.boundaryFontSize, fontWeight: this.boundaryFontWeight, }; } ``` |
+| `sequence.actorFont` | object |  | ignored (13.0.0) | v12's internal font helper; v13 reads the `actorFontSize`, `actorFontFamily` and `actorFontWeight` keys. | JavaScript function that returns a `FontConfig`. By default, these return the appropriate `*FontSize`, `*FontFamily`, `*FontWeight` values. For example, the font calculator called `boundaryFont` might be defined as: ```javascript boundaryFont: function () { return { fontFamily: this.boundaryFontFamily, fontSize: this.boundaryFontSize, fontWeight: this.boundaryFontWeight, }; } ``` |
 
 ## `gantt`
 

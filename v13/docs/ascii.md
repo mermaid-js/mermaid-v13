@@ -5,8 +5,9 @@ pure ASCII. Text output runs the same parser and the same layout as SVG, laid ou
 cells instead of pixels, and is drawn by the diagram's own `ascii` entry (DESIGN §6.3, ADR-14).
 
 Only diagram types that declare `ascii` in their manifest support it. In 13.0 those are the
-flowchart (`graph` / `flowchart`) and the ER diagram (`erDiagram`): entities are boxed tables,
-relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`). See [the format matrix](format-matrix.md) for every type.
+flowchart (`graph` / `flowchart`), the ER diagram (`erDiagram`): entities are boxed tables,
+relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`), and the
+sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)). See [the format matrix](format-matrix.md) for every type.
 
 ```
                ┌───◇────┐            ╭─────────╮
@@ -107,8 +108,8 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 1         | Any error: a usage error (unknown option or command, a `--format` other than `ascii` or `svg`, a bad `--width` or `--charset`), syntax, unknown diagram, unreadable file. |
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
-Exit 2 cannot happen with the diagram types built into 13.0: the flowchart and the ER diagram
-both render as SVG and as text. It is kept for types that will not have a text form (D58).
+Exit 2 cannot happen with the diagram types built into 13.0: the flowchart, the ER diagram and
+the sequence diagram all render as SVG and as text. It is kept for types that will not have a text form (D58).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
 font tables. It is not v12's `mmdc` (which renders through a headless browser) nor the
@@ -300,7 +301,8 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 ## Size
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
-plus the flowchart's text entry have their own budget of 15 KB gzip, East Asian width data
-included, outside the 80 KB R-PERF-1 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft:
-the bench's `ascii-size` gate measures and reports it but never fails. That an SVG render loads
+plus one diagram type's text entry (the flowchart's, the ER diagram's or the sequence diagram's)
+have their own budget of 15 KB gzip, East Asian width data included, outside the 80 KB R-PERF-1
+budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft: the bench's `ascii-size` gate measures
+the largest of those paths and reports it, but never fails. That an SVG render loads
 no ascii module is a hard check (`packages/bench/src/ascii-size.spec.ts` in `pnpm test`).

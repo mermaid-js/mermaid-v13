@@ -25,8 +25,9 @@ export const LIMITS = {
   /** R-PERF-9 (Should): ms from navigation start until the first render is possible. */
   readyAtMs: 15,
   /**
-   * R-ASCII-9 / D87: what a text render loads on top of an SVG flowchart render (`core/ascii`
-   * plus the flowchart's ascii entry), gzip bytes. Kept apart from R-PERF-1, which never loads it.
+   * R-ASCII-9 / D87: what a text render of one diagram type loads on top of its SVG render
+   * (`core/ascii` plus that type's ascii entry), gzip bytes, for the largest type. Kept apart
+   * from R-PERF-1, which never loads it.
    * A soft budget (D87): the `ascii-size` gate reports it and never fails the job.
    */
   asciiGzipBytes: 15 * 1024,
@@ -241,7 +242,7 @@ export function evaluateGates({
   const ascii = report.asciiSize ?? null;
   gates.push({
     id: 'ascii-size',
-    title: 'ASCII chunks, core/ascii + flowchart ascii entry (gzip)',
+    title: 'ASCII chunks, core/ascii + the largest diagram ascii entry (gzip)',
     requirement: 'R-ASCII-9',
     // D87: the budget is soft. Measured and reported; it never fails the job.
     level: 'should',

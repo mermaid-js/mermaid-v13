@@ -50,7 +50,7 @@
   |
   | Type: `boolean` · Default: `true`
   |
-  | Status: pending.
+  | Status: honoured (since 13.0.0).
 @ 13:12  dompurify|Config: {}
   13:3-13:18 "dompurifyConfig"
   | **dompurifyConfig**

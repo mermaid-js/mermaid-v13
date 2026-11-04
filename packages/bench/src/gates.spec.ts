@@ -132,7 +132,7 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
 
   // D87: the 15 KB ascii budget is soft. The gate reports, like R-PERF-9's ready-at, and never
   // fails the job, in any mode.
-  it('reports core/ascii + the flowchart ascii entry over 15 KB gzip without failing (R-ASCII-9, D87)', () => {
+  it('reports core/ascii + a diagram ascii entry over 15 KB gzip without failing (R-ASCII-9, D87)', () => {
     const report = healthy();
     report.asciiSize!.gzip = 15 * KB + 1;
     expect(gate(report, 'ascii-size')).toMatchObject({
