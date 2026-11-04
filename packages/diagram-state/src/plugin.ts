@@ -1,7 +1,12 @@
 import type { DiagramParseContext, DiagramPlugin } from '@mermaid-js/core';
 import { resolveLimits } from '@mermaid-js/core/limits';
 import type { SvgWriter } from '@mermaid-js/core/svg';
-import { layoutState, type StateLayout, type StateRenderContext } from './layout/index.ts';
+import {
+  layoutState,
+  type CompleteStateLayout,
+  type StateLayout,
+  type StateRenderContext,
+} from './layout/index.ts';
 import { detectState, parseState } from './parser/index.ts';
 import type { StateModel, StateParseResult } from './parser/index.ts';
 import { renderState } from './render/render.ts';
@@ -25,7 +30,8 @@ export const state = {
       preprocessed: ctx.preprocessed,
       maxDepth: (ctx.limits ?? resolveLimits(ctx.config)).maxDepth,
     }),
-  layout: (model: StateModel, ctx: StateRenderContext): StateLayout => layoutState(model, ctx),
+  layout: (model: StateModel, ctx: StateRenderContext): CompleteStateLayout =>
+    layoutState(model, ctx),
   render: (model: StateModel, layout: StateLayout, ctx: StateRenderContext, w: SvgWriter): void =>
     renderState(model, layout, ctx, w),
 } satisfies DiagramPlugin<StateModel, StateLayout>;

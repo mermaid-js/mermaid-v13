@@ -18,21 +18,49 @@ export interface StateDivider {
   y2: number;
 }
 
-/** The state layout: the engine's LayoutModel with stretched region frames, plus the views. */
+/**
+ * The state layout: the engine's LayoutModel with stretched region frames, plus the views and
+ * dividers. A `postLayout` hook gets and returns the shared `LayoutModel`, so one that builds a
+ * new model drops both extras: the renderer derives them again (`completeLayout`).
+ */
 export interface StateLayout extends LayoutModel {
   /** Between regions placed side by side (or stacked, D113), composite by composite. */
-  readonly dividers: readonly StateDivider[];
-  /** Set by `layoutState`; a `postLayout` hook that builds a new model drops it. */
+  readonly dividers?: readonly StateDivider[];
+  /** The measured views the layout was built from. */
   readonly state?: StatePrepared;
 }
 
+/** A layout with its views and dividers present. */
+export interface CompleteStateLayout extends StateLayout {
+  readonly dividers: readonly StateDivider[];
+  readonly state: StatePrepared;
+}
+
 /** Measures the model and lays it out with `ctx.layout` (default `layered`). */
-export function layoutState(model: StateModel, ctx: StateRenderContext): StateLayout {
+export function layoutState(model: StateModel, ctx: StateRenderContext): CompleteStateLayout {
   const prepared = prepareState(model, ctx);
   const laid = (ctx.layout ?? layered)(prepared.graph);
   const groups = new Map(laid.groups);
   const dividers = stretchRegions(prepared, groups);
   return { ...laid, groups, dividers, state: prepared };
+}
+
+/**
+ * The layout with whatever a `postLayout` hook dropped derived again: the views from the model
+ * (their warnings went out once already, in `layoutState`, so this pass drops them) and the
+ * dividers from the hook's own groups, the region frames stretched as `layoutState` does.
+ */
+export function completeLayout(
+  model: StateModel,
+  layout: StateLayout,
+  ctx: StateRenderContext
+): CompleteStateLayout {
+  if (layout.state && layout.dividers) return layout as CompleteStateLayout;
+  const state = layout.state ?? prepareState(model, { ...ctx, warn: () => undefined });
+  if (layout.dividers) return { ...layout, dividers: layout.dividers, state };
+  const groups = new Map(layout.groups);
+  const dividers = stretchRegions(state, groups);
+  return { ...layout, groups, dividers, state };
 }
 
 interface Span {

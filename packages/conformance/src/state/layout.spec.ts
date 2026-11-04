@@ -17,7 +17,7 @@ import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import {
   layoutState,
   parseState,
-  type StateLayout,
+  type CompleteStateLayout,
   type StateModel,
 } from '@mermaid-js/diagram-state';
 import { REPO_ROOT, corpusFromDir } from '../index.ts';
@@ -49,7 +49,7 @@ function run(
   model: StateModel,
   units: UnitProfile,
   measurer: Measurer
-): { graph: LayoutGraph; laid: LayoutModel; layout: StateLayout } {
+): { graph: LayoutGraph; laid: LayoutModel; layout: CompleteStateLayout } {
   let graph: LayoutGraph | undefined;
   let laid: LayoutModel | undefined;
   const layout = layoutState(model, {
@@ -84,9 +84,13 @@ const overlap = (a0: number, a1: number, b0: number, b1: number): number =>
   Math.min(a1, b1) - Math.max(a0, b0);
 
 /** The #140 region checks, plus edge-label frames; one message per problem. */
-function regionProblems(graph: LayoutGraph, layout: StateLayout, checked: string[]): string[] {
+function regionProblems(
+  graph: LayoutGraph,
+  layout: CompleteStateLayout,
+  checked: string[]
+): string[] {
   const problems: string[] = [];
-  const prepared = layout.state!;
+  const prepared = layout.state;
   const parentOf = new Map<string, string | undefined>();
   for (const n of graph.nodes) parentOf.set(n.id, n.parent);
   for (const g of graph.groups) parentOf.set(g.id, g.parent);

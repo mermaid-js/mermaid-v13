@@ -1,5 +1,5 @@
 export { layoutState } from './layout.ts';
-export type { StateDivider, StateLayout } from './layout.ts';
+export type { CompleteStateLayout, StateDivider, StateLayout } from './layout.ts';
 export { prepareState } from './prepare.ts';
 export type {
   StateEdgeView,

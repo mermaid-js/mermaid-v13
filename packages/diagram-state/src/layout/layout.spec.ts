@@ -10,7 +10,12 @@ import {
 } from '@mermaid-js/core/layout';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
-import { layoutState, parseState, type StateLayout, type StateRenderContext } from '../index.ts';
+import {
+  layoutState,
+  parseState,
+  type CompleteStateLayout,
+  type StateRenderContext,
+} from '../index.ts';
 
 // The state graph builder (#144) at its seam: StateModel → LayoutGraph → LayoutModel. The
 // context records the graph the builder hands the engine.
@@ -23,7 +28,7 @@ beforeAll(async () => {
 interface Run {
   graph: LayoutGraph;
   model: LayoutModel;
-  layout: StateLayout;
+  layout: CompleteStateLayout;
 }
 
 function run(src: string, options: { units?: UnitProfile; config?: ConfigInput } = {}): Run {
@@ -135,7 +140,7 @@ describe('state graph builder', () => {
     expect(validateLayout(graph, model)).toEqual([]);
     const at = (id: string) => model.nodes.get(id)!.x;
     expect(at('note:2')).toBeLessThan(at('B'));
-    expect(layout.state!.edges.filter((e) => e.note)).toHaveLength(2);
+    expect(layout.state.edges.filter((e) => e.note)).toHaveLength(2);
   });
 
   it('turns fork and join bars across the flow', () => {
@@ -147,7 +152,7 @@ describe('state graph builder', () => {
 
   it('gives described states a title and their description lines', () => {
     const { layout } = run('stateDiagram-v2\n  A : first line\n  A : second line\n');
-    const view = layout.state!.views.get('A');
+    const view = layout.state.views.get('A');
     expect(view).toMatchObject({ shape: 'described' });
     if (!view || !('rows' in view) || !view.rows) throw new Error('no rows');
     expect(view.rows.lines).toHaveLength(2);

@@ -29,7 +29,8 @@ import type {
   StateRenderContext,
   StateWarning,
 } from '../layout/index.ts';
-import { prepareState, stateMetrics } from '../layout/index.ts';
+import { stateMetrics } from '../layout/index.ts';
+import { completeLayout, type CompleteStateLayout } from '../layout/layout.ts';
 import type { StateLink, StateModel } from '../parser/index.ts';
 import { arrowTrim, arrowhead, drawArrowhead, routePath, type Arrowhead } from './edges.ts';
 import { drawDescribed, drawShape, type ShapePaint } from './shapes.ts';
@@ -159,7 +160,7 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
 /** What every section of one render draws from. */
 interface Scene {
   readonly w: SvgWriter;
-  readonly layout: StateLayout;
+  readonly layout: CompleteStateLayout;
   readonly s: StatePrepared;
   readonly sm: StateMetrics;
   readonly titlePad: number;
@@ -175,11 +176,13 @@ export function renderState(
   ctx: StateRenderContext,
   w: SvgWriter
 ): void {
-  const s = layout.state ?? prepareState(model, ctx);
+  // A postLayout hook that builds a new model drops the views and dividers (see StateLayout).
+  const full = completeLayout(model, layout, ctx);
+  const s = full.state;
   const units = ctx.units ?? pxProfile;
   const scene: Scene = {
     w,
-    layout,
+    layout: full,
     s,
     sm: stateMetrics(units),
     titlePad: units.builder.titlePad,

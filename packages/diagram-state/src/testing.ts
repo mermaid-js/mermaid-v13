@@ -13,7 +13,7 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { streamWriter, treeWriter, type SvgTree } from '@mermaid-js/core/svg';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
-import type { StateLayout } from './layout/index.ts';
+import type { CompleteStateLayout } from './layout/index.ts';
 import type { StateParseResult } from './parser/index.ts';
 import { state } from './plugin.ts';
 
@@ -31,7 +31,7 @@ export interface RenderedForTest {
   tree: SvgTree;
   warnings: Warning[];
   parse: StateParseResult;
-  layout: StateLayout;
+  layout: CompleteStateLayout;
   config: ResolvedConfig;
 }
 

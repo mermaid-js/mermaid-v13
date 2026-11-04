@@ -194,6 +194,42 @@ describe('extension plugins (R-PLUG-2, D52, D70)', () => {
   });
 });
 
+describe('a postLayout hook that builds a new LayoutModel (state)', () => {
+  // The hook keeps only the shared LayoutModel fields: the state renderer's own extras are gone.
+  const rebuild: ExternalDiagram = {
+    id: 'rebuild',
+    postLayout(l: LaidOut) {
+      if (l.kind !== 'graph') return l;
+      const { nodes, edges, groups, width, height, direction } = l.layout;
+      return { ...l, layout: { nodes, edges, groups, width: width + 100, height, direction } };
+    },
+  };
+  const COMPOSITE = 'stateDiagram-v2\n  state X {\n    a --> b\n    --\n    c --> d\n  }\n';
+
+  it('still draws composites, regions and their divider', async () => {
+    const plain = await createMermaid().render('x', COMPOSITE);
+    const m = createMermaid();
+    await m.registerExternalDiagrams([rebuild]);
+    const r = await m.render('x', COMPOSITE);
+    expect(r.width).toBe(plain.width + 100);
+    const dividers = (svg: string): string[] => svg.match(/<line class="divider"[^>]*>/g) ?? [];
+    expect(dividers(r.svg)).toHaveLength(1);
+    expect(dividers(r.svg)).toEqual(dividers(plain.svg));
+    assertInert(r.svg);
+  });
+
+  it('reports each style warning once', async () => {
+    const text =
+      'stateDiagram-v2\n  state X {\n    A --> B\n  }\n  style A fill:#f00,behavior:url(x.htc)\n';
+    const plain = await createMermaid().render('x', text);
+    const m = createMermaid();
+    await m.registerExternalDiagrams([rebuild]);
+    const codes = (await m.render('x', text)).warnings.map((w) => w.code);
+    expect(plain.warnings.map((w) => w.code)).toEqual(['STYLE_PROPERTY_DROPPED']);
+    expect(codes).toEqual(['STYLE_PROPERTY_DROPPED']);
+  });
+});
+
 describe('extension hooks in text output (D86)', () => {
   it('runs postParse and postLayout with units "cell"; never postRender or afterMount', async () => {
     const log: string[] = [];
