@@ -9,7 +9,7 @@
  * Budget, as a ratio (timing tests never assert absolute times): no single query call takes
  * longer than {@link RATIO} times the document's own `update` (a full re-parse), with a
  * {@link FLOOR_MS} floor for timer and GC noise on tiny documents. The absolute 10 ms budget
- * on a 50k-character document is the bench's (`pnpm --filter @mermaid-js/bench language`).
+ * on a 50k-character document is the bench package's `language` script.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';

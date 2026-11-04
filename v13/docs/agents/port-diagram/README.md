@@ -24,6 +24,7 @@ M3 types are all jison in v12: `sequence/parser/sequenceDiagram.jison`, `class/p
 ```
 T0 core contract (only if the type needs new core primitives)
  └─> T1 lexer parity gate ─> T2 grammar + parser + model + AST ─> T3 layout ─> T4 renderer ─> T5 integration
+                                                               └─> T6 language service (after T2)
 ```
 
 - T0 lands before any other ticket of any type that depends on it. It is the only place a port edits shared core.
@@ -38,6 +39,8 @@ Each step is one ticket. Every ticket tests through the public seam, `createMerm
 3. **T3: Layout.** Class, state and ER are graph diagrams: build a `LayoutGraph` and call `ctx.layout()`. Sequence is `layoutKind: 'custom'` with its own `L`. Measurement always happens before layout, using the injected measurer. **Done when** DDLT-style checks (no overlaps, no NaN, containment) pass on fixtures produced by the v13 parser.
 4. **T4: Renderer.** Draw through `SvgWriter` only, with sizes and colours from theme tokens, so redux reads as one family with flowchart (R-THEME-11). Translate v12's theme-name sets, `look === 'neo'` branches and drop-shadow filters into theme variables: [theming.md](theming.md). Every element drawn from the AST gets `data-id` and `data-ast`. The only element ids are `${idPrefix}-title` and `-desc`. **Done when** the render properties (well-formed, `assertInert`, determinism, no NaN, bounding box) and the AST round-trip hold over the corpus, and each structural change from v12's SVG is listed in MIGRATION.md.
 5. **T5: Integration.** Add the manifest in the package's `package.json` and run `gen:registry`, keeping v12's detector order. Move the type's config keys from `pending` to `honoured` (`gen:config`), add theme variables (`gen:theme`, only where redux and classic differ: [theming.md](theming.md)), and add MIGRATION.md entries. Add visual baseline fixtures under `e2e/diagrams/<type>/baseline/` for the gallery. The type stops being `UNSUPPORTED_DIAGRAM` once its manifest is in the generated registry; add a spec that its source now renders. **Done when** `pnpm check`, `pnpm e2e` and the bench run are green, and the handoff reports the bench load-path size for this type.
+
+6. **T6: Language service (R-LANG-3).** Ship the `./language` facet and the shared golden suite for the type: [language.md](language.md) is the checklist. **Done when** the type has goldens for every required feature and the corpus property, rename round-trip and oracle specs are green.
 
 ## Rules every ticket follows
 
