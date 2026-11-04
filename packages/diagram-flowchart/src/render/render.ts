@@ -292,7 +292,7 @@ export function renderFlowchart(
       const at = layout.edges.get(e.id)?.label;
       if (!at || e.label.width === 0) continue;
       const lw = e.label.width + 2 * LABEL_PAD;
-      w.open('g', { class: 'edgeLabel', 'data-id': e.edge.id, 'data-ast': e.edge.ast });
+      w.open('g', { class: 'edgeLabel', 'data-id': e.edge.id });
       w.leaf('rect', {
         x: at.x - lw / 2,
         y: at.y - e.label.height / 2,

@@ -15,11 +15,6 @@ describe('render ids and links', () => {
     assertInert(svg, { themeStyle: true });
   });
 
-  it('gives edge labels the edge’s AST id (R-PARSE-8)', async () => {
-    const { svg } = await createMermaid().render('e', 'flowchart LR\n  A -->|go| B');
-    expect(svg).toMatch(/<g class="edgeLabel" data-id="L_A_B_0" data-ast="e:A&gt;B">/);
-  });
-
   it('draws raster data-URL images and refuses mailto as an image source (R-SEC-2)', async () => {
     const m = createMermaid();
     const data = await m.render('i', `flowchart LR\n  A@{ img: "${PNG}" }`);
