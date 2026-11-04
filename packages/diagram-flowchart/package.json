@@ -15,6 +15,11 @@
       "mermaid-source": "./src/ascii.ts",
       "types": "./dist/ascii.d.ts",
       "default": "./dist/ascii.js"
+    },
+    "./language": {
+      "mermaid-source": "./src/language.ts",
+      "types": "./dist/language.d.ts",
+      "default": "./dist/language.js"
     }
   },
   "files": [
@@ -47,6 +52,7 @@
       "ascii"
     ],
     "export": "flowchart",
-    "ascii": "./dist/ascii.js"
+    "ascii": "./dist/ascii.js",
+    "language": "./dist/language.js"
   }
 }

@@ -69,6 +69,8 @@ export interface DiagramManifest {
   readonly export: string;
   /** Module path of the lazily loaded text-output entry; its `ascii` export is the hook (D76). */
   readonly ascii?: string;
+  /** Module path of the language facet entry, read by the language service (R-LANG-8, D89). */
+  readonly language?: string;
 }
 
 /** A package.json `exports` map: subpath → conditions → file. */
