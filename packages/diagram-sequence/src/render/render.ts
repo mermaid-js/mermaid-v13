@@ -234,7 +234,7 @@ function drawParticipant(scene: Scene, p: ParticipantLayout): void {
       stroke: paint.actor.line,
       'stroke-width': LIFELINE_STROKE,
     });
-  const symbol = { w, p, paint: paint.actor, tint, shadow: paint.shadow };
+  const symbol = { w, p, paint: paint.actor, tint, shadow: paint.shadow, m: scene.m };
   drawSymbol({ ...symbol, y: p.top }, 'top');
   if (p.bottom !== undefined) drawSymbol({ ...symbol, y: p.bottom }, 'bottom');
   w.close();

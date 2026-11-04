@@ -34,8 +34,13 @@ export interface ParticipantLayout {
   readonly labelY: number;
   /** From the top of the bottom box to the centre of its label, where it is not `labelY`. */
   readonly bottomLabelY?: number;
-  /** The glyph band under v12's band model (theme `actorGlyphBand` above 0); else undefined. */
+  /**
+   * The glyph band under v12's band model (theme `actorGlyphBand` above 0), for the kinds that
+   * stand on it (actor, boundary, control, entity, database); else undefined.
+   */
   readonly band?: GlyphBand;
+  /** Under the band model, a `collections` stack is drawn this much shorter; else undefined. */
+  readonly stackInset?: number;
   /** Top of the top box: the header row, or the creating message's row. */
   readonly top: number;
   /** Top of the mirrored bottom box (`mirrorActors`); undefined without one. */
@@ -56,8 +61,6 @@ export interface GlyphBand {
   readonly top: number;
   /** From the top of the bottom box to the band's bottom edge. */
   readonly bottom: number;
-  /** A `collections` stack is drawn this much shorter, so it stops at the lifeline. */
-  readonly inset: number;
 }
 
 export interface SelfLoop {

@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Mermaid } from 'mermaid';
+import { pathPoints } from './path-bounds.ts';
 import { asTest, sequenceApi } from './render-api.ts';
 
 /**
@@ -246,24 +247,55 @@ describe('v12 neo geometry as theme variables (#194, D152)', () => {
     expect(r(await render(KINDS, '  theme: default'))).toBe(15);
   });
 
-  it('draws a database cylinder as tall as the band in redux', async () => {
-    // The y of every point of the cylinder's path (M/L: x y; A: … x y).
-    const ys = (svg: string): number[] => {
-      const d = /<path[^>]* d="([^"]+)"/.exec(group(svg, 'database'))?.[1] ?? '';
-      return (d.match(/[MLA][^MLAZ]*/g) ?? []).map((seg) => {
-        const n = seg.slice(1).trim().split(/[ ,]+/).map(Number);
-        return n[n.length - 1]!;
-      });
-    };
-    const span = (v: number[]): number => Math.max(...v) - Math.min(...v);
-    // A 150 px column: the cylinder is 50 wide, its ends' ry 25 / (2.5 + 50 / 50). The path's
-    // points span the height less both ends: v12 neo 44 (the band), classic 50 (width / 3).
-    const ry = 25 / 3.5;
-    const neo = await render(KINDS);
-    expect(span(ys(neo))).toBeCloseTo(44 - 2 * ry, 1);
-    // Its bottom sits on the band, above the label, so below the lifeline start nothing.
-    expect(Math.max(...ys(neo))).toBeLessThan(lifelines(neo).D!);
-    expect(span(ys(await render(KINDS, '  theme: default')))).toBeCloseTo(50 - 2 * ry, 1);
+  /** The y of every bounding point of the database's top cylinder, bulges included. */
+  const cylinder = (svg: string): number[] => {
+    const d = /<path[^>]* d="([^"]+)"/.exec(group(svg, 'database'))?.[1] ?? '';
+    return pathPoints(d).map((p) => p.y);
+  };
+
+  it('draws the database cylinder exactly on the 44 px band in redux', async () => {
+    // One-line labels make the row the band stack exactly, so the band runs from 0 to 44.
+    const ys = cylinder(await render(KINDS));
+    expect(Math.min(...ys)).toBeCloseTo(0, 2);
+    expect(Math.max(...ys)).toBeCloseTo(44, 2);
+    // Classic: width / 3 = 50 tall plus its bottom end's ry (25 / 3.5), from the box top.
+    const classic = cylinder(await render(KINDS, '  theme: default'));
+    expect(Math.max(...classic) - Math.min(...classic)).toBeCloseTo(50, 1);
+  });
+
+  it('scales the round symbols, the figure and the cylinder to any band', async () => {
+    const SYMBOLS =
+      'participant S@{ "type": "control" }\nparticipant E@{ "type": "entity" }\nparticipant B@{ "type": "boundary" }\nparticipant D@{ "type": "database" }\nactor A\nS->>A: x';
+    for (const band of [10, 20, 44, 100]) {
+      const svg = await render(SYMBOLS, `  themeVariables:\n    actorGlyphBand: ${band}`);
+      const lines = lifelines(svg);
+      const at = `band ${band}`;
+      for (const kind of ['control', 'entity', 'boundary']) {
+        const g = group(svg, kind);
+        const r = attr(g, /<circle[^>]* r="([\d.]+)"/);
+        const cy = attr(g, /<circle[^>]* cy="([\d.]+)"/);
+        // v12 neo: a 22 px circle on a 44 px band, so half the band.
+        expect(r, `${at} ${kind}`).toBeCloseTo(band / 2, 1);
+        // Inside the row, and clear of the label and lifeline below.
+        expect(cy - r, `${at} ${kind}`).toBeGreaterThanOrEqual(-0.01);
+        expect(cy + r, `${at} ${kind}`).toBeLessThan(lines.S!);
+      }
+      // The control's head rides on its circle and scales with it.
+      const head = (/<polygon points="([^"]+)"/.exec(group(svg, 'control'))?.[1] ?? '')
+        .split(/[ ,]/)
+        .map(Number)
+        .filter((_, i) => i % 2 === 1);
+      // It rises about 10 px over the circle at band 44, so up to v12 neo's 0.11 px past the
+      // viewBox's top margin (render.spec's documented tolerance), never more.
+      const viewTop = Number(/viewBox="(-?[\d.]+) (-?[\d.]+)/.exec(svg)![2]);
+      expect(Math.min(...head), at).toBeGreaterThanOrEqual(viewTop - 0.12);
+      const ys = cylinder(svg);
+      expect(Math.max(...ys) - Math.min(...ys), `${at} database`).toBeCloseTo(band, 1);
+      expect(Math.min(...ys), at).toBeGreaterThanOrEqual(-0.01);
+      expect(Math.max(...ys), at).toBeLessThan(lines.D!);
+      const r = attr(group(svg, 'actor'), /<circle[^>]* r="([\d.]+)"/);
+      expect(r, `${at} actor`).toBeCloseTo((15 * band) / 65, 1);
+    }
   });
 
   it('draws a collections stack 6 px shorter in redux, so it stops at the lifeline', async () => {

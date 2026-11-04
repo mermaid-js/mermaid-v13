@@ -196,6 +196,30 @@ function activationsOnLifeline(layout: SequenceLayout, parts: Participants, out:
   }
 }
 
+/**
+ * Participant rows: a lifeline starts at or below the bottom of its row; under the band model
+ * (#194) the glyph band lies inside the row, and the label lies under the band and inside the
+ * row, at the top and at the bottom.
+ */
+function rowsHold(layout: SequenceLayout, out: string[]): void {
+  for (const p of layout.participants) {
+    if (p.lifeline.y1 < p.top + p.height - EPS)
+      out.push(`the lifeline of ${p.id} starts inside its row`);
+    const band = p.band;
+    if (!band) continue;
+    const half = p.label.height / 2;
+    const check = (where: string, edge: number, labelY: number): void => {
+      if (band.height <= 0 || edge - band.height < -EPS || edge > p.height + EPS)
+        out.push(`the ${where} glyph band of ${p.id} leaves its row`);
+      if (labelY - half < edge - EPS) out.push(`the ${where} label of ${p.id} overlaps its symbol`);
+      if (labelY - half < -EPS || labelY + half > p.height + EPS)
+        out.push(`the ${where} label of ${p.id} leaves its row`);
+    };
+    check('top', band.top, p.labelY);
+    if (p.bottom !== undefined) check('bottom', band.bottom, p.bottomLabelY ?? p.labelY);
+  }
+}
+
 /** Every invariant `layout` breaks; empty when it holds them all. */
 export function sequenceLayoutViolations(model: SequenceModel, layout: SequenceLayout): string[] {
   const out: string[] = [];
@@ -210,5 +234,6 @@ export function sequenceLayoutViolations(model: SequenceModel, layout: SequenceL
   framesHold(model, layout, rectsOf, out);
   notesClear(layout, out);
   activationsOnLifeline(layout, parts, out);
+  rowsHold(layout, out);
   return out;
 }

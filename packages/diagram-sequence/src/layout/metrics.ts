@@ -121,6 +121,14 @@ export interface FixedLengths {
   readonly titleBand: number;
   /** A box's members are widened by this many `boxMargin`s before its label is fitted (a count). */
   readonly boxLabelMargins: number;
+  /** How far a `collections` stack's back rect sits left and below its front one. */
+  readonly stackOffset: number;
+  /** The radius of the round symbols (control, entity, boundary) in classic geometry. */
+  readonly figureRadius: number;
+  /** The band model (`ThemeLengths.glyphBand`): glyph to label (v12 `GLYPH_LABEL_GAP`). */
+  readonly glyphLabelGap: number;
+  /** The band model: label to lifeline (v12 `LABEL_LIFELINE_GAP`). */
+  readonly labelLifelineGap: number;
 }
 
 export interface MetricsTable {
@@ -188,8 +196,8 @@ const PX: MetricsTable = {
     glyphLifeline: { actor: 80, boundary: 80, control: 75, entity: 75 },
     databaseTextMargins: 2,
     // v12 `svgDraw.js` label rows: below the stack, the cylinder, the figure or the glyph.
+    // A `collections` label is centred in its front rect, `stackOffset` down.
     symbolLabelTop: {
-      collections: 6,
       database: 35,
       actor: 35,
       control: 34,
@@ -210,6 +218,10 @@ const PX: MetricsTable = {
     actorPadY: 0,
     titleBand: 40,
     boxLabelMargins: 8,
+    stackOffset: 6,
+    figureRadius: 22,
+    glyphLabelGap: 6,
+    labelLifelineGap: 6,
   },
 };
 
@@ -283,6 +295,10 @@ const CELL: MetricsTable = {
     actorPadY: 1,
     titleBand: 2,
     boxLabelMargins: 2,
+    stackOffset: 0,
+    figureRadius: 0,
+    glyphLabelGap: 0,
+    labelLifelineGap: 0,
   },
 };
 
@@ -290,18 +306,13 @@ const CELL: MetricsTable = {
  * Lengths the theme sets (D152, #194): v12 `look: neo` geometry in the redux themes, v12
  * classic in the classic themes, read from geometry theme variables, never from a theme name.
  * `glyphBand` above 0 turns on v12's band model (`actorBands.ts`): every row is as tall as its
- * tallest glyph-gap-label-gap stack, every lifeline starts at the row's bottom, and the
- * symbols stand on the band.
+ * tallest glyph-gap-label-gap stack (`glyphLabelGap`, `labelLifelineGap`), every lifeline starts
+ * at the row's bottom, the symbols stand on the band, scaled to it, and a `collections` stack is
+ * `stackOffset` shorter.
  */
 export interface ThemeLengths {
   /** `actorGlyphBand`: height of the band a symbol stands in; 0 keeps v12 classic symbols. */
   readonly glyphBand: number;
-  /** Band model: from the bottom of the glyph to the top of its label (v12 `GLYPH_LABEL_GAP`). */
-  readonly glyphLabelGap: number;
-  /** Band model: from the bottom of a label to the lifeline (v12 `LABEL_LIFELINE_GAP`). */
-  readonly labelLifelineGap: number;
-  /** Band model: a `collections` stack is drawn this much shorter, so it stops at the lifeline. */
-  readonly stackInset: number;
   /** `messageEndGap`: a message stops this far short of its target, past the arrowhead room. */
   readonly messageEndGap: number;
   /** `labelBoxExtraHeight`: added to a fragment's label tab. */
@@ -310,7 +321,7 @@ export interface ThemeLengths {
   readonly footerPadding: number;
 }
 
-/** The theme variable behind each themed length; the rest are the band model's constants. */
+/** The theme variable behind each themed length. */
 const THEME_VARIABLES = {
   glyphBand: 'actorGlyphBand',
   messageEndGap: 'messageEndGap',
@@ -318,24 +329,10 @@ const THEME_VARIABLES = {
   footerPadding: 'actorFooterPadding',
 } as const;
 
-// v12 classic: no band, no extras. A layout given no theme draws this.
-const CLASSIC_PX: ThemeLengths = {
+// v12 classic: no band, no extras. A px layout given no theme draws this, and so does every
+// cell layout: text draws every symbol as a box, so it has no glyph band and no neo extras.
+const CLASSIC: ThemeLengths = {
   glyphBand: 0,
-  glyphLabelGap: 6,
-  labelLifelineGap: 6,
-  stackInset: 6,
-  messageEndGap: 0,
-  labelBoxExtra: 0,
-  footerPadding: 0,
-};
-
-// Text output draws every symbol as a box, so it has no glyph band and no neo extras: the cell
-// set is the same for every theme.
-const THEMED_CELL: ThemeLengths = {
-  glyphBand: 0,
-  glyphLabelGap: 0,
-  labelLifelineGap: 0,
-  stackInset: 0,
   messageEndGap: 0,
   labelBoxExtra: 0,
   footerPadding: 0,
@@ -346,9 +343,8 @@ export function themeLengths(
   units: UnitProfile,
   theme: Pick<Theme, 'number'> | undefined
 ): ThemeLengths {
-  if (units.id === 'cell') return THEMED_CELL;
-  if (!theme) return CLASSIC_PX;
-  const out: Record<string, number> = { ...CLASSIC_PX };
+  if (units.id === 'cell' || !theme) return CLASSIC;
+  const out: Record<string, number> = { ...CLASSIC };
   for (const [key, name] of Object.entries(THEME_VARIABLES)) {
     const v = theme.number(name);
     out[key] = Number.isFinite(v) && v > 0 ? Math.min(v, MAX_CONFIG) : 0;

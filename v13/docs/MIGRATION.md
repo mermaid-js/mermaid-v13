@@ -332,7 +332,7 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `leanPaddingX` / `leanPaddingY` (totals; per side for the inverted trapezoid) | 2 × padding / padding | padding |
 | `oddPaddingX` / `oddPaddingY` (totals) | 42 / 24 | padding |
 | `actorRadius` (sequence participant box corner) | 6 | 3 |
-| `actorGlyphBand` (sequence: the band symbols stand in; above 0 turns on v12 neo's band model) | 44 | 0 (each symbol at its classic place) |
+| `actorGlyphBand` (sequence: the band symbols stand in, scaled to it; above 0 turns on v12 neo's band model) | 44 | 0 (each symbol at its classic place) |
 | `messageEndGap` (sequence: a message stops this far short of its target, past the head room; a bidirectional one starts this far in) | 3 | 0 |
 | `labelBoxExtraHeight` (sequence: added to a fragment's label tab) | 15 | 0 |
 | `actorFooterPadding` (sequence: room below a drawing with participants) | 30 | 0 |

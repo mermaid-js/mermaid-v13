@@ -24,6 +24,10 @@ interface HeadShape {
 /** The message line's width (v12 `.messageLine0/1`), which strokeWidth markers scale with. */
 export const MESSAGE_STROKE = 1.5;
 const DOTTED = '3, 3' as SafeValue;
+/** v12's curved self message: its second control point is 1.5 drops below the start. */
+const SELF_CURVE_C2_DROP = 1.5;
+/** v12 `drawSequenceNumber`: the text shrinks past 3, then past 5 characters. */
+const NUMBER_LENGTHS = { short: 3, medium: 5 } as const;
 
 const HEADS = {
   // `-arrowhead`, markerUnits userSpaceOnUse; v12 CSS fills and strokes it in signalColor.
@@ -284,7 +288,7 @@ export function drawMessageLine(
       // v12: `C x+60,y-10 x+60,y+30 x,y+20`, with the reach and drop from the layout.
       const drop = bottom - y;
       const c1: Point = [x0 + (right - x), y - drop / 2];
-      const c2: Point = [right, y + (drop * 3) / 2];
+      const c2: Point = [right, y + drop * SELF_CURVE_C2_DROP];
       p.curveTo(c1[0], c1[1], c2[0], c2[1], x, bottom);
       endAngle = Math.atan2(bottom - c2[1], x - c2[0]);
       startAngle = Math.atan2(c1[1] - y, c1[0] - x0) + Math.PI;
@@ -344,8 +348,8 @@ export function drawNumber(
   const text = String(value);
   const [short, medium, long] = d.numberFontSizes;
   let size = short;
-  if (text.length > 5) size = long;
-  else if (text.length > 3) size = medium;
+  if (text.length > NUMBER_LENGTHS.medium) size = long;
+  else if (text.length > NUMBER_LENGTHS.short) size = medium;
   w.leaf('circle', {
     class: 'sequenceNumberCircle',
     cx: x,

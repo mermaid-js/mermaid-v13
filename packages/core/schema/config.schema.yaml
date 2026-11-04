@@ -409,8 +409,12 @@ properties:
         description: |
           Height in px of the band a sequence symbol (actor, boundary, control, entity, database)
           stands in, above its label. Above 0, every participant row is tall enough for the band,
-          its label and v12's 6 px gaps, and lifelines start at the bottom of the row; 0 draws
-          each symbol at its own v12 classic place.
+          its label and v12's 6 px gaps, lifelines start at the bottom of the row, and the symbols
+          are scaled to the band: the round symbols are as tall as it, the stick figure and the
+          database cylinder fill it. Any height is accepted: on a band lower than the cylinder's
+          two ends the ends flatten to half the band each, and the control symbol's arrowhead
+          shrinks with a smaller circle but never grows past v12's size. 0 draws each symbol at
+          its own v12 classic place.
         type: [number, string]
         x-mermaid:
           status: honoured

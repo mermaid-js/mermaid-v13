@@ -109,36 +109,47 @@ function participantLayouts(env: Env, footer: number): ParticipantLayout[] {
   return out;
 }
 
-/** Kinds v12's band model stands on the glyph band; the rest fill the row as boxes. */
+/**
+ * Kinds v12's band model stands on the glyph band; the rest fill the row as boxes. The one
+ * list: the renderer draws on the band of whichever participant has one.
+ */
 const GLYPHS: ReadonlySet<string> = new Set(['actor', 'boundary', 'control', 'entity', 'database']);
 
 /**
  * From the top of a participant's box to the centre of its label (v12 `svgDraw.js` rows), and
  * the glyph band under the band model (v12 `actorBands.ts` `headerBands`, `footerBands`).
  */
-function labels(env: Env, c: Column): Pick<ParticipantLayout, 'labelY' | 'bottomLabelY' | 'band'> {
+function labels(
+  env: Env,
+  c: Column
+): Pick<ParticipantLayout, 'labelY' | 'bottomLabelY' | 'band' | 'stackInset'> {
   const { m } = env;
-  if (m.glyphBand <= 0) {
+  const neo = m.glyphBand > 0;
+  // v12 draws a `collections` label in its front rect, `stackOffset` down; under the band model
+  // the rect is that much shorter.
+  if (c.p.kind === 'collections') {
+    const inset = neo ? m.stackOffset : 0;
+    return {
+      labelY: m.stackOffset + m.half(c.height - inset),
+      ...(neo ? { stackInset: inset } : {}),
+    };
+  }
+  if (!neo) {
     const row = c.p.kind === 'actor' && m.figureLabelHeight > 0 ? m.figureLabelHeight : c.height;
     return { labelY: (m.symbolLabelTop[c.p.kind] ?? 0) + m.half(row) };
   }
+  if (!GLYPHS.has(c.p.kind)) return { labelY: m.half(c.height) };
   const text = c.label.height;
   const band = {
     height: m.glyphBand,
     top: c.height - m.labelLifelineGap - text - m.glyphLabelGap,
     bottom: m.labelLifelineGap + m.glyphBand,
-    inset: m.stackInset,
   };
-  if (GLYPHS.has(c.p.kind))
-    return {
-      labelY: c.height - m.labelLifelineGap - m.half(text),
-      bottomLabelY: band.bottom + m.glyphLabelGap + m.half(text),
-      band,
-    };
-  // v12 draws a `collections` label in its front rect, `inset` shorter and moved down by it.
-  if (c.p.kind === 'collections')
-    return { labelY: m.stackInset + m.half(c.height - m.stackInset), band };
-  return { labelY: m.half(c.height), band };
+  return {
+    labelY: c.height - m.labelLifelineGap - m.half(text),
+    bottomLabelY: band.bottom + m.glyphLabelGap + m.half(text),
+    band,
+  };
 }
 
 /** v12 draws a box from its first member's margin to its last, down to the last row. */

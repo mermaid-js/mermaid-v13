@@ -5,7 +5,7 @@ import { cellProfile, pxProfile, type UnitProfile } from '@mermaid-js/core/layou
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { SequenceModel } from '../model.ts';
-import { FIXTURES, hello } from './fixtures.ts';
+import { FIXTURES, hello, model as modelOf, msg, p as part } from './fixtures.ts';
 import { layoutSequence, sequenceLayoutViolations, type SequenceLayout } from './index.ts';
 
 // The two geometry sets (D152, #194): `redux` carries v12 `look: neo`, `default` v12 classic.
@@ -72,10 +72,21 @@ describe('sequence layout invariants', () => {
       }
     }
 
-  it('cell layouts land on whole cells, and are the same in every theme', () => {
+  it('cell layouts ignore the geometry theme variables: text draws symbols as boxes', () => {
+    const vars = {
+      actorGlyphBand: 100,
+      messageEndGap: 9,
+      labelBoxExtraHeight: 20,
+      actorFooterPadding: 50,
+    };
     for (const [name, model] of Object.entries(FIXTURES)) {
-      const neo = lay(model, cellProfile(), cellMeasurer, {}, 'redux');
-      expect(neo, name).toEqual(lay(model, cellProfile(), cellMeasurer, {}, 'default'));
+      const set = lay(model, cellProfile(), cellMeasurer, {}, 'default', vars);
+      expect(set, name).toEqual(lay(model, cellProfile(), cellMeasurer, {}, 'default'));
+    }
+  });
+
+  it('cell layouts land on whole cells', () => {
+    for (const [name, model] of Object.entries(FIXTURES)) {
       const stray: string[] = [];
       const walk = (v: unknown, path: string): void => {
         if (typeof v === 'number' && !Number.isInteger(v)) stray.push(`${path}=${v}`);
@@ -214,7 +225,6 @@ describe('sequence layout in px with v12 neo geometry (redux themes, #194)', () 
     const l = neo(FIXTURES.lifecycle!);
     for (const p of l.participants) {
       const h = p.label.height;
-      expect(p.band, p.id).toBeDefined();
       if (GLYPHS.has(p.kind)) {
         // Header: anchored at the lifeline, growing up; footer: anchored at it, growing down.
         expect(p.band!.top, p.id).toBe(p.height - GAP - h - GAP);
@@ -223,9 +233,13 @@ describe('sequence layout in px with v12 neo geometry (redux themes, #194)', () 
         expect(p.bottomLabelY, p.id).toBe(GAP + BAND + GAP + h / 2);
       } else if (p.kind === 'collections') {
         // Both rects are 6 shorter, the label centred in the front one.
-        expect(p.band!.inset, p.id).toBe(6);
+        expect(p.band, p.id).toBeUndefined();
+        expect(p.stackInset, p.id).toBe(6);
         expect(p.labelY, p.id).toBe(6 + (p.height - 6) / 2);
-      } else expect(p.labelY, p.id).toBe(p.height / 2);
+      } else {
+        expect(p.band, p.id).toBeUndefined();
+        expect(p.labelY, p.id).toBe(p.height / 2);
+      }
     }
     expect(classic(FIXTURES.lifecycle!).participants.every((p) => p.band === undefined)).toBe(true);
   });
@@ -268,5 +282,63 @@ describe('sequence layout in px with v12 neo geometry (redux themes, #194)', () 
     const asClassic = lay(FIXTURES.lifecycle!, pxProfile, tableMeasurer, {}, 'default', font);
     expect(neo(FIXTURES.lifecycle!, { ...OFF, ...font })).toEqual(asClassic);
     expect(lay(hello).participants[0]!.height).toBe(65);
+  });
+  // Every kind, one-, two- and three-line labels, created and destroyed participants.
+  const SYMBOLS = modelOf(
+    [
+      part('P'),
+      part('U', 'actor', { label: 'one<br/>two<br/>three' }),
+      part('W', 'boundary', { label: 'one<br/>two' }),
+      part('S', 'control'),
+      part('E', 'entity', { label: 'a<br/>b' }),
+      part('D', 'database', { label: 'Data<br/>base' }),
+      part('L', 'collections', { createdBy: 'm:mk' }),
+      part('Q', 'queue', { destroyedBy: 'm:rm' }),
+    ],
+    [
+      msg('P', 'U', 'hi'),
+      { ...msg('S', 'L', 'make'), ast: 'm:mk' },
+      { ...msg('Q', 'S', 'gone'), ast: 'm:rm' },
+      msg('D', 'E', 'q'),
+    ]
+  );
+
+  it('holds the invariants for any band, with multi-line labels', () => {
+    const models = { ...FIXTURES, symbols: SYMBOLS };
+    for (const band of [1, 10, 20, 44, 100])
+      for (const sequence of [{}, VARIANT])
+        for (const [name, m] of Object.entries(models)) {
+          const l = lay(m, pxProfile, tableMeasurer, sequence, 'redux', { actorGlyphBand: band });
+          expect(sequenceLayoutViolations(m, l), `${name}, band ${band}`).toEqual([]);
+        }
+  });
+
+  it('puts a band only on the kinds that stand on it', () => {
+    const l = neo(SYMBOLS);
+    const on = l.participants.filter((p) => p.band !== undefined).map((p) => p.kind);
+    expect(on.sort()).toEqual(['actor', 'boundary', 'control', 'database', 'entity']);
+  });
+
+  it('catches a symbol or label off its band and a lifeline inside its row', () => {
+    const good = neo(SYMBOLS);
+    expect(sequenceLayoutViolations(SYMBOLS, good)).toEqual([]);
+    const u = good.participants.findIndex((p) => p.id === 'U');
+    const p = good.participants[u]!;
+    const broken = (q: Partial<typeof p>): string[] => {
+      const participants = [...good.participants];
+      participants[u] = { ...p, ...q };
+      return sequenceLayoutViolations(SYMBOLS, { ...good, participants });
+    };
+    expect(broken({ band: { ...p.band!, top: p.height + 1 } })).toContain(
+      'the top glyph band of U leaves its row'
+    );
+    expect(broken({ labelY: p.band!.top })).toContain('the top label of U overlaps its symbol');
+    expect(broken({ bottomLabelY: p.height })).toContain('the bottom label of U leaves its row');
+    expect(broken({ band: { ...p.band!, bottom: 0 } })).toContain(
+      'the bottom glyph band of U leaves its row'
+    );
+    expect(broken({ lifeline: { ...p.lifeline, y1: p.top + p.height - 1 } })).toContain(
+      'the lifeline of U starts inside its row'
+    );
   });
 });

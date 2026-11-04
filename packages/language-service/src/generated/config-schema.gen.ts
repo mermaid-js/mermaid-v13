@@ -423,7 +423,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "actorGlyphBand": {
-          "description": "Height in px of the band a sequence symbol (actor, boundary, control, entity, database)\nstands in, above its label. Above 0, every participant row is tall enough for the band,\nits label and v12's 6 px gaps, and lifelines start at the bottom of the row; 0 draws\neach symbol at its own v12 classic place.\n",
+          "description": "Height in px of the band a sequence symbol (actor, boundary, control, entity, database)\nstands in, above its label. Above 0, every participant row is tall enough for the band,\nits label and v12's 6 px gaps, lifelines start at the bottom of the row, and the symbols\nare scaled to the band: the round symbols are as tall as it, the stick figure and the\ndatabase cylinder fill it. Any height is accepted: on a band lower than the cylinder's\ntwo ends the ends flatten to half the band each, and the control symbol's arrowhead\nshrinks with a smaller circle but never grows past v12's size. 0 draws each symbol at\nits own v12 classic place.\n",
           "type": [
             "number",
             "string"
