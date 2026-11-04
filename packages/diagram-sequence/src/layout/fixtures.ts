@@ -16,13 +16,13 @@ import type {
 
 let ordinal = 0;
 
-const p = (
+export const p = (
   id: string,
   kind: ParticipantKind = 'participant',
   extra: Partial<SequenceParticipant> = {}
 ): SequenceParticipant => ({ id, ast: `p:${id}`, label: id, kind, ...extra });
 
-const msg = (
+export const msg = (
   from: string,
   to: string,
   text: string,
@@ -38,7 +38,7 @@ const msg = (
   ...extra,
 });
 
-const note = (
+export const note = (
   placement: SequenceNote['placement'],
   participants: SequenceNote['participants'],
   text: string,
@@ -52,14 +52,14 @@ const note = (
   ...(wrap !== undefined ? { wrap } : {}),
 });
 
-const act = (participant: string, active: boolean): SequenceStatement => ({
+export const act = (participant: string, active: boolean): SequenceStatement => ({
   kind: 'activation',
   ast: `st:${ordinal++}`,
   participant,
   active,
 });
 
-const frag = (
+export const frag = (
   fragment: FragmentKind,
   ...sections: [string, SequenceStatement[]][]
 ): SequenceStatement => ({
@@ -75,14 +75,14 @@ const frag = (
   ),
 });
 
-const rect = (color: string, statements: SequenceStatement[]): SequenceStatement => ({
+export const rect = (color: string, statements: SequenceStatement[]): SequenceStatement => ({
   kind: 'rect',
   ast: `st:${ordinal++}`,
   color,
   statements,
 });
 
-const model = (
+export const model = (
   participants: SequenceParticipant[],
   statements: SequenceStatement[],
   extra: Partial<SequenceModel> = {}

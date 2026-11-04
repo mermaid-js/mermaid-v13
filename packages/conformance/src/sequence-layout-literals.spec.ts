@@ -11,6 +11,7 @@ const ALLOWED: Readonly<Record<string, string>> = {
   '1': 'the previous index; a counter step',
   '2': 'both sides of a box; halving',
   '100': 'sequence numbers are rounded to two decimals, as in v12',
+  '1e-6': 'the float tolerance of the invariant checks',
 };
 
 /** The numeric literals in TypeScript source, outside comments and strings. */

@@ -6,6 +6,13 @@
  * Shared contract (run notes GAPS.md): #141 lands the type, #139 adopts it and may extend it
  * additively. Text is kept as written (no sanitising); `<br>` and entity codes are resolved when
  * labels are measured and drawn.
+ *
+ * What the parser guarantees, as v12's DB did:
+ * - every id a message, note or activation names is in `participants` (v12 adds a participant
+ *   at its first mention). The layout leaves out a statement that breaks this, with a
+ *   `SEQUENCE_UNKNOWN_PARTICIPANT` warning, and `sequenceLayoutViolations` reports it;
+ * - `autonumber N` is `{ start: N, step: 1 }` (v12 restarts the step), `autonumber N M` is
+ *   `{ start: N, step: M }`, a bare `autonumber` and `autonumber off` carry neither.
  */
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
@@ -26,14 +33,20 @@ export interface SequenceParticipant {
   readonly ast: AstId;
   /** The description: the alias when one was given, else the id. */
   readonly label: string;
+  /** The alias as written (`as …` or `@{ alias }`); undefined when none was. */
+  readonly alias?: string;
   readonly kind: ParticipantKind;
   /** `wrap:`/`nowrap:` as written; undefined follows `sequence.wrap`. */
   readonly wrap?: boolean;
   /** Index into `SequenceModel.boxes`. */
   readonly box?: number;
-  /** AST id of the message that creates it (`create participant …`). */
+  /** AST id of the `create participant …` statement. */
+  readonly createAst?: AstId;
+  /** AST id of the message that creates it: the next message after `create`. */
   readonly createdBy?: AstId;
-  /** AST id of the message that destroys it (`destroy …`). */
+  /** AST id of the `destroy …` statement. */
+  readonly destroyAst?: AstId;
+  /** AST id of the message that destroys it: the next message after `destroy`. */
   readonly destroyedBy?: AstId;
 }
 
@@ -129,6 +142,8 @@ export interface FragmentSection {
   /** AST id of the `else`/`and`/`option` line; undefined for the first section. */
   readonly ast?: AstId;
   readonly label: string;
+  /** `wrap:`/`nowrap:` as written; v12 wraps fragment titles to the fragment either way. */
+  readonly wrap?: boolean;
   readonly statements: readonly SequenceStatement[];
 }
 
@@ -156,6 +171,7 @@ export interface SequenceAutonumber {
   /** `st:<ordinal>`. */
   readonly ast: AstId;
   readonly start?: number;
+  /** The parser writes 1 for `autonumber N`; the layout does the same when it is missing. */
   readonly step?: number;
   readonly visible: boolean;
 }

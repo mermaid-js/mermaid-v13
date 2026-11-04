@@ -16,6 +16,7 @@ import { Bounds } from './bounds.ts';
 import {
   actorMargins,
   boxSizes,
+  shownBoxes,
   measureColumns,
   placeColumns,
   type BoxGeom,
@@ -35,9 +36,10 @@ export function layoutSequence(model: SequenceModel, ctx: SequenceLayoutContext)
   const sizes = boxSizes(model, env);
 
   const b = new Bounds(m.boxMargin);
-  if (model.boxes.length > 0) {
+  const shown = shownBoxes(model, env);
+  if (shown.length > 0) {
     b.bump(m.boxMargin.y);
-    if (model.boxes.some((box) => box.label !== '')) b.bump(sizes.labelHeight);
+    if (shown.some((box) => box.label !== '')) b.bump(sizes.labelHeight);
   }
   const boxes = placeColumns(model, env, sizes, b);
   const rowHeight = [...env.columns.values()][0]?.height ?? m.height;
@@ -46,15 +48,15 @@ export function layoutSequence(model: SequenceModel, ctx: SequenceLayoutContext)
   const rows = new Rows(env, geometryOf(model.statements, env), b);
   rows.statements(model.statements);
 
-  // The bottom row: mirrored boxes, or where they would be.
-  const footer = b.y + 2 * m.boxMargin.y;
+  // The bottom row: mirrored boxes, or where they would be; below the tail of any activation.
+  const footer = Math.max(b.y + 2 * m.boxMargin.y, ...rows.activations.map((a) => a.y + a.height));
   if (env.mirror) {
-    b.bump(2 * m.boxMargin.y);
+    b.bump(footer - b.y);
     b.bump(rowHeight + m.boxMargin.y);
   }
   const participants = participantLayouts(env, footer);
   const boxLayouts = boxLayoutsOf(env, boxes, sizes, b);
-  if (model.boxes.length > 0) b.bump(m.boxMargin.y);
+  if (shown.length > 0) b.bump(m.boxMargin.y);
 
   const layout = {
     units: ctx.units.id,

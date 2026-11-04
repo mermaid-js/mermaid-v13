@@ -130,7 +130,8 @@ const PX: MetricsTable = {
     boxMargin: xy(0, 0),
     boxTextMargin: xy(0, 0),
     noteMargin: xy(0, 0),
-    activationWidth: 0,
+    // A bar of no width could not show what it stacks on.
+    activationWidth: 1,
     wrapPadding: 0,
     labelBoxWidth: 0,
     labelBoxHeight: 0,

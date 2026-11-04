@@ -106,7 +106,8 @@ export class Rows {
           break;
         case 'autonumber':
           this.seqIndex = orKeep(s.start, this.seqIndex);
-          this.seqStep = orKeep(s.step, this.seqStep);
+          // v12: `autonumber N` restarts the step at 1.
+          this.seqStep = orKeep(s.step ?? (s.start === undefined ? undefined : 1), this.seqStep);
           this.numbers = s.visible || this.env.seq.showSequenceNumbers === true;
           break;
       }
@@ -150,12 +151,20 @@ export class Rows {
     this.b.insert(a.startx, end - m.activationRise, a.stopx, end);
   }
 
-  /** v12 `boundMessage`: the rows of a message; returns the y of its line. */
-  private boundMessage(g: MessageX, self: boolean): number {
+  /**
+   * v12 `boundMessage`: the rows of a message. `reserve` is the room the message needs above
+   * its line (half of a box centred on it); the row moves down when the label gives less.
+   * Returns the top of the row and the y of the line.
+   */
+  private boundMessage(g: MessageX, self: boolean, reserve: number): [number, number] {
     const { b } = this;
     const { m } = this.env;
-    const starty = b.y;
     const textH = g.label.height;
+    const first = g.label.lines.length > 0 ? g.label.lineHeight : 0;
+    const gap = !self || !this.env.rightAngles ? m.boxMargin.y : 0;
+    const above = m.messageLeadLines * first + textH + gap;
+    if (above < reserve) b.bump(reserve - above);
+    const starty = b.y;
     b.bump(m.messageLead);
     b.bump(m.messageLeadLines * (g.label.lines.length > 0 ? g.label.lineHeight : 0));
     let total = textH - m.messageLead;
@@ -166,7 +175,9 @@ export class Rows {
       total += m.selfLoopAdvance;
       const dx = Math.max(m.half(g.label.width), m.half(m.width));
       const top = b.y - m.selfLoopRise + total;
-      b.insert(g.startx - dx, top, g.stopx + dx, b.y + m.selfLoopAdvance + total);
+      // Room for the loop itself, which reaches further than v12 reserved with a narrow width.
+      const right = Math.max(g.stopx + dx, this.selfLoop(g, lineY).right);
+      b.insert(g.startx - dx, top, right, b.y + m.selfLoopAdvance + total);
     } else {
       total += m.boxMargin.y;
       lineY = b.y + total;
@@ -174,7 +185,17 @@ export class Rows {
     }
     b.bump(total);
     b.insert(g.fromBounds, starty, g.toBounds, b.y);
-    return lineY;
+    return [starty, lineY];
+  }
+
+  /** The column a message creates, or destroys with a bottom box drawn at its row. */
+  private boxAt(s: SequenceMessage): Column | undefined {
+    const created = this.createdBy.get(s.ast);
+    if (created && created.p.id === s.to) return created;
+    const destroyed = this.destroyedBy.get(s.ast);
+    if (this.env.mirror && destroyed && (destroyed.p.id === s.from || destroyed.p.id === s.to))
+      return destroyed;
+    return undefined;
   }
 
   /** v12 `adjustCreatedDestroyedData`: a creating or destroying message ends at the symbol. */
@@ -216,11 +237,15 @@ export class Rows {
 
   private message(s: SequenceMessage): void {
     const g = this.geometry.messages.get(s);
-    if (!g) return;
+    if (!g) {
+      this.unknown(s.ast, [s.from, s.to]);
+      this.seqIndex = Math.round((this.seqIndex + this.seqStep) * 100) / 100;
+      return;
+    }
     const { m, seq } = this.env;
-    const starty = this.b.y;
     const self = s.from === s.to;
-    const lineY = this.boundMessage(g, self);
+    const box = this.boxAt(s);
+    const [starty, lineY] = this.boundMessage(g, self, box ? m.half(box.height) : 0);
     this.lifecycle(s, g, starty, lineY);
     const span = [Math.min(g.startx, g.stopx), Math.max(g.startx, g.stopx)] as const;
     const label = g.label;
@@ -246,6 +271,11 @@ export class Rows {
       ...(s.central ? { central: s.central } : {}),
     };
     this.messages.push(layout);
+    // Frames hold the label too, which v12 left to overrun them.
+    if (layout.label) {
+      const l = layout.label;
+      this.b.insert(l.x, l.y, l.x + l.width, l.y + l.height);
+    }
     // v12 rounds to two decimals against floating point drift.
     this.seqIndex = Math.round((this.seqIndex + this.seqStep) * 100) / 100;
     if (s.activation === 'activate') this.activate(s.to);
@@ -273,9 +303,22 @@ export class Rows {
     return REVERSE_ARROWS.has(s.arrow) === ltr ? g.toBounds - m.lifelineHalf : left;
   }
 
+  /** A statement naming a participant the model does not declare is left out, with a warning. */
+  private unknown(ast: AstId, ids: readonly string[]): void {
+    const missing = ids.filter((id) => !this.env.columns.has(id));
+    this.env.warn({
+      code: 'SEQUENCE_UNKNOWN_PARTICIPANT',
+      message: `Left out a statement that names an undeclared participant: ${missing.join(', ')}`,
+      astIds: [ast],
+    });
+  }
+
   private note(s: SequenceNote): void {
     const g = this.geometry.notes.get(s);
-    if (!g) return;
+    if (!g) {
+      this.unknown(s.ast, s.participants);
+      return;
+    }
     const { b, env } = this;
     const { m } = env;
     b.bump(m.boxMargin.y);
@@ -301,7 +344,7 @@ export class Rows {
   }
 
   /** Closes a frame: it reaches past its last row and holds its tab. */
-  private closeFrame(frame: OpenFrame, minWidth: number, minHeight: number): Rect {
+  private closeFrame(frame: OpenFrame, minWidth: number, minBottom: number): Rect {
     const { b } = this;
     b.close();
     const empty = frame.startx === undefined || frame.stopx === undefined;
@@ -310,7 +353,7 @@ export class Rows {
       : [frame.startx as number, frame.stopx as number];
     const ex = Math.max(stopx, sx + minWidth);
     const sy = frame.starty;
-    const ey = Math.max(frame.stopy ?? b.y, b.y, sy + minHeight);
+    const ey = Math.max(frame.stopy ?? b.y, b.y, minBottom);
     // Frames around this one hold what this one grew by.
     if (empty || ex !== frame.stopx || ey !== frame.stopy) b.insert(sx, sy, ex, ey);
     b.bump(ey - b.y);
@@ -353,8 +396,24 @@ export class Rows {
       width: Math.max(m.labelBoxWidth, kind.width + 2 * m.boxTextMargin.x),
       height: Math.max(m.labelBoxHeight, kind.height),
     };
-    const r = this.closeFrame(frame, tab.width, tab.height);
+    // The frame is wide enough for its title right of the tab and for each section label; a
+    // cell more in cells, where halves round down.
+    const slack = m.cells ? 1 : 0;
+    const labels = sections.map((sec) => (sec.text ? sec.text.width + slack : 0));
+    const minWidth = Math.max(
+      tab.width,
+      title ? title.width + m.labelBoxWidth + slack : 0,
+      ...labels
+    );
     const textY = (y: number): number => y + m.boxMargin.y + m.boxTextMargin.y;
+    // And tall enough for its tab, title and section labels, which v12 let an empty last
+    // section's label hang below.
+    const bottom = Math.max(
+      frame.starty + tab.height,
+      title ? textY(frame.starty) + title.height : 0,
+      ...sections.map((sec) => (sec.text ? textY(sec.y) + sec.text.height : 0))
+    );
+    const r = this.closeFrame(frame, minWidth, bottom);
     this.fragments[index] = {
       ast: s.ast,
       kind: s.fragment,
@@ -390,7 +449,7 @@ export class Rows {
     const index = this.rects.length;
     this.rects.length++;
     this.statements(s.statements);
-    const r = this.closeFrame(frame, 0, 0);
+    const r = this.closeFrame(frame, 0, frame.starty);
     this.rects[index] = { ast: s.ast, color: s.color, depth, ...r };
   }
 }

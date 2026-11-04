@@ -19,7 +19,8 @@ export function measureColumns(
   for (const p of model.participants) {
     const wrap = p.wrap ?? env.autoWrap;
     const label = env.measure(p.label, fonts.actor, wrap ? m.width - 2 * m.wrapPadding : Infinity);
-    const width = wrap ? m.width : Math.max(m.width, label.width + 2 * m.wrapPadding);
+    // v12 keeps a wrapped label at `width`; a word longer than that widens the box here.
+    const width = Math.max(m.width, label.width + 2 * m.wrapPadding);
     const height = Math.max(m.height, label.height + 2 * m.actorPadY);
     rowHeight = Math.max(rowHeight, height);
     columns.set(p.id, {
@@ -106,13 +107,20 @@ export interface BoxSizes {
   readonly labelHeight: number;
 }
 
+/** Boxes with a visible member: the others are not drawn and take no room. */
+export function shownBoxes(model: SequenceModel, env: Env): SequenceBox[] {
+  return model.boxes.filter((box) =>
+    box.participants.some((id) => env.columns.get(id)?.visible === true)
+  );
+}
+
 /** Room on each side of a box so that its label fits. */
 export function boxSizes(model: SequenceModel, env: Env): BoxSizes {
   const { m } = env;
   const labels = new Map<SequenceBox, MeasuredLabel>();
   const margins = new Map<SequenceBox, number>();
   let labelHeight = 0;
-  for (const box of model.boxes) {
+  for (const box of shownBoxes(model, env)) {
     let total = 0;
     for (const id of box.participants) {
       const c = env.columns.get(id);

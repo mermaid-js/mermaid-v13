@@ -48,6 +48,10 @@ export interface Env {
   readonly columns: ReadonlyMap<string, Column>;
   /** Participant ids in declaration order, hidden ones included: v12's neighbours. */
   readonly order: readonly string[];
+  /** Each id's place in `order`. */
+  readonly index: ReadonlyMap<string, number>;
+  /** The render's warning sink. */
+  readonly warn: SequenceLayoutContext['warn'];
   measure(text: string, font: FontKey, max: number): MeasuredLabel;
 }
 
@@ -135,16 +139,18 @@ export function envOf(
     mirror: seq.mirrorActors !== false,
     rightAngles: seq.rightAngles === true,
     order: participants.map((p) => p.id),
+    index: new Map(participants.map((p, i) => [p.id, i])),
+    warn: (w) => ctx.warn(w),
     measure: (text, font, max) => layoutLabel(text, font, max > 0 ? max : 1, ctx.measurer),
   };
 }
 
-export const prevOf = (env: Env, id: string): string | undefined =>
-  env.order[env.order.indexOf(id) - 1];
-export const nextOf = (env: Env, id: string): string | undefined => {
-  const i = env.order.indexOf(id);
-  return i < 0 ? undefined : env.order[i + 1];
+const neighbour = (env: Env, id: string, step: number): string | undefined => {
+  const i = env.index.get(id);
+  return i === undefined ? undefined : env.order[i + step];
 };
+export const prevOf = (env: Env, id: string): string | undefined => neighbour(env, id, -1);
+export const nextOf = (env: Env, id: string): string | undefined => neighbour(env, id, 1);
 
 /** The x of a column's lifeline. */
 export const centerOf = (env: Env, c: Column): number => c.x + env.m.half(c.width);
