@@ -38,6 +38,7 @@ const DIAGRAM_ASCII_ENTRY = 'packages/diagram-flowchart/src/ascii.ts';
 const DIAGRAM_LANGUAGE_ENTRY = 'packages/diagram-flowchart/src/language.ts';
 const DIAGRAM_LANGUAGE = 'packages/diagram-flowchart/src/language/fixture.ts';
 const DIAGRAM_PARSER = 'packages/diagram-flowchart/src/parser/fixture.ts';
+const DIAGRAM_FACET = 'packages/diagram-flowchart/src/facet/fixture.ts';
 
 describe('architecture lint rules fire', () => {
   it.each([
@@ -62,6 +63,7 @@ describe('architecture lint rules fire', () => {
     ['import-render-from-language.ts', DIAGRAM_LANGUAGE_ENTRY, 'mermaid/import-boundaries'],
     ['import-render-from-parser.ts', DIAGRAM_LANGUAGE, 'mermaid/import-boundaries'],
     ['import-render-from-parser.ts', DIAGRAM_PARSER, 'mermaid/import-boundaries'],
+    ['import-render-from-parser.ts', DIAGRAM_FACET, 'mermaid/import-boundaries'],
     ['global-config.ts', CORE, 'mermaid/no-global-config'],
     ['global-config.ts', DIAGRAM, 'mermaid/no-global-config'],
     ['nested-quantifier.ts', CORE, 'mermaid/no-nested-quantifier'],
@@ -89,6 +91,12 @@ describe('architecture lint rules fire', () => {
       filePath: join(root, DIAGRAM_PARSER),
     });
     expect(parser?.messages).toHaveLength(2);
+    const [facet] = await eslint.lintText(fixture('import-render-from-facet.ts'), {
+      filePath: join(root, DIAGRAM_FACET),
+    });
+    expect(facet?.messages.map((m) => m.ruleId)).toEqual(
+      Array(3).fill('mermaid/import-boundaries')
+    );
   });
 });
 
@@ -103,6 +111,7 @@ describe('architecture lint rules allow the intended directions', () => {
     ['import-core-ascii.ts', DIAGRAM_ASCII],
     ['import-core-ascii.ts', DIAGRAM_ASCII_ENTRY],
     ['import-parser-from-language.ts', DIAGRAM_LANGUAGE_ENTRY],
+    ['import-parser-from-facet.ts', DIAGRAM_FACET],
     ['import-render-from-language.ts', DIAGRAM],
     ['linear-regex.ts', CORE],
     ['named-char-code.ts', DIAGRAM],

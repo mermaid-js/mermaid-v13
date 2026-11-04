@@ -4,7 +4,7 @@
  * - `mermaid/import-boundaries`: diagram-* → core, mermaid → core + diagram-*, core → nothing;
  *   the mermaid bin (`src/cli.ts`, D85) may also import `node:` builtins;
  *   `core/ascii` imports no SVG code and only ASCII code imports it (DESIGN §6.3);
- *   a diagram's language-side code (`src/language*`, `src/parser/`) never imports its
+ *   a diagram's language-side code (`src/language*`, `src/facet/`, `src/parser/`) never imports its
  *   renderer, plugin, main entry or ASCII code (R-LANG-8, D89).
  * - `mermaid/no-global-config`: no getConfig-style global config lookup.
  * - `mermaid/no-magic-char-code`: char codes are compared with named constants, not numbers.
@@ -41,12 +41,18 @@ const isInside = (dir: string, path: string) => {
   return !rel.startsWith('..') && !isAbsolute(rel);
 };
 /**
- * Code reachable from a diagram's `./language` entry: the entry, `src/language/` and the
- * parser. `src/generated/` (the category table) is generated and not linted.
+ * Code reachable from a diagram's `./language` entry: the entry, `src/language/`, the facet's
+ * own modules in `src/facet/` (completions, hover, tables) and the parser. `src/generated/`
+ * (the category table) is generated and not linted.
  */
 const isLanguageCode = (src: string, filename: string) => {
   const [first] = relative(src, filename).split(sep);
-  return first === 'parser' || first === 'language' || first?.startsWith('language.') === true;
+  return (
+    first === 'parser' ||
+    first === 'facet' ||
+    first === 'language' ||
+    first?.startsWith('language.') === true
+  );
 };
 /** Modules that pull in rendering: `render/`, the plugin and main entry, ASCII code. */
 const isRenderSide = (src: string, target: string) => {
