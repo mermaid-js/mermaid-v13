@@ -59,7 +59,8 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 ## #155 (T3) layout
 
 - #152's reserved end-label room (a fan's gap taller than needed): judged acceptable, not tuned (core change). Three labelled ends on one side: ~120 px gap instead of ~84.
-- For the maintainer / #157 (T5): `class.padding` schema default 5 vs v12's effective 12, and `class.diagramPadding` 20 vs v12's 8. Layout uses 12 and 8 when unset; generating class defaults from the schema would change both.
+- Decided, D125 (draft PR #195), for #157 (T5): set the documented defaults `class.padding` 12 and `class.diagramPadding` 8; keep the namespace fallback at 16; add a MIGRATION.md note that the documented numbers changed from 5 and 20, citing D125.
+- For #157 (T5): if `class.layout` carries v12's `elk` default, default it to the layered layout, as state does under D127 (R-LAYOUT-7).
 - #156 (T4): end markers must stay within 12 px across; multiplicities are kept clear of them only by the engine's `endLabelAcross` offset.
 
 ## #159 (T6) language facet → later tickets
