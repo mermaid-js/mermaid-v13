@@ -1,0 +1,19 @@
+---
+description: every participant type, declared with the @{type} data form
+---
+sequenceDiagram
+  participant P as Participant
+  participant A@{ "type": "actor" }
+  participant B@{ "type": "boundary" }
+  participant C@{ "type": "control" }
+  participant E@{ "type": "entity" }
+  participant D@{ "type": "database" }
+  participant L@{ "type": "collections" }
+  participant Q@{ "type": "queue" }
+  P->>A: to actor
+  A->>B: to boundary
+  B->>C: to control
+  C->>E: to entity
+  E->>D: to database
+  D->>L: to collections
+  L->>Q: to queue

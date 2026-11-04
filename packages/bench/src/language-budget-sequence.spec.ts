@@ -5,23 +5,14 @@
  * text at most four times the cycle. The absolute ≤ 15 ms (D156) on the reference runner is
  * `pnpm --filter bench language:sequence --enforce`.
  */
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService } from '@mermaid-js/language-service';
 import { sequenceLanguage } from '@mermaid-js/diagram-sequence/language';
 import { bestOfEach, typing } from './language.ts';
 import { measureSequence, SEQUENCE_FIXTURE, sequenceCycle } from './language-sequence.ts';
 
-// Until the manifest registers the facet (#145), the service gets it as an eager row.
-const service = createLanguageService({
-  facets: [
-    {
-      type: 'sequence',
-      id: 'sequence',
-      detector: (t) => /^\s*sequenceDiagram/.test(t),
-      facet: sequenceLanguage,
-    },
-  ],
-});
+const service = createLanguageService();
+beforeAll(() => service.preload({ types: ['sequence'] }));
 
 describe('the sequence language-service bench fixture', () => {
   it('is a 50,000-character sequence diagram with no diagnostics', () => {

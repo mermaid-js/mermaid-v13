@@ -1,9 +1,14 @@
 {
   "name": "@mermaid-js/diagram-sequence",
   "version": "13.0.0-alpha.0",
-  "description": "Sequence diagram plugin for Mermaid: parser, model, layout and renderer.",
+  "description": "Sequence diagram plugin for Mermaid: parser, model, layout, renderer and text output.",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/diagram-sequence"
+  },
   "sideEffects": false,
   "exports": {
     ".": {
@@ -38,5 +43,19 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "sequence",
+    "types": [
+      "sequence"
+    ],
+    "formats": [
+      "svg",
+      "ascii"
+    ],
+    "export": "sequence",
+    "ascii": "./dist/ascii.js",
+    "language": "./dist/language.js"
   }
 }

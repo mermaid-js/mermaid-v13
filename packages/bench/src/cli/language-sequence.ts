@@ -14,17 +14,8 @@ import { parseArgs } from './args.ts';
 
 const args = parseArgs(process.argv.slice(2));
 const log = (line: string) => process.stdout.write(line + '\n');
-// Until the manifest registers the facet (#145), the service gets it as an eager row.
-const service = createLanguageService({
-  facets: [
-    {
-      type: 'sequence',
-      id: 'sequence',
-      detector: (t) => /^\s*sequenceDiagram/.test(t),
-      facet: sequenceLanguage,
-    },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['sequence'] });
 
 const texts = typing(SEQUENCE_FIXTURE);
 const r = measureSequence(service, texts, {

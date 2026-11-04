@@ -9,11 +9,12 @@ import { renderSequence } from './render/index.ts';
 /**
  * The sequence diagram plugin (DESIGN §12.1, spec #125): `layoutKind: 'custom'` with its own
  * `SequenceLayout`. `parse` takes the whole source; `layout` measures and places everything;
- * `render` writes the whole `<svg>` document into the writer. Registered by #145 (manifest).
+ * `render` writes the whole `<svg>` document into the writer. The registry loads it from the
+ * package's `mermaid` manifest, with the text hook from `./ascii` (#145).
  */
 export const sequence = {
   id: 'sequence',
-  formats: ['svg'] as const,
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'custom' as const,
   detector: (text: string): boolean => detectSequence(text),
   parse: (text: string, ctx: DiagramParseContext): SequenceParseResult =>

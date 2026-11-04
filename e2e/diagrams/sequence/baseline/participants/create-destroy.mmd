@@ -1,0 +1,15 @@
+---
+description: participants created and destroyed by a message
+---
+sequenceDiagram
+  participant Alice
+  participant Bob
+  Alice->>Bob: Hello Bob
+  create participant Carl
+  Alice->>Carl: Hi Carl
+  create actor D as Donald
+  Carl->>D: Hi
+  destroy Carl
+  Alice-xCarl: We are too many
+  destroy Bob
+  Bob->>Alice: I agree

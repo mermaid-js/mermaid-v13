@@ -1,0 +1,13 @@
+---
+description: activations by statement and by +/- shorthand, stacked
+---
+sequenceDiagram
+  participant A as Alice
+  participant J as John
+  A->>+J: Hello John
+  A->>+J: Are you there?
+  J-->>-A: Yes
+  J-->>-A: Hi Alice
+  activate A
+  A->>J: one more
+  deactivate A

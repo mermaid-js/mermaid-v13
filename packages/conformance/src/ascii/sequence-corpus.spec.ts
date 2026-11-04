@@ -1,9 +1,14 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { cellWidth, graphemes } from '@mermaid-js/core/ascii';
-import type { ArrowKind, SequenceModel, SequenceStatement } from '@mermaid-js/diagram-sequence';
+import {
+  detectSequence,
+  type ArrowKind,
+  type SequenceModel,
+  type SequenceStatement,
+} from '@mermaid-js/diagram-sequence';
 import { MermaidError } from 'mermaid';
 import { sequenceCorpus } from '../sequence/corpus.ts';
-import { asTest, sequenceApi } from '../sequence/render-api.ts';
+import { sequenceApi } from '../sequence/render-api.ts';
 import { renderSequenceAscii, type SequenceAsciiResult } from './sequence-render.ts';
 import { readSequence, sequenceExpectedOf } from './sequence-structure.ts';
 import type { Charset } from './structure.ts';
@@ -58,10 +63,10 @@ const cases: Case[] = [];
 const failed: Record<string, string> = {};
 
 beforeAll(async () => {
-  const svg = await sequenceApi();
+  const svg = sequenceApi();
   for (const item of await sequenceCorpus()) {
-    const source = asTest(item.source);
-    if (source === item.source) continue;
+    const source = item.source;
+    if (!detectSequence(source)) continue;
     let model: SequenceModel;
     try {
       model = (await svg.prepare(source)).parse.model as SequenceModel;

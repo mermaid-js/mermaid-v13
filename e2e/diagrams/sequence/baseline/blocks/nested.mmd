@@ -1,0 +1,18 @@
+---
+description: fragments nested three deep
+---
+sequenceDiagram
+  participant A
+  participant B
+  participant C
+  loop retry
+    A->>B: request
+    alt ok
+      B->>C: forward
+      opt audit
+        C->>C: record
+      end
+    else failed
+      B-->>A: error
+    end
+  end

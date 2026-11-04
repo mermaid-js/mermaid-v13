@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { Mermaid } from 'mermaid';
 import { pathPoints } from './path-bounds.ts';
-import { asTest, sequenceApi } from './render-api.ts';
+import { sequenceApi } from './render-api.ts';
 
 /**
  * What the sequence renderer draws (spec #125 T4), through the public `render()`: participant
@@ -10,12 +10,12 @@ import { asTest, sequenceApi } from './render-api.ts';
  */
 let api: Mermaid;
 beforeAll(async () => {
-  api = await sequenceApi();
+  api = sequenceApi();
 });
 
 const render = async (body: string, config = ''): Promise<string> => {
   const head = config ? `---\nconfig:\n${config}\n---\n` : '';
-  return (await api.render('s', asTest(`${head}sequenceDiagram\n${body}`))).svg;
+  return (await api.render('s', `${head}sequenceDiagram\n${body}`)).svg;
 };
 const count = (svg: string, re: RegExp): number => svg.match(new RegExp(re, 'g'))?.length ?? 0;
 /** The opening tag of the first element whose attributes match `re`. */
@@ -115,7 +115,7 @@ describe('notes, frames, activations, rects and boxes', () => {
   });
 
   it('warns about a rect colour it refuses and keeps the theme fill', async () => {
-    const result = await api.render('s', asTest('sequenceDiagram\nrect url(x)\nA->>B: x\nend'));
+    const result = await api.render('s', 'sequenceDiagram\nrect url(x)\nA->>B: x\nend');
     expect(result.warnings.map((w) => w.code)).toContain('STYLE_VALUE_DROPPED');
     expect(result.svg).not.toContain('url(x)');
   });
@@ -190,9 +190,8 @@ describe('review fixes (#143)', () => {
   it('warns about a refused font family and measures in the font it draws', async () => {
     const bad = await api.render(
       's',
-      asTest(
-        '%%{init:{"sequence":{"actorFontFamily":"x;color:red","actorFontSize":20}}}%%\nsequenceDiagram\nA->>B: x'
-      )
+
+      '%%{init:{"sequence":{"actorFontFamily":"x;color:red","actorFontSize":20}}}%%\nsequenceDiagram\nA->>B: x'
     );
     const good = await render('A->>B: x', '  sequence:\n    actorFontSize: 20');
     expect(bad.warnings.map((w) => w.code)).toContain('STYLE_VALUE_DROPPED');

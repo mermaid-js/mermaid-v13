@@ -1,0 +1,20 @@
+---
+description: participants grouped in boxes, with and without a colour and a title
+---
+sequenceDiagram
+  box Aqua Front end
+    participant B as Browser
+    participant S as Service worker
+  end
+  box rgb(240, 220, 255) Back end
+    participant A as API
+    participant D as Database
+  end
+  box
+    participant X as External
+  end
+  B->>S: fetch
+  S->>A: request
+  A->>D: read
+  A->>X: notify
+  A-->>B: response

@@ -1,0 +1,16 @@
+---
+description: every message arrow, solid and dotted
+---
+sequenceDiagram
+  participant A
+  participant B
+  A->B: solid, no head
+  A-->B: dotted, no head
+  A->>B: solid, arrowhead
+  A-->>B: dotted, arrowhead
+  A<<->>B: solid, both heads
+  A<<-->>B: dotted, both heads
+  A-xB: solid, cross
+  A--xB: dotted, cross
+  A-)B: solid, async
+  A--)B: dotted, async

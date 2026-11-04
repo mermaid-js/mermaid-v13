@@ -2,12 +2,12 @@ import { SaxesParser } from 'saxes';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { assertInert } from '@mermaid-js/core/svg';
-import type { SequenceModel } from '@mermaid-js/diagram-sequence';
+import { detectSequence, type SequenceModel } from '@mermaid-js/diagram-sequence';
 import { MermaidError, type Mermaid, type Prepared, type RenderResult } from 'mermaid';
 import { parseSvg, type SvgElement as SvgNode, type SvgView as SvgTree } from '../svg-tree.ts';
 import { sequenceCorpus } from './corpus.ts';
 import { pathPoints } from './path-bounds.ts';
-import { asTest, sequenceApi } from './render-api.ts';
+import { sequenceApi } from './render-api.ts';
 
 /**
  * Render properties of the sequence renderer (spec #125 T4, DESIGN §13.2, §13.4) over the
@@ -35,13 +35,13 @@ const skipped: { id: string; reason: string }[] = [];
 let api: Mermaid;
 
 beforeAll(async () => {
-  api = await sequenceApi();
+  api = sequenceApi();
   const corpus = await sequenceCorpus();
   for (const theme of THEMES) {
-    const themed = await sequenceApi(theme);
+    const themed = sequenceApi(theme);
     for (const item of corpus) {
-      const source = asTest(item.source);
-      if (source === item.source) continue;
+      const source = item.source;
+      if (!detectSequence(source)) continue;
       try {
         const prepared = await themed.prepare(source, { id: 'mermaid-0' });
         const result = themed.renderSync(source, { id: 'mermaid-0' });
@@ -149,7 +149,7 @@ describe('sequence render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, await sequenceApi(theme));
+    for (const theme of THEMES) fresh.set(theme, sequenceApi(theme));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -251,7 +251,7 @@ describe('sequence render: security and ids', () => {
     for (const source of hostile) {
       let result: RenderResult;
       try {
-        result = await api.render('x', asTest(source));
+        result = await api.render('x', source);
       } catch (e) {
         if (e instanceof MermaidError && e.code === 'SYNTAX') continue;
         throw e;
@@ -268,7 +268,7 @@ describe('sequence render: security and ids', () => {
   });
 
   it('gives two renders in one document no colliding ids', async () => {
-    const source = asTest('sequenceDiagram\n  accTitle: T\n  accDescr: D\n  A->>B: hi');
+    const source = 'sequenceDiagram\n  accTitle: T\n  accDescr: D\n  A->>B: hi';
     const ids = (svg: string): string[] => [...svg.matchAll(/ id="([^"]*)"/g)].map((m) => m[1]!);
     const a = ids((await api.render('mermaid-1', source)).svg);
     const b = ids((await api.render('mermaid-2', source)).svg);

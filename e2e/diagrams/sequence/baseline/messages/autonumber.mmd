@@ -1,0 +1,12 @@
+---
+description: autonumber with a start and step, and turned off
+---
+sequenceDiagram
+  autonumber 10 5
+  Alice->>John: Hello John
+  John-->>Alice: Great
+  Alice->>Alice: Self
+  autonumber off
+  John->>Alice: Not numbered
+  autonumber
+  Alice->>John: Restarted
