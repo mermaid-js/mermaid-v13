@@ -19,6 +19,7 @@ import {
   LineIndex,
   nodeId,
   ParseState,
+  Probe,
   significantTokens,
   skipTo,
 } from '@mermaid-js/core/parser-kit';
@@ -160,6 +161,62 @@ const STATEMENT_START = [
   T.AccDescr,
   T.NodeString,
 ];
+
+// What the parser would accept at its decision points, for the probe (R-LANG-7, D95). Each
+// list is a constant so a parse without a probe allocates nothing for them.
+const STATEMENT_KINDS = [
+  ...STATEMENT_START,
+  T.AccDescrMultilineValue,
+  T.DirectionTB,
+  T.DirectionBT,
+  T.DirectionRL,
+  T.DirectionLR,
+  T.DirectionTD,
+];
+const DOC_KINDS = [...STATEMENT_KINDS, T.Semi, Kind.Newline, T.Space, T.Eof, Kind.EOF];
+const SUBGRAPH_DOC_KINDS = [...DOC_KINDS, T.End];
+const BLANKS = [T.Space, Kind.Newline];
+/** Blanks before the header are optional: where one may stand, so may the header keyword. */
+const HEADER_START = [...BLANKS, T.Graph];
+const DIR_KINDS = [T.NoDir, T.Dir];
+const AFTER_DIR = [T.Space, ...LINE_END];
+const SHAPE_KINDS = [
+  T.SQS,
+  T.PS,
+  T.DiamondStart,
+  T.StadiumStart,
+  T.SubroutineStart,
+  T.CylinderStart,
+  T.DoubleCircleStart,
+  T.EllipseStart,
+  T.TrapStart,
+  T.InvTrapStart,
+  T.TagEnd,
+  T.VertexWithPropsStart,
+];
+const GRAPH = [T.Graph];
+const PS_ONLY = [T.PS];
+const DIAMOND_ONLY = [T.DiamondStart];
+const TRAP_ENDS = [T.TrapEnd, T.InvTrapEnd];
+const STYLE_SEPARATOR = [T.StyleSeparator];
+const SHAPE_DATA = [T.ShapeData];
+const SHAPE_DATA_PARTS = [T.ShapeData, T.ShapeDataEnd];
+const SPACE = [T.Space];
+const AMP = [T.Amp];
+const LINK_KINDS = [T.Link, T.StartLink, T.LinkId];
+const LINK_AFTER_ID = [T.Link, T.StartLink];
+/** After an edge label: an optional blank, then the node. */
+const AFTER_EDGE_LABEL = [T.Space, T.NodeString];
+const PIPE = [T.Pipe];
+const COMMA = [T.Comma];
+const STYLE_WANT = [T.NodeString];
+const LINK_STYLE_INDEX = [T.Default, T.Num];
+const INTERPOLATE_OR_STYLE = [T.Interpolate, T.NodeString];
+const CLICK_ACTION = [T.CallbackName, T.Href, T.Str, T.NodeString];
+const CALLBACK_ARGS = [T.CallbackArgs];
+const LINK_TARGET_OR_TOOLTIP = [T.LinkTarget, T.Str];
+const SUBGRAPH_HEADER = [T.Space, ...LINE_END];
+const SUBGRAPH_TITLE = [T.SQS, ...LINE_END];
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
@@ -304,6 +361,10 @@ class FlowParser {
   private readonly fullTokens: TokenStream;
   private tokens: TokenView;
   private i = 0;
+  /** Probe mode only (R-LANG-7). */
+  private readonly probe: Probe | undefined;
+  /** Source offset {@link tokens} was lexed from (after a restart, mid-document). */
+  private viewFrom = 0;
   /** Line numbers, built for error messages only. */
   private lines: LineIndex | undefined;
   /** Brackets and labels open around the current token, innermost last. */
@@ -350,7 +411,9 @@ class FlowParser {
     });
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
     this.body = this.children;
-    this.fullTokens = lex(src, pre.bodyStart, this.view);
+    const probe = options.probe === undefined ? undefined : new Probe(src, options.probe);
+    this.probe = probe;
+    this.fullTokens = lex(src, pre.bodyStart, this.view, true, probe);
     this.tokens = significantTokens(this.fullTokens);
   }
 
@@ -376,7 +439,7 @@ class FlowParser {
       range: { start: this.pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.fullTokens, options);
+    return st.result(model, ast, this.fullTokens, options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -396,6 +459,15 @@ class FlowParser {
   /** A token's text as v12 saw it (removed spans dropped, entities decoded). */
   private raw(j = this.i): string {
     return cook(this.src, this.start(j), this.end(j), this.view);
+  }
+
+  /**
+   * Probe hook: the parser tests the current token for `kinds` (a constant list), or would
+   * accept them there. Records them when it is the probed token.
+   */
+  private tested(kinds: readonly number[]): void {
+    const p = this.probe;
+    if (p?.isAt(this.tokens, this.i, this.viewFrom)) p.tested(kinds, this.start(this.i));
   }
 
   /** Source start of a token, with the quotes around a string (the lexer drops them). */
@@ -489,6 +561,7 @@ class FlowParser {
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
   private fail(want: readonly number[], hint?: string): never {
+    this.tested(want);
     const { st, src, opens, i } = this;
     const k = this.kind();
     const where = this.range(i);
@@ -591,7 +664,9 @@ class FlowParser {
   /** Skip to the next statement boundary after an error (R-PARSE-4). */
   private recover(): void {
     this.opens.length = 0;
+    const { probe } = this;
     if (this.restartFrom < 0) {
+      probe?.freeze();
       this.i = skipTo(this.tokens, this.i, BOUNDARY);
       return;
     }
@@ -599,27 +674,39 @@ class FlowParser {
     this.restartFrom = -1;
     this.lastRestart = from;
     this.restarts++;
-    this.tokens = significantTokens(lex(this.src, from, this.view, false));
+    // Text lexed again before the probe offset replaces what the probe saw there.
+    const lexedAgain = probe !== undefined && from < probe.offset ? probe : undefined;
+    if (lexedAgain) lexedAgain.reset();
+    else probe?.freeze();
+    this.tokens = significantTokens(lex(this.src, from, this.view, false, lexedAgain));
+    this.viewFrom = from;
     this.i = 0;
   }
 
   // ---- token rules --------------------------------------------------------------------
 
   private expect(k: number, ...also: number[]): number {
+    if (this.probe !== undefined) this.tested([k, ...also]);
     if (this.kind() !== k) this.fail([k, ...also]);
     return this.i++;
   }
 
   private separator(): void {
+    this.tested(LINE_END);
     const k = this.kind();
     if (k !== Kind.Newline && k !== T.Semi && k !== T.Eof) this.fail(LINE_END);
     this.i++;
   }
 
   private run(table: KindSet, want: readonly number[]): [string, Range] {
+    this.tested(want);
     if (!inKindSet(table, this.kind())) this.fail(want);
     const from = this.i++;
-    while (inKindSet(table, this.kind())) this.i++;
+    for (;;) {
+      this.tested(want);
+      if (!inKindSet(table, this.kind())) break;
+      this.i++;
+    }
     return [this.runText(from, this.i), this.span(from)];
   }
 
@@ -642,13 +729,18 @@ class FlowParser {
     strType: LabelType
   ): FlowLabelNode {
     const from = this.i;
+    this.tested(want);
     const k = this.kind();
     let type: LabelType;
     if (k === T.Str || k === T.MdStr) type = k === T.Str ? strType : 'markdown';
     else if (inKindSet(first, k)) type = 'text';
     else return this.fail(want);
     this.i++;
-    while (inKindSet(part, this.kind())) this.i++;
+    for (;;) {
+      this.tested(want);
+      if (!inKindSet(part, this.kind())) break;
+      this.i++;
+    }
     return { text: this.runText(from, this.i), type, range: this.span(from) };
   }
 
@@ -683,7 +775,9 @@ class FlowParser {
     this.i++;
     let built = '';
     let inString = false;
-    while (this.kind() === T.ShapeData) {
+    for (;;) {
+      this.tested(SHAPE_DATA_PARTS);
+      if (this.kind() !== T.ShapeData) break;
       const piece = this.raw();
       if (piece === '"' && this.end(this.i) === this.start(this.i) + 1) {
         inString = !inString;
@@ -754,6 +848,7 @@ class FlowParser {
 
   /** The bracketed shape and label after a node id, if any. */
   private shape(): VertexParts & { label?: FlowLabelNode } {
+    this.tested(SHAPE_KINDS);
     const k = this.kind();
     const simple = SHAPES[k];
     if (simple) {
@@ -766,6 +861,7 @@ class FlowParser {
       const round = k === T.PS;
       const close = round ? T.PE : T.DiamondStop;
       this.open('node label', round ? '`)`' : '`}`');
+      this.tested(round ? PS_ONLY : DIAMOND_ONLY);
       if (this.kind() !== k) {
         const label = this.text();
         this.closer(close);
@@ -792,6 +888,7 @@ class FlowParser {
       const trap = k === T.TrapStart;
       this.open('node label', trap ? '`\\]` or `/]`' : '`/]` or `\\]`');
       const label = this.text();
+      this.tested(TRAP_ENDS);
       if (this.kind() === (trap ? T.InvTrapEnd : T.TrapEnd)) {
         this.i++;
         this.opens.pop();
@@ -805,6 +902,7 @@ class FlowParser {
 
   private styledVertex(): FlowNodeStmt {
     const node = this.vertex();
+    this.tested(STYLE_SEPARATOR);
     if (this.kind() === T.StyleSeparator) {
       this.i++;
       const [cls, r] = this.idString();
@@ -828,13 +926,18 @@ class FlowParser {
     chain.push(nodes[0] as FlowNodeStmt);
     while (true) {
       const last = nodes[nodes.length - 1] as FlowNodeStmt;
+      this.tested(SHAPE_DATA);
       const data = this.kind() === T.ShapeData ? this.shapeData() : undefined;
+      this.tested(SPACE);
       if (this.kind() !== T.Space) {
         if (data !== undefined) this.applyData(last, data);
         return nodes;
       }
-      do this.i++;
-      while (this.kind() === T.Space);
+      do {
+        this.i++;
+        this.tested(SPACE);
+      } while (this.kind() === T.Space);
+      this.tested(AMP);
       if (this.kind() !== T.Amp) {
         // Blanks after shape data must lead to `&` (v12 drops them before a line break).
         if (data !== undefined)
@@ -845,6 +948,7 @@ class FlowParser {
         return nodes;
       }
       this.i++;
+      this.tested(SPACE);
       if (this.kind() !== T.Space) this.fail([T.Space]);
       do this.i++;
       while (this.kind() === T.Space);
@@ -858,21 +962,25 @@ class FlowParser {
   private link(): [LinkInfo, Range, FlowLabelNode | undefined] {
     const from = this.i;
     let id: string | undefined;
+    this.tested(LINK_KINDS);
     if (this.kind() === T.LinkId) {
       id = this.raw();
       const r = { start: this.start(this.i), end: this.end(this.i) - 1 };
       this.st.symbol(id.slice(0, -1), 'edge', r, 'def');
       this.i++;
     }
+    this.tested(LINK_AFTER_ID);
     if (this.kind() === T.Link) {
       const info = destructLink(this.raw(this.i++));
       if (id !== undefined) info.id = id;
       let label: FlowLabelNode | undefined;
+      this.tested(PIPE);
       if (this.kind() === T.Pipe) {
         this.open('edge label', '`|`');
         label = this.text();
         info.text = { text: label.text, type: label.type };
         this.closer(T.Pipe);
+        this.tested(AFTER_EDGE_LABEL);
         if (this.kind() === T.Space) this.i++;
       }
       return [info, this.span(from), label];
@@ -908,6 +1016,7 @@ class FlowParser {
     // v12 collected `$3.concat($1)` per link, newest first: kept as parts, joined once.
     const later: string[][] = [];
     while (true) {
+      this.tested(LINK_KINDS);
       const t = this.kind();
       if (t !== T.Link && t !== T.StartLink && t !== T.LinkId) {
         return later.length === 0 ? first : later.reverse().flat().concat(first);
@@ -947,15 +1056,22 @@ class FlowParser {
   // ---- other statements ---------------------------------------------------------------
 
   private style(): string {
+    this.tested(STYLE_WANT);
     if (!inKindSet(STYLE_PART, this.kind())) this.fail([T.NodeString]);
     const from = this.i++;
-    while (inKindSet(STYLE_PART, this.kind())) this.i++;
+    for (;;) {
+      this.tested(STYLE_WANT);
+      if (!inKindSet(STYLE_PART, this.kind())) break;
+      this.i++;
+    }
     return this.runText(from, this.i);
   }
 
   private stylesOpt(): string[] {
     const out = [this.style()];
-    while (this.kind() === T.Comma) {
+    for (;;) {
+      this.tested(COMMA);
+      if (this.kind() !== T.Comma) break;
       this.i++;
       out.push(this.style());
     }
@@ -980,6 +1096,7 @@ class FlowParser {
     this.i++;
     this.expect(T.Space);
     const positions: string[] = [];
+    this.tested(LINK_STYLE_INDEX);
     if (this.kind() === T.Default) positions.push(this.raw(this.i++));
     else {
       positions.push(this.raw(this.expect(T.Num, T.Default)));
@@ -989,6 +1106,7 @@ class FlowParser {
       }
     }
     this.expect(T.Space);
+    this.tested(INTERPOLATE_OR_STYLE);
     if (this.kind() !== T.Interpolate) {
       const styles = this.stylesOpt();
       // An index error is semantic: the statement parses on (R-PARSE-4).
@@ -1008,6 +1126,7 @@ class FlowParser {
 
   /** A `"…"` value in a click statement (one Str token, as jison requires). */
   private expectStr(...also: number[]): string {
+    if (this.probe !== undefined) this.tested([T.Str, ...also]);
     if (this.kind() !== T.Str) return this.fail([T.Str, ...also]);
     return this.labelRun(NONE, NONE, [T.Str], 'string').text;
   }
@@ -1018,9 +1137,11 @@ class FlowParser {
     const at = this.i;
     const id = this.raw(this.i++);
     this.refs(id, this.range(at), 'node', 'ref', out);
+    this.tested(CLICK_ACTION);
     const k = this.kind();
     if (k === T.CallbackName) {
       const name = this.raw(this.i++);
+      this.tested(CALLBACK_ARGS);
       const args = this.kind() === T.CallbackArgs ? this.raw(this.i++) : undefined;
       const tooltip = this.tooltip();
       db.setClickEvent(id, name, this.span(at), args);
@@ -1041,11 +1162,13 @@ class FlowParser {
       if (tooltip !== undefined) db.setTooltip(id, tooltip);
       return { targets: id.split(','), name };
     }
+    this.tested(SPACE);
     if (this.kind() !== T.Space) {
       db.setLink(id, url, this.span(at));
       return;
     }
     this.i++;
+    this.tested(LINK_TARGET_OR_TOOLTIP);
     if (this.kind() === T.LinkTarget) {
       db.setLink(id, url, this.span(at), this.raw(this.i++));
       return;
@@ -1061,6 +1184,7 @@ class FlowParser {
 
   /** An optional ` "tooltip"` after a callback. */
   private tooltip(): string | undefined {
+    this.tested(SPACE);
     if (this.kind() !== T.Space) return undefined;
     this.i++;
     return this.expectStr();
@@ -1076,6 +1200,7 @@ class FlowParser {
   /** One statement. Returns what v12's grammar adds to an enclosing subgraph's list. */
   private statement(collect: boolean, out: FlowStatementNode[]): DocItem {
     const { db, st } = this;
+    this.tested(STATEMENT_KINDS);
     const t = this.kind();
     this.hint = STATEMENT_HINTS[t];
     const from = this.i;
@@ -1186,6 +1311,7 @@ class FlowParser {
     // one diagnostic) and the body stays inside it.
     let failed = false;
     try {
+      this.tested(SUBGRAPH_HEADER);
       const t = this.kind();
       if (t === Kind.Newline || t === T.Semi || t === T.Eof) {
         this.i++;
@@ -1193,11 +1319,13 @@ class FlowParser {
         this.expect(T.Space, ...LINE_END);
         id = this.textNoTags();
         title = id;
+        this.tested(SUBGRAPH_TITLE);
         if (this.kind() === T.SQS) {
           this.open('subgraph title', '`]`');
           title = this.text();
           this.closer(T.SQE);
         }
+        this.tested(LINE_END);
         const k = this.kind();
         if (k !== Kind.Newline && k !== T.Semi && k !== T.Eof) this.fail([...LINE_END, T.SQS]);
         this.i++;
@@ -1271,6 +1399,7 @@ class FlowParser {
   private document(): void {
     const { frames, st, src } = this;
     while (true) {
+      this.tested(frames.length > 0 ? SUBGRAPH_DOC_KINDS : DOC_KINDS);
       const t = this.kind();
       if (t === Kind.EOF) break;
       try {
@@ -1327,22 +1456,32 @@ class FlowParser {
 
   private header(): void {
     const { db, st } = this;
-    while (this.kind() === T.Space || this.kind() === Kind.Newline) this.i++;
+    for (;;) {
+      this.tested(HEADER_START);
+      const k = this.kind();
+      if (k !== T.Space && k !== Kind.Newline) break;
+      this.i++;
+    }
     const from = this.i;
     try {
+      this.tested(GRAPH);
       if (this.kind() !== T.Graph)
         this.fail([T.Graph], 'a flowchart starts with `flowchart` or `graph` and a direction');
       this.i++;
+      this.tested(DIR_KINDS);
       if (this.kind() === T.NoDir) {
         this.i++;
         db.setDirection('TB');
       } else {
         if (this.kind() === Kind.Error) this.unknownDirection();
         const dir = this.raw(this.expect(T.Dir, T.NoDir));
+        this.tested(AFTER_DIR);
         let t = this.kind();
         if (t === T.Space) {
-          do this.i++;
-          while (this.kind() === T.Space);
+          do {
+            this.i++;
+            this.tested(BLANKS);
+          } while (this.kind() === T.Space);
           t = this.kind();
           if (t !== Kind.Newline) this.fail([Kind.Newline]);
         } else if (t !== T.Semi && t !== Kind.Newline) this.fail(LINE_END);
@@ -1373,6 +1512,13 @@ class FlowParser {
     while (w < src.length && /\s/.test(src[w] ?? '')) w++;
     let e = w;
     while (e < src.length && !/\s/.test(src[e] ?? '')) e++;
+    // A direction was expected across the word, which may lex as several tokens.
+    const { probe, tokens } = this;
+    if (probe !== undefined) {
+      for (let j = this.i; j < tokens.length && this.start(j) < e; j++) {
+        if (probe.isAt(tokens, j, this.viewFrom)) probe.tested(DIR_KINDS, this.start(j));
+      }
+    }
     this.st.diagnostics.error(
       'UNKNOWN_DIRECTION',
       `Unknown direction \`${src.slice(w, e)}\`: use TB, TD, BT, LR or RL (or \`>\`, \`<\`, \`^\`, \`v\`).`,
