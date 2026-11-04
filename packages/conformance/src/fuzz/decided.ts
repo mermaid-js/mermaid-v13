@@ -1,4 +1,4 @@
-// cspell:ignore Datasto grap catm ellips ullRom
+// cspell:ignore Datasto catm ellips ullRom
 
 import type { DivergenceKind } from '../types.ts';
 
@@ -31,27 +31,6 @@ export const FUZZ_DECISIONS: readonly DecidedDivergence[] = [
     source: 'flowchart TD\n  A@{ shape: datastore, label: "Datasto%%{init: re" }\n',
     reason:
       'Directives are found anywhere after front matter, as in v12, labels included; an unclosed one is the same error as above.',
-  },
-  {
-    id: 'directive-inside-keyword',
-    kind: 'reject',
-    source: 'grap%%{init: {"theme": "dark"}}%%h TD\n  A --> B\n',
-    reason:
-      'A directive is trivia between tokens, like a comment, and keeps every offset (DESIGN §4.1: no rewrites). v12 deleted directives from the text before lexing, so one inside a word or an arrow joined the halves.',
-  },
-  {
-    id: 'directive-inside-arrow',
-    kind: 'reject',
-    source: 'flowchart TD\n  A --%%{init: {"theme": "dark"}}%%> B\n',
-    reason:
-      'As directive-inside-keyword: `--` and `>` stay two tokens, so v13 reads an edge label opened by `--` that is never closed.',
-  },
-  {
-    id: 'directive-separates-tokens',
-    kind: 'accept',
-    source: 'graph%%{wrap}%%TD\nA-->B\n',
-    reason:
-      'As directive-inside-keyword: the directive separates `graph` from `TD`; v12 removed it and saw `graphTD`.',
   },
   {
     id: 'invalid-directive-content',
