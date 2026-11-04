@@ -4,6 +4,11 @@
   "description": "Markdown-ish syntax for generating flowcharts and other diagrams.",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/mermaid"
+  },
   "sideEffects": [
     "./src/index.ts",
     "./dist/index.js"
@@ -13,6 +18,11 @@
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./slim": {
+      "mermaid-source": "./src/slim.ts",
+      "types": "./dist/slim.d.ts",
+      "default": "./dist/slim.js"
     }
   },
   "bin": {
@@ -30,7 +40,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@mermaid-js/core": "workspace:^",
-    "@mermaid-js/diagram-flowchart": "workspace:^"
+    "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-flowchart": "workspace:*"
   }
 }

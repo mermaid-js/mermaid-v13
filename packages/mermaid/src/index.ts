@@ -3,44 +3,15 @@
  * detectType, supportsFormat and the register functions. The v12 `mermaidAPI` object is
  * removed (R-API-5). `run` and `mount` are the DOM adapter (dom.ts).
  */
-import { createMermaid } from './api.ts';
+import { createMermaid as createInstance, type Mermaid } from './api.ts';
+import { FIRST_PARTY } from './generated/registry.gen.ts';
 
-export {
-  MermaidError,
-  NotLoadedError,
-  renderErrorSvg,
-  UnsupportedFormatError,
-  readManifest,
-  type DiagramPlugin,
-  type ExtensionClaim,
-  type HookContext,
-  type LaidOut,
-  type MermaidErrorCode,
-  type PluginManifest,
-  type Resource,
-  type TextRenderContext,
-  type Warning,
-} from '@mermaid-js/core';
-export type { MermaidConfig } from '@mermaid-js/core/config';
-export {
-  createMermaid,
-  type ExtensionPlugin,
-  type InitializeConfig,
-  type IntegratorOptions,
-  type Mermaid,
-  type ParseErrorHandler,
-  type ParseOptions,
-  type ParseResult12 as ParseResult,
-  type Prepared,
-  type PreloadRequest,
-  type RenderOptions,
-  type RenderResult,
-  type SvgRenderOptions,
-  type TextRenderOptions,
-  type TextRenderResult,
-} from './api.ts';
-export type { Mounted, MountOptions, RunOptions } from './dom.ts';
-export type { ExternalDiagram, LayoutLoader, LazyDiagram, ManifestPlugin } from './registry.ts';
+export * from './exports.ts';
+
+/** A new `mermaid` API object, with its own registry and defaults and every first-party diagram. */
+export function createMermaid(): Mermaid {
+  return createInstance(FIRST_PARTY);
+}
 
 const mermaid = createMermaid();
 

@@ -66,6 +66,9 @@ export interface LEdge {
   // An end that is held where its offset puts it, and takes no part in sharing out a node's side.
   tailFixed: boolean;
   headFixed: boolean;
+  // Room an edge-end label takes along the flow next to each end (D102); its gap grows to it.
+  tailEnd: number;
+  headEnd: number;
   reversed: boolean;
   points: number[];
   labelX: number;
@@ -128,6 +131,8 @@ export const EDGE_INPUTS = [
   'headDx',
   'tailFixed',
   'headFixed',
+  'tailEnd',
+  'headEnd',
 ] as const satisfies readonly (keyof LEdge)[];
 
 /** Every input `layered` reads from `nodes` and `edges`. Equal inputs and options give equal layouts. */
@@ -153,6 +158,8 @@ export function ledge(tail: number, head: number, minlen = 1, labelW = 0, labelH
     headDx: 0,
     tailFixed: false,
     headFixed: false,
+    tailEnd: 0,
+    headEnd: 0,
     reversed: false,
     points: [],
     labelX: 0,
@@ -769,6 +776,7 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
         gapUnder[r]! += Math.max(0, Math.min(MAX_GAP * opt.rankSep, tall[r]!) - room[r]!);
     }
   }
+  roomForEnds(edges, RANK, direct, empty, gapUnder);
   if (grid) for (let r = 0; r < maxRank; r++) gapUnder[r] = ceilTo(gapUnder[r]!, grid);
   let y = 0;
   for (let r = 0; r <= maxRank; r++) {
@@ -907,6 +915,59 @@ export function layered(nodes: LNode[], edges: LEdge[], opt: LayeredOptions): La
   }
 
   return { width: maxX - minX, height };
+}
+
+// Edge-end labels (D102) sit beside an edge next to its ends, each in the stretch of gaps between
+// its end's rank and the next rank that holds more than bends. A stretch too short for its
+// labels grows, at the gap next to the end. Graphs without end labels are left as they are.
+function roomForEnds(
+  edges: readonly LEdge[],
+  RANK: Int32Array,
+  direct: Uint8Array,
+  empty: Uint8Array | undefined,
+  gapUnder: Float64Array
+): void {
+  const room = (lo: number, hi: number): number => {
+    let sum = 0;
+    for (let r = lo; r < hi; r++) sum += gapUnder[r]!;
+    return sum;
+  };
+  const grow = (lo: number, hi: number, need: number, at: number): void => {
+    const short = need - room(lo, hi);
+    if (short > 0) gapUnder[at]! += short;
+  };
+  // The labels at the ends below and above each node may have to stand one past the other (the
+  // placement moves a label out past one in its way), so each end makes room for all of them.
+  const below = new Map<number, number>();
+  const above = new Map<number, number>();
+  const add = (m: Map<number, number>, node: number, v: number): void => {
+    if (v > 0) m.set(node, (m.get(node) ?? 0) + v);
+  };
+  edges.forEach((e, ei) => {
+    if (direct[ei]!) return;
+    add(below, e.reversed ? e.head : e.tail, e.reversed ? e.headEnd : e.tailEnd);
+    add(above, e.reversed ? e.tail : e.head, e.reversed ? e.tailEnd : e.headEnd);
+  });
+  edges.forEach((e, ei) => {
+    if (direct[ei]! || (e.tailEnd <= 0 && e.headEnd <= 0)) return;
+    const a = e.reversed ? e.head : e.tail;
+    const b = e.reversed ? e.tail : e.head;
+    const ra = RANK[a]!;
+    const rb = RANK[b]!;
+    // Every edge runs from a lower rank to a higher one once `orient` has run.
+    if (rb <= ra) return;
+    const upper = below.get(a) ?? 0;
+    const lower = above.get(b) ?? 0;
+    let next = ra + 1;
+    while (next < rb && empty?.[next]) next++;
+    let prev = rb - 1;
+    while (prev > ra && empty?.[prev]) prev--;
+    if (next === rb) grow(ra, rb, upper + lower, ra);
+    else {
+      grow(ra, next, upper, ra);
+      grow(prev, rb, lower, rb - 1);
+    }
+  });
 }
 
 // Grid helpers (D78): `dropNoise` drops float noise so that values that agree keep agreeing,

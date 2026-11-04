@@ -9,6 +9,7 @@ const json = (path: string) =>
 
 interface Step {
   name?: string;
+  if?: string;
   run?: string;
   uses?: string;
   with?: Record<string, unknown>;
@@ -45,15 +46,19 @@ describe('changesets (R-REL-1, R-REL-2)', () => {
     expect(pre.tag).toBe('alpha');
   });
 
-  it('versions every published package together, so each alpha is one consistent set', () => {
-    expect(json('.changeset/config.json').fixed).toEqual([
-      [
-        'mermaid',
-        '@mermaid-js/core',
-        '@mermaid-js/diagram-flowchart',
-        '@mermaid-js/plugin-interactions',
-      ],
-    ]);
+  it('versions each package on its own; a change re-releases its dependents (v13/docs/RELEASING.md)', () => {
+    expect(json('.changeset/config.json').fixed).toEqual([]);
+    expect(json('.changeset/config.json').linked).toEqual([]);
+    // Exact workspace ranges: Changesets bumps every dependent, so `mermaid` always ships the
+    // newest set, and a pinned `mermaid` never floats onto another alpha of its packages.
+    for (const dir of ['mermaid', 'diagram-flowchart', 'plugin-interactions']) {
+      const pkg = json(`packages/${dir}/package.json`) as {
+        dependencies?: Record<string, string>;
+        peerDependencies?: Record<string, string>;
+      };
+      for (const range of Object.values({ ...pkg.dependencies, ...pkg.peerDependencies }))
+        expect(range, dir).toBe('workspace:*');
+    }
   });
 
   it('does not version or tag private workspace packages', () => {
@@ -118,6 +123,70 @@ describe('release workflow (R-REL-2, R-REL-3)', () => {
     for (const run of runs) {
       expect(run).not.toMatch(/\bnpm publish\b|\bpnpm publish\b|changeset publish/);
       expect(run).not.toMatch(/--tag latest|dist-tag/);
+    }
+  });
+});
+
+describe('manual release workflow (v13/docs/RELEASING.md §5)', () => {
+  const manual = parse(readFileSync(join(root, '.github/workflows/release-alpha.yml'), 'utf8')) as {
+    on: Record<string, { inputs?: Record<string, { default?: unknown }> } | undefined>;
+    concurrency: { group: string };
+    jobs: Record<string, Job>;
+  };
+  const r = manual.jobs.release!;
+  const at = (pattern: RegExp) => stepIndex(r, pattern);
+
+  it('runs only when dispatched, as a dry run unless asked otherwise, one release at a time', () => {
+    expect(Object.keys(manual.on)).toEqual(['workflow_dispatch']);
+    expect(manual.on.workflow_dispatch?.inputs?.dry_run?.default).toBe(true);
+    expect(manual.concurrency.group).toBe(workflow.concurrency.group);
+    expect(r.environment).toBe('npm-alpha');
+  });
+
+  it('checks, versions, builds and rehearses before it pushes, publishes and tags', () => {
+    const order = [
+      /pnpm release:preflight/,
+      /pnpm check/,
+      /pnpm changeset version/,
+      /pnpm release:sync-version/,
+      /pnpm build/,
+      /pnpm release:rehearse/,
+      /git push origin HEAD:mermaid-v13/,
+      /pnpm release:publish --target public/,
+      /pnpm changeset tag/,
+    ].map(at);
+    expect(order.every((i) => i >= 0)).toBe(true);
+    for (let i = 1; i < order.length; i++) expect(order[i]).toBeGreaterThanOrEqual(order[i - 1]!);
+  });
+
+  it('sets a git identity before versioning and tagging, and checks the tags reached origin', () => {
+    const identity = at(/git config user\.email/);
+    expect(identity).toBeGreaterThanOrEqual(0);
+    expect(identity).toBeLessThan(at(/pnpm changeset version/));
+    const tag = r.steps[at(/pnpm changeset tag/)]!;
+    expect(tag.run).toMatch(/git rev-parse -q --verify "refs\/tags\/\$t"/);
+    expect(tag.run).toMatch(/git ls-remote --exit-code --tags origin/);
+  });
+
+  it('pushes and tags only outside a dry run, and the publish honours it', () => {
+    expect(r.steps[at(/git push origin HEAD/)]!.if).toContain('!inputs.dry_run');
+    expect(r.steps[at(/pnpm changeset tag/)]!.if).toContain('!inputs.dry_run');
+    const publish = r.steps[at(/pnpm release:publish/)]!;
+    expect(publish.run).toContain('$DRY_RUN');
+    expect(publish.env?.DRY_RUN).toContain('--dry-run');
+  });
+
+  it('publishes with the npm token, without provenance (private repository), gate reason given', () => {
+    const publish = r.steps[at(/pnpm release:publish/)]!.run!;
+    expect(publish).toContain('--no-provenance');
+    expect(publish).toContain('--skip-gate "$GATE_REASON"');
+    expect((r as Job & { env?: Record<string, string> }).env?.NODE_AUTH_TOKEN).toBe(
+      '${{ secrets.NPM_TOKEN }}'
+    );
+    expect(r.permissions?.['id-token']).toBeUndefined();
+    for (const s of r.steps) {
+      expect(s.run ?? '').not.toMatch(/\bnpm publish\b|\bpnpm publish\b|changeset publish/);
+      expect(s.run ?? '').not.toMatch(/--tag latest|dist-tag/);
     }
   });
 });

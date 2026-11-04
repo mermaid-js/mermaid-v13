@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "devDependencies": {
+    "esbuild": "^0.25.12",
     "yaml": "^2.9.0"
   }
 }

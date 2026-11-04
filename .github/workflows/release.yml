@@ -61,7 +61,9 @@ jobs:
         env:
           # @changesets/changelog-github looks up the PR and author of each changeset.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: pnpm exec prettier --write .changeset "packages/*/package.json" "packages/*/CHANGELOG.md"
+      # version.ts is what the error image and `mermaid --version` report; changesets bumps only package.json.
+      - run: pnpm release:sync-version
+      - run: pnpm exec prettier --write .changeset "packages/*/package.json"
       - name: Commit and push the version commit
         id: commit
         run: |
