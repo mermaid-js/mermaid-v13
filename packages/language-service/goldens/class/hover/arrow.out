@@ -1,0 +1,70 @@
+@ 2:7  A <||-- B
+  2:5-2:9 "<|--"
+  | **`<|--`** inheritance: solid line with a triangle at the start
+  |
+  | `A` → `B`
+  |
+  | `A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.
+@ 3:6  C *|-- D
+  3:5-3:8 "*--"
+  | **`*--`** composition: solid line with a filled diamond at the start
+  |
+  | `C` → `D`
+  |
+  | `A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.
+@ 4:7  E o-|- F
+  4:5-4:8 "o--"
+  | **`o--`** aggregation: solid line with a hollow diamond at the start
+  |
+  | `E` → `F`
+  |
+  | `A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.
+@ 5:6  G -|-> H
+  5:5-5:8 "-->"
+  | **`-->`** association: solid line with an arrow head at the end
+  |
+  | `G` → `H`
+  |
+  | `A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.
+@ 6:6  I .|.|> J
+  6:5-6:9 "..|>"
+  | **`..|>`** realization: dashed line with a triangle at the end
+  |
+  | `I` → `J`
+  |
+  | `A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.
+@ 7:5  K |.. L
+  7:5-7:7 ".."
+  | **`..`** dashed link: dashed line
+  |
+  | `K` → `L`
+  |
+  | `A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.
+@ 8:10  M <|--||> N
+  8:5-8:11 "<|--|>"
+  | **`<|--|>`** inheritance: solid line with a triangle at the start and a triangle at the end
+  |
+  | `M` → `N`
+  |
+  | `A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.
+@ 9:7  O --|* P
+  9:5-9:8 "--*"
+  | **`--*`** composition: solid line with a filled diamond at the end
+  |
+  | `O` → `P`
+  |
+  | `A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.
+@ 10:5  Q |()-- R
+  10:5-10:9 "()--"
+  | **`()--`** lollipop interface: solid line with a lollipop at the start
+  |
+  | `Q` → `R`
+  |
+  | `A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.
+@ 11:10  S "1" -|-> "*" T
+  11:9-11:12 "-->"
+  | **`-->`** association: solid line with an arrow head at the end
+  |
+  | `S` → `T`
+  |
+  | `A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.

@@ -1,0 +1,30 @@
+@ 3:10  class `|Animal`~T~
+  prepare: 3:10-3:16 "Animal"; rename to "Creature":
+  %% rename-to: Creature
+  classDiagram
+    class `Creature`~T~
+    Creature --> Duck
+    cssClass "Creature~T~,Duck" hot
+    namespace Water {
+      class Fish
+    }
+@ 4:3  |Animal --> Duck
+  prepare: 4:3-4:9 "Animal"; rename to "Creature":
+  %% rename-to: Creature
+  classDiagram
+    class `Creature`~T~
+    Creature --> Duck
+    cssClass "Creature~T~,Duck" hot
+    namespace Water {
+      class Fish
+    }
+@ 6:13  namespace |Water {
+  prepare: 6:13-6:18 "Water"; rename to "Creature":
+  %% rename-to: Creature
+  classDiagram
+    class `Animal`~T~
+    Animal --> Duck
+    cssClass "Animal~T~,Duck" hot
+    namespace Creature {
+      class Fish
+    }

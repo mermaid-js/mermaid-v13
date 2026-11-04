@@ -1,0 +1,45 @@
+@ 2:9  class |Animal~T~["An animal"]:::hot {
+  2:9-2:15 "Animal"
+  | **class** `Animal`
+  |
+  | Label: `An animal` · Generic: `~T~` · Annotations: `<<abstract>>` · Style class: `hot`
+  |
+  | 1 attribute, 1 method · 1 relationship
+@ 6:19  <<abstract>> Ani|mal
+  6:16-6:22 "Animal"
+  | **class** `Animal`
+  |
+  | Label: `An animal` · Generic: `~T~` · Annotations: `<<abstract>>` · Style class: `hot`
+  |
+  | 1 attribute, 1 method · 1 relationship
+@ 7:15  Animal <|-- |Duck
+  7:15-7:19 "Duck"
+  | **class** `Duck`
+  |
+  | 0 attributes, 0 methods · 1 relationship
+@ 8:13  namespace |Water {
+  8:13-8:18 "Water"
+  | **namespace** `Water`
+  |
+  | 1 class
+@ 9:12  class F|ish
+  9:11-9:15 "Fish"
+  | **class** `Fish`
+  |
+  | In namespace `Water`
+  |
+  | 0 attributes, 0 methods · 1 relationship
+@ 11:19  namespace Outer.|Inner {
+  11:19-11:24 "Inner"
+  | **namespace** `Outer.Inner`
+  |
+  | Label: `Inner` · 1 class
+  |
+  | In namespace `Outer`
+@ 14:3  |plug ()-- Fish
+  14:3-14:7 "plug"
+  | **interface** `plug`
+  |
+  | Lollipop on `Fish`
+@ 15:9  style |Ghost fill:#000
+  none

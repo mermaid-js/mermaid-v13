@@ -1,0 +1,27 @@
+@ 2:11  class An|imal {
+  n:Animal 2:3-4:4 "class Animal {\n    +int age\n  }"
+@ 3:11  +int a|ge
+  m:Animal#1 3:5-3:13 "+int age"
+  n:Animal 2:3-4:4 "class Animal {\n    +int age\n  }"
+@ 5:13  Animal <|-|- Duck : label
+  e:Animal>Duck 5:3-5:27 "Animal <|-- Duck : label"
+@ 5:17  Animal <|-- Du|ck : label
+  n:Duck 5:15-5:19 "Duck"
+  e:Animal>Duck 5:3-5:27 "Animal <|-- Duck : label"
+@ 5:25  Animal <|-- Duck : lab|el
+  e:Animal>Duck 5:3-5:27 "Animal <|-- Duck : label"
+@ 6:14  namespace W|ater {
+  s:Water 6:3-8:4 "namespace Water {\n    class Fish\n  }"
+@ 7:12  class F|ish
+  n:Fish 7:5-7:15 "class Fish"
+  s:Water 6:3-8:4 "namespace Water {\n    class Fish\n  }"
+@ 9:14  note for Du|ck "quack"
+  n:Duck@2 9:12-9:16 "Duck"
+  note:1 9:3-9:24 "note for Duck \"quack\""
+@ 9:20  note for Duck "qu|ack"
+  note:1 9:3-9:24 "note for Duck \"quack\""
+@ 10:5  st|yle Duck fill:#ff0
+  st:2 10:3-10:23 "style Duck fill:#ff0"
+@ 11:5  pl|ug ()-- Duck
+  i:plug 11:3-11:7 "plug"
+  e:plug>Duck 11:3-11:17 "plug ()-- Duck"

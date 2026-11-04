@@ -1,0 +1,14 @@
+@ 3:13  class A:::|hot
+  prepare: 3:13-3:16 "hot"; rename to "warm":
+  %% rename-to: warm
+  classDiagram
+    class A:::warm
+    cssClass "A" warm
+    classDef warm fill:#f00
+@ 5:12  classDef |hot fill:#f00
+  prepare: 5:12-5:15 "hot"; rename to "warm":
+  %% rename-to: warm
+  classDiagram
+    class A:::warm
+    cssClass "A" warm
+    classDef warm fill:#f00

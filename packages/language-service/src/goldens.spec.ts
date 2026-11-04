@@ -10,9 +10,10 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService, firstPartyFacets } from './index.ts';
 import { goldenCases, missingFeatures, readFixture, renderGolden } from './testing/goldens.ts';
+import { UNLISTED_FACETS } from './testing/unlisted-facets.ts';
 
 const ROOT = join(import.meta.dirname, '..', 'goldens');
-const service = createLanguageService();
+const service = createLanguageService({ facets: UNLISTED_FACETS });
 beforeAll(() => service.preload());
 
 const cases = goldenCases(ROOT);
@@ -27,8 +28,16 @@ for (const diagram of [...new Set(cases.map((c) => c.diagram))]) {
 }
 
 describe('the port checklist (R-LANG-3)', () => {
-  const withFacet = [...new Set(firstPartyFacets.filter((e) => e.load).map((e) => e.id))];
+  const rows = [...firstPartyFacets, ...UNLISTED_FACETS];
+  const withFacet = [...new Set(rows.filter((e) => e.load).map((e) => e.id))];
   it.each(withFacet)('%s has goldens for every required feature', (id) => {
     expect(missingFeatures(ROOT, id)).toEqual([]);
   });
+
+  it.each(UNLISTED_FACETS.map((e) => e.type))(
+    '%s is still unlisted (drop its test-only row once the manifest has `language`)',
+    (type) => {
+      expect(firstPartyFacets.find((e) => e.type === type)?.load).toBeUndefined();
+    }
+  );
 });

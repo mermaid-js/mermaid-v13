@@ -22,6 +22,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService } from './index.ts';
 import { contextOf } from './snapshot.ts';
 import type { DocumentSnapshot } from './index.ts';
+import { UNLISTED_FACETS } from './testing/unlisted-facets.ts';
 
 const REPO = join(import.meta.dirname, '..', '..', '..');
 const CORPUS = join(REPO, 'e2e', 'diagrams');
@@ -38,7 +39,7 @@ for (const f of corpus) {
   byType.set(type, [...(byType.get(type) ?? []), f]);
 }
 
-const service = createLanguageService();
+const service = createLanguageService({ facets: UNLISTED_FACETS });
 beforeAll(() => service.preload());
 
 /** Every token boundary of `doc`, sorted. */

@@ -99,12 +99,12 @@ export const MODE_KINDS = kindSet(
   T.CallbackArgs,
   T.AccDescrMultilineValue
 );
-export const UNCLOSED: Readonly<Record<number, [what: string, closer: string]>> = {
-  [T.Str]: ['string', 'quote `"`'],
-  [T.GenericType]: ['generic type', '`~`'],
-  [T.CallbackName]: ['callback', '`(`'],
-  [T.CallbackArgs]: ['callback arguments', '`)`'],
-  [T.AccDescrMultilineValue]: ['accessible description', '`}`'],
+export const UNCLOSED: Readonly<Record<number, [what: string, closer: string, code: string]>> = {
+  [T.Str]: ['string', 'quote `"`', 'UNCLOSED_STRING'],
+  [T.GenericType]: ['generic type', '`~`', 'UNCLOSED_GENERIC'],
+  [T.CallbackName]: ['callback', '`(`', 'UNCLOSED_CALLBACK'],
+  [T.CallbackArgs]: ['callback arguments', '`)`', 'UNCLOSED_CALLBACK_ARGS'],
+  [T.AccDescrMultilineValue]: ['accessible description', '`}`', 'UNCLOSED_ACC_DESCR'],
 };
 
 /**
