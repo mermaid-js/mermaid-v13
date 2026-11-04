@@ -17,3 +17,9 @@
 5. Before reporting, `git merge feature/125_sequence-diagram` and run the checks again.
 6. Write `tickets/<N>.md` (≤ 40 lines) in **your own worktree** at `v13/docs/agents/runs/125/tickets/<N>.md`, committed on your branch. It covers: exports, how to use them, test helpers, gz size, unmet criteria.
 7. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
+
+## Machine-wide locks (four M3 sessions share one machine)
+
+- Every full `pnpm check`: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`.
+- Every Playwright e2e run: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-e2e.lock <command>`.
+- A timing test that fails under load is not a regression: rerun it under the lock before acting on it.
