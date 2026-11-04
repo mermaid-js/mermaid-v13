@@ -113,6 +113,18 @@ describe('state graph builder', () => {
     expect(model.groups.get('X:region2')!.height).toBeLessThan(r2!.height);
   });
 
+  it('pads a reopened composite that holds plain children beside its regions', () => {
+    // The first opening puts `a` directly in X; the second adds two regions (model `group()`).
+    const { graph, model } = run(
+      'stateDiagram-v2\n  state X {\n    a\n  }\n  state X {\n    b\n    --\n    c\n  }\n'
+    );
+    const pad = pxProfile.builder.groupPad;
+    expect(group(graph, 'X')!.padding).toMatchObject({ left: pad, right: pad, bottom: pad });
+    const x = model.groups.get('X')!;
+    const a = model.nodes.get('a')!;
+    expect(a.x - a.width / 2 - (x.x - x.width / 2)).toBeGreaterThanOrEqual(pad);
+  });
+
   it('lays out a transition between sibling regions like any other edge (D113)', () => {
     const { graph, model, layout } = run(
       'stateDiagram-v2\n  state X {\n    A1 --> A2\n    --\n    B1 --> B2\n  }\n  A2 --> B1\n'

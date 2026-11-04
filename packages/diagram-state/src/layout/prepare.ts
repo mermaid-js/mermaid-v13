@@ -428,6 +428,10 @@ function layoutGraph(
   const spacing = spacingOn(along, across);
   const down = spacingOn('y', 'x');
   const turned = down.node !== spacing.node || down.rank !== spacing.rank;
+  // Composites a reopening left holding plain children beside its regions (model `group()`).
+  const mixed = new Set<string>();
+  for (const x of [...nodes, ...groups.filter((g) => !g.region)])
+    if (x.parent !== undefined && regionsOf.has(x.parent)) mixed.add(x.parent);
   const graph: LayoutGraph = {
     direction: model.direction,
     nodes: nodes.map((n): LayoutNode => {
@@ -438,7 +442,7 @@ function layoutGraph(
       return node;
     }),
     groups: groups.map((g): LayoutGroup => {
-      const group: LayoutGroup = { id: g.id, padding: groupPadding(g, regionsOf, b) };
+      const group: LayoutGroup = { id: g.id, padding: groupPadding(g, regionsOf, mixed, b) };
       if (g.label.height > 0) group.title = { width: g.label.width, height: g.label.height };
       if (g.parent !== undefined) group.parent = g.parent;
       const d = groupDir.get(g.id);
@@ -474,14 +478,17 @@ function layoutGraph(
 /**
  * A composite's padding holds its title; one split into regions leaves the rest of its padding
  * to the regions, so the region frames tile it and the dividers run border to border. A region
- * has no title.
+ * has no title. A composite that also holds plain children (`mixed`: an earlier opening put
+ * states in it directly) keeps its padding, so those children do not touch its border.
  */
 function groupPadding(
   g: StateGroupView,
   regionsOf: ReadonlyMap<string, readonly string[]>,
+  mixed: ReadonlySet<string>,
   b: UnitProfile['builder']
 ): LayoutGroup['padding'] {
   const top = g.label.height > 0 ? b.titlePad : b.groupPad;
-  if (!g.region && regionsOf.has(g.id)) return { top, right: 0, bottom: 0, left: 0 };
+  if (!g.region && regionsOf.has(g.id) && !mixed.has(g.id))
+    return { top, right: 0, bottom: 0, left: 0 };
   return { top, right: b.groupPad, bottom: b.groupPad, left: b.groupPad };
 }
