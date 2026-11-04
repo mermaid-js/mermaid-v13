@@ -23,6 +23,8 @@ import {
   matchAt,
   newlineAt,
   ParseState,
+  Probe,
+  ProbeCursor,
   scanWhile,
   syncTo,
   TokenCursor,
@@ -50,7 +52,8 @@ const CHARS = charTable([ID, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWX
 const isIdChar = (c: number) => hasClass(CHARS, c, ID) || isUnicodeLetter(c);
 const ARROW = /-->/y;
 
-function lex(src: string): TokenStream {
+/** With a probe, the lexer reports its mode (`label` inside `[…]`) for each step. */
+function lex(src: string, probe?: Probe): TokenStream {
   const w = new TokenWriter();
   let i = 0;
   while (i < src.length) {
@@ -74,8 +77,11 @@ function lex(src: string): TokenStream {
     } else if (c === 91 /* [ */) {
       w.push(T.Open, i, i + 1);
       j = i + 1;
+      const text = j;
       while (j < src.length && src[j] !== ']' && !newlineAt(src, j)) j++;
       if (j > i + 1) w.push(T.Text, i + 1, j);
+      probe?.lexed(i, text, 'initial');
+      probe?.lexed(text, j, 'label');
       if (src[j] === ']') w.push(T.Close, j, ++j);
     } else if (c === 59 /* ; */) {
       w.push(T.Semi, i, (j = i + 1));
@@ -86,8 +92,10 @@ function lex(src: string): TokenStream {
     } else {
       w.push(Kind.Error, i, (j = i + 1));
     }
+    if (c !== 91) probe?.lexed(i, j, 'initial');
     i = j;
   }
+  probe?.lexed(i, i, 'initial');
   return w.finish(src);
 }
 
@@ -118,10 +126,14 @@ interface TinyEdge extends AstNode<'Edge'> {
 // ---- parser ---------------------------------------------------------------------------
 
 const BOUNDARY = kindSet(Kind.Newline, T.Semi);
+/** What the body loop accepts where a statement may start (empty ones too), and after one. */
+const STATEMENT_FIRST = [T.Id, T.Style, T.Group, Kind.Newline, T.Semi];
+const STATEMENT_FOLLOW = [Kind.Newline, T.Semi];
 
 function parse(src: string, options: ParseOptions = {}): ParseResult<TinyModel> {
-  const tokens = lex(src);
-  const cur = new TokenCursor(tokens);
+  const probe = options.probe === undefined ? undefined : new Probe(src, options.probe);
+  const tokens = lex(src, probe);
+  const cur = probe ? new ProbeCursor(tokens, probe) : new TokenCursor(tokens);
   const st = new ParseState();
   const model: TinyModel = { nodes: [], edges: [] };
   const known = new Map<string, TinyModel['nodes'][number]>();
@@ -223,26 +235,40 @@ function parse(src: string, options: ParseOptions = {}): ParseResult<TinyModel> 
     return edge;
   }
 
-  function body(out: AstNode[], closer: number): void {
-    while (!cur.at(Kind.EOF) && !cur.at(closer)) {
-      if (cur.eat(Kind.Newline) || cur.eat(T.Semi)) continue;
+  // The loop stops at the end of the text without testing for a statement, so it tells the
+  // probe what it would have accepted there (`cur.tested`; a no-op without a probe).
+  function body(out: AstNode[], closer?: number): void {
+    let fresh = true;
+    for (;;) {
+      if (fresh) {
+        cur.tested(STATEMENT_FIRST);
+        if (closer !== undefined) cur.tested(closer);
+      }
+      if (cur.at(Kind.EOF) || (closer !== undefined && cur.at(closer))) return;
+      if (cur.eat(Kind.Newline) || cur.eat(T.Semi)) {
+        fresh = true;
+        continue;
+      }
+      fresh = false;
       const s = statement();
       if (s) out.push(s);
-      if (!cur.at(Kind.EOF) && !cur.at(closer) && !cur.at(Kind.Newline) && !cur.at(T.Semi)) {
+      cur.tested(STATEMENT_FOLLOW);
+      const ends = cur.at(Kind.EOF) || (closer !== undefined && cur.at(closer));
+      if (!ends && !cur.at(Kind.Newline) && !cur.at(T.Semi)) {
         fail(cur.range, [T.Arrow, T.Open, Kind.Newline, Kind.EOF]);
       }
     }
   }
 
   const children: AstNode[] = [];
-  body(children, -1);
+  body(children);
   const ast: AstNode<'Document'> = {
     id: 'doc',
     type: 'Document',
     range: { start: 0, end: src.length },
     children,
   };
-  return st.result(model, ast, tokens, options);
+  return st.result(model, ast, tokens, options, probe);
 }
 
 // ---- helpers --------------------------------------------------------------------------
@@ -402,5 +428,96 @@ describe('parser kit through a tiny grammar', () => {
     parse('P --> Q\nQ --> P');
     const a2 = parse(SRC);
     expect(a2).toEqual(a1);
+  });
+
+  describe('probe mode (R-LANG-7)', () => {
+    const NAMES = new Map<number, string>([
+      [Kind.EOF, 'EOF'],
+      [Kind.Newline, 'Newline'],
+      ...Object.entries(T).map(([k, v]) => [v, k] as [number, string]),
+    ]);
+    /** The probe at the `|` in `marked`, kinds by name, sorted. */
+    function probeAt(marked: string) {
+      const offset = marked.indexOf('|');
+      const src = marked.slice(0, offset) + marked.slice(offset + 1);
+      const r = parse(src, { probe: offset });
+      const p = r.probe;
+      if (!p) throw new Error('no probe result');
+      return {
+        expected: p.expected.map((k) => NAMES.get(k) ?? String(k)).sort(),
+        mode: p.mode,
+        prefix: text(src, p.prefix),
+        r,
+      };
+    }
+
+    it('at the start: what may start a statement, or the end', () => {
+      expect(probeAt('|A --> B').expected).toEqual([
+        'EOF',
+        'Group',
+        'Id',
+        'Newline',
+        'Semi',
+        'Style',
+      ]);
+      expect(probeAt('|').expected).toEqual(['EOF', 'Group', 'Id', 'Newline', 'Semi', 'Style']);
+    });
+
+    it('mid-statement: what may follow the node, after the space', () => {
+      const p = probeAt('A |');
+      expect(p.expected).toEqual(['Arrow', 'EOF', 'Newline', 'Open', 'Semi']);
+      expect(p.prefix).toBe('');
+      expect(probeAt('A --> |').expected).toEqual(['Id']);
+    });
+
+    it('in a word: the kinds tested at it, with the prefix typed so far', () => {
+      expect(probeAt('A --> Bo|')).toMatchObject({ expected: ['Id'], prefix: 'Bo' });
+      expect(probeAt('A --> B|o')).toMatchObject({ expected: ['Id'], prefix: 'B' });
+      expect(probeAt('sty|')).toMatchObject({ prefix: 'sty' });
+    });
+
+    it('after punctuation: the token after it, with an empty prefix', () => {
+      expect(probeAt('A -->| B')).toMatchObject({ expected: ['Id'], prefix: '' });
+      expect(probeAt('A[|x]')).toMatchObject({ mode: 'label', prefix: '' });
+    });
+
+    it('after an error: recovery carries on and the probe still sees its statement', () => {
+      const p = probeAt('A --> ;\nB |');
+      expect(p.expected).toEqual(['Arrow', 'EOF', 'Newline', 'Open', 'Semi']);
+      expect(p.r.diagnostics.map((d) => d.code)).toEqual(['UNEXPECTED']);
+    });
+
+    it('stops at an error on the probed token: recovery tests are not expectations', () => {
+      expect(probeAt('A --> |;').expected).toEqual(['Id']);
+    });
+
+    it('at the end of the text: a new statement or the end', () => {
+      const p = probeAt('A --> B\n|');
+      expect(p.expected).toEqual(['EOF', 'Group', 'Id', 'Newline', 'Semi', 'Style']);
+      expect(p.mode).toBe('initial');
+      expect(probeAt('group g\n|').expected).toEqual([
+        'EOF',
+        'End',
+        'Group',
+        'Id',
+        'Newline',
+        'Semi',
+        'Style',
+      ]);
+    });
+
+    it('records the lexer mode at the offset', () => {
+      expect(probeAt('A[St|art]').mode).toBe('label');
+      expect(probeAt('A[Start]|').mode).toBe('initial');
+    });
+
+    it('changes nothing else in the result', () => {
+      for (const at of [0, 3, 10, SRC.length]) {
+        const { probe, ...rest } = parse(SRC, { probe: at });
+        expect(probe?.offset).toBe(at);
+        expect(rest).toEqual(parse(SRC));
+      }
+      expect(parse(SRC).probe).toBeUndefined();
+    });
   });
 });

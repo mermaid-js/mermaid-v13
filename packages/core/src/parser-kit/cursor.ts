@@ -3,6 +3,7 @@
  * on a significant token: trivia kinds are skipped on every move. One cursor per parse.
  */
 import type { Range } from './positions.ts';
+import type { Probe } from './probe.ts';
 import { Kind, tokenText } from './tokens.ts';
 import type { TokenKind, TokenStream } from './tokens.ts';
 
@@ -33,7 +34,7 @@ export class TokenCursor {
     this.pos = this.skip(0);
   }
 
-  private skip(i: number): number {
+  protected skip(i: number): number {
     const last = this.tokens.length - 1;
     while (i < last && this.trivia[this.tokens.kind[i] ?? 0] === 1) i++;
     return Math.min(i, last);
@@ -71,6 +72,11 @@ export class TokenCursor {
     return from;
   }
 
+  /** Whether the significant token after the current one has `kind`. */
+  peekAt(kind: TokenKind): boolean {
+    return this.peek() === kind;
+  }
+
   at(kind: TokenKind): boolean {
     return this.kind === kind;
   }
@@ -80,5 +86,67 @@ export class TokenCursor {
     if (this.kind !== kind) return false;
     this.next();
     return true;
+  }
+
+  /**
+   * Tell a probe what the parser would accept here without testing each kind, e.g. what may
+   * start a statement where a loop stops at the end of the text. Does nothing without one.
+   */
+  tested(_kinds: TokenKind | readonly TokenKind[]): void {
+    // Recorded by ProbeCursor only.
+  }
+
+  /** Recovery starts (called by `syncTo`). Does nothing without a probe. */
+  recovering(): void {
+    // Recorded by ProbeCursor only.
+  }
+}
+
+/**
+ * A {@link TokenCursor} for a probe parse: `at`, `eat`, `peekAt` and `tested` record the kinds
+ * tested at the probed token. A plain parse uses `TokenCursor`, which records nothing.
+ */
+export class ProbeCursor extends TokenCursor {
+  /** Index of the probed token; the stream length when there is none. */
+  private readonly target: number;
+
+  constructor(
+    tokens: TokenStream,
+    private readonly probe: Probe,
+    trivia: KindSet = TRIVIA
+  ) {
+    super(tokens, trivia);
+    let t = this.pos;
+    while (t < tokens.length && !probe.covers(tokens.start[t] ?? 0, tokens.end[t] ?? 0)) {
+      t = t === tokens.length - 1 ? tokens.length : this.skip(t + 1);
+    }
+    this.target = t;
+  }
+
+  private record(at: number, kinds: TokenKind | readonly TokenKind[]): void {
+    if (at === this.target) this.probe.tested(kinds, this.tokens.start[at] ?? 0);
+  }
+
+  override peekAt(kind: TokenKind): boolean {
+    this.record(this.skip(this.pos + 1), kind);
+    return super.peekAt(kind);
+  }
+
+  override at(kind: TokenKind): boolean {
+    this.record(this.pos, kind);
+    return super.at(kind);
+  }
+
+  override eat(kind: TokenKind): boolean {
+    this.record(this.pos, kind);
+    return super.eat(kind);
+  }
+
+  override tested(kinds: TokenKind | readonly TokenKind[]): void {
+    this.record(this.pos, kinds);
+  }
+
+  override recovering(): void {
+    this.probe.freeze();
   }
 }
