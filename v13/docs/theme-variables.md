@@ -41,6 +41,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `noteBorderColor` | `--mermaid-noteBorderColor` | derived | color | `mix(noteBkgColor, black, 30%)` | `mix(noteBkgColor, white, 30%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | core |
 | `errorBkgColor` | `--mermaid-errorBkgColor` | derived | color | `#552222` | `#a44141` | redux-color, redux, redux-dark, redux-dark-color | core |
 | `errorTextColor` | `--mermaid-errorTextColor` | derived | color | `contrast(background, #552222, #ffdddd)` | `contrast(background, #dddddd, #552222)` | redux-color, redux, redux-dark, redux-dark-color, dark | core |
+| `compositeBackground` | `--mermaid-compositeBackground` | derived | color | `background` | `background` | redux-dark, redux-dark-color | state |
 | `compositeTitleBackground` | `--mermaid-compositeTitleBackground` | derived | color | `mainBkg` | `mainBkg` | redux-color, redux, redux-dark, redux-dark-color | state |
 | `altBackground` | `--mermaid-altBackground` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | state |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart |
