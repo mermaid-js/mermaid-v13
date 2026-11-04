@@ -68,4 +68,4 @@ Report the run's summary (`gh run view <id>`): its published lines. A real run (
    ```
    Ask, then `git push origin --tags`.
 
-7. **Confirm.** Run `pnpm release:preflight` again: it should report *Nothing to release*. Run `npm view mermaid dist-tags`: `alpha` should be the new version and `latest` still 12.x. Finish with the released `name@version` list and the install line: `npm install mermaid@alpha --save-exact`.
+7. **Confirm.** Run `pnpm release:preflight` again: it should report *Nothing to release*. Run `npm view mermaid dist-tags`: `alpha` should be the new version and `latest` still 12.x. Finish with the released `name@version` list and the install line: `npm install mermaid@alpha --save-exact`. New packages can take a few minutes to appear (npm caches the 404). Check the tarball URL before reporting a failure, and `git ls-remote --tags origin` for the tags.

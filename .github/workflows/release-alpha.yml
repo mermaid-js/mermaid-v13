@@ -63,6 +63,12 @@ jobs:
           node-version-file: '.node-version'
           registry-url: 'https://registry.npmjs.org'
       - run: pnpm install --frozen-lockfile
+      # Before anything that commits or tags: `changeset tag` makes annotated tags, which git
+      # refuses without an identity, and changesets reports "New tag" anyway.
+      - name: Git identity
+        run: |
+          git config user.name "mermaid-release-bot"
+          git config user.email "mermaid-release-bot@users.noreply.github.com"
       - name: Preflight (plan, npm login)
         run: pnpm release:preflight
       - run: pnpm check
@@ -76,8 +82,6 @@ jobs:
             echo "No pending changesets; publishing any versions not on npm yet."
             echo "committed=false" >> "$GITHUB_OUTPUT"
           else
-            git config user.name "mermaid-release-bot"
-            git config user.email "mermaid-release-bot@users.noreply.github.com"
             git add -A
             git commit -m "chore(release): version packages"
             git show --stat HEAD
@@ -103,6 +107,18 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Tag the released versions
         if: ${{ !inputs.dry_run }}
+        env:
+          # `pnpm check` already ran above; the husky pre-push hook would run it again.
+          HUSKY: '0'
         run: |
           pnpm changeset tag
+          # changesets prints "New tag" even when `git tag` fails: check each tag exists.
+          tags=$(node -e "for (const d of require('fs').readdirSync('packages')) { try { const p = require('./packages/' + d + '/package.json'); if (!p.private) console.log(p.name + '@' + p.version); } catch {} }")
+          for t in $tags; do
+            git rev-parse -q --verify "refs/tags/$t" > /dev/null || { echo "::error::tag $t was not created"; exit 1; }
+          done
           git push origin --tags
+          for t in $tags; do
+            git ls-remote --exit-code --tags origin "refs/tags/$t" > /dev/null || { echo "::error::tag $t is not on origin"; exit 1; }
+          done
+          echo "Tags on origin: $tags"

@@ -126,6 +126,13 @@ export type Exec = (args: string[]) => string;
 export const npm: Exec = (args) =>
   execFileSync('npm', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
+/** npm's refusal to publish a version that already exists. */
+function alreadyPublished(error: unknown): boolean {
+  const e = error as { stderr?: unknown; message?: unknown };
+  const text = [e.stderr, e.message].filter((x): x is string => typeof x === 'string').join('\n');
+  return /EPUBLISHCONFLICT|cannot publish over (?:the )?previously published version/i.test(text);
+}
+
 /** Whether `name@version` is on `registry`; any lookup failure counts as not published. */
 export function isPublished(exec: Exec, spec: string, registry: string): boolean {
   try {
@@ -149,6 +156,8 @@ export function publishAll(
     provenance?: boolean;
     /** A one-time password for npm accounts with 2FA on publish (manual releases). */
     otp?: string;
+    /** Receives npm's own output for each publish (`+ name@version`, notices). */
+    log?: (npmOutput: string) => void;
   }
 ): { published: string[]; skipped: string[] } {
   const exec = opts.exec ?? npm;
@@ -165,17 +174,29 @@ export function publishAll(
       skipped.push(spec);
       continue;
     }
-    exec([
-      'publish',
-      t.tarball,
-      '--tag',
-      DIST_TAG,
-      '--registry',
-      url,
-      ...(target === 'public' ? ['--access', 'public'] : []),
-      ...(target === 'public' && opts.provenance !== false ? ['--provenance'] : []),
-      ...(opts.otp === undefined ? [] : ['--otp', opts.otp]),
-    ]);
+    let out: string;
+    try {
+      out = exec([
+        'publish',
+        t.tarball,
+        '--tag',
+        DIST_TAG,
+        '--registry',
+        url,
+        ...(target === 'public' ? ['--access', 'public'] : []),
+        ...(target === 'public' && opts.provenance !== false ? ['--provenance'] : []),
+        ...(opts.otp === undefined ? [] : ['--otp', opts.otp]),
+      ]);
+    } catch (e) {
+      // Right after a publish the registry's cache can still answer 404 to `npm view`, so a
+      // re-run tries again and npm refuses: that version is out, which is all a re-run needs.
+      if (alreadyPublished(e)) {
+        skipped.push(spec);
+        continue;
+      }
+      throw e;
+    }
+    opts.log?.(out);
     published.push(spec);
   }
   return { published, skipped };

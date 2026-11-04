@@ -225,7 +225,9 @@ One-time setup:
 
 ### When something goes wrong
 
-- **Publish failed half way:** fix the cause and run the same `release:publish` again. Published versions are skipped.
+- **Publish failed half way:** fix the cause and run the same `release:publish` again. Published versions are skipped, including ones the registry's cache still reports as missing.
+- **"Not found" right after a publish:** npm's cache can answer 404 for a few minutes, longest for a package's very first version (about 3 minutes for the `@mermaid-js/*` packages on 13.0.0-alpha.0). Until the cache catches up, `npm install mermaid@alpha` fails for users, because npm can't find the new dependencies. To check without the cache, request the tarball (`curl -I https://registry.npmjs.org/mermaid/-/mermaid-<version>.tgz`). Your npm "published" emails are also proof.
+- **Tags missing on GitHub:** `git ls-remote --tags origin '*<version>'`. Create them on the released commit (`pnpm changeset tag` needs a git identity, because the tags are annotated) and push them. The workflow now checks each tag before and after pushing.
 - **Versioned, never published** (preflight lists versions *not on the registry yet*): run steps 4 to 6. If changesets have been merged since, version first (step 3): a publish ships `HEAD`, and that code belongs under the new version. The unpublished alpha number is simply skipped.
 - **A bad version is on npm:** never unpublish, and never reuse a number. Fix forward with a new changeset and release. Meanwhile point `alpha` back with `npm dist-tag add mermaid@<good> alpha`, and `npm deprecate mermaid@<bad> "<why>"`.
 - **`latest` must never move.** If a publish ever touched it: `npm dist-tag add mermaid@<current v12> latest`.

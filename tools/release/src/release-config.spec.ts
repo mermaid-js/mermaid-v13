@@ -159,6 +159,15 @@ describe('manual release workflow (v13/docs/RELEASING.md §5)', () => {
     for (let i = 1; i < order.length; i++) expect(order[i]).toBeGreaterThanOrEqual(order[i - 1]!);
   });
 
+  it('sets a git identity before versioning and tagging, and checks the tags reached origin', () => {
+    const identity = at(/git config user\.email/);
+    expect(identity).toBeGreaterThanOrEqual(0);
+    expect(identity).toBeLessThan(at(/pnpm changeset version/));
+    const tag = r.steps[at(/pnpm changeset tag/)]!;
+    expect(tag.run).toMatch(/git rev-parse -q --verify "refs\/tags\/\$t"/);
+    expect(tag.run).toMatch(/git ls-remote --exit-code --tags origin/);
+  });
+
   it('pushes and tags only outside a dry run, and the publish honours it', () => {
     expect(r.steps[at(/git push origin HEAD/)]!.if).toContain('!inputs.dry_run');
     expect(r.steps[at(/pnpm changeset tag/)]!.if).toContain('!inputs.dry_run');
