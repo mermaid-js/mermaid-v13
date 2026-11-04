@@ -80,8 +80,11 @@ export interface MermaidMonacoOptions {
   readonly preload?: PreloadRequest;
   /** The Monaco language id; `mermaid` when omitted. */
   readonly languageId?: string;
-  /** Milliseconds after the last edit before markers update; 150 when omitted. */
-  readonly diagnosticsDelay?: number;
+  /**
+   * Milliseconds after the last edit before markers update; 150 when omitted (D98). The same
+   * name as the CodeMirror adapter's `delay` (Monaco refreshes semantic tokens itself).
+   */
+  readonly delay?: number;
 }
 
 export interface MermaidRegistration extends Monaco.IDisposable {
@@ -106,8 +109,9 @@ const registered = new WeakMap<object, Map<string, Shared>>();
  * `service.preload()` first (D155), so no snapshot is taken before the facets are loaded.
  *
  * Once per language id: calling it again for the same `monaco` and id returns a handle to the
- * same registration (another `service` for it is refused), and the providers and markers stay
- * until every handle is disposed. Monaco cannot unregister a language id, so that stays.
+ * same registration (another `service` for it is refused; its `preload` is loaded into the
+ * shared service before the handle resolves), and the providers and markers stay until every
+ * handle is disposed. Monaco cannot unregister a language id, so that stays.
  */
 export async function registerMermaid(
   monaco: MonacoApi,
@@ -118,6 +122,7 @@ export async function registerMermaid(
   let byId = registered.get(languages);
   if (!byId) registered.set(languages, (byId = new Map<string, Shared>()));
   let shared = byId.get(languageId);
+  const joining = shared !== undefined;
   if (shared && options.service && options.service !== shared.service) {
     throw new Error(`Mermaid is already registered for "${languageId}" with another service.`);
   }
@@ -145,7 +150,7 @@ export async function registerMermaid(
           languageId,
           semanticTokensProvider(service)
         ),
-        watchDiagnostics(monaco, service, languageId, options.diagnosticsDelay),
+        watchDiagnostics(monaco, service, languageId, options.delay),
       ];
     })();
     shared = { service, ready, handles: 0 };
@@ -156,6 +161,8 @@ export async function registerMermaid(
   let disposables: Monaco.IDisposable[];
   try {
     disposables = await entry.ready;
+    // A later call's preload is honoured, not ignored: the service loads what it lacks.
+    if (joining) await entry.service.preload(options.preload);
   } catch (error) {
     if (--entry.handles === 0) byId.delete(languageId);
     throw error;

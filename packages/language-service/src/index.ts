@@ -19,6 +19,8 @@ export type { FacetEntry } from './facets.ts';
 export type { Annotation, ConfigSchema, SchemaNode } from './config/schema.ts';
 export { COMPLETION_TRIGGERS } from './completion.ts';
 export { diagnosticMessage } from './diagnostics.ts';
+export { inlineMarkdown } from './markdown.ts';
+export type { InlinePart } from './markdown.ts';
 export { firstPartyFacets } from './generated/facets.gen.ts';
 export type { FoldingRange } from './folding.ts';
 export { encodeSemanticTokens, lineFoldingRanges, lineSemanticTokens } from './lines.ts';

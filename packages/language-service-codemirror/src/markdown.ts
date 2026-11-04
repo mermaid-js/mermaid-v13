@@ -1,20 +1,19 @@
 /**
  * The small Markdown the service writes (hover and completion docs): paragraphs split by
- * blank lines, `code` and **bold** spans, `- ` list lines. Built with text nodes only, so
- * nothing in a diagram's text can become markup.
+ * blank lines, `code` spans (with any number of backticks, as the service fences a label
+ * that holds one) and **bold** spans, `- ` list lines. Built with text nodes only, so nothing
+ * in a diagram's text can become markup.
  */
-
-const INLINE = /(`[^`]+`|\*\*[^*]+\*\*)/;
+import { inlineMarkdown } from '@mermaid-js/language-service';
 
 function inline(parent: HTMLElement, text: string): void {
-  for (const part of text.split(INLINE)) {
-    if (part === '') continue;
-    if (part.startsWith('`') && part.endsWith('`') && part.length > 1) {
-      parent.appendChild(document.createElement('code')).textContent = part.slice(1, -1);
-    } else if (part.startsWith('**') && part.endsWith('**') && part.length > 3) {
-      parent.appendChild(document.createElement('strong')).textContent = part.slice(2, -2);
+  for (const part of inlineMarkdown(text)) {
+    if (part.kind === 'code') {
+      parent.appendChild(document.createElement('code')).textContent = part.text;
+    } else if (part.kind === 'strong') {
+      parent.appendChild(document.createElement('strong')).textContent = part.text;
     } else {
-      parent.appendChild(document.createTextNode(part));
+      parent.appendChild(document.createTextNode(part.text));
     }
   }
 }

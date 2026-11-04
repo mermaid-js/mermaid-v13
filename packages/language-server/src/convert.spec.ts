@@ -14,7 +14,7 @@ import {
 } from '@mermaid-js/language-service';
 import type { SemanticToken } from '@mermaid-js/language-service';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { toFoldingRange, toRange } from './convert.ts';
+import { toFoldingRange, toMarkup, toRange } from './convert.ts';
 import { decodeTokens } from './testing/lsp-client.ts';
 
 const CORPUS = join(import.meta.dirname, '..', '..', '..', 'e2e', 'diagrams');
@@ -159,5 +159,16 @@ describe('positions and folding', () => {
       endLine: 3,
       kind: 'comment',
     });
+  });
+});
+
+describe('plain-text markup', () => {
+  it('drops the marks but keeps backticks that are part of a code span', () => {
+    expect(toMarkup('**node** `B`', false).value).toBe('node B');
+    // A label holding a backtick: the service fences it with two (tables.ts `code`).
+    expect(toMarkup('label ``a`b``', false).value).toBe('label a`b');
+    expect(toMarkup('``` `` ```', false).value).toBe('``');
+    expect(toMarkup('**x** `**y**`', false).value).toBe('x **y**');
+    expect(toMarkup('**node** `B`', true)).toEqual({ kind: 'markdown', value: '**node** `B`' });
   });
 });

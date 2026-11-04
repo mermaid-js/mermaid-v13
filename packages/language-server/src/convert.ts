@@ -15,6 +15,7 @@ import type {
 import {
   diagnosticMessage,
   encodeSemanticTokens,
+  inlineMarkdown,
   lineSemanticTokens,
 } from '@mermaid-js/language-service';
 import type {
@@ -72,12 +73,17 @@ const COMPLETION_KIND: Readonly<Record<CompletionKind, CompletionItem['kind']>> 
 
 /**
  * The service's markdown as LSP markup content: as it is when the client takes markdown, else
- * as plain text with the bold and code marks taken out.
+ * as plain text with the bold marks and code fences taken out (backticks inside a code span,
+ * such as one in a label, stay).
  */
 export function toMarkup(value: string, markdown: boolean): MarkupContent {
-  return markdown
-    ? { kind: 'markdown', value }
-    : { kind: 'plaintext', value: value.replace(/\*\*|`/g, '') };
+  if (markdown) return { kind: 'markdown', value };
+  return {
+    kind: 'plaintext',
+    value: inlineMarkdown(value)
+      .map((p) => p.text)
+      .join(''),
+  };
 }
 
 /** Whether a client capability's format list (preferred first) lets the server send markdown. */

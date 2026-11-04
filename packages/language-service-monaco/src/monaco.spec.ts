@@ -442,6 +442,30 @@ describe('registering twice', () => {
     ).rejects.toThrow(/already registered/);
   });
 
+  it("honours a second registration's preload: its types load before it resolves", async () => {
+    const f = fakeMonaco();
+    const service = createLanguageService();
+    const first = await registerMermaid(f.monaco, { service, preload: { types: ['pie'] } });
+    const preload = vi.spyOn(service, 'preload');
+    const second = await registerMermaid(f.monaco, { preload: { types: ['flowchart'] } });
+    expect(preload).toHaveBeenCalledWith({ types: ['flowchart'] });
+    expect(second.service.update('x', 'flowchart LR\n  A\n').facet?.id).toBe('flowchart');
+    second.dispose();
+    first.dispose();
+  });
+
+  it('takes the markers delay as `delay`, as the CodeMirror adapter does', async () => {
+    const f = fakeMonaco();
+    const r = await registerMermaid(f.monaco, { delay: 40 });
+    const model = f.createModel('file:///delay.mmd', 'flowchart LR\n  A --> B\n');
+    model.setValue('flowchart LR\n  A[x\n');
+    vi.advanceTimersByTime(39);
+    expect(f.markers.get('file:///delay.mmd')).toEqual([]);
+    vi.advanceTimersByTime(1);
+    expect(f.markers.get('file:///delay.mmd')).toHaveLength(1);
+    r.dispose();
+  });
+
   it('registers another language id separately', async () => {
     const other = await registerMermaid(fake.monaco, { languageId: 'mmd2' });
     expect(fake.providers.get('hover')?.map((p) => p.language)).toEqual(['mermaid', 'mmd2']);
