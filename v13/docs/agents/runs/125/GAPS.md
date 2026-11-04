@@ -5,7 +5,7 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 ## #141 T3 layout
 - [x] Invariants on fixtures produced by the v13 parser: `packages/conformance/src/sequence/layout-corpus.spec.ts` (#139), green in px and cells, default and changed config.
 - [x] Messages after a participant is destroyed: v12 accepts them (oracle), so #139 accepts with a `SEQUENCE_AFTER_DESTROY` warning; the span invariant reports them (pinned in the same spec).
-- **Decided (maintainer, 2026-11-04): honour per-key sequence font sizes.** A set `sequence.messageFontSize`, `noteFontSize`, `actorFontSize` (and the other per-key size/weight keys) takes effect; unset, they inherit the theme `fontSize` (v12's effective 16). v12 overwrote them all with the global `fontSize`. #141 already behaves this way. Still to do: the D-id row (next free after D114 on `docs/m3-specs`; the M3 docs session owns DECISIONS.md), and in #145 (T5) move the keys to `honoured` and add a MIGRATION.md entry for the change.
+- **Decided (maintainer, 2026-11-04): honour per-key sequence font sizes.** A set `sequence.messageFontSize`, `noteFontSize`, `actorFontSize` (and the other per-key size/weight keys) takes effect; unset, they inherit the theme `fontSize` (v12's effective 16). v12 overwrote them all with the global `fontSize`. #141 already behaves this way. Done in #145: the keys are `honoured` with the default change in their reason, no generated section defaults (the layout's metrics table holds v12's lengths), MIGRATION.md "Config behaviour". Still to do: the D-id row (the M3 docs session owns DECISIONS.md).
 
 ## #139 T2 parser
 
@@ -14,8 +14,8 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 - [x] **Core `sourceView` mid-line directive fix (#186):** merged; six sequence forms added to the lexer-parity gate (`MID_LINE_DIRECTIVES`), parity 100%.
 
 ## #149 T6 language facet
-- **Goldens run from conformance until the manifest lands (#145).** `firstPartyFacets` gets a `load` only from a manifest `language` entry, so `packages/conformance/src/sequence/language-goldens.spec.ts` passes the facet as an eager row over `packages/conformance/language-goldens/sequence/`. Its last test fails once the manifest has `language`: then `git mv` the folder to `packages/language-service/goldens/sequence/` and delete the spec (#145).
-- **Property and rename round-trip specs (recipe step 7) pick sequence up only with the manifest.** Run by hand over the 193 sequence corpus files with the eager row: no throw, no completion range off the cursor's line, every participant rename keeps the model. Re-check when #145 registers the facet.
+- [x] **Goldens run from conformance until the manifest lands (#145).** Done in #145: moved to `packages/language-service/goldens/sequence/` (outputs unchanged; the two no-offer cases renamed `not-code-*`), the temporary spec deleted. `firstPartyFacets` gets a `load` only from a manifest `language` entry, so `packages/conformance/src/sequence/language-goldens.spec.ts` passes the facet as an eager row over `packages/conformance/language-goldens/sequence/`. Its last test fails once the manifest has `language`: then `git mv` the folder to `packages/language-service/goldens/sequence/` and delete the spec (#145).
+- [x] **Property and rename round-trip specs (recipe step 7) pick sequence up only with the manifest.** #145: both green over the corpus with sequence registered, no new known entry. Run by hand over the 193 sequence corpus files with the eager row: no throw, no completion range off the cursor's line, every participant rename keeps the model. Re-check when #145 registers the facet.
 - **TextMate has no mode switch.** The generator cannot add one without changing flowchart's TextMate grammar (its `callbackname` `pop push`). So in TextMate only: the data `@{ … }`, `as` and the alias text of a declaration may be miscoloured, and when the rest of a declaration line is not a plain id (it holds `@{`, `<`, `,` or `:`), the id mode's catch-all `INVALID` end wins and the line from the id on, a `;`-separated statement after it included, has no colour. Everything else agrees (statements after `;` behind an alias, multi-line data, entities in ids and text). Spelled out and checked token by token in `tools/gen-grammar/src/sequence-categories.spec.ts`; fixing it needs switch support (and end-pattern order) in `tools/gen-grammar/src/highlight.ts` (cross-type, owner gen-grammar).
 - [x] **Section folds one line short when a section ends with a nested block:** fixed in language-service `lines.ts` (a closer line of a nested block stays in the enclosing fold), spec in `lines.spec.ts`.
 - **Adapters colour first paint with flowchart's grammar (D119, accepted).** Picking a highlighter per type is #190.
@@ -36,11 +36,11 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 - [x] **Accepted (D119): first-paint colours via #190.** The CodeMirror and Monaco adapters colour first paint with flowchart's grammar for every type; picking the highlighter per type is cross-type ticket #190, after the M3 facets. #149 does not change the adapters.
 - [x] **Accepted with D119: no `./monarch.json` export yet.** It only feeds the Monaco adapter's first paint; it comes with #190.
 - [ ] **TextMate: pop-then-push rules.** `tools/gen-grammar/src/highlight.ts` has no TextMate form for a rule that pops one mode and pushes another, so TextMate colours a declaration's `as` alias and `@{…}` data as statement text (documented exception in `tools/gen-grammar/src/sequence-categories.spec.ts`). Cross-type generator fix; needs a follow-up ticket or maintainer acceptance.
-- [ ] **Property and rename round-trip specs pick sequence up once #145 registers it** (run by hand over the corpus in #149: clean). Then move `packages/conformance/language-goldens/sequence/` to the shared location and delete `packages/conformance/src/sequence/language-goldens.spec.ts` (its last test fails by design once the manifest lands).
+- [x] **Property and rename round-trip specs pick sequence up once #145 registers it** (done in #145, see above) (run by hand over the corpus in #149: clean). Then move `packages/conformance/language-goldens/sequence/` to the shared location and delete `packages/conformance/src/sequence/language-goldens.spec.ts` (its last test fails by design once the manifest lands).
 
 ## #143 T4 renderer
 - [x] **Neo symbol geometry**: ported by #194 (`tickets/194.md`): redux themes draw v12 neo geometry, classic themes v12 classic, from four geometry theme variables.
-- **Registry**: tests register the plugin under a swapped header (`conformance/src/sequence/render-api.ts`); #145 removes the swap once the manifest is generated.
+- [x] **Registry**: the swapped-header registration is gone (#145); the specs use `createMermaid()` and the generated registry.
 
 ## Resolved by the maintainer
 
@@ -52,3 +52,8 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 ## Final review
 
 - [ ] **Flaky margin: `packages/bench/src/language-budget-sequence.spec.ts` "a cycle costs at most four bare parses".** Failed twice in parallel full-suite runs under machine load (4.19 vs 4); passes alone under the lock. Check it uses best-of-N CPU time like flowchart's, and whether the ratio bound has the same headroom as flowchart's.
+
+## #145 T5 integration
+
+- [ ] **ASCII: a note over participants on both sides of a box border covers the border.** `note over W,A` where `A` is in a `box` and `W` is not: the note's interior blanks the box side (rows of the note, the box's left column). Found with the theme baselines; they use `note over W,D` instead. The corpus property (`sequence-corpus.spec.ts` "draws nothing but lines over the sides of a box") catches it once such a source is in the corpus. Owner: an ASCII follow-up (#150 area).
+- **Front-matter `title` in SVG (decided in #145 under D122).** Not drawn, as flowchart and state; the `title` statement is drawn; text output prints the front-matter title. v12 drew both. MIGRATION.md "Sequence SVG structure". D122 says the front-matter title "still feeds the accessible name", but no SVG (flowchart, state or sequence) carries it today: worth a look in the cross-type title decision.
