@@ -56,9 +56,10 @@ const fixturesOf = (group: string): Fixture[] =>
       };
     });
 
-const divergences = JSON.parse(
-  readFileSync(join(ROOT, 'ascii-divergences.json'), 'utf8')
-) as Divergence[];
+// The flowchart's entries: the ER goldens (`er/`, `er-ascii/`) list theirs in the same file.
+const divergences = (
+  JSON.parse(readFileSync(join(ROOT, 'ascii-divergences.json'), 'utf8')) as Divergence[]
+).filter((d) => UPSTREAM.some((g) => d.fixture.startsWith(`${g}/`)));
 const rejected = new Set(
   divergences.filter((d) => d.kind === 'rejected-input').map((d) => d.fixture)
 );

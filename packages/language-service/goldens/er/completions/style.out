@@ -1,0 +1,5 @@
+@ 6:9  style |
+  A node 6:9-6:9 "" -> "A"
+  B node 6:9-6:9 "" -> "B"
+  G subgraph 6:9-6:9 "" -> "G"
+  C node 6:9-6:9 "" -> "C"

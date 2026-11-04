@@ -30,13 +30,17 @@ function languageEntry(pkg = 'diagram-flowchart'): URL {
   return new URL(source, dir);
 }
 
+const ER = 'packages/diagram-er/src/';
+
 let language: Bundle;
 let classLanguage: Bundle;
+let erLanguage: Bundle;
 let prod: Bundle;
 beforeAll(async () => {
-  [language, classLanguage, prod] = await Promise.all([
+  [language, classLanguage, erLanguage, prod] = await Promise.all([
     build(languageEntry()),
     build(languageEntry('diagram-class')),
+    build(languageEntry('diagram-er')),
     build(new URL('../../mermaid/src/index.ts', import.meta.url)),
   ]);
 }, 60_000);
@@ -98,5 +102,31 @@ describe('the class ./language bundle', () => {
     const all = inputs(prod);
     expect(all).not.toContain(`${CLASS}language.ts`);
     expect(all).not.toContain(`${CLASS}generated/categories.ts`);
+  });
+});
+
+describe('the er ./language bundle', () => {
+  it('holds the parser and the category table', () => {
+    const all = inputs(erLanguage);
+    expect(all).toContain(`${ER}language.ts`);
+    expect(all).toContain(`${ER}parser/parser.ts`);
+    expect(all).toContain(`${ER}generated/categories.ts`);
+  });
+
+  it('contains no renderer, layout, plugin or ASCII code', () => {
+    const leaked = inputs(erLanguage).filter(
+      (i) =>
+        (i.startsWith(ER) &&
+          !/^packages\/diagram-er\/src\/(language|facet\/|parser\/|generated\/)/.test(i)) ||
+        i.includes('packages/core/src/svg/') ||
+        i.includes('packages/core/src/layout/')
+    );
+    expect(leaked).toEqual([]);
+  });
+
+  it('stays out of the mermaid bundle', () => {
+    const all = inputs(prod);
+    expect(all).not.toContain(`${ER}language.ts`);
+    expect(all).not.toContain(`${ER}generated/categories.ts`);
   });
 });

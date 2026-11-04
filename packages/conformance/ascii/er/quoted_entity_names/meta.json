@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/er/quoted_entity_names.txt",
+  "charset": "unicode"
+}

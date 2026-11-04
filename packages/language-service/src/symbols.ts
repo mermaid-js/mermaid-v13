@@ -102,6 +102,10 @@ export function references(
 }
 
 const noun = (kind: string) => (kind === 'class' ? 'class name' : `${kind} id`);
+const VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);
+/** `noun(kind)` with its article (`an entity id`). */
+const aNoun = (kind: string) =>
+  `${VOWELS.has(kind.charAt(0).toLowerCase()) ? 'an' : 'a'} ${noun(kind)}`;
 
 /** Why `ctx` has no symbols to work with, when it has no facet. */
 function unsupported(ctx: DocumentContext): string | undefined {
@@ -186,7 +190,7 @@ export function rename(
   const edits = sameSymbol(list, o).map((x) => ({ range: x.range, newText: newName }));
   if (newName === o.name) return deepFreeze({ edits });
   const clash = list.find((x) => x.space === o.space && x.name === newName);
-  if (clash) return refuse(`'${newName}' is already a ${noun(clash.kind)} in this diagram.`);
+  if (clash) return refuse(`'${newName}' is already ${aNoun(clash.kind)} in this diagram.`);
   if (!readsBack(ctx, facet, o, edits, newName))
     return refuse(`'${newName}' would not read as the same ${noun(o.kind)} everywhere it is used.`);
   return deepFreeze({ edits });

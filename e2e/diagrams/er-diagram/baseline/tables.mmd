@@ -1,0 +1,22 @@
+---
+description: entity tables with types, keys (PK, FK, UK, combined) and comments, plus an entity without attributes
+---
+erDiagram
+  CUSTOMER {
+    string id PK "the customer number"
+    string name
+    string email UK
+  }
+  ORDER {
+    int id PK
+    string customerId FK "who placed it"
+    date placed
+  }
+  LINE_ITEM {
+    int orderId PK, FK
+    int line PK
+    decimal price
+  }
+  NOTE
+  CUSTOMER ||--o{ ORDER : places
+  ORDER ||--|{ LINE_ITEM : contains

@@ -1,0 +1,33 @@
+@ 2:12  CUSTOMER |||--o{ ORDER : places
+  2:12-2:14 "||"
+  | **`||`** exactly one
+  |
+  | `CUSTOMER` (exactly one) to `ORDER` (zero or more), identifying (solid line): `places`
+  |
+  | Cardinalities, as symbols (`|o`, `||`, `}|`, `o{`, …) or words (`one or more`, `1+`, `many(0)`, …).
+@ 3:15  CUSTOMER ||-|-o{ ORDER : places
+  3:14-3:16 "--"
+  | **`--`** identifying (solid line)
+  |
+  | `CUSTOMER` (exactly one) to `ORDER` (zero or more), identifying (solid line): `places`
+  |
+  | Lines: `--` or `to` (identifying, solid), `..`, `.-`, `-.` or `optionally to` (dashed).
+@ 4:17  CUSTOMER ||--o|{ ORDER : places
+  4:16-4:18 "o{"
+  | **`o{`** zero or more
+  |
+  | `CUSTOMER` (exactly one) to `ORDER` (zero or more), identifying (solid line): `places`
+  |
+  | Cardinalities, as symbols (`|o`, `||`, `}|`, `o{`, …) or words (`one or more`, `1+`, `many(0)`, …).
+@ 6:17  A one or more |to zero or many B : x
+  6:17-6:19 "to"
+  | **`to`** identifying (solid line)
+  |
+  | `A` (one or more) to `B` (zero or more), identifying (solid line): `x`
+  |
+  | Lines: `--` or `to` (identifying, solid), `..`, `.-`, `-.` or `optionally to` (dashed).
+@ 8:16  string id P|K, FK
+  8:15-8:17 "PK"
+  | **`PK`** primary key
+  |
+  | `string name PK, FK "comment"`.

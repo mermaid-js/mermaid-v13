@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { astOf, buildLexer, buildParser, parseGrammar } from './index.ts';
+import {
+  astOf,
+  buildLexer,
+  buildParser,
+  lezerTokens,
+  monarch,
+  parseGrammar,
+  textMate,
+} from './index.ts';
 
 const TINY = `
 (** A tiny list language. *)
@@ -28,6 +36,29 @@ describe('grammar files', () => {
       ['item', 'Item'],
     ]);
     expect(g.start).toBe('list');
+  });
+
+  it("reads `@options case-insensitive` into every lexer and highlighter (jison's option)", () => {
+    const src =
+      '@lexer\n@options case-insensitive ;\nKW /end\\b/ :keyword ;\nID /[a-z]+/ ;\n- / +/ ;\n@grammar\ns = { KW | ID } ;';
+    const g = parseGrammar(src);
+    expect(g.ignoreCase).toBe(true);
+    expect(
+      buildLexer(g)
+        .lex('END Abc')
+        .tokens.map((t) => [t.name, t.text])
+    ).toEqual([
+      ['KW', 'END'],
+      ['ID', 'Abc'],
+    ]);
+    const names = { id: 'x', extensions: ['x'] };
+    expect(JSON.stringify(textMate(g, names))).toContain('(?i)end');
+    expect(monarch(g, names)).toMatchObject({ ignoreCase: true });
+    expect(lezerTokens(g, names, './x.js')).toContain("new RegExp(p, 'iy')");
+    expect(parseGrammar(TINY).ignoreCase).toBe(false);
+    expect(() => parseGrammar('@lexer\n@options loud ;\nA /a/ ;\n@grammar\ns = A ;')).toThrow(
+      /line 2: unknown lexer option `loud`/
+    );
   });
 
   it('reports unknown symbols, modes and unreachable rules with a line', () => {

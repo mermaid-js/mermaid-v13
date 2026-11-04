@@ -1,0 +1,11 @@
+erDiagram
+  CUSTOMER \|\|--o{ |ORDER : places
+  subgraph Sales
+    |ORDER {
+      string id PK
+    }
+  end
+  |CUSTOMER }\|--\|\| Sa|les : belongs
+  "LINE ITEM" \|\|--\|\| |CUSTOMER : x
+  classDef |hot fill:#f96
+  ORDER:::h|ot

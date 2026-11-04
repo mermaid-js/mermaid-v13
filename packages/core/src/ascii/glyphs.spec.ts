@@ -55,6 +55,23 @@ describe('glyph sets (D79)', () => {
     expect(unicode.tee).toEqual({ up: '┴', down: '┬', left: '┤', right: '├' });
   });
 
+  // ER relationship ends (D109): mermaid-ascii's marks on a horizontal line (`||`, `o{`, `}|`),
+  // and a bar, ring and foot of their own on a vertical one.
+  it('has crow’s-foot marks, the foot named by the way it opens (towards the entity)', () => {
+    expect(unicode.cardinality).toEqual({
+      bar: { h: '|', v: '╪' },
+      ring: 'o',
+      many: { up: 'V', down: 'Λ', left: '}', right: '{' },
+      parent: '◇',
+    });
+    expect(ascii.cardinality).toEqual({
+      bar: { h: '|', v: '=' },
+      ring: 'o',
+      many: { up: 'v', down: '^', left: '}', right: '{' },
+      parent: '*',
+    });
+  });
+
   it('every ASCII glyph is printable ASCII', () => {
     const all = JSON.stringify(ascii).replace(/"(name|solid|dotted|thick|rounded|double)"/g, '');
     expect(all).toMatch(/^[\x20-\x7e]*$/);

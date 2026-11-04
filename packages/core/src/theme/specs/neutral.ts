@@ -36,6 +36,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_PADDING,
   },
   values: {
+    altBackground: '#f4f4f4', // v12 (#192)
     textColor: '#000000',
     nodeBorder: '#999999',
     clusterBkg: '#fcfcfc',
@@ -47,6 +48,10 @@ const theme: ThemeSpec = {
     noteBkgColor: '#666666',
     noteTextColor: '#ffffff',
     noteBorderColor: '#999999',
+    // v12 theme-neutral sets the ER rows in its constructor, so they never follow an
+    // override: khroma lighten(#eee, 75) is white (D117).
+    rowOdd: '#ffffff',
+    rowEven: '#f4f4f4',
   },
 };
 

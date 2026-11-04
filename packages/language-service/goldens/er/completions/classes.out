@@ -1,0 +1,11 @@
+@ 5:7  A:::|
+  hot class 5:7-5:7 "" -> "hot"
+  cold class 5:7-5:7 "" -> "cold"
+@ 6:13  class A,B |
+  hot class 6:13-6:13 "" -> "hot"
+  cold class 6:13-6:13 "" -> "cold"
+@ 7:9  class |
+  A node 7:9-7:9 "" -> "A"
+  B node 7:9-7:9 "" -> "B"
+@ 8:12  subgraph |
+  none

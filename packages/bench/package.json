@@ -15,6 +15,7 @@
   "devDependencies": {
     "@mermaid-js/core": "workspace:^",
     "@mermaid-js/diagram-class": "workspace:^",
+    "@mermaid-js/diagram-er": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
     "@mermaid-js/language-service": "workspace:^",
     "@playwright/test": "^1.62.1",
