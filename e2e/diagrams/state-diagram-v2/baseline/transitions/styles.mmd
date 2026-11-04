@@ -1,0 +1,16 @@
+---
+description: classDef, the class shorthand, class statements and style on states and a composite
+---
+stateDiagram-v2
+  classDef hot fill:#f96,stroke:#333,color:#000
+  classDef cool fill:#9cf,stroke:#036,font-weight:bold
+  [*] --> A:::hot
+  A --> B
+  B --> C
+  state Group {
+    x --> y
+  }
+  C --> Group
+  class B cool
+  style C fill:#ff0,stroke:#f00,stroke-width:2px
+  style Group fill:#eef,stroke:#00f

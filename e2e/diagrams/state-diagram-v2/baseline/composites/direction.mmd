@@ -1,0 +1,14 @@
+---
+description: an LR diagram with a composite that sets its own direction
+---
+stateDiagram-v2
+  direction LR
+  [*] --> A
+  A --> B
+  B --> C
+  state B {
+    direction TB
+    a --> b
+    b --> c
+  }
+  C --> [*]

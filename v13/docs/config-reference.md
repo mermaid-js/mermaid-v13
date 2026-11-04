@@ -328,33 +328,33 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `state` | object |  | pending |  | The object containing configurations specific for entity relationship diagrams |
-| `state.useWidth` | number |  | pending |  |  |
-| `state.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
-| `state.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
+| `state` | object |  | honoured (13.0.0) |  | The object containing configurations specific for entity relationship diagrams |
+| `state.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the state renderers never did. |  |
+| `state.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `state.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | honoured (13.0.0) |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `state.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
-| `state.layout` | string | `"elk"` | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `state.wrappingWidth` | number | `120` | pending |  | Width of nodes where text is wrapped. When using markdown strings the text is wrapped automatically, this value sets the max width of a text before it continues on a new line. |
-| `state.minNodeWidth` | number | `120` | pending |  | Minimum width of the label area of a node. Labels narrower than this are widened to it, so nodes with short text get a uniform width; the node's own padding is added on top, the same way it is for `wrappingWidth`. Nodes with an explicit width are not affected. |
-| `state.titleTopMargin` | integer | `25` | pending |  | Margin top for the text over the diagram |
+| `state.layout` | string | `"layered"` | honoured (13.0.0) | Defaults to `layered`, not v12's `elk` (D127, R-LAYOUT-7: ELK is never the default). ELK applies only when an author sets it; until an ELK plugin is registered it is drawn with `layered` (D106). | Defines which layout algorithm to use for rendering the diagram. |
+| `state.wrappingWidth` | number | `120` | honoured (13.0.0) |  | Width of nodes where text is wrapped. When using markdown strings the text is wrapped automatically, this value sets the max width of a text before it continues on a new line. |
+| `state.minNodeWidth` | number | `120` | honoured (13.0.0) |  | Minimum width of the label area of a node. Labels narrower than this are widened to it, so nodes with short text get a uniform width; the node's own padding is added on top, the same way it is for `wrappingWidth`. Nodes with an explicit width are not affected. |
+| `state.titleTopMargin` | integer | `25` | ignored (13.0.0) | The state SVG draws no front-matter `title`, as flowchart's (D122). | Margin top for the text over the diagram |
 | `state.arrowMarkerAbsolute` | boolean |  | ignored (13.0.0) | Arrowheads are inline paths, not `<marker>` references. |  |
-| `state.dividerMargin` | number | `10` | pending |  |  |
-| `state.sizeUnit` | number | `5` | pending |  |  |
-| `state.padding` | number | `8` | pending |  |  |
-| `state.textHeight` | number | `10` | pending |  |  |
-| `state.titleShift` | number | `-15` | pending |  |  |
-| `state.noteMargin` | number | `10` | pending |  |  |
-| `state.nodeSpacing` | integer |  | pending |  |  |
-| `state.rankSpacing` | integer |  | pending |  |  |
-| `state.forkWidth` | number | `70` | pending |  |  |
-| `state.forkHeight` | number | `7` | pending |  |  |
-| `state.miniPadding` | number | `2` | pending |  |  |
-| `state.fontSizeFactor` | number | `5.02` | pending |  | Font size factor, this is used to guess the width of the edges labels before rendering by dagre layout. This might need updating if/when switching font |
-| `state.fontSize` | number | `24` | pending |  |  |
-| `state.labelHeight` | number | `16` | pending |  |  |
-| `state.edgeLengthFactor` | string | `"20"` | pending |  |  |
-| `state.compositTitleSize` | number | `35` | pending |  |  |
-| `state.radius` | number | `5` | pending |  |  |
+| `state.dividerMargin` | number | `10` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.sizeUnit` | number | `5` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.padding` | number | `8` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.textHeight` | number | `10` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.titleShift` | number | `-15` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.noteMargin` | number | `10` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.nodeSpacing` | integer |  | honoured (13.0.0) |  |  |
+| `state.rankSpacing` | integer |  | honoured (13.0.0) |  |  |
+| `state.forkWidth` | number | `70` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.forkHeight` | number | `7` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.miniPadding` | number | `2` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.fontSizeFactor` | number | `5.02` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. | Font size factor, this is used to guess the width of the edges labels before rendering by dagre layout. This might need updating if/when switching font |
+| `state.fontSize` | number | `24` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.labelHeight` | number | `16` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.edgeLengthFactor` | string | `"20"` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.compositTitleSize` | number | `35` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
+| `state.radius` | number | `5` | ignored (13.0.0) | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
 
 ## `er`
 

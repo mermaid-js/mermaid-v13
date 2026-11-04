@@ -50,8 +50,8 @@ export const FIXTURE_FOLDER_TYPES: Readonly<Record<string, readonly string[]>> =
   sankey: ['sankey'],
   sequence: ['sequence'],
   'state-diagram': ['stateDiagram'],
-  // One fixture here is an `info` diagram.
-  'state-diagram-v2': ['stateDiagram', 'info'],
+  // Its one `info` fixture is in FIXTURE_TYPE_EXCEPTIONS.
+  'state-diagram-v2': ['stateDiagram'],
   swimlanes: ['swimlane'],
   timeline: ['timeline'],
   'tree-view': ['treeView'],
@@ -62,6 +62,14 @@ export const FIXTURE_FOLDER_TYPES: Readonly<Record<string, readonly string[]>> =
   xychart: ['xychart'],
   // An external plugin in v12; not in the first-party registry.
   zenuml: ['zenuml'],
+};
+
+/**
+ * Fixtures of another type than their folder's (fixture path → type): each runs only once its
+ * own type has a v13 package, so it does not hold back its folder.
+ */
+export const FIXTURE_TYPE_EXCEPTIONS: Readonly<Record<string, string>> = {
+  'state-diagram-v2/nightly-check/v2-should-render-a-simple-info.mmd': 'info',
 };
 
 export interface DiscoveryOptions {
@@ -75,6 +83,7 @@ export interface DiscoveryOptions {
    */
   supportedTypes: ReadonlySet<string>;
   folderTypes?: Readonly<Record<string, readonly string[]>>;
+  typeExceptions?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -114,9 +123,20 @@ export const discoverMmdFixtures = async (options: DiscoveryOptions): Promise<st
     below.map((pattern) => `${folder}/${pattern}`)
   );
   if (patterns.length === 0) return [];
-  return (await collectMmdFixtures(diagramsDir, patterns)).sort();
+  const { supportedTypes, typeExceptions = FIXTURE_TYPE_EXCEPTIONS } = options;
+  return (await collectMmdFixtures(diagramsDir, patterns))
+    .filter((file) => {
+      const type = typeExceptions[file];
+      return type === undefined || supportedTypes.has(type);
+    })
+    .sort();
 };
 
 /** The fixture folders' diagram types that `supports` (e.g. mermaid's `supportsFormat`) renders. */
 export const supportedTypesOf = (supports: (type: string) => boolean): ReadonlySet<string> =>
-  new Set(Object.values(FIXTURE_FOLDER_TYPES).flat().filter(supports));
+  new Set(
+    [
+      ...Object.values(FIXTURE_FOLDER_TYPES).flat(),
+      ...Object.values(FIXTURE_TYPE_EXCEPTIONS),
+    ].filter(supports)
+  );

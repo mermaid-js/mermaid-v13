@@ -12,13 +12,15 @@
     "harvest:flowchart": "tsx --conditions=mermaid-source src/cli/harvest-flowchart.ts",
     "fuzz": "tsx --conditions=mermaid-source src/cli/fuzz.ts",
     "smoke": "tsx --conditions=mermaid-source src/cli/smoke.ts",
-    "harvest:er": "tsx --conditions=mermaid-source src/cli/harvest-er.ts"
+    "harvest:er": "tsx --conditions=mermaid-source src/cli/harvest-er.ts",
+    "harvest:state": "tsx --conditions=mermaid-source src/cli/harvest-state.ts"
   },
   "devDependencies": {
     "@braintree/sanitize-url": "7.1.2",
     "@mermaid-js/core": "workspace:^",
     "@mermaid-js/diagram-er": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/diagram-state": "workspace:^",
     "@mermaid-js/gen-grammar": "workspace:^",
     "@mermaid-js/language-service": "workspace:^",
     "@types/js-yaml": "^4.0.9",

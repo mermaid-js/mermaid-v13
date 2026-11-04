@@ -107,6 +107,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:^
+        version: link:../diagram-state
       '@mermaid-js/language-service':
         specifier: workspace:^
         version: link:../language-service
@@ -149,6 +152,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:^
+        version: link:../diagram-state
       '@mermaid-js/gen-grammar':
         specifier: workspace:^
         version: link:../../tools/gen-grammar
@@ -248,6 +254,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-state:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/language-server:
     dependencies:
       '@mermaid-js/core':
@@ -259,6 +271,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:*
+        version: link:../diagram-state
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -281,6 +296,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:*
+        version: link:../diagram-state
 
   packages/language-service-codemirror:
     devDependencies:
@@ -440,6 +458,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:*
+        version: link:../diagram-state
 
   packages/plugin-interactions:
     devDependencies:
@@ -476,6 +497,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../../packages/diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:^
+        version: link:../../packages/diagram-state
       vscode-oniguruma:
         specifier: 2.0.1
         version: 2.0.1

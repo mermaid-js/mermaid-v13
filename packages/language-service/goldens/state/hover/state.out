@@ -1,0 +1,28 @@
+@ 3:11  [*] --> |Idle
+  3:11-3:15 "Idle"
+  | **state** `Idle`
+  |
+  | Class: `hot`
+  |
+  | Transitions: 2 in, 1 out · 1 note
+@ 8:5  |Work --> [*]
+  8:5-8:9 "Work"
+  | **state** `Work`
+  |
+  | In: `Busy`
+  |
+  | Transitions: 0 in, 1 out
+@ 12:3  |Busy --> Idle
+  12:3-12:7 "Busy"
+  | **composite state** `Busy`
+  |
+  | Labels: `Doing work`, `second line`
+  |
+  | Transitions: 1 in, 1 out
+@ 12:12  Busy --> |Idle
+  12:12-12:16 "Idle"
+  | **state** `Idle`
+  |
+  | Class: `hot`
+  |
+  | Transitions: 2 in, 1 out · 1 note

@@ -33,6 +33,36 @@ const KNOWN_MODEL_CHANGES = [
   'flowchart/visual-check/v2-17-should-apply-class-def-colour-to-edge-label.mmd link@516: model',
 ];
 
+/**
+ * Renames whose way back is refused: the original name is a v12 state id that the state facet
+ * will not take as a new name (`isValidId`, #151), so it cannot be typed back. Both come from the
+ * corpus text, not from the rename: `state State1: Description 1` in a `stateDiagram-v2` makes
+ * `State1:` (and `Description`, `1`) state ids in v12 too, and the fork/join fixtures write
+ * `&lt;&lt;fork&gt;&gt;` HTML-escaped, so the marker is an id that `class`/`style` cannot name.
+ */
+const KNOWN_BACK_REFUSALS = [
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-dark-theme.mmd State1:@410: back refused: 'State1:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-dark-theme.mmd State2:@442: back refused: 'State2:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-dark-theme.mmd State3:@474: back refused: 'State3:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-dark-theme.mmd State4:@506: back refused: 'State4:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-theme.mmd State1:@400: back refused: 'State1:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-theme.mmd State2:@432: back refused: 'State2:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-theme.mmd State3:@464: back refused: 'State3:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-neo-theme.mmd State4:@496: back refused: 'State4:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-dark-theme.mmd State1:@414: back refused: 'State1:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-dark-theme.mmd State2:@446: back refused: 'State2:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-dark-theme.mmd State3:@478: back refused: 'State3:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-dark-theme.mmd State4:@510: back refused: 'State4:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-theme.mmd State1:@404: back refused: 'State1:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-theme.mmd State2:@436: back refused: 'State2:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-theme.mmd State3:@468: back refused: 'State3:' is not a state id.",
+  "state-diagram-v2/nightly-check/states-with-descriptions-neo-look-redux-theme.mmd State4:@500: back refused: 'State4:' is not a state id.",
+  "state-diagram/pr-check/should-render-forks-and-joins.mmd &lt;&lt;fork&gt;&gt;@299: back refused: '&lt;&lt;fork&gt;&gt;' cannot be named in `class` or `style` statements (letters, digits and `_` only).",
+  "state-diagram/pr-check/should-render-forks-and-joins.mmd &lt;&lt;join&gt;&gt;@409: back refused: '&lt;&lt;join&gt;&gt;' cannot be named in `class` or `style` statements (letters, digits and `_` only).",
+  "state-diagram/pr-check/should-render-forks-in-composit-states.mmd &lt;&lt;fork&gt;&gt;@321: back refused: '&lt;&lt;fork&gt;&gt;' cannot be named in `class` or `style` statements (letters, digits and `_` only).",
+  "state-diagram/pr-check/should-render-forks-in-composit-states.mmd &lt;&lt;join&gt;&gt;@431: back refused: '&lt;&lt;join&gt;&gt;' cannot be named in `class` or `style` statements (letters, digits and `_` only).",
+];
+
 /** Refused renames: safe, but each one is listed so a new refusal is seen. */
 const KNOWN_REFUSALS = [
   // An `L_B_D_0@{ … }` naming a generated edge id: renamed, it would name a new edge.
@@ -117,7 +147,7 @@ describe('rename, re-parse, same model modulo the name', () => {
       }
     }
     expect(renamed).toBeGreaterThan(2000);
-    expect(problems).toEqual(KNOWN_MODEL_CHANGES);
+    expect(problems).toEqual([...KNOWN_MODEL_CHANGES, ...KNOWN_BACK_REFUSALS]);
     expect(refused).toEqual(KNOWN_REFUSALS);
   }, 120_000);
 });
