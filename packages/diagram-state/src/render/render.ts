@@ -132,14 +132,14 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
     arrow: theme.color('arrowheadColor'),
     shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
   };
-  // v12's `compositeTitleBackground` and `altBackground` are not core variables yet; their
-  // redux values are `clusterBkg`'s (GAPS.md #146). The body is v12's `compositeBackground`.
+  // v12's composite variables (D120, D126, #193): the title band and a nested composite's
+  // body. The top-level body stays on `background` until `compositeBackground` (#196).
   const composite =
     s.groups.length > 0
       ? {
-          title: theme.color('clusterBkg'),
+          title: theme.color('compositeTitleBackground'),
           body: theme.color('background'),
-          alt: theme.color('clusterBkg'),
+          alt: theme.color('altBackground'),
           text: theme.color('titleColor'),
           radius: theme.number('radius'),
         }

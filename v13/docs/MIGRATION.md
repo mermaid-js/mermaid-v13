@@ -509,10 +509,9 @@ Colours map to theme variables v13 already has (D152): states `mainBkg` / `nodeB
 `lineColor` (v12 `specialStateColor`), the end dot `nodeBorder` (v12 `innerEndBackground`),
 transitions `lineColor` and `arrowheadColor` (v12 `transitionColor`), labels `textColor` on
 `edgeLabelBackground`, composite bodies `background` (v12 `compositeBackground`), composite
-titles `titleColor`, notes `noteBkgColor` / `noteBorderColor` / `noteTextColor`. v12's
-`compositeTitleBackground` and `altBackground` have no core variable yet: both are drawn with
-`clusterBkg`, which is v12's value in the redux family but not in the classic one (classic v12
-drew `mainBkg` and `#f0f0f0`). The composite outline radius is `radius`; the state radius (5),
+titles `titleColor`, notes `noteBkgColor` / `noteBorderColor` / `noteTextColor`. The composite
+title band reads `compositeTitleBackground` and a nested composite's body `altBackground`, with
+v12's values (D120, D126, #193; see the theme variable table). The composite outline radius is `radius`; the state radius (5),
 the end-state stroke (2) and the dash patterns are the same in every v12 look, so constants.
 
 ## Front matter and directives

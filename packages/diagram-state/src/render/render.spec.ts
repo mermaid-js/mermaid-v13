@@ -267,6 +267,39 @@ describe('state render: palette slots (v12 stateDiagram-colorIndex)', () => {
     tree.getAttr(tree.children(one(tree, ast))[0]!, 'stroke');
 });
 
+describe('state render: composite theme variables (D120, D126, #193)', () => {
+  // The title band reads `compositeTitleBackground`, a nested composite's body `altBackground`;
+  // the top-level body stays on `background` until `compositeBackground` (#196).
+  const src = 'stateDiagram-v2\n  state Outer {\n    state Inner {\n      [*] --> A\n    }\n  }';
+  it('paints the title band and the alternate body from their own variables', async () => {
+    const { tree, svg } = await renderForTest(src, {
+      config: {
+        theme: 'default',
+        themeVariables: { compositeTitleBackground: '#123456', altBackground: '#abcdef' },
+      },
+    });
+    const fills = (ast: string) =>
+      tree
+        .children(one(tree, ast))
+        .slice(0, 2)
+        .map((n) => tree.getAttr(n, 'fill'));
+    // Each fill is the root's custom property for that variable (D152).
+    const prop = (fill = '') => /^var\((--_\w+)\)$/.exec(fill)?.[1];
+    const [title, body] = fills('s:Outer').map(prop);
+    const [innerTitle, alt] = fills('s:Inner').map(prop);
+    const declared = (p: string | undefined) =>
+      new RegExp(`${p}:var\\(--mermaid-(\\w+),`).exec(svg)?.[1];
+    expect([title, innerTitle].map(declared)).toEqual([
+      'compositeTitleBackground',
+      'compositeTitleBackground',
+    ]);
+    expect(declared(body)).toBe('background');
+    expect(declared(alt)).toBe('altBackground');
+    expect(svg).toContain('--mermaid-compositeTitleBackground,#123456)');
+    expect(svg).toContain('--mermaid-altBackground,#abcdef)');
+  });
+});
+
 describe('state render: theme geometry (D152)', () => {
   it('writes the drop shadow only where the theme has one', async () => {
     const src = 'stateDiagram-v2\n  A --> B';
