@@ -107,6 +107,17 @@ describe('flowchart probe', () => {
     expect(probeAt('flowchart TD\nA -->¦te|xt¦ B').mode).toBe('text');
   });
 
+  it('on an empty line inside a run of line breaks: a statement start (#32)', () => {
+    const p = probeAt('flowchart TD\nsubgraph S\n|\nend');
+    expect(p.expected).toEqual(expect.arrayContaining([...STATEMENTS, 'End']));
+    expect(p.prefix).toBe('');
+    expect(probeAt('flowchart TD\nA\n\n|\n\nB').expected).toEqual(
+      expect.arrayContaining(STATEMENTS)
+    );
+    // A link may run over line breaks: past one, the probe is at the node after it.
+    expect(probeAt('flowchart TD\nA -->\n|\n B').expected).toEqual(['NodeString', 'Pipe']);
+  });
+
   it('inside a subgraph: any statement or `end`', () => {
     const p = probeAt('flowchart TD\nsubgraph S\n  A\n  |\nend');
     expect(p.expected).toEqual(expect.arrayContaining([...STATEMENTS, 'End']));

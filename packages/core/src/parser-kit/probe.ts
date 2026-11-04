@@ -5,8 +5,9 @@
  *
  * The probed token: take the first significant token that ends at or after the offset; skip it
  * when it ends exactly at the offset and its kind is one the cursor follows rather than extends
- * (line breaks, blanks and the diagram's `follow` kinds: punctuation such as `:::`, `-->`, `[`).
- * If that token is part of a word, the probed token is the word's first token: a word is a run
+ * (line breaks, blanks and the diagram's `follow` kinds: punctuation such as `:::`, `-->`, `[`),
+ * or when its kind is followed and a line break lies between its start and the offset (an empty
+ * line inside a run of line breaks is after the separator). If that token is part of a word, the probed token is the word's first token: a word is a run
  * of adjacent tokens (no gap, no leading blank) none of which has a followed kind, so
  * `café` lexed as `caf` + `é` or `my-` as `my` + `-` is one word. The prefix is the text from
  * the probed token's start (leading blanks dropped) to the offset.
@@ -73,8 +74,17 @@ export class Probe {
   /** Whether a token is the probed token or after it, before words are joined. */
   private covers(start: number, end: number, kind: TokenKind): boolean {
     const o = this.offset;
-    if (end !== o) return end > o;
+    if (end !== o) return end > o && !(start < o && this.follows(kind) && this.lineEndIn(start, o));
     return start === end || !this.follows(kind);
+  }
+
+  /**
+   * Whether `[from, to)` holds a line break. A followed token (a line-break run, a link
+   * running over lines) that the offset is past a line break of is behind the cursor.
+   */
+  private lineEndIn(from: number, to: number): boolean {
+    for (let i = from; i < to; i++) if (isLineEnd(this.source.charCodeAt(i))) return true;
+    return false;
   }
 
   /**

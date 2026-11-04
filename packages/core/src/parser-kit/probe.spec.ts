@@ -28,6 +28,13 @@ function stream() {
   return { src, tokens: w.finish(src) };
 }
 
+/** Index of the probed token of `view` at offset `o`, or -1. */
+function probedIn(src: string, view: ReturnType<typeof significantTokens>, o: number): number {
+  const p = new Probe(src, o, FOLLOW);
+  for (let i = 0; i < view.length; i++) if (p.isAt(view, i)) return i;
+  return -1;
+}
+
 describe('Probe', () => {
   it.each([
     [0, 0, 'ab'],
@@ -104,17 +111,29 @@ describe('Probe', () => {
     w.push(Kind.Space, 5, 6);
     w.push(Word, 6, 7);
     const view = significantTokens(w.finish(src));
-    const hit = (o: number) => {
-      const p = new Probe(src, o, FOLLOW);
-      for (let i = 0; i < view.length; i++) if (p.isAt(view, i)) return i;
-      return -1;
-    };
+    const hit = (o: number) => probedIn(src, view, o);
     expect(hit(3)).toBe(0); // `ab-|`
     expect(hit(5)).toBe(0); // `ab-c.|`
     expect(hit(6)).toBe(4); // after the blank
     const p = new Probe(src, 5, FOLLOW);
     p.tested(Word, 0);
     expect(src.slice(p.result().prefix.start, 5)).toBe('ab-c.');
+  });
+
+  it('a followed token the offset is past a line break of is behind the cursor', () => {
+    // `ab\n\n|\ncd`: a blank line inside one line-break run is after the separator, so the
+    // probe is at the next token, not at the run (#32).
+    const src = 'ab\n\n\ncd';
+    const w = new TokenWriter();
+    w.push(Word, 0, 2);
+    w.push(Kind.Newline, 2, 5);
+    w.push(Word, 5, 7);
+    const view = significantTokens(w.finish(src));
+    const hit = (o: number) => probedIn(src, view, o);
+    expect(hit(2)).toBe(0); // `ab|`: still the word
+    expect(hit(3)).toBe(2); // on the first blank line
+    expect(hit(4)).toBe(2);
+    expect(hit(5)).toBe(2);
   });
 
   it('records nothing with a cursor whose offset is inside a comment', () => {
