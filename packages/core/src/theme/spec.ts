@@ -50,10 +50,9 @@ export const LIGHT_RULES: ThemeRuleTable = {
   noteBorderColor: 'mix(noteBkgColor, black, 30%)',
   errorBkgColor: '#552222',
   errorTextColor: 'contrast(background, #552222, #ffdddd)',
-  // ER (v12 classic): rowOdd is khroma lighten(mainBkg, 75), white for any light fill;
-  // rowEven approximates the base theme's lighten(mainBkg, 5), in HSL.
-  rowOdd: '#ffffff',
-  rowEven: 'lighten(mainBkg, 64%)',
+  // ER rows, exactly v12 theme-base's khroma lighten (HSL lightness) of mainBkg (D117).
+  rowOdd: 'lightenHsl(mainBkg, 75%)',
+  rowEven: 'lightenHsl(mainBkg, 5%)',
   erEdgeLabelBackground: 'edgeLabelBackground',
   erMarkerFill: '#ffffff',
 };
@@ -69,7 +68,7 @@ export const DARK_RULES: ThemeRuleTable = {
   noteBorderColor: 'mix(noteBkgColor, white, 30%)',
   errorBkgColor: '#a44141',
   errorTextColor: 'contrast(background, #dddddd, #552222)',
-  // v12 dark: lighten(mainBkg, 5) and darken(mainBkg, 10), in HSL.
-  rowOdd: 'lighten(mainBkg, 6%)',
-  rowEven: 'darken(mainBkg, 81%)',
+  // v12 theme-dark: khroma lighten(mainBkg, 5) and darken(mainBkg, 10), exactly (D117).
+  rowOdd: 'lightenHsl(mainBkg, 5%)',
+  rowEven: 'darkenHsl(mainBkg, 10%)',
 };

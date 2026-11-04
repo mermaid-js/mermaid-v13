@@ -40,6 +40,9 @@ const theme: ThemeSpec = {
     noteBkgColor: '#666666',
     noteTextColor: '#ffffff',
     noteBorderColor: '#999999',
+    // v12 theme-neutral sets the ER rows in its constructor, so they never follow an
+    // override: khroma lighten(#eee, 75) is white (D117).
+    rowOdd: '#ffffff',
     rowEven: '#f4f4f4',
   },
 };

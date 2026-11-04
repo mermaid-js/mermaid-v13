@@ -39,6 +39,28 @@ describe('diagram plugin rule tables (DESIGN §12.1)', () => {
     expect(root['--_p']).toBe('var(--mermaid-primaryColor,#fff4dd)');
   });
 
+  it('lightenHsl and darkenHsl move HSL lightness as khroma does, in JS and CSS (D117)', () => {
+    const rules = { a: 'lightenHsl(primaryColor, 5%)', b: 'darkenHsl(#1f2020, 10%)' };
+    const lit = createTheme(base, { rules, cssVariables: false });
+    // v12 theme-base: khroma lighten('#fff4dd', 5) = hsl(40.588…, 100%, 98.333…%).
+    expect(lit.color('a')).toBe('#fffcf6');
+    expect(lit.color('b')).toBe('#060606');
+    expect(
+      createTheme(base, { rules: { c: 'lightenHsl(#3366cc, 100%)' }, cssVariables: false }).color(
+        'c'
+      )
+    ).toBe('#ffffff');
+    const t = createTheme(base, { rules });
+    t.color('a');
+    t.color('b');
+    expect(t.rootStyle()['--_a']).toBe(
+      'var(--mermaid-a,hsl(from var(--_p) h s calc(l + 5) / alpha))'
+    );
+    expect(t.rootStyle()['--_b']).toBe(
+      'var(--mermaid-b,hsl(from #1f2020 h s calc(l - 10) / alpha))'
+    );
+  });
+
   it('rejects malformed rules and cycles', () => {
     const bad = (rule: string) => () =>
       createTheme(base, { rules: { x: rule }, cssVariables: false }).color('x');
