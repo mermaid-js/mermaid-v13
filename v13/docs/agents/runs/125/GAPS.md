@@ -22,3 +22,7 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 
 - **Flowchart oracle `\n` clipping.** `packages/conformance/src/flowchart/jison-lexer.ts` strips v12's appended `\n` from the last non-empty token; #137 found that wrong when a skipped `\s+` run swallowed it, and fixed it only in the sequence oracle. Flowchart's gate may compare a wrong expectation on sources ending in blanks.
 - **Cross-type duplication.** The source view is decided (D114, see #139 above). The jison lexer oracle and the harvest CLI in conformance are near copies of flowchart's too; one parameterised oracle and harvest CLI would serve every type.
+
+## #143 T4 renderer
+- **Neo symbol geometry** not drawn (layout has none): every theme draws v12 classic symbols. Needs a maintainer decision on layout geometry variables (D152).
+- **Registry**: tests register the plugin under a swapped header (`conformance/src/sequence/render-api.ts`); #145 removes the swap once the manifest is generated.
