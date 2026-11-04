@@ -181,6 +181,8 @@ interface Build {
   readonly units: UnitProfile;
   /** Every label is markdown, as v12's `createText` read it. */
   readonly label: (text: string, max?: number) => MeasuredLabel;
+  /** A multiplicity, in `classTerminalFontSize` (v12 `.edgeTerminals`, 11px). */
+  readonly terminal: (text: string) => MeasuredLabel;
   readonly px: (value: number, axis: 'x' | 'y') => number;
   /** Layout id of the group a class's or note's `parent` namespace is drawn as. */
   readonly groupOf: (ns: string | undefined) => string | undefined;
@@ -188,6 +190,12 @@ interface Build {
   /** Layout id by class id and by interface id. */
   readonly classIds: Map<string, string>;
   readonly interfaceIds: Map<string, string>;
+}
+
+/** The multiplicities' font size: the theme's `classTerminalFontSize`, else the diagram's. */
+function terminalSize(ctx: ClassLayoutContext, fallback: number): number {
+  const n = ctx.theme.number('classTerminalFontSize');
+  return Number.isFinite(n) && n > 0 && n < 1000 ? n : fallback;
 }
 
 const withParent = (parent: string | undefined): { parent?: string } =>
@@ -215,6 +223,10 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
     ctx,
     units,
     label: (text, max = Infinity) => layoutLabel(text, font, max, ctx.measurer, { markdown: true }),
+    terminal: (text) =>
+      layoutLabel(text, { ...font, size: terminalSize(ctx, font.size) }, Infinity, ctx.measurer, {
+        markdown: true,
+      }),
     px: (value, axis) => fromPx(units, value, axis),
     groupOf: (ns) => {
       const g = parentOf(ns);
@@ -343,7 +355,7 @@ function relationEdges(build: Build): ClassEdgeView[] {
     build.classIds.get(end.id);
   // A written `"none"` multiplicity drew nothing in v12.
   const multiplicity = (text: string | undefined): MeasuredLabel | undefined =>
-    text === undefined || text === '' || text === 'none' ? undefined : build.label(text);
+    text === undefined || text === '' || text === 'none' ? undefined : build.terminal(text);
   const edges: ClassEdgeView[] = [];
   for (const rel of build.model.relations) {
     const source = endOf(rel.start);
