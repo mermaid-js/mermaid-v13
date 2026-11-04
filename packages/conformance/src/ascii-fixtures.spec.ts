@@ -22,8 +22,11 @@ interface AsciiDivergence {
   reason: string;
 }
 
+// The flowchart's entries: the ER goldens (`er/`, `er-ascii/`) list theirs in the same file.
 const readDivergences = () =>
-  JSON.parse(readFileSync(join(ROOT, 'ascii-divergences.json'), 'utf8')) as AsciiDivergence[];
+  (
+    JSON.parse(readFileSync(join(ROOT, 'ascii-divergences.json'), 'utf8')) as AsciiDivergence[]
+  ).filter((d) => Object.keys(GROUPS).some((g) => d.fixture.startsWith(`${g}/`)));
 
 const fixtures = Object.keys(GROUPS).flatMap((group) =>
   readdirSync(join(ROOT, group)).map((name) => `${group}/${name}`)

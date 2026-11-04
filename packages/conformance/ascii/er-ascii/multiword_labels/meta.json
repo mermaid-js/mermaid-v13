@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/er-ascii/multiword_labels.txt",
+  "charset": "ascii"
+}

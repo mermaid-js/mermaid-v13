@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/er/cardinality_numeric_all.txt",
+  "charset": "unicode"
+}

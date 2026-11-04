@@ -17,7 +17,8 @@ const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
  */
 export const er = {
   id: 'er',
-  formats: ['svg'] as const,
+  // Text output is the lazily loaded `./ascii` entry (manifest key `ascii`, #136).
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'graph' as const,
   detector: (text: string): boolean => detectEr(text),
   parse: (text: string, ctx: DiagramParseContext): ErParseResult => {

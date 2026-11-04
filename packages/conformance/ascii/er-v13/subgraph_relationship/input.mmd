@@ -1,0 +1,6 @@
+erDiagram
+    subgraph billing [Billing]
+      INVOICE
+    end
+    CUSTOMER ||--o{ billing : pays
+    billing ||--|| LEDGER : posts

@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/er/entities_without_relationships.txt",
+  "charset": "unicode"
+}

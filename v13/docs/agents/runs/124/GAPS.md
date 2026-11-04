@@ -36,6 +36,12 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 - Generate the ER section defaults (`SECTION_OWNERS`; v12 nodeSpacing 140, rankSpacing 80, minEntityWidth 100) and mark the keys the builder reads (`er.nodeSpacing`, `er.rankSpacing`, `er.minEntityWidth`) as honoured.
 - **D116 (maintainer, draft PR #184): honour both.** Mark `er.entityPadding` (default 15) and `er.diagramPadding` (default 20) `honoured`. In px, `entityPadding` replaces the shared node padding inside entity table cells (v12's across × down meaning) and `diagramPadding` sets the margin around the drawing; the cell profile stays at 1-cell padding. Fix the MIGRATION.md ER row that says they are ignored, and cite D116 in code and tests.
 
+- #136 ASCII: declare `ascii` in ER's manifest (`formats: ["svg","ascii"]`, `"ascii": "./dist/ascii.js"`, `loadAscii` → `@mermaid-js/diagram-er/ascii`'s `ascii`), regenerate the registry, then point `conformance/src/ascii/er-render.ts` at `createMermaid()` and drop its `ER_SECTION_DEFAULTS` once the generated defaults carry them (goldens unchanged). Add ER to `v13/docs/ascii.md` and the format matrix.
+
+## #136 T7 ASCII (open question)
+
+- Maintainer: should text output honour the v12 px defaults `er.nodeSpacing` 140 (≈18 columns, 9 rows across in LR), `er.rankSpacing` 80 (5 rows) and `er.minEntityWidth` 100 (13 columns)? The goldens are drawn with them, as DESIGN's "px keys still count" implies; LR drawings get 9-row gaps between components.
+
 ## #135 T6 language facet (merged; finish after T5)
 
 - Facet, probe mode (the lexer now reports its jison start condition), generated tables and the bundle check are done. These wait on the T5 manifest giving ER a `load` in `firstPartyFacets` (language.md steps 4, 6, 7):
@@ -46,4 +52,4 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 
 ## Not started
 
-- None. #136 T7 ASCII and #134 T5 integration are running.
+- None. #134 T5 integration is running.

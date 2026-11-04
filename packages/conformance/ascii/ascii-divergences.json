@@ -58,5 +58,10 @@
     "fixture": "extended-chars/thick_edge_corners_chain_skip_lr",
     "kind": "structural",
     "reason": "upstream.txt joins two thick edges at a `┏` just left of C (`│ B │━━┏━►│ C │`); `┏` has no left arm, so B's `━━` stroke ends free there. v13 draws each edge on its own (D140)."
+  },
+  {
+    "fixture": "er/style_and_direction_skipped",
+    "kind": "reinterpreted",
+    "reason": "`direction LR` sets the layout direction: mermaid@12 and v13 both read it, so Mermaid draws CUSTOMER and ORDER side by side with the relationship between them. mermaid-ascii skips the statement and draws the relationship under the boxes as for every diagram. The `classDef` and `style` colours are dropped by both (v13 warns: ASCII_DROPPED style)."
   }
 ]
