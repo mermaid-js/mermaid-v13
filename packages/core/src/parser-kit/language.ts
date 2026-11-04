@@ -36,6 +36,10 @@ export interface LanguageFacet<A extends AstNode = AstNode> {
    * rename cover every kind in its group (D92).
    */
   readonly namespaces: readonly (readonly string[])[];
-  /** `undefined` when `name` can be used as an identifier, else the reason it cannot (D92). */
-  isValidId(name: string): string | undefined;
+  /**
+   * `undefined` when `name` can be used as an identifier of symbol kind `kind` (a kind the
+   * parser records, e.g. `node`, `class`, `edge`; the facet's main id kind when omitted),
+   * else the reason it cannot (D92).
+   */
+  isValidId(name: string, kind?: string): string | undefined;
 }
