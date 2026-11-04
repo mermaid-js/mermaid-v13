@@ -202,6 +202,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `class.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
 | `class.htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
+| `state.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the state renderers never did. |  |
 | `state.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `state.titleTopMargin` | ignored | The state SVG draws no front-matter `title`, as flowchart's (D122). |  |
 | `state.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
@@ -450,7 +451,8 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 - **`state` section:** `wrappingWidth`, `minNodeWidth`, `nodeSpacing`, `rankSpacing`,
   `useMaxWidth`, `theme` and `layout` work as in v12 (`layout` keeps v12's `elk` default, drawn
   with `layered`, see Layout).
-- **Ignored:** `titleTopMargin` (no front-matter title is drawn, D122), and the sizes only v12's
+- **Ignored:** `titleTopMargin` (no front-matter title is drawn, D122), `useWidth` (only gantt
+  read it), and the sizes only v12's
   old dagre renderer read: `dividerMargin`, `sizeUnit`, `padding`, `textHeight`, `titleShift`,
   `noteMargin`, `forkWidth`, `forkHeight`, `miniPadding`, `fontSizeFactor`, `fontSize`,
   `labelHeight`, `edgeLengthFactor`, `compositTitleSize` and `radius`. Sizes come from the theme

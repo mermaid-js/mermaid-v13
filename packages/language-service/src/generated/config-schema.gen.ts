@@ -3377,6 +3377,21 @@ export const configSchema: ConfigSchema = {
             "reason": "v12's `elk` default is kept: it is drawn with `layered` until an ELK plugin is registered (D106)."
           }
         },
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the state renderers never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "wrappingWidth": {
           "description": "Width of nodes where text is wrapped.\n\nWhen using markdown strings the text is wrapped automatically, this\nvalue sets the max width of a text before it continues on a new line.\n",
           "type": "number",

@@ -321,8 +321,8 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
 | `state` | object |  | honoured (13.0.0) |  | The object containing configurations specific for entity relationship diagrams |
-| `state.useWidth` | number |  | pending |  |  |
-| `state.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `state.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the state renderers never did. |  |
+| `state.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `state.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" | `"redux-color"` | honoured (13.0.0) |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `state.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `state.layout` | string | `"elk"` | honoured (13.0.0) | v12's `elk` default is kept: it is drawn with `layered` until an ELK plugin is registered (D106). | Defines which layout algorithm to use for rendering the diagram. |
