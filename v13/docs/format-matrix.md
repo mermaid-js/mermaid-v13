@@ -15,7 +15,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `c4` | not ported | no | no |
 | `kanban` | not ported | no | no |
 | `classDiagram` | `@mermaid-js/diagram-class` | yes | no |
-| `er` | not ported | no | no |
+| `er` | `@mermaid-js/diagram-er` | yes | yes |
 | `gantt` | not ported | no | no |
 | `info` | not ported | no | no |
 | `pie` | not ported | no | no |

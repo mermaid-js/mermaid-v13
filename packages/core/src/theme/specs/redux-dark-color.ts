@@ -14,7 +14,7 @@ const theme: ThemeSpec = {
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
   rules: REDUX_RULES,
-  values: REDUX_DARK_VALUES,
+  values: { ...REDUX_DARK_VALUES, erEdgeLabelBackground: '#16141f' },
   palettes: {
     borderColorArray: TAILWIND_400,
     bkgColorArray: [],

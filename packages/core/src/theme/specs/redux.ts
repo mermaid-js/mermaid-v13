@@ -42,6 +42,9 @@ const redux: ThemeSpec = {
     mainBkg: '#ffffff',
     clusterBkg: '#f9f9fb',
     clusterBorder: '#bdbccc',
+    // v12 pins both composite-state backgrounds (#192).
+    compositeTitleBackground: '#f9f9fb',
+    altBackground: '#f9f9fb',
     noteBkgColor: '#fff5ad',
     noteTextColor: '#28253d',
     noteBorderColor: '#facc15',

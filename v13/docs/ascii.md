@@ -4,8 +4,9 @@ Mermaid v13 can render a diagram as plain text instead of SVG: Unicode box drawi
 pure ASCII. Text output runs the same parser and the same layout as SVG, laid out in character
 cells instead of pixels, and is drawn by the diagram's own `ascii` entry (DESIGN §6.3, ADR-14).
 
-Only diagram types that declare `ascii` in their manifest support it. In 13.0 that is the
-flowchart (`graph` / `flowchart`). See [the format matrix](format-matrix.md) for every type.
+Only diagram types that declare `ascii` in their manifest support it. In 13.0 those are the
+flowchart (`graph` / `flowchart`) and the ER diagram (`erDiagram`): entities are boxed tables,
+relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`). See [the format matrix](format-matrix.md) for every type.
 
 ```
                ┌───◇────┐            ╭─────────╮
@@ -106,8 +107,8 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 1         | Any error: a usage error (unknown option or command, a `--format` other than `ascii` or `svg`, a bad `--width` or `--charset`), syntax, unknown diagram, unreadable file. |
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
-Exit 2 cannot happen with the diagram types built into 13.0: the flowchart, the only one, renders
-both as SVG and as text. It is kept for types that will not have a text form (D58).
+Exit 2 cannot happen with the diagram types built into 13.0: the flowchart and the ER diagram
+both render as SVG and as text. It is kept for types that will not have a text form (D58).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
 font tables. It is not v12's `mmdc` (which renders through a headless browser) nor the
@@ -143,6 +144,14 @@ flowchart LR
 px-valued keys such as `flowchart.nodeSpacing`, `rankSpacing` and `wrappingWidth` still count:
 they convert at 8 × 16 px per cell, with minimums (200 px wrapping width → 25 cells). The px
 `availableWidth` render option is ignored for text; use `ascii.maxWidth`.
+
+ER is the exception for its size keys (D118): `er.nodeSpacing`, `er.rankSpacing` and
+`er.minEntityWidth` convert only when the diagram, a directive or `initialize()` sets them.
+v12's px defaults (140, 80, 100) do not convert: text output uses the cell profile's spacing and
+fits each box to its text, with a rank gap of at least six cells so both cardinality marks of a
+relationship and a line between them fit. `er.entityPadding` and `er.diagramPadding` are SVG
+only (D116): cells keep their 1-cell padding and no margin. ER drawings do not yet fit
+`ascii.maxWidth`.
 
 ## Glyph sets
 

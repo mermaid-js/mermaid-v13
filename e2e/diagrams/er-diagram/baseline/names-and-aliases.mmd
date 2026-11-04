@@ -1,0 +1,13 @@
+---
+description: aliases, quoted names with spaces, generics shown as <T>, and CJK text
+---
+erDiagram
+  ORD["Purchase Order"] {
+    List~LineItem~ items
+    Map~string~ totals "per currency"
+  }
+  "Customer Account" ||--o{ ORD : places
+  ORD ||--|| 発送 : "ships as"
+  発送 {
+    string 住所
+  }

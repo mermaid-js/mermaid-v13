@@ -19,9 +19,13 @@ const FRESH = 'renamedZq7';
  * - renaming a node renames the generated id of its edges (`L_B_D_0`), and an `L_B_D_0@{ … }`
  *   written in the text then names an edge that no longer exists;
  * - `class link …` for the edge id `link` is recorded as a node mention, so renaming the edge
- *   id (or the "node") leaves the other one behind and the class moves.
+ *   id (or the "node") leaves the other one behind and the class moves;
+ * - (not a model change) an ER entity name with a `.` is percent-encoded in its attribute ids.
  */
 const KNOWN_MODEL_CHANGES = [
+  // Not a model change: ER attribute ids percent-encode a `.` in the entity name
+  // (`a:2%2E5.id`), so the name-for-name substitution above cannot map `renamedZq7` back.
+  'er-diagram/pr-check/should-render-complex-er-diagram-with-mixed-special-entity-names.mmd 2.5@392: model',
   'flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd B@257: model',
   'flowchart/nightly-check/classic/03-40-should-add-edge-animation.mmd D@303: model',
   'flowchart/nightly-check/handdrawn/03-fdh49-should-add-edge-animation.mmd B@265: model',

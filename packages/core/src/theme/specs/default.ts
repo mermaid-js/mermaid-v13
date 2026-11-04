@@ -36,6 +36,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_PADDING,
   },
   values: {
+    altBackground: '#f0f0f0', // v12 (#192)
     textColor: '#333333',
     nodeBorder: '#9370db',
     clusterBkg: '#ffffde',
@@ -46,6 +47,8 @@ const theme: ThemeSpec = {
     noteTextColor: '#000000',
     noteBorderColor: '#aaaa33',
   },
+  // v12 theme-default derives the ER rows from primaryColor with khroma (D117).
+  rules: { rowOdd: 'lightenHsl(primaryColor, 75%)', rowEven: 'lightenHsl(primaryColor, 1%)' },
 };
 
 export default theme;

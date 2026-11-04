@@ -27,7 +27,14 @@ ${themeAnnotation}
   flowchart:
     $ref: '#/$defs/FlowchartDiagramConfig'
     x-mermaid: { status: pending }
+  er:
+    $ref: '#/$defs/ErDiagramConfig'
+    x-mermaid: { status: pending }
 $defs:
+  ErDiagramConfig:
+    title: Er Diagram Config
+    type: object
+    properties: {}
   FlowchartDiagramConfig:
     title: Flowchart Diagram Config
     type: object
@@ -123,7 +130,7 @@ describe('gen-config', () => {
       'x-mermaid': { status: 'pending' },
     });
     expect(json.properties.flowchart!.$ref).toBe('#/$defs/FlowchartDiagramConfig');
-    expect(Object.keys(json.$defs)).toEqual(['FlowchartDiagramConfig']);
+    expect(Object.keys(json.$defs)).toEqual(['ErDiagramConfig', 'FlowchartDiagramConfig']);
     expect(source).not.toContain('"$schema"');
   });
 

@@ -22,6 +22,7 @@ describe('packAll (this workspace)', () => {
     expect(names).toEqual([
       '@mermaid-chart/core',
       '@mermaid-chart/diagram-class',
+      '@mermaid-chart/diagram-er',
       '@mermaid-chart/diagram-flowchart',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',

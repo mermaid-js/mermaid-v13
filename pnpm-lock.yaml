@@ -104,6 +104,9 @@ importers:
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
+      '@mermaid-js/diagram-er':
+        specifier: workspace:^
+        version: link:../diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
@@ -146,6 +149,9 @@ importers:
       '@mermaid-js/diagram-class':
         specifier: workspace:^
         version: link:../diagram-class
+      '@mermaid-js/diagram-er':
+        specifier: workspace:^
+        version: link:../diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
@@ -242,6 +248,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-er:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-flowchart:
     devDependencies:
       '@mermaid-js/core':
@@ -256,6 +268,9 @@ importers:
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
+      '@mermaid-js/diagram-er':
+        specifier: workspace:*
+        version: link:../diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
@@ -278,6 +293,9 @@ importers:
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
+      '@mermaid-js/diagram-er':
+        specifier: workspace:*
+        version: link:../diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
@@ -437,6 +455,9 @@ importers:
       '@mermaid-js/diagram-class':
         specifier: workspace:*
         version: link:../diagram-class
+      '@mermaid-js/diagram-er':
+        specifier: workspace:*
+        version: link:../diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart

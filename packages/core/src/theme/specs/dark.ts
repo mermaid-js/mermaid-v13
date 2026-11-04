@@ -36,6 +36,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_PADDING,
   },
   values: {
+    altBackground: '#555555', // v12 (#192)
     textColor: '#cccccc',
     nodeBorder: '#cccccc',
     clusterBkg: '#474949',
@@ -46,6 +47,10 @@ const theme: ThemeSpec = {
     border2: '#ffffff40',
     noteBorderColor: '#2f2f2f',
     errorTextColor: '#dddddd',
+    // v12 theme-dark sets the ER rows in its constructor, from its own mainBkg #1f2020, so they
+    // never follow an override: khroma lighten(#1f2020, 5) and darken(#1f2020, 10) (D117).
+    rowOdd: '#2c2d2d',
+    rowEven: '#060606',
   },
 };
 

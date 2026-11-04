@@ -1,7 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parse } from 'yaml';
+import { pendingChangesets } from './changesets.ts';
 
 const root = join(import.meta.dirname, '..', '..', '..');
 const json = (path: string) =>
@@ -51,7 +52,13 @@ describe('changesets (R-REL-1, R-REL-2)', () => {
     expect(json('.changeset/config.json').linked).toEqual([]);
     // Exact workspace ranges: Changesets bumps every dependent, so `mermaid` always ships the
     // newest set, and a pinned `mermaid` never floats onto another alpha of its packages.
-    for (const dir of ['mermaid', 'diagram-flowchart', 'diagram-class', 'plugin-interactions']) {
+    for (const dir of [
+      'mermaid',
+      'diagram-flowchart',
+      'diagram-class',
+      'diagram-er',
+      'plugin-interactions',
+    ]) {
       const pkg = json(`packages/${dir}/package.json`) as {
         dependencies?: Record<string, string>;
         peerDependencies?: Record<string, string>;
@@ -63,6 +70,25 @@ describe('changesets (R-REL-1, R-REL-2)', () => {
 
   it('does not version or tag private workspace packages', () => {
     expect(json('.changeset/config.json').privatePackages).toEqual({ version: false, tag: false });
+  });
+
+  it('gives every public package that has not been released a pending feat: changeset', () => {
+    const released = Object.keys(json('.changeset/pre.json').initialVersions as object);
+    const pending = pendingChangesets(root).map((id) =>
+      readFileSync(join(root, '.changeset', `${id}.md`), 'utf8')
+    );
+    const unreleased = readdirSync(join(root, 'packages'))
+      .filter((dir) => existsSync(join(root, 'packages', dir, 'package.json')))
+      .map((dir) => json(`packages/${dir}/package.json`) as { name: string; private?: boolean })
+      .filter((pkg) => pkg.private !== true && !released.includes(pkg.name))
+      .map((pkg) => pkg.name);
+    expect(unreleased.length).toBeGreaterThan(0);
+    for (const name of unreleased) {
+      const first = pending.filter(
+        (md) => md.includes(`'${name}': `) && md.includes(`feat: first release of \`${name}\``)
+      );
+      expect(first.length, name).toBeGreaterThan(0);
+    }
   });
 });
 
