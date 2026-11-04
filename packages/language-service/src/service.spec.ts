@@ -1,13 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { flowchartLanguage } from '@mermaid-js/diagram-flowchart/language';
 import { createLanguageService } from './index.ts';
 import type { DocumentSnapshot, Range } from './index.ts';
 
 const service = createLanguageService();
-const open = async (text: string, uri = 'file:///a.mmd'): Promise<DocumentSnapshot> => {
-  const doc = service.update(uri, text);
-  return (await doc.pending) ?? doc;
-};
+beforeAll(() => service.preload());
+const open = async (text: string, uri = 'file:///a.mmd'): Promise<DocumentSnapshot> =>
+  service.update(uri, text);
 const texts = (doc: DocumentSnapshot, ranges: readonly Range[]) =>
   ranges.map((r) => doc.text.slice(r.start, r.end));
 /** Offset of the `n`th (1-based) occurrence of `needle`, plus `delta`. */
@@ -19,13 +18,27 @@ const at = (text: string, needle: string, n = 1, delta = 0): number => {
 };
 
 describe('snapshots', () => {
-  it('loads the first-party facet lazily, then serves the same text with it', async () => {
-    const first = service.update('file:///lazy.mmd', 'flowchart TD\n  A --> B\n');
-    const doc = (await first.pending) ?? first;
+  it('after preload, gives the full answer on the first snapshot (D155)', async () => {
+    const fresh = createLanguageService();
+    await fresh.preload();
+    const doc = fresh.update('file:///first.mmd', 'flowchart TD\n  A --> B\n  A --> C\n');
     expect(doc.facet?.id).toBe('flowchart');
-    expect(doc.text).toBe(first.text);
-    // Once loaded, an update is complete at once.
-    expect(service.update('file:///lazy.mmd', 'flowchart TD\n  A\n').pending).toBeUndefined();
+    expect(doc.diagnostics()).toEqual([]);
+    expect(doc.references(15).map((r) => doc.text.slice(r.start, r.end))).toEqual(['A', 'A']);
+  });
+
+  it('without preload, gives LANGUAGE_NOT_LOADED and the generic features', () => {
+    const fresh = createLanguageService();
+    const text = '---\ntitle: x\n---\nflowchart TD\n  %% note\n  A --> B\n';
+    const doc = fresh.update('file:///cold.mmd', text);
+    expect(doc.facet).toBeUndefined();
+    const [d, ...rest] = doc.diagnostics();
+    expect(rest).toEqual([]);
+    expect(d).toEqual(expect.objectContaining({ severity: 'info', code: 'LANGUAGE_NOT_LOADED' }));
+    expect(d?.message).toContain('flowchart');
+    expect(d?.message).not.toContain('not supported');
+    expect(doc.foldingRanges().map((f) => f.kind)).toEqual(['frontMatter']);
+    expect(doc.semanticTokens().map((t) => t.type)).toEqual(['comment']);
   });
 
   it('is immutable: a later update does not change an earlier snapshot', async () => {
@@ -53,8 +66,8 @@ describe('snapshots', () => {
         },
       ],
     });
+    // An eager row needs no preload.
     const doc = custom.update('x', 'custom\n');
-    expect(doc.pending).toBeUndefined();
     expect(doc.facet?.id).toBe('custom');
   });
 

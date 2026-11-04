@@ -227,16 +227,19 @@ interface LanguageFacet<A extends AstNode = AstNode> {
 
 The manifest gets `"language": "./dist/language.js"`. `firstPartyFacets` is generated like `registry.gen.ts` (§12.4): `{ id, detector, load }`, same detector order. Third-party facets are passed to `createLanguageService({ facets })`; the LSP server scans `node_modules` for manifests with `language`.
 
-**Document model (R-LANG-4, D90).**
+**Document model (R-LANG-4, D90, D155).**
 
 ```ts
 const service = createLanguageService({ facets?, schema? });
-const doc = service.update(uri, text);   // full re-parse, immutable snapshot
+await service.preload({ types? });       // loads facets first (default: every first-party facet), like render's preload (ADR-9)
+const doc = service.update(uri, text);   // synchronous, complete, immutable snapshot; full re-parse
 doc.diagnostics(); doc.definition(offset); doc.references(offset);
 doc.prepareRename(offset); doc.rename(offset, newName);   // edits or { refused: reason }
 doc.hover(offset); doc.foldingRanges(); doc.semanticTokens(); doc.completions(offset);
 doc.astAt(offset); doc.rangeOf(astId);                    // R-LANG-6, D97
 ```
+
+`update` never returns a partial snapshot. A detected type whose facet was not preloaded gets one `LANGUAGE_NOT_LOADED` info diagnostic naming the type, plus the generic features, until the host preloads it. A facet whose load failed gets a `LANGUAGE_LOAD_FAILED` warning.
 
 All positions are UTF-16 offsets into the full text, as the parser already uses; adapters convert with `LineIndex`. The snapshot keeps the `ParseResult` (with tokens). Queries are computed lazily and memoised on the snapshot. `completions(offset)` re-parses with `probe: offset`. Budget: update + all queries ≤ 10 ms at 50k chars.
 

@@ -2,18 +2,17 @@
  * Edge cases from the #31 review: rename checked in context, facet loading failures,
  * immutability and the semantic token types around subgraphs.
  */
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { flowchartLanguage } from '@mermaid-js/diagram-flowchart/language';
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
 import { createLanguageService } from './index.ts';
 import type { DocumentSnapshot, FacetEntry, RenameResult } from './index.ts';
 
 const service = createLanguageService();
+beforeAll(() => service.preload());
 let n = 0;
-const open = async (text: string): Promise<DocumentSnapshot> => {
-  const doc = service.update(`review:///${n++}`, text);
-  return (await doc.pending) ?? doc;
-};
+const open = async (text: string): Promise<DocumentSnapshot> =>
+  service.update(`review:///${n++}`, text);
 const at = (text: string, needle: string, k = 1): number => {
   let i = -1;
   for (let j = 0; j < k; j++) i = text.indexOf(needle, i + 1);
@@ -76,11 +75,6 @@ const row = (type: string, load: FacetEntry['load']): FacetEntry => ({
   detector: (text) => text.startsWith(type),
   load,
 });
-const settle = async (doc: DocumentSnapshot): Promise<DocumentSnapshot> => {
-  let d = doc;
-  for (let i = 0; i < 3 && d.pending; i++) d = await d.pending;
-  return d;
-};
 
 describe('facet loading', () => {
   it('treats a loader that resolves to something other than a facet as failed', async () => {
@@ -93,8 +87,8 @@ describe('facet loading', () => {
         }),
       ],
     });
-    const doc = await settle(s.update('x', 'zzz\n'));
-    expect(doc.pending).toBeUndefined();
+    await s.preload();
+    const doc = s.update('x', 'zzz\n');
     expect(loads).toBe(1);
     expect(doc.diagnostics().map((d) => d.code)).toEqual(['LANGUAGE_LOAD_FAILED']);
   });
@@ -108,8 +102,9 @@ describe('facet loading', () => {
         row('www', () => Promise.reject(new Error('offline'))),
       ],
     });
-    const sync = await settle(s.update('x', 'yyy\n'));
-    const async = await settle(s.update('y', 'www\n'));
+    await s.preload();
+    const sync = s.update('x', 'yyy\n');
+    const async = s.update('y', 'www\n');
     expect(sync.diagnostics()).toEqual([
       expect.objectContaining({
         code: 'LANGUAGE_LOAD_FAILED',
@@ -131,10 +126,50 @@ describe('facet loading', () => {
         },
       ],
     });
-    const elk = await settle(s.update('a', 'flowchart-elk TD\nA-->B\n'));
-    const v2 = await settle(s.update('b', 'flowchart TD\nA-->B\n'));
+    await s.preload();
+    const elk = s.update('a', 'flowchart-elk TD\nA-->B\n');
+    const v2 = s.update('b', 'flowchart TD\nA-->B\n');
     expect(elk.facet?.id).toBe('flowchart');
     expect(v2.facet?.id).toBe('custom');
+  });
+});
+
+describe('preload (D155)', () => {
+  const counted = () => {
+    const loads: string[] = [];
+    const rows = ['aaa', 'bbb'].map((type) =>
+      row(type, () => {
+        loads.push(type);
+        return Promise.resolve(fake(type));
+      })
+    );
+    return { loads, service: createLanguageService({ facets: rows }) };
+  };
+
+  it('loads only the types asked for', async () => {
+    const { loads, service: s } = counted();
+    await s.preload({ types: ['aaa'] });
+    expect(loads).toEqual(['aaa']);
+    expect(s.update('x', 'aaa\n').facet?.id).toBe('aaa');
+    expect(
+      s
+        .update('y', 'bbb\n')
+        .diagnostics()
+        .map((d) => d.code)
+    ).toEqual(['LANGUAGE_NOT_LOADED']);
+  });
+
+  it('narrows first-party facets by diagram id', async () => {
+    const s = createLanguageService();
+    await s.preload({ types: ['flowchart'] });
+    expect(s.update('x', 'flowchart TD\nA\n').facet?.id).toBe('flowchart');
+  });
+
+  it('loads each facet once when called again', async () => {
+    const { loads, service: s } = counted();
+    await Promise.all([s.preload(), s.preload()]);
+    await s.preload();
+    expect(loads.sort()).toEqual(['aaa', 'bbb']);
   });
 });
 
