@@ -9,7 +9,7 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 
 ## #139 T2 parser
 
-- [ ] **D114: switch to the core source view.** v12's input cleanup (`diagram-sequence/src/parser/source.ts`, a copy of flowchart's) moves into the core parser kit, owned by the state spec's T0. Keep the copy until that T0 merges into `mermaid-v13`; then switch diagram-sequence to the shared one and delete the copy.
+- [ ] **D114: switch to the core source view.** v12's input cleanup (`diagram-sequence/src/parser/source.ts`, a copy of flowchart's) moves into the core parser kit, owned by the state spec's T0. The T0 (#181) is merged into this branch (7d7345ad6); #139 does the switch to core `sourceView` and deletes the copy.
 
 ## Shared contracts
 
