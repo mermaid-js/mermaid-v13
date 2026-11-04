@@ -26,3 +26,7 @@ Unmet acceptance criteria and announced contracts, under the ticket that owns ea
 ## #154 (T2) shared source view (D114)
 
 - v12's input cleanup (offset-preserving source view, `packages/diagram-class/src/parser/source.ts`, a copy of flowchart's) moves into core's parser kit under the state spec's T0 (draft PR into `mermaid-v13`). Keep the class copy until that merges; then switch diagram-class to the shared one and delete the copy. Whichever of that T0 and #152 merges second rebases and reruns `pnpm check`.
+
+## #153 (T1) stress spec under load
+
+- `packages/conformance/src/class/lexer-stress.spec.ts` (2 cases) failed, along with core's `preprocess/stress.spec.ts`, in one full run at load ~30 on 16 cores (2026-11-04, after merging #165). Both pass alone. Watch it; if it flakes again at normal load, give it more trials or a wider ratio.
