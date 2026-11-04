@@ -104,6 +104,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/language-service':
+        specifier: workspace:^
+        version: link:../language-service
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
