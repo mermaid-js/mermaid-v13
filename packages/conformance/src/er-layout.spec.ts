@@ -100,7 +100,11 @@ describe('layered over parser-produced ER graphs', () => {
       const bad: Record<string, string[]> = {};
       for (const { id, model } of models) {
         const { graph, laid } = build(model, units);
-        expect(graph.metrics, id).toBe(units.engine);
+        // In px a self-loop clears its two ends (36 out, the zero circle behind a crow's foot,
+        // plus loopGap 6) and ends along a side are a mark's 18 plus minPitch 8 apart (#124).
+        if (units.grid === undefined)
+          expect(graph.metrics, id).toEqual({ ...units.engine, loop: 42, portPitch: 26 });
+        else expect(graph.metrics, id).toBe(units.engine);
         expect(graph.grid, id).toBe(units.grid);
         const problems = validateLayout(graph, laid);
         if (units.grid !== undefined) problems.push(...validateGrid(graph, laid));

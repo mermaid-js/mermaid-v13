@@ -114,7 +114,8 @@ describe('entity tables in px', () => {
       width: cell('string') + cell('name') + cell('PK') + 6 * pad.x,
       height: 2 * (line() + 2 * pad.y),
     });
-    expect(graph.metrics).toBe(pxProfile.engine);
+    // Self-loops and port pitch sized for the cardinality marks (#124); the rest is the profile's.
+    expect(graph.metrics).toEqual({ ...pxProfile.engine, loop: 42, portPitch: 26 });
     expect(graph.grid).toBeUndefined();
     expect(graph.routing).toBe('stepped');
   });

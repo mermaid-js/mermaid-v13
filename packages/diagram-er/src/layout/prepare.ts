@@ -27,6 +27,7 @@ import type {
   ErSubgraph,
 } from '../parser/index.ts';
 import type { ErRenderContext } from './context.ts';
+import { END_CELLS, erMetrics } from './ends.ts';
 
 /** A band of a table: its offset from the table's top (or left) border and its size. */
 export interface Band {
@@ -171,8 +172,6 @@ interface Measure {
   readonly styleOf: (classes: readonly string[], own?: readonly string[]) => CheckedStyle;
 }
 
-/** Cells one relationship end draws in text output (a bar or crow's foot, then a bar or ring). */
-const END_CELLS = 2;
 /** The smallest rank gap in cells that holds both ends of a line with line cells between. */
 const ENDS_GAP = 2 * END_CELLS + 2;
 
@@ -531,7 +530,8 @@ function layoutGraph(
     routing: 'stepped',
     // Room for the cardinality marker at the head (D154): theme-independent.
     headRoom: b.headRoom,
-    metrics: units.engine,
+    // Self-loops and port pitch sized for the cardinality marks (`ends.ts`).
+    metrics: erMetrics(units),
   };
   if (units.grid !== undefined) graph.grid = units.grid;
   return graph;

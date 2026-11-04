@@ -21,7 +21,7 @@ import type { ErRenderContext } from '../layout/context.ts';
 import type { EdgeView, EntityView, ErPrepared, GroupView } from '../layout/prepare.ts';
 import { prepareEr } from '../layout/prepare.ts';
 import type { ErModel } from '../parser/index.ts';
-import { drawEnd, lineEnd, routePath, type EndPaint } from './edges.ts';
+import { drawEnd, fitEnds, lineEnd, routePath, type EndPaint, type LineEnd } from './edges.ts';
 
 // The dash of a non-identifying line (v12 `.edge-pattern-dashed`, every theme).
 const DASH = '8,8' as SafeValue;
@@ -154,6 +154,29 @@ interface Scene {
   readonly paint: Paints;
   /** Cell padding across, as the layout measured it. */
   readonly padX: number;
+  /** Each edge's start and end, fitted to their neighbours on the same side. */
+  readonly ends: ReadonlyMap<string, readonly [LineEnd | undefined, LineEnd | undefined]>;
+}
+
+/** The ends of every route, each drawn as wide as its neighbours on that side leave room for. */
+function edgeEnds(er: ErPrepared, layout: ErLayout): Scene['ends'] {
+  const all: { box: string; end: LineEnd; edge: string; start: boolean }[] = [];
+  for (const e of er.edges) {
+    const points = layout.edges.get(e.id)?.points;
+    if (!points || points.length < 2) continue;
+    const start = lineEnd(points, true);
+    const end = lineEnd(points, false);
+    if (start) all.push({ box: e.source, end: start, edge: e.id, start: true });
+    if (end) all.push({ box: e.target, end, edge: e.id, start: false });
+  }
+  const fitted = fitEnds(all);
+  const out = new Map<string, [LineEnd | undefined, LineEnd | undefined]>();
+  all.forEach((a, i) => {
+    let pair = out.get(a.edge);
+    if (!pair) out.set(a.edge, (pair = [undefined, undefined]));
+    pair[a.start ? 0 : 1] = fitted[i];
+  });
+  return out;
 }
 
 /** Writes the whole `<svg>` document for a laid-out ER diagram. */
@@ -171,6 +194,7 @@ export function renderEr(
     ctx,
     paint: paints(ctx.theme, er),
     padX: er.pad.x,
+    ends: edgeEnds(er, layout),
   };
   openRoot(scene, model);
   // v12 numbers edge ids by the relationship's place among all of them.
@@ -272,7 +296,7 @@ function drawCluster(
 const edgeDataId = (e: EdgeView, i: number): string =>
   `id_${e.relationship.from.name}_${e.relationship.to.name}_${i}`;
 
-function drawEdge({ w, layout, paint }: Scene, e: EdgeView, i: number): void {
+function drawEdge({ w, layout, paint, ends }: Scene, e: EdgeView, i: number): void {
   const r = e.relationship;
   const route = layout.edges.get(e.id);
   w.open('g', {
@@ -290,8 +314,7 @@ function drawEdge({ w, layout, paint }: Scene, e: EdgeView, i: number): void {
       'stroke-dasharray': r.identifying ? undefined : DASH,
     });
     // v12: the start marker shows the cardinality written next to `from` (the route's start).
-    const start = lineEnd(route.points, true);
-    const end = lineEnd(route.points, false);
+    const [start, end] = ends.get(e.id) ?? [];
     if (start) drawEnd(w, r.from.cardinality, start, paint.ends);
     if (end) drawEnd(w, r.to.cardinality, end, paint.ends);
   }

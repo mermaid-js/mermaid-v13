@@ -4,23 +4,20 @@
 // runs from the entity outline out along the line, `s` across it.
 import type { RoutePoint } from '@mermaid-js/core/layout';
 import type { Attrs, PathData, SvgWriter } from '@mermaid-js/core/svg';
+import { PX_END } from '../layout/ends.ts';
 import type { ErCardinality } from '../parser/index.ts';
 
 // The most a corner of a stepped route is rounded by (v12's ELK routes turn square; v13's
 // `rounded` curve uses the same radius).
 const RADIUS = 5;
-// Half the span of a bar and of a crow's foot at the outline.
-const HALF = 9;
-// Bars: the first is 9 from the outline, a second (only one) 6 further; a bar behind a crow's
-// foot is 24 out. The crow's foot meets the line 18 out.
-const BAR = 9;
-const BAR_2 = 15;
-const BAR_MANY = 24;
-const TOE = 18;
-// The zero circle: radius 6; behind a bar (zero or one) its centre is 21 out. Behind a crow's
-// foot (zero or more) it is the theme's `erZeroOrMoreCircleOffset` (v12 neo 28, classic 30).
-const CIRCLE_R = 6;
-const CIRCLE_ONE = 21;
+// Bars: the first is `bar` from the outline, a second (only one) at `bar2`; a bar behind a
+// crow's foot is at `barMany`. The crow's foot meets the line at `toe`. The zero circle behind
+// a bar is centred at `circleOne`; behind a crow's foot at the theme's
+// `erZeroOrMoreCircleOffset` (v12 neo 28, classic 30).
+const { half: HALF, bar: BAR, bar2: BAR_2, barMany: BAR_MANY, toe: TOE } = PX_END;
+const { circleR: CIRCLE_R, circleOne: CIRCLE_ONE } = PX_END;
+// Room between two ends on one side at full size; ends drawn narrower keep it in proportion.
+const END_GAP = 4;
 
 const near = (a: RoutePoint, b: RoutePoint): boolean =>
   Math.abs(a.x - b.x) < 0.01 && Math.abs(a.y - b.y) < 0.01;
@@ -75,6 +72,43 @@ export interface LineEnd {
   readonly y: number;
   readonly dx: number;
   readonly dy: number;
+  /** The share of the full span the end is drawn across the line at (1 when omitted). */
+  readonly scale?: number;
+}
+
+/** A line end and the layout id of the box it meets. */
+export interface BoxEnd {
+  readonly box: string;
+  readonly end: LineEnd;
+}
+
+/**
+ * Each end with the scale it fits at: the ends that leave one side of one box (same box key,
+ * same direction) are drawn narrower when a neighbour is closer than a full span plus
+ * {@link END_GAP}, so no two overlap. The layout spaces them further apart than that when the
+ * side has room (`erMetrics`, #124).
+ */
+export function fitEnds(ends: readonly BoxEnd[]): LineEnd[] {
+  const side = (e: BoxEnd) => `${e.box}|${Math.round(e.end.dx)},${Math.round(e.end.dy)}`;
+  const groups = new Map<string, BoxEnd[]>();
+  for (const e of ends) {
+    const key = side(e);
+    let g = groups.get(key);
+    if (!g) groups.set(key, (g = []));
+    g.push(e);
+  }
+  return ends.map((e) => {
+    let nearest = Infinity;
+    for (const o of groups.get(side(e))!) {
+      if (o === e) continue;
+      // Distance across the line, along the side.
+      const d = Math.abs((o.end.x - e.end.x) * -e.end.dy + (o.end.y - e.end.y) * e.end.dx);
+      // Ends the layout puts in one place are drawn over each other, at full size.
+      if (d > 0.01) nearest = Math.min(nearest, d);
+    }
+    const fit = nearest / (2 * HALF + END_GAP);
+    return fit >= 1 ? e.end : { ...e.end, scale: fit };
+  });
 }
 
 /** The end of a route at its first point (`start`) or its last, pointing back along it. */
@@ -112,9 +146,10 @@ const CLASS: Readonly<Record<ErCardinality, string>> = {
 export function drawEnd(w: SvgWriter, card: ErCardinality, end: LineEnd, paint: EndPaint): void {
   if (card === 'mdParent') return;
   const { x, y, dx, dy } = end;
-  // A point `d` out along the line and `s` across it.
-  const px = (d: number, s: number): number => x + dx * d - dy * s;
-  const py = (d: number, s: number): number => y + dy * d + dx * s;
+  const k = end.scale ?? 1;
+  // A point `d` out along the line and `s` across it (scaled to the room the end has).
+  const px = (d: number, s: number): number => x + dx * d - dy * s * k;
+  const py = (d: number, s: number): number => y + dy * d + dx * s * k;
   const b = w.path();
   const bar = (d: number): void =>
     void b.moveTo(px(d, -HALF), py(d, -HALF)).lineTo(px(d, HALF), py(d, HALF));
@@ -144,7 +179,7 @@ export function drawEnd(w: SvgWriter, card: ErCardinality, end: LineEnd, paint: 
     w.leaf('circle', {
       cx: px(circle, 0),
       cy: py(circle, 0),
-      r: CIRCLE_R,
+      r: CIRCLE_R * k,
       fill: paint.circleFill,
       ...paint.line,
     });
