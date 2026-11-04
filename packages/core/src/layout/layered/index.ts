@@ -23,6 +23,7 @@ import {
   type CEdge,
   type CNode,
 } from './compound.ts';
+import { markerRect } from './end-markers.ts';
 import { edgeOn, floorTo, type LayeredOptions } from './layered.ts';
 import { pxProfile, type LayoutMetrics } from '../units.ts';
 
@@ -635,7 +636,7 @@ const OUTWARD: Readonly<Record<Side, { axis: 'x' | 'y'; sign: 1 | -1 }>> = {
 // leaves its end's side, `endLabelAlong` out from the side (the target's also past the
 // arrowhead's room) and `endLabelAcross` off the line, on the side of the line the route does not
 // turn towards. Where that would cover a label already placed (any edge's middle label, or an end
-// label placed before it) it takes the other side, and where both would, it moves further out
+// label placed before it, or any edge's end marker, `LayoutEdge.startMarker`) it takes the other side, and where both would, it moves further out
 // along the segment on whichever side needs less, past what is in the way. It never moves onto a
 // node or a group's title. On the grid all of it is whole cells: the label starts in the row or
 // column `along` cells past the end cell, `across` blank cells off the line.
@@ -652,6 +653,13 @@ function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): Layout
   for (const e of graph.edges) {
     const placed = model.edges.get(e.id);
     if (e.label && placed?.label) taken.push(rectOf(placed.label, e.label));
+    if (!placed || placed.points.length < 2) continue;
+    const { points, ports } = placed;
+    const straight = graph.routing === 'straight';
+    if (e.startMarker)
+      taken.push(markerRect(points, OUTWARD[ports.source], e.startMarker, straight));
+    if (e.endMarker)
+      taken.push(markerRect([...points].reverse(), OUTWARD[ports.target], e.endMarker, straight));
   }
   const across = M.endLabelAcross;
   for (const e of graph.edges) {

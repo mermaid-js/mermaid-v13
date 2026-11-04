@@ -48,6 +48,33 @@ export interface AstCallback {
   args?: string;
 }
 
+/**
+ * An element menu as an AST node carries it (R-PLUG-9, D105): the AST node of a menu statement
+ * (sequence `link`, `links`, `properties`, `details`) has a `menu` field of this shape. The
+ * `menu` field name is reserved for this on every AST node, as `callback` is for `AstCallback`;
+ * a value of another shape is skipped.
+ * Diagram-agnostic, so the interactions plugin can find menus in any diagram's AST. Statements
+ * for the same `target` add up in source order, later labels and keys replacing earlier ones.
+ * The svg never draws a menu. The interactions plugin claims `menus`; without it a diagram
+ * drops them (spec #125: silently).
+ */
+export interface AstMenu {
+  /** Id of the element the menu belongs to (the rendered `data-id`), as written. */
+  target: string;
+  /**
+   * Menu entries, label to URL, in v12's order (object key order). URLs are checked as link URLs
+   * (`checkUrl`); a refused one becomes `about:blank`, as v12's `sanitizeUrl` made it.
+   */
+  links?: Readonly<Record<string, unknown>>;
+  /** Element properties; the plugin reads `class` (extra classes for the menu panel). */
+  properties?: Readonly<Record<string, unknown>>;
+  /**
+   * Id of a page element whose text is JSON `{ "links": {…}, "properties": {…} }`, read when
+   * the svg is mounted (v12 `details`).
+   */
+  details?: string;
+}
+
 function esc(name: string): string {
   for (let i = 0; i < name.length; i++) {
     const c = name.charCodeAt(i);

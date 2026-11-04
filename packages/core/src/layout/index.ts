@@ -5,6 +5,7 @@ export type {
   Box,
   Dir,
   EdgeRouting,
+  EndMarker,
   LayoutContext,
   LayoutEdge,
   LayoutEngine,
