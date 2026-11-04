@@ -159,7 +159,7 @@ function sideRoom(k: number, pitch: number, grid: number): number {
 function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
   const grid = gridOf(graph);
   let model = run(graph, dir, tight);
-  if (!grid) return model;
+  if (!grid) return endLabels(graph, model, grid);
   const M = graph.metrics ?? pxProfile.engine;
   const pitch = Math.max(grid, edgeOn(M.portPitch, grid));
   let current = graph;
@@ -218,7 +218,7 @@ function grown(graph: LayoutGraph, dir: Dir, tight: boolean): LayoutModel {
     model = run(current, dir, tight);
   }
   placeTitles(current, model, grid);
-  return model;
+  return endLabels(current, model, grid);
 }
 
 // On the grid a group's title sits on its top border row, and no edge may end or cross there
@@ -544,6 +544,8 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
       minlen: Math.max(1, Math.round(e.minLen)),
       labelW,
       labelH,
+      ...(e.startLabel ? { start: e.startLabel } : {}),
+      ...(e.endLabel ? { end: e.endLabel } : {}),
       route: [],
       labelX: 0,
       labelY: 0,
@@ -619,6 +621,132 @@ function run(graph: LayoutGraph, rootDir: Dir, tight: boolean): LayoutModel {
     groups,
     direction: rootDir,
   };
+}
+
+// The axis a side faces along, and which way is out of the box.
+const OUTWARD: Readonly<Record<Side, { axis: 'x' | 'y'; sign: 1 | -1 }>> = {
+  top: { axis: 'y', sign: -1 },
+  bottom: { axis: 'y', sign: 1 },
+  left: { axis: 'x', sign: -1 },
+  right: { axis: 'x', sign: 1 },
+};
+
+// Edge-end labels (D102), placed once the routes are final: each sits beside the segment that
+// leaves its end's side, `endLabelAlong` out from the side (the target's also past the
+// arrowhead's room) and `endLabelAcross` off the line, on the side of the line the route does not
+// turn towards. Where that would cover a label already placed (any edge's middle label, or an end
+// label placed before it) it takes the other side, and where both would, it moves further out
+// along the segment on whichever side needs less, past what is in the way. It never moves onto a
+// node or a group's title. On the grid all of it is whole cells: the label starts in the row or
+// column `along` cells past the end cell, `across` blank cells off the line.
+function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): LayoutModel {
+  if (!graph.edges.some((e) => e.startLabel ?? e.endLabel)) return model;
+  const M = graph.metrics ?? pxProfile.engine;
+  const headRoom = graph.headRoom ?? 0;
+  const walls: Rect[] = [...model.nodes.values()].map((b) => rectOf(b, b));
+  for (const g of graph.groups) {
+    const placed = model.groups.get(g.id);
+    if (g.title && placed) walls.push(rectOf(placed.title, g.title));
+  }
+  const taken: Rect[] = [];
+  for (const e of graph.edges) {
+    const placed = model.edges.get(e.id);
+    if (e.label && placed?.label) taken.push(rectOf(placed.label, e.label));
+  }
+  const across = M.endLabelAcross;
+  for (const e of graph.edges) {
+    if (!e.startLabel && !e.endLabel) continue;
+    const placed = model.edges.get(e.id);
+    if (!placed || placed.points.length === 0) continue;
+    const { points, ports } = placed;
+    const room = { along: M.endLabelAlong, across, grid };
+    if (e.startLabel) {
+      const at = endLabelAt(points, ports.source, e.startLabel, room, { walls, taken });
+      placed.startLabel = at;
+      taken.push(rectOf(at, e.startLabel));
+    }
+    if (e.endLabel) {
+      const back = [...points].reverse();
+      const head = { ...room, along: room.along + headRoom };
+      const at = endLabelAt(back, ports.target, e.endLabel, head, { walls, taken });
+      placed.endLabel = at;
+      taken.push(rectOf(at, e.endLabel));
+    }
+  }
+  return model;
+}
+
+interface Rect {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+function rectOf(c: Point, s: { width: number; height: number }): Rect {
+  return {
+    x0: c.x - s.width / 2,
+    y0: c.y - s.height / 2,
+    x1: c.x + s.width / 2,
+    y1: c.y + s.height / 2,
+  };
+}
+
+// Overlap by more than float noise; boxes that share an edge are clear.
+function hits(a: Rect, b: Rect): boolean {
+  const e = 1e-6;
+  return a.x0 < b.x1 - e && b.x0 < a.x1 - e && a.y0 < b.y1 - e && b.y0 < a.y1 - e;
+}
+
+// The centre of a label of `size` at the end `points[0]`, whose route leaves through `side`,
+// clear of `walls` (nodes, titles) and of the labels `taken`.
+function endLabelAt(
+  points: readonly RoutePoint[],
+  side: Side,
+  size: { width: number; height: number },
+  { along, across, grid }: { along: number; across: number; grid: number },
+  { walls, taken }: { walls: readonly Rect[]; taken: readonly Rect[] }
+): Point {
+  const p = points[0]!;
+  const { axis, sign } = OUTWARD[side];
+  const cross = axis === 'x' ? 'y' : 'x';
+  let lean = 0;
+  for (const q of points) {
+    const d = q[cross] - p[cross];
+    if (Math.abs(d) > 1e-6) {
+      lean = Math.sign(d);
+      break;
+    }
+  }
+  const deep = axis === 'x' ? size.width : size.height;
+  const wide = axis === 'x' ? size.height : size.width;
+  const at = (away: number, push: number): Point => {
+    const out = p[axis] + sign * (along + push + deep / 2 - grid / 2);
+    const off = p[cross] + away * (grid / 2 + across + wide / 2);
+    return axis === 'x' ? { x: out, y: off } : { x: off, y: out };
+  };
+  // How far out along the segment the label must move on side `away` to clear the labels in
+  // its way, or undefined where that runs into a wall.
+  const pushFor = (away: number): number | undefined => {
+    let push = 0;
+    for (let tries = 0; tries <= taken.length; tries++) {
+      const r = rectOf(at(away, push), size);
+      if (walls.some((w) => hits(r, w))) return undefined;
+      const hit = taken.find((t) => hits(r, t));
+      if (!hit) return push;
+      const lo = axis === 'x' ? 'x0' : 'y0';
+      const hi = axis === 'x' ? 'x1' : 'y1';
+      const by = sign > 0 ? hit[hi] - r[lo] : r[hi] - hit[lo];
+      push += grid ? Math.ceil(by / grid - 1e-9) * grid : by;
+    }
+    return undefined;
+  };
+  const first = lean > 0 ? -1 : 1;
+  const a = pushFor(first);
+  const b = pushFor(-first);
+  if (a !== undefined && (b === undefined || a <= b)) return at(first, a);
+  if (b !== undefined) return at(-first, b);
+  return at(first, 0);
 }
 
 const FLOW_START: Readonly<Record<Dir, Side>> = {
