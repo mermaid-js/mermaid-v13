@@ -108,8 +108,9 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 1         | Any error: a usage error (unknown option or command, a `--format` other than `ascii` or `svg`, a bad `--width` or `--charset`), syntax, unknown diagram, unreadable file. |
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
-Exit 2 cannot happen with the diagram types built into 13.0: the flowchart, the ER diagram and
-the sequence diagram all render as SVG and as text. It is kept for types that will not have a text form (D58).
+Of the diagram types built into 13.0, the flowchart, the ER diagram and the sequence diagram
+render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
+`stateDiagram` exits 2 (D58, D100).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
 font tables. It is not v12's `mmdc` (which renders through a headless browser) nor the

@@ -1,0 +1,10 @@
+stateDiagram-v2
+  [*] --> |Idle
+  state Busy {
+    |A -|-> B
+    --
+    C
+  }
+  note right of |Busy : works
+  Idle --> Busy|
+  |

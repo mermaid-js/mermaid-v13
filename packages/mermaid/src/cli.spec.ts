@@ -141,6 +141,19 @@ describe('mermaid render: input and output (R-ASCII-4, D85)', () => {
 
 describe('mermaid render: sequence diagrams (#145)', () => {
   it.concurrent(
+    'exits 2 for a built-in type with no text form (the state diagram)',
+    async () => {
+      const r = await cli(['render', '--format', 'ascii'], 'stateDiagram-v2\n  [*] --> A\n');
+      expect(r).toEqual({
+        code: 2,
+        stdout: '',
+        stderr: '<stdin>: Diagram type "stateDiagram" cannot be rendered as ascii.\n',
+      });
+    },
+    T
+  );
+
+  it.concurrent(
     'renders a sequence diagram from stdin as text',
     async () => {
       const r = await cli(['render', '--format', 'ascii'], 'sequenceDiagram\n  A->>B: hi\n');
@@ -232,7 +245,7 @@ describe('mermaid render: stderr and exit codes (R-ASCII-4, D85)', () => {
     [['render', FILE, '--format', 'ascii', '--charset', 'ebcdic'], '--charset must be'],
     [['render', FILE, '--format', 'ascii', '--colour'], "Unknown option '--colour'"],
     // Only ascii and svg are formats; exit 2 is the API's UNSUPPORTED_FORMAT for a type that
-    // has no text form, and every type built into 13.0 (flowchart, ER, sequence) has one (ascii.md).
+    // has no text form (the state diagram in 13.0, tested above).
     [['render', FILE, '--format', 'png'], '--format must be ascii or svg, got "png"'],
   ])(
     'exits 1 with usage help on stderr: %j',

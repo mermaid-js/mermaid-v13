@@ -193,6 +193,7 @@ export default tseslint.config(
       'packages/diagram-flowchart/src/v12-specs/**',
       'packages/diagram-sequence/src/v12-specs/*.spec.ts',
       'packages/diagram-er/src/v12-specs/**',
+      'packages/diagram-state/src/v12-specs/**',
     ],
     rules: {
       '@eslint-community/eslint-comments/disable-enable-pair': 'off',

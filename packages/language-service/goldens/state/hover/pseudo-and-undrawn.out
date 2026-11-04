@@ -1,0 +1,20 @@
+@ 2:9  state |Lonely
+  2:9-2:15 "Lonely"
+  | **state** `Lonely`
+  |
+  | Not drawn: name it in a transition or give it a description.
+@ 3:9  state |fork1 <<fork>>
+  3:9-3:14 "fork1"
+  | **fork pseudo-state** `fork1`
+  |
+  | Transitions: 0 in, 1 out
+@ 5:3  |fork1 --> c
+  5:3-5:8 "fork1"
+  | **fork pseudo-state** `fork1`
+  |
+  | Transitions: 0 in, 1 out
+@ 5:13  fork1 --> |c
+  5:13-5:14 "c"
+  | **choice pseudo-state** `c`
+  |
+  | Transitions: 1 in, 0 out

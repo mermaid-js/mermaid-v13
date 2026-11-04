@@ -1,0 +1,12 @@
+@ 4:25  state "Busy state" as |Busy
+  prepare: 4:25-4:29 "Busy"; rename to "Working":
+  %% rename-to: Working
+  stateDiagram-v2
+    [*] --> Working
+    state "Busy state" as Working
+    state Working {
+      A --> B
+      --
+      C
+    }
+    Working --> [*]

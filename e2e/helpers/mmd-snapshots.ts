@@ -11,6 +11,7 @@ export {
   collectMmdFixtures,
   DIAGRAMS_DIR,
   FIXTURE_FOLDER_TYPES,
+  FIXTURE_TYPE_EXCEPTIONS,
 } from '../../packages/dev/src/fixture-discovery.ts';
 
 /** The diagram types that have a v13 package: registry rows with a `load`. */

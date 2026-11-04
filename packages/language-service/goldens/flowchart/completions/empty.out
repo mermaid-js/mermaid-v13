@@ -3,3 +3,5 @@
   graph keyword 1:1-1:1 "" -> "graph"
   erDiagram keyword 1:1-1:1 "" -> "erDiagram"
   sequenceDiagram keyword 1:1-1:1 "" -> "sequenceDiagram"
+  stateDiagram-v2 keyword 1:1-1:1 "" -> "stateDiagram-v2"
+  stateDiagram keyword 1:1-1:1 "" -> "stateDiagram"

@@ -1,0 +1,13 @@
+---
+description: fork and join bars splitting and merging the flow
+---
+stateDiagram-v2
+  state split <<fork>>
+  state merge <<join>>
+  [*] --> split
+  split --> Left
+  split --> Right
+  Left --> merge
+  Right --> merge
+  merge --> Done
+  Done --> [*]

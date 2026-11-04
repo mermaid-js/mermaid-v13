@@ -1,0 +1,816 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-state",
+  "scopeName": "source.mermaid-state",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-state"
+    },
+    "trivia-1": {
+      "match": "[^\\S\\n]*%%\\{.*?\\}%%",
+      "name": "meta.embedded.mermaid-state"
+    },
+    "rule-0": {
+      "match": "(?i:click)\\b",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-1": {
+      "match": "(?i:href)\\b",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-2": {
+      "match": "\"[^\"]*\"",
+      "name": "string.quoted.mermaid-state"
+    },
+    "rule-3": {
+      "match": "(?i:default)\\b",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-4": {
+      "match": "(?i:.*direction\\s+tb)[^\\n]*",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-5": {
+      "match": "(?i:.*direction\\s+bt)[^\\n]*",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-6": {
+      "match": "(?i:.*direction\\s+rl)[^\\n]*",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-7": {
+      "match": "(?i:.*direction\\s+lr)[^\\n]*",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-8": {
+      "match": "\\n+"
+    },
+    "rule-9": {
+      "match": "\\s+"
+    },
+    "rule-11": {
+      "match": "#[^\\n]*",
+      "name": "comment.line.mermaid-state"
+    },
+    "rule-12": {
+      "match": "%%(?!\\{)[^\\n]*",
+      "name": "comment.line.mermaid-state"
+    },
+    "rule-13": {
+      "begin": "(?i:scale)\\s+",
+      "end": "(\\s+(?i:width)\\b)",
+      "patterns": [
+        {
+          "include": "#mode-SCALE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-state"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-state"
+        }
+      }
+    },
+    "rule-16": {
+      "begin": "(?i:accTitle)\\s*:\\s*",
+      "end": "([^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-acc_title"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-state"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-state"
+        }
+      }
+    },
+    "rule-18": {
+      "begin": "(?i:accDescr)\\s*:\\s*",
+      "end": "([^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-acc_descr"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-state"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-state"
+        }
+      }
+    },
+    "rule-20": {
+      "begin": "(?i:accDescr)\\s*\\{\\s*",
+      "end": "(\\})",
+      "patterns": [
+        {
+          "include": "#mode-acc_descr_multiline"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-state"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-state"
+        }
+      }
+    },
+    "rule-23": {
+      "begin": "(?i:classDef)\\s+",
+      "end": "(?=(?i:default)\\s+)|(?=\\w+\\s+)",
+      "patterns": [
+        {
+          "include": "#mode-CLASSDEF"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-state"
+        }
+      }
+    },
+    "rule-27": {
+      "begin": "(?i:class)\\s+",
+      "end": "(?=\\w+(?:,\\s*\\w+)*)",
+      "patterns": [
+        {
+          "include": "#mode-CLASS"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-state"
+        }
+      }
+    },
+    "rule-30": {
+      "begin": "(?i:style)\\s+",
+      "end": "(?=[\\w,]+\\s+)",
+      "patterns": [
+        {
+          "include": "#mode-STYLE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-state"
+        }
+      }
+    },
+    "rule-33": {
+      "begin": "(?i:state)\\s+",
+      "end": "((?i:<<(?:fork|join|choice)>>|\\[\\[(?:fork|join|choice)\\]\\]))|(\\n)|(?=\\{)",
+      "patterns": [
+        {
+          "include": "#mode-STATE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-state"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-state"
+        }
+      }
+    },
+    "rule-54": {
+      "begin": "\\{",
+      "end": "(\\})",
+      "patterns": [
+        {
+          "include": "#mode-struct"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-state"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-state"
+        }
+      }
+    },
+    "rule-57": {
+      "begin": "(?i:note)\\s+",
+      "end": "(?=(?i:left of)\\b)|(?=(?i:right of)\\b)|(?=\")",
+      "patterns": [
+        {
+          "include": "#mode-NOTE"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-state"
+        }
+      }
+    },
+    "rule-69": {
+      "match": "(?i:stateDiagram)\\s+",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-70": {
+      "match": "(?i:stateDiagram-v2)\\s+",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-71": {
+      "match": "(?i:hide empty description)\\b",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-72": {
+      "match": "\\[\\*\\]",
+      "name": "constant.language.mermaid-state"
+    },
+    "rule-73": {
+      "match": "%%[^:\\n\\s\\-{]*"
+    },
+    "rule-74": {
+      "match": "(?:[^:\\n\\s\\-{%]|%(?!%))+",
+      "name": "variable.other.mermaid-state"
+    },
+    "rule-75": {
+      "match": "\\s*:(?:[^:\\n;]|:[^:\\n;])+",
+      "name": "string.quoted.mermaid-state"
+    },
+    "rule-76": {
+      "match": "-->",
+      "name": "keyword.operator.mermaid-state"
+    },
+    "rule-78": {
+      "match": ":::",
+      "name": "keyword.operator.mermaid-state"
+    },
+    "rule-80": {
+      "match": "."
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-54"
+        },
+        {
+          "include": "#rule-57"
+        },
+        {
+          "include": "#rule-69"
+        },
+        {
+          "include": "#rule-70"
+        },
+        {
+          "include": "#rule-71"
+        },
+        {
+          "include": "#rule-72"
+        },
+        {
+          "include": "#rule-73"
+        },
+        {
+          "include": "#rule-74"
+        },
+        {
+          "include": "#rule-75"
+        },
+        {
+          "include": "#rule-76"
+        },
+        {
+          "include": "#rule-78"
+        },
+        {
+          "include": "#rule-80"
+        }
+      ]
+    },
+    "rule-10": {
+      "match": "(?:(?!\\n)\\s)+"
+    },
+    "rule-35": {
+      "match": "(?i:.*(?=<<fork>>))",
+      "name": "variable.other.mermaid-state"
+    },
+    "rule-36": {
+      "match": "(?i:.*(?=<<join>>))",
+      "name": "variable.other.mermaid-state"
+    },
+    "rule-37": {
+      "match": "(?i:.*(?=<<choice>>))",
+      "name": "variable.other.mermaid-state"
+    },
+    "rule-38": {
+      "match": "(?i:.*(?=\\[\\[fork\\]\\]))",
+      "name": "variable.other.mermaid-state"
+    },
+    "rule-39": {
+      "match": "(?i:.*(?=\\[\\[join\\]\\]))",
+      "name": "variable.other.mermaid-state"
+    },
+    "rule-40": {
+      "match": "(?i:.*(?=\\[\\[choice\\]\\]))",
+      "name": "variable.other.mermaid-state"
+    },
+    "rule-45": {
+      "begin": "\"",
+      "end": "(\")",
+      "patterns": [
+        {
+          "include": "#mode-STATE_STRING"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-state"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-state"
+        }
+      }
+    },
+    "rule-46": {
+      "begin": "\\s*(?i:as)\\s+",
+      "end": "((?:[^\\n{%]|%(?!%))*)",
+      "patterns": [
+        {
+          "include": "#mode-STATE_ID"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-state"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "variable.other.mermaid-state"
+        }
+      }
+    },
+    "rule-51": {
+      "match": "\\w+\\s+\\w+.*?\\{"
+    },
+    "rule-52": {
+      "match": "[^\\n\\s{]+",
+      "name": "variable.other.mermaid-state"
+    },
+    "mode-STATE": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        },
+        {
+          "include": "#rule-37"
+        },
+        {
+          "include": "#rule-38"
+        },
+        {
+          "include": "#rule-39"
+        },
+        {
+          "include": "#rule-40"
+        },
+        {
+          "include": "#rule-45"
+        },
+        {
+          "include": "#rule-46"
+        },
+        {
+          "include": "#rule-51"
+        },
+        {
+          "include": "#rule-52"
+        }
+      ]
+    },
+    "rule-50": {
+      "match": "[^\"]+",
+      "name": "string.quoted.mermaid-state"
+    },
+    "mode-STATE_STRING": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-50"
+        }
+      ]
+    },
+    "rule-47": {
+      "match": "%%[^\\n{]*"
+    },
+    "mode-STATE_ID": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-47"
+        }
+      ]
+    },
+    "rule-14": {
+      "match": "\\d+",
+      "name": "constant.numeric.mermaid-state"
+    },
+    "mode-SCALE": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-14"
+        }
+      ]
+    },
+    "mode-acc_title": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-acc_descr": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "rule-22": {
+      "match": "[^}]+",
+      "name": "string.quoted.mermaid-state"
+    },
+    "mode-acc_descr_multiline": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-22"
+        }
+      ]
+    },
+    "mode-CLASSDEF": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-CLASSDEFID": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-CLASS": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-CLASS_STYLE": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-STYLE": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-STYLEDEF_STYLES": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-NOTE": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-NOTE_ID": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "rule-68": {
+      "match": "[\\s\\S]*?(?=\\n\\s*(?i:end note)\\b)",
+      "name": "string.quoted.mermaid-state"
+    },
+    "mode-NOTE_TEXT": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-68"
+        }
+      ]
+    },
+    "rule-62": {
+      "match": "\"",
+      "name": "string.quoted.mermaid-state"
+    },
+    "rule-63": {
+      "match": "[^\"]+",
+      "name": "string.quoted.mermaid-state"
+    },
+    "mode-FLOATING_NOTE": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-62"
+        },
+        {
+          "include": "#rule-63"
+        }
+      ]
+    },
+    "mode-FLOATING_NOTE_ID": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "rule-41": {
+      "match": "(?i:.*direction\\s+tb)[^\\n]*",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-42": {
+      "match": "(?i:.*direction\\s+bt)[^\\n]*",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-43": {
+      "match": "(?i:.*direction\\s+rl)[^\\n]*",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-44": {
+      "match": "(?i:.*direction\\s+lr)[^\\n]*",
+      "name": "keyword.control.mermaid-state"
+    },
+    "rule-56": {
+      "match": "\\n"
+    },
+    "rule-77": {
+      "match": "--",
+      "name": "keyword.operator.mermaid-state"
+    },
+    "mode-struct": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-33"
+        },
+        {
+          "include": "#rule-41"
+        },
+        {
+          "include": "#rule-42"
+        },
+        {
+          "include": "#rule-43"
+        },
+        {
+          "include": "#rule-44"
+        },
+        {
+          "include": "#rule-56"
+        },
+        {
+          "include": "#rule-57"
+        },
+        {
+          "include": "#rule-72"
+        },
+        {
+          "include": "#rule-73"
+        },
+        {
+          "include": "#rule-74"
+        },
+        {
+          "include": "#rule-75"
+        },
+        {
+          "include": "#rule-76"
+        },
+        {
+          "include": "#rule-77"
+        },
+        {
+          "include": "#rule-78"
+        }
+      ]
+    }
+  }
+}

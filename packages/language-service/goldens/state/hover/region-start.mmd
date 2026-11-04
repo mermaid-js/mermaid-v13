@@ -1,0 +1,15 @@
+stateDiagram-v2
+  state X {
+    |[*] --> a
+    |[*] --> c
+    --
+    |[*] --> b
+    b --> [|*]
+  }
+  state Y {
+    a2 --> Z
+    --
+    state Z {
+      |[*] --> z
+    }
+  }
