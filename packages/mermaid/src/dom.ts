@@ -10,10 +10,11 @@
  * - The browser measurer is `canvasMeasurer` (selected in `selectMeasurer`); a host's
  *   `--mermaid-fontFamily` on the element is what the svg draws with, so it is measured too.
  */
-import { MermaidError, renderErrorSvg } from '@mermaid-js/core';
+import { renderErrorSvg, type MermaidError } from '@mermaid-js/core';
 import type { MermaidConfig } from '@mermaid-js/core/config';
 import { resolveFontFamily } from '@mermaid-js/core/text';
 import type { InitializeConfig, Prepared, RenderResult, SvgRenderOptions } from './api.ts';
+import { toMermaidError } from './errors.ts';
 import { VERSION } from './version.ts';
 
 /** v12's `RunOptions`, unchanged (R-COMPAT-5). */
@@ -66,11 +67,6 @@ export interface DomHost {
   siteConfig(): Readonly<MermaidConfig>;
   onParseError(error: MermaidError): void;
 }
-
-const toError = (e: unknown): MermaidError =>
-  e instanceof MermaidError
-    ? e
-    : new MermaidError('INTERNAL', e instanceof Error ? e.message : String(e), { cause: e });
 
 /** v12's `utils.entityDecode`: decodes entities in the element's markup, keeps tags as text. */
 export function entityDecode(html: string): string {
@@ -144,7 +140,7 @@ export function createDomAdapter(host: DomHost) {
       try {
         result = await draw(text, { id, config: fontConfig(el, undefined) });
       } catch (e) {
-        const error = toError(e);
+        const error = toMermaidError(e);
         showError(el, error, conf.suppressErrorRendering);
         errors.push(error);
         host.onParseError(error);
@@ -155,7 +151,7 @@ export function createDomAdapter(host: DomHost) {
         if (options.postRenderCallback) await options.postRenderCallback(id);
         result.bindFunctions?.(el);
       } catch (e) {
-        errors.push(toError(e));
+        errors.push(toMermaidError(e));
       }
     }
     if (errors.length > 0) throw errors[0];
@@ -212,7 +208,7 @@ export function createDomAdapter(host: DomHost) {
         }
         return next;
       } catch (e) {
-        error = toError(e);
+        error = toMermaidError(e);
         if (!destroyed) {
           const suppress =
             options.config?.suppressErrorRendering ?? host.siteConfig().suppressErrorRendering;

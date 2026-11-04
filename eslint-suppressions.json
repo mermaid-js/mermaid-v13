@@ -544,12 +544,6 @@
     "@typescript-eslint/explicit-module-boundary-types": {
       "count": 1
     },
-    "@typescript-eslint/no-shadow": {
-      "count": 3
-    },
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 1
-    },
     "max-lines-per-function": {
       "count": 1
     }
