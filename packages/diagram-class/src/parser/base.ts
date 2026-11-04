@@ -54,8 +54,8 @@ import type { Frame, Name } from './tables.ts';
 import { lex } from './lexer.ts';
 import type { ClassLex } from './lexer.ts';
 import { S } from './rules.ts';
-import { v12Text } from './source.ts';
-import type { V12Text } from './source.ts';
+import { v12Text } from './v12-text.ts';
+import type { V12Text } from './v12-text.ts';
 import { tokenValue } from './tokens-api.ts';
 import type { ClassParseOptions } from './parser.ts';
 

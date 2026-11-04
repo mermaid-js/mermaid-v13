@@ -12,10 +12,10 @@
  * Every scan is linear in the text it consumes (R-PARSE-7).
  */
 import { Kind, TokenWriter } from '@mermaid-js/core/parser-kit';
-import type { Probe, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Probe, TokenStream } from '@mermaid-js/core/parser-kit';
 import { A, CONDITIONS, RULES, S } from './rules.ts';
 import type { Rule, Scan } from './rules.ts';
-import type { Hole, V12Text } from './source.ts';
+import type { V12Text } from './v12-text.ts';
 
 /** A lex: the tokens (source offsets), and each token's range in v12's text. */
 export interface ClassLex {
