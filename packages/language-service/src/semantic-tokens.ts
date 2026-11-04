@@ -125,11 +125,15 @@ export function semanticTokens(ctx: DocumentContext, list: readonly Occurrence[]
     if (start < end) out.push({ range: { start, end }, type, modifiers: [] });
   };
   let j = 0;
+  // Out is in order and disjoint (LSP needs it): `done` is the end of the last symbol put in.
+  let done = 0;
   for (let i = 0; i < tokens.length; i++) {
     const type = BY_CATEGORY[facet.categories[tokens.kind[i] ?? 0] ?? 'Other'];
     if (type === undefined) continue;
-    let at = tokens.start[i] ?? 0;
-    const end = tokens.end[i] ?? 0;
+    // A symbol can span lexer tokens (`default-index.js`): the rest of it is not re-typed.
+    let at = Math.max(tokens.start[i] ?? 0, done);
+    // A token ends where the next one starts (`end` takes the blanks and comment after it).
+    const end = Math.min(tokens.end[i] ?? 0, tokens.start[i + 1] ?? Infinity);
     // Symbols before or inside this token go in at their place; the token keeps the rest
     // (`click A` is one token holding the keyword and the node id).
     while (j < symbols.length && symbols[j]!.range.start < end) {
@@ -137,6 +141,7 @@ export function semanticTokens(ctx: DocumentContext, list: readonly Occurrence[]
       if (s.range.start > at) push(at, s.range.start, type);
       out.push(s);
       at = Math.max(at, s.range.end);
+      done = Math.max(done, s.range.end);
     }
     push(at, end, type);
   }

@@ -2,6 +2,8 @@
  * Edge cases from the #31 review: rename checked in context, facet loading failures,
  * immutability and the semantic token types around subgraphs.
  */
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { flowchartLanguage } from '@mermaid-js/diagram-flowchart/language';
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
@@ -222,5 +224,42 @@ describe('semantic tokens around subgraphs (D94)', () => {
       'A node [declaration,definition]',
       'S subgraph []',
     ]);
+  });
+});
+
+describe('semantic tokens never overlap (LSP, #38)', () => {
+  const tokens = (doc: DocumentSnapshot) =>
+    doc.semanticTokens().map((t) => `${doc.text.slice(t.range.start, t.range.end)} ${t.type}`);
+
+  it('keeps a node id that spans lexer tokens whole', async () => {
+    // `default-index.js` is two lexer tokens and one node.
+    const doc = await open('flowchart LR\n  default-index.js --> b\n');
+    expect(tokens(doc)).toEqual([
+      'flowchart keyword',
+      'LR enumMember',
+      'default-index.js node',
+      '--> operator',
+      'b node',
+    ]);
+  });
+
+  it('ends a keyword before a comment its token runs over', async () => {
+    const doc = await open('flowchart LR\n  subgraph S\n    a\n  end\n\n  %% note\n  a --> b\n');
+    expect(tokens(doc)).toContain('end keyword');
+    expect(tokens(doc)).toContain('%% note comment');
+  });
+
+  it('are in order and disjoint over the corpus', () => {
+    const root = join(import.meta.dirname, '../../../e2e/diagrams');
+    const files = (readdirSync(root, { recursive: true }) as string[]).filter((f) =>
+      f.endsWith('.mmd')
+    );
+    let overlaps = 0;
+    for (const f of files) {
+      const list = service.update('x', readFileSync(join(root, f), 'utf8')).semanticTokens();
+      for (let i = 1; i < list.length; i++)
+        if (list[i]!.range.start < list[i - 1]!.range.end) overlaps++;
+    }
+    expect(overlaps).toBe(0);
   });
 });
