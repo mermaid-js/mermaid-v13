@@ -53,9 +53,9 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 
 ## Final review
 
-- [ ] **#145 is done but not reviewed or merged** (branch `feature/145_sequence-integration`, head `f0e55fea7`, in `.claude/worktrees/t145`). Its review stopped on the org spend limit (2026-11-04, resets 20:00 Stockholm); resume it, then merge.
+- [x] **#145 reviewed and merged** (review findings fixed: entry closure back to 6 files, per-type ascii sizes, c4 note, baselines generated in the Playwright image).
 - [ ] **#145 open items:** ASCII note spanning a box border blanks the border (baselines use `note over W,D` to avoid it); D122's "title feeds the accessible name" is not true of any SVG today; the per-key font D-id row (docs session).
-- [ ] **Sequence menu wiring after #202 merges:** `menu?: AstMenu` on `SequenceMenuStmt`; `forceMenus` from pending to honoured.
+- [x] **Sequence menu wiring (done in #145):** `menu?: AstMenu` on `SequenceMenuStmt`; `forceMenus` from pending to honoured.
 
 - [ ] **Flaky margin: `packages/bench/src/language-budget-sequence.spec.ts` "a cycle costs at most four bare parses".** Failed twice in parallel full-suite runs under machine load (4.19 vs 4); passes alone under the lock. Check it uses best-of-N CPU time like flowchart's, and whether the ratio bound has the same headroom as flowchart's.
 

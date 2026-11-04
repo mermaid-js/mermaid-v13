@@ -7,8 +7,8 @@
 | T3 custom layout | #141 | soft: #139 | merged |
 | T4 SVG renderer | #143 | #139, #141 | merged |
 | Neo geometry as theme variables | #194 | #143 | merged |
-| T5 integration | #145 | #143, #194 | running |
-| Actor menus (plugin-interactions) | #147 | #143; never with class #158 (D112) | draft PR #202 into `mermaid-v13` (check, chromium/firefox/webkit e2e green); class #126 told; sequence wiring (`menu?: AstMenu` on `SequenceMenuStmt`) lands here after #202 merges |
+| T5 integration | #145 | #143, #194 | merged |
+| Actor menus (plugin-interactions) | #147 | #143; never with class #158 (D112) | merged into `mermaid-v13` as #202; sequence wiring in #145 |
 | T6 language facet | #149 | #139, #29, #31 | merged |
 | T7 ASCII | #150 | #139, #141 | merged (supportsFormat + CLI wait on #145) |
 
