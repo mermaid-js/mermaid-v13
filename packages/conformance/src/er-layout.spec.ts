@@ -110,6 +110,18 @@ describe('layered over parser-produced ER graphs', () => {
       expect(bad).toEqual({});
       expect(crossings).toMatchSnapshot();
     }, 120_000);
+
+    // #189: a subgraph related to itself reserves room for its loop inside the drawing.
+    it(`lays out a subgraph self-loop validly with the ${name} profile`, () => {
+      const { model, diagnostics } = parseEr(
+        'erDiagram\n  subgraph G\n  A\n  end\n  G ||--o{ G : nests\n  A ||--|| B : x'
+      );
+      expect(diagnostics).toEqual([]);
+      const { graph, laid } = build(model, units);
+      const problems = validateLayout(graph, laid);
+      if (units.grid !== undefined) problems.push(...validateGrid(graph, laid));
+      expect(problems).toEqual([]);
+    });
   }
 
   it('gives every LayoutGraph length as a whole number of cells', () => {

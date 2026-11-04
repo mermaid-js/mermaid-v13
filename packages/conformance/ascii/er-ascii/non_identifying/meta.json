@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/er-ascii/non_identifying.txt",
+  "charset": "ascii"
+}
