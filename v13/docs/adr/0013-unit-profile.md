@@ -48,3 +48,11 @@ values divided by 8. Tolerances (`IN_LINE`, `TWIN`) and ratios and counts stay a
   `pxProfile.builder.nodePad` records the default theme's values.
 - Every other graph diagram (M3+) sizes through `ctx.units` from the start, so it gets ASCII
   layout without its own constants.
+
+## Amendment (M3, D108)
+
+The same rule holds for diagrams with `layoutKind: 'custom'`. A custom layout takes every length
+from a metrics table of its own, in the diagram package, with one value set per `units.id` (`px`,
+`cell`) and px config values converted through `units.pxPerUnit`. It never branches on a backend,
+so one layout function serves both. Core's `UnitProfile` gains no per-diagram section: core never
+names a diagram. Sequence is the first.
