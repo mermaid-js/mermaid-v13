@@ -22,4 +22,27 @@ describe('er ascii through the API', () => {
       ['ASCII_DROPPED', 'style', ['n:ORDER', 'style:1']],
     ]);
   });
+
+  it('fits ascii.maxWidth as the flowchart does: tighten, then turn LR to TB (D84, D124)', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    const src =
+      'erDiagram\n  direction LR\n  CUSTOMER ||--o{ ORDER : places\n  ORDER ||--|{ LINE_ITEM : contains\n';
+    const at = async (maxWidth?: number) => {
+      const ascii = maxWidth === undefined ? {} : { maxWidth };
+      const out = await m.render('er-w', src, { format: 'ascii', ascii });
+      return { columns: out.columns, rows: out.rows, codes: out.warnings.map((w) => w.code) };
+    };
+    const wide = await at();
+    expect(wide.rows).toBe(3);
+    // Under the cell profile's turn breakpoint (80) the drawing runs down and fits.
+    const down = await at(30);
+    expect(down.columns).toBeLessThanOrEqual(30);
+    expect(down.rows).toBeGreaterThan(wide.rows);
+    expect(down.codes).toEqual([]);
+    // Never cropped: narrower than the widest table, it says so.
+    const narrow = await at(8);
+    expect(narrow.columns).toBeGreaterThan(8);
+    expect(narrow.codes).toEqual(['ASCII_TOO_WIDE']);
+  });
 });

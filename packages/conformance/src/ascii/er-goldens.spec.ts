@@ -6,6 +6,7 @@ import { parseEr } from '@mermaid-js/diagram-er';
 import { loadOracle } from '../oracle.ts';
 import { renderErAscii } from './er-render.ts';
 import { erExpectedOf, readErStructure } from './er-structure.ts';
+import type { AsciiOptions } from './render.ts';
 import type { Charset } from './structure.ts';
 
 // The mermaid-ascii ER goldens (#136, D83, D100, D109, R-ASCII-2), from
@@ -18,7 +19,8 @@ import type { Charset } from './structure.ts';
 //   listed fixture that passes (a stale entry) both fail.
 // - our reviewed `expected.txt`, compared exactly, in the fixture's charset, and
 //   `expected.<other>.txt` in the other charset unless the other group has the same input.
-// The `er-v13/` cases are our own, with `expected.txt` (Unicode) and `expected.ascii.txt`.
+// The `er-v13/` cases are our own, with `expected.txt` (Unicode) and `expected.ascii.txt`; a
+// `maxWidth` in their meta.json is the `ascii.maxWidth` they render with (D84, D124).
 // Goldens are written with `vitest run -u <this file>` and reviewed by hand (tickets/136.md).
 
 const ROOT = fileURLToPath(new URL('../../ascii/', import.meta.url));
@@ -31,6 +33,8 @@ interface Fixture {
   dir: string;
   input: string;
   charset: Charset;
+  /** `ascii.maxWidth` (our own cases only). */
+  maxWidth?: number;
 }
 
 interface Divergence {
@@ -46,12 +50,14 @@ const fixturesOf = (group: string): Fixture[] =>
       const dir = join(ROOT, group, name);
       const meta = JSON.parse(readFileSync(join(dir, 'meta.json'), 'utf8')) as {
         charset: Charset;
+        maxWidth?: number;
       };
       return {
         id: `${group}/${name}`,
         dir,
         input: readFileSync(join(dir, 'input.mmd'), 'utf8'),
         charset: meta.charset,
+        ...(meta.maxWidth !== undefined ? { maxWidth: meta.maxWidth } : {}),
       };
     });
 
@@ -181,7 +187,9 @@ describe('er ascii goldens: expected.txt (exact)', () => {
   ];
 
   it.each(cases.map((c) => [`${c.f.id}/${c.file}`, c] as const))('%s', async (_, c) => {
-    const { text } = await renderErAscii(c.f.input, { charset: c.charset });
+    const options: AsciiOptions = { charset: c.charset };
+    if (c.f.maxWidth !== undefined) options.maxWidth = c.f.maxWidth;
+    const { text } = await renderErAscii(c.f.input, options);
     await expect(text).toMatchFileSnapshot(join(c.f.dir, c.file));
   });
 
