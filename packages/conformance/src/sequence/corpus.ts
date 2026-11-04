@@ -70,9 +70,25 @@ export const EDGE_CASES: CorpusItem[] = [
   'sequenceDiagram\naccTitle: ',
 ].map((source, k) => ({ id: `edge case ${k}`, source }));
 
+// Directives that start partway through a line (#185). v12 removed directives first, then line
+// comments from what was left, then dropped `style`/`classDef` semicolons from that.
+export const MID_LINE_DIRECTIVES: CorpusItem[] = [
+  'sequenceDiagram\nA->>B: x %%{init: {\n  %%x "a": 1}}%%\nB->>A: y',
+  'sequenceDiagram\nA->>B: x %%{init: {"a":"style"}}%% :#y;\nB->>A: z',
+  'sequenceDiagram\nNote over A: x %%{init: {"a":"style"}}%% :#y; z\nA->>B: w',
+  'sequenceDiagram\nA->>B: x\n%% c %%{init:\n{}}%% d\nB->>A: y',
+  'sequenceDiagram\nA->>B: x\n%%%%{init: {}}%%\nB->>A: y',
+  'sequenceDiagram\nA->>B: sty%%{init: {}}%%le A fill:#f00;\nB->>A: y',
+].map((source, k) => ({ id: `mid-line directive ${k}`, source }));
+
 /** The e2e fixtures, the v12 spec strings, the cases above, and each of them commented. */
 export async function sequenceGateCorpus(): Promise<CorpusItem[]> {
-  const all = [...(await sequenceCorpus()), ...LINE_SEPARATORS, ...EDGE_CASES];
+  const all = [
+    ...(await sequenceCorpus()),
+    ...LINE_SEPARATORS,
+    ...EDGE_CASES,
+    ...MID_LINE_DIRECTIVES,
+  ];
   return [
     ...all,
     ...all.map((item) => ({ id: `${item.id} (commented)`, source: commented(item.source) })),

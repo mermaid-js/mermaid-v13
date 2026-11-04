@@ -3,8 +3,8 @@
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T1 lexer parity gate | #137 | — | merged |
-| T2 grammar, parser, model, AST | #139 | #137, #27, #28 | running |
-| T3 custom layout | #141 | soft: #139 | merged (parser-fixture criterion open) |
+| T2 grammar, parser, model, AST | #139 | #137, #27, #28 | merged |
+| T3 custom layout | #141 | soft: #139 | merged |
 | T4 SVG renderer | #143 | #139, #141 | — |
 | T5 integration | #145 | #143 | — |
 | Actor menus (plugin-interactions) | #147 | #143; never with class's interactions ticket (D112) | — |

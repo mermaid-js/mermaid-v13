@@ -11,7 +11,7 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 
 - [x] **D114: switch to the core source view.** Done in #139: `parser/source.ts` deleted; the lexer derives its own read text (CRLF, entities) from the core view.
 
-- [ ] **Core `sourceView` mid-line directive bugs (class owns the fix, draft PR into `mermaid-v13`).** (1) a `%%` line inside a `%%{…}%%` directive becomes a comment hole running past `}%%`; (2) `"style"` text inside a directive triggers the `;` drop. diagram-sequence uses core `sourceView` (#139), so it picks up the fix on the next `mermaid-v13` merge. Then add sequence forms of both strings to the lexer-parity edge cases (`packages/conformance/src/sequence/lexer-parity.spec.ts`) and check parity stays 100%.
+- [x] **Core `sourceView` mid-line directive fix (#186):** merged; six sequence forms added to the lexer-parity gate (`MID_LINE_DIRECTIVES`), parity 100%.
 
 ## Shared contracts
 
