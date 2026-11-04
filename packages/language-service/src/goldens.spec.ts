@@ -1,39 +1,34 @@
 /**
- * Per-feature golden specs (D99 suite 1): every `goldens/<diagram>/<feature>/<case>.mmd`
- * through the service, compared with `<case>.out`. Format: src/testing/goldens.ts.
+ * The shared golden suite (D99 suite 1, R-LANG-3): every `goldens/<diagram>/<feature>/<case>.mmd`
+ * through the service, compared with `<case>.out`. Format and discovery: src/testing/goldens.ts.
+ * A new diagram or feature folder runs without a code change. Every first-party diagram with a
+ * facet must have cases for each of `REQUIRED_FEATURES`.
  * Update outputs with `vitest run packages/language-service -u`, then review the diff.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { createLanguageService } from './index.ts';
-import { FEATURES, readFixture, renderGolden } from './testing/goldens.ts';
+import { createLanguageService, firstPartyFacets } from './index.ts';
+import { goldenCases, missingFeatures, readFixture, renderGolden } from './testing/goldens.ts';
 
 const ROOT = join(import.meta.dirname, '..', 'goldens');
-const dirs = (path: string) =>
-  readdirSync(path, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name)
-    .sort();
-
 const service = createLanguageService();
 beforeAll(() => service.preload());
 
-for (const diagram of dirs(ROOT)) {
+const cases = goldenCases(ROOT);
+for (const diagram of [...new Set(cases.map((c) => c.diagram))]) {
   describe(diagram, () => {
-    for (const feature of dirs(join(ROOT, diagram))) {
-      const dir = join(ROOT, diagram, feature);
-      const cases = readdirSync(dir)
-        .filter((f) => f.endsWith('.mmd'))
-        .sort();
-      it.each(cases)(`${feature}: %s`, async (file) => {
-        expect(Object.keys(FEATURES)).toContain(feature);
-        const fixture = readFixture(readFileSync(join(dir, file), 'utf8'));
-        const doc = service.update(`golden:///${diagram}/${feature}/${file}`, fixture.text);
-        await expect(renderGolden(feature, doc, fixture)).toMatchFileSnapshot(
-          join(dir, file.replace(/\.mmd$/, '.out'))
-        );
-      });
-    }
+    it.each(cases.filter((c) => c.diagram === diagram))('$feature: $name', async (c) => {
+      const fixture = readFixture(readFileSync(c.input, 'utf8'));
+      const doc = service.update(`golden:///${diagram}/${c.feature}/${c.name}.mmd`, fixture.text);
+      await expect(renderGolden(c.feature, doc, fixture)).toMatchFileSnapshot(c.output);
+    });
   });
 }
+
+describe('the port checklist (R-LANG-3)', () => {
+  const withFacet = [...new Set(firstPartyFacets.filter((e) => e.load).map((e) => e.id))];
+  it.each(withFacet)('%s has goldens for every required feature', (id) => {
+    expect(missingFeatures(ROOT, id)).toEqual([]);
+  });
+});

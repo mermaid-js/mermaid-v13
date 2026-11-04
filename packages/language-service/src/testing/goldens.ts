@@ -7,10 +7,15 @@
  * - Positions print as 1-based `line:column`; a range prints as `l:c-l:c 'text'`.
  *
  * Features with markers (definition, references, rename, astAt, completions, hover) print one
- * block per marker;
- * the others (diagnostics, folding, semanticTokens) print the whole document. A new query
- * adds a renderer to {@link FEATURES} and a folder of fixtures.
+ * block per marker; the others (diagnostics, folding, semanticTokens) print the whole document.
+ *
+ * A feature folder with no renderer in {@link FEATURES} runs through the snapshot method of
+ * the same name (one call per marker), printed by {@link generic}: a new query needs a folder
+ * of fixtures, and a renderer only when the generic output reads badly. Port checklist
+ * (R-LANG-3): v13/docs/agents/port-diagram/README.md.
  */
+import { existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { LineIndex } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import type { DocumentSnapshot } from '../snapshot.ts';
@@ -134,9 +139,106 @@ export const FEATURES: Readonly<Record<string, Render>> = {
       ),
 };
 
+/**
+ * Every feature a diagram's facet must have goldens for (R-LANG-3). Completion and hover
+ * (#32, #33) join the list when they land.
+ */
+export const REQUIRED_FEATURES: readonly string[] = Object.freeze([
+  'diagnostics',
+  'definition',
+  'references',
+  'rename',
+  'astAt',
+  'folding',
+  'semanticTokens',
+]);
+
+const isRange = (v: unknown): v is Range =>
+  typeof v === 'object' &&
+  v !== null &&
+  Object.keys(v).length === 2 &&
+  typeof (v as Range).start === 'number' &&
+  typeof (v as Range).end === 'number';
+
+/** One value on one line: a range as `l:c-l:c 'text'`, an object as `key value …`. */
+function show(value: unknown, p: Printer): string {
+  if (value === undefined) return 'none';
+  if (isRange(value)) return p.range(value);
+  if (Array.isArray(value)) return `[${value.map((v) => show(v, p)).join(', ')}]`;
+  if (typeof value === 'object' && value !== null)
+    return Object.entries(value)
+      .filter(([, v]) => v !== undefined)
+      .map(([k, v]) => `${k} ${show(v, p)}`)
+      .join(' ');
+  return JSON.stringify(value);
+}
+
+/** The renderer of a feature with none in {@link FEATURES}: the snapshot method `feature`. */
+function generic(feature: string): Render | undefined {
+  const method = (doc: DocumentSnapshot) =>
+    (doc as unknown as Record<string, unknown>)[feature] as
+      | ((offset?: number) => unknown)
+      | undefined;
+  const lines = (value: unknown, p: Printer): string[] => {
+    if (!Array.isArray(value)) return [show(value, p)];
+    return value.length ? value.map((v) => show(v, p)) : ['none'];
+  };
+  return (doc, fixture, p) => {
+    const fn = method(doc);
+    if (typeof fn !== 'function')
+      throw new Error(`"${feature}" is neither a golden renderer nor a snapshot method`);
+    if (!fixture.markers.length) return lines(fn.call(doc), p);
+    return perMarker((d, at, pr) => lines(fn.call(d, at), pr))(doc, fixture, p);
+  };
+}
+
 /** The golden output of `feature` for one fixture. */
 export function renderGolden(feature: string, doc: DocumentSnapshot, fixture: Fixture): string {
-  const render = FEATURES[feature];
-  if (!render) throw new Error(`no golden renderer for "${feature}"`);
+  const render = FEATURES[feature] ?? generic(feature)!;
   return `${render(doc, fixture, new Printer(doc.text)).join('\n')}\n`;
+}
+
+export interface GoldenCase {
+  diagram: string;
+  feature: string;
+  /** The case name: the file name without `.mmd`. */
+  name: string;
+  /** Path of the `.mmd` fixture. */
+  input: string;
+  /** Path of the `.out` next to it. */
+  output: string;
+}
+
+const dirs = (path: string): string[] =>
+  existsSync(path)
+    ? readdirSync(path, { withFileTypes: true })
+        .filter((d) => d.isDirectory())
+        .map((d) => d.name)
+        .sort()
+    : [];
+
+/** Every `<root>/<diagram>/<feature>/<case>.mmd`, sorted; new folders need no code change. */
+export function goldenCases(root: string): GoldenCase[] {
+  return dirs(root).flatMap((diagram) =>
+    dirs(join(root, diagram)).flatMap((feature) => {
+      const dir = join(root, diagram, feature);
+      return readdirSync(dir)
+        .filter((f) => f.endsWith('.mmd'))
+        .sort()
+        .map((f) => {
+          const name = f.slice(0, -'.mmd'.length);
+          return { diagram, feature, name, input: join(dir, f), output: join(dir, `${name}.out`) };
+        });
+    })
+  );
+}
+
+/** The {@link REQUIRED_FEATURES} with no case under `<root>/<diagram>/`. */
+export function missingFeatures(root: string, diagram: string): string[] {
+  const have = new Set(
+    goldenCases(root)
+      .filter((c) => c.diagram === diagram)
+      .map((c) => c.feature)
+  );
+  return REQUIRED_FEATURES.filter((f) => !have.has(f));
 }
