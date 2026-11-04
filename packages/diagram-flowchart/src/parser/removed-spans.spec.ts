@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Kind } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { flowchartTokens, parseFlowchart } from '../index.ts';
-import { lex } from './lexer.ts';
-import { sourceView } from './source.ts';
+import { flowSourceView, lex } from './lexer.ts';
 import { T } from './tokens.ts';
 
 const errors = (src: string) =>
@@ -13,7 +12,7 @@ const errors = (src: string) =>
 
 const stream = (src: string) => {
   const pre = preprocess(src);
-  const view = sourceView(
+  const view = flowSourceView(
     src,
     pre.bodyStart,
     pre.directives.map((d) => d.range)

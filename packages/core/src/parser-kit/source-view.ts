@@ -1,18 +1,19 @@
 /**
- * What v12 did to flowchart text before its lexer saw it, reproduced without rewriting the
- * source (DESIGN §4.1). v12 ran these rewrites, in order:
+ * The v12 source view (D114, DESIGN §4.1): what v12 did to a diagram's text before its lexer saw
+ * it, reproduced without rewriting the source. v12 ran these rewrites, in order, for every type:
  *
  * 1. `cleanupText`: CRLF → LF, and `="x"` → `='x'` inside every `<tag …>`;
  * 2. directives removed, then every line comment (`^\s*%%(?!{)[^\n]+\n?`, multiline) removed;
  * 3. `encodeEntities`: on a line holding `style…:…#…;` (then `classDef…`), the last `;` is
  *    dropped; then every `#name;` / `#123;` becomes an entity placeholder;
- * 4. `flowParser`: `}\s*\n` → `}\n`; and a `\n` is appended.
+ * 4. a `\n` appended. Some types' parsers rewrote more (flowchart: `}\s*\n` → `}\n`), which a
+ *    type opts into with {@link SourceViewOptions}.
  *
- * v13 keeps the source as written. Here we compute, in linear scans, *where* those rewrites
- * would have acted: removed spans (comments and directives, emitted as trivia), converted
- * quotes and dropped semicolons (a per-offset mask). The lexer and {@link cook}, which builds
- * label text from a source range, read a copy with the removed spans cut out (v12's text) and
- * map its offsets back to the source, so every token and range is a source offset.
+ * v13 keeps the source as written. Here we compute, in linear scans (R-PARSE-7), *where* those
+ * rewrites would have acted: removed spans (comments and directives, emitted as trivia),
+ * converted quotes and dropped semicolons (a per-offset mask). A lexer and {@link cook}, which
+ * builds label text from a source range, read a copy with the removed spans cut out (v12's text)
+ * and map its offsets back to the source, so every token and range is a source offset.
  */
 import {
   COLON,
@@ -20,20 +21,29 @@ import {
   DQUOTE,
   EQUALS,
   HASH,
-  isSpace,
-  isWord,
   LBRACE,
   LF,
   PERCENT,
   RBRACE,
   SEMI,
-} from '@mermaid-js/core/parser-kit';
-import type { Range } from '@mermaid-js/core/parser-kit';
+} from './char-codes.ts';
+import { isSpace, isWord } from './chars.ts';
+import type { Range } from './positions.ts';
 
 /** Mask bit: a `"` that v12 turned into `'` (an HTML attribute quote). */
 export const QUOTE = 1;
 /** Mask bit: a `;` that v12's `encodeEntities` dropped. */
 export const DROP = 2;
+
+/** Which rewrites a type's v12 pipeline ran, beyond comments and directives (every type). */
+export interface SourceViewOptions {
+  /** `="x"` → `='x'` inside `<tag …>` (`cleanupText`). Default true. */
+  readonly tagQuotes?: boolean;
+  /** Drop the last `;` of a `style…:…#…;` or `classDef…` line (`encodeEntities`). Default true. */
+  readonly styleSemicolons?: boolean;
+  /** {@link cook} collapses `}\s*\n` to `}\n`, as flowchart's v12 parser did. Default false. */
+  readonly braceNewline?: boolean;
+}
 
 export interface SourceView {
   /** Per-offset {@link QUOTE}/{@link DROP} bits, or undefined when nothing is marked. */
@@ -47,6 +57,8 @@ export interface SourceView {
    * undefined when nothing was cut. Read them with {@link SourceOffsets}.
    */
   runs: Uint32Array | undefined;
+  /** Whether {@link cook} collapses `}\s*\n` ({@link SourceViewOptions.braceNewline}). */
+  braceNewline: boolean;
 }
 
 export interface Hole extends Range {
@@ -56,14 +68,24 @@ export interface Hole extends Range {
 
 const isNl = (c: number) => c === 10 || c === 13;
 
-export function sourceView(src: string, from: number, directives: readonly Range[]): SourceView {
+/**
+ * The source view of `src[from…]` (the text after the diagram header's start); `directives` are
+ * the `%%{…}%%` ranges from core's preprocess, sorted.
+ */
+export function sourceView(
+  src: string,
+  from: number,
+  directives: readonly Range[],
+  options: SourceViewOptions = {}
+): SourceView {
   let mask: Uint8Array | undefined;
   const mark = (i: number, bit: number) => {
     mask ??= new Uint8Array(src.length);
     mask[i] = (mask[i] ?? 0) | bit;
   };
-  markTagQuotes(src, from, mark);
-  markDroppedSemicolons(src, from, directives, mark, () => mask);
+  if (options.tagQuotes !== false) markTagQuotes(src, from, mark);
+  if (options.styleSemicolons !== false)
+    markDroppedSemicolons(src, from, directives, mark, () => mask);
   const removed = holes(src, from, directives);
   const m = mask;
   if (m) {
@@ -77,7 +99,12 @@ export function sourceView(src: string, from: number, directives: readonly Range
     }
     removed.sort((a, b) => a.start - b.start);
   }
-  return { mask, holes: removed, ...cut(src, removed) };
+  return {
+    mask,
+    holes: removed,
+    ...cut(src, removed),
+    braceNewline: options.braceNewline === true,
+  };
 }
 
 /** `src` without the removed spans (which may overlap), and where each kept run was. */
@@ -155,9 +182,9 @@ function markTagQuotes(src: string, from: number, mark: (i: number, bit: number)
 }
 
 /** LF and CR: where v12's `[^\n]` stopped once it had turned CR into LF. */
-const BREAKS = ['\n', '\r'];
+const BREAKS = ['\n', '\r'] as const;
 /** What a regex `.` does not match, and what `^` (multiline) follows. */
-const LINE_ENDS = ['\n', '\r', '\u2028', '\u2029'];
+const LINE_ENDS = ['\n', '\r', '\u2028', '\u2029'] as const;
 
 /**
  * The first of `chars` at or after `q`, or the end. Found with `indexOf`, keeping the next of
@@ -317,18 +344,18 @@ function holes(src: string, from: number, directives: readonly Range[]): Hole[] 
 /**
  * The text v12's parser saw for the source range `[start, end)` (one label or value), with
  * entity placeholders already decoded back to `&name;` / `&#123;` as v12's renderer did.
- * Removed spans inside the range are skipped.
+ * Removed spans inside the range are skipped, and `}\s*\n` collapses when the view asks for it.
  */
 export function cook(src: string, start: number, end: number, view: SourceView): string {
-  const { text, mask } = view;
+  const { text, mask, braceNewline } = view;
   const removed = view.holes;
   const k = firstHole(view, start);
   // A removed span inside the range, or right before it (then the text before is not src's).
   const split = (removed[k]?.start ?? end) < end || (k > 0 && removed[k - 1]?.end === start);
   if (
     !split &&
-    !/[\r#}]/.test(src.slice(start, end)) &&
-    src.charCodeAt(start - 1) !== RBRACE &&
+    !(braceNewline ? /[\r#}]/ : /[\r#]/).test(src.slice(start, end)) &&
+    (!braceNewline || src.charCodeAt(start - 1) !== RBRACE) &&
     !masked(mask, start, end)
   )
     return src.slice(start, end);
@@ -357,7 +384,10 @@ export function cook(src: string, start: number, end: number, view: SourceView):
         continue;
       }
     }
-    if (c === RBRACE || (i === from && text.charCodeAt(i - 1) === RBRACE && isSpace(c))) {
+    if (
+      braceNewline &&
+      (c === RBRACE || (i === from && text.charCodeAt(i - 1) === RBRACE && isSpace(c)))
+    ) {
       const at = c === RBRACE ? i + 1 : i;
       if (c === RBRACE) out += '}';
       let j = at;
