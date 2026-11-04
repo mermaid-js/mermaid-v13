@@ -1,17 +1,18 @@
 # Run notes, spec #126 (class diagram)
 
-Integration: `feature/126_class-diagram`, draft PR #166 into `mermaid-v13`. T2 merged (`e12887a64`); T3 and T6 running.
+Integration: `feature/126_class-diagram`, draft PR #166 into `mermaid-v13`. T0–T6 merged; #201 running; #158 waits for sequence #147.
 
 | Ticket | Title | Blocked by | Branch |
 | --- | --- | --- | --- |
 | #152 | T0 edge-end labels (core) | – | feature/152_edge-end-labels, merged here; draft PR #165 into mermaid-v13 |
 | #153 | T1 lexer gate | – | feature/153_class-lexer, merged here |
 | #154 | T2 grammar, parser, model, AST | #153, #27, #28 | feature/154_class-parser, merged here |
-| #155 | T3 layout | #152, #154 | feature/155_class-layout |
-| #156 | T4 renderer | #155 | |
-| #157 | T5 integration | #156 | feature/157_class-integration |
+| #155 | T3 layout | #152, #154 | feature/155_class-layout, merged here |
+| #156 | T4 renderer | #155 | feature/156_class-render, merged here |
+| #157 | T5 integration | #156 | feature/157_class-integration, merged here |
 | #158 | interactions (D105) | #156; not alongside #125's | waits for sequence #147 to merge (agreed with #125, D112) |
-| #159 | T6 language facet | #154, #29, #31 | feature/159_class-language |
+| #159 | T6 language facet | #154, #29, #31 | feature/159_class-language, merged here |
+| #201 | multiplicities clear of markers across edges | – | fix/201_class-marker-clearance |
 | #185 | T0b core `sourceView` directive fix (D114) | – | fix/185_source-view-directives, merged via #186 |
 
 Notes:
