@@ -20,11 +20,18 @@ export interface FacetParseOptions {
   probe?: number;
 }
 
-/** What the facet's completion and hover read of a document (DESIGN §4.5). */
+/**
+ * What the facet's completion and hover read of a document (DESIGN §4.5). Read-only: for
+ * hover it is the snapshot's own parse, which the service has frozen (D90) where its memoised
+ * queries read it; a facet never changes it.
+ */
 export interface DocumentView<A extends AstNode = AstNode> {
   /** The whole text; every range is a UTF-16 offset into it. */
   readonly text: string;
-  /** The snapshot's parse of `text`: tokens kept, no probe. */
+  /**
+   * The parse of `text` with tokens kept: for `hover`, the snapshot's (no probe); for
+   * `completions`, the probe parse the `ProbeResult` came from.
+   */
   readonly result: ParseResult<unknown, A>;
 }
 

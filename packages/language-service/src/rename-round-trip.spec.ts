@@ -7,6 +7,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService } from './index.ts';
+import { contextOf } from './snapshot.ts';
 import type { DocumentSnapshot, Range, TextEdit } from './index.ts';
 
 const CORPUS = join(import.meta.dirname, '..', '..', '..', 'e2e', 'diagrams');
@@ -69,7 +70,7 @@ function modulo(value: unknown, from: string, to: string): unknown {
 function symbolPositions(doc: DocumentSnapshot): number[] {
   const seen = new Set<string>();
   const out: number[] = [];
-  for (const s of doc.context.result?.symbols ?? []) {
+  for (const s of contextOf(doc).result?.symbols ?? []) {
     const prepared = doc.prepareRename(s.range.start);
     if ('refused' in prepared) continue;
     const key = JSON.stringify(doc.references(s.range.start));
@@ -90,7 +91,7 @@ describe('rename, re-parse, same model modulo the name', () => {
       if (text.includes(FRESH)) continue;
       const doc = service.update(`corpus:///${file}`, text);
       if (!doc.facet) continue;
-      const before = modulo(doc.context.result?.model, FRESH, FRESH);
+      const before = modulo(contextOf(doc).result?.model, FRESH, FRESH);
       for (const at of symbolPositions(doc)) {
         const name = (doc.prepareRename(at) as { placeholder: string }).placeholder;
         const where = `${file.split('\\').join('/')} ${name}@${at}`;
@@ -101,7 +102,7 @@ describe('rename, re-parse, same model modulo the name', () => {
         }
         renamed++;
         const next = service.update(`corpus:///${file}#renamed`, apply(text, result.edits));
-        const after = modulo(next.context.result?.model, FRESH, name);
+        const after = modulo(contextOf(next).result?.model, FRESH, name);
         if (JSON.stringify(after) !== JSON.stringify(before)) problems.push(`${where}: model`);
         const codes = (d: DocumentSnapshot) => d.diagnostics().map((x) => x.code);
         if (JSON.stringify(codes(next)) !== JSON.stringify(codes(doc)))

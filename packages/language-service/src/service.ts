@@ -9,7 +9,8 @@ import type { ConfigSchema } from './config/schema.ts';
 import type { DocumentContext } from './context.ts';
 import type { FacetEntry } from './facets.ts';
 import { firstPartyFacets } from './generated/facets.gen.ts';
-import { DocumentSnapshot } from './snapshot.ts';
+import { createSnapshot } from './snapshot.ts';
+import type { DocumentSnapshot } from './snapshot.ts';
 
 export interface LanguageServiceOptions {
   /**
@@ -192,7 +193,7 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
       notLoaded: entry?.load !== undefined && state === undefined,
       available: entry === undefined ? available() : [],
     };
-    return new DocumentSnapshot(Object.freeze(context), ++version);
+    return createSnapshot(Object.freeze(context), ++version);
   };
 
   return {

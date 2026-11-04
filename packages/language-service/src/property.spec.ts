@@ -20,6 +20,7 @@ import { join, relative } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService } from './index.ts';
+import { contextOf } from './snapshot.ts';
 import type { DocumentSnapshot } from './index.ts';
 
 const REPO = join(import.meta.dirname, '..', '..', '..');
@@ -47,7 +48,7 @@ function boundaries(doc: DocumentSnapshot): number[] {
     at.add(m.index);
     at.add(m.index + m[0].length);
   }
-  const tokens = doc.context.result?.tokens;
+  const tokens = contextOf(doc).result?.tokens;
   for (let i = 0; tokens && i < tokens.length; i++) {
     at.add(tokens.start[i]!);
     at.add(tokens.end[i]!);

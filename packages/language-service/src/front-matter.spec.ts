@@ -13,6 +13,7 @@ import type { ConfigWarning } from '@mermaid-js/core/config';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { configSection } from './config/front-matter.ts';
 import { createLanguageService } from './index.ts';
+import { contextOf } from './snapshot.ts';
 import type { DocumentSnapshot } from './index.ts';
 import { configSchema } from './generated/config-schema.gen.ts';
 
@@ -34,7 +35,7 @@ const isConfigWarning = (code: string) => code.startsWith('CONFIG_') || code ===
 function rendered(doc: DocumentSnapshot): string[] {
   const config = preprocess(doc.text).frontMatter?.config;
   if (config === undefined) return [];
-  const section = configSection(doc.context);
+  const section = configSection(contextOf(doc));
   const out: ConfigWarning[] = [];
   resolveConfig(CORE_DEFAULTS, {}, config, [], section ? { [section]: {} } : {}, {
     warn: (w) => out.push(w),

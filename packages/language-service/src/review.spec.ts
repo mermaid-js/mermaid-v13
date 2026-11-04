@@ -6,8 +6,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { flowchartLanguage } from '@mermaid-js/diagram-flowchart/language';
-import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, LanguageFacet } from '@mermaid-js/core/parser-kit';
 import { createLanguageService } from './index.ts';
+import { contextOf } from './snapshot.ts';
 import type { DocumentSnapshot, FacetEntry, RenameResult } from './index.ts';
 
 const service = createLanguageService();
@@ -256,10 +257,58 @@ describe('snapshots are immutable', () => {
   });
 });
 
+describe('the snapshot hides its parse (D90)', () => {
+  it('exports DocumentSnapshot as a type only, with no public context', async () => {
+    const api = await import('./index.ts');
+    expect('DocumentSnapshot' in api).toBe(false);
+    const doc = await open('flowchart TD\n  A --> B\n');
+    expect('context' in doc).toBe(false);
+    expect(Object.keys(doc)).toEqual([]);
+  });
+
+  it('hands a facet a parse it cannot change behind the memoised queries', async () => {
+    let seen: DocumentView | undefined;
+    const spy: LanguageFacet = {
+      ...fake('spy'),
+      hover: (_at, view) => {
+        seen = view;
+        return undefined;
+      },
+    };
+    const s = createLanguageService({
+      facets: [{ type: 'spy', id: 'spy', detector: (t) => t.startsWith('spy'), facet: spy }],
+    });
+    const text = 'spy\nflowchart TD\n  subgraph S\n    A --> B\n  end\n  A[x\n';
+    const doc = s.update('spy', text);
+    doc.hover(text.indexOf('A'));
+    const result = seen!.result;
+    for (const part of [
+      seen,
+      result,
+      result.diagnostics,
+      result.diagnostics[0],
+      result.diagnostics[0]!.range,
+      result.symbols,
+      result.symbols[0],
+      result.symbols[0]!.range,
+      result.statements,
+      result.statements[0],
+      result.tokens,
+    ])
+      expect(Object.isFrozen(part)).toBe(true);
+    const before = doc.foldingRanges();
+    expect(() => {
+      result.statements.length = 0;
+    }).toThrow(TypeError);
+    expect(doc.foldingRanges()).toBe(before);
+    expect(doc.references(text.indexOf('A')).length).toBe(2);
+  });
+});
+
 describe('diagnostics are frozen copies', () => {
   it('copies range, related and expected, and leaves the parse result as it was', async () => {
     const doc = await open('flowchart TD\n  subgraph S\n    A --> B\n');
-    const own = doc.context.result!.diagnostics;
+    const own = contextOf(doc).result!.diagnostics;
     const d = doc.diagnostics().find((x) => x.related?.length)!;
     expect(d.related!.length).toBeGreaterThan(0);
     const src = own.find((x) => x.code === d.code)!;
@@ -276,7 +325,7 @@ describe('diagnostics are frozen copies', () => {
   it('copies expected', async () => {
     const doc = await open('flowchart TD\n  A -->\n');
     const d = doc.diagnostics().find((x) => x.expected?.length)!;
-    const src = doc.context.result!.diagnostics.find((x) => x.code === d.code)!;
+    const src = contextOf(doc).result!.diagnostics.find((x) => x.code === d.code)!;
     expect(d.expected).toEqual(src.expected);
     expect(d.expected).not.toBe(src.expected);
     expect(Object.isFrozen(d.expected)).toBe(true);

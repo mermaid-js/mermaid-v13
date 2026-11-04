@@ -3,7 +3,7 @@
  * config key's schema docs. The diagram text is the facet's: it gets the token and the symbol
  * occurrence under the offset (one containing it, else one ending at it).
  */
-import type { Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
 import { frontMatterHover } from './config/hover.ts';
 import type { FrontMatterTree } from './config/front-matter.ts';
 import type { DocumentContext } from './context.ts';
@@ -47,11 +47,14 @@ export function hover(
   ctx: DocumentContext,
   fm: FrontMatterTree | undefined,
   occurrences: readonly Occurrence[],
-  offset: number
+  offset: number,
+  /** The frozen view of the snapshot's parse the facet gets (D90). */
+  view: () => DocumentView | undefined
 ): Hover | undefined {
   if (fm !== undefined && inFrontMatter(fm, offset)) return frontMatterHover(ctx, fm, offset);
-  const { facet, result, text } = ctx;
-  if (!facet || !result) return undefined;
+  const { facet } = ctx;
+  const doc = facet && view();
+  if (!facet || !doc) return undefined;
   const token = tokenAt(ctx, offset);
   const o = occurrenceAt(occurrences, offset);
   const target: HoverTarget = {
@@ -60,5 +63,5 @@ export function hover(
     ...(o ? { symbol: { name: o.name, kind: o.kind, role: o.role, range: o.range } } : {}),
   };
   // Even with no token: a keyword the lexer emits no token for (`click`) is the facet's to find.
-  return facet.hover(target, { text, result });
+  return facet.hover(target, doc);
 }

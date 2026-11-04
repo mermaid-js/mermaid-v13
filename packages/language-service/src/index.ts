@@ -14,8 +14,7 @@
  */
 export { createLanguageService } from './service.ts';
 export type { LanguageService, LanguageServiceOptions, PreloadRequest } from './service.ts';
-export { DocumentSnapshot } from './snapshot.ts';
-export type { DocumentContext } from './context.ts';
+export type { DocumentSnapshot } from './snapshot.ts';
 export type { FacetEntry } from './facets.ts';
 export type { Annotation, ConfigSchema, SchemaNode } from './config/schema.ts';
 export { diagnosticMessage } from './diagnostics.ts';
