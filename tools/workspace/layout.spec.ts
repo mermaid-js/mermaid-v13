@@ -23,6 +23,7 @@ describe('workspace layout (DESIGN §2)', () => {
     ['packages/mermaid', 'mermaid', false],
     ['packages/plugin-interactions', '@mermaid-js/plugin-interactions', false],
     ['packages/language-service', '@mermaid-js/language-service', false],
+    ['packages/language-server', '@mermaid-js/language-server', false],
     ['packages/conformance', '@mermaid-js/conformance', true],
     ['packages/bench', '@mermaid-js/bench', true],
     ['tools/gen-metrics', '@mermaid-js/gen-metrics', true],
