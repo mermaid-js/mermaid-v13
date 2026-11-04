@@ -1,6 +1,6 @@
 # Gaps, spec #126
 
-Status: every ticket (#152–#159, #185, #201) is merged into `feature/126_class-diagram`. The final whole-branch review findings are being fixed on `fix/126_final-review`.
+Status: every ticket (#152–#159, #185, #201) and the final whole-branch review fixes (`fix/126_final-review`) are merged into `feature/126_class-diagram`.
 
 ## Accepted by the maintainer, with follow-ups (2026-11-04)
 
@@ -23,6 +23,7 @@ Status: every ticket (#152–#159, #185, #201) is merged into `feature/126_class
 - `fixed` changeset group not used: RELEASING.md and `release-config.spec.ts` keep it empty (as state did).
 - Neo-theme marker variants are theme geometry (D152); `classEdgeLabelBackground` dropped (v12's rule never matched).
 - Empty `classDiagram` is rejected, as in v12 (UX question only).
+- Story 17, front-matter `title`: not drawn, like every v13 renderer today (flowchart, ER, state); MIGRATION row. Consistent with the existing v13 precedent, so not a class gap.
 - Sanitising: text is escaped, not sanitised, within flowchart's precedent (MIGRATION).
 
 ## Record per ticket
