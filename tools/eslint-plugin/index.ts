@@ -3,7 +3,9 @@
  *
  * - `mermaid/import-boundaries`: diagram-* → core, mermaid → core + diagram-*, core → nothing;
  *   the mermaid bin (`src/cli.ts`, D85) may also import `node:` builtins;
- *   `core/ascii` imports no SVG code and only ASCII code imports it (DESIGN §6.3).
+ *   `core/ascii` imports no SVG code and only ASCII code imports it (DESIGN §6.3);
+ *   a diagram's language-side code (`src/language*`, `src/parser/`) never imports its
+ *   renderer, plugin, main entry or ASCII code (R-LANG-8, D89).
  * - `mermaid/no-global-config`: no getConfig-style global config lookup.
  * - `mermaid/no-magic-char-code`: char codes are compared with named constants, not numbers.
  * - `mermaid/no-nested-quantifier`: no quantifier nested in an unbounded/variable quantifier.
@@ -37,6 +39,24 @@ const isAsciiCode = (dir: string, filename: string) =>
 const isInside = (dir: string, path: string) => {
   const rel = relative(dir, path);
   return !rel.startsWith('..') && !isAbsolute(rel);
+};
+/**
+ * Code reachable from a diagram's `./language` entry: the entry, `src/language/` and the
+ * parser. `src/generated/` (the category table) is generated and not linted.
+ */
+const isLanguageCode = (src: string, filename: string) => {
+  const [first] = relative(src, filename).split(sep);
+  return first === 'parser' || first === 'language' || first?.startsWith('language.') === true;
+};
+/** Modules that pull in rendering: `render/`, the plugin and main entry, ASCII code. */
+const isRenderSide = (src: string, target: string) => {
+  const [first] = relative(src, target).split(sep);
+  return (
+    first === 'render' ||
+    first === 'ascii' ||
+    first?.startsWith('ascii.') === true ||
+    /^(plugin|index)(\.[cm]?[jt]s)?$/.test(first ?? '')
+  );
 };
 const isTestFile = (filename: string) => /\.(spec|test)\.[cm]?[jt]s$/.test(filename);
 const isTestOnly = (s: string) =>
@@ -112,6 +132,13 @@ const importBoundaries: Rule.RuleModule = {
           }
         } else if (pkg.name === 'core' && !inTest && isInside(join(src, 'ascii'), target)) {
           reason = 'only ASCII code imports core/ascii (DESIGN §6.3)';
+        } else if (
+          pkg.name.startsWith('diagram-') &&
+          !inTest &&
+          isLanguageCode(src, filename) &&
+          isRenderSide(src, target)
+        ) {
+          reason = 'code reachable from ./language never imports rendering code (R-LANG-8)';
         }
       } else if (isCoreAscii(specifier) && !inTest && !isAsciiCode(pkg.dir, filename)) {
         reason = `only ASCII code imports ${CORE}/ascii (DESIGN §6.3)`;

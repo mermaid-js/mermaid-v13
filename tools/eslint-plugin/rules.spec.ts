@@ -35,6 +35,9 @@ const MERMAID = 'packages/mermaid/src/fixture.ts';
 const CORE_ASCII = 'packages/core/src/ascii/fixture.ts';
 const DIAGRAM_ASCII = 'packages/diagram-flowchart/src/ascii/fixture.ts';
 const DIAGRAM_ASCII_ENTRY = 'packages/diagram-flowchart/src/ascii.ts';
+const DIAGRAM_LANGUAGE_ENTRY = 'packages/diagram-flowchart/src/language.ts';
+const DIAGRAM_LANGUAGE = 'packages/diagram-flowchart/src/language/fixture.ts';
+const DIAGRAM_PARSER = 'packages/diagram-flowchart/src/parser/fixture.ts';
 
 describe('architecture lint rules fire', () => {
   it.each([
@@ -56,6 +59,9 @@ describe('architecture lint rules fire', () => {
     ['import-core-ascii.ts', MERMAID, 'mermaid/import-boundaries'],
     ['import-ascii-relative.ts', CORE, 'mermaid/import-boundaries'],
     ['import-svg-from-ascii.ts', CORE_ASCII, 'mermaid/import-boundaries'],
+    ['import-render-from-language.ts', DIAGRAM_LANGUAGE_ENTRY, 'mermaid/import-boundaries'],
+    ['import-render-from-parser.ts', DIAGRAM_LANGUAGE, 'mermaid/import-boundaries'],
+    ['import-render-from-parser.ts', DIAGRAM_PARSER, 'mermaid/import-boundaries'],
     ['global-config.ts', CORE, 'mermaid/no-global-config'],
     ['global-config.ts', DIAGRAM, 'mermaid/no-global-config'],
     ['nested-quantifier.ts', CORE, 'mermaid/no-nested-quantifier'],
@@ -79,6 +85,10 @@ describe('architecture lint rules fire', () => {
       filePath: join(root, DIAGRAM),
     });
     expect(chars?.messages).toHaveLength(3);
+    const [parser] = await eslint.lintText(fixture('import-render-from-parser.ts'), {
+      filePath: join(root, DIAGRAM_PARSER),
+    });
+    expect(parser?.messages).toHaveLength(2);
   });
 });
 
@@ -92,6 +102,8 @@ describe('architecture lint rules allow the intended directions', () => {
     ['import-relative.ts', CORE_ASCII],
     ['import-core-ascii.ts', DIAGRAM_ASCII],
     ['import-core-ascii.ts', DIAGRAM_ASCII_ENTRY],
+    ['import-parser-from-language.ts', DIAGRAM_LANGUAGE_ENTRY],
+    ['import-render-from-language.ts', DIAGRAM],
     ['linear-regex.ts', CORE],
     ['named-char-code.ts', DIAGRAM],
     ['dom-in-adapter.ts', MERMAID],
