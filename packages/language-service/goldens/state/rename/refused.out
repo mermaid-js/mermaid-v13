@@ -1,0 +1,8 @@
+@ 3:3  |A --> B
+  prepare: 3:3-3:4 "A"; rename to "a-b":
+  refused: 'a-b' is not a state id.
+@ 4:13  classDef h|ot fill:#f96
+  prepare: 4:12-4:15 "hot"; rename to "a-b":
+  refused: 'a-b' is not a class name.
+@ 6:3  |[*] --> A
+  prepare: refused: There is no id or class name here to rename.

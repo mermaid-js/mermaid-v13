@@ -1,0 +1,7 @@
+@ 3:12  classDef |hot fill:#f96
+  prepare: 3:12-3:15 "hot"; rename to "warm":
+  %% rename-to: warm
+  stateDiagram-v2
+    classDef warm fill:#f96
+    class A warm
+    B:::warm --> A

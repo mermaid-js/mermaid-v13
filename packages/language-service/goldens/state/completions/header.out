@@ -1,0 +1,3 @@
+@ 1:7  stateD|
+  stateDiagram-v2 keyword 1:1-1:7 "stateD" -> "stateDiagram-v2"
+  stateDiagram keyword 1:1-1:7 "stateD" -> "stateDiagram"

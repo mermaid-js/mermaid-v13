@@ -35,7 +35,14 @@ const STATEMENT_KEYWORDS = [
 
 describe('completion', () => {
   it('in an empty document or a partial header: the diagram keywords', () => {
-    expect(labels('|')).toEqual(['flowchart', 'graph', 'erDiagram']);
+    expect(labels('|')).toEqual([
+      'flowchart',
+      'graph',
+      'erDiagram',
+      'stateDiagram-v2',
+      'stateDiagram',
+    ]);
+    expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);
     expect(complete('flo|')).toEqual([
       expect.objectContaining({ label: 'flowchart', range: { start: 0, end: 3 } }),
     ]);

@@ -2,6 +2,7 @@ import type { ParitySuite } from './corpus.ts';
 import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
+import { stateAdapter } from './state/v13.ts';
 
 /**
  * The diagrams under oracle parity. Each first-party diagram ticket adds its suite here, e.g.
@@ -25,6 +26,11 @@ export const PARITY_SUITES: ParitySuite[] = [
     adapter: erAdapter,
     corpusDirs: ['e2e/diagrams/er-diagram'],
     corpusFiles: ['packages/conformance/corpus/er-v12-specs.json'],
+  },
+  {
+    adapter: stateAdapter,
+    corpusDirs: ['e2e/diagrams/state-diagram', 'e2e/diagrams/state-diagram-v2'],
+    corpusFiles: ['packages/conformance/corpus/state-v12-specs.json'],
   },
 ];
 

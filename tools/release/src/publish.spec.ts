@@ -24,6 +24,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-er',
       '@mermaid-chart/diagram-flowchart',
       '@mermaid-chart/diagram-sequence',
+      '@mermaid-chart/diagram-state',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',
       '@mermaid-chart/plugin-interactions',
@@ -35,7 +36,7 @@ describe('packAll (this workspace)', () => {
     expect(mermaid.dependencies?.['@mermaid-js/core']).toBe(
       `npm:@mermaid-chart/core@${packed[0]!.version}`
     );
-    const files = execFileSync('tar', ['-tzf', packed[3]!.tarball], { encoding: 'utf8' });
+    const files = execFileSync('tar', ['-tzf', packed[4]!.tarball], { encoding: 'utf8' });
     expect(files.split('\n')).toContain('package/LICENSE');
     expect(JSON.stringify(mermaid)).not.toContain('workspace:');
     expect(JSON.stringify(mermaid)).not.toContain('mermaid-source');

@@ -1,0 +1,13 @@
+---
+description: states with one and several descriptions, and a quoted described state
+---
+stateDiagram-v2
+  [*] --> Waiting
+  Waiting : Waiting for input
+  Busy : Busy
+  Busy : Reading the request
+  Busy : Writing the reply
+  state "A described state" as Described
+  Waiting --> Busy
+  Busy --> Described
+  Described --> [*]

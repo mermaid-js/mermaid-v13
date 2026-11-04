@@ -12,6 +12,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `mermaid/slim` | A subpath of `mermaid`, not a package: the same API with only the diagrams passed to `createMermaid({ diagrams })`. | to pick diagrams, with the `@mermaid-js/diagram-*` packages they want |
 | `@mermaid-js/core` | The DOM-free engine: plugin contract, parser kit, layout, SVG writer, theme, config. | never directly; `mermaid` brings it |
 | `@mermaid-js/diagram-flowchart` | The flowchart plugin (SVG, and text output from `/ascii`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-state` | The state diagram plugin (SVG; `stateDiagram` and `stateDiagram-v2`). | with `mermaid/slim` |
 | `@mermaid-js/plugin-interactions` | v12 click callbacks as an extension plugin. | when they use `click A callback` |
 
 The private workspace packages (`bench`, `conformance`, `dev`, `tools/*`) are never published.

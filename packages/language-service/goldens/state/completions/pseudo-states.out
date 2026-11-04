@@ -1,0 +1,15 @@
+@ 2:15  state fork1 |
+  <<fork>> keyword (fork pseudo-state) 2:15-2:15 "" -> "<<fork>>"
+  <<join>> keyword (join pseudo-state) 2:15-2:15 "" -> "<<join>>"
+  <<choice>> keyword (choice pseudo-state) 2:15-2:15 "" -> "<<choice>>"
+  { operator (composite state body) 2:15-2:15 "" -> "{"
+@ 3:17  state join1 <<|
+  <<fork>> keyword (fork pseudo-state) 3:15-3:17 "<<" -> "<<fork>>"
+  <<join>> keyword (join pseudo-state) 3:15-3:17 "<<" -> "<<join>>"
+  <<choice>> keyword (choice pseudo-state) 3:15-3:17 "<<" -> "<<choice>>"
+@ 4:13  state c [[|
+  [[fork]] keyword (fork pseudo-state) 4:11-4:13 "[[" -> "[[fork]]"
+  [[join]] keyword (join pseudo-state) 4:11-4:13 "[[" -> "[[join]]"
+  [[choice]] keyword (choice pseudo-state) 4:11-4:13 "[[" -> "[[choice]]"
+@ 5:9  state |
+  none

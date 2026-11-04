@@ -1,0 +1,48 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:16 "stateDiagram-v2" keyword
+3:3-3:15 "%% a comment" comment
+4:3-4:15 "direction LR" keyword
+5:3-5:6 "[*]" enumMember
+5:7-5:10 "-->" operator
+5:11-5:12 "A" variable [declaration, definition]
+5:13-5:20 ": start" string
+6:3-6:8 "state" keyword
+6:9-6:10 "\"" string
+6:10-6:19 "Long name" string
+6:19-6:20 "\"" string
+6:21-6:23 "as" keyword
+6:24-6:25 "B" variable [declaration, definition]
+7:3-7:8 "state" keyword
+7:9-7:10 "C" variable [declaration, definition]
+7:11-7:12 "{" operator
+8:5-8:6 "D" variable [declaration, definition]
+8:7-8:10 "-->" operator
+8:11-8:12 "E" variable [declaration, definition]
+9:5-9:7 "--" operator
+10:5-10:6 "F" variable [declaration, definition]
+11:3-11:4 "}" operator
+12:3-12:8 "state" keyword
+12:9-12:14 "fork1" variable [declaration, definition]
+12:15-12:23 "<<fork>>" keyword
+13:3-13:7 "note" keyword
+13:8-13:16 "right of" keyword
+13:17-13:18 "A" variable
+13:21-13:27 "a note" string
+14:3-14:11 "classDef" keyword
+14:12-14:15 "hot" class [declaration, definition]
+14:16-14:37 "fill:#f96,stroke:#333" string
+15:3-15:8 "class" keyword
+15:9-15:10 "A" variable
+15:11-15:14 "hot" class
+16:3-16:4 "A" variable
+16:4-16:7 ":::" operator
+16:7-16:10 "hot" class
+16:11-16:14 "-->" operator
+16:15-16:16 "B" variable
+17:3-17:8 "style" keyword
+17:9-17:10 "B" variable
+17:11-17:20 "fill:#bbf" string
+18:3-18:8 "click" keyword
+18:9-18:10 "A" variable
+18:11-18:32 "\"https://example.com\"" string
+18:33-18:38 "\"tip\"" string

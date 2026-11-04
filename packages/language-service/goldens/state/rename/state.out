@@ -1,0 +1,28 @@
+@ 3:11  [*] --> |Idle
+  prepare: 3:11-3:15 "Idle"; rename to "Waiting":
+  %% rename-to: Waiting
+  stateDiagram-v2
+    [*] --> Waiting
+    Waiting --> Busy : start
+    state Busy {
+      Waiting --> Work
+    }
+    Waiting : idle
+    note left of Waiting : text
+    class Waiting hot
+    Busy:::hot --> Waiting
+    style Waiting fill:#bbf
+@ 11:18  Busy:::hot --> |Idle
+  prepare: 11:18-11:22 "Idle"; rename to "Waiting":
+  %% rename-to: Waiting
+  stateDiagram-v2
+    [*] --> Waiting
+    Waiting --> Busy : start
+    state Busy {
+      Waiting --> Work
+    }
+    Waiting : idle
+    note left of Waiting : text
+    class Waiting hot
+    Busy:::hot --> Waiting
+    style Waiting fill:#bbf

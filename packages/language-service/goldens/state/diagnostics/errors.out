@@ -1,0 +1,3 @@
+2:8-2:9 "[" error YAML_SYNTAX: Invalid YAML: this `[` is never closed with `]`.
+5:8-5:8 "" error UNEXPECTED: Expected a state such as `A` or `[*]`, got a line break.
+6:9-6:12 "a b" error MULTI_WORD_STATE: A state name must be a single word, got `a b`: write `state "a b" as a_b {` to show the words.
