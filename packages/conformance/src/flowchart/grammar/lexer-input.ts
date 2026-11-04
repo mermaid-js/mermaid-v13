@@ -3,8 +3,8 @@
  * mermaid@12 handed its flowchart lexer, built with v12's own regexes (`preprocess.ts`
  * `cleanupText`, front matter, `directiveRegex`, `cleanupComments`, `encodeEntities`,
  * `flowParser.ts`) and mapped back to source offsets. Dev and CI only; the hand-written
- * parser reproduces these effects without rewriting (`src/parser/source.ts`), so this is an
- * independent reference for it.
+ * parser reproduces these effects without rewriting (the parser kit's source view, D114), so
+ * this is an independent reference for it.
  */
 import { appendMapped, mapped, replaceMapped, sliceMapped } from '@mermaid-js/gen-grammar';
 import type { MappedText } from '@mermaid-js/gen-grammar';
