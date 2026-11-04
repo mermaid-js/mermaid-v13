@@ -109,7 +109,10 @@ properties:
         `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8;
         `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 /
         ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2;
-        `crossArrowheadStrokeWidth` 2 / 2; `nodePaddingX` (per side) 16 / 2 × padding;
+        `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and
+        `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground`
+        white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`;
+        `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding;
         `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding;
         `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding;
         `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5;
@@ -200,6 +203,36 @@ properties:
           Stroke width in px of a cross arrowhead's arms.
         type: [number, string]
         x-mermaid: *arrowhead
+      erZeroOrMoreCircleOffset:
+        description: |
+          ER diagrams: distance in px from the entity outline to the centre of the circle of a
+          zero-or-more end.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      rowOdd:
+        description: |
+          ER diagrams: fill of the odd attribute rows of an entity (the first, third, …).
+        type: string
+        x-mermaid: &erColor
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            ER theme variable (#133), redux / classic value in the `themeVariables` notes.
+      rowEven:
+        description: |
+          ER diagrams: fill of the even attribute rows of an entity.
+        type: string
+        x-mermaid: *erColor
+      erEdgeLabelBackground:
+        description: |
+          ER diagrams: background of relationship labels.
+        type: string
+        x-mermaid: *erColor
+      erMarkerFill:
+        description: |
+          ER diagrams: fill of the circle of a zero-or-one and zero-or-more end.
+        type: string
+        x-mermaid: *erColor
       nodePaddingX:
         description: |
           Room left and right of a node label, per side, for the rectangle and the shapes that share its padding. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.

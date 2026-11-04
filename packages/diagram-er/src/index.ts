@@ -9,3 +9,5 @@ export { detectEr, parseEr } from './parser/index.ts';
 export type * from './parser/index.ts';
 export { genericType, layoutEr, prepareEr } from './layout/layout.ts';
 export type * from './layout/layout.ts';
+export { er } from './plugin.ts';
+export { renderEr } from './render/render.ts';

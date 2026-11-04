@@ -39,6 +39,8 @@ const theme: ThemeSpec = {
     noteTextColor: '#000000',
     noteBorderColor: '#aaaa33',
   },
+  // v12 default: rowEven is lighten(primaryColor, 1) in HSL.
+  rules: { rowEven: 'lighten(mainBkg, 26%)' },
 };
 
 export default theme;

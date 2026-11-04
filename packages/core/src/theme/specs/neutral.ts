@@ -40,6 +40,7 @@ const theme: ThemeSpec = {
     noteBkgColor: '#666666',
     noteTextColor: '#ffffff',
     noteBorderColor: '#999999',
+    rowEven: '#f4f4f4',
   },
 };
 
