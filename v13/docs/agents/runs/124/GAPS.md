@@ -26,7 +26,7 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 ## #133 T4 SVG renderer (merged)
 
 - No unmet criteria. No Playwright run yet; that is T5's (`pnpm e2e` under the lock).
-- **Open question for the maintainer (visual differences from v12 classic, recorded in MIGRATION.md):** classic `rowEven` uses `lighten()` approximations of v12's HSL lightening; table strokes use `strokeWidth` (1 classic, 2 redux) where v12 classic drew 1.3; an author `fill` now fills the whole table in every theme.
+- **D117 (maintainer, draft PR #188), applied in T5:** classic `rowEven` must equal v12's HSL lightening exactly (tested against v12; its MIGRATION row goes). Keep the shared `strokeWidth` and the whole-table author fill (MIGRATION rows stay, citing D117).
 
 ## #134 T5 integration (open items)
 
