@@ -7,7 +7,7 @@
 1. Confirm your base: `git merge-base --is-ancestor <base> HEAD`. If that fails, reset onto <base>.
 2. Use the Skill tool with `mattpocock-skills:tdd`. Test through `createMermaid().render()`, except where the recipe step names another seam.
 3. Stay in the ticket's scope. Touch shared files minimally and additively. Shared generated files (registry, parity suites, config reference, theme variables) are regenerated with `gen:*`, never hand-merged. Escalate decisions (anything against DESIGN, REQUIREMENTS, a D-id, or a v12 default) instead of making them: stop and report the question.
-4. Run `pnpm check` until it is green. Commit with no AI attribution (no Co-Authored-By, no "Generated with" line). Don't push, open PRs, or comment on or close issues. Don't edit `.github/workflows/*`. Don't add root scripts.
+4. Run `pnpm check` until it is green, always as `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check` (one full check and one e2e run machine-wide; e2e under `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-e2e.lock …`). A timing test that fails under load is rerun under the lock before acting on it. Commit with no AI attribution (no Co-Authored-By, no "Generated with" line). Don't push, open PRs, or comment on or close issues. Don't edit `.github/workflows/*`. Don't add root scripts.
 5. Before reporting, merge <base> and run `pnpm check` again.
 6. Write tickets/<N>.md (≤ 40 lines): exports, how to use them, test helpers, gz size, unmet criteria.
 7. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
