@@ -3,7 +3,9 @@
 Unmet acceptance criteria, filed under the ticket that owns each one.
 
 ## #141 T3 layout
-- [ ] Invariants on fixtures produced by the v13 parser: waits for #139 (T2), which waits for #27/#28 (D107).
+- [ ] Invariants on fixtures produced by the v13 parser: waits for #139 (T2), which waits for #27/#28 (D107). Run `sequenceLayoutViolations` over the parsed corpus.
+- [ ] Messages after a participant is destroyed are drawn below its end (as v12) and the span invariant reports them. Decide in #139 whether the parser rejects or warns.
+- [ ] **Maintainer decision: sequence font sizes.** v12 overwrote every per-key `sequence` font size (`messageFontSize`, `noteFontSize`, `actorFontSize`, …) with the global `fontSize`, so they had no effect. v13 defaults them to the theme `fontSize` (same effective 16), but a set per-key size now takes effect. Change of v12 semantics; needs a D-id before T5 moves the keys to `honoured`.
 
 ## #139 T2 parser
 
@@ -11,7 +13,7 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 
 ## Shared contracts
 
-- **`SequenceModel`** (`packages/diagram-sequence/src/model.ts`): owned by #139 (T2), which is held. #141 (T3) lands the type first, shaped from the spec's model list (§Parser), as the layout's input; #139 adopts it and may extend it additively. A change that breaks #141's fixtures goes through the orchestrator.
+- **`SequenceModel`** (`packages/diagram-sequence/src/model.ts`, landed with #141): owned by #139 (T2), which is held. #141 (T3) landed the type first, shaped from the spec's model list (§Parser), as the layout's input; #139 adopts it and may extend it additively. A change that breaks #141's fixtures goes through the orchestrator.
 - **Package skeleton** (`packages/diagram-sequence`): on the integration branch. #137 adds the conformance devDependency on it.
 
 ## Follow-ups from the #137 review (outside the ticket's scope)

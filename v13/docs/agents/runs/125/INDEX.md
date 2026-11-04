@@ -4,7 +4,7 @@
 | --- | --- | --- | --- |
 | T1 lexer parity gate | #137 | — | merged |
 | T2 grammar, parser, model, AST | #139 | #137, #27, #28 | held (D107) |
-| T3 custom layout | #141 | soft: #139 | running (hand-built fixtures) |
+| T3 custom layout | #141 | soft: #139 | merged (parser-fixture criterion open) |
 | T4 SVG renderer | #143 | #139, #141 | — |
 | T5 integration | #145 | #143 | — |
 | Actor menus (plugin-interactions) | #147 | #143; never with class's interactions ticket (D112) | — |
