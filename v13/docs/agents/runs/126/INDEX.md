@@ -12,6 +12,7 @@ Integration: `feature/126_class-diagram`, draft PR #166 into `mermaid-v13`. M2.5
 | #157 | T5 integration | #156 | |
 | #158 | interactions (D105) | #156; not alongside #125's | |
 | #159 | T6 language facet | #154, #29, #31 | |
+| #185 | T0b core `sourceView` directive fix (D114) | – | fix/185_source-view-directives (own PR into mermaid-v13) |
 
 Notes:
 - [01-v12-class.md](01-v12-class.md): v12 class grammar, DB, renderers, specs, fixture counts (pointers).
