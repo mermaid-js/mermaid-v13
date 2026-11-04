@@ -4,3 +4,6 @@
  * AST, at oracle parity with v12 (#154).
  */
 export * from './parser/index.ts';
+// Generated from grammar/class.ebnf (D93, D94), for the language facet (#159).
+export { classCategories } from './generated/categories.ts';
+export { classDocs } from './generated/docs.ts';

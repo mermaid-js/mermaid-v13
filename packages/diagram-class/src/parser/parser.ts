@@ -9,6 +9,7 @@
  * other lexer mode that runs to the end of the text is reported at its opener, and lexing
  * restarts on the line after it.
  */
+// cspell:words LALR
 import { inKindSet, Kind } from '@mermaid-js/core/parser-kit';
 import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
