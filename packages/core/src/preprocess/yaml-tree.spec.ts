@@ -226,3 +226,52 @@ describe('parseYaml tree mode: keys that cannot be read', () => {
     });
   });
 });
+
+describe('parseYaml tree mode: sequence and root recovery', () => {
+  it('recovers from a tab-indented sequence item', () => {
+    const src = 'l:\n  - a\n\t- b\n  - c\nz: 1\n';
+    const r = parseYaml(src, { tree: true });
+    expect(where(src, r)).toEqual(['3:1 YAML_SYNTAX']);
+    expect(r.value).toEqual({ l: ['a', 'c'], z: 1 });
+    expect(spans(src, r.root ?? undefined)).toMatchObject({
+      '$.l[0]': 'a',
+      '$.l[1]': 'c',
+      '$.z': '1',
+    });
+  });
+
+  it('reads on after a root sequence that ends early', () => {
+    const src = '- a\nb: 1\nc: *x\nd: 2\n';
+    const r = parseYaml(src, { tree: true });
+    expect(where(src, r)).toEqual(['2:1 YAML_SYNTAX', '3:4 YAML_SYNTAX']);
+    expect(r.value).toEqual({ b: 1, d: 2 });
+    expect(spans(src, r.root ?? undefined)).toEqual({
+      $: 'b: 1\nc: *x\nd: 2',
+      '$.b#key': 'b',
+      '$.b': '1',
+      '$.c#key': 'c',
+      '$.d#key': 'd',
+      '$.d': '2',
+    });
+  });
+
+  it('reads on after an indented root mapping that ends early', () => {
+    const src = '  a: 1\nb: 2\nc: 3\n';
+    const r = parseYaml(src, { tree: true });
+    expect(where(src, r)).toEqual(['2:1 YAML_SYNTAX']);
+    expect(r.value).toEqual({ a: 1, b: 2, c: 3 });
+    expect(spans(src, r.root ?? undefined)).toMatchObject({
+      $: 'a: 1\nb: 2\nc: 3',
+      '$.a': '1',
+      '$.b': '2',
+      '$.c': '3',
+    });
+  });
+
+  it('gives a mapping whose keys are all dropped the span of its lines', () => {
+    const src = 'constructor: 1\nconstructor: 2\n';
+    const r = parseYaml(src, { tree: true });
+    expect(r.value).toEqual({});
+    expect(spans(src, r.root ?? undefined)).toEqual({ $: 'constructor: 1\nconstructor: 2' });
+  });
+});

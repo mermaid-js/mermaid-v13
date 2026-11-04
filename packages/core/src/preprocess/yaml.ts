@@ -20,7 +20,13 @@
 import { CR, LF, NUL, SPACE, TAB } from '../parser-kit/char-codes.ts';
 import { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Diagnostic } from '../parser-kit/diagnostics.ts';
-import type { YamlNode, YamlPair, YamlScalarNode, YamlScalarStyle } from './yaml-nodes.ts';
+import type {
+  YamlMapNode,
+  YamlNode,
+  YamlPair,
+  YamlScalarNode,
+  YamlScalarStyle,
+} from './yaml-nodes.ts';
 import { lineEnd, newlineAt } from '../parser-kit/scanner.ts';
 import {
   isSpaceOrBreak,
@@ -629,15 +635,16 @@ class Reader {
       let seqEnd = lineAt + 1;
       while (this.i < this.lines.length) {
         this.skipBlank();
-        if (this.i >= this.lines.length || this.indent() !== indent) break;
-        const cur = (this.lines[this.i] ?? '').slice(indent);
-        if (!isSeqItem(cur)) break;
-        const rest = cur.slice(1);
-        const pad = leading(rest) + 1;
-        const restAt = (this.at[this.i] ?? 0) + indent + pad;
-        const body = stripComment(rest).trim();
+        if (this.i >= this.lines.length) break;
         const itemLine = this.i;
         try {
+          if (this.indent() !== indent) break;
+          const cur = (this.lines[this.i] ?? '').slice(indent);
+          if (!isSeqItem(cur)) break;
+          const rest = cur.slice(1);
+          const pad = leading(rest) + 1;
+          const restAt = (this.at[this.i] ?? 0) + indent + pad;
+          const body = stripComment(rest).trim();
           if (body === '') {
             this.i++;
             out.push(this.block(indent + 1, depth + 1));
@@ -710,19 +717,20 @@ class Reader {
         } else {
           value = this.inlineValue(rest.trim(), restAt, indent, depth + 1);
         }
-        if (this.assign(out, key, value, keyAt, keyEnd) && pairs) {
-          const node = this.take(restAt);
+        const node = pairs ? this.take(restAt) : undefined;
+        if (this.assign(out, key, value, keyAt, keyEnd) && pairs && node) {
           pairs.push({ key, keyRange: { start: keyAt, end: keyEnd }, value: node });
-          mapEnd = Math.max(mapEnd, keyEnd + 1, node.range.end);
         }
+        // A dropped key still counts towards the span of the mapping.
+        if (node) mapEnd = Math.max(mapEnd, keyEnd + 1, node.range.end);
       } catch (err) {
         if (!pairs || !(err instanceof YamlError)) throw err;
         const bad = this.report(err);
         // The key stays (without a value) when it was read and is not a prototype key.
         if (key !== undefined && !UNSAFE_KEYS.has(key)) {
           pairs.push({ key, keyRange: { start: keyAt, end: keyEnd } });
-          mapEnd = Math.max(mapEnd, keyEnd);
         }
+        mapEnd = Math.max(mapEnd, this.lineRange(entryLine)[1]);
         this.resync(Math.max(this.i, bad + 1, entryLine + 1), indent);
       }
     }
@@ -739,16 +747,69 @@ class Reader {
       const [value, end] = this.flow(from, this.end, '', 0);
       if (this.skip(end, this.end) >= this.end) return value;
     }
+    if (this.tree) return this.readTree();
     const value = this.block(0, 0);
     this.skipBlank();
     if (this.i < this.lines.length && (this.lines[this.i] ?? '').trim() !== '...') {
-      const [at, to] = this.lineRange(this.i);
-      const message = 'end of the stream or a document separator is expected';
-      // Tree mode keeps what was read; the rest of the text is not read.
-      if (this.tree) this.report(new YamlError('YAML_SYNTAX', message, at, Math.max(to, at)));
-      else this.fail(message, at, to);
+      this.fail('end of the stream or a document separator is expected', ...this.lineRange(this.i));
     }
     return value;
+  }
+
+  /**
+   * Tree mode: the root block, and after it ends early (a less indented line, or a mapping
+   * after a sequence), each further block from the line where the last one stopped, with one
+   * error for that line. The root is the first block that is a mapping (else the first block);
+   * later mappings add their entries to it, and other later blocks are read only for their
+   * errors.
+   */
+  readTree(): YamlValue {
+    let first: [YamlValue, YamlNode | undefined] | undefined;
+    let map: YamlMap | undefined;
+    let root: YamlMapNode | undefined;
+    for (;;) {
+      this.skipBlank();
+      if (this.i >= this.lines.length || (this.lines[this.i] ?? '').trim() === '...') break;
+      const from = this.i;
+      if (first) {
+        const [at, to] = this.lineRange(from);
+        const message = 'end of the stream or a document separator is expected';
+        this.report(new YamlError('YAML_SYNTAX', message, at, Math.max(to, at)));
+      }
+      let value: YamlValue;
+      try {
+        value = this.block(0, 0);
+      } catch (err) {
+        if (!(err instanceof YamlError)) throw err;
+        this.i = Math.max(this.i, this.report(err) + 1, from + 1);
+        continue;
+      }
+      if (this.i === from) this.i++;
+      const node = this.node;
+      first ??= [value, node];
+      if (node?.kind !== 'map') continue;
+      // A block mapping node always comes with its YamlMap value.
+      const entries = value as YamlMap;
+      if (root && map) for (const pair of node.pairs) this.merge(map, root, pair, entries);
+      else [root, map] = [node, entries];
+    }
+    this.node = root ?? first?.[1];
+    return map ?? first?.[0] ?? null;
+  }
+
+  /** Tree mode: add `pair` of a later root mapping (values in `from`) to the root. */
+  merge(map: YamlMap, root: YamlMapNode, pair: YamlPair, from: YamlMap): void {
+    root.range.end = Math.max(root.range.end, pair.value?.range.end ?? pair.keyRange.end);
+    if (Object.hasOwn(map, pair.key)) {
+      const { start, end } = pair.keyRange;
+      this.report(
+        new YamlError('YAML_SYNTAX', `duplicated mapping key \`${pair.key}\``, start, end)
+      );
+      root.pairs.push({ key: pair.key, keyRange: pair.keyRange });
+      return;
+    }
+    if (pair.value && Object.hasOwn(from, pair.key)) map[pair.key] = from[pair.key] ?? null;
+    root.pairs.push(pair);
   }
 }
 

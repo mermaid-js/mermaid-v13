@@ -90,6 +90,7 @@ const TREE_SHAPES: [string, (n: number) => string][] = [
   ['an unclosed quote on every line', (n) => lines(n, (i) => `k${i}: [ "\n`)],
   ['an unclosed flow item on every line', (n) => 'l:\n' + lines(n, () => '  - {a\n')],
   ['the same key on every line', (n) => lines(n, () => 'a: 1\n')],
+  ['a root that ends early on every other line', (n) => lines(n, (i) => `- a\nk${i}: 1\n`)],
 ];
 
 describe('the YAML tree mode runs in linear time', () => {
