@@ -2,11 +2,10 @@
  * The sequence parser's public surface: the parser, detection, and the lexer gated against
  * v12's jison lexer.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
+import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
-import { cook, sourceView } from './source.ts';
 
 export { JISON_NAMES, T as SequenceTokenKind } from './tokens.ts';
 export { parseSequence } from './parser.ts';

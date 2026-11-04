@@ -3,10 +3,8 @@
  * human names (R-ERR-2, R-ERR-5) and statement recovery (R-PARSE-4). The grammar rules are in
  * `parser.ts`, which extends this class.
  */
-import { inKindSet, Kind, LineIndex, skipTo } from '@mermaid-js/core/parser-kit';
-import type { ParseState, Probe, Range, TokenView } from '@mermaid-js/core/parser-kit';
-import { cook } from './source.ts';
-import type { SourceView } from './source.ts';
+import { cook, inKindSet, Kind, LineIndex, skipTo } from '@mermaid-js/core/parser-kit';
+import type { ParseState, Probe, Range, SourceView, TokenView } from '@mermaid-js/core/parser-kit';
 import { BOUNDARY, EXPECTED, LINE_END, NEWLINE, STOP } from './tables.ts';
 import { T } from './tokens.ts';
 

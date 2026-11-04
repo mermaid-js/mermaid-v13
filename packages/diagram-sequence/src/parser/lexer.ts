@@ -23,6 +23,7 @@ import {
   CR,
   DASH,
   DOT,
+  firstHole,
   GT,
   HASH,
   isDigit,
@@ -31,6 +32,7 @@ import {
   Kind,
   LBRACE,
   LF,
+  localOffset,
   LPAREN,
   LT,
   PERCENT,
@@ -39,11 +41,10 @@ import {
   RPAREN,
   SEMI,
   SLASH,
+  SourceOffsets,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { Probe, TokenStream } from '@mermaid-js/core/parser-kit';
-import { firstHole, localOffset, SourceOffsets } from './source.ts';
-import type { Hole, SourceView } from './source.ts';
+import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 // Start conditions of sequenceDiagram.jison (`CONFIG_DATA` is declared there, never entered).
@@ -215,6 +216,21 @@ const SPACE = 0x20;
 const TAB = 0x09;
 
 /**
+ * The text the lexer reads, of the same length as the view's text: v12 turned every CRLF and
+ * CR into LF before lexing, so a CRLF reads as two LFs (every rule treats a run of line breaks
+ * as one, except the single `\s` after `title`, which the lexer steps over as a pair) and a
+ * lone CR as LF; each `#name;` entity is `ﬂ`, the name and `¶`, so no rule takes its `#` or `;`
+ * (v12's placeholders).
+ */
+function lexerText(text: string): string {
+  let out = text.includes('\r')
+    ? text.replace(/\r\n?/g, (m) => (m.length === 2 ? '\n\n' : '\n'))
+    : text;
+  if (out.includes('#')) out = out.replace(/#(\w+);/g, (_, name: string) => `ﬂ${name}¶`);
+  return out;
+}
+
+/**
  * Lex the sequence body `src[from…]`. `view` comes from {@link sourceView}. With a `probe`, the
  * start condition at the probe's offset is recorded as its mode.
  */
@@ -229,6 +245,8 @@ export function lex(src: string, from: number, view: SourceView, probe?: Probe):
 class SequenceLexer {
   /** The text v12 lexed, plus the line break v12 appended (clamped in the output). */
   private readonly text: string;
+  /** The view's text: CRs as written (see {@link lexerText}). */
+  private readonly raw: string;
   /** Length of v12's text without the appended line break. */
   private readonly len: number;
   private readonly n: number;
@@ -246,8 +264,10 @@ class SequenceLexer {
     from: number,
     view: SourceView
   ) {
-    this.text = view.lexText + '\n';
-    this.len = view.lexText.length;
+    const lexText = lexerText(view.text);
+    this.text = lexText + '\n';
+    this.len = lexText.length;
+    this.raw = view.text;
     this.n = this.text.length;
     this.offsets = view.runs && new SourceOffsets(view.runs);
     this.holes = view.holes;
@@ -335,7 +355,7 @@ class SequenceLexer {
     let a = this.source(s);
     const last = Math.min(end, this.len);
     let b = last > s ? this.source(last - 1) + 1 : a;
-    // A line break starts at the CR of its CRLF (cut from the text).
+    // A line break starts at the CR of its CRLF.
     if (b > a && this.src.charCodeAt(a) === LF && this.src.charCodeAt(a - 1) === CR) a--;
     if (this.holes.length > 0) {
       this.trivia(a);
@@ -509,8 +529,10 @@ class SequenceLexer {
     const q = this.p + 5;
     const colon = this.text.charCodeAt(q) === COLON ? 1 : 0;
     if (!isSpace(this.text.charCodeAt(q + colon))) return false;
-    const e = this.lineRun(q + colon + 1);
-    if (e === q + colon + 1) return false;
+    // The one `\s` is a whole CRLF (v12 saw one LF there).
+    const after = q + colon + (this.raw.charCodeAt(q + colon) === CR ? 2 : 1);
+    const e = this.lineRun(after);
+    if (e === after) return false;
     return this.emit(colon ? T.LegacyTitle : T.Title, this.p, e);
   }
 

@@ -19,12 +19,14 @@ import {
   Probe,
   RBRACE,
   significantTokens,
+  sourceView,
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstId,
   ParseOptions,
   ParseResult,
   Range,
+  SourceView,
   StatementSpan,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
@@ -100,8 +102,6 @@ import {
   participantData,
 } from './normalise.ts';
 import type { Wrapped } from './normalise.ts';
-import { sourceView } from './source.ts';
-import type { SourceView } from './source.ts';
 import { T } from './tokens.ts';
 import { TokenRules } from './rules.ts';
 

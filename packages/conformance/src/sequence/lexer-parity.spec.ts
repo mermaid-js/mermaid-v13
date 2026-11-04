@@ -72,6 +72,7 @@ const EDGE_CASES: CorpusItem[] = [
   'sequenceDiagram\rA->>B: x\r\rB-->>A: y',
   'sequenceDiagram\r\nparticipant A as Alice\r\nloop L\r\nA->>B: x\r\nend',
   'sequenceDiagram\r\naccDescr {\r\na\r\nb\r\n}\r\nA->>B: x',
+  'sequenceDiagram\r\ntitle\r\nfoo\r\ntitle:\r\nbar\r\nA->>B: x',
   'sequenceDiagram\nA->>B: #quot;hi#59; #9829; #x;\nNote over A: #amp;',
   'sequenceDiagram\n#end;->>B: x\nparticipant #a;b\nloop #lt;l\nend',
   'sequenceDiagram\nA->>B: style x:#f00;\nclassDef y:#f00; z\nA->>B: x',
