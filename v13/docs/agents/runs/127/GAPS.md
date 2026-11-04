@@ -20,3 +20,7 @@ Unmet criteria and shared contracts, by owning ticket.
 ## Shared source view (from #138, D114)
 
 - D114: the v12 source view (comment-line removal, dropped `;`, the `="x"` quote rewrite) moves into the core parser kit in state T0 #162, which flowchart switches to. `diagram-state/src/parser/source.ts` stays, deprecated, until that T0 merges into `mermaid-v13`; then diagram-state adopts the kit version and deletes its copy (owner: #142, or a follow-up if #142 has merged by then). #162 is in draft PR #181 into `mermaid-v13`. When adopting: the kit has no option for state's `trimStart` or appended `\n`, and state's lexer must move from its per-character `at` array to `SourceOffsets`/`localOffset` (handoff: `tickets/162.md` on `feature/162_parser-kit-source-view`).
+
+## Outside this spec (seen after merging `mermaid-v13` at `5a6425d8e`)
+
+- `.gitignore` now un-ignores `/.claude/skills/` (#129, for `release-alpha`). A worktree that holds local skill copies then fails `pnpm check`'s `prettier --check .` on untracked files (`.claude/skills/recheck-issue/scripts/*`). `.prettierignore` needs `.claude/`, or the local copies need to go. Until then, verify with prettier over `git ls-files` plus the rest of the check chain.
