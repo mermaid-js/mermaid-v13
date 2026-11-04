@@ -4,6 +4,7 @@
  */
 import type { SequenceDiagramConfig } from '@mermaid-js/core/config';
 import type { RenderContext } from '@mermaid-js/core';
+import { checkStyle } from '@mermaid-js/core/svg';
 import { fontSizePx, layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { ArrowKind, SequenceParticipant, SequenceStatement } from '../model.ts';
 import { FONT_WEIGHT, sequenceMetrics, type SequenceMetrics } from './metrics.ts';
@@ -103,16 +104,35 @@ function weightOf(value: unknown): number {
   return Number.isFinite(n) && n > 0 ? n : FONT_WEIGHT.normal;
 }
 
-function fontsOf(ctx: SequenceLayoutContext): Fonts {
+/**
+ * The fonts labels are measured in, and so drawn in (the renderer reads them too). A per-key
+ * family the style check refuses falls back to the Mermaid font, with a warning when `warn`
+ * is given (the layout passes it, so it is raised once per render).
+ */
+export function fontsOf(
+  ctx: Pick<SequenceLayoutContext, 'config' | 'theme'>,
+  warn?: SequenceLayoutContext['warn']
+): Fonts {
   const seq = (ctx.config.sequence ?? {}) as Readonly<Record<string, unknown>>;
   const family = ctx.theme.value('fontFamily');
   const size = ctx.theme.number('fontSize');
   // Family keys inherit the Mermaid font; size and weight keys apply when set.
   const font = (prefix: string): FontKey => {
-    const f = seq[`${prefix}FontFamily`];
+    const key = `${prefix}FontFamily`;
+    const f = seq[key];
+    let safe: string | undefined;
+    if (typeof f === 'string' && f.trim() !== '') {
+      safe = checkStyle(['font-family:' + f]).text['font-family'] as string | undefined;
+      if (safe === undefined)
+        warn?.({
+          code: 'STYLE_VALUE_DROPPED',
+          message: `Dropped sequence.${key} ${JSON.stringify(f)}: it is not a font family Mermaid allows`,
+          path: `sequence.${key}`,
+        });
+    }
     const s = fontSizePx(seq[`${prefix}FontSize`], size);
     return {
-      family: typeof f === 'string' && f.trim() !== '' ? f : family,
+      family: safe ?? family,
       size: s !== undefined && s > 0 ? s : size,
       weight: weightOf(seq[`${prefix}FontWeight`]),
     };
@@ -133,7 +153,7 @@ export function envOf(
   const seq = ctx.config.sequence ?? {};
   return {
     m: sequenceMetrics(ctx.units, seq),
-    fonts: fontsOf(ctx),
+    fonts: fontsOf(ctx, (w) => ctx.warn(w)),
     seq,
     autoWrap: ctx.config.wrap === true || seq.wrap === true,
     mirror: seq.mirrorActors !== false,

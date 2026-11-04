@@ -3,7 +3,7 @@
  * `theme-redux-dark-color.js` at 12.2.0 (identical for every variable v13 reads).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
+import { NEO_ARROWHEADS, NEO_SEQUENCE, REDUX_PADDING } from './geometry.ts';
 
 export const REDUX_DARK_BASE: ThemeSpec['base'] = {
   primaryColor: '#1f2020',
@@ -26,9 +26,13 @@ export const REDUX_DARK_TOKENS: ThemeSpec['tokens'] = {
   spacing3: 16,
   ...NEO_ARROWHEADS,
   ...REDUX_PADDING,
+  ...NEO_SEQUENCE,
 };
 
 export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {
+  // sequence (v12 theme-redux-dark.js pins these two)
+  signalColor: '#ffffff',
+  labelBoxBorderColor: '#bdbccc',
   // v12's drop shadow in white for a theme name with 'dark' (insertLookDefs), as a CSS filter.
   dropShadow: 'drop-shadow(4px 4px 0 rgb(255 255 255 / 0.06))',
   primaryBorderColor: '#cccccc',

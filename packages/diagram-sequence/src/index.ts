@@ -21,6 +21,8 @@ export {
   sequenceTokens,
 } from './parser/index.ts';
 export type * from './parser/ast.ts';
+export { sequence } from './plugin.ts';
+export { renderSequence, type SequenceRenderContext } from './render/index.ts';
 export type { SequenceParseOptions, SequenceParseResult, SequenceToken } from './parser/index.ts';
 
 /** The plugin's contract. */
