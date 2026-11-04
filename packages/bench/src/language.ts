@@ -2,7 +2,8 @@
  * The language-service bench (R-LANG-4, D90): one editing cycle on the committed 50k-character
  * flowchart, `fixtures/language/flowchart-50k.mmd`. A cycle is what an editor does per change:
  * `update` (a full re-parse) and then every query: diagnostics, folding ranges, semantic tokens,
- * and definition, references, prepareRename, rename and astAt at a cursor on a node id.
+ * and definition, references, prepareRename, rename, astAt and hover at a cursor on a node id,
+ * and completions at the end of that id (a re-parse with a probe).
  * Budget: ≤ 10 ms per cycle on the reference runner. The CLI is `src/cli/language.ts`.
  */
 import { readFileSync } from 'node:fs';
@@ -25,6 +26,8 @@ const STAGES = [
   'prepareRename',
   'rename',
   'astAt',
+  'completions',
+  'hover',
 ] as const;
 type Stage = (typeof STAGES)[number];
 
@@ -38,6 +41,8 @@ export interface CycleAnswers {
   astAt: number;
   folds: number;
   tokens: number;
+  completions: number;
+  hover: boolean;
 }
 
 /**
@@ -69,10 +74,23 @@ export function cycle(
   const ids = doc.astAt(at);
   for (const id of ids) doc.rangeOf(id);
   time?.('astAt');
+  const completions = doc.completions(at + 2).length;
+  time?.('completions');
+  const hover = doc.hover(at) !== undefined;
+  time?.('hover');
   const renameEdits = 'edits' in renamed ? renamed.edits.length : -1;
   return {
     doc,
-    answers: { definition, references, renameEdits, astAt: ids.length, folds, tokens },
+    answers: {
+      definition,
+      references,
+      renameEdits,
+      astAt: ids.length,
+      folds,
+      tokens,
+      completions,
+      hover,
+    },
   };
 }
 

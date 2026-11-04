@@ -28,6 +28,8 @@ describe('the language-service bench fixture', () => {
     expect(answers.astAt).toBeGreaterThan(0);
     expect(answers.folds).toBeGreaterThan(70);
     expect(answers.tokens).toBeGreaterThan(5_000);
+    expect(answers.completions).toBeGreaterThan(0);
+    expect(answers.hover).toBe(true);
   });
 
   it('reports per-stage times that add up to the cycle', () => {
@@ -42,6 +44,8 @@ describe('the language-service bench fixture', () => {
       'prepareRename',
       'rename',
       'astAt',
+      'completions',
+      'hover',
     ]);
     const sum = Object.values(r.stages).reduce((a, b) => a + b, 0);
     expect(r.total).toBeGreaterThan(0);
