@@ -22,7 +22,7 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 ## #134 T5 integration (open items)
 
 - Generate the ER section defaults (`SECTION_OWNERS`; v12 nodeSpacing 140, rankSpacing 80, minEntityWidth 100) and mark the keys the builder reads (`er.nodeSpacing`, `er.rankSpacing`, `er.minEntityWidth`) as honoured.
-- **Open question for the maintainer:** T3 pads cells by the profile's node padding (16 × 12 px) and does not read `er.entityPadding` or `er.diagramPadding`. Spec user story 17 names `entityPadding` among the keys that keep working. Options: honour them in px (map them onto the cell padding), or mark them `ignored` with a reason. MIGRATION.md currently documents the second.
+- **D116 (maintainer, draft PR #184): honour both.** Mark `er.entityPadding` (default 15) and `er.diagramPadding` (default 20) `honoured`. In px, `entityPadding` replaces the shared node padding inside entity table cells (v12's across × down meaning) and `diagramPadding` sets the margin around the drawing; the cell profile stays at 1-cell padding. Fix the MIGRATION.md ER row that says they are ignored, and cite D116 in code and tests.
 
 ## Not started
 
