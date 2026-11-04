@@ -1,24 +1,27 @@
 /**
- * Interactions extension plugin: v12 click callbacks and `bindFunctions` (DESIGN §12.3,
- * R-PLUG-9, R-SVG-5, D47, D74).
+ * Interactions extension plugin: v12 click callbacks, `bindFunctions` and element menus
+ * (DESIGN §12.3, R-PLUG-9, R-SVG-5, D47, D74, D105).
  *
- * `postParse` collects the `click … callback` / `call` statements of the AST (any node with a
- * `callback` field, see `AstCallback`) into the render's state and claims `callbacks`, so core
- * does not warn. `afterMount` (reached through `RenderResult.bindFunctions` or the DOM
- * adapter's `run` / `mount`) adds a click listener to each rendered node (`g.node[data-id]`)
- * that calls the named function, resolved on `window` the way v12's `utils.runFunc` did.
+ * The plugin is a table of features (`FEATURES`), each owning one AST field from collection
+ * to binding (`feature.ts`): `callback` (`AstCallback`: `click … callback` / `call`) and `menu`
+ * (`AstMenu`: sequence actor `link`/`links`/`properties`/`details`, see `menus.ts`). A new
+ * feature is one more entry. `postParse` walks the AST once and hands each field it finds, on
+ * any node kind, to its feature; the plugin claims every feature's claim, so the diagram does
+ * not warn. `afterMount` (reached through `RenderResult.bindFunctions` or the DOM adapter's
+ * `run` / `mount`) binds each feature in each diagram root svg of the element (`scope.ts`).
  *
- * It also collects element menus (`menu` fields, `AstMenu`: sequence actor `link`/`links`/
- * `properties`/`details`) and builds them as DOM in `afterMount`, see `menus.ts`. What it
- * collects is a table of collectors, one per AST field, so another feature adds one entry.
+ * Binding is keyed on content per svg: binding the same interactions again adds nothing, and
+ * different ones (a re-render whose svg did not change) replace what was bound before.
  *
  * Nothing in the diagram text can turn this on: only registering the plugin does
  * (`registerExternalDiagrams([interactions])`). The svg itself is unchanged, so it still
  * passes the allow-list (R-SEC-2).
  */
-import type { ExtensionPlugin, HookContext } from '@mermaid-js/core';
-import type { AstCallback, AstMenu, AstNode } from '@mermaid-js/core/parser-kit';
-import { bindMenus, collectMenu, type MenuSpec, type MenuUrls } from './menus.ts';
+import type { ExtensionPlugin } from '@mermaid-js/core';
+import type { AstNode } from '@mermaid-js/core/parser-kit';
+import { defineFeature, isBag, type AnyFeature } from './feature.ts';
+import { menus } from './menus.ts';
+import { createScope, rootsFor } from './scope.ts';
 
 /** One callback to bind: a node id, the function name and its arguments. */
 export interface Binding {
@@ -26,47 +29,6 @@ export interface Binding {
   readonly name: string;
   readonly args: readonly string[];
 }
-
-/** The state `postParse` hands to `afterMount`. */
-interface InteractionState {
-  bindings?: Binding[];
-  /** Nodes already bound in this render, so a second `bindFunctions` call adds nothing. */
-  bound?: WeakSet<object>;
-  /** Element menus, one per target, in first-mention order. */
-  menus?: MenuSpec[];
-  /** The render's link URL options, for links read when the svg is mounted (`details`). */
-  urls?: MenuUrls;
-  /** `<diagram>.forceMenus`: menus always shown, nothing bound. */
-  forceMenus?: boolean;
-}
-
-/** What one `postParse` walk collects. */
-interface Found {
-  readonly bindings: Binding[];
-  readonly menus: Map<string, MenuSpec>;
-}
-
-/**
- * One collector per AST field an extension feature reads: diagram-agnostic, since it looks at
- * fields of any node kind, never at a diagram's node types. A new feature adds an entry.
- */
-const COLLECTORS: readonly ((node: AstNode, found: Found, ctx: HookContext) => void)[] = [
-  (node, found) => {
-    const callback = (node as AstNode & { callback?: AstCallback }).callback;
-    if (callback !== undefined)
-      for (const id of callback.targets)
-        found.bindings.push({ id, name: callback.name, args: callbackArgs(id, callback.args) });
-  },
-  (node, found, ctx) => {
-    const menu = (node as AstNode & { menu?: AstMenu }).menu;
-    if (menu !== undefined)
-      collectMenu(menu, found.menus, {
-        securityLevel: ctx.securityLevel,
-        linkSchemes: ctx.linkSchemes,
-        warn: (w) => ctx.warn(w),
-      });
-  },
-];
 
 /**
  * v12 split at each comma followed by an even number of `"` up to the end
@@ -104,11 +66,6 @@ export function callbackArgs(id: string, args: string | undefined): string[] {
   return list.length === 0 ? [id] : list;
 }
 
-function collect(node: AstNode, found: Found, ctx: HookContext): void {
-  for (const c of COLLECTORS) c(node, found, ctx);
-  for (const child of node.children ?? []) collect(child, found, ctx);
-}
-
 /**
  * Looks `name` up on `window` (`fn`, `app.handlers.fn`) as v12's `runFunc` did and calls it.
  * A missing name does nothing (v12 logged an error).
@@ -124,37 +81,75 @@ export function runFunction(name: string, args: readonly string[]): void {
   if (typeof fn === 'function') (fn as (...a: string[]) => unknown).apply(owner, [...args]);
 }
 
+/** `click … callback` / `call` (`AstCallback`), bound to the nodes' `g.node[data-id]`. */
+const callbacks = defineFeature<Binding[]>({
+  field: 'callback',
+  claim: 'callbacks',
+  start: () => [],
+  collect(value, acc) {
+    if (!isBag(value) || typeof value.name !== 'string' || !Array.isArray(value.targets)) return;
+    const { name, args } = value;
+    for (const id of value.targets)
+      if (typeof id === 'string')
+        acc.push({ id, name, args: callbackArgs(id, typeof args === 'string' ? args : undefined) });
+  },
+  plan: (bindings) => ({
+    key: JSON.stringify(bindings),
+    bind(scope) {
+      if (bindings.length === 0) return;
+      const isNode = (g: Element) => (g.getAttribute('class') ?? '').split(' ').includes('node');
+      const anchors = scope.anchors(new Set(bindings.map((b) => b.id)), isNode);
+      for (const b of bindings)
+        for (const node of anchors.get(b.id) ?? [])
+          scope.listen(node, 'click', () => runFunction(b.name, b.args));
+    },
+  }),
+});
+
+/** Every feature, in binding order. A new interaction feature is a new entry here. */
+const FEATURES: readonly AnyFeature[] = [callbacks, menus];
+
+/** What `postParse` hands to `afterMount`: each feature's collected state, by table index. */
+interface InteractionState {
+  collected?: unknown[];
+}
+
+/** What each diagram root svg has bound: the content key and how to undo it. */
+const boundSvgs = new WeakMap<Element, { key: string; teardown: () => void }>();
+
+function walk(node: AstNode, visit: (node: AstNode) => void): void {
+  visit(node);
+  for (const child of node.children ?? []) walk(child, visit);
+}
+
 /** The interactions extension. Register it with `registerExternalDiagrams([interactions])`. */
 export const interactions: ExtensionPlugin<Element, unknown> = {
   id: 'interactions',
-  claims: ['callbacks'],
-  postParse(ast: AstNode, ctx: HookContext): AstNode {
-    const found: Found = { bindings: [], menus: new Map() };
-    collect(ast, found, ctx);
-    const state = ctx.state as InteractionState;
-    state.bindings = found.bindings;
-    state.menus = [...found.menus.values()];
-    state.urls = { securityLevel: ctx.securityLevel, linkSchemes: ctx.linkSchemes };
-    // `forceMenus` lives in the diagram's own config section (`sequence.forceMenus`).
-    const section = (ctx.config as Record<string, { forceMenus?: unknown } | undefined>)[
-      ctx.diagram
-    ];
-    state.forceMenus = section?.forceMenus === true;
+  claims: FEATURES.map((f) => f.claim),
+  postParse(ast, ctx) {
+    const collected = FEATURES.map((f) => f.start(ctx));
+    walk(ast, (node) => {
+      const fields = node as unknown as Record<string, unknown>;
+      FEATURES.forEach((f, i) => {
+        if (fields[f.field] !== undefined) f.collect(fields[f.field], collected[i]);
+      });
+    });
+    (ctx.state as InteractionState).collected = collected;
     return ast;
   },
-  afterMount(el: Element, _result: unknown, state: Record<string, unknown>): void {
-    const { bindings = [], menus = [], urls = {}, forceMenus = false } = state as InteractionState;
-    if (menus.length > 0) bindMenus(el, menus, urls, forceMenus);
-    if (bindings.length === 0) return;
-    const bound = ((state as InteractionState).bound ??= new WeakSet());
-    const byId = new Map<string, Binding[]>();
-    for (const b of bindings) byId.set(b.id, [...(byId.get(b.id) ?? []), b]);
-    for (const node of Array.from(el.querySelectorAll('g.node[data-id]'))) {
-      const mine = byId.get(node.getAttribute('data-id') ?? '');
-      if (mine === undefined || bound.has(node)) continue;
-      bound.add(node);
-      for (const b of mine)
-        node.addEventListener('click', () => runFunction(b.name, b.args), false);
+  afterMount(el, result, state) {
+    const { collected } = state as InteractionState;
+    if (collected === undefined) return;
+    const svgText = (result as { svg?: unknown } | undefined)?.svg;
+    const plans = FEATURES.map((f, i) => f.plan(collected[i], el.ownerDocument));
+    const key = JSON.stringify(plans.map((p) => p.key));
+    for (const svg of rootsFor(el, typeof svgText === 'string' ? svgText : '')) {
+      const before = boundSvgs.get(svg);
+      if (before?.key === key) continue;
+      before?.teardown();
+      const { scope, teardown } = createScope(svg);
+      for (const p of plans) p.bind(scope);
+      boundSvgs.set(svg, { key, teardown });
     }
   },
 };

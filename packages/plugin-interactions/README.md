@@ -9,7 +9,9 @@ import { interactions } from '@mermaid-js/plugin-interactions';
 await mermaid.registerExternalDiagrams([interactions]);
 ```
 
-An actor menu is an HTML `div.actorPopupMenu` (with `data-menu-for="<id>"`) that the plugin adds to the element the svg is mounted in, next to the svg. It holds a `div.actorPopupMenuPanel` (plus the actor's `properties.class`) with one `a` per link, opening in a new tab. A click on the actor toggles it. `sequence.forceMenus: true` shows every menu all the time. Menu links get the same URL checks as flowchart links: `securityLevel` and `linkSchemes` apply.
+An actor menu is an HTML `div.actorPopupMenu` (with `data-menu-for="<id>"`) that the plugin puts right after the diagram's `<svg>`, never inside it. It holds a `div.actorPopupMenuPanel` (plus the actor's `properties.class`) with one `a` per link, which opens in a new tab. A click on the actor's top or bottom symbol toggles it, and it opens below the top symbol. With `sequence.forceMenus: true`, every menu is shown all the time. Menu links get the same URL checks as flowchart links (`securityLevel`, `linkSchemes`). A refused link becomes `about:blank`, as in v12.
+
+Binding is keyed on content: calling `bindFunctions` again with the same interactions adds nothing, and calling it with different ones replaces what was bound for that svg. `mount()` rebinds on every render. When one element holds several diagrams, each render binds only its own svg.
 
 Install `@mermaid-js/plugin-interactions@v13-alpha` together with the newest `mermaid@v13-alpha`.
 

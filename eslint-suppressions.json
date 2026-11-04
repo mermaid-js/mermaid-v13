@@ -548,11 +548,6 @@
       "count": 2
     }
   },
-  "packages/plugin-interactions/src/index.ts": {
-    "unicorn/prefer-spread": {
-      "count": 1
-    }
-  },
   "tools/eslint-plugin/index.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 1

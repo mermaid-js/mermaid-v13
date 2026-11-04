@@ -2,104 +2,103 @@
  * Element menus (R-PLUG-9, D105): the v12 sequence actor popup (`drawPopup`), rebuilt as DOM
  * the plugin owns. The svg never holds a menu, so core output stays inert (R-SEC-2).
  *
- * `postParse` folds every `menu` field (`AstMenu`) into one {@link MenuSpec} per target,
- * checking link URLs as flowchart links are checked (`checkUrl`, with the render's
- * `securityLevel` and `linkSchemes`). `afterMount` builds one menu per target and binds it to
- * the target's innermost `g[data-id]` groups (a sequence participant's top and bottom symbol,
- * a flowchart node): a click toggles it, and the menu opens below the first of them. With
- * `<diagram>.forceMenus` the menus are always shown and nothing is bound (v12 `forceMenus`).
+ * `collect` folds every `menu` field (`AstMenu`) into one part list per target, checking link
+ * URLs as flowchart links are checked (`checkUrl`, with the render's `securityLevel` and
+ * `linkSchemes`); a refused URL becomes `about:blank` with `URL_REFUSED`, as v12's
+ * `sanitizeUrl` made it. `plan` folds them, reading `details` from the page. `bind` puts one
+ * `div.actorPopupMenu` per target right after the svg (never inside it) and binds it to the
+ * target's innermost `g[data-id]` groups: a click toggles it, and it opens below the first.
+ * With `<diagram>.forceMenus` every menu is shown and nothing is bound (v12 `forceMenus`).
+ *
+ * Placement: the menu is absolutely positioned with no `left`/`top`, so it sits at its static
+ * position right after the svg and moves with it when the page reflows; margins offset it to
+ * below the anchor. It is placed again on every show, and a forced menu again whenever the svg
+ * changes size (`ResizeObserver`), which also covers an svg mounted while hidden.
  */
 import type { AstMenu } from '@mermaid-js/core/parser-kit';
 import { checkUrl, type UrlOptions } from '@mermaid-js/core/svg';
+import { defineFeature, isBag } from './feature.ts';
 
-/** One part of a menu, in source order; `details` is read when the svg is mounted. */
+const BLANK = 'about:blank';
+/** Marks a menu element; the menus of an svg are the run of marked siblings after it. */
+const MARK = 'data-mermaid-menu';
+
+type Link = readonly [label: string, href: string];
 type MenuPart =
-  | { readonly links: readonly (readonly [string, string])[] }
+  | { readonly links: readonly Link[] }
   | { readonly properties: Readonly<Record<string, unknown>> }
   | { readonly details: string };
 
-/** What `postParse` keeps of one target's menu statements. */
-export interface MenuSpec {
-  readonly target: string;
-  readonly parts: MenuPart[];
-}
-
-/** The URL options of the render, without the warning sink (mount-time links warn nowhere). */
-export type MenuUrls = Pick<UrlOptions, 'securityLevel' | 'linkSchemes'>;
-
-function checkedLinks(links: unknown, urls: UrlOptions): [string, string][] {
-  if (typeof links !== 'object' || links === null) return [];
-  const out: [string, string][] = [];
-  for (const [label, url] of Object.entries(links)) {
-    if (typeof url !== 'string') {
-      urls.warn?.({
-        code: 'URL_REFUSED',
-        message: `The menu link ${JSON.stringify(label.slice(0, 100))} was removed: its URL is not a string.`,
-      });
-      continue;
-    }
-    const href = checkUrl(url, urls);
-    if (href !== undefined) out.push([label, href]);
-  }
-  return out;
-}
-
-/** Adds one `AstMenu` to the specs, by target, in source order. */
-export function collectMenu(menu: AstMenu, specs: Map<string, MenuSpec>, urls: UrlOptions): void {
-  let spec = specs.get(menu.target);
-  if (!spec) specs.set(menu.target, (spec = { target: menu.target, parts: [] }));
-  if (menu.links !== undefined) spec.parts.push({ links: checkedLinks(menu.links, urls) });
-  if (menu.properties !== undefined) spec.parts.push({ properties: menu.properties });
-  if (menu.details !== undefined) spec.parts.push({ details: menu.details });
+interface MenuState {
+  readonly specs: Map<string, MenuPart[]>;
+  readonly urls: UrlOptions;
+  readonly force: boolean;
 }
 
 interface Folded {
-  links: Map<string, string>;
-  properties: Record<string, unknown>;
+  readonly target: string;
+  readonly links: readonly Link[];
+  readonly classes: readonly string[];
 }
 
-/** v12 `insertLinks` / `insertProperties` / `addDetails`: later keys replace earlier ones. */
-function fold(spec: MenuSpec, doc: Document, urls: MenuUrls): Folded {
-  const out: Folded = { links: new Map(), properties: {} };
-  const addLinks = (links: readonly (readonly [string, string])[]) => {
-    for (const [label, href] of links) out.links.set(label, href);
+/** v12 `sanitizeUrl` for one menu entry: the checked URL, or `about:blank` with a warning. */
+function checkedLinks(links: Record<string, unknown>, urls: UrlOptions): Link[] {
+  return Object.entries(links).map(([label, url]): Link => {
+    if (typeof url === 'string') return [label, checkUrl(url, urls) ?? BLANK];
+    urls.warn?.({
+      code: 'URL_REFUSED',
+      message: `The menu link ${JSON.stringify(label.slice(0, 100))} was removed: its URL is not a string.`,
+    });
+    return [label, BLANK];
+  });
+}
+
+/** A null-prototype bag, so `__proto__` from JSON is an ordinary key. */
+const bag = <V>(): Record<string, V> => Object.create(null) as Record<string, V>;
+
+/** Keys that never become a label or a property. */
+const RESERVED: ReadonlySet<string> = new Set(['__proto__', 'constructor', 'prototype']);
+
+/** v12 `insertLinks` / `insertProperties` / `addDetails`, in source order. */
+function fold(target: string, parts: readonly MenuPart[], doc: Document, urls: UrlOptions): Folded {
+  const links = bag<string>();
+  const properties = bag<unknown>();
+  const addLinks = (list: readonly Link[]) => {
+    for (const [label, href] of list) if (!RESERVED.has(label)) links[label] = href;
   };
-  for (const part of spec.parts) {
+  const addProperties = (from: Readonly<Record<string, unknown>>) => {
+    for (const [k, v] of Object.entries(from)) if (!RESERVED.has(k)) properties[k] = v;
+  };
+  for (const part of parts) {
     if ('links' in part) addLinks(part.links);
-    else if ('properties' in part) Object.assign(out.properties, part.properties);
+    else if ('properties' in part) addProperties(part.properties);
     else {
-      let details: { links?: unknown; properties?: unknown } | undefined;
+      let details: unknown;
       try {
-        details = JSON.parse(doc.getElementById(part.details)?.textContent ?? '') as typeof details;
+        details = JSON.parse(doc.getElementById(part.details)?.textContent ?? '');
       } catch {
         continue; // v12 logged the parse error and went on
       }
-      if (typeof details?.properties === 'object' && details.properties !== null)
-        Object.assign(out.properties, details.properties);
-      addLinks(checkedLinks(details?.links, urls));
+      if (!isBag(details)) continue;
+      if (isBag(details.properties)) addProperties(details.properties);
+      if (isBag(details.links)) addLinks(checkedLinks(details.links, { ...urls, warn: undefined }));
     }
   }
-  return out;
+  const cls = properties.class;
+  const classes =
+    typeof cls === 'string' ? cls.split(/\s+/).filter((c) => /^-?[A-Za-z_][\w-]*$/.test(c)) : [];
+  // Object.entries enumerates integer-like keys first, as v12's `for … in` over the links did.
+  return { target, links: Object.entries(links), classes };
 }
 
-const RE_CLASS = /^-?[A-Za-z_][\w-]*$/;
-
-/** `properties.class` as class names; anything that is not a plain class name is dropped. */
-function extraClasses(properties: Record<string, unknown>): string[] {
-  const value = properties.class;
-  return typeof value === 'string' ? value.split(/\s+/).filter((c) => RE_CLASS.test(c)) : [];
-}
-
-function build(doc: Document, target: string, folded: Folded, width: number): HTMLElement {
-  const menu = doc.createElement('div');
-  menu.setAttribute('class', 'actorPopupMenu');
-  menu.setAttribute('data-menu-for', target);
-  Object.assign(menu.style, { position: 'absolute', zIndex: '1', display: 'none' });
-  const panel = menu.appendChild(doc.createElement('div'));
-  panel.setAttribute(
-    'class',
-    ['actorPopupMenuPanel', ...extraClasses(folded.properties)].join(' ')
-  );
+function build(doc: Document, menu: Folded, width: number): HTMLElement {
+  const box = doc.createElement('div');
+  box.setAttribute('class', 'actorPopupMenu');
+  box.setAttribute(MARK, '');
+  box.setAttribute('data-menu-for', menu.target);
+  Object.assign(box.style, { position: 'absolute', zIndex: '1', display: 'none' });
+  const panel = box.appendChild(doc.createElement('div'));
+  panel.setAttribute('class', ['actorPopupMenuPanel', ...menu.classes].join(' '));
   Object.assign(panel.style, {
     minWidth: `${Math.max(0, Math.round(width))}px`,
     padding: '4px 0',
@@ -108,7 +107,7 @@ function build(doc: Document, target: string, folded: Folded, width: number): HT
     border: '1px solid GrayText',
     boxShadow: '0px 8px 16px 0px rgba(0,0,0,0.2)',
   });
-  for (const [label, href] of folded.links) {
+  for (const [label, href] of menu.links) {
     const a = panel.appendChild(doc.createElement('a'));
     a.setAttribute('class', 'actor');
     a.setAttribute('href', href);
@@ -117,99 +116,106 @@ function build(doc: Document, target: string, folded: Folded, width: number): HT
     Object.assign(a.style, { display: 'block', padding: '6px 10px' });
     a.textContent = label;
   }
-  return menu;
+  return box;
 }
 
-/**
- * Moves `menu` (shown) to just below `anchor`: it is measured at `0,0` first, so this holds
- * whatever its containing block is (a positioned host element, or the page).
- */
+/** Offsets a shown `menu` from its static position to just below `anchor`. */
 function place(menu: HTMLElement, anchor: Element): void {
-  const box = anchor.getBoundingClientRect();
-  menu.style.left = '0px';
-  menu.style.top = '0px';
+  menu.style.marginLeft = '0px';
+  menu.style.marginTop = '0px';
   const origin = menu.getBoundingClientRect();
-  menu.style.left = `${box.left - origin.left}px`;
-  menu.style.top = `${box.bottom - origin.top}px`;
+  const box = anchor.getBoundingClientRect();
+  menu.style.marginLeft = `${box.left - origin.left}px`;
+  menu.style.marginTop = `${box.bottom - origin.top}px`;
 }
 
-/**
- * The groups a menu binds to: every `g[data-id=target]` with no such group inside it, or the
- * outermost `[data-id=target]` elements when the diagram draws no group for it.
- */
-function anchorsOf(el: Element, targets: ReadonlySet<string>): Map<string, Element[]> {
-  const found = new Map<string, Element[]>();
-  for (const node of el.querySelectorAll('[data-id]')) {
-    const id = node.getAttribute('data-id') ?? '';
-    if (targets.has(id)) found.set(id, [...(found.get(id) ?? []), node]);
+/** Removes the menus right after `svg`: its own from an earlier bind, or a replaced svg's. */
+function removeMenusAfter(svg: Element): void {
+  let next = svg.nextElementSibling;
+  while (next?.hasAttribute(MARK)) {
+    const after = next.nextElementSibling;
+    next.remove();
+    next = after;
   }
-  /** The members of `pool` that hold another member, up to `el`. */
-  const holders = (pool: ReadonlySet<Element>) => {
-    const out = new Set<Element>();
-    for (const n of pool)
-      for (let p = n.parentElement; p !== null && p !== el; p = p.parentElement)
-        if (pool.has(p)) out.add(p);
-    return out;
-  };
-  const inside = (n: Element, pool: ReadonlySet<Element>) => {
-    for (let p = n.parentElement; p !== null && p !== el; p = p.parentElement)
-      if (pool.has(p)) return true;
-    return false;
-  };
-  const out = new Map<string, Element[]>();
-  for (const [id, nodes] of found) {
-    const groups = new Set(nodes.filter((n) => n.tagName.toLowerCase() === 'g'));
-    if (groups.size > 0) {
-      const covered = holders(groups);
-      out.set(
-        id,
-        [...groups].filter((n) => !covered.has(n))
-      );
-    } else {
-      const all = new Set(nodes);
-      out.set(
-        id,
-        nodes.filter((n) => !inside(n, all))
-      );
-    }
-  }
-  return out;
 }
 
-/** Elements that already have a menu, across renders, so binding twice adds nothing. */
-const bound = new WeakSet<Element>();
-
-/** Builds and binds the menus of one render in `el` (the DOM adapter's mount element). */
-export function bindMenus(
-  el: Element,
-  specs: readonly MenuSpec[],
-  urls: MenuUrls,
-  force: boolean
-): void {
-  const doc = el.ownerDocument;
-  const anchors = anchorsOf(el, new Set(specs.map((s) => s.target)));
-  for (const spec of specs) {
-    const mine = (anchors.get(spec.target) ?? []).filter((a) => !bound.has(a));
-    if (mine.length === 0) continue;
-    const folded = fold(spec, doc, urls);
-    if (folded.links.size === 0) continue; // v12 drew no popup without links
-    const first = mine[0]!;
-    const menu = build(doc, spec.target, folded, first.getBoundingClientRect().width);
-    el.appendChild(menu);
-    for (const a of mine) bound.add(a);
-    if (force) {
-      menu.style.display = 'block';
-      place(menu, first);
-      continue;
-    }
-    const toggle = () => {
-      const show = menu.style.display === 'none';
-      menu.style.display = show ? 'block' : 'none';
-      if (show) place(menu, first);
+export const menus = defineFeature<MenuState>({
+  field: 'menu',
+  claim: 'menus',
+  start(ctx) {
+    // `forceMenus` lives in the diagram's own config section (`sequence.forceMenus`).
+    const section = (ctx.config as Record<string, { forceMenus?: unknown } | undefined>)[
+      ctx.diagram
+    ];
+    return {
+      specs: new Map(),
+      urls: {
+        securityLevel: ctx.securityLevel,
+        linkSchemes: ctx.linkSchemes,
+        warn: (w) => ctx.warn(w),
+      },
+      force: section?.forceMenus === true,
     };
-    for (const a of mine) {
-      (a as HTMLElement).style.cursor = 'pointer';
-      a.addEventListener('click', toggle, false);
-    }
-  }
-}
+  },
+  collect(value, acc) {
+    if (!isBag(value) || typeof value.target !== 'string') return;
+    const menu = value as Partial<AstMenu> & { target: string };
+    let parts = acc.specs.get(menu.target);
+    if (!parts) acc.specs.set(menu.target, (parts = []));
+    if (isBag(menu.links)) parts.push({ links: checkedLinks(menu.links, acc.urls) });
+    if (isBag(menu.properties)) parts.push({ properties: menu.properties });
+    if (typeof menu.details === 'string') parts.push({ details: menu.details });
+  },
+  plan(acc, doc) {
+    const folded = [...acc.specs].map(([target, parts]) => fold(target, parts, doc, acc.urls));
+    const shown = folded.filter((m) => m.links.length > 0); // v12 drew no popup without links
+    return {
+      key: JSON.stringify([acc.force, shown]),
+      bind(scope) {
+        const { svg } = scope;
+        removeMenusAfter(svg);
+        const parent = svg.parentElement;
+        if (shown.length === 0 || parent === null) return;
+        const anchors = scope.anchors(new Set(shown.map((m) => m.target)));
+        let last: Element = svg;
+        const forced: [HTMLElement, Element][] = [];
+        for (const menu of shown) {
+          const mine = anchors.get(menu.target) ?? [];
+          const first = mine[0];
+          if (first === undefined) continue;
+          const box = build(doc, menu, first.getBoundingClientRect().width);
+          parent.insertBefore(box, last.nextElementSibling);
+          last = box;
+          scope.onTeardown(() => box.remove());
+          if (acc.force) {
+            box.style.display = 'block';
+            place(box, first);
+            forced.push([box, first]);
+            continue;
+          }
+          const toggle = () => {
+            const show = box.style.display === 'none';
+            box.style.display = show ? 'block' : 'none';
+            if (show) place(box, first);
+          };
+          for (const a of mine) {
+            const style = (a as HTMLElement).style as CSSStyleDeclaration | undefined;
+            if (style) {
+              style.cursor = 'pointer';
+              scope.onTeardown(() => (style.cursor = ''));
+            }
+            scope.listen(a, 'click', toggle);
+          }
+        }
+        const Observer = doc.defaultView?.ResizeObserver;
+        if (forced.length > 0 && Observer !== undefined) {
+          const observer = new Observer(() => {
+            for (const [box, first] of forced) place(box, first);
+          });
+          observer.observe(svg);
+          scope.onTeardown(() => observer.disconnect());
+        }
+      },
+    };
+  },
+});
