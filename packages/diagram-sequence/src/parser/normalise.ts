@@ -7,7 +7,7 @@
 // cspell:words currentcolor accentcolor accentcolortext activetext buttonborder canvastext linktext marktext selecteditem selecteditemtext visitedtext threeddarkshadow threedface threedhighlight threedlightshadow threedshadow
 import { isSpace, LPAREN } from '@mermaid-js/core/parser-kit';
 import { isYamlMap, parseYaml } from '@mermaid-js/core/preprocess';
-import { parseColor } from '@mermaid-js/core/theme';
+import { isNamedColor } from './colors.ts';
 import type { ParticipantKind } from '../model.ts';
 
 /** Text and its `wrap:`/`nowrap:` prefix; `wrap` undefined follows the config. */
@@ -86,7 +86,7 @@ export function isCssColor(c: string): boolean {
   if (KEYWORDS.has(lower) || SYSTEM_COLORS.has(lower)) return true;
   const fn = /^(rgba?|hsla?)\((.*)\)$/s.exec(lower);
   if (fn) return colorArgs(fn[1]?.startsWith('rgb') ? 'rgb' : 'hsl', fn[2] ?? '');
-  return /^[a-z]+$/.test(lower) && parseColor(lower) !== undefined;
+  return /^[a-z]+$/.test(lower) && isNamedColor(lower);
 }
 
 const isWordChar = (c: number) =>

@@ -12,7 +12,7 @@
 import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
-import { asciiSize } from '../ascii-size.ts';
+import { asciiSize, asciiSizeByType } from '../ascii-size.ts';
 import { DEFAULT_BASE_REF } from '../base.ts';
 import { runnerId } from '../baseline.ts';
 import { summarise } from '../build.ts';
@@ -122,6 +122,7 @@ const report: PrReport = {
     ...(site.base && { base: staticGzip(site.base) }),
   },
   asciiSize: asciiSize(site.v13),
+  asciiSizeByType: asciiSizeByType(site.v13),
   renderers,
   corpus: corpusCheck,
   ...(instructions
@@ -138,6 +139,7 @@ const benchView: BenchReport = {
   options: { pr: true },
   pipeline,
   asciiSize: report.asciiSize,
+  asciiSizeByType: report.asciiSizeByType,
   renderers,
 };
 const outcome = gate(benchView, setting, reportOnly, {

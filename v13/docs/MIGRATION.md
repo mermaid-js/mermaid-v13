@@ -511,6 +511,12 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
 - **Box colours** are checked without a browser, with the rules a browser's `CSS.supports`
   applies (named and system colours, `rgb()`/`hsl()` in legacy and modern syntax); `calc()`
   inside a colour is not read and makes the word part of the title.
+- **Detection is v12's, quirks included.** v12's C4 detector runs before the sequence one and
+  matches `C4Container`, `C4Component`, `C4Dynamic` or `C4Deployment` anywhere in the text, so a
+  sequence diagram that names a participant `C4Container` is detected as C4. v12 then drew a C4
+  diagram; v13 has no C4 package yet and throws `UNSUPPORTED_DIAGRAM`. Rename the participant
+  (or use an alias: `participant C as C4Container` still matches, `participant C as Container`
+  does not).
 
 ## State diagram syntax
 

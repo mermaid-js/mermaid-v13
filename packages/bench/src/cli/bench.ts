@@ -17,7 +17,7 @@
  * never fail the job.
  */
 import { chromium } from '@playwright/test';
-import { asciiSize } from '../ascii-size.ts';
+import { asciiSize, asciiSizeByType } from '../ascii-size.ts';
 import { DEFAULT_BASE_REF, resolveRef } from '../base.ts';
 import { runnerId } from '../baseline.ts';
 import { buildSite, driveBrowser, serve } from '../driver.ts';
@@ -100,6 +100,7 @@ try {
     unsupported,
     // R-ASCII-9: the chunks only a text render loads, from the production build's import graph.
     asciiSize: asciiSize(site.v13),
+    asciiSizeByType: asciiSizeByType(site.v13),
     renderers: await driveBrowser({ browser, server, site, renderers, fixtures, ...options, log }),
   };
   const outcome = gate(report, setting, reportOnly);

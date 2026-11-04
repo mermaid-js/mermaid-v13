@@ -191,7 +191,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `sequence.messageMargin` | integer | `35` | ignored (13.0.0) | v12's sequence renderer never read it; messages are spaced by `boxMargin` and their label height. | Space between messages. |
 | `sequence.messageAlign` | "left" \\| "center" \\| "right" | `"center"` | honoured (13.0.0) |  | Multiline message alignment |
 | `sequence.mirrorActors` | boolean | `true` | honoured (13.0.0) |  | Mirror actors under diagram |
-| `sequence.forceMenus` | boolean | `false` | pending | Takes effect with actor popup menus (plugin-interactions, | forces actor popup menus to always be visible (to support E2E testing). |
+| `sequence.forceMenus` | boolean | `false` | honoured (13.0.0) | Read by `@mermaid-js/plugin-interactions`, which draws the actor menus; without the plugin there are no menus to show. | forces actor popup menus to always be visible (to support E2E testing). |
 | `sequence.bottomMarginAdj` | integer | `1` | honoured (13.0.0) |  | Prolongs the edge of the diagram downwards. Depending on css styling this might need adjustment. |
 | `sequence.rightAngles` | boolean | `false` | honoured (13.0.0) |  | Curved Arrows become Right Angles This will display arrows that start and begin at the same node as right angles, rather than as curves. |
 | `sequence.showSequenceNumbers` | boolean | `false` | honoured (13.0.0) |  | This will show the node numbers |

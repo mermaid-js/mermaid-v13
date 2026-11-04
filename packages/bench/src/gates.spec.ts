@@ -148,6 +148,16 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
     expect(gate(report, 'ascii-size')).toMatchObject({ status: 'fail', actual: null });
   });
 
+  // Gated on the per-type max (maintainer decision 2026-11-04); every type's number stays in
+  // the report and the gate detail, so a regression of a smaller type is still visible.
+  it("lists each type's ascii path size in the gate detail", () => {
+    const report = healthy();
+    report.asciiSizeByType = { er: 9 * KB, flowchart: 9.5 * KB, sequence: 10 * KB };
+    expect(gate(report, 'ascii-size').detail).toMatch(
+      /by type: er 9(\.0)? KB, flowchart 9\.5 KB, sequence 10(\.0)? KB$/
+    );
+  });
+
   it('fails when the warm geomean speedup over frozen 12.2.0 dagre is under 50×', () => {
     const report = healthy();
     // 10 ms / 0.25 ms = 40×.

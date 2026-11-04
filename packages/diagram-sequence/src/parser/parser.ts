@@ -462,6 +462,14 @@ class SequenceParser extends TokenRules {
       Object.assign(node, data);
       this.db.menu(name, data);
     }
+    // The diagram-agnostic menu the interactions plugin collects (`AstMenu`, #147): the target is
+    // the participant's rendered `data-id`; rejected JSON leaves its entries out.
+    node.menu = {
+      target: name,
+      ...(data?.links !== undefined && { links: data.links }),
+      ...(data?.properties !== undefined && { properties: data.properties }),
+      ...(type === 'Details' && { details: text }),
+    };
     st.statement(type.toLowerCase(), range);
     this.body.push(node);
   }

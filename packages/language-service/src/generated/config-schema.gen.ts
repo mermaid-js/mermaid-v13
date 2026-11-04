@@ -4632,8 +4632,9 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending",
-            "reason": "Takes effect with actor popup menus (plugin-interactions,"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Read by `@mermaid-js/plugin-interactions`, which draws the actor menus; without the plugin there are no menus to show."
           }
         },
         "bottomMarginAdj": {

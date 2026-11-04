@@ -78,10 +78,15 @@ export function asciiPaths(bundle: Bundle): { diagram: string; size: SizeSummary
   return out.sort((a, b) => Number(a.diagram > b.diagram) - Number(a.diagram < b.diagram));
 }
 
+/** Gzip bytes of each diagram type's text path (`asciiPaths`), by type. */
+export function asciiSizeByType(bundle: Bundle): Record<string, number> {
+  return Object.fromEntries(asciiPaths(bundle).map((p) => [p.diagram, p.size.gzip]));
+}
+
 /**
  * Gzip size of the largest one-diagram text path (`asciiPaths`), measured from the build
- * (`source: 'static'`): a page renders one diagram type as text, so the soft budget (D87) holds
- * per type, not for every type's drawing at once.
+ * (`source: 'static'`). The soft budget (D87) holds per type, not for every type's drawing at
+ * once: the gate reads the per-type max (maintainer decision 2026-11-04).
  */
 export function asciiSize(bundle: Bundle): SizeSummary {
   const paths = asciiPaths(bundle);

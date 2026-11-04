@@ -4,7 +4,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { asciiPaths, asciiSize, isAsciiModule, splitByFormat } from './ascii-size.ts';
+import {
+  asciiPaths,
+  asciiSize,
+  asciiSizeByType,
+  isAsciiModule,
+  splitByFormat,
+} from './ascii-size.ts';
 import type { Bundle } from './build.ts';
 import { bundle } from './build.ts';
 
@@ -59,6 +65,9 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
       expect(own).toEqual([`packages/diagram-${diagram}/src/ascii.ts`]);
     }
     expect(asciiSize(prod).gzip).toBe(Math.max(...paths.map((p) => p.size.gzip)));
+    expect(asciiSizeByType(prod)).toEqual(
+      Object.fromEntries(paths.map((p) => [p.diagram, p.size.gzip]))
+    );
   });
 
   // The bench CLI runs from packages/bench, the specs from the repo root: the split must not

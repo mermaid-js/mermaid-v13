@@ -26,8 +26,8 @@ export const LIMITS = {
   readyAtMs: 15,
   /**
    * R-ASCII-9 / D87: what a text render of one diagram type loads on top of its SVG render
-   * (`core/ascii` plus that type's ascii entry), gzip bytes, for the largest type. Kept apart
-   * from R-PERF-1, which never loads it.
+   * (`core/ascii` plus that type's ascii entry), gzip bytes, for the largest type: the per-type
+   * max (maintainer decision 2026-11-04). Kept apart from R-PERF-1, which never loads it.
    * A soft budget (D87): the `ascii-size` gate reports it and never fails the job.
    */
   asciiGzipBytes: 15 * 1024,
@@ -240,9 +240,15 @@ export function evaluateGates({
   });
 
   const ascii = report.asciiSize ?? null;
+  const byType = (sizes: BenchReport['asciiSizeByType']): string =>
+    sizes === undefined || Object.keys(sizes).length === 0
+      ? ''
+      : `; by type: ${Object.entries(sizes)
+          .map(([type, gzip]) => `${type} ${kb(gzip)}`)
+          .join(', ')}`;
   gates.push({
     id: 'ascii-size',
-    title: 'ASCII chunks, core/ascii + the largest diagram ascii entry (gzip)',
+    title: "ASCII chunks, core/ascii + one type's ascii entry, per-type max (gzip)",
     requirement: 'R-ASCII-9',
     // D87: the budget is soft. Measured and reported; it never fails the job.
     level: 'should',
@@ -253,7 +259,7 @@ export function evaluateGates({
     detail:
       ascii === null
         ? 'no ascii size measured'
-        : `${kb(ascii.gzip)} in ${ascii.files.length} chunk(s) an SVG render never loads (limit ${kb(LIMITS.asciiGzipBytes)})`,
+        : `${kb(ascii.gzip)} in ${ascii.files.length} chunk(s) an SVG render never loads (limit ${kb(LIMITS.asciiGzipBytes)})${byType(report.asciiSizeByType)}`,
   });
 
   for (const g of gates) {

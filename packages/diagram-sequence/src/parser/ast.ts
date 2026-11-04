@@ -17,7 +17,7 @@
  * statement, whichever comes first. `activate`, `deactivate` and `destroy` add no participant
  * (as in v12), so they take no `p:` id.
  */
-import type { AstNode, Range } from '@mermaid-js/core/parser-kit';
+import type { AstMenu, AstNode, Range } from '@mermaid-js/core/parser-kit';
 import type { ArrowKind, FragmentKind } from '../model.ts';
 
 /** A participant id inside a message, note, activation or menu statement. */
@@ -117,6 +117,8 @@ export interface SequenceMenuStmt extends AstNode<'Links' | 'Link' | 'Properties
   text: string;
   links?: Record<string, unknown>;
   properties?: Record<string, unknown>;
+  /** The same menu for the interactions plugin (`AstMenu`, #147); the svg never draws it. */
+  menu?: AstMenu;
   children: SequenceParticipantRef[];
 }
 

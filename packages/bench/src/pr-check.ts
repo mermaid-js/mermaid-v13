@@ -73,6 +73,8 @@ export interface PrReport {
   /** Static-import closure of the production bundle, gzip bytes, for v13 and the base. */
   staticGzip: { v13: number; base?: number };
   asciiSize: SizeSummary | null;
+  /** Gzip bytes of each diagram type's text path. */
+  asciiSizeByType: Readonly<Record<string, number>>;
   /** Browser runs of v13 and Mermaid 12 on the PR diagrams. */
   renderers: RendererRun[];
   corpus: CorpusCheck;
