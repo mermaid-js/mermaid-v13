@@ -1,0 +1,15 @@
+---
+description: CJK, accented and emoji labels on states, composites and transitions
+---
+stateDiagram-v2
+  state "待機" as wait
+  state "処理中" as work
+  [*] --> wait
+  wait --> work : 開始
+  state "Café ☕" as cafe
+  work --> cafe : pause
+  state "Ünïcödé group" as G {
+    a --> b
+  }
+  cafe --> G
+  G --> [*]

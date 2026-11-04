@@ -34,6 +34,7 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   flowchart: 'packages/diagram-flowchart',
   class: 'packages/diagram-class',
   er: 'packages/diagram-er',
+  state: 'packages/diagram-state',
 };
 
 export const MIGRATION_BEGIN = '<!-- BEGIN GENERATED CONFIG SECTION: pnpm gen:config -->';

@@ -1,0 +1,8 @@
+---
+description: start, plain states, end
+---
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> Running
+  Running --> Done
+  Done --> [*]

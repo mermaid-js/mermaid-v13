@@ -9,6 +9,7 @@ import {
   collectMmdFixtures,
   discoverMmdFixtures,
   FIXTURE_FOLDER_TYPES,
+  FIXTURE_TYPE_EXCEPTIONS,
   fixturePath,
   supportedFixtureFolders,
   fixtureBaseName,
@@ -125,6 +126,23 @@ describe('discoverMmdFixtures', () => {
     ]);
   });
 
+  it('skips a fixture of another type than its folder until that type is supported', async () => {
+    const typeExceptions = { 'flowchart/pr-check/b.mmd': 'pie' };
+    const run = (supportedTypes: Set<string>) =>
+      discoverMmdFixtures({
+        diagramsDir: dir,
+        tiers: 'pr-check',
+        supportedTypes,
+        folderTypes,
+        typeExceptions,
+      });
+    expect(await run(new Set(['flowchart-v2']))).toEqual([]);
+    expect(await run(new Set(['flowchart-v2', 'pie']))).toEqual([
+      'flowchart/pr-check/b.mmd',
+      'pie/pr-check/p.mmd',
+    ]);
+  });
+
   it('throws on a folder with no declared types', async () => {
     await expect(
       discoverMmdFixtures({ diagramsDir: dir, supportedTypes: new Set(), folderTypes: {} })
@@ -142,6 +160,8 @@ describe('the real fixture folders', () => {
   it('runs flowchart and skips types without a v13 package', async () => {
     const folders = supportedFixtureFolders();
     expect(folders).toContain('flowchart');
+    expect(folders).toContain('state-diagram');
+    expect(folders).toContain('state-diagram-v2');
     expect(folders).not.toContain('sequence');
     expect(folders).not.toContain('zenuml');
   });
@@ -157,7 +177,10 @@ describe('the real fixture folders', () => {
       } catch {
         continue; // Undetectable fixtures (zenuml, bad frontmatter) say nothing about the folder.
       }
-      if (!FIXTURE_FOLDER_TYPES[folder]?.includes(type)) undeclared.push(`${file}: ${type}`);
+      const declared = Object.hasOwn(FIXTURE_TYPE_EXCEPTIONS, file)
+        ? [FIXTURE_TYPE_EXCEPTIONS[file]]
+        : FIXTURE_FOLDER_TYPES[folder];
+      if (!declared?.includes(type)) undeclared.push(`${file}: ${type}`);
     }
     expect(undeclared).toEqual([]);
   });
@@ -172,9 +195,10 @@ describe('the discovery source', () => {
   it('agrees with mermaid on which types have a v13 package', () => {
     expect(discovery.supportedTypesOf((type) => supportsFormat(type, 'svg'))).toEqual(
       new Set(
-        Object.values(FIXTURE_FOLDER_TYPES)
-          .flat()
-          .filter((type) => SUPPORTED_TYPES.has(type))
+        [
+          ...Object.values(FIXTURE_FOLDER_TYPES).flat(),
+          ...Object.values(FIXTURE_TYPE_EXCEPTIONS),
+        ].filter((type) => SUPPORTED_TYPES.has(type))
       )
     );
   });

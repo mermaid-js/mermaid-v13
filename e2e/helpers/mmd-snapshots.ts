@@ -11,6 +11,7 @@ export {
   collectMmdFixtures,
   DIAGRAMS_DIR,
   FIXTURE_FOLDER_TYPES,
+  FIXTURE_TYPE_EXCEPTIONS,
 } from '../../packages/dev/src/fixture-discovery.ts';
 
 const NAMED_ENTITIES: Readonly<Record<string, string>> = {

@@ -1,0 +1,16 @@
+---
+description: transitions into, out of and between composite states, and a composite self-loop
+---
+stateDiagram-v2
+  [*] --> Outer
+  state Outer {
+    [*] --> inner1
+    inner1 --> inner2
+  }
+  state Other {
+    x --> y
+  }
+  Outer --> Other : leave
+  inner2 --> y
+  Other --> Other : retry
+  Other --> [*]

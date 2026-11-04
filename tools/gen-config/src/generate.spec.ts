@@ -61,7 +61,7 @@ describe('gen-config', () => {
     expect(stale).toEqual([]);
   });
 
-  it('writes defaults for every section owner', async () => {
+  it('writes defaults for every section owner (#148)', async () => {
     const { files } = await generate(read(SCHEMA_PATH)!, read);
     for (const [section, pkg] of Object.entries(SECTION_OWNERS)) {
       expect(files.get(`${pkg}/src/generated/config-defaults.ts`), section).toContain(

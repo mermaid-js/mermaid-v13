@@ -40,6 +40,29 @@ export const GRAMMARS: GrammarTarget[] = [
     kinds: { module: 'parser/tokens.ts', object: 'T', documented: ['CallbackName'] },
   },
   {
+    type: 'state',
+    title: 'State diagram syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // Text jison consumes without a terminal; the hand-written lexer keeps a token for it.
+      unnamed: {
+        State: { mode: 'struct', pattern: '(?i:state)\\s+' },
+        Quote: { mode: 'STATE', pattern: '"' },
+        Marker: {
+          mode: 'STATE',
+          pattern: '(?i:<<(?:fork|join|choice)>>|\\[\\[(?:fork|join|choice)\\]\\])',
+        },
+        EndNote: { mode: 'NOTE_TEXT', pattern: '\\n\\s*(?i:end note)\\b' },
+        AccDescrOpen: { mode: 'INITIAL', pattern: '(?i:accDescr)\\s*\\{\\s*' },
+        AccDescrClose: { mode: 'acc_descr_multiline', pattern: '\\}' },
+        ScaleWidth: { mode: 'SCALE', pattern: '\\s+(?i:width)\\b' },
+      },
+      // A pseudo-state's name: the `state` keyword before it is not a token of its own.
+      documented: ['Fork', 'Join', 'Choice'],
+    },
+  },
+  {
     type: 'er',
     title: 'Entity relationship diagram syntax',
     kinds: { module: 'parser/tokens.ts', object: 'T' },

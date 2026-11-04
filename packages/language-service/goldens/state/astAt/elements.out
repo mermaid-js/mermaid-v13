@@ -1,0 +1,20 @@
+@ 2:11  [*] --> |Idle
+  n:Idle 2:11-2:15 "Idle"
+  e:[*]start>Idle 2:3-2:15 "[*] --> Idle"
+@ 4:5  |A --> B
+  n:A 4:5-4:6 "A"
+  e:A>B 4:5-4:12 "A --> B"
+  r:Busy#1 4:5-5:7 "A --> B\n    --"
+  s:Busy 3:3-7:4 "state Busy {\n    A --> B\n    --\n    C\n  }"
+@ 4:8  A -|-> B
+  e:A>B 4:5-4:12 "A --> B"
+  r:Busy#1 4:5-5:7 "A --> B\n    --"
+  s:Busy 3:3-7:4 "state Busy {\n    A --> B\n    --\n    C\n  }"
+@ 8:17  note right of |Busy : works
+  n:Busy 8:17-8:21 "Busy"
+  note:1 8:3-8:29 "note right of Busy : works"
+@ 9:16  Idle --> Busy|
+  n:Busy@2 9:12-9:16 "Busy"
+  e:Idle>Busy 9:3-9:16 "Idle --> Busy"
+@ 10:3  |
+  none

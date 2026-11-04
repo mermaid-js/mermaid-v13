@@ -1,0 +1,12 @@
+---
+description: notes left and right of states, one-line and multi-line
+---
+stateDiagram-v2
+  [*] --> Ready
+  Ready --> Working
+  Working --> [*]
+  note right of Ready : A one-line note
+  note left of Working
+    A note over
+    several lines
+  end note
