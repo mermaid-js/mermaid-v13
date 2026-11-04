@@ -50,7 +50,7 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## Composite self-loop (from #144)
 
-- [ ] Maintainer: "Fix in core now". State T0 #187 (draft PR #189): the layered engine counts a group's self-loop and its label in the drawing and parent sizes. When it merges into `mermaid-v13`, merge it here and remove the case from `ENGINE_GAPS` in `conformance/src/state/layout.spec.ts`.
+- [x] Closed: #189 merged into `mermaid-v13` (`f9fafcd93`) and here; `ENGINE_GAPS` is empty. Was: maintainer "Fix in core now". State T0 #187 (PR #189): the layered engine counts a group's self-loop and its label in the drawing and parent sizes. When it merges into `mermaid-v13`, merge it here and remove the case from `ENGINE_GAPS` in `conformance/src/state/layout.spec.ts`.
 
 ## #148 T5 integration (from #151)
 

@@ -169,13 +169,9 @@ function regionProblems(graph: LayoutGraph, layout: StateLayout, checked: string
   return problems;
 }
 
-// Engine gaps (no core change from a state ticket, D102): reported on #144 for a state T0.
-// `layered` does not count a group's self-loop (and its label) in the drawing's extent, so the
-// loop runs off the right edge. Pinned exactly, so a fix in core shows up here.
-const ENGINE_GAPS: Readonly<Record<string, readonly string[]>> = {
-  'e2e/diagrams/state-diagram-v2/pr-check/v2-a-compound-state-should-be-able-to-link-to-itself.mmd':
-    ["edge 'edge1' runs outside the drawing", "stretched: edge 'edge1' runs outside the drawing"],
-};
+// Engine gaps (no core change from a state ticket, D102), pinned exactly so a core fix shows up
+// here. Empty since #187 (#189): the group self-loop gap found in #144 is fixed in core.
+const ENGINE_GAPS: Readonly<Record<string, readonly string[]>> = {};
 
 describe('layered over parser-produced state graphs', () => {
   it('reads both corpora', () => {
