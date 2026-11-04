@@ -8,7 +8,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 
 | Package | What it is | Users install it… |
 | --- | --- | --- |
-| `mermaid` | The API (`render`, `initialize`, `run`, `mount`, CLI) plus every first-party diagram, each loaded on first use. | for everything: `npm install mermaid@alpha` |
+| `mermaid` | The API (`render`, `initialize`, `run`, `mount`, CLI) plus every first-party diagram, each loaded on first use. | for everything: `npm install mermaid@v13-alpha` |
 | `mermaid/slim` | A subpath of `mermaid`, not a package: the same API with only the diagrams passed to `createMermaid({ diagrams })`. | to pick diagrams, with the `@mermaid-js/diagram-*` packages they want |
 | `@mermaid-js/core` | The DOM-free engine: plugin contract, parser kit, layout, SVG writer, theme, config. | never directly; `mermaid` brings it |
 | `@mermaid-js/diagram-flowchart` | The flowchart plugin (SVG, and text output from `/ascii`). | with `mermaid/slim` |
@@ -16,7 +16,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 
 The private workspace packages (`bench`, `conformance`, `dev`, `tools/*`) are never published.
 
-Every publish uses the npm dist-tag **`alpha`**, never `latest`, so `mermaid@latest` stays on v12. (npm also tags the very first version of a brand-new package `latest`. That is harmless for the `@mermaid-js/*` packages, which have no stable release.)
+Every publish uses the npm dist-tag **`v13-alpha`**, never `latest`, so `mermaid@latest` stays on v12. The older `alpha` tag is not moved any more: on `mermaid` it held the v11 alphas, and it stays at `13.0.0-alpha.0`, the one build published under it. (npm also tags the very first version of a brand-new package `latest`. That is harmless for the `@mermaid-js/*` packages, which have no stable release.)
 
 ## 2. Versions
 
@@ -31,7 +31,7 @@ mermaid                          13.0.0-alpha.7
 
 The packages depend on each other at **exact** versions (`workspace:*` in package.json, which `pnpm pack` writes as `13.0.0-alpha.6`). This has two effects:
 
-- **A change re-releases everything that depends on it.** Changesets bumps every dependent whose pinned version no longer matches. `mermaid` depends on every diagram package and on core, so **any** release also releases a new `mermaid`, and `mermaid@alpha` always holds the newest set.
+- **A change re-releases everything that depends on it.** Changesets bumps every dependent whose pinned version no longer matches. `mermaid` depends on every diagram package and on core, so **any** release also releases a new `mermaid`, and `mermaid@v13-alpha` always holds the newest set.
 - **A pinned version stays pinned.** `mermaid@13.0.0-alpha.7` always installs the same core and flowchart. With `^` ranges it would float onto newer alphas, which can break.
 
 | Changeset names | `changeset version` releases |
@@ -79,7 +79,7 @@ Never edit `version` in a package.json, `version.ts` or the CHANGELOG files by h
 | `pnpm changeset version` | Applies the pending changesets: bumps versions (dependents too), writes CHANGELOGs, records them in `pre.json`. | package.json, CHANGELOG.md, `.changeset/pre.json` |
 | `pnpm release:sync-version` | Writes `packages/mermaid/src/version.ts` from package.json. | `version.ts` |
 | `pnpm release:rehearse` | Copies the working tree, versions and builds it, publishes to a local Verdaccio, then installs both ways and runs the guide's snippets, the CLI, bundles and types (`--nodes a,b` to test several Node binaries). | nothing (temp dir) |
-| `pnpm release:publish --target public …` | Packs every published package (alpha-version, exact-range and workspace-leak gates, LICENSE added), then `npm publish --tag alpha` for **each version not on npm yet**. Already published versions are skipped, so only what `changeset version` bumped goes out, and a re-run after a failure finishes the set. | npm |
+| `pnpm release:publish --target public …` | Packs every published package (alpha-version, exact-range and workspace-leak gates, LICENSE added), then `npm publish --tag v13-alpha` for **each version not on npm yet**. Already published versions are skipped, so only what `changeset version` bumped goes out, and a re-run after a failure finishes the set. | npm |
 | `pnpm changeset tag` | Creates a git tag `<name>@<version>` for each package version that has none. | git tags |
 
 `release:publish` options:
@@ -221,21 +221,21 @@ One-time setup:
      @mermaid-js/diagram-flowchart  13.0.0-alpha.5 → 13.0.0-alpha.6
      mermaid  13.0.0-alpha.6 → 13.0.0-alpha.7  (dependent)
    ```
-3. After steps 3 to 6, npm has `@mermaid-js/diagram-flowchart@13.0.0-alpha.6` and `mermaid@13.0.0-alpha.7` (which pins `diagram-flowchart@13.0.0-alpha.6`). Both `alpha` tags moved. `core` and `plugin-interactions` were skipped, because their versions are already on npm.
+3. After steps 3 to 6, npm has `@mermaid-js/diagram-flowchart@13.0.0-alpha.6` and `mermaid@13.0.0-alpha.7` (which pins `diagram-flowchart@13.0.0-alpha.6`). Both `v13-alpha` tags moved. `core` and `plugin-interactions` were skipped, because their versions are already on npm.
 
 ### When something goes wrong
 
 - **Publish failed half way:** fix the cause and run the same `release:publish` again. Published versions are skipped, including ones the registry's cache still reports as missing.
-- **"Not found" right after a publish:** npm's cache can answer 404 for a few minutes, longest for a package's very first version (about 3 minutes for the `@mermaid-js/*` packages on 13.0.0-alpha.0). Until the cache catches up, `npm install mermaid@alpha` fails for users, because npm can't find the new dependencies. To check without the cache, request the tarball (`curl -I https://registry.npmjs.org/mermaid/-/mermaid-<version>.tgz`). Your npm "published" emails are also proof.
+- **"Not found" right after a publish:** npm's cache can answer 404 for a few minutes, longest for a package's very first version (about 3 minutes for the `@mermaid-js/*` packages on 13.0.0-alpha.0). Until the cache catches up, `npm install mermaid@v13-alpha` fails for users, because npm can't find the new dependencies. To check without the cache, request the tarball (`curl -I https://registry.npmjs.org/mermaid/-/mermaid-<version>.tgz`). Your npm "published" emails are also proof.
 - **Tags missing on GitHub:** `git ls-remote --tags origin '*<version>'`. Create them on the released commit (`pnpm changeset tag` needs a git identity, because the tags are annotated) and push them. The workflow now checks each tag before and after pushing.
 - **Versioned, never published** (preflight lists versions *not on the registry yet*): run steps 4 to 6. If changesets have been merged since, version first (step 3): a publish ships `HEAD`, and that code belongs under the new version. The unpublished alpha number is simply skipped.
-- **A bad version is on npm:** never unpublish, and never reuse a number. Fix forward with a new changeset and release. Meanwhile point `alpha` back with `npm dist-tag add mermaid@<good> alpha`, and `npm deprecate mermaid@<bad> "<why>"`.
+- **A bad version is on npm:** never unpublish, and never reuse a number. Fix forward with a new changeset and release. Meanwhile point `v13-alpha` back with `npm dist-tag add mermaid@<good> v13-alpha`, and `npm deprecate mermaid@<bad> "<why>"`.
 - **`latest` must never move.** If a publish ever touched it: `npm dist-tag add mermaid@<current v12> latest`.
 
 ## 6. Installing a release
 
-- Everything: `npm install mermaid@alpha --save-exact`.
-- Pick diagrams: `npm install mermaid@alpha @mermaid-js/diagram-flowchart@alpha --save-exact`. The newest `mermaid` always pins the newest diagram packages, so the `alpha` tags line up. To match an older `mermaid`, use the versions in `npm view mermaid@<version> dependencies`.
+- Everything: `npm install mermaid@v13-alpha --save-exact`.
+- Pick diagrams: `npm install mermaid@v13-alpha @mermaid-js/diagram-flowchart@v13-alpha --save-exact`. The newest `mermaid` always pins the newest diagram packages, so the `v13-alpha` tags line up. To match an older `mermaid`, use the versions in `npm view mermaid@<version> dependencies`.
 - Which build is installed: `npm ls mermaid @mermaid-js/core @mermaid-js/diagram-flowchart`.
 
 ## 7. CI later, in the OSS repo

@@ -1,4 +1,4 @@
-// Scenario "everything": `npm install mermaid@alpha`, the snippets of the alpha guide as written.
+// Scenario "everything": `npm install mermaid@v13-alpha`, the snippets of the alpha guide as written.
 import assert from 'node:assert/strict';
 import mermaid, { MermaidError } from 'mermaid';
 

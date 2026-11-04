@@ -93,7 +93,7 @@ jobs:
       - name: Push the version commit
         if: ${{ !inputs.dry_run && steps.version.outputs.committed == 'true' }}
         run: git push origin HEAD:mermaid-v13
-      - name: Publish to npm with tag alpha
+      - name: Publish to npm with tag v13-alpha
         env:
           DRY_RUN: ${{ inputs.dry_run && '--dry-run' || '' }}
           GATE_REASON: ${{ inputs.gate_reason }}
@@ -102,7 +102,7 @@ jobs:
           pnpm release:publish --target public --no-provenance --skip-gate "$GATE_REASON" $DRY_RUN \
             | tee "$RUNNER_TEMP/publish.log"
           {
-            echo "### npm ($([ -n "$DRY_RUN" ] && echo 'dry run' || echo 'tag alpha'))"
+            echo "### npm ($([ -n "$DRY_RUN" ] && echo 'dry run' || echo 'tag v13-alpha'))"
             grep -E '^(published|would publish|already published):' "$RUNNER_TEMP/publish.log" | sed 's/^/- /'
           } >> "$GITHUB_STEP_SUMMARY"
       - name: Tag the released versions
