@@ -1103,7 +1103,8 @@ export function compoundLayout(
       // Between a group and its own member, either way: down from the group's top border row
       // (half a cell inside it, so the route stays in the drawing) to the member's top, in a cell
       // of that side no other edge ends in (D140). Clearing the way is the repair router's (#45,
-      // D78). The label sits on the border row, just right of the line.
+      // D78). The label sits on the first row inside the border, just right of the line: on the
+      // border row it would cover the group's title and corners.
       const outer = depth[e.src]! < depth[e.dst]!;
       const group = outer ? a : b;
       const member = outer ? b : a;
@@ -1112,7 +1113,7 @@ export function compoundLayout(
       const top = member.y - member.h / 2;
       e.route = outer ? [x, frame, 0, x, top, 0] : [x, top, 0, x, frame, 0];
       e.labelX = x + grid / 2 + e.labelW / 2;
-      e.labelY = frame - grid + e.labelH / 2;
+      e.labelY = frame + e.labelH / 2;
     }
   }
   for (const ei of loops) {

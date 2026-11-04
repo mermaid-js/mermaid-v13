@@ -84,7 +84,10 @@ export function dedent(text: string): string {
   let out = text.replace(/\r?\n[\t ]*$/, '');
   const indents = out.match(/\n(?:[\t ]+|(?!\s).)/g);
   if (indents) {
-    const min = Math.min(...indents.map((m) => m.length - 1));
+    // Only blanks count: a line that starts with text has no indent (as ts-dedent, v12).
+    const min = Math.min(
+      ...indents.map((m) => m.length - 1 - m.slice(1).replace(/[\t ]/g, '').length)
+    );
     out = out.replace(new RegExp(`\\n[\\t ]{${min}}`, 'g'), '\n');
   }
   return out.replace(/^\r?\n/, '');

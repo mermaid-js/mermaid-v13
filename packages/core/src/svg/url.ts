@@ -145,6 +145,40 @@ export function checkUrl(url: string, options: UrlOptions): SafeUrl | undefined 
   return undefined;
 }
 
+// Raster images as data URLs (R-SEC-2's allow-listed image types). Never SVG: it can script.
+const RE_DATA_IMAGE = /^data:image\/(?:png|jpeg|gif|webp)(?:;base64)?,/i;
+
+/** Whether `url` is a data URL of an allowed raster image type. */
+export function isImageDataUrl(url: string): boolean {
+  return RE_DATA_IMAGE.test(url) && !RE_MARKUP.test(url);
+}
+
+/**
+ * Checks an image source (`<image href>`): relative, `http`/`https` (not under `strict`), or a
+ * raster data URL. Mail and integrator link schemes are for links, not images.
+ */
+export function checkImageUrl(
+  url: string,
+  options: Pick<UrlOptions, 'securityLevel' | 'warn'>
+): SafeUrl | undefined {
+  const schemes = options.securityLevel === 'strict' ? [] : ['http', 'https'];
+  const kept = typeof url === 'string' ? unwrap(url, false) : undefined;
+  const decoded = typeof url === 'string' ? unwrap(url, true) : undefined;
+  if (kept && decoded !== undefined) {
+    if (isImageDataUrl(kept) && isImageDataUrl(decoded)) return kept as SafeUrl;
+    if (allowed(kept, schemes) && allowed(decoded, schemes)) return kept as SafeUrl;
+  }
+  options.warn?.({
+    code: 'URL_REFUSED',
+    message: `The image ${JSON.stringify(String(url).slice(0, 200))} was removed: ${
+      options.securityLevel === 'strict'
+        ? 'only relative and data:image sources are allowed'
+        : 'only http, https, relative and data:image (png, jpeg, gif, webp) sources are allowed'
+    }.`,
+  });
+  return undefined;
+}
+
 /** Keeps the v12 link targets; any other value is dropped with a warning. */
 export function checkLinkTarget(target: string | undefined, warn?: Warn): LinkTarget | undefined {
   if (target === undefined || target === '') return undefined;
