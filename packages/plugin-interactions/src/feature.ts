@@ -1,7 +1,8 @@
 /**
  * One interaction feature (R-PLUG-9, D105): everything about one AST field, from collecting it
  * in `postParse` to binding it in `afterMount`. The plugin is a table of these (`FEATURES` in
- * `index.ts`), so a new feature (class #158's links) is one new entry and one new file.
+ * `index.ts`), so a new feature is one new entry and one new file. A diagram that emits a
+ * field an entry already reads (class `callback`, #158) needs no entry of its own.
  */
 import type { ExtensionClaim, HookContext } from '@mermaid-js/core';
 import type { Scope } from './scope.ts';

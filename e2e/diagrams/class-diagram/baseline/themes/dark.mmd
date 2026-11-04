@@ -1,0 +1,23 @@
+---
+config:
+  theme: dark
+description: one representative class diagram in the dark theme
+---
+classDiagram
+  class Animal {
+    <<abstract>>
+    +String name
+    +eat()*
+  }
+  Animal <|-- Dog
+  Animal <|-- Cat
+  Dog "1" *-- "4" Leg : has
+  Cat ..> Food : eats
+  Dog o-- Toy
+  namespace Home {
+    class Owner
+  }
+  Owner --> Dog : walks
+  note for Cat "independent"
+  classDef pet fill:#f96,stroke:#333
+  class Cat:::pet

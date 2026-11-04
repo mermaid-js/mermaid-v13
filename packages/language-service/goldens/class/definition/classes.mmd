@@ -1,0 +1,16 @@
+classDiagram
+  Animal <\|-- |Duck
+  class |Duck {
+    +swim()
+  }
+  |Duck : +quack()
+  note for |Duck "quacks"
+  style Du|ck fill:#ff0
+  cssClass "Animal,|Duck" hot
+  classDef |hot fill:#f00
+  click |Animal href "https://example.com"
+  pond ()-- |Duck
+  |pond ()-- Animal
+  namespace |Water {
+    class Fish
+  }

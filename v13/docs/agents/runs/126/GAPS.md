@@ -1,0 +1,127 @@
+# Gaps, spec #126
+
+Status: every ticket (#152–#159, #185, #201) and the final whole-branch review fixes (`fix/126_final-review`) are merged into `feature/126_class-diagram`.
+
+## Accepted by the maintainer, with follow-ups (2026-11-04)
+
+1. **R-LANG-4 language budget (#159):** ~26 ms per edit cycle on a 50k-character class document, against 15 ms (D156). Accepted for #166; to be fixed before M3 closes, in #205.
+2. **Core writer `left: true` fast path (#156):** a one-plain-run label asked to align left is drawn centred, and class anchors its rows itself. Accepted; the core fix is #206, which takes the two flowchart bullet snapshot changes.
+3. **Dev theme gallery (#157):** class baselines are not in it. Accepted; cross-type #207.
+4. **Theme `usedBy` lists (#157):** the shared variables don't list class. Accepted; cross-type #207.
+5. **Namespace rename (#159):** dotted and nested namespaces have no references or rename; hover works. Accepted, no ticket.
+6. **Core issues found here (not class-specific):** accepted; follow-up #208.
+   - `layoutLabel` doesn't set underline;
+   - LF/CR/tab left raw in attribute values;
+   - D67 directive-after-comment difference;
+   - invalid-YAML front matter is accepted;
+   - flowchart parity harness `#y;` in edge text.
+
+## Accepted or decided (no action)
+
+- D125 padding defaults; D127 layered default; D119 first-paint colours via #190; D48 no sandbox `_top`; e2e entity decoding (`asHostText`, accepted by the coordinator, no snapshot outside class changes).
+- #152 limits: `direct` edges get no reserved end-label room; grid group/member end label; a fan's gap can be taller than needed (~120 px instead of ~84).
+- `fixed` changeset group not used: RELEASING.md and `release-config.spec.ts` keep it empty (as state did).
+- Neo-theme marker variants are theme geometry (D152); `classEdgeLabelBackground` dropped (v12's rule never matched).
+- Empty `classDiagram` is rejected, as in v12 (UX question only).
+- Story 17, front-matter `title`: not drawn, like every v13 renderer today (flowchart, ER, state); MIGRATION row. Consistent with the existing v13 precedent, so not a class gap.
+- Sanitising: text is escaped, not sanitised, within flowchart's precedent (MIGRATION).
+
+## Record per ticket
+
+## Spec corrections (from 01-v12-class.md)
+
+- At fa796a943 there is one detector (`/^\s*classDiagram/`) and one pipeline: `classDiagram` and `classDiagram-v2` share the jison, `ClassDB` and `classRenderer-v3-unified`. The "v1 and v2 specs" (#153, #154) and "both v12 renderers" (#156) in the tickets mean that single pipeline; `classRenderer.js` and `svgDraw.js` are dead code. The MIGRATION entries in #156 compare against the unified renderer.
+
+## #152 (T0) known limits
+
+Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841c1eb64`); #152 closed by the PR. The limits below are accepted, not open work for this spec.
+
+
+- Edges routed `direct` (over MAX_DUMMIES) get no reserved room for end labels; their labels are still placed clear (spec "edge drawn without bends").
+- Grid: an edge between a group and its own member (fixture F4) can put the member end's label above the group border.
+- Room is reserved for all end labels on a side, so a fan's gap can be taller than needed. T3 may tune it.
+
+## #153 (T1) → later tickets
+
+- #157 (T5): make the package public (done in #157); the `fixed` group was declined per RELEASING.md.
+- #154 (T2): add the class line to `PARITY_SUITES` with the model adapter. Done (`classAdapter`, `feature/154_class-parser`): 711/711 agree, no divergences listed.
+- Not class-specific, for the maintainer: with a comment line straight after a multi-line `%%{`, v12 keeps the text, but core's preprocess still reads a directive (D67). The class lexer suite excludes that injection case.
+- Lexing is ~1 µs/char on token-dense lines (linear); size/speed work is for milestone close.
+
+## #154 (T2) shared source view (D114) — done
+
+- 2026-11-04, #154: switched after #186 fixed core's `sourceView`. diagram-class reads it through `src/parser/v12-text.ts` (CRLF, trimStart and entity placeholders on top); `source.ts` is deleted and the lexer gate is 100%.
+
+## #153 (T1) stress spec under load — fixed in #154
+
+- Now timed like core's preprocess spec (fastest of 5, up to 5 ratios, 2 s cutoff); it still fails with the direction memo removed.
+
+- `packages/conformance/src/class/lexer-stress.spec.ts` (2 cases) failed, along with core's `preprocess/stress.spec.ts`, in one full run at load ~30 on 16 cores (2026-11-04, after merging #165). Both pass alone. Watch it; if it flakes again at normal load, give it more trials or a wider ratio.
+
+## #154 (T2) → later tickets
+
+- Front matter with invalid YAML: v12 rejects the diagram, v13 (core preprocess) accepts it. Found by mutation fuzzing; no corpus source has it. Not class-specific (core, every type).
+- v12 rejects `classDiagram` with no statement (its grammar needs one); v13 does too, for parity. A UX question for the maintainer, not a gap.
+
+## From the #154 review → #156 (T4), #158 (interactions), #157 (T5)
+
+- Sanitising: the oracle stubs DOMPurify, so parity can't see that real v12 ran `sanitizeText` on class ids, labels and member text (e.g. it likely strips `<T>` in `A : +List<T> items`). v13 escapes text in `SvgWriter` instead. #156 checks what flowchart did about this and lists the difference in MIGRATION.md. If it changes what a user sees beyond flowchart's precedent, it is a question for the maintainer.
+- Link target: v12 forced `_top` under `securityLevel: 'sandbox'`. Closed by D48, which removed sandbox mode; class keeps the written target, as flowchart does (#158 asserts it).
+- Not compared by parity: class `text`, `shape`, `domId` (render-side; #156).
+
+## #185 (core sourceView fix)
+
+- Done: #186 merged into `mermaid-v13` (`3f1fce34a`) and here; class switched in #154. Was: after it merges, merge `mermaid-v13` here and switch diagram-class to `sourceView` (ready port: `d114-v12-text.ts.txt`), keeping class's `trimStart` and entity steps; delete `src/parser/source.ts`.
+- Not class: the flowchart parity harness never decodes v12's `#y;` placeholder in edge text (`flowchart LR\nA -- x:#y; --> B`); jison splits EDGE_TEXT per character and the harness decodes before merging tokens. No corpus string hits it.
+
+## #159 (T6) accepted
+
+- First-paint colours via #190 (D119, accepted): the CodeMirror and Monaco adapters colour first paint with flowchart's grammar for every type. Per-type highlighter selection is cross-type ticket #190, after the M3 facets land. #159 does not change the adapters.
+
+## #155 (T3) layout
+
+- #152's reserved end-label room (a fan's gap taller than needed): judged acceptable, not tuned (core change). Three labelled ends on one side: ~120 px gap instead of ~84.
+- Decided, D125 (draft PR #195), for #157 (T5): set the documented defaults `class.padding` 12 and `class.diagramPadding` 8; keep the namespace fallback at 16; add a MIGRATION.md note that the documented numbers changed from 5 and 20, citing D125.
+- For #157 (T5): if `class.layout` carries v12's `elk` default, default it to the layered layout, as state does under D127 (R-LAYOUT-7).
+- #156 (T4): end markers must stay within 12 px across. Superseded by #201: the engine now gets marker obstacles.
+
+## #156 (T4) renderer
+
+- Done (`feature/156_class-render`): the #154-review sanitising item (within flowchart's precedent: text is escaped, `+List<T> items` shows as written; MIGRATION "Class diagram SVG structure") and the #155 marker item (every marker ≤ 12 px across, outline included; asserted in `class-behaviour.spec.ts`).
+- Done in the #156 review round: the `-margin` marker variants are theme geometry (`classMarkerStrokeWidth`, `classFilledMarkerStrokeWidth`, `extensionMarkerLength`, `extensionMarkerGap`, `compositionMarkerGap`, `dependencyMarkerGap`; redux = v12 neo, classic = v12 classic), all within 12 px across; multiplicities are measured and drawn at `classTerminalFontSize` (11 in every theme); `classText` is honoured (redux `textColor`, classic `primaryTextColor`); one `data-id` per relationship.
+- Dropped in the review round: `classEdgeLabelBackground`. v12's `.edgeLabel[data-look="neo"]` rule never matched (v12 sets `data-look` on the edge path only), so class labels sat on `mainBkg` in both families; no variable, and the 0.5-opacity rect (SVG-label mode only) is moot.
+- For the maintainer (core writer): a one-plain-run label with `left: true` is drawn centred by the writer's fast path. Fixing it in core changes two flowchart SVGs (`flowchart/nightly-check/v2/03-should-render-raw-strings.mmd`, `04-…-htmllabels-false.mmd`: the one-item bullet list `- x`), so it was not changed; the class renderer writes start-anchored rows itself.
+- Variables' `usedBy` lists `class` only for the new ones; the shared ones the renderer reads still list `flowchart`/`core` (cosmetic, #157 may update).
+- Core, not class: core's `layoutLabel` sets bold/italic on runs but not `Style.Underline`, so the renderer writes `text-decoration` for static members itself. And the writer writes LF/CR/tab in attribute values raw, so XML readers see `data-ast` of a class named across lines (`` `A\nB` ``) with spaces; the round-trip spec compares in that form.
+- #157 (T5): drop the `vi.mock` of `registry.gen.ts` in `class-render.spec.ts` and `class-behaviour.spec.ts` (and `class/test-registry.ts`) once the manifest row loads `classDiagram` from `@mermaid-js/diagram-class` (plugin id `class`, formats `['svg']`, no `configDefaults` yet). `THIRD_PARTY_NOTICES` is in place for when the package goes public (`src/render/route.ts` is Pele's `routePath`, copied from flowchart since packages cannot import each other).
+- #158: `ClassNode.haveCallback` / `model.callbacks` draw nothing; the sandbox `linkTarget` rule is not applied (renderer passes `linkTarget` through `checkLinkTarget`).
+
+## #159 (T6) language facet → later tickets
+
+- #157 (T5): with the manifest, add `"language": "./dist/language.js"` to diagram-class's `mermaid` key, add `@mermaid-js/diagram-class` to language-service's `peerDependencies`, run `gen:registry`, then delete the classDiagram row of `packages/language-service/src/testing/unlisted-facets.ts` (goldens.spec fails until it is gone). The flowchart golden `completions/empty.out` already offers `classDiagram`.
+- R-LANG-4 budget: a 50k-character class document cycles in ~26 ms (update, rename and completions are each one ~7.5 ms parse) against flowchart's ~17.5 ms on the same loaded machine (load ~13); 15 ms is the reference-runner budget (D156). Parse speed is milestone-close work.
+- Rename: a dotted namespace (`namespace A.B`), and any namespace that is a prefix of one, has no definition, references or rename (renaming it would change the namespace tree); a nested namespace has none either (its qualified id is not its text). Hover still works for both.
+
+## #157 (T5) integration — done
+
+- Done: package public (`13.0.0-alpha.0`, README, notices); manifest with `language`; `gen:registry`; the #156 `vi.mock`s and `class/test-registry.ts` deleted; the classDiagram row of `unlisted-facets.ts` deleted (the file stays, empty, for the next port); D125 defaults and MIGRATION note; D127 checked (v12's `class` section had no `layout` default, so the top-level `layered` applies; spec asserts an installed ELK is not used unless asked).
+- Not done, for the maintainer: the brief said "add it to the changeset `fixed` group", but RELEASING.md says `fixed` is empty on purpose and `release-config.spec.ts` enforces it. Followed RELEASING (as state #148 did): own changeset, exact `workspace:*` ranges.
+- D125 detail: the generated `classConfigDefaults` has `padding: 12`, but the plugin's `configDefaults` leaves `padding` out, so "unset" still reaches the layout and namespaces (16) and notes (6) draw as v12. With it in, every namespace and note would be padded 12.
+- Cosmetic, not done: theme `usedBy` lists for the shared variables the class renderer reads (shared file other ports also edit).
+- Not done: class baselines are not in the dev theme gallery (`packages/dev/src/fixtures.ts` reads flowchart's only; state deferred the same to ER's `galleryFixtures`).
+
+## #157 e2e entity decoding (`asHostText`), checked 2026-11-04
+
+- Accepted by the M3 coordinator: the mmd-snapshot runner decodes HTML entities as v12's e2e page did.
+- Snapshots outside class: none change. No flowchart, ER or sequence fixture contains `&lt;`, `&gt;`, `&amp;` or `&quot;`. Block (1), mindmap (1) and usecase (4) fixtures do, but those types are not in `SUPPORTED_TYPES`, so they are not snapshotted. State's `pr-check/should-render-forks-and-joins.mmd` and `should-render-forks-in-composit-states.mmd` will be decoded once state merges (state is told).
+
+## #158 (interactions): contract from sequence #147 (PR #202, merged)
+
+- Build on #202 once it is in `mermaid-v13`: `packages/plugin-interactions/src/feature.ts` plus the `FEATURES` table in `index.ts`. Each feature owns one AST field end to end (start, collect, plan, bind). Class adds one entry and its own file. Flowchart callbacks already run through it.
+- Core gains a type-only `AstMenu` in parser-kit and a `'menus'` ExtensionClaim. Binding is scoped per diagram svg, keyed on content; `mount()` rebinds on every render.
+- Not applied, per D48 (sandbox mode removed; `sandbox` is treated as `default` with a warning, as for flowchart): the v12 sandbox `linkTarget` rule (`_top`). Also #158's: and `haveCallback` / `model.callbacks`, which the renderer leaves undrawn.
+
+## #158 (interactions) — done
+
+- Done (`feature/158_class-interactions`, 760d13df2): class callbacks bind through the existing `callbacks` feature (same `callback` field), no new entry, no core change; callbacks bind only the `g.node` whose `data-ast` names the id (note/interface id collisions fixed). Links, targets and tooltips were already the #156 renderer's, checked in `class.spec.ts`.
+- For the maintainer: the sandbox `_top` rule (#154 review, #156 items) is not applied, matching flowchart: D48/D75 map `sandbox` to `default` with a warning. Applying v12's rule would amend D48 for both types.

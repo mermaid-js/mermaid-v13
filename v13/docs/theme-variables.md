@@ -32,6 +32,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart |
 | `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart |
 | `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart |
+| `classText` | `--mermaid-classText` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-color, redux, redux-dark, redux-dark-color | class |
 | `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | | flowchart |
 | `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color | flowchart |
@@ -59,6 +60,13 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart |
 | `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart |
 | `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart |
+| `classMarkerStrokeWidth` | `--mermaid-classMarkerStrokeWidth` | token | length | | | all | class |
+| `classFilledMarkerStrokeWidth` | `--mermaid-classFilledMarkerStrokeWidth` | token | length | | | all | class |
+| `extensionMarkerLength` | `--mermaid-extensionMarkerLength` | token | length | | | all | class |
+| `extensionMarkerGap` | `--mermaid-extensionMarkerGap` | token | length | | | all | class |
+| `compositionMarkerGap` | `--mermaid-compositionMarkerGap` | token | length | | | all | class |
+| `dependencyMarkerGap` | `--mermaid-dependencyMarkerGap` | token | length | | | all | class |
+| `classTerminalFontSize` | `--mermaid-classTerminalFontSize` | token | length | | | all | class |
 | `erZeroOrMoreCircleOffset` | `--mermaid-erZeroOrMoreCircleOffset` | token | length | | | all | er |
 | `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart |
 | `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart |

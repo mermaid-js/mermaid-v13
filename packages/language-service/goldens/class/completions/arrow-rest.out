@@ -1,0 +1,20 @@
+@ 2:9  Duck -|
+  --> operator (association: solid line with an arrow head at the end) 2:8-2:9 "-" -> "-->"
+  -- operator (link: solid line) 2:8-2:9 "-" -> "--"
+  --|> operator (inheritance: solid line with a triangle at the end) 2:8-2:9 "-" -> "--|>"
+  --* operator (composition: solid line with a filled diamond at the end) 2:8-2:9 "-" -> "--*"
+  --o operator (aggregation: solid line with a hollow diamond at the end) 2:8-2:9 "-" -> "--o"
+  --() operator (lollipop interface: solid line with a lollipop at the end) 2:8-2:9 "-" -> "--()"
+@ 3:10  Duck <||
+  <|-- operator (inheritance: solid line with a triangle at the start) 3:8-3:10 "<|" -> "<|--"
+  <|.. operator (realization: dashed line with a triangle at the start) 3:8-3:10 "<|" -> "<|.."
+  <|--|> operator (inheritance: solid line with a triangle at the start and a triangle at the end) 3:8-3:10 "<|" -> "<|--|>"
+@ 4:10  Duck ..|
+  ..> operator (dependency: dashed line with an arrow head at the end) 4:8-4:10 ".." -> "..>"
+  ..|> operator (realization: dashed line with a triangle at the end) 4:8-4:10 ".." -> "..|>"
+@ 5:10  Duck --|
+  --> operator (association: solid line with an arrow head at the end) 5:8-5:10 "--" -> "-->"
+  --|> operator (inheritance: solid line with a triangle at the end) 5:8-5:10 "--" -> "--|>"
+  --* operator (composition: solid line with a filled diamond at the end) 5:8-5:10 "--" -> "--*"
+  --o operator (aggregation: solid line with a hollow diamond at the end) 5:8-5:10 "--" -> "--o"
+  --() operator (lollipop interface: solid line with a lollipop at the end) 5:8-5:10 "--" -> "--()"

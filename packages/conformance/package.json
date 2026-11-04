@@ -18,6 +18,7 @@
   "devDependencies": {
     "@braintree/sanitize-url": "7.1.2",
     "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/diagram-class": "workspace:^",
     "@mermaid-js/diagram-er": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
     "@mermaid-js/diagram-state": "workspace:^",

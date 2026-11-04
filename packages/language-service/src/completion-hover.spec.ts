@@ -38,10 +38,12 @@ describe('completion', () => {
     expect(labels('|')).toEqual([
       'flowchart',
       'graph',
+      'classDiagram',
       'erDiagram',
       'stateDiagram-v2',
       'stateDiagram',
     ]);
+    expect(labels('cla|')).toEqual(['classDiagram']);
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);
     expect(complete('flo|')).toEqual([
       expect.objectContaining({ label: 'flowchart', range: { start: 0, end: 3 } }),

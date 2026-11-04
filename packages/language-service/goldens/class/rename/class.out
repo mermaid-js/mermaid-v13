@@ -1,0 +1,30 @@
+@ 3:9  class |Animal~T~
+  prepare: 3:9-3:15 "Animal"; rename to "Creature":
+  %% rename-to: Creature
+  classDiagram
+    class Creature~T~
+    Creature <|-- Duck
+    Creature : +int age
+    note for Creature "every animal"
+    cssClass "Creature,Duck" hot
+    callback Creature "onClick"
+@ 5:3  |Animal : +int age
+  prepare: 5:3-5:9 "Animal"; rename to "Creature":
+  %% rename-to: Creature
+  classDiagram
+    class Creature~T~
+    Creature <|-- Duck
+    Creature : +int age
+    note for Creature "every animal"
+    cssClass "Creature,Duck" hot
+    callback Creature "onClick"
+@ 8:12  callback |Animal "onClick"
+  prepare: 8:12-8:18 "Animal"; rename to "Creature":
+  %% rename-to: Creature
+  classDiagram
+    class Creature~T~
+    Creature <|-- Duck
+    Creature : +int age
+    note for Creature "every animal"
+    cssClass "Creature,Duck" hot
+    callback Creature "onClick"

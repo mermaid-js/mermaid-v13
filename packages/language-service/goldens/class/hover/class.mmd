@@ -1,0 +1,15 @@
+classDiagram
+  class |Animal~T~["An animal"]:::hot {
+    +int age
+    +isMammal() bool
+  }
+  <<abstract>> Ani|mal
+  Animal <\|-- |Duck
+  namespace |Water {
+    class F|ish
+  }
+  namespace Outer.|Inner {
+    class Frog
+  }
+  |plug ()-- Fish
+  style |Ghost fill:#000

@@ -1,0 +1,12 @@
+---
+description: class labels, backtick names, relationship labels and markdown in members
+---
+classDiagram
+  class `Order Service`
+  class A["Payment gateway"]
+  class B {
+    +__bold__() 
+    +_italic_ field
+  }
+  `Order Service` --> A : calls<br>async
+  A --> B

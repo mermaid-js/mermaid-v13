@@ -1,0 +1,15 @@
+---
+description: classDef applied by shorthand and by cssClass, and an inline style
+---
+classDiagram
+  class Hot:::warm {
+    +heat()
+  }
+  class Cold
+  class Neutral
+  classDef warm fill:#f96,stroke:#333
+  classDef cool fill:#9cf,stroke:#036,color:#000
+  cssClass "Cold" cool
+  style Neutral fill:#eee,stroke:#999,stroke-width:3px
+  Hot --> Cold
+  Cold --> Neutral
