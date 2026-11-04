@@ -13,6 +13,7 @@
 import { fileURLToPath } from 'node:url';
 import type { DocumentSnapshot, FacetEntry, LanguageService } from '@mermaid-js/language-service';
 import {
+  COMPLETION_TRIGGERS,
   createLanguageService,
   LineIndex,
   SEMANTIC_TOKEN_LEGEND,
@@ -145,7 +146,7 @@ export function startServer(connection: Connection, options: ServerOptions = {})
         renameProvider: { prepareProvider: true },
         hoverProvider: true,
         foldingRangeProvider: true,
-        completionProvider: {},
+        completionProvider: { triggerCharacters: [...COMPLETION_TRIGGERS] },
         semanticTokensProvider: {
           legend: {
             tokenTypes: [...SEMANTIC_TOKEN_LEGEND.types],

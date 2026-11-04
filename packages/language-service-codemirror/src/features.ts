@@ -12,7 +12,7 @@ import { Facet, RangeSetBuilder, StateEffect, StateField } from '@codemirror/sta
 import type { EditorState, Extension } from '@codemirror/state';
 import { Decoration, EditorView, hoverTooltip, ViewPlugin } from '@codemirror/view';
 import type { DecorationSet, ViewUpdate } from '@codemirror/view';
-import { diagnosticMessage } from '@mermaid-js/language-service';
+import { COMPLETION_TRIGGERS, diagnosticMessage } from '@mermaid-js/language-service';
 import type { AstId, CompletionKind, DocumentSnapshot, Range } from '@mermaid-js/language-service';
 import { mermaidLanguageDefinition } from './language.ts';
 import { renderMarkdown } from './markdown.ts';
@@ -85,8 +85,16 @@ const TYPE: Readonly<Record<CompletionKind, string>> = {
   shape: 'type',
 };
 
+const WORD = /^[\p{L}\p{N}_]$/u;
+
 /** A completion source over the service's `completions(offset)`. */
 export function completionSource(context: CompletionContext): CompletionResult | null {
+  // While typing, only after a word character or one of the service's trigger characters
+  // (as Monaco and LSP clients ask); each ask is a probe re-parse.
+  if (!context.explicit) {
+    const before = context.state.sliceDoc(context.pos - 1, context.pos);
+    if (!WORD.test(before) && !COMPLETION_TRIGGERS.includes(before)) return null;
+  }
   const doc = mermaidSnapshot(context.state);
   if (!doc) return null;
   const items = doc.completions(context.pos);

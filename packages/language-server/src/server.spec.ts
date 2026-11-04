@@ -3,7 +3,7 @@
  * `mermaid-language-server` bin and exercises every method it offers on flowchart fixtures.
  * Positions are 0-based lines and UTF-16 columns, written out by hand from the fixtures.
  */
-import { SEMANTIC_TOKEN_LEGEND } from '@mermaid-js/language-service';
+import { COMPLETION_TRIGGERS, SEMANTIC_TOKEN_LEGEND } from '@mermaid-js/language-service';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -69,7 +69,8 @@ describe('mermaid-language-server over stdio', () => {
     expect(caps.renameProvider).toEqual({ prepareProvider: true });
     expect(caps.hoverProvider).toBe(true);
     expect(caps.foldingRangeProvider).toBe(true);
-    expect(caps.completionProvider).toBeDefined();
+    // The same trigger characters as Monaco and CodeMirror.
+    expect(caps.completionProvider).toEqual({ triggerCharacters: [...COMPLETION_TRIGGERS] });
     expect(caps.positionEncoding ?? 'utf-16').toBe('utf-16');
     expect(client.init.serverInfo?.name).toBe('mermaid-language-server');
   });

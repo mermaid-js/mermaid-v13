@@ -38,7 +38,6 @@ export { snapshotOf, toRange } from './convert.ts';
 export type { MonacoApi } from './convert.ts';
 export { toMarkers, watchDiagnostics } from './markers.ts';
 export {
-  COMPLETION_TRIGGERS,
   completionProvider,
   definitionProvider,
   foldingRangeProvider,

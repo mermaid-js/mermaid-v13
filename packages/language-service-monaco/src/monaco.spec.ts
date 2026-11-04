@@ -1,3 +1,4 @@
+import * as languageService from '@mermaid-js/language-service';
 import { createLanguageService, SEMANTIC_TOKEN_LEGEND } from '@mermaid-js/language-service';
 import type { LanguageService } from '@mermaid-js/language-service';
 import type * as Monaco from 'monaco-editor';
@@ -144,6 +145,11 @@ describe('markers', () => {
 });
 
 describe('providers', () => {
+  it('completes after the service trigger characters, as the LSP server and CodeMirror do', () => {
+    const p = fake.provider('completion') as Monaco.languages.CompletionItemProvider;
+    expect(p.triggerCharacters).toEqual([...languageService.COMPLETION_TRIGGERS]);
+  });
+
   it('completes from the service, with Monaco ranges and kinds', () => {
     const model = fake.createModel('file:///d.mmd', FLOW);
     const provider = fake.provider('completion') as Monaco.languages.CompletionItemProvider;

@@ -17,6 +17,7 @@ export type { LanguageService, LanguageServiceOptions, PreloadRequest } from './
 export type { DocumentSnapshot } from './snapshot.ts';
 export type { FacetEntry } from './facets.ts';
 export type { Annotation, ConfigSchema, SchemaNode } from './config/schema.ts';
+export { COMPLETION_TRIGGERS } from './completion.ts';
 export { diagnosticMessage } from './diagnostics.ts';
 export { firstPartyFacets } from './generated/facets.gen.ts';
 export type { FoldingRange } from './folding.ts';

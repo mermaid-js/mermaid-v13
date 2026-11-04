@@ -47,3 +47,19 @@ export function completions(
   if (!ctx.facet) return [];
   return facetItems(ctx.facet, ctx.text, offset);
 }
+
+/**
+ * Characters after which an editor asks for completions without a typed word: front-matter
+ * `:`, arrows (`-`, `=`, `.`), `&`, `@`, `{` (shape data) and `,`. Every adapter uses this one
+ * list (LSP `triggerCharacters`, Monaco's, CodeMirror's activation while typing).
+ */
+export const COMPLETION_TRIGGERS: readonly string[] = Object.freeze([
+  ':',
+  '-',
+  '=',
+  '.',
+  '&',
+  '@',
+  '{',
+  ',',
+]);

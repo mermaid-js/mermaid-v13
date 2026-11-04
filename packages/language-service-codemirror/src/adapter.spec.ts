@@ -7,7 +7,7 @@ import { CompletionContext } from '@codemirror/autocomplete';
 import { foldable } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import type { Extension } from '@codemirror/state';
-import { createLanguageService } from '@mermaid-js/language-service';
+import { COMPLETION_TRIGGERS, createLanguageService } from '@mermaid-js/language-service';
 import { describe, expect, it } from 'vitest';
 import {
   DIAGNOSTICS_DELAY,
@@ -117,6 +117,20 @@ describe('completion', () => {
   it('is the completion source of the Mermaid language', async () => {
     const state = await stateOf(TEXT);
     expect(state.languageDataAt('autocomplete', TEXT.length)).toContain(completionSource);
+  });
+
+  it('opens while typing only after a word character or a trigger character', async () => {
+    const typed = async (text: string) => {
+      const state = await stateOf(text);
+      return completionSource(new CompletionContext(state, state.doc.length, false));
+    };
+    expect(COMPLETION_TRIGGERS).toContain('-');
+    expect(await typed('flowchart LR\n  A --> ')).toBeNull();
+    expect(await typed('flowchart LR\n  A --> B\n  A -')).not.toBeNull();
+    expect(await typed('flowchart LR\n  A --> B\n  A --> C\n  B')).not.toBeNull();
+    // Asked for (Ctrl-Space): always.
+    const state = await stateOf('flowchart LR\n  A --> B\n  A --> ');
+    expect(completionSource(new CompletionContext(state, state.doc.length, true))).not.toBeNull();
   });
 
   it('offers nothing where the service has nothing', async () => {

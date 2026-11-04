@@ -3,7 +3,11 @@
  * namespace where it needs Monaco's enums) and answers from the model's snapshot; register
  * them yourself to pick features one by one, or call `registerMermaid` for all of them.
  */
-import { encodeSemanticTokens, SEMANTIC_TOKEN_LEGEND } from '@mermaid-js/language-service';
+import {
+  COMPLETION_TRIGGERS,
+  encodeSemanticTokens,
+  SEMANTIC_TOKEN_LEGEND,
+} from '@mermaid-js/language-service';
 import type { CompletionKind, LanguageService } from '@mermaid-js/language-service';
 import type * as Monaco from 'monaco-editor';
 import { at, snapshotOf, toRange } from './convert.ts';
@@ -23,15 +27,13 @@ const COMPLETION_KINDS: Record<CompletionKind, keyof typeof Monaco.languages.Com
   shape: 'Struct',
 };
 
-/** Characters after which Monaco asks for completions without a typed word. */
-export const COMPLETION_TRIGGERS = [':', '-', '=', '.', '&', '@', '{', ','];
-
 export function completionProvider(
   monaco: { languages: Pick<Languages, 'CompletionItemKind'> },
   service: LanguageService
 ): Monaco.languages.CompletionItemProvider {
   return {
-    triggerCharacters: COMPLETION_TRIGGERS,
+    // The service's list, shared with the LSP server and CodeMirror.
+    triggerCharacters: [...COMPLETION_TRIGGERS],
     provideCompletionItems(model, position) {
       const { doc, offset } = at(service, model, position);
       const suggestions = doc.completions(offset).map((item, i) => ({
