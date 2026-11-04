@@ -8,7 +8,7 @@ import { isSpace } from '../parser-kit/chars.ts';
 import type { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Range } from '../parser-kit/positions.ts';
 import { lineEnd, newlineAt } from '../parser-kit/scanner.ts';
-import { parseYaml } from './yaml.ts';
+import { isYamlMap, parseYaml } from './yaml.ts';
 import type { YamlMap, YamlValue } from './yaml.ts';
 
 export interface FrontMatter {
@@ -56,10 +56,6 @@ function isFence(src: string, start: number, end: number, indent: string): boole
   const dash = start + indent.length;
   if (!src.startsWith('---', dash)) return false;
   return hspace(src, dash + 3) === end;
-}
-
-function isMap(value: YamlValue): value is YamlMap {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /** Find, read and interpret the front matter at the start of `src`. */
@@ -129,7 +125,7 @@ function interpret(
   const fm: FrontMatter = { range, yamlRange, data: null };
   const value = yaml.value;
   if (value === null) return fm;
-  if (!isMap(value)) {
+  if (!isYamlMap(value)) {
     diagnostics.warning(
       'FRONT_MATTER_NOT_A_MAPPING',
       'The front matter should be a YAML mapping such as `title: …`; it was ignored.',
@@ -142,7 +138,7 @@ function interpret(
   // v12 keeps `title` and `displayMode` only when truthy, as strings.
   if (title) fm.title = String(title);
   if (config !== undefined && config !== null) {
-    if (isMap(config)) fm.config = config;
+    if (isYamlMap(config)) fm.config = config;
     else {
       diagnostics.warning(
         'FRONT_MATTER_CONFIG',
@@ -155,7 +151,7 @@ function interpret(
     const cfg = (fm.config ??= {});
     const gantt = cfg.gantt;
     if (gantt === undefined || gantt === null) cfg.gantt = { displayMode: String(displayMode) };
-    else if (isMap(gantt as YamlValue)) (gantt as YamlMap).displayMode = String(displayMode);
+    else if (isYamlMap(gantt as YamlValue)) (gantt as YamlMap).displayMode = String(displayMode);
   }
   return fm;
 }

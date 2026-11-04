@@ -11,7 +11,8 @@
 // cspell:words kepano
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import type { AstId, Diagnostic, Range } from '@mermaid-js/core/parser-kit';
-import type { YamlMap, YamlValue } from '@mermaid-js/core/preprocess';
+import { isYamlMap } from '@mermaid-js/core/preprocess';
+import type { YamlMap } from '@mermaid-js/core/preprocess';
 import { isValidShape } from './shapes.ts';
 
 export type LabelType = 'text' | 'string' | 'markdown';
@@ -230,8 +231,16 @@ export function destructLink(end: string, start?: string): LinkInfo {
 
 const INTERNAL_METADATA_KEYS = ['laneRole', 'laneIndex', 'drawnExtent'];
 
-const isMap = (v: YamlValue | undefined): v is YamlMap =>
-  v !== null && typeof v === 'object' && !Array.isArray(v);
+/** What one mention of a vertex sets. */
+export interface VertexParts {
+  label?: FlowLabel;
+  /** The shape, from brackets or `@{ shape }`. */
+  type?: string;
+  styles?: string[];
+  props?: Record<string, string>;
+  /** The parsed `@{ … }` block; null when it did not parse. */
+  data?: YamlMap | null;
+}
 
 /** Collects one parse's model, in v12 FlowDB order. Create one per parse. */
 export class FlowBuilder {
@@ -265,20 +274,12 @@ export class FlowBuilder {
     return this.edgeById.has(id);
   }
 
-  /** v12 `addVertex`. `data` is the parsed `@{…}` block. Returns whether it created a vertex. */
-  addVertex(
-    id: string,
-    ast: AstId,
-    at: Range,
-    label?: FlowLabel,
-    type?: string,
-    styles?: string[],
-    props?: Record<string, string>,
-    data?: YamlMap | null
-  ): void {
+  /** v12 `addVertex`: create the vertex `id` if it is new, then apply `parts` to it. */
+  addVertex(id: string, ast: AstId, at: Range, parts: VertexParts = {}): void {
     if (!id || id.trim().length === 0) return;
+    const { label, type, styles, props, data } = parts;
     let doc: YamlMap | undefined;
-    if (data !== undefined && isMap(data)) {
+    if (data !== undefined && isYamlMap(data)) {
       doc = { ...data };
       for (const key of INTERNAL_METADATA_KEYS) delete doc[key];
     }
