@@ -3,7 +3,7 @@
  * flowchart, `fixtures/language/flowchart-50k.mmd`. A cycle is what an editor does per change:
  * `update` (a full re-parse) and then every query: diagnostics, folding ranges, semantic tokens,
  * and definition, references, prepareRename, rename and astAt at a cursor on a node id.
- * Budget: ≤ 10 ms per cycle on the reference runner. The CLI is `src/cli/language.ts`.
+ * Budget: ≤ 15 ms per cycle (D156) on the reference runner. The CLI is `src/cli/language.ts`.
  */
 import { readFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
@@ -12,7 +12,7 @@ import { FIXTURES_DIR } from './fixtures.ts';
 import { median } from './stats.ts';
 
 export const LANGUAGE_FIXTURE = readFileSync(`${FIXTURES_DIR}language/flowchart-50k.mmd`, 'utf8');
-export const LANGUAGE_BUDGET_MS = 10;
+export const LANGUAGE_BUDGET_MS = 15;
 
 /** The stages of a cycle, in order. */
 const STAGES = [

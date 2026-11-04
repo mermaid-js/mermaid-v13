@@ -1,7 +1,7 @@
 /**
  * R-LANG-4 in PR CI, as ratios (timing tests never assert absolute times): on the 50k-character
  * bench fixture, one editing cycle (update + every query, `cycle` in language.ts) costs at most
- * a few bare parses, and doubling the text at most doubles the cycle. The absolute ≤ 10 ms on
+ * a few bare parses, and doubling the text at most doubles the cycle. The absolute ≤ 15 ms (D156) on
  * the reference runner is the bench package's `language --enforce` script.
  */
 import { beforeAll, describe, expect, it } from 'vitest';

@@ -241,7 +241,7 @@ doc.astAt(offset); doc.rangeOf(astId);                    // R-LANG-6, D97
 
 `update` never returns a partial snapshot. A detected type whose facet was not preloaded gets one `LANGUAGE_NOT_LOADED` info diagnostic naming the type, plus the generic features, until the host preloads it. A facet whose load failed gets a `LANGUAGE_LOAD_FAILED` warning.
 
-All positions are UTF-16 offsets into the full text, as the parser already uses; adapters convert with `LineIndex`. The snapshot keeps the `ParseResult` (with tokens). Queries are computed lazily and memoised on the snapshot. `completions(offset)` re-parses with `probe: offset`. Budget: update + all queries ≤ 10 ms at 50k chars.
+All positions are UTF-16 offsets into the full text, as the parser already uses; adapters convert with `LineIndex`. The snapshot keeps the `ParseResult` (with tokens). Queries are computed lazily and memoised on the snapshot. `completions(offset)` re-parses with `probe: offset`. Budget: update + all queries ≤ 15 ms (D156) at 50k chars.
 
 **Feature sources.**
 
