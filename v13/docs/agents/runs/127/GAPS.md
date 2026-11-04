@@ -46,7 +46,7 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## Core `sourceView` mid-line directive bugs (found by class, fix owned by class)
 
-- [ ] Two cases in core `sourceView` (#181): a `%%` line inside a mid-line `%%{…}%%` directive becomes a comment hole that runs past `}%%`, and text inside a directive triggers the `;` drop. When class's core fix merges into `mermaid-v13`, merge it here and add state forms of both strings to the lexer-parity harvest (e.g. `stateDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB` and `stateDiagram\nA : x %%{init: {"a":"style"}}%% :#y;`). Until then, if state parity shows either, list it as a known divergence pointing at the class fix.
+- [x] Closed: #186 merged in (`3f1fce34a`); both state forms are lexer-parity edge cases, parity 597 of 604 sources lexed by v12 with 0 diffs. Was: two cases in core `sourceView` (#181): a `%%` line inside a mid-line `%%{…}%%` directive becomes a comment hole that runs past `}%%`, and text inside a directive triggers the `;` drop. When class's core fix merges into `mermaid-v13`, merge it here and add state forms of both strings to the lexer-parity harvest (e.g. `stateDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB` and `stateDiagram\nA : x %%{init: {"a":"style"}}%% :#y;`). Until then, if state parity shows either, list it as a known divergence pointing at the class fix.
 
 ## Composite self-loop (from #144)
 
