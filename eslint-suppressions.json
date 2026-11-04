@@ -470,9 +470,6 @@
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 3
     },
-    "@typescript-eslint/only-throw-error": {
-      "count": 6
-    },
     "complexity": {
       "count": 1
     },

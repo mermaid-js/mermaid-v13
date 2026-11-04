@@ -22,6 +22,7 @@ import {
 } from '@mermaid-js/core/parser-kit';
 import type {
   AstCallback,
+  AstId,
   KindSet,
   ParseOptions,
   ParseResult,
@@ -225,8 +226,11 @@ const EXPECTED = new ExpectedTable([
   ['the end of the text', [Kind.EOF, T.Eof]],
 ]);
 
-/** Thrown inside the parser after a diagnostic is recorded; caught at statement level. */
-class Stop {}
+/**
+ * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
+ * instance, so its stack is captured once.
+ */
+class Stop extends Error {}
 const STOP = new Stop();
 
 interface Frame {
@@ -259,6 +263,17 @@ const STATEMENT_HINTS: Record<number, string> = {
   [T.Click]:
     'write it as `click <node id> <callback>` or `click <node id> "<url>"`, e.g. `click A "https://example.com"`',
 };
+
+/**
+ * The first node statement of `list` with a name: a scan for short lists, a map for the long
+ * ones of `A & B & …` fan-out (each edge looks up both its ends).
+ */
+function byName(list: readonly FlowNodeStmt[]): (name: string) => FlowNodeStmt | undefined {
+  if (list.length < 8) return (name) => list.find((n) => n.name === name);
+  const map = new Map<string, FlowNodeStmt>();
+  for (const n of list) if (!map.has(n.name)) map.set(n.name, n);
+  return (name) => map.get(name);
+}
 
 /** Parse a flowchart. Never throws: problems are error diagnostics. */
 export function parseFlowchart(src: string, options: FlowParseOptions = {}): FlowParseResult {
@@ -759,25 +774,27 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
 
   const vertexStatement = (collect: boolean): string[] => {
     let stmt = node();
-    let nodes = stmt.map((n) => n.name);
+    let names = stmt.map((n) => n.name);
+    const first = names;
+    // v12 collected `$3.concat($1)` per link, newest first: kept as parts, joined once.
+    const later: string[][] = [];
+    const collected = () => (later.length === 0 ? first : later.reverse().flat().concat(first));
     if (pendingData !== undefined) applyData(stmt[stmt.length - 1] as FlowNodeStmt, pendingData);
     while (true) {
       const t = kind();
-      if (t !== T.Link && t !== T.StartLink && t !== T.LinkId) return nodes;
+      if (t !== T.Link && t !== T.StartLink && t !== T.LinkId) return collected();
       const [info, linkRange, lbl] = link();
       const next = node();
+      const nextNames = next.map((n) => n.name);
       if (pendingData !== undefined) applyData(next[next.length - 1] as FlowNodeStmt, pendingData);
       const before = db.edges.length;
-      db.addLink(
-        stmt.map((n) => n.name),
-        next.map((n) => n.name),
-        info,
-        (a, b) => ids.edge(a, b),
-        linkRange
-      );
-      for (const edge of db.edges.slice(before)) {
-        const from = stmt.find((n) => n.name === edge.start);
-        const to = next.find((n) => n.name === edge.end);
+      db.addLink(names, nextNames, info, (a, b) => ids.edge(a, b), linkRange);
+      const fromOf = byName(stmt);
+      const toOf = byName(next);
+      for (let k = before; k < db.edges.length; k++) {
+        const edge = db.edges[k] as (typeof db.edges)[number];
+        const from = fromOf(edge.start);
+        const to = toOf(edge.end);
         const ast: FlowEdge = {
           id: edge.ast,
           type: 'Edge',
@@ -793,8 +810,9 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
         if (lbl) ast.label = lbl;
         chain.push(ast);
       }
-      if (collect) nodes = next.map((n) => n.name).concat(nodes);
+      if (collect) later.push(nextNames);
       stmt = next;
+      names = nextNames;
     }
   };
 
@@ -1044,21 +1062,29 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     i++;
     let id: FlowLabelNode | undefined;
     let title: FlowLabelNode | undefined;
-    const t = kind();
-    if (t === Kind.Newline || t === T.Semi || t === T.Eof) {
-      i++;
-    } else {
-      expect(T.Space, ...LINE_END);
-      id = textNoTags();
-      title = id;
-      if (kind() === T.SQS) {
-        open('subgraph title', '`]`');
-        title = text();
-        closer(T.SQE);
+    // A header error still opens the subgraph, so its `end` closes it (R-PARSE-4: one error,
+    // one diagnostic) and the body stays inside it.
+    let failed = false;
+    try {
+      const t = kind();
+      if (t === Kind.Newline || t === T.Semi || t === T.Eof) {
+        i++;
+      } else {
+        expect(T.Space, ...LINE_END);
+        id = textNoTags();
+        title = id;
+        if (kind() === T.SQS) {
+          open('subgraph title', '`]`');
+          title = text();
+          closer(T.SQE);
+        }
+        const k = kind();
+        if (k !== Kind.Newline && k !== T.Semi && k !== T.Eof) fail([...LINE_END, T.SQS]);
+        i++;
       }
-      const k = kind();
-      if (k !== Kind.Newline && k !== T.Semi && k !== T.Eof) fail([...LINE_END, T.SQS]);
-      i++;
+    } catch (e) {
+      if (e !== STOP) throw e;
+      failed = true;
     }
     const spanned = st.beginStatement('subgraph', S[from] ?? 0);
     frames.push({
@@ -1082,10 +1108,18 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
         opener
       );
     }
+    if (failed) throw STOP;
   };
 
   const closeSubgraph = (frame: Frame, end: number): void => {
-    const sgId = db.addSubGraph(frame.id, list, frame.title, (name) => ids.subgraph(name));
+    // Each opening gets its own AST id (`s:A`, then `s:A@2`); the model keeps the first.
+    let opening: AstId | undefined;
+    const sgId = db.addSubGraph(
+      frame.id,
+      list,
+      frame.title,
+      (name) => (opening = ids.subgraph(name))
+    );
     if (frame.id) {
       const named = frame.id === frame.title && /\s/.test(frame.title.text) ? undefined : frame.id;
       if (named) {
@@ -1097,7 +1131,7 @@ export function parseFlowchart(src: string, options: FlowParseOptions = {}): Flo
     st.endStatement(frame.span, end);
     const sg = db.subgraph(sgId);
     const node: FlowSubgraph = {
-      id: sg?.ast ?? ids.subgraph(sgId),
+      id: opening ?? sg?.ast ?? ids.subgraph(sgId),
       type: 'Subgraph',
       range: { start: frame.start, end },
       name: sgId,

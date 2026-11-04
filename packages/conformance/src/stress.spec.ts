@@ -283,6 +283,7 @@ describe('stress: parse is linear in input size', () => {
       (n) => 'graph TD\nA-- t' + ' '.repeat(4 * n) + '-y --> B',
     ],
     ['ellipse text of spaces before tildes', (n) => 'graph TD\nA(-x' + ' '.repeat(4 * n) + '~~ -)'],
+    ['fan-out', (n) => 'graph TD\nA --> ' + repeat(n, (i) => `b${i} & `) + 'z'],
     ['linkStyle lines', (n) => 'graph TD\nA-->B\n' + 'linkStyle 0 stroke:red\n'.repeat(n)],
     ['class assignments', (n) => 'graph TD\n' + repeat(n, (i) => `n${i}:::c${i % 7}\n`)],
   ];
