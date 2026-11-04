@@ -29,7 +29,7 @@ export interface DrawOptions {
 
 /**
  * The generated `er` section defaults, as the API hands them to the hook. v12's px sizes in
- * them (140 / 80 / 100) do not convert in cells (D118), so the drawings use the cell profile.
+ * them (140 / 80 / 100) do not convert in cells (D118, D124), so the drawings use the cell profile.
  */
 const ER_DEFAULTS = erConfigDefaults;
 

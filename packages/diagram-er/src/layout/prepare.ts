@@ -178,11 +178,11 @@ const ENDS_GAP = 2 * END_CELLS + 2;
 type SizeKey = 'nodeSpacing' | 'rankSpacing' | 'minEntityWidth';
 
 /**
- * D118: a px size key as the builder reads it. In px every value counts, the generated v12
- * default included. In cells only a value the author set converts; v12's px defaults (140,
+ * D118, D124: a px size key as the builder reads it. In px every value counts, the generated
+ * v12 default included. In cells only a value the author set converts; v12's px defaults (140,
  * 80, 100) do not, and the cell profile's own spacing and width apply. The resolved config
  * already carries the section defaults, so a value equal to the generated default counts as
- * not set (setting it to exactly that value draws as not setting it).
+ * not set (D124: setting it to exactly that value draws as not setting it).
  */
 function sizeKey(
   units: UnitProfile,
@@ -465,9 +465,10 @@ function layoutGraph(
   ): number => {
     return px === undefined ? fallback : fromPx(units, px, axis, min);
   };
-  // D118: in cells a relationship's two ends take END_CELLS cells each, and a line cell
+  // D124: in cells a relationship's two ends take END_CELLS cells each, and a line cell
   // between them (or between an end and the label) keeps them readable as ends, so the rank
-  // gap is at least that, over the cell profile's own spacing. In px the markers fit headRoom.
+  // gap is at least that (6), over the cell profile's own 4. In px the marks size the
+  // engine's self-loop and port pitch instead (`erMetrics`).
   const endRoom = units.grid === undefined ? 0 : ENDS_GAP;
   const spacingOn = (rank: 'x' | 'y', node: 'x' | 'y') => ({
     node: fromConfig(sizeKey(units, er, 'nodeSpacing'), b.spacing.node, node, b.minSpacing.node),

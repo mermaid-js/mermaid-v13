@@ -3,7 +3,7 @@ import { draw, text } from './ascii/er.fixtures.ts';
 
 // The ER diagram's `ascii` hook (#136, D76, D82, D109, R-ASCII-1, R-ASCII-5), called through
 // the `./ascii` entry as a pipeline does (parse → cell layout → hook), with the generated `er`
-// defaults, which do not convert in cells: the cell profile's spacing and widths (D118).
+// defaults, which do not convert in cells: the cell profile's spacing and widths (D118, D124).
 
 const lines = (...rows: string[]): string => rows.join('\n');
 const rowsWith = (out: string, s: string): string[] => out.split('\n').filter((r) => r.includes(s));

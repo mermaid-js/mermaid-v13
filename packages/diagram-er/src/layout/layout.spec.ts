@@ -178,13 +178,13 @@ describe('entity tables in px', () => {
     expect(c.graph.spacing).toMatchObject({ node: 20, rank: 6 });
   });
 
-  it("keeps the cell profile's spacing and width for v12's px defaults (D118)", () => {
+  it("keeps the cell profile's spacing and width for v12's px defaults (D118, D124)", () => {
     const src = 'erDiagram\n  A ||--o{ B : x\n';
     const defaults = { er: { nodeSpacing: 140, rankSpacing: 80, minEntityWidth: 100 } };
     const c = lay(src, cellProfile(), defaults);
     expect(c.graph.spacing).toMatchObject({
       node: cellProfile().builder.spacing.node,
-      // The cell profile's rank gap, floored at six cells for both ends (D118).
+      // The cell profile's rank gap, floored at six cells for both ends (D124).
       rank: Math.max(cellProfile().builder.spacing.rank, 6),
     });
     // "A" in a 1-cell padded box, not widened to 100 px (13 columns).
@@ -194,6 +194,14 @@ describe('entity tables in px', () => {
     });
     // In px the defaults count.
     expect(lay(src, pxProfile, defaults).graph.spacing).toMatchObject({ node: 140, rank: 80 });
+    // D124's corner case: in cells, writing exactly the default draws as not writing it; one
+    // px more converts.
+    expect(lay(src, cellProfile(), { er: { minEntityWidth: 100 } }).graph.nodes[0]).toMatchObject({
+      width: 5,
+    });
+    expect(lay(src, cellProfile(), { er: { minEntityWidth: 104 } }).graph.nodes[0]).toMatchObject({
+      width: 13,
+    });
   });
 });
 

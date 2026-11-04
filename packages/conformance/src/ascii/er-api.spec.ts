@@ -15,7 +15,7 @@ describe('er ascii through the API', () => {
     const lines = out.text.split('\n');
     expect(out.rows).toBe(lines.length);
     expect(out.columns).toBe(Math.max(...lines.map((l) => [...l].length)));
-    // v12's px defaults do not convert in cells (D118): the box fits the name, no 13-column
+    // v12's px defaults do not convert in cells (D118, D124): the box fits the name, no 13-column
     // minimum from minEntityWidth 100.
     expect(lines[1]).toBe('│ CUSTOMER │');
     expect(out.warnings.map((w) => [w.code, w.feature, w.astIds])).toEqual([

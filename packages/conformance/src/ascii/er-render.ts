@@ -3,7 +3,7 @@
 // whose generated registry lists ER (#134), and hands back the cell layout that render drew,
 // captured by a `postLayout` hook (D86: `units: 'cell'`), as `render.ts` does for the
 // flowchart. No site config: v12's px defaults for the `er` section do not convert in cells, so
-// the drawings use the cell profile's spacing and widths (D118).
+// the drawings use the cell profile's spacing and widths (D118, D124).
 import type { LaidOut } from '@mermaid-js/core';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { ErLayout } from '@mermaid-js/diagram-er';
