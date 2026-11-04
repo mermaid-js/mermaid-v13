@@ -4,7 +4,7 @@ Unmet acceptance criteria and announced contracts, under the ticket that owns ea
 
 ## Held
 
-- #154 (T2) and everything after it (#155 T3, #156 T4, #157 T5, #158 interactions, #159 T6) wait for M2.5's #27 and #28 to merge into `mermaid-v13` (D107). #159 also waits for #29 and #31.
+- Released 2026-11-04: M2.5 (#123) merged into `mermaid-v13` and into this branch (`b93d413f6`); #27, #28, #29, #31 closed. #154 (T2) started; #159 (T6) and #155 (T3) follow T2.
 
 ## Spec corrections (from 01-v12-class.md)
 
