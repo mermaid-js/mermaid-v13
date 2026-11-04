@@ -192,6 +192,34 @@ describe('snapshots are immutable', () => {
   });
 });
 
+describe('diagnostics are frozen copies', () => {
+  it('copies range, related and expected, and leaves the parse result as it was', async () => {
+    const doc = await open('flowchart TD\n  subgraph S\n    A --> B\n');
+    const own = doc.context.result!.diagnostics;
+    const d = doc.diagnostics().find((x) => x.related?.length)!;
+    expect(d.related!.length).toBeGreaterThan(0);
+    const src = own.find((x) => x.code === d.code)!;
+    expect(d).toEqual(src);
+    for (const part of [d, d.range, d.related, d.related![0], d.related![0]!.range])
+      expect(Object.isFrozen(part)).toBe(true);
+    if (d.expected) expect(Object.isFrozen(d.expected)).toBe(true);
+    expect(d.range).not.toBe(src.range);
+    expect(d.related![0]).not.toBe(src.related![0]);
+    expect(Object.isFrozen(src)).toBe(false);
+    expect(Object.isFrozen(src.range)).toBe(false);
+  });
+
+  it('copies expected', async () => {
+    const doc = await open('flowchart TD\n  A -->\n');
+    const d = doc.diagnostics().find((x) => x.expected?.length)!;
+    const src = doc.context.result!.diagnostics.find((x) => x.code === d.code)!;
+    expect(d.expected).toEqual(src.expected);
+    expect(d.expected).not.toBe(src.expected);
+    expect(Object.isFrozen(d.expected)).toBe(true);
+    expect(Object.isFrozen(src.expected)).toBe(false);
+  });
+});
+
 describe('semantic tokens around subgraphs (D94)', () => {
   const typed = (doc: DocumentSnapshot) =>
     doc
