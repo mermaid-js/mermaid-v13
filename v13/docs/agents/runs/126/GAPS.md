@@ -92,3 +92,9 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 
 - Accepted by the M3 coordinator: the mmd-snapshot runner decodes HTML entities as v12's e2e page did.
 - Snapshots outside class: none change. No flowchart, ER or sequence fixture contains `&lt;`, `&gt;`, `&amp;` or `&quot;`. Block (1), mindmap (1) and usecase (4) fixtures do, but those types are not in `SUPPORTED_TYPES`, so they are not snapshotted. State's `pr-check/should-render-forks-and-joins.mmd` and `should-render-forks-in-composit-states.mmd` will be decoded once state merges (state is told).
+
+## #158 (interactions): contract from sequence #147 (draft PR #202, not merged yet)
+
+- Build on #202 once it is in `mermaid-v13`: `packages/plugin-interactions/src/feature.ts` plus the `FEATURES` table in `index.ts`. Each feature owns one AST field end to end (start, collect, plan, bind). Class adds one entry and its own file. Flowchart callbacks already run through it.
+- Core gains a type-only `AstMenu` in parser-kit and a `'menus'` ExtensionClaim. Binding is scoped per diagram svg, keyed on content; `mount()` rebinds on every render.
+- Also #158's: the sandbox `linkTarget` rule (`_top` under `securityLevel: 'sandbox'`), and `haveCallback` / `model.callbacks`, which the renderer leaves undrawn.
