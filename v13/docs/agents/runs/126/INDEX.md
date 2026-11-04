@@ -9,7 +9,7 @@ Integration: `feature/126_class-diagram`, draft PR #166 into `mermaid-v13`. T2 m
 | #154 | T2 grammar, parser, model, AST | #153, #27, #28 | feature/154_class-parser, merged here |
 | #155 | T3 layout | #152, #154 | feature/155_class-layout |
 | #156 | T4 renderer | #155 | |
-| #157 | T5 integration | #156 | |
+| #157 | T5 integration | #156 | feature/157_class-integration |
 | #158 | interactions (D105) | #156; not alongside #125's | waits for sequence #147 to merge (agreed with #125, D112) |
 | #159 | T6 language facet | #154, #29, #31 | feature/159_class-language |
 | #185 | T0b core `sourceView` directive fix (D114) | – | fix/185_source-view-directives, merged via #186 |
