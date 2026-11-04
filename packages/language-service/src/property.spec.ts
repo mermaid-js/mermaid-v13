@@ -6,6 +6,10 @@
  * facet), plus the start and end of every word, blank run and punctuation character (every
  * type, so the generic features are covered too), plus 0 and the text's length.
  *
+ * Invariants: semantic tokens are sorted and never overlap (editors require both), and every
+ * completion item replaces a range on the cursor's line that contains the cursor (Monaco and
+ * CodeMirror drop items whose range spans lines).
+ *
  * Budget, as a ratio (timing tests never assert absolute times): no query call takes longer
  * than {@link RATIO} times the document's own `update` (a full re-parse, best of three), best
  * of three calls, with a {@link FLOOR_MS} floor for timer noise on tiny documents. The absolute 10 ms budget
@@ -88,6 +92,14 @@ function check(name: string, text: string): string[] {
   run('diagnostics', () => doc.diagnostics());
   run('foldingRanges', () => doc.foldingRanges());
   run('semanticTokens', () => doc.semanticTokens());
+  const tokens = doc.semanticTokens();
+  for (let i = 1; i < tokens.length; i++) {
+    const [a, b] = [tokens[i - 1]!.range, tokens[i]!.range];
+    if (b.start < a.end)
+      problems.push(
+        `${name}: semantic tokens [${a.start},${a.end}) and [${b.start},${b.end}) overlap or are unsorted`
+      );
+  }
   for (const at of boundaries(doc)) {
     run('definition', () => doc.definition(at), at);
     run('references', () => doc.references(at), at);
@@ -96,6 +108,16 @@ function check(name: string, text: string): string[] {
     run('rename', () => doc.rename(at, 'renamed1'), at);
     run('astAt', () => doc.astAt(at).map((id) => doc.rangeOf(id)), at);
     run('completions', () => doc.completions(at), at);
+    const bad = doc
+      .completions(at)
+      .find(
+        ({ range: r }) =>
+          r.start > at || r.end < at || /[\r\n]/.test(doc.text.slice(r.start, r.end))
+      );
+    if (bad)
+      problems.push(
+        `${name}: completion ${JSON.stringify(bad.label)} @${at} replaces [${bad.range.start},${bad.range.end}), off the cursor's line`
+      );
     run('hover', () => doc.hover(at), at);
   }
   service.close(uri);

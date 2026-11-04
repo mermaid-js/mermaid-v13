@@ -271,6 +271,17 @@ describe('semantic tokens never overlap (LSP, #38)', () => {
     ]);
   });
 
+  it('keeps a node id that starts with digits whole (#36 review)', async () => {
+    const doc = await open('flowchart TD\n  1A --> 1B\n');
+    expect(tokens(doc)).toEqual([
+      'flowchart keyword',
+      'TD enumMember',
+      '1A node',
+      '--> operator',
+      '1B node',
+    ]);
+  });
+
   it('ends a keyword before a comment its token runs over', async () => {
     const doc = await open('flowchart LR\n  subgraph S\n    a\n  end\n\n  %% note\n  a --> b\n');
     expect(tokens(doc)).toContain('end keyword');

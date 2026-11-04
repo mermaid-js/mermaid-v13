@@ -149,6 +149,13 @@ describe('completion', () => {
     }
   });
 
+  it('at the start of an `end` followed by a statement: replaces `end` only (#36 review)', () => {
+    const { doc, offset } = at('flowchart LR\n  subgraph a\n    a1\n  |end\n  C --> D\n');
+    const items = doc.completions(offset);
+    expect(items.map((i) => i.label)).toContain('end');
+    for (const i of items) expect(doc.text.slice(i.range.start, i.range.end)).toBe('end');
+  });
+
   it('after `direction `: the directions', () => {
     const dirs = ['TB', 'TD', 'BT', 'LR', 'RL'];
     expect(labels('flowchart TD\n  A\n  direction |')).toEqual(dirs);

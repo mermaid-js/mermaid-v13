@@ -114,8 +114,10 @@ function wordRange(text: string, tokens: TokenStream, probe: ProbeResult): Range
     end = tokens.end[i] ?? end;
     i++;
   }
-  // Some tokens take the blanks after them (`end`): those are not replaced.
-  while (end > o && /\s/.test(text.charAt(end - 1))) end--;
+  // Some tokens take the blanks after them (`end\n  `): the word stops at the first blank
+  // after the cursor, so a range never runs on to the next line or statement.
+  const blank = /\s/.exec(text.slice(o, end));
+  if (blank) end = o + blank.index;
   return span(probe.prefix.start, end);
 }
 
