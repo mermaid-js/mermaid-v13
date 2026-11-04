@@ -20,7 +20,8 @@ const OUT = fileURLToPath(new URL('../src/v12-specs/', import.meta.url));
 /** The specs that parse; the others test v12's renderer and svgDraw with a mocked DOM. */
 const FILES = ['sequenceDiagram.spec.js', 'keywordActors.spec.ts'];
 
-const RENDER = "draws with v12's renderer (bounds, `showSequenceNumbers`); the renderer is #143";
+const RENDER =
+  "asserts v12's internal `bounds` object, which only v12's renderer fills; v13's layout has its own invariants (`sequenceLayoutViolations`)";
 
 /** `file: { test or describe title (or its unique start): reason }`. Reasons are written into the file. */
 export const SKIP: Record<string, Record<string, string>> = {

@@ -12,6 +12,13 @@
  * | box                                       | `box:<ordinal>`          |
  * | any other statement (`activate`, `destroy`, `rect`, `else`, `autonumber`, `title`, menus, …) | `st:<ordinal>` |
  *
+ * Names are written as they are, except that `%`, `>`, `@` and `#` are percent-encoded (`%25`,
+ * `%3E`, `%40`, `%23`), so the suffixes stay unambiguous; spaces and other characters are kept.
+ * The first mention or message has no suffix; the n-th later one takes `@n` (participants) or
+ * `#n` (messages between the same two participants, counted from 2). For example:
+ * `participant A B` is `p:A B`; `participant A#c` is `p:A%23c`; the first `A->>B#2` is
+ * `m:A>B%232`; the second `A->>B` is `m:A>B#2`.
+ *
  * The first mention of a participant is the AST node whose id the model's participant keeps
  * (`p:A`): a declaration (`participant A`) or a reference inside a message, note or menu
  * statement, whichever comes first. `activate`, `deactivate` and `destroy` add no participant

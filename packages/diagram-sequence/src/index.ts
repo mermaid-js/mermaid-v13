@@ -1,6 +1,8 @@
 /**
- * `@mermaid-js/diagram-sequence`: the sequence diagram plugin (spec #125).
- * The plugin export and manifest land with the tickets of that spec.
+ * `@mermaid-js/diagram-sequence`: the sequence diagram plugin (spec #125): the plugin export
+ * (`sequence`), the parser, layout and SVG renderer entries, and the model and AST types. The
+ * package's `mermaid` manifest registers it, with `./ascii` and `./language` as the text hook
+ * and the language facet.
  */
 import type { DiagramPlugin } from '@mermaid-js/core';
 import type { SequenceModel } from './model.ts';

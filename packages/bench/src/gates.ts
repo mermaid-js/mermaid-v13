@@ -25,9 +25,9 @@ export const LIMITS = {
   /** R-PERF-9 (Should): ms from navigation start until the first render is possible. */
   readyAtMs: 15,
   /**
-   * R-ASCII-9 / D87: what a text render of one diagram type loads on top of its SVG render
+   * R-ASCII-9 / D87 / D130: what a text render of one diagram type loads on top of its SVG render
    * (`core/ascii` plus that type's ascii entry), gzip bytes, for the largest type: the per-type
-   * max (maintainer decision 2026-11-04). Kept apart from R-PERF-1, which never loads it.
+   * max (D130). Kept apart from R-PERF-1, which never loads it.
    * A soft budget (D87): the `ascii-size` gate reports it and never fails the job.
    */
   asciiGzipBytes: 15 * 1024,
@@ -248,7 +248,7 @@ export function evaluateGates({
           .join(', ')}`;
   gates.push({
     id: 'ascii-size',
-    title: "ASCII chunks, core/ascii + one type's ascii entry, per-type max (gzip)",
+    title: "ASCII chunks, core/ascii + one type's ascii entry, per-type max (gzip, D130)",
     requirement: 'R-ASCII-9',
     // D87: the budget is soft. Measured and reported; it never fails the job.
     level: 'should',

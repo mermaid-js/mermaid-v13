@@ -10,7 +10,7 @@
 | T5 integration | #145 | #143, #194 | merged |
 | Actor menus (plugin-interactions) | #147 | #143; never with class #158 (D112) | merged into `mermaid-v13` as #202; sequence wiring in #145 |
 | T6 language facet | #149 | #139, #29, #31 | merged |
-| T7 ASCII | #150 | #139, #141 | merged (supportsFormat + CLI wait on #145) |
+| T7 ASCII | #150 | #139, #141 | merged (format support and CLI wired in #145) |
 
 - `01-v12-sequence.md`: pointer notes on v12 grammar, DB, renderer, specs, corpus.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.

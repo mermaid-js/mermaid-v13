@@ -86,7 +86,7 @@ export function asciiSizeByType(bundle: Bundle): Record<string, number> {
 /**
  * Gzip size of the largest one-diagram text path (`asciiPaths`), measured from the build
  * (`source: 'static'`). The soft budget (D87) holds per type, not for every type's drawing at
- * once: the gate reads the per-type max (maintainer decision 2026-11-04).
+ * once: the gate reads the per-type max (D130).
  */
 export function asciiSize(bundle: Bundle): SizeSummary {
   const paths = asciiPaths(bundle);

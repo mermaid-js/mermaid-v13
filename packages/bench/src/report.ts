@@ -95,7 +95,7 @@ export interface BenchReport {
   /**
    * What a text render of one diagram type loads that an SVG render never does (R-ASCII-9, D87),
    * from the build's import graph (`source: 'static'`): the largest type's path, which the gate
-   * reads (per-type max, maintainer decision 2026-11-04). Absent in reports older than M2.
+   * reads (per-type max, D130). Absent in reports older than M2.
    */
   asciiSize?: SizeSummary | null;
   /** Gzip bytes of each diagram type's text path (`asciiPaths`), so every type stays visible. */

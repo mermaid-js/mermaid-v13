@@ -323,8 +323,8 @@ function load(text: string, db: SequenceDB): void {
 }
 
 /**
- * No drawing here (#143): specs that check what the renderer drew are skipped; the ones that
- * only call `draw` to see that nothing throws check the parse.
+ * No drawing here: specs that assert v12's internal `bounds` (which only v12's renderer fills)
+ * are skipped; the ones that only call `draw` to see that nothing throws check the parse.
  */
 const renderer = { draw: (): Promise<void> => Promise.resolve() };
 

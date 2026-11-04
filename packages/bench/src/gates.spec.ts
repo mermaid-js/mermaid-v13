@@ -148,7 +148,7 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
     expect(gate(report, 'ascii-size')).toMatchObject({ status: 'fail', actual: null });
   });
 
-  // Gated on the per-type max (maintainer decision 2026-11-04); every type's number stays in
+  // Gated on the per-type max (D130); every type's number stays in
   // the report and the gate detail, so a regression of a smaller type is still visible.
   it("lists each type's ascii path size in the gate detail", () => {
     const report = healthy();

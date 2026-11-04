@@ -6,9 +6,9 @@
 // cspell:disable
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Diagram, mermaidAPI, parser, SequenceDB, setSiteConfig } from './adapter.ts';
-// skipped: when checking the bounds in a sequenceDiagram — draws with v12's renderer (bounds, `showSequenceNumbers`); the renderer is #143
-// skipped: when rendering a sequenceDiagram APA — draws with v12's renderer (bounds, `showSequenceNumbers`); the renderer is #143
-// skipped: when rendering a sequenceDiagram with actor mirror activated — draws with v12's renderer (bounds, `showSequenceNumbers`); the renderer is #143
+// skipped: when checking the bounds in a sequenceDiagram — asserts v12's internal `bounds` object, which only v12's renderer fills; v13's layout has its own invariants (`sequenceLayoutViolations`)
+// skipped: when rendering a sequenceDiagram APA — asserts v12's internal `bounds` object, which only v12's renderer fills; v13's layout has its own invariants (`sequenceLayoutViolations`)
+// skipped: when rendering a sequenceDiagram with actor mirror activated — asserts v12's internal `bounds` object, which only v12's renderer fills; v13's layout has its own invariants (`sequenceLayoutViolations`)
 // skipped: should have functions used in sequence JISON as own property — checks the methods v12's jison grammar called on its DB; v13 has no jison DB
 
 beforeAll(async () => {
