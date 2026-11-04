@@ -70,8 +70,10 @@ generated/
 /CLAUDE.md
 /AGENTS.md
 /assistant/
+# Project skills are shared (v13/docs/RELEASING.md uses release-alpha); the rest of .claude stays
+# local. `!/.claude/` first, so a global `.claude` ignore can't hide the skills.
+!/.claude/
 /.claude/*
-# Project skills are shared (v13/docs/RELEASING.md uses release-alpha).
 !/.claude/skills/
 packages/mermaid/src/diagrams/CLAUDE.md
 packages/parser/CLAUDE.md

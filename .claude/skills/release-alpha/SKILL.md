@@ -1,0 +1,71 @@
+---
+name: release-alpha
+description: Release Mermaid v13 alpha packages (mermaid, @mermaid-js/*) to npm by hand, or check what a release would ship. Use when asked to release, publish or cut an alpha, to see what is pending, or to finish a release that failed half way. Runs the preflight and checks, versions with Changesets, rehearses on a local registry, publishes and tags, and asks before each step that leaves the machine.
+---
+
+# Release the v13 alpha
+
+Follow `v13/docs/RELEASING.md` §5. Read it first if you haven't in this session: it explains the versioning (independent `13.0.0-alpha.N` per package, dependents re-released, exact pins) that you will report to the user.
+
+Arguments: `dry run` (or `plan`) stops after step 4 and publishes nothing. `in CI` (or `on GitHub`) runs the release with the *Release alpha (manual)* workflow instead of on this machine: see *In CI* below.
+
+## In CI
+
+Run step 1 (preflight) locally for the plan, then ask before starting anything. Show the plan and whether it is a dry run.
+
+```bash
+gh workflow run release-alpha.yml -f dry_run=true          # or dry_run=false to release
+gh run list --workflow release-alpha.yml --limit 1         # the run id
+gh run watch <id> --exit-status
+```
+
+Report the run's summary (`gh run view <id>`): its published lines. A real run (`dry_run=false`) is an outward step: it needs a yes, like step 5. If the run waits for approval in the `npm-alpha` environment, tell the user. On failure, show the failing step (`gh run view <id> --log-failed`). Re-running is safe.
+
+## Rules
+
+- **Ask before every outward step**: pushing the version commit, `release:publish`, pushing tags. Show what will happen (packages and versions) and wait for a yes. A yes covers that step of this release only.
+- Never pass `--force`, never `npm unpublish`, never `changeset pre exit`. Never edit versions, `version.ts` or CHANGELOGs by hand.
+- `--skip-gate` needs a reason from the user. Offer `"manual alpha"`, and quote what they choose.
+- npm auth: if the shell has a `mermaid-release` function (`type mermaid-release`), prefix `release:preflight` and `release:publish` with it. It runs them with the release token from the Keychain (`v13/docs/RELEASING.md`, *npm release token*), so no `--otp` is needed. Otherwise, if npm asks for a one-time password (`EOTP`), ask the user for a fresh code and re-run the same publish command with `--otp <code>`. Versions already published are skipped.
+- Never print, echo or log the token, and never write it to a file.
+- On a failed check, stop and report it with its output. Don't work around it.
+- Run commands from the repository root with the Node in `.node-version`.
+
+## Steps
+
+1. **Preflight.** Run `pnpm release:preflight`. Report its ✘ and ⚠ lines, the release plan and the next step.
+   - *Nothing to release*: say so and stop.
+   - ✘ lines: stop. Common fixes: `git pull`, `git stash` (ask first), `npm login`, `gh auth login`.
+   - *Next: build and publish* (versioned earlier, never published): skip to step 4.
+
+2. **Checks.** Run `pnpm check`. It must pass. If it fails, show the failing part and stop. Only the user can decide to release anyway.
+
+3. **Version.** Explain the plan in plain words: which packages change because of a changeset, and which only because they depend on one (marked *dependent*). Then:
+   ```bash
+   GITHUB_TOKEN=$(gh auth token) pnpm changeset version
+   pnpm release:sync-version
+   pnpm exec prettier --write .changeset "packages/*/package.json"
+   git add -A && git commit -m "chore(release): version packages"
+   ```
+   Show `git show --stat HEAD` and the new CHANGELOG entries. Ask to push: `git push origin mermaid-v13`. If the push is rejected by branch protection, tell the user to merge the commit through a PR, then continue from step 1 on the merged commit.
+
+4. **Build and rehearse.**
+   ```bash
+   pnpm build
+   pnpm release:rehearse
+   ```
+   Every check must be ✔. Report the bundle sizes it prints. For `dry run`, stop here: say what would publish and that nothing left the machine. Also say that the version commit from step 3 is local, if it wasn't pushed. Ask whether to keep it or drop it (`git reset --hard HEAD~1`, only with a yes).
+
+5. **Publish.** List each `name@version` that `release:preflight` reports as *not on the registry yet*, and ask for a yes. Then:
+   ```bash
+   mermaid-release pnpm release:publish --target public --no-provenance --skip-gate "<reason>"   # or without the prefix, plus --otp
+   ```
+   It first prints the last known bench (R-PERF-1…4, not enforced). Show those lines to the user, and say plainly when a check fails (for example R-PERF-3 below 50×). Report every `published:` and `already published:` line. On an error, show it. A re-run is safe.
+
+6. **Tag.**
+   ```bash
+   pnpm changeset tag
+   ```
+   Ask, then `git push origin --tags`.
+
+7. **Confirm.** Run `pnpm release:preflight` again: it should report *Nothing to release*. Run `npm view mermaid dist-tags`: `alpha` should be the new version and `latest` still 12.x. Finish with the released `name@version` list and the install line: `npm install mermaid@alpha --save-exact`.
