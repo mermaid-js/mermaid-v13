@@ -30,6 +30,8 @@ export const GRAMMARS: GrammarTarget[] = [
       unnamed: { ShapeDataEnd: { mode: 'shapeData', pattern: '\\}' } },
       // `@{` and the text between quotes are Meta, the quoted values String.
       mixed: ['SHAPE_DATA'],
+      // `click <id>` and `call <name>`: the keyword is not a token of its own.
+      documented: ['Click', 'CallbackName'],
     },
   },
 ];

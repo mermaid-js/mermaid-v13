@@ -23,6 +23,11 @@ export interface KindSource {
    * mixed terminal fails generation.
    */
   mixed?: string[];
+  /**
+   * Kinds that get a hover doc (D93) although their category is not keyword or operator: the
+   * text before them is a keyword the lexer emits no token for (`click`, `call`).
+   */
+  documented?: string[];
 }
 
 /**

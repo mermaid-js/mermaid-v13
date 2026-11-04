@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { FlowTokenKind as T } from '@mermaid-js/diagram-flowchart';
 // The checked-in table, read from source: the package exports it from `./language` only.
 import { flowchartDocs } from '../../../packages/diagram-flowchart/src/generated/docs.ts';
-import { docTable } from './docs.ts';
+import { docsModule, docTable } from './docs.ts';
 import { parseGrammar } from './ebnf.ts';
 import { generate, sourceDir } from './generate.ts';
 
@@ -50,6 +50,30 @@ step = SPACE STEP ;
     });
   });
 
+  it('prefers a token rule’s own doc to a rule that only names it; documents listed kinds too', () => {
+    const own = parseGrammar(`@lexer
+GO     /go\\b/     :keyword ;
+(** \`fast\`: quickly. *)
+FAST   /fast\\b/   :keyword ;
+NAME   /[a-z]+/    :variable ;
+SPACE  /[ ]+/ ;
+@grammar
+(** \`go name\`. *)
+Go @Go = GO SPACE NAME [ SPACE FAST ] ;
+`);
+    expect(docTable(own, ['Go', 'Fast', 'Name'], ['Name']).entries).toEqual([
+      ['Go', '`go name`.'],
+      ['Fast', '`fast`: quickly.'],
+      ['Name', '`go name`.'],
+    ]);
+  });
+
+  it('fails generation when a keyword kind has no doc', () => {
+    expect(() =>
+      docsModule(g, 'demo', 'demo.ebnf', ['Go', 'Stop'], { module: 'k.ts', object: 'K' })
+    ).toThrow(/no doc for the keyword kinds Stop/);
+  });
+
   it('is generated for flowchart from the grammar file’s doc comments, not a second copy', () => {
     const files = generate((p) => readFileSync(join(root, p), 'utf8'));
     expect(files.has(`${sourceDir('flowchart')}/generated/docs.ts`)).toBe(true);
@@ -58,6 +82,9 @@ step = SPACE STEP ;
     expect(flowchartDocs[T.End]).toBe(flowchartDocs[T.Subgraph]);
     expect(flowchartDocs[T.Link]).toMatch(/^A link/);
     expect(flowchartDocs[T.ClassDef]).toMatch(/classDef/);
+    expect(flowchartDocs[T.Click]).toMatch(/^`click id callback`/);
+    expect(flowchartDocs[T.CallbackName]).toBe(flowchartDocs[T.Click]);
+    expect(flowchartDocs[T.Default]).toMatch(/classDef default/);
     for (const k of [T.Style, T.Class, T.LinkStyle, T.Default, T.AccTitle, T.DirectionTB]) {
       expect(flowchartDocs[k], `kind ${k}`).toMatch(/\S/);
     }
