@@ -60,3 +60,33 @@ describe('state probe leaves the parse unchanged', () => {
     // ~12k parses: about 3 s alone, longer beside a full `pnpm test` (it is a sweep, not a timing).
   }, 60_000);
 });
+
+/** The probe's mode is the lexer's start condition at the offset (jison's names, as flowchart). */
+describe('state probe mode', () => {
+  const modeAt = (marked: string) => {
+    const at = marked.indexOf('|');
+    return parseState(marked.replace('|', ''), { keepTokens: true, probe: at }).probe?.mode;
+  };
+
+  it.each([
+    ['stateDiagram-v2\n  |', 'INITIAL'],
+    ['stateDiagram-v2\n  A --> |', 'INITIAL'],
+    ['stateDiagram-v2\n  state A {\n    |\n  }', 'struct'],
+    ['stateDiagram-v2\n  note |', 'NOTE'],
+    ['stateDiagram-v2\n  note left of |A', 'NOTE_ID'],
+    ['stateDiagram-v2\n  note right of A\n    te|xt\n  end note', 'NOTE_TEXT'],
+    ['stateDiagram-v2\n  class |', 'CLASS'],
+    ['stateDiagram-v2\n  class A |hot', 'CLASS_STYLE'],
+    ['stateDiagram-v2\n  classDef |', 'CLASSDEF'],
+    ['stateDiagram-v2\n  style |', 'STYLE'],
+    ['stateDiagram-v2\n  state |', 'STATE'],
+    ['stateDiagram-v2\n  accTitle: a |title', 'acc_title'],
+  ])('%j is in %s', (marked, mode) => {
+    expect(modeAt(marked)).toBe(mode);
+  });
+
+  it('is `comment` in a comment and `frontMatter` in front matter', () => {
+    expect(modeAt('stateDiagram-v2\n  %% a |comment\n  A')).toBe('comment');
+    expect(modeAt('---\ntitle: |x\n---\nstateDiagram-v2\n  A')).toBe('frontMatter');
+  });
+});

@@ -5,7 +5,7 @@
  * quotes, `<<fork>>`-style markers, `end note`, …) and over a `;` v12 dropped.
  */
 import { Kind, kindSet } from '@mermaid-js/core/parser-kit';
-import type { TokenView } from '@mermaid-js/core/parser-kit';
+import type { Probe, TokenView } from '@mermaid-js/core/parser-kit';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { lex, NO_VIEW } from './lexer.ts';
 import { T } from './tokens.ts';
@@ -45,14 +45,15 @@ export interface Tokens extends TokenView {
 
 export function terminals(
   src: string,
-  pre: PreprocessResult
+  pre: PreprocessResult,
+  probe?: Probe
 ): { tokens: Tokens; all: ReturnType<typeof lex>['tokens'] } {
   const view = stateView(
     src,
     pre.bodyStart,
     pre.directives.map((d) => d.range)
   );
-  const { tokens, viewStart, viewEnd } = lex(src, view);
+  const { tokens, viewStart, viewEnd } = lex(src, view, probe);
   const last = view.text.length - 1;
   const kind: number[] = [];
   const start: number[] = [];

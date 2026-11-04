@@ -145,14 +145,14 @@ class StateParser {
       warn: (code, message, range) => void diagnostics.warning(code, message, range),
     });
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
-    const { tokens, all } = terminals(src, pre);
+    const probe =
+      options.probe === undefined ? undefined : new Probe(src, options.probe, PROBE_FOLLOWS);
+    this.probe = probe;
+    if (probe && pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+    const { tokens, all } = terminals(src, pre, probe);
     this.tokens = tokens;
     this.all = all;
-    if (options.probe !== undefined) {
-      const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
-      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
-      else probe.trivia(all);
-    }
+    probe?.trivia(all);
   }
 
   parse(): StateParseResult {
@@ -400,7 +400,7 @@ class StateParser {
       keyword: this.text(j).trim(),
     };
     out.push(node);
-    this.st.statement('Header', node.range);
+    this.st.statement('header', node.range);
   }
 
   /** `document`: statements and line breaks, to the end (or the `}` of `scope`). */
@@ -437,7 +437,8 @@ class StateParser {
       range: this.span(from),
       refs,
     };
-    this.st.statement(kind, node.range);
+    // Statement kinds are camelCase, as flowchart's (`accDescr`, `classDef`; DESIGN §4.5).
+    this.st.statement(kind.charAt(0).toLowerCase() + kind.slice(1), node.range);
     return node;
   }
 
@@ -489,7 +490,7 @@ class StateParser {
         const node = this.stateNode(from, name, this.own(from), scope);
         node.declaredOnly = true;
         nodes.push(node);
-        this.st.statement('State', node.range);
+        this.st.statement('state', node.range);
         this.declared.push([name, node.range]);
         items.push(NOOP);
         return;
@@ -526,7 +527,7 @@ class StateParser {
         const node = this.stateNode(from, name, this.own(from), scope);
         node.pseudo = PSEUDO[k];
         nodes.push(node);
-        this.st.statement('State', node.range);
+        this.st.statement('state', node.range);
         items.push({
           stmt: 'state',
           id: this.text(from),
@@ -662,13 +663,13 @@ class StateParser {
       node.range = this.span(from);
       doc.items.push(item);
       doc.nodes.push(node);
-      this.st.statement('State', node.range);
+      this.st.statement('state', node.range);
       return;
     }
     if (this.kind() !== T.Arrow) {
       doc.items.push(item);
       doc.nodes.push(node);
-      this.st.statement('State', node.range);
+      this.st.statement('state', node.range);
       return;
     }
     this.i++;
@@ -693,7 +694,7 @@ class StateParser {
     }
     doc.items.push(rel);
     doc.nodes.push(edge);
-    this.st.statement('Transition', edge.range);
+    this.st.statement('transition', edge.range);
   }
 
   /** `state "…" as X`, optionally with a body. */
@@ -719,7 +720,7 @@ class StateParser {
     const node = this.stateNode(from, name, nameRange, scope);
     node.description = Array.isArray(description) ? description.join(':') : description;
     doc.nodes.push(node);
-    this.st.statement('State', node.range);
+    this.st.statement('state', node.range);
     doc.items.push({
       stmt: 'state',
       id,
@@ -754,7 +755,7 @@ class StateParser {
       children: [],
     };
     if (descr !== undefined) node.description = descr;
-    const span = this.st.beginStatement('Composite', node.range.start);
+    const span = this.st.beginStatement('composite', node.range.start);
     const body: Doc = { items: [], nodes: [] };
     if (depth > this.maxDepth) {
       this.st.diagnostics.error(
@@ -836,7 +837,7 @@ class StateParser {
       };
       doc.nodes.push(node);
       doc.items.push(NOOP);
-      this.st.statement('Note', node.range);
+      this.st.statement('note', node.range);
       this.st.diagnostics.warning(
         'FLOATING_NOTE',
         'A note with `as` is not attached to a state and is not drawn: write `note left of <state>` or `note right of <state>`.',
@@ -873,7 +874,7 @@ class StateParser {
       children: [mention],
     };
     doc.nodes.push(node);
-    this.st.statement('Note', node.range);
+    this.st.statement('note', node.range);
     doc.items.push({
       stmt: 'state',
       id: target,

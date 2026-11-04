@@ -1,0 +1,15 @@
+@ 5:7  A:::|hot --> B
+  hot class 5:7-5:10 "hot" -> "hot"
+  cold class 5:7-5:10 "hot" -> "cold"
+@ 6:11  class A,|B hot
+  A node 6:11-6:12 "B" -> "A"
+  B node 6:11-6:12 "B" -> "B"
+@ 7:11  class A |hot
+  hot class 7:11-7:14 "hot" -> "hot"
+  cold class 7:11-7:14 "hot" -> "cold"
+@ 8:9  style |A fill:#bbf
+  A node 8:9-8:10 "A" -> "A"
+  B node 8:9-8:10 "A" -> "B"
+@ 9:12  classDef |
+  hot class 9:12-9:12 "" -> "hot"
+  cold class 9:12-9:12 "" -> "cold"

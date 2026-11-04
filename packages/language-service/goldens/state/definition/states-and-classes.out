@@ -1,0 +1,12 @@
+@ 4:12  Idle --> |Busy
+  -> 3:25-3:29 "Busy"
+@ 5:20  Busy --> Idle : d|one
+  -> none
+@ 6:16  note left of |Idle : waits
+  -> 2:11-2:15 "Idle"
+@ 7:9  class |Idle hot
+  -> 2:11-2:15 "Idle"
+@ 9:11  Busy:::h|ot --> [*]
+  -> 8:12-8:15 "hot"
+@ 10:9  style |Busy fill:#bbf
+  -> 3:25-3:29 "Busy"

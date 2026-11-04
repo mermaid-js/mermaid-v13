@@ -32,7 +32,7 @@ import {
   SEMI,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Probe, TokenStream } from '@mermaid-js/core/parser-kit';
 import type { StateView } from './view.ts';
 import { T } from './tokens.ts';
 
@@ -59,6 +59,8 @@ const S = {
   FLOATING_NOTE: 18,
   FLOATING_NOTE_ID: 19,
 } as const;
+/** Start condition names by number, for the probe's lexer mode (R-LANG-7). */
+const S_NAMES = /* @__PURE__ */ Object.keys(S);
 
 // Literal rules (case-insensitive, as `%options case-insensitive` compiles them).
 const RE_CLICK = /click\b/iy;
@@ -109,9 +111,12 @@ export interface Lexed {
 
 export const NO_VIEW = 0xffffffff;
 
-/** Lex the state source `src` whose v12 text is `view`. */
-export function lex(src: string, view: StateView): Lexed {
-  return new StateLexer(src, view).run();
+/**
+ * Lex the state source `src` whose v12 text is `view`. With a `probe`, the start condition at
+ * the probe's offset is recorded as its mode.
+ */
+export function lex(src: string, view: StateView, probe?: Probe): Lexed {
+  return new StateLexer(src, view).run(probe);
 }
 
 class StateLexer {
@@ -144,8 +149,10 @@ class StateLexer {
     this.lower = view.text.replace(/[A-Z]+/g, (s) => s.toLowerCase());
   }
 
-  run(): Lexed {
-    while (this.p < this.n) this.step();
+  run(probe?: Probe): Lexed {
+    // Two loops, so a plain lex does no probe work per step.
+    if (probe === undefined) while (this.p < this.n) this.step();
+    else this.probedSteps(probe);
     this.atEnd();
     this.flushRemoved(this.src.length + 1);
     return {
@@ -153,6 +160,17 @@ class StateLexer {
       viewStart: Uint32Array.from(this.vs),
       viewEnd: Uint32Array.from(this.ve),
     };
+  }
+
+  /** The steps, telling `probe` the start condition each one reads its text in. */
+  private probedSteps(probe: Probe): void {
+    while (this.p < this.n) {
+      const before = this.p;
+      const mode = S_NAMES[this.state] ?? '';
+      this.step();
+      probe.lexed(this.sourceStart(before), this.sourceStart(this.p), mode);
+    }
+    probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
   }
 
   // --- output ---

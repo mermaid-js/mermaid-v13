@@ -1,0 +1,5 @@
+@ 3:18  note right of B|usy : text
+  Busy node 3:17-3:21 "Busy" -> "Busy"
+@ 4:16  note left of |
+  Idle node 4:16-4:16 "" -> "Idle"
+  Busy node 4:16-4:16 "" -> "Busy"

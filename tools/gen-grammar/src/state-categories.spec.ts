@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { Kind, TOKEN_CATEGORIES } from '@mermaid-js/core/parser-kit';
-import { StateTokenKind as T } from '@mermaid-js/diagram-state';
-// The checked-in tables, read from source: the facet (#151) will export them from `./language`.
-import { stateCategories } from '../../../packages/diagram-state/src/generated/categories.ts';
-import { stateDocs } from '../../../packages/diagram-state/src/generated/docs.ts';
+import {
+  stateCategories,
+  stateDocs,
+  StateTokenKind as T,
+} from '@mermaid-js/diagram-state/language';
 
 describe('state kind → category table and keyword docs', () => {
   it('gives every state and shared kind a highlight category', () => {
