@@ -5,7 +5,7 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 ## #141 T3 layout
 - [ ] Invariants on fixtures produced by the v13 parser: waits for #139 (T2), which waits for #27/#28 (D107). Run `sequenceLayoutViolations` over the parsed corpus.
 - [ ] Messages after a participant is destroyed are drawn below its end (as v12) and the span invariant reports them. Decide in #139 whether the parser rejects or warns.
-- [ ] **Maintainer decision: sequence font sizes.** v12 overwrote every per-key `sequence` font size (`messageFontSize`, `noteFontSize`, `actorFontSize`, …) with the global `fontSize`, so they had no effect. v13 defaults them to the theme `fontSize` (same effective 16), but a set per-key size now takes effect. Change of v12 semantics; needs a D-id before T5 moves the keys to `honoured`.
+- **Decided (maintainer, 2026-11-04): honour per-key sequence font sizes.** A set `sequence.messageFontSize`, `noteFontSize`, `actorFontSize` (and the other per-key size/weight keys) takes effect; unset, they inherit the theme `fontSize` (v12's effective 16). v12 overwrote them all with the global `fontSize`. #141 already behaves this way. Still to do: the D-id row (next free after D114 on `docs/m3-specs`; the M3 docs session owns DECISIONS.md), and in #145 (T5) move the keys to `honoured` and add a MIGRATION.md entry for the change.
 
 ## #139 T2 parser
 
