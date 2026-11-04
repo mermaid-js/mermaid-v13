@@ -8,7 +8,7 @@
 | T4 SVG renderer | #143 | #139, #141 | merged |
 | Neo geometry as theme variables | #194 | #143 | running |
 | T5 integration | #145 | #143, #194 | — |
-| Actor menus (plugin-interactions) | #147 | #143; never with class #158 (D112) | next (class agreed #147 goes first; tell class #126 orchestrator when #147 reaches mermaid-v13) |
+| Actor menus (plugin-interactions) | #147 | #143; never with class #158 (D112) | next, as a core-style T0: own branch from `mermaid-v13`, own draft PR into `mermaid-v13` (generic plugin side, collecting by AST node kind); sequence wiring lands on this branch; tell class #126 the PR number; merge `mermaid-v13` back after the maintainer merges it |
 | T6 language facet | #149 | #139, #29, #31 | merged |
 | T7 ASCII | #150 | #139, #141 | running |
 
