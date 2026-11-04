@@ -77,3 +77,7 @@ Unmet criteria and shared contracts, by owning ticket.
 - [ ] Add `"language"` to the state manifest and run `gen:registry`. Then delete state's row in `packages/language-service/src/testing/pending-facets.ts` and the `@mermaid-js/diagram-state` devDependency of `packages/language-service`.
 - [ ] Optional: no `{` completion after `state x `, because state's error code is `UNCLOSED`, not `UNCLOSED_*`, and completion-validity counts it as an error. Rename `UNCLOSED` to `UNCLOSED_COMPOSITE` if wanted; that's a message-code change, so update the snapshots.
 - [ ] Optional: a bench language-bundle spec for state (only flowchart has one).
+
+## Accepted (maintainer)
+
+- [x] **First-paint colours via #190** (D119, draft PR #191): the CodeMirror and Monaco adapters colour the first paint with flowchart's grammar for every diagram type. Choosing the highlighter per type is cross-type ticket #190, after the M3 facets land. #151 does not change the adapters.
