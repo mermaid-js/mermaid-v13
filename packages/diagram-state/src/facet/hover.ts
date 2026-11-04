@@ -100,16 +100,35 @@ function symbolHover(s: SymbolOccurrence, model: StateModel): string | undefined
   return undefined;
 }
 
-/** `[*]` under the cursor: the start or end state it is, from its AST id. */
-function pseudoHover(ast: StateDocument, at: number): Hover | undefined {
-  for (const n of walk(ast.children)) {
-    if (n.type !== 'State' || n.name !== '[*]' || !within(n.nameRange, at)) continue;
-    const m = /^n:(?:(.*)\/)?\[\*\](start|end)/.exec(n.id);
-    if (!m) return undefined;
-    const of = m[1] === undefined ? 'the diagram' : `composite state ${code(m[1])}`;
-    return { range: n.nameRange, contents: `**${code('[*]')}** the ${m[2]} state of ${of}` };
-  }
-  return undefined;
+/**
+ * `[*]` under the cursor: the start or end state it is. Its AST id is scoped to the composite
+ * (`n:X/[*]start@2`), but each region has its own start and end (`X:region2_start`), so the
+ * enclosing `Region` node names the scope, as the model does.
+ */
+function pseudoHover(ast: StateDocument, model: StateModel, at: number): Hover | undefined {
+  const find = (children: readonly Node[], region?: string): Hover | undefined => {
+    for (const n of children) {
+      if (n.type === 'State' && n.name === '[*]' && within(n.nameRange, at)) {
+        const m = /^n:(?:(.*)\/)?\[\*\](start|end)/.exec(n.id);
+        if (!m) return undefined;
+        const scope = model.regions.find((r) => r.ast === region)?.id ?? m[1];
+        let of = 'the diagram';
+        if (scope === m[1] && scope !== undefined) of = `composite state ${code(scope)}`;
+        else if (scope !== undefined) of = placeOf(scope, model);
+        return { range: n.nameRange, contents: `**${code('[*]')}** the ${m[2]} state of ${of}` };
+      }
+      if ('children' in n) {
+        // A nested composite is its own scope until one of its regions opens.
+        let inner = region;
+        if (n.type === 'Region') inner = n.id;
+        else if (n.type === 'Composite') inner = undefined;
+        const hit = find(n.children as readonly Node[], inner);
+        if (hit) return hit;
+      }
+    }
+    return undefined;
+  };
+  return find(ast.children);
 }
 
 /** An arrow under the cursor: the transition it makes. */
@@ -151,7 +170,7 @@ export function stateHover(at: HoverTarget, doc: DocumentView<StateDocument>): H
     return undefined;
   }
   const word = text.slice(range.start, range.end);
-  if (t.kind === T.EdgeState) return pseudoHover(result.ast, at.offset);
+  if (t.kind === T.EdgeState) return pseudoHover(result.ast, model, at.offset);
   if (t.kind === T.Arrow) {
     return (
       arrowHover(result.ast, range) ?? {
