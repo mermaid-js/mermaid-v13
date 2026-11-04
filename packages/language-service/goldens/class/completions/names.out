@@ -1,5 +1,6 @@
 @ 5:16  class Fish:::|
   hot constant (style class) 5:16-5:16 "" -> "hot"
+  cold constant (style class) 5:16-5:16 "" -> "cold"
 @ 6:12  note for |
   Animal class 6:12-6:12 "" -> "Animal"
   Duck class 6:12-6:12 "" -> "Duck"
@@ -10,8 +11,10 @@
   Fish class 7:9-7:9 "" -> "Fish"
 @ 8:19  cssClass "Fish" |
   hot constant (style class) 8:19-8:19 "" -> "hot"
+  cold constant (style class) 8:19-8:19 "" -> "cold"
 @ 9:12  classDef |
   hot constant (style class) 9:12-9:12 "" -> "hot"
+  cold constant (style class) 9:12-9:12 "" -> "cold"
 @ 10:5  <<|
   interface constant (an interface) 10:5-10:5 "" -> "interface"
   abstract constant (an abstract class) 10:5-10:5 "" -> "abstract"
@@ -38,3 +41,9 @@
   Animal class 15:9-15:9 "" -> "Animal"
   Duck class 15:9-15:9 "" -> "Duck"
   Fish class 15:9-15:9 "" -> "Fish"
+@ 16:19  click Duck call |
+  none
+@ 17:14  style Duck |
+  none
+@ 18:17  classDef cold |
+  none

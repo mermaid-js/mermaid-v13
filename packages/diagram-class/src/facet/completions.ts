@@ -177,10 +177,19 @@ function arrowRest(text: string, tokens: TokenStream, o: number): CompletionItem
   return items.list;
 }
 
-/** Keywords and link targets whose kind the parser tests at the cursor. */
-function byKind(items: Items, expected: ReadonlySet<number>): void {
+/** Kinds of the keywords that start a statement (every keyword but `call` and `href`). */
+const CLICK_ACTIONS = new Set<number>([T.CallbackName, T.Href]);
+
+/**
+ * Keywords and link targets whose kind the parser tests at the cursor: statement keywords at
+ * a statement start only (a style value may be any word, `style A |` tests `style` too), and
+ * `call` / `href` right after `click Class`.
+ */
+function byKind(items: Items, expected: ReadonlySet<number>, st: Statement): void {
+  const clickAction = st.head === T.Click && st.groups === 1;
   for (const k of KEYWORDS) {
     if (!expected.has(k.kind)) continue;
+    if (CLICK_ACTIONS.has(k.kind) ? !clickAction : st.head !== -1) continue;
     const documentation = classDocs[k.kind];
     items.add(k.label, 'keyword', {
       insertText: k.insert ?? k.label,
@@ -197,7 +206,7 @@ function afterDirection(text: string, at: number): boolean {
   return /^[^\S\r\n]*direction[^\S\r\n]+$/.test(text.slice(lineStart, at));
 }
 
-type NameContext = 'classes' | 'styleClasses' | 'annotations' | 'arrows' | 'none';
+type NameContext = 'classes' | 'styleClasses' | 'annotations' | 'arrows' | 'label' | 'none';
 
 /** What an expected name is at this point of the statement. */
 function nameContext(st: Statement): NameContext {
@@ -213,8 +222,38 @@ function nameContext(st: Statement): NameContext {
   // A statement led by a class name: a relationship, or `A : member`.
   const arrowAt = kinds.findIndex((k) => ARROW_PARTS.has(k));
   if (arrowAt < 0) return prev === T.Label ? 'none' : 'arrows';
-  const afterArrow = kinds.slice(arrowAt).every((k) => ARROW_PARTS.has(k) || k === T.Str);
-  return afterArrow ? 'classes' : 'none';
+  const rest = kinds.slice(arrowAt);
+  if (rest.every((k) => ARROW_PARTS.has(k) || k === T.Str)) return 'classes';
+  // `A --> B |`: the relationship's `: label` may follow.
+  return rest.includes(T.Label) ? 'none' : 'label';
+}
+
+/** The names, annotations or operators a {@link NameContext} offers. */
+function contextItems(
+  items: Items,
+  context: NameContext,
+  expected: ReadonlySet<number>,
+  symbols: readonly SymbolOccurrence[],
+  at: number,
+  labels: ReadonlyMap<string, string>
+): void {
+  const name = expected.has(T.Alpha);
+  if (context === 'classes' && name) {
+    names(items, symbols, 'class', at, 'class', (id) => {
+      const label = labels.get(id);
+      return label === undefined || label === id ? undefined : label;
+    });
+  } else if (context === 'styleClasses' && name) {
+    names(items, symbols, 'cssClass', at, 'constant', () => 'style class');
+  } else if (context === 'annotations' && name) {
+    for (const [a, meaning] of ANNOTATIONS) items.add(a, 'constant', { detail: meaning });
+  } else if (context === 'arrows' || context === 'label') {
+    if (context === 'arrows' && expected.has(T.Line)) for (const a of ARROWS) arrowItem(items, a);
+    if (expected.has(T.Label)) {
+      const detail = context === 'arrows' ? 'a member, or a label' : 'a label';
+      items.add(':', 'operator', { insertText: ': ', detail });
+    }
+  }
 }
 
 export function classCompletions(
@@ -239,22 +278,10 @@ export function classCompletions(
   const model = result.model as ClassModel | undefined;
   const labels = new Map((model?.classes ?? []).map((c) => [c.id, c.label]));
   const context = nameContext(st);
-  const name = expected.has(T.Alpha);
-  if (context !== 'arrows') byKind(items, expected);
-  if (context === 'classes' && name) {
-    names(items, result.symbols, 'class', range.start, 'class', (id) => {
-      const label = labels.get(id);
-      return label === undefined || label === id ? undefined : label;
-    });
-  } else if (context === 'styleClasses' && name) {
-    names(items, result.symbols, 'cssClass', range.start, 'constant', () => 'style class');
-  } else if (context === 'annotations' && name) {
-    for (const [a, meaning] of ANNOTATIONS) items.add(a, 'constant', { detail: meaning });
-  } else if (context === 'arrows') {
-    if (expected.has(T.Line)) for (const a of ARROWS) arrowItem(items, a);
-    if (expected.has(T.Label)) {
-      items.add(':', 'operator', { insertText: ': ', detail: 'a member, or a label' });
-    }
-  }
+  // `click A call |`: a function name goes here (the lexer reads `call` with it).
+  const line = text.slice(text.lastIndexOf('\n', range.start - 1) + 1, range.start);
+  if (st.head === T.Click && /(?:^|\s)call[^\S\r\n]+$/.test(line)) return [];
+  if (context !== 'arrows' && context !== 'label') byKind(items, expected, st);
+  contextItems(items, context, expected, result.symbols, range.start, labels);
   return items.list;
 }

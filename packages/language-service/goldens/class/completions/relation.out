@@ -45,3 +45,5 @@
   Duck class 6:24-6:24 "" -> "Duck"
 @ 7:10  Duck : |
   none
+@ 8:19  Duck --> Animal |
+  : operator (a label) 8:19-8:19 "" -> ": "

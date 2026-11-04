@@ -32,7 +32,7 @@ describe('class language facet: isValidId (rename, D92)', () => {
     expect(classLanguage.isValidId('hot', 'cssClass')).toBeUndefined();
     expect(classLanguage.isValidId('a-b', 'cssClass')).toBe("'a-b' is not a style class name.");
     expect(classLanguage.isValidId('Outer', 'namespace')).toBeUndefined();
-    expect(classLanguage.isValidId('A.B', 'namespace')).toBeUndefined();
+    expect(classLanguage.isValidId('A.B', 'namespace')).toMatch(/cannot contain `\.`/);
     expect(classLanguage.isValidId('a{', 'namespace')).toBe("'a{' is not a namespace name.");
     expect(classLanguage.isValidId('plug', 'interface')).toBeUndefined();
     expect(classLanguage.isValidId('a()', 'interface')).toBe("'a()' is not an interface name.");

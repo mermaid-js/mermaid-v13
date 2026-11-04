@@ -62,6 +62,9 @@ const PROBES: Readonly<Record<string, readonly [before: string, after: string, n
 function invalidReason(name: string, kind = 'class'): string | undefined {
   const shape = shapeReason(name) ?? keywordReason(name);
   if (shape) return shape;
+  if (kind === 'namespace' && name.includes('.')) {
+    return 'A namespace name cannot contain `.`: `A.B` makes namespace `B` inside `A`.';
+  }
   const known = kind in PROBES ? kind : 'class';
   const [before, after, noun] = PROBES[known]!;
   const reads = (b: string, a: string) =>

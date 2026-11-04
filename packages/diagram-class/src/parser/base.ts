@@ -71,6 +71,9 @@ interface Mention {
   made: boolean;
 }
 
+/** A name that reads the same without backticks: letters, digits, `_` and `-`. */
+const PLAIN_NAME = /^[\p{L}\p{N}_-]+$/u;
+
 export abstract class ParserBase {
   /** Class mentions in source order; their ids are set at the end ({@link mentionIds}). */
   protected readonly mentions: Mention[] = [];
@@ -253,6 +256,14 @@ export abstract class ParserBase {
     return e;
   }
 
+  /** Whether a lexer-mode token from token `from` on, before the current one, runs to the end. */
+  protected runsToEnd(from: number): boolean {
+    for (let j = from; j < this.i; j++) {
+      if (inKindSet(MODE_KINDS, this.kind(j)) && this.end(j) >= this.src.length) return true;
+    }
+    return false;
+  }
+
   protected restartAt(at: number): void {
     if (at > this.lastRestart && at <= this.src.length && this.restarts < 64) {
       this.restartFrom = at;
@@ -270,13 +281,15 @@ export abstract class ParserBase {
       if (!inKindSet(MODE_KINDS, this.kind(j))) continue;
       const s = this.start(j);
       const e = this.end(j);
-      if (s === e || e < src.length || this.tokEnd(j) !== e) continue;
+      if (e < src.length || this.tokEnd(j) !== e) continue;
+      // An empty value counts only after its opener (`click A call` at the end of the text).
+      if (s === e && this.tokStart(j) === s) continue;
       const [what, closer, code] = UNCLOSED[this.kind(j)] ?? ['text', 'closer', 'UNCLOSED'];
       const opener = { start: this.tokStart(j), end: s };
       const written = src.slice(opener.start, opener.end).trim();
       this.st.diagnostics.error(
         code,
-        `Unclosed ${what}: the ${written ? `\`${written}\`` : 'text'} at line ${this.lineOf(s)} has no closing ${closer}. Add ${closer} to close it.`,
+        `Unclosed ${what}: the ${written ? `\`${written}\`` : 'text'} at line ${this.lineOf(opener.start)} has no closing ${closer}. Add ${closer} to close it.`,
         opener.end > opener.start ? opener : { start: s, end: Math.min(s + 1, src.length) },
         {
           related: [
@@ -461,15 +474,22 @@ export abstract class ParserBase {
   }
 
   /**
-   * The range of a name's symbol: the id alone, without the generic type written after it
-   * (`A` of `A~T~`), so that rename edits the name only (D92).
+   * The range of a name's symbol: the id alone, inside its backticks and without the generic
+   * type written after it (`A` of `A~T~`, also when `A` is backtick-quoted), so that rename edits the name
+   * only (D92). A name whose text does not start with its id keeps the whole range (the
+   * service then leaves it out).
    */
+  protected idRange(id: string, range: Range): Range {
+    const { src } = this;
+    let start = range.start;
+    // Inside backticks only a plain name: one that needs them (`IPC::Sender`) stays whole.
+    if (src[start] === '`' && src[start + 1 + id.length] === '`' && PLAIN_NAME.test(id)) start++;
+    if (id === '' || src.slice(start, start + id.length) !== id) return range;
+    return { start, end: start + id.length };
+  }
+
   protected symbolRange(name: Name): Range {
-    const { start } = name.range;
-    if (name.raw === name.id || this.src.slice(start, start + name.id.length) !== name.id) {
-      return name.range;
-    }
-    return { start, end: start + name.id.length };
+    return this.idRange(name.id, name.range);
   }
 
   /** A mention of a class name: its AST node (id set by {@link mentionIds}) and symbol. */
@@ -552,7 +572,8 @@ export abstract class ParserBase {
       const pr = exact ? { start: at, end: at + part.length } : r;
       // v12 looked each part up as written: `"A, B"` names `A` and ` B`, which no class is.
       if (part !== '' && part.trim() === part) {
-        this.st.symbol(splitClassName(part).id, kindName, pr, 'ref');
+        const { id } = splitClassName(part);
+        this.st.symbol(id, kindName, exact ? this.idRange(id, pr) : pr, 'ref');
       }
       out.push(part);
       at += part.length + 1;
