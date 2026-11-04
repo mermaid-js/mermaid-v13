@@ -41,7 +41,7 @@ import {
   SLASH,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Probe, TokenStream } from '@mermaid-js/core/parser-kit';
 import { firstHole, localOffset, SourceOffsets } from './source.ts';
 import type { Hole, SourceView } from './source.ts';
 import { T } from './tokens.ts';
@@ -57,6 +57,18 @@ const S = {
   acc_descr: 6,
   acc_descr_multiline: 7,
 } as const;
+
+/** Start condition names by number, for the probe's lexer mode. */
+const S_NAMES: readonly string[] = [
+  'INITIAL',
+  'ID',
+  'ALIAS',
+  'LINE',
+  'CONFIG',
+  'acc_title',
+  'acc_descr',
+  'acc_descr_multiline',
+];
 
 /** What a keyword rule does after its literal. */
 const B = {
@@ -203,10 +215,11 @@ const SPACE = 0x20;
 const TAB = 0x09;
 
 /**
- * Lex the sequence body `src[from…]`. `view` comes from {@link sourceView}.
+ * Lex the sequence body `src[from…]`. `view` comes from {@link sourceView}. With a `probe`, the
+ * start condition at the probe's offset is recorded as its mode.
  */
-export function lex(src: string, from: number, view: SourceView): TokenStream {
-  return new SequenceLexer(src, from, view).run();
+export function lex(src: string, from: number, view: SourceView, probe?: Probe): TokenStream {
+  return new SequenceLexer(src, from, view).run(probe);
 }
 
 /**
@@ -244,24 +257,37 @@ class SequenceLexer {
     this.w = new TokenWriter(((this.len - this.p) >> 2) + 8);
   }
 
-  run(): TokenStream {
+  run(probe?: Probe): TokenStream {
     const { text, n } = this;
     // v12 trimmed leading blanks (after removing comments) before lexing.
     while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
-    while (this.p < n) {
-      if (!this.step(text.charCodeAt(this.p))) {
-        // No rule matches (jison throws): an Error token, then the initial state again.
-        const c = text.charCodeAt(this.p);
-        this.emit(Kind.Error, this.p, c === LF ? this.p : this.p + 1);
-        this.stack.length = 0;
-        this.state = S.INITIAL;
+    // Two loops, so a plain lex does no probe work per step.
+    if (probe === undefined) while (this.p < n) this.next();
+    else {
+      while (this.p < n) {
+        const before = this.p;
+        const mode = S_NAMES[this.state] ?? '';
+        this.next();
+        probe.lexed(this.source(before), this.source(this.p), mode);
       }
+      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
     }
     // At the end jison tries the rules once more on the empty input.
     const kind = this.endKind();
     if (kind !== -1) this.emit(kind, this.len, this.len);
     this.trivia(this.src.length + 1);
     return this.w.finish(this.src);
+  }
+
+  /** One step: the rule that matches at {@link p}, or an Error token where none does. */
+  private next(): void {
+    if (!this.step(this.text.charCodeAt(this.p))) {
+      // No rule matches (jison throws): an Error token, then the initial state again.
+      const c = this.text.charCodeAt(this.p);
+      this.emit(Kind.Error, this.p, c === LF ? this.p : this.p + 1);
+      this.stack.length = 0;
+      this.state = S.INITIAL;
+    }
   }
 
   /** The token a rule matching the empty input at the end gives in the current state. */

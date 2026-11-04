@@ -2,6 +2,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { patchSequenceOracle } from './sequence/oracle-env.ts';
 
 /**
  * The `mermaid@12` oracle: parser + DB only, through v12's diagram API, with no DOM.
@@ -67,6 +68,8 @@ async function load(): Promise<Oracle> {
   const mermaid = ((await import('mermaid-v12')) as unknown as { default: MermaidV12 }).default;
   // Registers v12's diagrams; getDiagramFromText needs that first.
   await mermaid.parse('flowchart LR\n  A');
+  // Box colours need `window.CSS` (sequence/oracle-env.ts).
+  await patchSequenceOracle(mermaid);
 
   return {
     version,
