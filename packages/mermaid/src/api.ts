@@ -20,14 +20,10 @@ import {
   type Warning,
 } from '@mermaid-js/core';
 import {
-  CORE_DEFAULTS,
   INTEGRATOR_ONLY_KEYS,
-  resolveSite,
   resolveText,
-  type ConfigInput,
   type MermaidConfig,
   type ResolvedConfig,
-  type ResolvedSite,
 } from '@mermaid-js/core/config';
 import {
   cellProfile,
@@ -35,7 +31,7 @@ import {
   type LayoutEngine,
   type UnitProfile,
 } from '@mermaid-js/core/layout';
-import { asLimitError, checkSource, resolveLimits, type Limits } from '@mermaid-js/core/limits';
+import { checkSource } from '@mermaid-js/core/limits';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { resolveSecurityLevel } from '@mermaid-js/core/svg';
@@ -50,7 +46,21 @@ import {
 } from '@mermaid-js/core/theme';
 import { stageEnd, stageStart } from '@mermaid-js/core/timing';
 import type * as TextModule from './ascii.ts';
+import {
+  defaultIdPrefix,
+  directiveConfig,
+  isPlain,
+  mergeInto,
+  optionsKey,
+  Overlays,
+  SiteConfigs,
+  snapshot,
+  type InitializeConfig,
+  type Plain,
+  type Snapshot,
+} from './config-snapshot.ts';
 import { createDomAdapter } from './dom.ts';
+import { toMermaidError } from './errors.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
   Registry,
@@ -61,24 +71,8 @@ import {
 } from './registry.ts';
 import { VERSION } from './version.ts';
 
-/** Options only the integrator can set; never read from diagram text (R-SEC-5, R-SEC-6). */
-export interface IntegratorOptions {
-  /** Measures label text. Ignored under `deterministic: true` (R-TEXT-7, DESIGN §5.1). */
-  measurer?: Measurer;
-  /** Use the built-in metric tables, never the canvas (R-TEXT-7). */
-  deterministic?: boolean;
-  /** Replaces the default link schemes (http, https, mailto). */
-  linkSchemes?: readonly string[];
-  output?: { cssVariables?: boolean };
-  /**
-   * Resource limits (R-SEC-5); each wins over v12's `maxTextSize`/`maxEdges`. Over a limit,
-   * render rejects with `MermaidError { code: 'LIMIT' }`. Diagram text cannot change them.
-   */
-  limits?: Partial<Limits>;
-}
-
-/** `initialize()` input: the schema config plus the integrator-only options. */
-export type InitializeConfig = MermaidConfig & IntegratorOptions;
+export type { InitializeConfig, IntegratorOptions } from './config-snapshot.ts';
+export { defaultIdPrefix } from './config-snapshot.ts';
 
 export interface RenderOptions {
   /**
@@ -202,141 +196,6 @@ export interface PreloadRequest {
 /** @deprecated v12 compatibility: receives the `MermaidError` of a failed `parse`. */
 export type ParseErrorHandler = (error: MermaidError) => void;
 
-const INTEGRATOR_KEYS = ['measurer', 'deterministic', 'linkSchemes', 'output', 'limits'] as const;
-
-type Plain = Record<string, unknown>;
-const isPlain = (v: unknown): v is Plain =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
-const UNSAFE = new Set(['__proto__', 'constructor', 'prototype']);
-
-// Arrays are copied too: the result is frozen, and the caller's own arrays must stay theirs.
-function copyValue(v: unknown): unknown {
-  if (Array.isArray(v)) return v.map(copyValue);
-  return isPlain(v) ? mergeInto({}, v) : v;
-}
-
-function mergeInto(target: Plain, source: Plain): Plain {
-  for (const [k, v] of Object.entries(source)) {
-    if (UNSAFE.has(k) || v === undefined) continue;
-    const t = target[k];
-    target[k] = isPlain(v) ? mergeInto(isPlain(t) ? { ...t } : {}, v) : copyValue(v);
-  }
-  return target;
-}
-
-function freeze<T>(value: T): T {
-  if (typeof value === 'object' && value !== null && !Object.isFrozen(value)) {
-    Object.freeze(value);
-    for (const child of Object.values(value)) freeze(child);
-  }
-  return value;
-}
-
-interface Snapshot {
-  readonly config: Readonly<MermaidConfig>;
-  readonly options: Readonly<IntegratorOptions>;
-  /** From the integrator's config alone, before any diagram text is read. */
-  readonly limits: Readonly<Limits>;
-}
-
-function withLimits(
-  config: Readonly<MermaidConfig>,
-  options: Readonly<IntegratorOptions>
-): Snapshot {
-  return { config, options, limits: resolveLimits(config, options.limits) };
-}
-
-/** Keys sorted, so equal configs serialise equally whatever their key order. */
-function stableJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
-  if (value && typeof value === 'object') {
-    const entries = Object.keys(value)
-      .sort()
-      .map((k) => `${JSON.stringify(k)}:${stableJson((value as Plain)[k])}`);
-    return `{${entries.join(',')}}`;
-  }
-  return JSON.stringify(value) ?? 'null';
-}
-
-/** Integrator options as they enter a key: a measurer counts by its `id` (DESIGN §5.1). */
-function optionsKey(options: Readonly<IntegratorOptions>): unknown {
-  const { measurer, ...rest } = options;
-  return measurer ? { ...rest, measurer: measurer.id } : rest;
-}
-
-/**
- * `mermaid-<FNV-1a 32 of text + resolved config + integrator options + unit profile>`: distinct
- * per diagram, deterministic (R-SVG-3, R-ARCH-6). Pass options through `optionsKey`, so a
- * measurer counts by its id and never by its state. The px profile adds nothing, so SVG ids
- * are as before units joined the key.
- */
-export function defaultIdPrefix(
-  text: string,
-  config: unknown,
-  options: unknown,
-  units: UnitProfile
-): string {
-  const unit = units.id === 'px' ? '' : `\u0000${units.id}`;
-  const input = `${text}\u0000${stableJson(config)}\u0000${stableJson(options)}${unit}`;
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i++) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return `mermaid-${(h >>> 0).toString(36)}`;
-}
-
-function snapshot(input: InitializeConfig = {}): Snapshot {
-  const config: Plain = {};
-  const options: Plain = {};
-  for (const [k, v] of Object.entries(input)) {
-    if ((INTEGRATOR_KEYS as readonly string[]).includes(k)) options[k] = v;
-    else if (!UNSAFE.has(k)) config[k] = v;
-  }
-  const merged = mergeInto({}, config) as MermaidConfig;
-  // v12's legacy location of the font: `fontFamily` also sets `themeVariables.fontFamily`.
-  if (typeof merged.fontFamily === 'string') {
-    const vars = (merged.themeVariables ?? {}) as Plain;
-    if (vars.fontFamily === undefined)
-      merged.themeVariables = { ...vars, fontFamily: merged.fontFamily };
-  }
-  return withLimits(freeze(merged), Object.freeze(options) as IntegratorOptions);
-}
-
-function overlay(base: Snapshot, extra: InitializeConfig | undefined): Snapshot {
-  if (!extra) return base;
-  const next = snapshot(extra);
-  const limits =
-    base.options.limits || next.options.limits
-      ? { ...base.options.limits, ...next.options.limits }
-      : undefined;
-  return withLimits(
-    freeze(mergeInto(mergeInto({}, base.config as Plain), next.config as Plain)),
-    Object.freeze({ ...base.options, ...next.options, ...(limits ? { limits } : {}) })
-  );
-}
-
-/** Init directive config in source order (v12's `config` key moved into the section). */
-function directiveConfig(pre: PreprocessResult, section: string | undefined): ConfigInput[] {
-  const out: ConfigInput[] = [];
-  for (const d of pre.directives) {
-    if (d.kind === 'wrap') out.push({ wrap: true });
-    else if (d.kind === 'init' && isPlain(d.args)) {
-      const args = { ...d.args };
-      // v12 detectInit: an init `config` key belongs to the detected diagram's section.
-      if (args.config !== undefined && section) {
-        args[section] =
-          isPlain(args[section]) && isPlain(args.config)
-            ? mergeInto({ ...args[section] }, args.config)
-            : args.config;
-        delete args.config;
-      }
-      out.push(args);
-    }
-  }
-  return out;
-}
-
 const WARNING_KEYS = ['path', 'source', 'feature', 'shapes', 'astIds'] as const;
 
 /** A copy of a warning with only the `Warning` keys (text output adds `feature`, `shapes`, `astIds`). */
@@ -349,7 +208,6 @@ const toWarning = (w: Warning): Warning => {
   return out as unknown as Warning;
 };
 
-/** The `ascii` config section with its defaults (D77, D79, D84). */
 /** `render`'s third argument: v12's container element, or an options object (D80). */
 function renderOptions(arg: unknown): RenderOptions | undefined {
   if (!isPlain(arg) || typeof arg.nodeType === 'number') return undefined;
@@ -357,15 +215,6 @@ function renderOptions(arg: unknown): RenderOptions | undefined {
 }
 
 type TextBackend = typeof TextModule;
-
-function internal(e: unknown): MermaidError {
-  if (e instanceof MermaidError) return e;
-  // A LimitError (source/output size, a stack overflow from deep nesting) is LIMIT; any other
-  // RangeError (e.g. a NaN coordinate from the writer) is an internal error.
-  const limit = asLimitError(e);
-  if (limit) return new MermaidError('LIMIT', limit.message, { cause: limit });
-  return new MermaidError('INTERNAL', e instanceof Error ? e.message : String(e), { cause: e });
-}
 
 interface Analysis {
   readonly detected: Detected;
@@ -375,10 +224,10 @@ interface Analysis {
   readonly title?: string;
 }
 
-/** The integrator's side of a config, and the warnings resolving it gave. */
-interface SiteConfig {
-  readonly site: ResolvedSite;
-  readonly warnings: readonly Warning[];
+/** What `detect` found, for a type with a plugin package. */
+interface Found {
+  readonly detected: Detected & { readonly id: string };
+  readonly pre: PreprocessResult;
 }
 
 interface CacheEntry {
@@ -387,7 +236,6 @@ interface CacheEntry {
 }
 
 const CACHE_SIZE = 32;
-const OVERLAY_CACHE_SIZE = 16;
 
 /** How a render measures and sizes: px for SVG, cells for text (D77, D84). */
 interface Units {
@@ -399,6 +247,74 @@ interface Units {
   readonly text?: Pick<TextRenderContext, 'config' | 'title' | 'ast'>;
 }
 
+/** The analyses of recent texts, each valid only for the snapshot it was made with. */
+class AnalysisCache {
+  private readonly entries = new Map<string, CacheEntry>();
+
+  get(text: string, snap: Snapshot): Analysis | undefined {
+    const hit = this.entries.get(text);
+    return hit && hit.snap === snap ? hit.analysis : undefined;
+  }
+
+  set(text: string, snap: Snapshot, analysis: Analysis): void {
+    this.entries.delete(text);
+    this.entries.set(text, { snap, analysis });
+    if (this.entries.size > CACHE_SIZE) this.entries.delete(this.entries.keys().next().value!);
+  }
+
+  clear(): void {
+    this.entries.clear();
+  }
+}
+
+function layoutName(config: ResolvedConfig): string {
+  return String(config.layout ?? 'layered');
+}
+
+function themeNames(config: ResolvedConfig): ThemeName[] {
+  const choice = resolveThemeName(config.theme);
+  return choice.dark ? [choice.name, choice.dark] : [choice.name];
+}
+
+/** The layout, themes and plugin resources `a` needs that are not loaded yet. */
+function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
+  const missing: Resource[] = [];
+  const { config } = a.prepared;
+  if (a.plugin.layoutKind === 'graph') {
+    const name = layoutName(config);
+    if (registry.layout(name).state === 'missing') missing.push({ kind: 'layout', name });
+  }
+  // Text output draws no colours, so it needs no theme (D82).
+  for (const name of text ? [] : themeNames(config)) {
+    if (!loadedTheme(name)) missing.push({ kind: 'theme', name });
+  }
+  for (const r of a.plugin.resources?.(a.prepared.parse, config) ?? []) missing.push(r);
+  return missing;
+}
+
+async function loadResources(registry: Registry, missing: readonly Resource[]): Promise<void> {
+  await Promise.all(
+    missing.map(async (r) => {
+      if (r.kind === 'layout') await registry.loadLayout(r.name);
+      else if (r.kind === 'theme') await loadTheme(r.name as ThemeName);
+      else if (r.kind === 'diagram') await registry.load(r.name);
+    })
+  );
+}
+
+/** The theme a draw paints with: the config's choice, or the default when it is not loaded. */
+function themeFor(config: ResolvedConfig, s: Snapshot, warn: (w: Warning) => void) {
+  const choice = resolveThemeName(config.theme, warn);
+  const spec = loadedTheme(choice.name) ?? loadedTheme(DEFAULT_THEME)!;
+  const dark = choice.dark ? loadedTheme(choice.dark) : undefined;
+  return createTheme(spec, {
+    themeVariables: config.themeVariables as Record<string, unknown> | undefined,
+    dark,
+    cssVariables: s.options.output?.cssVariables,
+    warn,
+  });
+}
+
 /** One `mermaid` API object with its own registry and defaults. */
 export function createMermaid() {
   const registry = new Registry();
@@ -406,10 +322,9 @@ export function createMermaid() {
   let site: Snapshot = snapshot();
   let parseErrorHandler: ParseErrorHandler | undefined;
   let iconPacksRequested = false;
-  const cache = new Map<string, CacheEntry>();
-  // Everything but the diagram text's own config depends only on the snapshot, the plugin and
-  // the detected type: resolve it once, and replay its warnings on reuse.
-  const siteConfigs = new WeakMap<Snapshot, WeakMap<AnyPlugin, Map<string, SiteConfig>>>();
+  const cache = new AnalysisCache();
+  const siteConfigs = new SiteConfigs();
+  const overlays = new Overlays();
   // `core/ascii`'s cell measurer and width, loaded by the first text `prepare` (D87).
   let textBackend: TextBackend | undefined;
 
@@ -431,26 +346,7 @@ export function createMermaid() {
     const section = sectionOf(detected, plugin);
     const front = pre.frontMatter?.config;
     const directives = directiveConfig(pre, section);
-    let byPlugin = siteConfigs.get(snap);
-    if (!byPlugin)
-      siteConfigs.set(snap, (byPlugin = new WeakMap<AnyPlugin, Map<string, SiteConfig>>()));
-    let byType = byPlugin.get(plugin);
-    if (!byType) byPlugin.set(plugin, (byType = new Map<string, SiteConfig>()));
-    const key = `${section ?? ''}\0${detected.type}`;
-    let hit = byType.get(key);
-    if (!hit) {
-      const pluginDefaults: Plain = {};
-      if (plugin.configDefaults && section) pluginDefaults[section] = plugin.configDefaults;
-      // v12's flowchart-elk detector sets `layout: 'elk'` below the user's config.
-      if (detected.type === 'flowchart-elk') pluginDefaults.layout = 'elk';
-      const recorded: Warning[] = [];
-      const resolved = resolveSite(CORE_DEFAULTS, snap.config, pluginDefaults as MermaidConfig, {
-        warn: (w) => void recorded.push(w),
-        section,
-      });
-      hit = { site: resolved, warnings: recorded };
-      byType.set(key, hit);
-    }
+    const hit = siteConfigs.get(snap, plugin, detected, section);
     for (const w of hit.warnings) warn(w);
     const config: ResolvedConfig = resolveText(hit.site, front, directives, { warn });
     const t = stageStart();
@@ -489,6 +385,27 @@ export function createMermaid() {
     };
   }
 
+  /** `detect`, for a type with a plugin package that can draw `ascii` when that is asked for. */
+  function detectSupported(text: string, s: Snapshot, ascii: boolean): Found {
+    const { detected, pre } = detect(text, s);
+    if (detected.id === undefined) throw unsupported(detected);
+    if (ascii) checkText(detected);
+    return { detected: { ...detected, id: detected.id }, pre };
+  }
+
+  /** Parses with the loaded `plugin` and caches the analysis (DESIGN §3 steps 2–4). */
+  function analysisOf(
+    text: string,
+    s: Snapshot,
+    { detected, pre }: Found,
+    plugin: AnyPlugin | undefined
+  ): Analysis {
+    if (!plugin) throw unsupported(detected);
+    const analysis = analyse(text, s, plugin, detected, pre);
+    cache.set(text, s, analysis);
+    return analysis;
+  }
+
   function unsupported(detected: Detected): MermaidError {
     return new MermaidError(
       'UNSUPPORTED_DIAGRAM',
@@ -496,79 +413,9 @@ export function createMermaid() {
     );
   }
 
-  function cached(text: string, snap: Snapshot): Analysis | undefined {
-    const hit = cache.get(text);
-    return hit && hit.snap === snap ? hit.analysis : undefined;
-  }
-
-  function remember(text: string, snap: Snapshot, analysis: Analysis): void {
-    cache.delete(text);
-    cache.set(text, { snap, analysis });
-    if (cache.size > CACHE_SIZE) cache.delete(cache.keys().next().value!);
-  }
-
-  function themeNames(config: ResolvedConfig): ThemeName[] {
-    const choice = resolveThemeName(config.theme);
-    return choice.dark ? [choice.name, choice.dark] : [choice.name];
-  }
-
-  function missingFor(a: Analysis, text = false): Resource[] {
-    const missing: Resource[] = [];
-    const { config } = a.prepared;
-    if (a.plugin.layoutKind === 'graph') {
-      const name = String(config.layout ?? 'layered');
-      if (registry.layout(name).state === 'missing') missing.push({ kind: 'layout', name });
-    }
-    // Text output draws no colours, so it needs no theme (D82).
-    for (const name of text ? [] : themeNames(config)) {
-      if (!loadedTheme(name)) missing.push({ kind: 'theme', name });
-    }
-    for (const r of a.plugin.resources?.(a.prepared.parse, config) ?? []) missing.push(r);
-    return missing;
-  }
-
-  async function loadResources(missing: readonly Resource[]): Promise<void> {
-    await Promise.all(
-      missing.map(async (r) => {
-        if (r.kind === 'layout') await registry.loadLayout(r.name);
-        else if (r.kind === 'theme') await loadTheme(r.name as ThemeName);
-        else if (r.kind === 'diagram') await registry.load(r.name);
-      })
-    );
-  }
-
-  // Equal per-call configs over the same defaults give the same snapshot, so
-  // `prepare(text, o)` then `renderSync(text, o)` hits the parse cache, and a fresh but equal
-  // object (or one changed in place) is keyed by what it holds, not by its identity.
-  let overlayBase = site;
-  const overlays = new Map<string, Snapshot>();
-  const measurerIds = new WeakMap<object, number>();
-  let measurerCount = 0;
-  const overlayKey = (extra: InitializeConfig): string => {
-    const { measurer, ...rest } = extra as Plain;
-    if (measurer === undefined || measurer === null || typeof measurer !== 'object')
-      return stableJson(extra);
-    let n = measurerIds.get(measurer);
-    if (n === undefined) measurerIds.set(measurer, (n = ++measurerCount));
-    return `${n}\u0000${stableJson(rest)}`;
-  };
-  function snap(options?: RenderOptions): Snapshot {
+  function snapshotFor(options?: RenderOptions): Snapshot {
     const extra = options?.config;
-    if (!extra) return site;
-    if (overlayBase !== site) {
-      overlays.clear();
-      overlayBase = site;
-    }
-    const key = overlayKey(extra);
-    let s = overlays.get(key);
-    if (s) {
-      overlays.delete(key);
-    } else {
-      s = overlay(site, extra);
-      if (overlays.size >= OVERLAY_CACHE_SIZE) overlays.delete(overlays.keys().next().value!);
-    }
-    overlays.set(key, s);
-    return s;
+    return extra ? overlays.get(site, extra) : site;
   }
 
   /** Throws `UnsupportedFormatError` unless `detected` declares ascii (R-ASCII-5, D80). */
@@ -602,25 +449,21 @@ export function createMermaid() {
 
   async function prepareWith(text: string, s: Snapshot, format?: string): Promise<Analysis> {
     const ascii = checkFormat(text, s, format) === 'ascii';
-    let analysis = cached(text, s);
+    let analysis = cache.get(text, s);
     if (!analysis) {
-      const { detected, pre } = detect(text, s);
-      if (ascii && detected.id !== undefined) checkText(detected);
-      const plugin = detected.id === undefined ? undefined : await registry.load(detected.id);
-      if (!plugin) throw unsupported(detected);
-      analysis = analyse(text, s, plugin, detected, pre);
-      remember(text, s, analysis);
+      const f = detectSupported(text, s, ascii);
+      analysis = analysisOf(text, s, f, await registry.load(f.detected.id));
     }
     if (ascii) await loadText(analysis);
-    await loadResources(missingFor(analysis, ascii));
+    await loadResources(registry, missingFor(registry, analysis, ascii));
     return analysis;
   }
 
   async function prepare(text: string, options?: RenderOptions): Promise<Prepared> {
     try {
-      return (await prepareWith(text, snap(options), options?.format)).prepared;
+      return (await prepareWith(text, snapshotFor(options), options?.format)).prepared;
     } catch (e) {
-      throw internal(e);
+      throw toMermaidError(e);
     }
   }
 
@@ -631,27 +474,21 @@ export function createMermaid() {
     options: RenderOptions | undefined,
     ascii: boolean
   ): Analysis | RenderResult {
-    const hit = cached(text, s);
+    const hit = cache.get(text, s);
     if (hit) return hit;
-    const { detected, pre } = detect(text, s);
-    if (detected.id === undefined) throw unsupported(detected);
-    if (ascii) checkText(detected);
+    const f = detectSupported(text, s, ascii);
+    const { detected } = f;
     const plugin = registry.plugin(detected.id);
-    if (!plugin) {
-      const missing = new NotLoadedError([{ kind: 'diagram', name: detected.id }]);
-      if (ascii || !options?.placeholders) throw missing;
-      const drawn = renderErrorSvg(missing, { version: VERSION });
-      return {
-        svg: drawn,
-        diagramType: detected.type,
-        width: 0,
-        height: 0,
-        warnings: [{ code: 'PLACEHOLDER', message: missing.message }],
-      };
-    }
-    const analysis = analyse(text, s, plugin, detected, pre);
-    remember(text, s, analysis);
-    return analysis;
+    if (plugin) return analysisOf(text, s, f, plugin);
+    const missing = new NotLoadedError([{ kind: 'diagram', name: detected.id }]);
+    if (ascii || !options?.placeholders) throw missing;
+    return {
+      svg: renderErrorSvg(missing, { version: VERSION }),
+      diagramType: detected.type,
+      width: 0,
+      height: 0,
+      warnings: [{ code: 'PLACEHOLDER', message: missing.message }],
+    };
   }
 
   /** The render context of one draw, and the warnings sink it writes to. */
@@ -667,7 +504,7 @@ export function createMermaid() {
     const textOutput = units.id === 'cell';
     const warnings: Warning[] = [...prepared.warnings];
     const warn = (w: Warning): void => void warnings.push(toWarning(w));
-    const missing = missingFor(analysis, textOutput);
+    const missing = missingFor(registry, analysis, textOutput);
     if (missing.length > 0) {
       if (textOutput || !options?.placeholders) throw new NotLoadedError(missing);
       warn({
@@ -685,7 +522,7 @@ export function createMermaid() {
     }
     let engine: LayoutEngine | undefined;
     if (plugin.layoutKind === 'graph') {
-      const name = String(config.layout ?? 'layered');
+      const name = layoutName(config);
       const found = registry.layout(name);
       if (found.state === 'unknown') {
         warn({
@@ -695,15 +532,7 @@ export function createMermaid() {
       }
       engine = found.engine;
     }
-    const choice = resolveThemeName(config.theme, warn);
-    const spec = loadedTheme(choice.name) ?? loadedTheme(DEFAULT_THEME)!;
-    const dark = choice.dark ? loadedTheme(choice.dark) : undefined;
-    const theme = createTheme(spec, {
-      themeVariables: config.themeVariables as Record<string, unknown> | undefined,
-      dark,
-      cssVariables: s.options.output?.cssVariables,
-      warn,
-    });
+    const theme = themeFor(config, s, warn);
     let idPrefix: string | undefined;
     const ctx: RenderContext = {
       config,
@@ -825,9 +654,9 @@ export function createMermaid() {
   function renderSync(text: string, options?: SvgRenderOptions): RenderResult;
   function renderSync(text: string, options?: RenderOptions): RenderResult | TextRenderResult {
     try {
-      return draw(text, snap(options), options);
+      return draw(text, snapshotFor(options), options);
     } catch (e) {
-      throw internal(e);
+      throw toMermaidError(e);
     }
   }
 
@@ -849,12 +678,12 @@ export function createMermaid() {
     containerOrOptions?: Element | RenderOptions
   ): Promise<RenderResult | TextRenderResult> {
     const options = renderOptions(containerOrOptions);
-    const s = snap(options);
+    const s = snapshotFor(options);
     try {
       await prepareWith(text, s, options?.format);
       return draw(text, s, { ...options, id });
     } catch (e) {
-      throw internal(e);
+      throw toMermaidError(e);
     }
   }
 
@@ -866,10 +695,10 @@ export function createMermaid() {
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12 | false> {
     const s = site;
     try {
-      const { detected, pre } = detect(text, s);
-      const plugin = detected.id === undefined ? undefined : await registry.load(detected.id);
-      if (!plugin) throw unsupported(detected);
-      const a = cached(text, s) ?? analyse(text, s, plugin, detected, pre);
+      const f = detectSupported(text, s, false);
+      const { detected, pre } = f;
+      const plugin = await registry.load(detected.id);
+      const a = cache.get(text, s) ?? analysisOf(text, s, f, plugin);
       const config: Plain = {};
       const front = pre.frontMatter?.config;
       for (const c of [
@@ -885,7 +714,7 @@ export function createMermaid() {
       };
     } catch (e) {
       if (parseOptions?.suppressErrors) return false;
-      const error = internal(e);
+      const error = toMermaidError(e);
       parseErrorHandler?.(error);
       throw error;
     }
@@ -896,11 +725,12 @@ export function createMermaid() {
   }
 
   function detectType(text: string, config?: MermaidConfig): string {
-    void config; // v12 passed it to detectors; v13 detection reads the text only.
+    // v12 passed `config` to detectors; v13 detectors get the `initialize()` config.
+    void config;
     try {
       return detect(text, site).detected.type;
     } catch (e) {
-      throw internal(e);
+      throw toMermaidError(e);
     }
   }
 
@@ -938,7 +768,7 @@ export function createMermaid() {
     try {
       await Promise.all(tasks);
     } catch (e) {
-      throw internal(e);
+      throw toMermaidError(e);
     }
   }
 
@@ -956,7 +786,6 @@ export function createMermaid() {
   }
 
   function registerLayoutLoaders(loaders: readonly LayoutLoader[]): void {
-    cache.clear();
     registry.registerLayouts(loaders);
   }
 
