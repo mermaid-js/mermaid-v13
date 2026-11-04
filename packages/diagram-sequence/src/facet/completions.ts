@@ -95,79 +95,125 @@ function kindBefore(tokens: TokenStream, at: number): number {
   return -1;
 }
 
-/** The kind of the first token on the line holding `at`, before `at`; -1 when there is none. */
-function lineHead(text: string, tokens: TokenStream, at: number): number {
-  let lineStart = at;
-  while (lineStart > 0 && !/[\r\n]/.test(text.charAt(lineStart - 1))) lineStart--;
-  let i = tokenBefore(tokens, lineStart);
-  if (i < 0 || (tokens.end[i] ?? 0) <= lineStart) i++;
-  for (; i < tokens.length && (tokens.start[i] ?? 0) < at; i++) {
-    const k = tokens.kind[i]!;
-    if (k !== Kind.Space && k !== Kind.Newline) return k;
-  }
-  return -1;
-}
+/** Where statements end: a line break or `;`. */
+const STATEMENT_END = new Set<number>([Kind.Newline, T.Semi]);
 
 /**
- * `A -|`, `A--|`: the rest of a half-typed arrow on a message line, replacing what was typed
- * of it. Empty when the text before the cursor is no arrow start.
+ * The first significant token of the statement holding `at` (after the last line break or
+ * `;` before it), as its index, or -1 when there is none before `at`.
  */
-function arrowRest(text: string, tokens: TokenStream, o: number): CompletionItem[] {
+function statementHead(tokens: TokenStream, at: number): number {
+  let head = -1;
+  for (let i = tokenBefore(tokens, at - 1); i >= 0; i--) {
+    const k = tokens.kind[i]!;
+    if ((tokens.start[i] ?? 0) >= at) continue;
+    if (STATEMENT_END.has(k)) break;
+    if (k !== Kind.Space && k !== Kind.Comment && k !== Kind.Directive) head = i;
+  }
+  return head;
+}
+
+const headKind = (tokens: TokenStream, at: number) => {
+  const i = statementHead(tokens, at);
+  return i < 0 ? -1 : tokens.kind[i]!;
+};
+
+/**
+ * `A -|`, `A--|`: the rest of a half-typed arrow on a message line, replacing the whole arrow
+ * around the cursor. `undefined` when the text before the cursor is no arrow start; empty when
+ * it is one but the statement is not a message (`note over A -|`).
+ */
+function arrowRest(text: string, tokens: TokenStream, o: number): CompletionItem[] | undefined {
   let from = o;
   while (from > 0 && ARROW_CHAR.test(text.charAt(from - 1))) from--;
   // An id may end in `x` or `)`: the typed arrow starts at a `-`, `<`, `/` or `\`.
   while (from < o && !/[-</\\]/.test(text.charAt(from))) from++;
   const typed = text.slice(from, o);
-  if (typed === '' || from === 0 || /[\r\n]/.test(text.charAt(from - 1))) return [];
-  if (!ARROWS.some((a) => a.text.startsWith(typed) && a.text !== typed)) return [];
-  // Only on a message line: one that starts with a participant id.
-  if (lineHead(text, tokens, from) !== T.Actor) return [];
-  const items = new Items(typed, span(from, o));
-  for (const a of ARROWS) if (a.text !== typed) items.arrow(a);
+  if (typed === '' || from === 0 || /[\r\n]/.test(text.charAt(from - 1))) return undefined;
+  if (!ARROWS.some((a) => a.text.startsWith(typed) && a.text !== typed)) return undefined;
+  // Only in a message: a statement that starts with a participant id.
+  if (headKind(tokens, from) !== T.Actor) return [];
+  // The arrow goes on after the cursor (`A-|>>B`): all of it is replaced.
+  let end = o;
+  while (end < text.length && /[-<>|\\/]/.test(text.charAt(end))) end++;
+  const items = new Items(typed, span(from, end));
+  for (const a of ARROWS) if (a.text !== text.slice(from, end)) items.arrow(a);
   return items.list;
 }
 
-/** Inside `@{ … }`: keys at a key position, participant types after `type:`. */
-function participantData(text: string, probe: ProbeResult): CompletionItem[] {
-  const o = probe.offset;
-  const from = probe.prefix.start;
-  const back = (at: number, test: (c: string) => boolean) => {
-    let i = at;
-    while (i > from && test(text.charAt(i - 1))) i--;
-    return i;
-  };
-  const quote = (c: string) => c === '"' || c === "'";
-  const blank = (c: string) => /\s/.test(c);
-  const rest = /^[\w-]*/.exec(text.slice(o, o + 64))?.[0].length ?? 0;
-  // `type: da|`, `"type": "da|`
-  const name = back(o, (c) => /[\w-]/.test(c));
-  let k = back(back(name, quote), blank);
-  if (k > from && text.charAt(k - 1) === ':') {
-    k = back(back(k - 1, blank), quote);
-    const at = k - 'type'.length;
-    if (
-      at >= from &&
-      text.slice(at, k) === 'type' &&
-      (at === from || /[\s,{"']/.test(text.charAt(at - 1)))
-    ) {
-      const items = new Items(text.slice(name, o), span(name, o + rest));
-      for (const [type, shape] of PARTICIPANT_TYPES) {
-        items.add(type, 'constant', { detail: `drawn as ${shape}` });
-      }
-      return items.list;
+/**
+ * The state of `@{ … }` data at the cursor, read from its start: the keys written so far, and
+ * whether the cursor is at a key or in the value of which key. Quoted text is skipped.
+ */
+function dataState(text: string, from: number, o: number) {
+  const written = new Set<string>();
+  let atKey = true;
+  let key = '';
+  let valueOf = '';
+  let quote = '';
+  const unquote = (k: string) => k.trim().replace(/^["']|["']$/g, '');
+  for (let i = from; i < o; i++) {
+    const c = text.charAt(i);
+    if (quote !== '') {
+      if (c === quote) quote = '';
+      else if (atKey) key += c;
+      continue;
     }
+    if (c === '"' || c === "'") {
+      quote = c;
+      continue;
+    }
+    if (c === ',' || c === '{' || c === '\n' || c === '\r') {
+      atKey = true;
+      key = '';
+    } else if (c === ':' && atKey) {
+      atKey = false;
+      valueOf = unquote(key);
+      written.add(valueOf);
+    } else if (atKey) key += c;
   }
-  // A key: letters after the start, a `,`, a `{` or a line break (blanks between).
-  const key = back(o, (c) => /[A-Za-z]/.test(c));
-  const blanks = back(key, blank);
-  const atKey =
-    blanks === from ||
-    /[,{]/.test(text.charAt(blanks - 1)) ||
-    /[\r\n]/.test(text.slice(blanks, key));
-  if (!atKey) return [];
-  const items = new Items(text.slice(key, o), span(key, o + rest));
-  for (const k2 of PARTICIPANT_DATA_KEYS) items.add(k2, 'property', { insertText: `${k2}: ` });
+  return { written, atKey, key, valueOf, inQuote: quote !== '' };
+}
+
+/** Inside `@{ … }`: keys not yet written at a key position, participant types after `type:`. */
+function participantData(text: string, o: number): CompletionItem[] {
+  const from = text.lastIndexOf('@{', o) + 2;
+  if (from < 2) return [];
+  const state = dataState(text, from, o);
+  const rest = /^[\w-]*/.exec(text.slice(o, o + 64))?.[0].length ?? 0;
+  let word = o;
+  while (word > from && /[\w-]/.test(text.charAt(word - 1))) word--;
+  const items = new Items(text.slice(word, o), span(word, o + rest));
+  if (!state.atKey) {
+    if (state.valueOf !== 'type') return [];
+    // The value is the word right after `:` (blanks and one opening quote between).
+    const before = text.slice(text.lastIndexOf(':', word) + 1, word);
+    if (!/^\s*["']?$/.test(before)) return [];
+    for (const [type, shape] of PARTICIPANT_TYPES) {
+      items.add(type, 'constant', { detail: `drawn as ${shape}` });
+    }
+    return items.list;
+  }
+  // A key position: only blanks between the last separator and the word typed.
+  if (state.inQuote || state.key.trimStart() !== text.slice(word, o)) return [];
+  for (const k of PARTICIPANT_DATA_KEYS) {
+    if (!state.written.has(k)) items.add(k, 'property', { insertText: `${k}: ` });
+  }
   return items.list;
+}
+
+/**
+ * `links |`, `title |` with nothing typed after: the keyword's lookahead needs a word after it,
+ * so it lexes as a participant id and the parser expects an arrow. `menu` for a menu keyword
+ * (a participant id goes next), `title` for `title` (text goes next), else undefined.
+ */
+function menuOrTitle(text: string, tokens: TokenStream, o: number): 'menu' | 'title' | undefined {
+  const i = statementHead(tokens, o);
+  if (i < 0 || tokens.kind[i] !== T.Actor) return undefined;
+  const word = text.slice(tokens.start[i], o);
+  if (/^(?:links|link|properties|details)[^\S\r\n]+$/i.test(word)) return 'menu';
+  if (/^title[^\S\r\n]+$/i.test(word)) return 'title';
+  return undefined;
 }
 
 /** The probed word's range: the prefix, plus the rest of the word after the cursor. */
@@ -196,11 +242,13 @@ export function sequenceCompletions(
   const { text, result } = doc;
   const tokens = result.tokens;
   if (!tokens) return [];
-  if (probe.mode === 'CONFIG') return participantData(text, probe);
+  if (probe.mode === 'CONFIG') return participantData(text, probe.offset);
   if (!CODE_MODES.has(probe.mode) || inText(tokens, probe.offset)) return [];
 
   const rest = arrowRest(text, tokens, probe.offset);
-  if (rest.length > 0) return rest;
+  if (rest) return rest;
+  const menu = menuOrTitle(text, tokens, probe.offset);
+  if (menu === 'title') return [];
   const range = wordRange(text, probe);
   const items = new Items(text.slice(range.start, probe.offset), range);
   const expected = new Set(probe.expected);
@@ -222,7 +270,7 @@ export function sequenceCompletions(
       items.add(p.label, 'keyword', { documentation: sequenceDocs[p.kind] ?? '' });
     }
   }
-  if (expected.has(T.Actor)) participants(items, doc, range.start);
-  for (const a of ARROWS) if (expected.has(a.token)) items.arrow(a);
+  if (expected.has(T.Actor) || menu === 'menu') participants(items, doc, range.start);
+  if (menu === undefined) for (const a of ARROWS) if (expected.has(a.token)) items.arrow(a);
   return items.list;
 }

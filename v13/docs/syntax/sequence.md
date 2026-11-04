@@ -312,9 +312,9 @@ Modes: `INITIAL`, `ID`, `ALIAS`, `LINE`, `CONFIG`, `acc_title`, `acc_descr`, `ac
 | CONFIG | CONFIG_CONTENT | `[^}]+` |  |  |
 | CONFIG | CONFIG_END | `\}(?=\s+(?i:as)\s)` | pop push(ALIAS) |  |
 | CONFIG | CONFIG_END | `\}` | pop |  |
-| ID | ACTOR | `[^<>:\n,;@\s]+(?=\s*@\{)` |  | A participant id after `participant`, `actor`, `destroy`, `activate` and `deactivate`. |
-| ID | ACTOR | `[^<>:\n,;@\s]+(?=\s+(?i:as)\s)` | pop push(ALIAS) |  |
-| ID | ACTOR | `[^<>:\n,;@]+(?=\s*[\n;#]\|$)` | pop |  |
+| ID | ACTOR | `(?:#\w+;\|[^<>:\n,;@\s])+(?=\s*@\{)` |  | A participant id after `participant`, `actor`, `destroy`, `activate` and `deactivate`; an entity such as `#lt;` is part of it. |
+| ID | ACTOR | `(?:#\w+;\|[^<>:\n,;@\s])+(?=\s+(?i:as)\s)` | pop push(ALIAS) |  |
+| ID | ACTOR | `(?:#\w+;\|[^<>:\n,;@])+(?=\s*[\n;#]\|$)` | pop |  |
 | ID | INVALID | `[^<>:\n,;@]*<[^\n]*` | pop |  |
 | ID | INVALID | `[^\n]+` | pop |  |
 | INITIAL | box | `(?i:box)\b` | push(LINE) | `box <colour> <label>`: groups the participants declared up to `end`. |
@@ -361,7 +361,7 @@ Modes: `INITIAL`, `ID`, `ALIAS`, `LINE`, `CONFIG`, `acc_title`, `acc_descr`, `ac
 | INITIAL | off | `(?i:off)\b` |  |  |
 | INITIAL | COMMA | `,` |  |  |
 | INITIAL | SEMI | `;` |  |  |
-| INITIAL | ACTOR | `[^/\\+()<\->:\n,;]+(?:(?!-(?i:x)\|--(?i:x)\|-\)\|--\)\|-\\|\\\|-\\\|-\/\|-\/\/\|-\\|\/\|…` |  | A participant id in a message or note: anything up to an arrow, `+`, `-`, `:`, `,` or `;`; a `-` joins an id unless an arrow starts there (`A-B->>C` is from `A-B`). |
+| INITIAL | ACTOR | `(?:#\w+;\|[^/\\+()<\->:\n,;])+(?:(?!-(?i:x)\|--(?i:x)\|-\)\|--\)\|-\\|\\\|-\\\|-\/\|-\…` |  | A participant id in a message or note: anything up to an arrow, `+`, `-`, `:`, `,` or `;`; a `-` joins an id unless an arrow starts there (`A-B->>C` is from `A-B`). |
 | INITIAL | SOLID_ARROW | `->>` |  | `->>` solid line, arrowhead. |
 | INITIAL | BIDIRECTIONAL_SOLID_ARROW | `<<->>` |  | `<<->>` solid line, arrowheads at both ends. |
 | INITIAL | DOTTED_ARROW | `-->>` |  | `-->>` dotted line, arrowhead. |

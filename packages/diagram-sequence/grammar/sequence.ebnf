@@ -34,10 +34,11 @@ NUM                       /(?:[0-9]+(?:\.[0-9]{1,2})?|\.[0-9]{1,2})(?=[ \n]+)/ :
 <CONFIG> CONFIG_CONTENT   /[^}]+/                          :meta ;
 <CONFIG> CONFIG_END       /\}(?=\s+(?i:as)\s)/             pop push(ALIAS) :meta ;
 <CONFIG> CONFIG_END       /\}/                             pop :meta ;
-(** A participant id after `participant`, `actor`, `destroy`, `activate` and `deactivate`. *)
-<ID> ACTOR                /[^<>:\n,;@\s]+(?=\s*@\{)/       :variable ;
-<ID> ACTOR                /[^<>:\n,;@\s]+(?=\s+(?i:as)\s)/ pop push(ALIAS) :variable ;
-<ID> ACTOR                /[^<>:\n,;@]+(?=\s*[\n;#]|$)/    pop :variable ;
+(** A participant id after `participant`, `actor`, `destroy`, `activate` and `deactivate`; an
+entity such as `#lt;` is part of it. *)
+<ID> ACTOR                /(?:#\w+;|[^<>:\n,;@\s])+(?=\s*@\{)/ :variable ;
+<ID> ACTOR                /(?:#\w+;|[^<>:\n,;@\s])+(?=\s+(?i:as)\s)/ pop push(ALIAS) :variable ;
+<ID> ACTOR                /(?:#\w+;|[^<>:\n,;@])+(?=\s*[\n;#]|$)/ pop :variable ;
 <ID> INVALID              /[^<>:\n,;@]*<[^\n]*/            pop ;
 <ID> INVALID              /[^\n]+/                         pop ;
 
@@ -123,7 +124,7 @@ SEMI                      /;/                              :punctuation ;
 (** A participant id in a message or note: anything up to an arrow, `+`, `-`, `:`, `,` or `;`;
 a `-` joins an id unless an arrow starts there (`A-B->>C` is from `A-B`). *)
 ACTOR
-  /[^/\\+()<\->:\n,;]+(?:(?!-(?i:x)|--(?i:x)|-\)|--\)|-\|\\|-\\|-\/|-\/\/|-\|\/|\/\|-|\\\|-|\/\/-|\\\\-|\/\|-|--\|\\|--|\(\))-*[^+<\->:\n,;]+)*/
+  /(?:#\w+;|[^/\\+()<\->:\n,;])+(?:(?!-(?i:x)|--(?i:x)|-\)|--\)|-\|\\|-\\|-\/|-\/\/|-\|\/|\/\|-|\\\|-|\/\/-|\\\\-|\/\|-|--\|\\|--|\(\))-*(?:#\w+;|[^+<\->:\n,;])+)*/
   :variable ;
 
 (** `->>` solid line, arrowhead. *)

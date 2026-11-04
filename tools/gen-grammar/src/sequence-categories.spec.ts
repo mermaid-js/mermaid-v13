@@ -74,6 +74,16 @@ const FIXTURES: [string, string][] = [
   ['central', 'sequenceDiagram\n  A->>()B: x\n  A()->>B: y'],
   ['semi', 'sequenceDiagram\n  A->>B: x; B->>A: y'],
   ['data', 'sequenceDiagram\n  participant A@{ "type": "queue" } as Q'],
+  ['data-multiline', 'sequenceDiagram\n  participant A@{\n    type: queue\n  } as Q\n  A->>B: x'],
+  [
+    'alias-then-semi',
+    'sequenceDiagram\n  participant A as Alice; A->>B: x as y\n  actor B as Bob; B->>A: ok\n  participant C@{ type: queue }; C->>A: z',
+  ],
+  ['message-text-as', 'sequenceDiagram\n  A->>B: sent as text\n  participant C'],
+  [
+    'entities',
+    'sequenceDiagram\n  participant A#lt;B\n  A#35;B->>C: x\n  #lt; hi->>C: y\n  activate A#lt;B',
+  ],
   ['invalid', 'sequenceDiagram\n  participant A<b>'],
   [
     'half-arrows',
@@ -109,17 +119,48 @@ const FIXTURES: [string, string][] = [
 ];
 
 /**
- * Documented exception (GAPS.md, #149): TextMate has no mode switch. A rule that pops one mode
- * and pushes another (`pop push(…)`: a participant id followed by `as` or `@{`, the `as` itself,
- * the `}` of the data) ends the TextMate scope before it, and the statement rules read the rest
- * of the line. So TextMate colours the alias and data of a `participant` or `actor` declaration
- * as the statement rules do. Monarch (`switchTo`) and Lezer model the switch.
- * Input: `participant A@{ "type": "queue" } as Q`, `actor B as Bob`.
+ * Documented exception (GAPS.md, #149): TextMate has no mode switch, and the generator cannot
+ * add one without changing flowchart's TextMate grammar (its `callbackname` switch). A rule that
+ * pops one mode and pushes another (`pop push(…)`) ends the TextMate scope before it, and the
+ * statement rules read on. So TextMate may colour exactly these tokens of a `participant` or
+ * `actor` declaration otherwise: the data `@{ … }` (on any number of lines), `as` and the alias
+ * text after it. And TextMate tries the id mode's end rules before its other rules at each
+ * position: unless the plain id rule (`ACTOR … pop`) matches the whole rest of the line from the
+ * blank after the keyword, the catch-all `INVALID` (`[^\n]+`) does, and ends the scope there. So
+ * when that rest holds `@{`, `<`, `,` or `:` (data, or an alias such as `Multi<br/>line` or
+ * `Alice, the talkative one`), the line from the id on has no colour in TextMate, a statement
+ * after a `;` on it included. Everything else, the id before `as` and statements after a
+ * `;` that follows an alias included, must agree. Monarch (`switchTo`) and Lezer model the switch.
  */
-const TEXTMATE_SWITCH_LINE =
-  /^[^\S\n]*(?:create[^\S\n]+)?(?:participant|actor)\b[^\n]*(?:\sas\s|@\{)/i;
-const lineAt = (src: string, i: number) =>
-  src.slice(src.lastIndexOf('\n', i - 1) + 1, (src.indexOf('\n', i) + 1 || src.length + 1) - 1);
+const SWITCH_KINDS = new Set<number>([T.ConfigStart, T.ConfigContent, T.ConfigEnd, T.As]);
+/** Keywords that open the id mode. */
+const ID_KEYWORDS = new Set<number>([
+  T.Participant,
+  T.ParticipantActor,
+  T.Destroy,
+  T.Activate,
+  T.Deactivate,
+]);
+
+/** Offsets of the tokens TextMate may colour otherwise (see above). */
+function textMateExempt(src: string): Set<number> {
+  const tokens = sequenceTokens(src);
+  const exempt = new Set<number>();
+  tokens.forEach((t, j) => {
+    let end = -1;
+    if (SWITCH_KINDS.has(t.kind) || (t.kind === T.RestOfLine && tokens[j - 1]?.kind === T.As)) {
+      end = t.range.end;
+    } else if (t.kind === T.Actor && ID_KEYWORDS.has(tokens[j - 1]?.kind ?? -1)) {
+      const from = tokens[j - 1]!.range.end;
+      const nl = src.indexOf('\n', from);
+      const lineEnd = nl < 0 ? src.length : nl;
+      const whole = /^(?:#\w+;|[^<>:\n,;@])+(?=\s*[\n;#]|$)/.exec(src.slice(from, lineEnd + 1));
+      if (!whole) end = lineEnd;
+    }
+    for (let i = t.range.start; i < end; i++) exempt.add(i);
+  });
+  return exempt;
+}
 
 /** Kinds whose tokens are blanks or empty, so no highlighter colours them. */
 const BLANK_KINDS = new Set<number>([T.AliasEnd, T.Eof]);
@@ -188,6 +229,7 @@ describe('four-way highlighting agreement (sequence)', () => {
     for (const [file, src] of [...FIXTURES, ...corpus]) {
       const text = blankFrontMatter(src);
       const seen = highlighters.map(([name, h]) => [name, h(text)] as const);
+      const exempt = textMateExempt(src);
       for (const [i, kind] of lexerKinds(src)) {
         if (/\s/.test(src[i] ?? '')) continue;
         covered.add(kind);
@@ -195,7 +237,7 @@ describe('four-way highlighting agreement (sequence)', () => {
         for (const [name, cats] of seen) {
           const got = cats[i];
           if (got === want) continue;
-          if (name === 'TextMate' && TEXTMATE_SWITCH_LINE.test(lineAt(src, i))) continue;
+          if (name === 'TextMate' && exempt.has(i)) continue;
           const key = `${name}: ${NAMES[kind] ?? kind} is ${want}, highlighted ${got}`;
           if (!disagreements.has(key)) disagreements.set(key, `${file} at ${i}`);
         }

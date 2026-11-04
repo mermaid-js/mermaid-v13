@@ -1,0 +1,9 @@
+@ 3:30  note over Alice: x; Alice--|
+  -->> operator (dotted line, arrowhead) 3:28-3:30 "--" -> "-->>"
+  --> operator (dotted line, no arrowhead) 3:28-3:30 "--" -> "-->"
+  --x operator (dotted line, a cross at the end) 3:28-3:30 "--" -> "--x"
+  --) operator (dotted line, an open arrowhead (async)) 3:28-3:30 "--" -> "--)"
+  --|\ operator (dotted line, solid half arrowhead on the top) 3:28-3:30 "--" -> "--|\\"
+  --|/ operator (dotted line, solid half arrowhead on the bottom) 3:28-3:30 "--" -> "--|/"
+  --\\ operator (dotted line, open half arrowhead on the top) 3:28-3:30 "--" -> "--\\\\"
+  --// operator (dotted line, open half arrowhead on the bottom) 3:28-3:30 "--" -> "--//"
