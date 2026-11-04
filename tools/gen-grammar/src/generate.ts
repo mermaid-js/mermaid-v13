@@ -1,10 +1,11 @@
 /**
  * Every file generated from the grammar files: highlighters next to each grammar (separate
  * artefacts, never imported by a published package), the syntax reference pages and each
- * diagram's runtime kind → category table (D94).
+ * diagram's runtime kind → category table (D94) and keyword doc table (D93).
  */
-import { categoriesModule } from './categories.ts';
+import { categoriesModule, kindKeys } from './categories.ts';
 import type { KindSource } from './categories.ts';
+import { docsModule } from './docs.ts';
 import { parseGrammar } from './ebnf.ts';
 import { lezerGrammar, lezerTokens, monarch, textMate } from './highlight.ts';
 import { syntaxDoc } from './syntax-doc.ts';
@@ -59,6 +60,16 @@ export function generateFor(
     [
       `${sourceDir(type)}/generated/categories.ts`,
       categoriesModule(g, type, grammarPath(type), kindsText, target.kinds),
+    ],
+    [
+      `${sourceDir(type)}/generated/docs.ts`,
+      docsModule(
+        g,
+        type,
+        grammarPath(type),
+        kindKeys(kindsText, target.kinds.object),
+        target.kinds
+      ),
     ],
   ]);
 }

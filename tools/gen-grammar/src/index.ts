@@ -25,6 +25,8 @@ export type { HighlightNames } from './highlight.ts';
 export { ebnfText, syntaxDoc } from './syntax-doc.ts';
 export { categoriesModule, categoryTable, kindKeys } from './categories.ts';
 export type { CategoryTable, KindSource } from './categories.ts';
+export { docsModule, docTable } from './docs.ts';
+export type { DocTable } from './docs.ts';
 export {
   GRAMMARS,
   generate,

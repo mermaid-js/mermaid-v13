@@ -224,17 +224,27 @@ Subgraph @Subgraph = subgraph SPACE textNoTags [ SQS text SQE ] separator docume
                    | subgraph separator document end ;
 ```
 
+`style id fill:#f9f,stroke:#333`: styles one node or subgraph.
+
 ```ebnf
 Style @Style = STYLE SPACE idString SPACE styles ;
 ```
+
+`classDef name fill:#f9f,color:#000`: defines a class of styles; `classDef default …`
+styles every node without a class.
 
 ```ebnf
 ClassDef @ClassDef = CLASSDEF SPACE idString SPACE styles ;
 ```
 
+`class A,B name`: gives nodes a class (as `A:::name` does).
+
 ```ebnf
 Class @Class = CLASS SPACE idString SPACE idString ;
 ```
+
+`linkStyle 0,2 stroke:#f00`: styles links by their position in the source, from 0;
+`linkStyle default …` styles every link; `interpolate curve` sets their curve.
 
 ```ebnf
 LinkStyle @LinkStyle = LINKSTYLE SPACE ( DEFAULT | numList ) SPACE ( styles | INTERPOLATE SPACE alphaNum [ SPACE styles ] ) ;
@@ -259,6 +269,8 @@ each with an optional tooltip; urls take an optional target.
 Click @Click = CLICK ( CALLBACKNAME [ CALLBACKARGS ] [ SPACE STR ] | alphaNum [ SPACE STR ] | [ HREF ] STR [ SPACE STR ] [ SPACE LINK_TARGET ] ) ;
 ```
 
+`direction LR` inside a subgraph: the direction of its layout.
+
 ```ebnf
 Direction @Direction = direction_tb
                      | direction_bt
@@ -267,9 +279,13 @@ Direction @Direction = direction_tb
                      | direction_td ;
 ```
 
+`accTitle: …`: the accessible title of the diagram.
+
 ```ebnf
 AccTitle @AccTitle = acc_title acc_title_value ;
 ```
+
+`accDescr: …` or `accDescr { … }`: the accessible description of the diagram.
 
 ```ebnf
 AccDescr @AccDescr = acc_descr acc_descr_value

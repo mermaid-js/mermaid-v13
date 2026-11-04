@@ -286,9 +286,15 @@ alphaNumToken = NUM | UNICODE_TEXT | NODE_STRING | DIR | DOWN | MINUS | COMMA | 
 Subgraph @Subgraph = subgraph SPACE textNoTags [ SQS text SQE ] separator document end
   | subgraph separator document end ;
 
+(** `style id fill:#f9f,stroke:#333`: styles one node or subgraph. *)
 Style @Style = STYLE SPACE idString SPACE styles ;
+(** `classDef name fill:#f9f,color:#000`: defines a class of styles; `classDef default …`
+styles every node without a class. *)
 ClassDef @ClassDef = CLASSDEF SPACE idString SPACE styles ;
+(** `class A,B name`: gives nodes a class (as `A:::name` does). *)
 Class @Class = CLASS SPACE idString SPACE idString ;
+(** `linkStyle 0,2 stroke:#f00`: styles links by their position in the source, from 0;
+`linkStyle default …` styles every link; `interpolate curve` sets their curve. *)
 LinkStyle @LinkStyle = LINKSTYLE SPACE ( DEFAULT | numList ) SPACE
   ( styles | INTERPOLATE SPACE alphaNum [ SPACE styles ] ) ;
 numList = NUM { COMMA NUM } ;
@@ -301,6 +307,9 @@ Click @Click = CLICK ( CALLBACKNAME [ CALLBACKARGS ] [ SPACE STR ]
   | alphaNum [ SPACE STR ]
   | [ HREF ] STR [ SPACE STR ] [ SPACE LINK_TARGET ] ) ;
 
+(** `direction LR` inside a subgraph: the direction of its layout. *)
 Direction @Direction = direction_tb | direction_bt | direction_rl | direction_lr | direction_td ;
+(** `accTitle: …`: the accessible title of the diagram. *)
 AccTitle @AccTitle = acc_title acc_title_value ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description of the diagram. *)
 AccDescr @AccDescr = acc_descr acc_descr_value | acc_descr_multiline_value ;
