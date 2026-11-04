@@ -538,7 +538,7 @@ export interface NamespaceGroup {
 export function namespaceGroups(
   model: ClassModel,
   hierarchical = true
-): { groups: NamespaceGroup[]; parentOf(parent: string | undefined): string | undefined } {
+): { groups: NamespaceGroup[]; parentOf: (parent: string | undefined) => string | undefined } {
   const byId = new Map(model.namespaces.map((ns) => [ns.id, ns]));
   const groups: NamespaceGroup[] = [];
   for (const ns of model.namespaces) {

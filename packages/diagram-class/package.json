@@ -21,7 +21,8 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "port:v12-specs": "tsx scripts/port-v12-specs.ts && prettier --write src/v12-specs"
   },
   "peerDependencies": {
     "@mermaid-js/core": "workspace:^"

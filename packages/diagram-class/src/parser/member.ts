@@ -36,7 +36,7 @@ const tidyName = (name: string): string => (name.startsWith(' ') ? ' ' + name.tr
  * A method as v12's `/([#+~-])?(.+)\((.*)\)([\s$*])?(.*)([$*])?/` matched it, or undefined
  * when that regex finds no match (v12 then failed on the member).
  */
-function method(text: string): MemberParts | undefined {
+export function method(text: string): MemberParts | undefined {
   // `.` stops at line ends, so the match lies in one line: the first line with a `(` after
   // its first character and a `)` after that. `(.+)` and `(.*)` are greedy: the last `)` of
   // the line, and the last `(` before it.
@@ -82,7 +82,7 @@ function method(text: string): MemberParts | undefined {
   return undefined;
 }
 
-function attribute(text: string): MemberParts {
+export function attribute(text: string): MemberParts {
   const first = text.slice(0, 1);
   const last = text.slice(-1);
   const visibility: Visibility = isVisibility(first) ? first : '';

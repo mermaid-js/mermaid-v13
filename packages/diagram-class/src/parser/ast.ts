@@ -109,6 +109,11 @@ export interface ClassSimpleStmt extends AstNode<ClassSimpleKind> {
   refs: string[];
   /** `callback` and `click … call`: what the interactions plugin binds (DESIGN §12.3). */
   callback?: AstCallback;
+  /** `link` and `click … href` (Click only): the URL as written, and its target. */
+  url?: string;
+  target?: string;
+  /** A click's tooltip (Click only). */
+  tooltip?: string;
 }
 
 export type ClassStatementNode =

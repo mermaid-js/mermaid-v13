@@ -10,7 +10,7 @@
  * restarts on the line after it.
  */
 import { inKindSet, Kind } from '@mermaid-js/core/parser-kit';
-import type { AstCallback, ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { LIMIT_CODES } from '@mermaid-js/core/limits';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
@@ -438,57 +438,57 @@ class ClassParser extends ParserBase {
     }
   }
 
-  /** `callback`, `link` and `click` statements. Returns the callback, for the AST. */
-  protected clickStatement(refs: string[]): AstCallback | undefined {
+  /** `callback`, `link` and `click` statements, read into their AST node. */
+  protected clickStatement(node: ClassSimpleStmt): void {
     const { db } = this;
     const from = this.i;
     const k = this.kind();
     this.i++;
     const name = this.className();
     this.st.symbol(name.id, 'class', name.range, 'ref');
-    refs.push(name.raw);
+    node.refs.push(name.raw);
     if (k === T.Callback) {
       const fn = this.str().text;
+      node.callback = { targets: [name.id], name: fn };
       this.tested(STR);
-      const tip = this.kind() === T.Str ? this.val(this.i++) : undefined;
+      if (this.kind() === T.Str) node.tooltip = this.val(this.i++);
       db.setClickEvent(name.raw, fn, this.span(from));
-      if (tip !== undefined) db.setTooltip(name.raw, tip);
-      return { targets: [name.id], name: fn };
-    }
-    if (k === T.Link) {
-      const url = this.str().text;
-      this.link(name, url);
-      return undefined;
-    }
-    this.tested(CLICK_ACTION);
-    const a = this.kind();
-    if (a === T.CallbackName) {
+    } else if (k === T.Link) {
+      node.url = this.str().text;
+      this.link(name, node);
+      return;
+    } else {
+      this.tested(CLICK_ACTION);
+      const a = this.kind();
+      if (a === T.Href) {
+        this.i++;
+        node.url = this.str().text;
+        this.link(name, node);
+        return;
+      }
+      if (a !== T.CallbackName) this.fail(CLICK_ACTION);
       const fn = this.val(this.i++);
       this.tested(CALLBACK_ARGS);
       const args = this.kind() === T.CallbackArgs ? this.val(this.i++) : undefined;
+      node.callback =
+        args === undefined
+          ? { targets: [name.id], name: fn }
+          : { targets: [name.id], name: fn, args };
       this.tested(STR);
-      const tip = this.kind() === T.Str ? this.val(this.i++) : undefined;
+      if (this.kind() === T.Str) node.tooltip = this.val(this.i++);
       db.setClickEvent(name.raw, fn, this.span(from), args);
-      if (tip !== undefined) db.setTooltip(name.raw, tip);
-      return args === undefined
-        ? { targets: [name.id], name: fn }
-        : { targets: [name.id], name: fn, args };
     }
-    if (a !== T.Href) this.fail(CLICK_ACTION);
-    this.i++;
-    const url = this.str().text;
-    this.link(name, url);
-    return undefined;
+    if (node.tooltip !== undefined) db.setTooltip(name.raw, node.tooltip);
   }
 
   /** After a link's URL: `[ "tooltip" ] [ target ]`. */
-  protected link(name: Name, url: string): void {
+  protected link(name: Name, node: ClassSimpleStmt): void {
     this.tested(AFTER_URL);
-    const tip = this.kind() === T.Str ? this.val(this.i++) : undefined;
+    if (this.kind() === T.Str) node.tooltip = this.val(this.i++);
     this.tested(LINK_TARGET);
-    const target = this.kind() === T.LinkTarget ? this.val(this.i++) : undefined;
-    this.db.setLink(name.raw, url, target);
-    if (tip !== undefined) this.db.setTooltip(name.raw, tip);
+    if (this.kind() === T.LinkTarget) node.target = this.val(this.i++);
+    this.db.setLink(name.raw, node.url ?? '', node.target);
+    if (node.tooltip !== undefined) this.db.setTooltip(name.raw, node.tooltip);
   }
 
   protected simple(kind: ClassSimpleKind, from: number, refs: string[]): ClassSimpleStmt {
@@ -526,10 +526,10 @@ class ClassParser extends ParserBase {
       case T.Callback:
       case T.Link:
       case T.Click: {
-        const callback = this.clickStatement(refs);
         const node = this.simple('Click', from, refs);
-        if (callback) node.callback = callback;
         out.push(node);
+        this.clickStatement(node);
+        node.range = this.span(from);
         return;
       }
       case T.Style: {
