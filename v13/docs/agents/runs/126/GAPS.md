@@ -26,13 +26,13 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 - Not class-specific, for the maintainer: with a comment line straight after a multi-line `%%{`, v12 keeps the text, but core's preprocess still reads a directive (D67). The class lexer suite excludes that injection case.
 - Lexing is ~1 µs/char on token-dense lines (linear); size/speed work is for milestone close.
 
-## #154 (T2) shared source view (D114)
+## #154 (T2) shared source view (D114) — done
 
 - 2026-11-04, #154: switched after #186 fixed core's `sourceView`. diagram-class reads it through `src/parser/v12-text.ts` (CRLF, trimStart and entity placeholders on top); `source.ts` is deleted and the lexer gate is 100%.
 
-- v12's input cleanup (offset-preserving source view, `packages/diagram-class/src/parser/source.ts`, a copy of flowchart's) moves into core's parser kit under the state spec's T0 (draft PR into `mermaid-v13`). Keep the class copy until that merges; then switch diagram-class to the shared one and delete the copy. Whichever of that T0 and #152 merges second rebases and reruns `pnpm check`.
+## #153 (T1) stress spec under load — fixed in #154
 
-## #153 (T1) stress spec under load
+- Now timed like core's preprocess spec (fastest of 5, up to 5 ratios, 2 s cutoff); it still fails with the direction memo removed.
 
 - `packages/conformance/src/class/lexer-stress.spec.ts` (2 cases) failed, along with core's `preprocess/stress.spec.ts`, in one full run at load ~30 on 16 cores (2026-11-04, after merging #165). Both pass alone. Watch it; if it flakes again at normal load, give it more trials or a wider ratio.
 
@@ -49,7 +49,7 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 
 ## #185 (core sourceView fix)
 
-- Draft PR #186 into `mermaid-v13`. After it merges, merge `mermaid-v13` here and switch diagram-class to `sourceView` (ready port: `d114-v12-text.ts.txt`), keeping class's `trimStart` and entity steps; delete `src/parser/source.ts`.
+- Done: #186 merged into `mermaid-v13` (`3f1fce34a`) and here; class switched in #154. Was: after it merges, merge `mermaid-v13` here and switch diagram-class to `sourceView` (ready port: `d114-v12-text.ts.txt`), keeping class's `trimStart` and entity steps; delete `src/parser/source.ts`.
 - Not class: the flowchart parity harness never decodes v12's `#y;` placeholder in edge text (`flowchart LR\nA -- x:#y; --> B`); jison splits EDGE_TEXT per character and the harness decodes before merging tokens. No corpus string hits it.
 
 ## #159 (T6) accepted
