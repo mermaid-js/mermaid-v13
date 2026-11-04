@@ -65,20 +65,25 @@ test.beforeAll(async () => {
     stdio: 'inherit',
   });
   const port = await freePort();
-  preview = spawn(VITE, ['preview', '--outDir', outDir, '--port', String(port), '--strictPort'], {
-    cwd: EXAMPLE,
-    stdio: 'ignore',
-  });
-  url = `http://localhost:${port}/`;
-  for (let i = 0; i < 300; i++) {
+  // An explicit IPv4 host: `localhost` may resolve differently for Vite and for fetch.
+  preview = spawn(
+    VITE,
+    ['preview', '--outDir', outDir, '--host', '127.0.0.1', '--port', String(port), '--strictPort'],
+    { cwd: EXAMPLE, stdio: ['ignore', 'ignore', 'pipe'] }
+  );
+  let stderr = '';
+  preview.stderr?.on('data', (chunk: Buffer) => (stderr += chunk.toString()));
+  url = `http://127.0.0.1:${port}/`;
+  for (let i = 0; i < 600; i++) {
     const ok = await fetch(url).then(
       (r) => r.ok,
       () => false
     );
     if (ok) return;
+    if (preview.exitCode !== null) break;
     await new Promise((r) => setTimeout(r, 100));
   }
-  throw new Error(`vite preview did not start on ${url}`);
+  throw new Error(`vite preview did not start on ${url}: ${stderr}`);
 });
 
 test.afterAll(() => {
@@ -154,9 +159,13 @@ test('completes a node id', async ({ page }) => {
 test('hover shows the node docs', async ({ page }) => {
   await open(page);
   const p = await pointAt(page, 5, 14); // `Ready` in `Start --> Ready{Ready?}`
-  await page.mouse.move(p.x, p.y);
   const hover = page.locator('.monaco-hover:not(.hidden)');
-  await expect(hover).toContainText('node');
+  // Monaco shows a hover after the pointer rests over a word; move in until it does.
+  await expect(async () => {
+    await page.mouse.move(p.x - 40, p.y + 60);
+    await page.mouse.move(p.x, p.y, { steps: 5 });
+    await expect(hover).toContainText('node', { timeout: 2000 });
+  }).toPass({ timeout: 20_000 });
   await expect(hover).toContainText('Ready');
 });
 
