@@ -380,6 +380,15 @@ so it counts twice towards the diameter compared with the per-side node padding.
 Node positions differ from v12's dagre and ELK output; layouts are deterministic for the same
 input.
 
+### ER diagrams
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Laid out by ELK, v12's default `layout` | Laid out by the built-in `layered` engine, like every graph diagram; `layout: elk` maps to it until an ELK plugin is registered | DESIGN §6.1, D106 |
+| ELK's orthogonal routes | Stepped routes (right angles), the nearest `layered` routing | |
+| Table cells padded by `er.diagramPadding` (across) and `er.entityPadding` (down), times 1.25 without HTML labels | Every cell padded by the layout's node padding (16 × 12 px; 1 cell across in text output), so tables are a little roomier | ADR-13 |
+| Entities with attributes and subgraph titles measured by the browser | Measured before layout with the injected measurer, in the font each is drawn in | DESIGN §6.1 |
+
 ## Labels and text
 
 | v12 | v13 | Why |
