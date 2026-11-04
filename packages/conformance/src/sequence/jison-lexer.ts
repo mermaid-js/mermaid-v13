@@ -3,6 +3,9 @@
  * jison lexer, run on exactly the text v12's sequence parser received. We capture that text by
  * wrapping the shared lexer's `setInput` while the oracle parses, then re-run the lexer on it
  * with a fresh SequenceDB as `yy`. Copied from the flowchart oracle.
+ *
+ * Calls must be sequential (await each one before the next): the captured text is one
+ * variable shared by every call, and v12's parser is a single shared instance.
  */
 import { loadOracle } from '../oracle.ts';
 
