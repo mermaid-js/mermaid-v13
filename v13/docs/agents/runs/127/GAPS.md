@@ -23,7 +23,7 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## #148 T5 integration (from #138)
 
-- `packages/diagram-state` is `"private": true` so the release pack test (`tools/release/src/publish.spec.ts`) stays green. T5 drops `private` when it adds the manifest and registry entry.
+- [x] Done in #148: `private` dropped; the package is published (version `13.0.0-alpha.0`, `THIRD_PARTY_NOTICES` for the Pele-derived `render/edges.ts`), and the pack test lists it.
 
 ## Shared source view (from #138, D114)
 
@@ -42,14 +42,16 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## #146 T4 renderer
 
-- [ ] **Escalated (state T0 candidate, theme variables):** v12's `compositeTitleBackground` and
+- [ ] **Escalated (theme variables), now state T0 #192 (D120), done in core elsewhere:** v12's `compositeTitleBackground` and
   `altBackground` are not core variables. The renderer draws both with `clusterBkg`, which is
   v12's value in the redux family (`#f9f9fb`) but not in classic (v12: `mainBkg`, `#f0f0f0`).
   Adding the two variables is a core change (vocabulary, every theme spec, schema), so not here
   (D102). MIGRATION.md "State diagram SVG structure" lists the mapping.
-- [ ] **Escalated:** v12 tinted each concurrency region with its composite's palette fill; v13
+- [x] **Accepted (D121):** v12 tinted each concurrency region with its composite's palette fill; v13
   draws the regions unfilled (dashed dividers only), as tinted frames left untinted strips at
-  every divider gap. And the front-matter `title` is not drawn (as flowchart's SVG).
+  every divider gap. MIGRATION.md cites D121 (#148).
+- [x] **Accepted (D122):** the front-matter `title` is not drawn (as flowchart's SVG);
+  `state.titleTopMargin` is `ignored` with that reason. MIGRATION.md cites D122 (#148).
 - Fixed in #146 (layout, #144 code): the region stretch ignored the composite's title height,
   so region frames and dividers ran over the title band. And a classDef's `color` painted the
   shape too (v12's `textStyles` repeat it as `fill`); only the label takes it now.
@@ -74,6 +76,12 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## #148 T5 integration (from #151)
 
-- [ ] Add `"language"` to the state manifest and run `gen:registry`. Then delete state's row in `packages/language-service/src/testing/pending-facets.ts` and the `@mermaid-js/diagram-state` devDependency of `packages/language-service`.
-- [ ] Optional: no `{` completion after `state x `, because state's error code is `UNCLOSED`, not `UNCLOSED_*`, and completion-validity counts it as an error. Rename `UNCLOSED` to `UNCLOSED_COMPOSITE` if wanted; that's a message-code change, so update the snapshots.
-- [ ] Optional: a bench language-bundle spec for state (only flowchart has one).
+- [x] Done in #148: `"language"` in the manifest, `gen:registry` run, `pending-facets.ts` deleted. The
+  devDependency stays, now with an optional peer like flowchart's: the generated `facets.gen.ts`
+  imports `@mermaid-js/diagram-state/language`. `language-server` depends on it (it serves state).
+- [x] Done in #148: `UNCLOSED` is `UNCLOSED_COMPOSITE`, and `state x |` offers `{`.
+- [x] Done in #148: `bench/src/language-bundle.spec.ts` runs for flowchart and state.
+- Seen in #148, left to the facet (listed in `rename-round-trip.spec.ts` `KNOWN_BACK_REFUSALS`):
+  a rename whose way back is refused, because the original id is one `isValidId` will not take
+  (`State1:` from `state State1: Description` in the corpus, HTML-escaped `&lt;&lt;fork&gt;&gt;`).
+  `isValidId` also refuses CJK ids outright, even where no `class`/`style` names them.

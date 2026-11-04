@@ -1,0 +1,11 @@
+---
+description: a choice pseudo-state with labelled branches
+---
+stateDiagram-v2
+  state check <<choice>>
+  [*] --> Input
+  Input --> check
+  check --> Small : n < 10
+  check --> Large : n >= 10
+  Small --> [*]
+  Large --> [*]

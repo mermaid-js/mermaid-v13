@@ -104,6 +104,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:^
+        version: link:../diagram-state
       '@mermaid-js/language-service':
         specifier: workspace:^
         version: link:../language-service
@@ -253,6 +256,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:*
+        version: link:../diagram-state
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -431,6 +437,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:*
+        version: link:../diagram-state
 
   packages/plugin-interactions:
     devDependencies:

@@ -1,0 +1,10 @@
+---
+description: the v1 stateDiagram keyword, drawn by the same renderer as stateDiagram-v2
+---
+stateDiagram
+  [*] --> Still
+  Still --> [*]
+  Still --> Moving
+  Moving --> Still
+  Moving --> Crash
+  Crash --> [*]

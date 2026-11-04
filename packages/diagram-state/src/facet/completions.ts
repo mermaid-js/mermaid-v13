@@ -149,6 +149,8 @@ function byLine(c: Context): CompletionItem[] | undefined {
         documentation: stateDocs[T.Fork] ?? '',
       });
     }
+    // `state x {` opens a composite; its error until the `}` is `UNCLOSED_COMPOSITE` (#148).
+    if (typed === '') items.add('{', 'operator', { detail: 'composite state body' });
     return items.list;
   }
   return undefined;

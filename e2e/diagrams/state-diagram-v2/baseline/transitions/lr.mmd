@@ -1,0 +1,12 @@
+---
+description: a left-to-right diagram with branching and merging transitions
+---
+stateDiagram-v2
+  direction LR
+  [*] --> Draft
+  Draft --> Review : submit
+  Review --> Draft : reject
+  Review --> Approved : approve
+  Approved --> Published
+  Draft --> Published : publish now
+  Published --> [*]

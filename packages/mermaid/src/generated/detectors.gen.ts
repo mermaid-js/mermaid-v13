@@ -20,7 +20,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'flowchart-v2', pattern: /^\s*(graph|flowchart)/, id: 'flowchart', formats: ['svg', 'ascii'] },
   { type: 'timeline', pattern: /^\s*timeline/ },
   { type: 'gitGraph', pattern: /^\s*gitGraph/ },
-  { type: 'stateDiagram', pattern: /^\s*stateDiagram/ },
+  { type: 'stateDiagram', pattern: /^\s*stateDiagram/, id: 'state', formats: ['svg'] },
   { type: 'journey', pattern: /^\s*journey/ },
   { type: 'quadrantChart', pattern: /^\s*quadrantChart/ },
   { type: 'sankey', pattern: /^\s*sankey(-beta)?/ },

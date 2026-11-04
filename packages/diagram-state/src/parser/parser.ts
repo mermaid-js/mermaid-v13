@@ -769,7 +769,7 @@ class StateParser {
     else {
       const opener = this.own(open);
       this.st.diagnostics.error(
-        'UNCLOSED',
+        'UNCLOSED_COMPOSITE',
         `Unclosed composite state: the \`{\` of \`${name}\` at line ${this.lineOf(opener.start)} has no closing \`}\`. Add \`}\` after its last statement.`,
         opener,
         {

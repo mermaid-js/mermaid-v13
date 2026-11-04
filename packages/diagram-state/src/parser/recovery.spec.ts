@@ -132,7 +132,7 @@ const CASES: Case[] = [
   {
     name: 'unclosed composite state',
     lines: ['stateDiagram-v2', 'A --> B', 'state X {', '  C'],
-    errors: [['UNCLOSED', 3]],
+    errors: [['UNCLOSED_COMPOSITE', 3]],
     keeps: ['A', 'B', 'X', 'C'],
   },
   {
@@ -140,7 +140,7 @@ const CASES: Case[] = [
     lines: ['stateDiagram-v2', 'A ->', 'state X {', '  C'],
     errors: [
       ['UNEXPECTED_CHARACTER', 2],
-      ['UNCLOSED', 3],
+      ['UNCLOSED_COMPOSITE', 3],
     ],
     keeps: ['X', 'C'],
   },

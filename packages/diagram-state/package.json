@@ -1,10 +1,14 @@
 {
   "name": "@mermaid-js/diagram-state",
-  "version": "0.0.0",
-  "private": true,
+  "version": "13.0.0-alpha.0",
   "description": "State diagram plugin for Mermaid: lexer, parser, model, graph builder and renderer.",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/diagram-state"
+  },
   "sideEffects": false,
   "exports": {
     ".": {
@@ -27,7 +31,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "THIRD_PARTY_NOTICES"
   ],
   "engines": {
     "node": ">=20"
@@ -38,9 +43,21 @@
     "port:v12-specs": "tsx scripts/port-v12-specs.ts && prettier --write src/v12-specs"
   },
   "peerDependencies": {
-    "@mermaid-js/core": "workspace:^"
+    "@mermaid-js/core": "workspace:*"
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "state",
+    "types": [
+      "stateDiagram"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "state",
+    "language": "./dist/language.js"
   }
 }
