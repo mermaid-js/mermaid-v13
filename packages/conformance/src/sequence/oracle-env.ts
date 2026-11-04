@@ -9,7 +9,7 @@
  * Nothing else changes; the DB constructor binds `parseBoxData` from the prototype and
  * `apply` calls `addDetails` on it, so the patch reaches every DB the oracle makes.
  */
-// cspell:words currentcolor
+// cspell:words currentcolor asamuzakjp
 import { isColor } from '@asamuzakjp/css-color';
 
 // The system colours and CSS-wide keywords a browser's `CSS.supports('color', …)` accepts,

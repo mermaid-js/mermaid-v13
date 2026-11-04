@@ -4,7 +4,7 @@
  * actor menu texts (`addLinks`, `addALink`, `addProperties`). Text is otherwise kept as written:
  * v12's `sanitizeText` runs when SVG is written, not here.
  */
-// cspell:words currentcolor
+// cspell:words currentcolor accentcolor accentcolortext activetext buttonborder canvastext linktext marktext selecteditem selecteditemtext visitedtext threeddarkshadow threedface threedhighlight threedlightshadow threedshadow
 import { isSpace, LPAREN } from '@mermaid-js/core/parser-kit';
 import { isYamlMap, parseYaml } from '@mermaid-js/core/preprocess';
 import { parseColor } from '@mermaid-js/core/theme';
@@ -61,8 +61,8 @@ function colorArgs(fn: 'rgb' | 'hsl', body: string): boolean {
     const alpha = a[3] === undefined || isNumber(a[3]) || isPercent(a[3]);
     const [x = '', y = '', z = ''] = a;
     if (fn === 'hsl') return alpha && isAngle(x) && isPercent(y) && isPercent(z);
-    const nums = [x, y, z].every(isNumber);
-    return alpha && (nums || [x, y, z].every(isPercent));
+    const allNumbers = [x, y, z].every(isNumber);
+    return alpha && (allNumbers || [x, y, z].every(isPercent));
   }
   const [main = '', alpha, extra] = s.split('/');
   if (extra !== undefined) return false;
