@@ -45,7 +45,6 @@
   "ignore": [
     "tools/**/fixtures/**",
     "packages/diagram-flowchart/scripts/**",
-    "packages/diagram-state/scripts/**",
     "e2e/global-teardown.ts",
     "e2e/helpers/coverage.ts",
     "e2e/rendering/common-tests/**"

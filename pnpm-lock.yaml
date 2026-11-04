@@ -464,6 +464,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../../packages/diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:^
+        version: link:../../packages/diagram-state
       vscode-oniguruma:
         specifier: 2.0.1
         version: 2.0.1

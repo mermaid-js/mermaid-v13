@@ -19,9 +19,18 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## Shared source view (from #138, D114)
 
-- [ ] **Adopt the shared source view: #181 merged into `mermaid-v13` (`c620c5715`) and into this branch** (owner: #142 if still open, else a follow-up): import it from `@mermaid-js/core/parser-kit` and delete `diagram-state/src/parser/source.ts`.
+- [x] **Adopt the shared source view** — done in #142: `parser/view.ts` builds the state text on the kit's `sourceView` (holes, dropped `;`, tag quotes) with `SourceOffsets` / `localOffset`, adds state's `trimStart` and appended `\n`, and `source.ts` is deleted. Lexer gate unchanged (593 of 600, 0 diffs). Not done: the lexer still reads offsets from a per-character table (filled from `SourceOffsets`), because state's text reads CRLF as one LF and so does not line up with the kit's runs.
 
 - D114: the v12 source view (comment-line removal, dropped `;`, the `="x"` quote rewrite) moves into the core parser kit in state T0 #162, which flowchart switches to. `diagram-state/src/parser/source.ts` stays, deprecated, until that T0 merges into `mermaid-v13`; then diagram-state adopts the kit version and deletes its copy (owner: #142, or a follow-up if #142 has merged by then). #162 merged via PR #181. When adopting: the kit has no option for state's `trimStart` or appended `\n`, and state's lexer must move from its per-character `at` array to `SourceOffsets`/`localOffset` (handoff: `tickets/162.md` on `feature/162_parser-kit-source-view`).
+
+## #144 T3 / #146 T4 (from #142)
+
+- `StateModel` ids are v12's (`root_start`, `X_end`, `X:region1`). A state's `parent` is its composite or region. Notes carry no parent: v12 put every note group at the top level.
+- v12 render-data specs (`stateNoteEdge`, `stateNoteNode`, `stateDiagram-colorIndex`) are ported as skips for the builder and renderer: note edges dashed, a note on a composite is no group, one palette slot per composite shared by its regions. The renderer specs (`stateRenderer*.spec.js`) were not ported.
+
+## Open question (from #142, escalated)
+
+- A composite whose last `--` has nothing after it: v12 splits no regions and draws each `--` as a stray `divider` node with an empty label. v13 drops the stray nodes and warns `EMPTY_REGION`. No corpus source has it, so `divergences.json` lists nothing; needs a D-id if kept.
 
 ## Outside this spec (seen after merging `mermaid-v13` at `5a6425d8e`)
 

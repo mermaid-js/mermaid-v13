@@ -12,6 +12,7 @@
  * it. Tokens for text jison consumed without a terminal (the `state` keyword, quotes,
  * `<<fork>>`-style markers, `end note`, …) only widen the ranges of the terminals around them.
  */
+// cspell:words LALR
 import { Kind, LineIndex, ParseState, Probe, skipTo } from '@mermaid-js/core/parser-kit';
 import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
