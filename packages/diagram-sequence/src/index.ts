@@ -13,6 +13,8 @@ export {
   type SequenceLayout,
   type SequenceLayoutContext,
 } from './layout/index.ts';
+export { JISON_NAMES, SequenceTokenKind, sequenceTokens } from './parser/index.ts';
+export type { SequenceToken } from './parser/index.ts';
 
 /** The plugin's contract. */
 export type SequencePlugin = DiagramPlugin<SequenceModel, SequenceLayout>;

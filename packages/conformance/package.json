@@ -10,6 +10,7 @@
     "oracle": "vitest run --root ../.. packages/conformance/src/parity.spec.ts",
     "oracle:report": "tsx --conditions=mermaid-source src/cli/oracle-report.ts",
     "harvest:flowchart": "tsx --conditions=mermaid-source src/cli/harvest-flowchart.ts",
+    "harvest:sequence": "tsx --conditions=mermaid-source src/cli/harvest-sequence.ts",
     "fuzz": "tsx --conditions=mermaid-source src/cli/fuzz.ts",
     "smoke": "tsx --conditions=mermaid-source src/cli/smoke.ts"
   },
@@ -17,6 +18,7 @@
     "@braintree/sanitize-url": "7.1.2",
     "@mermaid-js/core": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/diagram-sequence": "workspace:^",
     "@mermaid-js/gen-grammar": "workspace:^",
     "@types/js-yaml": "^4.0.9",
     "js-yaml": "^4.3.2",
