@@ -248,7 +248,10 @@ export class Registry {
     if (!entry || id === undefined) return undefined;
     const have = this.ascii(id);
     if (have) return have;
-    if (!(await this.load(id)) || this.ascii(id)) return this.ascii(id);
+    if (!(await this.load(id))) return this.ascii(id);
+    // The plugin may carry its own ascii hook.
+    const registered = this.ascii(id);
+    if (registered) return registered;
     if (!entry.loadAscii) return undefined;
     const hook = await entry.loadAscii();
     if (typeof hook !== 'function')
