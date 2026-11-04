@@ -54,10 +54,13 @@ export async function startExample(name: string): Promise<ExampleServer> {
   return {
     origin,
     async close() {
-      const exited = new Promise((done) => child.once('exit', done));
-      // pnpm runs vite in a child; signal the whole group.
-      if (child.pid !== undefined) process.kill(-child.pid, 'SIGTERM');
-      await exited;
+      // A child that has already exited (vite crashed) has nothing left to wait for.
+      if (child.exitCode === null && child.signalCode === null) {
+        const exited = new Promise((done) => child.once('exit', done));
+        // pnpm runs vite in a child; signal the whole group.
+        if (child.pid !== undefined) process.kill(-child.pid, 'SIGTERM');
+        await exited;
+      }
       rmSync(outDir, { recursive: true, force: true });
     },
   };

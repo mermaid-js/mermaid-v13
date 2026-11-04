@@ -10,6 +10,7 @@ import { lintGutter } from '@codemirror/lint';
 import { EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers } from '@codemirror/view';
 import { mermaid, selectAst } from '@mermaid-js/language-service-codemirror';
+import { createLanguageService } from '@mermaid-js/language-service';
 import type { AstId } from '@mermaid-js/language-service';
 import { render } from 'mermaid';
 
@@ -66,6 +67,9 @@ function schedulePreview(text: string): void {
 // No top-level await: the lazily loaded chunks (the facet, the config schema) import shared
 // code from the entry chunk, which would wait on this module and deadlock.
 async function start(): Promise<EditorView> {
+  // One service could serve several editors; each editor's document closes with it.
+  const service = createLanguageService();
+  const uri = 'memory://example/diagram.mmd';
   const view = new EditorView({
     parent: document.getElementById('editor')!,
     state: EditorState.create({
@@ -78,6 +82,8 @@ async function start(): Promise<EditorView> {
         closeBrackets(),
         keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap, ...completionKeymap]),
         await mermaid({
+          service,
+          uri,
           onCursorAst: (ids) => {
             cursorIds = ids;
             highlight();
@@ -97,7 +103,7 @@ async function start(): Promise<EditorView> {
   });
 
   schedulePreview(INITIAL);
-  Object.assign(window, { editor: view });
+  Object.assign(window, { editor: view, service, uri });
   return view;
 }
 

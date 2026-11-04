@@ -53,6 +53,17 @@ async function cursorAt(page: Page, text: string, delta = 0): Promise<void> {
   );
 }
 
+/** The example's initial text (packages/language-service/examples/codemirror/src/main.ts). */
+const INITIAL = `flowchart LR
+  A[Start] --> B{Ready?}
+  B -- yes --> C[Ship it]
+  B -- no --> D[Fix]
+  subgraph review
+    D --> E[Test]
+    E --> B
+  end
+`;
+
 const docText = (page: Page) =>
   page.evaluate(() => (window as unknown as EditorWindow).editor.state.doc.toString());
 
@@ -88,10 +99,10 @@ test('completes a node id', async ({ page }) => {
   for (const id of ['A', 'B', 'C', 'D']) {
     await expect(list.locator('.cm-completionLabel', { hasText: new RegExp(`^${id}$`) })).toHaveCount(1);
   }
-  await page.keyboard.type('C');
-  await expect(list.locator('.cm-completionLabel').first()).toHaveText('C');
-  await page.keyboard.press('Enter');
-  expect((await docText(page)).trimEnd().endsWith('  E --> C')).toBe(true);
+  // Pick an item without typing any of it: the whole id comes from the item's apply.
+  await list.locator('.cm-completionLabel', { hasText: /^D$/ }).click();
+  await expect(list).toBeHidden();
+  expect(await docText(page)).toBe(`${INITIAL}  E --> D`);
 });
 
 test('hovers a node', async ({ page }) => {
@@ -139,4 +150,41 @@ test('clicking the preview moves the cursor', async ({ page }) => {
   expect(line.text).toContain('E[Test]');
   expect(line.rest.startsWith('E[Test]')).toBe(true);
   await expect(page.locator('#preview .ast-current')).toHaveAttribute('data-ast', 'n:E');
+});
+
+test('draws semantic tokens, and redraws them after an edit and after unfolding', async ({
+  page,
+}) => {
+  await open(page);
+  const node = (text: string) =>
+    page.locator('.cm-content .cm-mermaid-node', { hasText: new RegExp(`^${text}$`) });
+  await expect(node('A').first()).toBeVisible();
+  await expect(page.locator('.cm-mermaid-subgraph', { hasText: 'review' })).toHaveCount(1);
+  // Fold, then edit: the debounced rebuild decorates only the visible lines, and the new
+  // node gets its class once the snapshot is in.
+  await page.locator('.cm-foldGutter [title="Fold line"]').click();
+  await expect(page.locator('.cm-foldPlaceholder')).toBeVisible();
+  await page.evaluate(() => {
+    const view = (window as unknown as EditorWindow).editor;
+    view.dispatch({ changes: { from: view.state.doc.length, insert: '  Zed --> A\n' } });
+  });
+  await expect(node('Zed')).toHaveCount(1);
+  // Unfolding decorates the lines that were hidden during that rebuild.
+  await page.locator('.cm-foldPlaceholder').click();
+  await expect(page.locator('.cm-line', { hasText: 'D --> E[Test]' })).toBeVisible();
+  await expect(node('E').first()).toBeVisible();
+});
+
+test('closes the document in the shared service when the editor goes away', async ({ page }) => {
+  await open(page);
+  const open1 = await page.evaluate(() => {
+    const w = window as unknown as EditorWindow & {
+      service: { get(uri: string): unknown };
+      uri: string;
+    };
+    const before = w.service.get(w.uri) !== undefined;
+    (w.editor as unknown as { destroy(): void }).destroy();
+    return { before, after: w.service.get(w.uri) !== undefined };
+  });
+  expect(open1).toEqual({ before: true, after: false });
 });

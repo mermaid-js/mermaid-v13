@@ -5,6 +5,7 @@
  */
 import { Facet, StateField } from '@codemirror/state';
 import type { EditorState, Extension } from '@codemirror/state';
+import { ViewPlugin } from '@codemirror/view';
 import { createLanguageService } from '@mermaid-js/language-service';
 import type {
   DocumentSnapshot,
@@ -68,13 +69,22 @@ export function mermaidSnapshot(state: EditorState): DocumentSnapshot | undefine
 
 let nextUri = 0;
 
+/** Closes the editor's document in the service when the view is destroyed. */
+const closeOnDestroy = ViewPlugin.define((view) => ({
+  destroy() {
+    const config = view.state.facet(serviceConfig);
+    config?.service.close(config.uri);
+  },
+}));
+
 /**
  * The service every other feature reads. Waits for `service.preload()` (D155) so the first
  * snapshot is complete: a facet loaded later would leave the editor with generic features.
+ * The document is closed in the service when the editor view is destroyed.
  */
 export async function mermaidService(options: MermaidServiceOptions = {}): Promise<Extension> {
   const service = options.service ?? createLanguageService();
   await service.preload(options.preload);
   const uri = options.uri ?? `memory://mermaid/${++nextUri}.mmd`;
-  return [serviceConfig.of({ service, uri }), snapshotField];
+  return [serviceConfig.of({ service, uri }), snapshotField, closeOnDestroy];
 }
