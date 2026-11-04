@@ -38,6 +38,8 @@ export default defineConfig({
     'browser/**/*.spec.ts',
     'dev/**/*.spec.ts',
     'smoke/**/*.spec.ts',
+    // The language-service example editors (D98), each built and served by its own spec.
+    'language/**/*.spec.ts',
   ],
   // e2e/helpers holds Vitest unit tests for the e2e helpers; Playwright must not collect them.
   testIgnore: '**/helpers/**',

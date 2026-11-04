@@ -143,17 +143,28 @@ test('typing an error shows its diagnostic', async ({ page }) => {
   await expect(page.locator('#status')).not.toBeEmpty();
 });
 
-test('completes a node id', async ({ page }) => {
+test('completes a node id and a keyword from the service', async ({ page }) => {
   await open(page);
   await moveTo(page, 9, 6);
   await page.keyboard.press('End');
   await page.keyboard.type('\n  Done --> Bu');
   await page.keyboard.press('Control+Space');
   const widget = page.locator('.suggest-widget');
-  await expect(widget).toBeVisible();
-  await expect(widget.locator('.monaco-list-row').first()).toContainText('Build');
+  const first = widget.locator('.monaco-list-row').first();
+  await expect(first).toContainText('Build');
+  // The service's kind for a node id (a variable), not a word-based suggestion's.
+  await expect(first.locator('.codicon-symbol-variable')).toHaveCount(1);
   await page.keyboard.press('Enter');
   await expect.poll(async () => (await lineText(page, 10)).trim()).toBe('Done --> Build');
+
+  // A keyword the text does not contain: only the service offers it.
+  await page.keyboard.type('\n  cli');
+  await page.keyboard.press('Control+Space');
+  const click = widget.locator('.monaco-list-row', { hasText: 'click' });
+  await expect(click).toHaveCount(1);
+  await expect(click.locator('.codicon-symbol-keyword')).toHaveCount(1);
+  await page.keyboard.press('Enter');
+  await expect.poll(async () => (await lineText(page, 11)).trim()).toBe('click');
 });
 
 test('hover shows the node docs', async ({ page }) => {
