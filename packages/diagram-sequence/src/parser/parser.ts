@@ -152,6 +152,8 @@ class SequenceParser extends TokenRules {
   private readonly mentions = new Map<string, number>();
   private readonly pairs = new Map<string, number>();
   private readonly fragmentCount = new Map<string, number>();
+  /** Depth of a box closed early by a non-participant line; its `end` is taken silently. */
+  private danglingEnd = -1;
 
   constructor(
     src: string,
@@ -219,11 +221,11 @@ class SequenceParser extends TokenRules {
   }
 
   /** A participant mentioned by a message, note or menu statement: v12 adds it. */
-  private ref(name: string, range: Range, adds = true): SequenceParticipantRef {
+  private ref(name: string, range: Range): SequenceParticipantRef {
     const first = !this.mentions.has(name);
     const id = this.participantAst(name);
     this.st.symbol(name, 'participant', range, first ? 'def' : 'ref');
-    if (adds) this.db.mention(name, id, range);
+    this.db.mention(name, id, range);
     return { id, type: 'ParticipantRef', range, name };
   }
 
@@ -253,8 +255,10 @@ class SequenceParser extends TokenRules {
     }
     const range = this.span(from);
     this.separator();
-    const first = !this.mentions.has(name);
-    const id = this.participantAst(name);
+    // `destroy` adds no participant: it keeps `p:<id>` for the statement that does.
+    const adds = kw !== T.Destroy || create;
+    const first = adds && !this.mentions.has(name);
+    const id = adds ? this.participantAst(name) : this.ids.statement('st');
     const keyword = KEYWORD_NAMES[kw] ?? 'participant';
     const node: SequenceParticipantStmt = {
       id,
@@ -275,7 +279,10 @@ class SequenceParser extends TokenRules {
     }
     const parts: DeclareParts = { id: name, ast: id, range };
     if (kw !== T.Destroy) parts.kind = keyword as ParticipantKind;
-    if (alias) parts.description = parseMessage(alias.text);
+    if (alias) {
+      parts.description = parseMessage(alias.text);
+      this.math(parts.description.text, alias.range);
+    }
     if (data) this.participantData(data[0], data[1], parts);
     if (create) db.create(parts);
     else db.declare(parts);
@@ -442,7 +449,8 @@ class SequenceParser extends TokenRules {
       text,
       children: [ref],
     };
-    const data = menuData(type, text);
+    const written = messageText(this.src.slice(this.start(txt), this.end(txt))).text;
+    const data = menuData(type, written);
     if (data === undefined) {
       const example = type === 'Links' ? '`{"label": "url"}`' : '`{"key": "value"}`';
       st.diagnostics.warning(
@@ -450,7 +458,10 @@ class SequenceParser extends TokenRules {
         `The \`${type.toLowerCase()}\` text is not a JSON object, so it is ignored: write it as ${example}.`,
         this.range(txt)
       );
-    } else Object.assign(node, data);
+    } else {
+      Object.assign(node, data);
+      this.db.menu(name, data);
+    }
     st.statement(type.toLowerCase(), range);
     this.body.push(node);
   }
@@ -464,7 +475,8 @@ class SequenceParser extends TokenRules {
     const [name, nameRange] = this.actor();
     this.separator();
     const range = this.range(from, this.i - 2);
-    const ref = this.ref(name, nameRange, false);
+    // No participant is added, so no `p:` id is used up (the one that adds it keeps `p:<id>`).
+    this.st.symbol(name, 'participant', nameRange, 'ref');
     const active = kw === T.Activate;
     const ast = this.ids.statement('st');
     if (active) db.activate(name);
@@ -472,7 +484,7 @@ class SequenceParser extends TokenRules {
       db.statement({ kind: 'activation', ast, participant: name, active });
     }
     st.statement(active ? 'activate' : 'deactivate', range);
-    this.body.push({ id: ast, type: 'Activation', range, active, children: [ref] });
+    this.body.push({ id: ast, type: 'Activation', range, active, participant: name, nameRange });
   }
 
   /** `autonumber`, `autonumber N`, `autonumber N M`, `autonumber off`. */
@@ -557,12 +569,16 @@ class SequenceParser extends TokenRules {
    */
   private multilineRange(range: Range): void {
     const t = this.fullTokens;
-    let j = 0;
-    while (
-      j < t.length &&
-      ((t.start[j] ?? 0) < range.start || t.kind[j] !== T.AccDescrMultilineValue)
-    )
-      j++;
+    // Token starts are sorted: the first token at or after the value's start (pitfall 11).
+    let lo = 0;
+    let hi = t.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if ((t.start[mid] ?? 0) < range.start) lo = mid + 1;
+      else hi = mid;
+    }
+    let j = lo;
+    while (j < t.length && t.kind[j] !== T.AccDescrMultilineValue) j++;
     for (let o = j - 1; o >= 0; o--) {
       const k = t.kind[o];
       if (k === T.AccDescrMultiline) range.start = t.start[o] ?? range.start;
@@ -637,6 +653,7 @@ class SequenceParser extends TokenRules {
       const n = (this.fragmentCount.get(fragment) ?? 0) + 1;
       this.fragmentCount.set(fragment, n);
       const label: Wrapped = parseMessage(text);
+      this.math(label.text, this.range(rest));
       node = { ...base, id: `f:${fragment}#${n}`, type: 'Fragment', fragment, label: label.text };
       opened = db.openFragment(node.id, fragment, label);
       kind = fragment;
@@ -647,6 +664,7 @@ class SequenceParser extends TokenRules {
       kind = 'rect';
     } else {
       const data = parseBoxData(text);
+      this.math(data.text ?? '', this.range(rest));
       node = { ...base, id: this.ids.statement('box'), type: 'Box', label: data.text ?? '' };
       if (data.color !== 'transparent') node.color = data.color;
       db.openBox(node.id, data);
@@ -687,6 +705,7 @@ class SequenceParser extends TokenRules {
     this.i++;
     const rest = this.expect(REST);
     const label = parseMessage(this.raw(rest));
+    this.math(label.text, this.range(rest));
     const range = this.range(from, rest);
     const ast = this.ids.statement('st');
     db.section(fragment, ast, label);
@@ -708,6 +727,12 @@ class SequenceParser extends TokenRules {
   /** `end`: closes the innermost block. */
   private close(from: number): void {
     const { st, db, frames } = this;
+    if (this.danglingEnd === frames.length) {
+      // The `end` of a box closed early (see boxLine).
+      this.danglingEnd = -1;
+      this.i++;
+      return;
+    }
     const frame = frames.pop();
     if (!frame) {
       st.diagnostics.error(
@@ -715,8 +740,9 @@ class SequenceParser extends TokenRules {
         'Unexpected `end`: there is no open block (`loop`, `alt`, `box`, …) to close here.',
         this.range(from)
       );
+      // The rest of the line goes with the stray `end` (one error, one diagnostic).
       this.i++;
-      return;
+      throw STOP;
     }
     this.i++;
     const end = this.end(from);
@@ -742,8 +768,19 @@ class SequenceParser extends TokenRules {
       this.body.push(this.participantStatement(from, false));
       return;
     }
-    this.hint = 'a box holds `participant`, `actor` and `destroy` lines only, up to its `end`';
-    this.fail(BOX_KINDS);
+    // A box holds participant lines only: this line means its `end` is missing. One error,
+    // then the box is closed here and the line parsed as any other (pitfall 8); the `end` the
+    // author may still write for it later closes nothing and is not reported again.
+    const frame = this.frames.pop() as Frame;
+    this.st.diagnostics.error(
+      'UNCLOSED_BLOCK',
+      `Unclosed \`box\`: the \`box\` at line ${this.lineOf(frame.opener.start)} holds participant lines only, and this line comes before its \`end\`. Add \`end\` after its participants.`,
+      frame.opener,
+      { related: [{ message: 'This line is not a participant line.', range: this.range(from) }] }
+    );
+    this.closeFrame(frame, this.end(from - 1));
+    this.db.closeBox();
+    this.danglingEnd = this.frames.length;
   }
 
   /** `sequenceDiagram`, after optional line breaks (jison `start`). */

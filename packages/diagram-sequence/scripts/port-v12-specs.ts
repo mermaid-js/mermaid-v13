@@ -28,8 +28,6 @@ export const SKIP: Record<string, Record<string, string>> = {
     'when checking the bounds in a sequenceDiagram': RENDER,
     'when rendering a sequenceDiagram APA': RENDER,
     'when rendering a sequenceDiagram with actor mirror activated': RENDER,
-    'should not show sequence numbers per default': RENDER,
-    'should show sequence numbers when autonumber is enabled': RENDER,
     'should have functions used in sequence JISON as own property':
       "checks the methods v12's jison grammar called on its DB; v13 has no jison DB",
   },

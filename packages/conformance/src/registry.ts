@@ -15,7 +15,10 @@ export const PARITY_SUITES: ParitySuite[] = [
   {
     adapter: sequenceAdapter,
     corpusDirs: ['e2e/diagrams/sequence'],
-    corpusFiles: ['packages/conformance/corpus/sequence-v12-specs.json'],
+    corpusFiles: [
+      'packages/conformance/corpus/sequence-v12-specs.json',
+      'packages/conformance/corpus/sequence-cases.json',
+    ],
   },
 ];
 

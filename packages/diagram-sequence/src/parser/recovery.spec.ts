@@ -11,6 +11,7 @@ const errors = (src: string) =>
 
 /** `[source, codes of the errors, in order]`; one error per marked line. */
 const CASES: [string, string[]][] = [
+  ['sequenceDiagram\nA->>B: x\nend x', ['UNEXPECTED_END']],
   ['sequenceDiagram\nA->>B\nB->>A: ok', ['UNEXPECTED']],
   [
     'sequenceDiagram\nA->>B\nfoo bar\nA B: x\nB->>A: ok',
@@ -23,10 +24,17 @@ const CASES: [string, string[]][] = [
   ['sequenceDiagram\nalt x\nloop y\nend', ['UNCLOSED_BLOCK']],
   ['sequenceDiagram\nend\nA->>B: x\nend', ['UNEXPECTED_END', 'UNEXPECTED_END']],
   ['sequenceDiagram\nloop x\nelse y\nend\nand z', ['UNEXPECTED_SECTION', 'UNEXPECTED_SECTION']],
+  ['sequenceDiagram\nbox G\nA->>B: x\nparticipant C\nnote over C: n\nend', ['UNCLOSED_BLOCK']],
+  ['sequenceDiagram\nbox X\nparticipant A\nA->>B: x\nB->>A: y\nC->>A: z', ['UNCLOSED_BLOCK']],
   [
-    'sequenceDiagram\nbox G\nA->>B: x\nparticipant C\nnote over C: n\nend',
-    ['UNEXPECTED', 'UNEXPECTED'],
+    'sequenceDiagram\nA->>C: x\ncreate participant B\nA->>C: y\nA->>C: z\nA->>B: w',
+    ['SEQUENCE_CREATE_MESSAGE'],
   ],
+  [
+    'sequenceDiagram\ncreate participant Z\nA->>B: m\nA->>B: m\nA->>B: m',
+    ['SEQUENCE_CREATE_MESSAGE'],
+  ],
+  ['sequenceDiagram\ndestroy Z\nA->>B: m\nA->>B: m\nA->>B: m', ['SEQUENCE_DESTROY_MESSAGE']],
   ['sequenceDiagram\nautonumber x\nactivate\nA->>B: ok', ['UNEXPECTED', 'UNEXPECTED']],
   ['flowchart\nA->>B: x', ['UNEXPECTED']],
   ['sequenceDiagram\ndeactivate A\nA->>-B: x', ['SEQUENCE_INACTIVE', 'SEQUENCE_INACTIVE']],

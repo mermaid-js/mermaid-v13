@@ -126,13 +126,54 @@ describe('value conversion (as v12)', () => {
     expect(m.participants.find((p) => p.id === 'C')).toMatchObject({
       createAst: 'p:C',
       createdBy: 'm:A>C',
-      destroyAst: 'p:C@3',
+      destroyAst: 'st:1',
       destroyedBy: 'm:C>A',
     });
   });
 });
 
+describe('actor menus on the model (as v12 merged them)', () => {
+  it('keeps JSON values, merges arrays by index and resets on a redeclaration', () => {
+    const m = parse(
+      'links A: {"n": 3}\nproperties A: [1]\nlinks B: {"x": "u"}\nparticipant B as Bee\nlink C: L @ u'
+    ).model;
+    expect(m.participants.map((p) => [p.id, p.links, p.properties])).toEqual([
+      ['A', { n: 3 }, { 0: 1 }],
+      ['B', undefined, undefined],
+      ['C', { L: 'u' }, undefined],
+    ]);
+  });
+});
+
+describe('box colours (as a browser reads them)', () => {
+  it('takes CSS system colours and modern syntax, and rejects legacy hsl without %', () => {
+    const m = parse(
+      'box Background Jobs\nend\nbox hsl(none 0% 0%) A\nend\nbox hsl(1,2,3) B\nend\nbox rgb(1 2 3 / 50%) C\nend'
+    ).model;
+    expect(m.boxes.map((b) => [b.color, b.label])).toEqual([
+      ['Background', 'Jobs'],
+      ['hsl(none 0% 0%)', 'A'],
+      [undefined, 'hsl(1,2,3) B'],
+      ['rgb(1 2 3 / 50%)', 'C'],
+    ]);
+  });
+});
+
 describe('AST, symbols and statements', () => {
+  it('keeps p:<id> for the statement that adds the participant', () => {
+    for (const body of ['activate A\nA->>B: x\ndeactivate A', 'destroy A\nA->>B: x']) {
+      const r = parse(body);
+      const a = r.model.participants.find((p) => p.id === 'A');
+      expect(a?.ast).toBe('p:A');
+      const msg = r.ast.children.find((n) => n.type === 'Message');
+      expect(msg && 'children' in msg && msg.children[0]?.id).toBe('p:A');
+      const def = r.symbols.find((s) => s.name === 'A' && s.role === 'def');
+      expect(def && r.ast.children.find((n) => n.type === 'Message')?.range.start).toBe(
+        def?.range.start
+      );
+    }
+  });
+
   it('gives semantic ids from the names', () => {
     const r = parse(
       'participant A\nA->>B: x\nA->>B: y\nNote over A: n\nloop l\nB->>A: z\nend\nalt a\nelse b\nend\nbox G\nactor C\nend\nactivate A'
@@ -165,7 +206,6 @@ describe('AST, symbols and statements', () => {
       'box:1',
       'p:C',
       'st:2',
-      'p:A@6',
     ]);
     expect(new Set(ids).size).toBe(ids.length);
   });
@@ -210,6 +250,19 @@ describe('warnings', () => {
   it('warns about math, and keeps the text', () => {
     expect(codes('A->>B: $$x^2$$')).toEqual([['warning', 'SEQUENCE_MATH']]);
     expect(first('A->>B: $$x^2$$')).toMatchObject({ text: '$$x^2$$' });
+  });
+
+  it('warns about math in labels too: aliases, fragment and section labels, box titles', () => {
+    expect(
+      codes(
+        'participant A as $$\\alpha$$\nloop $$x$$\nA->>B: hi\nend\nalt a\nelse $$y$$\nend\nbox $$z$$\nend'
+      )
+    ).toEqual([
+      ['warning', 'SEQUENCE_MATH'],
+      ['warning', 'SEQUENCE_MATH'],
+      ['warning', 'SEQUENCE_MATH'],
+      ['warning', 'SEQUENCE_MATH'],
+    ]);
   });
 
   it('warns about a message after the destroying one (v12 accepts it)', () => {

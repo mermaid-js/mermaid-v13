@@ -10,11 +10,64 @@
  * `apply` calls `addDetails` on it, so the patch reaches every DB the oracle makes.
  */
 // cspell:words currentcolor
-import { parseColor } from '@mermaid-js/core/theme';
+import { isColor } from '@asamuzakjp/css-color';
 
-/** `CSS.supports('color', c)` as a browser answers it for what v12 passes. */
-const supportsColor = (c: string): boolean =>
-  parseColor(c) !== undefined || /^(?:currentcolor|inherit|initial|unset|revert)$/i.test(c);
+// The system colours and CSS-wide keywords a browser's `CSS.supports('color', …)` accepts,
+// which `@asamuzakjp/css-color` (jsdom's colour parser) does not list. Written out here, apart
+// from v13's own table, so parity sees a difference between the two.
+const BROWSER_EXTRA = new Set(
+  [
+    'AccentColor',
+    'AccentColorText',
+    'ActiveText',
+    'ButtonBorder',
+    'ButtonFace',
+    'ButtonText',
+    'Canvas',
+    'CanvasText',
+    'Field',
+    'FieldText',
+    'GrayText',
+    'Highlight',
+    'HighlightText',
+    'LinkText',
+    'Mark',
+    'MarkText',
+    'SelectedItem',
+    'SelectedItemText',
+    'VisitedText',
+    'ActiveBorder',
+    'ActiveCaption',
+    'AppWorkspace',
+    'Background',
+    'ButtonHighlight',
+    'ButtonShadow',
+    'CaptionText',
+    'InactiveBorder',
+    'InactiveCaption',
+    'InactiveCaptionText',
+    'InfoBackground',
+    'InfoText',
+    'Menu',
+    'MenuText',
+    'Scrollbar',
+    'ThreeDDarkShadow',
+    'ThreeDFace',
+    'ThreeDHighlight',
+    'ThreeDLightShadow',
+    'ThreeDShadow',
+    'Window',
+    'WindowFrame',
+    'WindowText',
+    'inherit',
+    'initial',
+    'unset',
+    'revert',
+  ].map((c) => c.toLowerCase())
+);
+
+/** `CSS.supports('color', c)` as a browser answers it, from a CSS colour parser. */
+const supportsColor = (c: string): boolean => isColor(c) || BROWSER_EXTRA.has(c.toLowerCase());
 
 interface SequenceDbPrototype {
   extractWrap(text?: string): { cleanedText?: string; wrap?: boolean };

@@ -161,23 +161,33 @@ interface SequenceDbV12 {
 const str = (v: unknown): string | null => (typeof v === 'string' ? decodeEntities(v) : null);
 const num = (v: unknown): number | null => (typeof v === 'number' ? v : null);
 
-/** The row of the first message at or after `from`, when it names `id` (as `to`, or `from` too). */
+/**
+ * The row v12 draws a create or destroy at: the row it stored (the message count when the
+ * statement came), and only when that row is a message to `id` (or, for a destroy, from it),
+ * as v12's renderer checked (`sequenceRenderer.ts:1002–1022`); otherwise v12 drew none.
+ */
 export function drawnAt(
   rows: readonly SequenceRowSnapshot[],
-  from: number,
+  at: number,
   id: string,
   either: boolean
 ): number | null {
-  for (let i = from; i < rows.length; i++) {
-    const r = rows[i] as SequenceRowSnapshot;
-    if (!MESSAGE_TYPES.has(r.type)) continue;
-    return r.to === id || (either && r.from === id) ? i : null;
-  }
-  return null;
+  const r = rows[at];
+  if (!r || !MESSAGE_TYPES.has(r.type)) return null;
+  return r.to === id || (either && r.from === id) ? at : null;
 }
 
-const plain = (v: unknown): Record<string, unknown> =>
-  v && typeof v === 'object' ? (JSON.parse(JSON.stringify(v)) as Record<string, unknown>) : {};
+/** A menu record as plain data, with v12's entity placeholders decoded in keys and strings. */
+const plain = (v: unknown): Record<string, unknown> => {
+  const walk = (x: unknown): unknown => {
+    if (typeof x === 'string') return decodeEntities(x);
+    if (Array.isArray(x)) return x.map(walk);
+    if (x && typeof x === 'object')
+      return Object.fromEntries(Object.entries(x).map(([k, y]) => [decodeEntities(k), walk(y)]));
+    return x;
+  };
+  return v && typeof v === 'object' ? (walk(v) as Record<string, unknown>) : {};
+};
 
 export function sequenceV12Snapshot(dbValue: unknown): SequenceSnapshot {
   const db = dbValue as SequenceDbV12;

@@ -30,9 +30,63 @@ export function messageText(txt: string): Wrapped {
   return parseMessage(txt.trim().slice(1));
 }
 
-/** v12's own `CSS.supports('color', c)` answers, without a DOM. */
+/** CSS system colours (CSS Color 4, deprecated ones included), lower case. */
+const SYSTEM_COLORS = new Set(
+  (
+    'accentcolor accentcolortext activetext buttonborder buttonface buttontext canvas canvastext ' +
+    'field fieldtext graytext highlight highlighttext linktext mark marktext selecteditem ' +
+    'selecteditemtext visitedtext activeborder activecaption appworkspace background ' +
+    'buttonhighlight buttonshadow captiontext inactiveborder inactivecaption ' +
+    'inactivecaptiontext infobackground infotext menu menutext scrollbar threeddarkshadow ' +
+    'threedface threedhighlight threedlightshadow threedshadow window windowframe windowtext'
+  ).split(' ')
+);
+const KEYWORDS = new Set(['transparent', 'currentcolor', 'inherit', 'initial', 'unset', 'revert']);
+
+const NUMBER = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i;
+const isNumber = (s: string) => NUMBER.test(s);
+const isPercent = (s: string) => s.endsWith('%') && isNumber(s.slice(0, -1));
+const isAngle = (s: string) => {
+  const m = /^(.*?)(deg|grad|rad|turn)$/i.exec(s);
+  return m ? isNumber(m[1] ?? '') : isNumber(s);
+};
+
+/** The arguments of `rgb()`/`hsl()` as CSS Color 4 accepts them (legacy commas or modern). */
+function colorArgs(fn: 'rgb' | 'hsl', body: string): boolean {
+  const s = body.trim();
+  if (s.includes(',')) {
+    // Legacy syntax: no `none`; rgb takes all numbers or all percentages, hsl a hue then %.
+    const a = s.split(',').map((x) => x.trim());
+    if (a.length !== 3 && a.length !== 4) return false;
+    const alpha = a[3] === undefined || isNumber(a[3]) || isPercent(a[3]);
+    const [x = '', y = '', z = ''] = a;
+    if (fn === 'hsl') return alpha && isAngle(x) && isPercent(y) && isPercent(z);
+    const nums = [x, y, z].every(isNumber);
+    return alpha && (nums || [x, y, z].every(isPercent));
+  }
+  const [main = '', alpha, extra] = s.split('/');
+  if (extra !== undefined) return false;
+  const a = main.trim().split(/\s+/);
+  if (a.length !== 3) return false;
+  const value = (x: string) => x.toLowerCase() === 'none' || isNumber(x) || isPercent(x);
+  const alphaOk = alpha === undefined || value(alpha.trim());
+  const [h = ''] = a;
+  if (fn === 'hsl') {
+    return alphaOk && (h.toLowerCase() === 'none' || isAngle(h)) && a.slice(1).every(value);
+  }
+  return alphaOk && a.every(value);
+}
+
+/**
+ * What a browser's `CSS.supports('color', c)` answers for the colours v12's box line can pass:
+ * a word (named, system or keyword colour) or `rgb[a](…)` / `hsl[a](…)`.
+ */
 export function isCssColor(c: string): boolean {
-  return parseColor(c) !== undefined || /^(?:currentcolor|inherit|initial|unset|revert)$/i.test(c);
+  const lower = c.toLowerCase();
+  if (KEYWORDS.has(lower) || SYSTEM_COLORS.has(lower)) return true;
+  const fn = /^(rgba?|hsla?)\((.*)\)$/s.exec(lower);
+  if (fn) return colorArgs(fn[1]?.startsWith('rgb') ? 'rgb' : 'hsl', fn[2] ?? '');
+  return /^[a-z]+$/.test(lower) && parseColor(lower) !== undefined;
 }
 
 const isWordChar = (c: number) =>
@@ -90,36 +144,56 @@ export function parseBoxData(str: string): BoxData {
 /** `&equals;` and `&amp;` back to `=` and `&`, as v12's menu statements did. */
 const unescapeMenu = (text: string) => text.replace(/&equals;/g, '=').replace(/&amp;/g, '&');
 
-/** `links A: {json}` and `properties A: {json}`: the JSON object, or undefined. */
-export function menuJson(text: string, links: boolean): Record<string, unknown> | undefined {
-  try {
-    const value: unknown = JSON.parse(links ? unescapeMenu(text) : text);
-    if (value !== null && typeof value === 'object' && !Array.isArray(value))
-      return value as Record<string, unknown>;
-  } catch {
-    // Not JSON: v12 logged the error and ignored the statement.
+/** v12's `encodeEntities` placeholders, which its menu statements worked on. */
+const encode = (text: string) =>
+  text.replace(/#(\w+);/g, (_, name: string) =>
+    /^\+?\d+$/.test(name) ? `ﬂ°°${name}¶ß` : `ﬂ°${name}¶ß`
+  );
+/** The placeholders back to `&name;` / `&#123;`, as v12's output had them. */
+const decode = (text: string) => text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
+const decoded = (v: unknown): unknown => {
+  if (typeof v === 'string') return decode(v);
+  if (Array.isArray(v)) return v.map(decoded);
+  if (v !== null && typeof v === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, x] of Object.entries(v)) out[decode(k)] = decoded(x);
+    return out;
   }
-  return undefined;
-}
+  return v;
+};
 
-/** What `links`/`link`/`properties` carry (D105); undefined when the JSON is not an object. */
+/**
+ * What `links`/`link`/`properties` carry (D105), as v12 merged it into the participant, from
+ * the text after `:` as written (entities as `#name;`): the value's `for … in` keys, so an
+ * array merges by index and a string by character; undefined when the text is not JSON (v12
+ * logged that and ignored the statement). v12 worked on its entity placeholders, so this does
+ * too, and decodes them at the end.
+ */
 export function menuData(
   type: 'Links' | 'Link' | 'Properties' | 'Details',
-  text: string
-): { links?: Record<string, string>; properties?: Record<string, unknown> } | undefined {
+  written: string
+): { links?: Record<string, unknown>; properties?: Record<string, unknown> } | undefined {
   if (type === 'Details') return {};
-  if (type === 'Link') return { links: menuLink(text) };
-  const value = menuJson(text, type === 'Links');
-  if (value === undefined) return undefined;
-  if (type === 'Properties') return { properties: value };
-  const links: Record<string, string> = {};
-  for (const [k, v] of Object.entries(value))
-    links[k] = typeof v === 'string' ? v : JSON.stringify(v);
-  return { links };
+  const text = encode(written);
+  if (type === 'Link') return { links: decoded(menuLink(text)) as Record<string, unknown> };
+  let value: unknown;
+  try {
+    value = JSON.parse(type === 'Links' ? unescapeMenu(text) : text);
+  } catch {
+    return undefined;
+  }
+  const merged: Record<string, unknown> = {};
+  if (typeof value === 'string') {
+    for (let i = 0; i < value.length; i++) merged[String(i)] = value[i];
+  } else if (value !== null && typeof value === 'object') {
+    for (const [k, v] of Object.entries(value)) merged[k] = v;
+  }
+  const out = decoded(merged) as Record<string, unknown>;
+  return type === 'Links' ? { links: out } : { properties: out };
 }
 
 /** `link A: label @ url`, split as v12's `addALink` did (the character before `@` is dropped). */
-export function menuLink(text: string): Record<string, string> {
+function menuLink(text: string): Record<string, string> {
   const sep = text.indexOf('@');
   const t = unescapeMenu(text);
   return { [t.slice(0, sep - 1).trim()]: t.slice(sep + 1).trim() };

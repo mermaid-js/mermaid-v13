@@ -9,8 +9,6 @@ import { Diagram, mermaidAPI, parser, SequenceDB, setSiteConfig } from './adapte
 // skipped: when checking the bounds in a sequenceDiagram — draws with v12's renderer (bounds, `showSequenceNumbers`); the renderer is #143
 // skipped: when rendering a sequenceDiagram APA — draws with v12's renderer (bounds, `showSequenceNumbers`); the renderer is #143
 // skipped: when rendering a sequenceDiagram with actor mirror activated — draws with v12's renderer (bounds, `showSequenceNumbers`); the renderer is #143
-// skipped: should not show sequence numbers per default — draws with v12's renderer (bounds, `showSequenceNumbers`); the renderer is #143
-// skipped: should show sequence numbers when autonumber is enabled — draws with v12's renderer (bounds, `showSequenceNumbers`); the renderer is #143
 // skipped: should have functions used in sequence JISON as own property — checks the methods v12's jison grammar called on its DB; v13 has no jison DB
 
 beforeAll(async () => {
@@ -402,7 +400,7 @@ Bob-->Alice: I am good thanks!`);
     expect(messages[0].from).toBe('Alice');
     expect(messages[2].from).toBe('Bob');
   });
-  it.skip('should not show sequence numbers per default', async () => {
+  it('should not show sequence numbers per default', async () => {
     const str = `
 sequenceDiagram
 Alice->Bob:Hello Bob, how are you?
@@ -412,7 +410,7 @@ Bob-->Alice: I am good thanks!`;
     await diagram.renderer.draw(str, 'tst', '1.2.3', diagram); // needs to be rendered for the correct value of visibility auto numbers
     expect(diagram.db.showSequenceNumbers()).toBe(false);
   });
-  it.skip('should show sequence numbers when autonumber is enabled', async () => {
+  it('should show sequence numbers when autonumber is enabled', async () => {
     const str = `
 sequenceDiagram
 autonumber

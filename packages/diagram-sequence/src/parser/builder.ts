@@ -159,6 +159,9 @@ export class SequenceBuilder {
     // v12: no type (a mention, `create destroy …`) resets the description to the id.
     if (kind === undefined) description = undefined;
     const p: Participant = old ?? { id, ast: parts.ast, label: id, kind: 'participant' };
+    // v12 wrote a new record: the menus merged so far are gone.
+    delete p.links;
+    delete p.properties;
     p.label = description?.text ?? id;
     p.kind = kind ?? 'participant';
     if (description !== undefined) p.alias = description.text;
@@ -172,6 +175,17 @@ export class SequenceBuilder {
       this.participants.set(id, p);
     }
     this.currentBox?.participants.push(id);
+  }
+
+  /** Merge actor menu data into `id` (v12 `insertLinks`/`insertProperties`). */
+  menu(
+    id: string,
+    data: { links?: Record<string, unknown>; properties?: Record<string, unknown> }
+  ): void {
+    const p = this.participants.get(id);
+    if (!p) return;
+    if (data.links) p.links = { ...p.links, ...data.links };
+    if (data.properties) p.properties = { ...p.properties, ...data.properties };
   }
 
   // ---- boxes ---------------------------------------------------------------------------
@@ -194,36 +208,36 @@ export class SequenceBuilder {
   message(m: Mutable<SequenceMessage>, range: Range): void {
     const created = this.lastCreated;
     const destroyed = this.lastDestroyed;
+    let ends: string | undefined;
+    // One diagnostic per mistake (pitfall 8): the pending check is dropped once it has failed.
     if (created) {
-      if (m.to !== created.id) {
+      this.lastCreated = undefined;
+      if (m.to === created.id) {
+        const p = this.participants.get(created.id);
+        if (p) p.createdBy = m.ast;
+      } else {
         this.sink.error(
           'SEQUENCE_CREATE_MESSAGE',
           `\`${created.id}\` is created here, so the next message must go to it.`,
           created.range
         );
-      } else {
-        this.lastCreated = undefined;
-        const p = this.participants.get(created.id);
-        if (p) p.createdBy = m.ast;
       }
     } else if (destroyed) {
-      if (m.to !== destroyed.id && m.from !== destroyed.id) {
+      this.lastDestroyed = undefined;
+      if (m.to === destroyed.id || m.from === destroyed.id) {
+        const p = this.participants.get(destroyed.id);
+        if (p) p.destroyedBy = m.ast;
+        ends = destroyed.id;
+      } else {
         this.sink.error(
           'SEQUENCE_DESTROY_MESSAGE',
           `\`${destroyed.id}\` is destroyed here, so the next message must come from it or go to it.`,
           destroyed.range
         );
-      } else {
-        this.lastDestroyed = undefined;
-        const p = this.participants.get(destroyed.id);
-        if (p) p.destroyedBy = m.ast;
-        if (this.gone.has(m.from) || this.gone.has(m.to)) this.afterDestroy(m, range);
-        this.gone.add(destroyed.id);
-        this.list.push(m);
-        return;
       }
     }
     if (this.gone.has(m.from) || this.gone.has(m.to)) this.afterDestroy(m, range);
+    if (ends !== undefined) this.gone.add(ends);
     this.list.push(m);
   }
 

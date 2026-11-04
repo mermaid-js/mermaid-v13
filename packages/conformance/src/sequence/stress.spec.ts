@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sequenceTokens } from '@mermaid-js/diagram-sequence';
+import { parseSequence, sequenceTokens } from '@mermaid-js/diagram-sequence';
 
 /**
  * R-PARSE-7, pitfall 5: the sequence lexer is linear in input size, in every free-text state.
@@ -74,5 +74,50 @@ describe('stress: the sequence lexer is linear in input size', () => {
       expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
     },
     30_000
+  );
+});
+
+/** Parser shapes (pitfall 11): repeated statements, blocks and errors, each linear. */
+const PARSER_SHAPES: [string, (n: number) => string][] = [
+  ['multi-line accDescr blocks', (n) => SD + 'accDescr {\n d\n}\nA->>B: m\n'.repeat(n / 26)],
+  ['boxes', (n) => SD + 'box B\nparticipant P\nend\n'.repeat(n / 26)],
+  ['nested loops', (n) => SD + 'loop x\n'.repeat(n / 14) + 'A->>B: x\n' + 'end\n'.repeat(n / 14)],
+  [
+    'a create without its message',
+    (n) => SD + 'create participant Z\n' + 'A->>B: m\n'.repeat(n / 9),
+  ],
+  ['activations', (n) => SD + 'A->>+B: m\n'.repeat(n / 20) + 'B->>-A: m\n'.repeat(n / 20)],
+  ['errors on every line', (n) => SD + 'A->>: m\n'.repeat(n / 8)],
+  ['alt sections', (n) => SD + 'alt a\n' + 'A->>B: m\nelse b\n'.repeat(n / 16) + 'end'],
+  ['unclosed loops', (n) => SD + 'loop x\n'.repeat(n / 7)],
+  [
+    'many participants',
+    (n) => SD + Array.from({ length: n / 12 }, (_, i) => `P${i}->>Q${i}: m`).join('\n'),
+  ],
+];
+
+describe('stress: the sequence parser is linear in input size', () => {
+  it.each(PARSER_SHAPES)(
+    '%s',
+    (_name, build) => {
+      const small = build(10_000);
+      const large = build(80_000);
+      parseSequence(small); // warm up
+      parseSequence(large);
+      let tSmall = Infinity;
+      let tLarge = Infinity;
+      for (let round = 0; round < 5; round++) {
+        tSmall = Math.min(
+          tSmall,
+          cost(() => parseSequence(small))
+        );
+        tLarge = Math.min(
+          tLarge,
+          cost(() => parseSequence(large))
+        );
+      }
+      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+    },
+    60_000
   );
 });

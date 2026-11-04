@@ -10,11 +10,12 @@
  * | note                                      | `note:<ordinal>`         |
  * | fragment (`loop`, `alt`, …)               | `f:<kind>#<ordinal>`     |
  * | box                                       | `box:<ordinal>`          |
- * | any other statement (`activate`, `rect`, `else`, `autonumber`, `title`, menus, …) | `st:<ordinal>` |
+ * | any other statement (`activate`, `destroy`, `rect`, `else`, `autonumber`, `title`, menus, …) | `st:<ordinal>` |
  *
  * The first mention of a participant is the AST node whose id the model's participant keeps
- * (`p:A`): a declaration (`participant A`) or a reference inside a message, note or other
- * statement, whichever comes first.
+ * (`p:A`): a declaration (`participant A`) or a reference inside a message, note or menu
+ * statement, whichever comes first. `activate`, `deactivate` and `destroy` add no participant
+ * (as in v12), so they take no `p:` id.
  */
 import type { AstNode, Range } from '@mermaid-js/core/parser-kit';
 import type { ArrowKind, FragmentKind } from '../model.ts';
@@ -24,7 +25,10 @@ export interface SequenceParticipantRef extends AstNode<'ParticipantRef'> {
   name: string;
 }
 
-/** `participant A`, `actor A as Alice`, `participant A@{ … }`, `create …`, `destroy A`. */
+/**
+ * `participant A`, `actor A as Alice`, `participant A@{ … }`, `create …`, `destroy A`. A plain
+ * `destroy` adds no participant, so its id is `st:<ordinal>`, not `p:`.
+ */
 export interface SequenceParticipantStmt extends AstNode<'Participant'> {
   keyword: 'participant' | 'actor' | 'destroy';
   /** Written after `create`. */
@@ -54,9 +58,11 @@ export interface SequenceNoteStmt extends AstNode<'Note'> {
   children: SequenceParticipantRef[];
 }
 
+/** `activate A` / `deactivate A`. It adds no participant, so it holds no `p:` reference. */
 export interface SequenceActivationStmt extends AstNode<'Activation'> {
   active: boolean;
-  children: SequenceParticipantRef[];
+  participant: string;
+  nameRange: Range;
 }
 
 /** `else …`, `and …` or `option …`: a later section of a fragment. */
@@ -109,7 +115,7 @@ export interface SequenceMenuStmt extends AstNode<'Links' | 'Link' | 'Properties
   participant: string;
   /** The text after `:`, as written (trimmed). */
   text: string;
-  links?: Record<string, string>;
+  links?: Record<string, unknown>;
   properties?: Record<string, unknown>;
   children: SequenceParticipantRef[];
 }

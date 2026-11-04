@@ -12,22 +12,19 @@
  */
 import { detectSequence, parseSequence } from '@mermaid-js/diagram-sequence';
 import type {
-  SequenceDocument,
   SequenceMessage,
   SequenceModel,
   SequenceParseResult,
   SequenceStatement,
-  SequenceStatementNode,
 } from '@mermaid-js/diagram-sequence';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { DiagramAdapter } from '../types.ts';
 import { LINETYPE, SEQUENCE_V12_TYPES, sequenceV12Snapshot } from './v12.ts';
 import type { SequenceRowSnapshot, SequenceSnapshot } from './v12.ts';
 
-/** What the parity adapter parses: the parse result and the front matter title. */
+/** What the parity adapter parses. */
 export interface SequenceParity {
   result: SequenceParseResult;
-  frontMatterTitle: string | undefined;
 }
 
 const START: Record<string, number> = {
@@ -152,32 +149,11 @@ function rows(
   }
 }
 
-/** Actor menu data in statement order, merged per participant as v12's `insertLinks` did. */
-function menus(
-  nodes: readonly SequenceStatementNode[],
-  links: Map<string, Record<string, unknown>>,
-  properties: Map<string, Record<string, unknown>>
-): void {
-  for (const n of nodes) {
-    if (n.type === 'Links' || n.type === 'Link' || n.type === 'Properties') {
-      const into = n.type === 'Properties' ? properties : links;
-      const data = n.type === 'Properties' ? n.properties : n.links;
-      if (data) into.set(n.participant, { ...into.get(n.participant), ...data });
-    } else if ('children' in n && Array.isArray(n.children)) {
-      menus(n.children as SequenceStatementNode[], links, properties);
-    }
-  }
-}
-
 export function sequenceV13Snapshot(parity: SequenceParity): SequenceSnapshot {
   const model: SequenceModel = parity.result.model;
-  const ast: SequenceDocument = parity.result.ast;
   const out: SequenceRowSnapshot[] = [];
   const index = new Map<string, number>();
   rows(model.statements, out, index);
-  const links = new Map<string, Record<string, unknown>>();
-  const properties = new Map<string, Record<string, unknown>>();
-  menus(ast.children, links, properties);
   return {
     participants: model.participants.map((p) => ({
       id: p.id,
@@ -185,8 +161,8 @@ export function sequenceV13Snapshot(parity: SequenceParity): SequenceSnapshot {
       kind: p.kind,
       wrap: p.wrap ?? false,
       box: p.box ?? null,
-      links: links.get(p.id) ?? {},
-      properties: properties.get(p.id) ?? {},
+      links: { ...p.links },
+      properties: { ...p.properties },
     })),
     boxes: model.boxes.map((b) => ({
       label: b.label,
@@ -201,7 +177,8 @@ export function sequenceV13Snapshot(parity: SequenceParity): SequenceSnapshot {
     destroyed: model.participants
       .filter((p) => p.destroyAst !== undefined)
       .map((p) => [p.id, p.destroyedBy === undefined ? null : (index.get(p.destroyedBy) ?? null)]),
-    title: model.title ?? parity.frontMatterTitle ?? '',
+    // The oracle applies no front matter when it parses (as for `wrap`), so no front matter title.
+    title: model.title ?? '',
     accTitle: model.accTitle,
     accDescr: model.accDescr,
   };
@@ -213,7 +190,7 @@ export function parseSequenceForParity(text: string): SequenceParity {
   const result = parseSequence(text, { preprocessed: pre });
   const error = [...pre.diagnostics, ...result.diagnostics].find((d) => d.severity === 'error');
   if (error) throw new Error(`${error.code}: ${error.message}`);
-  return { result, frontMatterTitle: pre.frontMatter?.title };
+  return { result };
 }
 
 export const sequenceAdapter: DiagramAdapter<SequenceParity> = {

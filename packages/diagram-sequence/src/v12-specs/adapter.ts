@@ -5,7 +5,7 @@
  * rebuilds v12's flat message list from the model's statement tree.
  */
 import { preprocess } from '@mermaid-js/core/preprocess';
-import type { SequenceModel, SequenceStatement, SequenceStatementNode } from '../index.ts';
+import type { SequenceModel, SequenceStatement } from '../index.ts';
 import { parseSequence } from '../parser/index.ts';
 import type { SequenceParseResult } from '../parser/index.ts';
 
@@ -174,25 +174,11 @@ function rebuild(
   }
 }
 
-function menus(nodes: readonly SequenceStatementNode[], actors: Map<string, Message>): void {
-  for (const n of nodes) {
-    if (n.type === 'Links' || n.type === 'Link' || n.type === 'Properties') {
-      const a = actors.get(n.participant);
-      if (!a) continue;
-      const key = n.type === 'Properties' ? 'properties' : 'links';
-      Object.assign(a[key] as object, n.type === 'Properties' ? n.properties : n.links);
-    } else if ('children' in n && Array.isArray(n.children)) {
-      menus(n.children as SequenceStatementNode[], actors);
-    }
-  }
-}
-
 /** A v12 `SequenceDB` read-out of one parse. */
 export class SequenceDB {
   readonly LINETYPE = LINETYPE;
   readonly PLACEMENT = PLACEMENT;
   private model: SequenceModel | undefined;
-  private result: SequenceParseResult | undefined;
   private byDefault = false;
   private title = '';
 
@@ -202,7 +188,6 @@ export class SequenceDB {
   }
 
   load(result: SequenceParseResult, text: string): void {
-    this.result = result;
     this.model = result.model;
     this.built = undefined;
     this.byDefault = wrapDefault(text);
@@ -267,11 +252,10 @@ export class SequenceDB {
         type: p.kind,
         wrap: p.wrap ?? this.byDefault,
         box: p.box === undefined ? undefined : boxes[p.box],
-        links: {},
-        properties: {},
+        links: { ...p.links },
+        properties: { ...p.properties },
       });
     }
-    if (this.result) menus(this.result.ast.children, actors);
     return actors;
   }
 
@@ -299,6 +283,18 @@ export class SequenceDB {
       if (p.destroyedBy !== undefined) out.set(p.id, at.get(p.destroyedBy) ?? -1);
     }
     return out;
+  }
+
+  /**
+   * v12's renderer turned sequence numbers on or off at each `autonumber` row as it drew, so
+   * after a draw this is the last row's `visible` (false when there is none).
+   */
+  showSequenceNumbers(): boolean {
+    let on = false;
+    for (const m of this.getMessages()) {
+      if (m.type === LINETYPE.AUTONUMBER) on = (m.message as { visible: boolean }).visible;
+    }
+    return on;
   }
 
   getDiagramTitle(): string {
