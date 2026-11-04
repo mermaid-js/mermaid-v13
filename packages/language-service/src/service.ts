@@ -52,7 +52,24 @@ function detectText(src: string, start: number, pre: PreprocessResult): string {
     .join('\n');
 }
 
-type Loaded = LanguageFacet | Promise<unknown> | 'failed';
+/** A row's facet once loaded, its load in flight, or why loading failed. */
+type Loaded = LanguageFacet | Promise<unknown> | { readonly failed: string };
+
+/** Whether a loader's result has the shape of a {@link LanguageFacet}. */
+function isFacet(value: unknown): value is LanguageFacet {
+  if (typeof value !== 'object' || value === null) return false;
+  const f = value as Record<string, unknown>;
+  return (
+    typeof f.id === 'string' &&
+    typeof f.parse === 'function' &&
+    typeof f.isValidId === 'function' &&
+    typeof f.categories === 'object' &&
+    f.categories !== null &&
+    Array.isArray(f.namespaces)
+  );
+}
+
+const reason = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 export function createLanguageService(options: LanguageServiceOptions = {}): LanguageService {
   const extra = options.facets ?? [];
@@ -60,7 +77,8 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
     ...firstPartyFacets.map((e) => extra.find((x) => x.type === e.type) ?? e),
     ...extra.filter((x) => !firstPartyFacets.some((e) => e.type === x.type)),
   ];
-  const loaded = new Map<string, Loaded>();
+  // Keyed by row, not diagram id: a replaced `flowchart-v2` row must not serve `flowchart-elk`.
+  const loaded = new Map<FacetEntry, Loaded>();
   const docs = new Map<string, DocumentSnapshot>();
   let version = 0;
 
@@ -80,19 +98,25 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
     });
   };
 
-  /** The entry's facet, or a promise while it loads. */
-  const facetOf = (entry: FacetEntry | undefined): LanguageFacet | Promise<unknown> | undefined => {
+  /** The entry's facet, a promise while it loads, or why it could not be loaded. */
+  const facetOf = (entry: FacetEntry | undefined): Loaded | undefined => {
     if (!entry) return undefined;
     if (entry.facet) return entry.facet;
-    const state = loaded.get(entry.id);
-    if (state === 'failed') return undefined;
-    if (state !== undefined) return state;
-    if (!entry.load) return undefined;
-    const loading = entry.load().then(
-      (facet) => loaded.set(entry.id, facet),
-      () => loaded.set(entry.id, 'failed')
-    );
-    loaded.set(entry.id, loading);
+    const state = loaded.get(entry);
+    if (state !== undefined || !entry.load) return state;
+    const fail = (error: unknown) => loaded.set(entry, { failed: reason(error) });
+    let started: Promise<LanguageFacet>;
+    try {
+      started = entry.load();
+    } catch (error) {
+      fail(error);
+      return loaded.get(entry);
+    }
+    const loading = Promise.resolve(started).then((facet) => {
+      if (isFacet(facet)) loaded.set(entry, facet);
+      else fail(new Error(`the module has no \`language\` facet export`));
+    }, fail);
+    loaded.set(entry, loading);
     return loading;
   };
 
@@ -101,7 +125,8 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
     const start = diagramStart(text, pre);
     const entry = detect(text, pre, start);
     const found = facetOf(entry);
-    const facet = found instanceof Promise ? undefined : found;
+    const facet =
+      found === undefined || found instanceof Promise || 'failed' in found ? undefined : found;
     const context: DocumentContext = {
       uri,
       text,
@@ -111,6 +136,7 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
       facet,
       result: facet?.parse(text, { keepTokens: true }),
       schema: options.schema,
+      loadError: found !== undefined && 'failed' in found ? found.failed : undefined,
     };
     let pending: Promise<DocumentSnapshot> | undefined;
     if (found instanceof Promise) {
@@ -120,7 +146,7 @@ export function createLanguageService(options: LanguageServiceOptions = {}): Lan
         return next;
       });
     }
-    const snapshot = new DocumentSnapshot(context, ++version, pending);
+    const snapshot = new DocumentSnapshot(Object.freeze(context), ++version, pending);
     return snapshot;
   };
 

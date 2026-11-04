@@ -10,6 +10,7 @@ import { astAt, astRanges } from './ast.ts';
 import type { DocumentContext } from './context.ts';
 import { diagnostics } from './diagnostics.ts';
 import { foldingRanges } from './folding.ts';
+import { deepFreeze } from './freeze.ts';
 import type { FoldingRange } from './folding.ts';
 import { semanticTokens } from './semantic-tokens.ts';
 import type { SemanticToken } from './semantic-tokens.ts';
@@ -52,18 +53,21 @@ export class DocumentSnapshot {
   /** Memoise `compute` under `key` for this snapshot. */
   protected memo<T>(key: string, compute: () => T): T {
     if (this.cache.has(key)) return this.cache.get(key) as T;
-    const value = compute();
+    const value = deepFreeze(compute());
     this.cache.set(key, value);
     return value;
   }
 
-  private occurrences(): Occurrence[] {
+  private occurrences(): readonly Occurrence[] {
     return this.memo('occurrences', () => occurrences(this.context));
   }
 
   /** Preprocess and parse diagnostics as they are (D91). */
-  diagnostics(): Diagnostic[] {
-    return this.memo('diagnostics', () => diagnostics(this.context, this.pending !== undefined));
+  diagnostics(): readonly Diagnostic[] {
+    // Copies: the parse result's own diagnostics stay as the parser left them.
+    return this.memo('diagnostics', () =>
+      diagnostics(this.context, this.pending !== undefined).map((d) => structuredClone(d))
+    );
   }
 
   /** The range of the first definition of the name at `offset` (D92). */
@@ -72,7 +76,7 @@ export class DocumentSnapshot {
   }
 
   /** Every occurrence of the name at `offset` in its namespace, in source order. */
-  references(offset: number, includeDeclaration = true): Range[] {
+  references(offset: number, includeDeclaration = true): readonly Range[] {
     return references(this.occurrences(), offset, includeDeclaration);
   }
 
@@ -86,22 +90,23 @@ export class DocumentSnapshot {
     return rename(this.context, this.occurrences(), offset, newName);
   }
 
-  foldingRanges(): FoldingRange[] {
+  foldingRanges(): readonly FoldingRange[] {
     return this.memo('folding', () => foldingRanges(this.context));
   }
 
   /** Sorted, non-overlapping tokens; types and modifiers from {@link SEMANTIC_TOKEN_LEGEND}. */
-  semanticTokens(): SemanticToken[] {
+  semanticTokens(): readonly SemanticToken[] {
     return this.memo('semanticTokens', () => semanticTokens(this.context, this.occurrences()));
   }
 
   /** AST ids around `offset`, innermost first (R-LANG-6). */
-  astAt(offset: number): AstId[] {
-    return astAt(this.context.result?.ast, offset);
+  astAt(offset: number): readonly AstId[] {
+    return Object.freeze(astAt(this.context.result?.ast, offset));
   }
 
   /** The source range of an AST id. */
   rangeOf(id: AstId): Range | undefined {
-    return this.memo('astRanges', () => astRanges(this.context.result?.ast)).get(id);
+    const r = this.memo('astRanges', () => astRanges(this.context.result?.ast)).get(id);
+    return r && Object.freeze({ start: r.start, end: r.end });
   }
 }

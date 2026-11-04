@@ -25,6 +25,13 @@ export function diagnostics(ctx: DocumentContext, loading: boolean): Diagnostic[
       message: `No diagram type detected matching given configuration for text: ${body.slice(0, 200)}`,
       range: headerRange(ctx.text, ctx.start),
     });
+  } else if (ctx.loadError !== undefined) {
+    out.push({
+      severity: 'warning',
+      code: 'LANGUAGE_LOAD_FAILED',
+      message: `The ${ctx.entry.id} language support could not be loaded (${ctx.loadError}); only generic features are available.`,
+      range: headerRange(ctx.text, ctx.start),
+    });
   } else {
     out.push({
       severity: 'info',

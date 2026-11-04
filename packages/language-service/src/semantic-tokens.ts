@@ -31,6 +31,10 @@ export const SEMANTIC_TOKEN_LEGEND = {
 export type SemanticTokenType = (typeof SEMANTIC_TOKEN_LEGEND.types)[number];
 export type SemanticTokenModifier = (typeof SEMANTIC_TOKEN_LEGEND.modifiers)[number];
 
+/**
+ * One token. Its range can span lines (a multi-line label, an `accDescr { }` body, a `@{ }`
+ * block); an LSP host without multi-line token support splits it per line.
+ */
 export interface SemanticToken {
   range: Range;
   type: SemanticTokenType;
@@ -75,7 +79,9 @@ function symbolTokens(list: readonly Occurrence[]): SemanticToken[] {
   for (const o of list) {
     const def = defs.get(`${o.space}\0${o.name}`);
     const modifiers: SemanticTokenModifier[] = [];
-    if (o.role === 'def') modifiers.push('declaration');
+    // A node mention that only names a subgraph declares nothing.
+    if (o.role === 'def' && (def === undefined || def.kind === o.kind))
+      modifiers.push('declaration');
     if (def === o) modifiers.push('definition');
     const last = out[out.length - 1];
     if (last && last.range.end > o.range.start) continue;

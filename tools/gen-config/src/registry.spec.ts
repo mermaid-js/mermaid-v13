@@ -102,7 +102,7 @@ describe('first-party language facets (R-LANG-8, D89)', () => {
   it('lists every v12 type in detector order, loading the facet through its subpath', () => {
     const out = generateFacets([flowchart]);
     expect(out).toContain(
-      "    load: () => import('@x/diagram-flowchart/language').then((m) => m.flowchartLanguage),"
+      "    load: () => import('@x/diagram-flowchart/language').then((m) => m.language),"
     );
     expect(out).toContain(
       "  { type: 'mindmap', id: 'mindmap', detector: (text) => /^\\s*mindmap/.test(text) },"
