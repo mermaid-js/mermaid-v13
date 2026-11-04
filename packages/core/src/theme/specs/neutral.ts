@@ -29,6 +29,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_PADDING,
   },
   values: {
+    altBackground: '#f4f4f4', // v12 (#192)
     textColor: '#000000',
     nodeBorder: '#999999',
     clusterBkg: '#fcfcfc',

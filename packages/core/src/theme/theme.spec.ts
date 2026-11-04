@@ -142,6 +142,43 @@ describe('createTheme: drop shadow (#85)', () => {
   );
 });
 
+describe('createTheme: composite state backgrounds (#192, D120)', () => {
+  // v12 12.2.0 theme-*.js: the redux themes pin both; the classic ones derive the title strip
+  // from mainBkg and give altBackground a literal (base: tertiaryColor).
+  it.each([
+    ['redux', '#f9f9fb', '#f9f9fb'],
+    ['redux-color', '#f9f9fb', '#f9f9fb'],
+    ['redux-dark', '#16141f', '#16141f'],
+    ['redux-dark-color', '#16141f', '#16141f'],
+    ['default', '#ececff', '#f0f0f0'],
+    ['dark', '#1f2020', '#555555'],
+    ['forest', '#cde498', '#f0f0f0'],
+    ['neutral', '#eeeeee', '#f4f4f4'],
+    ['base', '#fff4dd', '#f6f9ff'],
+  ] as const)('%s: compositeTitleBackground %s, altBackground %s', async (name, title, alt) => {
+    const t = createTheme(await loadTheme(name), { cssVariables: false });
+    expect(t.value('compositeTitleBackground')).toBe(title);
+    expect(t.value('altBackground')).toBe(alt);
+  });
+
+  it('derives the classic title strip from mainBkg, as v12 does', async () => {
+    const t = createTheme(await loadTheme('default'), {
+      themeVariables: { mainBkg: '#123456' },
+      cssVariables: false,
+    });
+    expect(t.value('compositeTitleBackground')).toBe('#123456');
+  });
+
+  it('takes themeVariables overrides', async () => {
+    const t = createTheme(await loadTheme('redux-color'), {
+      themeVariables: { compositeTitleBackground: '#ff0000', altBackground: '#00ff00' },
+      cssVariables: false,
+    });
+    expect(t.value('compositeTitleBackground')).toBe('#ff0000');
+    expect(t.value('altBackground')).toBe('#00ff00');
+  });
+});
+
 describe('createTheme: author fills get contrasting ink (R-THEME-12)', () => {
   it('keeps the theme ink when it reads, and picks one that does otherwise', () => {
     const t = createTheme(base);
