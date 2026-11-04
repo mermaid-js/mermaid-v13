@@ -9,7 +9,7 @@
 1. Confirm your base: `git merge-base --is-ancestor feature/127_state-diagram HEAD`. If that fails, reset onto feature/127_state-diagram.
 2. Use the Skill tool with `tdd`. Test through `createMermaid().render()` / `renderSync()`, except where the ticket names another seam (lexer gate: token streams; layout: `LayoutGraph → LayoutModel`).
 3. Stay in the ticket's scope. Touch shared files minimally and additively. Escalate decisions (anything contradicting DESIGN, REQUIREMENTS, a D-id or a v12 default) in your reply instead of making them.
-4. Run `pnpm check` until it is green. Commit with no AI attribution (no Co-Authored-By, no "Generated with"). Don't push, open PRs, or comment on or close issues.
+4. Run `pnpm check` until it is green. Machine-wide, only one full check and one e2e run at a time: run them as `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check` and `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-e2e.lock pnpm e2e`. A timing test that fails under load is not a regression; rerun it under the lock. Commit with no AI attribution (no Co-Authored-By, no "Generated with"). Don't push, open PRs, or comment on or close issues.
 5. Before reporting, merge `feature/127_state-diagram` and run `pnpm check` again.
 6. Write `v13/docs/agents/runs/127/tickets/<N>.md` in your branch (≤ 40 lines): exports, how to use them, test helpers, gz size, unmet criteria. Commit it.
 7. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.
