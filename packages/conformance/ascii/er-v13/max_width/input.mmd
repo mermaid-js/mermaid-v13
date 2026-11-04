@@ -1,0 +1,5 @@
+erDiagram
+    direction LR
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE_ITEM : contains
+    LINE_ITEM }o--|| PRODUCT : describes

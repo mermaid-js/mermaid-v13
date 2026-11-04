@@ -109,7 +109,10 @@ properties:
         `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8;
         `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 /
         ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2;
-        `crossArrowheadStrokeWidth` 2 / 2; `nodePaddingX` (per side) 16 / 2 × padding;
+        `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and
+        `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground`
+        white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`;
+        `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding;
         `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding;
         `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding;
         `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5;
@@ -119,7 +122,7 @@ properties:
         `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY`
         (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0;
         `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
-        on the dark redux themes) / `none`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux
+        on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux
         themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`,
         `#f4f4f4` in `neutral`, `tertiaryColor` in `base`). "padding" is `flowchart.padding`. Plain `redux` and
         `redux-dark` carry no palette. Geometry variables are read as numbers at render time,
@@ -203,6 +206,36 @@ properties:
           Stroke width in px of a cross arrowhead's arms.
         type: [number, string]
         x-mermaid: *arrowhead
+      erZeroOrMoreCircleOffset:
+        description: |
+          ER diagrams: distance in px from the entity outline to the centre of the circle of a
+          zero-or-more end.
+        type: [number, string]
+        x-mermaid: *arrowhead
+      rowOdd:
+        description: |
+          ER diagrams: fill of the odd attribute rows of an entity (the first, third, …).
+        type: string
+        x-mermaid: &erColor
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            ER theme variable (#133), redux / classic value in the `themeVariables` notes.
+      rowEven:
+        description: |
+          ER diagrams: fill of the even attribute rows of an entity.
+        type: string
+        x-mermaid: *erColor
+      erEdgeLabelBackground:
+        description: |
+          ER diagrams: background of relationship labels.
+        type: string
+        x-mermaid: *erColor
+      erMarkerFill:
+        description: |
+          ER diagrams: fill of the circle of a zero-or-one and zero-or-more end.
+        type: string
+        x-mermaid: *erColor
       nodePaddingX:
         description: |
           Room left and right of a node label, per side, for the rectangle and the shapes that share its padding. A px number, or a multiple of `flowchart.padding` written `padding` or `<n> * padding`.
@@ -374,6 +407,16 @@ properties:
           since: 13.0.0
           reason: >-
             24 (12 per side) in the redux themes; `padding` in the classic themes (v12 `rectLeftInvArrow.ts`). Read as a number at render time (D152), so its CSS variable has no effect.
+      compositeBackground:
+        description: |
+          Fill of a composite state's body (state diagram).
+        type: string
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            v12's values (D126): `#16141f` in `redux-dark` and `redux-dark-color`; `background`
+            in every other theme.
       compositeTitleBackground:
         description: |
           Fill of a composite state's title strip (state diagram).
@@ -2398,6 +2441,9 @@ $defs:
             `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render,
             whatever the diagram section.
           replacement: '`theme`, or the geometry and `dropShadow` theme variables'
+      useMaxWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useMaxWidth'
+        x-mermaid: { status: honoured, since: 13.0.0 }
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
@@ -2409,7 +2455,10 @@ $defs:
         type: integer
         default: 20
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: The margin around the drawing, in px (D116). Text output keeps its own.
       layoutDirection:
         description: Directional bias for layout of entities
         type: string
@@ -2420,19 +2469,30 @@ $defs:
           LR: Left-Right
           RL: Right to Left
         default: TB
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used,
+            did. The diagram's `direction` statement sets the direction.
+          replacement: '`direction TB|BT|LR|RL` in the diagram text'
       minEntityWidth:
         description: The minimum width of an entity box. Expressed in pixels.
         type: integer
         default: 100
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       minEntityHeight:
         description: The minimum height of an entity box. Expressed in pixels.
         type: integer
         default: 75
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used,
+            did. An entity is as tall as its rows.
       entityPadding:
         description: |
           The minimum internal padding between text in an entity box and the enclosing box borders.
@@ -2440,33 +2500,56 @@ $defs:
         type: integer
         default: 15
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The padding inside every entity table cell, in px, across and down, in place of the
+            layout's node padding (D116). Text output keeps its 1-cell padding.
       nodeSpacing:
         type: integer
         default: 140
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       rankSpacing:
         type: integer
         default: 80
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       stroke:
         description: Stroke color of box edges and lines.
         type: string
         default: gray
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used,
+            did.
+          replacement: '`themeVariables.nodeBorder` and `lineColor`'
       fill:
         description: Fill color of entity boxes
         type: string
         default: honeydew
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used,
+            did.
+          replacement: '`themeVariables.mainBkg`'
       fontSize:
         description: Font size (expressed as an integer representing a number of pixels)
         type: integer
         default: 12
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: >-
+            mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used,
+            did. Entities use the theme font size.
+          replacement: '`themeVariables.fontSize`'
 
   StateDiagramConfig:
     title: State Diagram Config

@@ -11,6 +11,8 @@ import redux from './redux.ts';
 const theme: ThemeSpec = {
   ...redux,
   name: 'redux-color',
+  // v12 draws ER edge labels on `erEdgeLabelBackground` in the colour themes only.
+  values: { ...redux.values, erEdgeLabelBackground: '#ffffff' },
   palettes: {
     borderColorArray: TAILWIND_400,
     bkgColorArray: TAILWIND_50,

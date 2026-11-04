@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { renderDiagram } from './adapter.ts';
-import { baselineFixtures } from './fixtures.ts';
+import { galleryFixtures } from './fixtures.ts';
 
 describe('renderDiagram (the page adapter)', () => {
-  it.each(baselineFixtures().map((f) => [f.path, f.source]))(
+  it.each(galleryFixtures().map((f) => [f.path, f.source]))(
     'renders %s without warnings',
     async (_path, source) => {
       const { svg, warnings } = await renderDiagram(source);
       expect(warnings).toEqual([]);
-      expect(svg).toMatch(/^<svg [^>]*aria-roledescription="flowchart"/);
+      expect(svg).toMatch(/^<svg [^>]*aria-roledescription="(flowchart|er)"/);
     }
   );
 

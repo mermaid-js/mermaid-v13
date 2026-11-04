@@ -1,0 +1,3 @@
+@ 3:3  |A ||--o{ B : x
+  prepare: 3:3-3:4 "A"; rename to "many":
+  refused: 'many' is read as a cardinality or line.

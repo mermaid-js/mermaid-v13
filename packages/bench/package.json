@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^",
+    "@mermaid-js/diagram-er": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
     "@mermaid-js/diagram-sequence": "workspace:^",
     "@mermaid-js/language-service": "workspace:^",

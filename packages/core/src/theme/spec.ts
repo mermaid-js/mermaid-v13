@@ -50,7 +50,13 @@ export const LIGHT_RULES: ThemeRuleTable = {
   noteBorderColor: 'mix(noteBkgColor, black, 30%)',
   errorBkgColor: '#552222',
   errorTextColor: 'contrast(background, #552222, #ffdddd)',
-  // v12 theme-base.js; the other classic themes pin altBackground (#192).
+  // ER rows, exactly v12 theme-base's khroma lighten (HSL lightness) of mainBkg (D117).
+  rowOdd: 'lightenHsl(mainBkg, 75%)',
+  rowEven: 'lightenHsl(mainBkg, 5%)',
+  erEdgeLabelBackground: 'edgeLabelBackground',
+  erMarkerFill: '#ffffff',
+  // v12 theme-base.js; the other classic themes pin altBackground (#192, D126).
+  compositeBackground: 'background',
   compositeTitleBackground: 'mainBkg',
   altBackground: 'tertiaryColor',
   // sequence, as v12 `theme-base.js` derives them
@@ -81,4 +87,7 @@ export const DARK_RULES: ThemeRuleTable = {
   noteBorderColor: 'mix(noteBkgColor, white, 30%)',
   errorBkgColor: '#a44141',
   errorTextColor: 'contrast(background, #dddddd, #552222)',
+  // v12 theme-dark: khroma lighten(mainBkg, 5) and darken(mainBkg, 10), exactly (D117).
+  rowOdd: 'lightenHsl(mainBkg, 5%)',
+  rowEven: 'darkenHsl(mainBkg, 10%)',
 };

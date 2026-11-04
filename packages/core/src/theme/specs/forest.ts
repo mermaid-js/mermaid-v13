@@ -29,6 +29,8 @@ const theme: ThemeSpec = {
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
   },
+  // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
+  rules: { rowEven: 'lightenHsl(mainBkg, 20%)' },
   values: {
     altBackground: '#f0f0f0', // v12 (#192)
     // sequence (v12 theme-forest.js: actorBorder is darken(mainBkg, 20))

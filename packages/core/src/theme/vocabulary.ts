@@ -52,6 +52,8 @@ export const ARROWHEAD_VARIABLES = [
   'crossArrowheadSize',
   'crossArrowheadGap',
   'crossArrowheadStrokeWidth',
+  // ER crow's-foot ends: where the zero-or-more circle sits, out from the outline.
+  'erZeroOrMoreCircleOffset',
 ] as const;
 
 export type ArrowheadVariable = (typeof ARROWHEAD_VARIABLES)[number];
@@ -119,6 +121,7 @@ const CF = ['core', 'flowchart'];
 const ST = ['state'];
 const S = ['sequence'];
 const CS = ['core', 'sequence'];
+const E = ['er'];
 
 const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): ThemeVarDef => ({
   alias,
@@ -174,7 +177,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   sequenceNumberColor: def('snc', 'color', S),
   errorBkgColor: def('eb', 'color', C),
   errorTextColor: def('et', 'color', C),
-  // composite states (#192, D120): the title strip and the alternate (nested) body.
+  // composite states (#192, D120, D126): the body, the title strip and the alternate
+  // (nested) body.
+  compositeBackground: def('cbg', 'color', ST),
   compositeTitleBackground: def('ctb', 'color', ST),
   altBackground: def('alb', 'color', ST),
   // tokens
@@ -194,6 +199,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   crossArrowheadSize: def('xs', 'length', F),
   crossArrowheadGap: def('xg', 'length', F),
   crossArrowheadStrokeWidth: def('xw', 'length', F),
+  erZeroOrMoreCircleOffset: def('ezc', 'length', E),
   // Node padding, read as numbers at render time (D152), so their aliases are never written.
   nodePaddingX: def('npx', 'padding', F),
   nodePaddingY: def('npy', 'padding', F),
@@ -219,6 +225,12 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   messageEndGap: def('meg', 'length', S),
   labelBoxExtraHeight: def('lbx', 'length', S),
   actorFooterPadding: def('afp', 'length', S),
+  // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
+  // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
+  rowOdd: def('ro', 'color', E),
+  rowEven: def('re', 'color', E),
+  erEdgeLabelBackground: def('eel', 'color', E),
+  erMarkerFill: def('emf', 'color', E),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', [...F, 'sequence']),
