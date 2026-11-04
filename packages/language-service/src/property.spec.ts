@@ -12,12 +12,12 @@
  *
  * Budget, as a ratio (timing tests never assert absolute times): no query call takes longer
  * than {@link RATIO} times the document's own `update` (a full re-parse, best of three), best
- * of three calls, with a {@link FLOOR_MS} floor for timer noise on tiny documents. The absolute 10 ms budget
- * on a 50k-character document is the bench package's `language` script.
+ * of three calls, in CPU time, with a {@link FLOOR_MS} floor for timer noise on tiny documents.
+ * The absolute 10 ms budget on a 50k-character document is the bench package's
+ * `language` script.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
-import { performance } from 'node:perf_hooks';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService } from './index.ts';
 import { contextOf } from './snapshot.ts';
@@ -56,13 +56,22 @@ function boundaries(doc: DocumentSnapshot): number[] {
   return [...at].sort((a, b) => a - b);
 }
 
-/** Best of three `update`s, in ms. */
+/**
+ * CPU time of this process in ms: a loaded machine (a parallel `pnpm test`, a build) makes the
+ * worker wait for a core, which wall time would count against the query.
+ */
+function cpuMs(): number {
+  const { user, system } = process.cpuUsage();
+  return (user + system) / 1000;
+}
+
+/** Best of three `update`s, in CPU ms. */
 function updateMs(uri: string, text: string): number {
   let best = Infinity;
   for (let i = 0; i < 3; i++) {
-    const t = performance.now();
+    const t = cpuMs();
     service.update(uri, text);
-    best = Math.min(best, performance.now() - t);
+    best = Math.min(best, cpuMs() - t);
   }
   return best;
 }
@@ -79,14 +88,14 @@ function check(name: string, text: string): string[] {
     // a slow query is.
     let ms = Infinity;
     for (let i = 0; i < 3 && ms > limit; i++) {
-      const t = performance.now();
+      const t = cpuMs();
       try {
         call();
       } catch (error) {
         problems.push(`${name}: ${where} threw ${(error as Error).message}`);
         return;
       }
-      ms = Math.min(ms, performance.now() - t);
+      ms = Math.min(ms, cpuMs() - t);
     }
     if (ms > limit) problems.push(`${name}: ${where} took ${ms.toFixed(1)} ms (> ${limit} ms)`);
   };

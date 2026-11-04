@@ -53,5 +53,6 @@ describe('flowchart probe leaves the parse unchanged', () => {
     }
     expect(problems).toEqual([]);
     expect(probes).toBeGreaterThan(5000);
-  });
+    // ~12k parses: about 3 s alone, longer beside a full `pnpm test` (it is a sweep, not a timing).
+  }, 60_000);
 });

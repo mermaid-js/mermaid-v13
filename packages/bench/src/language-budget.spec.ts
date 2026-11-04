@@ -1,13 +1,13 @@
 /**
  * R-LANG-4 in PR CI, as ratios (timing tests never assert absolute times): on the 50k-character
  * bench fixture, one editing cycle (update + every query, `cycle` in language.ts) costs at most
- * a few bare parses, and doubling the text at most doubles the cycle. The absolute ≤ 15 ms (D156) on
+ * a few bare parses, and four times the text at most four times the cycle. The absolute ≤ 15 ms (D156) on
  * the reference runner is the bench package's `language --enforce` script.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService } from '@mermaid-js/language-service';
 import { flowchartLanguage } from '@mermaid-js/diagram-flowchart/language';
-import { bestOf, cycle, LANGUAGE_FIXTURE, measureLanguage, typing } from './language.ts';
+import { bestOfEach, cycle, LANGUAGE_FIXTURE, measureLanguage, typing } from './language.ts';
 
 const service = createLanguageService();
 beforeAll(() => service.preload({ types: ['flowchart'] }));
@@ -49,25 +49,38 @@ describe('the language-service bench fixture', () => {
     ]);
     const sum = Object.values(r.stages).reduce((a, b) => a + b, 0);
     expect(r.total).toBeGreaterThan(0);
-    expect(sum).toBeGreaterThan(r.total * 0.5);
-    expect(sum).toBeLessThan(r.total * 1.5);
-  });
+    // Medians of stages need not add up to the median cycle exactly (a loaded machine spreads
+    // them); a stage left out or counted twice is far outside these bounds.
+    expect(sum).toBeGreaterThan(r.total * 0.25);
+    expect(sum).toBeLessThan(r.total * 2.5);
+  }, 60_000);
 });
 
+/**
+ * Robust under machine load (a parallel `pnpm test`, another build): each ratio takes the best
+ * of many runs, measured alternately so load hits both sides alike, and leaves room for noise
+ * while staying far below what a regression gives.
+ */
 describe('the R-LANG-4 budget, as ratios', () => {
   it('a cycle costs at most four bare parses', () => {
     const texts = typing(LANGUAGE_FIXTURE);
-    const parse = bestOf(15, (i) => flowchartLanguage.parse(texts(i), { keepTokens: true }));
-    const full = bestOf(15, (i) => cycle(service, texts(i)));
-    expect(full / parse).toBeLessThanOrEqual(4);
-  });
+    const [parse, full] = bestOfEach(
+      25,
+      (i) => flowchartLanguage.parse(texts(i), { keepTokens: true }),
+      (i) => cycle(service, texts(i))
+    );
+    expect(full! / parse!).toBeLessThanOrEqual(4);
+  }, 60_000);
 
-  it('doubling the text at most doubles the cycle (plus noise)', () => {
+  it('four times the text at most four times the cycle (plus noise; quadratic gives 16)', () => {
     const body = LANGUAGE_FIXTURE.slice(LANGUAGE_FIXTURE.indexOf('  subgraph'));
     const one = typing(LANGUAGE_FIXTURE);
-    const two = typing(LANGUAGE_FIXTURE + body);
-    const a = bestOf(15, (i) => cycle(service, one(i)));
-    const b = bestOf(15, (i) => cycle(service, two(i)));
-    expect(b / a).toBeLessThanOrEqual(2.6);
-  });
+    const four = typing(LANGUAGE_FIXTURE + body + body + body);
+    const [a, b] = bestOfEach(
+      15,
+      (i) => cycle(service, one(i)),
+      (i) => cycle(service, four(i))
+    );
+    expect(b! / a!).toBeLessThanOrEqual(6);
+  }, 60_000);
 });

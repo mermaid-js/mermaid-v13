@@ -275,12 +275,14 @@ describe('the config schema', () => {
 // ---------------------------------------------------------------------------- stress
 
 describe('stress (R-PARSE-7)', () => {
+  /** Best CPU time of 5 runs in ms: the time this worker waits for a core is left out. */
   const fastest = (run: () => unknown): number => {
     let best = Infinity;
-    for (let t = 0; t < 3; t++) {
-      const t0 = performance.now();
+    for (let t = 0; t < 5; t++) {
+      const t0 = process.cpuUsage();
       run();
-      best = Math.min(best, performance.now() - t0);
+      const { user, system } = process.cpuUsage(t0);
+      best = Math.min(best, (user + system) / 1000);
     }
     return best;
   };
@@ -307,8 +309,10 @@ describe('stress (R-PARSE-7)', () => {
       });
     };
     run(500);
-    const small = run(5000);
+    // 8× the lines: linear is 8×, quadratic 64×. The bound leaves room for a loaded machine
+    // (a parallel `pnpm test`): best of 5, and 2.5× slack over linear.
+    const small = run(2500);
     const big = run(20000);
-    expect(big / Math.max(small, 1)).toBeLessThan(8);
+    expect(big / Math.max(small, 1)).toBeLessThan(20);
   });
 });

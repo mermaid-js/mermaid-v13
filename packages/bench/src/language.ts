@@ -114,6 +114,30 @@ export function bestOf(runs: number, fn: (run: number) => unknown): number {
   return best;
 }
 
+/** CPU time of this process in ms (user + system): another process's load does not count. */
+function cpuMs(): number {
+  const { user, system } = process.cpuUsage();
+  return (user + system) / 1000;
+}
+
+/**
+ * The best CPU time of each function over `runs` rounds, called alternately (a, b, a, b, …),
+ * in ms and in the order given. For ratio checks that must hold on a loaded machine: CPU time
+ * leaves out the time the worker waits for a core, and alternating lets the noise that stays
+ * (caches, GC) hit both sides alike.
+ */
+export function bestOfEach(runs: number, ...fns: readonly ((run: number) => unknown)[]): number[] {
+  const best = fns.map(() => Infinity);
+  for (let i = 0; i < runs; i++) {
+    for (const [k, fn] of fns.entries()) {
+      const t = cpuMs();
+      fn(i);
+      best[k] = Math.min(best[k]!, cpuMs() - t);
+    }
+  }
+  return best;
+}
+
 export interface LanguageMeasurement {
   chars: number;
   runs: number;

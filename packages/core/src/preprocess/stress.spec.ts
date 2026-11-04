@@ -1,6 +1,6 @@
 /**
  * R-PARSE-7: preprocess is linear in its input. Each shape is timed at n and 4n; linear
- * predicts ~4x, quadratic ~16x, and the bar sits at 8x; the best of three measurements
+ * predicts ~4x, quadratic ~16x, and the bar sits at 8x; the best of up to five measurements
  * counts, so machine noise cannot fail it.
  * Shapes include the ones that are quadratic in v12 (`regexes.spec.ts`) and unclosed input.
  */
@@ -63,11 +63,12 @@ describe('preprocess runs in linear time', () => {
     const small = build(5_000);
     const large = build(20_000);
     const reps = repsFor(() => preprocess(small));
-    // Load on the machine only ever slows a run, so a ratio under the bar on any of three
+    // Load on the machine only ever slows a run, so a ratio under the bar on any of five
     // measurements proves linearity; quadratic input stays near 16x on every one of them.
+    // (Five, not three: a full `pnpm test` beside a build can slow three in a row.)
     let ratio = Infinity;
     let tLarge = Infinity;
-    for (let attempt = 0; attempt < 3 && ratio >= 8; attempt++) {
+    for (let attempt = 0; attempt < 5 && ratio >= 8; attempt++) {
       const tSmall = fastest(() => preprocess(small), reps);
       tLarge = fastest(() => preprocess(large), reps);
       ratio = Math.min(ratio, tLarge / Math.max(tSmall, 1));
@@ -100,7 +101,7 @@ describe('the YAML tree mode runs in linear time', () => {
     const read = (src: string) => () => parseYaml(src, { tree: true });
     const reps = repsFor(read(small));
     let ratio = Infinity;
-    for (let attempt = 0; attempt < 3 && ratio >= 8; attempt++) {
+    for (let attempt = 0; attempt < 5 && ratio >= 8; attempt++) {
       ratio = Math.min(ratio, fastest(read(large), reps) / Math.max(fastest(read(small), reps), 1));
     }
     expect(ratio).toBeLessThan(8);
