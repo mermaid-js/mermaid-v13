@@ -218,6 +218,33 @@ const LINK_TARGET_OR_TOOLTIP = [T.LinkTarget, T.Str];
 const SUBGRAPH_HEADER = [T.Space, ...LINE_END];
 const SUBGRAPH_TITLE = [T.SQS, ...LINE_END];
 
+/**
+ * Kinds a probe's cursor follows rather than extends when the token ends at the offset:
+ * links, separators and brackets. Id and text kinds are absent, so `my-` or a label is a word.
+ */
+const PROBE_FOLLOWS = kindSet(
+  ...SHAPE_KINDS,
+  ...LINK_KINDS,
+  T.StyleSeparator,
+  T.Semi,
+  T.Space,
+  T.NoDir,
+  T.Pipe,
+  T.SQE,
+  T.PE,
+  T.DiamondStop,
+  T.StadiumEnd,
+  T.SubroutineEnd,
+  T.CylinderEnd,
+  T.DoubleCircleEnd,
+  T.EllipseEnd,
+  T.TrapEnd,
+  T.InvTrapEnd,
+  T.TagStart,
+  T.ShapeDataEnd,
+  T.Sep
+);
+
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
   ['`&`', [T.Amp]],
@@ -364,7 +391,7 @@ class FlowParser {
   /** Probe mode only (R-LANG-7). */
   private readonly probe: Probe | undefined;
   /** Source offset {@link tokens} was lexed from (after a restart, mid-document). */
-  private viewFrom = 0;
+  private viewFrom: number;
   /** Line numbers, built for error messages only. */
   private lines: LineIndex | undefined;
   /** Brackets and labels open around the current token, innermost last. */
@@ -411,10 +438,16 @@ class FlowParser {
     });
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
     this.body = this.children;
-    const probe = options.probe === undefined ? undefined : new Probe(src, options.probe);
+    const probe =
+      options.probe === undefined ? undefined : new Probe(src, options.probe, PROBE_FOLLOWS);
+    this.viewFrom = pre.bodyStart;
     this.probe = probe;
     this.fullTokens = lex(src, pre.bodyStart, this.view, true, probe);
     this.tokens = significantTokens(this.fullTokens);
+    if (probe) {
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      else probe.trivia(this.fullTokens);
+    }
   }
 
   parse(): FlowParseResult {
@@ -674,10 +707,11 @@ class FlowParser {
     this.restartFrom = -1;
     this.lastRestart = from;
     this.restarts++;
-    // Text lexed again before the probe offset replaces what the probe saw there.
+    // Text lexed again before the probe offset replaces what the probe saw there. A restart at
+    // or after it skipped the probed token: the probe is done.
     const lexedAgain = probe !== undefined && from < probe.offset ? probe : undefined;
     if (lexedAgain) lexedAgain.reset();
-    else probe?.freeze();
+    else probe?.freeze(true);
     this.tokens = significantTokens(lex(this.src, from, this.view, false, lexedAgain));
     this.viewFrom = from;
     this.i = 0;

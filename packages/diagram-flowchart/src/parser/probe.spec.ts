@@ -121,6 +121,49 @@ describe('flowchart probe', () => {
     expect(unclosed.mode).toBe('INITIAL');
   });
 
+  it('decides what the cursor follows by token kind: ids ending in `-` or `.` keep their prefix', () => {
+    expect(probeAt('flowchart TD\nclass A my-|')).toMatchObject({ prefix: 'my-' });
+    expect(probeAt('flowchart TD\nA --> my.|')).toMatchObject({ prefix: 'my.' });
+    expect(probeAt('flowchart TD\nA:::my-|')).toMatchObject({
+      expected: ['NodeString'],
+      prefix: 'my-',
+    });
+    const dash = probeAt('flowchart TD\nA-|');
+    expect(dash.prefix).toBe('A-');
+    expect(dash.expected).toEqual(probeAt('flowchart TD\nA|').expected);
+    expect(probeAt('flowchart TD\nA:::|')).toMatchObject({ expected: ['NodeString'], prefix: '' });
+  });
+
+  it('an id lexed as several tokens is one word: its whole prefix, the kinds at its start', () => {
+    const accented = probeAt('flowchart TD\ncafé|');
+    expect(accented.prefix).toBe('café');
+    expect(accented.expected).toEqual(probeAt('flowchart TD\ncafe|').expected);
+    expect(probeAt('flowchart TD\nA --> 日本x|')).toMatchObject({ prefix: '日本x' });
+    expect(probeAt('flowchart TD\nA --> 日本x|').expected).toEqual(
+      probeAt('flowchart TD\nA --> abc|').expected
+    );
+  });
+
+  it('in a line comment, a directive or front matter: nothing, and a mode that says where', () => {
+    expect(probeAt('flowchart TD\n%% hello wor|\nA')).toMatchObject({
+      expected: [],
+      mode: 'comment',
+    });
+    expect(probeAt('%% hello wor|')).toMatchObject({ expected: [], mode: 'comment' });
+    expect(probeAt('%%{init: {"theme": "da|"}}%%\nflowchart TD\nA')).toMatchObject({
+      expected: [],
+      mode: 'directive',
+    });
+    expect(probeAt('---\ntitle: x|\n---\nflowchart TD\nA')).toMatchObject({
+      expected: [],
+      mode: 'frontMatter',
+    });
+    // Mid-line `%%` is node text, as in v12: code completion applies.
+    expect(probeAt('flowchart TD\nA --> B%%x|')).toMatchObject({ prefix: 'B%%x', mode: 'INITIAL' });
+    // Right after a comment line: code again.
+    expect(probeAt('flowchart TD\n%% note\n|').expected).toContain('NodeString');
+  });
+
   it('only with a probe', () => {
     expect(parseFlowchart('flowchart TD\nA').probe).toBeUndefined();
     expect(parseFlowchart('flowchart TD\nA', { probe: 0 }).probe?.offset).toBe(0);

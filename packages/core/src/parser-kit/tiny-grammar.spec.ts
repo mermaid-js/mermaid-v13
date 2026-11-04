@@ -129,9 +129,12 @@ const BOUNDARY = kindSet(Kind.Newline, T.Semi);
 /** What the body loop accepts where a statement may start (empty ones too), and after one. */
 const STATEMENT_FIRST = [T.Id, T.Style, T.Group, Kind.Newline, T.Semi];
 const STATEMENT_FOLLOW = [Kind.Newline, T.Semi];
+/** Kinds a probe's cursor follows rather than extends. */
+const PUNCTUATION = kindSet(T.Arrow, T.Open, T.Close, T.Semi);
 
 function parse(src: string, options: ParseOptions = {}): ParseResult<TinyModel> {
-  const probe = options.probe === undefined ? undefined : new Probe(src, options.probe);
+  const probe =
+    options.probe === undefined ? undefined : new Probe(src, options.probe, PUNCTUATION);
   const tokens = lex(src, probe);
   const cur = probe ? new ProbeCursor(tokens, probe) : new TokenCursor(tokens);
   const st = new ParseState();

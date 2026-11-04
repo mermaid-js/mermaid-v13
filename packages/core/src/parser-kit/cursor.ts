@@ -107,7 +107,7 @@ export class TokenCursor {
  * tested at the probed token. A plain parse uses `TokenCursor`, which records nothing.
  */
 export class ProbeCursor extends TokenCursor {
-  /** Index of the probed token; the stream length when there is none. */
+  /** Index of the probed token in the stream; -1 when there is none. */
   private readonly target: number;
 
   constructor(
@@ -116,11 +116,8 @@ export class ProbeCursor extends TokenCursor {
     trivia: KindSet = TRIVIA
   ) {
     super(tokens, trivia);
-    let t = this.pos;
-    while (t < tokens.length && !probe.covers(tokens.start[t] ?? 0, tokens.end[t] ?? 0)) {
-      t = t === tokens.length - 1 ? tokens.length : this.skip(t + 1);
-    }
-    this.target = t;
+    probe.trivia(tokens);
+    this.target = probe.targetIn(tokens, 0, trivia);
   }
 
   private record(at: number, kinds: TokenKind | readonly TokenKind[]): void {

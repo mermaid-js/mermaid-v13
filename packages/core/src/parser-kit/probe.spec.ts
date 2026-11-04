@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FIRST_DIAGRAM_KIND,
   Kind,
+  kindSet,
   Probe,
   ProbeCursor,
   significantTokens,
@@ -10,6 +11,10 @@ import {
 
 const Word = FIRST_DIAGRAM_KIND;
 const Colon = FIRST_DIAGRAM_KIND + 1;
+const Dash = FIRST_DIAGRAM_KIND + 2;
+const Dot = FIRST_DIAGRAM_KIND + 3;
+/** Kinds the cursor follows rather than extends. */
+const FOLLOW = kindSet(Colon);
 
 /** `ab ::: cd`: Word[0,2] Colon[3,6] Word[7,9] EOF, with the blanks as Space trivia. */
 function stream() {
@@ -34,7 +39,7 @@ describe('Probe', () => {
   ])('offset %i probes significant token %i (%s)', (offset, index, _text) => {
     const { src } = stream();
     const tokens = significantTokens(stream().tokens);
-    const probe = new Probe(src, offset);
+    const probe = new Probe(src, offset, FOLLOW);
     const hits = [];
     for (let i = 0; i < tokens.length; i++) if (probe.isAt(tokens, i)) hits.push(i);
     expect(hits).toEqual([index]);
@@ -54,7 +59,7 @@ describe('Probe', () => {
 
   it('a cursor records at, eat and peekAt only at the probed token', () => {
     const { src, tokens } = stream();
-    const probe = new Probe(src, 6); // probes `cd`
+    const probe = new Probe(src, 6, FOLLOW); // probes `cd`
     const c = new ProbeCursor(tokens, probe);
     expect(c.at(Colon)).toBe(false); // at `ab`: not recorded
     expect(c.peekAt(Colon)).toBe(true); // peeks `:::`: not recorded
@@ -75,5 +80,55 @@ describe('Probe', () => {
     c.recovering();
     c.at(Kind.Newline);
     expect(probe.result().expected).toEqual([Colon]);
+  });
+
+  it('normalises the offset: whole, finite, inside the source', () => {
+    const src = 'abc';
+    const at = (o: number) => {
+      const r = new Probe(src, o).result();
+      return [r.offset, r.prefix.start, r.prefix.end];
+    };
+    expect(at(Number.NaN)).toEqual([0, 0, 0]);
+    expect(at(1.7)).toEqual([1, 1, 1]);
+    expect(at(Infinity)).toEqual([3, 3, 3]);
+    expect(at(-5)).toEqual([0, 0, 0]);
+  });
+
+  it('follows tokens by kind; adjacent word tokens are one word, probed at its start', () => {
+    const src = 'ab-c. x';
+    const w = new TokenWriter();
+    w.push(Word, 0, 2);
+    w.push(Dash, 2, 3);
+    w.push(Word, 3, 4);
+    w.push(Dot, 4, 5); // a word part ending in punctuation
+    w.push(Kind.Space, 5, 6);
+    w.push(Word, 6, 7);
+    const view = significantTokens(w.finish(src));
+    const hit = (o: number) => {
+      const p = new Probe(src, o, FOLLOW);
+      for (let i = 0; i < view.length; i++) if (p.isAt(view, i)) return i;
+      return -1;
+    };
+    expect(hit(3)).toBe(0); // `ab-|`
+    expect(hit(5)).toBe(0); // `ab-c.|`
+    expect(hit(6)).toBe(4); // after the blank
+    const p = new Probe(src, 5, FOLLOW);
+    p.tested(Word, 0);
+    expect(src.slice(p.result().prefix.start, 5)).toBe('ab-c.');
+  });
+
+  it('records nothing with a cursor whose offset is inside a comment', () => {
+    const src = 'a %% xy\nb';
+    const w = new TokenWriter();
+    w.push(Word, 0, 1);
+    w.push(Kind.Comment, 2, 7);
+    w.push(Kind.Newline, 7, 8);
+    w.push(Word, 8, 9);
+    const probe = new Probe(src, 6);
+    const c = new ProbeCursor(w.finish(src), probe);
+    c.next();
+    c.at(Kind.Newline);
+    c.tested([Word]);
+    expect(probe.result()).toMatchObject({ expected: [], mode: 'comment' });
   });
 });
