@@ -18,7 +18,7 @@ import {
 } from './allowlist.ts';
 import { RE_INVALID_XML } from './escape.ts';
 import { RE_UNSAFE_STYLE, STYLE_TEXT_PROPERTIES, checkFilter, styleSheetProblem } from './style.ts';
-import type { SecurityLevel } from './url.ts';
+import { isImageDataUrl, type SecurityLevel } from './url.ts';
 
 export interface InertOptions {
   readonly securityLevel?: SecurityLevel;
@@ -114,10 +114,15 @@ function browserView(value: string): string {
   return value.replace(/[\t\n\r]/g, '').replace(RE_LEADING_CTRL, '');
 }
 
-function hrefProblem(value: string, options: InertOptions): string | undefined {
-  const schemes =
-    options.securityLevel === 'strict' ? [] : (options.linkSchemes ?? ['http', 'https', 'mailto']);
+function hrefProblem(tag: string, value: string, options: InertOptions): string | undefined {
+  const strict = options.securityLevel === 'strict';
+  const image = tag === 'image';
   const seen = browserView(value);
+  // An image source follows checkImageUrl: raster data URLs, and no mail or link schemes.
+  if (image && isImageDataUrl(seen) && isImageDataUrl(decodePercent(seen))) return undefined;
+  let schemes: readonly string[] = options.linkSchemes ?? ['http', 'https', 'mailto'];
+  if (strict) schemes = [];
+  else if (image) schemes = ['http', 'https'];
   for (const form of [seen, browserView(decodePercent(seen))]) {
     if (RE_NETWORK_PATH.test(form)) return `href="${value}" is a network path`;
     const scheme = RE_SCHEME.exec(form);
@@ -145,7 +150,7 @@ function attrProblem(
     case 'xmlns':
       return tag === 'svg' && value === SVG_NS ? undefined : `xmlns="${value}" on <${tag}>`;
     case 'href':
-      return HREF_TAGS.has(tag) ? hrefProblem(value, options) : `href on <${tag}>`;
+      return HREF_TAGS.has(tag) ? hrefProblem(tag, value, options) : `href on <${tag}>`;
     case 'target':
       return LINK_TARGETS.has(value) ? undefined : `target="${value}"`;
     case 'rel':

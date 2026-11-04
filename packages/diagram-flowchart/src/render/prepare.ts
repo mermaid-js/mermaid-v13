@@ -6,7 +6,13 @@
 import type { Dir, LayoutGraph, LayoutGroup, LayoutNode } from '@mermaid-js/core/layout';
 import { fromPx, pxProfile } from '@mermaid-js/core/layout';
 import { checkStyle, type CheckedStyle } from '@mermaid-js/core/svg';
-import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
+import {
+  fontSizePx,
+  layoutLabel,
+  Style,
+  type FontKey,
+  type MeasuredLabel,
+} from '@mermaid-js/core/text';
 import type { FlowModel, FlowModelEdge, FlowModelSubgraph, FlowVertex } from '../parser/index.ts';
 import type { FlowRenderContext } from './context.ts';
 import { curveKind, type CurveKind } from './edges.ts';
@@ -106,8 +112,8 @@ function textStyle(style: CheckedStyle, font: FontKey): [FontKey, number] {
   const weight = t['font-weight'];
   const bold = weight === 'bold' || weight === 'bolder' || Number(weight) >= 600;
   const bits = (bold ? Style.Bold : 0) | (t['font-style'] === 'italic' ? Style.Italic : 0);
-  const size = parseFloat(String(t['font-size'] ?? ''));
-  return [size > 0 && size < 1000 ? { ...font, size } : font, bits];
+  const size = fontSizePx(t['font-size'], font.size);
+  return [size !== undefined && size > 0 && size < 1000 ? { ...font, size } : font, bits];
 }
 
 /**
@@ -339,13 +345,16 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     for (let n = 2; ids.has(id); n++) id = `${e.id}#${n}`;
     ids.add(id);
     const [start, end] = arrows(e.type, e.stroke);
+    const style = styleOf(e.classes, [...(model.defaultStyle ?? []), ...(e.style ?? [])]);
+    // Measured in the font the label is drawn in, as node labels are.
+    const [f, bits] = textStyle(style, font);
     edges.push({
       edge: e,
       id,
       source,
       target,
-      label: label(e.text, e.labelType === 'markdown', font, b.edgeWrap),
-      style: styleOf(e.classes, [...(model.defaultStyle ?? []), ...(e.style ?? [])]),
+      label: label(e.text, e.labelType === 'markdown', f, b.edgeWrap, bits),
+      style,
       start,
       end,
       curve: curveKind(e.interpolate ?? model.defaultInterpolate ?? flow.curve),
@@ -369,7 +378,9 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
   // An LR/RL drawing the engine turns to TB for `availableWidth` runs its ranks down (#47).
   const down = spacingOn('y', 'x');
   const turned = down.node !== spacing.node || down.rank !== spacing.rank;
-  const curve = curveKind(flow.curve);
+  // How edges are routed follows the diagram's default curve: `linkStyle default interpolate`
+  // first, then config, as each edge's own drawing does.
+  const curve = curveKind(model.defaultInterpolate ?? flow.curve);
   const graph: LayoutGraph = {
     direction: rootDir,
     nodes: nodes.map((n): LayoutNode => {

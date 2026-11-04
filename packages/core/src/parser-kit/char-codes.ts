@@ -26,6 +26,7 @@ export const SEMI = 0x3b;
 export const LT = 0x3c;
 export const EQUALS = 0x3d;
 export const GT = 0x3e;
+export const QUESTION = 0x3f;
 export const AT = 0x40;
 export const LBRACKET = 0x5b;
 export const BACKSLASH = 0x5c;

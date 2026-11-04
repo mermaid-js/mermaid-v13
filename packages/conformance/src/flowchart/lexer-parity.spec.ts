@@ -19,6 +19,8 @@ import type { JisonToken } from './jison-lexer.ts';
  * - v12 appended a `\n` before lexing; v13 lexes a sentinel line break there whose image is
  *   clipped to the source, so that last character is taken off v12's last token.
  *
+ * Every source is also lexed with comment lines added, which v12 removed before lexing.
+ *
  * Deliberate differences: the `@{` opener keeps its image in v13 (jison clears it); v13 also emits the closing `}` of shape data (jison drops it), and
  * comments and directives as trivia; both are left out. After a lexical error jison stops, so
  * both streams are cut at the first `INVALID`.
@@ -82,6 +84,26 @@ function dropAppendedNewline(tokens: JisonToken[]): void {
   }
 }
 
+// U+2028 and U+2029: a regex `.` stops at them and `^` follows them, as LF does.
+const LINE_SEPARATORS: CorpusItem[] = [
+  { id: 'line separators 0', source: 'flowchart LR\nA\u2028direction TB\nB' },
+  { id: 'line separators 1', source: 'flowchart LR\nsubgraph S\nx\u2028direction TB\nA\nend' },
+  { id: 'line separators 2', source: 'flowchart LR\naccTitle: hi\u2028there\nA' },
+  { id: 'line separators 3', source: 'flowchart LR\naccDescr: hi\u2029there\nA' },
+  { id: 'line separators 4', source: 'flowchart LR\nA\n%% c\u2028B\nC' },
+  { id: 'line separators 5', source: 'flowchart LR\nA\n\u2028%% c\nB' },
+  { id: 'line separators 6', source: 'flowchart LR\nA\u2028%% c\nB' },
+  { id: 'line separators 7', source: 'flowchart LR\nA\u2028  %% c\u2028B\nC' },
+  { id: 'line separators 8', source: 'flowchart LR\nA\nclick A\u2028call f()\n' },
+  { id: 'line separators 9', source: 'flowchart LR\nA-->B\u2028C' },
+  { id: 'line separators 10', source: 'flowchart LR\nA[a\u2028b]' },
+  { id: 'line separators 11', source: 'flowchart LR\nstyle A fill:#f00;\u2028B;\n' },
+  { id: 'line separators 12', source: 'flowchart LR\nclassDef x fill:#f00;\u2029A;\n' },
+  { id: 'line separators 13', source: 'graph\u2028TD\nA' },
+  { id: 'line separators 14', source: 'graph TD\u2028\nA' },
+  { id: 'line separators 15', source: 'flowchart LR\nA -- x\u2028--> B' },
+];
+
 async function corpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
   for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/flowchart'), 'e2e')) {
@@ -90,7 +112,24 @@ async function corpus(): Promise<CorpusItem[]> {
   const specs = JSON.parse(
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/flowchart-v12-specs.json'), 'utf8')
   ) as CorpusItem[];
-  return [...items, ...specs];
+  const all = [...items, ...specs, ...LINE_SEPARATORS];
+  return [
+    ...all,
+    ...all.map((item) => ({ id: `${item.id} (commented)`, source: commented(item.source) })),
+  ];
+}
+
+/**
+ * `src` with nine comment lines after every line of the body, or one through the middle of a
+ * one-line body. v12 removed them before lexing, so tokens must match across them.
+ */
+function commented(src: string): string {
+  const head = /^---[\s\S]*?\n---[^\S\n]*\n/.exec(src)?.[0] ?? '';
+  const body = src.slice(head.length);
+  const lines = body.split('\n');
+  const cut = Math.floor(body.length / 2);
+  const split = body.slice(0, cut) + '\n%% cut\n' + body.slice(cut);
+  return head + (lines.length > 2 ? lines.join('\n' + '  %% c\n'.repeat(9)) : split);
 }
 
 describe('flowchart lexer parity with mermaid@12 (jison)', () => {

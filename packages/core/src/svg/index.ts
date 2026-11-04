@@ -37,8 +37,10 @@ export {
   type TreeSvgWriter,
 } from './writer.ts';
 export {
+  checkImageUrl,
   checkLinkTarget,
   checkUrl,
+  isImageDataUrl,
   resolveSecurityLevel,
   type SecurityLevel,
   type UrlOptions,
@@ -49,6 +51,7 @@ export {
   checkLength,
   checkStyle,
   px,
+  styleScope,
   styleText,
   themeRef,
   themeStyleSheet,

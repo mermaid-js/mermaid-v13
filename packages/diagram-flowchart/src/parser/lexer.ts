@@ -1,16 +1,18 @@
 /**
  * Flowchart lexer: a state machine mirroring the start conditions of v12's `flow.jison`
- * (DESIGN §4.3). Ported from Pele's `src/diagrams/flowchart/lexer.ts` @ 3a2f075
+ * (DESIGN §4.3). Ported from Pele's `src/diagrams/flowchart/lexer.ts` at 3a2f075
  * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano), which is checked token by token
  * against the jison lexer. Changes from Pele:
- * - tokens carry ranges into the original source, which is never rewritten;
- * - comments and directives are trivia tokens, at the places v12 removed them ({@link sourceView});
+ * - it lexes the text v12 lexed, with comments and directives cut out ({@link sourceView}), and
+ *   maps each token back to its range in the source, which is never rewritten. A token that
+ *   runs over a removed span is one token whose range covers it;
+ * - comments and directives are trivia tokens, each with its own range, in source order;
  * - CRLF and CR are line breaks; `}\s*\n` and v12's `encodeEntities` quirks are reproduced;
  * - an unmatched character is an `Error` token, and lexing carries on (for recovery).
  *
  * Every scan is linear in the text it consumes (R-PARSE-7).
  */
-// cspell:words kepano invis segs virt
+// cspell:words kepano invis
 import {
   AMP,
   ASCII_MAX,
@@ -30,6 +32,7 @@ import {
   hasClass,
   HASH,
   isDigit,
+  isLineEnd,
   isSpace,
   isUnicodeLetter,
   isWord,
@@ -53,6 +56,7 @@ import {
   LPAREN,
   LT,
   PIPE,
+  QUESTION,
   RBRACE,
   RBRACKET,
   RPAREN,
@@ -64,8 +68,8 @@ import {
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
 import type { TokenStream } from '@mermaid-js/core/parser-kit';
-import { DROP, firstHole, QUOTE } from './source.ts';
-import type { SourceView } from './source.ts';
+import { firstHole, localOffset, QUOTE, SourceOffsets } from './source.ts';
+import type { Hole, SourceView } from './source.ts';
 import { T } from './tokens.ts';
 
 // Start conditions of flow.jison (the ones the lexer needs).
@@ -156,8 +160,9 @@ const RE_SPACE = /[^\S\n\r]+/y;
 const RE_END = /end\s*/y;
 const RE_EMPTY_CALL = /\(\s*\)/y;
 const RE_ENTITY = /#\w+;/y;
+const LINK_TARGETS = ['_self', '_blank', '_parent', '_top'];
 
-const isNl = (c: number) => c === 10 || c === 13;
+const isNl = (c: number) => c === LF || c === CR;
 
 /**
  * Lex the flowchart body `src[from…]`. `view` comes from {@link sourceView}. With
@@ -165,258 +170,280 @@ const isNl = (c: number) => c === 10 || c === 13;
  * lexing restarts mid-document after an error).
  */
 export function lex(src: string, from: number, view: SourceView, graphKeyword = true): TokenStream {
-  // v12 appended a newline before parsing; a sentinel plays its part (clamped in the output).
-  const text = src + '\n';
-  const len = src.length;
-  const n = text.length;
-  const mask = view.mask;
-  const holes = view.holes;
-  // About one token per four characters of flowchart text.
-  const w = new TokenWriter(((len - from) >> 2) + 8);
-  const stack: number[] = [];
-  let state: number = S.INITIAL;
-  let p = from;
-  let hole = firstHole(view, from);
-  let lim = holes[hole]?.start ?? n;
-  let firstGraph = graphKeyword;
-  let dirNext = text.indexOf('direction', p);
-  let atNext = text.indexOf('@', p);
-  let lineEndAt = -1;
-  let dirFailed = 0;
-  let runEnd = 0;
-  let runAt = -1;
-  let wsFrom = -1;
-  let wsTo = -1;
+  return new FlowLexer(src, from, view, graphKeyword).run();
+}
 
-  const bits = (i: number) => (mask ? (mask[i] ?? 0) : 0);
-  const isQuote = (i: number) => text.charCodeAt(i) === DQUOTE && (bits(i) & QUOTE) === 0;
-  const nextQuote = (from: number) => {
-    let e = text.indexOf('"', from);
-    while (e !== -1 && e < lim && (bits(e) & QUOTE) !== 0) e = text.indexOf('"', e + 1);
-    return e === -1 || e > lim ? lim : e;
-  };
-  const upTo = (ch: string, from: number) => {
-    const e = text.indexOf(ch, from);
-    return e === -1 || e > lim ? lim : e;
-  };
-  const emit = (kind: number, s: number, e: number): void => {
-    const a = Math.min(s, len);
-    const b = Math.min(e, len);
-    w.push(kind, a, b);
-    p = e;
-  };
-  const push = (s: number): void => {
-    stack.push(state);
-    state = s;
-  };
-  const pop = (): void => {
-    state = stack.pop() ?? S.INITIAL;
-  };
-  /** End of the run of `pred` characters from `q`, continuing over removed spans. */
-  const scanRun = (q: number, pred: (ch: number, at: number) => boolean): number => {
-    let j = q;
-    let k = hole;
-    // Start of the removed span the scan reaches next; only there are the spans looked at.
-    let hs = -1;
-    while (j < n) {
-      if (j >= hs) {
-        while ((holes[k]?.end ?? n + 1) <= j) k++;
-        const h = holes[k];
-        hs = h?.start ?? n + 1;
-        if (h && h.start === j) {
-          j = h.end;
-          continue;
-        }
+/**
+ * One lex. Offsets are into {@link text}, v12's text; {@link emit} maps them to the source.
+ * Each start condition is a method named after it.
+ */
+class FlowLexer {
+  /** The text v12 lexed, plus the line break v12 appended (clamped in the output). */
+  private readonly text: string;
+  /** Length of v12's text without the appended line break. */
+  private readonly len: number;
+  private readonly n: number;
+  private readonly offsets: SourceOffsets | undefined;
+  private readonly mask: Uint8Array | undefined;
+  private readonly holes: readonly Hole[];
+  /** The next removed span to write as trivia. */
+  private hole: number;
+  private readonly w: TokenWriter;
+  private readonly stack: number[] = [];
+  private state: number = S.INITIAL;
+  private p: number;
+  private readonly from: number;
+  private firstGraph: boolean;
+  // Memos that keep the scans below linear.
+  private dirNext: number;
+  private atNext: number;
+  private lineEndAt = -1;
+  private dirFailed = 0;
+  private runEnd = 0;
+  private runAt = -1;
+  private wsFrom = -1;
+  private wsTo = -1;
+
+  constructor(
+    private readonly src: string,
+    from: number,
+    view: SourceView,
+    graphKeyword: boolean
+  ) {
+    this.text = view.text + '\n';
+    this.len = view.text.length;
+    this.n = this.text.length;
+    this.offsets = view.runs && new SourceOffsets(view.runs);
+    this.mask = view.mask;
+    this.holes = view.holes;
+    this.hole = firstHole(view, from);
+    this.from = this.p = localOffset(view, from);
+    this.firstGraph = graphKeyword;
+    // About one token per four characters of flowchart text.
+    this.w = new TokenWriter(((this.len - this.p) >> 2) + 8);
+    this.dirNext = this.text.indexOf('direction', this.p);
+    this.atNext = this.text.indexOf('@', this.p);
+  }
+
+  run(): TokenStream {
+    const { text, n } = this;
+    // v12 trimmed leading blanks (after removing comments) before lexing.
+    if (this.firstGraph) while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
+    while (this.p < n) {
+      const before = this.p;
+      if (!this.step(text.charCodeAt(this.p)) || this.p === before) {
+        // No rule matches: one Error token, then resume in the initial state.
+        this.emit(Kind.Error, this.p, Math.min(this.p + 1, n));
+        this.stack.length = 0;
+        this.state = S.INITIAL;
       }
-      if (pred(text.charCodeAt(j), j)) j++;
-      else break;
     }
+    const kind = eofValueKind(this.state);
+    if (kind !== -1) this.emit(kind, this.len, this.len);
+    if (this.state === S.INITIAL) this.emit(T.Eof, this.len, this.len);
+    this.trivia(this.src.length + 1);
+    return this.w.finish(this.src);
+  }
+
+  // --- Offsets and output -------------------------------------------------------------------
+
+  /** Source offset of `text[i]`; the end of the source from the appended line break on. */
+  private source(i: number): number {
+    if (i >= this.len) return this.src.length;
+    return this.offsets ? this.offsets.source(i) : i;
+  }
+
+  /** Write the removed spans that start before `at` (a source offset) as trivia. */
+  private trivia(at: number): void {
+    const hs = this.holes;
+    for (let h = hs[this.hole]; h && h.start < at; h = hs[++this.hole]) {
+      if (h.kind !== 'drop') {
+        this.w.push(h.kind === 'comment' ? Kind.Comment : Kind.Directive, h.start, h.end);
+      }
+    }
+  }
+
+  /** Write the token `text[s, e)` with its source range, and move past it. */
+  private emit(kind: number, s: number, e: number): void {
+    const a = this.source(s);
+    const last = Math.min(e, this.len);
+    let b = last > s ? this.source(last - 1) + 1 : a;
+    if (this.holes.length > 0) {
+      this.trivia(a);
+      if (b > a) b = this.dropAt(b);
+    }
+    this.w.push(kind, a, b);
+    this.p = e;
+  }
+
+  /** The end of the `;` v12 dropped at `b`, which belongs to the token before it; else `b`. */
+  private dropAt(b: number): number {
+    const hs = this.holes;
+    let k = this.hole;
+    while (k < hs.length && (hs[k]?.start ?? b) < b) k++;
+    const h = hs[k];
+    return h && h.start === b && h.kind === 'drop' ? h.end : b;
+  }
+
+  private push(s: number): void {
+    this.stack.push(this.state);
+    this.state = s;
+  }
+
+  private pop(): void {
+    this.state = this.stack.pop() ?? S.INITIAL;
+  }
+
+  // --- Character tests and scans ------------------------------------------------------------
+
+  /** A `"` that v12 had not turned into `'`. */
+  private isQuote(i: number): boolean {
+    return this.text.charCodeAt(i) === DQUOTE && ((this.mask?.[this.source(i)] ?? 0) & QUOTE) === 0;
+  }
+
+  /** `ch` at or after `start`, else the end. */
+  private find(ch: string, start: number): number {
+    const e = this.text.indexOf(ch, start);
+    return e === -1 ? this.n : e;
+  }
+
+  private nextQuote(from: number): number {
+    let e = this.find('"', from);
+    while (e < this.n && !this.isQuote(e)) e = this.find('"', e + 1);
+    return e;
+  }
+
+  /** The last blank of the run at `q`. */
+  private blankRunEnd(q: number): number {
+    let j = q;
+    while (j + 1 < this.n && isSpace(this.text.charCodeAt(j + 1))) j++;
     return j;
-  };
-  const blankUpTo = (q: number, e: number): boolean => {
-    for (let j = q; j < e; j++) if (!isSpace(text.charCodeAt(j))) return false;
-    return true;
-  };
-  const at = (re: RegExp, q: number): number => {
+  }
+
+  /** End of the sticky `re` matched at `q`, or -1. */
+  private at(re: RegExp, q: number): number {
     re.lastIndex = q;
-    const ok = re.test(text);
-    if (ok && (re.lastIndex < lim || (re.lastIndex === lim && lim >= n))) return re.lastIndex;
-    // Blanks up to a removed span: the pattern may go on after it.
-    if (!ok && !(lim < n && lim - q < 4096 && blankUpTo(q, lim))) return -1;
-    // The match runs into a removed span. v12 matched the text with it removed: match the
-    // text around the next removed spans, then map the end back to a source offset.
-    const segs: [number, number][] = [[q, lim]];
-    let virt = text.slice(q, lim);
-    for (let k = hole; k < holes.length && k < hole + 8; k++) {
-      const from = holes[k]?.end ?? n;
-      const to = Math.min(holes[k + 1]?.start ?? n, from + 4096);
-      segs.push([from, to]);
-      virt += text.slice(from, to);
-    }
-    re.lastIndex = 0;
-    if (!re.test(virt)) return -1;
-    let rest = re.lastIndex;
-    for (const [a, b] of segs) {
-      if (rest <= b - a) return a + rest;
-      rest -= b - a;
-    }
-    return n;
-  };
+    return re.test(this.text) ? re.lastIndex : -1;
+  }
+
   // jison `(\r?\n)*\s*\n`: a blank run up to its last line feed.
-  const noDirEnd = (q: number): number => {
+  private noDirEnd(q: number): number {
     let last = -1;
-    for (let j = q; j < lim && isSpace(text.charCodeAt(j)); j++) {
-      const ch = text.charCodeAt(j);
+    for (let j = q; j < this.n && isSpace(this.text.charCodeAt(j)); j++) {
+      const ch = this.text.charCodeAt(j);
       // A lone CR was a line feed to v12.
-      if (ch === LF || (ch === CR && text.charCodeAt(j + 1) !== LF)) last = j;
+      if (ch === LF || (ch === CR && this.text.charCodeAt(j + 1) !== LF)) last = j;
     }
     return last < 0 ? -1 : last + 1;
-  };
-  // jison `(\r?\n)+` (a lone CR, which v12 turned into LF, counts too).
-  // A run of line breaks continues over removed lines, which v12 no longer saw.
-  const newlineEnd = (q: number): number => {
-    const j = isNl(text.charCodeAt(q)) ? scanRun(q, isNl) : q;
-    return j > q ? j : -1;
-  };
-  const entityAt = (q: number): boolean => {
-    const e = at(RE_ENTITY, q);
-    return e >= 0 && (bits(e - 1) & DROP) === 0;
-  };
-  const kw = (word: string): boolean =>
-    text.startsWith(word, p) && !isWord(text.charCodeAt(p + word.length));
+  }
 
-  // First character after any run of whitespace starting at q, skipping one optional x, o or <.
-  // Blanks continue over removed spans, as in the text v12 lexed.
-  const skipWs = (q: number): number => {
-    if (q >= wsFrom && q <= wsTo) return wsTo;
+  // jison `(\r?\n)+` (a lone CR, which v12 turned into LF, counts too).
+  private newlineEnd(q: number): number {
     let j = q;
-    if (isSpace(text.charCodeAt(q))) {
-      let k = hole;
-      let hs = -1;
-      while (j < n) {
-        if (j >= hs) {
-          while ((holes[k]?.end ?? n + 1) <= j) k++;
-          const h = holes[k];
-          hs = h?.start ?? n + 1;
-          if (h && h.start === j) {
-            j = h.end;
-            continue;
-          }
-        }
-        if (isSpace(text.charCodeAt(j))) j++;
-        else break;
-      }
-      wsFrom = q;
-      wsTo = j;
+    while (j < this.n && isNl(this.text.charCodeAt(j))) j++;
+    return j > q ? j : -1;
+  }
+
+  private entityAt(q: number): boolean {
+    return this.at(RE_ENTITY, q) >= 0;
+  }
+
+  private kw(word: string): boolean {
+    return (
+      this.text.startsWith(word, this.p) && !isWord(this.text.charCodeAt(this.p + word.length))
+    );
+  }
+
+  /** First character after any run of whitespace starting at q. */
+  private skipWs(q: number): number {
+    if (q >= this.wsFrom && q <= this.wsTo) return this.wsTo;
+    let j = q;
+    if (isSpace(this.text.charCodeAt(q))) {
+      while (j < this.n && isSpace(this.text.charCodeAt(j))) j++;
+      this.wsFrom = q;
+      this.wsTo = j;
     }
     return j;
-  };
-  const linkChar = (q: number): number => {
-    const j = skipWs(q);
-    const d = text.charCodeAt(j);
-    return d === LOWER_X || d === LOWER_O || d === LT ? text.charCodeAt(j + 1) : d;
-  };
-  const invisAhead = (q: number): boolean => text.charCodeAt(skipWs(q)) === TILDE;
+  }
 
-  const quote = (): void => {
-    if (text.charCodeAt(p + 1) === BACKTICK) {
-      push(S.md_string);
-      p += 2;
+  /** The character a link pattern at q turns on: after blanks and one optional `x`, `o` or `<`. */
+  private linkChar(q: number): number {
+    const j = this.skipWs(q);
+    const d = this.text.charCodeAt(j);
+    return d === LOWER_X || d === LOWER_O || d === LT ? this.text.charCodeAt(j + 1) : d;
+  }
+
+  private invisAhead(q: number): boolean {
+    return this.text.charCodeAt(this.skipWs(q)) === TILDE;
+  }
+
+  // --- Rules shared by several states -------------------------------------------------------
+
+  private quote(): void {
+    if (this.text.charCodeAt(this.p + 1) === BACKTICK) {
+      this.push(S.md_string);
+      this.p += 2;
     } else {
-      push(S.string);
-      p++;
+      this.push(S.string);
+      this.p++;
     }
-  };
+  }
 
-  const invisLink = (): boolean => {
-    if (!invisAhead(p)) return false;
-    const e = at(RE_INVIS_LINK, p);
+  private invisLink(): boolean {
+    if (!this.invisAhead(this.p)) return false;
+    const e = this.at(RE_INVIS_LINK, this.p);
     if (e < 0) return false;
-    emit(T.Link, p, e);
+    this.emit(T.Link, this.p, e);
     return true;
-  };
+  }
 
-  const opener = (c: number): boolean => {
-    const d = text.charCodeAt(p + 1);
-    if (c === 40) {
-      if (d === DASH) {
-        push(S.ellipseText);
-        emit(T.EllipseStart, p, p + 2);
-      } else if (d === LBRACKET) {
-        push(S.text);
-        emit(T.StadiumStart, p, p + 2);
-      } else if (d === LPAREN && text.charCodeAt(p + 2) === LPAREN) {
-        push(S.text);
-        emit(T.DoubleCircleStart, p, p + 3);
-      } else {
-        push(S.text);
-        emit(T.PS, p, p + 1);
+  /** The shape openers; `c` is `(`, `[`, `|` or `{`. */
+  private opener(c: number): boolean {
+    const d = this.text.charCodeAt(this.p + 1);
+    if (c === LPAREN) {
+      if (d === DASH) return this.open(S.ellipseText, T.EllipseStart, 2);
+      if (d === LBRACKET) return this.open(S.text, T.StadiumStart, 2);
+      if (d === LPAREN && this.text.charCodeAt(this.p + 2) === LPAREN) {
+        return this.open(S.text, T.DoubleCircleStart, 3);
       }
-      return true;
+      return this.open(S.text, T.PS, 1);
     }
-    if (c === 91) {
-      if (d === LBRACKET) {
-        push(S.text);
-        emit(T.SubroutineStart, p, p + 2);
-      } else if (d === LPAREN) {
-        push(S.text);
-        emit(T.CylinderStart, p, p + 2);
-      } else if (d === SLASH) {
-        push(S.trapText);
-        emit(T.TrapStart, p, p + 2);
-      } else if (d === BACKSLASH) {
-        push(S.trapText);
-        emit(T.InvTrapStart, p, p + 2);
-      } else {
-        push(S.text);
-        emit(T.SQS, p, p + 1);
-      }
-      return true;
+    if (c === LBRACKET) {
+      if (d === LBRACKET) return this.open(S.text, T.SubroutineStart, 2);
+      if (d === LPAREN) return this.open(S.text, T.CylinderStart, 2);
+      if (d === SLASH) return this.open(S.trapText, T.TrapStart, 2);
+      if (d === BACKSLASH) return this.open(S.trapText, T.InvTrapStart, 2);
+      return this.open(S.text, T.SQS, 1);
     }
-    if (c === 124) {
-      push(S.text);
-      emit(T.Pipe, p, p + 1);
-      return true;
-    }
-    if (c === 123) {
-      push(S.text);
-      emit(T.DiamondStart, p, p + 1);
-      return true;
-    }
+    if (c === PIPE) return this.open(S.text, T.Pipe, 1);
+    if (c === LBRACE) return this.open(S.text, T.DiamondStart, 1);
     return false;
-  };
+  }
 
-  const graph = (length: number): void => {
-    if (firstGraph) {
-      firstGraph = false;
-      push(S.dir);
+  private open(state: number, kind: number, length: number): true {
+    this.push(state);
+    return this.token(kind, length);
+  }
+
+  private graph(length: number): void {
+    if (this.firstGraph) {
+      this.firstGraph = false;
+      this.push(S.dir);
     }
-    emit(T.Graph, p, p + length);
-  };
+    this.emit(T.Graph, this.p, this.p + length);
+  }
 
-  const nodeString = (): boolean => {
+  private nodeString(): boolean {
+    const p = this.p;
     let q = p;
-    let k = hole;
-    let hs = -1;
-    while (q < n) {
-      // A removed span inside a run joins its two halves, as in v12's text.
-      if (q >= hs) {
-        while ((holes[k]?.end ?? n + 1) <= q) k++;
-        const h = holes[k];
-        hs = h?.start ?? n + 1;
-        if (h && h.start === q) {
-          if (q === p) break;
-          q = h.end;
-          continue;
-        }
-      }
-      const ch = text.charCodeAt(q);
+    while (q < this.n) {
+      const ch = this.text.charCodeAt(q);
       // v12 had turned `#name;` into an entity placeholder, which ends a node string.
-      if (ch === HASH && entityAt(q)) break;
+      if (ch === HASH && this.entityAt(q)) break;
       if (hasClass(CHARS, ch, NODE)) {
         q++;
-      } else if (ch === DASH && q + 1 < n) {
-        const d = text.charCodeAt(q + 1);
+      } else if (ch === DASH && q + 1 < this.n) {
+        const d = this.text.charCodeAt(q + 1);
         if (d === GT || d === DASH || d === DOT) break;
         q++;
       } else {
@@ -424,694 +451,624 @@ export function lex(src: string, from: number, view: SourceView, graphKeyword = 
       }
     }
     if (q === p) return false;
-    emit(T.NodeString, p, q);
+    this.emit(T.NodeString, p, q);
     return true;
-  };
+  }
 
-  const link = (c: number): boolean => {
-    const d = linkChar(p);
+  private link(c: number): boolean {
+    const p = this.p;
+    const d = this.linkChar(p);
     let e: number;
-    if (d === 45) {
-      if ((e = at(RE_LINK, p)) >= 0) {
-        emit(T.Link, p, e);
-        return true;
-      }
-      if ((e = at(RE_START_LINK, p)) >= 0) {
-        push(S.edgeText);
-        emit(T.StartLink, p, e);
-        return true;
-      }
-      if ((e = at(RE_DOTTED_LINK, p)) >= 0) {
-        emit(T.Link, p, e);
-        return true;
-      }
-      if ((e = at(RE_DOTTED_START, p)) >= 0) {
-        push(S.dottedEdgeText);
-        emit(T.StartLink, p, e);
-        return true;
-      }
-    } else if (d === 61) {
-      if ((e = at(RE_THICK_LINK, p)) >= 0) {
-        emit(T.Link, p, e);
-        return true;
-      }
-      if ((e = at(RE_THICK_START, p)) >= 0) {
-        push(S.thickEdgeText);
-        emit(T.StartLink, p, e);
-        return true;
-      }
-    } else if (d === 46 && (e = at(RE_DOTTED_LINK, p)) >= 0) {
-      emit(T.Link, p, e);
-      return true;
+    if (d === DASH) {
+      if ((e = this.at(RE_LINK, p)) >= 0) return this.linkToken(p, e);
+      if ((e = this.at(RE_START_LINK, p)) >= 0) return this.startLink(S.edgeText, p, e);
+      if ((e = this.at(RE_DOTTED_LINK, p)) >= 0) return this.linkToken(p, e);
+      if ((e = this.at(RE_DOTTED_START, p)) >= 0) return this.startLink(S.dottedEdgeText, p, e);
+    } else if (d === EQUALS) {
+      if ((e = this.at(RE_THICK_LINK, p)) >= 0) return this.linkToken(p, e);
+      if ((e = this.at(RE_THICK_START, p)) >= 0) return this.startLink(S.thickEdgeText, p, e);
+    } else if (d === DOT && (e = this.at(RE_DOTTED_LINK, p)) >= 0) {
+      return this.linkToken(p, e);
     }
-    return c !== 45 && c !== 61 && c !== 46 && invisLink();
-  };
+    return c !== DASH && c !== EQUALS && c !== DOT && this.invisLink();
+  }
+
+  private linkToken(s: number, e: number): true {
+    this.emit(T.Link, s, e);
+    return true;
+  }
+
+  private startLink(state: number, s: number, e: number): true {
+    this.push(state);
+    this.emit(T.StartLink, s, e);
+    return true;
+  }
 
   // mermaid@12.2.0's LINK_ID is `[^\s\"]+\@(?=[^\{\"])`.
-  const isRunBreak = (ch: number, q: number) => (ch === 34 && isQuote(q)) || isSpace(ch);
+  private isRunBreak(ch: number, q: number): boolean {
+    return (ch === DQUOTE && this.isQuote(q)) || isSpace(ch);
+  }
 
-  const initial = (c: number): boolean => {
+  // --- States -------------------------------------------------------------------------------
+
+  private step(c: number): boolean {
+    switch (this.state) {
+      case S.INITIAL:
+        return this.initial(c);
+      case S.string:
+        return this.string(c);
+      case S.md_string:
+        return this.mdString(c);
+      case S.acc_title:
+      case S.acc_descr:
+        return this.accValue();
+      case S.acc_descr_multiline:
+        return this.accDescrMultiline(c);
+      case S.dir:
+        return this.dir(c);
+      case S.text:
+        return this.textState(c);
+      case S.ellipseText:
+        return this.ellipseText(c);
+      case S.trapText:
+        return this.trapText(c);
+      case S.edgeText:
+        return this.edgeText(c, RE_LINK, DASH, -1);
+      case S.thickEdgeText:
+        return this.edgeText(c, RE_THICK_LINK, EQUALS, -1);
+      case S.dottedEdgeText:
+        return this.edgeText(c, RE_DOTTED_LINK, DOT, DASH);
+      case S.click:
+        return this.click(c);
+      case S.callbackname:
+        return this.callbackName(c);
+      case S.callbackargs:
+        return this.callbackArgs(c);
+      case S.shapeData:
+        return this.shapeData(c);
+      case S.shapeDataStr:
+        return this.shapeDataStr(c);
+    }
+    return false;
+  }
+
+  private initial(c: number): boolean {
+    return (
+      this.keyword(c) ||
+      this.direction() ||
+      this.linkId(c) ||
+      this.punctuation(c) ||
+      this.blanks(c) ||
+      this.word(c)
+    );
+  }
+
+  /** The keyword rules, picked by their first character. */
+  private keyword(c: number): boolean {
+    const p = this.p;
     let e: number;
     switch (c) {
       case LOWER_A:
-        if (text.startsWith('acc', p)) {
-          if ((e = at(RE_ACC_TITLE, p)) >= 0) {
-            push(S.acc_title);
-            emit(T.AccTitle, p, e);
+        if (this.text.startsWith('acc', p)) {
+          if ((e = this.at(RE_ACC_TITLE, p)) >= 0) {
+            this.push(S.acc_title);
+            this.emit(T.AccTitle, p, e);
             return true;
           }
-          if ((e = at(RE_ACC_DESCR, p)) >= 0) {
-            push(S.acc_descr);
-            emit(T.AccDescr, p, e);
+          if ((e = this.at(RE_ACC_DESCR, p)) >= 0) {
+            this.push(S.acc_descr);
+            this.emit(T.AccDescr, p, e);
             return true;
           }
-          if ((e = at(RE_ACC_DESCR_ML, p)) >= 0) {
-            push(S.acc_descr_multiline);
-            p = e;
+          if ((e = this.at(RE_ACC_DESCR_ML, p)) >= 0) {
+            this.push(S.acc_descr_multiline);
+            this.p = e;
             return true;
           }
         }
-        break;
+        return false;
       case AT:
-        if (text.charCodeAt(p + 1) === LBRACE) {
-          push(S.shapeData);
-          w.push(T.ShapeData, p, p + 2);
-          p += 2;
-          return true;
-        }
-        break;
+        if (this.text.charCodeAt(p + 1) !== LBRACE) return false;
+        this.push(S.shapeData);
+        this.emit(T.ShapeData, p, p + 2);
+        return true;
       case LOWER_C:
-        if ((e = at(RE_CALL, p)) >= 0) {
-          push(S.callbackname);
-          p = e;
+        if ((e = this.at(RE_CALL, p)) >= 0) {
+          this.push(S.callbackname);
+          this.p = e;
           return true;
         }
-        if (kw('classDef')) {
-          emit(T.ClassDef, p, p + 8);
+        if (this.kw('classDef')) return this.token(T.ClassDef, 8);
+        if (this.kw('class')) return this.token(T.Class, 5);
+        if ((e = this.at(RE_CLICK, p)) >= 0) {
+          this.push(S.click);
+          this.p = e;
           return true;
         }
-        if (kw('class')) {
-          emit(T.Class, p, p + 5);
-          return true;
-        }
-        if ((e = at(RE_CLICK, p)) >= 0) {
-          push(S.click);
-          p = e;
-          return true;
-        }
-        break;
+        return false;
       case DQUOTE:
-        if (isQuote(p)) {
-          quote();
-          return true;
-        }
-        break;
+        if (!this.isQuote(p)) return false;
+        this.quote();
+        return true;
       case LOWER_S:
-        if (kw('style')) {
-          emit(T.Style, p, p + 5);
-          return true;
-        }
-        if (kw('swimlane-beta')) {
-          graph(13);
-          return true;
-        }
-        if (kw('subgraph')) {
-          emit(T.Subgraph, p, p + 8);
-          return true;
-        }
-        break;
+        if (this.kw('style')) return this.token(T.Style, 5);
+        if (this.kw('swimlane-beta')) return this.graphWord(13);
+        if (this.kw('subgraph')) return this.token(T.Subgraph, 8);
+        return false;
       case LOWER_D:
-        if (kw('default')) {
-          emit(T.Default, p, p + 7);
-          return true;
-        }
-        break;
+        return this.kw('default') && this.token(T.Default, 7);
       case LOWER_L:
-        if (kw('linkStyle')) {
-          emit(T.LinkStyle, p, p + 9);
-          return true;
-        }
-        break;
+        return this.kw('linkStyle') && this.token(T.LinkStyle, 9);
       case LOWER_I:
-        if (kw('interpolate')) {
-          emit(T.Interpolate, p, p + 11);
-          return true;
-        }
-        break;
+        return this.kw('interpolate') && this.token(T.Interpolate, 11);
       case LOWER_H:
-        if (text.startsWith('href', p) && isSpace(text.charCodeAt(p + 4))) {
-          emit(T.Href, p, p + 5);
-          return true;
-        }
-        break;
+        if (!this.text.startsWith('href', p) || !isSpace(this.text.charCodeAt(p + 4))) return false;
+        // v12 saw CRLF as one LF: `href[\s]` took the whole line break.
+        this.emit(
+          T.Href,
+          p,
+          p + (this.text.charCodeAt(p + 4) === CR && this.text.charCodeAt(p + 5) === LF ? 6 : 5)
+        );
+        return true;
       case LOWER_F:
-        if (kw('flowchart-elk')) {
-          graph(13);
-          return true;
-        }
-        if (kw('flowchart')) {
-          graph(9);
-          return true;
-        }
-        break;
+        if (this.kw('flowchart-elk')) return this.graphWord(13);
+        return this.kw('flowchart') && this.graphWord(9);
       case LOWER_G:
-        if (kw('graph')) {
-          graph(5);
-          return true;
-        }
-        break;
+        return this.kw('graph') && this.graphWord(5);
       case LOWER_E:
-        if (kw('end')) {
-          emit(T.End, p, Math.max(p + 3, at(RE_END, p)));
-          return true;
-        }
-        break;
+        if (!this.kw('end')) return false;
+        this.emit(T.End, p, Math.max(p + 3, this.at(RE_END, p)));
+        return true;
       case UNDERSCORE:
-        for (const target of ['_self', '_blank', '_parent', '_top']) {
-          if (kw(target)) {
-            emit(T.LinkTarget, p, p + target.length);
-            return true;
-          }
+        for (const target of LINK_TARGETS) {
+          if (this.kw(target)) return this.token(T.LinkTarget, target.length);
         }
-        break;
+        return false;
     }
+    return false;
+  }
 
-    if (dirNext !== -1 && p >= dirFailed) {
-      if (dirNext < p) dirNext = text.indexOf('direction', p);
-      if (dirNext !== -1) {
-        if (lineEndAt < p) {
-          lineEndAt = p;
-          while (lineEndAt < n && !isNl(text.charCodeAt(lineEndAt))) lineEndAt++;
-        }
-        if (dirNext < lineEndAt) {
-          for (let i = 0; i < 5; i++) {
-            const re = RE_DIRECTION[i];
-            if (re && (e = at(re, p)) >= 0) {
-              emit(T.DirectionTB + i, p, e);
-              return true;
-            }
-          }
-          // No direction statement starts anywhere in the rest of this line either.
-          dirFailed = lineEndAt;
-        }
-      }
+  /** A token of `length` characters at p. */
+  private token(kind: number, length: number): true {
+    this.emit(kind, this.p, this.p + length);
+    return true;
+  }
+
+  private graphWord(length: number): true {
+    this.graph(length);
+    return true;
+  }
+
+  /** `.*direction\s+XX[^\n]*`, tried only on lines that hold `direction`. */
+  private direction(): boolean {
+    const p = this.p;
+    if (this.dirNext === -1 || p < this.dirFailed) return false;
+    if (this.dirNext < p) this.dirNext = this.text.indexOf('direction', p);
+    if (this.dirNext === -1) return false;
+    if (this.lineEndAt < p) {
+      this.lineEndAt = p;
+      // Where `.*direction` stops.
+      while (this.lineEndAt < this.n && !isLineEnd(this.text.charCodeAt(this.lineEndAt)))
+        this.lineEndAt++;
     }
-
-    // A link id is a run of id characters up to its last `@` that is not followed by `{` or `"`.
-    if (atNext !== -1 && !isRunBreak(c, p)) {
-      if (p >= runEnd) {
-        if (atNext < p) atNext = text.indexOf('@', p);
-        let q = p;
-        while (q < lim && !isRunBreak(text.charCodeAt(q), q)) q++;
-        runEnd = q;
-        runAt = -1;
-        if (atNext !== -1 && atNext < q) {
-          for (let k = Math.min(q, n - 1) - 1; k >= atNext; k--) {
-            if (text.charCodeAt(k) !== AT) continue;
-            const after = text.charCodeAt(k + 1);
-            if (after !== LBRACE && !(after === DQUOTE && isQuote(k + 1))) {
-              runAt = k;
-              break;
-            }
-          }
-        }
-      }
-      if (runAt > p) {
-        emit(T.LinkId, p, runAt + 1);
+    if (this.dirNext >= this.lineEndAt) return false;
+    for (let i = 0; i < RE_DIRECTION.length; i++) {
+      const re = RE_DIRECTION[i];
+      const e = re ? this.at(re, p) : -1;
+      if (e >= 0) {
+        this.emit(T.DirectionTB + i, p, e);
         return true;
       }
     }
+    // No direction statement starts anywhere in the rest of this line either.
+    this.dirFailed = this.lineEndAt;
+    return false;
+  }
 
+  /** A link id: a run of id characters up to its last `@` not followed by `{` or `"`. */
+  private linkId(c: number): boolean {
+    const p = this.p;
+    if (this.atNext === -1 || this.isRunBreak(c, p)) return false;
+    if (p >= this.runEnd) {
+      if (this.atNext < p) this.atNext = this.text.indexOf('@', p);
+      let q = p;
+      while (q < this.n && !this.isRunBreak(this.text.charCodeAt(q), q)) q++;
+      this.runEnd = q;
+      this.runAt = -1;
+      if (this.atNext !== -1 && this.atNext < q) {
+        for (let k = Math.min(q, this.n - 1) - 1; k >= this.atNext; k--) {
+          if (this.text.charCodeAt(k) !== AT) continue;
+          const after = this.text.charCodeAt(k + 1);
+          if (after !== LBRACE && !(after === DQUOTE && this.isQuote(k + 1))) {
+            this.runAt = k;
+            break;
+          }
+        }
+      }
+    }
+    if (this.runAt <= p) return false;
+    this.emit(T.LinkId, p, this.runAt + 1);
+    return true;
+  }
+
+  /** Numbers, punctuation and the links and shapes they open. */
+  private punctuation(c: number): boolean {
+    const p = this.p;
     if (isDigit(c)) {
-      emit(T.Num, p, scanRun(p + 1, isDigit));
+      let e = p + 1;
+      while (isDigit(this.text.charCodeAt(e))) e++;
+      this.emit(T.Num, p, e);
       return true;
     }
-
     switch (c) {
       case HASH:
         // v12 turned `#name;` into an entity placeholder that no INITIAL rule matches.
-        if (entityAt(p)) return false;
-        emit(T.Brkt, p, p + 1);
-        return true;
+        if (this.entityAt(p)) return false;
+        return this.token(T.Brkt, 1);
       case COLON:
-        if (text.charCodeAt(p + 1) === COLON && text.charCodeAt(p + 2) === COLON) {
-          emit(T.StyleSeparator, p, p + 3);
-        } else emit(T.Colon, p, p + 1);
-        return true;
-      case AMP:
-        emit(T.Amp, p, p + 1);
-        return true;
-      case SEMI:
-        if (bits(p) & DROP) {
-          p++;
-          return true;
+        if (this.text.charCodeAt(p + 1) === COLON && this.text.charCodeAt(p + 2) === COLON) {
+          return this.token(T.StyleSeparator, 3);
         }
-        emit(T.Semi, p, p + 1);
-        return true;
+        return this.token(T.Colon, 1);
+      case AMP:
+        return this.token(T.Amp, 1);
+      case SEMI:
+        return this.token(T.Semi, 1);
       case COMMA:
-        emit(T.Comma, p, p + 1);
-        return true;
+        return this.token(T.Comma, 1);
       case STAR:
-        emit(T.Mult, p, p + 1);
-        return true;
+        return this.token(T.Mult, 1);
       case LOWER_X:
       case LOWER_O:
-        return link(c) || nodeString();
+        return this.link(c) || this.nodeString();
       case LT:
-        if (link(c)) return true;
-        emit(T.TagStart, p, p + 1);
-        return true;
+        return this.link(c) || this.token(T.TagStart, 1);
       case DASH:
-        if (link(c) || nodeString()) return true;
-        emit(T.Minus, p, p + 1);
-        return true;
+        return this.link(c) || this.nodeString() || this.token(T.Minus, 1);
       case EQUALS:
         // flow.jison's `=(?!=)` in NODE_STRING compiles to `(?!)` in mermaid@12: `=` never joins an id.
-        return link(c);
+        return this.link(c);
       case DOT:
-        return link(c) || nodeString();
+        return this.link(c) || this.nodeString();
       case TILDE:
-        return invisLink();
-      case LPAREN:
-        return opener(c);
+        return this.invisLink();
       case LBRACKET:
-        if (text.charCodeAt(p + 1) === PIPE) {
-          emit(T.VertexWithPropsStart, p, p + 2);
-          return true;
-        }
-        return opener(c);
+        if (this.text.charCodeAt(p + 1) === PIPE) return this.token(T.VertexWithPropsStart, 2);
+        return this.opener(c);
+      case LPAREN:
       case PIPE:
       case LBRACE:
-        return opener(c);
+        return this.opener(c);
       case GT:
-        push(S.text);
-        emit(T.TagEnd, p, p + 1);
-        return true;
+        this.push(S.text);
+        return this.token(T.TagEnd, 1);
       case CARET:
-        emit(T.Up, p, p + 1);
-        return true;
+        return this.token(T.Up, 1);
       case BACKSLASH:
-        if (text.charCodeAt(p + 1) === PIPE) {
-          emit(T.Sep, p, p + 2);
-          return true;
-        }
-        return nodeString();
+        if (this.text.charCodeAt(p + 1) === PIPE) return this.token(T.Sep, 2);
+        return this.nodeString();
       case LOWER_V:
-        if (!isWord(text.charCodeAt(p + 1))) {
-          emit(T.Down, p, p + 1);
-          return true;
-        }
-        return nodeString();
+        if (!isWord(this.text.charCodeAt(p + 1))) return this.token(T.Down, 1);
+        return this.nodeString();
     }
+    return false;
+  }
 
-    if (isSpace(c)) {
-      // v12 rewrote `}\s*\n` to `}\n` before lexing.
-      if (text.charCodeAt(p - 1) === RBRACE && p > from) {
-        let nl = -1;
-        scanRun(p, (ch, at) => {
-          if (isNl(ch)) nl = at;
-          return isSpace(ch);
-        });
-        if (nl > p) {
-          if (text.charCodeAt(nl) === LF && text.charCodeAt(nl - 1) === CR) nl--;
-          p = nl;
-          wsFrom = wsTo = -1;
-          c = text.charCodeAt(p);
-        }
+  /** Blanks: a link that opens with them, line breaks, or a space token. */
+  private blanks(c: number): boolean {
+    if (!isSpace(c)) return false;
+    // v12 rewrote `}\s*\n` to `}\n` before lexing.
+    if (this.text.charCodeAt(this.p - 1) === RBRACE && this.p > this.from) {
+      let nl = -1;
+      for (let j = this.p; j < this.n && isSpace(this.text.charCodeAt(j)); j++)
+        if (isNl(this.text.charCodeAt(j))) nl = j;
+      if (nl > this.p) {
+        if (this.text.charCodeAt(nl) === LF && this.text.charCodeAt(nl - 1) === CR) nl--;
+        this.p = nl;
+        this.wsFrom = this.wsTo = -1;
+        c = this.text.charCodeAt(nl);
       }
-      if (link(c)) return true;
-      if ((e = newlineEnd(p)) >= 0) {
-        emit(Kind.Newline, p, e);
-        return true;
-      }
-      if ((e = at(RE_SPACE, p)) >= 0) {
-        emit(T.Space, p, e);
-        return true;
-      }
-      return false;
     }
-
-    if (c <= ASCII_MAX) return nodeString();
-    if (isUnicodeLetter(c)) {
-      emit(T.UnicodeText, p, p + 1);
+    if (this.link(c)) return true;
+    let e: number;
+    if ((e = this.newlineEnd(this.p)) >= 0) {
+      this.emit(Kind.Newline, this.p, e);
+      return true;
+    }
+    if ((e = this.at(RE_SPACE, this.p)) >= 0) {
+      this.emit(T.Space, this.p, e);
       return true;
     }
     return false;
-  };
+  }
 
-  const edgeText = (c: number, linkRe: RegExp, a: number, b: number): boolean => {
-    if (c === 34 && isQuote(p)) {
-      quote();
+  private word(c: number): boolean {
+    if (c <= ASCII_MAX) return this.nodeString();
+    if (!isUnicodeLetter(c)) return false;
+    return this.token(T.UnicodeText, 1);
+  }
+
+  private string(c: number): boolean {
+    if (c === DQUOTE && this.isQuote(this.p)) {
+      if (this.text.charCodeAt(this.p + 1) === BACKTICK) {
+        this.push(S.md_string);
+        this.p += 2;
+      } else {
+        this.pop();
+        this.p++;
+      }
+    } else this.emit(T.Str, this.p, this.nextQuote(this.p));
+    return true;
+  }
+
+  private mdString(c: number): boolean {
+    if (c === BACKTICK) {
+      if (!this.isQuote(this.p + 1)) return false;
+      this.pop();
+      this.p += 2;
       return true;
     }
-    const d = linkChar(p);
+    if (c === DQUOTE && this.isQuote(this.p)) {
+      this.quote();
+      return true;
+    }
+    let q = this.p + 1;
+    while (q < this.n) {
+      const ch = this.text.charCodeAt(q);
+      if (ch === BACKTICK || (ch === DQUOTE && this.isQuote(q))) break;
+      q++;
+    }
+    this.emit(T.MdStr, this.p, q);
+    return true;
+  }
+
+  private accValue(): boolean {
+    let e = this.p;
+    while (e < this.n && !isNl(this.text.charCodeAt(e))) e++;
+    const kind = this.state === S.acc_title ? T.AccTitleValue : T.AccDescrValue;
+    this.pop();
+    this.emit(kind, this.p, e);
+    return true;
+  }
+
+  private accDescrMultiline(c: number): boolean {
+    if (c === RBRACE) {
+      this.pop();
+      this.p++;
+    } else this.emit(T.AccDescrMultilineValue, this.p, this.find('}', this.p));
+    return true;
+  }
+
+  private dir(c: number): boolean {
+    const p = this.p;
+    let e: number;
+    if (c === DQUOTE && this.isQuote(p)) {
+      this.quote();
+    } else if ((e = this.noDirEnd(p)) >= 0) {
+      this.pop();
+      this.emit(T.NoDir, p, e);
+    } else if (
+      (e = this.at(RE_DIR, p)) >= 0 ||
+      (e = this.at(RE_DIR_SYM, p)) >= 0 ||
+      (e = this.at(RE_DIR_V, p)) >= 0
+    ) {
+      this.pop();
+      this.emit(T.Dir, p, e);
+    } else {
+      return this.invisLink() || this.opener(c);
+    }
+    return true;
+  }
+
+  private textState(c: number): boolean {
+    const p = this.p;
+    const d = this.text.charCodeAt(p + 1);
+    switch (c) {
+      case LPAREN:
+      case LBRACKET:
+      case LBRACE:
+        return this.opener(c);
+      case RBRACKET:
+        this.pop();
+        if (d === RPAREN) return this.token(T.StadiumEnd, 2);
+        if (d === RBRACKET) return this.token(T.SubroutineEnd, 2);
+        return this.token(T.SQE, 1);
+      case RPAREN:
+        this.pop();
+        if (d === RBRACKET) return this.token(T.CylinderEnd, 2);
+        if (d === RPAREN && this.text.charCodeAt(p + 2) === RPAREN)
+          return this.token(T.DoubleCircleEnd, 3);
+        return this.token(T.PE, 1);
+      case PIPE:
+        this.pop();
+        return this.token(T.Pipe, 1);
+      case RBRACE:
+        this.pop();
+        return this.token(T.DiamondStop, 1);
+    }
+    if (c === DQUOTE && this.isQuote(p)) {
+      this.quote();
+      return true;
+    }
+    if ((c === TILDE || isSpace(c)) && this.invisLink()) return true;
+    let q = p + 1;
+    while (q < this.n) {
+      const ch = this.text.charCodeAt(q);
+      if (hasClass(CHARS, ch, TEXT_STOP) || (ch === DQUOTE && this.isQuote(q))) break;
+      q++;
+    }
+    this.emit(T.Text, p, q);
+    return true;
+  }
+
+  private ellipseText(c: number): boolean {
+    const p = this.p;
+    const d = this.text.charCodeAt(p + 1);
+    if (c === DQUOTE && this.isQuote(p)) {
+      this.quote();
+      return true;
+    }
+    if ((c === TILDE || isSpace(c)) && this.invisLink()) return true;
+    if ((c === DASH || c === SLASH || c === RPAREN) && d === RPAREN) {
+      this.pop();
+      return this.token(T.EllipseEnd, 2);
+    }
+    if (c === LPAREN || c === LBRACKET || c === LBRACE) return this.opener(c);
+    if (c === RPAREN || c === RBRACKET || c === RBRACE) return false;
+    let q = p + 1;
+    while (q < this.n) {
+      const ch = this.text.charCodeAt(q);
+      if (hasClass(CHARS, ch, ELLIPSE_STOP) || (ch === DQUOTE && this.isQuote(q))) break;
+      if ((ch === DASH || ch === SLASH) && this.text.charCodeAt(q + 1) === RPAREN) break;
+      if ((ch === TILDE || isSpace(ch)) && this.invisAhead(q) && this.at(RE_INVIS_LINK, q) >= 0)
+        break;
+      // As in edgeText: `\s*~~~` fails alike from every blank of the run.
+      if (isSpace(ch)) q = this.blankRunEnd(q);
+      q++;
+    }
+    this.emit(T.Text, p, q);
+    return true;
+  }
+
+  private trapText(c: number): boolean {
+    const p = this.p;
+    const d = this.text.charCodeAt(p + 1);
+    if (c === DQUOTE && this.isQuote(p)) {
+      this.quote();
+      return true;
+    }
+    if ((c === TILDE || isSpace(c)) && this.invisLink()) return true;
+    const end = d === RBRACKET;
+    switch (c) {
+      case LPAREN:
+        if (!end) return this.opener(c);
+        this.pop();
+        return this.token(T.TrapEnd, 2);
+      case LBRACKET:
+      case LBRACE:
+        return this.opener(c);
+      case BACKSLASH:
+        if (!end) return this.token(T.Text, 1);
+        this.pop();
+        return this.token(T.TrapEnd, 2);
+      case SLASH:
+        if (!end) return this.token(T.Text, 1);
+        this.pop();
+        return this.token(T.InvTrapEnd, 2);
+      case RBRACKET:
+      case RPAREN:
+        if (!end) return false;
+        this.pop();
+        return this.token(T.TrapEnd, 2);
+      case RBRACE:
+        return false;
+    }
+    if ((c === QUESTION || c === EQUALS) && end) {
+      this.pop();
+      return this.token(T.TrapEnd, 2);
+    }
+    let q = p + 1;
+    while (q < this.n && !hasClass(CHARS, this.text.charCodeAt(q), TRAP_STOP)) q++;
+    this.emit(T.Text, p, q);
+    return true;
+  }
+
+  /** Edge text of a link opened with `a` (`-`, `=` or `.`); `b` also closes a dotted one. */
+  private edgeText(c: number, linkRe: RegExp, a: number, b: number): boolean {
+    const p = this.p;
+    if (c === DQUOTE && this.isQuote(p)) {
+      this.quote();
+      return true;
+    }
+    const d = this.linkChar(p);
     if (d === a || d === b) {
-      const e = at(linkRe, p);
+      const e = this.at(linkRe, p);
       if (e >= 0) {
-        pop();
-        emit(T.Link, p, e);
-        return true;
+        this.pop();
+        return this.linkToken(p, e);
       }
     }
-    if (c === a && (a !== 45 || text.charCodeAt(p + 1) === DASH)) return false;
+    if (c === a && (a !== DASH || this.text.charCodeAt(p + 1) === DASH)) return false;
     let q = p + 1;
-    while (q < lim) {
-      const ch = text.charCodeAt(q);
-      if (ch === DQUOTE && isQuote(q)) break;
+    while (q < this.n) {
+      const ch = this.text.charCodeAt(q);
+      if (ch === DQUOTE && this.isQuote(q)) break;
       if (ch === a) {
-        if (a !== 45 || text.charCodeAt(q + 1) === DASH) break;
+        if (a !== DASH || this.text.charCodeAt(q + 1) === DASH) break;
       } else if (ch === LOWER_X || ch === LOWER_O || ch === LT || ch === b || isSpace(ch)) {
-        const dd = linkChar(q);
-        if ((dd === a || dd === b) && at(linkRe, q) >= 0) break;
+        const dd = this.linkChar(q);
+        if ((dd === a || dd === b) && this.at(linkRe, q) >= 0) break;
+        // The link pattern opens with `\s*`: from any later blank of this run it reaches the
+        // same character and fails the same way, so the run is skipped (linear, R-PARSE-7).
+        if (isSpace(ch)) q = this.blankRunEnd(q);
       }
       q++;
     }
-    emit(T.EdgeText, p, q);
+    this.emit(T.EdgeText, p, q);
     return true;
-  };
-
-  const step = (c: number): boolean => {
-    switch (state) {
-      case S.INITIAL:
-        return initial(c);
-
-      case S.string:
-        if (c === 34 && isQuote(p)) {
-          if (text.charCodeAt(p + 1) === BACKTICK) {
-            push(S.md_string);
-            p += 2;
-          } else {
-            pop();
-            p++;
-          }
-        } else emit(T.Str, p, nextQuote(p));
-        return true;
-
-      case S.md_string:
-        if (c === 96) {
-          if (isQuote(p + 1)) {
-            pop();
-            p += 2;
-            return true;
-          }
-          return false;
-        }
-        if (c === 34 && isQuote(p)) {
-          quote();
-          return true;
-        }
-        {
-          let q = p + 1;
-          while (q < lim) {
-            const ch = text.charCodeAt(q);
-            if (ch === BACKTICK || (ch === DQUOTE && isQuote(q))) break;
-            q++;
-          }
-          emit(T.MdStr, p, q);
-        }
-        return true;
-
-      case S.acc_title:
-      case S.acc_descr: {
-        let e = p;
-        while (e < lim && !isNl(text.charCodeAt(e))) e++;
-        const kind = state === S.acc_title ? T.AccTitleValue : T.AccDescrValue;
-        pop();
-        emit(kind, p, e);
-        return true;
-      }
-
-      case S.acc_descr_multiline:
-        if (c === 125) {
-          pop();
-          p++;
-        } else emit(T.AccDescrMultilineValue, p, upTo('}', p));
-        return true;
-
-      case S.dir: {
-        let e: number;
-        if (c === 34 && isQuote(p)) {
-          quote();
-        } else if ((e = noDirEnd(p)) >= 0) {
-          pop();
-          emit(T.NoDir, p, e);
-        } else if (
-          (e = at(RE_DIR, p)) >= 0 ||
-          (e = at(RE_DIR_SYM, p)) >= 0 ||
-          (e = at(RE_DIR_V, p)) >= 0
-        ) {
-          pop();
-          emit(T.Dir, p, e);
-        } else {
-          return invisLink() || opener(c);
-        }
-        return true;
-      }
-
-      case S.text: {
-        const d = text.charCodeAt(p + 1);
-        switch (c) {
-          case 40:
-          case 91:
-          case 123:
-            opener(c);
-            return true;
-          case 93:
-            pop();
-            if (d === RPAREN) emit(T.StadiumEnd, p, p + 2);
-            else if (d === RBRACKET) emit(T.SubroutineEnd, p, p + 2);
-            else emit(T.SQE, p, p + 1);
-            return true;
-          case 41:
-            pop();
-            if (d === RBRACKET) emit(T.CylinderEnd, p, p + 2);
-            else if (d === RPAREN && text.charCodeAt(p + 2) === RPAREN)
-              emit(T.DoubleCircleEnd, p, p + 3);
-            else emit(T.PE, p, p + 1);
-            return true;
-          case 124:
-            pop();
-            emit(T.Pipe, p, p + 1);
-            return true;
-          case 125:
-            pop();
-            emit(T.DiamondStop, p, p + 1);
-            return true;
-        }
-        if (c === 34 && isQuote(p)) {
-          quote();
-          return true;
-        }
-        if ((c === 126 || isSpace(c)) && invisLink()) return true;
-        let q = p + 1;
-        while (q < lim) {
-          const ch = text.charCodeAt(q);
-          if (hasClass(CHARS, ch, TEXT_STOP) || (ch === DQUOTE && isQuote(q))) break;
-          q++;
-        }
-        emit(T.Text, p, q);
-        return true;
-      }
-
-      case S.ellipseText: {
-        const d = text.charCodeAt(p + 1);
-        if (c === 34 && isQuote(p)) {
-          quote();
-        } else if ((c === 126 || isSpace(c)) && invisLink()) {
-          return true;
-        } else if ((c === 45 || c === 47 || c === 41) && d === RPAREN) {
-          pop();
-          emit(T.EllipseEnd, p, p + 2);
-        } else if (c === 40 || c === 91 || c === 123) {
-          opener(c);
-        } else if (c === 41 || c === 93 || c === 125) {
-          return false;
-        } else {
-          let q = p + 1;
-          while (q < lim) {
-            const ch = text.charCodeAt(q);
-            if (hasClass(CHARS, ch, ELLIPSE_STOP) || (ch === DQUOTE && isQuote(q))) break;
-            if ((ch === DASH || ch === SLASH) && text.charCodeAt(q + 1) === RPAREN) break;
-            if ((ch === TILDE || isSpace(ch)) && invisAhead(q) && at(RE_INVIS_LINK, q) >= 0) break;
-            q++;
-          }
-          emit(T.Text, p, q);
-        }
-        return true;
-      }
-
-      case S.trapText: {
-        const d = text.charCodeAt(p + 1);
-        if (c === 34 && isQuote(p)) {
-          quote();
-          return true;
-        }
-        if ((c === 126 || isSpace(c)) && invisLink()) return true;
-        switch (c) {
-          case 40:
-            if (d === RBRACKET) {
-              pop();
-              emit(T.TrapEnd, p, p + 2);
-            } else opener(c);
-            return true;
-          case 91:
-          case 123:
-            opener(c);
-            return true;
-          case 92:
-            if (d === RBRACKET) {
-              pop();
-              emit(T.TrapEnd, p, p + 2);
-            } else emit(T.Text, p, p + 1);
-            return true;
-          case 47:
-            if (d === RBRACKET) {
-              pop();
-              emit(T.InvTrapEnd, p, p + 2);
-            } else emit(T.Text, p, p + 1);
-            return true;
-          case 93:
-          case 41:
-            if (d === RBRACKET) {
-              pop();
-              emit(T.TrapEnd, p, p + 2);
-              return true;
-            }
-            return false;
-          case 125:
-            return false;
-        }
-        if ((c === 63 || c === 61) && d === RBRACKET) {
-          pop();
-          emit(T.TrapEnd, p, p + 2);
-          return true;
-        }
-        let q = p + 1;
-        while (q < lim) {
-          const ch = text.charCodeAt(q);
-          if (hasClass(CHARS, ch, TRAP_STOP)) break;
-          q++;
-        }
-        emit(T.Text, p, q);
-        return true;
-      }
-
-      case S.edgeText:
-        return edgeText(c, RE_LINK, 45, -1);
-      case S.thickEdgeText:
-        return edgeText(c, RE_THICK_LINK, 61, -1);
-      case S.dottedEdgeText:
-        return edgeText(c, RE_DOTTED_LINK, 46, 45);
-
-      case S.click:
-        if (c === 34 && isQuote(p)) {
-          quote();
-        } else if (isSpace(c)) {
-          pop();
-          p += c === 13 && text.charCodeAt(p + 1) === LF ? 2 : 1;
-        } else {
-          let q = p + 1;
-          while (q < lim && !isSpace(text.charCodeAt(q))) q++;
-          emit(T.Click, p, q);
-        }
-        return true;
-
-      case S.callbackname:
-        if (c === 40) {
-          const e = at(RE_EMPTY_CALL, p);
-          pop();
-          if (e >= 0) p = e;
-          else {
-            push(S.callbackargs);
-            p++;
-          }
-        } else emit(T.CallbackName, p, upTo('(', p));
-        return true;
-
-      case S.callbackargs:
-        if (c === 41) {
-          pop();
-          p++;
-        } else emit(T.CallbackArgs, p, upTo(')', p));
-        return true;
-
-      case S.shapeData:
-        if (c === 34 && isQuote(p)) {
-          push(S.shapeDataStr);
-          emit(T.ShapeData, p, p + 1);
-        } else if (c === 125) {
-          pop();
-          emit(T.ShapeDataEnd, p, p + 1);
-        } else if (c === 94) {
-          return false;
-        } else {
-          let q = p + 1;
-          while (q < lim) {
-            const ch = text.charCodeAt(q);
-            if (hasClass(CHARS, ch, SHAPE_DATA_STOP) || (ch === DQUOTE && isQuote(q))) break;
-            q++;
-          }
-          emit(T.ShapeData, p, q);
-        }
-        return true;
-
-      case S.shapeDataStr:
-        if (c === 34 && isQuote(p)) {
-          pop();
-          emit(T.ShapeData, p, p + 1);
-        } else emit(T.ShapeData, p, nextQuote(p));
-        return true;
-    }
-    return false;
-  };
-
-  // v12 trimmed leading blanks (after removing comments) before lexing.
-  if (graphKeyword) {
-    while (p < len) {
-      const h = holes[hole];
-      if (h && p >= h.start) {
-        if (h.kind !== 'drop') {
-          w.push(h.kind === 'comment' ? Kind.Comment : Kind.Directive, h.start, h.end);
-        }
-        p = Math.max(p, h.end);
-        hole++;
-        lim = holes[hole]?.start ?? n;
-      } else if (isSpace(text.charCodeAt(p))) p++;
-      else break;
-    }
   }
-  while (true) {
-    if (p >= lim) {
-      const h = holes[hole];
-      if (h && p >= h.start && p < n) {
-        // Skip a removed span; it is trivia in the stream.
-        const end = Math.max(p, h.end);
-        if (h.kind !== 'drop') {
-          w.push(h.kind === 'comment' ? Kind.Comment : Kind.Directive, h.start, end);
-        }
-        p = end;
-        hole++;
-        lim = holes[hole]?.start ?? n;
-        wsFrom = wsTo = -1;
-        continue;
-      }
-      if (p >= n) {
-        const kind = eofValueKind(state);
-        if (kind !== -1) emit(kind, len, len);
-        if (state === S.INITIAL) emit(T.Eof, len, len);
-        break;
-      }
-      lim = n;
+
+  private click(c: number): boolean {
+    if (c === DQUOTE && this.isQuote(this.p)) {
+      this.quote();
+    } else if (isSpace(c)) {
+      this.pop();
+      this.p += c === CR && this.text.charCodeAt(this.p + 1) === LF ? 2 : 1;
+    } else {
+      let q = this.p + 1;
+      while (q < this.n && !isSpace(this.text.charCodeAt(q))) q++;
+      this.emit(T.Click, this.p, q);
     }
-    const before = p;
-    if (!step(text.charCodeAt(p)) || p === before) {
-      // No rule matches: one Error token, then resume in the initial state.
-      const e = Math.min(p + 1, n);
-      w.push(Kind.Error, Math.min(p, len), Math.min(e, len));
-      p = e;
-      stack.length = 0;
-      state = S.INITIAL;
-    }
+    return true;
   }
-  return w.finish(src);
+
+  private callbackName(c: number): boolean {
+    if (c === LPAREN) {
+      const e = this.at(RE_EMPTY_CALL, this.p);
+      this.pop();
+      if (e >= 0) this.p = e;
+      else {
+        this.push(S.callbackargs);
+        this.p++;
+      }
+    } else this.emit(T.CallbackName, this.p, this.find('(', this.p));
+    return true;
+  }
+
+  private callbackArgs(c: number): boolean {
+    if (c === RPAREN) {
+      this.pop();
+      this.p++;
+    } else this.emit(T.CallbackArgs, this.p, this.find(')', this.p));
+    return true;
+  }
+
+  private shapeData(c: number): boolean {
+    if (c === DQUOTE && this.isQuote(this.p)) {
+      this.push(S.shapeDataStr);
+      return this.token(T.ShapeData, 1);
+    }
+    if (c === RBRACE) {
+      this.pop();
+      return this.token(T.ShapeDataEnd, 1);
+    }
+    if (c === CARET) return false;
+    let q = this.p + 1;
+    while (q < this.n) {
+      const ch = this.text.charCodeAt(q);
+      if (hasClass(CHARS, ch, SHAPE_DATA_STOP) || (ch === DQUOTE && this.isQuote(q))) break;
+      q++;
+    }
+    this.emit(T.ShapeData, this.p, q);
+    return true;
+  }
+
+  private shapeDataStr(c: number): boolean {
+    if (c === DQUOTE && this.isQuote(this.p)) {
+      this.pop();
+      return this.token(T.ShapeData, 1);
+    }
+    this.emit(T.ShapeData, this.p, this.nextQuote(this.p));
+    return true;
+  }
 }
