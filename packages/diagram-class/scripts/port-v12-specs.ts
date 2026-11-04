@@ -48,7 +48,7 @@ export const SKIP_LINES: Record<string, [line: string, reason: string][]> = {
 };
 
 /** v12 tests skipped upstream that v12 (the oracle) and v13 both pass: `file: [title]`. */
-export const UNSKIP: Record<string, string[]> = {
+export const RESTORED: Record<string, string[]> = {
   'classDiagram.spec.ts': ['should handle a leading newline'],
 };
 
@@ -94,7 +94,7 @@ for (const [file, name] of Object.entries(FILES)) {
     body = lines.join('\n');
     notes.push(`// skipped assertion: ${line} — ${reason}`);
   }
-  for (const title of UNSKIP[name] ?? []) {
+  for (const title of RESTORED[name] ?? []) {
     const marker = `it.skip('${title}'`;
     if (!body.includes(marker)) throw new Error(`${name}: no skipped test ${title}`);
     body = body.replace(marker, `it('${title}'`);

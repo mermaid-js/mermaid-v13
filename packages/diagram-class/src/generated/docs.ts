@@ -7,43 +7,31 @@ import { T } from '../parser/tokens.ts';
  * docs: the text the syntax reference page shows. Hover reads it.
  */
 export const classDocs: Readonly<Partial<Record<number, string>>> = {
-  [T.DirectionTB]: '`direction LR`: the direction of the layout.',
-  [T.DirectionBT]: '`direction LR`: the direction of the layout.',
-  [T.DirectionRL]: '`direction LR`: the direction of the layout.',
-  [T.DirectionLR]: '`direction LR`: the direction of the layout.',
-  [T.AccTitle]: '`accTitle: …`: the accessible title of the diagram.',
-  [T.AccDescr]: '`accDescr: …` or `accDescr { … }`: the accessible description of the diagram.',
-  [T.ClassDiagram]: 'A diagram is the header line, then statements, one per line.',
-  [T.CallbackName]:
-    '`callback Class "fn"`, `link Class "url"`, `click Class call fn()` or `click Class href "url"`, with an optional tooltip; links take an optional target.',
-  [T.Style]: '`style Class fill:#f9f`: styles one class.',
-  [T.ClassDef]:
-    '`classDef name fill:#f96`: defines a style class, given with `:::name` or `cssClass`.',
-  [T.Namespace]: '`namespace Name { … }`: groups classes and notes.',
-  [T.Class]:
-    '`class Name`, with an optional `["label"]`, then `:::style`, `<<annotation>>` or a body of members in braces.',
-  [T.CssClass]: '`cssClass "A,B" name`: gives classes a style class.',
-  [T.Callback]:
-    '`callback Class "fn"`, `link Class "url"`, `click Class call fn()` or `click Class href "url"`, with an optional tooltip; links take an optional target.',
-  [T.Link]:
-    '`callback Class "fn"`, `link Class "url"`, `click Class call fn()` or `click Class href "url"`, with an optional tooltip; links take an optional target.',
-  [T.Click]:
-    '`callback Class "fn"`, `link Class "url"`, `click Class call fn()` or `click Class href "url"`, with an optional tooltip; links take an optional target.',
-  [T.NoteFor]: '`note for Class "text"` or `note "text"`.',
-  [T.Note]: '`note for Class "text"` or `note "text"`.',
-  [T.Href]:
-    '`callback Class "fn"`, `link Class "url"`, `click Class call fn()` or `click Class href "url"`, with an optional tooltip; links take an optional target.',
-  [T.Extension]: 'Relationship ends and lines.',
-  [T.Dependency]:
-    '`A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.',
-  [T.Composition]:
-    '`A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.',
-  [T.Aggregation]:
-    '`A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.',
-  [T.Lollipop]:
-    '`A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.',
-  [T.Line]: '`A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.',
-  [T.DottedLine]:
-    '`A "1" *-- "many" B : label`: a relationship, with optional multiplicities and label.',
-  [T.StyleSeparator]: '`class A:::name`: gives the class a style class.',
+  [T.DirectionTB]: "`direction LR`: the direction of the layout.",
+  [T.DirectionBT]: "`direction LR`: the direction of the layout.",
+  [T.DirectionRL]: "`direction LR`: the direction of the layout.",
+  [T.DirectionLR]: "`direction LR`: the direction of the layout.",
+  [T.AccTitle]: "`accTitle: …`: the accessible title of the diagram.",
+  [T.AccDescr]: "`accDescr: …` or `accDescr { … }`: the accessible description of the diagram.",
+  [T.ClassDiagram]: "A diagram is the header line, then statements, one per line.",
+  [T.CallbackName]: "`callback Class \"fn\"`, `link Class \"url\"`, `click Class call fn()` or `click Class href \"url\"`, with an optional tooltip; links take an optional target.",
+  [T.Style]: "`style Class fill:#f9f`: styles one class.",
+  [T.ClassDef]: "`classDef name fill:#f96`: defines a style class, given with `:::name` or `cssClass`.",
+  [T.Namespace]: "`namespace Name { … }`: groups classes and notes.",
+  [T.Class]: "`class Name`, with an optional `[\"label\"]`, then `:::style`, `<<annotation>>` or a body of members in braces.",
+  [T.CssClass]: "`cssClass \"A,B\" name`: gives classes a style class.",
+  [T.Callback]: "`callback Class \"fn\"`, `link Class \"url\"`, `click Class call fn()` or `click Class href \"url\"`, with an optional tooltip; links take an optional target.",
+  [T.Link]: "`callback Class \"fn\"`, `link Class \"url\"`, `click Class call fn()` or `click Class href \"url\"`, with an optional tooltip; links take an optional target.",
+  [T.Click]: "`callback Class \"fn\"`, `link Class \"url\"`, `click Class call fn()` or `click Class href \"url\"`, with an optional tooltip; links take an optional target.",
+  [T.NoteFor]: "`note for Class \"text\"` or `note \"text\"`.",
+  [T.Note]: "`note for Class \"text\"` or `note \"text\"`.",
+  [T.Href]: "`callback Class \"fn\"`, `link Class \"url\"`, `click Class call fn()` or `click Class href \"url\"`, with an optional tooltip; links take an optional target.",
+  [T.Extension]: "Relationship ends and lines.",
+  [T.Dependency]: "`A \"1\" *-- \"many\" B : label`: a relationship, with optional multiplicities and label.",
+  [T.Composition]: "`A \"1\" *-- \"many\" B : label`: a relationship, with optional multiplicities and label.",
+  [T.Aggregation]: "`A \"1\" *-- \"many\" B : label`: a relationship, with optional multiplicities and label.",
+  [T.Lollipop]: "`A \"1\" *-- \"many\" B : label`: a relationship, with optional multiplicities and label.",
+  [T.Line]: "`A \"1\" *-- \"many\" B : label`: a relationship, with optional multiplicities and label.",
+  [T.DottedLine]: "`A \"1\" *-- \"many\" B : label`: a relationship, with optional multiplicities and label.",
+  [T.StyleSeparator]: "`class A:::name`: gives the class a style class.",
 };
