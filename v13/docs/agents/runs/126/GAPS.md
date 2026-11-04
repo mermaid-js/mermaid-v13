@@ -12,6 +12,9 @@ Unmet acceptance criteria and announced contracts, under the ticket that owns ea
 
 ## #152 (T0) known limits
 
+Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841c1eb64`); #152 closed by the PR. The limits below are accepted, not open work for this spec.
+
+
 - Edges routed `direct` (over MAX_DUMMIES) get no reserved room for end labels; their labels are still placed clear (spec "edge drawn without bends").
 - Grid: an edge between a group and its own member (fixture F4) can put the member end's label above the group border.
 - Room is reserved for all end labels on a side, so a fan's gap can be taller than needed. T3 may tune it.
