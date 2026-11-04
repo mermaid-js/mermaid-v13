@@ -28,6 +28,8 @@ const theme: ThemeSpec = {
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
   },
+  // v12 forest: rowEven is lighten(mainBkg, 20) in HSL.
+  rules: { rowEven: 'lighten(mainBkg, 78%)' },
   values: {
     textColor: '#000000',
     nodeBorder: '#13540c',

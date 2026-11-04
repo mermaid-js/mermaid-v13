@@ -56,6 +56,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart |
 | `crossArrowheadGap` | `--mermaid-crossArrowheadGap` | token | length | | | all | flowchart |
 | `crossArrowheadStrokeWidth` | `--mermaid-crossArrowheadStrokeWidth` | token | length | | | all | flowchart |
+| `erZeroOrMoreCircleOffset` | `--mermaid-erZeroOrMoreCircleOffset` | token | length | | | all | er |
 | `nodePaddingX` | `--mermaid-nodePaddingX` | token | padding | | | all | flowchart |
 | `nodePaddingY` | `--mermaid-nodePaddingY` | token | padding | | | all | flowchart |
 | `stadiumPaddingX` | `--mermaid-stadiumPaddingX` | token | padding | | | all | flowchart |
@@ -75,6 +76,10 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart |
 | `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
 | `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart |
+| `rowOdd` | `--mermaid-rowOdd` | derived | color | `#ffffff` | `lighten(mainBkg, 6%)` | redux-color, redux, redux-dark, redux-dark-color | er |
+| `rowEven` | `--mermaid-rowEven` | derived | color | `lighten(mainBkg, 64%)` | `darken(mainBkg, 81%)` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral | er |
+| `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
+| `erMarkerFill` | `--mermaid-erMarkerFill` | derived | color | `#ffffff` | `#ffffff` | redux-color, redux, redux-dark, redux-dark-color | er |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color | flowchart |
 
 ## Palettes
