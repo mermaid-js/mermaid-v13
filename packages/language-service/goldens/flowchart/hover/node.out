@@ -1,0 +1,35 @@
+@ 3:3  |A(Start) --> B{Is it?}
+  3:3-3:4 "A"
+  | **node** `A`
+  |
+  | Label: `Start` · Shape: `round`
+  |
+  | Edges: 1 in, 1 out
+@ 4:19  B -->|yes| C:::h|ot
+  4:18-4:21 "hot"
+  | **class** `hot`
+  |
+  | `classDef hot fill:#f96,stroke:#333`
+  |
+  | Used by 1 node
+@ 6:9  D --> |A
+  6:9-6:10 "A"
+  | **node** `A`
+  |
+  | Label: `Start` · Shape: `round`
+  |
+  | Edges: 1 in, 1 out
+@ 7:3  |B --> D
+  7:3-7:4 "B"
+  | **node** `B`
+  |
+  | Label: `Is it?` · Shape: `diamond`
+  |
+  | Edges: 1 in, 3 out
+@ 8:15  C:::hot --> |C
+  8:15-8:16 "C"
+  | **node** `C`
+  |
+  | Label: `C` · Shape: default · Class: `hot`
+  |
+  | Edges: 2 in, 1 out

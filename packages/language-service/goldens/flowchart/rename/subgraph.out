@@ -1,0 +1,16 @@
+@ 3:12  subgraph |one [One]
+  prepare: 3:12-3:15 "one"; rename to "group":
+  %% rename-to: group
+  flowchart TD
+    subgraph group [One]
+      A --> B
+    end
+    C --> group
+@ 6:12  C --> one|
+  prepare: 6:9-6:12 "one"; rename to "group":
+  %% rename-to: group
+  flowchart TD
+    subgraph group [One]
+      A --> B
+    end
+    C --> group

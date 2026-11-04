@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mermaid Monaco example</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        margin: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto 1fr;
+        height: 100vh;
+        background: #fff;
+      }
+      header {
+        grid-column: 1 / -1;
+        padding: 8px 16px;
+        border-bottom: 1px solid #ddd;
+        font-size: 14px;
+      }
+      #editor {
+        min-height: 0;
+        border-right: 1px solid #ddd;
+      }
+      #side {
+        min-height: 0;
+        overflow: auto;
+        padding: 16px;
+      }
+      #status {
+        color: #b00020;
+        font-size: 13px;
+        white-space: pre-wrap;
+      }
+      #preview [data-ast] {
+        cursor: pointer;
+      }
+      #preview .ast-active {
+        outline: 2px solid #e8a33d;
+        outline-offset: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      Mermaid language service in Monaco: move the cursor to highlight the preview, click the
+      preview to move the cursor.
+    </header>
+    <div id="editor"></div>
+    <div id="side">
+      <div id="status"></div>
+      <div id="preview"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,1902 @@
+---
+title: Language service budget, 50k characters
+---
+flowchart TD
+  %% R-LANG-4 bench fixture: update + all queries <= 10 ms
+  classDef hot fill:#f96,stroke:#333
+  classDef cold fill:#9cf,stroke:#036
+  classDef warn fill:#ff9,color:#000
+  subgraph group1 [Group 1: beta]
+    direction LR
+    n0["alpha alpha 0"]
+    n1("beta measure 1")
+    n2{"gamma parse 2"}
+    n3(["delta beta 3"])
+    n4[("parse queue 4")]
+    n5(("render render 5"))
+    n0 -->|alpha| n1
+    n1 --- n2
+    n2 -.-> n3
+    n3 ==>|delta| n4
+    n4 --o n5
+    n0 & n1 --> n5
+  end
+  %% group 1 styles
+  class n0,n2 cold
+  style n3 fill:#eee,stroke:#999,stroke-width:2px
+  click n4 "https://example.com/1" "Open 1"
+  n5@{ shape: rounded, label: "Shape 1" }
+  n1:::hot --> n4
+  subgraph group2 [Group 2: gamma]
+    direction LR
+    n6>"layout gamma 6"]
+    n7{{"measure cache 7"}}
+    n8["queue layout 8"]
+    n9("cache delta 9")
+    n10{"alpha alpha 10"}
+    n11(["beta measure 11"])
+    n6 <-->|layout| n7
+    n7 --> n8
+    n8 --- n9
+    n9 -.->|cache| n10
+    n10 ==> n11
+    n6 & n7 --> n11
+  end
+  group1 --> group2
+  n5 e2@==> n6
+  e2@{ animate: true }
+  %% group 2 styles
+  class n6,n8 warn
+  style n9 fill:#eee,stroke:#999,stroke-width:2px
+  click n10 "https://example.com/2" "Open 2"
+  n11@{ shape: rounded, label: "Shape 2" }
+  n7:::hot --> n10
+  subgraph group3 [Group 3: delta]
+    direction LR
+    n12[("gamma parse 12")]
+    n13(("delta beta 13"))
+    n14>"parse queue 14"]
+    n15{{"render render 15"}}
+    n16["layout gamma 16"]
+    n17("measure cache 17")
+    n12 --x|gamma| n13
+    n13 <--> n14
+    n14 --> n15
+    n15 ---|render| n16
+    n16 -.-> n17
+    n12 & n13 --> n17
+  end
+  group2 --> group3
+  n11 e3@==> n12
+  e3@{ animate: true }
+  %% group 3 styles
+  class n12,n14 hot
+  style n15 fill:#eee,stroke:#999,stroke-width:2px
+  click n16 "https://example.com/3" "Open 3"
+  n17@{ shape: rounded, label: "Shape 3" }
+  n13:::hot --> n16
+  subgraph group4 [Group 4: parse]
+    direction LR
+    n18{"queue layout 18"}
+    n19(["cache delta 19"])
+    n20[("alpha alpha 20")]
+    n21(("beta measure 21"))
+    n22>"gamma parse 22"]
+    n23{{"delta beta 23"}}
+    n18 --o|queue| n19
+    n19 --x n20
+    n20 <--> n21
+    n21 -->|beta| n22
+    n22 --- n23
+    n18 & n19 --> n23
+  end
+  group3 --> group4
+  n17 e4@==> n18
+  e4@{ animate: true }
+  %% group 4 styles
+  class n18,n20 cold
+  style n21 fill:#eee,stroke:#999,stroke-width:2px
+  click n22 "https://example.com/4" "Open 4"
+  n23@{ shape: rounded, label: "Shape 4" }
+  n19:::hot --> n22
+  subgraph group5 [Group 5: render]
+    direction LR
+    n24["parse queue 24"]
+    n25("render render 25")
+    n26{"layout gamma 26"}
+    n27(["measure cache 27"])
+    n28[("queue layout 28")]
+    n29(("cache delta 29"))
+    n24 ==>|parse| n25
+    n25 --o n26
+    n26 --x n27
+    n27 <-->|measure| n28
+    n28 --> n29
+    n24 & n25 --> n29
+  end
+  group4 --> group5
+  n23 e5@==> n24
+  e5@{ animate: true }
+  %% group 5 styles
+  class n24,n26 warn
+  style n27 fill:#eee,stroke:#999,stroke-width:2px
+  click n28 "https://example.com/5" "Open 5"
+  n29@{ shape: rounded, label: "Shape 5" }
+  n25:::hot --> n28
+  subgraph group6 [Group 6: layout]
+    direction LR
+    n30>"alpha alpha 30"]
+    n31{{"beta measure 31"}}
+    n32["gamma parse 32"]
+    n33("delta beta 33")
+    n34{"parse queue 34"}
+    n35(["render render 35"])
+    n30 -.->|alpha| n31
+    n31 ==> n32
+    n32 --o n33
+    n33 --x|delta| n34
+    n34 <--> n35
+    n30 & n31 --> n35
+  end
+  group5 --> group6
+  n29 e6@==> n30
+  e6@{ animate: true }
+  %% group 6 styles
+  class n30,n32 hot
+  style n33 fill:#eee,stroke:#999,stroke-width:2px
+  click n34 "https://example.com/6" "Open 6"
+  n35@{ shape: rounded, label: "Shape 6" }
+  n31:::hot --> n34
+  subgraph group7 [Group 7: measure]
+    direction LR
+    n36[("layout gamma 36")]
+    n37(("measure cache 37"))
+    n38>"queue layout 38"]
+    n39{{"cache delta 39"}}
+    n40["alpha alpha 40"]
+    n41("beta measure 41")
+    n36 ---|layout| n37
+    n37 -.-> n38
+    n38 ==> n39
+    n39 --o|cache| n40
+    n40 --x n41
+    n36 & n37 --> n41
+  end
+  group6 --> group7
+  n35 e7@==> n36
+  e7@{ animate: true }
+  %% group 7 styles
+  class n36,n38 cold
+  style n39 fill:#eee,stroke:#999,stroke-width:2px
+  click n40 "https://example.com/7" "Open 7"
+  n41@{ shape: rounded, label: "Shape 7" }
+  n37:::hot --> n40
+  subgraph group8 [Group 8: queue]
+    direction LR
+    n42{"gamma parse 42"}
+    n43(["delta beta 43"])
+    n44[("parse queue 44")]
+    n45(("render render 45"))
+    n46>"layout gamma 46"]
+    n47{{"measure cache 47"}}
+    n42 -->|gamma| n43
+    n43 --- n44
+    n44 -.-> n45
+    n45 ==>|render| n46
+    n46 --o n47
+    n42 & n43 --> n47
+  end
+  group7 --> group8
+  n41 e8@==> n42
+  e8@{ animate: true }
+  %% group 8 styles
+  class n42,n44 warn
+  style n45 fill:#eee,stroke:#999,stroke-width:2px
+  click n46 "https://example.com/8" "Open 8"
+  n47@{ shape: rounded, label: "Shape 8" }
+  n43:::hot --> n46
+  subgraph group9 [Group 9: cache]
+    direction LR
+    n48["queue layout 48"]
+    n49("cache delta 49")
+    n50{"alpha alpha 50"}
+    n51(["beta measure 51"])
+    n52[("gamma parse 52")]
+    n53(("delta beta 53"))
+    n48 <-->|queue| n49
+    n49 --> n50
+    n50 --- n51
+    n51 -.->|beta| n52
+    n52 ==> n53
+    n48 & n49 --> n53
+  end
+  group8 --> group9
+  n47 e9@==> n48
+  e9@{ animate: true }
+  %% group 9 styles
+  class n48,n50 hot
+  style n51 fill:#eee,stroke:#999,stroke-width:2px
+  click n52 "https://example.com/9" "Open 9"
+  n53@{ shape: rounded, label: "Shape 9" }
+  n49:::hot --> n52
+  subgraph group10 [Group 10: alpha]
+    direction LR
+    n54>"parse queue 54"]
+    n55{{"render render 55"}}
+    n56["layout gamma 56"]
+    n57("measure cache 57")
+    n58{"queue layout 58"}
+    n59(["cache delta 59"])
+    n54 --x|parse| n55
+    n55 <--> n56
+    n56 --> n57
+    n57 ---|measure| n58
+    n58 -.-> n59
+    n54 & n55 --> n59
+  end
+  group9 --> group10
+  n53 e10@==> n54
+  e10@{ animate: true }
+  %% group 10 styles
+  class n54,n56 cold
+  style n57 fill:#eee,stroke:#999,stroke-width:2px
+  click n58 "https://example.com/10" "Open 10"
+  n59@{ shape: rounded, label: "Shape 10" }
+  n55:::hot --> n58
+  subgraph group11 [Group 11: beta]
+    direction LR
+    n60[("alpha alpha 60")]
+    n61(("beta measure 61"))
+    n62>"gamma parse 62"]
+    n63{{"delta beta 63"}}
+    n64["parse queue 64"]
+    n65("render render 65")
+    n60 --o|alpha| n61
+    n61 --x n62
+    n62 <--> n63
+    n63 -->|delta| n64
+    n64 --- n65
+    n60 & n61 --> n65
+  end
+  group10 --> group11
+  n59 e11@==> n60
+  e11@{ animate: true }
+  %% group 11 styles
+  class n60,n62 warn
+  style n63 fill:#eee,stroke:#999,stroke-width:2px
+  click n64 "https://example.com/11" "Open 11"
+  n65@{ shape: rounded, label: "Shape 11" }
+  n61:::hot --> n64
+  subgraph group12 [Group 12: gamma]
+    direction LR
+    n66{"layout gamma 66"}
+    n67(["measure cache 67"])
+    n68[("queue layout 68")]
+    n69(("cache delta 69"))
+    n70>"alpha alpha 70"]
+    n71{{"beta measure 71"}}
+    n66 ==>|layout| n67
+    n67 --o n68
+    n68 --x n69
+    n69 <-->|cache| n70
+    n70 --> n71
+    n66 & n67 --> n71
+  end
+  group11 --> group12
+  n65 e12@==> n66
+  e12@{ animate: true }
+  %% group 12 styles
+  class n66,n68 hot
+  style n69 fill:#eee,stroke:#999,stroke-width:2px
+  click n70 "https://example.com/12" "Open 12"
+  n71@{ shape: rounded, label: "Shape 12" }
+  n67:::hot --> n70
+  subgraph group13 [Group 13: delta]
+    direction LR
+    n72["gamma parse 72"]
+    n73("delta beta 73")
+    n74{"parse queue 74"}
+    n75(["render render 75"])
+    n76[("layout gamma 76")]
+    n77(("measure cache 77"))
+    n72 -.->|gamma| n73
+    n73 ==> n74
+    n74 --o n75
+    n75 --x|render| n76
+    n76 <--> n77
+    n72 & n73 --> n77
+  end
+  group12 --> group13
+  n71 e13@==> n72
+  e13@{ animate: true }
+  %% group 13 styles
+  class n72,n74 cold
+  style n75 fill:#eee,stroke:#999,stroke-width:2px
+  click n76 "https://example.com/13" "Open 13"
+  n77@{ shape: rounded, label: "Shape 13" }
+  n73:::hot --> n76
+  subgraph group14 [Group 14: parse]
+    direction LR
+    n78>"queue layout 78"]
+    n79{{"cache delta 79"}}
+    n80["alpha alpha 80"]
+    n81("beta measure 81")
+    n82{"gamma parse 82"}
+    n83(["delta beta 83"])
+    n78 ---|queue| n79
+    n79 -.-> n80
+    n80 ==> n81
+    n81 --o|beta| n82
+    n82 --x n83
+    n78 & n79 --> n83
+  end
+  group13 --> group14
+  n77 e14@==> n78
+  e14@{ animate: true }
+  %% group 14 styles
+  class n78,n80 warn
+  style n81 fill:#eee,stroke:#999,stroke-width:2px
+  click n82 "https://example.com/14" "Open 14"
+  n83@{ shape: rounded, label: "Shape 14" }
+  n79:::hot --> n82
+  subgraph group15 [Group 15: render]
+    direction LR
+    n84[("parse queue 84")]
+    n85(("render render 85"))
+    n86>"layout gamma 86"]
+    n87{{"measure cache 87"}}
+    n88["queue layout 88"]
+    n89("cache delta 89")
+    n84 -->|parse| n85
+    n85 --- n86
+    n86 -.-> n87
+    n87 ==>|measure| n88
+    n88 --o n89
+    n84 & n85 --> n89
+  end
+  group14 --> group15
+  n83 e15@==> n84
+  e15@{ animate: true }
+  %% group 15 styles
+  class n84,n86 hot
+  style n87 fill:#eee,stroke:#999,stroke-width:2px
+  click n88 "https://example.com/15" "Open 15"
+  n89@{ shape: rounded, label: "Shape 15" }
+  n85:::hot --> n88
+  subgraph group16 [Group 16: layout]
+    direction LR
+    n90{"alpha alpha 90"}
+    n91(["beta measure 91"])
+    n92[("gamma parse 92")]
+    n93(("delta beta 93"))
+    n94>"parse queue 94"]
+    n95{{"render render 95"}}
+    n90 <-->|alpha| n91
+    n91 --> n92
+    n92 --- n93
+    n93 -.->|delta| n94
+    n94 ==> n95
+    n90 & n91 --> n95
+  end
+  group15 --> group16
+  n89 e16@==> n90
+  e16@{ animate: true }
+  %% group 16 styles
+  class n90,n92 cold
+  style n93 fill:#eee,stroke:#999,stroke-width:2px
+  click n94 "https://example.com/16" "Open 16"
+  n95@{ shape: rounded, label: "Shape 16" }
+  n91:::hot --> n94
+  subgraph group17 [Group 17: measure]
+    direction LR
+    n96["layout gamma 96"]
+    n97("measure cache 97")
+    n98{"queue layout 98"}
+    n99(["cache delta 99"])
+    n100[("alpha alpha 100")]
+    n101(("beta measure 101"))
+    n96 --x|layout| n97
+    n97 <--> n98
+    n98 --> n99
+    n99 ---|cache| n100
+    n100 -.-> n101
+    n96 & n97 --> n101
+  end
+  group16 --> group17
+  n95 e17@==> n96
+  e17@{ animate: true }
+  %% group 17 styles
+  class n96,n98 warn
+  style n99 fill:#eee,stroke:#999,stroke-width:2px
+  click n100 "https://example.com/17" "Open 17"
+  n101@{ shape: rounded, label: "Shape 17" }
+  n97:::hot --> n100
+  subgraph group18 [Group 18: queue]
+    direction LR
+    n102>"gamma parse 102"]
+    n103{{"delta beta 103"}}
+    n104["parse queue 104"]
+    n105("render render 105")
+    n106{"layout gamma 106"}
+    n107(["measure cache 107"])
+    n102 --o|gamma| n103
+    n103 --x n104
+    n104 <--> n105
+    n105 -->|render| n106
+    n106 --- n107
+    n102 & n103 --> n107
+  end
+  group17 --> group18
+  n101 e18@==> n102
+  e18@{ animate: true }
+  %% group 18 styles
+  class n102,n104 hot
+  style n105 fill:#eee,stroke:#999,stroke-width:2px
+  click n106 "https://example.com/18" "Open 18"
+  n107@{ shape: rounded, label: "Shape 18" }
+  n103:::hot --> n106
+  subgraph group19 [Group 19: cache]
+    direction LR
+    n108[("queue layout 108")]
+    n109(("cache delta 109"))
+    n110>"alpha alpha 110"]
+    n111{{"beta measure 111"}}
+    n112["gamma parse 112"]
+    n113("delta beta 113")
+    n108 ==>|queue| n109
+    n109 --o n110
+    n110 --x n111
+    n111 <-->|beta| n112
+    n112 --> n113
+    n108 & n109 --> n113
+  end
+  group18 --> group19
+  n107 e19@==> n108
+  e19@{ animate: true }
+  %% group 19 styles
+  class n108,n110 cold
+  style n111 fill:#eee,stroke:#999,stroke-width:2px
+  click n112 "https://example.com/19" "Open 19"
+  n113@{ shape: rounded, label: "Shape 19" }
+  n109:::hot --> n112
+  subgraph group20 [Group 20: alpha]
+    direction LR
+    n114{"parse queue 114"}
+    n115(["render render 115"])
+    n116[("layout gamma 116")]
+    n117(("measure cache 117"))
+    n118>"queue layout 118"]
+    n119{{"cache delta 119"}}
+    n114 -.->|parse| n115
+    n115 ==> n116
+    n116 --o n117
+    n117 --x|measure| n118
+    n118 <--> n119
+    n114 & n115 --> n119
+  end
+  group19 --> group20
+  n113 e20@==> n114
+  e20@{ animate: true }
+  %% group 20 styles
+  class n114,n116 warn
+  style n117 fill:#eee,stroke:#999,stroke-width:2px
+  click n118 "https://example.com/20" "Open 20"
+  n119@{ shape: rounded, label: "Shape 20" }
+  n115:::hot --> n118
+  subgraph group21 [Group 21: beta]
+    direction LR
+    n120["alpha alpha 120"]
+    n121("beta measure 121")
+    n122{"gamma parse 122"}
+    n123(["delta beta 123"])
+    n124[("parse queue 124")]
+    n125(("render render 125"))
+    n120 ---|alpha| n121
+    n121 -.-> n122
+    n122 ==> n123
+    n123 --o|delta| n124
+    n124 --x n125
+    n120 & n121 --> n125
+  end
+  group20 --> group21
+  n119 e21@==> n120
+  e21@{ animate: true }
+  %% group 21 styles
+  class n120,n122 hot
+  style n123 fill:#eee,stroke:#999,stroke-width:2px
+  click n124 "https://example.com/21" "Open 21"
+  n125@{ shape: rounded, label: "Shape 21" }
+  n121:::hot --> n124
+  subgraph group22 [Group 22: gamma]
+    direction LR
+    n126>"layout gamma 126"]
+    n127{{"measure cache 127"}}
+    n128["queue layout 128"]
+    n129("cache delta 129")
+    n130{"alpha alpha 130"}
+    n131(["beta measure 131"])
+    n126 -->|layout| n127
+    n127 --- n128
+    n128 -.-> n129
+    n129 ==>|cache| n130
+    n130 --o n131
+    n126 & n127 --> n131
+  end
+  group21 --> group22
+  n125 e22@==> n126
+  e22@{ animate: true }
+  %% group 22 styles
+  class n126,n128 cold
+  style n129 fill:#eee,stroke:#999,stroke-width:2px
+  click n130 "https://example.com/22" "Open 22"
+  n131@{ shape: rounded, label: "Shape 22" }
+  n127:::hot --> n130
+  subgraph group23 [Group 23: delta]
+    direction LR
+    n132[("gamma parse 132")]
+    n133(("delta beta 133"))
+    n134>"parse queue 134"]
+    n135{{"render render 135"}}
+    n136["layout gamma 136"]
+    n137("measure cache 137")
+    n132 <-->|gamma| n133
+    n133 --> n134
+    n134 --- n135
+    n135 -.->|render| n136
+    n136 ==> n137
+    n132 & n133 --> n137
+  end
+  group22 --> group23
+  n131 e23@==> n132
+  e23@{ animate: true }
+  %% group 23 styles
+  class n132,n134 warn
+  style n135 fill:#eee,stroke:#999,stroke-width:2px
+  click n136 "https://example.com/23" "Open 23"
+  n137@{ shape: rounded, label: "Shape 23" }
+  n133:::hot --> n136
+  subgraph group24 [Group 24: parse]
+    direction LR
+    n138{"queue layout 138"}
+    n139(["cache delta 139"])
+    n140[("alpha alpha 140")]
+    n141(("beta measure 141"))
+    n142>"gamma parse 142"]
+    n143{{"delta beta 143"}}
+    n138 --x|queue| n139
+    n139 <--> n140
+    n140 --> n141
+    n141 ---|beta| n142
+    n142 -.-> n143
+    n138 & n139 --> n143
+  end
+  group23 --> group24
+  n137 e24@==> n138
+  e24@{ animate: true }
+  %% group 24 styles
+  class n138,n140 hot
+  style n141 fill:#eee,stroke:#999,stroke-width:2px
+  click n142 "https://example.com/24" "Open 24"
+  n143@{ shape: rounded, label: "Shape 24" }
+  n139:::hot --> n142
+  subgraph group25 [Group 25: render]
+    direction LR
+    n144["parse queue 144"]
+    n145("render render 145")
+    n146{"layout gamma 146"}
+    n147(["measure cache 147"])
+    n148[("queue layout 148")]
+    n149(("cache delta 149"))
+    n144 --o|parse| n145
+    n145 --x n146
+    n146 <--> n147
+    n147 -->|measure| n148
+    n148 --- n149
+    n144 & n145 --> n149
+  end
+  group24 --> group25
+  n143 e25@==> n144
+  e25@{ animate: true }
+  %% group 25 styles
+  class n144,n146 cold
+  style n147 fill:#eee,stroke:#999,stroke-width:2px
+  click n148 "https://example.com/25" "Open 25"
+  n149@{ shape: rounded, label: "Shape 25" }
+  n145:::hot --> n148
+  subgraph group26 [Group 26: layout]
+    direction LR
+    n150>"alpha alpha 150"]
+    n151{{"beta measure 151"}}
+    n152["gamma parse 152"]
+    n153("delta beta 153")
+    n154{"parse queue 154"}
+    n155(["render render 155"])
+    n150 ==>|alpha| n151
+    n151 --o n152
+    n152 --x n153
+    n153 <-->|delta| n154
+    n154 --> n155
+    n150 & n151 --> n155
+  end
+  group25 --> group26
+  n149 e26@==> n150
+  e26@{ animate: true }
+  %% group 26 styles
+  class n150,n152 warn
+  style n153 fill:#eee,stroke:#999,stroke-width:2px
+  click n154 "https://example.com/26" "Open 26"
+  n155@{ shape: rounded, label: "Shape 26" }
+  n151:::hot --> n154
+  subgraph group27 [Group 27: measure]
+    direction LR
+    n156[("layout gamma 156")]
+    n157(("measure cache 157"))
+    n158>"queue layout 158"]
+    n159{{"cache delta 159"}}
+    n160["alpha alpha 160"]
+    n161("beta measure 161")
+    n156 -.->|layout| n157
+    n157 ==> n158
+    n158 --o n159
+    n159 --x|cache| n160
+    n160 <--> n161
+    n156 & n157 --> n161
+  end
+  group26 --> group27
+  n155 e27@==> n156
+  e27@{ animate: true }
+  %% group 27 styles
+  class n156,n158 hot
+  style n159 fill:#eee,stroke:#999,stroke-width:2px
+  click n160 "https://example.com/27" "Open 27"
+  n161@{ shape: rounded, label: "Shape 27" }
+  n157:::hot --> n160
+  subgraph group28 [Group 28: queue]
+    direction LR
+    n162{"gamma parse 162"}
+    n163(["delta beta 163"])
+    n164[("parse queue 164")]
+    n165(("render render 165"))
+    n166>"layout gamma 166"]
+    n167{{"measure cache 167"}}
+    n162 ---|gamma| n163
+    n163 -.-> n164
+    n164 ==> n165
+    n165 --o|render| n166
+    n166 --x n167
+    n162 & n163 --> n167
+  end
+  group27 --> group28
+  n161 e28@==> n162
+  e28@{ animate: true }
+  %% group 28 styles
+  class n162,n164 cold
+  style n165 fill:#eee,stroke:#999,stroke-width:2px
+  click n166 "https://example.com/28" "Open 28"
+  n167@{ shape: rounded, label: "Shape 28" }
+  n163:::hot --> n166
+  subgraph group29 [Group 29: cache]
+    direction LR
+    n168["queue layout 168"]
+    n169("cache delta 169")
+    n170{"alpha alpha 170"}
+    n171(["beta measure 171"])
+    n172[("gamma parse 172")]
+    n173(("delta beta 173"))
+    n168 -->|queue| n169
+    n169 --- n170
+    n170 -.-> n171
+    n171 ==>|beta| n172
+    n172 --o n173
+    n168 & n169 --> n173
+  end
+  group28 --> group29
+  n167 e29@==> n168
+  e29@{ animate: true }
+  %% group 29 styles
+  class n168,n170 warn
+  style n171 fill:#eee,stroke:#999,stroke-width:2px
+  click n172 "https://example.com/29" "Open 29"
+  n173@{ shape: rounded, label: "Shape 29" }
+  n169:::hot --> n172
+  subgraph group30 [Group 30: alpha]
+    direction LR
+    n174>"parse queue 174"]
+    n175{{"render render 175"}}
+    n176["layout gamma 176"]
+    n177("measure cache 177")
+    n178{"queue layout 178"}
+    n179(["cache delta 179"])
+    n174 <-->|parse| n175
+    n175 --> n176
+    n176 --- n177
+    n177 -.->|measure| n178
+    n178 ==> n179
+    n174 & n175 --> n179
+  end
+  group29 --> group30
+  n173 e30@==> n174
+  e30@{ animate: true }
+  %% group 30 styles
+  class n174,n176 hot
+  style n177 fill:#eee,stroke:#999,stroke-width:2px
+  click n178 "https://example.com/30" "Open 30"
+  n179@{ shape: rounded, label: "Shape 30" }
+  n175:::hot --> n178
+  subgraph group31 [Group 31: beta]
+    direction LR
+    n180[("alpha alpha 180")]
+    n181(("beta measure 181"))
+    n182>"gamma parse 182"]
+    n183{{"delta beta 183"}}
+    n184["parse queue 184"]
+    n185("render render 185")
+    n180 --x|alpha| n181
+    n181 <--> n182
+    n182 --> n183
+    n183 ---|delta| n184
+    n184 -.-> n185
+    n180 & n181 --> n185
+  end
+  group30 --> group31
+  n179 e31@==> n180
+  e31@{ animate: true }
+  %% group 31 styles
+  class n180,n182 cold
+  style n183 fill:#eee,stroke:#999,stroke-width:2px
+  click n184 "https://example.com/31" "Open 31"
+  n185@{ shape: rounded, label: "Shape 31" }
+  n181:::hot --> n184
+  subgraph group32 [Group 32: gamma]
+    direction LR
+    n186{"layout gamma 186"}
+    n187(["measure cache 187"])
+    n188[("queue layout 188")]
+    n189(("cache delta 189"))
+    n190>"alpha alpha 190"]
+    n191{{"beta measure 191"}}
+    n186 --o|layout| n187
+    n187 --x n188
+    n188 <--> n189
+    n189 -->|cache| n190
+    n190 --- n191
+    n186 & n187 --> n191
+  end
+  group31 --> group32
+  n185 e32@==> n186
+  e32@{ animate: true }
+  %% group 32 styles
+  class n186,n188 warn
+  style n189 fill:#eee,stroke:#999,stroke-width:2px
+  click n190 "https://example.com/32" "Open 32"
+  n191@{ shape: rounded, label: "Shape 32" }
+  n187:::hot --> n190
+  subgraph group33 [Group 33: delta]
+    direction LR
+    n192["gamma parse 192"]
+    n193("delta beta 193")
+    n194{"parse queue 194"}
+    n195(["render render 195"])
+    n196[("layout gamma 196")]
+    n197(("measure cache 197"))
+    n192 ==>|gamma| n193
+    n193 --o n194
+    n194 --x n195
+    n195 <-->|render| n196
+    n196 --> n197
+    n192 & n193 --> n197
+  end
+  group32 --> group33
+  n191 e33@==> n192
+  e33@{ animate: true }
+  %% group 33 styles
+  class n192,n194 hot
+  style n195 fill:#eee,stroke:#999,stroke-width:2px
+  click n196 "https://example.com/33" "Open 33"
+  n197@{ shape: rounded, label: "Shape 33" }
+  n193:::hot --> n196
+  subgraph group34 [Group 34: parse]
+    direction LR
+    n198>"queue layout 198"]
+    n199{{"cache delta 199"}}
+    n200["alpha alpha 200"]
+    n201("beta measure 201")
+    n202{"gamma parse 202"}
+    n203(["delta beta 203"])
+    n198 -.->|queue| n199
+    n199 ==> n200
+    n200 --o n201
+    n201 --x|beta| n202
+    n202 <--> n203
+    n198 & n199 --> n203
+  end
+  group33 --> group34
+  n197 e34@==> n198
+  e34@{ animate: true }
+  %% group 34 styles
+  class n198,n200 cold
+  style n201 fill:#eee,stroke:#999,stroke-width:2px
+  click n202 "https://example.com/34" "Open 34"
+  n203@{ shape: rounded, label: "Shape 34" }
+  n199:::hot --> n202
+  subgraph group35 [Group 35: render]
+    direction LR
+    n204[("parse queue 204")]
+    n205(("render render 205"))
+    n206>"layout gamma 206"]
+    n207{{"measure cache 207"}}
+    n208["queue layout 208"]
+    n209("cache delta 209")
+    n204 ---|parse| n205
+    n205 -.-> n206
+    n206 ==> n207
+    n207 --o|measure| n208
+    n208 --x n209
+    n204 & n205 --> n209
+  end
+  group34 --> group35
+  n203 e35@==> n204
+  e35@{ animate: true }
+  %% group 35 styles
+  class n204,n206 warn
+  style n207 fill:#eee,stroke:#999,stroke-width:2px
+  click n208 "https://example.com/35" "Open 35"
+  n209@{ shape: rounded, label: "Shape 35" }
+  n205:::hot --> n208
+  subgraph group36 [Group 36: layout]
+    direction LR
+    n210{"alpha alpha 210"}
+    n211(["beta measure 211"])
+    n212[("gamma parse 212")]
+    n213(("delta beta 213"))
+    n214>"parse queue 214"]
+    n215{{"render render 215"}}
+    n210 -->|alpha| n211
+    n211 --- n212
+    n212 -.-> n213
+    n213 ==>|delta| n214
+    n214 --o n215
+    n210 & n211 --> n215
+  end
+  group35 --> group36
+  n209 e36@==> n210
+  e36@{ animate: true }
+  %% group 36 styles
+  class n210,n212 hot
+  style n213 fill:#eee,stroke:#999,stroke-width:2px
+  click n214 "https://example.com/36" "Open 36"
+  n215@{ shape: rounded, label: "Shape 36" }
+  n211:::hot --> n214
+  subgraph group37 [Group 37: measure]
+    direction LR
+    n216["layout gamma 216"]
+    n217("measure cache 217")
+    n218{"queue layout 218"}
+    n219(["cache delta 219"])
+    n220[("alpha alpha 220")]
+    n221(("beta measure 221"))
+    n216 <-->|layout| n217
+    n217 --> n218
+    n218 --- n219
+    n219 -.->|cache| n220
+    n220 ==> n221
+    n216 & n217 --> n221
+  end
+  group36 --> group37
+  n215 e37@==> n216
+  e37@{ animate: true }
+  %% group 37 styles
+  class n216,n218 cold
+  style n219 fill:#eee,stroke:#999,stroke-width:2px
+  click n220 "https://example.com/37" "Open 37"
+  n221@{ shape: rounded, label: "Shape 37" }
+  n217:::hot --> n220
+  subgraph group38 [Group 38: queue]
+    direction LR
+    n222>"gamma parse 222"]
+    n223{{"delta beta 223"}}
+    n224["parse queue 224"]
+    n225("render render 225")
+    n226{"layout gamma 226"}
+    n227(["measure cache 227"])
+    n222 --x|gamma| n223
+    n223 <--> n224
+    n224 --> n225
+    n225 ---|render| n226
+    n226 -.-> n227
+    n222 & n223 --> n227
+  end
+  group37 --> group38
+  n221 e38@==> n222
+  e38@{ animate: true }
+  %% group 38 styles
+  class n222,n224 warn
+  style n225 fill:#eee,stroke:#999,stroke-width:2px
+  click n226 "https://example.com/38" "Open 38"
+  n227@{ shape: rounded, label: "Shape 38" }
+  n223:::hot --> n226
+  subgraph group39 [Group 39: cache]
+    direction LR
+    n228[("queue layout 228")]
+    n229(("cache delta 229"))
+    n230>"alpha alpha 230"]
+    n231{{"beta measure 231"}}
+    n232["gamma parse 232"]
+    n233("delta beta 233")
+    n228 --o|queue| n229
+    n229 --x n230
+    n230 <--> n231
+    n231 -->|beta| n232
+    n232 --- n233
+    n228 & n229 --> n233
+  end
+  group38 --> group39
+  n227 e39@==> n228
+  e39@{ animate: true }
+  %% group 39 styles
+  class n228,n230 hot
+  style n231 fill:#eee,stroke:#999,stroke-width:2px
+  click n232 "https://example.com/39" "Open 39"
+  n233@{ shape: rounded, label: "Shape 39" }
+  n229:::hot --> n232
+  subgraph group40 [Group 40: alpha]
+    direction LR
+    n234{"parse queue 234"}
+    n235(["render render 235"])
+    n236[("layout gamma 236")]
+    n237(("measure cache 237"))
+    n238>"queue layout 238"]
+    n239{{"cache delta 239"}}
+    n234 ==>|parse| n235
+    n235 --o n236
+    n236 --x n237
+    n237 <-->|measure| n238
+    n238 --> n239
+    n234 & n235 --> n239
+  end
+  group39 --> group40
+  n233 e40@==> n234
+  e40@{ animate: true }
+  %% group 40 styles
+  class n234,n236 cold
+  style n237 fill:#eee,stroke:#999,stroke-width:2px
+  click n238 "https://example.com/40" "Open 40"
+  n239@{ shape: rounded, label: "Shape 40" }
+  n235:::hot --> n238
+  subgraph group41 [Group 41: beta]
+    direction LR
+    n240["alpha alpha 240"]
+    n241("beta measure 241")
+    n242{"gamma parse 242"}
+    n243(["delta beta 243"])
+    n244[("parse queue 244")]
+    n245(("render render 245"))
+    n240 -.->|alpha| n241
+    n241 ==> n242
+    n242 --o n243
+    n243 --x|delta| n244
+    n244 <--> n245
+    n240 & n241 --> n245
+  end
+  group40 --> group41
+  n239 e41@==> n240
+  e41@{ animate: true }
+  %% group 41 styles
+  class n240,n242 warn
+  style n243 fill:#eee,stroke:#999,stroke-width:2px
+  click n244 "https://example.com/41" "Open 41"
+  n245@{ shape: rounded, label: "Shape 41" }
+  n241:::hot --> n244
+  subgraph group42 [Group 42: gamma]
+    direction LR
+    n246>"layout gamma 246"]
+    n247{{"measure cache 247"}}
+    n248["queue layout 248"]
+    n249("cache delta 249")
+    n250{"alpha alpha 250"}
+    n251(["beta measure 251"])
+    n246 ---|layout| n247
+    n247 -.-> n248
+    n248 ==> n249
+    n249 --o|cache| n250
+    n250 --x n251
+    n246 & n247 --> n251
+  end
+  group41 --> group42
+  n245 e42@==> n246
+  e42@{ animate: true }
+  %% group 42 styles
+  class n246,n248 hot
+  style n249 fill:#eee,stroke:#999,stroke-width:2px
+  click n250 "https://example.com/42" "Open 42"
+  n251@{ shape: rounded, label: "Shape 42" }
+  n247:::hot --> n250
+  subgraph group43 [Group 43: delta]
+    direction LR
+    n252[("gamma parse 252")]
+    n253(("delta beta 253"))
+    n254>"parse queue 254"]
+    n255{{"render render 255"}}
+    n256["layout gamma 256"]
+    n257("measure cache 257")
+    n252 -->|gamma| n253
+    n253 --- n254
+    n254 -.-> n255
+    n255 ==>|render| n256
+    n256 --o n257
+    n252 & n253 --> n257
+  end
+  group42 --> group43
+  n251 e43@==> n252
+  e43@{ animate: true }
+  %% group 43 styles
+  class n252,n254 cold
+  style n255 fill:#eee,stroke:#999,stroke-width:2px
+  click n256 "https://example.com/43" "Open 43"
+  n257@{ shape: rounded, label: "Shape 43" }
+  n253:::hot --> n256
+  subgraph group44 [Group 44: parse]
+    direction LR
+    n258{"queue layout 258"}
+    n259(["cache delta 259"])
+    n260[("alpha alpha 260")]
+    n261(("beta measure 261"))
+    n262>"gamma parse 262"]
+    n263{{"delta beta 263"}}
+    n258 <-->|queue| n259
+    n259 --> n260
+    n260 --- n261
+    n261 -.->|beta| n262
+    n262 ==> n263
+    n258 & n259 --> n263
+  end
+  group43 --> group44
+  n257 e44@==> n258
+  e44@{ animate: true }
+  %% group 44 styles
+  class n258,n260 warn
+  style n261 fill:#eee,stroke:#999,stroke-width:2px
+  click n262 "https://example.com/44" "Open 44"
+  n263@{ shape: rounded, label: "Shape 44" }
+  n259:::hot --> n262
+  subgraph group45 [Group 45: render]
+    direction LR
+    n264["parse queue 264"]
+    n265("render render 265")
+    n266{"layout gamma 266"}
+    n267(["measure cache 267"])
+    n268[("queue layout 268")]
+    n269(("cache delta 269"))
+    n264 --x|parse| n265
+    n265 <--> n266
+    n266 --> n267
+    n267 ---|measure| n268
+    n268 -.-> n269
+    n264 & n265 --> n269
+  end
+  group44 --> group45
+  n263 e45@==> n264
+  e45@{ animate: true }
+  %% group 45 styles
+  class n264,n266 hot
+  style n267 fill:#eee,stroke:#999,stroke-width:2px
+  click n268 "https://example.com/45" "Open 45"
+  n269@{ shape: rounded, label: "Shape 45" }
+  n265:::hot --> n268
+  subgraph group46 [Group 46: layout]
+    direction LR
+    n270>"alpha alpha 270"]
+    n271{{"beta measure 271"}}
+    n272["gamma parse 272"]
+    n273("delta beta 273")
+    n274{"parse queue 274"}
+    n275(["render render 275"])
+    n270 --o|alpha| n271
+    n271 --x n272
+    n272 <--> n273
+    n273 -->|delta| n274
+    n274 --- n275
+    n270 & n271 --> n275
+  end
+  group45 --> group46
+  n269 e46@==> n270
+  e46@{ animate: true }
+  %% group 46 styles
+  class n270,n272 cold
+  style n273 fill:#eee,stroke:#999,stroke-width:2px
+  click n274 "https://example.com/46" "Open 46"
+  n275@{ shape: rounded, label: "Shape 46" }
+  n271:::hot --> n274
+  subgraph group47 [Group 47: measure]
+    direction LR
+    n276[("layout gamma 276")]
+    n277(("measure cache 277"))
+    n278>"queue layout 278"]
+    n279{{"cache delta 279"}}
+    n280["alpha alpha 280"]
+    n281("beta measure 281")
+    n276 ==>|layout| n277
+    n277 --o n278
+    n278 --x n279
+    n279 <-->|cache| n280
+    n280 --> n281
+    n276 & n277 --> n281
+  end
+  group46 --> group47
+  n275 e47@==> n276
+  e47@{ animate: true }
+  %% group 47 styles
+  class n276,n278 warn
+  style n279 fill:#eee,stroke:#999,stroke-width:2px
+  click n280 "https://example.com/47" "Open 47"
+  n281@{ shape: rounded, label: "Shape 47" }
+  n277:::hot --> n280
+  subgraph group48 [Group 48: queue]
+    direction LR
+    n282{"gamma parse 282"}
+    n283(["delta beta 283"])
+    n284[("parse queue 284")]
+    n285(("render render 285"))
+    n286>"layout gamma 286"]
+    n287{{"measure cache 287"}}
+    n282 -.->|gamma| n283
+    n283 ==> n284
+    n284 --o n285
+    n285 --x|render| n286
+    n286 <--> n287
+    n282 & n283 --> n287
+  end
+  group47 --> group48
+  n281 e48@==> n282
+  e48@{ animate: true }
+  %% group 48 styles
+  class n282,n284 hot
+  style n285 fill:#eee,stroke:#999,stroke-width:2px
+  click n286 "https://example.com/48" "Open 48"
+  n287@{ shape: rounded, label: "Shape 48" }
+  n283:::hot --> n286
+  subgraph group49 [Group 49: cache]
+    direction LR
+    n288["queue layout 288"]
+    n289("cache delta 289")
+    n290{"alpha alpha 290"}
+    n291(["beta measure 291"])
+    n292[("gamma parse 292")]
+    n293(("delta beta 293"))
+    n288 ---|queue| n289
+    n289 -.-> n290
+    n290 ==> n291
+    n291 --o|beta| n292
+    n292 --x n293
+    n288 & n289 --> n293
+  end
+  group48 --> group49
+  n287 e49@==> n288
+  e49@{ animate: true }
+  %% group 49 styles
+  class n288,n290 cold
+  style n291 fill:#eee,stroke:#999,stroke-width:2px
+  click n292 "https://example.com/49" "Open 49"
+  n293@{ shape: rounded, label: "Shape 49" }
+  n289:::hot --> n292
+  subgraph group50 [Group 50: alpha]
+    direction LR
+    n294>"parse queue 294"]
+    n295{{"render render 295"}}
+    n296["layout gamma 296"]
+    n297("measure cache 297")
+    n298{"queue layout 298"}
+    n299(["cache delta 299"])
+    n294 -->|parse| n295
+    n295 --- n296
+    n296 -.-> n297
+    n297 ==>|measure| n298
+    n298 --o n299
+    n294 & n295 --> n299
+  end
+  group49 --> group50
+  n293 e50@==> n294
+  e50@{ animate: true }
+  %% group 50 styles
+  class n294,n296 warn
+  style n297 fill:#eee,stroke:#999,stroke-width:2px
+  click n298 "https://example.com/50" "Open 50"
+  n299@{ shape: rounded, label: "Shape 50" }
+  n295:::hot --> n298
+  subgraph group51 [Group 51: beta]
+    direction LR
+    n300[("alpha alpha 300")]
+    n301(("beta measure 301"))
+    n302>"gamma parse 302"]
+    n303{{"delta beta 303"}}
+    n304["parse queue 304"]
+    n305("render render 305")
+    n300 <-->|alpha| n301
+    n301 --> n302
+    n302 --- n303
+    n303 -.->|delta| n304
+    n304 ==> n305
+    n300 & n301 --> n305
+  end
+  group50 --> group51
+  n299 e51@==> n300
+  e51@{ animate: true }
+  %% group 51 styles
+  class n300,n302 hot
+  style n303 fill:#eee,stroke:#999,stroke-width:2px
+  click n304 "https://example.com/51" "Open 51"
+  n305@{ shape: rounded, label: "Shape 51" }
+  n301:::hot --> n304
+  subgraph group52 [Group 52: gamma]
+    direction LR
+    n306{"layout gamma 306"}
+    n307(["measure cache 307"])
+    n308[("queue layout 308")]
+    n309(("cache delta 309"))
+    n310>"alpha alpha 310"]
+    n311{{"beta measure 311"}}
+    n306 --x|layout| n307
+    n307 <--> n308
+    n308 --> n309
+    n309 ---|cache| n310
+    n310 -.-> n311
+    n306 & n307 --> n311
+  end
+  group51 --> group52
+  n305 e52@==> n306
+  e52@{ animate: true }
+  %% group 52 styles
+  class n306,n308 cold
+  style n309 fill:#eee,stroke:#999,stroke-width:2px
+  click n310 "https://example.com/52" "Open 52"
+  n311@{ shape: rounded, label: "Shape 52" }
+  n307:::hot --> n310
+  subgraph group53 [Group 53: delta]
+    direction LR
+    n312["gamma parse 312"]
+    n313("delta beta 313")
+    n314{"parse queue 314"}
+    n315(["render render 315"])
+    n316[("layout gamma 316")]
+    n317(("measure cache 317"))
+    n312 --o|gamma| n313
+    n313 --x n314
+    n314 <--> n315
+    n315 -->|render| n316
+    n316 --- n317
+    n312 & n313 --> n317
+  end
+  group52 --> group53
+  n311 e53@==> n312
+  e53@{ animate: true }
+  %% group 53 styles
+  class n312,n314 warn
+  style n315 fill:#eee,stroke:#999,stroke-width:2px
+  click n316 "https://example.com/53" "Open 53"
+  n317@{ shape: rounded, label: "Shape 53" }
+  n313:::hot --> n316
+  subgraph group54 [Group 54: parse]
+    direction LR
+    n318>"queue layout 318"]
+    n319{{"cache delta 319"}}
+    n320["alpha alpha 320"]
+    n321("beta measure 321")
+    n322{"gamma parse 322"}
+    n323(["delta beta 323"])
+    n318 ==>|queue| n319
+    n319 --o n320
+    n320 --x n321
+    n321 <-->|beta| n322
+    n322 --> n323
+    n318 & n319 --> n323
+  end
+  group53 --> group54
+  n317 e54@==> n318
+  e54@{ animate: true }
+  %% group 54 styles
+  class n318,n320 hot
+  style n321 fill:#eee,stroke:#999,stroke-width:2px
+  click n322 "https://example.com/54" "Open 54"
+  n323@{ shape: rounded, label: "Shape 54" }
+  n319:::hot --> n322
+  subgraph group55 [Group 55: render]
+    direction LR
+    n324[("parse queue 324")]
+    n325(("render render 325"))
+    n326>"layout gamma 326"]
+    n327{{"measure cache 327"}}
+    n328["queue layout 328"]
+    n329("cache delta 329")
+    n324 -.->|parse| n325
+    n325 ==> n326
+    n326 --o n327
+    n327 --x|measure| n328
+    n328 <--> n329
+    n324 & n325 --> n329
+  end
+  group54 --> group55
+  n323 e55@==> n324
+  e55@{ animate: true }
+  %% group 55 styles
+  class n324,n326 cold
+  style n327 fill:#eee,stroke:#999,stroke-width:2px
+  click n328 "https://example.com/55" "Open 55"
+  n329@{ shape: rounded, label: "Shape 55" }
+  n325:::hot --> n328
+  subgraph group56 [Group 56: layout]
+    direction LR
+    n330{"alpha alpha 330"}
+    n331(["beta measure 331"])
+    n332[("gamma parse 332")]
+    n333(("delta beta 333"))
+    n334>"parse queue 334"]
+    n335{{"render render 335"}}
+    n330 ---|alpha| n331
+    n331 -.-> n332
+    n332 ==> n333
+    n333 --o|delta| n334
+    n334 --x n335
+    n330 & n331 --> n335
+  end
+  group55 --> group56
+  n329 e56@==> n330
+  e56@{ animate: true }
+  %% group 56 styles
+  class n330,n332 warn
+  style n333 fill:#eee,stroke:#999,stroke-width:2px
+  click n334 "https://example.com/56" "Open 56"
+  n335@{ shape: rounded, label: "Shape 56" }
+  n331:::hot --> n334
+  subgraph group57 [Group 57: measure]
+    direction LR
+    n336["layout gamma 336"]
+    n337("measure cache 337")
+    n338{"queue layout 338"}
+    n339(["cache delta 339"])
+    n340[("alpha alpha 340")]
+    n341(("beta measure 341"))
+    n336 -->|layout| n337
+    n337 --- n338
+    n338 -.-> n339
+    n339 ==>|cache| n340
+    n340 --o n341
+    n336 & n337 --> n341
+  end
+  group56 --> group57
+  n335 e57@==> n336
+  e57@{ animate: true }
+  %% group 57 styles
+  class n336,n338 hot
+  style n339 fill:#eee,stroke:#999,stroke-width:2px
+  click n340 "https://example.com/57" "Open 57"
+  n341@{ shape: rounded, label: "Shape 57" }
+  n337:::hot --> n340
+  subgraph group58 [Group 58: queue]
+    direction LR
+    n342>"gamma parse 342"]
+    n343{{"delta beta 343"}}
+    n344["parse queue 344"]
+    n345("render render 345")
+    n346{"layout gamma 346"}
+    n347(["measure cache 347"])
+    n342 <-->|gamma| n343
+    n343 --> n344
+    n344 --- n345
+    n345 -.->|render| n346
+    n346 ==> n347
+    n342 & n343 --> n347
+  end
+  group57 --> group58
+  n341 e58@==> n342
+  e58@{ animate: true }
+  %% group 58 styles
+  class n342,n344 cold
+  style n345 fill:#eee,stroke:#999,stroke-width:2px
+  click n346 "https://example.com/58" "Open 58"
+  n347@{ shape: rounded, label: "Shape 58" }
+  n343:::hot --> n346
+  subgraph group59 [Group 59: cache]
+    direction LR
+    n348[("queue layout 348")]
+    n349(("cache delta 349"))
+    n350>"alpha alpha 350"]
+    n351{{"beta measure 351"}}
+    n352["gamma parse 352"]
+    n353("delta beta 353")
+    n348 --x|queue| n349
+    n349 <--> n350
+    n350 --> n351
+    n351 ---|beta| n352
+    n352 -.-> n353
+    n348 & n349 --> n353
+  end
+  group58 --> group59
+  n347 e59@==> n348
+  e59@{ animate: true }
+  %% group 59 styles
+  class n348,n350 warn
+  style n351 fill:#eee,stroke:#999,stroke-width:2px
+  click n352 "https://example.com/59" "Open 59"
+  n353@{ shape: rounded, label: "Shape 59" }
+  n349:::hot --> n352
+  subgraph group60 [Group 60: alpha]
+    direction LR
+    n354{"parse queue 354"}
+    n355(["render render 355"])
+    n356[("layout gamma 356")]
+    n357(("measure cache 357"))
+    n358>"queue layout 358"]
+    n359{{"cache delta 359"}}
+    n354 --o|parse| n355
+    n355 --x n356
+    n356 <--> n357
+    n357 -->|measure| n358
+    n358 --- n359
+    n354 & n355 --> n359
+  end
+  group59 --> group60
+  n353 e60@==> n354
+  e60@{ animate: true }
+  %% group 60 styles
+  class n354,n356 hot
+  style n357 fill:#eee,stroke:#999,stroke-width:2px
+  click n358 "https://example.com/60" "Open 60"
+  n359@{ shape: rounded, label: "Shape 60" }
+  n355:::hot --> n358
+  subgraph group61 [Group 61: beta]
+    direction LR
+    n360["alpha alpha 360"]
+    n361("beta measure 361")
+    n362{"gamma parse 362"}
+    n363(["delta beta 363"])
+    n364[("parse queue 364")]
+    n365(("render render 365"))
+    n360 ==>|alpha| n361
+    n361 --o n362
+    n362 --x n363
+    n363 <-->|delta| n364
+    n364 --> n365
+    n360 & n361 --> n365
+  end
+  group60 --> group61
+  n359 e61@==> n360
+  e61@{ animate: true }
+  %% group 61 styles
+  class n360,n362 cold
+  style n363 fill:#eee,stroke:#999,stroke-width:2px
+  click n364 "https://example.com/61" "Open 61"
+  n365@{ shape: rounded, label: "Shape 61" }
+  n361:::hot --> n364
+  subgraph group62 [Group 62: gamma]
+    direction LR
+    n366>"layout gamma 366"]
+    n367{{"measure cache 367"}}
+    n368["queue layout 368"]
+    n369("cache delta 369")
+    n370{"alpha alpha 370"}
+    n371(["beta measure 371"])
+    n366 -.->|layout| n367
+    n367 ==> n368
+    n368 --o n369
+    n369 --x|cache| n370
+    n370 <--> n371
+    n366 & n367 --> n371
+  end
+  group61 --> group62
+  n365 e62@==> n366
+  e62@{ animate: true }
+  %% group 62 styles
+  class n366,n368 warn
+  style n369 fill:#eee,stroke:#999,stroke-width:2px
+  click n370 "https://example.com/62" "Open 62"
+  n371@{ shape: rounded, label: "Shape 62" }
+  n367:::hot --> n370
+  subgraph group63 [Group 63: delta]
+    direction LR
+    n372[("gamma parse 372")]
+    n373(("delta beta 373"))
+    n374>"parse queue 374"]
+    n375{{"render render 375"}}
+    n376["layout gamma 376"]
+    n377("measure cache 377")
+    n372 ---|gamma| n373
+    n373 -.-> n374
+    n374 ==> n375
+    n375 --o|render| n376
+    n376 --x n377
+    n372 & n373 --> n377
+  end
+  group62 --> group63
+  n371 e63@==> n372
+  e63@{ animate: true }
+  %% group 63 styles
+  class n372,n374 hot
+  style n375 fill:#eee,stroke:#999,stroke-width:2px
+  click n376 "https://example.com/63" "Open 63"
+  n377@{ shape: rounded, label: "Shape 63" }
+  n373:::hot --> n376
+  subgraph group64 [Group 64: parse]
+    direction LR
+    n378{"queue layout 378"}
+    n379(["cache delta 379"])
+    n380[("alpha alpha 380")]
+    n381(("beta measure 381"))
+    n382>"gamma parse 382"]
+    n383{{"delta beta 383"}}
+    n378 -->|queue| n379
+    n379 --- n380
+    n380 -.-> n381
+    n381 ==>|beta| n382
+    n382 --o n383
+    n378 & n379 --> n383
+  end
+  group63 --> group64
+  n377 e64@==> n378
+  e64@{ animate: true }
+  %% group 64 styles
+  class n378,n380 cold
+  style n381 fill:#eee,stroke:#999,stroke-width:2px
+  click n382 "https://example.com/64" "Open 64"
+  n383@{ shape: rounded, label: "Shape 64" }
+  n379:::hot --> n382
+  subgraph group65 [Group 65: render]
+    direction LR
+    n384["parse queue 384"]
+    n385("render render 385")
+    n386{"layout gamma 386"}
+    n387(["measure cache 387"])
+    n388[("queue layout 388")]
+    n389(("cache delta 389"))
+    n384 <-->|parse| n385
+    n385 --> n386
+    n386 --- n387
+    n387 -.->|measure| n388
+    n388 ==> n389
+    n384 & n385 --> n389
+  end
+  group64 --> group65
+  n383 e65@==> n384
+  e65@{ animate: true }
+  %% group 65 styles
+  class n384,n386 warn
+  style n387 fill:#eee,stroke:#999,stroke-width:2px
+  click n388 "https://example.com/65" "Open 65"
+  n389@{ shape: rounded, label: "Shape 65" }
+  n385:::hot --> n388
+  subgraph group66 [Group 66: layout]
+    direction LR
+    n390>"alpha alpha 390"]
+    n391{{"beta measure 391"}}
+    n392["gamma parse 392"]
+    n393("delta beta 393")
+    n394{"parse queue 394"}
+    n395(["render render 395"])
+    n390 --x|alpha| n391
+    n391 <--> n392
+    n392 --> n393
+    n393 ---|delta| n394
+    n394 -.-> n395
+    n390 & n391 --> n395
+  end
+  group65 --> group66
+  n389 e66@==> n390
+  e66@{ animate: true }
+  %% group 66 styles
+  class n390,n392 hot
+  style n393 fill:#eee,stroke:#999,stroke-width:2px
+  click n394 "https://example.com/66" "Open 66"
+  n395@{ shape: rounded, label: "Shape 66" }
+  n391:::hot --> n394
+  subgraph group67 [Group 67: measure]
+    direction LR
+    n396[("layout gamma 396")]
+    n397(("measure cache 397"))
+    n398>"queue layout 398"]
+    n399{{"cache delta 399"}}
+    n400["alpha alpha 400"]
+    n401("beta measure 401")
+    n396 --o|layout| n397
+    n397 --x n398
+    n398 <--> n399
+    n399 -->|cache| n400
+    n400 --- n401
+    n396 & n397 --> n401
+  end
+  group66 --> group67
+  n395 e67@==> n396
+  e67@{ animate: true }
+  %% group 67 styles
+  class n396,n398 cold
+  style n399 fill:#eee,stroke:#999,stroke-width:2px
+  click n400 "https://example.com/67" "Open 67"
+  n401@{ shape: rounded, label: "Shape 67" }
+  n397:::hot --> n400
+  subgraph group68 [Group 68: queue]
+    direction LR
+    n402{"gamma parse 402"}
+    n403(["delta beta 403"])
+    n404[("parse queue 404")]
+    n405(("render render 405"))
+    n406>"layout gamma 406"]
+    n407{{"measure cache 407"}}
+    n402 ==>|gamma| n403
+    n403 --o n404
+    n404 --x n405
+    n405 <-->|render| n406
+    n406 --> n407
+    n402 & n403 --> n407
+  end
+  group67 --> group68
+  n401 e68@==> n402
+  e68@{ animate: true }
+  %% group 68 styles
+  class n402,n404 warn
+  style n405 fill:#eee,stroke:#999,stroke-width:2px
+  click n406 "https://example.com/68" "Open 68"
+  n407@{ shape: rounded, label: "Shape 68" }
+  n403:::hot --> n406
+  subgraph group69 [Group 69: cache]
+    direction LR
+    n408["queue layout 408"]
+    n409("cache delta 409")
+    n410{"alpha alpha 410"}
+    n411(["beta measure 411"])
+    n412[("gamma parse 412")]
+    n413(("delta beta 413"))
+    n408 -.->|queue| n409
+    n409 ==> n410
+    n410 --o n411
+    n411 --x|beta| n412
+    n412 <--> n413
+    n408 & n409 --> n413
+  end
+  group68 --> group69
+  n407 e69@==> n408
+  e69@{ animate: true }
+  %% group 69 styles
+  class n408,n410 hot
+  style n411 fill:#eee,stroke:#999,stroke-width:2px
+  click n412 "https://example.com/69" "Open 69"
+  n413@{ shape: rounded, label: "Shape 69" }
+  n409:::hot --> n412
+  subgraph group70 [Group 70: alpha]
+    direction LR
+    n414>"parse queue 414"]
+    n415{{"render render 415"}}
+    n416["layout gamma 416"]
+    n417("measure cache 417")
+    n418{"queue layout 418"}
+    n419(["cache delta 419"])
+    n414 ---|parse| n415
+    n415 -.-> n416
+    n416 ==> n417
+    n417 --o|measure| n418
+    n418 --x n419
+    n414 & n415 --> n419
+  end
+  group69 --> group70
+  n413 e70@==> n414
+  e70@{ animate: true }
+  %% group 70 styles
+  class n414,n416 cold
+  style n417 fill:#eee,stroke:#999,stroke-width:2px
+  click n418 "https://example.com/70" "Open 70"
+  n419@{ shape: rounded, label: "Shape 70" }
+  n415:::hot --> n418
+  subgraph group71 [Group 71: beta]
+    direction LR
+    n420[("alpha alpha 420")]
+    n421(("beta measure 421"))
+    n422>"gamma parse 422"]
+    n423{{"delta beta 423"}}
+    n424["parse queue 424"]
+    n425("render render 425")
+    n420 -->|alpha| n421
+    n421 --- n422
+    n422 -.-> n423
+    n423 ==>|delta| n424
+    n424 --o n425
+    n420 & n421 --> n425
+  end
+  group70 --> group71
+  n419 e71@==> n420
+  e71@{ animate: true }
+  %% group 71 styles
+  class n420,n422 warn
+  style n423 fill:#eee,stroke:#999,stroke-width:2px
+  click n424 "https://example.com/71" "Open 71"
+  n425@{ shape: rounded, label: "Shape 71" }
+  n421:::hot --> n424
+  subgraph group72 [Group 72: gamma]
+    direction LR
+    n426{"layout gamma 426"}
+    n427(["measure cache 427"])
+    n428[("queue layout 428")]
+    n429(("cache delta 429"))
+    n430>"alpha alpha 430"]
+    n431{{"beta measure 431"}}
+    n426 <-->|layout| n427
+    n427 --> n428
+    n428 --- n429
+    n429 -.->|cache| n430
+    n430 ==> n431
+    n426 & n427 --> n431
+  end
+  group71 --> group72
+  n425 e72@==> n426
+  e72@{ animate: true }
+  %% group 72 styles
+  class n426,n428 hot
+  style n429 fill:#eee,stroke:#999,stroke-width:2px
+  click n430 "https://example.com/72" "Open 72"
+  n431@{ shape: rounded, label: "Shape 72" }
+  n427:::hot --> n430
+  subgraph group73 [Group 73: delta]
+    direction LR
+    n432["gamma parse 432"]
+    n433("delta beta 433")
+    n434{"parse queue 434"}
+    n435(["render render 435"])
+    n436[("layout gamma 436")]
+    n437(("measure cache 437"))
+    n432 --x|gamma| n433
+    n433 <--> n434
+    n434 --> n435
+    n435 ---|render| n436
+    n436 -.-> n437
+    n432 & n433 --> n437
+  end
+  group72 --> group73
+  n431 e73@==> n432
+  e73@{ animate: true }
+  %% group 73 styles
+  class n432,n434 cold
+  style n435 fill:#eee,stroke:#999,stroke-width:2px
+  click n436 "https://example.com/73" "Open 73"
+  n437@{ shape: rounded, label: "Shape 73" }
+  n433:::hot --> n436
+  subgraph group74 [Group 74: parse]
+    direction LR
+    n438>"queue layout 438"]
+    n439{{"cache delta 439"}}
+    n440["alpha alpha 440"]
+    n441("beta measure 441")
+    n442{"gamma parse 442"}
+    n443(["delta beta 443"])
+    n438 --o|queue| n439
+    n439 --x n440
+    n440 <--> n441
+    n441 -->|beta| n442
+    n442 --- n443
+    n438 & n439 --> n443
+  end
+  group73 --> group74
+  n437 e74@==> n438
+  e74@{ animate: true }
+  %% group 74 styles
+  class n438,n440 warn
+  style n441 fill:#eee,stroke:#999,stroke-width:2px
+  click n442 "https://example.com/74" "Open 74"
+  n443@{ shape: rounded, label: "Shape 74" }
+  n439:::hot --> n442
+  subgraph group75 [Group 75: render]
+    direction LR
+    n444[("parse queue 444")]
+    n445(("render render 445"))
+    n446>"layout gamma 446"]
+    n447{{"measure cache 447"}}
+    n448["queue layout 448"]
+    n449("cache delta 449")
+    n444 ==>|parse| n445
+    n445 --o n446
+    n446 --x n447
+    n447 <-->|measure| n448
+    n448 --> n449
+    n444 & n445 --> n449
+  end
+  group74 --> group75
+  n443 e75@==> n444
+  e75@{ animate: true }
+  %% group 75 styles
+  class n444,n446 hot
+  style n447 fill:#eee,stroke:#999,stroke-width:2px
+  click n448 "https://example.com/75" "Open 75"
+  n449@{ shape: rounded, label: "Shape 75" }
+  n445:::hot --> n448
+  subgraph group76 [Group 76: layout]
+    direction LR
+    n450{"alpha alpha 450"}
+    n451(["beta measure 451"])
+    n452[("gamma parse 452")]
+    n453(("delta beta 453"))
+    n454>"parse queue 454"]
+    n455{{"render render 455"}}
+    n450 -.->|alpha| n451
+    n451 ==> n452
+    n452 --o n453
+    n453 --x|delta| n454
+    n454 <--> n455
+    n450 & n451 --> n455
+  end
+  group75 --> group76
+  n449 e76@==> n450
+  e76@{ animate: true }
+  %% group 76 styles
+  class n450,n452 cold
+  style n453 fill:#eee,stroke:#999,stroke-width:2px
+  click n454 "https://example.com/76" "Open 76"
+  n455@{ shape: rounded, label: "Shape 76" }
+  n451:::hot --> n454
+  subgraph group77 [Group 77: measure]
+    direction LR
+    n456["layout gamma 456"]
+    n457("measure cache 457")
+    n458{"queue layout 458"}
+    n459(["cache delta 459"])
+    n460[("alpha alpha 460")]
+    n461(("beta measure 461"))
+    n456 ---|layout| n457
+    n457 -.-> n458
+    n458 ==> n459
+    n459 --o|cache| n460
+    n460 --x n461
+    n456 & n457 --> n461
+  end
+  group76 --> group77
+  n455 e77@==> n456
+  e77@{ animate: true }
+  %% group 77 styles
+  class n456,n458 warn
+  style n459 fill:#eee,stroke:#999,stroke-width:2px
+  click n460 "https://example.com/77" "Open 77"
+  n461@{ shape: rounded, label: "Shape 77" }
+  n457:::hot --> n460
+  subgraph group78 [Group 78: queue]
+    direction LR
+    n462>"gamma parse 462"]
+    n463{{"delta beta 463"}}
+    n464["parse queue 464"]
+    n465("render render 465")
+    n466{"layout gamma 466"}
+    n467(["measure cache 467"])
+    n462 -->|gamma| n463
+    n463 --- n464
+    n464 -.-> n465
+    n465 ==>|render| n466
+    n466 --o n467
+    n462 & n463 --> n467
+  end
+  group77 --> group78
+  n461 e78@==> n462
+  e78@{ animate: true }
+  %% group 78 styles
+  class n462,n464 hot
+  style n465 fill:#eee,stroke:#999,stroke-width:2px
+  click n466 "https://example.com/78" "Open 78"
+  n467@{ shape: rounded, label: "Shape 78" }
+  n463:::hot --> n466
+  subgraph group79 [Group 79: cache]
+    direction LR
+    n468[("queue layout 468")]
+    n469(("cache delta 469"))
+    n470>"alpha alpha 470"]
+    n471{{"beta measure 471"}}
+    n472["gamma parse 472"]
+    n473("delta beta 473")
+    n468 <-->|queue| n469
+    n469 --> n470
+    n470 --- n471
+    n471 -.->|beta| n472
+    n472 ==> n473
+    n468 & n469 --> n473
+  end
+  group78 --> group79
+  n467 e79@==> n468
+  e79@{ animate: true }
+  %% group 79 styles
+  class n468,n470 cold
+  style n471 fill:#eee,stroke:#999,stroke-width:2px
+  click n472 "https://example.com/79" "Open 79"
+  n473@{ shape: rounded, label: "Shape 79" }
+  n469:::hot --> n472
+  linkStyle 0,1,2 stroke:#f00,stroke-width:2px

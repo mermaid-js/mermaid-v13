@@ -1,0 +1,15 @@
+@ 2:12  subgraph |S [Group]
+  2:12-2:13 "S"
+  | **subgraph** `S`
+  |
+  | Title: `Group` · 3 members
+@ 5:14  subgraph |T
+  5:14-5:15 "T"
+  | **subgraph** `T`
+  |
+  | Title: `T` · 1 member
+@ 9:9  C --> |S
+  9:9-9:10 "S"
+  | **subgraph** `S`
+  |
+  | Title: `Group` · 3 members
