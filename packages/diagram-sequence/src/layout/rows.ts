@@ -380,23 +380,44 @@ export class Rows {
     b.bump(m.boxMargin.y);
     const y = b.y;
     const height = g.label.height + 2 * m.noteMargin.y;
-    b.bump(height);
-    b.insert(g.startx, y, g.startx + g.width, y + height);
     const span = [g.startx, g.startx + g.width] as const;
+    const at = alignX(env, env.seq.noteAlign, span, g.label.width, m.noteMargin.x);
+    const { x, width } = this.noteClearOfBorders(g.startx, g.width, at, g.label.width);
+    b.bump(height);
+    b.insert(g.startx, y, g.startx + width, y + height);
     this.notes.push({
       ast: s.ast,
       placement: s.placement,
       participants: s.participants,
       x: g.startx,
       y,
-      width: g.width,
+      width,
       height,
-      label: placed(
-        g.label,
-        alignX(env, env.seq.noteAlign, span, g.label.width, m.noteMargin.x),
-        y + m.half(height - g.label.height)
-      ),
+      label: placed(g.label, x, y + m.half(height - g.label.height)),
     });
+  }
+
+  /**
+   * In cells a box side inside a note is drawn through it, so the note's text keeps a cell
+   * clear of it: the label moves within the note to the nearest place clear of every such
+   * side, and when there is none the note grows right to hold it past the last one.
+   */
+  private noteClearOfBorders(
+    left: number,
+    width: number,
+    x: number,
+    w: number
+  ): { x: number; width: number } {
+    const right = left + width - 1;
+    const inside = this.borders.filter((c) => c > left && c < right);
+    if (inside.length === 0) return { x, width };
+    const pad = this.env.m.noteMargin.x;
+    const clear = (at: number): boolean => inside.every((c) => c < at - 1 || c > at + w);
+    for (let d = 0; d <= width; d++)
+      for (const at of [x - d, x + d])
+        if (at >= left + pad && at + w <= right - pad + 1 && clear(at)) return { x: at, width };
+    const at = Math.max(...inside) + 2;
+    return { x: at, width: Math.max(width, at + w + pad - left) };
   }
 
   /** Closes a frame: it reaches past its last row and holds its tab. */

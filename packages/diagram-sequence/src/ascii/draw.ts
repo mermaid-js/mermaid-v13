@@ -116,6 +116,12 @@ const row = (x1: number, x2: number, y: number): Cell[] => {
   return out;
 };
 
+const column = (x: number, y1: number, y2: number): Cell[] => {
+  const out: Cell[] = [];
+  for (let y = y1; y <= y2; y++) out.push({ x, y });
+  return out;
+};
+
 const textOf = (label: MeasuredLabel, i: number): string =>
   (label.lines[i] ?? []).map((r) => r.text).join('');
 
@@ -357,6 +363,13 @@ class Drawing {
       const r = this.rect(n);
       clear(canvas, r);
       drawBox(canvas, glyphs, r);
+      // A box side the note spans is drawn through it (the layout keeps the text clear).
+      for (const b of this.layout.boxes) {
+        const box = this.rect(b);
+        for (const x of [box.x, box.x + box.width - 1])
+          if (x > r.x && x < r.x + r.width - 1)
+            drawRun(canvas, glyphs, column(x, r.y, r.y + r.height - 1), false);
+      }
       const label = this.at(n.label);
       this.labels.push(() => writeLabel(canvas, label, this.align.note));
     }
