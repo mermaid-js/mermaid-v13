@@ -201,7 +201,7 @@ describe('state symbols and statement spans', () => {
 
   it('records no span for a click statement that fails at its line end', () => {
     const r = parseState('stateDiagram-v2\n  A\n  click A "u" "t" B\n  C\n');
-    expect(r.statements.map((s) => s.kind)).toEqual(['Header', 'State', 'State']);
+    expect(r.statements.map((s) => s.kind)).toEqual(['header', 'state', 'state']);
     expect(r.ast.children.map((n) => n.type)).toEqual(['Header', 'State', 'State']);
   });
 });

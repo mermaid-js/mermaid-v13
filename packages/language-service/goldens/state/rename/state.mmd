@@ -1,0 +1,12 @@
+%% rename-to: Waiting
+stateDiagram-v2
+  [*] --> |Idle
+  Idle --> Busy : start
+  state Busy {
+    Idle --> Work
+  }
+  Idle : idle
+  note left of Idle : text
+  class Idle hot
+  Busy:::hot --> |Idle
+  style Idle fill:#bbf

@@ -106,6 +106,9 @@ const EDGES: CorpusItem[] = (
       'stateDiagram-v2\n  note right of A\n  a\n  \n  END NOTE\n  note left of B\n  x end note\n  end notes\n  end note\n',
     ],
     ['note odd text', 'stateDiagram-v2\n  note left of A :t\n  note left of A\n  : spaced\n'],
+    // Mid-line directives (#185, fixed in core `sourceView` by #186).
+    ['comment line in mid-line directive', 'stateDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB'],
+    ['style word in directive', 'stateDiagram\nA : x %%{init: {"a":"style"}}%% :#y;'],
   ] satisfies [string, string][]
 ).map(([id, source]) => ({ id: `edge/${id}`, source }));
 

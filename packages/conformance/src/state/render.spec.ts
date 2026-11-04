@@ -28,7 +28,7 @@ const skipped: { id: string; reason: string }[] = [];
 
 // The layout's engine gap (#144, `state/layout.spec.ts` ENGINE_GAPS): `layered` leaves a
 // group's self-loop out of the drawing's extent, so the loop is drawn outside the viewBox. The
-// renderer draws what the layout gives; the fix is a state T0 in core (D102). Pinned exactly.
+// renderer draws what the layout gives; the fix is state T0 #187 in core (D102). Pinned exactly.
 const OUTSIDE_VIEWBOX: readonly string[] = [
   'e2e/diagrams/state-diagram-v2/pr-check/v2-a-compound-state-should-be-able-to-link-to-itself.mmd',
 ];

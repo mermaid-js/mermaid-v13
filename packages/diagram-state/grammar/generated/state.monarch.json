@@ -1,0 +1,961 @@
+{
+  "tokenPostfix": ".mermaid-state",
+  "defaultToken": "",
+  "includeLF": true,
+  "start": "frontMatterStart",
+  "tokenizer": {
+    "root": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "(?i:click)\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "(?i:href)\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "\"[^\"]*\"",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "(?i:default)\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "(?i:.*direction\\s+tb)[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "(?i:.*direction\\s+bt)[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "(?i:.*direction\\s+rl)[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "(?i:.*direction\\s+lr)[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "\\n+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "\\s+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "#[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "%%(?!\\{)[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "(?i:scale)\\s+",
+        {
+          "token": "keyword",
+          "next": "@SCALE"
+        }
+      ],
+      [
+        "(?i:accTitle)\\s*:\\s*",
+        {
+          "token": "keyword",
+          "next": "@acc_title"
+        }
+      ],
+      [
+        "(?i:accDescr)\\s*:\\s*",
+        {
+          "token": "keyword",
+          "next": "@acc_descr"
+        }
+      ],
+      [
+        "(?i:accDescr)\\s*\\{\\s*",
+        {
+          "token": "keyword",
+          "next": "@acc_descr_multiline"
+        }
+      ],
+      [
+        "(?i:classDef)\\s+",
+        {
+          "token": "keyword",
+          "next": "@CLASSDEF"
+        }
+      ],
+      [
+        "(?i:class)\\s+",
+        {
+          "token": "keyword",
+          "next": "@CLASS"
+        }
+      ],
+      [
+        "(?i:style)\\s+",
+        {
+          "token": "keyword",
+          "next": "@STYLE"
+        }
+      ],
+      [
+        "(?i:state)\\s+",
+        {
+          "token": "keyword",
+          "next": "@STATE"
+        }
+      ],
+      [
+        "\\{",
+        {
+          "token": "delimiter",
+          "next": "@struct"
+        }
+      ],
+      [
+        "(?i:note)\\s+",
+        {
+          "token": "keyword",
+          "next": "@NOTE"
+        }
+      ],
+      [
+        "(?i:stateDiagram)\\s+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "(?i:stateDiagram-v2)\\s+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "(?i:hide empty description)\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "\\[\\*\\]",
+        {
+          "token": "constant"
+        }
+      ],
+      [
+        "%%[^:\\n\\s\\-{]*",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "(?:[^:\\n\\s\\-{%]|%(?!%))+",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\\s*:(?:[^:\\n;]|:[^:\\n;])+",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "-->",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        ":::",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        ".",
+        {
+          "token": ""
+        }
+      ]
+    ],
+    "STATE": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "(?:(?!\\n)\\s)+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "#[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "%%(?!\\{)[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "(?i:<<(?:fork|join|choice)>>|\\[\\[(?:fork|join|choice)\\]\\])",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?i:.*(?=<<fork>>))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "(?i:.*(?=<<join>>))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "(?i:.*(?=<<choice>>))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "(?i:.*(?=\\[\\[fork\\]\\]))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "(?i:.*(?=\\[\\[join\\]\\]))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "(?i:.*(?=\\[\\[choice\\]\\]))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\"",
+        {
+          "token": "string",
+          "next": "@STATE_STRING"
+        }
+      ],
+      [
+        "\\s*(?i:as)\\s+",
+        {
+          "token": "keyword",
+          "next": "@STATE_ID"
+        }
+      ],
+      [
+        "\\w+\\s+\\w+.*?\\{",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "[^\\n\\s{]+",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\\n",
+        {
+          "token": "",
+          "next": "@pop"
+        }
+      ],
+      [
+        "\\{",
+        {
+          "token": "delimiter",
+          "switchTo": "@struct"
+        }
+      ]
+    ],
+    "STATE_STRING": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "\"",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[^\"]+",
+        {
+          "token": "string"
+        }
+      ]
+    ],
+    "STATE_ID": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "%%[^\\n{]*",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "(?:[^\\n{%]|%(?!%))*",
+        {
+          "token": "variable",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "SCALE": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "\\d+",
+        {
+          "token": "number"
+        }
+      ],
+      [
+        "\\s+(?i:width)\\b",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "acc_title": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "[^\\n]*",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "acc_descr": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "[^\\n]*",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "acc_descr_multiline": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "\\}",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[^}]+",
+        {
+          "token": "string"
+        }
+      ]
+    ],
+    "CLASSDEF": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "(?i:default)\\s+",
+        {
+          "token": "variable",
+          "switchTo": "@CLASSDEFID"
+        }
+      ],
+      [
+        "\\w+\\s+",
+        {
+          "token": "variable",
+          "switchTo": "@CLASSDEFID"
+        }
+      ]
+    ],
+    "CLASSDEFID": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "[^\\n]*",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "CLASS": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "\\w+(?:,\\s*\\w+)*",
+        {
+          "token": "variable",
+          "switchTo": "@CLASS_STYLE"
+        }
+      ]
+    ],
+    "CLASS_STYLE": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "[^\\n]*",
+        {
+          "token": "variable",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "STYLE": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "[\\w,]+\\s+",
+        {
+          "token": "variable",
+          "switchTo": "@STYLEDEF_STYLES"
+        }
+      ]
+    ],
+    "STYLEDEF_STYLES": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "[^\\n]*",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "NOTE": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "(?i:left of)\\b",
+        {
+          "token": "keyword",
+          "switchTo": "@NOTE_ID"
+        }
+      ],
+      [
+        "(?i:right of)\\b",
+        {
+          "token": "keyword",
+          "switchTo": "@NOTE_ID"
+        }
+      ],
+      [
+        "\"",
+        {
+          "token": "string",
+          "switchTo": "@FLOATING_NOTE"
+        }
+      ]
+    ],
+    "NOTE_ID": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "\\s*(?:[^:\\n\\s\\-%]|%(?!%))+",
+        {
+          "token": "variable",
+          "switchTo": "@NOTE_TEXT"
+        }
+      ]
+    ],
+    "NOTE_TEXT": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "\\s*:[^:\\n;]+",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ],
+      [
+        "\\n\\s*(?i:end note)\\b",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[\\s\\S]*?(?=\\n\\s*(?i:end note)\\b)",
+        {
+          "token": "string"
+        }
+      ]
+    ],
+    "FLOATING_NOTE": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "\\s*(?i:as)\\s*",
+        {
+          "token": "keyword",
+          "switchTo": "@FLOATING_NOTE_ID"
+        }
+      ],
+      [
+        "\"",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "[^\"]+",
+        {
+          "token": "string"
+        }
+      ]
+    ],
+    "FLOATING_NOTE_ID": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "(?:[^\\n%]|%(?!%))*",
+        {
+          "token": "variable",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "struct": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{.*?\\}%%",
+        {
+          "token": "annotation"
+        }
+      ],
+      [
+        "(?:(?!\\n)\\s)+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "#[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "%%(?!\\{)[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "(?i:classDef)\\s+",
+        {
+          "token": "keyword",
+          "next": "@CLASSDEF"
+        }
+      ],
+      [
+        "(?i:class)\\s+",
+        {
+          "token": "keyword",
+          "next": "@CLASS"
+        }
+      ],
+      [
+        "(?i:style)\\s+",
+        {
+          "token": "keyword",
+          "next": "@STYLE"
+        }
+      ],
+      [
+        "(?i:state)\\s+",
+        {
+          "token": "keyword",
+          "next": "@STATE"
+        }
+      ],
+      [
+        "(?i:.*direction\\s+tb)[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "(?i:.*direction\\s+bt)[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "(?i:.*direction\\s+rl)[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "(?i:.*direction\\s+lr)[^\\n]*",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "\\}",
+        {
+          "token": "delimiter",
+          "next": "@pop"
+        }
+      ],
+      [
+        "\\n",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "(?i:note)\\s+",
+        {
+          "token": "keyword",
+          "next": "@NOTE"
+        }
+      ],
+      [
+        "\\[\\*\\]",
+        {
+          "token": "constant"
+        }
+      ],
+      [
+        "%%[^:\\n\\s\\-{]*",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "(?:[^:\\n\\s\\-{%]|%(?!%))+",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "\\s*:(?:[^:\\n;]|:[^:\\n;])+",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        "-->",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        "--",
+        {
+          "token": "operator"
+        }
+      ],
+      [
+        ":::",
+        {
+          "token": "operator"
+        }
+      ]
+    ],
+    "frontMatterStart": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@frontMatter"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "",
+        {
+          "token": "",
+          "switchTo": "@root"
+        }
+      ]
+    ],
+    "frontMatter": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@root"
+        }
+      ],
+      [
+        "[^\\S\\n]*#.*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#]*(?=:(?:\\s|$))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "[^#]+",
+        {
+          "token": ""
+        }
+      ]
+    ]
+  }
+}

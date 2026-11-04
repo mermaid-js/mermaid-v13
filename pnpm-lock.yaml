@@ -272,6 +272,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:*
+        version: link:../diagram-state
 
   packages/language-service-codemirror:
     devDependencies:

@@ -1,0 +1,18 @@
+%%{init: {"theme": "dark"}}%%
+stateDiagram-v2
+  %% a comment
+  direction LR
+  [*] --> A : start
+  state "Long name" as B
+  state C {
+    D --> E
+    --
+    F
+  }
+  state fork1 <<fork>>
+  note right of A : a note
+  classDef hot fill:#f96,stroke:#333
+  class A hot
+  A:::hot --> B
+  style B fill:#bbf
+  click A "https://example.com" "tip"

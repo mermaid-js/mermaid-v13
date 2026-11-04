@@ -10,9 +10,10 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService, firstPartyFacets } from './index.ts';
 import { goldenCases, missingFeatures, readFixture, renderGolden } from './testing/goldens.ts';
+import { PENDING_FACETS } from './testing/pending-facets.ts';
 
 const ROOT = join(import.meta.dirname, '..', 'goldens');
-const service = createLanguageService();
+const service = createLanguageService({ facets: PENDING_FACETS });
 beforeAll(() => service.preload());
 
 const cases = goldenCases(ROOT);
@@ -27,7 +28,9 @@ for (const diagram of [...new Set(cases.map((c) => c.diagram))]) {
 }
 
 describe('the port checklist (R-LANG-3)', () => {
-  const withFacet = [...new Set(firstPartyFacets.filter((e) => e.load).map((e) => e.id))];
+  const withFacet = [
+    ...new Set([...firstPartyFacets.filter((e) => e.load), ...PENDING_FACETS].map((e) => e.id)),
+  ];
   it.each(withFacet)('%s has goldens for every required feature', (id) => {
     expect(missingFeatures(ROOT, id)).toEqual([]);
   });

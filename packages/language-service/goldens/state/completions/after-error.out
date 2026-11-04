@@ -1,0 +1,4 @@
+@ 4:3  |
+  A node 4:3-4:3 "" -> "A"
+  B node 4:3-4:3 "" -> "B"
+  [*] constant (start or end state) 4:3-4:3 "" -> "[*]"

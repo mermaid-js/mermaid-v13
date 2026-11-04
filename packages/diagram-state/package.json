@@ -12,6 +12,14 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./language": {
+      "mermaid-source": "./src/language.ts",
+      "types": "./dist/language.d.ts",
+      "default": "./dist/language.js"
+    },
+    "./monarch.json": {
+      "mermaid-source": "./grammar/generated/state.monarch.json"
+    },
     "./testing": {
       "mermaid-source": "./src/testing.ts",
       "types": "./dist/testing.d.ts",

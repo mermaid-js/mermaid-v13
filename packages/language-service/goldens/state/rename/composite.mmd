@@ -1,0 +1,10 @@
+%% rename-to: Working
+stateDiagram-v2
+  [*] --> Busy
+  state "Busy state" as |Busy
+  state Busy {
+    A --> B
+    --
+    C
+  }
+  Busy --> [*]
