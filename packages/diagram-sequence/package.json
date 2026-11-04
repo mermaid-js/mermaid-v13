@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-sequence",
-  "version": "0.0.0",
+  "version": "13.0.0-alpha.0",
   "description": "Sequence diagram plugin for Mermaid: parser, model, layout and renderer.",
   "type": "module",
   "license": "MIT",
@@ -23,7 +23,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "peerDependencies": {
-    "@mermaid-js/core": "workspace:^"
+    "@mermaid-js/core": "workspace:*"
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
