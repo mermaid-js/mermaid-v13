@@ -63,6 +63,69 @@ describe('layered: edge-end labels', () => {
   });
 });
 
+describe('layered: edge-end labels clear of end markers (#201)', () => {
+  // Two edges out of one side of a narrow source, as `Dog "1" *-- Leg` and `Dog o-- Toy`.
+  const DIAMOND = { length: 20, width: 12 };
+  const fan = (direction: LayoutGraph['direction'], markers: boolean): LayoutGraph => ({
+    direction,
+    nodes: [
+      { id: 'a', width: 50, height: 80 },
+      { id: 'b', width: 50, height: 80 },
+      { id: 'c', width: 50, height: 80 },
+    ],
+    edges: [
+      {
+        id: 'ab',
+        source: 'a',
+        target: 'b',
+        minLen: 1,
+        startLabel: ONE,
+        ...(markers ? { startMarker: DIAMOND } : {}),
+      },
+      {
+        id: 'ac',
+        source: 'a',
+        target: 'c',
+        minLen: 1,
+        ...(markers ? { startMarker: DIAMOND } : {}),
+      },
+    ],
+    groups: [],
+    spacing: { node: 50, rank: 50, edge: 20 },
+    routing: 'stepped',
+  });
+  // The box the source-end marker of edge `id` covers.
+  const markerBox = (model: LayoutModel, id: string, side: 'source'): Rect => {
+    const e = model.edges.get(id)!;
+    const p = e.points[0]!;
+    const out = e.ports[side];
+    const h = DIAMOND.width / 2;
+    const l = DIAMOND.length;
+    if (out === 'bottom') return { x0: p.x - h, y0: p.y, x1: p.x + h, y1: p.y + l };
+    if (out === 'top') return { x0: p.x - h, y0: p.y - l, x1: p.x + h, y1: p.y };
+    if (out === 'right') return { x0: p.x, y0: p.y - h, x1: p.x + l, y1: p.y + h };
+    return { x0: p.x - l, y0: p.y - h, x1: p.x, y1: p.y + h };
+  };
+  it.each(['TB', 'BT', 'LR', 'RL'] as const)('%s: the label misses both markers', (dir) => {
+    const model = layered(fan(dir, true));
+    const label = rect(model.edges.get('ab')!.startLabel!, ONE);
+    for (const id of ['ab', 'ac']) {
+      const m = markerBox(model, id, 'source');
+      const e = 1e-6;
+      expect(
+        label.x0 < m.x1 - e && m.x0 < label.x1 - e && label.y0 < m.y1 - e && m.y0 < label.y1 - e,
+        `${dir}: label on the marker of ${id}`
+      ).toBe(false);
+    }
+  });
+  it('markers move the label off its neighbour, not the route (TB)', () => {
+    const plain = layered(fan('TB', false));
+    const marked = layered(fan('TB', true));
+    expect(marked.edges.get('ab')!.points).toEqual(plain.edges.get('ab')!.points);
+    expect(marked.edges.get('ab')!.startLabel).not.toEqual(plain.edges.get('ab')!.startLabel);
+  });
+});
+
 // Which way the flow runs in each direction, as the axis and sign of source → target.
 const FLOW = {
   TB: ['y', 1],
