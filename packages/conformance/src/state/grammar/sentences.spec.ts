@@ -17,7 +17,7 @@ const SENTENCES = 3000;
  * Grammar differential over generated sentences (R-PARSE-9): random derivations of
  * `grammar/state.ebnf`, weighted by how often the corpus uses each rule, with token texts
  * drawn from the corpus. The hand-written parser must agree with the reference parser on
- * accept/reject and AST shape, and mermaid@12 on accept/reject.
+ * accept/reject and AST shape, and mermaid v12 on accept/reject.
  */
 describe('state grammar differential (generated sentences)', () => {
   it('agrees on generated sentences', async () => {
@@ -50,7 +50,7 @@ describe('state grammar differential (generated sentences)', () => {
       const v12 = await oracle.parse(text);
       if (v12Syntax(v12) === !ref.accepted) {
         diffs.push(
-          `${id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, mermaid@12 ${ref.accepted ? 'rejects' : 'accepts'}`
+          `${id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, mermaid v12 ${ref.accepted ? 'rejects' : 'accepts'}`
         );
       }
     }

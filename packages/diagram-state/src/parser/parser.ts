@@ -12,18 +12,8 @@
  * it. Tokens for text jison consumed without a terminal (the `state` keyword, quotes,
  * `<<fork>>`-style markers, `end note`, …) only widen the ranges of the terminals around them.
  */
-import {
-  ExpectedTable,
-  Kind,
-  kindSet,
-  LineIndex,
-  nodeId,
-  ParseState,
-  Probe,
-  SEMI,
-  skipTo,
-} from '@mermaid-js/core/parser-kit';
-import type { ParseOptions, ParseResult, Range, TokenView } from '@mermaid-js/core/parser-kit';
+import { Kind, LineIndex, ParseState, Probe, skipTo } from '@mermaid-js/core/parser-kit';
+import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
 import { DEFAULT_LIMITS, LIMIT_CODES } from '@mermaid-js/core/limits';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
@@ -32,17 +22,55 @@ import type {
   StateDocument,
   StateHeader,
   StateNoteStmt,
-  StateRegionNode,
   StateSimpleKind,
   StateSimpleStmt,
   StateStatementNode,
   StateStmt,
   StateTransitionStmt,
 } from './ast.ts';
-import { lex, NO_VIEW } from './lexer.ts';
+import type { lex } from './lexer.ts';
 import { StateBuilder } from './model.ts';
-import type { Item, StateDirection, StateItem, StateModel } from './model.ts';
-import { sourceView } from './source.ts';
+import type { Item, StateItem, StateModel } from './model.ts';
+import {
+  AFTER_ID,
+  AFTER_TARGET,
+  AS,
+  BOUNDARY,
+  BOUNDARY_IN_COMPOSITE,
+  CLASS_IDS,
+  CLASS_NAME,
+  CLASSDEF_ID,
+  CLASSDEF_STYLES,
+  CLICK_ACTION,
+  COMPOSITE_DOC_KINDS,
+  DESCR_VALUE,
+  DIRECTIONS,
+  DOC_KINDS,
+  EXPECTED,
+  HEADER,
+  HEADER_START,
+  HINTS,
+  ID_KINDS,
+  ID_ONLY,
+  MISPLACED,
+  NL,
+  NOTE_AFTER,
+  NOTE_TEXT,
+  PROBE_FOLLOWS,
+  PSEUDO,
+  STRING,
+  STRUCT_START,
+  STRUCT_STOP,
+  STYLE_IDS,
+  STYLE_STYLES,
+  TITLE,
+  WIDTH,
+} from './tables.ts';
+import { blankAt, keyOf, trimColon } from './names.ts';
+import type { Scope } from './names.ts';
+import { splitRegions } from './regions.ts';
+import { terminals } from './terminals.ts';
+import type { Tokens } from './terminals.ts';
 import { T } from './tokens.ts';
 
 export interface StateParseOptions extends ParseOptions {
@@ -59,251 +87,17 @@ export function parseState(src: string, options: StateParseOptions = {}): StateP
   return new StateParser(src, options).parse();
 }
 
-/** Kinds jison consumed without a terminal: they only widen the ranges of their neighbours. */
-const NO_TERMINAL = kindSet(
-  T.State,
-  T.Quote,
-  T.Marker,
-  T.EndNote,
-  T.AccDescrOpen,
-  T.AccDescrClose,
-  T.ScaleWidth
-);
-/** Of those, the kinds that belong to the terminal after them. */
-const LEADING = kindSet(T.State, T.AccDescrOpen);
-
-/** Kinds that run to the line end, where v12 dropped a final `;`. */
-const STYLES = kindSet(T.ClassDefStyleOpts, T.StyleDefStyleOpts);
-
-const NL = [Kind.Newline, T.EndOfInput];
-const BOUNDARY = kindSet(Kind.Newline, T.EndOfInput, Kind.EOF);
-const BOUNDARY_IN_COMPOSITE = kindSet(Kind.Newline, T.EndOfInput, Kind.EOF, T.StructStop);
-const DIRECTIONS: Readonly<Record<number, StateDirection>> = {
-  [T.DirectionTB]: 'TB',
-  [T.DirectionBT]: 'BT',
-  [T.DirectionRL]: 'RL',
-  [T.DirectionLR]: 'LR',
-};
-const PSEUDO: Readonly<Record<number, 'fork' | 'join' | 'choice'>> = {
-  [T.Fork]: 'fork',
-  [T.Join]: 'join',
-  [T.Choice]: 'choice',
-};
-
-// What the parser accepts at its decision points (constant lists: a parse without a probe
-// allocates nothing for them).
-const STATEMENT_KINDS = [
-  T.Id,
-  T.EdgeState,
-  T.CompositeState,
-  T.StateDescr,
-  T.Fork,
-  T.Join,
-  T.Choice,
-  T.Note,
-  T.ClassDef,
-  T.Class,
-  T.Style,
-  T.DirectionTB,
-  T.DirectionBT,
-  T.DirectionRL,
-  T.DirectionLR,
-  T.AccTitle,
-  T.AccDescr,
-  T.AccDescrMultilineValue,
-  T.Click,
-  T.HideEmpty,
-  T.Scale,
-];
-const DOC_KINDS = [...STATEMENT_KINDS, ...NL, Kind.EOF];
-const COMPOSITE_DOC_KINDS = [...STATEMENT_KINDS, T.Concurrent, ...NL, T.StructStop];
-const HEADER = [T.Sd];
-const HEADER_START = [T.Sd, ...NL];
-const ID_KINDS = [T.Id, T.EdgeState];
-const ID_ONLY = [T.Id];
-const AFTER_ID = [T.StyleSeparator, T.Descr, T.Arrow];
-const AFTER_TARGET = [T.StyleSeparator, T.Descr];
-const STRUCT_START = [T.StructStart];
-const STRUCT_STOP = [T.StructStop];
-const AS = [T.As];
-const CLASSDEF_ID = [T.ClassDefId];
-const CLASSDEF_STYLES = [T.ClassDefStyleOpts];
-const STYLE_IDS = [T.StyleIds];
-const STYLE_STYLES = [T.StyleDefStyleOpts];
-const CLASS_IDS = [T.ClassEntityIds];
-const CLASS_NAME = [T.StyleClass];
-const NOTE_AFTER = [T.LeftOf, T.RightOf, T.NoteText];
-const NOTE_TEXT = [T.NoteText];
-const WIDTH = [T.Width];
-const TITLE = [T.AccTitleValue];
-const DESCR_VALUE = [T.AccDescrValue];
-const CLICK_ACTION = [T.String, T.Href];
-const STRING = [T.String];
-
-/** Kinds a probe's cursor follows rather than extends: punctuation. */
-const PROBE_FOLLOWS = kindSet(T.Arrow, T.StyleSeparator, T.StructStart, T.StructStop, T.Concurrent);
-
-/** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
-const EXPECTED = new ExpectedTable([
-  ['`stateDiagram` or `stateDiagram-v2`', [T.Sd]],
-  ['a state such as `A` or `[*]`', [T.Id, T.EdgeState]],
-  ['an arrow `-->`', [T.Arrow]],
-  ['`:::` and a class name', [T.StyleSeparator]],
-  ['a description such as `: text`', [T.Descr]],
-  ['`as` and a state id', [T.As]],
-  ['`{`', [T.StructStart]],
-  ['`}`', [T.StructStop]],
-  ['a class name', [T.ClassDefId, T.StyleClass]],
-  ['state ids such as `A,B`', [T.StyleIds, T.ClassEntityIds]],
-  ['styles such as `fill:#f96`', [T.ClassDefStyleOpts, T.StyleDefStyleOpts]],
-  ['`left of` or `right of`', [T.LeftOf, T.RightOf]],
-  ['note text', [T.NoteText]],
-  ['a quoted string', [T.String]],
-  ['`href`', [T.Href]],
-  ['a width such as `200`', [T.Width]],
-  ['a title', [T.AccTitleValue]],
-  ['a description', [T.AccDescrValue]],
-  ['`--` between regions', [T.Concurrent]],
-  [
-    'a statement such as `state`, `note`, `classDef`, `class` or `style`',
-    [
-      T.CompositeState,
-      T.StateDescr,
-      T.Fork,
-      T.Join,
-      T.Choice,
-      T.Note,
-      T.ClassDef,
-      T.Class,
-      T.Style,
-      T.DirectionTB,
-      T.DirectionBT,
-      T.DirectionRL,
-      T.DirectionLR,
-      T.AccTitle,
-      T.AccDescr,
-      T.AccDescrMultilineValue,
-      T.Click,
-      T.HideEmpty,
-      T.Scale,
-    ],
-  ],
-  ['a line break', [Kind.Newline, T.EndOfInput]],
-  ['the end of the text', [Kind.EOF]],
-]);
-
-/** How each statement is written, for errors inside it. */
-const HINTS: Readonly<Record<number, string>> = {
-  [T.ClassDef]: 'write it as `classDef <name> <styles>`, e.g. `classDef hot fill:#f96`',
-  [T.Class]: 'write it as `class <state ids> <class name>`, e.g. `class A,B hot`',
-  [T.Style]: 'write it as `style <state ids> <styles>`, e.g. `style A fill:#f96`',
-  [T.Note]:
-    'write it as `note left of <state> : <text>`, or `note right of <state>`, the text on the lines after it, then `end note`',
-  [T.Click]: 'write it as `click <state> "<url>" "<tooltip>"` or `click <state> href "<url>"`',
-  [T.StateDescr]: 'write it as `state "<description>" as <id>`',
-  [T.Scale]: 'write it as `scale <number> width`',
-};
-
 /** Thrown after a diagnostic is recorded; caught at statement level. One instance. */
 class Stop extends Error {}
 const STOP = new Stop();
 
-/** Parser tokens: the terminals, each with its own range and the range it covers. */
-interface Tokens extends TokenView {
-  /** Range start including leading text jison consumed without a terminal. */
-  readonly from: Uint32Array;
-  /** Range end including trailing text jison consumed without a terminal. */
-  readonly to: Uint32Array;
-  /** Images as v12's lexer gave them (see `stateTokens`). */
-  readonly text: string[];
-}
-
-function terminals(src: string, pre: PreprocessResult): { tokens: Tokens; all: ReturnType<typeof lex>['tokens'] } {
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  const { tokens, viewStart, viewEnd } = lex(src, view);
-  const last = view.text.length - 1;
-  const kind: number[] = [];
-  const start: number[] = [];
-  const end: number[] = [];
-  const from: number[] = [];
-  const to: number[] = [];
-  const text: string[] = [];
-  let lead = -1;
-  let prevKind: number = Kind.EOF;
-  for (let j = 0; j < tokens.length; j++) {
-    const k = tokens.kind[j] ?? Kind.EOF;
-    const a = viewStart[j] ?? NO_VIEW;
-    if (k === Kind.EOF || a === NO_VIEW || k === Kind.Comment || k === Kind.Directive) continue;
-    const s = tokens.start[j] ?? 0;
-    const e = tokens.end[j] ?? 0;
-    if (NO_TERMINAL[k] === 1) {
-      const trailing =
-        LEADING[k] !== 1 &&
-        !(k === T.Quote && prevKind !== T.StateDescr && prevKind !== T.NoteText);
-      if (trailing && to.length > 0) to[to.length - 1] = Math.max(to[to.length - 1] ?? 0, e);
-      else if (lead < 0) lead = s;
-      prevKind = k;
-      continue;
-    }
-    const b = Math.min(viewEnd[j] ?? a, last);
-    kind.push(k);
-    start.push(s);
-    end.push(e);
-    from.push(lead >= 0 ? lead : s);
-    // Styles run to the line end: a `;` right after them is the one v12 dropped.
-    to.push(STYLES[k] === 1 && src.charCodeAt(e) === SEMI ? e + 1 : e);
-    text.push(decodeEntities(view.text.slice(Math.min(a, b), b)));
-    lead = -1;
-    prevKind = k;
-  }
-  return {
-    tokens: {
-      kind: Uint16Array.from(kind),
-      start: Uint32Array.from(start),
-      end: Uint32Array.from(end),
-      from: Uint32Array.from(from),
-      to: Uint32Array.from(to),
-      text,
-      length: kind.length,
-    },
-    all: tokens,
-  };
-}
-
 /** What v12 kept of a statement whose action returned a string: nothing, but it counts. */
 const NOOP: Item = { stmt: 'noop' };
-
-/**
- * `#name;` and `#123;` as v12's renderer read them: v12 turned them into placeholders before
- * lexing and back into `&name;` / `&#123;` after.
- */
-function decodeEntities(text: string): string {
-  if (!text.includes('#')) return text;
-  return text.replace(/#(\w+);/g, (_, w: string) => (/^\+?\d+$/.test(w) ? `&#${w};` : `&${w};`));
-}
-
-const trimColon = (s: string) => (s.startsWith(':') ? s.slice(1).trim() : s.trim());
-
-/** The name a mention's AST id is built from: `[*]` is scoped to its composite. */
-function keyOf(name: string, scope: Scope | undefined, end: boolean | undefined): string {
-  if (name !== '[*]') return name;
-  return `${scope ? `${scope.name}/` : ''}[*]${end ? 'end' : 'start'}`;
-}
 
 /** What a document collects: v12's statement list and the AST nodes. */
 interface Doc {
   items: Item[];
   nodes: StateStatementNode[];
-}
-
-/** The composite state a document is the body of. */
-interface Scope {
-  name: string;
-  depth: number;
 }
 
 /**
@@ -327,6 +121,9 @@ class StateParser {
   private lines: LineIndex | undefined;
   private dividers = 0;
   private hint: string | undefined;
+  /** The hint of the statement before the current one, and where the current one starts. */
+  private prevHint: string | undefined;
+  private stmtFrom = 0;
   private i = 0;
 
   constructor(
@@ -454,24 +251,16 @@ class StateParser {
     this.tested(want);
     const { st } = this;
     const k = this.kind();
-    const where = this.own(this.i);
+    const where = this.where();
     if (k === T.MultiWordState) {
-      const name = this.text().replace(/\s*\{$/, '').trim();
+      const name = this.text()
+        .replace(/\s*\{$/, '')
+        .trim();
       st.diagnostics.error(
         'MULTI_WORD_STATE',
         `A state name must be a single word, got \`${name}\`: write \`state "${name}" as ${name.replace(/\s+/g, '_')} {\` to show the words.`,
         where
       );
-      throw STOP;
-    }
-    if (k === Kind.Error || k === T.Invalid) {
-      const ch = this.src.slice(where.start, Math.max(where.end, where.start + 1)).trim();
-      const d = ch
-        ? `Unexpected character \`${ch}\``
-        : `Unexpected text ${this.found()}`;
-      st.diagnostics.error('UNEXPECTED_CHARACTER', `${d}${this.why(hint)}.`, where, {
-        expected: EXPECTED.names(want),
-      });
       throw STOP;
     }
     if (k === T.DefaultClassDefId) {
@@ -482,10 +271,53 @@ class StateParser {
       );
       throw STOP;
     }
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
-    const why = this.why(hint);
+    // A lexical error at the start of a statement comes from the text before it (`scale 3`
+    // with no `width`): explain that statement.
+    const zeroWidth = k === Kind.Error && where.end === where.start;
+    const why = this.why(
+      hint ?? (zeroWidth && this.i === this.stmtFrom ? this.prevHint : undefined)
+    );
+    if ((k === Kind.Error || k === T.Invalid) && !this.crossesLine()) {
+      const ch = this.src.slice(where.start, Math.max(where.end, where.start + 1)).trim();
+      const what = ch ? `character \`${ch}\`` : blankAt(this.src, where.start);
+      const arrow = ch === '-' && !why ? '; a transition is written `A --> B`' : '';
+      st.diagnostics.error('UNEXPECTED_CHARACTER', `Unexpected ${what}${why || arrow}.`, where, {
+        expected: EXPECTED.names(want),
+      });
+      throw STOP;
+    }
+    const found = this.crossesLine() ? 'the end of the line' : this.found();
+    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), found);
     if (why) d.message = `${d.message.slice(0, -1)}${why}.`;
     throw STOP;
+  }
+
+  /** Whether the current token is on a later line than the statement's previous token. */
+  private crossesLine(): boolean {
+    const { i, tokens } = this;
+    if (i <= this.stmtFrom || i >= tokens.length) return false;
+    const k = this.kind();
+    if (k === Kind.Newline || k === T.EndOfInput) return false;
+    return /[\n\r]/.test(this.src.slice(tokens.end[i - 1] ?? 0, tokens.start[i] ?? 0));
+  }
+
+  /**
+   * Where an error is reported: the current token, or, at a line break or on a later line, the
+   * end of the statement's line.
+   */
+  private where(): Range {
+    const { i, tokens } = this;
+    if (i >= tokens.length) return { start: this.src.length, end: this.src.length };
+    const k = this.kind();
+    if (k === Kind.Newline || k === T.EndOfInput) {
+      const s = tokens.start[i] ?? 0;
+      return { start: s, end: s };
+    }
+    if (this.crossesLine()) {
+      const e = this.own(i - 1).end;
+      return { start: e, end: e };
+    }
+    return this.own(i);
   }
 
   private why(hint: string | undefined): string {
@@ -493,11 +325,24 @@ class StateParser {
     return h ? `; ${h}` : '';
   }
 
-  /** Skip to the next statement boundary after an error (R-PARSE-4). */
-  private recover(inComposite: boolean): void {
+  /**
+   * Skip to the next statement boundary after an error in the statement that starts at token
+   * `from` (R-PARSE-4): a line break, or the `}` of the composite state it is in. Some line
+   * breaks are no tokens (all of them inside a composite, as in jison), so the first token on
+   * a later line is a boundary too.
+   */
+  private recover(inComposite: boolean, from: number): void {
+    this.prevHint = this.hint;
     this.hint = undefined;
     this.probe?.freeze();
-    this.i = skipTo(this.tokens, this.i, inComposite ? BOUNDARY_IN_COMPOSITE : BOUNDARY);
+    const { tokens, src } = this;
+    const boundary = inComposite ? BOUNDARY_IN_COMPOSITE : BOUNDARY;
+    let j = this.i;
+    while (j < tokens.length && boundary[tokens.kind[j] ?? Kind.EOF] !== 1) {
+      if (j > from && /[\n\r]/.test(src.slice(tokens.end[j - 1] ?? 0, tokens.start[j] ?? 0))) break;
+      j++;
+    }
+    this.i = j;
   }
 
   // ---- document -----------------------------------------------------------------------
@@ -509,20 +354,30 @@ class StateParser {
       if (k === Kind.Newline || k === T.EndOfInput) this.i++;
       else break;
     }
-    try {
-      const j = this.expect(HEADER);
-      const node: StateHeader = {
-        id: this.ids.statement('st'),
-        type: 'Header',
-        range: this.own(j),
-        keyword: this.text(j).trim(),
-      };
-      out.push(node);
-      this.st.statement('Header', node.range);
-    } catch (e) {
-      if (e !== STOP) throw e;
-      this.recover(false);
+    if (this.kind() !== T.Sd) {
+      try {
+        this.fail(HEADER);
+      } catch (e) {
+        if (e !== STOP) throw e;
+      }
+      // One error for a missing or late header: parse on after a later one, if any.
+      const sd = this.tokens.kind.indexOf(T.Sd, this.i);
+      if (sd < 0) {
+        this.i = skipTo(this.tokens, this.i, BOUNDARY);
+        return;
+      }
+      this.probe?.freeze();
+      this.i = sd;
     }
+    const j = this.i++;
+    const node: StateHeader = {
+      id: this.ids.statement('st'),
+      type: 'Header',
+      range: this.own(j),
+      keyword: this.text(j).trim(),
+    };
+    out.push(node);
+    this.st.statement('Header', node.range);
   }
 
   /** `document`: statements and line breaks, to the end (or the `}` of `scope`). */
@@ -536,12 +391,13 @@ class StateParser {
       }
       if (k === Kind.EOF) return;
       if (k === T.StructStop && scope) return;
-      const from = this.i;
+      const from = (this.stmtFrom = this.i);
       try {
         this.statement(scope, doc);
+        this.prevHint = this.hint;
       } catch (e) {
         if (e !== STOP) throw e;
-        this.recover(scope !== undefined);
+        this.recover(scope !== undefined, from);
         // A `}` on the line of the error closes the composite state.
         if (this.i === from) this.i++;
       }
@@ -549,7 +405,12 @@ class StateParser {
   }
 
   private simple(kind: StateSimpleKind, from: number, refs: string[] = []): StateSimpleStmt {
-    const node: StateSimpleStmt = { id: this.ids.statement('st'), type: kind, range: this.span(from), refs };
+    const node: StateSimpleStmt = {
+      id: this.ids.statement('st'),
+      type: kind,
+      range: this.span(from),
+      refs,
+    };
     this.st.statement(kind, node.range);
     return node;
   }
@@ -600,6 +461,7 @@ class StateParser {
         }
         // `state X` alone: jison's action returns the name, which v12 then ignores.
         const node = this.stateNode(from, name, this.own(from), scope);
+        node.declaredOnly = true;
         nodes.push(node);
         this.st.statement('State', node.range);
         this.declared.push([name, node.range]);
@@ -608,6 +470,36 @@ class StateParser {
       }
       case T.StateDescr:
         return this.describedState(scope, doc);
+      case T.MultiWordState: {
+        // One error for the name; the block still opens, so its `}` closes it (pitfall 8).
+        const name = this.text()
+          .replace(/\s*\{$/, '')
+          .trim();
+        this.st.diagnostics.error(
+          'MULTI_WORD_STATE',
+          `A state name must be a single word, got \`${name}\`: write \`state "${name}" as ${name.replace(/\s+/g, '_')} {\` to show the words.`,
+          this.own(this.i)
+        );
+        this.i++;
+        if (this.at(STRUCT_START, T.StructStart)) {
+          return this.composite(scope, doc, from, name, from, undefined);
+        }
+        return;
+      }
+      case T.Click:
+        return this.click(doc);
+      default:
+        if (this.simpleStatement(k, scope, doc)) return;
+        this.hint = undefined;
+        return this.fail(scope ? COMPOSITE_DOC_KINDS : DOC_KINDS, MISPLACED[k]);
+    }
+  }
+
+  /** The statements with no state name to parse: pseudo-states, `--`, notes, keywords. */
+  private simpleStatement(k: number, scope: Scope | undefined, doc: Doc): boolean {
+    const { items, nodes } = doc;
+    const from = this.i;
+    switch (k) {
       case T.Fork:
       case T.Join:
       case T.Choice: {
@@ -624,7 +516,7 @@ class StateParser {
           ast: node.id,
           range: node.range,
         });
-        return;
+        return true;
       }
       case T.Concurrent: {
         this.i++;
@@ -637,10 +529,11 @@ class StateParser {
           ast: node.id,
           range: node.range,
         });
-        return;
+        return true;
       }
       case T.Note:
-        return this.note(scope, doc);
+        this.note(scope, doc);
+        return true;
       case T.DirectionTB:
       case T.DirectionBT:
       case T.DirectionRL:
@@ -648,50 +541,46 @@ class StateParser {
         this.i++;
         items.push({ stmt: 'dir', value: DIRECTIONS[k] ?? 'TB' });
         nodes.push(this.simple('Direction', from));
-        return;
+        return true;
       }
       case T.AccTitle: {
         this.i++;
         this.db.setAccTitle(this.text(this.expect(TITLE)).trim());
         items.push(NOOP);
         nodes.push(this.simple('AccTitle', from));
-        return;
+        return true;
       }
       case T.AccDescr: {
         this.i++;
         this.db.setAccDescr(this.text(this.expect(DESCR_VALUE)).trim());
         items.push(NOOP);
         nodes.push(this.simple('AccDescr', from));
-        return;
+        return true;
       }
       case T.AccDescrMultilineValue: {
         this.i++;
         this.db.setAccDescr(this.text(from).trim());
         items.push(NOOP);
         nodes.push(this.simple('AccDescr', from));
-        return;
+        return true;
       }
       case T.HideEmpty: {
         this.i++;
         items.push(NOOP);
         nodes.push(this.simple('HideEmpty', from));
-        return;
+        return true;
       }
       case T.Scale: {
         this.i++;
         this.expect(WIDTH);
         items.push(NOOP);
         nodes.push(this.simple('Scale', from));
-        return;
+        return true;
       }
-      case T.Click:
-        return this.click(doc);
       default:
-        this.hint = undefined;
-        return this.fail(scope ? COMPOSITE_DOC_KINDS : DOC_KINDS);
+        return false;
     }
   }
-
   /** Symbols for the ids of `style` / `class` (`A,B`). */
   private refs(ids: string, j: number): void {
     const r = this.own(j);
@@ -815,7 +704,14 @@ class StateParser {
     node.description = Array.isArray(description) ? description.join(':') : description;
     doc.nodes.push(node);
     this.st.statement('State', node.range);
-    doc.items.push({ stmt: 'state', id, type: 'default', description, ast: node.id, range: node.range });
+    doc.items.push({
+      stmt: 'state',
+      id,
+      type: 'default',
+      description,
+      ast: node.id,
+      range: node.range,
+    });
   }
 
   /** `… { document }`: the `{` is the current token. */
@@ -862,13 +758,18 @@ class StateParser {
         opener,
         {
           expected: EXPECTED.names(STRUCT_STOP),
-          related: [{ message: 'The text ends here.', range: { start: this.src.length, end: this.src.length } }],
+          related: [
+            {
+              message: 'The text ends here.',
+              range: { start: this.src.length, end: this.src.length },
+            },
+          ],
         }
       );
     }
     node.range = this.span(from);
     this.st.endStatement(span, node.range.end);
-    node.children = this.regions(name, body);
+    node.children = splitRegions(name, body.nodes, body.items, this.regionCount);
     const tail = node.children[node.children.length - 1];
     const item: StateItem = {
       stmt: 'state',
@@ -898,46 +799,6 @@ class StateParser {
       }
       this.i++;
     }
-  }
-
-  /**
-   * The children of a composite: its statements, or its regions when `--` splits it and the
-   * last region is not empty (v12 splits nothing otherwise).
-   */
-  private regions(name: string, body: Doc): StateStatementNode[] | StateRegionNode[] {
-    const { nodes, items } = body;
-    let last = nodes.length - 1;
-    while (last >= 0 && nodes[last]?.type !== 'Divider') last--;
-    if (last < 0 || last === nodes.length - 1) return nodes;
-    const key = nodeId(name).slice(2);
-    const out: StateRegionNode[] = [];
-    let part: StateStatementNode[] = [];
-    let k = this.regionCount.get(name) ?? 0;
-    const close = (children: StateStatementNode[]) => {
-      k++;
-      const first = children[0];
-      const end = children[children.length - 1];
-      out.push({
-        id: `r:${key}#${k}`,
-        type: 'Region',
-        range: { start: first?.range.start ?? 0, end: end?.range.end ?? 0 },
-        children,
-      });
-    };
-    let n = 0;
-    for (const node of nodes) {
-      part.push(node);
-      if (node.type === 'Divider') {
-        close(part);
-        const item = items[n] as StateItem;
-        item.ast = `r:${key}#${k}`;
-        part = [];
-      }
-      n++;
-    }
-    close(part);
-    this.regionCount.set(name, k);
-    return out;
   }
 
   /** `note left of A : …`, `note right of A … end note`, `note "…" as N`. */
@@ -972,6 +833,16 @@ class StateParser {
     const position = this.text(this.i++).trim();
     const j = this.expect(ID_ONLY);
     const target = this.text(j).trim();
+    if (this.kind() === Kind.Error) {
+      const r = this.own(from);
+      this.st.diagnostics.error(
+        'UNCLOSED_NOTE',
+        `Unclosed note: the note on \`${target}\` at line ${this.lineOf(r.start)} has no text. Write it after \`:\` on the same line, or on the lines after it and end it with \`end note\`.`,
+        r,
+        { related: [{ message: 'The text ends here.', range: this.where() }] }
+      );
+      throw STOP;
+    }
     const t = this.expect(NOTE_TEXT);
     const text = this.text(t).trim();
     const noteId = this.ids.statement('note');
@@ -1028,4 +899,3 @@ class StateParser {
     doc.items.push({ stmt: 'click', id, url, tooltip, ast: node.id });
   }
 }
-

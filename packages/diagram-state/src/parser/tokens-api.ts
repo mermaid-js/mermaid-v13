@@ -2,7 +2,7 @@ import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex, NO_VIEW } from './lexer.ts';
-import { sourceView } from './source.ts';
+import { stateView } from './view.ts';
 
 export interface StateToken {
   /** A `StateTokenKind` or a shared `Kind`. */
@@ -21,7 +21,7 @@ export interface StateToken {
  */
 export function stateTokens(src: string): StateToken[] {
   const pre = preprocess(src);
-  const view = sourceView(
+  const view = stateView(
     src,
     pre.bodyStart,
     pre.directives.map((d) => d.range)

@@ -117,7 +117,7 @@ export function learnSentenceModel(sources: readonly string[]): SentenceModel {
 }
 
 /**
- * Whether mermaid@12 accepted the syntax: true when it accepted, false on a jison parse or
+ * Whether mermaid v12 accepted the syntax: true when it accepted, false on a jison parse or
  * lexical error (the "single word" rule is a lexer error), undefined when it stopped for
  * another reason (a composite state with two descriptions), which the grammar does not cover.
  */

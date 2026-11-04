@@ -139,7 +139,7 @@ function commented(src: string): string {
   return head + (lines.length > 2 ? lines.join('\n' + '  %% c\n'.repeat(3)) : split);
 }
 
-describe('state lexer parity with mermaid@12 (jison)', () => {
+describe('state lexer parity with mermaid v12 (jison)', () => {
   it('emits the same tokens over the e2e fixtures, the v12 spec strings and edge cases', async () => {
     const oracle = await loadStateLexerOracle();
     const items = await corpus();

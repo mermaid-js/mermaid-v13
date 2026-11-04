@@ -10,7 +10,7 @@ import { handWrittenVerdict, v12Syntax, referenceVerdict } from './reference.ts'
  * shape (statement, node and link types, nesting and source ranges).
  */
 describe('state grammar differential', () => {
-  it('agrees with the hand-written parser and mermaid@12 over the corpus', async () => {
+  it('agrees with the hand-written parser and mermaid v12 over the corpus', async () => {
     const oracle = await loadOracle();
     const diffs: string[] = [];
     let compared = 0;
@@ -22,7 +22,7 @@ describe('state grammar differential', () => {
       const v12 = await oracle.parse(item.source);
       if (v12Syntax(v12) === !ref.accepted) {
         diffs.push(
-          `${item.id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, mermaid@12 ${ref.accepted ? 'rejects' : 'accepts'}`
+          `${item.id}: grammar ${ref.accepted ? 'accepts' : 'rejects'}, mermaid v12 ${ref.accepted ? 'rejects' : 'accepts'}`
         );
       }
       if (ref.accepted !== hand.accepted) {

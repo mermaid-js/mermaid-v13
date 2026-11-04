@@ -292,7 +292,8 @@ export class StateBuilder {
     if (regions.length > 0 && current.length > 0) {
       const last = regions[regions.length - 1] as StateItem;
       regions.push({ ...last, doc: current, ast: item.tail ?? last.ast });
-      for (const r of regions) r.id = regionId(item.id, Number(r.ast.slice(r.ast.lastIndexOf('#') + 1)));
+      for (const r of regions)
+        r.id = regionId(item.id, Number(r.ast.slice(r.ast.lastIndexOf('#') + 1)));
       item.doc = regions;
     } else if (regions.length > 0) {
       // v12 splits nothing when the last region is empty, and draws each `--` as a stray node.
@@ -352,7 +353,8 @@ export class StateBuilder {
             tooltip: unquote(item.tooltip),
           });
           break;
-        default:
+        case 'dir':
+        case 'noop':
           break;
       }
     }
@@ -415,7 +417,19 @@ export class StateBuilder {
       this.records.set(id, rec);
       if (id !== '' && id !== '</join></fork>' && id !== '</choice>') this.nodes.push(rec);
     }
-    const d = item.description;
+    this.describe(rec, item.description);
+    if (!rec.isGroup && item.doc) this.group(rec, item, parent);
+    if (parent && parent.id !== 'root') rec.parent = parent.id;
+    if (item.note) {
+      const side = item.note.position === 'left of' ? 'left' : 'right';
+      this.notes.push({ ast: item.note.ast, target: id, side, text: item.note.text });
+      this.edgeCount++;
+    }
+  }
+
+  /** The description of one mention, as `dataFetcher` adds it to the node. */
+  private describe(rec: GraphNode, d: string | string[] | undefined): void {
+    const { id } = rec;
     if (d) {
       if (Array.isArray(rec.description)) {
         rec.shape = WITH_DESC;
@@ -430,26 +444,23 @@ export class StateBuilder {
     }
     if (Array.isArray(rec.description) && rec.description.length === 1 && rec.shape === WITH_DESC)
       rec.shape = rec.isGroup ? GROUP : RECT;
-    if (!rec.isGroup && item.doc) {
-      rec.isGroup = true;
-      const dir = dirOf(item.doc);
-      if (dir !== undefined) rec.dir = dir;
-      if (item.type === DIVIDER && parent) {
-        rec.shape = DIVIDER;
-        rec.region = true;
-        const region: StateRegion = { id, ast: item.ast, parent: parent.id };
-        if (dir !== undefined) region.dir = dir;
-        this.regions.push(region);
-      } else {
-        rec.shape = GROUP;
-        if (item.ast.startsWith('s:')) rec.ast = item.ast;
-      }
-    }
-    if (parent && parent.id !== 'root') rec.parent = parent.id;
-    if (item.note) {
-      const side = item.note.position === 'left of' ? 'left' : 'right';
-      this.notes.push({ ast: item.note.ast, target: id, side, text: item.note.text });
-      this.edgeCount++;
+  }
+
+  /** The first mention with statements makes the node a composite (or a region). */
+  private group(rec: GraphNode, item: StateItem, parent: StateItem | undefined): void {
+    const { id } = rec;
+    rec.isGroup = true;
+    const dir = dirOf(item.doc);
+    if (dir !== undefined) rec.dir = dir;
+    if (item.type === DIVIDER && parent) {
+      rec.shape = DIVIDER;
+      rec.region = true;
+      const region: StateRegion = { id, ast: item.ast, parent: parent.id };
+      if (dir !== undefined) region.dir = dir;
+      this.regions.push(region);
+    } else {
+      rec.shape = GROUP;
+      if (item.ast.startsWith('s:')) rec.ast = item.ast;
     }
   }
 }

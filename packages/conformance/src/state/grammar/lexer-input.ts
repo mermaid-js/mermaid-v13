@@ -1,9 +1,9 @@
 /**
- * The state grammar's lexer input (see the header of `grammar/state.ebnf`): the text mermaid@12
+ * The state grammar's lexer input (see the header of `grammar/state.ebnf`): the text mermaid v12
  * handed its state lexer, built with v12's own regexes (`preprocess.ts` `cleanupText`, front
  * matter, `directiveRegex`, `cleanupComments`, `encodeEntities`) and mapped back to source
  * offsets. Dev and CI only; the hand-written lexer reproduces these effects without rewriting
- * (`src/parser/source.ts`), so this is an independent reference for it.
+ * (`src/parser/view.ts`), so this is an independent reference for it.
  */
 import { appendMapped, mapped, replaceMapped, sliceMapped } from '@mermaid-js/gen-grammar';
 import type { MappedText } from '@mermaid-js/gen-grammar';

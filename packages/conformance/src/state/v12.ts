@@ -1,5 +1,5 @@
 /**
- * The v12 side of state parity: a plain-data snapshot of what mermaid@12's `StateDB` handed its
+ * The v12 side of state parity: a plain-data snapshot of what mermaid v12's `StateDB` handed its
  * renderer (`getData()`: the graph `dataFetcher` built), plus classes, links, accessibility
  * fields and the diagram direction. The v13 normaliser (`v13.ts`) produces the same shape from a
  * `StateModel`.
@@ -11,7 +11,7 @@
  */
 import { decodeEntities } from '../flowchart/v12.ts';
 
-/** `diagram.type` mermaid@12 reports for `stateDiagram` and `stateDiagram-v2` alike. */
+/** `diagram.type` mermaid v12 reports for `stateDiagram` and `stateDiagram-v2` alike. */
 export const STATE_V12_TYPES = ['stateDiagram'];
 
 export interface StateSnapshot {
@@ -74,27 +74,45 @@ export function userClasses(css: string): string[] {
 
 const unquote = (s: string) => s.replace(/^"+|"+$/g, '');
 
-export function stateV12Snapshot(dbValue: unknown): StateSnapshot {
-  const db = dbValue as StateDbV12;
-  const data = db.getData();
-  // Regions in order within their composite.
+/** Regions renamed `<composite>:region<k>`, and the `[*]` states in them with them. */
+function regionNames(nodes: readonly NodeV12[]): (raw: string) => string {
   const rename = new Map<string, string>();
   const perParent = new Map<string, number>();
-  for (const n of data.nodes) {
+  for (const n of nodes) {
     if (n.shape !== 'divider' || !n.isGroup) continue;
     const parent = n.parentId ?? 'root';
     const k = (perParent.get(parent) ?? 0) + 1;
     perParent.set(parent, k);
     rename.set(n.id, `${parent}:region${k}`);
   }
-  const id = (raw: string): string => {
+  return (raw) => {
     const direct = rename.get(raw);
     if (direct !== undefined) return direct;
     const m = /^(.*)_(start|end)$/.exec(raw);
     const scope = m ? rename.get(m[1] ?? '') : undefined;
     return scope !== undefined ? `${scope}_${m?.[2] ?? ''}` : raw;
   };
-  const opt = (v: string | undefined) => (v === undefined ? undefined : id(v));
+}
+
+function stateOf(n: NodeV12, id: (raw: string) => string): StateSnapshot['states'][number] {
+  return {
+    id: id(n.id),
+    kind: n.isGroup ? 'composite' : (KINDS[n.shape ?? ''] ?? 'plain'),
+    // A label that is the id is the renamed id.
+    label: [n.label === n.id ? id(n.id) : (n.label ?? ''), ...(n.description ?? [])].map(
+      decodeEntities
+    ),
+    parent: n.parentId === undefined ? undefined : id(n.parentId),
+    classes: userClasses(n.cssClasses ?? ''),
+    styles: [...(n.cssStyles ?? [])],
+    dir: n.isGroup ? n.dir : undefined,
+  };
+}
+
+export function stateV12Snapshot(dbValue: unknown): StateSnapshot {
+  const db = dbValue as StateDbV12;
+  const data = db.getData();
+  const id = regionNames(data.nodes);
   const snap: StateSnapshot = {
     direction: data.direction,
     accTitle: decodeEntities(db.getAccTitle()),
@@ -108,11 +126,7 @@ export function stateV12Snapshot(dbValue: unknown): StateSnapshot {
       styles: [...c.styles],
       textStyles: [...c.textStyles],
     })),
-    links: [...db.getLinks().entries()].map(([k, v]) => [
-      k.id,
-      unquote(v.url),
-      unquote(v.tooltip),
-    ]),
+    links: [...db.getLinks().entries()].map(([k, v]) => [k.id, unquote(v.url), unquote(v.tooltip)]),
   };
   for (const n of data.nodes) {
     if (n.shape === 'noteGroup') continue;
@@ -122,29 +136,17 @@ export function stateV12Snapshot(dbValue: unknown): StateSnapshot {
         side: n.position === 'left of' ? 'left' : 'right',
         text: decodeEntities(n.label ?? ''),
       });
-      continue;
-    }
-    if (n.isGroup && n.shape === 'divider') {
-      snap.regions.push({ id: id(n.id), parent: opt(n.parentId) ?? '', dir: n.dir ?? 'TB' });
-      continue;
-    }
-    const kind = n.isGroup ? 'composite' : (KINDS[n.shape ?? ''] ?? 'plain');
-    snap.states.push({
-      id: id(n.id),
-      kind,
-      // A label that is the id is the renamed id.
-      label: [n.label === n.id ? id(n.id) : (n.label ?? ''), ...(n.description ?? [])].map(
-        decodeEntities
-      ),
-      parent: opt(n.parentId),
-      classes: userClasses(n.cssClasses ?? ''),
-      styles: [...(n.cssStyles ?? [])],
-      dir: n.isGroup ? n.dir : undefined,
-    });
+    } else if (n.isGroup && n.shape === 'divider') {
+      snap.regions.push({ id: id(n.id), parent: id(n.parentId ?? ''), dir: n.dir ?? 'TB' });
+    } else snap.states.push(stateOf(n, id));
   }
   for (const e of data.edges) {
     if (e.classes !== 'transition') continue;
-    snap.transitions.push({ from: id(e.start), to: id(e.end), label: decodeEntities(e.label ?? '') });
+    snap.transitions.push({
+      from: id(e.start),
+      to: id(e.end),
+      label: decodeEntities(e.label ?? ''),
+    });
   }
   return snap;
 }

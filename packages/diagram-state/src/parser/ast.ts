@@ -31,6 +31,8 @@ export interface StateStmt extends AstNode<'State'> {
   pseudo?: 'fork' | 'join' | 'choice';
   description?: string;
   className?: string;
+  /** `state X` on its own: it declares nothing, and v12 draws no state for it. */
+  declaredOnly?: boolean;
 }
 
 /** `A --> B : label`; its children are the two state mentions. */

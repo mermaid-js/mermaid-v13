@@ -5,7 +5,7 @@ import { asJison, grammarTokens } from './state-grammar.ts';
 
 /**
  * Lexer modes first (parser-method §2): the `@lexer` section of `grammar/state.ebnf` emits
- * mermaid@12's jison token stream (names, and images after jison's trimming actions) on the
+ * mermaid v12's jison token stream (names, and images after jison's trimming actions) on the
  * text v12's lexer received, over the e2e fixtures and the v12 spec strings.
  */
 describe('state grammar lexer', () => {

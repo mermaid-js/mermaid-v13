@@ -1,7 +1,7 @@
 /**
  * State lexer: a state machine mirroring the start conditions of v12's `stateDiagram.jison`
  * (DESIGN §4.3, parser-method §1), checked token by token against it (#138). It lexes the text
- * v12 lexed ({@link sourceView}) and maps every token back to its source range; the source is
+ * v12 lexed ({@link stateView}) and maps every token back to its source range; the source is
  * never rewritten.
  *
  * jison's matching, reproduced: per start condition the first rule that matches wins (no
@@ -33,7 +33,7 @@ import {
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { TokenStream } from '@mermaid-js/core/parser-kit';
-import type { SourceView } from './source.ts';
+import type { StateView } from './view.ts';
 import { T } from './tokens.ts';
 
 // Start conditions of stateDiagram.jison (those some rule enters).
@@ -110,7 +110,7 @@ export interface Lexed {
 export const NO_VIEW = 0xffffffff;
 
 /** Lex the state source `src` whose v12 text is `view`. */
-export function lex(src: string, view: SourceView): Lexed {
+export function lex(src: string, view: StateView): Lexed {
   return new StateLexer(src, view).run();
 }
 
@@ -137,7 +137,7 @@ class StateLexer {
 
   constructor(
     private readonly src: string,
-    private readonly view: SourceView
+    private readonly view: StateView
   ) {
     this.t = view.text;
     this.n = view.text.length;

@@ -1,6 +1,6 @@
 /**
  * The v13 side of state parity: the state plugin's parse and the normaliser from its
- * `StateModel` to the {@link StateSnapshot} that `v12.ts` takes from mermaid@12's `StateDB`.
+ * `StateModel` to the {@link StateSnapshot} that `v12.ts` takes from mermaid v12's `StateDB`.
  */
 import { detectState, parseState } from '@mermaid-js/diagram-state';
 import type { StateModel } from '@mermaid-js/diagram-state';
