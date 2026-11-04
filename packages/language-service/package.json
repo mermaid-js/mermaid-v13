@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*"
   }
 }

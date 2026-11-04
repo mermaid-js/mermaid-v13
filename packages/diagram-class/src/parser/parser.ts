@@ -266,7 +266,7 @@ class ClassParser extends ParserBase {
       nameRange: name.range,
       children: [],
     };
-    this.st.symbol(name.id, 'class', name.range, made ? 'def' : 'ref');
+    this.st.symbol(name.id, 'class', this.symbolRange(name), made ? 'def' : 'ref');
     this.mention(node, name.id, made);
     try {
       this.tested(AFTER_CLASS);
@@ -458,6 +458,31 @@ class ClassParser extends ParserBase {
     return { id: this.ids.statement('st'), type: kind, range: r, refs };
   }
 
+  /** `callback`, `link` and `click`: the node, then its span. */
+  protected clickCase(from: number, refs: string[], out: ClassStatementNode[]): void {
+    const { st } = this;
+    // The span is recorded once the statement is read, or failed (folding, code↔diagram
+    // highlight); an unclosed string or error keeps it to the statement's first line.
+    const node: ClassSimpleStmt = {
+      id: this.ids.statement('st'),
+      type: 'Click',
+      range: this.span(from),
+      refs,
+    };
+    out.push(node);
+    const errors = st.diagnostics.list.length;
+    try {
+      this.clickStatement(node);
+    } finally {
+      let r = this.span(from);
+      if (st.diagnostics.list.length > errors || this.runsToEnd(from)) {
+        r = { start: r.start, end: Math.min(r.end, this.lineBreakAfter(r.start)) };
+      }
+      node.range = r;
+      st.statement('click', r);
+    }
+  }
+
   /** One statement at the top level (jison `statement`). */
   protected statement(out: ClassStatementNode[]): void {
     const { db, st } = this;
@@ -487,10 +512,7 @@ class ClassParser extends ParserBase {
       case T.Callback:
       case T.Link:
       case T.Click: {
-        const node = this.simple('Click', from, refs);
-        out.push(node);
-        this.clickStatement(node);
-        node.range = this.span(from);
+        this.clickCase(from, refs, out);
         return;
       }
       case T.Style: {

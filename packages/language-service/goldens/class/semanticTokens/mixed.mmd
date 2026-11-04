@@ -1,0 +1,15 @@
+---
+title: Animals
+---
+classDiagram
+  direction LR
+  %% a comment
+  class Animal~T~["An animal"]:::hot {
+    +int age
+  }
+  <<abstract>> Animal
+  Animal "1" <\|-- "many" Duck : is a
+  pond ()-- Duck
+  classDef hot fill:#f00
+  click Duck call quack("loud") "Tooltip"
+  link Animal "https://example.com" _blank

@@ -1,3 +1,4 @@
 @ 1:1  |
   flowchart keyword 1:1-1:1 "" -> "flowchart"
   graph keyword 1:1-1:1 "" -> "graph"
+  classDiagram keyword 1:1-1:1 "" -> "classDiagram"

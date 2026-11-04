@@ -10,9 +10,10 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createLanguageService } from './index.ts';
 import { goldenCases, readFixture } from './testing/goldens.ts';
+import { UNLISTED_FACETS } from './testing/unlisted-facets.ts';
 
 const ROOT = join(import.meta.dirname, '..', 'goldens');
-const service = createLanguageService();
+const service = createLanguageService({ facets: UNLISTED_FACETS });
 beforeAll(() => service.preload());
 
 const cases = goldenCases(ROOT).filter((c) => c.feature === 'completions');

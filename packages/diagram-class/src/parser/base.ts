@@ -71,6 +71,9 @@ interface Mention {
   made: boolean;
 }
 
+/** A name that reads the same without backticks: letters, digits, `_` and `-`. */
+const PLAIN_NAME = /^[\p{L}\p{N}_-]+$/u;
+
 export abstract class ParserBase {
   /** Class mentions in source order; their ids are set at the end ({@link mentionIds}). */
   protected readonly mentions: Mention[] = [];
@@ -253,6 +256,14 @@ export abstract class ParserBase {
     return e;
   }
 
+  /** Whether a lexer-mode token from token `from` on, before the current one, runs to the end. */
+  protected runsToEnd(from: number): boolean {
+    for (let j = from; j < this.i; j++) {
+      if (inKindSet(MODE_KINDS, this.kind(j)) && this.end(j) >= this.src.length) return true;
+    }
+    return false;
+  }
+
   protected restartAt(at: number): void {
     if (at > this.lastRestart && at <= this.src.length && this.restarts < 64) {
       this.restartFrom = at;
@@ -270,13 +281,15 @@ export abstract class ParserBase {
       if (!inKindSet(MODE_KINDS, this.kind(j))) continue;
       const s = this.start(j);
       const e = this.end(j);
-      if (s === e || e < src.length || this.tokEnd(j) !== e) continue;
-      const [what, closer] = UNCLOSED[this.kind(j)] ?? ['text', 'closer'];
+      if (e < src.length || this.tokEnd(j) !== e) continue;
+      // An empty value counts only after its opener (`click A call` at the end of the text).
+      if (s === e && this.tokStart(j) === s) continue;
+      const [what, closer, code] = UNCLOSED[this.kind(j)] ?? ['text', 'closer', 'UNCLOSED'];
       const opener = { start: this.tokStart(j), end: s };
       const written = src.slice(opener.start, opener.end).trim();
       this.st.diagnostics.error(
-        this.kind(j) === T.Str ? 'UNCLOSED_STRING' : 'UNCLOSED',
-        `Unclosed ${what}: the ${written ? `\`${written}\`` : 'text'} at line ${this.lineOf(s)} has no closing ${closer}. Add ${closer} to close it.`,
+        code,
+        `Unclosed ${what}: the ${written ? `\`${written}\`` : 'text'} at line ${this.lineOf(opener.start)} has no closing ${closer}. Add ${closer} to close it.`,
         opener.end > opener.start ? opener : { start: s, end: Math.min(s + 1, src.length) },
         {
           related: [
@@ -460,9 +473,28 @@ export abstract class ParserBase {
     return { text, range: this.span(from) };
   }
 
+  /**
+   * The range of a name's symbol: the id alone, inside its backticks and without the generic
+   * type written after it (`A` of `A~T~`, also when `A` is backtick-quoted), so that rename edits the name
+   * only (D92). A name whose text does not start with its id keeps the whole range (the
+   * service then leaves it out).
+   */
+  protected idRange(id: string, range: Range): Range {
+    const { src } = this;
+    let start = range.start;
+    // Inside backticks only a plain name: one that needs them (`IPC::Sender`) stays whole.
+    if (src[start] === '`' && src[start + 1 + id.length] === '`' && PLAIN_NAME.test(id)) start++;
+    if (id === '' || src.slice(start, start + id.length) !== id) return range;
+    return { start, end: start + id.length };
+  }
+
+  protected symbolRange(name: Name): Range {
+    return this.idRange(name.id, name.range);
+  }
+
   /** A mention of a class name: its AST node (id set by {@link mentionIds}) and symbol. */
   protected ref(name: Name, created: boolean): ClassRefNode {
-    this.st.symbol(name.id, 'class', name.range, created ? 'def' : 'ref');
+    this.st.symbol(name.id, 'class', this.symbolRange(name), created ? 'def' : 'ref');
     return this.mention(
       { id: '', type: 'ClassRef', range: name.range, name: name.raw, classId: name.id },
       name.id,
@@ -522,7 +554,7 @@ export abstract class ParserBase {
 
   /** The interface end of a lollipop relationship: its AST node and symbol. */
   protected interfaceRef(name: Name, ast: AstId, index: number): ClassInterfaceRefNode {
-    this.st.symbol(name.id, 'interface', name.range, 'def');
+    this.st.symbol(name.id, 'interface', this.symbolRange(name), 'def');
     return {
       id: ast,
       type: 'InterfaceRef',
@@ -538,7 +570,11 @@ export abstract class ParserBase {
     let at = r.start + 1;
     for (const part of list.split(',')) {
       const pr = exact ? { start: at, end: at + part.length } : r;
-      this.st.symbol(splitClassName(part).id, kindName, pr, 'ref');
+      // v12 looked each part up as written: `"A, B"` names `A` and ` B`, which no class is.
+      if (part !== '' && part.trim() === part) {
+        const { id } = splitClassName(part);
+        this.st.symbol(id, kindName, exact ? this.idRange(id, pr) : pr, 'ref');
+      }
       out.push(part);
       at += part.length + 1;
     }
@@ -571,7 +607,7 @@ export abstract class ParserBase {
     const k = this.kind();
     this.i++;
     const name = this.className();
-    this.st.symbol(name.id, 'class', name.range, 'ref');
+    this.st.symbol(name.id, 'class', this.symbolRange(name), 'ref');
     node.refs.push(name.raw);
     if (k === T.Callback) {
       const fn = this.str().text;

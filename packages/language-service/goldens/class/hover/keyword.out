@@ -1,0 +1,73 @@
+@ 1:6  class|Diagram
+  1:1-1:13 "classDiagram"
+  | **`classDiagram`**
+  |
+  | A diagram is the header line, then statements, one per line.
+@ 2:6  dir|ection LR
+  2:3-2:15 "direction LR"
+  | **`direction LR`** direction: left to right
+@ 3:5  cl|ass A
+  3:3-3:8 "class"
+  | **`class`**
+  |
+  | `class Name`, with an optional `["label"]`, then `:::style`, `<<annotation>>` or a body of members in braces.
+@ 4:7  name|space N {
+  4:3-4:12 "namespace"
+  | **`namespace`**
+  |
+  | `namespace Name { … }`: groups classes and notes.
+@ 7:5  no|te for A "x"
+  7:3-7:11 "note for"
+  | **`note for`**
+  |
+  | `note for Class "text"` or `note "text"`.
+@ 8:6  not|e "y"
+  8:3-8:7 "note"
+  | **`note`**
+  |
+  | `note for Class "text"` or `note "text"`.
+@ 9:8  class|Def hot fill:#f00
+  9:3-9:11 "classDef"
+  | **`classDef`**
+  |
+  | `classDef name fill:#f96`: defines a style class, given with `:::name` or `cssClass`.
+@ 10:6  css|Class "A" hot
+  10:3-10:11 "cssClass"
+  | **`cssClass`**
+  |
+  | `cssClass "A,B" name`: gives classes a style class.
+@ 11:6  sty|le A fill:#000
+  11:3-11:8 "style"
+  | **`style`**
+  |
+  | `style Class fill:#f9f`: styles one class.
+@ 12:7  call|back A "fn"
+  12:3-12:11 "callback"
+  | **`callback`**
+  |
+  | `callback Class "fn"`, `link Class "url"`, `click Class call fn()` or `click Class href "url"`, with an optional tooltip; links take an optional target.
+@ 13:5  li|nk A "https://example.com"
+  13:3-13:7 "link"
+  | **`link`**
+  |
+  | `callback Class "fn"`, `link Class "url"`, `click Class call fn()` or `click Class href "url"`, with an optional tooltip; links take an optional target.
+@ 14:6  cli|ck A href "https://example.com"
+  14:3-14:8 "click"
+  | **`click`**
+  |
+  | `callback Class "fn"`, `link Class "url"`, `click Class call fn()` or `click Class href "url"`, with an optional tooltip; links take an optional target.
+@ 14:13  click A hr|ef "https://example.com"
+  14:11-14:15 "href"
+  | **`href`**
+  |
+  | `callback Class "fn"`, `link Class "url"`, `click Class call fn()` or `click Class href "url"`, with an optional tooltip; links take an optional target.
+@ 15:6  acc|Title: Title
+  15:3-15:12 "accTitle:"
+  | **`accTitle:`**
+  |
+  | `accTitle: …`: the accessible title of the diagram.
+@ 16:6  A :|:: hot
+  16:5-16:8 ":::"
+  | **`:::`**
+  |
+  | `class A:::name`: gives the class a style class.
