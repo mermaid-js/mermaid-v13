@@ -448,9 +448,6 @@
     "complexity": {
       "count": 1
     },
-    "max-params": {
-      "count": 1
-    },
     "tsdoc/syntax": {
       "count": 1
     }
@@ -464,22 +461,10 @@
     }
   },
   "packages/diagram-flowchart/src/parser/parser.ts": {
-    "@typescript-eslint/no-shadow": {
-      "count": 1
-    },
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 3
     },
-    "@typescript-eslint/only-throw-error": {
-      "count": 6
-    },
-    "complexity": {
-      "count": 1
-    },
     "max-lines": {
-      "count": 1
-    },
-    "max-lines-per-function": {
       "count": 1
     },
     "tsdoc/syntax": {
@@ -525,12 +510,6 @@
   },
   "packages/mermaid/src/api.ts": {
     "@typescript-eslint/explicit-module-boundary-types": {
-      "count": 1
-    },
-    "@typescript-eslint/no-shadow": {
-      "count": 3
-    },
-    "@typescript-eslint/no-unnecessary-condition": {
       "count": 1
     },
     "max-lines-per-function": {
