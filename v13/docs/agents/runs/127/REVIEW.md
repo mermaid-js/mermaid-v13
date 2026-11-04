@@ -19,6 +19,8 @@ Severity counts: 1 high, 2 medium, 4 low.
 
 ## 1. High: a `postLayout` hook that returns a new `LayoutModel` crashes every state diagram with a composite
 
+**Fixed in `83f98b6a4`:** `completeLayout` re-derives the views (warnings dropped) and the dividers from the hook's groups; `extensions.spec.ts` hooks a state diagram.
+
 **Where:** `packages/diagram-state/src/render/render.ts:317` (`for (const d of layout.dividers)`), with
 `render.ts:178` (`layout.state ?? prepareState(model, ctx)`) and `layout/layout.ts:21-26`.
 
@@ -49,6 +51,8 @@ state case to `packages/mermaid/src/extensions.spec.ts`, which today hooks only 
 
 ## 2. Medium: `isValidId` refuses valid ids that contain `$`
 
+**Fixed in `0513942b3`:** `line.replace('@', () => name)`; `$` ids now read back (refused only for `class`/`style`, as `café`), cases in `language.spec.ts`.
+
 **Where:** `packages/diagram-state/src/language.ts:34`: `line.replace('@', name)`.
 
 **Defect:** With a string as the replacement, `String.prototype.replace` expands `$$`, `$&`,
@@ -65,6 +69,8 @@ refusal is false: the rename would produce a valid diagram.
 to the `rename/` goldens or to `language.spec.ts`.
 
 ## 3. Medium: the `./testing` subpath is published scaffolding, and its pipeline is not the real one
+
+**Fixed in `cb765a0f3`:** `./testing` export removed; the helper is `src/testing.fixtures.ts` (unbuilt, with `state.configDefaults`); the conformance render spec runs on `createMermaid()` with a recording extension; `STATE_LAYOUT_DEFAULTS` gone (the layout reads `stateConfigDefaults`).
 
 **Where:** `packages/diagram-state/package.json:27-31` (export `./testing`, shipped in `dist`),
 `src/testing.ts:2-4` and `:50-57`, `src/layout/metrics.ts:49-52`.
@@ -88,6 +94,8 @@ keep it and document it as public in the README. Update the two stale comments.
 
 ## 4. Low: the build ships the test-only v12 spec adapter
 
+**Fixed in `0513942b3`:** `src/v12-specs/**` excluded from `tsconfig.build.json`.
+
 **Where:** `packages/diagram-state/tsconfig.build.json:10`.
 
 **Defect:** Flowchart's build config excludes `src/v12-specs/**`
@@ -101,6 +109,8 @@ keep it and document it as public in the README. Update the two stale comments.
 **Fix:** Add `"src/v12-specs/**"` to `exclude`, as flowchart does.
 
 ## 5. Low: a reopened composite that mixes plain children and regions gets zero padding
+
+**Fixed in `e7ce54666`:** such a composite keeps its side and bottom padding; test in `layout.spec.ts`.
 
 **Where:** `packages/diagram-state/src/layout/prepare.ts:484` (`groupPadding`), against
 `parser/model.ts` `node()`/`group()`.
@@ -120,6 +130,8 @@ has it as a direct parent. Alternatively, put such children in an implicit first
 draws them mixed too, so record the choice in GAPS/MIGRATION).
 
 ## 6. Low: statements and options that do nothing get no warning, and completion offers them
+
+**Fixed in `7d321e926`:** `IGNORED_IN_COMPOSITE` (`classDef`/`class`/`style`, and `click`, which lexes as state names there), `LINK_NOT_DRAWN`, `SCALE_IGNORED`; accept/reject unchanged; completion drops them in composites; MIGRATION.md lists them. `A:::cls` no-ops left open in GAPS.md.
 
 **Where:** `render/render.ts:205-207` (links looked up for node views only),
 `parser/model.ts:234,336` (`extract` reads top-level statements only),
@@ -147,6 +159,8 @@ the probe is inside a composite, or keep them and rely on the new warning. This 
 change against v12, so it goes to the maintainer.
 
 ## 7. Low: hover on a region's `[*]` names the composite, not the region's own start state
+
+**Fixed in `d6d8039c8`:** hover resolves the enclosing region (`X`, region k); golden `hover/region-start`.
 
 **Where:** `facet/hover.ts:107`, with `parser/names.ts` `keyOf` (the scope is the composite) and
 `parser/model.ts` `translate` (the scope is the region).
