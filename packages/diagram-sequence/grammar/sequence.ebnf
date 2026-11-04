@@ -1,0 +1,286 @@
+(** Sequence diagram syntax (R-PARSE-9, D54): the normative grammar of `sequenceDiagram` diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF read as LF; `="x"` inside an HTML tag read as
+`='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities kept as
+opaque text that no rule takes apart; and a line break appended. Keywords are matched without
+regard to case. A participant id and an invalid id lose the blanks around them. *)
+
+@lexer
+
+@modes ID ALIAS LINE CONFIG acc_title acc_descr acc_descr_multiline ;
+
+(** Separators: line breaks, `;` and the end of the text. *)
+NEWLINE                   /\n+/ ;
+-                         /\s+/ ;
+<ID,ALIAS,LINE> -         /(?:(?!\n)\s)+/ ;
+(** `#` to the end of the line is a comment outside messages and labels. *)
+<INITIAL,ID,ALIAS,LINE> - /#[^\n]*/                        :comment ;
+(* jison read `\%%(?!\{)` as one `%`. *)
+-                         /%(?!\{)[^\n]*/                  :comment ;
+-                         /[^}]%%[^\n]*/                   :comment ;
+(** `autonumber 10 5`: the first number and the step. *)
+NUM                       /(?:[0-9]+(?:\.[0-9]{1,2})?|\.[0-9]{1,2})(?=[ \n]+)/ :number ;
+
+(** Participant data `participant A@{ "type": "database" }`: YAML in braces. *)
+<ID> CONFIG_START         /@\{/                            push(CONFIG) :meta ;
+<CONFIG> CONFIG_CONTENT   /[^}]+/                          :meta ;
+<CONFIG> CONFIG_END       /\}(?=\s+(?i:as)\s)/             pop push(ALIAS) :meta ;
+<CONFIG> CONFIG_END       /\}/                             pop pop :meta ;
+(** A participant id after `participant`, `actor`, `destroy`, `activate` and `deactivate`. *)
+<ID> ACTOR                /[^<>:\n,;@\s]+(?=\s*@\{)/       :variable ;
+<ID> ACTOR                /[^<>:\n,;@\s]+(?=\s+(?i:as)\s)/ push(ALIAS) :variable ;
+<ID> ACTOR                /[^<>:\n,;@]+(?=\s*[\n;#]|$)/    pop :variable ;
+<ID> INVALID              /[^<>:\n,;@]*<[^\n]*/            pop ;
+<ID> INVALID              /[^\n]+/                         pop ;
+
+(** `box <colour> <label>`: groups the participants declared up to `end`. *)
+box                       /(?i:box)\b/                     push(LINE) :keyword ;
+(** `participant A`, `participant A as Alice`: declares a participant (a box). *)
+participant               /(?i:participant)\b/             push(ID) :keyword ;
+(** `actor A`: declares a participant drawn as a stick figure. *)
+participant_actor         /(?i:actor)\b/                   push(ID) :keyword ;
+(** `create participant A`: the participant appears at the next message, which goes to it. *)
+create                    /(?i:create)\b/                  :keyword ;
+(** `destroy A`: the participant ends at the next message, which comes from or goes to it. *)
+destroy                   /(?i:destroy)\b/                 push(ID) :keyword ;
+(** `participant A as Alice`: the label shown for the participant. *)
+<ALIAS> AS                /(?i:as)\b/                      pop pop push(LINE) :keyword ;
+<ALIAS> ALIAS_END         /(?:)/                           pop pop ;
+(** `loop <text>` … `end`: a repeated part. *)
+loop                      /(?i:loop)\b/                    push(LINE) :keyword ;
+(** `rect <colour>` … `end`: a background highlight. *)
+rect                      /(?i:rect)\b/                    push(LINE) :keyword ;
+(** `opt <text>` … `end`: an optional part. *)
+opt                       /(?i:opt)\b/                     push(LINE) :keyword ;
+(** `alt <text>` … `else <text>` … `end`: alternative paths. *)
+alt                       /(?i:alt)\b/                     push(LINE) :keyword ;
+(** `else <text>`: the next path of an `alt`. *)
+else                      /(?i:else)\b/                    push(LINE) :keyword ;
+(** `par <text>` … `and <text>` … `end`: parallel paths. *)
+par                       /(?i:par)\b/                     push(LINE) :keyword ;
+(** `par_over <text>` … `end`: parallel paths drawn over each other. *)
+par_over                  /(?i:par_over)\b/                push(LINE) :keyword ;
+(** `and <text>`: the next path of a `par`. *)
+and                       /(?i:and)\b/                     push(LINE) :keyword ;
+(** `critical <text>` … `option <text>` … `end`: a critical region and its options. *)
+critical                  /(?i:critical)\b/                push(LINE) :keyword ;
+(** `option <text>`: the next option of a `critical` region. *)
+option                    /(?i:option)\b/                  push(LINE) :keyword ;
+(** `break <text>` … `end`: a part that ends the sequence. *)
+break                     /(?i:break)\b/                   push(LINE) :keyword ;
+<LINE> restOfLine         /(?i:(?::?(?:no)?wrap:)?)[^#\n;]*/ pop :string ;
+(** `end`: closes a `box`, `loop`, `alt`, `rect` or other block. *)
+end                       /(?i:end)\b/                     :keyword ;
+(** `note left of A: …`: a note left of the participant. *)
+left_of                   /(?i:left of)\b/                 :keyword ;
+(** `note right of A: …`: a note right of the participant. *)
+right_of                  /(?i:right of)\b/                :keyword ;
+(** `links A: {"label": "url"}`: menu links for a participant. *)
+links                     /(?i:links)(?=[ \t]+[^/\\+()<>:\n,;\s-])/ :keyword ;
+(** `link A: label @ url`: one menu link for a participant. *)
+link                      /(?i:link)(?=[ \t]+[^/\\+()<>:\n,;\s-])/ :keyword ;
+(** `properties A: {"key": "value"}`: properties for a participant. *)
+properties                /(?i:properties)(?=[ \t]+[^/\\+()<>:\n,;\s-])/ :keyword ;
+(** `details A: <element id>`: menu data read from a page element. *)
+details                   /(?i:details)(?=[ \t]+[^/\\+()<>:\n,;\s-])/ :keyword ;
+(** `note over A: …` or `note over A,B: …`: a note over one or two participants. *)
+over                      /(?i:over)\b/                    :keyword ;
+(** `note left of A: …`, `note right of A: …`, `note over A,B: …`. *)
+note                      /(?i:note)\b/                    :keyword ;
+(** `activate A`: starts an activation bar on the participant. *)
+activate                  /(?i:activate)\b/                push(ID) :keyword ;
+(** `deactivate A`: ends the participant's last activation bar. *)
+deactivate                /(?i:deactivate)\b/              push(ID) :keyword ;
+(** `title <text>`: the diagram title. *)
+title                     /(?i:title)\s[^#\n;]+/           :keyword ;
+(** `title: <text>`: the diagram title (older form). *)
+legacy_title              /(?i:title:)\s[^#\n;]+/          :keyword ;
+
+(** `accTitle: …` and `accDescr: …` take the rest of the line; `accDescr { … }` runs to `}`. *)
+acc_title                 /(?i:accTitle)\s*:\s*/           push(acc_title) :keyword ;
+<acc_title> acc_title_value /[^\n]*/                       pop :string ;
+acc_descr                 /(?i:accDescr)\s*:\s*/           push(acc_descr) :keyword ;
+<acc_descr> acc_descr_value /[^\n]*/                       pop :string ;
+-                         /(?i:accDescr)\s*\{\s*/          push(acc_descr_multiline) attach-next :keyword ;
+<acc_descr_multiline> -   /\}/                             pop attach-prev :keyword ;
+<acc_descr_multiline> acc_descr_multiline_value /[^}]*/    :string ;
+
+SD                        /(?i:sequenceDiagram)\b/         :keyword ;
+(** `autonumber`, `autonumber <start> [<step>]`, `autonumber off`: numbers the messages. *)
+autonumber                /(?i:autonumber)\b/              :keyword ;
+off                       /(?i:off)\b/                     :keyword ;
+COMMA                     /,/                              :punctuation ;
+SEMI                      /;/                              :punctuation ;
+
+(** A participant id in a message or note: anything up to an arrow, `+`, `-`, `:`, `,` or `;`;
+a `-` joins an id unless an arrow starts there (`A-B->>C` is from `A-B`). *)
+ACTOR
+  /[^/\\+()<\->:\n,;]+(?:(?!-(?i:x)|--(?i:x)|-\)|--\)|-\|\\|-\\|-\/|-\/\/|-\|\/|\/\|-|\\\|-|\/\/-|\\\\-|\/\|-|--\|\\|--|\(\))-*[^+<\->:\n,;]+)*/
+  :variable ;
+
+(** `->>` solid line, arrowhead. *)
+SOLID_ARROW               /->>/                            :operator ;
+(** `<<->>` solid line, arrowheads at both ends. *)
+BIDIRECTIONAL_SOLID_ARROW /<<->>/                          :operator ;
+(** `-->>` dotted line, arrowhead. *)
+DOTTED_ARROW              /-->>/                           :operator ;
+(** `<<-->>` dotted line, arrowheads at both ends. *)
+BIDIRECTIONAL_DOTTED_ARROW /<<-->>/                        :operator ;
+(** `->` solid line, no arrowhead. *)
+SOLID_OPEN_ARROW          /->/                             :operator ;
+(** `-->` dotted line, no arrowhead. *)
+DOTTED_OPEN_ARROW         /-->/                            :operator ;
+(** `-x` solid line, a cross at the end. *)
+SOLID_CROSS               /-(?i:x)/                        :operator ;
+(** `--x` dotted line, a cross at the end. *)
+DOTTED_CROSS              /--(?i:x)/                       :operator ;
+(** `-)` solid line, an open arrow (async). *)
+SOLID_POINT               /-\)/                            :operator ;
+(** `--)` dotted line, an open arrow (async). *)
+DOTTED_POINT              /--\)/                           :operator ;
+(** Half arrows: `--|\`, `--|/`, `--\\`, `--//` and their reverses, dotted. *)
+SOLID_ARROW_TOP_DOTTED    /--\|\\/                         :operator ;
+SOLID_ARROW_BOTTOM_DOTTED /--\|\//                         :operator ;
+STICK_ARROW_TOP_DOTTED    /--\\\\/                         :operator ;
+STICK_ARROW_BOTTOM_DOTTED /--\/\//                         :operator ;
+SOLID_ARROW_TOP_REVERSE_DOTTED /\/\|--/                    :operator ;
+SOLID_ARROW_BOTTOM_REVERSE_DOTTED /\\\|--/                 :operator ;
+STICK_ARROW_TOP_REVERSE_DOTTED /\/\/--/                    :operator ;
+STICK_ARROW_BOTTOM_REVERSE_DOTTED /\\\\--/                 :operator ;
+(** Half arrows: `-|\`, `-|/`, `-\\`, `-//` and their reverses. *)
+SOLID_ARROW_TOP           /-\|\\/                          :operator ;
+SOLID_ARROW_BOTTOM        /-\|\//                          :operator ;
+STICK_ARROW_TOP           /-\\\\/                          :operator ;
+STICK_ARROW_BOTTOM        /-\/\//                          :operator ;
+SOLID_ARROW_TOP_REVERSE   /\/\|-/                          :operator ;
+SOLID_ARROW_BOTTOM_REVERSE /\\\|-/                         :operator ;
+STICK_ARROW_TOP_REVERSE   /\/\/-/                          :operator ;
+STICK_ARROW_BOTTOM_REVERSE /\\\\-/                         :operator ;
+
+(** `: text` after a message or note; `wrap:` / `nowrap:` first sets wrapping. *)
+TXT                       /:(?i:(?:(?:no)?wrap:)?)[^#\n;]*/ :string ;
+(** `A->>+B`: activates `B`. *)
+PLUS                      /\+/                             :operator ;
+(** `A->>-B`: deactivates `A`. *)
+MINUS                     /-/                              :operator ;
+(** `A->>()B`: a central connection on that end. *)
+PARENS                    /\(\)/                           :operator ;
+EOF                       /$/ ;
+INVALID                   /./ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+DIRECTIVE                 /[^\S\n]*%%\{.*?\}%%/             :meta ;
+
+@grammar
+
+(** A diagram is `sequenceDiagram`, then statements. *)
+sequence = { nl } Header document ;
+Header @Header = SD ;
+
+(** Statements, separated by line breaks or `;`; blocks and titles need no separator. *)
+document = { statement | nl | INVALID } ;
+nl = NEWLINE | SEMI | ALIAS_END | EOF ;
+
+statement = Participant nl
+  | Create nl
+  | Message nl
+  | Note nl
+  | Activation nl
+  | Autonumber nl
+  | menu nl
+  | Title
+  | AccTitle
+  | AccDescr
+  | Box
+  | fragment
+  | Rect ;
+
+(** `participant A`, `participant A as Alice` or `participant A@{ "type": "database" }`: declares
+a participant, drawn as a box unless the data gives another type. *)
+participantDecl = participant ACTOR [ config ] [ AS restOfLine ] ;
+(** `actor A` or `actor A as Alice`: declares a participant drawn as a stick figure. *)
+actorDecl = participant_actor ACTOR [ config ] [ AS restOfLine ] ;
+(** `destroy A`: the participant ends at the next message, which comes from or goes to it. *)
+destroyDecl = destroy actor ;
+participantLine = participantDecl | actorDecl | destroyDecl ;
+Participant @Participant = participantLine ;
+(** `create participant A` or `create actor A`: the participant appears at the next message,
+which goes to it. *)
+Create @Participant = create participantLine ;
+config = CONFIG_START CONFIG_CONTENT CONFIG_END ;
+actor = ACTOR | link ;
+
+(** `A->>B: text`; `+`/`-` after the arrow activate the target or deactivate the source, `()`
+on either side of the arrow is a central connection. *)
+Message @Message = actor ( arrow [ PLUS | MINUS | PARENS ] | PARENS arrow [ PARENS ] ) actor TXT ;
+arrow = SOLID_ARROW | BIDIRECTIONAL_SOLID_ARROW | DOTTED_ARROW | BIDIRECTIONAL_DOTTED_ARROW
+  | SOLID_OPEN_ARROW | DOTTED_OPEN_ARROW | SOLID_CROSS | DOTTED_CROSS | SOLID_POINT | DOTTED_POINT
+  | SOLID_ARROW_TOP_DOTTED | SOLID_ARROW_BOTTOM_DOTTED | STICK_ARROW_TOP_DOTTED
+  | STICK_ARROW_BOTTOM_DOTTED | SOLID_ARROW_TOP_REVERSE_DOTTED | SOLID_ARROW_BOTTOM_REVERSE_DOTTED
+  | STICK_ARROW_TOP_REVERSE_DOTTED | STICK_ARROW_BOTTOM_REVERSE_DOTTED | SOLID_ARROW_TOP
+  | SOLID_ARROW_BOTTOM | STICK_ARROW_TOP | STICK_ARROW_BOTTOM | SOLID_ARROW_TOP_REVERSE
+  | SOLID_ARROW_BOTTOM_REVERSE | STICK_ARROW_TOP_REVERSE | STICK_ARROW_BOTTOM_REVERSE ;
+
+(** `note left of A: text`, `note right of A: text` or `note over A,B: text`: a note beside
+one participant or over one or two. *)
+Note @Note = note ( ( left_of | right_of ) actor | over actor [ COMMA actor ] ) TXT ;
+(** `activate A` / `deactivate A`: starts or ends an activation bar. *)
+Activation @Activation = ( activate | deactivate ) actor ;
+(** `autonumber`, `autonumber <start> [<step>]` or `autonumber off`: numbers the messages. *)
+Autonumber @Autonumber = autonumber [ NUM [ NUM ] | off ] ;
+menu = Links | Link | Properties | Details ;
+(** `links A: {"label": "url"}`: menu links for a participant. *)
+Links @Links = links actor TXT ;
+(** `link A: label @ url`: one menu link for a participant. *)
+Link @Link = link actor TXT ;
+(** `properties A: {"key": "value"}`: properties for a participant's menu. *)
+Properties @Properties = properties actor TXT ;
+(** `details A: <element id>`: menu data read from a page element. *)
+Details @Details = details actor TXT ;
+
+(** `title <text>` or `title: <text>`: the diagram title. *)
+Title @Title = title | legacy_title ;
+(** `accTitle: <text>`: the accessible title. *)
+AccTitle @AccTitle = acc_title acc_title_value ;
+(** `accDescr: <text>` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = acc_descr acc_descr_value | acc_descr_multiline_value ;
+
+(** `box <colour> <label>` … `end`: groups the participants declared inside, with an optional
+colour and label. *)
+Box @Box = box restOfLine { Participant nl | nl } end ;
+
+(** `loop <text>` … `end`: a repeated part. *)
+Loop @Fragment = loop restOfLine document end ;
+(** `opt <text>` … `end`: an optional part. *)
+Opt @Fragment = opt restOfLine document end ;
+(** `break <text>` … `end`: a part that ends the sequence. *)
+Break @Fragment = break restOfLine document end ;
+(** `alt <text>` … `else <text>` … `end`: alternative paths. *)
+Alt @Fragment = alt restOfLine document { Else } end ;
+(** `else <text>`: the next path of an `alt`. *)
+Else @Section = else restOfLine document ;
+(** `par <text>` … `and <text>` … `end`: parallel paths. *)
+Par @Fragment = par restOfLine document { And } end ;
+(** `par_over <text>` … `and <text>` … `end`: parallel paths drawn over each other. *)
+ParOver @Fragment = par_over restOfLine document { And } end ;
+(** `and <text>`: the next path of a `par` or `par_over`. *)
+And @Section = and restOfLine document ;
+(** `critical <text>` … `option <text>` … `end`: a critical region and its options. *)
+Critical @Fragment = critical restOfLine document { Option } end ;
+(** `option <text>`: the next option of a `critical` region. *)
+Option @Section = option restOfLine document ;
+fragment = Loop | Opt | Break | Alt | Par | ParOver | Critical ;
+
+(** `rect <colour>` … `end`: a background highlight around its statements. *)
+Rect @Rect = rect restOfLine document end ;

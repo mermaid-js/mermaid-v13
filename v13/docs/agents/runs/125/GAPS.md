@@ -3,13 +3,13 @@
 Unmet acceptance criteria, filed under the ticket that owns each one.
 
 ## #141 T3 layout
-- [ ] Invariants on fixtures produced by the v13 parser: waits for #139 (T2), which waits for #27/#28 (D107). Run `sequenceLayoutViolations` over the parsed corpus.
-- [ ] Messages after a participant is destroyed are drawn below its end (as v12) and the span invariant reports them. Decide in #139 whether the parser rejects or warns.
+- [x] Invariants on fixtures produced by the v13 parser: `packages/conformance/src/sequence/layout-corpus.spec.ts` (#139), green in px and cells, default and changed config.
+- [x] Messages after a participant is destroyed: v12 accepts them (oracle), so #139 accepts with a `SEQUENCE_AFTER_DESTROY` warning; the span invariant reports them (pinned in the same spec).
 - **Decided (maintainer, 2026-11-04): honour per-key sequence font sizes.** A set `sequence.messageFontSize`, `noteFontSize`, `actorFontSize` (and the other per-key size/weight keys) takes effect; unset, they inherit the theme `fontSize` (v12's effective 16). v12 overwrote them all with the global `fontSize`. #141 already behaves this way. Still to do: the D-id row (next free after D114 on `docs/m3-specs`; the M3 docs session owns DECISIONS.md), and in #145 (T5) move the keys to `honoured` and add a MIGRATION.md entry for the change.
 
 ## #139 T2 parser
 
-- [ ] **D114: switch to the core source view.** v12's input cleanup (`diagram-sequence/src/parser/source.ts`, a copy of flowchart's) moves into the core parser kit, owned by the state spec's T0. The T0 (#181) is merged into this branch (7d7345ad6); #139 does the switch to core `sourceView` and deletes the copy.
+- [x] **D114: switch to the core source view.** Done in #139: `parser/source.ts` deleted; the lexer derives its own read text (CRLF, entities) from the core view.
 
 - [ ] **Core `sourceView` mid-line directive bugs (class owns the fix, draft PR into `mermaid-v13`).** (1) a `%%` line inside a `%%{…}%%` directive becomes a comment hole running past `}%%`; (2) `"style"` text inside a directive triggers the `;` drop. diagram-sequence uses core `sourceView` (#139), so it picks up the fix on the next `mermaid-v13` merge. Then add sequence forms of both strings to the lexer-parity edge cases (`packages/conformance/src/sequence/lexer-parity.spec.ts`) and check parity stays 100%.
 

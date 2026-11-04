@@ -8,9 +8,11 @@
  * labels are measured and drawn.
  *
  * What the parser guarantees, as v12's DB did:
- * - every id a message, note or activation names is in `participants` (v12 adds a participant
- *   at its first mention). The layout leaves out a statement that breaks this, with a
- *   `SEQUENCE_UNKNOWN_PARTICIPANT` warning, and `sequenceLayoutViolations` reports it;
+ * - every id a message or note names is in `participants` (v12 adds a participant at its
+ *   first mention). `activate X` / `deactivate X` do not add one (v12 did not either, and its
+ *   renderer failed on such an activation): the layout leaves out a statement that names an
+ *   undeclared participant, with a `SEQUENCE_UNKNOWN_PARTICIPANT` warning, and
+ *   `sequenceLayoutViolations` reports it;
  * - `autonumber N` is `{ start: N, step: 1 }` (v12 restarts the step), `autonumber N M` is
  *   `{ start: N, step: M }`, a bare `autonumber` and `autonumber off` carry neither.
  */
@@ -48,6 +50,13 @@ export interface SequenceParticipant {
   readonly destroyAst?: AstId;
   /** AST id of the message that destroys it: the next message after `destroy`. */
   readonly destroyedBy?: AstId;
+  /**
+   * Actor menu links from `links`/`link` statements, merged in order as v12 merged them; a
+   * redeclaration with a label resets them (as v12). For `plugin-interactions` (D105).
+   */
+  readonly links?: Readonly<Record<string, unknown>>;
+  /** Actor menu properties from `properties` statements, merged the same way. */
+  readonly properties?: Readonly<Record<string, unknown>>;
 }
 
 export interface SequenceBox {

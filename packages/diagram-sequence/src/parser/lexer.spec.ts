@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { Kind } from '@mermaid-js/core/parser-kit';
+import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { sequenceTokens } from './index.ts';
 import { lex } from './lexer.ts';
-import { sourceView } from './source.ts';
 import { T } from './tokens.ts';
 
 const stream = (src: string) => {
