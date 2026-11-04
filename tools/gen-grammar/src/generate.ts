@@ -34,6 +34,11 @@ export const GRAMMARS: GrammarTarget[] = [
       documented: ['Click', 'CallbackName'],
     },
   },
+  {
+    type: 'class',
+    title: 'Class diagram syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T', documented: ['CallbackName'] },
+  },
 ];
 
 export const grammarPath = (type: string): string =>

@@ -3,7 +3,7 @@ import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 import type { ClassLex } from './lexer.ts';
-import { v12Text } from './source.ts';
+import { v12Text } from './v12-text.ts';
 
 export interface ClassToken {
   /** A `T` kind or a shared `Kind`. */
