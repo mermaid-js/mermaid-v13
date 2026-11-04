@@ -1,0 +1,2326 @@
+[
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#1",
+    "source": "erDiagram\nISLAND\nMAINLAND"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#2",
+    "source": "erDiagram\n \"\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#3",
+    "source": "erDiagram\n Blo~rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#4",
+    "source": "erDiagram\n \"Blo~rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#5",
+    "source": "erDiagram\n \"Blo~~rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#6",
+    "source": "erDiagram\n \"Blorf~\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#8",
+    "source": "erDiagram\n Blo`rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#9",
+    "source": "erDiagram\n \"Blo`rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#10",
+    "source": "erDiagram\n \"Blo``rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#11",
+    "source": "erDiagram\n \"Blorf`\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#13",
+    "source": "erDiagram\n Blo!rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#14",
+    "source": "erDiagram\n \"Blo!rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#15",
+    "source": "erDiagram\n \"Blo!!rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#16",
+    "source": "erDiagram\n \"Blorf!\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#18",
+    "source": "erDiagram\n Blo@rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#19",
+    "source": "erDiagram\n \"Blo@rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#20",
+    "source": "erDiagram\n \"Blo@@rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#21",
+    "source": "erDiagram\n \"Blorf@\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#23",
+    "source": "erDiagram\n Blo#rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#24",
+    "source": "erDiagram\n \"Blo#rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#25",
+    "source": "erDiagram\n \"Blo##rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#26",
+    "source": "erDiagram\n \"Blorf#\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#28",
+    "source": "erDiagram\n Blo$rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#29",
+    "source": "erDiagram\n \"Blo$rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#30",
+    "source": "erDiagram\n \"Blo$$rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#31",
+    "source": "erDiagram\n \"Blorf$\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#33",
+    "source": "erDiagram\n Blo^rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#34",
+    "source": "erDiagram\n \"Blo^rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#35",
+    "source": "erDiagram\n \"Blo^^rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#36",
+    "source": "erDiagram\n \"Blorf^\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#38",
+    "source": "erDiagram\n Blo&rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#39",
+    "source": "erDiagram\n \"Blo&rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#40",
+    "source": "erDiagram\n \"Blo&&rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#41",
+    "source": "erDiagram\n \"Blorf&\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#43",
+    "source": "erDiagram\n Blo*rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#44",
+    "source": "erDiagram\n \"Blo*rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#45",
+    "source": "erDiagram\n \"Blo**rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#46",
+    "source": "erDiagram\n \"Blorf*\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#48",
+    "source": "erDiagram\n Blo(rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#49",
+    "source": "erDiagram\n \"Blo(rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#50",
+    "source": "erDiagram\n \"Blo((rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#51",
+    "source": "erDiagram\n \"Blorf(\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#53",
+    "source": "erDiagram\n Blo)rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#54",
+    "source": "erDiagram\n \"Blo)rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#55",
+    "source": "erDiagram\n \"Blo))rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#56",
+    "source": "erDiagram\n \"Blorf)\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#58",
+    "source": "erDiagram\n Blo-rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#59",
+    "source": "erDiagram\n \"Blo-rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#60",
+    "source": "erDiagram\n \"Blo--rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#61",
+    "source": "erDiagram\n \"Blorf-\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#63",
+    "source": "erDiagram\n Blo=rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#64",
+    "source": "erDiagram\n \"Blo=rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#65",
+    "source": "erDiagram\n \"Blo==rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#66",
+    "source": "erDiagram\n \"Blorf=\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#68",
+    "source": "erDiagram\n Blo+rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#69",
+    "source": "erDiagram\n \"Blo+rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#70",
+    "source": "erDiagram\n \"Blo++rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#71",
+    "source": "erDiagram\n \"Blorf+\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#73",
+    "source": "erDiagram\n Blo[rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#74",
+    "source": "erDiagram\n \"Blo[rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#75",
+    "source": "erDiagram\n \"Blo[[rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#76",
+    "source": "erDiagram\n \"Blorf[\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#78",
+    "source": "erDiagram\n Blo]rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#79",
+    "source": "erDiagram\n \"Blo]rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#80",
+    "source": "erDiagram\n \"Blo]]rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#81",
+    "source": "erDiagram\n \"Blorf]\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#83",
+    "source": "erDiagram\n Blo{rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#84",
+    "source": "erDiagram\n \"Blo{rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#85",
+    "source": "erDiagram\n \"Blo{{rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#86",
+    "source": "erDiagram\n \"Blorf{\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#88",
+    "source": "erDiagram\n Blo}rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#89",
+    "source": "erDiagram\n \"Blo}rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#90",
+    "source": "erDiagram\n \"Blo}}rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#91",
+    "source": "erDiagram\n \"Blorf}\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#93",
+    "source": "erDiagram\n Blo|rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#94",
+    "source": "erDiagram\n \"Blo|rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#95",
+    "source": "erDiagram\n \"Blo||rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#96",
+    "source": "erDiagram\n \"Blorf|\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#98",
+    "source": "erDiagram\n Blo/rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#99",
+    "source": "erDiagram\n \"Blo/rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#100",
+    "source": "erDiagram\n \"Blo//rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#101",
+    "source": "erDiagram\n \"Blorf/\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#103",
+    "source": "erDiagram\n Blo;rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#104",
+    "source": "erDiagram\n \"Blo;rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#105",
+    "source": "erDiagram\n \"Blo;;rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#106",
+    "source": "erDiagram\n \"Blorf;\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#108",
+    "source": "erDiagram\n Blo:rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#109",
+    "source": "erDiagram\n \"Blo:rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#110",
+    "source": "erDiagram\n \"Blo::rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#111",
+    "source": "erDiagram\n \"Blorf:\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#113",
+    "source": "erDiagram\n Blo'rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#114",
+    "source": "erDiagram\n \"Blo'rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#115",
+    "source": "erDiagram\n \"Blo''rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#116",
+    "source": "erDiagram\n \"Blorf'\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#118",
+    "source": "erDiagram\n Blo.rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#119",
+    "source": "erDiagram\n \"Blo.rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#120",
+    "source": "erDiagram\n \"Blo..rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#121",
+    "source": "erDiagram\n \"Blorf.\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#123",
+    "source": "erDiagram\n Blo?rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#124",
+    "source": "erDiagram\n \"Blo?rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#125",
+    "source": "erDiagram\n \"Blo??rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#126",
+    "source": "erDiagram\n \"Blorf?\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#128",
+    "source": "erDiagram\n Blo¡rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#129",
+    "source": "erDiagram\n \"Blo¡rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#130",
+    "source": "erDiagram\n \"Blo¡¡rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#131",
+    "source": "erDiagram\n \"Blorf¡\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#133",
+    "source": "erDiagram\n Blo⁄rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#134",
+    "source": "erDiagram\n \"Blo⁄rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#135",
+    "source": "erDiagram\n \"Blo⁄⁄rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#136",
+    "source": "erDiagram\n \"Blorf⁄\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#138",
+    "source": "erDiagram\n Blo™rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#139",
+    "source": "erDiagram\n \"Blo™rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#140",
+    "source": "erDiagram\n \"Blo™™rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#141",
+    "source": "erDiagram\n \"Blorf™\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#143",
+    "source": "erDiagram\n Blo€rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#144",
+    "source": "erDiagram\n \"Blo€rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#145",
+    "source": "erDiagram\n \"Blo€€rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#146",
+    "source": "erDiagram\n \"Blorf€\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#148",
+    "source": "erDiagram\n Blo£rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#149",
+    "source": "erDiagram\n \"Blo£rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#150",
+    "source": "erDiagram\n \"Blo££rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#151",
+    "source": "erDiagram\n \"Blorf£\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#153",
+    "source": "erDiagram\n Blo‹rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#154",
+    "source": "erDiagram\n \"Blo‹rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#155",
+    "source": "erDiagram\n \"Blo‹‹rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#156",
+    "source": "erDiagram\n \"Blorf‹\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#158",
+    "source": "erDiagram\n Blo¢rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#159",
+    "source": "erDiagram\n \"Blo¢rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#160",
+    "source": "erDiagram\n \"Blo¢¢rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#161",
+    "source": "erDiagram\n \"Blorf¢\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#163",
+    "source": "erDiagram\n Blo›rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#164",
+    "source": "erDiagram\n \"Blo›rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#165",
+    "source": "erDiagram\n \"Blo››rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#166",
+    "source": "erDiagram\n \"Blorf›\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#168",
+    "source": "erDiagram\n Blo∞rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#169",
+    "source": "erDiagram\n \"Blo∞rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#170",
+    "source": "erDiagram\n \"Blo∞∞rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#171",
+    "source": "erDiagram\n \"Blorf∞\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#173",
+    "source": "erDiagram\n Bloﬁrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#174",
+    "source": "erDiagram\n \"Bloﬁrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#175",
+    "source": "erDiagram\n \"Bloﬁﬁrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#176",
+    "source": "erDiagram\n \"Blorfﬁ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#178",
+    "source": "erDiagram\n Blo§rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#179",
+    "source": "erDiagram\n \"Blo§rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#180",
+    "source": "erDiagram\n \"Blo§§rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#181",
+    "source": "erDiagram\n \"Blorf§\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#183",
+    "source": "erDiagram\n Blo‡rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#184",
+    "source": "erDiagram\n \"Blo‡rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#185",
+    "source": "erDiagram\n \"Blo‡‡rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#186",
+    "source": "erDiagram\n \"Blorf‡\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#188",
+    "source": "erDiagram\n Blo•rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#189",
+    "source": "erDiagram\n \"Blo•rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#190",
+    "source": "erDiagram\n \"Blo••rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#191",
+    "source": "erDiagram\n \"Blorf•\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#193",
+    "source": "erDiagram\n Blo°rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#194",
+    "source": "erDiagram\n \"Blo°rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#195",
+    "source": "erDiagram\n \"Blo°°rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#196",
+    "source": "erDiagram\n \"Blorf°\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#198",
+    "source": "erDiagram\n Bloªrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#199",
+    "source": "erDiagram\n \"Bloªrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#200",
+    "source": "erDiagram\n \"Bloªªrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#201",
+    "source": "erDiagram\n \"Blorfª\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#203",
+    "source": "erDiagram\n Blo·rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#204",
+    "source": "erDiagram\n \"Blo·rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#205",
+    "source": "erDiagram\n \"Blo··rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#206",
+    "source": "erDiagram\n \"Blorf·\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#208",
+    "source": "erDiagram\n Bloºrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#209",
+    "source": "erDiagram\n \"Bloºrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#210",
+    "source": "erDiagram\n \"Bloººrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#211",
+    "source": "erDiagram\n \"Blorfº\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#213",
+    "source": "erDiagram\n Blo‚rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#214",
+    "source": "erDiagram\n \"Blo‚rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#215",
+    "source": "erDiagram\n \"Blo‚‚rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#216",
+    "source": "erDiagram\n \"Blorf‚\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#218",
+    "source": "erDiagram\n Blo≠rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#219",
+    "source": "erDiagram\n \"Blo≠rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#220",
+    "source": "erDiagram\n \"Blo≠≠rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#221",
+    "source": "erDiagram\n \"Blorf≠\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#223",
+    "source": "erDiagram\n Blo±rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#224",
+    "source": "erDiagram\n \"Blo±rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#225",
+    "source": "erDiagram\n \"Blo±±rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#226",
+    "source": "erDiagram\n \"Blorf±\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#228",
+    "source": "erDiagram\n Bloœrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#229",
+    "source": "erDiagram\n \"Bloœrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#230",
+    "source": "erDiagram\n \"Bloœœrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#231",
+    "source": "erDiagram\n \"Blorfœ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#233",
+    "source": "erDiagram\n BloŒrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#234",
+    "source": "erDiagram\n \"BloŒrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#235",
+    "source": "erDiagram\n \"BloŒŒrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#236",
+    "source": "erDiagram\n \"BlorfŒ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#238",
+    "source": "erDiagram\n Blo∑rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#239",
+    "source": "erDiagram\n \"Blo∑rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#240",
+    "source": "erDiagram\n \"Blo∑∑rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#241",
+    "source": "erDiagram\n \"Blorf∑\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#243",
+    "source": "erDiagram\n Blo„rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#244",
+    "source": "erDiagram\n \"Blo„rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#245",
+    "source": "erDiagram\n \"Blo„„rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#246",
+    "source": "erDiagram\n \"Blorf„\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#248",
+    "source": "erDiagram\n Blo®rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#249",
+    "source": "erDiagram\n \"Blo®rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#250",
+    "source": "erDiagram\n \"Blo®®rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#251",
+    "source": "erDiagram\n \"Blorf®\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#253",
+    "source": "erDiagram\n Blo†rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#254",
+    "source": "erDiagram\n \"Blo†rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#255",
+    "source": "erDiagram\n \"Blo††rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#256",
+    "source": "erDiagram\n \"Blorf†\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#258",
+    "source": "erDiagram\n Bloˇrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#259",
+    "source": "erDiagram\n \"Bloˇrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#260",
+    "source": "erDiagram\n \"Bloˇˇrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#261",
+    "source": "erDiagram\n \"Blorfˇ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#263",
+    "source": "erDiagram\n Blo¥rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#264",
+    "source": "erDiagram\n \"Blo¥rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#265",
+    "source": "erDiagram\n \"Blo¥¥rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#266",
+    "source": "erDiagram\n \"Blorf¥\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#268",
+    "source": "erDiagram\n BloÁrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#269",
+    "source": "erDiagram\n \"BloÁrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#270",
+    "source": "erDiagram\n \"BloÁÁrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#271",
+    "source": "erDiagram\n \"BlorfÁ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#273",
+    "source": "erDiagram\n Blo¨rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#274",
+    "source": "erDiagram\n \"Blo¨rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#275",
+    "source": "erDiagram\n \"Blo¨¨rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#276",
+    "source": "erDiagram\n \"Blorf¨\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#278",
+    "source": "erDiagram\n Bloˆrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#279",
+    "source": "erDiagram\n \"Bloˆrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#280",
+    "source": "erDiagram\n \"Bloˆˆrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#281",
+    "source": "erDiagram\n \"Blorfˆ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#288",
+    "source": "erDiagram\n BloØrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#289",
+    "source": "erDiagram\n \"BloØrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#290",
+    "source": "erDiagram\n \"BloØØrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#291",
+    "source": "erDiagram\n \"BlorfØ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#293",
+    "source": "erDiagram\n Bloπrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#294",
+    "source": "erDiagram\n \"Bloπrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#295",
+    "source": "erDiagram\n \"Bloππrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#296",
+    "source": "erDiagram\n \"Blorfπ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#298",
+    "source": "erDiagram\n Blo∏rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#299",
+    "source": "erDiagram\n \"Blo∏rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#300",
+    "source": "erDiagram\n \"Blo∏∏rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#301",
+    "source": "erDiagram\n \"Blorf∏\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#303",
+    "source": "erDiagram\n Blo“rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#304",
+    "source": "erDiagram\n \"Blo“rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#305",
+    "source": "erDiagram\n \"Blo““rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#306",
+    "source": "erDiagram\n \"Blorf“\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#308",
+    "source": "erDiagram\n Blo«rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#309",
+    "source": "erDiagram\n \"Blo«rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#310",
+    "source": "erDiagram\n \"Blo««rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#311",
+    "source": "erDiagram\n \"Blorf«\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#313",
+    "source": "erDiagram\n Blo»rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#314",
+    "source": "erDiagram\n \"Blo»rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#315",
+    "source": "erDiagram\n \"Blo»»rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#316",
+    "source": "erDiagram\n \"Blorf»\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#318",
+    "source": "erDiagram\n Bloårf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#319",
+    "source": "erDiagram\n \"Bloårf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#320",
+    "source": "erDiagram\n \"Bloåårf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#321",
+    "source": "erDiagram\n \"Blorfå\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#323",
+    "source": "erDiagram\n BloÅrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#324",
+    "source": "erDiagram\n \"BloÅrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#325",
+    "source": "erDiagram\n \"BloÅÅrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#326",
+    "source": "erDiagram\n \"BlorfÅ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#328",
+    "source": "erDiagram\n Bloßrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#329",
+    "source": "erDiagram\n \"Bloßrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#330",
+    "source": "erDiagram\n \"Bloßßrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#331",
+    "source": "erDiagram\n \"Blorfß\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#333",
+    "source": "erDiagram\n BloÍrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#334",
+    "source": "erDiagram\n \"BloÍrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#335",
+    "source": "erDiagram\n \"BloÍÍrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#336",
+    "source": "erDiagram\n \"BlorfÍ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#338",
+    "source": "erDiagram\n Blo∂rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#339",
+    "source": "erDiagram\n \"Blo∂rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#340",
+    "source": "erDiagram\n \"Blo∂∂rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#341",
+    "source": "erDiagram\n \"Blorf∂\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#343",
+    "source": "erDiagram\n BloÎrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#344",
+    "source": "erDiagram\n \"BloÎrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#345",
+    "source": "erDiagram\n \"BloÎÎrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#346",
+    "source": "erDiagram\n \"BlorfÎ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#348",
+    "source": "erDiagram\n Bloƒrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#349",
+    "source": "erDiagram\n \"Bloƒrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#350",
+    "source": "erDiagram\n \"Bloƒƒrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#351",
+    "source": "erDiagram\n \"Blorfƒ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#353",
+    "source": "erDiagram\n BloÏrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#354",
+    "source": "erDiagram\n \"BloÏrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#355",
+    "source": "erDiagram\n \"BloÏÏrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#356",
+    "source": "erDiagram\n \"BlorfÏ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#358",
+    "source": "erDiagram\n Blo©rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#359",
+    "source": "erDiagram\n \"Blo©rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#360",
+    "source": "erDiagram\n \"Blo©©rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#361",
+    "source": "erDiagram\n \"Blorf©\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#363",
+    "source": "erDiagram\n Blo˙rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#364",
+    "source": "erDiagram\n \"Blo˙rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#365",
+    "source": "erDiagram\n \"Blo˙˙rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#366",
+    "source": "erDiagram\n \"Blorf˙\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#368",
+    "source": "erDiagram\n BloÓrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#369",
+    "source": "erDiagram\n \"BloÓrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#370",
+    "source": "erDiagram\n \"BloÓÓrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#371",
+    "source": "erDiagram\n \"BlorfÓ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#373",
+    "source": "erDiagram\n Blo∆rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#374",
+    "source": "erDiagram\n \"Blo∆rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#375",
+    "source": "erDiagram\n \"Blo∆∆rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#376",
+    "source": "erDiagram\n \"Blorf∆\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#378",
+    "source": "erDiagram\n BloÔrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#379",
+    "source": "erDiagram\n \"BloÔrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#380",
+    "source": "erDiagram\n \"BloÔÔrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#381",
+    "source": "erDiagram\n \"BlorfÔ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#383",
+    "source": "erDiagram\n Blo˚rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#384",
+    "source": "erDiagram\n \"Blo˚rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#385",
+    "source": "erDiagram\n \"Blo˚˚rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#386",
+    "source": "erDiagram\n \"Blorf˚\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#388",
+    "source": "erDiagram\n Blorf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#389",
+    "source": "erDiagram\n \"Blorf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#390",
+    "source": "erDiagram\n \"Blorf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#391",
+    "source": "erDiagram\n \"Blorf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#393",
+    "source": "erDiagram\n Blo¬rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#394",
+    "source": "erDiagram\n \"Blo¬rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#395",
+    "source": "erDiagram\n \"Blo¬¬rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#396",
+    "source": "erDiagram\n \"Blorf¬\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#398",
+    "source": "erDiagram\n BloÒrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#399",
+    "source": "erDiagram\n \"BloÒrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#400",
+    "source": "erDiagram\n \"BloÒÒrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#401",
+    "source": "erDiagram\n \"BlorfÒ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#403",
+    "source": "erDiagram\n Blo…rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#404",
+    "source": "erDiagram\n \"Blo…rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#405",
+    "source": "erDiagram\n \"Blo……rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#406",
+    "source": "erDiagram\n \"Blorf…\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#408",
+    "source": "erDiagram\n BloÚrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#409",
+    "source": "erDiagram\n \"BloÚrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#410",
+    "source": "erDiagram\n \"BloÚÚrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#411",
+    "source": "erDiagram\n \"BlorfÚ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#413",
+    "source": "erDiagram\n Bloærf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#414",
+    "source": "erDiagram\n \"Bloærf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#415",
+    "source": "erDiagram\n \"Bloæærf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#416",
+    "source": "erDiagram\n \"Blorfæ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#418",
+    "source": "erDiagram\n BloÆrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#419",
+    "source": "erDiagram\n \"BloÆrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#420",
+    "source": "erDiagram\n \"BloÆÆrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#421",
+    "source": "erDiagram\n \"BlorfÆ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#423",
+    "source": "erDiagram\n BloΩrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#424",
+    "source": "erDiagram\n \"BloΩrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#425",
+    "source": "erDiagram\n \"BloΩΩrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#426",
+    "source": "erDiagram\n \"BlorfΩ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#428",
+    "source": "erDiagram\n Blo¸rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#429",
+    "source": "erDiagram\n \"Blo¸rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#430",
+    "source": "erDiagram\n \"Blo¸¸rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#431",
+    "source": "erDiagram\n \"Blorf¸\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#433",
+    "source": "erDiagram\n Blo≈rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#434",
+    "source": "erDiagram\n \"Blo≈rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#435",
+    "source": "erDiagram\n \"Blo≈≈rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#436",
+    "source": "erDiagram\n \"Blorf≈\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#443",
+    "source": "erDiagram\n Blo˛rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#444",
+    "source": "erDiagram\n \"Blo˛rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#445",
+    "source": "erDiagram\n \"Blo˛˛rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#446",
+    "source": "erDiagram\n \"Blorf˛\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#448",
+    "source": "erDiagram\n Bloçrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#449",
+    "source": "erDiagram\n \"Bloçrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#450",
+    "source": "erDiagram\n \"Bloççrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#451",
+    "source": "erDiagram\n \"Blorfç\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#453",
+    "source": "erDiagram\n BloÇrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#454",
+    "source": "erDiagram\n \"BloÇrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#455",
+    "source": "erDiagram\n \"BloÇÇrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#456",
+    "source": "erDiagram\n \"BlorfÇ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#458",
+    "source": "erDiagram\n Blo√rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#459",
+    "source": "erDiagram\n \"Blo√rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#460",
+    "source": "erDiagram\n \"Blo√√rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#461",
+    "source": "erDiagram\n \"Blorf√\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#463",
+    "source": "erDiagram\n Blo◊rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#464",
+    "source": "erDiagram\n \"Blo◊rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#465",
+    "source": "erDiagram\n \"Blo◊◊rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#466",
+    "source": "erDiagram\n \"Blorf◊\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#468",
+    "source": "erDiagram\n Blo∫rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#469",
+    "source": "erDiagram\n \"Blo∫rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#470",
+    "source": "erDiagram\n \"Blo∫∫rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#471",
+    "source": "erDiagram\n \"Blorf∫\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#473",
+    "source": "erDiagram\n Bloırf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#474",
+    "source": "erDiagram\n \"Bloırf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#475",
+    "source": "erDiagram\n \"Bloıırf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#476",
+    "source": "erDiagram\n \"Blorfı\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#478",
+    "source": "erDiagram\n Blo˜rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#479",
+    "source": "erDiagram\n \"Blo˜rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#480",
+    "source": "erDiagram\n \"Blo˜˜rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#481",
+    "source": "erDiagram\n \"Blorf˜\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#483",
+    "source": "erDiagram\n Bloµrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#484",
+    "source": "erDiagram\n \"Bloµrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#485",
+    "source": "erDiagram\n \"Bloµµrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#486",
+    "source": "erDiagram\n \"Blorfµ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#488",
+    "source": "erDiagram\n BloÂrf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#489",
+    "source": "erDiagram\n \"BloÂrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#490",
+    "source": "erDiagram\n \"BloÂÂrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#491",
+    "source": "erDiagram\n \"BlorfÂ\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#493",
+    "source": "erDiagram\n Blo≤rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#494",
+    "source": "erDiagram\n \"Blo≤rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#495",
+    "source": "erDiagram\n \"Blo≤≤rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#496",
+    "source": "erDiagram\n \"Blorf≤\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#498",
+    "source": "erDiagram\n Blo¯rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#499",
+    "source": "erDiagram\n \"Blo¯rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#500",
+    "source": "erDiagram\n \"Blo¯¯rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#501",
+    "source": "erDiagram\n \"Blorf¯\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#503",
+    "source": "erDiagram\n Blo≥rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#504",
+    "source": "erDiagram\n \"Blo≥rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#505",
+    "source": "erDiagram\n \"Blo≥≥rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#506",
+    "source": "erDiagram\n \"Blorf≥\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#508",
+    "source": "erDiagram\n Blo˘rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#509",
+    "source": "erDiagram\n \"Blo˘rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#510",
+    "source": "erDiagram\n \"Blo˘˘rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#511",
+    "source": "erDiagram\n \"Blorf˘\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#513",
+    "source": "erDiagram\n Blo÷rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#514",
+    "source": "erDiagram\n \"Blo÷rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#515",
+    "source": "erDiagram\n \"Blo÷÷rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#516",
+    "source": "erDiagram\n \"Blorf÷\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#518",
+    "source": "erDiagram\n Blo¿rf\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#519",
+    "source": "erDiagram\n \"Blo¿rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#520",
+    "source": "erDiagram\n \"Blo¿¿rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#521",
+    "source": "erDiagram\n \"Blorf¿\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#523",
+    "source": "erDiagram\n \"a~`!@#$^&*()-=+[]{}|/;:'.?¡⁄™€£‹¢›∞ﬁ§‡•°ª·º‚≠±œŒ∑„®†ˇ¥Á¨ˆˆØπ∏“«»åÅßÍ∂ÎƒÏ©˙Ó∆Ô˚¬Ò…ÚæÆΩ¸≈π˛çÇ√◊∫ı˜µÂ≤¯≥˘÷¿\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#524",
+    "source": "erDiagram\n \"Blo%rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#525",
+    "source": "erDiagram\n \"Blo\\rf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#526",
+    "source": "erDiagram\n \"Blo\nrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#527",
+    "source": "erDiagram\n \"Blo\rrf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#528",
+    "source": "erDiagram\n \"Blo\brf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#529",
+    "source": "erDiagram\n \"Blo\u000brf\"\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#530",
+    "source": "erDiagram\nDUCK-àáâäæãåā\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#531",
+    "source": "erDiagram\nDUCK-BILLED_PLATYPUS\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#532",
+    "source": "erDiagram\nfoo[\"bar\"]\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#533",
+    "source": "erDiagram\nfoo ||--o| bar : rel\nbuzz foo[\"batman\"]\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#534",
+    "source": "erDiagram\nbuzz foo[\"batman\"]\nfoo ||--o| bar : rel\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#535",
+    "source": "erDiagram\n_foo\n"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#536",
+    "source": "erDiagram\nBOOK {\nstring myBookTitle\nstring MYBOOKSUBTITLE_1\nstring author-ref[name](1)\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#537",
+    "source": "erDiagram\nBOOK{\nstring *title}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#538",
+    "source": "erDiagram\nBOOK {\nid *the_Primary_Key}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#539",
+    "source": "erDiagram\nBUILDING {\npublic.geometry(point,4326) location}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#540",
+    "source": "erDiagram\nBOOK {\nstring 0author\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#541",
+    "source": "erDiagram\nBOOK {\nstring -author\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#542",
+    "source": "erDiagram\nBOOK {\nstring [author\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#543",
+    "source": "erDiagram\nBOOK {\nstring ]author\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#544",
+    "source": "erDiagram\nBOOK {\nstring (author\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#545",
+    "source": "erDiagram\nBOOK {\nstring )author\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#546",
+    "source": "erDiagram\nHOTEL {\nstring `geo.accuracy`\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#547",
+    "source": "erDiagram\nHOTEL {\nstring `geo.accuracy` PK \"the comment\"\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#548",
+    "source": "erDiagram\nHOTEL {\n`my.type` address\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#549",
+    "source": "erDiagram\nPERSON {\nstring? alias\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#550",
+    "source": "erDiagram\nPERSON {\nstring? alias UK \"optional display name\"\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#551",
+    "source": "erDiagram\nBOOK {\nstring title\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#552",
+    "source": "erDiagram\nBOOK {\nstring title PK\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#553",
+    "source": "erDiagram\nBOOK {\nstring title \"comment\"\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#554",
+    "source": "erDiagram\nBOOK {\nstring title PK \"comment\"\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#555",
+    "source": "erDiagram\nBOOK {\nint fk_title FK \n\nstring pk_author PK\nstring uk_address UK\nfloat pk_price PK \"comment\"\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#556",
+    "source": "erDiagram\nCUSTOMER {\nint customer_number PK, FK \"comment1\"\ndatetime customer_status_start_datetime PK,UK, FK\ndatetime customer_status_end_datetime PK , UK \"comment3\"\nstring customer_firstname\nstring customer_lastname \"comment5\"\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#557",
+    "source": "erDiagram\nBOOK {\ntype~T~ type\noption~T~ readable \"comment\"\nstring id PK\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#558",
+    "source": "erDiagram\nBOOK {\nstring[] readers FK \"comment\"\nstring[] authors FK\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#559",
+    "source": "erDiagram\nBOOK {\ncharacter(10) isbn FK\nvarchar(5) postal_code \"Five digits\"\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#560",
+    "source": "erDiagram\nBOOK {\nstring title\nstring author\nfloat price\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#561",
+    "source": "erDiagram\nBOOK {\nstring title\n}\nBOOK {\nstring author\nfloat price\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#562",
+    "source": "erDiagram\nBOOK {}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#563",
+    "source": "erDiagram\nBOOK{}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#564",
+    "source": "erDiagram\nBOOK         {}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#565",
+    "source": "erDiagram\nBOOK {\n  \n\n  string title\n\n  \n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#566",
+    "source": "erDiagram\nBOOK{string title}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#567",
+    "source": "erDiagram\nCAR ||--o{ DRIVER : \"insured for\""
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#568",
+    "source": "erDiagram\nCAR ||--o{ DRIVER : \"insured for\"\nDRIVER ||--|| LICENSE : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#569",
+    "source": "erDiagram\nTEACHER }o--o{ STUDENT : \"is teacher of\""
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#570",
+    "source": "erDiagram\nNODE ||--o{ NODE : \"leads to\""
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#571",
+    "source": "erDiagram\n      accTitle: graph title\n      accDescr: this graph is about stuff\n      TEACHER }o--o{ STUDENT : \"is teacher of\""
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#572",
+    "source": "erDiagram\n      accTitle: graph title\n      accDescr { this graph is\n        about\n        stuff\n        }\n\n      TEACHER }o--o{ STUDENT : \"is teacher of\""
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#573",
+    "source": "erDiagram\nCAR ||--o{ PERSON : \"insured for\"\nCAR }o--|| PERSON : \"owned by\""
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#574",
+    "source": "erDiagram\nA ||--|{ B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#575",
+    "source": "erDiagram\nA ||..o{ B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#576",
+    "source": "erDiagram\nA |o..o{ B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#577",
+    "source": "erDiagram\nA |o--|{ B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#578",
+    "source": "erDiagram\nA }|--|| B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#579",
+    "source": "erDiagram\nA }o--|| B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#580",
+    "source": "erDiagram\nA }o..o| B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#581",
+    "source": "erDiagram\nA }|..o| B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#582",
+    "source": "erDiagram\nA |o..|| B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#583",
+    "source": "erDiagram\nA ||..|| B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#584",
+    "source": "erDiagram\nA ||--o| B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#585",
+    "source": "erDiagram\nA |o..o| B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#586",
+    "source": "erDiagram\nA }o--o{ B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#587",
+    "source": "erDiagram\nA }|..|{ B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#588",
+    "source": "erDiagram\nA }o--|{ B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#589",
+    "source": "erDiagram\nA }|..o{ B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#590",
+    "source": "erDiagram\nA one or zero to many B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#591",
+    "source": "erDiagram\nA one or many optionally to zero or one B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#592",
+    "source": "erDiagram\nA zero or more to zero or many B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#593",
+    "source": "erDiagram\nA many(0) to many(1) B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#594",
+    "source": "erDiagram\nA many optionally to one B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#595",
+    "source": "erDiagram\nA only one optionally to 1+ B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#596",
+    "source": "erDiagram\nA 0+ optionally to 1 B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#597",
+    "source": "erDiagram\nCUSTOMER 1--one or more DELIVERY-ADDRESS : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#598",
+    "source": "erDiagram\nCUSTOMER 1..one or more DELIVERY-ADDRESS : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#599",
+    "source": "erDiagram\nCUSTOMER 1.-one or more DELIVERY-ADDRESS : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#600",
+    "source": "erDiagram\nCUSTOMER 1-.one or more DELIVERY-ADDRESS : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#601",
+    "source": "erDiagram\na many to 1 1: label"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#602",
+    "source": "erDiagram\na many to 1 12: label"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#603",
+    "source": "erDiagram\nHOUSE ||--|{ ROOM : contains"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#604",
+    "source": "erDiagram\nHOUSE one to one ROOM : contains"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#605",
+    "source": "erDiagram\n PERSON ||..o{ POSSESSION : owns"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#606",
+    "source": "erDiagram\n PERSON many optionally to many POSSESSION : owns"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#607",
+    "source": "erDiagram\nA xxx B : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#608",
+    "source": "erDiagram\n        CUSTOMER\n        style CUSTOMER color:red\n      "
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#609",
+    "source": "erDiagram\n        CUSTOMER\n        style CUSTOMER color:red,stroke:blue,fill:#f9f\n      "
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#610",
+    "source": "erDiagram\n        CUSTOMER\n        style CUSTOMER color:red\n        style CUSTOMER fill:#f9f\n      "
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#611",
+    "source": "erDiagram\nCUSTOMER\nclass CUSTOMER myClass"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#612",
+    "source": "erDiagram\nCUSTOMER\nclass CUSTOMER firstClass, secondClass, thirdClass"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#613",
+    "source": "erDiagram\nCUSTOMER\nclass CUSTOMER firstClass\nclass CUSTOMER secondClass"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#614",
+    "source": "erDiagram\n        ENTITY1\n        ENTITY2\n        classDef default fill:#f9f\n      "
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#615",
+    "source": "erDiagram\n        classDef myClass fill:#f9f, stroke: red, color: pink\n      "
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#616",
+    "source": "erDiagram\n        classDef firstClass,secondClass fill:#f9f, stroke: red, color: pink\n       "
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#617",
+    "source": "erDiagram\nCUSTOMER:::myClass"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#618",
+    "source": "erDiagram\nCUSTOMER:::myClass {}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#619",
+    "source": "erDiagram\nCUSTOMER:::myClass {\nstring name\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#620",
+    "source": "erDiagram\nCUSTOMER:::firstClass,secondClass"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#621",
+    "source": "erDiagram\nc[CUSTOMER]:::myClass"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#622",
+    "source": "erDiagram\nCUSTOMER:::myClass ||--o{ PERSON:::myClass : allows"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#623",
+    "source": "erDiagram\nCUSTOMER ||--|{ ORDER : \"\""
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#624",
+    "source": "erDiagram\nCUSTOMER ||--|{ ORDER : \"places\""
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#625",
+    "source": "erDiagram\nCUSTOMER ||--|{ ORDER : places"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#626",
+    "source": "erDiagram\nPROJECT u--o{ TEAM_MEMBER : \"parent\""
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#627",
+    "source": "erDiagram\n__proto__ ||--|{ ORDER : place"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#628",
+    "source": "erDiagram\nconstructor ||--|{ ORDER : place"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#629",
+    "source": "erDiagram\nprototype ||--|{ ORDER : place"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#630",
+    "source": "erDiagram\nCUSTOMER }|..|{ DELIVERY-ADDRESS : has\n1"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#631",
+    "source": "erDiagram\nCUSTOMER }|..|{ DELIVERY-ADDRESS : has\nu"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#632",
+    "source": "erDiagram\nCUSTOMER }|..|{ DELIVERY-ADDRESS : has\n2.5"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#633",
+    "source": "erDiagram\nCUSTOMER }|..|{ DELIVERY-ADDRESS : has\n1.5"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#634",
+    "source": "erDiagram\nCUSTOMER }|..|{ DELIVERY-ADDRESS : has\n0.1"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#635",
+    "source": "erDiagram\nCUSTOMER }|..|{ DELIVERY-ADDRESS : has\n99.99"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#636",
+    "source": "erDiagram\nu {\nstring name\nint id\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#637",
+    "source": "erDiagram\n1 {\nstring name\nint id\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#638",
+    "source": "erDiagram\n2.5 {\nstring name\nint id\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#639",
+    "source": "erDiagram\n1.5 {\nstring value\n}"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#640",
+    "source": "erDiagram\nCUSTOMER ||--|| u : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#641",
+    "source": "erDiagram\nu ||--|| ORDER : places"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#642",
+    "source": "erDiagram\nu ||--|| v : connects"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#643",
+    "source": "erDiagram\nCUSTOMER ||--|| 1 : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#644",
+    "source": "erDiagram\n1 ||--|| ORDER : places"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#645",
+    "source": "erDiagram\n1 ||--|| 2 : connects"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#646",
+    "source": "erDiagram\nCUSTOMER ||--|| 2.5 : has"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#647",
+    "source": "erDiagram\n1.5 ||--|| ORDER : places"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#648",
+    "source": "erDiagram\n2.5 ||--|| 5.5 : connects"
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#649",
+    "source": "erDiagram\n              CUSTOMER ||--o{ 1 : places\n              1 ||--|{ u : contains\n              u {\n                string name\n                int quantity\n              }\n              \"2.5\" ||--|| ORDER : processes\n              ORDER {\n                int id\n                date created\n              }\n        "
+  },
+  {
+    "id": "v12-specs/parser/erDiagram.spec.js#650",
+    "source": "erDiagram\n              ENTITY {\n                string name1\n                int value2\n                float point3_5\n              }\n        "
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#1",
+    "source": "erDiagram\nsubgraph Group\nA\nB\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#2",
+    "source": "erDiagram\nsubgraph \"Some Title\"\nA\nB\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#3",
+    "source": "erDiagram\nsubgraph id [Title]\nA\nB\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#4",
+    "source": "erDiagram\nsubgraph \"Group 1.5\"\nA\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#5",
+    "source": "erDiagram\nsubgraph Group\n\nA\n\nB\n\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#6",
+    "source": "erDiagram\nsubgraph Group\nA\nend   \n"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#7",
+    "source": "erDiagram\nsubgraph empty\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#8",
+    "source": "erDiagram subgraph WithRL\ndirection RL\nA\nB\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#9",
+    "source": "erDiagram\nsubgraph Group\nA }|--|| B : \"relates to\"\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#10",
+    "source": "erDiagram\nsubgraph Group\nA\nend\nA }|--|| B : \"relates to\"\n"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#11",
+    "source": "erDiagram\nsubgraph G1\n  A\nend\nsubgraph G2\n  B\nend\nG1 }|--|| G2 : \"relates to\"\n"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#12",
+    "source": "erDiagram\nsubgraph G1\n  A\nend\nsubgraph G2\n  B\nend\nA }|--|| B : \"relates to\"\n"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#13",
+    "source": "erDiagram\nsubgraph Group\nA\nend\nGroup }|--|| B : \"relates to\"\n"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#14",
+    "source": "erDiagram\nsubgraph Group\n  A }|--|| B : \"r1\"\n  B }|--|| C : \"r2\"\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#15",
+    "source": "erDiagram\nsubgraph outer\n  A\n  subgraph inner\n    B\n  end\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#16",
+    "source": "erDiagram\nsubgraph outer\n    A\n      B\n  subgraph inner\n        C\n  end\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#17",
+    "source": "erDiagram\nsubgraph outer\n  subgraph inner\n    A }|--|| B : \"relates to\"\n  end\nend"
+  },
+  {
+    "id": "v12-specs/parser/subgraph.spec.js#18",
+    "source": "erDiagram\nsubgraph outer\n  A\n  subgraph inner\n    B\n  end\nend\nA }|--|| B : \"relates to\"\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#1",
+    "source": "---\ntitle: Order example\n---\nerDiagram\n    CUSTOMER ||--o{ ORDER : places\n    ORDER ||--|{ LINE-ITEM : contains\n    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#2",
+    "source": "erDiagram\n    CUSTOMER ||--o{ ORDER : places\n    CUSTOMER {\n        string name\n        string custNumber\n        string sector\n    }\n    ORDER ||--|{ LINE-ITEM : contains\n    ORDER {\n        int orderNumber\n        string deliveryAddress\n    }\n    LINE-ITEM {\n        string productCode\n        int quantity\n        float pricePerUnit\n    }\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#3",
+    "source": "erDiagram\n  CUSTOMER ||--o{ ORDER : places\n  ORDER ||--|{ LINE_ITEM : contains\n  PRODUCT ||--o{ LINE_ITEM : \"appears in\"\n  CUSTOMER {\n    string name\n    string email\n  }\n  ORDER {\n    int id\n    date placedAt\n  }\n  LINE_ITEM {\n    int quantity\n    float price\n  }\n  PRODUCT {\n    string sku\n    string title\n  }\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#4",
+    "source": "---\nconfig:\n  theme: default\n  look: classic\n  layout: dagre\n---\nerDiagram\n  CUSTOMER ||--o{ ORDER : places\n  ORDER ||--|{ LINE_ITEM : contains\n  PRODUCT ||--o{ LINE_ITEM : \"appears in\"\n  CUSTOMER {\n    string name\n    string email\n  }\n  ORDER {\n    int id\n    date placedAt\n  }\n  LINE_ITEM {\n    int quantity\n    float price\n  }\n  PRODUCT {\n    string sku\n    string title\n  }\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#5",
+    "source": "erDiagram\n    \"This ❤ Unicode\"\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#6",
+    "source": "erDiagram\n    \"This **is** _Markdown_\"\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#7",
+    "source": "erDiagram\n    CAR ||--o{ NAMED-DRIVER : allows\n    PERSON }o..o{ NAMED-DRIVER : is\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#8",
+    "source": "erDiagram\n    CAR 1 to zero or more NAMED-DRIVER : allows\n    PERSON many(0) optionally to 0+ NAMED-DRIVER : is\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#9",
+    "source": "erDiagram\n    CAR ||--o{ NAMED-DRIVER : allows\n    CAR {\n        string registrationNumber\n        string make\n        string model\n    }\n    PERSON ||--o{ NAMED-DRIVER : is\n    PERSON {\n        string firstName\n        string lastName\n        int age\n    }\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#10",
+    "source": "erDiagram\n    PERSON {\n        string firstName\n        string? middleName\n        string lastName\n    }\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#11",
+    "source": "erDiagram\n    p[Person] {\n        string firstName\n        string lastName\n    }\n    a[\"Customer Account\"] {\n        string email\n    }\n    p ||--o| a : has\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#12",
+    "source": "erDiagram\n    CAR ||--o{ NAMED-DRIVER : allows\n    CAR {\n        string registrationNumber PK\n        string make\n        string model\n        string[] parts\n    }\n    PERSON ||--o{ NAMED-DRIVER : is\n    PERSON {\n        string driversLicense PK \"The license #\"\n        string(99) firstName \"Only 99 characters are allowed\"\n        string lastName\n        string phone UK\n        int age\n    }\n    NAMED-DRIVER {\n        string carRegistrationNumber PK, FK\n        string driverLicence PK, FK\n    }\n    MANUFACTURER only one to zero or more CAR : makes\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#13",
+    "source": "erDiagram\n    direction TB\n    CUSTOMER ||--o{ ORDER : places\n    CUSTOMER {\n        string name\n        string custNumber\n        string sector\n    }\n    ORDER ||--|{ LINE-ITEM : contains\n    ORDER {\n        int orderNumber\n        string deliveryAddress\n    }\n    LINE-ITEM {\n        string productCode\n        int quantity\n        float pricePerUnit\n    }\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#14",
+    "source": "erDiagram\n    direction LR\n    CUSTOMER ||--o{ ORDER : places\n    CUSTOMER {\n        string name\n        string custNumber\n        string sector\n    }\n    ORDER ||--|{ LINE-ITEM : contains\n    ORDER {\n        int orderNumber\n        string deliveryAddress\n    }\n    LINE-ITEM {\n        string productCode\n        int quantity\n        float pricePerUnit\n    }\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#15",
+    "source": "erDiagram\n    subgraph title1\n        CUSTOMER\n        CUSTOMER {\n            string name\n            string custNumber\n            string sector\n        }\n    end\n    subgraph title2\n        CAR ||--o{ NAMED-DRIVER : allows\n        subgraph title3\n            PERSON\n            PERSON {\n                string firstName\n                string lastName\n                int age\n            }\n        end\n    end\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#16",
+    "source": "erDiagram\n    subgraph title1\n        CUSTOMER\n    end\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#17",
+    "source": "erDiagram\n    subgraph \"Customer Domain\"\n        CUSTOMER\n    end\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#18",
+    "source": "erDiagram\n    subgraph id1 [title 1]\n        CUSTOMER\n    end\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#19",
+    "source": "erDiagram\n    subgraph title1\n        A1 ||--|| A2 : links\n    end\n\n    subgraph title2\n        B1 ||--|| B2 : links\n    end\n\n    subgraph title3\n        C1 ||--|| C2 : links\n    end\n\n    title1 ||--|| title2 : links\n    title2 ||--|| title3 : links\n    title2 ||--|| C2 : links\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#20",
+    "source": "erDiagram\n    direction LR\n    subgraph TOP\n        direction TB\n        subgraph B1\n            direction RL\n            I1 ||--|| F1 : links\n        end\n        subgraph B2\n            direction BT\n            I2 ||--|| F2 : links\n        end\n    end\n    A ||--|| TOP : links\n    TOP ||--|| B : links\n    B1 ||--|| B2 : links\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#21",
+    "source": "erDiagram\n    id1||--||id2 : label\n    style id1 fill:#f9f,stroke:#333,stroke-width:4px\n    style id2 fill:#bbf,stroke:#f66,stroke-width:2px,color:#fff,stroke-dasharray: 5 5\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#22",
+    "source": "erDiagram\n    direction TB\n    CAR:::someclass {\n        string registrationNumber\n        string make\n        string model\n    }\n    PERSON:::someclass {\n        string firstName\n        string lastName\n        int age\n    }\n    HOUSE:::someclass\n\n    classDef someclass fill:#f96\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#23",
+    "source": "erDiagram\n    CAR {\n        string registrationNumber\n        string make\n        string model\n    }\n    PERSON {\n        string firstName\n        string lastName\n        int age\n    }\n    PERSON:::foo ||--|| CAR : owns\n    PERSON o{--|| HOUSE:::bar : has\n\n    classDef foo stroke:#f00\n    classDef bar stroke:#0f0\n    classDef foobar stroke:#00f\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#24",
+    "source": "erDiagram\n    CAR {\n        string registrationNumber\n        string make\n        string model\n    }\n    PERSON {\n        string firstName\n        string lastName\n        int age\n    }\n    PERSON:::foo ||--|| CAR : owns\n    PERSON o{--|| HOUSE:::bar : has\n\n    classDef default fill:#f9f,stroke-width:4px\n    classDef foo stroke:#f00\n    classDef bar stroke:#0f0\n    classDef foobar stroke:#00f\n"
+  },
+  {
+    "id": "v12-docs/entityRelationshipDiagram.md#25",
+    "source": "---\ntitle: Order example\nconfig:\n    layout: dagre\n---\nerDiagram\n    CUSTOMER ||--o{ ORDER : places\n    ORDER ||--|{ LINE-ITEM : contains\n    CUSTOMER }|..|{ DELIVERY-ADDRESS : uses\n"
+  }
+]

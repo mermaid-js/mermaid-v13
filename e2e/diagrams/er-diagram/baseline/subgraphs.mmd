@@ -1,0 +1,13 @@
+---
+description: nested subgraphs with titles and their own direction, and a relationship to a subgraph
+---
+erDiagram
+  subgraph Sales [Sales domain]
+    direction LR
+    CUSTOMER ||--o{ ORDER : places
+    subgraph Billing
+      INVOICE ||--|{ PAYMENT : "settled by"
+    end
+  end
+  ORDER ||--|| INVOICE : billed
+  WAREHOUSE ||--o{ Sales : supplies

@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-er": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*",
     "@mermaid-js/diagram-state": "workspace:*",
     "@mermaid-js/language-service": "workspace:*",

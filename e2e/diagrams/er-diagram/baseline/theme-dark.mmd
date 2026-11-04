@@ -1,0 +1,12 @@
+---
+description: a schema in the dark theme, set in front matter (row fills follow the theme, D117)
+config:
+  theme: dark
+---
+erDiagram
+  CUSTOMER ||--o{ ORDER : places
+  ORDER {
+    int id PK
+    date placed
+    string status
+  }

@@ -1,0 +1,3 @@
+@ 4:12  classDef |
+  hot class 4:12-4:12 "" -> "hot"
+  cold class 4:12-4:12 "" -> "cold"

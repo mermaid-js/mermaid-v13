@@ -1,0 +1,8 @@
+@ 3:12  subgraph |Sales
+  prepare: 3:12-3:17 "Sales"; rename to "Shop":
+  %% rename-to: Shop
+  erDiagram
+    subgraph Shop
+      ORDER
+    end
+    CUSTOMER ||--o{ Shop : buys

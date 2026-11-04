@@ -123,6 +123,8 @@ export function nonCapturing(pattern: string): string {
 
 export function textMate(g: Grammar, names: HighlightNames): object {
   const suffix = `.${names.id}`;
+  // Oniguruma's `(?i)` makes the rest of the (group of the) pattern ignore case.
+  const tm = (p: string) => (g.ignoreCase ? `(?i)${nonCapturing(p)}` : nonCapturing(p));
   const scope = (r: LexRule) => {
     const s = scopeOf(r);
     return s ? (TEXTMATE_SCOPES[s] ?? s) + suffix : undefined;
@@ -139,9 +141,7 @@ export function textMate(g: Grammar, names: HighlightNames): object {
     if (target === undefined) {
       const pattern = progressPattern(r);
       if (pattern === undefined) return undefined;
-      repository[key] = name
-        ? { match: nonCapturing(pattern), name }
-        : { match: nonCapturing(pattern) };
+      repository[key] = name ? { match: tm(pattern), name } : { match: tm(pattern) };
       return key;
     }
     const ends = rulesIn(g, target).filter((e) => isEnd(target, e) && !pushTarget(e));
@@ -150,8 +150,8 @@ export function textMate(g: Grammar, names: HighlightNames): object {
     const switches = rulesIn(g, target).filter((e) => isEnd(target, e) && pushTarget(e));
     const end =
       [
-        ...ends.map((e) => `(${nonCapturing(e.pattern)})`),
-        ...switches.map((e) => `(?=${nonCapturing(e.pattern)})`),
+        ...ends.map((e) => `(${tm(e.pattern)})`),
+        ...switches.map((e) => `(?=${tm(e.pattern)})`),
       ].join('|') || '$';
     const endCaptures: Record<string, object> = {};
     ends.forEach((e, k) => {
@@ -159,7 +159,7 @@ export function textMate(g: Grammar, names: HighlightNames): object {
       if (s) endCaptures[String(k + 1)] = { name: s };
     });
     const rule: Record<string, unknown> = {
-      begin: nonCapturing(r.pattern),
+      begin: tm(r.pattern),
       end,
       patterns: [{ include: `#mode-${target}` }],
     };
@@ -216,6 +216,7 @@ export function monarch(g: Grammar, names: HighlightNames): object {
   return {
     tokenPostfix: `.${names.id}`,
     defaultToken: '',
+    ...(g.ignoreCase ? { ignoreCase: true } : {}),
     includeLF: true,
     start: 'frontMatterStart',
     tokenizer,
@@ -310,7 +311,7 @@ const MODES = Object.fromEntries(
   Object.entries(TABLE).map(([mode, rules]) => [
     mode,
     rules.map(([p, token, push, pop]) => ({
-      re: new RegExp(p, 'y'),
+      re: new RegExp(p, '${g.ignoreCase ? 'iy' : 'y'}'),
       term: TERMS[token],
       push,
       pop,

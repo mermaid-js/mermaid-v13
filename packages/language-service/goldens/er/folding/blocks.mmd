@@ -1,0 +1,18 @@
+---
+title: Folding
+---
+erDiagram
+  accDescr {
+    A description
+    over two lines
+  }
+  subgraph outer
+    subgraph inner
+      A \|\|--o{ B : x
+    end
+    C {
+      string id PK
+      int n
+    }
+  end
+  D { string x }

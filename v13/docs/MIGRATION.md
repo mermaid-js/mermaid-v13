@@ -222,6 +222,11 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `state.compositTitleSize` | ignored | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
 | `state.radius` | ignored | Read only by v12's old dagre state renderer, which 12.2.0 no longer reached (both keywords used the unified renderer, which did not read it). Sizes come from the theme and state's own metrics. |  |
 | `er.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `er.layoutDirection` | ignored | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. The diagram's `direction` statement sets the direction. | `direction TB\|BT\|LR\|RL` in the diagram text |
+| `er.minEntityHeight` | ignored | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. An entity is as tall as its rows. |  |
+| `er.stroke` | ignored | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. | `themeVariables.nodeBorder` and `lineColor` |
+| `er.fill` | ignored | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. | `themeVariables.mainBkg` |
+| `er.fontSize` | ignored | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. Entities use the theme font size. | `themeVariables.fontSize` |
 | `pie.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `quadrantChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `xyChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -348,6 +353,10 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `leanPaddingX` / `leanPaddingY` (totals; per side for the inverted trapezoid) | 2 × padding / padding | padding |
 | `oddPaddingX` / `oddPaddingY` (totals) | 42 / 24 | padding |
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color` | `none` |
+| `erZeroOrMoreCircleOffset` (ER, centre of a zero-or-more circle from the outline) | 28 | 30 |
+| `rowOdd` / `rowEven` (ER attribute rows) | the entity fill (`mainBkg`): v12 neo leaves rows unfilled | v12's `rowOdd` / `rowEven`, the same colours (khroma's HSL lightening, D117) |
+| `erEdgeLabelBackground` (ER relationship labels) | white (`redux-color`), `#16141f` (`redux-dark-color`); `edgeLabelBackground` in `redux` and `redux-dark` | `edgeLabelBackground` |
+| `erMarkerFill` (ER zero circles) | `mainBkg` | white |
 | `compositeBackground` (state) | `background`; `#16141f` on `redux-dark` and `redux-dark-color` | `background` |
 | `compositeTitleBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color` | `mainBkg` |
 | `altBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color` | `#f0f0f0` (`default`, `forest`); `#555555` (`dark`); `#f4f4f4` (`neutral`); `tertiaryColor` (`base`) |
@@ -399,6 +408,22 @@ so it counts twice towards the diameter compared with the per-side node padding.
 
 Node positions differ from v12's dagre and ELK output; layouts are deterministic for the same
 input.
+
+### ER diagrams
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Laid out by ELK, v12's default `layout` | Laid out by the built-in `layered` engine, like every graph diagram; `layout: elk` maps to it until an ELK plugin is registered | DESIGN §6.1, D106 |
+| ELK's orthogonal routes | Stepped routes (right angles), the nearest `layered` routing | |
+| Table cells padded by `er.diagramPadding` (across) and `er.entityPadding` (down), times 1.25 without HTML labels | Every cell padded by `er.entityPadding` (default 15 px) on each side, across and down; `er.diagramPadding` (default 20 px) is the margin around the drawing. Text output keeps 1 cell across and no margin | D116, ADR-13 |
+| `er.nodeSpacing` / `er.rankSpacing` (140 / 80) and `er.minEntityWidth` (100) | Honoured with the same defaults in SVG. Text output uses the cell profile's spacing and widths unless the diagram sets these keys. A value equal to the default counts as not set in text output: setting exactly `nodeSpacing: 140`, `rankSpacing: 80` or `minEntityWidth: 100` draws the compact cell spacing, and any other value converts from px | D118, D124 |
+| Text output's gap between ranks | At least 6 cells (the cell profile's own is 4), so a relationship's two crow's-foot ends and its label each keep a line cell between them | D124 |
+
+The `er` keys `layoutDirection`, `minEntityHeight`, `fontSize`, `stroke` and `fill` are
+ignored: mermaid 12.2.0 no longer read them either (only its legacy ER renderer did). Use the
+`direction` statement and the `fontSize`, `mainBkg`, `nodeBorder` and `lineColor` theme
+variables instead.
+| Entities with attributes and subgraph titles measured by the browser | Measured before layout with the injected measurer, in the font each is drawn in | DESIGN §6.1 |
 
 ## Labels and text
 
@@ -569,3 +594,28 @@ them keep working.
 | `style`/`classDef`/`linkStyle` as a `style` attribute | Presentation attributes (`fill`, `stroke`, …) after the allow-list (R-SEC-3) | Unknown properties and unsafe values are dropped with a warning |
 | `click A "url"` wraps the node in `<a xlink:href>`; tooltips are an HTML hover div | `<a href>` inside the node group (only URLs that pass `securityLevel`); tooltips are an SVG `<title>`; `click … callback` draws nothing (interactions plugin) | No script in output (R-SVG-4, R-SVG-5) |
 | `viewBox` may start at negative coordinates | `viewBox="0 0 w h"` | Layout places the drawing at the origin |
+
+## ER SVG structure
+
+What changed in the ER diagram's SVG compared with v12 (DESIGN §7.2, #133). The groups are the
+flowchart's (`clusters`, `edgePaths`, `edgeLabels`, `nodes`), and v12's ER class names are kept
+where the element still exists (`node default <classDef>`, `outer-path`, `row-rect-odd`,
+`row-rect-even`, `name`, `attribute-type`, `attribute-name`, `attribute-keys`,
+`attribute-comment`, `divider`, `relationshipLine`, `edge-pattern-solid`/`-dashed`, `cluster`).
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `class="erDiagram"`, `aria-roledescription="er"`, a `<style>` element | No root `id`; `class="mermaid mermaid-er erDiagram"`, `role="img"`, `aria-roledescription="er"`, `data-mermaid-version`; no `<style>`, colours are presentation attributes reading `var(--_x)` aliases | Only `<id>-title` and `<id>-desc` ids (R-A11Y-1); inert output (R-SEC-2) |
+| Entity `<g class="node default" id="entity-<name>-<n>">` | `<g class="node default …" data-id="<name>" data-ast="n:<name>" transform>` | `data-ast` maps the entity to its first mention (R-PARSE-8) |
+| Table drawn with rough.js paths: `g.outer-path`, `g.row-rect-odd/even` (one per row, empty of text), one `path.divider` polygon per rule, and `g.label` groups holding `<foreignObject>` or `<text>` | `<rect class="outer-path">`; one `<g class="row-rect-odd\|even" data-id="<attribute>" data-ast="a:<entity>.<attribute>">` per attribute row holding its fill `<rect>` and its cells as `<text class="attribute-type">` (and `-name`, `-keys`, `-comment`); one `<path class="divider">` with the outline and every rule; `<text class="name">` | One element per attribute row carries its AST id; text labels only (D5) |
+| Entity without attributes: `drawRect` with `rect.basic.label-container` | `<rect class="outer-path">` and `<text class="name">` | Same structure as a table |
+| Entity outline 1.3px (rough.js default) in classic looks, `strokeWidth` in neo | `strokeWidth` (1 classic, 2 redux) for outline, rules, lines and ends | Theme tokens (R-THEME-11), D117 |
+| `style` / `classDef` fill: classic looks keep the theme fill on odd rows, neo fills every row | The author's fill fills the whole table in every theme; its stroke styles the outline and every rule | One rule for every theme (D152), D117 |
+| Edge `<path class="… relationshipLine" id="id_<from entity id>_<to entity id>_<n>" marker-start marker-end>` with `<marker>` elements in `<defs>`: `CUSTOMER \|\|--o{ ORDER` is `id_entity-CUSTOMER-0_entity-ORDER-1_0` | `<g class="edge relationshipLine edge-thickness-normal edge-pattern-solid\|dashed" data-id="id_<from name>_<to name>_<n>" data-ast="e:<a>><b>">` holding the line `<path>` and one `<g class="marker onlyOne\|zeroOrOne\|oneOrMore\|zeroOrMore">` per end (a `<path>`, plus a `<circle>` for a zero end): the same edge is `id_CUSTOMER_ORDER_0` | No `<defs>` or ids (D35); ends take the line colour. The `data-id` uses the entity names, as `data-id` does on entities; v12's entity ids are gone |
+| Crow's foot: a lens marker half covered by the entity box | Only the visible half is drawn, from the outline to the toe 18px out | Same picture without relying on paint order |
+| `md_parent` end (`u`): no marker | No marker (unchanged) | |
+| Edge label `<g class="edgeLabel">` with `<foreignObject>` (`span.edgeLabel`, `div.labelBkg`) | `<g class="edgeLabel" data-id>` with a background `<rect>` and a `<text>` | Text labels; labels carry no `data-ast` |
+| Subgraph `<g class="cluster" id>` with `<g class="cluster-label">` | `<g class="cluster …" data-id="<name>" data-ast="s:<name>">` with `<rect>` and `<text class="cluster-label">` | |
+| Front-matter `title` drawn as `text.erDiagramTitleText` | Not drawn yet, as in the flowchart | |
+| Hand-drawn look: background copies of every entity (`<id>-background`) | None (`look` is removed, D153) | |
+

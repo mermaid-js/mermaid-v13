@@ -16,7 +16,8 @@
         "mermaid-v12",
         "mermaid-v12-frozen",
         "pele",
-        "@mermaid-js/diagram-flowchart"
+        "@mermaid-js/diagram-flowchart",
+        "@mermaid-js/diagram-er"
       ]
     },
     "packages/dev": {
