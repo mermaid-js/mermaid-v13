@@ -109,6 +109,8 @@ export function validateLayout(graph: LayoutGraph, model: LayoutModel): string[]
     }
   }
 
+  // Every placed label, for the check that end labels keep clear of other edges' labels.
+  const placedLabels: { edge: string; name: string; r: Rect }[] = [];
   for (const e of graph.edges) {
     const placed = model.edges.get(e.id);
     if (!placed) {
@@ -161,6 +163,18 @@ export function validateLayout(graph: LayoutGraph, model: LayoutModel): string[]
         if (overlaps(r, o)) problems.push(`${name} of edge '${e.id}' overlaps its ${other}`);
       }
       labels.push([name, r]);
+      placedLabels.push({ edge: e.id, name, r });
+    }
+  }
+  // An end label (D102) keeps clear of the labels of every other edge too.
+  for (let j = 0; j < placedLabels.length; j++) {
+    for (let i = 0; i < j; i++) {
+      const a = placedLabels[j]!;
+      const b = placedLabels[i]!;
+      if (a.edge === b.edge || (a.name === 'label' && b.name === 'label')) continue;
+      if (!overlaps(a.r, b.r)) continue;
+      const [x, y] = a.name === 'label' ? [b, a] : [a, b];
+      problems.push(`${x.name} of edge '${x.edge}' overlaps ${y.name} of edge '${y.edge}'`);
     }
   }
   return problems;

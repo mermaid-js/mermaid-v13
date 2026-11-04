@@ -87,6 +87,36 @@ describe('validateLayout: edge-end labels (D102)', () => {
     );
   });
 
+  it('reports an end label over another edge’s labels', () => {
+    const two: LayoutGraph = {
+      ...labelled,
+      edges: [
+        labelled.edges[0]!,
+        { id: 'f', source: 'a', target: 'b', minLen: 1, startLabel: { width: 10, height: 10 } },
+      ],
+    };
+    const model = placed({ x: 60, y: 28 });
+    const f = model.edges.get('e')!;
+    model.edges.set('f', {
+      ...f,
+      label: undefined,
+      endLabel: undefined,
+      startLabel: { x: 62, y: 30 },
+    });
+    expect(validateLayout(two, model)).toContainEqual(
+      "start label of edge 'f' overlaps start label of edge 'e'"
+    );
+    model.edges.set('f', {
+      ...f,
+      label: undefined,
+      endLabel: undefined,
+      startLabel: { x: 50, y: 52 },
+    });
+    expect(validateLayout(two, model)).toContainEqual(
+      "start label of edge 'f' overlaps label of edge 'e'"
+    );
+  });
+
   it('reports a non-finite end label', () => {
     expect(validateLayout(labelled, placed({ x: NaN, y: 28 }))).toContainEqual(
       "edge 'e' has a non-finite coordinate"

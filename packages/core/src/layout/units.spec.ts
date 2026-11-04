@@ -31,6 +31,10 @@ describe('pxProfile (D77)', () => {
   });
 });
 
+// The least cell value of each metric: more than nothing, except an end label's room along its
+// segment, which may start in the row or column just off its node's side (D102).
+const MIN_CELL: Partial<Record<keyof LayoutMetrics, number>> = { endLabelAlong: 0 };
+
 describe('cellProfile (D77, D140)', () => {
   it('is compact by default', () => {
     expect(cellProfile()).toBe(cellProfile('compact'));
@@ -79,9 +83,7 @@ describe('cellProfile (D77, D140)', () => {
     expect(Object.keys(cellProfile().engine).sort()).toEqual(keys);
     for (const k of keys) {
       const v = cellProfile().engine[k as keyof LayoutMetrics];
-      // An end label may start in the row or column just off its node's side (D102).
-      if (k === 'endLabelAlong') expect(v, k).toBe(0);
-      else expect(v, k).toBeGreaterThan(0);
+      expect(v, k).toBeGreaterThanOrEqual(MIN_CELL[k as keyof LayoutMetrics] ?? 1e-9);
       expect(v, k).toBeLessThanOrEqual(pxProfile.engine[k as keyof LayoutMetrics]);
     }
   });

@@ -141,6 +141,78 @@ describe('layered: edge-end labels in each direction', () => {
   });
 });
 
+// One class with three relationships out of (or into) one side: every end label clear of every
+// other label and of every node, and still beside its own end.
+describe('layered: end labels of several edges on one side of a node', () => {
+  const fan = (dir: LayoutGraph['direction'], cells: boolean, out: boolean): LayoutGraph => {
+    const size = cells ? { width: 7, height: 3 } : { width: 80, height: 40 };
+    const ids = ['a', 'b', 'c', 'd'];
+    return {
+      direction: dir,
+      nodes: ids.map((id) => ({ id, ...size })),
+      edges: ['b', 'c', 'd'].map((t) => ({
+        id: `a${t}`,
+        source: out ? 'a' : t,
+        target: out ? t : 'a',
+        minLen: 1,
+        label: cells ? { width: 3, height: 1 } : { width: 30, height: 20 },
+        startLabel: cells ? { width: 1, height: 1 } : ONE,
+        endLabel: cells ? { width: 4, height: 1 } : { width: 28, height: 20 },
+      })),
+      groups: [],
+      spacing: cells ? { node: 2, rank: 4, edge: 1 } : { node: 50, rank: 50, edge: 20 },
+      headRoom: cells ? 1 : 7,
+      ...(cells ? { grid: 1, metrics: cellProfile().engine } : {}),
+    };
+  };
+  const cases = (['TB', 'BT', 'LR', 'RL'] as const).flatMap((dir) =>
+    [false, true].flatMap((cells) =>
+      [true, false].map(
+        (out) => [dir, cells ? 'cells' : 'px', out ? 'out of' : 'into', cells, out] as const
+      )
+    )
+  );
+  it.each(cases)('%s in %s, three edges %s one side', (dir, _, __, cells, out) => {
+    const graph = fan(dir, cells, out);
+    const model = layered(graph);
+    const problems = cells ? validateGrid(graph, model) : validateLayout(graph, model);
+    const near = cells ? [2, 2] : [16, 32];
+    expect([...problems, ...endProblems(graph, model, near[0]!, near[1]!)]).toEqual([]);
+  });
+});
+
+// Edges with more bends than the engine cuts into pieces (MAX_DUMMIES) run straight from end to
+// end, and their gaps get no room for end labels: placement still keeps the labels clear, here
+// with room to spare since such an edge spans many ranks.
+describe('layered: end labels on an edge drawn without bends', () => {
+  it('places them clear of nodes and labels', () => {
+    const graph: LayoutGraph = {
+      ...pair('TB'),
+      edges: [
+        { id: 'ab', source: 'a', target: 'b', minLen: 30000, startLabel: ONE, endLabel: MANY },
+      ],
+    };
+    const model = layered(graph);
+    expect([...validateLayout(graph, model), ...endProblems(graph, model, 16, 32)]).toEqual([]);
+  });
+});
+
+// Known limit on the grid: an edge between a group and its own member runs down from the group's
+// top border, outside the layered gaps, so its ends get no room of their own. Its labels stay clear
+// of every node, label and title, but the member end's label can land past the border, outside
+// the group.
+describe('layered: end labels on a grid edge between a group and its member', () => {
+  it('keeps them clear, outside the group if need be', () => {
+    const base = cellFixtures().find((f) => f.name.startsWith('F4'))!.graph;
+    const graph = labelled(base, { width: 1, height: 1 }, { width: 3, height: 1 });
+    const model = layered(graph);
+    expect(validateGrid(graph, model)).toEqual([]);
+    const g = model.groups.get('g')!;
+    const end = model.edges.get('g->B:abcd#1')!.endLabel!;
+    expect(end.y).toBeLessThan(g.y - g.height / 2 + 0.5);
+  });
+});
+
 // Sweep: every edge of the layout fixtures gets both end labels, in px under each routing and in
 // cells on the grid. Each end label must sit near its end, outside both of its edge's nodes, and
 // clear of the edge's other labels; `validateLayout` / `validateGrid` must find nothing.
@@ -150,22 +222,49 @@ const labelled = (graph: LayoutGraph, start: Size, end: Size): LayoutGraph => ({
   edges: graph.edges.map((e: LayoutEdge) => ({ ...e, startLabel: start, endLabel: end })),
 });
 
-function endProblems(graph: LayoutGraph, model: LayoutModel, near: number): string[] {
+// `near` is how far a label may sit from its end when nothing is in its way; each further end
+// label on the same side of the same node may push it out by up to `stack` more (D102).
+function endProblems(
+  graph: LayoutGraph,
+  model: LayoutModel,
+  near: number,
+  stack: number
+): string[] {
   const out: string[] = [];
+  const sides = new Map<string, number>();
+  const key = (node: string, side: string): string => `${node} ${side}`;
+  for (const e of graph.edges) {
+    const { ports } = model.edges.get(e.id)!;
+    for (const k of [key(e.source, ports.source), key(e.target, ports.target)])
+      sides.set(k, (sides.get(k) ?? 0) + 1);
+  }
   for (const e of graph.edges) {
     const placed = model.edges.get(e.id)!;
     const own = [model.nodes.get(e.source), model.nodes.get(e.target)].filter((b) => b);
     const ends = [
-      ['start', e.startLabel!, placed.startLabel, placed.points[0]!],
-      ['end', e.endLabel!, placed.endLabel, placed.points.at(-1)!],
+      [
+        'start',
+        e.startLabel!,
+        placed.startLabel,
+        placed.points[0]!,
+        key(e.source, placed.ports.source),
+      ],
+      [
+        'end',
+        e.endLabel!,
+        placed.endLabel,
+        placed.points.at(-1)!,
+        key(e.target, placed.ports.target),
+      ],
     ] as const;
-    for (const [name, size, at, p] of ends) {
+    for (const [name, size, at, p, side] of ends) {
       if (!at) {
         out.push(`${e.id}: no ${name} label`);
         continue;
       }
       const r = rect(at, size);
-      if (reach(r, p) > near) out.push(`${e.id}: ${name} label far from its end`);
+      if (reach(r, p) > near + (sides.get(side)! - 1) * stack)
+        out.push(`${e.id}: ${name} label far from its end`);
       for (const b of own)
         if (overlaps(r, rect(b!, b!))) out.push(`${e.id}: ${name} label on a node`);
     }
@@ -182,17 +281,20 @@ describe('layered: edge-end labels on every fixture edge (px)', () => {
     (_, routing, base) => {
       const graph = labelled({ ...base, routing }, ONE, MANY);
       const model = layered(graph);
-      expect([...validateLayout(graph, model), ...endProblems(graph, model, 16)]).toEqual([]);
+      expect([...validateLayout(graph, model), ...endProblems(graph, model, 16, 32)]).toEqual([]);
     }
   );
 });
 
-const CELLS = [...cellFixtures(), ...randomCellFixtures(30), ...randomGroupFixtures(30)];
+// F4 (edges between a group and its own members) is a known limit, specced above.
+const CELLS = [...cellFixtures(), ...randomCellFixtures(60), ...randomGroupFixtures(120)].filter(
+  (f) => !f.name.startsWith('F4')
+);
 
 describe('layered: edge-end labels on every fixture edge (grid: 1)', () => {
   it.each(CELLS.map((f) => [f.name, f.graph] as const))('%s', (_, base) => {
     const graph = labelled(base, { width: 1, height: 1 }, { width: 3, height: 1 });
     const model = layered(graph);
-    expect([...validateGrid(graph, model), ...endProblems(graph, model, 2)]).toEqual([]);
+    expect([...validateGrid(graph, model), ...endProblems(graph, model, 2, 2)]).toEqual([]);
   });
 });

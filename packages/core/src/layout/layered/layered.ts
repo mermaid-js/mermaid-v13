@@ -936,13 +936,28 @@ function roomForEnds(
     const short = need - room(lo, hi);
     if (short > 0) gapUnder[at]! += short;
   };
+  // The labels at the ends below and above each node may have to stand one past the other (the
+  // placement moves a label out past one in its way), so each end makes room for all of them.
+  const below = new Map<number, number>();
+  const above = new Map<number, number>();
+  const add = (m: Map<number, number>, node: number, v: number): void => {
+    if (v > 0) m.set(node, (m.get(node) ?? 0) + v);
+  };
+  edges.forEach((e, ei) => {
+    if (direct[ei]!) return;
+    add(below, e.reversed ? e.head : e.tail, e.reversed ? e.headEnd : e.tailEnd);
+    add(above, e.reversed ? e.tail : e.head, e.reversed ? e.tailEnd : e.headEnd);
+  });
   edges.forEach((e, ei) => {
     if (direct[ei]! || (e.tailEnd <= 0 && e.headEnd <= 0)) return;
-    const ra = RANK[e.reversed ? e.head : e.tail]!;
-    const rb = RANK[e.reversed ? e.tail : e.head]!;
+    const a = e.reversed ? e.head : e.tail;
+    const b = e.reversed ? e.tail : e.head;
+    const ra = RANK[a]!;
+    const rb = RANK[b]!;
+    // Every edge runs from a lower rank to a higher one once `orient` has run.
     if (rb <= ra) return;
-    const upper = e.reversed ? e.headEnd : e.tailEnd;
-    const lower = e.reversed ? e.tailEnd : e.headEnd;
+    const upper = below.get(a) ?? 0;
+    const lower = above.get(b) ?? 0;
     let next = ra + 1;
     while (next < rb && empty?.[next]) next++;
     let prev = rb - 1;
