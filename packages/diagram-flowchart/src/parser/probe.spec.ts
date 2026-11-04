@@ -121,6 +121,16 @@ describe('flowchart probe', () => {
     expect(probeAt('flowchart TD\nA -->\n|\n B').expected).toEqual(['NodeString', 'Pipe']);
   });
 
+  it('after a closed subgraph: the word does not reach back over `end` (#32 review)', () => {
+    const p = probeAt('flowchart TD\nsubgraph S\n  C\nend\n  st|');
+    expect(p.prefix).toBe('st');
+    expect(p.expected).toEqual(expect.arrayContaining(STATEMENTS));
+    const next = probeAt('flowchart TD\nsubgraph S\n  C\nend\n  |');
+    expect(next.expected).toEqual(expect.arrayContaining(STATEMENTS));
+    expect(next.expected).not.toContain('End');
+    expect(probeAt('flowchart TD\nsubgraph S\n  C\nend|\n').prefix).toBe('end');
+  });
+
   it('inside a subgraph: any statement or `end`', () => {
     const p = probeAt('flowchart TD\nsubgraph S\n  A\n  |\nend');
     expect(p.expected).toEqual(expect.arrayContaining([...STATEMENTS, 'End']));

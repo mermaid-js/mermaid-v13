@@ -6,10 +6,11 @@
  * The probed token: take the first significant token that ends at or after the offset; skip it
  * when it ends exactly at the offset and its kind is one the cursor follows rather than extends
  * (line breaks, blanks and the diagram's `follow` kinds: punctuation such as `:::`, `-->`, `[`),
- * or when its kind is followed and the offset is in the blanks it took after its text (link
- * tokens take them) or past a line break in it (an empty line inside a run of line breaks is
+ * or when the offset is in the blanks a token took after its text (links and `end` take them),
+ * or past a line break inside a followed token (an empty line inside a run of line breaks is
  * after the separator). If that token is part of a word, the probed token is the word's first token: a word is a run
- * of adjacent tokens (no gap, no leading blank) none of which has a followed kind, so
+ * of adjacent tokens (no gap, no leading blank, no line break or trailing blank in an earlier
+ * one) none of which has a followed kind, so
  * `café` lexed as `caf` + `é` or `my-` as `my` + `-` is one word. The prefix is the text from
  * the probed token's start (leading blanks dropped) to the offset.
  *
@@ -78,15 +79,27 @@ export class Probe {
   private covers(start: number, end: number, kind: TokenKind): boolean {
     const o = this.offset;
     if (end < o || start === end) return end >= o;
-    if (!this.follows(kind)) return true;
-    if (end === o) return false;
-    // Behind the cursor: a followed token whose text (without the blanks it took after it)
-    // ends at or before the offset, or that the offset is past a line break of.
+    const follows = this.follows(kind);
+    // A token's text without the blanks it took after it (`end\n  `, ` --> `).
     let text = end;
     while (text > start && isBlankOrLineEnd(this.source.charCodeAt(text - 1))) text--;
-    if (text > start && text <= o) return false;
-    for (let i = start; i < o; i++) if (isLineEnd(this.source.charCodeAt(i))) return false;
+    if (text > start) {
+      // In those blanks the cursor is after the token; right after its text it extends a word
+      // and follows anything else.
+      if (text < o) return false;
+      if (text === o) return !follows;
+    } else if (end === o) return !follows;
+    // Past a line break inside a followed token (a line-break run), the cursor is after it.
+    if (follows)
+      for (let i = start; i < o; i++) if (isLineEnd(this.source.charCodeAt(i))) return false;
     return true;
+  }
+
+  /** Whether `[from, to)` holds a line break, or ends with a blank. */
+  private blankIn(from: number, to: number): boolean {
+    if (to > from && isBlankOrLineEnd(this.source.charCodeAt(to - 1))) return true;
+    for (let i = from; i < to; i++) if (isLineEnd(this.source.charCodeAt(i))) return true;
+    return false;
   }
 
   /**
@@ -114,6 +127,8 @@ export class Probe {
       for (let p = t - 1; p >= 0 && trivia[kind[p] ?? 0] !== 1; p--) {
         const s = start[t] ?? 0;
         if (!word(p) || end[p] !== s || isSpace(this.source.charCodeAt(s))) break;
+        // Never across a line break or the blanks a token took after it (`end\n  A`).
+        if (this.blankIn(start[p] ?? 0, s)) break;
         t = p;
       }
     }

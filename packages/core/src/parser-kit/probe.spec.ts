@@ -150,6 +150,21 @@ describe('Probe', () => {
     expect(probedIn(src, view, 8)).toBe(2); // in its blanks
   });
 
+  it('never joins a word across a line break or blanks a token took', () => {
+    // `end\n  A`: a keyword token took the line break and indent after it (#32 review).
+    const src = 'ab\n  cd';
+    const w = new TokenWriter();
+    w.push(Word, 0, 5);
+    w.push(Word, 5, 7);
+    const view = significantTokens(w.finish(src));
+    expect(probedIn(src, view, 7)).toBe(1);
+    expect(probedIn(src, view, 6)).toBe(1);
+    // In the blanks a word took, the cursor is after it: `ab\n  |cd`.
+    expect(probedIn(src, view, 5)).toBe(1);
+    expect(probedIn(src, view, 3)).toBe(1);
+    expect(probedIn(src, view, 2)).toBe(0); // `ab|`: still the word
+  });
+
   it('records nothing with a cursor whose offset is inside a comment', () => {
     const src = 'a %% xy\nb';
     const w = new TokenWriter();
