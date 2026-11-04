@@ -51,3 +51,9 @@ Unmet criteria and shared contracts, by owning ticket.
 ## Composite self-loop (from #144)
 
 - [ ] Maintainer: "Fix in core now". State T0 #187: the layered engine counts a group's self-loop and its label in the drawing and parent sizes. When it merges into `mermaid-v13`, merge it here and remove the case from `ENGINE_GAPS` in `conformance/src/state/layout.spec.ts`.
+
+## #148 T5 integration (from #151)
+
+- [ ] Add `"language"` to the state manifest and run `gen:registry`. Then delete state's row in `packages/language-service/src/testing/pending-facets.ts` and the `@mermaid-js/diagram-state` devDependency of `packages/language-service`.
+- [ ] Optional: no `{` completion after `state x `, because state's error code is `UNCLOSED`, not `UNCLOSED_*`, and completion-validity counts it as an error. Rename `UNCLOSED` to `UNCLOSED_COMPOSITE` if wanted; that's a message-code change, so update the snapshots.
+- [ ] Optional: a bench language-bundle spec for state (only flowchart has one).
