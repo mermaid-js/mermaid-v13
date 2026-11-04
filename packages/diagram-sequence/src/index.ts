@@ -6,3 +6,5 @@ import type { DiagramPlugin } from '@mermaid-js/core';
 
 /** The plugin's contract; the type parameters become `SequenceModel` and `SequenceLayout`. */
 export type SequencePlugin = DiagramPlugin<unknown, unknown>;
+export { JISON_NAMES, SequenceTokenKind, sequenceTokens } from './parser/index.ts';
+export type { SequenceToken } from './parser/index.ts';
