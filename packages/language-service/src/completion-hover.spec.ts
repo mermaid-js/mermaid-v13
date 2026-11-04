@@ -306,3 +306,52 @@ describe('stress (pitfall 5: linear on long runs)', () => {
     60_000
   );
 });
+
+describe('ER completion of names that need quotes (#124 review)', () => {
+  /** The items at `¦` (ER text holds `|`), and the text with an item accepted. */
+  function erAt(marked: string) {
+    const offset = marked.indexOf('¦');
+    const text = marked.slice(0, offset) + marked.slice(offset + 1);
+    const items = service.update('file:///er.mmd', text).completions(offset);
+    const accept = (label: string): string => {
+      const item = items.find((i) => i.label === label)!;
+      return text.slice(0, item.range.start) + item.insertText + text.slice(item.range.end);
+    };
+    return { items, accept };
+  }
+  /** The error codes of `text`. */
+  const errors = (text: string): string[] =>
+    service
+      .update('file:///er-after.mmd', text)
+      .diagnostics()
+      .filter((d) => d.severity === 'error')
+      .map((d) => d.code);
+
+  it('quotes an entity name with a space, so it reads back as that entity', () => {
+    const { items, accept } = erAt('erDiagram\n"my entity" ||--|| B : x\nC ||--|| ¦');
+    const item = items.find((i) => i.label === 'my entity');
+    expect(item?.insertText).toBe('"my entity"');
+    const text = accept('my entity');
+    expect(text).toBe('erDiagram\n"my entity" ||--|| B : x\nC ||--|| "my entity"');
+    expect(errors(text + ' : y')).toEqual([]);
+  });
+
+  it('leaves a name that reads back bare as it is', () => {
+    const { items } = erAt('erDiagram\n"my entity" ||--|| B : x\nC ||--|| ¦');
+    expect(items.find((i) => i.label === 'B')?.insertText).toBe('B');
+  });
+
+  it('quotes a keyword used as a name, and a subgraph name with a space', () => {
+    const { items } = erAt(
+      'erDiagram\n"end" ||--|| B : x\nsubgraph "my group"\n  D\nend\nC ||--|| ¦'
+    );
+    expect(items.find((i) => i.label === 'end' && i.kind === 'node')?.insertText).toBe('"end"');
+    expect(items.find((i) => i.label === 'my group')?.insertText).toBe('"my group"');
+  });
+
+  it('offers no name `class` and `style` cannot take (they read no quotes)', () => {
+    const { items } = erAt('erDiagram\n"my entity" ||--|| B : x\nstyle ¦');
+    expect(items.map((i) => i.label)).toContain('B');
+    expect(items.map((i) => i.label)).not.toContain('my entity');
+  });
+});

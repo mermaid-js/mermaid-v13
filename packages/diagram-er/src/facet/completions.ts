@@ -23,6 +23,7 @@ import { erDocs } from '../generated/docs.ts';
 import type { ErDocument } from '../parser/ast.ts';
 import type { ErModel } from '../parser/model.ts';
 import { T } from '../parser/tokens.ts';
+import { writtenName } from './names.ts';
 import {
   CARDINALITY_MEANING,
   DIRECTIONS,
@@ -62,7 +63,7 @@ class Items {
   private readonly seen = new Set<string>();
 
   constructor(
-    private readonly prefix: string,
+    readonly prefix: string,
     private readonly range: Range
   ) {}
 
@@ -136,17 +137,35 @@ function atLineStart(text: string, at: number): boolean {
   return true;
 }
 
-/** Entity and subgraph names in first-mention order, leaving out the word being typed. */
-function entities(items: Items, doc: DocumentView<ErDocument>, except: number): void {
+/**
+ * Entity and subgraph names in first-mention order, leaving out the word being typed. A name
+ * that does not read back bare is inserted in quotes; where quotes are not read (`bare`: the
+ * targets of `class` and `style`), it is not offered.
+ */
+function entities(
+  items: Items,
+  doc: DocumentView<ErDocument>,
+  except: number,
+  bare: boolean
+): void {
   const model = doc.result.model as ErModel;
   const subgraphs = new Set(model.subgraphs.map((s) => s.name));
   const aliases = new Map(model.entities.map((e) => [e.name, e.alias]));
-  for (const s of doc.result.symbols) {
-    if ((s.kind !== 'entity' && s.kind !== 'subgraph') || s.range.start === except) continue;
-    if (s.name === '') continue;
+  const symbols = doc.result.symbols.filter(
+    (s) => (s.kind === 'entity' || s.kind === 'subgraph') && s.name !== ''
+  );
+  // A name written bare somewhere reads back bare; only the others are checked.
+  const writtenBare = new Set<string>();
+  for (const s of symbols) {
+    if (doc.text.slice(s.range.start, s.range.end) === s.name) writtenBare.add(s.name);
+  }
+  for (const s of symbols) {
+    if (s.range.start === except || !s.name.startsWith(items.prefix)) continue;
+    const insert = writtenBare.has(s.name) ? s.name : writtenName(s.name);
+    if (insert === undefined || (bare && insert !== s.name)) continue;
     const kind: CompletionKind = subgraphs.has(s.name) ? 'subgraph' : 'node';
     const alias = aliases.get(s.name);
-    items.add(s.name, kind, alias ? { detail: alias } : {});
+    items.add(s.name, kind, { insertText: insert, ...(alias ? { detail: alias } : {}) });
   }
 }
 
@@ -155,6 +174,9 @@ function classes(items: Items, symbols: readonly SymbolOccurrence[], except: num
     if (s.kind === 'class' && s.range.start !== except && s.name !== '') items.add(s.name, 'class');
   }
 }
+
+/** Whether the name being typed is a `class` or `style` target (an id list: no quotes). */
+const isIdList = (st: Statement): boolean => st.head === T.Class || st.head === T.Style;
 
 /** What an expected name is at this point of the statement. */
 function idContext(st: Statement): 'entities' | 'classes' | 'none' {
@@ -249,7 +271,7 @@ export function erCompletions(probe: ProbeResult, doc: DocumentView<ErDocument>)
   if (ENTITY_NAME.some((k) => expected.has(k)) || expected.has(T.StyleText)) {
     const ids = idContext(st);
     if (ids === 'classes') classes(items, result.symbols, range.start);
-    else if (ids === 'entities') entities(items, doc, range.start);
+    else if (ids === 'entities') entities(items, doc, range.start, isIdList(st));
   }
   relationshipParts(items, expected, st);
   return items.list;
