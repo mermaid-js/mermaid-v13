@@ -417,6 +417,18 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 
 ## State diagram syntax
 
+### Layout
+
+- **Default layout:** v12 drew state diagrams with ELK by default; v13 uses `layered`, the
+  engine built into core, until an ELK plugin is registered (D106). `layout: elk` is accepted
+  and drawn with `layered`, as for flowcharts.
+- **Notes** are placed along the flow: the engine has no same-rank constraint, so in a TB
+  drawing `note right of X` sits below `X` and `note left of X` above it (in LR, to the right
+  and left). A note sits in its state's composite; v12 put every note at the top level.
+- **Concurrency regions** are laid out side by side across their composite's flow, with a
+  divider between neighbours. A transition between two regions of one composite stacks them
+  along the flow instead, as in v12 (D113).
+
 ### Removed v12 behaviour
 
 - **A trailing empty concurrency region** (a composite state whose last `--` has nothing after

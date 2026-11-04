@@ -8,6 +8,14 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## #144 T3 layout (from #140, `v13/docs/research/state-regions.md`)
 
+- [x] Done in #144: nested-group model, frame stretch, D113 edges, region checks in
+  `conformance/src/state/layout.spec.ts`. Prototype folder deleted.
+- [ ] **Engine gap (state T0 candidate, maintainer):** `layered` leaves a group's self-loop and
+  its label out of the drawing's extent (`v2-a-compound-state-should-be-able-to-link-to-itself`,
+  `Active --> Active`): the loop runs off the right edge. Pinned as `ENGINE_GAPS` in the layout
+  spec; no core change from #144 (D102).
+- [ ] **Escalated (#144):** a composite with no `direction` is laid out TB in any diagram (v12's
+  `getDir` default), and a note sits in its state's composite (v12 put notes at the top level).
 - Adopt the nested-group model: each region a title-less `LayoutGroup` in its composite, no edges between regions. No state T0 (D111).
 - The builder stretches every region frame along the flow to the composite's inner size, so dividers run full length.
 - **D113 (answered):** a transition between two sibling regions goes to the engine like any other edge, with no special handling and no warning; the regions stack, as in v12. W4 is dropped. #144's region checks skip composites that have such an edge (S7, S17).
