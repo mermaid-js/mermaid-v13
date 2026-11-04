@@ -23,6 +23,17 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 - **Flowchart oracle `\n` clipping.** `packages/conformance/src/flowchart/jison-lexer.ts` strips v12's appended `\n` from the last non-empty token; #137 found that wrong when a skipped `\s+` run swallowed it, and fixed it only in the sequence oracle. Flowchart's gate may compare a wrong expectation on sources ending in blanks.
 - **Cross-type duplication.** The source view is decided (D114, see #139 above). The jison lexer oracle and the harvest CLI in conformance are near copies of flowchart's too; one parameterised oracle and harvest CLI would serve every type.
 
+## #149 T6 language facet
+
+- [x] **Accepted (D119): first-paint colours via #190.** The CodeMirror and Monaco adapters colour first paint with flowchart's grammar for every type; picking the highlighter per type is cross-type ticket #190, after the M3 facets. #149 does not change the adapters.
+- [x] **Accepted with D119: no `./monarch.json` export yet.** It only feeds the Monaco adapter's first paint; it comes with #190.
+- [ ] **TextMate: pop-then-push rules.** `tools/gen-grammar/src/highlight.ts` has no TextMate form for a rule that pops one mode and pushes another, so TextMate colours a declaration's `as` alias and `@{…}` data as statement text (documented exception in `tools/gen-grammar/src/sequence-categories.spec.ts`). Cross-type generator fix; needs a follow-up ticket or maintainer acceptance.
+- [ ] **Property and rename round-trip specs pick sequence up once #145 registers it** (run by hand over the corpus in #149: clean). Then move `packages/conformance/language-goldens/sequence/` to the shared location and delete `packages/conformance/src/sequence/language-goldens.spec.ts` (its last test fails by design once the manifest lands).
+
 ## #143 T4 renderer
 - **Neo symbol geometry** not drawn (layout has none): every theme draws v12 classic symbols. Needs a maintainer decision on layout geometry variables (D152).
 - **Registry**: tests register the plugin under a swapped header (`conformance/src/sequence/render-api.ts`); #145 removes the swap once the manifest is generated.
+
+## Resolved by the maintainer
+
+- [x] **D123: keep the fix.** The 3 create/destroy divergences (#139: `create-after-note`, `destroy-then-create`, `destroy-before-loop`) stand: v13 attaches `create`/`destroy` to the right message. Cited in `packages/conformance/divergences.json` and MIGRATION.md "Sequence syntax".
