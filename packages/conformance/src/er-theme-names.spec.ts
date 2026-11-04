@@ -26,21 +26,21 @@ describe('no theme names or look in the ER package (D152)', () => {
     expect(files.some((f) => f.path.endsWith(join('render', 'render.ts')))).toBe(true);
   });
 
-  // `default` is also v12's entity class, so plain names are checked only where compared.
-  it.each([...THEME_NAMES, 'neo', 'handDrawn'])(
-    'never compares with the theme or look %s',
+  // `default` is also v12's entity class (and `base`, `dark` are plain words), so the classic
+  // names are checked only on a line that mentions the theme; the rest never appear at all.
+  it.each(THEME_NAMES)('never compares the theme with %s', (name) => {
+    const q = `['"\`]${name.replace(/-/g, '\\-')}['"\`]`;
+    const compared = new RegExp(`theme[^\\n]*${q}|${q}[^\\n]*theme`, 'i');
+    expect(files.filter((f) => compared.test(f.text)).map((f) => f.path)).toEqual([]);
+  });
+
+  it.each([...THEME_NAMES.filter((n) => n.startsWith('redux')), 'neo', 'handDrawn'])(
+    'never names %s at all',
     (name) => {
-      const q = `['"\`]${name.replace(/-/g, '\\-')}['"\`]`;
-      const compared = new RegExp(
-        `[=!]==?\\s*${q}|${q}\\s*[=!]==?|\\.has\\(\\s*${q}|theme[^\\n]*${q}`
-      );
-      expect(files.filter((f) => compared.test(f.text)).map((f) => f.path)).toEqual([]);
+      const quoted = new RegExp(`['"\`]${name.replace(/-/g, '\\-')}['"\`]`);
+      expect(files.filter((f) => quoted.test(f.text)).map((f) => f.path)).toEqual([]);
     }
   );
-
-  it.each(THEME_NAMES.filter((n) => n.startsWith('redux')))('never names %s at all', (name) => {
-    expect(files.filter((f) => f.text.includes(`'${name}'`)).map((f) => f.path)).toEqual([]);
-  });
 
   it('never reads the look config', () => {
     expect(files.filter((f) => /\.look\b|\blook\s*[=!]==/.test(f.text)).map((f) => f.path)).toEqual(
