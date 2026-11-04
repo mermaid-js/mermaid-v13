@@ -6,6 +6,7 @@ import {
   fromPx,
   pxProfile,
   type Dir,
+  type EndMarker,
   type LayoutEdge,
   type LayoutGraph,
   type LayoutGroup,
@@ -385,6 +386,23 @@ function relationEdges(build: Build): ClassEdgeView[] {
   return edges;
 }
 
+/**
+ * The room each end marker takes out from the box, px: what the renderer draws in the built-in
+ * themes, outline included, rounded up (gap + length + outline; redux's diamonds 19.75). A
+ * constant, as flowchart's head room (D154), so the theme marker variables never move the
+ * layout; the class layout spec checks it against every theme's drawn markers.
+ */
+const MARKER_ROOM: Readonly<Record<RelationType, number>> = {
+  none: 0,
+  aggregation: 20,
+  composition: 20,
+  extension: 19,
+  dependency: 13,
+  lollipop: 14,
+};
+/** Every marker is 12 px across (render/markers.ts `MARKER_ACROSS`). */
+const MARKER_WIDTH = 12;
+
 function layoutGraph(
   model: ClassModel,
   ctx: ClassLayoutContext,
@@ -417,6 +435,11 @@ function layoutGraph(
   const groupPx = Number.isNaN(padding) ? GROUP_PAD : padding;
   const groupPad = { x: fromPx(units, groupPx, 'x'), y: fromPx(units, groupPx, 'y') };
   const size = (l: MeasuredLabel) => ({ width: l.width, height: l.height });
+  // Only where end labels are placed in px (class has no text output).
+  const marker = (type: RelationType): EndMarker | undefined => {
+    const length = MARKER_ROOM[type];
+    return units.grid === undefined && length > 0 ? { length, width: MARKER_WIDTH } : undefined;
+  };
   const node = (
     v: { layoutId: string; width: number; height: number; parent?: string },
     shape: string
@@ -458,9 +481,12 @@ function layoutGraph(
             }
           : {}),
         // Multiplicities need no room of their own: the engine puts them `endLabelAcross` off
-        // the line, which clears any end marker up to twice that across (v12's are 12 px).
+        // the line, which clears their own end's marker (12 px across), and past every edge's
+        // markers, which it is told about (#201).
         ...(e.startLabel ? { startLabel: size(e.startLabel) } : {}),
         ...(e.endLabel ? { endLabel: size(e.endLabel) } : {}),
+        ...(marker(e.startMarker) ? { startMarker: marker(e.startMarker)! } : {}),
+        ...(marker(e.endMarker) ? { endMarker: marker(e.endMarker)! } : {}),
       })
     ),
     spacing,

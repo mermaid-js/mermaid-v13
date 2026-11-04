@@ -82,6 +82,21 @@ export function markerTrim(type: RelationType, m: Markers): number {
   return m.gap[type] + (type === 'dependency' ? NOTCH : m.length[type]);
 }
 
+/**
+ * How far from the node outline a drawn marker reaches along the line, outline (and its mitred
+ * corners) included. Across it is `MARKER_ACROSS`.
+ */
+export function markerReach(type: RelationType, m: Markers): number {
+  if (type === 'none') return 0;
+  if (type === 'lollipop') return m.gap[type] + LOLLIPOP;
+  const filled = type === 'composition' || type === 'dependency';
+  return (
+    m.gap[type] +
+    (type === 'dependency' ? ARROW : m.length[type]) +
+    (filled ? m.filledWidth : m.hollowWidth)
+  );
+}
+
 /** Draws the marker for a line that meets the outline at `end`, travelling along (dx, dy). */
 export function marker(w: SvgWriter, type: RelationType, end: LineEnd, m: Markers): void {
   if (type === 'none') return;

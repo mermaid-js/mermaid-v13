@@ -5,8 +5,14 @@ import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core
 import { countCrossings, validateLayout } from '@mermaid-js/core/layout';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { tableMeasurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme } from '@mermaid-js/core/theme';
+import { THEME_NAMES, createTheme, loadTheme } from '@mermaid-js/core/theme';
 import { layoutClass, parseClass, type ClassLayout } from '@mermaid-js/diagram-class';
+import {
+  MARKER_ACROSS,
+  markerReach,
+  markers,
+  type Markers,
+} from '@mermaid-js/diagram-class/testing';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
 import type { CorpusItem } from './types.ts';
 
@@ -78,53 +84,98 @@ function sizeProblems(layout: ClassLayout): string[] {
   return out;
 }
 
-/** v12's end markers (markers.js): length along the line; all are at most 12 px across. */
-const MARKER_LENGTH: Readonly<Record<string, number>> = {
-  aggregation: 18,
-  composition: 18,
-  extension: 18,
-  dependency: 9,
-  lollipop: 13,
-};
-const MARKER_HALF = 6;
+/** A box: left, top, right, bottom. */
+type Box = readonly [number, number, number, number];
 
-/** Multiplicities clear of the marker at their end: text box against the marker's box. */
-function markerProblems(layout: ClassLayout): string[] {
-  const out: string[] = [];
+/**
+ * The boxes the renderer draws each marker in, for one theme's marker geometry: from the node
+ * outline out along the line's first leg as `routePath` takes it (the leg's own direction on
+ * straight routes, else its axis), `MARKER_ACROSS` wide, outline included.
+ */
+function markerBoxes(layout: ClassLayout, m: Markers): { what: string; box: Box }[] {
+  const straight = layout.class!.graph.routing === 'straight';
+  const out: { what: string; box: Box }[] = [];
   for (const e of layout.class!.edges) {
-    const placed = layout.edges.get(e.layoutId)!;
-    const pts = placed.points;
-    for (const [label, at, marker, a, b] of [
-      [e.startLabel, placed.startLabel, e.startMarker, pts[0]!, pts[1]!],
-      [e.endLabel, placed.endLabel, e.endMarker, pts[pts.length - 1]!, pts[pts.length - 2]!],
+    const pts = layout.edges.get(e.layoutId)?.points ?? [];
+    if (pts.length < 2) continue;
+    for (const [type, a, b] of [
+      [e.startMarker, pts[0]!, pts[1]!],
+      [e.endMarker, pts[pts.length - 1]!, pts[pts.length - 2]!],
     ] as const) {
-      const m = MARKER_LENGTH[marker] ?? 0;
-      if (!label || !at || m === 0) continue;
-      const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-      const tip = { x: a.x + ((b.x - a.x) / len) * m, y: a.y + ((b.y - a.y) / len) * m };
-      const vertical = Math.abs(b.x - a.x) < Math.abs(b.y - a.y);
-      const mx0 = vertical ? a.x - MARKER_HALF : Math.min(a.x, tip.x);
-      const mx1 = vertical ? a.x + MARKER_HALF : Math.max(a.x, tip.x);
-      const my0 = vertical ? Math.min(a.y, tip.y) : a.y - MARKER_HALF;
-      const my1 = vertical ? Math.max(a.y, tip.y) : a.y + MARKER_HALF;
-      const lx0 = at.x - label.width / 2;
-      const ly0 = at.y - label.height / 2;
-      if (
-        lx0 < mx1 - 0.5 &&
-        mx0 < lx0 + label.width - 0.5 &&
-        ly0 < my1 - 0.5 &&
-        my0 < ly0 + label.height - 0.5
-      ) {
-        out.push(`a multiplicity of '${e.layoutId}' overlaps its ${marker} marker`);
+      const reach = markerReach(type, m);
+      if (reach === 0) continue;
+      let dx = b.x - a.x;
+      let dy = b.y - a.y;
+      if (straight) {
+        const len = Math.hypot(dx, dy) || 1;
+        dx /= len;
+        dy /= len;
+      } else if ((a === pts[0] ? b : a).axis === 'h') {
+        dx = Math.sign(dx) || 1;
+        dy = 0;
+      } else {
+        dx = 0;
+        dy = Math.sign(dy) || 1;
       }
+      const h = MARKER_ACROSS / 2;
+      const xs = [a.x - dy * h, a.x + dy * h, a.x + dx * reach - dy * h, a.x + dx * reach + dy * h];
+      const ys = [a.y + dx * h, a.y - dx * h, a.y + dy * reach + dx * h, a.y + dy * reach - dx * h];
+      out.push({
+        what: `the ${type} marker of '${e.layoutId}'`,
+        box: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)],
+      });
     }
   }
   return out;
 }
 
+/** Multiplicities clear of every drawn marker, theirs and every other edge's (#201). */
+function markerProblems(layout: ClassLayout, geometries: readonly Markers[]): string[] {
+  const out = new Set<string>();
+  const labels: { what: string; box: Box }[] = [];
+  for (const e of layout.class!.edges) {
+    const placed = layout.edges.get(e.layoutId)!;
+    for (const [end, label, at] of [
+      ['start', e.startLabel, placed.startLabel],
+      ['end', e.endLabel, placed.endLabel],
+    ] as const) {
+      if (!label || !at) continue;
+      const x0 = at.x - label.width / 2;
+      const y0 = at.y - label.height / 2;
+      labels.push({
+        what: `the ${end} multiplicity of '${e.layoutId}'`,
+        box: [x0, y0, x0 + label.width, y0 + label.height],
+      });
+    }
+  }
+  if (labels.length === 0) return [];
+  const e = 0.5;
+  for (const m of geometries) {
+    for (const marker of markerBoxes(layout, m)) {
+      for (const l of labels) {
+        const [ax0, ay0, ax1, ay1] = l.box;
+        const [bx0, by0, bx1, by1] = marker.box;
+        if (ax0 < bx1 - e && bx0 < ax1 - e && ay0 < by1 - e && by0 < ay1 - e) {
+          out.add(`${l.what} overlaps ${marker.what}`);
+        }
+      }
+    }
+  }
+  return [...out];
+}
+
+/** The marker geometry of every built-in theme: the layout is the same in all of them. */
+async function allMarkers(): Promise<Markers[]> {
+  const themes = await Promise.all(
+    THEME_NAMES.map(async (n) => createTheme(await loadTheme(n), {}))
+  );
+  return themes.map((t) => markers(t, 'none', 'none'));
+}
+
 describe('layered over parser-produced class graphs', () => {
   it('lays out every corpus graph validly, nested and flat, and records crossings', async () => {
     const theme = createTheme(await loadTheme('default'), {});
+    const geometries = await allMarkers();
     const crossings: Record<string, number> = {};
     let laid = 0;
     const seen = { endLabels: 0, labels: 0, groups: 0, notes: 0, lollipops: 0 };
@@ -143,7 +194,7 @@ describe('layered over parser-produced class graphs', () => {
         expect(validateLayout(layout.class!.graph, layout), id).toEqual([]);
         expect(boxProblems(layout), id).toEqual([]);
         expect(sizeProblems(layout), id).toEqual([]);
-        expect(markerProblems(layout), id).toEqual([]);
+        expect(markerProblems(layout, geometries), id).toEqual([]);
         if (hierarchical) crossings[item.id] = countCrossings(layout);
         if (!hierarchical) continue;
         const p = layout.class!;
@@ -163,6 +214,7 @@ describe('layered over parser-produced class graphs', () => {
 
   it('lays out generated graphs with fans of multiplicities, lollipops, notes and namespaces', async () => {
     const theme = createTheme(await loadTheme('default'), {});
+    const geometries = await allMarkers();
     // Deterministic generator (mulberry32).
     let seed = 155;
     const rnd = (): number => {
@@ -206,7 +258,7 @@ describe('layered over parser-produced class graphs', () => {
       expect(validateLayout(layout.class!.graph, layout), src).toEqual([]);
       expect(boxProblems(layout), src).toEqual([]);
       expect(sizeProblems(layout), src).toEqual([]);
-      expect(markerProblems(layout), src).toEqual([]);
+      expect(markerProblems(layout, geometries), src).toEqual([]);
       checked++;
     }
     expect(checked).toBe(120);
