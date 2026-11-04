@@ -1,6 +1,7 @@
 {
   "tokenPostfix": ".mermaid-flowchart",
   "defaultToken": "",
+  "start": "frontMatterStart",
   "tokenizer": {
     "root": [
       [
@@ -2597,6 +2598,49 @@
         {
           "token": "delimiter",
           "next": "@text"
+        }
+      ]
+    ],
+    "frontMatterStart": [
+      [
+        "---[^\\S\\n]*$",
+        {
+          "token": "annotation",
+          "switchTo": "@frontMatter"
+        }
+      ],
+      [
+        "",
+        {
+          "token": "",
+          "switchTo": "@root"
+        }
+      ]
+    ],
+    "frontMatter": [
+      [
+        "---[^\\S\\n]*$",
+        {
+          "token": "annotation",
+          "switchTo": "@root"
+        }
+      ],
+      [
+        "[^\\S\\n]*#.*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#]*(?=:(?:\\s|$))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "[^#]+",
+        {
+          "token": ""
         }
       ]
     ]

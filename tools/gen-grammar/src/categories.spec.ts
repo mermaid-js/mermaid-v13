@@ -127,8 +127,8 @@ const BLANK_KINDS = new Set<number>([T.Space, T.NoDir, T.Eof]);
 /**
  * Documented exceptions, where the highlighters see text differently from the lexer:
  *
- * 1. Front matter: the generated highlighters do not model it (they would read the YAML as
- *    flowchart text), so it is blanked before highlighting. Gap, see run notes GAPS.md.
+ * 1. Front matter: the lexer gives it no tokens, so it is blanked before highlighting. Monarch
+ *    models it (monarch-front-matter.spec.ts); TextMate and Lezer do not yet (GAPS.md).
  * 2. `ShapeData`: one kind for all of `@{ … }`; the highlighters show its quoted values as
  *    String, the table (one category per kind) says Meta.
  *    Input: `A@{ label: "hi" }`.

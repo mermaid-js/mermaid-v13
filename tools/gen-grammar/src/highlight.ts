@@ -213,8 +213,29 @@ export function monarch(g: Grammar, names: HighlightNames): object {
     if (lineEnd) rules.push(['$', { token: '', next: '@pop' }]);
     tokenizer[state(mode)] = rules;
   }
-  return { tokenPostfix: `.${names.id}`, defaultToken: '', tokenizer };
+  Object.assign(tokenizer, MONARCH_FRONT_MATTER);
+  return { tokenPostfix: `.${names.id}`, defaultToken: '', start: 'frontMatterStart', tokenizer };
 }
+
+/**
+ * Front matter (a `---` first line up to the next `---` line): the tokenizer starts in
+ * `frontMatterStart`, which reads an opening fence or moves to `root` without reading
+ * anything. Inside, fences are meta, YAML keys variables and `#` comments comments, so no
+ * YAML quote or bracket opens a diagram mode. An unclosed block runs to the end of the text
+ * (Monarch cannot look ahead), as it does while being typed.
+ */
+const MONARCH_FRONT_MATTER = {
+  frontMatterStart: [
+    ['---[^\\S\\n]*$', { token: 'annotation', switchTo: '@frontMatter' }],
+    ['', { token: '', switchTo: '@root' }],
+  ],
+  frontMatter: [
+    ['---[^\\S\\n]*$', { token: 'annotation', switchTo: '@root' }],
+    ['[^\\S\\n]*#.*', { token: 'comment' }],
+    ['[^\\S\\n]*(?:- )?[^\\s#:\'"-][^:#]*(?=:(?:\\s|$))', { token: 'variable' }],
+    ['[^#]+', { token: '' }],
+  ],
+};
 
 // ---- Lezer -----------------------------------------------------------------------------
 

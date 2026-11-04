@@ -90,7 +90,8 @@ type MonarchRule = [string, { token: string; next?: string; switchTo?: string }]
 
 /** Highlights with a Monarch definition (JSON text), interpreted as Monaco runs it per line. */
 export function monarchCategorise(json: string): Categorise {
-  const states = (JSON.parse(json) as { tokenizer: Record<string, MonarchRule[]> }).tokenizer;
+  const def = JSON.parse(json) as { start?: string; tokenizer: Record<string, MonarchRule[]> };
+  const states = def.tokenizer;
   const compiled = Object.fromEntries(
     Object.entries(states).map(([s, rules]) => [
       s,
@@ -99,7 +100,7 @@ export function monarchCategorise(json: string): Categorise {
   );
   return (text) => {
     const out: string[] = [];
-    let stack = ['root'];
+    let stack = [def.start ?? 'root'];
     for (const line of lines(text)) {
       const cats: string[] = Array.from({ length: line.length }, () => 'Other');
       // A zero-width match only changes the state; a few in a row at one offset end there.
