@@ -1,0 +1,8 @@
+---
+description: long state labels and transition labels wrap at state.wrappingWidth
+---
+stateDiagram-v2
+  [*] --> Long
+  Long : This state has a long description that has to wrap over several lines
+  Long --> Short : a transition label that is long enough to wrap as well
+  Short --> [*]

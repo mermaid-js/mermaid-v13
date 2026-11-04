@@ -1,0 +1,60 @@
+@ 2:5  di|rection LR
+  2:3-2:15 "direction LR"
+  | **`direction LR`** direction: left to right
+  |
+  | `direction TB`, `BT`, `RL` or `LR`: the direction of the diagram, or of the composite state it is in.
+@ 3:5  st|ate f <<fork>>
+  3:3-3:8 "state"
+  | **`state`**
+  |
+  | `state X { … }` or `state "description" as X { … }`: a composite state; `--` splits it into concurrent regions.
+@ 3:15  state f <<fo|rk>>
+  3:11-3:19 "<<fork>>"
+  | **`<<fork>>`**
+  |
+  | `state f <<fork>>`, `<<join>>`, `<<choice>>` (or `[[fork]]` …): a pseudo-state.
+@ 4:15  state c [[ch|oice]]
+  4:11-4:21 "[[choice]]"
+  | **`[[choice]]`**
+  |
+  | `state f <<fork>>`, `<<join>>`, `<<choice>>` (or `[[fork]]` …): a pseudo-state.
+@ 5:5  no|te left of A : text
+  5:3-5:7 "note"
+  | **`note`**
+  |
+  | `note left of A : text`, or `note right of A`, the text on the lines after it, then `end note`. A floating `note "text" as N` is accepted and not drawn.
+@ 8:5  en|d note
+  8:3-8:11 "end note"
+  | **`end note`**
+  |
+  | `note left of A : text`, or `note right of A`, the text on the lines after it, then `end note`. A floating `note "text" as N` is accepted and not drawn.
+@ 9:5  cl|assDef x fill:#f00
+  9:3-9:11 "classDef"
+  | **`classDef`**
+  |
+  | `classDef name fill:#f96,color:#000`: defines a class of styles.
+@ 11:8  A -|-> B
+  11:7-11:10 "-->"
+  | **`-->`** transition `A` → `B`
+  |
+  | `A --> B`: a transition.
+@ 12:6  -|-
+  12:5-12:7 "--"
+  | **`--`**
+  |
+  | `--` splits a composite state into concurrent regions.
+@ 15:5  A:|::x
+  15:4-15:7 ":::"
+  | **`:::`**
+  |
+  | `A:::name`: gives the state a class, as `class A name` does.
+@ 16:5  hi|de empty description
+  16:3-16:25 "hide empty description"
+  | **`hide empty description`**
+  |
+  | `hide empty description`: accepted and ignored.
+@ 17:5  st|yle A fill:#bbf
+  17:3-17:8 "style"
+  | **`style`**
+  |
+  | `style A,B fill:#f96`: styles states.

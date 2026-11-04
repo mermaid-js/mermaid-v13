@@ -1,0 +1,11 @@
+---
+description: labelled transitions, several between the same pair, and self-loops
+---
+stateDiagram-v2
+  [*] --> A
+  A --> B : go
+  B --> A : back
+  A --> B : again
+  B --> B : stay
+  A --> A
+  B --> [*] : finish

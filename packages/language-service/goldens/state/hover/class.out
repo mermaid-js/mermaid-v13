@@ -1,0 +1,21 @@
+@ 4:8  A:::h|ot --> B
+  4:7-4:10 "hot"
+  | **class** `hot`
+  |
+  | `classDef hot fill:#f96,stroke:#333`
+  |
+  | Used by 1 state
+@ 5:11  class B |cold
+  5:11-5:15 "cold"
+  | **class** `cold`
+  |
+  | `classDef cold fill:#69f`
+  |
+  | Used by 1 state
+@ 6:7  C:::|warm
+  6:7-6:11 "warm"
+  | **class** `warm`
+  |
+  | No `classDef` defines it.
+  |
+  | Used by 0 states

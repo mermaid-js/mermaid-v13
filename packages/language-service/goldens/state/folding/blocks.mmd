@@ -1,0 +1,25 @@
+---
+title: Folding
+config:
+  theme: forest
+---
+stateDiagram-v2
+  accTitle: one line
+  accDescr {
+    A description
+    over two lines
+  }
+  state Outer {
+    state Inner {
+      A --> B
+    }
+    --
+    C
+  }
+  note right of A
+    a note
+    over two lines
+  end note
+  note left of B : one line
+  state Empty {
+  }

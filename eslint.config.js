@@ -189,7 +189,11 @@ export default tseslint.config(
   },
   {
     // Ported verbatim from v12 by scripts/port-v12-specs.ts, which adds the blanket disable.
-    files: ['packages/diagram-flowchart/src/v12-specs/**', 'packages/diagram-er/src/v12-specs/**'],
+    files: [
+      'packages/diagram-flowchart/src/v12-specs/**',
+      'packages/diagram-er/src/v12-specs/**',
+      'packages/diagram-state/src/v12-specs/**',
+    ],
     rules: {
       '@eslint-community/eslint-comments/disable-enable-pair': 'off',
       '@eslint-community/eslint-comments/no-unlimited-disable': 'off',

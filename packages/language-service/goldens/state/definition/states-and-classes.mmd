@@ -1,0 +1,10 @@
+stateDiagram-v2
+  [*] --> Idle
+  state "Doing work" as Busy
+  Idle --> |Busy
+  Busy --> Idle : d|one
+  note left of |Idle : waits
+  class |Idle hot
+  classDef hot fill:#f96
+  Busy:::h|ot --> [*]
+  style |Busy fill:#bbf

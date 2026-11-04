@@ -1,0 +1,4 @@
+@ 3:12  Idle --> |
+  Idle node 3:12-3:12 "" -> "Idle"
+  Busy node 3:12-3:12 "" -> "Busy"
+  [*] constant (start or end state) 3:12-3:12 "" -> "[*]"
