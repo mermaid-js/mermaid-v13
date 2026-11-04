@@ -1,33 +1,35 @@
 /**
- * Third-party language facets (DESIGN §4.5, D89): packages in `node_modules` whose
- * package.json has a `mermaid` diagram manifest with a `language` entry. The manifest's
- * `detector` module is imported now (detection is synchronous); the `language` module is
+ * Third-party language facets (DESIGN §4.5, D89, D157): packages in a workspace folder's own
+ * `node_modules` whose package.json has a `mermaid` diagram manifest with a `language` entry.
+ * The server calls this only when the client opts in (D157); by default it runs no code from
+ * the opened folder.
+ *
+ * Confinement: ancestor folders' `node_modules` are never scanned; `detector` and `language`
+ * must resolve (symlinks followed) inside the package directory; each import has a time limit.
+ * The `detector` module is imported now (detection is synchronous); the `language` module is
  * imported by `preload`, so a broken one shows as `LANGUAGE_LOAD_FAILED` on its documents.
  *
  * Nothing here throws: an unreadable directory, a package.json that is not JSON, a manifest
- * without `id`, `detector` or `language`, or a detector module that fails to load skips that
- * package and is reported through `log`.
+ * without `id`, `detector` or `language`, an id or type of a first-party diagram, a path out of
+ * the package, or a detector module that fails or takes too long to load skips that package
+ * and is reported through `log`.
  */
-import { readdirSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { readdirSync, readFileSync, realpathSync } from 'node:fs';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import type { FacetEntry, LanguageFacet } from '@mermaid-js/language-service';
 import { firstPartyFacets } from '@mermaid-js/language-service';
 
 type Detector = FacetEntry['detector'];
 
+/** Default time limit on one detector or language import. */
+const IMPORT_TIMEOUT_MS = 5000;
+
 export interface DiscoverOptions {
   /** Called once per package that is skipped, with the reason. */
   log?: (message: string) => void;
-}
-
-/** `node_modules` directories from `root` up to the file system root, nearest first. */
-function nodeModulesDirs(root: string): string[] {
-  const out: string[] = [];
-  for (let dir = resolve(root); ; dir = dirname(dir)) {
-    out.push(join(dir, 'node_modules'));
-    if (dirname(dir) === dir) return out;
-  }
+  /** Time limit on each detector or language import, in ms (default 5000). */
+  importTimeoutMs?: number;
 }
 
 function list(dir: string): string[] {
@@ -88,7 +90,31 @@ function candidate(dir: string, log: (m: string) => void): Candidate | undefined
   };
 }
 
-const moduleUrl = (dir: string, path: string) => pathToFileURL(resolve(dir, path)).href;
+class OutsideError extends Error {}
+
+/**
+ * The file URL of `path` in package `dir`, after following symlinks; throws `OutsideError`
+ * when it resolves outside the package, and the file system's error when it does not exist.
+ */
+function confined(dir: string, path: string): string {
+  const root = realpathSync(dir);
+  const target = resolve(dir, path);
+  const lexical = relative(resolve(dir), target);
+  if (lexical.startsWith('..') || isAbsolute(lexical)) throw new OutsideError();
+  const real = realpathSync(target);
+  const inside = relative(root, real);
+  if (inside.startsWith('..') || isAbsolute(inside)) throw new OutsideError();
+  return pathToFileURL(real).href;
+}
+
+/** `import(url)`, rejected after `ms`. */
+function importWithin(url: string, ms: number): Promise<unknown> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const limit = new Promise<never>((_, fail) => {
+    timer = setTimeout(() => fail(new Error(`timed out after ${ms} ms`)), ms);
+  });
+  return Promise.race([import(url), limit]).finally(() => clearTimeout(timer));
+}
 
 /** The detector a detector module exports: `detector`, else the default export. */
 function detectorOf(module: unknown): Detector | undefined {
@@ -98,41 +124,62 @@ function detectorOf(module: unknown): Detector | undefined {
 }
 
 /**
- * Facet rows for every third-party language facet visible from `root` (its `node_modules`
- * and those of its parents), in discovery order. Packages with a first-party diagram id, and
- * a second package with an id already found, are skipped.
+ * Facet rows for every third-party language facet in the own `node_modules` of each root, in
+ * discovery order. Packages whose id is a first-party diagram id or type (`flowchart`,
+ * `flowchart-v2`), and a second package with an id already found, are skipped.
  */
 export async function discoverFacets(
-  root: string,
+  roots: string | readonly string[],
   options: DiscoverOptions = {}
 ): Promise<FacetEntry[]> {
   const log = options.log ?? ((): void => undefined);
-  const ids = new Set(firstPartyFacets.map((e) => e.id));
-  const found: Candidate[] = [];
-  for (const modules of nodeModulesDirs(root))
-    for (const dir of packageDirs(modules)) {
+  const ms = options.importTimeoutMs ?? IMPORT_TIMEOUT_MS;
+  const firstParty = new Set(firstPartyFacets.flatMap((e) => [e.id, e.type]));
+  const ids = new Set<string>();
+  const found: (Candidate & { languageUrl: string })[] = [];
+  for (const root of typeof roots === 'string' ? [roots] : roots)
+    for (const dir of packageDirs(join(resolve(root), 'node_modules'))) {
       const c = candidate(dir, log);
-      if (c === undefined || ids.has(c.id)) continue;
+      if (c === undefined) continue;
+      if (firstParty.has(c.id)) {
+        log(`${c.name}: "${c.id}" is a first-party diagram`);
+        continue;
+      }
+      if (ids.has(c.id)) continue;
+      let languageUrl: string;
+      try {
+        languageUrl = confined(c.dir, c.language);
+      } catch (error) {
+        if (error instanceof OutsideError) {
+          log(`${c.name}: "language" is outside the package`);
+          continue;
+        }
+        // A missing file: kept, so its documents say LANGUAGE_LOAD_FAILED.
+        languageUrl = pathToFileURL(resolve(c.dir, c.language)).href;
+      }
       ids.add(c.id);
-      found.push(c);
+      found.push({ ...c, languageUrl });
     }
   const rows = await Promise.all(
     found.map(async (c): Promise<FacetEntry | undefined> => {
       let detector: Detector | undefined;
       try {
-        detector = detectorOf(await import(moduleUrl(c.dir, c.detector)));
+        detector = detectorOf(await importWithin(confined(c.dir, c.detector), ms));
       } catch (error) {
+        if (error instanceof OutsideError)
+          return void log(`${c.name}: "detector" is outside the package`);
         log(`${c.name}: detector failed to load (${(error as Error).message})`);
         return undefined;
       }
       if (!detector) return void log(`${c.name}: the detector module exports no function`);
-      const url = moduleUrl(c.dir, c.language);
       return {
         type: c.id,
         id: c.id,
         detector,
         load: () =>
-          import(url).then((m: { language?: LanguageFacet }) => m.language as LanguageFacet),
+          importWithin(c.languageUrl, ms).then(
+            (m) => (m as { language?: LanguageFacet }).language as LanguageFacet
+          ),
       };
     })
   );

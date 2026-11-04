@@ -17,6 +17,7 @@ import type {
   CompletionItem,
   Diagnostic,
   FoldingRange,
+  MarkupContent,
   Position,
   Range,
 } from 'vscode-languageserver';
@@ -65,31 +66,54 @@ const COMPLETION_KIND: Readonly<Record<CompletionKind, CompletionItem['kind']>> 
   shape: 20, // EnumMember
 };
 
-export function toCompletionItem(index: LineIndex, item: ServiceCompletionItem): CompletionItem {
+/**
+ * The service's markdown as LSP markup content: as it is when the client takes markdown, else
+ * as plain text with the bold and code marks taken out.
+ */
+export function toMarkup(value: string, markdown: boolean): MarkupContent {
+  return markdown
+    ? { kind: 'markdown', value }
+    : { kind: 'plaintext', value: value.replace(/\*\*|`/g, '') };
+}
+
+/** Whether a client capability's format list (preferred first) lets the server send markdown. */
+export const takesMarkdown = (formats: readonly string[] | undefined): boolean =>
+  formats === undefined || formats.includes('markdown');
+
+export function toCompletionItem(
+  index: LineIndex,
+  item: ServiceCompletionItem,
+  markdown = true
+): CompletionItem {
   const out: CompletionItem = {
     label: item.label,
     kind: COMPLETION_KIND[item.kind],
     textEdit: { range: toRange(index, item.range), newText: item.insertText },
   };
   if (item.detail !== undefined) out.detail = item.detail;
-  if (item.documentation !== undefined)
-    out.documentation = { kind: 'markdown', value: item.documentation };
+  if (item.documentation !== undefined) out.documentation = toMarkup(item.documentation, markdown);
   return out;
 }
 
+/** A last line that only closes its block: it stays visible when the block is folded. */
+const CLOSER = /^[ \t]*(?:end|\}|---|\}%%)[ \t]*(?:\r\n|\r|\n)?$/;
+
 /**
- * Folding ranges by line. A range ends on the line of its last character; ranges within one
- * line are left out, and so is a second range on the same start line (clients keep one).
+ * Folding ranges by line. A range ends on the line of its last character, or the line before
+ * when that line only closes the block (`end`, `}`, `---`); ranges within one line are left
+ * out, and so is a second range on the same start line (clients keep one).
  */
 export function toFoldingRanges(
   index: LineIndex,
+  text: string,
   ranges: readonly ServiceFoldingRange[]
 ): FoldingRange[] {
   const out: FoldingRange[] = [];
   const seen = new Set<number>();
   for (const { range, kind } of ranges) {
     const startLine = index.position(range.start).line;
-    const endLine = index.position(Math.max(range.start, range.end - 1)).line;
+    let endLine = index.position(Math.max(range.start, range.end - 1)).line;
+    if (CLOSER.test(text.slice(index.offset(endLine, 0), range.end))) endLine--;
     if (endLine <= startLine || seen.has(startLine)) continue;
     seen.add(startLine);
     out.push(kind === 'comment' ? { startLine, endLine, kind: 'comment' } : { startLine, endLine });
@@ -138,7 +162,11 @@ export function encodeSemanticTokens(
       continue;
     }
     for (let line = from.line; line <= to.line; line++) {
-      const lineStart = line === from.line ? start : index.offset(line, 0);
+      // A continuation piece starts after the line's indentation.
+      let lineStart = line === from.line ? start : index.offset(line, 0);
+      if (line !== from.line)
+        while (lineStart < end && (text[lineStart] === ' ' || text[lineStart] === '\t'))
+          lineStart++;
       // `offset(line, ∞)` clamps to the line's end, before its line break.
       const lineEnd = line === to.line ? end : index.offset(line, text.length);
       emit(line, lineStart - index.offset(line, 0), lineEnd - lineStart, type, mods);

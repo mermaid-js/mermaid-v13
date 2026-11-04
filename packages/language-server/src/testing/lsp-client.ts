@@ -26,8 +26,8 @@ export interface Client {
   readonly published: PublishDiagnosticsParams[];
   /** The next `publishDiagnostics` for `uri` (one already received and not yet taken first). */
   diagnostics(uri: string): Promise<PublishDiagnosticsParams>;
-  /** Open `uri` with `text` (language id `mermaid`, version 1). */
-  open(uri: string, text: string): void;
+  /** Open `uri` with `text` (version 1, language id `mermaid` unless given). */
+  open(uri: string, text: string, languageId?: string): void;
   /** Replace the whole text of `uri`. */
   change(uri: string, text: string, version: number): void;
   close(uri: string): void;
@@ -39,6 +39,8 @@ export interface Client {
 
 export interface ClientOptions {
   rootUri?: string | null;
+  workspaceFolders?: { uri: string; name: string }[];
+  initializationOptions?: unknown;
   capabilities?: ClientCapabilities;
 }
 
@@ -71,6 +73,10 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
       processId: process.pid,
       rootUri: options.rootUri ?? null,
       capabilities: options.capabilities ?? {},
+      ...(options.workspaceFolders ? { workspaceFolders: options.workspaceFolders } : {}),
+      ...(options.initializationOptions !== undefined
+        ? { initializationOptions: options.initializationOptions }
+        : {}),
     }),
     exited.then((code) => {
       throw new Error(`the server exited (${code}) before initialize:\n${stderr}`);
@@ -86,9 +92,9 @@ export async function startClient(options: ClientOptions = {}): Promise<Client> 
       if (i >= 0) return Promise.resolve(unread.splice(i, 1)[0]!);
       return new Promise((done) => waiting.push({ uri, done }));
     },
-    open(uri, text) {
+    open(uri, text, languageId = 'mermaid') {
       void connection.sendNotification('textDocument/didOpen', {
-        textDocument: { uri, languageId: 'mermaid', version: 1, text },
+        textDocument: { uri, languageId, version: 1, text },
       });
     },
     change(uri, text, version) {

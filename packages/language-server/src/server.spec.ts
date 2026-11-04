@@ -4,6 +4,8 @@
  * Positions are 0-based lines and UTF-16 columns, written out by hand from the fixtures.
  */
 import { SEMANTIC_TOKEN_LEGEND } from '@mermaid-js/language-service';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type {
@@ -16,9 +18,11 @@ import type {
 } from 'vscode-languageserver-protocol';
 import { decodeTokens, startClient } from './testing/lsp-client.ts';
 import type { Client } from './testing/lsp-client.ts';
-import { FAKE_FACET, facetPackage, workspace } from './testing/workspace.ts';
+import { detectorSource, FAKE_FACET, facetPackage, workspace } from './testing/workspace.ts';
 
 const T = 60_000;
+/** The opt-in to third-party facets (D157). */
+const PLUGINS = { mermaid: { plugins: true } };
 
 /** Lines 0–8. Line 8 leaves a `[` open: one error. */
 const FLOW = [
@@ -147,7 +151,8 @@ describe('mermaid-language-server over stdio', () => {
 
   it('folds the subgraph and the multi-line label by line', async () => {
     const folds = await request<FoldingRange[]>('textDocument/foldingRange', doc);
-    expect(folds).toContainEqual({ startLine: 3, endLine: 5 });
+    // `subgraph S1` … `end`: the `end` line stays visible.
+    expect(folds).toContainEqual({ startLine: 3, endLine: 4 });
     for (const f of folds) expect(f.endLine).toBeGreaterThan(f.startLine);
   });
 
@@ -186,7 +191,7 @@ describe('semantic tokens over stdio', () => {
       try {
         const tokens = await tokensOf(client);
         const lines = FLOW.split('\n');
-        // The label `Start⏎  here` (inside the quotes) becomes `Start` and `  here`.
+        // The label `Start⏎  here` (inside the quotes) becomes `Start` and `here` (indent left out).
         expect(tokens).toContainEqual({
           line: 1,
           char: 5,
@@ -196,8 +201,8 @@ describe('semantic tokens over stdio', () => {
         });
         expect(tokens).toContainEqual({
           line: 2,
-          char: 0,
-          length: 6,
+          char: 2,
+          length: 4,
           type: 'string',
           modifiers: [],
         });
@@ -249,7 +254,7 @@ describe('documents and facets the server serves', () => {
     async () => {
       const client = await startClient();
       try {
-        client.open('file:///work/notes.md', 'flowchart LR\n  A --> B[\n');
+        client.open('file:///work/notes.md', 'flowchart LR\n  A --> B[\n', 'markdown');
         client.open('file:///work/README.MERMAID', 'flowchart LR\n  A --> B[\n');
         const served = await client.diagnostics('file:///work/README.MERMAID');
         expect(served.diagnostics).toHaveLength(1);
@@ -277,7 +282,10 @@ describe('documents and facets the server serves', () => {
         },
         'broken-json': { 'package.json': '{' },
       });
-      const client = await startClient({ rootUri: pathToFileURL(root).href });
+      const client = await startClient({
+        rootUri: pathToFileURL(root).href,
+        initializationOptions: PLUGINS,
+      });
       try {
         // Opened right after `initialized`: the facet is already there (D155).
         client.open('file:///work/a.mmd', 'fake\n');
@@ -287,6 +295,296 @@ describe('documents and facets the server serves', () => {
         expect((await client.diagnostics('file:///work/b.mmd')).diagnostics).toEqual([]);
       } finally {
         expect(await client.stop()).toBe(0);
+      }
+    },
+    T
+  );
+});
+
+describe('review fixes (#38)', () => {
+  /** Fails fast instead of waiting for the spec timeout when the session is wedged. */
+  const within = <R>(p: Promise<R>, ms = 8000): Promise<R> =>
+    Promise.race([
+      p,
+      new Promise<never>((_, fail) => setTimeout(() => fail(new Error('no answer')), ms)),
+    ]);
+  const LOUD = FAKE_FACET.replace(
+    'parse: (text) => ({',
+    "parse: (text) => (console.log('loud parse'), console.info('info'), {"
+  );
+  const THROWS = FAKE_FACET.replace(
+    'parse: (text) => ({',
+    "parse: (text) => { throw new Error('boom'); }, unused: (text) => ({"
+  );
+
+  it(
+    'keeps stdout for LSP messages: a facet that logs does not wedge the session',
+    async () => {
+      const root = workspace({
+        loud: {
+          ...facetPackage('loud', 'loud'),
+          'detector.js': `console.log('loud detector');\n${detectorSource('loud')}`,
+          'language.js': `console.log('loud language');\n${LOUD}`,
+        },
+      });
+      const client = await within(
+        startClient({ rootUri: pathToFileURL(root).href, initializationOptions: PLUGINS })
+      );
+      try {
+        client.open('file:///w/l.mmd', 'loud\n');
+        const { diagnostics } = await within(client.diagnostics('file:///w/l.mmd'));
+        expect(diagnostics.map((d) => d.code)).toEqual(['FAKE_WARNING']);
+        expect(
+          await within(
+            client.connection.sendRequest('textDocument/hover', {
+              textDocument: { uri: 'file:///w/l.mmd' },
+              position: pos(0, 1),
+            })
+          )
+        ).toBeNull();
+        expect(client.stderr()).toContain('loud detector');
+        expect(client.stderr()).toContain('loud parse');
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+
+  it(
+    'turns a facet parse that throws into an error diagnostic and drops the old snapshot',
+    async () => {
+      const root = workspace({
+        thrower: { ...facetPackage('thrower', 'thrower'), 'language.js': THROWS },
+      });
+      const client = await startClient({
+        rootUri: pathToFileURL(root).href,
+        initializationOptions: PLUGINS,
+      });
+      const uri = 'file:///w/t.mmd';
+      try {
+        client.open(uri, 'flowchart LR\n  A --> B\n');
+        await client.diagnostics(uri);
+        client.change(uri, 'thrower\n  x\n', 2);
+        const { diagnostics } = await within(client.diagnostics(uri));
+        expect(diagnostics).toEqual([
+          expect.objectContaining({
+            severity: 1,
+            code: 'LANGUAGE_FACET_FAILED',
+            range: range(0, 0, 7),
+          }),
+        ]);
+        expect(diagnostics[0]!.message).toContain('boom');
+        const hover = await client.connection.sendRequest('textDocument/hover', {
+          textDocument: { uri },
+          position: pos(1, 2),
+        });
+        expect(hover).toBeNull();
+        // Ranged changes apply to the new text, not the old snapshot's.
+        await client.connection.sendNotification('textDocument/didChange', {
+          textDocument: { uri, version: 3 },
+          contentChanges: [{ range: range(0, 0, 7), text: 'flowchart LR\n  B' }],
+        });
+        expect((await within(client.diagnostics(uri))).diagnostics).toEqual([]);
+        const def = await client.connection.sendRequest<Location>('textDocument/definition', {
+          textDocument: { uri },
+          position: pos(2, 2),
+        });
+        expect(def.range).toEqual(range(2, 2, 3));
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+
+  it(
+    'ignores an older version and applies ranged changes in order',
+    async () => {
+      const client = await startClient();
+      const uri = 'file:///w/v.mmd';
+      try {
+        client.open(uri, 'flowchart LR\n  A --> B\n');
+        await client.diagnostics(uri);
+        client.change(uri, 'flowchart LR\n  Q --> R\n', 5);
+        client.change(uri, 'flowchart LR\n  OLD --> R\n', 3);
+        await client.connection.sendNotification('textDocument/didChange', {
+          textDocument: { uri, version: 6 },
+          contentChanges: [
+            { range: range(0, 0, 0), text: '%% x\n' },
+            { range: range(2, 2, 3), text: 'Zed' },
+          ],
+        });
+        await client.diagnostics(uri);
+        expect((await client.diagnostics(uri)).diagnostics).toEqual([]);
+        const refs = await client.connection.sendRequest<Location[]>('textDocument/references', {
+          textDocument: { uri },
+          position: pos(2, 2),
+          context: { includeDeclaration: true },
+        });
+        expect(refs.map((r) => r.range)).toEqual([range(2, 2, 5)]);
+        expect(client.published.filter((p) => p.uri === uri)).toHaveLength(3);
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+
+  it(
+    'follows the client markup capability for hover and completion docs',
+    async () => {
+      const client = await startClient({
+        capabilities: {
+          textDocument: {
+            hover: { contentFormat: ['plaintext'] },
+            completion: { completionItem: { documentationFormat: ['plaintext'] } },
+          },
+        },
+      });
+      const uri = 'file:///w/m.mmd';
+      try {
+        client.open(uri, FLOW);
+        await client.diagnostics(uri);
+        const hover = await client.connection.sendRequest<Hover>('textDocument/hover', {
+          textDocument: { uri },
+          position: pos(4, 10),
+        });
+        expect(hover.contents).toMatchObject({ kind: 'plaintext' });
+        expect((hover.contents as { value: string }).value).not.toMatch(/\*\*|`/);
+        const items = await client.connection.sendRequest<CompletionItem[]>(
+          'textDocument/completion',
+          { textDocument: { uri }, position: pos(5, 2) }
+        );
+        const documented = items.filter((i) => i.documentation !== undefined);
+        expect(documented.length).toBeGreaterThan(0);
+        for (const i of documented) expect(i.documentation).toMatchObject({ kind: 'plaintext' });
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+
+  it(
+    'serves a document by language id `mermaid` too (an untitled buffer)',
+    async () => {
+      const client = await startClient();
+      try {
+        client.open('untitled:Untitled-1', 'flowchart LR\n  A --> B[\n');
+        expect((await within(client.diagnostics('untitled:Untitled-1'))).diagnostics).toHaveLength(
+          1
+        );
+      } finally {
+        await client.stop();
+      }
+    },
+    T
+  );
+
+  it(
+    'with plugins on, scans every workspace folder; by default scans none (D157)',
+    async () => {
+      const a = workspace({ 'mermaid-a': facetPackage('mermaid-a', 'aaa') });
+      const b = workspace({ 'mermaid-b': facetPackage('mermaid-b', 'bbb') });
+      const workspaceFolders = [
+        { uri: pathToFileURL(a).href, name: 'a' },
+        { uri: pathToFileURL(b).href, name: 'b' },
+      ];
+      const codes = async (client: Client) => {
+        const out = [];
+        for (const word of ['aaa', 'bbb']) {
+          client.open(`file:///w/${word}.mmd`, `${word}\n`);
+          out.push(
+            (await client.diagnostics(`file:///w/${word}.mmd`)).diagnostics.map((d) => d.code)
+          );
+        }
+        return out;
+      };
+      const all = await startClient({ workspaceFolders, initializationOptions: PLUGINS });
+      try {
+        expect(await codes(all)).toEqual([['FAKE_WARNING'], ['FAKE_WARNING']]);
+      } finally {
+        await all.stop();
+      }
+      const none = await startClient({ workspaceFolders });
+      try {
+        expect(await codes(none)).toEqual([['UNSUPPORTED_DIAGRAM'], ['UNSUPPORTED_DIAGRAM']]);
+      } finally {
+        await none.stop();
+      }
+    },
+    T
+  );
+
+  it(
+    'imports nothing from the workspace without the opt-in (D157)',
+    async () => {
+      const root = workspace({});
+      const marker = join(root, 'detector-ran');
+      const pkg = facetPackage('mermaid-fake', 'fake');
+      const files = {
+        ...pkg,
+        'detector.js': `import { writeFileSync } from 'node:fs';\nwriteFileSync(${JSON.stringify(marker)}, 'ran');\n${detectorSource('fake')}`,
+        'language.js': `import { writeFileSync } from 'node:fs';\nwriteFileSync(${JSON.stringify(marker)}, 'ran');\n${FAKE_FACET}`,
+      };
+      mkdirSync(join(root, 'node_modules', 'mermaid-fake'), { recursive: true });
+      for (const [f, text] of Object.entries(files))
+        writeFileSync(join(root, 'node_modules', 'mermaid-fake', f), text);
+      for (const initializationOptions of [
+        undefined,
+        {},
+        { mermaid: {} },
+        { mermaid: { plugins: 'yes' } },
+      ]) {
+        const client = await startClient({
+          rootUri: pathToFileURL(root).href,
+          initializationOptions,
+        });
+        try {
+          client.open('file:///w/f.mmd', 'fake\n');
+          const { diagnostics } = await client.diagnostics('file:///w/f.mmd');
+          expect(diagnostics.map((d) => d.code)).toEqual(['UNSUPPORTED_DIAGRAM']);
+        } finally {
+          await client.stop();
+        }
+        expect(existsSync(marker)).toBe(false);
+      }
+      const on = await startClient({
+        rootUri: pathToFileURL(root).href,
+        initializationOptions: PLUGINS,
+      });
+      try {
+        on.open('file:///w/f.mmd', 'fake\n');
+        expect((await on.diagnostics('file:///w/f.mmd')).diagnostics.map((d) => d.code)).toEqual([
+          'FAKE_WARNING',
+        ]);
+      } finally {
+        await on.stop();
+      }
+      expect(existsSync(marker)).toBe(true);
+    },
+    T
+  );
+
+  it(
+    'with plugins on, a package claiming flowchart-v2 does not take over flowchart',
+    async () => {
+      const root = workspace({ hijack: facetPackage('hijack', 'flowchart-v2', 'flowchart') });
+      const client = await startClient({
+        rootUri: pathToFileURL(root).href,
+        initializationOptions: PLUGINS,
+      });
+      try {
+        client.open('file:///w/h.mmd', 'flowchart LR\n  A --> B\n');
+        expect((await client.diagnostics('file:///w/h.mmd')).diagnostics).toEqual([]);
+        const hover = await client.connection.sendRequest<Hover>('textDocument/hover', {
+          textDocument: { uri: 'file:///w/h.mmd' },
+          position: pos(1, 2),
+        });
+        expect((hover.contents as { value: string }).value).toContain('node');
+      } finally {
+        await client.stop();
       }
     },
     T

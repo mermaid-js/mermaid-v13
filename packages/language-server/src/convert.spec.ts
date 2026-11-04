@@ -54,7 +54,7 @@ describe('encodeSemanticTokens', () => {
       }
       const expected = doc
         .semanticTokens()
-        .map((s) => text.slice(s.range.start, s.range.end).replace(/\r\n|\r|\n/g, ''))
+        .map((s) => text.slice(s.range.start, s.range.end).replace(/(?:\r\n|\r|\n)[ \t]*/g, ''))
         .join('');
       expect(covered, `corpus file ${n}`).toBe(expected);
     }
@@ -76,6 +76,20 @@ describe('encodeSemanticTokens', () => {
       SEMANTIC_TOKEN_LEGEND.types.indexOf('string'),
       0,
     ]);
+  });
+
+  it('starts a continuation piece after the line indentation', () => {
+    const text = 'A["x\n  \t  y"]';
+    const data = encodeSemanticTokens(new LineIndex(text), text, [token(3, 11)]);
+    expect(decodeTokens(data, legend)).toEqual([
+      { line: 0, char: 3, length: 1, type: 'string', modifiers: [] },
+      { line: 1, char: 5, length: 1, type: 'string', modifiers: [] },
+    ]);
+    // A line holding only indentation gives no piece.
+    const blank = 'A["x\n   \n  y"]';
+    expect(
+      decodeTokens(encodeSemanticTokens(new LineIndex(blank), blank, [token(3, 14)]), legend)
+    ).toHaveLength(2);
   });
 
   it('leaves out empty lines inside a token and an overlapping token', () => {
@@ -126,15 +140,31 @@ describe('positions and folding', () => {
     });
   });
 
-  it('folds by line: a range ends on the line of its last character', () => {
-    const text = 'subgraph A\n  x\nend\n';
+  it('folds by line, keeping a closing line (`end`, `}`, `---`) visible', () => {
+    const text = 'subgraph A\n  x\n  end\n';
     const index = new LineIndex(text);
     expect(
-      toFoldingRanges(index, [
-        { range: { start: 0, end: 18 }, kind: 'subgraph' },
-        { range: { start: 0, end: 19 }, kind: 'chain' },
+      toFoldingRanges(index, text, [
+        { range: { start: 0, end: 20 }, kind: 'subgraph' },
+        { range: { start: 0, end: 21 }, kind: 'chain' },
         { range: { start: 11, end: 14 }, kind: 'chain' },
       ])
-    ).toEqual([{ startLine: 0, endLine: 2 }]);
+    ).toEqual([{ startLine: 0, endLine: 1 }]);
+    const block = 'accDescr {\n  a\n  b\n}\nA["x\ny"]\n';
+    expect(
+      toFoldingRanges(new LineIndex(block), block, [
+        { range: { start: 0, end: 21 }, kind: 'accDescr' },
+        { range: { start: 22, end: 30 }, kind: 'chain' },
+      ])
+    ).toEqual([
+      { startLine: 0, endLine: 2 },
+      { startLine: 4, endLine: 5 },
+    ]);
+    // A block whose closer directly follows the opener line folds nothing.
+    expect(
+      toFoldingRanges(new LineIndex('subgraph A\nend'), 'subgraph A\nend', [
+        { range: { start: 0, end: 14 }, kind: 'subgraph' },
+      ])
+    ).toEqual([]);
   });
 });
