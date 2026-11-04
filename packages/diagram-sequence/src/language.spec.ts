@@ -3,7 +3,19 @@ import { ARROWS } from './facet/tables.ts';
 import { language, sequenceLanguage, sequenceTokens } from './language.ts';
 
 describe('sequence language facet: isValidId (rename, D92)', () => {
-  it.each(['A', 'Alice', 'a_b', 'a.b', '1', 'café', 'loops', 'ends'])('accepts %s', (name) => {
+  it.each([
+    'A',
+    'Alice',
+    'a_b',
+    'a.b',
+    '1',
+    'café',
+    'loops',
+    'ends',
+    'Alice Smith',
+    'A # c',
+    'A#c',
+  ])('accepts %j, an id the parser reads back', (name) => {
     expect(sequenceLanguage.isValidId(name)).toBeUndefined();
   });
 
@@ -20,7 +32,6 @@ describe('sequence language facet: isValidId (rename, D92)', () => {
     ['a<b', /not a participant id/],
     ['end', /not a participant id/],
     ['End', /not a participant id/],
-    ['Alice Smith', /not a participant id/],
     ['participant', /not a participant id/],
     ['loop', /not a participant id/],
   ])('rejects %j with a reason', (name, reason) => {

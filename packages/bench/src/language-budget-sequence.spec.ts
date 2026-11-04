@@ -1,7 +1,7 @@
 /**
  * R-LANG-4 in PR CI for sequence, as ratios (timing tests never assert absolute times), as
  * `language-budget.spec.ts` does for flowchart: on the 50k-character sequence fixture, one
- * editing cycle (update + every query) costs at most a few bare parses, and four times the
+ * editing cycle (update + every query) costs at most four and a half bare parses, and four times the
  * text at most four times the cycle. The absolute ≤ 15 ms (D156) on the reference runner is
  * `pnpm --filter bench language:sequence --enforce`.
  */
@@ -48,14 +48,23 @@ describe('the sequence language-service bench fixture', () => {
  * load hits both sides alike, in CPU time.
  */
 describe('the R-LANG-4 budget for sequence, as ratios', () => {
-  it('a cycle costs at most four bare parses', () => {
+  /**
+   * 4.5, not 4 as for flowchart. A cycle holds three structural parses (`update`, the rename's
+   * read-back of the renamed text, and the completions probe) plus semantic tokens, so its
+   * best runs sit at 3.6–3.85 bare parses under vitest; `cpuUsage` counts GC, and under load
+   * single best-of-25 runs reach 4.05–4.2. `isValidId` is one small parse (about 0.03 ms) and
+   * no longer a factor. Outside vitest (tsx) a bare parse is about three times faster while
+   * semantic tokens are not, so the same cycle is about five bare parses there: the ratio is
+   * only meaningful under the runner that measures it.
+   */
+  it('a cycle costs at most four and a half bare parses', () => {
     const texts = typing(SEQUENCE_FIXTURE);
     const [parse, full] = bestOfEach(
       25,
       (i) => sequenceLanguage.parse(texts(i), { keepTokens: true }),
       (i) => sequenceCycle(service, texts(i))
     );
-    expect(full! / parse!).toBeLessThanOrEqual(4);
+    expect(full! / parse!).toBeLessThanOrEqual(4.5);
   }, 60_000);
 
   it('four times the text at most four times the cycle (plus noise; quadratic gives 16)', () => {

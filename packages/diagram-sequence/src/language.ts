@@ -25,11 +25,14 @@ const HEADER = 'sequenceDiagram\n';
 
 /**
  * Where a participant id is written; `@` stands for it. A name is an id only when every one
- * of them reads it back as that participant, so a rename keeps every mention.
+ * of them reads it back as that participant, so a rename keeps every mention. `actor @ as x`
+ * is not among them: the ID rule's `\s+as\s` lookahead only follows a run without blanks, so
+ * `Alice Smith as x` is one id, as in v12, though `participant Alice Smith` is accepted. A
+ * rename into an aliased declaration is still refused, by the service's read-back of the
+ * renamed document.
  */
 const PARTICIPANT_LINES = [
   'participant @',
-  'actor @ as x',
   '@->>Z: x',
   'Z->>@: x',
   'Z->>+@: x',
@@ -38,6 +41,9 @@ const PARTICIPANT_LINES = [
   'activate @',
   'links @: {}',
 ];
+
+/** How many lines also name the other participant, `Z`. */
+const ZS = PARTICIPANT_LINES.filter((l) => l.includes('Z')).length;
 
 /** Blank, line-break and space checks. */
 function shapeReason(name: string): string | undefined {
@@ -48,28 +54,32 @@ function shapeReason(name: string): string | undefined {
 }
 
 /**
- * Whether `name`, written for `@` in the one-statement `line`, reads back as exactly one
- * participant symbol named `name` at that spot, with no error.
+ * Whether `name`, written for `@` in every line of {@link PARTICIPANT_LINES}, reads back as
+ * exactly one participant symbol named `name` at each spot, with no error. One parse of all
+ * the lines together (the rename bench's budget, R-LANG-4): every line starts in the lexer's
+ * initial mode, so a line reads as it would alone.
  */
-function readsBack(line: string, name: string): boolean {
-  const at = HEADER.length + line.indexOf('@');
-  const { diagnostics, symbols } = parseSequence(`${HEADER}${line.replace('@', () => name)}\n`);
-  const hits = symbols.filter((s) => s.kind === 'participant' && s.range.start === at);
-  return (
-    !diagnostics.some((d) => d.severity === 'error') &&
-    hits.length === 1 &&
-    hits[0]!.name === name &&
-    hits[0]!.range.end === at + name.length
-  );
+function readsBack(name: string): boolean {
+  let text = HEADER;
+  const spots: number[] = [];
+  for (const line of PARTICIPANT_LINES) {
+    spots.push(text.length + line.indexOf('@'));
+    text += `${line.replace('@', () => name)}\n`;
+  }
+  const { diagnostics, symbols } = parseSequence(text);
+  if (diagnostics.some((d) => d.severity === 'error')) return false;
+  const participants = symbols.filter((s) => s.kind === 'participant');
+  // Each line has one `@` and at most one `Z`, so nothing else may read as a participant.
+  if (participants.length !== spots.length + ZS) return false;
+  return spots.every((at) => {
+    const hits = participants.filter((s) => s.range.start === at);
+    return hits.length === 1 && hits[0]!.name === name && hits[0]!.range.end === at + name.length;
+  });
 }
 
 /** Why `name` cannot be a participant id, if it cannot. */
 function invalidReason(name: string): string | undefined {
-  const shape = shapeReason(name);
-  if (shape) return shape;
-  return PARTICIPANT_LINES.every((l) => readsBack(l, name))
-    ? undefined
-    : `'${name}' is not a participant id.`;
+  return shapeReason(name) ?? (readsBack(name) ? undefined : `'${name}' is not a participant id.`);
 }
 
 /** The sequence facet. */
