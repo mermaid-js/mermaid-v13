@@ -2,7 +2,6 @@
  * Completion and hover on the diagram text (#32, D93, D95), through the service API. The
  * goldens (goldens/flowchart/completions and hover) print whole lists; these assert the rules.
  */
-import { performance } from 'node:perf_hooks';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { flowchartDocs, FlowTokenKind as T } from '@mermaid-js/diagram-flowchart/language';
 import { createLanguageService } from './index.ts';
@@ -257,12 +256,14 @@ describe('hover', () => {
 });
 
 describe('stress (pitfall 5: linear on long runs)', () => {
+  /** Best CPU time of 5 runs in ms: the time this worker waits for a core is left out. */
   const fastest = (run: () => unknown): number => {
     let best = Infinity;
-    for (let t = 0; t < 3; t++) {
-      const t0 = performance.now();
+    for (let t = 0; t < 5; t++) {
+      const t0 = process.cpuUsage();
       run();
-      best = Math.min(best, performance.now() - t0);
+      const { user, system } = process.cpuUsage(t0);
+      best = Math.min(best, (user + system) / 1000);
     }
     return best;
   };
@@ -294,8 +295,9 @@ describe('stress (pitfall 5: linear on long runs)', () => {
       });
     };
     run(500);
-    const small = run(5000);
+    // 8× the input: linear is 8×, quadratic 64×; 2.5× slack for a loaded machine.
+    const small = run(2500);
     const big = run(20000);
-    expect(big / Math.max(small, 1)).toBeLessThan(8);
+    expect(big / Math.max(small, 1)).toBeLessThan(20);
   });
 });

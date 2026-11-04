@@ -4,7 +4,6 @@
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { performance } from 'node:perf_hooks';
 import {
   createLanguageService,
   encodeSemanticTokens as encodeLines,
@@ -128,10 +127,11 @@ describe('encodeSemanticTokens', () => {
     const time = (lines: number) => {
       const text = `"${'\n'.repeat(lines)}"`;
       const index = new LineIndex(text);
-      const t = performance.now();
+      const t = process.cpuUsage();
       const data = encodeSemanticTokens(index, text, [token(0, text.length)]);
       expect(data).toHaveLength(10);
-      return performance.now() - t;
+      const { user, system } = process.cpuUsage(t);
+      return (user + system) / 1000; // CPU ms: load elsewhere does not count
     };
     time(1000);
     const small = Math.max(time(20_000), 1);

@@ -100,11 +100,12 @@ describe('lineSemanticTokens', () => {
     ]);
     const time = (lines: number) => {
       const big = `"${'\n'.repeat(lines)}"`;
-      const t = performance.now();
+      const t = process.cpuUsage();
       expect(
         lineSemanticTokens(big, [token(0, big.length)], { index: new LineIndex(big) })
       ).toHaveLength(2);
-      return performance.now() - t;
+      const { user, system } = process.cpuUsage(t);
+      return (user + system) / 1000; // CPU ms: load elsewhere does not count
     };
     time(1000);
     const small = Math.max(time(20_000), 1);
