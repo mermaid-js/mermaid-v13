@@ -51,6 +51,7 @@ import {
   AFTER_OVER,
   AFTER_PARTICIPANT,
   AS_REST,
+  BLOCK_KINDS,
   BOX_KINDS,
   CONFIG_CONTENT,
   CONFIG_END,
@@ -70,6 +71,7 @@ import {
   PROBE_FOLLOWS,
   REST,
   SECTION_NAMES,
+  SECTION_KINDS,
   SECTION_OF,
   SECTION_OWNERS,
   STOP,
@@ -766,13 +768,21 @@ class SequenceParser extends TokenRules {
     }
   }
 
+  /** What a line may start with inside `frame` (or at the top). */
+  private expected(frame: Frame | undefined): readonly number[] {
+    if (!frame) return DOC_KINDS;
+    if (frame.keyword === T.Box) return BOX_KINDS;
+    const section = frame.fragment && SECTION_OF[frame.fragment.fragment];
+    return (section === undefined ? undefined : SECTION_KINDS[section]) ?? BLOCK_KINDS;
+  }
+
   /** The statements up to the end of the text, through every block (jison `document`). */
   private document(): void {
     const { frames, st, src } = this;
     for (;;) {
       const frame = frames[frames.length - 1];
       const inBox = frame?.keyword === T.Box;
-      this.tested(inBox ? BOX_KINDS : DOC_KINDS);
+      this.tested(this.expected(frame));
       const k = this.kind();
       if (k === Kind.EOF) break;
       const from = this.i;

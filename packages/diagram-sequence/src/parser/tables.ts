@@ -84,6 +84,13 @@ export const STATEMENT_START = [
 // What the parser would accept at its decision points, for the probe (R-LANG-7, D95). Each
 // list is a constant so a parse without a probe allocates nothing for them.
 export const DOC_KINDS = [...STATEMENT_START, ...LINE_END, T.Invalid, Kind.EOF];
+/** In a block: `end`, and the section keyword of the innermost fragment. */
+export const BLOCK_KINDS = [...DOC_KINDS, T.End];
+export const SECTION_KINDS: Readonly<Record<number, readonly number[]>> = {
+  [T.Else]: [...BLOCK_KINDS, T.Else],
+  [T.And]: [...BLOCK_KINDS, T.And],
+  [T.Option]: [...BLOCK_KINDS, T.Option],
+};
 export const BOX_KINDS = [...PARTICIPANT_KEYWORDS, ...LINE_END, T.End];
 export const HEADER = [T.SD];
 export const HEADER_START = [...LINE_END, T.SD];
