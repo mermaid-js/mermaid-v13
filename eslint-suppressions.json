@@ -591,11 +591,6 @@
       "count": 1
     }
   },
-  "tools/release/src/publish-cli.ts": {
-    "tsdoc/syntax": {
-      "count": 3
-    }
-  },
   "tools/release/src/publish.ts": {
     "tsdoc/syntax": {
       "count": 2

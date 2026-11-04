@@ -35,7 +35,8 @@ v13 closes the gap on **size, speed, theming and security** while keeping Mermai
 | **M1** | Core pipeline, flowchart only, built-in layered layout, SVG backend, themes (light/dark + v12 names), parser kit, parity oracle, benchmarks in CI, DOM adapter | D8, D18, D37 |
 | **M2** | ASCII/Unicode text output backend for flowcharts: text-grid kit in core, unit profile, API and CLI | D11, D24, D57, D58, D76–D87 |
 | **M2.5** | `@mermaid-js/language-service` + CodeMirror/Monaco adapters + LSP server (flowchart first) | D37, D88–D99 |
-| **M3** | sequence, class, state, ER | D34 |
+| **M3** | sequence, class, state, ER | D34, D100–D105, D107–D111 |
+| **M3.5** | Plugin platform: lazy-loaded first-party packages, plugin auto-discovery and CDN loading, ELK plugin, optional-feature packages, `neo` themes, core size budget | D106 |
 | **M4** | gantt, pie, mindmap, timeline, gitGraph, journey, quadrant | D34 |
 | **M5** | Remaining v12 diagram types | D34 |
 | **Parallel** | Small v12 performance track | D44 |
@@ -122,7 +123,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-PERF-5 | Benchmarks report time per stage: parse, measure, layout and serialise. | Must | M1 | D43 | Harness output contains stage columns |
 | R-PERF-6 | The fixed benchmark fixtures include the Pele/#8635 set (7-, 50- and 500-node flowcharts, sequence, class) plus the 158-diagram corpus. | Must | M1 | D43 | Fixtures committed |
 | R-PERF-7 | CI fails when any stage regresses by more than 10% on the reference runner. | Must | M1 | D43 | CI job with a stored baseline |
-| R-PERF-8 | Core has a published size budget, enforced in CI. Later diagram packages are optional plugins and have no size budget for now. | Should | M3 | D7, D59 | Budget file for core |
+| R-PERF-8 | Core has a published size budget, enforced in CI. Later diagram packages are optional plugins and have no size budget for now. | Should | M3.5 | D7, D59 | Budget file for core |
 | R-PERF-9 | The time from loading the module to the first possible render is ≤ 15 ms on the reference runner (Pele: 10 ms). | Should | M1 | – | Harness "Ready at" |
 
 ## 8. Parsing (R-PARSE)
@@ -164,7 +165,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-LAYOUT-4 | Flowchart features supported: all directions (TB/TD/BT/LR/RL), subgraphs with their own `direction`, every v12 node shape and edge type, edge labels, `linkStyle`, `curve` interpolations, and minimum edge length (`---->`). | Must | M1 | P1, D2 | Visual baseline per feature |
 | R-LAYOUT-5 | Optional `availableWidth` makes the layout adapt to the width: tighten spacing first, then switch LR to TB under a threshold. It is off by default. | Should | M1 | D19 | Specs at several widths |
 | R-LAYOUT-6 | Layout honours `nodeSpacing`, `rankSpacing`, `padding` and `diagramPadding` with v12 default values. | Must | M1 | D22, P1 | Specs |
-| R-LAYOUT-7 | ELK is available only as an optional plugin package. It is never the default and never part of core. | Must | M3 | D7 | Package exists; core size unaffected |
+| R-LAYOUT-7 | ELK is available only as an optional plugin package. It is never the default and never part of core. | Must | M3.5 | D7 | Package exists; core size unaffected |
 
 ## 11. SVG output (R-SVG)
 
@@ -188,7 +189,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-THEME-4 | Derived colours (borders, hover, secondary and tertiary fills, contrast text) are computed in CSS with `color-mix()`/`var()` from the base variables, with a computed fallback. Overriding a base variable updates its derived colours. | Must | M1 | D39 | Browser test overriding `--mermaid-primaryColor` |
 | R-THEME-5 | A theme can be fully specified with a small set of base variables (target ≤ 8: primary, secondary, tertiary, background, text, line, font family, font size). | Must | M1 | D20 | Doc + spec: base-only theme renders fully |
 | R-THEME-6 | Built-in themes `redux-color` (the default when no theme is set), `redux`, `redux-dark`, `redux-dark-color`, `default`, `dark`, `forest`, `neutral` and `base` are supported, with recognisably the same palettes as v12. | Must | M1 | D20, D55, D151, P1 | Visual baseline |
-| R-THEME-7 | The remaining v12 themes (`neo`, `neo-dark`) are supported as well, either in core or as theme packages. Until then they render `redux-color` and `redux-dark-color` with a warning. | Must | M3 | P1, D64, D151 | See open item O-2 |
+| R-THEME-7 | The remaining v12 themes (`neo`, `neo-dark`) are supported as well, either in core or as theme packages. Until then they render `redux-color` and `redux-dark-color` with a warning. | Must | M3.5 | P1, D64, D151 | See open item O-2 |
 | R-THEME-8 | Optional `theme: 'auto'` follows the OS light/dark setting via a variables-only `<style>` with `prefers-color-scheme`. | Could | M1 | D20 | Browser test with emulated colour scheme |
 | R-THEME-9 | Built-in themes meet WCAG AA contrast for text on fills, in both light and dark. | Must | M1 | D29 | Automated contrast check over theme tokens |
 | R-THEME-10 | Colour handling has no runtime dependency (no khroma). | Must | M1 | D10, D39 | R-PERF-2 |
@@ -246,11 +247,11 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-PLUG-1 | The monorepo contains `packages/core`, one `packages/diagram-<type>` per diagram type, and `packages/mermaid` (public API plus bundle). Each diagram package is versioned independently. | Must | M1 | D7, D25 | Workspace layout |
 | R-PLUG-2 | There are two kinds of plugin, both pure (data in, data out). Diagram plugins implement `{ id, detector, parse, layout?, render → SvgNode tree, ascii? }`. Extension plugins register hooks that apply to any diagram type: postParse(ast) → ast, postLayout(layoutModel) → layoutModel, and postRender(svgTree) → svgTree, which runs before serialisation. The DOM adapter adds afterMount(element) for runtime behaviour such as R-PLUG-9. Hooks run in registration order, and their output still passes the R-SEC-2 allow-list. Config, measurer, theme tokens and limits are passed in as arguments. | Must | M1 | D35, D42, D52 | flowchart implemented purely through the contract; a fixture extension plugin exercises every hook |
 | R-PLUG-3 | A plugin declares itself in `package.json` under `"mermaid": { plugin, id, detector, entry }`. The detector is tiny and loaded eagerly; the entry is loaded lazily on detection. The manifest also has a kind: diagram or extension. Extension plugins (R-PLUG-2) have no detector. Their entry registers hooks and is loaded when the plugin is activated. | Must | M1 | D40, D52 | Spec with a fixture plugin |
-| R-PLUG-4 | Installing `mermaid` gives every first-party diagram type with no configuration. The packages are dependencies that are lazily imported, and bundlers code-split them so only the types actually rendered are downloaded. | Must | M3 | D40 | Bundle test: page with one flowchart downloads only core + flowchart |
-| R-PLUG-5 | Third-party and heavy plugins activate on install: in Node/SSR by auto-discovering manifests in `node_modules`; in bundlers through a one-line `mermaid/plugin` (unplugin for Vite, webpack, Rollup and esbuild); on a CDN by adding a self-registering script. | Must | M3 | D35, D40 | Example apps for each path in CI |
+| R-PLUG-4 | Installing `mermaid` gives every first-party diagram type with no configuration. The packages are dependencies that are lazily imported, and bundlers code-split them so only the types actually rendered are downloaded. | Must | M3.5 | D40 | Bundle test: page with one flowchart downloads only core + flowchart |
+| R-PLUG-5 | Third-party and heavy plugins activate on install: in Node/SSR by auto-discovering manifests in `node_modules`; in bundlers through a one-line `mermaid/plugin` (unplugin for Vite, webpack, Rollup and esbuild); on a CDN by adding a self-registering script. | Must | M3.5 | D35, D40 | Example apps for each path in CI |
 | R-PLUG-6 | `registerExternalDiagrams()` always works as an explicit fallback. | Must | M1 | D40 | Spec |
-| R-PLUG-7 | The CDN build lazy-loads first-party diagram packages only from the configured CDN base, never from a URL in diagram text. | Must | M3 | D41 | Spec |
-| R-PLUG-8 | Optional features (ELK, math, icons, hand-drawn look) are separate plugin packages. Core size is unaffected by their existence. | Must | M3+ | D7 | Size check |
+| R-PLUG-7 | The CDN build lazy-loads first-party diagram packages only from the configured CDN base, never from a URL in diagram text. | Must | M3.5 | D41 | Spec |
+| R-PLUG-8 | Optional features (ELK, math, icons, hand-drawn look) are separate plugin packages. Core size is unaffected by their existence. | Must | M3.5 | D7 | Size check |
 | R-PLUG-9 | A first-party interactions plugin restores v12 click callbacks (click X callback, call) from day one. Core only emits stable node ids; the plugin binds handlers to the rendered DOM after render, so core output stays inside the allow-list (R-SEC-2). The integrator opts in by installing it; diagram text alone cannot enable it. | Must | M1 | D47 | Spec: callback fires with plugin, warning without it; allow-list test passes with plugin enabled |
 
 ## 18. ASCII output (R-ASCII)
@@ -306,8 +307,8 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | ID | Requirement | Pri | MS | Src | Acceptance |
 | --- | --- | --- | --- | --- | --- |
 | R-REL-1 | Development happens on branch `mermaid-v13`. v12 continues on `develop`. | Must | M1 | D1 | Branch exists |
-| R-REL-2 | Changesets pre-release mode publishes an alpha on every merge to `mermaid-v13`. | Must | M1 | D28 | Release workflow |
-| R-REL-3 | Alphas are first private (`@mermaid-chart/mermaid`, GitHub Packages). Public `mermaid@13.0.0-alpha.N` (dist-tag `alpha`) starts when M1 meets R-PERF-1…4. | Must | M1 | D28 | Gate checked in release workflow |
+| R-REL-2 | Changesets pre-release mode versions the alphas. The release master publishes them (D155); publishing on every merge to `mermaid-v13` waits for CI in the OSS repository. | Must | M1 | D28, D155 | Release workflows, v13/docs/RELEASING.md |
+| R-REL-3 | Public `mermaid@13.0.0-alpha.N` (dist-tag `alpha`) is published to npm from the first alpha (D155). Each release prints R-PERF-1…4 on the last bench report. The gate is enforced once R-PERF-3 holds on CI; until then the release master skips it with a stated reason. | Must | M1 | D28, D155 | `release:publish` (`--gate` or `--skip-gate`) |
 | R-REL-4 | Ported Pele code carries MIT attribution in file headers and `THIRD_PARTY_NOTICES`. | Must | M1 | D12 | License check |
 | R-REL-5 | Requirements, design, ADRs and tickets cross-reference each other by R-id. | Must | M1 | D36 | Review |
 

@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/language-service",
-  "version": "0.0.0",
+  "version": "13.0.0-alpha.0",
   "description": "Editor-agnostic Mermaid language service: diagnostics, navigation, rename, folding, semantic tokens.",
   "type": "module",
   "license": "MIT",
@@ -28,8 +28,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "peerDependencies": {
-    "@mermaid-js/core": "workspace:^",
-    "@mermaid-js/diagram-flowchart": "workspace:^"
+    "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-flowchart": "workspace:*"
   },
   "peerDependenciesMeta": {
     "@mermaid-js/diagram-flowchart": {
@@ -37,7 +37,7 @@
     }
   },
   "devDependencies": {
-    "@mermaid-js/core": "workspace:^",
-    "@mermaid-js/diagram-flowchart": "workspace:^"
+    "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-flowchart": "workspace:*"
   }
 }

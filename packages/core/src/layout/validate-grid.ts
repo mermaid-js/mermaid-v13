@@ -68,9 +68,14 @@ export function validateGrid(graph: LayoutGraph, model: LayoutModel): string[] {
       const b = pts[i]!;
       if (a.x !== b.x && a.y !== b.y) out.push(`edge '${e.id}' has a diagonal segment`);
     }
-    if (e.label && placed.label) {
-      const c = cells({ ...placed.label, ...e.label }, grid);
-      if (![c.left, c.top].every(whole)) out.push(`label of '${e.id}' is off the grid`);
+    for (const [name, size, at] of [
+      ['label', e.label, placed.label],
+      ['start label', e.startLabel, placed.startLabel],
+      ['end label', e.endLabel, placed.endLabel],
+    ] as const) {
+      if (!size || !at) continue;
+      const c = cells({ ...at, ...size }, grid);
+      if (![c.left, c.top].every(whole)) out.push(`${name} of '${e.id}' is off the grid`);
     }
     const end = (id: string, side: Side, p: Point | undefined): void => {
       if (!p) return;

@@ -239,13 +239,13 @@ importers:
   packages/language-server:
     dependencies:
       '@mermaid-js/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@mermaid-js/diagram-flowchart':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../diagram-flowchart
       '@mermaid-js/language-service':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../language-service
       vscode-languageserver:
         specifier: ^11.0.0
@@ -258,10 +258,10 @@ importers:
   packages/language-service:
     devDependencies:
       '@mermaid-js/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@mermaid-js/diagram-flowchart':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../diagram-flowchart
 
   packages/language-service-codemirror:
@@ -414,10 +414,10 @@ importers:
   packages/mermaid:
     dependencies:
       '@mermaid-js/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@mermaid-js/diagram-flowchart':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../diagram-flowchart
 
   packages/plugin-interactions:
@@ -466,6 +466,9 @@ importers:
 
   tools/release:
     devDependencies:
+      esbuild:
+        specifier: ^0.25.12
+        version: 0.25.12
       yaml:
         specifier: ^2.9.0
         version: 2.9.0

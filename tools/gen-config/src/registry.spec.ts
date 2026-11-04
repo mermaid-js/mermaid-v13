@@ -1,9 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  DETECTORS_PATH,
   FACETS_PATH,
-  REGISTRY_PATH,
+  generateDetectors,
   generateFacets,
+  REGISTRY_PATH,
   generateRegistry,
   readManifests,
 } from './registry.ts';
@@ -79,6 +81,30 @@ describe('first-party diagram registry (DESIGN §12.4)', () => {
 
   it('is up to date (run `pnpm gen:registry`)', () => {
     expect(readFileSync(REGISTRY_PATH, 'utf8')).toBe(generateRegistry(readManifests()));
+  });
+
+  it('writes the detector table without loaders, for mermaid/slim', () => {
+    const out = generateDetectors([
+      {
+        name: '@x/diagram-gantt',
+        manifest: {
+          plugin: 'diagram',
+          id: 'gantt',
+          types: ['gantt'],
+          formats: ['svg'],
+          export: 'gantt',
+        },
+      },
+    ]);
+    expect(out).toContain(
+      "  { type: 'gantt', pattern: /^\\s*gantt/, id: 'gantt', formats: ['svg'] },"
+    );
+    expect(out).not.toContain('import(');
+    expect(out.indexOf("'flowchart-elk'")).toBeLessThan(out.indexOf("'gantt'"));
+  });
+
+  it('has an up-to-date detector table (run `pnpm gen:registry`)', () => {
+    expect(readFileSync(DETECTORS_PATH, 'utf8')).toBe(generateDetectors(readManifests()));
   });
 });
 

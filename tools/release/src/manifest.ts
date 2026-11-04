@@ -82,6 +82,25 @@ export function workspaceLeaks(manifest: PackedManifest): string[] {
   return leaks;
 }
 
+/**
+ * Dependencies on the set's own packages must name its exact version: alphas break between
+ * builds, and `^13.0.0-alpha.1` also matches `alpha.2`, so a user who pins `mermaid` exactly
+ * would still float `@mermaid-js/core`. Use `workspace:*`, which `pnpm pack` writes as exact.
+ */
+export function inexactWorkspaceRanges(
+  manifest: PackedManifest,
+  versions: ReadonlyMap<string, string>
+): string[] {
+  const problems: string[] = [];
+  for (const field of DEP_FIELDS)
+    for (const [dep, range] of Object.entries(manifest[field] ?? {})) {
+      const version = versions.get(dep);
+      if (version !== undefined && range !== version)
+        problems.push(`${field}: ${dep}@${range} (want exactly ${version})`);
+    }
+  return problems;
+}
+
 /** Only `x.y.z-alpha.N` goes out, so a release or beta line is never published from here. */
 export function assertAlphaVersion(manifest: Pick<PackedManifest, 'name' | 'version'>): void {
   if (!/^\d+\.\d+\.\d+-alpha\.\d+$/.test(manifest.version))

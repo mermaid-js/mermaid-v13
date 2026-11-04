@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/language-server",
-  "version": "0.0.0",
+  "version": "13.0.0-alpha.0",
   "description": "Mermaid language server (LSP over stdio) for .mmd and .mermaid files.",
   "type": "module",
   "license": "MIT",
@@ -26,9 +26,9 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@mermaid-js/core": "workspace:^",
-    "@mermaid-js/diagram-flowchart": "workspace:^",
-    "@mermaid-js/language-service": "workspace:^",
+    "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-flowchart": "workspace:*",
+    "@mermaid-js/language-service": "workspace:*",
     "vscode-languageserver": "^11.0.0"
   },
   "devDependencies": {

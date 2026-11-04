@@ -191,3 +191,8 @@ oklch
 subpaths
 goldens
 memoises
+parseable
+userconfig
+htpasswd
+unpushed
+EPUBLISHCONFLICT
