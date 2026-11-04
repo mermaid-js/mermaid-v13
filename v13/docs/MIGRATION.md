@@ -348,6 +348,8 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `leanPaddingX` / `leanPaddingY` (totals; per side for the inverted trapezoid) | 2 × padding / padding | padding |
 | `oddPaddingX` / `oddPaddingY` (totals) | 42 / 24 | padding |
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color` | `none` |
+| `compositeTitleBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color` | `mainBkg` |
+| `altBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color` | `#f0f0f0` (`default`, `forest`); `#555555` (`dark`); `#f4f4f4` (`neutral`); `tertiaryColor` (`base`) |
 
 The palette rows apply to the two colour themes only; plain `redux` and `redux-dark` carry no
 palette. A padding variable (the `…Padding…` names) takes a px number or a multiple of
