@@ -27,6 +27,8 @@ export const GRAMMARS: GrammarTarget[] = [
       module: 'parser/tokens.ts',
       object: 'T',
       unnamed: { ShapeDataEnd: { mode: 'shapeData', pattern: '\\}' } },
+      // `@{` and the text between quotes are Meta, the quoted values String.
+      mixed: ['SHAPE_DATA'],
     },
   },
 ];

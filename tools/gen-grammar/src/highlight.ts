@@ -145,7 +145,14 @@ export function textMate(g: Grammar, names: HighlightNames): object {
       return key;
     }
     const ends = rulesIn(g, target).filter((e) => isEnd(target, e) && !pushTarget(e));
-    const end = ends.length > 0 ? ends.map((e) => `(${nonCapturing(e.pattern)})`).join('|') : '$';
+    // A rule that pops and pushes another mode (Monarch's switchTo) cannot be one TextMate
+    // end: the scope ends before it, and the enclosing mode's rules read on from there.
+    const switches = rulesIn(g, target).filter((e) => isEnd(target, e) && pushTarget(e));
+    const end =
+      [
+        ...ends.map((e) => `(${nonCapturing(e.pattern)})`),
+        ...switches.map((e) => `(?=${nonCapturing(e.pattern)})`),
+      ].join('|') || '$';
     const endCaptures: Record<string, object> = {};
     ends.forEach((e, k) => {
       const s = scope(e);
@@ -264,10 +271,20 @@ import * as TERMS from '${termsModule}';
 
 /** mode -> [pattern, token, push target, pop] in priority order. */
 const TABLE = ${JSON.stringify(lezerTable(g))};
+/** Trivia (comments, directives): no other token runs into one (the lexer never sees them). */
+const TRIVIA = ${JSON.stringify(g.triviaRules.map((r) => r.pattern))}.map(
+  (p) => new RegExp(p, p.startsWith('^') ? 'gm' : 'g')
+);
 const MODES = Object.fromEntries(
   Object.entries(TABLE).map(([mode, rules]) => [
     mode,
-    rules.map(([p, token, push, pop]) => ({ re: new RegExp(p, 'y'), term: TERMS[token], push, pop })),
+    rules.map(([p, token, push, pop]) => ({
+      re: new RegExp(p, 'y'),
+      term: TERMS[token],
+      push,
+      pop,
+      bol: p.startsWith('^'),
+    })),
   ])
 );
 
@@ -298,16 +315,33 @@ function ahead(input) {
     if (c < 0) break;
     s += String.fromCharCode(c);
   }
-  return s;
+  let cut = s.length;
+  for (const re of TRIVIA) {
+    re.lastIndex = 1;
+    const m = re.exec(s);
+    if (m && m.index < cut) cut = m.index;
+  }
+  return s.slice(0, cut);
+}
+
+/** Whether only blanks stand between the line start and the input position. */
+function atLineStart(input) {
+  let k = -1;
+  while (input.peek(k) === 32 || input.peek(k) === 9) k--;
+  const c = input.peek(k);
+  return c < 0 || c === 10 || c === 13;
 }
 
 /** The next token: [term, length, modes after it]; empty matches only change the mode. */
 function next(modes, input) {
   const text = ahead(input);
   if (text.length === 0) return undefined;
+  // A \`^\` rule matches only at a line start (the regex sees the text from here on).
+  const bol = atLineStart(input);
   for (let guard = 0; guard < 8; guard++) {
     let changed = false;
     for (const rule of MODES[modes.top] ?? []) {
+      if (rule.bol && !bol) continue;
       rule.re.lastIndex = 0;
       const m = rule.re.exec(text);
       if (!m) continue;

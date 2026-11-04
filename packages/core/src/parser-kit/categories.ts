@@ -35,3 +35,17 @@ export const SHARED_CATEGORIES: Readonly<Record<TokenKind, TokenCategory>> =
     [Kind.Space]: 'Other',
     [Kind.Error]: 'Other',
   });
+
+/**
+ * A diagram's kind → category table: `byKey` names the category of every key of the diagram's
+ * kind object (exactly those keys, checked by the compiler), merged over
+ * {@link SHARED_CATEGORIES}. Generated per diagram by tools/gen-grammar.
+ */
+export function kindCategories<K extends string>(
+  kinds: Readonly<Record<K, TokenKind>>,
+  byKey: NoInfer<Readonly<Record<K, TokenCategory>>>
+): Readonly<Record<TokenKind, TokenCategory>> {
+  const out: Record<TokenKind, TokenCategory> = { ...SHARED_CATEGORIES };
+  for (const k of Object.keys(byKey) as K[]) out[kinds[k]] = byKey[k];
+  return Object.freeze(out);
+}

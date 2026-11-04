@@ -389,5 +389,5 @@ Modes: `INITIAL`, `string`, `md_string`, `acc_title`, `acc_descr`, `acc_descr_mu
 
 Removed before lexing (highlighted only):
 
-- COMMENT: `%%(?!\{)[^\n]*`
-- DIRECTIVE: `%%\{.*?\}%%`
+- COMMENT: `^[^\S\n]*%%(?!\{)[^\n]+`
+- DIRECTIVE: `[^\S\n]*%%\{.*?\}%%`

@@ -13,11 +13,11 @@
   ],
   "repository": {
     "trivia-0": {
-      "match": "%%(?!\\{)[^\\n]*",
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
       "name": "comment.line.mermaid-flowchart"
     },
     "trivia-1": {
-      "match": "%%\\{.*?\\}%%",
+      "match": "[^\\S\\n]*%%\\{.*?\\}%%",
       "name": "meta.embedded.mermaid-flowchart"
     },
     "rule-0": {
@@ -98,7 +98,7 @@
     },
     "rule-13": {
       "begin": "call\\s+",
-      "end": "(\\(\\s*\\))",
+      "end": "(\\(\\s*\\))|(?=\\()",
       "patterns": [
         {
           "include": "#mode-callbackname"

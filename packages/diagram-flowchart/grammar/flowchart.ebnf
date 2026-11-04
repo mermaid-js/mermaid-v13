@@ -205,9 +205,11 @@ EOF                       /$/ ;
 
 @trivia
 
-(** Removed before lexing (see the lexer input); listed for the highlighters. *)
-COMMENT                   /%%(?!\{)[^\n]*/                 :comment ;
-DIRECTIVE                 /%%\{.*?\}%%/                     :meta ;
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line (a `%%` after a statement is node text); both take their leading blanks so they win
+over label text that starts at the line start. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+DIRECTIVE                 /[^\S\n]*%%\{.*?\}%%/             :meta ;
 
 @grammar
 
