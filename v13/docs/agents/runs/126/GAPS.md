@@ -63,6 +63,16 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 - For #157 (T5): if `class.layout` carries v12's `elk` default, default it to the layered layout, as state does under D127 (R-LAYOUT-7).
 - #156 (T4): end markers must stay within 12 px across; multiplicities are kept clear of them only by the engine's `endLabelAcross` offset.
 
+## #156 (T4) renderer
+
+- Done (`feature/156_class-render`): the #154-review sanitising item (within flowchart's precedent: text is escaped, `+List<T> items` shows as written; MIGRATION "Class diagram SVG structure") and the #155 marker item (every marker ≤ 12 px across, outline included; asserted in `class-behaviour.spec.ts`).
+- Question for the maintainer: markers are v12's classic shapes in every theme (tip on the outline, outline `strokeWidth`: 1 classic, 2 redux). v12 neo's `-margin` variants (extension triangle 8 long instead of 17, tip gaps 0 / 2.75 / 4 / 8 px by type) are not reproduced; doing so needs per-marker theme variables. Listed in MIGRATION.
+- Question for the maintainer: multiplicities are drawn (and measured by #155's layout) in the diagram font size; v12 drew them at 11px (`.edgeTerminals`).
+- New theme variable `classEdgeLabelBackground` (redux `edgeLabelBackground`, classic `mainBkg`, as v12 class `.edgeLabel[data-look="neo"]`): vocabulary, `LIGHT_RULES`, `REDUX_RULES` on the four redux specs, schema text, `gen:config` + `gen:theme`, MIGRATION row. Its `usedBy` is `class`; the other variables the renderer reads still list only `flowchart`/`core` (cosmetic, #157 may update).
+- Core, not class: core's `layoutLabel` sets bold/italic on runs but not `Style.Underline`, so the renderer writes `text-decoration` for static members itself. And the writer writes LF/CR/tab in attribute values raw, so XML readers see `data-ast` of a class named across lines (`` `A\nB` ``) with spaces; the round-trip spec compares in that form.
+- #157 (T5): drop the `vi.mock` of `registry.gen.ts` in `class-render.spec.ts` and `class-behaviour.spec.ts` (and `class/test-registry.ts`) once the manifest row loads `classDiagram` from `@mermaid-js/diagram-class` (plugin id `class`, formats `['svg']`, no `configDefaults` yet). `THIRD_PARTY_NOTICES` is in place for when the package goes public (`src/render/route.ts` is Pele's `routePath`, copied from flowchart since packages cannot import each other).
+- #158: `ClassNode.haveCallback` / `model.callbacks` draw nothing; the sandbox `linkTarget` rule is not applied (renderer passes `linkTarget` through `checkLinkTarget`).
+
 ## #159 (T6) language facet → later tickets
 
 - #157 (T5): with the manifest, add `"language": "./dist/language.js"` to diagram-class's `mermaid` key, add `@mermaid-js/diagram-class` to language-service's `peerDependencies`, run `gen:registry`, then delete the classDiagram row of `packages/language-service/src/testing/unlisted-facets.ts` (goldens.spec fails until it is gone). The flowchart golden `completions/empty.out` already offers `classDiagram`.
