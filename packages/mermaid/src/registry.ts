@@ -12,7 +12,6 @@ import {
 } from '@mermaid-js/core';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { diagramStart, type PreprocessResult } from '@mermaid-js/core/preprocess';
-import { FIRST_PARTY } from './generated/registry.gen.ts';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the registry holds plugins of every model and layout type
 export type AnyPlugin = DiagramPlugin<any, any>;
@@ -170,7 +169,8 @@ export class Registry {
   private readonly layoutLoaders = new Map<string, LayoutLoader['loader']>();
   private readonly layouts = new Map<string, LayoutEngine>([['layered', layered]]);
 
-  constructor(firstParty: readonly FirstPartyEntry[] = FIRST_PARTY) {
+  /** `firstParty`: the generated table, with loaders (`mermaid`) or without (`mermaid/slim`). */
+  constructor(firstParty: readonly FirstPartyEntry[]) {
     for (const e of firstParty) {
       this.entries.push({
         type: e.type,

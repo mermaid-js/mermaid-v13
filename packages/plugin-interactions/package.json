@@ -1,9 +1,14 @@
 {
   "name": "@mermaid-js/plugin-interactions",
-  "version": "0.0.0",
+  "version": "13.0.0-alpha.0",
   "description": "Mermaid extension plugin restoring v12 click callbacks (DESIGN §12.3).",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/plugin-interactions"
+  },
   "sideEffects": false,
   "exports": {
     ".": {
@@ -23,7 +28,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "peerDependencies": {
-    "@mermaid-js/core": "workspace:^"
+    "@mermaid-js/core": "workspace:*"
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^",
