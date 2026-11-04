@@ -28,7 +28,7 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 
 ## #154 (T2) shared source view (D114)
 
-- 2026-11-04, #154: not switched. Core's `sourceView` gets 2 of the class lexer gate's hand-written cases wrong (see tickets/154.md); fixing it needs a core change, so `source.ts` stays until it is fixed. Asked the M3 coordinator who fixes core (state owns #181). A ready port onto `sourceView` is saved as `d114-v12-text.ts.txt` in this folder.
+- 2026-11-04, #154: switched after #186 fixed core's `sourceView`. diagram-class reads it through `src/parser/v12-text.ts` (CRLF, trimStart and entity placeholders on top); `source.ts` is deleted and the lexer gate is 100%.
 
 - v12's input cleanup (offset-preserving source view, `packages/diagram-class/src/parser/source.ts`, a copy of flowchart's) moves into core's parser kit under the state spec's T0 (draft PR into `mermaid-v13`). Keep the class copy until that merges; then switch diagram-class to the shared one and delete the copy. Whichever of that T0 and #152 merges second rebases and reruns `pnpm check`.
 
@@ -51,3 +51,7 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 
 - Draft PR #186 into `mermaid-v13`. After it merges, merge `mermaid-v13` here and switch diagram-class to `sourceView` (ready port: `d114-v12-text.ts.txt`), keeping class's `trimStart` and entity steps; delete `src/parser/source.ts`.
 - Not class: the flowchart parity harness never decodes v12's `#y;` placeholder in edge text (`flowchart LR\nA -- x:#y; --> B`); jison splits EDGE_TEXT per character and the harness decodes before merging tokens. No corpus string hits it.
+
+## #159 (T6) accepted
+
+- First-paint colours via #190 (D119, accepted): the CodeMirror and Monaco adapters colour first paint with flowchart's grammar for every type. Per-type highlighter selection is cross-type ticket #190, after the M3 facets land. #159 does not change the adapters.
