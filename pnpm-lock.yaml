@@ -140,6 +140,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-state':
+        specifier: workspace:^
+        version: link:../diagram-state
       '@mermaid-js/gen-grammar':
         specifier: workspace:^
         version: link:../../tools/gen-grammar
@@ -225,6 +228,12 @@ importers:
         version: 4.20.6
 
   packages/diagram-flowchart:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-state:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^

@@ -11,12 +11,14 @@
     "oracle:report": "tsx --conditions=mermaid-source src/cli/oracle-report.ts",
     "harvest:flowchart": "tsx --conditions=mermaid-source src/cli/harvest-flowchart.ts",
     "fuzz": "tsx --conditions=mermaid-source src/cli/fuzz.ts",
-    "smoke": "tsx --conditions=mermaid-source src/cli/smoke.ts"
+    "smoke": "tsx --conditions=mermaid-source src/cli/smoke.ts",
+    "harvest:state": "tsx --conditions=mermaid-source src/cli/harvest-state.ts"
   },
   "devDependencies": {
     "@braintree/sanitize-url": "7.1.2",
     "@mermaid-js/core": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/diagram-state": "workspace:^",
     "@mermaid-js/gen-grammar": "workspace:^",
     "@types/js-yaml": "^4.0.9",
     "js-yaml": "^4.3.2",
