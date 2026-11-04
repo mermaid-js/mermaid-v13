@@ -2,21 +2,19 @@
 
 Status: every ticket (#152–#159, #185, #201) is merged into `feature/126_class-diagram`. The final whole-branch review findings are being fixed on `fix/126_final-review`.
 
-## Needs the maintainer's acceptance (finish rule 4)
+## Accepted by the maintainer, with follow-ups (2026-11-04)
 
-Each item is unmet against a requirement or the spec, or is a core issue found here and not fixed. They are listed so the maintainer can accept or reject them before #166 goes ready.
-
-1. **R-LANG-4 language budget (#159).** One edit cycle on a 50k-character class document takes ~26 ms, against a 15 ms reference budget (D156). Flowchart took ~17.5 ms on the same loaded machine. Parse speed is milestone-close work ("measure and report, don't optimise").
-2. **Core writer, `left: true` fast path (#156).** A one-plain-run label asked to align left is drawn centred. Fixing it in core changes two flowchart SVGs (`flowchart/nightly-check/v2/03-should-render-raw-strings`, `04-…-htmllabels-false`: the one-item bullet `- x`), so core was left alone, and class writes start-anchored rows itself.
-3. **Dev theme gallery (#157).** Class baselines are not in the dev gallery, which reads flowchart only. State and ER deferred the same.
-4. **Theme `usedBy` lists (#157).** The shared variables the class renderer reads still list only `flowchart`/`core`. Cosmetic.
-5. **Namespace rename (#159).** Dotted namespaces (`namespace A.B`), any namespace that is a prefix of one, and nested namespaces have no definition, references or rename. Hover works.
-6. **Core issues found here, not class-specific:**
-   - core `layoutLabel` doesn't set `Style.Underline`;
-   - the writer leaves LF/CR/tab raw in attribute values;
-   - core preprocess reads a directive where v12 keeps text when a comment line follows `%%{` (D67);
-   - core accepts front matter with invalid YAML, which v12 rejects;
-   - the flowchart parity harness doesn't decode `#y;` in edge text.
+1. **R-LANG-4 language budget (#159):** ~26 ms per edit cycle on a 50k-character class document, against 15 ms (D156). Accepted for #166; to be fixed before M3 closes, in #205.
+2. **Core writer `left: true` fast path (#156):** a one-plain-run label asked to align left is drawn centred, and class anchors its rows itself. Accepted; the core fix is #206, which takes the two flowchart bullet snapshot changes.
+3. **Dev theme gallery (#157):** class baselines are not in it. Accepted; cross-type #207.
+4. **Theme `usedBy` lists (#157):** the shared variables don't list class. Accepted; cross-type #207.
+5. **Namespace rename (#159):** dotted and nested namespaces have no references or rename; hover works. Accepted, no ticket.
+6. **Core issues found here (not class-specific):** accepted; follow-up #208.
+   - `layoutLabel` doesn't set underline;
+   - LF/CR/tab left raw in attribute values;
+   - D67 directive-after-comment difference;
+   - invalid-YAML front matter is accepted;
+   - flowchart parity harness `#y;` in edge text.
 
 ## Accepted or decided (no action)
 
