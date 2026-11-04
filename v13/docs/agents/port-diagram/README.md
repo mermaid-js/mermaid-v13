@@ -41,6 +41,8 @@ Each step is one ticket. Every ticket tests through the public seam, `createMerm
 
 ## Rules every ticket follows
 
+Also read [pitfalls.md](pitfalls.md): what went wrong in the flowchart port, as rules per ticket.
+
 - **Escalate decisions.** Anything that contradicts DESIGN, REQUIREMENTS or a D-id, or changes a v12 default or v12 semantics, stops and goes to the maintainer as a question. Implement the documented behaviour meanwhile. Record each answer as a D-id row in DECISIONS.md.
 - **The oracle decides syntax.** When a v12 spec and the oracle disagree, the oracle wins and the spec gets a skip with a reason. Fix the parser, not the spec.
 - **No theme names, no look.** A diagram package never checks a theme name or `look`; every family difference is a theme variable (D152, [theming.md](theming.md)).
