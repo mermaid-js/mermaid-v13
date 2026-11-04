@@ -283,21 +283,26 @@ describe('stress (pitfall 5: linear on long runs)', () => {
       (n) => `flowchart TD\n  A@{ label: x${'\n,'.repeat(n)}1|}`,
     ],
   ];
-  it.each(SHAPES)('%s: completion and hover stay linear', (_, shape) => {
-    const run = (n: number) => {
-      const marked = shape(n);
-      const offset = marked.indexOf('|');
-      const text = marked.slice(0, offset) + marked.slice(offset + 1);
-      return fastest(() => {
-        const doc = service.update('file:///stress.mmd', text);
-        doc.completions(offset);
-        doc.hover(offset - 1);
-      });
-    };
-    run(500);
-    // 8× the input: linear is 8×, quadratic 64×; 2.5× slack for a loaded machine.
-    const small = run(2500);
-    const big = run(20000);
-    expect(big / Math.max(small, 1)).toBeLessThan(20);
-  });
+  it.each(SHAPES)(
+    '%s: completion and hover stay linear',
+    (_, shape) => {
+      const run = (n: number) => {
+        const marked = shape(n);
+        const offset = marked.indexOf('|');
+        const text = marked.slice(0, offset) + marked.slice(offset + 1);
+        return fastest(() => {
+          const doc = service.update('file:///stress.mmd', text);
+          doc.completions(offset);
+          doc.hover(offset - 1);
+        });
+      };
+      run(500);
+      // 8× the input: linear is 8×, quadratic 64×; 2.5× slack for a loaded machine.
+      const small = run(2500);
+      const big = run(20000);
+      expect(big / Math.max(small, 1)).toBeLessThan(20);
+      // Wall-clock limit for a busy machine; the ratio above is the check.
+    },
+    60_000
+  );
 });

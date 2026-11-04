@@ -298,21 +298,26 @@ describe('stress (R-PARSE-7)', () => {
     ['many list items', (n) => '  flowchart:\n' + '    - bogus: 1\n'.repeat(n)],
     ['one long key', (n) => `  ${'x'.repeat(n * 10)}: 1\n`],
   ];
-  it.each(SHAPES)('%s: completion and diagnostics stay linear', (_, shape) => {
-    const run = (n: number) => {
-      const text = `---\nconfig:\n${shape(n)}    \n---\nflowchart TD\n  A\n`;
-      return fastest(() => {
-        const doc = service.update('file:///stress.mmd', text);
-        doc.diagnostics();
-        doc.completions(text.indexOf('    \n---') + 4);
-        doc.hover(text.indexOf('    \n---') - 3);
-      });
-    };
-    run(500);
-    // 8× the lines: linear is 8×, quadratic 64×. The bound leaves room for a loaded machine
-    // (a parallel `pnpm test`): best of 5, and 2.5× slack over linear.
-    const small = run(2500);
-    const big = run(20000);
-    expect(big / Math.max(small, 1)).toBeLessThan(20);
-  });
+  it.each(SHAPES)(
+    '%s: completion and diagnostics stay linear',
+    (_, shape) => {
+      const run = (n: number) => {
+        const text = `---\nconfig:\n${shape(n)}    \n---\nflowchart TD\n  A\n`;
+        return fastest(() => {
+          const doc = service.update('file:///stress.mmd', text);
+          doc.diagnostics();
+          doc.completions(text.indexOf('    \n---') + 4);
+          doc.hover(text.indexOf('    \n---') - 3);
+        });
+      };
+      run(500);
+      // 8× the lines: linear is 8×, quadratic 64×. The bound leaves room for a loaded machine
+      // (a parallel `pnpm test`): best of 5, and 2.5× slack over linear.
+      const small = run(2500);
+      const big = run(20000);
+      expect(big / Math.max(small, 1)).toBeLessThan(20);
+      // Wall-clock limit for a busy machine; the ratio above is the check.
+    },
+    60_000
+  );
 });
