@@ -44,10 +44,10 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 
 ## Resolved by the maintainer
 
-- [x] **ascii-size gate: per-type max (2026-11-04).** #145 changed the bench ascii-size gate to measure each type's text path (core/ascii + that type's ascii entry) and gate on the largest (sequence 9.9 KB gz). Maintainer: keep it and amend R-ASCII-9's wording to "each type's text path". Still to do: the D-id row and the R-ASCII-9 wording (M3 docs session owns DECISIONS/REQUIREMENTS).
+- [x] **D130 — ascii-size gate: per-type max (2026-11-04).** #145 changed the bench ascii-size gate to measure each type's text path (core/ascii + that type's ascii entry) and gate on the largest (sequence 9.9 KB gz). Maintainer: keep it and amend R-ASCII-9's wording to "each type's text path". Recorded as D130 (R-ASCII-9 reworded to "each type's text path") by the docs session. Still to do in the final fix pass: cite D130 in the bench gate title/comments.
 
 - [x] **Neo geometry: port it (2026-11-04).** v12's default sequence look was `neo`; #143 draws classic geometry everywhere. Ported as geometry theme variables in follow-up ticket #194 (blocked by #143; #145 waits on it).
-- [x] **Accepted (2026-11-04):** async/half/stick arrowheads in `signalColor` (v12: black); classic rect/box grey shadows dropped (shadow only where `dropShadow` is set). Listed in MIGRATION.md by #143.
+- [x] **D131 — accepted (2026-11-04):** async/half/stick arrowheads in `signalColor` (v12: black); classic rect/box grey shadows dropped (shadow only where `dropShadow` is set). Listed in MIGRATION.md by #143; the final fix pass cites D131 there.
 
 - [x] **D123: keep the fix.** The 3 create/destroy divergences (#139: `create-after-note`, `destroy-then-create`, `destroy-before-loop`) stand: v13 attaches `create`/`destroy` to the right message. Cited in `packages/conformance/divergences.json` and MIGRATION.md "Sequence syntax".
 
