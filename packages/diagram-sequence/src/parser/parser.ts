@@ -152,6 +152,8 @@ class SequenceParser extends TokenRules {
   private readonly mentions = new Map<string, number>();
   private readonly pairs = new Map<string, number>();
   private readonly fragmentCount = new Map<string, number>();
+  /** Menu statements per target since its last redeclaration, whose `menu` a reset drops. */
+  private readonly menus = new Map<string, SequenceMenuStmt[]>();
   /** Depth of a box closed early by a non-participant line; its `end` is taken silently. */
   private danglingEnd = -1;
 
@@ -180,6 +182,11 @@ class SequenceParser extends TokenRules {
       },
       warn: (code, message, range) => {
         diagnostics.warning(code, message, range);
+      },
+      // The plugin sees what the model keeps: menus before the reset are no longer emitted.
+      menusReset: (id) => {
+        for (const node of this.menus.get(id) ?? []) delete node.menu;
+        this.menus.delete(id);
       },
     });
     this.maxDepth = options.maxDepth ?? DEFAULT_LIMITS.maxDepth;
@@ -470,6 +477,7 @@ class SequenceParser extends TokenRules {
       ...(data?.properties !== undefined && { properties: data.properties }),
       ...(type === 'Details' && { details: text }),
     };
+    this.menus.set(name, [...(this.menus.get(name) ?? []), node]);
     st.statement(type.toLowerCase(), range);
     this.body.push(node);
   }

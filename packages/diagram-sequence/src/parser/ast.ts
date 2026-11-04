@@ -117,7 +117,10 @@ export interface SequenceMenuStmt extends AstNode<'Links' | 'Link' | 'Properties
   text: string;
   links?: Record<string, unknown>;
   properties?: Record<string, unknown>;
-  /** The same menu for the interactions plugin (`AstMenu`, #147); the svg never draws it. */
+  /**
+   * The same menu for the interactions plugin (`AstMenu`, #147); the svg never draws it. A
+   * later declaration of the target with a label drops it, as v12 dropped the merged menus.
+   */
   menu?: AstMenu;
   children: SequenceParticipantRef[];
 }

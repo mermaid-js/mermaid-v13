@@ -39,6 +39,8 @@ type Section = Mutable<FragmentSection> & { statements: SequenceStatement[] };
 export interface BuilderSink {
   error(code: string, message: string, range: Range): void;
   warn(code: string, message: string, range: Range): void;
+  /** A redeclaration reset the menus merged into `id` so far (v12 wrote a new record). */
+  menusReset?(id: string): void;
 }
 
 /** A participant statement's parts (pitfall 10: more than four parameters). */
@@ -162,6 +164,7 @@ export class SequenceBuilder {
     // v12 wrote a new record: the menus merged so far are gone.
     delete p.links;
     delete p.properties;
+    if (old) this.sink.menusReset?.(id);
     p.label = description?.text ?? id;
     p.kind = kind ?? 'participant';
     if (description !== undefined) p.alias = description.text;

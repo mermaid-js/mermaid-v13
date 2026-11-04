@@ -143,6 +143,19 @@ describe('actor menus on the model (as v12 merged them)', () => {
       ['C', { L: 'u' }, undefined],
     ]);
   });
+
+  it('drops the earlier menus from the AST on a redeclaration, as the model drops them', () => {
+    const r = parse(
+      'participant A\nlinks A: {"Old": "https://example.com/old"}\ndetails A: el\nlinks B: {"b": "u"}\nparticipant A as Alice\nproperties A: {"class": "k"}'
+    );
+    const menus = r.ast.children.flatMap((n) => ('menu' in n && n.menu ? [n.menu] : []));
+    expect(menus).toEqual([
+      { target: 'B', links: { b: 'u' } },
+      { target: 'A', properties: { class: 'k' } },
+    ]);
+    expect(r.model.participants[0]).toMatchObject({ id: 'A', properties: { class: 'k' } });
+    expect(r.model.participants[0]?.links).toBeUndefined();
+  });
 });
 
 describe('box colours (as a browser reads them)', () => {
