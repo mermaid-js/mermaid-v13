@@ -1,0 +1,54 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:10 "flowchart" keyword
+2:11-2:13 "LR" enumMember
+3:3-3:15 "%% a comment" comment
+4:3-4:4 "A" node [declaration, definition]
+4:4-4:5 "[" operator
+4:5-4:10 "Start" string
+4:10-4:11 "]" operator
+4:12-4:15 "-->" operator
+4:15-4:16 "|" operator
+4:16-4:18 "go" string
+4:18-4:19 "|" operator
+4:20-4:21 "B" node [declaration, definition]
+4:21-4:22 "(" operator
+4:22-4:23 "(" operator
+4:24-4:29 "Round" string
+4:30-4:31 ")" operator
+4:31-4:32 ")" operator
+5:3-5:11 "subgraph" keyword
+5:12-5:15 "one" subgraph [declaration, definition]
+5:16-5:17 "[" operator
+5:17-5:20 "One" string
+5:20-5:21 "]" operator
+6:5-6:6 "B" node
+6:7-6:10 "-->" operator
+6:11-6:12 "C" node [declaration, definition]
+7:3-7:6 "end" keyword
+8:3-8:4 "C" node
+8:5-8:8 "-->" operator
+8:9-8:12 "one" subgraph [declaration]
+9:3-9:11 "classDef" keyword
+9:12-9:15 "hot" class [declaration, definition]
+9:16-9:20 "fill" variable
+9:22-9:25 "f96" variable
+9:25-9:26 "," operator
+9:26-9:32 "stroke" variable
+9:34-9:37 "333" number
+10:3-10:8 "class" keyword
+10:9-10:10 "A" node
+10:11-10:14 "hot" class
+11:3-11:4 "A" node
+11:4-11:7 ":::" operator
+11:7-11:10 "hot" class
+12:3-12:8 "style" keyword
+12:9-12:10 "B" node
+12:11-12:15 "fill" variable
+12:17-12:20 "bbf" variable
+13:9-13:10 "A" node
+13:12-13:31 "https://example.com" string
+13:34-13:37 "tip" string
+14:3-14:12 "linkStyle" keyword
+14:13-14:14 "0" number
+14:15-14:21 "stroke" variable
+14:22-14:25 "red" variable
