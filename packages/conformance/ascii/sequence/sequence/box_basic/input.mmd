@@ -1,0 +1,9 @@
+sequenceDiagram
+    box Payments
+    participant GW
+    participant PAY
+    end
+    participant S as Shop
+    GW->>PAY: authorize
+    PAY-->>GW: ok
+    GW->>S: receipt

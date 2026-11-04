@@ -41,6 +41,27 @@ describe('lineFoldingRanges', () => {
     ).toEqual([]);
   });
 
+  it('keeps a closer line inside a range that only closes a block nested in it', () => {
+    // A sequence `else` section whose last statement is an `opt … end` block: the section ends
+    // on the `end` of the `opt`, which is that block's closer, not the section's.
+    const text = 'alt a\n  x\nelse b\n  opt o\n    y\n  end\nelse c\n  z\nend\n';
+    const at = (s: string, from = 0) => text.indexOf(s, from);
+    const innerEnd = at('  end') + '  end'.length;
+    expect(
+      lineFoldingRanges(text, [
+        { range: { start: 0, end: text.length - 1 }, kind: 'alt' },
+        { range: { start: at('else b'), end: innerEnd }, kind: 'else' },
+        { range: { start: at('opt o'), end: innerEnd }, kind: 'opt' },
+        { range: { start: at('else c'), end: at('end\n', at('else c')) - 1 }, kind: 'else' },
+      ])
+    ).toEqual([
+      { startLine: 0, endLine: 7, kind: 'alt' },
+      { startLine: 2, endLine: 5, kind: 'else' },
+      { startLine: 3, endLine: 4, kind: 'opt' },
+      { startLine: 6, endLine: 7, kind: 'else' },
+    ]);
+  });
+
   it('is what a snapshot gives: the front matter keeps its closing `---`', () => {
     const text =
       '---\ntitle: T\nconfig:\n  theme: dark\n---\nflowchart LR\n  subgraph S\n    A\n  end\n';

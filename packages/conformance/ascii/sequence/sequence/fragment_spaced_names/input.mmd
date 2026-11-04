@@ -1,0 +1,6 @@
+sequenceDiagram
+    alt cache hit
+    cron job->>data svc: read
+    else fall back -> origin: yes
+    cron job->>data svc: fetch
+    end

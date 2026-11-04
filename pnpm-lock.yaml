@@ -110,6 +110,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-sequence':
+        specifier: workspace:^
+        version: link:../diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:^
         version: link:../diagram-state
@@ -143,6 +146,9 @@ importers:
 
   packages/conformance:
     devDependencies:
+      '@asamuzakjp/css-color':
+        specifier: 3.2.0
+        version: 3.2.0
       '@braintree/sanitize-url':
         specifier: 7.1.2
         version: 7.1.2
@@ -158,6 +164,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-sequence':
+        specifier: workspace:^
+        version: link:../diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:^
         version: link:../diagram-state
@@ -266,6 +275,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-sequence:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-state:
     devDependencies:
       '@mermaid-js/core':
@@ -286,6 +301,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-sequence':
+        specifier: workspace:*
+        version: link:../diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:*
         version: link:../diagram-state
@@ -314,6 +332,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-sequence':
+        specifier: workspace:*
+        version: link:../diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:*
         version: link:../diagram-state
@@ -479,6 +500,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-sequence':
+        specifier: workspace:*
+        version: link:../diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:*
         version: link:../diagram-state
@@ -518,6 +542,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../../packages/diagram-flowchart
+      '@mermaid-js/diagram-sequence':
+        specifier: workspace:^
+        version: link:../../packages/diagram-sequence
       '@mermaid-js/diagram-state':
         specifier: workspace:^
         version: link:../../packages/diagram-state
@@ -4779,7 +4806,6 @@ snapshots:
       '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
       '@csstools/css-tokenizer': 3.0.4
       lru-cache: 10.4.3
-    optional: true
 
   '@babel/helper-string-parser@7.29.7':
     optional: true
@@ -5236,14 +5262,12 @@ snapshots:
 
   '@cspell/url@9.3.2': {}
 
-  '@csstools/color-helpers@5.1.0':
-    optional: true
+  '@csstools/color-helpers@5.1.0': {}
 
   '@csstools/css-calc@2.1.4(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)':
     dependencies:
       '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
       '@csstools/css-tokenizer': 3.0.4
-    optional: true
 
   '@csstools/css-color-parser@3.1.0(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)':
     dependencies:
@@ -5251,15 +5275,12 @@ snapshots:
       '@csstools/css-calc': 2.1.4(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)
       '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
       '@csstools/css-tokenizer': 3.0.4
-    optional: true
 
   '@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4)':
     dependencies:
       '@csstools/css-tokenizer': 3.0.4
-    optional: true
 
-  '@csstools/css-tokenizer@3.0.4':
-    optional: true
+  '@csstools/css-tokenizer@3.0.4': {}
 
   '@ctrl/tinycolor@4.2.2': {}
 
@@ -7796,8 +7817,7 @@ snapshots:
       strip-ansi: 7.1.2
       wrap-ansi: 9.0.2
 
-  lru-cache@10.4.3:
-    optional: true
+  lru-cache@10.4.3: {}
 
   magic-string@0.30.21:
     dependencies:

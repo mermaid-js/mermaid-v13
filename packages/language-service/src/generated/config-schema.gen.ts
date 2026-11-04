@@ -42,7 +42,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no palette. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
+        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no palette. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
       },
       "type": "object",
       "additionalProperties": true,
@@ -465,6 +465,66 @@ export const configSchema: ConfigSchema = {
             "status": "honoured",
             "since": "13.0.0",
             "reason": "v12's values (D120): `#f9f9fb` in `redux` and `redux-color`, `#16141f` in `redux-dark` and `redux-dark-color`; `#f0f0f0` in `default` and `forest`, `#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`."
+          }
+        },
+        "actorRadius": {
+          "description": "Corner radius in px of a sequence participant box.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "6 in the redux themes (v12 `look: neo`), 3 in the classic themes (v12 `svgDraw.js`). Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "actorGlyphBand": {
+          "description": "Height in px of the band a sequence symbol (actor, boundary, control, entity, database)\nstands in, above its label. Above 0, every participant row is tall enough for the band,\nits label and v12's 6 px gaps, lifelines start at the bottom of the row, and the symbols\nare scaled to the band: the round symbols are as tall as it, the stick figure and the\ndatabase cylinder fill it. Any height is accepted: on a band lower than the cylinder's\ntwo ends the ends flatten to half the band each, and the control symbol's arrowhead\nshrinks with a smaller circle but never grows past v12's size. 0 draws each symbol at\nits own v12 classic place.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "44 in the redux themes (v12 `look: neo`, `actorBands.ts`), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "messageEndGap": {
+          "description": "How far in px a sequence message line stops short of its target (all arrows but `->`),\nand starts in from its source for a bidirectional message, on top of the arrowhead room.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "3 in the redux themes (v12 `look: neo`), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "labelBoxExtraHeight": {
+          "description": "Added in px to the height of a sequence fragment's label tab (`loop`, `alt`, …).\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "15 in the redux themes (v12 `look: neo`), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "actorFooterPadding": {
+          "description": "Room in px added below a sequence diagram that has participants.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "30 in the redux themes (v12 `look: neo` viewBox), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect."
           }
         }
       }
@@ -922,7 +982,8 @@ export const configSchema: ConfigSchema = {
     "sequence": {
       "$ref": "#/$defs/SequenceDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "gantt": {
@@ -4489,11 +4550,19 @@ export const configSchema: ConfigSchema = {
             "reason": "Arrowheads are inline paths, not `<marker>` references."
           }
         },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "hideUnusedParticipants": {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "activationWidth": {
@@ -4502,7 +4571,8 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "diagramMarginX": {
@@ -4511,7 +4581,8 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "diagramMarginY": {
@@ -4520,7 +4591,8 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "actorMargin": {
@@ -4529,56 +4601,65 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "width": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/width",
           "default": 150,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "height": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/height",
           "default": 65,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "boxMargin": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/boxMargin",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "boxTextMargin": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/boxTextMargin",
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "noteMargin": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/noteMargin",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "messageMargin": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/messageMargin",
           "default": 35,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's sequence renderer never read it; messages are spaced by `boxMargin` and their label height."
           }
         },
         "messageAlign": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/messageAlign",
           "default": "center",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "mirrorActors": {
@@ -4586,7 +4667,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": true,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "forceMenus": {
@@ -4594,21 +4676,25 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Read by `@mermaid-js/plugin-interactions`, which draws the actor menus; without the plugin there are no menus to show."
           }
         },
         "bottomMarginAdj": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/bottomMarginAdj",
           "default": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "rightAngles": {
           "$ref": "#/$defs/JourneyDiagramConfig/properties/rightAngles",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "showSequenceNumbers": {
@@ -4616,7 +4702,8 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "actorFontSize": {
@@ -4625,17 +4712,19 @@ export const configSchema: ConfigSchema = {
             "string",
             "number"
           ],
-          "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "actorFontFamily": {
           "description": "This sets the font family of the actor's description",
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect."
           }
         },
         "actorFontWeight": {
@@ -4646,7 +4735,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 400,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "noteFontSize": {
@@ -4655,17 +4745,19 @@ export const configSchema: ConfigSchema = {
             "string",
             "number"
           ],
-          "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "noteFontFamily": {
           "description": "This sets the font family of actor-attached notes",
           "type": "string",
-          "default": "\"trebuchet ms\", verdana, arial, sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect."
           }
         },
         "noteFontWeight": {
@@ -4676,7 +4768,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 400,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "noteAlign": {
@@ -4689,7 +4782,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "center",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "messageFontSize": {
@@ -4698,17 +4792,19 @@ export const configSchema: ConfigSchema = {
             "string",
             "number"
           ],
-          "default": 16,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect."
           }
         },
         "messageFontFamily": {
           "description": "This sets the font family of actor messages",
           "type": "string",
-          "default": "\"trebuchet ms\", verdana, arial, sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect."
           }
         },
         "messageFontWeight": {
@@ -4719,7 +4815,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 400,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "wrap": {
@@ -4727,14 +4824,16 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "wrapPadding": {
           "$ref": "#/$defs/C4DiagramConfig/properties/wrapPadding",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "labelBoxWidth": {
@@ -4742,7 +4841,8 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "labelBoxHeight": {
@@ -4750,25 +4850,32 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 20,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "messageFont": {
           "$ref": "#/$defs/FontCalculator",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's internal font helper; v13 reads the `messageFontSize`, `messageFontFamily` and `messageFontWeight` keys."
           }
         },
         "noteFont": {
           "$ref": "#/$defs/FontCalculator",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's internal font helper; v13 reads the `noteFontSize`, `noteFontFamily` and `noteFontWeight` keys."
           }
         },
         "actorFont": {
           "$ref": "#/$defs/FontCalculator",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's internal font helper; v13 reads the `actorFontSize`, `actorFontFamily` and `actorFontWeight` keys."
           }
         }
       }

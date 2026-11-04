@@ -6,6 +6,7 @@ import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
   CLASSIC_PADDING,
+  CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -34,9 +35,15 @@ const theme: ThemeSpec = {
     ...CLASSIC_CLASS_MARKERS,
     ...TEXT_SIZES,
     ...CLASSIC_PADDING,
+    ...CLASSIC_SEQUENCE,
   },
   values: {
     altBackground: '#f0f0f0', // v12 (#192)
+    // sequence (v12 theme-default.js)
+    actorTextColor: '#000000',
+    activationBkgColor: '#f4f4f4',
+    activationBorderColor: '#666666',
+    sequenceNumberColor: '#ffffff',
     textColor: '#333333',
     nodeBorder: '#9370db',
     clusterBkg: '#ffffde',

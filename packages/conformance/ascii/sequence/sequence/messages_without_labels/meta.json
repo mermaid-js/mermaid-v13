@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence/messages_without_labels.txt",
+  "charset": "unicode"
+}

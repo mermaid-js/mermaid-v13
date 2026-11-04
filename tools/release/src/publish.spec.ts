@@ -24,6 +24,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-class',
       '@mermaid-chart/diagram-er',
       '@mermaid-chart/diagram-flowchart',
+      '@mermaid-chart/diagram-sequence',
       '@mermaid-chart/diagram-state',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',

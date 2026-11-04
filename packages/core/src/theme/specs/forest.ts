@@ -6,6 +6,7 @@ import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
   CLASSIC_PADDING,
+  CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -34,11 +35,21 @@ const theme: ThemeSpec = {
     ...CLASSIC_CLASS_MARKERS,
     ...TEXT_SIZES,
     ...CLASSIC_PADDING,
+    ...CLASSIC_SEQUENCE,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
   rules: { rowEven: 'lightenHsl(mainBkg, 20%)' },
   values: {
     altBackground: '#f0f0f0', // v12 (#192)
+    // sequence (v12 theme-forest.js: actorBorder is darken(mainBkg, 20))
+    actorBorder: '#a6cf47',
+    actorTextColor: '#000000',
+    signalColor: '#333333',
+    signalTextColor: '#333333',
+    labelBoxBorderColor: '#326932',
+    activationBkgColor: '#f4f4f4',
+    activationBorderColor: '#666666',
+    sequenceNumberColor: '#ffffff',
     textColor: '#000000',
     nodeBorder: '#13540c',
     clusterBkg: '#cdffb2',

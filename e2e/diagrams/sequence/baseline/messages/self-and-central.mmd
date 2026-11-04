@@ -1,0 +1,13 @@
+---
+description: self messages and central connections on the lifeline
+---
+sequenceDiagram
+  participant A
+  participant B
+  participant C
+  A->>A: think
+  A->>B: ask
+  B-->>B: look it up
+  A->>()B: to the centre
+  B()->>C: from the centre
+  A()->>()C: centre to centre

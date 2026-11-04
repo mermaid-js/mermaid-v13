@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/activation_stacked.txt",
+  "charset": "ascii"
+}

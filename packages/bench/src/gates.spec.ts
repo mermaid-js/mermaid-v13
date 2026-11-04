@@ -132,7 +132,7 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
 
   // D87: the 15 KB ascii budget is soft. The gate reports, like R-PERF-9's ready-at, and never
   // fails the job, in any mode.
-  it('reports core/ascii + the flowchart ascii entry over 15 KB gzip without failing (R-ASCII-9, D87)', () => {
+  it('reports core/ascii + a diagram ascii entry over 15 KB gzip without failing (R-ASCII-9, D87)', () => {
     const report = healthy();
     report.asciiSize!.gzip = 15 * KB + 1;
     expect(gate(report, 'ascii-size')).toMatchObject({
@@ -146,6 +146,16 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
     expect(gate(report, 'ascii-size').status).toBe('pass');
     delete report.asciiSize;
     expect(gate(report, 'ascii-size')).toMatchObject({ status: 'fail', actual: null });
+  });
+
+  // Gated on the per-type max (D130); every type's number stays in
+  // the report and the gate detail, so a regression of a smaller type is still visible.
+  it("lists each type's ascii path size in the gate detail", () => {
+    const report = healthy();
+    report.asciiSizeByType = { er: 9 * KB, flowchart: 9.5 * KB, sequence: 10 * KB };
+    expect(gate(report, 'ascii-size').detail).toMatch(
+      /by type: er 9(\.0)? KB, flowchart 9\.5 KB, sequence 10(\.0)? KB$/
+    );
   });
 
   it('fails when the warm geomean speedup over frozen 12.2.0 dagre is under 50×', () => {

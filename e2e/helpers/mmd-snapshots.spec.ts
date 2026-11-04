@@ -160,9 +160,10 @@ describe('the real fixture folders', () => {
   it('runs flowchart and skips types without a v13 package', async () => {
     const folders = supportedFixtureFolders();
     expect(folders).toContain('flowchart');
+    expect(folders).toContain('sequence');
     expect(folders).toContain('state-diagram');
     expect(folders).toContain('state-diagram-v2');
-    expect(folders).not.toContain('sequence');
+    expect(folders).not.toContain('journey');
     expect(folders).not.toContain('zenuml');
   });
 

@@ -33,7 +33,13 @@ export const firstPartyFacets: readonly FacetEntry[] = [
   { type: 'info', id: 'info', detector: (text) => /^\s*info/.test(text) },
   { type: 'pie', id: 'pie', detector: (text) => /^\s*pie/.test(text) },
   { type: 'requirement', id: 'requirement', detector: (text) => /^\s*requirement(Diagram)?/.test(text) },
-  { type: 'sequence', id: 'sequence', detector: (text) => /^\s*sequenceDiagram/.test(text) },
+  {
+    type: 'sequence',
+    id: 'sequence',
+    section: 'sequence',
+    detector: (text) => /^\s*sequenceDiagram/.test(text),
+    load: () => import('@mermaid-js/diagram-sequence/language').then((m) => m.language),
+  },
   { type: 'swimlane', id: 'swimlane', detector: (text) => /^\s*swimlane-beta\b/.test(text) },
   {
     type: 'flowchart-v2',

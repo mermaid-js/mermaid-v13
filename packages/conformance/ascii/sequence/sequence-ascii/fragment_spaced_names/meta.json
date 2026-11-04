@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/fragment_spaced_names.txt",
+  "charset": "ascii"
+}

@@ -1,6 +1,7 @@
 /**
  * The curated v13 visual baseline (R-TEST-5): `e2e/diagrams/flowchart/baseline/**.mmd`, and
- * the ER diagram's `e2e/diagrams/er-diagram/baseline/*.mmd` (#134).
+ * the ER diagram's `e2e/diagrams/er-diagram/baseline/*.mmd` (#134) and the sequence diagram's
+ * `e2e/diagrams/sequence/baseline/**.mmd` (#145).
  * The Playwright snapshot runner (`e2e/rendering/mmd-snapshots.spec.ts`, tier `baseline`) and
  * the gallery (R-TEST-6) both read this folder, so they can't drift apart.
  */
@@ -12,6 +13,8 @@ export const REPO_ROOT = join(import.meta.dirname, '..', '..', '..');
 export const BASELINE_DIR = join(REPO_ROOT, 'e2e', 'diagrams', 'flowchart', 'baseline');
 /** The ER diagram's baseline (#134), shown in the gallery under `er/`. */
 export const ER_BASELINE_DIR = join(REPO_ROOT, 'e2e', 'diagrams', 'er-diagram', 'baseline');
+/** The sequence diagram's baseline (#145), shown in the gallery under `sequence/`. */
+export const SEQUENCE_BASELINE_DIR = join(REPO_ROOT, 'e2e', 'diagrams', 'sequence', 'baseline');
 
 /** The themes M1 ships, in gallery column order. */
 export const M1_THEMES: readonly ThemeName[] = THEME_NAMES;
@@ -39,10 +42,18 @@ export function baselineFixtures(dir = BASELINE_DIR): Fixture[] {
     .sort((a, b) => Number(a.path > b.path) - Number(a.path < b.path));
 }
 
-/** The gallery's fixtures: the flowchart baseline, then the ER baseline under `er/`. */
+/**
+ * The gallery's fixtures: the flowchart baseline, then the ER baseline under `er/` and the
+ * sequence baseline under `sequence/`.
+ */
 export function galleryFixtures(): Fixture[] {
-  const er = baselineFixtures(ER_BASELINE_DIR).map((f) => ({ ...f, path: `er/${f.path}` }));
-  return [...baselineFixtures(), ...er];
+  const under = (dir: string, prefix: string): Fixture[] =>
+    baselineFixtures(dir).map((f) => ({ ...f, path: `${prefix}/${f.path}` }));
+  return [
+    ...baselineFixtures(),
+    ...under(ER_BASELINE_DIR, 'er'),
+    ...under(SEQUENCE_BASELINE_DIR, 'sequence'),
+  ];
 }
 
 /** Whether the fixture picks its own theme (front matter or init directive). */

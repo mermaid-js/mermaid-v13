@@ -5,8 +5,9 @@ pure ASCII. Text output runs the same parser and the same layout as SVG, laid ou
 cells instead of pixels, and is drawn by the diagram's own `ascii` entry (DESIGN §6.3, ADR-14).
 
 Only diagram types that declare `ascii` in their manifest support it. In 13.0 those are the
-flowchart (`graph` / `flowchart`) and the ER diagram (`erDiagram`): entities are boxed tables,
-relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`). See [the format matrix](format-matrix.md) for every type.
+flowchart (`graph` / `flowchart`), the ER diagram (`erDiagram`): entities are boxed tables,
+relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`), and the
+sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)). See [the format matrix](format-matrix.md) for every type.
 
 ```
                ┌───◇────┐            ╭─────────╮
@@ -107,8 +108,9 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 1         | Any error: a usage error (unknown option or command, a `--format` other than `ascii` or `svg`, a bad `--width` or `--charset`), syntax, unknown diagram, unreadable file. |
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
-Exit 2 cannot happen with the diagram types built into 13.0: the flowchart and the ER diagram
-both render as SVG and as text. It is kept for types that will not have a text form (D58).
+Of the diagram types built into 13.0, the flowchart, the ER diagram and the sequence diagram
+render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
+`stateDiagram` exits 2 (D58, D100).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
 font tables. It is not v12's `mmdc` (which renders through a headless browser) nor the
@@ -198,6 +200,82 @@ Subgraphs are frames with the title on the top border (`┌─ build ──┐`)
 An empty subgraph is drawn as an empty frame. A front-matter `title` is printed centred on the
 first line.
 
+## Sequence diagrams
+
+The sequence diagram's text entry (`@mermaid-js/diagram-sequence/ascii`, D100) draws the same
+layout as SVG, computed in cells (D108): one layout function, its lengths from a `cell` column
+of the sequence metrics table.
+
+```
+  ┌───┐             ┌───┐
+  │ A │             │ B │
+  └─┬─┘             └─┬─┘
+    ┆                 ┆
+    ┆    request      ┆
+    ├────────────────►┆
+┌───┼ alt ────────────┼───┐
+│   ┆      [is valid] ┆   │
+│   ┆                 ┆   │
+│   ┆    success      ┆   │
+│   ┆◄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┤   │
+├┄┄┄┼┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┼┄┄┄┤
+│   ┆  [is invalid]   ┆   │
+│   ┆                 ┆   │
+│   ┆     error       ┆   │
+│   ┆◄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┤   │
+└───┼─────────────────┼───┘
+    ┆                 ┆
+  ┌─┴─┐             ┌─┴─┐
+  │ A │             │ B │
+  └───┘             └───┘
+```
+
+from
+
+```mermaid
+sequenceDiagram
+  A->>B: request
+  alt is valid
+    B-->>A: success
+  else is invalid
+    B-->>A: error
+  end
+```
+
+- Participants are boxes that fit their label, mirrored at the bottom as in SVG
+  (`mirrorActors`). An `actor` has rounded corners and a `database` double top and bottom;
+  the other symbols (boundary, control, entity, collections, queue) are plain boxes, named in
+  one `ASCII_SHAPE` warning.
+- Lifelines are dashed (`┆`, `:`). An activation draws its lifeline heavy (`┃`, `I`); a nested
+  one is one column to the right.
+- Message lines are solid or dotted and start at a tee on the sender's lifeline. Heads:
+  `►` `◄` (`>` `<`) for `->>`, `✕` (`x`) for `-x`, `)` `(` for the async `-)`, harpoons
+  `⇀` `⇁` `↼` `↽` for the half arrows, none for `->`. ASCII has no half heads: it draws
+  them as `>` `<` and says so in one `ASCII_SHAPE` warning (`half-arrowhead`). A
+  bidirectional arrow has a head at each end, a central connection `()` a circle (`●`, `o`)
+  on the lifeline.
+- A self message loops out right of its lifeline, its label beside it; a central circle sits
+  where it leaves (`A()->>A`) or comes back (`A->>()A`). Every loop is square, so
+  `sequence.rightAngles` changes nothing in text.
+- Each line of a label is aligned as `sequence.messageAlign` / `noteAlign` say.
+- Labels keep off the sides of a `box` group: a box grows to hold its members' self messages
+  and notes, and a message label that would cross a side moves along its line to clear it.
+- Notes are boxes; one over two participants fits its text. A fragment is a frame with its
+  keyword on the top border (on the first stretch where no lifeline crosses it), its
+  condition on the row below in brackets, and a dashed divider (`├┄┄┤`) before each `else`, `and` or
+  `option`. A `box` group is a frame with its title on the top border.
+- With `autonumber`, each label starts with its number (`1. Hello`), and the layout makes
+  room for it.
+- A `title` statement is centred above the drawing; without one, the front-matter title is.
+- Dropped, one `ASCII_DROPPED` warning per kind: `style` (`box` colours and `rect`
+  highlighting, which leaves no trace), `emphasis` (bold and italic text, and a bold
+  `sequence.*FontWeight`), `link` (actor menus: `link`, `links`, `properties`,
+  `details`) and `accessibility` (`accTitle`, `accDescr`).
+
+`sequence.*` px config keys convert to cells as for the flowchart (8 × 16 px per cell): set
+`sequence.width` to 120 and boxes are at least 15 columns wide. Wrapped text (`wrap`) wraps
+to at least 19 columns.
+
 ## What gets dropped
 
 Text output is plain: no colour. Features with no text form are left out, with **one**
@@ -224,7 +302,8 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 ## Size
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
-plus the flowchart's text entry have their own budget of 15 KB gzip, East Asian width data
-included, outside the 80 KB R-PERF-1 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft:
-the bench's `ascii-size` gate measures and reports it but never fails. That an SVG render loads
+plus one diagram type's text entry (the flowchart's, the ER diagram's or the sequence diagram's)
+have their own budget of 15 KB gzip, East Asian width data included, outside the 80 KB R-PERF-1
+budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft: the bench's `ascii-size` gate measures
+each type's text path and reports the largest (D130), but never fails. That an SVG render loads
 no ascii module is a hard check (`packages/bench/src/ascii-size.spec.ts` in `pnpm test`).

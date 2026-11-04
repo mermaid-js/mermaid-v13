@@ -1,0 +1,32 @@
+---
+description: loop, alt with else, opt, par with and, critical with option, break
+---
+sequenceDiagram
+  participant C as Client
+  participant S as Server
+  participant D as Database
+  loop every minute
+    C->>S: poll
+  end
+  alt cache hit
+    S-->>C: cached
+  else cache miss
+    S->>D: query
+    D-->>S: rows
+  end
+  opt logging on
+    S->>S: write log
+  end
+  par to the client
+    S-->>C: done
+  and to the database
+    S->>D: commit
+  end
+  critical open a connection
+    S->>D: connect
+  option timeout
+    S->>S: retry
+  end
+  break when the server fails
+    S-->>C: error
+  end

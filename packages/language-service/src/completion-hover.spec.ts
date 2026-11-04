@@ -40,6 +40,7 @@ describe('completion', () => {
       'graph',
       'classDiagram',
       'erDiagram',
+      'sequenceDiagram',
       'stateDiagram-v2',
       'stateDiagram',
     ]);

@@ -1,0 +1,25 @@
+@ 2:5  A-|>>B: Hello
+  2:4-2:7 "->>"
+  | **`->>`** solid line, arrowhead: `A` → `B`
+  |
+  | `A->>B: text`: a message from `A` to `B`. `+` after the arrow activates `B`, `-` deactivates `A`; `()` on either side is a central connection.
+@ 3:6  B--|>>A: Hi
+  3:4-3:8 "-->>"
+  | **`-->>`** dotted line, arrowhead: `B` → `A`
+  |
+  | `A->>B: text`: a message from `A` to `B`. `+` after the arrow activates `B`, `-` deactivates `A`; `()` on either side is a central connection.
+@ 4:5  A-|xB: no
+  4:4-4:6 "-x"
+  | **`-x`** solid line, a cross at the end: `A` → `B`
+  |
+  | `A->>B: text`: a message from `A` to `B`. `+` after the arrow activates `B`, `-` deactivates `A`; `()` on either side is a central connection.
+@ 5:5  A-||\B: half
+  5:4-5:7 "-|\\"
+  | **`-|\`** solid line, solid half arrowhead on the top: `A` → `B`
+  |
+  | `A->>B: text`: a message from `A` to `B`. `+` after the arrow activates `B`, `-` deactivates `A`; `()` on either side is a central connection.
+@ 6:7  A->>|+B: on
+  6:7-6:8 "+"
+  | **`+`**
+  |
+  | `A->>+B`: activates `B`.

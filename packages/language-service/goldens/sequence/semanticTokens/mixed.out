@@ -1,0 +1,41 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:16 "sequenceDiagram" keyword
+3:3-3:15 "%% a comment" comment
+4:3-4:18 "title Greetings" keyword
+5:3-5:13 "autonumber" keyword
+5:14-5:16 "10" number
+5:17-5:18 "5" number
+6:3-6:14 "participant" keyword
+6:15-6:16 "A" variable [declaration, definition]
+6:16-6:18 "@{" macro
+6:19-6:37 "\"type\": \"database\"" macro
+6:38-6:39 "}" macro
+7:3-7:8 "actor" keyword
+7:9-7:10 "B" variable [declaration, definition]
+7:11-7:13 "as" keyword
+7:14-7:17 "Bob" string
+8:3-8:4 "A" variable
+8:4-8:7 "->>" operator
+8:7-8:8 "+" operator
+8:8-8:9 "B" variable
+8:9-8:16 ": Hello" string
+9:3-9:4 "B" variable
+9:4-9:8 "-->>" operator
+9:8-9:9 "-" operator
+9:9-9:10 "A" variable
+9:10-9:14 ": Hi" string
+10:3-10:4 "A" variable
+10:4-10:6 "-)" operator
+10:6-10:7 "B" variable
+10:7-10:14 ": async" string
+11:3-11:7 "note" keyword
+11:8-11:16 "right of" keyword
+11:17-11:18 "B" variable
+11:18-11:28 ": thinking" string
+12:3-12:6 "opt" keyword
+12:7-12:12 "maybe" string
+13:5-13:6 "A" variable
+13:6-13:8 "-x" operator
+13:8-13:9 "B" variable
+13:9-13:13 ": no" string
+14:3-14:6 "end" keyword

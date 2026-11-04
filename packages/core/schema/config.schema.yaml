@@ -120,7 +120,8 @@ properties:
         none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding;
         `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` /
         `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY`
-        (totals) 42 / 24 and padding; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
+        (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0;
+        `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
         on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux
         themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`,
         `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers
@@ -442,6 +443,59 @@ properties:
             v12's values (D120): `#f9f9fb` in `redux` and `redux-color`, `#16141f` in
             `redux-dark` and `redux-dark-color`; `#f0f0f0` in `default` and `forest`, `#555555`
             in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`.
+      actorRadius:
+        description: |
+          Corner radius in px of a sequence participant box.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            6 in the redux themes (v12 `look: neo`), 3 in the classic themes (v12 `svgDraw.js`). Read as a number at render time (D152), so its CSS variable has no effect.
+      actorGlyphBand:
+        description: |
+          Height in px of the band a sequence symbol (actor, boundary, control, entity, database)
+          stands in, above its label. Above 0, every participant row is tall enough for the band,
+          its label and v12's 6 px gaps, lifelines start at the bottom of the row, and the symbols
+          are scaled to the band: the round symbols are as tall as it, the stick figure and the
+          database cylinder fill it. Any height is accepted: on a band lower than the cylinder's
+          two ends the ends flatten to half the band each, and the control symbol's arrowhead
+          shrinks with a smaller circle but never grows past v12's size. 0 draws each symbol at
+          its own v12 classic place.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            44 in the redux themes (v12 `look: neo`, `actorBands.ts`), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      messageEndGap:
+        description: |
+          How far in px a sequence message line stops short of its target (all arrows but `->`),
+          and starts in from its source for a bidirectional message, on top of the arrowhead room.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            3 in the redux themes (v12 `look: neo`), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      labelBoxExtraHeight:
+        description: |
+          Added in px to the height of a sequence fragment's label tab (`loop`, `alt`, …).
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            15 in the redux themes (v12 `look: neo`), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      actorFooterPadding:
+        description: |
+          Room in px added below a sequence diagram that has participants.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            30 in the redux themes (v12 `look: neo` viewBox), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
   themeCSS:
     type: string
     x-mermaid:
@@ -907,7 +961,7 @@ properties:
     x-mermaid: { status: pending }
   sequence:
     $ref: '#/$defs/SequenceDiagramConfig'
-    x-mermaid: { status: pending }
+    x-mermaid: { status: honoured, since: 13.0.0 }
   gantt:
     $ref: '#/$defs/GanttDiagramConfig'
     x-mermaid: { status: pending }
@@ -3353,15 +3407,9 @@ $defs:
       - useMaxWidth
       - rightAngles
       - showSequenceNumbers
-      - actorFontSize
-      - actorFontFamily
       - actorFontWeight
-      - noteFontSize
-      - noteFontFamily
       - noteFontWeight
       - noteAlign
-      - messageFontSize
-      - messageFontFamily
       - messageFontWeight
     properties:
       theme:
@@ -3383,163 +3431,216 @@ $defs:
           status: ignored
           since: 13.0.0
           reason: Arrowheads are inline paths, not `<marker>` references.
+      useMaxWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useMaxWidth'
+        x-mermaid: { status: honoured, since: 13.0.0 }
       hideUnusedParticipants:
         type: boolean
         default: false
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       activationWidth:
         description: Width of the activation rect
         type: integer
         default: 10
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       diagramMarginX:
         description: Margin to the right and left of the sequence diagram
         type: integer
         default: 50
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       diagramMarginY:
         description: Margin to the over and under the sequence diagram
         type: integer
         default: 10
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       actorMargin:
         description: Margin between actors
         type: integer
         default: 50
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       width:
         $ref: '#/$defs/JourneyDiagramConfig/properties/width'
         default: 150
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       height:
         $ref: '#/$defs/JourneyDiagramConfig/properties/height'
         default: 65
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       boxMargin:
         $ref: '#/$defs/JourneyDiagramConfig/properties/boxMargin'
         default: 10
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       boxTextMargin:
         $ref: '#/$defs/JourneyDiagramConfig/properties/boxTextMargin'
         default: 5
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       noteMargin:
         $ref: '#/$defs/JourneyDiagramConfig/properties/noteMargin'
         default: 10
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       messageMargin:
         $ref: '#/$defs/JourneyDiagramConfig/properties/messageMargin'
         default: 35
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's sequence renderer never read it; messages are spaced by `boxMargin` and their label height.
       messageAlign:
         $ref: '#/$defs/JourneyDiagramConfig/properties/messageAlign'
         default: center
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       mirrorActors:
         description: |
           Mirror actors under diagram
         type: boolean
         default: true
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       forceMenus:
         description: |
           forces actor popup menus to always be visible (to support E2E testing).
         type: boolean
         default: false
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            Read by `@mermaid-js/plugin-interactions`, which draws the actor menus; without the
+            plugin there are no menus to show.
       bottomMarginAdj:
         $ref: '#/$defs/JourneyDiagramConfig/properties/bottomMarginAdj'
         default: 1
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       rightAngles:
         $ref: '#/$defs/JourneyDiagramConfig/properties/rightAngles'
         default: false
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       showSequenceNumbers:
         description: This will show the node numbers
         type: boolean
         default: false
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       actorFontSize:
         description: This sets the font size of the actor's description
         type: *fontSizeType
-        default: 14
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The default changes: unset, it is the theme's `fontSize` (16 by default), the size
+            v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set
+            value now takes effect.
       actorFontFamily:
         description: This sets the font family of the actor's description
         type: string
-        default: '"Open Sans", sans-serif'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The default changes: unset, it is the theme's `fontFamily`, as for every diagram
+            type, not a per-key font. A set value takes effect.
       actorFontWeight:
         description: This sets the font weight of the actor's description
         type: ['string', 'number']
         default: 400
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
 
       noteFontSize:
         description: This sets the font size of actor-attached notes
         type: *fontSizeType
-        default: 14
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The default changes: unset, it is the theme's `fontSize` (16 by default), the size
+            v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set
+            value now takes effect.
       noteFontFamily:
         description: This sets the font family of actor-attached notes
         type: string
-        default: '"trebuchet ms", verdana, arial, sans-serif'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The default changes: unset, it is the theme's `fontFamily`, as for every diagram
+            type, not a per-key font. A set value takes effect.
       noteFontWeight:
         description: This sets the font weight of actor-attached notes
         type: ['string', 'number']
         default: 400
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       noteAlign:
         description: This sets the text alignment of actor-attached notes
         type: string
         enum: ['left', 'center', 'right']
         default: 'center'
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
 
       messageFontSize:
         description: This sets the font size of actor messages
         type: *fontSizeType
-        default: 16
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The default changes: unset, it is the theme's `fontSize` (16 by default), the size
+            v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set
+            value now takes effect.
       messageFontFamily:
         description: This sets the font family of actor messages
         type: string
-        default: '"trebuchet ms", verdana, arial, sans-serif'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The default changes: unset, it is the theme's `fontFamily`, as for every diagram
+            type, not a per-key font. A set value takes effect.
       messageFontWeight:
         description: This sets the font weight of actor messages
         type: ['string', 'number']
         default: 400
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
 
       wrap:
         description: This sets the auto-wrap state for the diagram
         type: boolean
         default: false # different from C4 Diagram
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       wrapPadding:
         $ref: '#/$defs/C4DiagramConfig/properties/wrapPadding'
         default: 10
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       labelBoxWidth:
         description: This sets the width of the loop-box (loop, alt, opt, par)
         type: number
         default: 50
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       labelBoxHeight:
         description: This sets the height of the loop-box (loop, alt, opt, par)
         type: number
         default: 20
-        x-mermaid: { status: pending }
-      messageFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
-      noteFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
-      actorFont: { '$ref': '#/$defs/FontCalculator', x-mermaid: { status: pending } }
+        x-mermaid: { status: honoured, since: 13.0.0 }
+      messageFont:
+        $ref: '#/$defs/FontCalculator'
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's internal font helper; v13 reads the `messageFontSize`, `messageFontFamily` and `messageFontWeight` keys.
+      noteFont:
+        $ref: '#/$defs/FontCalculator'
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's internal font helper; v13 reads the `noteFontSize`, `noteFontFamily` and `noteFontWeight` keys.
+      actorFont:
+        $ref: '#/$defs/FontCalculator'
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's internal font helper; v13 reads the `actorFontSize`, `actorFontFamily` and `actorFontWeight` keys.
 
   SwimlaneDiagramConfig:
     title: Swimlane Diagram Config

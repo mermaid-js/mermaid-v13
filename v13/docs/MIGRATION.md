@@ -196,6 +196,10 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `agentflow.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `sequence.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `sequence.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
+| `sequence.messageMargin` | ignored | v12's sequence renderer never read it; messages are spaced by `boxMargin` and their label height. |  |
+| `sequence.messageFont` | ignored | v12's internal font helper; v13 reads the `messageFontSize`, `messageFontFamily` and `messageFontWeight` keys. |  |
+| `sequence.noteFont` | ignored | v12's internal font helper; v13 reads the `noteFontSize`, `noteFontFamily` and `noteFontWeight` keys. |  |
+| `sequence.actorFont` | ignored | v12's internal font helper; v13 reads the `actorFontSize`, `actorFontFamily` and `actorFontWeight` keys. |  |
 | `gantt.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `journey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -264,6 +268,12 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
 | `flowchart.curve` | `"rounded"` | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes; `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory). |
+| `sequence.actorFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
+| `sequence.actorFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
+| `sequence.noteFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
+| `sequence.noteFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
+| `sequence.messageFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
+| `sequence.messageFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
 | `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
 | `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
 
@@ -310,6 +320,21 @@ Removed and ignored keys, with what to use instead:
   flowchart: v13 writes no generated ids, and the output is byte-identical for the same input
   and config when the measurer is deterministic.
 
+Sequence diagrams (`sequence` section, #145):
+
+- **Per-key font sizes take effect.** v12 replaced `sequence.actorFontSize`, `noteFontSize` and
+  `messageFontSize` with the global `fontSize` before drawing, so setting them did nothing and
+  every label was drawn at 16 px. v13 draws a set value; unset, they follow the theme's
+  `fontSize`, so a diagram that sets none looks as before (D132).
+  The documented defaults 14 and 16 are gone.
+- **Per-key font families follow the Mermaid font** when unset (`fontFamily`), as every
+  diagram type's text does; a set `actorFontFamily`, `noteFontFamily` or `messageFontFamily`
+  takes effect after the same safety check as other font keys.
+- `messageMargin` (never read by v12's renderer) and the `actorFont`, `noteFont`,
+  `messageFont` helpers are ignored. `sequence.forceMenus` is honoured: the actor menus are
+  drawn by `@mermaid-js/plugin-interactions`, which shows every menu when it is set; without
+  the plugin there are no menus to show.
+
 ## Themes
 
 | v12 | v13 | Why |
@@ -326,6 +351,7 @@ Removed and ignored keys, with what to use instead:
 | Neo gradients (`useGradient`, `gradientStart`, `gradientStop`) | Not in 13.0. They come back as theme variables of the `neo` theme when it is ported | D151 |
 | Drop shadow under `look: neo` | A hard drop shadow in the redux themes only, as the CSS `filter` from the `dropShadow` theme variable: offset 4px, no blur, 6% opacity, black on light themes and white on dark. It is on node outlines, icons, subgraphs and collapsed groups, not on edges, edge labels or swimlanes. The classic themes set `dropShadow: none`. No `<defs>` and no ids, so several diagrams on a page never collide | D151, D152 |
 | Per-subgraph colour in `redux-color` | Each subgraph takes a palette slot by declaration order, cycling after twelve: border from `borderColorArray`, fill from `bkgColorArray`. `redux-dark-color` has an empty fill palette, so its subgraphs are coloured on the border only. `redux` and the classic themes carry no palette. Colour is on whenever the theme has a non-empty `borderColorArray` (a `themeVariables` palette turns it on in any theme), and a collapsed subgraph's card, separator and dots take its slot too. As in v12 the slot is written as `data-color-id="color-<n>"` on the cluster or collapsed node, and an author `style` / `classDef` still wins. Swimlanes are not drawn yet, so there is nothing to colour there | D151, D152 |
+| Sequence colours `actorBkg`, `actorBorder`, `actorTextColor`, `actorLineColor`, `signalColor`, `signalTextColor`, `labelBoxBkgColor`, `labelBoxBorderColor`, `labelTextColor`, `loopTextColor`, `activationBkgColor`, `activationBorderColor`, `sequenceNumberColor` | The same names, derived as v12 `theme-base.js` derives them, with each built-in theme's v12 values pinned where they differ; `--mermaid-<name>` like every variable. `activationBorderColor` is `secondaryColor` with 12.5% black, close to khroma's `darken(…, 10)` | R-THEME-2, D71 |
 | Numbered palettes (`pie*`, `git*`) | Not in the 13.0 inventory; they come with the diagram types that use them. `cScale0`–`cScale11` are set by `redux-color` (the fixed Tailwind-300 set) | R-CONF-5 |
 
 Colours are close to, but not byte-equal with, v12. Where a v12 colour pair failed WCAG AA
@@ -358,6 +384,11 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `cylinderPaddingX` / `cylinderPaddingY` (totals, besides the caps) | 24 / 24 | padding |
 | `leanPaddingX` / `leanPaddingY` (totals; per side for the inverted trapezoid) | 2 × padding / padding | padding |
 | `oddPaddingX` / `oddPaddingY` (totals) | 42 / 24 | padding |
+| `actorRadius` (sequence participant box corner) | 6 | 3 |
+| `actorGlyphBand` (sequence: the band symbols stand in, scaled to it; above 0 turns on v12 neo's band model) | 44 | 0 (each symbol at its classic place) |
+| `messageEndGap` (sequence: a message stops this far short of its target, past the head room; a bidirectional one starts this far in) | 3 | 0 |
+| `labelBoxExtraHeight` (sequence: added to a fragment's label tab) | 15 | 0 |
+| `actorFooterPadding` (sequence: room below a drawing with participants) | 30 | 0 |
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color` | `none` |
 | `classText` (colour: class diagram text) | `textColor` | `primaryTextColor` |
 | `classMarkerStrokeWidth` / `classFilledMarkerStrokeWidth` (outline of hollow / filled class markers) | 2 / 0 | 1 / 1 |
@@ -500,6 +531,34 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 - **`maxEdges`** (default 5,000; v12 had 500) is still the edge limit; going over it fails
   with a `LIMIT` error. See Limits under Public API.
 
+## Sequence syntax
+
+The sequence parser accepts the v12 language (oracle parity over every e2e fixture and the
+v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The differences:
+
+- **Error messages** are new, as for flowchart, and every error is reported, not only the
+  first. A `box` that holds a line other than a participant line is reported once, as missing
+  its `end`.
+- **`create` and `destroy`** take effect at the message that creates or destroys the
+  participant. v12 drew them only when that message was the very next row, so a note or a block line in
+  between (or a `create` between a `destroy` and its message) silently dropped the creation
+  or the destruction (D123).
+- **A message after the destroying one** is accepted as in v12, with a
+  `SEQUENCE_AFTER_DESTROY` warning: it is drawn below the participant's end.
+- **Math** (`$$…$$`) in messages, notes, aliases, fragment and box labels is shown as written,
+  with a `SEQUENCE_MATH` warning, until a math plugin exists.
+- **An unknown participant type** (`@{ type: robot }`) draws a participant box, with a
+  `SEQUENCE_PARTICIPANT_TYPE` warning; v12 drew nothing.
+- **Box colours** are checked without a browser, with the rules a browser's `CSS.supports`
+  applies (named and system colours, `rgb()`/`hsl()` in legacy and modern syntax); `calc()`
+  inside a colour is not read and makes the word part of the title.
+- **Detection is v12's, quirks included.** v12's C4 detector runs before the sequence one and
+  matches `C4Container`, `C4Component`, `C4Dynamic` or `C4Deployment` anywhere in the text, so a
+  sequence diagram that names a participant `C4Container` is detected as C4. v12 then drew a C4
+  diagram; v13 has no C4 package yet and throws `UNSUPPORTED_DIAGRAM`. Rename the participant
+  (or use an alias: `participant C as C4Container` still matches, `participant C as Container`
+  does not).
+
 ## State diagram syntax
 
 ### Layout
@@ -635,6 +694,45 @@ them keep working.
 | `click A "url"` wraps the node in `<a xlink:href>`; tooltips are an HTML hover div | `<a href>` inside the node group (only URLs that pass `securityLevel`); tooltips are an SVG `<title>`; `click … callback` draws nothing (interactions plugin) | No script in output (R-SVG-4, R-SVG-5) |
 | `viewBox` may start at negative coordinates | `viewBox="0 0 w h"` | Layout places the drawing at the origin |
 
+## Sequence SVG structure
+
+What changed in the sequence diagram's SVG compared with v12 (spec #125, DESIGN §7.2). The
+v12 element classes (`actor`, `actor-top`, `actor-bottom`, `actor-man`, `actor-box`,
+`actor-line`, `messageLine0`, `messageLine1`, `messageText`, `sequenceNumber`, `note`,
+`noteText`, `loopLine`, `labelBox`, `labelText`, `loopText`, `sectionTitle`, `activation0`–`2`,
+`rect`) are kept so selectors that use them keep working.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `aria-roledescription="sequence"`, a `<style>` scoped by the id | No root `id`; `class="mermaid mermaid-sequence"`, `role="img"`, `aria-roledescription="sequence"`, `data-mermaid-version`; colours are presentation attributes reading `var(--_x)` aliases on the root `style` | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
+| `<defs>` with `<marker>`s (`-arrowhead`, `-filled-head`, `-crosshead`, `-sequencenumber`, the half-arrow heads, `-filled-head-control`) and `<filter id="…-drop-shadow">`; `marker-end="url(#…)"` on lines | No `<defs>`. Arrowheads are `<polygon class="arrowhead">` / `<polyline class="arrowhead">` in the message's group, at v12's marker size and anchor; the sequence number is a `<circle class="sequenceNumberCircle">` and its `<text class="sequenceNumber">`; the control symbol's head is a `<polygon>`; the shadow is a `filter` CSS value from `dropShadow` | No ids needed; heads take the message colour |
+| Async (`-)`), half-arrow and stick heads were black in every theme (no CSS reached their markers); the cross head was themed | Every head is drawn in `signalColor` | v12's black heads did not read on the dark themes (D131) |
+| The sequence number in `font-family="sans-serif"` | The number takes the diagram font, like every other label; badge size and text sizes (12, 9, 7) as in v12 | Fonts are uniform across diagrams |
+| v12 classic themes gave `rect` blocks and boxes their own grey drop shadow (`g rect.rect { filter: dropShadow }`) | No shadow in the classic themes: `rect` blocks and boxes take `dropShadow` only where the theme sets it (the redux themes) | One shadow variable per theme (D152, D131) |
+| A fragment title that is empty once read (`loop </style>`) | Not drawn, as v12 skipped it | v13 drew `[]` before the fix |
+| A refused per-key font family (`sequence.actorFontFamily: "x;color:red"`) went into the inline style | Dropped with `STYLE_VALUE_DROPPED`; the label is measured and drawn in the Mermaid font | Inert output (R-SEC-3) |
+| Participants: a lifeline `<line id="actorN" class="actor-line 200" name>` in one group, the top box in another, the bottom box drawn later; `data-et`, `data-type`, `data-id="<name>"`, `name` attributes; `id="root-N"` for menus | One `<g class="participant participant-<kind>" data-id="<id>" data-ast="p:<id>">` per participant holding its `<line class="actor-line">`, `<g class="actor-top">` and `<g class="actor-bottom">`; no `name`, `data-et` or `data-type` | One element per participant maps it to its source (R-PARSE-8) |
+| Lifelines ran to `y2="2000"` and were cut by the viewBox | A lifeline ends at the bottom row (or where the participant is destroyed) | The layout places it (#141) |
+| Messages: `<text class="messageText">` and `<line>`/`<path>` as siblings, `data-et="message"`, `data-id="i<n>"`, `data-from`, `data-to` | `<g class="message" data-id data-ast="m:<from>><to>#<n>">` holding the label, the line or self-loop path, the heads, central-connection circles and the number | One element per message (R-PARSE-8) |
+| Notes, frames: `<g data-et="note">` or `<g data-et="control-structure">`, `data-id="i<n>"` | Notes in `<g class="notes">`, each `<g class="note-<placement>" data-id data-ast="note:<n>">`; frames in `<g class="fragments">`, each `<g class="fragment fragment-<kind>" data-id data-ast="f:<kind>#<n>">` with a `<g class="loopSection" data-ast>` per `else`/`and`/`option` | Same |
+| Activations, `rect` blocks and boxes: unclassed groups, appended where the draw loop met them | `<g class="activations">`, painted in start order so an inner bar covers its outer one (each bar has `data-ast` of its `activate` line; a bar opened by `+` or `()` has the message's id as `data-id` and no `data-ast`), `<g class="rects">`, `<g class="boxes">` (each `<g class="box" data-ast="box:<n>">`) | Stacking order is fixed: boxes, rects, participants, activations, frames, notes, messages |
+| Text: `<text>` with a `<tspan>` per line and a `style="font-…"` from `sequence.*Font*` | `<text>`/`<tspan>`; a section whose per-key font differs from the Mermaid font writes `font-family`/`font-size`/`font-weight` on its group (`participants`, `messages`, `fragments`, `notes`) | Labels are drawn in the font they were measured in |
+| Title: an unclassed `<text>` at a fixed place; box labels `class="text"` in default black | `<text class="sequenceTitle">` centred above the drawing; box labels in `textColor` | Theme colour on every text |
+| The `redux-color` / `redux-dark-color` names switched per-participant colour; `look: neo` switched the corner radius (6 / 3), the actor, note, label tab and `rect` shadow | The palette (`borderColorArray`, `bkgColorArray`, `data-color-id="color-<n>"` on the participant and its activations), `actorRadius` and `dropShadow` theme variables. `rect` blocks and boxes take the shadow only where the theme has one (see below) | D152 |
+| Bottom symbols of the figure kinds sat a few px off the top ones (`isFooter` offsets) | The bottom symbol is drawn like the top one | One drawing per kind |
+| v12's `look: neo` geometry: the band model of `actorBands.ts` (rows as tall as glyph band 44 + 6 + label + 6, one lifeline start per row, the symbols on the band, the stick figure scaled to it, the database cylinder as tall as it, a `collections` stack 6 shorter), messages 3 px shorter, label tabs 15 px taller, 30 px more below the drawing | The same geometry in the redux themes and v12 classic geometry in the classic themes, from the `actorGlyphBand`, `messageEndGap`, `labelBoxExtraHeight` and `actorFooterPadding` theme variables (see "Theme geometry"), so any theme can take either. Text output draws every symbol as a box and ignores them (#194) | D152 |
+| A front-matter `title` was drawn above the diagram like a `title` statement | The SVG draws only the `title` statement; a front-matter `title` is not drawn, as in flowchart and state (D122), and does not feed the accessible name: only `accTitle` does (D133). Text output prints it on top when there is no `title` statement | One cross-type decision on front-matter titles (D122, D133) |
+| `actor`/`link` popup menus (`actorPopupMenu`, `onclick`) | Not drawn by the renderer; the interactions plugin adds them | No script in output (R-SVG-4) |
+
+The `data-ast` ids are built from the names as written (R-PARSE-8): `p:<id>` for a participant
+(its later mentions `p:<id>@2`, `@3`, …), `m:<from>><to>` for the first message between two
+participants and `m:<from>><to>#2`, `#3`, … for the next ones, `note:<n>`, `f:<kind>#<n>`,
+`box:<n>` and `st:<n>` for the rest. Inside a name `%`, `>`, `@` and `#` are percent-encoded
+(`%25`, `%3E`, `%40`, `%23`), so the suffixes stay unambiguous; spaces and other characters are
+kept. So `participant A B` is `p:A B`, `participant A#c` is `p:A%23c`, the first `A->>B#2` is
+`m:A>B%232` (no suffix: it is the first message from `A` to `B#2`), and the second `A->>B` is
+`m:A>B#2`.
+
 ## Class diagram SVG structure
 
 What changed in the class diagram's SVG compared with v12's unified renderer
@@ -688,4 +786,3 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 | Subgraph `<g class="cluster" id>` with `<g class="cluster-label">` | `<g class="cluster …" data-id="<name>" data-ast="s:<name>">` with `<rect>` and `<text class="cluster-label">` | |
 | Front-matter `title` drawn as `text.erDiagramTitleText` | Not drawn yet, as in the flowchart | |
 | Hand-drawn look: background copies of every entity (`<id>-background`) | None (`look` is removed, D153) | |
-

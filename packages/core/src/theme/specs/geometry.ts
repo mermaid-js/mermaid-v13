@@ -120,6 +120,35 @@ export const CLASSIC_PADDING: Readonly<Record<PaddingToken, number | string>> = 
   oddPaddingY: 'padding',
 };
 
+type SequenceGeometry = Extract<
+  TokenVariable,
+  'actorRadius' | 'actorGlyphBand' | 'messageEndGap' | 'labelBoxExtraHeight' | 'actorFooterPadding'
+>;
+
+/**
+ * Sequence geometry, v12 `look: neo` (#194): the participant box corner (`svgDraw.js`); the
+ * glyph band of `actorBands.ts` (`GLYPH_BAND_HEIGHT`), which also turns on its band model;
+ * the 3 px a message stops short of its target (`sequenceRenderer.ts` `buildMessageModel`);
+ * the 15 px taller fragment label tab (`svgDraw.js` `drawLoop`); the 30 px added below a
+ * diagram with participants (`sequenceRenderer.ts` viewBox).
+ */
+export const NEO_SEQUENCE: Readonly<Record<SequenceGeometry, number>> = {
+  actorRadius: 6,
+  actorGlyphBand: 44,
+  messageEndGap: 3,
+  labelBoxExtraHeight: 15,
+  actorFooterPadding: 30,
+};
+
+/** v12 classic: corner 3, no glyph band (per-shape symbols), and none of the neo extras. */
+export const CLASSIC_SEQUENCE: Readonly<Record<SequenceGeometry, number>> = {
+  actorRadius: 3,
+  actorGlyphBand: 0,
+  messageEndGap: 0,
+  labelBoxExtraHeight: 0,
+  actorFooterPadding: 0,
+};
+
 /**
  * Class relationship markers, v12 neo (`*-margin` markers in rendering-elements/markers.js at
  * fa796a943), each measured from the node outline after `markerOffsets` shortens the line

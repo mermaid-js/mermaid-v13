@@ -54,6 +54,29 @@ flags, a front-matter title, `maxWidth`), each with `input.mmd`, `meta.json`, `e
 Every input was triaged with v13's flowchart parser and the mermaid@12 oracle in
 `src/oracle.ts`. Both accept the same 140 inputs and agree on their models.
 
+## Sequence goldens
+
+`sequence/` holds the 96 sequence golden files of mermaid-ascii at the same commit (#150, D83,
+D100): `cmd/testdata/sequence-ascii/` (39, charset `ascii`) as `sequence/sequence-ascii/<name>/`
+and `cmd/testdata/sequence/` (57, charset `unicode`) as `sequence/sequence/<name>/`. Each upstream
+file is the input, a `---` line and the expected output. `input.mmd` is the input with its
+surrounding blank space trimmed (upstream trims it before parsing), `upstream.txt` the output as
+written, and `meta.json` gives `source` and `charset`. There are no header lines.
+
+`src/ascii/sequence-goldens.spec.ts` runs the same two checks as for the flowchart:
+
+- **Structural check against `upstream.txt`** (`src/ascii/sequence-structure.ts`): every
+  participant label inside a box, every message, note, fragment (without its brackets) and box
+  label present, the same number of arrowheads on message lines. Combining marks and other
+  zero-width characters are left out of the comparison.
+- **`expected.txt`**, exact, plus `expected.<other>.txt` when the other group has no fixture
+  with the same input. Write them with
+  `vitest run -u packages/conformance/src/ascii/sequence-goldens.spec.ts` and review the diff.
+
+[`sequence/ascii-divergences.json`](sequence/ascii-divergences.json) has the same entry kinds.
+Every input was triaged with v13's sequence parser and the mermaid@12 oracle: both reject
+`quoted_name_with_arrow` and agree on the models of the other 95.
+
 ## ER goldens
 
 The 83 ER golden files of mermaid-ascii (#136, D83, D100, D109) come from

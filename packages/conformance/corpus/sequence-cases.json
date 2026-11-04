@@ -1,0 +1,34 @@
+[
+  {
+    "id": "sequence-cases/create-after-note",
+    "source": "sequenceDiagram\nA->>B: x\ncreate participant C\nnote over A: n\nA->>C: y"
+  },
+  {
+    "id": "sequence-cases/destroy-then-create",
+    "source": "sequenceDiagram\nA->>B: x\ndestroy B\ncreate participant C\nA->>C: y\nB->>A: z"
+  },
+  {
+    "id": "sequence-cases/menu-values",
+    "source": "sequenceDiagram\nlinks A: {\"n\": 3}\nproperties A: [1]\nlinks B: {\"x\": \"u\"}\nparticipant B as Bee\nlink C: L @ u"
+  },
+  {
+    "id": "sequence-cases/box-colours",
+    "source": "sequenceDiagram\nbox Background Jobs\nparticipant A\nend\nbox hsl(none 0% 0%) H\nparticipant B\nend\nbox hsl(1,2,3) L\nparticipant C\nend\nbox rgb(1 2 3 / 50%) R\nparticipant D\nend"
+  },
+  {
+    "id": "sequence-cases/activate-before-mention",
+    "source": "sequenceDiagram\nactivate A\nA->>B: x\ndeactivate A\ndestroy B\nB->>A: y"
+  },
+  {
+    "id": "sequence-cases/destroy-before-loop",
+    "source": "sequenceDiagram\nA->>B: x\ndestroy B\nloop L\nA->>B: y\nend"
+  },
+  {
+    "id": "sequence-cases/menu-entities",
+    "source": "sequenceDiagram\nparticipant A\nlinks A: {\"Dash\": \"https://x.com/a?b#61;1#amp;c=2\"}"
+  },
+  {
+    "id": "sequence-cases/stray-end-with-text",
+    "source": "sequenceDiagram\nA->>B: x\nend x"
+  }
+]

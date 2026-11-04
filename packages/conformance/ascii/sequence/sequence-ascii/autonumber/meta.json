@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/autonumber.txt",
+  "charset": "ascii"
+}

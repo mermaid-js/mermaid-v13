@@ -109,6 +109,15 @@ export const TOKEN_VARIABLES = [
   'leanPaddingY',
   'oddPaddingX',
   'oddPaddingY',
+  // Sequence participant boxes (v12 neo rx 6, classic 3).
+  'actorRadius',
+  // Sequence geometry (v12 `look: neo` / classic, #194): the glyph band participants stand in
+  // (0 draws the classic symbols), the gap at a message's end, the taller fragment label tab
+  // and the room below the drawing.
+  'actorGlyphBand',
+  'messageEndGap',
+  'labelBoxExtraHeight',
+  'actorFooterPadding',
 ] as const;
 
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
@@ -129,9 +138,11 @@ export const PALETTE_LIMIT = 12;
 const F = ['flowchart'];
 const C = ['core'];
 const CF = ['core', 'flowchart'];
+const ST = ['state'];
+const S = ['sequence'];
+const CS = ['core', 'sequence'];
 const K = ['class'];
 const E = ['er'];
-const S = ['state'];
 
 const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): ThemeVarDef => ({
   alias,
@@ -148,17 +159,17 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   background: def('bg', 'color', CF),
   primaryTextColor: def('pt', 'color', CF),
   lineColor: def('l', 'color', F),
-  fontFamily: def('ff', 'font', CF),
-  fontSize: def('fs', 'length', CF),
+  fontFamily: def('ff', 'font', [...CF, 'sequence']),
+  fontSize: def('fs', 'length', [...CF, 'sequence']),
   // derived
   primaryBorderColor: def('pb', 'color', CF),
   secondaryBorderColor: def('sb', 'color', CF),
   tertiaryBorderColor: def('tb', 'color', CF),
   secondaryTextColor: def('st', 'color', CF),
   tertiaryTextColor: def('tt', 'color', CF),
-  textColor: def('tx', 'color', CF),
-  mainBkg: def('mb', 'color', F),
-  nodeBorder: def('nb', 'color', F),
+  textColor: def('tx', 'color', [...CF, 'sequence']),
+  mainBkg: def('mb', 'color', [...F, 'sequence']),
+  nodeBorder: def('nb', 'color', [...F, 'sequence']),
   nodeTextColor: def('nt', 'color', F),
   clusterBkg: def('cb', 'color', F),
   clusterBorder: def('cs', 'color', F),
@@ -170,18 +181,32 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   defaultLinkColor: def('dl', 'color', F),
   border1: def('b1', 'color', F),
   border2: def('b2', 'color', F),
-  noteBkgColor: def('nk', 'color', C),
-  noteTextColor: def('nx', 'color', C),
-  noteBorderColor: def('no', 'color', C),
+  noteBkgColor: def('nk', 'color', CS),
+  noteTextColor: def('nx', 'color', CS),
+  noteBorderColor: def('no', 'color', CS),
+  // sequence (v12 names, derived as v12 `theme-base.js` derives them)
+  actorBkg: def('ab', 'color', S),
+  actorBorder: def('ar', 'color', S),
+  actorTextColor: def('at', 'color', S),
+  actorLineColor: def('alc', 'color', S),
+  signalColor: def('sc', 'color', S),
+  signalTextColor: def('stc', 'color', S),
+  labelBoxBkgColor: def('lbb', 'color', S),
+  labelBoxBorderColor: def('lbr', 'color', S),
+  labelTextColor: def('ltc', 'color', S),
+  loopTextColor: def('lpt', 'color', S),
+  activationBkgColor: def('acb', 'color', S),
+  activationBorderColor: def('acr', 'color', S),
+  sequenceNumberColor: def('snc', 'color', S),
   errorBkgColor: def('eb', 'color', C),
   errorTextColor: def('et', 'color', C),
   // composite states (#192, D120, D126): the body, the title strip and the alternate
   // (nested) body.
-  compositeBackground: def('cbg', 'color', S),
-  compositeTitleBackground: def('ctb', 'color', S),
-  altBackground: def('alb', 'color', S),
+  compositeBackground: def('cbg', 'color', ST),
+  compositeTitleBackground: def('ctb', 'color', ST),
+  altBackground: def('alb', 'color', ST),
   // tokens
-  strokeWidth: def('sw', 'length', CF),
+  strokeWidth: def('sw', 'length', [...CF, 'sequence']),
   clusterStrokeWidth: def('cw', 'length', F),
   radius: def('r', 'length', CF),
   fontWeight: def('fw', 'weight', C),
@@ -226,6 +251,11 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   leanPaddingY: def('lny', 'padding', F),
   oddPaddingX: def('odx', 'padding', F),
   oddPaddingY: def('ody', 'padding', F),
+  actorRadius: def('arx', 'length', S),
+  actorGlyphBand: def('agb', 'length', S),
+  messageEndGap: def('meg', 'length', S),
+  labelBoxExtraHeight: def('lbx', 'length', S),
+  actorFooterPadding: def('afp', 'length', S),
   // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
   // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
   rowOdd: def('ro', 'color', E),
@@ -234,5 +264,5 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   erMarkerFill: def('emf', 'color', E),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
-  dropShadow: def('ds', 'filter', F),
+  dropShadow: def('ds', 'filter', [...F, 'sequence']),
 };

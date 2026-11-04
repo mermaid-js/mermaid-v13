@@ -9,13 +9,13 @@ describe('theme variable inventory (DESIGN §8.3)', () => {
       '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, flowchart |'
     );
     expect(doc).toContain(
-      '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart |'
+      '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, sequence |'
     );
     expect(doc).toContain(
       '| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color | core, flowchart |'
     );
     expect(doc).toContain(
-      '| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart |'
+      '| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence |'
     );
   });
 

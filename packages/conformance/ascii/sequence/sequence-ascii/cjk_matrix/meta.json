@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/cjk_matrix.txt",
+  "charset": "ascii"
+}

@@ -4,7 +4,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { asciiSize, isAsciiModule, splitByFormat } from './ascii-size.ts';
+import {
+  asciiPaths,
+  asciiSize,
+  asciiSizeByType,
+  isAsciiModule,
+  splitByFormat,
+} from './ascii-size.ts';
 import type { Bundle } from './build.ts';
 import { bundle } from './build.ts';
 
@@ -39,11 +45,29 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     expect(inputs.some((i) => i.includes('diagram-flowchart/src/plugin.ts'))).toBe(true);
   });
 
-  it('puts core/ascii and the flowchart ascii entry only in chunks a text render loads', () => {
+  it('puts core/ascii and each diagram ascii entry only in chunks a text render loads', () => {
     const { ascii } = splitByFormat(prod);
     const inputs = ascii.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
-    expect(inputs.some((i) => i.includes('diagram-flowchart/src/ascii.ts'))).toBe(true);
+    for (const type of ['flowchart', 'er', 'sequence'])
+      expect(inputs.some((i) => i.includes(`diagram-${type}/src/ascii.ts`))).toBe(true);
+  });
+
+  // A page draws one type as text: each type's path is core/ascii plus its own entry, and the
+  // budget is the largest of them, not every type's drawing at once.
+  it('measures one text path per diagram type, each holding core/ascii and only its own entry', () => {
+    const paths = asciiPaths(prod);
+    expect(paths.map((p) => p.diagram)).toEqual(['er', 'flowchart', 'sequence']);
+    for (const { diagram, size } of paths) {
+      const inputs = size.files.flatMap((f) => prod.graph[f.path]!.inputs);
+      expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
+      const own = inputs.filter((i) => /diagram-[^/]+\/src\/ascii\.ts$/.test(i));
+      expect(own).toEqual([`packages/diagram-${diagram}/src/ascii.ts`]);
+    }
+    expect(asciiSize(prod).gzip).toBe(Math.max(...paths.map((p) => p.size.gzip)));
+    expect(asciiSizeByType(prod)).toEqual(
+      Object.fromEntries(paths.map((p) => [p.diagram, p.size.gzip]))
+    );
   });
 
   // The bench CLI runs from packages/bench, the specs from the repo root: the split must not

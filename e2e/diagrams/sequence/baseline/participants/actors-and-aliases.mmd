@@ -1,0 +1,12 @@
+---
+description: actor and participant keywords, aliases, and participants first named in a message
+---
+sequenceDiagram
+  actor U as User
+  participant W as Web server
+  participant DB
+  U->>W: GET /index
+  W->>DB: query
+  DB-->>W: rows
+  W-->>U: 200 OK
+  W->>Cache: store

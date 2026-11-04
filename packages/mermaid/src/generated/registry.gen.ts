@@ -35,7 +35,14 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
   { type: 'info', pattern: /^\s*info/ },
   { type: 'pie', pattern: /^\s*pie/ },
   { type: 'requirement', pattern: /^\s*requirement(Diagram)?/ },
-  { type: 'sequence', pattern: /^\s*sequenceDiagram/ },
+  {
+    type: 'sequence',
+    pattern: /^\s*sequenceDiagram/,
+    id: 'sequence',
+    formats: ['svg', 'ascii'],
+    load: () => import('@mermaid-js/diagram-sequence').then((m) => m.sequence),
+    loadAscii: () => import('@mermaid-js/diagram-sequence/ascii').then((m) => m.ascii),
+  },
   { type: 'swimlane', pattern: /^\s*swimlane-beta\b/ },
   {
     type: 'flowchart-v2',

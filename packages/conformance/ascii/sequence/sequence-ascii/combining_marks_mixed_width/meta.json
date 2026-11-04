@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/combining_marks_mixed_width.txt",
+  "charset": "ascii"
+}

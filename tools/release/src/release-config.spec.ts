@@ -57,6 +57,7 @@ describe('changesets (R-REL-1, R-REL-2)', () => {
       'diagram-flowchart',
       'diagram-class',
       'diagram-er',
+      'diagram-sequence',
       'plugin-interactions',
     ]) {
       const pkg = json(`packages/${dir}/package.json`) as {

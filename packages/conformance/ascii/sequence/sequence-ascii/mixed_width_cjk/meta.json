@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/mixed_width_cjk.txt",
+  "charset": "ascii"
+}

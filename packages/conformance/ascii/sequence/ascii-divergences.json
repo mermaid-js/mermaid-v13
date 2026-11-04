@@ -1,0 +1,37 @@
+[
+  {
+    "fixture": "sequence-ascii/participant_names_alias_equals",
+    "kind": "reinterpreted",
+    "reason": "`participant cron job as Cron` declares one participant with the id and label `cron job as Cron` in mermaid@12 and v13 (an id with a space does not take an `as` alias), so `cron job->>…` adds a third participant `cron job`. mermaid-ascii reads it as `cron job` aliased `Cron` and draws two participants."
+  },
+  {
+    "fixture": "sequence-ascii/participant_names_alias_equals",
+    "kind": "structural",
+    "reason": "Follows from the reinterpretation: Mermaid draws three participants, `cron job as Cron`, `DS` and `cron job`, and upstream.txt has no box with the first and last of those labels."
+  },
+  {
+    "fixture": "sequence-ascii/self_arrow_variants",
+    "kind": "structural",
+    "reason": "`A<<->>A` is a bidirectional self message: v12 and v13 draw a head at both ends of the loop (marker-start and marker-end), mermaid-ascii only the one where the loop comes back. 4 heads against upstream's 3."
+  },
+  {
+    "fixture": "sequence/participant_names_alias_equals",
+    "kind": "reinterpreted",
+    "reason": "`participant cron job as Cron` declares one participant with the id and label `cron job as Cron` in mermaid@12 and v13 (an id with a space does not take an `as` alias), so `cron job->>…` adds a third participant `cron job`. mermaid-ascii reads it as `cron job` aliased `Cron` and draws two participants."
+  },
+  {
+    "fixture": "sequence/participant_names_alias_equals",
+    "kind": "structural",
+    "reason": "Follows from the reinterpretation: Mermaid draws three participants, `cron job as Cron`, `DS` and `cron job`, and upstream.txt has no box with the first and last of those labels."
+  },
+  {
+    "fixture": "sequence/quoted_name_with_arrow",
+    "kind": "rejected-input",
+    "reason": "`\"A->B\" ->> C` quotes a participant id. mermaid@12 and v13 both reject it at the `->>` (v13: UNEXPECTED, `Expected a message text such as : Hello`): v12's lexer reads the quoted text as the message start. mermaid-ascii takes `A->B` as the participant's name."
+  },
+  {
+    "fixture": "sequence/self_arrow_variants",
+    "kind": "structural",
+    "reason": "`A<<->>A` is a bidirectional self message: v12 and v13 draw a head at both ends of the loop (marker-start and marker-end), mermaid-ascii only the one where the loop comes back. 4 heads against upstream's 3."
+  }
+]

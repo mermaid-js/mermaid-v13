@@ -1,0 +1,12 @@
+@ 4:3  |A->>B: Hello
+  prepare: 4:3-4:4 "A"; rename to "Alice":
+  %% rename-to: Alice
+  sequenceDiagram
+    participant Alice
+    Alice->>B: Hello
+    alt yes
+      B-->>Alice: ok
+    else no
+      note over Alice,B: no
+    end
+    deactivate Alice

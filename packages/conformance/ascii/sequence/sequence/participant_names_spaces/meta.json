@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence/participant_names_spaces.txt",
+  "charset": "unicode"
+}

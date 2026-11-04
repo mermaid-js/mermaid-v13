@@ -265,3 +265,40 @@ test('details reads the menu from a JSON element on the page', async ({ page }) 
   await expect(panel.locator('a').nth(0)).toHaveAttribute('href', '/wiki');
   await expect(panel.locator('a').nth(1)).toHaveAttribute('href', 'about:blank');
 });
+
+test('the real sequence diagram: menus bind on its participant symbols (#145)', async ({
+  page,
+}) => {
+  await open(page);
+  await page.addStyleTag({ content: '#d { width: 600px; }' });
+  const codes = await page.evaluate(async () => {
+    await window.mermaid.registerExternalDiagrams([window.mermaidInteractions]);
+    const text = [
+      'sequenceDiagram',
+      '  participant A as Alice',
+      '  participant B as Bob',
+      '  links A: {"Docs": "/docs", "Bad": "javascript:alert(1)"}',
+      '  link A: Repo @ /repo',
+      '  A->>B: hi',
+    ].join('\n');
+    const { svg, bindFunctions, warnings } = await window.mermaid.render('seq', text);
+    const el = document.createElement('div');
+    el.id = 'd';
+    el.innerHTML = svg;
+    document.body.appendChild(el);
+    bindFunctions?.(el);
+    return warnings.map((w) => w.code);
+  });
+  expect(codes).toEqual(['URL_REFUSED']);
+  const menu = page.locator('#d > svg + div.actorPopupMenu[data-menu-for="A"]');
+  await expect(menu).toBeHidden();
+  await symbol(page, '#d', 'A', 'bottom').click();
+  await expect(menu).toBeVisible();
+  await expectBelow(menu, symbol(page, '#d', 'A', 'top'));
+  await expect(menu.locator('a')).toHaveText(['Docs', 'Bad', 'Repo']);
+  await expect(menu.locator('a').nth(1)).toHaveAttribute('href', 'about:blank');
+  await symbol(page, '#d', 'A', 'top').click();
+  await expect(menu).toBeHidden();
+  await symbol(page, '#d', 'B', 'top').click();
+  await expect(page.locator('#d div.actorPopupMenu')).toHaveCount(1);
+});

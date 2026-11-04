@@ -1,0 +1,14 @@
+---
+description: background highlights with rect, nested, in colour
+---
+sequenceDiagram
+  participant A
+  participant B
+  participant C
+  rect rgb(191, 223, 255)
+    A->>B: inside the blue rect
+    rect rgba(255, 200, 0, 0.4)
+      B->>C: inside the nested rect
+    end
+  end
+  C-->>A: outside

@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/self_message.txt",
+  "charset": "ascii"
+}

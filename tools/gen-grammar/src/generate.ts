@@ -40,6 +40,19 @@ export const GRAMMARS: GrammarTarget[] = [
     kinds: { module: 'parser/tokens.ts', object: 'T', documented: ['CallbackName'] },
   },
   {
+    type: 'sequence',
+    title: 'Sequence diagram syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // `accDescr {` and its `}`: jison returns no token for them, the lexer does.
+      unnamed: {
+        AccDescrMultiline: { mode: 'INITIAL', pattern: '(?i:accDescr)\\s*\\{\\s*' },
+        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '\\}' },
+      },
+    },
+  },
+  {
     type: 'state',
     title: 'State diagram syntax',
     kinds: {

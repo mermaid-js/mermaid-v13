@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence-ascii/east_asian_participants.txt",
+  "charset": "ascii"
+}

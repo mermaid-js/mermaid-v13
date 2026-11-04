@@ -63,6 +63,7 @@ const report: PrReport = {
   node: 'node v24.16.0',
   staticGzip: { v13: 70 * 1024, base: 70 * 1024 - 12 },
   asciiSize: null,
+  asciiSizeByType: {},
   renderers: [run('v13', 0.5, 70 * 1024), run('v12-frozen', 25)],
   corpus: { ok: 158, total: 158, failures: [] },
   instructions,

@@ -7,6 +7,7 @@ import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
   CLASSIC_PADDING,
+  CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -35,6 +36,7 @@ const base: ThemeSpec = {
     ...CLASSIC_CLASS_MARKERS,
     ...TEXT_SIZES,
     ...CLASSIC_PADDING,
+    ...CLASSIC_SEQUENCE,
   },
 };
 

@@ -1,8 +1,8 @@
 /**
  * Splits a production bundle by output format (R-ASCII-9, D76, D87): the files an SVG render can
- * load, and the files only `format: 'ascii'` loads. The ascii share has its own soft 15 KB gzip budget
- * (`LIMITS.asciiGzipBytes`) and must never be reachable from the SVG path, so R-PERF-1 is not
- * charged for it.
+ * load, and the files only `format: 'ascii'` loads. One diagram type's text path has its own soft
+ * 15 KB gzip budget (`LIMITS.asciiGzipBytes`) and must never be reachable from the SVG path, so
+ * R-PERF-1 is not charged for it.
  */
 import type { Bundle } from './build.ts';
 import { summarise } from './build.ts';
@@ -48,11 +48,48 @@ export function splitByFormat(bundle: Bundle): FormatSplit {
   return { svg, ascii };
 }
 
-/** Gzip size of the ascii-only files, measured from the build (`source: 'static'`). */
-export function asciiSize(bundle: Bundle): SizeSummary {
+/** The diagram a diagram-package ascii entry belongs to (`diagram-sequence` → `sequence`). */
+function diagramOf(entryPoint: string): string | undefined {
+  return /packages\/diagram-([^/]+)\/src\/ascii\.ts$/.exec(entryPoint)?.[1];
+}
+
+/**
+ * What one text render of each diagram type loads on top of its SVG render: the ascii-only
+ * files reachable from mermaid's own ascii entry and that diagram's ascii entry (`core/ascii`,
+ * the shared text kit, plus the diagram's drawing), by diagram, sorted by name.
+ */
+export function asciiPaths(bundle: Bundle): { diagram: string; size: SizeSummary }[] {
   const { ascii } = splitByFormat(bundle);
-  return summarise(
-    bundle.files.filter((f) => ascii.includes(f.path)),
-    'static'
-  );
+  const entries = ascii.filter((f) => bundle.graph[f]?.entryPoint !== undefined);
+  const shared = entries.filter((f) => diagramOf(bundle.graph[f]!.entryPoint!) === undefined);
+  const out: { diagram: string; size: SizeSummary }[] = [];
+  for (const f of entries) {
+    const diagram = diagramOf(bundle.graph[f]!.entryPoint!);
+    if (diagram === undefined) continue;
+    const files = closure(bundle, [...shared, f], () => true).filter((x) => ascii.includes(x));
+    out.push({
+      diagram,
+      size: summarise(
+        bundle.files.filter((x) => files.includes(x.path)),
+        'static'
+      ),
+    });
+  }
+  return out.sort((a, b) => Number(a.diagram > b.diagram) - Number(a.diagram < b.diagram));
+}
+
+/** Gzip bytes of each diagram type's text path (`asciiPaths`), by type. */
+export function asciiSizeByType(bundle: Bundle): Record<string, number> {
+  return Object.fromEntries(asciiPaths(bundle).map((p) => [p.diagram, p.size.gzip]));
+}
+
+/**
+ * Gzip size of the largest one-diagram text path (`asciiPaths`), measured from the build
+ * (`source: 'static'`). The soft budget (D87) holds per type, not for every type's drawing at
+ * once: the gate reads the per-type max (D130).
+ */
+export function asciiSize(bundle: Bundle): SizeSummary {
+  const paths = asciiPaths(bundle);
+  if (paths.length === 0) return summarise([], 'static');
+  return paths.reduce((a, b) => (b.size.gzip > a.size.gzip ? b : a)).size;
 }

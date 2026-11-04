@@ -1,0 +1,10 @@
+@ 2:10  create |
+  participant keyword 2:10-2:10 "" -> "participant"
+  actor keyword 2:10-2:10 "" -> "actor"
+@ 3:19  participant A@{ |
+  type property 3:19-3:19 "" -> "type: "
+  alias property 3:19-3:19 "" -> "alias: "
+@ 4:30  participant B@{ "type": "da|" }
+  database constant (drawn as a database cylinder) 4:28-4:30 "da" -> "database"
+@ 5:17  participant C |
+  as keyword 5:17-5:17 "" -> "as"

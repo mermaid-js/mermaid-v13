@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence/multiword_labels.txt",
+  "charset": "unicode"
+}

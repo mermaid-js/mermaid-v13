@@ -1,0 +1,14 @@
+---
+description: notes left of, right of and over one or two participants
+---
+sequenceDiagram
+  participant A as Alice
+  participant B as Bob
+  participant C as Carol
+  note left of A: left of Alice
+  A->>B: hello
+  note right of B: right of Bob
+  note over A: over Alice
+  note over A,C: spans Alice to Carol
+  B->>C: and on
+  note over C: a longer note<br/>on two lines

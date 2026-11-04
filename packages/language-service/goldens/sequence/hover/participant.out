@@ -1,0 +1,30 @@
+@ 3:11  actor |A as Alice
+  3:11-3:12 "A"
+  | **actor** `A`
+  |
+  | Label: `Alice` · Type: `actor` · Box: `Team`
+  |
+  | Messages: 0 in, 1 out · 1 note
+@ 5:3  |A->>B: Hello
+  5:3-5:4 "A"
+  | **actor** `A`
+  |
+  | Label: `Alice` · Type: `actor` · Box: `Team`
+  |
+  | Messages: 0 in, 1 out · 1 note
+@ 6:15  note over A,|B: hi
+  6:15-6:16 "B"
+  | **participant** `B`
+  |
+  | Label: `B` · Type: `participant`
+  |
+  | Messages: 1 in, 1 out · 1 note
+@ 8:7  B->>|C: new
+  8:7-8:8 "C"
+  | **participant** `C`
+  |
+  | Label: `C` · Type: `participant`
+  |
+  | Messages: 1 in, 0 out · 0 notes
+  |
+  | It is created by a message.

@@ -1,0 +1,2340 @@
+---
+title: Language service budget, 50k characters
+---
+sequenceDiagram
+  %% R-LANG-4 bench fixture: update + all queries <= 15 ms
+  autonumber
+  box Aqua Services
+    actor P0 as Alpha 0
+    participant P1 as Beta 1
+    participant P2 as Gamma 2
+    participant P3 as Delta 3
+    actor P4 as Parse 4
+    participant P5 as Render 5
+    participant P6 as Queue 6
+    participant P7 as Measure 7
+    actor P8 as Alpha 8
+    participant P9 as Beta 9
+    participant P10 as Gamma 10
+    participant P11 as Delta 11
+  end
+  %% block 0
+  loop alpha every 0 seconds
+    P0->>+P3: alpha request 0
+    alt alpha ok
+      P3-->>-P0: beta reply
+    else alpha failed
+      P3-xP1: error 0
+      note over P3,P1: alpha retry
+    end
+  end
+  rect rgb(0, 200, 255)
+    activate P1
+    P1->>P0: delta 0
+    note right of P0: gamma measure
+    deactivate P1
+  end
+  %% block 1
+  loop beta every 1 seconds
+    P1-->>+P8: beta request 1
+    alt beta ok
+      P8-->>-P1: gamma reply
+    else beta failed
+      P8-xP8: error 1
+      note over P8,P8: beta retry
+    end
+  end
+  rect rgb(1, 200, 255)
+    activate P8
+    P8->>P1: parse 1
+    note right of P1: delta measure
+    deactivate P8
+  end
+  %% block 2
+  loop gamma every 2 seconds
+    P2->+P1: gamma request 2
+    alt gamma ok
+      P1-->>-P2: delta reply
+    else gamma failed
+      P1-xP3: error 2
+      note over P1,P3: gamma retry
+    end
+  end
+  rect rgb(2, 200, 255)
+    activate P3
+    P3->>P2: render 2
+    note right of P2: parse measure
+    deactivate P3
+  end
+  %% block 3
+  loop delta every 3 seconds
+    P3-->+P6: delta request 3
+    alt delta ok
+      P6-->>-P3: parse reply
+    else delta failed
+      P6-xP10: error 3
+      note over P6,P10: delta retry
+    end
+  end
+  rect rgb(3, 200, 255)
+    activate P10
+    P10->>P3: queue 3
+    note right of P3: render measure
+    deactivate P10
+  end
+  %% block 4
+  loop parse every 4 seconds
+    P4-x+P11: parse request 4
+    alt parse ok
+      P11-->>-P4: render reply
+    else parse failed
+      P11-xP5: error 4
+      note over P11,P5: parse retry
+    end
+  end
+  rect rgb(4, 200, 255)
+    activate P5
+    P5->>P4: measure 4
+    note right of P4: queue measure
+    deactivate P5
+  end
+  %% block 5
+  loop render every 5 seconds
+    P5--x+P4: render request 5
+    alt render ok
+      P4-->>-P5: queue reply
+    else render failed
+      P4-xP0: error 5
+      note over P4,P0: render retry
+    end
+  end
+  rect rgb(5, 200, 255)
+    activate P0
+    P0->>P5: alpha 5
+    note right of P5: measure measure
+    deactivate P0
+  end
+  %% block 6
+  loop queue every 6 seconds
+    P6-)+P9: queue request 6
+    alt queue ok
+      P9-->>-P6: measure reply
+    else queue failed
+      P9-xP7: error 6
+      note over P9,P7: queue retry
+    end
+  end
+  rect rgb(6, 200, 255)
+    activate P7
+    P7->>P6: beta 6
+    note right of P6: alpha measure
+    deactivate P7
+  end
+  %% block 7
+  loop measure every 7 seconds
+    P7--)+P2: measure request 7
+    alt measure ok
+      P2-->>-P7: alpha reply
+    else measure failed
+      P2-xP2: error 7
+      note over P2,P2: measure retry
+    end
+  end
+  rect rgb(7, 200, 255)
+    activate P2
+    P2->>P7: gamma 7
+    note right of P7: beta measure
+    deactivate P2
+  end
+  %% block 8
+  loop alpha every 8 seconds
+    P8->>+P7: alpha request 8
+    alt alpha ok
+      P7-->>-P8: beta reply
+    else alpha failed
+      P7-xP9: error 8
+      note over P7,P9: alpha retry
+    end
+  end
+  rect rgb(8, 200, 255)
+    activate P9
+    P9->>P8: delta 8
+    note right of P8: gamma measure
+    deactivate P9
+  end
+  %% block 9
+  loop beta every 9 seconds
+    P9-->>+P0: beta request 9
+    alt beta ok
+      P0-->>-P9: gamma reply
+    else beta failed
+      P0-xP4: error 9
+      note over P0,P4: beta retry
+    end
+  end
+  rect rgb(9, 200, 255)
+    activate P4
+    P4->>P9: parse 9
+    note right of P9: delta measure
+    deactivate P4
+  end
+  %% block 10
+  loop gamma every 10 seconds
+    P10->+P5: gamma request 10
+    alt gamma ok
+      P5-->>-P10: delta reply
+    else gamma failed
+      P5-xP11: error 10
+      note over P5,P11: gamma retry
+    end
+  end
+  rect rgb(10, 200, 255)
+    activate P11
+    P11->>P10: render 10
+    note right of P10: parse measure
+    deactivate P11
+  end
+  %% block 11
+  loop delta every 11 seconds
+    P11-->+P10: delta request 11
+    alt delta ok
+      P10-->>-P11: parse reply
+    else delta failed
+      P10-xP6: error 11
+      note over P10,P6: delta retry
+    end
+  end
+  rect rgb(11, 200, 255)
+    activate P6
+    P6->>P11: queue 11
+    note right of P11: render measure
+    deactivate P6
+  end
+  %% block 12
+  loop parse every 12 seconds
+    P0-x+P3: parse request 12
+    alt parse ok
+      P3-->>-P0: render reply
+    else parse failed
+      P3-xP1: error 12
+      note over P3,P1: parse retry
+    end
+  end
+  rect rgb(12, 200, 255)
+    activate P1
+    P1->>P0: measure 12
+    note right of P0: queue measure
+    deactivate P1
+  end
+  %% block 13
+  loop render every 13 seconds
+    P1--x+P8: render request 13
+    alt render ok
+      P8-->>-P1: queue reply
+    else render failed
+      P8-xP8: error 13
+      note over P8,P8: render retry
+    end
+  end
+  rect rgb(13, 200, 255)
+    activate P8
+    P8->>P1: alpha 13
+    note right of P1: measure measure
+    deactivate P8
+  end
+  %% block 14
+  loop queue every 14 seconds
+    P2-)+P1: queue request 14
+    alt queue ok
+      P1-->>-P2: measure reply
+    else queue failed
+      P1-xP3: error 14
+      note over P1,P3: queue retry
+    end
+  end
+  rect rgb(14, 200, 255)
+    activate P3
+    P3->>P2: beta 14
+    note right of P2: alpha measure
+    deactivate P3
+  end
+  %% block 15
+  loop measure every 15 seconds
+    P3--)+P6: measure request 15
+    alt measure ok
+      P6-->>-P3: alpha reply
+    else measure failed
+      P6-xP10: error 15
+      note over P6,P10: measure retry
+    end
+  end
+  rect rgb(15, 200, 255)
+    activate P10
+    P10->>P3: gamma 15
+    note right of P3: beta measure
+    deactivate P10
+  end
+  %% block 16
+  loop alpha every 16 seconds
+    P4->>+P11: alpha request 16
+    alt alpha ok
+      P11-->>-P4: beta reply
+    else alpha failed
+      P11-xP5: error 16
+      note over P11,P5: alpha retry
+    end
+  end
+  rect rgb(16, 200, 255)
+    activate P5
+    P5->>P4: delta 16
+    note right of P4: gamma measure
+    deactivate P5
+  end
+  %% block 17
+  loop beta every 17 seconds
+    P5-->>+P4: beta request 17
+    alt beta ok
+      P4-->>-P5: gamma reply
+    else beta failed
+      P4-xP0: error 17
+      note over P4,P0: beta retry
+    end
+  end
+  rect rgb(17, 200, 255)
+    activate P0
+    P0->>P5: parse 17
+    note right of P5: delta measure
+    deactivate P0
+  end
+  %% block 18
+  loop gamma every 18 seconds
+    P6->+P9: gamma request 18
+    alt gamma ok
+      P9-->>-P6: delta reply
+    else gamma failed
+      P9-xP7: error 18
+      note over P9,P7: gamma retry
+    end
+  end
+  rect rgb(18, 200, 255)
+    activate P7
+    P7->>P6: render 18
+    note right of P6: parse measure
+    deactivate P7
+  end
+  %% block 19
+  loop delta every 19 seconds
+    P7-->+P2: delta request 19
+    alt delta ok
+      P2-->>-P7: parse reply
+    else delta failed
+      P2-xP2: error 19
+      note over P2,P2: delta retry
+    end
+  end
+  rect rgb(19, 200, 255)
+    activate P2
+    P2->>P7: queue 19
+    note right of P7: render measure
+    deactivate P2
+  end
+  %% block 20
+  loop parse every 20 seconds
+    P8-x+P7: parse request 20
+    alt parse ok
+      P7-->>-P8: render reply
+    else parse failed
+      P7-xP9: error 20
+      note over P7,P9: parse retry
+    end
+  end
+  rect rgb(20, 200, 255)
+    activate P9
+    P9->>P8: measure 20
+    note right of P8: queue measure
+    deactivate P9
+  end
+  %% block 21
+  loop render every 21 seconds
+    P9--x+P0: render request 21
+    alt render ok
+      P0-->>-P9: queue reply
+    else render failed
+      P0-xP4: error 21
+      note over P0,P4: render retry
+    end
+  end
+  rect rgb(21, 200, 255)
+    activate P4
+    P4->>P9: alpha 21
+    note right of P9: measure measure
+    deactivate P4
+  end
+  %% block 22
+  loop queue every 22 seconds
+    P10-)+P5: queue request 22
+    alt queue ok
+      P5-->>-P10: measure reply
+    else queue failed
+      P5-xP11: error 22
+      note over P5,P11: queue retry
+    end
+  end
+  rect rgb(22, 200, 255)
+    activate P11
+    P11->>P10: beta 22
+    note right of P10: alpha measure
+    deactivate P11
+  end
+  %% block 23
+  loop measure every 23 seconds
+    P11--)+P10: measure request 23
+    alt measure ok
+      P10-->>-P11: alpha reply
+    else measure failed
+      P10-xP6: error 23
+      note over P10,P6: measure retry
+    end
+  end
+  rect rgb(23, 200, 255)
+    activate P6
+    P6->>P11: gamma 23
+    note right of P11: beta measure
+    deactivate P6
+  end
+  %% block 24
+  loop alpha every 24 seconds
+    P0->>+P3: alpha request 24
+    alt alpha ok
+      P3-->>-P0: beta reply
+    else alpha failed
+      P3-xP1: error 24
+      note over P3,P1: alpha retry
+    end
+  end
+  rect rgb(24, 200, 255)
+    activate P1
+    P1->>P0: delta 24
+    note right of P0: gamma measure
+    deactivate P1
+  end
+  %% block 25
+  loop beta every 25 seconds
+    P1-->>+P8: beta request 25
+    alt beta ok
+      P8-->>-P1: gamma reply
+    else beta failed
+      P8-xP8: error 25
+      note over P8,P8: beta retry
+    end
+  end
+  rect rgb(25, 200, 255)
+    activate P8
+    P8->>P1: parse 25
+    note right of P1: delta measure
+    deactivate P8
+  end
+  %% block 26
+  loop gamma every 26 seconds
+    P2->+P1: gamma request 26
+    alt gamma ok
+      P1-->>-P2: delta reply
+    else gamma failed
+      P1-xP3: error 26
+      note over P1,P3: gamma retry
+    end
+  end
+  rect rgb(26, 200, 255)
+    activate P3
+    P3->>P2: render 26
+    note right of P2: parse measure
+    deactivate P3
+  end
+  %% block 27
+  loop delta every 27 seconds
+    P3-->+P6: delta request 27
+    alt delta ok
+      P6-->>-P3: parse reply
+    else delta failed
+      P6-xP10: error 27
+      note over P6,P10: delta retry
+    end
+  end
+  rect rgb(27, 200, 255)
+    activate P10
+    P10->>P3: queue 27
+    note right of P3: render measure
+    deactivate P10
+  end
+  %% block 28
+  loop parse every 28 seconds
+    P4-x+P11: parse request 28
+    alt parse ok
+      P11-->>-P4: render reply
+    else parse failed
+      P11-xP5: error 28
+      note over P11,P5: parse retry
+    end
+  end
+  rect rgb(28, 200, 255)
+    activate P5
+    P5->>P4: measure 28
+    note right of P4: queue measure
+    deactivate P5
+  end
+  %% block 29
+  loop render every 29 seconds
+    P5--x+P4: render request 29
+    alt render ok
+      P4-->>-P5: queue reply
+    else render failed
+      P4-xP0: error 29
+      note over P4,P0: render retry
+    end
+  end
+  rect rgb(29, 200, 255)
+    activate P0
+    P0->>P5: alpha 29
+    note right of P5: measure measure
+    deactivate P0
+  end
+  %% block 30
+  loop queue every 30 seconds
+    P6-)+P9: queue request 30
+    alt queue ok
+      P9-->>-P6: measure reply
+    else queue failed
+      P9-xP7: error 30
+      note over P9,P7: queue retry
+    end
+  end
+  rect rgb(30, 200, 255)
+    activate P7
+    P7->>P6: beta 30
+    note right of P6: alpha measure
+    deactivate P7
+  end
+  %% block 31
+  loop measure every 31 seconds
+    P7--)+P2: measure request 31
+    alt measure ok
+      P2-->>-P7: alpha reply
+    else measure failed
+      P2-xP2: error 31
+      note over P2,P2: measure retry
+    end
+  end
+  rect rgb(31, 200, 255)
+    activate P2
+    P2->>P7: gamma 31
+    note right of P7: beta measure
+    deactivate P2
+  end
+  %% block 32
+  loop alpha every 32 seconds
+    P8->>+P7: alpha request 32
+    alt alpha ok
+      P7-->>-P8: beta reply
+    else alpha failed
+      P7-xP9: error 32
+      note over P7,P9: alpha retry
+    end
+  end
+  rect rgb(32, 200, 255)
+    activate P9
+    P9->>P8: delta 32
+    note right of P8: gamma measure
+    deactivate P9
+  end
+  %% block 33
+  loop beta every 33 seconds
+    P9-->>+P0: beta request 33
+    alt beta ok
+      P0-->>-P9: gamma reply
+    else beta failed
+      P0-xP4: error 33
+      note over P0,P4: beta retry
+    end
+  end
+  rect rgb(33, 200, 255)
+    activate P4
+    P4->>P9: parse 33
+    note right of P9: delta measure
+    deactivate P4
+  end
+  %% block 34
+  loop gamma every 34 seconds
+    P10->+P5: gamma request 34
+    alt gamma ok
+      P5-->>-P10: delta reply
+    else gamma failed
+      P5-xP11: error 34
+      note over P5,P11: gamma retry
+    end
+  end
+  rect rgb(34, 200, 255)
+    activate P11
+    P11->>P10: render 34
+    note right of P10: parse measure
+    deactivate P11
+  end
+  %% block 35
+  loop delta every 35 seconds
+    P11-->+P10: delta request 35
+    alt delta ok
+      P10-->>-P11: parse reply
+    else delta failed
+      P10-xP6: error 35
+      note over P10,P6: delta retry
+    end
+  end
+  rect rgb(35, 200, 255)
+    activate P6
+    P6->>P11: queue 35
+    note right of P11: render measure
+    deactivate P6
+  end
+  %% block 36
+  loop parse every 36 seconds
+    P0-x+P3: parse request 36
+    alt parse ok
+      P3-->>-P0: render reply
+    else parse failed
+      P3-xP1: error 36
+      note over P3,P1: parse retry
+    end
+  end
+  rect rgb(36, 200, 255)
+    activate P1
+    P1->>P0: measure 36
+    note right of P0: queue measure
+    deactivate P1
+  end
+  %% block 37
+  loop render every 37 seconds
+    P1--x+P8: render request 37
+    alt render ok
+      P8-->>-P1: queue reply
+    else render failed
+      P8-xP8: error 37
+      note over P8,P8: render retry
+    end
+  end
+  rect rgb(37, 200, 255)
+    activate P8
+    P8->>P1: alpha 37
+    note right of P1: measure measure
+    deactivate P8
+  end
+  %% block 38
+  loop queue every 38 seconds
+    P2-)+P1: queue request 38
+    alt queue ok
+      P1-->>-P2: measure reply
+    else queue failed
+      P1-xP3: error 38
+      note over P1,P3: queue retry
+    end
+  end
+  rect rgb(38, 200, 255)
+    activate P3
+    P3->>P2: beta 38
+    note right of P2: alpha measure
+    deactivate P3
+  end
+  %% block 39
+  loop measure every 39 seconds
+    P3--)+P6: measure request 39
+    alt measure ok
+      P6-->>-P3: alpha reply
+    else measure failed
+      P6-xP10: error 39
+      note over P6,P10: measure retry
+    end
+  end
+  rect rgb(39, 200, 255)
+    activate P10
+    P10->>P3: gamma 39
+    note right of P3: beta measure
+    deactivate P10
+  end
+  %% block 40
+  loop alpha every 40 seconds
+    P4->>+P11: alpha request 40
+    alt alpha ok
+      P11-->>-P4: beta reply
+    else alpha failed
+      P11-xP5: error 40
+      note over P11,P5: alpha retry
+    end
+  end
+  rect rgb(40, 200, 255)
+    activate P5
+    P5->>P4: delta 40
+    note right of P4: gamma measure
+    deactivate P5
+  end
+  %% block 41
+  loop beta every 41 seconds
+    P5-->>+P4: beta request 41
+    alt beta ok
+      P4-->>-P5: gamma reply
+    else beta failed
+      P4-xP0: error 41
+      note over P4,P0: beta retry
+    end
+  end
+  rect rgb(41, 200, 255)
+    activate P0
+    P0->>P5: parse 41
+    note right of P5: delta measure
+    deactivate P0
+  end
+  %% block 42
+  loop gamma every 42 seconds
+    P6->+P9: gamma request 42
+    alt gamma ok
+      P9-->>-P6: delta reply
+    else gamma failed
+      P9-xP7: error 42
+      note over P9,P7: gamma retry
+    end
+  end
+  rect rgb(42, 200, 255)
+    activate P7
+    P7->>P6: render 42
+    note right of P6: parse measure
+    deactivate P7
+  end
+  %% block 43
+  loop delta every 43 seconds
+    P7-->+P2: delta request 43
+    alt delta ok
+      P2-->>-P7: parse reply
+    else delta failed
+      P2-xP2: error 43
+      note over P2,P2: delta retry
+    end
+  end
+  rect rgb(43, 200, 255)
+    activate P2
+    P2->>P7: queue 43
+    note right of P7: render measure
+    deactivate P2
+  end
+  %% block 44
+  loop parse every 44 seconds
+    P8-x+P7: parse request 44
+    alt parse ok
+      P7-->>-P8: render reply
+    else parse failed
+      P7-xP9: error 44
+      note over P7,P9: parse retry
+    end
+  end
+  rect rgb(44, 200, 255)
+    activate P9
+    P9->>P8: measure 44
+    note right of P8: queue measure
+    deactivate P9
+  end
+  %% block 45
+  loop render every 45 seconds
+    P9--x+P0: render request 45
+    alt render ok
+      P0-->>-P9: queue reply
+    else render failed
+      P0-xP4: error 45
+      note over P0,P4: render retry
+    end
+  end
+  rect rgb(45, 200, 255)
+    activate P4
+    P4->>P9: alpha 45
+    note right of P9: measure measure
+    deactivate P4
+  end
+  %% block 46
+  loop queue every 46 seconds
+    P10-)+P5: queue request 46
+    alt queue ok
+      P5-->>-P10: measure reply
+    else queue failed
+      P5-xP11: error 46
+      note over P5,P11: queue retry
+    end
+  end
+  rect rgb(46, 200, 255)
+    activate P11
+    P11->>P10: beta 46
+    note right of P10: alpha measure
+    deactivate P11
+  end
+  %% block 47
+  loop measure every 47 seconds
+    P11--)+P10: measure request 47
+    alt measure ok
+      P10-->>-P11: alpha reply
+    else measure failed
+      P10-xP6: error 47
+      note over P10,P6: measure retry
+    end
+  end
+  rect rgb(47, 200, 255)
+    activate P6
+    P6->>P11: gamma 47
+    note right of P11: beta measure
+    deactivate P6
+  end
+  %% block 48
+  loop alpha every 48 seconds
+    P0->>+P3: alpha request 48
+    alt alpha ok
+      P3-->>-P0: beta reply
+    else alpha failed
+      P3-xP1: error 48
+      note over P3,P1: alpha retry
+    end
+  end
+  rect rgb(48, 200, 255)
+    activate P1
+    P1->>P0: delta 48
+    note right of P0: gamma measure
+    deactivate P1
+  end
+  %% block 49
+  loop beta every 49 seconds
+    P1-->>+P8: beta request 49
+    alt beta ok
+      P8-->>-P1: gamma reply
+    else beta failed
+      P8-xP8: error 49
+      note over P8,P8: beta retry
+    end
+  end
+  rect rgb(49, 200, 255)
+    activate P8
+    P8->>P1: parse 49
+    note right of P1: delta measure
+    deactivate P8
+  end
+  %% block 50
+  loop gamma every 50 seconds
+    P2->+P1: gamma request 50
+    alt gamma ok
+      P1-->>-P2: delta reply
+    else gamma failed
+      P1-xP3: error 50
+      note over P1,P3: gamma retry
+    end
+  end
+  rect rgb(50, 200, 255)
+    activate P3
+    P3->>P2: render 50
+    note right of P2: parse measure
+    deactivate P3
+  end
+  %% block 51
+  loop delta every 51 seconds
+    P3-->+P6: delta request 51
+    alt delta ok
+      P6-->>-P3: parse reply
+    else delta failed
+      P6-xP10: error 51
+      note over P6,P10: delta retry
+    end
+  end
+  rect rgb(51, 200, 255)
+    activate P10
+    P10->>P3: queue 51
+    note right of P3: render measure
+    deactivate P10
+  end
+  %% block 52
+  loop parse every 52 seconds
+    P4-x+P11: parse request 52
+    alt parse ok
+      P11-->>-P4: render reply
+    else parse failed
+      P11-xP5: error 52
+      note over P11,P5: parse retry
+    end
+  end
+  rect rgb(52, 200, 255)
+    activate P5
+    P5->>P4: measure 52
+    note right of P4: queue measure
+    deactivate P5
+  end
+  %% block 53
+  loop render every 53 seconds
+    P5--x+P4: render request 53
+    alt render ok
+      P4-->>-P5: queue reply
+    else render failed
+      P4-xP0: error 53
+      note over P4,P0: render retry
+    end
+  end
+  rect rgb(53, 200, 255)
+    activate P0
+    P0->>P5: alpha 53
+    note right of P5: measure measure
+    deactivate P0
+  end
+  %% block 54
+  loop queue every 54 seconds
+    P6-)+P9: queue request 54
+    alt queue ok
+      P9-->>-P6: measure reply
+    else queue failed
+      P9-xP7: error 54
+      note over P9,P7: queue retry
+    end
+  end
+  rect rgb(54, 200, 255)
+    activate P7
+    P7->>P6: beta 54
+    note right of P6: alpha measure
+    deactivate P7
+  end
+  %% block 55
+  loop measure every 55 seconds
+    P7--)+P2: measure request 55
+    alt measure ok
+      P2-->>-P7: alpha reply
+    else measure failed
+      P2-xP2: error 55
+      note over P2,P2: measure retry
+    end
+  end
+  rect rgb(55, 200, 255)
+    activate P2
+    P2->>P7: gamma 55
+    note right of P7: beta measure
+    deactivate P2
+  end
+  %% block 56
+  loop alpha every 56 seconds
+    P8->>+P7: alpha request 56
+    alt alpha ok
+      P7-->>-P8: beta reply
+    else alpha failed
+      P7-xP9: error 56
+      note over P7,P9: alpha retry
+    end
+  end
+  rect rgb(56, 200, 255)
+    activate P9
+    P9->>P8: delta 56
+    note right of P8: gamma measure
+    deactivate P9
+  end
+  %% block 57
+  loop beta every 57 seconds
+    P9-->>+P0: beta request 57
+    alt beta ok
+      P0-->>-P9: gamma reply
+    else beta failed
+      P0-xP4: error 57
+      note over P0,P4: beta retry
+    end
+  end
+  rect rgb(57, 200, 255)
+    activate P4
+    P4->>P9: parse 57
+    note right of P9: delta measure
+    deactivate P4
+  end
+  %% block 58
+  loop gamma every 58 seconds
+    P10->+P5: gamma request 58
+    alt gamma ok
+      P5-->>-P10: delta reply
+    else gamma failed
+      P5-xP11: error 58
+      note over P5,P11: gamma retry
+    end
+  end
+  rect rgb(58, 200, 255)
+    activate P11
+    P11->>P10: render 58
+    note right of P10: parse measure
+    deactivate P11
+  end
+  %% block 59
+  loop delta every 59 seconds
+    P11-->+P10: delta request 59
+    alt delta ok
+      P10-->>-P11: parse reply
+    else delta failed
+      P10-xP6: error 59
+      note over P10,P6: delta retry
+    end
+  end
+  rect rgb(59, 200, 255)
+    activate P6
+    P6->>P11: queue 59
+    note right of P11: render measure
+    deactivate P6
+  end
+  %% block 60
+  loop parse every 60 seconds
+    P0-x+P3: parse request 60
+    alt parse ok
+      P3-->>-P0: render reply
+    else parse failed
+      P3-xP1: error 60
+      note over P3,P1: parse retry
+    end
+  end
+  rect rgb(60, 200, 255)
+    activate P1
+    P1->>P0: measure 60
+    note right of P0: queue measure
+    deactivate P1
+  end
+  %% block 61
+  loop render every 61 seconds
+    P1--x+P8: render request 61
+    alt render ok
+      P8-->>-P1: queue reply
+    else render failed
+      P8-xP8: error 61
+      note over P8,P8: render retry
+    end
+  end
+  rect rgb(61, 200, 255)
+    activate P8
+    P8->>P1: alpha 61
+    note right of P1: measure measure
+    deactivate P8
+  end
+  %% block 62
+  loop queue every 62 seconds
+    P2-)+P1: queue request 62
+    alt queue ok
+      P1-->>-P2: measure reply
+    else queue failed
+      P1-xP3: error 62
+      note over P1,P3: queue retry
+    end
+  end
+  rect rgb(62, 200, 255)
+    activate P3
+    P3->>P2: beta 62
+    note right of P2: alpha measure
+    deactivate P3
+  end
+  %% block 63
+  loop measure every 63 seconds
+    P3--)+P6: measure request 63
+    alt measure ok
+      P6-->>-P3: alpha reply
+    else measure failed
+      P6-xP10: error 63
+      note over P6,P10: measure retry
+    end
+  end
+  rect rgb(63, 200, 255)
+    activate P10
+    P10->>P3: gamma 63
+    note right of P3: beta measure
+    deactivate P10
+  end
+  %% block 64
+  loop alpha every 64 seconds
+    P4->>+P11: alpha request 64
+    alt alpha ok
+      P11-->>-P4: beta reply
+    else alpha failed
+      P11-xP5: error 64
+      note over P11,P5: alpha retry
+    end
+  end
+  rect rgb(64, 200, 255)
+    activate P5
+    P5->>P4: delta 64
+    note right of P4: gamma measure
+    deactivate P5
+  end
+  %% block 65
+  loop beta every 65 seconds
+    P5-->>+P4: beta request 65
+    alt beta ok
+      P4-->>-P5: gamma reply
+    else beta failed
+      P4-xP0: error 65
+      note over P4,P0: beta retry
+    end
+  end
+  rect rgb(65, 200, 255)
+    activate P0
+    P0->>P5: parse 65
+    note right of P5: delta measure
+    deactivate P0
+  end
+  %% block 66
+  loop gamma every 66 seconds
+    P6->+P9: gamma request 66
+    alt gamma ok
+      P9-->>-P6: delta reply
+    else gamma failed
+      P9-xP7: error 66
+      note over P9,P7: gamma retry
+    end
+  end
+  rect rgb(66, 200, 255)
+    activate P7
+    P7->>P6: render 66
+    note right of P6: parse measure
+    deactivate P7
+  end
+  %% block 67
+  loop delta every 67 seconds
+    P7-->+P2: delta request 67
+    alt delta ok
+      P2-->>-P7: parse reply
+    else delta failed
+      P2-xP2: error 67
+      note over P2,P2: delta retry
+    end
+  end
+  rect rgb(67, 200, 255)
+    activate P2
+    P2->>P7: queue 67
+    note right of P7: render measure
+    deactivate P2
+  end
+  %% block 68
+  loop parse every 68 seconds
+    P8-x+P7: parse request 68
+    alt parse ok
+      P7-->>-P8: render reply
+    else parse failed
+      P7-xP9: error 68
+      note over P7,P9: parse retry
+    end
+  end
+  rect rgb(68, 200, 255)
+    activate P9
+    P9->>P8: measure 68
+    note right of P8: queue measure
+    deactivate P9
+  end
+  %% block 69
+  loop render every 69 seconds
+    P9--x+P0: render request 69
+    alt render ok
+      P0-->>-P9: queue reply
+    else render failed
+      P0-xP4: error 69
+      note over P0,P4: render retry
+    end
+  end
+  rect rgb(69, 200, 255)
+    activate P4
+    P4->>P9: alpha 69
+    note right of P9: measure measure
+    deactivate P4
+  end
+  %% block 70
+  loop queue every 70 seconds
+    P10-)+P5: queue request 70
+    alt queue ok
+      P5-->>-P10: measure reply
+    else queue failed
+      P5-xP11: error 70
+      note over P5,P11: queue retry
+    end
+  end
+  rect rgb(70, 200, 255)
+    activate P11
+    P11->>P10: beta 70
+    note right of P10: alpha measure
+    deactivate P11
+  end
+  %% block 71
+  loop measure every 71 seconds
+    P11--)+P10: measure request 71
+    alt measure ok
+      P10-->>-P11: alpha reply
+    else measure failed
+      P10-xP6: error 71
+      note over P10,P6: measure retry
+    end
+  end
+  rect rgb(71, 200, 255)
+    activate P6
+    P6->>P11: gamma 71
+    note right of P11: beta measure
+    deactivate P6
+  end
+  %% block 72
+  loop alpha every 72 seconds
+    P0->>+P3: alpha request 72
+    alt alpha ok
+      P3-->>-P0: beta reply
+    else alpha failed
+      P3-xP1: error 72
+      note over P3,P1: alpha retry
+    end
+  end
+  rect rgb(72, 200, 255)
+    activate P1
+    P1->>P0: delta 72
+    note right of P0: gamma measure
+    deactivate P1
+  end
+  %% block 73
+  loop beta every 73 seconds
+    P1-->>+P8: beta request 73
+    alt beta ok
+      P8-->>-P1: gamma reply
+    else beta failed
+      P8-xP8: error 73
+      note over P8,P8: beta retry
+    end
+  end
+  rect rgb(73, 200, 255)
+    activate P8
+    P8->>P1: parse 73
+    note right of P1: delta measure
+    deactivate P8
+  end
+  %% block 74
+  loop gamma every 74 seconds
+    P2->+P1: gamma request 74
+    alt gamma ok
+      P1-->>-P2: delta reply
+    else gamma failed
+      P1-xP3: error 74
+      note over P1,P3: gamma retry
+    end
+  end
+  rect rgb(74, 200, 255)
+    activate P3
+    P3->>P2: render 74
+    note right of P2: parse measure
+    deactivate P3
+  end
+  %% block 75
+  loop delta every 75 seconds
+    P3-->+P6: delta request 75
+    alt delta ok
+      P6-->>-P3: parse reply
+    else delta failed
+      P6-xP10: error 75
+      note over P6,P10: delta retry
+    end
+  end
+  rect rgb(75, 200, 255)
+    activate P10
+    P10->>P3: queue 75
+    note right of P3: render measure
+    deactivate P10
+  end
+  %% block 76
+  loop parse every 76 seconds
+    P4-x+P11: parse request 76
+    alt parse ok
+      P11-->>-P4: render reply
+    else parse failed
+      P11-xP5: error 76
+      note over P11,P5: parse retry
+    end
+  end
+  rect rgb(76, 200, 255)
+    activate P5
+    P5->>P4: measure 76
+    note right of P4: queue measure
+    deactivate P5
+  end
+  %% block 77
+  loop render every 77 seconds
+    P5--x+P4: render request 77
+    alt render ok
+      P4-->>-P5: queue reply
+    else render failed
+      P4-xP0: error 77
+      note over P4,P0: render retry
+    end
+  end
+  rect rgb(77, 200, 255)
+    activate P0
+    P0->>P5: alpha 77
+    note right of P5: measure measure
+    deactivate P0
+  end
+  %% block 78
+  loop queue every 78 seconds
+    P6-)+P9: queue request 78
+    alt queue ok
+      P9-->>-P6: measure reply
+    else queue failed
+      P9-xP7: error 78
+      note over P9,P7: queue retry
+    end
+  end
+  rect rgb(78, 200, 255)
+    activate P7
+    P7->>P6: beta 78
+    note right of P6: alpha measure
+    deactivate P7
+  end
+  %% block 79
+  loop measure every 79 seconds
+    P7--)+P2: measure request 79
+    alt measure ok
+      P2-->>-P7: alpha reply
+    else measure failed
+      P2-xP2: error 79
+      note over P2,P2: measure retry
+    end
+  end
+  rect rgb(79, 200, 255)
+    activate P2
+    P2->>P7: gamma 79
+    note right of P7: beta measure
+    deactivate P2
+  end
+  %% block 80
+  loop alpha every 80 seconds
+    P8->>+P7: alpha request 80
+    alt alpha ok
+      P7-->>-P8: beta reply
+    else alpha failed
+      P7-xP9: error 80
+      note over P7,P9: alpha retry
+    end
+  end
+  rect rgb(80, 200, 255)
+    activate P9
+    P9->>P8: delta 80
+    note right of P8: gamma measure
+    deactivate P9
+  end
+  %% block 81
+  loop beta every 81 seconds
+    P9-->>+P0: beta request 81
+    alt beta ok
+      P0-->>-P9: gamma reply
+    else beta failed
+      P0-xP4: error 81
+      note over P0,P4: beta retry
+    end
+  end
+  rect rgb(81, 200, 255)
+    activate P4
+    P4->>P9: parse 81
+    note right of P9: delta measure
+    deactivate P4
+  end
+  %% block 82
+  loop gamma every 82 seconds
+    P10->+P5: gamma request 82
+    alt gamma ok
+      P5-->>-P10: delta reply
+    else gamma failed
+      P5-xP11: error 82
+      note over P5,P11: gamma retry
+    end
+  end
+  rect rgb(82, 200, 255)
+    activate P11
+    P11->>P10: render 82
+    note right of P10: parse measure
+    deactivate P11
+  end
+  %% block 83
+  loop delta every 83 seconds
+    P11-->+P10: delta request 83
+    alt delta ok
+      P10-->>-P11: parse reply
+    else delta failed
+      P10-xP6: error 83
+      note over P10,P6: delta retry
+    end
+  end
+  rect rgb(83, 200, 255)
+    activate P6
+    P6->>P11: queue 83
+    note right of P11: render measure
+    deactivate P6
+  end
+  %% block 84
+  loop parse every 84 seconds
+    P0-x+P3: parse request 84
+    alt parse ok
+      P3-->>-P0: render reply
+    else parse failed
+      P3-xP1: error 84
+      note over P3,P1: parse retry
+    end
+  end
+  rect rgb(84, 200, 255)
+    activate P1
+    P1->>P0: measure 84
+    note right of P0: queue measure
+    deactivate P1
+  end
+  %% block 85
+  loop render every 85 seconds
+    P1--x+P8: render request 85
+    alt render ok
+      P8-->>-P1: queue reply
+    else render failed
+      P8-xP8: error 85
+      note over P8,P8: render retry
+    end
+  end
+  rect rgb(85, 200, 255)
+    activate P8
+    P8->>P1: alpha 85
+    note right of P1: measure measure
+    deactivate P8
+  end
+  %% block 86
+  loop queue every 86 seconds
+    P2-)+P1: queue request 86
+    alt queue ok
+      P1-->>-P2: measure reply
+    else queue failed
+      P1-xP3: error 86
+      note over P1,P3: queue retry
+    end
+  end
+  rect rgb(86, 200, 255)
+    activate P3
+    P3->>P2: beta 86
+    note right of P2: alpha measure
+    deactivate P3
+  end
+  %% block 87
+  loop measure every 87 seconds
+    P3--)+P6: measure request 87
+    alt measure ok
+      P6-->>-P3: alpha reply
+    else measure failed
+      P6-xP10: error 87
+      note over P6,P10: measure retry
+    end
+  end
+  rect rgb(87, 200, 255)
+    activate P10
+    P10->>P3: gamma 87
+    note right of P3: beta measure
+    deactivate P10
+  end
+  %% block 88
+  loop alpha every 88 seconds
+    P4->>+P11: alpha request 88
+    alt alpha ok
+      P11-->>-P4: beta reply
+    else alpha failed
+      P11-xP5: error 88
+      note over P11,P5: alpha retry
+    end
+  end
+  rect rgb(88, 200, 255)
+    activate P5
+    P5->>P4: delta 88
+    note right of P4: gamma measure
+    deactivate P5
+  end
+  %% block 89
+  loop beta every 89 seconds
+    P5-->>+P4: beta request 89
+    alt beta ok
+      P4-->>-P5: gamma reply
+    else beta failed
+      P4-xP0: error 89
+      note over P4,P0: beta retry
+    end
+  end
+  rect rgb(89, 200, 255)
+    activate P0
+    P0->>P5: parse 89
+    note right of P5: delta measure
+    deactivate P0
+  end
+  %% block 90
+  loop gamma every 90 seconds
+    P6->+P9: gamma request 90
+    alt gamma ok
+      P9-->>-P6: delta reply
+    else gamma failed
+      P9-xP7: error 90
+      note over P9,P7: gamma retry
+    end
+  end
+  rect rgb(90, 200, 255)
+    activate P7
+    P7->>P6: render 90
+    note right of P6: parse measure
+    deactivate P7
+  end
+  %% block 91
+  loop delta every 91 seconds
+    P7-->+P2: delta request 91
+    alt delta ok
+      P2-->>-P7: parse reply
+    else delta failed
+      P2-xP2: error 91
+      note over P2,P2: delta retry
+    end
+  end
+  rect rgb(91, 200, 255)
+    activate P2
+    P2->>P7: queue 91
+    note right of P7: render measure
+    deactivate P2
+  end
+  %% block 92
+  loop parse every 92 seconds
+    P8-x+P7: parse request 92
+    alt parse ok
+      P7-->>-P8: render reply
+    else parse failed
+      P7-xP9: error 92
+      note over P7,P9: parse retry
+    end
+  end
+  rect rgb(92, 200, 255)
+    activate P9
+    P9->>P8: measure 92
+    note right of P8: queue measure
+    deactivate P9
+  end
+  %% block 93
+  loop render every 93 seconds
+    P9--x+P0: render request 93
+    alt render ok
+      P0-->>-P9: queue reply
+    else render failed
+      P0-xP4: error 93
+      note over P0,P4: render retry
+    end
+  end
+  rect rgb(93, 200, 255)
+    activate P4
+    P4->>P9: alpha 93
+    note right of P9: measure measure
+    deactivate P4
+  end
+  %% block 94
+  loop queue every 94 seconds
+    P10-)+P5: queue request 94
+    alt queue ok
+      P5-->>-P10: measure reply
+    else queue failed
+      P5-xP11: error 94
+      note over P5,P11: queue retry
+    end
+  end
+  rect rgb(94, 200, 255)
+    activate P11
+    P11->>P10: beta 94
+    note right of P10: alpha measure
+    deactivate P11
+  end
+  %% block 95
+  loop measure every 95 seconds
+    P11--)+P10: measure request 95
+    alt measure ok
+      P10-->>-P11: alpha reply
+    else measure failed
+      P10-xP6: error 95
+      note over P10,P6: measure retry
+    end
+  end
+  rect rgb(95, 200, 255)
+    activate P6
+    P6->>P11: gamma 95
+    note right of P11: beta measure
+    deactivate P6
+  end
+  %% block 96
+  loop alpha every 96 seconds
+    P0->>+P3: alpha request 96
+    alt alpha ok
+      P3-->>-P0: beta reply
+    else alpha failed
+      P3-xP1: error 96
+      note over P3,P1: alpha retry
+    end
+  end
+  rect rgb(96, 200, 255)
+    activate P1
+    P1->>P0: delta 96
+    note right of P0: gamma measure
+    deactivate P1
+  end
+  %% block 97
+  loop beta every 97 seconds
+    P1-->>+P8: beta request 97
+    alt beta ok
+      P8-->>-P1: gamma reply
+    else beta failed
+      P8-xP8: error 97
+      note over P8,P8: beta retry
+    end
+  end
+  rect rgb(97, 200, 255)
+    activate P8
+    P8->>P1: parse 97
+    note right of P1: delta measure
+    deactivate P8
+  end
+  %% block 98
+  loop gamma every 98 seconds
+    P2->+P1: gamma request 98
+    alt gamma ok
+      P1-->>-P2: delta reply
+    else gamma failed
+      P1-xP3: error 98
+      note over P1,P3: gamma retry
+    end
+  end
+  rect rgb(98, 200, 255)
+    activate P3
+    P3->>P2: render 98
+    note right of P2: parse measure
+    deactivate P3
+  end
+  %% block 99
+  loop delta every 99 seconds
+    P3-->+P6: delta request 99
+    alt delta ok
+      P6-->>-P3: parse reply
+    else delta failed
+      P6-xP10: error 99
+      note over P6,P10: delta retry
+    end
+  end
+  rect rgb(99, 200, 255)
+    activate P10
+    P10->>P3: queue 99
+    note right of P3: render measure
+    deactivate P10
+  end
+  %% block 100
+  loop parse every 100 seconds
+    P4-x+P11: parse request 100
+    alt parse ok
+      P11-->>-P4: render reply
+    else parse failed
+      P11-xP5: error 100
+      note over P11,P5: parse retry
+    end
+  end
+  rect rgb(100, 200, 255)
+    activate P5
+    P5->>P4: measure 100
+    note right of P4: queue measure
+    deactivate P5
+  end
+  %% block 101
+  loop render every 101 seconds
+    P5--x+P4: render request 101
+    alt render ok
+      P4-->>-P5: queue reply
+    else render failed
+      P4-xP0: error 101
+      note over P4,P0: render retry
+    end
+  end
+  rect rgb(101, 200, 255)
+    activate P0
+    P0->>P5: alpha 101
+    note right of P5: measure measure
+    deactivate P0
+  end
+  %% block 102
+  loop queue every 102 seconds
+    P6-)+P9: queue request 102
+    alt queue ok
+      P9-->>-P6: measure reply
+    else queue failed
+      P9-xP7: error 102
+      note over P9,P7: queue retry
+    end
+  end
+  rect rgb(102, 200, 255)
+    activate P7
+    P7->>P6: beta 102
+    note right of P6: alpha measure
+    deactivate P7
+  end
+  %% block 103
+  loop measure every 103 seconds
+    P7--)+P2: measure request 103
+    alt measure ok
+      P2-->>-P7: alpha reply
+    else measure failed
+      P2-xP2: error 103
+      note over P2,P2: measure retry
+    end
+  end
+  rect rgb(103, 200, 255)
+    activate P2
+    P2->>P7: gamma 103
+    note right of P7: beta measure
+    deactivate P2
+  end
+  %% block 104
+  loop alpha every 104 seconds
+    P8->>+P7: alpha request 104
+    alt alpha ok
+      P7-->>-P8: beta reply
+    else alpha failed
+      P7-xP9: error 104
+      note over P7,P9: alpha retry
+    end
+  end
+  rect rgb(104, 200, 255)
+    activate P9
+    P9->>P8: delta 104
+    note right of P8: gamma measure
+    deactivate P9
+  end
+  %% block 105
+  loop beta every 105 seconds
+    P9-->>+P0: beta request 105
+    alt beta ok
+      P0-->>-P9: gamma reply
+    else beta failed
+      P0-xP4: error 105
+      note over P0,P4: beta retry
+    end
+  end
+  rect rgb(105, 200, 255)
+    activate P4
+    P4->>P9: parse 105
+    note right of P9: delta measure
+    deactivate P4
+  end
+  %% block 106
+  loop gamma every 106 seconds
+    P10->+P5: gamma request 106
+    alt gamma ok
+      P5-->>-P10: delta reply
+    else gamma failed
+      P5-xP11: error 106
+      note over P5,P11: gamma retry
+    end
+  end
+  rect rgb(106, 200, 255)
+    activate P11
+    P11->>P10: render 106
+    note right of P10: parse measure
+    deactivate P11
+  end
+  %% block 107
+  loop delta every 107 seconds
+    P11-->+P10: delta request 107
+    alt delta ok
+      P10-->>-P11: parse reply
+    else delta failed
+      P10-xP6: error 107
+      note over P10,P6: delta retry
+    end
+  end
+  rect rgb(107, 200, 255)
+    activate P6
+    P6->>P11: queue 107
+    note right of P11: render measure
+    deactivate P6
+  end
+  %% block 108
+  loop parse every 108 seconds
+    P0-x+P3: parse request 108
+    alt parse ok
+      P3-->>-P0: render reply
+    else parse failed
+      P3-xP1: error 108
+      note over P3,P1: parse retry
+    end
+  end
+  rect rgb(108, 200, 255)
+    activate P1
+    P1->>P0: measure 108
+    note right of P0: queue measure
+    deactivate P1
+  end
+  %% block 109
+  loop render every 109 seconds
+    P1--x+P8: render request 109
+    alt render ok
+      P8-->>-P1: queue reply
+    else render failed
+      P8-xP8: error 109
+      note over P8,P8: render retry
+    end
+  end
+  rect rgb(109, 200, 255)
+    activate P8
+    P8->>P1: alpha 109
+    note right of P1: measure measure
+    deactivate P8
+  end
+  %% block 110
+  loop queue every 110 seconds
+    P2-)+P1: queue request 110
+    alt queue ok
+      P1-->>-P2: measure reply
+    else queue failed
+      P1-xP3: error 110
+      note over P1,P3: queue retry
+    end
+  end
+  rect rgb(110, 200, 255)
+    activate P3
+    P3->>P2: beta 110
+    note right of P2: alpha measure
+    deactivate P3
+  end
+  %% block 111
+  loop measure every 111 seconds
+    P3--)+P6: measure request 111
+    alt measure ok
+      P6-->>-P3: alpha reply
+    else measure failed
+      P6-xP10: error 111
+      note over P6,P10: measure retry
+    end
+  end
+  rect rgb(111, 200, 255)
+    activate P10
+    P10->>P3: gamma 111
+    note right of P3: beta measure
+    deactivate P10
+  end
+  %% block 112
+  loop alpha every 112 seconds
+    P4->>+P11: alpha request 112
+    alt alpha ok
+      P11-->>-P4: beta reply
+    else alpha failed
+      P11-xP5: error 112
+      note over P11,P5: alpha retry
+    end
+  end
+  rect rgb(112, 200, 255)
+    activate P5
+    P5->>P4: delta 112
+    note right of P4: gamma measure
+    deactivate P5
+  end
+  %% block 113
+  loop beta every 113 seconds
+    P5-->>+P4: beta request 113
+    alt beta ok
+      P4-->>-P5: gamma reply
+    else beta failed
+      P4-xP0: error 113
+      note over P4,P0: beta retry
+    end
+  end
+  rect rgb(113, 200, 255)
+    activate P0
+    P0->>P5: parse 113
+    note right of P5: delta measure
+    deactivate P0
+  end
+  %% block 114
+  loop gamma every 114 seconds
+    P6->+P9: gamma request 114
+    alt gamma ok
+      P9-->>-P6: delta reply
+    else gamma failed
+      P9-xP7: error 114
+      note over P9,P7: gamma retry
+    end
+  end
+  rect rgb(114, 200, 255)
+    activate P7
+    P7->>P6: render 114
+    note right of P6: parse measure
+    deactivate P7
+  end
+  %% block 115
+  loop delta every 115 seconds
+    P7-->+P2: delta request 115
+    alt delta ok
+      P2-->>-P7: parse reply
+    else delta failed
+      P2-xP2: error 115
+      note over P2,P2: delta retry
+    end
+  end
+  rect rgb(115, 200, 255)
+    activate P2
+    P2->>P7: queue 115
+    note right of P7: render measure
+    deactivate P2
+  end
+  %% block 116
+  loop parse every 116 seconds
+    P8-x+P7: parse request 116
+    alt parse ok
+      P7-->>-P8: render reply
+    else parse failed
+      P7-xP9: error 116
+      note over P7,P9: parse retry
+    end
+  end
+  rect rgb(116, 200, 255)
+    activate P9
+    P9->>P8: measure 116
+    note right of P8: queue measure
+    deactivate P9
+  end
+  %% block 117
+  loop render every 117 seconds
+    P9--x+P0: render request 117
+    alt render ok
+      P0-->>-P9: queue reply
+    else render failed
+      P0-xP4: error 117
+      note over P0,P4: render retry
+    end
+  end
+  rect rgb(117, 200, 255)
+    activate P4
+    P4->>P9: alpha 117
+    note right of P9: measure measure
+    deactivate P4
+  end
+  %% block 118
+  loop queue every 118 seconds
+    P10-)+P5: queue request 118
+    alt queue ok
+      P5-->>-P10: measure reply
+    else queue failed
+      P5-xP11: error 118
+      note over P5,P11: queue retry
+    end
+  end
+  rect rgb(118, 200, 255)
+    activate P11
+    P11->>P10: beta 118
+    note right of P10: alpha measure
+    deactivate P11
+  end
+  %% block 119
+  loop measure every 119 seconds
+    P11--)+P10: measure request 119
+    alt measure ok
+      P10-->>-P11: alpha reply
+    else measure failed
+      P10-xP6: error 119
+      note over P10,P6: measure retry
+    end
+  end
+  rect rgb(119, 200, 255)
+    activate P6
+    P6->>P11: gamma 119
+    note right of P11: beta measure
+    deactivate P6
+  end
+  %% block 120
+  loop alpha every 120 seconds
+    P0->>+P3: alpha request 120
+    alt alpha ok
+      P3-->>-P0: beta reply
+    else alpha failed
+      P3-xP1: error 120
+      note over P3,P1: alpha retry
+    end
+  end
+  rect rgb(120, 200, 255)
+    activate P1
+    P1->>P0: delta 120
+    note right of P0: gamma measure
+    deactivate P1
+  end
+  %% block 121
+  loop beta every 121 seconds
+    P1-->>+P8: beta request 121
+    alt beta ok
+      P8-->>-P1: gamma reply
+    else beta failed
+      P8-xP8: error 121
+      note over P8,P8: beta retry
+    end
+  end
+  rect rgb(121, 200, 255)
+    activate P8
+    P8->>P1: parse 121
+    note right of P1: delta measure
+    deactivate P8
+  end
+  %% block 122
+  loop gamma every 122 seconds
+    P2->+P1: gamma request 122
+    alt gamma ok
+      P1-->>-P2: delta reply
+    else gamma failed
+      P1-xP3: error 122
+      note over P1,P3: gamma retry
+    end
+  end
+  rect rgb(122, 200, 255)
+    activate P3
+    P3->>P2: render 122
+    note right of P2: parse measure
+    deactivate P3
+  end
+  %% block 123
+  loop delta every 123 seconds
+    P3-->+P6: delta request 123
+    alt delta ok
+      P6-->>-P3: parse reply
+    else delta failed
+      P6-xP10: error 123
+      note over P6,P10: delta retry
+    end
+  end
+  rect rgb(123, 200, 255)
+    activate P10
+    P10->>P3: queue 123
+    note right of P3: render measure
+    deactivate P10
+  end
+  %% block 124
+  loop parse every 124 seconds
+    P4-x+P11: parse request 124
+    alt parse ok
+      P11-->>-P4: render reply
+    else parse failed
+      P11-xP5: error 124
+      note over P11,P5: parse retry
+    end
+  end
+  rect rgb(124, 200, 255)
+    activate P5
+    P5->>P4: measure 124
+    note right of P4: queue measure
+    deactivate P5
+  end
+  %% block 125
+  loop render every 125 seconds
+    P5--x+P4: render request 125
+    alt render ok
+      P4-->>-P5: queue reply
+    else render failed
+      P4-xP0: error 125
+      note over P4,P0: render retry
+    end
+  end
+  rect rgb(125, 200, 255)
+    activate P0
+    P0->>P5: alpha 125
+    note right of P5: measure measure
+    deactivate P0
+  end
+  %% block 126
+  loop queue every 126 seconds
+    P6-)+P9: queue request 126
+    alt queue ok
+      P9-->>-P6: measure reply
+    else queue failed
+      P9-xP7: error 126
+      note over P9,P7: queue retry
+    end
+  end
+  rect rgb(126, 200, 255)
+    activate P7
+    P7->>P6: beta 126
+    note right of P6: alpha measure
+    deactivate P7
+  end
+  %% block 127
+  loop measure every 127 seconds
+    P7--)+P2: measure request 127
+    alt measure ok
+      P2-->>-P7: alpha reply
+    else measure failed
+      P2-xP2: error 127
+      note over P2,P2: measure retry
+    end
+  end
+  rect rgb(127, 200, 255)
+    activate P2
+    P2->>P7: gamma 127
+    note right of P7: beta measure
+    deactivate P2
+  end
+  %% block 128
+  loop alpha every 128 seconds
+    P8->>+P7: alpha request 128
+    alt alpha ok
+      P7-->>-P8: beta reply
+    else alpha failed
+      P7-xP9: error 128
+      note over P7,P9: alpha retry
+    end
+  end
+  rect rgb(128, 200, 255)
+    activate P9
+    P9->>P8: delta 128
+    note right of P8: gamma measure
+    deactivate P9
+  end
+  %% block 129
+  loop beta every 129 seconds
+    P9-->>+P0: beta request 129
+    alt beta ok
+      P0-->>-P9: gamma reply
+    else beta failed
+      P0-xP4: error 129
+      note over P0,P4: beta retry
+    end
+  end
+  rect rgb(129, 200, 255)
+    activate P4
+    P4->>P9: parse 129
+    note right of P9: delta measure
+    deactivate P4
+  end
+  %% block 130
+  loop gamma every 130 seconds
+    P10->+P5: gamma request 130
+    alt gamma ok
+      P5-->>-P10: delta reply
+    else gamma failed
+      P5-xP11: error 130
+      note over P5,P11: gamma retry
+    end
+  end
+  rect rgb(130, 200, 255)
+    activate P11
+    P11->>P10: render 130
+    note right of P10: parse measure
+    deactivate P11
+  end
+  %% block 131
+  loop delta every 131 seconds
+    P11-->+P10: delta request 131
+    alt delta ok
+      P10-->>-P11: parse reply
+    else delta failed
+      P10-xP6: error 131
+      note over P10,P6: delta retry
+    end
+  end
+  rect rgb(131, 200, 255)
+    activate P6
+    P6->>P11: queue 131
+    note right of P11: render measure
+    deactivate P6
+  end
+  %% block 132
+  loop parse every 132 seconds
+    P0-x+P3: parse request 132
+    alt parse ok
+      P3-->>-P0: render reply
+    else parse failed
+      P3-xP1: error 132
+      note over P3,P1: parse retry
+    end
+  end
+  rect rgb(132, 200, 255)
+    activate P1
+    P1->>P0: measure 132
+    note right of P0: queue measure
+    deactivate P1
+  end
+  %% block 133
+  loop render every 133 seconds
+    P1--x+P8: render request 133
+    alt render ok
+      P8-->>-P1: queue reply
+    else render failed
+      P8-xP8: error 133
+      note over P8,P8: render retry
+    end
+  end
+  rect rgb(133, 200, 255)
+    activate P8
+    P8->>P1: alpha 133
+    note right of P1: measure measure
+    deactivate P8
+  end
+  %% block 134
+  loop queue every 134 seconds
+    P2-)+P1: queue request 134
+    alt queue ok
+      P1-->>-P2: measure reply
+    else queue failed
+      P1-xP3: error 134
+      note over P1,P3: queue retry
+    end
+  end
+  rect rgb(134, 200, 255)
+    activate P3
+    P3->>P2: beta 134
+    note right of P2: alpha measure
+    deactivate P3
+  end
+  %% block 135
+  loop measure every 135 seconds
+    P3--)+P6: measure request 135
+    alt measure ok
+      P6-->>-P3: alpha reply
+    else measure failed
+      P6-xP10: error 135
+      note over P6,P10: measure retry
+    end
+  end
+  rect rgb(135, 200, 255)
+    activate P10
+    P10->>P3: gamma 135
+    note right of P3: beta measure
+    deactivate P10
+  end
+  %% block 136
+  loop alpha every 136 seconds
+    P4->>+P11: alpha request 136
+    alt alpha ok
+      P11-->>-P4: beta reply
+    else alpha failed
+      P11-xP5: error 136
+      note over P11,P5: alpha retry
+    end
+  end
+  rect rgb(136, 200, 255)
+    activate P5
+    P5->>P4: delta 136
+    note right of P4: gamma measure
+    deactivate P5
+  end
+  %% block 137
+  loop beta every 137 seconds
+    P5-->>+P4: beta request 137
+    alt beta ok
+      P4-->>-P5: gamma reply
+    else beta failed
+      P4-xP0: error 137
+      note over P4,P0: beta retry
+    end
+  end
+  rect rgb(137, 200, 255)
+    activate P0
+    P0->>P5: parse 137
+    note right of P5: delta measure
+    deactivate P0
+  end
+  %% block 138
+  loop gamma every 138 seconds
+    P6->+P9: gamma request 138
+    alt gamma ok
+      P9-->>-P6: delta reply
+    else gamma failed
+      P9-xP7: error 138
+      note over P9,P7: gamma retry
+    end
+  end
+  rect rgb(138, 200, 255)
+    activate P7
+    P7->>P6: render 138
+    note right of P6: parse measure
+    deactivate P7
+  end
+  %% block 139
+  loop delta every 139 seconds
+    P7-->+P2: delta request 139
+    alt delta ok
+      P2-->>-P7: parse reply
+    else delta failed
+      P2-xP2: error 139
+      note over P2,P2: delta retry
+    end
+  end
+  rect rgb(139, 200, 255)
+    activate P2
+    P2->>P7: queue 139
+    note right of P7: render measure
+    deactivate P2
+  end
+  %% block 140
+  loop parse every 140 seconds
+    P8-x+P7: parse request 140
+    alt parse ok
+      P7-->>-P8: render reply
+    else parse failed
+      P7-xP9: error 140
+      note over P7,P9: parse retry
+    end
+  end
+  rect rgb(140, 200, 255)
+    activate P9
+    P9->>P8: measure 140
+    note right of P8: queue measure
+    deactivate P9
+  end
+  %% block 141
+  loop render every 141 seconds
+    P9--x+P0: render request 141
+    alt render ok
+      P0-->>-P9: queue reply
+    else render failed
+      P0-xP4: error 141
+      note over P0,P4: render retry
+    end
+  end
+  rect rgb(141, 200, 255)
+    activate P4
+    P4->>P9: alpha 141
+    note right of P9: measure measure
+    deactivate P4
+  end
+  %% block 142
+  loop queue every 142 seconds
+    P10-)+P5: queue request 142
+    alt queue ok
+      P5-->>-P10: measure reply
+    else queue failed
+      P5-xP11: error 142
+      note over P5,P11: queue retry
+    end
+  end
+  rect rgb(142, 200, 255)
+    activate P11
+    P11->>P10: beta 142
+    note right of P10: alpha measure
+    deactivate P11
+  end
+  %% block 143
+  loop measure every 143 seconds
+    P11--)+P10: measure request 143
+    alt measure ok
+      P10-->>-P11: alpha reply
+    else measure failed
+      P10-xP6: error 143
+      note over P10,P6: measure retry
+    end
+  end
+  rect rgb(143, 200, 255)
+    activate P6
+    P6->>P11: gamma 143
+    note right of P11: beta measure
+    deactivate P6
+  end
+  %% block 144
+  loop alpha every 144 seconds
+    P0->>+P3: alpha request 144
+    alt alpha ok
+      P3-->>-P0: beta reply
+    else alpha failed
+      P3-xP1: error 144
+      note over P3,P1: alpha retry
+    end
+  end
+  rect rgb(144, 200, 255)
+    activate P1
+    P1->>P0: delta 144
+    note right of P0: gamma measure
+    deactivate P1
+  end

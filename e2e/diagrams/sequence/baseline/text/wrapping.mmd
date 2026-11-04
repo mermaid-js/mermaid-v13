@@ -1,0 +1,13 @@
+---
+config:
+  sequence:
+    wrap: true
+    width: 120
+description: long message and note text wrapped to the participant width
+---
+sequenceDiagram
+  participant A as Alice with a long name
+  participant B as Bob
+  A->>B: This message is long enough that it wraps onto several lines
+  note over A,B: This note is long enough that it wraps onto several lines as well
+  B-->>A: short

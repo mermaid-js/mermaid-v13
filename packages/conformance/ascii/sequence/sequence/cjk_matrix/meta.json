@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/sequence/cjk_matrix.txt",
+  "charset": "unicode"
+}
