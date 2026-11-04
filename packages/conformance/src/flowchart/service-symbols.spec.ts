@@ -56,7 +56,9 @@ describe('flowchart definition, references and folding through the service match
       if (doc.facet?.id !== 'flowchart') continue;
       if (doc.diagnostics().some((d) => d.severity === 'error')) continue;
       checked++;
-      const fail = (what: string) => problems.push(`${item.id}: ${what}`);
+      const fail = (what: string): undefined => {
+        problems.push(`${item.id}: ${what}`);
+      };
       const model = flowchartV12Snapshot(v12.db);
       // Where to ask: the parse output's own occurrences (R-PARSE-5 checks those directly).
       const parsed = parseFlowchart(item.source);
