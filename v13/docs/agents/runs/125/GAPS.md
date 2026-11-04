@@ -13,6 +13,14 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 
 - [x] **Core `sourceView` mid-line directive fix (#186):** merged; six sequence forms added to the lexer-parity gate (`MID_LINE_DIRECTIVES`), parity 100%.
 
+## #149 T6 language facet
+- **Goldens run from conformance until the manifest lands (#145).** `firstPartyFacets` gets a `load` only from a manifest `language` entry, so `packages/conformance/src/sequence/language-goldens.spec.ts` passes the facet as an eager row over `packages/conformance/language-goldens/sequence/`. Its last test fails once the manifest has `language`: then `git mv` the folder to `packages/language-service/goldens/sequence/` and delete the spec (#145).
+- **Property and rename round-trip specs (recipe step 7) pick sequence up only with the manifest.** Run by hand over the 193 sequence corpus files with the eager row: no throw, no completion range off the cursor's line, every participant rename keeps the model. Re-check when #145 registers the facet.
+- **TextMate has no mode switch.** The generator cannot add one without changing flowchart's TextMate grammar (its `callbackname` `pop push`). So in TextMate only: the data `@{ … }`, `as` and the alias text of a declaration may be miscoloured, and when the rest of a declaration line is not a plain id (it holds `@{`, `<`, `,` or `:`), the id mode's catch-all `INVALID` end wins and the line from the id on, a `;`-separated statement after it included, has no colour. Everything else agrees (statements after `;` behind an alias, multi-line data, entities in ids and text). Spelled out and checked token by token in `tools/gen-grammar/src/sequence-categories.spec.ts`; fixing it needs switch support (and end-pattern order) in `tools/gen-grammar/src/highlight.ts` (cross-type, owner gen-grammar).
+- [x] **Section folds one line short when a section ends with a nested block:** fixed in language-service `lines.ts` (a closer line of a nested block stays in the enclosing fold), spec in `lines.spec.ts`.
+- **Adapters colour first paint with flowchart's grammar (D119, accepted).** Picking a highlighter per type is #190.
+- No `./monarch.json` export: it feeds the adapters only (#190, D119, accepted).
+
 ## Shared contracts
 
 - **`SequenceModel`** (`packages/diagram-sequence/src/model.ts`, landed with #141): owned by #139 (T2), which is held. #141 (T3) landed the type first, shaped from the spec's model list (§Parser), as the layout's input; #139 adopts it and may extend it additively. A change that breaks #141's fixtures goes through the orchestrator.
@@ -35,5 +43,8 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 - **Registry**: tests register the plugin under a swapped header (`conformance/src/sequence/render-api.ts`); #145 removes the swap once the manifest is generated.
 
 ## Resolved by the maintainer
+
+- [x] **Neo geometry: port it (2026-11-04).** v12's default sequence look was `neo`; #143 draws classic geometry everywhere. Ported as geometry theme variables in follow-up ticket #194 (blocked by #143; #145 waits on it).
+- [x] **Accepted (2026-11-04):** async/half/stick arrowheads in `signalColor` (v12: black); classic rect/box grey shadows dropped (shadow only where `dropShadow` is set). Listed in MIGRATION.md by #143.
 
 - [x] **D123: keep the fix.** The 3 create/destroy divergences (#139: `create-after-note`, `destroy-then-create`, `destroy-before-loop`) stand: v13 attaches `create`/`destroy` to the right message. Cited in `packages/conformance/divergences.json` and MIGRATION.md "Sequence syntax".

@@ -1,0 +1,4 @@
+@ 2:35  participant A@{ type: database, | }
+  alias property 2:35-2:35 "" -> "alias: "
+@ 3:32  participant B@{ x: "a type: q|" }
+  none

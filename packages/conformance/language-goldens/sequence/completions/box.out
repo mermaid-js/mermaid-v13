@@ -1,0 +1,5 @@
+@ 3:5  |
+  participant keyword 3:5-3:5 "" -> "participant"
+  actor keyword 3:5-3:5 "" -> "actor"
+  destroy keyword 3:5-3:5 "" -> "destroy"
+  end keyword 3:5-3:5 "" -> "end"

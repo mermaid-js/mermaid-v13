@@ -6,9 +6,10 @@
 | T2 grammar, parser, model, AST | #139 | #137, #27, #28 | merged |
 | T3 custom layout | #141 | soft: #139 | merged |
 | T4 SVG renderer | #143 | #139, #141 | running |
-| T5 integration | #145 | #143 | — |
+| Neo geometry as theme variables | #194 | #143 | — |
+| T5 integration | #145 | #143, #194 | — |
 | Actor menus (plugin-interactions) | #147 | #143; never with class's interactions ticket (D112) | — |
-| T6 language facet | #149 | #139, #29, #31 | running |
+| T6 language facet | #149 | #139, #29, #31 | merged |
 | T7 ASCII | #150 | #139, #141 | — |
 
 - `01-v12-sequence.md`: pointer notes on v12 grammar, DB, renderer, specs, corpus.

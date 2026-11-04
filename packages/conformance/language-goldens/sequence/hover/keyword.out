@@ -1,0 +1,35 @@
+@ 2:3  |participant A
+  2:3-2:14 "participant"
+  | **`participant`**
+  |
+  | `participant A`, `participant A as Alice` or `participant A@{ "type": "database" }`: declares a participant, drawn as a box unless the data gives another type.
+@ 3:5  lo|op every minute
+  3:3-3:7 "loop"
+  | **`loop`**
+  |
+  | `loop <text>` … `end`: a repeated part.
+@ 4:7  no|te left of A: x
+  4:5-4:9 "note"
+  | **`note`**
+  |
+  | `note left of A: text`, `note right of A: text` or `note over A,B: text`: a note beside one participant or over one or two.
+@ 4:12  note le|ft of A: x
+  4:10-4:17 "left of"
+  | **`left of`**
+  |
+  | `note left of A: …`: a note left of the participant.
+@ 5:4  e|nd
+  5:3-5:6 "end"
+  | **`end`**
+  |
+  | `end`: closes a `box`, `loop`, `alt`, `rect` or other block.
+@ 6:5  ti|tle Hello
+  6:3-6:8 "title"
+  | **`title`**
+  |
+  | `title <text>` or `title: <text>`: the diagram title.
+@ 7:7  auto|number
+  7:3-7:13 "autonumber"
+  | **`autonumber`**
+  |
+  | `autonumber`, `autonumber <start> [<step>]` or `autonumber off`: numbers the messages.

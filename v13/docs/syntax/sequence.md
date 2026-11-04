@@ -304,17 +304,17 @@ Modes: `INITIAL`, `ID`, `ALIAS`, `LINE`, `CONFIG`, `acc_title`, `acc_descr`, `ac
 | INITIAL | NEWLINE | `\n+` |  | Separators: line breaks, `;` and the end of the text. |
 | INITIAL | — | `\s+` |  |  |
 | ID, ALIAS, LINE | — | `(?:(?!\n)\s)+` |  |  |
-| INITIAL, ID, ALIAS, LINE | — | `#[^\n]*` |  | `#` to the end of the line is a comment outside messages and labels. |
+| INITIAL, ID, ALIAS, LINE | — | `#(?!\w+;)[^\n]*` |  | `#` to the end of the line is a comment outside messages and labels; an entity such as `#lt;` is text. |
 | INITIAL | — | `%(?!\{)[^\n]*` |  |  |
 | INITIAL | — | `[^}]%%[^\n]*` |  |  |
 | INITIAL | NUM | `(?:[0-9]+(?:\.[0-9]{1,2})?\|\.[0-9]{1,2})(?=[ \n]+)` |  | `autonumber 10 5`: the first number and the step. |
-| ID | CONFIG_START | `@\{` | push(CONFIG) | Participant data `participant A@{ "type": "database" }`: YAML in braces. |
+| ID | CONFIG_START | `@\{` | pop push(CONFIG) | Participant data `participant A@{ "type": "database" }`: YAML in braces. |
 | CONFIG | CONFIG_CONTENT | `[^}]+` |  |  |
 | CONFIG | CONFIG_END | `\}(?=\s+(?i:as)\s)` | pop push(ALIAS) |  |
-| CONFIG | CONFIG_END | `\}` | pop pop |  |
-| ID | ACTOR | `[^<>:\n,;@\s]+(?=\s*@\{)` |  | A participant id after `participant`, `actor`, `destroy`, `activate` and `deactivate`. |
-| ID | ACTOR | `[^<>:\n,;@\s]+(?=\s+(?i:as)\s)` | push(ALIAS) |  |
-| ID | ACTOR | `[^<>:\n,;@]+(?=\s*[\n;#]\|$)` | pop |  |
+| CONFIG | CONFIG_END | `\}` | pop |  |
+| ID | ACTOR | `(?:#\w+;\|[^<>:\n,;@\s])+(?=\s*@\{)` |  | A participant id after `participant`, `actor`, `destroy`, `activate` and `deactivate`; an entity such as `#lt;` is part of it. |
+| ID | ACTOR | `(?:#\w+;\|[^<>:\n,;@\s])+(?=\s+(?i:as)\s)` | pop push(ALIAS) |  |
+| ID | ACTOR | `(?:#\w+;\|[^<>:\n,;@])+(?=\s*[\n;#]\|$)` | pop |  |
 | ID | INVALID | `[^<>:\n,;@]*<[^\n]*` | pop |  |
 | ID | INVALID | `[^\n]+` | pop |  |
 | INITIAL | box | `(?i:box)\b` | push(LINE) | `box <colour> <label>`: groups the participants declared up to `end`. |
@@ -322,8 +322,8 @@ Modes: `INITIAL`, `ID`, `ALIAS`, `LINE`, `CONFIG`, `acc_title`, `acc_descr`, `ac
 | INITIAL | participant_actor | `(?i:actor)\b` | push(ID) | `actor A`: declares a participant drawn as a stick figure. |
 | INITIAL | create | `(?i:create)\b` |  | `create participant A`: the participant appears at the next message, which goes to it. |
 | INITIAL | destroy | `(?i:destroy)\b` | push(ID) | `destroy A`: the participant ends at the next message, which comes from or goes to it. |
-| ALIAS | AS | `(?i:as)\b` | pop pop push(LINE) | `participant A as Alice`: the label shown for the participant. |
-| ALIAS | ALIAS_END | `(?:)` | pop pop |  |
+| ALIAS | AS | `(?i:as)\b` | pop push(LINE) | `participant A as Alice`: the label shown for the participant. |
+| ALIAS | ALIAS_END | `(?:)` | pop |  |
 | INITIAL | loop | `(?i:loop)\b` | push(LINE) | `loop <text>` … `end`: a repeated part. |
 | INITIAL | rect | `(?i:rect)\b` | push(LINE) | `rect <colour>` … `end`: a background highlight. |
 | INITIAL | opt | `(?i:opt)\b` | push(LINE) | `opt <text>` … `end`: an optional part. |
@@ -335,7 +335,7 @@ Modes: `INITIAL`, `ID`, `ALIAS`, `LINE`, `CONFIG`, `acc_title`, `acc_descr`, `ac
 | INITIAL | critical | `(?i:critical)\b` | push(LINE) | `critical <text>` … `option <text>` … `end`: a critical region and its options. |
 | INITIAL | option | `(?i:option)\b` | push(LINE) | `option <text>`: the next option of a `critical` region. |
 | INITIAL | break | `(?i:break)\b` | push(LINE) | `break <text>` … `end`: a part that ends the sequence. |
-| LINE | restOfLine | `(?i:(?::?(?:no)?wrap:)?)[^#\n;]*` | pop |  |
+| LINE | restOfLine | `(?i:(?::?(?:no)?wrap:)?)(?:[^#\n;]\|#\w+;)*` | pop |  |
 | INITIAL | end | `(?i:end)\b` |  | `end`: closes a `box`, `loop`, `alt`, `rect` or other block. |
 | INITIAL | left_of | `(?i:left of)\b` |  | `note left of A: …`: a note left of the participant. |
 | INITIAL | right_of | `(?i:right of)\b` |  | `note right of A: …`: a note right of the participant. |
@@ -347,8 +347,8 @@ Modes: `INITIAL`, `ID`, `ALIAS`, `LINE`, `CONFIG`, `acc_title`, `acc_descr`, `ac
 | INITIAL | note | `(?i:note)\b` |  | `note left of A: …`, `note right of A: …`, `note over A,B: …`. |
 | INITIAL | activate | `(?i:activate)\b` | push(ID) | `activate A`: starts an activation bar on the participant. |
 | INITIAL | deactivate | `(?i:deactivate)\b` | push(ID) | `deactivate A`: ends the participant's last activation bar. |
-| INITIAL | title | `(?i:title)\s[^#\n;]+` |  | `title <text>`: the diagram title. |
-| INITIAL | legacy_title | `(?i:title:)\s[^#\n;]+` |  | `title: <text>`: the diagram title (older form). |
+| INITIAL | title | `(?i:title)\s(?:[^#\n;]\|#\w+;)+` |  | `title <text>`: the diagram title. |
+| INITIAL | legacy_title | `(?i:title:)\s(?:[^#\n;]\|#\w+;)+` |  | `title: <text>`: the diagram title (older form). |
 | INITIAL | acc_title | `(?i:accTitle)\s*:\s*` | push(acc_title) | `accTitle: …` and `accDescr: …` take the rest of the line; `accDescr { … }` runs to `}`. |
 | acc_title | acc_title_value | `[^\n]*` | pop |  |
 | INITIAL | acc_descr | `(?i:accDescr)\s*:\s*` | push(acc_descr) |  |
@@ -361,7 +361,7 @@ Modes: `INITIAL`, `ID`, `ALIAS`, `LINE`, `CONFIG`, `acc_title`, `acc_descr`, `ac
 | INITIAL | off | `(?i:off)\b` |  |  |
 | INITIAL | COMMA | `,` |  |  |
 | INITIAL | SEMI | `;` |  |  |
-| INITIAL | ACTOR | `[^/\\+()<\->:\n,;]+(?:(?!-(?i:x)\|--(?i:x)\|-\)\|--\)\|-\\|\\\|-\\\|-\/\|-\/\/\|-\\|\/\|…` |  | A participant id in a message or note: anything up to an arrow, `+`, `-`, `:`, `,` or `;`; a `-` joins an id unless an arrow starts there (`A-B->>C` is from `A-B`). |
+| INITIAL | ACTOR | `(?:#\w+;\|[^/\\+()<\->:\n,;])+(?:(?!-(?i:x)\|--(?i:x)\|-\)\|--\)\|-\\|\\\|-\\\|-\/\|-\…` |  | A participant id in a message or note: anything up to an arrow, `+`, `-`, `:`, `,` or `;`; a `-` joins an id unless an arrow starts there (`A-B->>C` is from `A-B`). |
 | INITIAL | SOLID_ARROW | `->>` |  | `->>` solid line, arrowhead. |
 | INITIAL | BIDIRECTIONAL_SOLID_ARROW | `<<->>` |  | `<<->>` solid line, arrowheads at both ends. |
 | INITIAL | DOTTED_ARROW | `-->>` |  | `-->>` dotted line, arrowhead. |
@@ -388,7 +388,7 @@ Modes: `INITIAL`, `ID`, `ALIAS`, `LINE`, `CONFIG`, `acc_title`, `acc_descr`, `ac
 | INITIAL | SOLID_ARROW_BOTTOM_REVERSE | `\\\\|-` |  |  |
 | INITIAL | STICK_ARROW_TOP_REVERSE | `\/\/-` |  |  |
 | INITIAL | STICK_ARROW_BOTTOM_REVERSE | `\\\\-` |  |  |
-| INITIAL | TXT | `:(?i:(?:(?:no)?wrap:)?)[^#\n;]*` |  | `: text` after a message or note; `wrap:` / `nowrap:` first sets wrapping. |
+| INITIAL | TXT | `:(?i:(?:(?:no)?wrap:)?)(?:[^#\n;]\|#\w+;)*` |  | `: text` after a message or note; `wrap:` / `nowrap:` first sets wrapping. |
 | INITIAL | PLUS | `\+` |  | `A->>+B`: activates `B`. |
 | INITIAL | MINUS | `-` |  | `A->>-B`: deactivates `A`. |
 | INITIAL | PARENS | `\(\)` |  | `A->>()B`: a central connection on that end. |

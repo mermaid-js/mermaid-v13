@@ -14,6 +14,7 @@
   "devDependencies": {
     "@mermaid-js/core": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/diagram-sequence": "workspace:^",
     "@lezer/generator": "1.7.1",
     "@lezer/highlight": "1.2.1",
     "@lezer/lr": "1.4.2",

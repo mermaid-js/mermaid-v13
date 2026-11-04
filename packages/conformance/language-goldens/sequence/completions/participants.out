@@ -1,0 +1,14 @@
+@ 4:7  A->>|
+  A node (participant: Alice) 4:7-4:7 "" -> "A"
+  B node (actor) 4:7-4:7 "" -> "B"
+@ 5:8  A->>+|
+  A node (participant: Alice) 5:8-5:8 "" -> "A"
+  B node (actor) 5:8-5:8 "" -> "B"
+@ 6:12  activate |
+  A node (participant: Alice) 6:12-6:12 "" -> "A"
+  B node (actor) 6:12-6:12 "" -> "B"
+@ 7:15  note over A,|
+  A node (participant: Alice) 7:15-7:15 "" -> "A"
+  B node (actor) 7:15-7:15 "" -> "B"
+@ 8:4  B|
+  B node (actor) 8:3-8:4 "B" -> "B"

@@ -1,0 +1,7 @@
+sequenceDiagram
+  participant A
+  A->>: no target
+  note A: no position
+  else stray
+  B->>A: still parsed
+  loop unclosed

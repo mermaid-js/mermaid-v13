@@ -1,0 +1,10 @@
+%% rename-to: Alice
+sequenceDiagram
+  participant A
+  |A->>B: Hello
+  alt yes
+    B-->>A: ok
+  else no
+    note over A,B: no
+  end
+  deactivate A
