@@ -91,6 +91,8 @@ test('without the plugin, nothing is bound and the warning is returned', async (
  */
 async function setUp(page: Page): Promise<void> {
   await open(page);
+  // The test diagram is `width="100%"`: keep it small enough to fit the viewport.
+  await page.addStyleTag({ content: '#d { width: 300px; }' });
   await page.evaluate(async () => {
     await window.mermaid.registerExternalDiagrams([
       window.menuDiagram as never,

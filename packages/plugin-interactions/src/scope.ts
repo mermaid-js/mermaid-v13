@@ -1,5 +1,5 @@
 /**
- * Where one render's interactions bind (R-PLUG-9): the diagram root svgs inside the mount
+ * Where one render's interactions bind (R-PLUG-9): the diagram roots inside the mount
  * element, and the groups of each element in one svg. Two diagrams on a page can use the same
  * element ids (`data-id` is the name as written), so nothing here looks outside one svg.
  */
@@ -54,8 +54,8 @@ function dataIds(svg: string): string[] {
 }
 
 /**
- * The diagram root svgs in `el` that show `svgText`: `el` itself when it is one, else the
- * outermost svgs inside it. When there are several, only those with the render's `data-id`s in
+ * The diagram roots in `el` that show `svgText`: `el` itself when it is one, else the
+ * outermost `svg` elements inside it. When there are several, only those with the render's `data-id`s in
  * the same order (two identical drawings both match).
  */
 export function rootsFor(el: Element, svgText: string): Element[] {

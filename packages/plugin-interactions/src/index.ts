@@ -115,7 +115,7 @@ interface InteractionState {
 }
 
 /** What each diagram root svg has bound: the content key and how to undo it. */
-const boundSvgs = new WeakMap<Element, { key: string; teardown: () => void }>();
+const boundRoots = new WeakMap<Element, { key: string; teardown: () => void }>();
 
 function walk(node: AstNode, visit: (node: AstNode) => void): void {
   visit(node);
@@ -144,12 +144,12 @@ export const interactions: ExtensionPlugin<Element, unknown> = {
     const plans = FEATURES.map((f, i) => f.plan(collected[i], el.ownerDocument));
     const key = JSON.stringify(plans.map((p) => p.key));
     for (const svg of rootsFor(el, typeof svgText === 'string' ? svgText : '')) {
-      const before = boundSvgs.get(svg);
+      const before = boundRoots.get(svg);
       if (before?.key === key) continue;
       before?.teardown();
       const { scope, teardown } = createScope(svg);
       for (const p of plans) p.bind(scope);
-      boundSvgs.set(svg, { key, teardown });
+      boundRoots.set(svg, { key, teardown });
     }
   },
 };
