@@ -35,7 +35,7 @@ v13 closes the gap on **size, speed, theming and security** while keeping Mermai
 | **M1** | Core pipeline, flowchart only, built-in layered layout, SVG backend, themes (light/dark + v12 names), parser kit, parity oracle, benchmarks in CI, DOM adapter | D8, D18, D37 |
 | **M2** | ASCII/Unicode text output backend for flowcharts: text-grid kit in core, unit profile, API and CLI | D11, D24, D57, D58, D76–D87 |
 | **M2.5** | `@mermaid-js/language-service` + CodeMirror/Monaco adapters + LSP server (flowchart first) | D37, D88–D99 |
-| **M3** | sequence, class, state, ER | D34, D100–D105, D107–D129 |
+| **M3** | sequence, class, state, ER | D34, D100–D105, D107–D131 |
 | **M3.5** | Plugin platform: lazy-loaded first-party packages, plugin auto-discovery and CDN loading, ELK plugin, optional-feature packages, `neo` themes, core size budget | D106 |
 | **M4** | gantt, pie, mindmap, timeline, gitGraph, journey, quadrant | D34 |
 | **M5** | Remaining v12 diagram types | D34 |
@@ -266,7 +266,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-ASCII-6 | Two glyph sets: `unicode` box drawing (default) and pure `ascii`, chosen by `ascii.charset` (diagram text may set it). Solid, dotted and thick edges, every arrowhead kind, tees and all junctions (heavy and dashed included) have a glyph in both sets. | Must | M2 | D79 | Glyph-table specs; goldens in both sets |
 | R-ASCII-7 | The cell measurer counts grapheme clusters: East Asian Wide/Fullwidth and emoji take 2 cells, combining marks and ZWJ 0, for node, edge and subgraph labels alike. Each label line is one row; wrapping honours `wrappingWidth` converted to cells. | Must | M2 | D81 | Specs with CJK, emoji, ZWJ sequences, flags and combining marks |
 | R-ASCII-8 | `ascii.maxWidth` (columns) drives `availableWidth` in cells. Output is never cropped; an `ASCII_TOO_WIDE` warning is added when it still doesn't fit. | Should | M2 | D84 | Specs at several widths |
-| R-ASCII-9 | The `core/ascii` kit plus the flowchart's ascii entry stay within 15 KB gzip and are never loaded for an SVG render. ASCII render properties run over the whole in-repo flowchart corpus in both charsets in PR CI (no throw where SVG renders, deterministic, labels present, no overlapping boxes, row widths match `columns`, no trailing spaces). | Must | M2 | D87 | Size check; bundle test (SVG flowchart page loads no ascii chunk); property suite |
+| R-ASCII-9 | Each diagram type's text path (the `core/ascii` kit plus that type's ascii entry) stays within 15 KB gzip and is never loaded for an SVG render (D130). ASCII render properties run over the whole in-repo corpus of each type with text output, in both charsets, in PR CI (no throw where SVG renders, deterministic, labels present, no overlapping boxes, row widths match `columns`, no trailing spaces). | Must | M2 | D87, D130 | Size check per type (gate on the largest); bundle test (SVG page loads no ascii chunk); property suite |
 
 ## 19. Accessibility (R-A11Y)
 
