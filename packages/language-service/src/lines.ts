@@ -4,6 +4,7 @@
  * each. Lines and characters are 0-based, characters count UTF-16 code units (LSP's default).
  */
 import { LineIndex } from '@mermaid-js/core/parser-kit';
+import type { Range } from '@mermaid-js/core/parser-kit';
 import type { FoldingRange } from './folding.ts';
 import type { SemanticToken, SemanticTokenModifier, SemanticTokenType } from './semantic-tokens.ts';
 import { SEMANTIC_TOKEN_LEGEND } from './semantic-tokens.ts';
@@ -21,7 +22,8 @@ const CLOSER = /^[ \t]*(?:end|\}|---|\}%%)[ \t]*(?:\r\n|\r|\n)?$/;
 
 /**
  * Folding ranges by line. A range ends on the line of its last character, or the line before
- * when that line only closes the block (`end`, `}`, `---`, `}%%`); a range that then covers
+ * when that line only closes the block (`end`, `}`, `---`, `}%%`) and no range nested in it ends
+ * there (a closer that ends a nested block belongs to the range); a range that then covers
  * one line is left out, and so is a second range on the same start line (editors keep one).
  */
 export function lineFoldingRanges(
@@ -31,10 +33,19 @@ export function lineFoldingRanges(
 ): LineFoldingRange[] {
   const out: LineFoldingRange[] = [];
   const seen = new Set<number>();
+  const lastLine = (r: Range) => index.position(Math.max(r.start, r.end - 1)).line;
+  // The latest start among the ranges ending on each line: a range that starts later and ends
+  // on the same line is nested in it, and a closer there closes the nested block, not this one.
+  const latestStart = new Map<number, number>();
+  for (const { range } of ranges) {
+    const line = lastLine(range);
+    latestStart.set(line, Math.max(latestStart.get(line) ?? -1, range.start));
+  }
   for (const { range, kind } of ranges) {
     const startLine = index.position(range.start).line;
-    let endLine = index.position(Math.max(range.start, range.end - 1)).line;
-    if (CLOSER.test(text.slice(index.offset(endLine, 0), range.end))) endLine--;
+    let endLine = lastLine(range);
+    const nested = (latestStart.get(endLine) ?? -1) > range.start;
+    if (!nested && CLOSER.test(text.slice(index.offset(endLine, 0), range.end))) endLine--;
     if (endLine <= startLine || seen.has(startLine)) continue;
     seen.add(startLine);
     out.push({ startLine, endLine, kind });
