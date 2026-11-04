@@ -69,6 +69,52 @@ describe('sourceView: tag quotes and dropped semicolons', () => {
   });
 });
 
+/** The `%%{…}%%` ranges of `src`, as core's preprocess reports them. */
+const directivesOf = (src: string) =>
+  [...src.matchAll(/%%\{[\s\S]*?\}%%/g)].map((m) => ({
+    start: m.index,
+    end: m.index + m[0].length,
+  }));
+
+// v12 removed directives, then line comments from what was left, then dropped the semicolons
+// from that (#185): a directive that starts partway through a line takes its lines with it.
+describe('sourceView: directives that start mid-line', () => {
+  it.each([
+    ['classDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB', 'classDiagram\nA \nB', {}],
+    [
+      'flowchart LR\nA %%{init: {\n  %%x "a": 1}}%%\nB',
+      'flowchart LR\nA \nB',
+      { braceNewline: true },
+    ],
+  ])('a `%%` line inside one is not a comment: %j', (src, text, options) => {
+    const directives = directivesOf(src);
+    const view = sourceView(src, 0, directives, options);
+    expect(view.text).toBe(text);
+    expect(view.holes).toEqual(directives.map((d) => ({ ...d, kind: 'directive' })));
+  });
+
+  it.each([
+    ['classDiagram\nA : x %%{init: {"a":"style"}}%% :#y;\nB', 'classDiagram\nA : x  :&y;\nB', {}],
+    [
+      'flowchart LR\nA["x %%{init: {"a":"style"}}%% :#y; z"]\nB',
+      'flowchart LR\nA["x  :&y; z"]\nB',
+      { braceNewline: true },
+    ],
+  ])('text inside one does not drop a `;`: %j', (src, cooked, options) => {
+    const view = sourceView(src, 0, directivesOf(src), options);
+    expect(view.mask?.includes(DROP) ?? false).toBe(false);
+    expect(view.holes.map((h) => h.kind)).toEqual(['directive']);
+    expect(cook(src, 0, src.length, view)).toBe(cooked);
+  });
+
+  it("a `style` that the cut directive completes drops the line's last `;`", () => {
+    const src = 'sty%%{init: {}}%%le A fill:#f00;';
+    const view = sourceView(src, 0, directivesOf(src));
+    expect(view.holes.map((h) => h.kind)).toEqual(['directive', 'drop']);
+    expect(view.text).toBe('style A fill:#f00');
+  });
+});
+
 describe('cook', () => {
   it('decodes entity placeholders and turns CRLF into LF', () => {
     const src = 'x #amp; #35; #a\r\ny';
