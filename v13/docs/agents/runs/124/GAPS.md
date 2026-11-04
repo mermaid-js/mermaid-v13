@@ -11,7 +11,7 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 
 - No unmet criteria. D114 closed: diagram-er reads core's `sourceView` through `src/parser/view.ts`; its own `source.ts` is deleted, lexer parity still 100%.
 - Closed by #135: the ER lexer reports its start condition as the probe's `mode`.
-- Known limit: after an error, a stray `{` opens an attribute block in the lexer, so recovery skips to the next `}`.
+- Known limit: after an error, a stray `{` opens an attribute block in the lexer, so recovery skips to the next `}`. Accepted.
 - Not ported, with reasons in the port script: `erDb.spec.js` (calls the DB directly, no parse) and `erRenderer.spec.ts` (T4 territory).
 
 ## Core `sourceView` directive fix (#186, merged in)
@@ -21,7 +21,7 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 ## #132 T3 layout (merged)
 
 - No unmet criteria. Fixed at merge: `grammar/generated/*` was gitignored and never committed, so `check:grammar` failed in fresh worktrees (the flaky push after #131). Now force-added, as flowchart's are.
-- Core `layered` gap, not in the corpus, flowchart has it too: an edge from a group to its own member puts the label on the member (`G ||--|| A`, A in G). Belongs to a core ticket, not this spec. The other half, a group self-loop running outside the drawing, is fixed by #189 (merged in); `er-layout.spec.ts` now has an ER self-loop case, which fails in px without #189.
+- Core `layered` gap, not in the corpus, flowchart has it too: an edge from a group to its own member puts the label on the member (`G ||--|| A`, A in G). Accepted; core follow-up #198. The other half, a group self-loop running outside the drawing, is fixed by #189 (merged in); `er-layout.spec.ts` now has an ER self-loop case, which fails in px without #189.
 
 ## #133 T4 SVG renderer (merged)
 
@@ -44,9 +44,9 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 
 - Five findings fixed test-first, plus maxWidth. SVG changed for 58 of 215 ER corpus files (self-loops 42 px out instead of 26; ends along a side 26 px apart instead of 16).
 
-## Awaiting maintainer acceptance
+## Accepted (maintainer, 2026-11-04)
 
-1. **Very crowded entity sides draw narrow ends.** Where more ends share a side than fit (seven ends on a 48 px LR side), `fitEnds` draws the crow's-feet about 3 px wide so neighbours stay apart. Growing the entity to fit full-size ends would change box sizes. Accept, or grow the box.
-2. **Core `layered` label gap** (flowchart has it too, not in the corpus): an edge from a subgraph to its own member puts the label on the member. A core ticket, not this spec.
-3. **Quoted names get no definition** in the language service: 315 ER names written only in quotes, the same shared gap as flowchart's quoted subgraph ids; the oracle spec pins the count.
-4. **Known parser limit:** after an error, a stray `{` opens an attribute block, so recovery skips to the next `}`.
+1. **Very crowded entity sides draw narrow ends.** Where more ends share a side than fit (seven ends on a 48 px LR side), `fitEnds` draws the crow's-feet about 3 px wide so neighbours stay apart. Accepted: the box does not grow.
+2. **Core `layered` label gap** (flowchart has it too, not in the corpus): an edge from a subgraph to its own member puts the label on the member. Accepted for M3; core follow-up #198.
+3. **Quoted names get no definition** in the language service: 315 ER names written only in quotes, the same shared gap as flowchart's quoted subgraph ids; the oracle spec pins the count. Accepted for M3; cross-type follow-up #199.
+4. **Known parser limit:** after an error, a stray `{` opens an attribute block, so recovery skips to the next `}`. Accepted.
