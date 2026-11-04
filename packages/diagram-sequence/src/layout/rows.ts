@@ -68,7 +68,7 @@ export class Rows {
   readonly notes: NoteLayout[] = [];
   readonly activations: ActivationLayout[] = [];
   /** The start order of each entry of `activations`. */
-  private readonly barSeqs: number[] = [];
+  private readonly barStarts: number[] = [];
   private started = 0;
   readonly fragments: FragmentLayout[] = [];
   readonly rects: RectLayout[] = [];
@@ -148,9 +148,9 @@ export class Rows {
       end += m.activationShortTail;
     }
     // Listed in start order, though a bar is only known when it ends.
-    let at = this.barSeqs.length;
-    while (at > 0 && (this.barSeqs[at - 1] as number) > a.seq) at--;
-    this.barSeqs.splice(at, 0, a.seq);
+    let at = this.barStarts.length;
+    while (at > 0 && (this.barStarts[at - 1] as number) > a.seq) at--;
+    this.barStarts.splice(at, 0, a.seq);
     this.activations.splice(at, 0, {
       participant: a.actor,
       ...(a.ast !== undefined ? { ast: a.ast } : {}),
