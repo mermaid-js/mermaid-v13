@@ -1,3 +1,4 @@
+// cspell:words MLCAZ
 /**
  * The points that bound an SVG path as the sequence renderer writes it (absolute `M`, `L`,
  * `C`, `A` with no rotation, `Z`): every end point, plus the extremes of each cubic and each
@@ -8,7 +9,7 @@ export interface Point {
   readonly y: number;
 }
 
-const nums = (s: string): number[] =>
+const numbers = (s: string): number[] =>
   (s.match(/-?\d+(?:\.\d+)?(?:e[-+]?\d+)?/gi) ?? []).map(Number);
 
 /** The t in (0, 1) where one axis of a cubic turns. */
@@ -56,9 +57,9 @@ function arc(from: Point, args: number[]): Point[] {
   }
   const num = rx * rx * ry * ry - rx * rx * y1 * y1 - ry * ry * x1 * x1;
   const den = rx * rx * y1 * y1 + ry * ry * x1 * x1;
-  const coef = (large === sweep ? -1 : 1) * Math.sqrt(Math.max(0, num / den));
-  const cx1 = (coef * rx * y1) / ry;
-  const cy1 = (-coef * ry * x1) / rx;
+  const factor = (large === sweep ? -1 : 1) * Math.sqrt(Math.max(0, num / den));
+  const cx1 = (factor * rx * y1) / ry;
+  const cy1 = (-factor * ry * x1) / rx;
   const cx = cx1 + (from.x + to.x) / 2;
   const cy = cy1 + (from.y + to.y) / 2;
   const start = Math.atan2((y1 - cy1) / ry, (x1 - cx1) / rx);
@@ -80,7 +81,7 @@ export function pathPoints(d: string): Point[] {
   let at: Point = { x: 0, y: 0 };
   let start = at;
   for (const seg of d.match(/[MLCAZ][^MLCAZ]*/gi) ?? []) {
-    const n = nums(seg.slice(1));
+    const n = numbers(seg.slice(1));
     const cmd = seg[0]!.toUpperCase();
     if (cmd === 'Z') {
       at = start;
