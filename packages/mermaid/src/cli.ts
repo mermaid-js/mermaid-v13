@@ -52,7 +52,7 @@ class UsageError extends Error {}
 
 interface Command {
   file: string | undefined;
-  format: string;
+  format: 'ascii' | 'svg';
   /** `--charset` and `--width`: explicit, so they win over the diagram's own `ascii` config. */
   ascii: NonNullable<TextRenderOptions['ascii']>;
   warnings: boolean;
@@ -143,7 +143,6 @@ async function source(file: string | undefined): Promise<string> {
 
 async function render(cmd: Command, text: string): Promise<RenderResult | TextRenderResult> {
   const mermaid = createMermaid();
-  // The API owns the list of formats: anything but svg/ascii is its UnsupportedFormatError.
   const options = {
     format: cmd.format,
     config: CONFIG,

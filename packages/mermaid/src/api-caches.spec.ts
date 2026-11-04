@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { DiagramPlugin } from '@mermaid-js/core';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import { createMermaid, MermaidError } from './index.ts';
 import type { InitializeConfig } from './api.ts';
@@ -103,5 +104,26 @@ describe('text output context', () => {
     m.renderSync(FLOW, { format: 'ascii' });
     expect(typeof (seen as { charset?: unknown } | undefined)?.charset).toBe('string');
     expect(Object.isFrozen(seen)).toBe(true);
+  });
+});
+
+describe('the parse cache', () => {
+  it('keeps what parse() found, so prepare() right after does not parse again', async () => {
+    let parses = 0;
+    const counted: DiagramPlugin = {
+      id: 'counted',
+      layoutKind: 'custom',
+      detector: (text) => /^\s*counted/.test(text),
+      parse: () => {
+        parses++;
+        return { model: {}, diagnostics: [] } as never;
+      },
+      render: () => undefined as never,
+    };
+    const m = createMermaid();
+    await m.registerExternalDiagrams([counted]);
+    await m.parse('counted\n  a');
+    await m.prepare('counted\n  a');
+    expect(parses).toBe(1);
   });
 });
