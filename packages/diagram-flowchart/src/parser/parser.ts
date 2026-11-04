@@ -730,7 +730,9 @@ class FlowParser {
   private nodeSymbol(name: string, r: Range): void {
     const { db } = this;
     const creates = !db.vertices.has(name) && !db.hasEdge(name) && name.trim() !== '';
-    this.st.symbol(name, 'node', r, creates ? 'def' : 'ref');
+    // An edge id (`e1@{ … }`) names the edge: v12 never makes it a vertex.
+    const edge = !db.vertices.has(name) && db.hasEdge(name);
+    this.st.symbol(name, edge ? 'edge' : 'node', r, creates ? 'def' : 'ref');
   }
 
   private vertex(): FlowNodeStmt {
