@@ -10,7 +10,8 @@
     "pr": "tsx --conditions=mermaid-source src/cli/pr.ts",
     "gates": "tsx --conditions=mermaid-source src/cli/gates.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "language": "tsx --conditions=mermaid-source src/cli/language.ts"
+    "language": "tsx --conditions=mermaid-source src/cli/language.ts",
+    "language:sequence": "tsx --conditions=mermaid-source src/cli/language-sequence.ts"
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^",

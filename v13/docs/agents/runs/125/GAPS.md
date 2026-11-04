@@ -18,7 +18,7 @@ Unmet acceptance criteria, filed under the ticket that owns each one.
 - **Property and rename round-trip specs (recipe step 7) pick sequence up only with the manifest.** Run by hand over the 193 sequence corpus files with the eager row: no throw, no completion range off the cursor's line, every participant rename keeps the model. Re-check when #145 registers the facet.
 - **TextMate has no mode switch.** A `pop push(…)` lexer rule (participant id before `as` or `@{`, the `as`, the data's `}`) ends the TextMate scope, so TextMate colours a declaration's alias and data as statement text. Monarch and Lezer agree with the table. Documented exception in `tools/gen-grammar/src/sequence-categories.spec.ts`; the fix is in `tools/gen-grammar/src/highlight.ts` (cross-type, owner gen-grammar).
 - **Adapters colour first paint with flowchart's grammar (D119, accepted).** Picking a highlighter per type is #190.
-- No `./monarch.json` export yet (flowchart has one for the Monaco adapter); add it with #190 or #145.
+- No `./monarch.json` export: it feeds the adapters only (#190, D119, accepted).
 
 ## Shared contracts
 
