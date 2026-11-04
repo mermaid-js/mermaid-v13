@@ -22,3 +22,7 @@ Unmet acceptance criteria and announced contracts, under the ticket that owns ea
 - #154 (T2): add the class line to `PARITY_SUITES` with the model adapter.
 - Not class-specific, for the maintainer: with a comment line straight after a multi-line `%%{`, v12 keeps the text, but core's preprocess still reads a directive (D67). The class lexer suite excludes that injection case.
 - Lexing is ~1 µs/char on token-dense lines (linear); size/speed work is for milestone close.
+
+## #154 (T2) shared source view (D114)
+
+- v12's input cleanup (offset-preserving source view, `packages/diagram-class/src/parser/source.ts`, a copy of flowchart's) moves into core's parser kit under the state spec's T0 (draft PR into `mermaid-v13`). Keep the class copy until that merges; then switch diagram-class to the shared one and delete the copy. Whichever of that T0 and #152 merges second rebases and reruns `pnpm check`.
