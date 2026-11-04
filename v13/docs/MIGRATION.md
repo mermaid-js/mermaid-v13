@@ -436,6 +436,50 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
   `divider` node. v13 draws the composite without regions and gives one `EMPTY_REGION` warning
   per diagram (D115).
 
+## State diagram SVG structure
+
+What changed in the state diagram's SVG compared with both v12 renderers: the unified renderer
+(`stateRenderer-v3-unified`, `stateDiagram-v2` and the shared shapes) and the old dagre renderer
+(`stateRenderer.js` + `shapes.js`, which v12 still used for the `stateDiagram` keyword). v13 has
+one renderer for both keywords (D101). v12 class names that still describe something are kept
+(`statediagram-state`, `statediagram-cluster`, `statediagram-cluster-alt`, `statediagram-note`,
+`transition`, `note-edge`, `state-start`, `state-end`, `end-state-inner`, `fork-join`, `divider`,
+`outer`, `inner`, `cluster-label`, `edgeLabel`, user `classDef` classes).
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `class="statediagram"`, `aria-roledescription="stateDiagram"`; old renderer: a `<g id="<id>-root">` and a `viewBox` from `getBBox()` (often negative), width ×1.75 | No root `id`; `class="mermaid mermaid-state statediagram"`, `role="img"`, `data-mermaid-version`, `viewBox="0 0 w h"` from the layout | The only ids are `<id>-title` and `<id>-desc` (R-A11Y-1); no DOM measuring (R-TEXT-4) |
+| `<style>` with `state/styles.js` CSS scoped by the root id; `[data-look]` rules | No `<style>` (except `theme: 'auto'`); colours are presentation attributes reading `var(--_x)` aliases; no `data-look` | Inert output (R-SEC-2); `look` is removed (D153) |
+| Unified: `<g class="root">` with `clusters`, `edgePaths`, `edgeLabels`, `nodes`; old: a nested `<g class="stateGroup" id>` per state and per composite, laid out by one dagre run per composite | Root children are `clusters`, `edgePaths`, `edgeLabels`, `nodes`, one layout for the whole diagram | One drawing, one layout (#144) |
+| Element ids `state-<id>-<n>`, `edge<n>`, `<id>----note-<n>` | `data-id` (the state id, `edge<n>`, `<composite>:region<k>`, the note's `note:<k>`) and `data-ast` (`n:A`, `s:X`, `r:X#1`, `e:A>B`, `note:1`) | Ids are global in a page; `data-ast` maps an element to its source (R-PARSE-8) |
+| `<defs>` with `<marker id="…-barbEnd">` (unified), `dependencyEnd` (old), `marker-end="url(#…)"`; drop-shadow `<filter>`s under the neo look | Arrowheads are `<path class="marker">` in each transition's group, the flowchart's point arrowhead with the theme's `arrowhead*` geometry; the shadow is the `dropShadow` CSS filter, no `<filter>` | No `<defs>` or ids (D35); state reads as one family with flowchart (R-THEME-11) |
+| Labels: `<foreignObject>` HTML (unified) or `<text>` (old) | `<text>`/`<tspan>` | No HTML mode (D5) |
+| State: `<g class="node statediagram-state" id>` with `<rect class="basic label-container">` and `<g class="label">` | `<g class="node statediagram-state …" data-id data-ast transform>` with a `<rect rx="5">` and a `<text>` | Fewer elements |
+| Described state (`rectWithTitle`): `<rect class="outer title-state">`, `<line class="divider">`, two HTML labels; old: `state-title` text, `descr-divider` line, `state-description` text | `<rect>`, `<text class="state-title">`, `<line class="divider">`, `<text class="state-description">` | Text labels |
+| Start: `<circle class="state-start">`; end: roughjs paths (`outer-path`), old renderer two circles `end-state-outer` / `end-state-inner` | Start `<circle class="state-start">`; end `<circle class="state-end">` (the ring) and `<circle class="end-state-inner">` (the dot) | Plain circles, no roughjs |
+| Choice, fork and join: roughjs `<path>`s | `<polygon>` (choice) and `<rect class="fork-join">` | Plain shapes |
+| Composite (`roundedWithTitle`): `<g class="… statediagram-cluster" id data-look>` with `rect.outer`, `rect.inner` and an HTML `cluster-label`; old: `composit` / `alt-composit` rects and a `state-title` text | `<g class="statediagram-state statediagram-cluster [statediagram-cluster-alt] …" data-id data-ast>` with `rect.outer`, `rect.inner` and `<text class="cluster-label">` | Text labels; one element per composite |
+| Concurrency region: a cluster `<g>` with a dashed `<rect class="divider">` filled `altBackground` (and the palette tint) around each region; old: a `<line class="divider">` per `--` node | Each region is `<g class="statediagram-state statediagram-cluster statediagram-region" data-ast="r:X#k">` with an `<rect class="region">` with no fill or stroke; between neighbouring regions the composite holds a dashed `<line class="divider">` from the layout's `dividers`, in the composite's border colour | Regions read as one composite split in parts; the lines come from region geometry (#144) |
+| Note: a `noteGroup` cluster around the note and its state, `<g class="node statediagram-note">` with a roughjs path | No note group; `<g class="node statediagram-note" data-ast="note:k">` with a `<rect>` | A note sits in its state's scope (#144) |
+| Note edge: `<path class="transition note-edge …">`, dashed by CSS or the neo dash generator | `<g class="transition note-edge edge-thickness-normal edge-pattern-dashed" data-id>` with a `<path stroke-dasharray="5">`, no arrowhead and no `data-ast` (the note element carries the note's AST id) | One `data-ast` per AST node (R-PARSE-8) |
+| Transition: `<path class="transition …" id>` in `edgePaths` | `<g class="transition edge-thickness-normal edge-pattern-solid" data-id data-ast>` holding the `<path>` and its arrowhead | One element per transition |
+| Edge label: `<g class="edgeLabel">` with HTML, background at 50% opacity; old: `<g class="stateLabel">` with a `rect.box` | `<g class="edgeLabel" data-id>` with an opaque `edgeLabelBackground` `<rect>` and a `<text>` | As flowchart |
+| `click`: the node wrapped in `<a xlink:href target="_blank" title>` after drawing | `<a href target="_blank">` inside the node group (only URLs that pass `securityLevel`), tooltip as an SVG `<title>`; a composite is not linked (v12 searched `g.node` only) | No script in output (R-SVG-4, R-SVG-5) |
+| `data-color-id` on composites and regions, coloured by `[data-color-id]` CSS rules: outline and title strip tinted, regions tinted | The same `data-color-id="color-<n>"`, slot per composite in declaration order, shared by its regions; a styled composite spends its slot unpainted. Colours are attributes; the region frames are not tinted | Palette from `borderColorArray` / `bkgColorArray` only, never a theme name (D152) |
+| `classDef` / `style` as CSS (`.name > * { … !important }`), reaching the composite body but not its title strip | Presentation attributes after the allow-list (R-SEC-3), on a state's shape, on both of a composite's rects, and `color` on the label only | Unknown properties and unsafe values are dropped with a warning |
+| Front-matter `title` drawn as `statediagramTitleText` | Not drawn | As flowchart |
+
+Colours map to theme variables v13 already has (D152): states `mainBkg` / `nodeBorder` /
+`nodeTextColor` (v12 `stateBkg`, `stateBorder`, the node label colour), start, fork and join
+`lineColor` (v12 `specialStateColor`), the end dot `nodeBorder` (v12 `innerEndBackground`),
+transitions `lineColor` and `arrowheadColor` (v12 `transitionColor`), labels `textColor` on
+`edgeLabelBackground`, composite bodies `background` (v12 `compositeBackground`), composite
+titles `titleColor`, notes `noteBkgColor` / `noteBorderColor` / `noteTextColor`. v12's
+`compositeTitleBackground` and `altBackground` have no core variable yet: both are drawn with
+`clusterBkg`, which is v12's value in the redux family but not in the classic one (classic v12
+drew `mainBkg` and `#f0f0f0`). The composite outline radius is `radius`; the state radius (5),
+the end-state stroke (2) and the dash patterns are the same in every v12 look, so constants.
+
 ## Front matter and directives
 
 Front matter (`---` … `---`) and `%%{init: …}%%` directives are read as in v12, without

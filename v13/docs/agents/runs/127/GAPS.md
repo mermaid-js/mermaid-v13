@@ -10,7 +10,7 @@ Unmet criteria and shared contracts, by owning ticket.
 
 - [x] Done in #144: nested-group model, frame stretch, D113 edges, region checks in
   `conformance/src/state/layout.spec.ts`. Prototype folder deleted.
-- [ ] **Engine gap (state T0 candidate, maintainer):** `layered` leaves a group's self-loop and
+- [x] **Engine gap (fixed by state T0 #187):** `layered` leaves a group's self-loop and
   its label out of the drawing's extent (`v2-a-compound-state-should-be-able-to-link-to-itself`,
   `Active --> Active`): the loop runs off the right edge. Pinned as `ENGINE_GAPS` in the layout
   spec; no core change from #144 (D102).
@@ -35,6 +35,26 @@ Unmet criteria and shared contracts, by owning ticket.
 
 - `StateModel` ids are v12's (`root_start`, `X_end`, `X:region1`). A state's `parent` is its composite or region. Notes carry no parent: v12 put every note group at the top level.
 - v12 render-data specs (`stateNoteEdge`, `stateNoteNode`, `stateDiagram-colorIndex`) are ported as skips for the builder and renderer: note edges dashed, a note on a composite is no group, one palette slot per composite shared by its regions. The renderer specs (`stateRenderer*.spec.js`) were not ported.
+  - [x] Done in #146: note connectors dashed with no arrowhead, no note group, one slot per
+    composite shared by its regions (styled composites spend theirs unpainted). Checked through
+    the render entry in `diagram-state/src/render/render.spec.ts`; the v12 specs stay skipped
+    (they read v12's `getData`, which v13 has no equivalent of).
+
+## #146 T4 renderer
+
+- [ ] **Escalated (state T0 candidate, theme variables):** v12's `compositeTitleBackground` and
+  `altBackground` are not core variables. The renderer draws both with `clusterBkg`, which is
+  v12's value in the redux family (`#f9f9fb`) but not in classic (v12: `mainBkg`, `#f0f0f0`).
+  Adding the two variables is a core change (vocabulary, every theme spec, schema), so not here
+  (D102). MIGRATION.md "State diagram SVG structure" lists the mapping.
+- [ ] **Escalated:** v12 tinted each concurrency region with its composite's palette fill; v13
+  draws the regions unfilled (dashed dividers only), as tinted frames left untinted strips at
+  every divider gap. And the front-matter `title` is not drawn (as flowchart's SVG).
+- Fixed in #146 (layout, #144 code): the region stretch ignored the composite's title height,
+  so region frames and dividers ran over the title band. And a classDef's `color` painted the
+  shape too (v12's `textStyles` repeat it as `fill`); only the label takes it now.
+- The composite self-loop engine gap (#187) is fixed in core and merged: every corpus file
+  draws inside its viewBox.
 
 ## Answered (from #142)
 
@@ -50,7 +70,7 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## Composite self-loop (from #144)
 
-- [x] Closed: #189 merged into `mermaid-v13` (`f9fafcd93`) and here; `ENGINE_GAPS` is empty. Was: maintainer "Fix in core now". State T0 #187 (PR #189): the layered engine counts a group's self-loop and its label in the drawing and parent sizes. When it merges into `mermaid-v13`, merge it here and remove the case from `ENGINE_GAPS` in `conformance/src/state/layout.spec.ts`.
+- [x] Closed: #189 merged into `mermaid-v13` (`f9fafcd93`) and here; `ENGINE_GAPS` is empty, and #146 dropped the pinned file from the render viewBox check: the self-loop now draws inside the viewBox.
 
 ## #148 T5 integration (from #151)
 
