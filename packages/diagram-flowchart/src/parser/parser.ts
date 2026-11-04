@@ -824,7 +824,9 @@ class FlowParser {
   private nodeSymbol(name: string, r: Range): void {
     const { db } = this;
     const creates = !db.vertices.has(name) && !db.hasEdge(name) && name.trim() !== '';
-    this.st.symbol(name, 'node', r, creates ? 'def' : 'ref');
+    // An edge id (`e1@{ … }`) names the edge: v12 never makes it a vertex.
+    const edge = !db.vertices.has(name) && db.hasEdge(name);
+    this.st.symbol(name, edge ? 'edge' : 'node', r, creates ? 'def' : 'ref');
   }
 
   private vertex(): FlowNodeStmt {
@@ -1136,7 +1138,8 @@ class FlowParser {
     const { db } = this;
     const at = this.i;
     const id = this.raw(this.i++);
-    this.refs(id, this.range(at), 'node', 'ref', out);
+    // The token's own range: `range` would widen it over `click`.
+    this.refs(id, { start: this.start(at), end: this.end(at) }, 'node', 'ref', out);
     this.tested(CLICK_ACTION);
     const k = this.kind();
     if (k === T.CallbackName) {

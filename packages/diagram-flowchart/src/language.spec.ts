@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flowchartLanguage } from './language.ts';
+import { flowchartLanguage, language } from './language.ts';
 
 describe('flowchart language facet: isValidId (rename, D92)', () => {
   it.each(['A', 'node1', 'my_node', 'a-b', '1', 'café', 'End', 'ends', 'default'])(
@@ -60,5 +60,22 @@ describe('flowchart language facet: parse, categories, namespaces', () => {
 
   it('puts nodes and subgraphs in one name space, classes and edges in their own', () => {
     expect(flowchartLanguage.namespaces).toEqual([['node', 'subgraph'], ['class'], ['edge']]);
+  });
+});
+
+describe('flowchart language facet: isValidId by symbol kind', () => {
+  it('checks class names as classDef reads them', () => {
+    expect(flowchartLanguage.isValidId('hot', 'class')).toBeUndefined();
+    expect(flowchartLanguage.isValidId('a,b', 'class')).toBe("'a,b' is not a class name.");
+    expect(flowchartLanguage.isValidId('a b', 'class')).toBe('An id cannot contain spaces.');
+  });
+
+  it('checks edge ids as `id@-->` reads them', () => {
+    expect(flowchartLanguage.isValidId('e1', 'edge')).toBeUndefined();
+    expect(flowchartLanguage.isValidId('"q"', 'edge')).toBe('\'"q"\' is not an edge id.');
+  });
+
+  it('is exported under the fixed name `language`', () => {
+    expect(language).toBe(flowchartLanguage);
   });
 });

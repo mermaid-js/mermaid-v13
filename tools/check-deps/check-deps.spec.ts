@@ -34,7 +34,17 @@ describe('runtime dependency check (R-PERF-2)', () => {
   it('fails when core declares a runtime dependency', () => {
     const bad = pkg('packages/core', { name: '@mermaid-js/core', dependencies: { khroma: '^2' } });
     expect(findDependencyViolations([bad])).toEqual([
-      '@mermaid-js/core: runtime dependency "khroma" is not allowed (core and diagram packages have zero runtime dependencies)',
+      '@mermaid-js/core: runtime dependency "khroma" is not allowed (core, diagram and language-service packages have zero runtime dependencies)',
+    ]);
+  });
+
+  it('fails when the language service declares a runtime dependency (R-LANG-1)', () => {
+    const bad = pkg('packages/language-service', {
+      name: '@mermaid-js/language-service',
+      dependencies: { '@mermaid-js/core': 'workspace:^' },
+    });
+    expect(findDependencyViolations([core, bad])).toEqual([
+      '@mermaid-js/language-service: runtime dependency "@mermaid-js/core" is not allowed (core, diagram and language-service packages have zero runtime dependencies)',
     ]);
   });
 
@@ -53,7 +63,7 @@ describe('runtime dependency check (R-PERF-2)', () => {
       peerDependencies: { dagre: '^1' },
     });
     expect(findDependencyViolations([core, bad])).toEqual([
-      '@mermaid-js/diagram-pie: runtime dependency "d3" is not allowed (core and diagram packages have zero runtime dependencies)',
+      '@mermaid-js/diagram-pie: runtime dependency "d3" is not allowed (core, diagram and language-service packages have zero runtime dependencies)',
       '@mermaid-js/diagram-pie: peer dependency "dagre" is not a workspace package',
     ]);
   });

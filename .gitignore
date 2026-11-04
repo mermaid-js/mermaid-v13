@@ -65,6 +65,7 @@ generated/
 !packages/core/src/config/generated/
 !packages/diagram-*/src/generated/
 !packages/mermaid/src/generated/
+!packages/language-service/src/generated/
 
 
 /CLAUDE.md

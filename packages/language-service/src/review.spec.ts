@@ -1,0 +1,191 @@
+/**
+ * Edge cases from the #31 review: rename checked in context, facet loading failures,
+ * immutability and the semantic token types around subgraphs.
+ */
+import { describe, expect, it } from 'vitest';
+import { flowchartLanguage } from '@mermaid-js/diagram-flowchart/language';
+import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
+import { createLanguageService } from './index.ts';
+import type { DocumentSnapshot, FacetEntry, RenameResult } from './index.ts';
+
+const service = createLanguageService();
+let n = 0;
+const open = async (text: string): Promise<DocumentSnapshot> => {
+  const doc = service.update(`review:///${n++}`, text);
+  return (await doc.pending) ?? doc;
+};
+const at = (text: string, needle: string, k = 1): number => {
+  let i = -1;
+  for (let j = 0; j < k; j++) i = text.indexOf(needle, i + 1);
+  if (i < 0) throw new Error(`no ${needle}`);
+  return i;
+};
+const applied = (text: string, r: RenameResult): string => {
+  if (!('edits' in r)) throw new Error(r.refused);
+  let out = text;
+  for (const e of [...r.edits].sort((a, b) => b.range.start - a.range.start))
+    out = out.slice(0, e.range.start) + e.newText + out.slice(e.range.end);
+  return out;
+};
+const renamed = async (text: string, needle: string, k: number, to: string) =>
+  (await open(text)).rename(at(text, needle, k), to);
+
+describe('rename is checked in context (D92)', () => {
+  it.each([
+    ['flowchart TD\nA-->B\n', 'A', 1, 'x-'],
+    ['flowchart TD\nB---A\n', 'A', 1, 'o'],
+    ['flowchart TD\nA-->B\nB:::foo\n', 'B', 2, 'C:'],
+    ['flowchart TD\nA --> B\nclassDef foo fill:red\nclass A foo\n', 'foo', 1, 'a,b'],
+  ])(
+    'refuses a rename that reads differently in place: %j, %s #%i → %s',
+    async (text, needle, k, to) => {
+      const r = await renamed(text, needle, k, to);
+      expect(r).toEqual({ refused: expect.stringContaining(`'${to}'`) as unknown });
+    }
+  );
+
+  it('accepts names that read back the same', async () => {
+    const cls = 'flowchart TD\nA --> B\nclassDef foo fill:red\nclass A foo\nA:::foo\n';
+    expect(applied(cls, await renamed(cls, 'foo', 1, 'bar'))).toBe(cls.replace(/foo/g, 'bar'));
+    const edge = 'flowchart TD\nA e1@--> B\n';
+    expect(applied(edge, await renamed(edge, 'e1', 1, 'e9'))).toBe('flowchart TD\nA e9@--> B\n');
+  });
+
+  it('renames one id in a click list without touching a longer one', async () => {
+    const text = 'flowchart TD\nA --> AA\nclick A,AA callback\n';
+    expect(applied(text, await renamed(text, 'A', 1, 'Q'))).toBe(
+      'flowchart TD\nQ --> AA\nclick Q,AA callback\n'
+    );
+  });
+
+  it('covers an edge id in `e1@{ … }` in the edge namespace', async () => {
+    const text = 'flowchart TD\nA e1@--> B\ne1@{ animate: true }\n';
+    const doc = await open(text);
+    expect(doc.references(at(text, 'e1', 2)).map((r) => r.start)).toEqual([
+      at(text, 'e1'),
+      at(text, 'e1', 2),
+    ]);
+    expect(applied(text, doc.rename(at(text, 'e1'), 'e9'))).toBe(text.replace(/e1/g, 'e9'));
+  });
+});
+
+const fake = (id: string): LanguageFacet => ({ ...flowchartLanguage, id });
+const row = (type: string, load: FacetEntry['load']): FacetEntry => ({
+  type,
+  id: type,
+  detector: (text) => text.startsWith(type),
+  load,
+});
+const settle = async (doc: DocumentSnapshot): Promise<DocumentSnapshot> => {
+  let d = doc;
+  for (let i = 0; i < 3 && d.pending; i++) d = await d.pending;
+  return d;
+};
+
+describe('facet loading', () => {
+  it('treats a loader that resolves to something other than a facet as failed', async () => {
+    let loads = 0;
+    const s = createLanguageService({
+      facets: [
+        row('zzz', () => {
+          loads++;
+          return Promise.resolve(undefined as unknown as LanguageFacet);
+        }),
+      ],
+    });
+    const doc = await settle(s.update('x', 'zzz\n'));
+    expect(doc.pending).toBeUndefined();
+    expect(loads).toBe(1);
+    expect(doc.diagnostics().map((d) => d.code)).toEqual(['LANGUAGE_LOAD_FAILED']);
+  });
+
+  it('handles a loader that throws at once like a rejected one, with its own message', async () => {
+    const s = createLanguageService({
+      facets: [
+        row('yyy', () => {
+          throw new Error('boom');
+        }),
+        row('www', () => Promise.reject(new Error('offline'))),
+      ],
+    });
+    const sync = await settle(s.update('x', 'yyy\n'));
+    const async = await settle(s.update('y', 'www\n'));
+    expect(sync.diagnostics()).toEqual([
+      expect.objectContaining({
+        code: 'LANGUAGE_LOAD_FAILED',
+        message: expect.stringContaining('boom') as unknown,
+      }),
+    ]);
+    expect(async.diagnostics()[0]?.message).toContain('offline');
+    expect(async.diagnostics()[0]?.message).not.toContain('not supported');
+  });
+
+  it('keeps a replaced first-party row apart from the other rows of the same diagram id', async () => {
+    const s = createLanguageService({
+      facets: [
+        {
+          type: 'flowchart-v2',
+          id: 'flowchart',
+          detector: (text) => /^\s*(graph|flowchart)/.test(text),
+          load: () => Promise.resolve(fake('custom')),
+        },
+      ],
+    });
+    const elk = await settle(s.update('a', 'flowchart-elk TD\nA-->B\n'));
+    const v2 = await settle(s.update('b', 'flowchart TD\nA-->B\n'));
+    expect(elk.facet?.id).toBe('flowchart');
+    expect(v2.facet?.id).toBe('custom');
+  });
+});
+
+describe('snapshots are immutable', () => {
+  it('freezes what queries return', async () => {
+    const doc = await open('flowchart TD\nA-->B\nA -->\n');
+    const tokens = doc.semanticTokens();
+    expect(() => {
+      (tokens as unknown[]).length = 0;
+    }).toThrow();
+    expect(doc.semanticTokens().length).toBeGreaterThan(0);
+    const diags = doc.diagnostics();
+    expect(Object.isFrozen(diags)).toBe(true);
+    expect(Object.isFrozen(diags[0])).toBe(true);
+    expect(Object.isFrozen(doc.foldingRanges())).toBe(true);
+    const def = doc.definition(13);
+    expect(Object.isFrozen(def)).toBe(true);
+  });
+});
+
+describe('semantic tokens around subgraphs (D94)', () => {
+  const typed = (doc: DocumentSnapshot) =>
+    doc
+      .semanticTokens()
+      .filter((t) => t.type === 'node' || t.type === 'subgraph')
+      .map(
+        (t) => `${doc.text.slice(t.range.start, t.range.end)} ${t.type} [${t.modifiers.join(',')}]`
+      );
+
+  it('types a subgraph id as subgraph when an edge names it first', async () => {
+    const text = 'flowchart TD\nA-->S\nsubgraph S\n  a\nend\n';
+    const doc = await open(text);
+    expect(typed(doc)).toEqual([
+      'A node [declaration,definition]',
+      'S subgraph []',
+      'S subgraph [declaration,definition]',
+      'a node [declaration,definition]',
+    ]);
+    expect(doc.definition(at(text, 'S'))).toEqual({
+      start: at(text, 'S', 2),
+      end: at(text, 'S', 2) + 1,
+    });
+  });
+
+  it('gives an edge to an earlier subgraph no declaration', async () => {
+    const doc = await open('flowchart TD\nsubgraph S\n  a\nend\nA --> S\n');
+    expect(typed(doc)).toEqual([
+      'S subgraph [declaration,definition]',
+      'a node [declaration,definition]',
+      'A node [declaration,definition]',
+      'S subgraph []',
+    ]);
+  });
+});
