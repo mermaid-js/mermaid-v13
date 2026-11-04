@@ -59,6 +59,9 @@ export interface CEdge {
   minlen: number;
   labelW: number;
   labelH: number;
+  // Sizes of the edge-end labels (D102), when the edge has them.
+  start?: { width: number; height: number };
+  end?: { width: number; height: number };
   // x, y, axis triples; axis is 0 where the edge runs vertically into the point, 1 horizontally.
   route: number[];
   labelX: number;
@@ -665,6 +668,15 @@ export function compoundLayout(
   const endpointBelow = (item: number, e: CEdge, out: boolean): boolean =>
     (out ? e.src : e.dst) !== item;
 
+  // The room an edge-end label takes along the flow of its level, with the room before it (D102).
+  const endRoom = (
+    size: { width: number; height: number } | undefined,
+    vertical: boolean,
+    head: boolean
+  ): number =>
+    size
+      ? (vertical ? size.height : size.width) + M.endLabelAlong + (head ? (opt.headRoom ?? 0) : 0)
+      : 0;
   const build = (
     level: Level,
     sized: boolean
@@ -704,6 +716,8 @@ export function compoundLayout(
         edge.headDx = offset(le.b, le.e, false);
         edge.tailFixed = held(le.a, le.e, true);
         edge.headFixed = held(le.b, le.e, false);
+        if (le.a === e.src) edge.tailEnd = endRoom(e.start, vertical, false);
+        if (le.b === e.dst) edge.headEnd = endRoom(e.end, vertical, true);
       }
       ledges.push(edge);
     }
@@ -717,12 +731,15 @@ export function compoundLayout(
         lnodes.push(ln);
         dummies[i] = d;
         const edge = port.out ? ledge(local[port.inner]!, d) : ledge(d, local[port.inner]!);
+        const e = edges[port.e]!;
         if (port.out) {
           edge.tailDx = offset(port.inner, port.e, true);
           edge.tailFixed = held(port.inner, port.e, true);
+          if (sized && port.inner === e.src) edge.tailEnd = endRoom(e.start, vertical, false);
         } else {
           edge.headDx = offset(port.inner, port.e, false);
           edge.headFixed = held(port.inner, port.e, false);
+          if (sized && port.inner === e.dst) edge.headEnd = endRoom(e.end, vertical, true);
         }
         ledges.push(edge);
       } else {
