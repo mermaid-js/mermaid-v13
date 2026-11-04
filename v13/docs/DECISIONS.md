@@ -218,6 +218,7 @@ D100–D139 are M3's (D140–D149 stay M2's). One spec per type, following `agen
 | D120 | **`compositeTitleBackground` and `altBackground` become core theme variables.** State's composite title bars and alternate backgrounds read them, with v12's values per family: `clusterBkg` in the redux themes; `mainBkg` and `#f0f0f0` in the classic themes. A state T0 adds them to the vocabulary, the theme specs and the schema (D102, D152). Until it merges, state draws both with `clusterBkg`. |
 | D121 | **Concurrency regions are not tinted.** v12 filled each region with its composite's palette fill. v13 leaves regions unfilled and draws only the dashed dividers, because tinted frames left untinted strips in the gaps between regions. MIGRATION.md lists it. |
 | D122 | **State's SVG does not draw the front-matter `title`, as flowchart's doesn't.** Drawing the title is one cross-type decision for later, not a per-diagram choice. The title still feeds the accessible name. |
+| D123 | **Sequence `create` and `destroy` attach to the message they belong to.** In three corpus sources v12 attached a `create` or `destroy` to the wrong message. v13 attaches it to the right one: a deliberate fix, listed in `divergences.json` with this D-id and in MIGRATION.md's "Sequence syntax" section. Syntax acceptance is unchanged (P2). |
 
 ## Release (2026-11-04)
 
