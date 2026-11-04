@@ -415,6 +415,15 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 - **`maxEdges`** (default 5,000; v12 had 500) is still the edge limit; going over it fails
   with a `LIMIT` error. See Limits under Public API.
 
+## State diagram syntax
+
+### Removed v12 behaviour
+
+- **A trailing empty concurrency region** (a composite state whose last `--` has nothing after
+  it) is not drawn. v12 split no regions there and drew each `--` as a stray, unlabelled
+  `divider` node. v13 draws the composite without regions and gives one `EMPTY_REGION` warning
+  per diagram (D115).
+
 ## Front matter and directives
 
 Front matter (`---` … `---`) and `%%{init: …}%%` directives are read as in v12, without

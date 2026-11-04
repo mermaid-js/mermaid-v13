@@ -115,8 +115,10 @@ export interface StateItem {
   start?: boolean;
   /** AST id of this mention (a `--`: of the region it closes). */
   ast: AstId;
-  /** A composite split by `--`: the AST id of its last region. */
-  tail?: AstId;
+  /** A `--`: the ordinal of the region it closes within its composite. */
+  region?: number;
+  /** A composite split by `--`: its last region's AST id and ordinal. */
+  tail?: { ast: AstId; region: number };
   range: Range;
 }
 
@@ -205,6 +207,7 @@ export class StateBuilder {
   private readonly transitions: StateTransition[] = [];
   private readonly notes: StateNote[] = [];
   private edgeCount = 0;
+  private emptyRegionWarned = false;
   private accTitle = '';
   private accDescr = '';
 
@@ -291,17 +294,25 @@ export class StateBuilder {
     }
     if (regions.length > 0 && current.length > 0) {
       const last = regions[regions.length - 1] as StateItem;
-      regions.push({ ...last, doc: current, ast: item.tail ?? last.ast });
-      for (const r of regions)
-        r.id = regionId(item.id, Number(r.ast.slice(r.ast.lastIndexOf('#') + 1)));
+      regions.push({
+        ...last,
+        doc: current,
+        ast: item.tail?.ast ?? last.ast,
+        region: item.tail?.region ?? regions.length + 1,
+      });
+      regions.forEach((r, k) => (r.id = regionId(item.id, r.region ?? k + 1)));
       item.doc = regions;
     } else if (regions.length > 0) {
-      // v12 splits nothing when the last region is empty, and draws each `--` as a stray node.
-      this.ctx.warn(
-        'EMPTY_REGION',
-        'A `--` separator needs states after it: the composite state is drawn without regions.',
-        regions[regions.length - 1]?.range ?? item.range
-      );
+      // v12 splits nothing when the last region is empty and draws each `--` as a stray node.
+      // D115: drop them and warn, once per diagram.
+      if (!this.emptyRegionWarned) {
+        this.emptyRegionWarned = true;
+        this.ctx.warn(
+          'EMPTY_REGION',
+          'A `--` separator needs states after it: a composite state whose last region is empty is drawn without regions.',
+          regions[regions.length - 1]?.range ?? item.range
+        );
+      }
       item.doc = item.doc.filter((s) => !(s.stmt === 'state' && s.type === DIVIDER));
     }
     for (const stmt of item.doc) this.translate(item.id, stmt, true);

@@ -28,9 +28,9 @@ Unmet criteria and shared contracts, by owning ticket.
 - `StateModel` ids are v12's (`root_start`, `X_end`, `X:region1`). A state's `parent` is its composite or region. Notes carry no parent: v12 put every note group at the top level.
 - v12 render-data specs (`stateNoteEdge`, `stateNoteNode`, `stateDiagram-colorIndex`) are ported as skips for the builder and renderer: note edges dashed, a note on a composite is no group, one palette slot per composite shared by its regions. The renderer specs (`stateRenderer*.spec.js`) were not ported.
 
-## Open question (from #142, escalated)
+## Answered (from #142)
 
-- A composite whose last `--` has nothing after it: v12 splits no regions and draws each `--` as a stray `divider` node with an empty label. v13 drops the stray nodes and warns `EMPTY_REGION`. No corpus source has it, so `divergences.json` lists nothing; needs a D-id if kept.
+- [x] **Trailing empty concurrency region** (D115, "Drop it, warn"): v13 does not draw it (v12 drew each `--` as a stray `divider` node) and gives one `EMPTY_REGION` warning per diagram. MIGRATION.md lists it under state's "Removed v12 behaviour".
 
 ## Outside this spec (seen after merging `mermaid-v13` at `5a6425d8e`)
 

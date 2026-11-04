@@ -24,3 +24,9 @@ export function blankAt(src: string, at: number): string {
 export function trimColon(s: string): string {
   return s.startsWith(':') ? s.slice(1).trim() : s.trim();
 }
+
+/** The error for `state a b {` (v12's lexer threw "State name must be a single word"). */
+export function multiWordMessage(name: string): string {
+  const id = name.replace(/\s+/g, '_');
+  return `A state name must be a single word, got \`${name}\`: write \`state "${name}" as ${id} {\` to show the words.`;
+}

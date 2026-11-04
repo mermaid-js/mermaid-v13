@@ -164,6 +164,15 @@ const CASES: Case[] = [
     keeps: ['A', 'B', 'D'],
   },
   {
+    name: 'click statements with text after them',
+    lines: ['stateDiagram-v2', 'A', 'click A "u" "t" B', 'C', 'click C href "v" D', 'E'],
+    errors: [
+      ['UNEXPECTED', 3],
+      ['UNEXPECTED', 5],
+    ],
+    keeps: ['A', 'C', 'E'],
+  },
+  {
     name: 'scale without width, and stray text after a state name',
     lines: ['stateDiagram-v2', 'A', 'scale 300', 'B', 'scale width', 'C'],
     errors: [

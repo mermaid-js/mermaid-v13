@@ -67,7 +67,7 @@ import {
   TITLE,
   WIDTH,
 } from './tables.ts';
-import { blankAt, keyOf, trimColon } from './names.ts';
+import { blankAt, keyOf, multiWordMessage, trimColon } from './names.ts';
 import type { Scope } from './names.ts';
 import { splitRegions } from './regions.ts';
 import { terminals } from './terminals.ts';
@@ -93,7 +93,7 @@ class Stop extends Error {}
 const STOP = new Stop();
 
 /** What v12 kept of a statement whose action returned a string: nothing, but it counts. */
-const NOOP: Item = { stmt: 'noop' };
+const NOOP: Item = Object.freeze({ stmt: 'noop' });
 
 /** What a document collects: v12's statement list and the AST nodes. */
 interface Doc {
@@ -115,6 +115,11 @@ class StateParser {
   private readonly probe: Probe | undefined;
   private readonly maxDepth: number;
   private readonly seen = new Set<string>();
+  /**
+   * Symbols of the statements being parsed: recorded when a statement completes, dropped when
+   * it fails, so a failed `A -->` does not define `A`.
+   */
+  private readonly pending: [name: string, kind: string, range: Range, role?: 'def' | 'ref'][] = [];
   /** Region ordinals handed out per composite name. */
   private readonly regionCount = new Map<string, number>();
   /** `state X` lines on their own, which v12 does not draw unless X is mentioned elsewhere. */
@@ -254,14 +259,7 @@ class StateParser {
     const k = this.kind();
     const where = this.where();
     if (k === T.MultiWordState) {
-      const name = this.text()
-        .replace(/\s*\{$/, '')
-        .trim();
-      st.diagnostics.error(
-        'MULTI_WORD_STATE',
-        `A state name must be a single word, got \`${name}\`: write \`state "${name}" as ${name.replace(/\s+/g, '_')} {\` to show the words.`,
-        where
-      );
+      this.multiWord(where);
       throw STOP;
     }
     if (k === T.DefaultClassDefId) {
@@ -319,6 +317,30 @@ class StateParser {
       return { start: e, end: e };
     }
     return this.own(i);
+  }
+
+  /** Queue a symbol; a state's role is decided when it is recorded (its first is the def). */
+  private symbol(name: string, kind: string, range: Range, role?: 'def' | 'ref'): void {
+    this.pending.push([name, kind, range, role]);
+  }
+
+  /** Record the queued symbols of the statements that completed. */
+  private flushSymbols(): void {
+    for (const [name, kind, range, role] of this.pending) {
+      const r = role ?? (this.seen.has(name) ? 'ref' : 'def');
+      if (role === undefined) this.seen.add(name);
+      this.st.symbol(name, kind, range, r);
+    }
+    this.pending.length = 0;
+  }
+
+  /** `state a b {`: one error for the name, which is returned (v12's lexer threw here). */
+  private multiWord(where: Range): string {
+    const name = this.text()
+      .replace(/\s*\{$/, '')
+      .trim();
+    this.st.diagnostics.error('MULTI_WORD_STATE', multiWordMessage(name), where);
+    return name;
   }
 
   private why(hint: string | undefined): string {
@@ -393,11 +415,14 @@ class StateParser {
       if (k === Kind.EOF) return;
       if (k === T.StructStop && scope) return;
       const from = (this.stmtFrom = this.i);
+      const mark = this.pending.length;
       try {
         this.statement(scope, doc);
         this.prevHint = this.hint;
+        this.flushSymbols();
       } catch (e) {
         if (e !== STOP) throw e;
+        this.pending.length = mark;
         this.recover(scope !== undefined, from);
         // A `}` on the line of the error closes the composite state.
         if (this.i === from) this.i++;
@@ -429,7 +454,7 @@ class StateParser {
         this.i++;
         const id = this.text(this.expect(CLASSDEF_ID)).trim();
         const classes = this.text(this.expect(CLASSDEF_STYLES)).trim();
-        this.st.symbol(id, 'class', this.own(from + 1), 'def');
+        this.symbol(id, 'class', this.own(from + 1), 'def');
         items.push({ stmt: 'classDef', id, classes });
         nodes.push(this.simple('ClassDef', from, [id]));
         return;
@@ -438,7 +463,7 @@ class StateParser {
         this.i++;
         const id = this.text(this.expect(STYLE_IDS)).trim();
         const styleClass = this.text(this.expect(STYLE_STYLES)).trim();
-        this.refs(id, from + 1);
+        this.refs(from + 1);
         items.push({ stmt: 'style', id, styleClass });
         nodes.push(this.simple('Style', from, id.split(',')));
         return;
@@ -448,8 +473,8 @@ class StateParser {
         const id = this.text(this.expect(CLASS_IDS)).trim();
         const j = this.expect(CLASS_NAME);
         const styleClass = this.text(j).trim();
-        this.refs(id, from + 1);
-        this.st.symbol(styleClass, 'class', this.own(j), 'ref');
+        this.refs(from + 1);
+        this.symbol(styleClass, 'class', this.own(j), 'ref');
         items.push({ stmt: 'applyClass', id, styleClass });
         nodes.push(this.simple('Class', from, [...id.split(','), styleClass]));
         return;
@@ -473,14 +498,7 @@ class StateParser {
         return this.describedState(scope, doc);
       case T.MultiWordState: {
         // One error for the name; the block still opens, so its `}` closes it (pitfall 8).
-        const name = this.text()
-          .replace(/\s*\{$/, '')
-          .trim();
-        this.st.diagnostics.error(
-          'MULTI_WORD_STATE',
-          `A state name must be a single word, got \`${name}\`: write \`state "${name}" as ${name.replace(/\s+/g, '_')} {\` to show the words.`,
-          this.own(this.i)
-        );
+        const name = this.multiWord(this.own(this.i));
         this.i++;
         if (this.at(STRUCT_START, T.StructStart)) {
           return this.composite(scope, doc, from, name, from, undefined);
@@ -491,7 +509,6 @@ class StateParser {
         return this.click(doc);
       default:
         if (this.simpleStatement(k, scope, doc)) return;
-        this.hint = undefined;
         return this.fail(scope ? COMPOSITE_DOC_KINDS : DOC_KINDS, MISPLACED[k]);
     }
   }
@@ -583,16 +600,15 @@ class StateParser {
     }
   }
   /** Symbols for the ids of `style` / `class` (`A,B`). */
-  private refs(ids: string, j: number): void {
+  private refs(j: number): void {
     const r = this.own(j);
     let at = r.start;
     for (const part of this.src.slice(r.start, r.end).split(',')) {
       const name = part.trim();
       const s = at + part.indexOf(name);
-      if (name) this.st.symbol(name, 'state', { start: s, end: s + name.length }, 'ref');
+      if (name) this.symbol(name, 'state', { start: s, end: s + name.length }, 'ref');
       at += part.length + 1;
     }
-    void ids;
   }
 
   /** A state mention's AST node, `n:<name>` (or the scoped id of `[*]`). */
@@ -605,8 +621,7 @@ class StateParser {
   ): StateStmt {
     const ast = this.ids.node(keyOf(name, scope, end));
     if (name !== '[*]') {
-      this.st.symbol(name, 'state', nameRange, this.seen.has(name) ? 'ref' : 'def');
-      this.seen.add(name);
+      this.symbol(name, 'state', nameRange);
     }
     return { id: ast, type: 'State', range: this.span(j), name, nameRange };
   }
@@ -628,7 +643,7 @@ class StateParser {
       this.i++;
       const c = this.expect(ID_ONLY);
       const cls = this.text(c).trim();
-      this.st.symbol(cls, 'class', this.own(c), 'ref');
+      this.symbol(cls, 'class', this.own(c), 'ref');
       item.classes = [cls];
       node.className = cls;
       node.range = this.span(j);
@@ -728,8 +743,7 @@ class StateParser {
     const depth = (scope?.depth ?? 0) + 1;
     const nameRange = this.own(nameTok);
     if (name !== '') {
-      this.st.symbol(name, 'state', nameRange, this.seen.has(name) ? 'ref' : 'def');
-      this.seen.add(name);
+      this.symbol(name, 'state', nameRange);
     }
     const node: StateCompositeStmt = {
       id: this.ids.subgraph(name),
@@ -770,8 +784,8 @@ class StateParser {
     }
     node.range = this.span(from);
     this.st.endStatement(span, node.range.end);
-    node.children = splitRegions(name, body.nodes, body.items, this.regionCount);
-    const tail = node.children[node.children.length - 1];
+    const split = splitRegions(name, body.nodes, body.items, this.regionCount);
+    node.children = split.children;
     const item: StateItem = {
       stmt: 'state',
       id: name,
@@ -782,7 +796,7 @@ class StateParser {
       range: node.range,
     };
     // The last region is the one v12 made up: the builder takes its AST id from here.
-    if (tail?.type === 'Region') item.tail = tail.id;
+    if (split.tail) item.tail = split.tail;
     doc.items.push(item);
     doc.nodes.push(node);
   }
@@ -875,7 +889,7 @@ class StateParser {
     const from = this.i++;
     const j = this.expect(ID_KINDS);
     const name = this.text(j).trim();
-    this.st.symbol(name, 'state', this.own(j), this.seen.has(name) ? 'ref' : 'def');
+    this.symbol(name, 'state', this.own(j));
     const id: StateItem = {
       stmt: 'state',
       id: name,
@@ -894,8 +908,8 @@ class StateParser {
       url = this.text(this.expect(STRING));
       tooltip = this.text(this.expect(STRING));
     }
-    const node = this.simple('Click', from, [name]);
     this.expect(NL);
+    const node = this.simple('Click', from, [name]);
     doc.nodes.push(node);
     doc.items.push({ stmt: 'click', id, url, tooltip, ast: node.id });
   }

@@ -169,8 +169,39 @@ describe('state model', () => {
     ]);
   });
 
+  it('drops a trailing empty region with one EMPTY_REGION warning per diagram (D115)', () => {
+    const r = parseState(
+      'stateDiagram-v2\n  state X {\n    A\n    --\n  }\n  state Y {\n    B\n    --\n  }\n'
+    );
+    expect(r.diagnostics.map((d) => d.code)).toEqual(['EMPTY_REGION']);
+    expect(r.model.regions).toEqual([]);
+    expect(r.model.states.map((s) => [s.id, s.parent])).toEqual([
+      ['X', undefined],
+      ['A', 'X'],
+      ['Y', undefined],
+      ['B', 'Y'],
+    ]);
+  });
+
   it('is plain data', () => {
     const { model } = parseState('stateDiagram-v2\n  [*] --> A\n  note left of A : n\n');
     expect(JSON.parse(JSON.stringify(model))).toEqual(model);
+  });
+});
+
+describe('state symbols and statement spans', () => {
+  it('records the symbols of a statement only when it parses', () => {
+    const r = parseState('stateDiagram-v2\n  A -->\n  A --> B\n');
+    expect(r.symbols.map((s) => [s.name, s.role])).toEqual([
+      ['A', 'def'],
+      ['B', 'def'],
+    ]);
+    expect(r.symbols[0]?.range.start).toBe('stateDiagram-v2\n  A -->\n  '.length);
+  });
+
+  it('records no span for a click statement that fails at its line end', () => {
+    const r = parseState('stateDiagram-v2\n  A\n  click A "u" "t" B\n  C\n');
+    expect(r.statements.map((s) => s.kind)).toEqual(['Header', 'State', 'State']);
+    expect(r.ast.children.map((n) => n.type)).toEqual(['Header', 'State', 'State']);
   });
 });

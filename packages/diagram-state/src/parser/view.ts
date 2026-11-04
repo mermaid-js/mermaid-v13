@@ -35,10 +35,12 @@ export function stateView(src: string, from: number, directives: readonly Range[
   const kit = sourceView(src, from, directives);
   const { text, mask } = kit;
   const offsets = kit.runs ? new SourceOffsets(kit.runs) : undefined;
-  const codes: number[] = [];
-  const at: number[] = [];
+  const start = localOffset(kit, from);
+  const codes = new Uint16Array(text.length - start + 1);
+  const at = new Uint32Array(text.length - start + 2);
+  let n = 0;
   let lead = true;
-  for (let i = localOffset(kit, from); i < text.length; i++) {
+  for (let i = start; i < text.length; i++) {
     let c = text.charCodeAt(i);
     if (lead && isSpace(c)) {
       if (c === CR && text.charCodeAt(i + 1) === LF) i++;
@@ -50,14 +52,14 @@ export function stateView(src: string, from: number, directives: readonly Range[
       c = LF;
       if (text.charCodeAt(i + 1) === LF) i++;
     } else if (((mask?.[s] ?? 0) & QUOTE) !== 0) c = APOSTROPHE;
-    codes.push(c);
-    at.push(s);
+    codes[n] = c;
+    at[n++] = s;
   }
-  codes.push(LF);
-  at.push(src.length, src.length);
+  codes[n] = LF;
+  at[n] = at[n + 1] = src.length;
   let out = '';
-  for (let i = 0; i < codes.length; i += 4096) {
-    out += String.fromCharCode(...codes.slice(i, i + 4096));
+  for (let i = 0; i <= n; i += 4096) {
+    out += String.fromCharCode(...codes.subarray(i, Math.min(i + 4096, n + 1)));
   }
   const removed: Hole[] = [];
   const drops = new Set<number>();
@@ -65,5 +67,5 @@ export function stateView(src: string, from: number, directives: readonly Range[
     if (h.kind === 'drop') drops.add(h.start);
     else removed.push(h);
   }
-  return { text: out, at: Uint32Array.from(at), removed, drops };
+  return { text: out, at: at.subarray(0, n + 2), removed, drops };
 }
