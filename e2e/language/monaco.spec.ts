@@ -7,15 +7,8 @@
  */
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { execFileSync, spawn } from 'node:child_process';
-import type { ChildProcess } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { createServer } from 'node:net';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-
-const EXAMPLE = join(import.meta.dirname, '../../packages/language-service/examples/monaco');
-const VITE = join(EXAMPLE, 'node_modules/.bin/vite');
+import { startExample } from './example-server.ts';
+import type { ExampleServer } from './example-server.ts';
 
 /** The parts of the page's globals the spec reads (set by the example's main.ts). */
 interface EditorWindow {
@@ -41,58 +34,20 @@ interface EditorWindow {
   };
 }
 
-const freePort = () =>
-  new Promise<number>((resolve, reject) => {
-    const server = createServer();
-    server.once('error', reject);
-    server.listen(0, () => {
-      const address = server.address();
-      server.close(() => resolve(typeof address === 'object' && address ? address.port : 0));
-    });
-  });
-
-let preview: ChildProcess | undefined;
-let url = '';
-// Built outside the tree, so no build output is left in the workspace (knip reads it all).
-const outDir = mkdtempSync(join(tmpdir(), 'mermaid-monaco-example-'));
-
+// One build and one preview server for the file.
 test.describe.configure({ mode: 'serial' });
 
+let example: ExampleServer;
 test.beforeAll(async () => {
   test.setTimeout(180_000);
-  execFileSync(VITE, ['build', '--logLevel', 'warn', '--outDir', outDir, '--emptyOutDir'], {
-    cwd: EXAMPLE,
-    stdio: 'inherit',
-  });
-  const port = await freePort();
-  // An explicit IPv4 host: `localhost` may resolve differently for Vite and for fetch.
-  preview = spawn(
-    VITE,
-    ['preview', '--outDir', outDir, '--host', '127.0.0.1', '--port', String(port), '--strictPort'],
-    { cwd: EXAMPLE, stdio: ['ignore', 'ignore', 'pipe'] }
-  );
-  let stderr = '';
-  preview.stderr?.on('data', (chunk: Buffer) => (stderr += chunk.toString()));
-  url = `http://127.0.0.1:${port}/`;
-  for (let i = 0; i < 600; i++) {
-    const ok = await fetch(url).then(
-      (r) => r.ok,
-      () => false
-    );
-    if (ok) return;
-    if (preview.exitCode !== null) break;
-    await new Promise((r) => setTimeout(r, 100));
-  }
-  throw new Error(`vite preview did not start on ${url}: ${stderr}`);
+  example = await startExample('monaco');
 });
-
-test.afterAll(() => {
-  preview?.kill();
-  rmSync(outDir, { recursive: true, force: true });
+test.afterAll(async () => {
+  await example?.close();
 });
 
 async function open(page: Page): Promise<void> {
-  await page.goto(url);
+  await page.goto(example.origin);
   await page.waitForFunction(() => 'editor' in window);
   await expect(page.locator('#preview svg')).toBeVisible();
 }
@@ -223,4 +178,29 @@ test('Monarch reads front matter as front matter', async ({ page }) => {
   expect(tokens[1]?.[0]?.type).toBe('variable.mermaid-flowchart');
   expect(tokens[3]?.[0]?.type).toBe('keyword.mermaid-flowchart');
   expect(tokens[4]?.map((t) => t.type)).toContain('operator.mermaid-flowchart');
+});
+
+test('Monarch: front matter after blank lines or indented, and modes a line break ends', async ({
+  page,
+}) => {
+  await open(page);
+  const lastLine = (text: string) =>
+    page.evaluate((t) => {
+      const lines = (window as unknown as EditorWindow).monaco.editor.tokenize(t, 'mermaid');
+      return lines[lines.length - 2]?.map((x) => x.type) ?? [];
+    }, text);
+  for (const text of [
+    "\n---\ntitle: it's (open\n---\nflowchart LR\n  A --> B\n",
+    "  ---\n  title: it's (open\n  ---\nflowchart LR\n  A --> B\n",
+    // `graph` with no direction: its mode ends at the line break.
+    'graph\n  A --> B\n',
+  ]) {
+    // `A --> B`: two node ids and an arrow, not one string or direction run.
+    const types = (await lastLine(text)).filter((t) => t !== '');
+    expect(types, JSON.stringify(text)).toEqual([
+      'variable.mermaid-flowchart',
+      'operator.mermaid-flowchart',
+      'variable.mermaid-flowchart',
+    ]);
+  }
 });
