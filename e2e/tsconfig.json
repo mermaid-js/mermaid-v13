@@ -12,6 +12,7 @@
     "browser",
     "dev",
     "smoke",
+    "language",
     "helpers/util.ts",
     "helpers/mmd-snapshots.ts",
     "helpers/mmd-snapshots.spec.ts",
