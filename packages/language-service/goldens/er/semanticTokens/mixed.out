@@ -1,0 +1,56 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:10 "erDiagram" keyword
+3:3-3:15 "%% a comment" comment
+4:3-4:12 "accTitle:" keyword
+4:13-4:17 "Shop" string
+5:3-5:15 "direction LR" keyword
+6:3-6:11 "CUSTOMER" variable [declaration, definition]
+6:11-6:12 "[" operator
+6:12-6:20 "Customer" variable
+6:20-6:21 "]" operator
+7:3-7:11 "CUSTOMER" variable
+7:12-7:14 "||" operator
+7:14-7:16 "--" operator
+7:16-7:18 "o{" operator
+7:19-7:30 "\"LINE ITEM\"" variable
+7:31-7:32 ":" operator
+7:33-7:47 "\"places order\"" variable
+8:3-8:11 "CUSTOMER" variable
+8:12-8:13 "{" operator
+9:5-9:11 "string" variable
+9:12-9:16 "name" variable
+9:17-9:19 "PK" keyword
+9:20-9:30 "\"the name\"" string
+10:5-10:8 "int" variable
+10:9-10:12 "age" variable
+11:3-11:4 "}" operator
+12:3-12:11 "subgraph" keyword
+12:12-12:13 "G" subgraph [declaration, definition]
+13:5-13:10 "ORDER" variable [declaration, definition]
+13:11-13:13 "}|" operator
+13:13-13:15 ".." operator
+13:15-13:17 "||" operator
+13:18-13:25 "PRODUCT" variable [declaration, definition]
+13:26-13:27 ":" operator
+13:28-13:31 "has" variable
+14:3-14:6 "end" keyword
+15:3-15:11 "classDef" keyword
+15:12-15:15 "hot" class [declaration, definition]
+15:16-15:20 "fill" string
+15:20-15:21 ":" operator
+15:22-15:25 "f96" string
+15:25-15:26 "," operator
+15:26-15:32 "stroke" string
+15:32-15:33 ":" operator
+15:34-15:37 "333" string
+16:3-16:8 "class" keyword
+16:9-16:17 "CUSTOMER" variable
+16:18-16:21 "hot" class
+17:3-17:8 "ORDER" variable
+17:8-17:11 ":::" operator
+17:11-17:14 "hot" class
+18:3-18:8 "style" keyword
+18:9-18:16 "PRODUCT" variable
+18:17-18:21 "fill" string
+18:21-18:22 ":" operator
+18:23-18:26 "bbf" string

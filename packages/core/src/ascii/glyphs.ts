@@ -5,7 +5,9 @@
 // commit 5a9df15: pkg/graph/draw.go (`junctionChars`, `mergeJunctions`, `drawBox`) and
 // pkg/graph/arrow.go (line, corner, head and tee glyphs). Changed: mermaid-ascii merges
 // only light glyphs through a 10×10 table; here every line glyph, heavy, double and dashed
-// included, is read as four arms and merged through one lookup.
+// included, is read as four arms and merged through one lookup. The crow's-foot marks on a
+// horizontal line (`||`, `|o`, `}|`, `o{`) are the ones mermaid-ascii's ER renderer draws
+// (pkg/er/layout.go); the vertical bar and feet are v13's.
 
 import type { Dir } from './directions.ts';
 
@@ -27,6 +29,18 @@ export interface Sides {
   readonly right: string;
 }
 
+/** ER relationship ends (D109): crow's-foot marks, drawn on the line next to the entity. */
+export interface CardinalityGlyphs {
+  /** A bar across the line ("one"): `h` on a horizontal line, `v` on a vertical one. */
+  readonly bar: { readonly h: string; readonly v: string };
+  /** A ring on the line ("zero"). */
+  readonly ring: string;
+  /** The crow's foot ("many"), by the direction it opens: towards the entity. */
+  readonly many: Sides;
+  /** The MD parent end (`u`). */
+  readonly parent: string;
+}
+
 export interface GlyphSet {
   readonly name: 'unicode' | 'ascii';
   readonly solid: Stroke;
@@ -42,6 +56,8 @@ export interface GlyphSet {
   readonly circle: string;
   /** `--x` end. */
   readonly cross: string;
+  /** ER relationship ends. */
+  readonly cardinality: CardinalityGlyphs;
 }
 
 const stroke = (glyphs: string): Stroke => {
@@ -64,6 +80,7 @@ export const unicode: GlyphSet = {
   head: sides('▲▼◄►'),
   circle: '●',
   cross: '✕',
+  cardinality: { bar: { h: '|', v: '╪' }, ring: 'o', many: sides('VΛ}{'), parent: '◇' },
 };
 
 export const ascii: GlyphSet = {
@@ -77,6 +94,7 @@ export const ascii: GlyphSet = {
   head: sides('^v<>'),
   circle: 'o',
   cross: 'x',
+  cardinality: { bar: { h: '|', v: '=' }, ring: 'o', many: sides('v^}{'), parent: '*' },
 };
 
 // A line glyph is four arms (up, right, down, left), each 0 none, 1 light, 2 heavy or

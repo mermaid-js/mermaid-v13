@@ -1,0 +1,18 @@
+%%{init: {"theme": "dark"}}%%
+erDiagram
+  %% a comment
+  accTitle: Shop
+  direction LR
+  CUSTOMER[Customer]
+  CUSTOMER \|\|--o{ "LINE ITEM" : "places order"
+  CUSTOMER {
+    string name PK "the name"
+    int age
+  }
+  subgraph G
+    ORDER }\|..\|\| PRODUCT : has
+  end
+  classDef hot fill:#f96,stroke:#333
+  class CUSTOMER hot
+  ORDER:::hot
+  style PRODUCT fill:#bbf

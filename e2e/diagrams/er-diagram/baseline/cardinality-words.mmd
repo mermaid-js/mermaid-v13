@@ -1,0 +1,8 @@
+---
+description: cardinalities and lines written as words, numbers and the MD parent end
+---
+erDiagram
+  PERSON only one to zero or more CAR : drives
+  CAR one or more optionally to zero or one GARAGE : "parks in"
+  ROOM 1 to many DESK : holds
+  CHILD u--o{ PARENT : has

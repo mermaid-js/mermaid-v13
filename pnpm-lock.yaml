@@ -101,6 +101,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/diagram-er':
+        specifier: workspace:^
+        version: link:../diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
@@ -140,6 +143,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/diagram-er':
+        specifier: workspace:^
+        version: link:../diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
@@ -230,6 +236,12 @@ importers:
         specifier: ^4.20.6
         version: 4.20.6
 
+  packages/diagram-er:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-flowchart:
     devDependencies:
       '@mermaid-js/core':
@@ -241,6 +253,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-er':
+        specifier: workspace:*
+        version: link:../diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
@@ -260,6 +275,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-er':
+        specifier: workspace:*
+        version: link:../diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
@@ -416,6 +434,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:*
         version: link:../core
+      '@mermaid-js/diagram-er':
+        specifier: workspace:*
+        version: link:../diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart

@@ -62,6 +62,8 @@ export function syntaxDoc(g: Grammar, title: string, source: string): string {
     ''
   );
   out.push(`Modes: ${['INITIAL', ...g.modes].map((m) => `\`${m}\``).join(', ')}.`, '');
+  if (g.ignoreCase)
+    out.push('Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.', '');
   out.push('| Modes | Token | Pattern | Action | Doc |', '| --- | --- | --- | --- | --- |');
   for (const r of g.lexRules) {
     const pattern = r.pattern.length > 80 ? `${r.pattern.slice(0, 77)}…` : r.pattern;

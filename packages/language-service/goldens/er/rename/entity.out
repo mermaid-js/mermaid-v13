@@ -1,0 +1,10 @@
+@ 3:3  |CUSTOMER ||--o{ ORDER : places
+  prepare: 3:3-3:11 "CUSTOMER"; rename to "CLIENT":
+  %% rename-to: CLIENT
+  erDiagram
+    CLIENT ||--o{ ORDER : places
+    CLIENT {
+      string name
+    }
+    style CLIENT fill:#f00
+    class CLIENT hot

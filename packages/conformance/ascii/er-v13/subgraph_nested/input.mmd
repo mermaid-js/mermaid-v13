@@ -1,0 +1,14 @@
+erDiagram
+    subgraph sales [Sales]
+      subgraph orders [Orders]
+        ORDER {
+          int id PK
+          decimal total
+        }
+        LINE_ITEM
+      end
+      CUSTOMER
+    end
+    CUSTOMER ||--o{ ORDER : places
+    ORDER ||--|{ LINE_ITEM : contains
+    PRODUCT ||--o{ LINE_ITEM : "appears in"

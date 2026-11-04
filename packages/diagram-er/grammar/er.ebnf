@@ -1,0 +1,196 @@
+(** Entity relationship diagram syntax (R-PARSE-9, D54): the normative grammar of `erDiagram`
+diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text (letters outside ASCII); and a line break appended.
+
+Statements need no separator: `A B` is two entities, and a statement ends where the next one
+can start. *)
+
+@lexer
+
+@options case-insensitive ;
+
+@modes block block_bq acc_title acc_descr acc_descr_multiline style ;
+
+(** `accTitle: …` and `accDescr: …` take the rest of the line; `accDescr { … }` runs to `}`. *)
+acc_title                 /accTitle\s*:\s*/                push(acc_title) :keyword ;
+<acc_title> acc_title_value /[^\n]*/                       pop :string ;
+acc_descr                 /accDescr\s*:\s*/                push(acc_descr) :keyword ;
+<acc_descr> acc_descr_value /[^\n]*/                       pop :string ;
+-                         /accDescr\s*\{\s*/               push(acc_descr_multiline) attach-next :keyword ;
+<acc_descr_multiline> -   /\}/                             pop attach-prev :keyword ;
+<acc_descr_multiline> acc_descr_multiline_value /[^}]*/    :string ;
+
+(** `direction LR`: the whole line is one token. *)
+direction_tb              /.*direction\s+TB[^\n]*/         :keyword ;
+direction_bt              /.*direction\s+BT[^\n]*/         :keyword ;
+direction_rl              /.*direction\s+RL[^\n]*/         :keyword ;
+direction_lr              /.*direction\s+LR[^\n]*/         :keyword ;
+
+-                         /[ \t\r]+/ ;
+NEWLINE                   /\n+/ ;
+
+(** A quoted name: `"…"` without `%`, `\`, line breaks, vertical tabs or backspaces. *)
+ENTITY_NAME               /"[^"%\r\n\v\b\\]+"/             :variable ;
+(** Any other quoted text, line breaks included: a relationship label only. *)
+WORD                      /"[^"]*"/                        :string ;
+ER_DIAGRAM                /erDiagram\b/                    :keyword ;
+(** `{ … }` holds the attributes of an entity. *)
+BLOCK_START               /\{/                             push(block) :punctuation ;
+BRKT                      /#/ ;
+COMMA                     /,/                              :punctuation ;
+(** `A:::name`: gives the entity a class, as `class A name` does. *)
+STYLE_SEPARATOR           /:::/                            :operator ;
+COLON                     /:/                              :punctuation ;
+
+(** Attributes: `type name`, keys `PK`, `FK`, `UK` and a `"comment"`. A type may hold
+`~generic~` parts; `` `…` `` quotes a type or name. *)
+<block> -                 /\s+/ ;
+<block> ATTRIBUTE_KEY     /\b(?:PK|FK|UK)\b/               :keyword ;
+<block> ATTRIBUTE_WORD    /[^\s]*[~].*[~][^\s]*/           :variable ;
+<block> ATTRIBUTE_WORD    /[*A-Za-z_À-￿][A-Za-z0-9\-_[\]().,À-￿*]*/ :variable ;
+<block> -                 /`/                              push(block_bq) :string ;
+<block_bq> ATTRIBUTE_WORD /[^`]+/                          :variable ;
+<block_bq> -              /`/                              pop :string ;
+<block> ATTRIBUTE_COMMENT /"[^"]*"/                        :string ;
+<block> -                 /\n+/ ;
+<block> BLOCK_STOP        /\}/                             pop :punctuation ;
+(** `string? name`: the type is optional. *)
+<block> QMARK             /\?/                             :operator ;
+<block> BLOCK_COMMA       /,/                              :punctuation ;
+<block> CHAR              /./ ;
+
+(** `A[alias]`: the name shown for the entity. *)
+SQS                       /\[/                             :punctuation ;
+SQE                       /\]/                             :punctuation ;
+
+(** Statement keywords. `style` and `classDef` read the rest of the line as styles. *)
+STYLE                     /style\b/                        push(style) :keyword ;
+<style> NEWLINE           /\n+/                            pop ;
+<style> -                 /\s+/ ;
+<style> COLON             /:/                              :punctuation ;
+<style> COMMA             /,/                              :punctuation ;
+<style> BRKT              /#/ ;
+CLASSDEF                  /classDef\b/                     push(style) :keyword ;
+CLASS                     /class\b/                        :keyword ;
+SUBGRAPH                  /subgraph\b/                     :keyword ;
+END                       /end\b\s*/                       :keyword ;
+
+(** Cardinalities, as symbols (`|o`, `||`, `}|`, `o{`, …) or words (`one or more`, `1+`,
+`many(0)`, …). *)
+ZERO_OR_ONE               /one or zero\b/                  :operator ;
+ONE_OR_MORE               /one or more\b/                  :operator ;
+ONE_OR_MORE               /one or many\b/                  :operator ;
+ONE_OR_MORE               /1\+/                            :operator ;
+ZERO_OR_ONE               /\|o/                            :operator ;
+ZERO_OR_ONE               /zero or one\b/                  :operator ;
+ZERO_OR_MORE              /zero or more\b/                 :operator ;
+ZERO_OR_MORE              /zero or many\b/                 :operator ;
+ZERO_OR_MORE              /0\+/                            :operator ;
+ZERO_OR_MORE              /\}o/                            :operator ;
+ZERO_OR_MORE              /many\(0\)/                      :operator ;
+ONE_OR_MORE               /many\(1\)/                      :operator ;
+ZERO_OR_MORE              /many\b/                         :operator ;
+ONE_OR_MORE               /\}\|/                           :operator ;
+ONLY_ONE                  /one\b/                          :operator ;
+ONLY_ONE                  /only one\b/                     :operator ;
+DECIMAL_NUM               /[0-9]+\.[0-9]+/                 :number ;
+(** `1` is a cardinality before a name, a number or a line, else an entity name. *)
+ONLY_ONE                  /1\b(?=\s+[A-Za-z_"'])/          :operator ;
+ONLY_ONE                  /1\b(?=\s+[0-9])/                :operator ;
+ONLY_ONE                  /1\b(?=--|\.\.|\.-|-\.)/         :operator ;
+ENTITY_ONE                /1\b/                            :number ;
+NUM                       /[0-9]+/                         :number ;
+ONLY_ONE                  /\|\|/                           :operator ;
+ZERO_OR_ONE               /o\|/                            :operator ;
+ZERO_OR_MORE              /o\{/                            :operator ;
+ONE_OR_MORE               /\|\{/                           :operator ;
+(** `u`: the parent end of a parent–child relationship. *)
+MD_PARENT                 /u(?=[.\-|])/                    :operator ;
+(** Lines: `--` or `to` (identifying, solid), `..`, `.-`, `-.` or `optionally to` (dashed). *)
+NON_IDENTIFYING           /\.\./                           :operator ;
+IDENTIFYING               /--/                             :operator ;
+IDENTIFYING               /to\b/                           :operator ;
+NON_IDENTIFYING           /optionally to\b/                :operator ;
+NON_IDENTIFYING           /\.-/                            :operator ;
+NON_IDENTIFYING           /-\./                            :operator ;
+<style> STYLE_TEXT        /(?:[^\x00-\x7F]|\w|-|\*)+/      :string ;
+<style> SEMI              /;/                              :punctuation ;
+(** Names: letters, digits, `_`, `-`, `*`, `.` and anything outside ASCII. *)
+UNICODE_TEXT              /(?:[^\x00-\x7F]|\w|-|\*|\.)+/   :variable ;
+CHAR                      /./ ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+DIRECTIVE                 /[^\S\n]*%%\{.*?\}%%/             :meta ;
+
+@grammar
+
+(** A diagram is `erDiagram`, then statements. *)
+er = Header document EOF ;
+Header @Header = ER_DIAGRAM ;
+
+document = { statement | NEWLINE | EOF } ;
+separator = SEMI | NEWLINE | EOF ;
+
+statement = Relationship
+  | Entity
+  | AccTitle
+  | AccDescr
+  | Direction
+  | ClassDef separator
+  | Class
+  | Style separator
+  | Subgraph ;
+
+(** `CUSTOMER ||--o{ ORDER : places`: a relationship with a cardinality at each end, a line
+and a label. Either end may take classes with `:::`. *)
+Relationship @Relationship = endpoint cardinality relType cardinality endpoint COLON role ;
+endpoint @Entity = entityName [ STYLE_SEPARATOR idList ] ;
+cardinality = ZERO_OR_ONE | ZERO_OR_MORE | ONE_OR_MORE | ONLY_ONE | MD_PARENT ;
+relType = NON_IDENTIFYING | IDENTIFYING ;
+role = WORD | ENTITY_NAME | UNICODE_TEXT ;
+
+(** `CUSTOMER`, `CUSTOMER[Alias]`, `CUSTOMER:::cls`, each with an optional `{ … }` of
+attributes. *)
+Entity @Entity = entityName [ STYLE_SEPARATOR idList ] [ block ]
+  | entityName SQS entityName SQE [ STYLE_SEPARATOR idList ] [ block ] ;
+entityName = ENTITY_NAME | UNICODE_TEXT | NUM | DECIMAL_NUM | ENTITY_ONE ;
+block = BLOCK_START { Attribute } BLOCK_STOP ;
+(** `string name PK, FK "comment"`. *)
+Attribute @Attribute = ATTRIBUTE_WORD [ QMARK ] ATTRIBUTE_WORD
+  [ ATTRIBUTE_KEY { BLOCK_COMMA ATTRIBUTE_KEY } ] [ ATTRIBUTE_COMMENT ] ;
+
+(** `accTitle: …`: the accessible title of the diagram. *)
+AccTitle @AccTitle = acc_title acc_title_value ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description of the diagram. *)
+AccDescr @AccDescr = acc_descr acc_descr_value | acc_descr_multiline_value ;
+(** `direction LR`: the layout direction of the diagram, or of the subgraph it is in. *)
+Direction @Direction = direction_tb | direction_bt | direction_rl | direction_lr ;
+
+(** `classDef name fill:#f9f,color:#000`: defines a class of styles. *)
+ClassDef @ClassDef = CLASSDEF idList styles ;
+(** `class A,B name`: gives entities a class (as `A:::name` does). *)
+Class @Class = CLASS idList idList ;
+(** `style A fill:#f9f,stroke:#333`: styles one entity or subgraph. *)
+Style @Style = STYLE idList styles ;
+idList = ( UNICODE_TEXT | STYLE_TEXT ) { COMMA ( UNICODE_TEXT | STYLE_TEXT ) } ;
+styles = style { COMMA style } ;
+style = ( STYLE_TEXT | NUM | COLON | BRKT )+ ;
+
+(** `subgraph id` or `subgraph id [title]`, then statements, then `end`. *)
+Subgraph @Subgraph = SUBGRAPH entityName [ SQS entityName+ SQE ] separator document END ;

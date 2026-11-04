@@ -22,6 +22,7 @@ import type {
 } from '../svg/types.ts';
 import { num } from '../svg/escape.ts';
 import {
+  adjustLightness,
   composite,
   contrastRatio,
   formatColor,
@@ -249,7 +250,9 @@ class Resolver {
   private evaluate(e: Expr): Resolved {
     switch (e.k) {
       case 'pct':
-        throw new SyntaxError('A percentage is only an argument of mix, lighten, darken or alpha');
+        throw new SyntaxError(
+          'A percentage is only an argument of mix, lighten, darken, lightenHsl, darkenHsl or alpha'
+        );
       case 'lit':
         return this.literal('', e.text);
       case 'ref': {
@@ -283,6 +286,17 @@ class Resolver {
         return this.mix(this.evaluate(x), this.literal('', 'white'), pct(y));
       case 'darken':
         return this.mix(this.evaluate(x), this.literal('', 'black'), pct(y));
+      case 'lightenHsl':
+      case 'darkenHsl': {
+        // khroma's lighten/darken, as v12's classic themes derive with them (D117).
+        const a = this.evaluate(x);
+        const d = e.fn === 'lightenHsl' ? pct(y) : -pct(y);
+        const rgba = a.rgba && adjustLightness(a.rgba, d);
+        // Clamped as khroma does: relative colour syntax keeps an out-of-range lightness.
+        const l = `l ${d < 0 ? '-' : '+'} ${num(Math.abs(d))}`;
+        const css = `hsl(from ${a.css} h s clamp(0, ${l}, 100) / alpha)`;
+        return { css, lit: rgba ? formatColor(rgba) : a.lit, rgba, deps: a.deps };
+      }
       case 'alpha': {
         const a = this.evaluate(x);
         const p = pct(y);

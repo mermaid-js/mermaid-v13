@@ -32,7 +32,8 @@ export interface ModeLexer {
 
 export function buildLexer(g: Grammar): ModeLexer {
   const compiled = new Map<LexRule, RegExp>();
-  for (const r of g.lexRules) compiled.set(r, new RegExp(r.pattern, 'y'));
+  const flags = g.ignoreCase ? 'iy' : 'y';
+  for (const r of g.lexRules) compiled.set(r, new RegExp(r.pattern, flags));
   const byMode = new Map<string, LexRule[]>();
   for (const m of ['INITIAL', ...g.modes]) {
     byMode.set(

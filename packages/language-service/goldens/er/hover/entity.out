@@ -1,0 +1,14 @@
+@ 2:3  |CUSTOMER[Customer]
+  2:3-2:11 "CUSTOMER"
+  | **entity** `CUSTOMER` (alias `Customer`)
+  |
+  | 2 attributes: `string name PK`, `int age`
+  |
+  | 1 relationship · Class: `hot`
+@ 10:5  OR|DER }|..|| PRODUCT : has
+  10:3-10:8 "ORDER"
+  | **entity** `ORDER`
+  |
+  | No attributes.
+  |
+  | 2 relationships

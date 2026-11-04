@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/er-ascii/cjk_feature_matrix.txt",
+  "charset": "ascii"
+}
