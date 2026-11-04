@@ -192,6 +192,8 @@ export interface PreloadRequest {
   types?: readonly string[];
   layouts?: readonly string[];
   themes?: readonly string[];
+  /** `'ascii'` also loads each type's text entry, for `renderSync(…, { format: 'ascii' })`. */
+  formats?: readonly ('svg' | 'ascii')[];
   /** Accepted and ignored until the icons plugin exists. */
   iconPacks?: readonly string[];
   math?: boolean;
@@ -481,7 +483,10 @@ export function createMermaid() {
       pre.diagnostics.filter((d) => d.severity === 'error')
     );
     if (error) throw error;
-    return { detected: registry.detect(text, pre), pre };
+    return {
+      detected: registry.detect(text, pre, s.config as Readonly<Record<string, unknown>>),
+      pre,
+    };
   }
 
   function unsupported(detected: Detected): MermaidError {
@@ -910,8 +915,25 @@ export function createMermaid() {
       );
     }
     for (const l of req.layouts ?? []) tasks.push(registry.loadLayout(l));
+    // `auto` needs its dark spec too.
     for (const name of req.themes ?? []) {
-      tasks.push(loadTheme(resolveThemeName(name).name));
+      const choice = resolveThemeName(name);
+      tasks.push(loadTheme(choice.name));
+      if (choice.dark) tasks.push(loadTheme(choice.dark));
+    }
+    if (req.formats?.includes('ascii')) {
+      tasks.push(
+        import('./ascii.ts').then((b) => {
+          textBackend = b;
+        })
+      );
+      for (const t of req.types ?? []) {
+        tasks.push(
+          registry.loadAscii(t).then((hook) => {
+            if (!hook) throw new UnsupportedFormatError(t, 'ascii');
+          })
+        );
+      }
     }
     try {
       await Promise.all(tasks);

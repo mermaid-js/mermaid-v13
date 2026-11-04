@@ -4,7 +4,10 @@
   "description": "Markdown-ish syntax for generating flowcharts and other diagrams.",
   "type": "module",
   "license": "MIT",
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/index.ts",
+    "./dist/index.js"
+  ],
   "exports": {
     ".": {
       "mermaid-source": "./src/index.ts",
