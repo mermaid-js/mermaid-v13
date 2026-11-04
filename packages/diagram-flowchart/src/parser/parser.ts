@@ -1017,7 +1017,8 @@ class FlowParser {
     const { db } = this;
     const at = this.i;
     const id = this.raw(this.i++);
-    this.refs(id, this.range(at), 'node', 'ref', out);
+    // The token's own range: `range` would widen it over `click`.
+    this.refs(id, { start: this.start(at), end: this.end(at) }, 'node', 'ref', out);
     const k = this.kind();
     if (k === T.CallbackName) {
       const name = this.raw(this.i++);
