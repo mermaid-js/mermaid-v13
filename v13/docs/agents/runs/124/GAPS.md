@@ -10,7 +10,7 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 ## #131 T2 grammar/parser/model (merged)
 
 - No unmet criteria. D114 closed: diagram-er reads core's `sourceView` through `src/parser/view.ts`; its own `source.ts` is deleted, lexer parity still 100%.
-- For T6: probe-mode `mode` is always `''` (the ER lexer does not report its state yet).
+- Closed by #135: the ER lexer reports its start condition as the probe's `mode`.
 - Known limit: after an error, a stray `{` opens an attribute block in the lexer, so recovery skips to the next `}`.
 - Not ported, with reasons in the port script: `erDb.spec.js` (calls the DB directly, no parse) and `erRenderer.spec.ts` (T4 territory).
 
