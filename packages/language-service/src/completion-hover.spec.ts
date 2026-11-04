@@ -126,6 +126,48 @@ describe('completion', () => {
     expect(labels('flowchart TD\n  %% cl|\n  A')).toEqual([]);
   });
 
+  it('after a closed subgraph’s `end`: the same as with no subgraph', () => {
+    const head = 'flowchart TD\n  classDef hot fill:#f00\n  A --> B\n';
+    const closed = `${head}  subgraph S\n    C\n  end\n`;
+    const plain = `${head}  C\n`;
+    for (const tail of [
+      '  |',
+      '  A|',
+      '  st|',
+      '  class A |',
+      '  classDef |',
+      '  subgraph |',
+      '  click A |',
+      '  style A|',
+    ]) {
+      const want = labels(plain + tail).filter((l) => l !== 'S');
+      if (tail !== '  subgraph |') expect(want.length, tail).toBeGreaterThan(0);
+      expect(
+        labels(closed + tail).filter((l) => l !== 'S'),
+        tail
+      ).toEqual(want);
+    }
+  });
+
+  it('after `direction `: the directions', () => {
+    const dirs = ['TB', 'TD', 'BT', 'LR', 'RL'];
+    expect(labels('flowchart TD\n  A\n  direction |')).toEqual(dirs);
+    expect(labels('flowchart TD\n  subgraph S\n    direction |\n  end')).toEqual(dirs);
+    expect(labels('flowchart TD\n  A\n  direction T|')).toEqual(['TB', 'TD']);
+  });
+
+  it('no node shapes after a word that lexes as a keyword', () => {
+    expect(complete('flowchart TD\n  A --> end|').filter((i) => i.kind === 'shape')).toEqual([]);
+  });
+
+  it('after a comma in `class` and `style`: ids, replacing only after the comma', () => {
+    const items = complete('flowchart TD\n  A --> B\n  class A,|');
+    expect(items.map((i) => i.label)).toEqual(['A', 'B']);
+    expect(items[0]!.range).toEqual({ start: 33, end: 33 });
+    expect(labels('flowchart TD\n  A --> B\n  style A,|')).toEqual(['A', 'B']);
+    expect(labels('flowchart TD\n  A --> B\n  class A,B|')).toEqual(['B']);
+  });
+
   it('keywords carry their doc from the syntax reference', () => {
     const sub = complete('flowchart TD\n  sub|').find((i) => i.label === 'subgraph');
     expect(sub?.documentation).toBe(flowchartDocs[T.Subgraph]);
@@ -187,6 +229,19 @@ describe('hover', () => {
     expect(h?.contents).toContain('dotted line with an arrow head');
   });
 
+  it('`click` and `call`: the click doc; `classDef default` and `:::` say what they are', () => {
+    const t = 'flowchart TD\n  A --> B\n  classDef default fill:#f00\n  click A call fn()\n';
+    const d = service.update('file:///k.mmd', t);
+    const h = (needle: string, delta = 1) => d.hover(t.indexOf(needle) + delta);
+    expect(h('click')?.contents).toContain(flowchartDocs[T.Click]!);
+    expect(h('call')?.contents).toContain(flowchartDocs[T.CallbackName]!);
+    expect(h('default', 2)?.contents).toMatch(/every node without a class/);
+    expect(h('default', 2)?.contents).not.toMatch(/Used by/);
+    expect(flowchartDocs[T.Default]).not.toBe(flowchartDocs[T.LinkStyle]);
+    expect(flowchartDocs[T.Interpolate]).not.toBe(flowchartDocs[T.LinkStyle]);
+    expect(flowchartDocs[T.StyleSeparator]).toMatch(/:::/);
+  });
+
   it('a shape name, an edge id; nothing on blanks', () => {
     expect(on('proc', 1, 1)?.contents).toMatch(/same as `rect`/);
     expect(on('e1@')?.contents).toContain('`C` → `A`');
@@ -211,6 +266,14 @@ describe('stress (pitfall 5: linear on long runs)', () => {
     ['blanks after a link', (n) => `flowchart TD\n  A -->${' '.repeat(n)}|`],
     ['one long chain', (n) => `flowchart TD\n  A${' --> A'.repeat(n)} --> |`],
     ['many line breaks before a statement', (n) => `flowchart TD\n  A${'\n'.repeat(n)}|`],
+    [
+      'line breaks in shape data, cursor after a digit',
+      (n) => `flowchart TD\n  A@{ label: x,${'\n'.repeat(n)}1|}`,
+    ],
+    [
+      'commas in shape data, cursor after a digit',
+      (n) => `flowchart TD\n  A@{ label: x${'\n,'.repeat(n)}1|}`,
+    ],
   ];
   it.each(SHAPES)('%s: completion and hover stay linear', (_, shape) => {
     const run = (n: number) => {

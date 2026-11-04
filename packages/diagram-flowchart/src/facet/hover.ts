@@ -10,6 +10,7 @@ import type {
   HoverTarget,
   Range,
   SymbolOccurrence,
+  TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { flowchartDocs } from '../generated/docs.ts';
 import type { FlowDocument, FlowEdge, FlowNodeStmt, FlowStatementNode } from '../parser/ast.ts';
@@ -17,7 +18,7 @@ import type { FlowModel } from '../parser/model.ts';
 import { destructLink } from '../parser/model.ts';
 import { acceptedShape, SHAPE_GROUPS } from '../parser/shapes.ts';
 import { T } from '../parser/tokens.ts';
-import { code, describeLink, DIRECTIONS, span } from './tables.ts';
+import { code, describeLink, DIRECTIONS, span, tokenBefore } from './tables.ts';
 
 const LINK_TOKENS = new Set<number>([T.Link, T.StartLink]);
 
@@ -70,7 +71,10 @@ function subgraphHover(name: string, model: FlowModel): string | undefined {
 
 function classHover(name: string, model: FlowModel): string {
   const c = model.classes.find((x) => x.id === name);
-  const used = model.vertices.filter((v) => v.classes.includes(name)).length;
+  const used =
+    name === 'default'
+      ? 'Applies to every node without a class.'
+      : `Used by ${plural(model.vertices.filter((v) => v.classes.includes(name)).length, 'node')}`;
   let styles = 'No `classDef` defines it.';
   if (c !== undefined) {
     styles =
@@ -78,7 +82,7 @@ function classHover(name: string, model: FlowModel): string {
         ? 'Its `classDef` sets no styles.'
         : code(`classDef ${name} ${c.styles.join(',')}`);
   }
-  return `**class** ${code(name)}\n\n${styles}\n\nUsed by ${plural(used, 'node')}`;
+  return `**class** ${code(name)}\n\n${styles}\n\n${used}`;
 }
 
 function edgeHover(name: string, model: FlowModel): string | undefined {
@@ -147,6 +151,33 @@ function shapeHover(text: string, token: Range, at: number): Hover | undefined {
   return undefined;
 }
 
+/** Keywords the lexer emits no token for, and the kind of the token they come before. */
+const UNTOKENED: Readonly<Record<string, number>> = { click: T.Click, call: T.CallbackName };
+
+/** `click` / `call` under the cursor: the doc of the token right after it. */
+function untokenedKeyword(
+  text: string,
+  tokens: TokenStream | undefined,
+  at: number
+): Hover | undefined {
+  if (!tokens) return undefined;
+  let start = at;
+  let end = at;
+  while (start > 0 && start > at - 5 && /[a-z]/.test(text.charAt(start - 1))) start--;
+  while (end < text.length && end < at + 5 && /[a-z]/.test(text.charAt(end))) end++;
+  const kind = UNTOKENED[text.slice(start, end)];
+  if (kind === undefined || (start > 0 && /\w/.test(text.charAt(start - 1)))) return undefined;
+  // The next token after the keyword and its blanks must be the one it introduces.
+  let next = end;
+  while (next < text.length && /[^\S\r\n]/.test(text.charAt(next))) next++;
+  const i = tokenBefore(tokens, next);
+  if (i < 0 || tokens.start[i] !== next || tokens.kind[i] !== kind) return undefined;
+  const doc = flowchartDocs[kind];
+  return doc === undefined
+    ? undefined
+    : { range: span(start, end), contents: `**${code(text.slice(start, end))}**\n\n${doc}` };
+}
+
 export function flowchartHover(
   at: HoverTarget,
   doc: DocumentView<FlowDocument>
@@ -158,7 +189,7 @@ export function flowchartHover(
     if (contents !== undefined) return { range: at.symbol.range, contents };
   }
   const t = at.token;
-  if (!t) return undefined;
+  if (!t) return untokenedKeyword(text, result.tokens, at.offset);
   if (t.kind === T.ShapeData) return shapeHover(text, t.range, at.offset);
   // Tokens may take blanks and line breaks with them (`end`, links): only their text counts.
   const range = trimmed(text, t.range);

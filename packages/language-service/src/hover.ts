@@ -59,6 +59,6 @@ export function hover(
     ...(token ? { token } : {}),
     ...(o ? { symbol: { name: o.name, kind: o.kind, role: o.role, range: o.range } } : {}),
   };
-  if (!target.token && !target.symbol) return undefined;
+  // Even with no token: a keyword the lexer emits no token for (`click`) is the facet's to find.
   return facet.hover(target, { text, result });
 }

@@ -1,0 +1,42 @@
+@ 6:15  direction |
+  TB constant (top to bottom) 6:15-6:15 "" -> "TB"
+  TD constant (top down (same as TB)) 6:15-6:15 "" -> "TD"
+  BT constant (bottom to top) 6:15-6:15 "" -> "BT"
+  LR constant (left to right) 6:15-6:15 "" -> "LR"
+  RL constant (right to left) 6:15-6:15 "" -> "RL"
+@ 8:3  |
+  subgraph keyword 8:3-8:3 "" -> "subgraph"
+  style keyword 8:3-8:3 "" -> "style"
+  classDef keyword 8:3-8:3 "" -> "classDef"
+  class keyword 8:3-8:3 "" -> "class"
+  linkStyle keyword 8:3-8:3 "" -> "linkStyle"
+  click keyword 8:3-8:3 "" -> "click"
+  accTitle keyword 8:3-8:3 "" -> "accTitle: "
+  accDescr keyword 8:3-8:3 "" -> "accDescr: "
+  direction TB keyword 8:3-8:3 "" -> "direction TB"
+  direction TD keyword 8:3-8:3 "" -> "direction TD"
+  direction BT keyword 8:3-8:3 "" -> "direction BT"
+  direction LR keyword 8:3-8:3 "" -> "direction LR"
+  direction RL keyword 8:3-8:3 "" -> "direction RL"
+  A node 8:3-8:3 "" -> "A"
+  B node 8:3-8:3 "" -> "B"
+  C node 8:3-8:3 "" -> "C"
+  direction node 8:3-8:3 "" -> "direction"
+  S subgraph 8:3-8:3 "" -> "S"
+  st node 8:3-8:3 "" -> "st"
+@ 9:5  st|
+  style keyword 9:3-9:5 "st" -> "style"
+@ 10:11  class A,|
+  A node 10:11-10:11 "" -> "A"
+  B node 10:11-10:11 "" -> "B"
+  C node 10:11-10:11 "" -> "C"
+  direction node 10:11-10:11 "" -> "direction"
+  S subgraph 10:11-10:11 "" -> "S"
+  st node 10:11-10:11 "" -> "st"
+@ 11:11  class A |
+  hot class 11:11-11:11 "" -> "hot"
+@ 12:10  style A|
+  A node 12:9-12:10 "A" -> "A"
+@ 13:11  click A |
+  href keyword 13:11-13:11 "" -> "href"
+  call keyword 13:11-13:11 "" -> "call"

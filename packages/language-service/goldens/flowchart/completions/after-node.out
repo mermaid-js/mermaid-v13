@@ -36,5 +36,10 @@
   Bee[/Bee\] shape (trapezoid) 6:9-6:12 "Bee" -> "Bee[/Bee\\]"
   Bee[\Bee/] shape (inv_trapezoid) 6:9-6:12 "Bee" -> "Bee[\\Bee/]"
   Bee(-Bee-) shape (ellipse) 6:9-6:12 "Bee" -> "Bee(-Bee-)"
-@ 7:7  B --|
+@ 7:12  A --> end|
   none
+@ 8:7  B --|
+  --> operator (normal line with an arrow head) 8:5-8:7 "--" -> "-->"
+  --- operator (normal line with no head) 8:5-8:7 "--" -> "---"
+  --o operator (normal line with a circle head) 8:5-8:7 "--" -> "--o"
+  --x operator (normal line with a cross head) 8:5-8:7 "--" -> "--x"

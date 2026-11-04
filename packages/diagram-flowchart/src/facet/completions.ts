@@ -47,7 +47,8 @@ const ID_PART = new Set<number>([T.NodeString, T.UnicodeText, T.Num, T.Minus, T.
 const isWord = (kind: number) =>
   ID_PART.has(kind) || ['Keyword', 'Constant'].includes(flowchartCategories[kind]!);
 const BLANK = new Set<number>([T.Space, Kind.Space]);
-const STATEMENT_END = new Set<number>([Kind.Newline, T.Semi, T.Eof, Kind.EOF]);
+/** Where a statement ends; `end` closes a block and takes the line break after it. */
+const STATEMENT_END = new Set<number>([Kind.Newline, T.Semi, T.Eof, Kind.EOF, T.End]);
 
 /** Items filtered by the typed prefix, one per label. */
 class Items {
@@ -198,26 +199,50 @@ function arrowRest(text: string, tokens: TokenStream, o: number): CompletionItem
 
 /** Inside `@{ … }`: keys at a key position, shape names after `shape:`. */
 function shapeData(text: string, probe: ProbeResult): CompletionItem[] {
+  // Scanned back from the cursor by hand: a regex anchored at the end retries every blank of
+  // a long run (pitfall 5).
   const o = probe.offset;
-  const before = text.slice(probe.prefix.start, o);
+  const from = probe.prefix.start;
+  const isSpace = (i: number) => /\s/.test(text.charAt(i));
+  const back = (at: number, test: (j: number) => boolean) => {
+    let i = at;
+    while (i > from && test(i - 1)) i--;
+    return i;
+  };
   const rest = /^[\w-]*/.exec(text.slice(o, o + 64))?.[0].length ?? 0;
-  const value = /(?:^|[\s,{])shape\s*:\s*([\w-]*)$/.exec(before);
-  if (value) {
-    const typed = value[1]!;
-    const items = new Items(typed, span(o - typed.length, o + rest));
-    for (const group of SHAPE_GROUPS) {
-      for (const name of group.filter(acceptedShape)) {
-        const detail = name === group[0] ? 'shape' : `same as ${group[0]}`;
-        items.add(name, 'shape', { detail });
+  // `shape: na|`
+  const name = back(o, (j) => /[\w-]/.test(text.charAt(j)));
+  let k = back(name, isSpace);
+  if (k > from && text.charAt(k - 1) === ':') {
+    k = back(k - 1, isSpace);
+    const at = k - 'shape'.length;
+    if (
+      at >= from &&
+      text.slice(at, k) === 'shape' &&
+      (at === from || /[\s,{]/.test(text.charAt(at - 1)))
+    ) {
+      const typed = text.slice(name, o);
+      const items = new Items(typed, span(name, o + rest));
+      for (const group of SHAPE_GROUPS) {
+        for (const shape of group.filter(acceptedShape)) {
+          const detail = shape === group[0] ? 'shape' : `same as ${group[0]}`;
+          items.add(shape, 'shape', { detail });
+        }
       }
+      return items.list;
     }
-    return items.list;
   }
-  const key = /(?:^|[,{\n])\s*([A-Za-z]*)$/.exec(before);
-  if (!key) return [];
-  const typed = key[1]!;
-  const items = new Items(typed, span(o - typed.length, o + rest));
-  for (const k of NODE_DATA_KEYS) items.add(k, 'property', { insertText: `${k}: ` });
+  // A key: letters after the start, a `,`, a `{` or a line break (blanks between).
+  const key = back(o, (j) => /[A-Za-z]/.test(text.charAt(j)));
+  const blanks = back(key, isSpace);
+  const atKey =
+    blanks === from ||
+    /[,{]/.test(text.charAt(blanks - 1)) ||
+    /[\r\n]/.test(text.slice(blanks, key));
+  if (!atKey) return [];
+  const typed = text.slice(key, o);
+  const items = new Items(typed, span(key, o + rest));
+  for (const k2 of NODE_DATA_KEYS) items.add(k2, 'property', { insertText: `${k2}: ` });
   return items.list;
 }
 
@@ -246,29 +271,48 @@ function operators(items: Items, expected: ReadonlySet<number>): void {
   }
 }
 
+/** Whether `range` is non-empty and lexes as id parts only (not `end`, `style`, …). */
+function isId(tokens: TokenStream, range: Range): boolean {
+  if (range.start === range.end) return false;
+  for (let i = Math.max(0, tokenBefore(tokens, range.start)); i < tokens.length; i++) {
+    const start = tokens.start[i] ?? 0;
+    if (start >= range.end) break;
+    if ((tokens.end[i] ?? 0) <= range.start) continue;
+    if (!ID_PART.has(tokens.kind[i]!)) return false;
+  }
+  return true;
+}
+
+/** `direction ` written as a whole line so far: a subgraph direction is being typed. */
+function afterDirection(text: string, at: number): boolean {
+  let lineStart = at;
+  while (lineStart > 0 && !/[\r\n]/.test(text.charAt(lineStart - 1))) lineStart--;
+  return /^[^\S\r\n]*direction[^\S\r\n]+$/.test(text.slice(lineStart, at));
+}
+
 /** Node and subgraph ids, then the word's bracket shapes when it is a node in a chain. */
 function nodes(
   items: Items,
   result: DocumentView<FlowDocument>['result'],
   st: Statement,
-  range: Range,
   word: string,
+  typedAt: number,
   nodeKind: (s: SymbolOccurrence) => CompletionKind
 ): void {
   const model = result.model as FlowModel;
   const labels = new Map(model.vertices.map((v) => [v.id, v.text]));
-  ids(items, result.symbols, NODE_KINDS, range.start, nodeKind, (name) => {
+  ids(items, result.symbols, NODE_KINDS, typedAt, nodeKind, (name) => {
     const label = labels.get(name);
     return label === undefined || label === name ? undefined : label;
   });
   // Right after an id in a chain (after a link or `&`, or an id used elsewhere): its bracket
-  // shapes, with the id as the label. A word at a statement start may be a keyword.
-  if (st.head === T.Class || st.head === T.Style || word === '' || /\s/.test(word)) return;
+  // shapes, with the id as the label. `word` is empty when it lexes as a keyword (`end`).
+  if (st.head === T.Class || st.head === T.Style || word === '') return;
   const linked = st.prev === T.Link || st.prev === T.Amp || st.prev === T.Pipe;
   const known =
     linked ||
     result.symbols.some(
-      (s) => NODE_KINDS.has(s.kind) && s.name === word && s.range.start !== range.start
+      (s) => NODE_KINDS.has(s.kind) && s.name === word && s.range.start !== typedAt
     );
   if (!known) return;
   for (const [open, close, name] of BRACKET_SHAPES) {
@@ -284,14 +328,24 @@ export function flowchartCompletions(
   const tokens = result.tokens;
   if (!tokens) return [];
   if (probe.mode === 'shapeData') return shapeData(text, probe);
-  if (EDGE_TEXT_MODES.has(probe.mode)) return arrowRest(text, tokens, probe.offset);
+  // Right after `--`, `==` or `-.`: the rest of the arrow, whichever mode the probe ended in
+  // (the link start token takes the line break after it, so the probe may be past it).
+  const rest = arrowRest(text, tokens, probe.offset);
+  if (rest.length > 0 || EDGE_TEXT_MODES.has(probe.mode)) return rest;
   if (!CODE_MODES.has(probe.mode)) return [];
 
-  const range = wordRange(text, tokens, probe);
+  const word = wordRange(text, tokens, probe);
+  // `A,B` is one word to the lexer: only what follows the last comma is replaced.
+  const comma = text.slice(word.start, probe.offset).lastIndexOf(',');
+  const range = comma >= 0 ? span(word.start + comma + 1, word.end) : word;
   const items = new Items(text.slice(range.start, probe.offset), range);
   const expected = new Set(probe.expected);
   // The header's direction: by kind, or by position at the end of the text (see above).
-  if (expected.has(T.Dir) || onHeaderLine(text, tokens, range.start)) {
+  if (
+    expected.has(T.Dir) ||
+    onHeaderLine(text, tokens, range.start) ||
+    afterDirection(text, range.start)
+  ) {
     for (const [dir, meaning] of DIRECTIONS) items.add(dir, 'constant', { detail: meaning });
     return items.list;
   }
@@ -299,15 +353,16 @@ export function flowchartCompletions(
   const nodeKind = (s: SymbolOccurrence): CompletionKind =>
     subgraphs.has(s.name) ? 'subgraph' : 'node';
   if (probe.mode === 'click') {
-    ids(items, result.symbols, NODE_KINDS, range.start, nodeKind);
+    ids(items, result.symbols, NODE_KINDS, word.start, nodeKind);
     return items.list;
   }
   byKind(items, expected);
-  const st = statementBefore(tokens, range.start);
+  const st = statementBefore(tokens, word.start);
   const context = expected.has(T.NodeString) ? idContext(st) : 'none';
-  if (context === 'classes') ids(items, result.symbols, CLASS_KINDS, range.start, () => 'class');
+  if (context === 'classes') ids(items, result.symbols, CLASS_KINDS, word.start, () => 'class');
   else if (context === 'nodes') {
-    nodes(items, result, st, range, text.slice(range.start, range.end), nodeKind);
+    const id = isId(tokens, range) ? text.slice(range.start, range.end) : '';
+    nodes(items, result, st, id, word.start, nodeKind);
   }
   operators(items, expected);
   return items.list;

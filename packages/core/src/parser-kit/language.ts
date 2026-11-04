@@ -34,7 +34,8 @@ export interface HoverTarget {
   readonly offset: number;
   /**
    * The token of `doc.result.tokens` under the offset (one containing it, else one ending at
-   * it), when there is one that is not a blank or line break.
+   * it), when there is one that is not a blank or line break. Without one the facet may still
+   * read the text (a keyword its lexer emits no token for).
    */
   readonly token?: { readonly kind: TokenKind; readonly range: Range };
   /** The parser's symbol occurrence under the offset, when there is one. */
