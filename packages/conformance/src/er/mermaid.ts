@@ -1,6 +1,6 @@
 // A `mermaid` API object that renders ER before the registry lists it (#133; T5 adds the
 // manifest). It is the public `createMermaid` with the generated first-party table, the `er`
-// row given the plugin, so tests go through the same `render()` path as every other type.
+// row given the plugin and its `./ascii` entry (#136), so tests go through the same `render()` path as every other type.
 // Once `gen:registry` lists ER, `createMermaid()` from `mermaid` replaces this.
 import { er } from '@mermaid-js/diagram-er';
 // eslint-disable-next-line mermaid/import-boundaries -- until T5 (#134) lists ER in the generated registry, no public entry builds an API object that renders it
@@ -13,7 +13,13 @@ export function erMermaid(): ReturnType<typeof createMermaid> {
   const m = createMermaid(
     FIRST_PARTY.map((row) =>
       row.type === 'er' && row.load === undefined
-        ? { ...row, id: 'er', formats: ['svg'], load: () => Promise.resolve(er) }
+        ? {
+            ...row,
+            id: 'er',
+            formats: ['svg', 'ascii'],
+            load: () => Promise.resolve(er),
+            loadAscii: () => import('@mermaid-js/diagram-er/ascii').then((entry) => entry.ascii),
+          }
         : row
     )
   );

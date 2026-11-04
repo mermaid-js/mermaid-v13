@@ -32,6 +32,8 @@ export interface DrawOptions {
  */
 export const ER_DEFAULTS = { nodeSpacing: 140, rankSpacing: 80, minEntityWidth: 100 } as const;
 
+// Text output reads no theme colour; the classic one stands in for the pipeline's.
+const classic = 'default';
 let theme: Theme | undefined;
 
 /** `src` as text. The `ascii` options go in as the config section the API hands the hook. */
@@ -47,7 +49,7 @@ export async function draw(src: string, options: DrawOptions = {}): Promise<Draw
   } as unknown as ResolvedConfig;
   const parse = parseEr(src, { preprocessed: pre });
   const warnings: ErWarning[] = [];
-  theme ??= createTheme(await loadTheme('default'), {});
+  theme ??= createTheme(await loadTheme(classic), {});
   const units = cellProfile(config.ascii?.padding);
   const ctx: ErAsciiContext = {
     config,
