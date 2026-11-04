@@ -230,6 +230,15 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/language-service:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+      '@mermaid-js/diagram-flowchart':
+        specifier: workspace:^
+        version: link:../diagram-flowchart
+
   packages/mermaid:
     dependencies:
       '@mermaid-js/core':

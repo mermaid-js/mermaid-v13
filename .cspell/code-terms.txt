@@ -189,3 +189,5 @@ zenuml
 oklab
 oklch
 subpaths
+goldens
+memoises

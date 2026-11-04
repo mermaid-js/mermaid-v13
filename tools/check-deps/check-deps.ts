@@ -1,8 +1,8 @@
 /**
  * Published-package dependency check (R-PERF-2, R-PARSE-1).
  *
- * - `core` and every `diagram-*` package declare no runtime (`dependencies`,
- *   `optionalDependencies`) dependencies at all; they reach core as a peer.
+ * - `core`, every `diagram-*` package and `language-service` (R-LANG-1) declare no runtime
+ *   (`dependencies`, `optionalDependencies`) dependencies at all; they reach core as a peer.
  * - Other published packages (`mermaid`, `plugin-*`) depend only on workspace packages.
  * - Peer dependencies of published packages are workspace packages only.
  * - A published package's `bin` sources import only `node:` builtins, relative files and
@@ -29,7 +29,7 @@ export interface WorkspacePackage {
 
 const isZeroDependencyPackage = (dir: string) => {
   const name = basename(dir);
-  return name === 'core' || name.startsWith('diagram-');
+  return name === 'core' || name === 'language-service' || name.startsWith('diagram-');
 };
 
 export function findDependencyViolations(packages: WorkspacePackage[]): string[] {
@@ -46,7 +46,7 @@ export function findDependencyViolations(packages: WorkspacePackage[]): string[]
     for (const dep of runtime) {
       if (isZeroDependencyPackage(dir)) {
         violations.push(
-          `${manifest.name}: runtime dependency "${dep}" is not allowed (core and diagram packages have zero runtime dependencies)`
+          `${manifest.name}: runtime dependency "${dep}" is not allowed (core, diagram and language-service packages have zero runtime dependencies)`
         );
       } else if (!workspaceNames.has(dep)) {
         violations.push(`${manifest.name}: runtime dependency "${dep}" is not a workspace package`);
