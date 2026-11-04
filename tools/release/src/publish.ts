@@ -6,6 +6,7 @@
  */
 import { execFileSync } from 'node:child_process';
 import {
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -16,7 +17,13 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { PackedManifest, Target } from './manifest.ts';
-import { DIST_TAG, assertAlphaVersion, publishManifest, workspaceLeaks } from './manifest.ts';
+import {
+  DIST_TAG,
+  assertAlphaVersion,
+  inexactWorkspaceRanges,
+  publishManifest,
+  workspaceLeaks,
+} from './manifest.ts';
 
 export interface Registry {
   target: Target;
@@ -80,6 +87,7 @@ export function packAll(
   const packages = publishedPackages(root);
   if (opts.requireAlpha !== false) packages.forEach((p) => assertAlphaVersion(p.manifest));
   const workspace = packages.map((p) => p.manifest.name);
+  const versions = new Map(packages.map((p) => [p.manifest.name, p.manifest.version]));
   mkdirSync(opts.outDir, { recursive: true });
 
   return packages.map(({ dir }) => {
@@ -91,6 +99,12 @@ export function packAll(
 
     const manifestPath = join(work, 'package', 'package.json');
     const packed = JSON.parse(readFileSync(manifestPath, 'utf8')) as PackedManifest;
+    const inexact = inexactWorkspaceRanges(packed, versions);
+    if (inexact.length > 0)
+      throw new Error(`INEXACT RANGE in ${packed.name}, do not publish:\n${inexact.join('\n')}`);
+    // MIT asks for the notice in every copy; the packages have no LICENSE of their own.
+    const license = join(work, 'package', 'LICENSE');
+    if (!existsSync(license)) copyFileSync(join(root, 'LICENSE'), license);
     const manifest = publishManifest(packed, { target: opts.target, workspace });
     const leaks = workspaceLeaks(manifest);
     if (leaks.length > 0)
@@ -112,7 +126,15 @@ export type Exec = (args: string[]) => string;
 export const npm: Exec = (args) =>
   execFileSync('npm', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
-function isPublished(exec: Exec, spec: string, registry: string): boolean {
+/** npm's refusal to publish a version that already exists. */
+function alreadyPublished(error: unknown): boolean {
+  const e = error as { stderr?: unknown; message?: unknown };
+  const text = [e.stderr, e.message].filter((x): x is string => typeof x === 'string').join('\n');
+  return /EPUBLISHCONFLICT|cannot publish over (?:the )?previously published version/i.test(text);
+}
+
+/** Whether `name@version` is on `registry`; any lookup failure counts as not published. */
+export function isPublished(exec: Exec, spec: string, registry: string): boolean {
   try {
     return exec(['view', spec, 'version', '--registry', registry]).trim() !== '';
   } catch {
@@ -126,7 +148,17 @@ function isPublished(exec: Exec, spec: string, registry: string): boolean {
  */
 export function publishAll(
   tarballs: PackedTarball[],
-  opts: { registry: Registry; exec?: Exec; dryRun?: boolean }
+  opts: {
+    registry: Registry;
+    exec?: Exec;
+    dryRun?: boolean;
+    /** npm provenance on public publishes (default true); off for a local test registry. */
+    provenance?: boolean;
+    /** A one-time password for npm accounts with 2FA on publish (manual releases). */
+    otp?: string;
+    /** Receives npm's own output for each publish (`+ name@version`, notices). */
+    log?: (npmOutput: string) => void;
+  }
 ): { published: string[]; skipped: string[] } {
   const exec = opts.exec ?? npm;
   const { target, url } = opts.registry;
@@ -142,15 +174,29 @@ export function publishAll(
       skipped.push(spec);
       continue;
     }
-    exec([
-      'publish',
-      t.tarball,
-      '--tag',
-      DIST_TAG,
-      '--registry',
-      url,
-      ...(target === 'public' ? ['--access', 'public', '--provenance'] : []),
-    ]);
+    let out: string;
+    try {
+      out = exec([
+        'publish',
+        t.tarball,
+        '--tag',
+        DIST_TAG,
+        '--registry',
+        url,
+        ...(target === 'public' ? ['--access', 'public'] : []),
+        ...(target === 'public' && opts.provenance !== false ? ['--provenance'] : []),
+        ...(opts.otp === undefined ? [] : ['--otp', opts.otp]),
+      ]);
+    } catch (e) {
+      // Right after a publish the registry's cache can still answer 404 to `npm view`, so a
+      // re-run tries again and npm refuses: that version is out, which is all a re-run needs.
+      if (alreadyPublished(e)) {
+        skipped.push(spec);
+        continue;
+      }
+      throw e;
+    }
+    opts.log?.(out);
     published.push(spec);
   }
   return { published, skipped };

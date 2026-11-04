@@ -60,6 +60,14 @@ export interface LayoutEdge {
   minLen: number;
   /** Measured size of the edge label, including any room the diagram wants around it. */
   label?: Size;
+  /**
+   * Measured size of a small label at the source end (a class multiplicity), including any room
+   * the diagram wants around it. The engine places it beside the route's first segment, off to
+   * one side, outside the source box (D102).
+   */
+  startLabel?: Size;
+  /** As `startLabel`, at the target end, also clear of `LayoutGraph.headRoom`. */
+  endLabel?: Size;
 }
 
 export interface LayoutGroup {
@@ -139,6 +147,10 @@ export interface LayoutModelEdge {
   points: RoutePoint[];
   /** Centre of the label, when the edge has one. */
   label?: Point;
+  /** Centre of the start label, when the edge has one. */
+  startLabel?: Point;
+  /** Centre of the end label, when the edge has one. */
+  endLabel?: Point;
   ports: { source: Side; target: Side };
 }
 
