@@ -36,7 +36,7 @@ function route(r: () => number): RoutePoint[] {
   let y = Math.round(r() * 200);
   for (let i = 0; i < n; i++) {
     const axis = r() < 0.5 ? 'h' : 'v';
-    // Mostly right-angle legs, as the engine routes, with some free ones and repeats.
+    // Mostly right-angle legs, as the engine routes, with some free ones and repeated points.
     const k = r();
     if (k < 0.4) x += Math.round((r() - 0.5) * 160);
     else if (k < 0.8) y += Math.round((r() - 0.5) * 160);
@@ -44,7 +44,7 @@ function route(r: () => number): RoutePoint[] {
       x += Math.round((r() - 0.5) * 80);
       y += Math.round((r() - 0.5) * 80);
     }
-    pts.push(r() < 0.5 ? { x, y } : { x, y, axis });
+    pts.push({ x, y, axis });
   }
   return pts;
 }
