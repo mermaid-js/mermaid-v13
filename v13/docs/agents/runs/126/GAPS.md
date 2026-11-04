@@ -46,3 +46,8 @@ Done: merged into `mermaid-v13` as #165 (`5a6425d8e`) and into this branch (`841
 - Sanitising: the oracle stubs DOMPurify, so parity can't see that real v12 ran `sanitizeText` on class ids, labels and member text (e.g. it likely strips `<T>` in `A : +List<T> items`). v13 escapes text in `SvgWriter` instead. #156 checks what flowchart did about this and lists the difference in MIGRATION.md. If it changes what a user sees beyond flowchart's precedent, it is a question for the maintainer.
 - Link target: under `securityLevel: 'sandbox'`, v12 forces `linkTarget` to `_top`. The model's `linkTarget` says "`_blank` when none given"; #158 must apply the sandbox rule, as for flowchart.
 - Not compared by parity: class `text`, `shape`, `domId` (render-side; #156).
+
+## #185 (core sourceView fix)
+
+- Draft PR #186 into `mermaid-v13`. After it merges, merge `mermaid-v13` here and switch diagram-class to `sourceView` (ready port: `d114-v12-text.ts.txt`), keeping class's `trimStart` and entity steps; delete `src/parser/source.ts`.
+- Not class: the flowchart parity harness never decodes v12's `#y;` placeholder in edge text (`flowchart LR\nA -- x:#y; --> B`); jison splits EDGE_TEXT per character and the harness decodes before merging tokens. No corpus string hits it.
