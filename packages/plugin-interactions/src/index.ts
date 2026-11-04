@@ -81,7 +81,22 @@ export function runFunction(name: string, args: readonly string[]): void {
   if (typeof fn === 'function') (fn as (...a: string[]) => unknown).apply(owner, [...args]);
 }
 
-/** `click … callback` / `call` (`AstCallback`), bound to the nodes' `g.node[data-id]`. */
+/**
+ * True when `g` draws the node `id` itself: its `data-ast` (`n:A`, `n:A@2`, `s:S`) names `id`.
+ * Other kinds may share a `data-id` with a node: a class note is `note0` and a lollipop
+ * interface `interface0` (`data-ast` `note:1`, `i:A`), and a class can have either name.
+ */
+function drawsNode(g: Element, id: string): boolean {
+  const ast = g.getAttribute('data-ast');
+  if (ast === null) return true;
+  const named = ast.slice(ast.indexOf(':') + 1);
+  return named === id || named.startsWith(`${id}@`);
+}
+
+/**
+ * `click … callback` / `call` (`AstCallback`), bound to the nodes' `g.node[data-id]`: flowchart
+ * nodes and class boxes alike (the class parser emits the same field).
+ */
 const callbacks = defineFeature<Binding[]>({
   field: 'callback',
   claim: 'callbacks',
@@ -97,7 +112,9 @@ const callbacks = defineFeature<Binding[]>({
     key: JSON.stringify(bindings),
     bind(scope) {
       if (bindings.length === 0) return;
-      const isNode = (g: Element) => (g.getAttribute('class') ?? '').split(' ').includes('node');
+      const isNode = (g: Element) =>
+        (g.getAttribute('class') ?? '').split(' ').includes('node') &&
+        drawsNode(g, g.getAttribute('data-id') ?? '');
       const anchors = scope.anchors(new Set(bindings.map((b) => b.id)), isNode);
       for (const b of bindings)
         for (const node of anchors.get(b.id) ?? [])

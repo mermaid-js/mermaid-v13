@@ -63,6 +63,11 @@ export class FakeEl {
   removeEventListener(type: string, fn: () => void): void {
     this.listeners.get(type)?.delete(fn);
   }
+  /** Replaces the children with `html` parsed, as the DOM adapter's `mount()` sets it. */
+  set innerHTML(html: string) {
+    for (const c of [...this.children]) c.remove();
+    parseInto(this, html);
+  }
   /** The number of click listeners. */
   get clicks(): number {
     return this.listeners.get('click')?.size ?? 0;
