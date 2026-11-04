@@ -3,7 +3,7 @@
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { NEO_ARROWHEADS, NEO_SEQUENCE, REDUX_PADDING } from './geometry.ts';
+import { NEO_ARROWHEADS, NEO_SEQUENCE, REDUX_PADDING, REDUX_RULES } from './geometry.ts';
 
 const redux: ThemeSpec = {
   name: 'redux',
@@ -46,6 +46,7 @@ const redux: ThemeSpec = {
     errorBkgColor: '#ffffff',
     errorTextColor: '#000000',
   },
+  rules: REDUX_RULES,
 };
 
 export default redux;

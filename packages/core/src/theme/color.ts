@@ -86,6 +86,39 @@ export function mixColors(a: Rgba, b: Rgba, p: number): Rgba {
   return [ch(0), ch(1), ch(2), alpha];
 }
 
+// khroma writes HSL channels with 10 decimals; v12's colours are those strings.
+const round10 = (n: number): number => Math.round(n * 1e10) / 1e10;
+
+/**
+ * `c` with `delta` (percentage points, ±100) added to its HSL lightness, clamped to 0–100 and
+ * converted back to sRGB: khroma's `lighten`/`darken`, which v12's themes derive with (D117),
+ * including khroma's rounding of the HSL channels to 10 decimals.
+ */
+export function adjustLightness(c: Rgba, delta: number): Rgba {
+  const [r, g, b] = [c[0] / 255, c[1] / 255, c[2] / 255];
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  let h = 0;
+  let s = 0;
+  if (d > 0) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    if (max === r) h = ((g - b) / d + 6) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+  }
+  const lt = round10(clamp(l * 100 + delta, 100)) / 100;
+  const sat = round10(s * 100) / 100;
+  const k = sat * Math.min(lt, 1 - lt);
+  const hue = round10(h * 60) / 30; // degrees → twelfths of a turn, as parseColor's hsl
+  const [x, y, z] = [0, 8, 4].map((o) => {
+    const t = (o + hue) % 12;
+    return (lt - k * Math.max(-1, Math.min(t - 3, 9 - t, 1))) * 255;
+  }) as [number, number, number];
+  return [x, y, z, c[3]];
+}
+
 export function invertColor(c: Rgba): Rgba {
   return [255 - c[0], 255 - c[1], 255 - c[2], c[3]];
 }

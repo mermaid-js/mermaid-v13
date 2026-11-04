@@ -5,6 +5,9 @@
  *   mix(a, b, 15%)      a with 15% of b, `color-mix(in srgb, a 85%, b)`
  *   lighten(a, 15%)     mix(a, white, 15%)
  *   darken(a, 15%)      mix(a, black, 15%)
+ *   lightenHsl(a, 5%)   a with 5 added to its HSL lightness, clamped (khroma's `lighten`, which
+ *                       v12 themes used), `hsl(from a h s clamp(0, l + 5, 100) / alpha)` (D117)
+ *   darkenHsl(a, 5%)    the same, subtracting 5 (khroma's `darken`)
  *   alpha(a, 80%)       a at 80% opacity, `color-mix(in srgb, a 80%, transparent)`
  *   contrast(bg, a, b)  a, unless it misses AA on bg and b reads better (WCAG ratio); in CSS
  *                       the choice follows bg live, between a's and b's theme values
@@ -21,12 +24,22 @@ export type Expr =
   | { readonly k: 'pct'; readonly value: number }
   | { readonly k: 'call'; readonly fn: Fn; readonly args: readonly Expr[] };
 
-export type Fn = 'mix' | 'lighten' | 'darken' | 'alpha' | 'contrast' | 'invert';
+export type Fn =
+  | 'mix'
+  | 'lighten'
+  | 'darken'
+  | 'lightenHsl'
+  | 'darkenHsl'
+  | 'alpha'
+  | 'contrast'
+  | 'invert';
 
 const ARITY: Readonly<Record<Fn, number>> = {
   mix: 3,
   lighten: 2,
   darken: 2,
+  lightenHsl: 2,
+  darkenHsl: 2,
   alpha: 2,
   contrast: 3,
   invert: 1,

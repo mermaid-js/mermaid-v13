@@ -1,4 +1,5 @@
 import type { ParitySuite } from './corpus.ts';
+import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
 
@@ -19,6 +20,11 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/sequence-v12-specs.json',
       'packages/conformance/corpus/sequence-cases.json',
     ],
+  },
+  {
+    adapter: erAdapter,
+    corpusDirs: ['e2e/diagrams/er-diagram'],
+    corpusFiles: ['packages/conformance/corpus/er-v12-specs.json'],
   },
 ];
 

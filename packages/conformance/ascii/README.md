@@ -1,4 +1,4 @@
-# ASCII flowchart goldens
+# ASCII goldens
 
 The 142 flowchart golden files of [mermaid-ascii](https://github.com/AlexanderGrooff/mermaid-ascii),
 ported for v13's ASCII/Unicode backend (M2, D83, R-ASCII-2). They come from
@@ -76,3 +76,28 @@ written, and `meta.json` gives `source` and `charset`. There are no header lines
 [`sequence/ascii-divergences.json`](sequence/ascii-divergences.json) has the same entry kinds.
 Every input was triaged with v13's sequence parser and the mermaid@12 oracle: both reject
 `quoted_name_with_arrow` and agree on the models of the other 95.
+
+## ER goldens
+
+The 83 ER golden files of mermaid-ascii (#136, D83, D100, D109) come from
+`cmd/testdata/{er,er-ascii}` at the same commit, one folder per file: `er/` (70, Unicode) and
+`er-ascii/` (13, ASCII; every input is the same as its `er/` namesake). They have no header
+lines. `meta.json` holds `source` and `charset`. `er-v13/` holds our own cases (directions, MD
+parent ends, nested subgraphs, a relationship to a subgraph, a title, dropped styles, CJK and
+emoji, generics and aliases, self and parallel relationships), each with `expected.txt`
+(Unicode) and `expected.ascii.txt`.
+
+`src/ascii/er-goldens.spec.ts` renders them through `src/ascii/er-render.ts` (the ER plugin's
+`./ascii` entry, as the API will once the plugin is registered). The structural check is
+`src/ascii/er-structure.ts`: it finds the crow's-foot marks (mermaid-ascii's `||`, `|o`, `}|`,
+`}o` on a horizontal line, ours on a vertical one too), counts one end per run and reads its
+cardinality, replaces the marks with line glyphs and runs the flowchart reader on what is left.
+Each entity's table must be in a box (name row, then the attribute cells), each relationship
+label present, each line connected box to box, the same ends with the same cardinalities as
+upstream, and no arrowheads. The drawings use the cell profile's spacing and entity widths:
+`er.nodeSpacing`, `er.rankSpacing` and `er.minEntityWidth` convert from px only when a diagram
+sets them, never from v12's defaults (D118); the rank gap is at least six cells, so both ends of
+a relationship and a line cell between them fit. `expected.txt` files are written with
+`vitest run -u packages/conformance/src/ascii/er-goldens.spec.ts` and reviewed by hand.
+ER entries in `ascii-divergences.json` have fixtures under `er/` or `er-ascii/`; each suite
+reads only its own groups' entries.

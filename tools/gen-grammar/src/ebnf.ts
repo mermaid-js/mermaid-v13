@@ -6,6 +6,7 @@
  * `@lexer`: lexer modes (jison start conditions) and ordered token rules.
  *
  *     @modes string text … ;                      exclusive modes; INITIAL is implicit
+ *     \@options case-insensitive ;                 every rule ignores case (jison's option)
  *     <modes> NAME /regex/ action… :scope ;       one token rule
  *
  * - `<a,b>` lists the modes a rule applies in, `<*>` every mode; no list means INITIAL.
@@ -67,6 +68,8 @@ export interface Grammar {
   /** Title line(s): the file's leading `(** … *)` comment. */
   doc: string | undefined;
   modes: string[];
+  /** `@options case-insensitive`: every lexer rule ignores case (regex flag `i`). */
+  ignoreCase: boolean;
   lexRules: LexRule[];
   /** Highlighting-only rules for text removed before lexing. */
   triviaRules: LexRule[];
@@ -201,6 +204,7 @@ export function parseGrammar(src: string): Grammar {
   };
 
   const modes: string[] = [];
+  let ignoreCase = false;
   const lexRules: LexRule[] = [];
   const triviaRules: LexRule[] = [];
   const tokens: string[] = [];
@@ -219,6 +223,16 @@ export function parseGrammar(src: string): Grammar {
       if (t.k === 'at' && t.v === 'modes') {
         p++;
         while (peek()?.k === 'word') modes.push((toks[p++] as Tok).v);
+        expectPunct(';');
+        continue;
+      }
+      if (t.k === 'at' && t.v === 'options') {
+        p++;
+        while (peek()?.k === 'word') {
+          const o = toks[p++] as Tok;
+          if (o.v === 'case-insensitive') ignoreCase = true;
+          else err(`unknown lexer option \`${o.v}\``, o);
+        }
         expectPunct(';');
         continue;
       }
@@ -329,6 +343,7 @@ export function parseGrammar(src: string): Grammar {
   const g: Grammar = {
     doc: fileDoc,
     modes,
+    ignoreCase,
     lexRules,
     triviaRules,
     tokens,

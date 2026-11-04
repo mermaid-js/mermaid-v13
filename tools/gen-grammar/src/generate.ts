@@ -47,6 +47,11 @@ export const GRAMMARS: GrammarTarget[] = [
       },
     },
   },
+  {
+    type: 'er',
+    title: 'Entity relationship diagram syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
 ];
 
 export const grammarPath = (type: string): string =>

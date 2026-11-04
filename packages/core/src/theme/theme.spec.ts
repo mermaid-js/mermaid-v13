@@ -161,6 +161,30 @@ describe('createTheme: composite state backgrounds (#192, D120)', () => {
     expect(t.value('altBackground')).toBe(alt);
   });
 
+  // D126: v12's compositeBackground is the theme background, except on the dark redux themes.
+  it.each([
+    ['redux', '#ffffff'],
+    ['redux-color', '#ffffff'],
+    ['redux-dark', '#16141f'],
+    ['redux-dark-color', '#16141f'],
+    ['default', '#ffffff'],
+    ['dark', '#333333'],
+    ['forest', '#ffffff'],
+    ['neutral', '#ffffff'],
+    ['base', '#f4f4f4'],
+  ] as const)('%s: compositeBackground %s (D126)', async (name, body) => {
+    const t = createTheme(await loadTheme(name), { cssVariables: false });
+    expect(t.value('compositeBackground')).toBe(body);
+  });
+
+  it('derives the composite body from background, as v12 does (D126)', async () => {
+    const t = createTheme(await loadTheme('default'), {
+      themeVariables: { background: '#abcdef' },
+      cssVariables: false,
+    });
+    expect(t.value('compositeBackground')).toBe('#abcdef');
+  });
+
   it('derives the classic title strip from mainBkg, as v12 does', async () => {
     const t = createTheme(await loadTheme('default'), {
       themeVariables: { mainBkg: '#123456' },

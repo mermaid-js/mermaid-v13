@@ -29,15 +29,20 @@
   },
   "peerDependencies": {
     "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-er": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*"
   },
   "peerDependenciesMeta": {
+    "@mermaid-js/diagram-er": {
+      "optional": true
+    },
     "@mermaid-js/diagram-flowchart": {
       "optional": true
     }
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-er": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*"
   }
 }

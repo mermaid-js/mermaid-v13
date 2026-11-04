@@ -47,7 +47,9 @@ export const REDUX_DARK_VALUES: NonNullable<ThemeSpec['values']> = {
   nodeTextColor: '#e0dfdf',
   clusterBkg: '#1e1a2e',
   clusterBorder: '#bdbccc',
-  // v12 pins both composite-state backgrounds (#192); not clusterBkg (#1e1a2e).
+  // v12 pins the composite-state backgrounds (#192, D126); not clusterBkg (#1e1a2e) or
+  // background (#333333).
+  compositeBackground: '#16141f',
   compositeTitleBackground: '#16141f',
   altBackground: '#16141f',
   titleColor: '#dfe0e0',
