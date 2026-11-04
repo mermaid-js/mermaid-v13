@@ -7,13 +7,14 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 - No unmet criteria. 4 of 2,599 sources are not compared: commented variants whose mid-line cut splits the `erDiagram` keyword, so v12 never detects them (listed in `packages/conformance/src/er/lexer-parity.spec.ts`).
 - Final `/code-review` over the lexer is deferred to the spec's finish step.
 
-## #131 T2 grammar/parser/model
+## #131 T2 grammar/parser/model (merged)
 
-- **D114, shared source view.** v12 input cleanup (the offset-preserving source view, flowchart `source.ts`) moves into the core parser kit, owned by the state spec's T0 (draft PR into `mermaid-v13`). Until that T0 merges into `mermaid-v13`, keep `packages/diagram-er/src/parser/source.ts`. Once it has merged, switch diagram-er to the shared one and delete the copy, with the lexer-parity gate still green.
+- No unmet criteria. D114 closed: diagram-er reads core's `sourceView` through `src/parser/view.ts`; its own `source.ts` is deleted, lexer parity still 100%.
+- For T6: probe-mode `mode` is always `''` (the ER lexer does not report its state yet).
+- Known limit: after an error, a stray `{` opens an attribute block in the lexer, so recovery skips to the next `}`.
+- Not ported, with reasons in the port script: `erDb.spec.js` (calls the DB directly, no parse) and `erRenderer.spec.ts` (T4 territory).
 
-## Blocked (not started)
+## Not started
 
-- #131 T2 grammar/parser/model: blocked by M2.5 #27 (parser-kit probe) and #28 (category table), not merged into `mermaid-v13` on 2026-11-04 (D107). Held, per the run brief.
-- #132 T3 layout: may start on hand-built fixtures, but its done criterion needs parser-produced fixtures, and `ErModel` is T2's contract. Not started, to avoid defining the model ahead of T2.
-- #133 T4 renderer, #134 T5 integration, #136 T7 ASCII: downstream of T3.
-- #135 T6 language facet: blocked by T2, #29 and #31.
+- #133 T4 renderer, #136 T7 ASCII: downstream of T3 (#132, running).
+- #134 T5 integration: downstream of T4.
