@@ -14,7 +14,17 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 - Known limit: after an error, a stray `{` opens an attribute block in the lexer, so recovery skips to the next `}`.
 - Not ported, with reasons in the port script: `erDb.spec.js` (calls the DB directly, no parse) and `erRenderer.spec.ts` (T4 territory).
 
+## #132 T3 layout (merged)
+
+- No unmet criteria. Fixed at merge: `grammar/generated/*` was gitignored and never committed, so `check:grammar` failed in fresh worktrees (the flaky push after #131). Now force-added, as flowchart's are.
+- Core `layered` gap, not in the corpus, flowchart has it too: an edge from a group to its own member puts the label on the member (`G ||--|| A`, A in G), and a group self-loop runs outside the drawing. Belongs to a core ticket, not this spec.
+
+## #134 T5 integration (open items)
+
+- Generate the ER section defaults (`SECTION_OWNERS`; v12 nodeSpacing 140, rankSpacing 80, minEntityWidth 100) and mark the keys the builder reads (`er.nodeSpacing`, `er.rankSpacing`, `er.minEntityWidth`) as honoured.
+- **D116 (maintainer, draft PR #184): honour both.** Mark `er.entityPadding` (default 15) and `er.diagramPadding` (default 20) `honoured`. In px, `entityPadding` replaces the shared node padding inside entity table cells (v12's across × down meaning) and `diagramPadding` sets the margin around the drawing; the cell profile stays at 1-cell padding. Fix the MIGRATION.md ER row that says they are ignored, and cite D116 in code and tests.
+
 ## Not started
 
-- #133 T4 renderer, #136 T7 ASCII: downstream of T3 (#132, running).
+- #133 T4 renderer, #136 T7 ASCII: unblocked by T3; #135 T6 running.
 - #134 T5 integration: downstream of T4.
