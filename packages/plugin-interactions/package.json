@@ -1,7 +1,7 @@
 {
   "name": "@mermaid-js/plugin-interactions",
   "version": "13.0.0-alpha.0",
-  "description": "Mermaid extension plugin restoring v12 click callbacks (DESIGN §12.3).",
+  "description": "Mermaid extension plugin restoring v12 click callbacks and actor menus (DESIGN §12.3).",
   "type": "module",
   "license": "MIT",
   "repository": {

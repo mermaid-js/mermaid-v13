@@ -83,3 +83,73 @@ test('without the plugin, nothing is bound and the warning is returned', async (
   await node(page, 'A').click();
   expect(await page.evaluate(() => window.calls)).toEqual([]);
 });
+
+/**
+ * Element menus (#147, D105): a fixture extension registered before the plugin puts `menu`
+ * nodes (`AstMenu`) on the flowchart AST, as a diagram's parser emits them (sequence actor
+ * `link`/`links`). The plugin builds the menu as DOM next to the svg, never inside it.
+ */
+async function renderMenus(page: Page) {
+  return page.evaluate(async (src) => {
+    const fixture = {
+      id: 'menu-fixture',
+      postParse(ast: { children?: unknown[] }) {
+        const menu = (target: string, links: Record<string, string>) => ({
+          id: `st:${target}`,
+          type: 'Link',
+          range: { start: 0, end: 0 },
+          menu: { target, links },
+        });
+        return {
+          ...ast,
+          children: [
+            ...(ast.children ?? []),
+            menu('A', { Docs: '/docs', Bad: 'javascript:alert(1)' }),
+            menu('C', { Bad: 'javascript:alert(2)' }),
+          ],
+        };
+      },
+    };
+    await window.mermaid.registerExternalDiagrams([fixture as never, window.mermaidInteractions]);
+    const { svg, bindFunctions, warnings } = await window.mermaid.render('d1', src);
+    const el = document.createElement('div');
+    el.id = 'd';
+    el.innerHTML = svg;
+    document.body.appendChild(el);
+    bindFunctions?.(el);
+    bindFunctions?.(el);
+    return { svg, warnings: warnings.map((w) => w.code) };
+  }, 'flowchart LR\n  A[Start] --> B[Next] --> C[End]\n');
+}
+
+test('with the plugin, an element menu is DOM beside the svg that a click toggles', async ({
+  page,
+}) => {
+  await open(page);
+  const { svg, warnings } = await renderMenus(page);
+  expect(svg).not.toContain('actorPopupMenu');
+  expect(warnings.filter((w) => w === 'URL_REFUSED')).toHaveLength(2);
+  const menus = page.locator('#d > div.actorPopupMenu');
+  // Bound once although bindFunctions ran twice; C had no safe link, so it has no menu.
+  await expect(menus).toHaveCount(1);
+  const menu = page.locator('#d > div.actorPopupMenu[data-menu-for="A"]');
+  await expect(menu).toBeHidden();
+  await node(page, 'A').click();
+  await expect(menu).toBeVisible();
+  const link = menu.locator('a');
+  await expect(link).toHaveCount(1);
+  await expect(link).toHaveText('Docs');
+  await expect(link).toHaveAttribute('href', '/docs');
+  await expect(link).toHaveAttribute('target', '_blank');
+  // The menu opens just below the node.
+  const box = (await node(page, 'A').boundingBox())!;
+  const at = (await menu.boundingBox())!;
+  expect(Math.abs(at.x - box.x)).toBeLessThan(2);
+  expect(Math.abs(at.y - (box.y + box.height))).toBeLessThan(2);
+  await node(page, 'A').click();
+  await expect(menu).toBeHidden();
+  // Nodes without a menu stay inert.
+  await node(page, 'B').click();
+  await expect(menus).toHaveCount(1);
+  expect(await page.locator('#d svg a').count()).toBe(0);
+});
