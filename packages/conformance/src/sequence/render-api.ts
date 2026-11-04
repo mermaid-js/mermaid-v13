@@ -2,7 +2,7 @@
 import type { DiagramParseContext } from '@mermaid-js/core';
 import { diagramStart, preprocess } from '@mermaid-js/core/preprocess';
 import { sequence } from '@mermaid-js/diagram-sequence';
-import { createMermaid, type Mermaid } from 'mermaid';
+import { createMermaid, type Mermaid, type MermaidConfig } from 'mermaid';
 
 /**
  * A `mermaid` API that renders sequence diagrams before the plugin is in the generated registry
@@ -40,7 +40,7 @@ export const sequenceTest = {
 };
 
 /** A fresh API object with the sequence plugin registered (`deterministic: true`). */
-export async function sequenceApi(theme?: string): Promise<Mermaid> {
+export async function sequenceApi(theme?: MermaidConfig['theme']): Promise<Mermaid> {
   const m = createMermaid();
   m.initialize({ deterministic: true, ...(theme !== undefined ? { theme } : {}) });
   await m.registerExternalDiagrams([sequenceTest]);
