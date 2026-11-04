@@ -931,6 +931,12 @@
         }
       ],
       [
+        "[^}]+",
+        {
+          "token": "string"
+        }
+      ],
+      [
         "\"`",
         {
           "token": "string",
@@ -1995,6 +2001,12 @@
         }
       ],
       [
+        "\\S+",
+        {
+          "token": "variable"
+        }
+      ],
+      [
         "\\s*~~~+\\s*",
         {
           "token": "operator"
@@ -2103,6 +2115,12 @@
         {
           "token": "",
           "switchTo": "@callbackargs"
+        }
+      ],
+      [
+        "[^(]+",
+        {
+          "token": "function"
         }
       ],
       [
@@ -2221,6 +2239,12 @@
         {
           "token": "",
           "next": "@pop"
+        }
+      ],
+      [
+        "[^)]+",
+        {
+          "token": "string"
         }
       ],
       [

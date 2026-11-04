@@ -53,10 +53,29 @@ const LEZER_TOKENS: Record<string, [name: string, tag: string]> = {
   function: ['Function', 't.function(t.variableName)'],
 };
 
+/**
+ * The highlight category of a `:scope` (D94): the Lezer token name, `Other` for none. The
+ * kind → category table and all three highlighters derive from it.
+ */
+export function categoryOf(scope = ''): string {
+  return (LEZER_TOKENS[scope] ?? ['Other'])[0];
+}
+
 const has = (r: LexRule, op: string) => r.actions.some((a) => a.op === op);
 const pushTarget = (r: LexRule) =>
   r.actions.find((a) => a.op === 'push' || a.op === 'push-once')?.mode;
 const matchesEmpty = (r: LexRule) => new RegExp(`^(?:${r.pattern})$`).test('');
+
+/**
+ * The pattern a highlighter uses for a rule that changes no mode. TextMate and Monarch cannot
+ * take a rule that matches empty text (it makes no progress): `atom*` becomes `atom+`, which
+ * matches the same non-empty text; any other pattern that can match empty is left out.
+ */
+function progressPattern(r: LexRule): string | undefined {
+  if (!matchesEmpty(r)) return r.pattern;
+  const star = /^(?:\\.|\[(?:\\.|[^\]\\])*\]|[^\\[\](){}|*+?])\*$/;
+  return star.test(r.pattern) ? `${r.pattern.slice(0, -1)}+` : undefined;
+}
 const scopeOf = (r: LexRule) => r.scope;
 
 /** Rules in effect in `mode`, trivia first, in priority order. */
@@ -118,10 +137,11 @@ export function textMate(g: Grammar, names: HighlightNames): object {
     const target = pushTarget(r);
     const name = scope(r);
     if (target === undefined) {
-      if (matchesEmpty(r)) return undefined;
+      const pattern = progressPattern(r);
+      if (pattern === undefined) return undefined;
       repository[key] = name
-        ? { match: nonCapturing(r.pattern), name }
-        : { match: nonCapturing(r.pattern) };
+        ? { match: nonCapturing(pattern), name }
+        : { match: nonCapturing(pattern) };
       return key;
     }
     const ends = rulesIn(g, target).filter((e) => isEnd(target, e) && !pushTarget(e));
@@ -171,7 +191,8 @@ export function monarch(g: Grammar, names: HighlightNames): object {
     for (const r of rulesIn(g, mode)) {
       const target = pushTarget(r);
       const pop = mode !== 'INITIAL' && has(r, 'pop');
-      if (matchesEmpty(r) && target === undefined && !pop) continue;
+      const pattern = target === undefined && !pop ? progressPattern(r) : r.pattern;
+      if (pattern === undefined) continue;
       if (pop && r.pattern.includes('\\n')) lineEnd = true;
       const action: Record<string, string> = {
         token: MONARCH_TOKENS[scopeOf(r) ?? ''] ?? '',
@@ -179,7 +200,7 @@ export function monarch(g: Grammar, names: HighlightNames): object {
       if (pop && target !== undefined) action.switchTo = `@${state(target)}`;
       else if (pop) action.next = '@pop';
       else if (target !== undefined) action.next = `@${state(target)}`;
-      rules.push([r.pattern, action]);
+      rules.push([pattern, action]);
     }
     // Monarch reads lines without their line break: a mode a line break closes ends here.
     if (lineEnd) rules.push(['$', { token: '', next: '@pop' }]);
@@ -219,7 +240,7 @@ function lezerTable(g: Grammar): Record<string, [string, string, string | null, 
   for (const mode of ['INITIAL', ...g.modes]) {
     table[mode] = rulesIn(g, mode).map((r) => [
       r.pattern,
-      (LEZER_TOKENS[scopeOf(r) ?? ''] ?? ['Other'])[0],
+      categoryOf(scopeOf(r)),
       pushTarget(r) ?? null,
       mode !== 'INITIAL' && has(r, 'pop'),
     ]);
