@@ -1,0 +1,4 @@
+{
+  "source": "cmd/testdata/er/cardinality_words.txt",
+  "charset": "unicode"
+}

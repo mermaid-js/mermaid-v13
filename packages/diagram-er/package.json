@@ -12,6 +12,11 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./ascii": {
+      "mermaid-source": "./src/ascii.ts",
+      "types": "./dist/ascii.d.ts",
+      "default": "./dist/ascii.js"
+    },
     "./language": {
       "mermaid-source": "./src/language.ts",
       "types": "./dist/language.d.ts",
