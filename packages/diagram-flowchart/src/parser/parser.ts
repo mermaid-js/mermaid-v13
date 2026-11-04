@@ -11,6 +11,7 @@
  */
 // cspell:words kepano LALR yytexts
 import {
+  cook,
   ExpectedTable,
   inKindSet,
   isSpace,
@@ -32,6 +33,7 @@ import type {
   ParseOptions,
   ParseResult,
   Range,
+  SourceView,
   TokenStream,
   TokenView,
 } from '@mermaid-js/core/parser-kit';
@@ -49,11 +51,9 @@ import type {
   FlowStatementNode,
   FlowSubgraph,
 } from './ast.ts';
-import { lex } from './lexer.ts';
+import { flowSourceView, lex } from './lexer.ts';
 import { destructLink, FlowBuilder } from './model.ts';
 import type { DocItem, FlowModel, LabelType, LinkInfo, VertexParts } from './model.ts';
-import { cook, sourceView } from './source.ts';
-import type { SourceView } from './source.ts';
 import { T } from './tokens.ts';
 
 export interface FlowParseOptions extends ParseOptions {
@@ -419,7 +419,7 @@ class FlowParser {
     private readonly options: FlowParseOptions
   ) {
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
-    this.view = sourceView(
+    this.view = flowSourceView(
       src,
       pre.bodyStart,
       pre.directives.map((d) => d.range)

@@ -9,7 +9,7 @@ import { interactions } from '@mermaid-js/plugin-interactions';
 await mermaid.registerExternalDiagrams([interactions]);
 ```
 
-Install `@mermaid-js/plugin-interactions@alpha` together with the newest `mermaid@alpha`.
+Install `@mermaid-js/plugin-interactions@v13-alpha` together with the newest `mermaid@v13-alpha`.
 
 > [!WARNING]
 > Alpha: APIs can change between builds. Pin an exact version.

@@ -15,3 +15,13 @@ Integration: `feature/126_class-diagram`, draft PR #166 into `mermaid-v13`. M2.5
 
 Notes:
 - [01-v12-class.md](01-v12-class.md): v12 class grammar, DB, renderers, specs, fixture counts (pointers).
+
+## Finish (maintainer rule, 2026-11-04)
+
+#166 stays a draft until all of these hold; then `gh pr ready 166 -R mermaid-js/mermaid-v13` (never merge it):
+1. Every class ticket (#153–#159) is merged into `feature/126_class-diagram`.
+2. The final whole-branch `/code-review` has run and its findings are fixed.
+3. `pnpm check`, the full e2e suite and the bench run pass locally, under the locks.
+4. GAPS.md has nothing unmet except items the maintainer accepted.
+5. The PR description carries these results and the bench load-path size (D110).
+The same report lists the `gh issue close` commands for the tickets.

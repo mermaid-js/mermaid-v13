@@ -15,14 +15,14 @@
  * Every version already on the registry is skipped, so only the packages `changeset version`
  * bumped go out. `--no-provenance`: npm provenance needs CI (OIDC) in a public repository, so a
  * manual publish turns it off.
- * Both publish with dist-tag `alpha` only, and only `x.y.z-alpha.N` versions.
+ * Both publish with dist-tag `v13-alpha` only, and only `x.y.z-alpha.N` versions.
  * Registry auth comes from the environment (`NODE_AUTH_TOKEN` + the .npmrc setup-node writes).
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseArgs } from '../../../packages/bench/src/cli/args.ts';
-import type { Target } from './manifest.ts';
+import { DIST_TAG, type Target } from './manifest.ts';
 import { REGISTRIES, packAll, publishAll } from './publish.ts';
 import {
   DEFAULT_REPORT,
@@ -75,5 +75,5 @@ const { published, skipped } = publishAll(tarballs, {
 for (const s of skipped) process.stdout.write(`already published: ${s}\n`);
 for (const s of published)
   process.stdout.write(
-    `${args.flag('dry-run') ? 'would publish' : 'published'}: ${s} (tag alpha)\n`
+    `${args.flag('dry-run') ? 'would publish' : 'published'}: ${s} (tag ${DIST_TAG})\n`
   );
