@@ -72,18 +72,19 @@ export function keyAt(
 /** Edit distance with an early exit once it passes `max` (keys are short; this stays cheap). */
 function distance(a: string, b: string, max: number): number {
   if (Math.abs(a.length - b.length) > max) return max + 1;
-  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  let prev = new Uint16Array(b.length + 1).map((_, j) => j);
+  let row = new Uint16Array(b.length + 1);
   for (let i = 1; i <= a.length; i++) {
-    const row = [i];
+    row[0] = i;
     let best = i;
     for (let j = 1; j <= b.length; j++) {
       const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
       const v = Math.min(prev[j]! + 1, row[j - 1]! + 1, prev[j - 1]! + cost);
-      row.push(v);
+      row[j] = v;
       if (v < best) best = v;
     }
     if (best > max) return max + 1;
-    prev = row;
+    [prev, row] = [row, prev];
   }
   return prev[b.length]!;
 }
@@ -132,6 +133,7 @@ export function configDiagnostics(
 
   const walk = (map: YamlMapNode, node: SchemaNode, path: string) => {
     const props = schema.properties(node);
+    let live: string[] | undefined;
     for (const pair of map.pairs) {
       const value = pair.value;
       if (value === undefined || (value.kind === 'scalar' && value.value === null)) continue;
@@ -139,7 +141,7 @@ export function configDiagnostics(
       const child = props.get(pair.key);
       if (child === undefined) {
         if (path === '' && pair.key === ownSection) continue;
-        const hint = closest(pair.key, liveKeys(props));
+        const hint = closest(pair.key, (live ??= liveKeys(props)));
         out.push({
           severity: 'warning',
           code: 'CONFIG_UNKNOWN_KEY',

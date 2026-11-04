@@ -134,7 +134,11 @@ describe('stress (R-PARSE-7)', () => {
   const SHAPES: [string, (n: number) => string][] = [
     ['many sibling keys', (n) => '  flowchart:\n' + '    curve: basis\n'.repeat(n)],
     ['many blank and comment lines', (n) => '  flowchart:\n' + '\n    # c\n'.repeat(n)],
-    ['many unknown keys', (n) => Array.from({ length: n }, (_, i) => `  k${i}: 1\n`).join('')],
+    // Keys of one length: a longer key may be compared with more known keys ("did you mean").
+    [
+      'many unknown keys',
+      (n) => Array.from({ length: n }, (_, i) => `  k${String(i).padStart(6, '0')}: 1\n`).join(''),
+    ],
     ['one long key', (n) => `  ${'x'.repeat(n * 10)}: 1\n`],
   ];
   it.each(SHAPES)('%s: completion and diagnostics stay linear', (_, shape) => {
