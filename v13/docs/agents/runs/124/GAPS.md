@@ -28,6 +28,14 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 - Generate the ER section defaults (`SECTION_OWNERS`; v12 nodeSpacing 140, rankSpacing 80, minEntityWidth 100) and mark the keys the builder reads (`er.nodeSpacing`, `er.rankSpacing`, `er.minEntityWidth`) as honoured.
 - **D116 (maintainer, draft PR #184): honour both.** Mark `er.entityPadding` (default 15) and `er.diagramPadding` (default 20) `honoured`. In px, `entityPadding` replaces the shared node padding inside entity table cells (v12's across × down meaning) and `diagramPadding` sets the margin around the drawing; the cell profile stays at 1-cell padding. Fix the MIGRATION.md ER row that says they are ignored, and cite D116 in code and tests.
 
+## #135 T6 language facet (merged; finish after T5)
+
+- Facet, probe mode (the lexer now reports its jison start condition), generated tables and the bundle check are done. These wait on the T5 manifest giving ER a `load` in `firstPartyFacets` (language.md steps 4, 6, 7):
+  - `git mv packages/conformance/language-goldens/er packages/language-service/goldens/er` and delete `packages/conformance/src/er/language-goldens.spec.ts` (its last test fails once ER has a `load`, on purpose).
+  - Regenerate flowchart's `completions/empty.out`, which gains `erDiagram`, and review it. Run `property.spec` and `rename-round-trip.spec` over the ER corpus.
+- Not done, doable after T5: the oracle-through-service spec (step 8, copy `flowchart/service-symbols.spec.ts`), and the 50k-character budget numbers (step 10, R-LANG-4).
+- Step 9 (first-paint highlighters in the CodeMirror and Monaco adapters) is flowchart-only for every type until the adapters pick a highlighter per detected type. That is a shared adapter change across all M3 types, not ER's to make alone: open question for the maintainer.
+
 ## Not started
 
 - #133 T4 renderer, #136 T7 ASCII: unblocked by T3; #135 T6 running.
