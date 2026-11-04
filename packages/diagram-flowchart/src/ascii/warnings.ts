@@ -9,6 +9,7 @@ import type { FlowModel } from '../parser/index.ts';
 import type { FlowWarning } from '../render/context.ts';
 import type { NodeView, Prepared } from '../render/prepare.ts';
 import { textForm } from './shapes.ts';
+import { flowchartConfigDefaults } from '../generated/config-defaults.ts';
 
 /** The feature kinds an `ASCII_DROPPED` warning names, in the order they are reported. */
 export type AsciiDroppedFeature =
@@ -33,7 +34,15 @@ export interface AsciiShapeWarning extends FlowWarning {
   readonly astIds: readonly string[];
 }
 
-export type AsciiWarning = AsciiDroppedWarning | AsciiShapeWarning;
+/** Edges the repair router found no free lane for (D78). */
+export interface AsciiRouteWarning extends FlowWarning {
+  readonly code: 'ASCII_ROUTE';
+  readonly astIds: readonly string[];
+}
+
+export type AsciiWarning = AsciiDroppedWarning | AsciiShapeWarning | AsciiRouteWarning;
+
+const DEFAULT_CURVE = flowchartConfigDefaults.curve;
 
 const WHAT: Record<AsciiDroppedFeature, string> = {
   style: 'colours and styles (style, classDef, linkStyle)',
@@ -78,7 +87,7 @@ function statements(ast: AstNode | undefined, out: Map<string, string[]>): void 
 type Found = Record<AsciiDroppedFeature, Set<string> | undefined>;
 
 // Which features the drawing uses, with the AST ids of the elements that use them.
-function features(model: FlowModel, flow: Prepared): Found {
+function features(model: FlowModel, flow: Prepared, curve: string | undefined): Found {
   const found: Found = {
     style: undefined,
     curve: undefined,
@@ -103,6 +112,8 @@ function features(model: FlowModel, flow: Prepared): Found {
     if (emphasised(e.label, e.style)) add('emphasis', e.edge.ast);
     if ((e.edge.interpolate ?? model.defaultInterpolate) !== undefined) add('curve', e.edge.ast);
   }
+  // A curve set in config (site, front matter or directive) draws every edge with it in SVG.
+  if (curve !== undefined && curve !== DEFAULT_CURVE) add('curve');
   for (const v of model.vertices) if (v.link) add('link', astOf.get(v.id) ?? v.ast);
   for (const [id] of model.tooltips) add('link', astOf.get(id));
   for (const c of model.callbacks) add('link', astOf.get(c.id));
@@ -136,9 +147,10 @@ export function asciiWarnings(
   model: FlowModel,
   flow: Prepared,
   glyphs: GlyphSet,
-  ast?: AstNode
+  ast?: AstNode,
+  curve?: string
 ): AsciiWarning[] {
-  const found = features(model, flow);
+  const found = features(model, flow, curve);
   const stmts = new Map<string, string[]>();
   statements(ast, stmts);
   const out: AsciiWarning[] = [];

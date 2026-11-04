@@ -82,7 +82,8 @@ function writeLabel(
 ): void {
   label.lines.forEach((runs, i) => {
     let text = runs.map((r) => r.text).join('');
-    if (glyphs.name === 'ascii') text = text.replace(/[•◦]/g, '-');
+    // Only a list item's own marker: a bullet written in the text stays as written.
+    if (glyphs.name === 'ascii' && label.left) text = text.replace(/^(\s*)[•◦]/, '$1-');
     const indent = label.indents[i] ?? 0;
     const lineWidth = label.widths[i] ?? 0;
     const at = label.left ? x + Math.floor((width - label.width) / 2) + indent : x;
@@ -160,9 +161,24 @@ function tee(canvas: Canvas, glyphs: GlyphSet, end: End): void {
   canvas.set(x, y, merged === stub ? fallback : merged);
 }
 
+// A marker on a group's frame is reached from inside the group, so it points the other way.
+function drawMarkers(
+  canvas: Canvas,
+  glyphs: GlyphSet,
+  ends: readonly End[],
+  onFrame: (end: End) => boolean
+): void {
+  for (const end of ends) {
+    const head = markerGlyph(glyphs, onFrame(end) ? { ...end, into: opposite(end.into) } : end);
+    if (head) canvas.set(end.cell.x, end.cell.y, head);
+  }
+}
+
 export interface DrawOptions {
-  /** The front-matter title, printed centred on the first line. */
+  /** The front-matter title, printed centred on the first lines. */
   readonly title?: string;
+  /** `ascii.maxWidth`: a longer title wraps to it (or to the drawing, when that is wider). */
+  readonly maxWidth?: number;
 }
 
 /**
@@ -204,10 +220,22 @@ export function drawFlowchart(
     drawEdge(canvas, glyphs, e, route, placed.ports, ends);
   }
   for (const { x, y } of gaps) if (canvas.get(x, y) === glyphs.solid.h) canvas.set(x, y, ' ');
-  for (const end of ends) {
-    const head = markerGlyph(glyphs, end);
-    if (head) canvas.set(end.cell.x, end.cell.y, head);
-  }
+  // An edge between a group and its own member ends on the group's frame (#42): the line
+  // already joins the border there, so there is no tee to add, and
+  // the line reaches it from inside the group, so a marker there points the other way.
+  const onFrame = (end: End): boolean => {
+    const g = layout.groups.get(end.at);
+    if (!g) return false;
+    const r = cellRect(g);
+    const { x, y } = end.cell;
+    const inX = x >= r.x && x < r.x + r.width;
+    const inY = y >= r.y && y < r.y + r.height;
+    return (
+      (inX && (y === r.y || y === r.y + r.height - 1)) ||
+      (inY && (x === r.x || x === r.x + r.width - 1))
+    );
+  };
+  drawMarkers(canvas, glyphs, ends, onFrame);
 
   for (const e of flow.edges) {
     const at = layout.edges.get(e.id)?.label;
@@ -229,27 +257,29 @@ export function drawFlowchart(
     const top = r.y + Math.floor((r.height - lines) / 2);
     writeLabel(canvas, n.label, r.x + 1, top, r.width - 2, glyphs);
   }
-  // An edge between a group and its own member ends on the group's frame (#42): the line
-  // already joins the border there, so there is no tee to add.
-  const onFrame = (end: End): boolean => {
-    const g = layout.groups.get(end.at);
-    if (!g) return false;
-    const r = cellRect(g);
-    const { x, y } = end.cell;
-    const inX = x >= r.x && x < r.x + r.width;
-    const inY = y >= r.y && y < r.y + r.height;
-    return (
-      (inX && (y === r.y || y === r.y + r.height - 1)) ||
-      (inY && (x === r.x || x === r.x + r.width - 1))
-    );
-  };
   for (const end of ends) if (!markerGlyph(glyphs, end) && !onFrame(end)) tee(canvas, glyphs, end);
 
-  return finish(canvas, options.title);
+  return finish(canvas, options.title, options.maxWidth);
 }
 
-/** Trims the empty margin and puts the title, centred, on the first line. */
-function finish(canvas: Canvas, title: string | undefined): string {
+// Greedy word wrap to `width` cells; a word longer than that keeps a line of its own.
+function wrapTitle(text: string, width: number): string[] {
+  if (cellWidth(text) <= width) return [text];
+  const lines: string[] = [];
+  let line = '';
+  for (const word of text.split(/\s+/)) {
+    const next = line === '' ? word : `${line} ${word}`;
+    if (line !== '' && cellWidth(next) > width) {
+      lines.push(line);
+      line = word;
+    } else line = next;
+  }
+  if (line !== '') lines.push(line);
+  return lines;
+}
+
+/** Trims the empty margin and puts the title, centred, on the first lines. */
+function finish(canvas: Canvas, title: string | undefined, maxWidth?: number): string {
   let lines = canvas.toString().split('\n');
   while (lines.length > 0 && lines[0] === '') lines.shift();
   while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop();
@@ -257,11 +287,14 @@ function finish(canvas: Canvas, title: string | undefined): string {
   if (margin > 0 && Number.isFinite(margin)) lines = lines.map((l) => l.slice(margin));
   const text = title?.trim();
   if (text) {
-    const out = new Canvas();
     const width = Math.max(0, ...lines.map(cellWidth));
-    const tw = cellWidth(text);
-    drawText(out, Math.max(0, Math.floor((width - tw) / 2)), 0, text);
-    lines.unshift(out.toString());
+    // Only a width budget wraps it: then to the budget, or to the drawing when that is wider.
+    const wrapped = maxWidth === undefined ? [text] : wrapTitle(text, Math.max(width, maxWidth));
+    const out = new Canvas();
+    wrapped.forEach((line, i) =>
+      drawText(out, Math.max(0, Math.floor((width - cellWidth(line)) / 2)), i, line)
+    );
+    lines.unshift(...out.toString().split('\n'));
   }
   return lines.join('\n');
 }
