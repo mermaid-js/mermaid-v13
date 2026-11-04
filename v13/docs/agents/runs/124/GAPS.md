@@ -14,6 +14,10 @@ Unmet acceptance criteria and open contracts, under the ticket that owns each on
 - Known limit: after an error, a stray `{` opens an attribute block in the lexer, so recovery skips to the next `}`.
 - Not ported, with reasons in the port script: `erDb.spec.js` (calls the DB directly, no parse) and `erRenderer.spec.ts` (T4 territory).
 
+## Pending core fix: `sourceView` directives mid-line
+
+- The class session owns a core fix to `sourceView` (#181), with a draft PR into `mermaid-v13`. Two bugs: a `%%` line inside a mid-line `%%{…}%%` directive opens a comment hole past `}%%`, and text such as `"style"` inside a directive triggers the `;` drop. After it merges, merge `mermaid-v13` here and add ER forms of both to the lexer-parity harvest (for example `erDiagram\nA %%{init: {\n  %%x "a": 1}}%%\nB`, and a directive holding `"style"` before a `;`).
+
 ## #132 T3 layout (merged)
 
 - No unmet criteria. Fixed at merge: `grammar/generated/*` was gitignored and never committed, so `check:grammar` failed in fresh worktrees (the flaky push after #131). Now force-added, as flowchart's are.
