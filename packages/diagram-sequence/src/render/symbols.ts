@@ -1,6 +1,7 @@
 // Participant symbols, one factory per kind, drawn in the participant's box as v12
-// `svgDraw.js` draws them in classic geometry (`drawActorType*`). Lengths here are v12's
-// renderer constants; the box itself (x, top, width, height) is the layout's.
+// `svgDraw.js` draws them (`drawActorType*`): in classic geometry, or standing on the glyph
+// band when the layout gives one (v12 neo's band model, theme `actorGlyphBand`, #194). Lengths
+// here are v12's renderer constants; the box and the band are the layout's.
 import type { Attrs, Paint, SvgWriter } from '@mermaid-js/core/svg';
 import type { ParticipantKind } from '../model.ts';
 import type { ParticipantLayout } from '../layout/index.ts';
@@ -16,13 +17,15 @@ export interface SymbolScene {
   readonly paint: ActorPaint;
   readonly tint: Tint | undefined;
   readonly shadow: Paints['shadow'];
+  /** The y of the glyph band's bottom edge for this box, under the band model. */
+  readonly glyphBottom?: number;
 }
 
 /** v12's figure lines and circles take its `line` / `.actor-man circle` CSS width. */
 const FIGURE_STROKE = 2;
 const STACK_OFFSET = 6;
 const FIGURE_RADIUS = 22;
-/** The stick figure (v12 `ACTOR_GLYPH_*`, `ACTOR_TYPE_WIDTH`). */
+/** The stick figure (v12 `ACTOR_GLYPH_*`, `ACTOR_TYPE_WIDTH`), unscaled from its classic top. */
 const STICK = {
   head: 10,
   headRadius: 15,
@@ -33,6 +36,8 @@ const STICK = {
   halfSpan: 18,
   /** The right leg ends 2 short of the arm span. */
   rightFoot: 16,
+  /** v12 `ACTOR_GLYPH_HEIGHT`: head top (-5) to feet (60); scaled to the band under neo. */
+  height: 65,
 } as const;
 const CONTROL_CY = 32;
 const ENTITY_CY = 31;
@@ -92,7 +97,8 @@ function participant(s: SymbolScene): void {
 function collections(s: SymbolScene): void {
   const { p, y, w } = s;
   w.open('g', { filter: s.shadow });
-  const rect = { ...boxAttrs(s), width: p.width, height: p.height };
+  // v12 neo draws both rects shorter, so the back one stops at the lifeline.
+  const rect = { ...boxAttrs(s), width: p.width, height: p.height - (p.band?.inset ?? 0) };
   w.leaf('rect', { ...rect, x: p.x, y });
   w.leaf('rect', { ...rect, x: p.x - STACK_OFFSET, y: y + STACK_OFFSET });
   w.close();
@@ -129,17 +135,19 @@ function database(s: SymbolScene): void {
   const third = p.width / 3;
   const rx = third / 2;
   const ry = rx / (2.5 + third / 50);
-  const h = third;
+  // v12 neo: as tall as the band, its bottom on the band's edge; classic: width / 3 from the top.
+  const h = p.band ? p.band.height : third;
+  const y0 = s.glyphBottom !== undefined ? s.glyphBottom - h - ry : y;
   const x0 = p.x + third;
   const x1 = x0 + third;
-  const top = y + 2 * ry;
+  const top = y0 + 2 * ry;
   const d = w
     .path()
     .moveTo(x0, top)
     .arcTo(rx, ry, 0, false, false, x1, top)
     .arcTo(rx, ry, 0, false, false, x0, top)
-    .lineTo(x0, y + h)
-    .arcTo(rx, ry, 0, false, false, x1, y + h)
+    .lineTo(x0, y0 + h)
+    .arcTo(rx, ry, 0, false, false, x1, y0 + h)
     .lineTo(x1, top)
     .done();
   w.leaf('path', { ...boxAttrs(s), d, filter: s.shadow });
@@ -148,25 +156,34 @@ function database(s: SymbolScene): void {
 function actor(s: SymbolScene): void {
   const { p, y, w } = s;
   const cx = p.x + p.width / 2;
+  // v12 neo scales the figure to fill the band, feet on its bottom edge.
+  const bottom = s.glyphBottom;
+  const k = p.band && bottom !== undefined ? p.band.height / STICK.height : 1;
+  const gy = (o: number): number => (bottom !== undefined ? bottom - (STICK.feet - o) * k : y + o);
+  const gx = (o: number): number => cx + o * k;
   // v12 draws the stick figure without a shadow.
   w.open('g', { ...figureAttrs(s), filter: undefined });
-  w.leaf('line', { x1: cx, y1: y + STICK.neck, x2: cx, y2: y + STICK.hip });
+  w.leaf('line', { x1: cx, y1: gy(STICK.neck), x2: cx, y2: gy(STICK.hip) });
   w.leaf('line', {
-    x1: cx - STICK.halfSpan,
-    y1: y + STICK.arms,
-    x2: cx + STICK.halfSpan,
-    y2: y + STICK.arms,
+    x1: gx(-STICK.halfSpan),
+    y1: gy(STICK.arms),
+    x2: gx(STICK.halfSpan),
+    y2: gy(STICK.arms),
   });
-  w.leaf('line', { x1: cx - STICK.halfSpan, y1: y + STICK.feet, x2: cx, y2: y + STICK.hip });
-  w.leaf('line', { x1: cx, y1: y + STICK.hip, x2: cx + STICK.rightFoot, y2: y + STICK.feet });
-  w.leaf('circle', { cx, cy: y + STICK.head, r: STICK.headRadius });
+  w.leaf('line', { x1: gx(-STICK.halfSpan), y1: gy(STICK.feet), x2: cx, y2: gy(STICK.hip) });
+  w.leaf('line', { x1: cx, y1: gy(STICK.hip), x2: gx(STICK.rightFoot), y2: gy(STICK.feet) });
+  w.leaf('circle', { cx, cy: gy(STICK.head), r: STICK.headRadius * k });
   w.close();
 }
 
+/** A round glyph's centre: on the band, its circle touching the bottom edge; else classic. */
+const roundCy = (s: SymbolScene, classic: number): number =>
+  s.glyphBottom !== undefined ? s.glyphBottom - FIGURE_RADIUS : s.y + classic;
+
 function control(s: SymbolScene): void {
-  const { p, y, w } = s;
+  const { p, w } = s;
   const cx = p.x + p.width / 2;
-  const cy = y + CONTROL_CY;
+  const cy = roundCy(s, CONTROL_CY);
   w.open('g', { ...figureAttrs(s), filter: undefined });
   w.leaf('circle', { cx, cy, r: FIGURE_RADIUS, filter: s.shadow });
   const h = CONTROL_HEAD;
@@ -178,9 +195,9 @@ function control(s: SymbolScene): void {
 }
 
 function entity(s: SymbolScene): void {
-  const { p, y, w } = s;
+  const { p, w } = s;
   const cx = p.x + p.width / 2;
-  const cy = y + ENTITY_CY;
+  const cy = roundCy(s, ENTITY_CY);
   w.open('g', figureAttrs(s));
   w.leaf('circle', { cx, cy, r: FIGURE_RADIUS });
   w.leaf('line', {
@@ -193,9 +210,9 @@ function entity(s: SymbolScene): void {
 }
 
 function boundary(s: SymbolScene): void {
-  const { p, y, w } = s;
+  const { p, w } = s;
   const cx = p.x + p.width / 2;
-  const cy = y + BOUNDARY_CY;
+  const cy = roundCy(s, BOUNDARY_CY);
   w.open('g', figureAttrs(s));
   w.leaf('line', { x1: cx - BOUNDARY_BAR, y1: cy, x2: cx - BOUNDARY_GAP, y2: cy });
   w.leaf('line', {
@@ -221,21 +238,29 @@ const SYMBOLS: Readonly<Record<ParticipantKind, (s: SymbolScene) => void>> = {
 
 /** Kinds drawn as a figure above their label (v12 `actor-man`), the rest as a box. */
 const FIGURES: ReadonlySet<ParticipantKind> = new Set(['actor', 'control', 'entity', 'boundary']);
+/** Kinds that stand on the glyph band under the band model (v12 `neoBands` callers). */
+const GLYPHS: ReadonlySet<ParticipantKind> = new Set([...FIGURES, 'database']);
 
 /**
  * One participant symbol and its label, as a group classed like v12's (`actor-top` /
  * `actor-bottom`, `actor-man` for figures). The label carries `data-id` only.
  */
-export function drawSymbol(s: SymbolScene, position: 'top' | 'bottom'): void {
-  const { p, w } = s;
+export function drawSymbol(scene: SymbolScene, position: 'top' | 'bottom'): void {
+  const { p, w } = scene;
   const figure = FIGURES.has(p.kind);
+  const bottom = position === 'bottom';
+  const s =
+    p.band && GLYPHS.has(p.kind)
+      ? { ...scene, glyphBottom: scene.y + (bottom ? p.band.bottom : p.band.top) }
+      : scene;
   w.open('g', {
     class: `${figure ? 'actor-man ' : ''}actor-${position}`,
     'data-id': p.id,
   });
   SYMBOLS[p.kind](s);
   const dx = p.kind === 'collections' ? -STACK_OFFSET : 0;
-  w.label(p.label, p.x + dx + p.width / 2, s.y + p.labelY, {
+  const labelY = bottom ? (p.bottomLabelY ?? p.labelY) : p.labelY;
+  w.label(p.label, p.x + dx + p.width / 2, s.y + labelY, {
     class: `actor ${figure ? 'actor-man' : 'actor-box'}`,
     'data-id': p.id,
     fill: s.paint.text,

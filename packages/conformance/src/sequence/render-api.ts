@@ -40,9 +40,9 @@ export const sequenceTest = {
 };
 
 /** A fresh API object with the sequence plugin registered (`deterministic: true`). */
-export async function sequenceApi(): Promise<Mermaid> {
+export async function sequenceApi(theme?: string): Promise<Mermaid> {
   const m = createMermaid();
-  m.initialize({ deterministic: true });
+  m.initialize({ deterministic: true, ...(theme !== undefined ? { theme } : {}) });
   await m.registerExternalDiagrams([sequenceTest]);
   return m;
 }

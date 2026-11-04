@@ -117,7 +117,8 @@ properties:
         none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding;
         `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` /
         `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY`
-        (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
+        (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0;
+        `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
         on the dark redux themes) / `none`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux
         themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`,
         `#f4f4f4` in `neutral`, `tertiaryColor` in `base`). "padding" is `flowchart.padding`. Plain `redux` and
@@ -404,6 +405,46 @@ properties:
           since: 13.0.0
           reason: >-
             6 in the redux themes (v12 `look: neo`), 3 in the classic themes (v12 `svgDraw.js`). Read as a number at render time (D152), so its CSS variable has no effect.
+      actorGlyphBand:
+        description: |
+          Height in px of the band a sequence symbol (actor, boundary, control, entity, database)
+          stands in, above its label. Above 0, every participant row is tall enough for the band,
+          its label and v12's 6 px gaps, and lifelines start at the bottom of the row; 0 draws
+          each symbol at its own v12 classic place.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            44 in the redux themes (v12 `look: neo`, `actorBands.ts`), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      messageEndGap:
+        description: |
+          How far in px a sequence message line stops short of its target (all arrows but `->`),
+          and starts in from its source for a bidirectional message, on top of the arrowhead room.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            3 in the redux themes (v12 `look: neo`), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      labelBoxExtraHeight:
+        description: |
+          Added in px to the height of a sequence fragment's label tab (`loop`, `alt`, …).
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            15 in the redux themes (v12 `look: neo`), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      actorFooterPadding:
+        description: |
+          Room in px added below a sequence diagram that has participants.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            30 in the redux themes (v12 `look: neo` viewBox), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
   themeCSS:
     type: string
     x-mermaid:

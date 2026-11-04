@@ -8,9 +8,12 @@ import type { SequenceModel } from '../model.ts';
 import { FIXTURES, hello } from './fixtures.ts';
 import { layoutSequence, sequenceLayoutViolations, type SequenceLayout } from './index.ts';
 
-let spec: ThemeSpec;
+// The two geometry sets (D152, #194): `redux` carries v12 `look: neo`, `default` v12 classic.
+const THEMES = ['redux', 'default'] as const;
+type ThemeName = (typeof THEMES)[number];
+const specs = new Map<ThemeName, ThemeSpec>();
 beforeAll(async () => {
-  spec = await loadTheme('redux');
+  for (const name of THEMES) specs.set(name, await loadTheme(name));
 });
 
 const PROFILES: [string, UnitProfile, Measurer][] = [
@@ -39,35 +42,40 @@ function lay(
   model: SequenceModel,
   units: UnitProfile = pxProfile,
   measurer: Measurer = tableMeasurer,
-  sequence: Record<string, unknown> = {}
+  sequence: Record<string, unknown> = {},
+  theme: ThemeName = 'default',
+  themeVariables: Record<string, unknown> = {}
 ): SequenceLayout {
   return layoutSequence(model, {
     config: { sequence } as ResolvedConfig,
     measurer,
     units,
-    theme: createTheme(spec, {}),
+    theme: createTheme(specs.get(theme)!, { themeVariables }),
     warn: () => {},
   });
 }
 
 describe('sequence layout invariants', () => {
-  for (const [unit, units, measurer] of PROFILES) {
-    for (const [config, sequence] of [
-      ['default config', {}],
-      ['every option changed', VARIANT],
-    ] as const) {
-      for (const [name, model] of Object.entries(FIXTURES)) {
-        it(`${name}, ${unit}, ${config}`, () => {
-          const layout = lay(model, units, measurer, sequence);
-          expect(sequenceLayoutViolations(model, layout)).toEqual([]);
-          expect(layout.units).toBe(unit);
-        });
+  for (const theme of THEMES)
+    for (const [unit, units, measurer] of PROFILES) {
+      for (const [config, sequence] of [
+        ['default config', {}],
+        ['every option changed', VARIANT],
+      ] as const) {
+        for (const [name, model] of Object.entries(FIXTURES)) {
+          it(`${name}, ${theme}, ${unit}, ${config}`, () => {
+            const layout = lay(model, units, measurer, sequence, theme);
+            expect(sequenceLayoutViolations(model, layout)).toEqual([]);
+            expect(layout.units).toBe(unit);
+          });
+        }
       }
     }
-  }
 
-  it('cell layouts land on whole cells', () => {
+  it('cell layouts land on whole cells, and are the same in every theme', () => {
     for (const [name, model] of Object.entries(FIXTURES)) {
+      const neo = lay(model, cellProfile(), cellMeasurer, {}, 'redux');
+      expect(neo, name).toEqual(lay(model, cellProfile(), cellMeasurer, {}, 'default'));
       const stray: string[] = [];
       const walk = (v: unknown, path: string): void => {
         if (typeof v === 'number' && !Number.isInteger(v)) stray.push(`${path}=${v}`);
@@ -168,5 +176,97 @@ describe('sequence layout in px follows v12', () => {
   it('numbers messages from autonumber until it is turned off', () => {
     const l = lay(FIXTURES.numbersAndWrap!);
     expect(l.messages.map((m) => m.number?.value)).toEqual([10, 15, undefined, undefined]);
+  });
+});
+
+describe('sequence layout in px with v12 neo geometry (redux themes, #194)', () => {
+  const neo = (model: SequenceModel, vars: Record<string, unknown> = {}): SequenceLayout =>
+    lay(model, pxProfile, tableMeasurer, {}, 'redux', vars);
+  const OFF = {
+    actorGlyphBand: 0,
+    messageEndGap: 0,
+    labelBoxExtraHeight: 0,
+    actorFooterPadding: 0,
+  };
+  const NEO = {
+    actorGlyphBand: 44,
+    messageEndGap: 3,
+    labelBoxExtraHeight: 15,
+    actorFooterPadding: 30,
+  };
+  // The same theme with v12 classic geometry: the fonts stay those of `redux`.
+  const classic = (model: SequenceModel): SequenceLayout => neo(model, OFF);
+  // v12 `actorBands.ts`: glyph band 44, 6 above the label, 6 above the lifeline.
+  const BAND = 44;
+  const GAP = 6;
+  const GLYPHS = new Set(['actor', 'boundary', 'control', 'entity', 'database']);
+
+  it('makes every row as tall as the tallest band stack and starts lifelines at its bottom', () => {
+    const l = neo(FIXTURES.lifecycle!);
+    const text = Math.max(...l.participants.map((p) => p.label.height));
+    for (const p of l.participants) {
+      expect(p.height, p.id).toBe(Math.max(65, BAND + GAP + text + GAP));
+      expect(p.lifeline.y1, p.id).toBe(p.top + p.height);
+    }
+  });
+
+  it('stands each symbol on the band with its label under it, top and bottom', () => {
+    const l = neo(FIXTURES.lifecycle!);
+    for (const p of l.participants) {
+      const h = p.label.height;
+      expect(p.band, p.id).toBeDefined();
+      if (GLYPHS.has(p.kind)) {
+        // Header: anchored at the lifeline, growing up; footer: anchored at it, growing down.
+        expect(p.band!.top, p.id).toBe(p.height - GAP - h - GAP);
+        expect(p.labelY, p.id).toBe(p.height - GAP - h / 2);
+        expect(p.band!.bottom, p.id).toBe(GAP + BAND);
+        expect(p.bottomLabelY, p.id).toBe(GAP + BAND + GAP + h / 2);
+      } else if (p.kind === 'collections') {
+        // Both rects are 6 shorter, the label centred in the front one.
+        expect(p.band!.inset, p.id).toBe(6);
+        expect(p.labelY, p.id).toBe(6 + (p.height - 6) / 2);
+      } else expect(p.labelY, p.id).toBe(p.height / 2);
+    }
+    expect(classic(FIXTURES.lifecycle!).participants.every((p) => p.band === undefined)).toBe(true);
+  });
+
+  it('stops every message but `->` 3 px further short, and starts a bidirectional one 3 in', () => {
+    const n = neo(FIXTURES.arrows!).messages;
+    const c = classic(FIXTURES.arrows!).messages;
+    n.forEach((m, i) => {
+      const toward = m.from === 'A' ? -1 : 1;
+      const k = c[i]!;
+      expect(m.stopX - k.stopX, m.arrow).toBe(m.arrow === 'solid_open' ? 0 : 3 * toward);
+      const bidi = m.arrow.startsWith('bidirectional');
+      expect(m.startX - k.startX, m.arrow).toBe(bidi ? -3 * toward : 0);
+    });
+    // v12 neo `hello`: 76 to 271 - 3.
+    expect([n[0]!.startX, neo(hello).messages[0]!.stopX]).toEqual([c[0]!.startX, 268]);
+  });
+
+  it('draws fragment label tabs 15 px taller', () => {
+    const n = neo(FIXTURES.fragments!).fragments;
+    const c = classic(FIXTURES.fragments!).fragments;
+    expect(n.map((f) => f.tab.height)).toEqual(c.map((f) => f.tab.height + 15));
+  });
+
+  it('adds 30 px below a drawing with participants, and none to an empty one', () => {
+    const l = neo(hello);
+    const b = l.participants[1]!;
+    // The classic viewBox ends boxMargin + bottomMarginAdj below the boxes (v12).
+    expect(l.bounds.y + l.bounds.height).toBeCloseTo(b.bottom! + b.height + 10 + 1 + 30);
+    expect(neo(FIXTURES.empty!).bounds).toEqual(classic(FIXTURES.empty!).bounds);
+  });
+
+  it('follows the geometry theme variables, not the theme name', () => {
+    const font = { fontFamily: 'Arial', fontSize: 16 };
+    const asNeo = lay(FIXTURES.lifecycle!, pxProfile, tableMeasurer, {}, 'default', {
+      ...NEO,
+      ...font,
+    });
+    expect(asNeo).toEqual(neo(FIXTURES.lifecycle!, font));
+    const asClassic = lay(FIXTURES.lifecycle!, pxProfile, tableMeasurer, {}, 'default', font);
+    expect(neo(FIXTURES.lifecycle!, { ...OFF, ...font })).toEqual(asClassic);
+    expect(lay(hello).participants[0]!.height).toBe(65);
   });
 });

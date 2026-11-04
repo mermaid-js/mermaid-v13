@@ -167,7 +167,9 @@ describe('review fixes (#143)', () => {
 
   it('moves numbered lines with central connections clear of the badge, as v12', async () => {
     const svg = await render(
-      'participant A\nparticipant B\nautonumber\nB()<<->>A: y\nA/|-()B: r2\nB()/|-A: r3'
+      'participant A\nparticipant B\nautonumber\nB()<<->>A: y\nA/|-()B: r2\nB()/|-A: r3',
+      // v12 classic numbers; neo moves a bidirectional start 3 more (messageEndGap).
+      '  theme: default'
     );
     const lines = [...svg.matchAll(/<line class="messageLine0"[^>]*>/g)].map((m) => m[0]);
     const attr = (l: string, a: string): number =>
@@ -209,5 +211,93 @@ describe('review fixes (#143)', () => {
   it('draws no title for a fragment label that is empty once read', async () => {
     const svg = await render('loop </style>\nA->>B: x\nend');
     expect(svg).not.toContain('class="loopText"');
+  });
+});
+
+describe('v12 neo geometry as theme variables (#194, D152)', () => {
+  const KINDS =
+    'participant P\nactor A\nparticipant D@{ "type": "database" }\nparticipant C@{ "type": "collections" }\nP->>C: x';
+  const lifelines = (svg: string): Record<string, number> =>
+    Object.fromEntries(
+      [...svg.matchAll(/class="actor-line" data-id="(\w+)"[^>]* y1="([\d.]+)"/g)].map((m) => [
+        m[1]!,
+        Number(m[2]),
+      ])
+    );
+  /** The markup of one participant's group. */
+  const group = (svg: string, kind: string): string => {
+    const at = svg.indexOf(`class="participant participant-${kind}"`);
+    const end = svg.indexOf('class="participant participant-', at + 1);
+    return svg.slice(at, end < 0 ? undefined : end);
+  };
+  const attr = (markup: string, re: RegExp): number => Number(re.exec(markup)?.[1]);
+
+  it('starts every lifeline at the bottom of the row in redux, per kind in classic', async () => {
+    const neo = lifelines(await render(KINDS));
+    expect(new Set(Object.values(neo)).size).toBe(1);
+    // v12 classic: the box height 65, the stick figure 80, the database 65 + 2 × 5.
+    const classic = lifelines(await render(KINDS, '  theme: default'));
+    expect(classic).toEqual({ P: 65, A: 80, D: 75, C: 65 });
+  });
+
+  it('scales the stick figure to the 44 px glyph band in redux (v12 15 × 44 / 65)', async () => {
+    const r = (svg: string): number => attr(group(svg, 'actor'), /<circle[^>]* r="([\d.]+)"/);
+    expect(r(await render(KINDS))).toBeCloseTo((15 * 44) / 65, 1);
+    expect(r(await render(KINDS, '  theme: default'))).toBe(15);
+  });
+
+  it('draws a database cylinder as tall as the band in redux', async () => {
+    // The y of every point of the cylinder's path (M/L: x y; A: … x y).
+    const ys = (svg: string): number[] => {
+      const d = /<path[^>]* d="([^"]+)"/.exec(group(svg, 'database'))?.[1] ?? '';
+      return (d.match(/[MLA][^MLAZ]*/g) ?? []).map((seg) => {
+        const n = seg.slice(1).trim().split(/[ ,]+/).map(Number);
+        return n[n.length - 1]!;
+      });
+    };
+    const span = (v: number[]): number => Math.max(...v) - Math.min(...v);
+    // A 150 px column: the cylinder is 50 wide, its ends' ry 25 / (2.5 + 50 / 50). The path's
+    // points span the height less both ends: v12 neo 44 (the band), classic 50 (width / 3).
+    const ry = 25 / 3.5;
+    const neo = await render(KINDS);
+    expect(span(ys(neo))).toBeCloseTo(44 - 2 * ry, 1);
+    // Its bottom sits on the band, above the label, so below the lifeline start nothing.
+    expect(Math.max(...ys(neo))).toBeLessThan(lifelines(neo).D!);
+    expect(span(ys(await render(KINDS, '  theme: default')))).toBeCloseTo(50 - 2 * ry, 1);
+  });
+
+  it('draws a collections stack 6 px shorter in redux, so it stops at the lifeline', async () => {
+    const heights = (svg: string, kind: string): number[] =>
+      [...group(svg, kind).matchAll(/<rect[^>]* height="([\d.]+)"/g)].map((m) => Number(m[1]));
+    const neo = await render(KINDS);
+    const [box] = heights(neo, 'participant');
+    // Top and bottom row, front and back rect each.
+    expect(heights(neo, 'collections')).toEqual(Array(4).fill(box! - 6));
+    const classic = await render(KINDS, '  theme: default');
+    const [classicBox] = heights(classic, 'participant');
+    expect(heights(classic, 'collections')).toEqual(Array(4).fill(classicBox));
+  });
+
+  it('draws fragment label tabs 15 px taller in redux', async () => {
+    const tab = (svg: string): number => {
+      const pts = (/class="labelBox" points="([^"]+)"/.exec(svg)?.[1] ?? '').split(/[ ,]/);
+      const ys = pts.filter((_, i) => i % 2 === 1).map(Number);
+      return Math.max(...ys) - Math.min(...ys);
+    };
+    expect(tab(await render('loop every minute\nA->>B: x\nend'))).toBe(35);
+    expect(tab(await render('loop every minute\nA->>B: x\nend', '  theme: default'))).toBe(20);
+  });
+
+  it('stops messages 3 px further short in redux, from messageEndGap', async () => {
+    const x2 = (svg: string): number => attr(tag(svg, /class="messageLine0"/), / x2="([\d.]+)"/);
+    const neo = x2(await render('A->>B: x'));
+    expect(x2(await render('A->>B: x', '  themeVariables:\n    messageEndGap: 0'))).toBe(neo + 3);
+  });
+
+  it('draws classic geometry in redux when the variables say so', async () => {
+    const off =
+      '  themeVariables:\n    actorGlyphBand: 0\n    messageEndGap: 0\n    labelBoxExtraHeight: 0\n    actorFooterPadding: 0';
+    const lines = lifelines(await render(KINDS, off));
+    expect(lines.A).toBe(80);
   });
 });

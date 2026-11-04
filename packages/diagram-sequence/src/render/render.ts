@@ -73,7 +73,7 @@ export function renderSequence(
     paint: paints(ctx, layout),
     columns: new Map(layout.participants.map((p) => [p.id, p])),
     order: new Map(model.participants.map((p, i) => [p.id, i])),
-    m: sequenceMetrics(pxProfile, ctx.config.sequence),
+    m: sequenceMetrics(pxProfile, ctx.config.sequence, ctx.theme),
   };
   openRoot(scene);
   if (layout.boxes.length > 0) drawBoxes(scene);

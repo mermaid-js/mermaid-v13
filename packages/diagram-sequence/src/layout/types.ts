@@ -32,6 +32,10 @@ export interface ParticipantLayout {
   readonly height: number;
   /** From the top of a box (`top`, `bottom`) to the centre of its label. */
   readonly labelY: number;
+  /** From the top of the bottom box to the centre of its label, where it is not `labelY`. */
+  readonly bottomLabelY?: number;
+  /** The glyph band under v12's band model (theme `actorGlyphBand` above 0); else undefined. */
+  readonly band?: GlyphBand;
   /** Top of the top box: the header row, or the creating message's row. */
   readonly top: number;
   /** Top of the mirrored bottom box (`mirrorActors`); undefined without one. */
@@ -39,6 +43,21 @@ export interface ParticipantLayout {
   readonly lifeline: { readonly x: number; readonly y1: number; readonly y2: number };
   readonly created: boolean;
   readonly destroyed: boolean;
+}
+
+/**
+ * v12 `actorBands.ts`: a symbol stands on the bottom edge of a band of fixed height, its label
+ * under it. The header stack is anchored at the lifeline and grows up, the footer stack at the
+ * lifeline and grows down, so labels of one line share a baseline across the row.
+ */
+export interface GlyphBand {
+  readonly height: number;
+  /** From the top of the top box to the band's bottom edge. */
+  readonly top: number;
+  /** From the top of the bottom box to the band's bottom edge. */
+  readonly bottom: number;
+  /** A `collections` stack is drawn this much shorter, so it stops at the lifeline. */
+  readonly inset: number;
 }
 
 export interface SelfLoop {

@@ -134,11 +134,14 @@ class XPass {
     const right = fromLeft <= toLeft;
     let startx = right ? fromRight : fromLeft;
     let stopx = right ? toLeft : toRight;
+    const toward = (v: number): number => (right ? -v : v);
+    // v12 neo: every arrow but `->` stops short of its target, a bidirectional one starts in.
+    if (s.arrow !== 'solid_open') stopx += toward(m.messageEndGap);
+    if (BIDIRECTIONAL.has(s.arrow)) startx -= toward(m.messageEndGap);
     if (s.central === 'from' || s.central === 'both') {
       startx += m.centralOffset;
       if (BIDIRECTIONAL.has(s.arrow) && !right) startx -= m.centralBidiOffset;
     }
-    const toward = (v: number): number => (right ? -v : v);
     if (s.from === s.to) stopx = startx;
     else {
       const toBar = Math.abs(toLeft - toRight) > 2 * m.lifelineHalf;

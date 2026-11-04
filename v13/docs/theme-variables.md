@@ -91,6 +91,10 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
 | `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart |
 | `actorRadius` | `--mermaid-actorRadius` | token | length | | | all | sequence |
+| `actorGlyphBand` | `--mermaid-actorGlyphBand` | token | length | | | all | sequence |
+| `messageEndGap` | `--mermaid-messageEndGap` | token | length | | | all | sequence |
+| `labelBoxExtraHeight` | `--mermaid-labelBoxExtraHeight` | token | length | | | all | sequence |
+| `actorFooterPadding` | `--mermaid-actorFooterPadding` | token | length | | | all | sequence |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color | flowchart, sequence |
 
 ## Palettes

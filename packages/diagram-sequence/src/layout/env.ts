@@ -152,7 +152,7 @@ export function envOf(
 ): Omit<Env, 'columns'> {
   const seq = ctx.config.sequence ?? {};
   return {
-    m: sequenceMetrics(ctx.units, seq),
+    m: sequenceMetrics(ctx.units, seq, ctx.theme),
     fonts: fontsOf(ctx, (w) => ctx.warn(w)),
     seq,
     autoWrap: ctx.config.wrap === true || seq.wrap === true,

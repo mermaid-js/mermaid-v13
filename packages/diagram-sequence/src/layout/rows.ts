@@ -59,6 +59,8 @@ const orKeep = (v: number | undefined, current: number): number =>
 /** Where the lifeline starts below the top of a column's symbol. */
 export function lifelineOffset(env: Env, c: Column): number {
   const { m } = env;
+  // The band model: one datum, the bottom of the row, for every kind.
+  if (m.glyphBand > 0) return c.height;
   if (c.p.kind === 'database') return c.height + m.databaseTextMargins * m.boxTextMargin.y;
   return Math.max(c.height, m.glyphLifeline[c.p.kind] ?? 0);
 }
@@ -410,7 +412,7 @@ export class Rows {
     const kind = env.measure(TAB[s.fragment], env.fonts.message, Infinity);
     const tab = {
       width: Math.max(m.labelBoxWidth, kind.width + 2 * m.boxTextMargin.x),
-      height: Math.max(m.labelBoxHeight, kind.height),
+      height: Math.max(m.labelBoxHeight, kind.height) + m.labelBoxExtra,
     };
     // The frame is wide enough for its title right of the tab and for each section label; a
     // cell more in cells, where halves round down.

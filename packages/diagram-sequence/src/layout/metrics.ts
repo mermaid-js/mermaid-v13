@@ -11,6 +11,7 @@
  */
 import type { SequenceDiagramConfig } from '@mermaid-js/core/config';
 import { fromPx, type UnitProfile } from '@mermaid-js/core/layout';
+import type { Theme } from '@mermaid-js/core/theme';
 import type { ParticipantKind } from '../model.ts';
 
 export interface XY {
@@ -285,13 +286,83 @@ const CELL: MetricsTable = {
   },
 };
 
+/**
+ * Lengths the theme sets (D152, #194): v12 `look: neo` geometry in the redux themes, v12
+ * classic in the classic themes, read from geometry theme variables, never from a theme name.
+ * `glyphBand` above 0 turns on v12's band model (`actorBands.ts`): every row is as tall as its
+ * tallest glyph-gap-label-gap stack, every lifeline starts at the row's bottom, and the
+ * symbols stand on the band.
+ */
+export interface ThemeLengths {
+  /** `actorGlyphBand`: height of the band a symbol stands in; 0 keeps v12 classic symbols. */
+  readonly glyphBand: number;
+  /** Band model: from the bottom of the glyph to the top of its label (v12 `GLYPH_LABEL_GAP`). */
+  readonly glyphLabelGap: number;
+  /** Band model: from the bottom of a label to the lifeline (v12 `LABEL_LIFELINE_GAP`). */
+  readonly labelLifelineGap: number;
+  /** Band model: a `collections` stack is drawn this much shorter, so it stops at the lifeline. */
+  readonly stackInset: number;
+  /** `messageEndGap`: a message stops this far short of its target, past the arrowhead room. */
+  readonly messageEndGap: number;
+  /** `labelBoxExtraHeight`: added to a fragment's label tab. */
+  readonly labelBoxExtra: number;
+  /** `actorFooterPadding`: added below a drawing with participants. */
+  readonly footerPadding: number;
+}
+
+/** The theme variable behind each themed length; the rest are the band model's constants. */
+const THEME_VARIABLES = {
+  glyphBand: 'actorGlyphBand',
+  messageEndGap: 'messageEndGap',
+  labelBoxExtra: 'labelBoxExtraHeight',
+  footerPadding: 'actorFooterPadding',
+} as const;
+
+// v12 classic: no band, no extras. A layout given no theme draws this.
+const CLASSIC_PX: ThemeLengths = {
+  glyphBand: 0,
+  glyphLabelGap: 6,
+  labelLifelineGap: 6,
+  stackInset: 6,
+  messageEndGap: 0,
+  labelBoxExtra: 0,
+  footerPadding: 0,
+};
+
+// Text output draws every symbol as a box, so it has no glyph band and no neo extras: the cell
+// set is the same for every theme.
+const THEMED_CELL: ThemeLengths = {
+  glyphBand: 0,
+  glyphLabelGap: 0,
+  labelLifelineGap: 0,
+  stackInset: 0,
+  messageEndGap: 0,
+  labelBoxExtra: 0,
+  footerPadding: 0,
+};
+
+/** The themed lengths for a profile: px from the theme's geometry variables (D152). */
+export function themeLengths(
+  units: UnitProfile,
+  theme: Pick<Theme, 'number'> | undefined
+): ThemeLengths {
+  if (units.id === 'cell') return THEMED_CELL;
+  if (!theme) return CLASSIC_PX;
+  const out: Record<string, number> = { ...CLASSIC_PX };
+  for (const [key, name] of Object.entries(THEME_VARIABLES)) {
+    const v = theme.number(name);
+    out[key] = Number.isFinite(v) && v > 0 ? Math.min(v, MAX_CONFIG) : 0;
+  }
+  return out as unknown as ThemeLengths;
+}
+
 /** The table for a unit profile. */
 export function metricsTable(units: UnitProfile): MetricsTable {
   return units.id === 'cell' ? CELL : PX;
 }
 
 /** The sequence layout's lengths for one render, in the profile's units. */
-export interface SequenceMetrics extends ConfigLengths, FixedLengths {
+export interface SequenceMetrics extends ConfigLengths, FixedLengths, ThemeLengths {
   readonly cells: boolean;
   /** Half a length; whole cells round down, so columns stay on the grid. */
   half(v: number): number;
@@ -321,14 +392,18 @@ const SINGLE: Readonly<Record<string, Axis>> = {
 };
 const BOTH = ['boxMargin', 'boxTextMargin', 'noteMargin'] as const;
 
-/** Resolves the metrics for a profile and the `sequence` config section. */
+/**
+ * Resolves the metrics for a profile, the `sequence` config section and the theme's geometry
+ * variables (v12 classic without a theme).
+ */
 export function sequenceMetrics(
   units: UnitProfile,
-  config: Readonly<SequenceDiagramConfig> | undefined
+  config: Readonly<SequenceDiagramConfig> | undefined,
+  theme?: Pick<Theme, 'number'>
 ): SequenceMetrics {
   const table = metricsTable(units);
   const cfg = (config ?? {}) as Readonly<Record<string, unknown>>;
-  const out: Record<string, unknown> = { ...table.fixed };
+  const out: Record<string, unknown> = { ...table.fixed, ...themeLengths(units, theme) };
   const length = (key: string, axis: Axis, fallback: number, min: number): number => {
     const px = configNumber(cfg[key]);
     return px === undefined ? fallback : fromPx(units, px, axis, min);

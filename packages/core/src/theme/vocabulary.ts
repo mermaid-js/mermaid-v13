@@ -89,6 +89,13 @@ export const TOKEN_VARIABLES = [
   'oddPaddingY',
   // Sequence participant boxes (v12 neo rx 6, classic 3).
   'actorRadius',
+  // Sequence geometry (v12 `look: neo` / classic, #194): the glyph band participants stand in
+  // (0 draws the classic symbols), the gap at a message's end, the taller fragment label tab
+  // and the room below the drawing.
+  'actorGlyphBand',
+  'messageEndGap',
+  'labelBoxExtraHeight',
+  'actorFooterPadding',
 ] as const;
 
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
@@ -208,6 +215,10 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   oddPaddingX: def('odx', 'padding', F),
   oddPaddingY: def('ody', 'padding', F),
   actorRadius: def('arx', 'length', S),
+  actorGlyphBand: def('agb', 'length', S),
+  messageEndGap: def('meg', 'length', S),
+  labelBoxExtraHeight: def('lbx', 'length', S),
+  actorFooterPadding: def('afp', 'length', S),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', [...F, 'sequence']),

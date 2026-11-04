@@ -14,11 +14,16 @@ import { asTest, sequenceApi } from './render-api.ts';
  * `deterministic: true`: well-formed XML, the allow-list, render-twice determinism, no
  * NaN/Infinity/undefined, every drawn coordinate inside the viewBox, no `foreignObject` and no
  * `<marker>`, and every participant, message, note, fragment, rect and box mapped to exactly
- * one `data-ast` element whose id resolves to an AST range (R-PARSE-8).
+ * one `data-ast` element whose id resolves to an AST range (R-PARSE-8). The corpus renders in
+ * a redux theme (v12 neo geometry) and a classic one (v12 classic geometry), #194.
  */
+
+/** One theme of each geometry set (D152): redux-color draws v12 neo, default v12 classic. */
+const THEMES = ['redux-color', 'default'] as const;
 
 interface Case {
   id: string;
+  theme: (typeof THEMES)[number];
   source: string;
   result: RenderResult & { tree: SvgTree };
   prepared: Prepared;
@@ -30,24 +35,29 @@ let api: Mermaid;
 
 beforeAll(async () => {
   api = await sequenceApi();
-  for (const item of await sequenceCorpus()) {
-    const source = asTest(item.source);
-    if (source === item.source) continue;
-    try {
-      const prepared = await api.prepare(source, { id: 'mermaid-0' });
-      const result = api.renderSync(source, { id: 'mermaid-0' });
-      cases.push({
-        id: item.id,
-        source,
-        result: { ...result, tree: parseSvg(result.svg) },
-        prepared,
-      });
-    } catch (e) {
-      if (!(e instanceof MermaidError)) throw new Error(`${item.id}: ${String(e)}`, { cause: e });
-      skipped.push({ id: item.id, reason: `${e.code}: ${e.message.split('\n')[0]}` });
+  const corpus = await sequenceCorpus();
+  for (const theme of THEMES) {
+    const themed = await sequenceApi(theme);
+    for (const item of corpus) {
+      const source = asTest(item.source);
+      if (source === item.source) continue;
+      try {
+        const prepared = await themed.prepare(source, { id: 'mermaid-0' });
+        const result = themed.renderSync(source, { id: 'mermaid-0' });
+        cases.push({
+          id: `${theme} ${item.id}`,
+          theme,
+          source,
+          result: { ...result, tree: parseSvg(result.svg) },
+          prepared,
+        });
+      } catch (e) {
+        if (!(e instanceof MermaidError)) throw new Error(`${item.id}: ${String(e)}`, { cause: e });
+        skipped.push({ id: item.id, reason: `${e.code}: ${e.message.split('\n')[0]}` });
+      }
     }
   }
-}, 120_000);
+}, 240_000);
 
 function wellFormed(svg: string): string | undefined {
   const parser = new SaxesParser({ xmlns: true });
@@ -113,7 +123,8 @@ function astIndex(ast: AstNode): Map<string, AstNode> {
 
 describe('sequence render properties over the corpus', () => {
   it('renders the corpus', () => {
-    expect(cases.length).toBeGreaterThan(300);
+    for (const theme of THEMES)
+      expect(cases.filter((c) => c.theme === theme).length, theme).toBeGreaterThan(300);
     // Inputs v13 rejects are the parser's business (#139 parity); none fail to render.
     expect(skipped.filter((s) => !s.reason.startsWith('SYNTAX'))).toEqual([]);
   });
@@ -127,9 +138,10 @@ describe('sequence render properties over the corpus', () => {
   });
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
-    const m = await sequenceApi();
+    const fresh = new Map<string, Mermaid>();
+    for (const theme of THEMES) fresh.set(theme, await sequenceApi(theme));
     for (const c of cases) {
-      const again = await m.render('mermaid-0', c.source);
+      const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
     }
   });
