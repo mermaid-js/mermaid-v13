@@ -15,7 +15,6 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import type { SequenceModel } from '../model.ts';
-import { pxProfile } from '@mermaid-js/core/layout';
 import { sequenceMetrics, type SequenceMetrics } from '../layout/index.ts';
 import type {
   BoxLayout,
@@ -31,7 +30,7 @@ import { drawSymbol } from './symbols.ts';
 /** What the renderer reads from the render context. */
 export type SequenceRenderContext = Pick<
   RenderContext,
-  'config' | 'theme' | 'warn' | 'idPrefix' | 'version'
+  'config' | 'theme' | 'warn' | 'idPrefix' | 'version' | 'units'
 >;
 
 /** What every section of one render draws from. */
@@ -44,7 +43,7 @@ interface Scene {
   readonly columns: ReadonlyMap<string, ParticipantLayout>;
   /** Each participant's declaration order: its palette slot. */
   readonly order: ReadonlyMap<string, number>;
-  /** The px lengths of the sequence metrics table. */
+  /** The sequence metrics in the render's units (px for SVG), as the layout read them. */
   readonly m: SequenceMetrics;
 }
 
@@ -73,7 +72,7 @@ export function renderSequence(
     paint: paints(ctx, layout),
     columns: new Map(layout.participants.map((p) => [p.id, p])),
     order: new Map(model.participants.map((p, i) => [p.id, i])),
-    m: sequenceMetrics(pxProfile, ctx.config.sequence, ctx.theme),
+    m: sequenceMetrics(ctx.units, ctx.config.sequence, ctx.theme),
   };
   openRoot(scene);
   if (layout.boxes.length > 0) drawBoxes(scene);
