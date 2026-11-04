@@ -66,11 +66,25 @@ import {
   TILDE,
   TokenWriter,
   UNDERSCORE,
+  firstHole,
+  localOffset,
+  QUOTE,
+  SourceOffsets,
+  sourceView,
 } from '@mermaid-js/core/parser-kit';
-import type { TokenStream } from '@mermaid-js/core/parser-kit';
-import { firstHole, localOffset, QUOTE, SourceOffsets } from './source.ts';
-import type { Hole, SourceView } from './source.ts';
+import type { Hole, Range, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
+
+/**
+ * Flowchart's v12 source view (D114): the shared rewrites plus flowParser's `}\s*\n` → `}\n`.
+ */
+export function flowSourceView(
+  src: string,
+  from: number,
+  directives: readonly Range[]
+): SourceView {
+  return sourceView(src, from, directives, { braceNewline: true });
+}
 
 // Start conditions of flow.jison (the ones the lexer needs).
 const S = {

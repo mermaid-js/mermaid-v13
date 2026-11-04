@@ -271,6 +271,11 @@
       "count": 2
     }
   },
+  "packages/core/src/parser-kit/source-view.ts": {
+    "complexity": {
+      "count": 2
+    }
+  },
   "packages/core/src/parser-kit/tiny-grammar.spec.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 2
@@ -474,12 +479,7 @@
       "count": 1
     }
   },
-  "packages/diagram-flowchart/src/parser/source.ts": {
-    "complexity": {
-      "count": 2
-    }
-  },
-  "packages/diagram-flowchart/src/render/prepare.ts": {
+    "packages/diagram-flowchart/src/render/prepare.ts": {
     "@typescript-eslint/no-shadow": {
       "count": 1
     },

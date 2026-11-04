@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { parseFlowchart } from '../index.ts';
-import { sourceView } from './source.ts';
+import { flowSourceView } from './lexer.ts';
 
 const errors = (src: string) =>
   parseFlowchart(src)
@@ -24,7 +24,7 @@ describe('v12 lexing details', () => {
   it('keeps holes in source order when a comment ends inside a directive', () => {
     const src = 'flowchart LR\n%% c %%{init: {\n}}%%\nA';
     const pre = preprocess(src);
-    const { holes } = sourceView(
+    const { holes } = flowSourceView(
       src,
       pre.bodyStart,
       pre.directives.map((d) => d.range)

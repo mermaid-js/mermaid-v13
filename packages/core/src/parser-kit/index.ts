@@ -33,3 +33,13 @@ export { AstIds, nodeId } from './ast.ts';
 export type { AstCallback, AstId, AstNode } from './ast.ts';
 export { ParseState } from './result.ts';
 export type { ParseOptions, ParseResult, StatementSpan, SymbolOccurrence } from './result.ts';
+export {
+  cook,
+  DROP,
+  firstHole,
+  localOffset,
+  QUOTE,
+  SourceOffsets,
+  sourceView,
+} from './source-view.ts';
+export type { Hole, SourceView, SourceViewOptions } from './source-view.ts';
