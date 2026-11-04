@@ -15,6 +15,7 @@ export type { GenerateOptions, Sentence, SentenceGenerator, SentenceModel } from
 export {
   lezerGrammar,
   lezerTokenNames,
+  categoryOf,
   lezerTokens,
   monarch,
   nonCapturing,
@@ -22,5 +23,14 @@ export {
 } from './highlight.ts';
 export type { HighlightNames } from './highlight.ts';
 export { ebnfText, syntaxDoc } from './syntax-doc.ts';
-export { GRAMMARS, generate, generateFor, generatedDir, grammarPath } from './generate.ts';
+export { categoriesModule, categoryTable, kindKeys } from './categories.ts';
+export type { CategoryTable, KindSource } from './categories.ts';
+export {
+  GRAMMARS,
+  generate,
+  generateFor,
+  generatedDir,
+  grammarPath,
+  sourceDir,
+} from './generate.ts';
 export type { GrammarTarget } from './generate.ts';
