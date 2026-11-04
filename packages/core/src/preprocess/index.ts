@@ -8,5 +8,5 @@ export { diagramStart } from './diagram-start.ts';
 export type { FrontMatter } from './frontmatter.ts';
 export { MAX_DIRECTIVE_DEPTH } from './directives.ts';
 export type { Directive, DirectiveKind } from './directives.ts';
-export { MAX_YAML_DEPTH, parseYaml } from './yaml.ts';
+export { isYamlMap, MAX_YAML_DEPTH, parseYaml } from './yaml.ts';
 export type { YamlMap, YamlOptions, YamlResult, YamlValue } from './yaml.ts';
