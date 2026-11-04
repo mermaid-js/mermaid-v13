@@ -152,20 +152,16 @@ function shapeHover(text: string, token: Range, at: number): Hover | undefined {
 }
 
 /** Keywords the lexer emits no token for, and the kind of the token they come before. */
-const UNTOKENED: Readonly<Record<string, number>> = { click: T.Click, call: T.CallbackName };
+const BARE_KEYWORDS: Readonly<Record<string, number>> = { click: T.Click, call: T.CallbackName };
 
 /** `click` / `call` under the cursor: the doc of the token right after it. */
-function untokenedKeyword(
-  text: string,
-  tokens: TokenStream | undefined,
-  at: number
-): Hover | undefined {
+function bareKeyword(text: string, tokens: TokenStream | undefined, at: number): Hover | undefined {
   if (!tokens) return undefined;
   let start = at;
   let end = at;
   while (start > 0 && start > at - 5 && /[a-z]/.test(text.charAt(start - 1))) start--;
   while (end < text.length && end < at + 5 && /[a-z]/.test(text.charAt(end))) end++;
-  const kind = UNTOKENED[text.slice(start, end)];
+  const kind = BARE_KEYWORDS[text.slice(start, end)];
   if (kind === undefined || (start > 0 && /\w/.test(text.charAt(start - 1)))) return undefined;
   // The next token after the keyword and its blanks must be the one it introduces.
   let next = end;
@@ -189,7 +185,7 @@ export function flowchartHover(
     if (contents !== undefined) return { range: at.symbol.range, contents };
   }
   const t = at.token;
-  if (!t) return untokenedKeyword(text, result.tokens, at.offset);
+  if (!t) return bareKeyword(text, result.tokens, at.offset);
   if (t.kind === T.ShapeData) return shapeHover(text, t.range, at.offset);
   // Tokens may take blanks and line breaks with them (`end`, links): only their text counts.
   const range = trimmed(text, t.range);
