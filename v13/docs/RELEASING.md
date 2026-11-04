@@ -104,14 +104,14 @@ Never edit `version` in a package.json, `version.ts` or the CHANGELOG files by h
 
 - npm publish rights on `mermaid` and the `@mermaid-js` scope.
 - `gh auth login` with read access to this repository: the changelog (`@changesets/changelog-github`) looks up the PR and author of each changeset, and `changeset version` fails without a `GITHUB_TOKEN`.
-- `npm login`. If your account asks for 2FA on publish, pass `--otp` (one code covers a run if you are quick). A granular access token limited to these packages, set in `~/.npmrc`, avoids the prompt.
-- Node from `.node-version`, `pnpm install`.
+- An npm login for publishing. Either set up the release token below and prefix npm commands with `mermaid-release` (no 2FA prompts), or `npm login` and pass `--otp <code>` to `release:publish`. One code covers a run if you are quick, and a re-run with a fresh code skips what is already published.
+- Node from `.node-version` (`nvm use 24.16.0`), `pnpm install`.
 
 ### Each release
 
 ```bash
 git switch mermaid-v13 && git pull
-pnpm release:preflight                 # 1. what would ship, and the next step
+mermaid-release pnpm release:preflight # 1. what would ship, and the next step
 
 pnpm check                             # 2. lint, typecheck, tests, deps, licenses, generated files
 
@@ -124,15 +124,73 @@ git push origin mermaid-v13            #    or open a PR with this commit, merge
 pnpm build                             # 4. build and rehearse what will ship
 pnpm release:rehearse
 
-pnpm release:publish --target public --no-provenance --skip-gate "manual alpha"   # 5. publish
+mermaid-release pnpm release:publish --target public --no-provenance --skip-gate "manual alpha"   # 5. publish
 
 pnpm changeset tag                     # 6. tag the released versions
 git push origin --tags
 ```
 
+`mermaid-release` runs the command with the release token ([npm release token](#npm-release-token)). Without it, drop the prefix and add `--otp <code>` to the publish.
+
 Run `pnpm release:preflight` again at the end: it should say *Nothing to release*.
 
 The version commit is pushed **before** publishing so that everything on npm is on the branch. If `mermaid-v13` doesn't accept direct pushes, merge the version commit through a PR, pull, and continue at step 4. Preflight then reports *Next: build and publish*.
+
+### npm release token
+
+The CI workflow, and optionally your laptop, publish with a granular npm token that bypasses 2FA. It is created once and replaced when it expires.
+
+**Create it** on npmjs.com: avatar → *Access Tokens* → *Generate New Token* → *Granular Access Token*.
+
+| Field | Value |
+| --- | --- |
+| Token name | `mermaid-v13-alpha-release` |
+| Bypass two-factor authentication | checked: CI can't type a code |
+| Allowed IP ranges | empty: GitHub runners have no fixed IPs |
+| Packages and scopes | *Read and write*, *Only select packages and scopes*: package `mermaid` and scope `@mermaid-js` (the scope also covers packages the first publish creates) |
+| Organizations | No access |
+| Expiration | the longest npm allows for write tokens (currently 90 days); set a reminder to rotate it |
+
+npm shows the token once. Then:
+
+- **Allow tokens on `mermaid`.** Go to npmjs.com/package/mermaid/access → *Publishing access* and pick the option that allows a granular token with 2FA bypass. *Disallow tokens* rejects every token. Changing it needs an owner of the package.
+- **CI:** `gh secret set NPM_TOKEN --env npm-alpha -R mermaid-js/mermaid-v13`. It prompts for the value, so the token stays out of your shell history.
+
+**Laptop (optional).** The token goes into the macOS Keychain, not into a file, and your own `npm login` stays as it is. One-time setup:
+
+1. Store the token. At *password data for new item*, paste the token (it doesn't echo) and press Enter:
+   ```bash
+   security add-generic-password -a "$USER" -s mermaid-npm-release -w
+   security find-generic-password -s mermaid-npm-release -w | cut -c1-4   # prints npm_
+   ```
+2. Create a release-only npm config. It holds a placeholder, not the token; keep the single quotes:
+   ```bash
+   printf '//registry.npmjs.org/:_authToken=${MERMAID_NPM_TOKEN}\n' > ~/.npmrc-mermaid-release
+   ```
+3. Add this function to `~/.bashrc` (or `~/.zshrc`), then `source` that file:
+   ```bash
+   # Run one command with the Mermaid npm release token (kept in the macOS Keychain).
+   mermaid-release() {
+     MERMAID_NPM_TOKEN="$(security find-generic-password -s mermaid-npm-release -w)" \
+     NPM_CONFIG_USERCONFIG="$HOME/.npmrc-mermaid-release" \
+     "$@"
+   }
+   ```
+4. Check it. The first time, macOS may ask whether `security` can read the item: choose *Always Allow*.
+   ```bash
+   mermaid-release npm whoami   # the token's owner
+   npm whoami                   # your own login, unchanged
+   ```
+
+Prefix only the commands that talk to npm: `mermaid-release pnpm release:preflight` and `mermaid-release pnpm release:publish …`. Don't use `--otp` with the token.
+
+**Replace it** before it expires, or straight away if it may have leaked. Generate a new token as above, then update both copies and revoke the old token on npmjs.com:
+
+```bash
+security add-generic-password -U -a "$USER" -s mermaid-npm-release -w   # -U replaces the stored value
+gh secret set NPM_TOKEN --env npm-alpha -R mermaid-js/mermaid-v13
+mermaid-release npm whoami                                               # check the new one
+```
 
 ### From GitHub Actions
 
@@ -151,7 +209,7 @@ Because this repository is private, the workflow publishes without provenance an
 One-time setup:
 
 - **Environment `npm-alpha`:** restrict it to branch `mermaid-v13`. Add required reviewers if each release should be approved before it starts.
-- **Secret `NPM_TOKEN`, in that environment:** a granular npm token that may publish `mermaid` and `@mermaid-js/*` without 2FA prompts. If `mermaid`'s npm settings disallow tokens, this needs an npm owner first.
+- **Secret `NPM_TOKEN`, in that environment:** the [npm release token](#npm-release-token).
 - **Secret `RELEASE_BOT_TOKEN`:** a token allowed to push to the protected `mermaid-v13` branch. Without it, the run uses the workflow's own token, which only works while the branch accepts its pushes.
 
 ### Example: a flowchart fix
