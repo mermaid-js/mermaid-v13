@@ -2,6 +2,7 @@
  * Completion and hover on the diagram text (#32, D93, D95), through the service API. The
  * goldens (goldens/flowchart/completions and hover) print whole lists; these assert the rules.
  */
+import { performance } from 'node:perf_hooks';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { flowchartDocs, FlowTokenKind as T } from '@mermaid-js/diagram-flowchart/language';
 import { createLanguageService } from './index.ts';
@@ -190,5 +191,41 @@ describe('hover', () => {
     expect(on('proc', 1, 1)?.contents).toMatch(/same as `rect`/);
     expect(on('e1@')?.contents).toContain('`C` → `A`');
     expect(on('  B ==>', 1, 0)).toBeUndefined();
+  });
+});
+
+describe('stress (pitfall 5: linear on long runs)', () => {
+  const fastest = (run: () => unknown): number => {
+    let best = Infinity;
+    for (let t = 0; t < 3; t++) {
+      const t0 = performance.now();
+      run();
+      best = Math.min(best, performance.now() - t0);
+    }
+    return best;
+  };
+  const SHAPES: [string, (n: number) => string][] = [
+    ['line breaks inside shape data', (n) => `flowchart TD\n  A@{${'\n'.repeat(n)}|}`],
+    ['blank lines inside shape data', (n) => `flowchart TD\n  A@{${'\n  ,'.repeat(n)} |}`],
+    ['blanks on the header line', (n) => `flowchart${' '.repeat(n)}|`],
+    ['blanks after a link', (n) => `flowchart TD\n  A -->${' '.repeat(n)}|`],
+    ['one long chain', (n) => `flowchart TD\n  A${' --> A'.repeat(n)} --> |`],
+    ['many line breaks before a statement', (n) => `flowchart TD\n  A${'\n'.repeat(n)}|`],
+  ];
+  it.each(SHAPES)('%s: completion and hover stay linear', (_, shape) => {
+    const run = (n: number) => {
+      const marked = shape(n);
+      const offset = marked.indexOf('|');
+      const text = marked.slice(0, offset) + marked.slice(offset + 1);
+      return fastest(() => {
+        const doc = service.update('file:///stress.mmd', text);
+        doc.completions(offset);
+        doc.hover(offset - 1);
+      });
+    };
+    run(500);
+    const small = run(5000);
+    const big = run(20000);
+    expect(big / Math.max(small, 1)).toBeLessThan(8);
   });
 });
