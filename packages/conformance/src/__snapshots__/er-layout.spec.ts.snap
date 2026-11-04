@@ -2,6 +2,13 @@
 
 exports[`layered over parser-produced ER graphs > lays out every corpus graph validly with the cell profile 1`] = `
 {
+  "er/baseline/accessibility.mmd": 0,
+  "er/baseline/cardinalities.mmd": 0,
+  "er/baseline/cardinality-words.mmd": 0,
+  "er/baseline/direction-lr.mmd": 0,
+  "er/baseline/subgraphs.mmd": 0,
+  "er/baseline/tables.mmd": 0,
+  "er/baseline/theme-dark.mmd": 0,
   "er/nightly-check/has-a-label-with-char-sequence-graph.mmd": 0,
   "er/nightly-check/should-render-a-simple-er-diagram.mmd": 0,
   "er/nightly-check/should-render-a-simple-subgraph.mmd": 0,
@@ -213,6 +220,13 @@ exports[`layered over parser-produced ER graphs > lays out every corpus graph va
 
 exports[`layered over parser-produced ER graphs > lays out every corpus graph validly with the px profile 1`] = `
 {
+  "er/baseline/accessibility.mmd": 0,
+  "er/baseline/cardinalities.mmd": 0,
+  "er/baseline/cardinality-words.mmd": 0,
+  "er/baseline/direction-lr.mmd": 0,
+  "er/baseline/subgraphs.mmd": 0,
+  "er/baseline/tables.mmd": 0,
+  "er/baseline/theme-dark.mmd": 0,
   "er/nightly-check/has-a-label-with-char-sequence-graph.mmd": 0,
   "er/nightly-check/should-render-a-simple-er-diagram.mmd": 0,
   "er/nightly-check/should-render-a-simple-subgraph.mmd": 0,
