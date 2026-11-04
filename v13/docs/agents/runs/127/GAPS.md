@@ -92,7 +92,7 @@ Unmet criteria and shared contracts, by owning ticket.
 
 ## #127 final review fixes
 
-- [ ] **Open (maintainer):** `A:::cls` as a statement on its own (any scope), and `A:::cls`
+- [x] **Answered (maintainer, "Yes, warn", question 4):** `CLASS_NOT_APPLIED` on the `:::cls` part, rendering unchanged. Was: `A:::cls` as a statement on its own (any scope), and `A:::cls`
   inside a composite, set no class: v12's `extract` applies `:::` only from top-level
   transitions. v13 keeps that (parity) with no warning yet; the no-op warnings of the review
   (`IGNORED_IN_COMPOSITE`, `LINK_NOT_DRAWN`, `SCALE_IGNORED`) do not cover it.

@@ -338,6 +338,8 @@ export class StateBuilder {
       switch (item.stmt) {
         case 'state':
           this.addState(item.id);
+          this.classNotApplied(item, undefined);
+          if (item.doc && item.type !== DIVIDER) this.classesInside(item.doc, item.id);
           break;
         case 'relation':
           this.addState(item.state1.id, item.state1.classes);
@@ -367,6 +369,37 @@ export class StateBuilder {
         case 'dir':
         case 'noop':
           break;
+      }
+    }
+  }
+
+  /**
+   * `A:::cls` that sets no class (maintainer, #127 question 4): v12's `extract` applies `:::`
+   * only from a transition at the top level, so a state written on its own and any `:::` inside
+   * a composite do nothing. Rendering is unchanged (v12 parity); only the warning is new.
+   */
+  private classNotApplied(item: StateItem, composite: string | undefined): void {
+    const cls = item.classes?.[0];
+    if (cls === undefined) return;
+    const where = composite
+      ? `inside composite state \`${composite}\``
+      : 'on a state written on its own';
+    this.ctx.warn(
+      'CLASS_NOT_APPLIED',
+      `\`:::${cls}\` ${where} sets no class (v12 ignores it too): use it in a top-level transition, or write \`class ${item.id} ${cls}\` at the top level.`,
+      item.range
+    );
+  }
+
+  /** Every `:::` inside composite `composite` (regions included), which v12 ignores. */
+  private classesInside(doc: readonly Item[], composite: string): void {
+    for (const stmt of doc) {
+      if (stmt.stmt === 'relation') {
+        this.classNotApplied(stmt.state1, composite);
+        this.classNotApplied(stmt.state2, composite);
+      } else if (stmt.stmt === 'state') {
+        this.classNotApplied(stmt, composite);
+        if (stmt.doc) this.classesInside(stmt.doc, stmt.type === DIVIDER ? composite : stmt.id);
       }
     }
   }

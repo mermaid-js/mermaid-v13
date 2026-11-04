@@ -646,7 +646,7 @@ class StateParser {
       this.symbol(cls, 'class', this.own(c), 'ref');
       item.classes = [cls];
       node.className = cls;
-      node.range = this.span(j);
+      node.range = item.range = this.span(j);
     }
     return [item, node];
   }

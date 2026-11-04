@@ -474,7 +474,9 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
   v12: `classDef`, `class` and `style` inside a composite state (v12 reads them from the top
   level only) warn `IGNORED_IN_COMPOSITE`, as does `click` there (v12's lexer reads that line
   as state names); a top-level `click` on a composite or on a state that is not drawn warns
-  `LINK_NOT_DRAWN`; `scale … width` warns `SCALE_IGNORED`. Completion no longer offers
+  `LINK_NOT_DRAWN`; `scale … width` warns `SCALE_IGNORED`; and `A:::cls` that sets no class
+  (on a state written on its own, or anywhere inside a composite: v12 applies `:::` only in a
+  top-level transition) warns `CLASS_NOT_APPLIED`. Completion no longer offers
   `classDef`, `class`, `style`, `click` or `scale` inside a composite.
 
 ## State diagram SVG structure

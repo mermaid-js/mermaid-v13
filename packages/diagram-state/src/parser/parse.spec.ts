@@ -179,6 +179,7 @@ describe('state model', () => {
       ['warning', 'IGNORED_IN_COMPOSITE'],
       ['warning', 'IGNORED_IN_COMPOSITE'],
       ['warning', 'IGNORED_IN_COMPOSITE'],
+      ['warning', 'CLASS_NOT_APPLIED'],
     ]);
     const text = (d: { range: { start: number; end: number } }) =>
       src.slice(d.range.start, d.range.end).trim();
@@ -189,12 +190,39 @@ describe('state model', () => {
       // v12's lexer has no `click` in a composite: the line is state names (parity), so only
       // the word is flagged.
       'click',
+      'a:::c',
     ]);
     expect(r.diagnostics[0]!.message).toMatch(/`class` .*inside composite state `X`.*top level/);
     // Still ignored, as in v12.
     expect(r.model.states.find((s) => s.id === 'a')!.classes).toEqual([]);
     expect(r.model.states.find((s) => s.id === 'a')!.styles).toEqual([]);
     expect(r.model.links).toEqual([]);
+  });
+
+  // Maintainer (#127 question 4): `:::` that v12 ignores warns, and still sets no class.
+  it('warns CLASS_NOT_APPLIED for a lone `A:::cls` and for `:::` inside a composite', () => {
+    const src =
+      'stateDiagram-v2\n  classDef c fill:#f00\n  A:::c\n  B:::c : text\n  C:::c --> D:::c\n  state X {\n    E:::c --> F\n  }\n';
+    const r = parseState(src);
+    const hits = r.diagnostics.filter((d) => d.code === 'CLASS_NOT_APPLIED');
+    expect(hits.map((d) => [d.severity, src.slice(d.range.start, d.range.end)])).toEqual([
+      ['warning', 'A:::c'],
+      ['warning', 'B:::c'],
+      ['warning', 'E:::c'],
+    ]);
+    expect(hits[0]!.message).toMatch(
+      /`:::c` on a state written on its own sets no class.*`class A c`/
+    );
+    expect(hits[2]!.message).toMatch(/inside composite state `X`/);
+    const classes = (id: string) => r.model.states.find((s) => s.id === id)!.classes;
+    // Rendering unchanged (v12): only the top-level transition applies its classes.
+    expect([classes('A'), classes('B'), classes('C'), classes('D'), classes('E')]).toEqual([
+      [],
+      [],
+      ['c'],
+      ['c'],
+      [],
+    ]);
   });
 
   it('warns for a click on a composite or on a state that is not drawn', () => {
