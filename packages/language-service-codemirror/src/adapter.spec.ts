@@ -88,6 +88,18 @@ describe('diagnostics', () => {
     for (const d of found) expect(d.to).toBeLessThanOrEqual(state.doc.length);
   });
 
+  it('shows where an unclosed `[` was opened, what was expected and where the text ends', async () => {
+    const text = 'flowchart LR\n  A[x\n';
+    const [d, ...rest] = lintDiagnostics(await stateOf(text));
+    expect(rest).toEqual([]);
+    expect(text.slice(d!.from, d!.to)).toBe('[');
+    // As core's formatDiagnostic and the LSP server render it.
+    expect(d!.message).toContain('\nExpected: label text, `]`');
+    expect(d!.message).toContain('\nNote at line 3, column 1: The text ends here.');
+    // The related place is one action away.
+    expect(d!.actions?.map((a) => a.name)).toEqual(['Line 3: The text ends here.']);
+  });
+
   it('is empty for a valid diagram', async () => {
     expect(lintDiagnostics(await stateOf('flowchart LR\n  A --> B\n'))).toEqual([]);
   });

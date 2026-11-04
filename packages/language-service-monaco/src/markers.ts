@@ -3,6 +3,7 @@
  * or is switched to the language, again after edits (debounced, as the CodeMirror linter is,
  * D98), and loses them and its service document when it closes or changes language.
  */
+import { diagnosticMessage } from '@mermaid-js/language-service';
 import type { Diagnostic, LanguageService, Severity } from '@mermaid-js/language-service';
 import type * as Monaco from 'monaco-editor';
 import { snapshotOf, toRange } from './convert.ts';
@@ -21,7 +22,10 @@ type MonacoMarkers = Pick<typeof Monaco, 'MarkerSeverity'> & {
   >;
 };
 
-/** The markers of `diagnostics` on `model`. */
+/**
+ * The markers of `diagnostics` on `model`: the message with what was expected (as the LSP
+ * server and core's `formatDiagnostic` give it), the related places as `relatedInformation`.
+ */
 export function toMarkers(
   monaco: Pick<typeof Monaco, 'MarkerSeverity'>,
   model: TextModel,
@@ -30,7 +34,7 @@ export function toMarkers(
   return diagnostics.map((d) => ({
     severity: monaco.MarkerSeverity[SEVERITIES[d.severity]],
     code: d.code,
-    message: d.message,
+    message: diagnosticMessage(d),
     source: 'mermaid',
     ...toRange(model, d.range),
     ...(d.related?.length

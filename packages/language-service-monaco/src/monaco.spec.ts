@@ -96,6 +96,22 @@ describe('markers', () => {
     expect(model.getVersionId()).toBe(1);
   });
 
+  it('shows where an unclosed `[` was opened and what was expected, as the LSP server does', () => {
+    fake.createModel('file:///open.mmd', 'flowchart LR\n  A[x\n');
+    const [marker] = fake.markers.get('file:///open.mmd')!;
+    expect(marker).toMatchObject({ startLineNumber: 2, startColumn: 4, endColumn: 5 });
+    expect(marker!.message).toMatch(
+      /^Unclosed node label: the `\[` at line 2 .*\nExpected: label text, `]`$/
+    );
+    expect(marker!.relatedInformation).toEqual([
+      expect.objectContaining({
+        message: 'The text ends here.',
+        startLineNumber: 3,
+        startColumn: 1,
+      }),
+    ]);
+  });
+
   it('updates markers after an edit, debounced, and clears them when the model closes', () => {
     const model = fake.createModel('file:///b.mmd', 'flowchart LR\n  A --> B\n');
     expect(fake.markers.get('file:///b.mmd')).toEqual([]);

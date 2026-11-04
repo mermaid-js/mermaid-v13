@@ -7,11 +7,12 @@ import { autocompletion } from '@codemirror/autocomplete';
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
 import { codeFolding, foldService } from '@codemirror/language';
 import { linter } from '@codemirror/lint';
-import type { Diagnostic as LintDiagnostic } from '@codemirror/lint';
+import type { Action as LintAction, Diagnostic as LintDiagnostic } from '@codemirror/lint';
 import { Facet, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state';
 import type { EditorState, Extension } from '@codemirror/state';
 import { Decoration, EditorView, hoverTooltip, ViewPlugin } from '@codemirror/view';
 import type { DecorationSet, ViewUpdate } from '@codemirror/view';
+import { diagnosticMessage } from '@mermaid-js/language-service';
 import type { AstId, CompletionKind, DocumentSnapshot, Range } from '@mermaid-js/language-service';
 import { mermaidLanguageDefinition } from './language.ts';
 import { renderMarkdown } from './markdown.ts';
@@ -24,17 +25,37 @@ const clamp = (state: EditorState, at: number) => Math.max(0, Math.min(at, state
 
 // --- diagnostics -------------------------------------------------------------------------
 
-/** The service's diagnostics as CodeMirror lint diagnostics (`source` = the code). */
+/**
+ * The service's diagnostics as CodeMirror lint diagnostics (`source` = the code). The message
+ * carries what was expected and a `Note at line L, column C: …` line per related place, as
+ * core's `formatDiagnostic` renders them (CodeMirror has no related information); each
+ * related place is also an action that moves the cursor there.
+ */
 export function lintDiagnostics(state: EditorState): LintDiagnostic[] {
   const doc = mermaidSnapshot(state);
   if (!doc) return [];
-  return doc.diagnostics().map((d) => ({
-    from: clamp(state, d.range.start),
-    to: clamp(state, Math.max(d.range.start, d.range.end)),
-    severity: d.severity,
-    source: d.code,
-    message: d.message,
-  }));
+  const lines = doc.lines();
+  return doc.diagnostics().map((d) => {
+    let message = diagnosticMessage(d);
+    const actions: LintAction[] = [];
+    for (const r of d.related ?? []) {
+      const { line, column } = lines.position(r.range.start);
+      message += `\nNote at line ${line + 1}, column ${column + 1}: ${r.message}`;
+      const anchor = clamp(state, r.range.start);
+      actions.push({
+        name: `Line ${line + 1}: ${r.message}`,
+        apply: (view) => view.dispatch({ selection: { anchor }, scrollIntoView: true }),
+      });
+    }
+    return {
+      from: clamp(state, d.range.start),
+      to: clamp(state, Math.max(d.range.start, d.range.end)),
+      severity: d.severity,
+      source: d.code,
+      message,
+      ...(actions.length > 0 ? { actions } : {}),
+    };
+  });
 }
 
 export interface DiagnosticsOptions {

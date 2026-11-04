@@ -12,7 +12,11 @@ import type {
   LineIndex,
   Range as ServiceRange,
 } from '@mermaid-js/language-service';
-import { encodeSemanticTokens, lineSemanticTokens } from '@mermaid-js/language-service';
+import {
+  diagnosticMessage,
+  encodeSemanticTokens,
+  lineSemanticTokens,
+} from '@mermaid-js/language-service';
 import type {
   CompletionItem,
   Diagnostic,
@@ -43,7 +47,7 @@ export function toDiagnostic(index: LineIndex, uri: string, d: ServiceDiagnostic
     severity: SEVERITY[d.severity],
     code: d.code,
     source: 'mermaid',
-    message: d.expected?.length ? `${d.message}\nExpected: ${d.expected.join(', ')}` : d.message,
+    message: diagnosticMessage(d),
   };
   if (d.related?.length)
     out.relatedInformation = d.related.map((r) => ({

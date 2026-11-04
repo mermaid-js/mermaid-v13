@@ -18,6 +18,7 @@ export { DocumentSnapshot } from './snapshot.ts';
 export type { DocumentContext } from './context.ts';
 export type { FacetEntry } from './facets.ts';
 export type { Annotation, ConfigSchema, SchemaNode } from './config/schema.ts';
+export { diagnosticMessage } from './diagnostics.ts';
 export { firstPartyFacets } from './generated/facets.gen.ts';
 export type { FoldingRange } from './folding.ts';
 export { encodeSemanticTokens, lineFoldingRanges, lineSemanticTokens } from './lines.ts';

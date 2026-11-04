@@ -49,3 +49,12 @@ export function diagnostics(ctx: DocumentContext): Diagnostic[] {
   }
   return out;
 }
+
+/**
+ * A diagnostic's message as editors show it: the message, then `Expected: a, b` on its own
+ * line when the parser listed what it expected (as core's `formatDiagnostic` renders it). The
+ * related places stay separate (LSP `relatedInformation`, Monaco's, CodeMirror's notes).
+ */
+export function diagnosticMessage(d: Diagnostic): string {
+  return d.expected?.length ? `${d.message}\nExpected: ${d.expected.join(', ')}` : d.message;
+}
