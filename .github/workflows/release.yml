@@ -4,9 +4,9 @@
 # `alpha`) and published:
 #   1. version: adds a `mermaid` patch changeset if the merge brought none, runs
 #      `changeset version` and pushes the `chore(release): version packages` commit.
-#   2. private: `@mermaid-chart/*` to GitHub Packages, dist-tag `alpha` (publish-fork flow).
+#   2. private: `@mermaid-chart/*` to GitHub Packages, dist-tag `v13-alpha` (publish-fork flow).
 #   3. public:  `mermaid@13.0.0-alpha.N` and its `@mermaid-js/*` packages to npm, dist-tag
-#      `alpha`, only when the repository variable PUBLIC_ALPHA is 'true' and the full bench
+#      `v13-alpha`, only when the repository variable PUBLIC_ALPHA is 'true' and the full bench
 #      meets R-PERF-1…4 on the version commit. `release:publish` re-checks the gate itself.
 #
 # Maintainer setup (nothing here works until it is done):
@@ -94,7 +94,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check:licenses
       - run: pnpm build
-      - name: Pack, leak-gate and publish @mermaid-chart/* with tag alpha
+      - name: Pack, leak-gate and publish @mermaid-chart/* with tag v13-alpha
         run: pnpm release:publish --target private
         env:
           NODE_AUTH_TOKEN: ${{ secrets.MERMAID_CHART_PACKAGES_TOKEN }}
@@ -134,7 +134,7 @@ jobs:
       - name: Public alpha gate (R-PERF-1…4)
         run: pnpm release:public-gate packages/bench/dist/reports/latest.json --commit ${{ needs.version.outputs.sha }}
       - run: pnpm build
-      - name: Pack, leak-gate and publish mermaid with tag alpha
+      - name: Pack, leak-gate and publish mermaid with tag v13-alpha
         run: pnpm release:publish --target public --gate packages/bench/dist/reports/latest.json --commit ${{ needs.version.outputs.sha }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
