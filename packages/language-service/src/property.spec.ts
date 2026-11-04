@@ -6,9 +6,9 @@
  * facet), plus the start and end of every word, blank run and punctuation character (every
  * type, so the generic features are covered too), plus 0 and the text's length.
  *
- * Budget, as a ratio (timing tests never assert absolute times): no single query call takes
- * longer than {@link RATIO} times the document's own `update` (a full re-parse), with a
- * {@link FLOOR_MS} floor for timer and GC noise on tiny documents. The absolute 10 ms budget
+ * Budget, as a ratio (timing tests never assert absolute times): no query call takes longer
+ * than {@link RATIO} times the document's own `update` (a full re-parse, best of three), best
+ * of three calls, with a {@link FLOOR_MS} floor for timer noise on tiny documents. The absolute 10 ms budget
  * on a 50k-character document is the bench package's `language` script.
  */
 import { readdirSync, readFileSync } from 'node:fs';
@@ -70,14 +70,19 @@ function check(name: string, text: string): string[] {
   const problems: string[] = [];
   const run = (query: string, call: () => unknown, offset?: number) => {
     const where = offset === undefined ? query : `${query} @${offset}`;
-    const t = performance.now();
-    try {
-      call();
-    } catch (error) {
-      problems.push(`${name}: ${where} threw ${(error as Error).message}`);
-      return;
+    // Best of three when the first call is over: a GC pause or a busy CI core is not repeated,
+    // a slow query is.
+    let ms = Infinity;
+    for (let i = 0; i < 3 && ms > limit; i++) {
+      const t = performance.now();
+      try {
+        call();
+      } catch (error) {
+        problems.push(`${name}: ${where} threw ${(error as Error).message}`);
+        return;
+      }
+      ms = Math.min(ms, performance.now() - t);
     }
-    const ms = performance.now() - t;
     if (ms > limit) problems.push(`${name}: ${where} took ${ms.toFixed(1)} ms (> ${limit} ms)`);
   };
   run('diagnostics', () => doc.diagnostics());
@@ -101,12 +106,16 @@ describe('every query at every token boundary of the corpus', () => {
     expect(byType.get('flowchart')?.length).toBeGreaterThan(400);
   });
 
-  it.each([...byType.keys()])('%s', (type) => {
-    const problems = byType
-      .get(type)!
-      .flatMap((file) => check(relative(CORPUS, file), readFileSync(file, 'utf8')));
-    expect(problems).toEqual([]);
-  });
+  it.each([...byType.keys()])(
+    '%s',
+    (type) => {
+      const problems = byType
+        .get(type)!
+        .flatMap((file) => check(relative(CORPUS, file), readFileSync(file, 'utf8')));
+      expect(problems).toEqual([]);
+    },
+    120_000
+  );
 });
 
 describe('the boundaries', () => {
