@@ -177,6 +177,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-quadrant':
+        specifier: workspace:^
+        version: link:../diagram-quadrant
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
@@ -295,6 +298,12 @@ importers:
         version: link:../core
 
   packages/diagram-flowchart:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-quadrant:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
