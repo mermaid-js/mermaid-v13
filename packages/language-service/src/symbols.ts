@@ -131,12 +131,16 @@ export function prepareRename(
   return deepFreeze({ range: o.range, placeholder: o.name });
 }
 
-/** `text` with `edits` (non-overlapping) applied. */
+/** `text` with `edits` (non-overlapping) applied, in one pass: O(text + edits). */
 function applyEdits(text: string, edits: readonly TextEdit[]): string {
-  let out = text;
-  for (const e of [...edits].sort((a, b) => b.range.start - a.range.start))
-    out = out.slice(0, e.range.start) + e.newText + out.slice(e.range.end);
-  return out;
+  const parts: string[] = [];
+  let at = 0;
+  for (const e of [...edits].sort((a, b) => a.range.start - b.range.start)) {
+    parts.push(text.slice(at, e.range.start), e.newText);
+    at = e.range.end;
+  }
+  parts.push(text.slice(at));
+  return parts.join('');
 }
 
 /**
