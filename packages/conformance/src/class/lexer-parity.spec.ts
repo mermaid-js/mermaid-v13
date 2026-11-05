@@ -96,6 +96,10 @@ const LEXER_CASES: CorpusItem[] = [
   'classDiagram\nclass A {\n  %% not a comment in a body\n}',
   'classDiagram\nA direction TB\nB direction LR x\nC',
   'classDiagram\ndirection\n\nRL extra\nA',
+  // `#y;` wherever a jison token could end inside its placeholder (`ﬂ°y¶ß`, #208 item 5).
+  'classDiagram\nA : x:#y; z\nA <|-- B : #y;\nclass C~#y;~\nnote "#y;"\nclass D["#y;"]',
+  'classDiagram\nclass A {\n+x #y; y\n}\nA "#y;" --> "#9829;" B\naccTitle: #y;',
+  'classDiagram\nA #y; B',
 ].map((source, i) => ({ id: `lexer case ${i}`, source }));
 
 async function corpus(): Promise<CorpusItem[]> {
