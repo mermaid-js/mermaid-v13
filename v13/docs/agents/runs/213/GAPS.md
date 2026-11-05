@@ -40,6 +40,8 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 ## #234 T6 state
 
+- [ ] Escalated (tickets/234.md): region divider plain under the gradient; choice shadow (pre-existing); neo-dark `altBackground #f0f0f0` reads badly (the #227 item), proposed `#404040`.
+
 ## #235 T7 ER
 
 ## #236 T8 close
