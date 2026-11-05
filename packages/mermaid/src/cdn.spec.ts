@@ -106,12 +106,50 @@ describe('globalThis.mermaidPlugins (D167)', () => {
     expect(svg).toContain('late-mark');
   });
 
-  it('drains the queue, so a second API object does not register the same entries', async () => {
-    const queue: unknown[] = [textDiagram('once', 'once')];
+  it('drains the queue; a second API object of the build gets every entry, earlier ones too', async () => {
+    const queue: unknown[] = [{ ...textDiagram('once', 'once'), package: 'once-pkg' }];
     const scope = { mermaidPlugins: queue };
-    connectPluginQueue(createMermaid(), scope);
+    const first = createMermaid();
+    connectPluginQueue(first, scope);
     expect(queue).toHaveLength(0);
     expect(scope.mermaidPlugins).toBe(queue);
+    const second = createMermaid();
+    expect(connectPluginQueue(second, scope)).toBe(true);
+    // Like an array's push, it returns the length: every entry the queue has taken.
+    expect(queue.push({ ...textDiagram('later', 'later'), package: 'later-pkg' })).toBe(2);
+    for (const api of [first, second]) {
+      expect((await api.render('o', 'once x')).svg).toContain('once: x');
+      expect((await api.render('l', 'later y')).svg).toContain('later: y');
+    }
+  });
+
+  it('warns when an entry has no package name, and orders it by its id', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const scope = { mermaidPlugins: [textDiagram('nopkg', 'nopkg')] };
+      const api = createMermaid();
+      connectPluginQueue(api, scope);
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/"nopkg" has no "package"/));
+      expect((await api.render('n', 'nopkg x')).svg).toContain('nopkg: x');
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('leaves a queue another build copy connected alone, warning once', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const queue: unknown[] = [];
+      Object.defineProperty(queue, Symbol.for('mermaid.pluginQueue'), { value: {} });
+      const push = queue.push;
+      const scope = { mermaidPlugins: queue };
+      expect(connectPluginQueue(createMermaid(), scope)).toBe(false);
+      expect(connectPluginQueue(createMermaid(), scope)).toBe(false);
+      expect(queue.push).toBe(push);
+      expect(warn.mock.calls.filter(([m]) => /two copies/.test(String(m)))).toHaveLength(1);
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it('detects queued diagrams by package name, whatever the push order (D166)', async () => {
@@ -254,6 +292,24 @@ describe('the plugin queue under bad plugins (D167)', () => {
 });
 
 describe('the CDN entry (D163, D167)', () => {
+  it('gives createMermaid() instances the plugin queue and cdnBase', async () => {
+    const cdn = await import('./cdn.ts');
+    const g = globalThis as { mermaidPlugins?: unknown[] };
+    g.mermaidPlugins!.push({ ...textDiagram('cdnearly', 'cdnearly'), package: 'cdn-early' });
+    const api = cdn.createMermaid();
+    g.mermaidPlugins!.push({ ...textDiagram('cdnlate', 'cdnlate'), package: 'cdn-late' });
+    expect((await api.render('e', 'cdnearly x')).svg).toContain('cdnearly: x');
+    expect((await api.render('l', 'cdnlate y')).svg).toContain('cdnlate: y');
+    try {
+      api.initialize({ cdnBase: 'https://cdn.example/m/' });
+      expect(await (await import('./cdn-base.ts')).cdnUrl('chunks/x.mjs')).toBe(
+        'https://cdn.example/m/chunks/x.mjs'
+      );
+    } finally {
+      api.initialize({ cdnBase: undefined });
+    }
+  });
+
   const here = new URL('./', import.meta.url).href;
   const chunk = async () => (await import('./cdn-base.ts')).cdnUrl('chunks/x.mjs');
 
@@ -321,6 +377,32 @@ describe('the CDN entry (D163, D167)', () => {
     } finally {
       warn.mockRestore();
       cdn.initialize({ cdnBase: undefined });
+    }
+  });
+
+  it('a second build copy keeps off globalThis.mermaid, the queue and the startOnLoad run', async () => {
+    await import('./cdn.ts');
+    const g = globalThis as { window?: unknown; mermaid?: unknown };
+    // The copy that owns the page (earlier tests may have loaded more copies since).
+    const owner = g.mermaid;
+    const added: unknown[] = [];
+    const removed: unknown[] = [];
+    g.window = {
+      addEventListener: (_t: string, fn: unknown) => void added.push(fn),
+      removeEventListener: (_t: string, fn: unknown) => void removed.push(fn),
+    };
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      vi.resetModules();
+      const second = await import('./cdn.ts');
+      expect(second.default).not.toBe(owner);
+      expect(g.mermaid).toBe(owner);
+      expect(added).toHaveLength(1);
+      expect(removed).toEqual(added);
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/two copies of mermaid/));
+    } finally {
+      warn.mockRestore();
+      delete g.window;
     }
   });
 });
