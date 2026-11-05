@@ -11,7 +11,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - Review findings left to later tickets (none blocking):
   - [x] **#305:** `harvest-pie.ts` drops literals containing `${`, so the interpolated `it.each` strings of parser `pie.test.ts` are not harvested (27 of 32 kept). Expand the tables by hand into the quirks or the ported specs so those shapes reach the gate. Its `\\\n` continuation branch in `unescape` is unreachable for quoted literals.
     - Closed by #305: all 32 `pie.test.ts` strings are in `pie-v12-specs.json`; the 5 missing from the count are duplicates within the `it.each` tables (none contains `${`). The whole file is also ported (`src/v12-specs/langium-pie.spec.ts`).
-  - [ ] **#306/#325:** drop the pie exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one theme variable") once the renderer reads theme variables.
+  - [x] **#306/#325:** drop the pie exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one theme variable") once the renderer reads theme variables.
+    - Closed by #306: the exemption is gone; pie reads `fontFamily` and `textColor` (both list `pie` in `usedBy`).
   - [ ] **#325:** `LANGIUM_NAMES` (test-only) and `pieTokens` are exported from the runtime entry; move them to a test or internal subpath if they show up in the load-path size.
 - Deviations (accepted by the orchestrator, consistent with D220): the lexer-error position is compared as the length of the text v12 read before it (entities decoded), since v12 and v13 offsets differ; unclosed `%%{` directives are a listed gate exclusion (core's `UNCLOSED_DIRECTIVE`, shared by every type). An in-body `---…---` block is its own `Yaml` trivia kind in `PIE_TRIVIA`; #305 skips it.
 
@@ -23,7 +24,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - a negative section is left out of the model and does not shadow a later section with the same label (v12 rejects the whole text anyway);
   - a repeated `title`/`accTitle`/`accDescr` statement gets `title@2`, … (pitfall 9);
   - the parity oracle gets no front matter, so the parity parse holds the front-matter title back; the D218 fallback is covered by the package's own specs.
-- [ ] **#306:** repeated-label and negative sections have AST nodes but no model section, so nothing draws them. The AST round-trip needs a rule for those nodes (e.g. the dropped repeat maps to the first slice's legend row, or such nodes are exempt with a reason).
+- [x] **#306:** repeated-label and negative sections have AST nodes but no model section, so nothing draws them. The AST round-trip needs a rule for those nodes (e.g. the dropped repeat maps to the first slice's legend row, or such nodes are exempt with a reason).
+  - Closed by #306 (`packages/conformance/src/pie/render.spec.ts`): a `Slice` node that is a model section has exactly one `data-ast` element (its legend row); one with no section (repeat or negative) has none, and must carry a `PIE_DUPLICATE_SLICE`/`PIE_NEGATIVE_VALUE` diagnostic inside its range; header, title and accessibility nodes have no element, as in sequence.
 - [ ] **#325:** `getConfig` ported spec is skipped (no DB config) until the config keys are honoured.
 
 ## #335 T3 layout (merged)

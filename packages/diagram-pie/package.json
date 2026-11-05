@@ -2,7 +2,7 @@
   "name": "@mermaid-js/diagram-pie",
   "version": "0.0.0",
   "private": true,
-  "description": "Pie chart plugin for Mermaid: lexer, parser and model (layout and renderer to follow).",
+  "description": "Pie chart plugin for Mermaid: parser, layout and SVG renderer.",
   "type": "module",
   "license": "MIT",
   "repository": {

@@ -46,9 +46,7 @@ const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
     expect(TYPES).toEqual(['class', 'er', 'flowchart', 'pie', 'sequence', 'state']);
-    // Pie has only its lexer so far: it reads theme variables from its renderer (#306) on.
-    const drawing = TYPES.filter((type) => type !== 'pie');
-    for (const type of drawing) expect(READS.get(type)!.size).toBeGreaterThan(0);
+    for (const type of TYPES) expect(READS.get(type)!.size).toBeGreaterThan(0);
   });
 
   it.each(TYPES)('lists %s for every variable it reads, and for no other', (type) => {

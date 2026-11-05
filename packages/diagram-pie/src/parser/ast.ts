@@ -12,7 +12,8 @@
  * | `accDescr …`                     | `accDescr`, then `accDescr@2`, … |
  *
  * In labels `%`, `>`, `@` and `#` are percent-encoded (`%25`, `%3E`, `%40`, `%23`), so the
- * `@n` suffix stays unambiguous. The model's section keeps the id of its first occurrence
+ * `@n` suffix stays unambiguous, and so are the characters XML 1.0 cannot hold (`\0` is `%00`,
+ * a lone surrogate `%D800`), so the `data-ast` the renderer writes is the id. The model's section keeps the id of its first occurrence
  * (pitfall 9).
  */
 import type { AstNode, Range } from '@mermaid-js/core/parser-kit';

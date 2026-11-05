@@ -1,11 +1,10 @@
 /**
- * Ports v12's pie parser specs (R-TEST-3) into `src/v12-specs/`, run against v13's parser
- * through `src/v12-specs/adapter.ts`: v12's `parser` and pie DB getters for the diagram spec,
- * and the Langium `pieParse` result for the parser package's spec. The spec bodies are copied
+ * Ports v12's pie specs (R-TEST-3) into `src/v12-specs/`, run against v13's parser, layout
+ * and renderer through `src/v12-specs/adapter.ts`: v12's `parser` and pie DB getters for the
+ * diagram spec, the Langium `pieParse` result for the parser package's spec, and v12's `draw`
+ * with the few `document` reads the renderer spec makes (#306). The spec bodies are copied
  * unchanged from the last v12 commit; only imports are rewritten, and tests listed in `SKIP`
  * (with a reason) are turned into `it.skip`.
- *
- * Not ported here: `pieRenderer.spec.ts` tests the renderer (#306).
  *
  * Usage: `pnpm --filter @mermaid-js/diagram-pie port:v12-specs` (also runs prettier).
  */
@@ -34,6 +33,14 @@ const SOURCES: Source[] = [
     imports: [
       "import { beforeEach, describe, expect, it } from 'vitest';",
       "import { DEFAULT_PIE_DB, db, parser, setConfig } from './adapter.ts';",
+    ],
+  },
+  {
+    file: 'packages/mermaid/src/diagrams/pie/pieRenderer.spec.ts',
+    name: 'pieRenderer.spec.ts',
+    imports: [
+      "import { beforeEach, describe, expect, it } from 'vitest';",
+      "import { db, document, draw, parser } from './adapter.ts';",
     ],
   },
   {

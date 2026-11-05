@@ -94,10 +94,27 @@ const ONE_PER_LINE = 'put each section and statement on a line of its own';
 class Stop extends Error {}
 const STOP = new Stop();
 
-/** `%`, `>`, `@` and `#` percent-encoded, as in every AST id (DESIGN §4.2). */
+/**
+ * `%`, `>`, `@` and `#` percent-encoded, as in every AST id (DESIGN §4.2), and so are the
+ * characters XML 1.0 cannot hold (C0 controls but tab, LF and CR; DEL; lone surrogates; U+FFFE,
+ * U+FFFF), which a label can carry through `\0`, `\b`, `\f`, `\v` or the source: the SVG
+ * writer drops them, so `data-ast` would not be the id (#306). Two hex digits up to U+007F,
+ * four above, so the encoding stays one-to-one.
+ */
+const ESCAPED = '%>@#\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ud800-\\udfff\\ufffe\\uffff';
+const RE_NEEDS_ESC = new RegExp(`[${ESCAPED}]`, 'u');
+const RE_ESC = new RegExp(`[${ESCAPED}]`, 'gu');
+/** Code units below this take two hex digits (`%00`…`%7F`), the rest four (`%D800`, `%FFFE`). */
+const TWO_DIGITS = 0x80;
 function esc(name: string): string {
-  return /[%>@#]/.test(name)
-    ? name.replace(/[%>@#]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`)
+  return RE_NEEDS_ESC.test(name)
+    ? name.replace(RE_ESC, (c) => {
+        const n = c.charCodeAt(0);
+        return `%${n
+          .toString(16)
+          .toUpperCase()
+          .padStart(n < TWO_DIGITS ? 2 : 4, '0')}`;
+      })
     : name;
 }
 

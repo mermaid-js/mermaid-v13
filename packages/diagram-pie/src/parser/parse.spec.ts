@@ -187,6 +187,16 @@ describe('pie parser', () => {
     expect(ast.children[0]).toMatchObject({ showData: true });
   });
 
+  it('percent-encodes in ids the characters XML cannot hold, so data-ast keeps them (#306)', () => {
+    // NUL, backspace, form feed, vertical tab, DEL and a lone surrogate come out of `\\x`
+    // escapes or the source; tab, LF and CR are written as character references, so they stay.
+    const src = 'pie\n"\\0\\b\\f\\v\x7f\ud800\\t\\r%": 1\n"\\0": 2';
+    const ids = parse(src).ast.children.map((n) => n.id);
+    expect(ids).toEqual(['pie', 'slice:%00%08%0C%0B%7F%D800\t\r%25', 'slice:%00']);
+    // One-to-one: a label spelling out an encoding is encoded differently.
+    expect(parse('pie\n"%00": 1').ast.children[1]!.id).toBe('slice:%2500');
+  });
+
   it('records statements and slice symbols, a repeat as a reference (D229)', () => {
     const src = 'pie\ntitle T\n"a": 1\n"a": 2';
     const { statements, symbols } = parse(src);
