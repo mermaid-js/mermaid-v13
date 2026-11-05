@@ -81,6 +81,13 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - `TOKEN_VARIABLES` built by a `@__PURE__` call so bundles drop it (same value and type; ≈240 B gz off core).
 - **Budget (for the maintainer):** core closure 89822 B gz (bench method); on the CDN-build measure 90061 B of 90112 B, so 51 B headroom. The pie row costs ≈330 B, ≈290 B of it because pie is the first diagram chunk that doesn't import `core/layout`, which splits a shared chunk. Journey, quadrant and timeline will push core past budget; R-PERF-8 needs a decision.
 
+## Final whole-branch review (fixed, `tickets/review-fixes.md`)
+
+- Five findings, all fixed: multi-line legend rows and titles overlapped (rows now take their label height; extra title lines grow up; `invariants.ts` checks label boxes); markdown strings were not rendered; no `language-service` (and CodeMirror/Monaco adapter) changesets; a value or sum overflowing to Infinity (now `PIE_VALUE_TOO_LARGE`, a warning and no section, and `pieSum()` scales only on overflow); the unreachable `isValidId` refusal (kept as `() => undefined`, the facet interface requires it).
+- **Orchestrator choice (for the maintainer): markdown strings render in pie labels.** #288 Q6 says "core label layout (no markdown)", while D225 (DECISIONS.md) and MIGRATION.md say markdown strings render in wave-1 labels. Followed D225, the wave-wide record, so pie behaves like journey/quadrant/timeline. A plain label is unchanged; only one written as `` `…` `` renders as markdown.
+- Deviations accepted: the title-vs-legend overlap check skips a `center` legend (v12 draws it over the pie; `many-slices` already touches its title); `PIE_VALUE_TOO_LARGE` is a warning, as v12 accepted such values (accept/reject parity); a title counts as markdown with or without its double quotes.
+- Rejected Langium oracle loads stay cached for the process (`langium-lexer.ts`): a nit, left as is.
+
 ## Shared contracts
 
 - **`PieModel`** (`packages/diagram-pie/src/model.ts`): landed by the orchestrator before #305 and #335 started in parallel, shaped from the spec's model list. #305 produces it; #335 reads it. Change it only additively and note the change here.
