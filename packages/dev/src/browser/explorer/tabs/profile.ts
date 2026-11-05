@@ -20,6 +20,7 @@
 import '@shoelace-style/shoelace/dist/components/checkbox/checkbox.js';
 import { css, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import type { Stage, StageClock } from '../../mermaid.ts';
+import { asHostText } from '../../../host-text.ts';
 import { readStorage, renderConfig, writeStorage } from '../settings.ts';
 import { ViewerTabElement, type DevMermaid } from './context.ts';
 
@@ -311,11 +312,11 @@ export class ProfileTab extends ViewerTabElement {
   async #diagrams(): Promise<{ path: string; text: string }[]> {
     const ctx = this.ctx;
     if (!ctx?.file) return [];
-    if (this.scope === 'diagram') return [{ path: ctx.file, text: ctx.text }];
+    if (this.scope === 'diagram') return [{ path: ctx.file, text: asHostText(ctx.text) }];
     const diagrams: { path: string; text: string }[] = [];
     for (const path of await ctx.siblings()) {
-      if (path === ctx.file) diagrams.push({ path, text: ctx.text });
-      else diagrams.push({ path, text: await ctx.read(path) });
+      if (path === ctx.file) diagrams.push({ path, text: asHostText(ctx.text) });
+      else diagrams.push({ path, text: asHostText(await ctx.read(path)) });
     }
     return diagrams;
   }

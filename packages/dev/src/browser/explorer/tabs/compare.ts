@@ -31,6 +31,7 @@ import {
   serializeCompareUrlState,
   type VersionsResponse,
 } from '../compare-model.ts';
+import { asHostText } from '../../../host-text.ts';
 import { effectiveTheme, isDarkTheme, renderConfig, setUrlParams } from '../settings.ts';
 import { ViewerTabElement } from './context.ts';
 
@@ -292,7 +293,7 @@ export class CompareTab extends ViewerTabElement {
       this.#setPane(side, { sentKey: key, requestId, status: 'rendering', message: '' });
       this.#post(side, {
         type: 'render',
-        text: this.ctx.text,
+        text: asHostText(this.ctx.text),
         config: this.#config(side),
         background: this.#background,
         requestId,
