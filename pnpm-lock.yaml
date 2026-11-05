@@ -558,6 +558,16 @@ importers:
         specifier: ^4.20.6
         version: 4.20.6
 
+  packages/plugin-hand-drawn:
+    dependencies:
+      roughjs:
+        specifier: 4.6.6
+        version: 4.6.6
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/plugin-interactions:
     devDependencies:
       '@mermaid-js/core':
