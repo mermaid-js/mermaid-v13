@@ -7,6 +7,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ### #308 T1 lexer
 - [x] #285 merged into the integration branch at e5f920116 (PR #346 ready). Earlier: #285's oracle was not committed yet. Timeline's v12 DB is a module namespace, so sequence's `db.constructor` trick for a fresh `yy` does not apply: the descriptor must reset it with `clear()` (owner #285; check when it lands).
 - A period named `timeline` is rejected (jison's implicit `\b`): kept, the oracle decides.
+- [x] `yy` checked (#308): the timeline lexer's actions only call `begin`/`popState`, never `yy`, so the oracle's default (the DB namespace itself) is enough; the descriptor needs no `yy` builder and was not changed.
+- Gate exclusions (listed in `packages/conformance/src/timeline/lexer-parity.spec.ts`): the `accDescr {` opener and its `}` (jison returns no token), comments and directives (trivia). The only sources v12 does not lex are commented copies of one-line bodies whose `%% cut` splits the `timeline` header; each is gated uncommented.
 
 ### #336 T2 parser
 - [ ] **Divergence to list:** v12's DB has no `setDiagramTitle`, so v12 drops a front-matter `title`. D218 draws it; the model-parity adapter lists it as a deliberate divergence.
