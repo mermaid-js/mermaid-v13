@@ -71,9 +71,8 @@ describe('visual baseline fixtures (R-TEST-5)', () => {
       'neo',
       'neo-dark',
     ]);
-    // The redux-color, redux-dark and redux-dark-color fixtures come with #89; neo's and
-    // neo-dark's with #229.
-    const pending = new Set(['redux-color', 'redux-dark', 'redux-dark-color', 'neo', 'neo-dark']);
+    // The redux-color, redux-dark and redux-dark-color fixtures come with #89.
+    const pending = new Set(['redux-color', 'redux-dark', 'redux-dark-color']);
     for (const theme of M1_THEMES.filter((t) => !pending.has(t))) {
       const f = fixtures.find((x) => x.path === `themes/${theme}.mmd`);
       expect(f?.source).toMatch(new RegExp(`theme: ${theme}\\n`));

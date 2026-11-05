@@ -25,6 +25,13 @@ const textIn = (tree: SvgView, node: SvgElement): string =>
     .map((c) => tree.textOf(c) ?? textIn(tree, c))
     .join('');
 
+/** Whether an ancestor of `n` has the class `cls`. */
+const within = (n: SvgElement, cls: string): boolean => {
+  for (let p = n.parent; p; p = p.parent)
+    if ((p.attrs.class ?? '').split(' ').includes(cls)) return true;
+  return false;
+};
+
 describe('flowchart render: document root (DESIGN §7.2)', () => {
   it('writes the root with viewBox, max-width, role and the v12 group classes', async () => {
     const { svg, tree } = await draw('flowchart TD\n  A[Start] --> B(End)');
@@ -690,11 +697,6 @@ describe('flowchart render: drop shadow (#85)', () => {
   const WHITE = 'drop-shadow(4px 4px 0 rgb(255 255 255 / 0.06))';
 
   const shadowed = (tree: SvgView) => tree.find((n, t) => t.getAttr(n, 'filter') !== undefined);
-  const within = (n: SvgElement, cls: string): boolean => {
-    for (let p = n.parent; p; p = p.parent)
-      if ((p.attrs.class ?? '').split(' ').includes(cls)) return true;
-    return false;
-  };
   const rootStyle = (svg: string) => /<svg[^>]* style="([^"]*)"/.exec(svg)![1]!;
 
   it('puts the shadow on every node outline, subgraph rect and collapsed card in redux-color', async () => {
@@ -784,3 +786,121 @@ function assertInertOk(svg: string, themeStyle: boolean): boolean {
   assertInert(svg, { themeStyle });
   return true;
 }
+
+describe('flowchart render: neo gradient (D182, #229)', () => {
+  const SHAPES = [
+    'flowchart TD',
+    '  subgraph S[Group]',
+    '    A[Rect] -- a label --> B{Diamond}',
+    '  end',
+    '  B --> C((Circle)) --> D[(Db)] --> E([Stadium]) --> H{{Hex}}',
+    '  H --> F --> G --> L',
+    '  F@{ shape: f-circ }',
+    '  G@{ shape: dbl-circ }',
+    '  L@{ shape: lin-doc }',
+    '  W@{ shape: browser }',
+    '  I@{ icon: "fa:user", form: "square", label: "Icon" }',
+    '  K[Linked]',
+    '  click K "https://example.com"',
+    '  X --> P',
+    '  subgraph grp[Collapsed]',
+    '    P --> Q',
+    '  end',
+    '  grp@{ view: collapsed }',
+  ].join('\n');
+  const URL = 'url(#mermaid-0-gradient)';
+  const outlined = (tree: SvgView) => tree.find((n, t) => t.getAttr(n, 'stroke') === URL);
+  /** The first drawn shape of a node: its outline. */
+  const outlineOf = (tree: SvgView, node: SvgElement): SvgElement => {
+    const kids = tree.children(node).flatMap((c) => (tree.tag(c) === 'a' ? tree.children(c) : [c]));
+    return kids.find((c) =>
+      ['rect', 'polygon', 'circle', 'path', 'ellipse'].includes(tree.tag(c))
+    )!;
+  };
+
+  it.each(['neo', 'neo-dark'])(
+    'strokes every node outline and subgraph rect in %s',
+    async (theme) => {
+      const { svg, tree } = await draw(SHAPES, { config: { theme } });
+      for (const node of tree.find({ class: 'node' })) {
+        const id = tree.getAttr(node, 'data-id');
+        expect(tree.getAttr(outlineOf(tree, node), 'stroke'), `node ${id}`).toBe(URL);
+      }
+      const clusters = tree.find({ class: 'cluster' }).filter((c) => within(c, 'clusters'));
+      const rects = clusters.flatMap((c) => tree.children(c).filter((k) => tree.tag(k) === 'rect'));
+      expect(rects.map((r) => tree.getAttr(r, 'stroke'))).toEqual([URL]);
+      expect(svg.match(/<linearGradient /g)).toHaveLength(1);
+      assertInert(svg);
+    }
+  );
+
+  it('keeps the gradient off edges, edge labels, arrowheads and the collapsed dots (D154)', async () => {
+    const { tree } = await draw(SHAPES, { config: { theme: 'neo' } });
+    const all = outlined(tree);
+    expect(all.length).toBeGreaterThan(0);
+    for (const n of all) {
+      expect(within(n, 'edgePaths') || within(n, 'edgeLabels'), tree.tag(n)).toBe(false);
+      expect(tree.getAttr(n, 'class') ?? '').not.toMatch(/collapsed-/);
+    }
+    expect(tree.find((n, t) => t.getAttr(n, 'fill') === URL)).toHaveLength(0);
+  });
+
+  it('fills dots and draws one-segment inner lines in plain nodeBorder', async () => {
+    // A bounding-box gradient paints nothing on a line with no width or height, and v12 neo
+    // fills no node part with the gradient.
+    const { tree } = await draw(SHAPES, {
+      config: { theme: 'neo', output: { cssVariables: false } } as InitializeConfig,
+    });
+    const dot = tree.children(byAst(tree, 'n:F')[0]!).find((c) => tree.tag(c) === 'circle')!;
+    expect(tree.getAttr(dot, 'fill')).toBe('#000000');
+    expect(tree.getAttr(dot, 'stroke')).toBe(URL);
+    for (const id of ['L', 'W']) {
+      const node = tree.find((n, t) => t.getAttr(n, 'data-id') === id && within(n, 'nodes'))[0]!;
+      const lines = tree
+        .children(node)
+        .filter((c) => tree.tag(c) === 'path' && tree.getAttr(c, 'fill') === 'none');
+      expect(lines.length, id).toBeGreaterThan(0);
+      for (const l of lines) expect(tree.getAttr(l, 'stroke'), id).toBe('#000000');
+    }
+    const browserDots = tree
+      .children(byAst(tree, 'n:W')[0]!)
+      .filter((c) => tree.tag(c) === 'circle');
+    expect(browserDots.map((c) => tree.getAttr(c, 'stroke'))).toEqual(Array(3).fill('#000000'));
+  });
+
+  it("lets the author's style and classDef strokes win over the gradient", async () => {
+    const { tree } = await draw(
+      [
+        'flowchart TD',
+        '  A --> B',
+        '  style A stroke:#ff0000',
+        '  classDef c stroke:#00ff00',
+        '  class B c',
+        '  subgraph S',
+        '    C',
+        '  end',
+        '  style S stroke:#0000ff',
+      ].join('\n'),
+      { config: { theme: 'neo', output: { cssVariables: false } } as InitializeConfig }
+    );
+    const stroke = (ast: string) => tree.getAttr(outlineOf(tree, byAst(tree, ast)[0]!), 'stroke');
+    expect(stroke('n:A')).toBe('#ff0000');
+    expect(stroke('n:B')).toBe('#00ff00');
+    expect(stroke('s:S')).toBe('#0000ff');
+    expect(tree.getAttr(outlineOf(tree, byAst(tree, 'n:C')[0]!), 'stroke')).toBe(URL);
+  });
+
+  it('lets a palette slot win over the gradient on a subgraph', async () => {
+    const { tree } = await draw('flowchart TD\n  subgraph S\n    A\n  end', {
+      config: { theme: 'redux-color', themeVariables: { useGradient: true } },
+    });
+    const rect = tree.children(byAst(tree, 's:S')[0]!).find((c) => tree.tag(c) === 'rect')!;
+    expect(tree.getAttr(rect, 'stroke')).not.toBe(URL);
+    expect(tree.getAttr(outlineOf(tree, byAst(tree, 'n:A')[0]!), 'stroke')).toBe(URL);
+  });
+
+  it.each(['default', 'redux-color', 'dark'])('writes no gradient in %s', async (theme) => {
+    const { svg } = await draw(SHAPES, { config: { theme } });
+    expect(svg).not.toMatch(/<defs|url\(/);
+  });
+});

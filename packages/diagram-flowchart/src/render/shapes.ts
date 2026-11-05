@@ -367,7 +367,14 @@ const S: Record<string, ShapeDef> = {
     inset: roundInset,
     span: roundSpan,
     size: fixed(14, 14),
-    draw: (w, W, _H, a, line) => circle(w, W / 2, { ...line, fill: line.stroke, filter: a.filter }),
+    // The outline's stroke (the gradient under neo, D182), filled with the line colour.
+    draw: (w, W, _H, a, line) =>
+      circle(w, W / 2, {
+        stroke: a.stroke,
+        'stroke-width': line['stroke-width'],
+        fill: line.stroke,
+        filter: a.filter,
+      }),
   },
   'fr-circ': {
     noLabel: true,
@@ -840,6 +847,13 @@ export const shapeInset = (
 ): number => def(shape).inset?.(W, H, side, t, p) ?? 0;
 export const shapeSpan = (shape: string, W: number, H: number, sideways: boolean): number =>
   Math.max(0, def(shape).span?.(W, H, sideways) ?? 0);
+/**
+ * Whether the shape's inner lines take a colour, not the gradient (D182): the dots' fills
+ * (v12 neo fills nothing with it), and a one-segment line, whose zero-width or zero-height
+ * box a bounding-box gradient can't paint.
+ */
+export const usesPlain = (shape: string): boolean => PLAIN.has(shape);
+const PLAIN = /* @__PURE__ */ new Set(['f-circ', 'fr-circ', 'lin-doc', 'browser']);
 export const shapeHasLabel = (shape: string): boolean => def(shape).noLabel !== true;
 export const shapeFilled = (shape: string): boolean => def(shape).bare !== true;
 /** Whether the shape is drawn by its own code rather than falling back to a rectangle. */
