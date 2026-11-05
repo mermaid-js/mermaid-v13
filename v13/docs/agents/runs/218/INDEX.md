@@ -1,6 +1,6 @@
 # Run notes — spec #218 (M3.5 plugin-loading platform)
 
-Integration branch: `feature/218_plugin-platform` (worktree `.claude/worktrees/m35-platform-impl-d51ccd`), cut from `mermaid-js/mermaid-v13` at `060177736`, with `docs/m35-plugin-platform-spec` (D160–D169, PR #219) merged in.
+Integration branch: `feature/218_plugin-platform` (worktree `.claude/worktrees/m35-platform-impl-d51ccd`), cut from `mermaid-js/mermaid-v13` at `060177736`, with D160–D169 (PR #219, merged as `b7e9076f5`); later synced with `mermaid-js/mermaid-v13`.
 
 Tickets: T0 #220 size gates · T1 #221 registry rules · T2 #222 pack harness · T3 #224 bundle test (T2) · T4 #226 Node discovery (T1, T2) · T5 #228 bundler plugin (T1, T3) · T6 #230 CDN build (T1, T2) · T7 #232 close-out.
 
