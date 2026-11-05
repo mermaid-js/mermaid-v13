@@ -155,8 +155,9 @@ function astIndex(ast: AstNode): Map<string, AstNode> {
 
 describe('quadrant render properties over the e2e corpus', () => {
   it('renders the corpus in four families', () => {
-    expect(cases).toHaveLength(14);
-    expect(families).toHaveLength(14 * FAMILIES.length);
+    // v12's 14 e2e fixtures and the 12 baselines (#317).
+    expect(cases).toHaveLength(14 + 12);
+    expect(families).toHaveLength((14 + 12) * FAMILIES.length);
   });
 
   it('writes well-formed XML that passes the allow-list', () => {

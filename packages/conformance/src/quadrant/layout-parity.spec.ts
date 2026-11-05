@@ -183,9 +183,16 @@ function differences(a: unknown, b: unknown): string[] {
 describe('quadrant layout parity with v12 getQuadrantData()', () => {
   it('equals v12 on the corpus and the extra cases, to 0.01 px', async () => {
     const items = await corpus();
-    expect(items.length).toBe(14 + EXTRA.length);
+    // v12's 14 e2e fixtures and the 12 baselines (#317).
+    expect(items.length).toBe(14 + 12 + EXTRA.length);
     const problems: string[] = [];
     for (const item of items) {
+      // The oracle's getDiagramFromText skips front matter, so v12 here never sees a front-matter
+      // title (D218); quadrant.spec.ts in mermaid checks that one through the public API.
+      const front = item.source.startsWith('---\n')
+        ? item.source.slice(4, item.source.indexOf('\n---', 3))
+        : '';
+      if (/^title:/m.test(front)) continue;
       const v12 = await v12Quadrant(item.source);
       if (!v12.accepted) {
         problems.push(`${item.id}: v12 rejected it: ${v12.error}`);
