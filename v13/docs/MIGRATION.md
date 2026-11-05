@@ -583,6 +583,11 @@ npm install @mermaid-js/plugin-hand-drawn
 - **A section's `look` applies to the diagram drawn,** whatever its type: `sequence.look:
   handDrawn` in the config of a flowchart sketches that flowchart. v12 read only the drawn type's
   section.
+- **Only `handDrawn: false` turns the sketch off.** `look: classic` and `look: neo` still only
+  warn `LOOK_REMOVED`: they do not beat a `look: handDrawn` set in another source (`initialize`,
+  front matter, a directive) or at the top level. In v12 the diagram text's `look`, and the
+  drawn type's section, won. To draw one diagram plain under a site-wide hand-drawn look, set
+  `handDrawn: false` in its front matter or directive.
 - **Without the plugin,** `look: handDrawn` draws the plain diagram with one `LOOK_REMOVED`
   warning naming `@mermaid-js/plugin-hand-drawn`, and `handDrawn` or `handDrawnSeed` give
   `CONFIG_UNKNOWN_KEY`, as `elk.*` keys do without ELK (D153).
@@ -605,20 +610,26 @@ npm install @mermaid-js/plugin-hand-drawn
   collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state
   (states, composites, notes, start and end, choice, fork and join, region dividers,
   transitions) and ER (entities, attribute rows, dividers, subgraphs, relationship lines).
-  Mindmap is sketched from its port. Arrowheads, edge-label backgrounds and text are never
+  Mindmap will be sketched once it is ported. Arrowheads, edge-label backgrounds and text are never
   sketched, as in v12. Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges.
   State composites are drawn at 0.7, where v12 used roughjs's default of 1. An outline with no
   fill and no stroke (flowchart's `text` and brace hit boxes, state's region frame) stays the
   plain element.
-- **Not sketched:** sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw exactly
-  as without the plugin, with no warning, as in v12 (D305). Types v12 sketched that v13 has not
-  ported yet (requirement, block, kanban, swimlanes, venn, ishikawa, treemap, usecase,
-  agentflow) are sketched once their ports adopt it.
+- **Not sketched:** sequence draws exactly as without the plugin, with no warning, as in v12
+  (D305). Gantt, pie, timeline, journey, quadrant and gitGraph will do the same once they are
+  ported. Types v12 sketched that v13 has not ported yet (requirement, block, kanban, swimlanes,
+  venn, ishikawa, treemap, usecase, agentflow) are sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
   included (D305).
 - **Size.** roughjs loads with the plugin, not lazily (D306): about 11.2 KB gz for the plugin,
   8.9 KB of it roughjs. `mermaid` and core are the same bytes with or without it (R-PLUG-8).
+- **Output size.** A sketched SVG is much larger than the plain one: hachure fills at v12's
+  `hachureGap` of 1.5 draw a stroke every 1.5 units, so the SVG grows roughly 5–25× (about 14×
+  for a 40-node flowchart), most for large filled shapes. A large diagram can reach the `maxOutputLength` limit (4,000,000
+  characters) and fail with a `LIMIT` error. The integrator can raise it with
+  `initialize({ limits: { maxOutputLength: 20_000_000 } })` or a per-call `config.limits`
+  ([Limits](#limits)); diagram text cannot.
 
 ### Hand-drawn SVG structure
 

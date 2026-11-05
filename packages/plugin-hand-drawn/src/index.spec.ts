@@ -84,6 +84,24 @@ describe('the config fragment (D303)', () => {
     }
   });
 
+  it('turns off only with handDrawn: false; another look does not beat a handDrawn one', async () => {
+    const m = await api(handDrawn);
+    m.initialize({ deterministic: true, look: 'handDrawn' } as never);
+    for (const config of ['  look: classic', '  flowchart:\n    look: neo']) {
+      const r = await m.render('a', front(config));
+      expect(codes(r.warnings)).toEqual(['LOOK_REMOVED']);
+      expect(sketched(r.svg)).toBe(true);
+    }
+    const section = await m.render(
+      'a',
+      front('  look: classic\n  flowchart:\n    look: handDrawn')
+    );
+    expect(sketched(section.svg)).toBe(true);
+    const off = await m.render('a', front('  handDrawn: false'));
+    expect(codes(off.warnings)).toEqual([]);
+    expect(sketched(off.svg)).toBe(false);
+  });
+
   it("aliases every section of core's schema that has a look", () => {
     // The sections of core's key tree, and those that declare `look` (all of them, today).
     const keys = readFileSync(

@@ -4,7 +4,8 @@
 # config reference. Same `x-mermaid` annotations as core's schema.
 #
 # v12's `look: handDrawn` aliases to `handDrawn: true`, at the top level and in every diagram
-# section core's schema gives a `look` (v12 resolves a section's `look` onto the top level).
+# section core's schema gives a `look`. v12 read only the drawn type's section; here a section's
+# `look: handDrawn` turns `handDrawn` on whatever type is drawn (aliases are not per type).
 # Other `look` values are not aliased: they still warn `LOOK_REMOVED`. `index.spec.ts` checks that
 # the list covers every core section with a `look`.
 x-mermaid-fragment:
