@@ -31,6 +31,12 @@ export interface JourneyTask {
   readonly name: string;
   readonly score: number;
   readonly people: readonly string[];
+  /**
+   * The AST ids of the task's named actor mentions (`a:<name>`, a later mention of a name
+   * `a:<name>@2`, … over the whole text), in `people` order with `''` left out: the `''` actor
+   * has no node. The task's dots carry them as `data-ast`. Absent on hand-built models.
+   */
+  readonly mentions?: readonly AstId[];
   /** The name of the section the task is in; `''` before the first section line. */
   readonly section: string;
   /**

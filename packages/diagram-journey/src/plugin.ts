@@ -1,5 +1,6 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
+import { journeyConfigDefaults } from './generated/config-defaults.ts';
 import { journeyLabels } from './labels.ts';
 import { layoutJourney, type JourneyLayout } from './layout/index.ts';
 import type { JourneyModel } from './model.ts';
@@ -19,6 +20,7 @@ export const journey = {
   id: 'journey',
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
+  configDefaults: journeyConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => DETECT.test(text),
   parse: (text: string, ctx: DiagramParseContext): JourneyParseResult =>
     parseJourney(text, { preprocessed: ctx.preprocessed }),

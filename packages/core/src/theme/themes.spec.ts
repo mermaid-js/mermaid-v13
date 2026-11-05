@@ -30,6 +30,12 @@ const TEXT_ON_FILL: readonly [text: string, fill: string][] = [
   ['errorTextColor', 'background'],
 ];
 
+/**
+ * Variables no theme sets, only an author (D249: journey `actor0`–`actor5`, which win over
+ * `journey.actorColours` when set). Unset, they resolve to `currentColor`.
+ */
+const AUTHOR_ONLY = ['actor0', 'actor1', 'actor2', 'actor3', 'actor4', 'actor5'];
+
 describe('built-in themes', () => {
   it('ships the redux family and default, dark, forest, neutral and base (D64, D151)', () => {
     expect(specs.map((s) => s.name)).toEqual([...THEME_NAMES]);
@@ -78,7 +84,9 @@ describe('built-in themes', () => {
       const t = createTheme(spec, { cssVariables: false });
       for (const [name, def] of Object.entries(THEME_VARIABLES)) {
         const v = t.value(name);
-        if (def.kind === 'color') expect(parseColor(v), `${spec.name}.${name}=${v}`).toBeDefined();
+        if (AUTHOR_ONLY.includes(name)) expect(v, `${spec.name}.${name}`).toBe('currentColor');
+        else if (def.kind === 'color')
+          expect(parseColor(v), `${spec.name}.${name}=${v}`).toBeDefined();
         else expect(v, name).not.toBe('');
       }
     }

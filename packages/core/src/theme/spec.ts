@@ -3,6 +3,7 @@
  * derived values a v12 theme hard-codes, and rules that override the shared derivation
  * table. Built-in specs live in `specs/`, one lazily imported file each.
  */
+import { fillTypes } from './specs/palettes.ts';
 import type { BaseVariable, PaletteVariable, TokenVariable } from './vocabulary.ts';
 
 /** Derivation rules by variable name, in the DSL of `dsl.ts`. */
@@ -56,6 +57,12 @@ export const LIGHT_RULES: ThemeRuleTable = {
   rowEven: 'lightenHsl(mainBkg, 5%)',
   erEdgeLabelBackground: 'edgeLabelBackground',
   erMarkerFill: '#ffffff',
+  // v12 journey `.face { fill: faceColor or #FFF8DC }`; no v12 theme sets faceColor.
+  faceColor: '#fff8dc',
+  // Journey section fills (#327, D241): v12 theme-base takes primaryColor, secondaryColor and
+  // their hue turns by +64, -64 and 128 degrees. The DSL has no hue turn, so 2-7 are base's
+  // resolved v12 values; every other theme pins all eight (`fillTypes`, specs/palettes.ts).
+  ...fillTypes('primaryColor secondaryColor #e6ffdd #ffdde6 #ffddea #ddeaff #ddfff9 #fff9dd'),
   // v12 theme-base.js; the other classic themes pin altBackground (#192, D126).
   compositeBackground: 'background',
   compositeTitleBackground: 'mainBkg',

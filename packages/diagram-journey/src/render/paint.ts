@@ -11,7 +11,6 @@ import {
   type SafeValue,
 } from '@mermaid-js/core/svg';
 import type { FontKey } from '@mermaid-js/core/text';
-import { THEME_VARIABLES } from '@mermaid-js/core/theme';
 import { fontsOf } from '../layout/env.ts';
 import { FONT_WEIGHT, SECTION_SLOTS } from '../layout/metrics.ts';
 import type { JourneyLayout } from '../layout/types.ts';
@@ -38,58 +37,38 @@ export const FIXED_COLORS = {
 /** v12's `journey.actorColours` default, used while the config has none. */
 const V12_ACTOR_COLOURS = ['#8FBC8F', '#7CFC00', '#00FFFF', '#20B2AA', '#B0E0E6', '#FFFFE0'];
 
-/**
- * A theme variable that the journey vocabulary entries (T5 #327) add, with v12's value for
- * while the vocabulary does not know it. Each name is written as a literal so the vocabulary
- * `usedBy` scan (`theme-used-by.spec.ts`) sees it once it is added.
- */
-interface Themed {
-  readonly name: string;
-  readonly fallback: Paint;
-}
-const v12 = (name: string, fallback: string): Themed => ({ name, fallback: fixed(fallback) });
+/** A theme variable name, written through a call so the `usedBy` scan sees it. */
+const v = (name: string): string => name;
 
-/** The v12 default theme's `fillType0`…`fillType7`: primary, secondary and their hue turns. */
-const FILL_TYPES: readonly Themed[] = [
-  v12('fillType0', '#ececff'),
-  v12('fillType1', '#ffffde'),
-  v12('fillType2', '#ffecfe'),
-  v12('fillType3', '#deffe0'),
-  v12('fillType4', '#ecfffe'),
-  v12('fillType5', '#ffdee0'),
-  v12('fillType6', '#ffefec'),
-  v12('fillType7', '#defbff'),
+/** `fillType0`…`fillType7`, one per section slot (D241); each theme pins v12's values. */
+const FILL_TYPES: readonly string[] = [
+  v('fillType0'),
+  v('fillType1'),
+  v('fillType2'),
+  v('fillType3'),
+  v('fillType4'),
+  v('fillType5'),
+  v('fillType6'),
+  v('fillType7'),
 ];
 
-/** v12 `.face { fill: faceColor or #FFF8DC }`. */
-const FACE: Themed = v12('faceColor', '#FFF8DC');
-
-/** v12 styles `actor-0`…`actor-5` from `actor<n>`; no v12 theme sets one (D249). */
-const author = (name: string): string => name;
+/** v12 styles `actor-0`…`actor-5` from `actor<n>`; no theme sets one (D249). */
 const AUTHOR_ACTORS: readonly string[] = [
-  author('actor0'),
-  author('actor1'),
-  author('actor2'),
-  author('actor3'),
-  author('actor4'),
-  author('actor5'),
+  v('actor0'),
+  v('actor1'),
+  v('actor2'),
+  v('actor3'),
+  v('actor4'),
+  v('actor5'),
 ];
 
 /** A variable no theme spec gives a value resolves to this (core `Resolver`). */
 const UNSET = 'currentColor';
 
-const known = (name: string): boolean =>
-  Object.prototype.hasOwnProperty.call(THEME_VARIABLES, name);
-
-/** The theme's value when its vocabulary has the variable, else v12's. */
-function themed(theme: Theme, t: Themed): Paint {
-  return known(t.name) ? theme.color(t.name) : t.fallback;
-}
-
-/** The author's `actor<slot>`, when the vocabulary has it and it has a value (D249). */
+/** The author's `actor<slot>`, when set (D249); else the renderer uses `actorColours`. */
 function authorActor(theme: Theme, slot: number): Paint | undefined {
   const name = AUTHOR_ACTORS[slot];
-  if (name === undefined || !known(name) || theme.value(name) === UNSET) return undefined;
+  if (name === undefined || theme.value(name) === UNSET) return undefined;
   return theme.color(name);
 }
 
@@ -154,7 +133,7 @@ export function paints(ctx: PaintContext, l: JourneyLayout): Paints {
   // Each drawn slot reads its own `fillType<n>`; tasks before the first section take slot 0.
   const fills = new Map<number, Paint>();
   for (const s of [...l.bands.map((b) => b.slot), ...l.tasks.map((t) => t.slot)])
-    if (!fills.has(s)) fills.set(s, themed(theme, FILL_TYPES[s % SECTION_SLOTS]!));
+    if (!fills.has(s)) fills.set(s, theme.color(FILL_TYPES[s % SECTION_SLOTS]!));
   const sectionColours = colourList(ctx, 'sectionColours');
   const configured = colourList(ctx, 'actorColours');
   const palette: readonly Paint[] =
@@ -180,7 +159,7 @@ export function paints(ctx: PaintContext, l: JourneyLayout): Paints {
       band === undefined || !sectionColours || sectionColours.length === 0
         ? text
         : sectionColours[band % sectionColours.length]!,
-    face: l.tasks.length > 0 ? themed(theme, FACE) : text,
+    face: l.tasks.length > 0 ? theme.color('faceColor') : text,
     actorOf: (slot) => actors.get(slot) ?? text,
     title,
     fonts: {

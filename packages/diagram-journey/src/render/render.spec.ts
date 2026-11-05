@@ -18,7 +18,7 @@ import {
 } from '@mermaid-js/core/svg';
 import { PAYLOADS } from '@mermaid-js/core/svg/testing';
 import { tableMeasurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, THEME_VARIABLES, type ThemeSpec } from '@mermaid-js/core/theme';
+import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { FIXTURES, journey, section, task } from '../layout/fixtures.ts';
 import { layoutJourney, type JourneyLayout } from '../layout/index.ts';
 import type { JourneyModel } from '../model.ts';
@@ -210,10 +210,13 @@ describe('journey render properties over the fixtures', () => {
     }
   });
 
-  it('maps every section line and task to exactly one data-ast element (R-PARSE-8)', () => {
+  it('maps every section line, task and actor mention to exactly one data-ast element (R-PARSE-8)', () => {
     for (const c of cases) {
       const { tree } = c.result;
-      const nodes = [...c.model.sections, ...c.model.tasks].map((n) => n.ast);
+      const nodes = [
+        ...c.model.sections.map((n) => n.ast),
+        ...c.model.tasks.flatMap((t) => [t.ast, ...(t.mentions ?? [])]),
+      ];
       const written = tree
         .find((n, t) => t.getAttr(n, 'data-ast') !== undefined)
         .map((n) => tree.getAttr(n, 'data-ast'));
@@ -342,7 +345,7 @@ describe('journey render: sections and tasks', () => {
     expect(tree.getAttr(line, 'stroke-dasharray')).toBe('4 2');
     expect(tree.getAttr(line, 'stroke')).toBe('var(--_tx)');
     const face = tree.children(t)[1]!;
-    expect(tree.getAttr(face, 'fill')).toBe('#FFF8DC');
+    expect(tree.getAttr(face, 'fill')).toBe('var(--_jfc)');
     expect(tree.getAttr(face, 'stroke')).toBe('#999');
     // v12's tooltip on each actor dot.
     expect(textIn(tree, tree.children(t)[6]!)).toBe('Me');
@@ -501,16 +504,9 @@ describe('journey render: legend, title and activity line', () => {
   });
 });
 
-describe('journey render: theme variables (T5 #327 adds them to the vocabulary)', () => {
-  const ADDED = [
-    ...[0, 1, 2, 3, 4, 5, 6, 7].map((n) => `fillType${n}`),
-    'faceColor',
-    ...[0, 1, 2, 3, 4, 5].map((n) => `actor${n}`),
-  ];
-
-  it('falls back to v12 values while the vocabulary does not know them', () => {
-    for (const name of ADDED) expect(THEME_VARIABLES, name).not.toHaveProperty(name);
-    const { tree } = render(fixture('eight-sections'));
+describe('journey render: theme variables (#327)', () => {
+  it('fills the eight section slots from fillType0–7, v12 default theme values', () => {
+    const { tree } = render(fixture('eight-sections'), { cssVariables: false });
     const fills = byClass(tree, 'journey-section').map((b) =>
       tree.getAttr(tree.children(b)[0]!, 'fill')
     );
@@ -526,24 +522,23 @@ describe('journey render: theme variables (T5 #327 adds them to the vocabulary)'
     ]);
   });
 
-  it('reads them through the theme once the vocabulary has them', () => {
-    const vocabulary = THEME_VARIABLES as Record<string, (typeof THEME_VARIABLES)[string]>;
-    for (const name of ADDED) vocabulary[name] = { alias: name, kind: 'color', usedBy: [] };
-    try {
-      const { tree, svg } = render(fixture('working-day'), {
-        themeVariables: { fillType1: '#123456', faceColor: '#abcdef', actor1: '#fedcba' },
-      });
-      const band = byClass(tree, 'section-type-1')[0]!;
-      expect(tree.getAttr(tree.children(band)[0]!, 'fill')).toBe('var(--_fillType1)');
-      expect(svg).toContain('--_fillType1:var(--mermaid-fillType1,#123456)');
-      expect(tree.getAttr(byClass(tree, 'face')[0]!, 'fill')).toBe('var(--_faceColor)');
-      // actor1 is set, actor0 is not: actor0 keeps actorColours (D249).
-      const dots = byClass(tree, 'legend-entry').map((e) =>
-        tree.getAttr(tree.children(e)[0]!, 'fill')
-      );
-      expect(dots).toEqual(['#8FBC8F', 'var(--_actor1)']);
-    } finally {
-      for (const name of ADDED) delete vocabulary[name];
-    }
+  it('reads fills, the face and an author actor<n> through the theme', () => {
+    const { tree, svg } = render(fixture('working-day'), {
+      themeVariables: { fillType1: '#123456', faceColor: '#abcdef', actor1: '#fedcba' },
+    });
+    const band = byClass(tree, 'section-type-1')[0]!;
+    expect(tree.getAttr(tree.children(band)[0]!, 'fill')).toBe('var(--_jf1)');
+    expect(svg).toContain('--_jf1:var(--mermaid-fillType1,#123456)');
+    expect(tree.getAttr(byClass(tree, 'face')[0]!, 'fill')).toBe('var(--_jfc)');
+    // actor1 is set, actor0 is not: actor0 keeps actorColours (D249).
+    const dots = byClass(tree, 'legend-entry').map((e) =>
+      tree.getAttr(tree.children(e)[0]!, 'fill')
+    );
+    expect(dots).toEqual(['#8FBC8F', 'var(--_ja1)']);
+  });
+
+  it('draws the face in #FFF8DC by default', () => {
+    const { tree } = render(fixture('working-day'), { cssVariables: false });
+    expect(tree.getAttr(byClass(tree, 'face')[0]!, 'fill')).toBe('#fff8dc');
   });
 });

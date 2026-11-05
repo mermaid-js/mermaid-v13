@@ -2,6 +2,7 @@
  * `forest`: v12 `theme-forest.js`.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { fillTypes } from './palettes.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -41,6 +42,8 @@ const theme: ThemeSpec = {
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
   rules: { rowEven: 'lightenHsl(mainBkg, 20%)' },
   values: {
+    // journey section fills, v12's resolved values (`fillTypes`)
+    ...fillTypes('#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff'),
     altBackground: '#f0f0f0', // v12 (#192)
     // sequence (v12 theme-forest.js: actorBorder is darken(mainBkg, 20))
     actorBorder: '#a6cf47',

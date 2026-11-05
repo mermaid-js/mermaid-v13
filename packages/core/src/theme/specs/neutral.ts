@@ -2,6 +2,7 @@
  * `neutral`: v12 `theme-neutral.js`, greys for print.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { fillTypes } from './palettes.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -39,6 +40,8 @@ const theme: ThemeSpec = {
     useGradient: false,
   },
   values: {
+    // journey section fills, v12's resolved values (`fillTypes`)
+    ...fillTypes('#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc'),
     altBackground: '#f4f4f4', // v12 (#192)
     // sequence (v12 theme-neutral.js: actorBorder is lighten(border1, 23))
     actorBorder: '#d4d4d4',

@@ -154,8 +154,11 @@ function tasksOf(
     for (const actor of t.people) {
       const s = slots.get(actor);
       if (s === undefined) continue;
+      // Only '' has no slot, and it has no mention node: dots and mentions pair in order.
+      const ast = t.mentions?.[dots.length];
       dots.push({
         actor,
+        ...(ast === undefined ? {} : { ast }),
         slot: s,
         cx: x + m.dotStart + dots.length * m.dotStep,
         cy: taskY,

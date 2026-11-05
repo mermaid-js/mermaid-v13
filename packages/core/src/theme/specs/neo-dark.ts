@@ -9,6 +9,7 @@
  * `packages/conformance/src/neo-dark-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { fillTypes } from './palettes.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
@@ -53,6 +54,8 @@ const neoDark: ThemeSpec = {
   // and the neo-look zero circle takes the node fill.
   rules: REDUX_RULES,
   values: {
+    // journey section fills, v12's resolved values (`fillTypes`)
+    ...fillTypes('#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'),
     // v12 `drop-shadow( 1px 2px 2px rgba(185,185,185,0.2))`, normalised for `checkFilter`.
     dropShadow: 'drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))',
     mainBkg: '#2a2020',

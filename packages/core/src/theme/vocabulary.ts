@@ -151,6 +151,8 @@ const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): Them
 /** Who reads the base text variables (`fontFamily`, `fontSize`): a new type appends here. */
 const TEXT_USERS = ['core', 'flowchart', 'sequence', 'class', 'state', 'er', 'journey'];
 
+const JOURNEY = ['journey'];
+
 /** The core inventory. Order is the order of the generated table. */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   // base
@@ -263,6 +265,14 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   rowEven: def('re', 'color', ['er']),
   erEdgeLabelBackground: def('eel', 'color', ['er']),
   erMarkerFill: def('emf', 'color', ['er']),
+  // user journey (#290): section and task fills by slot (D241), the face, and the author's
+  // actor dot colours, which no theme sets (D249: the renderer then uses `actorColours`).
+  // Built in a loop: fifteen near-identical rows cost the always-loaded core bytes.
+  ...Object.fromEntries(
+    [...'01234567'].map((n) => [`fillType${n}`, def(`jf${n}`, 'color', JOURNEY)])
+  ),
+  faceColor: def('jfc', 'color', JOURNEY),
+  ...Object.fromEntries([...'012345'].map((n) => [`actor${n}`, def(`ja${n}`, 'color', JOURNEY)])),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er']),
