@@ -17,7 +17,7 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [M2 #245] (from the #237 review) A registered `$$` provider that declines (engine not loaded) shows raw TeX with no warning: `inlineSpans` warns only when no provider claims the delimiter. M2 must throw `NotLoadedError` naming `math` in `renderSync`, or warn in placeholder mode (D178).
 - [M3 #246] (from #237) Only flowchart passes `ctx.inline` to `layoutLabel`; class, state, ER and sequence neither draw boxes nor warn `MATH_NOT_RENDERED`. Class's single-run form (`render.ts:389`) must skip box runs. Text output gives no warning yet (D179 `ASCII_DROPPED`).
 - [E2 #240] v12 develop registers 7 layout names; D171 lists 9 (`elk.layered`, `elk.radial` were only per-container ids in v12). Register all 9 as D171 says.
-- [E3 #241 / E4 #242] ~~no config reaches the engine~~ Closed by #238: `mermaid` calls `engine(graph, { config })`; `LayoutContext.config` is the resolved config with fragment defaults. Still open: `LayoutGraph` carries no node metadata, so `@{ algorithm }` can't reach the engine (E3).
+- [E3 #241 / E4 #242] ~~no config reaches the engine~~ Closed by #238: `mermaid` calls `engine(graph, { config })`; `LayoutContext.config` is the resolved config with fragment defaults. ~~Still open: no node metadata~~ Closed by #241: `LayoutGroup.algorithm` (flowchart `id@{ algorithm }`, as written) reaches the engine.
 - [#218 T1 #221 / T4 #226] (from #238) The discovered `layout` arm needs `config?: ConfigFragment`, loaded eagerly from the manifest's `config` module, and the entry export resolved as `tickets/238.md` says.
 - [M2 #245] The engine (`plugin-math/src/engine.ts`, #244) is 677 KB gz only when MathJax's `#default-font/*` package import is aliased to `@mathjax/mathjax-tex-font` in the build (1,034 KB gz otherwise). Decide whether that size is acceptable (font variants could load lazily). Publishing needs `THIRD_PARTY_ALLOWED` entries for `@mathjax/src` and `@mathjax/mathjax-tex-font` (Apache-2.0) and a NOTICE. Characters outside the TeX font come out as `<text>` with a guessed width: measure them or refuse them (`244-mathjax.md`).
 - [M2 #245] Size default (orchestrator): build with the `#default-font/*` → `@mathjax/mathjax-tex-font` alias (677 KB gz, as MathJax's own builds do); report the size, no gate (spec "Testing Decisions"). Raised to Knut for acceptance.
@@ -30,6 +30,12 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [E4 #242] `elk.radial` (registered per D171; v12 never had it as a layout name) throws ELK's "not a tree" error on a graph with a cycle or several roots, so the render fails. Match v12's per-container behaviour or fall back to `layered` with a warning; escalate if neither fits.
 - [E5 #243] With `layout: elk` and the plugin, text output gets ELK's px coordinates (the engine ignores `grid`); without the plugin it gets `ELK_NOT_INSTALLED`. D179: always `layered`, one `ASCII_DROPPED`. The package has no README yet.
 - [T0b #238] The manifest E2 wants: `{"plugin":"layout","names":[the 9 names],"entry":"./dist/index.js"}` (`tickets/240.md`).
+
+## From E3 #241
+
+- [E4 #242] `@{ algorithm }` must warn `ELK_ALGORITHM_IGNORED` once, but an engine has no warning channel: `LayoutContext` has `options` and `config` only, and `LayoutModel` no warnings. Either the engine gets a `warn` on `ctx` (a core change: escalate) or `mermaid`/the plugin warns from `LayoutGroup.algorithm` before layout.
+- [E4 #242] Not ported by E3 (post-passes beyond D174's list): v12's `evenGroupFrames` (pulls a frame in past an edge lane), `separateOppositeEdgeLabels`, `slideTerminalLabelsOffFrames`, `putTerminalLabelsOnTheirSide`, `sanitizeElkEdgePoints`, marker segment lengths, `cutter2` (clip to the outline). DDLT invariants hold without them. Two edges into one side can still share an end point (class corpus `C2`).
+- [E4 #242] Spacing comes from `LayoutGraph.spacing` (ticket), not v12's `spacing.baseValue` 40/24 and fixed group spacings, so pixel sizes differ from v12. v12's `minLen`, `headRoom` and `routing` have no ELK mapping (v12 had none either).
 
 ## Waiting on #218
 

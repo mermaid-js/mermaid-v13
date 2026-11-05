@@ -94,6 +94,11 @@ export interface LayoutGroup {
   /** Room between the group's border and its content. The title sits inside `padding.top`. */
   padding: Box;
   title?: Size;
+  /**
+   * The layout algorithm the author named for this group (flowchart `id@{ algorithm: … }`), as
+   * written. An engine that cannot lay a group out with another algorithm ignores it.
+   */
+  algorithm?: string;
 }
 
 export interface LayoutSpacing {

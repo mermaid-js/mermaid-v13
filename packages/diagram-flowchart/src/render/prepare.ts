@@ -416,6 +416,9 @@ function layoutGraph(
       if (g.parent !== undefined) group.parent = g.parent;
       const d = dirOf(nest.subgraphs.get(g.id)?.dir);
       if (d) group.direction = d;
+      // `@{ algorithm }` is for the layout engine to read (an ELK plugin); layered ignores it.
+      const algorithm = nest.subgraphs.get(g.id)?.metadata?.algorithm;
+      if (typeof algorithm === 'string') group.algorithm = algorithm;
       return group;
     }),
     edges: edges.map((e) => ({

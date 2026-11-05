@@ -1,9 +1,16 @@
 /**
- * The ELK engine: `LayoutGraph` → ELK graph → `layoutSync` → `LayoutModel` (DESIGN §6.1).
+ * The ELK engine: `LayoutGraph` → ELK graph → `layoutSync` → `LayoutModel` (DESIGN §6.1), a
+ * port of v12 develop's adapter (`rendering-util/layout-algorithms/elk/render.ts`).
  *
- * E2 #240 maps only what the layout contract carries: sizes, groups and their padding and
- * titles, edge labels, direction, spacing and diagram padding. E3 #241 grows this file into the
- * port of v12 develop's adapter (`elk.*` config keys, presets, pre- and post-passes).
+ * The graph builder (E3 #241) maps sizes, groups (padding, title, own direction), edge labels
+ * and edge-end labels (D102), and spacing from `LayoutGraph.spacing`. It keeps v12's group rules:
+ * a group with its own direction is laid out on its own (`SEPARATE_CHILDREN`) unless an edge
+ * crosses its border, which puts it and every group up to the edge's common ancestor back in
+ * the parent's layout (`INCLUDE_CHILDREN`), as v12's `configureCrossHierarchyEdges` does. Each
+ * edge lives in its ends' common ancestor (`findCommonAncestor`) and edges reach ELK in v12's
+ * nested order (`orderNestedEdgeEnds`). v12's fixed options (those no `elk.*` key sets) are
+ * set too. The `elk.*` keys, presets and passes are E4 #242's; a group's `algorithm` is not
+ * applied (D174). The engine never measures: every length comes from the graph.
  *
  * Coordinates: every shape and edge is read in root coordinates (`elk.json.*Coords: ROOT`).
  * Only `x`, `y`, `width`, `height`, sections and labels are read back, never GWT's `$H` hash
@@ -29,6 +36,7 @@ import type {
   LayoutOptions,
 } from 'elkjs/lib/elk-api.js';
 import { layoutSync } from './sync.ts';
+import { ROOT, findCommonAncestor, orderNestedEdgeEnds, type Tree } from './tree.ts';
 
 /** The ELK algorithms the package's layout names select (D171). */
 export type ElkAlgorithm =
@@ -46,9 +54,37 @@ const DIRECTION: Record<Dir, string> = { TB: 'DOWN', BT: 'UP', LR: 'RIGHT', RL: 
 const padding = (top: number, right: number, bottom: number, left: number): string =>
   `[top=${top},left=${left},bottom=${bottom},right=${right}]`;
 
+/**
+ * Margin kept free at the ends of each side, so no port lands on a corner (v12
+ * `PORTS_SURROUNDING`, 12 by measurement there: the corner is the one border point with no side
+ * to leave from).
+ */
+const PORTS_SURROUNDING = padding(12, 12, 12, 12);
+
+/**
+ * v12's fixed root options: what no `elk.*` key or preset sets. The `layered.*` ones mean nothing
+ * to the other algorithms.
+ */
+const FIXED_ROOT: LayoutOptions = {
+  'elk.layered.unnecessaryBendpoints': 'true',
+  'elk.layered.wrapping.multiEdge.improveCuts': 'true',
+  'elk.layered.wrapping.multiEdge.improveWrappedEdges': 'true',
+  'elk.layered.edgeRouting.selfLoopDistribution': 'EQUALLY',
+  'elk.layered.mergeHierarchyEdges': 'true',
+  'elk.spacing.portsSurrounding': PORTS_SURROUNDING,
+};
+
+/** v12's fixed group options (`buildSubgraphLayoutOptions`). */
+const FIXED_GROUP: LayoutOptions = {
+  // A node may shift so an edge can leave its port straight rather than bend at once.
+  'elk.layered.nodePlacement.networkSimplex.nodeFlexibility': 'PORT_POSITION',
+  'elk.spacing.portsSurrounding': PORTS_SURROUNDING,
+};
+
 /** The edge label kinds, as ELK label ids: `<edge id>\u0000c` and so on. */
 const LABEL_KINDS = { label: 'c', startLabel: 's', endLabel: 'e' } as const;
 const PLACEMENT = { c: 'CENTER', s: 'TAIL', e: 'HEAD' } as const;
+const MARKER = { s: 'startMarker', e: 'endMarker' } as const;
 
 interface Built {
   root: ElkNode;
@@ -58,35 +94,69 @@ interface Built {
   edges: Map<string, ElkExtendedEdge>;
 }
 
-/** Container chain of a node or group id, innermost first, ending at the root (''). */
-function containers(graph: LayoutGraph): (id: string) => string[] {
-  const parent = new Map<string, string | undefined>();
-  for (const n of graph.nodes) parent.set(n.id, n.parent);
-  for (const g of graph.groups) parent.set(g.id, g.parent);
+/** Parent group of every node and group in `graph`. */
+function treeOf(graph: LayoutGraph): Tree {
+  const tree = new Map<string, string>();
+  for (const item of [...graph.nodes, ...graph.groups])
+    if (item.parent !== undefined) tree.set(item.id, item.parent);
+  return tree;
+}
+
+/** Container chain of a node or group id, innermost first, ending at the root (`ROOT`). */
+function containers(tree: Tree): (id: string) => string[] {
   return (id) => {
     const chain: string[] = [];
-    for (let p = parent.get(id); p !== undefined; p = parent.get(p)) chain.push(p);
-    chain.push('');
+    for (let p = tree.get(id); p !== undefined; p = tree.get(p)) chain.push(p);
+    chain.push(ROOT);
     return chain;
   };
 }
 
+type Handling = 'SEPARATE_CHILDREN' | 'INCLUDE_CHILDREN';
+
+/**
+ * How ELK lays out each group, as v12 decides it. A group with its own direction is laid
+ * out on its own. An edge whose ends sit in different groups puts every group from each end up
+ * to and including their common ancestor back into its parent's layout, since a group laid out
+ * on its own cannot be crossed. Groups not listed inherit their parent's handling.
+ */
+function hierarchyHandling(graph: LayoutGraph, tree: Tree): Map<string, Handling> {
+  const handling = new Map<string, Handling>();
+  for (const g of graph.groups) if (g.direction) handling.set(g.id, 'SEPARATE_CHILDREN');
+  const groups = new Set(graph.groups.map((g) => g.id));
+  for (const e of graph.edges) {
+    if (tree.get(e.source) === tree.get(e.target)) continue;
+    const ancestor = findCommonAncestor(e.source, e.target, tree);
+    for (const end of [e.source, e.target]) {
+      for (let id: string | undefined = end; id !== undefined; id = tree.get(id)) {
+        if (groups.has(id)) handling.set(id, 'INCLUDE_CHILDREN');
+        if (id === ancestor) break;
+      }
+    }
+  }
+  return handling;
+}
+
 /** Builds the ELK graph for `graph`. Each edge sits in its ends' innermost common container. */
 export function toElkGraph(graph: LayoutGraph, algorithm: ElkAlgorithm): Built {
+  const layered = algorithm === 'layered';
+  const tree = treeOf(graph);
   const spacing: LayoutOptions = {
     'elk.algorithm': algorithm,
-    'elk.direction': DIRECTION[graph.direction],
     'elk.spacing.nodeNode': String(graph.spacing.node),
     'elk.layered.spacing.nodeNodeBetweenLayers': String(graph.spacing.rank),
     'elk.spacing.edgeEdge': String(graph.spacing.edge),
   };
   const pad = graph.diagramPadding ?? 0;
   const root: ElkNode = {
-    id: '',
+    id: ROOT,
     layoutOptions: {
       ...spacing,
-      // Only layered lays out across group borders; the others lay out each group on its own.
-      ...(algorithm === 'layered' ? { 'elk.hierarchyHandling': 'INCLUDE_CHILDREN' } : {}),
+      'elk.direction': DIRECTION[graph.direction],
+      // As v12, for every algorithm: those that cannot lay out across group borders lay out
+      // each group on its own whatever this says.
+      'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
+      ...FIXED_ROOT,
       'elk.json.shapeCoords': 'ROOT',
       'elk.json.edgeCoords': 'ROOT',
       'elk.padding': padding(pad, pad, pad, pad),
@@ -94,40 +164,68 @@ export function toElkGraph(graph: LayoutGraph, algorithm: ElkAlgorithm): Built {
     children: [],
     edges: [],
   };
-  const nodes = new Map<string, ElkNode>([['', root]]);
+  const nodes = new Map<string, ElkNode>([[ROOT, root]]);
+  const handling = hierarchyHandling(graph, tree);
+  const byId = new Map(graph.groups.map((g) => [g.id, g]));
+  // The direction a group's contents run in: its own when ELK lays it out on its own, else its
+  // parent's.
+  const flow = new Map<string, Dir>();
+  const flowOf = (id: string | undefined): Dir => {
+    if (id === undefined) return graph.direction;
+    const known = flow.get(id);
+    if (known) return known;
+    const g = byId.get(id)!;
+    const dir = handling.get(id) === 'SEPARATE_CHILDREN' ? g.direction! : flowOf(g.parent);
+    flow.set(id, dir);
+    return dir;
+  };
   for (const g of graph.groups) {
     const title = g.title ?? { width: 0, height: 0 };
     const { top, right, bottom, left } = g.padding;
+    const own = handling.get(g.id);
     // The title sits in the top padding. ELK layered does not keep a compound node's minimum
-    // size under INCLUDE_CHILDREN, so `widenForTitles` widens frames after layout.
+    // size under INCLUDE_CHILDREN, so `widenForTitles` also widens frames after layout.
     nodes.set(g.id, {
       id: g.id,
       layoutOptions: {
         ...spacing,
+        'elk.direction': DIRECTION[flowOf(g.id)],
+        ...(own ? { 'elk.hierarchyHandling': own } : {}),
+        ...FIXED_GROUP,
         'elk.padding': padding(top + title.height, right, bottom, left),
+        ...(title.width > 0
+          ? {
+              'elk.nodeSize.constraints': '[MINIMUM_SIZE]',
+              'elk.nodeSize.minimum': `(${title.width + left + right}, 0)`,
+            }
+          : {}),
       },
       children: [],
       edges: [],
     });
   }
   for (const n of graph.nodes) nodes.set(n.id, { id: n.id, width: n.width, height: n.height });
-  const chainOf = containers(graph);
   // Children in input order: groups first (as declared), then nodes.
-  for (const g of graph.groups) nodes.get(chainOf(g.id)[0]!)!.children!.push(nodes.get(g.id)!);
-  for (const n of graph.nodes) nodes.get(chainOf(n.id)[0]!)!.children!.push(nodes.get(n.id)!);
+  for (const item of [...graph.groups, ...graph.nodes])
+    nodes.get(item.parent ?? ROOT)!.children!.push(nodes.get(item.id)!);
 
   const edges = new Map<string, ElkExtendedEdge>();
-  for (const e of graph.edges) {
+  for (const index of orderNestedEdgeEnds(graph.edges, tree)) {
+    const e = graph.edges[index]!;
     const labels: ElkLabel[] = [];
     for (const kind of ['label', 'startLabel', 'endLabel'] as const) {
       const size = e[kind];
       if (!size) continue;
       const code = LABEL_KINDS[kind];
+      // An end label clears the end's marker too, which ELK does not know about (v12 pads by
+      // half the marker's width all round). The centre, which is all that is read back, stays.
+      const marker = code === 'c' ? undefined : e[MARKER[code]];
+      const room = marker ? marker.width : 0;
       labels.push({
         id: `${e.id}\u0000${code}`,
         text: code,
-        width: size.width,
-        height: size.height,
+        width: size.width + room,
+        height: size.height + room,
         layoutOptions: {
           'elk.edgeLabels.placement': PLACEMENT[code],
           ...(code === 'c' ? { 'elk.edgeLabels.inline': 'true' } : {}),
@@ -140,12 +238,10 @@ export function toElkGraph(graph: LayoutGraph, algorithm: ElkAlgorithm): Built {
       targets: [e.target],
       ...(labels.length ? { labels } : {}),
     };
-    const target = new Set(chainOf(e.target));
-    const home = chainOf(e.source).find((c) => target.has(c)) ?? '';
-    nodes.get(home)!.edges!.push(edge);
+    nodes.get(findCommonAncestor(e.source, e.target, tree))!.edges!.push(edge);
     edges.set(e.id, edge);
   }
-  return { root, nodes, edges, layered: algorithm === 'layered' };
+  return { root, nodes, edges, layered };
 }
 
 interface Rect {
@@ -278,10 +374,10 @@ function extendEnd(points: Point[], end: 'start' | 'end', old: Rect | undefined,
 }
 
 function readModel(graph: LayoutGraph, built: Built): LayoutModel {
-  const chainOf = containers(graph);
+  const chainOf = containers(treeOf(graph));
   const rects = new Map<string, Rect>();
   for (const [id, n] of built.nodes)
-    if (id !== '')
+    if (id !== ROOT)
       rects.set(id, { x: n.x ?? 0, y: n.y ?? 0, width: n.width ?? 0, height: n.height ?? 0 });
   const elkRects = new Map(rects);
   const widened = widenForTitles(graph, rects, chainOf);
