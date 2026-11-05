@@ -315,4 +315,4 @@ Modes: `INITIAL`, `string`, `bqstring`, `generic`, `callback_name`, `callback_ar
 Removed before lexing (highlighted only):
 
 - COMMENT: `^[^\S\n]*%%(?!\{)[^\n]+`
-- DIRECTIVE: `[^\S\n]*%%\{.*?\}%%`
+- DIRECTIVE: `[^\S\n]*%%\{[\s\S]*?\}%%`

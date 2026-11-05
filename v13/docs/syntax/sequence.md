@@ -398,4 +398,4 @@ Modes: `INITIAL`, `ID`, `ALIAS`, `LINE`, `CONFIG`, `acc_title`, `acc_descr`, `ac
 Removed before lexing (highlighted only):
 
 - COMMENT: `^[^\S\n]*%%(?!\{)[^\n]+`
-- DIRECTIVE: `[^\S\n]*%%\{.*?\}%%`
+- DIRECTIVE: `[^\S\n]*%%\{[\s\S]*?\}%%`

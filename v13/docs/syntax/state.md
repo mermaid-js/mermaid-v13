@@ -241,7 +241,7 @@ Modes: `INITIAL`, `STATE`, `STATE_STRING`, `STATE_ID`, `SCALE`, `acc_title`, `ac
 | STATE_ID | ID | `(?:[^\n{%]\|%(?!%))*` | pop |  |
 | STATE_STRING | — | `"` | pop |  |
 | STATE_STRING | STATE_DESCR | `[^"]*` |  |  |
-| STATE | MULTI_WORD_STATE | `\w+\s+\w+.*?\{` |  | A state name is one word. |
+| STATE | MULTI_WORD_STATE | `\w+\s+\w+.*?(?=\{)` |  | A state name is one word: v12 throws here. The `{` is read on as in a valid one. |
 | STATE | COMPOSITE_STATE | `[^\n\s{]+` |  |  |
 | STATE | — | `\n` | pop |  |
 | INITIAL, STATE | STRUCT_START | `\{` | pop push(struct) | `{` and `}` around the statements of a composite state. |
@@ -265,7 +265,7 @@ Modes: `INITIAL`, `STATE`, `STATE_STRING`, `STATE_ID`, `SCALE`, `acc_title`, `ac
 | INITIAL, struct | EDGE_STATE | `\[\*\]` |  | `[*]`: the start state of the composite (or diagram) it is in, or its end state when a transition goes to it. |
 | INITIAL, struct | — | `%%[^:\n\s\-{]*` |  |  |
 | INITIAL, struct | ID | `(?:[^:\n\s\-{%]\|%(?!%))+` |  |  |
-| INITIAL, struct | DESCR | `\s*:(?:[^:\n;]\|:[^:\n;])+` |  | `A : text` gives a state a description; after a transition it is the transition's label. |
+| INITIAL, struct | DESCR | `\s*:(?:#\w+;\|[^:\n;]\|:[^:\n;])+` |  | `A : text` gives a state a description; after a transition it is the transition's label. An entity's `;` (`#colon;`) does not end it. |
 | INITIAL, struct | ARROW | `-->` |  | `A --> B`: a transition. |
 | struct | CONCURRENT | `--` |  | `--` splits a composite state into concurrent regions. |
 | INITIAL, struct | STYLE_SEPARATOR | `:::` |  | `A:::name`: gives the state a class, as `class A name` does. |
@@ -275,4 +275,4 @@ Modes: `INITIAL`, `STATE`, `STATE_STRING`, `STATE_ID`, `SCALE`, `acc_title`, `ac
 Removed before lexing (highlighted only):
 
 - COMMENT: `^[^\S\n]*%%(?!\{)[^\n]+`
-- DIRECTIVE: `[^\S\n]*%%\{.*?\}%%`
+- DIRECTIVE: `[^\S\n]*%%\{[\s\S]*?\}%%`

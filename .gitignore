@@ -66,8 +66,9 @@ generated/
 !packages/diagram-*/src/generated/
 !packages/mermaid/src/generated/
 !packages/language-service/src/generated/
-# The Lezer parser built from the flowchart grammar (#35), checked by its freshness spec
+# The adapters' per-type Lezer parsers and Monarch files (#35, D134), checked by freshness specs
 !packages/language-service-codemirror/src/generated/
+!packages/language-service-monaco/src/generated/
 
 
 /CLAUDE.md

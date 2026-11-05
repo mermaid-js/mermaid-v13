@@ -2,7 +2,8 @@
  * The package.json that goes into a published tarball (R-REL-2, R-REL-3).
  *
  * `pnpm pack` already turns `workspace:` ranges into concrete ones. On top of that:
- * - the `mermaid-source` export condition is dropped: it points at `src/`, which is not shipped;
+ * - the `mermaid-source` export condition is dropped: it points at `src/`, which is not shipped
+ *   (`danglingExports` refuses a subpath that had no other target);
  * - devDependencies are dropped: they name private workspace packages and mean nothing to users;
  * - for the private registry (GitHub Packages, scope `@mermaid-chart`, D28) every package is
  *   renamed into that scope and every workspace dependency becomes an npm alias
@@ -83,6 +84,28 @@ export function workspaceLeaks(manifest: PackedManifest): string[] {
     for (const [dep, range] of Object.entries(manifest[field] ?? {}))
       if (range.includes('workspace:')) leaks.push(`${field}: ${dep}@${range}`);
   return leaks;
+}
+
+/**
+ * Export subpaths that are unusable once published: left with no target after the
+ * `mermaid-source` condition is dropped (`"./monarch.json": {}`, #174), or still pointing into
+ * `src/`, which is not shipped.
+ */
+export function danglingExports(manifest: PackedManifest): string[] {
+  const exports = manifest.exports;
+  if (exports === null || typeof exports !== 'object' || Array.isArray(exports)) return [];
+  const targets = (value: unknown): string[] => {
+    if (typeof value === 'string') return [value];
+    if (value === null || typeof value !== 'object') return [];
+    return Object.values(value).flatMap(targets);
+  };
+  return Object.entries(exports)
+    .filter(([key]) => key.startsWith('.'))
+    .filter(([, value]) => {
+      const all = targets(value);
+      return all.length === 0 || all.some((t) => t.startsWith('./src/'));
+    })
+    .map(([key]) => key);
 }
 
 /**
