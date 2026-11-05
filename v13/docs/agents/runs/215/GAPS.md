@@ -24,6 +24,12 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [M2 #245] `loadResources` (`api.ts:295`) handles only layout, theme and diagram; extension plugins have no resources hook, so a `math` resource is never loaded. M2 adds it (check #218 doesn't already).
 - [E5 #243] Text output uses the SVG layout name and throws `NotLoadedError` when that engine isn't loaded; D179 needs ascii to always use `layered`.
 
+## From E2 #240
+
+- [E4 #242] `elk.radial` (registered per D171; v12 never had it as a layout name) throws ELK's "not a tree" error on a graph with a cycle or several roots, so the render fails. Match v12's per-container behaviour or fall back to `layered` with a warning; escalate if neither fits.
+- [E5 #243] With `layout: elk` and the plugin, text output gets ELK's px coordinates (the engine ignores `grid`); without the plugin it gets `ELK_NOT_INSTALLED`. D179: always `layered`, one `ASCII_DROPPED`. The package has no README yet.
+- [T0b #238] The manifest E2 wants: `{"plugin":"layout","names":[the 9 names],"entry":"./dist/index.js"}` (`tickets/240.md`).
+
 ## Waiting on #218
 
 - Activates-on-install checks (E2, E5, M3) need #218 T4 (#226). S1 #247 needs #218 T0 (#220).
