@@ -210,10 +210,13 @@ describe('journey render properties over the fixtures', () => {
     }
   });
 
-  it('maps every section line and task to exactly one data-ast element (R-PARSE-8)', () => {
+  it('maps every section line, task and actor mention to exactly one data-ast element (R-PARSE-8)', () => {
     for (const c of cases) {
       const { tree } = c.result;
-      const nodes = [...c.model.sections, ...c.model.tasks].map((n) => n.ast);
+      const nodes = [
+        ...c.model.sections.map((n) => n.ast),
+        ...c.model.tasks.flatMap((t) => [t.ast, ...(t.mentions ?? [])]),
+      ];
       const written = tree
         .find((n, t) => t.getAttr(n, 'data-ast') !== undefined)
         .map((n) => tree.getAttr(n, 'data-ast'));

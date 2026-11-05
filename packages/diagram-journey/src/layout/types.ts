@@ -28,6 +28,8 @@ export interface PlacedLabel extends Rect {
 /** A dot in an actor's colour: in the legend, or on a task. */
 export interface ActorDot extends Circle {
   readonly actor: string;
+  /** On a task, the AST id of the actor mention it draws (`JourneyTask.mentions`). */
+  readonly ast?: AstId;
   /**
    * The actor's place among the named actors (v12 `actor-<n>` class): `actorColours[slot % n]`,
    * or the author's `actor<slot>` theme variable (D249). The `''` actor has none (D244).

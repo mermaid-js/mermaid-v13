@@ -990,6 +990,10 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 - **Legend order:** the legend lists actors in the model's order (sorted by code unit), and
   colours follow the same order. v12 gave colours in sorted order but walked the actor
   object's keys for the legend, so integer-like names (`1`, `42`) came first there.
+- **Actor names with entities:** a name written with a `#…;` entity (`#lt;b#gt;`, held as
+  `&lt;b&gt;`) sorts by that text, so before plain names. v12 sorted the placeholder its
+  entity encoding left in the name, after plain names. Only such names' legend order and
+  colour slots change (#302).
 - **Legend wrapping (D225):** a legend name wider than `maxLabelWidth` wraps with core label
   layout, and a word too long for a line splits without the hyphen v12 added at each split.
 
@@ -1035,10 +1039,10 @@ section and task classes now sit on the group that holds the box and its label.
 | Task lines `<line id="<id>-task<n>">` | `<line class="task-line">`, no id | Only `<id>-title` and `<id>-desc` ids remain |
 | A section: an unclassed `<g>` with `<rect class="journey-section section-type-<n>">` and its label (a `<switch><foreignObject>` by default) with the same classes | `<g class="journey-section section-type-<n>" data-id="s:<name>" data-ast="s:<name>">` holding the `<rect>` and `<text class="section-label" data-id>`. A rule on `.section-type-<n>` now matches the group: write `.section-type-<n> > rect` for the box | One element per section maps it to its source (R-PARSE-8) |
 | A `section` line with no tasks, or a repeated name that continues the run before it, drew nothing | Still no band; an empty `<g class="journey-section empty" data-id data-ast>` stands for the line | One `data-ast` element per AST node |
-| A task: an unclassed `<g>` with the line, the face, an unclassed `<g>` of eyes and mouth, `<rect class="task task-type-<n>">`, the actor dots and a label of class `task` | `<g class="task task-type-<n>" data-id="t:<n>" data-ast="t:<n>">` holding, in v12's paint order, `<line class="task-line">`, `<circle class="face">`, two `<circle class="eye">`, `<path class="mouth mouth-smile\|mouth-sad\|mouth-flat">`, the `<rect>`, a `<circle class="actor-<n>">` per named actor (with its `<title>`, as v12) and `<text class="task-label" data-id>` | Same |
+| A task: an unclassed `<g>` with the line, the face, an unclassed `<g>` of eyes and mouth, `<rect class="task task-type-<n>">`, the actor dots and a label of class `task` | `<g class="task task-type-<n>" data-id="t:<n>" data-ast="t:<n>">` holding, in v12's paint order, `<line class="task-line">`, `<circle class="face">`, two `<circle class="eye">`, `<path class="mouth mouth-smile\|mouth-sad\|mouth-flat">`, the `<rect>`, a `<circle class="actor-<n>" data-ast="a:<name>">` per named actor mention (with its `<title>`, as v12) and `<text class="task-label" data-id>` | Same |
 | Mouth: a d3 `arc` path moved by `transform`; a score of 3 or `NaN` a `<line class="mouth">` | An absolute `<path>` for every mouth, no `transform`; v12's shapes and its rule on the score as written | No d3 (R-PERF-2) |
 | Faces at `300 + (5 − score) × 30` for any score; `NaN` wrote `cy="NaN"` | `NaN` is drawn at 3 and other scores clamped to 0–5, with one `JOURNEY_SCORE` warning per render | D226 |
-| Legend: `<circle class="actor-<n>">` and `<text class="legend"><tspan>` siblings at the root, one row per actor including `''`, which took the first colour | `<g class="legend-entries">` with one `<g class="legend-entry" data-id="a:<name>">` per named actor, holding the `<circle class="actor-<n>">` and `<text class="legend">`; no `data-ast` (actors are not statements). `''` draws nothing and takes no colour | D244 |
+| Legend: `<circle class="actor-<n>">` and `<text class="legend"><tspan>` siblings at the root, one row per actor including `''`, which took the first colour | `<g class="legend-entries">` with one `<g class="legend-entry" data-id="a:<name>">` per named actor, holding the `<circle class="actor-<n>">` and `<text class="legend">`; no `data-ast` (the task dots carry the mentions' ids). `''` draws nothing and takes no colour | D244 |
 | Labels: an HTML `<div>` in `<foreignObject>` (`textPlacement: fo`) or `<tspan>`s, `<br>` literal in the HTML and a hyphen at each split word in the legend | `<text>`/`<tspan>` from core's label layout: task names wrap to the task, section names to the band, legend names to `maxLabelWidth`, `<br>` breaks, long words split without a hyphen; `textPlacement` is ignored | D225 |
 | Colours from the `<style>`: `.task-type-<n>, .section-type-<n> { fill: fillType<n> }` (every rule gated on `fillType0`), `line { stroke: textColor }`, `.face { fill: faceColor or #FFF8DC; stroke: #999 }`, `.legend { fill: textColor }`, `.actor-<n> { fill: actor<n> }`; `#666` outlines, eyes and mouth, `#000` dot outlines | Presentation attributes: band and task fills from `fillType<slot>`, lines, arrowhead, legend and names from `textColor`, the face from `faceColor`, dots from `journey.actorColours` unless the author sets `actor<n>` (n < 6); `#666`, `#999` and `#000` stay constants in every theme | No style sheet (R-SEC-2); D152, D245, D249 |
 | `sectionColours` reached the `tspan` fallback only (the default `fo` label ignored it) | Colours section and task names, by band, when set; otherwise names are `textColor` | D225 |
@@ -1047,5 +1051,6 @@ section and task classes now sit on the group that holds the box and its label.
 | A `journey.titleColor`, `actorColours` or `sectionColours` value that is not a colour went into the markup | Dropped with `STYLE_VALUE_DROPPED`; the default colour is used | Inert output (R-SEC-3) |
 
 The `data-ast` ids come from the source (R-PARSE-8): `s:<name>` for a section line (a repeat
-of a name `s:<name>@2`, `@3`, …) and `t:<n>` for the n-th task, counting from 1. Legend entries
-carry `data-id="a:<name>"` only.
+of a name `s:<name>@2`, `@3`, …), `t:<n>` for the n-th task, counting from 1, and
+`a:<name>` for a task's dot, the first mention of that actor (a later one `a:<name>@2`, …).
+Legend entries carry `data-id="a:<name>"` only.

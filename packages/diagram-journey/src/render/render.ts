@@ -220,6 +220,7 @@ function drawTask(scene: Scene, t: TaskLayout): void {
   for (const d of t.dots) {
     w.open('circle', {
       class: `actor-${d.slot}`,
+      'data-ast': d.ast,
       cx: d.cx,
       cy: d.cy,
       r: d.r,

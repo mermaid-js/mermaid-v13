@@ -440,6 +440,7 @@ function buildModel(
         name: n.name,
         score: n.score,
         people: n.people,
+        mentions: n.children.map((c) => c.id),
         section: at < 0 ? '' : (sections[at] as JourneySection).name,
         ...(at < 0 ? {} : { sectionIndex: at }),
       });
