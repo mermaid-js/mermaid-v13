@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { build } from 'esbuild';
 import type { Metafile } from 'esbuild';
-import { HIGHLIGHTED_TYPES } from '../../../packages/language-service-monaco/scripts/monarch.ts';
+import { firstPartyFacets } from '../../../packages/language-service/src/generated/facets.gen.ts';
 
 export const ADAPTERS = [
   '@mermaid-js/language-service-codemirror',
@@ -19,10 +19,18 @@ export const ADAPTERS = [
 
 export const ADAPTER_FIXTURES = join(import.meta.dirname, '..', 'fixtures', 'adapters');
 
-/** Each adapter's per-type grammar file, as published (`dist/generated/`). */
-const GRAMMAR_FILE: Record<(typeof ADAPTERS)[number], (id: string) => string> = {
-  '@mermaid-js/language-service-codemirror': (id) => `dist/generated/${id}.parser.js`,
-  '@mermaid-js/language-service-monaco': (id) => `dist/generated/${id}.monarch.js`,
+/**
+ * The first-party facet ids (`FirstPartyFacetId`): each adapter ships one grammar per id
+ * (D134), and the service's facets are optional peers, one diagram package per id.
+ */
+export const FACET_IDS: readonly string[] = [
+  ...new Set(firstPartyFacets.filter((e) => e.load !== undefined).map((e) => e.id)),
+];
+
+/** Each adapter's per-type grammar file under `src/generated/` and `dist/generated/`. */
+export const GRAMMAR_FILE: Record<(typeof ADAPTERS)[number], (id: string) => string> = {
+  '@mermaid-js/language-service-codemirror': (id) => `${id}.parser.js`,
+  '@mermaid-js/language-service-monaco': (id) => `${id}.monarch.js`,
 };
 
 export interface AdapterCheck {
@@ -56,6 +64,38 @@ function eagerOutputs(meta: Metafile, entry: string): Set<string> {
   return seen;
 }
 
+/**
+ * What is wrong with the grammar files in a code-split bundle (D134), or nothing: each of
+ * `grammars` (a file whose input path ends with `file`, of type `id`) must be in exactly one
+ * chunk, with no other type's grammar, that the entry reaches only through a dynamic import.
+ * `isGrammar` tells a grammar input from the rest.
+ */
+export function lazyGrammarProblems(
+  meta: Metafile,
+  entry: string,
+  grammars: readonly { readonly id: string; readonly file: string }[],
+  isGrammar: (input: string) => boolean
+): string[] {
+  const problems: string[] = [];
+  const grammarsIn = (out: string) =>
+    Object.keys(meta.outputs[out]?.inputs ?? {}).filter(isGrammar);
+  for (const out of eagerOutputs(meta, entry))
+    if (grammarsIn(out).length > 0)
+      problems.push(`${out} loads ${grammarsIn(out).join(', ')} eagerly`);
+  for (const { id, file } of grammars) {
+    const holding = Object.keys(meta.outputs).filter((o) =>
+      grammarsIn(o).some((i) => i.endsWith(file))
+    );
+    if (holding.length !== 1) {
+      problems.push(`${file} is in ${holding.length} chunks`);
+      continue;
+    }
+    const others = grammarsIn(holding[0]!).filter((i) => !i.includes(`/generated/${id}.`));
+    if (others.length > 0) problems.push(`${file} shares a chunk with ${others.join(', ')}`);
+  }
+  return problems;
+}
+
 /** The checks, in order, for an install in `dir`; `tarballs` are the adapters' own tarballs. */
 export function adapterChecks(
   dir: string,
@@ -73,14 +113,14 @@ export function adapterChecks(
           const files = exec('tar', ['-tzf', tarball], dir).split('\n');
           for (const f of ['package/dist/index.js', 'package/dist/index.d.ts', 'package/LICENSE'])
             assert(files.includes(f), `${name} has no ${f.slice(8)}`);
-          for (const id of HIGHLIGHTED_TYPES) {
-            const f = `package/${GRAMMAR_FILE[name](id)}`;
+          for (const id of FACET_IDS) {
+            const f = `package/dist/generated/${GRAMMAR_FILE[name](id)}`;
             assert(files.includes(f), `${name} has no ${f.slice(8)}`);
           }
           const src = files.filter((f) => f.startsWith('package/src/'));
           assert(src.length === 0, `${name} ships ${src.join(', ')}`);
         }
-        return `${HIGHLIGHTED_TYPES.length} grammar files each`;
+        return `${FACET_IDS.length} grammar files each`;
       },
     });
   }
@@ -94,11 +134,10 @@ export function adapterChecks(
         >;
         for (const kind of ['lezer', 'monarch'] as const)
           assert(
-            JSON.stringify(Object.keys(out[kind]).sort()) ===
-              JSON.stringify([...HIGHLIGHTED_TYPES].sort()),
+            JSON.stringify(Object.keys(out[kind]).sort()) === JSON.stringify([...FACET_IDS].sort()),
             `${kind} loaded ${Object.keys(out[kind]).join(', ')}`
           );
-        return `Lezer and Monarch: ${HIGHLIGHTED_TYPES.join(', ')}`;
+        return `Lezer and Monarch: ${FACET_IDS.join(', ')}`;
       },
     },
     {
@@ -127,31 +166,19 @@ export function adapterChecks(
           (o) => meta.outputs[o]?.entryPoint === 'bundle-adapters.mjs'
         );
         assert(entry !== undefined, 'no entry chunk');
-        const eager = eagerOutputs(meta, entry);
-        const grammarsIn = (out: string) =>
-          Object.keys(meta.outputs[out]?.inputs ?? {}).filter((i) =>
-            /node_modules\/@mermaid-js\/language-service-(?:codemirror|monaco)\/dist\/generated\//.test(
-              i
-            )
-          );
-        for (const out of eager)
-          assert(
-            grammarsIn(out).length === 0,
-            `${out} loads ${grammarsIn(out).join(', ')} eagerly`
-          );
-        let chunks = 0;
-        for (const name of ADAPTERS)
-          for (const id of HIGHLIGHTED_TYPES) {
-            const file = `node_modules/${name}/${GRAMMAR_FILE[name](id)}`;
-            const holding = Object.keys(meta.outputs).filter((o) =>
-              grammarsIn(o).some((i) => i.endsWith(file))
-            );
-            assert(holding.length === 1, `${file} is in ${holding.length} chunks`);
-            const others = grammarsIn(holding[0]!).filter((i) => !i.includes(`/generated/${id}.`));
-            assert(others.length === 0, `${file} shares a chunk with ${others.join(', ')}`);
-            chunks++;
-          }
-        return `${chunks} lazy grammar chunks`;
+        const grammars = ADAPTERS.flatMap((name) =>
+          FACET_IDS.map((id) => ({
+            id,
+            file: `node_modules/${name}/dist/generated/${GRAMMAR_FILE[name](id)}`,
+          }))
+        );
+        const problems = lazyGrammarProblems(meta, entry, grammars, (i) =>
+          /node_modules\/@mermaid-js\/language-service-(?:codemirror|monaco)\/dist\/generated\//.test(
+            i
+          )
+        );
+        assert(problems.length === 0, problems.join('\n'));
+        return `${grammars.length} lazy grammar chunks`;
       },
     }
   );

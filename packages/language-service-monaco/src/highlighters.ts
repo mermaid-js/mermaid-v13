@@ -8,66 +8,26 @@
  * imported when a model of the type first shows up, and the definition is registered again
  * with it, so a page that edits only flowcharts loads no other type's file. A header no
  * loaded type claims reads as plain text: semantic tokens only, never another type's colours.
- * Editing a model's header re-picks by itself: Monaco re-tokenizes from the edited line.
+ * `detect` tries the first-party facets' own detector patterns in detection order, so it
+ * picks the type the service detects. Editing a model's header re-picks by itself: Monaco
+ * re-tokenizes from the edited line.
  */
 import { firstPartyFacets } from '@mermaid-js/language-service';
-import type { LanguageService } from '@mermaid-js/language-service';
+import type { FirstPartyFacetId, LanguageService } from '@mermaid-js/language-service';
 import type * as Monaco from 'monaco-editor';
 import { snapshotOf } from './convert.ts';
 import type { TextModel } from './convert.ts';
+import { MONARCH_HIGHLIGHTERS } from './grammars.ts';
+import type { MonarchDefinition } from './grammars.ts';
 
-/** One generated Monarch rule: a pattern and its action. */
-type MonarchRule = readonly [
-  string,
-  { readonly token: string; readonly next?: string; readonly switchTo?: string },
-];
+export { MONARCH_HIGHLIGHTERS } from './grammars.ts';
+export type { MonarchDefinition, MonarchHighlighter } from './grammars.ts';
 
-/** A generated Monarch file (gen-grammar's `<id>.monarch.json`). */
-export interface MonarchDefinition {
-  readonly tokenPostfix?: string;
-  readonly defaultToken?: string;
-  readonly ignoreCase?: boolean;
-  readonly includeLF?: boolean;
-  readonly start?: string;
-  readonly tokenizer: Readonly<Record<string, readonly MonarchRule[]>>;
-}
+type MonarchRule = MonarchDefinition['tokenizer'][string][number];
 
-export interface MonarchHighlighter {
-  /**
-   * The pattern the type's detector looks for at the diagram's first line (its
-   * `firstPartyFacets` detector without the leading `^\s*`).
-   */
-  readonly header: string;
-  /** Imports the type's generated Monarch file. */
-  load(): Promise<MonarchDefinition>;
-}
-
-/**
- * Diagram id → its header and its generated Monarch file, imported on demand (D134). A port
- * adds its row here and its id to `scripts/monarch.ts` (`agents/port-diagram/language.md`).
- */
-export const MONARCH_HIGHLIGHTERS: Readonly<Record<string, MonarchHighlighter>> = {
-  flowchart: {
-    header: '(?:graph|flowchart)',
-    load: () => import('./generated/flowchart.monarch.js').then((m) => m.default),
-  },
-  sequence: {
-    header: 'sequenceDiagram',
-    load: () => import('./generated/sequence.monarch.js').then((m) => m.default),
-  },
-  class: {
-    header: 'classDiagram',
-    load: () => import('./generated/class.monarch.js').then((m) => m.default),
-  },
-  state: {
-    header: 'stateDiagram',
-    load: () => import('./generated/state.monarch.js').then((m) => m.default),
-  },
-  er: {
-    header: 'erDiagram',
-    load: () => import('./generated/er.monarch.js').then((m) => m.default),
-  },
-};
+/** Whether `id` has a row in {@link MONARCH_HIGHLIGHTERS}. */
+const highlighted = (id: string): id is FirstPartyFacetId =>
+  Object.hasOwn(MONARCH_HIGHLIGHTERS, id);
 
 /** The postfix of the shared states' tokens (front matter, directives, comments). */
 const SHARED = '.mermaid';
@@ -77,6 +37,42 @@ const KEEP = new Set(['@pop', '@popall', '@push']);
 function caseless(re: string): string {
   if (re === '') return re;
   return re.startsWith('^') ? `^(?i:${re.slice(1)})` : `(?i:${re})`;
+}
+
+/** `source` split at its top-level `|`s. */
+function alternatives(source: string): string[] {
+  const out: string[] = [];
+  let depth = 0;
+  let cls = false;
+  let from = 0;
+  for (let i = 0; i < source.length; i++) {
+    const c = source[i];
+    if (c === '\\') i++;
+    else if (cls) cls = c !== ']';
+    else if (c === '[') cls = true;
+    else if (c === '(') depth++;
+    else if (c === ')') depth--;
+    else if (c === '|' && depth === 0) {
+      out.push(source.slice(from, i));
+      from = i + 1;
+    }
+  }
+  return [...out, source.slice(from)];
+}
+
+/**
+ * A first-party detector pattern as a lookahead at the diagram's first line, where `detect`
+ * stands once blanks are skipped: the detector tests the text from that line on, so a leading
+ * `^\s*` is dropped. An alternative without one (c4's `C4Container`, which v12 finds anywhere)
+ * may start anywhere on the line; Monarch sees no further.
+ */
+function headerOf(pattern: RegExp): string {
+  const lead = '^\\s*';
+  const parts = alternatives(pattern.source).map((a) =>
+    a.startsWith(lead) ? a.slice(lead.length) : `.*?(?:${a})`
+  );
+  const re = `(?=${parts.join('|')})`;
+  return pattern.flags.includes('i') ? caseless(re) : re;
 }
 
 /** `def`'s rules of one state, its targets renamed by `target` and its postfix applied. */
@@ -125,17 +121,29 @@ export function combineMonarch(
     const rules = first?.tokenizer[state];
     if (first && rules) tokenizer[state] = rewrite(first, rules, shared, SHARED);
   }
+  // The first facet whose detector matches picks the type, as in the service; one with no
+  // loaded file reads as plain text.
   tokenizer.detect = [
     ['[^\\S\\n]*%%\\{.*?\\}%%', { token: `annotation${SHARED}` }],
+    ['[^\\S\\n]*%%\\{', { token: `annotation${SHARED}`, next: '@directive' }],
     ['[^\\S\\n]*%%[^\\n]*', { token: `comment${SHARED}` }],
     ['\\s+', { token: '' }],
-    ...ids.map(
-      (id): Monaco.languages.IMonarchLanguageRule => [
-        `(?=${MONARCH_HIGHLIGHTERS[id]!.header})`,
-        { token: '', switchTo: `@${id}__root` },
-      ]
+    ...firstPartyFacets.flatMap((e): Monaco.languages.IMonarchLanguageRule[] =>
+      e.pattern === undefined
+        ? []
+        : [
+            [
+              headerOf(e.pattern),
+              { token: '', switchTo: loaded.has(e.id) ? `@${e.id}__root` : '@plain' },
+            ],
+          ]
     ),
     ['[^\\n]+', { token: '', switchTo: '@plain' }],
+  ];
+  // A directive over several lines, up to its `}%%` (core's preprocess).
+  tokenizer.directive = [
+    ['.*?\\}%%', { token: `annotation${SHARED}`, next: '@pop' }],
+    ['[^\\n]+|\\n', { token: `annotation${SHARED}` }],
   ];
   tokenizer.plain = [
     ['[^\\n]+', { token: '' }],
@@ -156,10 +164,10 @@ interface MonacoTokens {
 }
 
 /** The diagram id the service detects for `model`, when the id has a highlighter row. */
-function highlighterOf(service: LanguageService, model: TextModel): string | undefined {
+function highlighterOf(service: LanguageService, model: TextModel): FirstPartyFacetId | undefined {
   const type = snapshotOf(service, model).type;
   const id = firstPartyFacets.find((e) => e.type === type)?.id;
-  return id !== undefined && Object.hasOwn(MONARCH_HIGHLIGHTERS, id) ? id : undefined;
+  return id !== undefined && highlighted(id) ? id : undefined;
 }
 
 /**
@@ -188,7 +196,7 @@ export function watchHighlighters(
     const id = highlighterOf(service, model);
     if (id === undefined || loaded.has(id) || loading.has(id)) return;
     loading.add(id);
-    MONARCH_HIGHLIGHTERS[id]!.load().then(
+    MONARCH_HIGHLIGHTERS[id].load().then(
       (def) => {
         loading.delete(id);
         loaded.set(id, def);

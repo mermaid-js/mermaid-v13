@@ -7,15 +7,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildParserFile } from '@lezer/generator';
+import { LEZER_HIGHLIGHTERS } from '../src/grammars.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 export const OUT_DIR = join(import.meta.dirname, '..', 'src', 'generated');
 
-/**
- * The diagram ids with a generated highlighting grammar. A port adds its id here and its row
- * to `LEZER_HIGHLIGHTERS` (src/language.ts).
- */
-export const HIGHLIGHTED_TYPES = ['flowchart', 'sequence', 'class', 'state', 'er'] as const;
+/** The diagram ids with a parser: the rows of `LEZER_HIGHLIGHTERS` (src/grammars.ts). */
+export const HIGHLIGHTED_TYPES = Object.keys(LEZER_HIGHLIGHTERS);
 
 const grammarDir = (id: string) => join(ROOT, `packages/diagram-${id}/grammar/generated`);
 

@@ -20,21 +20,15 @@ import {
 } from '@codemirror/language';
 import { NodeType, Parser, Tree } from '@lezer/common';
 import type { Input, PartialParse, TreeFragment } from '@lezer/common';
-import type { LRParser } from '@lezer/lr';
 import { diagramStart, preprocess } from '@mermaid-js/core/preprocess';
 import { firstPartyFacets } from '@mermaid-js/language-service';
+import type { FirstPartyFacetId } from '@mermaid-js/language-service';
+import { LEZER_HIGHLIGHTERS } from './grammars.ts';
 
-/**
- * Diagram id → its generated Lezer parser, imported on demand (D134). A port adds its row
- * here and its id to `scripts/lezer.ts` (`agents/port-diagram/language.md`).
- */
-export const LEZER_HIGHLIGHTERS: Readonly<Record<string, () => Promise<LRParser>>> = {
-  flowchart: () => import('./generated/flowchart.parser.js').then((m) => m.parser),
-  sequence: () => import('./generated/sequence.parser.js').then((m) => m.parser),
-  class: () => import('./generated/class.parser.js').then((m) => m.parser),
-  state: () => import('./generated/state.parser.js').then((m) => m.parser),
-  er: () => import('./generated/er.parser.js').then((m) => m.parser),
-};
+export { LEZER_HIGHLIGHTERS } from './grammars.ts';
+
+/** Whether `id` has a row in {@link LEZER_HIGHLIGHTERS}. */
+const highlighted = (id: string): id is FirstPartyFacetId => Object.hasOwn(LEZER_HIGHLIGHTERS, id);
 
 const data = defineLanguageFacet({ commentTokens: { line: '%%' } });
 
@@ -51,7 +45,7 @@ const failed = new Set<string>();
  * retry it) until the next call of this function.
  */
 export function loadHighlighter(id: string): Promise<void> {
-  const load = Object.hasOwn(LEZER_HIGHLIGHTERS, id) ? LEZER_HIGHLIGHTERS[id] : undefined;
+  const load = highlighted(id) ? LEZER_HIGHLIGHTERS[id] : undefined;
   if (!load || loaded.has(id)) return Promise.resolve();
   let started = loading.get(id);
   if (!started) {
@@ -136,7 +130,7 @@ class MermaidParser extends Parser {
     const id = detectId(text, end, pre);
     const inner = id === undefined ? undefined : loaded.get(id);
     if (id === undefined || !inner) {
-      if (id === undefined || !Object.hasOwn(LEZER_HIGHLIGHTERS, id) || failed.has(id)) {
+      if (id === undefined || !highlighted(id) || failed.has(id)) {
         return done(input.length);
       }
       // Still loading: an empty tree now, and a re-parse once the parser is in (the skipping
