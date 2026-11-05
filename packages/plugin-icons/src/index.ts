@@ -19,19 +19,17 @@
  * placeholder, an empty 1em box in labels and nothing in shapes (D299: `missing()` reported it,
  * so the API threw `NotLoadedError` or, with placeholders, warned `PLACEHOLDER`); an icon the
  * converter changed gives one `ICON_SIMPLIFIED` per render (D295). The providers note what they
- * meet; `postRender` gives the two warnings, once each, naming the icons in the order drawn.
+ * meet in the render's scratch (`InlineRequest.scratch`, `GlyphRequest.scratch`); `postRender`
+ * reads it there (`ctx.inline.scratch`) and gives the two warnings, once each, naming the icons in
+ * the order drawn. A glyph that does not resolve is `null`, so flowchart gives its deprecated
+ * `ICON_UNAVAILABLE` beside this warning (D299): no diagram is named here.
  *
- * Module state is caches of pure functions (per parse, per pack object, per built icon) and one
- * render's notes, keyed by that render's warnings sink and dropped in its `postRender`. Nothing
- * carries `missing()` results to the draw.
+ * The plugin keeps no state (D294). Its module-level WeakMaps are memoisation of pure functions
+ * (the packs a parse names, an icon built from a pack object, a built icon's label nodes): each
+ * value is a function of its key alone, so dropping any entry changes no output, and nothing
+ * carries `missing()` results or a render's notes to the draw.
  */
-import type {
-  DiagramIcon,
-  ExtensionPlugin,
-  GlyphRequest,
-  IconPacks,
-  ResourceRequest,
-} from '@mermaid-js/core';
+import type { DiagramIcon, ExtensionPlugin, IconPacks, ResourceRequest } from '@mermaid-js/core';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import type { Paint, SvgNode, SvgTree, Transform } from '@mermaid-js/core/svg';
 import type {
@@ -47,16 +45,19 @@ import { getIcon, type IconifyJSON } from './resolve.ts';
 
 export type { IconifyAlias, IconifyIcon, IconifyJSON } from './resolve.ts';
 
-/** D296: v12's label prefixes plus `fad`, with no left boundary; the pack, then the icon. */
+/**
+ * D296: v12's label prefixes plus `fad`, with no left boundary; the pack, then the icon. Core's
+ * `ICON_NOT_RENDERED` feature has the same regex (`core/src/text/inline.ts` `FEATURES`): keep
+ * them equal, so this provider claims every span core would warn about.
+ */
 // cspell:disable-next-line
 const LABEL = /(fa[bdklrs]?):fa-([\w-]+)/;
 const LABELS = new RegExp(LABEL.source, 'g');
-/** How much of a name as written a warning quotes, as flowchart's `ICON_UNAVAILABLE` does. */
+/** How much of a name as written a warning quotes. */
 const QUOTE = 60;
 /** How many icons a warning names. */
 const LISTED = 8;
 
-type Warn = GlyphRequest['warn'];
 /** An icon ready to draw, a pack still loading that the API reported, or why it is not drawn. */
 type Found = { readonly icon: BuiltIcon } | { readonly pending: true } | { readonly why: string };
 
@@ -65,7 +66,7 @@ const NOT_A_NAME = 'not a pack:name icon name';
 
 /**
  * The packs a parse names, per parse (the API caches it with the analysis), so `renderSync` does
- * not walk it again.
+ * not walk it again. Memoisation, as the two maps below: a pure result per key object.
  */
 const packsByParse = new WeakMap<object, ReadonlySet<string>>();
 /** Each pack's built icons, per pack object (a re-registered pack is a new object). */
@@ -83,19 +84,17 @@ interface Notes {
   readonly unresolved: Map<string, string>;
   readonly simplified: Set<string>;
   labels: boolean;
-  /** The glyph names not drawn, as written, in the order met. */
-  readonly glyphs: Set<string>;
+  glyphs: boolean;
 }
-/** Each render's notes, keyed by its warnings sink (one per render, shared by both providers). */
-const notesByRender = new WeakMap<Warn, Notes>();
 
-function notesOf(warn: Warn): Notes {
-  let notes = notesByRender.get(warn);
-  if (!notes) {
-    notes = { unresolved: new Map(), simplified: new Set(), labels: false, glyphs: new Set() };
-    notesByRender.set(warn, notes);
-  }
-  return notes;
+/** This render's notes, in its scratch under the extension's id (`ctx.inline.scratch`). */
+function notesOf(scratch: Record<string, unknown>): Notes {
+  return (scratch.icons ??= {
+    unresolved: new Map(),
+    simplified: new Set(),
+    labels: false,
+    glyphs: false,
+  }) as Notes;
 }
 
 /** Every string in `value` (an AST or a model), for a diagram that lists no labels. */
@@ -185,13 +184,12 @@ function asGlyph(packs: IconPacks | undefined, written: string, fallbackPrefix?:
 }
 
 /** Notes that the icon `written` (in a label or a glyph name) is not drawn, and why. */
-function unresolved(warn: Warn, written: string, label: boolean, why: string): void {
-  const notes = notesOf(warn);
+function unresolved(notes: Notes, written: string, label: boolean, why: string): void {
   const key = `${label ? 'l' : 'g'}${written}`;
   if (notes.unresolved.has(key)) return;
   notes.unresolved.set(key, `${quote(written)} (${why})`);
   if (label) notes.labels = true;
-  else notes.glyphs.add(written);
+  else notes.glyphs = true;
 }
 
 function listed(items: Iterable<string>): string {
@@ -202,32 +200,22 @@ function listed(items: Iterable<string>): string {
 
 /**
  * One render's `ICON_NOT_RENDERED` (D291) and `ICON_SIMPLIFIED` (D295), each naming the icons in
- * the order drawn, through the render's once-per-render sink. In flowchart, the shapes' icons
- * also get the deprecated alias `ICON_UNAVAILABLE` beside it, for one alpha (D299): flowchart
- * gives it itself only without an icons extension, since this warning comes after its render.
+ * the order drawn, through the render's once-per-render sink. (A diagram's deprecated alias for
+ * its shapes, flowchart's `ICON_UNAVAILABLE`, is the diagram's: the glyph it got was `null`.)
  */
-function warnFor(spans: InlineSpans, diagram: string): void {
-  const { warn } = spans;
-  const notes = notesByRender.get(warn);
+function warnFor({ warn, scratch }: InlineSpans): void {
+  const notes = scratch.icons as Notes | undefined;
   if (!notes) return;
-  notesByRender.delete(warn);
   if (notes.unresolved.size > 0) {
-    // Another provider's ICON_NOT_RENDERED came first: flowchart has given the alias for it.
-    const aliased = spans.notRendered('icon');
     const where = [
       notes.labels ? 'labels show them as written' : '',
-      notes.glyphs.size > 0 ? 'their shapes are drawn without them' : '',
+      notes.glyphs ? 'their shapes are drawn without them' : '',
     ].filter(Boolean);
     const said = where.join('; ');
     warn({
       code: 'ICON_NOT_RENDERED',
       message: `Icons not rendered: ${listed(notes.unresolved.values())}. ${said[0]!.toUpperCase()}${said.slice(1)}.`,
     });
-    if (diagram === 'flowchart' && notes.glyphs.size > 0 && !aliased)
-      warn({
-        code: 'ICON_UNAVAILABLE',
-        message: `ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED. Icons not drawn: ${listed([...notes.glyphs].map((n) => JSON.stringify(quote(n))))}; an icon with a form draws its frame alone.`,
-      });
   }
   if (notes.simplified.size > 0)
     warn({
@@ -317,7 +305,7 @@ const label: InlineProvider = {
     const size = request.font.size;
     const baseline = 0.875 * size;
     if ('icon' in f) {
-      if (f.icon.simplified) notesOf(request.warn).simplified.add(quote(source));
+      if (f.icon.simplified) notesOf(request.scratch).simplified.add(quote(source));
       const [left, top, w, h] = f.icon.viewBox;
       const s = size / h;
       const { nodes, current } = labelNodesOf(f.icon);
@@ -331,7 +319,7 @@ const label: InlineProvider = {
     }
     // The pack is still loading and the API knows (placeholders): an empty 1em box (D299).
     if ('pending' in f) return { width: size, height: size, baseline, node: { tag: 'g' } };
-    unresolved(request.warn, source, true, f.why);
+    unresolved(notesOf(request.scratch), source, true, f.why);
     return undefined;
   },
 };
@@ -347,15 +335,16 @@ export const icons: ExtensionPlugin = {
       if (!(size > 0 && Number.isFinite(size))) return undefined;
       const f = asGlyph(iconPacks, written, fallbackPrefix);
       if ('icon' in f) {
-        if (f.icon.simplified) notesOf(request.warn).simplified.add(quote(written));
+        if (f.icon.simplified) notesOf(request.scratch).simplified.add(quote(written));
         const [left, top, w, h] = f.icon.viewBox;
         const s = size / Math.max(w, h);
         return placed(f.icon.nodes, (size - w * s) / 2 - left * s, (size - h * s) / 2 - top * s, s);
       }
       // Still loading, with placeholders: the diagram draws the frame alone (D299).
       if ('pending' in f) return undefined;
-      unresolved(request.warn, written, false, f.why);
-      return undefined;
+      unresolved(notesOf(request.scratch), written, false, f.why);
+      // Unresolved, and warned in postRender: the diagram may give its own alias (D299).
+      return null;
     },
   },
   // A `currentColor` stroke cannot point at the label's fill, so the icon's `color` is set to
@@ -368,10 +357,11 @@ export const icons: ExtensionPlugin = {
       tree.setAttr(n, 'class', undefined);
       tree.setAttr(n, 'color', inheritedFill(tree, n));
     }
-    if (ctx.inline) warnFor(ctx.inline, ctx.diagram);
+    if (ctx.inline) warnFor(ctx.inline);
   },
   resources: {
-    // Packs are the API object's (D294): it loads each `iconPack` this reports.
+    // Packs are the API object's (D294): it loads each `iconPack` this reports, so this
+    // extension provides none and `load` is never called (core requires the three fields).
     provides: [],
     missing(parse, request) {
       if (request.format !== 'svg') return [];

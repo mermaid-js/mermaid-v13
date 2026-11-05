@@ -117,11 +117,12 @@ describe('an icon that is not drawn (D298, D299)', () => {
     expect(attr(frame(r.svg), 'stroke')).not.toBe(attr(frame(r.svg), 'fill'));
   });
 
-  it('warns ICON_NOT_RENDERED once, then the deprecated ICON_UNAVAILABLE naming the shapes', async () => {
+  it("gives flowchart's deprecated ICON_UNAVAILABLE naming the shapes, then one ICON_NOT_RENDERED", async () => {
     const m = await api();
     const r = await m.render('x', UNRESOLVED);
-    expect(codes(r)).toEqual(['ICON_NOT_RENDERED', 'ICON_UNAVAILABLE']);
-    expect(r.warnings[1]!.message).toBe(
+    // Flowchart gives the alias as it draws; the extension's warning comes after the draw.
+    expect(codes(r)).toEqual(['ICON_UNAVAILABLE', 'ICON_NOT_RENDERED']);
+    expect(r.warnings[0]!.message).toBe(
       'ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED. Icons not drawn: "fa:nope", "user", "fa:nada"; an icon with a form draws its frame alone.'
     );
   });
@@ -132,7 +133,7 @@ describe('an icon that is not drawn (D298, D299)', () => {
     expect(codes(r)).toEqual(['ICON_NOT_RENDERED', 'ICON_UNAVAILABLE']);
     const shapes = await plain.render('x', 'flowchart LR\n  B@{ icon: "fa:car" }');
     expect(shapes.warnings[0]!.message).toBe(
-      'Icons are not rendered without an icons extension: icon shapes draw their frame alone.'
+      'Icons are not rendered without an icons extension: icon shapes draw their frame alone, or nothing without a form.'
     );
   });
 
@@ -147,6 +148,18 @@ describe('an icon that is not drawn (D298, D299)', () => {
     expect(codes(r)).toEqual(['PLACEHOLDER']);
     expect(r.svg).toContain('<rect x="-24" y="-24" width="48" height="48"');
     expect(r.svg).not.toContain('M0 0H1V24z');
+  });
+
+  it('names only the unresolved shapes in a placeholder render, not the pending ones', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    await m.registerExternalDiagrams([icons]);
+    m.registerIconPacks([{ name: 'fa', loader: () => Promise.resolve(fa) }]);
+    await m.preload({ types: ['flowchart'] });
+    const source = 'flowchart LR\n  A@{ icon: "fa:bell", form: square }\n  B@{ icon: "mdi:x" }';
+    const r = m.renderSync(source, { placeholders: true });
+    expect(codes(r)).toEqual(['PLACEHOLDER', 'ICON_UNAVAILABLE', 'ICON_NOT_RENDERED']);
+    expect(r.warnings[1]!.message).toContain('Icons not drawn: "mdi:x";');
   });
 
   it('gives no alias when every glyph is drawn, even if a label icon is not', async () => {

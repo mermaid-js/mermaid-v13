@@ -73,7 +73,7 @@ export interface IconPacks {
 export interface IconPackSource extends IconPacks {
   /**
    * Runs pack `name`'s loader; resolves (never rejects) once it is `ready` or `failed`, or once the
-   * pack registered in its place meanwhile is.
+   * pack registered in its place meanwhile is. A function property, so a view can leave it out.
    */
-  load(name: string): Promise<void>;
+  readonly load: (name: string) => Promise<void>;
 }

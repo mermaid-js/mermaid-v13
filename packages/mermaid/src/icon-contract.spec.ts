@@ -364,6 +364,59 @@ describe('the glyph slot (D293)', () => {
     expect(r.warnings.filter((w) => w.code === 'ICON_NOT_RENDERED')).toHaveLength(1);
   });
 
+  it('gives the alias ICON_UNAVAILABLE for the shapes a provider reports unresolved (null), once (D299)', async () => {
+    const { m, ready } = api({
+      id: 'unresolved',
+      glyphs: {
+        // null: unresolved, and the extension says ICON_NOT_RENDERED; undefined: declined quietly.
+        glyph: (name, { warn }) =>
+          name.startsWith('no:')
+            ? (warn({ code: 'ICON_NOT_RENDERED', message: 'unresolved' }), null)
+            : undefined,
+      },
+    });
+    await ready;
+    const source =
+      'flowchart LR\n  A@{ icon: "no:a", form: square }\n  B@{ icon: "fa:b" }\n  C@{ icon: "no:c" }';
+    const r = await m.render('x', source);
+    expect(codes(r.warnings)).toEqual(['ICON_NOT_RENDERED', 'ICON_UNAVAILABLE']);
+    expect(r.warnings[1]!.message).toBe(
+      'ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED. Icons not drawn: "no:a", "no:c"; an icon with a form draws its frame alone.'
+    );
+    // The frame-only drawing, as without an extension.
+    expect(r.svg).toBe((await api().m.render('x', source)).svg);
+  });
+
+  it('asks a later extension after one reports the glyph unresolved', async () => {
+    const { m, ready } = api(
+      { id: 'first', glyphs: { glyph: () => null } },
+      { id: 'second', glyphs: { glyph: () => GLYPH(8) } }
+    );
+    await ready;
+    const r = await m.render('x', SHAPE);
+    expect([...r.svg.matchAll(RE_GLYPH)]).toHaveLength(1);
+    expect(codes(r.warnings)).toEqual([]);
+  });
+
+  it('gives providers and hooks one scratch object per render (ctx.inline.scratch)', async () => {
+    const seen: object[] = [];
+    const { m, ready } = api({
+      id: 'scratch',
+      inline: [{ pattern: /fa:fa-car/, box: (_, r) => void seen.push(r.scratch) }],
+      glyphs: { glyph: (_, r) => void seen.push(r.scratch) },
+      postRender: (_, ctx) => void seen.push(ctx.inline!.scratch),
+    });
+    await ready;
+    const source = `${SHAPE}\n  B["fa:fa-car"] --> C["fa:fa-car"]`;
+    await m.render('x', source);
+    await m.render('x', source);
+    expect(seen).toHaveLength(8);
+    const [first, second] = [new Set(seen.slice(0, 4)), new Set(seen.slice(4))];
+    expect([first.size, second.size]).toEqual([1, 1]);
+    expect([...first][0]).not.toBe([...second][0]);
+    expect([...first][0]).toEqual({});
+  });
+
   it("gives glyph providers the render's icon packs (D294)", async () => {
     const seen: unknown[] = [];
     const { m, ready } = api({

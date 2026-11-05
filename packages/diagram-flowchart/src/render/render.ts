@@ -127,11 +127,6 @@ interface NodePaint {
    * classic themes) writes no filter at all.
    */
   readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
-  /**
-   * An icon shape's glyph without a `stroke` style (D298): nodeBorder, or the gradient under
-   * `useGradient`. Looked up only when an icon shape is drawn.
-   */
-  readonly glyph: OutlinePaint | undefined;
 }
 
 interface Paints {
@@ -165,9 +160,6 @@ function paints(theme: ThemeOf, flow: Prepared): Paints {
     line: theme.color('lineColor'),
     arrow: theme.color('arrowheadColor'),
     shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
-    glyph: flow.nodes.some((v) => v.vertex?.icon && !v.vertex.img)
-      ? theme.outline('nodeBorder')
-      : undefined,
   };
   const cluster =
     flow.groups.length > 0
@@ -441,9 +433,11 @@ function drawNode(
   }
   if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
   else if (v?.icon) {
-    // D298: the glyph takes the author's stroke, else nodeBorder (the gradient under neo).
-    const glyph = view.style.shape.stroke ?? paint.node.glyph!;
-    if (!drawIcon(w, view, shapeAttrs, glyph, ctx.icon)) iconsMissed.push(v.icon);
+    // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
+    // under neo). Unresolved: no extension has glyphs, or one reported it (`null`).
+    const glyph = view.style.shape.stroke ?? paint.node.stroke;
+    const drawn = drawIcon(w, view, shapeAttrs, glyph, ctx.icon);
+    if (drawn === null || !ctx.icon) iconsMissed.push(v.icon);
   } else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
   const fill = view.style.shape.fill;
   w.label(view.label, 0, view.dy, {

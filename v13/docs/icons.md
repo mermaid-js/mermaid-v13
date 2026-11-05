@@ -113,11 +113,12 @@ const { svg } = mermaid.renderSync(text);
 
 Without that, `renderSync` throws `NotLoadedError` naming the pack. With
 `renderSync(text, { placeholders: true })` it draws an empty 1em box in place of each label icon
-(an icon shape draws its frame) and warns `PLACEHOLDER`.
+(an icon shape draws its frame, or nothing if it has no `form`) and warns `PLACEHOLDER`.
 
 A label icon is 1em tall at the label's font size, as wide as its aspect makes it, its bottom
 0.125em below the text's baseline, in the label's text colour. An icon shape's glyph takes the node's `stroke`
-style, else the theme's node border colour.
+style, else the theme's node border colour; with `useGradient` (`neo`, `neo-dark`) and no `stroke`
+style, its `currentColor` parts take the border gradient instead.
 
 ## When an icon is not drawn
 
@@ -125,7 +126,7 @@ Mermaid never fails a render over an icon. It reports a warning in `RenderResult
 
 | Code | When |
 | --- | --- |
-| `ICON_NOT_RENDERED` | An icon did not resolve: no icons plugin, no pack of that name, no such icon, a pack whose loader failed or that is not Iconify JSON, or a shape icon name that is not `pack:name`. A label shows the icon as written (`fa:fa-car`); an icon shape draws its frame alone. One warning per render names the icons and why. |
+| `ICON_NOT_RENDERED` | An icon did not resolve: no icons plugin, no pack of that name, no such icon, a pack whose loader failed or that is not Iconify JSON, or a shape icon name that is not `pack:name`. A label shows the icon as written (`fa:fa-car`); an icon shape draws its frame alone, or nothing if it has no `form`. One warning per render: with the icons plugin it names the icons and why; without it, it says icons need an icons extension. |
 | `ICON_PACKS_UNSUPPORTED` | Packs are registered, but no icons plugin is. |
 | `ICON_SIMPLIFIED` | An icon was drawn without parts Mermaid does not draw (below). One warning per render names the icons. |
 | `ICON_UNAVAILABLE` | Deprecated, for flowchart icon shapes: read `ICON_NOT_RENDERED`. It is still raised next to it in this alpha. |

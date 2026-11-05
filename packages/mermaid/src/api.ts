@@ -393,6 +393,8 @@ export function createMermaid(
   let parseErrorHandler: ParseErrorHandler | undefined;
   // One pack registry per API object (D294); an icons extension reads it, keeping no state.
   const [iconPacks, registerPacks] = iconPackRegistry();
+  // What a draw reads: the packs without their loader, so a draw cannot start one (R-ARCH-6).
+  const { load: _, ...packs } = iconPacks;
   const cache = new AnalysisCache();
   const siteConfigs = new SiteConfigs();
   const overlays = new Overlays();
@@ -658,8 +660,8 @@ export function createMermaid(
     // Inline boxes (D177) are SVG only: text output shows every span as written, and warns
     // ASCII_DROPPED once per feature (D179). Glyphs (D293) are SVG only too, absent without an
     // extension that has them, and share the inline spans' once-per-render warnings (D291).
-    const inline = inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg', iconPacks);
-    const icon = textOutput ? undefined : hooks.icon(inline.warn, iconPacks);
+    const inline = inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg', packs);
+    const icon = textOutput ? undefined : hooks.icon(inline, packs);
     const ctx: RenderContext = {
       config,
       measurer:
@@ -675,7 +677,7 @@ export function createMermaid(
       version: VERSION,
       linkSchemes: s.options.linkSchemes,
       limits: s.limits,
-      iconPacks,
+      iconPacks: packs,
       layout: (graph) => {
         if (!engine) throw new TypeError(`${plugin.id} has no graph layout`);
         // D174: `@{ algorithm }` is parsed but not applied yet. `mermaid` says so, not the engine

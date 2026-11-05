@@ -66,8 +66,8 @@ export interface RenderContext {
   /** Integrator-only limits (R-SEC-5): `resolveLimits(initialize config, limits option)`. */
   readonly limits: Limits;
   /**
-   * The API object's icon packs (D294), for an icons extension's hooks. Read-only (the same object
-   * as `ResourceRequest.iconPacks`, whose `load` the type leaves out).
+   * The API object's icon packs (D294), for an icons extension's hooks: a view without the
+   * loader `ResourceRequest.iconPacks` has, so a draw cannot start one (R-ARCH-6).
    */
   readonly iconPacks?: IconPacks;
   /**
@@ -79,10 +79,15 @@ export interface RenderContext {
   /**
    * The extensions' glyphs (D293), for icons a diagram draws outside labels (flowchart icon
    * shapes, mindmap `::icon()`): `name` as written (`fa:bell`), drawn in a `size` px square at
-   * the origin (the provider fits it, xMidYMid meet), or `undefined` when no extension has it.
-   * Absent when no extension has `glyphs`, and in text output.
+   * the origin (the provider fits it, xMidYMid meet); `null` when an extension reported it
+   * unresolved (and warns `ICON_NOT_RENDERED`, D291); `undefined` when none has it (or it is a
+   * placeholder). Absent when no extension has `glyphs`, and in text output.
    */
-  readonly icon?: (name: string, size: number, options?: IconOptions) => SvgFragment | undefined;
+  readonly icon?: (
+    name: string,
+    size: number,
+    options?: IconOptions
+  ) => SvgFragment | null | undefined;
   warn(warning: Warning): void;
 }
 

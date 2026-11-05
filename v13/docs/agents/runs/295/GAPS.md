@@ -34,3 +34,11 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - #324: icons cannot go in class relation labels or single-line state notes: the v12 grammar takes no `:` there.
 - #326: an unresolved shape icon keeps its outlined frame (D298 "keeps today's frame-only drawing"): byte-identical without the extension, and a borderless `mainBkg` frame would vanish on a `mainBkg` page. The `ICON_UNAVAILABLE` alias names the shapes' icons. A glyph provider that declines without warning leaves the render quiet (D291: warning is the extension's). Glyph colour ignores the palette slot, as v12.
 - [hand-drawn spec, D301] No node-outline hook on this branch yet: the icon frame is not sketched under hand-drawn. The glyph is a separate `<g>` after the frame, ready for the hook.
+
+## From the final whole-branch review (`fix/295_final-review`, `tickets/final-review.md`)
+
+- ~~The plugin gives flowchart's `ICON_UNAVAILABLE` (`diagram === 'flowchart'`), flowchart skips it with an extension.~~ Fixed: `GlyphProvider.glyph` / `RenderContext.icon` may return `null` (unresolved, the extension warns `ICON_NOT_RENDERED`), `undefined` stays "none" (placeholder, declined). Flowchart gives the alias for its `null` shapes (and for every icon shape without a glyph extension); the plugin names no diagram. The alias now comes before the plugin's `ICON_NOT_RENDERED` (the plugin warns in `postRender`).
+- ~~`notesByRender`: per-render notes in a module WeakMap keyed by the warn sink (D294).~~ Fixed: core's per-render `scratch` (`InlineRequest.scratch` = `GlyphRequest.scratch` = `InlineSpans.scratch`, so `ctx.inline.scratch` in hooks), shared by every extension's providers, keyed by extension id (`scratch.icons`). Kept, as memoisation of pure functions (documented in `index.ts`): packs per parse, built icons per pack object, label nodes per built icon; each value depends on its key alone.
+- ~~Draws get `IconPackSource` with `load`.~~ Fixed: `ctx.iconPacks`, `InlineRequest.iconPacks`, `GlyphRequest.iconPacks` are a view without `load` (R-ARCH-6); `ResourceRequest.iconPacks` keeps it.
+- D296's regex stays in two places (core `FEATURES`, plugin `LABEL`), each pointing at the other: exporting it cost core 13 B gz.
+- The plugin's `resources.load` stays a no-op (core requires it; making it optional costs core bytes), with a comment.

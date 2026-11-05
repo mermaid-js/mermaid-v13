@@ -22,7 +22,12 @@ import type { ParseResult } from '../parser-kit/result.ts';
 import { isAllowedAttr, isAllowedTag } from '../svg/allowlist.ts';
 import type { SvgTree } from '../svg/tree.ts';
 import type { InlineBox, SvgFragment } from '../svg/writer.ts';
-import type { InlinePairProvider, InlineProvider, InlineRequest } from '../text/inline.ts';
+import type {
+  InlinePairProvider,
+  InlineProvider,
+  InlineRequest,
+  InlineSpans,
+} from '../text/inline.ts';
 import type { IconPacks, IconPackSource } from './icon-packs.ts';
 import { MermaidError, type Resource } from './errors.ts';
 import type { DiagramIcon, IconOptions, RenderContext } from './types.ts';
@@ -126,9 +131,12 @@ export interface ResourceRequest {
 export interface GlyphProvider {
   /**
    * The glyph `name` (as written, `fa:bell`) names, drawn in the `size` px square at the origin
-   * (fitted by the provider, as `xMidYMid meet`), or `undefined` when it has none.
+   * (fitted by the provider, as `xMidYMid meet`); `null` when it does not resolve and the
+   * extension warns `ICON_NOT_RENDERED` for it (D291), so the diagram may give its own alias
+   * (flowchart's `ICON_UNAVAILABLE`, D299); `undefined` when it has none to give (a placeholder
+   * for a pack still loading, or a name it leaves to others).
    */
-  glyph(name: string, request: GlyphRequest): SvgFragment | undefined;
+  glyph(name: string, request: GlyphRequest): SvgFragment | null | undefined;
 }
 
 /** What a glyph provider gets with each name. */
@@ -141,6 +149,8 @@ export interface GlyphRequest {
   readonly warn: (warning: { readonly code: string; readonly message: string }) => void;
   /** The render's icon packs (D294), read-only. */
   readonly iconPacks?: IconPacks;
+  /** The render's scratch, as `InlineRequest.scratch`. */
+  readonly scratch: Record<string, unknown>;
 }
 
 /**
@@ -370,23 +380,26 @@ export class HookRunner<El = unknown, R = unknown> {
   /**
    * One render's `RenderContext.icon` (D293), or `undefined` when no extension has `glyphs`. It
    * asks each extension in registration order and returns the first glyph, checked (its size is
-   * the provider's to honour). `warn` is the render's once-per-render warnings
-   * (`InlineSpans.warn`).
+   * the provider's to honour); else `null` when one reported the name unresolved. `spans` gives
+   * the render's once-per-render warnings and scratch (`InlineSpans`).
    */
-  icon(warn: GlyphRequest['warn'], iconPacks?: IconPacks): RenderContext['icon'] {
+  icon(spans: Pick<InlineSpans, 'warn' | 'scratch'>, iconPacks?: IconPacks): RenderContext['icon'] {
     const list = this.list.filter((p) => p.glyphs);
     if (!list[0]) return undefined;
+    const { warn, scratch } = spans;
     return (name: string, size: number, options?: IconOptions) => {
-      const request: GlyphRequest = { ...options, size, warn, iconPacks };
+      const request: GlyphRequest = { ...options, size, warn, iconPacks, scratch };
+      let unresolved;
       for (const p of list) {
         try {
           const glyph = p.glyphs!.glyph(name, request);
           if (glyph) return (checkFragment(glyph), glyph);
+          if (glyph === null) unresolved = glyph;
         } catch (e) {
           throw failed(p, 'glyphs', e);
         }
       }
-      return undefined;
+      return unresolved;
     };
   }
 

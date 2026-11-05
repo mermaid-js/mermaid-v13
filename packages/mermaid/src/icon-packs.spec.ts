@@ -308,4 +308,24 @@ describe('registerIconPacks (D294)', () => {
     expect(seen[0]).toEqual(['error', 'get', 'load', 'names', 'state']);
     expect(seen.at(-1)).not.toContain('register');
   });
+
+  it('gives the draw the packs without their loader, so a draw cannot start one (R-ARCH-6)', async () => {
+    const seen: string[][] = [];
+    const keys = (packs: object | undefined) => void seen.push(Object.keys(packs ?? {}).sort());
+    const m = createMermaid();
+    await m.registerExternalDiagrams([
+      {
+        id: 'views',
+        claims: ['icons'],
+        inline: [{ pattern: /fa:fa-car/, box: (_, r) => keys(r.iconPacks) }],
+        glyphs: { glyph: (_, r) => keys(r.iconPacks) },
+        postRender: (_, ctx) => keys(ctx.iconPacks),
+      },
+    ]);
+    m.registerIconPacks([
+      { name: 'fa', loader: () => Promise.resolve({ prefix: 'fa', icons: {} }) },
+    ]);
+    await m.render('a', 'flowchart LR\n  A["fa:fa-car"] --> B@{ icon: "fa:car" }');
+    expect(seen).toEqual(Array(3).fill(['error', 'get', 'names', 'state']));
+  });
 });

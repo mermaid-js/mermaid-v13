@@ -88,7 +88,8 @@ function painted(node: SvgFragment, paint: OutlinePaint): SvgFragment {
  * fill) and the glyph takes `paint`: its `color`, or under `useGradient` the gradient on its
  * `currentColor` paints. Without one the frame keeps its outline, as before the icons plugin.
  * The frame is a square of `assetHeight`, while `assetSize` widens the box to `assetWidth`.
- * Returns whether the glyph was drawn.
+ * Returns the glyph, or why none was drawn: `null` unresolved (the extension warned), `undefined`
+ * none (no extension, a placeholder, or declined).
  */
 export function drawIcon(
   w: SvgWriter,
@@ -96,7 +97,7 @@ export function drawIcon(
   a: Attrs,
   paint: OutlinePaint,
   icon?: FlowRenderContext['icon']
-): boolean {
+): SvgFragment | null | undefined {
   const v = view.vertex!;
   const size = asset(v.assetHeight, ICON);
   const top = assetTop(view, size);
@@ -113,7 +114,7 @@ export function drawIcon(
       ...f,
     });
   }
-  if (!glyph) return false;
+  if (!glyph) return glyph;
   const gradient = paint.startsWith('url(');
   w.open('g', {
     transform: translate(-size / 2, top),
@@ -121,7 +122,7 @@ export function drawIcon(
   });
   writeFragment(w, gradient ? painted(glyph, paint) : glyph);
   w.close();
-  return true;
+  return glyph;
 }
 
 /** How many icons a warning names, and how much of each. */
@@ -129,13 +130,12 @@ const LISTED = 8;
 const QUOTE = 60;
 
 /**
- * After the nodes: the icon shapes whose glyph was not drawn (`missed`, as written). Without an
- * extension that has glyphs, flowchart says `ICON_NOT_RENDERED` itself (with one, the extension
- * says it for the icons it cannot draw, D291). Next to it, once per render and for one alpha, the
- * deprecated alias `ICON_UNAVAILABLE` names them (D299, as sequence's `SEQUENCE_MATH`): not for a
- * placeholder render (`PLACEHOLDER`), where the extension gives no `ICON_NOT_RENDERED`. An
- * extension that warns only once the render is drawn (the icons extension, in `postRender`) gives
- * the alias itself.
+ * After the nodes: the icon shapes whose glyph is unresolved (`missed`, as written). Without an
+ * extension that has glyphs, every icon shape is, and flowchart says `ICON_NOT_RENDERED` itself;
+ * with one, `missed` holds those it reported unresolved (`null`), and it says `ICON_NOT_RENDERED`
+ * (D291), perhaps only once the render is drawn. Beside it, once per render and for one alpha,
+ * the deprecated alias `ICON_UNAVAILABLE` names them (D299, as sequence's `SEQUENCE_MATH`). A
+ * placeholder, or a glyph an extension declines quietly, is not in `missed`: no alias.
  */
 export function iconsNotDrawn(ctx: FlowRenderContext, missed: readonly string[]): void {
   if (missed.length === 0) return;
@@ -144,9 +144,9 @@ export function iconsNotDrawn(ctx: FlowRenderContext, missed: readonly string[])
     warn({
       code: 'ICON_NOT_RENDERED',
       message:
-        'Icons are not rendered without an icons extension: icon shapes draw their frame alone.',
+        'Icons are not rendered without an icons extension: icon shapes draw their frame alone, or nothing without a form.',
     });
-  } else if (ctx.inline && !ctx.inline.notRendered('icon')) return;
+  }
   const names = [...new Set(missed)].map((n) =>
     JSON.stringify(n.length > QUOTE ? `${n.slice(0, QUOTE)}…` : n)
   );

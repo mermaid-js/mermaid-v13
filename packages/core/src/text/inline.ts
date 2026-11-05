@@ -20,6 +20,8 @@ export interface InlineRequest {
   readonly warn: Warn;
   /** The render's icon packs (D294), read-only, for a provider that draws icons. */
   readonly iconPacks?: IconPacks;
+  /** The render's scratch ({@link InlineSpans.scratch}). */
+  readonly scratch: Record<string, unknown>;
 }
 
 /**
@@ -84,6 +86,12 @@ export interface InlineSpans {
    * message once per render.
    */
   readonly warn: Warn;
+  /**
+   * One render's scratch object, the same in every `InlineRequest` and `GlyphRequest` of the
+   * render and in its hooks (`ctx.inline.scratch`): what providers note for a `postRender` hook,
+   * so an extension keeps no module state. Every extension shares it: key it by extension id.
+   */
+  readonly scratch: Record<string, unknown>;
 }
 
 /** What core finds spans by: a delimiter pair or a pattern, as providers have them. */
@@ -126,7 +134,9 @@ const FEATURES: readonly Feature[] = [
     },
   },
   {
-    // D296: v12's prefixes plus `fad`, with no left boundary (`sofa:fa-x` matches).
+    // D296: v12's prefixes plus `fad`, with no left boundary (`sofa:fa-x` matches). The icons
+    // extension's provider has the same regex (`plugin-icons/src/index.ts` `LABEL`): keep them
+    // equal. Not shared, since an exported constant costs core bytes (R-PERF-8).
     // cspell:disable-next-line
     pattern: /(fa[bdklrs]?):fa-([\w-]+)/,
     warning: {
@@ -211,6 +221,7 @@ export function inlineSpans(
   const finders = ascii ? [] : providers.map(finder);
   const given = new Set<string>();
   const notDrawn = new Set<string>();
+  const scratch = {};
   const once: Warn = (w) => {
     let key = `${w.code}\n${w.message}`;
     for (const { warning, ascii: dropped } of FEATURES)
@@ -221,6 +232,7 @@ export function inlineSpans(
   };
   return {
     warn: once,
+    scratch,
     notRendered: (feature) => notDrawn.has(feature),
     extract(raw, font, measurer) {
       // The spans that may be boxed: a label holding a placeholder character boxes none.
@@ -251,6 +263,7 @@ export function inlineSpans(
               ex: font.size / 2,
               warn: once,
               iconPacks,
+              scratch,
             })
           );
         if (box) {

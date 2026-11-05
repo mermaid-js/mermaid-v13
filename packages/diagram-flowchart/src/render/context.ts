@@ -45,7 +45,9 @@ export interface FlowRenderContext {
   readonly inline?: InlineSpans;
   /**
    * The extensions' glyphs (D293): an icon shape's glyph fitted into a `size` square at the
-   * origin, or `undefined`. Absent without an extension that has glyphs.
+   * origin; `null` when an extension reported it unresolved (it warns `ICON_NOT_RENDERED`);
+   * `undefined` when none has it, or for a placeholder. Absent without an extension that has
+   * glyphs.
    */
-  readonly icon?: (name: string, size: number) => SvgFragment | undefined;
+  readonly icon?: (name: string, size: number) => SvgFragment | null | undefined;
 }
