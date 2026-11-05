@@ -10,13 +10,23 @@
  * follow (R-THEME-3, -4). With `cssVariables: false` the same values are written as
  * literals for renderers that do not resolve CSS variables.
  */
-import { checkColor, checkFilter, checkStyle, splitTopLevel, styleText } from '../svg/style.ts';
+import {
+  checkColor,
+  checkFilter,
+  checkStyle,
+  splitTopLevel,
+  styleScope,
+  styleText,
+} from '../svg/style.ts';
 import type {
+  GradientRef,
   Length,
+  OutlinePaint,
   Paint,
   SafeColor,
   SafeFilter,
   SafeValue,
+  StopColor,
   StyleText,
   ThemeRef,
 } from '../svg/types.ts';
@@ -61,6 +71,19 @@ export interface ThemeOptions {
    */
   readonly dark?: ThemeSpec;
   readonly warn?: (warning: ThemeWarning) => void;
+  /**
+   * The render's id prefix, read only when the gradient is on (the pipeline computes it
+   * lazily). Default `mermaid`.
+   */
+  readonly idPrefix?: () => string;
+}
+
+/** The render's gradient (D182), for the writer to emit as `<defs>`. */
+export interface ThemeGradient {
+  /** `<scope>-gradient`, the scope being the id prefix as an XML name (`styleScope`). */
+  readonly id: string;
+  readonly start: StopColor;
+  readonly stop: StopColor;
 }
 
 /** A custom property name for the root `style`. */
@@ -73,6 +96,13 @@ export interface Theme {
   readonly cssVariables: boolean;
   /** A colour variable as paint: `var(--_x)`, or the literal colour. */
   color(name: string): Paint;
+  /**
+   * The paint for an outline (D182): the render's gradient when `useGradient` is on, else
+   * {@link color}. Renderers call it where v12 neo strokes with the gradient.
+   */
+  outline(name: string): OutlinePaint;
+  /** The gradient an {@link outline} refers to; undefined while `useGradient` is off. */
+  gradient(): ThemeGradient | undefined;
   /** A length variable (stroke width, font size, token) for an attribute. */
   length(name: string): Length;
   /** A length or size variable as a number, for geometry and measuring. */
@@ -147,6 +177,7 @@ const AA = 4.5;
 const own = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.call(o, k);
 
 function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
+  if (typeof raw === 'boolean') return kind === 'flag' ? String(raw) : undefined;
   if (typeof raw === 'number')
     return kind === 'length' || kind === 'padding' || kind === 'weight'
       ? checkValue(kind, String(raw))
@@ -166,6 +197,10 @@ function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
       return checkStyle(['font-family:' + v]).text['font-family'] as string | undefined;
     case 'filter':
       return checkFilter(v);
+    case 'flag': {
+      const f = v.toLowerCase();
+      return f === 'true' || f === 'false' ? f : undefined;
+    }
   }
 }
 
@@ -195,7 +230,8 @@ class Resolver {
   private source(name: string): string | undefined {
     const s = this.spec;
     if (own(s.base, name)) return (s.base as Record<string, string>)[name];
-    if (own(s.tokens, name)) return String((s.tokens as Record<string, number | string>)[name]);
+    if (own(s.tokens, name))
+      return String((s.tokens as Record<string, number | string | boolean>)[name]);
     if (s.values && own(s.values, name)) return s.values[name];
     return undefined;
   }
@@ -538,6 +574,27 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
   );
   const vars = options.cssVariables !== false;
   const used = new Set<string>();
+  // null: off. Built on first use, so the id prefix is only read when the gradient is on.
+  let grad: ThemeGradient | null | undefined;
+  const gradient = (): ThemeGradient | undefined => {
+    if (grad === undefined) {
+      if (main.get('useGradient').lit !== 'true') grad = null;
+      else {
+        // A stop is written on the gradient itself, after the root style: the public
+        // variable over the computed value, not an alias.
+        const stop = (name: string): StopColor => {
+          const lit = main.get(name).lit;
+          return (vars ? `var(--mermaid-${name},${lit})` : lit) as StopColor;
+        };
+        grad = {
+          id: `${styleScope(options.idPrefix?.() ?? 'mermaid')}-gradient`,
+          start: stop('gradientStart'),
+          stop: stop('gradientStop'),
+        };
+      }
+    }
+    return grad ?? undefined;
+  };
 
   const def = (name: string): ThemeVarDef => {
     const d = byName.get(name);
@@ -564,7 +621,7 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
     return out;
   };
 
-  return {
+  const theme: Theme = {
     name: spec.name,
     dark: darkMode,
     cssVariables: vars,
@@ -572,6 +629,11 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
       if (def(name).kind !== 'color') throw new TypeError(`${name} is not a colour`);
       return vars ? ref(name) : (main.get(name).lit as SafeColor);
     },
+    outline(name) {
+      const g = gradient();
+      return g ? (`url(#${g.id})` as GradientRef) : theme.color(name);
+    },
+    gradient,
     length(name) {
       if (def(name).kind !== 'length') throw new TypeError(`${name} is not a length`);
       return vars ? ref(name) : Number(main.get(name).lit);
@@ -628,4 +690,5 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
         : undefined,
     palette: (name) => palettes[name],
   };
+  return theme;
 }

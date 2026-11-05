@@ -38,6 +38,7 @@ const redux: ThemeSpec = {
     ...TEXT_SIZES,
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
+    useGradient: false,
   },
   rules: REDUX_RULES,
   values: {
@@ -55,6 +56,9 @@ const redux: ThemeSpec = {
     noteBorderColor: '#facc15',
     errorBkgColor: '#ffffff',
     errorTextColor: '#000000',
+    // v12 theme-redux*.js; off until a theme or the author turns it on (D182).
+    gradientStart: '#0042eb',
+    gradientStop: '#eb0042',
   },
 };
 

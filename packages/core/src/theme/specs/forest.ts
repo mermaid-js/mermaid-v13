@@ -36,6 +36,7 @@ const theme: ThemeSpec = {
     ...TEXT_SIZES,
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
+    useGradient: false,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
   rules: { rowEven: 'lightenHsl(mainBkg, 20%)' },

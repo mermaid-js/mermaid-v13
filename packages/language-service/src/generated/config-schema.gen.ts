@@ -467,6 +467,36 @@ export const configSchema: ConfigSchema = {
             "reason": "v12's values (D120): `#f9f9fb` in `redux` and `redux-color`, `#16141f` in `redux-dark` and `redux-dark-color`; `#f0f0f0` in `default` and `forest`, `#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`."
           }
         },
+        "useGradient": {
+          "description": "Paint node and cluster outlines with a horizontal gradient from `gradientStart` to\n`gradientStop` instead of their border colour. The SVG then carries one\n`<linearGradient>`, its id derived from the render's id prefix.\n",
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Off in every shipped theme (D182); v12 turned it on for `look: neo` only. `true` or `false` (also as a string). Read at render time, so it has no CSS variable. The diagram types adopt it one by one; until then it changes nothing."
+          }
+        },
+        "gradientStart": {
+          "description": "The outline gradient's colour at the left edge, when `useGradient` is on.\n",
+          "type": "string",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values: `#0042eb` in the redux themes, `primaryBorderColor` in the classic themes. Written on the gradient stop as `var(--mermaid-gradientStart,<value>)`, so a host can re-colour it without a re-render (D182)."
+          }
+        },
+        "gradientStop": {
+          "description": "The outline gradient's colour at the right edge, when `useGradient` is on.\n",
+          "type": "string",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values: `#eb0042` in the redux themes, `secondaryBorderColor` in the classic themes. Written on the gradient stop as `var(--mermaid-gradientStop,<value>)` (D182)."
+          }
+        },
         "actorRadius": {
           "description": "Corner radius in px of a sequence participant box.\n",
           "type": [

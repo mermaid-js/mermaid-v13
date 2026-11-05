@@ -38,6 +38,15 @@ export type LinkTarget = '_self' | '_blank' | '_parent' | '_top';
 
 /** A paint value: a checked colour, a theme variable, or a keyword. */
 export type Paint = SafeColor | ThemeRef | 'none' | 'currentColor' | 'transparent';
+/**
+ * `url(#<scope>-gradient)`, the render's own gradient (D182). Only `Theme.outline()` makes
+ * one, and only `fill` and `stroke` take it.
+ */
+export type GradientRef = Brand<string, 'GradientRef'>;
+/** What `fill` and `stroke` accept: a paint, or the render's gradient. */
+export type OutlinePaint = Paint | GradientRef;
+/** A gradient stop colour: a checked colour, or `var(--mermaid-gradientStart,<colour>)`. */
+export type StopColor = SafeColor | ThemeRef;
 /** A length: a plain number (user units), a checked length or a theme variable. */
 export type Length = number | SafeLength | ThemeRef;
 
@@ -84,9 +93,9 @@ export interface AttrTypes {
   d: PathData;
   points: readonly number[];
   // presentation
-  fill: Paint;
+  fill: OutlinePaint;
   'fill-opacity': number | SafeValue;
-  stroke: Paint;
+  stroke: OutlinePaint;
   'stroke-width': Length;
   'stroke-dasharray': SafeValue | 'none';
   'stroke-dashoffset': Length;
@@ -134,6 +143,22 @@ export type AllowedTag =
   | 'title'
   | 'desc'
   | 'image';
+
+/**
+ * The gradient's elements (D182). They are on the allow-list, but only the writer emits them,
+ * once per SVG as the root's first child; renderers and `postRender` hooks cannot.
+ */
+export type GradientTag = 'defs' | 'linearGradient' | 'stop';
+/** The gradient's attributes, written by the writer on `linearGradient` and `stop` only. */
+export type GradientAttr = 'offset' | 'stop-color' | 'stop-opacity' | 'gradientUnits';
+
+/** The render's gradient (D182), as the theme gives it to the writer. */
+export interface SvgGradient {
+  /** The `linearGradient` id, `<scope>-gradient`; outlines refer to it as `url(#id)`. */
+  readonly id: string;
+  readonly start: StopColor;
+  readonly stop: StopColor;
+}
 
 /** A warning raised by a safety check. The pipeline forwards these to `ctx.warn`. */
 export interface SvgWarning {
