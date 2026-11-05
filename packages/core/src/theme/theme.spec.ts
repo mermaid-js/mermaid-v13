@@ -148,7 +148,7 @@ describe('createTheme: drop shadow (#85)', () => {
 
 describe('createTheme: composite state backgrounds (#192, D120)', () => {
   // v12 12.2.0 theme-*.js: the redux themes pin both; the classic ones derive the title strip
-  // from mainBkg and give altBackground a literal (base: tertiaryColor).
+  // from mainBkg and give altBackground a literal (base: tertiaryColor). neo-dark: D189.
   it.each([
     ['redux', '#f9f9fb', '#f9f9fb'],
     ['redux-color', '#f9f9fb', '#f9f9fb'],
@@ -160,7 +160,7 @@ describe('createTheme: composite state backgrounds (#192, D120)', () => {
     ['neutral', '#eeeeee', '#f4f4f4'],
     ['base', '#fff4dd', '#f6f9ff'],
     ['neo', '#ffffff', '#f0f0f0'],
-    ['neo-dark', '#2a2020', '#f0f0f0'],
+    ['neo-dark', '#2a2020', '#404040'], // D189
   ] as const)('%s: compositeTitleBackground %s, altBackground %s', async (name, title, alt) => {
     const t = createTheme(await loadTheme(name), { cssVariables: false });
     expect(t.value('compositeTitleBackground')).toBe(title);

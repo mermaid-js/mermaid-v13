@@ -27,6 +27,31 @@ describe('buildGallery (R-TEST-6)', () => {
     expect(html.match(/<svg /g)).toHaveLength(11);
   });
 
+  it("puts every dark theme on a dark ground, in the theme's own background (#236)", async () => {
+    const { html } = await buildGallery(fixtures.slice(0, 1), { version: '1' });
+    const figure = (theme: string): string =>
+      new RegExp(`<figure data-theme="${theme}"[^>]*>`).exec(html)?.[0] ?? '';
+    for (const theme of ['dark', 'redux-dark', 'redux-dark-color', 'neo-dark'])
+      expect(figure(theme)).toContain('class="dark"');
+    for (const theme of ['redux-color', 'default', 'neo'])
+      expect(figure(theme)).not.toContain('dark');
+    expect(figure('neo-dark')).toContain('style="background:#333333"');
+    expect(figure('neo')).toContain('style="background:#ffffff"');
+  });
+
+  it('shows only the chosen themes, and a fixture with its own theme only if it is one', async () => {
+    const { html, count } = await buildGallery(fixtures, {
+      version: '1',
+      themes: ['neo', 'neo-dark'],
+    });
+    expect(count).toBe(2);
+    expect([...html.matchAll(/data-theme="([\w-]+)"/g)].map((m) => m[1])).toEqual([
+      'neo',
+      'neo-dark',
+    ]);
+    expect(html).toContain('themes neo, neo-dark');
+  });
+
   it('shows a fixture that picks its theme once, in that theme', async () => {
     const { html, count } = await buildGallery(fixtures.slice(1), { version: '13.0.0-test' });
     expect(count).toBe(1);

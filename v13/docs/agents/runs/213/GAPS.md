@@ -23,27 +23,34 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 ## #227 T2 neo-dark
 
 - [x] Merged (PR #259). Gradient values in `neo-dark.ts` (integration merge).
-- [ ] `altBackground #f0f0f0` kept from v12 (D126) on a dark theme; not a text pair. #234 (state) judges it side by side with v12; escalate if it reads badly.
+- [x] `altBackground #f0f0f0` kept from v12 (D126) on a dark theme; not a text pair. #234 judged it: it reads badly. Now `#404040` (D189, #236).
 
 ## #229 T3 flowchart
 
 - [x] Merged (PR #261). Carries a8669b5f4 from #257 (cherry-picked): the new fixtures move the grammar sampler onto `A@{…}@{…}`.
-- [ ] Escalated to Knut, built as v13 does it; MIGRATION.md lines and D-ids wait for the answer: linked nodes get the gradient (v12 bug drew them plain); `lin-doc` rule and `fr-circ` dot in plain nodeBorder; icon frames take the gradient until the icons plugin.
+- [x] Decided 2026-11-05 (D184, D185, D186; MIGRATION.md "Neo gradient", #236): linked nodes get the gradient (v12 bug drew them plain); `lin-doc` rule and `fr-circ` dot in plain nodeBorder; icon frames take the gradient until the icons plugin.
 
 ## #231 T4 sequence
 
 - [x] Merged (PR #260). No gradient, as in v12 (evidence in tickets/231.md). Text size follows the theme (D132).
-- [ ] Escalated to Knut: participant boxes take the theme shadow; v12's white offset filter did not show.
-- [ ] For #236: MIGRATION.md still says neo gradients are "Not in 13.0".
+- [x] Decided 2026-11-05 (D184; MIGRATION.md drop shadow row, #236): participant boxes take the theme shadow; v12's white offset filter did not show.
+- [x] Sequence text at the theme's 14px (v12 16px): already decided by D132 (unset sequence font sizes follow the theme's `fontSize`); MIGRATION.md cites D132. No new D-id.
+- [x] For #236: MIGRATION.md's "Not in 13.0" gradient row now says what v13 does (D182).
 
 ## #233 T5 class
 
+- [x] Decided 2026-11-05 (D187; MIGRATION.md Class diagram SVG structure, #236): `style`/`classDef` fill and stroke on a class box take effect in every theme.
+
 ## #234 T6 state
 
-- [ ] Escalated (tickets/234.md): region divider plain under the gradient; choice shadow (pre-existing); neo-dark `altBackground #f0f0f0` reads badly (the #227 item), proposed `#404040`.
+- [x] Decided 2026-11-05 (D185, D188, D189; MIGRATION.md State diagram SVG structure and neo-dark, #236): region divider plain under the gradient; choice shadow (pre-existing); neo-dark `altBackground` `#404040`.
 
 ## #235 T7 ER
 
-- [ ] Escalated (tickets/235.md): column rules take the gradient colour at their x; v12 drew each half gradientStart, half gradientStop (0.0001-wide polygons). Proposed MIGRATION.md line there.
+- [x] Decided 2026-11-05 (D185; MIGRATION.md "Neo gradient", #236): column rules take the gradient colour at their x; v12 drew each half gradientStart, half gradientStop (0.0001-wide polygons).
 
 ## #236 T8 close
+
+- [x] Gallery: every type's baselines in `neo` and `neo-dark`; dark themes on their own background; `/gallery?themes=…` on the dev server (tickets/236.md).
+- [x] Docs: R-THEME-7 done, theming.md gradient row, MIGRATION.md gradient and D184–D189 lines.
+- [ ] Maintainer review of the gallery (tailnet URL in the PR).
