@@ -190,7 +190,8 @@ describe('colours', () => {
     expect(circle(plain)).toContain('fill="#333333"');
     const set = await lit('\n  themeVariables:\n    quadrantPointFill: "#0149ff"');
     expect(circle(set)).toContain('fill="#0149ff"');
-    expect(circle(set)).toContain('stroke="#0149ff"');
+    // v12's default stroke was the NaN point fill, which browsers ignore: no ring.
+    expect(circle(set)).not.toContain('stroke=');
   });
 
   it('writes inline and class paints as attributes, with the # v12 left out (D235)', async () => {
@@ -203,12 +204,23 @@ describe('colours', () => {
     );
     const a = /<g class="data-point" data-id="A"[^>]*><circle[^>]*>/.exec(svg)![0];
     expect(a).toContain('fill="#ff0000"');
-    expect(a).toContain('stroke="var(--_qpf)"');
+    expect(a).not.toContain('stroke=');
     const b = /<g class="data-point" data-id="B"[^>]*><circle[^>]*>/.exec(svg)![0];
     expect(b).toContain('fill="#00ff00"');
     expect(b).toContain('stroke="#0000ff"');
     expect(b).toContain('stroke-width="3"');
     expect(b).toContain('r="9"');
+  });
+
+  it('draws a stroke only where a stroke colour is set (v12 drew no default ring)', async () => {
+    const ring = (svg: string): string => /<circle[^>]*>/.exec(svg)![0];
+    const width = ring(await render('A: [0.5, 0.5] stroke-width: 4px'));
+    expect(width).not.toContain('stroke=');
+    const both = ring(await render('A: [0.5, 0.5] stroke-width: 4px, stroke-color: #00ff00'));
+    expect(both).toContain('stroke="#00ff00"');
+    expect(both).toContain('stroke-width="4"');
+    const cls = ring(await render('classDef c stroke-color: #0000ff\nA:::c: [0.5, 0.5]'));
+    expect(cls).toContain('stroke="#0000ff"');
   });
 
   it('draws every family plain: no gradient, shadow or palette (D227)', async () => {
@@ -253,6 +265,16 @@ describe('bounding box (D224)', () => {
     expect(w).toBe(Math.ceil(495 + half));
     expect(h).toBe(500);
     expect(svg).toContain(`max-width:${w}px`);
+  });
+
+  it('covers a stroked point at the corner, half its stroke outside the circle', async () => {
+    const svg = await render('A: [1, 1] radius: 5, stroke-width: 20px, stroke-color: #ff0000');
+    // The point sits at (495, 5): radius 5 plus half of the 20px stroke reaches 15 out.
+    expect(viewBox(svg)).toEqual([0, -10, 510, 510]);
+    // A stroke width with no stroke colour draws no stroke, so it adds nothing.
+    expect(viewBox(await render('A: [1, 1] radius: 5, stroke-width: 20px'))).toEqual([
+      0, 0, 500, 500,
+    ]);
   });
 
   it('grows left over a label that starts before 0', async () => {
