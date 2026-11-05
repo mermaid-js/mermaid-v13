@@ -19,7 +19,7 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 ## #332 T3 layout (from the exploration)
 
 - `oracle.parse(text, config)` resets config before `getQuadrantData()` runs, so builder parity must carry config through `%%{init}` in the text (or extend the oracle additively).
-- **Choice (no maintainer):** v12's builder falls back with `||`, so a configured `0` (e.g. `pointRadius: 0`, `quadrantPadding: 0`) reverts to the default. v13 honours the configured value, since the schema accepts 0 and R-CONF says configured keys are honoured; MIGRATION.md lists it (T5). Parity fixtures avoid 0.
+- ~~Configured `0` differs from v12~~: false. v12's `getQuadrantData()` re-applies `getConfig().quadrantChart` after the `||` defaults, so v12 honours `0` too (review of #332, probed). No MIGRATION entry.
 - v12 point x/y reach the builder as strings coerced by d3; v13 parses them once (D226 for non-numbers).
 
 ## #309 T0 (merged)
