@@ -80,8 +80,9 @@ handDrawnSeed?: number
  * Defines which layout algorithm to use for rendering the diagram.
  * 
  * Defaults to `layered`, the layout engine built into core (DESIGN §6.1).
- * The v12 names `dagre` and `elk` are still accepted and map to `layered`
- * until an ELK plugin is installed.
+ * The v12 name `dagre` is still accepted and maps to `layered`. `elk` and
+ * `elk.<algorithm>` need the `@mermaid-js/layout-elk` plugin; without it
+ * they draw with `layered` and warn `ELK_NOT_INSTALLED`.
  * 
  */
 layout?: string

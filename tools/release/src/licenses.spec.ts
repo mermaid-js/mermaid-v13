@@ -83,6 +83,18 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
+  it('accepts notices for a third-party dependency in a package with no ported files', () => {
+    const root = workspace({
+      'packages/layout/package.json': JSON.stringify({
+        name: 'layout',
+        files: ['dist', 'THIRD_PARTY_NOTICES'],
+      }),
+      'packages/layout/THIRD_PARTY_NOTICES': 'elkjs\n-----\nEPL-2.0 OR GPL-3.0-or-later\n',
+      'packages/layout/src/a.ts': '// Our own code.\nexport {};\n',
+    });
+    expect(checkLicenses(root)).toEqual([]);
+  });
+
   it('reports notice entries for files that no longer exist', () => {
     const root = workspace({
       'packages/core/package.json': manifest(),

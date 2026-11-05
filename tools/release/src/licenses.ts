@@ -9,7 +9,8 @@
  *   `THIRD_PARTY_NOTICES` that holds the upstream's MIT copyright line, lists the file by its
  *   package-relative path (in that upstream's section, when the notices have one per upstream)
  *   and is in the package's `"files"`, so it ships in the tarball;
- * - every path the notices list still exists;
+ * - every path the notices list still exists (notices may also credit a runtime dependency, such
+ *   as layout-elk's elkjs, with no file listed);
  * - the files in `REQUIRED_CREDITS` credit the upstreams listed for them.
  * Spec files are not published and are skipped. Tools are not published either, so only their
  * headers are checked.
@@ -160,9 +161,8 @@ export function checkLicenses(root: string): string[] {
     }
 
     const notices = readFileSync(noticesPath, 'utf8');
-    const used = UPSTREAMS.filter(
-      (u) => u.name === 'Pele' || derived.some((d) => d.upstream === u)
-    );
+    // Notices may also cover third-party dependencies (layout-elk's elkjs), with no ported file.
+    const used = UPSTREAMS.filter((u) => derived.some((d) => d.upstream === u));
     for (const u of used)
       if (!notices.includes('MIT License') || !notices.includes(u.copyright))
         problems.push(`${pkg}/${NOTICES}: must contain the MIT License text with "${u.copyright}"`);

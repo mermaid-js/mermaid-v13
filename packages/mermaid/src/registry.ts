@@ -86,12 +86,14 @@ export interface Detected {
   readonly id: string | undefined;
 }
 
+/** Names the built-in engine answers to silently (DESIGN §6.1): `layered` and v12's `dagre`. */
+const builtIn = (name: string): boolean => name === 'layered' || name === 'dagre';
+
 /**
- * Names the built-in engine answers to until an ELK plugin is registered (DESIGN §6.1): v12's
- * `dagre`, `elk` and the `elk.<algorithm>` names of v12's ELK package.
+ * v12's ELK names, `elk` and `elk.<algorithm>` (D171). Without an ELK engine registered they draw
+ * with the built-in engine and warn `ELK_NOT_INSTALLED` (D173). Core never names the package.
  */
-const builtIn = (name: string): boolean =>
-  name === 'layered' || name === 'dagre' || name === 'elk' || name.startsWith('elk.');
+const isElkName = (name: string): boolean => name === 'elk' || name.startsWith('elk.');
 
 /** The plugin a loaded entry module holds: `manifest.export`, the default export, or itself. */
 function entryExport(module: unknown, manifest: PluginManifest): unknown {
@@ -378,13 +380,16 @@ export class Registry {
 
   /**
    * The engine for a `layout` name: `ready` when loaded, `missing` when registered but not
-   * loaded, `unknown` (the built-in engine stands in) when nobody registered it.
+   * loaded, `unknown` (the built-in engine stands in) when nobody registered it, and `elk` (the
+   * built-in engine stands in too) for an ELK name while no ELK engine is registered at all.
    */
-  layout(name: string): { engine: LayoutEngine; state: 'ready' | 'missing' | 'unknown' } {
+  layout(name: string): { engine: LayoutEngine; state: 'ready' | 'missing' | 'unknown' | 'elk' } {
     const engine = this.layouts.get(name);
     if (engine) return { engine, state: 'ready' };
     if (this.layoutLoaders.has(name)) return { engine: layered, state: 'missing' };
-    return { engine: layered, state: builtIn(name) ? 'ready' : 'unknown' };
+    if (builtIn(name)) return { engine: layered, state: 'ready' };
+    const elkInstalled = [...this.layoutLoaders.keys()].some(isElkName);
+    return { engine: layered, state: isElkName(name) && !elkInstalled ? 'elk' : 'unknown' };
   }
 
   async loadLayout(name: string): Promise<void> {

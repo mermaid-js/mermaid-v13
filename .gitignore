@@ -68,6 +68,8 @@ generated/
 !packages/language-service/src/generated/
 # The Lezer parser built from the flowchart grammar (#35), checked by its freshness spec
 !packages/language-service-codemirror/src/generated/
+# v12 develop's ELK input graphs (#239), captured from a v12 build; the sync spec's oracle input
+!packages/layout-elk/fixtures/generated/
 
 
 /CLAUDE.md

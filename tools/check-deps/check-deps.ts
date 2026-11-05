@@ -11,7 +11,9 @@
  *   published or not: the editor, the service and core are peers.
  * - Other private packages (conformance, bench, tools) are not published and are skipped.
  * - `THIRD_PARTY_ALLOWED` names the few third-party packages a published package may depend
- *   on and import from its bin, by decision: the LSP server's `vscode-languageserver` (D88).
+ *   on and import from its bin, by decision: the LSP server's `vscode-languageserver` (D88) and
+ *   the ELK layout package's `elkjs` (D171, licensed EPL-2.0 OR GPL-3.0-or-later; see the
+ *   package's THIRD_PARTY_NOTICES).
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
@@ -34,6 +36,7 @@ export interface WorkspacePackage {
 /** Third-party runtime dependencies a published package may have, by package name. */
 export const THIRD_PARTY_ALLOWED: Readonly<Record<string, readonly string[]>> = {
   '@mermaid-js/language-server': ['vscode-languageserver'],
+  '@mermaid-js/layout-elk': ['elkjs'],
 };
 
 const allowedThirdParty = (name: string, dep: string) =>
