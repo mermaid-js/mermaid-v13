@@ -111,10 +111,12 @@ function bounds(scene: Scene): Box {
     box.maxX = Math.max(box.maxX, x);
     box.maxY = Math.max(box.maxY, y);
   };
-  for (const p of layout.points) {
-    put(p.cx - p.radius, p.cy - p.radius);
-    put(p.cx + p.radius, p.cy + p.radius);
-  }
+  layout.points.forEach((p, i) => {
+    // A drawn stroke is centred on the circle, so half of it lies outside.
+    const r = p.radius + (scene.paint.points[i]!.stroke ? p.strokeWidth / 2 : 0);
+    put(p.cx - r, p.cy - r);
+    put(p.cx + r, p.cy + r);
+  });
   for (const at of anchors(layout)) {
     const { label } = scene.measure(at);
     if (label.lines.length === 0) continue;

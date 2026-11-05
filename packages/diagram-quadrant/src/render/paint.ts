@@ -18,7 +18,8 @@ const QUADRANT_VARS = [
 
 export interface PointPaint {
   readonly fill: Paint;
-  readonly stroke: Paint;
+  /** Only an inline or class `stroke-color`: v12's default stroke never drew (see below). */
+  readonly stroke?: Paint;
 }
 
 export interface Paints {
@@ -48,17 +49,17 @@ export function paints(theme: Theme, layout: QuadrantLayout): Paints {
   });
   const externalBorder = theme.color('quadrantExternalBorderStrokeFill');
   const internalBorder = theme.color('quadrantInternalBorderStrokeFill');
-  // An unset point paint is the theme's (D231), read once and only when a point needs it.
+  // An unset point fill is the theme's (D231), read once and only when a point needs it. An
+  // unset stroke is none: v12's default was its NaN `quadrantPointFill`, which browsers ignore,
+  // so a `stroke-width` alone drew no ring.
   let point: Paint | undefined;
   const themed = (): Paint => (point ??= theme.color('quadrantPointFill'));
   const author = (c: string | undefined): Paint | undefined =>
     c === undefined ? undefined : checkColor(c);
-  const points = layout.points.map(
-    (p: QuadrantLayoutPoint): PointPaint => ({
-      fill: author(p.fill) ?? themed(),
-      stroke: author(p.stroke) ?? themed(),
-    })
-  );
+  const points = layout.points.map((p: QuadrantLayoutPoint): PointPaint => {
+    const stroke = author(p.stroke);
+    return { fill: author(p.fill) ?? themed(), ...(stroke ? { stroke } : {}) };
+  });
   const has = (axis: 'x' | 'y'): boolean => layout.axisLabels.some((l) => l.axis === axis);
   return {
     quadrants,

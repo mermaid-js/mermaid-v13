@@ -968,8 +968,22 @@ and `transform="translate(x,y) rotate(r)"` placement.
 | An unlabelled quadrant drew an empty `<text>` | Only its `<rect>` | Nothing invisible is drawn |
 | Border lines styled with `style="stroke: …; stroke-width: …"` | `stroke` and `stroke-width` attributes | No inline style (R-SEC-2) |
 | Labels set as `textContent`: a quoted `<br>` and a markdown string's `**` showed literally, entities as written | Core's label layout with no wrap width: every `<br>` form breaks, markdown renders, entities decode, and math works (D176). A plain label is still one `<text>`; one with breaks or emphasis is a `<text>` with `<tspan>`s, placed so its box sits where v12's anchor and baseline put one line | D225 |
-| Points: `fill="hsl(…, NaN%)"` (v12's `quadrantPointFill` rule had a precedence bug and a khroma call with no amount), so points showed the root `fill: textColor`; a user `quadrantPointFill` was ignored | `fill` and `stroke` from `quadrantPointFill`, which defaults to `textColor`: the same look in every theme, and a user value is honoured | D231 |
+| Points: `fill="hsl(…, NaN%)"` and the same `stroke` (v12's `quadrantPointFill` rule had a precedence bug and a khroma call with no amount), so points showed the root `fill: textColor` and no stroke, even with a `stroke-width`; a user `quadrantPointFill` was ignored | `fill` from `quadrantPointFill`, which defaults to `textColor`: the same look in every theme, and a user value is honoured. A `stroke` is written only when an inline or class `stroke-color` sets one, so `stroke-width` alone still draws no ring; a drawn stroke counts toward the bounding box | D231, D224 |
 | A style colour without `#` (`color: ff0000`) was written as `fill="ff0000"`, which browsers ignore | Written as `fill="#ff0000"` | D235 |
-| Quadrant fills 2–4 derived from `primaryColor` (or `#ECECFE` in `redux`, `redux-color` and `neo`) | Derived from `quadrant1Fill`, which is `primaryColor` (`#ececfe` in those three): the same colours unless an author sets `quadrant1Fill` alone, which now moves 2–4 too. `default` also follows an author `primaryColor`, which v12's `theme-default.js` ignored for the quadrant fills (it derived them once, before the overrides) | D232 |
+| Quadrant fills 2–4 derived from `primaryColor` (or `#ECECFE` in `redux`, `redux-color` and `neo`) | Derived from `quadrant1Fill`, which is `primaryColor` (`#ececfe` in those three): the same colours unless an author sets `quadrant1Fill` alone, which now moves 2–4 too. `default` also follows an author `primaryColor`, `primaryTextColor` and `primaryBorderColor`, which v12's `theme-default.js` ignored for the quadrant fills, text fills and borders (it derived them once, in its constructor, before the overrides) | D232 |
 | A point whose coordinate lexed but was not a number in [0, 1] (`0x5`, `0a5`) was drawn off the chart or at `NaN` | Left out, with one `QUADRANT_POINT_INVALID` warning per point | D226 |
 | `look: neo` changed nothing in a quadrant chart | Every theme family draws it plain, without gradient, shadow or palette; families differ by colour only | D227 |
+| Border lines in v12's khroma `primaryBorderColor` | Core's `primaryBorderColor`, the border colour of every other type, so some themes change (table below) | R-THEME-11 |
+| `themeVariables.darkMode: true` switched `primaryTextColor` and `textColor` to `#eee` in `redux`, `redux-color`, `base` and `neo`, and so every quadrant text | Core's theme specs keep their text colours under `darkMode`, so quadrant text does too. This is core behaviour for every type, not a quadrant change | Core |
+
+Quadrant border colours (`quadrantExternalBorderStrokeFill` and `quadrantInternalBorderStrokeFill`)
+where v12 and v13 differ; the other themes keep v12's colour.
+
+| Theme | v12 | v13 |
+| --- | --- | --- |
+| `default` | `#c7c7f1` | `#c9c9d9` |
+| `dark` | `#cccccc` | `#4c4d4d` |
+| `forest` | `#abb594` | `#aec281` |
+| `neutral` | `#d4d4d4` | `#cacaca` |
+| `base` | `#eeddbb` | `#d9cfbc` |
+| `redux`, `redux-color` | `#171717` | `#28253d` |
