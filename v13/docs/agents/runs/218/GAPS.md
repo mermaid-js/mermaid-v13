@@ -32,3 +32,9 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 - #238 is merged into `feature/215_feature-plugins`, not yet `mermaid-v13`. Final shape: `"mermaid": { "plugin": "layout", "names": [...] (never layered/dagre), "entry", "id"?, "export"?, "config"? }`; `ManifestPlugin` gains `config?: ConfigFragment`; `registerExternalDiagrams` registers each name lazily with one shared entry load (details: `v13/docs/agents/runs/215/tickets/238.md` on that branch).
 - [ ] Whichever of #218/#215 reaches `mermaid-v13` second adapts: the T1 seam's `layout` arm gains `config`, uses #238's entry resolution; T4 `scanOne` (hook comment), T5's generated module and T6's queue feed layout manifests. Our arm (`{kind:'layout', package, names, loader}`) is compatible; the change is additive.
+
+## T6 #230 (merged)
+
+- [ ] Not yet run in the Playwright image (T7).
+- [ ] **Open, maintainer decision (D163):** a `cdnBase` that is not the directory the ESM entry came from makes lazy chunks load a second copy of the shared core chunks from the mirror (separate module instances; `instanceof LimitError` etc. break). Implementer's recommendation (a′): the classic loader also reads `data-cdn-base` from its own `<script>` tag and imports the whole ESM build from there; for ESM, `cdnBase` must mirror the entry's directory, a different value warns. `data-cdn-base` would be a second source besides `initialize()`, so it needs a D-id in D160–D169. Rejected: rewriting lazy chunks to take core from the entry (custom linker).
+- Bare package URLs (unpkg/jsdelivr → `dist/mermaid.min.js`) are unit-tested only; the test server doesn't redirect.
