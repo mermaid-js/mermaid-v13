@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectTimeline, parseTimeline } from '@mermaid-js/diagram-timeline';
-import { timelineLanguage } from '@mermaid-js/diagram-timeline/language';
+import { parseTimeline } from '@mermaid-js/diagram-timeline';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';
 import { timelineGateCorpus } from './corpus.ts';
@@ -16,19 +15,11 @@ import { timelineV12Snapshot } from './v12.ts';
  *   the one starting at a `section` v12 gave that name (a repeated name is matched by name);
  *   every period v12 puts before the first section sits in none; section folds never overlap.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until timeline's
- * manifest has its `language` entry (#315); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (timeline's manifest
+ * `language` entry, #315).
  */
-const service = createLanguageService({
-  facets: [
-    {
-      type: 'timeline',
-      id: 'timeline',
-      detector: (t) => detectTimeline(t),
-      facet: timelineLanguage,
-    },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['timeline'] });
 
 describe('timeline symbols and folding through the service match v12', () => {
   it('over the gate corpus', async () => {
@@ -87,8 +78,9 @@ describe('timeline symbols and folding through the service match v12', () => {
     expect(problems).toEqual([]);
   }, 300_000);
 
-  it('runs with an eager row only while timeline has no manifest `language` entry', () => {
+  it('loads the facet from the generated registry (#315)', () => {
     const row = firstPartyFacets.find((e) => e.type === 'timeline');
-    expect(row?.load, 'drop the eager row: the manifest registers the facet').toBeUndefined();
+    expect(row?.load).toBeTypeOf('function');
+    expect(service.update('x:///t', 'timeline\n  2002 : a').facet?.id).toBe('timeline');
   });
 });

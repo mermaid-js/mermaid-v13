@@ -53,7 +53,14 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     detector: (text) => /^\s*(graph|flowchart)/.test(text),
     load: () => import('@mermaid-js/diagram-flowchart/language').then((m) => m.language),
   },
-  { type: 'timeline', id: 'timeline', pattern: /^\s*timeline/, detector: (text) => /^\s*timeline/.test(text) },
+  {
+    type: 'timeline',
+    id: 'timeline',
+    section: 'timeline',
+    pattern: /^\s*timeline/,
+    detector: (text) => /^\s*timeline/.test(text),
+    load: () => import('@mermaid-js/diagram-timeline/language').then((m) => m.language),
+  },
   { type: 'gitGraph', id: 'gitGraph', pattern: /^\s*gitGraph/, detector: (text) => /^\s*gitGraph/.test(text) },
   {
     type: 'stateDiagram',
@@ -88,4 +95,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'class' | 'er' | 'sequence' | 'state';
+export type FirstPartyFacetId = 'flowchart' | 'class' | 'er' | 'sequence' | 'timeline' | 'state';

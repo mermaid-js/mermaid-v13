@@ -257,10 +257,21 @@ describe('timeline TD follows timelineRendererVertical.ts', () => {
     expect(l.axis.y1).toBe(50 - 32);
     expect(l.axis.y2).toBeCloseTo(end + 8 + 20);
     expect(l.axis.arrow.tip).toEqual({ x: 430, y: l.axis.y2 + 4 });
-    const big = lay({ ...fx.verticalSimple, title: undefined }, {}, 'default', {
+    // v12 reads the top-level `fontSize` key here (`parseFontSize(conf.fontSize)`), not the
+    // theme's font size.
+    const big = layoutTimeline(
+      { ...fx.verticalSimple, title: undefined },
+      {
+        config: { timeline: {}, fontSize: 20 } as ResolvedConfig,
+        measurer: tableMeasurer,
+        theme: createTheme(specs.get('default')!, {}),
+      }
+    );
+    expect(big.axis.y1).toBe(50 - 40);
+    const themed = lay({ ...fx.verticalSimple, title: undefined }, {}, 'default', {
       fontSize: '20px',
     });
-    expect(big.axis.y1).toBe(50 - 40);
+    expect(themed.axis.y1).toBe(50 - 32);
   });
 
   it('starts the axis below a title it would cross, where v12 drew it through', () => {

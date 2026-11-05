@@ -43,6 +43,9 @@ describe('completion', () => {
       'classDiagram',
       'erDiagram',
       'sequenceDiagram',
+      'timeline',
+      'timeline LR',
+      'timeline TD',
       'stateDiagram-v2',
       'stateDiagram',
     ]);

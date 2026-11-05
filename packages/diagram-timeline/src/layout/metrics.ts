@@ -18,6 +18,8 @@ export interface CommonMetrics {
   readonly originY: number;
   /** Added to a box's label height, in font sizes (v12 `fontSize × 1.1 × 0.5`). */
   readonly heightEm: number;
+  /** The font size those formulas take when the `fontSize` config key is unset (v12's 16). */
+  readonly fontSize: number;
   /** The title: its baseline (v12 `y = 20`), size (v12 `font-size: 4ex`) and weight (bold). */
   readonly titleBaseline: number;
   readonly titleFontSize: string;
@@ -115,6 +117,7 @@ export const TIMELINE_METRICS: TimelineMetrics = {
     originX: 50,
     originY: 50,
     heightEm: 1.1 * 0.5,
+    fontSize: 16,
     titleBaseline: 20,
     titleFontSize: '4ex',
     titleFontWeight: 700,

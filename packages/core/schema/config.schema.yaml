@@ -959,7 +959,7 @@ properties:
     x-mermaid: { status: pending }
   timeline:
     $ref: '#/$defs/TimelineDiagramConfig'
-    x-mermaid: { status: pending }
+    x-mermaid: { status: honoured, since: 13.0.0 }
   class:
     $ref: '#/$defs/ClassDiagramConfig'
     x-mermaid: { status: honoured, since: 13.0.0 }
@@ -1048,7 +1048,14 @@ properties:
   fontSize:
     type: number
     default: 16
-    x-mermaid: { status: pending }
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+      reason: >-
+        Read by timeline, as v12's renderer read it: each box is `fontSize × 0.55` px taller
+        than its text, and the TD axis starts `2 × fontSize` above the content and ends
+        `0.5 × fontSize + 20` below it. Text is drawn at `themeVariables.fontSize`; no other
+        type reads this key.
   markdownAutoWrap:
     type: boolean
     default: true
@@ -3118,61 +3125,108 @@ $defs:
       - bottomMarginAdj
       - useMaxWidth
     properties:
+      useWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useWidth'
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: Only v12's gantt renderer read `useWidth`; the timeline renderer never did.
+      useMaxWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useMaxWidth'
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            As v12 with its default config merged (true): `width="100%"` and a `max-width`. v12's
+            renderer fell back to false only when the key was missing from its config.
       diagramMarginX:
         $ref: '#/$defs/C4DiagramConfig/properties/diagramMarginX'
         default: 50
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       diagramMarginY:
         $ref: '#/$defs/C4DiagramConfig/properties/diagramMarginY'
         default: 10
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       leftMargin:
         description: Margin between actors
         type: integer
         default: 150
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            As v12: the content starts `50 + leftMargin` from the left and the title is placed
+            from it. The LR axis starts at `leftMargin` and ends at `width + 3 × leftMargin` or at
+            the last period, whichever is further.
       width:
         description: Width of actor boxes
         type: integer
         default: 150
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       height:
         description: Height of actor boxes
         type: integer
         default: 50
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       padding:
         type: number
-        x-mermaid: { status: pending }
-        # should the default value be 50?
-        # see https://github.com/mermaid-js/mermaid/blob/7647ae317a7b2130e32777248d25a9c4d24b8f9f/packages/mermaid/src/diagrams/timeline/timelineRenderer.ts#L237
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The margin around the drawing in the viewBox, as v12's `setupGraphViewbox`. The schema
+            has no default, as v12's; unset it is 50, v12's renderer fallback.
       boxMargin:
         description: Margin around loop boxes
         type: integer
         default: 10
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       boxTextMargin:
         description: Margin around the text in loop/alt/opt boxes
         type: integer
         default: 5
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       noteMargin:
         description: Margin around notes
         type: integer
         default: 10
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       messageMargin:
         description: Space between messages.
         type: integer
         default: 35
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       messageAlign:
         description: Multiline message alignment
         type: string
@@ -3181,7 +3235,10 @@ $defs:
           - center
           - right
         default: center
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       bottomMarginAdj:
         description: |
           Prolongs the edge of the diagram downwards.
@@ -3190,7 +3247,10 @@ $defs:
         type: integer
         default: 1
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       rightAngles:
         description: |
           Curved Arrows become Right Angles
@@ -3199,54 +3259,86 @@ $defs:
           right angles, rather than as curves.
         type: boolean
         default: false
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       taskFontSize:
         type: *fontSizeType
         default: 14
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it; box text is drawn at `themeVariables.fontSize`.
       taskFontFamily:
         type: string
         default: '"Open Sans", sans-serif'
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it; box text is drawn at `themeVariables.fontFamily`.
       taskMargin:
         type: number
         default: 50
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       activationWidth:
         description: Width of activation box
         type: number
         default: 10
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       textPlacement:
         description: |
           text placement as: tspan | fo | old only text as before
         type: string
         # TODO, should this be an enum?
         default: fo
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it.
       actorColours:
         type: array
         items:
           type: string
         default: ['#8FBC8F', '#7CFC00', '#00FFFF', '#20B2AA', '#B0E0E6', '#FFFFE0']
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`.
       sectionFills:
         type: array
         items:
           type: string
         default: ['#191970', '#8B008B', '#4B0082', '#2F4F4F', '#800000', '#8B4513', '#00008B']
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`.
       sectionColours:
         type: array
         items:
           type: string
         default: ['#fff']
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`.
       disableMulticolor:
         # added by https://github.com/mermaid-js/mermaid/commit/652a42fe1aed7911a781a84716940a973b995639
         type: boolean
         default: false
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            With no sections, every period and its events take colour slot 0 instead of one slot per
+            period, as v12. With sections it does nothing, as in v12.
 
   GanttDiagramConfig:
     title: Gantt Diagram Config

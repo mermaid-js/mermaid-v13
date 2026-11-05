@@ -15,7 +15,6 @@ import {
   type SvgWriter,
 } from '@mermaid-js/core/svg';
 import { fontSizePx } from '@mermaid-js/core/text';
-import { PALETTE_LIMIT } from '@mermaid-js/core/theme';
 import { TIMELINE_METRICS } from '../layout/metrics.ts';
 import type {
   TimelineBox,
@@ -24,7 +23,7 @@ import type {
   TimelineLine,
 } from '../layout/types.ts';
 import type { TimelineModel } from '../model.ts';
-import { paints, type BoxPaint, type Paints } from './paint.ts';
+import { paints, PALETTE_SLOTS, type BoxPaint, type Paints } from './paint.ts';
 
 /** What the renderer reads from the render context. */
 export type TimelineRenderContext = Pick<
@@ -104,7 +103,7 @@ function textElement(w: SvgWriter, tag: 'title' | 'desc', text: string, id: stri
 }
 
 /** v12's class for slot `slot`: `section-<slot mod 12 − 1>`, so slot 0 is `section--1`. */
-const sectionClass = (slot: number): number => (slot % PALETTE_LIMIT) - 1;
+const sectionClass = (slot: number): number => (slot % PALETTE_SLOTS) - 1;
 
 /**
  * One box (v12 `drawNode`): a `timeline-node section-<n>` group with the background path, the

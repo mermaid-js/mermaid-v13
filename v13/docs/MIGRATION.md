@@ -276,7 +276,27 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `sequence.actorFont` | ignored | v12's internal font helper; v13 reads the `actorFontSize`, `actorFontFamily` and `actorFontWeight` keys. |  |
 | `gantt.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `journey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `timeline.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the timeline renderer never did. |  |
 | `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `timeline.diagramMarginX` | ignored | v12's timeline never read it. |  |
+| `timeline.diagramMarginY` | ignored | v12's timeline never read it. |  |
+| `timeline.width` | ignored | v12's timeline never read it. |  |
+| `timeline.height` | ignored | v12's timeline never read it. |  |
+| `timeline.boxMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.boxTextMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.noteMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.messageMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.messageAlign` | ignored | v12's timeline never read it. |  |
+| `timeline.bottomMarginAdj` | ignored | v12's timeline never read it. |  |
+| `timeline.rightAngles` | ignored | v12's timeline never read it. |  |
+| `timeline.taskFontSize` | ignored | v12's timeline never read it; box text is drawn at `themeVariables.fontSize`. |  |
+| `timeline.taskFontFamily` | ignored | v12's timeline never read it; box text is drawn at `themeVariables.fontFamily`. |  |
+| `timeline.taskMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.activationWidth` | ignored | v12's timeline never read it. |  |
+| `timeline.textPlacement` | ignored | v12's timeline never read it. |  |
+| `timeline.actorColours` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
+| `timeline.sectionFills` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
+| `timeline.sectionColours` | ignored | v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`. |  |
 | `class.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `class.titleTopMargin` | ignored | The class SVG draws no front-matter `title`, as flowchart's. |  |
@@ -958,6 +978,24 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 | Front-matter `title` drawn as `text.erDiagramTitleText` | Not drawn yet, as in the flowchart | |
 | Hand-drawn look: background copies of every entity (`<id>-background`) | None (`look` is removed, D153) | |
 
+## Timeline config
+
+- **SVG only:** `timeline`, `timeline LR` and `timeline TD` are detected by v12's case-sensitive
+  `timeline` detector, after `flowchart-v2` and before `gitGraph`. `format: 'ascii'` throws
+  `UnsupportedFormatError` (D216).
+- **Honoured** in the `timeline` section, with v12's effective values when unset (v12's renderer
+  with its default config merged): `leftMargin` (150), `padding` (no schema default; 50, v12's
+  fallback), `useMaxWidth` (true) and `disableMulticolor` (false). The top-level `fontSize` (16)
+  is read as v12's timeline read it: each box is `0.55 × fontSize` taller than its text, and the
+  TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. The
+  text itself is drawn at `themeVariables.fontSize`, as in v12.
+- **Ignored**, as v12's timeline never read them (keys copied from the sequence config):
+  `diagramMarginX`, `diagramMarginY`, `width`, `height`, `boxMargin`, `boxTextMargin`,
+  `noteMargin`, `messageMargin`, `messageAlign`, `bottomMarginAdj`, `rightAngles`,
+  `taskFontSize`, `taskFontFamily`, `taskMargin`, `activationWidth`, `textPlacement`,
+  `actorColours`, `sectionFills`, `sectionColours` and `useWidth`. Box colours come from the
+  `cScale`, `cScaleInv` and `cScaleLabel` palettes or `mainBkg` / `nodeBorder` (D258).
+
 ## Timeline SVG structure
 
 What changed in the timeline's SVG compared with v12's `timelineRenderer.ts` (LR) and
@@ -985,5 +1023,6 @@ where the element still exists: `timeline-node`, `section-<n>`, `node-bkg`, `nod
 | TD: the next section started 30px above the end of the previous section's last row, so full rows overlapped | A TD section starts at v12's place or 30px below what the previous group's rows hold, whichever is lower; most sectioned TD input moves down | No overlaps (#337) |
 | TD: the axis started `2 × fontSize` above the content, through a title wider than about 285px | The axis starts below the title when the title spans it | #337 |
 | Title an unclassed `<text>` in the root's `textColor`, `font-size="4ex"`, bold, at `bbox.width / 2 − leftMargin` (LR under `look: neo`: `bbox.x × 2 + leftMargin`); a front-matter `title` was dropped | `<text class="timeline-title">` in `textColor`, bold, at the px size of `4ex` the layout measured, left-aligned at the classic place in every theme. The `title` statement and a front-matter `title` are both drawn there; a title taller than one 16px line moves the content down | D218, D254, D225 |
-| `timeline.useMaxWidth` fell back to `false` in the renderer | `useMaxWidth` (default true) sets `width="100%"` and `max-width`; `false` writes the drawing's width and height | Schema default |
+| LR: the axis ended at `width + 3 × leftMargin`, short of the last period below a `leftMargin` of 25 | The axis ends there or at the last period's right edge, whichever is further; the default `leftMargin` (150) draws as v12 | #337 |
+| `timeline.useMaxWidth` fell back to `false` in the renderer, but v12's default config set it to `true` | Unchanged by default: `true` sets `width="100%"` and `max-width`; `false` writes the drawing's width and height. `leftMargin` (150), `padding` (50 when unset) and `disableMulticolor` likewise take v12's effective values, and the top-level `fontSize` still adds `0.55 × fontSize` to each box and sets the TD axis ends while the text is drawn at `themeVariables.fontSize`. The keys v12's timeline never read are ignored ([Removed, moved and ignored keys](#removed-moved-and-ignored-keys)) | #315 |
 

@@ -993,7 +993,8 @@ export const configSchema: ConfigSchema = {
     "timeline": {
       "$ref": "#/$defs/TimelineDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "class": {
@@ -1163,7 +1164,9 @@ export const configSchema: ConfigSchema = {
       "type": "number",
       "default": 16,
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "Read by timeline, as v12's renderer read it: each box is `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. Text is drawn at `themeVariables.fontSize`; no other type reads this key."
       }
     },
     "markdownAutoWrap": {
@@ -4149,18 +4152,38 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the timeline renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12 with its default config merged (true): `width=\"100%\"` and a `max-width`. v12's renderer fell back to false only when the key was missing from its config."
+          }
+        },
         "diagramMarginX": {
           "$ref": "#/$defs/C4DiagramConfig/properties/diagramMarginX",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "diagramMarginY": {
           "$ref": "#/$defs/C4DiagramConfig/properties/diagramMarginY",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "leftMargin": {
@@ -4169,7 +4192,9 @@ export const configSchema: ConfigSchema = {
           "default": 150,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: the content starts `50 + leftMargin` from the left and the title is placed from it. The LR axis starts at `leftMargin` and ends at `width + 3 × leftMargin` or at the last period, whichever is further."
           }
         },
         "width": {
@@ -4178,7 +4203,9 @@ export const configSchema: ConfigSchema = {
           "default": 150,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "height": {
@@ -4187,13 +4214,17 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "padding": {
           "type": "number",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The margin around the drawing in the viewBox, as v12's `setupGraphViewbox`. The schema has no default, as v12's; unset it is 50, v12's renderer fallback."
           }
         },
         "boxMargin": {
@@ -4202,7 +4233,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "boxTextMargin": {
@@ -4211,7 +4244,9 @@ export const configSchema: ConfigSchema = {
           "default": 5,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "noteMargin": {
@@ -4220,7 +4255,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "messageMargin": {
@@ -4229,7 +4266,9 @@ export const configSchema: ConfigSchema = {
           "default": 35,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "messageAlign": {
@@ -4242,7 +4281,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "center",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "bottomMarginAdj": {
@@ -4251,7 +4292,9 @@ export const configSchema: ConfigSchema = {
           "default": 1,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "rightAngles": {
@@ -4259,7 +4302,9 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "taskFontSize": {
@@ -4269,21 +4314,27 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; box text is drawn at `themeVariables.fontSize`."
           }
         },
         "taskFontFamily": {
           "type": "string",
           "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; box text is drawn at `themeVariables.fontFamily`."
           }
         },
         "taskMargin": {
           "type": "number",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "activationWidth": {
@@ -4291,7 +4342,9 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "textPlacement": {
@@ -4299,7 +4352,9 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "fo",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "actorColours": {
@@ -4316,7 +4371,9 @@ export const configSchema: ConfigSchema = {
             "#FFFFE0"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`."
           }
         },
         "sectionFills": {
@@ -4334,7 +4391,9 @@ export const configSchema: ConfigSchema = {
             "#00008B"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`."
           }
         },
         "sectionColours": {
@@ -4346,14 +4405,18 @@ export const configSchema: ConfigSchema = {
             "#fff"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`."
           }
         },
         "disableMulticolor": {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "With no sections, every period and its events take colour slot 0 instead of one slot per period, as v12. With sections it does nothing, as in v12."
           }
         }
       }

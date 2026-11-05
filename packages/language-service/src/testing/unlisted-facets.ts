@@ -10,14 +10,4 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [
-  // Spec #291: the manifest comes with T5 (#315).
-  {
-    type: 'timeline',
-    id: 'timeline',
-    section: 'timeline',
-    pattern: /^\s*timeline/,
-    detector: (text) => /^\s*timeline/.test(text),
-    load: () => import('@mermaid-js/diagram-timeline/language').then((m) => m.language),
-  },
-];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [];

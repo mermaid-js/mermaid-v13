@@ -344,6 +344,9 @@ importers:
       '@mermaid-js/diagram-state':
         specifier: workspace:*
         version: link:../diagram-state
+      '@mermaid-js/diagram-timeline':
+        specifier: workspace:*
+        version: link:../diagram-timeline
       '@mermaid-js/language-service':
         specifier: workspace:*
         version: link:../language-service
@@ -565,6 +568,9 @@ importers:
       '@mermaid-js/diagram-state':
         specifier: workspace:*
         version: link:../diagram-state
+      '@mermaid-js/diagram-timeline':
+        specifier: workspace:*
+        version: link:../diagram-timeline
     devDependencies:
       esbuild:
         specifier: ^0.25.12

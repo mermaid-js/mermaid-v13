@@ -15,12 +15,20 @@ import {
   type Paint,
   type SafeValue,
 } from '@mermaid-js/core/svg';
-import { formatColor, PALETTE_LIMIT, parseColor } from '@mermaid-js/core/theme';
 import { boxStrokes, scaleColors } from '../layout/env.ts';
 
 type Theme = RenderContext['theme'];
 type Length = ReturnType<Theme['length']>;
 type Shadow = ReturnType<Theme['filter']>;
+type Rgba = NonNullable<ReturnType<Theme['rgba']>>;
+type PaletteName = Parameters<Theme['palette']>[0];
+
+/**
+ * v12's colour classes per palette (`THEME_COLOR_LIMIT`, core's `PALETTE_LIMIT`, D258). Kept
+ * here and colours read through the `Theme` object: a value import of `@mermaid-js/core/theme`
+ * splits core's theme modules out of the entry chunk and grows the core closure (D161).
+ */
+export const PALETTE_SLOTS = 12;
 
 /** v12 `.eventWrapper { filter: brightness(120%) }`, computed into the colours. */
 const EVENT_BRIGHTNESS = 1.2;
@@ -61,12 +69,23 @@ export interface Paints {
   readonly label: Attrs;
 }
 
-/** `c` at 120% brightness, as CSS `brightness()` computes it in sRGB; `c` when JS can't parse it. */
-function brighter(c: string): Paint {
-  const rgba = parseColor(c);
-  if (!rgba) return c as Paint;
-  const up = (v: number): number => Math.min(255, v * EVENT_BRIGHTNESS);
-  return checkColor(formatColor([up(rgba[0]), up(rgba[1]), up(rgba[2]), rgba[3]])) ?? (c as Paint);
+const byte = (n: number): string =>
+  Math.round(Math.min(Math.max(n, 0), 255))
+    .toString(16)
+    .padStart(2, '0');
+
+/**
+ * `rgba` at 120% brightness, as CSS `brightness()` computes it in sRGB, written as six or eight
+ * hex digits; `c` when JS can't compute the colour. The channels are first rounded as the
+ * colour's hex form holds them.
+ */
+function brighter(c: Paint, rgba: Rgba | undefined): Paint {
+  if (!rgba) return c;
+  const up = (v: number): string =>
+    byte(Math.round(Math.min(Math.max(v, 0), 255)) * EVENT_BRIGHTNESS);
+  const alpha = rgba[3] >= 1 ? '' : byte(rgba[3] * 255);
+  const hex = '#' + up(rgba[0]) + up(rgba[1]) + up(rgba[2]) + (alpha === 'ff' ? '' : alpha);
+  return checkColor(hex) ?? c;
 }
 
 function weightOf(value: string): number {
@@ -86,16 +105,16 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     let ref = refs.get(name);
     if (ref === undefined) refs.set(name, (ref = theme.color(name)));
     if (!bright || live) return ref;
-    const rgba = theme.rgba(name);
-    return rgba ? brighter(formatColor(rgba)) : ref;
+    return brighter(ref, theme.rgba(name));
   };
   // Slots wrap at v12's 12 classes first, so boxes that share a `section-<n>` class share
   // their colour, then at a shorter author list.
-  const at = (slot: number, length: number): number => (slot % PALETTE_LIMIT) % length;
-  const slotted = (list: readonly string[], slot: number, bright: boolean): Paint | undefined => {
+  const at = (slot: number, length: number): number => (slot % PALETTE_SLOTS) % length;
+  const slotted = (name: PaletteName, slot: number, bright: boolean): Paint | undefined => {
+    const list = theme.palette(name);
     if (list.length === 0) return undefined;
-    const c = list[at(slot, list.length)]!;
-    return bright ? brighter(c) : (c as Paint);
+    const i = at(slot, list.length);
+    return bright ? brighter(list[i]!, theme.paletteRgba(name)[i]) : list[i];
   };
   const gradient = theme.gradient() !== undefined;
   const widths = boxStrokes(theme);
@@ -112,7 +131,7 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     const inv = theme.palette('cScaleInv');
     const text = theme.palette('cScaleLabel');
     // v12 repeats `.lineWrapper line` once per slot, so the last slot's label colour wins.
-    line = slotted(text, PALETTE_LIMIT - 1, false) ?? named('nodeBorder', false);
+    line = slotted('cScaleLabel', PALETTE_SLOTS - 1, false) ?? named('nodeBorder', false);
     // The fallbacks, read now so the root declares them.
     if (gradient || fill.length === 0) named('mainBkg', false);
     if (gradient || inv.length === 0 || text.length === 0) named('nodeBorder', false);
@@ -120,14 +139,14 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     paintOf = (slot, bright) => ({
       fill: gradient
         ? named('mainBkg', bright)
-        : (slotted(fill, slot, bright) ?? named('mainBkg', bright)),
+        : (slotted('cScale', slot, bright) ?? named('mainBkg', bright)),
       stroke: outline,
       strokeWidth: gradient ? (widths.outline as Length) : undefined,
-      text: slotted(text, slot, bright) ?? named('nodeBorder', bright),
+      text: slotted('cScaleLabel', slot, bright) ?? named('nodeBorder', bright),
       rule: {
         stroke: gradient
           ? named('nodeBorder', bright)
-          : (slotted(inv, slot, bright) ?? named('nodeBorder', bright)),
+          : (slotted('cScaleInv', slot, bright) ?? named('nodeBorder', bright)),
         width: widths.rule,
       },
     });
@@ -141,7 +160,7 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     const strokeWidth = theme.length('strokeWidth');
     if (!solid || border.length === 0) named('mainBkg', false);
     paintOf = (slot, bright) => {
-      const tint = slotted(border, slot, bright);
+      const tint = slotted('borderColorArray', slot, bright);
       return {
         fill: (solid ? tint : undefined) ?? named('mainBkg', bright),
         // The palette slot wins over the gradient (theming.md); an event's plain outline is

@@ -98,7 +98,7 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `deterministicIDSeed` | string |  | honoured (13.0.0) | As in v12, only its length is used, as the first `run()` diagram number when `deterministicIds` is set. | This option is the optional seed for deterministic ids. If set to `undefined` but deterministicIds is `true`, a simple number iterator is used. You can set this attribute to base the seed on a static string. |
 | `dompurifyConfig` | import('dompurify').Config |  | removed (13.0.0) | v13 has no HTML sanitizer: output is safe by construction (R-SEC-1). Replacement: none. | Configuration options to pass to the `dompurify` library. |
 | `wrap` | boolean |  | pending |  |  |
-| `fontSize` | number | `16` | pending |  |  |
+| `fontSize` | number | `16` | honoured (13.0.0) | Read by timeline, as v12's renderer read it: each box is `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. Text is drawn at `themeVariables.fontSize`; no other type reads this key. |  |
 | `markdownAutoWrap` | boolean | `true` | pending |  |  |
 | `suppressErrorRendering` | boolean | `false` | honoured (13.0.0) | `run()` and `mount()` put the error image (`renderErrorSvg`) in place of a failing diagram unless this is set; `render()` always rejects with a `MermaidError` and never touches the DOM. | Suppresses inserting 'Syntax error' diagram in the DOM. This is useful when you want to control how to handle syntax errors in your application. |
 
@@ -272,34 +272,34 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `timeline` | object |  | pending |  |  |
-| `timeline.useWidth` | number |  | pending |  |  |
-| `timeline.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `timeline` | object |  | honoured (13.0.0) |  |  |
+| `timeline.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the timeline renderer never did. |  |
+| `timeline.useMaxWidth` | boolean | `true` | honoured (13.0.0) | As v12 with its default config merged (true): `width="100%"` and a `max-width`. v12's renderer fell back to false only when the key was missing from its config. | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `timeline.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `timeline.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `timeline.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `timeline.diagramMarginX` | integer | `50` | pending |  | Margin to the right and left of the c4 diagram, must be a positive value. |
-| `timeline.diagramMarginY` | integer | `10` | pending |  | Margin to the over and under the c4 diagram, must be a positive value. |
-| `timeline.leftMargin` | integer | `150` | pending |  | Margin between actors |
-| `timeline.width` | integer | `150` | pending |  | Width of actor boxes |
-| `timeline.height` | integer | `50` | pending |  | Height of actor boxes |
-| `timeline.padding` | number |  | pending |  |  |
-| `timeline.boxMargin` | integer | `10` | pending |  | Margin around loop boxes |
-| `timeline.boxTextMargin` | integer | `5` | pending |  | Margin around the text in loop/alt/opt boxes |
-| `timeline.noteMargin` | integer | `10` | pending |  | Margin around notes |
-| `timeline.messageMargin` | integer | `35` | pending |  | Space between messages. |
-| `timeline.messageAlign` | "left" \\| "center" \\| "right" | `"center"` | pending |  | Multiline message alignment |
-| `timeline.bottomMarginAdj` | integer | `1` | pending |  | Prolongs the edge of the diagram downwards. Depending on css styling this might need adjustment. |
-| `timeline.rightAngles` | boolean | `false` | pending |  | Curved Arrows become Right Angles This will display arrows that start and begin at the same node as right angles, rather than as curves. |
-| `timeline.taskFontSize` | string \\| number | `14` | pending |  |  |
-| `timeline.taskFontFamily` | string | `"\"Open Sans\", sans-serif"` | pending |  |  |
-| `timeline.taskMargin` | number | `50` | pending |  |  |
-| `timeline.activationWidth` | number | `10` | pending |  | Width of activation box |
-| `timeline.textPlacement` | string | `"fo"` | pending |  | text placement as: tspan \| fo \| old only text as before |
-| `timeline.actorColours` | array | `["#8FBC8F","#7CFC00","#00FFFF","#20B2AA","#B0E0E6","#FFFFE0"]` | pending |  |  |
-| `timeline.sectionFills` | array | `["#191970","#8B008B","#4B0082","#2F4F4F","#800000","#8B4513","#00008B"]` | pending |  |  |
-| `timeline.sectionColours` | array | `["#fff"]` | pending |  |  |
-| `timeline.disableMulticolor` | boolean | `false` | pending |  |  |
+| `timeline.diagramMarginX` | integer | `50` | ignored (13.0.0) | v12's timeline never read it. | Margin to the right and left of the c4 diagram, must be a positive value. |
+| `timeline.diagramMarginY` | integer | `10` | ignored (13.0.0) | v12's timeline never read it. | Margin to the over and under the c4 diagram, must be a positive value. |
+| `timeline.leftMargin` | integer | `150` | honoured (13.0.0) | As v12: the content starts `50 + leftMargin` from the left and the title is placed from it. The LR axis starts at `leftMargin` and ends at `width + 3 × leftMargin` or at the last period, whichever is further. | Margin between actors |
+| `timeline.width` | integer | `150` | ignored (13.0.0) | v12's timeline never read it. | Width of actor boxes |
+| `timeline.height` | integer | `50` | ignored (13.0.0) | v12's timeline never read it. | Height of actor boxes |
+| `timeline.padding` | number |  | honoured (13.0.0) | The margin around the drawing in the viewBox, as v12's `setupGraphViewbox`. The schema has no default, as v12's; unset it is 50, v12's renderer fallback. |  |
+| `timeline.boxMargin` | integer | `10` | ignored (13.0.0) | v12's timeline never read it. | Margin around loop boxes |
+| `timeline.boxTextMargin` | integer | `5` | ignored (13.0.0) | v12's timeline never read it. | Margin around the text in loop/alt/opt boxes |
+| `timeline.noteMargin` | integer | `10` | ignored (13.0.0) | v12's timeline never read it. | Margin around notes |
+| `timeline.messageMargin` | integer | `35` | ignored (13.0.0) | v12's timeline never read it. | Space between messages. |
+| `timeline.messageAlign` | "left" \\| "center" \\| "right" | `"center"` | ignored (13.0.0) | v12's timeline never read it. | Multiline message alignment |
+| `timeline.bottomMarginAdj` | integer | `1` | ignored (13.0.0) | v12's timeline never read it. | Prolongs the edge of the diagram downwards. Depending on css styling this might need adjustment. |
+| `timeline.rightAngles` | boolean | `false` | ignored (13.0.0) | v12's timeline never read it. | Curved Arrows become Right Angles This will display arrows that start and begin at the same node as right angles, rather than as curves. |
+| `timeline.taskFontSize` | string \\| number | `14` | ignored (13.0.0) | v12's timeline never read it; box text is drawn at `themeVariables.fontSize`. |  |
+| `timeline.taskFontFamily` | string | `"\"Open Sans\", sans-serif"` | ignored (13.0.0) | v12's timeline never read it; box text is drawn at `themeVariables.fontFamily`. |  |
+| `timeline.taskMargin` | number | `50` | ignored (13.0.0) | v12's timeline never read it. |  |
+| `timeline.activationWidth` | number | `10` | ignored (13.0.0) | v12's timeline never read it. | Width of activation box |
+| `timeline.textPlacement` | string | `"fo"` | ignored (13.0.0) | v12's timeline never read it. | text placement as: tspan \| fo \| old only text as before |
+| `timeline.actorColours` | array | `["#8FBC8F","#7CFC00","#00FFFF","#20B2AA","#B0E0E6","#FFFFE0"]` | ignored (13.0.0) | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
+| `timeline.sectionFills` | array | `["#191970","#8B008B","#4B0082","#2F4F4F","#800000","#8B4513","#00008B"]` | ignored (13.0.0) | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
+| `timeline.sectionColours` | array | `["#fff"]` | ignored (13.0.0) | v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`. |  |
+| `timeline.disableMulticolor` | boolean | `false` | honoured (13.0.0) | With no sections, every period and its events take colour slot 0 instead of one slot per period, as v12. With sections it does nothing, as in v12. |  |
 
 ## `class`
 

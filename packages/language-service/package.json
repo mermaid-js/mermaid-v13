@@ -51,6 +51,9 @@
     },
     "@mermaid-js/diagram-state": {
       "optional": true
+    },
+    "@mermaid-js/diagram-timeline": {
+      "optional": true
     }
   },
   "devDependencies": {

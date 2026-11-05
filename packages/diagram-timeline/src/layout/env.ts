@@ -28,7 +28,10 @@ function lengthOf(value: unknown, fallback: number): number {
 
 export interface Env {
   readonly m: TimelineMetrics;
-  /** The font size every height formula reads (v12 `conf.fontSize`). */
+  /**
+   * The font size every height formula reads: the top-level `fontSize` config key (v12
+   * `conf.fontSize`), not the theme's, which the labels are drawn and measured at.
+   */
   readonly fontSize: number;
   readonly leftMargin: number;
   readonly padding: number;
@@ -88,6 +91,7 @@ export function envOf(ctx: TimelineLayoutContext): Env {
   const m = TIMELINE_METRICS;
   const conf = ctx.config.timeline ?? {};
   const fontSize = ctx.theme.number('fontSize');
+  const formulaSize = lengthOf(ctx.config.fontSize, m.common.fontSize);
   const family = ctx.theme.value('fontFamily');
   const font: FontKey = { family, size: fontSize, weight: weightOf(ctx.theme.value('fontWeight')) };
   const titleSize = fontSizePx(m.common.titleFontSize, fontSize) ?? fontSize;
@@ -96,7 +100,7 @@ export function envOf(ctx: TimelineLayoutContext): Env {
   const stroke = scaleColors(ctx.theme) ? undefined : ctx.theme.number('strokeWidth');
   return {
     m,
-    fontSize,
+    fontSize: formulaSize,
     leftMargin: lengthOf(conf.leftMargin, m.common.leftMargin),
     padding: lengthOf(conf.padding, m.common.padding),
     multicolor: conf.disableMulticolor !== true,
@@ -110,7 +114,7 @@ export function envOf(ctx: TimelineLayoutContext): Env {
       layoutLabel(plain(text), f, Math.max(wrap, m.common.minWrap), ctx.measurer, {
         inline: ctx.inline,
       }),
-    boxHeight: (label, padding) => label.height + fontSize * m.common.heightEm + padding,
+    boxHeight: (label, padding) => label.height + formulaSize * m.common.heightEm + padding,
   };
 }
 

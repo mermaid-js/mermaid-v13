@@ -52,7 +52,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     load: () => import('@mermaid-js/diagram-flowchart').then((m) => m.flowchart),
     loadAscii: () => import('@mermaid-js/diagram-flowchart/ascii').then((m) => m.ascii),
   },
-  { type: 'timeline', pattern: /^\s*timeline/ },
+  {
+    type: 'timeline',
+    pattern: /^\s*timeline/,
+    id: 'timeline',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-timeline').then((m) => m.timeline),
+  },
   { type: 'gitGraph', pattern: /^\s*gitGraph/ },
   {
     type: 'stateDiagram',
