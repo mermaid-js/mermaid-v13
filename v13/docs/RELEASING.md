@@ -81,8 +81,8 @@ Never edit `version` in a package.json, `version.ts` or the CHANGELOG files by h
 | `pnpm release:preflight` | Checks branch, clean tree, origin, pre mode, Node, npm login, GitHub token. Prints the release plan (from `changeset status`), the versions not yet on npm and the next step. | nothing |
 | `pnpm changeset version` | Applies the pending changesets: bumps versions (dependents too), writes CHANGELOGs, records them in `pre.json`. | package.json, CHANGELOG.md, `.changeset/pre.json` |
 | `pnpm release:sync-version` | Writes `packages/mermaid/src/version.ts` from package.json. | `version.ts` |
-| `pnpm release:rehearse` | Copies the working tree, versions and builds it, publishes to a local Verdaccio, then installs both ways and runs the guide's snippets, the CLI, bundles and types (`--nodes a,b` to test several Node binaries). | nothing (temp dir) |
-| `pnpm release:publish --target public …` | Packs every published package (alpha-version, exact-range and workspace-leak gates, LICENSE added), then `npm publish --tag v13-alpha` for **each version not on npm yet**. Already published versions are skipped, so only what `changeset version` bumped goes out, and a re-run after a failure finishes the set. | npm |
+| `pnpm release:rehearse` | Copies the working tree, versions and builds it, publishes to a local Verdaccio, then installs both ways and runs the guide's snippets, the CLI, bundles and types, and installs the editor adapters and checks their per-type grammars load and stay lazy chunks (`--nodes a,b` to test several Node binaries). | nothing (temp dir) |
+| `pnpm release:publish --target public …` | Packs every published package (alpha-version, exact-range, workspace-leak and dangling-export gates, LICENSE added), then `npm publish --tag v13-alpha` for **each version not on npm yet**. Already published versions are skipped, so only what `changeset version` bumped goes out, and a re-run after a failure finishes the set. | npm |
 | `pnpm changeset tag` | Creates a git tag `<name>@<version>` for each package version that has none. | git tags |
 
 `release:publish` options:
@@ -272,10 +272,11 @@ So **an alpha goes out when the release master merges the Version Packages PR.**
 - `tools/release/src/`:
   - `preflight*.ts`: preflight and release plan.
   - `version-file*.ts`: `version.ts` sync.
-  - `manifest.ts`: published manifest, leak and exact-range gates.
+  - `manifest.ts`: published manifest, leak, exact-range and dangling-export gates.
   - `publish*.ts`: pack and publish.
   - `public-gate*.ts`: R-PERF gate.
   - `changesets*.ts`: `ensure-changeset`.
   - `rehearse-cli.ts`: local rehearsal (consumer fixtures in `tools/release/fixtures/rehearsal/`).
+  - `adapters-check.ts`, `adapters-pack-cli.ts`: the editor adapters' pack-and-install checks (fixtures in `tools/release/fixtures/adapters/`); `pnpm exec tsx tools/release/src/adapters-pack-cli.ts` runs them without a registry, in `.tmp/adapters-pack-check/`.
 - `.github/workflows/release-alpha.yml`: the manual release workflow (§5).
 - `.github/workflows/release.yml`: the CI publish-on-merge flow (off).
