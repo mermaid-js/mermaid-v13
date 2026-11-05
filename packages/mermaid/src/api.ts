@@ -66,6 +66,7 @@ import {
   Registry,
   type AnyPlugin,
   type Detected,
+  type DiscoveredPlugin,
   type ExternalDiagram,
   type FirstPartyEntry,
   type LayoutLoader,
@@ -324,6 +325,16 @@ function themeFor(config: ResolvedConfig, s: Snapshot, warn: (w: Warning) => voi
 export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
   const registry = new Registry(firstParty);
   const hooks = new HookRunner<Element, RenderResult>();
+  // Discovery (D166): `PLUGIN_SKIPPED` warnings wait for the next draw; a first-use source
+  // (the Node scan, T4) runs once, before the first prepare, render, parse or preload.
+  const skipped: Warning[] = [];
+  let firstUse: (() => Promise<void>) | undefined;
+  let ready: Promise<void> | undefined;
+  const discovered = async (): Promise<void> => {
+    if (!firstUse) return;
+    ready ??= firstUse().catch(() => undefined);
+    await ready;
+  };
   let site: Snapshot = snapshot();
   let parseErrorHandler: ParseErrorHandler | undefined;
   let iconPacksRequested = false;
@@ -453,6 +464,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
   }
 
   async function prepareWith(text: string, s: Snapshot, format?: string): Promise<Analysis> {
+    if (firstUse) await discovered();
     const ascii = checkFormat(text, s, format) === 'ascii';
     let analysis = cache.get(text, s);
     if (!analysis) {
@@ -507,7 +519,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     const { prepared, plugin } = analysis;
     const { config } = prepared;
     const textOutput = units.id === 'cell';
-    const warnings: Warning[] = [...prepared.warnings];
+    const warnings: Warning[] = [...skipped.splice(0), ...prepared.warnings];
     const warn = (w: Warning): void => void warnings.push(toWarning(w));
     const missing = missingFor(registry, analysis, textOutput);
     if (missing.length > 0) {
@@ -698,6 +710,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
   ): Promise<ParseResult12 | false>;
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12>;
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12 | false> {
+    if (firstUse) await discovered();
     const s = site;
     try {
       const f = detectSupported(text, s, false);
@@ -740,6 +753,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
   }
 
   async function preload(req: PreloadRequest): Promise<void> {
+    if (firstUse) await discovered();
     const tasks: Promise<unknown>[] = [];
     for (const t of req.types ?? []) {
       tasks.push(
@@ -781,13 +795,26 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     return registry.formats(type).includes(format);
   }
 
+  /**
+   * Third-party diagrams and extensions, detected after first-party and discovered types, in
+   * call order (D166). A first-party id throws `TypeError` unless `replace: true`, which makes
+   * the plugin take over that id (detected in its first-party slot).
+   */
   async function registerExternalDiagrams(
     diagrams: readonly ExternalDiagram[],
-    { lazyLoad = true }: { lazyLoad?: boolean } = {}
+    { lazyLoad = true, replace = false }: { lazyLoad?: boolean; replace?: boolean } = {}
   ): Promise<void> {
     cache.clear();
-    const extensions = await registry.registerExternal(diagrams, lazyLoad);
+    const extensions = await registry.registerExternal(diagrams, lazyLoad, replace);
     for (const e of extensions) hooks.register(e as ExtensionPlugin);
+  }
+
+  async function addDiscovered(list: readonly DiscoveredPlugin[]): Promise<readonly Warning[]> {
+    cache.clear();
+    const { extensions, warnings } = await registry.registerDiscovered(list);
+    for (const e of extensions) hooks.register(e as ExtensionPlugin);
+    skipped.push(...warnings);
+    return warnings;
   }
 
   function registerLayoutLoaders(loaders: readonly LayoutLoader[]): void {
@@ -813,7 +840,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     onParseError: (error) => parseErrorHandler?.(error),
   });
 
-  return {
+  const api = {
     render,
     prepare,
     renderSync,
@@ -830,6 +857,36 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     registerIconPacks,
     setParseErrorHandler,
   };
+  seams.set(api, {
+    add: addDiscovered,
+    onFirstUse(source) {
+      if (firstUse || ready) throw new Error('A first-use discovery source is already set');
+      firstUse = async () => {
+        const list = await source(site.config);
+        await addDiscovered(list);
+      };
+    },
+  });
+  return api;
 }
 
 export type Mermaid = ReturnType<typeof createMermaid>;
+
+/** The discovered-list seam of one API object (see discovery.ts). */
+interface Seam {
+  add(list: readonly DiscoveredPlugin[]): Promise<readonly Warning[]>;
+  onFirstUse(
+    source: (
+      config: Readonly<Record<string, unknown>>
+    ) => readonly DiscoveredPlugin[] | Promise<readonly DiscoveredPlugin[]>
+  ): void;
+}
+
+const seams = new WeakMap<object, Seam>();
+
+/** The discovered-list seam of `api`, an object `createMermaid` made. */
+export function seamOf(api: Mermaid): Seam {
+  const seam = seams.get(api);
+  if (!seam) throw new TypeError('Not a mermaid API object');
+  return seam;
+}

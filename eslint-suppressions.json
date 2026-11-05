@@ -484,7 +484,7 @@
       "count": 1
     }
   },
-    "packages/diagram-flowchart/src/render/prepare.ts": {
+  "packages/diagram-flowchart/src/render/prepare.ts": {
     "@typescript-eslint/no-shadow": {
       "count": 1
     },
@@ -541,9 +541,6 @@
     }
   },
   "packages/mermaid/src/registry.ts": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 3
-    },
     "@typescript-eslint/unbound-method": {
       "count": 2
     }

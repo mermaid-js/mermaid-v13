@@ -24,7 +24,9 @@ afterEach(() => FakeResizeObserver.live.clear());
 
 async function mermaid(plugin = true) {
   const m = createMermaid();
-  await m.registerExternalDiagrams(plugin ? [menuDiagram, interactions] : [menuDiagram]);
+  await m.registerExternalDiagrams(plugin ? [menuDiagram, interactions] : [menuDiagram], {
+    replace: true,
+  });
   return m;
 }
 
@@ -188,7 +190,7 @@ describe('element menus (R-PLUG-9, D105)', () => {
     const links = { Web: 'https://example.com', Rel: './page', Tel: 'tel:123' };
     const strict = createMermaid();
     strict.initialize({ securityLevel: 'strict' });
-    await strict.registerExternalDiagrams([menuDiagram, interactions]);
+    await strict.registerExternalDiagrams([menuDiagram, interactions], { replace: true });
     const s = await strict.render('d', menuText([{ target: 'P', links }]));
     const sd = mounted(s.svg);
     s.bindFunctions!(sd.el);
@@ -197,7 +199,7 @@ describe('element menus (R-PLUG-9, D105)', () => {
     ]);
     const tel = createMermaid();
     tel.initialize({ linkSchemes: ['tel'] });
-    await tel.registerExternalDiagrams([menuDiagram, interactions]);
+    await tel.registerExternalDiagrams([menuDiagram, interactions], { replace: true });
     const t = await tel.render('d', menuText([{ target: 'P', links }]));
     const td = mounted(t.svg);
     t.bindFunctions!(td.el);
