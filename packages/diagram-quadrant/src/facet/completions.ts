@@ -19,6 +19,7 @@ import { quadrantCategories } from '../generated/categories.ts';
 import { quadrantDocs } from '../generated/docs.ts';
 import type { QuadrantDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
+import { readsAs } from './names.ts';
 import { KEYWORDS, span, STYLE_KEYS, tokenBefore } from './tables.ts';
 
 /** Modes whose text is a value, not code: nothing is offered there. */
@@ -103,11 +104,46 @@ function keywords(items: Items, expected: ReadonlySet<number>): void {
   }
 }
 
-/** Class names the document uses, leaving out the word being typed. */
-function classes(items: Items, doc: DocumentView<QuadrantDocument>, except: number): void {
+/**
+ * Class names the document uses that read back where they are inserted (`role`: after `:::`, a
+ * `ref`; after `classDef`, a `def`), leaving out the word being typed.
+ */
+function classes(
+  items: Items,
+  doc: DocumentView<QuadrantDocument>,
+  except: number,
+  role: 'def' | 'ref'
+): void {
+  const checked = new Map<string, boolean>();
   for (const s of doc.result.symbols) {
-    if (s.kind === 'class' && s.range.start !== except && s.name !== '') items.add(s.name, 'class');
+    if (s.kind !== 'class' || s.range.start === except || !s.name.startsWith(items.prefix))
+      continue;
+    let ok = checked.get(s.name);
+    if (ok === undefined) checked.set(s.name, (ok = readsAs(s.name, role)));
+    if (ok) items.add(s.name, 'class');
   }
+}
+
+/** Whether `-->` is already written at or right after the cursor. */
+function arrowAfter(text: string, tokens: TokenStream, at: number): boolean {
+  if (/^[ ]*-+>/.test(text.slice(at))) return true;
+  const i = tokenBefore(tokens, at);
+  return i >= 0 && tokens.kind[i] === T.AxisTextDelimiter && at < (tokens.end[i] ?? 0);
+}
+
+/**
+ * `accTitle ¦` and `accDescr ¦`: the word lexes as a label until `:` (or `{`) follows it, so
+ * those are what may come next.
+ */
+function accSeparators(items: Items, text: string, at: number): void {
+  let lineStart = at;
+  while (lineStart > 0 && !/[\r\n;]/.test(text.charAt(lineStart - 1))) lineStart--;
+  const m = /^\s*(accTitle|accDescr)\s+$/i.exec(text.slice(lineStart, at));
+  if (!m) return;
+  const descr = /^accDescr$/i.test(m[1]!);
+  const documentation = quadrantDocs[descr ? T.AccDescr : T.AccTitle] ?? '';
+  items.add(':', 'operator', { insertText: ': ', documentation });
+  if (descr) items.add('{', 'operator', { insertText: '{', documentation });
 }
 
 /** Style keys, unless the cursor is in a style's value (after its `:`). */
@@ -146,16 +182,17 @@ export function quadrantCompletions(
   const arrowAt =
     expected.has(T.AxisTextDelimiter) ||
     (axis && expected.has(T.Minus) && /^-+$/.test(items.prefix) && st.length > 1);
-  if (arrowAt && !st.includes(T.AxisTextDelimiter)) {
+  if (arrowAt && !st.includes(T.AxisTextDelimiter) && !arrowAfter(text, tokens, probe.offset)) {
     items.add('-->', 'operator', { documentation: quadrantDocs[T.AxisTextDelimiter] ?? '' });
   }
+  if (expected.has(T.PointStart) && items.prefix === '') accSeparators(items, text, range.start);
   if (!expected.has(T.Alpha) && !expected.has(T.ClassName)) return items.list;
   if (expected.has(T.ClassName) && text.slice(range.start - 3, range.start) === ':::') {
-    classes(items, doc, range.start);
+    classes(items, doc, range.start, 'ref');
   } else if (head === T.ClassDef) {
     const styles = classDefStyles(st);
     if (styles !== undefined) styleKeys(items, st, styles);
-    else if (st.length === 2 && st[1] === T.Space) classes(items, doc, range.start);
+    else if (st.length === 2 && st[1] === T.Space) classes(items, doc, range.start, 'def');
   } else if (st.includes(T.PointEnd)) {
     styleKeys(items, st, st.lastIndexOf(T.PointEnd) + 1);
   }
