@@ -79,7 +79,8 @@ export interface LayoutLoader {
   readonly config?: ConfigFragment;
   /**
    * The layout plugin's own hooks (an extension plugin, D174: ELK's `lineHops` is a
-   * `postRender` edit), registered with the loaders. Loaders of one package share one.
+   * `postRender` edit). They run only on renders laid out by this loader's name, so other
+   * renders keep the stream writer. Loaders of one package share one.
    */
   readonly extension?: ExtensionPlugin;
 }
@@ -201,6 +202,7 @@ export class Registry {
   private readonly loading = new Map<string, Promise<AnyPlugin>>();
   private readonly asciiHooks = new Map<string, AnyAsciiHook>();
   private readonly layoutLoaders = new Map<string, LayoutLoader['loader']>();
+  private readonly layoutExtensions = new Map<string, ExtensionPlugin>();
   /** Whether any ELK name (`elk`, `elk.*`) has a registered loader. */
   private elkRegistered = false;
   private readonly layouts = new Map<string, LayoutEngine>([['layered', layered]]);
@@ -475,18 +477,23 @@ export class Registry {
     else if (!lazyLoad) await this.load(def.id);
   }
 
-  /** Registers `loaders` and returns their extensions, checked, each once. */
-  registerLayouts(loaders: readonly LayoutLoader[]): ExtensionPlugin[] {
-    const extensions = [
-      ...new Set(loaders.flatMap((l) => (l.extension === undefined ? [] : [l.extension]))),
-    ].map(checkExtension);
+  /** Registers `loaders`. Returns whether any brought an extension. */
+  registerLayouts(loaders: readonly LayoutLoader[]): boolean {
+    for (const l of loaders) if (l.extension !== undefined) checkExtension(l.extension);
     for (const l of loaders) if (l.config !== undefined) this.addFragment(l.config);
     for (const l of loaders) {
       this.layoutLoaders.set(l.name, l.loader);
+      if (l.extension !== undefined) this.layoutExtensions.set(l.name, l.extension);
+      else this.layoutExtensions.delete(l.name);
       if (isElkName(l.name)) this.elkRegistered = true;
       this.layouts.delete(l.name);
     }
-    return extensions;
+    return loaders.some((l) => l.extension !== undefined);
+  }
+
+  /** The extension the loader registered for layout `name` brought, if any. */
+  layoutExtension(name: string): ExtensionPlugin | undefined {
+    return this.layoutExtensions.get(name);
   }
 
   /**

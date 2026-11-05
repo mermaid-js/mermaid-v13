@@ -51,4 +51,3 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 - [#218 T4 #226 / T0b #238] A layout package can bring an extension (`LayoutLoader.extension`, used by layout-elk for `lineHops` and its warnings). `ManifestPlugin` and the `layout` manifest carry `config` but no extension, so a package activated by discovery gets neither until the manifest names an eager extension module (as `config`).
 - [E5 #243] MIGRATION.md: `ELK_ALGORITHM_IGNORED`, `ELK_RADIAL_NOT_A_TREE`, and `cycleBreakingStrategy: MODEL_ORDER` left off groups laid out with their parent (elkjs 0.12 throws there; v12 develop fails that render). The language-service schema has no fragments, so `elk` no longer completes in front matter.
-- [E5 #243] Every render with the ELK loaders registered now draws into a tree (the extension has `postRender`), whatever its layout. Output is byte-identical; include it in the warm-render report.

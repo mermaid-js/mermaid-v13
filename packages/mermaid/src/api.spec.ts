@@ -406,11 +406,12 @@ describe('layout engines (R-LAYOUT-2)', () => {
     expect((await m.render('l', `---\nconfig:\n  layout: elk\n---\n${FLOW}`)).warnings).toEqual([]);
   });
 
-  it('registers the extension a layout loader brings, once, with the loaders (D174)', async () => {
+  it('runs a layout loader’s extension only on renders laid out by one of its names (D174)', async () => {
     const seen: string[] = [];
     const extension: ExtensionPlugin = {
       id: 'spy-layout',
-      postRender: (_tree, ctx) => void seen.push(String(ctx.config.layout)),
+      postLayout: (laidOut, ctx) => (seen.push(`layout ${String(ctx.config.layout)}`), laidOut),
+      postRender: (_tree, ctx) => void seen.push(`render ${String(ctx.config.layout)}`),
     };
     const m = createMermaid();
     const loader = () => Promise.resolve(layered);
@@ -418,9 +419,26 @@ describe('layout engines (R-LAYOUT-2)', () => {
       { name: 'one', loader, extension },
       { name: 'two', loader, extension },
     ]);
-    await m.render('l', `---\nconfig:\n  layout: two\n---\n${FLOW}`);
-    await m.render('l', FLOW);
-    expect(seen).toEqual(['two', 'layered']);
+    const two = `---\nconfig:\n  layout: two\n---\n${FLOW}`;
+    await m.render('l', two);
+    await m.prepare(two);
+    m.renderSync(two);
+    expect(seen).toEqual(['layout two', 'render two', 'layout two', 'render two']);
+    // A `layered` render does not run it, so it keeps the stream writer and draws as before.
+    seen.length = 0;
+    const plain = await createMermaid().render('l', FLOW);
+    expect((await m.render('l', FLOW)).svg).toBe(plain.svg);
+    expect(m.renderSync(FLOW).svg).toBe(plain.svg);
+    expect(seen).toEqual([]);
+    // Nor a diagram that lays out no graph, whatever `layout` says.
+    await m.render('l', `---\nconfig:\n  layout: two\n---\nsequenceDiagram\n  A->>B: hi\n`);
+    expect(seen).toEqual([]);
+    // Another layout name registered without an extension takes the name back.
+    m.registerLayoutLoaders([{ name: 'two', loader }]);
+    await m.render('l', two);
+    expect(seen).toEqual([]);
+    await m.render('l', `---\nconfig:\n  layout: one\n---\n${FLOW}`);
+    expect(seen).toEqual(['layout one', 'render one']);
     expect(() =>
       m.registerLayoutLoaders([{ name: 'bad', loader, extension: { id: '' } as ExtensionPlugin }])
     ).toThrow(TypeError);

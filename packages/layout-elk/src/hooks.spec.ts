@@ -1,10 +1,10 @@
 // E4 #242: what the package's own hooks do (`elkExtension`, registered with the loaders), through
 // `createMermaid().render()` and `renderSync()`: `lineHops` (D174) and the warnings for what the
 // engine could not do as asked (`elk.radial` on a graph that is not a tree; `@{ algorithm }`).
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { createMermaid } from 'mermaid';
-import elkLayouts from './index.ts';
+import elkLayouts, { elkExtension } from './index.ts';
 
 // ELK puts the two A/B → C/D edges across each other: one horizontal run over one vertical.
 const CROSSING = 'flowchart TD\n  A --> C\n  A --> D\n  B --> C\n  B --> D\n';
@@ -54,6 +54,25 @@ describe('elk.lineHops (a postRender edit, D174)', () => {
     expect((await api().render('d', doc(tree))).svg).toBe(
       (await api().render('d', doc(tree, hops('false')))).svg
     );
+  });
+
+  it('runs its hooks only on renders laid out with ELK', async () => {
+    const postLayout = vi.spyOn(elkExtension, 'postLayout');
+    const postRender = vi.spyOn(elkExtension, 'postRender');
+    try {
+      const m = api();
+      await m.render('d', CROSSING);
+      await m.render('d', doc(CROSSING, '', 'layered'));
+      await m.render('d', 'sequenceDiagram\n  A->>B: hi\n');
+      expect(postLayout).not.toHaveBeenCalled();
+      expect(postRender).not.toHaveBeenCalled();
+      await m.render('d', doc(CROSSING));
+      expect(postLayout).toHaveBeenCalledTimes(1);
+      expect(postRender).toHaveBeenCalledTimes(1);
+    } finally {
+      postLayout.mockRestore();
+      postRender.mockRestore();
+    }
   });
 
   it('never touches a drawing that is not laid out with ELK', async () => {

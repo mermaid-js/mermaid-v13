@@ -53,8 +53,8 @@ const elkLaidOut = (config: unknown): boolean =>
   engine !== undefined && ELK_NAMES.has(String((config as { layout?: unknown }).layout));
 
 /**
- * The package's extension (`id: layout-elk`). Registered with the loaders by
- * `registerLayoutLoaders`; it acts only on renders laid out with one of the names above.
+ * The package's extension (`id: layout-elk`), on every loader: `mermaid` runs it only on renders
+ * laid out with one of the names above, so other renders keep the stream writer.
  */
 export const elkExtension: ExtensionPlugin = {
   id: 'layout-elk',
