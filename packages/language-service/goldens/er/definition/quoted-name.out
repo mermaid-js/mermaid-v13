@@ -1,0 +1,6 @@
+@ 2:13  "Customer |Account" ||--o{ ORDER : places
+  -> 2:4-2:20 "Customer Account"
+@ 6:29  ORDER }|--|| "Customer Acc|ount" : for
+  -> 2:4-2:20 "Customer Account"
+@ 7:14  "x" ||--|| |x : self
+  -> 7:4-7:5 "x"

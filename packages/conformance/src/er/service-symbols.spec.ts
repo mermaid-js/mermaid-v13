@@ -10,24 +10,21 @@ import { PARITY_SUITES } from '../registry.ts';
 import { erV12Snapshot } from './v12.ts';
 
 /**
- * Names written only quoted in a document (`"Customer Domain"`): the parser records the name
- * with the quoted token's range, which the service leaves out (symbols.ts, the flowchart's
- * quoted-subgraph gap #31), so they have no definition. A change here means the gap moved.
- */
-const QUOTED_ONLY = 315;
-
-/**
  * The oracle expectations re-run through the language service for ER (language.md step 8,
  * D99 suite 2, R-LANG-1), as `flowchart/service-symbols.spec.ts` does for the flowchart:
  * definition, references and folding ranges asked at the places the parse output records,
  * checked against the mermaid v12 model over the ER parity corpus:
  * - every v12 entity and class resolves to exactly one definition, holding its name, and references from any of its occurrences give
- *   the same list, with that definition in it;
+ *   the same list, with that definition in it; a name written quoted (`"Customer Domain"`)
+ *   resolves like one written bare, its definition the text between the quotes (#199);
  * - a name resolving to a `def` in the entity namespace is a v12 entity or subgraph;
  * - every v12 subgraph's definition is on one of its own `subgraph` lines;
  * - each multi-line v12 subgraph body is a `subgraph` fold range, and each member entity has a
  *   reference inside one of its bodies.
  */
+
+/** Names written quoted (`"Customer Domain"`) in the corpus that resolve (#199). */
+const QUOTED_RESOLVED = 315;
 
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 const inside = (r: Range, outer: Range) => outer.start <= r.start && r.end <= outer.end;
@@ -50,7 +47,7 @@ describe('ER definition, references and folding through the service match v12', 
     await service.preload({ types: ['er'] });
     const problems: string[] = [];
     let checked = 0;
-    let quotedOnly = 0;
+    let quotedResolved = 0;
     for await (const item of resolveCorpus({}, PARITY_SUITES)) {
       const v12 = await oracle.parse(item.source);
       if (!v12.accepted || v12.diagramType !== 'er') continue;
@@ -58,41 +55,43 @@ describe('ER definition, references and folding through the service match v12', 
       if (doc.facet?.id !== 'er') continue;
       if (doc.diagnostics().some((d) => d.severity === 'error')) continue;
       checked++;
+      // Where to put the cursor on an occurrence: inside the quotes of a quoted one.
+      const probe = (r: Range) => (/^["`]/.test(doc.text.charAt(r.start)) ? r.start + 1 : r.start);
       const fail = (what: string): undefined => {
         problems.push(`${item.id}: ${what}`);
       };
       const model = erV12Snapshot(v12.db);
       const parsed = parseEr(item.source);
-      // Only occurrences written bare: the service skips quoted ones (QUOTED_ONLY above).
+      // Occurrences written bare or quoted: the parser gives a quoted one the quotes' range.
       const occurrences = (name: string, kinds: readonly string[]): SymbolOccurrence[] =>
         parsed.symbols.filter(
-          (s) => s.name === name && kinds.includes(s.kind) && text(doc, s.range) === name
+          (s) =>
+            s.name === name &&
+            kinds.includes(s.kind) &&
+            [name, `"${name}"`].includes(text(doc, s.range))
         );
-      const quoted = (name: string, kinds: readonly string[]): boolean =>
-        occurrences(name, kinds).length === 0 &&
-        parsed.symbols.some((s) => s.name === name && kinds.includes(s.kind));
 
       /** The single definition and the references of `name`, asked at each occurrence. */
       const resolve = (name: string, kinds: readonly string[]): Range | undefined => {
-        if (quoted(name, kinds)) return (quotedOnly++, undefined);
         const at = occurrences(name, kinds);
         if (at.length === 0) return (fail(`${kinds[0]} ${name} has no occurrence`), undefined);
         const defs = new Set<string>();
         const refLists = new Set<string>();
         let def: Range | undefined;
         for (const o of at) {
-          const d = doc.definition(o.range.start);
+          const d = doc.definition(probe(o.range));
           if (!d || text(doc, d) !== name) return fail(`${name}: definition ${d && text(doc, d)}`);
           defs.add(`${d.start}:${d.end}`);
           def = d;
-          const refs = doc.references(o.range.start);
+          const refs = doc.references(probe(o.range));
           if (refs.some((r) => text(doc, r) !== name)) fail(`${name}: a reference is not ${name}`);
           refLists.add(JSON.stringify(refs));
         }
         if (defs.size !== 1) fail(`${name}: ${defs.size} definitions`);
         if (refLists.size !== 1) fail(`${name}: references differ by occurrence`);
-        const refs = doc.references(at[0]!.range.start);
+        const refs = doc.references(probe(at[0]!.range));
         if (!refs.some((r) => r.start === def!.start)) fail(`${name}: definition not referenced`);
+        if (at.some((o) => text(doc, o.range) !== name)) quotedResolved++;
         return def;
       };
 
@@ -102,11 +101,11 @@ describe('ER definition, references and folding through the service match v12', 
       for (const e of entities) resolve(e, ENTITY);
       for (const c of model.classes) resolve(c.name, ['class']);
       const defStarts = new Set(
-        parsed.symbols.filter((x) => x.role === 'def').map((x) => x.range.start)
+        parsed.symbols.filter((x) => x.role === 'def').map((x) => probe(x.range))
       );
       for (const s of parsed.symbols.filter((x) => ENTITY.includes(x.kind))) {
         if (entities.has(s.name) || subgraphIds.has(s.name)) continue;
-        const d = doc.definition(s.range.start);
+        const d = doc.definition(probe(s.range));
         if (d && defStarts.has(d.start)) fail(`${s.name} is defined but is no v12 entity`);
       }
 
@@ -135,14 +134,15 @@ describe('ER definition, references and folding through the service match v12', 
         for (const member of s.members) {
           if (!entities.has(member)) continue;
           const at = occurrences(member, ENTITY)[0];
-          const refs = at ? doc.references(at.range.start) : [];
+          const refs = at ? doc.references(probe(at.range)) : [];
           if (!refs.some((r) => regions.some((g) => inside(r, g))))
             fail(`member ${member} of ${s.name} has no reference in its fold range`);
         }
       }
     }
     expect(checked).toBeGreaterThan(600);
-    expect(quotedOnly).toBe(QUOTED_ONLY);
+    // Names written quoted somewhere that resolved above (#199); a change means coverage moved.
+    expect(quotedResolved).toBe(QUOTED_RESOLVED);
     expect(problems).toEqual([]);
   }, 180_000);
 });

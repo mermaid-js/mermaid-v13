@@ -41,6 +41,8 @@ describe('flowchart kind → category table', () => {
     expect(flowchartCategories[T.Colon]).toBe('Other');
     // `}` closing shape data is an unnamed rule in the grammar file.
     expect(flowchartCategories[T.ShapeDataEnd]).toBe('Meta');
+    // So is the `click` keyword before a click statement's node id.
+    expect(flowchartCategories[T.ClickKeyword]).toBe('Keyword');
     // Shared kinds are fixed in the parser kit.
     expect(flowchartCategories[Kind.Comment]).toBe('Comment');
     expect(flowchartCategories[Kind.Directive]).toBe('Meta');

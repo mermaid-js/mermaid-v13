@@ -1,0 +1,7 @@
+%% rename-to: Client Account
+erDiagram
+  "Customer |Account" \|\|--o{ ORDER : places
+  "Customer Account" {
+    string name
+  }
+  ORDER }\|--\|\| "Customer Account" : for

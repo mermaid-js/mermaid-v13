@@ -83,10 +83,13 @@ function symbolTokens(list: readonly Occurrence[]): SemanticToken[] {
     if (o.role === 'def' && (def === undefined || def.kind === o.kind))
       modifiers.push('declaration');
     if (def === o) modifiers.push('definition');
+    // A quoted name is one token with its quotes, as the lexer has it (#199).
+    const q = o.quote?.length ?? 0;
+    const range = { start: o.range.start - q, end: o.range.end + q };
     const last = out[out.length - 1];
-    if (last && last.range.end > o.range.start) continue;
+    if (last && last.range.end > range.start) continue;
     // Typed by what the name denotes: an edge to a subgraph id is a subgraph.
-    out.push({ range: o.range, type: BY_SYMBOL[(def ?? o).kind] ?? 'variable', modifiers });
+    out.push({ range, type: BY_SYMBOL[(def ?? o).kind] ?? 'variable', modifiers });
   }
   return out;
 }
@@ -135,7 +138,7 @@ export function semanticTokens(ctx: DocumentContext, list: readonly Occurrence[]
     // A token ends where the next one starts (`end` takes the blanks and comment after it).
     const end = Math.min(tokens.end[i] ?? 0, tokens.start[i + 1] ?? Infinity);
     // Symbols before or inside this token go in at their place; the token keeps the rest
-    // (`click A` is one token holding the keyword and the node id).
+    // (a token can hold more text than its symbol).
     while (j < symbols.length && symbols[j]!.range.start < end) {
       const s = symbols[j++]!;
       if (s.range.start > at) push(at, s.range.start, type);

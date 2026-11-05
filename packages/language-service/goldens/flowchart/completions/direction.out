@@ -1,5 +1,6 @@
 @ 1:10  flowchart| TD
   flowchart keyword 1:1-1:10 "flowchart" -> "flowchart"
+  flowchart-elk keyword 1:1-1:10 "flowchart" -> "flowchart-elk"
 @ 1:12  flowchart T|D
   TB constant (top to bottom) 1:11-1:13 "TD" -> "TB"
   TD constant (top down (same as TB)) 1:11-1:13 "TD" -> "TD"

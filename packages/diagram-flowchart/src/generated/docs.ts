@@ -30,4 +30,5 @@ export const flowchartDocs: Readonly<Partial<Record<number, string>>> = {
   [T.Amp]: "Nodes joined by links: `A --> B & C -.-> D`. Blanks after shape data must lead to `&`.",
   [T.Link]: "A link: `-->`, `---`, `-.->`, `==>`, `~~~`; `>`, `o` or `x` heads (`<`, `o`, `x` at the start too for both ends). `--`, `==` and `-.` followed by text open an edge-text mode, closed by the arrow.",
   [T.StartLink]: "A link, with an optional id, and text either between pipes or inside the arrow.",
+  [T.ClickKeyword]: "`click id callback`, `click id call fn(args)`, `click id \"url\"`, `click id href \"url\"`, each with an optional tooltip; urls take an optional target.",
 };

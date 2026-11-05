@@ -1,0 +1,12 @@
+@ 2:5  A-|
+  --> operator (normal line with an arrow head) 2:4-2:5 "-" -> "-->"
+  --- operator (normal line with no head) 2:4-2:5 "-" -> "---"
+  -.-> operator (dotted line with an arrow head) 2:4-2:5 "-" -> "-.->"
+  -.- operator (dotted line with no head) 2:4-2:5 "-" -> "-.-"
+  --o operator (normal line with a circle head) 2:4-2:5 "-" -> "--o"
+  --x operator (normal line with a cross head) 2:4-2:5 "-" -> "--x"
+@ 3:7  B <-|
+  <--> operator (normal line with an arrow head at both ends) 3:5-3:7 "<-" -> "<-->"
+@ 4:6  C==|
+  ==> operator (thick line with an arrow head) 4:4-4:6 "==" -> "==>"
+  === operator (thick line with no head) 4:4-4:6 "==" -> "==="
