@@ -120,17 +120,41 @@ export function installManifest(
   return out;
 }
 
-/** pnpm reads overrides from `pnpm-workspace.yaml` only: the app's own, plus the tarballs. */
+/**
+ * Dependencies whose install scripts may run. pnpm 11+ fails an install with
+ * `ERR_PNPM_IGNORED_BUILDS` on any unapproved script (esbuild's postinstall); `allowBuilds`
+ * is the key pnpm 10.26+, 11 and 12 all read (11+ ignore `onlyBuiltDependencies`). Which
+ * pnpm runs depends on the machine (Homebrew, corepack's latest in the Playwright image).
+ */
+export const ALLOW_BUILDS: Readonly<Record<string, boolean>> = { esbuild: true };
+
+interface PnpmWorkspaceConfig {
+  overrides?: Deps;
+  allowBuilds?: Record<string, boolean>;
+}
+
+/**
+ * The app's `pnpm-workspace.yaml`: its own settings, the tarballs as overrides (pnpm reads
+ * overrides from there only) and {@link ALLOW_BUILDS}.
+ */
+export function pnpmWorkspaceConfig(
+  config: PnpmWorkspaceConfig | null,
+  packed: readonly PackedPackage[]
+): PnpmWorkspaceConfig {
+  const overrides = Object.fromEntries(packed.map((p) => [p.name, `file:${p.tarball}`]));
+  return {
+    ...config,
+    overrides: { ...config?.overrides, ...overrides },
+    allowBuilds: { ...ALLOW_BUILDS, ...config?.allowBuilds },
+  };
+}
+
 function pnpmWorkspace(dir: string, packed: readonly PackedPackage[]): void {
   const file = join(dir, 'pnpm-workspace.yaml');
-  const config = (existsSync(file) ? yaml.load(readFileSync(file, 'utf8')) : null) as {
-    overrides?: Deps;
-  } | null;
-  const overrides = Object.fromEntries(packed.map((p) => [p.name, `file:${p.tarball}`]));
-  writeFileSync(
-    file,
-    yaml.dump({ ...config, overrides: { ...config?.overrides, ...overrides } }, { lineWidth: -1 })
-  );
+  const config = (
+    existsSync(file) ? yaml.load(readFileSync(file, 'utf8')) : null
+  ) as PnpmWorkspaceConfig | null;
+  writeFileSync(file, yaml.dump(pnpmWorkspaceConfig(config, packed), { lineWidth: -1 }));
 }
 
 const INSTALL_ARGS: Record<PackageManager, string[]> = {

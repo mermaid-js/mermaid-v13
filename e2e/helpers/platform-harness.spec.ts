@@ -13,6 +13,7 @@ import {
   packageSources,
   partOf,
   packClosure,
+  pnpmWorkspaceConfig,
 } from '../platform/harness/index.ts';
 import type { PackedPackage } from '../platform/harness/index.ts';
 
@@ -109,6 +110,17 @@ describe('installManifest', () => {
     const m = installManifest(app, packed, 'pnpm');
     expect(m.dependencies).toEqual({ mermaid: 'file:/t/mermaid.tgz', other: '^1.0.0' });
     expect(m.overrides).toBeUndefined();
+  });
+
+  it('writes pnpm overrides and lets esbuild run its install script (pnpm 11+ fail otherwise)', () => {
+    const local = packed.map((p) => ({ ...p, tarball: `./tarballs/${p.name}.tgz` }));
+    const config = pnpmWorkspaceConfig({ overrides: { x: '1.0.0' } }, local);
+    expect(config.overrides).toEqual({
+      x: '1.0.0',
+      '@mermaid-js/core': 'file:./tarballs/@mermaid-js/core.tgz',
+      mermaid: 'file:./tarballs/mermaid.tgz',
+    });
+    expect(config.allowBuilds).toEqual({ esbuild: true });
   });
 });
 

@@ -360,19 +360,31 @@ export function createMermaid(
   // Discovery (D166): its warnings wait for the next draw that succeeds; a first-use source
   // (the Node scan, T4) runs once, before the first prepare, render, parse or preload.
   const skipped: Warning[] = [];
-  let firstUse: (() => Promise<void>) | undefined;
+  let firstUse: ((deadline: number) => Promise<void>) | undefined;
+  let firstUseLimit = ADD_TIME_LIMIT_MS;
   let ready: Promise<void> | undefined;
   // Additions still registering (the CDN queue's pushes, T6), with the time each one's wait
   // ends: a draw waits for each until then, and renders without it after (one warning).
   const adding = new Map<Promise<unknown>, { deadline: number; limit: number }>();
   const discovered = async (): Promise<void> => {
     if (firstUse) {
-      ready ??= firstUse().catch((e: unknown) => {
-        skipped.push({
-          code: 'PLUGIN_DISCOVERY_FAILED',
-          message: `Plugin discovery failed: ${e instanceof Error ? e.message : String(e)}`,
+      // One limit for the whole first use: the source, then its registration (which joins
+      // `adding` with what is left of the limit). Past it the draw goes on; what the source
+      // finds still registers when it ends (as a late CDN queue entry does).
+      ready ??= (async () => {
+        const deadline = Date.now() + firstUseLimit;
+        const run = firstUse!(deadline).catch((e: unknown) => {
+          skipped.push({
+            code: 'PLUGIN_DISCOVERY_FAILED',
+            message: `Plugin discovery failed: ${e instanceof Error ? e.message : String(e)}`,
+          });
         });
-      });
+        if (!(await settlesBy(run, deadline)))
+          skipped.push({
+            code: 'PLUGIN_DISCOVERY_FAILED',
+            message: `Plugin discovery did not finish within ${firstUseLimit} ms; rendering without it.`,
+          });
+      })();
       await ready;
     }
     while (adding.size > 0) {
@@ -890,6 +902,15 @@ export function createMermaid(
     list: readonly DiscoveredPlugin[],
     { timeLimitMs = ADD_TIME_LIMIT_MS }: AddOptions = {}
   ): Promise<readonly Warning[]> {
+    return register(list, Date.now() + timeLimitMs, timeLimitMs);
+  }
+
+  /** `addDiscovered`, waited for by draws until `deadline`; `undefined`: not waited for. */
+  function register(
+    list: readonly DiscoveredPlugin[],
+    deadline: number | undefined,
+    limit: number
+  ): Promise<readonly Warning[]> {
     cache.clear();
     // Never rejects; leaves `adding` before its awaiter resumes, so a draw right after it
     // does not wait. The cache is cleared again: a draw during the wait may have filled it.
@@ -914,7 +935,7 @@ export function createMermaid(
         cache.clear();
         adding.delete(pending);
       });
-    adding.set(pending, { deadline: Date.now() + timeLimitMs, limit: timeLimitMs });
+    if (deadline !== undefined) adding.set(pending, { deadline, limit });
     return pending;
   }
 
@@ -960,11 +981,13 @@ export function createMermaid(
   };
   seams.set(api, {
     add: addDiscovered,
-    onFirstUse(source) {
+    onFirstUse(source, { timeLimitMs = ADD_TIME_LIMIT_MS } = {}) {
       if (firstUse || ready) throw new Error('A first-use discovery source is already set');
-      firstUse = async () => {
+      firstUseLimit = timeLimitMs;
+      firstUse = async (deadline) => {
         const list = await source(site.config, (w) => void skipped.push(w));
-        await addDiscovered(list);
+        // Past the deadline (the draw already went on with a warning) it registers unwaited.
+        void register(list, Date.now() < deadline ? deadline : undefined, timeLimitMs);
       };
     },
   });
@@ -985,7 +1008,7 @@ export type FirstUseSource = (
 /** The discovered-list seam of one API object (see discovery.ts). */
 interface Seam {
   add(list: readonly DiscoveredPlugin[], options?: AddOptions): Promise<readonly Warning[]>;
-  onFirstUse(source: FirstUseSource): void;
+  onFirstUse(source: FirstUseSource, options?: AddOptions): void;
 }
 
 const seams = new WeakMap<object, Seam>();

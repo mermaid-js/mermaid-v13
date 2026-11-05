@@ -1,0 +1,5 @@
+# pnpm settings of the smoke app; the harness adds the tarball overrides and allowBuilds.
+# No hidden hoisting (node_modules/.pnpm/node_modules): a package must declare what it
+# imports. With the default hoisting, pnpm 12 lets mermaid resolve an undeclared
+# @mermaid-js/core through that folder, and the "missing dependency" check passes.
+hoist: false

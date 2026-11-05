@@ -292,14 +292,49 @@ describe('Node discovery', () => {
     expect((await discovering(out).render('a', 'box x')).svg).toContain('box: x');
   });
 
-  it('warns once, naming the root, when the app root has no node_modules', async () => {
+  it('logs once, naming the root, when the app root has no node_modules; renders stay clean', async () => {
     const root = app({});
-    const m = discovering(root);
+    const logged: { code: string; message: string }[] = [];
+    const m = discovering(root, { log: (w) => void logged.push(w) });
     const r = await m.render('f', 'flowchart LR\n  A --> B\n');
-    const empty = r.warnings.filter((w) => w.code === 'PLUGIN_DISCOVERY_NO_MODULES');
-    expect(empty).toHaveLength(1);
-    expect(empty[0]?.message).toContain(root);
+    expect(r.warnings).toEqual([]);
+    expect(logged.map((w) => w.code)).toEqual(['PLUGIN_DISCOVERY_NO_MODULES']);
+    expect(logged[0]?.message).toContain(root);
     expect((await m.render('g', 'flowchart LR\n  A --> B\n')).warnings).toEqual([]);
+    expect(logged).toHaveLength(1);
+  });
+
+  it('sends every skip to the optional log as well as to the first render', async () => {
+    const root = app({ ok: diagram('ok', 'ok'), bad: { 'package.json': '{' } });
+    const logged: string[] = [];
+    const m = discovering(root, { log: (w) => void logged.push(w.code) });
+    const r = await m.render('a', 'ok 1');
+    expect(skips(r.warnings)).toHaveLength(1);
+    expect(logged).toEqual(['PLUGIN_SKIPPED']);
+  });
+
+  it('imports slow extension entries in parallel: two of them wait one limit, not two', async () => {
+    const sleep = 'await new Promise((r) => setTimeout(r, 2000));\n';
+    const root = app({
+      slow1: pkg(
+        'slow1',
+        { plugin: 'extension', id: 'mark', entry: './index.js', export: 'mark' },
+        { 'index.js': sleep + EXTENSION }
+      ),
+      slow2: pkg(
+        'slow2',
+        { plugin: 'extension', id: 'mark2', entry: './index.js', export: 'mark' },
+        {
+          'index.js': sleep + EXTENSION.replace("id: 'mark'", "id: 'mark2'"),
+        }
+      ),
+    });
+    const m = discovering(root, { importTimeoutMs: 500 });
+    const start = Date.now();
+    const r = await m.render('f', 'flowchart LR\n  A --> B\n');
+    expect(skips(r.warnings)).toHaveLength(2);
+    // Serially: 2 × 500 ms. In parallel: one 500 ms limit.
+    expect(Date.now() - start).toBeLessThan(950);
   });
 
   it('does nothing without a package.json above the folder', async () => {

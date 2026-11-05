@@ -112,6 +112,19 @@ interface Entry {
 /** A diagram or extension checked and ready to enter a source. */
 type Resolved = { readonly extension: ExtensionPlugin } | { readonly diagram: Entry };
 
+/** The id of an extension (given, or by manifest) without loading it; else undefined. */
+function extensionIdOf(def: ExternalDiagram): string | undefined {
+  try {
+    const kind = kindOf(def);
+    if (kind === 'extension') return (def as ExtensionPlugin).id;
+    if (kind !== 'manifest') return undefined;
+    const manifest = readManifest((def as ManifestPlugin).manifest);
+    return manifest.plugin === 'extension' ? manifest.id : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 interface Found<T> {
   readonly package: string;
   readonly value: T;
@@ -534,7 +547,17 @@ export class Registry {
       if (known.has(key)) throw new TypeError('it was already discovered');
       known.add(key);
     };
-    for (const item of [...list].sort(byPackage)) {
+    const sorted = [...list].sort(byPackage);
+    // Every entry resolves at once (extension entries load now), so slow entries share one
+    // wait instead of adding up; they are then applied in package order.
+    const resolved = sorted.map((item) => {
+      const { package: name, kind } = item as { package?: unknown; kind?: unknown };
+      if (kind !== 'plugin' || typeof name !== 'string' || name === '') return undefined;
+      const p = this.resolveDiscovered(item.plugin);
+      p.catch(() => undefined);
+      return p;
+    });
+    for (const [i, item] of sorted.entries()) {
       const { package: name, kind } = item as { package?: unknown; kind?: unknown };
       const pkg = typeof name === 'string' ? name : '';
       try {
@@ -542,7 +565,7 @@ export class Registry {
         if (kind !== 'layout' && kind !== 'plugin')
           throw new TypeError(`unknown kind ${JSON.stringify(kind)}`);
         if (item.kind === 'layout') this.discoverLayout(pkg, item, known, skip);
-        else this.discoverPlugin(pkg, await this.resolve(item.plugin), claim, skip);
+        else this.discoverPlugin(pkg, (await resolved[i])!, claim, skip);
       } catch (e) {
         skip(pkg || '(unnamed)', why(e));
       }
@@ -550,17 +573,29 @@ export class Registry {
     return warnings;
   }
 
+  /**
+   * A discovered plugin, resolved; an extension whose id is registered explicitly is not
+   * loaded at all (explicit beats discovered, silently, as for diagrams and layouts).
+   */
+  private async resolveDiscovered(def: ExternalDiagram): Promise<Resolved | { explicit: string }> {
+    const id = extensionIdOf(def);
+    if (id !== undefined && this.explicitExtensions.some((e) => e.id === id))
+      return { explicit: id };
+    return this.resolve(def);
+  }
+
   private discoverPlugin(
     pkg: string,
-    r: Resolved,
+    r: Resolved | { explicit: string },
     claim: (key: string) => void,
     skip: (pkg: string, reason: string) => void
   ): void {
+    if ('explicit' in r) return void claim(`${pkg}\0extension\0${r.explicit}`);
     if ('extension' in r) {
       const id = r.extension.id;
       claim(`${pkg}\0extension\0${id}`);
-      if (this.explicitExtensions.some((e) => e.id === id))
-        throw new TypeError(`extension "${id}" is registered explicitly`);
+      // Registered explicitly while its entry loaded: explicit wins, silently.
+      if (this.explicitExtensions.some((e) => e.id === id)) return;
       const owner = this.discoveredExtensions.find((d) => d.value.id === id);
       if (owner && byPackage(owner, { package: pkg }) < 0)
         throw new TypeError(`extension "${id}" belongs to "${owner.package}"`);
