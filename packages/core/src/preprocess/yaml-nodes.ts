@@ -1,9 +1,15 @@
 /**
- * The node tree of the YAML reader's tree mode (`parseYaml(src, { tree: true })`, R-LANG-5):
- * every key and value with its range into the original source.
+ * What the YAML reader (`yaml.ts`) returns: the value, and the node tree of its tree mode
+ * (`parseYaml(src, { tree: true })`, R-LANG-5) with every key and value's range into the
+ * original source. Also the flow collection the reader builds both in. Imports no reader code,
+ * so the reader imports this module and not the other way round.
  */
 import type { Range } from '../parser-kit/positions.ts';
-import type { YamlMap, YamlValue } from './yaml.ts';
+
+export type YamlValue = null | boolean | number | string | YamlValue[] | YamlMap;
+export interface YamlMap {
+  [key: string]: YamlValue;
+}
 
 /** How a scalar is written in the source. */
 export type YamlScalarStyle = 'plain' | 'single' | 'double' | 'literal' | 'folded';

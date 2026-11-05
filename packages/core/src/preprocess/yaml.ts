@@ -25,11 +25,13 @@ import type { Diagnostic } from '../parser-kit/diagnostics.ts';
 import { flowCollection } from './yaml-nodes.ts';
 import type {
   FlowCollection,
+  YamlMap,
   YamlMapNode,
   YamlNode,
   YamlPair,
   YamlScalarNode,
   YamlScalarStyle,
+  YamlValue,
 } from './yaml-nodes.ts';
 import { lineEnd, newlineAt } from '../parser-kit/scanner.ts';
 import {
@@ -48,10 +50,7 @@ import {
   trimBack,
 } from './yaml-text.ts';
 
-export type YamlValue = null | boolean | number | string | YamlValue[] | YamlMap;
-export interface YamlMap {
-  [key: string]: YamlValue;
-}
+export type { YamlMap, YamlValue };
 
 export interface YamlOptions {
   /** Offset where the YAML text starts (default 0). */
