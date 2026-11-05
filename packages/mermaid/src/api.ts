@@ -27,6 +27,7 @@ import {
 } from '@mermaid-js/core/config';
 import {
   cellProfile,
+  layered,
   pxProfile,
   type LayoutEngine,
   type UnitProfile,
@@ -277,11 +278,6 @@ function layoutName(config: ResolvedConfig): string {
   return String(config.layout ?? 'layered');
 }
 
-/** The engine a draw lays out with: text output always uses `layered` and the cell profile (D179). */
-function drawnLayout(config: ResolvedConfig, text: boolean): string {
-  return text ? 'layered' : layoutName(config);
-}
-
 function themeNames(config: ResolvedConfig): ThemeName[] {
   const choice = resolveThemeName(config.theme);
   return choice.dark ? [choice.name, choice.dark] : [choice.name];
@@ -291,8 +287,9 @@ function themeNames(config: ResolvedConfig): ThemeName[] {
 function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
   const missing: Resource[] = [];
   const { config } = a.prepared;
-  if (a.plugin.layoutKind === 'graph') {
-    const name = drawnLayout(config, text);
+  // Text output lays out with core's own `layered`, never a registered engine (D179).
+  if (a.plugin.layoutKind === 'graph' && !text) {
+    const name = layoutName(config);
     if (registry.layout(name).state === 'missing') missing.push({ kind: 'layout', name });
   }
   // Text output draws no colours, so it needs no theme (D82).
@@ -361,8 +358,9 @@ export function createMermaid(
    * other extension they keep the stream writer.
    */
   const hooksFor = (analysis: Analysis, text = false): HookRunner<Element, RenderResult> => {
-    if (analysis.plugin.layoutKind !== 'graph') return hooks;
-    const own = registry.layoutExtension(drawnLayout(analysis.prepared.config, text));
+    // Text output never runs a layout's hooks: no registered engine lays it out (D179).
+    if (text || analysis.plugin.layoutKind !== 'graph') return hooks;
+    const own = registry.layoutExtension(layoutName(analysis.prepared.config));
     if (!own) return hooks;
     let runner = layoutRunners.get(own);
     if (!runner) {
@@ -618,8 +616,11 @@ export function createMermaid(
           message: `Text output lays out with the built-in layered engine; layout "${asked}" is not used.`,
         });
       }
-      const name = drawnLayout(config, textOutput);
-      const found = registry.layout(name);
+      // Text output: core's `layered` itself, even when a loader replaced the name for SVG.
+      const name = textOutput ? 'layered' : asked;
+      const found = textOutput
+        ? ({ engine: layered, state: 'ready' } as const)
+        : registry.layout(name);
       // Only when ELK lays the graph out: with LAYOUT_UNKNOWN or ELK_NOT_INSTALLED, layered
       // draws every group, as that warning says.
       if (isElkName(name) && (found.state === 'ready' || found.state === 'missing')) elkName = name;
