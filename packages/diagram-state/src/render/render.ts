@@ -15,6 +15,7 @@ import {
   themeStyleSheet,
   translate,
   type Attrs,
+  type OutlinePaint,
   type Paint,
   type SafeValue,
   type SvgWriter,
@@ -70,10 +71,18 @@ interface Paints {
   readonly strokeWidth: Length;
   /** State boxes, diamonds, rings and the end state's dot. */
   readonly fill: Color;
-  readonly border: Color;
+  /** Outlines: the theme's gradient when `useGradient` is on (D182), else nodeBorder. */
+  readonly border: OutlinePaint;
+  /**
+   * nodeBorder as a colour: the end state's dot fill and the dividers, which are lines with a
+   * zero-width or zero-height box that a bounding-box gradient leaves unpainted.
+   */
+  readonly plainBorder: Color;
   readonly text: Color;
-  /** Transitions, their arrowheads and the filled pseudo-states. */
+  /** Transitions, their arrowheads and the filled pseudo-states' fill. */
   readonly line: Color;
+  /** The start dot's, fork and join bars' and end ring's stroke: lineColor or the gradient. */
+  readonly lineOutline: OutlinePaint;
   readonly arrow: Color;
   /** The theme's drop shadow on outlines; none for a theme whose value is `none`. */
   readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
@@ -84,7 +93,7 @@ interface Paints {
     readonly text: Color;
     readonly radius: number;
   };
-  readonly note?: { fill: Color; stroke: Color; text: Color };
+  readonly note?: { fill: Color; stroke: OutlinePaint; text: Color };
   readonly edgeLabel?: { fill: Color; text: Color };
   /** The palette slot of each composite and region; empty when the theme has no palette. */
   readonly slots: ReadonlyMap<string, Tint>;
@@ -126,9 +135,13 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
     fontSize: theme.length('fontSize'),
     strokeWidth: theme.length('strokeWidth'),
     fill: theme.color('mainBkg'),
-    border: theme.color('nodeBorder'),
+    // v12 neo (`styles.ts` `[data-look=neo]` rules, `state/styles.js:318-327`) strokes these
+    // with the gradient; lookups in the old order so other themes' roots are unchanged.
+    border: theme.outline('nodeBorder'),
+    plainBorder: theme.color('nodeBorder'),
     text: theme.color('nodeTextColor'),
     line: theme.color('lineColor'),
+    lineOutline: theme.outline('lineColor'),
     arrow: theme.color('arrowheadColor'),
     shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
   };
@@ -147,7 +160,7 @@ function paints(theme: ThemeOf, model: StateModel, s: StatePrepared): Paints {
   const note = s.nodes.some((v) => v.shape === 'note')
     ? {
         fill: theme.color('noteBkgColor'),
-        stroke: theme.color('noteBorderColor'),
+        stroke: theme.outline('noteBorderColor'),
         text: theme.color('noteTextColor'),
       }
     : undefined;
@@ -317,6 +330,9 @@ function drawComposite({ w, layout, ctx, paint, titlePad }: Scene, g: StateGroup
     fill: (fill && ctx.theme.ink(fill)) || c.text,
     ...g.style.text,
   });
+  // A divider is a line: its box has no width or height, so it takes the colour, not the
+  // gradient (v12 neo dashes the whole region rect with the gradient instead).
+  const divider = slot?.stroke ?? paint.plainBorder;
   for (const d of layout.dividers) {
     if (d.composite !== g.id) continue;
     w.leaf('line', {
@@ -325,7 +341,7 @@ function drawComposite({ w, layout, ctx, paint, titlePad }: Scene, g: StateGroup
       y1: d.y1,
       x2: d.x2,
       y2: d.y2,
-      stroke,
+      stroke: divider,
       'stroke-width': paint.strokeWidth,
       'stroke-dasharray': DIVIDER_DASH,
     });
@@ -444,11 +460,15 @@ function drawNode(
     filter: view.shape === 'fork' || view.shape === 'join' ? undefined : paint.shadow,
     ...view.style.shape,
   };
-  const solid: Attrs = { fill: paint.line, stroke: paint.line, ...view.style.shape };
+  const solid: Attrs = { fill: paint.line, stroke: paint.lineOutline, ...view.style.shape };
   const shapePaint: ShapePaint = {
     shape,
     solid,
-    line: { stroke: shape.stroke, 'stroke-width': shape['stroke-width'] },
+    ring: solid.fill === paint.line ? paint.lineOutline : solid.fill,
+    line: {
+      stroke: shape.stroke === paint.border ? paint.plainBorder : shape.stroke,
+      'stroke-width': shape['stroke-width'],
+    },
   };
   drawShape(w, view, shapePaint);
   const fill = view.style.shape.fill;
