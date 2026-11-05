@@ -34,7 +34,7 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 - [x] Merged (PR #260). No gradient, as in v12 (evidence in tickets/231.md). Text size follows the theme (D132).
 - [x] Decided 2026-11-05 (D184; MIGRATION.md drop shadow row, #236): participant boxes take the theme shadow; v12's white offset filter did not show.
-- [ ] Still open (tickets/231.md, not in the 2026-11-05 answers): sequence text at the theme's 14px under the redux family, `neo` and `neo-dark`, v12 16px; proposed MIGRATION.md addition there.
+- [x] Sequence text at the theme's 14px (v12 16px): already decided by D132 (unset sequence font sizes follow the theme's `fontSize`); MIGRATION.md cites D132. No new D-id.
 - [x] For #236: MIGRATION.md's "Not in 13.0" gradient row now says what v13 does (D182).
 
 ## #233 T5 class
