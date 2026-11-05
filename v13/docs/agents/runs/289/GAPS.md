@@ -54,12 +54,14 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 
 ## #321 T6 (handoff `tickets/321.md`)
 
-- [x] T2 review: the `:::` class `ref` symbol is recorded only once its point statement completes (a failed point has no symbol, so rename leaves it alone).
+- [x] T2 review item superseded by the #321 review below (refs are recorded wherever `:::name` lexes).
 - [ ] **Owner #317 T5:** add `quadrantChart` rows to `LEZER_HIGHLIGHTERS` / `MONARCH_HIGHLIGHTERS` (keyed by `FirstPartyFacetId`, which needs the manifest's `language` entry), run each adapter's `gen`, extend adapters-agree and first-paint specs, and drop the test-only row in `language-service/src/testing/unlisted-facets.ts`.
 - **Choice:** style-key completions insert an example value (`radius: 10`): a key without a value is an error inside the inserted text.
 - Size: `./language` 11.5 KB gz; parser 8.8 KB gz (+0.2 KB probe). R-LANG-4 timing not measured on a steady machine.
-- Review of #321 (through `createLanguageService`). Follow-up on `feature/321_language-fixes`:
-  - [ ] `:::` completion offers class names `:::` cannot read (`a-b`, `café`); `classDef ¦` offers `:::`-only names (`a_b`).
-  - [ ] **Choice, reversing the earlier one:** a class ref is recorded whenever `:::name` lexes, even in a failed point, so rename covers it and the clash check sees it (recording only completed statements let `cold → warm` silently merge classes). The ref links to no statement.
-  - [ ] `-->` offered before an existing `-->`; completion after a full `title` / `accDescr ` gives nothing.
-  - [ ] **Choice:** only the effective (last) `classDef` of a name is the definition; earlier ones are references (v12: last wins; hover already shows the last).
+- Review of #321 (through `createLanguageService`). Follow-up on `feature/321_language-fixes` (done):
+  - [x] `:::` completion offers class names `:::` cannot read (`a-b`, `café`); `classDef ¦` offers `:::`-only names (`a_b`).
+  - [x] **Choice, reversing the earlier one:** a class ref is recorded whenever `:::name` lexes, even in a failed point, so rename covers it and the clash check sees it (recording only completed statements let `cold → warm` silently merge classes). The ref links to no statement.
+  - [x] `-->` offered before an existing `-->`; completion after a full `title` / `accDescr ` gives nothing.
+  - [x] **Choice:** only the effective (last) `classDef` of a name is the definition; earlier ones are references (v12: last wins; hover already shows the last).
+  - **Choice:** `accDescr ¦` / `accTitle ¦` offer `:` (and `{` for `accDescr`): the word lexes as a label until one follows. After a word typed in full (`title¦`), the probe takes the mode of the step that lexed it.
+  - Size after the fixes: `./language` 11.9 KB gz; parser 9.0 KB gz.

@@ -1,0 +1,6 @@
+@ 5:7  A:::|
+  ok class 5:7-5:7 "" -> "ok"
+  a_b class 5:7-5:7 "" -> "a_b"
+@ 6:12  classDef |
+  a-b class 6:12-6:12 "" -> "a-b"
+  ok class 6:12-6:12 "" -> "ok"
