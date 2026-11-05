@@ -10,7 +10,7 @@ export interface InlineRequest {
   readonly measurer: Measurer;
   /** `measurer.metrics(font)`. */
   readonly metrics: VerticalMetrics;
-  /** One ex in px. The tables carry no x-height, so this is half the font size (MathJax's default). */
+  /** One ex in px. The tables carry no x-height, so this is half the font size (the MathJax default). */
   readonly ex: number;
 }
 
@@ -53,7 +53,7 @@ const FEATURES = [
   },
 ] as const;
 
-/** Placeholders are noncharacters, which never occur in interchange text. */
+/** Placeholders are Unicode non-characters, which never occur in interchange text. */
 export const PLACEHOLDER = 0xfdd0;
 const MAX_BOXES = 32;
 const RE_PLACEHOLDER = /[﷐-﷯]/;
