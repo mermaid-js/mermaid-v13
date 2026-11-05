@@ -31,6 +31,7 @@ flowchart LR
     <script>
       mermaid.initialize({ startOnLoad: true });
       globalThis.mermaidPlugins.push({
+        package: 'mermaid-fixture-extension',
         manifest: { plugin: 'extension', id: 'fixture-mark', entry: './index.js', export: 'fixtureMark' },
         load: () => import('%CDN%/mermaid-fixture-extension/index.js'),
       });
