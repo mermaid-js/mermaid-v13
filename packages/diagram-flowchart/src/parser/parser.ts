@@ -150,6 +150,8 @@ const SHAPES: Record<number, [shape: string, close: number, what: string, closeT
 const DIRECTIONS = ['TB', 'BT', 'RL', 'LR', 'TD'];
 
 const LINE_END = [Kind.Newline, T.Semi, T.Eof];
+/** What the parser skips: the shared trivia, and the `click` keyword (jison has no token for it). */
+const PARSER_TRIVIA = kindSet(Kind.Comment, Kind.Directive, Kind.Space, T.ClickKeyword);
 /** Where recovery resumes (R-PARSE-4). */
 const BOUNDARY = kindSet(Kind.EOF, T.Eof, Kind.Newline, T.Semi);
 const STATEMENT_START = [
@@ -445,7 +447,7 @@ class FlowParser {
     this.viewFrom = pre.bodyStart;
     this.probe = probe;
     this.fullTokens = lex(src, pre.bodyStart, this.view, true, probe);
-    this.tokens = significantTokens(this.fullTokens);
+    this.tokens = significantTokens(this.fullTokens, PARSER_TRIVIA);
     if (probe) {
       if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
       else probe.trivia(this.fullTokens);
@@ -726,7 +728,10 @@ class FlowParser {
     const lexedAgain = probe !== undefined && from < probe.offset ? probe : undefined;
     if (lexedAgain) lexedAgain.reset();
     else probe?.freeze(true);
-    this.tokens = significantTokens(lex(this.src, from, this.view, false, lexedAgain));
+    this.tokens = significantTokens(
+      lex(this.src, from, this.view, false, lexedAgain),
+      PARSER_TRIVIA
+    );
     this.viewFrom = from;
     this.i = 0;
   }

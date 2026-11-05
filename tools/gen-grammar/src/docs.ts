@@ -74,7 +74,12 @@ function firstSets(g: Grammar): Map<string, Set<string>> {
 }
 
 /** The doc of every keyword and operator kind in `keys`, matched to terminals by name. */
-export function docTable(g: Grammar, keys: string[], also: readonly string[] = []): DocTable {
+export function docTable(
+  g: Grammar,
+  keys: string[],
+  also: readonly string[] = [],
+  unnamed: Readonly<Record<string, { docOf?: string }>> = {}
+): DocTable {
   const byName = new Map<string, LexRule>();
   for (const r of g.lexRules) {
     if (r.name !== undefined && !byName.has(fold(r.name))) byName.set(fold(r.name), r);
@@ -122,6 +127,14 @@ export function docTable(g: Grammar, keys: string[], also: readonly string[] = [
   const entries: [string, string][] = [];
   const missing: string[] = [];
   for (const key of keys) {
+    // A kind of an unnamed rule shares the doc of the terminal it names.
+    const shared = unnamed[key]?.docOf;
+    if (shared !== undefined) {
+      const doc = docOf(shared);
+      if (doc === undefined) missing.push(key);
+      else entries.push([key, doc]);
+      continue;
+    }
     const rule = byName.get(fold(key));
     if (!rule?.name || !isDocumented(rule.name)) continue;
     const doc = docOf(rule.name);
@@ -137,9 +150,14 @@ export function docsModule(
   type: string,
   grammarFile: string,
   keys: string[],
-  source: { module: string; object: string; documented?: string[] }
+  source: {
+    module: string;
+    object: string;
+    documented?: string[];
+    unnamed?: Readonly<Record<string, { docOf?: string }>>;
+  }
 ): string {
-  const { entries, missing } = docTable(g, keys, source.documented);
+  const { entries, missing } = docTable(g, keys, source.documented, source.unnamed);
   if (missing.length > 0) {
     throw new Error(`${grammarFile}: no doc for the keyword kinds ${missing.join(', ')}`);
   }

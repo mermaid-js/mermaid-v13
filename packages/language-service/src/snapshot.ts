@@ -188,15 +188,27 @@ class Snapshot implements DocumentSnapshot {
   }
 
   /**
-   * Preprocess and parse diagnostics as they are (D91), with the front-matter config warnings
-   * (D96) placed in source order among them.
+   * Preprocess and parse diagnostics as they are (D91), except the front matter's YAML ones:
+   * the tree mode's, one per bad line, replace preprocess's first error (#168). The
+   * front-matter config warnings (D96) go in source order among them.
    */
   diagnostics(): readonly Diagnostic[] {
     // Copies: the parse result's own diagnostics stay as the parser left them.
     return this.#memo('diagnostics', () => {
-      const own = diagnostics(this.#context).map(copyDiagnostic);
-      // Both lists are in source order: merge, own first on a tie.
-      const config = configDiagnostics(this.#context, this.#frontMatter());
+      const fm = this.#frontMatter();
+      let own = diagnostics(this.#context).map(copyDiagnostic);
+      if (fm !== undefined && !fm.unclosed) {
+        const { start, end } = fm.range;
+        own = own.filter(
+          (d) => !(d.code.startsWith('YAML_') && start <= d.range.start && d.range.end <= end)
+        );
+      }
+      // Each list is in source order: merge, own first on a tie.
+      // The front matter's own: its YAML diagnostics and config warnings (a stable sort).
+      const config = [
+        ...(fm?.diagnostics ?? []).map(copyDiagnostic),
+        ...configDiagnostics(this.#context, fm),
+      ].sort((a, b) => a.range.start - b.range.start);
       const out: Diagnostic[] = [];
       let i = 0;
       for (const w of config) {
