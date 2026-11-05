@@ -90,7 +90,7 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
         };
         const cy = ey + height / 2;
         connectors.push({
-          ...line(env, axisX, cy, eventX, cy, common.connectorWidth),
+          ...line(env, axisX, cy, eventX, cy, env.connectorWidth),
           period: i,
           event: k,
           slot,
@@ -155,7 +155,7 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
     axisTop,
     axisX,
     all.y + all.height + td.axisBottomEm * env.fontSize + td.axisBottomPad,
-    common.axisWidth
+    env.axisWidth
   );
   return finish(env, {
     direction: 'TD',

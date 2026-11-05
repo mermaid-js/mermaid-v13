@@ -33,6 +33,12 @@ export interface Env {
   readonly leftMargin: number;
   readonly padding: number;
   readonly multicolor: boolean;
+  /**
+   * Stroke widths of the axis and the dashed connectors: v12's attributes (4 and 2) where boxes
+   * take the `cScale` palettes, else the theme's `strokeWidth` (v12 redux `.lineWrapper line`).
+   */
+  readonly axisWidth: number;
+  readonly connectorWidth: number;
   /** Box labels: the theme's font at its weight (redux draws them bold). */
   readonly font: FontKey;
   readonly titleFont: FontKey;
@@ -44,6 +50,14 @@ export interface Env {
   boxHeight(label: MeasuredLabel, padding: number): number;
 }
 
+/**
+ * Whether boxes take the `cScale` palettes (`timelineScaleColors`, v12 classic and neo) or the
+ * `mainBkg` / `nodeBorder` paint (v12 redux). The layout reads it for the line widths.
+ */
+export function scaleColors(theme: TimelineLayoutContext['theme']): boolean {
+  return theme.value('timelineScaleColors') === 'true';
+}
+
 export function envOf(ctx: TimelineLayoutContext): Env {
   const m = TIMELINE_METRICS;
   const conf = ctx.config.timeline ?? {};
@@ -53,12 +67,15 @@ export function envOf(ctx: TimelineLayoutContext): Env {
   const titleSize = fontSizePx(m.common.titleFontSize, fontSize) ?? fontSize;
   const refSize = m.common.titleReferenceFontSize;
   const titleRefSize = fontSizePx(m.common.titleFontSize, refSize) ?? refSize;
+  const stroke = scaleColors(ctx.theme) ? undefined : ctx.theme.number('strokeWidth');
   return {
     m,
     fontSize,
     leftMargin: lengthOf(conf.leftMargin, m.common.leftMargin),
     padding: lengthOf(conf.padding, m.common.padding),
     multicolor: conf.disableMulticolor !== true,
+    axisWidth: stroke ?? m.common.axisWidth,
+    connectorWidth: stroke ?? m.common.connectorWidth,
     font,
     titleFont: { family, size: titleSize, weight: m.common.titleFontWeight },
     titleReferenceFont: { family, size: titleRefSize, weight: m.common.titleFontWeight },

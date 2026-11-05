@@ -33,9 +33,17 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - [ ] Invariants run on hand-built fixtures only (`layout/fixtures.ts`); #336 runs `timelineLayoutViolations` on parser-produced models.
 
 ### #311 T4 renderer
-- [ ] v12's section classes are `section-<slot − 1>`: the first section is `section--1`. **Choice:** keep v12's numbering exactly, so existing author CSS still matches (P2); MIGRATION.md says so.
-- Redux event label offset is `padding/2 + 3` in v12's code (the spec says `padding + 3`): follow the code (oracle).
-- v12 TD writes no gradient defs, so its neo gradient CSS points at a missing id; v13's core defs make it draw (D182). MIGRATION.md row.
+- [x] v12's section classes are `section-<slot − 1>`: the first section is `section--1`. **Choice:** keep v12's numbering exactly, so existing author CSS still matches (P2); MIGRATION.md says so.
+- [x] Redux event label offset is `padding/2 + 3` in v12's code (the spec says `padding + 3`): follow the code (oracle).
+- [x] v12 TD writes no gradient defs, so its neo gradient CSS points at a missing id; v13's core defs make it draw (D182). MIGRATION.md row.
+- [x] **Choice:** four new theme variables carry the family differences no existing variable has (the neo themes take the classic values, D227): `timelineRadius` (5 / 0), `timelineLabelOffset` (padding kind, `0.5 * padding` / `padding`), `timelineEventLabelShift` (0 / 3) and the flag `timelineScaleColors` (true / false). The flag switches what v12's two `styles.js` generators switch together: `cScale`/`cScaleLabel`/`cScaleInv` paint with the 3px rule and the 4 / 2 px axis and connectors, or `mainBkg`/`nodeBorder` with the border slot, `strokeWidth` lines and `dropShadow`. The layout reads it for the line widths, so arrowheads and bounds follow `strokeWidth` in redux.
+- [ ] **Size:** the vocabulary rows and `usedBy` entries cost +142 B gz on the bench core closure (89,985 → 90,127, 15 B over the 90,112 budget) and +138 B on the CDN ESM closure (90,105 → 90,243, 131 B over). `core-size.spec.ts`, `optional-size.spec.ts` and `cdn-build.spec.ts` fail; no other check does. For the maintainer, with the M4 size work (D217).
+- [x] **Choice:** events' `brightness(120%)` is computed into their colours (`brightness()` is not an allowed filter; no core edit). Under `theme: 'auto'` an event's theme variable stays live and unbrightened; a page CSS override of `--mermaid-mainBkg`/`--mermaid-nodeBorder` reaches periods, not events. A gradient outline is not brightened. MIGRATION.md.
+- [x] **Choice:** arrowheads take their line's colour (v12's marker path was always black). MIGRATION.md.
+- [x] **Choice:** under the gradient the rule is plain `nodeBorder` at 2px (D185, D227), and box text keeps `cScaleLabel<n>` (v12's neo rules set only fill and stroke).
+- [x] **Choice:** the title is drawn at the px size of `4ex` the layout measured (`fontSizePx`), not the literal `4ex` (pitfall 16), in `textColor` (v12's root `fill`).
+- [ ] Render properties, AST round-trip and the "one `data-ast` per section/period/event" check over the parsed corpus: wait for #336. Today they run over `layout/fixtures.ts` (both directions × 11 themes × `auto` × two config variants); T2 adds its parsed models to `MODELS` in `render/render.spec.ts`.
+- [ ] No `createMermaid().render()` test yet (the plugin can't register without a parser); `render/testing.fixtures.ts` builds the context as the pipeline does. #315 adds the public-seam spec.
 
 ### #315 T5 integration
 - [ ] Renderer fallbacks (`leftMargin` 50, `useMaxWidth` false) differ from the schema defaults (150, true). Use the effective v12 values with the default config merged (check in the oracle) and record any key whose effective value differs from its schema default.

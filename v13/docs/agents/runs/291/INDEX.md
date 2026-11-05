@@ -8,7 +8,7 @@ Integration branch `feature/291_timeline` (from `mermaid-v13` + `docs/m4-specs`,
 | T2 grammar, parser, model, AST | #336 | #308 | |
 | T3 layout (LR and TD) | #337 | #336 (hand-built fixtures meanwhile) | merged (ff 70ad3a5d2) |
 | T4a classic `cScale*`, `cScaleInv*`, `cScaleLabel*` palettes | #338 | — | merged |
-| T4 SVG renderer | #311 | #337, #338 | in progress |
+| T4 SVG renderer | #311 | #337, #338 | in review (branch `feature/311_timeline-renderer`) |
 | T5 integration | #315 | #311, #318 | |
 | T6 language facet | #318 | #336 | |
 

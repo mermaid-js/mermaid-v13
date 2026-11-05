@@ -302,6 +302,27 @@ describe('timeline TD follows timelineRendererVertical.ts', () => {
   });
 });
 
+describe('timeline line widths follow the theme', () => {
+  it('draws the axis at 4 px and connectors at 2 px where boxes take cScale (v12 classic)', () => {
+    for (const m of [fx.simple, fx.turned(fx.simple)]) {
+      const l = lay(m);
+      expect(l.axis.width).toBe(4);
+      expect(new Set(l.connectors.map((c) => c.width))).toEqual(new Set([2]));
+    }
+  });
+
+  it('draws both at strokeWidth in the redux themes, arrowheads sized to match', () => {
+    for (const m of [fx.simple, fx.turned(fx.simple)]) {
+      const l = lay(m, {}, 'redux', { strokeWidth: 3 });
+      expect(l.axis.width).toBe(3);
+      expect(new Set(l.connectors.map((c) => c.width))).toEqual(new Set([3]));
+      // The tip is one stroke width past the line's end.
+      const { axis } = l;
+      expect(Math.hypot(axis.arrow.tip.x - axis.x2, axis.arrow.tip.y - axis.y2)).toBeCloseTo(3);
+    }
+  });
+});
+
 describe('timelineLayoutViolations', () => {
   it('catches a broken layout', () => {
     const good = lay(fx.sections);
