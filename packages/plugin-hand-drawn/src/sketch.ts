@@ -4,7 +4,7 @@
  * core's `PathBuilder`, so `num()` formats every one and the output passes the allow-list.
  */
 import { pathBuilder, type Attrs, type PathData } from '@mermaid-js/core/svg';
-import rough from 'roughjs/bundled/rough.esm.js';
+import roughBundle from 'roughjs/bundled/rough.esm.js';
 import type { Drawable, Op, Options } from 'roughjs/bin/core.js';
 
 /** The outline tags a diagram draws through `w.outline` (D302). */
@@ -27,6 +27,9 @@ export interface SketchPath {
   readonly attrs: Attrs;
 }
 
+// roughjs has no `type: module`, so a loader that reads the bundle as CommonJS (tsx does, as the
+// dev server runs) hands over its namespace as the default import: `{ default: rough }`.
+const rough = (roughBundle as { default?: typeof roughBundle }).default ?? roughBundle;
 const generator = rough.generator();
 
 function toPath(ops: readonly Op[]): PathData {
