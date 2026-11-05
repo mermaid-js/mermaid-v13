@@ -202,6 +202,24 @@ describe('inline boxes from an extension (D177)', () => {
     expect((e as MermaidError).code).toBe('INTERNAL');
     expect((e as MermaidError).message).toMatch(/"broken-math" failed in inline: .*finite width/);
   });
+
+  it('warns INLINE_LIMIT once when a label has more spans than it boxes, or a reserved character', async () => {
+    const { m, ready } = api(math);
+    await ready;
+    const many = Array.from({ length: 34 }, (_, i) => `$$x_{${i}}$$`).join(' ');
+    const r = await m.render('x', `flowchart TD\n  A["${many}"] --> B["${many}"]`);
+    expect(codes(r.warnings)).toEqual(['INLINE_LIMIT']);
+    // 32 boxes per label; the last two spans of each are shown as written.
+    expect(boxes(r.svg)).toHaveLength(64);
+    expect(r.svg).toContain('$$x_{33}$$');
+    // U+FDD0–U+FDEF mark boxes inside a label, so a label holding one boxes nothing.
+    const reserved = await m.render('x', 'flowchart TD\n  A["﷕ $$x$$"]');
+    expect(codes(reserved.warnings)).toEqual(['INLINE_LIMIT']);
+    expect(boxes(reserved.svg)).toEqual([]);
+    // Without a span, a reserved character is just text.
+    expect(codes((await m.render('x', 'flowchart TD\n  A["﷕"]')).warnings)).toEqual([]);
+    expect(codes((await m.render('x', 'flowchart TD\n  A["$$x$$ $$y$$"]')).warnings)).toEqual([]);
+  });
 });
 
 // Every label core lays out, per type (D176): one `$$…$$` span each, with a distinct TeX length

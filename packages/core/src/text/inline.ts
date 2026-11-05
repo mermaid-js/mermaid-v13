@@ -66,6 +66,11 @@ const FEATURES = [
 /** Placeholders are Unicode non-characters, which never occur in interchange text. */
 export const PLACEHOLDER = 0xfdd0;
 const MAX_BOXES = 32;
+/** Given once per render when a label's spans are shown as written because of the limits above. */
+const LIMIT = {
+  code: 'INLINE_LIMIT',
+  message: `A label has more than ${MAX_BOXES} inline spans, or a character in U+FDD0–U+FDEF: those spans are shown as written.`,
+} as const;
 const hex = (n: number): string => n.toString(16).padStart(4, '0');
 const RE_PLACEHOLDER = new RegExp(
   `[\\u${hex(PLACEHOLDER)}-\\u${hex(PLACEHOLDER + MAX_BOXES - 1)}]`
@@ -98,6 +103,7 @@ export function inlineSpans(
     given.add(key);
     warn(w);
   };
+  const claimed = (text: string): boolean => providers.some((p) => hasPair(text, p.open, p.close));
   return {
     extract(raw, font, measurer) {
       for (const f of missing) {
@@ -106,7 +112,11 @@ export function inlineSpans(
           warn({ code: f.code, message: f.message });
         }
       }
-      if (providers.length === 0 || RE_PLACEHOLDER.test(raw)) return undefined;
+      if (providers.length === 0) return undefined;
+      if (RE_PLACEHOLDER.test(raw)) {
+        if (claimed(raw)) once(LIMIT);
+        return undefined;
+      }
       let request: InlineRequest | undefined;
       const boxes: LabelBoxSpan[] = [];
       let source = '';
@@ -144,6 +154,7 @@ export function inlineSpans(
         }
         at = next;
       }
+      if (boxes.length === MAX_BOXES && claimed(raw.slice(at))) once(LIMIT);
       if (boxes.length === 0) return undefined;
       return { source: source + raw.slice(at), boxes };
     },

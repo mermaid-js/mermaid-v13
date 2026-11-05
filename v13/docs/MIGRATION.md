@@ -542,6 +542,7 @@ v12 rendered `$$…$$` with KaTeX into MathML or HTML; v13 typesets it with Math
 - **Not supported**: the span is shown as written, with `MATH_ERROR`. `\def`, `\newcommand` and `\renewcommand` (MathJax would keep a definition from one formula to the next, so one label could change another), `\href`, `\style`, `\class`, `\unicode` and `\htmlClass` are undefined control sequences; `\tag` (an equation number) is refused. Only the TeX packages `base`, `ams`, `boldsymbol`, `cancel`, `color` and `enclose` are loaded.
 - **Class members** read as in v12: a member ending in `$` is static, so `+x $$a$$` is drawn underlined as `+x $$a$`. Put the TeX before the end (`+$$a$$ x`).
 - **Errors.** v12 drew KaTeX's error for TeX that does not parse; v13 shows the span as written, with one `MATH_ERROR` warning naming MathJax's message.
+- **Limits.** A label draws at most 32 formulas; the rest are shown as written. A label that contains a character in U+FDD0–U+FDEF (Unicode non-characters, which v13 uses to mark formulas inside a label) draws none. Either gives one `INLINE_LIMIT` warning per render (core's, for any inline span, not only math).
 - **No MathML.** Nothing in v13 output is MathML or HTML, so `legacyMathML` and `forceLegacyMathML` have no effect, and no KaTeX stylesheet is needed.
 - **Loading.** MathJax loads only for a diagram with a `$$…$$` pair in a label. `render()` loads it; `renderSync` needs `prepare()` or `preload({ math: true })` first, or throws `NotLoadedError` naming `math "tex"`.
 
