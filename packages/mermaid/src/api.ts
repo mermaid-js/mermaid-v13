@@ -940,6 +940,9 @@ export function createMermaid(
       await registry.registerExternal(diagrams, lazyLoad, replace);
     } finally {
       rebuildHooks();
+      // Again after the await, as `DiscoveryQueue.add` does: a render while it was pending
+      // resolved its config without the new fragments and hooks.
+      cache.clear();
     }
   }
 

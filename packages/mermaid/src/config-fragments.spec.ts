@@ -213,6 +213,18 @@ describe('layout manifests (D177, DESIGN §12.1)', () => {
     expect(names).toEqual(['one', 'one']);
   });
 
+  it('a render while the registration is pending caches nothing the new fragment changes', async () => {
+    const { def } = gridPackage(['grid']);
+    const text = `---\nconfig:\n  layout: grid\n  grid:\n    gap: 2\n---\n${FLOW}`;
+    const m = createMermaid();
+    await m.prepare(FLOW);
+    const pending = m.registerExternalDiagrams([def]);
+    // Before the fragment is in, `grid` is an unknown key.
+    expect(codes(m.renderSync(text).warnings)).toContain('CONFIG_UNKNOWN_KEY');
+    await pending;
+    expect((await m.render('a', text)).warnings).toEqual([]);
+  });
+
   it('refuses a layout manifest that claims a built-in name (D127, D171)', async () => {
     for (const name of ['layered', 'dagre']) {
       const { def } = gridPackage(['grid', name]);
