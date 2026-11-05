@@ -1,0 +1,65 @@
+# The config fragment of @mermaid-js/plugin-hand-drawn (D153, D303): the activation key and the
+# seed, out of core's schema. Core knows these keys only while the plugin is registered.
+# `pnpm gen:config` writes `src/generated/config-fragment.ts` and the plugin's section of the
+# config reference. Same `x-mermaid` annotations as core's schema.
+#
+# v12's `look: handDrawn` aliases to `handDrawn: true`, at the top level and in every diagram
+# section core's schema gives a `look` (v12 resolves a section's `look` onto the top level).
+# Other `look` values are not aliased: they still warn `LOOK_REMOVED`. `index.spec.ts` checks that
+# the list covers every core section with a `look`.
+x-mermaid-fragment:
+  id: hand-drawn
+  aliases:
+    - { from: look, when: handDrawn, to: handDrawn, value: true }
+    - { from: flowchart.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: swimlane.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: agentflow.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: sequence.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: gantt.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: journey.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: timeline.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: class.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: state.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: er.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: pie.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: quadrantChart.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: xyChart.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: requirement.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: architecture.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: mindmap.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: ishikawa.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: kanban.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: gitGraph.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: c4.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: sankey.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: packet.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: block.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: eventmodeling.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: treeView.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: radar.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: usecase.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: venn.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: wardley-beta.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: cynefin.look, when: handDrawn, to: handDrawn, value: true }
+    - { from: railroad.look, when: handDrawn, to: handDrawn, value: true }
+properties:
+  handDrawn:
+    description: |
+      Draws the outlines of nodes, groups and edges hand-drawn, sketched by roughjs, in
+      flowchart, class, state and ER diagrams. Other types draw as usual. The layout does not
+      change: the sketch follows the outlines the plain drawing has. Text output is never
+      sketched (one `ASCII_DROPPED` warning, `feature: 'handDrawn'`). v12's `look: handDrawn`
+      sets it, at the top level or in a diagram section.
+    type: boolean
+    default: false
+    x-mermaid: { status: honoured, since: 13.0.0 }
+  handDrawnSeed:
+    description: |
+      The seed of the hand-drawn sketch. Every outline uses it, so the same text gives the same
+      drawing on every render and machine, and another seed gives another drawing. A non-zero
+      seed draws as v12 did for the same geometry. 0, the default, is a fixed seed too: v12 used
+      a random one.
+    type: number
+    default: 0
+    x-mermaid:
+      { status: honoured, since: 13.0.0, reason: '0 is a fixed seed, not a random one (D300).' }

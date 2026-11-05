@@ -205,9 +205,18 @@ export type ParseErrorHandler = (error: MermaidError) => void;
 
 const WARNING_KEYS = ['path', 'source', 'feature', 'shapes', 'astIds'] as const;
 
-/** A copy of a warning with only the `Warning` keys (text output adds `feature`, `shapes`, `astIds`). */
+/**
+ * A copy of a warning with only the `Warning` keys (text output adds `feature`, `shapes`, `astIds`).
+ * `LOOK_REMOVED` names the hand-drawn package here: core never names one (D153, as D173).
+ */
 const toWarning = (w: Warning): Warning => {
-  const out: Plain = { code: w.code, message: w.message };
+  const out: Plain = {
+    code: w.code,
+    message:
+      w.code === 'LOOK_REMOVED'
+        ? `${w.message} For handDrawn, register @mermaid-js/plugin-hand-drawn.`
+        : w.message,
+  };
   for (const k of WARNING_KEYS) {
     const v = w[k];
     if (v !== undefined) out[k] = Array.isArray(v) ? [...(v as unknown[])] : v;

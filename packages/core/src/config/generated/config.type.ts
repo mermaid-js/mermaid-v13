@@ -72,11 +72,6 @@ themeCSS?: string
  */
 look?: ("classic" | "handDrawn" | "neo")
 /**
- * Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed.
- * 
- */
-handDrawnSeed?: number
-/**
  * Defines which layout algorithm to use for rendering the diagram.
  * 
  * Defaults to `layered`, the layout engine built into core (DESIGN §6.1).
