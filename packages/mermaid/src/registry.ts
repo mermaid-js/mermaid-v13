@@ -238,6 +238,8 @@ export class Registry {
   private order: Entry[] | undefined;
   /** Discovered extensions, sorted by package then id. */
   private discoveredExtensions: Found<ExtensionPlugin>[] = [];
+  /** Every discovered (package, kind, id or name) seen so far, registered or not. */
+  private readonly claimed = new Set<string>();
   /** Explicit extensions, in call order (a repeated id keeps its place). */
   private readonly explicitExtensions: ExtensionPlugin[] = [];
   private readonly plugins = new Map<string, AnyPlugin>();
@@ -525,12 +527,9 @@ export class Registry {
         message: `Plugin package "${pkg}" was skipped: ${reason}`,
         package: pkg,
       });
-    // One package may give several entries; each (package, kind, id or name) counts once.
-    const known = new Set([
-      ...this.discovered.map((d) => `${d.package}\0diagram\0${d.value.id}`),
-      ...this.discoveredExtensions.map((d) => `${d.package}\0extension\0${d.value.id}`),
-      ...this.discoveredLayouts.map((d) => `${d.package}\0layout\0${d.name}`),
-    ]);
+    // One package may give several entries; each (package, kind, id or name) counts once, also
+    // across batches still registering at the same time (the CDN queue's pushes).
+    const known = this.claimed;
     const claim = (key: string): void => {
       if (known.has(key)) throw new TypeError('it was already discovered');
       known.add(key);

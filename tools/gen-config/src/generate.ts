@@ -341,7 +341,7 @@ function referenceDoc(root: RootSchema): string {
     '- **removed**: produces a warning and has no effect.',
     '- **moved**: produces a warning; the key now belongs to another package.',
     '',
-    'Keys not listed here produce an "unknown key" warning and are dropped from diagram text. Diagram text (front matter and `%%{init}%%` directives) can never set the keys listed in `secure`, nor the integrator-only options `securityLevel`, limits, `deterministic`, `idPrefix`, `output.cssVariables`, the measurer, link schemes or `discovery`.',
+    'Keys not listed here produce an "unknown key" warning and are dropped from diagram text. Diagram text (front matter and `%%{init}%%` directives) can never set the keys listed in `secure`, nor the integrator-only options `securityLevel`, limits, `deterministic`, `idPrefix`, `output.cssVariables`, the measurer, link schemes, `discovery` or `cdnBase`.',
     '',
   ];
   for (const [group, list] of groups) {

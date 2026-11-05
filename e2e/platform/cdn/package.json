@@ -1,0 +1,12 @@
+{
+  "name": "platform-cdn",
+  "version": "0.0.0",
+  "private": true,
+  "description": "CDN example (spec #218, T6): pages/ on one origin load mermaid's CDN build from node_modules/ served as a second origin, as from unpkg.",
+  "type": "module",
+  "dependencies": {
+    "mermaid": "13.0.0-alpha.0",
+    "mermaid-fixture-diagram": "1.0.0",
+    "mermaid-fixture-extension": "1.0.0"
+  }
+}
