@@ -103,19 +103,13 @@ describe('flowchart render: themes (D151)', () => {
     }
   );
 
-  it.each([['neo-dark', 'redux-dark-color']])(
-    'renders %s as %s, with THEME_UNAVAILABLE',
-    async (theme, standIn) => {
-      const r = await literal(theme);
-      expect(r.warnings.map((w) => w.code)).toEqual(['THEME_UNAVAILABLE']);
-      expect(r.svg).toBe((await literal(standIn)).svg);
-    }
-  );
-
-  it('renders neo as its own theme, with no warning (D180)', async () => {
-    const r = await literal('neo');
+  it.each([
+    ['neo', 'redux-color'],
+    ['neo-dark', 'redux-dark-color'],
+  ])('renders %s as its own theme, with no warning (D180)', async (theme, formerStandIn) => {
+    const r = await literal(theme);
     expect(r.warnings).toEqual([]);
-    expect(r.svg).not.toBe((await literal('redux-color')).svg);
+    expect(r.svg).not.toBe((await literal(formerStandIn)).svg);
   });
 });
 

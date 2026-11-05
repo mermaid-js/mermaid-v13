@@ -34,6 +34,7 @@ const EXPECTED: Record<ThemeName, typeof NEO> = {
   neutral: CLASSIC,
   base: CLASSIC,
   neo: NEO,
+  'neo-dark': NEO,
 };
 
 const resolve = async (name: ThemeName, themeVariables?: Record<string, unknown>) => {

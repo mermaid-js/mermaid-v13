@@ -105,7 +105,7 @@ describe('the redux family (D151)', () => {
     expect((await literal('redux-dark')).palette('borderColorArray')).toEqual([]);
   });
 
-  it.each(['default', 'dark', 'forest', 'neutral', 'base', 'neo'] as const)(
+  it.each(['default', 'dark', 'forest', 'neutral', 'base', 'neo', 'neo-dark'] as const)(
     '%s carries no palette',
     async (name) => {
       const t = await literal(name);

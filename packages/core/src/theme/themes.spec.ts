@@ -45,12 +45,14 @@ describe('built-in themes', () => {
         'neutral',
         'base',
         'neo',
+        'neo-dark',
       ].sort()
     );
     expect(specs.filter((s) => s.dark).map((s) => s.name)).toEqual([
       'redux-dark',
       'redux-dark-color',
       'dark',
+      'neo-dark',
     ]);
   });
 
@@ -152,11 +154,11 @@ describe('theme names', () => {
     expect((await loadTheme('neo')).name).toBe('neo');
   });
 
-  it('stands neo-dark in for redux-dark-color, with a warning', () => {
+  it('resolves neo-dark to its own spec, with no warning (D180)', async () => {
     const warnings: ThemeWarning[] = [];
-    const warn = (w: ThemeWarning) => warnings.push(w);
-    expect(resolveThemeName('neo-dark', warn)).toEqual({ name: 'redux-dark-color' });
-    expect(warnings.map((w) => w.code)).toEqual(['THEME_UNAVAILABLE']);
+    expect(resolveThemeName('neo-dark', (w) => warnings.push(w))).toEqual({ name: 'neo-dark' });
+    expect(warnings).toEqual([]);
+    expect((await loadTheme('neo-dark')).name).toBe('neo-dark');
   });
 
   it('stands in for unknown names and null, with a warning', () => {
@@ -215,6 +217,7 @@ describe('node padding per theme (#83, D151, D152)', () => {
     base: CLASSIC,
     // D181: neo takes the redux family's v12 `look: neo` geometry.
     neo: REDUX,
+    'neo-dark': REDUX,
   };
   const theme = (name: string, options: Parameters<typeof createTheme>[1] = {}) =>
     createTheme(specs.find((s) => s.name === name)!, options);

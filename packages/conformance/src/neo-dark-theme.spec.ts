@@ -1,0 +1,186 @@
+/**
+ * #227: v13's `neo-dark` against v12 12.2.0's resolved `getThemeVariables()` for
+ * `theme: 'neo-dark'` (D151: v12 is the oracle). Every variable in the v13 vocabulary and every
+ * palette is compared; each one that differs is in `DIFFERENCES` with the decision that makes
+ * it, and the list has to match the differences found exactly, so none is unlisted and none is
+ * stale. D183 cleans neo-dark up: dark derivation, stroke width 2 and AA.
+ */
+import {
+  DARK_RULES,
+  PALETTE_LIMIT,
+  PALETTE_VARIABLES,
+  THEME_VARIABLES,
+  contrastRatio,
+  createTheme,
+  formatColor,
+  loadTheme,
+  parseColor,
+  type Rgba,
+  type Theme,
+} from '@mermaid-js/core/theme';
+import { describe, expect, it } from 'vitest';
+import { loadOracle } from './oracle.ts';
+
+interface V12 {
+  mermaidAPI: {
+    reset(): void;
+    initialize(config: object): void;
+    getConfig(): { themeVariables: Record<string, unknown> };
+  };
+}
+
+await loadOracle();
+const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+
+function v12Vars(theme: string): Record<string, unknown> {
+  v12.mermaidAPI.reset();
+  v12.mermaidAPI.initialize({ theme });
+  return { ...v12.mermaidAPI.getConfig().themeVariables };
+}
+
+const OLD = v12Vars('neo-dark');
+const spec = await loadTheme('neo-dark');
+const neoDark = createTheme(spec, { cssVariables: false });
+const neo = createTheme(await loadTheme('neo'), { cssVariables: false });
+
+/** Owned by #223 (GAPS.md "Contracts"): compared like the rest once the vocabulary has them. */
+const GRADIENT = ['useGradient', 'gradientStart', 'gradientStop'] as const;
+const PENDING_GRADIENT = GRADIENT.filter((n) => !Object.hasOwn(THEME_VARIABLES, n));
+
+/** Geometry v12 takes from `look: neo`, not from a theme variable; v13 carries it as tokens. */
+const LOOK_GEOMETRY = Object.entries(THEME_VARIABLES)
+  .filter(([name, d]) => (d.kind === 'length' || d.kind === 'padding') && !(name in OLD))
+  .map(([name]) => name);
+
+const LOOK_GEOMETRY_WHY =
+  'D181, D152: v12 neo geometry comes from `look: neo`; v13 carries the redux family values';
+
+/** v12 derived these with the light rules because it never set `darkMode` (D183). */
+const DARK_DERIVED = [
+  'secondaryBorderColor',
+  'tertiaryBorderColor',
+  'clusterBorder',
+  'noteBorderColor',
+  'edgeLabelBackground',
+] as const;
+
+const DARK_WHY = 'D183: derived with the dark rules; v12 never set darkMode';
+
+/** Each difference from v12 neo-dark, with the decision that makes it. */
+const DIFFERENCES: Readonly<Record<string, string>> = {
+  ...Object.fromEntries(DARK_DERIVED.map((n) => [n, DARK_WHY])),
+  strokeWidth: 'D183: 2, as in neo; v12 neo-dark drew with 1',
+  secondaryTextColor: 'D183, R-THEME-9: v12 #b8b6b6 is 4.49:1 on secondaryColor; #b9b7b7 meets AA',
+  dropShadow: 'D181: the same blurred shadow, written in the syntax `checkFilter` accepts',
+  cScale: 'D181, D152: neo-dark carries no per-item palette',
+  // v13 variables for what v12 decides by look or by theme name.
+  rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
+  rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
+  erMarkerFill: 'D152: v12 `zero_or_one_neo` fills the zero circle with the node fill',
+  erEdgeLabelBackground:
+    'D152, D183: v12 ER labels use edgeLabelBackground outside its COLOR_THEMES; it is dark-derived',
+  ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
+};
+
+const hex = (v: unknown): string | undefined => {
+  if (typeof v !== 'string') return undefined;
+  const rgba = parseColor(v);
+  return rgba ? formatColor(rgba) : undefined;
+};
+
+function v13Value(t: Theme, name: string): string | number {
+  const kind = THEME_VARIABLES[name]?.kind;
+  if (kind === 'padding') return t.padding(name, 15);
+  if (kind === 'length') return t.number(name);
+  return t.value(name);
+}
+
+function same(name: string): boolean {
+  const old = OLD[name];
+  if (typeof old !== 'string' && typeof old !== 'number' && typeof old !== 'boolean') return false;
+  const now = v13Value(neoDark, name);
+  const kind = THEME_VARIABLES[name]?.kind;
+  if (kind === 'color') return hex(old) !== undefined && hex(old) === hex(now);
+  if (kind === 'length') return Number.parseFloat(String(old)) === now;
+  return String(old).trim() === String(now).trim();
+}
+
+function v12Palette(name: string): string[] {
+  if (name === 'cScale')
+    return Array.from({ length: PALETTE_LIMIT }, (_, i) => OLD[`cScale${i}`] as string);
+  const list = OLD[name];
+  return Array.isArray(list) ? (list as string[]) : [];
+}
+
+describe('neo-dark against v12 12.2.0 (#227, D151, D181, D183)', () => {
+  it('loads v12 neo-dark, which never set darkMode', () => {
+    expect(OLD.fontFamily).toBe('arial, sans-serif');
+    expect(OLD.radius).toBe(3);
+    expect(OLD.strokeWidth).toBe(1);
+    expect(OLD.darkMode).toBeFalsy();
+  });
+
+  it('differs from v12 only where a decision says so', () => {
+    const vocabulary = Object.keys(THEME_VARIABLES).filter((n) => !same(n));
+    const palettes = PALETTE_VARIABLES.filter(
+      (p) => JSON.stringify(v12Palette(p).map(hex)) !== JSON.stringify(neoDark.palette(p).map(hex))
+    );
+    expect([...vocabulary, ...palettes].sort()).toEqual(Object.keys(DIFFERENCES).sort());
+  });
+
+  it('is a dark theme whose differing colours come from the shared dark rules (D183)', () => {
+    expect(spec.dark).toBe(true);
+    for (const name of DARK_DERIVED) {
+      expect(Object.hasOwn(spec.values ?? {}, name), name).toBe(false);
+      expect(Object.hasOwn(spec.rules ?? {}, name), name).toBe(false);
+    }
+    expect(DARK_RULES.edgeLabelBackground).toBe('mix(secondaryColor, black, 30%)');
+    expect(neoDark.value('clusterBorder')).toBe(neoDark.value('tertiaryBorderColor'));
+    expect(neoDark.value('erEdgeLabelBackground')).toBe(neoDark.value('edgeLabelBackground'));
+  });
+
+  it('meets AA with the smallest change to v12 secondaryTextColor (D183, R-THEME-9)', () => {
+    const on = neoDark.rgba('secondaryColor') as Rgba;
+    expect(contrastRatio(parseColor(String(OLD.secondaryTextColor))!, on)).toBeLessThan(4.5);
+    expect(contrastRatio(neoDark.rgba('secondaryTextColor') as Rgba, on)).toBeGreaterThanOrEqual(
+      4.5
+    );
+  });
+
+  it('takes the neo tokens: stroke width 2, radius 3 (D181, D183)', () => {
+    expect(neoDark.number('strokeWidth')).toBe(2);
+    expect(neoDark.number('radius')).toBe(3);
+    for (const name of LOOK_GEOMETRY)
+      expect(v13Value(neoDark, name), name).toEqual(v13Value(neo, name));
+  });
+
+  it('draws the same shadow as v12 (D181)', () => {
+    const shadow = /^drop-shadow\(\s*(\S+)\s+(\S+)\s+(\S+)\s+(.+?)\);?$/;
+    const [, ...a] = shadow.exec(String(OLD.dropShadow).trim()) ?? [];
+    const [, ...b] = shadow.exec(neoDark.filter('dropShadow')) ?? [];
+    expect(b.slice(0, 3).map((x) => Number.parseFloat(x))).toEqual(
+      a.slice(0, 3).map((x) => Number.parseFloat(x))
+    );
+    expect(parseColor(b[3]!)).toEqual(parseColor(a[3]!.replace(/\s+/g, '')));
+  });
+
+  it('gives the ER rows and marker what v12 neo draws (D152)', () => {
+    expect(hex(neoDark.value('rowOdd'))).toBe(hex(OLD.mainBkg));
+    expect(hex(neoDark.value('rowEven'))).toBe(hex(OLD.mainBkg));
+    expect(hex(neoDark.value('erMarkerFill'))).toBe(hex(OLD.mainBkg));
+  });
+
+  it('has no per-item palette (D181)', () => {
+    for (const p of PALETTE_VARIABLES) expect(neoDark.palette(p), p).toEqual([]);
+  });
+
+  // GAPS.md "Contracts": #223 owns the gradient vocabulary. Until it merges these are not v13
+  // variables, so neo-dark cannot set them; afterwards the comparison above covers them.
+  it.skipIf(PENDING_GRADIENT.length === 0)(
+    'gradient variables, added once #223 merges: v12 neo-dark values',
+    () => {
+      expect(PENDING_GRADIENT).toEqual([...GRADIENT]);
+      expect(GRADIENT.map((n) => OLD[n])).toEqual([true, '#0042eb', '#eb0042']);
+    }
+  );
+});

@@ -14,10 +14,12 @@ describe('theme.outline (D182)', () => {
     }
   });
 
-  it('is on in neo, as v12 theme-neo.js has it (D182)', async () => {
-    const t = createTheme(await loadTheme('neo'), { idPrefix: () => 'd1' });
-    expect(t.value('useGradient')).toBe('true');
-    expect(t.outline('nodeBorder')).toBe('url(#d1-gradient)');
+  it('is on in neo and neo-dark, as v12 has it (D182)', async () => {
+    for (const name of ['neo', 'neo-dark'] as const) {
+      const t = createTheme(await loadTheme(name), { idPrefix: () => 'd1' });
+      expect(t.value('useGradient')).toBe('true');
+      expect(t.outline('nodeBorder')).toBe('url(#d1-gradient)');
+    }
   });
 
   it('is the render’s gradient when themeVariables turn it on', () => {
