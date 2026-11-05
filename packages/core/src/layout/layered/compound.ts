@@ -451,6 +451,166 @@ function freeTop(b: CNode, edges: CEdge[], grid: number, pitch: number): number 
   return mid;
 }
 
+// The left end of a run `w` long from `start` on, `gap` clear of every line at `xs`.
+function clearOf(start: number, w: number, xs: readonly number[], gap: number): number {
+  let at = start;
+  for (const x of [...xs].sort((p, q) => p - q)) if (x > at - gap && x < at + w + gap) at = x + gap;
+  return at;
+}
+
+// Where the routes run straight down (or up) through the rows from `y0` to `y1`.
+function verticalsAcross(edges: CEdge[], y0: number, y1: number): number[] {
+  const xs: number[] = [];
+  for (const { route: r } of edges) {
+    for (let k = 3; k < r.length; k += 3) {
+      if (Math.abs(r[k]! - r[k - 3]!) > 1e-6) continue;
+      const lo = Math.min(r[k + 1]!, r[k - 2]!);
+      const hi = Math.max(r[k + 1]!, r[k - 2]!);
+      if (lo < y1 - 1e-6 && hi > y0 + 1e-6) xs.push(r[k]!);
+    }
+  }
+  return xs;
+}
+
+// Whether `e`'s source end (`out`) or target end lies inside group `item` rather than on it.
+function endpointBelow(item: number, e: CEdge, out: boolean): boolean {
+  return (out ? e.src : e.dst) !== item;
+}
+
+// An edge between a group and one of its own members (#198).
+interface OwnEdge {
+  ei: number;
+  group: number;
+  member: number;
+  // Whether the group is the edge's source.
+  fromGroup: boolean;
+  // Whether it runs down from the group's top into the member's top: on the grid every one, in
+  // px the labelled ones (an unlabelled one keeps its straight line).
+  fromTop: boolean;
+  // In px, the line's across-flow offset from its member's middle: a member's lines spread.
+  offset: number;
+}
+
+// The edges between a group and its own member (`stray`), in that order.
+function ownEdgesOf(
+  stray: readonly number[],
+  edges: readonly CEdge[],
+  depth: Int32Array,
+  grid: number,
+  pitch: number
+): OwnEdge[] {
+  const out: OwnEdge[] = [];
+  const byMember = new Map<number, OwnEdge[]>();
+  for (const ei of stray) {
+    const e = edges[ei]!;
+    const fromGroup = depth[e.src]! < depth[e.dst]!;
+    const [group, member] = fromGroup ? [e.src, e.dst] : [e.dst, e.src];
+    const own: OwnEdge = {
+      ei,
+      group,
+      member,
+      fromGroup,
+      fromTop: grid > 0 || e.labelW > 0,
+      offset: 0,
+    };
+    out.push(own);
+    if (!grid && own.fromTop) {
+      let lines = byMember.get(member);
+      if (!lines) byMember.set(member, (lines = []));
+      lines.push(own);
+    }
+  }
+  for (const lines of byMember.values())
+    lines.forEach((own, k) => (own.offset = (k - (lines.length - 1) / 2) * pitch));
+  return out;
+}
+
+// What the band sizing of a level reads: its laid-out items, and `boxX`, an item's x in the
+// level's box (before the box's own offset).
+interface BandLevel {
+  nodes: readonly CNode[];
+  edges: readonly CEdge[];
+  level: Level;
+  lnodes: readonly LNode[];
+  boxX: (ln: LNode) => number;
+  grid: number;
+}
+
+// The height a band of `labelled` edges' labels, one a row `gapY` apart from `bandTop` below the
+// group's top, adds below the group's top padding.
+function ownBandHeight(
+  labelled: readonly CEdge[],
+  bandTop: number,
+  gapY: number,
+  padTop: number
+): number {
+  let height = 0;
+  for (const e of labelled) height += e.labelH + gapY;
+  return Math.max(0, bandTop + height - padTop);
+}
+
+// The rightmost x in the box where a line of `own` may land on its member's top (`freeTop` on
+// the grid).
+function rightmostOwnLine({ nodes, level, lnodes, boxX, grid }: BandLevel, own: OwnEdge[]): number {
+  let rightmost = -Infinity;
+  for (const { member: m, fromTop, offset } of own) {
+    if (!fromTop) continue;
+    // The member's middle in the box: through the item of this level that holds it.
+    let d = m;
+    let x = 0;
+    while (nodes[d]!.parent !== level.id) {
+      x += nodes[d]!.x - (d === m ? 0 : nodes[d]!.w / 2);
+      d = nodes[d]!.parent;
+    }
+    const dx = boxX(lnodes[level.items.indexOf(d)]!);
+    const mid = d === m ? dx : dx - nodes[d]!.w / 2 + x;
+    const half = nodes[m]!.w / 2;
+    const lineX = grid
+      ? mid + half - (nodes[m]!.w >= 3 * grid ? 1.5 * grid : grid / 2)
+      : mid + offset;
+    rightmost = Math.max(rightmost, lineX);
+  }
+  return rightmost;
+}
+
+// Where the lines into the level's members through its top border cross the band.
+function topBorderCrossings(
+  { nodes, edges, level, lnodes, boxX }: BandLevel,
+  dummies: Int32Array,
+  levelOf: ReadonlyMap<number, Level>
+): number[] {
+  const crossing: number[] = [];
+  level.ports.forEach((port, i) => {
+    if (port.side !== Side.Top) return;
+    const d = dummies[i]!;
+    if (d >= 0) {
+      crossing.push(boxX(lnodes[d]!));
+      return;
+    }
+    let x = boxX(lnodes[level.items.indexOf(port.inner)]!);
+    const item = nodes[port.inner]!;
+    if (item.isGroup && endpointBelow(port.inner, edges[port.e]!, port.out))
+      x += levelOf.get(port.inner)!.portOf.get(port.e * 2 + (port.out ? 0 : 1))!.px - item.w / 2;
+    crossing.push(x);
+  });
+  return crossing;
+}
+
+// The box width, at least `boxW`, that keeps the labels' right edge `right` (from the content's
+// left) `inset` inside the frame, with the content still centred.
+function widenedForOwnLabels(
+  boxW: number,
+  contentW: number,
+  right: number,
+  inset: number,
+  grid: number
+): number {
+  if (!grid) return Math.max(boxW, 2 * (right + inset) - contentW);
+  let w = boxW;
+  while (floorTo((w - contentW) / 2, grid) + right > w - inset + 1e-9) w += 2 * grid;
+  return w;
+}
+
 export function shiftLayout(nodes: CNode[], edges: CEdge[], ox: number, oy: number): void {
   for (const c of nodes) {
     c.x += ox;
@@ -664,9 +824,23 @@ export function compoundLayout(
     }
   }
 
+  // Edges between a group and its own member (#198), by group. Each runs down from the group's
+  // top into the member's top; their labels sit in a band of rows at the top of the group, below
+  // its title and above its content, right of every such line, one label a row. On the grid every
+  // such edge runs so; in px the labelled ones do (an unlabelled one keeps its straight line).
+  const ownEdges = ownEdgesOf(stray, edges, depth, grid, M.portPitch);
+  const ownByGroup = new Map<number, OwnEdge[]>();
+  for (const own of ownEdges) {
+    let list = ownByGroup.get(own.group);
+    if (!list) ownByGroup.set(own.group, (list = []));
+    list.push(own);
+  }
+  const ownGapX = grid ? grid / 2 : Math.max(M.endLabelAcross, M.portPitch / 2);
+  const ownGapY = grid ? 0 : M.loopGap;
+  // Where the band starts below the group's top: on the grid the title is on the border row.
+  const bandTop = (g: CNode): number => (grid ? grid : g.padTop);
+
   const local = new Int32Array(n);
-  const endpointBelow = (item: number, e: CEdge, out: boolean): boolean =>
-    (out ? e.src : e.dst) !== item;
 
   // The room an edge-end label takes along the flow of its level, with the room before it (D102).
   const endRoom = (
@@ -908,10 +1082,28 @@ export function compoundLayout(
       // the slack is a whole number of cells either side.
       if (grid && level.items.length > 0 && Math.round((boxW - contentW) / grid) % 2 !== 0)
         boxW += grid;
-      const boxH = contentH + padTop + (group ? group.padBottom : 0);
-      const offX = grid ? floorTo((boxW - contentW) / 2, grid) : (boxW - contentW) / 2;
-      const offY = padTop;
       const across = (ly: number): number => (flip ? size.height - ly : ly);
+      // Room for the labels of the group's edges to its own members (#198): the band below the
+      // title, and the width for them right of the lines.
+      let bandH = 0;
+      const own = group ? ownByGroup.get(level.id) : undefined;
+      const labelled = own
+        ? own.filter((o) => edges[o.ei]!.labelW > 0).map((o) => edges[o.ei]!)
+        : [];
+      if (group && own && labelled.length > 0) {
+        const boxX = (ln: LNode): number => (vertical ? ln.x : across(ln.y));
+        const band: BandLevel = { nodes, edges, level, lnodes, boxX, grid };
+        bandH = ownBandHeight(labelled, bandTop(group), ownGapY, padTop);
+        let widest = 0;
+        for (const e of labelled) widest = Math.max(widest, e.labelW);
+        const crossing = topBorderCrossings(band, built.dummies, levelOf);
+        const lines = rightmostOwnLine(band, own);
+        const right = clearOf(lines + ownGapX, widest, crossing, ownGapX) + widest;
+        boxW = widenedForOwnLabels(boxW, contentW, right, grid ? grid : padX, grid);
+      }
+      const boxH = contentH + padTop + bandH + (group ? group.padBottom : 0);
+      const offX = grid ? floorTo((boxW - contentW) / 2, grid) : (boxW - contentW) / 2;
+      const offY = padTop + bandH;
       const tx = (lx: number, ly: number): number => offX + (vertical ? lx : across(ly));
       const ty = (lx: number, ly: number): number => offY + (vertical ? across(ly) : lx);
       const axis = vertical ? 0 : 1;
@@ -1109,28 +1301,50 @@ export function compoundLayout(
     }
   }
 
-  for (const ei of stray) {
+  for (const { ei, group: g, member: m, fromGroup, fromTop, offset } of ownEdges) {
     const e = edges[ei]!;
     const a = nodes[e.src]!;
     const b = nodes[e.dst]!;
     e.route = [a.x, a.y, 0, b.x, b.y, 0];
     e.labelX = (a.x + b.x) / 2;
     e.labelY = (a.y + b.y) / 2;
+    if (!fromTop) continue;
+    // Between a group and its own member, either way: down from the group's top to the member's
+    // top. On the grid it starts on the group's top border row (half a cell inside it, so the
+    // route stays in the drawing), in a cell of the member's side no other edge ends in (D140);
+    // clearing the way is the repair router's (#45, D78). In px it starts on the top border, or
+    // below the title where the title is in its way.
+    const group = nodes[g]!;
+    const member = nodes[m]!;
+    const top = member.y - member.h / 2;
+    let x: number;
+    let frame: number;
     if (grid) {
-      // Between a group and its own member, either way: down from the group's top border row
-      // (half a cell inside it, so the route stays in the drawing) to the member's top, in a cell
-      // of that side no other edge ends in (D140). Clearing the way is the repair router's (#45,
-      // D78). The label sits on the first row inside the border, just right of the line: on the
-      // border row it would cover the group's title and corners.
-      const outer = depth[e.src]! < depth[e.dst]!;
-      const group = outer ? a : b;
-      const member = outer ? b : a;
-      const x = freeTop(member, edges, grid, edgeOn(M.portPitch, grid));
-      const frame = group.y - group.h / 2 + grid;
-      const top = member.y - member.h / 2;
-      e.route = outer ? [x, frame, 0, x, top, 0] : [x, top, 0, x, frame, 0];
-      e.labelX = x + grid / 2 + e.labelW / 2;
-      e.labelY = frame + e.labelH / 2;
+      x = freeTop(member, edges, grid, edgeOn(M.portPitch, grid));
+      frame = group.y - group.h / 2 + grid;
+    } else {
+      x = member.x + offset;
+      frame = group.y - group.h / 2;
+      const title = Math.max(0, group.minW - 2 * group.padX) / 2;
+      if (title > 0 && Math.abs(x - group.x) < title + M.endLabelAcross) frame += group.padTop;
+    }
+    e.route = fromGroup ? [x, frame, 0, x, top, 0] : [x, top, 0, x, frame, 0];
+  }
+  // Their labels: one a row in the band below the group's title, right of all its such lines
+  // (#198). On the border row a label would cover the group's title and corners.
+  for (const [g, own] of ownByGroup) {
+    const group = nodes[g]!;
+    let rightmostLine = -Infinity;
+    for (const o of own)
+      if (o.fromTop) rightmostLine = Math.max(rightmostLine, edges[o.ei]!.route[0]!);
+    let y = group.y - group.h / 2 + bandTop(group);
+    for (const { ei } of own) {
+      const e = edges[ei]!;
+      if (e.labelW <= 0) continue;
+      const crossing = verticalsAcross(edges, y, y + e.labelH);
+      e.labelX = clearOf(rightmostLine + ownGapX, e.labelW, crossing, ownGapX) + e.labelW / 2;
+      e.labelY = y + e.labelH / 2;
+      y += e.labelH + ownGapY;
     }
   }
   for (const ei of loops) {

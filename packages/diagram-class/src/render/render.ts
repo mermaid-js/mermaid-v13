@@ -19,7 +19,7 @@ import {
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
+import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   ClassBoxView,
   ClassEdgeView,
@@ -386,22 +386,8 @@ function drawRow(w: SvgWriter, row: ClassRow, attrs: Attrs): void {
     w.label(label, row.x, cy, attrs);
     return;
   }
-  const first = label.lines[0];
-  if (first === undefined) {
+  if (label.lines.length === 0) {
     w.leaf('text', attrs);
-    return;
-  }
-  const only = label.lines.length === 1 && first.length === 1 ? first[0]! : undefined;
-  if (only && !only.bold && !only.italic && !only.underline && !only.strike && !only.attrs) {
-    // One plain run: the writer would centre it, so it is written here, starting at `x`.
-    w.open('text', {
-      ...attrs,
-      x: row.x,
-      y: row.y + label.baseline,
-      'text-anchor': 'start',
-    });
-    w.text(only.text);
-    w.close();
     return;
   }
   // Left-aligned: centred on its own width, so the writer's left mode starts it at `x`.
@@ -482,8 +468,6 @@ function drawClass(
             ? undefined
             : `${view.id}${row.ast.slice(row.ast.lastIndexOf('#'))}`,
         'data-ast': row.ast,
-        // A static member (`$`) is underlined; core's runs carry bold and italic only.
-        'text-decoration': row.style & Style.Underline ? 'underline' : undefined,
         ...text,
       });
     }

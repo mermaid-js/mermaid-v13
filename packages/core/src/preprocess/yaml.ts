@@ -42,6 +42,9 @@ import {
   leading,
 } from './yaml-text.ts';
 
+/** Where an inline value sits: after `key:`, after `- `, or as a node on its own line. */
+type ValueSlot = 'after-key' | 'after-dash' | 'alone';
+
 export type YamlValue = null | boolean | number | string | YamlValue[] | YamlMap;
 export interface YamlMap {
   [key: string]: YamlValue;
@@ -316,9 +319,16 @@ class Reader {
     return out;
   }
 
-  /** Characters that cannot start a plain value in a block (js-yaml readPlainScalar). */
-  plainStart(text: string, at: number): void {
+  /**
+   * Characters that cannot start a plain value in a block (js-yaml readPlainScalar). A lone
+   * `-` or `?` after `key:` is an indicator too; after `- ` or at the root a lone `?` is an
+   * explicit key in js-yaml, which this subset leaves alone.
+   */
+  plainStart(text: string, at: number, slot: ValueSlot): void {
     const c = text[0];
+    if ((c === '-' || (c === '?' && slot === 'after-key')) && text.length === 1) {
+      this.fail('bad indentation of a mapping entry', at);
+    }
     if (c === ']' || c === '}' || c === ',' || c === '%') {
       this.fail('bad indentation of a mapping entry', at);
     }
@@ -452,6 +462,18 @@ class Reader {
     if (inFlow && (ch === '>' || ch === '|' || ch === '%')) {
       this.fail(`\`${ch}\` cannot start a plain value inside \`{…}\` or \`[…]\``, pos);
     }
+    // `-` or `?` before a blank or flow indicator is no value to js-yaml (`?` + blank is an
+    // explicit key, which is read as text here).
+    if (inFlow && (ch === '-' || ch === '?')) {
+      const next = s[pos + 1];
+      if (
+        pos + 1 >= limit ||
+        RE_FLOW_INDICATOR.test(next ?? '') ||
+        (ch === '-' && isSpaceOrBreak(next))
+      ) {
+        this.fail('missed comma between flow collection entries', pos);
+      }
+    }
     while (end < limit) {
       const c = s[end] ?? '';
       if (
@@ -535,8 +557,8 @@ class Reader {
     return text + '\n';
   }
 
-  /** The value after `key:` or `- `, starting at offset `at`; line `this.i - 1` holds it. */
-  inlineValue(rest: string, at: number, indent: number, depth: number): YamlValue {
+  /** The value in `slot`, starting at offset `at`; line `this.i - 1` holds it. */
+  inlineValue(rest: string, at: number, indent: number, depth: number, slot: ValueSlot): YamlValue {
     const first = rest[0];
     if ((first === '|' || first === '>') && RE_BLOCK_HEADER.test(rest)) {
       const header = this.i - 1;
@@ -570,12 +592,15 @@ class Reader {
     let text = body.trim();
     let textEnd = at + text.length;
     this.printable(at, textEnd);
-    this.plainStart(text, at);
+    this.plainStart(text, at, slot);
     const indicator = mappingIndicator(text, true);
     // `k: a: b` or `k: a:` at a line end: js-yaml reads a second mapping entry and fails.
     if (indicator >= 0) this.fail('bad indentation of a mapping entry', at + indicator);
     // js-yaml: a comment ends a plain value; more of it after the comment is an error.
     let commented = body.length < rest.length;
+    // Whether `text` ends in a kept line break; asking `text.endsWith` would flatten the
+    // growing string on every line and make a long value quadratic (R-PARSE-7).
+    let broken = false;
     while (this.i < this.lines.length) {
       const line = this.lines[this.i] ?? '';
       if (line.trim() === '') {
@@ -583,6 +608,7 @@ class Reader {
         while (j < this.lines.length && (this.lines[j] ?? '').trim() === '') j++;
         if (j >= this.lines.length || leading(this.lines[j] ?? '') <= indent) break;
         text += '\n'.repeat(j - this.i);
+        broken = true;
         this.i = j;
         continue;
       }
@@ -606,7 +632,8 @@ class Reader {
         this.fail('bad indentation of a mapping entry', where);
       }
       this.printable(from, from + more.length);
-      text += (text.endsWith('\n') ? '' : ' ') + more;
+      text += (broken ? '' : ' ') + more;
+      broken = false;
       textEnd = from + more.length;
       this.i++;
     }
@@ -655,7 +682,7 @@ class Reader {
             out.push(this.block(indent + pad, depth + 1));
           } else {
             this.i++;
-            out.push(this.inlineValue(rest.trim(), restAt, indent, depth + 1));
+            out.push(this.inlineValue(rest.trim(), restAt, indent, depth + 1, 'after-dash'));
           }
           if (items) {
             const node = this.take(restAt - pad + 1);
@@ -677,7 +704,7 @@ class Reader {
     if (splitKey(line) === null) {
       this.i++;
       // A plain scalar continues on any line indented more than its parent node.
-      return this.inlineValue(line.trim(), lineAt, minIndent - 1, depth);
+      return this.inlineValue(line.trim(), lineAt, minIndent - 1, depth, 'alone');
     }
 
     const out: YamlMap = {};
@@ -715,7 +742,7 @@ class Reader {
             }
           }
         } else {
-          value = this.inlineValue(rest.trim(), restAt, indent, depth + 1);
+          value = this.inlineValue(rest.trim(), restAt, indent, depth + 1, 'after-key');
         }
         const node = pairs ? this.take(restAt) : undefined;
         if (this.assign(out, key, value, keyAt, keyEnd) && pairs && node) {

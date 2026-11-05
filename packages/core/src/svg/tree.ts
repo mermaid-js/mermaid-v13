@@ -5,7 +5,7 @@
  */
 import { BLANK_REL, TEXT_HOLDERS } from './allowlist.ts';
 import { checkTag, formatValue } from './encode.ts';
-import { esc } from './escape.ts';
+import { esc, escAttr } from './escape.ts';
 import type { AllowedAttr, AllowedTag, Attrs, AttrTypes, Brand } from './types.ts';
 
 /** A handle to one node of an `SvgTree`. */
@@ -288,7 +288,7 @@ export class CompactTree implements SvgTree {
       const start = this.attrStart[c] as number;
       const end = start + (this.attrLen[c] as number);
       for (let i = start; i < end; i++)
-        out += ' ' + this.attrNames[i] + '="' + esc(this.attrValues[i] as string) + '"';
+        out += ' ' + this.attrNames[i] + '="' + escAttr(this.attrValues[i] as string) + '"';
       const first = this.firstChild[c] as number;
       if (first === NONE) {
         out += '/>';
