@@ -369,13 +369,13 @@ importers:
         specifier: 1.4.2
         version: 1.4.2
       '@mermaid-js/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@mermaid-js/diagram-flowchart':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../diagram-flowchart
       '@mermaid-js/language-service':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../language-service
       '@types/node':
         specifier: ^22.19.21
@@ -393,19 +393,19 @@ importers:
         specifier: ^6.7.6
         version: 6.7.6
       '@mermaid-js/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@mermaid-js/diagram-flowchart':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../diagram-flowchart
       '@mermaid-js/language-server':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../language-server
       '@mermaid-js/language-service':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../language-service
       '@mermaid-js/language-service-codemirror':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../language-service-codemirror
       '@types/node':
         specifier: ^22.19.21

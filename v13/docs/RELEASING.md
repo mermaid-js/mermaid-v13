@@ -31,6 +31,8 @@ mermaid                          13.0.0-alpha.7
 @mermaid-js/plugin-interactions  13.0.0-alpha.3
 ```
 
+A package that has never been published starts at a hand-set `13.0.0-alpha.0` in its package.json, which is never published itself: its first changeset (a `patch`, "feat: first release of …") makes its first release `13.0.0-alpha.1`.
+
 The packages depend on each other at **exact** versions (`workspace:*` in package.json, which `pnpm pack` writes as `13.0.0-alpha.6`). This has two effects:
 
 - **A change re-releases everything that depends on it.** Changesets bumps every dependent whose pinned version no longer matches. `mermaid` depends on every diagram package and on core, so **any** release also releases a new `mermaid`, and `mermaid@v13-alpha` always holds the newest set.
