@@ -46,3 +46,4 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 - **`PieModel`** (`packages/diagram-pie/src/model.ts`): landed by the orchestrator before #305 and #335 started in parallel, shaped from the spec's model list. #305 produces it; #335 reads it. Change it only additively and note the change here.
   - #305: unchanged. `parsePie` fills it as documented (frozen; `title` absent when neither an in-text nor a front-matter title).
+- [x] **Generated grammar files were not committed** (`generated/` is gitignored; sequence's are force-added). Fixed on the integration branch with `git add -f packages/diagram-pie/grammar/generated/`. Tickets that change `pie.ebnf` must force-add the regenerated files.
