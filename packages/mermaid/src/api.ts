@@ -64,6 +64,7 @@ import { createDomAdapter } from './dom.ts';
 import { toMermaidError } from './errors.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
+  isElkName,
   Registry,
   type AnyPlugin,
   type Detected,
@@ -332,6 +333,33 @@ function themeFor(
 export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
   const registry = new Registry(firstParty);
   const hooks = new HookRunner<Element, RenderResult>();
+  // Every registered extension in registration order (by id), for the per-layout runners below.
+  let extensionList: ExtensionPlugin[] = [];
+  // `hooks` plus one layout loader's extension, per extension (D174), rebuilt on registration.
+  const layoutRunners = new Map<ExtensionPlugin, HookRunner<Element, RenderResult>>();
+  const addExtension = (e: ExtensionPlugin): void => {
+    hooks.register(e);
+    extensionList = [...extensionList.filter((p) => p.id !== e.id), e];
+    layoutRunners.clear();
+  };
+  /**
+   * The hooks of a render: the registered extensions, plus the extension of the layout loader
+   * that lays it out, if it brought one. Other renders never run a layout's hooks, so with no
+   * other extension they keep the stream writer.
+   */
+  const hooksFor = (analysis: Analysis): HookRunner<Element, RenderResult> => {
+    if (analysis.plugin.layoutKind !== 'graph') return hooks;
+    const own = registry.layoutExtension(layoutName(analysis.prepared.config));
+    if (!own) return hooks;
+    let runner = layoutRunners.get(own);
+    if (!runner) {
+      runner = new HookRunner<Element, RenderResult>();
+      for (const e of extensionList) runner.register(e);
+      runner.register(own);
+      layoutRunners.set(own, runner);
+    }
+    return runner;
+  };
   let site: Snapshot = snapshot();
   let parseErrorHandler: ParseErrorHandler | undefined;
   let iconPacksRequested = false;
@@ -552,8 +580,10 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
       });
     }
     let engine: LayoutEngine | undefined;
+    let elkName: string | undefined;
     if (plugin.layoutKind === 'graph') {
       const name = layoutName(config);
+      if (isElkName(name)) elkName = name;
       const found = registry.layout(name);
       if (found.state === 'unknown') {
         warn({
@@ -588,6 +618,18 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
       limits: s.limits,
       layout: (graph) => {
         if (!engine) throw new TypeError(`${plugin.id} has no graph layout`);
+        // D174: `@{ algorithm }` is parsed but not applied yet. `mermaid` says so, not the engine
+        // (which has no warning channel), once per render.
+        if (elkName !== undefined) {
+          const asked = [...new Set(graph.groups.flatMap((g) => g.algorithm ?? []))];
+          if (asked.length > 0) {
+            warn({
+              code: 'ELK_ALGORITHM_IGNORED',
+              message: `Per-group layout algorithms (@{ algorithm }) are not applied yet: ${asked.join(', ')}. Those groups are laid out with "${elkName}".`,
+            });
+            elkName = undefined;
+          }
+        }
         return engine(
           width !== undefined && graph.availableWidth === undefined
             ? { ...graph, availableWidth: width }
@@ -639,7 +681,8 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     });
     const textCtx = ctx as TextRenderContext;
     // D86: postParse and postLayout run (LaidOut.units 'cell'); postRender, afterMount never.
-    const run = hooks.size === 0 ? undefined : hooks.start(textCtx, plugin.id);
+    const textHooks = hooksFor(analysis);
+    const run = textHooks.size === 0 ? undefined : textHooks.start(textCtx, plugin.id);
     const out = drawText(
       plugin,
       hook,
@@ -679,11 +722,12 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
       units: pxProfile,
       width: options?.availableWidth,
     });
-    if (hooks.size === 0) {
+    const renderHooks = hooksFor(analysis);
+    if (renderHooks.size === 0) {
       const drawn = drawDiagram(plugin, prepared.parse.model, ctx);
       return { ...drawn, diagramType: prepared.diagramType, warnings };
     }
-    const run = hooks.start(ctx, plugin.id);
+    const run = renderHooks.start(ctx, plugin.id);
     const drawn = drawDiagram(plugin, prepared.parse.model, ctx, { run, ast: prepared.parse.ast });
     const result: RenderResult = { ...drawn, diagramType: prepared.diagramType, warnings };
     // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
@@ -825,14 +869,16 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
   ): Promise<void> {
     cache.clear();
     const extensions = await registry.registerExternal(diagrams, lazyLoad);
-    for (const e of extensions) hooks.register(e as ExtensionPlugin);
+    for (const e of extensions) addExtension(e as ExtensionPlugin);
   }
 
   function registerLayoutLoaders(loaders: readonly LayoutLoader[]): void {
     const before = registry.fragments();
-    registry.registerLayouts(loaders);
-    // A new fragment changes how config resolves: parsed texts must resolve again.
-    if (registry.fragments() !== before) cache.clear();
+    const hooked = registry.registerLayouts(loaders);
+    layoutRunners.clear();
+    // A new fragment changes how config resolves, and a new hook how texts draw: parsed texts
+    // must resolve again.
+    if (registry.fragments() !== before || hooked) cache.clear();
   }
 
   /** No-op until the icons plugin exists; renders then carry an `ICON_PACKS_UNSUPPORTED` warning. */

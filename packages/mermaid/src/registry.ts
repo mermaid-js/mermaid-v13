@@ -77,6 +77,12 @@ export interface LayoutLoader {
    * loads. Loaders of one package share one fragment object (one id).
    */
   readonly config?: ConfigFragment;
+  /**
+   * The layout plugin's own hooks (an extension plugin, D174: ELK's `lineHops` is a
+   * `postRender` edit). They run only on renders laid out by this loader's name, so other
+   * renders keep the stream writer. Loaders of one package share one.
+   */
+  readonly extension?: ExtensionPlugin;
 }
 
 interface Entry {
@@ -107,7 +113,8 @@ const builtIn = (name: string): boolean => name === 'layered' || name === 'dagre
  * v12's ELK names, `elk` and `elk.<algorithm>` (D171). Without an ELK engine registered they draw
  * with the built-in engine and warn `ELK_NOT_INSTALLED` (D173). Core never names the package.
  */
-const isElkName = (name: string): boolean => name === 'elk' || name.startsWith('elk.');
+/** `elk` or `elk.<anything>`: a name only an ELK layout plugin lays out (D171, D173). */
+export const isElkName = (name: string): boolean => name === 'elk' || name.startsWith('elk.');
 
 /** The plugin a loaded entry module holds: `manifest.export`, the default export, or itself. */
 function entryExport(module: unknown, manifest: PluginManifest): unknown {
@@ -195,6 +202,7 @@ export class Registry {
   private readonly loading = new Map<string, Promise<AnyPlugin>>();
   private readonly asciiHooks = new Map<string, AnyAsciiHook>();
   private readonly layoutLoaders = new Map<string, LayoutLoader['loader']>();
+  private readonly layoutExtensions = new Map<string, ExtensionPlugin>();
   /** Whether any ELK name (`elk`, `elk.*`) has a registered loader. */
   private elkRegistered = false;
   private readonly layouts = new Map<string, LayoutEngine>([['layered', layered]]);
@@ -469,13 +477,23 @@ export class Registry {
     else if (!lazyLoad) await this.load(def.id);
   }
 
-  registerLayouts(loaders: readonly LayoutLoader[]): void {
+  /** Registers `loaders`. Returns whether any brought an extension. */
+  registerLayouts(loaders: readonly LayoutLoader[]): boolean {
+    for (const l of loaders) if (l.extension !== undefined) checkExtension(l.extension);
     for (const l of loaders) if (l.config !== undefined) this.addFragment(l.config);
     for (const l of loaders) {
       this.layoutLoaders.set(l.name, l.loader);
+      if (l.extension !== undefined) this.layoutExtensions.set(l.name, l.extension);
+      else this.layoutExtensions.delete(l.name);
       if (isElkName(l.name)) this.elkRegistered = true;
       this.layouts.delete(l.name);
     }
+    return loaders.some((l) => l.extension !== undefined);
+  }
+
+  /** The extension the loader registered for layout `name` brought, if any. */
+  layoutExtension(name: string): ExtensionPlugin | undefined {
+    return this.layoutExtensions.get(name);
   }
 
   /**

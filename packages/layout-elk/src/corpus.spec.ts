@@ -13,6 +13,7 @@ import { createMermaid } from 'mermaid';
 import corpus from '../fixtures/v12-elk-corpus.json' with { type: 'json' };
 import { toElkGraph, type ElkAlgorithm } from './adapter.ts';
 import elkLayouts from './index.ts';
+import { elkConfigOf } from './options.ts';
 import { findCommonAncestor, ROOT, type Tree } from './tree.ts';
 
 // The ELK corpus (every e2e/diagrams source that selects ELK, `fixtures/v12-elk-corpus.json`)
@@ -39,6 +40,7 @@ const text = (source: string): string =>
 interface Laid {
   graph: LayoutGraph;
   model: LayoutModel;
+  ctx?: LayoutContext;
 }
 
 /** A fresh API with the package registered, recording what each ELK engine call gets and gives. */
@@ -47,12 +49,12 @@ function api(laid: Laid[] = []) {
   m.initialize({ deterministic: true });
   m.registerLayoutLoaders(
     elkLayouts.map((l) => ({
-      name: l.name,
+      ...l,
       loader: async () => {
         const engine = await l.loader();
         return (graph: LayoutGraph, ctx?: LayoutContext) => {
           const model = engine(graph, ctx);
-          laid.push({ graph, model });
+          laid.push({ graph, model, ...(ctx ? { ctx } : {}) });
           return model;
         };
       },
@@ -122,8 +124,9 @@ describe('ELK output is deterministic (R-ARCH-6)', () => {
 //
 // Sizes differ (v13 measures with its own measurer and padding) and so do ids, so what is
 // compared is the shape: which group holds what, which groups ELK lays out on their own and in
-// which direction, the edges each container holds and their order, the edge label kinds, and
-// the fixed options v12 sets whatever the config (the `elk.*` keys and presets are E4's).
+// which direction, the edges each container holds and their order, the edge label kinds, the
+// fixed options v12 sets whatever the config, and what the `elk.*` keys and the preset set (E4):
+// the root's and every group's options and the nodes `keepEntryNodeOnTop` pins.
 
 /** v13 ids carry a kind prefix (`n:`, `c:`); v12 ER ids are `entity-NAME-N`. */
 const v13Id = (id: string): string => id.replace(/^[a-z]:/, '');
@@ -147,6 +150,24 @@ const GROUP_FIXED = [
   'layered.nodePlacement.networkSimplex.nodeFlexibility',
   'spacing.portsSurrounding',
 ];
+/** What the `elk.*` keys and the preset set on the root (v12 `createRootElkGraph`). */
+const ROOT_CONFIG = [
+  'layered.nodePlacement.strategy',
+  'layered.nodePlacement.bk.fixedAlignment',
+  'layered.mergeEdges',
+  'layered.crossingMinimization.forceNodeModelOrder',
+  'layered.considerModelOrder.strategy',
+  'layered.cycleBreaking.strategy',
+  'layered.layering.strategy',
+  'layered.layering.coffmanGraham.layerBound',
+];
+/** ... and on every group (v12 `buildSubgraphLayoutOptions`). */
+const GROUP_CONFIG = [
+  'layered.mergeEdges',
+  'layered.nodePlacement.bk.fixedAlignment',
+  'layered.nodePlacement.strategy',
+  'layered.cycleBreaking.strategy',
+];
 
 interface Shape {
   root: Record<string, string | undefined>;
@@ -154,17 +175,22 @@ interface Shape {
   groups: Record<string, string>;
   /** Container id → its edges in order, `source>target:label kinds`. */
   edges: Record<string, string[]>;
+  /** Nodes pinned to a layer (`keepEntryNodeOnTop`), `id=constraint`. */
+  pinned: string[];
 }
 
 function shape(root: ElkNode, rename: (id: string) => string, edgeList: ElkExtendedEdge[]): Shape {
   const tree = new Map<string, string>();
   const groups: Record<string, string> = {};
+  const pinned: string[] = [];
   const handling = new Map<string, string>();
   handling.set(ROOT, opt(root.layoutOptions, 'hierarchyHandling') ?? 'SEPARATE_CHILDREN');
   const walk = (n: ElkNode, parent: string): void => {
     for (const c of n.children ?? []) {
       const id = rename(c.id);
       if (parent !== ROOT) tree.set(id, parent);
+      const layer = opt(c.layoutOptions, 'layered.layering.layerConstraint');
+      if (layer) pinned.push(`${id}=${layer}`);
       if (!c.children?.length) continue;
       // v12 lays out a group with `@{ algorithm }` on its own with that algorithm; v13 parses the
       // key but does not apply it (D174), so the group keeps the handling it would have had.
@@ -177,6 +203,8 @@ function shape(root: ElkNode, rename: (id: string) => string, edgeList: ElkExten
         handling.get(id),
         separate ? opt(c.layoutOptions, 'direction') : '',
         ...GROUP_FIXED.map((k) => `${k}=${opt(c.layoutOptions, k)}`),
+        // A group v12 lays out with its own `@{ algorithm }` drops none of these.
+        ...GROUP_CONFIG.map((k) => `${k}=${opt(c.layoutOptions, k)}`),
       ].join(' ');
       walk(c, id);
     }
@@ -195,9 +223,9 @@ function shape(root: ElkNode, rename: (id: string) => string, edgeList: ElkExten
     (edges[home] ??= []).push(`${source}>${target}:${kinds}`);
   }
   const rootOptions = Object.fromEntries(
-    ['hierarchyHandling', ...ROOT_FIXED].map((k) => [k, opt(root.layoutOptions, k)])
+    ['hierarchyHandling', ...ROOT_FIXED, ...ROOT_CONFIG].map((k) => [k, opt(root.layoutOptions, k)])
   );
-  return { root: rootOptions, groups, edges };
+  return { root: rootOptions, groups, edges, pinned: pinned.sort() };
 }
 
 /** Every edge of the built ELK graph, container by container, in the order ELK gets them. */
@@ -218,12 +246,13 @@ describe('the ELK graph matches v12 develop’s in shape', () => {
 
   const compared = entries.filter((e) => !(e.source in OTHER_GRAPH));
   it.each(compared.map((e) => [e.source, e.input] as const))('%s', (source, v12) => {
-    const graph = rendered.get(source)!.laid[0]!.graph;
+    const { graph, ctx } = rendered.get(source)!.laid[0]!;
     const algorithm = String(v12.layoutOptions!['elk.algorithm']).replace(
       /^elk\./,
       ''
     ) as ElkAlgorithm;
-    const built = toElkGraph(graph, algorithm).root;
+    // The `elk` section the engine got: fragment defaults plus whatever the source sets.
+    const built = toElkGraph(graph, algorithm, elkConfigOf(ctx?.config)).root;
     expect(shape(built, v13Id, allEdges(built))).toEqual(shape(v12, v12Id, v12.edges ?? []));
   });
 });
