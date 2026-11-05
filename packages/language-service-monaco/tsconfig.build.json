@@ -5,7 +5,10 @@
     "declaration": true,
     "outDir": "dist",
     "rootDir": "src",
-    "types": []
+    "types": [],
+    "customConditions": []
   },
+  // The generated Monarch files are plain JavaScript beside their `.d.ts`; `build` copies them
+  // to `dist/generated/`, where the compiled `import()`s find them, one lazy file per type.
   "exclude": ["src/**/*.spec.ts", "src/testing/**"]
 }

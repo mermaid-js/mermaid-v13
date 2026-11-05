@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { danglingExports } from './manifest.ts';
 import type { PackedManifest } from './manifest.ts';
 import { REGISTRIES, packAll, publishAll } from './publish.ts';
 import type { Exec, PackedTarball } from './publish.ts';
@@ -28,6 +29,8 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-state',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',
+      '@mermaid-chart/language-service-codemirror',
+      '@mermaid-chart/language-service-monaco',
       '@mermaid-chart/plugin-interactions',
       '@mermaid-chart/mermaid',
     ]);
@@ -41,6 +44,7 @@ describe('packAll (this workspace)', () => {
     expect(files.split('\n')).toContain('package/LICENSE');
     expect(JSON.stringify(mermaid)).not.toContain('workspace:');
     expect(JSON.stringify(mermaid)).not.toContain('mermaid-source');
+    for (const p of packed) expect(danglingExports(manifestOf(p.tarball)), p.name).toEqual([]);
   }, 60_000);
 
   it('refuses to pack a version that is not an alpha prerelease', () => {

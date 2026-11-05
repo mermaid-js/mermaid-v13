@@ -217,6 +217,11 @@ describe('js-yaml parity found by fuzzing (#17)', () => {
     ['k: a\n  - b\n', { k: 'a - b' }],
     ['k: a\n ---\n', { k: 'a ---' }],
     ['k: a\n  \tb\n', { k: 'a b' }],
+    // `-` and `?` start a plain value in a flow collection unless a blank or indicator follows.
+    ['k: a\n  -\n', { k: 'a -' }],
+    ['{-: 1}', { '-': 1 }],
+    ['[-x, ?x]', ['-x', '?x']],
+    ['{a: -x}', { a: '-x' }],
   ])('reads %j as js-yaml does', (src, expected) => {
     const r = parseYaml(src);
     expect(r.diagnostics).toEqual([]);
@@ -256,6 +261,17 @@ describe('js-yaml parity found by fuzzing (#17)', () => {
     ['k:\n  ]x\n', 'bad indentation of a mapping entry', '2:3'],
     ['k: ? x\n', 'bad indentation of a mapping entry', '1:4'],
     ['k: - x\n', 'bad indentation of a mapping entry', '1:4'],
+    // A lone `-` or `?` value is an indicator, not text (#208).
+    ['k: -\n', 'bad indentation of a mapping entry', '1:4'],
+    ['k: ?\n', 'bad indentation of a mapping entry', '1:4'],
+    ['k: - # c\n', 'bad indentation of a mapping entry', '1:4'],
+    ['k: -\n  more\n', 'bad indentation of a mapping entry', '1:4'],
+    ['k:\n  j: ?\n', 'bad indentation of a mapping entry', '2:6'],
+    ['[-]', 'missed comma between flow collection entries', '1:2'],
+    ['[a, - x]', 'missed comma between flow collection entries', '1:5'],
+    ['{a: -}', 'missed comma between flow collection entries', '1:5'],
+    ['{a: ?}', 'missed comma between flow collection entries', '1:5'],
+    ['k: [\n  -\n]\n', 'missed comma between flow collection entries', '2:3'],
     ['k: |x\n', 'a line break is expected', '1:4'],
     ['k: >x\n', 'a line break is expected', '1:4'],
     ['k: a\n\tb\n', 'tab characters must not be used in indentation', '2:1'],

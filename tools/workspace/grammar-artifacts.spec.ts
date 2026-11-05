@@ -14,6 +14,13 @@ interface PackageJson {
   peerDependencies?: Record<string, string>;
 }
 
+/**
+ * D135: the editor adapters ship the generated Lezer parsers and Monarch files (built from each
+ * type's `grammar/generated/` output into their own `src/generated/`), so the CodeMirror
+ * adapter needs the Lezer runtime. Grammar files and `@lezer/generator` still never ship.
+ */
+const LEZER_RUNTIME = new Set(['@mermaid-js/language-service-codemirror']);
+
 const published = readdirSync(join(root, 'packages'))
   .filter((dir) => existsSync(join(root, 'packages', dir, 'package.json')))
   .map((dir) => ({
@@ -45,8 +52,10 @@ describe('grammar artefacts stay out of published packages (D54)', () => {
       expect(pkg.files).toContain('dist');
       for (const f of pkg.files ?? []) expect(f).not.toMatch(/grammar|\.ebnf/);
       const deps = { ...pkg.dependencies, ...pkg.peerDependencies };
+      const lezer = LEZER_RUNTIME.has(pkg.name) ? /^@lezer\/generator$/ : /^@lezer\//;
       for (const name of Object.keys(deps)) {
-        expect(name).not.toMatch(/gen-grammar|^@lezer\/|vscode-textmate|vscode-oniguruma/);
+        expect(name).not.toMatch(/gen-grammar|vscode-textmate|vscode-oniguruma/);
+        expect(name).not.toMatch(lezer);
       }
     }
   );

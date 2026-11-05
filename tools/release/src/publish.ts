@@ -20,6 +20,7 @@ import type { PackedManifest, Target } from './manifest.ts';
 import {
   DIST_TAG,
   assertAlphaVersion,
+  danglingExports,
   inexactWorkspaceRanges,
   publishManifest,
   workspaceLeaks,
@@ -109,6 +110,11 @@ export function packAll(
     const leaks = workspaceLeaks(manifest);
     if (leaks.length > 0)
       throw new Error(`WORKSPACE LEAK in ${manifest.name}, do not publish:\n${leaks.join('\n')}`);
+    const dangling = danglingExports(manifest);
+    if (dangling.length > 0)
+      throw new Error(
+        `DANGLING EXPORT in ${manifest.name} (no published target), do not publish:\n${dangling.join('\n')}`
+      );
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 
     const tarball = join(

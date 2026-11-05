@@ -15,7 +15,8 @@ import type { JisonToken } from './jison-lexer.ts';
  * Normalisation, both sides:
  * - runs of `TEXT`, `EDGE_TEXT`, `STR` and `MD_STR` are merged (jison splits some per
  *   character; v13 splits strings where a removed comment line was);
- * - images are compared as v12's parser read them: entity placeholders decoded, CRLF as LF;
+ * - images are compared as v12's parser read them: entity placeholders decoded (after the
+ *   merge, as a placeholder can span split tokens), CRLF as LF;
  * - v12 appended a `\n` before lexing; v13 lexes a sentinel line break there whose image is
  *   clipped to the source, so that last character is taken off v12's last token.
  *
@@ -118,6 +119,15 @@ const MID_LINE_DIRECTIVES: CorpusItem[] = [
   { id: 'mid-line directive 5', source: 'flowchart LR\nsty%%{init: {}}%%le A fill:#f00;\nB' },
 ];
 
+// Entities in edge text (#208): jison splits EDGE_TEXT per character, so v12's placeholders
+// (`ﬂ°°`, `¶ß`) only decode once the run is merged.
+const EDGE_TEXT_ENTITIES: CorpusItem[] = [
+  { id: 'edge text entity 0', source: 'flowchart LR\nA -- x:#y; --> B' },
+  { id: 'edge text entity 1', source: 'flowchart LR\nA -- #quot;q#quot; and #9829; --> B' },
+  { id: 'edge text entity 2', source: 'flowchart LR\nA == #35; ==> B' },
+  { id: 'edge text entity 3', source: 'flowchart LR\nA -. #amp; .-> B' },
+];
+
 async function corpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
   for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/flowchart'), 'e2e')) {
@@ -126,7 +136,13 @@ async function corpus(): Promise<CorpusItem[]> {
   const specs = JSON.parse(
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/flowchart-v12-specs.json'), 'utf8')
   ) as CorpusItem[];
-  const all = [...items, ...specs, ...LINE_SEPARATORS, ...MID_LINE_DIRECTIVES];
+  const all = [
+    ...items,
+    ...specs,
+    ...LINE_SEPARATORS,
+    ...MID_LINE_DIRECTIVES,
+    ...EDGE_TEXT_ENTITIES,
+  ];
   return [
     ...all,
     ...all.map((item) => ({ id: `${item.id} (commented)`, source: commented(item.source) })),
@@ -156,8 +172,9 @@ describe('flowchart lexer parity with mermaid@12 (jison)', () => {
       const v12 = await oracle.tokens(item.source);
       if (!v12) continue;
       compared++;
-      const expected = normalise(
-        cutEntityError(v12).map(([n, i]): JisonToken => [n, decodeEntities(i)])
+      // Merged first: a placeholder split over per-character tokens decodes only when whole.
+      const expected = normalise(cutEntityError(v12)).map(
+        ([n, i]): JisonToken => [n, decodeEntities(i)]
       );
       dropAppendedNewline(expected);
       const actual = v13Tokens(item.source);

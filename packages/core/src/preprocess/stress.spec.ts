@@ -56,6 +56,14 @@ const SHAPES: [string, (n: number) => string][] = [
   ['one huge directive', (n) => '%%{init: {"a": [' + '1,'.repeat(n) + '1]}}%%'],
   ['all whitespace', (n) => ('\n' + ' '.repeat(4)).repeat(n)],
   ['`%%` runs without a newline', (n) => '%%' + 'x%%'.repeat(n)],
+  [
+    'a multi-line plain value in front matter',
+    (n) => '---\na: x\n' + lines(n, (i) => `  y${i}\n`) + '---\ngraph TD\n',
+  ],
+  [
+    'a multi-line plain scalar at the root of front matter',
+    (n) => '---\n' + lines(n, () => 'k0 nope\n') + '---\ngraph TD\n',
+  ],
 ];
 
 describe('preprocess runs in linear time', () => {
@@ -110,6 +118,8 @@ const TREE_SHAPES: [string, (n: number) => string][] = [
     'an unclosed quote in a root flow mapping',
     (n) => '{ a: "x,\n' + lines(n, (i) => ` k${i}: 1,\n`),
   ],
+  ['a multi-line plain value', (n) => 'a: x\n' + lines(n, (i) => `  y${i}\n`)],
+  ['a multi-line plain scalar at the root', (n) => lines(n, () => 'k0 nope\n')],
 ];
 
 describe('the YAML tree mode runs in linear time', () => {

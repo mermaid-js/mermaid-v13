@@ -229,6 +229,9 @@ D100–D139 are M3's (D140–D149 stay M2's). One spec per type, following `agen
 | D131 | **Two accepted sequence differences from v12.** Async, half and stick arrowheads use `signalColor` (v12 drew them black). The classic themes' grey shadows on `rect` and `box` are dropped; a shadow appears only where the theme sets `dropShadow`. Both are listed in MIGRATION.md. Decided by the maintainer in the sequence session (#143). |
 | D132 | **Sequence honours its per-key font sizes.** A `sequence.actorFontSize`, `noteFontSize` or `messageFontSize` that the author sets takes effect. A key left unset follows the theme's `fontSize`, so sequence text matches the rest of the family (fonts are uniform across diagrams). Decided by the maintainer in the sequence session; MIGRATION.md cites this row. |
 | D133 | **Correction to D122: the front-matter `title` does not feed the accessible name.** D122 said it did. No SVG type does so today: flowchart, state and sequence take the accessible name from `accTitle` only. That stays as it is for M3. Whether the title should also name the diagram is part of the later cross-type title decision. |
+| D134 | **Adapters pick first-paint grammars from their own per-type map (#167).** `LanguageFacet` gets no grammar hook. The CodeMirror adapter keeps a diagram-type id → lazy `import()` map of the generated Lezer parsers, and the Monaco adapter one of the generated Monarch files. Each adapter re-picks when the detected type changes. A type with no row gets semantic tokens only, never flowchart's colours. A port adds its row to both maps (`agents/port-diagram/language.md`). Decided by the maintainer, 2026-11-05. |
+| D135 | **Generated editor grammars ship in the adapter packages (#174, refines D54 and D158).** The Lezer parsers ship in `@mermaid-js/language-service-codemirror` and the Monarch files in `@mermaid-js/language-service-monaco`, built from each type's `grammar/generated/` output. The diagram packages keep publishing no generated grammar output (D54 unchanged for them). Decided by the maintainer, 2026-11-05. |
+| D136 | **Per-type first paint and publishing the adapters ship in M3 (#212, amends D158).** Spec #249 lands #190 and #174 in M3, so both adapters are published with the M3 release. Decided by the maintainer, 2026-11-05. |
 
 ## Release (2026-11-04)
 
@@ -236,9 +239,11 @@ D100–D139 are M3's (D140–D149 stay M2's). One spec per type, following `agen
 | --- | --- |
 | D155 | **Alphas go to npm first, and the release master starts each one.** `mermaid` and the `@mermaid-js/*` packages publish straight to npm with dist-tag `v13-alpha`, starting at `13.0.0-alpha.0` (published under `alpha`, then tagged `v13-alpha`; `alpha` held the v11 alphas and is not moved again), so people can try v13 now. GitHub Packages stays available (`release:publish --target private`). Changesets versions each package on its own line, `13.0.0-alpha.N`, with exact internal pins, so any release also re-releases `mermaid`. Releases are not published on every merge: the release master starts each one, with the `release-alpha` skill or the *Release alpha (manual)* workflow (v13/docs/RELEASING.md). The R-PERF-1…4 gate is printed from the last bench report but not enforced, because R-PERF-3 stays below 50× on CI runners (D150). The release master gives the reason. There is no npm provenance while the repository is private. Amends D28, R-REL-2 and R-REL-3. |
 
-## M3.5 — plugin platform (grilling session, 2026-11-05)
+## M3.5 — plugin platform
 
-D160–D169 belong to the plugin-platform spec: R-PLUG-4, -5, -7 and R-PERF-8 (D106). The other M3.5 specs use D170–D179 (optional feature plugins) and D180–D189 (`neo` themes).
+M3.5's specs each take their own range: D160–D169 the plugin-platform spec (R-PLUG-4, -5, -7 and R-PERF-8, D106), D170–D179 the optional feature plugins (ELK, math), D180–D189 the `neo` themes (R-THEME-7).
+
+### Plugin platform (grilling session, 2026-11-05)
 
 | # | Decision |
 | --- | --- |
@@ -252,6 +257,15 @@ D160–D169 belong to the plugin-platform spec: R-PLUG-4, -5, -7 and R-PERF-8 (D
 | D167 | **CDN plugins register through a global queue.** A third-party CDN script pushes itself onto `globalThis.mermaidPlugins`, an array. `mermaid` drains the queue at startup and watches it afterwards, so the scripts can load in either order. Both CDN builds set `globalThis.mermaid`. Replaces DESIGN §12.4's direct `globalThis.mermaid.registerExternalDiagrams` call, which needed `mermaid` to load first. R-PLUG-5. |
 | D168 | **Feature-plugin specs do not wait for discovery.** The ELK, math and other optional plugins (D170–D179) ship working through `registerExternalDiagrams` and their manifest. They get auto-discovery when this spec's discovery tickets merge, and no M3.5 spec blocks another. R-PLUG-5, R-PLUG-8. |
 | D169 | **Discovery activates `plugin-interactions` like any other extension.** Installing `@mermaid-js/plugin-interactions` is the opt-in (R-PLUG-9), so Node and bundler discovery activate it. Diagram text still cannot enable it. R-PLUG-5, R-PLUG-9. |
+
+### Neo themes (grilling session, 2026-11-05)
+
+| # | Decision |
+| --- | --- |
+| D180 | **`neo` and `neo-dark` live in core.** Each is its own lazily imported `ThemeSpec` file in `packages/core/src/theme/specs/`, as D64 and DESIGN §8.1 say. There is no theme package and no theme-registration API, so the neo themes do not depend on the plugin-loading spec. The `THEME_UNAVAILABLE` stand-ins for `neo` and `neo-dark` (D151) are removed when each theme lands; `null` still renders `base`. R-THEME-7. |
+| D181 | **The neo themes carry v12's neo-look geometry with their own tokens.** v12 12.2.0 defaults all five ported types to `look: neo`, so `theme: neo` drew neo geometry. Both themes take the redux family's geometry tables (padding, arrowheads, class markers, sequence band). Their tokens come from `theme-neo.js` and `theme-neo-dark.js`: corner radius 3, the neo drop shadow (blurred, not redux's hard shadow), `arial, sans-serif` at 14px, and no per-item palette. v12 with `theme: neo` is the oracle for every value (D151). R-THEME-6, R-THEME-11. |
+| D182 | **The neo gradient is ported, with scoped defs.** `useGradient`, `gradientStart` and `gradientStop` become public theme variables. When `useGradient` is on, the SVG carries one `<defs>` with a `<linearGradient id="<idPrefix>-gradient">` and two `<stop>`s, and the outlines that v12 neo strokes with the gradient take `url(#<idPrefix>-gradient)`. The allow-list adds `defs`, `linearGradient` and `stop` with `offset`, `stop-color`, `stop-opacity` and `gradientUnits`, and accepts `url(#…)` paint only for that SVG's own gradient id. This is the one exception to "no `<defs>`, no ids" (DESIGN §8). The stop colours are CSS variables with computed fallbacks, and literals under `cssVariables: false`. `useGradient` is off in every other shipped theme, so their output does not change; any theme can turn it on through `themeVariables` (D152). R-SEC-2, R-THEME-2. |
+| D183 | **`neo-dark` is cleaned up into a proper dark theme.** v12's `theme-neo-dark.js` never sets `darkMode`, so its borders derive with the light rules, and it draws with stroke width 1. v13's `neo-dark` keeps v12's base colours, shadow and gradient, derives with the dark rules, and uses stroke width 2 like `neo`. It meets WCAG AA (R-THEME-9). MIGRATION.md lists each difference from v12. |
 
 ## Language-service follow-ups (2026-11-05)
 

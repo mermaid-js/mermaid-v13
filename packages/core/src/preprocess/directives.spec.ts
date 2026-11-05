@@ -57,11 +57,34 @@ describe('preprocess: directives', () => {
   });
 
   it('reads wrap and other directives, and bare-word arguments as strings (v12)', () => {
-    expect(dirs('%%{wrap}%%\n%%{init: dark}%%\n%%{config: {"a": 1}}%%\n%%{}%%')).toEqual([
+    expect(dirs('%%{wrap}%%\n%%{init: dark}%%\n%%{config: {"a": 1}}%%')).toEqual([
       { kind: 'wrap', name: 'wrap', args: undefined },
       { kind: 'init', name: 'init', args: 'dark' },
       { kind: 'other', name: 'config', args: { a: 1 } },
-      { kind: 'other', name: '', args: undefined },
+    ]);
+  });
+
+  // v12 directiveRegex needs a word right after `%%{` (blanks allowed); without one the text
+  // stays in the diagram, where most v12 grammars reject it (#208).
+  it.each([
+    ['empty', '%%{}%%'],
+    ['blank', '%%{ \n }%%'],
+    ['JSON only', '%%{"theme": "dark"}%%'],
+    ['a colon first', '%%{: {"theme": "dark"}}%%'],
+    ['a comment line after the opener', '%%{\n%% c\ninit: {"theme": "dark"}}%%'],
+    ['unclosed', '%%{ "a"\ngraph TD'],
+    // An unclosed directive ends at its line, so a name on the next line is outside it.
+    ['unclosed, a name on the next line', '%%{\ninit: dark\ngraph TD'],
+  ])('reads no directive from an opener without a name: %s', (_name, src) => {
+    const r = preprocess(src);
+    expect(r.directives).toEqual([]);
+    expect(r.diagnostics).toEqual([]);
+  });
+
+  it('reads a later directive after an opener without a name, and a name on the next line', () => {
+    expect(dirs('%%{ %%{wrap}%%\n%%{\n  init: dark}%%')).toEqual([
+      { kind: 'wrap', name: 'wrap', args: undefined },
+      { kind: 'init', name: 'init', args: 'dark' },
     ]);
   });
 

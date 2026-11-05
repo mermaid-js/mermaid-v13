@@ -183,11 +183,15 @@ export function generateFacets(manifests: readonly ManifestSource[]): string {
     '/** First-party diagram types in v12 detection order, with their language facets (D89). */',
     'export const firstPartyFacets: readonly FacetEntry[] = [',
   ];
+  const facetIds: string[] = [];
   for (const [type, source, flags] of V12_DETECTORS) {
     const m = byType.get(type);
-    const detector = `(text) => /${source}/${flags}.test(text)`;
+    const pattern = `/${source}/${flags}`;
+    const detector = `(text) => ${pattern}.test(text)`;
     if (!m) {
-      lines.push(`  { type: '${type}', id: '${type}', detector: ${detector} },`);
+      lines.push(
+        `  { type: '${type}', id: '${type}', pattern: ${pattern}, detector: ${detector} },`
+      );
       continue;
     }
     lines.push(
@@ -195,15 +199,27 @@ export function generateFacets(manifests: readonly ManifestSource[]): string {
       `    type: '${type}',`,
       `    id: '${m.manifest.id}',`,
       `    section: '${m.manifest.id}',`,
+      `    pattern: ${pattern},`,
       `    detector: ${detector},`
     );
     if (m.manifest.language !== undefined) {
       const language = specifierFor(m, m.manifest.language, 'language');
       lines.push(`    load: () => import('${language}').then((m) => m.language),`);
+      if (!facetIds.includes(m.manifest.id)) facetIds.push(m.manifest.id);
     }
     lines.push(`  },`);
   }
-  lines.push('];', '');
+  const union = facetIds.map((id) => `'${id}'`).join(' | ') || 'never';
+  lines.push(
+    '];',
+    '',
+    '/**',
+    ' * The ids of the first-party types with a language facet, in detector order. Each editor',
+    " * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.",
+    ' */',
+    `export type FirstPartyFacetId = ${union};`,
+    ''
+  );
   return lines.join('\n');
 }
 

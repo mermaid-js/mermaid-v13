@@ -131,14 +131,23 @@ describe('first-party language facets (R-LANG-8, D89)', () => {
       "    load: () => import('@x/diagram-flowchart/language').then((m) => m.language),"
     );
     expect(out).toContain(
-      "  { type: 'mindmap', id: 'mindmap', detector: (text) => /^\\s*mindmap/.test(text) },"
+      "  { type: 'mindmap', id: 'mindmap', pattern: /^\\s*mindmap/, detector: (text) => /^\\s*mindmap/.test(text) },"
     );
+    expect(out).toContain('    pattern: /^\\s*(graph|flowchart)/,');
     expect(out).toContain('    detector: (text) => /^\\s*(graph|flowchart)/.test(text),');
     // The config section the renderer reads: the package id; a type with no package has none.
     expect(out).toContain("    section: 'flowchart',");
     expect(out).not.toMatch(/type: 'mindmap'.*section/);
     expect(out.indexOf("'flowchart-elk'")).toBeLessThan(out.indexOf("'mindmap'"));
     expect(out.indexOf("'sequence'")).toBeLessThan(out.indexOf("'flowchart-v2'"));
+  });
+
+  it('names the ids that have a facet in one union type', () => {
+    expect(generateFacets([flowchart])).toContain("export type FirstPartyFacetId = 'flowchart';");
+    const { language: _, ...manifest } = flowchart.manifest;
+    expect(generateFacets([{ ...flowchart, manifest }])).toContain(
+      'export type FirstPartyFacetId = never;'
+    );
   });
 
   it('gives a type whose package has no language entry no loader', () => {

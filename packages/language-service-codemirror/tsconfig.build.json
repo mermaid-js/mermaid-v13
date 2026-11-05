@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "types": [],
+    "customConditions": []
+  },
+  // The generated parsers are plain JavaScript beside their `.d.ts`; `build` copies them to
+  // `dist/generated/`, where the compiled `import()`s find them, one lazy file per type.
+  "include": ["src"],
+  "exclude": ["src/**/*.spec.ts"]
+}

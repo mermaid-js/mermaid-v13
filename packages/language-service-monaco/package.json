@@ -1,7 +1,6 @@
 {
   "name": "@mermaid-js/language-service-monaco",
-  "version": "0.0.0",
-  "private": true,
+  "version": "13.0.0-alpha.0",
   "description": "Monaco adapter for the Mermaid language service: language id, Monarch tokens and every provider in one call.",
   "type": "module",
   "license": "MIT",
@@ -20,23 +19,25 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "gen": "tsx scripts/generate.ts",
+    "build": "tsc -p tsconfig.build.json && node -e \"fs.cpSync('src/generated', 'dist/generated', { recursive: true, filter: (f) => !f.endsWith('.d.ts') })\"",
     "typecheck": "tsc -p tsconfig.json"
   },
   "peerDependencies": {
-    "@mermaid-js/diagram-flowchart": "workspace:^",
-    "@mermaid-js/language-service": "workspace:^",
+    "@mermaid-js/language-service": "workspace:*",
     "monaco-editor": ">=0.50.0"
   },
   "devDependencies": {
     "@codemirror/language": "^6.13.1",
     "@codemirror/state": "^6.7.6",
-    "@mermaid-js/diagram-flowchart": "workspace:^",
-    "@mermaid-js/language-server": "workspace:^",
-    "@mermaid-js/language-service": "workspace:^",
-    "@mermaid-js/language-service-codemirror": "workspace:^",
+    "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-flowchart": "workspace:*",
+    "@mermaid-js/language-server": "workspace:*",
+    "@mermaid-js/language-service": "workspace:*",
+    "@mermaid-js/language-service-codemirror": "workspace:*",
     "@types/node": "^22.19.21",
     "monaco-editor": "^0.57.0",
+    "tsx": "^4.20.6",
     "vscode-languageserver": "^11.0.0",
     "vscode-languageserver-protocol": "3.18.5"
   }

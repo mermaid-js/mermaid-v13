@@ -211,7 +211,7 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 | block | — | `\n+` |  |  |
 | block | BLOCK_STOP | `\}` | pop |  |
 | block | QMARK | `\?` |  | `string? name`: the type is optional. |
-| block | BLOCK_COMMA | `,` |  |  |
+| block | BLOCK_COMMA | `,` |  | Uncoloured: the lexer reads it as v12 did, one `CHAR` (no category). |
 | block | CHAR | `.` |  |  |
 | INITIAL | SQS | `\[` |  | `A[alias]`: the name shown for the entity. |
 | INITIAL | SQE | `\]` |  |  |
@@ -267,4 +267,4 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 Removed before lexing (highlighted only):
 
 - COMMENT: `^[^\S\n]*%%(?!\{)[^\n]+`
-- DIRECTIVE: `[^\S\n]*%%\{.*?\}%%`
+- DIRECTIVE: `[^\S\n]*%%\{[\s\S]*?\}%%`

@@ -13,7 +13,10 @@
  *    - everything: `npm install mermaid@v13-alpha --save-exact`, the guide's snippets on each Node,
  *      the `mermaid` bin and `npx mermaid@v13-alpha`, an esbuild browser bundle;
  *    - pick your diagrams: `mermaid/slim` + `@mermaid-js/diagram-flowchart`, the same checks,
- *      a bundle smaller than the full one, and the published types under `nodenext`.
+ *      a bundle smaller than the full one, and the published types under `nodenext`;
+ *    - editor adapters: `@mermaid-js/language-service-codemirror` and `-monaco`, imported in
+ *      Node with every per-type grammar loaded, their types, and a bundle that keeps each
+ *      grammar in a lazy chunk of its own (`adapterChecks`, also `adapters-pack-cli.ts`).
  * 4. Releases again after a flowchart-only changeset: only flowchart and `mermaid` publish, and
  *    an upgrade of the "everything" install picks up both and keeps core.
  * Nothing in the repository changes; the temp dir is removed unless `--keep`.
@@ -25,6 +28,7 @@ import { dirname, join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { build } from 'esbuild';
 import { parseArgs } from '../../../packages/bench/src/cli/args.ts';
+import { ADAPTER_FIXTURES, ADAPTERS, adapterChecks, FACET_IDS } from './adapters-check.ts';
 import { pendingChangesets } from './changesets.ts';
 import { packAll, publishAll } from './publish.ts';
 
@@ -389,6 +393,29 @@ async function main(): Promise<void> {
       slim
     );
   });
+
+  step('Scenario "editor adapters": the CodeMirror and Monaco adapters (#174)');
+  const editors = consumer('adapters', npmrc);
+  cpSync(ADAPTER_FIXTURES, editors, { recursive: true });
+  run(
+    'npm',
+    [
+      'install',
+      ...ADAPTERS.map((a) => `${a}@v13-alpha`),
+      // The service's optional facet peers: a bundle needs each one it may import.
+      ...FACET_IDS.map((id) => `@mermaid-js/diagram-${id}@v13-alpha`),
+      '--save-exact',
+      '--no-audit',
+      '--no-fund',
+    ],
+    editors,
+    npmEnv
+  );
+  for (const c of adapterChecks(editors, {
+    tarballs: new Map(tarballs.map((t) => [t.name, t.tarball])),
+    tsc: join(ROOT, 'node_modules/typescript/bin/tsc'),
+  }))
+    await checkAsync(c.name, async () => c.run());
 
   step('Second release: a flowchart-only changeset ships flowchart and mermaid, nothing else');
   const before = new Map(tarballs.map((t) => [t.name, t.version]));

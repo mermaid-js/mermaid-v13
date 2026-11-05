@@ -23,7 +23,8 @@ import {
   type CEdge,
   type CNode,
 } from './compound.ts';
-import { markerRect } from './end-markers.ts';
+import { markerRect, type Rect } from './end-markers.ts';
+import { gridObstacles, type GridBorders } from './grid-obstacles.ts';
 import { edgeOn, floorTo, type LayeredOptions } from './layered.ts';
 import { pxProfile, type LayoutMetrics } from '../units.ts';
 
@@ -639,7 +640,8 @@ const OUTWARD: Readonly<Record<Side, { axis: 'x' | 'y'; sign: 1 | -1 }>> = {
 // label placed before it, or any edge's end marker, `LayoutEdge.startMarker`) it takes the other side, and where both would, it moves further out
 // along the segment on whichever side needs less, past what is in the way. It never moves onto a
 // node or a group's title. On the grid all of it is whole cells: the label starts in the row or
-// column `along` cells past the end cell, `across` blank cells off the line.
+// column `along` cells past the end cell, `across` blank cells off the line, and it also moves
+// past every route's end cell and every group border row (column) it would cover.
 function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): LayoutModel {
   if (!graph.edges.some((e) => e.startLabel ?? e.endLabel)) return model;
   const M = graph.metrics ?? pxProfile.engine;
@@ -661,6 +663,9 @@ function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): Layout
     if (e.endMarker)
       taken.push(markerRect([...points].reverse(), OUTWARD[ports.target], e.endMarker, straight));
   }
+  const { ends, ...borders } = gridObstacles(model, grid);
+  taken.push(...ends);
+  const around = { walls, taken, borders };
   const across = M.endLabelAcross;
   for (const e of graph.edges) {
     if (!e.startLabel && !e.endLabel) continue;
@@ -669,26 +674,19 @@ function endLabels(graph: LayoutGraph, model: LayoutModel, grid: number): Layout
     const { points, ports } = placed;
     const room = { along: M.endLabelAlong, across, grid };
     if (e.startLabel) {
-      const at = endLabelAt(points, ports.source, e.startLabel, room, { walls, taken });
+      const at = endLabelAt(points, ports.source, e.startLabel, room, around);
       placed.startLabel = at;
       taken.push(rectOf(at, e.startLabel));
     }
     if (e.endLabel) {
       const back = [...points].reverse();
       const head = { ...room, along: room.along + headRoom };
-      const at = endLabelAt(back, ports.target, e.endLabel, head, { walls, taken });
+      const at = endLabelAt(back, ports.target, e.endLabel, head, around);
       placed.endLabel = at;
       taken.push(rectOf(at, e.endLabel));
     }
   }
   return model;
-}
-
-interface Rect {
-  x0: number;
-  y0: number;
-  x1: number;
-  y1: number;
 }
 
 function rectOf(c: Point, s: { width: number; height: number }): Rect {
@@ -707,16 +705,19 @@ function hits(a: Rect, b: Rect): boolean {
 }
 
 // The centre of a label of `size` at the end `points[0]`, whose route leaves through `side`,
-// clear of `walls` (nodes, titles) and of the labels `taken`.
+// clear of `walls` (nodes, titles), of the labels `taken` and of the group `borders` it moves
+// across.
 function endLabelAt(
   points: readonly RoutePoint[],
   side: Side,
   size: { width: number; height: number },
   { along, across, grid }: { along: number; across: number; grid: number },
-  { walls, taken }: { walls: readonly Rect[]; taken: readonly Rect[] }
+  obstacles: { walls: readonly Rect[]; taken: readonly Rect[]; borders: GridBorders }
 ): Point {
+  const { walls, borders } = obstacles;
   const p = points[0]!;
   const { axis, sign } = OUTWARD[side];
+  const taken = [...obstacles.taken, ...(axis === 'y' ? borders.rows : borders.columns)];
   const cross = axis === 'x' ? 'y' : 'x';
   let lean = 0;
   for (const q of points) {
