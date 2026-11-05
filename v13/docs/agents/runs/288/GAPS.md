@@ -14,6 +14,16 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - [ ] **#325:** `LANGIUM_NAMES` (test-only) and `pieTokens` are exported from the runtime entry; move them to a test or internal subpath if they show up in the load-path size.
 - Deviations (accepted by the orchestrator, consistent with D220): the lexer-error position is compared as the length of the text v12 read before it (entities decoded), since v12 and v13 offsets differ; unclosed `%%{` directives are a listed gate exclusion (core's `UNCLOSED_DIRECTIVE`, shared by every type). An in-body `---…---` block is its own `Yaml` trivia kind in `PIE_TRIVIA`; #305 skips it.
 
+## #335 T3 layout (merged)
+
+- [ ] **Invariants on parser-produced fixtures**: not run, because #305 had not merged. Whoever merges second adds the corpus spec described in `tickets/335.md` (`pieLayoutViolations` over the e2e corpus parsed by the v13 parser). Owner: #305 if it merges after #335 (it does), else #306.
+- [ ] **#325:** delete `PIE_THEME_DEFAULTS` in `layout/metrics.ts` (title/section/legend text sizes, stroke widths) once the pie variables exist; the layout already prefers a vocabulary entry of kind `length`.
+- Deviations (orchestrator: accepted, consistent with P1/D226; listed for the maintainer):
+  - an empty `highlightSlice` (the default) highlights nothing; v12 highlighted a slice labelled `""` (the default `''` matched it);
+  - no sections gives legend offsets of 0 where v12 computed NaN (D226: never NaN);
+  - the bounding box also covers the stroke widths and a highlighted slice drawn at 1.05 (D224: covers what is drawn).
+- Shared edit: `pie` added to `fontFamily`'s `usedBy` (`core/src/theme/vocabulary.ts`, regenerated `theme-variables.md`).
+
 ## #325 T5 integration (known before start)
 
 - [ ] **Theme DSL gaps** (`01-v12-pie.md` §4): no hue-rotate `adjust` in `core/src/theme/dsl.ts`; `taskTextDarkColor` and `mainContrastColor` (v12's pie title/legend colours) are not in the vocabulary; dark and neutral have no `cScale` palette. Store v12's computed values as literals where a derivation is missing (as `specs/neo-dark.ts:26` does), rather than growing the DSL; keep any vocabulary addition additive.
