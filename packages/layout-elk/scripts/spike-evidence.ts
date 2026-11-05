@@ -14,7 +14,7 @@ import { chromium, firefox, webkit } from '@playwright/test';
 import { build } from 'esbuild';
 import elkBundled from 'elkjs/lib/elk.bundled.js';
 import type { ElkNode } from 'elkjs/lib/elk-api.js';
-import corpus from '../fixtures/generated/v12-elk-corpus.json' with { type: 'json' };
+import corpus from '../fixtures/v12-elk-corpus.json' with { type: 'json' };
 
 interface Entry {
   source: string;
