@@ -148,6 +148,28 @@ describe('canvasMeasurer', () => {
     expect(browser.measured).toBe(1);
   });
 
+  it('answers a hit without measuring, even with the font cache nearly full', async () => {
+    browser.install();
+    browser.finishLoading();
+    const m = (await freshModule()).canvasMeasurer() as Measurer;
+    for (let i = 0; i < 19_999; i++) m.width(`label ${i}`, brand, 0);
+    const before = browser.measured;
+    expect(m.width('label 0', brand, 0)).toBe(70);
+    expect(browser.measured).toBe(before);
+  });
+
+  it('clears a font cache whole at 20,000 entries rather than dropping one', async () => {
+    browser.install();
+    browser.finishLoading();
+    const m = (await freshModule()).canvasMeasurer() as Measurer;
+    for (let i = 0; i < 20_000; i++) m.width(`label ${i}`, brand, 0);
+    m.width('label 20000', brand, 0); // one past the cap
+    const before = browser.measured;
+    m.width('label 1', brand, 0); // dropping only the oldest entry would have kept this one
+    m.width('label 20000', brand, 0); // the entry that hit the cap is kept
+    expect(browser.measured).toBe(before + 1);
+  });
+
   it('re-measures once a late-loading web font arrives', async () => {
     browser.install();
     const m = (await freshModule()).canvasMeasurer() as Measurer;

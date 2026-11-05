@@ -21,7 +21,9 @@ time and take the binding A/B only while nothing else is running here.
    feature/265_render-speed; create that branch from the tip of T1's branch if it does not
    exist, with a draft integration PR into mermaid-v13 that stays a draft.
 5. Rules that this machine's memory may not have: no AI attribution in commits or PRs; push
-   only to the mermaid-js remote; draft PRs only; never merge; never edit .github/workflows;
-   always pass -R mermaid-js/mermaid-v13 to gh.
+   only to the mermaid-js remote; open PRs as drafts and run gh pr ready on a ticket PR once
+   it is done (criteria met, CI green, mergeable), since ready is what marks it for review;
+   the integration PR stays a draft until INDEX.md's finish rule holds; never merge; never
+   edit .github/workflows; always pass -R mermaid-js/mermaid-v13 to gh.
 6. Finish with the reply IMPLEMENTER.md asks for, and stop. Do not start the next ticket.
 ```

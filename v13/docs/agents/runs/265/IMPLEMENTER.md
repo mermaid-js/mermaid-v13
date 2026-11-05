@@ -17,6 +17,6 @@
    ```
 
    From `packages/bench/dist/reports/latest.json`, report three ratios (head to Pele, base to Pele, head to base) as sums of warm time over: all common fixtures, the 14 largest (`perf/*` plus `pele/flowchart-500`), and the tiny set (fixtures Pele renders in under 0.5 ms in the same run). Put the table in the PR description. Report ratios, not milliseconds.
-6. Commit with no AI attribution (no Co-Authored-By, no "Generated with"). Push only to the `mermaid-js` remote. Open a **draft** PR; never merge and never mark an integration PR ready.
+6. Commit with no AI attribution (no Co-Authored-By, no "Generated with"). Push only to the `mermaid-js` remote. Open a **draft** PR and mark it ready (`gh pr ready`) once it is done: criteria met, CI green, mergeable. Never merge, and never mark the integration PR ready before INDEX.md's finish rule holds.
 7. Write `v13/docs/agents/runs/265/tickets/<N>.md` in your branch (≤ 40 lines): what changed, the A/B table, anything dropped under the identity gate, unmet criteria. Commit it.
 8. Reply in ≤ 12 lines: branch, head sha, PR, checks, the head-to-base ratio, deviations, unmet criteria.

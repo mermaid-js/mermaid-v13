@@ -28,7 +28,7 @@ interface FontSet {
   check(font: string, text?: string): boolean;
 }
 
-/** Entries kept per CSS font before the least recently used are dropped. */
+/** Entries kept per CSS font; at this size the font's cache is cleared whole (D201). */
 const MAX_CACHED = 20000;
 const MONO_FAMILY = 'monospace';
 
@@ -74,7 +74,7 @@ function cssFont(font: FontKey, style: StyleBits): string {
 
 /**
  * A measurer that measures whole strings with canvas `measureText`, or null where there is
- * no canvas. Widths are cached per CSS font (LRU, 20k entries), except while
+ * no canvas. Widths are cached per CSS font (20k entries, then cleared whole), except while
  * `document.fonts.check` says the font is not loaded yet; all caches are dropped when
  * `document.fonts.size` changes, so a late-loading web font is re-measured.
  */
@@ -104,15 +104,11 @@ export function canvasMeasurer(): Measurer | null {
       const fonts = use(css);
       let cache = widths.get(css);
       const hit = cache?.get(text);
-      if (cache && hit !== undefined) {
-        cache.delete(text);
-        cache.set(text, hit);
-        return hit;
-      }
+      if (hit !== undefined) return hit;
       const w = ctx.measureText(text).width;
       if (hasFont(fonts, css, text)) {
         if (!cache) widths.set(css, (cache = new Map()));
-        if (cache.size >= MAX_CACHED) cache.delete(cache.keys().next().value as string);
+        if (cache.size >= MAX_CACHED) cache.clear();
         cache.set(text, w);
       } else {
         // The context resolved the font to a fallback when `font` was set; set it again
