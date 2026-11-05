@@ -155,8 +155,8 @@ export function textMate(g: Grammar, names: HighlightNames): object {
   const suffix = `.${names.id}`;
   // Oniguruma's `(?i)` makes the rest of the (group of the) pattern ignore case.
   const tm = (p: string) => {
-    const onig = nonCapturing(lineBased(p));
-    return g.ignoreCase ? `(?i)${onig}` : onig;
+    const pattern = nonCapturing(lineBased(p));
+    return g.ignoreCase ? `(?i)${pattern}` : pattern;
   };
   const scope = (r: LexRule) => {
     const s = scopeOf(r);
