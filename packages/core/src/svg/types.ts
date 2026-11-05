@@ -95,6 +95,9 @@ export interface AttrTypes {
   // presentation
   fill: OutlinePaint;
   'fill-opacity': number | SafeValue;
+  /** Icon bodies (D295). */
+  'fill-rule': 'nonzero' | 'evenodd';
+  'clip-rule': 'nonzero' | 'evenodd';
   stroke: OutlinePaint;
   'stroke-width': Length;
   'stroke-dasharray': SafeValue | 'none';
