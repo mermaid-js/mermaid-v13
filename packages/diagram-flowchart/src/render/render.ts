@@ -111,8 +111,9 @@ interface NodePaint {
   /** The outline: the theme's gradient when `useGradient` is on (D182), else nodeBorder. */
   readonly stroke: OutlinePaint;
   /**
-   * nodeBorder as a colour where the outline is the gradient: a filled dot's fill, and a
-   * one-segment inner line, whose bounding box has no width or height (shapes.ts `Drawer`).
+   * nodeBorder as a colour where the outline is the gradient: a filled part's fill (a dot,
+   * the fork bar), and a one-segment inner line, whose bounding box has no width or height
+   * (shapes.ts `usesPlain`, D185).
    * Read only when the gradient is on and such a shape is drawn.
    */
   readonly plainStroke: Color | undefined;

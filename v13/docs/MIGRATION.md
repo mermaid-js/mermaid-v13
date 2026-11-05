@@ -325,7 +325,8 @@ Sequence diagrams (`sequence` section, #145):
 - **Per-key font sizes take effect.** v12 replaced `sequence.actorFontSize`, `noteFontSize` and
   `messageFontSize` with the global `fontSize` before drawing, so setting them did nothing and
   every label was drawn at 16 px. v13 draws a set value; unset, they follow the theme's
-  `fontSize`, so a diagram that sets none looks as before (D132).
+  `fontSize` (D132). A diagram that sets none looks as before in a 16 px theme; under the redux
+  family, `neo` and `neo-dark` (`fontSize` 14px) its text is 14 px where v12 drew 16 px.
   The documented defaults 14 and 16 are gone.
 - **Per-key font families follow the Mermaid font** when unset (`fontFamily`), as every
   diagram type's text does; a set `actorFontFamily`, `noteFontFamily` or `messageFontFamily`
@@ -476,10 +477,13 @@ that v12 neo strokes with the gradient take it, and nothing else does (D182):
   `classDef` stroke still win.
 
 An `objectBoundingBox` gradient cannot paint a line whose box has no width or height, so those
-lines are drawn in plain `nodeBorder`: a lined document's rule, the `fr-circ` inner dot, the
-`f-circ` and `browser` lines, the dashed divider between state concurrency regions (v12 dashed
+lines are drawn in plain `nodeBorder`: the rules of a lined document and a lined or divided
+rectangle (v12 stroked them with the gradient), the `fr-circ` inner dot, the `f-circ` and
+`browser` lines, the dashed divider between state concurrency regions (v12 dashed
 each region's frame with the gradient) and a described state's divider. Class dividers are
 lifted 0.01 so they take the gradient (v12 0.001) (D185).
+No node part is filled with the gradient: the flowchart fork and join bar is stroked with it and
+filled in plain `nodeBorder`, the same colour as the `lineColor` v12 neo filled it with (D185).
 
 ## Layout
 

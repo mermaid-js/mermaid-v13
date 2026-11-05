@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { createMermaid, type InitializeConfig, type RenderResult } from 'mermaid';
+import { shapeNames } from '@mermaid-js/diagram-flowchart/testing';
 import { parseSvg, type SvgElement, type SvgView } from './svg-tree.ts';
 
 /**
@@ -833,6 +834,111 @@ describe('flowchart render: neo gradient (D182, #229)', () => {
       assertInert(svg);
     }
   );
+
+  /** One node per `@{ shape }` name, aliases included, in a subgraph. */
+  const NAMES = shapeNames();
+  const EVERY_SHAPE = [
+    'flowchart TD',
+    '  subgraph S[Group]',
+    ...NAMES.map((s, i) => `    n${i}@{ shape: ${s}, label: "x" }`),
+    '  end',
+    '  n0 --> n1',
+  ].join('\n');
+  const nums = (s: string): number[] => (s.match(/-?[\d.]+(?:e-?\d+)?/g) ?? []).map(Number);
+  /**
+   * Whether the element's box has no width or no height, from its geometry. Arcs are taken
+   * to have extent; a curve's control points bound it, so a flat hull means a flat curve.
+   */
+  const flat = (tree: SvgView, n: SvgElement): boolean => {
+    const a = (k: string) => tree.getAttr(n, k);
+    let xs: number[] = [];
+    let ys: number[] = [];
+    switch (tree.tag(n)) {
+      case 'rect':
+        return Number(a('width')) === 0 || Number(a('height')) === 0;
+      case 'circle':
+        return Number(a('r')) === 0;
+      case 'ellipse':
+        return Number(a('rx')) === 0 || Number(a('ry')) === 0;
+      case 'line':
+        xs = [Number(a('x1')), Number(a('x2'))];
+        ys = [Number(a('y1')), Number(a('y2'))];
+        break;
+      case 'polygon':
+      case 'polyline':
+      case 'path': {
+        const d = a('d') ?? a('points') ?? '';
+        if (/[AaHhVvSsTt]|[a-z]/.test(d.replace(/e-?\d/g, ''))) return false;
+        const v = nums(d);
+        xs = v.filter((_, i) => i % 2 === 0);
+        ys = v.filter((_, i) => i % 2 === 1);
+        break;
+      }
+      case undefined:
+      default:
+        return false;
+    }
+    return Math.min(...xs) === Math.max(...xs) || Math.min(...ys) === Math.max(...ys);
+  };
+
+  it.each(['neo', 'neo-dark'] as const)(
+    'draws no zero-width or zero-height element with the gradient in %s, over every shape',
+    async (theme) => {
+      const { tree } = await draw(EVERY_SHAPE, { config: { theme } });
+      expect(outlined(tree).length).toBeGreaterThan(NAMES.length);
+      const bad = outlined(tree)
+        .filter((n) => flat(tree, n))
+        .map((n) => `${tree.getAttr(n.parent!, 'data-id')} ${tree.tag(n)}`);
+      expect(bad).toEqual([]);
+    }
+  );
+
+  it.each(['neo', 'neo-dark'] as const)(
+    'fills no element with the gradient in %s, over every shape',
+    async (theme) => {
+      const { svg, tree } = await draw(EVERY_SHAPE, { config: { theme } });
+      const bad = tree
+        .find((n, t) => (t.getAttr(n, 'fill') ?? '').startsWith('url('))
+        .map((n) => `${tree.getAttr(n.parent!, 'data-id')} ${tree.tag(n)}`);
+      expect(bad).toEqual([]);
+      expect(svg).not.toMatch(/fill:\s*url\(/);
+    }
+  );
+
+  it('draws the lined and divided rectangle rules in plain nodeBorder, every alias', async () => {
+    const names = [
+      'lin-rect',
+      'lined-rectangle',
+      'lined-process',
+      'lin-proc',
+      'shaded-process',
+      'div-rect',
+      'div-proc',
+      'divided-rectangle',
+      'divided-process',
+    ];
+    const { tree } = await draw(
+      ['flowchart LR', ...names.map((s, i) => `  n${i}@{ shape: ${s}, label: "x" }`)].join('\n'),
+      { config: { theme: 'neo', output: { cssVariables: false } } as InitializeConfig }
+    );
+    names.forEach((s, i) => {
+      const kids = tree.children(byAst(tree, `n:n${i}`)[0]!);
+      expect(tree.getAttr(kids.find((c) => tree.tag(c) === 'rect')!, 'stroke'), s).toBe(URL);
+      const rule = kids.find((c) => tree.tag(c) === 'path' && tree.getAttr(c, 'fill') === 'none');
+      expect(tree.getAttr(rule!, 'stroke'), s).toBe('#000000');
+    });
+  });
+
+  it('fills the fork and join bar plainly, never with the gradient', async () => {
+    const { tree } = await draw('flowchart LR\n  a@{ shape: fork }\n  b@{ shape: join }', {
+      config: { theme: 'neo', output: { cssVariables: false } } as InitializeConfig,
+    });
+    for (const id of ['a', 'b']) {
+      const bar = tree.children(byAst(tree, `n:${id}`)[0]!).find((c) => tree.tag(c) === 'rect')!;
+      expect(tree.getAttr(bar, 'fill'), id).toBe('#000000');
+      expect(tree.getAttr(bar, 'stroke'), id).toBe(URL);
+    }
+  });
 
   it('keeps the gradient off edges, edge labels, arrowheads and the collapsed dots (D154)', async () => {
     const { tree } = await draw(SHAPES, { config: { theme: 'neo' } });

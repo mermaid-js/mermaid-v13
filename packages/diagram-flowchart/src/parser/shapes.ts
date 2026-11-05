@@ -63,6 +63,9 @@ const SHAPES: ReadonlySet<string> = /* @__PURE__ */ new Set([
   ...UNDOCUMENTED.split(' '),
 ]);
 
+/** Every name `@{ shape: name }` accepts, aliases included (tests draw each one). */
+export const shapeNames = (): string[] => [...SHAPES].filter(acceptedShape);
+
 /** Whether `@{ shape: name }` names a shape v12 accepts. */
 export function isValidShape(name: string): boolean {
   return SHAPES.has(name);
