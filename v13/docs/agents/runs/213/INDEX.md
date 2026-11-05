@@ -12,8 +12,8 @@ Integration branch `feature/213_neo-themes`, cut from `mermaid-v13` plus the D18
 | Ticket | Branch | State |
 | --- | --- | --- |
 | #223 T0 core gradient | feature/223_core-gradient | running |
-| #225 T1 neo | feature/225_neo-theme | running |
-| #227 T2 neo-dark | | blocked by #225 |
+| #225 T1 neo | feature/225_neo-theme | merged (#253) |
+| #227 T2 neo-dark | feature/227_neo-dark-theme | running |
 | #229 T3 flowchart | | blocked by #223 #225 #227 |
 | #231 T4 sequence | | blocked by #223 #225 #227 |
 | #233 T5 class | | blocked by #223 #225 #227 |

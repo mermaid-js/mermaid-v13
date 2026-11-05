@@ -11,6 +11,9 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 ## #225 T1 neo
 
+- [x] Merged (PR #253). Size: default path +12 B gz (name and loader in `registry.ts`); the spec is its own 451 B gz chunk. Accepted as the cost of registering a theme; reported in #248.
+- [ ] Gradient values in `neo.ts` once #223 merges (Contracts).
+
 ## #227 T2 neo-dark
 
 ## #229 T3 flowchart
