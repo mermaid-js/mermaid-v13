@@ -116,3 +116,38 @@ describe('convertBody: what an icon body loses (D295)', () => {
     ).toBe('<rect/>');
   });
 });
+
+describe('convertBody: review fixes', () => {
+  it('reads compact SVG number lists', () => {
+    expect(out('<g transform="translate(-1-2)"/>')).toBe('<g transform="translate(-1 -2)"/>');
+    expect(out('<g transform="matrix(.5.5-.5.5 0 0)"/>')).toBe(
+      '<g transform="matrix(0.5 0.5 -0.5 0.5 0 0)"/>'
+    );
+    expect(out('<polyline points="0,0 1-1 2,2"/>')).toBe('<polyline points="0,0 1,-1 2,2"/>');
+    expect(out('<g transform="translate(1,,2)"/>')).toBe('<g/>');
+  });
+
+  it.each([
+    '<g transform="perspective(2)"/>',
+    '<polygon points="x"/>',
+    '<path d="M0 0 url(x)"/>',
+    '<text x="1 2">a</text>',
+    '<rect width="auto"/>',
+  ])('reports a dropped value that draws: %s', (body) => {
+    expect(convertBody(body).simplified).toBe(true);
+  });
+
+  it.each([
+    '<path d="M0 0" fill="#f00" stroke="url(#a)',
+    '<path d="M0 0"/><!-- <path d="M1 1"/>',
+    '<text><![CDATA[a',
+  ])('reports a body cut short: %s', (body) => {
+    expect(convertBody(body).simplified).toBe(true);
+  });
+
+  it('decodes named references as label text does', () => {
+    expect(out('<text>a&nbsp;b &copy; &unknown; &#169;</text>')).toBe(
+      '<text>a b © &amp;unknown; ©</text>'
+    );
+  });
+});

@@ -96,3 +96,40 @@ describe('iconBox', () => {
     });
   });
 });
+
+describe('getIcon: bad pack data (review fixes)', () => {
+  const bad = {
+    prefix: 'bad',
+    width: 'wide',
+    icons: {
+      numberBody: { body: 42 },
+      nullIcon: null,
+      odd: {
+        body: '<path d="M0 0"/>',
+        width: '10',
+        height: Number.NaN,
+        left: Infinity,
+        rotate: 'x',
+      },
+      zero: { body: '', width: 0, height: -4 },
+    },
+    aliases: { toNumber: { parent: 'numberBody' }, toNull: { parent: 'nullIcon' }, junk: 7 },
+  } as unknown as IconifyJSON;
+
+  it('treats an icon without a string body as unresolved', () => {
+    for (const name of ['numberBody', 'nullIcon', 'toNumber', 'toNull', 'junk'])
+      expect(getIcon(bad, name), name).toBeUndefined();
+  });
+
+  it('ignores dimensions and rotations that are not usable numbers', () => {
+    const icon = getIcon(bad, 'odd')!;
+    expect(icon).toMatchObject({ width: 16, height: 16, left: 0, top: 0, rotate: 0 });
+    expect(iconBox(icon).viewBox).toEqual([0, 0, 16, 16]);
+    expect(getIcon(bad, 'zero')).toMatchObject({ width: 16, height: 16 });
+  });
+
+  it('survives a pack whose icons are not an object', () => {
+    expect(getIcon({ prefix: 'x', icons: 'abc' } as unknown as IconifyJSON, '0')).toBeUndefined();
+    expect(getIcon({ prefix: 'x', icons: null } as unknown as IconifyJSON, 'a')).toBeUndefined();
+  });
+});

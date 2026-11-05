@@ -22,7 +22,9 @@ const RE_PERCENT = /^(?:\d+(?:\.\d*)?|\.\d+)%$/;
 const RE_PATH = /^[MLHVCSQTAZmlhvcsqtaz\d\s,.eE+-]*$/;
 const RE_URL = /^url\s*\(/i;
 const RE_TRANSFORM = /^\s*(matrix|translate|scale|rotate|skewX|skewY)\s*\(([^()]*)\)\s*,?/;
-const RE_SEPARATORS = /[\s,]+/;
+/** One number of an SVG number list (SVG 1.1 §4.3 `number`), read at a position. */
+const RE_LIST_NUMBER = /[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/y;
+const RE_WSP = /\s*/y;
 
 /** Argument counts each transform function takes. */
 const TRANSFORM_ARGS: Readonly<Record<string, readonly number[]>> = {
@@ -75,16 +77,29 @@ function toNumber(value: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+const skip = (re: RegExp, s: string, at: number): number => {
+  re.lastIndex = at;
+  return at + (re.exec(s)?.[0].length ?? 0);
+};
+
+/**
+ * An SVG number list: numbers apart by spaces or one comma, or by nothing where the grammar
+ * allows it (`1-1`, `.5.5`).
+ */
 function numbers(value: string): number[] | undefined {
-  const parts = value.trim().split(RE_SEPARATORS);
-  if (parts.length === 1 && parts[0] === '') return [];
   const out: number[] = [];
-  for (const p of parts) {
-    const n = toNumber(p);
-    if (n === undefined || p.endsWith('px')) return undefined;
+  let i = skip(RE_WSP, value, 0);
+  while (i < value.length) {
+    if (out.length > 0 && value[i] === ',') i = skip(RE_WSP, value, i + 1);
+    RE_LIST_NUMBER.lastIndex = i;
+    const m = RE_LIST_NUMBER.exec(value);
+    if (!m) return undefined;
+    const n = Number(m[0]);
+    if (!Number.isFinite(n)) return undefined;
     out.push(n);
+    i = skip(RE_WSP, value, i + m[0].length);
   }
-  return out;
+  return value.trimEnd().endsWith(',') ? undefined : out;
 }
 
 /** A transform list rebuilt from checked functions and numbers, or undefined. */
@@ -152,6 +167,18 @@ function attrValue(name: string, value: string, report: AttrReport): unknown {
   return STYLE_PROPERTIES.has(name) ? styled(name, value) : undefined;
 }
 
+/** Attributes that draw, besides the style properties: dropping one changes the icon. */
+const DRAWING: ReadonlySet<string> = new Set([
+  ...NUMBER_ATTRS,
+  ...Object.keys(KEYWORDS),
+  'width',
+  'height',
+  'd',
+  'points',
+  'transform',
+  'color',
+]);
+
 /** Sets one attribute from a body, or notes why it was not kept. */
 function readAttr(out: Mutable, name: string, value: string, report: AttrReport): void {
   if (name === 'display') {
@@ -164,7 +191,7 @@ function readAttr(out: Mutable, name: string, value: string, report: AttrReport)
   }
   const v = attrValue(name, value, report);
   if (v === undefined) {
-    if (name === 'fill' || name === 'stroke') report.simplified = true;
+    if (DRAWING.has(name) || STYLE_PROPERTIES.has(name)) report.simplified = true;
     return;
   }
   out[name] = v;

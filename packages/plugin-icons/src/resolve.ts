@@ -66,14 +66,38 @@ const DEFAULT_SIZE = 16;
 /** Longer alias chains than this are treated as broken (Iconify has no limit; packs use 1–2). */
 const MAX_CHAIN = 64;
 
-const own = <T>(record: Readonly<Record<string, T>> | undefined, name: string): T | undefined =>
-  record !== undefined && Object.hasOwn(record, name) ? record[name] : undefined;
+const isObject = (v: unknown): v is Readonly<Record<string, unknown>> =>
+  typeof v === 'object' && v !== null;
+
+/** An own entry of a pack record that has the string field `key`: packs are untrusted data. */
+function entry(
+  record: unknown,
+  name: string,
+  key: 'body' | 'parent'
+): Readonly<Record<string, unknown>> | undefined {
+  if (!isObject(record) || !Object.hasOwn(record, name)) return undefined;
+  const v = record[name];
+  return isObject(v) && typeof v[key] === 'string' ? v : undefined;
+}
+const iconOf = (pack: IconifyJSON, name: string) =>
+  entry(pack.icons, name, 'body') as IconifyIcon | undefined;
+const aliasOf = (pack: IconifyJSON, name: string) =>
+  entry(pack.aliases, name, 'parent') as IconifyAlias | undefined;
+
+/** A box offset (any finite number) or size (a positive one); anything else counts as unset. */
+const offset = (v: unknown): number | undefined =>
+  typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+const size = (v: unknown): number | undefined => {
+  const n = offset(v);
+  return n !== undefined && n > 0 ? n : undefined;
+};
+const quarterTurns = (v: unknown): number => (Number.isInteger(v) ? (v as number) : 0);
 
 /** The names from `name` up to the icon it resolves to, or undefined for a loop or a gap. */
 function chain(pack: IconifyJSON, name: string): string[] | undefined {
   const names = [name];
-  for (let current = name; own(pack.icons, current) === undefined; ) {
-    const parent = own(pack.aliases, current)?.parent;
+  for (let current = name; iconOf(pack, current) === undefined; ) {
+    const parent = aliasOf(pack, current)?.parent;
     if (parent === undefined || parent === '' || names.includes(parent) || names.length > MAX_CHAIN)
       return undefined;
     names.push(parent);
@@ -90,28 +114,28 @@ function chain(pack: IconifyJSON, name: string): string[] | undefined {
 export function getIcon(pack: IconifyJSON, name: string): IconData | undefined {
   const names = chain(pack, name);
   if (names === undefined) return undefined;
-  const icon = own(pack.icons, names[names.length - 1] as string) as IconifyIcon;
+  const icon = iconOf(pack, names[names.length - 1] as string) as IconifyIcon;
   let rotate = 0;
   let hFlip = false;
   let vFlip = false;
   const dims: { left?: number; top?: number; width?: number; height?: number } = {};
   for (const n of names) {
     const props: IconifyDimensions & IconifyTransformations =
-      own(pack.icons, n) ?? (own(pack.aliases, n) as IconifyAlias);
-    rotate = (rotate + (props.rotate ?? 0)) % 4;
+      iconOf(pack, n) ?? (aliasOf(pack, n) as IconifyAlias);
+    rotate = (rotate + quarterTurns(props.rotate)) % 4;
     hFlip = hFlip !== Boolean(props.hFlip);
     vFlip = vFlip !== Boolean(props.vFlip);
-    dims.left ??= props.left;
-    dims.top ??= props.top;
-    dims.width ??= props.width;
-    dims.height ??= props.height;
+    dims.left ??= offset(props.left);
+    dims.top ??= offset(props.top);
+    dims.width ??= size(props.width);
+    dims.height ??= size(props.height);
   }
   return {
     body: icon.body,
-    left: dims.left ?? pack.left ?? 0,
-    top: dims.top ?? pack.top ?? 0,
-    width: dims.width ?? pack.width ?? DEFAULT_SIZE,
-    height: dims.height ?? pack.height ?? DEFAULT_SIZE,
+    left: dims.left ?? offset(pack.left) ?? 0,
+    top: dims.top ?? offset(pack.top) ?? 0,
+    width: dims.width ?? size(pack.width) ?? DEFAULT_SIZE,
+    height: dims.height ?? size(pack.height) ?? DEFAULT_SIZE,
     rotate,
     hFlip,
     vFlip,

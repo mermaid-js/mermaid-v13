@@ -11,7 +11,7 @@
  * `title`, `desc` and `metadata` draw nothing and are dropped without a report.
  */
 import type { Attrs } from '@mermaid-js/core/svg';
-import type { SvgFragment } from '@mermaid-js/core/text';
+import { entityAt, type SvgFragment } from '@mermaid-js/core/text';
 import { readAttrs, type AttrReport } from './attrs.ts';
 
 /** A converted body. */
@@ -46,16 +46,8 @@ const RE_NAME = /[A-Za-z_][\w:.-]*/y;
 const RE_SPACE = /\s*/y;
 const RE_ATTR_NAME = /[^\s=/>"']+/y;
 const RE_UNQUOTED = /[^\s>]+/y;
-const RE_ENTITY = /&(?:#x([\da-f]{1,6})|#(\d{1,7})|(amp|lt|gt|quot|apos));/gi;
 // eslint-disable-next-line no-control-regex -- the characters XML does not allow
 const RE_INVALID = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f￾￿]|[\ud800-\udfff]/gu;
-const NAMED: Readonly<Record<string, string>> = {
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  quot: '"',
-  apos: "'",
-};
 
 interface Frame {
   readonly tag: string;
@@ -65,14 +57,18 @@ interface Frame {
   readonly children: (SvgFragment | string)[];
 }
 
+/** Character references decoded as in label text (core's `entityAt`); unknown ones stay. */
 function decode(text: string): string {
-  return text
-    .replace(RE_ENTITY, (whole, hex?: string, dec?: string, named?: string) => {
-      if (named !== undefined) return NAMED[named.toLowerCase()] ?? whole;
-      const code = hex === undefined ? Number(dec) : Number.parseInt(hex, 16);
-      return code <= 0x10ffff ? String.fromCodePoint(code) : '';
-    })
-    .replace(RE_INVALID, '');
+  let out = '';
+  let from = 0;
+  for (let at = text.indexOf('&'); at !== -1; at = text.indexOf('&', at + 1)) {
+    const ref = entityAt(text, at);
+    if (ref === undefined) continue;
+    out += text.slice(from, at) + ref[0];
+    from = at + ref[1];
+    at = from - 1;
+  }
+  return (out + text.slice(from)).replace(RE_INVALID, '');
 }
 
 function sticky(re: RegExp, s: string, at: number): string | undefined {
@@ -96,7 +92,11 @@ class Scan {
       if (end > this.pos) this.text(decode(src.slice(this.pos, end)));
       if (lt === -1) break;
       this.pos = lt;
-      if (!this.markup()) break;
+      if (!this.markup()) {
+        // The body ends inside a tag, comment or CDATA section: the rest is lost.
+        this.simplified = true;
+        break;
+      }
     }
     while (this.stack.length > 1) this.pop();
     return this.root.children as SvgFragment[];
