@@ -30,6 +30,8 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/mermaid',
       // Peer of mermaid (D164): after it.
       '@mermaid-chart/bundler-plugin',
+      // Not shipped by mermaid until its integration (#327): after it.
+      '@mermaid-chart/diagram-journey',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',
       '@mermaid-chart/language-service-codemirror',
