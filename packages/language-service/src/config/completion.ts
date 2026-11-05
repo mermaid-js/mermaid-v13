@@ -14,7 +14,7 @@
  * In block style the parent keys come from one backward scan over the lines above. Both are
  * linear.
  */
-import { lineEnd as endOfLine } from '@mermaid-js/core/parser-kit';
+import { lineEnd } from '@mermaid-js/core/parser-kit';
 import type { CompletionItem, Range } from '@mermaid-js/core/parser-kit';
 import type { DocumentContext } from '../context.ts';
 import { configSection, liveKeys, mapAt, secureKeys } from './front-matter.ts';
@@ -317,7 +317,7 @@ class FlowScan {
     } else if (/\s/.test(c)) {
       this.i++;
     } else if (c === '#' && /\s/.test(text.charAt(this.i - 1))) {
-      const end = Math.min(endOfLine(text, this.i), this.limit);
+      const end = Math.min(lineEnd(text, this.i), this.limit);
       if (this.offset > this.i && this.offset <= end) return null;
       this.i = end;
     } else if (c === ':' && top.map && !top.value) {
@@ -427,14 +427,14 @@ export function frontMatterCompletions(
   const yaml = fm.yamlRange;
   if (offset < yaml.start || offset > yaml.end) return [];
   const lineStart = lineStartOf(text, offset, yaml.start);
-  const lineEnd = runEnd(text, offset, yaml.end, /[^\r\n]/);
+  const cursorLineEnd = runEnd(text, offset, yaml.end, /[^\r\n]/);
   const prefix = text.slice(lineStart, offset);
 
   const flow = flowPlace(text, fm, offset);
   if (flow === null) return [];
   if (flow !== undefined) {
     if (flow.kind === 'value') return valueItems(ctx, flow.path, flow.range);
-    const colon = /^[ \t]*:/.test(text.slice(flow.range.end, lineEnd));
+    const colon = /^[ \t]*:/.test(text.slice(flow.range.end, cursorLineEnd));
     return keyItems(ctx, fm, flow.path, flow.range, flow.quoted || colon ? 'name' : 'flow', '');
   }
 
@@ -443,8 +443,8 @@ export function frontMatterCompletions(
     const indent = key[1]!;
     const parent = parentPath(text, fm, lineStart, indent.length);
     if (parent === undefined) return [];
-    const end = runEnd(text, offset, lineEnd, PLAIN_KEY);
-    const colon = /^[ \t]*:/.test(text.slice(end, lineEnd));
+    const end = runEnd(text, offset, cursorLineEnd, PLAIN_KEY);
+    const colon = /^[ \t]*:/.test(text.slice(end, cursorLineEnd));
     const style = key[2] !== '' || colon ? 'name' : 'block';
     return keyItems(ctx, fm, parent, { start: offset - key[3]!.length, end }, style, indent);
   }
@@ -452,7 +452,7 @@ export function frontMatterCompletions(
   if (value !== null) {
     const parent = parentPath(text, fm, lineStart, value[1]!.length);
     if (parent === undefined) return [];
-    const end = runEnd(text, offset, lineEnd, /[^\s#]/);
+    const end = runEnd(text, offset, cursorLineEnd, /[^\s#]/);
     const range = { start: offset - value[5]!.length, end };
     return valueItems(ctx, [...parent, keyOf(value, 2)], range);
   }

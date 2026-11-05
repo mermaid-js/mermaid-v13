@@ -387,6 +387,24 @@ describe('parseYaml tree mode: root flow documents (#169)', () => {
     ]);
   });
 
+  it("reads a single-quoted value's `''` as one quote when it recovers", () => {
+    // Closed: the doubled quote keeps the `,` inside the value.
+    const closed = "{a: 'it''s, x', b: *x, c: 1}";
+    const c = parseYaml(closed, { tree: true });
+    expect(where(closed, c)).toEqual(['1:20 YAML_SYNTAX']);
+    expect(c.value).toEqual({ a: "it's, x", c: 1 });
+    // Never closed: the `'` is a plain character and the rest is read on from after it. Read
+    // as two quoted runs (`'x"y'` and `', c" ...`), the `"` would open a quote at the `,`.
+    const open = `{a: 'x"y'', c" , b: 1}`;
+    const r = parseYaml(open, { tree: true });
+    expect(where(open, r)).toEqual(['1:5 YAML_SYNTAX']);
+    expect(r.value).toEqual({ b: 1 });
+    expect(pairsOf(open, r.root)).toEqual([
+      ['a', false],
+      ['b', true],
+    ]);
+  });
+
   it('keeps the prototype-key protection in a recovering root flow mapping', () => {
     const src = '{__proto__: {polluted: true}, a: *x, constructor: 1, b: 2}';
     const r = parseYaml(src, { tree: true });
