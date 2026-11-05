@@ -7,9 +7,9 @@ import { renderForTest, type RenderedForTest } from './testing.fixtures.ts';
 
 /**
  * Render properties of the timeline renderer (spec #291 T4) over the hand-built fixtures, both
- * directions, every theme and `theme: 'auto'`, and config away from its defaults. The parser
- * (#336) is not merged, so the models are `layout/fixtures.ts`; T2 adds its parsed corpus models
- * to `MODELS` and the same properties run over them.
+ * directions, every theme and `theme: 'auto'`, and config away from its defaults. The same
+ * properties and the AST round-trip run over the parsed corpus in
+ * `packages/conformance/src/timeline/render.spec.ts` (the package reads no files).
  */
 const MODELS: readonly (readonly [string, TimelineModel])[] = Object.entries(fx.FIXTURES).flatMap(
   ([name, m]) => [
