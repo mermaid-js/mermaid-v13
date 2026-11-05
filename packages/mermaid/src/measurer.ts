@@ -72,44 +72,84 @@ function cssFont(font: FontKey, style: StyleBits): string {
   );
 }
 
+/** One CSS font's caches. */
+interface Entry {
+  readonly css: string;
+  readonly cache: Map<string, number>;
+  /** Widths of single ASCII characters; NaN where not measured yet. */
+  readonly ascii: Float64Array;
+}
+
+/** The canvas measurer, with the once-per-render check of the font set (D201). */
+export type CanvasMeasurer = Measurer & { sync(): void };
+
 /**
  * A measurer that measures whole strings with canvas `measureText`, or null where there is
- * no canvas. Widths are cached per CSS font (20k entries, then cleared whole), except while
- * `document.fonts.check` says the font is not loaded yet; all caches are dropped when
- * `document.fonts.size` changes, so a late-loading web font is re-measured.
+ * no canvas. Widths are cached per CSS font (20k entries, then cleared whole; single ASCII
+ * characters in a typed array), except while `document.fonts.check` says the font is not
+ * loaded yet. `sync()`, called once per render, drops every cache when `document.fonts.size`
+ * has changed, so a late-loading web font is re-measured. A render measures synchronously, so
+ * the set cannot change inside one.
  */
-export function canvasMeasurer(): Measurer | null {
+export function canvasMeasurer(): CanvasMeasurer | null {
   const ctx = context();
   if (!ctx) return null;
-  const widths = new Map<string, Map<string, number>>();
-  const vertical = new Map<string, VerticalMetrics>();
+  // The CSS font string and its caches per (FontKey object, style bits); a new object with an
+  // equal font finds the same entry by its string.
+  const byFont = new WeakMap<FontKey, (Entry | undefined)[]>();
+  const byCss = new Map<string, Entry>();
+  let vertical = new WeakMap<FontKey, VerticalMetrics>();
+  const verticalByCss = new Map<string, VerticalMetrics>();
   let faces = fontSet()?.size;
   let current = '';
 
-  const use = (font: string): FontSet | undefined => {
-    const fonts = fontSet();
-    if (fonts?.size !== faces) {
-      faces = fonts?.size;
-      widths.clear();
-      vertical.clear();
+  const entry = (font: FontKey, style: StyleBits): Entry => {
+    let byStyle = byFont.get(font);
+    if (!byStyle) byFont.set(font, (byStyle = []));
+    let e = byStyle[style];
+    if (!e) {
+      const css = cssFont(font, style);
+      e = byCss.get(css);
+      if (!e) {
+        e = { css, cache: new Map(), ascii: new Float64Array(128).fill(NaN) };
+        byCss.set(css, e);
+      }
+      byStyle[style] = e;
     }
-    if (font !== current) ctx.font = current = font;
-    return fonts;
+    return e;
   };
 
   return {
     id: 'canvas',
+    sync() {
+      const size = fontSet()?.size;
+      if (size === faces) return;
+      faces = size;
+      for (const e of byCss.values()) {
+        e.cache.clear();
+        e.ascii.fill(NaN);
+      }
+      verticalByCss.clear();
+      vertical = new WeakMap();
+    },
     width(text, font, style) {
-      const css = cssFont(font, style);
-      const fonts = use(css);
-      let cache = widths.get(css);
-      const hit = cache?.get(text);
-      if (hit !== undefined) return hit;
+      const e = entry(font, style);
+      const single = text.length === 1 ? text.charCodeAt(0) : 128;
+      if (single < 128) {
+        const w = e.ascii[single]!;
+        if (w === w) return w; // not NaN
+      } else {
+        const hit = e.cache.get(text);
+        if (hit !== undefined) return hit;
+      }
+      if (e.css !== current) ctx.font = current = e.css;
       const w = ctx.measureText(text).width;
-      if (hasFont(fonts, css, text)) {
-        if (!cache) widths.set(css, (cache = new Map()));
-        if (cache.size >= MAX_CACHED) cache.clear();
-        cache.set(text, w);
+      if (hasFont(fontSet(), e.css, text)) {
+        if (single < 128) e.ascii[single] = w;
+        else {
+          if (e.cache.size >= MAX_CACHED) e.cache.clear();
+          e.cache.set(text, w);
+        }
       } else {
         // The context resolved the font to a fallback when `font` was set; set it again
         // next time so the loaded face is picked up (Chromium keeps the fallback otherwise).
@@ -118,27 +158,34 @@ export function canvasMeasurer(): Measurer | null {
       return w;
     },
     metrics(font) {
-      const css = cssFont(font, 0);
-      const fonts = use(css);
-      const hit = vertical.get(css);
+      const hit = vertical.get(font);
       if (hit) return hit;
-      const m = ctx.measureText('Mg');
-      if (m.fontBoundingBoxAscent === undefined || m.fontBoundingBoxDescent === undefined) {
-        return tableMeasurer.metrics(font);
+      const css = cssFont(font, 0);
+      let out = verticalByCss.get(css);
+      if (!out) {
+        if (css !== current) ctx.font = current = css;
+        const m = ctx.measureText('Mg');
+        if (m.fontBoundingBoxAscent === undefined || m.fontBoundingBoxDescent === undefined) {
+          return tableMeasurer.metrics(font);
+        }
+        out = {
+          ascent: m.fontBoundingBoxAscent,
+          descent: m.fontBoundingBoxDescent,
+          lineHeight: m.fontBoundingBoxAscent + m.fontBoundingBoxDescent,
+        };
+        if (!hasFont(fontSet(), css, 'Mg')) {
+          current = '';
+          return out;
+        }
+        verticalByCss.set(css, out);
       }
-      const out: VerticalMetrics = {
-        ascent: m.fontBoundingBoxAscent,
-        descent: m.fontBoundingBoxDescent,
-        lineHeight: m.fontBoundingBoxAscent + m.fontBoundingBoxDescent,
-      };
-      if (hasFont(fonts, css, 'Mg')) vertical.set(css, out);
-      else current = '';
+      vertical.set(font, out);
       return out;
     },
   };
 }
 
-let shared: Measurer | undefined;
+let shared: CanvasMeasurer | undefined;
 
 export interface MeasurerOptions {
   /** An integrator-supplied measurer. `deterministic` overrides it (R-TEXT-7). */
@@ -149,11 +196,13 @@ export interface MeasurerOptions {
 
 /**
  * The measurer for a render: the table measurer when `deterministic`, else the integrator's,
- * else the shared canvas measurer in a browser, else the table measurer.
+ * else the shared canvas measurer in a browser (checked against the font set once, here),
+ * else the table measurer.
  */
 export function selectMeasurer(options: MeasurerOptions = {}): Measurer {
   if (options.deterministic) return tableMeasurer;
   if (options.measurer) return options.measurer;
   shared ??= canvasMeasurer() ?? undefined;
+  shared?.sync();
   return shared ?? tableMeasurer;
 }
