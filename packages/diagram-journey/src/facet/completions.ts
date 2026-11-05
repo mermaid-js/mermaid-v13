@@ -85,17 +85,18 @@ function actorItems(
   const typed = text.slice(range.start, o);
   const word = text.slice(range.start, range.end);
   // The others this task names already, and the word being typed if no other task names it.
-  const others = text
+  const listed = text
     .slice(list.start, list.end)
     .split(',')
     .map((s) => s.trim());
-  const self = others.indexOf(word);
-  if (self >= 0) others.splice(self, 1);
+  const self = listed.indexOf(word);
+  if (self >= 0) listed.splice(self, 1);
+  const others = new Set(listed);
   const model = doc.result.model as JourneyModel;
   const counts = taskCounts(model);
   const items: CompletionItem[] = [];
   for (const name of model.actors) {
-    if (name === '' || !name.startsWith(typed) || others.includes(name)) continue;
+    if (name === '' || !name.startsWith(typed) || others.has(name)) continue;
     if (name === word && (counts.get(name) ?? 0) <= 1) continue;
     items.push({
       label: name,

@@ -70,14 +70,77 @@ describe('user journeys through the public API (#327)', () => {
     expect(wide.svg).not.toContain('#b91c1c');
   });
 
+  it("replaces the default actor colours with an author's actorColours (#290 review)", async () => {
+    const { svg } = await createMermaid().render(
+      'j',
+      "---\nconfig:\n  journey:\n    actorColours: ['#00f', '#f00']\n---\njourney\n  A: 5: Me, You\n"
+    );
+    const fills = [...svg.matchAll(/<circle class="actor-(\d+)"[^>]* fill="([^"]+)"/g)].map((m) => [
+      m[1],
+      m[2],
+    ]);
+    expect(fills.length).toBeGreaterThan(0);
+    for (const [slot, fill] of fills) expect(fill).toBe(slot === '0' ? '#00f' : '#f00');
+    expect(svg).not.toContain('#8FBC8F');
+  });
+
+  it('keeps the default for a length over 10000 px, never writing Infinity (#290 review)', async () => {
+    const m = createMermaid();
+    const plain = await m.render('j', TEXT);
+    const huge = await m.render(
+      'j',
+      '---\nconfig:\n  journey:\n    leftMargin: 1e307\n---\n' + TEXT
+    );
+    expect(huge.svg).not.toContain('Infinity');
+    expect(huge.svg).toBe(plain.svg);
+    for (const key of ['width', 'height', 'taskMargin', 'boxTextMargin', 'diagramMarginX']) {
+      const r = await m.render('j', `---\nconfig:\n  journey:\n    ${key}: 1e308\n---\n` + TEXT);
+      expect(r.svg, key).toBe(plain.svg);
+    }
+  });
+
+  it('warns once per refused journey length and keeps its default (#290 review)', async () => {
+    const { warnings } = await createMermaid().render(
+      'j',
+      "---\nconfig:\n  journey:\n    leftMargin: -5\n    width: 'wide'\n    height: 20000\n    taskMargin: 60\n---\n" +
+        TEXT
+    );
+    expect(warnings.map((w) => [w.code, w.path])).toEqual([
+      ['JOURNEY_CONFIG', 'journey.leftMargin'],
+      ['JOURNEY_CONFIG', 'journey.width'],
+      ['JOURNEY_CONFIG', 'journey.height'],
+    ]);
+  });
+
   it("maps each task dot to its actor mention; '' draws none and legend rows carry data-id only", async () => {
     const { svg } = await createMermaid().render('j', 'journey\n  A: 5: Me, , You\n  B: 3: Me,\n');
-    const dots = [...svg.matchAll(/<circle class="actor-\d+" data-ast="([^"]+)"/g)].map(
-      (m) => m[1]
-    );
+    const dots = [
+      ...svg.matchAll(/<circle class="actor-\d+" data-id="[^"]+" data-ast="([^"]+)"/g),
+    ].map((m) => m[1]);
     expect(dots).toEqual(['a:Me', 'a:You', 'a:Me@2']);
     expect(svg).toContain('data-id="a:Me"');
     expect(svg).not.toMatch(/legend-entry[^>]*data-ast/);
+  });
+
+  it('titles each task dot with the legend text and gives it the legend data-id (#290 review)', async () => {
+    const { svg } = await createMermaid().render(
+      'j',
+      'journey\n  A: 5: A#amp;B, x<br>y\n  B: 3: A#amp;B\n'
+    );
+    const dots = [
+      ...svg.matchAll(
+        /<circle class="actor-\d+" data-id="([^"]+)" data-ast="([^"]+)"[^>]*><title>([^<]*)<\/title>/g
+      ),
+    ].map((m) => [m[1], m[2], m[3]]);
+    // The title is the plain text the legend shows (`A&B`, the break a space); the data-id
+    // is the legend entry's.
+    expect(dots).toEqual([
+      ['a:A&amp;amp;B', 'a:A&amp;amp;B', 'A&amp;B'],
+      ['a:x&lt;br&gt;y', 'a:x&lt;br%3Ey', 'x y'],
+      ['a:A&amp;amp;B', 'a:A&amp;amp;B@2', 'A&amp;B'],
+    ]);
+    const legend = [...svg.matchAll(/<g class="legend-entry" data-id="([^"]+)"/g)].map((m) => m[1]);
+    expect(legend).toEqual(['a:A&amp;amp;B', 'a:x&lt;br&gt;y']);
   });
 
   it('warns once for scores outside 0-5 (D226)', async () => {

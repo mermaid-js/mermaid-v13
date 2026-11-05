@@ -34,7 +34,11 @@ export const FIXED_COLORS = {
   dot: fixed('#000'),
 } as const;
 
-/** v12's `journey.actorColours` default, used while the config has none. */
+/**
+ * v12's `journey.actorColours` default, used while the config has none. This is the only copy:
+ * the schema has no default for the key, since core's config merge unions arrays, so a schema
+ * default would keep these six ahead of an author's list (an author's list replaces them).
+ */
 const V12_ACTOR_COLOURS = ['#8FBC8F', '#7CFC00', '#00FFFF', '#20B2AA', '#B0E0E6', '#FFFFE0'];
 
 /** A theme variable name, written through a call so the `usedBy` scan sees it. */

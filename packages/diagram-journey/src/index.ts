@@ -1,7 +1,7 @@
 /**
  * `@mermaid-js/diagram-journey`: the user journey diagram plugin (spec #290): the model type,
- * the lexer, the parser and its AST, the layout, the renderer and the plugin. The manifest (T5)
- * follows.
+ * the lexer, the parser and its AST, the layout, the renderer and the plugin. The language
+ * facet is the `./language` entry.
  */
 export type * from './model.ts';
 export {

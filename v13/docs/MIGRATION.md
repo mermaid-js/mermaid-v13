@@ -1008,6 +1008,14 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
   `bottomMarginAdj`, `rightAngles`, `activationWidth` and `useWidth` (v12's journey renderer
   never read them), `boxMargin` (read only in a loop over an empty list), `textPlacement`
   (every label is SVG text, D225) and `sectionFills` (D241).
+- **`actorColours` replaces the defaults:** an author's list is the whole palette, cycling
+  from the first actor. v12 appended the author's colours after its six defaults (`#8FBC8F`,
+  `#7CFC00`, `#00FFFF`, `#20B2AA`, `#B0E0E6`, `#FFFFE0`), so they reached only the seventh
+  actor on. Unset, the six defaults apply as before.
+- **Lengths are checked:** a length key (`diagramMarginX`, `diagramMarginY`, `leftMargin`,
+  `maxLabelWidth`, `width`, `height`, `taskMargin`, `boxTextMargin`) that is not a number from
+  0 to 10000 px keeps its default, with one `JOURNEY_CONFIG` warning per key. v12 used any
+  value as it was.
 - **Per-diagram values now apply:** v12 read `sectionFills` and `sectionColours` once at
   module load, so a front-matter or directive value never reached the drawing; a
   `sectionColours` set there now colours the names.
@@ -1039,7 +1047,7 @@ section and task classes now sit on the group that holds the box and its label.
 | Task lines `<line id="<id>-task<n>">` | `<line class="task-line">`, no id | Only `<id>-title` and `<id>-desc` ids remain |
 | A section: an unclassed `<g>` with `<rect class="journey-section section-type-<n>">` and its label (a `<switch><foreignObject>` by default) with the same classes | `<g class="journey-section section-type-<n>" data-id="s:<name>" data-ast="s:<name>">` holding the `<rect>` and `<text class="section-label" data-id>`. A rule on `.section-type-<n>` now matches the group: write `.section-type-<n> > rect` for the box | One element per section maps it to its source (R-PARSE-8) |
 | A `section` line with no tasks, or a repeated name that continues the run before it, drew nothing | Still no band; an empty `<g class="journey-section empty" data-id data-ast>` stands for the line | One `data-ast` element per AST node |
-| A task: an unclassed `<g>` with the line, the face, an unclassed `<g>` of eyes and mouth, `<rect class="task task-type-<n>">`, the actor dots and a label of class `task` | `<g class="task task-type-<n>" data-id="t:<n>" data-ast="t:<n>">` holding, in v12's paint order, `<line class="task-line">`, `<circle class="face">`, two `<circle class="eye">`, `<path class="mouth mouth-smile\|mouth-sad\|mouth-flat">`, the `<rect>`, a `<circle class="actor-<n>" data-ast="a:<name>">` per named actor mention (with its `<title>`, as v12) and `<text class="task-label" data-id>` | Same |
+| A task: an unclassed `<g>` with the line, the face, an unclassed `<g>` of eyes and mouth, `<rect class="task task-type-<n>">`, the actor dots and a label of class `task` | `<g class="task task-type-<n>" data-id="t:<n>" data-ast="t:<n>">` holding, in v12's paint order, `<line class="task-line">`, `<circle class="face">`, two `<circle class="eye">`, `<path class="mouth mouth-smile\|mouth-sad\|mouth-flat">`, the `<rect>`, a `<circle class="actor-<n>" data-id="a:<name>" data-ast="a:<name>">` per named actor mention (`data-id` the legend entry's; its `<title>`, as v12, the name as the legend shows it: entities decoded, a `<br>` a space) and `<text class="task-label" data-id>` | Same |
 | Mouth: a d3 `arc` path moved by `transform`; a score of 3 or `NaN` a `<line class="mouth">` | An absolute `<path>` for every mouth, no `transform`; v12's shapes and its rule on the score as written | No d3 (R-PERF-2) |
 | Faces at `300 + (5 − score) × 30` for any score; `NaN` wrote `cy="NaN"` | `NaN` is drawn at 3 and other scores clamped to 0–5, with one `JOURNEY_SCORE` warning per render | D226 |
 | Legend: `<circle class="actor-<n>">` and `<text class="legend"><tspan>` siblings at the root, one row per actor including `''`, which took the first colour | `<g class="legend-entries">` with one `<g class="legend-entry" data-id="a:<name>">` per named actor, holding the `<circle class="actor-<n>">` and `<text class="legend">`; no `data-ast` (the task dots carry the mentions' ids). `''` draws nothing and takes no colour | D244 |

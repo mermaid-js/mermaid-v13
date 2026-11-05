@@ -74,7 +74,7 @@ export function fontsOf(
 
 export function envOf(ctx: JourneyLayoutContext): Env {
   return {
-    m: journeyMetrics(ctx.config.journey ?? {}),
+    m: journeyMetrics(ctx.config.journey ?? {}, (w) => ctx.warn(w)),
     fonts: fontsOf(ctx, (w) => ctx.warn(w)),
     warn: (w) => ctx.warn(w),
     measure: (text, font, max) =>

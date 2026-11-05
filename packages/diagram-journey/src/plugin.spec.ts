@@ -14,16 +14,16 @@ describe('journey plugin (spec #290)', () => {
   it("carries v12's journey defaults, minus the keys that follow the theme (D225, D132, D248)", () => {
     const d = journey.configDefaults;
     expect(d).toMatchObject({ leftMargin: 150, width: 150, height: 50, taskMargin: 50 });
-    expect(d.actorColours).toEqual([
-      '#8FBC8F',
-      '#7CFC00',
-      '#00FFFF',
-      '#20B2AA',
-      '#B0E0E6',
-      '#FFFFE0',
-    ]);
     expect(d.titleFontSize).toBe('4ex');
-    for (const key of ['sectionColours', 'taskFontFamily', 'taskFontSize', 'titleFontFamily'])
+    // `actorColours` has no default: core's merge unions arrays, so an author's list could
+    // not replace one; the renderer holds v12's six colours (render/paint.ts).
+    for (const key of [
+      'actorColours',
+      'sectionColours',
+      'taskFontFamily',
+      'taskFontSize',
+      'titleFontFamily',
+    ])
       expect(d, key).not.toHaveProperty(key);
   });
 

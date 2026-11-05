@@ -3,6 +3,7 @@
 // legend, the section bands, the tasks (each its dashed line, face, box, actor dots and name),
 // the title and the activity arrow. Every element drawn from an AST node carries `data-id` and
 // `data-ast` (R-PARSE-8), exactly one per node; labels and legend entries carry `data-id` only.
+// A task dot's `data-id` is its legend entry's (`a:<name>`), its `data-ast` the mention's.
 import type { RenderContext } from '@mermaid-js/core';
 import {
   px,
@@ -187,12 +188,21 @@ function drawName(
 /** The tasks (v12 `drawTask`): line, face, box, actor dots and name, in v12's paint order. */
 function drawTasks(scene: Scene): void {
   const { w, layout, paint } = scene;
+  const names = new Map(layout.legend.map((e) => [e.actor, plainText(e.label.text)]));
   w.open('g', { class: 'tasks', ...paint.fonts.task });
-  for (const t of layout.tasks) drawTask(scene, t);
+  for (const t of layout.tasks) drawTask(scene, t, names);
   w.close();
 }
 
-function drawTask(scene: Scene, t: TaskLayout): void {
+/** A measured label as plain text, its lines joined with a space. */
+const plainText = (label: MeasuredLabel): string =>
+  label.lines.map((line) => line.map((r) => r.text).join('')).join(' ');
+
+/**
+ * One task. `names` holds each actor's legend text, which its dots' tooltips show: the name as
+ * read (entities decoded, `<br>` a space), not as written.
+ */
+function drawTask(scene: Scene, t: TaskLayout, names: ReadonlyMap<string, string>): void {
   const { w, paint, m } = scene;
   w.open('g', { class: `task task-type-${t.slot}`, 'data-id': t.ast, 'data-ast': t.ast });
   w.leaf('line', {
@@ -220,6 +230,7 @@ function drawTask(scene: Scene, t: TaskLayout): void {
   for (const d of t.dots) {
     w.open('circle', {
       class: `actor-${d.slot}`,
+      'data-id': `a:${d.actor}`,
       'data-ast': d.ast,
       cx: d.cx,
       cy: d.cy,
@@ -228,9 +239,9 @@ function drawTask(scene: Scene, t: TaskLayout): void {
       stroke: FIXED_COLORS.dot,
       'stroke-width': m.dotStroke,
     });
-    // v12's tooltip naming the actor.
+    // v12's tooltip naming the actor, as the legend shows it.
     w.open('title');
-    w.text(d.actor);
+    w.text(names.get(d.actor) ?? d.actor);
     w.close();
     w.close();
   }

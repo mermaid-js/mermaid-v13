@@ -4,8 +4,11 @@
  *
  * The values are v12's: the `journey` config defaults of the v12 schema, and the constants
  * written into v12's `journeyRenderer.ts` and `svgDraw.js`. A length set in `journey` config
- * replaces its default when it is a finite number of at least 0.
+ * replaces its default when it is a number from 0 to `MAX_LENGTH`; any other value keeps the
+ * default, with one `JOURNEY_CONFIG` warning per key.
  */
+import type { Warning } from '@mermaid-js/core';
+
 /** Lengths that `journey` config can set (v12 key names and defaults). */
 export interface ConfigLengths {
   /** Room left and right of what is drawn. */
@@ -86,8 +89,7 @@ export interface FixedLengths {
   readonly titleBaseline: number;
 }
 
-/** The score scale (D226). */
-export const SCORE = { min: 0, max: 5, mid: 3 } as const;
+export { drawnScore, SCORE } from '../score.ts';
 
 /** v12 draws section fills from `fillType0`…`fillType7` (D241). */
 export const SECTION_SLOTS = 8;
@@ -150,13 +152,45 @@ export const FIXED: FixedLengths = {
 
 export interface JourneyMetrics extends ConfigLengths, FixedLengths {}
 
-function length(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : undefined;
+/**
+ * The largest length `journey` config may set, in px. Far past any real diagram, and low enough
+ * that the sums and products of the layout stay finite (core's number formatter writes
+ * `Infinity` as it is).
+ */
+export const MAX_LENGTH = 10000;
+
+/** A refused value as a warning shows it: a number as written, anything else as JSON, cut. */
+function shown(value: unknown): string {
+  if (typeof value === 'number') return String(value);
+  const json = JSON.stringify(value) as string | undefined;
+  return (json ?? typeof value).slice(0, 60);
 }
 
-/** The metrics of one layout: the fixed lengths, and the config lengths over their defaults. */
-export function journeyMetrics(config: Readonly<Record<string, unknown>> = {}): JourneyMetrics {
-  const set = (key: keyof ConfigLengths): number => length(config[key]) ?? CONFIG_DEFAULTS[key];
+function length(value: unknown): number | undefined {
+  return typeof value === 'number' && value >= 0 && value <= MAX_LENGTH ? value : undefined;
+}
+
+/**
+ * The metrics of one layout: the fixed lengths, and the config lengths over their defaults.
+ * With `warn`, each refused length warns once (`JOURNEY_CONFIG`); the layout passes it, the
+ * renderer, which reads the same config again, does not.
+ */
+export function journeyMetrics(
+  config: Readonly<Record<string, unknown>> = {},
+  warn?: (w: Warning) => void
+): JourneyMetrics {
+  const set = (key: keyof ConfigLengths): number => {
+    const value = config[key];
+    const ok = length(value);
+    if (ok !== undefined) return ok;
+    if (value !== undefined)
+      warn?.({
+        code: 'JOURNEY_CONFIG',
+        message: `Ignored journey.${key} ${shown(value)}: a length is a number from 0 to ${MAX_LENGTH} px; the default ${CONFIG_DEFAULTS[key]} is used`,
+        path: `journey.${key}`,
+      });
+    return CONFIG_DEFAULTS[key];
+  };
   return {
     ...FIXED,
     diagramMarginX: set('diagramMarginX'),

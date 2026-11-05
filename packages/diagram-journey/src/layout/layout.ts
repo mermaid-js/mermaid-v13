@@ -15,8 +15,8 @@ import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type { JourneyModel, JourneySection, JourneyTask } from '../model.ts';
 import { envOf, type Env, type JourneyLayoutContext } from './env.ts';
 import { drawnRects, union } from './extent.ts';
-import { drawnScore, faceOf, lineEnd } from './faces.ts';
-import { SCORE, SECTION_SLOTS } from './metrics.ts';
+import { faceOf, lineEnd } from './faces.ts';
+import { drawnScore, SCORE, SECTION_SLOTS } from './metrics.ts';
 import type {
   ActivityLine,
   ActorDot,

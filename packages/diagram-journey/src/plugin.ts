@@ -13,8 +13,8 @@ const DETECT = /^\s*journey/;
 /**
  * The user journey plugin (spec #290): `layoutKind: 'custom'` with its own `JourneyLayout`.
  * `layout` measures and places everything; `render` writes the whole `<svg>` document into
- * the writer. `parse` takes the whole source (T2 #302). The plugin is not registered yet (the
- * package's `mermaid` manifest and `gen:registry` come with T5 #327).
+ * the writer. `parse` takes the whole source (T2 #302). The package's `mermaid` manifest
+ * registers it (`gen:registry`), with the `./language` facet.
  */
 export const journey = {
   id: 'journey',

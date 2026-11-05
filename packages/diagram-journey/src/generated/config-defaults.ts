@@ -21,14 +21,6 @@ export const journeyConfigDefaults: JourneyDiagramConfig = {
   "taskMargin": 50,
   "activationWidth": 10,
   "textPlacement": "fo",
-  "actorColours": [
-    "#8FBC8F",
-    "#7CFC00",
-    "#00FFFF",
-    "#20B2AA",
-    "#B0E0E6",
-    "#FFFFE0"
-  ],
   "sectionFills": [
     "#191970",
     "#8B008B",

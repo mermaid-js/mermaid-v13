@@ -3,6 +3,7 @@
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import { drawnScore } from '../score.ts';
 import type { JourneyTask } from '../model.ts';
 import { T } from '../parser/tokens.ts';
 
@@ -69,9 +70,12 @@ export function scoreFace(score: number): string {
   return `A ${face} face, drawn at ${score}`;
 }
 
-/** The mean score of `tasks` that have a number, to one decimal; `undefined` for none. */
+/**
+ * The mean of the scores `tasks` are drawn at (D226: clamped to 0–5), over the tasks that have
+ * a number, to one decimal; `undefined` for none.
+ */
 export function meanScore(tasks: readonly JourneyTask[]): string | undefined {
-  const scores = tasks.map((t) => t.score).filter((s) => !Number.isNaN(s));
+  const scores = tasks.filter((t) => !Number.isNaN(t.score)).map((t) => drawnScore(t.score));
   if (scores.length === 0) return undefined;
   return (scores.reduce((a, s) => a + s, 0) / scores.length).toFixed(1);
 }

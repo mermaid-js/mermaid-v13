@@ -4,13 +4,7 @@
  */
 import { pathBuilder, type PathData } from '@mermaid-js/core/svg';
 import type { Circle, FaceLayout, Mouth } from './types.ts';
-import { SCORE, type JourneyMetrics } from './metrics.ts';
-
-/** The score a face is drawn at (D226): `NaN` at the middle, the rest clamped to the scale. */
-export function drawnScore(score: number): number {
-  if (Number.isNaN(score)) return SCORE.mid;
-  return Math.min(SCORE.max, Math.max(SCORE.min, score));
-}
+import { drawnScore, SCORE, type JourneyMetrics } from './metrics.ts';
 
 /** v12's rule on the score as written: `NaN` compares false both ways, so it is flat. */
 export function mouthOf(score: number): Mouth {

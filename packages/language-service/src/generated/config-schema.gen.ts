@@ -4016,18 +4016,10 @@ export const configSchema: ConfigSchema = {
           "items": {
             "type": "string"
           },
-          "default": [
-            "#8FBC8F",
-            "#7CFC00",
-            "#00FFFF",
-            "#20B2AA",
-            "#B0E0E6",
-            "#FFFFE0"
-          ],
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "The actor dot colours in every theme, as in v12 (D249); an author's `actor0`–`actor5` theme variable wins. The empty actor `''` takes no colour (D244). A value that is not a colour is dropped with `STYLE_VALUE_DROPPED`."
+            "reason": "The actor dot colours in every theme (D249); an author's `actor0`–`actor5` theme variable wins. Unset, dots take v12's six colours (`#8FBC8F`, `#7CFC00`, `#00FFFF`, `#20B2AA`, `#B0E0E6`, `#FFFFE0`); a list set by the author replaces them (v12 appended it after them). The empty actor `''` takes no colour (D244). A value that is not a colour is dropped with `STYLE_VALUE_DROPPED`."
           }
         },
         "sectionFills": {
