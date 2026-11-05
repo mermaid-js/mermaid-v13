@@ -46,6 +46,12 @@ export interface InlineSpans {
     font: FontKey,
     measurer: Measurer
   ): { readonly source: string; readonly boxes: readonly LabelBoxSpan[] } | undefined;
+  /**
+   * Whether this render has warned that `feature`'s spans (`'math'`) are not drawn: its
+   * not-rendered warning (`MATH_NOT_RENDERED`, from core or a provider) or `ASCII_DROPPED`.
+   * Not set by a provider's other warnings (`MATH_ERROR`) or the API's `PLACEHOLDER`.
+   */
+  notRendered(feature: string): boolean;
 }
 
 /**
@@ -97,7 +103,9 @@ export function inlineSpans(
   const missing = FEATURES.filter((f) => !providers.some((p) => p.open === f.open));
   const warned = new Set<string>();
   const given = new Set<string>();
+  const notDrawn = new Set<string>();
   const once: Warn = (w) => {
+    for (const f of FEATURES) if (f.code === w.code) notDrawn.add(f.feature);
     const key = `${w.code}\n${w.message}`;
     if (given.has(key)) return;
     given.add(key);
@@ -105,10 +113,12 @@ export function inlineSpans(
   };
   const claimed = (text: string): boolean => providers.some((p) => hasPair(text, p.open, p.close));
   return {
+    notRendered: (feature) => notDrawn.has(feature),
     extract(raw, font, measurer) {
       for (const f of missing) {
         if (!warned.has(f.code) && hasPair(raw, f.open, f.close)) {
           warned.add(f.code);
+          notDrawn.add(f.feature);
           warn({ code: f.code, message: f.message });
         }
       }
@@ -165,6 +175,7 @@ export function inlineSpans(
 function asWritten(warn: (warning: AsciiDropped) => void): InlineSpans {
   const warned = new Set<string>();
   return {
+    notRendered: (feature) => warned.has(feature),
     extract(raw) {
       for (const f of FEATURES) {
         if (!warned.has(f.feature) && hasPair(raw, f.open, f.close)) {

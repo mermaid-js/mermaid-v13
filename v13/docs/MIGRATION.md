@@ -587,7 +587,8 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
   plugin, as in every type (see [Math](#math)). Without it the TeX is shown as written, with
   core's `MATH_NOT_RENDERED`. `SEQUENCE_MATH` is deprecated: it is still raised once per render
   next to `MATH_NOT_RENDERED` (or `ASCII_DROPPED` in text output) for one alpha, and is no longer
-  a parse warning.
+  a parse warning. It is not raised for TeX the math plugin refuses (`MATH_ERROR`) or for a
+  placeholder render (`PLACEHOLDER`).
 - **An unknown participant type** (`@{ type: robot }`) draws a participant box, with a
   `SEQUENCE_PARTICIPANT_TYPE` warning; v12 drew nothing.
 - **Box colours** are checked without a browser, with the rules a browser's `CSS.supports`

@@ -25,8 +25,10 @@ export type SequenceLayoutContext = Pick<
 >;
 
 /**
- * Deprecated alias of core's `MATH_NOT_RENDERED` (D176), raised for one alpha next to it when a
- * label's `$$…$$` is shown as written. Sequence's own math warning before core drew math (D105).
+ * Deprecated alias of core's `MATH_NOT_RENDERED` (D176), raised for one alpha next to it (or next
+ * to `ASCII_DROPPED` for math, in text output) when a label's `$$…$$` is shown as written. Not for
+ * TeX a provider refused (`MATH_ERROR`) or a placeholder render (`PLACEHOLDER`). Sequence's own
+ * math warning before core drew math (D105).
  */
 export const SEQUENCE_MATH = {
   code: 'SEQUENCE_MATH',
@@ -211,7 +213,7 @@ export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<En
       const label = layoutLabel(text, font, max > 0 ? max : 1, ctx.measurer, {
         inline: ctx.inline,
       });
-      if (!mathShown && showsMath(label)) {
+      if (!mathShown && showsMath(label) && ctx.inline?.notRendered('math') === true) {
         mathShown = true;
         ctx.warn({ ...SEQUENCE_MATH });
       }

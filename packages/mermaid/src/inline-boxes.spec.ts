@@ -311,6 +311,33 @@ describe('math in every diagram type (D176)', () => {
     }
   );
 
+  it('sequence: SEQUENCE_MATH only next to MATH_NOT_RENDERED, not when a provider declines', async () => {
+    const source = EVERY_TYPE.find((t) => t.type === 'sequence')!.source;
+    const declining = (code?: string): ExtensionPlugin => ({
+      id: 'declining-math',
+      inline: [
+        {
+          open: '$$',
+          close: '$$',
+          box: (_tex, request) => {
+            if (code) request.warn({ code, message: code });
+            return undefined;
+          },
+        },
+      ],
+    });
+    // Bad TeX (MATH_ERROR), or an engine the API already reported (PLACEHOLDER): no alias.
+    for (const [code, expected] of [
+      ['MATH_ERROR', ['MATH_ERROR']],
+      [undefined, []],
+      ['MATH_NOT_RENDERED', ['MATH_NOT_RENDERED', 'SEQUENCE_MATH']],
+    ] as const) {
+      const { m, ready } = api(declining(code));
+      await ready;
+      expect(codes((await m.render('x', source)).warnings), code).toEqual(expected);
+    }
+  });
+
   // D179: text output draws no boxes, provider or not, and says so once.
   it.each(EVERY_TYPE.filter((t) => ['flowchart', 'er', 'sequence'].includes(t.type)))(
     '$type: text output shows the TeX as written, with one ASCII_DROPPED for math',
