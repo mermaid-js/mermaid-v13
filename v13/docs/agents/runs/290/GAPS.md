@@ -33,7 +33,7 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 - Decided in T1: `journey`'s `\b` reads ASCII word characters only (no `u` flag), checked over every code unit.
 - In every state some jison rule matches (`.` takes the `;`), so v12 never throws on journey text and v13 writes no `Error` token.
 
-## #302 T2 grammar, parser, model, AST
+## #302 T2 grammar, parser, model, AST (merged)
 
 - Decided by the coordinator: text ending inside an accessibility value is rejected, as v12 rejects it (accept/reject parity, P2), with a message that names no token. Done: `MISSING_ACC_TITLE` / `MISSING_ACC_DESCR` on the keyword (`accTitle:` or `accDescr:` with nothing after it before the end), `UNCLOSED_DESCRIPTION` on an `accDescr {` with no `}`; one diagnostic each.
 - `JourneyModel` adopted unchanged (`sectionIndex` filled for every task after a section line, absent before the first).
@@ -75,5 +75,7 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 - Unmet until T2/T5: render properties run on the hand-built `FIXTURES` (6 themes, `auto`, literal colours), not on parser output through `createMermaid().render()`; the AST round-trip checks `data-ast` against the model's ids (one element each), not against AST ranges.
 
 ## #327 T5 integration
+
+- Coordinator: T5 gives each task dot the `data-ast` of its actor-mention node (`a:<name>`, `a:<name>@2`, from T2's AST; the `''` actor has no node and draws no dot), so the AST round-trip has one element per node; legend entries keep `data-id` only. MIGRATION row for the entity actor sort (T2 divergence).
 
 ## #331 T6 language facet
