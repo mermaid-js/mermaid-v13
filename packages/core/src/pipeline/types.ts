@@ -10,6 +10,7 @@ import type { ParseResult } from '../parser-kit/result.ts';
 import type { PreprocessResult } from '../preprocess/preprocess.ts';
 import type { SvgWriter } from '../svg/writer.ts';
 import type { SecurityLevel } from '../svg/url.ts';
+import type { InlineSpans } from '../text/inline.ts';
 import type { Measurer } from '../text/measurer.ts';
 import type { Theme } from '../theme/theme.ts';
 import type { Resource } from './errors.ts';
@@ -63,6 +64,11 @@ export interface RenderContext {
   layout(graph: LayoutGraph): LayoutModel;
   /** Integrator-only limits (R-SEC-5): `resolveLimits(initialize config, limits option)`. */
   readonly limits: Limits;
+  /**
+   * The extensions' inline-box providers for this render (D177), for `layoutLabel`'s `inline`
+   * option. SVG output only: text output leaves it out and shows every span as written.
+   */
+  readonly inline?: InlineSpans;
   warn(warning: Warning): void;
 }
 

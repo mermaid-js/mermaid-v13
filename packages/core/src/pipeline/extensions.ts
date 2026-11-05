@@ -9,7 +9,10 @@
  */
 import type { LayoutModel } from '../layout/types.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
+import { isAllowedAttr, isAllowedTag } from '../svg/allowlist.ts';
 import type { SvgTree } from '../svg/tree.ts';
+import type { InlineBox } from '../svg/writer.ts';
+import type { InlineProvider } from '../text/inline.ts';
 import { MermaidError } from './errors.ts';
 import type { RenderContext } from './types.ts';
 
@@ -63,9 +66,14 @@ export interface ExtensionPlugin<El = unknown, R = unknown> {
   /** DOM adapter only (`run`, `mount`, `bindFunctions`). `state` is the render's scratch. */
   afterMount?(el: El, result: R, state: Record<string, unknown>): void;
   readonly claims?: readonly ExtensionClaim[];
+  /**
+   * Inline-box providers, one per delimiter pair (D177): label layout hands each delimited span
+   * to its provider and draws the box it returns. The first registered provider of a pair wins.
+   */
+  readonly inline?: readonly InlineProvider[];
 }
 
-type Hook = 'postParse' | 'postLayout' | 'postRender' | 'afterMount';
+type Hook = 'postParse' | 'postLayout' | 'postRender' | 'afterMount' | 'inline';
 
 /** One render's hooks, created by {@link HookRunner.start}. */
 export interface HookRun<El = unknown, R = unknown> {
@@ -88,20 +96,99 @@ function failed(plugin: { id: string }, hook: Hook, e: unknown): MermaidError {
   });
 }
 
+function checkBox(box: InlineBox): InlineBox {
+  const { width, height, baseline } = box as Partial<InlineBox>;
+  const node = (box as { node?: unknown }).node;
+  for (const [name, n] of [
+    ['width', width],
+    ['height', height],
+    ['baseline', baseline],
+  ] as const) {
+    if (typeof n !== 'number' || !Number.isFinite(n) || (name !== 'baseline' && n < 0))
+      throw new TypeError(`an inline box needs a finite ${name}, got ${String(n)}`);
+  }
+  checkFragment(node, 0);
+  return box;
+}
+
+const MAX_DEPTH = 64;
+
+/** The whole fragment: allowed tags and attribute names, children fragments or strings. */
+function checkFragment(node: unknown, depth: number): void {
+  if (depth > MAX_DEPTH)
+    throw new TypeError(`an inline box's node is nested over ${MAX_DEPTH} deep`);
+  const f = node as { tag?: unknown; attrs?: unknown; children?: unknown } | null;
+  if (typeof f !== 'object' || f === null || typeof f.tag !== 'string' || !isAllowedTag(f.tag))
+    throw new TypeError(`an inline box's node holds ${describe(f)}, not an allowed SVG element`);
+  if (f.attrs !== undefined) {
+    if (typeof f.attrs !== 'object' || f.attrs === null)
+      throw new TypeError(`<${f.tag}> in an inline box has attrs that are not an object`);
+    for (const name of Object.keys(f.attrs))
+      if (!isAllowedAttr(name))
+        throw new TypeError(`${name} on <${f.tag}> in an inline box is not an allowed attribute`);
+  }
+  if (f.children === undefined) return;
+  if (!Array.isArray(f.children))
+    throw new TypeError(`<${f.tag}> in an inline box has children that are not an array`);
+  for (const child of f.children as unknown[])
+    if (typeof child !== 'string') checkFragment(child, depth + 1);
+}
+
+function describe(f: { tag?: unknown } | null): string {
+  if (f === null || typeof f !== 'object') return String(f);
+  return typeof f.tag === 'string' ? `<${f.tag}>` : 'an element without a tag';
+}
+
+/** `provider` with its boxes checked, and its failures reported as `plugin`'s. */
+function guarded(plugin: { id: string }, provider: InlineProvider): InlineProvider {
+  const { open, close } = provider;
+  if (typeof open !== 'string' || open === '' || typeof close !== 'string' || close === '')
+    throw new TypeError(
+      `Extension "${plugin.id}": an inline provider needs open and close strings`
+    );
+  if (typeof provider.box !== 'function')
+    throw new TypeError(`Extension "${plugin.id}": an inline provider's box must be a function`);
+  return {
+    open,
+    close,
+    box(source, request) {
+      try {
+        const box = provider.box(source, request);
+        return box === undefined ? undefined : checkBox(box);
+      } catch (e) {
+        throw failed(plugin, 'inline', e);
+      }
+    },
+  };
+}
+
 /**
  * The registered extensions, in registration order. One per `mermaid` API object; call
  * {@link HookRunner.start} once per render.
  */
 export class HookRunner<El = unknown, R = unknown> {
   private readonly list: ExtensionPlugin<El, R>[] = [];
+  private readonly providers = new Map<ExtensionPlugin<El, R>, readonly InlineProvider[]>();
 
   /** Adds an extension, or replaces the one with the same id in place (keeping its order). */
   register(plugin: ExtensionPlugin<El, R>): void {
     if (typeof plugin.id !== 'string' || plugin.id === '')
       throw new TypeError('An extension plugin needs a non-empty string id');
+    const inline: unknown = plugin.inline ?? [];
+    if (!Array.isArray(inline))
+      throw new TypeError(`Extension "${plugin.id}": inline must be an array of providers`);
+    const providers = (inline as readonly InlineProvider[]).map((p) => guarded(plugin, p));
     const at = this.list.findIndex((p) => p.id === plugin.id);
-    if (at >= 0) this.list[at] = plugin;
-    else this.list.push(plugin);
+    if (at >= 0) {
+      this.providers.delete(this.list[at]!);
+      this.list[at] = plugin;
+    } else this.list.push(plugin);
+    this.providers.set(plugin, providers);
+  }
+
+  /** Every extension's inline-box providers, in registration order (D177). */
+  inline(): readonly InlineProvider[] {
+    return this.list.flatMap((p) => this.providers.get(p) ?? []);
   }
 
   get size(): number {
