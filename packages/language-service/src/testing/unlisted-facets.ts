@@ -10,4 +10,13 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #290: the manifest comes with T5 (#327).
+  {
+    type: 'journey',
+    id: 'journey',
+    section: 'journey',
+    detector: (text) => /^\s*journey/.test(text),
+    load: () => import('@mermaid-js/diagram-journey/language').then((m) => m.language),
+  },
+];

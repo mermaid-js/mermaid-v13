@@ -1,0 +1,42 @@
+@ 3:15  Make tea: |5: Me
+  3:15-3:16 "5"
+  | **score** `5`
+  |
+  | A smiling face, drawn at 5.
+  |
+  | A score runs from 0 (worst) to 5 (best).
+@ 4:19  Go upstairs: 3|: Me
+  4:18-4:19 "3"
+  | **score** `3`
+  |
+  | A flat face, drawn at 3.
+  |
+  | A score runs from 0 (worst) to 5 (best).
+@ 6:13  Stairs: |7: Me
+  6:13-6:14 "7"
+  | **score** `7`
+  |
+  | Outside 0–5: a smiling face drawn at 5, and the render warns (`JOURNEY_SCORE`).
+  |
+  | A score runs from 0 (worst) to 5 (best).
+@ 7:11  Lift: |-1: Me
+  7:11-7:13 "-1"
+  | **score** `-1`
+  |
+  | Outside 0–5: a frowning face drawn at 0, and the render warns (`JOURNEY_SCORE`).
+  |
+  | A score runs from 0 (worst) to 5 (best).
+@ 8:11  Wait: |x: Me
+  8:11-8:12 "x"
+  | **score** `x` (NaN)
+  |
+  | Not a number: a flat face drawn at 3, and the render warns (`JOURNEY_SCORE`).
+  |
+  | A score runs from 0 (worst) to 5 (best).
+@ 9:10  Hex: |0x2: Me
+  9:10-9:13 "0x2"
+  | **score** `0x2` (2)
+  |
+  | A frowning face, drawn at 2.
+  |
+  | A score runs from 0 (worst) to 5 (best).

@@ -1,0 +1,32 @@
+@ 1:5  jour|ney
+  1:1-1:8 "journey"
+  | **`journey`**
+  |
+  | A user journey is `journey`, then titles, sections and tasks, one per line.
+@ 2:5  ti|tle My working day
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title <text>`: the diagram title.
+@ 3:14  title My wo|rking day
+  none
+@ 4:6  acc|Title: A day
+  4:3-4:11 "accTitle"
+  | **`accTitle`**
+  |
+  | `accTitle: <text>`: the accessible title.
+@ 5:6  acc|Descr: Going to work
+  5:3-5:11 "accDescr"
+  | **`accDescr`**
+  |
+  | `accDescr: <text>` or `accDescr { … }`: the accessible description.
+@ 6:6  acc|Descr {
+  6:3-6:11 "accDescr"
+  | **`accDescr`**
+  |
+  | `accDescr: <text>` or `accDescr { … }`: the accessible description.
+@ 9:6  sec|tion Go to work
+  9:3-9:10 "section"
+  | **`section`**
+  |
+  | `section <name>`: a section; the tasks after it are drawn in its band.

@@ -1,0 +1,10 @@
+@ 3:18  Make tea: 5: |Me
+  -> 3:18-3:20 "Me"
+@ 4:22  Do work: 1: Me, C|at
+  -> 4:21-4:24 "Cat"
+@ 6:23  Sit down: 5: Cat, |Me
+  -> 3:18-3:20 "Me"
+@ 7:11  section |Go to work
+  -> 2:11-2:21 "Go to work"
+@ 8:8  Do |work: 3: Me
+  -> 4:5-4:12 "Do work"

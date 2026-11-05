@@ -24,6 +24,11 @@ const PACKAGES = [
     dir: 'diagram-class',
     renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
   },
+  {
+    name: 'journey',
+    dir: 'diagram-journey',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'labels.ts'],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */

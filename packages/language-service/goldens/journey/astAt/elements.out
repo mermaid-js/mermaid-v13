@@ -1,0 +1,15 @@
+@ 2:5  ti|tle My working day
+  st:2 2:3-2:23 "title My working day"
+@ 3:12  section G|o to work
+  s:Go to work 3:3-3:21 "section Go to work"
+@ 4:10  Make |tea: 5: Me, Cat
+  t:1 4:5-4:25 "Make tea: 5: Me, Cat"
+@ 4:23  Make tea: 5: Me, C|at
+  a:Cat 4:22-4:25 "Cat"
+  t:1 4:5-4:25 "Make tea: 5: Me, Cat"
+@ 5:14  Do work: |1: Me
+  t:2 5:5-5:19 "Do work: 1: Me"
+@ 7:8  a l|ong day
+  st:3 6:3-8:4 "accDescr {\n    a long day\n  }"
+@ 9:3  |
+  none

@@ -1,0 +1,3 @@
+@ 4:18  Make tea: 5: |Me
+  prepare: 4:18-4:20 "Me"; rename to "Cat":
+  refused: 'Cat' is already an actor id in this diagram.

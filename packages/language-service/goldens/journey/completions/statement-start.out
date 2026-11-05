@@ -1,0 +1,20 @@
+@ 2:3  |
+  section keyword 2:3-2:3 "" -> "section "
+  title keyword 2:3-2:3 "" -> "title "
+  accTitle keyword 2:3-2:3 "" -> "accTitle: "
+  accDescr keyword 2:3-2:3 "" -> "accDescr: "
+@ 3:5  se|
+  section keyword 3:3-3:5 "se" -> "section "
+@ 4:6  acc|
+  accTitle keyword 4:3-4:6 "acc" -> "accTitle: "
+  accDescr keyword 4:3-4:6 "acc" -> "accDescr: "
+@ 5:5  ti|
+  title keyword 5:3-5:5 "ti" -> "title "
+@ 6:11  Make tea|: 5
+  none
+@ 7:9  Sit: 5|
+  none
+@ 8:13  title My t|
+  none
+@ 9:13  section Wo|rk
+  none

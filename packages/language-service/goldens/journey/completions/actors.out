@@ -1,0 +1,22 @@
+@ 5:17  Do work: 1: |
+  Bob node (actor, in 1 task) 5:17-5:17 "" -> "Bob"
+  C node (actor, in 1 task) 5:17-5:17 "" -> "C"
+  Cat node (actor, in 2 tasks) 5:17-5:17 "" -> "Cat"
+  Me node (actor, in 5 tasks) 5:17-5:17 "" -> "Me"
+@ 6:21  Do more: 1: Me, |
+  Bob node (actor, in 1 task) 6:21-6:21 "" -> "Bob"
+  C node (actor, in 1 task) 6:21-6:21 "" -> "C"
+  Cat node (actor, in 2 tasks) 6:21-6:21 "" -> "Cat"
+@ 7:23  Do even more: 1: C|
+  Cat node (actor, in 2 tasks) 7:22-7:23 "C" -> "Cat"
+@ 8:16  Lunch: 2: M|e, Cat
+  Me node (actor, in 5 tasks) 8:15-8:17 "Me" -> "Me"
+@ 9:12  Rest: 2|: Me
+  none
+@ 10:17  Nap: 2: Me: |
+  none
+@ 11:14  Sleep: 2:|
+  Bob node (actor, in 1 task) 11:14-11:14 "" -> "Bob"
+  C node (actor, in 1 task) 11:14-11:14 "" -> "C"
+  Cat node (actor, in 2 tasks) 11:14-11:14 "" -> "Cat"
+  Me node (actor, in 5 tasks) 11:14-11:14 "" -> "Me"

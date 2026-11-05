@@ -24,6 +24,8 @@ import {
   LineIndex,
   nodeId,
   ParseState,
+  Probe,
+  ProbeCursor,
   sourceView,
   syncTo,
   TokenCursor,
@@ -62,6 +64,16 @@ const SKIPPED = kindSet(Kind.Comment, Kind.Directive, T.AccDescrMultiline, T.Acc
 const COMMENTS = kindSet(Kind.Comment, Kind.Directive);
 /** Where recovery resumes (R-PARSE-4): the next line break or the end of the text. */
 const BOUNDARY = kindSet(Kind.EOF, Kind.Newline, T.Eof);
+/** What may start a statement, or come instead of one, as a probe records it (R-LANG-7). */
+const STATEMENT_KINDS = [
+  T.Title,
+  T.AccTitle,
+  T.AccDescr,
+  T.Section,
+  T.TaskName,
+  Kind.Newline,
+  Kind.EOF,
+];
 
 const HEADER = ['`journey`'];
 const STATEMENT = [
@@ -92,6 +104,8 @@ class JourneyParser {
   private readonly tokens: TokenStream;
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
+  /** Only in a probe parse (R-LANG-7, D95). */
+  private readonly probe: Probe | undefined;
   private readonly children: JourneyStatementNode[] = [];
   /** Mentions per actor name, for `a:<name>@<n>`. */
   private readonly mentions = new Map<string, number>();
@@ -108,8 +122,17 @@ class JourneyParser {
       pre.bodyStart,
       pre.directives.map((d) => d.range)
     );
-    this.tokens = lex(src, pre.bodyStart, this.view);
-    this.c = new TokenCursor(this.tokens, SKIPPED);
+    if (options.probe === undefined) {
+      this.tokens = lex(src, pre.bodyStart, this.view);
+      this.c = new TokenCursor(this.tokens, SKIPPED);
+      return;
+    }
+    // Every token kind extends the word it ends: names and data run to their `:` or line end.
+    const probe = (this.probe = new Probe(src, options.probe));
+    if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+    this.tokens = lex(src, pre.bodyStart, this.view, probe);
+    // The cursor marks an offset inside a comment or directive as outside code.
+    this.c = new ProbeCursor(this.tokens, probe, SKIPPED);
   }
 
   parse(): JourneyParseResult {
@@ -123,7 +146,7 @@ class JourneyParser {
       range: { start: this.pre.bodyStart, end: this.src.length },
       children: this.children,
     };
-    return this.st.result(model, ast, this.tokens, this.options);
+    return this.st.result(model, ast, this.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -214,7 +237,7 @@ class JourneyParser {
   private header(): void {
     this.statement(() => {
       const { c } = this;
-      if (c.kind !== T.Journey) this.fail(HEADER, 'a user journey starts with `journey`');
+      if (!c.at(T.Journey)) this.fail(HEADER, 'a user journey starts with `journey`');
       const range = this.span(c.next());
       this.add({ id: this.st.ids.statement('st'), type: 'Header', range }, 'header');
     });
@@ -224,6 +247,7 @@ class JourneyParser {
   private document(): void {
     const { c } = this;
     for (;;) {
+      c.tested(STATEMENT_KINDS);
       const k = c.kind;
       if (k === Kind.EOF) break;
       if (k === Kind.Newline || k === T.Eof) {
@@ -341,7 +365,7 @@ class JourneyParser {
     const { c } = this;
     const first = c.next();
     const name = this.raw(first);
-    if (c.kind !== T.TaskData) this.fail(TASK_DATA, this.explainTask(first, name));
+    if (!c.at(T.TaskData)) this.fail(TASK_DATA, this.explainTask(first, name));
     const j = c.next();
     const data = this.raw(j);
     const pieces = data.slice(1).split(':');
