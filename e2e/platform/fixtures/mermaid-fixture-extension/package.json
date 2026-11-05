@@ -1,0 +1,21 @@
+{
+  "name": "mermaid-fixture-extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Test fixture: a tiny third-party Mermaid extension plugin that marks every rendered svg.",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js"
+  ],
+  "mermaid": {
+    "plugin": "extension",
+    "id": "fixture-mark",
+    "entry": "./index.js",
+    "export": "fixtureMark"
+  }
+}
