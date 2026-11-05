@@ -46,11 +46,23 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 
 - Parity: oracle accept/reject and model parity green; quadrant divergences are the two unclosed-directive `reject` entries. Grammar differential (corpus + 3,000 generated sentences), grammar-lexer gate, recovery set (23 errors / 11 cases), message fuzz, `v12-specs/` (27 pass, 2 skipped with reasons).
 - **Choices:** one diagnostic per bad style; a style cut short by a syntax error is not also checked. An overridden `classDef` gets `st:<n>` like other overridden statements. Token kind `AxisDelimiter` renamed `AxisTextDelimiter` (gen:grammar matches kinds to terminals by name). `oracle.ts` gets one additive patch call (`quadrant/oracle-env.ts`) recording v12's DB calls.
-- [ ] **Owner #321 T6:** probe support (completion context) is not in the parser yet.
+- [x] **#321 T6 (closed):** probe support added (ProbeCursor, lexer start condition as mode).
 - Size: parser 8.6 KB gz; package 10.4 KB gz.
 - Review of #301 (≈30k inputs through model parity, no model, AST or performance defects). Follow-ups:
-  - [ ] **Owner #321 T6:** a class `ref` symbol is recorded before its point statement finishes (`parser.ts:456`), leaving a stale symbol when the point fails (`P:::a: [0.1, 2]`).
+  - [x] **#321 T6 (done):** a class `ref` symbol was recorded before its point statement finished (`parser.ts:456`), leaving a stale symbol when the point failed (`P:::a: [0.1, 2]`).
   - [ ] **Owner #301 follow-up (after T4/T6):** `UNCLOSED_STRING` only fires when `"` starts a label; a later quote (`x-axis a "b⏎…`) gives a generic message that quotes the rest of the document. Junk before the header (`foo⏎quadrantChart`) gives a second, false "comes only once" diagnostic. Model parity runs only on e2e, v12-specs and quadrant-cases; extend it to the whole gate corpus (506 items agree today by hand).
+
+## #321 T6 (handoff `tickets/321.md`)
+
+- [x] T2 review: the `:::` class `ref` symbol is recorded only once its point statement completes (a failed point has no symbol, so rename leaves it alone).
+- [ ] **Owner #317 T5:** add `quadrantChart` rows to `LEZER_HIGHLIGHTERS` / `MONARCH_HIGHLIGHTERS` (keyed by `FirstPartyFacetId`, which needs the manifest's `language` entry), run each adapter's `gen`, extend adapters-agree and first-paint specs, and drop the test-only row in `language-service/src/testing/unlisted-facets.ts`.
+- **Choice:** style-key completions insert an example value (`radius: 10`): a key without a value is an error inside the inserted text.
+- Size: `./language` 11.5 KB gz; parser 8.8 KB gz (+0.2 KB probe). R-LANG-4 timing not measured on a steady machine.
+- Review of #321 (through `createLanguageService`). Follow-up on `feature/321_language-fixes`:
+  - [ ] `:::` completion offers class names `:::` cannot read (`a-b`, `café`); `classDef ¦` offers `:::`-only names (`a_b`).
+  - [ ] **Choice, reversing the earlier one:** a class ref is recorded whenever `:::name` lexes, even in a failed point, so rename covers it and the clash check sees it (recording only completed statements let `cold → warm` silently merge classes). The ref links to no statement.
+  - [ ] `-->` offered before an existing `-->`; completion after a full `title` / `accDescr ` gives nothing.
+  - [ ] **Choice:** only the effective (last) `classDef` of a name is the definition; earlier ones are references (v12: last wins; hover already shows the last).
 
 ## #312 T4 (handoff `tickets/312.md`)
 

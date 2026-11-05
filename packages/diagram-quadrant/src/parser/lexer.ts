@@ -48,7 +48,7 @@ import {
   TokenWriter,
   UNDERSCORE,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Probe, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 import type { V12Text } from './v12-text.ts';
 
@@ -66,6 +66,9 @@ const S = {
   point_x: 9,
   point_y: 10,
 } as const;
+
+/** Start condition names by number, for the probe's lexer mode (jison's names). */
+const S_NAMES: readonly string[] = Object.keys(S);
 
 /** What a rule does to the start-condition stack. */
 const A = {
@@ -394,9 +397,15 @@ export interface QuadrantLex {
 /**
  * Lex a quadrant source as v12 saw it (`v12`), writing v12's removed spans as trivia. `onRule`
  * is told the jison rule number of every rule that matches (dev use: the rule-coverage gate).
+ * With a `probe`, the start condition at the probe's offset is recorded as its mode (R-LANG-7).
  */
-export function lex(src: string, v12: V12Text, onRule?: (rule: number) => void): QuadrantLex {
-  return new QuadrantLexer(src, v12, onRule).run();
+export function lex(
+  src: string,
+  v12: V12Text,
+  onRule?: (rule: number) => void,
+  probe?: Probe
+): QuadrantLex {
+  return new QuadrantLexer(src, v12, onRule).run(probe);
 }
 
 class QuadrantLexer {
@@ -422,11 +431,13 @@ class QuadrantLexer {
     this.w = new TokenWriter(((v12.text.length / 3) | 0) + 8);
   }
 
-  run(): QuadrantLex {
+  run(probe?: Probe): QuadrantLex {
     const { n } = this.scan;
     let p = 0;
     for (let done = false; !done; ) {
       if (p >= n) done = true;
+      const before = p;
+      const mode = probe ? (S_NAMES[this.state] ?? '') : '';
       const at = this.step(p);
       if (at >= 0) p = at;
       else if (p < n) {
@@ -439,7 +450,12 @@ class QuadrantLexer {
         this.state = S.INITIAL;
         p = end;
       }
+      if (probe) {
+        const start = this.sourceStart(before);
+        probe.lexed(start, p > before ? this.sourceEnd(p - 1) : start, mode);
+      }
     }
+    probe?.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
     this.trivia(this.src.length + 1);
     const tokens = this.w.finish(this.src);
     this.starts.push(this.v12.length);

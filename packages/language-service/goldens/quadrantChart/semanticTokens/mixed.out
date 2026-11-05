@@ -1,0 +1,35 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:14 "quadrantChart" keyword
+3:3-3:15 "%% a comment" comment
+4:3-4:8 "title" keyword
+4:9-4:29 "Reach and engagement" string
+5:3-5:12 "accTitle:" keyword
+5:13-5:22 "Campaigns" string
+6:3-6:9 "x-axis" keyword
+6:20-6:23 "-->" operator
+7:3-7:13 "quadrant-1" keyword
+8:3-8:11 "classDef" keyword
+8:12-8:15 "hot" class [declaration, definition]
+9:13-9:16 ":::" operator
+9:16-9:19 "hot" class
+9:19-9:22 ": [" operator
+9:22-9:25 "0.3" number
+9:25-9:26 "," operator
+9:27-9:30 "0.6" number
+9:30-9:31 "]" operator
+10:3-10:4 "\"" string
+10:4-10:15 "Campaign: B" string
+10:15-10:16 "\"" string
+10:16-10:19 ": [" operator
+10:19-10:23 "0.45" number
+10:23-10:24 "," operator
+10:25-10:29 "0.23" number
+10:29-10:30 "]" operator
+11:3-11:5 "\"`" string
+11:5-11:13 "**Bold**" string
+11:13-11:15 "`\"" string
+11:15-11:18 ": [" operator
+11:18-11:21 "0.1" number
+11:21-11:22 "," operator
+11:23-11:26 "0.9" number
+11:26-11:27 "]" operator

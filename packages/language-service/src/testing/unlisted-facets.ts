@@ -10,4 +10,13 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #289: the manifest comes with T5 (#317).
+  {
+    type: 'quadrantChart',
+    id: 'quadrantChart',
+    section: 'quadrantChart',
+    detector: (text) => /^\s*quadrantChart/.test(text),
+    load: () => import('@mermaid-js/diagram-quadrant/language').then((m) => m.language),
+  },
+];

@@ -1,0 +1,5 @@
+@ 3:12  classDef |hot radius: 10
+  prepare: 3:12-3:15 "hot"; rename to "a_b":
+  refused: 'a_b' is not a class name: `classDef` and `:::` take letters and digits only.
+@ 5:6  Cam|paign B: [0.4, 0.2]
+  prepare: refused: There is no id or class name here to rename.

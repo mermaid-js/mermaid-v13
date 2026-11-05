@@ -1,0 +1,6 @@
+2:23-2:26 "-->" error UNEXPECTED: Expected a line break or `;`, got `-->`; write an axis as `x-axis <start> --> <end>`, e.g. `x-axis Low --> High`.
+3:12-3:13 "2" error UNEXPECTED_CHARACTER: Unexpected character `2`; a coordinate is `0`, `1` or `0.` and digits, e.g. `0.25`; write a point as `Name: [0.25, 0.75]`.
+4:17-4:28 "radius: big" error QUADRANT_STYLE_VALUE: `radius` takes a whole number, e.g. `radius: 10`; `big` is not valid.
+5:13-5:14 "_" error UNEXPECTED: Expected a blank and styles, got `_`; a class name defined with `classDef` cannot hold `_`.
+6:14-6:15 "(" error UNEXPECTED_CHARACTER: Unexpected character `(`; quote the label to use it, e.g. `"a (b)"`.
+7:3-7:11 "accDescr" error UNCLOSED_DESCRIPTION: Unclosed description: the `accDescr {` at line 7 has no closing `}`. Add `}` after the description.
