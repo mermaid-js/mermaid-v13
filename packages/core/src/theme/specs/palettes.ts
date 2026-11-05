@@ -50,3 +50,13 @@ export const TAILWIND_300: readonly string[] = [
   '#74d4ff',
   '#ffa1ad',
 ];
+
+/** One palette entry per slot (12, v12's `THEME_COLOR_LIMIT`, D258). */
+export const paletteSlots = (entry: (i: number) => string): readonly string[] =>
+  Array.from({ length: 12 }, (_, i) => entry(i));
+
+/** `cScaleInv` as v12 derives it from a fixed `cScale`: `invert(cScale<n>)`. */
+export const INVERTED_SCALE = paletteSlots((i) => `invert(cScale${i})`);
+
+/** `cScaleLabel` as most v12 themes derive it: `labelTextColor` (v12 `scaleLabelColor`). */
+export const LABEL_SCALE = paletteSlots(() => 'labelTextColor');

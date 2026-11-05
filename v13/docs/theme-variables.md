@@ -6,7 +6,8 @@ Every variable is exposed as a CSS custom property `--mermaid-<name>` and can be
 `themeVariables`. A **base** variable is set by every theme (at most 8, R-THEME-5); a
 **derived** one follows its rule unless a theme or the author sets it; a **token** is a
 shape token (R-THEME-11). Rules are in the derivation DSL (`mix`, `lighten`, `darken`,
-`alpha`, `contrast`, `invert`) and compile to `color-mix(in srgb, …)`. Variables of
+`lightenHsl`, `darkenHsl`, `alpha`, `contrast`, `invert`, `adjustHue`, `ifSet`) and compile
+to CSS (`color-mix(in srgb, …)`, relative colours). Variables of
 diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 
 | Variable | CSS variable | Role | Kind | Light rule | Dark rule | Set by themes | Used by |
@@ -118,11 +119,15 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 
 Lists of colours a theme carries as data (D151, D152), read as literal colours rather than
 CSS variables. In `themeVariables` a whole list is an array of colours or a comma-separated
-string; `cScale0`–`cScale11` replace one entry of `cScale`. A theme not listed carries an
-empty list.
+string; `cScale0`–`cScale11`, `cScaleInv0`–`cScaleInv11` and `cScaleLabel0`–`cScaleLabel11`
+replace one entry. A theme entry can be a rule over the base colours and other palette
+entries, so `cScaleInv` and `cScaleLabel` follow an override of `cScale` or `primaryColor` as
+in v12 (D258). A theme not listed carries an empty list.
 
 | Palette | `themeVariables` names | Set by themes |
 | --- | --- | --- |
 | `borderColorArray` | `borderColorArray` | redux-color, redux-dark-color |
 | `bkgColorArray` | `bkgColorArray` | redux-color |
-| `cScale` | `cScale`, `cScale0`–`cScale11` | redux-color, redux-dark-color |
+| `cScale` | `cScale`, `cScale0`–`cScale11` | all |
+| `cScaleInv` | `cScaleInv`, `cScaleInv0`–`cScaleInv11` | all |
+| `cScaleLabel` | `cScaleLabel`, `cScaleLabel0`–`cScaleLabel11` | all |

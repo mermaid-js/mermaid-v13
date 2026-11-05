@@ -12,8 +12,13 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - [ ] **Divergence to list:** v12's DB has no `setDiagramTitle`, so v12 drops a front-matter `title`. D218 draws it; the model-parity adapter lists it as a deliberate divergence.
 
 ### #338 T4a palettes
-- [ ] v12's derivation differs per theme (forest derives as the spec says; default darkens twice and fixes slots 3–11; base and the neo/redux-dark themes darken by 25; dark and neutral use fixed lists; `cScaleInv` is `invert` in most themes and a 180° hue turn in default and forest; some `cScaleLabel` slots are special-cased). **Choice:** every theme's default values equal v12's exactly; under `primaryColor`/`secondaryColor`/`tertiaryColor` overrides the palette follows v12's rule wherever the DSL can express it (a small additive hue-rotation helper is allowed); any remaining difference is listed here.
-- [ ] `cScale<n>` overrides are dropped today in every classic theme (no `cScale` list). T4a fixes it.
+- [x] v12's derivation differs per theme (forest derives as the spec says; default darkens twice and fixes slots 3–11; base and the neo/redux-dark themes darken by 25; dark and neutral use fixed lists; `cScaleInv` is `invert` in most themes and a 180° hue turn in default and forest; some `cScaleLabel` slots are special-cased). **Choice:** every theme's default values equal v12's exactly; under `primaryColor`/`secondaryColor`/`tertiaryColor` overrides the palette follows v12's rule wherever the DSL can express it (a small additive hue-rotation helper is allowed); any remaining difference is listed here.
+  - Done with two DSL functions, `adjustHue(c, deg)` and `ifSet(v, fallback)`, and palette entries that are rules naming other slots (`invert(cScale3)`). The oracle spec `packages/conformance/src/theme-palettes.spec.ts` matches v12 exactly in all 11 themes: theme values, base-colour overrides, `primaryColor` alone, `darkMode`, `labelTextColor`, numbered and `cScale<n>` overrides.
+  - Remaining difference: under `darkMode`, v12 turns the unset `primaryTextColor` of `base`, `neo`, `redux` and `redux-color` to `#eee` and their labels follow. v13's `darkMode` switches rules, not base colours (theme-wide, not palette-specific). Listed in the spec (`TEXT_UNDER_DARK_MODE`) and MIGRATION.md.
+  - **Choice:** v12's `scaleLabelColor` is not a v13 variable (no ported diagram reads it); set `cScaleLabel` or `labelTextColor`. MIGRATION.md.
+  - **Choice:** D181's "no per-item palette" for `neo`/`neo-dark` is read as the per-subgraph palettes (`borderColorArray`, `bkgColorArray`); both neo themes carry v12's `cScale*` as the ticket asks.
+- [x] `cScale<n>` overrides are dropped today in every classic theme (no `cScale` list). T4a fixes it.
+- [ ] No browser (Playwright) check of `adjustHue`/`ifSet` CSS: `e2e/browser/theme.spec.ts` is also edited by #309. Palettes are literal colours, so no render depends on that CSS yet. Add both to that test after #309 merges.
 
 ### #337 T3 layout
 - [x] v12 TD advances sections by `height − 2·30`, so consecutive sections overlap by 30 px. **Choice:** the spec's "no overlaps" invariant wins; TD sections do not overlap: a section starts at v12's position or 30 px (`TASK_VERTICAL_GAP`) below what the previous group's rows hold, whichever is lower. Most sectioned TD input moves (pr-check/14 overlapped by about 11 px in v12). MIGRATION.md row (owner #311).
@@ -31,3 +36,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 ### #315 T5 integration
 - [ ] Renderer fallbacks (`leftMargin` 50, `useMaxWidth` false) differ from the schema defaults (150, true). Use the effective v12 values with the default config merged (check in the oracle) and record any key whose effective value differs from its schema default.
+
+### #338 review (2026-11-05), deferred
+- [ ] No browser check that `adjustHue`/`ifSet` CSS forms resolve to the JS hex. Add the JS-vs-CSS case to the Playwright theme spec after #309 merges (that file is shared). Nothing renders those CSS forms yet: palettes are literal.
+- [ ] **Size:** the CDN core closure is ~18 B under its 90,112 B gz budget after #338. The next core addition (#309, T4/T5) will likely cross it. Handle at M4 close with the size budget work (D217; the maintainer is open to +10–15%).

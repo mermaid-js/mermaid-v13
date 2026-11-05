@@ -5,7 +5,13 @@
  * (`primaryBorderColor` from `#28253D`, `clusterBkg`, `clusterBorder`).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { TAILWIND_300, TAILWIND_400, TAILWIND_50 } from './palettes.ts';
+import {
+  INVERTED_SCALE,
+  LABEL_SCALE,
+  TAILWIND_300,
+  TAILWIND_400,
+  TAILWIND_50,
+} from './palettes.ts';
 import redux from './redux.ts';
 
 const theme: ThemeSpec = {
@@ -17,7 +23,11 @@ const theme: ThemeSpec = {
     borderColorArray: TAILWIND_400,
     bkgColorArray: TAILWIND_50,
     cScale: TAILWIND_300,
+    cScaleInv: INVERTED_SCALE,
+    cScaleLabel: LABEL_SCALE,
   },
+  // v12 theme-redux-color.js does not darken its fixed cScale under darkMode.
+  darkModePalettes: {},
 };
 
 export default theme;
