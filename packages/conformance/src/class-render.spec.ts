@@ -158,12 +158,13 @@ describe('class render properties over the corpus', () => {
     }
   });
 
-  it('writes no ids but the title and description (R-A11Y-1)', () => {
+  it('writes no ids but the title, the description (R-A11Y-1) and the neo gradient (D182)', () => {
     for (const c of cases) {
       const ids = c.result.tree
         .find((n, t) => t.getAttr(n, 'id') !== undefined)
         .map((n) => c.result.tree.getAttr(n, 'id'));
-      for (const id of ids) expect(['mermaid-0-title', 'mermaid-0-desc'], c.id).toContain(id);
+      const allowed = ['mermaid-0-title', 'mermaid-0-desc', 'mermaid-0-gradient'];
+      for (const id of ids) expect(allowed, c.id).toContain(id);
     }
   });
 
