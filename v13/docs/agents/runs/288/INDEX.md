@@ -3,7 +3,7 @@
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T1 lexer parity gate, shared Langium oracle | #304 | — | merged |
-| T2 grammar, parser, model, AST, ported specs | #305 | #304 | open |
+| T2 grammar, parser, model, AST, ported specs | #305 | #304 | merged |
 | T3 custom layout (`PieLayout`) | #335 | #305 (soft) | merged |
 | T4 SVG renderer | #306 | #305, #335 | open |
 | T5 integration | #325 | #306 | open |
