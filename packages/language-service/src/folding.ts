@@ -1,6 +1,6 @@
 /**
  * Folding ranges (DESIGN §4.5): every statement span that covers more than one line
- * (subgraphs, multi-line `accDescr { }`, a chain with a multi-line `@{ }`), at any depth,
+ * (subgraphs, multi-line `accDescr { }`, a chain with a multi-line `@{ }`, a timeline section), at any depth,
  * plus the front matter and multi-line directives. Ranges are offsets; adapters turn them
  * into line ranges.
  */
@@ -19,9 +19,14 @@ export function foldingRanges(ctx: DocumentContext): FoldingRange[] {
   const { text, pre } = ctx;
   const out: FoldingRange[] = [];
   const add = (kind: string, range: Range) => {
-    // Without its trailing line break, so the fold ends on the range's last line.
+    // Without its trailing line break (a CRLF is one), so the fold ends on the range's last
+    // line; a range that runs over empty lines keeps it and ends on the last of them (a
+    // timeline section folds to the line before the next section, D259).
     let end = range.end;
-    while (end > range.start && LINE_BREAK.test(text.charAt(end - 1))) end--;
+    let brk = end;
+    if (brk > range.start && text.charAt(brk - 1) === '\n') brk--;
+    if (brk > range.start && text.charAt(brk - 1) === '\r') brk--;
+    if (brk === range.start || !LINE_BREAK.test(text.charAt(brk - 1))) end = brk;
     if (LINE_BREAK.test(text.slice(range.start, end))) out.push({ kind, range: { ...range, end } });
   };
   if (pre.frontMatter) add('frontMatter', pre.frontMatter.range);

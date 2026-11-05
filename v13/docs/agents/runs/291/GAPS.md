@@ -42,11 +42,11 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ### #318 T6 language facet
 - [x] Probe wired (closes the #336 note): `ParseOptions.probe` records expected kinds and the jison start condition.
 - **Choice:** goldens run through the service's test-only row (`language-service/src/testing/unlisted-facets.ts`, the class #159 / pie #307 mechanism) and live in `packages/language-service/goldens/timeline/` from the start, instead of sequence's conformance-only goldens spec that T5 moves: the row also runs the property, round-trip, completion-validity and code-point specs. T5 deletes the row when the manifest lands; nothing moves.
-- **Choice:** a section's statement span (its fold) ends at the last non-blank character before the next `section`: comment lines after its last statement stay in it, blank lines do not.
+- [x] Folding follows D259 literally: a section's span runs to the start of the next `section`'s line (blank and comment lines included), the last one to the end of the text. Shared `language-service/src/folding.ts`: a range ending in an empty line keeps its last line break, so the fold ends on that empty line (no other type's golden changed).
 - **Choice:** `accTitle:`/`accDescr:` with nothing after it at the very end reports its error zero-width after the keyword and its blanks (was the keyword), so a completed `accTitle: ` is not an error inside the inserted text.
-- **Choice:** keyword completions match the prefix without regard to case (the lexer is case-insensitive); no `:` (event) or `accDescr {` item (not in the ticket's list).
+- **Choice:** keyword completions match the prefix without regard to case (the lexer is case-insensitive); no `:` (event) or `accDescr {` item (not in the ticket's list). Each item is kept only where v12's lexer reads the completed text as that statement (one lex per offered item): none on the line after a bare `section`/`title` (their name), statements also on the header line and after `accDescr { … }`. An item adds no separator the text already has (`acc|Title: x` → `accTitle`, `acc|Descr {` keeps the block); at a word's first character nothing is replaced.
 - [ ] Adapter highlighter rows (`LEZER_HIGHLIGHTERS`, `MONARCH_HIGHLIGHTERS`), adapter `gen`, `adapters-agree.spec.ts` and first-paint e2e cases: wait for the manifest's facet id (owner #315, listed in `tickets/318.md`).
-- Budget (R-LANG-4) measured only on the loaded dev machine (cycle 1.9 ms median on 50k characters); no `bench language:timeline` script.
+- Budget (R-LANG-4) measured only on the loaded dev machine (cycle 3.2 ms median on 50k characters, completion at a line start); no `bench language:timeline` script.
 
 ### #311 T4 renderer
 - [ ] v12's section classes are `section-<slot − 1>`: the first section is `section--1`. **Choice:** keep v12's numbering exactly, so existing author CSS still matches (P2); MIGRATION.md says so.

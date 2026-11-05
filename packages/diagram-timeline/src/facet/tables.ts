@@ -10,20 +10,32 @@ export interface KeywordItem {
   readonly kind: number;
   readonly label: string;
   readonly item: CompletionKind;
-  /** Text inserted, when it is not the label. */
-  readonly insert?: string;
+  /** What follows the label when the text after it holds none (`section `, `accTitle: `). */
+  readonly separator?: string;
+  /** The token kinds the inserted text may lex as, when not just `kind`. */
+  readonly reads?: readonly number[];
   readonly detail?: string;
 }
 
-/** What may start a line: the header, then the statements, in the order they are offered. */
-export const LINE_ITEMS: readonly KeywordItem[] = [
+/** The header, offered where the parser expects it (an empty text). */
+export const HEADER_ITEMS: readonly KeywordItem[] = [
   { kind: T.Timeline, label: 'timeline', item: 'keyword' },
   { kind: T.TimelineLR, label: 'timeline LR', item: 'keyword', detail: 'left to right' },
   { kind: T.TimelineTD, label: 'timeline TD', item: 'keyword', detail: 'top to bottom' },
-  { kind: T.Title, label: 'title', item: 'keyword', insert: 'title ' },
-  { kind: T.Section, label: 'section', item: 'keyword', insert: 'section ' },
-  { kind: T.AccTitle, label: 'accTitle', item: 'keyword', insert: 'accTitle: ' },
-  { kind: T.AccDescr, label: 'accDescr', item: 'keyword', insert: 'accDescr: ' },
+];
+
+/** The statements completion offers, in the order it offers them. */
+export const STATEMENT_ITEMS: readonly KeywordItem[] = [
+  { kind: T.Title, label: 'title', item: 'keyword', separator: ' ' },
+  { kind: T.Section, label: 'section', item: 'keyword', separator: ' ' },
+  { kind: T.AccTitle, label: 'accTitle', item: 'keyword', separator: ': ' },
+  {
+    kind: T.AccDescr,
+    label: 'accDescr',
+    item: 'keyword',
+    separator: ': ',
+    reads: [T.AccDescr, T.AccDescrMultiline],
+  },
 ];
 
 /** After `timeline` on its line: the direction words (`timeline LR` is one token). */

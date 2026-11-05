@@ -100,6 +100,8 @@ class TimelineLexer {
   private readonly stack: number[] = [];
   private state: number = S.INITIAL;
   private p: number;
+  /** Source offset where the last `acc…` keyword's value mode starts (after `:` or `{`). */
+  private valueAt = 0;
 
   constructor(
     private readonly src: string,
@@ -133,9 +135,9 @@ class TimelineLexer {
         this.step(text.charCodeAt(this.p));
         const after = this.source(this.p);
         if (this.stack.length > depth) {
-          // An `acc…` keyword: from its end on (the blanks it took too) the value starts.
-          probe.lexed(before, this.covered, S_NAMES[state] ?? '');
-          probe.lexed(this.covered, after, S_NAMES[this.state] ?? '');
+          // An `acc…` keyword: after its `:` or `{` (the blanks it took too) the value starts.
+          probe.lexed(before, this.valueAt, S_NAMES[state] ?? '');
+          probe.lexed(this.valueAt, after, S_NAMES[this.state] ?? '');
         } else {
           // A one-line value holds the offset at its end too (typing there extends it).
           const value = state === S.acc_title || state === S.acc_descr ? 1 : 0;
@@ -394,6 +396,7 @@ class TimelineLexer {
     if (!title && !this.literal('accdescr', p)) return false;
     const j = this.blanks(p + 8);
     const d = text.charCodeAt(j);
+    this.valueAt = this.source(j + 1);
     if (d === COLON) {
       this.emit(title ? T.AccTitle : T.AccDescr, p, this.blanks(j + 1));
       this.push(title ? S.acc_title : S.acc_descr);

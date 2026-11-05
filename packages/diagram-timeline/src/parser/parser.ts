@@ -444,7 +444,7 @@ class TimelineParser {
     const n = this.sections.length + 1;
     const text = this.raw(j).slice(SECTION_PREFIX);
     const range = this.range(j);
-    this.closeSection(range.start);
+    this.closeSection(range.start, true);
     this.sections.push({ ast: `sec:${n}`, text });
     this.children.push({ id: `sec:${n}`, type: 'Section', range, text });
     this.openSection = this.st.beginStatement('section', range.start);
@@ -452,15 +452,16 @@ class TimelineParser {
   }
 
   /**
-   * End the open section's span at the last non-blank character before `at` (a comment line
-   * after its last statement stays in it; blank lines do not), never before its own token.
+   * End the open section's span at the start of the line holding `at`, the next `section` (D259:
+   * it folds to the line before the next; blank and comment lines included), or at `at`, the
+   * end of the text; never before its own token.
    */
-  private closeSection(at: number): void {
+  private closeSection(at: number, next = false): void {
     const span = this.openSection;
     if (!span) return;
     this.openSection = undefined;
     let end = at;
-    while (end > span.range.end && /\s/.test(this.src.charAt(end - 1))) end--;
+    if (next) while (end > span.range.end && !this.breaksIn(end - 1, end)) end--;
     this.st.endStatement(span, Math.max(end, span.range.end));
   }
 

@@ -78,13 +78,37 @@ describe('timeline completions (D95)', () => {
   });
 
   it('offers the directions after `timeline`, on its line', () => {
-    expect(complete('timeline ¦')).toEqual(['LR', 'TD']);
-    expect(complete('timeline ¦\n')).toEqual(['LR', 'TD']);
-    expect(complete('timeline ¦\n  2002 : a')).toEqual(['LR', 'TD']);
+    expect(complete('timeline ¦')).toEqual(['LR', 'TD', ...STATEMENTS]);
+    expect(complete('timeline ¦\n')).toEqual(['LR', 'TD', ...STATEMENTS]);
+    expect(complete('timeline ¦\n  2002 : a')).toEqual(['LR', 'TD', ...STATEMENTS]);
     expect(complete('timeline l¦')).toEqual(['LR']);
-    expect(complete('timeline T¦')).toEqual(['TD']);
+    // Without regard to case, as the lexer: `t` may start `TD` or `title`.
+    expect(complete('timeline T¦')).toEqual(['TD', 'title']);
     expect(complete('timeline\n¦')).toEqual(STATEMENTS);
-    expect(complete('timeline LR ¦')).toEqual([]);
+    // Inside the one `timeline TD` token: the header again, replacing all of it.
+    expect(edits('timeline ¦TD')).toEqual([
+      ['timeline TD', 'timeline LR'],
+      ['timeline TD', 'timeline TD'],
+    ]);
+  });
+
+  it('offers the statements v12 reads on the header line (no separator needed)', () => {
+    expect(complete('timeline ti¦')).toEqual(['title']);
+    expect(complete('timeline TD s¦')).toEqual(['section']);
+    expect(complete('timeline LR ¦')).toEqual(STATEMENTS);
+  });
+
+  it('offers nothing on the line after a bare `section` or `title`: it is their name', () => {
+    expect(complete('timeline\n  section\n  ¦')).toEqual([]);
+    expect(complete('timeline\n  title\n  ¦')).toEqual([]);
+    expect(complete('timeline\n  section\n¦')).toEqual([]);
+    expect(complete('timeline\n  SECTION\n  ¦\n  2002 : x')).toEqual([]);
+    expect(complete('timeline\r\n  section\r\n  ¦')).toEqual([]);
+    expect(complete('timeline\n  section A\n  ¦')).toEqual(STATEMENTS);
+  });
+
+  it('offers the statements after `accDescr { … }` on its line, where v12 reads one', () => {
+    expect(complete('timeline\n  accDescr {\n  x\n  } ¦')).toEqual(STATEMENTS);
   });
 
   it('offers the statements at the start of a line', () => {
@@ -103,7 +127,36 @@ describe('timeline completions (D95)', () => {
       ['', 'accTitle: '],
       ['', 'accDescr: '],
     ]);
-    expect(edits('timeline T¦')).toEqual([['T', 'TD']]);
+    expect(edits('timeline T¦')).toEqual([
+      ['T', 'TD'],
+      ['T', 'title '],
+    ]);
+  });
+
+  it('adds no separator the text already has, and keeps a block `accDescr {`', () => {
+    expect(edits('timeline\n  acc¦Title: Social')).toEqual([
+      ['accTitle', 'accTitle'],
+      ['accTitle', 'accDescr'],
+    ]);
+    expect(edits('timeline\n  acc¦Title : Social')).toEqual([
+      ['accTitle', 'accTitle'],
+      ['accTitle', 'accDescr'],
+    ]);
+    expect(edits('timeline\n  acc¦ Social')).toEqual([
+      ['acc', 'accTitle:'],
+      ['acc', 'accDescr:'],
+    ]);
+    expect(edits('timeline\n  sec¦tion Web')).toEqual([['section', 'section']]);
+    expect(edits('timeline\n  acc¦Descr {\n x\n }')).toEqual([['accDescr', 'accDescr']]);
+  });
+
+  it('inserts at the first character of a word, replacing nothing', () => {
+    expect(edits('timeline\n  ¦2002 : x')).toEqual([
+      ['', 'title '],
+      ['', 'section '],
+      ['', 'accTitle: '],
+      ['', 'accDescr: '],
+    ]);
   });
 
   it('offers nothing in a period, an event, a title, a section name or a value', () => {
@@ -115,6 +168,8 @@ describe('timeline completions (D95)', () => {
     expect(complete('timeline\n  title Hist¦')).toEqual([]);
     expect(complete('timeline\n  section W¦')).toEqual([]);
     expect(complete('timeline\n  accTitle: a¦')).toEqual([]);
+    expect(complete('timeline\n  accTitle: ¦')).toEqual([]);
+    expect(complete('timeline\n  accDescr {} title T ¦')).toEqual([]);
     expect(complete('timeline\n  accDescr {\n  ¦\n  }')).toEqual([]);
   });
 

@@ -162,9 +162,9 @@ describe('parseTimeline: AST', () => {
       ['header', 'timeline'],
       ['period', '2001 '],
       ['event', ': a'],
-      ['section', 'section A\n    2002 : b\n         : c\n    %% note'],
-      ['section', 'section B'],
-      ['section', 'section C\n    title T\n    2003 : d'],
+      ['section', 'section A\n    2002 : b\n         : c\n    %% note\n\n'],
+      ['section', 'section B\n'],
+      ['section', 'section C\n    title T\n    2003 : d\n\n'],
     ]);
     expect(statements[3]?.children?.map((s) => s.kind)).toEqual(['period', 'event', 'event']);
     expect(statements[4]?.children).toBeUndefined();
@@ -234,6 +234,11 @@ describe('parseTimeline: probe (R-LANG-7, D95)', () => {
     expect(probe('timeline\n  accTitle: a¦').mode).toBe('acc_title');
     expect(probe('timeline\n  accDescr: ¦').mode).toBe('acc_descr');
     expect(probe('timeline\n  accDescr {\n  ¦\n}').mode).toBe('acc_descr_multiline');
+    expect(probe('timeline\n  accDescr {¦\n}').mode).toBe('acc_descr_multiline');
+    // The blanks after `:` are the value's: typing there writes the value.
+    expect(probe('timeline\n  accTitle: ¦ x').mode).toBe('acc_title');
+    expect(probe('timeline\n  accTitle:¦ x').mode).toBe('acc_title');
+    expect(probe('timeline\n  accTi¦tle: x').mode).toBe('INITIAL');
     expect(probe('timeline\n  %% a ¦comment\n').mode).toBe('comment');
     expect(probe('---\ntitle: ¦x\n---\ntimeline\n').mode).toBe('frontMatter');
   });
