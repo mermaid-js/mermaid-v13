@@ -823,22 +823,31 @@ class FlowParser {
     this.i++;
     let built = '';
     let inString = false;
+    let close: number;
+    let blockOpener = opener;
     for (;;) {
-      this.tested(SHAPE_DATA_PARTS);
+      for (;;) {
+        this.tested(SHAPE_DATA_PARTS);
+        if (this.kind() !== T.ShapeData) break;
+        const piece = this.raw();
+        if (piece === '"' && this.end(this.i) === this.start(this.i) + 1) {
+          inString = !inString;
+          built += piece;
+        } else built += inString ? piece.replace(/\n\s*/g, '<br/>') : piece;
+        this.i++;
+      }
+      if (this.kind() !== T.ShapeDataEnd) {
+        this.opens.push({ range: blockOpener, what: 'shape data', closer: '`}`' });
+        this.fail([T.ShapeDataEnd]);
+      }
+      close = this.start(this.i);
+      this.i++;
+      // Blocks back to back (`A@{…}@{…}`) are one: v12's `shapeData` rule joins their texts.
+      this.tested(SHAPE_DATA);
       if (this.kind() !== T.ShapeData) break;
-      const piece = this.raw();
-      if (piece === '"' && this.end(this.i) === this.start(this.i) + 1) {
-        inString = !inString;
-        built += piece;
-      } else built += inString ? piece.replace(/\n\s*/g, '<br/>') : piece;
+      blockOpener = this.range(this.i);
       this.i++;
     }
-    if (this.kind() !== T.ShapeDataEnd) {
-      this.opens.push({ range: opener, what: 'shape data', closer: '`}`' });
-      this.fail([T.ShapeDataEnd]);
-    }
-    const close = this.start(this.i);
-    this.i++;
     const whole: Range = { start: opener.start, end: close + 1 };
     const inner = { start: opener.end, end: close };
     // v12 parsed `{\n<data>\n}`; a `#` comment reads differently without those newlines.
