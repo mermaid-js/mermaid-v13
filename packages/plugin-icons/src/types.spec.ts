@@ -1,4 +1,5 @@
 // Label icons in every type that lays out labels through core/text (I3 #324, D291, D292, D299).
+import { assertInert } from '@mermaid-js/core/svg';
 import { createMermaid, type Mermaid } from 'mermaid';
 import { describe, expect, it } from 'vitest';
 import { icons } from './index.ts';
@@ -82,6 +83,20 @@ describe('every label slot of every type', () => {
   });
 });
 
+describe('text output (D299)', () => {
+  it.each([
+    ['flowchart LR\n  A["fa:fa-bell a"] -- "fa:fa-bell e" --> B'],
+    ['erDiagram\n  A ||--o{ B : "fa:fa-bell r"'],
+    ['sequenceDiagram\n  A->>B: fa:fa-bell m\n  Note over A: fa:fa-bell n'],
+  ])('shows icons as written with one ASCII_DROPPED: %s', async (source) => {
+    const r = await (await api()).render('i', source, { format: 'ascii' });
+    expect(r.text).toContain('fa:fa-bell');
+    expect(r.warnings).toEqual([
+      expect.objectContaining({ code: 'ASCII_DROPPED', feature: 'icon' }),
+    ]);
+  });
+});
+
 /** The label `fa:fa-<icon> x` as drawn: the box's corner and scale, and where " x" starts. */
 function placed(svg: string) {
   const m =
@@ -155,6 +170,7 @@ describe('currentColor strokes take the label colour', () => {
       expect(colours, theme).toHaveLength(n);
       for (const [, c] of colours) expect(c).toMatch(/^(var\(--[\w-]+\)|#[\da-f]+)$/i);
       expect(r.svg).not.toContain('mermaid-label-icon');
+      assertInert(r.svg, { themeStyle: r.svg.includes('<style>') });
     }
   });
 
