@@ -152,7 +152,8 @@ describe('state in the neo themes (D182, #234)', () => {
   ].join('\n');
   const URL = 'url(#s-gradient)';
 
-  async function draw(theme: string): Promise<{ svg: string; tree: SvgTree }> {
+  type Theme = NonNullable<Parameters<ReturnType<typeof createMermaid>['initialize']>[0]['theme']>;
+  async function draw(theme: Theme): Promise<{ svg: string; tree: SvgTree }> {
     let tree: SvgTree | undefined;
     const hook: ExtensionPlugin = {
       id: 'tree',
@@ -216,7 +217,7 @@ describe('state in the neo themes (D182, #234)', () => {
     });
   }
 
-  it.each(['default', 'redux', 'redux-dark-color', 'dark'])(
+  it.each(['default', 'redux', 'redux-dark-color', 'dark'] as const)(
     'writes no gradient under %s',
     async (theme) => {
       const { svg } = await draw(theme);
