@@ -1,3 +1,4 @@
+// cspell:words LALR
 /**
  * Quadrant parser: recursive descent over the {@link lex} tokens, producing a
  * {@link QuadrantModel}, the typed AST, symbols, statement spans and diagnostics (DESIGN §4.3).

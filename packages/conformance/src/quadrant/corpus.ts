@@ -1,4 +1,4 @@
-// cspell:words quadrantchart
+// cspell:words quadrantchart ffaa axisy Ünïcödé Chartx
 /**
  * The quadrant gate corpus (#300, #301): the 14 e2e fixtures, the strings harvested from v12's
  * `quadrant.jison.spec.ts` and syntax page (`corpus/quadrant-v12-specs.json`), those headed
