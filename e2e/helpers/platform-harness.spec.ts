@@ -11,6 +11,7 @@ import {
   FIXTURE_EXTENSION,
   installManifest,
   packageSources,
+  partOf,
   packClosure,
 } from '../platform/harness/index.ts';
 import type { PackedPackage } from '../platform/harness/index.ts';
@@ -108,5 +109,42 @@ describe('installManifest', () => {
     const m = installManifest(app, packed, 'pnpm');
     expect(m.dependencies).toEqual({ mermaid: 'file:/t/mermaid.tgz', other: '^1.0.0' });
     expect(m.overrides).toBeUndefined();
+  });
+});
+
+describe('chunk parts (bundle spec)', () => {
+  it('maps the source paths of each bundler and package manager to a part', () => {
+    const pnpm = 'node_modules/.pnpm/@mermaid-js+diagram-class@file+tarballs+x.tgz/node_modules';
+    expect(
+      [
+        '../../node_modules/mermaid/dist/index.js',
+        '../../node_modules/mermaid/dist/ascii.js',
+        `webpack://app/./${pnpm}/@mermaid-js/diagram-class/dist/index.js`,
+        `../${pnpm}/@mermaid-js/core/dist/ascii/draw.js`,
+        '../node_modules/@mermaid-js/diagram-er/dist/ascii.js',
+        '../node_modules/@mermaid-js/diagram-state/dist/language.js',
+        '../node_modules/@mermaid-js/language-service/dist/index.js',
+        '../node_modules/@mermaid-js/diagram-flowchart/dist/testing.js',
+        '../node_modules/@mermaid-js/core/dist/layout/index.js',
+        '../node_modules/d3/src/index.js',
+        'webpack://app/webpack/runtime/load script',
+        '\0vite/preload-helper.js',
+        '../../src/flowchart.js',
+      ].map(partOf)
+    ).toEqual([
+      'core',
+      'ascii',
+      'diagram:class',
+      'ascii',
+      'ascii',
+      'language',
+      'language',
+      'testing',
+      'core',
+      'package:d3',
+      'app',
+      'app',
+      'app',
+    ]);
   });
 });
