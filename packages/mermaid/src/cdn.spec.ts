@@ -303,4 +303,24 @@ describe('the CDN entry (D163, D167)', () => {
       warn.mockRestore();
     }
   });
+
+  it('warns once when cdnBase is not the directory mermaid was loaded from', async () => {
+    // A fresh build copy: the warning is once per copy, and earlier tests used a mirror.
+    vi.resetModules();
+    const cdn = await import('./cdn.ts');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      cdn.initialize({ cdnBase: here });
+      expect(warn).not.toHaveBeenCalled();
+      cdn.initialize({ cdnBase: 'https://mirror.example/mermaid/dist/' });
+      cdn.initialize({ cdnBase: 'https://mirror2.example/mermaid/dist/' });
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0]![0]).toMatch(/second copy.*Load mermaid itself from/s);
+      // It still applies.
+      expect(await chunk()).toBe('https://mirror2.example/mermaid/dist/chunks/x.mjs');
+    } finally {
+      warn.mockRestore();
+      cdn.initialize({ cdnBase: undefined });
+    }
+  });
 });

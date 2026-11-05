@@ -7,6 +7,7 @@
 
 let fallback: URL | undefined;
 let chosen: URL | undefined;
+let warned = false;
 
 /** `value` as a directory URL: no query or hash, a trailing `/`. */
 function directory(value: string | URL, against?: string): URL {
@@ -25,7 +26,10 @@ export function setDefaultBase(entryUrl: string): void {
 /**
  * Sets the base from `initialize({ cdnBase })`. A relative value resolves against
  * `document.baseURI` (the page). `undefined` returns to the default. Throws `TypeError` on
- * anything but a non-empty string or `undefined`.
+ * anything but a non-empty string or `undefined`. A base other than the entry's own directory
+ * still applies, with one console warning per build copy: the lazy chunks' static imports of
+ * the shared core chunks resolve against the mirror, so core loads a second time (D163 as
+ * amended; load mermaid itself from the mirror, e.g. `data-cdn-base` on `mermaid.min.js`).
  */
 export function setCdnBase(value: unknown): void {
   if (value === undefined) {
@@ -35,6 +39,14 @@ export function setCdnBase(value: unknown): void {
   if (typeof value !== 'string' || value.trim() === '')
     throw new TypeError('cdnBase must be a non-empty URL string');
   chosen = directory(value, typeof document === 'undefined' ? undefined : document.baseURI);
+  if (!warned && fallback && chosen.href !== fallback.href) {
+    warned = true;
+    console.warn(
+      `mermaid: cdnBase ${chosen.href} is not the directory mermaid was loaded from ` +
+        `(${fallback.href}): the shared core chunks will load a second copy from there. ` +
+        'Load mermaid itself from that mirror instead (for mermaid.min.js: data-cdn-base).'
+    );
+  }
 }
 
 /** The URL of the chunk at `path` (relative to the build's `dist/`) under the current base. */

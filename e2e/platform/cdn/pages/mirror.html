@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CDN: data-cdn-base</title>
+  </head>
+  <body>
+    <!-- The loader comes from %CDN%; data-cdn-base moves the whole build to %OTHER%. -->
+    <pre class="mermaid">
+flowchart LR
+  A[Start] --> B{Choice}
+  B --> C[Done]
+    </pre>
+    <script
+      src="%CDN%/mermaid/dist/mermaid.min.js"
+      data-cdn-base="%OTHER%/mermaid/dist?v=1#mirror"
+    ></script>
+    <script>
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+  </body>
+</html>

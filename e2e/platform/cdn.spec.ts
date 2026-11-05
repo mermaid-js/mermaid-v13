@@ -31,7 +31,10 @@ async function site(): Promise<Site> {
   const pagesDir = join(app.dir, 'pages');
   for (const name of readdirSync(pagesDir)) {
     const file = join(pagesDir, name);
-    writeFileSync(file, readFileSync(file, 'utf8').replaceAll('%CDN%', cdn.origin));
+    writeFileSync(
+      file,
+      readFileSync(file, 'utf8').replaceAll('%CDN%', cdn.origin).replaceAll('%OTHER%', other.origin)
+    );
   }
   const pages = await serveDir(pagesDir);
   return {
@@ -139,7 +142,13 @@ test('cdnBase in front matter or %%{init}%% warns as a secure key and leads to n
   );
 });
 
-test('initialize({ cdnBase }) moves the first-party chunk loads to that base', async ({ page }) => {
+test('initialize({ cdnBase }) moves the first-party chunk loads to that base, with a warning', async ({
+  page,
+}) => {
+  const warnings: string[] = [];
+  page.on('console', (m) => {
+    if (m.type() === 'warning') warnings.push(m.text());
+  });
   const fromCdn = recordScripts(page, s.cdn.origin);
   const fromOther = recordScripts(page, s.other.origin);
   await page.goto(s.pages.url('/api.html'));
@@ -157,7 +166,8 @@ test('initialize({ cdnBase }) moves the first-party chunk loads to that base', a
   );
   expect(fromCdn.all.filter((p) => p.includes('diagram-state') || p.includes('forest'))).toEqual(
     []
-  );
+  ); // Not the entry's own directory: core's shared chunks load a second copy from there.
+  expect(warnings).toEqual([expect.stringMatching(/second copy/)]);
 });
 
 test('plugin scripts placed before and after mermaid both register, and later pushes too', async ({
@@ -191,4 +201,38 @@ test('plugin scripts placed before and after mermaid both register, and later pu
   expect(late.type).toBe('latebox');
   expect(late.svg).toContain('pushed');
   expect(errors).toEqual([]);
+});
+
+test('data-cdn-base loads the whole build from the mirror, with no module loaded twice', async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => {
+    if (m.type() === 'warning') warnings.push(m.text());
+  });
+  const scripts = allScripts(page);
+  const fromOther = recordScripts(page, s.other.origin);
+  await page.goto(s.pages.url('/mirror.html'));
+  await expect(page.locator('pre.mermaid svg [data-id="A"]')).toHaveCount(1);
+  await page.waitForLoadState('networkidle');
+  expect(errors).toEqual([]);
+  expect(warnings).toEqual([]);
+  // The loader from the CDN origin; everything else from the mirror.
+  expect(scripts[0]).toBe(`${s.cdn.origin}/mermaid/dist/mermaid.min.js`);
+  for (const url of scripts.slice(1))
+    expect(url.startsWith(`${s.other.origin}/mermaid/dist/`), url).toBe(true);
+  const paths = scripts.map((u) => new URL(u).pathname);
+  expect(new Set(paths).size, paths.join('\n')).toBe(paths.length);
+  expect(fromOther.all).toEqual(
+    expect.arrayContaining([
+      '/mermaid/dist/mermaid.esm.min.mjs',
+      '/mermaid/dist/chunks/diagram-flowchart.mjs',
+    ])
+  );
+  assertLoadedOnly(join(s.app.dir, 'node_modules'), fromOther.all, {
+    diagrams: ['flowchart'],
+    required: ['flowchart'],
+  });
 });
