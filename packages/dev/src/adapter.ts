@@ -5,8 +5,11 @@
  *
  * The math extension is registered, as an installed `@mermaid-js/plugin-math` would be: `$$…$$`
  * renders as paths (D176), and `prepare` loads MathJax only for a diagram with math (D178).
+ * So are `@mermaid-js/layout-elk`'s layouts: `layout: elk`, `elk.<algorithm>` and the
+ * `flowchart-elk` header are laid out by ELK (D171), and `prepare` loads elkjs only for them.
  */
 import type { Measurer } from '@mermaid-js/core/text';
+import elkLayouts from '@mermaid-js/layout-elk';
 import math from '@mermaid-js/plugin-math';
 import { createMermaid, type RenderResult } from 'mermaid';
 
@@ -30,6 +33,7 @@ export interface RenderOutput {
 }
 
 const mermaid = createMermaid();
+mermaid.registerLayoutLoaders(elkLayouts);
 const registered = mermaid.registerExternalDiagrams([math]);
 
 export async function renderDiagram(

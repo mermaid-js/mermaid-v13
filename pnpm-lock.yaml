@@ -220,6 +220,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/layout-elk':
+        specifier: workspace:^
+        version: link:../layout-elk
       '@mermaid-js/plugin-interactions':
         specifier: workspace:^
         version: link:../plugin-interactions

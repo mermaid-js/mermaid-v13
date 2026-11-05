@@ -25,4 +25,11 @@ describe('renderDiagram (the page adapter)', () => {
     const { svg } = await renderDiagram('flowchart LR\n  A --> B', { cssVariables: false });
     expect(svg).not.toContain('var(--');
   });
+
+  it('lays out ELK names with @mermaid-js/layout-elk, as an installed plugin would (D171)', async () => {
+    const text = 'flowchart LR\n  A --> B\n  A --> C\n  B --> D\n  C --> D';
+    const elk = await renderDiagram(`---\nconfig:\n  layout: elk\n---\n${text}`);
+    expect(elk.warnings).toEqual([]);
+    expect(elk.svg).not.toEqual((await renderDiagram(text)).svg);
+  });
 });
