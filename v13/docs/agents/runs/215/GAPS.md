@@ -10,8 +10,8 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 ## Contract gaps found by exploration (owner in brackets)
 
-- [T0 #237] `SvgNode` (`core/src/svg/tree.ts:12`) is an index into a writer's tree and the stream writer has none, so a box run can't carry `node: SvgNode` at label-layout time. Needs a writer-independent form (writer callback or detached fragment). Report the chosen shape as a deviation from the ticket wording.
-- [T0 #237 / M1 #244] The measurer has no x-height (`VerticalMetrics` = ascent, descent, lineHeight). MathJax `ex` → px needs a new metric or a fixed em ratio; M1 reports the options, T0 exposes what the provider needs.
+- ~~[T0 #237] `SvgNode` can't be carried by a box run~~ Closed by #237: a box's `node` is a detached `SvgFragment` (`{ tag, attrs, children }`) the writer replays through its primitives (deviation from the ticket's `node: SvgNode`).
+- ~~[T0 #237 / M1 #244] no x-height for ex → px~~ Closed by #237: `InlineRequest` carries `font`, `metrics` and `ex = 0.5 × font.size`; M1 may ask for a real x-height (see `tickets/237.md`).
 - [E1 #239] v12 develop pins elkjs 0.12.0; only 0.9.3 is on this machine (via the `mermaid@12.2.0` oracle). The dispatcher pointers in `01-v12-elk.md` are from 0.9.3.
 - [E2 #240] v12 develop registers 7 layout names; D171 lists 9 (`elk.layered`, `elk.radial` were only per-container ids in v12). Register all 9 as D171 says.
 - [E3 #241 / E4 #242] `api.ts:557-563` calls the engine with no `LayoutContext`, and `LayoutGraph` carries no config or node metadata, so `elk.*` keys and `@{ algorithm }` can't reach the engine. DESIGN §6.1 already has `(g, ctx)`; E3 plumbs `ctx` (with the resolved config), E4 uses it.
