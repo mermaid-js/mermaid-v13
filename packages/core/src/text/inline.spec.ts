@@ -106,6 +106,14 @@ describe('inline boxes in label layout (D177)', () => {
     expect(layout('a $$x$$').height).toBeCloseTo(11.5, 9);
   });
 
+  it('never takes a character reference that decodes to a placeholder for a box', () => {
+    expect(shape(layout('$$x$$ &#xFDD0;'))).toEqual([['[box 4]', ' \ufdd0']]);
+    expect(shape(layout('`a $$x$$ &#xFDD0;`', Infinity, [fixture()], true))).toEqual([
+      // Inline code keeps references as written; its box placeholders are still boxes.
+      ['a ', '[box 4]', ' &#xFDD0;'],
+    ]);
+  });
+
   it('keeps a span as written when its provider declines it', () => {
     const declining: InlineProvider = { open: '$$', close: '$$', box: () => undefined };
     const warnings: Warning[] = [];

@@ -56,7 +56,10 @@ const FEATURES = [
 /** Placeholders are Unicode non-characters, which never occur in interchange text. */
 export const PLACEHOLDER = 0xfdd0;
 const MAX_BOXES = 32;
-const RE_PLACEHOLDER = /[﷐-﷯]/;
+const hex = (n: number): string => n.toString(16).padStart(4, '0');
+const RE_PLACEHOLDER = new RegExp(
+  `[\\u${hex(PLACEHOLDER)}-\\u${hex(PLACEHOLDER + MAX_BOXES - 1)}]`
+);
 
 function hasPair(raw: string, open: string, close: string): boolean {
   const at = raw.indexOf(open);

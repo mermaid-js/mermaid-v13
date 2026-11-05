@@ -9,6 +9,7 @@
  */
 import type { LayoutModel } from '../layout/types.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
+import { isAllowedAttr, isAllowedTag } from '../svg/allowlist.ts';
 import type { SvgTree } from '../svg/tree.ts';
 import type { InlineBox } from '../svg/writer.ts';
 import type { InlineProvider } from '../text/inline.ts';
@@ -97,7 +98,7 @@ function failed(plugin: { id: string }, hook: Hook, e: unknown): MermaidError {
 
 function checkBox(box: InlineBox): InlineBox {
   const { width, height, baseline } = box as Partial<InlineBox>;
-  const node = (box as { node?: unknown }).node as { tag?: unknown } | null | undefined;
+  const node = (box as { node?: unknown }).node;
   for (const [name, n] of [
     ['width', width],
     ['height', height],
@@ -106,9 +107,36 @@ function checkBox(box: InlineBox): InlineBox {
     if (typeof n !== 'number' || !Number.isFinite(n) || (name !== 'baseline' && n < 0))
       throw new TypeError(`an inline box needs a finite ${name}, got ${String(n)}`);
   }
-  if (typeof node !== 'object' || node === null || typeof node.tag !== 'string')
-    throw new TypeError('an inline box needs an SVG fragment as its node');
+  checkFragment(node, 0);
   return box;
+}
+
+const MAX_DEPTH = 64;
+
+/** The whole fragment: allowed tags and attribute names, children fragments or strings. */
+function checkFragment(node: unknown, depth: number): void {
+  if (depth > MAX_DEPTH)
+    throw new TypeError(`an inline box's node is nested over ${MAX_DEPTH} deep`);
+  const f = node as { tag?: unknown; attrs?: unknown; children?: unknown } | null;
+  if (typeof f !== 'object' || f === null || typeof f.tag !== 'string' || !isAllowedTag(f.tag))
+    throw new TypeError(`an inline box's node holds ${describe(f)}, not an allowed SVG element`);
+  if (f.attrs !== undefined) {
+    if (typeof f.attrs !== 'object' || f.attrs === null)
+      throw new TypeError(`<${f.tag}> in an inline box has attrs that are not an object`);
+    for (const name of Object.keys(f.attrs))
+      if (!isAllowedAttr(name))
+        throw new TypeError(`${name} on <${f.tag}> in an inline box is not an allowed attribute`);
+  }
+  if (f.children === undefined) return;
+  if (!Array.isArray(f.children))
+    throw new TypeError(`<${f.tag}> in an inline box has children that are not an array`);
+  for (const child of f.children as unknown[])
+    if (typeof child !== 'string') checkFragment(child, depth + 1);
+}
+
+function describe(f: { tag?: unknown } | null): string {
+  if (f === null || typeof f !== 'object') return String(f);
+  return typeof f.tag === 'string' ? `<${f.tag}>` : 'an element without a tag';
 }
 
 /** `provider` with its boxes checked, and its failures reported as `plugin`'s. */

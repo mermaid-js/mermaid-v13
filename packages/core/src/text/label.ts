@@ -125,8 +125,7 @@ export function layoutLabel(
   const widths: number[] = [];
   const tags: Tags = { bold: 0, italic: 0 };
   for (const { source, bullet } of markdown ? markdownLines(src) : plainLines(text)) {
-    const styled = inline(source, base, tags, markdown);
-    const pieces = tidy(spans ? withBoxes(styled, spans.boxes) : styled);
+    const pieces = tidy(inline(source, base, tags, markdown, spans?.boxes));
     let indent = 0;
     let hang = 0;
     if (bullet !== undefined) {
@@ -176,26 +175,6 @@ function grownBaselines(
     y += above + below;
   }
   return grown ? { at, height: y } : undefined;
-}
-
-/** Splits pieces at box placeholders, wherever markup left them, into box pieces. */
-function withBoxes(pieces: Piece[], boxes: readonly LabelBoxSpan[]): Piece[] {
-  const out: Piece[] = [];
-  for (const piece of pieces) {
-    let text = '';
-    for (const ch of piece.text) {
-      const box = boxes[ch.charCodeAt(0) - PLACEHOLDER];
-      if (box === undefined || ch.length !== 1) {
-        text += ch;
-        continue;
-      }
-      if (text !== '') out.push({ text, style: piece.style });
-      out.push({ text: ch, style: piece.style, box });
-      text = '';
-    }
-    if (text !== '') out.push({ text, style: piece.style });
-  }
-  return out;
 }
 
 /** One source line of a label; `bullet` is the list nesting level of a bullet item. */
@@ -269,8 +248,31 @@ const RE_WORD = /\w/;
  * Splits one line of source into styled pieces: HTML subset tags and character references, and
  * in markdown strings emphasis, inline code and backslash escapes. Emphasis stays in its line.
  */
-function inline(source: string, base: StyleBits, tags: Tags, markdown: boolean): Piece[] {
+function inline(
+  source: string,
+  base: StyleBits,
+  tags: Tags,
+  markdown: boolean,
+  boxes?: readonly LabelBoxSpan[]
+): Piece[] {
   const out: Piece[] = [];
+  const boxAt = (ch: string): LabelBoxSpan | undefined => boxes?.[ch.charCodeAt(0) - PLACEHOLDER];
+  // Pushes source text in one style, its box placeholders as box pieces. Only placeholders in
+  // the source are boxes: a character reference is decoded into `text` and never reaches here.
+  const pushSource = (src: string, s: StyleBits): void => {
+    let chunk = '';
+    for (const ch of src) {
+      const box = boxAt(ch);
+      if (box === undefined) {
+        chunk += ch;
+        continue;
+      }
+      if (chunk !== '') out.push({ text: chunk, style: s });
+      out.push({ text: ch, style: s, box });
+      chunk = '';
+    }
+    if (chunk !== '') out.push({ text: chunk, style: s });
+  };
   let text = '';
   let style = base;
   let marked = 0;
@@ -286,6 +288,14 @@ function inline(source: string, base: StyleBits, tags: Tags, markdown: boolean):
   let i = 0;
   while (i < source.length) {
     const ch = source[i] as string;
+    const box = boxAt(ch);
+    if (box !== undefined) {
+      if (text !== '') out.push({ text, style });
+      out.push({ text: ch, style, box });
+      text = '';
+      i++;
+      continue;
+    }
     if (ch === '<') {
       RE_TAG.lastIndex = i;
       const m = RE_TAG.exec(source);
@@ -313,7 +323,7 @@ function inline(source: string, base: StyleBits, tags: Tags, markdown: boolean):
       const end = source.indexOf('`', i + 1);
       if (end > i + 1) {
         if (text !== '') out.push({ text, style });
-        out.push({ text: source.slice(i + 1, end), style: style | Style.Mono });
+        pushSource(source.slice(i + 1, end), style | Style.Mono);
         text = '';
         i = end + 1;
         continue;

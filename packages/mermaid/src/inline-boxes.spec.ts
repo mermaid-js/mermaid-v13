@@ -153,6 +153,37 @@ describe('inline boxes from an extension (D177)', () => {
     expect(drawn).toBeGreaterThanOrEqual(4);
   });
 
+  it('checks the whole fragment and blames the extension for a malformed child', async () => {
+    for (const child of [
+      null,
+      { attrs: {} },
+      { tag: 'script' },
+      { tag: 'g', attrs: { onclick: 'x' } },
+    ]) {
+      const bad: ExtensionPlugin = {
+        id: 'bad-fragment',
+        inline: [
+          {
+            open: '$$',
+            close: '$$',
+            box: () =>
+              ({
+                width: 1,
+                height: 1,
+                baseline: 1,
+                node: { tag: 'g', children: [child] },
+              }) as never,
+          },
+        ],
+      };
+      const { m, ready } = api(bad);
+      await ready;
+      const e = await m.render('x', FLOW).catch((x: unknown) => x);
+      expect(e, JSON.stringify(child)).toBeInstanceOf(MermaidError);
+      expect((e as MermaidError).message).toMatch(/"bad-fragment" failed in inline/);
+    }
+  });
+
   it('reports a failing provider as the extension that failed', async () => {
     const broken: ExtensionPlugin = {
       id: 'broken-math',
