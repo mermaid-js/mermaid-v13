@@ -17,7 +17,8 @@
   },
   "scripts": {
     "gen": "tsx scripts/generate.ts",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "bench:parse": "tsx --conditions=mermaid-source scripts/bench-parse.ts"
   },
   "peerDependencies": {
     "@codemirror/autocomplete": "^6.18.0",
