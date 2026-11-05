@@ -6,7 +6,6 @@
 // cspell:disable
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DEFAULT_PIE_DB, db, parser, setConfig } from './adapter.ts';
-// skipped: getConfig — v13 has no pie DB and no DB config: core resolves the `pie` config section (#325)
 
 setConfig({
   securityLevel: 'strict',
@@ -191,7 +190,7 @@ describe('pie', () => {
       expect(config.useMaxWidth).toBeTruthy();
     });
 
-    it.skip('getConfig', () => {
+    it('getConfig', () => {
       expect(db.getConfig()).toStrictEqual(DEFAULT_PIE_DB.config);
     });
 

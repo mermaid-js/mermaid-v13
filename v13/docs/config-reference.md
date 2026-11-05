@@ -373,16 +373,16 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `pie` | object |  | pending |  |  |
-| `pie.useWidth` | number |  | pending |  |  |
-| `pie.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `pie` | object |  | honoured (13.0.0) |  |  |
+| `pie.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the pie renderer never did. |  |
+| `pie.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `pie.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `pie.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `pie.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `pie.textPosition` | number | `0.75` | pending |  | Axial position of slice's label from zero at the center to 1 at the outside edges. |
-| `pie.donutHole` | number | `0` | pending |  | Donut hole ratio. Valid value are from 0 to 0.9. Default to 0. |
-| `pie.legendPosition` | "top" \\| "bottom" \\| "left" \\| "right" \\| "center" | `"right"` | pending |  | Legend's position relative to the chart. Default to right. |
-| `pie.highlightSlice` | string | `""` | pending |  | Highlight specific slice with matching label. Set to 'hover' to highlight hovered slice. |
+| `pie.textPosition` | number | `0.75` | honoured (13.0.0) |  | Axial position of slice's label from zero at the center to 1 at the outside edges. |
+| `pie.donutHole` | number | `0` | honoured (13.0.0) | As in v12, a value outside (0, 0.9] draws no hole. | Donut hole ratio. Valid value are from 0 to 0.9. Default to 0. |
+| `pie.legendPosition` | "top" \\| "bottom" \\| "left" \\| "right" \\| "center" | `"right"` | honoured (13.0.0) | As in v12; the bounding box now covers every legend row and label, where v12 clipped long legends (D224). | Legend's position relative to the chart. Default to right. |
+| `pie.highlightSlice` | string | `""` | honoured (13.0.0) | The slice with that label is drawn `scale(1.05)` at opacity 1, as v12's `highlighted` class (D222); the empty default highlights nothing. `hover` is accepted but draws nothing extra, with one `PIE_HOVER_IGNORED` warning, since the SVG has no hover styles (D6). | Highlight specific slice with matching label. Set to 'hover' to highlight hovered slice. |
 
 ## `quadrantChart`
 

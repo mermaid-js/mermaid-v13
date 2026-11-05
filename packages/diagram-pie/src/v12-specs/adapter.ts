@@ -21,17 +21,27 @@ import { layoutPie } from '../layout/index.ts';
 import { parsePie } from '../parser/index.ts';
 import { renderPie } from '../render/index.ts';
 import type { PieModel } from '../model.ts';
+import { pie } from '../plugin.ts';
 
 /** The specs set `securityLevel`; the parse reads no config. */
 export function setConfig(next: Record<string, unknown>): void {
   void next;
 }
 
-/** v12's pie DB defaults; its `config` is read only by the skipped `getConfig` spec. */
+/**
+ * v12's pie DB defaults. `config` is v12 12.2.0's `pie` section default, less `useWidth` (984),
+ * which v13 ignores (#325); `getConfig` compares it with the plugin's generated defaults.
+ */
 export const DEFAULT_PIE_DB = {
   sections: new Map<string, number>(),
   showData: false,
-  config: {},
+  config: {
+    useMaxWidth: true,
+    textPosition: 0.75,
+    donutHole: 0,
+    legendPosition: 'right',
+    highlightSlice: '',
+  },
 };
 
 class PieDB {
@@ -52,6 +62,11 @@ class PieDB {
 
   getSections(): Map<string, number> {
     return new Map((this.model?.sections ?? []).map((s) => [s.label, s.value]));
+  }
+
+  /** v12's DB config: v13 has none, so the `pie` section's defaults as the plugin carries them. */
+  getConfig(): Record<string, unknown> {
+    return { ...pie.configDefaults };
   }
 
   getShowData(): boolean {

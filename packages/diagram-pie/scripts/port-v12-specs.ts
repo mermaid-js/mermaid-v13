@@ -54,11 +54,7 @@ const SOURCES: Source[] = [
 ];
 
 /** `file name: { test title (or its unique start): reason }`. Reasons are written into the file. */
-export const SKIP: Record<string, Record<string, string>> = {
-  'pie.spec.ts': {
-    getConfig: 'v13 has no pie DB and no DB config: core resolves the `pie` config section (#325)',
-  },
-};
+export const SKIP: Record<string, Record<string, string>> = {};
 
 const git = (...args: string[]) =>
   execFileSync('git', ['-C', ROOT, ...args], { encoding: 'utf8', maxBuffer: 1 << 26 });
