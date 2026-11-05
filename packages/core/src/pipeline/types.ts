@@ -93,6 +93,12 @@ export interface IconOptions {
 }
 
 /**
+ * An icon a diagram draws outside labels ({@link DiagramPlugin.icons}): its name as written, or
+ * that name with the `fallbackPrefix` the diagram passes to {@link RenderContext.icon} for it.
+ */
+export type DiagramIcon = string | ({ readonly name: string } & IconOptions);
+
+/**
  * What a diagram's `ascii` hook gets (DESIGN §6.3, D82): the render context, laid out in
  * cells (`units.id === 'cell'`, the cell measurer), plus the front-matter title and the AST.
  */
@@ -130,10 +136,11 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
   labels?(model: M): readonly string[];
   /**
    * Every icon name the layout draws outside labels for `model`, as written (`fa:bell`, D293):
-   * flowchart icon shapes, mindmap `::icon()`. Label icons are in `labels()`. An icons extension
-   * reads them through `ResourceRequest.icons` to load only the packs a diagram names.
+   * flowchart icon shapes, mindmap `::icon()`, each with the fallback pack it is drawn with, if any.
+   * Label icons are in `labels()`. An icons extension reads them through `ResourceRequest.icons`
+   * to load only the packs a diagram names.
    */
-  icons?(model: M): readonly string[];
+  icons?(model: M): readonly DiagramIcon[];
   layout?(model: M, ctx: RenderContext): L;
   /** Writes the whole `<svg>` document. */
   render(model: M, layout: L, ctx: RenderContext, w: SvgWriter): void;

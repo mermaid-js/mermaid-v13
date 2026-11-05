@@ -69,7 +69,16 @@ describe('license check (R-REL-4)', () => {
       'packages/flow/src/a.ts': `${GOOD_HEADER}export {};\n`,
     });
     expect(checkLicenses(missing)).toEqual([
-      'packages/flow: has Pele-derived files but no THIRD_PARTY_NOTICES',
+      'packages/flow: has files ported from Pele but no THIRD_PARTY_NOTICES',
+    ]);
+    // It names the upstreams the files come from.
+    const iconifyOnly = workspace({
+      'packages/icons/package.json': JSON.stringify({ name: 'icons', files: ['dist'] }),
+      'packages/icons/src/a.ts':
+        '// Ported from Iconify (https://github.com/iconify/iconify, MIT License, Copyright (c) 2021-PRESENT Vjacheslav Trushkin).\nexport {};\n',
+    });
+    expect(checkLicenses(iconifyOnly)).toEqual([
+      'packages/icons: has files ported from @iconify/utils but no THIRD_PARTY_NOTICES',
     ]);
 
     const unpublished = workspace({
@@ -206,6 +215,18 @@ describe('license check (R-REL-4)', () => {
         })
       )
     ).toEqual([]);
+  });
+
+  it('requires plugin-icons/src/{resolve,name}.ts to credit @iconify/utils', () => {
+    const root = workspace({
+      'packages/plugin-icons/package.json': JSON.stringify({ name: 'icons', files: ['dist'] }),
+      'packages/plugin-icons/src/resolve.ts': '// Ported from somewhere.\nexport {};\n',
+      'packages/plugin-icons/src/name.ts': '// Ours.\nexport {};\n',
+    });
+    expect(checkLicenses(root)).toEqual([
+      'packages/plugin-icons/src/name.ts: header must credit @iconify/utils',
+      'packages/plugin-icons/src/resolve.ts: header must credit @iconify/utils',
+    ]);
   });
 
   it('requires core/svg/url.ts to credit both Pele and @braintree/sanitize-url', () => {

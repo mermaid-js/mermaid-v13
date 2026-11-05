@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import type { InlinePatternProvider } from '@mermaid-js/core/text';
+import type { DiagramIcon } from '@mermaid-js/core';
 import { createMermaid, MermaidError, type ExtensionPlugin } from './index.ts';
 
 function api(...extensions: ExtensionPlugin[]) {
@@ -396,7 +397,7 @@ describe('the glyph slot (D293)', () => {
 
 describe('DiagramPlugin.icons (D293)', () => {
   it("reaches an extension's resource request with flowchart's shape icons", async () => {
-    const seen: (readonly string[] | undefined)[] = [];
+    const seen: (readonly DiagramIcon[] | undefined)[] = [];
     const { m, ready } = api({
       id: 'packs',
       resources: {
