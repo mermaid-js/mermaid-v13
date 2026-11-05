@@ -569,6 +569,29 @@ describe('extension resources (R-API-2, D178)', () => {
     );
   });
 
+  it("reads an extension's resources once, when it is registered", async () => {
+    let reads = 0;
+    const loaded = { done: false };
+    const resources = {
+      provides: [{ kind: 'math', name: 'tex' }] as const,
+      missing: () => (loaded.done ? [] : [{ kind: 'math', name: 'tex' } as const]),
+      load: async () => void (loaded.done = true),
+    };
+    const plugin = {
+      id: 'counted',
+      get resources() {
+        reads++;
+        return resources;
+      },
+    } as ExtensionPlugin;
+    const m = await api(plugin);
+    expect(reads).toBe(1);
+    await m.render('a', FLOW);
+    await m.preload({ math: true });
+    expect(() => m.renderSync(FLOW)).not.toThrow();
+    expect(reads).toBe(1);
+  });
+
   it('refuses resources without provides, missing() and load()', async () => {
     const m = createMermaid();
     const bad = { id: 'bad', resources: { provides: [] } } as unknown as ExtensionPlugin;

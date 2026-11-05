@@ -243,6 +243,8 @@ function need(
 export class HookRunner<El = unknown, R = unknown> {
   private readonly list: ExtensionPlugin<El, R>[] = [];
   private readonly providers = new Map<ExtensionPlugin<El, R>, readonly InlineProvider[]>();
+  /** Each extension's `resources`, checked once at registration. */
+  private readonly loaders = new Map<ExtensionPlugin<El, R>, ExtensionResources>();
 
   /** Adds an extension, or replaces the one with the same id in place (keeping its order). */
   register(plugin: ExtensionPlugin<El, R>): void {
@@ -252,13 +254,15 @@ export class HookRunner<El = unknown, R = unknown> {
     if (!Array.isArray(inline))
       throw new TypeError(`Extension "${plugin.id}": inline must be an array of providers`);
     const providers = (inline as readonly InlineProvider[]).map((p) => guarded(plugin, p));
-    checkResources(plugin, plugin.resources);
+    const resources = checkResources(plugin, plugin.resources);
     const at = this.list.findIndex((p) => p.id === plugin.id);
     if (at >= 0) {
       this.providers.delete(this.list[at]!);
+      this.loaders.delete(this.list[at]!);
       this.list[at] = plugin;
     } else this.list.push(plugin);
     this.providers.set(plugin, providers);
+    if (resources) this.loaders.set(plugin, resources);
   }
 
   /**
@@ -268,7 +272,7 @@ export class HookRunner<El = unknown, R = unknown> {
   resources(parse: ParseResult<unknown>, request: ResourceRequest): readonly ExtensionNeed[] {
     const out: ExtensionNeed[] = [];
     for (const p of this.list) {
-      const resources = checkResources(p, p.resources);
+      const resources = this.loaders.get(p);
       if (!resources) continue;
       let missing: readonly Resource[];
       try {
@@ -289,10 +293,9 @@ export class HookRunner<El = unknown, R = unknown> {
   /** Every resource of `kind` the registered extensions provide, for `preload`. */
   provided(kind: Resource['kind']): readonly ExtensionNeed[] {
     return this.list.flatMap((p) => {
-      const resources = checkResources(p, p.resources);
-      return (resources?.provides ?? [])
-        .filter((r) => r.kind === kind)
-        .map((r) => need(p, resources!, r));
+      const resources = this.loaders.get(p);
+      if (!resources) return [];
+      return resources.provides.filter((r) => r.kind === kind).map((r) => need(p, resources, r));
     });
   }
 

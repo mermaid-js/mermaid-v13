@@ -66,6 +66,27 @@ describe('@mermaid-js/plugin-math', () => {
     expect(r.warnings[0]?.message).toContain('math "tex"');
   });
 
+  it('warns when it declines a span because the engine has not loaded', async () => {
+    // Label text the parse does not hold (so prepare() did not load the engine) reaches the
+    // provider directly: the span is shown as written, but not silently.
+    const math = await freshMath();
+    const warnings: { code: string; message: string }[] = [];
+    const request = {
+      font: { family: 'sans-serif', size: 16, weight: 400 },
+      measurer: {
+        id: 'x',
+        width: () => 10,
+        metrics: () => ({ ascent: 12, descent: 4, lineHeight: 19 }),
+      },
+      metrics: { ascent: 12, descent: 4, lineHeight: 19 },
+      ex: 8,
+      warn: (w: { code: string; message: string }) => void warnings.push(w),
+    };
+    expect(math.inline![0]!.box('x^2', request)).toBeUndefined();
+    expect(warnings.map((w) => w.code)).toEqual(['MATH_NOT_RENDERED']);
+    expect(warnings[0]?.message).toContain('preload({ math: true })');
+  });
+
   it('does not load the engine for a diagram without a $$…$$ pair', async () => {
     const m = await api(await freshMath());
     const plain = await m.render('m', PLAIN);
@@ -74,6 +95,18 @@ describe('@mermaid-js/plugin-math', () => {
     expect(await m.prepare('flowchart LR\n  A["just $$ once"]')).toBeDefined();
     // Nothing above loaded it, so a diagram with math still needs prepare.
     expect(thrown(() => m.renderSync(FLOW))).toBeInstanceOf(NotLoadedError);
+  });
+
+  // The parse has no diagram-agnostic notion of a label (each type's AST and model differ), so
+  // any string the parse holds counts. Comments are not in the parse; a tooltip is.
+  it.each([
+    ['a %% comment', 'flowchart LR\n  %% $$x$$\n  A --> B', false],
+    ['a click tooltip', 'flowchart LR\n  A --> B\n  click A "https://example.com" "$$x$$"', true],
+  ])('with $$…$$ only in %s, prepare loads the engine: %s', async (_, source, loads) => {
+    const m = await api(await freshMath());
+    await m.prepare(source);
+    if (loads) expect(() => m.renderSync(FLOW)).not.toThrow();
+    else expect(() => m.renderSync(FLOW)).toThrow(NotLoadedError);
   });
 
   it('renderSync after prepare equals render()', async () => {

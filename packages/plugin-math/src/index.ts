@@ -24,6 +24,12 @@ const TEX: Resource = { kind: 'math', name: 'tex' };
 
 let engine: Engine | undefined;
 let loading: Promise<void> | undefined;
+/**
+ * Whether the last `missing()` reported the engine. The API asks `missing()` right before it
+ * draws, synchronously, so while drawing this says whether the render already knows the engine
+ * is missing (and, with `placeholders`, has warned `PLACEHOLDER` for it).
+ */
+let reported = false;
 
 function load(): Promise<void> {
   loading ??= import('./engine.ts').then(
@@ -87,8 +93,17 @@ const provider: InlineProvider = {
   open: '$$',
   close: '$$',
   box(tex, request) {
-    // Only reached unloaded when the render was asked for placeholders: the API has warned.
-    if (!engine) return undefined;
+    if (!engine) {
+      // With placeholders the API has warned about the engine already; otherwise this is label
+      // text the parse does not hold, so prepare() could not know to load the engine.
+      if (!reported)
+        request.warn({
+          code: 'MATH_NOT_RENDERED',
+          message:
+            'Math ($$…$$) is not rendered: the math engine has not loaded, so the TeX is shown as written. Call prepare() or preload({ math: true }) first.',
+        });
+      return undefined;
+    }
     try {
       return engine.typeset(tex, {
         ex: request.ex,
@@ -112,8 +127,10 @@ export const math: ExtensionPlugin = {
   inline: [provider],
   resources: {
     provides: [TEX],
-    missing: (parse, { format }) =>
-      format === 'svg' && engine === undefined && needsMath(parse) ? [TEX] : [],
+    missing(parse, { format }) {
+      reported = format === 'svg' && engine === undefined && needsMath(parse);
+      return reported ? [TEX] : [];
+    },
     load,
   },
 };
