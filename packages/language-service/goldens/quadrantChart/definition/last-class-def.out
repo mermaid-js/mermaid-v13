@@ -1,0 +1,6 @@
+@ 3:8  A:::h|ot: [0.3, 0.6]
+  -> 5:12-5:15 "hot"
+@ 4:13  classDef h|ot radius: 12, color: #f00
+  -> 5:12-5:15 "hot"
+@ 5:12  classDef |hot radius: 14
+  -> 5:12-5:15 "hot"

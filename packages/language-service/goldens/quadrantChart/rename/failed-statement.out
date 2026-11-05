@@ -4,4 +4,4 @@
   quadrantChart
     classDef warm radius: 10
     A:::warm: [0.3, 0.6]
-    B:::hot: [0.4, 2]
+    B:::warm: [0.4, 2]

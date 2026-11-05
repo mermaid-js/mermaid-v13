@@ -133,15 +133,25 @@ describe('quadrant parser: AST, symbols and spans', () => {
     expect(r.statements.map((s) => s.kind)).toEqual(['header', 'point', 'classDef']);
   });
 
-  it('records no class reference for a point that fails, so a rename leaves it alone', () => {
-    const r = parseQuadrant(H + 'P:::a: [0.1, 2]\n');
-    expect(r.diagnostics.filter((d) => d.severity === 'error')).toHaveLength(1);
-    expect(r.symbols).toEqual([]);
+  it('records a class reference wherever `:::name` lexes, a failed statement too', () => {
+    const src = H + 'P:::a: [0.1, 2]\nQ (x):::b: [0.1, 0.2]\n';
+    const r = parseQuadrant(src);
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toHaveLength(2);
+    expect(
+      r.symbols.map((s) => `${s.name}:${s.role}:${src.slice(s.range.start, s.range.end)}`)
+    ).toEqual(['a:ref:a', 'b:ref:b']);
     expect(r.statements.map((s) => s.kind)).toEqual(['header']);
-    // A bad style is a diagnostic only: the point, and its reference, stay.
-    const styled = parseQuadrant(H + 'Q:::a: [0.1, 0.2] radius: x\n');
-    expect(styled.symbols.map((s) => `${s.name}:${s.role}`)).toEqual(['a:ref']);
-    expect(styled.statements.map((s) => s.kind)).toEqual(['header', 'point']);
+  });
+
+  it('makes only the last classDef of a name, the one the model keeps, its definition', () => {
+    const src = H + 'classDef hot radius: 1\nP:::hot: [0.1, 0.1]\nclassDef hot radius: 2\n';
+    const r = parseQuadrant(src);
+    expect(r.symbols.map((s) => `${s.role}@${s.range.start}`)).toEqual([
+      `ref@${src.indexOf('hot')}`,
+      `ref@${src.indexOf(':::hot') + 3}`,
+      `def@${src.lastIndexOf('hot')}`,
+    ]);
+    expect(r.model.classes.get('hot')?.ast).toBe('c:hot');
   });
 
   it('ranges cover quotes and `]`, not the blanks a keyword takes', () => {
