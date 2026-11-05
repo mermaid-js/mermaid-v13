@@ -557,7 +557,7 @@ export const configSchema: ConfigSchema = {
     },
     "layout": {
       "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
-      "description": "Defines which layout algorithm to use for rendering the diagram.\n\nDefaults to `layered`, the layout engine built into core (DESIGN §6.1).\nThe v12 name `dagre` is still accepted and maps to `layered`. `elk` and\n`elk.<algorithm>` need the `@mermaid-js/layout-elk` plugin; without it\nthey draw with `layered` and warn `ELK_NOT_INSTALLED`.\n",
+      "description": "Defines which layout algorithm to use for rendering the diagram.\n\nDefaults to `layered`, the layout engine built into core (DESIGN §6.1).\nThe v12 name `dagre` is still accepted and maps to `layered`. `elk` and\n`elk.<algorithm>` need an ELK layout plugin; without one they draw with\n`layered` and warn `ELK_NOT_INSTALLED`.\n",
       "default": "layered",
       "x-mermaid": {
         "status": "honoured",
