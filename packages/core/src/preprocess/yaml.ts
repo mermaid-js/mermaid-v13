@@ -576,6 +576,9 @@ class Reader {
     if (indicator >= 0) this.fail('bad indentation of a mapping entry', at + indicator);
     // js-yaml: a comment ends a plain value; more of it after the comment is an error.
     let commented = body.length < rest.length;
+    // Whether `text` ends in a kept line break; asking `text.endsWith` would flatten the
+    // growing string on every line and make a long value quadratic (R-PARSE-7).
+    let broken = false;
     while (this.i < this.lines.length) {
       const line = this.lines[this.i] ?? '';
       if (line.trim() === '') {
@@ -583,6 +586,7 @@ class Reader {
         while (j < this.lines.length && (this.lines[j] ?? '').trim() === '') j++;
         if (j >= this.lines.length || leading(this.lines[j] ?? '') <= indent) break;
         text += '\n'.repeat(j - this.i);
+        broken = true;
         this.i = j;
         continue;
       }
@@ -606,7 +610,8 @@ class Reader {
         this.fail('bad indentation of a mapping entry', where);
       }
       this.printable(from, from + more.length);
-      text += (text.endsWith('\n') ? '' : ' ') + more;
+      text += (broken ? '' : ' ') + more;
+      broken = false;
       textEnd = from + more.length;
       this.i++;
     }
