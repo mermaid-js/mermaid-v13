@@ -14,4 +14,5 @@ export const LEZER_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, () => Promis
   class: () => import('./generated/class.parser.js').then((m) => m.parser),
   state: () => import('./generated/state.parser.js').then((m) => m.parser),
   er: () => import('./generated/er.parser.js').then((m) => m.parser),
+  journey: () => import('./generated/journey.parser.js').then((m) => m.parser),
 };

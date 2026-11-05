@@ -35,6 +35,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'class',
       'er',
       'flowchart',
+      'journey',
       'sequence',
       'state',
     ]);
@@ -89,6 +90,13 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out[0]).toBe('erDiagram:keyword');
       expect(out).toContain('CUSTOMER:variable');
       expect(out).toContain('ORDER:variable');
+    });
+
+    it('highlights a user journey with the journey grammar', () => {
+      const out = spans('journey\n  section Go to work\n  Make tea: 5: Me\n');
+      expect(out[0]).toBe('journey:keyword');
+      expect(out).toContain('Make tea:variable');
+      expect(out).toContain(': 5: Me:string');
     });
 
     it('finds the type after front matter, directives and comments', () => {

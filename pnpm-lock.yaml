@@ -338,6 +338,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-journey':
+        specifier: workspace:*
+        version: link:../diagram-journey
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence

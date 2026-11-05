@@ -241,6 +241,7 @@ const TYPE_DOCS: Record<string, string> = {
   class: 'classDiagram\n  class Animal\n',
   state: 'stateDiagram-v2\n  [*] --> Idle\n',
   er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
+  journey: 'journey\n  section Go to work\n  Make tea: 5: Me\n',
 };
 
 /** The highlighter chunks the page has loaded (`<id>.monarch-<hash>.js`). */

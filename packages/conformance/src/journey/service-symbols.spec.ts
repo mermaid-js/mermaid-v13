@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { detectJourney } from '@mermaid-js/diagram-journey';
 import { journeyLanguage } from '@mermaid-js/diagram-journey/language';
 import type { Range, SymbolOccurrence } from '@mermaid-js/core/parser-kit';
-import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
+import { createLanguageService } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';
 import { journeyGateCorpus } from './corpus.ts';
@@ -23,9 +22,6 @@ import { journeyV12Snapshot } from './v12.ts';
  * A name whose source text is not its name is no service occurrence, so a rename could not keep
  * it: a name written with an entity (`#lt;b#gt;`, read `&lt;b&gt;`), a tag quote v12 turned
  * (`style="c"`), or a comment or directive cut out of it. Those are counted in {@link ESCAPED}.
- *
- * The service gets the facet as an eager row, as a host bundling it would, until journey's
- * manifest has its `language` entry (#327); the last test then fails: drop the row.
  */
 
 /** v12 names written otherwise than their name in the corpus (skipped above). */
@@ -33,17 +29,14 @@ const ESCAPED = 35;
 /** Longer sources (the 200 000-character stress cases) are left to the parity specs. */
 const MAX_LENGTH = 20_000;
 
-const service = createLanguageService({
-  facets: [
-    { type: 'journey', id: 'journey', detector: (t) => detectJourney(t), facet: journeyLanguage },
-  ],
-});
+const service = createLanguageService();
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 const inside = (r: Range, outer: Range) => outer.start <= r.start && r.end <= outer.end;
 
 describe('journey definition, references and folding through the service match v12', () => {
   it('over the gate corpus', async () => {
     const oracle = await loadOracle();
+    await service.preload({ types: ['journey'] });
     const problems: string[] = [];
     let checked = 0;
     let names = 0;
@@ -123,9 +116,4 @@ describe('journey definition, references and folding through the service match v
     expect(escaped).toBe(ESCAPED);
     expect(problems).toEqual([]);
   }, 300_000);
-
-  it('runs with an eager row only while journey has no manifest `language` entry', () => {
-    const row = firstPartyFacets.find((e) => e.type === 'journey');
-    expect(row?.load, 'drop the eager row: the manifest registers the facet').toBeUndefined();
-  });
 });

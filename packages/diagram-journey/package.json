@@ -48,6 +48,7 @@
     "formats": [
       "svg"
     ],
-    "export": "journey"
+    "export": "journey",
+    "language": "./dist/language.js"
   }
 }
