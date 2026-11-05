@@ -25,7 +25,7 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 - **`useMaxWidth`/`useWidth` (T5).** Base config keys; journey re-declares them with its own status as sequence does (schema L3336-3338).
 - **Oracle descriptor (T1), closed.** The v12 journey DB is a plain module object. #285's `defaultYy` (`packages/conformance/src/jison/oracle.ts`) already passes such a DB itself (its `constructor` is `Object`), and journey's lexer actions never read `yy`, so the `journey` descriptor needs no `yy` and no change.
 
-## #310 T1 lexer gate
+## #310 T1 lexer gate (merged)
 
 - Decided in T1: v13 ends every token stream in `EOF`. When the text ends inside an accessibility state (`accTitle:`, `accDescr:` or an unclosed `accDescr {` at the end), jison's value rule matched the empty input, which set `done`, so it returned `$end` without `EOF`: the gate excludes that final v13 `EOF` (`packages/conformance/src/journey/lexer-parity.spec.ts`). **For T2:** v12's `start: journey document 'EOF'` therefore throws on such a text; T2 decides whether v13 reports it as v12 did or accepts the empty value.
 - Decided in T1: a bare `%%` line survives v12's comment strip (it needs a character after `%%`), and `[^\}]%%[^\n]*` then eats it with the line break before it, so the lines either side join (no `NEWLINE`). v13 writes it as one comment from that line break (`\r\n%%` for CRLF).
@@ -34,7 +34,9 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 
 ## #302 T2 grammar, parser, model, AST
 
-## #303 T3 layout
+- Decided by the coordinator: text ending inside an accessibility value is rejected, as v12 rejects it (accept/reject parity, P2), with a message that names no token.
+
+## #303 T3 layout (merged)
 
 - Unmet until T2 merges: the invariants run on hand-built fixtures (`src/layout/fixtures.ts`, one per corpus model plus edge cases); T2 swaps `FIXTURES` for parser output on the `.mmd` files.
 - Decided in T3: D242's margin is `max(leftMargin, 40 + 2·boxTextMargin + widest legend line + 2·boxTextMargin)`: v12's 150 whenever the legend fits (so v12 positions hold at default config), growing by the overflow only when it does not (no threshold jump), with a gap after the legend equal to its text inset.
