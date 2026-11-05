@@ -27,6 +27,7 @@ import {
   BACKSLASH,
   BACKTICK,
   COLON,
+  codePointEnd,
   COMMA,
   CR,
   DASH,
@@ -411,7 +412,7 @@ class Lexer {
       return this.emit(T.StyleText, i, j);
     }
     if (c === SEMI) return this.emit(T.Semi, i, i + 1);
-    return this.emit(Kind.Error, i, i + 1);
+    return this.emit(Kind.Error, i, codePointEnd(t, i));
   }
 
   /** The end of `\s*` from `i`. */

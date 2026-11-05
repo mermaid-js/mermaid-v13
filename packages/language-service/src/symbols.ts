@@ -23,6 +23,25 @@ export interface Occurrence extends SymbolOccurrence {
 const QUOTES = ['"`', '"', '`'];
 /** The closing quote of an opening one. */
 const closing = (quote: string) => [...quote].reverse().join('');
+/** Each of {@link QUOTES} with its closing quote. */
+const QUOTE_PAIRS = QUOTES.map((q) => [q, closing(q)] as const);
+
+/**
+ * The opening quote `name` is written in at `[start, end)` of `text`, if it is. Compares in
+ * place: this runs for every symbol of every parse (semantic tokens read it first).
+ */
+function quoteAround(text: string, start: number, end: number, name: string): string | undefined {
+  for (const [open, close] of QUOTE_PAIRS) {
+    if (end - start !== name.length + open.length + close.length) continue;
+    if (
+      text.startsWith(open, start) &&
+      text.startsWith(name, start + open.length) &&
+      text.startsWith(close, end - close.length)
+    )
+      return open;
+  }
+  return undefined;
+}
 
 export interface TextEdit {
   range: Range;
@@ -56,12 +75,12 @@ export function occurrences(ctx: DocumentContext): readonly Occurrence[] {
   for (const s of result.symbols) {
     let { start, end } = s.range;
     if (s.name === '') continue;
-    const written = text.slice(start, end);
-    const quote = QUOTES.find((q) => written === `${q}${s.name}${closing(q)}`);
+    const bare = end - start === s.name.length && text.startsWith(s.name, start);
+    const quote = bare ? undefined : quoteAround(text, start, end, s.name);
     if (quote) {
       start += quote.length;
       end -= quote.length;
-    } else if (written !== s.name) continue;
+    } else if (!bare) continue;
     const space = spaceOf(s.kind);
     const o = { name: s.name, kind: s.kind, role: s.role, range: { start, end }, space };
     out.push(quote ? { ...o, quote } : o);

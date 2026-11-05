@@ -13,7 +13,7 @@
  * probe may be in edge-text mode or past an unclosed `--`); an arrow glued to an id (`A-`,
  * `B <-`) lexes as part of the id or a tag, so it is found from the text.
  */
-import { Kind } from '@mermaid-js/core/parser-kit';
+import { inKindSet, Kind } from '@mermaid-js/core/parser-kit';
 import type {
   CompletionItem,
   CompletionKind,
@@ -28,6 +28,7 @@ import { flowchartDocs } from '../generated/docs.ts';
 import type { FlowDocument } from '../parser/ast.ts';
 import type { FlowModel } from '../parser/model.ts';
 import { destructLink } from '../parser/model.ts';
+import { READ_PAST } from '../parser/parser.ts';
 import { acceptedShape, SHAPE_GROUPS } from '../parser/shapes.ts';
 import { T } from '../parser/tokens.ts';
 import {
@@ -91,7 +92,7 @@ function statementBefore(tokens: TokenStream, at: number): Statement {
     if ((tokens.end[i] ?? 0) > at) continue;
     if (STATEMENT_END.has(k)) break;
     // As the parser reads it: `click` heads no statement, the node id after it does.
-    if (k === Kind.Comment || k === Kind.Directive || k === T.ClickKeyword) continue;
+    if (inKindSet(READ_PAST, k)) continue;
     kinds.push(k);
   }
   kinds.reverse();
