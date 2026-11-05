@@ -42,7 +42,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
+        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
       },
       "type": "object",
       "additionalProperties": true,
@@ -609,6 +609,54 @@ export const configSchema: ConfigSchema = {
             "status": "honoured",
             "since": "13.0.0",
             "reason": "30 in the redux themes (v12 `look: neo` viewBox), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "timelineRadius": {
+          "description": "Corner radius in px of the top corners of a timeline section, period or event box.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "0 in the redux themes, 5 in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "timelineLabelOffset": {
+          "description": "How far below the top of a timeline section or period box its label starts: px, or a\nmultiple of the box's padding (`padding`, `0.5 * padding`).\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`padding` in the redux themes, `0.5 * padding` in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "timelineEventLabelShift": {
+          "description": "Extra px below half the box padding at which a timeline event's label starts.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "3 in the redux themes, 0 in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "timelineScaleColors": {
+          "description": "`true`: timeline boxes take `cScale<n>` fills and `cScaleLabel<n>` text with a\n3px `cScaleInv<n>` rule under each box, and the axis and connectors are\n`cScaleLabel11` at 4px and 2px. `false`: boxes take `mainBkg` (the `borderColorArray`\nslot when `bkgColorArray` is non-empty) with a `nodeBorder` outline at `strokeWidth`\nand the theme's `dropShadow`, `nodeBorder` text, and the axis and connectors are\n`nodeBorder` at `strokeWidth`.\n",
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`false` in the redux themes, `true` in the classic and neo themes (v12 `styles.js`, D227, D257). Read literally at render time, so it has no CSS variable."
           }
         }
       }

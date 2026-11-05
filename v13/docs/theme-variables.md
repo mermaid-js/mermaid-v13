@@ -25,9 +25,9 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er |
-| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er |
-| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er, timeline |
+| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
+| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | flowchart, state, er |
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
@@ -59,7 +59,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `compositeBackground` | `--mermaid-compositeBackground` | derived | color | `background` | `background` | redux-dark, redux-dark-color | state |
 | `compositeTitleBackground` | `--mermaid-compositeTitleBackground` | derived | color | `mainBkg` | `mainBkg` | redux-color, redux, redux-dark, redux-dark-color | state |
 | `altBackground` | `--mermaid-altBackground` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | state |
-| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er |
+| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |
 | `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core, timeline |
@@ -106,11 +106,15 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `messageEndGap` | `--mermaid-messageEndGap` | token | length | | | all | sequence |
 | `labelBoxExtraHeight` | `--mermaid-labelBoxExtraHeight` | token | length | | | all | sequence |
 | `actorFooterPadding` | `--mermaid-actorFooterPadding` | token | length | | | all | sequence |
+| `timelineRadius` | `--mermaid-timelineRadius` | token | length | | | all | timeline |
+| `timelineLabelOffset` | `--mermaid-timelineLabelOffset` | token | padding | | | all | timeline |
+| `timelineEventLabelShift` | `--mermaid-timelineEventLabelShift` | token | length | | | all | timeline |
+| `timelineScaleColors` | `--mermaid-timelineScaleColors` | token | flag | | | all | timeline |
 | `rowOdd` | `--mermaid-rowOdd` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, neutral, neo, neo-dark | er |
 | `rowEven` | `--mermaid-rowEven` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | er |
 | `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
 | `erMarkerFill` | `--mermaid-erMarkerFill` | derived | color | `#ffffff` | `#ffffff` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | er |
-| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er |
+| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `gradientStop` | `--mermaid-gradientStop` | derived | color | `secondaryBorderColor` | `secondaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |

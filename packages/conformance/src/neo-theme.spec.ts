@@ -44,8 +44,15 @@ const GRADIENT = ['useGradient', 'gradientStart', 'gradientStop'] as const;
 const PENDING_GRADIENT = GRADIENT.filter((n) => !Object.hasOwn(THEME_VARIABLES, n));
 
 /** Geometry v12 takes from `look: neo`, not from a theme variable; v13 carries it as tokens. */
+/**
+ * Timeline's box variables (spec #291): v12 chose its timeline geometry and paint by a theme
+ * name with `redux`, not by `look`, so `theme: neo` drew the classic values (D227).
+ */
+const TIMELINE = Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('timeline'));
+
 const LOOK_GEOMETRY = Object.entries(THEME_VARIABLES)
   .filter(([name, d]) => (d.kind === 'length' || d.kind === 'padding') && !(name in OLD))
+  .filter(([name]) => !TIMELINE.includes(name))
   .map(([name]) => name);
 
 const LOOK_GEOMETRY_WHY =
@@ -62,6 +69,9 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
     'D152: v12 ER labels use edgeLabelBackground outside its COLOR_THEMES (redux-color, redux-dark-color)',
   border1: 'D152: v12 neo leaves it unset; no ported diagram reads it (usedBy is empty)',
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
+  ...Object.fromEntries(
+    TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])
+  ),
 };
 
 const hex = (v: unknown): string | undefined => {
@@ -122,6 +132,12 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
     expect(LOOK_GEOMETRY.length).toBeGreaterThan(0);
     for (const name of LOOK_GEOMETRY)
       expect(v13Value(neo, name), name).toEqual(v13Value(redux, name));
+  });
+
+  it('takes the classic timeline values, as v12 theme neo drew (D227)', async () => {
+    const classic = createTheme(await loadTheme('default'), { cssVariables: false });
+    expect(TIMELINE.length).toBe(4);
+    for (const name of TIMELINE) expect(v13Value(neo, name), name).toEqual(v13Value(classic, name));
   });
 
   it('gives the ER variables what v12 neo draws (D152)', () => {

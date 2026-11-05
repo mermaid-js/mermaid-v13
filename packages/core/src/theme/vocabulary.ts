@@ -123,6 +123,12 @@ export const TOKEN_VARIABLES = [
   'messageEndGap',
   'labelBoxExtraHeight',
   'actorFooterPadding',
+  // Timeline boxes (spec #291, D227): the top corner, the label offset (sections and periods)
+  // and the extra offset of event labels, and whether boxes take the `cScale` palettes.
+  'timelineRadius',
+  'timelineLabelOffset',
+  'timelineEventLabelShift',
+  'timelineScaleColors',
   // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
   'useGradient',
 ] as const;
@@ -191,9 +197,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
   tertiaryTextColor: def('tt', 'color', ['core']),
-  textColor: def('tx', 'color', ['core', 'flowchart', 'sequence', 'state', 'er']),
-  mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er']),
-  nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er']),
+  textColor: def('tx', 'color', ['core', 'flowchart', 'sequence', 'state', 'er', 'timeline']),
+  mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   nodeTextColor: def('nt', 'color', ['flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
@@ -230,7 +236,15 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   compositeTitleBackground: def('ctb', 'color', ['state']),
   altBackground: def('alb', 'color', ['state']),
   // tokens
-  strokeWidth: def('sw', 'length', ['core', 'flowchart', 'sequence', 'class', 'state', 'er']),
+  strokeWidth: def('sw', 'length', [
+    'core',
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+  ]),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),
   radius: def('r', 'length', ['core', 'flowchart', 'state']),
   fontWeight: def('fw', 'weight', ['core', 'timeline']),
@@ -280,6 +294,10 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   messageEndGap: def('meg', 'length', ['sequence']),
   labelBoxExtraHeight: def('lbx', 'length', ['sequence']),
   actorFooterPadding: def('afp', 'length', ['sequence']),
+  timelineRadius: def('tlr', 'length', ['timeline']),
+  timelineLabelOffset: def('tlo', 'padding', ['timeline']),
+  timelineEventLabelShift: def('tle', 'length', ['timeline']),
+  timelineScaleColors: def('tls', 'flag', ['timeline']),
   // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
   // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
   rowOdd: def('ro', 'color', ['er']),
@@ -288,7 +306,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   erMarkerFill: def('emf', 'color', ['er']),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
-  dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er']),
+  dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

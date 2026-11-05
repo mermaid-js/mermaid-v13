@@ -122,7 +122,7 @@ properties:
         `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` /
         `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY`
         (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0;
-        `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
+        `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black
         on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux
         themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`,
         `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers
@@ -592,6 +592,48 @@ properties:
           since: 13.0.0
           reason: >-
             30 in the redux themes (v12 `look: neo` viewBox), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect.
+      timelineRadius:
+        description: |
+          Corner radius in px of the top corners of a timeline section, period or event box.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            0 in the redux themes, 5 in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect.
+      timelineLabelOffset:
+        description: |
+          How far below the top of a timeline section or period box its label starts: px, or a
+          multiple of the box's padding (`padding`, `0.5 * padding`).
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `padding` in the redux themes, `0.5 * padding` in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect.
+      timelineEventLabelShift:
+        description: |
+          Extra px below half the box padding at which a timeline event's label starts.
+        type: [number, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            3 in the redux themes, 0 in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect.
+      timelineScaleColors:
+        description: |
+          `true`: timeline boxes take `cScale<n>` fills and `cScaleLabel<n>` text with a
+          3px `cScaleInv<n>` rule under each box, and the axis and connectors are
+          `cScaleLabel11` at 4px and 2px. `false`: boxes take `mainBkg` (the `borderColorArray`
+          slot when `bkgColorArray` is non-empty) with a `nodeBorder` outline at `strokeWidth`
+          and the theme's `dropShadow`, `nodeBorder` text, and the axis and connectors are
+          `nodeBorder` at `strokeWidth`.
+        type: [boolean, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            `false` in the redux themes, `true` in the classic and neo themes (v12 `styles.js`, D227, D257). Read literally at render time, so it has no CSS variable.
   themeCSS:
     type: string
     x-mermaid:
