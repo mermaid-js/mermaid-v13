@@ -26,6 +26,7 @@ export function modeSetting(cli: string | undefined): GateModeSetting {
 
 const GATE_IDS: readonly GateId[] = [
   'size',
+  'core-size',
   'speed',
   'ok-count',
   'stage-regression',
