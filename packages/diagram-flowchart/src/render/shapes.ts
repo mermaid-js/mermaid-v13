@@ -390,8 +390,9 @@ const S: Record<string, ShapeDef> = {
     noLabel: true,
     span: (W, H, s) => (s ? H : W) - 8,
     size: fixed(72, 8),
+    // v12 forkJoin: filled plain (`usesPlain`), stroked like the outline.
     draw: (w, W, H, a, line) =>
-      centred(w, W, H, { ...line, fill: line.stroke, filter: a.filter }, 2),
+      centred(w, W, H, { ...line, stroke: a.stroke, fill: line.stroke, filter: a.filter }, 2),
   },
   hourglass: {
     noLabel: true,
@@ -848,12 +849,15 @@ export const shapeInset = (
 export const shapeSpan = (shape: string, W: number, H: number, sideways: boolean): number =>
   Math.max(0, def(shape).span?.(W, H, sideways) ?? 0);
 /**
- * Whether the shape's inner lines take a colour, not the gradient (D182): the dots' fills
- * (v12 neo fills nothing with it), and a one-segment line, whose zero-width or zero-height
- * box a bounding-box gradient can't paint.
+ * Whether the shape's `line` paint is a colour, not the gradient (D182, D185). A drawer may
+ * fill with `line.stroke` only then (the dots, the fork bar: v12 neo fills nothing with the
+ * gradient). It also covers a one-segment line, whose zero-width or zero-height box a
+ * bounding-box gradient can't paint (the lin-doc and lin-rect rules, the div-rect and
+ * browser bars). conformance's every-shape neo tests check both.
  */
 export const usesPlain = (shape: string): boolean => PLAIN.has(shape);
-const PLAIN = /* @__PURE__ */ new Set(['f-circ', 'fr-circ', 'lin-doc', 'browser']);
+// prettier-ignore
+const PLAIN = /* @__PURE__ */ new Set(['f-circ', 'fr-circ', 'fork', 'lin-doc', 'browser', 'lin-rect', 'div-rect']);
 export const shapeHasLabel = (shape: string): boolean => def(shape).noLabel !== true;
 export const shapeFilled = (shape: string): boolean => def(shape).bare !== true;
 /** Whether the shape is drawn by its own code rather than falling back to a rectangle. */
