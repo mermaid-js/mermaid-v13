@@ -2,8 +2,12 @@
  * The one place the visual pages, browser specs and gallery turn diagram text into SVG, through
  * the public `mermaid` API (`prepare` + `renderSync`, which take per-call config). An isolated
  * `createMermaid()` instance keeps the defaults of other code on the page out of it.
+ *
+ * The math extension is registered, as an installed `@mermaid-js/plugin-math` would be: `$$…$$`
+ * renders as paths (D176), and `prepare` loads MathJax only for a diagram with math (D178).
  */
 import type { Measurer } from '@mermaid-js/core/text';
+import math from '@mermaid-js/plugin-math';
 import { createMermaid, type RenderResult } from 'mermaid';
 
 export interface RenderOptions {
@@ -26,6 +30,7 @@ export interface RenderOutput {
 }
 
 const mermaid = createMermaid();
+const registered = mermaid.registerExternalDiagrams([math]);
 
 export async function renderDiagram(
   text: string,
@@ -43,6 +48,7 @@ export async function renderDiagram(
         : { output: { cssVariables: options.cssVariables } }),
     },
   };
+  await registered;
   await mermaid.prepare(text, call);
   const result: RenderResult = mermaid.renderSync(text, call);
   return {

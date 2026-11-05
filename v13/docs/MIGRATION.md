@@ -519,6 +519,7 @@ v12 rendered `$$…$$` with KaTeX into MathML or HTML; v13 typesets it with Math
 - **Characters the TeX font lacks** (CJK or emoji in `\text{…}`) are drawn as text in the label's font, measured like the rest of the label.
 - **KaTeX-only names** v12 accepted are mapped: KaTeX's texvc names (`\Alpha`, `\Reals`, `\empty`, `\isin`, `\N`, `\cnums`, …), `\notni`, `\relax`, and `\phase` (drawn with round joins).
 - **Not supported**: the span is shown as written, with `MATH_ERROR`. `\def`, `\newcommand` and `\renewcommand` (MathJax would keep a definition from one formula to the next, so one label could change another), `\href`, `\style`, `\class`, `\unicode` and `\htmlClass` are undefined control sequences; `\tag` (an equation number) is refused. Only the TeX packages `base`, `ams`, `boldsymbol`, `cancel`, `color` and `enclose` are loaded.
+- **Class members** read as in v12: a member ending in `$` is static, so `+x $$a$$` is drawn underlined as `+x $$a$`. Put the TeX before the end (`+$$a$$ x`).
 - **Errors.** v12 drew KaTeX's error for TeX that does not parse; v13 shows the span as written, with one `MATH_ERROR` warning naming MathJax's message.
 - **No MathML.** Nothing in v13 output is MathML or HTML, so `legacyMathML` and `forceLegacyMathML` have no effect, and no KaTeX stylesheet is needed.
 - **Loading.** MathJax loads only for a diagram with a `$$…$$` pair in a label. `render()` loads it; `renderSync` needs `prepare()` or `preload({ math: true })` first, or throws `NotLoadedError` naming `math "tex"`.

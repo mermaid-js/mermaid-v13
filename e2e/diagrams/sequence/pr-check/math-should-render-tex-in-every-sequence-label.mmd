@@ -1,0 +1,14 @@
+---
+description: >-
+  Sequence diagram with $$…$$ TeX in a participant alias, messages, a note
+  and a loop label (D176): with the math plugin each span is drawn as MathJax
+  paths; without it SEQUENCE_MATH (deprecated) joins MATH_NOT_RENDERED.
+---
+sequenceDiagram
+  participant A as $$\alpha$$
+  participant B as $$\beta$$
+  loop $$k = 1 \ldots n$$
+    A->>B: $$x_k^2$$
+    B-->>A: $$\sqrt{x_k}$$
+  end
+  Note over A,B: $$\int_0^1 f(t)\,dt$$

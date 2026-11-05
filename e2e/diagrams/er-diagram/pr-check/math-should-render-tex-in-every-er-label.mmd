@@ -1,0 +1,12 @@
+---
+description: >-
+  ER diagram with $$…$$ TeX in an entity alias, an attribute comment and a
+  relationship label (D176): with the math plugin each span is drawn as
+  MathJax paths, measured into the table cells.
+---
+erDiagram
+  SAMPLE["$$x_i$$"] {
+    float mean "$$\bar{x} = \frac{1}{n}\sum x_i$$"
+    float sd "$$\sigma$$"
+  }
+  SAMPLE ||--o{ POINT : "$$x_i \in X$$"

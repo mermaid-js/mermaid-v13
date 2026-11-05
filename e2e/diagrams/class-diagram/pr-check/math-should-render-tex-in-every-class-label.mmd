@@ -1,0 +1,17 @@
+---
+description: >-
+  Class diagram with $$…$$ TeX in a class label, an annotation, members, a
+  relation label, multiplicities and a note (D176): with the math plugin each
+  span is drawn as MathJax paths on the label's baseline. A class body holds
+  no braces, so the TeX in it uses none, and a member ending in `$` is static
+  (v12), so no member ends with its TeX.
+---
+classDiagram
+  class Vector["$$\vec{v}$$"] {
+    <<$$\mathbb R^n$$>>
+    +$$\lVert v \rVert_2$$ norm
+    +dot($$\vec w$$) float
+  }
+  class Matrix
+  Matrix "$$m \times n$$" --> "$$n$$" Vector : $$A\vec{v}$$
+  note for Matrix "$$\det A \neq 0$$"

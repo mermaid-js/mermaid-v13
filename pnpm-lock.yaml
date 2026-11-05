@@ -223,6 +223,9 @@ importers:
       '@mermaid-js/plugin-interactions':
         specifier: workspace:^
         version: link:../plugin-interactions
+      '@mermaid-js/plugin-math':
+        specifier: workspace:^
+        version: link:../plugin-math
       '@shoelace-style/shoelace':
         specifier: ^2.20.1
         version: 2.20.1(@floating-ui/utils@0.2.12)(@types/react@19.3.0)

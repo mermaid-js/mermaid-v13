@@ -149,14 +149,19 @@ const corpus = (dir: string) =>
 
 describe('with the plugin enabled (R-SEC-2, R-ARCH-6)', () => {
   it('passes the allow-list and is deterministic over the math and flowchart corpus', async () => {
-    const math = await freshMath();
-    const m = await api(math);
-    const again = await api(math);
+    // Every type's math fixtures (D176), besides the katex folder and all flowcharts.
+    const math = ['class-diagram', 'state-diagram-v2', 'er-diagram', 'sequence'].flatMap((dir) =>
+      corpus(dir).filter(([, source]) => source.includes('$$'))
+    );
+    expect(math.length).toBeGreaterThanOrEqual(4);
+    const plugin = await freshMath();
+    const m = await api(plugin);
+    const again = await api(plugin);
     // A postRender hook switches the writer to its tree backing, which must agree byte for byte.
-    const tree = await api(math);
-    await tree.registerExternalDiagrams([math, { id: 'tree', postRender: () => {} }]);
+    const tree = await api(plugin);
+    await tree.registerExternalDiagrams([plugin, { id: 'tree', postRender: () => {} }]);
     let drawn = 0;
-    for (const [id, source] of [...corpus('katex'), ...corpus('flowchart')]) {
+    for (const [id, source] of [...corpus('katex'), ...corpus('flowchart'), ...math]) {
       let first: RenderResult;
       try {
         first = await m.render('m', source);
@@ -173,7 +178,7 @@ describe('with the plugin enabled (R-SEC-2, R-ARCH-6)', () => {
       expect((await tree.render('m', source)).svg, id).toBe(first.svg);
       expect(codes(first), id).not.toContain('MATH_NOT_RENDERED');
     }
-    expect(drawn).toBeGreaterThanOrEqual(4);
+    expect(drawn).toBeGreaterThanOrEqual(8);
   }, 120_000);
 });
 
