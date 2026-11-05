@@ -34,7 +34,7 @@ import {
   SPACE,
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
-import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { Hole, Probe, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from './tokens.ts';
 
 // Start conditions of timeline.jison.
@@ -44,6 +44,9 @@ const S = {
   acc_descr: 2,
   acc_descr_multiline: 3,
 } as const;
+
+/** Start condition names by number, for the probe's lexer mode (R-LANG-7). */
+const S_NAMES = ['INITIAL', 'acc_title', 'acc_descr', 'acc_descr_multiline'];
 
 /** ASCII lower case of `c`, for case-insensitive literals. */
 const lower = (c: number) => (c >= 65 && c <= 90 ? c + 32 : c);
@@ -67,9 +70,12 @@ function lexerText(text: string): string {
   return out;
 }
 
-/** Lex the timeline body `src[from…]`. `view` comes from {@link sourceView}. */
-export function lex(src: string, from: number, view: SourceView): TokenStream {
-  return new TimelineLexer(src, from, view).run();
+/**
+ * Lex the timeline body `src[from…]`. `view` comes from {@link sourceView}. With a `probe`, the
+ * start condition at the probe's offset is recorded as its mode.
+ */
+export function lex(src: string, from: number, view: SourceView, probe?: Probe): TokenStream {
+  return new TimelineLexer(src, from, view).run(probe);
 }
 
 /**
@@ -113,11 +119,31 @@ class TimelineLexer {
     this.w = new TokenWriter(((this.len - this.p) >> 3) + 8);
   }
 
-  run(): TokenStream {
+  run(probe?: Probe): TokenStream {
     const { text, n } = this;
     // v12 trimmed leading blanks (after removing comments) before lexing.
     while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
-    while (this.p < n) this.step(text.charCodeAt(this.p));
+    // Two loops, so a plain lex does no probe work per step.
+    if (probe === undefined) while (this.p < n) this.step(text.charCodeAt(this.p));
+    else {
+      while (this.p < n) {
+        const before = this.source(this.p);
+        const state = this.state;
+        const depth = this.stack.length;
+        this.step(text.charCodeAt(this.p));
+        const after = this.source(this.p);
+        if (this.stack.length > depth) {
+          // An `acc…` keyword: from its end on (the blanks it took too) the value starts.
+          probe.lexed(before, this.covered, S_NAMES[state] ?? '');
+          probe.lexed(this.covered, after, S_NAMES[this.state] ?? '');
+        } else {
+          // A one-line value holds the offset at its end too (typing there extends it).
+          const value = state === S.acc_title || state === S.acc_descr ? 1 : 0;
+          probe.lexed(before, after + value, S_NAMES[state] ?? '');
+        }
+      }
+      probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
+    }
     // At the end jison tries the rules once more on the empty input.
     this.emit(this.endKind(), this.len, this.len);
     this.trivia(this.src.length + 1);

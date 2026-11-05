@@ -24,10 +24,18 @@ import {
   LF,
   LineIndex,
   ParseState,
+  Probe,
+  ProbeCursor,
   sourceView,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
-import type { ParseOptions, ParseResult, Range, SourceView } from '@mermaid-js/core/parser-kit';
+import type {
+  ParseOptions,
+  ParseResult,
+  Range,
+  SourceView,
+  StatementSpan,
+} from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
@@ -65,6 +73,26 @@ const DIRECTION: Readonly<Record<number, TimelineDirection>> = {
  * so an empty `accDescr {}` is a statement of its own; `grammar/timeline.ebnf` names them too.
  */
 const SKIPPED = kindSet(Kind.Comment, Kind.Directive, Kind.Space);
+
+// What the parser accepts at its decision points, for the probe (R-LANG-7, D95). Constants,
+// so a parse without a probe allocates nothing for them.
+/** What may start a statement. */
+const STATEMENT_KINDS = [
+  T.Period,
+  T.Event,
+  T.Section,
+  T.Title,
+  T.AccTitle,
+  T.AccDescr,
+  T.AccDescrMultiline,
+];
+/** After `timeline` on its line: the direction words that make it `timeline LR`/`TD`. */
+const DIRECTIONS = [T.TimelineLR, T.TimelineTD];
+/**
+ * Kinds a probe's cursor follows rather than extends when the token ends at the offset:
+ * punctuation (the `}` closing `accDescr {`, a `:` that starts no event).
+ */
+const PROBE_FOLLOWS = kindSet(T.AccDescrMultilineEnd, T.Invalid);
 
 const HEADER = ['`timeline`'];
 const TEXT = ['text'];
@@ -113,6 +141,8 @@ class TimelineParser {
   private readonly view: SourceView;
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
+  /** Probe mode only (R-LANG-7). */
+  private readonly probe: Probe | undefined;
   private readonly children: TimelineStatementNode[] = [];
   private readonly sections: TimelineSection[] = [];
   private readonly periods: OpenPeriod[] = [];
@@ -125,6 +155,8 @@ class TimelineParser {
   /** A header was read; a missing one was reported once, so a later one is the header. */
   private headerSeen = false;
   private lines: LineIndex | undefined;
+  /** The open section's statement span: the statements after it nest in it (folding, D259). */
+  private openSection: StatementSpan | undefined;
 
   constructor(
     private readonly src: string,
@@ -137,12 +169,20 @@ class TimelineParser {
       pre.bodyStart,
       pre.directives.map((d) => d.range)
     );
-    this.c = new TokenCursor(lex(src, pre.bodyStart, this.view), SKIPPED);
+    if (options.probe === undefined) {
+      this.c = new TokenCursor(lex(src, pre.bodyStart, this.view), SKIPPED);
+      return;
+    }
+    const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+    if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+    // The cursor marks an offset inside a comment or directive as outside code.
+    this.c = new ProbeCursor(lex(src, pre.bodyStart, this.view, probe), probe, SKIPPED);
   }
 
   parse(): TimelineParseResult {
     this.header();
     this.document();
+    this.closeSection(this.src.length);
     const { st, pre, src } = this;
     const model: { -readonly [K in keyof TimelineModel]: TimelineModel[K] } = {
       direction: this.direction,
@@ -162,7 +202,7 @@ class TimelineParser {
       range: { start: pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.c.tokens, this.options);
+    return st.result(model, ast, this.c.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -255,15 +295,22 @@ class TimelineParser {
   private header(): void {
     this.statement(() => {
       const { c } = this;
+      c.tested(HEADERS);
       if (!HEADERS.includes(c.kind)) this.fail(HEADER, HEADER_HINT);
       this.takeHeader();
     });
   }
 
   private takeHeader(): void {
+    const { c } = this;
     this.headerSeen = true;
-    this.direction = DIRECTION[this.c.kind] ?? 'LR';
-    const j = this.c.next();
+    const plain = c.kind === T.Timeline;
+    this.direction = DIRECTION[c.kind] ?? 'LR';
+    const j = c.next();
+    // `timeline LR` is one token: on the line of a bare `timeline`, a word may still make it one.
+    const probe = this.probe;
+    if (plain && probe && !this.breaksIn(c.tokens.end[j] ?? 0, Math.min(c.start, probe.offset)))
+      c.tested(DIRECTIONS);
     this.add(
       { id: this.statementId(), type: 'Header', range: this.range(j), direction: this.direction },
       'header'
@@ -275,6 +322,7 @@ class TimelineParser {
     const { c } = this;
     for (;;) {
       const k = c.kind;
+      c.tested(this.headerSeen ? STATEMENT_KINDS : HEADERS);
       if (k === Kind.EOF) break;
       if (k === T.Eof) return;
       if (k === Kind.Newline) {
@@ -288,7 +336,7 @@ class TimelineParser {
 
   /**
    * The text ended inside an accessibility value, so jison's lexer returned no `EOF`, and no
-   * statement reported it (recovery skipped the value): report it at its keyword.
+   * statement reported it (recovery skipped the value): report it after its keyword.
    */
   private endsInValue(): void {
     const t = this.c.tokens;
@@ -299,10 +347,17 @@ class TimelineParser {
     }
   }
 
-  /** `accTitle:` or `accDescr:` with nothing after it at the very end. */
-  private emptyValueAtEnd(k: number, at: Range): void {
+  /**
+   * `accTitle:` or `accDescr:` with nothing after it at the very end. Reported where the text
+   * belongs: after the keyword and the blanks on its line (the keyword took the line breaks
+   * after them too), so a just-completed `accTitle: ` is the statement still to be written.
+   */
+  private emptyValueAtEnd(k: number, keyword: Range): void {
     this.endReported = true;
     const word = k === T.AccTitle ? 'accTitle' : 'accDescr';
+    let p = keyword.start;
+    while (p < keyword.end && !this.breaksIn(p, p + 1)) p++;
+    const at = { start: p, end: p };
     const d = this.st.diagnostics.unexpected('UNEXPECTED', at, TEXT, 'the end of the text');
     d.message = `${d.message.slice(0, -1)}; write it as \`${word}: <text>\`.`;
   }
@@ -379,13 +434,34 @@ class TimelineParser {
     this.add(node, 'event');
   }
 
-  /** `section`: v12 `addSection($1.substr(8))`. */
+  /**
+   * `section`: v12 `addSection($1.substr(8))`. Its statement span is a block holding every
+   * statement up to the next section, so it folds to the line before it (D259; the AST stays
+   * flat).
+   */
   private section(): void {
     const j = this.c.next();
     const n = this.sections.length + 1;
     const text = this.raw(j).slice(SECTION_PREFIX);
+    const range = this.range(j);
+    this.closeSection(range.start);
     this.sections.push({ ast: `sec:${n}`, text });
-    this.add({ id: `sec:${n}`, type: 'Section', range: this.range(j), text }, 'section');
+    this.children.push({ id: `sec:${n}`, type: 'Section', range, text });
+    this.openSection = this.st.beginStatement('section', range.start);
+    this.openSection.range.end = range.end;
+  }
+
+  /**
+   * End the open section's span at the last non-blank character before `at` (a comment line
+   * after its last statement stays in it; blank lines do not), never before its own token.
+   */
+  private closeSection(at: number): void {
+    const span = this.openSection;
+    if (!span) return;
+    this.openSection = undefined;
+    let end = at;
+    while (end > span.range.end && /\s/.test(this.src.charAt(end - 1))) end--;
+    this.st.endStatement(span, Math.max(end, span.range.end));
   }
 
   /** `title`: v12 `setDiagramTitle($1.substr(6))`; the last one wins. */

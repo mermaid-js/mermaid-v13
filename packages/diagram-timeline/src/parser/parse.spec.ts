@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseTimeline } from '../index.ts';
+import { parseTimeline, TimelineTokenKind } from '../index.ts';
 
 const errors = (src: string) =>
   parseTimeline(src)
@@ -144,15 +144,31 @@ describe('parseTimeline: AST', () => {
       ['Event', 'ev:1.2', ': b'],
       ['AccTitle', 'st:3', 'accTitle: x'],
     ]);
-    expect(statements.map((s) => s.kind)).toEqual([
-      'header',
-      'title',
-      'section',
+    expect(statements.map((s) => s.kind)).toEqual(['header', 'title', 'section']);
+    expect(statements[2]?.children?.map((s) => s.kind)).toEqual([
       'period',
       'event',
       'event',
       'accTitle',
     ]);
+  });
+
+  it('spans each section from `section` to the last line before the next (folding, D259)', () => {
+    const src =
+      'timeline\n  2001 : a\n  section A\n    2002 : b\n         : c\n    %% note\n\n  section B\n  section C\n    title T\n    2003 : d\n\n';
+    const { statements } = parseTimeline(src);
+    const spans = statements.map((s) => [s.kind, src.slice(s.range.start, s.range.end)]);
+    expect(spans).toEqual([
+      ['header', 'timeline'],
+      ['period', '2001 '],
+      ['event', ': a'],
+      ['section', 'section A\n    2002 : b\n         : c\n    %% note'],
+      ['section', 'section B'],
+      ['section', 'section C\n    title T\n    2003 : d'],
+    ]);
+    expect(statements[3]?.children?.map((s) => s.kind)).toEqual(['period', 'event', 'event']);
+    expect(statements[4]?.children).toBeUndefined();
+    expect(statements[5]?.children?.map((s) => s.kind)).toEqual(['title', 'period', 'event']);
   });
 
   it('gives an empty `accDescr {}` a statement, and leaves the description as it was', () => {
@@ -175,5 +191,60 @@ describe('parseTimeline: AST', () => {
     const src = 'timeline\naccDescr {\n  d\n}\n';
     const node = parseTimeline(src).ast.children[1];
     expect(node && src.slice(node.range.start, node.range.end)).toBe('accDescr {\n  d\n}');
+  });
+});
+
+describe('parseTimeline: probe (R-LANG-7, D95)', () => {
+  const K = TimelineTokenKind;
+  const STATEMENT = [
+    K.Period,
+    K.Event,
+    K.Section,
+    K.Title,
+    K.AccTitle,
+    K.AccDescr,
+    K.AccDescrMultiline,
+  ];
+  const HEADERS = [K.Timeline, K.TimelineLR, K.TimelineTD];
+  const probe = (marked: string) => {
+    const at = marked.indexOf('¦');
+    const src = marked.slice(0, at) + marked.slice(at + 1);
+    const p = parseTimeline(src, { probe: at }).probe!;
+    return { expected: p.expected, mode: p.mode, prefix: src.slice(p.prefix.start, p.prefix.end) };
+  };
+
+  it('expects the header at the start, a direction after `timeline`', () => {
+    expect(probe('¦')).toEqual({ expected: HEADERS, mode: 'INITIAL', prefix: '' });
+    expect(probe('time¦')).toMatchObject({ expected: HEADERS, prefix: 'time' });
+    expect(probe('timeline ¦').expected).toEqual([K.TimelineLR, K.TimelineTD, ...STATEMENT]);
+    expect(probe('timeline L¦')).toMatchObject({
+      expected: [K.TimelineLR, K.TimelineTD, ...STATEMENT],
+      prefix: 'L',
+    });
+    expect(probe('timeline TD\n¦').expected).toEqual(STATEMENT);
+  });
+
+  it('expects a statement at a line start, after any statement', () => {
+    expect(probe('timeline\n  ¦')).toMatchObject({ expected: STATEMENT, prefix: '' });
+    expect(probe('timeline\n  sec¦')).toMatchObject({ expected: STATEMENT, prefix: 'sec' });
+    expect(probe('timeline\n  2002 : a\n  ¦\n  2003 : b').expected).toEqual(STATEMENT);
+  });
+
+  it('names the lexer mode: inside an accessibility value nothing is code', () => {
+    expect(probe('timeline\n  accTitle: a¦').mode).toBe('acc_title');
+    expect(probe('timeline\n  accDescr: ¦').mode).toBe('acc_descr');
+    expect(probe('timeline\n  accDescr {\n  ¦\n}').mode).toBe('acc_descr_multiline');
+    expect(probe('timeline\n  %% a ¦comment\n').mode).toBe('comment');
+    expect(probe('---\ntitle: ¦x\n---\ntimeline\n').mode).toBe('frontMatter');
+  });
+
+  it('changes nothing else', () => {
+    const src = 'timeline\n  section A\n  2002 : a\n  bad : : x\n  accDescr {\n';
+    const { probe: _, ...plain } = parseTimeline(src, { keepTokens: true });
+    for (let at = 0; at <= src.length; at++) {
+      const { probe: p, ...withProbe } = parseTimeline(src, { keepTokens: true, probe: at });
+      expect(withProbe).toEqual(plain);
+      expect(p?.offset).toBe(at);
+    }
   });
 });

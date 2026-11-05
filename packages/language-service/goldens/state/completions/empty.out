@@ -6,5 +6,8 @@
   classDiagram keyword 1:1-1:1 "" -> "classDiagram"
   erDiagram keyword 1:1-1:1 "" -> "erDiagram"
   sequenceDiagram keyword 1:1-1:1 "" -> "sequenceDiagram"
+  timeline keyword 1:1-1:1 "" -> "timeline"
+  timeline LR keyword (left to right) 1:1-1:1 "" -> "timeline LR"
+  timeline TD keyword (top to bottom) 1:1-1:1 "" -> "timeline TD"
   stateDiagram-v2 keyword 1:1-1:1 "" -> "stateDiagram-v2"
   stateDiagram keyword 1:1-1:1 "" -> "stateDiagram"

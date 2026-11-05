@@ -16,7 +16,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** the AST is flat, one node per jison `statement` in source order (an event is not a child of its period); the model nests. Header is `st:1`; an event before any period (rejected) gets `st:<n>`.
 - **Choice:** `TimelineModel.titleAst` added (the in-text title's `st:<n>`; undefined for a front-matter title), as quadrant's model has.
 - **Choice:** recovery skips to the next line break, or to a token that starts on a later line: jison's `\s+` eats the line breaks after blanks, so `NEWLINE` alone would swallow the next line's error.
-- No probe yet (`ParseOptions.probe` is ignored): T6 (#318) adds it.
+- [x] No probe yet (`ParseOptions.probe` is ignored): T6 (#318) adds it. Done in #318.
 
 ### #338 T4a palettes
 - [x] v12's derivation differs per theme (forest derives as the spec says; default darkens twice and fixes slots 3–11; base and the neo/redux-dark themes darken by 25; dark and neutral use fixed lists; `cScaleInv` is `invert` in most themes and a 180° hue turn in default and forest; some `cScaleLabel` slots are special-cased). **Choice:** every theme's default values equal v12's exactly; under `primaryColor`/`secondaryColor`/`tertiaryColor` overrides the palette follows v12's rule wherever the DSL can express it (a small additive hue-rotation helper is allowed); any remaining difference is listed here.
@@ -38,6 +38,15 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - LR draws a connector for a period with no events; `disableMulticolor` does nothing when sections exist. Both kept (v12 behaviour).
 - D251 says leading periods take slot 0 "as Pele does"; Pele actually paints them neutral. The decided answer (slot 0) stands.
 - [x] Invariants run on parser-produced models (#336): `packages/conformance/src/timeline/layout-corpus.spec.ts`, the whole gate corpus, both directions, classic and redux, default and changed config.
+
+### #318 T6 language facet
+- [x] Probe wired (closes the #336 note): `ParseOptions.probe` records expected kinds and the jison start condition.
+- **Choice:** goldens run through the service's test-only row (`language-service/src/testing/unlisted-facets.ts`, the class #159 / pie #307 mechanism) and live in `packages/language-service/goldens/timeline/` from the start, instead of sequence's conformance-only goldens spec that T5 moves: the row also runs the property, round-trip, completion-validity and code-point specs. T5 deletes the row when the manifest lands; nothing moves.
+- **Choice:** a section's statement span (its fold) ends at the last non-blank character before the next `section`: comment lines after its last statement stay in it, blank lines do not.
+- **Choice:** `accTitle:`/`accDescr:` with nothing after it at the very end reports its error zero-width after the keyword and its blanks (was the keyword), so a completed `accTitle: ` is not an error inside the inserted text.
+- **Choice:** keyword completions match the prefix without regard to case (the lexer is case-insensitive); no `:` (event) or `accDescr {` item (not in the ticket's list).
+- [ ] Adapter highlighter rows (`LEZER_HIGHLIGHTERS`, `MONARCH_HIGHLIGHTERS`), adapter `gen`, `adapters-agree.spec.ts` and first-paint e2e cases: wait for the manifest's facet id (owner #315, listed in `tickets/318.md`).
+- Budget (R-LANG-4) measured only on the loaded dev machine (cycle 1.9 ms median on 50k characters); no `bench language:timeline` script.
 
 ### #311 T4 renderer
 - [ ] v12's section classes are `section-<slot − 1>`: the first section is `section--1`. **Choice:** keep v12's numbering exactly, so existing author CSS still matches (P2); MIGRATION.md says so.

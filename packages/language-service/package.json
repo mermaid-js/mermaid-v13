@@ -33,7 +33,8 @@
     "@mermaid-js/diagram-er": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",
-    "@mermaid-js/diagram-state": "workspace:*"
+    "@mermaid-js/diagram-state": "workspace:*",
+    "@mermaid-js/diagram-timeline": "workspace:*"
   },
   "peerDependenciesMeta": {
     "@mermaid-js/diagram-class": {
@@ -58,6 +59,7 @@
     "@mermaid-js/diagram-er": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",
-    "@mermaid-js/diagram-state": "workspace:*"
+    "@mermaid-js/diagram-state": "workspace:*",
+    "@mermaid-js/diagram-timeline": "workspace:*"
   }
 }
