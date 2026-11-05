@@ -14,3 +14,9 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [ ] Not yet verified in the Playwright image (docker was down for the implementer); the coordinator runs the platform specs there at close-out (T7).
 - [ ] npm hoists auto-installed peers, so a missing dependency is caught only by the pnpm variant of the smoke app. Later apps should install with pnpm where the check matters.
 - Platform cache lives in `<os tmpdir>/mermaid-v13-platform` (`MERMAID_PLATFORM_CACHE`); nothing prunes it.
+
+## T3 #224 (merged)
+
+- [ ] Not yet run in the Playwright image (close-out, T7).
+- Cold runs fetch the four bundlers from the npm registry (network needed).
+- Chunk attribution reads source maps (`e2e/platform/harness/chunks.ts`): T5 must keep source maps on in all four app configs.
