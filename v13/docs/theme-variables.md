@@ -17,8 +17,8 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `background` | `--mermaid-background` | base | color | | | all | core |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, timeline |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, timeline |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
@@ -61,7 +61,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |
-| `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core |
+| `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core, timeline |
 | `spacing1` | `--mermaid-spacing1` | token | length | | | all | core |
 | `spacing2` | `--mermaid-spacing2` | token | length | | | all | core |
 | `spacing3` | `--mermaid-spacing3` | token | length | | | all | core |
