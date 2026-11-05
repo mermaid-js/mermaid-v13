@@ -64,6 +64,7 @@ describe('packClosure', () => {
       '@mermaid-js/diagram-class',
       '@mermaid-js/diagram-er',
       '@mermaid-js/diagram-flowchart',
+      '@mermaid-js/diagram-journey',
       '@mermaid-js/diagram-sequence',
       '@mermaid-js/diagram-state',
       'mermaid',

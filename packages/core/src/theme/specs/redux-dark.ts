@@ -4,9 +4,9 @@
  * those values are pinned here rather than left to the shared dark rules.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { fillTypes } from './palettes.ts';
 import { REDUX_RULES } from './redux-rules.ts';
 import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
-import { fillTypes } from './journey-fills.ts';
 
 const theme: ThemeSpec = {
   name: 'redux-dark',
@@ -16,16 +16,7 @@ const theme: ThemeSpec = {
   rules: REDUX_RULES,
   values: {
     ...REDUX_DARK_VALUES,
-    ...fillTypes([
-      '#1f2020',
-      '#474949',
-      '#1f1f20',
-      '#474749',
-      '#1f201f',
-      '#474947',
-      '#201f20',
-      '#494749',
-    ]),
+    ...fillTypes('#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'),
   },
 };
 

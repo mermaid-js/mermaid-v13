@@ -68,4 +68,11 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 
 ## #327 T5 integration
 
+- Decided in T5: `fillType0`–`fillType7` are literal values per theme spec (`fillTypes()` in `core/src/theme/specs/palettes.ts`), equal to v12 12.2.0's resolved values (checked against the oracle by `packages/conformance/src/journey/theme.spec.ts`). `base` may carry no values or rules (R-THEME-5 spec), so its fills are the shared light/dark rules: `fillType0`/`fillType1` follow `primaryColor`/`secondaryColor` (as v12, also with custom values), `fillType2`–`7` are base's v12 literals. No other theme re-derives from a custom `primaryColor` (MIGRATION "User journey / Themes").
+- Decided in T5: `faceColor` is the shared rule `#fff8dc` (v12's `.face` fallback). `actor0`–`actor5` have no value in any theme and resolve to `currentColor`; `themes.spec.ts` lists them as author-only instead of requiring a safe literal, and the neo/neo-dark v12 comparisons list all seven as decided differences (v12 leaves them unset).
+- Decided in T5: vocabulary aliases `jf0`–`jf7`, `jfc`, `ja0`–`ja5`; the fifteen rows are built in a loop and the fills are a space-separated string, to keep the always-loaded core small.
+- Decided in T5: config defaults carry no `sectionColours`, `taskFontSize`, `taskFontFamily` or `titleFontFamily` (schema defaults removed with "default changes" reasons; `titleFontFamily` left `required`); `titleColor` keeps `''` (unset → `textColor`). `useWidth` ignored, `useMaxWidth` honoured, both re-declared. `journey` joins `SECTION_OWNERS`; the plugin carries `configDefaults`.
+- **For the maintainer: core budget.** The CDN ESM closure (`cdn-build.spec.ts`, budget 90112 B gz) went from about 89.7 KB to 90.0 KB: about 300 B is the fifteen variables and the fill values in `redux`/`redux-color`/the shared rules, the rest is esbuild re-splitting shared chunks once a new lazy entry imports a different subset of core (`limits` and `layout/layered` became their own chunks). About 100 B headroom remain; the other wave-1 ports will add rows of their own.
+- Unmet until T6 #331: the manifest has no `language` entry (no `./language` export yet); `cdn-build.spec.ts` now expects a language chunk only for packages that export one.
+
 ## #331 T6 language facet

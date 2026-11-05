@@ -19,6 +19,13 @@ const budget = JSON.parse(
   readFileSync(new URL('../size-budget.json', import.meta.url), 'utf8')
 ) as { core: { gzipBytes: number } };
 const ids = [...new Set(DETECTORS.flatMap((d) => (d.id ? [d.id] : [])))];
+/** Whether the diagram's package has a language facet entry (journey's comes with #331). */
+const hasLanguage = (id: string): boolean => {
+  const pkg = JSON.parse(
+    readFileSync(new URL(`../../diagram-${id}/package.json`, import.meta.url), 'utf8')
+  ) as { exports: Record<string, unknown> };
+  return pkg.exports['./language'] !== undefined;
+};
 let out: CdnBuild;
 
 beforeAll(async () => {
@@ -35,8 +42,9 @@ describe('the CDN build (D162)', () => {
   it('gives every first-party diagram, its ascii and language entries a stable chunk', () => {
     for (const id of ids) {
       expect(file(`chunks/diagram-${id}.mjs`), id).toBeDefined();
-      expect(file(`chunks/diagram-${id}-language.mjs`), id).toBeDefined();
+      if (hasLanguage(id)) expect(file(`chunks/diagram-${id}-language.mjs`), id).toBeDefined();
     }
+    expect(ids.filter(hasLanguage).length).toBeGreaterThan(0);
     for (const id of DETECTORS.filter((d) => d.formats?.includes('ascii')).map((d) => d.id))
       expect(file(`chunks/diagram-${id}-ascii.mjs`), id).toBeDefined();
     expect(file('chunks/core-theme-specs-dark.mjs')).toBeDefined();

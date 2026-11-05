@@ -2,6 +2,7 @@
  * `default`: v12's classic lavender theme (`theme-default.js`).
  */
 import type { ThemeSpec } from '../spec.ts';
+import { fillTypes } from './palettes.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -9,7 +10,6 @@ import {
   CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
-import { fillTypes } from './journey-fills.ts';
 
 const theme: ThemeSpec = {
   name: 'default',
@@ -40,17 +40,8 @@ const theme: ThemeSpec = {
     useGradient: false,
   },
   values: {
-    // journey section fills, v12's resolved values (journey-fills.ts)
-    ...fillTypes([
-      '#ececff',
-      '#ffffde',
-      '#ffecfe',
-      '#deffe0',
-      '#ecfffe',
-      '#ffdee0',
-      '#ffefec',
-      '#defbff',
-    ]),
+    // journey section fills, v12's resolved values (`fillTypes`)
+    ...fillTypes('#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff'),
     altBackground: '#f0f0f0', // v12 (#192)
     // sequence (v12 theme-default.js)
     actorTextColor: '#000000',

@@ -5,9 +5,8 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { REDUX_RULES } from './redux-rules.ts';
-import { TAILWIND_300, TAILWIND_400 } from './palettes.ts';
+import { TAILWIND_300, TAILWIND_400, fillTypes } from './palettes.ts';
 import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
-import { fillTypes } from './journey-fills.ts';
 
 const theme: ThemeSpec = {
   name: 'redux-dark-color',
@@ -18,17 +17,8 @@ const theme: ThemeSpec = {
   values: {
     ...REDUX_DARK_VALUES,
     erEdgeLabelBackground: '#16141f',
-    // v12's fixed 900 shades for the journey section fills (journey-fills.ts)
-    ...fillTypes([
-      '#701a75',
-      '#134e4a',
-      '#7c2d12',
-      '#581c87',
-      '#14532d',
-      '#4c1d95',
-      '#7f1d1d',
-      '#713f12',
-    ]),
+    // v12's fixed 900 shades for the journey section fills (`fillTypes`)
+    ...fillTypes('#701a75 #134e4a #7c2d12 #581c87 #14532d #4c1d95 #7f1d1d #713f12'),
   },
   palettes: {
     borderColorArray: TAILWIND_400,

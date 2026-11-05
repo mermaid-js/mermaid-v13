@@ -2,6 +2,7 @@
  * `dark`: v12 `theme-dark.js`.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { fillTypes } from './palettes.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -9,7 +10,6 @@ import {
   CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
-import { fillTypes } from './journey-fills.ts';
 
 const theme: ThemeSpec = {
   name: 'dark',
@@ -40,17 +40,8 @@ const theme: ThemeSpec = {
     useGradient: false,
   },
   values: {
-    // journey section fills, v12's resolved values (journey-fills.ts)
-    ...fillTypes([
-      '#1f2020',
-      '#474949',
-      '#1f1f20',
-      '#474749',
-      '#1f201f',
-      '#474947',
-      '#201f20',
-      '#494749',
-    ]),
+    // journey section fills, v12's resolved values (`fillTypes`)
+    ...fillTypes('#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'),
     altBackground: '#555555', // v12 (#192)
     // sequence (v12 theme-dark.js: mainContrastColor is lightgrey)
     actorTextColor: '#d3d3d3',

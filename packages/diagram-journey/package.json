@@ -32,5 +32,16 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "journey",
+    "types": [
+      "journey"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "journey"
   }
 }
