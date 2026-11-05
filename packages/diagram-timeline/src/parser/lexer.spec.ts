@@ -81,6 +81,21 @@ describe('tokens across removed spans', () => {
     expect(of(src, T.Period).map((t) => t.text)).toEqual(['2002 &quot;y&quot; ']);
   });
 
+  it('covers a dropped `;` after skipped blanks with a Space token of its own', () => {
+    // `encodeEntities` dropped the last `;` of a `style…:…#…;` line; the blank before it was
+    // skipped, so no token's range reaches it.
+    const src = 'timeline\nstyle x:#f; : ;';
+    const tokens = stream(src);
+    const covered = new Set(
+      tokens.flatMap((t) => [...Array(t.end - t.start).keys()].map((k) => t.start + k))
+    );
+    expect([...src.slice(9)].every((ch, k) => ch === ' ' || covered.has(9 + k))).toBe(true);
+    expect(tokens.filter((t) => t.kind === Kind.Space)).toEqual([
+      { kind: Kind.Space, start: 23, end: 24 },
+    ]);
+    expect(timelineTokens(src).some((t) => t.kind === Kind.Space)).toBe(false);
+  });
+
   it('writes no token for the accDescr braces the parity gate leaves out', () => {
     const src = 'timeline\naccDescr { a }\n2002 : x';
     const kinds = timelineTokens(src).map((t) => t.kind);

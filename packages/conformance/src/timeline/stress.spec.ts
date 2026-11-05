@@ -37,6 +37,12 @@ const SHAPES: [string, (n: number) => string][] = [
   ['entities', (n) => TL + '2002 : ' + '#a;'.repeat(n / 3)],
   ['lines split by comment lines', (n) => TL + '2002 : x\n%% c\n'.repeat(n / 14)],
   ['CRLF lines', (n) => TL + '2002 : x\r\n'.repeat(n / 10)],
+  // A dropped `;` and many removed spans: each token's text is read across the cut text (at 16x
+  // size, where a walk over every run per token shows).
+  [
+    'a style line, then CRLF lines split by comment lines',
+    (n) => TL + 'style a:#f;\r\n' + '2002 : x\r\n%% c\r\n'.repeat(n),
+  ],
 ];
 
 /** CPU ms of this thread (the process on Node versions without threadCpuUsage). */

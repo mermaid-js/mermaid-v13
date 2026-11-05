@@ -5,7 +5,8 @@
  *   maps each token back to its range in the source, which is never rewritten. A token that
  *   runs over a removed span is one token whose range covers it;
  * - comments and directives are trivia tokens, each with its own range, in source order; so
- *   are the `#…`, `%…` and `x%%…` comments the jison lexer skipped.
+ *   are the `#…`, `%…` and `x%%…` comments the jison lexer skipped, and a dropped `;` that no
+ *   token took (`Space`).
  *
  * jison facts it reproduces: the first rule in order wins (no longest match); the lexer is
  * case-insensitive (ASCII letters only); the `timeline` keywords end in `\b`; the first rule,
@@ -87,6 +88,8 @@ class TimelineLexer {
   private readonly holes: readonly Hole[];
   /** The next removed span to write as trivia. */
   private hole: number;
+  /** The end of the last token's source range (dropped `;` before it belong to a token). */
+  private covered = 0;
   private readonly w: TokenWriter;
   private readonly stack: number[] = [];
   private state: number = S.INITIAL;
@@ -143,12 +146,16 @@ class TimelineLexer {
     return this.offsets ? this.offsets.source(i) : i;
   }
 
-  /** Write the removed spans that start before `at` (a source offset) as trivia. */
+  /**
+   * Write the removed spans that start before `at` (a source offset) as trivia. A dropped `;`
+   * that no token's range took (one after skipped blanks) is a `Space` token of its own.
+   */
   private trivia(at: number): void {
     const hs = this.holes;
     for (let h = hs[this.hole]; h && h.start < at; h = hs[++this.hole]) {
       if (h.kind === 'comment') this.w.push(Kind.Comment, h.start, h.end);
       else if (h.kind === 'directive') this.w.push(Kind.Directive, h.start, h.end);
+      else if (h.start >= this.covered) this.w.push(Kind.Space, h.start, h.end);
     }
   }
 
@@ -167,6 +174,7 @@ class TimelineLexer {
       if (b > a) b = this.dropAt(b);
     }
     this.w.push(kind, a, b);
+    if (b > this.covered) this.covered = b;
     this.p = next;
   }
 
@@ -203,9 +211,14 @@ class TimelineLexer {
     return j;
   }
 
-  /** The end of the one character v12 saw at `q`: a CRLF is one LF to v12. */
+  /**
+   * The end of the one character v12 saw at `q`: a CRLF in the source is one LF to v12. A CR and
+   * an LF that a removed span left side by side are two: v12 turned CRs into LFs first.
+   */
   private charEnd(q: number): number {
-    return this.raw.charCodeAt(q) === CR && this.raw.charCodeAt(q + 1) === LF ? q + 2 : q + 1;
+    if (this.raw.charCodeAt(q) !== CR || this.raw.charCodeAt(q + 1) !== LF) return q + 1;
+    const o = this.offsets;
+    return !o || o.source(q + 1) === o.source(q) + 1 ? q + 2 : q + 1;
   }
 
   /** The end of one `\s` at `q`, or -1. */

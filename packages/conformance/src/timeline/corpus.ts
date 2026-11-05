@@ -76,6 +76,14 @@ export const EDGE_CASES: CorpusItem[] = [
   'timeline\r\ntitle\r\nfoo\r\nsection\r\nbar : x\r\n2002 :\r\nz',
   'timeline\r\naccDescr {\r\na\r\nb\r\n}\r\naccTitle:\r\nT\r\n2002 : x',
   'timeline TD\r\n2002 : x',
+  // A CR and an LF that a removed comment or directive left side by side: two line ends to v12.
+  TL + 'title\r%%{init:{}}%%\nfoo',
+  TL + 'title\r%% c\n\nfoo',
+  TL + 'section\r%% c\n\nfoo : x',
+  TL + '2002 :\r%% c\n\nx',
+  TL + 'accTitle:\r%% c\n\nx',
+  TL + '2002 : x\r%% c\n\n2003 : y',
+  TL + 'a\r%% c\n%%\nb',
   'timeline\r\n2002 : x\r\n%%\r\n2003 : y\r\n}%%\r\n2004 : z\r\n%%',
   'timeline\r\naccDescr\r\n{\r\nx\r\n}\r\nsection\r\n:\r\n2002 :\r\n:\r\nx',
   // An empty body, and blanks only.
@@ -104,7 +112,22 @@ export async function timelineGateCorpus(): Promise<CorpusItem[]> {
   return [
     ...all,
     ...all.map((item) => ({ id: `${item.id} (commented)`, source: commented(item.source) })),
+    ...all.map((item) => ({ id: `${item.id} (CR cut)`, source: crCut(item.source, '%% c') })),
+    ...all.map((item) => ({
+      id: `${item.id} (CR cut by a directive)`,
+      source: crCut(item.source, '%%{init: {}}%%'),
+    })),
   ];
+}
+
+/**
+ * `src` with every line break of the body written as a CR, then `removed` (a comment or a
+ * directive) and an LF on its own line. v12 turned the CR into an LF before removing it, so it
+ * saw two line ends where v13's cut text has a CR and an LF side by side.
+ */
+export function crCut(src: string, removed: string): string {
+  const head = /^---[\s\S]*?\n---[^\S\n]*\n/.exec(src)?.[0] ?? '';
+  return head + src.slice(head.length).replace(/\r?\n/g, `\r${removed}\n\n`);
 }
 
 /** The timeline corpus: the e2e fixtures and the v12 spec and syntax-page strings. */

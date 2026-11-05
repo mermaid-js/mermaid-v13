@@ -17,7 +17,7 @@ export interface TimelineToken {
 }
 
 /**
- * The significant timeline tokens of `src` (comments and directives left out), for editors
+ * The significant timeline tokens of `src` (trivia left out), for editors
  * and for the lexer-parity gate.
  */
 export function timelineTokens(src: string): TimelineToken[] {
@@ -31,7 +31,13 @@ export function timelineTokens(src: string): TimelineToken[] {
   const out: TimelineToken[] = [];
   for (let j = 0; j < stream.length; j++) {
     const kind = stream.kind[j] ?? Kind.EOF;
-    if (kind === Kind.Comment || kind === Kind.Directive || kind === Kind.EOF) continue;
+    if (
+      kind === Kind.Comment ||
+      kind === Kind.Directive ||
+      kind === Kind.Space ||
+      kind === Kind.EOF
+    )
+      continue;
     const start = stream.start[j] ?? 0;
     const end = stream.end[j] ?? 0;
     out.push({ kind, text: cook(src, start, end, view), range: { start, end } });

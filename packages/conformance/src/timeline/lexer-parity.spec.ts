@@ -31,6 +31,9 @@ import { timelineGateCorpus } from './corpus.ts';
  * Sources v12 never lexed as a timeline (`oracle.tokens` is undefined: the detector
  * `/^\s*timeline/` is case-sensitive, so `TIMELINE` is another type) are skipped.
  */
+/** The suffix of a generated variant's id. */
+const VARIANT = / \((?:commented|CR cut|CR cut by a directive)\)$/;
+
 function v13Tokens(source: string): JisonToken[] {
   const out: JisonToken[] = [];
   for (const t of timelineTokens(source)) {
@@ -61,7 +64,7 @@ describe('timeline lexer parity with mermaid@12 (jison)', () => {
         continue;
       }
       compared++;
-      if (!item.id.endsWith('(commented)')) {
+      if (!VARIANT.test(item.id)) {
         if (item.id.startsWith('e2e')) e2e++;
         if (item.id.startsWith('v12-')) specs++;
       }
@@ -85,19 +88,18 @@ describe('timeline lexer parity with mermaid@12 (jison)', () => {
     expect(
       diffs.map((d) => `${d.id} @${d.at}\n  v12 ${show(d.v12)}\n  v13 ${show(d.v13)}`)
     ).toEqual([]);
-    // The only sources v12 does not lex: commented copies of a body of two lines or fewer,
-    // where `%% cut` goes through the middle of the `timeline` header (v12 detects no
-    // timeline there). Each is lexed uncommented above.
+    // The only sources v12 does not lex (each is lexed as written above):
+    // - commented copies of a body of two lines or fewer, where `%% cut` goes through the
+    //   middle of the `timeline` header (v12 detects no timeline there);
+    // - CR-cut copies of a source with a multi-line directive, which the inserted lines break.
     const byId = new Map(items.map((item) => [item.id, item.source]));
     expect(
       skipped.filter((id) => {
-        const original = byId.get(id.replace(/ \(commented\)$/, '')) ?? '';
+        const original = byId.get(id.replace(VARIANT, '')) ?? '';
         const cut = byId.get(id) ?? '';
-        return !(
-          id.endsWith(' (commented)') &&
-          original.split('\n').length <= 2 &&
-          !/^\s*timeline/.test(cut)
-        );
+        const header = id.endsWith(' (commented)') && original.split('\n').length <= 2;
+        const directive = id.includes(' (CR cut') && /%%\{[^\n]*\n/.test(original);
+        return !((header && !/^\s*timeline/.test(cut)) || directive);
       })
     ).toEqual([]);
     expect(skipped.length).toBeLessThan(8);
