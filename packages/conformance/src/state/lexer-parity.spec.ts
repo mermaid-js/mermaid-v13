@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { JISON_NAMES, stateTokens } from '@mermaid-js/diagram-state';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
-import { loadStateLexerOracle } from './jison-lexer.ts';
-import type { JisonToken } from './jison-lexer.ts';
+import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
+import type { JisonToken } from '../jison/oracle.ts';
 
 /**
  * Lexer-parity gate (#138, parser-method §1): the v13 state lexer emits the same terminals,
@@ -144,12 +144,15 @@ function commented(src: string): string {
 
 describe('state lexer parity with mermaid v12 (jison)', () => {
   it('emits the same tokens over the e2e fixtures, the v12 spec strings and edge cases', async () => {
-    const oracle = await loadStateLexerOracle();
+    const oracle = await loadJisonLexerOracle('state');
     const items = await corpus();
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
     let compared = 0;
     for (const item of items) {
-      const v12 = await oracle.tokens(item.source);
+      const v12 = (await oracle.tokens(item.source))?.map(([n, i]): [string, string] => [
+        n === LEXICAL_ERROR ? 'ERROR' : n,
+        i,
+      ]);
       if (!v12) continue;
       compared++;
       const expected = cut(v12.map(([n, i]): JisonToken => [n, v12Image(i)]));

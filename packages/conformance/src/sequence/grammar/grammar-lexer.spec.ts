@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { sequenceGateCorpus } from '../corpus.ts';
-import { loadSequenceLexerOracle } from '../jison-lexer.ts';
+import { loadJisonLexerOracle } from '../../jison/oracle.ts';
 import { asJison, grammarTokens } from './sequence-grammar.ts';
 
 /**
@@ -11,10 +11,10 @@ import { asJison, grammarTokens } from './sequence-grammar.ts';
  */
 describe('sequence grammar lexer', () => {
   it('builds the lexer input v12 lexed', async () => {
-    const oracle = await loadSequenceLexerOracle();
+    const oracle = await loadJisonLexerOracle('sequence');
     const diffs: string[] = [];
     for (const item of await sequenceGateCorpus()) {
-      const v12 = await oracle.input(item.source);
+      const v12 = await oracle.lexedText(item.source);
       if (v12 === undefined) continue;
       const ours = grammarTokens(item.source).input.text;
       if (ours !== v12)
@@ -24,7 +24,7 @@ describe('sequence grammar lexer', () => {
   }, 120_000);
 
   it('emits the jison token stream', async () => {
-    const oracle = await loadSequenceLexerOracle();
+    const oracle = await loadJisonLexerOracle('sequence');
     const diffs: string[] = [];
     let compared = 0;
     for (const item of await sequenceGateCorpus()) {

@@ -300,6 +300,14 @@
     "source": "graph TD;A==>B;"
   },
   {
+    "id": "v12-specs/parser/flow-md-string.spec.js#1",
+    "source": "flowchart\nA[\"`The cat in **the** hat`\"]-- \"`The *bat* in the chat`\" -->B[\"The dog in the hog\"] -- \"The rat in the mat\" -->C;"
+  },
+  {
+    "id": "v12-specs/parser/flow-md-string.spec.js#2",
+    "source": "flowchart LR\nsubgraph \"One\"\n  a(\"`The **cat**\n  in the hat`\") -- \"1o\" --> b{{\"`The **dog** in the hog`\"}}\nend\nsubgraph \"`**Two**`\"\n  c(\"`The **cat**\n  in the hat`\") -- \"`1o **ipa**`\" --> d(\"The dog in the hog\")\nend"
+  },
+  {
     "id": "v12-specs/parser/flow-node-data.spec.js#1",
     "source": "flowchart TB\n      D@{ shape: rounded}"
   },
@@ -405,38 +413,42 @@
   },
   {
     "id": "v12-specs/parser/flow-node-data.spec.js#27",
-    "source": "flowchart TD\n     A & B e1@--> C & D\n        A1 e2@--> C1 & D1\n      "
+    "source": "flowchart TD\n    A[\"@A@\"] --> B[\"@for@ B@\"] & C@{ label: \"@for@ c@\"} & E{\"`@for@ E@`\"} & D((\"@for@ D@\"))\n      H1{{\"@for@ H@\"}}\n      H2{{\"`@for@ H@`\"}}\n      Q1{\"@for@ Q@\"}\n      Q2{\"`@for@ Q@`\"}\n      AS1>\"@for@ AS@\"]\n      AS2>\"`@for@ AS@`\"]\n      "
   },
   {
     "id": "v12-specs/parser/flow-node-data.spec.js#28",
-    "source": "flowchart TD\n     A & B e1@--> C & D\n        A1 e1@--> C1 & D1\n      "
+    "source": "flowchart TD\n     A & B e1@--> C & D\n        A1 e2@--> C1 & D1\n      "
   },
   {
     "id": "v12-specs/parser/flow-node-data.spec.js#29",
-    "source": "flowchart TD\n     A e1@--> B\n     C e2@--> D\n     E e3@--> F\n    e1@{ animate: true }\n    e2@{ animate: false }\n    e3@{ animate: true }\n    e3@{ animate: false }\n      "
+    "source": "flowchart TD\n     A & B e1@--> C & D\n        A1 e1@--> C1 & D1\n      "
   },
   {
     "id": "v12-specs/parser/flow-node-data.spec.js#30",
-    "source": "flowchart LR\n     A e1@--> B\n     B e2@--> C\n     B e3@--> D\n     C e4@--> E\n    e1@{ step: 1 }\n    e2@{ step: 2 }\n    e3@{ step: 2 }\n      "
+    "source": "flowchart TD\n     A e1@--> B\n     C e2@--> D\n     E e3@--> F\n    e1@{ animate: true }\n    e2@{ animate: false }\n    e3@{ animate: true }\n    e3@{ animate: false }\n      "
   },
   {
     "id": "v12-specs/parser/flow-node-data.spec.js#31",
-    "source": "flowchart LR\n     A e1@--> B\n     B e2@--> C\n    e1@{ step: 1 }\n      "
+    "source": "flowchart LR\n     A e1@--> B\n     B e2@--> C\n     B e3@--> D\n     C e4@--> E\n    e1@{ step: 1 }\n    e2@{ step: 2 }\n    e3@{ step: 2 }\n      "
   },
   {
     "id": "v12-specs/parser/flow-node-data.spec.js#32",
+    "source": "flowchart LR\n     A e1@--> B\n     B e2@--> C\n    e1@{ step: 1 }\n      "
+  },
+  {
+    "id": "v12-specs/parser/flow-node-data.spec.js#33",
     "source": "flowchart LR\n     A e1@--> B\n    e1@{ step: 1 }\n      "
   },
   {
-    "id": "v12-specs/parser/flow-node-data.spec.js#35",
+    "id": "v12-specs/parser/flow-node-data.spec.js#36",
     "source": "flowchart LR\n     A e1@--> B\n     B e2@--> C\n    e1@{ step: 0 }\n    e2@{ step: 1.5 }\n      "
   },
   {
-    "id": "v12-specs/parser/flow-node-data.spec.js#36",
+    "id": "v12-specs/parser/flow-node-data.spec.js#37",
     "source": "flowchart LR\n     A e1@--> B\n    e1@{ animate: true }\n      "
   },
   {
-    "id": "v12-specs/parser/flow-node-data.spec.js#37",
+    "id": "v12-specs/parser/flow-node-data.spec.js#38",
     "source": "flowchart TB\n       n2[\"label for n2\"] &   n4@{ label: \"label for n4\"}   & n5@{ label: \"label for n5\"} "
   },
   {
