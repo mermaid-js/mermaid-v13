@@ -560,7 +560,7 @@ class QuadrantParser {
 /**
  * Each token's source range with the quotes and `]` jison matched next to it, as the grammar's
  * `attach-next` / `attach-prev` rules count them: an opening quote counts towards the next token,
- * a closing quote or `]` towards the token right before it.
+ * a closing quote or `]` towards the token right before it (adjacent in the text v12 lexed).
  */
 function outerRanges(l: QuadrantLex): [Uint32Array, Uint32Array] {
   const { kind, start, end, length } = l.tokens;
@@ -574,7 +574,9 @@ function outerRanges(l: QuadrantLex): [Uint32Array, Uint32Array] {
     if (OPENS[k] === 1) {
       if (pending < 0) pending = start[i] ?? 0;
     } else if (CLOSES[k] === 1) {
-      if (prev >= 0 && pending < 0 && oe[prev] === start[i]) oe[prev] = end[i] ?? 0;
+      // Adjacent in the text v12 lexed: comment lines may lie between them in the source.
+      const touches = prev >= 0 && l.textEnd[prev] === l.textStart[i];
+      if (touches && pending < 0) oe[prev] = end[i] ?? 0;
       pending = -1;
     } else if (SKIPPED[k] !== 1) {
       if (pending >= 0) os[i] = pending;

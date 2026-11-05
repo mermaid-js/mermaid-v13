@@ -105,6 +105,38 @@ describe('quadrant lexer', () => {
     expect(err?.range).toEqual({ start: 18, end: 18 });
   });
 
+  it('starts a new --> at the space after a lone dash', () => {
+    const t = quadrantTokens('quadrantChart\nx-axis Low - --> High');
+    expect(t.slice(5, 8).map((x) => [JISON_NAMES[x.kind], x.text])).toEqual([
+      ['MINUS', '-'],
+      ['AXIS-TEXT-DELIMITER', ' --> '],
+      ['ALPHA', 'High'],
+    ]);
+  });
+
+  it('gives the rest of a placeholder split by an error a zero-width range', () => {
+    expect(dump('quadrantChart\nP:::#12;x').slice(2)).toEqual([
+      'ALPHA@14-15',
+      `${T.ClassMarker}@15-18`,
+      'LEXICAL_ERROR@18-19',
+      'UNICODE_TEXT@19-19',
+      'NUM@19-21',
+      'UNICODE_TEXT@21-22',
+      'ALPHA@22-23',
+      'NEWLINE@23-23',
+      'EOF@23-23',
+    ]);
+  });
+
+  it('ends the last line break before a trailing comment', () => {
+    expect(dump('quadrantChart\nquadrant-1 a\n%% c').slice(-4)).toEqual([
+      'ALPHA@25-26',
+      'NEWLINE@26-27',
+      'comment@27-31',
+      'EOF@31-31',
+    ]);
+  });
+
   // Pitfall 5: a rule that starts with a blank run and fails must not rescan the run from
   // every blank. Each case is about 1 MB; a quadratic scan would not finish in the timeout.
   it.each([

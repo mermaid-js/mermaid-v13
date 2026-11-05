@@ -1,12 +1,13 @@
 // cspell:words quadrantchart
 /**
  * The quadrant gate corpus (#300, #301): the 14 e2e fixtures, the strings harvested from v12's
- * `quadrant.jison.spec.ts` and syntax page (`corpus/quadrant-v12-specs.json`), the parser cases
- * of `corpus/quadrant-cases.json`, the style lists of `quadrantDb.spec.ts` put into point and
+ * `quadrant.jison.spec.ts` and syntax page (`corpus/quadrant-v12-specs.json`), those headed
+ * `QuadRantChart` again with a header v12 detects, the parser cases of
+ * `corpus/quadrant-cases.json`, the style lists of `quadrantDb.spec.ts` put into point and
  * classDef statements (that spec has no diagram sources), the named lexer quirks
  * ({@link QUIRKS}), hand-written lexer cases, line-separator and CRLF cases; and every one of
  * those again with comment lines added (v12 removed them before lexing, pitfall 3). The lexer
- * gate and the grammar differential run over it.
+ * gate, the grammar lexer gate and the grammar differential run over it.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -194,6 +195,14 @@ const DB_STYLES: CorpusItem[] = [
 /** Every jison rule and state edge, plus preprocessing shapes. */
 const LEXER_CASES: CorpusItem[] = [
   H + 'x-axis a ---> b\ny-axis  c  --  d',
+  // A failed `-->` at a lone dash: the space after it starts a new one (review of #300).
+  H + 'x-axis Low - --> High',
+  H + 'x-axis Low -- --> High',
+  H + 'y-axis a - -->b',
+  H + 'x-axis a -   --> b',
+  // A lexical error inside an entity placeholder, and a comment after the last line break.
+  H + 'P:::#12;x',
+  H + 'quadrant-1 a\n%% c',
   H + 'X-AXIS A\nY-Axis B\nQUADRANT-2 C\nquadrant-3 D\nQuadrant-4 E\nTITLE T',
   H + 'quadrant-5 x\nquadrant- y\nx-axisy-axis',
   H + 'accTitle : t\naccDescr:d\naccDescr {\n  two\n  lines\n}\nquadrant-1 a',
@@ -279,8 +288,17 @@ const PREPROCESS_DIFFERS = new Set(['quadrant-cases/unclosed-directive']);
 
 /** The whole gate corpus, each source also with comment lines added. */
 export async function quadrantGateCorpus(): Promise<CorpusItem[]> {
+  const base = await quadrantCorpus();
+  // The spec strings headed `QuadRantChart` again, with a header v12 detects.
+  const headed = base
+    .filter((item) => /^\s*QuadRantChart/.test(item.source))
+    .map((item) => ({
+      id: `${item.id} (header quadrantChart)`,
+      source: item.source.replace('QuadRantChart', 'quadrantChart'),
+    }));
   const all = [
-    ...(await quadrantCorpus()),
+    ...base,
+    ...headed,
     ...quadrantCases().filter((c) => !PREPROCESS_DIFFERS.has(c.id)),
     ...QUIRKS.map(({ id, source }) => ({ id: `quirk: ${id}`, source })),
     ...DB_STYLES,
@@ -294,16 +312,42 @@ export async function quadrantGateCorpus(): Promise<CorpusItem[]> {
 }
 
 /**
- * `src` with nine comment lines after every line of the body, or one through the middle of a
- * one-line body. v12 removed them before lexing, so tokens must match across them.
+ * `src` with nine comment lines after every line of the body; for a body of one or two lines,
+ * one comment line through the middle of the second line, or before a one-line body. The header
+ * line is never cut, so v12 still detects the chart. v12 removed the comment lines before
+ * lexing, so tokens must match across them.
  */
 function commented(src: string): string {
   const head = /^---[\s\S]*?\n---[^\S\n]*\n/.exec(src)?.[0] ?? '';
   const body = src.slice(head.length);
   const lines = body.split('\n');
-  if (lines.length <= 2) {
-    const mid = Math.floor(body.length / 2);
-    return head + body.slice(0, mid) + '\n%% cut\n' + body.slice(mid);
-  }
-  return head + lines.join('\n' + '  %% c\n'.repeat(9));
+  if (lines.length > 2) return head + lines.join('\n' + '  %% c\n'.repeat(9));
+  const nl = body.indexOf('\n');
+  if (nl < 0) return head + '%% cut\n' + body;
+  const mid = nl + 1 + Math.floor((body.length - nl - 1) / 2);
+  return head + body.slice(0, mid) + '\n%% cut\n' + body.slice(mid);
 }
+
+/** The ids of {@link NOT_DETECTED}, with the reason each is not compared. */
+const DETECTION_EXCLUSIONS: readonly (readonly [string, string])[] = [
+  ['v12-specs/parser/quadrant.jison.spec.ts#1', 'no header (the v12 spec expects a throw)'],
+  ...[14, 15, 17, 18, 20, 21, 23, 24, 26, 27, 29, 30, 31].map(
+    (n) =>
+      [
+        `v12-specs/parser/quadrant.jison.spec.ts#${n}`,
+        'header `QuadRantChart`: compared as `(header quadrantChart)` instead',
+      ] as const
+  ),
+];
+
+/**
+ * Sources v12 does not detect as a quadrant chart, so its lexer never ran and there is nothing
+ * to compare: v12's detector (`/^\s*quadrantChart/`) is case-sensitive, though its lexer is not.
+ * Any other source v12 does not detect fails the gate.
+ */
+export const NOT_DETECTED: ReadonlyMap<string, string> = new Map(
+  DETECTION_EXCLUSIONS.flatMap(([id, why]) => [
+    [id, why],
+    [`${id} (commented)`, why],
+  ])
+);

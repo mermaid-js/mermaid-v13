@@ -231,7 +231,10 @@ function delimiter(x: Scan, p: number): number {
   return spaces(x, j + 1);
 }
 
-/** The end of `" "*\-*` from `p`: a failed {@link delimiter} fails from anywhere before it. */
+/**
+ * The end of `" "*\-*` from `p`: a failed {@link delimiter} fails from every start before it
+ * (not at it: a new `" "*` run may start there).
+ */
 function spacesThenDashes(x: Scan, p: number): number {
   let j = spaces(x, p);
   while (j < x.n && code(x, j) === DASH) j++;
@@ -453,10 +456,11 @@ class QuadrantLexer {
   private step(p: number): number {
     for (const k of CONDITIONS[this.state] ?? []) {
       const r = RULES[k] as Rule;
-      if (r.lead && p <= (this.failedTo[k] ?? -1)) continue;
+      if (r.lead && p < (this.failedTo[k] ?? -1)) continue;
       const e = r.match(this.scan, p);
       if (e < 0) {
-        // Every later start up to the end of the same blank run sees the same text after it.
+        // Every later start before the end of the run fails the same way; at its end a new
+        // run may start (`- -->`: the space after the lone dash starts a delimiter).
         if (r.lead) this.failedTo[k] = r.lead(this.scan, p);
         continue;
       }
@@ -511,9 +515,15 @@ class QuadrantLexer {
     }
   }
 
+  /**
+   * Write `text[s, e)` with its source range. The `\n` v12 appended is no source text: a token
+   * that ends with it ends at the source's last character it took (zero-width at the end when it
+   * took only that `\n`), so it never encloses a trailing comment.
+   */
   private emit(kind: number, s: number, e: number): void {
     const start = this.sourceStart(s);
-    const end = e > s ? Math.max(start, this.sourceEnd(e - 1)) : start;
+    const last = Math.min(e, this.v12.length);
+    const end = last > s ? Math.max(start, this.sourceEnd(last - 1)) : start;
     this.trivia(start);
     this.w.push(kind, start, end);
     this.starts.push(s);

@@ -32,7 +32,10 @@ export interface V12Text {
   text: string;
   /** Length of {@link text} without the appended `\n`. */
   length: number;
-  /** Source offset where `text[i]` starts, or undefined when it is `from + i` throughout. */
+  /**
+   * Source offset where `text[i]` starts, or undefined when it is `from + i` throughout. The
+   * appended `\n`, and the characters after the first of an entity placeholder, are zero-width.
+   */
   starts: Uint32Array | undefined;
   /** Source offset where `text[i]` ends; undefined with {@link starts}. */
   ends: Uint32Array | undefined;
@@ -146,6 +149,15 @@ function appendEnd(a: Uint32Array, end: number): Uint32Array {
   return c;
 }
 
+/**
+ * A placeholder for the source character `[start, end)` (`#` or `;`): its first character takes
+ * that range and the rest are zero-width at its end, so a token that splits the placeholder
+ * (after a lexical error) never shares a range with the token before it.
+ */
+function placeholder(b: Builder, chars: string, start: number, end: number): void {
+  for (let k = 0; k < chars.length; k++) b.push(chars[k] ?? '', k === 0 ? start : end, end);
+}
+
 /** Step 3's placeholders: `#name;` → `ﬂ°name¶ß`, `#123;` → `ﬂ°°123¶ß`. */
 function withEntities(c: Chars): Chars {
   const t = c.text;
@@ -161,9 +173,9 @@ function withEntities(c: Chars): Chars {
     let digits = true;
     for (let k = i + 1; k < j; k++) digits &&= isDigit(t.charCodeAt(k));
     const open = digits ? PLACEHOLDER_OPEN + '°' : PLACEHOLDER_OPEN;
-    for (const o of open) b.push(o, c.starts[i] ?? 0, c.ends[i] ?? 0);
+    placeholder(b, open, c.starts[i] ?? 0, c.ends[i] ?? 0);
     for (let k = i + 1; k < j; k++) b.keep(c, k);
-    for (const o of PLACEHOLDER_CLOSE) b.push(o, c.starts[j] ?? 0, c.ends[j] ?? 0);
+    placeholder(b, PLACEHOLDER_CLOSE, c.starts[j] ?? 0, c.ends[j] ?? 0);
     i = j;
   }
   return b.done();
