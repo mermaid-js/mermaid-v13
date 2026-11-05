@@ -4,7 +4,7 @@ Unmet criteria, shared contracts and choices made without the maintainer, by own
 
 ## Held (blocked outside this spec)
 
-- T1 #300 waits for #285 (shared jison oracle, `feature/285_shared-jison-oracle`). T3 starts on hand-built models meanwhile.
+- [x] #285 merged into the integration branch from `feature/285_shared-jison-oracle` (PR #346, ready). T1 #300 is unblocked.
 
 ## #300 T1 lexer (from the exploration, `01-v12-quadrant.md`)
 
