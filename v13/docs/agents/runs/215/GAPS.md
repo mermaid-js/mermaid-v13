@@ -23,12 +23,12 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [M2 #245] Size default (orchestrator): build with the `#default-font/*` → `@mathjax/mathjax-tex-font` alias (677 KB gz, as MathJax's own builds do); report the size, no gate (spec "Testing Decisions"). Raised to Knut for acceptance.
 - ~~[M3 #246] (from #244) MathJax macros persist across formulas (breaks R-ARCH-6), so `\def`, `\newcommand`, `\href`, `\style`, `\class` and `\tag` are unsupported; KaTeX texvc names, `\relax` and `\phase` are mapped. MIGRATION.md must list them.~~ Closed by #246 (MIGRATION.md `### Math`). Still open, observation: with `fontFamily: courier` + `deterministic: true`, text after a math box can overlap the next box in Chromium, because the courier table is narrower than the browser's Courier (a measurer property, not the box placement).
 - [M2 #245] `loadResources` (`api.ts:295`) handles only layout, theme and diagram; extension plugins have no resources hook, so a `math` resource is never loaded. M2 adds it (check #218 doesn't already).
-- [E5 #243] Text output uses the SVG layout name and throws `NotLoadedError` when that engine isn't loaded; D179 needs ascii to always use `layered`.
+- ~~[E5 #243] Text output uses the SVG layout name and throws `NotLoadedError` when that engine isn't loaded; D179 needs ascii to always use `layered`.~~ Closed by #243: text output always lays out with `layered`, never loads another engine, one `ASCII_DROPPED` (`feature: 'layout'`).
 
 ## From E2 #240
 
 - ~~[E4 #242] `elk.radial` on a non-tree fails the render~~ Closed by #242: v12 had no behaviour to match (the name was a container id only, and such a render failed), so the engine draws with core's `layered` and the package's hook adds one `ELK_RADIAL_NOT_A_TREE`. ELK only rejects cycles in practice; several roots lay out fine.
-- [E5 #243] With `layout: elk` and the plugin, text output gets ELK's px coordinates (the engine ignores `grid`); without the plugin it gets `ELK_NOT_INSTALLED`. D179: always `layered`, one `ASCII_DROPPED`. The package has no README yet.
+- ~~[E5 #243] With `layout: elk` and the plugin, text output gets ELK's px coordinates (the engine ignores `grid`); without the plugin it gets `ELK_NOT_INSTALLED`. D179: always `layered`, one `ASCII_DROPPED`. The package has no README yet.~~ Closed by #243 (README added).
 - [T0b #238] The manifest E2 wants: `{"plugin":"layout","names":[the 9 names],"entry":"./dist/index.js"}` (`tickets/240.md`).
 
 ## From E3 #241
@@ -51,4 +51,5 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 ## From E4 #242
 
 - [#218 T4 #226 / T0b #238] A layout package can bring an extension (`LayoutLoader.extension`, used by layout-elk for `lineHops` and its warnings). `ManifestPlugin` and the `layout` manifest carry `config` but no extension, so a package activated by discovery gets neither until the manifest names an eager extension module (as `config`).
-- [E5 #243] MIGRATION.md: `ELK_ALGORITHM_IGNORED`, `ELK_RADIAL_NOT_A_TREE`, and `cycleBreakingStrategy: MODEL_ORDER` left off groups laid out with their parent (elkjs 0.12 throws there; v12 develop fails that render). The language-service schema has no fragments, so `elk` no longer completes in front matter.
+- ~~[E5 #243] MIGRATION.md: `ELK_ALGORITHM_IGNORED`, `ELK_RADIAL_NOT_A_TREE`, and `cycleBreakingStrategy: MODEL_ORDER` left off groups laid out with their parent (elkjs 0.12 throws there; v12 develop fails that render).~~ Closed by #243 (MIGRATION `### ELK`).
+- [later, from #243] The language-service schema has no fragments, so `elk` no longer completes in front matter. Not cheap: the LS checks front matter against a plugin-less render, and learning a fragment needs new public API on two packages (an LS option, a JSON-schema export of the fragment). Options in `tickets/243.md`.
