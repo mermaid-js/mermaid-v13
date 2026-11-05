@@ -24,7 +24,8 @@ import { flowchartV12Snapshot } from './v12.ts';
  */
 
 /** Subgraph ids written quoted (`subgraph "One"`, markdown strings) in the corpus that resolve (#199). */
-const QUOTED_RESOLVED = 13;
+// 15 since #285, whose harvest recovered `flow-md-string.spec.js#2` (`"One"`, "`**Two**`").
+const QUOTED_RESOLVED = 15;
 
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 const inside = (r: Range, outer: Range) => outer.start <= r.start && r.end <= outer.end;

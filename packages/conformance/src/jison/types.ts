@@ -30,8 +30,8 @@ export type HarvestMethod =
   /**
    * Runs each of `specs` (relative to `dir`; TypeScript has its types stripped) with its
    * imports stubbed and records every argument passed to `<name>.parser.parse` or
-   * `<name>.parse`, for each name in `parsers` (the names the specs give v12's jison parser). For specs
-   * that build sources in loops, `+` chains or `[…].join('\n')`, which no regex reads.
+   * `<name>.parse`, for each name in `parsers` (the names the specs give v12's jison parser).
+   * For specs that build sources in loops, `+` chains or `[…].join('\n')`, which no regex reads.
    */
   | { kind: 'run'; parsers: readonly string[]; specs: readonly string[] };
 
