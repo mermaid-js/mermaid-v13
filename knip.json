@@ -15,6 +15,10 @@
       "entry": ["src/index.ts", "src/*/index.ts", "src/cli/*.ts", "src/cli.ts"],
       "project": ["src/**/*.ts"]
     },
+    "packages/mermaid": {
+      "entry": ["src/index.ts", "src/slim.ts", "src/cli.ts", "src/cdn.ts", "src/cdn-loader.ts"],
+      "project": ["src/**/*.ts", "scripts/**/*.ts"]
+    },
     "packages/bench": {
       "entry": ["src/index.ts", "src/cli/*.ts", "src/runner/harness.ts", "src/runner/*-entry.ts"],
       "project": ["src/**/*.ts"],

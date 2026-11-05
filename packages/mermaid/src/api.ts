@@ -339,15 +339,19 @@ export function createMermaid(
   const skipped: Warning[] = [];
   let firstUse: (() => Promise<void>) | undefined;
   let ready: Promise<void> | undefined;
+  // Additions still registering (the CDN queue's pushes, T6): a draw waits for them.
+  const adding = new Set<Promise<unknown>>();
   const discovered = async (): Promise<void> => {
-    if (!firstUse) return;
-    ready ??= firstUse().catch((e: unknown) => {
-      skipped.push({
-        code: 'PLUGIN_DISCOVERY_FAILED',
-        message: `Plugin discovery failed: ${e instanceof Error ? e.message : String(e)}`,
+    if (firstUse) {
+      ready ??= firstUse().catch((e: unknown) => {
+        skipped.push({
+          code: 'PLUGIN_DISCOVERY_FAILED',
+          message: `Plugin discovery failed: ${e instanceof Error ? e.message : String(e)}`,
+        });
       });
-    });
-    await ready;
+      await ready;
+    }
+    while (adding.size > 0) await Promise.all(adding);
   };
   let site: Snapshot = snapshot();
   let parseErrorHandler: ParseErrorHandler | undefined;
@@ -478,7 +482,7 @@ export function createMermaid(
   }
 
   async function prepareWith(text: string, s: Snapshot, format?: string): Promise<Analysis> {
-    if (firstUse) await discovered();
+    if (firstUse || adding.size > 0) await discovered();
     const ascii = checkFormat(text, s, format) === 'ascii';
     let analysis = cache.get(text, s);
     if (!analysis) {
@@ -740,7 +744,7 @@ export function createMermaid(
   ): Promise<ParseResult12 | false>;
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12>;
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12 | false> {
-    if (firstUse) await discovered();
+    if (firstUse || adding.size > 0) await discovered();
     const s = site;
     try {
       const f = detectSupported(text, s, false);
@@ -787,7 +791,7 @@ export function createMermaid(
   }
 
   async function preload(req: PreloadRequest): Promise<void> {
-    if (firstUse) await discovered();
+    if (firstUse || adding.size > 0) await discovered();
     const tasks: Promise<unknown>[] = [];
     for (const t of req.types ?? []) {
       tasks.push(
@@ -851,12 +855,18 @@ export function createMermaid(
     }
   }
 
-  async function addDiscovered(list: readonly DiscoveredPlugin[]): Promise<readonly Warning[]> {
+  function addDiscovered(list: readonly DiscoveredPlugin[]): Promise<readonly Warning[]> {
     cache.clear();
-    const warnings = await registry.registerDiscovered(list);
-    rebuildHooks();
-    skipped.push(...warnings);
-    return warnings;
+    const pending = registry.registerDiscovered(list).then((warnings) => {
+      rebuildHooks();
+      skipped.push(...warnings);
+      return warnings;
+    });
+    const tracked: Promise<unknown> = pending
+      .catch(() => undefined)
+      .finally(() => adding.delete(tracked));
+    adding.add(tracked);
+    return pending;
   }
 
   function registerLayoutLoaders(loaders: readonly LayoutLoader[]): void {

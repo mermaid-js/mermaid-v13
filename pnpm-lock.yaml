@@ -506,6 +506,13 @@ importers:
       '@mermaid-js/diagram-state':
         specifier: workspace:*
         version: link:../diagram-state
+    devDependencies:
+      esbuild:
+        specifier: ^0.25.12
+        version: 0.25.12
+      tsx:
+        specifier: ^4.20.6
+        version: 4.20.6
 
   packages/plugin-interactions:
     devDependencies:
