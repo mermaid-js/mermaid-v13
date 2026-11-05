@@ -124,9 +124,12 @@ function readLayout(m: Record<string, unknown>): LayoutManifest {
   const names = m.names;
   if (!Array.isArray(names) || names.length === 0)
     fail('"names" of a layout must be a non-empty array');
-  for (const n of names as unknown[])
+  for (const n of names as unknown[]) {
     if (typeof n !== 'string' || !RE_LAYOUT.test(n))
       fail(`layout name ${JSON.stringify(n)} is not a name`);
+    // Installing a layout package changes no default (D127, D171).
+    if (n === 'layered' || n === 'dagre') fail(`layout name "${n}" is built in`);
+  }
   const entry = optionalString(m, 'entry');
   if (entry === undefined) fail('a layout needs an "entry"');
   for (const key of ['detector', 'formats', 'ascii'])

@@ -99,15 +99,22 @@ describe('config fragments (D153)', () => {
     await expect(reg({ id: 'f', keys: { a: 1 } })).rejects.toThrow(/bad key tree at "a"/);
     const proto = { id: 'f', keys: {}, aliases: [{ from: 'look', to: '__proto__.x' }] };
     await expect(reg(proto)).rejects.toThrow(/alias "to" must be a dotted key path/);
-    // A secure key stays the integrator's, aliased or not.
-    const m = createMermaid();
-    await m.registerExternalDiagrams([
-      fixture({ id: 'f', keys: {}, aliases: [{ from: 'fixtureLevel', to: 'securityLevel' }] }),
-    ]);
-    const r = await m.render('a', `---\nconfig:\n  fixtureLevel: loose\n---\n${FLOW}`);
-    expect(r.warnings).toContainEqual(
-      expect.objectContaining({ code: 'CONFIG_SECURE_KEY', path: 'securityLevel' })
+    // A secure or integrator-only key is never aliased, from or to.
+    for (const [from, to] of [
+      ['fixtureLevel', 'securityLevel'],
+      ['securityLevel', 'fixture.level'],
+      ['secure.x', 'fixture.level'],
+    ])
+      await expect(reg({ id: 'f', keys: {}, aliases: [{ from, to }] })).rejects.toThrow(
+        /alias of "securityLevel"|alias of "secure"/
+      );
+    // Core's own keys and defaults stay core's.
+    await expect(reg({ id: 'f', keys: { flowchart: 'open' } })).rejects.toThrow(
+      /"flowchart" is a core config key/
     );
+    await expect(
+      reg({ id: 'f', keys: { mine: 0 }, defaults: { securityLevel: 'loose' } })
+    ).rejects.toThrow(/default "securityLevel" is not one of its keys/);
   });
 
   it('reaches a layout engine through its ctx; a loader brings its fragment', async () => {
@@ -203,6 +210,15 @@ describe('layout manifests (D177, DESIGN §12.1)', () => {
     for (const name of ['a', 'b'])
       await n.render('x', `---\nconfig:\n  layout: ${name}\n---\n${FLOW}`);
     expect(names).toEqual(['one', 'one']);
+  });
+
+  it('refuses a layout manifest that claims a built-in name (D127, D171)', async () => {
+    for (const name of ['layered', 'dagre']) {
+      const { def } = gridPackage(['grid', name]);
+      await expect(createMermaid().registerExternalDiagrams([def])).rejects.toThrow(
+        `layout name "${name}" is built in`
+      );
+    }
   });
 
   it('rejects a layout manifest without its fragment, or a name the entry lacks', async () => {

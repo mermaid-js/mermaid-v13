@@ -4,7 +4,12 @@
  * fragments of the registered plugins to the validator, so their keys are known only while
  * the plugin is registered. Core never names a plugin: the fragment carries everything.
  */
+import { KEY_TREE } from './generated/keys.ts';
 import type { KeyTree } from './keys.ts';
+import { INTEGRATOR_ONLY_KEYS } from './secure.ts';
+
+const CORE_KEYS: ReadonlySet<string> = new Set(Object.keys(KEY_TREE as object));
+const SECURE: ReadonlySet<string> = new Set(INTEGRATOR_ONLY_KEYS);
 
 /**
  * A legacy key that maps to one of the plugin's keys. In each config source (`initialize()`,
@@ -74,8 +79,14 @@ export function checkFragment(
   const id = value.id;
   if (!isObject(value.keys)) throw new TypeError(`Config fragment "${id}": keys must be an object`);
   checkTree(value.keys, '', id);
+  for (const key of Object.keys(value.keys))
+    if (CORE_KEYS.has(key))
+      throw new TypeError(`Config fragment "${id}": "${key}" is a core config key`);
   if (value.defaults !== undefined && !isObject(value.defaults))
     throw new TypeError(`Config fragment "${id}": defaults must be an object`);
+  for (const key of Object.keys(value.defaults ?? {}))
+    if (!Object.hasOwn(value.keys, key))
+      throw new TypeError(`Config fragment "${id}": default "${key}" is not one of its keys`);
   if (value.aliases !== undefined) {
     if (!Array.isArray(value.aliases))
       throw new TypeError(`Config fragment "${id}": aliases must be an array`);
@@ -83,6 +94,13 @@ export function checkFragment(
       if (!isObject(a)) throw new TypeError(`Config fragment "${id}": an alias must be an object`);
       checkPath(a.from, '"from"', id);
       checkPath(a.to, '"to"', id);
+      for (const path of [a.from, a.to] as string[]) {
+        const head = path.split('.')[0]!;
+        if (SECURE.has(head))
+          throw new TypeError(
+            `Config fragment "${id}": no alias of "${head}", the integrator's key`
+          );
+      }
     }
   }
   if (value.themeVariables !== undefined) {
