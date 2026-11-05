@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { Kind } from '@mermaid-js/core/parser-kit';
 import { JISON_NAMES, lexQuadrant } from '@mermaid-js/diagram-quadrant';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
@@ -15,14 +16,17 @@ import type { JisonToken } from '../jison/oracle.ts';
  * lexed (`loadJisonLexerOracle('quadrant')`).
  *
  * Corpus: the 14 e2e fixtures, the strings harvested from v12's `quadrant.jison.spec.ts` and
- * syntax page (`corpus/quadrant-v12-specs.json`), the style lists of `quadrantDb.spec.ts` put
+ * syntax page (`corpus/quadrant-v12-specs.json`), those headed `QuadRantChart` again with a
+ * header v12 detects, the style lists of `quadrantDb.spec.ts` put
  * into point and classDef statements (that spec has no diagram sources), the named quirk cases
  * ({@link QUIRKS}), hand-written lexer cases, line-separator and CRLF cases; and every one of
  * those again with comment lines added (v12 removed them before lexing, pitfall 3).
  *
  * Images are compared as v12's lexer matched them, entity placeholders decoded, including the
  * `\n` v12 appended (v13 lexes it too; `quadrantTokens` clips it off for consumers). The text
- * v13 rebuilt is also checked against the exact text the oracle saw.
+ * v13 rebuilt is also checked against the exact text the oracle saw, and every source is
+ * compared but the ones listed in {@link NOT_DETECTED}. A separate check holds every token's
+ * source range to the contract ({@link rangeViolations}).
  *
  * Exclusions (v13 tokens with no jison terminal, left out of the comparison):
  * - comments and directives v12 removed before lexing, and the `%%` comments jison's rules
@@ -30,9 +34,8 @@ import type { JisonToken } from '../jison/oracle.ts';
  * - the openers and closers jison matches without returning a token: `"`, the quote-backtick pair
  *   opening a markdown string and the backtick-quote pair closing it,
  *   `:::`, `accDescr {` and its `}`, the `,` between coordinates and the closing `]`;
- * - sources v12 does not detect as a quadrant chart (its detector is case-sensitive, so the
- *   spec strings headed `QuadRantChart`, and the header-less `quadrant-1 do`): v12 never ran
- *   the lexer on them, so there is nothing to compare.
+ * - the sources listed in {@link NOT_DETECTED}, which v12 does not detect as a quadrant chart,
+ *   so it never ran the lexer on them.
  * After a lexical error jison stops, so both streams are cut at the first `LEXICAL_ERROR`; v13
  * writes an error token and carries on (for recovery). Empty-image tokens (`EOF`, `STR ""` at an
  * unclosed string, an empty `title_value`) are emitted by v13 too and compared as they are.
@@ -234,6 +237,14 @@ const DB_STYLES: CorpusItem[] = [
 /** Every jison rule and state edge, plus preprocessing shapes. */
 const LEXER_CASES: CorpusItem[] = [
   H + 'x-axis a ---> b\ny-axis  c  --  d',
+  // A failed `-->` at a lone dash: the space after it starts a new one (review of #300).
+  H + 'x-axis Low - --> High',
+  H + 'x-axis Low -- --> High',
+  H + 'y-axis a - -->b',
+  H + 'x-axis a -   --> b',
+  // A lexical error inside an entity placeholder, and a comment after the last line break.
+  H + 'P:::#12;x',
+  H + 'quadrant-1 a\n%% c',
   H + 'X-AXIS A\nY-Axis B\nQUADRANT-2 C\nquadrant-3 D\nQuadrant-4 E\nTITLE T',
   H + 'quadrant-5 x\nquadrant- y\nx-axisy-axis',
   H + 'accTitle : t\naccDescr:d\naccDescr {\n  two\n  lines\n}\nquadrant-1 a',
@@ -300,9 +311,17 @@ async function corpus(): Promise<CorpusItem[]> {
   const specs = JSON.parse(
     readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/quadrant-v12-specs.json'), 'utf8')
   ) as CorpusItem[];
+  // The spec strings headed `QuadRantChart` again, with a header v12 detects.
+  const headed = specs
+    .filter((item) => /^\s*QuadRantChart/.test(item.source))
+    .map((item) => ({
+      id: `${item.id} (header quadrantChart)`,
+      source: item.source.replace('QuadRantChart', 'quadrantChart'),
+    }));
   const all = [
     ...items,
     ...specs,
+    ...headed,
     ...QUIRKS.map(({ id, source }) => ({ id: `quirk: ${id}`, source })),
     ...DB_STYLES,
     ...LEXER_CASES,
@@ -315,19 +334,45 @@ async function corpus(): Promise<CorpusItem[]> {
 }
 
 /**
- * `src` with nine comment lines after every line of the body, or one through the middle of a
- * one-line body. v12 removed them before lexing, so tokens must match across them.
+ * `src` with nine comment lines after every line of the body; for a body of one or two lines,
+ * one comment line through the middle of the second line, or before a one-line body. The header
+ * line is never cut, so v12 still detects the chart. v12 removed the comment lines before
+ * lexing, so tokens must match across them.
  */
 function commented(src: string): string {
   const head = /^---[\s\S]*?\n---[^\S\n]*\n/.exec(src)?.[0] ?? '';
   const body = src.slice(head.length);
   const lines = body.split('\n');
-  if (lines.length <= 2) {
-    const mid = Math.floor(body.length / 2);
-    return head + body.slice(0, mid) + '\n%% cut\n' + body.slice(mid);
-  }
-  return head + lines.join('\n' + '  %% c\n'.repeat(9));
+  if (lines.length > 2) return head + lines.join('\n' + '  %% c\n'.repeat(9));
+  const nl = body.indexOf('\n');
+  if (nl < 0) return head + '%% cut\n' + body;
+  const mid = nl + 1 + Math.floor((body.length - nl - 1) / 2);
+  return head + body.slice(0, mid) + '\n%% cut\n' + body.slice(mid);
 }
+
+/** The ids of {@link NOT_DETECTED}, with the reason each is not compared. */
+const DETECTION_EXCLUSIONS: readonly (readonly [string, string])[] = [
+  ['v12-specs/parser/quadrant.jison.spec.ts#1', 'no header (the v12 spec expects a throw)'],
+  ...[14, 15, 17, 18, 20, 21, 23, 24, 26, 27, 29, 30, 31].map(
+    (n) =>
+      [
+        `v12-specs/parser/quadrant.jison.spec.ts#${n}`,
+        'header `QuadRantChart`: compared as `(header quadrantChart)` instead',
+      ] as const
+  ),
+];
+
+/**
+ * Sources v12 does not detect as a quadrant chart, so its lexer never ran and there is nothing
+ * to compare: v12's detector (`/^\s*quadrantChart/`) is case-sensitive, though its lexer is not.
+ * Any other source v12 does not detect fails the gate.
+ */
+const NOT_DETECTED: ReadonlyMap<string, string> = new Map(
+  DETECTION_EXCLUSIONS.flatMap(([id, why]) => [
+    [id, why],
+    [`${id} (commented)`, why],
+  ])
+);
 
 const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
 
@@ -342,11 +387,15 @@ describe('quadrant lexer parity with mermaid@12 (jison)', () => {
     const oracle = await loadJisonLexerOracle('quadrant');
     const items = await corpus();
     const diffs: string[] = [];
+    const undetected: string[] = [];
     let compared = 0;
     let e2e = 0;
     for (const item of items) {
       const v12 = await oracle.tokens(item.source, { keepAppendedNewline: true });
-      if (!v12) continue;
+      if (!v12) {
+        undetected.push(item.id);
+        continue;
+      }
       compared++;
       if (item.id.startsWith('e2e/') && !item.id.endsWith('(commented)')) e2e++;
       const input = await oracle.lexedText(item.source);
@@ -365,7 +414,9 @@ describe('quadrant lexer parity with mermaid@12 (jison)', () => {
     process.stdout.write(`quadrant lexer parity: ${compared} of ${items.length} sources lexed\n`);
     // Every e2e fixture reaches the quadrant lexer.
     expect(e2e).toBe(14);
-    expect(compared).toBeGreaterThan(270);
+    // Every source is compared, but the listed ones v12 does not detect.
+    expect(undetected.sort()).toEqual([...NOT_DETECTED.keys()].sort());
+    expect(compared).toBe(items.length - NOT_DETECTED.size);
     expect(diffs).toEqual([]);
   }, 120_000);
 
@@ -379,6 +430,14 @@ describe('quadrant lexer parity with mermaid@12 (jison)', () => {
     expect(contains(v12, has), show(v12)).toBe(true);
     expect(v13Tokens(source)).toEqual(v12);
   });
+
+  it('maps every token to a consistent source range', async () => {
+    const bad: string[] = [];
+    for (const item of await corpus()) {
+      for (const v of rangeViolations(item.source)) bad.push(`${item.id}: ${v}`);
+    }
+    expect(bad).toEqual([]);
+  }, 60_000);
 
   it('fires every reachable jison rule over the corpus', async () => {
     const fired = new Set<number>();
@@ -395,3 +454,87 @@ describe('quadrant lexer parity with mermaid@12 (jison)', () => {
  * on for recovery.
  */
 const UNREACHABLE = [41];
+
+/**
+ * Where the source ranges of `src`'s tokens break the stream's contract (empty when none):
+ * - each character of the text v12 lexed has the range of the source it stands for: one source
+ *   character (`'` for a converted tag quote, `ﬂ` for an entity's `#`, `¶` for its `;`), a
+ *   CRLF read as LF, or zero-width at the end of the one before (the rest of an entity
+ *   placeholder, and the `\n` v12 appended), in source order;
+ * - each token of that text (named or not) spans exactly the source of its characters, so the
+ *   source at its range re-lexes to its image, character for character;
+ * - tokens are in source order and those of v12's text do not overlap; a removed span (trivia)
+ *   lies between them, or inside the token right before it (a string over a comment line);
+ * - every source character after the leading blanks v12 trimmed is in a token, but the `;`
+ *   v12 dropped from `classDef` lines.
+ */
+/** One source character read as another: an entity's `#` and `;`, a tag quote, a lone CR. */
+const READ_AS: ReadonlyMap<string, string> = new Map([
+  ['#', 'ﬂ'],
+  [';', '¶'],
+  ['"', "'"],
+  ['\r', '\n'],
+]);
+
+function rangeViolations(src: string): string[] {
+  const l = lexQuadrant(src);
+  const v = l.v12;
+  const t = l.tokens;
+  const out: string[] = [];
+  // The appended `\n` is zero-width at the end of the source.
+  const at = (i: number) =>
+    i >= v.length ? src.length : v.starts ? (v.starts[i] ?? 0) : v.from + i;
+  const to = (i: number) =>
+    i >= v.length ? src.length : v.ends ? (v.ends[i] ?? 0) : v.from + i + 1;
+  for (let i = 0; i < v.text.length; i++) {
+    const a = at(i);
+    const b = to(i);
+    const c = v.text[i] ?? '';
+    const prevEnd = i > 0 ? to(i - 1) : 0;
+    let ok = a <= b && b <= src.length && (i === 0 || a >= prevEnd);
+    if (b === a + 1) {
+      const s = src[a] ?? '';
+      ok &&= s === c || READ_AS.get(s) === c;
+    } else if (b === a + 2) ok &&= src.slice(a, b) === '\r\n' && c === '\n';
+    else if (b === a) ok &&= i >= v.length ? c === '\n' : '°ß'.includes(c) && a === prevEnd;
+    else ok = false;
+    if (!ok) out.push(`char ${i} ${JSON.stringify(c)} at ${a}-${b}`);
+  }
+  const covered = new Uint8Array(src.length);
+  let lastStart = 0;
+  let prev = -1;
+  for (let j = 0; j < t.length - 1; j++) {
+    const start = t.start[j] ?? 0;
+    const end = t.end[j] ?? 0;
+    const ts = l.textStart[j] ?? -1;
+    const te = l.textEnd[j] ?? -1;
+    const name = JISON_NAMES[t.kind[j] ?? -1] ?? String(t.kind[j]);
+    const where = `${name}@${start}-${end}`;
+    if (start > end || end > src.length || start < lastStart) out.push(`${where} out of order`);
+    lastStart = start;
+    if (ts < 0) {
+      const kind = t.kind[j];
+      if (kind !== Kind.Comment && kind !== Kind.Directive) out.push(`${where} has no text`);
+      const before = prev < 0 ? 0 : (t.end[prev] ?? 0);
+      const inside = prev >= 0 && (t.start[prev] ?? 0) <= start && end <= before;
+      if (start < before && !inside) out.push(`${where} overlaps the token before`);
+      covered.fill(1, start, end);
+      continue;
+    }
+    const last = Math.min(te, v.length) - 1;
+    const wantStart = ts < v.length ? at(ts) : src.length;
+    const wantEnd = last >= ts ? Math.max(wantStart, to(last)) : wantStart;
+    if (start !== wantStart || end !== wantEnd)
+      out.push(`${where}, its text is at ${wantStart}-${wantEnd}`);
+    if (prev >= 0 && start < (t.end[prev] ?? 0)) out.push(`${where} overlaps the token before`);
+    covered.fill(1, start, end);
+    prev = j;
+  }
+  const first = l.textStart.findIndex((s) => s >= 0);
+  const from = first < 0 ? src.length : (t.start[first] ?? 0);
+  for (let i = from; i < src.length; i++) {
+    if (!covered[i] && src[i] !== ';')
+      out.push(`source ${i} ${JSON.stringify(src[i])} in no token`);
+  }
+  return out;
+}
