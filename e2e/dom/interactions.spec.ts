@@ -94,10 +94,10 @@ async function setUp(page: Page): Promise<void> {
   // The test diagram is `width="100%"`: keep it small enough to fit the viewport.
   await page.addStyleTag({ content: '#d { width: 300px; }' });
   await page.evaluate(async () => {
-    await window.mermaid.registerExternalDiagrams([
-      window.menuDiagram as never,
-      window.mermaidInteractions,
-    ]);
+    await window.mermaid.registerExternalDiagrams(
+      [window.menuDiagram as never, window.mermaidInteractions],
+      { replace: true }
+    );
   });
 }
 

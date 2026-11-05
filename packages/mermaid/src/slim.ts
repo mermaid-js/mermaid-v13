@@ -43,7 +43,9 @@ export function createMermaid(options: SlimOptions = {}): Mermaid {
       );
     given.set(plugin.id, plugin);
   }
+  // The collision rules (D166) see every first-party id and type, loadable or not.
   return createInstance(
-    DETECTORS.map((e) => row(e, e.id === undefined ? undefined : given.get(e.id)))
+    DETECTORS.map((e) => row(e, e.id === undefined ? undefined : given.get(e.id))),
+    DETECTORS
   );
 }
