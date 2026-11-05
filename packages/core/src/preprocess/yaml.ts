@@ -42,6 +42,9 @@ import {
   leading,
 } from './yaml-text.ts';
 
+/** Where an inline value sits: after `key:`, after `- `, or as a node on its own line. */
+type ValueSlot = 'after-key' | 'after-dash' | 'alone';
+
 export type YamlValue = null | boolean | number | string | YamlValue[] | YamlMap;
 export interface YamlMap {
   [key: string]: YamlValue;
@@ -321,9 +324,9 @@ class Reader {
    * `-` or `?` after `key:` is an indicator too; after `- ` or at the root a lone `?` is an
    * explicit key in js-yaml, which this subset leaves alone.
    */
-  plainStart(text: string, at: number, mappingValue: boolean): void {
+  plainStart(text: string, at: number, slot: ValueSlot): void {
     const c = text[0];
-    if ((c === '-' || (c === '?' && mappingValue)) && text.length === 1) {
+    if ((c === '-' || (c === '?' && slot === 'after-key')) && text.length === 1) {
       this.fail('bad indentation of a mapping entry', at);
     }
     if (c === ']' || c === '}' || c === ',' || c === '%') {
@@ -554,14 +557,8 @@ class Reader {
     return text + '\n';
   }
 
-  /** The value after `key:` or `- `, starting at offset `at`; line `this.i - 1` holds it. */
-  inlineValue(
-    rest: string,
-    at: number,
-    indent: number,
-    depth: number,
-    mappingValue = false
-  ): YamlValue {
+  /** The value in `slot`, starting at offset `at`; line `this.i - 1` holds it. */
+  inlineValue(rest: string, at: number, indent: number, depth: number, slot: ValueSlot): YamlValue {
     const first = rest[0];
     if ((first === '|' || first === '>') && RE_BLOCK_HEADER.test(rest)) {
       const header = this.i - 1;
@@ -595,7 +592,7 @@ class Reader {
     let text = body.trim();
     let textEnd = at + text.length;
     this.printable(at, textEnd);
-    this.plainStart(text, at, mappingValue);
+    this.plainStart(text, at, slot);
     const indicator = mappingIndicator(text, true);
     // `k: a: b` or `k: a:` at a line end: js-yaml reads a second mapping entry and fails.
     if (indicator >= 0) this.fail('bad indentation of a mapping entry', at + indicator);
@@ -685,7 +682,7 @@ class Reader {
             out.push(this.block(indent + pad, depth + 1));
           } else {
             this.i++;
-            out.push(this.inlineValue(rest.trim(), restAt, indent, depth + 1));
+            out.push(this.inlineValue(rest.trim(), restAt, indent, depth + 1, 'after-dash'));
           }
           if (items) {
             const node = this.take(restAt - pad + 1);
@@ -707,7 +704,7 @@ class Reader {
     if (splitKey(line) === null) {
       this.i++;
       // A plain scalar continues on any line indented more than its parent node.
-      return this.inlineValue(line.trim(), lineAt, minIndent - 1, depth);
+      return this.inlineValue(line.trim(), lineAt, minIndent - 1, depth, 'alone');
     }
 
     const out: YamlMap = {};
@@ -745,7 +742,7 @@ class Reader {
             }
           }
         } else {
-          value = this.inlineValue(rest.trim(), restAt, indent, depth + 1, true);
+          value = this.inlineValue(rest.trim(), restAt, indent, depth + 1, 'after-key');
         }
         const node = pairs ? this.take(restAt) : undefined;
         if (this.assign(out, key, value, keyAt, keyEnd) && pairs && node) {
