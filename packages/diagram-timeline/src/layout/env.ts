@@ -39,6 +39,8 @@ export interface Env {
    */
   readonly axisWidth: number;
   readonly connectorWidth: number;
+  /** How far each box's strokes reach past it, for the bounds (D224). */
+  readonly strokes: BoxStrokes;
   /** Box labels: the theme's font at its weight (redux draws them bold). */
   readonly font: FontKey;
   readonly titleFont: FontKey;
@@ -58,6 +60,30 @@ export function scaleColors(theme: TimelineLayoutContext['theme']): boolean {
   return theme.value('timelineScaleColors') === 'true';
 }
 
+/** The widths of a box's outline and of the rule under it; 0 where none is drawn. */
+export interface BoxStrokes {
+  readonly outline: number;
+  readonly rule: number;
+}
+
+/**
+ * The strokes `timelineScaleColors` and the gradient give a box: none and a 3 px rule (v12
+ * classic), a 2 px gradient outline and a 2 px rule (neo), or an outline at `strokeWidth` and
+ * no rule (v12 redux).
+ */
+export function boxStrokes(theme: TimelineLayoutContext['theme']): BoxStrokes {
+  const { ruleWidth, gradientWidth } = TIMELINE_METRICS.common;
+  if (!scaleColors(theme)) return { outline: theme.number('strokeWidth'), rule: 0 };
+  return theme.gradient()
+    ? { outline: gradientWidth, rule: gradientWidth }
+    : { outline: 0, rule: ruleWidth };
+}
+
+// Labels are plain text, as v12 drew them with `.text()` (spec #291): only core's line breaks
+// (D225) apply, so every `<` but a `<br>` is escaped before core's label layout reads markup.
+const RE_NOT_BREAK = /<(?!br\s*\/?>)/gi;
+const plain = (text: string): string => text.replace(RE_NOT_BREAK, '&lt;');
+
 export function envOf(ctx: TimelineLayoutContext): Env {
   const m = TIMELINE_METRICS;
   const conf = ctx.config.timeline ?? {};
@@ -76,11 +102,14 @@ export function envOf(ctx: TimelineLayoutContext): Env {
     multicolor: conf.disableMulticolor !== true,
     axisWidth: stroke ?? m.common.axisWidth,
     connectorWidth: stroke ?? m.common.connectorWidth,
+    strokes: boxStrokes(ctx.theme),
     font,
     titleFont: { family, size: titleSize, weight: m.common.titleFontWeight },
     titleReferenceFont: { family, size: titleRefSize, weight: m.common.titleFontWeight },
     measure: (text, wrap, f = font) =>
-      layoutLabel(text, f, Math.max(wrap, m.common.minWrap), ctx.measurer, { inline: ctx.inline }),
+      layoutLabel(plain(text), f, Math.max(wrap, m.common.minWrap), ctx.measurer, {
+        inline: ctx.inline,
+      }),
     boxHeight: (label, padding) => label.height + fontSize * m.common.heightEm + padding,
   };
 }

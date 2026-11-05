@@ -180,6 +180,7 @@ function drawSections(scene: Scene): void {
 /** Each period (`taskWrapper`), then (LR) its connector and its events (`eventWrapper`). */
 function drawPeriods(scene: Scene): void {
   const { w, layout, paint } = scene;
+  // Connectors by period, and (TD) by event within it: one lookup per box, not a scan.
   const byPeriod = new Map<number, TimelineConnector[]>();
   for (const c of layout.connectors) {
     const list = byPeriod.get(c.period) ?? [];
@@ -191,13 +192,19 @@ function drawPeriods(scene: Scene): void {
     w.open('g', { class: 'taskWrapper', 'data-id': p.ast, 'data-ast': p.ast });
     drawNode(scene, p, paint.box(p.slot), paint.labelOffset(p.padding));
     w.close();
+    const byEvent = new Map<number, TimelineConnector[]>();
     if (layout.direction === 'LR') for (const c of connectors) drawConnector(scene, c, p.ast);
+    else
+      for (const c of connectors) {
+        const list = byEvent.get(c.event ?? -1) ?? [];
+        list.push(c);
+        byEvent.set(c.event ?? -1, list);
+      }
     p.events.forEach((e, k) => {
       w.open('g', { class: 'eventWrapper', 'data-id': e.ast, 'data-ast': e.ast });
       drawNode(scene, e, paint.event(e.slot), paint.eventLabelOffset(e.padding));
       w.close();
-      if (layout.direction === 'TD')
-        for (const c of connectors) if (c.event === k) drawConnector(scene, c, e.ast);
+      for (const c of byEvent.get(k) ?? []) drawConnector(scene, c, e.ast);
     });
   });
 }

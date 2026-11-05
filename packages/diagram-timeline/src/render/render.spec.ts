@@ -29,6 +29,9 @@ const CONFIGS: readonly (readonly [string, Record<string, unknown>])[] = [
     },
   ],
   ['redux, gradient on', { theme: 'redux-color', themeVariables: { useGradient: true } }],
+  // Every fallback colour is declared on the root, also when a palette is emptied.
+  ['empty cScale lists', { theme: 'default', themeVariables: { cScale: [], cScaleLabel: [] } }],
+  ['empty border palette', { theme: 'redux-color', themeVariables: { borderColorArray: [] } }],
 ];
 
 interface Case {
@@ -95,4 +98,41 @@ describe('renderViolations', () => {
       )
     ).toBe(true);
   });
+});
+
+describe('timeline render cost', () => {
+  // Pitfall 19: one lookup per box. TD draws one connector per event; with every event under
+  // one period, a scan of the period's connectors per event was quadratic. The spec counts the
+  // renderer's reads of connector fields, which is exact where a timing ratio is noisy.
+  const stack = (n: number) =>
+    fx.turned(fx.timeline([['2000', ...Array.from({ length: n }, (_, i) => `e${i}`)]]));
+  const reads = async (n: number) => {
+    let count = 0;
+    const r = await renderForTest(stack(n), {
+      config: { theme: 'default' },
+      mapLayout: (l) => ({
+        ...l,
+        connectors: l.connectors.map(
+          (c) =>
+            new Proxy(c, {
+              get(target, key, receiver) {
+                count++;
+                return Reflect.get(target, key, receiver) as unknown;
+              },
+            })
+        ),
+      }),
+    });
+    return { count, svg: r.svg };
+  };
+
+  it('renders 5,000 events under one TD period, reading each connector a fixed number of times', async () => {
+    const big = await reads(5000);
+    expect(big.svg.match(/class="eventWrapper"/g)).toHaveLength(5000);
+    expect(big.svg.match(/class="arrowhead"/g)).toHaveLength(5001);
+    const small = await reads(2500);
+    // Twice the events, twice the reads; the scan read about 5000² more.
+    expect(big.count / small.count).toBeCloseTo(2, 1);
+    expect(big.count / 5000).toBeLessThan(40);
+  }, 60_000);
 });

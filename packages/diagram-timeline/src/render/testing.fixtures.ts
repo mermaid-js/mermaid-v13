@@ -21,6 +21,8 @@ export interface RenderForTestOptions {
   /** Integrator config, as `initialize()` would get it. */
   readonly config?: Readonly<Record<string, unknown>>;
   readonly idPrefix?: string;
+  /** Replaces the layout before it is drawn (the cost spec counts what the renderer reads). */
+  readonly mapLayout?: (layout: TimelineLayout) => TimelineLayout;
 }
 
 export interface RenderedForTest {
@@ -68,7 +70,8 @@ export async function renderForTest(
     limits: resolveLimits(config),
     warn,
   };
-  const layout = layoutTimeline(model, ctx);
+  const laid = layoutTimeline(model, ctx);
+  const layout = options.mapLayout ? options.mapLayout(laid) : laid;
   const gradient = theme.gradient();
   const w = streamWriter({ gradient });
   renderTimeline(model, layout, ctx, w);

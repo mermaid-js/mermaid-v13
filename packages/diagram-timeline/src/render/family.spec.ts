@@ -186,6 +186,16 @@ describe('events (v12 .eventWrapper { filter: brightness(120%) })', () => {
     const redux = await draw(fx.simple, { theme: 'redux', themeVariables: { mainBkg: '#808080' } });
     expect(redux.part('ev:1.1', 'path')!.attrs.fill).toBe('#9a9a9a');
     // Without the border palette, so the fill is mainBkg, a colour that switches with the page.
+    // The plain outline brightens with the rest of the group (#404040 × 1.2 = #4d4d4d).
+    const outlined = await draw(fx.simple, {
+      theme: 'redux',
+      themeVariables: { nodeBorder: '#404040' },
+    });
+    expect(outlined.part('ev:1.1', 'path')!.attrs.stroke).toBe('#4d4d4d');
+    expect(outlined.part('per:1', 'path')!.attrs.stroke).toBe('var(--_nb)');
+    // A gradient outline is not brightened.
+    const grad = await draw(fx.simple, { theme: 'redux', themeVariables: { useGradient: true } });
+    expect(grad.part('ev:1.1', 'path')!.attrs.stroke).toBe('url(#mermaid-0-gradient)');
     const auto = await draw(fx.simple, {
       theme: 'auto',
       themeVariables: { borderColorArray: [], bkgColorArray: [] },
@@ -206,6 +216,24 @@ describe('slots and classes', () => {
     expect(classes[12]).toBe('timeline-node section--1');
   });
 
+  it('gives boxes that share a section-<n> class one colour, past slot 11', async () => {
+    const many = fx.timeline(Array.from({ length: 14 }, (_, i) => [`${2000 + i}`] as const));
+    const five = ['#110000', '#220000', '#330000', '#440000', '#550000'];
+    const classic = await draw(many, { theme: 'default', themeVariables: { cScale: five } });
+    // Slot 12 is class section--1 like slot 0: (12 mod 12) mod 5 = 0, not 12 mod 5 = 2.
+    expect(classic.part('per:13', 'path')!.attrs.fill).toBe(
+      classic.part('per:1', 'path')!.attrs.fill
+    );
+    const redux = await draw(many, {
+      theme: 'redux-color',
+      themeVariables: { borderColorArray: five, bkgColorArray: five },
+    });
+    const [g12, p12] = redux.node('per:13');
+    const [g0, p0] = redux.node('per:1');
+    expect(g12!.attrs['data-color-id']).toBe(g0!.attrs['data-color-id']);
+    expect(p12!.attrs.fill).toBe(p0!.attrs.fill);
+  });
+
   it('paints every period in slot 0 under disableMulticolor', async () => {
     const d = await draw(fx.seven, { theme: 'default', timeline: { disableMulticolor: true } });
     const fills = new Set(fx.seven.periods.map((p) => d.part(p.ast, 'path')!.attrs.fill));
@@ -220,6 +248,22 @@ describe('slots and classes', () => {
     expect(d.part('sec:2', 'path')!.attrs.fill).toBe('#ff0000');
     expect(d.part('sec:2', 'text')!.attrs.fill).toBe('#00ff00');
     expect(d.part('sec:2', 'line')!.attrs.stroke).toBe('#0000ff');
+  });
+});
+
+describe('labels are plain text (v12 .text(), D225 line breaks only)', () => {
+  it('shows markup literally in sections, periods, events and the title; <br> still breaks', async () => {
+    const m = fx.timeline(['a <b>bold</b> c', ['a <i>it</i> c<br>next', 'a <u>u</u> &amp; c']], {
+      title: 'T <b>x</b>',
+    });
+    const d = await draw(m, { theme: 'default' });
+    const text = (ast: string) =>
+      new RegExp(`<text data-id="${ast}"[^>]*>(.*?)</text>`).exec(d.r.svg)![1]!;
+    expect(text('sec:1')).toBe('a &lt;b&gt;bold&lt;/b&gt; c');
+    expect(text('per:1')).toMatch(/>a &lt;i&gt;it&lt;\/i&gt; c<\/tspan><tspan[^>]*>next<\/tspan>$/);
+    expect(text('ev:1.1')).toBe('a &lt;u&gt;u&lt;/u&gt; &amp; c');
+    expect(d.r.svg).toMatch(/class="timeline-title"[^>]*>T &lt;b&gt;x&lt;\/b&gt;<\/text>/);
+    expect(d.r.svg).not.toMatch(/font-weight="bold"|font-style|text-decoration/);
   });
 });
 

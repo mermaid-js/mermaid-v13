@@ -16,15 +16,12 @@ import {
   type SafeValue,
 } from '@mermaid-js/core/svg';
 import { formatColor, PALETTE_LIMIT, parseColor } from '@mermaid-js/core/theme';
-import { scaleColors } from '../layout/env.ts';
+import { boxStrokes, scaleColors } from '../layout/env.ts';
 
 type Theme = RenderContext['theme'];
 type Length = ReturnType<Theme['length']>;
 type Shadow = ReturnType<Theme['filter']>;
 
-/** v12 `styles.js`: the `cScaleInv` rule under a classic box, and the gradient outline. */
-const RULE_WIDTH = 3;
-const GRADIENT_WIDTH = 2;
 /** v12 `.eventWrapper { filter: brightness(120%) }`, computed into the colours. */
 const EVENT_BRIGHTNESS = 1.2;
 /** v12 `svgDraw.js`: an event's label starts half its padding below the top, plus a shift. */
@@ -92,12 +89,16 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     const rgba = theme.rgba(name);
     return rgba ? brighter(formatColor(rgba)) : ref;
   };
+  // Slots wrap at v12's 12 classes first, so boxes that share a `section-<n>` class share
+  // their colour, then at a shorter author list.
+  const at = (slot: number, length: number): number => (slot % PALETTE_LIMIT) % length;
   const slotted = (list: readonly string[], slot: number, bright: boolean): Paint | undefined => {
     if (list.length === 0) return undefined;
-    const c = list[slot % list.length]!;
+    const c = list[at(slot, list.length)]!;
     return bright ? brighter(c) : (c as Paint);
   };
   const gradient = theme.gradient() !== undefined;
+  const widths = boxStrokes(theme);
   const weight = weightOf(theme.value('fontWeight'));
   const label: Attrs = {
     'font-weight': weight === NORMAL_WEIGHT ? undefined : (String(weight) as SafeValue),
@@ -111,40 +112,44 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     const inv = theme.palette('cScaleInv');
     const text = theme.palette('cScaleLabel');
     // v12 repeats `.lineWrapper line` once per slot, so the last slot's label colour wins.
-    line = slotted(text, PALETTE_LIMIT - 1, false) ?? theme.color('nodeBorder');
-    if (gradient) {
-      named('mainBkg', false);
-      named('nodeBorder', false);
-    }
+    line = slotted(text, PALETTE_LIMIT - 1, false) ?? named('nodeBorder', false);
+    // The fallbacks, read now so the root declares them.
+    if (gradient || fill.length === 0) named('mainBkg', false);
+    if (gradient || inv.length === 0 || text.length === 0) named('nodeBorder', false);
     const outline = gradient ? theme.outline('nodeBorder') : undefined;
     paintOf = (slot, bright) => ({
       fill: gradient
         ? named('mainBkg', bright)
         : (slotted(fill, slot, bright) ?? named('mainBkg', bright)),
       stroke: outline,
-      strokeWidth: gradient ? (GRADIENT_WIDTH as Length) : undefined,
+      strokeWidth: gradient ? (widths.outline as Length) : undefined,
       text: slotted(text, slot, bright) ?? named('nodeBorder', bright),
-      rule: gradient
-        ? { stroke: named('nodeBorder', bright), width: GRADIENT_WIDTH }
-        : { stroke: slotted(inv, slot, bright) ?? named('nodeBorder', bright), width: RULE_WIDTH },
+      rule: {
+        stroke: gradient
+          ? named('nodeBorder', bright)
+          : (slotted(inv, slot, bright) ?? named('nodeBorder', bright)),
+        width: widths.rule,
+      },
     });
   } else {
     // D257: the border palette slot fills where the theme carries a fill palette too.
     const border = theme.palette('borderColorArray');
     const solid = theme.palette('bkgColorArray').length > 0;
-    line = theme.color('nodeBorder');
+    line = named('nodeBorder', false);
     shadow = theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow');
     const outline = theme.outline('nodeBorder');
     const strokeWidth = theme.length('strokeWidth');
-    if (!solid) named('mainBkg', false);
+    if (!solid || border.length === 0) named('mainBkg', false);
     paintOf = (slot, bright) => {
       const tint = slotted(border, slot, bright);
       return {
         fill: (solid ? tint : undefined) ?? named('mainBkg', bright),
-        stroke: tint ?? outline,
+        // The palette slot wins over the gradient (theming.md); an event's plain outline is
+        // brightened with the rest of its group, a gradient one is not.
+        stroke: tint ?? (gradient ? outline : named('nodeBorder', bright)),
         strokeWidth,
         text: named('nodeBorder', bright),
-        colorId: border.length > 0 ? `color-${slot % border.length}` : undefined,
+        colorId: border.length > 0 ? `color-${at(slot, border.length)}` : undefined,
       };
     };
   }
