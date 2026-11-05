@@ -1,0 +1,268 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-journey",
+  "scopeName": "source.mermaid-journey",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-journey"
+    },
+    "trivia-1": {
+      "begin": "(?i)[^\\S\\n]*%%\\{",
+      "end": "(?i)\\}%%",
+      "name": "meta.embedded.mermaid-journey"
+    },
+    "rule-0": {
+      "match": "(?i)%(?!\\{)[^\\n]*",
+      "name": "comment.line.mermaid-journey"
+    },
+    "rule-1": {
+      "match": "(?i)[^}]%%[^\\n]*",
+      "name": "comment.line.mermaid-journey"
+    },
+    "rule-2": {
+      "match": "(?i)\\n+"
+    },
+    "rule-3": {
+      "match": "(?i)\\s+"
+    },
+    "rule-4": {
+      "match": "(?i)#[^\\n]*",
+      "name": "comment.line.mermaid-journey"
+    },
+    "rule-5": {
+      "match": "(?i)journey\\b",
+      "name": "keyword.control.mermaid-journey"
+    },
+    "rule-6": {
+      "match": "(?i)title\\s[^#\\n;]+",
+      "name": "keyword.control.mermaid-journey"
+    },
+    "rule-7": {
+      "begin": "(?i)accTitle\\s*:\\s*",
+      "end": "((?i)[^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-acc_title"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-journey"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-journey"
+        }
+      }
+    },
+    "rule-9": {
+      "begin": "(?i)accDescr\\s*:\\s*",
+      "end": "((?i)[^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-acc_descr"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-journey"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-journey"
+        }
+      }
+    },
+    "rule-11": {
+      "begin": "(?i)accDescr\\s*\\{\\s*",
+      "end": "((?i)\\})",
+      "patterns": [
+        {
+          "include": "#mode-acc_descr_multiline"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-journey"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-journey"
+        }
+      }
+    },
+    "rule-14": {
+      "match": "(?i)section\\s[^#:\\n;]+",
+      "name": "keyword.control.mermaid-journey"
+    },
+    "rule-15": {
+      "match": "(?i)[^#:\\n;]+",
+      "name": "variable.other.mermaid-journey"
+    },
+    "rule-16": {
+      "match": "(?i):[^#\\n;]+",
+      "name": "string.quoted.mermaid-journey"
+    },
+    "rule-17": {
+      "match": "(?i):",
+      "name": "punctuation.definition.mermaid-journey"
+    },
+    "rule-19": {
+      "match": "(?i)."
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-19"
+        }
+      ]
+    },
+    "mode-acc_title": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-acc_descr": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "rule-13": {
+      "match": "(?i)[^}]+",
+      "name": "string.quoted.mermaid-journey"
+    },
+    "mode-acc_descr_multiline": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-13"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-journey"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-journey"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-journey"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-journey"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}
