@@ -17,7 +17,8 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [M2 #245] (from the #237 review) A registered `$$` provider that declines (engine not loaded) shows raw TeX with no warning: `inlineSpans` warns only when no provider claims the delimiter. M2 must throw `NotLoadedError` naming `math` in `renderSync`, or warn in placeholder mode (D178).
 - [M3 #246] (from #237) Only flowchart passes `ctx.inline` to `layoutLabel`; class, state, ER and sequence neither draw boxes nor warn `MATH_NOT_RENDERED`. Class's single-run form (`render.ts:389`) must skip box runs. Text output gives no warning yet (D179 `ASCII_DROPPED`).
 - [E2 #240] v12 develop registers 7 layout names; D171 lists 9 (`elk.layered`, `elk.radial` were only per-container ids in v12). Register all 9 as D171 says.
-- [E3 #241 / E4 #242] `api.ts:557-563` calls the engine with no `LayoutContext`, and `LayoutGraph` carries no config or node metadata, so `elk.*` keys and `@{ algorithm }` can't reach the engine. DESIGN §6.1 already has `(g, ctx)`; E3 plumbs `ctx` (with the resolved config), E4 uses it.
+- [E3 #241 / E4 #242] ~~no config reaches the engine~~ Closed by #238: `mermaid` calls `engine(graph, { config })`; `LayoutContext.config` is the resolved config with fragment defaults. Still open: `LayoutGraph` carries no node metadata, so `@{ algorithm }` can't reach the engine (E3).
+- [#218 T1 #221 / T4 #226] (from #238) The discovered `layout` arm needs `config?: ConfigFragment`, loaded eagerly from the manifest's `config` module, and the entry export resolved as `tickets/238.md` says.
 - [M2 #245] `loadResources` (`api.ts:295`) handles only layout, theme and diagram; extension plugins have no resources hook, so a `math` resource is never loaded. M2 adds it (check #218 doesn't already).
 - [E5 #243] Text output uses the SVG layout name and throws `NotLoadedError` when that engine isn't loaded; D179 needs ascii to always use `layered`.
 

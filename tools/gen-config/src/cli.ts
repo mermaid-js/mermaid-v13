@@ -5,6 +5,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { findFragments } from './fragments.ts';
 import { SCHEMA_PATH, SchemaError, generate } from './generate.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -13,7 +14,7 @@ const read = (path: string) =>
 const check = process.argv.includes('--check');
 
 try {
-  const { files } = await generate(read(SCHEMA_PATH) ?? '', read);
+  const { files } = await generate(read(SCHEMA_PATH) ?? '', read, findFragments(root));
   const stale = [...files].filter(([path, content]) => read(path) !== content).map(([p]) => p);
   if (check) {
     if (stale.length > 0) {

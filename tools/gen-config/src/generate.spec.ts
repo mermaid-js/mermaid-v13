@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { findFragments } from './fragments.ts';
 import {
   MIGRATION_BEGIN,
   MIGRATION_END,
@@ -56,7 +57,7 @@ async function problemsOf(schema: string): Promise<string> {
 
 describe('gen-config', () => {
   it('the committed generated files match the schema (run `pnpm gen:config`)', async () => {
-    const { files } = await generate(read(SCHEMA_PATH)!, read);
+    const { files } = await generate(read(SCHEMA_PATH)!, read, findFragments(root));
     const stale = [...files].filter(([path, content]) => read(path) !== content).map(([p]) => p);
     expect(stale).toEqual([]);
   });
@@ -132,6 +133,100 @@ describe('gen-config', () => {
     expect(json.properties.flowchart!.$ref).toBe('#/$defs/FlowchartDiagramConfig');
     expect(Object.keys(json.$defs)).toEqual(['ErDiagramConfig', 'FlowchartDiagramConfig']);
     expect(source).not.toContain('"$schema"');
+  });
+
+  describe('plugin config fragments (D153)', () => {
+    const fragment = `
+x-mermaid-fragment:
+  id: fixture
+  aliases:
+    - { from: look, when: sketchy, to: fixture.mode, value: sketch }
+  themeVariables:
+    fixtureInk: primaryTextColor
+properties:
+  fixture:
+    type: object
+    description: The fixture plugin's options.
+    x-mermaid: { status: honoured }
+    properties:
+      mode:
+        type: string
+        enum: [plain, sketch]
+        default: plain
+        description: How the fixture draws.
+        x-mermaid: { status: honoured }
+      extra:
+        type: object
+        additionalProperties: true
+        x-mermaid: { status: pending }
+`;
+    const pkg = { pkg: 'packages/plugin-fixture', source: fragment };
+    const readPkg = (path: string) =>
+      path === 'packages/plugin-fixture/package.json'
+        ? '{ "name": "@mermaid-js/plugin-fixture" }'
+        : undefined;
+    const schema = tinySchema('    x-mermaid: { status: pending }');
+
+    it('writes the fragment into its package and leaves core untouched', async () => {
+      const without = await generate(schema, () => undefined);
+      const { files } = await generate(schema, readPkg, [pkg]);
+      expect(files.get('packages/plugin-fixture/src/generated/config-fragment.ts')).toContain(
+        `export const configFragment: ConfigFragment = {
+  "id": "fixture",
+  "keys": {
+    "fixture": {
+      "mode": 0,
+      "extra": "open"
+    }
+  },
+  "defaults": {
+    "fixture": {
+      "mode": "plain"
+    }
+  },
+  "aliases": [
+    {
+      "from": "look",
+      "when": "sketchy",
+      "to": "fixture.mode",
+      "value": "sketch"
+    }
+  ],
+  "themeVariables": {
+    "fixtureInk": "primaryTextColor"
+  }
+};`
+      );
+      for (const path of without.files.keys())
+        if (path !== 'v13/docs/config-reference.md')
+          expect(files.get(path), path).toBe(without.files.get(path));
+    });
+
+    it("documents the fragment's keys under the plugin's section in the config reference", async () => {
+      const { files } = await generate(schema, readPkg, [pkg]);
+      const doc = files.get('v13/docs/config-reference.md')!;
+      expect(doc).toContain(
+        '## `fixture` (plugin `@mermaid-js/plugin-fixture`)\n\nKnown only while `@mermaid-js/plugin-fixture` is registered.'
+      );
+      expect(doc).toContain(
+        '| `fixture.mode` | "plain" \\\\| "sketch" | `"plain"` | honoured |  | How the fixture draws. |'
+      );
+      expect(doc).toContain('Legacy alias: `look: "sketchy"` sets `fixture.mode`.');
+    });
+
+    it('fails on a fragment key core already has, or a bad fragment', async () => {
+      const clash = fragment.replace('  fixture:\n    type: object', '  theme:\n    type: object');
+      await expect(generate(schema, readPkg, [{ ...pkg, source: clash }])).rejects.toThrow(
+        /packages\/plugin-fixture: "theme" is a core config key/
+      );
+      const unannotated = fragment.replace('        x-mermaid: { status: pending }\n', '');
+      await expect(generate(schema, readPkg, [{ ...pkg, source: unannotated }])).rejects.toThrow(
+        /extra: missing x-mermaid annotation/
+      );
+      await expect(
+        generate(schema, readPkg, [{ ...pkg, source: 'properties: {}' }])
+      ).rejects.toThrow(/x-mermaid-fragment.id/);
+    });
   });
 
   it('splices the MIGRATION.md config section between its markers', () => {

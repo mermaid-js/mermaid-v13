@@ -32,6 +32,7 @@ export {
   readManifest,
   type DiagramManifest,
   type ExtensionManifest,
+  type LayoutManifest,
   type PluginFormat,
   type PluginManifest,
 } from './pipeline/manifest.ts';

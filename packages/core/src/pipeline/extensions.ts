@@ -7,6 +7,7 @@
  * last one (R-SEC-2). `afterMount` is typed here but only `mermaid`'s DOM adapter calls it,
  * through {@link HookRun.afterMount}: core never touches the DOM.
  */
+import type { ConfigFragment } from '../config/fragment.ts';
 import type { LayoutModel } from '../layout/types.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
 import { isAllowedAttr, isAllowedTag } from '../svg/allowlist.ts';
@@ -71,6 +72,11 @@ export interface ExtensionPlugin<El = unknown, R = unknown> {
    * to its provider and draws the box it returns. The first registered provider of a pair wins.
    */
   readonly inline?: readonly InlineProvider[];
+  /**
+   * The extension's config fragment (D153): its own keys, defaults, aliases and theme
+   * variables, known to the validator while the extension is registered.
+   */
+  readonly config?: ConfigFragment;
 }
 
 type Hook = 'postParse' | 'postLayout' | 'postRender' | 'afterMount' | 'inline';

@@ -362,7 +362,8 @@ The rules:
 
 - The graph and the result are plain data, so the ASCII backend (M2) and DDLT-style fixtures can use them directly (R-ARCH-3).
 - Measurement happens **before** layout: diagram code fills in `width` and `height` using the injected measurer, and the engine never measures. Layout depends on the measurer and the unit profile only, never on a backend (R-ARCH-3, D57, D77). For ASCII the same code runs with the cell measurer and the cell profile (widths in cells, heights in rows), so the ASCII path receives a normal `LayoutModel` and never measures itself (§6.3).
-- The engine is selected by the `layout` config key. `layered` is the default. Other engines are registered via `registerLayoutLoaders` (R-LAYOUT-2).
+- The engine is selected by the `layout` config key. `layered` is the default. Other engines are registered via `registerLayoutLoaders` (R-LAYOUT-2) or a `layout` manifest (§12.1).
+- `ctx.config` is the render's resolved config (M3.5, D153). A layout plugin reads its own fragment's keys there, for example `ctx.config.elk`, with the fragment's defaults merged in.
 
 ### 6.3 Text output: unit profile, grid and the text-grid kit (M2, D76–D87)
 
@@ -620,9 +621,14 @@ interface DiagramPlugin<M = unknown, L = LayoutModel> {
 "mermaid": { "plugin": "diagram", "id": "gantt", "formats": ["svg"], "detector": "./dist/detector.js", "entry": "./dist/index.js" }
 "mermaid": { "plugin": "diagram", "id": "flowchart", "formats": ["svg", "ascii"], "detector": "…", "entry": "…", "ascii": "./dist/ascii.js" }
 "mermaid": { "plugin": "extension", "id": "interactions", "entry": "./dist/index.js" }
+"mermaid": { "plugin": "layout", "names": ["elk", "elk.stress"], "entry": "./dist/index.js", "config": "./dist/config.js" }
 ```
 
 `plugin` is the kind. Extension manifests have no detector; the entry is loaded when the plugin is activated (on discovery, or through `registerExternalDiagrams`).
+
+**Layout manifests (M3.5, D177).** `names` is required and non-empty, `entry` is required, and `id`, `export` and `config` are optional; a layout has no `detector`, `formats` or `ascii`. Activation registers each name lazily, as `registerLayoutLoaders` does. The entry loads once, when a diagram first names one of the layouts. Its export (`export`, else the default export) is either v12's `LayoutLoader[]`, looked up by name, or one engine that serves every name. `config` names a small module whose `config` (else default) export is the package's config fragment. It is loaded eagerly with the manifest, like a detector, so the keys are known before the entry loads. Through `registerExternalDiagrams` the caller passes it as `ManifestPlugin.config`, and a manifest with `config` but no fragment is refused.
+
+**Config fragments (M3.5, D153).** A plugin can declare a `ConfigFragment` (`@mermaid-js/core/config`): `{ id, keys, defaults?, aliases?, themeVariables? }`. `keys` is a key tree like core's generated one. `defaults` merge over core's defaults and below everything else. Each alias `{ from, to, when?, value? }` moves a legacy key (for example `look: handDrawn`) to the plugin's key in each config source, before the schema check. A source that also sets `to` keeps its own value. `themeVariables` are new theme variables with a default rule or value; reusing a name core already has is refused. An extension carries its fragment as `ExtensionPlugin.config`, a layout as `LayoutLoader.config` or the manifest's `config` module. The fragment counts from registration on, one per `id`. Its keys validate only while the plugin is registered, and are unknown keys otherwise. Core never names a plugin. A package keeps its fragment as `schema/config.fragment.yaml`, an annotated schema with an `x-mermaid-fragment: { id, aliases?, themeVariables? }` header. `pnpm gen:config` turns it into `src/generated/config-fragment.ts` (`configFragment`) and documents the keys in a "plugin" section of the config reference. A fragment may not reuse a key core's schema has.
 
 **Formats (R-ASCII-5, D58).** `supportsFormat(type, format)` reads `formats` from the manifest, so hosts can check without loading the package. A type supports ASCII through an `ascii` hook, or by being graph-based on the shared layout. Asking for an unsupported format throws `UnsupportedFormatError`, never an approximation. The docs' type × format matrix is generated from the manifests.
 
@@ -641,6 +647,7 @@ interface ExtensionPlugin {
   afterMount?(el: Element, result: RenderResult): void;         // DOM adapter only
   claims?: ('callbacks')[];                                    // features it handles, to silence core's warning
   inline?: InlineProvider[];                                   // M3.5 (D177): boxes for delimited label spans (§5.3)
+  config?: ConfigFragment;                                     // M3.5 (D153): its own config keys (§12.1)
 }
 interface InlineProvider {
   open: string; close: string;                                 // '$$', '$$'
@@ -679,6 +686,8 @@ As built in M1: hooks see the AST, not the model, so the AST node of a `click �
 | Bundlers, third-party | `mermaid/plugin` (unplugin) does the same scan at build time and provides `virtual:mermaid-plugins`, which `mermaid` imports if present. |
 | CDN | First-party diagrams lazy-load from `cdnBase` (default: the URL `mermaid` itself was loaded from). Third-party scripts self-register by calling `globalThis.mermaid.registerExternalDiagrams`. Never loaded from diagram text (R-PLUG-7). |
 | Explicit | `registerExternalDiagrams()` (R-PLUG-6). |
+
+**Layout packages (M3.5, D177).** Every discovery path also takes `layout` manifests. Each name is registered as one lazy loader, with the package's config fragment loaded eagerly from the manifest's `config` module. An explicit `registerLayoutLoaders` call wins over discovery. A discovered `elk`/`elk.*` takes over the built-in aliases. When two discovered packages claim one name, the package name decides (D166). The discovery side of this belongs to #218.
 
 **Detector order:** first-party detectors run first, in v12's registration order (detection order is part of "syntax is sacred"), then third-party detectors in discovery order. **[ADR-6]**
 

@@ -7,6 +7,7 @@
  * This mirrors v12's `config.ts` (`setSiteConfig`, `addDirective`, `updateCurrentConfig`,
  * `resolveAppearance`) and `utils/sanitizeDirective.ts`, without global state.
  */
+import { applyAliases, withFragments, type ConfigAlias, type ConfigFragment } from './fragment.ts';
 import { deepFreeze } from './freeze.ts';
 import { KEY_NOTES, KEY_TREE } from './generated/keys.ts';
 import type { MermaidConfig } from './generated/config.type.ts';
@@ -59,6 +60,11 @@ export interface ResolveConfigOptions {
    * of `pluginDefaults`, when it has exactly one.
    */
   readonly section?: string;
+  /**
+   * The config fragments of the registered plugins (D153): their keys are known, their
+   * defaults merged over `defaults`, their aliases applied to every source.
+   */
+  readonly fragments?: readonly ConfigFragment[];
 }
 
 /**
@@ -145,6 +151,8 @@ export interface ResolvedSite {
   readonly section: string | undefined;
   /** Whether `initialize()` already earned the one `LOOK_REMOVED` warning. */
   readonly lookWarned: boolean;
+  /** The fragments' legacy aliases, applied to diagram text too. */
+  readonly aliases: readonly ConfigAlias[];
 }
 
 /** Resolves the integrator's side of a config (see {@link resolveConfig}). */
@@ -156,18 +164,22 @@ export function resolveSite(
 ): ResolvedSite {
   const warn = options.warn ?? ignore;
   const looks = lookStripper(warn);
+  const fragments = options.fragments ?? [];
+  const aliases = fragments.flatMap((f) => f.aliases ?? []);
   const plugin = looks.strip(clone(pluginDefaults ?? {}) as Plain);
   // A section the plugin brings that the schema does not know (a third-party diagram)
   // is its own business: accept whatever keys it gets.
-  const tree: Record<string, KeyTree> = { ...(KEY_TREE as Record<string, KeyTree>) };
+  const tree = withFragments(KEY_TREE as Record<string, KeyTree>, fragments);
   for (const key of Object.keys(plugin)) {
     tree[key] ??= 'open';
   }
 
-  const base = looks.strip(clone(defaults) as Plain);
+  const coreDefaults = clone(defaults) as Plain;
+  for (const f of fragments) if (f.defaults) merge(coreDefaults, clone(f.defaults) as Plain);
+  const base = looks.strip(clone(coreDefaults) as Plain);
   merge(base, plugin);
   const site = check(
-    looks.strip(clone(initialize ?? {}) as Plain, 'initialize'),
+    looks.strip(clone(applyAliases(initialize ?? {}, aliases)) as Plain, 'initialize'),
     tree,
     'initialize',
     warn
@@ -182,7 +194,7 @@ export function resolveSite(
     base: deepFreeze(base),
     site: deepFreeze(site),
     plugin: deepFreeze(plugin),
-    defaults: deepFreeze(looks.strip(clone(defaults) as Plain)),
+    defaults: deepFreeze(looks.strip(coreDefaults)),
   };
   return {
     plain: layered(layers, section, {}),
@@ -191,6 +203,7 @@ export function resolveSite(
     secure,
     section,
     lookWarned: looks.warned(),
+    aliases,
   };
 }
 
@@ -215,7 +228,8 @@ export function resolveText(
       continue;
     }
     const allowed: Plain = {};
-    for (const [key, value] of Object.entries(looks.strip({ ...input }, source))) {
+    const aliased = site.aliases.length > 0 ? applyAliases(input, site.aliases) : input;
+    for (const [key, value] of Object.entries(looks.strip({ ...aliased }, source))) {
       if (site.secure.has(key)) {
         warn({
           code: 'CONFIG_SECURE_KEY',
