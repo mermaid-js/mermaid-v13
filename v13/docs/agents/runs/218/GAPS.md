@@ -20,3 +20,10 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [ ] Not yet run in the Playwright image (close-out, T7).
 - Cold runs fetch the four bundlers from the npm registry (network needed).
 - Chunk attribution reads source maps (`e2e/platform/harness/chunks.ts`): T5 must keep source maps on in all four app configs.
+
+## T4 #226 (merged)
+
+- [ ] Not yet run in the Playwright image (T7).
+- Follow-up (not this spec): the `mermaid` CLI does not discover plugins.
+- Ancestor `node_modules` plugins are simply not found, no warning (D165 "never ancestors"); the ticket's "skipped with a warning" wording is read that way.
+- `scanPlugins`/`findAppRoot` (`mermaid/node-scan`) are async; T5 awaits them in its unplugin hooks. Layout manifests are skipped with a warning until #238 lands (hook in `scanOne`).

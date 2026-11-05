@@ -16,7 +16,14 @@
       "project": ["src/**/*.ts"]
     },
     "packages/mermaid": {
-      "entry": ["src/index.ts", "src/slim.ts", "src/cli.ts", "src/cdn.ts", "src/cdn-loader.ts"],
+      "entry": [
+        "src/index.ts",
+        "src/slim.ts",
+        "src/cli.ts",
+        "src/node.ts",
+        "src/cdn.ts",
+        "src/cdn-loader.ts"
+      ],
       "project": ["src/**/*.ts", "scripts/**/*.ts"]
     },
     "packages/bench": {

@@ -5,10 +5,11 @@
  * packages and builds the list.
  */
 import type { Warning } from '@mermaid-js/core';
-import { seamOf, type AddOptions, type Mermaid } from './api.ts';
+import { seamOf, type AddOptions, type FirstUseSource, type Mermaid } from './api.ts';
 import type { DiscoveredPlugin } from './registry.ts';
 
 export type { DiscoveredPlugin, SkippedPlugin } from './registry.ts';
+export type { FirstUseSource } from './api.ts';
 
 /**
  * Registers discovered packages on `api`. Diagrams are detected after every first-party type
@@ -29,13 +30,9 @@ export function addDiscovered(
 /**
  * Sets the source `api` runs once, before its first `prepare`, `render`, `parse` or `preload`
  * (the async Node scan). It gets the `initialize()` config, so it can honour a switch such as
- * `discovery: false`. A source that rejects registers nothing. One source per API object.
+ * `discovery: false`, and `warn`, which queues a warning (a package it skipped) for the first
+ * render. A source that rejects registers nothing. One source per API object.
  */
-export function discoverOnFirstUse(
-  api: Mermaid,
-  source: (
-    config: Readonly<Record<string, unknown>>
-  ) => readonly DiscoveredPlugin[] | Promise<readonly DiscoveredPlugin[]>
-): void {
+export function discoverOnFirstUse(api: Mermaid, source: FirstUseSource): void {
   seamOf(api).onFirstUse(source);
 }

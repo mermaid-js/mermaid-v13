@@ -11,7 +11,9 @@
   },
   "sideEffects": [
     "./src/index.ts",
+    "./src/node.ts",
     "./dist/index.js",
+    "./dist/node.js",
     "./dist/mermaid.esm.min.mjs",
     "./dist/mermaid.min.js"
   ],
@@ -19,12 +21,18 @@
     ".": {
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
+      "node": "./dist/node.js",
       "default": "./dist/index.js"
     },
     "./slim": {
       "mermaid-source": "./src/slim.ts",
       "types": "./dist/slim.d.ts",
       "default": "./dist/slim.js"
+    },
+    "./node-scan": {
+      "mermaid-source": "./src/node-scan.ts",
+      "types": "./dist/node-scan.d.ts",
+      "node": "./dist/node-scan.js"
     }
   },
   "unpkg": "./dist/mermaid.min.js",
