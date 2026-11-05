@@ -43,6 +43,13 @@ const small = (): ElkNode => ({
   ],
 });
 
+// elkjs refuses an edge to a node that does not exist.
+const bad = (): ElkNode => ({
+  id: 'root',
+  children: [{ id: 'a', width: 10, height: 10 }],
+  edges: [{ id: 'e', sources: ['a'], targets: ['missing'] }],
+});
+
 describe('layoutSync', () => {
   it('compares without $H: elkjs layout() itself differs from run to run only there', async () => {
     const elk = new ELK();
@@ -73,11 +80,6 @@ describe('layoutSync', () => {
   });
 
   it('throws the error elkjs layout() rejects with, and keeps working after it', async () => {
-    const bad = (): ElkNode => ({
-      id: 'root',
-      children: [{ id: 'a', width: 10, height: 10 }],
-      edges: [{ id: 'e', sources: ['a'], targets: ['missing'] }],
-    });
     const rejected = await viaPromise(bad()).then(
       () => undefined,
       (error: unknown) => error
@@ -120,7 +122,7 @@ describe('layoutSync', () => {
       expect(scheduled).toContain('setTimeout');
     });
 
-    it('starts no timer, immediate or microtask while it lays out the corpus', async () => {
+    it('starts no timer, immediate or microtask over the corpus and an error', async () => {
       vi.resetModules();
       const before = process.getActiveResourcesInfo().filter((r) => r === 'Timeout');
       for (const name of ['setTimeout', 'setInterval', 'setImmediate', 'queueMicrotask'] as const)
@@ -128,6 +130,8 @@ describe('layoutSync', () => {
       // A fresh module instance, so its first call (which registers the algorithms) is counted.
       const fresh = await import('./sync.ts');
       for (const { input } of graphs) fresh.layoutSync(structuredClone(input));
+      // GWT reports uncaught errors with setTimeout(throw); a thrown layout must not reach it.
+      expect(() => fresh.layoutSync(bad())).toThrow();
       expect(scheduled).toEqual([]);
       vi.restoreAllMocks();
       expect(process.getActiveResourcesInfo().filter((r) => r === 'Timeout')).toEqual(before);
