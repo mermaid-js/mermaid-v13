@@ -1,7 +1,6 @@
 {
   "name": "@mermaid-js/diagram-pie",
-  "version": "0.0.0",
-  "private": true,
+  "version": "13.0.0-alpha.0",
   "description": "Pie chart plugin for Mermaid: parser, layout and SVG renderer.",
   "type": "module",
   "license": "MIT",
@@ -39,5 +38,17 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "pie",
+    "types": [
+      "pie"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "pie",
+    "language": "./dist/language.js"
   }
 }
