@@ -70,6 +70,19 @@ const S = {
 /** Start condition names by number, for the probe's lexer mode (jison's names). */
 const S_NAMES: readonly string[] = Object.keys(S);
 
+/**
+ * Word kinds: a cursor right after one extends it (`title¦`, `tit¦`), so the probe's mode there
+ * is that of the step that lexed it, not of the next step (`title`'s value).
+ */
+const WORD_KINDS = new Set<number>([
+  T.Title,
+  T.ClassDef,
+  T.Alpha,
+  T.Num,
+  T.UnicodeText,
+  T.ClassName,
+]);
+
 /** What a rule does to the start-condition stack. */
 const A = {
   none: 0,
@@ -452,7 +465,10 @@ class QuadrantLexer {
       }
       if (probe) {
         const start = this.sourceStart(before);
-        probe.lexed(start, p > before ? this.sourceEnd(p - 1) : start, mode);
+        let end = p > before ? this.sourceEnd(p - 1) : start;
+        // The step holds an offset right after its word (`Probe.lexed` takes `end` exclusive).
+        if (p > before && WORD_KINDS.has(this.lastKind)) end++;
+        probe.lexed(start, end, mode);
       }
     }
     probe?.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
@@ -469,7 +485,11 @@ class QuadrantLexer {
   }
 
   /** Apply the first matching rule of the current state at `p`: the new offset, or -1. */
+  /** Kind of the token the last step wrote (`Kind.Error` when none matched). */
+  private lastKind: number = Kind.Error;
+
   private step(p: number): number {
+    this.lastKind = Kind.Error;
     for (const k of CONDITIONS[this.state] ?? []) {
       const r = RULES[k] as Rule;
       if (r.lead && p < (this.failedTo[k] ?? -1)) continue;
@@ -481,6 +501,7 @@ class QuadrantLexer {
         continue;
       }
       this.onRule?.(k);
+      this.lastKind = r.kind;
       this.act(r);
       this.emit(r.kind, p, e);
       return e;

@@ -24,7 +24,12 @@ import {
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
-import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import type {
+  ParseOptions,
+  ParseResult,
+  Range,
+  SymbolOccurrence,
+} from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import type {
@@ -238,6 +243,7 @@ class QuadrantParser {
   parse(): QuadrantParseResult {
     this.header();
     this.document();
+    this.classSymbols();
     const model = buildModel(this.children, this.st, this.pre.frontMatter?.title);
     const ast: QuadrantDocument = {
       id: 'doc',
@@ -246,6 +252,25 @@ class QuadrantParser {
       children: this.children,
     };
     return this.st.result(model, ast, this.lexed.tokens, this.options, this.probe);
+  }
+
+  /**
+   * Class symbols in source order. Every `:::name` that lexes is a `ref`, in a statement that
+   * failed too, so a rename and its clash check cover it (the occurrence has no statement link).
+   * Of the `classDef`s of a name, only the last, which the model keeps (`c:<name>`), is the
+   * `def`; earlier ones are references.
+   */
+  private classSymbols(): void {
+    const { kind, start, end, length } = this.lexed.tokens;
+    for (let i = 0; i < length; i++) {
+      if (kind[i] !== T.ClassName) continue;
+      const range = this.trim(start[i] ?? 0, end[i] ?? 0);
+      this.st.symbol(tokenValue(this.lexed, i), 'class', range, 'ref');
+    }
+    const symbols = this.st.symbols.sort((a, b) => a.range.start - b.range.start);
+    const last = new Map<string, SymbolOccurrence>();
+    for (const s of symbols) if (s.role === 'def') last.set(s.name, s);
+    for (const s of symbols) if (s.role === 'def' && last.get(s.name) !== s) s.role = 'ref';
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -557,8 +582,6 @@ class QuadrantParser {
     if (className !== undefined && classRange !== undefined) {
       node.className = className;
       node.classRange = classRange;
-      // Only once the statement is complete, as `classDef`'s `def`: a failed point has none.
-      this.st.symbol(className, 'class', classRange, 'ref');
     }
     this.add(node, 'point');
   }

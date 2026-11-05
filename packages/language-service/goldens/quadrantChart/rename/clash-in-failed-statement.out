@@ -1,0 +1,3 @@
+@ 3:12  classDef |cold radius: 10
+  prepare: 3:12-3:16 "cold"; rename to "warm":
+  refused: 'warm' is already a class name in this diagram.

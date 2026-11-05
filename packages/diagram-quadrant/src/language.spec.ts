@@ -152,6 +152,25 @@ describe('quadrant language facet: completions (D95)', () => {
     expect(complete(`${doc}  classDef ¦`)).toEqual(['hot', 'cold']);
   });
 
+  it('offers only class names that read back where they go', () => {
+    const doc = `${H}  classDef a-b radius: 1\n  classDef ok radius: 2\n  B:::a_b: [0.1, 0.1]\n`;
+    // `:::` reads `\w+` only; `classDef` names hold no `_`.
+    expect(complete(`${doc}  A:::¦`)).toEqual(['ok', 'a_b']);
+    expect(complete(`${doc}  classDef ¦`)).toEqual(['a-b', 'ok']);
+  });
+
+  it('does not offer `-->` where one is already written', () => {
+    expect(complete(`${H}  x-axis Low ¦--> High`)).toEqual([]);
+    expect(complete(`${H}  x-axis Low ¦ --> High`)).toEqual([]);
+  });
+
+  it('completes a keyword typed in full, and `accTitle`/`accDescr` with what follows', () => {
+    expect(complete(`${H}  title¦`)).toEqual(['title']);
+    expect(complete(`${H}  classDef¦`)).toEqual(['classDef']);
+    expect(complete(`${H}  accDescr ¦`)).toEqual([':', '{']);
+    expect(complete(`${H}  accTitle ¦`)).toEqual([':']);
+  });
+
   it('offers style keys after `]` and a classDef name, not in a value', () => {
     expect(complete(`${H}  A: [0.1, 0.2] ¦`)).toEqual(STYLE_KEYS);
     expect(complete(`${H}  A: [0.1, 0.2] radius: 10, stroke-¦`)).toEqual([
