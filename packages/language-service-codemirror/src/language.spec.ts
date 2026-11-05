@@ -49,9 +49,18 @@ describe('the Lezer language (#21 grammar)', () => {
   });
 
   it('reads front matter as front matter, not as flowchart text (GAPS #28)', () => {
-    // A `'` or `(` in the YAML would otherwise leave a label mode open into the diagram.
+    // A `'` or `(` in the YAML would otherwise leave a label mode open into the diagram. YAML
+    // keys are variables, as in the Monarch and TextMate grammars.
     const text = "---\ntitle: it's (open\nconfig:\n  theme: dark\n---\nflowchart LR\n  A --> B\n";
-    expect(spans(text)).toEqual(['flowchart:keyword', 'A:variable', '-->:operator', 'B:variable']);
+    expect(spans(text)).toEqual([
+      'title:variable',
+      'config:variable',
+      'theme:variable',
+      'flowchart:keyword',
+      'A:variable',
+      '-->:operator',
+      'B:variable',
+    ]);
   });
 
   it('highlights the whole text when there is no closed front matter fence', () => {
@@ -67,11 +76,11 @@ describe('the Lezer language (#21 grammar)', () => {
     state = state.update({ changes: { from: 14, to: 18 } }).state;
     const open = state.doc.toString();
     expect(spans(open, treeOf(state))).toEqual(spans(open));
-    expect(spans(open)).toEqual([]);
+    expect(spans(open)).toEqual([]); // no diagram type yet
     // Put it back: the diagram is highlighted again, not reused as blanks.
     state = state.update({ changes: { from: 14, insert: '---\n' } }).state;
     expect(spans(closed, treeOf(state))).toEqual(spans(closed));
-    expect(spans(closed)[0]).toBe('flowchart:keyword');
+    expect(spans(closed)[1]).toBe('flowchart:keyword');
   });
 
   it.each([

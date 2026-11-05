@@ -1114,7 +1114,7 @@
           "name": "comment.line.mermaid-sequence"
         },
         {
-          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#]*(?=:(?:\\s|$))",
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
           "name": "variable.other.mermaid-sequence"
         }
       ]

@@ -4,7 +4,7 @@ import { styleTags, tags as t } from '@lezer/highlight';
 import * as TERMS from './state.parser.terms.js';
 
 /** mode -> [pattern, token, push target, pop] in priority order. */
-const TABLE = {"INITIAL":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?i:click)\\b","Keyword",null,false],["(?i:href)\\b","Keyword",null,false],["\"[^\"]*\"","String",null,false],["(?i:default)\\b","Keyword",null,false],["(?i:.*direction\\s+tb)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+bt)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+rl)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+lr)[^\\n]*","Keyword",null,false],["\\n+","Other",null,false],["\\s+","Other",null,false],["#[^\\n]*","Comment",null,false],["%%(?!\\{)[^\\n]*","Comment",null,false],["(?i:scale)\\s+","Keyword","SCALE",false],["(?i:accTitle)\\s*:\\s*","Keyword","acc_title",false],["(?i:accDescr)\\s*:\\s*","Keyword","acc_descr",false],["(?i:accDescr)\\s*\\{\\s*","Keyword","acc_descr_multiline",false],["(?i:classDef)\\s+","Keyword","CLASSDEF",false],["(?i:class)\\s+","Keyword","CLASS",false],["(?i:style)\\s+","Keyword","STYLE",false],["(?i:state)\\s+","Keyword","STATE",false],["\\{","Punctuation","struct",false],["(?i:note)\\s+","Keyword","NOTE",false],["(?i:stateDiagram)\\s+","Keyword",null,false],["(?i:stateDiagram-v2)\\s+","Keyword",null,false],["(?i:hide empty description)\\b","Keyword",null,false],["\\[\\*\\]","Constant",null,false],["%%[^:\\n\\s\\-{]*","Other",null,false],["(?:[^:\\n\\s\\-{%]|%(?!%))+","Variable",null,false],["\\s*:(?:[^:\\n;]|:[^:\\n;])+","String",null,false],["-->","Operator",null,false],[":::","Operator",null,false],["$","Other",null,false],[".","Other",null,false]],"STATE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?:(?!\\n)\\s)+","Other",null,false],["#[^\\n]*","Comment",null,false],["%%(?!\\{)[^\\n]*","Comment",null,false],["(?i:<<(?:fork|join|choice)>>|\\[\\[(?:fork|join|choice)\\]\\])","Keyword",null,true],["(?i:.*(?=<<fork>>))","Variable",null,false],["(?i:.*(?=<<join>>))","Variable",null,false],["(?i:.*(?=<<choice>>))","Variable",null,false],["(?i:.*(?=\\[\\[fork\\]\\]))","Variable",null,false],["(?i:.*(?=\\[\\[join\\]\\]))","Variable",null,false],["(?i:.*(?=\\[\\[choice\\]\\]))","Variable",null,false],["\"","String","STATE_STRING",false],["\\s*(?i:as)\\s+","Keyword","STATE_ID",false],["\\w+\\s+\\w+.*?\\{","Other",null,false],["[^\\n\\s{]+","Variable",null,false],["\\n","Other",null,true],["\\{","Punctuation","struct",true]],"STATE_STRING":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\"","String",null,true],["[^\"]*","String",null,false]],"STATE_ID":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["%%[^\\n{]*","Other",null,false],["(?:[^\\n{%]|%(?!%))*","Variable",null,true]],"SCALE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\d+","Number",null,false],["\\s+(?i:width)\\b","Keyword",null,true]],"acc_title":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr_multiline":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\}","Keyword",null,true],["[^}]*","String",null,false]],"CLASSDEF":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?i:default)\\s+","Variable","CLASSDEFID",true],["\\w+\\s+","Variable","CLASSDEFID",true]],"CLASSDEFID":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"CLASS":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\w+(?:,\\s*\\w+)*","Variable","CLASS_STYLE",true]],"CLASS_STYLE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","Variable",null,true]],"STYLE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[\\w,]+\\s+","Variable","STYLEDEF_STYLES",true]],"STYLEDEF_STYLES":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"NOTE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?i:left of)\\b","Keyword","NOTE_ID",true],["(?i:right of)\\b","Keyword","NOTE_ID",true],["\"","String","FLOATING_NOTE",true]],"NOTE_ID":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\s*(?:[^:\\n\\s\\-%]|%(?!%))+","Variable","NOTE_TEXT",true]],"NOTE_TEXT":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\s*:[^:\\n;]+","String",null,true],["\\n\\s*(?i:end note)\\b","Keyword",null,true],["[\\s\\S]*?(?=\\n\\s*(?i:end note)\\b)","String",null,false]],"FLOATING_NOTE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\s*(?i:as)\\s*","Keyword","FLOATING_NOTE_ID",true],["\"","String",null,false],["[^\"]*","String",null,false]],"FLOATING_NOTE_ID":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?:[^\\n%]|%(?!%))*","Variable",null,true]],"struct":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?:(?!\\n)\\s)+","Other",null,false],["#[^\\n]*","Comment",null,false],["%%(?!\\{)[^\\n]*","Comment",null,false],["(?i:classDef)\\s+","Keyword","CLASSDEF",false],["(?i:class)\\s+","Keyword","CLASS",false],["(?i:style)\\s+","Keyword","STYLE",false],["(?i:state)\\s+","Keyword","STATE",false],["(?i:.*direction\\s+tb)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+bt)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+rl)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+lr)[^\\n]*","Keyword",null,false],["\\}","Punctuation",null,true],["\\n","Other",null,false],["(?i:note)\\s+","Keyword","NOTE",false],["\\[\\*\\]","Constant",null,false],["%%[^:\\n\\s\\-{]*","Other",null,false],["(?:[^:\\n\\s\\-{%]|%(?!%))+","Variable",null,false],["\\s*:(?:[^:\\n;]|:[^:\\n;])+","String",null,false],["-->","Operator",null,false],["--","Operator",null,false],[":::","Operator",null,false]]};
+const TABLE = {"@frontMatterStart":[["(?=(?:[^\\S\\n]*\\n)*[^\\S\\n]*---[^\\S\\n]*(?:\\n|$))","Other","@frontMatterOpen",true],["","Other",null,true]],"@frontMatterOpen":[["^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)","Meta","@frontMatter",true],["[^\\S\\n]*\\n","Other",null,false]],"@frontMatter":[["^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)","Meta",null,true],["[^\\S\\n]*#[^\\n]*","Comment",null,false],["^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))","Variable",null,false],["[^#\\n]+|\\n","Other",null,false]],"INITIAL":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?i:click)\\b","Keyword",null,false],["(?i:href)\\b","Keyword",null,false],["\"[^\"]*\"","String",null,false],["(?i:default)\\b","Keyword",null,false],["(?i:.*direction\\s+tb)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+bt)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+rl)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+lr)[^\\n]*","Keyword",null,false],["\\n+","Other",null,false],["\\s+","Other",null,false],["#[^\\n]*","Comment",null,false],["%%(?!\\{)[^\\n]*","Comment",null,false],["(?i:scale)\\s+","Keyword","SCALE",false],["(?i:accTitle)\\s*:\\s*","Keyword","acc_title",false],["(?i:accDescr)\\s*:\\s*","Keyword","acc_descr",false],["(?i:accDescr)\\s*\\{\\s*","Keyword","acc_descr_multiline",false],["(?i:classDef)\\s+","Keyword","CLASSDEF",false],["(?i:class)\\s+","Keyword","CLASS",false],["(?i:style)\\s+","Keyword","STYLE",false],["(?i:state)\\s+","Keyword","STATE",false],["\\{","Punctuation","struct",false],["(?i:note)\\s+","Keyword","NOTE",false],["(?i:stateDiagram)\\s+","Keyword",null,false],["(?i:stateDiagram-v2)\\s+","Keyword",null,false],["(?i:hide empty description)\\b","Keyword",null,false],["\\[\\*\\]","Constant",null,false],["%%[^:\\n\\s\\-{]*","Other",null,false],["(?:[^:\\n\\s\\-{%]|%(?!%))+","Variable",null,false],["\\s*:(?:[^:\\n;]|:[^:\\n;])+","String",null,false],["-->","Operator",null,false],[":::","Operator",null,false],["$","Other",null,false],[".","Other",null,false]],"STATE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?:(?!\\n)\\s)+","Other",null,false],["#[^\\n]*","Comment",null,false],["%%(?!\\{)[^\\n]*","Comment",null,false],["(?i:<<(?:fork|join|choice)>>|\\[\\[(?:fork|join|choice)\\]\\])","Keyword",null,true],["(?i:.*(?=<<fork>>))","Variable",null,false],["(?i:.*(?=<<join>>))","Variable",null,false],["(?i:.*(?=<<choice>>))","Variable",null,false],["(?i:.*(?=\\[\\[fork\\]\\]))","Variable",null,false],["(?i:.*(?=\\[\\[join\\]\\]))","Variable",null,false],["(?i:.*(?=\\[\\[choice\\]\\]))","Variable",null,false],["\"","String","STATE_STRING",false],["\\s*(?i:as)\\s+","Keyword","STATE_ID",false],["\\w+\\s+\\w+.*?\\{","Other",null,false],["[^\\n\\s{]+","Variable",null,false],["\\n","Other",null,true],["\\{","Punctuation","struct",true]],"STATE_STRING":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\"","String",null,true],["[^\"]*","String",null,false]],"STATE_ID":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["%%[^\\n{]*","Other",null,false],["(?:[^\\n{%]|%(?!%))*","Variable",null,true]],"SCALE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\d+","Number",null,false],["\\s+(?i:width)\\b","Keyword",null,true]],"acc_title":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr_multiline":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\}","Keyword",null,true],["[^}]*","String",null,false]],"CLASSDEF":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?i:default)\\s+","Variable","CLASSDEFID",true],["\\w+\\s+","Variable","CLASSDEFID",true]],"CLASSDEFID":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"CLASS":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\w+(?:,\\s*\\w+)*","Variable","CLASS_STYLE",true]],"CLASS_STYLE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","Variable",null,true]],"STYLE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[\\w,]+\\s+","Variable","STYLEDEF_STYLES",true]],"STYLEDEF_STYLES":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"NOTE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?i:left of)\\b","Keyword","NOTE_ID",true],["(?i:right of)\\b","Keyword","NOTE_ID",true],["\"","String","FLOATING_NOTE",true]],"NOTE_ID":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\s*(?:[^:\\n\\s\\-%]|%(?!%))+","Variable","NOTE_TEXT",true]],"NOTE_TEXT":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\s*:[^:\\n;]+","String",null,true],["\\n\\s*(?i:end note)\\b","Keyword",null,true],["[\\s\\S]*?(?=\\n\\s*(?i:end note)\\b)","String",null,false]],"FLOATING_NOTE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\s*(?i:as)\\s*","Keyword","FLOATING_NOTE_ID",true],["\"","String",null,false],["[^\"]*","String",null,false]],"FLOATING_NOTE_ID":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?:[^\\n%]|%(?!%))*","Variable",null,true]],"struct":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?:(?!\\n)\\s)+","Other",null,false],["#[^\\n]*","Comment",null,false],["%%(?!\\{)[^\\n]*","Comment",null,false],["(?i:classDef)\\s+","Keyword","CLASSDEF",false],["(?i:class)\\s+","Keyword","CLASS",false],["(?i:style)\\s+","Keyword","STYLE",false],["(?i:state)\\s+","Keyword","STATE",false],["(?i:.*direction\\s+tb)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+bt)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+rl)[^\\n]*","Keyword",null,false],["(?i:.*direction\\s+lr)[^\\n]*","Keyword",null,false],["\\}","Punctuation",null,true],["\\n","Other",null,false],["(?i:note)\\s+","Keyword","NOTE",false],["\\[\\*\\]","Constant",null,false],["%%[^:\\n\\s\\-{]*","Other",null,false],["(?:[^:\\n\\s\\-{%]|%(?!%))+","Variable",null,false],["\\s*:(?:[^:\\n;]|:[^:\\n;])+","String",null,false],["-->","Operator",null,false],["--","Operator",null,false],[":::","Operator",null,false]]};
 /** Trivia (comments, directives): no other token runs into one (the lexer never sees them). */
 const TRIVIA = ["^[^\\S\\n]*%%(?!\\{)[^\\n]+","[^\\S\\n]*%%\\{.*?\\}%%"].map(
   (p) => new RegExp(p, p.startsWith('^') ? 'gm' : 'g')
@@ -40,7 +40,8 @@ class Modes {
     return stack === this.stack ? this : new Modes(stack);
   }
 }
-const START = new Modes(['INITIAL']);
+/** Front matter modes (`@…`) sit above INITIAL and pop back to it. */
+const START = new Modes(['INITIAL', '@frontMatterStart']);
 
 /** How far a token may look ahead. Each token depends on this much text (incremental reuse). */
 const LOOKAHEAD = 4096;
@@ -101,14 +102,18 @@ function nextTrivia(entry, from, end) {
   return exact ? cut : -1;
 }
 
-/** The text a token is matched against: the lookahead, cut at the next trivia. */
-function ahead(input) {
-  if (!input.input || !input.ranges || input.ranges.length !== 1) return aheadSlow(input);
+/**
+ * The text a token is matched against: the lookahead, cut at the next trivia unless `whole`
+ * (front matter, where no trivia rule runs).
+ */
+function ahead(input, whole) {
+  if (!input.input || !input.ranges || input.ranges.length !== 1) return aheadSlow(input, whole);
   const entry = textOf(input);
   const at = input.pos - entry.from;
   const end = Math.min(at + LOOKAHEAD, entry.text.length);
   if (end <= at) return '';
   input.peek(end - at - 1); // record the lookahead, as reading each character would
+  if (whole) return entry.text.slice(at, end);
   const cut = nextTrivia(entry, at + 1, end);
   if (cut >= 0) return entry.text.slice(at, cut);
   const s = entry.text.slice(at, end);
@@ -116,13 +121,14 @@ function ahead(input) {
   return c < 0 ? s : s.slice(0, c);
 }
 
-function aheadSlow(input) {
+function aheadSlow(input, whole) {
   let s = '';
   for (let i = 0; i < LOOKAHEAD; i++) {
     const c = input.peek(i);
     if (c < 0) break;
     s += String.fromCharCode(c);
   }
+  if (whole) return s;
   const cut = triviaCut(s, 1, s.length);
   return cut < 0 ? s : s.slice(0, cut);
 }
@@ -137,7 +143,7 @@ function atLineStart(input) {
 
 /** The next token: [term, length, modes after it]; empty matches only change the mode. */
 function next(modes, input) {
-  const text = ahead(input);
+  const text = ahead(input, inFrontMatter(modes));
   if (text.length === 0) return undefined;
   // The tokenizer and then the context tracker's shift ask for the same token.
   // The key is the (immutable) Lezer input when there is one, else the text.
@@ -155,10 +161,19 @@ function next(modes, input) {
 }
 let last = { modes: undefined, pos: -1, key: undefined, ranges: undefined, result: undefined };
 
+/** Whether the top mode is a front matter one (`@…`), where no trivia cuts the text. */
+const inFrontMatter = (modes) => modes.top.charCodeAt(0) === 64;
+
 function match(modes, input, text) {
   // A `^` rule matches only at a line start (the regex sees the text from here on).
   const bol = atLineStart(input);
+  let whole = inFrontMatter(modes);
   for (let guard = 0; guard < 8; guard++) {
+    // Left the front matter without reading anything: the diagram's rules see trivia cuts.
+    if (whole && !inFrontMatter(modes)) {
+      text = ahead(input, false);
+      whole = false;
+    }
     let changed = false;
     for (const rule of MODES[modes.top] ?? []) {
       if (rule.bol && !bol) continue;

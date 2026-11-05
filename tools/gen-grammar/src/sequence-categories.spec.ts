@@ -16,12 +16,7 @@ import {
   sequenceTokens,
 } from '@mermaid-js/diagram-sequence/language';
 import { generate, generatedDir } from './generate.ts';
-import {
-  hidingFrontMatter,
-  lezerCategorise,
-  monarchCategorise,
-  textMateCategorise,
-} from './highlight-testing.ts';
+import { lezerCategorise, monarchCategorise, textMateCategorise } from './highlight-testing.ts';
 import type { Categorise } from './highlight-testing.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -166,15 +161,12 @@ describe('four-way highlighting agreement (sequence)', () => {
       ],
       ['Monarch', monarchCategorise(out('sequence.monarch.json'))],
       [
-        // As the CodeMirror adapter runs it: front matter hidden.
         'Lezer',
-        hidingFrontMatter(
-          await lezerCategorise(
-            out('sequence.grammar'),
-            out('sequence.tokens.js'),
-            'sequence',
-            join(root, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
-          )
+        await lezerCategorise(
+          out('sequence.grammar'),
+          out('sequence.tokens.js'),
+          'sequence',
+          join(root, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
         ),
       ],
     ];

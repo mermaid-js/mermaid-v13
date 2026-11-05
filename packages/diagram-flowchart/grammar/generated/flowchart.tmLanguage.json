@@ -2055,7 +2055,7 @@
           "name": "comment.line.mermaid-flowchart"
         },
         {
-          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#]*(?=:(?:\\s|$))",
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
           "name": "variable.other.mermaid-flowchart"
         }
       ]

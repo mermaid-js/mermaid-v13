@@ -17,12 +17,7 @@ import { flowSourceView } from '../../../packages/diagram-flowchart/src/parser/l
 import { categoryTable, kindKeys } from './categories.ts';
 import { parseGrammar } from './ebnf.ts';
 import { generate, generatedDir } from './generate.ts';
-import {
-  hidingFrontMatter,
-  lezerCategorise,
-  monarchCategorise,
-  textMateCategorise,
-} from './highlight-testing.ts';
+import { lezerCategorise, monarchCategorise, textMateCategorise } from './highlight-testing.ts';
 import type { Categorise } from './highlight-testing.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -132,9 +127,8 @@ const FIXTURES: [string, string][] = [
 const BLANK_KINDS = new Set<number>([T.Space, T.NoDir, T.Eof]);
 
 /*
- * The highlighters read the source as written, front matter included: TextMate and Monarch
- * model it (front-matter.spec.ts), Lezer runs as the CodeMirror adapter runs it, with the
- * front matter hidden. The lexer gives front matter no tokens, so only the diagram after it is
+ * The highlighters read the source as written, front matter included: all three model it
+ * (front-matter.spec.ts). The lexer gives front matter no tokens, so only the diagram after it is
  * compared. Documented exceptions, where the highlighters see text differently from the lexer:
  *
  * 1. `ShapeData`: one kind for all of `@{ … }`; the highlighters show its quoted values as
@@ -186,15 +180,12 @@ describe('four-way highlighting agreement', () => {
       ],
       ['Monarch', monarchCategorise(out('flowchart.monarch.json'))],
       [
-        // As the CodeMirror adapter runs it: front matter hidden.
         'Lezer',
-        hidingFrontMatter(
-          await lezerCategorise(
-            out('flowchart.grammar'),
-            out('flowchart.tokens.js'),
-            'flowchart',
-            join(root, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
-          )
+        await lezerCategorise(
+          out('flowchart.grammar'),
+          out('flowchart.tokens.js'),
+          'flowchart',
+          join(root, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
         ),
       ],
     ];

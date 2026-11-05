@@ -12,7 +12,6 @@ import { buildParserFile } from '@lezer/generator';
 import type { LRParser } from '@lezer/lr';
 import * as oniguruma from 'vscode-oniguruma';
 import * as vsctm from 'vscode-textmate';
-import { preprocess } from '@mermaid-js/core/preprocess';
 
 /** Category of each UTF-16 unit of a text (`Other` where a highlighter styles nothing). */
 export type Categorise = (text: string) => string[];
@@ -173,17 +172,5 @@ export async function lezerCategorise(
       },
     });
     return out;
-  };
-}
-
-/**
- * A highlighter as the CodeMirror adapter runs the Lezer grammar
- * (`language-service-codemirror/src/language.ts`): the generated grammar has no front-matter
- * state, so the adapter hides the block (core's `bodyStart`) from it as blanks, line breaks kept.
- */
-export function hidingFrontMatter(categorise: Categorise): Categorise {
-  return (text) => {
-    const end = preprocess(text).bodyStart;
-    return categorise(text.slice(0, end).replace(/[^\n\r]/g, ' ') + text.slice(end));
   };
 }
