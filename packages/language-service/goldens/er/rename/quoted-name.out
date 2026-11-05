@@ -1,0 +1,9 @@
+@ 3:13  "Customer |Account" ||--o{ ORDER : places
+  prepare: 3:4-3:20 "Customer Account"; rename to "Client Account":
+  %% rename-to: Client Account
+  erDiagram
+    "Client Account" ||--o{ ORDER : places
+    "Client Account" {
+      string name
+    }
+    ORDER }|--|| "Client Account" : for

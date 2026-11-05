@@ -83,10 +83,13 @@ function symbolTokens(list: readonly Occurrence[]): SemanticToken[] {
     if (o.role === 'def' && (def === undefined || def.kind === o.kind))
       modifiers.push('declaration');
     if (def === o) modifiers.push('definition');
+    // A quoted name is one token with its quotes, as the lexer has it (#199).
+    const q = o.quote?.length ?? 0;
+    const range = { start: o.range.start - q, end: o.range.end + q };
     const last = out[out.length - 1];
-    if (last && last.range.end > o.range.start) continue;
+    if (last && last.range.end > range.start) continue;
     // Typed by what the name denotes: an edge to a subgraph id is a subgraph.
-    out.push({ range: o.range, type: BY_SYMBOL[(def ?? o).kind] ?? 'variable', modifiers });
+    out.push({ range, type: BY_SYMBOL[(def ?? o).kind] ?? 'variable', modifiers });
   }
   return out;
 }

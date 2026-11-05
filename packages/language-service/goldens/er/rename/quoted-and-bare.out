@@ -1,0 +1,3 @@
+@ 3:4  "|x" ||--|| x : self
+  prepare: 3:4-3:5 "x"; rename to "two words":
+  refused: A name cannot contain spaces.
