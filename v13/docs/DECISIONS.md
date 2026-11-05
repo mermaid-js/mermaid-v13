@@ -40,7 +40,7 @@ Later decisions supersede earlier ones where they conflict; superseded text is m
 | D25 | Branch layout: `packages/core`, `packages/diagram-flowchart`, `packages/mermaid` = API + bundle; v12 sources deleted on branch (oracle via npm only); more packages as needed. |
 | D26 | Render tests: vitest property tests on full corpus (well-formed, security allow-list, deterministic, no NaN); Playwright/Argos curated visual baseline; all-diagrams gallery page; approaches harness in CI enforces D10. |
 | D27 | Targets: ES2022, evergreen ~2 yrs, Node ≥ 20, workers, Deno; no polyfills. |
-| D28 | Alphas first private (`@mermaid-chart/mermaid` on GitHub Packages via publish-fork), public npm `mermaid@13.0.0-alpha.N` once M1 meets D10; Changesets pre mode publishing on every merge to `mermaid-v13`. *(Amended by D155.)* |
+| D28 | Alphas first private (`@mermaid-chart/mermaid` on GitHub Packages via publish-fork), public npm `mermaid@13.0.0-alpha.N` once M1 meets D10; Changesets pre mode publishing on every merge to `mermaid-v13`. *(Amended by D159.)* |
 
 ## Principles
 
@@ -237,7 +237,7 @@ D100–D139 are M3's (D140–D149 stay M2's). One spec per type, following `agen
 
 | # | Decision |
 | --- | --- |
-| D155 | **Alphas go to npm first, and the release master starts each one.** `mermaid` and the `@mermaid-js/*` packages publish straight to npm with dist-tag `v13-alpha`, starting at `13.0.0-alpha.0` (published under `alpha`, then tagged `v13-alpha`; `alpha` held the v11 alphas and is not moved again), so people can try v13 now. GitHub Packages stays available (`release:publish --target private`). Changesets versions each package on its own line, `13.0.0-alpha.N`, with exact internal pins, so any release also re-releases `mermaid`. Releases are not published on every merge: the release master starts each one, with the `release-alpha` skill or the *Release alpha (manual)* workflow (v13/docs/RELEASING.md). The R-PERF-1…4 gate is printed from the last bench report but not enforced, because R-PERF-3 stays below 50× on CI runners (D150). The release master gives the reason. There is no npm provenance while the repository is private. Amends D28, R-REL-2 and R-REL-3. |
+| D159 | **Alphas go to npm first, and the release master starts each one.** `mermaid` and the `@mermaid-js/*` packages publish straight to npm with dist-tag `v13-alpha`, starting at `13.0.0-alpha.0` (published under `alpha`, then tagged `v13-alpha`; `alpha` held the v11 alphas and is not moved again), so people can try v13 now. GitHub Packages stays available (`release:publish --target private`). Changesets versions each package on its own line, `13.0.0-alpha.N`, with exact internal pins, so any release also re-releases `mermaid`. Releases are not published on every merge: the release master starts each one, with the `release-alpha` skill or the *Release alpha (manual)* workflow (v13/docs/RELEASING.md). The R-PERF-1…4 gate is printed from the last bench report but not enforced, because R-PERF-3 stays below 50× on CI runners (D150). The release master gives the reason. There is no npm provenance while the repository is private. Amends D28, R-REL-2 and R-REL-3. |
 
 ## M3.5 — plugin platform
 

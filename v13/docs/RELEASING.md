@@ -90,7 +90,7 @@ Never edit `version` in a package.json, `version.ts` or the CHANGELOG files by h
 `release:publish` options:
 
 - `--gate <bench report.json>` checks the public alpha gate (R-PERF-1…4, R-REL-3) on a full bench report of this commit.
-- `--skip-gate "<reason>"` publishes without enforcing the gate (D155). It prints the reason and the gate's checks on the **last known bench**: `--bench-report <file>`, else `packages/bench/dist/reports/latest.json`, else the newest successful *Nightly bench* report, downloaded with `gh`. The full bench takes up to an hour, and R-PERF-3 is below 50× on CI runners (D150), so manual releases use this. Example:
+- `--skip-gate "<reason>"` publishes without enforcing the gate (D159). It prints the reason and the gate's checks on the **last known bench**: `--bench-report <file>`, else `packages/bench/dist/reports/latest.json`, else the newest successful *Nightly bench* report, downloaded with `gh`. The full bench takes up to an hour, and R-PERF-3 is below 50× on CI runners (D150), so manual releases use this. Example:
   ```
   Public alpha gate (R-PERF-1…4) SKIPPED by the release master: manual alpha
   Last known bench, not enforced: 2026-11-04T11:02:52.881Z on blacksmith-4vcpu-ubuntu-2404, commit 639b65a
