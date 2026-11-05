@@ -74,7 +74,7 @@ import {
   type FirstPartyEntry,
   type LayoutLoader,
 } from './registry.ts';
-import { DiscoveryQueue, setSeam } from './seam.ts';
+import { DiscoveryQueue, registerSeam } from './seam.ts';
 import { VERSION } from './version.ts';
 
 export type { InitializeConfig, IntegratorOptions } from './config-snapshot.ts';
@@ -997,7 +997,7 @@ export function createMermaid(
     registerIconPacks,
     setParseErrorHandler,
   };
-  setSeam(api, discovery);
+  registerSeam(api, discovery);
   return api;
 }
 

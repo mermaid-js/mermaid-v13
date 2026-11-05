@@ -1,9 +1,11 @@
 /**
- * The discovered-list seam's state for one API object (D166; see discovery.ts): the first-use
- * source, the registrations still in flight, and the warnings waiting for the next draw.
- * `createMermaid` owns one `DiscoveryQueue` and hands it the registry call.
+ * The discovered-list seam of an API object (see discovery.ts): how discovery hands plugins to
+ * the `createMermaid` instance that registered it, without widening the public API. Its state
+ * (D166) is a `DiscoveryQueue`: the first-use source, the registrations still in flight, and the
+ * warnings waiting for the next draw. `createMermaid` owns one and hands it the registry call.
  */
 import type { Warning } from '@mermaid-js/core';
+import type { Mermaid } from './api.ts';
 import type { DiscoveredPlugin } from './registry.ts';
 
 /** How long a draw waits for a discovered registration still in flight (D165's import limit). */
@@ -25,7 +27,7 @@ export type FirstUseSource = (
 ) => readonly DiscoveredPlugin[] | Promise<readonly DiscoveredPlugin[]>;
 
 /** The discovered-list seam of one API object (see discovery.ts). */
-interface Seam {
+export interface Seam {
   add(list: readonly DiscoveredPlugin[], options?: AddOptions): Promise<readonly Warning[]>;
   onFirstUse(source: FirstUseSource, options?: AddOptions): void;
 }
@@ -144,13 +146,13 @@ export class DiscoveryQueue implements Seam {
 
 const seams = new WeakMap<object, Seam>();
 
-/** Makes `queue` the seam of `api` (an object `createMermaid` made). */
-export function setSeam(api: object, queue: DiscoveryQueue): void {
-  seams.set(api, queue);
+/** Registers the seam of `api`; `createMermaid` calls it once per object it makes. */
+export function registerSeam(api: object, seam: Seam): void {
+  seams.set(api, seam);
 }
 
 /** The discovered-list seam of `api`, an object `createMermaid` made. */
-export function seamOf(api: object): Seam {
+export function seamOf(api: Mermaid): Seam {
   const seam = seams.get(api);
   if (!seam) throw new TypeError('Not a mermaid API object');
   return seam;
