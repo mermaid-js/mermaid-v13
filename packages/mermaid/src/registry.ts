@@ -77,6 +77,11 @@ export interface LayoutLoader {
    * loads. Loaders of one package share one fragment object (one id).
    */
   readonly config?: ConfigFragment;
+  /**
+   * The layout plugin's own hooks (an extension plugin, D174: ELK's `lineHops` is a
+   * `postRender` edit), registered with the loaders. Loaders of one package share one.
+   */
+  readonly extension?: ExtensionPlugin;
 }
 
 interface Entry {
@@ -107,7 +112,8 @@ const builtIn = (name: string): boolean => name === 'layered' || name === 'dagre
  * v12's ELK names, `elk` and `elk.<algorithm>` (D171). Without an ELK engine registered they draw
  * with the built-in engine and warn `ELK_NOT_INSTALLED` (D173). Core never names the package.
  */
-const isElkName = (name: string): boolean => name === 'elk' || name.startsWith('elk.');
+/** `elk` or `elk.<anything>`: a name only an ELK layout plugin lays out (D171, D173). */
+export const isElkName = (name: string): boolean => name === 'elk' || name.startsWith('elk.');
 
 /** The plugin a loaded entry module holds: `manifest.export`, the default export, or itself. */
 function entryExport(module: unknown, manifest: PluginManifest): unknown {
@@ -469,13 +475,18 @@ export class Registry {
     else if (!lazyLoad) await this.load(def.id);
   }
 
-  registerLayouts(loaders: readonly LayoutLoader[]): void {
+  /** Registers `loaders` and returns their extensions, checked, each once. */
+  registerLayouts(loaders: readonly LayoutLoader[]): ExtensionPlugin[] {
+    const extensions = [
+      ...new Set(loaders.flatMap((l) => (l.extension === undefined ? [] : [l.extension]))),
+    ].map(checkExtension);
     for (const l of loaders) if (l.config !== undefined) this.addFragment(l.config);
     for (const l of loaders) {
       this.layoutLoaders.set(l.name, l.loader);
       if (isElkName(l.name)) this.elkRegistered = true;
       this.layouts.delete(l.name);
     }
+    return extensions;
   }
 
   /**

@@ -64,6 +64,7 @@ import { createDomAdapter } from './dom.ts';
 import { toMermaidError } from './errors.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
+  isElkName,
   Registry,
   type AnyPlugin,
   type Detected,
@@ -533,8 +534,10 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
       });
     }
     let engine: LayoutEngine | undefined;
+    let elkName: string | undefined;
     if (plugin.layoutKind === 'graph') {
       const name = layoutName(config);
+      if (isElkName(name)) elkName = name;
       const found = registry.layout(name);
       if (found.state === 'unknown') {
         warn({
@@ -569,6 +572,18 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
       limits: s.limits,
       layout: (graph) => {
         if (!engine) throw new TypeError(`${plugin.id} has no graph layout`);
+        // D174: `@{ algorithm }` is parsed but not applied yet. `mermaid` says so, not the engine
+        // (which has no warning channel), once per render.
+        if (elkName !== undefined) {
+          const asked = [...new Set(graph.groups.flatMap((g) => g.algorithm ?? []))];
+          if (asked.length > 0) {
+            warn({
+              code: 'ELK_ALGORITHM_IGNORED',
+              message: `Per-group layout algorithms (@{ algorithm }) are not applied yet: ${asked.join(', ')}. Those groups are laid out with "${elkName}".`,
+            });
+            elkName = undefined;
+          }
+        }
         return engine(
           width !== undefined && graph.availableWidth === undefined
             ? { ...graph, availableWidth: width }
@@ -808,9 +823,11 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
 
   function registerLayoutLoaders(loaders: readonly LayoutLoader[]): void {
     const before = registry.fragments();
-    registry.registerLayouts(loaders);
-    // A new fragment changes how config resolves: parsed texts must resolve again.
-    if (registry.fragments() !== before) cache.clear();
+    const extensions = registry.registerLayouts(loaders);
+    for (const e of extensions) hooks.register(e as ExtensionPlugin);
+    // A new fragment changes how config resolves, and a new hook how texts draw: parsed texts
+    // must resolve again.
+    if (registry.fragments() !== before || extensions.length > 0) cache.clear();
   }
 
   /** No-op until the icons plugin exists; renders then carry an `ICON_PACKS_UNSUPPORTED` warning. */

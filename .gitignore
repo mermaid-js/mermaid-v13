@@ -66,6 +66,7 @@ generated/
 !packages/diagram-*/src/generated/
 !packages/mermaid/src/generated/
 !packages/language-service/src/generated/
+!packages/layout-elk/src/generated/
 # The Lezer parser built from the flowchart grammar (#35), checked by its freshness spec
 !packages/language-service-codemirror/src/generated/
 

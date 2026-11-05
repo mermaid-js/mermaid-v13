@@ -9,8 +9,18 @@
  * the parent's layout (`INCLUDE_CHILDREN`), as v12's `configureCrossHierarchyEdges` does. Each
  * edge lives in its ends' common ancestor (`findCommonAncestor`) and edges reach ELK in v12's
  * nested order (`orderNestedEdgeEnds`). v12's fixed options (those no `elk.*` key sets) are
- * set too. The `elk.*` keys, presets and passes are E4 #242's; a group's `algorithm` is not
- * applied (D174). The engine never measures: every length comes from the graph.
+ * set too. The engine never measures: every length comes from the graph.
+ *
+ * The `elk.*` keys (E4 #242, D174) come from `ctx.config.elk` (the package's config fragment):
+ * the presets and keys set ELK's options as v12's `createRootElkGraph` and
+ * `buildSubgraphLayoutOptions` do (`options.ts`); `orientFeedbackEdges` hands the edges that
+ * re-enter a group to ELK reversed and `keepEntryNodeOnTop` pins each recursive flow's entry to
+ * the first layer (`passes.ts`); `straightenEdges` drops the port-to-channel step after layout
+ * (`straighten.ts`). `lineHops` changes how edges are drawn, so it is the package's `postRender`
+ * hook (`hops.ts`). A group's `algorithm` is not applied (D174): `mermaid` warns.
+ *
+ * `elk.radial` needs a tree. On a graph that is not one ELK throws; the engine then lays the graph
+ * out with core's `layered` and notes it (`takeNotes`), and the package's hook warns.
  *
  * Coordinates: every shape and edge is read in root coordinates (`elk.json.*Coords: ROOT`).
  * Only `x`, `y`, `width`, `height`, sections and labels are read back, never GWT's `$H` hash
@@ -28,6 +38,7 @@ import type {
   RoutePoint,
   Side,
 } from '@mermaid-js/core/layout';
+import { layered as layeredEngine } from '@mermaid-js/core/layout';
 import type {
   ElkEdgeSection,
   ElkExtendedEdge,
@@ -35,8 +46,13 @@ import type {
   ElkNode,
   LayoutOptions,
 } from 'elkjs/lib/elk-api.js';
+import { elkConfigOf, groupOptions, rootOptions, type ElkConfig } from './options.ts';
+import { findCyclicEntryNodes, findSubgraphFeedbackEdges } from './passes.ts';
+import { projectLabelOntoStraightenedRun, straightenEdgeTerminals } from './straighten.ts';
 import { layoutSync } from './sync.ts';
 import { ROOT, findCommonAncestor, orderNestedEdgeEnds, type Tree } from './tree.ts';
+
+export { drawLineHops, type HopStyle } from './hops.ts';
 
 /** The ELK algorithms the package's layout names select (D171). */
 export type ElkAlgorithm =
@@ -92,6 +108,8 @@ interface Built {
   layered: boolean;
   nodes: Map<string, ElkNode>;
   edges: Map<string, ElkExtendedEdge>;
+  /** Edges handed to ELK target first (`orientFeedbackEdges`); read back the other way round. */
+  reversed: Set<string>;
 }
 
 /** Parent group of every node and group in `graph`. */
@@ -137,8 +155,15 @@ function hierarchyHandling(graph: LayoutGraph, tree: Tree): Map<string, Handling
   return handling;
 }
 
-/** Builds the ELK graph for `graph`. Each edge sits in its ends' innermost common container. */
-export function toElkGraph(graph: LayoutGraph, algorithm: ElkAlgorithm): Built {
+/**
+ * Builds the ELK graph for `graph` with the `elk` config section `elk` (none: every key unset,
+ * the `default` preset). Each edge sits in its ends' innermost common container.
+ */
+export function toElkGraph(
+  graph: LayoutGraph,
+  algorithm: ElkAlgorithm,
+  elk: ElkConfig = {}
+): Built {
   const layered = algorithm === 'layered';
   const tree = treeOf(graph);
   const spacing: LayoutOptions = {
@@ -156,6 +181,7 @@ export function toElkGraph(graph: LayoutGraph, algorithm: ElkAlgorithm): Built {
       // As v12, for every algorithm: those that cannot lay out across group borders lay out
       // each group on its own whatever this says.
       'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
+      ...rootOptions(elk),
       ...FIXED_ROOT,
       'elk.json.shapeCoords': 'ROOT',
       'elk.json.edgeCoords': 'ROOT',
@@ -179,6 +205,13 @@ export function toElkGraph(graph: LayoutGraph, algorithm: ElkAlgorithm): Built {
     flow.set(id, dir);
     return dir;
   };
+  // Whether ELK lays a group out on its own: its own handling, else its parent's (the root's is
+  // INCLUDE_CHILDREN).
+  const separate = (id: string | undefined): boolean => {
+    if (id === undefined) return false;
+    const own = handling.get(id);
+    return own === undefined ? separate(byId.get(id)!.parent) : own === 'SEPARATE_CHILDREN';
+  };
   for (const g of graph.groups) {
     const title = g.title ?? { width: 0, height: 0 };
     const { top, right, bottom, left } = g.padding;
@@ -191,6 +224,7 @@ export function toElkGraph(graph: LayoutGraph, algorithm: ElkAlgorithm): Built {
         ...spacing,
         'elk.direction': DIRECTION[flowOf(g.id)],
         ...(own ? { 'elk.hierarchyHandling': own } : {}),
+        ...groupOptions(elk, separate(g.id)),
         ...FIXED_GROUP,
         'elk.padding': padding(top + title.height, right, bottom, left),
         ...(title.width > 0
@@ -209,9 +243,29 @@ export function toElkGraph(graph: LayoutGraph, algorithm: ElkAlgorithm): Built {
   for (const item of [...graph.groups, ...graph.nodes])
     nodes.get(item.parent ?? ROOT)!.children!.push(nodes.get(item.id)!);
 
+  // keepEntryNodeOnTop (off by default): each recursive flow's entry goes in the first layer.
+  if (elk.keepEntryNodeOnTop) {
+    for (const id of findCyclicEntryNodes([...graph.groups, ...graph.nodes], graph.edges)) {
+      const n = nodes.get(id)!;
+      n.layoutOptions = { ...n.layoutOptions, 'elk.layered.layering.layerConstraint': 'FIRST' };
+    }
+  }
+
+  // orientFeedbackEdges (on by default): an edge that closes a cycle only through a collapsed
+  // group goes to ELK the other way round, so ELK routes it downstream, not around the group.
+  const flags =
+    elk.orientFeedbackEdges === false
+      ? graph.edges.map(() => false)
+      : findSubgraphFeedbackEdges(graph.edges, tree);
+  const ends = graph.edges.map((e, i) =>
+    flags[i] ? { source: e.target, target: e.source } : { source: e.source, target: e.target }
+  );
+  const reversed = new Set(graph.edges.filter((_, i) => flags[i]).map((e) => e.id));
+
   const edges = new Map<string, ElkExtendedEdge>();
-  for (const index of orderNestedEdgeEnds(graph.edges, tree)) {
+  for (const index of orderNestedEdgeEnds(ends, tree)) {
     const e = graph.edges[index]!;
+    const turned = flags[index]!;
     const labels: ElkLabel[] = [];
     for (const kind of ['label', 'startLabel', 'endLabel'] as const) {
       const size = e[kind];
@@ -227,21 +281,23 @@ export function toElkGraph(graph: LayoutGraph, algorithm: ElkAlgorithm): Built {
         width: size.width + room,
         height: size.height + room,
         layoutOptions: {
-          'elk.edgeLabels.placement': PLACEMENT[code],
+          // A reversed edge's tail is its real target.
+          'elk.edgeLabels.placement':
+            turned && code !== 'c' ? PLACEMENT[code === 's' ? 'e' : 's'] : PLACEMENT[code],
           ...(code === 'c' ? { 'elk.edgeLabels.inline': 'true' } : {}),
         },
       });
     }
     const edge: ElkExtendedEdge = {
       id: e.id,
-      sources: [e.source],
-      targets: [e.target],
+      sources: [ends[index]!.source],
+      targets: [ends[index]!.target],
       ...(labels.length ? { labels } : {}),
     };
     nodes.get(findCommonAncestor(e.source, e.target, tree))!.edges!.push(edge);
     edges.set(e.id, edge);
   }
-  return { root, nodes, edges, layered };
+  return { root, nodes, edges, layered, reversed };
 }
 
 interface Rect {
@@ -373,7 +429,68 @@ function extendEnd(points: Point[], end: 'start' | 'end', old: Rect | undefined,
   else points.push(stub);
 }
 
-function readModel(graph: LayoutGraph, built: Built): LayoutModel {
+/** The centre of an edge label as ELK placed it, root coordinates; undefined when it did not. */
+function elkLabel(built: Built, edgeId: string, kind: keyof typeof LABEL_KINDS): Point | undefined {
+  const label = built.edges
+    .get(edgeId)!
+    .labels?.find((l) => l.id === `${edgeId}\u0000${LABEL_KINDS[kind]}`);
+  return label?.x !== undefined && label.y !== undefined
+    ? { x: label.x + (label.width ?? 0) / 2, y: label.y + (label.height ?? 0) / 2 }
+    : undefined;
+}
+
+type Routes = Map<string, { points: Point[]; placedByElk: boolean }>;
+
+/**
+ * straightenEdges (on by default): the step at an edge's ends goes, both ports stay. Rewrites
+ * `routes`; returns where each main label ELK placed on a run that moved went with it.
+ */
+function straighten(graph: LayoutGraph, built: Built, routes: Routes): Map<string, Point> {
+  const labelMoved = new Map<string, Point>();
+  const items = graph.edges.map((e) => {
+    const { points, placedByElk } = routes.get(e.id)!;
+    const c = placedByElk && e.label ? elkLabel(built, e.id, 'label') : undefined;
+    return { id: e.id, points, ...(c && e.label ? { ...c, label: true, ...e.label } : {}) };
+  });
+  for (const { edge, runs } of straightenEdgeTerminals(items)) {
+    routes.get(edge.id)!.points = edge.points;
+    if (edge.x === undefined || edge.y === undefined) continue;
+    const moved = projectLabelOntoStraightenedRun({ x: edge.x, y: edge.y }, runs);
+    if (moved) labelMoved.set(edge.id, moved);
+  }
+  return labelMoved;
+}
+
+/**
+ * The drawing is what it holds plus the padding: frames may have grown, and some algorithms
+ * (mrtree) size the root before its groups. Returns the shift that puts it at the padding.
+ */
+function extent(
+  pad: number,
+  root: ElkNode,
+  rects: Map<string, Rect>,
+  routes: Routes
+): { dx: number; dy: number; width: number; height: number } {
+  const all = [...rects.values()];
+  const xs = [
+    ...all.flatMap((r) => [r.x, r.x + r.width]),
+    ...[...routes.values()].flatMap((r) => r.points.map((p) => p.x)),
+  ];
+  const ys = [
+    ...all.flatMap((r) => [r.y, r.y + r.height]),
+    ...[...routes.values()].flatMap((r) => r.points.map((p) => p.y)),
+  ];
+  const dx = pad - Math.min(pad, ...xs);
+  const dy = pad - Math.min(pad, ...ys);
+  return {
+    dx,
+    dy,
+    width: Math.max(root.width ?? 0, Math.max(0, ...xs) + pad) + dx,
+    height: Math.max(root.height ?? 0, Math.max(0, ...ys) + pad) + dy,
+  };
+}
+
+function readModel(graph: LayoutGraph, built: Built, elk: ElkConfig): LayoutModel {
   const chainOf = containers(treeOf(graph));
   const rects = new Map<string, Rect>();
   for (const [id, n] of built.nodes)
@@ -382,14 +499,15 @@ function readModel(graph: LayoutGraph, built: Built): LayoutModel {
   const elkRects = new Map(rects);
   const widened = widenForTitles(graph, rects, chainOf);
 
-  const routes = new Map<string, { points: Point[]; placedByElk: boolean }>();
+  const routes: Routes = new Map();
   for (const e of graph.edges) {
-    const elk = built.edges.get(e.id)!;
+    const laid = built.edges.get(e.id)!;
     const from = elkRects.get(e.source)!;
     const to = elkRects.get(e.target)!;
-    const elkPoints = (elk.sections ?? []).flatMap((s, i) =>
+    const elkPoints = (laid.sections ?? []).flatMap((s, i) =>
       sectionPoints(s).slice(i === 0 ? 0 : 1)
     );
+    if (built.reversed.has(e.id)) elkPoints.reverse();
     // Some algorithms leave an edge unrouted, or route a nested one from somewhere else: then
     // the edge runs straight between the two boxes.
     const routed =
@@ -402,22 +520,10 @@ function readModel(graph: LayoutGraph, built: Built): LayoutModel {
     routes.set(e.id, { points, placedByElk: routed && built.layered });
   }
 
-  // The drawing is what it holds plus the padding: frames may have grown, and some algorithms
-  // (mrtree) size the root before its groups.
-  const pad = graph.diagramPadding ?? 0;
-  const all = [...rects.values()];
-  const xs = [
-    ...all.flatMap((r) => [r.x, r.x + r.width]),
-    ...[...routes.values()].flatMap((r) => r.points.map((p) => p.x)),
-  ];
-  const ys = [
-    ...all.flatMap((r) => [r.y, r.y + r.height]),
-    ...[...routes.values()].flatMap((r) => r.points.map((p) => p.y)),
-  ];
-  const dx = pad - Math.min(pad, ...xs);
-  const dy = pad - Math.min(pad, ...ys);
-  const width = Math.max(built.root.width ?? 0, Math.max(0, ...xs) + pad) + dx;
-  const height = Math.max(built.root.height ?? 0, Math.max(0, ...ys) + pad) + dy;
+  const labelMoved =
+    elk.straightenEdges === false ? new Map<string, Point>() : straighten(graph, built, routes);
+
+  const { dx, dy, width, height } = extent(graph.diagramPadding ?? 0, built.root, rects, routes);
   const at = (p: Point): Point => ({ x: p.x + dx, y: p.y + dy });
 
   const nodes = new Map<string, LayoutModelNode>();
@@ -434,14 +540,13 @@ function readModel(graph: LayoutGraph, built: Built): LayoutModel {
   }
   const edges = new Map<string, LayoutModelEdge>();
   for (const e of graph.edges) {
-    const elk = built.edges.get(e.id)!;
     const { points, placedByElk } = routes.get(e.id)!;
     const placed = (kind: keyof typeof LABEL_KINDS, along: number): Point | undefined => {
       if (!e[kind]) return undefined;
-      const label = elk.labels?.find((l) => l.id === `${e.id}\u0000${LABEL_KINDS[kind]}`);
-      if (placedByElk && label?.x !== undefined && label.y !== undefined)
-        return at({ x: label.x + (label.width ?? 0) / 2, y: label.y + (label.height ?? 0) / 2 });
-      return at(pointAlong(points, along));
+      const byElk = placedByElk
+        ? ((kind === 'label' ? labelMoved.get(e.id) : undefined) ?? elkLabel(built, e.id, kind))
+        : undefined;
+      return at(byElk ?? pointAlong(points, along));
     };
     const model: LayoutModelEdge = {
       points: routePoints(points.map(at)),
@@ -468,11 +573,54 @@ function readModel(graph: LayoutGraph, built: Built): LayoutModel {
   };
 }
 
-/** The layout engine for one ELK algorithm. Synchronous, as the contract is (D172). */
+/** Something the engine did instead of what was asked, for the package's hook to warn about. */
+export interface EngineNote {
+  readonly code: string;
+  readonly message: string;
+}
+
+// Notes by the render's config object, the one `ctx.config` the engine and the hooks share.
+const notes = new WeakMap<object, EngineNote[]>();
+
+/** The notes the engine left for the render with `config`, once. */
+export function takeNotes(config: object): EngineNote[] {
+  const found = notes.get(config) ?? [];
+  notes.delete(config);
+  return found;
+}
+
+function note(config: object | undefined, n: EngineNote): void {
+  if (config === undefined) return;
+  const list = notes.get(config) ?? [];
+  if (!list.some((x) => x.code === n.code)) list.push(n);
+  notes.set(config, list);
+}
+
+const notATree = (e: unknown): boolean =>
+  /not a tree/i.test(
+    e instanceof Error ? e.message : String((e as { message?: unknown } | null)?.message)
+  );
+
+/**
+ * The layout engine for one ELK algorithm. Synchronous, as the contract is (D172). It reads the
+ * `elk` section from `ctx.config` (fragment defaults merged in).
+ */
 export function elkEngine(algorithm: ElkAlgorithm): LayoutEngine {
-  return (graph) => {
-    const built = toElkGraph(graph, algorithm);
-    layoutSync(built.root);
-    return readModel(graph, built);
+  return (graph, ctx) => {
+    const elk = elkConfigOf(ctx?.config);
+    const built = toElkGraph(graph, algorithm, elk);
+    try {
+      layoutSync(built.root);
+    } catch (e) {
+      // v12 never had `elk.radial` as a layout name, and ELK refuses a graph that is not a tree.
+      if (algorithm !== 'radial' || !notATree(e)) throw e;
+      note(ctx?.config, {
+        code: 'ELK_RADIAL_NOT_A_TREE',
+        message:
+          'elk.radial cannot lay out this graph (ELK: "The given graph is not a tree!"), so it is drawn with layered.',
+      });
+      return layeredEngine(graph);
+    }
+    return readModel(graph, built, elk);
   };
 }

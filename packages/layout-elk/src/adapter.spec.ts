@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { validateLayout, type LayoutGraph } from '@mermaid-js/core/layout';
-import { elkEngine, toElkGraph, type ElkAlgorithm } from './adapter.ts';
+import type { ResolvedConfig } from '@mermaid-js/core/config';
+import { layered, validateLayout, type LayoutGraph } from '@mermaid-js/core/layout';
+import { elkEngine, takeNotes, toElkGraph, type ElkAlgorithm } from './adapter.ts';
 
 const spacing = { node: 50, rank: 50, edge: 20 };
 
@@ -102,10 +103,17 @@ describe('elkEngine (LayoutGraph → ELK → LayoutModel)', () => {
     expect(JSON.stringify([...first.nodes, ...first.edges, ...first.groups])).not.toContain('$H');
   });
 
-  it('elk.radial lays out a tree, and throws ELK’s error for a graph that is not one', () => {
+  it('elk.radial lays out a tree; a graph that is not one falls back to layered, noted once', () => {
     const tree = chain('TB');
-    expect(validateLayout(tree, elkEngine('radial')(tree))).toEqual([]);
-    expect(() => elkEngine('radial')(grouped())).toThrow(/not a tree/);
+    const config = {} as ResolvedConfig;
+    expect(validateLayout(tree, elkEngine('radial')(tree, { config }))).toEqual([]);
+    expect(takeNotes(config)).toEqual([]);
+    // Not a tree for ELK ("The given graph is not a tree!"): core's layered, and a note.
+    const graph = grouped();
+    expect(elkEngine('radial')(graph, { config })).toEqual(layered(graph));
+    elkEngine('radial')(graph, { config });
+    expect(takeNotes(config).map((n) => n.code)).toEqual(['ELK_RADIAL_NOT_A_TREE']);
+    expect(takeNotes(config)).toEqual([]);
   });
 
   describe('groups (v12 `buildSubgraphLayoutOptions`, `configureCrossHierarchyEdges`)', () => {

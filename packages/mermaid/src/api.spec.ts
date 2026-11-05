@@ -16,6 +16,7 @@ import mermaid, {
   render,
   renderSync,
   prepare,
+  type ExtensionPlugin,
 } from './index.ts';
 import { defaultIdPrefix } from './config-snapshot.ts';
 
@@ -372,6 +373,57 @@ describe('layout engines (R-LAYOUT-2)', () => {
     const text = `flowchart-elk LR\n  A[Start] --> B(End)\n`;
     expect((await render('l', text)).warnings.map((w) => w.code)).toEqual(['ELK_NOT_INSTALLED']);
     expect(renderSync(text).warnings.map((w) => w.code)).toEqual(['ELK_NOT_INSTALLED']);
+  });
+
+  // D174: `@{ algorithm }` reaches the engine (LayoutGroup.algorithm) but is not applied yet.
+  const GROUPS =
+    'flowchart TD\n  subgraph g1\n    a --> b\n  end\n  subgraph g2\n    c --> d\n  end\n  g1@{ algorithm: elk.box }\n  g2@{ algorithm: elk.rectpacking }\n';
+  const elkStandIn = () => {
+    const m = createMermaid();
+    m.registerLayoutLoaders([{ name: 'elk', loader: () => Promise.resolve(layered) }]);
+    return m;
+  };
+
+  it('warns ELK_ALGORITHM_IGNORED once per render when an ELK layout meets @{ algorithm }', async () => {
+    const text = `---\nconfig:\n  layout: elk\n---\n${GROUPS}`;
+    const m = elkStandIn();
+    for (let i = 0; i < 2; i++) {
+      const r = await m.render('l', text);
+      expect(r.warnings.map((w) => w.code)).toEqual(['ELK_ALGORITHM_IGNORED']);
+      expect(r.warnings[0]!.message).toContain('elk.box, elk.rectpacking');
+    }
+    expect(m.renderSync(text).warnings.map((w) => w.code)).toEqual(['ELK_ALGORITHM_IGNORED']);
+    // Without the plugin, alongside ELK_NOT_INSTALLED: the groups are not laid out as asked either.
+    expect((await render('l', text)).warnings.map((w) => w.code)).toEqual([
+      'ELK_NOT_INSTALLED',
+      'ELK_ALGORITHM_IGNORED',
+    ]);
+  });
+
+  it('says nothing about @{ algorithm } for a layout that is not ELK, or groups without it', async () => {
+    const m = elkStandIn();
+    expect((await m.render('l', GROUPS)).warnings).toEqual([]);
+    expect((await m.render('l', `---\nconfig:\n  layout: elk\n---\n${FLOW}`)).warnings).toEqual([]);
+  });
+
+  it('registers the extension a layout loader brings, once, with the loaders (D174)', async () => {
+    const seen: string[] = [];
+    const extension: ExtensionPlugin = {
+      id: 'spy-layout',
+      postRender: (_tree, ctx) => void seen.push(String(ctx.config.layout)),
+    };
+    const m = createMermaid();
+    const loader = () => Promise.resolve(layered);
+    m.registerLayoutLoaders([
+      { name: 'one', loader, extension },
+      { name: 'two', loader, extension },
+    ]);
+    await m.render('l', `---\nconfig:\n  layout: two\n---\n${FLOW}`);
+    await m.render('l', FLOW);
+    expect(seen).toEqual(['two', 'layered']);
+    expect(() =>
+      m.registerLayoutLoaders([{ name: 'bad', loader, extension: { id: '' } as ExtensionPlugin }])
+    ).toThrow(TypeError);
   });
 
   it('does not take a name that only starts with elk for an ELK name', async () => {

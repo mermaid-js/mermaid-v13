@@ -27,16 +27,22 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 ## From E2 #240
 
-- [E4 #242] `elk.radial` (registered per D171; v12 never had it as a layout name) throws ELK's "not a tree" error on a graph with a cycle or several roots, so the render fails. Match v12's per-container behaviour or fall back to `layered` with a warning; escalate if neither fits.
+- ~~[E4 #242] `elk.radial` on a non-tree fails the render~~ Closed by #242: v12 had no behaviour to match (the name was a container id only, and such a render failed), so the engine draws with core's `layered` and the package's hook adds one `ELK_RADIAL_NOT_A_TREE`. ELK only rejects cycles in practice; several roots lay out fine.
 - [E5 #243] With `layout: elk` and the plugin, text output gets ELK's px coordinates (the engine ignores `grid`); without the plugin it gets `ELK_NOT_INSTALLED`. D179: always `layered`, one `ASCII_DROPPED`. The package has no README yet.
 - [T0b #238] The manifest E2 wants: `{"plugin":"layout","names":[the 9 names],"entry":"./dist/index.js"}` (`tickets/240.md`).
 
 ## From E3 #241
 
-- [E4 #242] `@{ algorithm }` must warn `ELK_ALGORITHM_IGNORED` once, but an engine has no warning channel: `LayoutContext` has `options` and `config` only, and `LayoutModel` no warnings. Either the engine gets a `warn` on `ctx` (a core change: escalate) or `mermaid`/the plugin warns from `LayoutGroup.algorithm` before layout.
-- [E4 #242] Not ported by E3 (post-passes beyond D174's list): v12's `evenGroupFrames` (pulls a frame in past an edge lane), `separateOppositeEdgeLabels`, `slideTerminalLabelsOffFrames`, `putTerminalLabelsOnTheirSide`, `sanitizeElkEdgePoints`, marker segment lengths, `cutter2` (clip to the outline). DDLT invariants hold without them. Two edges into one side can still share an end point (class corpus `C2`).
-- [E4 #242] Spacing comes from `LayoutGraph.spacing` (ticket), not v12's `spacing.baseValue` 40/24 and fixed group spacings, so pixel sizes differ from v12. v12's `minLen`, `headRoom` and `routing` have no ELK mapping (v12 had none either).
+- ~~[E4 #242] `ELK_ALGORITHM_IGNORED` has no warning channel~~ Closed by #242: `mermaid` raises it in `ctx.layout`, once per render, when the layout name is an ELK name and a `LayoutGroup` has `algorithm` (no core change).
+- ~~[E4 #242] post-passes beyond D174's list~~ Closed by #242: `straightenEdges`, `orientFeedbackEdges` and `keepEntryNodeOnTop` are ported, `lineHops` is the package's `postRender`. `evenGroupFrames`, `separateOppositeEdgeLabels`, `slideTerminalLabelsOffFrames`, `putTerminalLabelsOnTheirSide`, `sanitizeElkEdgePoints`, marker segment lengths and `cutter2` stay out (none is tied to an `elk.*` key; reasons in `tickets/242.md`). Two edges into one side can still share an end point (class corpus `C2`).
+- ~~[E4 #242] spacing differs from v12~~ Kept by #242: spacing is `LayoutGraph.spacing` (E3's ticket) and D174 parity is options, not pixels. `minLen`, `headRoom` and `routing` have no ELK mapping (none in v12).
 
 ## Waiting on #218
 
 - Activates-on-install checks (E2, E5, M3) need #218 T4 (#226). S1 #247 needs #218 T0 (#220).
+
+## From E4 #242
+
+- [#218 T4 #226 / T0b #238] A layout package can bring an extension (`LayoutLoader.extension`, used by layout-elk for `lineHops` and its warnings). `ManifestPlugin` and the `layout` manifest carry `config` but no extension, so a package activated by discovery gets neither until the manifest names an eager extension module (as `config`).
+- [E5 #243] MIGRATION.md: `ELK_ALGORITHM_IGNORED`, `ELK_RADIAL_NOT_A_TREE`, and `cycleBreakingStrategy: MODEL_ORDER` left off groups laid out with their parent (elkjs 0.12 throws there; v12 develop fails that render). The language-service schema has no fragments, so `elk` no longer completes in front matter.
+- [E5 #243] Every render with the ELK loaders registered now draws into a tree (the extension has `postRender`), whatever its layout. Output is byte-identical; include it in the warm-render report.
