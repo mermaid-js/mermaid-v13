@@ -12,7 +12,7 @@ import {
   sourceRange,
 } from '@mermaid-js/gen-grammar';
 import type { AstShape, ReferenceParser, SentenceModel } from '@mermaid-js/gen-grammar';
-import { parseQuadrant } from '@mermaid-js/diagram-quadrant';
+import { lexQuadrant, parseQuadrant } from '@mermaid-js/diagram-quadrant';
 import type { QuadrantDocument } from '@mermaid-js/diagram-quadrant';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { grammarTokens, quadrantGrammar } from './quadrant-grammar.ts';
@@ -117,6 +117,14 @@ export function learnSentenceModel(sources: readonly string[]): SentenceModel {
     }
   }
   return model;
+}
+
+/**
+ * Whether v12's preprocessing and core's leave different text to lex: v12's directive regex
+ * removes an unclosed `%%{` with the rest of the text, core keeps it (a listed divergence).
+ */
+export function preprocessDiffers(source: string): boolean {
+  return grammarTokens(source).input.text !== lexQuadrant(source).v12.text;
 }
 
 /** Whether mermaid\@12 accepted the syntax: false on a jison parse or lexical error. */

@@ -93,6 +93,7 @@ const CLASS_NAME = [
 const STYLE_PART = [T.Alpha, T.Num, T.Colon, T.Space, T.Brkt, T.Minus];
 /** jison's `eol`. */
 const EOL = [Kind.Newline, T.Semi, T.Eof];
+const STYLE_END = [T.Comma, ...EOL];
 const QUADRANTS = [T.Quadrant1, T.Quadrant2, T.Quadrant3, T.Quadrant4];
 
 /** Text jison matched without returning a token: trivia to the parser. */
@@ -524,7 +525,8 @@ class QuadrantParser {
     while (this.in(STYLE_PART)) raw += this.take();
     const range = this.span(first);
     const text = raw.trim();
-    const problem = applyStyle(text, {});
+    // A style cut short by a syntax error is not checked: that error is the one reported.
+    const problem = this.in(STYLE_END) ? applyStyle(text, {}) : undefined;
     if (problem) this.st.diagnostics.error(problem.code, problem.message, range);
     return { text, range };
   }
