@@ -27,3 +27,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 ### #315 T5 integration
 - [ ] Renderer fallbacks (`leftMargin` 50, `useMaxWidth` false) differ from the schema defaults (150, true). Use the effective v12 values with the default config merged (check in the oracle) and record any key whose effective value differs from its schema default.
+
+### #338 review (2026-11-05), deferred
+- [ ] No browser check that `adjustHue`/`ifSet` CSS forms resolve to the JS hex. Add the JS-vs-CSS case to the Playwright theme spec after #309 merges (that file is shared). Nothing renders those CSS forms yet: palettes are literal.
+- [ ] **Size:** the CDN core closure is ~18 B under its 90,112 B gz budget after #338. The next core addition (#309, T4/T5) will likely cross it. Handle at M4 close with the size budget work (D217; the maintainer is open to +10–15%).
