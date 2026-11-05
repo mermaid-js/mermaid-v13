@@ -27,6 +27,16 @@ Unmet criteria and open choices, filed under the ticket that owns each one. Each
 
 ## H2 (#342)
 
+- **Unmet, for the maintainer: alt composite bodies.** The role table wants hachure for a `statediagram-cluster-alt` body. That class is on the composite's `<g>`; the `inner` leaf's attrs (all a drawer sees, T0) carry only `class: inner` and the alt fill, so the drawer cannot tell. Both composite parts are solid. Fixes: state adds a class to the alt `inner` leaf (changes plain output bytes), or core hands the drawer more context (core change, beyond T0). Not chosen here.
+- Choice: composite parts use roughness 0.7. v12 drew the body (and a square title band) at roughjs's default roughness 1, which D304 rules out.
+- Choice: `LOOK_REMOVED`'s plugin name is appended in `mermaid` (`toWarning`), not core: check-deps fails core for naming an optional package in any string (D153), as D173 put ELK's name in `mermaid`. Message: `… was removed in v13. For handDrawn, register @mermaid-js/plugin-hand-drawn.`, for every `look` value.
+- Choice: a section's `look: handDrawn` turns `handDrawn` on for whatever diagram is drawn, not only that section's type (aliases are not per type). v12 read only the drawn type's section.
+- Choice: text output warns `ASCII_DROPPED` (`handDrawn`) for every type with `handDrawn` on, sequence included, though its SVG is not sketched either.
+- Choice: an outline with nothing to sketch (fill and stroke absent or `none`) is the plain leaf, so hit boxes keep their pointer target. A node's leaf attributes other than geometry and paint (`class`, `filter`, `opacity`, `transform`, `style`, data attributes) go on the `<g>`.
+- Choice: an edge's placeholder stroke is `currentColor`; it only tells roughjs to draw an outline and is never written.
+- Choice: a group is sketched as `rectangle`, as H1 maps a square rect; v12 drew clusters as a radius-0 rounded-rect path, whose ops differ. Options match v12; geometry calls are H1's.
+- The fragment's aliases list core's 31 sections by name; `index.spec.ts` fails when core gains a section with `look` the list lacks.
+
 ## H3 (#343)
 
 ## H4 (#344)
