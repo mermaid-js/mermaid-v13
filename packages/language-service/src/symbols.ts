@@ -18,9 +18,9 @@ export interface Occurrence extends SymbolOccurrence {
 /**
  * Opening quotes a name may be written in, its range then covering the quotes (#199): a
  * flowchart markdown string (a backtick pair inside a double-quote pair) is a quote inside a
- * quote.
+ * quote; a pie label may be written in `'…'` (#307).
  */
-const QUOTES = ['"`', '"', '`'];
+const QUOTES = ['"`', '"', '`', "'"];
 /** The closing quote of an opening one. */
 const closing = (quote: string) => [...quote].reverse().join('');
 /** Each of {@link QUOTES} with its closing quote. */

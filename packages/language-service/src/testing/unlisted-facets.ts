@@ -10,4 +10,13 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #288: the manifest comes with T5 (#325).
+  {
+    type: 'pie',
+    id: 'pie',
+    section: 'pie',
+    detector: (text) => /^\s*pie/.test(text),
+    load: () => import('@mermaid-js/diagram-pie/language').then((m) => m.language),
+  },
+];

@@ -9,7 +9,9 @@ import { T } from '../parser/tokens.ts';
 export const pieDocs: Readonly<Partial<Record<number, string>>> = {
   [T.ShowData]: "`pie showData`: the legend shows each value after its label, as `Dogs [386]`.",
   [T.Pie]: "`pie`: starts a pie chart. `pie showData` shows the values in the legend.",
+  [T.Colon]: "`\"Dogs\" : 386`: a section, its label and its value. A repeated label keeps its first value.",
   [T.AccDescr]: "`accDescr: …` or `accDescr { … }`: the accessible description.",
   [T.AccTitle]: "`accTitle: …`: the accessible title.",
   [T.Title]: "`title Pets adopted`: the title drawn above the chart (the last one wins).",
+  [T.String]: "`\"Dogs\" : 386`: a section, its label and its value. A repeated label keeps its first value.",
 };

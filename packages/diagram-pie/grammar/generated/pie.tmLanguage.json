@@ -41,36 +41,41 @@
       "name": "constant.numeric.mermaid-pie"
     },
     "rule-4": {
-      "match": "[\\t ]*accDescr(?:[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)|\\s*\\{[^}]*\\})",
+      "match": "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
       "name": "keyword.control.mermaid-pie"
     },
     "rule-5": {
-      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "begin": "[\\t ]*accDescr\\s*\\{",
+      "end": "\\}",
       "name": "keyword.control.mermaid-pie"
     },
     "rule-6": {
-      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
       "name": "keyword.control.mermaid-pie"
     },
     "rule-7": {
+      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-pie"
+    },
+    "rule-8": {
       "match": "\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'",
       "name": "string.quoted.mermaid-pie"
     },
-    "rule-8": {
+    "rule-9": {
       "match": "\\r?\\n"
     },
-    "rule-9": {
+    "rule-10": {
       "match": "[\\t ]+"
     },
-    "rule-10": {
+    "rule-11": {
       "match": "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
       "name": "meta.embedded.mermaid-pie"
     },
-    "rule-11": {
+    "rule-12": {
       "match": "[\\t ]*%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
       "name": "meta.embedded.mermaid-pie"
     },
-    "rule-12": {
+    "rule-13": {
       "match": "[\\t ]*%%[^\\n\\r]*",
       "name": "comment.line.mermaid-pie"
     },
@@ -120,6 +125,9 @@
         },
         {
           "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
         }
       ]
     },

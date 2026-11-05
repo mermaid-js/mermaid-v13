@@ -28,6 +28,16 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - Closed by #306 (`packages/conformance/src/pie/render.spec.ts`): a `Slice` node that is a model section has exactly one `data-ast` element (its legend row); one with no section (repeat or negative) has none, and must carry a `PIE_DUPLICATE_SLICE`/`PIE_NEGATIVE_VALUE` diagnostic inside its range; header, title and accessibility nodes have no element, as in sequence.
 - [ ] **#325:** `getConfig` ported spec is skipped (no DB config) until the config keys are honoured.
 
+## #307 T6 language facet (merged)
+
+- [ ] **#325:** drop the pie row in `packages/language-service/src/testing/unlisted-facets.ts` once the manifest has `language` (`goldens.spec.ts` fails until then); drop the eager row in `packages/conformance/src/pie/service-symbols.spec.ts` (its last test fails until then); add the `LEZER_HIGHLIGHTERS` / `MONARCH_HIGHLIGHTERS` rows, run each adapter's `gen`, extend `adapters-agree.spec.ts` and the first-paint e2e specs (`language.md` step 9). Goldens stay in `packages/language-service/goldens/pie/`.
+- Deviations (orchestrator: accepted; listed for the maintainer):
+  - the facet runs through the test-only `unlisted-facets.ts` row (class #159's mechanism) rather than a conformance goldens spec, so the property and round-trip specs also cover pie before the manifest;
+  - shared: `'` added to the service's `QUOTES` (`language-service/src/symbols.ts`) so `'Dogs'` labels are symbols; no other type's goldens changed except the empty-text completion goldens (er, flowchart, state) now listing `pie`;
+  - `ACC_DESCR` split into two equivalent rules in `pie.ebnf` so TextMate/Monarch colour a multi-line `accDescr { }`; multi-line labels and in-body YAML still differ in those two highlighters (pinned in `pie-agreement.spec.ts`);
+  - a label written differently from its name (escapes, entities, CRLF or a comment line inside it: 44 in the corpus) gets no definition, references or rename;
+  - the `pie` line offers only `showData` and `title`, as the ticket lists.
+
 ## #335 T3 layout (merged)
 
 - [x] **Invariants on parser-produced fixtures**: closed by #305: `packages/conformance/src/pie/layout-corpus.spec.ts` (gate corpus × 5 legend positions × 3 option sets, 0 violations); `layoutPie`/`pieLayoutViolations` are now exported from the package entry for it. Was: not run, because #305 had not merged. Whoever merges second adds the corpus spec described in `tickets/335.md` (`pieLayoutViolations` over the e2e corpus parsed by the v13 parser). Owner: #305 if it merges after #335 (it does), else #306.

@@ -16,6 +16,11 @@
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./language": {
+      "mermaid-source": "./src/language.ts",
+      "types": "./dist/language.d.ts",
+      "default": "./dist/language.js"
     }
   },
   "files": [

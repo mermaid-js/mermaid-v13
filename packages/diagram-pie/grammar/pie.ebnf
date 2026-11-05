@@ -26,8 +26,10 @@ COLON                     /:/                              :punctuation ;
 `-`, no exponent, no leading zeros and no `.` without digits on both sides. *)
 NUMBER                    /-?[0-9]+\.[0-9]+(?!\.)|-?(?:0|[1-9][0-9]*)(?!\.)/ :number ;
 (** `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to `}`): the accessible
-description of the chart. *)
-ACC_DESCR                 /[\t ]*accDescr(?:[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)|\s*\{[^}]*\})/ :keyword ;
+description of the chart. mermaid@12's one rule, as two tried in order; the block's
+`[\s\S]*?\}` is its `[^}]*\}`, written so that line-based highlighters read the block as one span. *)
+ACC_DESCR                 /[\t ]*accDescr[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+ACC_DESCR                 /[\t ]*accDescr\s*\{[\s\S]*?\}/ :keyword ;
 (** `accTitle: …`: the accessible title of the chart, the rest of the line. *)
 ACC_TITLE                 /[\t ]*accTitle[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
 (** `title …`: the title drawn above the chart, the rest of the line. *)

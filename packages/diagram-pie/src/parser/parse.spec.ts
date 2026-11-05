@@ -232,6 +232,34 @@ describe('pie parser', () => {
     expect(parsePie('pie\n%% c', { probe: 7 }).probe?.mode).toBe('comment');
   });
 
+  it('names where the probe is: code, or inside a label or a statement value (T6)', () => {
+    const mode = (marked: string) => {
+      const at = marked.indexOf('¦');
+      const src = marked.slice(0, at) + marked.slice(at + 1);
+      return parsePie(src, { probe: at }).probe?.mode;
+    };
+    expect(mode('¦')).toBe('INITIAL');
+    expect(mode('pie\n  tit¦')).toBe('INITIAL');
+    expect(mode('pie\n  title¦')).toBe('INITIAL');
+    expect(mode('pie\n  title Pe¦ts')).toBe('title');
+    expect(mode('pie\n  title Pets¦')).toBe('title');
+    expect(mode('pie\n  accTitle: x¦')).toBe('accTitle');
+    expect(mode('pie\n  accDescr {\n  a¦\n}')).toBe('accDescr');
+    expect(mode('pie\n  accDescr {\n  a\n}¦')).toBe('INITIAL');
+    expect(mode('pie\n  "Do¦gs" : 1')).toBe('string');
+    expect(mode('pie\n  "Dogs¦')).toBe('string');
+    expect(mode('pie\n  "Dogs"¦')).toBe('INITIAL');
+    expect(mode('pie\n  "Dogs" : 1¦')).toBe('INITIAL');
+  });
+
+  it('follows a closed label: right after it the parser expects `:` (T6)', () => {
+    const src = 'pie\n  "Dogs"';
+    expect(parsePie(src, { probe: src.length }).probe).toMatchObject({
+      expected: [T.Colon],
+      prefix: { start: src.length, end: src.length },
+    });
+  });
+
   it('detects pie as v12 did', () => {
     expect(detectPie('pie')).toBe(true);
     expect(detectPie('  %% c\npie showData')).toBe(true);
