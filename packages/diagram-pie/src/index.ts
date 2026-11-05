@@ -4,3 +4,4 @@
  */
 export { LANGIUM_NAMES, PIE_TRIVIA, PieTokenKind, pieTokens } from './parser/index.ts';
 export type { PieToken } from './parser/index.ts';
+export type { PieModel, PieSection } from './model.ts';
