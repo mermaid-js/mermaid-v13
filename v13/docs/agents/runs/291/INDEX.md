@@ -11,6 +11,7 @@ Integration branch `feature/291_timeline` (from `mermaid-v13` + `docs/m4-specs`,
 | T4 SVG renderer | #311 | #337, #338 | merged (ff 7dfbff7c8) |
 | T5 integration | #315 | #311, #318 | merged (ff 57b4d1874) |
 | T6 language facet | #318 | #336 | merged (ff 9dd59f928) |
+| Final whole-branch review fixes | — | all | `feature/291_final-review`, `tickets/final-review.md` |
 
 - `01-v12-timeline.md`: pointer notes on v12 grammar, DB, renderers, styles, themes, corpus.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
