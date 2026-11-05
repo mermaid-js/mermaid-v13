@@ -4,9 +4,10 @@ import { performance } from 'node:perf_hooks';
 import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { Tree as TreeClass } from '@lezer/common';
-import type { Tree } from '@lezer/common';
+import type { Input, Tree } from '@lezer/common';
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { parser as flowchartParser } from './generated/flowchart.parser.js';
 import { loadHighlighter, mermaidLanguage } from './language.ts';
 
 const highlighter = tagHighlighter([
@@ -105,9 +106,10 @@ describe('the Lezer language (#21 grammar)', () => {
     20_000
   );
 
-  it('parses the 50k bench fixture in well under a second (#171)', () => {
-    // Was 1.1–3 s with a 4,096-character copy per token, ~30 ms after #171. The bound is loose
-    // so a loaded machine does not fail it; `scripts/bench-parse.ts` reports the time.
+  it('parses the 50k bench fixture at least 5× faster than before #171', () => {
+    // Was 1.1 s (up to 3 s) with a 4,096-character copy per token; ~20–30 ms after #171. The
+    // bound is #171's 5× (220 ms), best of 7 so a loaded machine does not fail it;
+    // `scripts/bench-parse.ts` reports the time.
     const text = readFileSync(
       join(import.meta.dirname, '../../bench/fixtures/language/flowchart-50k.mmd'),
       'utf8'
@@ -115,13 +117,34 @@ describe('the Lezer language (#21 grammar)', () => {
     const { parser } = mermaidLanguage().language;
     expect(parser.parse(text).length).toBe(text.length); // also the warm-up
     let best = Infinity;
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 7; i++) {
       const t = performance.now();
       parser.parse(text);
       best = Math.min(best, performance.now() - t);
     }
-    expect(best).toBeLessThan(500);
+    expect(best).toBeLessThan(220);
   }, 30_000);
+
+  it('takes the tokenizer’s slice path with this @lezer/lr (#171)', () => {
+    // The generated tokenizer reads a single-range input as one slice through the token
+    // stream's `input` and `ranges`, @lezer/lr internals; without them it falls back to
+    // reading char by char, 5–50× slower. The adapter's `@lezer/lr` peer range is what this
+    // is verified against: widen it only with this test passing.
+    const text = `flowchart LR\n${Array.from({ length: 200 }, (_, i) => `  A${i} --> B${i}\n`).join('')}`;
+    const reads: [number, number][] = [];
+    const input: Input = {
+      length: text.length,
+      lineChunks: false,
+      chunk: (from) => text.slice(from),
+      read: (from, to) => {
+        reads.push([from, to]);
+        return text.slice(from, to);
+      },
+    };
+    expect(flowchartParser.parse(input).length).toBe(text.length);
+    // The whole range read at once, and nothing else read.
+    expect(reads).toEqual([[0, text.length]]);
+  });
 
   it('reuses the diagram after an edit inside the front matter (#35 review)', () => {
     // Longer than the generated tokenizer's 4,096-character lookahead, which stops reuse

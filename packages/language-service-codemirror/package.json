@@ -32,7 +32,7 @@
     "@codemirror/view": "^6.26.0",
     "@lezer/common": "^1.2.0",
     "@lezer/highlight": "^1.2.0",
-    "@lezer/lr": "^1.4.0",
+    "@lezer/lr": "~1.4.2",
     "@mermaid-js/core": "workspace:*",
     "@mermaid-js/language-service": "workspace:*"
   },

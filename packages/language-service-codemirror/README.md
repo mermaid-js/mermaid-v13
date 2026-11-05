@@ -31,4 +31,5 @@ Before semantic tokens arrive, the text is coloured by a Lezer parser generated 
 
 ## Limitations
 
+- The `@lezer/lr` peer range is `~1.4.2`: the generated tokenizers read their text through @lezer/lr internals for speed, and that path is tested against 1.4.2 (`src/language.spec.ts`). Another @lezer/lr still works, by a path up to 50× slower.
 - Install the diagram packages you edit: each one's language support is an optional peer of `@mermaid-js/language-service` (see its README for bundler notes).
