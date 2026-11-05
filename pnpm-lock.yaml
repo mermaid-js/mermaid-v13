@@ -300,6 +300,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-journey:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-sequence:
     devDependencies:
       '@mermaid-js/core':
