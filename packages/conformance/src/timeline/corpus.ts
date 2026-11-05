@@ -101,10 +101,21 @@ export const MID_LINE_DIRECTIVES: CorpusItem[] = [
   TL + '2002 : x\n%% c %%{init:\n{}}%% d\n2003 : y',
 ].map((source, k) => ({ id: `mid-line directive ${k}`, source }));
 
-/** The e2e fixtures, the v12 spec strings, the cases above, and each of them commented. */
+/** The parser cases (`corpus/timeline-cases.json`): each corpus gap, and the rejections. */
+export function timelineCases(): CorpusItem[] {
+  return JSON.parse(
+    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/timeline-cases.json'), 'utf8')
+  ) as CorpusItem[];
+}
+
+/**
+ * The e2e fixtures, the v12 spec strings, the parser cases, the cases above, and each of them
+ * commented and CR-cut.
+ */
 export async function timelineGateCorpus(): Promise<CorpusItem[]> {
   const all = [
     ...(await timelineCorpus()),
+    ...timelineCases(),
     ...LINE_SEPARATORS,
     ...EDGE_CASES,
     ...MID_LINE_DIRECTIVES,

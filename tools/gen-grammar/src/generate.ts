@@ -85,6 +85,19 @@ export const GRAMMARS: GrammarTarget[] = [
     title: 'Entity relationship diagram syntax',
     kinds: { module: 'parser/tokens.ts', object: 'T' },
   },
+  {
+    type: 'timeline',
+    title: 'Timeline syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // `accDescr {` and its `}`: jison returns no token for them, the lexer does.
+      unnamed: {
+        AccDescrMultiline: { mode: 'INITIAL', pattern: 'accDescr\\s*\\{\\s*' },
+        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '\\}' },
+      },
+    },
+  },
 ];
 
 export const grammarPath = (type: string): string =>
