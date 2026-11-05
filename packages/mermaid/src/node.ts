@@ -5,38 +5,46 @@
  * `preload` of an API object, the app's own `node_modules` is scanned (`node-scan.ts`, from
  * the nearest package.json at or above `process.cwd()`); the scan is cached per root.
  *
- * Diagram plugins: the detector module is imported then, with a time limit; the entry loads on
- * first detection. Extensions (`@mermaid-js/plugin-interactions` too, D169) load on discovery.
+ * Diagram plugins: the detector module is imported then, with a time limit; the entry (and the
+ * ascii entry) loads on first detection, with no limit: a slow entry delays that render, never
+ * fails it. Extensions (`@mermaid-js/plugin-interactions` too, D169) load on discovery.
  * `initialize({ discovery: false })` turns it off; diagram text cannot set `discovery`
  * (integrator-only). A package that fails is skipped with a warning on the first render.
  */
-import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import type { Warning } from '@mermaid-js/core';
 import { discoverOnFirstUse, type DiscoveredPlugin, type FirstUseSource } from './discovery.ts';
+import { DETECTORS } from './generated/detectors.gen.ts';
 import mermaid, { createMermaid as createBase, type Mermaid } from './index.ts';
 import { findAppRoot, scanPlugins, type ScannedPackage } from './node-scan.ts';
 
 export * from './index.ts';
 
-/** Default time limit on one plugin module import (detector, entry, ascii entry), in ms. */
+/** Default time limit on one discovery-time import (a detector or an extension entry), in ms. */
 const IMPORT_TIMEOUT_MS = 5000;
 
 export interface NodeDiscoveryOptions {
   /** Where to look for the app's package.json (default `process.cwd()`). */
   readonly cwd?: string;
-  /** Time limit on each module import, in ms (default 5000). */
+  /** Time limit on each discovery-time import (detectors, extension entries), in ms (default 5000). */
   readonly importTimeoutMs?: number;
 }
 
-/** `import(url)`, rejected after `ms`. */
+/**
+ * A real runtime `import()` of a file found on disk. The magic comments keep webpack (Next.js
+ * server builds take the `node` condition) and Vite from trying to resolve it at build time.
+ */
+const importFile = (path: string): Promise<unknown> =>
+  import(/* webpackIgnore: true */ /* @vite-ignore */ pathToFileURL(path).href);
+
+/** `importFile(path)`, rejected after `ms`. */
 function importWithin(path: string, ms: number): Promise<unknown> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const limit = new Promise<never>((_, fail) => {
     timer = setTimeout(() => fail(new Error(`timed out after ${ms} ms`)), ms);
     timer.unref();
   });
-  return Promise.race([import(pathToFileURL(path).href), limit]).finally(() => clearTimeout(timer));
+  return Promise.race([importFile(path), limit]).finally(() => clearTimeout(timer));
 }
 
 type Detector = (text: string, config?: Readonly<Record<string, unknown>>) => boolean;
@@ -47,28 +55,28 @@ function detectorOf(module: unknown): Detector | undefined {
   return typeof fn === 'function' ? (fn as Detector) : undefined;
 }
 
-/** `mermaid`'s own dependencies: first-party packages, never discovered (npm hoists them). */
-function ownPackages(): string[] {
-  try {
-    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
-      name?: string;
-      dependencies?: Record<string, string>;
-    };
-    return [pkg.name ?? 'mermaid', ...Object.keys(pkg.dependencies ?? {})];
-  } catch {
-    return ['mermaid'];
-  }
-}
+/** First-party diagram ids: their own `@mermaid-js/*` packages are never discovered. */
+const FIRST_PARTY_IDS: readonly string[] = DETECTORS.flatMap((e) =>
+  e.id === undefined ? [] : [e.id]
+);
 
 /** One scanned package as a seam entry; a detector that fails to load gives a skip warning. */
 async function toDiscovered(p: ScannedPackage, ms: number): Promise<DiscoveredPlugin | Warning> {
   const skip = (why: string): Warning =>
     ({ code: 'PLUGIN_SKIPPED', message: `${p.package}: ${why}`, package: p.package }) as Warning;
-  const load = (): Promise<unknown> => importWithin(p.files.entry, ms);
+  const entry = p.files.entry;
   const ascii = p.files.ascii;
-  const loadAscii = ascii === undefined ? {} : { loadAscii: () => importWithin(ascii, ms) };
-  if (p.files.detector === undefined)
-    return { kind: 'plugin', package: p.package, plugin: { manifest: p.raw, load } };
+  if (p.manifest.plugin === 'extension')
+    // Loaded now, at discovery (its activation): under the time limit.
+    return {
+      kind: 'plugin',
+      package: p.package,
+      plugin: { manifest: p.raw, load: () => importWithin(entry, ms) },
+    };
+  // Loaded on first detection, during a render: no limit.
+  const load = (): Promise<unknown> => importFile(entry);
+  const loadAscii = ascii === undefined ? {} : { loadAscii: () => importFile(ascii) };
+  if (p.files.detector === undefined) return skip('the manifest has no "detector"');
   let detector: Detector | undefined;
   try {
     detector = detectorOf(await importWithin(p.files.detector, ms));
@@ -98,7 +106,7 @@ function discover(root: string, ms: number): Promise<Found> {
   let found = cache.get(key);
   if (!found) {
     found = (async () => {
-      const { packages, warnings } = scanPlugins(root, { ignore: ownPackages() });
+      const { packages, warnings } = await scanPlugins(root, { firstPartyIds: FIRST_PARTY_IDS });
       const entries = await Promise.all(packages.map((p) => toDiscovered(p, ms)));
       const list = entries.filter((e): e is DiscoveredPlugin => 'kind' in e);
       const skipped = entries.filter((e): e is Warning => !('kind' in e));
@@ -116,7 +124,7 @@ function discover(root: string, ms: number): Promise<Found> {
 export function nodeDiscovery(options: NodeDiscoveryOptions = {}): FirstUseSource {
   return async (config, warn) => {
     if (config.discovery === false) return [];
-    const root = findAppRoot(options.cwd ?? process.cwd());
+    const root = await findAppRoot(options.cwd ?? process.cwd());
     if (root === undefined) return [];
     const { list, warnings } = await discover(root, options.importTimeoutMs ?? IMPORT_TIMEOUT_MS);
     for (const w of warnings) warn(w);

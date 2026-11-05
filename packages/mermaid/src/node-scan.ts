@@ -1,16 +1,17 @@
 /// <reference types="node" />
 /**
  * The Node-only plugin scan (D165, R-PLUG-5): the packages in an app's own `node_modules` with
- * a `mermaid` manifest. Read-only and synchronous: it runs no package code. The Node entry
- * (`node.ts`) imports what it finds at runtime; the bundler plugin (T5) imports this module,
- * through `mermaid/node-scan`, to do the same scan at build time with the bundler's root.
+ * a `mermaid` manifest. Asynchronous and read-only (`node:fs/promises`): it runs no package
+ * code and never blocks the event loop. The Node entry (`node.ts`) imports what it finds at
+ * runtime; the bundler plugin (T5) imports this module, through `mermaid/node-scan`, to do the
+ * same scan at build time with the bundler's root.
  *
  * Confinement (D157): ancestor folders' `node_modules` are never scanned; every module path of
  * a manifest must resolve, symlinks followed, inside the package directory. Nothing here
  * throws: an unreadable `package.json`, a manifest `readManifest` rejects, a missing or
  * escaping path skips that package with one `PLUGIN_SKIPPED` warning.
  */
-import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
+import { readdir, readFile, realpath } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { readManifest, type PluginManifest } from '@mermaid-js/core';
 
@@ -31,51 +32,91 @@ export interface ScannedPackage {
   };
 }
 
-/** A package the scan skipped (the seam's `PLUGIN_SKIPPED` shape). */
-export interface ScanWarning {
-  readonly code: 'PLUGIN_SKIPPED';
-  readonly message: string;
-  readonly package: string;
-}
+/**
+ * A scan warning: a package skipped (the seam's `PLUGIN_SKIPPED` shape), or a root with no
+ * `node_modules` (so an empty result can be told from a broken one).
+ */
+export type ScanWarning =
+  | { readonly code: 'PLUGIN_SKIPPED'; readonly message: string; readonly package: string }
+  | { readonly code: 'PLUGIN_DISCOVERY_NO_MODULES'; readonly message: string };
 
 export interface ScanResult {
   /** Sorted by package name, in code-unit order (R-ARCH-6). */
   readonly packages: readonly ScannedPackage[];
+  /** Root warning first, then package warnings sorted by package name. */
   readonly warnings: readonly ScanWarning[];
 }
 
 export interface ScanOptions {
-  /** Package names left out silently (`mermaid`'s own first-party packages). */
-  readonly ignore?: Iterable<string>;
+  /**
+   * First-party diagram ids. A `@mermaid-js/*` package whose diagram manifest has one of them
+   * is `mermaid`'s own package (npm hoists them next to the app's plugins) and is left out
+   * silently. Anyone else claiming such an id is still found (the registry skips it, D166).
+   */
+  readonly firstPartyIds?: Iterable<string>;
 }
 
-/** The nearest directory at or above `from` with a `package.json`; undefined when none. */
-export function findAppRoot(from: string): string | undefined {
+const DEPENDENCY_FIELDS = [
+  'dependencies',
+  'devDependencies',
+  'peerDependencies',
+  'optionalDependencies',
+];
+
+/**
+ * Whether a package.json is a package root, not a type marker (`dist/package.json` holding
+ * only `{"type": "commonjs"}`): it has a `name` or a dependency field. One that is not JSON
+ * counts as a root, so the scan reports it rather than walking past it.
+ */
+async function isPackageRoot(file: string): Promise<boolean | undefined> {
+  let text: string;
+  try {
+    text = await readFile(file, 'utf8');
+  } catch {
+    return undefined;
+  }
+  try {
+    const pkg = JSON.parse(text) as unknown;
+    if (typeof pkg !== 'object' || pkg === null) return false;
+    const p = pkg as Record<string, unknown>;
+    return typeof p.name === 'string' || DEPENDENCY_FIELDS.some((f) => f in p);
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * The app root for `from`: the nearest directory at or above it whose package.json is a
+ * package root (type markers are walked past). Undefined when there is none.
+ */
+export async function findAppRoot(from: string): Promise<string | undefined> {
   for (let dir = resolve(from); ; dir = dirname(dir)) {
-    if (existsSync(join(dir, 'package.json'))) return dir;
+    if ((await isPackageRoot(join(dir, 'package.json'))) === true) return dir;
     if (dirname(dir) === dir) return undefined;
   }
 }
 
-function list(dir: string): string[] {
+async function list(dir: string): Promise<string[] | undefined> {
   try {
-    return readdirSync(dir);
+    return await readdir(dir);
   } catch {
-    return [];
+    return undefined;
   }
 }
 
 /** Package directories directly in `modules` (scoped ones one level down). */
-function packageDirs(modules: string): string[] {
-  return list(modules)
-    .filter((name) => !name.startsWith('.'))
-    .flatMap((name) =>
+async function packageDirs(modules: string, names: readonly string[]): Promise<string[]> {
+  const visible = names.filter((name) => !name.startsWith('.'));
+  const nested = await Promise.all(
+    visible.map(async (name) =>
       name.startsWith('@')
-        ? list(join(modules, name))
+        ? ((await list(join(modules, name))) ?? [])
             .filter((sub) => !sub.startsWith('.'))
             .map((sub) => join(modules, name, sub))
         : [join(modules, name)]
-    );
+    )
+  );
+  return nested.flat();
 }
 
 class Skip extends Error {}
@@ -86,16 +127,16 @@ const outside = (from: string, to: string): boolean => {
 };
 
 /** The real path of `path` in package `dir`; `Skip` when it is missing or escapes the package. */
-function confined(dir: string, path: string, key: string): string {
+async function confined(dir: string, root: string, path: string, key: string): Promise<string> {
   const target = resolve(dir, path);
   if (outside(resolve(dir), target)) throw new Skip(`"${key}" is outside the package`);
   let real: string;
   try {
-    real = realpathSync(target);
+    real = await realpath(target);
   } catch {
     throw new Skip(`"${key}" (${path}) does not exist`);
   }
-  if (outside(realpathSync(dir), real)) throw new Skip(`"${key}" is outside the package`);
+  if (outside(root, real)) throw new Skip(`"${key}" is outside the package`);
   return real;
 }
 
@@ -105,25 +146,30 @@ function byName(a: { package: string }, b: { package: string }): number {
   return a.package > b.package ? 1 : 0;
 }
 
-/** One package directory: a found plugin, a skip reason, or undefined (not a plugin). */
-function scanOne(
+const skipped = (pkg: string, why: string): ScanWarning => ({
+  code: 'PLUGIN_SKIPPED',
+  message: `${pkg}: ${why}`,
+  package: pkg,
+});
+
+/** One package directory: a found plugin, a skip warning, or undefined (not a plugin). */
+async function scanOne(
   dir: string,
   folder: string,
-  ignore: ReadonlySet<string>
-): ScannedPackage | ScanWarning | undefined {
+  firstParty: ReadonlySet<string>
+): Promise<ScannedPackage | ScanWarning | undefined> {
   let pkg: unknown;
   try {
-    pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
+    pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'));
   } catch (error) {
     // No package.json is not a package (a stray folder); anything else is worth a warning.
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined;
-    const why = `unreadable package.json (${(error as Error).message})`;
-    return { code: 'PLUGIN_SKIPPED', message: `${folder}: ${why}`, package: folder };
+    return skipped(folder, `unreadable package.json (${(error as Error).message})`);
   }
   if (typeof pkg !== 'object' || pkg === null) return undefined;
   const { name, mermaid: raw } = pkg as { name?: unknown; mermaid?: unknown };
   const label = typeof name === 'string' && name !== '' ? name : folder;
-  if (raw === undefined || ignore.has(label)) return undefined;
+  if (raw === undefined) return undefined;
   try {
     // Layout manifests (#238: `plugin: "layout"`, `names`, `entry`, `export`) go to the seam's
     // `layout` arm (node.ts `toDiscovered`) once `readManifest` accepts them; until then it
@@ -134,50 +180,57 @@ function scanOne(
     } catch (error) {
       throw new Skip((error as Error).message);
     }
-    if (manifest.entry === undefined) throw new Skip('the manifest has no "entry"');
     const diagram = manifest.plugin === 'diagram' ? manifest : undefined;
+    if (diagram && label.startsWith('@mermaid-js/') && firstParty.has(diagram.id)) return undefined;
+    if (manifest.entry === undefined) throw new Skip('the manifest has no "entry"');
     if (diagram && diagram.detector === undefined) throw new Skip('the manifest has no "detector"');
-    const entry = confined(dir, manifest.entry, 'entry');
-    const detector = diagram?.detector && confined(dir, diagram.detector, 'detector');
-    const ascii = diagram?.ascii && confined(dir, diagram.ascii, 'ascii');
+    const root = await realpath(dir);
+    const entry = await confined(dir, root, manifest.entry, 'entry');
+    const detector = diagram?.detector && (await confined(dir, root, diagram.detector, 'detector'));
+    const ascii = diagram?.ascii && (await confined(dir, root, diagram.ascii, 'ascii'));
     return {
       package: label,
-      dir: realpathSync(dir),
+      dir: root,
       raw,
       manifest,
       files: { entry, ...(detector ? { detector } : {}), ...(ascii ? { ascii } : {}) },
     };
   } catch (error) {
     if (!(error instanceof Skip)) throw error;
-    return { code: 'PLUGIN_SKIPPED', message: `${label}: ${error.message}`, package: label };
+    return skipped(label, error.message);
   }
 }
 
 /**
  * Scans `root`'s own `node_modules` (top-level and `@scope/*` entries) for `mermaid`
  * manifests. Packages without a package.json or a `mermaid` key are not plugins and give no
- * warning; neither do the `ignore`d ones.
+ * warning. Never rejects.
  */
-export function scanPlugins(root: string, options: ScanOptions = {}): ScanResult {
-  const ignore = new Set(options.ignore ?? []);
+export async function scanPlugins(root: string, options: ScanOptions = {}): Promise<ScanResult> {
+  const firstParty = new Set(options.firstPartyIds ?? []);
   const modules = join(resolve(root), 'node_modules');
-  const packages: ScannedPackage[] = [];
-  const warnings: ScanWarning[] = [];
-  for (const dir of packageDirs(modules)) {
-    const folder = relative(modules, dir).split('\\').join('/');
-    let found: ScannedPackage | ScanWarning | undefined;
-    try {
-      found = scanOne(dir, folder, ignore);
-    } catch (error) {
-      // A file system error mid-scan (a package removed while reading it).
-      const why = error instanceof Error ? error.message : String(error);
-      found = { code: 'PLUGIN_SKIPPED', message: `${folder}: ${why}`, package: folder };
-    }
-    if (found === undefined) continue;
-    if ('code' in found) warnings.push(found);
-    else packages.push(found);
+  const names = await list(modules);
+  if (names === undefined) {
+    const message = `No node_modules in ${resolve(root)}: no plugins discovered (ancestor folders are never scanned)`;
+    return { packages: [], warnings: [{ code: 'PLUGIN_DISCOVERY_NO_MODULES', message }] };
   }
-  packages.sort(byName);
-  warnings.sort(byName);
-  return { packages, warnings };
+  const found = await Promise.all(
+    (await packageDirs(modules, names)).map(async (dir) => {
+      const folder = relative(modules, dir).split('\\').join('/');
+      try {
+        return await scanOne(dir, folder, firstParty);
+      } catch (error) {
+        // A file system error mid-scan (a package removed while reading it).
+        return skipped(folder, error instanceof Error ? error.message : String(error));
+      }
+    })
+  );
+  const packages: ScannedPackage[] = [];
+  const warnings: (ScanWarning & { package: string })[] = [];
+  for (const f of found) {
+    if (f === undefined) continue;
+    if (!('code' in f)) packages.push(f);
+    else if (f.code === 'PLUGIN_SKIPPED') warnings.push(f);
+  }
+  return { packages: packages.sort(byName), warnings: warnings.sort(byName) };
 }

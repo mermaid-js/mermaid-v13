@@ -248,7 +248,10 @@ describe('Node discovery', () => {
       'zz-plugin': diagram('zz-plugin', 'zz', 'same', 'zz'),
       'aa-plugin': diagram('aa-plugin', 'aa', 'same', 'aa'),
     });
-    expect(scanPlugins(root).packages.map((p) => p.package)).toEqual(['aa-plugin', 'zz-plugin']);
+    expect((await scanPlugins(root)).packages.map((p) => p.package)).toEqual([
+      'aa-plugin',
+      'zz-plugin',
+    ]);
     expect((await discovering(root).render('a', 'same x')).svg).toContain('aa: x');
   });
 
@@ -259,6 +262,44 @@ describe('Node discovery', () => {
     void b;
     expect(skips(a.warnings)).toHaveLength(1);
     expect(skips((await m.render('b', 'ok 2')).warnings)).toEqual([]);
+  });
+
+  it('never times out a slow diagram entry during render, only discovery-time imports', async () => {
+    const root = app({
+      lazy: diagram('lazy', 'lazy'),
+      slowext: extension('slowext'),
+      ok: diagram('ok', 'ok'),
+    });
+    const at = join(root, 'node_modules');
+    const slow = 'await new Promise((r) => setTimeout(r, 600));\n';
+    writeFileSync(join(at, 'lazy', 'index.js'), slow + ENTRY('lazy'));
+    writeFileSync(join(at, 'slowext', 'index.js'), slow + EXTENSION);
+    const m = discovering(root, { importTimeoutMs: 200 });
+    const first = await m.render('a', 'ok fine');
+    // The extension entry loads at discovery, under the limit: skipped, never applied.
+    expect(first.svg).not.toContain('marked');
+    expect(first.warnings.map((w) => w.message).join('\n')).toMatch(/timed out after 200 ms/);
+    // The diagram entry loads on first detection: slow, but the render succeeds.
+    expect((await m.render('b', 'lazy works')).svg).toContain('lazy: works');
+  });
+
+  it('walks past type-marker package.json files to the app root', async () => {
+    const root = app({ 'mermaid-box': diagram('mermaid-box', 'box') });
+    const out = join(root, 'dist', 'server');
+    mkdirSync(out, { recursive: true });
+    writeFileSync(join(root, 'dist', 'package.json'), '{"type":"commonjs"}');
+    writeFileSync(join(out, 'package.json'), '{"type":"module"}');
+    expect((await discovering(out).render('a', 'box x')).svg).toContain('box: x');
+  });
+
+  it('warns once, naming the root, when the app root has no node_modules', async () => {
+    const root = app({});
+    const m = discovering(root);
+    const r = await m.render('f', 'flowchart LR\n  A --> B\n');
+    const empty = r.warnings.filter((w) => w.code === 'PLUGIN_DISCOVERY_NO_MODULES');
+    expect(empty).toHaveLength(1);
+    expect(empty[0]?.message).toContain(root);
+    expect((await m.render('g', 'flowchart LR\n  A --> B\n')).warnings).toEqual([]);
   });
 
   it('does nothing without a package.json above the folder', async () => {

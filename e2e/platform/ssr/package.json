@@ -2,10 +2,11 @@
   "name": "platform-ssr",
   "version": "0.0.0",
   "private": true,
-  "description": "Node SSR app (spec #218, T4): renders the fixture plugins, found by Node discovery, with no registration code.",
+  "description": "Node SSR app (spec #218, T4): renders the fixture plugins, found by Node discovery, with no registration code; also as a bundled server.",
   "type": "module",
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node server.mjs",
+    "build:bundle": "esbuild server.mjs --bundle --platform=node --format=esm --outfile=dist/server/server.mjs --log-level=warning && node -e \"const f=require('fs');f.writeFileSync('dist/package.json','{\\\"type\\\":\\\"commonjs\\\"}');f.writeFileSync('dist/server/package.json','{\\\"type\\\":\\\"module\\\"}')\""
   },
   "dependencies": {
     "mermaid": "13.0.0-alpha.0",

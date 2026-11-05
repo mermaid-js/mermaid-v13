@@ -3,12 +3,16 @@
  * packed, installed into a copy of `e2e/platform/ssr/` (npm and pnpm) and served by the app's
  * own Node server, which renders on the server and never registers a plugin. Node discovery
  * finds the fixture diagram and extension; `DISCOVERY=off` (`discovery: false`) turns it off.
+ * The bundled variant (esbuild, `--platform=node`) runs from `dist/server/`, below type-marker
+ * package.json files: discovery still finds the app root, imports the plugins at runtime and
+ * leaves npm's hoisted first-party packages out.
  */
 import { spawn } from 'node:child_process';
+import { join } from 'node:path';
 import type { ChildProcess } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 import { installApp } from './harness/index.ts';
-import type { InstalledApp, PackageManager } from './harness/index.ts';
+import type { PackageManager } from './harness/index.ts';
 
 test.describe.configure({ timeout: 180_000 });
 
@@ -17,10 +21,13 @@ interface Server {
   close(): void;
 }
 
-/** Starts the app's server and resolves with its origin once it prints `listening <origin>`. */
-function start(app: InstalledApp, env: Record<string, string> = {}): Promise<Server> {
+/**
+ * Starts the app's server (`server.mjs` in `dir`, which is also its cwd) and resolves with its
+ * origin once it prints `listening <origin>`.
+ */
+function start(dir: string, env: Record<string, string> = {}): Promise<Server> {
   const child: ChildProcess = spawn(process.execPath, ['server.mjs'], {
-    cwd: app.dir,
+    cwd: dir,
     env: { ...process.env, ...env },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -46,12 +53,18 @@ function start(app: InstalledApp, env: Record<string, string> = {}): Promise<Ser
   });
 }
 
-for (const manager of ['npm', 'pnpm'] as PackageManager[]) {
-  test(`the SSR app renders discovered plugins with no registration code (${manager})`, async ({
+const variants: [string, PackageManager, boolean][] = [
+  ['npm', 'npm', false],
+  ['pnpm', 'pnpm', false],
+  ['npm, bundled server', 'npm', true],
+];
+
+for (const [name, manager, bundled] of variants) {
+  test(`the SSR app renders discovered plugins with no registration code (${name})`, async ({
     page,
   }) => {
-    const app = installApp('ssr', { manager });
-    const server = await start(app);
+    const app = installApp('ssr', { manager, ...(bundled ? { build: 'build:bundle' } : {}) });
+    const server = await start(bundled ? join(app.dir, 'dist', 'server') : app.dir);
     try {
       await page.goto(`${server.origin}/`);
       // The fixture diagram: detector from its manifest, entry loaded on first detection.
@@ -70,7 +83,7 @@ for (const manager of ['npm', 'pnpm'] as PackageManager[]) {
 
 test('with discovery: false the fixture type is UNSUPPORTED_DIAGRAM', async ({ page }) => {
   const app = installApp('ssr', { manager: 'pnpm' });
-  const server = await start(app, { DISCOVERY: 'off' });
+  const server = await start(app.dir, { DISCOVERY: 'off' });
   try {
     await page.goto(`${server.origin}/`);
     await expect(page.locator('#fixture .error')).toHaveAttribute(
