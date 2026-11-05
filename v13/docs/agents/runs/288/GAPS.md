@@ -17,7 +17,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## #335 T3 layout (merged)
 
-- [ ] **Invariants on parser-produced fixtures**: not run, because #305 had not merged. Whoever merges second adds the corpus spec described in `tickets/335.md` (`pieLayoutViolations` over the e2e corpus parsed by the v13 parser). Owner: #305 if it merges after #335 (it does), else #306.
+- [x] **Invariants on parser-produced fixtures**: closed by #305: `packages/conformance/src/pie/layout-corpus.spec.ts` (gate corpus × 5 legend positions × 3 option sets, 0 violations); `layoutPie`/`pieLayoutViolations` are now exported from the package entry for it. Was: not run, because #305 had not merged. Whoever merges second adds the corpus spec described in `tickets/335.md` (`pieLayoutViolations` over the e2e corpus parsed by the v13 parser). Owner: #305 if it merges after #335 (it does), else #306.
 - [ ] **#325:** delete `PIE_THEME_DEFAULTS` in `layout/metrics.ts` (title/section/legend text sizes, stroke widths) once the pie variables exist; the layout already prefers a vocabulary entry of kind `length`.
 - Deviations (orchestrator: accepted, consistent with P1/D226; listed for the maintainer):
   - an empty `highlightSlice` (the default) highlights nothing; v12 highlighted a slice labelled `""` (the default `''` matched it);
