@@ -1,4 +1,10 @@
 @ 3:6  my-|
   my-node node 3:3-3:6 "my-" -> "my-node"
+  --> operator (normal line with an arrow head) 3:5-3:6 "-" -> "-->"
+  --- operator (normal line with no head) 3:5-3:6 "-" -> "---"
+  -.-> operator (dotted line with an arrow head) 3:5-3:6 "-" -> "-.->"
+  -.- operator (dotted line with no head) 3:5-3:6 "-" -> "-.-"
+  --o operator (normal line with a circle head) 3:5-3:6 "-" -> "--o"
+  --x operator (normal line with a cross head) 3:5-3:6 "-" -> "--x"
 @ 4:6  caf|
   café node 4:3-4:6 "caf" -> "café"

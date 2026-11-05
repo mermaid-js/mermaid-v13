@@ -1,0 +1,20 @@
+@ 3:8  e1@{ | }
+  animate property 3:8-3:8 "" -> "animate: "
+  animation property 3:8-3:8 "" -> "animation: "
+  curve property 3:8-3:8 "" -> "curve: "
+@ 4:25  e1@{ animate: true, an| }
+  animation property 4:23-4:25 "an" -> "animation: "
+@ 5:15  e1@{ curve: |}
+  basis constant 5:15-5:15 "" -> "basis"
+  bumpX constant 5:15-5:15 "" -> "bumpX"
+  bumpY constant 5:15-5:15 "" -> "bumpY"
+  cardinal constant 5:15-5:15 "" -> "cardinal"
+  catmullRom constant 5:15-5:15 "" -> "catmullRom"
+  linear constant 5:15-5:15 "" -> "linear"
+  monotoneX constant 5:15-5:15 "" -> "monotoneX"
+  monotoneY constant 5:15-5:15 "" -> "monotoneY"
+  natural constant 5:15-5:15 "" -> "natural"
+  step constant 5:15-5:15 "" -> "step"
+  stepAfter constant 5:15-5:15 "" -> "stepAfter"
+  stepBefore constant 5:15-5:15 "" -> "stepBefore"
+  rounded constant 5:15-5:15 "" -> "rounded"

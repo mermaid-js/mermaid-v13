@@ -38,6 +38,8 @@ describe('completion', () => {
     expect(labels('|')).toEqual([
       'flowchart',
       'graph',
+      'flowchart-elk',
+      'swimlane-beta',
       'classDiagram',
       'erDiagram',
       'sequenceDiagram',
@@ -48,7 +50,9 @@ describe('completion', () => {
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);
     expect(complete('flo|')).toEqual([
       expect.objectContaining({ label: 'flowchart', range: { start: 0, end: 3 } }),
+      expect.objectContaining({ label: 'flowchart-elk', range: { start: 0, end: 3 } }),
     ]);
+    expect(labels('sw|')).toEqual(['swimlane-beta']);
     expect(labels('---\ntitle: x\n---\ngr|')).toEqual(['graph']);
     // Only the first line: a later line of an undetected text gets nothing.
     expect(labels('foo\n|')).toEqual([]);

@@ -17,6 +17,8 @@ export interface KeywordItem {
 export const KEYWORDS: readonly KeywordItem[] = [
   { kind: T.Graph, label: 'flowchart' },
   { kind: T.Graph, label: 'graph' },
+  { kind: T.Graph, label: 'flowchart-elk' },
+  { kind: T.Graph, label: 'swimlane-beta' },
   { kind: T.Subgraph, label: 'subgraph' },
   { kind: T.End, label: 'end' },
   { kind: T.Style, label: 'style' },
@@ -83,6 +85,40 @@ export const BRACKET_SHAPES: readonly (readonly [open: string, close: string, na
   ['[\\', '/]', 'inv_trapezoid'],
   ['(-', '-)', 'ellipse'],
 ];
+
+/**
+ * The rest of an arrow inside edge text, by how the link was opened (`--`, `==`, `-.`): the
+ * forms v12's closing link patterns accept.
+ */
+export const CLOSERS: Readonly<Record<string, readonly string[]>> = {
+  '--': ['-->', '---', '--o', '--x'],
+  '==': ['==>', '===', '==o', '==x'],
+  '-.': ['.->', '.-', '.-o', '.-x'],
+};
+
+/** Curve names (`linkStyle … interpolate`, edge `curve:`): the config schema's `flowchart.curve`. */
+export const CURVES = [
+  'basis',
+  'bumpX',
+  'bumpY',
+  'cardinal',
+  'catmullRom',
+  'linear',
+  'monotoneX',
+  'monotoneY',
+  'natural',
+  'step',
+  'stepAfter',
+  'stepBefore',
+  'rounded',
+];
+
+/** Keys of an edge's `@{ … }` data that the model reads, with the values it accepts. */
+export const EDGE_DATA: Readonly<Record<string, readonly string[]>> = {
+  animate: ['true', 'false'],
+  animation: ['fast', 'slow'],
+  curve: CURVES,
+};
 
 /** Keys of a node's `@{ … }` shape data that the model reads. */
 export const NODE_DATA_KEYS = [

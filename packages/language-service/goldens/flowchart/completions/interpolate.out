@@ -1,0 +1,16 @@
+@ 3:27  linkStyle 0 interpolate |
+  basis constant 3:27-3:27 "" -> "basis"
+  bumpX constant 3:27-3:27 "" -> "bumpX"
+  bumpY constant 3:27-3:27 "" -> "bumpY"
+  cardinal constant 3:27-3:27 "" -> "cardinal"
+  catmullRom constant 3:27-3:27 "" -> "catmullRom"
+  linear constant 3:27-3:27 "" -> "linear"
+  monotoneX constant 3:27-3:27 "" -> "monotoneX"
+  monotoneY constant 3:27-3:27 "" -> "monotoneY"
+  natural constant 3:27-3:27 "" -> "natural"
+  step constant 3:27-3:27 "" -> "step"
+  stepAfter constant 3:27-3:27 "" -> "stepAfter"
+  stepBefore constant 3:27-3:27 "" -> "stepBefore"
+  rounded constant 3:27-3:27 "" -> "rounded"
+@ 4:35  linkStyle default interpolate ba|
+  basis constant 4:33-4:35 "ba" -> "basis"
