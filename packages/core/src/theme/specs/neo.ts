@@ -7,7 +7,7 @@
  * `packages/conformance/src/neo-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE } from './palettes.ts';
+import { LABEL_SCALE, REDUX_RULES } from './palettes.ts';
 import { darkenedScale, hueSources } from './scales.ts';
 import {
   NEO_ARROWHEADS,
@@ -17,7 +17,6 @@ import {
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
-import { REDUX_RULES } from './redux-rules.ts';
 
 const SOURCES = hueSources(true, '#ececfe', '#e9e9f1', 'lightenHsl(adjustHue(#ececfe, 180), 5%)');
 

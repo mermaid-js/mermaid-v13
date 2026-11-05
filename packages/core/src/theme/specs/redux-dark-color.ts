@@ -4,8 +4,13 @@
  * subgraph is coloured on its border only and keeps its contrast in dark mode.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { REDUX_RULES } from './redux-rules.ts';
-import { INVERTED_SCALE, TAILWIND_300, TAILWIND_400, paletteSlots } from './palettes.ts';
+import {
+  INVERTED_SCALE,
+  paletteSlots,
+  REDUX_RULES,
+  TAILWIND_300,
+  TAILWIND_400,
+} from './palettes.ts';
 import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
 
 const theme: ThemeSpec = {

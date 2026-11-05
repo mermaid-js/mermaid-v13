@@ -9,7 +9,7 @@
  * `packages/conformance/src/neo-dark-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE } from './palettes.ts';
+import { LABEL_SCALE, REDUX_RULES } from './palettes.ts';
 import { DARK_HUE_SOURCES, darkenedScale } from './scales.ts';
 import {
   NEO_ARROWHEADS,
@@ -19,7 +19,6 @@ import {
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
-import { REDUX_RULES } from './redux-rules.ts';
 
 const neoDark: ThemeSpec = {
   name: 'neo-dark',

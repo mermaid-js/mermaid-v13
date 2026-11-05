@@ -141,6 +141,8 @@ export interface Theme {
    * else the theme's; empty when the theme carries none.
    */
   palette(name: PaletteVariable): readonly SafeColor[];
+  /** {@link palette}'s entries as colour channels, where JS can compute them. */
+  paletteRgba(name: PaletteVariable): readonly (Rgba | undefined)[];
 }
 
 export interface AutoDeclarations {
@@ -255,13 +257,15 @@ class Resolver {
     return r;
   }
 
-  /** The palette's entries as literal colours. */
-  palette(p: PaletteVariable): SafeColor[] {
+  /** The palette's entries as literal colours, or as channels. */
+  palette(p: PaletteVariable): SafeColor[];
+  palette(p: PaletteVariable, rgba: true): (Rgba | undefined)[];
+  palette(p: PaletteVariable, rgba?: true): (SafeColor | Rgba | undefined)[] {
     const n = (this.palettes.user[p] ?? this.palettes.spec[p] ?? []).length;
-    return Array.from(
-      { length: n },
-      (_, i) => (checkColor(this.slot(p, i)?.lit ?? '') ?? 'currentColor') as SafeColor
-    );
+    return Array.from({ length: n }, (_, i) => {
+      const r = this.slot(p, i);
+      return rgba ? r?.rgba : ((checkColor(r?.lit ?? '') ?? 'currentColor') as SafeColor);
+    });
   }
 
   /** The spec's own value or rule, ignoring overrides. */
@@ -822,6 +826,7 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
       vars && night
         ? { light: decls(main, used, true), dark: decls(night, used, true) }
         : undefined,
+    paletteRgba: (name) => main.palette(name, true),
     palette(name) {
       let list = palettes.get(name);
       if (!list) palettes.set(name, (list = main.palette(name)));

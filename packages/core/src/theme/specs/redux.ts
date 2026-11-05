@@ -3,7 +3,7 @@
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE, paletteSlots } from './palettes.ts';
+import { LABEL_SCALE, paletteSlots, REDUX_RULES } from './palettes.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
@@ -12,7 +12,6 @@ import {
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
-import { REDUX_RULES } from './redux-rules.ts';
 
 /** `theme-redux.js`: `mainBkg` darkened by `step` in every slot, and its inverse. */
 const mainBkgScale = (
