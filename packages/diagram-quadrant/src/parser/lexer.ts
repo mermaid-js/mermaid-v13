@@ -308,7 +308,7 @@ const RULES: readonly Rule[] = [
   /* 12 */ rule((x, p) => until(x, '}', p), T.AccDescrMultilineValue),
   /* 13 */ rule(padded('x-axis'), T.XAxis, A.none, S.INITIAL, spaces),
   /* 14 */ rule(padded('y-axis'), T.YAxis, A.none, S.INITIAL, spaces),
-  /* 15 */ rule(delimiter, T.AxisDelimiter, A.none, S.INITIAL, spacesThenDashes),
+  /* 15 */ rule(delimiter, T.AxisTextDelimiter, A.none, S.INITIAL, spacesThenDashes),
   /* 16 */ rule(padded('quadrant-1'), T.Quadrant1, A.none, S.INITIAL, spaces),
   /* 17 */ rule(padded('quadrant-2'), T.Quadrant2, A.none, S.INITIAL, spaces),
   /* 18 */ rule(padded('quadrant-3'), T.Quadrant3, A.none, S.INITIAL, spaces),

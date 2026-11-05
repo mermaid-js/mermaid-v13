@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import {
   layoutQuadrant,
+  parseQuadrant,
   quadrantLayoutViolations,
   type QuadrantLayout,
+  type QuadrantModel,
   type QuadrantTextAnchor,
 } from '@mermaid-js/diagram-quadrant';
 import { REPO_ROOT, corpusFromDir } from '../corpus.ts';
@@ -20,8 +22,8 @@ import {
  * Builder parity (spec #289 T3): `layoutQuadrant` equals v12's `getQuadrantData()` to 0.01 px on
  * rects, lines, text anchors, radii and styled point paints, over the corpus and the cases below.
  * Theme colours are left out: the oracle's default point fill is `hsl(240, 100%, NaN%)` (D231),
- * and v13 reads them from the theme. The models are built from v12's own DB calls (`v12.ts`) until the parser (#301)
- * lands; the parser-produced run is GAPS #332.
+ * and v13 reads them from the theme. The models are the v13 parser's (#301), so the layout
+ * invariants also run on parser-produced fixtures (T3's done-when).
  *
  * Paints: a point's fill and stroke are compared with v12's, `#` added (D235), where a style sets
  * them. v12's default (its `quadrantPointFill`, `hsl(240, 100%, NaN%)`) reads as `null`, the
@@ -60,6 +62,14 @@ const EXTRA: CorpusItem[] = [
       'quadrantChart\n  x-axis A --> B\n  x-axis C\n  y-axis D --> E\n  y-axis F\n  P: [0.5, 0.5]\n',
   },
 ];
+
+/** The v13 parser's model of `source`; it must parse without errors. */
+function model(source: string): QuadrantModel {
+  const result = parseQuadrant(source);
+  const errors = result.diagnostics.filter((d) => d.severity === 'error');
+  if (errors.length > 0) throw new Error(errors.map((d) => d.message).join('\n'));
+  return result.model;
+}
 
 async function corpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
@@ -182,7 +192,7 @@ describe('quadrant layout parity with v12 getQuadrantData()', () => {
         continue;
       }
       const warnings: Warning[] = [];
-      const layout = layoutQuadrant(v12.model, v13QuadrantConfig(item.source), (w) =>
+      const layout = layoutQuadrant(model(item.source), v13QuadrantConfig(item.source), (w) =>
         warnings.push(w)
       );
       for (const d of differences(v13Shape(layout), v12Shape(v12.data)))
@@ -198,7 +208,9 @@ describe('quadrant layout parity with v12 getQuadrantData()', () => {
     const v12 = await v12Quadrant(source);
     if (!v12.accepted) throw new Error(v12.error);
     const warnings: Warning[] = [];
-    const layout = layoutQuadrant(v12.model, v13QuadrantConfig(source), (w) => warnings.push(w));
+    const layout = layoutQuadrant(model(source), v13QuadrantConfig(source), (w) =>
+      warnings.push(w)
+    );
     const v12Points = [...v12.data.points].reverse();
     expect(v12Points[0]!.x).toBeCloseTo(2455, 2);
     expect(warnings.map((w) => [w.code, w.astIds])).toEqual([

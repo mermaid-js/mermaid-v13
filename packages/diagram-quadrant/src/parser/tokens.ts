@@ -30,7 +30,7 @@ export const T = {
   /** `y-axis`, with the spaces around it. */
   YAxis: F + 11,
   /** `-->` (two or more dashes), with the spaces around it. */
-  AxisDelimiter: F + 12,
+  AxisTextDelimiter: F + 12,
   Quadrant1: F + 13,
   Quadrant2: F + 14,
   Quadrant3: F + 15,
@@ -99,7 +99,7 @@ export const JISON_NAMES: Readonly<Record<number, string>> = {
   [T.AccDescrMultilineValue]: 'acc_descr_multiline_value',
   [T.XAxis]: 'X-AXIS',
   [T.YAxis]: 'Y-AXIS',
-  [T.AxisDelimiter]: 'AXIS-TEXT-DELIMITER',
+  [T.AxisTextDelimiter]: 'AXIS-TEXT-DELIMITER',
   [T.Quadrant1]: 'QUADRANT_1',
   [T.Quadrant2]: 'QUADRANT_2',
   [T.Quadrant3]: 'QUADRANT_3',

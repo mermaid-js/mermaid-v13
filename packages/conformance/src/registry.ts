@@ -2,6 +2,7 @@ import { classAdapter } from './class/v13.ts';
 import type { ParitySuite } from './corpus.ts';
 import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
+import { quadrantAdapter } from './quadrant/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
 
@@ -37,6 +38,14 @@ export const PARITY_SUITES: ParitySuite[] = [
     adapter: stateAdapter,
     corpusDirs: ['e2e/diagrams/state-diagram', 'e2e/diagrams/state-diagram-v2'],
     corpusFiles: ['packages/conformance/corpus/state-v12-specs.json'],
+  },
+  {
+    adapter: quadrantAdapter,
+    corpusDirs: ['e2e/diagrams/quadrant-chart'],
+    corpusFiles: [
+      'packages/conformance/corpus/quadrant-v12-specs.json',
+      'packages/conformance/corpus/quadrant-cases.json',
+    ],
   },
 ];
 

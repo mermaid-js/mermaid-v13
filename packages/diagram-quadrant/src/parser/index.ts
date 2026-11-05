@@ -1,14 +1,20 @@
 /**
- * The quadrant parser's public surface so far (#300): the lexer, gated against v12's jison
- * lexer. The parser (#301) builds on {@link lexQuadrant}.
+ * The quadrant parser's public surface: the parser (#301), its AST and the lexer (#300), gated
+ * against v12's jison lexer.
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 import type { QuadrantLex } from './lexer.ts';
+import { tokenValue } from './value.ts';
 import { v12Text } from './v12-text.ts';
 
+export { parseQuadrant } from './parser.ts';
+export type { QuadrantParseOptions, QuadrantParseResult } from './parser.ts';
+export { detectQuadrant } from './detect.ts';
+export type * from './ast.ts';
+export { tokenValue } from './value.ts';
 export { JISON_NAMES, T as QuadrantTokenKind } from './tokens.ts';
 export type { QuadrantLex } from './lexer.ts';
 export type { V12Text } from './v12-text.ts';
@@ -29,20 +35,6 @@ export function lexQuadrant(src: string, onRule?: (rule: number) => void): Quadr
   const pre = preprocess(src);
   const directives = pre.directives.map((d) => d.range);
   return lex(src, v12Text(src, pre.bodyStart, directives), onRule);
-}
-
-/** Undo v12's `encodeEntities` placeholders, as v12's renderer did (`decodeEntities`). */
-const decodeEntities = (text: string): string =>
-  text.replace(/ﬂ°°/g, '&#').replace(/ﬂ°/g, '&').replace(/¶ß/g, ';');
-
-/**
- * The text of token `i` as v12's parser read it (less the `\n` v12 appended), or the source
- * text of a trivia token.
- */
-export function tokenValue(l: QuadrantLex, i: number): string {
-  const s = l.textStart[i] ?? -1;
-  if (s < 0) return l.tokens.source.slice(l.tokens.start[i] ?? 0, l.tokens.end[i] ?? 0);
-  return decodeEntities(l.v12.text.slice(s, Math.min(l.textEnd[i] ?? s, l.v12.length)));
 }
 
 /**

@@ -1,0 +1,712 @@
+/**
+ * Quadrant parser: recursive descent over the {@link lex} tokens, producing a
+ * {@link QuadrantModel}, the typed AST, symbols, statement spans and diagnostics (DESIGN §4.3).
+ *
+ * The grammar is v12's `quadrant.jison` (LALR), ported rule for rule (`grammar/quadrant.ebnf` is
+ * the normative form; the dead `section`, `NODE_STRING`, `DOWN`, `DEFAULT`, `UNIT`, `STYLE` and
+ * `PCT` are gone), so it accepts and rejects what jison does. The parser reads the tokens jison
+ * returned: the quotes, `:::`, `accDescr {`, `}`, the `,` between coordinates and the `]`, for
+ * which jison returns none, are trivia here, as are comments. Values convert as v12's DB did
+ * (`quadrantDb.ts`): labels trimmed, styles checked as `parseStyles` (`styles.ts`). Unlike jison
+ * it does not stop at the first error: it reports it, skips to the end of the statement (a line
+ * break, `;` or the end of the text) and carries on (R-PARSE-4).
+ */
+import {
+  Kind,
+  kindSet,
+  LineIndex,
+  nodeId,
+  ParseState,
+  syncTo,
+  TokenCursor,
+} from '@mermaid-js/core/parser-kit';
+import type { ParseOptions, ParseResult, Range } from '@mermaid-js/core/parser-kit';
+import { preprocess } from '@mermaid-js/core/preprocess';
+import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import type {
+  QuadrantAxis,
+  QuadrantClass,
+  QuadrantLabel,
+  QuadrantLabels,
+  QuadrantModel,
+  QuadrantPoint,
+  QuadrantStyles,
+  QuadrantText,
+} from '../model.ts';
+import type {
+  QuadrantAxisEndNode,
+  QuadrantAxisNode,
+  QuadrantClassDefNode,
+  QuadrantDocument,
+  QuadrantPointNode,
+  QuadrantQuadrantNode,
+  QuadrantStatementNode,
+  QuadrantStyleNode,
+  QuadrantTextNode,
+  QuadrantTextStatementNode,
+} from './ast.ts';
+import { lex } from './lexer.ts';
+import type { QuadrantLex } from './lexer.ts';
+import { applyStyle } from './styles.ts';
+import { T } from './tokens.ts';
+import { tokenValue } from './value.ts';
+import { v12Text } from './v12-text.ts';
+
+export interface QuadrantParseOptions extends ParseOptions {
+  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
+  preprocessed?: PreprocessResult;
+}
+
+export type QuadrantParseResult = ParseResult<QuadrantModel, QuadrantDocument>;
+
+/** jison's `alphaNumToken`: what text starts with. */
+const TEXT_START = [
+  T.Punctuation,
+  T.Amp,
+  T.Num,
+  T.Alpha,
+  T.Comma,
+  T.Plus,
+  T.Equals,
+  T.Mult,
+  T.Dot,
+  T.Brkt,
+  T.Underscore,
+  T.UnicodeText,
+];
+const LABEL_START = [...TEXT_START, T.Str, T.MdStr];
+/** jison's `textNoTagsToken`: what text goes on with. */
+const TEXT_MORE = [...TEXT_START, T.Space, T.Minus];
+/** jison's `idStringToken`, less its dead terminals: a `classDef` name. */
+const CLASS_NAME = [
+  T.Alpha,
+  T.Num,
+  T.Minus,
+  T.Comma,
+  T.Colon,
+  T.Amp,
+  T.Brkt,
+  T.Mult,
+  T.UnicodeText,
+];
+/** jison's `styleComponent`, less its dead terminals. */
+const STYLE_PART = [T.Alpha, T.Num, T.Colon, T.Space, T.Brkt, T.Minus];
+/** jison's `eol`. */
+const EOL = [Kind.Newline, T.Semi, T.Eof];
+const QUADRANTS = [T.Quadrant1, T.Quadrant2, T.Quadrant3, T.Quadrant4];
+
+/** Text jison matched without returning a token: trivia to the parser. */
+const GLUE = [
+  T.StringStart,
+  T.StringEnd,
+  T.MdStringStart,
+  T.MdStringEnd,
+  T.AccDescrMultiline,
+  T.AccDescrMultilineEnd,
+  T.ClassMarker,
+  T.PointComma,
+  T.PointEnd,
+];
+const SKIPPED = kindSet(Kind.Comment, Kind.Directive, ...GLUE);
+/** Glue whose text counts towards the next token's range (an opening quote). */
+const OPENS = kindSet(T.StringStart, T.MdStringStart, T.AccDescrMultiline);
+/** Glue whose text counts towards the previous token's range (a closing quote, the `]`). */
+const CLOSES = kindSet(T.StringEnd, T.MdStringEnd, T.AccDescrMultilineEnd, T.PointEnd);
+const COMMENTS = kindSet(Kind.Comment, Kind.Directive);
+
+/** The node type and statement-span kind of `title`, `accTitle:` and `accDescr:`. */
+const TEXT_STATEMENTS: Record<number, [QuadrantTextStatementNode['type'], string]> = {
+  [T.Title]: ['Title', 'title'],
+  [T.AccTitle]: ['AccTitle', 'accTitle'],
+  [T.AccDescr]: ['AccDescr', 'accDescr'],
+};
+
+/** Where recovery resumes (R-PARSE-4). */
+const BOUNDARY = kindSet(Kind.EOF, ...EOL);
+
+const LINE_END = ['a line break or `;`'];
+const LABEL = ['a label'];
+const POINT_START = ['`: [x, y]`'];
+const COORDINATE = ['a coordinate from 0 to 1'];
+const STYLE = ['a style such as `radius: 10`'];
+const STATEMENT = [
+  'a statement such as `title`, `x-axis`, `quadrant-1` or `classDef`',
+  'a point such as `Name: [0.5, 0.5]`',
+];
+
+const COORDINATE_HINT =
+  'a coordinate is `0`, `1` or `0.` and digits, e.g. `0.25`; write a point as `Name: [0.25, 0.75]`';
+const POINT_HINT = 'write a point as `Name: [x, y]`, e.g. `Campaign A: [0.3, 0.6]`';
+const AXIS_HINT = 'write an axis as `x-axis <start> --> <end>`, e.g. `x-axis Low --> High`';
+const QUADRANT_HINT = 'write a quadrant label as `quadrant-1 <label>`, e.g. `quadrant-1 Expand`';
+const CLASS_DEF_HINT =
+  'write it as `classDef <name> <styles>` with one blank after `classDef`, e.g. `classDef hot radius: 10, color: #ff0000`';
+const STYLES_HINT =
+  'styles are `radius: 10`, `color: #ff0000`, `stroke-color: #ff0000` and `stroke-width: 2px`, separated by `,`';
+
+/**
+ * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
+ * instance, so its stack is captured once.
+ */
+class Stop extends Error {}
+const STOP = new Stop();
+
+/** Parse a quadrant chart. Never throws: problems are error diagnostics. */
+export function parseQuadrant(
+  src: string,
+  options: QuadrantParseOptions = {}
+): QuadrantParseResult {
+  return new QuadrantParser(src, options).parse();
+}
+
+/**
+ * One parse. Each grammar rule is a method that returns what it read; a rule that fails
+ * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
+ */
+class QuadrantParser {
+  private readonly pre: PreprocessResult;
+  private readonly lexed: QuadrantLex;
+  private readonly st = new ParseState();
+  private readonly c: TokenCursor;
+  private readonly children: QuadrantStatementNode[] = [];
+  /** Source range of each token with the quotes and `]` next to it (jison's text). */
+  private readonly outerStart: Uint32Array;
+  private readonly outerEnd: Uint32Array;
+  /** Index of the last token consumed. */
+  private last = 0;
+  private hint: string | undefined;
+  private lines: LineIndex | undefined;
+
+  constructor(
+    private readonly src: string,
+    private readonly options: QuadrantParseOptions
+  ) {
+    const pre = (this.pre = options.preprocessed ?? preprocess(src));
+    if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
+    const directives = pre.directives.map((d) => d.range);
+    this.lexed = lex(src, v12Text(src, pre.bodyStart, directives));
+    this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
+    [this.outerStart, this.outerEnd] = outerRanges(this.lexed);
+  }
+
+  parse(): QuadrantParseResult {
+    this.header();
+    this.document();
+    const model = buildModel(this.children, this.st, this.pre.frontMatter?.title);
+    const ast: QuadrantDocument = {
+      id: 'doc',
+      type: 'Document',
+      range: { start: this.pre.bodyStart, end: this.src.length },
+      children: this.children,
+    };
+    return this.st.result(model, ast, this.lexed.tokens, this.options);
+  }
+
+  // ---- tokens -------------------------------------------------------------------------
+
+  private in(kinds: readonly number[]): boolean {
+    this.c.tested(kinds);
+    return kinds.includes(this.c.kind);
+  }
+
+  /** Consume the current token; its text as v12 read it. */
+  private take(): string {
+    const text = tokenValue(this.lexed, this.c.pos);
+    this.last = this.c.next();
+    return text;
+  }
+
+  /** Consume a token of one of `kinds` and return its text, or fail. */
+  private expect(kinds: readonly number[], names: string[]): string {
+    if (!this.in(kinds)) this.fail(names);
+    return this.take();
+  }
+
+  /** `[start, end)` without the blanks at either end (unless that leaves nothing). */
+  private trim(start: number, end: number): Range {
+    let s = start;
+    let e = end;
+    while (s < e && /\s/.test(this.src[s] ?? '')) s++;
+    while (e > s && /\s/.test(this.src[e - 1] ?? '')) e--;
+    return s < e ? { start: s, end: e } : { start, end };
+  }
+
+  /** The range from token `first` to the last token consumed, quotes and `]` included. */
+  private span(first: number): Range {
+    return this.trim(this.outerStart[first] ?? 0, this.outerEnd[this.last] ?? 0);
+  }
+
+  /** The kind of the next token after `i` that is not a comment. */
+  private kindAfter(i: number): number {
+    const { kind, length } = this.lexed.tokens;
+    let j = i + 1;
+    while (j < length - 1 && COMMENTS[kind[j] ?? 0] === 1) j++;
+    return kind[j] ?? Kind.EOF;
+  }
+
+  // ---- errors and recovery ------------------------------------------------------------
+
+  private lineOf(at: number): number {
+    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
+  }
+
+  /** The current token's range, without the blanks a padded keyword takes. */
+  private here(): Range {
+    return this.trim(this.c.start, this.c.end);
+  }
+
+  /** How an error message names the current token. */
+  private found(): string {
+    const k = this.c.kind;
+    if (k === Kind.EOF || k === T.Eof) return 'the end of the text';
+    if (k === Kind.Newline) return 'a line break';
+    if (k === T.Space) return 'a blank';
+    const r = this.here();
+    const t = this.src.slice(r.start, r.end).trim() || tokenValue(this.lexed, this.c.pos).trim();
+    return t.length > 24 ? `\`${t.slice(0, 24)}…\`` : `\`${t}\``;
+  }
+
+  /** Report what was found where `names` were expected, then stop the statement. */
+  private fail(names: string[]): never {
+    const { st, c } = this;
+    const where = this.here();
+    if (c.kind === Kind.Error) {
+      const ch = this.src.slice(c.start, c.end);
+      const what = ch === '' ? 'Unexpected end of the line' : `Unexpected character \`${ch}\``;
+      const why = (ch === '' ? undefined : this.explainCharacter(ch)) ?? this.hint;
+      st.diagnostics.error('UNEXPECTED_CHARACTER', `${what}${why ? `; ${why}` : ''}.`, where, {
+        expected: names,
+      });
+      throw STOP;
+    }
+    const d = st.diagnostics.unexpected('UNEXPECTED', where, names, this.found());
+    const why = this.explain() ?? this.hint;
+    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    throw STOP;
+  }
+
+  private explain(): string | undefined {
+    const k = this.c.kind;
+    if (k === T.Colon) {
+      return '`:` can only be in a quoted label, e.g. `"Q: x"`';
+    }
+    if (k === T.Quadrant) return '`quadrantChart` starts the chart and comes only once';
+    return undefined;
+  }
+
+  private explainCharacter(ch: string): string | undefined {
+    if ('()<>[]{}@^~|'.includes(ch)) return 'quote the label to use it, e.g. `"a (b)"`';
+    return undefined;
+  }
+
+  /** Run one statement rule; on failure, skip to the end of the statement. */
+  private statement(rule: () => void): void {
+    this.hint = undefined;
+    try {
+      rule();
+    } catch (error) {
+      if (error !== STOP) throw error;
+      syncTo(this.c, BOUNDARY);
+    }
+    this.hint = undefined;
+  }
+
+  /** Add a node, and its span, to the document. */
+  private add(node: QuadrantStatementNode, kind: string): void {
+    this.st.statement(kind, node.range);
+    this.children.push(node);
+  }
+
+  // ---- document -----------------------------------------------------------------------
+
+  /** `{ eol | SPACE } QUADRANT`. Without a header, the rest is still read as statements. */
+  private header(): void {
+    const { c } = this;
+    while (c.kind === T.Space || EOL.includes(c.kind)) c.next();
+    this.statement(() => {
+      const first = c.pos;
+      this.expect([T.Quadrant], ['`quadrantChart`']);
+      this.add({ id: '', type: 'Header', range: this.span(first) }, 'header');
+    });
+  }
+
+  /** `{ { SPACE } [ statement ] eol }`. */
+  private document(): void {
+    const { c } = this;
+    for (;;) {
+      const k = c.kind;
+      if (k === Kind.EOF) break;
+      if (k === T.Space || EOL.includes(k)) {
+        c.next();
+        continue;
+      }
+      this.statement(() => this.stmt());
+    }
+  }
+
+  /** The end of a statement; `names` are what else the statement could have gone on with. */
+  private eol(names: string[] = []): void {
+    if (!this.in(EOL)) this.fail([...names, ...LINE_END]);
+  }
+
+  private stmt(): void {
+    const k = this.c.kind;
+    if (k === T.Title || k === T.AccTitle || k === T.AccDescr) return this.textStatement(k);
+    if (k === T.AccDescrMultilineValue) return this.multilineDescription();
+    if (k === T.XAxis || k === T.YAxis) return this.axis(k);
+    if (QUADRANTS.includes(k)) return this.quadrant(k);
+    if (k === T.ClassDef) return this.classDef();
+    if (this.in(LABEL_START)) return this.point();
+    this.fail(STATEMENT);
+  }
+
+  /** `title …`, `accTitle: …`, `accDescr: …`: the rest of the line, trimmed. */
+  private textStatement(k: number): void {
+    const first = this.c.pos;
+    this.take();
+    // The value always follows: its rule matches the empty rest of a line too.
+    const text = this.take().trim();
+    const [type, kind] = TEXT_STATEMENTS[k] ?? ['AccDescr', 'accDescr'];
+    const node: QuadrantTextStatementNode = { id: '', type, range: this.span(first), text };
+    this.eol();
+    this.add(node, kind);
+  }
+
+  /** `accDescr { … }`: the text up to `}`, trimmed. */
+  private multilineDescription(): void {
+    const first = this.c.pos;
+    const text = this.take().trim();
+    if (this.kindAfter(first) !== T.AccDescrMultilineEnd) {
+      // The range starts at `accDescr {`, which counts towards the value.
+      const at = this.outerStart[first] ?? 0;
+      this.st.diagnostics.error(
+        'UNCLOSED_DESCRIPTION',
+        `Unclosed description: the \`accDescr {\` at line ${this.lineOf(at)} has no closing \`}\`. Add \`}\` after the description.`,
+        { start: at, end: Math.min(this.src.length, at + 'accDescr'.length) }
+      );
+      throw STOP;
+    }
+    const node: QuadrantTextStatementNode = {
+      id: '',
+      type: 'AccDescr',
+      range: this.span(first),
+      text,
+    };
+    this.eol();
+    this.add(node, 'accDescr');
+  }
+
+  /** `x-axis <text> [--> [<text>]]`. */
+  private axis(k: number): void {
+    const first = this.c.pos;
+    this.hint = AXIS_HINT;
+    this.take();
+    const label = this.text();
+    let end: QuadrantAxisEndNode | undefined;
+    let arrow = false;
+    if (this.in([T.AxisTextDelimiter])) {
+      arrow = true;
+      this.take();
+      if (this.in(LABEL_START)) {
+        const endLabel = this.text();
+        end = { id: '', type: 'AxisEnd', range: endLabel.range, label: endLabel };
+      }
+      this.eol(end ? [] : LABEL);
+    } else this.eol(['`-->` and an end label']);
+    const node: QuadrantAxisNode = {
+      id: '',
+      type: 'Axis',
+      range: this.span(first),
+      axis: k === T.XAxis ? 'x' : 'y',
+      label,
+      arrow,
+    };
+    if (end) node.children = [end];
+    this.add(node, 'axis');
+  }
+
+  /** `quadrant-N <text>`. */
+  private quadrant(k: number): void {
+    const first = this.c.pos;
+    this.hint = QUADRANT_HINT;
+    this.take();
+    const label = this.text();
+    this.eol();
+    const quadrant = (QUADRANTS.indexOf(k) + 1) as 1 | 2 | 3 | 4;
+    const node: QuadrantQuadrantNode = {
+      id: '',
+      type: 'Quadrant',
+      range: this.span(first),
+      quadrant,
+      label,
+    };
+    this.add(node, 'quadrant');
+  }
+
+  /** `<text>[:::class] : [x, y] [styles]`. */
+  private point(): void {
+    const first = this.c.pos;
+    const label = this.text();
+    this.hint = POINT_HINT;
+    let className: string | undefined;
+    let classRange: Range | undefined;
+    if (this.in([T.ClassName])) {
+      classRange = this.here();
+      className = this.take();
+      this.st.symbol(className, 'class', classRange, 'ref');
+    }
+    this.expect([T.PointStart], POINT_START);
+    this.hint = COORDINATE_HINT;
+    const x = this.expect([T.PointX], COORDINATE);
+    const y = this.expect([T.PointY], COORDINATE);
+    this.hint = STYLES_HINT;
+    const styles = this.in(STYLE_PART) ? this.styles() : [];
+    this.eol(styles.length > 0 ? ['`,` and a style'] : STYLE);
+    const node: QuadrantPointNode = {
+      id: '',
+      type: 'Point',
+      range: this.span(first),
+      name: label.text.trim(),
+      label,
+      x,
+      y,
+      styles,
+    };
+    if (className !== undefined) {
+      node.className = className;
+      node.classRange = classRange;
+    }
+    this.add(node, 'point');
+  }
+
+  /** `classDef SPACE <name> SPACE <styles>`. */
+  private classDef(): void {
+    const first = this.c.pos;
+    this.hint = CLASS_DEF_HINT;
+    this.take();
+    this.expect([T.Space], ['a blank and a class name']);
+    const nameFirst = this.c.pos;
+    let name = this.expect(CLASS_NAME, ['a class name']);
+    while (this.in(CLASS_NAME)) name += this.take();
+    const nameRange = this.span(nameFirst);
+    if (this.c.kind === T.Underscore) {
+      this.hint = 'a class name defined with `classDef` cannot hold `_`';
+    }
+    this.expect([T.Space], ['a blank and styles']);
+    this.hint = STYLES_HINT;
+    const styles = this.styles();
+    this.eol(['`,` and a style']);
+    this.st.symbol(name, 'class', nameRange, 'def');
+    const node: QuadrantClassDefNode = {
+      id: '',
+      type: 'ClassDef',
+      range: this.span(first),
+      name,
+      nameRange,
+      styles,
+    };
+    this.add(node, 'classDef');
+  }
+
+  /** `style { COMMA style }`, each style checked as v12's `parseStyles`. */
+  private styles(): QuadrantStyleNode[] {
+    const out = [this.style()];
+    while (this.in([T.Comma])) {
+      this.take();
+      out.push(this.style());
+    }
+    return out;
+  }
+
+  private style(): QuadrantStyleNode {
+    const first = this.c.pos;
+    let raw = this.expect(STYLE_PART, STYLE);
+    while (this.in(STYLE_PART)) raw += this.take();
+    const range = this.span(first);
+    const text = raw.trim();
+    const problem = applyStyle(text, {});
+    if (problem) this.st.diagnostics.error(problem.code, problem.message, range);
+    return { text, range };
+  }
+
+  /** jison's `text`: a word, a string or a markdown string, then words, blanks and `-`. */
+  private text(): QuadrantTextNode {
+    const first = this.c.pos;
+    const k = this.c.kind;
+    if (!this.in(LABEL_START)) this.fail(LABEL);
+    if (k === T.Str || k === T.MdStr) this.closed(k);
+    let text = this.take();
+    while (this.in(TEXT_MORE)) text += this.take();
+    return { text, markdown: k === T.MdStr, range: this.span(first) };
+  }
+
+  /** A string or markdown string at the cursor must be closed. */
+  private closed(k: number): void {
+    const p = this.c.pos;
+    const close = k === T.Str ? T.StringEnd : T.MdStringEnd;
+    if (this.kindAfter(p) === close) return;
+    const quote = this.outerStart[p] ?? this.c.start;
+    const mark = k === T.Str ? '"' : '"`';
+    const at = { start: quote, end: quote + mark.length };
+    this.st.diagnostics.error(
+      'UNCLOSED_STRING',
+      `Unclosed string: the \`${mark}\` at line ${this.lineOf(quote)} has no closing \`${k === T.Str ? '"' : '`"'}\`. Add it after the text.`,
+      at
+    );
+    throw STOP;
+  }
+}
+
+/**
+ * Each token's source range with the quotes and `]` jison matched next to it, as the grammar's
+ * `attach-next` / `attach-prev` rules count them: an opening quote counts towards the next token,
+ * a closing quote or `]` towards the token right before it.
+ */
+function outerRanges(l: QuadrantLex): [Uint32Array, Uint32Array] {
+  const { kind, start, end, length } = l.tokens;
+  const os = Uint32Array.from(start);
+  const oe = Uint32Array.from(end);
+  let pending = -1;
+  let prev = -1;
+  for (let i = 0; i < length; i++) {
+    const k = kind[i] ?? 0;
+    if (COMMENTS[k] === 1) continue;
+    if (OPENS[k] === 1) {
+      if (pending < 0) pending = start[i] ?? 0;
+    } else if (CLOSES[k] === 1) {
+      if (prev >= 0 && pending < 0 && oe[prev] === start[i]) oe[prev] = end[i] ?? 0;
+      pending = -1;
+    } else if (SKIPPED[k] !== 1) {
+      if (pending >= 0) os[i] = pending;
+      pending = -1;
+      prev = i;
+    }
+  }
+  return [os, oe];
+}
+
+// ---- model ----------------------------------------------------------------------------
+
+type Mutable<T> = { -readonly [K in keyof T]: T[K] };
+
+/** `pt:<name>`-style id part: `%`, `>`, `@` and `#` percent-encoded. */
+const esc = (name: string): string => nodeId(name).slice(2);
+
+const label = (t: QuadrantTextNode, suffix = ''): QuadrantText => ({
+  text: (t.text + suffix).trim(),
+  markdown: t.markdown,
+});
+
+function stylesOf(nodes: readonly QuadrantStyleNode[]): QuadrantStyles {
+  const out: Mutable<QuadrantStyles> = {};
+  for (const s of nodes) applyStyle(s.text, out);
+  return out;
+}
+
+/** The statements the model keeps: the last of each `quadrant-N`, axis, end label and class. */
+interface Kept {
+  quadrants: (QuadrantQuadrantNode | undefined)[];
+  axes: Record<string, QuadrantAxisNode>;
+  ends: Record<string, QuadrantAxisEndNode>;
+  classes: Map<string, QuadrantClassDefNode>;
+}
+
+function keptOf(nodes: readonly QuadrantStatementNode[]): Kept {
+  const kept: Kept = { quadrants: [], axes: {}, ends: {}, classes: new Map() };
+  for (const n of nodes) {
+    if (n.type === 'Quadrant') kept.quadrants[n.quadrant] = n;
+    else if (n.type === 'Axis') {
+      kept.axes[n.axis] = n;
+      const end = n.children?.[0];
+      if (end) kept.ends[n.axis] = end;
+    } else if (n.type === 'ClassDef') kept.classes.set(n.name, n);
+  }
+  return kept;
+}
+
+/** Give every node its id (see `ast.ts`), in source order. */
+function assignIds(nodes: readonly QuadrantStatementNode[], st: ParseState): void {
+  const kept = keptOf(nodes);
+  const statement = () => st.ids.statement('st');
+  const seen = new Map<string, number>();
+  for (const n of nodes) {
+    if (n.type === 'Quadrant') {
+      n.id = kept.quadrants[n.quadrant] === n ? `q:${n.quadrant}` : statement();
+    } else if (n.type === 'Axis') {
+      n.id = kept.axes[n.axis] === n ? `ax:${n.axis}` : statement();
+      const end = n.children?.[0];
+      if (end) end.id = kept.ends[n.axis] === end ? `ax:${n.axis}/end` : statement();
+    } else if (n.type === 'Point') {
+      const count = (seen.get(n.name) ?? 0) + 1;
+      seen.set(n.name, count);
+      n.id = count === 1 ? `pt:${esc(n.name)}` : `pt:${esc(n.name)}@${count}`;
+    } else if (n.type === 'ClassDef') {
+      n.id = kept.classes.get(n.name) === n ? `c:${esc(n.name)}` : statement();
+    } else n.id = statement();
+  }
+}
+
+/**
+ * Give every node its id and build the model as v12's DB did: the last `quadrant-N`, `title`,
+ * `accTitle`, `accDescr` and `classDef` of a name win, an axis statement sets the labels it
+ * names, points keep source order and repeats.
+ */
+function buildModel(
+  nodes: readonly QuadrantStatementNode[],
+  st: ParseState,
+  frontMatterTitle: string | undefined
+): QuadrantModel {
+  assignIds(nodes, st);
+  let title: QuadrantTextStatementNode | undefined;
+  let accTitle = '';
+  let accDescr = '';
+  const quadrants: (QuadrantLabel | undefined)[] = [undefined, undefined, undefined, undefined];
+  const axes: Record<string, Mutable<QuadrantAxis>> = {};
+  const points: QuadrantPoint[] = [];
+  const classes = new Map<string, QuadrantClass>();
+  for (const n of nodes) {
+    if (n.type === 'Title') title = n;
+    else if (n.type === 'AccTitle') accTitle = n.text;
+    else if (n.type === 'AccDescr') accDescr = n.text.replace(/\n\s+/g, '\n');
+    else if (n.type === 'Quadrant') {
+      if (n.id.startsWith('q:')) quadrants[n.quadrant - 1] = { ast: n.id, ...label(n.label) };
+    } else if (n.type === 'Axis') {
+      const end = n.children?.[0];
+      const axis = (axes[n.axis] ??= { ast: `ax:${n.axis}` });
+      axis.start = label(n.label, n.arrow && !end ? ' ⟶ ' : '');
+      if (end) axis.end = label(end.label);
+    } else if (n.type === 'Point') points.push(pointOf(n));
+    else if (n.type === 'ClassDef') {
+      // Map order is the first definition's, as v12's `Map.set`.
+      classes.set(n.name, { ast: `c:${esc(n.name)}`, styles: stylesOf(n.styles) });
+    }
+  }
+  const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
+  const model: Mutable<QuadrantModel> = {
+    accTitle,
+    accDescr,
+    quadrants: quadrants as unknown as QuadrantLabels,
+    points,
+    classes,
+    warnings,
+  };
+  if (title) {
+    model.title = title.text;
+    model.titleAst = title.id;
+  } else if (frontMatterTitle !== undefined) model.title = frontMatterTitle;
+  if (axes.x) model.xAxis = axes.x;
+  if (axes.y) model.yAxis = axes.y;
+  return model;
+}
+
+function pointOf(n: QuadrantPointNode): QuadrantPoint {
+  const point: Mutable<QuadrantPoint> = {
+    ast: n.id,
+    label: label(n.label),
+    x: n.x,
+    y: n.y,
+    styles: stylesOf(n.styles),
+  };
+  if (n.className) point.className = n.className;
+  return point;
+}

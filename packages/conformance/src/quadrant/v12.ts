@@ -1,13 +1,14 @@
 /**
- * The v12 side of quadrant layout parity (spec #289 T3): mermaid\@12's quadrant DB, driven
- * through the oracle.
+ * The v12 side of quadrant parity (spec #289): mermaid\@12's quadrant DB, driven through the
+ * oracle.
  *
- * Until the v13 parser (#301) exists, `v12QuadrantModel` is the interim fixture source: it records
- * the calls v12's jison grammar makes on the DB (`yy`) during a parse and builds the
- * `QuadrantModel` they describe, the way #301's parser is specified to (texts trimmed, styles split
- * and checked as v12's `parseStyles`, points in source order, coordinates as lexed). Calls run
- * through to v12's own DB, so `getQuadrantData()` afterwards is v12's builder output for the same
- * parse. Text keeps v12's `encodeEntities` placeholders (the corpus has none).
+ * - Model parity (#301): v12's DB keeps its builder's data private, so the oracle records the
+ *   calls v12's jison grammar makes on the DB (`oracle-env.ts`), and {@link quadrantV12Snapshot}
+ *   builds from them what v12's DB stored: texts trimmed and with `encodeEntities` placeholders
+ *   decoded, styles as `parseStyles` kept them (the oracle accepted the source, so all are
+ *   valid), the last `quadrant-N`, `title`, `accTitle`, `accDescr` and `classDef` of a name,
+ *   axis labels merged as `setData` merges them, points in source order (`addPoints` prepends).
+ * - Builder parity (#332): {@link v12Quadrant} returns `getQuadrantData()` for a source.
  *
  * Config: `getQuadrantData()` reads v12's global config when called. `oracle.parse(text, config)`
  * resets that config before returning, and `getDiagramFromText` does not apply `%%{init}`
@@ -19,15 +20,16 @@
 import { preprocess } from '@mermaid-js/core/preprocess';
 import {
   quadrantChartConfigDefaults,
-  type QuadrantLabel,
-  type QuadrantLabels,
   type QuadrantLayoutConfig,
-  type QuadrantModel,
-  type QuadrantPoint,
   type QuadrantStyles,
   type QuadrantText,
 } from '@mermaid-js/diagram-quadrant';
+import { decodeEntities } from '../flowchart/v12.ts';
 import { loadOracle } from '../oracle.ts';
+import { quadrantCalls } from './oracle-env.ts';
+
+/** `diagram.type` values mermaid\@12 reports for quadrant sources. */
+export const QUADRANT_V12_TYPES = ['quadrantChart'];
 
 /** v12's `QuadrantTextType`. */
 export interface V12QuadrantText {
@@ -77,64 +79,16 @@ interface LexText {
   type: 'text' | 'markdown';
 }
 
-type Call = readonly [method: string, args: readonly unknown[]];
-
 interface QuadrantDb {
   getQuadrantData(): V12QuadrantData;
-  [method: string]: unknown;
 }
 
-/** The DB methods the grammar calls, which the recorder wraps. */
-const RECORDED = [
-  'setQuadrant1Text',
-  'setQuadrant2Text',
-  'setQuadrant3Text',
-  'setQuadrant4Text',
-  'setXAxisLeftText',
-  'setXAxisRightText',
-  'setYAxisBottomText',
-  'setYAxisTopText',
-  'addPoint',
-  'addClass',
-  'setDiagramTitle',
-  'setAccTitle',
-  'setAccDescription',
-] as const;
-
-let calls: Call[] = [];
-let recording: Promise<void> | undefined;
-
-/** Wrap v12's quadrant DB (a module singleton, the grammar's `yy`) once, to record its calls. */
-function record(): Promise<void> {
-  recording ??= (async () => {
-    const result = await (await loadOracle()).parse('quadrantChart\n');
-    if (!result.accepted) throw new Error(`v12 rejected an empty quadrant chart: ${result.error}`);
-    const db = result.db as QuadrantDb;
-    const clear = db.clear as () => void;
-    db.clear = () => {
-      calls = [];
-      clear();
-    };
-    for (const name of RECORDED) {
-      const original = db[name] as (...args: unknown[]) => unknown;
-      db[name] = (...args: unknown[]) => {
-        const out = original(...args);
-        // Recorded after the call: a call v12 rejects (a bad style) throws first.
-        calls.push([name, structuredClone(args)]);
-        return out;
-      };
-    }
-  })();
-  return recording;
-}
-
-/** v12 parses one source: the model its DB calls describe and its builder output. */
+/** v12 parses one source: its builder output. */
 export type V12QuadrantParse =
-  | { accepted: true; model: QuadrantModel; data: V12QuadrantData }
+  | { accepted: true; data: V12QuadrantData }
   | { accepted: false; error: string };
 
 export async function v12Quadrant(source: string): Promise<V12QuadrantParse> {
-  await record();
   const oracle = await loadOracle();
   // The oracle has loaded (and patched) this instance already.
   const mermaid = ((await import('mermaid-v12')) as unknown as { default: MermaidV12 }).default;
@@ -146,7 +100,7 @@ export async function v12Quadrant(source: string): Promise<V12QuadrantParse> {
       return { accepted: false, error: `not a quadrant chart: ${result.diagramType}` };
     // Read now: the builder is a singleton, and the config is v12's global one.
     const data = structuredClone((result.db as QuadrantDb).getQuadrantData());
-    return { accepted: true, model: modelOf(calls), data };
+    return { accepted: true, data };
   } finally {
     mermaid.initialize({});
   }
@@ -166,8 +120,27 @@ function directiveOptions(source: string): Record<string, unknown> {
   return section;
 }
 
+/** What v12's quadrant DB stored for a parse, in the shape of v13's `QuadrantModel`. */
+export interface QuadrantSnapshot {
+  /** The in-text title (the oracle skips front matter); `''` without one. */
+  title: string;
+  accTitle: string;
+  accDescr: string;
+  quadrants: (QuadrantText | null)[];
+  xAxis: { start: QuadrantText | null; end: QuadrantText | null } | null;
+  yAxis: { start: QuadrantText | null; end: QuadrantText | null } | null;
+  points: {
+    label: QuadrantText;
+    className: string;
+    x: string;
+    y: string;
+    styles: QuadrantStyles;
+  }[];
+  classes: [name: string, styles: QuadrantStyles][];
+}
+
 const text = (t: LexText): QuadrantText => ({
-  text: t.text.trim(),
+  text: decodeEntities(t.text.trim()),
   markdown: t.type === 'markdown',
 });
 
@@ -184,65 +157,50 @@ function styles(list: readonly string[]): QuadrantStyles {
   return out;
 }
 
-function modelOf(log: readonly Call[]): QuadrantModel {
-  const quadrants: (QuadrantLabel | undefined)[] = [undefined, undefined, undefined, undefined];
-  let xAxis: { ast: string; start?: QuadrantText; end?: QuadrantText } | undefined;
-  let yAxis: typeof xAxis;
-  let title: string | undefined;
-  let accTitle = '';
-  let accDescr = '';
-  const points: QuadrantPoint[] = [];
-  const seen = new Map<string, number>();
-  const classes = new Map<string, { ast: string; styles: QuadrantStyles }>();
-  for (const [name, args] of log) {
+/** The snapshot of v12's DB after the oracle's last parse (the parity normaliser). */
+export function quadrantV12Snapshot(_db: unknown): QuadrantSnapshot {
+  const out: QuadrantSnapshot = {
+    title: '',
+    accTitle: '',
+    accDescr: '',
+    quadrants: [null, null, null, null],
+    xAxis: null,
+    yAxis: null,
+    points: [],
+    classes: [],
+  };
+  const classes = new Map<string, QuadrantStyles>();
+  const axis = (which: 'xAxis' | 'yAxis', end: 'start' | 'end', t: LexText) => {
+    out[which] = { start: null, end: null, ...out[which], [end]: text(t) };
+  };
+  for (const [name, args] of quadrantCalls()) {
+    const a = args[0] as LexText;
     const quadrant = /^setQuadrant(\d)Text$/.exec(name);
-    if (quadrant) {
-      const n = Number(quadrant[1]);
-      quadrants[n - 1] = { ast: `q:${n}`, ...text(args[0] as LexText) };
-    } else if (name === 'setXAxisLeftText' || name === 'setXAxisRightText') {
-      xAxis = {
-        ast: 'ax:x',
-        ...xAxis,
-        [name === 'setXAxisLeftText' ? 'start' : 'end']: text(args[0] as LexText),
-      };
-    } else if (name === 'setYAxisBottomText' || name === 'setYAxisTopText') {
-      yAxis = {
-        ast: 'ax:y',
-        ...yAxis,
-        [name === 'setYAxisBottomText' ? 'start' : 'end']: text(args[0] as LexText),
-      };
-    } else if (name === 'setDiagramTitle') title = args[0] as string;
-    else if (name === 'setAccTitle') accTitle = args[0] as string;
-    else if (name === 'setAccDescription') accDescr = args[0] as string;
+    if (quadrant) out.quadrants[Number(quadrant[1]) - 1] = text(a);
+    else if (name === 'setXAxisLeftText') axis('xAxis', 'start', a);
+    else if (name === 'setXAxisRightText') axis('xAxis', 'end', a);
+    else if (name === 'setYAxisBottomText') axis('yAxis', 'start', a);
+    else if (name === 'setYAxisTopText') axis('yAxis', 'end', a);
+    else if (name === 'setDiagramTitle') out.title = decodeEntities(args[0] as string);
+    else if (name === 'setAccTitle') out.accTitle = decodeEntities(args[0] as string);
+    else if (name === 'setAccDescription')
+      out.accDescr = decodeEntities((args[0] as string).replace(/\n\s+/g, '\n'));
     else if (name === 'addPoint') {
       const [label, className, x, y, list] = args as [LexText, string, string, string, string[]];
-      const t = text(label);
-      const count = (seen.get(t.text) ?? 0) + 1;
-      seen.set(t.text, count);
-      points.push({
-        ast: count === 1 ? `pt:${t.text}` : `pt:${t.text}@${count}`,
-        label: t,
-        ...(className ? { className } : {}),
-        x: String(x),
-        y: String(y),
+      out.points.push({
+        label: text(label),
+        className,
+        x: decodeEntities(String(x)),
+        y: decodeEntities(String(y)),
         styles: styles(list),
       });
     } else if (name === 'addClass') {
       const [className, list] = args as [string, string[]];
-      classes.set(className, { ast: `c:${className}`, styles: styles(list) });
+      classes.set(decodeEntities(className), styles(list));
     }
   }
-  return {
-    ...(title === undefined ? {} : { title, titleAst: 'st:title' }),
-    accTitle,
-    accDescr,
-    quadrants: quadrants as unknown as QuadrantLabels,
-    ...(xAxis ? { xAxis } : {}),
-    ...(yAxis ? { yAxis } : {}),
-    points,
-    classes,
-    warnings: [],
-  };
+  out.classes = [...classes];
+  return out;
 }
 
 /** The resolved `quadrantChart` options of `source`: its `%%{init}` directives over the defaults. */
