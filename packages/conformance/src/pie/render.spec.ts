@@ -316,19 +316,19 @@ describe('pie render: what is drawn', () => {
     const tree = parseSvg((await api.render('x', 'pie title T\n"a": 1')).svg);
     const [s] = slices(tree);
     expect(tree.getAttr(s!, 'fill')).toBe('var(--_pi1)');
-    expect(tree.getAttr(s!, 'stroke')).toBe('var(--_pikc)');
+    expect(tree.getAttr(s!, 'stroke')).toBe('var(--_pkc)');
     expect(tree.getAttr(s!, 'stroke-width')).toBe('2');
     expect(tree.getAttr(s!, 'opacity')).toBe('0.7');
     const outer = tree.find({ tag: 'circle', class: 'pieOuterCircle' })[0]!;
     expect([tree.getAttr(outer, 'stroke'), tree.getAttr(outer, 'fill')]).toEqual([
-      'var(--_pioc)',
+      'var(--_poc)',
       'none',
     ]);
     const title = tree.find({ tag: 'text', class: 'pieTitleText' })[0]!;
-    expect(tree.getAttr(title, 'fill')).toBe('var(--_pitc)');
+    expect(tree.getAttr(title, 'fill')).toBe('var(--_ptc)');
     expect(tree.getAttr(title, 'font-size')).toBe('25');
     expect(tree.getAttr(tree.find({ tag: 'text', class: 'slice' })[0]!, 'fill')).toBe(
-      'var(--_pisc)'
+      'var(--_psc)'
     );
   });
 
