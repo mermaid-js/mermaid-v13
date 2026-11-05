@@ -1,3 +1,4 @@
+// cspell:words nums
 /**
  * The Compare tab (`dev-tab-compare`, #61; v12 `compare-panel.ts`): the current text, unsaved
  * edits included, rendered with the same settings by the v13 dev build (left) and a published
@@ -10,9 +11,12 @@
  * - URL state: `version` (left out for the default) and `diff=1`.
  * - A dev rebuild (`ctx.build`) gives the left side a fresh iframe; a different version, the
  *   right. The iframes exist only while the tab is showing.
+ * - Each pane's header shows its render time and, once both sides rendered the same text, how
+ *   many times faster (green) or slower (red) it was than the other side.
  * - Spec hooks: `.pane[data-side][data-status]` (`waiting | loading | rendering | rendered |
  *   error`) with `.title` and `.error`; `iframe[data-side]`; `sl-select[data-role="version"]`;
- *   `sl-button[data-action="diff"]`; `[data-testid="compare-diff-status"][data-changed-pixels]`.
+ *   `sl-button[data-action="diff"]`; `[data-testid="compare-diff-status"][data-changed-pixels]`;
+ *   `[data-testid="render-time"][data-ms]`; `[data-testid="render-speed"][data-speed]`.
  */
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/option/option.js';
@@ -24,6 +28,8 @@ import { diffRenders, type DiffResult, type RenderedSvg } from '../compare-diff.
 import {
   V12_LINE,
   cdnBundleUrl,
+  compareSpeed,
+  formatRenderMs,
   isPrerelease,
   parseCompareUrlState,
   npmRenderConfig,
@@ -48,6 +54,8 @@ interface Pane {
   readonly status: PaneStatus;
   readonly message: string;
   readonly result: RenderedSvg | undefined;
+  /** How long the pane's `render()` call took for `result`. */
+  readonly renderMs: number | undefined;
   /** The render key of `result`, and of the last render sent. */
   readonly resultKey: string;
   readonly sentKey: string;
@@ -61,10 +69,13 @@ const newPane = (key = '', bundle?: PaneBundle): Pane => ({
   status: key ? 'loading' : 'waiting',
   message: '',
   result: undefined,
+  renderMs: undefined,
   resultKey: '',
   sentKey: '',
   requestId: 0,
 });
+
+const other = (side: Side): Side => (side === 'left' ? 'right' : 'left');
 
 // Elements that own the D key (the shell's list for ←/→, plus inputs).
 const OWNS_KEYS = /^(input|textarea|select|sl-.*)$/;
@@ -138,6 +149,28 @@ export class CompareTab extends ViewerTabElement {
     }
     .title {
       font-weight: 600;
+    }
+    .chips {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+    .chip {
+      padding: 1px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      background: var(--sl-color-neutral-100);
+      color: var(--sl-color-neutral-700);
+    }
+    .chip.faster {
+      background: var(--sl-color-success-100);
+      color: var(--sl-color-success-700);
+    }
+    .chip.slower {
+      background: var(--sl-color-danger-100);
+      color: var(--sl-color-danger-700);
     }
     .error {
       padding: 6px 10px;
@@ -317,6 +350,7 @@ export class CompareTab extends ViewerTabElement {
         status: 'rendered',
         message: '',
         result: { svg: m.svg, width: m.width, height: m.height },
+        renderMs: m.ms,
         resultKey: pane.sentKey,
       });
     } else if (m.type === 'error') {
@@ -325,6 +359,7 @@ export class CompareTab extends ViewerTabElement {
         status: 'error',
         message: m.message,
         result: undefined,
+        renderMs: undefined,
         resultKey: '',
       });
     }
@@ -432,6 +467,39 @@ export class CompareTab extends ViewerTabElement {
     >`;
   }
 
+  /** The pane's render time for the current text, if it has one. */
+  #currentMs(side: Side): number | undefined {
+    const pane = this.panes[side];
+    return pane.status === 'rendered' && pane.resultKey === this.#renderKey
+      ? pane.renderMs
+      : undefined;
+  }
+
+  #renderChips(side: Side) {
+    const ms = this.#currentMs(side);
+    if (ms === undefined) return nothing;
+    const otherMs = this.#currentMs(other(side));
+    const speed = otherMs === undefined ? undefined : compareSpeed(ms, otherMs);
+    return html`<span class="chips">
+      <span
+        class="chip"
+        data-testid="render-time"
+        data-ms=${ms}
+        title="The render() call, after one warm-up render in this pane"
+        >${formatRenderMs(ms)}</span
+      >
+      ${speed
+        ? html`<span
+            class="chip ${speed.kind}"
+            data-testid="render-speed"
+            data-speed=${speed.kind}
+            title=${`Than the ${other(side)} pane (${formatRenderMs(otherMs!)})`}
+            >${speed.label}</span
+          >`
+        : nothing}
+    </span>`;
+  }
+
   #renderPane(side: Side) {
     const pane = this.panes[side];
     const title = side === 'left' ? 'v13 dev' : (pane.bundle?.label ?? '…');
@@ -444,6 +512,7 @@ export class CompareTab extends ViewerTabElement {
       <div class="header">
         <span class="title">${title}</span>
         <span class="subtle">${pane.status}${size}</span>
+        ${this.#renderChips(side)}
       </div>
       ${pane.status === 'error'
         ? html`<div class="error" role="alert">${pane.message}</div>`

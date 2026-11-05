@@ -4,6 +4,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  compareSpeed,
+  formatRenderMs,
   parseCompareUrlState,
   resolveVersion,
   serializeCompareUrlState,
@@ -49,5 +51,29 @@ describe('the URL state', () => {
       version: null,
       diff: null,
     });
+  });
+});
+
+describe('render time chips', () => {
+  it('formats a render time to a sensible precision', () => {
+    expect(formatRenderMs(0.456)).toBe('0.46 ms');
+    expect(formatRenderMs(37.57)).toBe('37.6 ms');
+    expect(formatRenderMs(777.95)).toBe('778 ms');
+    expect(formatRenderMs(3374.84)).toBe('3.37 s');
+  });
+
+  it('says how many times faster or slower a pane is than the other', () => {
+    expect(compareSpeed(10, 25)).toEqual({ kind: 'faster', ratio: 2.5, label: '2.5× faster' });
+    expect(compareSpeed(25, 10)).toEqual({ kind: 'slower', ratio: 2.5, label: '2.5× slower' });
+    expect(compareSpeed(37.57, 777.95)?.label).toBe('21× faster');
+  });
+
+  it('calls times within 5% of each other the same speed', () => {
+    expect(compareSpeed(10, 10.4)).toMatchObject({ kind: 'same', label: 'same speed' });
+  });
+
+  it('compares nothing without two positive times', () => {
+    expect(compareSpeed(0, 10)).toBeUndefined();
+    expect(compareSpeed(10, Number.NaN)).toBeUndefined();
   });
 });
