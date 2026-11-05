@@ -35,7 +35,7 @@ import { checkSource } from '@mermaid-js/core/limits';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { resolveSecurityLevel } from '@mermaid-js/core/svg';
-import type { Measurer } from '@mermaid-js/core/text';
+import { inlineSpans, type Measurer } from '@mermaid-js/core/text';
 import {
   createTheme,
   DEFAULT_THEME,
@@ -562,6 +562,8 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
             : graph
         );
       },
+      // Inline boxes (D177) are SVG only: text output shows every span as written.
+      ...(textOutput ? {} : { inline: inlineSpans(hooks.inline(), warn) }),
       warn,
       // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
       ...textOnly,
