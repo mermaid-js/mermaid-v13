@@ -17,7 +17,12 @@ import { flowSourceView } from '../../../packages/diagram-flowchart/src/parser/l
 import { categoryTable, kindKeys } from './categories.ts';
 import { parseGrammar } from './ebnf.ts';
 import { generate, generatedDir } from './generate.ts';
-import { lezerCategorise, monarchCategorise, textMateCategorise } from './highlight-testing.ts';
+import {
+  hidingFrontMatter,
+  lezerCategorise,
+  monarchCategorise,
+  textMateCategorise,
+} from './highlight-testing.ts';
 import type { Categorise } from './highlight-testing.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -124,23 +129,20 @@ const FIXTURES: [string, string][] = [
 /** Kinds whose tokens are blanks or empty, so no highlighter colours them. */
 const BLANK_KINDS = new Set<number>([T.Space, T.NoDir, T.Eof]);
 
-/**
- * Documented exceptions, where the highlighters see text differently from the lexer:
+/*
+ * The highlighters read the source as written, front matter included: TextMate and Monarch
+ * model it (front-matter.spec.ts), Lezer runs as the CodeMirror adapter runs it, with the
+ * front matter hidden. The lexer gives front matter no tokens, so only the diagram after it is
+ * compared. Documented exceptions, where the highlighters see text differently from the lexer:
  *
- * 1. Front matter: the lexer gives it no tokens, so it is blanked before highlighting. Monarch
- *    models it (monarch-front-matter.spec.ts); TextMate and Lezer do not yet (GAPS.md).
- * 2. `ShapeData`: one kind for all of `@{ … }`; the highlighters show its quoted values as
+ * 1. `ShapeData`: one kind for all of `@{ … }`; the highlighters show its quoted values as
  *    String, the table (one category per kind) says Meta.
  *    Input: `A@{ label: "hi" }`.
- * 3. The `;` v12 dropped from the end of a `style` / `classDef` line (a `drop` hole of the
+ * 2. The `;` v12 dropped from the end of a `style` / `classDef` line (a `drop` hole of the
  *    lexer's source view) is part of the previous token's range but never read.
  *    Input: `style A fill:white;`.
  * Comment and directive holes are checked as the shared kinds `Comment` and `Directive`.
  */
-const blankFrontMatter = (src: string) => {
-  const end = preprocess(src).bodyStart;
-  return src.slice(0, end).replace(/[^\n]/g, ' ') + src.slice(end);
-};
 
 /**
  * The kind of each character of `src` as the lexer sees it: its tokens, and the comments and
@@ -182,12 +184,15 @@ describe('four-way highlighting agreement', () => {
       ],
       ['Monarch', monarchCategorise(out('flowchart.monarch.json'))],
       [
+        // As the CodeMirror adapter runs it: front matter hidden.
         'Lezer',
-        await lezerCategorise(
-          out('flowchart.grammar'),
-          out('flowchart.tokens.js'),
-          'flowchart',
-          join(root, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
+        hidingFrontMatter(
+          await lezerCategorise(
+            out('flowchart.grammar'),
+            out('flowchart.tokens.js'),
+            'flowchart',
+            join(root, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
+          )
         ),
       ],
     ];
@@ -199,8 +204,7 @@ describe('four-way highlighting agreement', () => {
     const disagreements = new Map<string, string>();
     const covered = new Set<number>();
     for (const [file, src] of [...FIXTURES, ...corpus]) {
-      const text = blankFrontMatter(src);
-      const seen = highlighters.map(([name, h]) => [name, h(text)] as const);
+      const seen = highlighters.map(([name, h]) => [name, h(src)] as const);
       for (const [i, kind] of lexerKinds(src)) {
         if (/\s/.test(src[i] ?? '')) continue;
         covered.add(kind);

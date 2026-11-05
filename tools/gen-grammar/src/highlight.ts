@@ -177,13 +177,56 @@ export function textMate(g: Grammar, names: HighlightNames): object {
     }
     repository[`mode-${mode}`] = { patterns };
   }
+  Object.assign(repository, textMateFrontMatter(suffix));
   return {
     $schema: 'https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json',
     name: names.id,
     scopeName: `source${suffix}`,
     fileTypes: names.extensions,
-    patterns: [{ include: '#mode-INITIAL' }],
+    patterns: [{ include: '#front-matter-start' }, { include: '#mode-INITIAL' }],
     repository,
+  };
+}
+
+/**
+ * Front matter as Monarch reads it (`MONARCH_FRONT_MATTER`): a `---` fence on the first
+ * non-blank line, at any indent, up to the next `---` line. `front-matter-start` opens at the
+ * start of the text when the first line is blank or a fence, passes blank lines and ends before
+ * any other text. An opening fence inside it starts `front-matter` (fences meta, YAML keys
+ * variables, `#` comments comments); the closing fence starts `front-matter-body`, which holds
+ * the diagram to the end of the text, so a later `---` line opens nothing. Neither ends (`(?!)`
+ * never matches): an unclosed block runs to the end of the text, as in Monarch.
+ */
+function textMateFrontMatter(suffix: string): Record<string, object> {
+  const fence = '^[^\\S\\n]*---[^\\S\\n]*$';
+  const meta = { '0': { name: `${TEXTMATE_SCOPES.meta}${suffix}` } };
+  return {
+    'front-matter-start': {
+      begin: '\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)',
+      end: '(?=\\S)',
+      // The opening fence wins over the end at the same position.
+      applyEndPatternLast: 1,
+      patterns: [{ include: '#front-matter' }],
+    },
+    'front-matter': {
+      begin: fence,
+      beginCaptures: meta,
+      end: '(?!)',
+      patterns: [
+        { include: '#front-matter-body' },
+        { match: '#.*', name: `${TEXTMATE_SCOPES.comment}${suffix}` },
+        {
+          match: '^[^\\S\\n]*(?:- )?[^\\s#:\'"-][^:#]*(?=:(?:\\s|$))',
+          name: `${TEXTMATE_SCOPES.variable}${suffix}`,
+        },
+      ],
+    },
+    'front-matter-body': {
+      begin: fence,
+      beginCaptures: meta,
+      end: '(?!)',
+      patterns: [{ include: '#mode-INITIAL' }],
+    },
   };
 }
 
@@ -340,20 +383,89 @@ class Modes {
 }
 const START = new Modes(['INITIAL']);
 
+/** How far a token may look ahead. Each token depends on this much text (incremental reuse). */
+const LOOKAHEAD = 4096;
+
+/** The first trivia match at or after \`from\` in \`s\`, at most \`limit\` ends; -1 if none. */
+function triviaCut(s, from, limit) {
+  let cut = -1;
+  for (const re of TRIVIA) {
+    re.lastIndex = from;
+    const m = re.exec(s);
+    if (m && m.index + m[0].length <= limit && (cut < 0 || m.index < cut)) cut = m.index;
+  }
+  return cut;
+}
+
+/**
+ * Per Lezer input (immutable while it is parsed): its text and, per trivia rule, the last
+ * match found, so a token's trivia search reuses the one before. Matches do not depend on
+ * where the search starts, so a match found from \`a\` is the first one from any \`b\` in
+ * [a, match]. Single-range inputs only; others read char by char (\`aheadSlow\`).
+ */
+const texts = new WeakMap();
+function textOf(input) {
+  const inner = input.input;
+  const range = input.ranges[0];
+  let entry = texts.get(inner);
+  if (!entry || entry.from !== range.from || entry.to !== range.to) {
+    entry = {
+      from: range.from,
+      to: range.to,
+      text: inner.read(range.from, range.to),
+      found: TRIVIA.map(() => ({ from: Infinity, at: -1, end: -1 })),
+    };
+    texts.set(inner, entry);
+  }
+  return entry;
+}
+
+/** The first trivia start in (from, end) whose match ends by \`end\`; \`end\` if none. */
+function nextTrivia(entry, from, end) {
+  let cut = end;
+  let exact = true;
+  for (let i = 0; i < TRIVIA.length; i++) {
+    const f = entry.found[i];
+    if (!(f.from <= from && (f.at < 0 || from <= f.at))) {
+      const re = TRIVIA[i];
+      re.lastIndex = from;
+      const m = re.exec(entry.text);
+      f.from = from;
+      f.at = m ? m.index : -1;
+      f.end = m ? m.index + m[0].length : -1;
+    }
+    if (f.at >= 0 && f.at < cut) {
+      if (f.end <= end) cut = f.at;
+      else exact = false; // runs past the lookahead: the window may hold another match
+    }
+  }
+  return exact ? cut : -1;
+}
+
+/** The text a token is matched against: the lookahead, cut at the next trivia. */
 function ahead(input) {
+  if (!input.input || !input.ranges || input.ranges.length !== 1) return aheadSlow(input);
+  const entry = textOf(input);
+  const at = input.pos - entry.from;
+  const end = Math.min(at + LOOKAHEAD, entry.text.length);
+  if (end <= at) return '';
+  input.peek(end - at - 1); // record the lookahead, as reading each character would
+  const cut = nextTrivia(entry, at + 1, end);
+  if (cut >= 0) return entry.text.slice(at, cut);
+  const s = entry.text.slice(at, end);
+  const c = triviaCut(s, 1, s.length);
+  return c < 0 ? s : s.slice(0, c);
+}
+
+function aheadSlow(input) {
   let s = '';
-  for (let i = 0; i < 4096; i++) {
+  for (let i = 0; i < LOOKAHEAD; i++) {
     const c = input.peek(i);
     if (c < 0) break;
     s += String.fromCharCode(c);
   }
-  let cut = s.length;
-  for (const re of TRIVIA) {
-    re.lastIndex = 1;
-    const m = re.exec(s);
-    if (m && m.index < cut) cut = m.index;
-  }
-  return s.slice(0, cut);
+  const cut = triviaCut(s, 1, s.length);
+  return cut < 0 ? s : s.slice(0, cut);
 }
 
 /** Whether only blanks stand between the line start and the input position. */
@@ -368,6 +480,23 @@ function atLineStart(input) {
 function next(modes, input) {
   const text = ahead(input);
   if (text.length === 0) return undefined;
+  // The tokenizer and then the context tracker's shift ask for the same token.
+  // The key is the (immutable) Lezer input when there is one, else the text.
+  const key = input.input && input.ranges ? input.input : text;
+  if (
+    last.modes === modes &&
+    last.pos === input.pos &&
+    last.key === key &&
+    last.ranges === input.ranges
+  )
+    return last.result;
+  const result = match(modes, input, text);
+  last = { modes, pos: input.pos, key, ranges: input.ranges, result };
+  return result;
+}
+let last = { modes: undefined, pos: -1, key: undefined, ranges: undefined, result: undefined };
+
+function match(modes, input, text) {
   // A \`^\` rule matches only at a line start (the regex sees the text from here on).
   const bol = atLineStart(input);
   for (let guard = 0; guard < 8; guard++) {
