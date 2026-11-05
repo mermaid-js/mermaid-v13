@@ -326,6 +326,8 @@ export interface AddOptions {
   readonly timeLimitMs?: number;
 }
 
+const why = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
 /** Whether `p` settles before `deadline` (a time from `Date.now()`). */
 function settlesBy(p: Promise<unknown>, deadline: number): Promise<boolean> {
   const left = deadline - Date.now();
@@ -366,34 +368,26 @@ export function createMermaid(
   // Additions still registering (the CDN queue's pushes, T6), with the time each one's wait
   // ends: a draw waits for each until then, and renders without it after (one warning).
   const adding = new Map<Promise<unknown>, { deadline: number; limit: number }>();
+  const failed = (message: string): Warning => ({ code: 'PLUGIN_DISCOVERY_FAILED', message });
+  const late = (limit: number) => `did not finish within ${limit} ms; rendering without it.`;
   const discovered = async (): Promise<void> => {
-    if (firstUse) {
-      // One limit for the whole first use: the source, then its registration (which joins
-      // `adding` with what is left of the limit). Past it the draw goes on; what the source
-      // finds still registers when it ends (as a late CDN queue entry does).
+    const start = firstUse;
+    if (start) {
+      // One limit for the source and its registration; past it the draw goes on (see onFirstUse).
       ready ??= (async () => {
         const deadline = Date.now() + firstUseLimit;
-        const run = firstUse!(deadline).catch((e: unknown) => {
-          skipped.push({
-            code: 'PLUGIN_DISCOVERY_FAILED',
-            message: `Plugin discovery failed: ${e instanceof Error ? e.message : String(e)}`,
-          });
-        });
+        const run = start(deadline).catch(
+          (e: unknown) => void skipped.push(failed(`Plugin discovery failed: ${why(e)}`))
+        );
         if (!(await settlesBy(run, deadline)))
-          skipped.push({
-            code: 'PLUGIN_DISCOVERY_FAILED',
-            message: `Plugin discovery did not finish within ${firstUseLimit} ms; rendering without it.`,
-          });
+          skipped.push(failed(`Plugin discovery ${late(firstUseLimit)}`));
       })();
       await ready;
     }
     while (adding.size > 0) {
       const [pending, { deadline, limit }] = adding.entries().next().value!;
       if (!(await settlesBy(pending, deadline)) && adding.delete(pending))
-        skipped.push({
-          code: 'PLUGIN_DISCOVERY_FAILED',
-          message: `A plugin registration did not finish within ${limit} ms; rendering without it.`,
-        });
+        skipped.push(failed(`A plugin registration ${late(limit)}`));
     }
   };
   let site: Snapshot = snapshot();
@@ -904,8 +898,7 @@ export function createMermaid(
   ): Promise<readonly Warning[]> {
     return register(list, Date.now() + timeLimitMs, timeLimitMs);
   }
-
-  /** `addDiscovered`, waited for by draws until `deadline`; `undefined`: not waited for. */
+  /** `addDiscovered`, waited for by draws until `deadline` (`undefined`: not waited for). */
   function register(
     list: readonly DiscoveredPlugin[],
     deadline: number | undefined,
@@ -923,10 +916,7 @@ export function createMermaid(
           return warnings;
         },
         (e: unknown): readonly Warning[] => {
-          const w: Warning = {
-            code: 'PLUGIN_DISCOVERY_FAILED',
-            message: `Plugin registration failed: ${e instanceof Error ? e.message : String(e)}`,
-          };
+          const w = failed(`Plugin registration failed: ${why(e)}`);
           skipped.push(w);
           return [w];
         }
@@ -986,7 +976,6 @@ export function createMermaid(
       firstUseLimit = timeLimitMs;
       firstUse = async (deadline) => {
         const list = await source(site.config, (w) => void skipped.push(w));
-        // Past the deadline (the draw already went on with a warning) it registers unwaited.
         void register(list, Date.now() < deadline ? deadline : undefined, timeLimitMs);
       };
     },

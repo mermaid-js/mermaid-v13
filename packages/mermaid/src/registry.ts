@@ -553,7 +553,7 @@ export class Registry {
     const resolved = sorted.map((item) => {
       const { package: name, kind } = item as { package?: unknown; kind?: unknown };
       if (kind !== 'plugin' || typeof name !== 'string' || name === '') return undefined;
-      const p = this.resolveDiscovered(item.plugin);
+      const p = this.resolveDiscovered((item as { plugin: ExternalDiagram }).plugin);
       p.catch(() => undefined);
       return p;
     });

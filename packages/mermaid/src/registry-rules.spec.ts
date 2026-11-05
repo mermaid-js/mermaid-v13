@@ -401,9 +401,18 @@ describe('integration review fixes (#218)', () => {
     const m = createMermaid();
     let settle!: (module: unknown) => void;
     const entry = new Promise((r) => (settle = r));
-    discoverOnFirstUse(m, () => [found('pkg-stall', extensionByManifest('stall', () => entry))], {
-      timeLimitMs: 30,
-    });
+    discoverOnFirstUse(
+      m,
+      () => [
+        found(
+          'pkg-stall',
+          extensionByManifest('stall', () => entry)
+        ),
+      ],
+      {
+        timeLimitMs: 30,
+      }
+    );
     const first = await m.render('f', FLOW);
     expect(first.warnings.map((w) => w.code)).toEqual(['PLUGIN_DISCOVERY_FAILED']);
     expect(first.warnings[0]!.message).toMatch(/within 30 ms/);

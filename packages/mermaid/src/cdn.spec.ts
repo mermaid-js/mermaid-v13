@@ -140,13 +140,13 @@ describe('globalThis.mermaidPlugins (D167)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     try {
       const queue: unknown[] = [];
-      Object.defineProperty(queue, Symbol.for('mermaid.pluginQueue'), { value: {} });
+      Object.defineProperty(queue, 'mermaid:pluginQueueOwner', { value: {} });
       const push = queue.push;
       const scope = { mermaidPlugins: queue };
       expect(connectPluginQueue(createMermaid(), scope)).toBe(false);
       expect(connectPluginQueue(createMermaid(), scope)).toBe(false);
       expect(queue.push).toBe(push);
-      expect(warn.mock.calls.filter(([m]) => /two copies/.test(String(m)))).toHaveLength(1);
+      expect(warn.mock.calls.filter(([m]) => String(m).includes('two copies'))).toHaveLength(1);
     } finally {
       warn.mockRestore();
     }
@@ -302,7 +302,7 @@ describe('the CDN entry (D163, D167)', () => {
     expect((await api.render('l', 'cdnlate y')).svg).toContain('cdnlate: y');
     try {
       api.initialize({ cdnBase: 'https://cdn.example/m/' });
-      expect(await (await import('./cdn-base.ts')).cdnUrl('chunks/x.mjs')).toBe(
+      expect((await import('./cdn-base.ts')).cdnUrl('chunks/x.mjs')).toBe(
         'https://cdn.example/m/chunks/x.mjs'
       );
     } finally {

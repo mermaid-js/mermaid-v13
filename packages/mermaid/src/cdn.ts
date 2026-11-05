@@ -22,7 +22,7 @@ const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Marks the default API object of a CDN build copy, as `globalThis.mermaid`. */
-const CDN_COPY = Symbol.for('mermaid.cdnCopy');
+const CDN_COPY = 'mermaid:cdnCopy';
 
 /**
  * `init`, also taking `cdnBase` (D163). Unlike the other keys, the base changes only when
@@ -31,7 +31,7 @@ const CDN_COPY = Symbol.for('mermaid.cdnCopy');
  * initializes with the defaults, as v12 did. The base is one per build copy (chunks are
  * module singletons), so every API object of the copy sets the same one.
  */
-function withCdnBase(init: (config?: InitializeConfig) => void) {
+function withCdnBase(init: (config: InitializeConfig) => void) {
   return (config?: InitializeConfig): void => {
     const given = isObject(config) ? config : {};
     if ('cdnBase' in given) {

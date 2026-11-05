@@ -17,8 +17,12 @@ export interface PluginQueueScope {
   mermaidPlugins?: unknown;
 }
 
-/** Marks a connected queue; the value is the build copy that owns it. */
-const OWNER = Symbol.for('mermaid.pluginQueue');
+/**
+ * Marks a connected queue (a non-enumerable property); the value is the build copy that owns
+ * it. A string key, shared by every copy on the page (no `Symbol.for`: nothing of the build's
+ * state is registered page-wide).
+ */
+const OWNER = 'mermaid:pluginQueueOwner';
 /** This build copy. */
 const COPY = {};
 
