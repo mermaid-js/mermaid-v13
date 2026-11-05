@@ -4,7 +4,13 @@
  * `util/chars.ts`, the Unicode table approach from Pele's `util/unicode.ts`
  * (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
  */
-import { ASCII_MAX } from './char-codes.ts';
+import {
+  ASCII_MAX,
+  HIGH_SURROGATE_FIRST,
+  HIGH_SURROGATE_LAST,
+  LOW_SURROGATE_FIRST,
+  LOW_SURROGATE_LAST,
+} from './char-codes.ts';
 import { UNICODE_LETTERS } from './unicode-table.ts';
 
 /**
@@ -108,4 +114,16 @@ export function isUnicodeLetter(c: number): boolean {
     else return true;
   }
   return false;
+}
+
+/**
+ * The end of the code point at `text[i]`: `i + 2` on a surrogate pair, else `i + 1`. A lexer
+ * that skips one bad character ends its error token here, so the token, and the diagnostic
+ * on it, never splits an astral character (an emoji) in half.
+ */
+export function codePointEnd(text: string, i: number): number {
+  const hi = text.charCodeAt(i);
+  if (hi < HIGH_SURROGATE_FIRST || hi > HIGH_SURROGATE_LAST) return i + 1;
+  const lo = text.charCodeAt(i + 1);
+  return lo >= LOW_SURROGATE_FIRST && lo <= LOW_SURROGATE_LAST ? i + 2 : i + 1;
 }
