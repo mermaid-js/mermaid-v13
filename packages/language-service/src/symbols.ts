@@ -11,6 +11,36 @@ import { deepFreeze } from './freeze.ts';
 export interface Occurrence extends SymbolOccurrence {
   /** Namespace key: the index of the facet group holding `kind`, else the kind itself. */
   readonly space: string;
+  /** The opening quote the name is written in (`"Customer Account"`), when it is (#199). */
+  readonly quote?: string;
+}
+
+/**
+ * Opening quotes a name may be written in, its range then covering the quotes (#199): a
+ * flowchart markdown string (a backtick pair inside a double-quote pair) is a quote inside a
+ * quote.
+ */
+const QUOTES = ['"`', '"', '`'];
+/** The closing quote of an opening one. */
+const closing = (quote: string) => [...quote].reverse().join('');
+/** Each of {@link QUOTES} with its closing quote. */
+const QUOTE_PAIRS = QUOTES.map((q) => [q, closing(q)] as const);
+
+/**
+ * The opening quote `name` is written in at `[start, end)` of `text`, if it is. Compares in
+ * place: this runs for every symbol of every parse (semantic tokens read it first).
+ */
+function quoteAround(text: string, start: number, end: number, name: string): string | undefined {
+  for (const [open, close] of QUOTE_PAIRS) {
+    if (end - start !== name.length + open.length + close.length) continue;
+    if (
+      text.startsWith(open, start) &&
+      text.startsWith(name, start + open.length) &&
+      text.startsWith(close, end - close.length)
+    )
+      return open;
+  }
+  return undefined;
 }
 
 export interface TextEdit {
@@ -33,6 +63,9 @@ function spaces(facet: LanguageFacet): (kind: string) => string {
 /**
  * Occurrences in source order, frozen. A symbol whose range does not hold exactly its name is
  * left out, so a rename never edits text that is not the name (the rename check then refuses).
+ * A name written in quotes (`subgraph "One"`, ER `"Customer Account"`, a class name in
+ * backticks) is recorded with the quotes' range: its occurrence is the text between
+ * them, so it is the same symbol as the name written bare, and a rename keeps the quotes (#199).
  */
 export function occurrences(ctx: DocumentContext): readonly Occurrence[] {
   const { result, facet, text } = ctx;
@@ -40,23 +73,37 @@ export function occurrences(ctx: DocumentContext): readonly Occurrence[] {
   const spaceOf = spaces(facet);
   const out: Occurrence[] = [];
   for (const s of result.symbols) {
-    const { start, end } = s.range;
-    if (s.name === '' || text.slice(start, end) !== s.name) continue;
+    let { start, end } = s.range;
+    if (s.name === '') continue;
+    const bare = end - start === s.name.length && text.startsWith(s.name, start);
+    const quote = bare ? undefined : quoteAround(text, start, end, s.name);
+    if (quote) {
+      start += quote.length;
+      end -= quote.length;
+    } else if (!bare) continue;
     const space = spaceOf(s.kind);
-    out.push({ name: s.name, kind: s.kind, role: s.role, range: { start, end }, space });
+    const o = { name: s.name, kind: s.kind, role: s.role, range: { start, end }, space };
+    out.push(quote ? { ...o, quote } : o);
   }
   return deepFreeze(out.sort((a, b) => a.range.start - b.range.start));
 }
 
-/** The occurrence under `offset`: one containing it, else one ending at it. */
+/**
+ * The occurrence under `offset`: the innermost one containing it, else one ending at it.
+ * Occurrences nest only where a name is made of others (the node names inside a generated
+ * flowchart edge id, `L_B_D_0`).
+ */
 export function occurrenceAt(list: readonly Occurrence[], offset: number): Occurrence | undefined {
   let touching: Occurrence | undefined;
+  let inner: Occurrence | undefined;
+  const size = (o: Occurrence) => o.range.end - o.range.start;
   for (const o of list) {
     if (o.range.start > offset) break;
-    if (offset < o.range.end) return o;
-    if (offset === o.range.end) touching = o;
+    if (offset < o.range.end) {
+      if (!inner || size(o) < size(inner)) inner = o;
+    } else if (offset === o.range.end) touching = o;
   }
-  return touching;
+  return inner ?? touching;
 }
 
 /** Every occurrence of `o`'s name in its namespace, one per range, in source order. */
@@ -174,6 +221,30 @@ function readsBack(
   return got.length === want.length && got.every((g, i) => g === want[i]);
 }
 
+/** Why `newName` cannot go between the quotes of a quoted occurrence in `all` (#199). */
+function quotedReason(all: readonly Occurrence[], newName: string): string | undefined {
+  for (const { quote } of all) {
+    if (quote === undefined) continue;
+    if ([...quote].some((q) => newName.includes(q)) || /[\r\n]/.test(newName))
+      return `'${newName}' cannot be written inside ${quote}…${closing(quote)}.`;
+    if (newName.trim() === '') return 'A quoted name cannot be empty.';
+  }
+  return undefined;
+}
+
+/**
+ * The facet's reason against `newName`, when any occurrence is written bare. Between quotes a
+ * name takes more (`Client Account`); the read-back check still has the last word.
+ */
+function bareReason(
+  facet: LanguageFacet,
+  all: readonly Occurrence[],
+  newName: string,
+  kind: string
+): string | undefined {
+  return all.some((x) => x.quote === undefined) ? facet.isValidId(newName, kind) : undefined;
+}
+
 export function rename(
   ctx: DocumentContext,
   list: readonly Occurrence[],
@@ -185,9 +256,10 @@ export function rename(
   const o = occurrenceAt(list, offset)!;
   const facet = ctx.facet!;
   const refuse = (refused: string): RenameResult => deepFreeze({ refused });
-  const invalid = facet.isValidId(newName, o.kind);
+  const all = sameSymbol(list, o);
+  const invalid = quotedReason(all, newName) ?? bareReason(facet, all, newName, o.kind);
   if (invalid !== undefined) return refuse(invalid);
-  const edits = sameSymbol(list, o).map((x) => ({ range: x.range, newText: newName }));
+  const edits = all.map((x) => ({ range: x.range, newText: newName }));
   if (newName === o.name) return deepFreeze({ edits });
   const clash = list.find((x) => x.space === o.space && x.name === newName);
   if (clash) return refuse(`'${newName}' is already ${aNoun(clash.kind)} in this diagram.`);

@@ -194,6 +194,54 @@ describe('definition, references and rename (D92)', () => {
     expect(doc.rename(onA, 'hot')).toHaveProperty('edits');
   });
 
+  /** `text` with the edits of a successful rename at `offset` to `name` applied. */
+  const renamed = async (text: string, offset: number, name: string): Promise<string> => {
+    const result = (await open(text)).rename(offset, name);
+    if (!('edits' in result)) throw new Error(result.refused);
+    let out = text;
+    for (const e of [...result.edits].sort((a, b) => b.range.start - a.range.start))
+      out = out.slice(0, e.range.start) + e.newText + out.slice(e.range.end);
+    return out;
+  };
+
+  it('renames a written generated edge id with the nodes it is made of (#170)', async () => {
+    const edge = 'flowchart TD\n  B --> D\n  L_B_D_0@{ animation: fast }\n';
+    expect(await renamed(edge, at(edge, '> D', 1, 2), 'Done')).toBe(
+      'flowchart TD\n  B --> Done\n  L_B_Done_0@{ animation: fast }\n'
+    );
+    expect(await renamed(edge, at(edge, 'B'), 'Begin')).toBe(
+      'flowchart TD\n  Begin --> D\n  L_Begin_D_0@{ animation: fast }\n'
+    );
+    // Ids holding `_` are cut where the edge's ends are, not at every `_`.
+    const under = 'flowchart TD\n  A_1 --> B_2\n  A_1 --> B_2\n  L_A_1_B_2_2@{ animation: slow }\n';
+    expect(await renamed(under, at(under, 'B_2'), 'X')).toBe(
+      'flowchart TD\n  A_1 --> X\n  A_1 --> X\n  L_A_1_X_2@{ animation: slow }\n'
+    );
+    // The node's name inside the id goes to the node; the rest of the id is the edge.
+    const doc = await open(edge);
+    const node = at(edge, '> D', 1, 2);
+    expect(doc.definition(at(edge, 'B_D', 1, 2))).toEqual({ start: node, end: node + 1 });
+    expect(texts(doc, doc.references(at(edge, 'L_')))).toEqual(['L_B_D_0']);
+  });
+
+  it('keeps a user edge id that only looks generated as an edge id', async () => {
+    const own = 'flowchart TD\n  B L_B_D_0@--> D\n  L_B_D_0@{ animation: fast }\n';
+    expect(await renamed(own, at(own, '> D', 1, 2), 'Done')).toBe(
+      'flowchart TD\n  B L_B_D_0@--> Done\n  L_B_D_0@{ animation: fast }\n'
+    );
+  });
+
+  it('records `class` on an edge id as the edge, not a node (#170)', async () => {
+    const cls = 'flowchart LR\n  a link@--> b\n  class link,b hot\n  classDef hot fill:#f96\n';
+    const doc = await open(cls);
+    expect(doc.references(at(cls, 'link', 2)).map((r) => r.start)).toEqual([
+      at(cls, 'link'),
+      at(cls, 'link', 2),
+    ]);
+    expect(await renamed(cls, at(cls, 'link'), 'e1')).toBe(cls.replace(/link/g, 'e1'));
+    expect(await renamed(cls, at(cls, 'b'), 'c')).toBe(cls.replace(/\bb\b/g, 'c'));
+  });
+
   it('refuses everything on a type with no facet', async () => {
     const doc = await open('journey\n  title T\n');
     expect(doc.definition(11)).toBeUndefined();

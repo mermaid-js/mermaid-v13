@@ -67,6 +67,10 @@ describe('the R-LANG-4 budget for sequence, as ratios', () => {
     expect(full! / parse!).toBeLessThanOrEqual(4.5);
   }, 60_000);
 
+  /**
+   * 6.2, not 6: local best-of-15 runs sit at 4.7–5.1, but a hosted CI run reached 6.06 (#254)
+   * with no change to sequence. Quadratic growth would give 16, so 6.2 still catches it.
+   */
   it('four times the text at most four times the cycle (plus noise; quadratic gives 16)', () => {
     const body = SEQUENCE_FIXTURE.slice(SEQUENCE_FIXTURE.indexOf('  %% block 0'));
     const one = typing(SEQUENCE_FIXTURE);
@@ -76,6 +80,6 @@ describe('the R-LANG-4 budget for sequence, as ratios', () => {
       (i) => sequenceCycle(service, one(i)),
       (i) => sequenceCycle(service, four(i))
     );
-    expect(b! / a!).toBeLessThanOrEqual(6);
+    expect(b! / a!).toBeLessThanOrEqual(6.2);
   }, 60_000);
 });

@@ -45,6 +45,7 @@
 12:9-12:10 "B" node
 12:11-12:15 "fill" variable
 12:17-12:20 "bbf" variable
+13:3-13:8 "click" keyword
 13:9-13:10 "A" node
 13:12-13:31 "https://example.com" string
 13:34-13:37 "tip" string

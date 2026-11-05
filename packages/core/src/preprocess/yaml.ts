@@ -12,7 +12,9 @@
  * - nesting is capped at {@link MAX_YAML_DEPTH} levels across block and flow collections.
  *
  * Editors opt in to a tree mode (`{ tree: true }`, R-LANG-5): it also returns a {@link YamlNode}
- * tree with a range for every key and value, and keeps reading after an error.
+ * tree with a range for every key and value, and keeps reading after an error: per entry in
+ * block collections and in a root flow document (#169); a flow collection inside a block value
+ * still fails as a whole, as the block entry's error, so the read stays linear.
  *
  * Every step is linear in the text it reads (R-PARSE-7).
  */
@@ -20,35 +22,36 @@
 import { CR, LF, NUL, SPACE, TAB } from '../parser-kit/char-codes.ts';
 import { Diagnostics } from '../parser-kit/diagnostics.ts';
 import type { Diagnostic } from '../parser-kit/diagnostics.ts';
+import { flowCollection } from './yaml-nodes.ts';
+import { plainNumber, unescapeDouble } from './yaml-scalar.ts';
 import type {
+  FlowCollection,
+  YamlMap,
   YamlMapNode,
   YamlNode,
   YamlPair,
   YamlScalarNode,
   YamlScalarStyle,
+  YamlValue,
 } from './yaml-nodes.ts';
 import { lineEnd, newlineAt } from '../parser-kit/scanner.ts';
 import {
   isSpaceOrBreak,
   isSeqItem,
-  lf,
   splitKey,
-  HEX_ESCAPE_LENGTH,
-  ESCAPES,
   fold,
   stripComment,
   mappingIndicator,
   nonPrintable,
   leading,
+  flowResync,
+  trimBack,
 } from './yaml-text.ts';
+
+export type { YamlMap, YamlValue };
 
 /** Where an inline value sits: after `key:`, after `- `, or as a node on its own line. */
 type ValueSlot = 'after-key' | 'after-dash' | 'alone';
-
-export type YamlValue = null | boolean | number | string | YamlValue[] | YamlMap;
-export interface YamlMap {
-  [key: string]: YamlValue;
-}
 
 export interface YamlOptions {
   /** Offset where the YAML text starts (default 0). */
@@ -94,19 +97,13 @@ class YamlError {
   ) {}
 }
 
-const RE_INT = /^[-+]?(?:0|[1-9][0-9]*)$/;
-const RE_HEX = /^[-+]?0x[0-9a-fA-F]+$/;
-const RE_OCT = /^[-+]?0o[0-7]+$/;
-const RE_BIN = /^[-+]?0b[01]+$/;
-const RE_FLOAT = /^[-+]?(?:[0-9][0-9]*(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][-+]?[0-9]+)?$/;
-const RE_INF = /^[-+]?\.(?:inf|Inf|INF)$/;
-const RE_NAN = /^\.(?:nan|NaN|NAN)$/;
 const RE_FLOW_KEY_END = /[\s,[\]{}]/;
 const RE_FLOW_INDICATOR = /[,[\]{}]/;
 const RE_SPACE = /\s/;
 const RE_LEADING_BLANK = /^[ \t]/;
 const RE_BLOCK_HEADER = /^[|>][-+0-9]*\s*(?:#.*)?$/;
 const RE_INDENT_DIGIT = /[1-9]/;
+const END_EXPECTED = 'end of the stream or a document separator is expected';
 
 /** One read of one YAML range. Lines keep their offsets into the original source. */
 class Reader {
@@ -121,6 +118,8 @@ class Reader {
   node: YamlNode | undefined;
   /** Tree mode: lines that already have an error (one error per line). */
   readonly errorLines = new Set<number>();
+  /** Tree mode: reading a root flow document, which an unclosed collection runs to the end of. */
+  rootFlow = false;
 
   constructor(
     readonly src: string,
@@ -281,42 +280,13 @@ class Reader {
     if (c === '@' || c === '`')
       this.fail(`\`${c}\` is reserved and cannot start a plain value`, at);
     if (c !== '-' && c !== '+' && c !== '.' && (c < '0' || c > '9')) return s;
-    if (RE_INT.test(s) || RE_FLOAT.test(s)) return Number(s);
-    if (RE_HEX.test(s) || RE_OCT.test(s) || RE_BIN.test(s)) {
-      const neg = s.startsWith('-');
-      const v = Number(neg || s.startsWith('+') ? s.slice(1) : s);
-      return neg ? -v : v;
-    }
-    if (RE_INF.test(s)) return s.startsWith('-') ? -Infinity : Infinity;
-    if (RE_NAN.test(s)) return NaN;
+    const n = plainNumber(s);
+    if (n !== undefined) return n;
     return s;
   }
 
   unquoteDouble(body: string, at: number): string {
-    if (!body.includes('\\')) return fold(body);
-    let out = '';
-    const s = fold(lf(body).replace(/\\\n[ \t]*/g, ''));
-    for (let i = 0; i < s.length; i++) {
-      const ch = s[i] ?? '';
-      if (ch !== '\\') {
-        out += ch;
-        continue;
-      }
-      const e = s[++i] ?? '';
-      if (e === 'x' || e === 'u' || e === 'U') {
-        const len = HEX_ESCAPE_LENGTH[e];
-        const hex = s.slice(i + 1, i + 1 + len);
-        const code = /^[0-9a-fA-F]+$/.test(hex) && hex.length === len ? parseInt(hex, 16) : NaN;
-        if (!(code <= 0x10ffff)) this.fail('invalid escape sequence in a double quoted value', at);
-        out += String.fromCodePoint(code);
-        i += len;
-      } else if (e in ESCAPES) {
-        out += ESCAPES[e];
-      } else {
-        this.fail('unknown escape sequence in a double quoted value', at);
-      }
-    }
-    return out;
+    return unescapeDouble(body, (message) => this.fail(message, at));
   }
 
   /**
@@ -375,6 +345,113 @@ class Reader {
     if (this.src[pos] === ',') this.fail("expected the node content, but found ','", pos);
   }
 
+  /**
+   * One entry of a flow collection at `pos` (a `key: value` pair of a mapping, or an item),
+   * stored in `out`; `separated` when a `,` (or the opening bracket) comes before it. Returns
+   * the offset after it. `out.key` holds the key once it is read.
+   */
+  flowEntry(
+    isMap: boolean,
+    out: FlowCollection,
+    pos: number,
+    limit: number,
+    depth: number,
+    separated: boolean
+  ): number {
+    const s = this.src;
+    out.key = undefined;
+    this.entryStart(pos, separated);
+    if (!isMap) {
+      let value: YamlValue;
+      [value, pos] = this.flow(pos, limit, ',]', depth + 1);
+      out.list.push(value);
+      if (out.items) out.items.push(this.take(pos));
+      return pos;
+    }
+    const keyAt = pos;
+    let key: YamlValue;
+    [key, pos] = this.flow(pos, limit, ':,}', depth + 1);
+    const keyEnd = pos;
+    const keyRange = this.node?.range;
+    this.node = undefined;
+    const name = String(key);
+    if (keyRange) out.key = { key: name, keyRange };
+    pos = this.skip(pos, limit);
+    let value: YamlValue = null;
+    if (s[pos] === ':') [value, pos] = this.flow(pos + 1, limit, ',}', depth + 1);
+    if (this.assign(out.map, name, value, keyAt, keyEnd) && out.pairs && keyRange) {
+      out.pairs.push({ key: name, keyRange, value: this.take(keyRange.end) });
+    }
+    return pos;
+  }
+
+  /** Tree mode: the node of a flow collection opening at `open`, ending at `end`. */
+  flowNode(out: FlowCollection, open: number, end: number): void {
+    const range = { start: open, end };
+    this.node = out.pairs
+      ? { kind: 'map', flow: true, pairs: out.pairs, range }
+      : { kind: 'seq', flow: true, items: out.items ?? [], range };
+  }
+
+  /**
+   * Tree mode, in a root flow document (#169): a flow collection at `open` that reads on after
+   * an error in one of its entries. The entry's error is reported, a key it read stays without a
+   * value (as in a block mapping), and the read goes on at the next `,` or closing bracket
+   * outside nested collections and quotes. A collection that is never closed ends at the end of
+   * the text, or at a closing bracket of an outer collection, with one error at its opener.
+   * Every error position moves forward, so the read stays linear (R-PARSE-7).
+   */
+  flowRecovering(open: number, limit: number, depth: number): [YamlValue, number] {
+    const s = this.src;
+    const ch = s[open];
+    const close = ch === '{' ? '}' : ']';
+    const out = flowCollection(ch === '{', true);
+    const value = ch === '{' ? out.map : out.list;
+    const unclosed = () => {
+      const message = `this \`${ch}\` is never closed with \`${close}\``;
+      this.report(new YamlError('YAML_SYNTAX', message, open, open + 1));
+    };
+    let pos = open + 1;
+    // Where an unclosed collection's range ends: after its last entry.
+    let last = pos;
+    let separated = true;
+    for (;;) {
+      pos = this.skip(pos, limit);
+      if (pos >= limit) {
+        unclosed();
+        this.flowNode(out, open, last);
+        return [value, limit];
+      }
+      if (s[pos] === close) {
+        this.flowNode(out, open, pos + 1);
+        return [value, pos + 1];
+      }
+      const entryAt = pos;
+      try {
+        pos = this.flowEntry(ch === '{', out, pos, limit, depth, separated);
+        last = pos;
+        pos = this.skip(pos, limit);
+      } catch (err) {
+        if (!(err instanceof YamlError)) throw err;
+        this.report(err);
+        this.node = undefined;
+        // A key read before the error stays, without a value (a pair is stored only last).
+        const key = out.key;
+        if (out.pairs && key && !UNSAFE_KEYS.has(key.key)) out.pairs.push(key);
+        pos = flowResync(s, Math.max(entryAt, err.start), limit, this.start);
+        last = Math.max(last, trimBack(s, pos, entryAt));
+        if (pos < limit && s[pos] !== ',' && s[pos] !== close) {
+          // A closing bracket of an outer collection: this one ends here, unclosed.
+          unclosed();
+          this.flowNode(out, open, last);
+          return [value, pos];
+        }
+      }
+      separated = s[pos] === ',';
+      if (separated) pos++;
+    }
+  }
+
   // Parses a flow value starting at `pos`, up to `limit`; returns the value and the offset after it.
   flow(pos: number, limit: number, stops: string, depth: number): [YamlValue, number] {
     const s = this.src;
@@ -383,11 +460,9 @@ class Reader {
     const open = pos;
     if (pos < limit && (ch === '{' || ch === '[')) {
       this.depth(depth + 1, pos);
+      if (this.rootFlow) return this.flowRecovering(pos, limit, depth);
       const close = ch === '{' ? '}' : ']';
-      const map: YamlMap = {};
-      const list: YamlValue[] = [];
-      const pairs: YamlPair[] | undefined = this.tree && ch === '{' ? [] : undefined;
-      const items: YamlNode[] | undefined = this.tree && ch === '[' ? [] : undefined;
+      const out = flowCollection(ch === '{', this.tree);
       pos++;
       let separated = true;
       for (;;) {
@@ -396,35 +471,10 @@ class Reader {
           this.fail(`this \`${ch}\` is never closed with \`${close}\``, open);
         }
         if (s[pos] === close) {
-          if (this.tree) {
-            const range = { start: open, end: pos + 1 };
-            this.node = pairs
-              ? { kind: 'map', flow: true, pairs, range }
-              : { kind: 'seq', flow: true, items: items ?? [], range };
-          }
-          return [ch === '{' ? map : list, pos + 1];
+          if (this.tree) this.flowNode(out, open, pos + 1);
+          return [ch === '{' ? out.map : out.list, pos + 1];
         }
-        this.entryStart(pos, separated);
-        if (ch === '{') {
-          const keyAt = pos;
-          let key: YamlValue;
-          [key, pos] = this.flow(pos, limit, ':,}', depth + 1);
-          const keyEnd = pos;
-          const keyRange = this.node?.range;
-          this.node = undefined;
-          pos = this.skip(pos, limit);
-          let value: YamlValue = null;
-          if (s[pos] === ':') [value, pos] = this.flow(pos + 1, limit, ',}', depth + 1);
-          const name = String(key);
-          if (this.assign(map, name, value, keyAt, keyEnd) && pairs && keyRange) {
-            pairs.push({ key: name, keyRange, value: this.take(keyRange.end) });
-          }
-        } else {
-          let value: YamlValue;
-          [value, pos] = this.flow(pos, limit, ',]', depth + 1);
-          list.push(value);
-          if (items) items.push(this.take(pos));
-        }
+        pos = this.flowEntry(ch === '{', out, pos, limit, depth, separated);
         pos = this.skip(pos, limit);
         separated = s[pos] === ',';
         if (separated) pos++;
@@ -771,14 +821,25 @@ class Reader {
     const from = this.skip(this.start, this.end);
     const ch = this.src[from];
     if (from < this.end && (ch === '{' || ch === '[')) {
+      const errors = this.diagnostics.list.length;
+      this.rootFlow = this.tree;
       const [value, end] = this.flow(from, this.end, '', 0);
-      if (this.skip(end, this.end) >= this.end) return value;
+      this.rootFlow = false;
+      const rest = this.skip(end, this.end);
+      if (rest >= this.end) return value;
+      // Tree mode: a root flow document read with errors stays the root; the text after it is
+      // one more error (else it is read again as a block, as the default mode does).
+      if (this.tree && this.diagnostics.list.length > errors) {
+        const [, to] = this.lineRange(this.lineOf(rest, 0));
+        this.report(new YamlError('YAML_SYNTAX', END_EXPECTED, rest, to));
+        return value;
+      }
     }
     if (this.tree) return this.readTree();
     const value = this.block(0, 0);
     this.skipBlank();
     if (this.i < this.lines.length && (this.lines[this.i] ?? '').trim() !== '...') {
-      this.fail('end of the stream or a document separator is expected', ...this.lineRange(this.i));
+      this.fail(END_EXPECTED, ...this.lineRange(this.i));
     }
     return value;
   }
@@ -800,8 +861,7 @@ class Reader {
       const from = this.i;
       if (first) {
         const [at, to] = this.lineRange(from);
-        const message = 'end of the stream or a document separator is expected';
-        this.report(new YamlError('YAML_SYNTAX', message, at, Math.max(to, at)));
+        this.report(new YamlError('YAML_SYNTAX', END_EXPECTED, at, Math.max(to, at)));
       }
       let value: YamlValue;
       try {
@@ -867,7 +927,9 @@ export function parseYaml(
     }
     const value = reader.read();
     if (!tree) return { value, diagnostics: diagnostics.list };
-    return { value, root: reader.node ?? null, diagnostics: diagnostics.list };
+    // Errors of a flow collection can be reported after later ones (its own `never closed`).
+    const list = [...diagnostics.list].sort((a, b) => a.range.start - b.range.start);
+    return { value, root: reader.node ?? null, diagnostics: list };
   } catch (err) {
     if (!(err instanceof YamlError)) throw err;
     diagnostics.error(err.code, `Invalid YAML: ${err.message}.`, {

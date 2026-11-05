@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { CORE_DEFAULTS, resolveConfig } from '@mermaid-js/core/config';
 import type { ConfigWarning } from '@mermaid-js/core/config';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { parseYaml, preprocess } from '@mermaid-js/core/preprocess';
 import { configSection } from './config/front-matter.ts';
 import { createLanguageService } from './index.ts';
 import { contextOf } from './snapshot.ts';
@@ -153,6 +153,82 @@ describe('front-matter config warnings equal a render’s', () => {
   });
 });
 
+// ---------------------------------------------------------------------------- YAML errors
+
+describe('front-matter YAML errors (D91, D96, #168)', () => {
+  const yamlOf = (doc: DocumentSnapshot) =>
+    doc
+      .diagnostics()
+      .filter((d) => d.code.startsWith('YAML_'))
+      .map((d) => `${d.code} ${doc.text.slice(d.range.start, d.range.end)}`);
+  /** The tree mode's own read of the text's front matter, as `CODE text`. */
+  const treeOf = (text: string) => {
+    const fm = preprocess(text).frontMatter!;
+    const read = parseYaml(text, { ...fm.yamlRange, tree: true });
+    return read.diagnostics.map((d) => `${d.code} ${text.slice(d.range.start, d.range.end)}`);
+  };
+
+  it('shows every bad line, where the renderer shows the first (the issue’s example)', () => {
+    const text = '---\nconfig:\n  theme: dark: bad\n  layout: "x\n---\nflowchart TD\n  A\n';
+    const [doc] = open(text);
+    const editor = doc.diagnostics().filter((d) => d.code.startsWith('YAML_'));
+    expect(editor).toHaveLength(2);
+    // Each on its own line: the second and the third of the text.
+    const lineOf = (at: number) => text.slice(0, at).split('\n').length;
+    expect(editor.map((d) => lineOf(d.range.start))).toEqual([3, 4]);
+    // The renderer (preprocess) keeps the first error only (D91).
+    const render = preprocess(text).diagnostics.filter((d) => d.code.startsWith('YAML_'));
+    expect(render).toHaveLength(1);
+    expect(editor[0]).toEqual(render[0]);
+  });
+
+  it('gives N errors for N bad lines', () => {
+    for (const n of [1, 3, 10]) {
+      const bad = Array.from({ length: n }, (_, i) => `  k${i}: a: b\n  ok${i}: 1\n`).join('');
+      const text = `---\nconfig:\n${bad}---\nflowchart TD\n  A\n`;
+      const [doc] = open(text);
+      expect(yamlOf(doc), `n=${n}`).toHaveLength(n);
+      expect(yamlOf(doc)).toEqual(treeOf(text));
+    }
+  });
+
+  it('equal the tree mode’s, once each, whether the facet reports preprocess or not', async () => {
+    const text = '---\na: [1\nb: c: d\nc: 1\nc: 2\n---\n%%{init: {"a" 1}}%%\nflowchart TD\n  A[x\n';
+    const [doc] = open(text);
+    expect(yamlOf(doc)).toEqual(treeOf(text));
+    expect(yamlOf(doc).length).toBeGreaterThan(1);
+    // The other diagnostics stay, in source order.
+    const codes = doc.diagnostics().map((d) => d.code);
+    expect(codes.filter((c) => !c.startsWith('YAML_'))).toEqual(['INVALID_DIRECTIVE', 'UNCLOSED']);
+    const starts = doc.diagnostics().map((d) => d.range.start);
+    expect(starts).toEqual([...starts].sort((a, b) => a - b));
+    // A facet that leaves preprocess to the service gets the same YAML errors.
+    const own = createLanguageService({
+      facets: [{ type: 'mine', id: 'mine', detector: (t) => t.startsWith('mine') }],
+    });
+    await own.preload();
+    const mine = own.update('file:///m.mmd', text.replace('flowchart TD', 'mine'));
+    expect(yamlOf(mine)).toEqual(treeOf(text));
+  });
+
+  it('keeps the warnings preprocess gives besides the errors, once', () => {
+    const text = '---\nconfig:\n  __proto__: 1\n  a: b: c\n---\nflowchart TD\n';
+    const [doc] = open(text);
+    expect(yamlOf(doc)).toEqual(treeOf(text));
+  });
+
+  it('gives no tree errors for a front matter without errors, or an unclosed one', () => {
+    const [ok] = open('---\nconfig:\n  theme: dark\n---\nflowchart TD\n');
+    expect(yamlOf(ok)).toEqual([]);
+    // Unclosed: preprocess reads no YAML, so neither does the editor (the body is not YAML).
+    const unclosed = '---\nconfig:\n  theme: dark: bad\nflowchart TD\n  A --> B\n';
+    const [doc] = open(unclosed);
+    const pre = preprocess(unclosed).diagnostics.filter((d) => d.code.startsWith('YAML_'));
+    expect(doc.diagnostics().filter((d) => d.code.startsWith('YAML_'))).toEqual(pre);
+    expect(doc.diagnostics().map((d) => d.code)).toContain('UNCLOSED_FRONT_MATTER');
+  });
+});
+
 // ---------------------------------------------------------------------------- completion
 
 describe('completion scoping (D96)', () => {
@@ -208,7 +284,12 @@ describe('completion scoping (D96)', () => {
     expect(doc.completions(1)).toEqual([]);
     // The facet's (#32): the header keywords, and the header keyword's doc.
     const at = text.indexOf('flowchart');
-    expect(doc.completions(at).map((i) => i.label)).toEqual(['flowchart', 'graph']);
+    expect(doc.completions(at).map((i) => i.label)).toEqual([
+      'flowchart',
+      'graph',
+      'flowchart-elk',
+      'swimlane-beta',
+    ]);
     expect(doc.hover(at)?.contents).toMatch(/^\*\*`flowchart`\*\*/);
   });
 });
