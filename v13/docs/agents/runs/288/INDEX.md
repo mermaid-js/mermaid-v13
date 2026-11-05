@@ -6,7 +6,7 @@
 | T2 grammar, parser, model, AST, ported specs | #305 | #304 | merged |
 | T3 custom layout (`PieLayout`) | #335 | #305 (soft) | merged |
 | T4 SVG renderer | #306 | #305, #335 | merged |
-| T5 integration | #325 | #306 | open |
+| T5 integration | #325 | #306 | merged |
 | T6 language facet | #307 | #305 | merged |
 
 - `01-v12-pie.md`: pointer notes on v12 grammar, DB, renderer, specs, corpus, and the v13 seams.

@@ -64,7 +64,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - the bounding box also covers the stroke widths and a highlighted slice drawn at 1.05 (D224: covers what is drawn).
 - Shared edit: `pie` added to `fontFamily`'s `usedBy` (`core/src/theme/vocabulary.ts`, regenerated `theme-variables.md`).
 
-## #325 T5 integration (known before start)
+## #325 T5 integration (merged)
 
 - [x] **Theme DSL gaps** (`01-v12-pie.md` §4): no hue-rotate `adjust` in `core/src/theme/dsl.ts`; `taskTextDarkColor` and `mainContrastColor` (v12's pie title/legend colours) are not in the vocabulary; dark and neutral have no `cScale` palette. Store v12's computed values as literals where a derivation is missing (as `specs/neo-dark.ts:26` does), rather than growing the DSL; keep any vocabulary addition additive.
   - Closed by #325: no DSL change and no `taskTextDarkColor`/`mainContrastColor`; each theme's pie table (in its spec file, `pieSlots` in `specs/palettes.ts`) keeps lightness-only slots as rules and stores hue turns, `cScale` slots and HSL-rounding cases as v12's resolved values. Oracle: `packages/conformance/src/pie/theme.spec.ts`.
@@ -72,6 +72,14 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - No clash: it is a conformance `DiagramAdapter` (`pie-fixture`), never registered with mermaid; `runner.spec.ts` and `corpus.spec.ts` still pass.
 - [x] **Specs that assume pie is unported**: `packages/mermaid/src/cli.spec.ts:221-224`, `e2e/language/codemirror.spec.ts:254-257`, maybe `packages/mermaid/src/registry-rules.spec.ts:48`, :73.
   - Closed by #325: the CLI spec uses `gantt` as the type this build lacks; the CodeMirror/Monaco "no highlighter" specs use `gantt`; `registry-rules.spec.ts` was right as is (pie is still first-party, and still detected as `pie`); discovery, gallery, packing and completion specs list pie.
+
+- Deviations (orchestrator: accepted, listed for the maintainer):
+  - 23 pie theme variables, not the "21" in the ticket; the ticket's own list has 23;
+  - `redux-color`/`redux-dark-color`: a `cScale<n>` override no longer recolours `pie<n+1>`, because rules cannot read a palette (MIGRATION.md says so);
+  - hue-turned slots, `default` 3/6 and `redux-dark`/`neo-dark` 5 are stored as v12's resolved values, so they do not follow an author's base colours;
+  - test-only exports (`LANGIUM_NAMES`, `pieTokens`, `PIE_TRIVIA`, `PieTokenKind`, `pieLayoutViolations`) moved to `@mermaid-js/diagram-pie/testing` (≈1 KB gz off the render chunk);
+  - `TOKEN_VARIABLES` built by a `@__PURE__` call so bundles drop it (same value and type; ≈240 B gz off core).
+- **Budget (for the maintainer):** core closure 89822 B gz (bench method); on the CDN-build measure 90061 B of 90112 B, so 51 B headroom. The pie row costs ≈330 B, ≈290 B of it because pie is the first diagram chunk that doesn't import `core/layout`, which splits a shared chunk. Journey, quadrant and timeline will push core past budget; R-PERF-8 needs a decision.
 
 ## Shared contracts
 
