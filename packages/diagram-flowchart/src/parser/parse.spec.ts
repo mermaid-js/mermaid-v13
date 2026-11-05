@@ -242,6 +242,15 @@ describe('flowchart parse', () => {
     expect(errors('flowchart TD\n  A@{ shape: [rect }\n')).toEqual(['SHAPE_DATA']);
   });
 
+  it('joins shape data blocks written back to back, as v12 did (#94)', () => {
+    const joined = parse('flowchart TD\n  A@{ shape: cyl, }@{ label: Disk } --> B\n');
+    expect(joined.diagnostics).toEqual([]);
+    expect(joined.model.vertices[0]).toMatchObject({ type: 'cyl', text: 'Disk' });
+    // The texts join without a separator, so YAML may reject the result (v12 did too).
+    expect(errors('flowchart TD\n  A@{ shape: cyl }@{ label: Disk }\n')).toEqual(['SHAPE_DATA']);
+    expect(errors('flowchart TD\n  A@{ shape: cyl }@{ label: Disk\n')).toEqual(['UNCLOSED']);
+  });
+
   it('accepts a subgraph without an id, which v12 crashed on', () => {
     const r = parse('flowchart TD\n  subgraph\n    A\n  end\n');
     expect(r.diagnostics).toEqual([]);
