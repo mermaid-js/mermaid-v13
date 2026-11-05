@@ -29,7 +29,7 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 ## #332 T3 (merged; handoff `tickets/332.md`)
 
 - [x] **Done in #301:** run the layout invariants and builder parity on parser-produced models: swap the parser's model in for `v12Quadrant(...).model` in `packages/conformance/src/quadrant/layout-parity.spec.ts`. T2 adopts `QuadrantModel` (`packages/diagram-quadrant/src/model.ts`): an axis statement sets only the labels it names (v12 merge), overridden statements get `st:<ordinal>` and draw nothing.
-- [ ] **Owner #312 T4:** remove quadrant's `NOT_YET_DRAWN` exemption in `tools/gen-config/src/theme-used-by.spec.ts`; grow the viewBox for point labels (D224); `fill`/`stroke` undefined in the layout means `quadrantPointFill`.
+- [x] **Done in #312 T4:** `NOT_YET_DRAWN` removed; the viewBox grows over labels and points past the chart (D224); undefined point `fill`/`stroke` paint `quadrantPointFill`.
 - [ ] **Owner #317 T5:** drop `"private": true`, add the manifest, a `feat: first release` changeset and the `publish.spec.ts` entry.
 - **Choices:** axis end labels get `ax:x/end` / `ax:y/end` so each drawn label has one AST id (pitfall 12). The square's width/height clamp at 0 (v12 wrote negative `<rect>` sizes for schema-valid tiny charts). Coordinates convert with `Number(text)` like v12's d3; a dropped point still counts as "has points" (v12 layout). Builder parity sets options with v12's `initialize()`, since 12.2.0's `getDiagramFromText` drops `%%{init}` config.
 - Size: 2.0 KB gz (layout only).
@@ -48,3 +48,9 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 - **Choices:** one diagnostic per bad style; a style cut short by a syntax error is not also checked. An overridden `classDef` gets `st:<n>` like other overridden statements. Token kind `AxisDelimiter` renamed `AxisTextDelimiter` (gen:grammar matches kinds to terminals by name). `oracle.ts` gets one additive patch call (`quadrant/oracle-env.ts`) recording v12's DB calls.
 - [ ] **Owner #321 T6:** probe support (completion context) is not in the parser yet.
 - Size: parser 8.6 KB gz; package 10.4 KB gz.
+
+## #312 T4 (handoff `tickets/312.md`)
+
+- **Additive core change (T5 builds on it):** the 15 `quadrant*` variables are in `vocabulary.ts` (`usedBy: ['quadrant']`, the package-name key `theme-used-by.spec.ts` checks, not `quadrantChart`), with rules in `LIGHT_RULES` and `quadrant1Fill: '#ececfe'` in `redux` (so `redux-color`) and `neo` values; `fontFamily`/`fontSize` usedBy gain `quadrant`; `theme-variables.md` regenerated; `quadrantPointFill` DIFFERENCES rows in the neo/neo-dark specs. Not yet in `config.schema.yaml` (T5).
+- [ ] **Owner #317 T5:** add the 15 to the schema `themeVariables` notes; manifest; `render-api.ts` in conformance then drops `replace: true` and uses the registry.
+- **Choices:** text fills 2–4 derive from `primaryTextColor` as v12 (D232 names only the fills). In `default`, v12 ignored an author `primaryColor` for the quadrant fills (derived in the constructor); v13 follows it (MIGRATION). Border fills follow core's `primaryBorderColor`, which core already approximates (D71). Plain labels keep v12's `x="0" y="0"`, `dominant-baseline`, `text-anchor`, `translate() rotate()`; multi-line/markdown labels go through `SvgWriter.label` in the same transform, boxed where v12's anchor/baseline puts one line. `data-id` for axis labels `x-axis-start|end`, `y-axis-…`, title `title`; `data-ast` on the groups (`g.title` for the title). An unlabelled quadrant draws no empty `<text>`. Empty groups kept. The viewBox grows over every label and point, not only point labels (D224 "covers what is drawn").

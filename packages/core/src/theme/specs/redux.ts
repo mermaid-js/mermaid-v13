@@ -59,6 +59,8 @@ const redux: ThemeSpec = {
     // v12 theme-redux*.js; off until a theme or the author turns it on (D182).
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',
+    // v12 derives the quadrant fills from a literal, not `primaryColor` (D232).
+    quadrant1Fill: '#ececfe',
   },
 };
 

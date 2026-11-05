@@ -43,14 +43,10 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
-/** Packages with no renderer yet, so no theme reads: quadrant until #312 (spec #289 T4). */
-const NOT_YET_DRAWN: ReadonlySet<string> = new Set(['quadrant']);
-
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
     expect(TYPES).toEqual(['class', 'er', 'flowchart', 'quadrant', 'sequence', 'state']);
-    for (const type of TYPES)
-      if (!NOT_YET_DRAWN.has(type)) expect(READS.get(type)!.size).toBeGreaterThan(0);
+    for (const type of TYPES) expect(READS.get(type)!.size).toBeGreaterThan(0);
   });
 
   it.each(TYPES)('lists %s for every variable it reads, and for no other', (type) => {

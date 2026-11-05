@@ -950,3 +950,26 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 | Subgraph `<g class="cluster" id>` with `<g class="cluster-label">` | `<g class="cluster …" data-id="<name>" data-ast="s:<name>">` with `<rect>` and `<text class="cluster-label">` | |
 | Front-matter `title` drawn as `text.erDiagramTitleText` | Not drawn yet, as in the flowchart | |
 | Hand-drawn look: background copies of every entity (`<id>-background`) | None (`look` is removed, D153) | |
+
+## Quadrant chart SVG structure
+
+What changed in the quadrant chart's SVG compared with v12 (spec #289, #312). v12's groups and
+classes are kept, in v12's order: `g.main` > `g.quadrants` (`g.quadrant`: `rect` + `text`),
+`g.border` (six `line`s), `g.data-points` (`g.data-point`: `circle` + `text`), `g.labels`
+(`g.label`: `text`) and `g.title`, each written even when empty. The last-declared point is
+still drawn first, so the first is on top. Text keeps v12's `text-anchor`, `dominant-baseline`
+and `transform="translate(x,y) rotate(r)"` placement.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, a `<style>` scoped by the id that gave every text its `fill` | No root `id`; `class="mermaid mermaid-quadrant"`, `role="img"`, `aria-roledescription="quadrantChart"` (kept), `data-mermaid-version`; every element carries its colour as a presentation attribute reading a `var(--_x)` alias on the root `style` | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
+| A fixed `viewBox="0 0 chartWidth chartHeight"`: a point label near the edge ran off it and the browser clipped it | The same placement; the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover any label or point drawn past the chart. A chart where everything fits keeps `0 0 chartWidth chartHeight` | The bounding box covers what is drawn (D224) |
+| Groups had no ids | `g.quadrant` has `data-id="quadrant-<n>"` and, when labelled, `data-ast="q:<n>"`; `g.data-point` has `data-id="<point name>"` and `data-ast="pt:<name>"` (`pt:<name>@2` for a repeated name); `g.label` has `data-id="x-axis-start"` (`-end`, `y-axis-…`) and `data-ast="ax:x"` / `ax:x/end` / `ax:y` / `ax:y/end`; `g.title` has `data-id="title"` and the `title` statement's `data-ast` | One element per AST node maps it to its source (R-PARSE-8) |
+| An unlabelled quadrant drew an empty `<text>` | Only its `<rect>` | Nothing invisible is drawn |
+| Border lines styled with `style="stroke: …; stroke-width: …"` | `stroke` and `stroke-width` attributes | No inline style (R-SEC-2) |
+| Labels set as `textContent`: a quoted `<br>` and a markdown string's `**` showed literally, entities as written | Core's label layout with no wrap width: every `<br>` form breaks, markdown renders, entities decode, and math works (D176). A plain label is still one `<text>`; one with breaks or emphasis is a `<text>` with `<tspan>`s, placed so its box sits where v12's anchor and baseline put one line | D225 |
+| Points: `fill="hsl(…, NaN%)"` (v12's `quadrantPointFill` rule had a precedence bug and a khroma call with no amount), so points showed the root `fill: textColor`; a user `quadrantPointFill` was ignored | `fill` and `stroke` from `quadrantPointFill`, which defaults to `textColor`: the same look in every theme, and a user value is honoured | D231 |
+| A style colour without `#` (`color: ff0000`) was written as `fill="ff0000"`, which browsers ignore | Written as `fill="#ff0000"` | D235 |
+| Quadrant fills 2–4 derived from `primaryColor` (or `#ECECFE` in `redux`, `redux-color` and `neo`) | Derived from `quadrant1Fill`, which is `primaryColor` (`#ececfe` in those three): the same colours unless an author sets `quadrant1Fill` alone, which now moves 2–4 too. `default` also follows an author `primaryColor`, which v12's `theme-default.js` ignored for the quadrant fills (it derived them once, before the overrides) | D232 |
+| A point whose coordinate lexed but was not a number in [0, 1] (`0x5`, `0a5`) was drawn off the chart or at `NaN` | Left out, with one `QUADRANT_POINT_INVALID` warning per point | D226 |
+| `look: neo` changed nothing in a quadrant chart | Every theme family draws it plain, without gradient, shadow or palette; families differ by colour only | D227 |

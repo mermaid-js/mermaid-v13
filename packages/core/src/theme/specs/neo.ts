@@ -71,6 +71,8 @@ const neo: ThemeSpec = {
     // v12 theme-neo.js (D182).
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',
+    // v12 derives the quadrant fills from a literal, not `primaryColor` (D232).
+    quadrant1Fill: '#ececfe',
   },
 };
 

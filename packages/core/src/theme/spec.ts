@@ -75,6 +75,24 @@ export const LIGHT_RULES: ThemeRuleTable = {
   // khroma darken(secondaryColor, 10): ten points of lightness, about 12.5% black on a grey.
   activationBorderColor: 'mix(secondaryColor, black, 12.5%)',
   sequenceNumberColor: 'invert(lineColor)',
+  // quadrant chart, as v12's `/* quadrant-graph */` block in every theme file derives them.
+  // Fills 2–4 follow `quadrant1Fill`, so a theme that pins it moves them too (D232); points
+  // default to `textColor`, the colour v12 points showed (D231).
+  quadrant1Fill: 'primaryColor',
+  quadrant2Fill: 'adjust(quadrant1Fill, 5, 5, 5)',
+  quadrant3Fill: 'adjust(quadrant1Fill, 10, 10, 10)',
+  quadrant4Fill: 'adjust(quadrant1Fill, 15, 15, 15)',
+  quadrant1TextFill: 'primaryTextColor',
+  quadrant2TextFill: 'adjust(primaryTextColor, -5, -5, -5)',
+  quadrant3TextFill: 'adjust(primaryTextColor, -10, -10, -10)',
+  quadrant4TextFill: 'adjust(primaryTextColor, -15, -15, -15)',
+  quadrantPointFill: 'textColor',
+  quadrantPointTextFill: 'primaryTextColor',
+  quadrantXAxisTextFill: 'primaryTextColor',
+  quadrantYAxisTextFill: 'primaryTextColor',
+  quadrantInternalBorderStrokeFill: 'primaryBorderColor',
+  quadrantExternalBorderStrokeFill: 'primaryBorderColor',
+  quadrantTitleFill: 'primaryTextColor',
   // The neo gradient's stops, as v12 theme-base derives them (D182).
   gradientStart: 'primaryBorderColor',
   gradientStop: 'secondaryBorderColor',

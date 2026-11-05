@@ -61,6 +61,8 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   erEdgeLabelBackground:
     'D152: v12 ER labels use edgeLabelBackground outside its COLOR_THEMES (redux-color, redux-dark-color)',
   border1: 'D152: v12 neo leaves it unset; no ported diagram reads it (usedBy is empty)',
+  quadrantPointFill:
+    'D231: v12 resolved it to hsl(…, NaN%); v13 defaults to textColor, as v12 points showed',
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
 };
 
