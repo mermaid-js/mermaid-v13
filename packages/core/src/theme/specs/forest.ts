@@ -2,7 +2,8 @@
  * `forest`: v12 `theme-forest.js`.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { darkenedScale, hueSources, paletteSlots } from './palettes.ts';
+import { paletteSlots } from './palettes.ts';
+import { darkenedScale, hueSources } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,

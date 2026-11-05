@@ -4,7 +4,8 @@
  * those values are pinned here rather than left to the shared dark rules.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { DARK_HUE_SOURCES, LABEL_SCALE, darkenedScale } from './palettes.ts';
+import { LABEL_SCALE } from './palettes.ts';
+import { DARK_HUE_SOURCES, darkenedScale } from './scales.ts';
 import { REDUX_RULES } from './redux-rules.ts';
 import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
 

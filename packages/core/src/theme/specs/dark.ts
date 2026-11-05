@@ -2,7 +2,8 @@
  * `dark`: v12 `theme-dark.js`.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { darkModeLabels, INVERTED_SCALE, paletteSlots } from './palettes.ts';
+import { INVERTED_SCALE, paletteSlots } from './palettes.ts';
+import { darkModeLabels } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,

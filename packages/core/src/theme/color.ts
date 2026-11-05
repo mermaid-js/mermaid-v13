@@ -140,29 +140,11 @@ export function hslToRgb(c: Hsl, alpha: number): Rgba {
 }
 
 /**
- * HSL channels to sRGB as khroma's `hsl2rgb` computes them, rounded to 10 decimals as khroma
- * writes rgb(): how v12's `invert` read a colour an HSL step made (D258).
+ * `c` with its channels rounded to 10 decimals, as khroma writes rgb(): how v12's `invert` read
+ * a colour an HSL step made (D258), so a channel on .5 rounds as v12's does.
  */
-export function khromaRgb([h, s, l]: Hsl, alpha: number): Rgba {
-  if (!s) return [round10(l * 2.55), round10(l * 2.55), round10(l * 2.55), alpha];
-  const [hh, ss, ll] = [h / 360, s / 100, l / 100];
-  const q = ll < 0.5 ? ll * (1 + ss) : ll + ss - ll * ss;
-  const p = 2 * ll - q;
-  const ch = (at: number): number => {
-    let t = at;
-    if (t < 0) t += 1;
-    else if (t > 1) t -= 1;
-    if (t < 1 / 6) return p + (q - p) * 6 * t;
-    if (t < 1 / 2) return q;
-    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-    return p;
-  };
-  return [
-    round10(ch(hh + 1 / 3) * 255),
-    round10(ch(hh) * 255),
-    round10(ch(hh - 1 / 3) * 255),
-    alpha,
-  ];
+export function khromaRgb(c: Rgba): Rgba {
+  return [round10(c[0]), round10(c[1]), round10(c[2]), c[3]];
 }
 
 export function invertColor(c: Rgba): Rgba {

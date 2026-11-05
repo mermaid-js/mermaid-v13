@@ -7,7 +7,8 @@
  * `packages/conformance/src/neo-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE, darkenedScale, hueSources } from './palettes.ts';
+import { LABEL_SCALE } from './palettes.ts';
+import { darkenedScale, hueSources } from './scales.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,

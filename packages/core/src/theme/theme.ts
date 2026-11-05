@@ -453,7 +453,7 @@ class Resolver {
 
   private invert(a: Resolved): Resolved {
     // After an HSL step, khroma's own conversion, as v12's invert of an hsl() string (D258).
-    const from = a.hsl && a.rgba ? khromaRgb(a.hsl, a.rgba[3]) : a.rgba;
+    const from = a.hsl && a.rgba ? khromaRgb(a.rgba) : a.rgba;
     const rgba = from && invertColor(from);
     const lit = rgba ? formatColor(rgba) : a.lit;
     // Relative colour syntax, so the inverse follows a host override of `a` (R-THEME-4).
