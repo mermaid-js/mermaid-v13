@@ -1,0 +1,32 @@
+{
+  "name": "@mermaid-js/diagram-timeline",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Timeline diagram plugin for Mermaid: model and layout (lexer, parser and renderer to follow).",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@mermaid-js/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^"
+  }
+}
