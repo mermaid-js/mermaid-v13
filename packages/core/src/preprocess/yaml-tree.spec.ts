@@ -275,3 +275,126 @@ describe('parseYaml tree mode: sequence and root recovery', () => {
     expect(spans(src, r.root ?? undefined)).toEqual({ $: 'constructor: 1\nconstructor: 2' });
   });
 });
+
+/** Each pair of a map node as `[key text, has a value]`. */
+function pairsOf(src: string, node: YamlNode | null | undefined): [string, boolean][] {
+  if (node?.kind !== 'map') return [];
+  return node.pairs.map((p) => [src.slice(p.keyRange.start, p.keyRange.end), !!p.value]);
+}
+
+describe('parseYaml tree mode: root flow documents (#169)', () => {
+  it('reads on after a duplicate key in a root flow mapping', () => {
+    const src = '{a: 1, a: 2, b: 3}';
+    const r = parseYaml(src, { tree: true });
+    expect(where(src, r)).toEqual(['1:8 YAML_SYNTAX']);
+    expect(r.value).toEqual({ a: 1, b: 3 });
+    expect(spans(src, r.root ?? undefined)).toEqual({
+      $: src,
+      '$.a#key': 'a',
+      '$.a': '1',
+      '$.b#key': 'b',
+      '$.b': '3',
+    });
+    // The duplicate is kept as a key without a value, as in a block mapping.
+    expect(pairsOf(src, r.root)).toEqual([
+      ['a', true],
+      ['a', false],
+      ['b', true],
+    ]);
+    // The default mode is unchanged: the first error stops the read.
+    expect(parseYaml(src)).toMatchObject({ value: null, diagnostics: [{ code: 'YAML_SYNTAX' }] });
+  });
+
+  it('reports one error per bad line of a multi-line root flow mapping, nested ones too', () => {
+    const src = [
+      '{',
+      '  title: T,',
+      '  bad: *x,',
+      '  config: { theme: dark, look: @y, layout: elk },',
+      '  list: [1, &a, 3],',
+      '  displayMode: compact',
+      '}',
+    ].join('\n');
+    const r = parseYaml(src, { tree: true });
+    expect(where(src, r)).toEqual(['3:8 YAML_SYNTAX', '4:32 YAML_SYNTAX', '5:13 YAML_SYNTAX']);
+    expect(r.value).toEqual({
+      title: 'T',
+      config: { theme: 'dark', layout: 'elk' },
+      list: [1, 3],
+      displayMode: 'compact',
+    });
+    expect(spans(src, r.root ?? undefined)).toMatchObject({
+      $: src,
+      '$.bad#key': 'bad',
+      '$.config': '{ theme: dark, look: @y, layout: elk }',
+      '$.config.look#key': 'look',
+      '$.config.layout': 'elk',
+      '$.list': '[1, &a, 3]',
+      '$.list[1]': '3',
+      '$.displayMode': 'compact',
+    });
+    expect(pairsOf(src, r.root)).toEqual([
+      ['title', true],
+      ['bad', false],
+      ['config', true],
+      ['list', true],
+      ['displayMode', true],
+    ]);
+  });
+
+  it('ends an unclosed root flow collection at the end of the text, with one error', () => {
+    const src = '{ title: T,\n  config: { theme: dark }\n';
+    const r = parseYaml(src, { tree: true });
+    expect(where(src, r)).toEqual(['1:1 YAML_SYNTAX']);
+    expect(r.value).toEqual({ title: 'T', config: { theme: 'dark' } });
+    expect(spans(src, r.root ?? undefined)).toMatchObject({
+      $: '{ title: T,\n  config: { theme: dark }',
+      '$.title': 'T',
+      '$.config.theme': 'dark',
+    });
+    const typing = '{ title: T, config: { th';
+    const t = parseYaml(typing, { tree: true });
+    // Both `{` are unclosed; the line's one error goes to the inner one, closed first.
+    expect(where(typing, t)).toEqual(['1:21 YAML_SYNTAX']);
+    expect(spans(typing, t.root ?? undefined)).toEqual({
+      $: typing,
+      '$.title#key': 'title',
+      '$.title': 'T',
+      '$.config#key': 'config',
+      '$.config': '{ th',
+      '$.config.th#key': 'th',
+      '$.config.th': '',
+    });
+  });
+
+  it('ends a nested collection at an outer closing bracket, and reads on', () => {
+    const src = '{a: [1, 2}, b: 3}';
+    const r = parseYaml(src, { tree: true });
+    expect(where(src, r)).toEqual(['1:10 YAML_SYNTAX']);
+    expect(spans(src, r.root ?? undefined)).toMatchObject({ '$.a': '[1, 2', '$.a[1]': '2' });
+  });
+
+  it('recovers in a root flow sequence and after an unclosed quote', () => {
+    const seq = '[1, *x,\n 3]';
+    expect(parseYaml(seq, { tree: true }).value).toEqual([1, 3]);
+    const quote = '{a: "x, b: 1}';
+    const r = parseYaml(quote, { tree: true });
+    expect(where(quote, r)).toEqual(['1:5 YAML_SYNTAX']);
+    expect(r.value).toEqual({ b: 1 });
+    expect(pairsOf(quote, r.root)).toEqual([
+      ['a', false],
+      ['b', true],
+    ]);
+  });
+
+  it('keeps the prototype-key protection in a recovering root flow mapping', () => {
+    const src = '{__proto__: {polluted: true}, a: *x, constructor: 1, b: 2}';
+    const r = parseYaml(src, { tree: true });
+    expect(r.value).toEqual({ b: 2 });
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    expect(pairsOf(src, r.root)).toEqual([
+      ['a', false],
+      ['b', true],
+    ]);
+  });
+});
