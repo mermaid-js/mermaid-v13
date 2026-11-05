@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectPie, parsePie } from '@mermaid-js/diagram-pie';
-import { pieLanguage } from '@mermaid-js/diagram-pie/language';
+import { parsePie } from '@mermaid-js/diagram-pie';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
@@ -24,16 +23,15 @@ import { pieV12Snapshot } from './v12.ts';
  * rename could not keep it: an escape (`"a\"b"`), an entity (`#amp;`), a quote v12 turned
  * inside a tag, a comment line or CRLF inside the label (counted in {@link ESCAPED}).
  *
- * The service gets the facet as an eager row, as a host bundling it would, until pie's
- * manifest has its `language` entry (#325); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (pie's manifest `language`
+ * entry, #325).
  */
 
 /** v12 section labels written otherwise than their name in the corpus (skipped above). */
 const ESCAPED = 44;
 
-const service = createLanguageService({
-  facets: [{ type: 'pie', id: 'pie', detector: (t) => detectPie(t), facet: pieLanguage }],
-});
+const service = createLanguageService();
+await service.preload({ types: ['pie'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 
 describe('pie definition, references and folding through the service match v12', () => {
@@ -96,8 +94,9 @@ describe('pie definition, references and folding through the service match v12',
     expect(problems).toEqual([]);
   }, 300_000);
 
-  it('runs with an eager row only while pie has no manifest `language` entry', () => {
+  it('loads the facet from the generated registry (#325)', () => {
     const row = firstPartyFacets.find((e) => e.type === 'pie');
-    expect(row?.load, 'drop the eager row: the manifest registers the facet').toBeUndefined();
+    expect(row?.load).toBeTypeOf('function');
+    expect(service.update('x:///p', 'pie\n"a": 1').facet?.id).toBe('pie');
   });
 });
