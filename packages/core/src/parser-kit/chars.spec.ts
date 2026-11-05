@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   charTable,
+  codePointEnd,
   hasClass,
   isBlank,
   isDigit,
@@ -63,5 +64,22 @@ describe('CharClass', () => {
       expect(isUnicodeLetter(code(c)), c).toBe(false);
     }
     expect(isUnicodeLetter(Number.NaN)).toBe(false);
+  });
+});
+
+describe('codePointEnd', () => {
+  it('steps over a whole surrogate pair', () => {
+    expect(codePointEnd('a😀b', 1)).toBe(3);
+    expect(codePointEnd('😀', 0)).toBe(2);
+  });
+
+  it('steps one code unit otherwise', () => {
+    expect(codePointEnd('ab', 0)).toBe(1);
+    expect(codePointEnd('é', 0)).toBe(1);
+    // A lone high surrogate, at the end or before a non-surrogate; a lone low surrogate.
+    expect(codePointEnd('\ud83d', 0)).toBe(1);
+    expect(codePointEnd('\ud83dx', 0)).toBe(1);
+    expect(codePointEnd('\ude00', 0)).toBe(1);
+    expect(codePointEnd('', 0)).toBe(1);
   });
 });
