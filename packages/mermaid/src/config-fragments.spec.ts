@@ -79,6 +79,22 @@ describe('config fragments (D153)', () => {
     expect(codes(bare.warnings)).toContain('LOOK_REMOVED');
   });
 
+  it('hints at the hand-drawn plugin in LOOK_REMOVED until a fragment declares `handDrawn`', async () => {
+    const text = `---\nconfig:\n  look: classic\n---\n${FLOW}`;
+    const removed = (ws: readonly Warning[]) => ws.find((w) => w.code === 'LOOK_REMOVED')?.message;
+    const hint = 'For handDrawn, register @mermaid-js/plugin-hand-drawn.';
+    expect(removed((await createMermaid().render('a', text)).warnings)).toContain(hint);
+    const other = createMermaid();
+    await other.registerExternalDiagrams([fixture()]);
+    expect(removed((await other.render('a', text)).warnings)).toContain(hint);
+
+    const m = createMermaid();
+    await m.registerExternalDiagrams([fixture({ id: 'sketch', keys: { handDrawn: 0 } })]);
+    const r = removed((await m.render('a', text)).warnings);
+    expect(r).toMatch(/removed/);
+    expect(r).not.toContain(hint);
+  });
+
   it('gives the plugin its own theme variables, with defaults an author can override', async () => {
     const m = createMermaid();
     await m.registerExternalDiagrams([fixture()]);

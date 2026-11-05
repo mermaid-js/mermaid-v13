@@ -78,7 +78,8 @@ describe('the config fragment (D303)', () => {
     for (const config of ['  look: neo', '  flowchart:\n    look: classic']) {
       const r = await m.render('a', front(config));
       expect(codes(r.warnings)).toEqual(['LOOK_REMOVED']);
-      expect(r.warnings[0]!.message).toContain('@mermaid-js/plugin-hand-drawn');
+      // The plugin is registered: no hint to register it.
+      expect(r.warnings[0]!.message).not.toContain('@mermaid-js/plugin-hand-drawn');
       expect(sketched(r.svg)).toBe(false);
     }
   });

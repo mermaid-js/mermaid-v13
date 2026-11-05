@@ -22,6 +22,7 @@ import {
 import {
   INTEGRATOR_ONLY_KEYS,
   resolveText,
+  type ConfigFragment,
   type MermaidConfig,
   type ResolvedConfig,
 } from '@mermaid-js/core/config';
@@ -207,13 +208,14 @@ const WARNING_KEYS = ['path', 'source', 'feature', 'shapes', 'astIds'] as const;
 
 /**
  * A copy of a warning with only the `Warning` keys (text output adds `feature`, `shapes`, `astIds`).
- * `LOOK_REMOVED` names the hand-drawn package here: core never names one (D153, as D173).
+ * `LOOK_REMOVED` names the hand-drawn package here, core never names one (D153, as D173), and
+ * only while no registered fragment declares `handDrawn` (the plugin's, or any that takes it).
  */
-const toWarning = (w: Warning): Warning => {
+const toWarning = (w: Warning, fragments: readonly ConfigFragment[]): Warning => {
   const out: Plain = {
     code: w.code,
     message:
-      w.code === 'LOOK_REMOVED'
+      w.code === 'LOOK_REMOVED' && !fragments.some((f) => 'handDrawn' in f.keys)
         ? `${w.message} For handDrawn, register @mermaid-js/plugin-hand-drawn.`
         : w.message,
   };
@@ -416,7 +418,7 @@ export function createMermaid(
     pre: PreprocessResult
   ): Analysis {
     const warnings: Warning[] = [];
-    const warn = (w: Warning): void => void warnings.push(toWarning(w));
+    const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
     for (const d of pre.diagnostics) if (d.severity === 'warning') warn(d);
     const section = sectionOf(detected, plugin);
     const front = pre.frontMatter?.config;
@@ -594,7 +596,7 @@ export function createMermaid(
     const { config } = prepared;
     const textOutput = units.id === 'cell';
     const warnings: Warning[] = [...skipped, ...prepared.warnings];
-    const warn = (w: Warning): void => void warnings.push(toWarning(w));
+    const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
     const missing = [
       ...missingFor(registry, analysis, textOutput),
       ...extensionNeeds(analysis, textOutput).map((n) => n.resource),
