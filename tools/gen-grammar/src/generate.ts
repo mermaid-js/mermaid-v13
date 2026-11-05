@@ -27,10 +27,15 @@ export const GRAMMARS: GrammarTarget[] = [
     kinds: {
       module: 'parser/tokens.ts',
       object: 'T',
-      unnamed: { ShapeDataEnd: { mode: 'shapeData', pattern: '\\}' } },
+      unnamed: {
+        ShapeDataEnd: { mode: 'shapeData', pattern: '\\}' },
+        // jison returns no token for `click`; the lexer does, with the click statement's doc.
+        ClickKeyword: { mode: 'INITIAL', pattern: 'click\\s+', docOf: 'CLICK' },
+      },
       // `@{` and the text between quotes are Meta, the quoted values String.
       mixed: ['SHAPE_DATA'],
-      // `click <id>` and `call <name>`: the keyword is not a token of its own.
+      // `call <name>`: the keyword is not a token of its own. `click` is offered as a
+      // completion for the node id the parser expects (`Click`).
       documented: ['Click', 'CallbackName'],
     },
   },

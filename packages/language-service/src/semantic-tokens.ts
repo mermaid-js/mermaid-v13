@@ -135,7 +135,7 @@ export function semanticTokens(ctx: DocumentContext, list: readonly Occurrence[]
     // A token ends where the next one starts (`end` takes the blanks and comment after it).
     const end = Math.min(tokens.end[i] ?? 0, tokens.start[i + 1] ?? Infinity);
     // Symbols before or inside this token go in at their place; the token keeps the rest
-    // (`click A` is one token holding the keyword and the node id).
+    // (a token can hold more text than its symbol).
     while (j < symbols.length && symbols[j]!.range.start < end) {
       const s = symbols[j++]!;
       if (s.range.start > at) push(at, s.range.start, type);
