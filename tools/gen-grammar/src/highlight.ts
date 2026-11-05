@@ -293,6 +293,9 @@ export function textMate(g: Grammar, names: HighlightNames): object {
   };
 }
 
+/** A YAML key up to its `:` (a list item's `- ` included), as front matter colours it. */
+const YAML_KEY = '[^\\S\\n]*(?:- )?[^\\s#:\'"-][^:#\\n]*(?=:(?:\\s|$))';
+
 /**
  * Front matter as Monarch reads it (`MONARCH_FRONT_MATTER`): a `---` fence on the first
  * non-blank line, at any indent, up to the next `---` line. `front-matter-start` opens at the
@@ -302,9 +305,6 @@ export function textMate(g: Grammar, names: HighlightNames): object {
  * the diagram to the end of the text, so a later `---` line opens nothing. Neither ends (`(?!)`
  * never matches): an unclosed block runs to the end of the text, as in Monarch.
  */
-/** A YAML key up to its `:` (a list item's `- ` included), as front matter colours it. */
-const YAML_KEY = '[^\\S\\n]*(?:- )?[^\\s#:\'"-][^:#\\n]*(?=:(?:\\s|$))';
-
 function textMateFrontMatter(suffix: string): Record<string, object> {
   const fence = '^[^\\S\\n]*---[^\\S\\n]*$';
   const meta = { '0': { name: `${TEXTMATE_SCOPES.meta}${suffix}` } };
