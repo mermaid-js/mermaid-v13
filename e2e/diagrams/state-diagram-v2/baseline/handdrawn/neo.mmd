@@ -5,12 +5,13 @@ config:
 description: one representative state diagram, hand-drawn in the neo theme (D307)
 ---
 stateDiagram-v2
+  state check <<choice>>
+  state split <<fork>>
+  state merge <<join>>
   [*] --> Idle
   Idle --> check : request
-  state check <<choice>>
   check --> split : valid
   check --> Idle : invalid
-  state split <<fork>>
   split --> Working
   split --> Audit
   state Working {
@@ -25,7 +26,6 @@ stateDiagram-v2
       Checking --> [*]
     }
   }
-  state merge <<join>>
   Working --> merge
   Audit --> merge
   merge --> Done
