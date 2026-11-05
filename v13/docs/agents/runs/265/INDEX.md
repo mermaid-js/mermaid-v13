@@ -3,6 +3,7 @@
 - IMPLEMENTER.md — the brief every implementer follows.
 - KICKOFF.md — the prompt that starts a session on the reference machine.
 - tickets/<N>.md — handoff per ticket, written by its implementer.
+- LEDGER.md — every fix against the last one and against the fixed origin `f208fab9b`; `ratios.mjs` computes its ratios.
 
 Decisions: D200–D209 (v13/docs/DECISIONS.md, last section). Follow-up spec: #281.
 
