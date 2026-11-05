@@ -1,20 +1,18 @@
 /**
- * The curated v13 visual baseline (R-TEST-5): `e2e/diagrams/flowchart/baseline/**.mmd`, and
- * the ER diagram's `e2e/diagrams/er-diagram/baseline/*.mmd` (#134) and the sequence diagram's
- * `e2e/diagrams/sequence/baseline/**.mmd` (#145).
- * The Playwright snapshot runner (`e2e/rendering/mmd-snapshots.spec.ts`, tier `baseline`) and
- * the gallery (R-TEST-6) both read this folder, so they can't drift apart.
+ * The curated v13 visual baselines (R-TEST-5): `e2e/diagrams/<folder>/baseline/**.mmd` of each
+ * diagram type v13 renders. The Playwright snapshot runner (`e2e/rendering/mmd-snapshots.spec.ts`,
+ * tier `baseline`) and the gallery (R-TEST-6) both read these folders, so they can't drift apart.
  */
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { THEME_NAMES, type ThemeName } from '@mermaid-js/core/theme';
+import { supportsFormat } from 'mermaid';
+import { supportedFixtureFolders, supportedTypesOf } from './fixture-discovery.ts';
 
 export const REPO_ROOT = join(import.meta.dirname, '..', '..', '..');
-export const BASELINE_DIR = join(REPO_ROOT, 'e2e', 'diagrams', 'flowchart', 'baseline');
-/** The ER diagram's baseline (#134), shown in the gallery under `er/`. */
-export const ER_BASELINE_DIR = join(REPO_ROOT, 'e2e', 'diagrams', 'er-diagram', 'baseline');
-/** The sequence diagram's baseline (#145), shown in the gallery under `sequence/`. */
-export const SEQUENCE_BASELINE_DIR = join(REPO_ROOT, 'e2e', 'diagrams', 'sequence', 'baseline');
+const DIAGRAMS_DIR = join(REPO_ROOT, 'e2e', 'diagrams');
+/** The flowchart baseline, which `fixtures.spec.ts` checks for coverage. */
+export const BASELINE_DIR = join(DIAGRAMS_DIR, 'flowchart', 'baseline');
 
 /** The themes M1 ships, in gallery column order. */
 export const M1_THEMES: readonly ThemeName[] = THEME_NAMES;
@@ -43,17 +41,22 @@ export function baselineFixtures(dir = BASELINE_DIR): Fixture[] {
 }
 
 /**
- * The gallery's fixtures: the flowchart baseline, then the ER baseline under `er/` and the
- * sequence baseline under `sequence/`.
+ * The gallery's fixtures (#207): the `baseline/` folder of every fixture folder whose diagram
+ * types mermaid renders (the snapshot discovery's `supportedFixtureFolders`), each under its
+ * folder name (`flowchart/shapes/rect.mmd`), in folder order. A new diagram type's baseline
+ * joins once its package is registered.
  */
-export function galleryFixtures(): Fixture[] {
-  const under = (dir: string, prefix: string): Fixture[] =>
-    baselineFixtures(dir).map((f) => ({ ...f, path: `${prefix}/${f.path}` }));
-  return [
-    ...baselineFixtures(),
-    ...under(ER_BASELINE_DIR, 'er'),
-    ...under(SEQUENCE_BASELINE_DIR, 'sequence'),
-  ];
+export function galleryFixtures(
+  supportedTypes: ReadonlySet<string> = supportedTypesOf((type) => supportsFormat(type, 'svg'))
+): Fixture[] {
+  return supportedFixtureFolders({ diagramsDir: DIAGRAMS_DIR, supportedTypes })
+    .filter((folder) => existsSync(join(DIAGRAMS_DIR, folder, 'baseline')))
+    .flatMap((folder) =>
+      baselineFixtures(join(DIAGRAMS_DIR, folder, 'baseline')).map((f) => ({
+        ...f,
+        path: `${folder}/${f.path}`,
+      }))
+    );
 }
 
 /** Whether the fixture picks its own theme (front matter or init directive). */
