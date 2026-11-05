@@ -74,7 +74,7 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 - Decided in T4: the in-package well-formed check is core's `inertProblem` scan plus one root, because `import-boundaries` keeps `saxes` out of diagram packages; T5's conformance render spec adds the full XML parse over the corpus.
 - Unmet until T2/T5: render properties run on the hand-built `FIXTURES` (6 themes, `auto`, literal colours), not on parser output through `createMermaid().render()`; the AST round-trip checks `data-ast` against the model's ids (one element each), not against AST ranges.
 
-## #327 T5 integration
+## #327 T5 integration (merged)
 
 - Coordinator: T5 gives each task dot the `data-ast` of its actor-mention node (`a:<name>`, `a:<name>@2`, from T2's AST; the `''` actor has no node and draws no dot), so the AST round-trip has one element per node; legend entries keep `data-id` only. MIGRATION row for the entity actor sort (T2 divergence).
 - Decided in T5: `fillType0`–`fillType7` are literal values per theme spec (`fillTypes()` in `core/src/theme/specs/palettes.ts`), equal to v12 12.2.0's resolved values (checked against the oracle by `packages/conformance/src/journey/theme.spec.ts`). `base` may carry no values or rules (R-THEME-5 spec), so its fills are the shared light/dark rules: `fillType0`/`fillType1` follow `primaryColor`/`secondaryColor` (as v12, also with custom values), `fillType2`–`7` are base's v12 literals. No other theme re-derives from a custom `primaryColor` (MIGRATION "User journey / Themes").
