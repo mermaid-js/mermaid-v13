@@ -12,6 +12,13 @@ Unmet criteria and open choices, filed under the ticket that owns each one. Each
 
 ## T1 (#340)
 
+- D308(a) finding: no v13 ER edge or end marker is drawn under an entity, so v12's solid underlay is dropped. Over the 218 ER corpus files that render (446 edges, 1,157 marker pieces), no sampled point of an edge path, crow's foot, bar or circle lies even 0.01 px inside an entity's box. Grow the boxes by 0.5 px and 445 edges and 452 marker pieces touch them, so the check does see the geometry: lines and markers stop at the outline. Entities are drawn after the edges, but nothing overlaps. One thing still shows through a hachured entity: a subgraph's fill, as for a flowchart node on a subgraph.
+- Choice: paint that an edge takes from its `edgePaths` group stays on the group. Flowchart, class and state edges get `stroke`, `stroke-width` and `fill: none` from it; ER edges carry their own stroke. T0's rule says to put all paint on the call, but here that would change the corpus bytes. H2's edge drawer must write one `<path>` that keeps inheriting this paint, as H1 already plans.
+- Choice: invisible shapes go through the hook too. That covers flowchart's `text` and brace hit boxes (`fill` and `stroke` `none`, role `node`) and state's concurrency region frame (role `group`, the only `group` state has). The drawer sees `none` paints.
+- Choice, flowchart roles beyond the ticket's list: the collapsed card is a `node`, with its separator as a `divider` and its three dots as `mark`; `browser`'s dots are `mark`; `fr-circ`'s inner disc is a `part`; braces and icon frames are `node`. `fork`, `choice`, `f-circ` and `sm-circ` are `node` in flowchart: v12 drew them with node options, and only `stateStart` used `solidStateFill`.
+- Choice, state: the start, the end's ring and dot, choice, fork and join are all `mark`. Composite `outer` and `inner` are `part`, and the dashed lines between regions are `divider`. ER subgraphs are `group` (the ticket doesn't list them).
+- The identity spec's base writes each outline as a plain leaf in the same process, so it can't see a changed attribute. That was checked once by hand instead: the 1,201 corpus files of the four types (1,142 render), in six themes (default, neo, neo-dark, redux, dark, forest), are byte-identical before and after adoption (7,206 SHA-256 digests).
+
 ## H1 (#341)
 
 ## H2 (#342)

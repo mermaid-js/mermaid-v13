@@ -76,9 +76,9 @@ export function drawIcon(
       v.form ? 'its frame is drawn without it' : 'it is left out'
     }.`,
   });
-  if (v.form === 'circle') w.leaf('circle', { cy: top + size / 2, r: size / 2, ...a });
+  if (v.form === 'circle') w.outline('node', 'circle', { cy: top + size / 2, r: size / 2, ...a });
   else if (v.form === 'square' || v.form === 'rounded') {
-    w.leaf('rect', {
+    w.outline('node', 'rect', {
       x: -size / 2,
       y: top,
       width: size,

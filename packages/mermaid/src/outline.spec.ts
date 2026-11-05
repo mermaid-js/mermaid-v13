@@ -60,7 +60,10 @@ describe('the outline hook through render (D302)', () => {
       await render({ id: 'fixture-outline', outline: outlineFixture }),
       await render({ id: 'fixture-outline', outline: outlineFixture }, tree),
     ]) {
-      expect(svg.match(/<g class="outline-node"><path [^>]*\/><\/g>/g)).toHaveLength(shapes.length);
+      // Flowchart's own roles (#340), or `node` for the leaves the proxy outlines.
+      expect(svg.match(/<g class="outline-[a-z]+"><path [^>]*\/><\/g>/g)).toHaveLength(
+        shapes.length
+      );
       expect(svg).not.toMatch(/<(rect|circle|ellipse|polygon|line)\b/);
       assertInert(svg);
     }

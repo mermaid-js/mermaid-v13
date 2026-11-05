@@ -5,15 +5,18 @@ import { er } from '@mermaid-js/diagram-er';
 import { flowchart } from '@mermaid-js/diagram-flowchart';
 import { sequence } from '@mermaid-js/diagram-sequence';
 import { state } from '@mermaid-js/diagram-state';
-import { outliningEveryLeaf } from '@mermaid-js/core/svg/testing';
+import type { SvgWriter } from '@mermaid-js/core/svg';
+import { outlineFixture, outliningEveryLeaf } from '@mermaid-js/core/svg/testing';
 import { createMermaid, MermaidError, type DiagramPlugin, type ExtensionPlugin } from 'mermaid';
 import { createMermaid as createSlim } from 'mermaid/slim';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
 
 /**
- * The outline hook (D302) changes no byte of the corpus unless a drawer draws: with a drawer
- * registered but inactive, in the stream and the tree backing, and with every first-party
- * diagram drawing all its shapes through `w.outline` and the drawer declining each one.
+ * The outline hook (D302) changes no byte of the corpus unless a drawer draws. The base writes
+ * every outline as its plain leaf, as flowchart, class, state and ER did before they adopted
+ * the hook (#340). Against it: the adopted diagrams with no drawer, with T0's fixture drawer
+ * registered but inactive (stream and tree backing), and with every leaf of every first-party
+ * diagram drawn through `w.outline` and a drawer declining each one.
  */
 
 const DIRS = [
@@ -26,6 +29,25 @@ const DIRS = [
 ];
 
 type AnyPlugin = DiagramPlugin<unknown, unknown>;
+const PLUGINS = [flowchart, classDiagram, state, er, sequence] as unknown as AnyPlugin[];
+
+/** `w`, writing each outline as the plain leaf, without the hook. */
+const plainLeaves = (w: SvgWriter): SvgWriter => ({
+  open: (tag, attrs) => w.open(tag, attrs),
+  close: () => w.close(),
+  leaf: (tag, attrs) => w.leaf(tag, attrs),
+  outline: (_role, tag, attrs) => w.leaf(tag, attrs),
+  text: (content) => w.text(content),
+  label: (box, x, y, attrs) => w.label(box, x, y, attrs),
+  path: () => w.path(),
+  styleSheet: (css) => w.styleSheet(css),
+});
+
+/** `plugin`, as it drew before adopting the hook. */
+const unadopted = (plugin: AnyPlugin): AnyPlugin => ({
+  ...plugin,
+  render: (model, layout, ctx, w) => plugin.render(model, layout, ctx, plainLeaves(w)),
+});
 
 /** `plugin`, drawing every shape through `w.outline`. */
 const adopted = (plugin: AnyPlugin): AnyPlugin => ({
@@ -34,8 +56,8 @@ const adopted = (plugin: AnyPlugin): AnyPlugin => ({
 });
 
 const inactive: ExtensionPlugin = {
-  id: 'inactive',
-  outline: { active: () => false, draw: () => true },
+  id: 'fixture-outline',
+  outline: { ...outlineFixture, active: () => false },
 };
 const declining: ExtensionPlugin = {
   id: 'declining',
@@ -54,19 +76,15 @@ async function api(make: () => ReturnType<typeof createMermaid>, ...extensions: 
 describe('the outline hook leaves the corpus byte-identical (D302)', () => {
   it('with no drawer drawing, in both writer backings', async () => {
     const full = () => createMermaid();
-    const slim = () =>
-      createSlim({
-        diagrams: [flowchart, classDiagram, state, er, sequence].map((p) =>
-          adopted(p as unknown as AnyPlugin)
-        ),
-      });
-    const plain = await api(full);
+    const slim = () => createSlim({ diagrams: PLUGINS.map(adopted) });
+    const plain = await api(() => createSlim({ diagrams: PLUGINS.map(unadopted) }));
     const variants = {
-      'inactive drawer, stream': await api(full, inactive),
-      'inactive drawer, tree': await api(full, inactive, tree),
-      'adopted, no drawer': await api(slim),
-      'adopted, declining drawer, stream': await api(slim, declining),
-      'adopted, declining drawer, tree': await api(slim, declining, tree),
+      'adopted, no drawer': await api(full),
+      'adopted, inactive fixture drawer, stream': await api(full, inactive),
+      'adopted, inactive fixture drawer, tree': await api(full, inactive, tree),
+      'every leaf outlined, no drawer': await api(slim),
+      'every leaf outlined, declining drawer, stream': await api(slim, declining),
+      'every leaf outlined, declining drawer, tree': await api(slim, declining, tree),
     };
     let compared = 0;
     for (const dir of DIRS)
