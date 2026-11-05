@@ -1,14 +1,14 @@
 # Run notes, spec #291 (timeline)
 
-Integration branch `feature/291_timeline` (from `mermaid-v13` + `docs/m4-specs`, PR #284).
+Integration branch `feature/291_timeline` (from `mermaid-v13` + `docs/m4-specs`, PR #284; + #285 as PR #346). Draft PR: #350.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate | #308 | #285 (merged in e5f920116) | next |
+| T1 lexer parity gate | #308 | #285 (merged in e5f920116) | in progress |
 | T2 grammar, parser, model, AST | #336 | #308 | |
-| T3 layout (LR and TD) | #337 | #336 (hand-built fixtures meanwhile) | in progress |
-| T4a classic `cScale*`, `cScaleInv*`, `cScaleLabel*` palettes | #338 | — | in progress |
-| T4 SVG renderer | #311 | #337, #338 | |
+| T3 layout (LR and TD) | #337 | #336 (hand-built fixtures meanwhile) | merged (ff 70ad3a5d2) |
+| T4a classic `cScale*`, `cScaleInv*`, `cScaleLabel*` palettes | #338 | — | merged |
+| T4 SVG renderer | #311 | #337, #338 | in progress |
 | T5 integration | #315 | #311, #318 | |
 | T6 language facet | #318 | #336 | |
 

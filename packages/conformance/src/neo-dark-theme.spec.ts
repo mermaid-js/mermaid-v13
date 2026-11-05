@@ -7,6 +7,7 @@
  */
 import {
   DARK_RULES,
+  NUMBERED_PALETTES,
   PALETTE_LIMIT,
   PALETTE_VARIABLES,
   THEME_VARIABLES,
@@ -73,7 +74,6 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   secondaryTextColor: 'D183, R-THEME-9: v12 #b8b6b6 is 4.49:1 on secondaryColor; #b9b7b7 meets AA',
   altBackground: 'D189: #404040; v12 #f0f0f0 hid the #cccccc lines on a nested composite',
   dropShadow: 'D181: the same blurred shadow, written in the syntax `checkFilter` accepts',
-  cScale: 'D181, D152: neo-dark carries no per-item palette',
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
@@ -107,8 +107,8 @@ function same(name: string): boolean {
 }
 
 function v12Palette(name: string): string[] {
-  if (name === 'cScale')
-    return Array.from({ length: PALETTE_LIMIT }, (_, i) => OLD[`cScale${i}`] as string);
+  if (NUMBERED_PALETTES.includes(name as never))
+    return Array.from({ length: PALETTE_LIMIT }, (_, i) => OLD[`${name}${i}`] as string);
   const list = OLD[name];
   return Array.isArray(list) ? (list as string[]) : [];
 }
@@ -179,8 +179,10 @@ describe('neo-dark against v12 12.2.0 (#227, D151, D181, D183)', () => {
     expect(hex(neoDark.value('erMarkerFill'))).toBe(hex(OLD.mainBkg));
   });
 
-  it('has no per-item palette (D181)', () => {
-    for (const p of PALETTE_VARIABLES) expect(neoDark.palette(p), p).toEqual([]);
+  it("has no per-subgraph palette (D181); its cScale palettes are v12 neo-dark's (D258)", () => {
+    expect(neoDark.palette('borderColorArray')).toEqual([]);
+    expect(neoDark.palette('bkgColorArray')).toEqual([]);
+    for (const p of NUMBERED_PALETTES) expect(neoDark.palette(p), p).toHaveLength(PALETTE_LIMIT);
   });
 
   // GAPS.md "Contracts": #223 owns the gradient vocabulary. Until it merges these are not v13

@@ -5,7 +5,7 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { REDUX_RULES } from './redux-rules.ts';
-import { TAILWIND_300, TAILWIND_400 } from './palettes.ts';
+import { INVERTED_SCALE, TAILWIND_300, TAILWIND_400, paletteSlots } from './palettes.ts';
 import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
 
 const theme: ThemeSpec = {
@@ -19,6 +19,9 @@ const theme: ThemeSpec = {
     borderColorArray: TAILWIND_400,
     bkgColorArray: [],
     cScale: TAILWIND_300,
+    cScaleInv: INVERTED_SCALE,
+    // v12 theme-redux-dark-color.js: each label is its slot darkened by 75.
+    cScaleLabel: paletteSlots((i) => `darkenHsl(cScale${i}, 75%)`),
   },
 };
 

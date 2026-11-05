@@ -9,6 +9,8 @@
  * `packages/conformance/src/neo-dark-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { LABEL_SCALE } from './palettes.ts';
+import { DARK_HUE_SOURCES, darkenedScale } from './scales.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
@@ -77,6 +79,9 @@ const neoDark: ThemeSpec = {
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',
   },
+  // v12 theme-neo-dark.js: hue steps darkened by 25 (75 under darkMode).
+  palettes: { ...darkenedScale(DARK_HUE_SOURCES, 25), cScaleLabel: LABEL_SCALE },
+  darkModePalettes: darkenedScale(DARK_HUE_SOURCES, 75),
 };
 
 export default neoDark;

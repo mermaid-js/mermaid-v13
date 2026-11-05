@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -46,11 +46,7 @@ const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
     expect(TYPES).toEqual(['class', 'er', 'flowchart', 'sequence', 'state', 'timeline']);
-    // A package with only its lexer so far (timeline at #308) draws nothing yet.
-    const drawn = TYPES.filter((t) =>
-      ['layout', 'render'].some((d) => existsSync(join(PACKAGES, `diagram-${t}`, 'src', d)))
-    );
-    for (const type of drawn) expect(READS.get(type)!.size).toBeGreaterThan(0);
+    for (const type of TYPES) expect(READS.get(type)!.size).toBeGreaterThan(0);
   });
 
   it.each(TYPES)('lists %s for every variable it reads, and for no other', (type) => {
