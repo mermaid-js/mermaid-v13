@@ -48,3 +48,6 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 - **Choices:** one diagnostic per bad style; a style cut short by a syntax error is not also checked. An overridden `classDef` gets `st:<n>` like other overridden statements. Token kind `AxisDelimiter` renamed `AxisTextDelimiter` (gen:grammar matches kinds to terminals by name). `oracle.ts` gets one additive patch call (`quadrant/oracle-env.ts`) recording v12's DB calls.
 - [ ] **Owner #321 T6:** probe support (completion context) is not in the parser yet.
 - Size: parser 8.6 KB gz; package 10.4 KB gz.
+- Review of #301 (≈30k inputs through model parity, no model, AST or performance defects). Follow-ups:
+  - [ ] **Owner #321 T6:** a class `ref` symbol is recorded before its point statement finishes (`parser.ts:456`), leaving a stale symbol when the point fails (`P:::a: [0.1, 2]`).
+  - [ ] **Owner #301 follow-up (after T4/T6):** `UNCLOSED_STRING` only fires when `"` starts a label; a later quote (`x-axis a "b⏎…`) gives a generic message that quotes the rest of the document. Junk before the header (`foo⏎quadrantChart`) gives a second, false "comes only once" diagnostic. Model parity runs only on e2e, v12-specs and quadrant-cases; extend it to the whole gate corpus (506 items agree today by hand).
