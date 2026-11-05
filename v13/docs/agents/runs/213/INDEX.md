@@ -16,7 +16,7 @@ Integration branch `feature/213_neo-themes`, cut from `mermaid-v13` plus the D18
 | #227 T2 neo-dark | feature/227_neo-dark-theme | merged (#259) |
 | #229 T3 flowchart | feature/229_flowchart-neo | merged (#261) |
 | #231 T4 sequence | feature/231_sequence-neo | merged (#260) |
-| #233 T5 class | feature/233_class-neo | running |
-| #234 T6 state | feature/234_state-neo | running |
-| #235 T7 ER | | blocked by #223 #225 #227 |
-| #236 T8 close | | blocked by #229–#235 |
+| #233 T5 class | feature/233_class-neo | merged |
+| #234 T6 state | feature/234_state-neo | merged |
+| #235 T7 ER | feature/235_er-neo | merged |
+| #236 T8 close | feature/236_neo-close | done, awaiting gallery review |
