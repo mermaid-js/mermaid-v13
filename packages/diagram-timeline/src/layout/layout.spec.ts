@@ -148,6 +148,34 @@ describe('timeline LR follows timelineRenderer.ts', () => {
   });
 });
 
+describe('timeline title', () => {
+  it('moves the content down by what a taller title adds over one line (D225)', () => {
+    for (const m of [fx.brTitle, fx.turned(fx.brTitle)]) {
+      const l = lay(m);
+      const one = lay({ ...m, title: 'A title' });
+      const t = l.title!;
+      expect(t.text.lines).toHaveLength(3);
+      const shift = t.text.height - t.text.lineHeight;
+      expect(l.sections[0]!.y).toBeCloseTo(one.sections[0]!.y + shift);
+      expect(l.periods[0]!.y).toBeCloseTo(one.periods[0]!.y + shift);
+      // The one-line title keeps v12's origin.
+      expect(one.sections[0]!.y).toBe(50);
+    }
+  });
+
+  it('moves the content down by what a large font size adds to the title', () => {
+    const at = (fontSize: string): TimelineLayout =>
+      lay(fx.verticalSimple, {}, 'default', { fontSize });
+    const big = at('72px');
+    const t = big.title!;
+    // The title's bottom sits as far above the content as v12's one-line 16 px title does.
+    const ref = at('16px');
+    const gap = ref.periods[0]!.y - (ref.title!.y + ref.title!.height);
+    expect(big.periods[0]!.y - (t.y + t.height)).toBeCloseTo(gap);
+    expect(big.periods[0]!.y).toBeGreaterThan(50);
+  });
+});
+
 describe('timeline groups and colour slots', () => {
   it('gives each period its own slot without sections, or slot 0 under disableMulticolor', () => {
     expect(lay(fx.seven).periods.map((p) => p.slot)).toEqual([0, 1, 2, 3, 4, 5, 6]);
@@ -223,13 +251,27 @@ describe('timeline TD follows timelineRendererVertical.ts', () => {
   });
 
   it('runs the axis from 2 font sizes above the content to 0.5 font size + 20 below it, with an arrowhead (D253)', () => {
-    const l = lay(fx.verticalSimple);
+    const l = lay({ ...fx.verticalSimple, title: undefined });
     const last = l.periods.at(-1)!;
     const end = Math.max(bottomOf(last), bottomOf(last.events.at(-1)!));
     expect(l.axis.y1).toBe(50 - 32);
     expect(l.axis.y2).toBeCloseTo(end + 8 + 20);
     expect(l.axis.arrow.tip).toEqual({ x: 430, y: l.axis.y2 + 4 });
-    expect(lay(fx.verticalSimple, {}, 'default', { fontSize: '20px' }).axis.y1).toBe(50 - 40);
+    const big = lay({ ...fx.verticalSimple, title: undefined }, {}, 'default', {
+      fontSize: '20px',
+    });
+    expect(big.axis.y1).toBe(50 - 40);
+  });
+
+  it('starts the axis below a title it would cross, where v12 drew it through', () => {
+    const l = lay(fx.verticalSimple);
+    const t = l.title!;
+    expect(t.x).toBeLessThan(430);
+    expect(t.x + t.width).toBeGreaterThan(430);
+    expect(l.axis.y1).toBeCloseTo(t.y + t.height);
+    expect(l.axis.y1).toBeGreaterThan(50 - 32);
+    // The boxes keep v12's places.
+    expect(l.periods[0]!.y).toBe(50);
   });
 
   it('draws sections as full rows, 590 wide, with their periods 20 below', () => {
@@ -285,6 +327,26 @@ describe('timelineLayoutViolations', () => {
     expect(found.some((v) => v.startsWith('the axis (150…300) does not span'))).toBe(true);
   });
 
+  it('catches a line through the title, a wrong slot and a label wider than its box', () => {
+    const good = lay(fx.verticalSimple);
+    const [p0] = good.periods;
+    const broken: TimelineLayout = {
+      ...good,
+      axis: { ...good.axis, y1: -100 },
+      periods: [{ ...p0!, slot: 3, width: 20 }, ...good.periods.slice(1)],
+    };
+    const found = timelineLayoutViolations(fx.verticalSimple, broken);
+    expect(found).toContain('the axis crosses the title');
+    expect(found).toContain('period per:1 is in slot 3, not 0');
+    expect(found).toContain("event ev:1.1 is in slot 0, not its period's");
+    expect(found).toContain('the label of per:1 is wider than its box');
+    // With disableMulticolor every period is in slot 0.
+    const multi = lay(fx.seven);
+    expect(timelineLayoutViolations(fx.seven, multi, { disableMulticolor: true })).toContain(
+      'period per:2 is in slot 1, not 0'
+    );
+  });
+
   it('catches overlapping TD sections and a model mismatch', () => {
     const good = lay(fx.verticalFullRows);
     const [, second] = good.sections;
@@ -320,15 +382,15 @@ describe('timeline layout invariants', () => {
       for (const [name, model] of Object.entries(fx.FIXTURES))
         for (const m of [model, fx.turned(model)])
           it(`${name}, ${m.direction}, ${theme}, ${config}`, () => {
-            expect(timelineLayoutViolations(m, lay(m, timeline, theme))).toEqual([]);
+            expect(timelineLayoutViolations(m, lay(m, timeline, theme), timeline)).toEqual([]);
           });
 
-  it('hold at a large font size', () => {
+  it.each(['30px', '72px'])('hold at a font size of %s', (fontSize) => {
     for (const [name, model] of Object.entries(fx.FIXTURES))
       for (const m of [model, fx.turned(model)])
         expect(
-          timelineLayoutViolations(m, lay(m, {}, 'default', { fontSize: '30px' })),
-          name
+          timelineLayoutViolations(m, lay(m, {}, 'default', { fontSize })),
+          `${name} ${m.direction}`
         ).toEqual([]);
   });
 });

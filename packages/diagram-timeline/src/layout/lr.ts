@@ -8,7 +8,7 @@
  * of the last column (v12's `width + 3 × leftMargin` fell short below a `leftMargin` of 25).
  */
 import type { TimelineModel } from '../model.ts';
-import { Bounds, groupsOf, line, slotOf, titleAt, type Env } from './env.ts';
+import { Bounds, groupsOf, line, slotOf, titleAt, titleBlock, type Env } from './env.ts';
 import { finish } from './finish.ts';
 import type {
   TimelineBox,
@@ -22,7 +22,9 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
   const { lr, common } = env.m;
   const boxWidth = lr.wrap + 2 * lr.padding;
   const left = common.originX + env.leftMargin;
-  const top = common.originY;
+  // A title taller than v12's one-line box moves everything below it down.
+  const heading = titleBlock(env, model.title);
+  const top = common.originY + heading.shift;
   const groups = groupsOf(model);
 
   const periodLabels = model.periods.map((p) => env.measure(p.text, lr.wrap));
@@ -48,11 +50,12 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
   }
 
   // Section boxes, drawn `pitch × columns − sectionTrim` wide and at least `sectionFloor` tall.
-  const sectionBoxes: { s: number; x: number; columns: number }[] = [];
+  const sectionBoxes: { s: number; x: number; columns: number; periods: readonly number[] }[] = [];
   let x = left;
   for (const g of groups) {
     const columns = Math.max(g.periods.length, 1);
-    if (g.section !== undefined) sectionBoxes.push({ s: g.section, x, columns });
+    if (g.section !== undefined)
+      sectionBoxes.push({ s: g.section, x, columns, periods: g.periods });
     x += lr.pitch * columns;
   }
   const sectionLabels = sectionBoxes.map(({ s, columns }) =>
@@ -120,31 +123,33 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
     });
   });
 
-  const sections: TimelineSectionLayout[] = sectionBoxes.map(({ s, x: sx, columns }, k) => {
-    const label = sectionLabels[k]!;
-    const box = {
-      x: sx,
-      y: top,
-      width: lr.pitch * columns - lr.sectionTrim + 2 * lr.padding,
-      height: sectionHeights[k]!,
-    };
-    const band = new Bounds().rect(box);
-    periods.forEach((p, i) => {
-      if (p.section !== s) return;
-      band.rect(p);
-      for (const e of p.events) band.rect(e);
-      band.segment(connectors[i]!);
-    });
-    return {
-      ast: model.sections[s]!.ast,
-      section: s,
-      slot: s,
-      label,
-      padding: lr.padding,
-      ...box,
-      band: band.box(box),
-    };
-  });
+  const sections: TimelineSectionLayout[] = sectionBoxes.map(
+    ({ s, x: sx, columns, periods: own }, k) => {
+      const label = sectionLabels[k]!;
+      const box = {
+        x: sx,
+        y: top,
+        width: lr.pitch * columns - lr.sectionTrim + 2 * lr.padding,
+        height: sectionHeights[k]!,
+      };
+      const band = new Bounds().rect(box);
+      for (const i of own) {
+        const p = periods[i]!;
+        band.rect(p);
+        for (const e of p.events) band.rect(e);
+        band.segment(connectors[i]!);
+      }
+      return {
+        ast: model.sections[s]!.ast,
+        section: s,
+        slot: s,
+        label,
+        padding: lr.padding,
+        ...box,
+        band: band.box(box),
+      };
+    }
+  );
 
   // v12's `getBBox` before the title and the axis: what the title and axis are placed from.
   const content = new Bounds();
@@ -155,7 +160,7 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
   }
   for (const c of connectors) content.segment(c);
   const box = content.box({ x: left, y: top });
-  const title = titleAt(env, model.title, box.width / 2 - env.leftMargin);
+  const title = titleAt(env, heading, box.width / 2 - env.leftMargin);
   const axisEnd = Math.max(box.width + lr.axisEndMargins * env.leftMargin, box.x + box.width);
   const axis = line(env, env.leftMargin, axisY, axisEnd, axisY, common.axisWidth);
   return finish(env, {

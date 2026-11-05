@@ -36,6 +36,8 @@ export interface Env {
   /** Box labels: the theme's font at its weight (redux draws them bold). */
   readonly font: FontKey;
   readonly titleFont: FontKey;
+  /** The title's font in v12's one-line title box (`titleReferenceFontSize`). */
+  readonly titleReferenceFont: FontKey;
   /** `text` laid out to `wrap` px (D225). */
   measure(text: string, wrap: number, font?: FontKey): MeasuredLabel;
   /** v12 `drawNode`'s height: the label, `heightEm` font sizes and the padding once. */
@@ -49,6 +51,8 @@ export function envOf(ctx: TimelineLayoutContext): Env {
   const family = ctx.theme.value('fontFamily');
   const font: FontKey = { family, size: fontSize, weight: weightOf(ctx.theme.value('fontWeight')) };
   const titleSize = fontSizePx(m.common.titleFontSize, fontSize) ?? fontSize;
+  const refSize = m.common.titleReferenceFontSize;
+  const titleRefSize = fontSizePx(m.common.titleFontSize, refSize) ?? refSize;
   return {
     m,
     fontSize,
@@ -57,8 +61,9 @@ export function envOf(ctx: TimelineLayoutContext): Env {
     multicolor: conf.disableMulticolor !== true,
     font,
     titleFont: { family, size: titleSize, weight: m.common.titleFontWeight },
+    titleReferenceFont: { family, size: titleRefSize, weight: m.common.titleFontWeight },
     measure: (text, wrap, f = font) =>
-      layoutLabel(text, f, wrap > 0 ? wrap : 1, ctx.measurer, { inline: ctx.inline }),
+      layoutLabel(text, f, Math.max(wrap, m.common.minWrap), ctx.measurer, { inline: ctx.inline }),
     boxHeight: (label, padding) => label.height + fontSize * m.common.heightEm + padding,
   };
 }
@@ -179,10 +184,31 @@ export class Bounds {
   }
 }
 
+/** The title's label, and how far it pushes the content down. */
+export interface TitleBlock {
+  readonly label?: MeasuredLabel;
+  /**
+   * How far the title's bottom passes v12's one-line title box (a one-line title at
+   * `titleReferenceFontSize`): 0 for a one-line title at the default font size, so the
+   * geometry is v12's.
+   */
+  readonly shift: number;
+}
+
+export function titleBlock(env: Env, title: string | undefined): TitleBlock {
+  if (title === undefined || title.trim() === '') return { shift: 0 };
+  const label = env.measure(title, Infinity, env.titleFont);
+  // One line of the reference font: only its baseline and line height are read.
+  const ref = env.measure(title, Infinity, env.titleReferenceFont);
+  const refBottom = -ref.baseline + ref.lineHeight;
+  const bottom = -label.baseline + label.height;
+  return { label, shift: Math.max(0, bottom - refBottom) };
+}
+
 /** The title, left-aligned at `x` with its first baseline at v12's `y = 20` (D254). */
-export function titleAt(env: Env, title: string | undefined, x: number): PlacedLabel | undefined {
-  if (title === undefined || title.trim() === '') return undefined;
-  const text = env.measure(title, Infinity, env.titleFont);
+export function titleAt(env: Env, block: TitleBlock, x: number): PlacedLabel | undefined {
+  const text = block.label;
+  if (!text) return undefined;
   return {
     x,
     y: env.m.common.titleBaseline - text.baseline,

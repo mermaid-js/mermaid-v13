@@ -6,6 +6,9 @@
  * - no NaN or infinite number;
  * - one section, period and event layout per model entry, with its AST id;
  * - no two boxes (sections, periods, events, the title) overlap, and section bands do not;
+ *   neither the axis nor a connector crosses the title;
+ * - colour slots follow D251 and `disableMulticolor`;
+ * - each label fits its box;
  * - events in their period's column (LR: same x span, below the axis) or row (TD: right of the
  *   axis, between the period's top and the next period's);
  * - connectors join period and event (LR: from the period's bottom, within its span, into its
@@ -78,6 +81,10 @@ function counts(model: TimelineModel, layout: TimelineLayout, out: string[]): vo
   });
 }
 
+/**
+ * Every pair of boxes: O(B²) in the boxes, which is fine for a test helper (corpus diagrams
+ * hold tens of boxes); the layout itself never runs it.
+ */
 function noOverlaps(layout: TimelineLayout, out: string[]): void {
   const boxes: { what: string; r: Rect }[] = [
     ...layout.sections.map((s) => ({ what: `section ${s.ast}`, r: s as Rect })),
@@ -100,7 +107,21 @@ function noOverlaps(layout: TimelineLayout, out: string[]): void {
         out.push(`the band of section ${secs[i]!.ast} overlaps the band of ${secs[j]!.ast}`);
 }
 
-function lr(layout: TimelineLayout, out: string[]): void {
+/** Each section's periods, built once: the checks below run per section, not per pair. */
+type BySection = ReadonlyMap<number, readonly TimelinePeriodLayout[]>;
+
+function bySection(layout: TimelineLayout): BySection {
+  const out = new Map<number, TimelinePeriodLayout[]>();
+  for (const p of layout.periods) {
+    if (p.section === undefined) continue;
+    const list = out.get(p.section) ?? [];
+    list.push(p);
+    out.set(p.section, list);
+  }
+  return out;
+}
+
+function lr(layout: TimelineLayout, own: BySection, out: string[]): void {
   const { axis } = layout;
   for (const p of layout.periods) {
     if (!(axis.y1 > bottom(p) - EPS)) out.push(`the axis is not below period ${p.ast}`);
@@ -129,14 +150,13 @@ function lr(layout: TimelineLayout, out: string[]): void {
   if (layout.connectors.length !== layout.periods.length)
     out.push(`${layout.connectors.length} connectors for ${layout.periods.length} periods`);
   for (const s of layout.sections)
-    layout.periods.forEach((p) => {
-      if (p.section !== s.section) return;
+    for (const p of own.get(s.section) ?? []) {
       if (!insideX(s, p)) out.push(`section ${s.ast} does not span period ${p.ast}`);
       if (bottom(s) > p.y + EPS) out.push(`section ${s.ast} reaches down to period ${p.ast}`);
-    });
+    }
 }
 
-function td(layout: TimelineLayout, out: string[]): void {
+function td(layout: TimelineLayout, own: BySection, out: string[]): void {
   const { axis } = layout;
   const ax = axis.x1;
   const order = [...layout.periods].sort((a, b) => a.y - b.y);
@@ -168,23 +188,108 @@ function td(layout: TimelineLayout, out: string[]): void {
       out.push(`the connector of event ${e.ast} is not level with it`);
   }
   for (const s of layout.sections)
-    layout.periods.forEach((p) => {
-      if (p.section !== s.section) return;
+    for (const p of own.get(s.section) ?? []) {
       if (!insideX(s, p)) out.push(`section ${s.ast} does not span period ${p.ast}`);
       if (bottom(s) > p.y + EPS) out.push(`section ${s.ast} reaches down to period ${p.ast}`);
       for (const e of p.events)
         if (!insideX(s, e)) out.push(`section ${s.ast} does not span event ${e.ast}`);
-    });
+    }
 }
 
-function bands(layout: TimelineLayout, out: string[]): void {
+function bands(layout: TimelineLayout, own: BySection, out: string[]): void {
   for (const s of layout.sections) {
     if (!contains(s.band, s)) out.push(`the band of section ${s.ast} does not hold its box`);
-    for (const p of layout.periods) {
-      if (p.section !== s.section) continue;
+    for (const p of own.get(s.section) ?? []) {
       for (const r of [p as TimelineBox, ...p.events])
         if (!contains(s.band, r)) out.push(`the band of section ${s.ast} does not hold ${r.ast}`);
     }
+  }
+}
+
+/**
+ * Whether the segment passes through the inside of `r` (touching an edge does not count):
+ * Liang–Barsky clipping against `r` shrunk by the tolerance.
+ */
+function crosses(l: TimelineLine, r: Rect): boolean {
+  const dx = l.x2 - l.x1;
+  const dy = l.y2 - l.y1;
+  let lo = 0;
+  let hi = 1;
+  const sides: [number, number][] = [
+    [-dx, l.x1 - (r.x + EPS)],
+    [dx, right(r) - EPS - l.x1],
+    [-dy, l.y1 - (r.y + EPS)],
+    [dy, bottom(r) - EPS - l.y1],
+  ];
+  for (const [p, q] of sides) {
+    if (p === 0) {
+      if (q < 0) return false;
+      continue;
+    }
+    const t = q / p;
+    if (p < 0) lo = Math.max(lo, t);
+    else hi = Math.min(hi, t);
+    if (lo > hi) return false;
+  }
+  return true;
+}
+
+function clearOfTitle(layout: TimelineLayout, out: string[]): void {
+  const t = layout.title;
+  if (!t) return;
+  if (crosses(layout.axis, t)) out.push('the axis crosses the title');
+  layout.connectors.forEach((c, i) => {
+    if (crosses(c, t)) out.push(`connector ${i} crosses the title`);
+  });
+}
+
+/** What `timelineLayoutViolations` needs to know of the config the layout ran with. */
+export interface ViolationOptions {
+  /** `timeline.disableMulticolor`. */
+  readonly disableMulticolor?: boolean;
+}
+
+/**
+ * Colour slots: a section its ordinal; a period its section's, 0 before the first (D251), or
+ * with no sections its own index (0 under `disableMulticolor`); events and connectors their
+ * period's.
+ */
+function slots(
+  model: TimelineModel,
+  layout: TimelineLayout,
+  options: ViolationOptions,
+  out: string[]
+): void {
+  for (const s of layout.sections)
+    if (s.slot !== s.section) out.push(`section ${s.ast} is in slot ${s.slot}, not ${s.section}`);
+  const sectioned = model.sections.length > 0;
+  const flat = options.disableMulticolor === true;
+  const wanted = (p: TimelinePeriodLayout, i: number): number => {
+    if (sectioned) return p.section ?? 0;
+    return flat ? 0 : i;
+  };
+  layout.periods.forEach((p, i) => {
+    const want = wanted(p, i);
+    if (p.slot !== want) out.push(`period ${p.ast} is in slot ${p.slot}, not ${want}`);
+    for (const e of p.events)
+      if (e.slot !== p.slot) out.push(`event ${e.ast} is in slot ${e.slot}, not its period's`);
+  });
+  for (const c of layout.connectors) {
+    const p = layout.periods[c.period];
+    if (p && c.slot !== p.slot) out.push(`a connector of period ${p.ast} is not in its slot`);
+  }
+}
+
+/** Each label fits its box: no wider than the box less its padding, no taller than the box. */
+function labelsFit(layout: TimelineLayout, out: string[]): void {
+  const boxes: TimelineBox[] = [
+    ...layout.sections,
+    ...layout.periods.flatMap((p) => [p as TimelineBox, ...p.events]),
+  ];
+  for (const b of boxes) {
+    if (b.label.width > b.width - 2 * b.padding + EPS)
+      out.push(`the label of ${b.ast} is wider than its box`);
+    if (b.label.height > b.height + EPS) out.push(`the label of ${b.ast} is taller than its box`);
   }
 }
 
@@ -211,15 +316,26 @@ function inBounds(layout: TimelineLayout, out: string[]): void {
     if (!lineRects(l).every((p) => holds(b, p))) out.push(`the bounds do not hold ${what}`);
 }
 
-/** Every invariant `layout` breaks for `model`, one line each; empty when it holds. */
-export function timelineLayoutViolations(model: TimelineModel, layout: TimelineLayout): string[] {
+/**
+ * Every invariant `layout` breaks for `model`, one line each; empty when it holds. Pass the
+ * `disableMulticolor` the layout ran with, for the colour slot check.
+ */
+export function timelineLayoutViolations(
+  model: TimelineModel,
+  layout: TimelineLayout,
+  options: ViolationOptions = {}
+): string[] {
   const out: string[] = [];
   numbers(layout, 'layout', out);
   counts(model, layout, out);
   noOverlaps(layout, out);
-  if (layout.direction === 'TD') td(layout, out);
-  else lr(layout, out);
-  bands(layout, out);
+  clearOfTitle(layout, out);
+  const own = bySection(layout);
+  if (layout.direction === 'TD') td(layout, own, out);
+  else lr(layout, own, out);
+  bands(layout, own, out);
+  slots(model, layout, options, out);
+  labelsFit(layout, out);
   inBounds(layout, out);
   return out;
 }

@@ -7,10 +7,11 @@
  * Changes from v12, each decided: periods are grouped by section position (D251); arrowheads
  * are drawn (D253); a section never starts over the previous one's last row (GAPS #337: v12
  * subtracted `2 × rowGap` from the section's height, so the next section began 30 px above the
- * end of a full last row), it starts at least `rowGap` below what that row holds.
+ * end of a full last row), it starts at least `rowGap` below what that row holds; the axis
+ * starts below a title it would cross (GAPS #337).
  */
 import type { TimelineModel } from '../model.ts';
-import { Bounds, groupsOf, line, slotOf, titleAt, type Env } from './env.ts';
+import { Bounds, groupsOf, line, slotOf, titleAt, titleBlock, type Env } from './env.ts';
 import { finish } from './finish.ts';
 import type {
   TimelineBox,
@@ -26,7 +27,9 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
   const periodWidth = td.periodWrap + pad2;
   const eventWidth = td.eventWrap + pad2;
   const left = common.originX + env.leftMargin;
-  const top = common.originY;
+  // A title taller than v12's one-line box moves everything below it down.
+  const heading = titleBlock(env, model.title);
+  const top = common.originY + heading.shift;
   const leftWidth = periodWidth + td.taskAxisGap;
   const rightWidth = eventWidth + td.eventAxisGap;
   const axisX = left + leftWidth;
@@ -138,13 +141,18 @@ export function layoutTD(env: Env, model: TimelineModel): TimelineLayout {
   }
   for (const c of connectors) content.segment(c);
   const box = content.box({ x: left, y: top });
-  const title = titleAt(env, model.title, box.width / 2 - env.leftMargin);
+  const title = titleAt(env, heading, box.width / 2 - env.leftMargin);
   if (title) content.rect(title);
   const all = content.box({ x: left, y: top });
+  // v12 starts the axis 2 font sizes above the content, through a title wider than half the
+  // content; it starts below the title instead.
+  let axisTop = top - td.axisTopEm * env.fontSize;
+  if (title && title.x < axisX && title.x + title.width > axisX)
+    axisTop = Math.max(axisTop, title.y + title.height);
   const axis = line(
     env,
     axisX,
-    top - td.axisTopEm * env.fontSize,
+    axisTop,
     axisX,
     all.y + all.height + td.axisBottomEm * env.fontSize + td.axisBottomPad,
     common.axisWidth

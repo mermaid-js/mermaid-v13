@@ -4,6 +4,6 @@
  */
 export { layoutTimeline } from './layout.ts';
 export type { TimelineLayoutContext } from './env.ts';
-export { timelineLayoutViolations } from './invariants.ts';
+export { timelineLayoutViolations, type ViolationOptions } from './invariants.ts';
 export { TIMELINE_METRICS, type TimelineMetrics } from './metrics.ts';
 export type * from './types.ts';

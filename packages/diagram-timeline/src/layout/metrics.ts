@@ -22,6 +22,13 @@ export interface CommonMetrics {
   readonly titleBaseline: number;
   readonly titleFontSize: string;
   readonly titleFontWeight: number;
+  /**
+   * The font size of v12's one-line title box (its default `fontSize`): the content moves down
+   * by however far the title's bottom passes that box (a `<br>` title, a large `fontSize`).
+   */
+  readonly titleReferenceFontSize: number;
+  /** The least width a label wraps to (core's `layoutLabel` takes a positive width). */
+  readonly minWrap: number;
   /** Stroke widths of the axis and the dashed connectors (v12 attributes). */
   readonly axisWidth: number;
   readonly connectorWidth: number;
@@ -105,6 +112,8 @@ export const TIMELINE_METRICS: TimelineMetrics = {
     titleBaseline: 20,
     titleFontSize: '4ex',
     titleFontWeight: 700,
+    titleReferenceFontSize: 16,
+    minWrap: 1,
     axisWidth: 4,
     connectorWidth: 2,
     arrowBack: 5,

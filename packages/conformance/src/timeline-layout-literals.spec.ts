@@ -8,7 +8,7 @@ import { REPO_ROOT } from './index.ts';
 // literal. The numbers the others may still write are counts, multipliers and non-length values.
 const ALLOWED: Readonly<Record<string, string>> = {
   '0': 'empty sizes, comparisons, the first index',
-  '1': 'a counter step; the least wrap width layoutLabel takes',
+  '1': 'a counter step',
   '2': 'both sides of a box; halving',
   '400': 'the normal font weight',
   '700': 'the bold font weight',

@@ -238,6 +238,21 @@ export const verticalFullRows = timeline(
   { direction: 'TD' }
 );
 
+/** Not in the corpus (D225): a three-line title, which pushes the content down. */
+export const brTitle = timeline(
+  ['First', ['2000 ', 'a'], ['2001 ', 'b', 'c'], 'Second', ['2002 ', 'd']],
+  { title: 'A title<br>on three<br/>lines' }
+);
+
+/** Not in the corpus: words longer than any box, which the label layout splits. */
+export const longWords = timeline(
+  [
+    `Supercalifragilisticexpialidocious${'x'.repeat(40)}`,
+    ['2000 ', `https://example.com/${'a'.repeat(80)}`],
+  ],
+  { title: 'Long words' }
+);
+
 /** `timeline` and nothing else. */
 export const empty = timeline([]);
 
@@ -255,5 +270,7 @@ export const FIXTURES: Readonly<Record<string, TimelineModel>> = {
   tallPeriod,
   leading,
   verticalFullRows,
+  brTitle,
+  longWords,
   empty,
 };
