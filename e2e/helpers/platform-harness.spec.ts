@@ -138,7 +138,7 @@ describe('appEnv', () => {
     const [path] = out.trim().split('\n');
     // The first esbuild is the real executable (a symlink to it), not the shell shim.
     expect(path).not.toContain(join('node_modules', '.bin'));
-    expect(readFileSync(path!, 'latin1')).not.toContain('export NODE_PATH');
+    expect(readFileSync(path, 'latin1')).not.toContain('export NODE_PATH');
     expect(out).toContain('NODE_PATH=\n');
   });
 });
