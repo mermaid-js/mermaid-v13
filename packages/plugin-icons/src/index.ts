@@ -4,8 +4,9 @@
  *
  * - In labels, `fa:fa-car` and the other D296 prefixes become an inline box (D177, D293) 1em
  *   tall at the label's font size, as wide as the icon's aspect makes it, its bottom 0.125em
- *   below the baseline (v12's `.label-icon`). Its `currentColor` fill takes the label's text
- *   colour.
+ *   below the baseline (v12's `.label-icon`). Its `currentColor` paints take the label's text
+ *   colour: fills inherit the label's fill, and an icon that still paints `currentColor` (a
+ *   stroke) gets `color` set to that fill in `postRender`.
  * - Outside labels (flowchart icon shapes, mindmap `::icon()`), `RenderContext.icon` gets the
  *   glyph fitted into the square the diagram asks for (xMidYMid meet). It keeps `currentColor`,
  *   which the diagram sets.
@@ -20,7 +21,7 @@
  */
 import type { ExtensionPlugin, GlyphRequest, IconPacks, ResourceRequest } from '@mermaid-js/core';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
-import type { Transform } from '@mermaid-js/core/svg';
+import type { Paint, SvgNode, SvgTree, Transform } from '@mermaid-js/core/svg';
 import type { InlineBox, InlineProvider, InlineRequest, SvgFragment } from '@mermaid-js/core/text';
 import { buildIcon, type BuiltIcon } from './icon.ts';
 import { iconName } from './name.ts';
@@ -61,8 +62,13 @@ const wantedByParse = new WeakMap<object, Wanted>();
 const wantedByPacks = new WeakMap<object, Wanted>();
 /** Each pack's built icons, per pack object (a re-registered pack is a new object). */
 const builtByPack = new WeakMap<object, Map<string, BuiltIcon | undefined>>();
-/** Each built icon's nodes as a label draws them. */
-const labelNodes = new WeakMap<BuiltIcon, readonly SvgFragment[]>();
+/** Each built icon's nodes as a label draws them, and whether any still paints currentColor. */
+const labelNodes = new WeakMap<BuiltIcon, { nodes: readonly SvgFragment[]; current: boolean }>();
+/**
+ * The class a label icon that still paints `currentColor` (a stroke, a fill under a fill the
+ * icon sets) carries until `postRender` gives it the label's colour and takes the class off.
+ */
+const RECOLOUR = 'mermaid-label-icon';
 /** What this render has warned, keyed by its warnings sink (one per render, shared by both). */
 const warned = new WeakMap<Warn, { unresolved?: true; simplified?: true }>();
 
@@ -245,7 +251,7 @@ const isCurrent = (paint: unknown): boolean =>
 /**
  * `nodes` with each `currentColor` fill left off where nothing in the icon above it sets a fill,
  * so it inherits the label's fill, its text colour (as v12's `.label-icon path`). Other paints
- * stay: a `currentColor` stroke is the page's text colour.
+ * stay: `postRender` points the `currentColor` left (strokes) at the label's fill.
  */
 function inLabel(
   nodes: readonly (SvgFragment | string)[],
@@ -269,10 +275,38 @@ function inLabel(
   });
 }
 
-function labelNodesOf(icon: BuiltIcon): readonly SvgFragment[] {
-  let nodes = labelNodes.get(icon);
-  if (!nodes) labelNodes.set(icon, (nodes = inLabel(icon.nodes, true) as SvgFragment[]));
-  return nodes;
+/** Whether any attribute in `nodes` paints `currentColor`. */
+const paintsCurrent = (nodes: readonly (SvgFragment | string)[]): boolean =>
+  nodes.some(
+    (n) =>
+      typeof n !== 'string' &&
+      (Object.values(n.attrs ?? {}).some(isCurrent) || paintsCurrent(n.children ?? []))
+  );
+
+function labelNodesOf(icon: BuiltIcon): { nodes: readonly SvgFragment[]; current: boolean } {
+  let built = labelNodes.get(icon);
+  if (!built) {
+    const nodes = inLabel(icon.nodes, true) as SvgFragment[];
+    labelNodes.set(icon, (built = { nodes, current: paintsCurrent(nodes) }));
+  }
+  return built;
+}
+
+/** A `fill:` declaration in a `style` attribute. */
+const STYLE_FILL = /(?:^|;)\s*fill\s*:\s*([^;!]+?)\s*(?:!important\s*)?(?:;|$)/i;
+
+/**
+ * The fill `node` inherits: the nearest `style` fill or `fill` attribute above it, which is the
+ * label's text colour (labels take their colour from attributes; theme sheets set only
+ * variables). Undefined for none, or for a gradient, which `color` cannot take.
+ */
+function inheritedFill(tree: SvgTree, node: SvgNode): Paint | undefined {
+  for (let n = tree.parent(node); n !== undefined; n = tree.parent(n)) {
+    const paint = STYLE_FILL.exec(tree.getAttr(n, 'style') ?? '')?.[1] ?? tree.getAttr(n, 'fill');
+    if (paint !== undefined)
+      return paint === 'none' || /url\(/i.test(paint) ? undefined : (paint as Paint);
+  }
+  return undefined;
 }
 
 const label: InlineProvider = {
@@ -287,11 +321,13 @@ const label: InlineProvider = {
       if (f.icon.simplified) simplified(request.warn, request.iconPacks, use);
       const [left, top, w, h] = f.icon.viewBox;
       const s = size / h;
+      const { nodes, current } = labelNodesOf(f.icon);
+      const node = placed(nodes, -left * s, -top * s, s);
       return {
         width: w * s,
         height: size,
         baseline,
-        node: placed(labelNodesOf(f.icon), -left * s, -top * s, s),
+        node: current ? { ...node, attrs: { class: RECOLOUR, ...node.attrs } } : node,
       };
     }
     // The pack is still loading and the API knows (placeholders): an empty 1em box (D299).
@@ -323,6 +359,16 @@ export const icons: ExtensionPlugin = {
       notRendered(request.warn, iconPacks, use, f.why, fallbackPrefix);
       return undefined;
     },
+  },
+  // A `currentColor` stroke cannot point at the label's fill, so the icon's `color` is set to
+  // the fill its label text inherits, once the label is placed in the tree. (With this hook,
+  // renders write into the tree backing, whose output is the stream's byte for byte.) Only the
+  // class alone marks an icon: a user class of the same name sits beside others (`node …`).
+  postRender(tree) {
+    for (const n of tree.find((node, t) => t.getAttr(node, 'class') === RECOLOUR)) {
+      tree.setAttr(n, 'class', undefined);
+      tree.setAttr(n, 'color', inheritedFill(tree, n));
+    }
   },
   resources: {
     // Packs are the API object's (D294): it loads each `iconPack` this reports.

@@ -1,7 +1,9 @@
 /**
- * The e2e pages' static icon packs (`fa`, `fluent-emoji`, `aws`, `material-icon-theme`), as v12's
- * `e2e/platform/viewer.js` registers them: local data, never a network fetch, so icon fixtures
- * render the same everywhere. Copied from there (keep the two in step).
+ * The icon packs the e2e page and the gallery register (`registerIconPacks`, D294), with
+ * `@mermaid-js/plugin-icons` active: the static packs v12's `e2e/platform/viewer.js`
+ * registered (`fa` with `bell`, `fluent-emoji`, `aws`, `material-icon-theme`), and `fal`, a
+ * stand-in whose icon is drawn with `currentColor` strokes (I3 #324). Static data, so baselines
+ * do not depend on a network or a pack version.
  */
 import type { IconLoader } from 'mermaid';
 
@@ -98,11 +100,22 @@ const staticMaterialIconPack = {
   width: 24,
   height: 24,
 };
+/** Drawn for these tests: a check in a ring, stroked with `currentColor` (lucide-style). */
+const staticStrokeIconPack = {
+  prefix: 'fal',
+  icons: {
+    'circle-check': {
+      body: '<g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></g>',
+    },
+  },
+  width: 24,
+  height: 24,
+};
 
-/** For `registerIconPacks`: each pack's loader runs only for a diagram that names it (D290). */
-export const E2E_ICON_PACKS: IconLoader[] = [
-  { name: 'fa', loader: () => staticBellIconPack },
-  { name: 'fluent-emoji', loader: () => staticAwsLogoIconPack },
-  { name: 'aws', loader: () => staticAwsIconPack },
-  { name: 'material-icon-theme', loader: () => staticMaterialIconPack },
+export const iconPacks: IconLoader[] = [
+  { name: 'fa', loader: () => Promise.resolve(staticBellIconPack) },
+  { name: 'fal', loader: () => Promise.resolve(staticStrokeIconPack) },
+  { name: 'fluent-emoji', loader: () => Promise.resolve(staticAwsLogoIconPack) },
+  { name: 'aws', loader: () => Promise.resolve(staticAwsIconPack) },
+  { name: 'material-icon-theme', loader: () => Promise.resolve(staticMaterialIconPack) },
 ];

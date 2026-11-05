@@ -7,15 +7,16 @@
  * renders as paths (D176), and `prepare` loads MathJax only for a diagram with math (D178).
  * So are `@mermaid-js/layout-elk`'s layouts: `layout: elk`, `elk.<algorithm>` and the
  * `flowchart-elk` header are laid out by ELK (D171), and `prepare` loads elkjs only for them.
- * So is `@mermaid-js/plugin-icons`, with the e2e pages' static packs (`icon-packs.ts`): label
- * icons and icon shapes draw their glyphs (D292), and a pack loads only for a diagram naming it.
+ * So is `@mermaid-js/plugin-icons`, with the static packs of `icon-packs.ts`: `fa:fa-bell` in a
+ * label and `A@{ icon: "aws:…" }` draw from them (D290–D299), and `prepare` loads only the packs
+ * a diagram names.
  */
 import type { Measurer } from '@mermaid-js/core/text';
 import elkLayouts from '@mermaid-js/layout-elk';
 import icons from '@mermaid-js/plugin-icons';
 import math from '@mermaid-js/plugin-math';
 import { createMermaid, type RenderResult } from 'mermaid';
-import { E2E_ICON_PACKS } from './icon-packs.ts';
+import { iconPacks } from './icon-packs.ts';
 
 export interface RenderOptions {
   /** Integrator config, as `initialize()` gets it. The diagram's own front matter wins. */
@@ -39,7 +40,7 @@ export interface RenderOutput {
 const mermaid = createMermaid();
 mermaid.registerLayoutLoaders(elkLayouts);
 const registered = mermaid.registerExternalDiagrams([math, icons]);
-mermaid.registerIconPacks(E2E_ICON_PACKS);
+mermaid.registerIconPacks(iconPacks);
 
 export async function renderDiagram(
   text: string,

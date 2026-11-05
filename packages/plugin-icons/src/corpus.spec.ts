@@ -7,7 +7,7 @@ import { icons as faSolid } from '@iconify-json/fa6-solid';
 import { icons as logos } from '@iconify-json/logos';
 import { icons as mdi } from '@iconify-json/mdi';
 import { assertInert } from '@mermaid-js/core/svg';
-import { createMermaid, MermaidError, type RenderResult } from 'mermaid';
+import { createMermaid, MermaidError, type ExtensionPlugin, type RenderResult } from 'mermaid';
 import { describe, expect, it } from 'vitest';
 import { icons } from './index.ts';
 
@@ -18,10 +18,10 @@ const corpus = (dir: string) =>
     .sort()
     .map((f) => [`${dir}/${f}`, readFileSync(join(DIAGRAMS, dir, f), 'utf8')] as const);
 
-async function api(...extra: { id: string; postRender?: () => void }[]) {
+async function api(extension: ExtensionPlugin = icons) {
   const m = createMermaid();
   m.initialize({ deterministic: true });
-  await m.registerExternalDiagrams([icons, ...extra]);
+  await m.registerExternalDiagrams([extension]);
   // fa6-solid stands in for every Font Awesome prefix; logos (gradients) for the shapes' aws.
   m.registerIconPacks([
     { name: 'fa', icons: faSolid },
@@ -36,8 +36,11 @@ describe('the flowchart corpus with icon packs', () => {
   it('passes the allow-list, is deterministic and draws its label icons', async () => {
     const m = await api();
     const again = await api();
-    // A postRender hook switches the writer to its tree backing, which must agree byte for byte.
-    const tree = await api({ id: 'tree', postRender: () => {} });
+    // The extension's postRender hook (label colour for currentColor strokes) makes the writer
+    // use its tree backing. Without the hook it streams, and must agree byte for byte: these
+    // packs' label icons paint fills only, so the hook has nothing to change.
+    const { postRender: _, ...streamed } = icons;
+    const stream = await api(streamed);
     let withIcons = 0;
     for (const [id, source] of corpus('flowchart')) {
       let first: RenderResult;
@@ -52,7 +55,7 @@ describe('the flowchart corpus with icon packs', () => {
         id
       ).not.toThrow();
       expect((await again.render('m', source)).svg, id).toBe(first.svg);
-      expect((await tree.render('m', source)).svg, id).toBe(first.svg);
+      expect((await stream.render('m', source)).svg, id).toBe(first.svg);
       // fa6-solid has car, server and bell; v4's `cogs` and the brands are not in it.
       if (/fa:fa-(car|server|bell)\b/.test(source)) {
         withIcons++;
