@@ -541,9 +541,6 @@
     }
   },
   "packages/mermaid/src/registry.ts": {
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 3
-    },
     "@typescript-eslint/unbound-method": {
       "count": 2
     }

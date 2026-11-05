@@ -51,6 +51,11 @@ export default tseslint.config(
       '!e2e/helpers/argos-metadata.spec.ts',
       '!e2e/rendering/',
       '!e2e/rendering/mmd-snapshots.spec.ts',
+      '!e2e/helpers/platform-harness.spec.ts',
+      '!e2e/platform/',
+      '!e2e/platform/*.spec.ts',
+      '!e2e/platform/harness/',
+      '!e2e/platform/harness/**',
       // Lint-rule fixtures are linted on purpose by tools/eslint-plugin tests only.
       'tools/**/fixtures/',
     ],

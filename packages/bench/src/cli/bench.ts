@@ -24,6 +24,7 @@ import { buildSite, driveBrowser, serve } from '../driver.ts';
 import { loadFixtures } from '../fixtures.ts';
 import { detectPipeline } from '../pipeline.ts';
 import type { BenchReport, RendererId } from '../report.ts';
+import { measureCoreSize } from '../size-budget.ts';
 import { classifyFixtures } from '../support.ts';
 import { parseArgs } from './args.ts';
 import { commitInfo, gate, modeSetting, publish, reportOnlyGates } from './output.ts';
@@ -101,6 +102,8 @@ try {
     // R-ASCII-9: the chunks only a text render loads, from the production build's import graph.
     asciiSize: asciiSize(site.v13),
     asciiSizeByType: asciiSizeByType(site.v13),
+    // R-PERF-8: core, the entry's static closure (D161).
+    coreSize: await measureCoreSize(),
     renderers: await driveBrowser({ browser, server, site, renderers, fixtures, ...options, log }),
   };
   const outcome = gate(report, setting, reportOnly);
