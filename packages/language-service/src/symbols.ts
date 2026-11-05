@@ -48,15 +48,22 @@ export function occurrences(ctx: DocumentContext): readonly Occurrence[] {
   return deepFreeze(out.sort((a, b) => a.range.start - b.range.start));
 }
 
-/** The occurrence under `offset`: one containing it, else one ending at it. */
+/**
+ * The occurrence under `offset`: the innermost one containing it, else one ending at it.
+ * Occurrences nest only where a name is made of others (the node names inside a generated
+ * flowchart edge id, `L_B_D_0`).
+ */
 export function occurrenceAt(list: readonly Occurrence[], offset: number): Occurrence | undefined {
   let touching: Occurrence | undefined;
+  let inner: Occurrence | undefined;
+  const size = (o: Occurrence) => o.range.end - o.range.start;
   for (const o of list) {
     if (o.range.start > offset) break;
-    if (offset < o.range.end) return o;
-    if (offset === o.range.end) touching = o;
+    if (offset < o.range.end) {
+      if (!inner || size(o) < size(inner)) inner = o;
+    } else if (offset === o.range.end) touching = o;
   }
-  return touching;
+  return inner ?? touching;
 }
 
 /** Every occurrence of `o`'s name in its namespace, one per range, in source order. */

@@ -878,8 +878,25 @@ class FlowParser {
     const { db } = this;
     const creates = !db.vertices.has(name) && !db.hasEdge(name) && name.trim() !== '';
     // An edge id (`e1@{ … }`) names the edge: v12 never makes it a vertex.
-    const edge = !db.vertices.has(name) && db.hasEdge(name);
-    this.st.symbol(name, edge ? 'edge' : 'node', r, creates ? 'def' : 'ref');
+    if (!db.vertices.has(name) && db.hasEdge(name)) this.edgeSymbol(name, r);
+    else this.st.symbol(name, 'node', r, creates ? 'def' : 'ref');
+  }
+
+  /**
+   * A mention of the edge id `name` at `r`. A generated id (`L_B_D_0`) is made of its ends'
+   * names, so each end also gets a node mention inside it: renaming the node then renames the
+   * id with it, and the written id keeps naming the same edge (#170).
+   */
+  private edgeSymbol(name: string, r: Range): void {
+    this.st.symbol(name, 'edge', r, 'ref');
+    const edge = this.db.edgeNamed(name);
+    if (!edge || edge.isUserDefinedId || this.src.slice(r.start, r.end) !== name) return;
+    const { start, end } = edge;
+    if (!name.startsWith(`L_${start}_${end}_`)) return;
+    const from = r.start + 2;
+    const to = from + start.length + 1;
+    this.st.symbol(start, 'node', { start: from, end: from + start.length }, 'ref');
+    this.st.symbol(end, 'node', { start: to, end: to + end.length }, 'ref');
   }
 
   private vertex(): FlowNodeStmt {
@@ -1133,13 +1150,25 @@ class FlowParser {
     return out;
   }
 
-  /** Symbols for a comma list of ids written at `r`, each also pushed to `out`. */
-  private refs(list: string, r: Range, kindName: string, role: 'def' | 'ref', out: string[]) {
+  /**
+   * Symbols for a comma list of ids written at `r`, each also pushed to `out`. With `edges`, a
+   * part naming an edge and no vertex is an edge mention (`class e1 hot`, as v12 `setClass`).
+   */
+  private refs(
+    list: string,
+    r: Range,
+    kindName: string,
+    role: 'def' | 'ref',
+    out: string[],
+    edges = false
+  ) {
+    const { db } = this;
     let at = r.start;
     const exact = this.src.slice(r.start, r.end) === list;
     for (const part of list.split(',')) {
       const pr = exact ? { start: at, end: at + part.length } : r;
-      this.st.symbol(part, kindName, pr, role);
+      if (edges && !db.vertices.has(part) && db.hasEdge(part)) this.edgeSymbol(part, pr);
+      else this.st.symbol(part, kindName, pr, role);
       out.push(part);
       at += part.length + 1;
     }
@@ -1298,7 +1327,7 @@ class FlowParser {
         const [targets, r] = this.idString();
         this.expect(T.Space);
         const [cls, cr] = this.idString();
-        this.refs(targets, r, 'node', 'ref', refList);
+        this.refs(targets, r, 'node', 'ref', refList, true);
         st.symbol(cls, 'class', cr, 'ref');
         refList.push(cls);
         db.setClass(targets, cls);
