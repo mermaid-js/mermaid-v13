@@ -98,6 +98,10 @@ export const QUIRKS: CorpusItem[] = [
   'pie\n---  \nx\n---x\n---\n"a": 1',
   'pie\n---\nnever closed\n"a": 1',
   'pie\n"a": 1 ---\n---',
+  // The optional body is tried first: an empty block closes only if no later line does.
+  'pie\n"a": 1\n---\n---\n"b": 2\n---\n---\n',
+  'pie\n---\n---\n"a": 1\n---',
+  'pie\n"a": 1\n---\n---\n"b": 2\n--- \n"c": 3',
   // Entities and dropped semicolons.
   'pie\ntitle a #quot;b#quot; #9829;\n"#amp;x": 1',
   'pie\n"a": 1#x;',
@@ -114,6 +118,57 @@ export const QUIRKS: CorpusItem[] = [
   'pie\r"a": 1\r"b": 2',
   'pie\r\n"a": 1\r\n\r\n"b": 2\r\n',
 ].map((source, k) => ({ id: `quirk ${k}`, source }));
+
+/**
+ * Parser and model cases (#305): semantic errors that let parsing go on, repeated statements,
+ * value conversion corners, and statements in places the grammar does or does not allow.
+ */
+export const PARSER_CASES: CorpusItem[] = [
+  // Negative values: a semantic error; the statement and the next ones go on.
+  'pie\n"a": -1\n"b": 2',
+  'pie\n"a": -1 "b": 2',
+  'pie\n"a": -1\n"a": 2',
+  'pie\n"a": -0.5\n"b": -2\n"c": 3',
+  // Repeats: the first section, the last title and accessibility values.
+  'pie\n"#amp;": 1\n"#amp;": 2',
+  'pie\n"a@2": 1\n"a": 2\n"a": 3\n"a#b": 4',
+  'pie\naccTitle: x\naccTitle: \n"a": 1',
+  'pie\naccDescr: a\naccDescr {b}\n"a": 1',
+  'pie\naccDescr {b}\naccDescr: a',
+  '---\ntitle: Front\n---\npie\ntitle one\ntitle\n"a": 1',
+  // Conversion: escapes, blanks other than space and tab, `{}` bodies.
+  'pie\n"\\0\\b\\f\\v\\r\\u0041\\%": 1',
+  "pie\n\"a\\nb\\tc\": 1\n' d \\' ': 2",
+  'pie\ntitle   x  \n"a": 1',
+  'pie\ntitle a\t\tb \t c\n"a": 1',
+  'pie\naccDescr { a \n \n b  \n\n\n c}\n"a": 1',
+  'pie\naccDescr {}\n"a": 1',
+  'pie\naccDescr {\n}\n"a": 1',
+  'pie\naccDescr {  a     b  }\n"a": 1',
+  'pie\naccDescr {a    \n   b   c  \n\n}',
+  'pie\naccDescr {a} "b": 1',
+  'pie\naccDescr {a}\ttitle x',
+  'pie\n"a": 99999999999999999999',
+  'pie\n"a": 0.1000000000000000000001',
+  'pie\n"": 1',
+  // Places: the header line, line breaks inside a section, values without a label.
+  'pie showData showData',
+  'pie pie',
+  'pie\n\n"a": 1\n\n',
+  'pie showData\n\n',
+  'pie title x accTitle: y',
+  'pie accTitle: a\ntitle b\n"a": 1',
+  'pie showData accDescr {\nx\n}',
+  'pie\n"a":\n1',
+  'pie\n"a"\n: 1',
+  'pie\n: 1',
+  'pie\n1',
+  'pie\n"a": "b"',
+  'pie\n"a" "b": 1',
+  'pie\ntitle a\n"x": 1 %% c\n"y": 2',
+  'pie\n"a": 1\n"b": 2 ---\n---',
+  'pie\n"a": 1\n"b": 2\n"c" 3\n"d": 4\n"e": x\n"f": 6',
+].map((source, k) => ({ id: `parser case ${k}`, source }));
 
 /**
  * Unclosed `%%{` directives. Core's preprocess ends one at its line end and reports
@@ -140,7 +195,13 @@ export async function pieCorpus(): Promise<CorpusItem[]> {
 
 /** The corpus, the cases above, and a CRLF and a commented copy of each. */
 export async function pieGateCorpus(): Promise<CorpusItem[]> {
-  const all = [...(await pieCorpus()), ...LINE_SEPARATORS, ...QUIRKS, ...UNCLOSED_DIRECTIVES];
+  const all = [
+    ...(await pieCorpus()),
+    ...LINE_SEPARATORS,
+    ...QUIRKS,
+    ...PARSER_CASES,
+    ...UNCLOSED_DIRECTIVES,
+  ];
   return [
     ...all,
     ...all.map((item) => ({ id: `${item.id} (CRLF)`, source: item.source.replace(/\n/g, '\r\n') })),

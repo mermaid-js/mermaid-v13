@@ -85,6 +85,11 @@ export const GRAMMARS: GrammarTarget[] = [
     title: 'Entity relationship diagram syntax',
     kinds: { module: 'parser/tokens.ts', object: 'T' },
   },
+  {
+    type: 'pie',
+    title: 'Pie chart syntax',
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
 ];
 
 export const grammarPath = (type: string): string =>

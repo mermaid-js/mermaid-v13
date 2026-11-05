@@ -257,8 +257,10 @@ class PieLexer {
   }
 
   /**
-   * YAML: `---[\t ]*\r?\n(?:[\S\s]*?\r?\n)?---(?:\r?\n|(?!\S))`: the first line start of the body
-   * (its first, or one after a line break) where `---` ends at a line break, a blank or the end.
+   * YAML: `---[\t ]*\r?\n(?:[\S\s]*?\r?\n)?---(?:\r?\n|(?!\S))`: a closing `---` that ends at a
+   * line break, a blank or the end. The optional group is tried first, so the first closing line
+   * after a line break in the body wins; only without one does a `---` at the body's start close
+   * it (`---\n---\n…\n---` is one block to the last line).
    */
   private yaml(p: number): number {
     const { text, n } = this;
@@ -268,12 +270,13 @@ class PieLexer {
     if (nl === 0) return -1;
     const body = b + nl;
     if (body >= this.yamlFails) return -1;
-    for (let k = body; k < n; k++) {
-      if (k > body && !isBreak(text.charCodeAt(k - 1))) continue;
-      if (!text.startsWith('---', k)) continue;
+    for (let k = body + 1; k < n; k++) {
+      if (!isBreak(text.charCodeAt(k - 1)) || !text.startsWith('---', k)) continue;
       const e = this.closer(k + 3);
       if (e >= 0) return this.match(T.Yaml, e);
     }
+    const e = text.startsWith('---', body) ? this.closer(body + 3) : -1;
+    if (e >= 0) return this.match(T.Yaml, e);
     this.yamlFails = body;
     return -1;
   }

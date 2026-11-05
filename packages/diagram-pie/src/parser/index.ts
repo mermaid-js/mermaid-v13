@@ -1,5 +1,6 @@
 /**
- * The pie parser's public surface: the lexer gated against v12's Langium lexer (#304).
+ * The pie parser's public surface: the parser (#305), detection, and the lexer gated against
+ * v12's Langium lexer (#304).
  */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
@@ -7,6 +8,10 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { LANGIUM_NAMES, PIE_TRIVIA, T as PieTokenKind } from './tokens.ts';
+export { parsePie } from './parser.ts';
+export type { PieParseOptions, PieParseResult } from './parser.ts';
+export { detectPie } from './detect.ts';
+export type * from './ast.ts';
 
 export interface PieToken {
   /** A `PieTokenKind` or a shared `Kind`. */
