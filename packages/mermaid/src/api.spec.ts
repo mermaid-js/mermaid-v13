@@ -393,11 +393,11 @@ describe('layout engines (R-LAYOUT-2)', () => {
       expect(r.warnings[0]!.message).toContain('elk.box, elk.rectpacking');
     }
     expect(m.renderSync(text).warnings.map((w) => w.code)).toEqual(['ELK_ALGORITHM_IGNORED']);
-    // Without the plugin, alongside ELK_NOT_INSTALLED: the groups are not laid out as asked either.
-    expect((await render('l', text)).warnings.map((w) => w.code)).toEqual([
-      'ELK_NOT_INSTALLED',
-      'ELK_ALGORITHM_IGNORED',
-    ]);
+    // Without the plugin, or with it and a name it lacks, layered draws everything: only the
+    // layout warning, no ELK_ALGORITHM_IGNORED.
+    expect((await render('l', text)).warnings.map((w) => w.code)).toEqual(['ELK_NOT_INSTALLED']);
+    const unknown = `---\nconfig:\n  layout: elk.nope\n---\n${GROUPS}`;
+    expect((await m.render('l', unknown)).warnings.map((w) => w.code)).toEqual(['LAYOUT_UNKNOWN']);
   });
 
   it('says nothing about @{ algorithm } for a layout that is not ELK, or groups without it', async () => {

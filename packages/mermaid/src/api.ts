@@ -619,8 +619,10 @@ export function createMermaid(
         });
       }
       const name = drawnLayout(config, textOutput);
-      if (isElkName(name)) elkName = name;
       const found = registry.layout(name);
+      // Only when ELK lays the graph out: with LAYOUT_UNKNOWN or ELK_NOT_INSTALLED, layered
+      // draws every group, as that warning says.
+      if (isElkName(name) && (found.state === 'ready' || found.state === 'missing')) elkName = name;
       if (found.state === 'unknown') {
         warn({
           code: 'LAYOUT_UNKNOWN',
