@@ -7,6 +7,7 @@
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { fixturePath } from '../helpers/mmd-snapshots.ts';
+import { assertInert, streamWriter } from '../../packages/core/src/svg/index.ts';
 import { createTheme, loadTheme } from '../../packages/core/src/theme/index.ts';
 import { channels, computedPaints, openHarness } from './page.ts';
 
@@ -165,3 +166,30 @@ for (const theme of [
     });
   }
 }
+
+test('the gradient’s stops follow --mermaid-gradientStart and --mermaid-gradientStop (D182)', async ({
+  page,
+}) => {
+  const theme = createTheme(await loadTheme('redux-color'), {
+    themeVariables: { useGradient: true },
+    idPrefix: () => 'g1',
+  });
+  const w = streamWriter({ gradient: theme.gradient() });
+  w.open('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: [0, 0, 100, 20] });
+  w.leaf('rect', { x: 0, y: 0, width: 100, height: 20, fill: theme.outline('nodeBorder') });
+  w.close();
+  const svg = w.finish();
+  assertInert(svg);
+  await page.setContent(`<div class="diagram">${svg}</div>`);
+  const stops = () =>
+    page.evaluate(() =>
+      [...document.querySelectorAll('.diagram stop')].map((s) => getComputedStyle(s).stopColor)
+    );
+  expect(await stops()).toEqual(['rgb(0, 66, 235)', 'rgb(235, 0, 66)']); // #0042eb, #eb0042
+  await page.evaluate(() => {
+    const host = document.querySelector<HTMLElement>('.diagram')!;
+    host.style.setProperty('--mermaid-gradientStart', '#00ff00');
+    host.style.setProperty('--mermaid-gradientStop', 'rgb(1 2 3)');
+  });
+  expect(await stops()).toEqual(['rgb(0, 255, 0)', 'rgb(1, 2, 3)']);
+});

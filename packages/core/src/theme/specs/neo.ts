@@ -45,6 +45,8 @@ const neo: ThemeSpec = {
     ...TEXT_SIZES,
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
+    // v12 theme-neo.js: outlines take the blue-to-red gradient (D182).
+    useGradient: true,
   },
   // v12 neo derives these as theme-redux.js does: `classText` from `textColor`, no ER row fill
   // of its own, and the neo-look zero circle on the node fill.
@@ -66,9 +68,9 @@ const neo: ThemeSpec = {
     errorBkgColor: '#ffffff',
     errorTextColor: '#000000',
     altBackground: '#f0f0f0', // v12 (#192, D126)
-    // --- Gradient (D182), owned by #223. Once #223 merges, add here, from v12 theme-neo.js:
-    //   useGradient on, gradientStart '#0042eb', gradientStop '#eb0042'
-    // They are not set until the vocabulary and the schema carry them.
+    // v12 theme-neo.js (D182).
+    gradientStart: '#0042eb',
+    gradientStop: '#eb0042',
   },
 };
 
