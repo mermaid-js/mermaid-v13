@@ -7,8 +7,10 @@
 import { JSON_SCHEMA, load } from 'js-yaml';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { createMermaid } from 'mermaid';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { corpusFromDir, REPO_ROOT } from './corpus.ts';
+import { loadOracle } from './oracle.ts';
 import type { CorpusItem } from './types.ts';
 
 const FRONT_MATTER = /^([^\S\n\r]*)-{3}\s*[\n\r](.*?)[\n\r]\1-{3}\s*[\n\r]+/s;
@@ -118,5 +120,91 @@ describe('preprocess parity with v12 over the e2e corpus', async () => {
       if (JSON.stringify(got) !== JSON.stringify(want)) differing.push(id);
     }
     expect(differing).toEqual(Object.keys(DIVERGENT));
+  });
+});
+
+/** v12 and v13 `parse()`: accepted or not, and the theme a directive or front matter set. */
+async function parsers() {
+  await loadOracle();
+  const mermaid12 = (
+    (await import('mermaid-v12')) as unknown as {
+      default: {
+        parse(text: string): Promise<{ config?: { theme?: string } }>;
+        mermaidAPI: { reset(): void };
+      };
+    }
+  ).default;
+  const m = createMermaid();
+  const read = async (run: () => Promise<{ config?: { theme?: string } }>) => {
+    try {
+      return { accepted: true, theme: (await run()).config?.theme };
+    } catch {
+      return { accepted: false };
+    }
+  };
+  return {
+    parse12: (src: string) => {
+      mermaid12.mermaidAPI.reset();
+      return read(() => mermaid12.parse(src));
+    },
+    parse13: (src: string) => read(() => m.parse(src)),
+  };
+}
+
+const BODIES = [
+  'flowchart LR\n  A --> B\n',
+  'classDiagram\n  class A\n',
+  'sequenceDiagram\n  A->>B: hi\n',
+  'erDiagram\n  A ||--o{ B : x\n',
+  'stateDiagram-v2\n  [*] --> A\n',
+];
+
+describe('directives around comments and without a name, against the v12 oracle (#208)', () => {
+  // v12 reads a directive only where a word follows `%%{` (blanks allowed). A comment line right
+  // after the opener leaves the rest as diagram text; most grammars then reject it.
+  const HEADS = [
+    '%% c\n%%{init: {"theme": "dark"}}%%\n',
+    '%%{\n%% c\ninit: {"theme": "dark"}}%%\n',
+    '%%{\n  %% c\n  init: {"theme": "dark"}}%%\n',
+    '%%{init:\n%% c\n{"theme": "dark"}}%%\n',
+    '%%{\n  init: {"theme": "dark"}}%%\n',
+    '%%{}%%\n',
+    '%%{ }%%\n',
+    '%%{"theme": "dark"}%%\n',
+    '%%{: {"theme": "dark"}}%%\n',
+  ];
+  const cases = HEADS.flatMap((head) => BODIES.map((body) => head + body));
+  // ... and inside the body, after the header line.
+  cases.push(...BODIES.map((body) => body.replace('\n', '\n  %%{}%%\n')));
+
+  it('accepts, rejects and sets the theme as v12 does', async () => {
+    const { parse12, parse13 } = await parsers();
+    const differing: string[] = [];
+    for (const src of cases) {
+      const [want, got] = [await parse12(src), await parse13(src)];
+      if (JSON.stringify(got) !== JSON.stringify(want)) differing.push(src);
+    }
+    expect(differing).toEqual([]);
+  });
+});
+
+describe('front matter that js-yaml rejects is reported, against the v12 oracle (#208)', () => {
+  // A lone `-` or `?` is an indicator, not text, after `key:` and in a flow collection.
+  const INVALID = [
+    'title: -',
+    'title: ?',
+    'title: - # c',
+    'description: -\n  Vertical (TB) counterpart',
+    'config:\n  theme: ?',
+    'config: {theme: -}',
+    'config:\n  themeVariables: {a: [-]}',
+  ];
+  it.each(INVALID)('rejects %j', async (yaml) => {
+    expect(() => load(yaml, { schema: JSON_SCHEMA })).toThrow();
+    const src = `---\n${yaml}\n---\nflowchart LR\n  A\n`;
+    const { parse12, parse13 } = await parsers();
+    expect(await parse12(src)).toEqual({ accepted: false });
+    expect(await parse13(src)).toEqual({ accepted: false });
+    expect(preprocess(src).diagnostics.map((d) => d.code)).toContain('YAML_SYNTAX');
   });
 });

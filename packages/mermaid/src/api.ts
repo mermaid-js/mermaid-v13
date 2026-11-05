@@ -315,7 +315,8 @@ function themeFor(
   config: ResolvedConfig,
   s: Snapshot,
   warn: (w: Warning) => void,
-  rules: ThemeRuleTable | undefined
+  rules: ThemeRuleTable | undefined,
+  idPrefix: () => string
 ) {
   const choice = resolveThemeName(config.theme, warn);
   const spec = loadedTheme(choice.name) ?? loadedTheme(DEFAULT_THEME)!;
@@ -326,6 +327,7 @@ function themeFor(
     ...(rules ? { rules } : {}),
     cssVariables: s.options.output?.cssVariables,
     warn,
+    idPrefix,
   });
 }
 
@@ -638,7 +640,8 @@ export function createMermaid(
       }
       engine = found.engine;
     }
-    const theme = themeFor(config, s, warn, registry.themeRules());
+    // The theme reads the id prefix only for the gradient (D182), after ctx exists.
+    const theme = themeFor(config, s, warn, registry.themeRules(), () => ctx.idPrefix);
     let idPrefix: string | undefined;
     const ctx: RenderContext = {
       config,

@@ -532,6 +532,7 @@ function run(text: string, style: StyleBits, width: number): Run {
     width,
     ...(style & Style.Bold ? { bold: true } : {}),
     ...(style & Style.Italic ? { italic: true } : {}),
+    ...(style & Style.Underline ? { underline: true } : {}),
     ...(style & Style.Mono ? { attrs: { 'font-family': MONO } } : {}),
   };
 }

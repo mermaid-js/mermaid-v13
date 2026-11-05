@@ -10,7 +10,8 @@
  * });
  * ```
  *
- * `mermaid()` waits for `service.preload()` (D155), then gives the Lezer highlighter from the
+ * `mermaid()` waits for `service.preload()` (D155), then gives the Lezer highlighter of the
+ * detected diagram type (each type's parser loaded on first use, D134), built from its
  * grammar file (#21), diagnostics (debounced 150 ms), completion, hover, folding,
  * semantic-token decorations and the cursor → AstId facet. Each is exported on its own too;
  * all but `mermaidLanguage` need `await mermaidService()` in the same state, and
@@ -49,7 +50,12 @@ export {
   semanticTokenRanges,
 } from './features.ts';
 export type { CursorAstListener, DiagnosticsOptions, SemanticTokenRange } from './features.ts';
-export { mermaidLanguage, mermaidLanguageDefinition } from './language.ts';
+export {
+  LEZER_HIGHLIGHTERS,
+  loadHighlighter,
+  mermaidLanguage,
+  mermaidLanguageDefinition,
+} from './language.ts';
 export { renderMarkdown } from './markdown.ts';
 export { mermaidService, mermaidSnapshot } from './service.ts';
 export type { MermaidServiceOptions } from './service.ts';

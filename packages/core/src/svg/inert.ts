@@ -11,13 +11,23 @@ import {
   ALLOWED_ATTRS,
   ALLOWED_TAGS,
   BLANK_REL,
+  GRADIENT_ATTRS,
+  GRADIENT_FIXED,
+  GRADIENT_TAGS,
   HREF_TAGS,
   LINK_TARGETS,
   NUMERIC_ATTRS,
+  RE_GRADIENT_ID,
   SVG_NS,
 } from './allowlist.ts';
 import { RE_INVALID_XML } from './escape.ts';
-import { RE_UNSAFE_STYLE, STYLE_TEXT_PROPERTIES, checkFilter, styleSheetProblem } from './style.ts';
+import {
+  RE_UNSAFE_STYLE,
+  STYLE_TEXT_PROPERTIES,
+  checkColor,
+  checkFilter,
+  styleSheetProblem,
+} from './style.ts';
 import { isImageDataUrl, type SecurityLevel } from './url.ts';
 
 export interface InertOptions {
@@ -30,6 +40,93 @@ export interface InertOptions {
    * `<style>` is still rejected.
    */
   readonly themeStyle?: boolean;
+  /**
+   * The render's gradient (D182): its id, the only one `url(#…)` may name, or `false` when the
+   * render has none, so no `<defs>` is accepted. Left out, the id is the one the document's
+   * gradient declares, which must look like `<scope>-gradient`.
+   */
+  readonly gradient?: string | false;
+}
+
+/** Where the scan is in the one gradient an SVG may carry (D182). */
+interface GradientScan {
+  /** The gradient's id, given or found. */
+  id: string | undefined;
+  /** Elements the root has had so far. */
+  rootChildren: number;
+  defs: number;
+  gradients: number;
+  stops: number;
+}
+
+const RE_FRACTION = /^(?:0|1|0?\.\d{1,6})$/;
+const RE_PERCENT_STOP = /^(?:\d{1,2}(?:\.\d{1,6})?|100)%$/;
+
+/** Why element `tag` cannot stand under `parent` here, as far as the gradient goes. */
+function gradientPlace(
+  tag: string,
+  stack: readonly string[],
+  g: GradientScan,
+  options: InertOptions
+): string | undefined {
+  const parent = stack[stack.length - 1];
+  if (stack.length === 1) g.rootChildren++;
+  switch (tag) {
+    case 'defs':
+      if (options.gradient === false) return '<defs> in an SVG without a gradient';
+      if (stack.length !== 1 || parent !== 'svg' || g.rootChildren !== 1 || ++g.defs > 1)
+        return '<defs> that is not the first child of <svg>';
+      return undefined;
+    case 'linearGradient':
+      return parent === 'defs' && ++g.gradients === 1 ? undefined : '<linearGradient> out of place';
+    case 'stop':
+      return parent === 'linearGradient' && ++g.stops <= 2 ? undefined : '<stop> out of place';
+  }
+  return parent !== undefined && GRADIENT_TAGS.has(parent) ? `<${tag}> in <${parent}>` : undefined;
+}
+
+/** Why an attribute of the gradient's elements, or one only they take, is not allowed. */
+function gradientAttrProblem(
+  tag: string,
+  name: string,
+  value: string,
+  g: GradientScan
+): string | undefined {
+  const owner = GRADIENT_ATTRS.get(name);
+  if (owner !== undefined && owner !== tag) return `${name} on <${tag}>`;
+  if (tag === 'linearGradient') {
+    if (name === 'id') {
+      if (g.id === undefined && RE_GRADIENT_ID.test(value)) g.id = value;
+      return value === g.id ? undefined : `gradient id="${value}" is not this SVG's`;
+    }
+    return GRADIENT_FIXED[name] === value ? undefined : `${name}="${value}" on <linearGradient>`;
+  }
+  if (tag === 'stop') {
+    if (name === 'offset')
+      return RE_FRACTION.test(value) || RE_PERCENT_STOP.test(value)
+        ? undefined
+        : `offset="${value}"`;
+    if (name === 'stop-color') return checkColor(value) ? undefined : `stop-color="${value}"`;
+    if (name === 'stop-opacity')
+      return RE_FRACTION.test(value) ? undefined : `stop-opacity="${value}"`;
+    return `${name} on <stop>`;
+  }
+  if (tag === 'defs') return `${name} on <defs>`;
+  if (name === 'id' && value === g.id) return `id="${value}" is the gradient's`;
+  return undefined;
+}
+
+/**
+ * A `fill` or `stroke` that refers to the gradient: only `url(#<id>)`, after the gradient. Any
+ * other `url(` (and `url(` anywhere else) is left to `attrProblem`, which rejects it.
+ */
+function gradientRef(name: string, value: string, g: GradientScan): boolean {
+  return (
+    (name === 'fill' || name === 'stroke') &&
+    g.gradients === 1 &&
+    g.id !== undefined &&
+    value === `url(#${g.id})`
+  );
 }
 
 const STYLE_OPEN = '<style>';
@@ -197,6 +294,13 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
   let i = 0;
   const n = svg.length;
   let sheets = 0;
+  const g: GradientScan = {
+    id: typeof options.gradient === 'string' ? options.gradient : undefined,
+    rootChildren: 0,
+    defs: 0,
+    gradients: 0,
+    stops: 0,
+  };
   while (i < n) {
     const lt = svg.indexOf('<', i);
     const text = svg.slice(i, lt === -1 ? n : lt);
@@ -216,6 +320,7 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
       if (svg.slice(lt, lt + STYLE_OPEN.length) !== STYLE_OPEN) return '<style> with attributes';
       if (stack.length !== 1 || stack[0] !== 'svg') return '<style> that is not a child of <svg>';
       if (++sheets > 1) return 'a second <style>';
+      g.rootChildren++;
       const end = svg.indexOf(STYLE_CLOSE, lt);
       if (end === -1) return 'unclosed <style>';
       const css = svg.slice(lt + STYLE_OPEN.length, end);
@@ -234,6 +339,8 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
       if (open !== tag) return `</${tag}> closes <${open ?? 'nothing'}>`;
       continue;
     }
+    const place = gradientPlace(tag, stack, g, options);
+    if (place !== undefined) return place;
     const seen = new Set<string>();
     let target: string | undefined;
     let rel: string | undefined;
@@ -266,13 +373,18 @@ export function inertProblem(svg: string, options: InertOptions = {}): string | 
       if (seen.has(name)) return `<${tag}> has ${name} twice`;
       seen.add(name);
       const value = decodeAttr(raw);
-      const problem = attrProblem(tag, name, value, options);
+      const problem =
+        gradientAttrProblem(tag, name, value, g) ??
+        (gradientRef(name, value, g) ? undefined : attrProblem(tag, name, value, options));
       if (problem !== undefined) return problem;
       if (name === 'target') target = value;
       if (name === 'rel') rel = value;
     }
     if (target === '_blank' && rel !== BLANK_REL)
       return `<${tag} target="_blank"> without rel="${BLANK_REL}"`;
+    if (tag === 'linearGradient' && seen.size !== Object.keys(GRADIENT_FIXED).length + 1)
+      return '<linearGradient> without its id, units and direction';
+    if (tag === 'stop' && !seen.has('offset')) return '<stop> without an offset';
     if (!selfClosing) stack.push(tag);
   }
   if (stack.length > 0) return `unclosed <${stack[stack.length - 1]}>`;

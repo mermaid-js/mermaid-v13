@@ -1,0 +1,20 @@
+@ 2:15  A -- text --|
+  --> operator (normal line with an arrow head) 2:13-2:15 "--" -> "-->"
+  --- operator (normal line with no head) 2:13-2:15 "--" -> "---"
+  --o operator (normal line with a circle head) 2:13-2:15 "--" -> "--o"
+  --x operator (normal line with a cross head) 2:13-2:15 "--" -> "--x"
+@ 3:16  B == heavy ==|
+  ==> operator (thick line with an arrow head) 3:14-3:16 "==" -> "==>"
+  === operator (thick line with no head) 3:14-3:16 "==" -> "==="
+  ==o operator (thick line with a circle head) 3:14-3:16 "==" -> "==o"
+  ==x operator (thick line with a cross head) 3:14-3:16 "==" -> "==x"
+@ 4:16  C -. dotted .|
+  .-> operator (dotted line with an arrow head) 4:15-4:16 "." -> ".->"
+  .- operator (dotted line with no head) 4:15-4:16 "." -> ".-"
+  .-o operator (dotted line with a circle head) 4:15-4:16 "." -> ".-o"
+  .-x operator (dotted line with a cross head) 4:15-4:16 "." -> ".-x"
+@ 5:13  D -- text |
+  --> operator (normal line with an arrow head) 5:13-5:13 "" -> "-->"
+  --- operator (normal line with no head) 5:13-5:13 "" -> "---"
+  --o operator (normal line with a circle head) 5:13-5:13 "" -> "--o"
+  --x operator (normal line with a cross head) 5:13-5:13 "" -> "--x"

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { createMermaid, type InitializeConfig, type RenderResult } from 'mermaid';
+import { shapeNames } from '@mermaid-js/diagram-flowchart/testing';
 import { parseSvg, type SvgElement, type SvgView } from './svg-tree.ts';
 
 /**
@@ -24,6 +25,13 @@ const textIn = (tree: SvgView, node: SvgElement): string =>
     .children(node)
     .map((c) => tree.textOf(c) ?? textIn(tree, c))
     .join('');
+
+/** Whether an ancestor of `n` has the class `cls`. */
+const within = (n: SvgElement, cls: string): boolean => {
+  for (let p = n.parent; p; p = p.parent)
+    if ((p.attrs.class ?? '').split(' ').includes(cls)) return true;
+  return false;
+};
 
 describe('flowchart render: document root (DESIGN §7.2)', () => {
   it('writes the root with viewBox, max-width, role and the v12 group classes', async () => {
@@ -106,10 +114,10 @@ describe('flowchart render: themes (D151)', () => {
   it.each([
     ['neo', 'redux-color'],
     ['neo-dark', 'redux-dark-color'],
-  ])('renders %s as %s, with THEME_UNAVAILABLE', async (theme, standIn) => {
+  ])('renders %s as its own theme, with no warning (D180)', async (theme, formerStandIn) => {
     const r = await literal(theme);
-    expect(r.warnings.map((w) => w.code)).toEqual(['THEME_UNAVAILABLE']);
-    expect(r.svg).toBe((await literal(standIn)).svg);
+    expect(r.warnings).toEqual([]);
+    expect(r.svg).not.toBe((await literal(formerStandIn)).svg);
   });
 });
 
@@ -690,11 +698,6 @@ describe('flowchart render: drop shadow (#85)', () => {
   const WHITE = 'drop-shadow(4px 4px 0 rgb(255 255 255 / 0.06))';
 
   const shadowed = (tree: SvgView) => tree.find((n, t) => t.getAttr(n, 'filter') !== undefined);
-  const within = (n: SvgElement, cls: string): boolean => {
-    for (let p = n.parent; p; p = p.parent)
-      if ((p.attrs.class ?? '').split(' ').includes(cls)) return true;
-    return false;
-  };
   const rootStyle = (svg: string) => /<svg[^>]* style="([^"]*)"/.exec(svg)![1]!;
 
   it('puts the shadow on every node outline, subgraph rect and collapsed card in redux-color', async () => {
@@ -784,3 +787,229 @@ function assertInertOk(svg: string, themeStyle: boolean): boolean {
   assertInert(svg, { themeStyle });
   return true;
 }
+
+describe('flowchart render: neo gradient (D182, #229)', () => {
+  const SHAPES = [
+    'flowchart TD',
+    '  subgraph S[Group]',
+    '    A[Rect] -- a label --> B{Diamond}',
+    '  end',
+    '  B --> C((Circle)) --> D[(Db)] --> E([Stadium]) --> H{{Hex}}',
+    '  H --> F --> G --> L',
+    '  F@{ shape: f-circ }',
+    '  G@{ shape: dbl-circ }',
+    '  L@{ shape: lin-doc }',
+    '  W@{ shape: browser }',
+    '  I@{ icon: "fa:user", form: "square", label: "Icon" }',
+    '  K[Linked]',
+    '  click K "https://example.com"',
+    '  X --> P',
+    '  subgraph grp[Collapsed]',
+    '    P --> Q',
+    '  end',
+    '  grp@{ view: collapsed }',
+  ].join('\n');
+  const URL = 'url(#mermaid-0-gradient)';
+  const outlined = (tree: SvgView) => tree.find((n, t) => t.getAttr(n, 'stroke') === URL);
+  /** The first drawn shape of a node: its outline. */
+  const outlineOf = (tree: SvgView, node: SvgElement): SvgElement => {
+    const kids = tree.children(node).flatMap((c) => (tree.tag(c) === 'a' ? tree.children(c) : [c]));
+    return kids.find((c) =>
+      ['rect', 'polygon', 'circle', 'path', 'ellipse'].includes(tree.tag(c) ?? '')
+    )!;
+  };
+
+  it.each(['neo', 'neo-dark'] as const)(
+    'strokes every node outline and subgraph rect in %s',
+    async (theme) => {
+      const { svg, tree } = await draw(SHAPES, { config: { theme } });
+      for (const node of tree.find({ class: 'node' })) {
+        const id = tree.getAttr(node, 'data-id');
+        expect(tree.getAttr(outlineOf(tree, node), 'stroke'), `node ${id}`).toBe(URL);
+      }
+      const clusters = tree.find({ class: 'cluster' }).filter((c) => within(c, 'clusters'));
+      const rects = clusters.flatMap((c) => tree.children(c).filter((k) => tree.tag(k) === 'rect'));
+      expect(rects.map((r) => tree.getAttr(r, 'stroke'))).toEqual([URL]);
+      expect(svg.match(/<linearGradient /g)).toHaveLength(1);
+      assertInert(svg);
+    }
+  );
+
+  /** One node per `@{ shape }` name, aliases included, in a subgraph. */
+  const NAMES = shapeNames();
+  const EVERY_SHAPE = [
+    'flowchart TD',
+    '  subgraph S[Group]',
+    ...NAMES.map((s, i) => `    n${i}@{ shape: ${s}, label: "x" }`),
+    '  end',
+    '  n0 --> n1',
+  ].join('\n');
+  const nums = (s: string): number[] => (s.match(/-?[\d.]+(?:e-?\d+)?/g) ?? []).map(Number);
+  /**
+   * Whether the element's box has no width or no height, from its geometry. Arcs are taken
+   * to have extent; a curve's control points bound it, so a flat hull means a flat curve.
+   */
+  const flat = (tree: SvgView, n: SvgElement): boolean => {
+    const a = (k: string) => tree.getAttr(n, k);
+    let xs: number[] = [];
+    let ys: number[] = [];
+    switch (tree.tag(n)) {
+      case 'rect':
+        return Number(a('width')) === 0 || Number(a('height')) === 0;
+      case 'circle':
+        return Number(a('r')) === 0;
+      case 'ellipse':
+        return Number(a('rx')) === 0 || Number(a('ry')) === 0;
+      case 'line':
+        xs = [Number(a('x1')), Number(a('x2'))];
+        ys = [Number(a('y1')), Number(a('y2'))];
+        break;
+      case 'polygon':
+      case 'polyline':
+      case 'path': {
+        const d = a('d') ?? a('points') ?? '';
+        if (/[AaHhVvSsTt]|[a-z]/.test(d.replace(/e-?\d/g, ''))) return false;
+        const v = nums(d);
+        xs = v.filter((_, i) => i % 2 === 0);
+        ys = v.filter((_, i) => i % 2 === 1);
+        break;
+      }
+      case undefined:
+      default:
+        return false;
+    }
+    return Math.min(...xs) === Math.max(...xs) || Math.min(...ys) === Math.max(...ys);
+  };
+
+  it.each(['neo', 'neo-dark'] as const)(
+    'draws no zero-width or zero-height element with the gradient in %s, over every shape',
+    async (theme) => {
+      const { tree } = await draw(EVERY_SHAPE, { config: { theme } });
+      expect(outlined(tree).length).toBeGreaterThan(NAMES.length);
+      const bad = outlined(tree)
+        .filter((n) => flat(tree, n))
+        .map((n) => `${tree.getAttr(n.parent!, 'data-id')} ${tree.tag(n)}`);
+      expect(bad).toEqual([]);
+    }
+  );
+
+  it.each(['neo', 'neo-dark'] as const)(
+    'fills no element with the gradient in %s, over every shape',
+    async (theme) => {
+      const { svg, tree } = await draw(EVERY_SHAPE, { config: { theme } });
+      const bad = tree
+        .find((n, t) => (t.getAttr(n, 'fill') ?? '').startsWith('url('))
+        .map((n) => `${tree.getAttr(n.parent!, 'data-id')} ${tree.tag(n)}`);
+      expect(bad).toEqual([]);
+      expect(svg).not.toMatch(/fill:\s*url\(/);
+    }
+  );
+
+  it('draws the lined and divided rectangle rules in plain nodeBorder, every alias', async () => {
+    const names = [
+      'lin-rect',
+      'lined-rectangle',
+      'lined-process',
+      'lin-proc',
+      'shaded-process',
+      'div-rect',
+      'div-proc',
+      'divided-rectangle',
+      'divided-process',
+    ];
+    const { tree } = await draw(
+      ['flowchart LR', ...names.map((s, i) => `  n${i}@{ shape: ${s}, label: "x" }`)].join('\n'),
+      { config: { theme: 'neo', output: { cssVariables: false } } as InitializeConfig }
+    );
+    names.forEach((s, i) => {
+      const kids = tree.children(byAst(tree, `n:n${i}`)[0]!);
+      expect(tree.getAttr(kids.find((c) => tree.tag(c) === 'rect')!, 'stroke'), s).toBe(URL);
+      const rule = kids.find((c) => tree.tag(c) === 'path' && tree.getAttr(c, 'fill') === 'none');
+      expect(tree.getAttr(rule!, 'stroke'), s).toBe('#000000');
+    });
+  });
+
+  it('fills the fork and join bar plainly, never with the gradient', async () => {
+    const { tree } = await draw('flowchart LR\n  a@{ shape: fork }\n  b@{ shape: join }', {
+      config: { theme: 'neo', output: { cssVariables: false } } as InitializeConfig,
+    });
+    for (const id of ['a', 'b']) {
+      const bar = tree.children(byAst(tree, `n:${id}`)[0]!).find((c) => tree.tag(c) === 'rect')!;
+      expect(tree.getAttr(bar, 'fill'), id).toBe('#000000');
+      expect(tree.getAttr(bar, 'stroke'), id).toBe(URL);
+    }
+  });
+
+  it('keeps the gradient off edges, edge labels, arrowheads and the collapsed dots (D154)', async () => {
+    const { tree } = await draw(SHAPES, { config: { theme: 'neo' } });
+    const all = outlined(tree);
+    expect(all.length).toBeGreaterThan(0);
+    for (const n of all) {
+      expect(within(n, 'edgePaths') || within(n, 'edgeLabels'), tree.tag(n)).toBe(false);
+      expect(tree.getAttr(n, 'class') ?? '').not.toMatch(/collapsed-/);
+    }
+    expect(tree.find((n, t) => t.getAttr(n, 'fill') === URL)).toHaveLength(0);
+  });
+
+  it('fills dots and draws one-segment inner lines in plain nodeBorder', async () => {
+    // A bounding-box gradient paints nothing on a line with no width or height, and v12 neo
+    // fills no node part with the gradient.
+    const { tree } = await draw(SHAPES, {
+      config: { theme: 'neo', output: { cssVariables: false } } as InitializeConfig,
+    });
+    const dot = tree.children(byAst(tree, 'n:F')[0]!).find((c) => tree.tag(c) === 'circle')!;
+    expect(tree.getAttr(dot, 'fill')).toBe('#000000');
+    expect(tree.getAttr(dot, 'stroke')).toBe(URL);
+    for (const id of ['L', 'W']) {
+      const node = tree.find((n, t) => t.getAttr(n, 'data-id') === id && within(n, 'nodes'))[0]!;
+      const lines = tree
+        .children(node)
+        .filter((c) => tree.tag(c) === 'path' && tree.getAttr(c, 'fill') === 'none');
+      expect(lines.length, id).toBeGreaterThan(0);
+      for (const l of lines) expect(tree.getAttr(l, 'stroke'), id).toBe('#000000');
+    }
+    const browserDots = tree
+      .children(byAst(tree, 'n:W')[0]!)
+      .filter((c) => tree.tag(c) === 'circle');
+    expect(browserDots.map((c) => tree.getAttr(c, 'stroke'))).toEqual(Array(3).fill('#000000'));
+  });
+
+  it("lets the author's style and classDef strokes win over the gradient", async () => {
+    const { tree } = await draw(
+      [
+        'flowchart TD',
+        '  A --> B',
+        '  style A stroke:#ff0000',
+        '  classDef c stroke:#00ff00',
+        '  class B c',
+        '  subgraph S',
+        '    C',
+        '  end',
+        '  style S stroke:#0000ff',
+      ].join('\n'),
+      { config: { theme: 'neo', output: { cssVariables: false } } as InitializeConfig }
+    );
+    const stroke = (ast: string) => tree.getAttr(outlineOf(tree, byAst(tree, ast)[0]!), 'stroke');
+    expect(stroke('n:A')).toBe('#ff0000');
+    expect(stroke('n:B')).toBe('#00ff00');
+    expect(stroke('s:S')).toBe('#0000ff');
+    expect(tree.getAttr(outlineOf(tree, byAst(tree, 'n:C')[0]!), 'stroke')).toBe(URL);
+  });
+
+  it('lets a palette slot win over the gradient on a subgraph', async () => {
+    const { tree } = await draw('flowchart TD\n  subgraph S\n    A\n  end', {
+      config: { theme: 'redux-color', themeVariables: { useGradient: true } },
+    });
+    const rect = tree.children(byAst(tree, 's:S')[0]!).find((c) => tree.tag(c) === 'rect')!;
+    expect(tree.getAttr(rect, 'stroke')).not.toBe(URL);
+    expect(tree.getAttr(outlineOf(tree, byAst(tree, 'n:A')[0]!), 'stroke')).toBe(URL);
+  });
+
+  it.each(['default', 'redux-color', 'dark'] as const)(
+    'writes no gradient in %s',
+    async (theme) => {
+      const { svg } = await draw(SHAPES, { config: { theme } });
+      expect(svg).not.toMatch(/<defs|url\(/);
+    }
+  );
+});

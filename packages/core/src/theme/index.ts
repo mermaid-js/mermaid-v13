@@ -31,6 +31,7 @@ export {
   type AliasName,
   type AutoDeclarations,
   type Theme,
+  type ThemeGradient,
   type ThemeOptions,
   type ThemeWarning,
 } from './theme.ts';

@@ -17,6 +17,11 @@ export interface FacetEntry {
    */
   readonly section?: string;
   /**
+   * First-party rows: v12's detector regex, which `detector` tests (editors that cannot run
+   * `detector`, such as Monaco's Monarch tokenizer, derive their dispatch from it).
+   */
+  readonly pattern?: RegExp;
+  /**
    * First-party rows: run on the text from the diagram's first line. Third-party rows: the
    * cleaned text (directives and `%%` comments removed) and the front-matter config, as v12.
    */

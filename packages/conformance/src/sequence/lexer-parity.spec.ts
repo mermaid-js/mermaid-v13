@@ -3,7 +3,8 @@ import { JISON_NAMES, sequenceTokens } from '@mermaid-js/diagram-sequence';
 import { decodeEntities } from '../flowchart/v12.ts';
 import { LEXICAL_ERROR, loadSequenceLexerOracle } from './jison-lexer.ts';
 import type { JisonToken } from './jison-lexer.ts';
-import { sequenceGateCorpus } from './corpus.ts';
+import { commented, sequenceGateCorpus } from './corpus.ts';
+import type { CorpusItem } from '../types.ts';
 
 /**
  * Lexer-parity gate (parser-method §1): the v13 sequence lexer emits the same terminals, with
@@ -41,10 +42,19 @@ function v13Tokens(source: string): JisonToken[] {
   return out;
 }
 
+// `#y;` wherever a jison token could end inside its placeholder (`ﬂ°y¶ß`, #208 item 5).
+const ENTITIES: CorpusItem[] = [
+  'sequenceDiagram\nA#y;->>B: x:#y; z\nparticipant #y;\nparticipant C as #y;\nloop #y;\nend',
+  'sequenceDiagram\ntitle #y;\nNote over A: #y;\nlinks A: {"#y;": "x"}\n#y;->>B: x',
+].flatMap((source, k) => [
+  { id: `entity ${k}`, source },
+  { id: `entity ${k} (commented)`, source: commented(source) },
+]);
+
 describe('sequence lexer parity with mermaid@12 (jison)', () => {
   it('emits the same tokens over the e2e fixtures and the v12 spec strings', async () => {
     const oracle = await loadSequenceLexerOracle();
-    const items = await sequenceGateCorpus();
+    const items = [...(await sequenceGateCorpus()), ...ENTITIES];
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
     let compared = 0;
     let e2e = 0;
@@ -67,7 +77,7 @@ describe('sequence lexer parity with mermaid@12 (jison)', () => {
     }
     process.stdout.write(`lexer parity: ${compared} of ${items.length} sources lexed by v12\n`);
     // Every e2e fixture reaches the sequence lexer.
-    expect(e2e).toBe(220);
+    expect(e2e).toBe(222);
     expect(compared).toBeGreaterThan(800);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(

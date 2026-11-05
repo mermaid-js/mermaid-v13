@@ -15,6 +15,26 @@ describe('edges between a group and its own member (D82, #42)', () => {
     expect(second).toContain('lbl');
   });
 
+  // #198: the labels sit inside the frame, whole, clear of each other and of the member.
+  it.each([
+    ['flowchart TB\nsubgraph SG [Grp]\nA\nend\nSG -->|lbl| A', ['lbl']],
+    [
+      'flowchart TB\nsubgraph SG [Grp]\nA --> B\nend\nSG -->|a label| A\nB -->|back| SG',
+      ['a label', 'back'],
+    ],
+    ['erDiagram\nsubgraph G [Grp]\nA\nend\nG ||--o{ A : has', ['has']],
+  ])('keeps the frame whole round such labels: %s', async (input, labels) => {
+    const rows = (await ascii(input)).text.split('\n');
+    const frame = rows.slice(1, -1);
+    for (const row of frame) expect(row).toMatch(/^│.*│$/);
+    for (const label of labels) {
+      expect(
+        frame.some((r) => r.includes(` ${label} `)),
+        label
+      ).toBe(true);
+    }
+  });
+
   it('points the arrowhead towards the frame for an edge from a member to its group', async () => {
     expect(
       (await ascii('flowchart TB\nsubgraph S [Group]\nA\nend\nA --> S')).text.split('\n')[0]

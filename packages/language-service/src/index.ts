@@ -22,6 +22,7 @@ export { diagnosticMessage } from './diagnostics.ts';
 export { inlineMarkdown } from './markdown.ts';
 export type { InlinePart } from './markdown.ts';
 export { firstPartyFacets } from './generated/facets.gen.ts';
+export type { FirstPartyFacetId } from './generated/facets.gen.ts';
 export type { FoldingRange } from './folding.ts';
 export { encodeSemanticTokens, lineFoldingRanges, lineSemanticTokens } from './lines.ts';
 export type { LineFoldingRange, LineSemanticToken, LineSemanticTokenOptions } from './lines.ts';

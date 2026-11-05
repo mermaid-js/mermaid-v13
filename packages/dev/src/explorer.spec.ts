@@ -60,7 +60,12 @@ describe('the explorer file API', () => {
     root = join(parent, 'root');
     mkdirSync(join(root, 'flowchart', 'baseline'), { recursive: true });
     mkdirSync(join(root, 'sequence'));
-    mkdirSync(join(root, 'Zeta'));
+    mkdirSync(join(root, 'Zeta', 'deep', 'er'), { recursive: true });
+    mkdirSync(join(root, 'Empty', 'nested'), { recursive: true });
+    mkdirSync(join(root, 'flowchart', 'helpers'));
+    writeFileSync(join(root, 'sequence', 's.mmd'), 'sequenceDiagram\n  A->>B: hi\n');
+    writeFileSync(join(root, 'Zeta', 'deep', 'er', 'z.mmd'), 'flowchart LR\n  Z\n');
+    writeFileSync(join(root, 'flowchart', 'helpers', 'util.ts'), 'export {};\n');
     writeFileSync(join(root, 'flowchart', 'baseline', 'b.mmd'), 'flowchart LR\n  B\n');
     writeFileSync(join(root, 'flowchart', 'baseline', 'a.mmd'), 'flowchart LR\n  A\n');
     writeFileSync(join(root, 'flowchart', 'baseline', 'notes.txt'), 'not a diagram');
@@ -68,7 +73,7 @@ describe('the explorer file API', () => {
     writeFileSync(join(parent, 'outside.mmd'), 'flowchart TD\n  secret\n');
     server = await startServer(
       PORT,
-      explorerServerOptions(root, { folders: () => ['flowchart', 'Zeta'] })
+      explorerServerOptions(root, { folders: () => ['flowchart', 'Zeta', 'Empty'] })
     );
   });
   afterAll(async () => {
@@ -77,7 +82,7 @@ describe('the explorer file API', () => {
   });
 
   describe('GET /dev/api/files', () => {
-    it('lists the root: the given top-level folders, then .mmd files', async () => {
+    it('lists the root: the given top-level folders that hold diagrams, then .mmd files', async () => {
       const reply = await call('/dev/api/files');
       expect(reply.status).toBe(200);
       expect(JSON.parse(reply.body)).toEqual({
@@ -100,6 +105,21 @@ describe('the explorer file API', () => {
           { name: 'b.mmd', kind: 'file', path: 'flowchart/baseline/b.mmd' },
         ],
       });
+    });
+
+    it('lists every folder below that holds a diagram, however deep, and none that do not', async () => {
+      expect(JSON.parse((await call('/dev/api/files?path=flowchart')).body)).toMatchObject({
+        entries: [{ name: 'baseline', kind: 'dir', path: 'flowchart/baseline' }],
+      });
+      expect(JSON.parse((await call('/dev/api/files?path=Zeta')).body)).toMatchObject({
+        entries: [{ name: 'deep', kind: 'dir', path: 'Zeta/deep' }],
+      });
+    });
+
+    it('refuses a folder outside the given top-level folders', async () => {
+      expect((await call('/dev/api/files?path=sequence')).status).toBe(400);
+      expect((await call(file('sequence/s.mmd'))).status).toBe(400);
+      expect((await call(file('sequence/new.mmd'), 'POST', 'x')).status).toBe(400);
     });
 
     it.each(['..', '../', 'flowchart/../..', '/..', 'a\0b'])('refuses %j', async (path) => {
@@ -134,10 +154,12 @@ describe('the explorer file API', () => {
 
   describe('POST /dev/api/file', () => {
     it('creates a new file with the given text, making folders', async () => {
-      const reply = await call(file('new/one.mmd'), 'POST', 'flowchart LR\n  N\n');
+      const reply = await call(file('Zeta/new/one.mmd'), 'POST', 'flowchart LR\n  N\n');
       expect(reply.status).toBe(201);
-      expect(JSON.parse(reply.body)).toEqual({ path: 'new/one.mmd', bytes: 17 });
-      expect(readFileSync(join(root, 'new', 'one.mmd'), 'utf8')).toBe('flowchart LR\n  N\n');
+      expect(JSON.parse(reply.body)).toEqual({ path: 'Zeta/new/one.mmd', bytes: 17 });
+      expect(readFileSync(join(root, 'Zeta', 'new', 'one.mmd'), 'utf8')).toBe(
+        'flowchart LR\n  N\n'
+      );
     });
 
     it('creates a starter diagram when the body is empty', async () => {
@@ -300,8 +322,8 @@ describe('the explorer file API', () => {
 });
 
 describe('resolveExplorerRoot', () => {
-  it('defaults to the e2e fixture folders', () => {
-    expect(resolveExplorerRoot({})).toBe(join(REPO_ROOT, 'e2e', 'diagrams'));
+  it('defaults to the checkout', () => {
+    expect(resolveExplorerRoot({})).toBe(REPO_ROOT);
   });
 
   it('takes MERMAID_DEV_EXPLORER_ROOT, relative to the checkout', () => {

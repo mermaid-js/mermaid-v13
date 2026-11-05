@@ -24,6 +24,19 @@ export function esc(text: string): string {
   return RE_NEEDS_ESC.test(text) ? text.replace(RE_ESC, (c) => ESC[c] ?? '') : text;
 }
 
+const RE_ATTR_WS = /[\t\n\r]/;
+const RE_ATTR_WS_G = /[\t\n\r]/g;
+const ATTR_WS: Readonly<Record<string, string>> = { '\t': '&#9;', '\n': '&#10;', '\r': '&#13;' };
+
+/**
+ * `esc()` for a double-quoted attribute value. Tab, LF and CR are written as character
+ * references too, since an XML reader turns them into spaces (attribute-value normalisation).
+ */
+export function escAttr(value: string): string {
+  const e = esc(value);
+  return RE_ATTR_WS.test(e) ? e.replace(RE_ATTR_WS_G, (c) => ATTR_WS[c] as string) : e;
+}
+
 // The two decimals of a coordinate, by hundredths. Building the string from integers is
 // much faster than converting a double.
 const FRACTION: string[] = [];

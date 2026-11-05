@@ -68,6 +68,8 @@ describe('visual baseline fixtures (R-TEST-5)', () => {
       'forest',
       'neutral',
       'base',
+      'neo',
+      'neo-dark',
     ]);
     // The redux-color, redux-dark and redux-dark-color fixtures come with #89.
     const pending = new Set(['redux-color', 'redux-dark', 'redux-dark-color']);

@@ -152,8 +152,9 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-TEXT-7 | `deterministic: true` forces the table measurer in every environment. Browser and Node output are then byte-identical. | Must | M1 | D17 | Cross-environment equality test |
 | R-TEXT-8 | Wrapping honours `wrappingWidth`, is CJK-aware, and handles soft hyphen and zero-width space. Emoji and wide characters are measured as wide. | Must | M1 | D17, P1 | Specs |
 | R-TEXT-9 | The font family comes from `fontFamily` config / `--mermaid-fontFamily`, with v12's default as the fallback (P1). | Must | M1 | D17, D20 | Spec |
-| R-TEXT-10 | Math (KaTeX) and icons are provided by optional plugins that emit SVG paths, never HTML. | Should | M4 | D5, D7 | Plugin exists; allow-list test passes with plugin enabled |
+| R-TEXT-10 | Math (TeX) is provided by an optional plugin that emits SVG paths, never HTML. It renders with MathJax in every label core lays out. | Must | M3.5 | D5, D7, D170, D175–D178 | Plugin exists; allow-list test passes with plugin enabled |
 | R-TEXT-11 | Markdown strings also accept bullet lists (lines starting with "- " or "\* ", one nesting level). They render as indented tspan lines with a bullet glyph. Bullets are recognised only inside markdown strings, never in plain labels, so existing diagrams are not broken. | Should | M1 | D56 | Specs plus visual baseline; oracle corpus shows no change for labels without markdown bullets |
+| R-TEXT-12 | Icons are provided by an optional plugin that emits SVG paths, never HTML. Split from R-TEXT-10 (D175). | Should | M4 | D5, D7, D170 | Plugin exists; allow-list test passes with plugin enabled |
 
 ## 10. Layout (R-LAYOUT)
 
@@ -189,7 +190,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-THEME-4 | Derived colours (borders, hover, secondary and tertiary fills, contrast text) are computed in CSS with `color-mix()`/`var()` from the base variables, with a computed fallback. Overriding a base variable updates its derived colours. | Must | M1 | D39 | Browser test overriding `--mermaid-primaryColor` |
 | R-THEME-5 | A theme can be fully specified with a small set of base variables (target ≤ 8: primary, secondary, tertiary, background, text, line, font family, font size). | Must | M1 | D20 | Doc + spec: base-only theme renders fully |
 | R-THEME-6 | Built-in themes `redux-color` (the default when no theme is set), `redux`, `redux-dark`, `redux-dark-color`, `default`, `dark`, `forest`, `neutral` and `base` are supported, with recognisably the same palettes as v12. | Must | M1 | D20, D55, D151, P1 | Visual baseline |
-| R-THEME-7 | The remaining v12 themes (`neo`, `neo-dark`) are supported as well, either in core or as theme packages. Until then they render `redux-color` and `redux-dark-color` with a warning. | Must | M3.5 | P1, D64, D151 | See open item O-2 |
+| R-THEME-7 | The remaining v12 themes (`neo`, `neo-dark`) are supported as well, either in core or as theme packages. | Must | M3.5 | P1, D64, D151, D180–D189 | **Done** (M3.5, #213): both in core (D180), with the neo gradient (D182); oracle specs against v12 12.2.0, `neo` and `neo-dark` visual baselines for every ported type, gallery of all types in both (#236). Open item O-2 |
 | R-THEME-8 | Optional `theme: 'auto'` follows the OS light/dark setting via a variables-only `<style>` with `prefers-color-scheme`. | Could | M1 | D20 | Browser test with emulated colour scheme |
 | R-THEME-9 | Built-in themes meet WCAG AA contrast for text on fills, in both light and dark. | Must | M1 | D29 | Automated contrast check over theme tokens |
 | R-THEME-10 | Colour handling has no runtime dependency (no khroma). | Must | M1 | D10, D39 | R-PERF-2 |
@@ -251,7 +252,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-PLUG-5 | Third-party and heavy plugins activate on install: in Node/SSR by auto-discovering manifests in `node_modules`; in bundlers through a one-line `@mermaid-js/bundler-plugin` (unplugin for Vite, webpack, Rollup and esbuild); on a CDN by adding a self-registering script. | Must | M3.5 | D35, D40, D164–D167 | Example apps for each path in CI |
 | R-PLUG-6 | `registerExternalDiagrams()` always works as an explicit fallback. | Must | M1 | D40 | Spec |
 | R-PLUG-7 | The CDN build lazy-loads first-party diagram packages only from the configured CDN base, never from a URL in diagram text. | Must | M3.5 | D41, D162, D163 | Spec |
-| R-PLUG-8 | Optional features (ELK, math, icons, hand-drawn look) are separate plugin packages. Core size is unaffected by their existence. | Must | M3.5 | D7 | Size check |
+| R-PLUG-8 | Optional features (ELK, math, icons, hand-drawn look) are separate plugin packages. Core size is unaffected by their existence. ELK and math ship in M3.5; icons and hand-drawn in M4 (D170). | Must | M3.5 | D7, D170 | Size check |
 | R-PLUG-9 | A first-party interactions plugin restores v12 click callbacks (click X callback, call) from day one. Core only emits stable node ids; the plugin binds handlers to the rendered DOM after render, so core output stays inside the allow-list (R-SEC-2). The integrator opts in by installing it; diagram text alone cannot enable it. | Must | M1 | D47 | Spec: callback fires with plugin, warning without it; allow-list test passes with plugin enabled |
 
 ## 18. ASCII output (R-ASCII)
@@ -307,8 +308,8 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | ID | Requirement | Pri | MS | Src | Acceptance |
 | --- | --- | --- | --- | --- | --- |
 | R-REL-1 | Development happens on branch `mermaid-v13`. v12 continues on `develop`. | Must | M1 | D1 | Branch exists |
-| R-REL-2 | Changesets pre-release mode versions the alphas. The release master publishes them (D155); publishing on every merge to `mermaid-v13` waits for CI in the OSS repository. | Must | M1 | D28, D155 | Release workflows, v13/docs/RELEASING.md |
-| R-REL-3 | Public `mermaid@13.0.0-alpha.N` (dist-tag `v13-alpha`) is published to npm from the first alpha (D155). Each release prints R-PERF-1…4 on the last bench report. The gate is enforced once R-PERF-3 holds on CI; until then the release master skips it with a stated reason. | Must | M1 | D28, D155 | `release:publish` (`--gate` or `--skip-gate`) |
+| R-REL-2 | Changesets pre-release mode versions the alphas. The release master publishes them (D159); publishing on every merge to `mermaid-v13` waits for CI in the OSS repository. | Must | M1 | D28, D159 | Release workflows, v13/docs/RELEASING.md |
+| R-REL-3 | Public `mermaid@13.0.0-alpha.N` (dist-tag `v13-alpha`) is published to npm from the first alpha (D159). Each release prints R-PERF-1…4 on the last bench report. The gate is enforced once R-PERF-3 holds on CI; until then the release master skips it with a stated reason. | Must | M1 | D28, D159 | `release:publish` (`--gate` or `--skip-gate`) |
 | R-REL-4 | Ported Pele code carries MIT attribution in file headers and `THIRD_PARTY_NOTICES`. | Must | M1 | D12 | License check |
 | R-REL-5 | Requirements, design, ADRs and tickets cross-reference each other by R-id. | Must | M1 | D36 | Review |
 

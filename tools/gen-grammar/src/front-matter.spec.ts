@@ -1,7 +1,7 @@
 /**
- * The Monarch tokenizer reads a leading front matter block as front matter (run notes GAPS.md
- * "Highlighters ignore front matter", Monaco part): YAML in it never leaves a flowchart mode
- * open into the diagram, so the diagram's highlighting is the same with or without it.
+ * The Monarch tokenizer (#36), the TextMate grammar (#176) and the Lezer tokenizer read a
+ * leading front matter block as front matter: YAML in it never leaves a flowchart mode open
+ * into the diagram, so the diagram's highlighting is the same with or without it.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -10,13 +10,28 @@ import { describe, expect, it } from 'vitest';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { detectFlowchart } from '@mermaid-js/diagram-flowchart';
 import { generate, generatedDir } from './generate.ts';
-import { monarchCategorise } from './highlight-testing.ts';
+import { lezerCategorise, monarchCategorise, textMateCategorise } from './highlight-testing.ts';
+import type { Categorise } from './highlight-testing.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 const files = generate((p) => readFileSync(join(root, p), 'utf8'));
-const monarch = monarchCategorise(
-  files.get(`${generatedDir('flowchart')}/flowchart.monarch.json`) ?? ''
-);
+const out = (name: string) => files.get(`${generatedDir('flowchart')}/${name}`) ?? '';
+const HIGHLIGHTERS: [string, Categorise][] = [
+  ['Monarch', monarchCategorise(out('flowchart.monarch.json'))],
+  [
+    'TextMate',
+    await textMateCategorise(out('flowchart.tmLanguage.json'), 'source.mermaid-flowchart'),
+  ],
+  [
+    'Lezer',
+    await lezerCategorise(
+      out('flowchart.grammar'),
+      out('flowchart.tokens.js'),
+      'flowchart',
+      join(root, 'tools/gen-grammar/node_modules/.cache/lezer-front-matter')
+    ),
+  ],
+];
 
 function mmdFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
@@ -40,7 +55,7 @@ const FIXTURES: [string, string][] = [
 
 const blank = (src: string, end: number) => src.slice(0, end).replace(/[^\n]/g, ' ');
 
-describe('Monarch front matter', () => {
+describe.each(HIGHLIGHTERS)('%s front matter', (_name, highlight) => {
   const corpus = mmdFiles(join(root, 'e2e/diagrams'))
     .map((f) => [f.slice(root.length), readFileSync(f, 'utf8')] as const)
     .filter(([, src]) => src.startsWith('---') && detectFlowchart(src) !== undefined);
@@ -51,8 +66,8 @@ describe('Monarch front matter', () => {
     for (const [file, src] of [...FIXTURES, ...corpus]) {
       const end = preprocess(src).bodyStart;
       expect(end, file).toBeGreaterThan(0);
-      const got = monarch(src).slice(end);
-      const want = monarch(blank(src, end) + src.slice(end)).slice(end);
+      const got = highlight(src).slice(end);
+      const want = highlight(blank(src, end) + src.slice(end)).slice(end);
       if (got.join() !== want.join()) differ.push(file);
     }
     expect(differ).toEqual([]);
@@ -60,7 +75,7 @@ describe('Monarch front matter', () => {
 
   it('marks the fences as meta and YAML keys as variables', () => {
     const src = '---\ntitle: x # note\n---\nflowchart LR\n';
-    const cats = monarch(src);
+    const cats = highlight(src);
     expect(cats.slice(0, 3)).toEqual(['Meta', 'Meta', 'Meta']);
     expect(cats.slice(4, 9)).toEqual(Array(5).fill('Variable'));
     expect(cats[src.indexOf('#')]).toBe('Comment');
@@ -69,7 +84,20 @@ describe('Monarch front matter', () => {
   });
 
   it('reads `---` only on the first line as an opening fence', () => {
-    const cats = monarch('flowchart LR\n---\n');
+    const cats = highlight('flowchart LR\n---\n');
     expect(cats.slice(13, 16)).not.toEqual(['Meta', 'Meta', 'Meta']);
+  });
+
+  it('reads one block: a `---` line after the closing fence opens nothing', () => {
+    const src = '---\na: 1\n---\n---\nflowchart LR\n';
+    const cats = highlight(src);
+    expect(cats.slice(13, 16)).not.toEqual(['Meta', 'Meta', 'Meta']);
+  });
+
+  it('reads an unclosed block to the end of the text', () => {
+    const src = "---\ntitle: it's (open\nflowchart LR\n  A --> B\n";
+    const cats = highlight(src);
+    expect(cats.slice(0, 3)).toEqual(['Meta', 'Meta', 'Meta']);
+    expect(new Set(cats.slice(src.indexOf('flowchart')))).toEqual(new Set(['Other']));
   });
 });

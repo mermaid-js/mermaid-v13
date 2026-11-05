@@ -1,0 +1,3 @@
+@ 3:13  "Customer |Account" ||--o{ ORDER : places
+  prepare: 3:4-3:20 "Customer Account"; rename to "Client \"A\"":
+  refused: 'Client "A"' cannot be written inside "…".

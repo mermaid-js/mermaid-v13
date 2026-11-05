@@ -83,9 +83,21 @@ export function saveSettings(settings: RenderSettings): void {
   setUrlParams({ theme: settings.theme, layout: settings.layout });
 }
 
-/** The integrator config a render uses: only the keys that are set. */
+/**
+ * The explorer renders local test diagrams, some far past the production limits (the
+ * `performance/flowcharts/huge*` sources run to 244k characters), so it lifts them.
+ */
+export const LOCAL_LIMITS = {
+  maxSourceLength: 10_000_000,
+  maxEdges: 1_000_000,
+  maxNodes: 1_000_000,
+  maxOutputLength: 200_000_000,
+} as const;
+
+/** The integrator config a render uses: the lifted limits, and only the keys that are set. */
 export function renderConfig(settings: RenderSettings): InitializeConfig {
   return {
+    limits: LOCAL_LIMITS,
     ...(settings.theme ? { theme: settings.theme as InitializeConfig['theme'] } : {}),
     ...(settings.layout ? { layout: settings.layout } : {}),
   };

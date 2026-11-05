@@ -4,9 +4,9 @@
  * A new diagram type that needs another element or attribute adds it here and in
  * `types.ts`, with care.
  */
-import type { AllowedAttr, AllowedTag } from './types.ts';
+import type { AllowedAttr, AllowedTag, GradientAttr, GradientTag } from './types.ts';
 
-const TAG_TABLE: Record<AllowedTag, true> = {
+const TAG_TABLE: Record<AllowedTag | GradientTag, true> = {
   svg: true,
   g: true,
   path: true,
@@ -22,9 +22,12 @@ const TAG_TABLE: Record<AllowedTag, true> = {
   title: true,
   desc: true,
   image: true,
+  defs: true,
+  linearGradient: true,
+  stop: true,
 };
 
-const ATTR_TABLE: Record<AllowedAttr, true> = {
+const ATTR_TABLE: Record<AllowedAttr | GradientAttr, true> = {
   xmlns: true,
   viewBox: true,
   width: true,
@@ -86,12 +89,43 @@ const ATTR_TABLE: Record<AllowedAttr, true> = {
   href: true,
   target: true,
   rel: true,
+  offset: true,
+  'stop-color': true,
+  'stop-opacity': true,
+  gradientUnits: true,
 };
 
 /** Every element the writer may emit. */
 export const ALLOWED_TAGS: ReadonlySet<string> = new Set(Object.keys(TAG_TABLE));
 /** Every attribute the writer may emit. */
 export const ALLOWED_ATTRS: ReadonlySet<string> = new Set(Object.keys(ATTR_TABLE));
+/** The gradient's elements: only the writer itself emits them (D182). */
+export const GRADIENT_TAGS: ReadonlySet<string> = new Set<GradientTag>([
+  'defs',
+  'linearGradient',
+  'stop',
+]);
+/** The gradient's attributes, by the one element each belongs on. */
+export const GRADIENT_ATTRS: ReadonlyMap<string, GradientTag> = new Map<GradientAttr, GradientTag>([
+  ['gradientUnits', 'linearGradient'],
+  ['offset', 'stop'],
+  ['stop-color', 'stop'],
+  ['stop-opacity', 'stop'],
+]);
+/**
+ * The one gradient the writer emits (D182): `linearGradient`'s attributes other than `id`, with
+ * their only values. A horizontal gradient over each outline's bounding box (v12 insertLookDefs'
+ * 0% → 100%, as the fractions objectBoundingBox units take).
+ */
+export const GRADIENT_FIXED: Readonly<Record<string, string>> = {
+  gradientUnits: 'objectBoundingBox',
+  x1: '0',
+  y1: '0',
+  x2: '1',
+  y2: '0',
+};
+/** A gradient id: a style scope (`styleScope`) and `-gradient`. */
+export const RE_GRADIENT_ID = /^[A-Za-z_][\w-]{0,63}-gradient$/;
 /** Elements that may hold character data. */
 export const TEXT_HOLDERS: ReadonlySet<string> = new Set(['text', 'tspan', 'title', 'desc']);
 /** Attributes whose value must be a number. */
@@ -119,10 +153,12 @@ export const LINK_TARGETS: ReadonlySet<string> = new Set(['_self', '_blank', '_p
 export const BLANK_REL = 'noopener noreferrer';
 export const SVG_NS = 'http://www.w3.org/2000/svg';
 
+/** A tag renderers and hooks may write (the gradient's are the writer's own). */
 export function isAllowedTag(tag: string): tag is AllowedTag {
-  return ALLOWED_TAGS.has(tag);
+  return ALLOWED_TAGS.has(tag) && !GRADIENT_TAGS.has(tag);
 }
 
+/** An attribute renderers and hooks may write (the gradient's are the writer's own). */
 export function isAllowedAttr(name: string): name is AllowedAttr {
-  return ALLOWED_ATTRS.has(name);
+  return ALLOWED_ATTRS.has(name) && !GRADIENT_ATTRS.has(name);
 }

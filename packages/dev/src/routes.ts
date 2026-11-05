@@ -5,13 +5,18 @@
  * - `POST /node-render` `{ code, options }` → the same adapter's output rendered in Node, for
  *   the Node-vs-browser equality spec (bodies over `MAX_BODY_BYTES` are a 413);
  * - `GET /fonts/<file>` → the `@fontsource/noto-sans-sc` files, for the late-font spec;
+ * - `GET /gallery[?themes=neo,neo-dark]` → the theme gallery (R-TEST-6) of every baseline, built
+ *   on request, in all themes or the listed ones (an unknown theme is a 400);
  * - `GET /smoke.mjs` → the smoke bundle (`smoke:build`), for the browser and worker smoke renders.
  */
-import { createReadStream, existsSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync } from 'node:fs';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { createRequire } from 'node:module';
 import { basename, dirname, join } from 'node:path';
+import { isThemeName } from '@mermaid-js/core/theme';
 import { renderDiagram, type RenderOptions } from './adapter.ts';
+import { galleryFixtures, REPO_ROOT } from './fixtures.ts';
+import { buildGallery } from './gallery.ts';
 
 const SMOKE = join(import.meta.dirname, '..', 'dist', 'smoke', 'smoke.mjs');
 const FONTS = join(
@@ -79,13 +84,33 @@ export function sendFile(res: ServerResponse, file: string, type: string, missin
   createReadStream(file).pipe(res);
 }
 
+/** `GET /gallery[?themes=a,b]`: the theme gallery, built on request. */
+async function serveGallery(res: ServerResponse, url: URL): Promise<void> {
+  const themes = url.searchParams.get('themes')?.split(',').filter(Boolean);
+  const unknown = themes?.filter((t) => !isThemeName(t)) ?? [];
+  if (unknown.length > 0) {
+    res.writeHead(400, { 'content-type': 'text/plain' });
+    res.end(`Unknown theme: ${unknown.join(', ')}`);
+    return;
+  }
+  const { version } = JSON.parse(
+    readFileSync(join(REPO_ROOT, 'packages', 'mermaid', 'package.json'), 'utf8')
+  ) as { version: string };
+  const { html } = await buildGallery(galleryFixtures(), { version, themes });
+  res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+  res.end(html);
+}
+
 export const builtInRoutes: readonly Route[] = [
   {
     path: '/',
     method: 'GET',
     handle: (_req, res) => {
       res.writeHead(200, { 'content-type': 'text/html' });
-      res.end('<a href="/dev/">Dev Explorer</a> · <a href="/e2e.html">e2e.html</a>');
+      res.end(
+        '<a href="/dev/">Dev Explorer</a> · <a href="/e2e.html">e2e.html</a> · ' +
+          '<a href="/gallery">Theme gallery</a>'
+      );
     },
   },
   {
@@ -102,6 +127,11 @@ export const builtInRoutes: readonly Route[] = [
       res.writeHead(200, { 'content-type': 'application/json' });
       res.end(JSON.stringify(out));
     },
+  },
+  {
+    path: '/gallery',
+    method: 'GET',
+    handle: (_req, res, url) => serveGallery(res, url),
   },
   {
     path: '/smoke.mjs',

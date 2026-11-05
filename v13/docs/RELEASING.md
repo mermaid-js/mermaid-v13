@@ -31,6 +31,8 @@ mermaid                          13.0.0-alpha.7
 @mermaid-js/plugin-interactions  13.0.0-alpha.3
 ```
 
+A package that has never been published starts at a hand-set `13.0.0-alpha.0` in its package.json, which is never published itself: its first changeset (a `patch`, "feat: first release of …") makes its first release `13.0.0-alpha.1`.
+
 The packages depend on each other at **exact** versions (`workspace:*` in package.json, which `pnpm pack` writes as `13.0.0-alpha.6`). This has two effects:
 
 - **A change re-releases everything that depends on it.** Changesets bumps every dependent whose pinned version no longer matches. `mermaid` depends on every diagram package and on core, so **any** release also releases a new `mermaid`, and `mermaid@v13-alpha` always holds the newest set.
@@ -81,14 +83,14 @@ Never edit `version` in a package.json, `version.ts` or the CHANGELOG files by h
 | `pnpm release:preflight` | Checks branch, clean tree, origin, pre mode, Node, npm login, GitHub token. Prints the release plan (from `changeset status`), the versions not yet on npm and the next step. | nothing |
 | `pnpm changeset version` | Applies the pending changesets: bumps versions (dependents too), writes CHANGELOGs, records them in `pre.json`. | package.json, CHANGELOG.md, `.changeset/pre.json` |
 | `pnpm release:sync-version` | Writes `packages/mermaid/src/version.ts` from package.json. | `version.ts` |
-| `pnpm release:rehearse` | Copies the working tree, versions and builds it, publishes to a local Verdaccio, then installs both ways and runs the guide's snippets, the CLI, bundles and types (`--nodes a,b` to test several Node binaries). | nothing (temp dir) |
-| `pnpm release:publish --target public …` | Packs every published package (alpha-version, exact-range and workspace-leak gates, LICENSE added), then `npm publish --tag v13-alpha` for **each version not on npm yet**. Already published versions are skipped, so only what `changeset version` bumped goes out, and a re-run after a failure finishes the set. | npm |
+| `pnpm release:rehearse` | Copies the working tree, versions and builds it, publishes to a local Verdaccio, then installs both ways and runs the guide's snippets, the CLI, bundles and types, and installs the editor adapters and checks their per-type grammars load and stay lazy chunks (`--nodes a,b` to test several Node binaries). | nothing (temp dir) |
+| `pnpm release:publish --target public …` | Packs every published package (alpha-version, exact-range, workspace-leak and dangling-export gates, LICENSE added), then `npm publish --tag v13-alpha` for **each version not on npm yet**. Already published versions are skipped, so only what `changeset version` bumped goes out, and a re-run after a failure finishes the set. | npm |
 | `pnpm changeset tag` | Creates a git tag `<name>@<version>` for each package version that has none. | git tags |
 
 `release:publish` options:
 
 - `--gate <bench report.json>` checks the public alpha gate (R-PERF-1…4, R-REL-3) on a full bench report of this commit.
-- `--skip-gate "<reason>"` publishes without enforcing the gate (D155). It prints the reason and the gate's checks on the **last known bench**: `--bench-report <file>`, else `packages/bench/dist/reports/latest.json`, else the newest successful *Nightly bench* report, downloaded with `gh`. The full bench takes up to an hour, and R-PERF-3 is below 50× on CI runners (D150), so manual releases use this. Example:
+- `--skip-gate "<reason>"` publishes without enforcing the gate (D159). It prints the reason and the gate's checks on the **last known bench**: `--bench-report <file>`, else `packages/bench/dist/reports/latest.json`, else the newest successful *Nightly bench* report, downloaded with `gh`. The full bench takes up to an hour, and R-PERF-3 is below 50× on CI runners (D150), so manual releases use this. Example:
   ```
   Public alpha gate (R-PERF-1…4) SKIPPED by the release master: manual alpha
   Last known bench, not enforced: 2026-11-04T11:02:52.881Z on blacksmith-4vcpu-ubuntu-2404, commit 639b65a
@@ -272,10 +274,11 @@ So **an alpha goes out when the release master merges the Version Packages PR.**
 - `tools/release/src/`:
   - `preflight*.ts`: preflight and release plan.
   - `version-file*.ts`: `version.ts` sync.
-  - `manifest.ts`: published manifest, leak and exact-range gates.
+  - `manifest.ts`: published manifest, leak, exact-range and dangling-export gates.
   - `publish*.ts`: pack and publish.
   - `public-gate*.ts`: R-PERF gate.
   - `changesets*.ts`: `ensure-changeset`.
   - `rehearse-cli.ts`: local rehearsal (consumer fixtures in `tools/release/fixtures/rehearsal/`).
+  - `adapters-check.ts`, `adapters-pack-cli.ts`: the editor adapters' pack-and-install checks (fixtures in `tools/release/fixtures/adapters/`); `pnpm exec tsx tools/release/src/adapters-pack-cli.ts` runs them without a registry, in `.tmp/adapters-pack-check/`.
 - `.github/workflows/release-alpha.yml`: the manual release workflow (§5).
 - `.github/workflows/release.yml`: the CI publish-on-merge flow (off).

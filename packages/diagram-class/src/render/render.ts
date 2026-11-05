@@ -15,11 +15,12 @@ import {
   translate,
   type Attrs,
   type CheckedStyle,
+  type OutlinePaint,
   type Paint,
   type SafeValue,
   type SvgWriter,
 } from '@mermaid-js/core/svg';
-import { Style, type MeasuredLabel } from '@mermaid-js/core/text';
+import type { MeasuredLabel } from '@mermaid-js/core/text';
 import type {
   ClassBoxView,
   ClassEdgeView,
@@ -86,7 +87,14 @@ function paletteSlots(theme: ThemeOf): (order: number) => Tint | undefined {
 interface Paints {
   readonly font: ReturnType<ThemeOf['font']>;
   readonly fontSize: Length;
-  readonly box: { fill: Color; stroke: Color; text: Color };
+  /** `stroke` is the theme's gradient when `useGradient` is on (D182, v12 neo `classBox.ts`). */
+  readonly box: { fill: Color; stroke: OutlinePaint; text: Color };
+  /**
+   * How far a divider's end is lifted: 0.01 when it is drawn with the gradient, else 0. A level
+   * line has a zero-height box, which an objectBoundingBox gradient doesn't paint; v12 lifts it
+   * by 0.001, the writer's precision is 0.01.
+   */
+  readonly lift: number;
   readonly strokeWidth: Length;
   /**
    * The theme's drop shadow, on class boxes, notes and namespaces only (v12 neo's `.outer-path`
@@ -96,7 +104,7 @@ interface Paints {
   readonly line: Color;
   readonly markers: Markers;
   readonly note?: { fill: Color; stroke: Color; text: Color };
-  readonly cluster?: { fill: Color; stroke: Color; strokeWidth: Length; text: Color };
+  readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
   /** Relationship labels and multiplicities, and the interface names. */
   readonly text?: Color;
   readonly edgeLabel?: Color;
@@ -110,7 +118,9 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
   const line = theme.color('lineColor');
   const box = {
     fill: theme.color('mainBkg'),
-    stroke: theme.color('nodeBorder'),
+    // v12 neo strokes class boxes and their dividers with the gradient; notes keep
+    // noteBorderColor (v12 `note.ts` writes it as an inline `!important` style).
+    stroke: theme.outline('nodeBorder'),
     // v12 `classText`: every class-diagram text but notes and namespace titles.
     text: theme.color('classText'),
   };
@@ -127,7 +137,7 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
     p.groups.length > 0
       ? {
           fill: theme.color('clusterBkg'),
-          stroke: theme.color('clusterBorder'),
+          stroke: theme.outline('clusterBorder'),
           strokeWidth: theme.length('clusterStrokeWidth'),
           text: theme.color('titleColor'),
         }
@@ -145,6 +155,7 @@ function paints(theme: ThemeOf, p: ClassPrepared): Paints {
     font: theme.font(),
     fontSize: theme.length('fontSize'),
     box,
+    lift: theme.gradient() ? 0.01 : 0,
     strokeWidth,
     shadow,
     line,
@@ -386,31 +397,8 @@ function drawRow(w: SvgWriter, row: ClassRow, attrs: Attrs): void {
     w.label(label, row.x, cy, attrs);
     return;
   }
-  const first = label.lines[0];
-  if (first === undefined) {
+  if (label.lines.length === 0) {
     w.leaf('text', attrs);
-    return;
-  }
-  const only = label.lines.length === 1 && first.length === 1 ? first[0]! : undefined;
-  // An inline box (D177) is drawn by the writer, so a lone box run takes the writer's path.
-  if (
-    only &&
-    only.kind !== 'box' &&
-    !only.bold &&
-    !only.italic &&
-    !only.underline &&
-    !only.strike &&
-    !only.attrs
-  ) {
-    // One plain run: the writer would centre it, so it is written here, starting at `x`.
-    w.open('text', {
-      ...attrs,
-      x: row.x,
-      y: row.y + label.baseline,
-      'text-anchor': 'start',
-    });
-    w.text(only.text);
-    w.close();
     return;
   }
   // Left-aligned: centred on its own width, so the writer's left mode starts it at `x`.
@@ -462,10 +450,17 @@ function drawClass(
     filter: paint.shadow,
     ...shape,
   });
+  // The dividers take the box's stroke: the gradient too, as v12 under `useGradient` (no
+  // `neo-line`), lifted so the gradient paints.
+  const lift = shape.stroke === paint.box.stroke ? paint.lift : 0;
   for (const y of view.dividers) {
     w.leaf('path', {
       class: 'divider',
-      d: w.path().moveTo(0, y).lineTo(view.width, y).done(),
+      d: w
+        .path()
+        .moveTo(0, y)
+        .lineTo(view.width, y + lift)
+        .done(),
       fill: 'none',
       stroke: shape.stroke,
       'stroke-width': shape['stroke-width'],
@@ -491,8 +486,6 @@ function drawClass(
             ? undefined
             : `${view.id}${row.ast.slice(row.ast.lastIndexOf('#'))}`,
         'data-ast': row.ast,
-        // A static member (`$`) is underlined; core's runs carry bold and italic only.
-        'text-decoration': row.style & Style.Underline ? 'underline' : undefined,
         ...text,
       });
     }

@@ -23,6 +23,8 @@ exports[`layered over parser-produced class graphs > lays out every corpus graph
   "class/baseline/themes/dark.mmd": 1,
   "class/baseline/themes/default.mmd": 1,
   "class/baseline/themes/forest.mmd": 1,
+  "class/baseline/themes/neo-dark.mmd": 1,
+  "class/baseline/themes/neo.mmd": 1,
   "class/baseline/themes/neutral.mmd": 1,
   "class/baseline/themes/redux-color.mmd": 1,
   "class/baseline/themes/redux-dark-color.mmd": 1,

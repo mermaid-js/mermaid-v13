@@ -367,7 +367,14 @@ const S: Record<string, ShapeDef> = {
     inset: roundInset,
     span: roundSpan,
     size: fixed(14, 14),
-    draw: (w, W, _H, a, line) => circle(w, W / 2, { ...line, fill: line.stroke, filter: a.filter }),
+    // The outline's stroke (the gradient under neo, D182), filled with the line colour.
+    draw: (w, W, _H, a, line) =>
+      circle(w, W / 2, {
+        stroke: a.stroke,
+        'stroke-width': line['stroke-width'],
+        fill: line.stroke,
+        filter: a.filter,
+      }),
   },
   'fr-circ': {
     noLabel: true,
@@ -383,8 +390,9 @@ const S: Record<string, ShapeDef> = {
     noLabel: true,
     span: (W, H, s) => (s ? H : W) - 8,
     size: fixed(72, 8),
+    // v12 forkJoin: filled plain (`usesPlain`), stroked like the outline.
     draw: (w, W, H, a, line) =>
-      centred(w, W, H, { ...line, fill: line.stroke, filter: a.filter }, 2),
+      centred(w, W, H, { ...line, stroke: a.stroke, fill: line.stroke, filter: a.filter }, 2),
   },
   hourglass: {
     noLabel: true,
@@ -840,6 +848,16 @@ export const shapeInset = (
 ): number => def(shape).inset?.(W, H, side, t, p) ?? 0;
 export const shapeSpan = (shape: string, W: number, H: number, sideways: boolean): number =>
   Math.max(0, def(shape).span?.(W, H, sideways) ?? 0);
+/**
+ * Whether the shape's `line` paint is a colour, not the gradient (D182, D185). A drawer may
+ * fill with `line.stroke` only then (the dots, the fork bar: v12 neo fills nothing with the
+ * gradient). It also covers a one-segment line, whose zero-width or zero-height box a
+ * bounding-box gradient can't paint (the lin-doc and lin-rect rules, the div-rect and
+ * browser bars). conformance's every-shape neo tests check both.
+ */
+export const usesPlain = (shape: string): boolean => PLAIN.has(shape);
+// prettier-ignore
+const PLAIN = /* @__PURE__ */ new Set(['f-circ', 'fr-circ', 'fork', 'lin-doc', 'browser', 'lin-rect', 'div-rect']);
 export const shapeHasLabel = (shape: string): boolean => def(shape).noLabel !== true;
 export const shapeFilled = (shape: string): boolean => def(shape).bare !== true;
 /** Whether the shape is drawn by its own code rather than falling back to a rectangle. */

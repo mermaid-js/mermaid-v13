@@ -38,6 +38,8 @@ describe('completion', () => {
     expect(labels('|')).toEqual([
       'flowchart',
       'graph',
+      'flowchart-elk',
+      'swimlane-beta',
       'classDiagram',
       'erDiagram',
       'sequenceDiagram',
@@ -48,7 +50,9 @@ describe('completion', () => {
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);
     expect(complete('flo|')).toEqual([
       expect.objectContaining({ label: 'flowchart', range: { start: 0, end: 3 } }),
+      expect.objectContaining({ label: 'flowchart-elk', range: { start: 0, end: 3 } }),
     ]);
+    expect(labels('sw|')).toEqual(['swimlane-beta']);
     expect(labels('---\ntitle: x\n---\ngr|')).toEqual(['graph']);
     // Only the first line: a later line of an undetected text gets nothing.
     expect(labels('foo\n|')).toEqual([]);
@@ -249,7 +253,7 @@ describe('hover', () => {
     const t = 'flowchart TD\n  A --> B\n  classDef default fill:#f00\n  click A call fn()\n';
     const d = service.update('file:///k.mmd', t);
     const h = (needle: string, delta = 1) => d.hover(t.indexOf(needle) + delta);
-    expect(h('click')?.contents).toContain(flowchartDocs[T.Click]!);
+    expect(h('click')?.contents).toContain(flowchartDocs[T.ClickKeyword]!);
     expect(h('call')?.contents).toContain(flowchartDocs[T.CallbackName]!);
     expect(h('default', 2)?.contents).toMatch(/every node without a class/);
     expect(h('default', 2)?.contents).not.toMatch(/Used by/);
