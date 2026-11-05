@@ -2,6 +2,7 @@
  * The flowchart facet's completion tables (DESIGN §4.5, D95): what each expected token kind is
  * offered as. Keyword docs are not here: they come from the grammar file (`generated/docs.ts`).
  */
+import type { FlowchartDiagramConfig } from '@mermaid-js/core/config';
 import type { Range, TokenStream } from '@mermaid-js/core/parser-kit';
 import { T } from '../parser/tokens.ts';
 
@@ -96,22 +97,31 @@ export const CLOSERS: Readonly<Record<string, readonly string[]>> = {
   '-.': ['.->', '.-', '.-o', '.-x'],
 };
 
+/** A `flowchart.curve` value: the generated config type, from the config schema's enum. */
+type Curve = NonNullable<FlowchartDiagramConfig['curve']>;
+
+/**
+ * Every curve, in the schema's order. A record over {@link Curve} so typecheck fails when the
+ * schema's `flowchart.curve` enum gains or loses a value and this does not follow.
+ */
+const CURVE_SET: Readonly<Record<Curve, true>> = {
+  basis: true,
+  bumpX: true,
+  bumpY: true,
+  cardinal: true,
+  catmullRom: true,
+  linear: true,
+  monotoneX: true,
+  monotoneY: true,
+  natural: true,
+  step: true,
+  stepAfter: true,
+  stepBefore: true,
+  rounded: true,
+};
+
 /** Curve names (`linkStyle … interpolate`, edge `curve:`): the config schema's `flowchart.curve`. */
-export const CURVES = [
-  'basis',
-  'bumpX',
-  'bumpY',
-  'cardinal',
-  'catmullRom',
-  'linear',
-  'monotoneX',
-  'monotoneY',
-  'natural',
-  'step',
-  'stepAfter',
-  'stepBefore',
-  'rounded',
-];
+export const CURVES = Object.keys(CURVE_SET) as readonly Curve[];
 
 /** Keys of an edge's `@{ … }` data that the model reads, with the values it accepts. */
 export const EDGE_DATA: Readonly<Record<string, readonly string[]>> = {
