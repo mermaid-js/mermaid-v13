@@ -117,7 +117,7 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
     });
     const cx = px + boxWidth / 2;
     connectors.push({
-      ...line(env, cx, periodBottom, cx, connectorEnd, common.connectorWidth),
+      ...line(env, cx, periodBottom, cx, connectorEnd, env.connectorWidth),
       period: i,
       slot,
     });
@@ -162,7 +162,7 @@ export function layoutLR(env: Env, model: TimelineModel): TimelineLayout {
   const box = content.box({ x: left, y: top });
   const title = titleAt(env, heading, box.width / 2 - env.leftMargin);
   const axisEnd = Math.max(box.width + lr.axisEndMargins * env.leftMargin, box.x + box.width);
-  const axis = line(env, env.leftMargin, axisY, axisEnd, axisY, common.axisWidth);
+  const axis = line(env, env.leftMargin, axisY, axisEnd, axisY, env.axisWidth);
   return finish(env, {
     direction: 'LR',
     sections,

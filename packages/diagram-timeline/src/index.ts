@@ -1,10 +1,11 @@
 /**
  * `@mermaid-js/diagram-timeline`: the timeline diagram plugin (spec #291). The lexer, the
- * parser, the model and the custom layout are here; the renderer, plugin export and manifest
- * land with the other tickets of that spec.
+ * parser, the model, the custom layout and the SVG renderer are here; the plugin export and
+ * manifest land with the other tickets of that spec.
  */
 export type * from './model.ts';
 export * from './layout/index.ts';
+export * from './render/index.ts';
 export {
   detectTimeline,
   JISON_NAMES,

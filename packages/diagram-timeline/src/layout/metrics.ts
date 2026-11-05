@@ -33,6 +33,12 @@ export interface CommonMetrics {
   readonly axisWidth: number;
   readonly connectorWidth: number;
   /**
+   * Box strokes (v12 `styles.js`): the rule under a box that takes `cScale` (`.section-N line`,
+   * width 3), and the outline and rule under the neo gradient (v12 neo-look rules, width 2).
+   */
+  readonly ruleWidth: number;
+  readonly gradientWidth: number;
+  /**
    * The arrowhead, in stroke widths (v12 marker `M 0,0 V 4 L6,2 Z`, `refX 5`, `refY 2`, in
    * `strokeWidth` units): its base this far behind the line's end, its tip this far past it,
    * and half its base across.
@@ -116,6 +122,8 @@ export const TIMELINE_METRICS: TimelineMetrics = {
     minWrap: 1,
     axisWidth: 4,
     connectorWidth: 2,
+    ruleWidth: 3,
+    gradientWidth: 2,
     arrowBack: 5,
     arrowAhead: 1,
     arrowHalf: 2,

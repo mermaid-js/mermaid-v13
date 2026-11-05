@@ -465,6 +465,10 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `messageEndGap` (sequence: a message stops this far short of its target, past the head room; a bidirectional one starts this far in) | 3 | 0 |
 | `labelBoxExtraHeight` (sequence: added to a fragment's label tab) | 15 | 0 |
 | `actorFooterPadding` (sequence: room below a drawing with participants) | 30 | 0 |
+| `timelineRadius` (timeline box top corners) | 0 (`neo`, `neo-dark`: 5, D227) | 5 |
+| `timelineLabelOffset` (timeline: a section or period label below its box's top) | padding (`neo`, `neo-dark`: 0.5 × padding) | 0.5 × padding |
+| `timelineEventLabelShift` (timeline: added to half the padding above an event label) | 3 (`neo`, `neo-dark`: 0) | 0 |
+| `timelineScaleColors` (timeline boxes take `cScale<n>` fills, `cScaleLabel<n>` text and a 3px `cScaleInv<n>` rule; the axis and connectors `cScaleLabel11` at 4px / 2px) | `false`: `mainBkg` fill (the `borderColorArray` slot when `bkgColorArray` is non-empty, D257), `nodeBorder` outline at `strokeWidth` with `dropShadow`, `nodeBorder` text, axis and connectors at `strokeWidth` (`neo`, `neo-dark`: `true`, D227) | `true` |
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color`; `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))` on `neo`; `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))` on `neo-dark` | `none` |
 | `classText` (colour: class diagram text) | `textColor` | `primaryTextColor` |
 | `classMarkerStrokeWidth` / `classFilledMarkerStrokeWidth` (outline of hollow / filled class markers) | 2 / 0 | 1 / 1 |
@@ -953,3 +957,33 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 | Subgraph `<g class="cluster" id>` with `<g class="cluster-label">` | `<g class="cluster …" data-id="<name>" data-ast="s:<name>">` with `<rect>` and `<text class="cluster-label">` | |
 | Front-matter `title` drawn as `text.erDiagramTitleText` | Not drawn yet, as in the flowchart | |
 | Hand-drawn look: background copies of every entity (`<id>-background`) | None (`look` is removed, D153) | |
+
+## Timeline SVG structure
+
+What changed in the timeline's SVG compared with v12's `timelineRenderer.ts` (LR) and
+`timelineRendererVertical.ts` (TD), and why (DESIGN §7.2, spec #291). v12's class names are kept
+where the element still exists: `timeline-node`, `section-<n>`, `node-bkg`, `node-line-<n>`,
+`taskWrapper`, `eventWrapper`, `lineWrapper`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, a `<style>` scoped by the id; no `role`; `accTitle` / `accDescr` parsed but never written (the DB had no `getAccTitle`) | No root `id`; `class="mermaid mermaid-timeline"`, `role="img"`, `aria-roledescription="timeline"`, `data-mermaid-version`; colours are presentation attributes reading `var(--_x)` aliases. `accTitle` and `accDescr` give `<title id="<id>-title">` and `<desc id="<id>-desc">` with `aria-labelledby` / `aria-describedby` | Inert output (R-SEC-2), only the title and description ids (R-A11Y-1) |
+| An empty first `<g>`; sections in an unclassed `<g transform>`; boxes placed by `transform` | No empty group. A section is `<g class="timeline-node section-<n>" data-id="sec:<k>" data-ast="sec:<k>">`; a period `<g class="taskWrapper" data-id data-ast="per:<k>">` and an event `<g class="eventWrapper" data-id data-ast="ev:<p>.<k>">`, each holding its `timeline-node` group. Coordinates are absolute, no `transform` | One element per section, period and event maps it to its source (R-PARSE-8) |
+| Box path `id="<id>-node-<n>"` (TD `undefined-node-<n>`), `class="node-bkg node-undefined"` | `<path class="node-bkg">`, no id | No ids; `node.type` was never set |
+| The class of slot *n* is `section-<n mod 12 − 1>`, so the first section is `section--1` | Kept as is, so author CSS written for v12 still matches | P2 |
+| Label `<text dy="1em" dominant-baseline="middle">` wrapped by `getComputedTextLength`; only lowercase `<br>` breaks | `<text data-id>` with a `<tspan>` per line from core's label layout. Labels stay plain text, as in v12: every `<br>` form breaks and entities decode (D225), and any other markup (`<b>`, `<i>`, `<u>`) is shown as written. Labels carry `data-id` only. Box labels are drawn at the theme's `fontWeight` (600 in the redux themes, as v12's redux CSS did) | D225, R-PARSE-8 |
+| `<marker id="<id>-arrowhead">` and `marker-end` on the axis and the connectors; TD referred to `url(#arrowhead)`, which did not exist, so it drew none; the marker was always black | Inline `<path class="arrowhead">` at v12's marker size and place, in the line's colour, in both directions | D253; no `<defs>` or ids |
+| Axis and connectors `stroke="black"` overridden by `.lineWrapper line`: `cScaleLabel11` (classic) or `nodeBorder` at `strokeWidth` (redux) | The same paint as attributes. A connector's `lineWrapper` carries the `data-id` of its period (LR) or event (TD), no `data-ast` | |
+| `.eventWrapper { filter: brightness(120%) }` | The event's colours are computed at 120% brightness (a gradient outline stays as it is). Under `theme: 'auto'` a theme variable an event reads keeps its CSS variable unbrightened, so it still switches with the page; a page that overrides `--mermaid-mainBkg` or `--mermaid-nodeBorder` in CSS changes periods but not events | `brightness()` is not an allowed `filter` value (R-SEC-2) |
+| Redux geometry, paint and shadow chosen by `theme.includes('redux')`; the `<filter id="<id>-drop-shadow">` written only under `look: neo` (its opacity 0.2 white on the dark redux themes) | The `timelineRadius`, `timelineLabelOffset`, `timelineEventLabelShift` and `timelineScaleColors` theme variables ([Theme geometry](#theme-geometry)) and the shared `dropShadow` CSS filter, in every look: the dark redux themes' shadow is white at 6%, as everywhere else | D152, D153 |
+| `redux-color` filled each box with its `borderColorArray` slot; `redux-dark-color` with `mainBkg` | Kept: the border slot fills where `bkgColorArray` is non-empty, else `mainBkg`; the outline takes the slot in both, and the box carries `data-color-id="color-<n>"` | D257 |
+| A redux theme with `useGradient` turned on | `redux-color` and `redux-dark-color` keep the palette slot as the outline (a palette slot wins over the gradient, as in every diagram); `redux` and `redux-dark` outline with the gradient at `strokeWidth` | theming.md |
+| `theme: neo` (and 12.2.0's default `look: neo`): classic geometry, `mainBkg` fill and gradient outlines through `[data-look=neo]` rules; the rule under each box stroked with the gradient, which a zero-height line can't show; TD wrote no gradient defs, so its gradient paint pointed at nothing | `neo` and `neo-dark` keep classic geometry and colours (no shadow), fill `mainBkg` and outline with the gradient at 2px in both directions; the rule is drawn in plain `nodeBorder` at 2px | D227, D182, D185 |
+| Periods before the first section were never drawn, and two sections with one name each drew both groups | Periods are grouped by section position: leading periods are drawn first with no section box, in slot 0; each section draws its own periods | D251 |
+| A period over about 150px tall put its events on the axis (events started 200px below the period top) | Events start at v12's place or 50px below the axis, whichever is lower | D252 |
+| `maxTaskHeight` was always one line (v12 measured `[object Object]`), so only a tall period grew | Every period takes the height of the tallest, and the axis follows it | #337 |
+| TD: the next section started 30px above the end of the previous section's last row, so full rows overlapped | A TD section starts at v12's place or 30px below what the previous group's rows hold, whichever is lower; most sectioned TD input moves down | No overlaps (#337) |
+| TD: the axis started `2 × fontSize` above the content, through a title wider than about 285px | The axis starts below the title when the title spans it | #337 |
+| Title an unclassed `<text>` in the root's `textColor`, `font-size="4ex"`, bold, at `bbox.width / 2 − leftMargin` (LR under `look: neo`: `bbox.x × 2 + leftMargin`); a front-matter `title` was dropped | `<text class="timeline-title">` in `textColor`, bold, at the px size of `4ex` the layout measured, left-aligned at the classic place in every theme. The `title` statement and a front-matter `title` are both drawn there; a title taller than one 16px line moves the content down | D218, D254, D225 |
+| `timeline.useMaxWidth` fell back to `false` in the renderer | `useMaxWidth` (default true) sets `width="100%"` and `max-width`; `false` writes the drawing's width and height | Schema default |
+

@@ -302,6 +302,55 @@ describe('timeline TD follows timelineRendererVertical.ts', () => {
   });
 });
 
+describe('timeline line widths follow the theme', () => {
+  it('draws the axis at 4 px and connectors at 2 px where boxes take cScale (v12 classic)', () => {
+    for (const m of [fx.simple, fx.turned(fx.simple)]) {
+      const l = lay(m);
+      expect(l.axis.width).toBe(4);
+      expect(new Set(l.connectors.map((c) => c.width))).toEqual(new Set([2]));
+    }
+  });
+
+  it('draws both at strokeWidth in the redux themes, arrowheads sized to match', () => {
+    for (const m of [fx.simple, fx.turned(fx.simple)]) {
+      const l = lay(m, {}, 'redux', { strokeWidth: 3 });
+      expect(l.axis.width).toBe(3);
+      expect(new Set(l.connectors.map((c) => c.width))).toEqual(new Set([3]));
+      // The tip is one stroke width past the line's end.
+      const { axis } = l;
+      expect(Math.hypot(axis.arrow.tip.x - axis.x2, axis.arrow.tip.y - axis.y2)).toBeCloseTo(3);
+    }
+  });
+});
+
+describe('timeline bounds hold every stroke (D224)', () => {
+  const edges = (l: TimelineLayout) => {
+    const boxes = [...l.sections, ...l.periods, ...l.periods.flatMap((p) => p.events)];
+    return {
+      left: Math.min(...boxes.map((b) => b.x)),
+      top: Math.min(...boxes.map((b) => b.y)),
+      right: Math.max(...boxes.map((b) => b.x + b.width)),
+      bottom: Math.max(...boxes.map((b) => b.y + b.height)),
+    };
+  };
+  it('holds half the redux outline around every box, with no padding', () => {
+    for (const m of [fx.sections, fx.turned(fx.sections), fx.turned(fx.simple)]) {
+      const l = lay(m, { padding: 0 }, 'redux', { strokeWidth: 6 });
+      const e = edges(l);
+      const b = l.bounds;
+      expect(b.x).toBeLessThanOrEqual(e.left - 3);
+      expect(b.y).toBeLessThanOrEqual(e.top - 3);
+      expect(b.x + b.width).toBeGreaterThanOrEqual(e.right + 3);
+      expect(b.y + b.height).toBeGreaterThanOrEqual(e.bottom + 3);
+    }
+  });
+
+  it('holds half the 3 px rule under the lowest classic box', () => {
+    const l = lay(fx.turned(fx.simple), { padding: 0 });
+    expect(l.bounds.y + l.bounds.height).toBeGreaterThanOrEqual(edges(l).bottom + 1.5);
+  });
+});
+
 describe('timelineLayoutViolations', () => {
   it('catches a broken layout', () => {
     const good = lay(fx.sections);
