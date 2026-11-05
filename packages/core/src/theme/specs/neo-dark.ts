@@ -70,7 +70,9 @@ const neoDark: ThemeSpec = {
     activationBorderColor: '#2e3030',
     errorBkgColor: '#201f1f',
     errorTextColor: '#dfe0e0',
-    altBackground: '#f0f0f0', // v12 (#192, D126)
+    // v12 kept the light theme's #f0f0f0, on which the #cccccc lines of a nested composite all
+    // but vanished (D189).
+    altBackground: '#404040',
     // v12 theme-neo-dark.js (D182).
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',

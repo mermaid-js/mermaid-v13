@@ -71,6 +71,7 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ...Object.fromEntries(DARK_DERIVED.map((n) => [n, DARK_WHY])),
   strokeWidth: 'D183: 2, as in neo; v12 neo-dark drew with 1',
   secondaryTextColor: 'D183, R-THEME-9: v12 #b8b6b6 is 4.49:1 on secondaryColor; #b9b7b7 meets AA',
+  altBackground: 'D189: #404040; v12 #f0f0f0 hid the #cccccc lines on a nested composite',
   dropShadow: 'D181: the same blurred shadow, written in the syntax `checkFilter` accepts',
   cScale: 'D181, D152: neo-dark carries no per-item palette',
   // v13 variables for what v12 decides by look or by theme name.
@@ -145,6 +146,14 @@ describe('neo-dark against v12 12.2.0 (#227, D151, D181, D183)', () => {
     expect(contrastRatio(neoDark.rgba('secondaryTextColor') as Rgba, on)).toBeGreaterThanOrEqual(
       4.5
     );
+  });
+
+  it('keeps transitions visible on a nested composite body (D189)', () => {
+    expect(hex(OLD.altBackground)).toBe('#f0f0f0');
+    expect(hex(neoDark.value('altBackground'))).toBe('#404040');
+    const lines = neoDark.rgba('lineColor') as Rgba;
+    expect(contrastRatio(lines, parseColor(String(OLD.altBackground))!)).toBeLessThan(3);
+    expect(contrastRatio(lines, neoDark.rgba('altBackground') as Rgba)).toBeGreaterThanOrEqual(3);
   });
 
   it('takes the neo tokens: stroke width 2, radius 3 (D181, D183)', () => {

@@ -88,6 +88,19 @@ describe('startServer', () => {
     expect((await call('/extra/a/b', { method: 'DELETE' })).status).not.toBe(200);
   });
 
+  it('serves the theme gallery of every baseline, filtered by theme, to a remote client', async () => {
+    const reply = await call('/gallery?themes=neo,neo-dark', {
+      host: `devbox.example.test:${PORT}`,
+    });
+    expect(reply.status).toBe(200);
+    const themes = new Set([...reply.body.matchAll(/data-theme="([\w-]+)"/g)].map((m) => m[1]));
+    // Fixtures that set their own theme (themes/neo.mmd, …) show only when it is a chosen one.
+    expect(themes).toEqual(new Set(['neo', 'neo-dark']));
+    for (const type of ['flowchart', 'sequence', 'class-diagram', 'state-diagram-v2', 'er-diagram'])
+      expect(reply.body).toContain(`id="group-${type}/themes"`);
+    expect((await call('/gallery?themes=nope')).status).toBe(400);
+  }, 30_000);
+
   it('turns a route that throws into a 500', async () => {
     expect(await call('/fails')).toEqual({ status: 500, body: 'boom' });
   });
