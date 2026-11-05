@@ -152,8 +152,9 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-TEXT-7 | `deterministic: true` forces the table measurer in every environment. Browser and Node output are then byte-identical. | Must | M1 | D17 | Cross-environment equality test |
 | R-TEXT-8 | Wrapping honours `wrappingWidth`, is CJK-aware, and handles soft hyphen and zero-width space. Emoji and wide characters are measured as wide. | Must | M1 | D17, P1 | Specs |
 | R-TEXT-9 | The font family comes from `fontFamily` config / `--mermaid-fontFamily`, with v12's default as the fallback (P1). | Must | M1 | D17, D20 | Spec |
-| R-TEXT-10 | Math (TeX) and icons are provided by optional plugins that emit SVG paths, never HTML. Math renders with MathJax in every label core lays out and is a Must in M3.5 (D175–D178); icons stay a Should for M4. | Should | M4 | D5, D7, D170, D175 | Plugin exists; allow-list test passes with plugin enabled |
+| R-TEXT-10 | Math (TeX) is provided by an optional plugin that emits SVG paths, never HTML. It renders with MathJax in every label core lays out. | Must | M3.5 | D5, D7, D170, D175–D178 | Plugin exists; allow-list test passes with plugin enabled |
 | R-TEXT-11 | Markdown strings also accept bullet lists (lines starting with "- " or "\* ", one nesting level). They render as indented tspan lines with a bullet glyph. Bullets are recognised only inside markdown strings, never in plain labels, so existing diagrams are not broken. | Should | M1 | D56 | Specs plus visual baseline; oracle corpus shows no change for labels without markdown bullets |
+| R-TEXT-12 | Icons are provided by an optional plugin that emits SVG paths, never HTML. Split from R-TEXT-10 (D175). | Should | M4 | D5, D7, D170 | Plugin exists; allow-list test passes with plugin enabled |
 
 ## 10. Layout (R-LAYOUT)
 
