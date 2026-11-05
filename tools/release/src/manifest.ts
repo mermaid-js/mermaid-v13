@@ -30,7 +30,7 @@ export interface PackedManifest {
 export const PRIVATE_SCOPE = '@mermaid-chart';
 export const PRIVATE_REPOSITORY = 'https://github.com/Mermaid-Chart/mermaid-v13';
 /**
- * The only dist-tag either registry gets from this pipeline (D155). Never `latest`. Not `alpha`
+ * The only dist-tag either registry gets from this pipeline (D159). Never `latest`. Not `alpha`
  * either: on npm that tag held v11 alphas, and it stays at 13.0.0-alpha.0.
  */
 export const DIST_TAG = 'v13-alpha';
