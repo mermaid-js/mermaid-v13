@@ -9,12 +9,9 @@
     "typecheck": "tsc -p tsconfig.json",
     "oracle": "vitest run --root ../.. packages/conformance/src/parity.spec.ts",
     "oracle:report": "tsx --conditions=mermaid-source src/cli/oracle-report.ts",
-    "harvest:flowchart": "tsx --conditions=mermaid-source src/cli/harvest-flowchart.ts",
-    "harvest:sequence": "tsx --conditions=mermaid-source src/cli/harvest-sequence.ts",
+    "harvest": "tsx --conditions=mermaid-source src/cli/harvest.ts",
     "fuzz": "tsx --conditions=mermaid-source src/cli/fuzz.ts",
-    "smoke": "tsx --conditions=mermaid-source src/cli/smoke.ts",
-    "harvest:er": "tsx --conditions=mermaid-source src/cli/harvest-er.ts",
-    "harvest:state": "tsx --conditions=mermaid-source src/cli/harvest-state.ts"
+    "smoke": "tsx --conditions=mermaid-source src/cli/smoke.ts"
   },
   "devDependencies": {
     "@asamuzakjp/css-color": "3.2.0",

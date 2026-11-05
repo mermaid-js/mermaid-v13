@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { erTokens, jisonName } from '@mermaid-js/diagram-er';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
-import { loadErLexerOracle } from './jison-lexer.ts';
-import type { JisonToken } from './jison-lexer.ts';
+import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
+import type { JisonToken } from '../jison/oracle.ts';
 
 /**
  * Lexer-parity gate (port-diagram/parser-method.md §1): the v13 ER lexer emits the same
@@ -153,13 +153,15 @@ function commented(src: string): string {
 
 describe('ER lexer parity with mermaid@12 (jison)', () => {
   it('emits the same tokens over the e2e fixtures and the v12 spec strings', async () => {
-    const oracle = await loadErLexerOracle();
+    const oracle = await loadJisonLexerOracle('er');
     const items = await corpus();
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
     const skipped: string[] = [];
     let compared = 0;
     for (const item of items) {
-      const v12 = await oracle.tokens(item.source);
+      const v12 = (await oracle.tokens(item.source, { keepAppendedNewline: true }))?.map(
+        ([n, i]): [string, string] => [n === LEXICAL_ERROR ? 'INVALID' : n, i]
+      );
       if (!v12) {
         skipped.push(item.id);
         continue;

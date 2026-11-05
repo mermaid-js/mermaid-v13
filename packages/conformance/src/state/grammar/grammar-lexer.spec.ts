@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loadStateLexerOracle } from '../jison-lexer.ts';
+import { LEXICAL_ERROR, loadJisonLexerOracle } from '../../jison/oracle.ts';
 import { stateCorpus } from './corpus.ts';
 import { asJison, grammarTokens } from './state-grammar.ts';
 
@@ -10,10 +10,10 @@ import { asJison, grammarTokens } from './state-grammar.ts';
  */
 describe('state grammar lexer', () => {
   it('builds the lexer input v12 lexed', async () => {
-    const oracle = await loadStateLexerOracle();
+    const oracle = await loadJisonLexerOracle('state');
     const diffs: string[] = [];
     for (const item of await stateCorpus()) {
-      const v12 = await oracle.input(item.source);
+      const v12 = await oracle.lexedText(item.source);
       if (v12 === undefined) continue;
       const ours = grammarTokens(item.source).input.text;
       if (ours !== v12)
@@ -23,11 +23,14 @@ describe('state grammar lexer', () => {
   }, 120_000);
 
   it('emits the jison token stream', async () => {
-    const oracle = await loadStateLexerOracle();
+    const oracle = await loadJisonLexerOracle('state');
     const diffs: string[] = [];
     let compared = 0;
     for (const item of await stateCorpus()) {
-      const v12 = await oracle.tokens(item.source);
+      const v12 = (await oracle.tokens(item.source))?.map(([n, i]): [string, string] => [
+        n === LEXICAL_ERROR ? 'ERROR' : n,
+        i,
+      ]);
       if (!v12) continue;
       compared++;
       const ours = asJison(grammarTokens(item.source));

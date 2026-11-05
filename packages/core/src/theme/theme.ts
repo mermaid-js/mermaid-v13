@@ -32,6 +32,7 @@ import type {
 } from '../svg/types.ts';
 import { num } from '../svg/escape.ts';
 import {
+  adjustChannels,
   adjustLightness,
   composite,
   contrastRatio,
@@ -289,6 +290,8 @@ class Resolver {
         throw new SyntaxError(
           'A percentage is only an argument of mix, lighten, darken, lightenHsl, darkenHsl or alpha'
         );
+      case 'num':
+        throw new SyntaxError('A plain number is only an argument of adjust');
       case 'lit':
         return this.literal('', e.text);
       case 'ref': {
@@ -351,6 +354,21 @@ class Resolver {
         // Relative colour syntax, so the inverse follows a host override of `a` (R-THEME-4).
         const css = `color(from ${a.css} srgb calc(1 - r) calc(1 - g) calc(1 - b) / alpha)`;
         return { css, lit, rgba, deps: a.deps };
+      }
+      case 'adjust': {
+        // khroma's adjust(c, { r, g, b }), as v12's quadrant fills derive (D232).
+        const a = this.evaluate(x);
+        const [r, g, b] = e.args.slice(1).map((arg) => {
+          if (arg.k !== 'num' || Math.abs(arg.value) > 255)
+            throw new SyntaxError('adjust needs a number from -255 to 255');
+          return arg.value;
+        }) as [number, number, number];
+        const rgba = a.rgba && adjustChannels(a.rgba, r, g, b);
+        // Clamped as khroma does: relative colour syntax keeps an out-of-range channel.
+        const ch = (c: string, d: number) =>
+          `clamp(0, ${c} ${d < 0 ? '-' : '+'} ${num(Math.abs(d))}, 255)`;
+        const css = `rgb(from ${a.css} ${ch('r', r)} ${ch('g', g)} ${ch('b', b)} / alpha)`;
+        return { css, lit: rgba ? formatColor(rgba) : a.lit, rgba, deps: a.deps };
       }
       case 'contrast': {
         const on = this.evaluate(x);

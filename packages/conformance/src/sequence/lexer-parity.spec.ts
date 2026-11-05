@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { JISON_NAMES, sequenceTokens } from '@mermaid-js/diagram-sequence';
 import { decodeEntities } from '../flowchart/v12.ts';
-import { LEXICAL_ERROR, loadSequenceLexerOracle } from './jison-lexer.ts';
-import type { JisonToken } from './jison-lexer.ts';
+import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
+import type { JisonToken } from '../jison/oracle.ts';
 import { commented, sequenceGateCorpus } from './corpus.ts';
 import type { CorpusItem } from '../types.ts';
 
@@ -53,7 +53,7 @@ const ENTITIES: CorpusItem[] = [
 
 describe('sequence lexer parity with mermaid@12 (jison)', () => {
   it('emits the same tokens over the e2e fixtures and the v12 spec strings', async () => {
-    const oracle = await loadSequenceLexerOracle();
+    const oracle = await loadJisonLexerOracle('sequence');
     const items = [...(await sequenceGateCorpus()), ...ENTITIES];
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
     let compared = 0;
