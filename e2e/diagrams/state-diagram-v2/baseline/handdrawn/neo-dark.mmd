@@ -1,0 +1,35 @@
+---
+config:
+  theme: neo-dark
+  look: handDrawn
+description: one representative state diagram, hand-drawn in the neo-dark theme (D307)
+---
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> check : request
+  state check <<choice>>
+  check --> split : valid
+  check --> Idle : invalid
+  state split <<fork>>
+  split --> Working
+  split --> Audit
+  state Working {
+    [*] --> Reading
+    Reading --> Writing
+    --
+    [*] --> Logging
+  }
+  state Audit {
+    state Review {
+      [*] --> Checking
+      Checking --> [*]
+    }
+  }
+  state merge <<join>>
+  Working --> merge
+  Audit --> merge
+  merge --> Done
+  note right of Done : All done
+  classDef hot fill:#f96,stroke:#333
+  class Done hot
+  Done --> [*]

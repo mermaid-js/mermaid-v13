@@ -242,6 +242,9 @@ importers:
       '@mermaid-js/layout-elk':
         specifier: workspace:^
         version: link:../layout-elk
+      '@mermaid-js/plugin-hand-drawn':
+        specifier: workspace:^
+        version: link:../plugin-hand-drawn
       '@mermaid-js/plugin-interactions':
         specifier: workspace:^
         version: link:../plugin-interactions

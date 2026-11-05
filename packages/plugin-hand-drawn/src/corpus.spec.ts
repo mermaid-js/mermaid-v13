@@ -122,11 +122,14 @@ async function render(m: Awaited<ReturnType<typeof api>>, source: string) {
 }
 
 describe('the hand-drawn corpus', () => {
-  it('has the files #296 counts in the four types', () => {
-    const count = (dir: string) =>
-      handDrawnCorpus.filter(([id]) => id.startsWith(`${dir}/`)).length;
+  it('has the files #296 counts in the four types, besides the four-family baselines (#343)', () => {
+    const baseline = (id: string) => id.includes('/baseline/handdrawn/');
+    const count = (dir: string, h3 = false) =>
+      handDrawnCorpus.filter(([id]) => id.startsWith(`${dir}/`) && baseline(id) === h3).length;
     expect([count('class-diagram'), count('er-diagram'), count('flowchart')]).toEqual([70, 43, 50]);
     expect(count('state-diagram-v2')).toBe(5);
+    const dirs = ['class-diagram', 'er-diagram', 'flowchart', 'state-diagram-v2'];
+    expect(dirs.map((dir) => count(dir, true))).toEqual([4, 4, 4, 4]);
   });
 
   it("sketches every outline with v12's roughjs options for its role", async () => {

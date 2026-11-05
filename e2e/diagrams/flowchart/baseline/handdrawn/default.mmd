@@ -1,0 +1,21 @@
+---
+config:
+  theme: default
+  look: handDrawn
+description: one representative flowchart, hand-drawn in the classic default theme (D307)
+---
+flowchart LR
+  start([Start]) --> check{Valid?}
+  check -- yes --> proc[Process]
+  check -- no --> fix[/Fix input/]
+  fix -.-> start
+  proc ==> db[(Store)]
+  subgraph svc [Service]
+    proc
+    db
+  end
+  db --> done((Done))
+  classDef hot fill:#f96,stroke:#333
+  class fix hot
+  style proc stroke-dasharray: 5 5
+  linkStyle 0 stroke:#e11d48,stroke-width:2px
