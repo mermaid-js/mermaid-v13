@@ -7,13 +7,14 @@
  *
  * Diagram plugins: the detector module is imported then, with a time limit; the entry (and the
  * ascii entry) loads on first detection, with no limit: a slow entry delays that render, never
- * fails it. Layout packages (D177): the `config` module is imported then, with the limit; the
- * entry loads when a diagram names one of the layouts. Extensions (`@mermaid-js/plugin-interactions` too, D169) load on discovery.
+ * fails it. Layout packages (D177): the `config` module is imported then, with the limit (its
+ * `extension` export, if any, runs on renders laid out by the package's names); the entry loads
+ * when a diagram names one of the layouts. Extensions (`@mermaid-js/plugin-interactions` too, D169) load on discovery.
  * `initialize({ discovery: false })` turns it off; diagram text cannot set `discovery`
  * (integrator-only). A package that fails is skipped with a warning on the first render.
  */
 import { pathToFileURL } from 'node:url';
-import type { Warning } from '@mermaid-js/core';
+import type { ExtensionPlugin, Warning } from '@mermaid-js/core';
 import type { ConfigFragment } from '@mermaid-js/core/config';
 import { discoverOnFirstUse, type DiscoveredPlugin, type FirstUseSource } from './discovery.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
@@ -57,9 +58,10 @@ function detectorOf(module: unknown): Detector | undefined {
   return typeof fn === 'function' ? (fn as Detector) : undefined;
 }
 
-function fragmentOf(module: unknown): unknown {
+/** A layout's `config` module: the fragment (`config`, else default) and its `extension`, if any. */
+function configModuleOf(module: unknown): { config: unknown; extension: unknown } {
   const m = module as Record<string, unknown> | null;
-  return m?.config ?? m?.default;
+  return { config: m?.config ?? m?.default, extension: m?.extension };
 }
 
 /** First-party diagram ids: their own `@mermaid-js/*` packages are never discovered. */
@@ -84,9 +86,10 @@ async function toDiscovered(p: ScannedPackage, ms: number): Promise<DiscoveredPl
   const load = (): Promise<unknown> => importFile(entry);
   if (p.manifest.plugin === 'layout') {
     let config: unknown;
+    let extension: unknown;
     if (p.files.config !== undefined) {
       try {
-        config = fragmentOf(await importWithin(p.files.config, ms));
+        ({ config, extension } = configModuleOf(await importWithin(p.files.config, ms)));
       } catch (error) {
         return skip(
           `config failed to load (${error instanceof Error ? error.message : String(error)})`
@@ -101,6 +104,7 @@ async function toDiscovered(p: ScannedPackage, ms: number): Promise<DiscoveredPl
         manifest: p.raw,
         load,
         ...(config !== undefined ? { config: config as ConfigFragment } : {}),
+        ...(extension !== undefined ? { extension: extension as ExtensionPlugin } : {}),
       },
     };
   }

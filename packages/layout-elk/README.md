@@ -9,6 +9,8 @@ import elkLayouts from '@mermaid-js/layout-elk';
 mermaid.registerLayoutLoaders(elkLayouts);
 ```
 
+In Node (SSR), installing the package is enough: `mermaid`'s Node entry finds it in your app's `node_modules` (its `mermaid` manifest) and registers it, `lineHops` included. Bundler discovery is not built yet; there, register it as above.
+
 Then a diagram that names an ELK layout is laid out by ELK:
 
 ```

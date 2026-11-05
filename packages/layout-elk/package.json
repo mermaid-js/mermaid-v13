@@ -16,6 +16,11 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./plugin": {
+      "mermaid-source": "./src/plugin.ts",
+      "types": "./dist/plugin.d.ts",
+      "default": "./dist/plugin.js"
+    },
     "./sync": {
       "mermaid-source": "./src/sync.ts",
       "types": "./dist/sync.d.ts",
@@ -42,5 +47,21 @@
   "devDependencies": {
     "@mermaid-js/core": "workspace:^",
     "mermaid": "workspace:*"
+  },
+  "mermaid": {
+    "plugin": "layout",
+    "names": [
+      "elk",
+      "elk.layered",
+      "elk.stress",
+      "elk.force",
+      "elk.mrtree",
+      "elk.sporeOverlap",
+      "elk.box",
+      "elk.rectpacking",
+      "elk.radial"
+    ],
+    "entry": "./dist/index.js",
+    "config": "./dist/plugin.js"
   }
 }

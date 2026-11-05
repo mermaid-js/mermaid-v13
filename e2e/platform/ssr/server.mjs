@@ -1,6 +1,6 @@
 // Node SSR app (spec #218, T4; R-PLUG-5, D165): an HTTP server that renders diagrams to SVG
 // on the server. It never registers a plugin: `mermaid`'s Node entry discovers the fixture
-// diagram and extension in this app's node_modules. DISCOVERY=off sets `discovery: false`.
+// diagram and extension and @mermaid-js/layout-elk in this app's node_modules. DISCOVERY=off sets `discovery: false`.
 // Prints `listening <origin>` once it accepts requests (PORT, default a free port).
 import { createServer } from 'node:http';
 import mermaid from 'mermaid';
@@ -10,7 +10,13 @@ mermaid.initialize({
   ...(process.env.DISCOVERY === 'off' ? { discovery: false } : {}),
 });
 
-const DIAGRAMS = { fixture: 'fixturebox from the server', flowchart: 'flowchart LR\n  A --> B\n' };
+const DIAGRAMS = {
+  fixture: 'fixturebox from the server',
+  flowchart: 'flowchart LR\n  A --> B\n',
+  // Laid out by @mermaid-js/layout-elk (its `layout` manifest); its two edges cross, so the
+  // package's extension draws a lineHops arc.
+  elk: '---\nconfig:\n  layout: elk\n---\nflowchart TD\n  A --> C\n  A --> D\n  B --> C\n  B --> D\n',
+};
 
 const escape = (s) => s.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 

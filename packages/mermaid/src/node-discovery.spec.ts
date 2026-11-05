@@ -264,6 +264,28 @@ export const layouts = ['grid', 'grid.wide'].map((name) => ({ name, loader: asyn
     expect(log).toEqual(['grid.wide:2', 'grid:5']);
   });
 
+  it('runs a layout package’s extension from its config module, on its own layouts only', async () => {
+    const root = app({
+      '@x/layout-hops': pkg(
+        '@x/layout-hops',
+        { plugin: 'layout', names: ['hops'], entry: './index.js', config: './config.js' },
+        {
+          'config.js': `export const config = { id: 'hops', keys: { hops: { on: 0 } }, defaults: { hops: { on: true } } };
+${EXTENSION.replace("id: 'mark'", "id: 'hops'").replace('export const mark', 'export const extension')}`,
+          'index.js': `export default [{ name: 'hops', loader: async () => globalThis.__hopsLayered }];\n`,
+        }
+      ),
+    });
+    (globalThis as { __hopsLayered?: unknown }).__hopsLayered = layered;
+    const m = discovering(root);
+    const flow = 'flowchart LR\n  A --> B\n';
+    const plain = await m.render('a', flow);
+    expect(plain.svg).not.toContain(' marked');
+    const hops = await m.render('a', `---\nconfig:\n  layout: hops\n---\n${flow}`);
+    expect(hops.warnings).toEqual([]);
+    expect(hops.svg).toMatch(/^<svg [^>]*class="[^"]* marked"/);
+  });
+
   it('gives the first-party skip rule (D166) its warning, and leaves mermaid’s own packages out', async () => {
     const root = app({
       'mermaid-flow': diagram('mermaid-flow', 'flowchart', 'flowchart'),

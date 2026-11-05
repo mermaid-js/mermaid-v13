@@ -52,7 +52,8 @@ export interface LayoutManifest {
   /**
    * Module path of the eagerly loaded config fragment (D153): its `config` export, else its
    * default export. Activation loads it with the manifest, so the keys are known before the
-   * entry loads.
+   * entry loads. Its `extension` export, if any, is the package's extension plugin, run only on
+   * renders laid out by one of `names` (ELK's `lineHops`).
    */
   readonly config?: string;
 }

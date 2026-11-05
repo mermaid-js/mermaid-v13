@@ -63,6 +63,12 @@ export interface ManifestPlugin {
    * with the manifest, like a detector (D153).
    */
   readonly config?: ConfigFragment;
+  /**
+   * The extension the same `config` module exports as `extension` (layouts with one), loaded
+   * with it. It runs only on renders laid out by one of the package's names, as
+   * `LayoutLoader.extension` (ELK's `lineHops`).
+   */
+  readonly extension?: ExtensionPlugin;
 }
 
 /** `registerExternalDiagrams` input: a diagram, an extension, or either by manifest. */
@@ -106,6 +112,8 @@ export type DiscoveredPlugin =
       readonly names: readonly string[];
       readonly loader: LayoutLoader['loader'];
       readonly config?: ConfigFragment;
+      /** Its hooks, run only on renders laid out by one of `names` (`LayoutLoader.extension`). */
+      readonly extension?: ExtensionPlugin;
     };
 
 /** The `PLUGIN_SKIPPED` warning: a package (or one of its names) not registered, and why. */
@@ -142,6 +150,7 @@ interface DiscoveredLayout {
   readonly name: string;
   readonly loader: LayoutLoader['loader'];
   readonly config?: ConfigFragment;
+  readonly extension?: ExtensionPlugin;
 }
 
 interface Found<T> {
@@ -201,9 +210,12 @@ function layoutPackage(manifest: LayoutManifest, def: ManifestPlugin): LayoutLoa
     }
     return pending;
   };
+  if (def.extension !== undefined && manifest.config === undefined)
+    throw new TypeError(`Layout package "${label}" has an extension but no "config" module`);
   return manifest.names.map((name) => ({
     name,
     ...(def.config !== undefined ? { config: def.config } : {}),
+    ...(def.extension !== undefined ? { extension: def.extension } : {}),
     loader: async () => {
       const found = await entry();
       if (typeof found === 'function') return found as LayoutEngine;
@@ -328,7 +340,10 @@ export class Registry {
   private readonly layoutExtensions = new Map<string, ExtensionPlugin>();
   /** Whether any ELK name (`elk`, `elk.*`) has a registered or discovered loader. */
   private elkRegistered = false;
-  private discoveredLayouts: (Found<LayoutLoader['loader']> & { readonly name: string })[] = [];
+  private discoveredLayouts: (Found<LayoutLoader['loader']> & {
+    readonly name: string;
+    readonly extension?: ExtensionPlugin;
+  })[] = [];
   private readonly layouts = new Map<string, LayoutEngine>([['layered', layered]]);
   private readonly layoutLoading = new Map<
     string,
@@ -663,11 +678,12 @@ export class Registry {
             throw new TypeError('its layout loader is missing');
           if (!Array.isArray(item.names as unknown) || item.names.length === 0)
             throw new TypeError('it names no layouts');
-          const { loader, config } = item;
+          const { loader, config, extension } = item;
           const loaders = item.names.map((layout) => ({
             name: layout,
             loader,
             ...(config !== undefined ? { config } : {}),
+            ...(extension !== undefined ? { extension } : {}),
           }));
           this.discoverLayouts(pkg, loaders, known, skip);
         } else this.discoverPlugin(pkg, await this.resolve(item.plugin), claim, skip, known);
@@ -725,7 +741,8 @@ export class Registry {
   /**
    * One package's layouts (a seam `layout` entry or a layout manifest): each name the package
    * may take is registered lazily; its config fragment joins when at least one name does.
-   * A discovered layout's `extension` is not run (only explicit loaders' are).
+   * Its extension runs on renders laid out by a name it holds, unless an explicit loader of
+   * that name replaces it (with its own extension or none).
    */
   private discoverLayouts(
     pkg: string,
@@ -735,7 +752,8 @@ export class Registry {
   ): void {
     for (const f of new Set(loaders.flatMap((l) => (l.config === undefined ? [] : [l.config]))))
       checkFragment(f, THEME_NAMES);
-    for (const { name, loader, config } of loaders) {
+    for (const l of loaders) if (l.extension !== undefined) checkExtension(l.extension);
+    for (const { name, loader, config, extension } of loaders) {
       const key = `${pkg}\0layout\0${String(name)}`;
       let reason: string | undefined;
       const owner = this.discoveredLayouts.find((d) => d.name === name);
@@ -753,7 +771,7 @@ export class Registry {
       if (owner) skip(owner.package, `layout "${name}" belongs to "${pkg}"`);
       this.discoveredLayouts = [
         ...this.discoveredLayouts.filter((d) => d !== owner),
-        { package: pkg, name, value: loader },
+        { package: pkg, name, value: loader, ...(extension !== undefined ? { extension } : {}) },
       ];
       if (isElkName(name)) this.elkRegistered = true;
       if (!this.layoutLoaders.has(name)) this.forgetLayout(name);
@@ -784,7 +802,8 @@ export class Registry {
 
   /** The extension the loader registered for layout `name` brought, if any. */
   layoutExtension(name: string): ExtensionPlugin | undefined {
-    return this.layoutExtensions.get(name);
+    if (this.layoutLoaders.has(name)) return this.layoutExtensions.get(name);
+    return this.discoveredLayouts.find((d) => d.name === name)?.extension;
   }
 
   private layoutLoader(name: string): LayoutLoader['loader'] | undefined {

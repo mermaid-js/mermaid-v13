@@ -6,6 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ConfigFragment } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
+import { addDiscovered } from './discovery.ts';
 import { createMermaid, type ExtensionPlugin, type LayoutLoader, type Warning } from './index.ts';
 
 const FLOW = 'flowchart LR\n  A[Start] --> B(End)\n';
@@ -233,5 +234,67 @@ describe('layout manifests (D177, DESIGN §12.1)', () => {
     await expect(m.render('a', `---\nconfig:\n  layout: gone\n---\n${FLOW}`)).rejects.toThrow(
       /no layout "gone"/
     );
+  });
+
+  /** A layout extension that says it ran: `MARK` with the layout's name. */
+  const marker = (id = 'grid-hooks'): ExtensionPlugin => ({
+    id,
+    postLayout(laidOut, ctx) {
+      ctx.warn({ code: 'MARK', message: `${id} ${String(ctx.config.layout)}` });
+      return laidOut;
+    },
+  });
+  const marks = (ws: readonly Warning[]) =>
+    ws.filter((w) => w.code === 'MARK').map((w) => w.message);
+  const gridText = (name: string) => `---\nconfig:\n  layout: ${name}\n---\n${FLOW}`;
+
+  it('runs the extension its config module brings, only on renders laid out by its names', async () => {
+    const { def } = gridPackage(['grid']);
+    for (const register of [
+      (m: ReturnType<typeof createMermaid>) =>
+        m.registerExternalDiagrams([{ ...def, extension: marker() }]),
+      (m: ReturnType<typeof createMermaid>) =>
+        addDiscovered(m, [
+          { kind: 'plugin', package: 'grid-pkg', plugin: { ...def, extension: marker() } },
+        ]),
+      (m: ReturnType<typeof createMermaid>) =>
+        addDiscovered(m, [
+          {
+            kind: 'layout',
+            package: 'grid-pkg',
+            names: ['grid'],
+            loader: () => Promise.resolve(layered),
+            config: grid,
+            extension: marker(),
+          },
+        ]),
+    ]) {
+      const m = createMermaid();
+      await register(m);
+      expect(marks((await m.render('a', gridText('grid'))).warnings)).toEqual(['grid-hooks grid']);
+      expect(marks((await m.render('a', FLOW)).warnings)).toEqual([]);
+    }
+  });
+
+  it('lets an explicit loader of the name replace a discovered package’s extension', async () => {
+    const { def } = gridPackage(['grid']);
+    const m = createMermaid();
+    await addDiscovered(m, [
+      { kind: 'plugin', package: 'grid-pkg', plugin: { ...def, extension: marker() } },
+    ]);
+    m.registerLayoutLoaders([{ name: 'grid', loader: () => Promise.resolve(layered) }]);
+    expect(marks((await m.render('a', gridText('grid'))).warnings)).toEqual([]);
+    m.registerLayoutLoaders([
+      { name: 'grid', loader: () => Promise.resolve(layered), extension: marker('own') },
+    ]);
+    expect(marks((await m.render('a', gridText('grid'))).warnings)).toEqual(['own grid']);
+  });
+
+  it('refuses an extension without a config module to carry it', async () => {
+    const { def } = gridPackage(['grid']);
+    const { config: _c, ...manifest } = def.manifest;
+    await expect(
+      createMermaid().registerExternalDiagrams([{ manifest, load: def.load, extension: marker() }])
+    ).rejects.toThrow(/extension but no "config" module/);
   });
 });
