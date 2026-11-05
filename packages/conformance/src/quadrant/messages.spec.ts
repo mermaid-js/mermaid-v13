@@ -4,8 +4,9 @@ import { mutator, random } from '../fuzz/mutator.ts';
 import { quadrantCases, quadrantCorpus } from './corpus.ts';
 
 /**
- * R-ERR-5: messages name constructs in Mermaid terms, never a token kind or grammar rule. We
- * break every quadrant corpus source in seeded ways and check every message produced.
+ * R-ERR-5: messages name constructs in Mermaid terms, never a token kind or grammar rule, and
+ * quote at most one line. We break every quadrant corpus source in seeded ways and check every
+ * message produced.
  */
 const RULES = [
   'textNoTagsToken',
@@ -39,7 +40,9 @@ describe('quadrant error messages', () => {
       const src = next();
       for (const d of parseQuadrant(src).diagnostics) {
         if (d.severity === 'error') errors++;
-        if (BANNED.test(d.message) || d.expected?.some((e) => BANNED.test(e))) {
+        // A message quotes at most one line of the source.
+        const lines = /[\n\r\u2028\u2029]/.test(d.message);
+        if (lines || BANNED.test(d.message) || d.expected?.some((e) => BANNED.test(e))) {
           bad.push(`${JSON.stringify(src)}: ${d.message}`);
         }
       }

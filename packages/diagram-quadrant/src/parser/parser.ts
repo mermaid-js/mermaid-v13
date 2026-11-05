@@ -152,8 +152,12 @@ const TEXT_STATEMENTS: Record<number, [QuadrantTextStatementNode['type'], string
   [T.AccDescr]: ['AccDescr', 'accDescr'],
 };
 
-/** Where recovery resumes (R-PARSE-4). */
-const BOUNDARY = kindSet(Kind.EOF, ...EOL);
+/** A line break, as the line index counts them. */
+const LINE_BREAK = /\r\n?|[\n\u2028\u2029]/;
+
+/** Where recovery resumes (R-PARSE-4), and the strings it checks on the way. */
+const RESUME = kindSet(Kind.EOF, ...EOL, T.Str, T.MdStr);
+const END = kindSet(Kind.EOF);
 
 const LINE_END = ['a line break or `;`'];
 const LABEL = ['a label'];
@@ -207,6 +211,8 @@ class QuadrantParser {
   /** Index of the last token consumed. */
   private last = 0;
   private hint: string | undefined;
+  /** The unclosed string reported last, so recovery does not report it again. */
+  private reported = -1;
   private lines: LineIndex | undefined;
 
   constructor(
@@ -295,7 +301,7 @@ class QuadrantParser {
     return this.trim(this.c.start, this.c.end);
   }
 
-  /** How an error message names the current token. */
+  /** How an error message names the current token: at most 24 characters of one line. */
   private found(): string {
     const k = this.c.kind;
     if (k === Kind.EOF || k === T.Eof) return 'the end of the text';
@@ -303,12 +309,17 @@ class QuadrantParser {
     if (k === T.Space) return 'a blank';
     const r = this.here();
     const t = this.src.slice(r.start, r.end).trim() || tokenValue(this.lexed, this.c.pos).trim();
-    return t.length > 24 ? `\`${t.slice(0, 24)}…\`` : `\`${t}\``;
+    // A quoted label may span lines: quote its first.
+    const line = t.split(LINE_BREAK, 1)[0] ?? '';
+    const shown = line.slice(0, 24);
+    return shown.length < t.length ? `\`${shown}…\`` : `\`${t}\``;
   }
 
   /** Report what was found where `names` were expected, then stop the statement. */
   private fail(names: string[]): never {
     const { st, c } = this;
+    // An unclosed quote anywhere swallows the rest of the text: that is the error to report.
+    if (c.kind === T.Str || c.kind === T.MdStr) this.closed(c.kind);
     const where = this.here();
     if (c.kind === Kind.Error) {
       const ch = this.src.slice(c.start, c.end);
@@ -346,9 +357,21 @@ class QuadrantParser {
       rule();
     } catch (error) {
       if (error !== STOP) throw error;
-      syncTo(this.c, BOUNDARY);
+      this.recover();
     }
     this.hint = undefined;
+  }
+
+  /** Skip to the end of the statement, reporting an unclosed string on the way. */
+  private recover(): void {
+    const { c } = this;
+    for (;;) {
+      syncTo(c, RESUME);
+      if (c.kind !== T.Str && c.kind !== T.MdStr) return;
+      // An unclosed one takes the rest of the text.
+      if (this.unclosed(c.kind)) return void syncTo(c, END);
+      c.next();
+    }
   }
 
   /** Add a node, and its span, to the document. */
@@ -359,18 +382,30 @@ class QuadrantParser {
 
   // ---- document -----------------------------------------------------------------------
 
-  /** `{ eol | SPACE } QUADRANT`. Without a header, the rest is still read as statements. */
+  /**
+   * `{ eol | SPACE } QUADRANT`. Text before a later `quadrantChart` is one error, and the chart
+   * starts there; without a header at all, the rest is still read as statements.
+   */
   private header(): void {
     const { c } = this;
     while (c.kind === T.Space || EOL.includes(c.kind)) {
       c.tested([T.Quadrant]);
       c.next();
     }
-    this.statement(() => {
-      const first = c.pos;
-      this.expect([T.Quadrant], ['`quadrantChart`']);
-      this.add({ id: '', type: 'Header', range: this.span(first) }, 'header');
-    });
+    if (!this.in([T.Quadrant])) {
+      const at = this.lexed.tokens.kind.indexOf(T.Quadrant, c.pos);
+      try {
+        this.fail(['`quadrantChart`']);
+      } catch (error) {
+        if (error !== STOP) throw error;
+      }
+      if (at < 0) return this.recover();
+      c.recovering();
+      while (c.pos < at) c.next();
+    }
+    const first = c.pos;
+    this.take();
+    this.add({ id: '', type: 'Header', range: this.span(first) }, 'header');
   }
 
   /** `{ { SPACE } [ statement ] eol }`. */
@@ -592,9 +627,16 @@ class QuadrantParser {
 
   /** A string or markdown string at the cursor must be closed. */
   private closed(k: number): void {
+    if (this.unclosed(k)) throw STOP;
+  }
+
+  /** Whether the string at the cursor is unclosed; reported once if so. */
+  private unclosed(k: number): boolean {
     const p = this.c.pos;
     const close = k === T.Str ? T.StringEnd : T.MdStringEnd;
-    if (this.kindAfter(p) === close) return;
+    if (this.kindAfter(p) === close) return false;
+    if (p === this.reported) return true;
+    this.reported = p;
     const quote = this.outerStart[p] ?? this.c.start;
     const mark = k === T.Str ? '"' : '"`';
     const at = { start: quote, end: quote + mark.length };
@@ -603,7 +645,7 @@ class QuadrantParser {
       `Unclosed string: the \`${mark}\` at line ${this.lineOf(quote)} has no closing \`${k === T.Str ? '"' : '`"'}\`. Add it after the text.`,
       at
     );
-    throw STOP;
+    return true;
   }
 }
 

@@ -124,6 +124,45 @@ const CASES: Case[] = [
     keeps: ['A'],
   },
   {
+    name: 'an unclosed string after an axis label',
+    lines: ['quadrantChart', 'A: [0.5, 0.5]', 'x-axis a "b', 'quadrant-1 c'],
+    errors: [['UNCLOSED_STRING', 3]],
+    keeps: ['A'],
+  },
+  {
+    name: 'an unclosed string after a point name',
+    lines: ['quadrantChart', 'A: [0.5, 0.5]', 'P "abc: [0.1,0.2]', 'Q: [0.3, 0.4]'],
+    errors: [['UNCLOSED_STRING', 3]],
+    keeps: ['A'],
+  },
+  {
+    name: 'an unclosed markdown string after a quadrant label',
+    lines: ['quadrantChart', 'quadrant-2 two', 'quadrant-1 a "`b', 'quadrant-3 c'],
+    errors: [['UNCLOSED_STRING', 3]],
+    keeps: ['two'],
+  },
+  {
+    name: 'a quoted name, then an unclosed string',
+    lines: ['quadrantChart', 'A: [0.5, 0.5]', 'P "abc" "d: [0.1,0.2]', 'Q: [0.3, 0.4]'],
+    errors: [
+      ['UNEXPECTED', 3],
+      ['UNCLOSED_STRING', 3],
+    ],
+    keeps: ['A'],
+  },
+  {
+    name: 'a quoted line break after a point name',
+    lines: ['quadrantChart', 'P "a', 'b": [0.1, 0.2]', 'Q: [0.3, 0.4]'],
+    errors: [['UNEXPECTED', 2]],
+    keeps: ['Q'],
+  },
+  {
+    name: 'text before the header',
+    lines: ['foo', 'bar baz', 'quadrantChart', 'P: [0.1, 0.2]', 'quadrant-1 one'],
+    errors: [['UNEXPECTED', 1]],
+    keeps: ['P', 'one'],
+  },
+  {
     name: 'an unclosed description',
     lines: ['quadrantChart', 'quadrant-1 one', 'accDescr {', '  open'],
     errors: [['UNCLOSED_DESCRIPTION', 3]],
@@ -151,6 +190,8 @@ describe('quadrant recovery set', () => {
     expect(got).toEqual(errors);
     for (const d of result.diagnostics) {
       expect(d.message).not.toMatch(BANNED);
+      // A message quotes at most one line of the source.
+      expect(d.message).not.toMatch(/[\n\r\u2028\u2029]/);
       for (const e of d.expected ?? []) expect(e).not.toMatch(BANNED);
     }
     const names = [
