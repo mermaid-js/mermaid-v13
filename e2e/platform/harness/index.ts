@@ -5,6 +5,7 @@
  */
 export {
   ALLOW_BUILDS,
+  appEnv,
   assertInstalledFromTarballs,
   installApp,
   installManifest,

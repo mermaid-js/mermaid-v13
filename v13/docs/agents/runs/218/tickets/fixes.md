@@ -5,7 +5,7 @@ Branch `feature/218_integration-fixes`.
 ## Linux (Playwright image) failures
 
 - `ERR_PNPM_IGNORED_BUILDS` (bundle/bundler-plugin esbuild apps): apps run whatever `pnpm` the machine has (Homebrew pnpm 11 on macOS, corepack's latest, 12.x, in the image), and pnpm 11+ fail on any unapproved install script. The harness's generated `pnpm-workspace.yaml` now has `allowBuilds: { esbuild: true }` (`ALLOW_BUILDS`, `pnpmWorkspaceConfig` in `harness/app.ts`); pnpm 10.30, 11 and 12 read that key (11+ ignore `onlyBuiltDependencies`). Unit test in `e2e/helpers/platform-harness.spec.ts`.
-- Missing `@mermaid-js/core` (pnpm) not caught on Linux: pnpm 12 put the auto-installed peer (from the override tarball, so the hash check passed) into the hidden hoist folder `node_modules/.pnpm/node_modules`, from where esbuild resolved mermaid's undeclared import. `e2e/platform/smoke/pnpm-workspace.yaml` sets `hoist: false`, so an undeclared dependency never resolves; the check is unchanged.
+- Missing `@mermaid-js/core` (pnpm) not caught on Linux, two holes: (1) the harness ran the build with pnpm's `.bin/esbuild` shim, which exports `NODE_PATH` with the monorepo's `node_modules/.pnpm/node_modules`, so esbuild resolved mermaid's undeclared import to the workspace `packages/core` (on macOS pnpm 11 fetched a registry copy of the peer, so the hash check threw first and hid it); (2) pnpm 12 hoists the auto-installed peer into the app's hidden `node_modules/.pnpm/node_modules`. Fixes: `appEnv` (exported) drops `NODE_PATH` and puts `<cache>/bin/esbuild` (a symlink to the real executable) first on PATH; `e2e/platform/smoke/pnpm-workspace.yaml` sets `hoist: false`. The check itself is unchanged. Unit test: `appEnv` in `platform-harness.spec.ts`.
 
 ## Review findings
 

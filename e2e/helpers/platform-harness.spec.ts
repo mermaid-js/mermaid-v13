@@ -3,11 +3,14 @@
  * manifests, which packages a pack brings along, and the package.json an install uses. The
  * pack, install and browser render themselves run in e2e/platform/pack-smoke.spec.ts.
  */
+import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { readManifest } from '../../packages/core/src/index.ts';
 import {
   FIXTURE_DIAGRAM,
+  appEnv,
   FIXTURE_EXTENSION,
   installManifest,
   packageSources,
@@ -121,6 +124,22 @@ describe('installManifest', () => {
       mermaid: 'file:./tarballs/mermaid.tgz',
     });
     expect(config.allowBuilds).toEqual({ esbuild: true });
+  });
+});
+
+describe('appEnv', () => {
+  it('runs the monorepo esbuild without the pnpm shim and its NODE_PATH', () => {
+    const env = appEnv();
+    expect(env.NODE_PATH).toBeUndefined();
+    const out = execFileSync('sh', ['-c', 'command -v esbuild; echo "NODE_PATH=$NODE_PATH"'], {
+      env,
+      encoding: 'utf8',
+    });
+    const [path] = out.trim().split('\n');
+    // The first esbuild is the real executable (a symlink to it), not the shell shim.
+    expect(path).not.toContain(join('node_modules', '.bin'));
+    expect(readFileSync(path!, 'latin1')).not.toContain('export NODE_PATH');
+    expect(out).toContain('NODE_PATH=\n');
   });
 });
 

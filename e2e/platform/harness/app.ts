@@ -12,8 +12,10 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   renameSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -63,15 +65,40 @@ const skipAppFile = (name: string): boolean =>
   name === 'node_modules' || name === 'dist' || LOCKFILES.has(name);
 
 /**
- * The environment of the app's commands: without the npm and pnpm variables of the
- * `pnpm e2e` that started Playwright, and with the monorepo's `node_modules/.bin` last on
- * PATH, so a build can use a tool (esbuild) the app does not install itself.
+ * A folder with the monorepo's `esbuild` executable itself, not pnpm's `.bin/esbuild` shim:
+ * the shim exports `NODE_PATH` with the monorepo's `node_modules/.pnpm/node_modules`, through
+ * which esbuild resolved an import the installed packages do not declare to the workspace
+ * sources (`packages/core`), so a missing dependency went unnoticed.
  */
-function appEnv(extra: Readonly<Record<string, string>> = {}): NodeJS.ProcessEnv {
+function toolsBin(): string {
+  const bin = join(cacheRoot(), 'bin');
+  const esbuild = join(bin, 'esbuild');
+  if (!existsSync(esbuild)) {
+    mkdirSync(bin, { recursive: true });
+    const real = realpathSync(join(REPO_ROOT, 'node_modules', 'esbuild', 'bin', 'esbuild'));
+    try {
+      symlinkSync(real, esbuild);
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+    }
+  }
+  return bin;
+}
+
+/**
+ * The environment of the app's commands: without the npm and pnpm variables of the
+ * `pnpm e2e` that started Playwright and without `NODE_PATH`, with the monorepo's esbuild
+ * ({@link toolsBin}) first and its `node_modules/.bin` last on PATH, so a build can use a tool
+ * the app does not install itself, and never resolves a package from the monorepo.
+ */
+export function appEnv(extra: Readonly<Record<string, string>> = {}): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {};
   for (const [k, v] of Object.entries(process.env))
-    if (!/^(?:npm|pnpm)_/i.test(k) && k !== 'INIT_CWD') env[k] = v;
-  env.PATH = [env.PATH, join(REPO_ROOT, 'node_modules', '.bin')].filter(Boolean).join(delimiter);
+    if (!/^(?:npm|pnpm)_/i.test(k) && k !== 'INIT_CWD' && k !== 'NODE_PATH') env[k] = v;
+  // First: `pnpm e2e` puts the monorepo's `.bin` (with the shim) at the front of PATH.
+  env.PATH = [toolsBin(), env.PATH, join(REPO_ROOT, 'node_modules', '.bin')]
+    .filter(Boolean)
+    .join(delimiter);
   return { ...env, ...extra };
 }
 
