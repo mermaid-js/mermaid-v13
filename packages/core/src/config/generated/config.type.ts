@@ -82,7 +82,8 @@ handDrawnSeed?: number
  * Defaults to `layered`, the layout engine built into core (DESIGN §6.1).
  * The v12 name `dagre` is still accepted and maps to `layered`. `elk` and
  * `elk.<algorithm>` need an ELK layout plugin; without one they draw with
- * `layered` and warn `ELK_NOT_INSTALLED`.
+ * `layered` and warn `ELK_NOT_INSTALLED`. Text output (`format: 'ascii'`)
+ * always uses `layered`.
  * 
  */
 layout?: string

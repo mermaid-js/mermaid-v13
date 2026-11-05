@@ -557,12 +557,12 @@ export const configSchema: ConfigSchema = {
     },
     "layout": {
       "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
-      "description": "Defines which layout algorithm to use for rendering the diagram.\n\nDefaults to `layered`, the layout engine built into core (DESIGN §6.1).\nThe v12 name `dagre` is still accepted and maps to `layered`. `elk` and\n`elk.<algorithm>` need an ELK layout plugin; without one they draw with\n`layered` and warn `ELK_NOT_INSTALLED`.\n",
+      "description": "Defines which layout algorithm to use for rendering the diagram.\n\nDefaults to `layered`, the layout engine built into core (DESIGN §6.1).\nThe v12 name `dagre` is still accepted and maps to `layered`. `elk` and\n`elk.<algorithm>` need an ELK layout plugin; without one they draw with\n`layered` and warn `ELK_NOT_INSTALLED`. Text output (`format: 'ascii'`)\nalways uses `layered`.\n",
       "default": "layered",
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning."
+        "reason": "The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179)."
       }
     },
     "maxTextSize": {

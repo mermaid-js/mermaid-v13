@@ -45,7 +45,7 @@ What most integrators have to change:
 | One `mermaid` package with every diagram type and its dependencies (d3, dagre, DOMPurify, khroma, KaTeX, …) | `mermaid` depends on `@mermaid-js/core` (pipeline, parser kit, layout, SVG writer, text, themes, config) and one `@mermaid-js/diagram-<type>` package per diagram type. `mermaid` has no other runtime dependencies | Small, DOM-free bundles (R-PERF-1, R-PERF-2) |
 | ESM, IIFE (`mermaid.min.js`) and "tiny" builds | ESM only in the alpha: each package ships its compiled modules (`dist/`), Node 20 or newer. The release pipeline publishes no IIFE, `mermaid.min.js` or tiny build; bundle `mermaid` with your own bundler | |
 | `mermaid@latest`, released from `develop` | Alphas are released from `mermaid-v13`, with dist-tag `v13-alpha` only, so `mermaid@latest` stays v12: install `mermaid@v13-alpha`. Public `mermaid@13.0.0-alpha.N` starts at `13.0.0-alpha.0` (D155) | R-REL-2, R-REL-3, D28, D155 |
-| `@mermaid-js/layout-elk` | No ELK package yet. `layout: elk` draws with the built-in engine ([Layout](#layout)) | R-PLUG-8 |
+| `@mermaid-js/layout-elk` | Same name, a 13.x line. Register it as in v12 (`mermaid.registerLayoutLoaders(elkLayouts)`); without it `layout: elk` draws with the built-in engine and warns `ELK_NOT_INSTALLED` ([ELK](#elk)) | R-PLUG-8, D171 |
 | ZenUML, tidy-tree and the example diagram package | Not ported in M1 | |
 
 ## Public API
@@ -266,7 +266,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | Key | v13 default | Reason |
 | --- | --- | --- |
 | `theme` | `"redux-color"` | The default changes from `default` to `redux-color`, the theme v12's flowchart renders by default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`, `neutral` and `base`. `neo` renders `redux-color`, `neo-dark` renders `redux-dark-color` and `null` renders `base`, each with a `THEME_UNAVAILABLE` warning. |
-| `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. |
+| `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179). |
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
 | `flowchart.curve` | `"rounded"` | The default changes from `basis` to `rounded`, the look of v12's default ELK layout: stepped routes whose corners are arcs of radius 5 (less on a short leg). Set `basis` to keep S-curves. `linear` draws straight segments; `step`, `stepBefore` and `stepAfter` draw stepped routes; `rounded` draws straight segments with rounded corners; every other value draws S-curves (the layout engine routes edges, not a d3 curve factory). |
@@ -451,6 +451,27 @@ so it counts twice towards the diameter compared with the per-side node padding.
 
 Node positions differ from v12's dagre and ELK output; layouts are deterministic for the same
 input.
+
+### ELK
+
+`@mermaid-js/layout-elk` keeps its v12 name and registration snippet (D171). It ports v12
+develop's ELK adapter on the same elkjs version (0.12.0), with every `elk.*` key, the presets and
+the passes (D174). Parity is with v12's ELK options, not its pixels.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| `import elkLayouts from '@mermaid-js/layout-elk'; mermaid.registerLayoutLoaders(elkLayouts)` | Unchanged. The package registers v12's seven names (`elk`, `elk.stress`, `elk.force`, `elk.mrtree`, `elk.sporeOverlap`, `elk.box`, `elk.rectpacking`) plus `elk.layered` and `elk.radial`, which were only per-container ids in v12. `elk` and `elk.layered` are both ELK's layered algorithm | D171 |
+| Installing the package made ELK the default (`layout` defaulted to `elk`) | Installing it changes no default: ELK lays out only a diagram that names it (`layout:`, a per-type `layout` key, or the `flowchart-elk` header) | D127, R-LAYOUT-7 |
+| An ELK name without the package drew with dagre | Drawn with `layered`, plus one `ELK_NOT_INSTALLED` warning per render that names `@mermaid-js/layout-elk` | D173 |
+| `elk` config keys (`mergeEdges`, `preset`, `lineHops`, …) were core config | The same keys and v12 develop's defaults, but they belong to the package's config fragment: known only while it is registered ([config reference](./config-reference.md)). Without it, an `elk` section gets one `CONFIG_UNKNOWN_KEY` warning and is ignored | D153, D174 |
+| ELK laid out asynchronously (`render()` only) | Synchronous: `renderSync` works once `prepare()` has loaded the engine (else `NotLoadedError` naming `layout "elk"`). elkjs loads only for a diagram that names an ELK layout. Web Worker hosts are not supported, as in v12 | D172 |
+| Per-container `id@{ algorithm: elk.box }` laid that container out with its own algorithm | Parsed but not applied yet: the container is laid out with the diagram's ELK algorithm, with one `ELK_ALGORITHM_IGNORED` warning per render listing the algorithms asked for | D174 |
+| `elk.radial` did not exist as a layout name (only as a container id); a container that was not a tree failed the render | `layout: elk.radial` lays out a tree radially. A graph ELK refuses as "not a tree" (in practice, one with a cycle) is drawn with `layered`, plus one `ELK_RADIAL_NOT_A_TREE` warning | D171 |
+| `cycleBreakingStrategy: MODEL_ORDER` was set on every container, and elkjs 0.12 threw for a container laid out with its parent, so that render failed | `MODEL_ORDER` is set on the root and on containers ELK lays out on their own (one with its own `direction` that no edge crosses); a container laid out with its parent follows the root's value | D174 |
+| `lineHops` drew hops and dropped the rounding of corners | Same hops (arc or gap, v12's radius and rule), drawn on straight runs only; corners keep their rounding | D174 |
+| v12's frame-evening and label post-passes (`evenGroupFrames`, `separateOppositeEdgeLabels`, `slideTerminalLabelsOffFrames`, `putTerminalLabelsOnTheirSide`, marker segment lengths) | Not ported: no `elk.*` key controls them, and v13's diagrams clip edges at their own outlines. Two edges into one side can share an end point | D174 |
+| Spacing from `spacing.baseValue` | Spacing comes from the diagram's `nodeSpacing` and `rankSpacing`, as for `layered` | D174 |
+| Text output did not exist | Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not, with one `ASCII_DROPPED` warning (`feature: 'layout'`) for the ELK name and no `ELK_NOT_INSTALLED` | D179 |
 
 ### Class diagram layout
 
