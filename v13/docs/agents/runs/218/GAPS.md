@@ -27,6 +27,7 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - Follow-up (not this spec): the `mermaid` CLI does not discover plugins.
 - Ancestor `node_modules` plugins are simply not found, no warning (D165 "never ancestors"); the ticket's "skipped with a warning" wording is read that way.
 - `scanPlugins`/`findAppRoot` (`mermaid/node-scan`) are async; T5 awaits them in its unplugin hooks. Layout manifests are skipped with a warning until #238 lands (hook in `scanOne`).
+- The spec's confinement list names `language`, but `readManifest` drops that key, so the scan never sees it and does not confine it (only `detector`, `entry`, `ascii`). The LSP's own scan (D157) confines `language`. Revisit if `readManifest` keeps `language`.
 
 ## Cross-spec: #238 layout manifests (from #215, PR #255)
 

@@ -102,6 +102,15 @@ export async function measureStaticClosure(
   return { bundle: b, size: closureSize(b) };
 }
 
+/**
+ * The core size the budget enforces (R-PERF-8, D161): the static closure of the budget file's
+ * `core.entry` (the CDN ESM entry), not of the bench site's entry. The bench report and the PR
+ * check use this, so they show the number `core-size.spec.ts` checks.
+ */
+export async function measureCoreSize(budget: SizeBudget = readSizeBudget()): Promise<SizeSummary> {
+  return (await measureStaticClosure(budget.core.entry)).size;
+}
+
 export interface BudgetCheck {
   ok: boolean;
   actual: number;

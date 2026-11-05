@@ -95,18 +95,21 @@ works everywhere (R-PLUG-6).
 
 | Where | What to do | D-id |
 | --- | --- | --- |
-| Node, SSR | Nothing. On first render `mermaid` scans the `node_modules` of the nearest `package.json` at or above `process.cwd()` (its top level and `@scope` folders, never parent folders). A package with a bad manifest, a path outside the package or a detector that takes over 5 s to import is skipped with a `PLUGIN_SKIPPED` warning in `RenderResult.warnings` | D165 |
+| Node, SSR | Nothing. On first render `mermaid` scans the `node_modules` of the nearest `package.json` at or above `process.cwd()` (its top level and `@scope` folders, never parent folders). A package with a bad manifest, a path outside the package or a detector that takes over 5 s to import is skipped with a `PLUGIN_SKIPPED` warning in `RenderResult.warnings`. A server deployed without `node_modules` gets no warning | D165 |
 | Bundlers | Add `@mermaid-js/bundler-plugin`: `plugins: [mermaid()]` with `mermaid` from `@mermaid-js/bundler-plugin/vite`, `/webpack`, `/rollup` or `/esbuild`. It scans at build time; skipped packages are build warnings. Without it a browser bundle has the first-party types and what you register | D164 |
-| CDN | Add the plugin's script tag, before or after `mermaid.min.js`. The script pushes itself onto `globalThis.mermaidPlugins` (`(globalThis.mermaidPlugins ??= []).push(plugin)`) | D167 |
+| CDN | Add the plugin's script tag, before or after `mermaid.min.js`. The script pushes itself onto `globalThis.mermaidPlugins` with its npm package name (`(globalThis.mermaidPlugins ??= []).push({ ...plugin, package: 'my-plugin' })`), so it orders as in an npm install; without `package` mermaid warns. Load `mermaid` once: a second copy on the page warns and leaves the plugins and the startOnLoad render to the first | D167 |
 
 - **Turning it off:** `initialize({ discovery: false })` stops Node discovery and ignores the
   bundler plugin's list. Like `cdnBase`, `discovery` is integrator-only.
 - **Discovery runs on the first `render`, `prepare`, `parse` or `preload`.** `renderSync`,
-  `detectType` and `supportsFormat` do not wait for it: `await mermaid.preload()` first.
+  `detectType` and `supportsFormat` do not wait for it: `await mermaid.preload()` first. A
+  render waits for a plugin that is still loading for a limited time (5 s), then goes on with a
+  `PLUGIN_DISCOVERY_FAILED` warning; the plugin works on later renders once it has loaded.
 - **Order (D166).** First-party types always win: a discovered package that claims a first-party
   id or type (`flowchart`, `pie`, …) is skipped with a warning. Replacing one takes
   `registerExternalDiagrams([plugin], { replace: true })`. Third-party detectors run after the
   first-party ones, sorted by package name, then the explicitly registered ones in call order.
+  An explicitly registered id wins over a discovered one, with no warning.
 - **Extensions activate on install too (D169).** With `@mermaid-js/plugin-interactions`
   installed, Node discovery and the bundler plugin turn click callbacks on with no
   `registerExternalDiagrams` call. Diagram text still cannot enable it.

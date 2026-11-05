@@ -9,6 +9,7 @@ import {
   checkBudget,
   chunkOf,
   flowchartClosureSize,
+  measureCoreSize,
   measureStaticClosure,
   readSizeBudget,
 } from './size-budget.ts';
@@ -28,6 +29,15 @@ describe('core size budget (R-PERF-8, D161)', () => {
     const lazy = core.bundle.files.filter((f) => !core.bundle.staticClosure.includes(f.path));
     expect(lazy.length).toBeGreaterThan(0);
   });
+
+  it('gives the bench and PR reports the closure of the budget entry, not of the bench site', async () => {
+    expect(budget.core.entry).toBe('packages/mermaid/src/cdn.ts');
+    expect((await measureCoreSize()).gzip).toBe(core.size.gzip);
+    // Another entry in the budget file measures that entry instead.
+    const other = await measureCoreSize(tight);
+    expect(other.gzip).toBe((await measureStaticClosure(tight.core.entry)).size.gzip);
+    expect(other.gzip).not.toBe(core.size.gzip);
+  }, 60_000);
 
   it('keeps the mermaid entry within the committed core budget', () => {
     const check = checkBudget(core.size, budget.core);

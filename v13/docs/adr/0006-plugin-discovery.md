@@ -41,9 +41,9 @@ skipped with a `PLUGIN_SKIPPED` warning, never a thrown error.
 | Path | Mechanism | D-id |
 | --- | --- | --- |
 | First-party | `mermaid` depends on every `@mermaid-js/diagram-*`; a generated table holds each detector and a lazy `import()`. Bundlers split per type. | D40, R-PLUG-4 |
-| Node / SSR | The `node` export condition of `mermaid` scans on first use, on by default. Root: the nearest `package.json` at or above `process.cwd()`; only its `node_modules` top level and `@scope` folders, never ancestors; 5 s per discovery-time import. `initialize({ discovery: false })` turns it off. | D165 |
+| Node / SSR | The `node` export condition of `mermaid` scans on first use, on by default. Root: the nearest `package.json` at or above `process.cwd()`; only its `node_modules` top level and `@scope` folders, never ancestors; 5 s per discovery-time import; skips go to the first render and an optional `log`. `initialize({ discovery: false })` turns it off. | D165 |
 | Bundlers | `@mermaid-js/bundler-plugin` (unplugin), one line per bundler, runs the same scan at build time and replaces `mermaid/discovered` with the list. `mermaid` keeps first-party dependencies only. | D164 |
-| CDN | ESM build with per-type chunks plus a classic loader `mermaid.min.js` (D162); chunks load only from `cdnBase` or the loader's `data-cdn-base` (D163, D41). Third-party scripts push onto `globalThis.mermaidPlugins`, in either load order. | D162, D163, D167 |
+| CDN | ESM build with per-type chunks plus a classic loader `mermaid.min.js` (D162); chunks load only from `cdnBase` or the loader's `data-cdn-base` (D163, D41). Third-party scripts push onto `globalThis.mermaidPlugins`, in either load order, each with its npm `package` name (it sets the D166 order). | D162, D163, D167 |
 | Explicit | `registerExternalDiagrams()`, always available. | R-PLUG-6 |
 
 Discovered extensions activate on discovery, `@mermaid-js/plugin-interactions` included: the
@@ -58,7 +58,9 @@ install is the opt-in, and diagram text can never enable a plugin (D169, R-PLUG-
 A discovered plugin with a first-party id or type is skipped with a warning. Replacing a
 first-party type needs `registerExternalDiagrams(…, { replace: true })`, whose detector then
 takes that type's first-party slot. Two packages with one id or layout name: the earlier package
-wins. Explicit registration beats discovery. Extension hooks run in the same order.
+wins. Explicit registration beats discovery, silently, for every kind (a discovered extension
+with an explicit id is not loaded). Extension hooks run in the same order. A draw waits for
+discovery still in flight for a bounded time, then renders without it (`PLUGIN_DISCOVERY_FAILED`).
 
 ## Consequences
 
