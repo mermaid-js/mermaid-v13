@@ -242,7 +242,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-API-5 | The `mermaidAPI` object is removed. | Must | M1 | D32 | MIGRATION.md |
 | R-API-6 | `run()` finds `pre.mermaid`/`.mermaid` elements and replaces them as in v12. | Must | M1 | D33, P1 | Browser test |
 | R-API-7 | `mount(el, text, options)` re-renders on resize only when `availableWidth` is used, re-measures after fonts load, and needs no re-render on theme change. | Should | M1 | D33 | Browser test |
-| R-API-8 | `RenderOptions.now` (a number or `Date`) is the instant time-based types such as gantt treat as now. Core never reads the clock; the DOM adapter defaults it to `Date.now()`. It is not a config key, so diagram text cannot set it. | Must | M4 | D270 | Spec: a fixed `now` gives identical output on repeated renders |
+| R-API-8 | `RenderOptions.now` (a number or `Date`) is the instant time-based types such as gantt treat as now. Core never reads the clock; the `mermaid` API defaults it to `Date.now()` at each call. It is not a config key, so diagram text cannot set it. | Must | M4 | D270, D275 | Spec: a fixed `now` gives identical output on repeated renders |
 
 ## 17. Packaging and plugins (R-PLUG)
 

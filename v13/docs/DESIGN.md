@@ -28,7 +28,7 @@ This document describes how v13 is built. It is written for the people who will 
 The core rules:
 
 - Every stage is a pure function of its inputs: plain data in, plain data out (R-ARCH-1, -2, -4).
-- Core never reads the clock. A type that needs "now" (gantt) gets it from `RenderOptions.now`, which the DOM adapter defaults to `Date.now()` (R-API-8, D270). The host time zone is an input, like the measured fonts: gantt's date arithmetic uses `Date`'s local-time methods, as v12 and Pele do, so tests pin `TZ`.
+- Core never reads the clock. A type that needs "now" (gantt) gets it from `RenderOptions.now`, which the `mermaid` API defaults to `Date.now()` at each call (R-API-8, D270, D275). The host time zone is an input, like the measured fonts: gantt's date arithmetic uses `Date`'s local-time methods, as v12 and Pele do, so tests pin `TZ`.
 - Nothing is global. Plugin registration is held by a `Registry` instance that the public `mermaid` package owns (§12).
 
 ## 2. Packages (R-PLUG-1, D25)
