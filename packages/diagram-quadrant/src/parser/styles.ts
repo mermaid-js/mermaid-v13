@@ -12,20 +12,16 @@ const NUMBER = /^\d+$/;
 const HEX = /^#?([\dA-Fa-f]{6}|[\dA-Fa-f]{3})$/;
 const PIXELS = /^\d+px$/;
 
-/** The value each key takes. */
-const VALUE: Record<string, RegExp> = {
-  radius: NUMBER,
-  color: HEX,
-  'stroke-color': HEX,
-  'stroke-width': PIXELS,
-};
-
-const EXAMPLE: Record<string, string> = {
-  radius: 'a whole number, e.g. `radius: 10`',
-  color: 'a hex colour, e.g. `color: #ff0000` or `color: #f00`',
-  'stroke-color': 'a hex colour, e.g. `stroke-color: #ff0000`',
-  'stroke-width': 'a size in pixels, e.g. `stroke-width: 2px`',
-};
+/**
+ * Each key's value pattern and an example for the message. A Map, not an object: a key such as
+ * `constructor` or `__proto__` must not find `Object.prototype`'s (it is an unknown key).
+ */
+const KEYS: ReadonlyMap<string, { readonly ok: RegExp; readonly example: string }> = new Map([
+  ['radius', { ok: NUMBER, example: 'a whole number, e.g. `radius: 10`' }],
+  ['color', { ok: HEX, example: 'a hex colour, e.g. `color: #ff0000` or `color: #f00`' }],
+  ['stroke-color', { ok: HEX, example: 'a hex colour, e.g. `stroke-color: #ff0000`' }],
+  ['stroke-width', { ok: PIXELS, example: 'a size in pixels, e.g. `stroke-width: 2px`' }],
+]);
 
 /** A style v12 refused: its diagnostic code and message. */
 export interface StyleProblem {
@@ -36,9 +32,8 @@ export interface StyleProblem {
 /** Apply one style (`radius: 10`, trimmed) to `out`; a problem when v12 refused it. */
 export function applyStyle(style: string, out: Mutable<QuadrantStyles>): StyleProblem | undefined {
   const [key = '', v = ''] = style.trim().split(/\s*:\s*/);
-  const example = EXAMPLE[key];
-  const ok = VALUE[key];
-  if (example === undefined || ok === undefined) {
+  const known = KEYS.get(key);
+  if (known === undefined) {
     return {
       code: 'QUADRANT_STYLE_UNKNOWN',
       message:
@@ -47,6 +42,7 @@ export function applyStyle(style: string, out: Mutable<QuadrantStyles>): StylePr
           : `\`${key}\` is not a point style: use \`radius\`, \`color\`, \`stroke-color\` or \`stroke-width\`.`,
     };
   }
+  const { ok, example } = known;
   if (!ok.test(v)) {
     const got = v === '' ? 'it has no value' : `\`${v}\` is not valid`;
     return {

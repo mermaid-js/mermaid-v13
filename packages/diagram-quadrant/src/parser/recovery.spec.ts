@@ -53,6 +53,24 @@ const CASES: Case[] = [
     keeps: ['A', 'B'],
   },
   {
+    name: 'style keys that are Object.prototype names',
+    lines: [
+      'quadrantChart',
+      'A: [0.5, 0.5] constructor: 5',
+      'classDef c toString: 1',
+      'B:::c: [0.3, 0.4] valueOf: 2, radius: 4',
+      'classDef d __proto__: 3',
+    ],
+    errors: [
+      ['QUADRANT_STYLE_UNKNOWN', 2],
+      ['QUADRANT_STYLE_UNKNOWN', 3],
+      ['QUADRANT_STYLE_UNKNOWN', 4],
+      // `_` is not in a style key's alphabet (v12's lexer): a syntax error.
+      ['UNEXPECTED', 5],
+    ],
+    keeps: ['A', 'B'],
+  },
+  {
     name: 'a bad style, then a syntax error in the same statement',
     lines: ['quadrantChart', 'A: [0.1, 0.2] radius: x, stroke-width: 1.5px', 'B: [0, 0]'],
     errors: [

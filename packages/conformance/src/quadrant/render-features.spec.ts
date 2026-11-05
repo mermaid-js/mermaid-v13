@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { UnsupportedFormatError, type Mermaid } from 'mermaid';
+import { MermaidError, UnsupportedFormatError, type Mermaid } from 'mermaid';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { parseQuadrant, quadrant } from '@mermaid-js/diagram-quadrant';
 import { quadrantApi } from './render-api.ts';
@@ -131,6 +131,120 @@ describe('labels (D225)', () => {
     expect(text).toMatch(/transform="translate\(5,[\d.]+\) rotate\(-90\)"/);
     expect(text).toContain('text-anchor="start"');
     expect(text).not.toContain('dominant-baseline');
+  });
+});
+
+describe('multi-line labels grow away from the square (D224, D225)', () => {
+  /** px, from `tableMeasurer` at the default font: 20px titles, 16px axis labels. */
+  const TITLE = { ascent: 18.1, line: 23 };
+  const AXIS = { ascent: 14.48, line: 18.4 };
+  const viewBox = (svg: string): number[] =>
+    /viewBox="([^"]*)"/.exec(svg)![1]!.split(' ').map(Number);
+  /** The square's top and left: the corner of quadrant 2. */
+  const square = (svg: string) => {
+    const [, x, y] = /data-id="quadrant-2"><rect x="([\d.]+)" y="([\d.]+)"/.exec(svg)!;
+    return { left: Number(x), top: Number(y) };
+  };
+  /**
+   * The lines of the label drawn in the group `id`, each as the band [from, to] it takes across
+   * its baseline direction, in the chart's frame: y for a level label, x for a label turned -90°
+   * (its local y runs along the chart's x).
+   */
+  const lines = (svg: string, id: string, m: { ascent: number; line: number }) => {
+    const g = new RegExp(`data-id="${id}"[^>]*>(<text[\\s\\S]*?</text>)`).exec(svg)![1]!;
+    const [, tx, ty, r] = /translate\(([-\d.]+),([-\d.]+)\) rotate\(([-\d.]+)\)/.exec(g)!;
+    const at = Number(r) === -90 ? Number(tx) : Number(ty);
+    const baselines = [...g.matchAll(/<tspan [^>]*y="([-\d.]+)"/g)].map((x) => Number(x[1]));
+    // A plain label is one `<text>` hung from its anchor, less its own `y`.
+    if (baselines.length === 0 && g.includes('dominant-baseline="hanging"')) {
+      const top = at + Number(/^<text x="0" y="([-\d.]+)"/.exec(g)![1]);
+      return [[top, top + m.line] as const];
+    }
+    return baselines.map((b) => [at + b - m.ascent, at + b - m.ascent + m.line] as const);
+  };
+  const close = (a: number, b: number) => expect(Math.abs(a - b)).toBeLessThan(0.01);
+
+  it.each([2, 3])(
+    'a %i-line title: earlier lines above, the last where one line sat',
+    async (n) => {
+      const text = Array.from({ length: n }, (_, i) => `Line ${i + 1}`).join('<br>');
+      const svg = await render(`title ${text}`);
+      const got = lines(svg, 'title', TITLE);
+      expect(got).toHaveLength(n);
+      // v12's one line: top at titlePadding (10).
+      close(got[n - 1]![0], 10);
+      close(got[0]![0], 10 - TITLE.line * (n - 1));
+      expect(got[n - 1]![1]).toBeLessThanOrEqual(square(svg).top);
+      // The square stays where v12 put it, and the box covers the lines above 0.
+      expect(square(svg)).toEqual({ left: 5, top: 45 });
+      const [x = 0, y = 0, w = 0, h = 0] = viewBox(svg);
+      expect([x, y, w, y + h]).toEqual([0, Math.floor(10 - TITLE.line * (n - 1)), 500, 500]);
+    }
+  );
+
+  it.each([2, 3])('a %i-line top x-axis grows up, and the title above it', async (n) => {
+    const two = (s: string) => Array.from({ length: n }, (_, i) => `${s}${i + 1}`).join('<br>');
+    const svg = await render(`title T\nx-axis "${two('L')}" --> "${two('R')}"`);
+    const { top } = square(svg);
+    // v12's square: quadrantPadding + x-axis band (5 + 16 + 5) + title band (10 + 20 + 10).
+    expect(top).toBe(71);
+    for (const id of ['x-axis-start', 'x-axis-end']) {
+      const got = lines(svg, id, AXIS);
+      expect(got).toHaveLength(n);
+      // v12's one line: top at titleSpace + xAxisLabelPadding (45).
+      close(got[n - 1]![0], 45);
+      close(got[0]![0], 45 - AXIS.line * (n - 1));
+      expect(got[n - 1]![1]).toBeLessThanOrEqual(top);
+      const title = lines(svg, 'title', TITLE);
+      expect(title[0]![1]).toBeLessThanOrEqual(got[0]![0]);
+    }
+    const [, y] = viewBox(svg);
+    const titleTop = lines(svg, 'title', TITLE)[0]![0];
+    expect(y).toBe(Math.floor(titleTop));
+    expect(y).toBeLessThan(0);
+  });
+
+  it.each([2, 3])('a %i-line left y-axis grows left, away from the square', async (n) => {
+    const two = (s: string) => Array.from({ length: n }, (_, i) => `${s}${i + 1}`).join('<br>');
+    const svg = await render(`x-axis Low --> High\ny-axis "${two('B')}" --> "${two('T')}"`);
+    const { left, top } = square(svg);
+    // v12's square: quadrantPadding + y-axis band (5 + 16 + 5).
+    expect([left, top]).toEqual([31, 31]);
+    for (const id of ['y-axis-start', 'y-axis-end']) {
+      const got = lines(svg, id, AXIS);
+      expect(got).toHaveLength(n);
+      // v12's one line: from yAxisLabelPadding (5), towards the square.
+      close(got[n - 1]![0], 5);
+      close(got[0]![0], 5 - AXIS.line * (n - 1));
+      expect(got[n - 1]![1]).toBeLessThanOrEqual(left);
+    }
+    // The x-axis labels stay above the square, clear of the y-axis band.
+    for (const id of ['x-axis-start', 'x-axis-end'])
+      expect(lines(svg, id, AXIS).at(-1)![1]).toBeLessThanOrEqual(top);
+    const [x = 0, , w = 0] = viewBox(svg);
+    expect([x, x + w]).toEqual([Math.floor(5 - AXIS.line * (n - 1)), 500]);
+  });
+
+  it('breaks a raw newline in a quoted label the same way', async () => {
+    const svg = await render('x-axis "L1\nL2" --> R');
+    const got = lines(svg, 'x-axis-start', AXIS);
+    expect(got).toHaveLength(2);
+    close(got[1]![0], 5);
+  });
+
+  it('keeps bottom and right labels growing outward as before', async () => {
+    const svg = await render(
+      'x-axis "L1<br>L2" --> R\ny-axis "B1<br>B2" --> T\nA: [0.5, 0.5]',
+      '  quadrantChart:\n    yAxisPosition: right'
+    );
+    const x = lines(svg, 'x-axis-start', AXIS);
+    const y = lines(svg, 'y-axis-start', AXIS);
+    close(x[0]![0], 500 - 26 + 5);
+    close(y[0]![0], 500 - 26 + 5);
+    const [vx, vy, w, h] = viewBox(svg);
+    expect([vx, vy]).toEqual([0, 0]);
+    expect(w).toBe(Math.ceil(y[1]![1]));
+    expect(h).toBe(Math.ceil(x[1]![1]));
   });
 });
 
@@ -317,5 +431,84 @@ describe('formats and warnings', () => {
     const both = (await api.render('q', '---\ntitle: FM\n---\nquadrantChart\ntitle In text')).svg;
     expect(both).toContain('>In text</text>');
     expect(both).not.toContain('>FM<');
+  });
+});
+
+describe('style keys named like Object.prototype members', () => {
+  it('fail as SYNTAX with one diagnostic per bad style, not INTERNAL', async () => {
+    for (const [src, codes] of [
+      ['A: [0.5, 0.5] constructor: 5', ['QUADRANT_STYLE_UNKNOWN']],
+      ['classDef c toString: 1', ['QUADRANT_STYLE_UNKNOWN']],
+      ['A: [0.5, 0.5] valueOf: 1, radius: 3, toString: 2', Array(2).fill('QUADRANT_STYLE_UNKNOWN')],
+      ['A: [0.5, 0.5] __proto__: 1', ['UNEXPECTED']],
+    ] as const) {
+      const e = await api.render('q', `quadrantChart\n${src}`).then(
+        () => undefined,
+        (x: unknown) => x
+      );
+      expect(e, src).toBeInstanceOf(MermaidError);
+      const err = e as MermaidError;
+      expect([err.code, err.diagnostics.map((d) => d.code)], src).toEqual(['SYNTAX', codes]);
+    }
+  });
+});
+
+describe('config values (D226)', () => {
+  const directive = async (section: Record<string, unknown>, body = 'A: [0.5, 0.5]') =>
+    api.render(
+      'q',
+      `%%{init: ${JSON.stringify({ quadrantChart: section })}}%%\nquadrantChart\n${body}`
+    );
+  const viewBox = (svg: string): number[] =>
+    /viewBox="([^"]*)"/.exec(svg)![1]!.split(' ').map(Number);
+
+  it('reads a numeric string as its number, as v12 drew it', async () => {
+    const r = await directive({ pointRadius: '7' });
+    expect(r.svg).toContain('r="7"');
+    expect(viewBox(r.svg)).toEqual([0, 0, 500, 500]);
+    expect(r.warnings).toEqual([]);
+    const title = 'title T\nA: [0.5, 0.5]';
+    const asString = await directive({ titleFontSize: '20', chartWidth: '400' }, title);
+    const asNumber = await directive({ titleFontSize: 20, chartWidth: 400 }, title);
+    expect(asString.svg).toBe(asNumber.svg);
+    expect(asString.warnings).toEqual([]);
+  });
+
+  it('falls back to the default for a value that is no number, with one warning per key', async () => {
+    const plain = await directive({});
+    const r = await directive({ pointRadius: 'big', titleFontSize: 'huge' });
+    expect(r.svg).toBe(plain.svg);
+    expect(r.svg).not.toContain('NaN');
+    expect(r.warnings.map((w) => w.code)).toEqual([
+      'QUADRANT_CONFIG_INVALID',
+      'QUADRANT_CONFIG_INVALID',
+    ]);
+    expect(r.warnings.map((w) => w.message).sort()).toEqual([
+      'quadrantChart.pointRadius is "big", not a number of 0 or more; using the default 5',
+      'quadrantChart.titleFontSize is "huge", not a number of 0 or more; using the default 20',
+    ]);
+    for (const bad of [-3, '', true, [1], { a: 1 }]) {
+      const b = await directive({ pointRadius: bad });
+      expect(b.svg, JSON.stringify(bad)).toBe(plain.svg);
+      expect(
+        b.warnings.map((w) => w.code),
+        JSON.stringify(bad)
+      ).toEqual(['QUADRANT_CONFIG_INVALID']);
+    }
+  });
+
+  it('falls back to the default axis side for a value that is no side', async () => {
+    const axes = 'x-axis Low --> High\ny-axis Down --> Up';
+    const plain = await directive({}, axes);
+    const r = await directive({ xAxisPosition: 'middle', yAxisPosition: 7 }, axes);
+    expect(r.svg).toBe(plain.svg);
+    expect(r.warnings.map((w) => w.code)).toEqual([
+      'QUADRANT_CONFIG_INVALID',
+      'QUADRANT_CONFIG_INVALID',
+    ]);
+    expect(r.warnings.map((w) => w.message).join(' ')).toMatch(/xAxisPosition[\s\S]*yAxisPosition/);
+    const set = await directive({ xAxisPosition: 'bottom', yAxisPosition: 'right' }, axes);
+    expect(set.svg).not.toBe(plain.svg);
+    expect(set.warnings).toEqual([]);
   });
 });

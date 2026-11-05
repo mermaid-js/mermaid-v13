@@ -150,6 +150,7 @@ function axisLabels(
     const at = (label: QuadrantText, end: 'start' | 'end', from: number): QuadrantAxisLabel => ({
       axis: 'x',
       end,
+      side: xAxisSide,
       ast: end === 'end' ? `${x.ast}/end` : x.ast,
       text: {
         label,
@@ -174,6 +175,7 @@ function axisLabels(
     const at = (label: QuadrantText, end: 'start' | 'end', from: number): QuadrantAxisLabel => ({
       axis: 'y',
       end,
+      side: c.yAxisPosition,
       ast: end === 'end' ? `${y.ast}/end` : y.ast,
       text: {
         label,

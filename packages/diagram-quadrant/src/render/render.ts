@@ -48,6 +48,8 @@ interface Scene {
   readonly ctx: QuadrantRenderContext;
   readonly paint: Paints;
   readonly measure: (at: QuadrantTextAnchor) => Placed;
+  /** px a label is drawn back from its anchor, against its line direction ({@link lifts}). */
+  readonly lift: ReadonlyMap<QuadrantTextAnchor, number>;
 }
 
 /** v12 draws text in the root font at its configured size, never bold. */
@@ -75,7 +77,8 @@ export function renderQuadrant(
     }
     return p;
   };
-  const scene: Scene = { w, model, layout, ctx, paint: paints(ctx.theme, layout), measure };
+  const paint = paints(ctx.theme, layout);
+  const scene: Scene = { w, model, layout, ctx, paint, measure, lift: lifts(layout, measure) };
   openRoot(scene, bounds(scene));
   w.open('g', { class: 'main' });
   drawQuadrants(scene);
@@ -85,6 +88,34 @@ export function renderQuadrant(
   drawTitle(scene);
   w.close();
   w.close();
+}
+
+/**
+ * How far each label above or left of the square is drawn back from its anchor, so that it
+ * grows away from the square (D224, D225). v12 placed one line; a label's extra lines go up
+ * above the square (left of it for a y-axis label, which is up in its turned frame), so its
+ * last line sits where v12's one line sat. The title is above a top x axis, so it also moves up
+ * by that axis's extra lines. A label below or right of the square already grows away from it.
+ * One line: 0, v12's placement.
+ */
+function lifts(
+  layout: QuadrantLayout,
+  measure: (at: QuadrantTextAnchor) => Placed
+): Map<QuadrantTextAnchor, number> {
+  const out = new Map<QuadrantTextAnchor, number>();
+  const extra = (at: QuadrantTextAnchor): number => {
+    const { label } = measure(at);
+    return label.lines.length > 1 ? label.height - label.lineHeight : 0;
+  };
+  let top = 0;
+  for (const l of layout.axisLabels) {
+    if (l.side !== 'top' && l.side !== 'left') continue;
+    const e = extra(l.text);
+    out.set(l.text, e);
+    if (l.side === 'top') top = Math.max(top, e);
+  }
+  if (layout.title) out.set(layout.title, extra(layout.title) + top);
+  return out;
 }
 
 /** Every text anchor that draws a label. */
@@ -121,7 +152,7 @@ function bounds(scene: Scene): Box {
     const { label } = scene.measure(at);
     if (label.lines.length === 0) continue;
     const x0 = at.anchor === 'start' ? 0 : -label.width / 2;
-    const y0 = at.baseline === 'hanging' ? 0 : -label.height / 2;
+    const y0 = (at.baseline === 'hanging' ? 0 : -label.height / 2) - (scene.lift.get(at) ?? 0);
     const rad = (at.rotation * Math.PI) / 180;
     // Snapped, so a quarter turn is exact.
     const cos = Math.round(Math.cos(rad) * 1e9) / 1e9;
@@ -202,18 +233,19 @@ function plainText(label: MeasuredLabel): string | undefined {
  * A label at its anchor, placed as v12 placed it: `translate(x, y) rotate(r)`. A plain label is
  * v12's one `<text>` with its `text-anchor` and `dominant-baseline`. A label with breaks,
  * markdown or inline boxes (D225) is laid out by core and drawn so its box sits where v12's
- * `text-anchor` and `dominant-baseline` would put one line's.
+ * `text-anchor` and `dominant-baseline` would put one line's, less its lift ({@link lifts}).
  */
 function drawText(scene: Scene, at: QuadrantTextAnchor, fill: Paint | undefined): void {
   const { w } = scene;
   const { label } = scene.measure(at);
   if (label.lines.length === 0) return;
   const transform = transforms(translate(at.x, at.y), rotate(at.rotation));
+  const lift = scene.lift.get(at) ?? 0;
   const text = plainText(label);
   if (text !== undefined) {
     w.open('text', {
       x: 0,
-      y: 0,
+      y: 0 - lift,
       fill,
       'font-size': at.fontSize,
       'dominant-baseline': at.baseline,
@@ -229,7 +261,7 @@ function drawText(scene: Scene, at: QuadrantTextAnchor, fill: Paint | undefined)
   w.label(
     start ? { ...label, left: true } : label,
     start ? label.width / 2 : 0,
-    at.baseline === 'hanging' ? label.height / 2 : 0,
+    (at.baseline === 'hanging' ? label.height / 2 : 0) - lift,
     attrs
   );
 }

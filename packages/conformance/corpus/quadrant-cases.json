@@ -88,6 +88,14 @@
     "source": "quadrantChart\nP: [0.1, 0.2] radius: x, color: y\n"
   },
   {
+    "id": "quadrant-cases/style-prototype-keys",
+    "source": "quadrantChart\nA: [0.5, 0.5] constructor: 5\nB: [0.2, 0.3] toString: 1, radius: 4\nC: [0.7, 0.1] valueOf: 2\nD: [0.4, 0.6] __proto__: 3\n"
+  },
+  {
+    "id": "quadrant-cases/classdef-prototype-keys",
+    "source": "quadrantChart\nclassDef a constructor: 5\nclassDef b toString: 1\nclassDef c valueOf: 2\nclassDef d __proto__: 3\nP:::b: [0.5, 0.5]\n"
+  },
+  {
     "id": "quadrant-cases/classdef-bad-style",
     "source": "quadrantChart\nclassDef c fill:#ff0000\n"
   },

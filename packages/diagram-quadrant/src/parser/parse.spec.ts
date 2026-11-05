@@ -77,6 +77,26 @@ describe('quadrant parser: model', () => {
     expect(model(H + 'P: [0.1, 0.2] radius: 10: 3\n').points[0]?.styles).toEqual({ radius: 10 });
   });
 
+  it('refuses Object.prototype names as style keys, one diagnostic each', () => {
+    for (const key of ['constructor', 'toString', 'valueOf', 'hasOwnProperty']) {
+      for (const src of [`P: [0.5, 0.5] ${key}: 5\n`, `classDef c ${key}: 1\n`]) {
+        const r = parseQuadrant(H + src);
+        expect(
+          r.diagnostics.map((d) => [d.code, d.severity]),
+          src
+        ).toEqual([['QUADRANT_STYLE_UNKNOWN', 'error']]);
+        expect(r.diagnostics[0]?.message).toContain(`\`${key}\` is not a point style`);
+      }
+    }
+    // `_` is not in a style key's alphabet (v12's lexer), so `__proto__` fails to parse.
+    for (const src of ['P: [0.5, 0.5] __proto__: 5\n', 'classDef c __proto__: 1\n'])
+      expect(
+        parseQuadrant(H + src).diagnostics.map((d) => d.code),
+        src
+      ).toEqual(['UNEXPECTED']);
+    expect(model(H + 'P: [0.5, 0.5] radius: 4\n').points[0]?.styles).toEqual({ radius: 4 });
+  });
+
   it('reads entities as `&name;` and takes the front-matter title only without a title', () => {
     const m = model(H + 'quadrant-1 a #amp; b\n');
     expect(m.quadrants[0]?.text).toBe('a &amp; b');

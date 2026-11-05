@@ -8,6 +8,7 @@ import { loadOracle } from '../oracle.ts';
 import { resolveCorpus } from '../corpus.ts';
 import { PARITY_SUITES } from '../registry.ts';
 import { QUADRANT_V12_TYPES, quadrantV12Snapshot } from './v12.ts';
+import { quadrantGateCorpus } from './corpus.ts';
 import { quadrantAdapter } from './v13.ts';
 
 /**
@@ -26,21 +27,55 @@ import { quadrantAdapter } from './v13.ts';
 
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 
+const quadrantService = async () => {
+  const service = createLanguageService({
+    facets: [
+      {
+        type: 'quadrantChart',
+        id: 'quadrantChart',
+        section: 'quadrantChart',
+        detector: (t) => /^\s*quadrantChart/.test(t),
+        facet: quadrantLanguage,
+      },
+    ],
+  });
+  await service.preload({ types: ['quadrantChart'] });
+  return service;
+};
+
+describe('quadrant diagnostics through the service', () => {
+  it('are never LANGUAGE_FACET_FAILED over the gate corpus', async () => {
+    const service = await quadrantService();
+    const problems: string[] = [];
+    let checked = 0;
+    for (const item of await quadrantGateCorpus()) {
+      const doc = service.update(`corpus:///${item.id}`, item.source);
+      checked++;
+      const got = doc.diagnostics().map((d) => d.code);
+      if (got.includes('LANGUAGE_FACET_FAILED')) problems.push(`${item.id}: facet failed`);
+    }
+    expect(checked).toBeGreaterThan(300);
+    expect(problems).toEqual([]);
+  });
+
+  it('give one error per style key named like an Object.prototype member', async () => {
+    const service = await quadrantService();
+    const doc = service.update(
+      'corpus:///prototype-keys',
+      'quadrantChart\nA: [0.5, 0.5] constructor: 5\nclassDef c toString: 1\nB: [0.1, 0.1] valueOf: 2\n'
+    );
+    expect(doc.diagnostics().map((d) => [d.code, d.severity])).toEqual([
+      ['QUADRANT_STYLE_UNKNOWN', 'error'],
+      ['QUADRANT_STYLE_UNKNOWN', 'error'],
+      ['QUADRANT_STYLE_UNKNOWN', 'error'],
+    ]);
+  });
+});
+
 describe('quadrant definition, references and folding through the service match v12', () => {
   it('over the parity corpus', async () => {
     const oracle = await loadOracle();
-    const service = createLanguageService({
-      facets: [
-        {
-          type: 'quadrantChart',
-          id: 'quadrantChart',
-          section: 'quadrantChart',
-          detector: (t) => /^\s*quadrantChart/.test(t),
-          facet: quadrantLanguage,
-        },
-      ],
-    });
-    await service.preload({ types: ['quadrantChart'] });
+    const service = await quadrantService();
     const suite = PARITY_SUITES.filter((s) => s.adapter === quadrantAdapter);
     const problems: string[] = [];
     let checked = 0;

@@ -80,6 +80,11 @@ export interface QuadrantAxisLabel {
   /** x: `start` is the left label; y: `start` is the bottom one. */
   readonly end: 'start' | 'end';
   /**
+   * The side of the square the label is on. A label with more lines than one grows away from
+   * the square: down below it and right of it as laid out, up above it and left of it (D224).
+   */
+  readonly side: 'top' | 'bottom' | 'left' | 'right';
+  /**
    * One id per label (pitfall 12): the start label has the axis's id (`ax:x`, `ax:y`), the end
    * label that id with `/end` (`ax:x/end`, `ax:y/end`).
    */
