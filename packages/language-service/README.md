@@ -2,7 +2,7 @@
 
 An editor-agnostic language service for Mermaid: diagnostics, go to definition, references, rename, hover, completion (front-matter `config:` included), folding, semantic tokens, and a cursor ↔ AST map for live previews. It has no runtime dependencies. `@mermaid-js/core` is a peer, and each diagram's language support (its _facet_) is an optional peer that loads on `preload()`.
 
-Use it directly, or through an adapter: `@mermaid-js/language-server` for any LSP editor.
+Use it directly, or through an adapter: `@mermaid-js/language-server` for any LSP editor, `@mermaid-js/language-service-codemirror` for CodeMirror 6, `@mermaid-js/language-service-monaco` for Monaco.
 
 ## Setup
 
@@ -42,4 +42,3 @@ The language server does not load third-party facets by default: a client opts i
 ## Limitations
 
 - Language support exists for flowchart only. Other types get generic features: comments, directives, and front-matter config.
-- First-paint highlighting in the editor adapters (the Lezer and Monarch grammars) is generated for flowchart only. Other types are highlighted by semantic tokens once their facet lands.
