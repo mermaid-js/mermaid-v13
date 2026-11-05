@@ -97,6 +97,19 @@ const TREE_SHAPES: [string, (n: number) => string][] = [
   ['an unclosed flow item on every line', (n) => 'l:\n' + lines(n, () => '  - {a\n')],
   ['the same key on every line', (n) => lines(n, () => 'a: 1\n')],
   ['a root that ends early on every other line', (n) => lines(n, (i) => `- a\nk${i}: 1\n`)],
+  // Root flow documents recover per entry (#169).
+  [
+    'a bad entry on every line of a root flow mapping',
+    (n) => '{\n' + lines(n, (i) => ` k${i}: *x,\n`) + '}',
+  ],
+  [
+    'an unclosed nested collection on every line of a root flow',
+    (n) => '[\n' + lines(n, () => ' {a: [1 },\n') + ']',
+  ],
+  [
+    'an unclosed quote in a root flow mapping',
+    (n) => '{ a: "x,\n' + lines(n, (i) => ` k${i}: 1,\n`),
+  ],
 ];
 
 describe('the YAML tree mode runs in linear time', () => {
