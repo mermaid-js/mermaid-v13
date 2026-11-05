@@ -133,6 +133,7 @@ describe('assertInert', () => {
     '<rect filter="none"/>',
     '<g data-color-id="color-0"/>',
     '<g data-color-id="color-11"/>',
+    '<path fill-rule="evenodd" clip-rule="nonzero" d="M0 0h4v4z"/>',
     '<svg style="--_ds:var(--mermaid-dropShadow,drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06)))"/>',
   ];
   for (const svg of OK) {
@@ -171,6 +172,8 @@ describe('assertInert', () => {
     '<g data-color-id="red"/>',
     '<g data-color-id="color-1;x"/>',
     '<g data-color-id="color-1234"/>',
+    '<path fill-rule="url(#a)"/>',
+    '<path clip-rule="inherit;x:y"/>',
     '<rect style="background:url(x)"/>',
     '<rect style="background:red"/>',
     '<rect style="fill:red;}body{x:y"/>',
