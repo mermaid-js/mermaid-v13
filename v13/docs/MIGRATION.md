@@ -325,7 +325,8 @@ Sequence diagrams (`sequence` section, #145):
 - **Per-key font sizes take effect.** v12 replaced `sequence.actorFontSize`, `noteFontSize` and
   `messageFontSize` with the global `fontSize` before drawing, so setting them did nothing and
   every label was drawn at 16 px. v13 draws a set value; unset, they follow the theme's
-  `fontSize`, so a diagram that sets none looks as before (D132).
+  `fontSize` (D132). A diagram that sets none looks as before in a 16 px theme; under the redux
+  family, `neo` and `neo-dark` (`fontSize` 14px) its text is 14 px where v12 drew 16 px.
   The documented defaults 14 and 16 are gone.
 - **Per-key font families follow the Mermaid font** when unset (`fontFamily`), as every
   diagram type's text does; a set `actorFontFamily`, `noteFontFamily` or `messageFontFamily`
