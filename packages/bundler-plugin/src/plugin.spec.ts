@@ -4,13 +4,21 @@
  * The scan root is the bundler's project root (`absWorkingDir`), never `process.cwd()`. The
  * four-bundler browser apps are the e2e side (`e2e/platform/bundler-plugin.spec.ts`).
  */
-import { mkdirSync, mkdtempSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { build, type Message, type Plugin } from 'esbuild';
+import { build, context, type BuildOptions, type Message, type Plugin } from 'esbuild';
 import { describe, expect, it } from 'vitest';
 import mermaid from './esbuild.ts';
+import { specifierOf } from './generate.ts';
 
 const MERMAID_DIR = realpathSync(join(import.meta.dirname, '..', '..', 'mermaid'));
 
@@ -72,19 +80,27 @@ export async function draw(text, config) {
 }
 `;
 
-/** A temp app: package.json, `main.js`, `node_modules/mermaid` (this workspace's) and `packages`. */
-function app(packages: Record<string, Files>): string {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), 'mmd-bundler-')));
-  writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'app', private: true }));
-  writeFileSync(join(root, 'main.js'), MAIN);
-  mkdirSync(join(root, 'node_modules'));
-  symlinkSync(MERMAID_DIR, join(root, 'node_modules', 'mermaid'), 'dir');
+/** Writes each package's files into `root/node_modules/<name>/`. */
+function install(root: string, packages: Record<string, Files>): void {
   for (const [name, files] of Object.entries(packages))
     for (const [file, text] of Object.entries(files)) {
       const path = join(root, 'node_modules', name, file);
       mkdirSync(join(path, '..'), { recursive: true });
       writeFileSync(path, text);
     }
+}
+
+/**
+ * A temp app: package.json, `main.js`, `node_modules/mermaid` (this workspace's) and
+ * `packages`, in a folder whose name starts with `prefix`.
+ */
+function app(packages: Record<string, Files>, prefix = 'mmd-bundler-'): string {
+  const root = realpathSync(mkdtempSync(join(tmpdir(), prefix)));
+  writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'app', private: true }));
+  writeFileSync(join(root, 'main.js'), MAIN);
+  mkdirSync(join(root, 'node_modules'));
+  symlinkSync(MERMAID_DIR, join(root, 'node_modules', 'mermaid'), 'dir');
+  install(root, packages);
   return root;
 }
 
@@ -96,6 +112,7 @@ interface Drawn {
 }
 
 interface Built {
+  readonly outdir: string;
   draw(text: string, config?: Record<string, unknown>): Promise<Drawn>;
   /** The source files esbuild put into the entry chunk (`main.js`), app-relative. */
   readonly mainInputs: readonly string[];
@@ -105,8 +122,13 @@ interface Built {
 let builds = 0;
 
 /** Builds `root/main.js` with esbuild (ESM, code splitting) and imports the bundle. */
-async function bundle(root: string, plugins: Plugin[]): Promise<Built> {
-  const outdir = join(root, `dist-${++builds}`);
+async function bundle(
+  root: string,
+  plugins: Plugin[],
+  extra: Partial<BuildOptions> = {}
+): Promise<Built> {
+  // Outside the app: vitest's module runner cannot import a path holding `#`.
+  const outdir = mkdtempSync(join(tmpdir(), `mmd-bundler-out-${++builds}-`));
   const result = await build({
     absWorkingDir: root,
     entryPoints: ['main.js'],
@@ -120,10 +142,12 @@ async function bundle(root: string, plugins: Plugin[]): Promise<Built> {
     metafile: true,
     logLevel: 'silent',
     plugins,
+    ...extra,
   });
-  const main = Object.entries(result.metafile.outputs).find(([, o]) => o.entryPoint === 'main.js');
+  const main = Object.entries(result.metafile!.outputs).find(([, o]) => o.entryPoint === 'main.js');
   const mod = (await import(pathToFileURL(join(outdir, 'main.js')).href)) as Pick<Built, 'draw'>;
   return {
+    outdir,
     draw: mod.draw,
     mainInputs: Object.keys(main![1].inputs),
     buildWarnings: result.warnings,
@@ -161,18 +185,20 @@ describe('mermaid() for esbuild', () => {
     expect((await built.draw('boxes hello')).error).toBe('UNSUPPORTED_DIAGRAM');
   });
 
-  it('skips a package that fails confinement with a build warning and a first-render warning', async () => {
+  it('skips a package that fails confinement with a root-relative build warning only', async () => {
     const root = app({
       'boxes-plugin': diagram('boxes-plugin', 'boxes'),
       'escape-plugin': diagram('escape-plugin', 'escape', 'escape', '../boxes-plugin/detector.js'),
     });
     const built = await bundle(root, [mermaid()]);
-    expect(built.buildWarnings.map((w) => w.text)).toEqual([
-      expect.stringMatching(/^\[mermaid\] .*escape-plugin/),
-    ]);
+    const texts = built.buildWarnings.map((w) => w.text);
+    expect(texts).toEqual([expect.stringMatching(/^\[mermaid\] .*escape-plugin/)]);
+    expect(texts[0]).not.toContain(root);
+    // Nothing of the build machine goes into the bundle, and renders carry no scan warnings.
+    expect(readFileSync(join(built.outdir, 'main.js'), 'utf8')).not.toContain(root);
     const first = await built.draw('boxes hi');
     expect(first.type).toBe('boxes');
-    expect(first.warnings).toEqual([expect.stringMatching(/^PLUGIN_SKIPPED .*escape-plugin/)]);
+    expect(first.warnings).toEqual([]);
     expect((await built.draw('escape hi')).error).toBe('UNSUPPORTED_DIAGRAM');
   });
 
@@ -199,5 +225,93 @@ describe('mermaid() for esbuild', () => {
     const root = app({});
     const built = await bundle(root, [mermaid({ root: plugins })]);
     expect((await built.draw('boxes hello')).type).toBe('boxes');
+  });
+
+  it('works in a project path holding #', async () => {
+    const root = app({ 'boxes-plugin': diagram('boxes-plugin', 'boxes') }, 'C#-app-');
+    // mermaid at `<root>/node_modules/mermaid`, as installed (its own dependencies from the
+    // workspace), so its `discovered` module's path holds the `#` too.
+    const built = await bundle(root, [mermaid()], {
+      preserveSymlinks: true,
+      nodePaths: [join(MERMAID_DIR, 'node_modules')],
+    });
+    expect((await built.draw('boxes hello')).type).toBe('boxes');
+  });
+
+  it('warns at build time when a detector is its entry (the lazy split is lost)', async () => {
+    const root = app({
+      'one-file': pkg(
+        'one-file',
+        {
+          plugin: 'diagram',
+          id: 'one',
+          detector: './index.js',
+          entry: './index.js',
+          export: 'plugin',
+        },
+        { 'index.js': `${ENTRY('one')}export const detector = (t) => t.startsWith('one');\n` }
+      ),
+    });
+    const built = await bundle(root, [mermaid()]);
+    expect(built.buildWarnings.map((w) => w.text)).toEqual([
+      expect.stringMatching(/^\[mermaid\] one-file: its detector and entry are the same file/),
+    ]);
+    expect((await built.draw('one x')).type).toBe('one');
+  });
+
+  it('rebuilds in watch mode when a plugin package is installed', async () => {
+    const root = app({});
+    const outdir = join(root, 'dist-watch');
+    let rebuilt: () => void = () => undefined;
+    let built = new Promise<void>((done) => (rebuilt = done));
+    const ctx = await context({
+      absWorkingDir: root,
+      entryPoints: ['main.js'],
+      bundle: true,
+      format: 'esm',
+      splitting: true,
+      platform: 'node',
+      conditions: ['mermaid-source'],
+      outdir,
+      logLevel: 'silent',
+      plugins: [mermaid(), { name: 'done', setup: (b) => void b.onEnd(() => rebuilt()) }],
+    });
+    try {
+      await ctx.watch();
+      await built;
+      const load = async (n: number) =>
+        (
+          (await import(`${pathToFileURL(join(outdir, 'main.js')).href}?${n}`)) as Pick<
+            Built,
+            'draw'
+          >
+        ).draw;
+      expect((await (await load(1))('boxes hello')).error).toBe('UNSUPPORTED_DIAGRAM');
+      built = new Promise<void>((done) => (rebuilt = done));
+      // What `npm install boxes-plugin` does: the package, then npm's install marker.
+      install(root, { 'boxes-plugin': diagram('boxes-plugin', 'boxes') });
+      writeFileSync(join(root, 'node_modules', '.package-lock.json'), '{}');
+      await built;
+      expect((await (await load(2))('boxes hello')).type).toBe('boxes');
+    } finally {
+      await ctx.dispose();
+    }
+  });
+});
+
+describe('specifierOf', () => {
+  it('keeps POSIX paths', () => {
+    expect(specifierOf('/home/u/C#/app/node_modules/x/d.js')).toBe(
+      '/home/u/C#/app/node_modules/x/d.js'
+    );
+  });
+
+  it('writes Windows drive paths with forward slashes', () => {
+    expect(specifierOf('C:\\app\\node_modules\\x\\d.js')).toBe('C:/app/node_modules/x/d.js');
+  });
+
+  it('keeps UNC and long paths as they are, never protocol-relative', () => {
+    expect(specifierOf('\\\\server\\share\\app\\d.js')).toBe('\\\\server\\share\\app\\d.js');
+    expect(specifierOf('\\\\?\\C:\\app\\d.js')).toBe('\\\\?\\C:\\app\\d.js');
   });
 });

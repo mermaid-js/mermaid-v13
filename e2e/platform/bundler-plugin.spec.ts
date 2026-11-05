@@ -7,7 +7,7 @@
  * renders, its entry in a chunk that loads only on its first render; the fixture extension
  * marks every svg; click callbacks fire. Without it, the fixture type is UNSUPPORTED_DIAGRAM.
  */
-import { cpSync, renameSync } from 'node:fs';
+import { cpSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import {
@@ -117,5 +117,27 @@ for (const bundler of BUNDLERS) {
       expect(flow.type).toBe('flowchart-v2');
       await expect(page.locator('#flow svg.fixture-mark')).toHaveCount(0);
     });
+
+    if (bundler === 'webpack')
+      test('a persistent-cache rebuild sees a removed plugin', async ({ page }) => {
+        const env = { MERMAID_CACHE: '1' };
+        app!.run('pnpm', ['run', 'build'], { env });
+        // What `pnpm remove mermaid-fixture-diagram` leaves: the link gone, pnpm's marker rewritten.
+        rmSync(join(app!.dir, 'node_modules', 'mermaid-fixture-diagram'), { recursive: true });
+        writeFileSync(join(app!.dir, 'node_modules', '.modules.yaml'), '# rewritten\n', {
+          flag: 'a',
+        });
+        app!.run('pnpm', ['run', 'build'], { env });
+        const server = await serveDir(join(app!.dir, 'dist'));
+        try {
+          await page.goto(server.url('/plugin.html'));
+          await expect(page.locator('#status')).toHaveText('ready');
+          expect(await draw(page, 'box', 'fixturebox gone')).toEqual({
+            error: 'UNSUPPORTED_DIAGRAM',
+          });
+        } finally {
+          await server.close();
+        }
+      });
   });
 }

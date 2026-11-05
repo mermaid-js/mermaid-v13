@@ -21,4 +21,6 @@ export default {
   },
   // The test maps each chunk to the packages in it through its source map.
   devtool: 'source-map',
+  // `MERMAID_CACHE=1`: webpack's persistent cache, as Next.js uses it.
+  cache: process.env.MERMAID_CACHE === '1' ? { type: 'filesystem' } : false,
 };

@@ -1,16 +1,11 @@
 /**
  * The bundler's discovered list (`mermaid/discovered`, D164) as a first-use source of the
- * D166 seam. `undefined` when the module is the empty one shipped with `mermaid` (no bundler
- * plugin), so nothing changes then. Like Node discovery (D165), `discovery: false` turns it off.
+ * D166 seam. `undefined` unless the build found at least one plugin, so without the bundler
+ * plugin (or with nothing installed) nothing changes, and Node discovery still runs in a
+ * server bundle. Like Node discovery (D165), `discovery: false` turns it off.
  */
-import discovered, { warnings } from './discovered.ts';
+import discovered from './discovered.ts';
 import type { FirstUseSource } from './discovery.ts';
 
 export const bundledSource: FirstUseSource | undefined =
-  discovered.length === 0 && warnings.length === 0
-    ? undefined
-    : (config, warn) => {
-        if (config.discovery === false) return [];
-        for (const w of warnings) warn(w);
-        return discovered;
-      };
+  discovered.length === 0 ? undefined : (config) => (config.discovery === false ? [] : discovered);
