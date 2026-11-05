@@ -4,6 +4,7 @@
  * same adapter the Playwright pages use, so the page needs no script and can be published as is.
  */
 import { renderDiagram } from './adapter.ts';
+import { asHostText } from './host-text.ts';
 import { M1_THEMES, setsTheme, type Fixture } from './fixtures.ts';
 
 export interface GalleryOptions {
@@ -55,7 +56,7 @@ export async function buildGallery(
     for (const theme of themes) {
       const idPrefix = `g${count + cells.length}`;
       try {
-        const { svg } = await renderDiagram(fixture.source, {
+        const { svg } = await renderDiagram(asHostText(fixture.source), {
           config: theme ? { theme } : undefined,
           idPrefix,
         });

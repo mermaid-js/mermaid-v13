@@ -36,7 +36,7 @@ v13 closes the gap on **size, speed, theming and security** while keeping Mermai
 | **M2** | ASCII/Unicode text output backend for flowcharts: text-grid kit in core, unit profile, API and CLI | D11, D24, D57, D58, D76–D87 |
 | **M2.5** | `@mermaid-js/language-service` + CodeMirror/Monaco adapters + LSP server (flowchart first) | D37, D88–D99 |
 | **M3** | sequence, class, state, ER | D34, D100–D105, D107–D133 |
-| **M3.5** | Plugin platform: lazy-loaded first-party packages, plugin auto-discovery and CDN loading, ELK plugin, optional-feature packages, `neo` themes, core size budget | D106 |
+| **M3.5** | Plugin platform: lazy-loaded first-party packages, plugin auto-discovery and CDN loading, ELK plugin, optional-feature packages, `neo` themes, core size budget | D106, D160–D169 |
 | **M4** | gantt, pie, mindmap, timeline, gitGraph, journey, quadrant | D34 |
 | **M5** | Remaining v12 diagram types | D34 |
 | **Parallel** | Small v12 performance track | D44 |
@@ -116,14 +116,14 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 
 | ID | Requirement | Pri | MS | Src | Acceptance |
 | --- | --- | --- | --- | --- | --- |
-| R-PERF-1 | Core + flowchart, as loaded for a flowchart render, is ≤ 80 KB gzip. | Must | M1 | D10 | Approaches harness "Loaded" size in CI |
+| R-PERF-1 | Core + flowchart, as loaded for a flowchart render, is ≤ 120 KB gzip (D160; was 80 KB). | Must | M1 | D10, D160 | Bench "Loaded" size, measured after one flowchart render |
 | R-PERF-2 | Core and every first-party diagram package have **zero** runtime npm dependencies. | Must | M1 | D10 | CI check on `dependencies` of published packages |
 | R-PERF-3 | Warm render is ≥ 50× faster than frozen `mermaid@12.2.0` with dagre, as a geomean over the corpus. | Must | M1 | D10, D45, D150 | Approaches harness geomean, reported in CI and enforced on a local run (D150); current v12 also reported |
 | R-PERF-4 | 100% of the flowchart corpus renders without error, including the large and huge tiers. | Must | M1 | D10 | Harness OK count = corpus size |
 | R-PERF-5 | Benchmarks report time per stage: parse, measure, layout and serialise. | Must | M1 | D43 | Harness output contains stage columns |
 | R-PERF-6 | The fixed benchmark fixtures include the Pele/#8635 set (7-, 50- and 500-node flowcharts, sequence, class) plus the 158-diagram corpus. | Must | M1 | D43 | Fixtures committed |
 | R-PERF-7 | CI fails when any stage regresses by more than 10% on the reference runner. | Must | M1 | D43 | CI job with a stored baseline |
-| R-PERF-8 | Core has a published size budget, enforced in CI. Later diagram packages are optional plugins and have no size budget for now. | Should | M3.5 | D7, D59 | Budget file for core |
+| R-PERF-8 | Core has a published size budget, enforced in CI: everything the `mermaid` entry loads before any diagram chunk (`@mermaid-js/core` plus the public API, registry, detectors and DOM adapter) is ≤ 88 KB gzip. Later diagram packages are optional plugins and have no size budget for now. | Should | M3.5 | D7, D59, D161 | Committed budget file; esbuild size spec in `pnpm check` |
 | R-PERF-9 | The time from loading the module to the first possible render is ≤ 15 ms on the reference runner (Pele: 10 ms). | Should | M1 | – | Harness "Ready at" |
 
 ## 8. Parsing (R-PARSE)
@@ -189,7 +189,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-THEME-4 | Derived colours (borders, hover, secondary and tertiary fills, contrast text) are computed in CSS with `color-mix()`/`var()` from the base variables, with a computed fallback. Overriding a base variable updates its derived colours. | Must | M1 | D39 | Browser test overriding `--mermaid-primaryColor` |
 | R-THEME-5 | A theme can be fully specified with a small set of base variables (target ≤ 8: primary, secondary, tertiary, background, text, line, font family, font size). | Must | M1 | D20 | Doc + spec: base-only theme renders fully |
 | R-THEME-6 | Built-in themes `redux-color` (the default when no theme is set), `redux`, `redux-dark`, `redux-dark-color`, `default`, `dark`, `forest`, `neutral` and `base` are supported, with recognisably the same palettes as v12. | Must | M1 | D20, D55, D151, P1 | Visual baseline |
-| R-THEME-7 | The remaining v12 themes (`neo`, `neo-dark`) are supported as well, either in core or as theme packages. Until then they render `redux-color` and `redux-dark-color` with a warning. | Must | M3.5 | P1, D64, D151 | See open item O-2 |
+| R-THEME-7 | The remaining v12 themes (`neo`, `neo-dark`) are supported as well, either in core or as theme packages. Until then they render `redux-color` and `redux-dark-color` with a warning. | Must | M3.5 | P1, D64, D151, D180–D183 | See open item O-2 |
 | R-THEME-8 | Optional `theme: 'auto'` follows the OS light/dark setting via a variables-only `<style>` with `prefers-color-scheme`. | Could | M1 | D20 | Browser test with emulated colour scheme |
 | R-THEME-9 | Built-in themes meet WCAG AA contrast for text on fills, in both light and dark. | Must | M1 | D29 | Automated contrast check over theme tokens |
 | R-THEME-10 | Colour handling has no runtime dependency (no khroma). | Must | M1 | D10, D39 | R-PERF-2 |
@@ -248,9 +248,9 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-PLUG-2 | There are two kinds of plugin, both pure (data in, data out). Diagram plugins implement `{ id, detector, parse, layout?, render → SvgNode tree, ascii? }`. Extension plugins register hooks that apply to any diagram type: postParse(ast) → ast, postLayout(layoutModel) → layoutModel, and postRender(svgTree) → svgTree, which runs before serialisation. The DOM adapter adds afterMount(element) for runtime behaviour such as R-PLUG-9. Hooks run in registration order, and their output still passes the R-SEC-2 allow-list. Config, measurer, theme tokens and limits are passed in as arguments. | Must | M1 | D35, D42, D52 | flowchart implemented purely through the contract; a fixture extension plugin exercises every hook |
 | R-PLUG-3 | A plugin declares itself in `package.json` under `"mermaid": { plugin, id, detector, entry }`. The detector is tiny and loaded eagerly; the entry is loaded lazily on detection. The manifest also has a kind: diagram or extension. Extension plugins (R-PLUG-2) have no detector. Their entry registers hooks and is loaded when the plugin is activated. | Must | M1 | D40, D52 | Spec with a fixture plugin |
 | R-PLUG-4 | Installing `mermaid` gives every first-party diagram type with no configuration. The packages are dependencies that are lazily imported, and bundlers code-split them so only the types actually rendered are downloaded. | Must | M3.5 | D40 | Bundle test: page with one flowchart downloads only core + flowchart |
-| R-PLUG-5 | Third-party and heavy plugins activate on install: in Node/SSR by auto-discovering manifests in `node_modules`; in bundlers through a one-line `mermaid/plugin` (unplugin for Vite, webpack, Rollup and esbuild); on a CDN by adding a self-registering script. | Must | M3.5 | D35, D40 | Example apps for each path in CI |
+| R-PLUG-5 | Third-party and heavy plugins activate on install: in Node/SSR by auto-discovering manifests in `node_modules`; in bundlers through a one-line `@mermaid-js/bundler-plugin` (unplugin for Vite, webpack, Rollup and esbuild); on a CDN by adding a self-registering script. | Must | M3.5 | D35, D40, D164–D167 | Example apps for each path in CI |
 | R-PLUG-6 | `registerExternalDiagrams()` always works as an explicit fallback. | Must | M1 | D40 | Spec |
-| R-PLUG-7 | The CDN build lazy-loads first-party diagram packages only from the configured CDN base, never from a URL in diagram text. | Must | M3.5 | D41 | Spec |
+| R-PLUG-7 | The CDN build lazy-loads first-party diagram packages only from the configured CDN base, never from a URL in diagram text. | Must | M3.5 | D41, D162, D163 | Spec |
 | R-PLUG-8 | Optional features (ELK, math, icons, hand-drawn look) are separate plugin packages. Core size is unaffected by their existence. ELK and math ship in M3.5; icons and hand-drawn in M4 (D170). | Must | M3.5 | D7, D170 | Size check |
 | R-PLUG-9 | A first-party interactions plugin restores v12 click callbacks (click X callback, call) from day one. Core only emits stable node ids; the plugin binds handlers to the rendered DOM after render, so core output stays inside the allow-list (R-SEC-2). The integrator opts in by installing it; diagram text alone cannot enable it. | Must | M1 | D47 | Spec: callback fires with plugin, warning without it; allow-list test passes with plugin enabled |
 

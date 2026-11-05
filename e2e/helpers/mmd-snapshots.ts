@@ -14,31 +14,8 @@ export {
   FIXTURE_TYPE_EXCEPTIONS,
 } from '../../packages/dev/src/fixture-discovery.ts';
 
-const NAMED_ENTITIES: Readonly<Record<string, string>> = {
-  lt: '<',
-  gt: '>',
-  amp: '&',
-  quot: '"',
-  apos: "'",
-  nbsp: '\u00a0',
-};
-
-/**
- * The text a fixture stands for on v12's e2e page: v12's viewer put it in a `.mermaid` element
- * as HTML and `run()` read it back entity-decoded, so fixtures written for that page carry
- * `&lt;&lt;interface&gt;&gt;` for `<<interface>>` (the class corpus does, 58 files). v13's
- * `run()` reads `textContent`, which decodes the same way; the snapshot runner passes the source
- * straight to `render()`, so it decodes here. Unknown names are left as written.
- */
-export const asHostText = (source: string): string =>
-  source.replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (whole, ref: string) => {
-    if (ref.startsWith('#')) {
-      const code =
-        ref[1] === 'x' || ref[1] === 'X' ? parseInt(ref.slice(2), 16) : Number(ref.slice(1));
-      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
-    }
-    return NAMED_ENTITIES[ref.toLowerCase()] ?? whole;
-  });
+// Fixture text as v12's e2e page saw it (entity-decoded); shared with the dev explorer.
+export { asHostText } from '../../packages/dev/src/host-text.ts';
 
 /** The diagram types that have a v13 package: registry rows with a `load`. */
 export const SUPPORTED_TYPES: ReadonlySet<string> = new Set(
