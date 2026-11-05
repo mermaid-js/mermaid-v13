@@ -1,8 +1,7 @@
 /**
  * `@mermaid-js/diagram-quadrant`: the quadrant chart plugin (spec #289): the plugin export
  * (`quadrant`), the `QuadrantModel` contract, the lexer (#300), the parser (#301), the layout
- * (#332) and the renderer (#312). The `mermaid` manifest (#317) follows, so until then a caller
- * registers the plugin itself.
+ * (#332) and the renderer (#312). `mermaid` loads it from the generated registry (#317).
  */
 import type { DiagramPlugin } from '@mermaid-js/core';
 import type { QuadrantModel } from './model.ts';

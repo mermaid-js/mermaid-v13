@@ -35,6 +35,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'class',
       'er',
       'flowchart',
+      'quadrantChart',
       'sequence',
       'state',
     ]);
@@ -89,6 +90,13 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out[0]).toBe('erDiagram:keyword');
       expect(out).toContain('CUSTOMER:variable');
       expect(out).toContain('ORDER:variable');
+    });
+
+    it('highlights a quadrant chart with the quadrant grammar', () => {
+      const out = spans('quadrantChart\n  x-axis Low --> High\n  A: [0.3, 0.6]\n');
+      expect(out[0]).toBe('quadrantChart:keyword');
+      expect(out).toContain('x-axis:keyword');
+      expect(out).toContain('-->:operator');
     });
 
     it('finds the type after front matter, directives and comments', () => {

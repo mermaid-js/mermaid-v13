@@ -14,6 +14,7 @@ Agents: the `release-alpha` skill (`.claude/skills/release-alpha/SKILL.md`) walk
 | `@mermaid-js/diagram-flowchart` | The flowchart plugin (SVG, and text output from `/ascii`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-class` | The class diagram plugin (SVG; `classDiagram` and `classDiagram-v2`). | with `mermaid/slim` |
 | `@mermaid-js/diagram-state` | The state diagram plugin (SVG; `stateDiagram` and `stateDiagram-v2`). | with `mermaid/slim` |
+| `@mermaid-js/diagram-quadrant` | The quadrant chart plugin (SVG; `quadrantChart`). | with `mermaid/slim` |
 | `@mermaid-js/plugin-interactions` | v12 click callbacks as an extension plugin. | when they use `click A callback` |
 
 The private workspace packages (`bench`, `conformance`, `dev`, `tools/*`) are never published.

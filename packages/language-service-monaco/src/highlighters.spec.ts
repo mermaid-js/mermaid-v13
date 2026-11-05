@@ -35,7 +35,12 @@ const DOCS = {
   class: 'classDiagram\n  class Animal\n',
   state: 'stateDiagram-v2\n  [*] --> Idle\n',
   er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
+  quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
 };
+
+/** A type's token postfix: its generated file's, named after the grammar (`.mermaid-quadrant`). */
+const postfixOf = async (id: string): Promise<string> =>
+  (await MONARCH_HIGHLIGHTERS[id as keyof typeof MONARCH_HIGHLIGHTERS].load()).tokenPostfix!;
 
 describe('the per-type Monarch highlighters (D134)', () => {
   it('has a row for each v13 diagram type', () => {
@@ -43,6 +48,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'class',
       'er',
       'flowchart',
+      'quadrantChart',
       'sequence',
       'state',
     ]);
@@ -52,8 +58,9 @@ describe('the per-type Monarch highlighters (D134)', () => {
     await setUp();
     fake.createModel(`file:///${id}.mmd`, text);
     const header = text.split(/\s/)[0]!;
-    await vi.waitFor(() => expect(spans(text)[0]).toBe(`${header}:keyword.mermaid-${id}`));
-    expect(spans(text).every((s) => s.endsWith(`.mermaid-${id}`))).toBe(true);
+    const postfix = await postfixOf(id);
+    await vi.waitFor(() => expect(spans(text)[0]).toBe(`${header}:keyword${postfix}`));
+    expect(spans(text).every((s) => s.endsWith(postfix))).toBe(true);
   });
 
   it('highlights a sequence diagram as sequence, not as flowchart', async () => {
@@ -185,7 +192,10 @@ describe('the per-type Monarch highlighters (D134)', () => {
         pastFirstLine.add(id ?? 'none');
         continue;
       }
-      const want = id !== undefined && Object.hasOwn(MONARCH_HIGHLIGHTERS, id) ? id : undefined;
+      const want =
+        id !== undefined && Object.hasOwn(MONARCH_HIGHLIGHTERS, id)
+          ? loaded.get(id)!.tokenPostfix!.slice('.mermaid-'.length)
+          : undefined;
       // The type whose grammar coloured the first styled token from the diagram's start on.
       const line = text.slice(0, start).split('\n').length - 1;
       const col = start - (text.lastIndexOf('\n', start - 1) + 1);

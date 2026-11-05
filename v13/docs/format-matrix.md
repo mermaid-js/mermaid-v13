@@ -27,7 +27,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `gitGraph` | not ported | no | no |
 | `stateDiagram` | `@mermaid-js/diagram-state` | yes | no |
 | `journey` | not ported | no | no |
-| `quadrantChart` | not ported | no | no |
+| `quadrantChart` | `@mermaid-js/diagram-quadrant` | yes | no |
 | `sankey` | not ported | no | no |
 | `packet` | not ported | no | no |
 | `xychart` | not ported | no | no |

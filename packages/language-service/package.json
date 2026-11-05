@@ -46,6 +46,9 @@
     "@mermaid-js/diagram-flowchart": {
       "optional": true
     },
+    "@mermaid-js/diagram-quadrant": {
+      "optional": true
+    },
     "@mermaid-js/diagram-sequence": {
       "optional": true
     },
