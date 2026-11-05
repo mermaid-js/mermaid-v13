@@ -14,6 +14,7 @@ import type { InlineSpans } from '../text/inline.ts';
 import type { Measurer } from '../text/measurer.ts';
 import type { Theme } from '../theme/theme.ts';
 import type { Resource } from './errors.ts';
+import type { IconPacks } from './icon-packs.ts';
 
 /** A problem that did not stop the render, as returned in `RenderResult.warnings`. */
 export interface Warning {
@@ -64,6 +65,8 @@ export interface RenderContext {
   layout(graph: LayoutGraph): LayoutModel;
   /** Integrator-only limits (R-SEC-5): `resolveLimits(initialize config, limits option)`. */
   readonly limits: Limits;
+  /** The API object's icon packs (D294), read-only, for an icons extension's hooks. */
+  readonly iconPacks?: IconPacks;
   /**
    * The extensions' inline-box providers for this render (D177), for `layoutLabel`'s `inline`
    * option. In text output it boxes nothing: every span is shown as written, with one

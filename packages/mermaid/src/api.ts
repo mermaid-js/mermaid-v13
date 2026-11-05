@@ -63,6 +63,7 @@ import {
 } from './config-snapshot.ts';
 import { createDomAdapter } from './dom.ts';
 import { toMermaidError } from './errors.ts';
+import { IconPackRegistry, type IconLoader } from './icon-packs.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
   builtIn,
@@ -194,7 +195,10 @@ export interface PreloadRequest {
   themes?: readonly string[];
   /** `'ascii'` also loads each type's text entry, for `renderSync(…, { format: 'ascii' })`. */
   formats?: readonly ('svg' | 'ascii')[];
-  /** Accepted and ignored until the icons plugin exists. */
+  /**
+   * Runs these packs' loaders (`registerIconPacks`), for `renderSync` with their icons (D294).
+   * An unregistered name is ignored; a rejecting loader does not reject (D299).
+   */
   iconPacks?: readonly string[];
   /** Loads what a registered math extension provides, for `renderSync` with `$$…$$` (D178). */
   math?: boolean;
@@ -387,7 +391,8 @@ export function createMermaid(
   const skipped = discovery.skipped;
   let site: Snapshot = snapshot();
   let parseErrorHandler: ParseErrorHandler | undefined;
-  let iconPacksRequested = false;
+  // One pack registry per API object (D294); an icons extension reads it, keeping no state.
+  const iconPacks = new IconPackRegistry();
   const cache = new AnalysisCache();
   const siteConfigs = new SiteConfigs();
   const overlays = new Overlays();
@@ -519,6 +524,7 @@ export function createMermaid(
     const { parse, config } = a.prepared;
     const labels = a.plugin.labels?.bind(a.plugin);
     return hooks.resources(parse, {
+      iconPacks,
       config,
       format: ascii ? 'ascii' : 'svg',
       ...(labels ? { labels: () => labels(parse.model) } : {}),
@@ -586,10 +592,18 @@ export function createMermaid(
     const textOutput = units.id === 'cell';
     const warnings: Warning[] = [...skipped, ...prepared.warnings];
     const warn = (w: Warning): void => void warnings.push(toWarning(w));
-    const missing = [
-      ...missingFor(registry, analysis, textOutput),
-      ...extensionNeeds(analysis, textOutput).map((n) => n.resource),
-    ];
+    const missing = missingFor(registry, analysis, textOutput);
+    for (const { resource: r } of extensionNeeds(analysis, textOutput)) {
+      // D299: a pack whose loader rejected is not missing, only unresolved, until the next
+      // prepare() retries it.
+      const failure = r.kind === 'iconPack' ? iconPacks.failure(r.name) : undefined;
+      if (failure === undefined) missing.push(r);
+      else
+        warn({
+          code: 'ICON_NOT_RENDERED',
+          message: `Icon pack "${r.name}" failed to load (${failure}): its icons are not drawn.`,
+        });
+    }
     if (missing.length > 0) {
       if (textOutput || !options?.placeholders) throw new NotLoadedError(missing);
       warn({
@@ -599,10 +613,12 @@ export function createMermaid(
           .join(', ')}.`,
       });
     }
-    if (iconPacksRequested) {
+    // D299: only while no extension claims icons. `mermaid` names the package; core never does.
+    if (iconPacks.size > 0 && !hooks.claims().includes('icons')) {
       warn({
         code: 'ICON_PACKS_UNSUPPORTED',
-        message: 'registerIconPacks() has no effect until the icons plugin exists.',
+        message:
+          'registerIconPacks() has no effect until an icons extension (@mermaid-js/plugin-icons) is registered.',
       });
     }
     let engine: LayoutEngine | undefined;
@@ -658,6 +674,7 @@ export function createMermaid(
       version: VERSION,
       linkSchemes: s.options.linkSchemes,
       limits: s.limits,
+      iconPacks: iconPacks.view,
       layout: (graph) => {
         if (!engine) throw new TypeError(`${plugin.id} has no graph layout`);
         // D174: `@{ algorithm }` is parsed but not applied yet. `mermaid` says so, not the engine
@@ -902,6 +919,7 @@ export function createMermaid(
     }
     // Extensions' resources by kind: `math: true` loads what a math extension provides (D178).
     if (req.math) for (const n of hooks.provided('math')) tasks.push(n.load());
+    for (const name of req.iconPacks ?? []) tasks.push(iconPacks.load(name));
     if (req.formats?.includes('ascii')) {
       tasks.push(
         import('./ascii.ts').then((b) => {
@@ -961,10 +979,14 @@ export function createMermaid(
     if (registry.fragments() !== before || hooked) cache.clear();
   }
 
-  /** No-op until the icons plugin exists; renders then carry an `ICON_PACKS_UNSUPPORTED` warning. */
-  function registerIconPacks(...packs: unknown[]): void {
-    void packs;
-    iconPacksRequested = true;
+  /**
+   * v12's icon packs (D290, D294), `{ name, icons }` or `{ name, loader }`: `name` overrides the
+   * pack's `prefix`. A loader runs in `prepare()` only for a diagram that names its pack, or in
+   * `preload({ iconPacks })`. Without an extension that claims `icons`, renders carry an
+   * `ICON_PACKS_UNSUPPORTED` warning (D299). A name registered again replaces its pack.
+   */
+  function registerIconPacks(packs: readonly IconLoader[]): void {
+    iconPacks.register(packs);
   }
 
   /** @deprecated Catch the `MermaidError` that `parse()` rejects with instead. */
