@@ -8,6 +8,7 @@ import type { SvgWriter } from '@mermaid-js/core/svg';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { addDiscovered, discoverOnFirstUse, type DiscoveredPlugin } from './discovery.ts';
 import { createMermaid, type ExternalDiagram, type LazyDiagram } from './index.ts';
+import { createMermaid as createSlim } from './slim.ts';
 
 const FLOW = 'flowchart LR\n  A --> B\n';
 
@@ -88,7 +89,11 @@ describe('detection order (D166)', () => {
     await addDiscovered(m, [found('pkg-b', textDiagram('same', 'same', 'b'))]);
     expect((await m.render('s', 'same')).svg).toContain('b: same');
     const warnings = await addDiscovered(m, [found('pkg-a', textDiagram('same', 'same', 'a'))]);
-    expect(warnings).toEqual([]);
+    // The displaced package is told, as it would be in one batch.
+    expect(warnings.map((w) => [w.code, (w as { package?: string }).package])).toEqual([
+      ['PLUGIN_SKIPPED', 'pkg-b'],
+    ]);
+    expect(warnings[0]!.message).toContain('"pkg-a"');
     expect((await m.render('s', 'same')).svg).toContain('a: same');
   });
 });
@@ -198,19 +203,24 @@ describe('discovered extensions and layouts', () => {
     };
     const warnings = await addDiscovered(m, [
       { kind: 'layout', package: 'pkg-z-elk', names: ['elk', 'elk.stress'], loader: engine('z') },
-      { kind: 'layout', package: 'pkg-a-elk', names: ['elk'], loader: engine('a') },
+      { kind: 'layout', package: 'pkg-a-elk', names: ['elk', 'dagre'], loader: engine('a') },
       { kind: 'layout', package: 'pkg-layered', names: ['layered'], loader: engine('x') },
     ]);
-    expect(warnings.map((w) => (w as { package?: string }).package)).toEqual([
-      'pkg-layered',
-      'pkg-z-elk',
+    // Only the offending names are skipped: pkg-a-elk keeps elk, pkg-z-elk keeps elk.stress.
+    expect(warnings.map((w) => [(w as { package?: string }).package, w.message])).toEqual([
+      ['pkg-a-elk', expect.stringContaining('"dagre" is a first-party layout')],
+      ['pkg-layered', expect.stringContaining('"layered" is a first-party layout')],
+      ['pkg-z-elk', expect.stringContaining('layout "elk" belongs to "pkg-a-elk"')],
     ]);
+    expect(m.supportsFormat('flowchart', 'svg')).toBe(true);
     expect(loads).toEqual([]);
     await m.render('e', '---\nconfig:\n  layout: elk\n---\n' + FLOW);
     expect(loads).toEqual(['a']);
     m.registerLayoutLoaders([{ name: 'elk', loader: engine('explicit') }]);
     await m.render('e', '---\nconfig:\n  layout: elk\n---\n' + FLOW);
     expect(loads).toEqual(['a', 'explicit']);
+    await m.render('e', '---\nconfig:\n  layout: elk.stress\n---\n' + FLOW);
+    expect(loads).toEqual(['a', 'explicit', 'z']);
   });
 });
 
@@ -233,5 +243,144 @@ describe('discoverOnFirstUse', () => {
     expect(seen).toHaveLength(1);
     expect([...a.warnings, ...b.warnings].map((w) => w.code)).toEqual(['PLUGIN_SKIPPED']);
     expect(() => discoverOnFirstUse(m, () => [])).toThrow();
+  });
+});
+
+describe('review fixes', () => {
+  it('replace: true fills a first-party type with no package (pie, classDiagram)', async () => {
+    const m = createMermaid();
+    await expect(m.registerExternalDiagrams([textDiagram('gantt', 'gantt')])).rejects.toThrow(
+      /first-party diagram id or type; pass \{ replace: true \}/
+    );
+    await m.registerExternalDiagrams(
+      [
+        textDiagram('pie', 'pie', 'community pie'),
+        textDiagram('classDiagram', 'classDiagram', 'c'),
+      ],
+      { replace: true }
+    );
+    const pie = await m.render('p', 'pie\n "a": 1');
+    expect(pie.diagramType).toBe('pie');
+    expect(pie.svg).toContain('community pie: pie');
+    expect(m.detectType('classDiagram\n A')).toBe('classDiagram');
+    expect((await m.render('c', 'classDiagram\n A')).svg).toContain('c: classDiagram');
+    expect((await m.render('f', FLOW)).diagramType).toBe('flowchart-v2');
+  });
+
+  it('mermaid/slim applies the same first-party names whatever diagrams were passed', async () => {
+    const m = createSlim();
+    await expect(
+      m.registerExternalDiagrams([textDiagram('class', 'classDiagram')])
+    ).rejects.toThrow(TypeError);
+    const warnings = await addDiscovered(m, [found('fake-sequence', textDiagram('sequence', 's'))]);
+    expect(warnings.map((w) => w.code)).toEqual(['PLUGIN_SKIPPED']);
+  });
+
+  it('takes several entries from one package, whatever their order', async () => {
+    const log: string[] = [];
+    const entries: DiscoveredPlugin[] = [
+      found('multi', textDiagram('twin-b', 'twin', 'b')),
+      found('multi', textDiagram('twin-a', 'twin', 'a')),
+      found('multi', { id: 'multi-ext', postRender: () => void log.push('ext') }),
+      { kind: 'layout', package: 'multi', names: ['multi-layout'], loader: async () => layered },
+    ];
+    const svgs: string[] = [];
+    for (const list of [entries, [...entries].reverse()]) {
+      const m = createMermaid();
+      expect(await addDiscovered(m, list)).toEqual([]);
+      svgs.push((await m.render('t', 'twin')).svg);
+    }
+    expect(svgs[0]).toContain('a: twin');
+    expect(svgs[1]).toBe(svgs[0]);
+    expect(log).toEqual(['ext', 'ext']);
+    const m = createMermaid();
+    const again = await addDiscovered(m, [entries[0]!, entries[0]!]);
+    expect(again.map((w) => w.message)).toEqual([expect.stringContaining('already discovered')]);
+  });
+
+  it('tells a displaced extension and layout package, as in one batch', async () => {
+    const m = createMermaid();
+    await addDiscovered(m, [
+      found('pkg-b', { id: 'ext', postRender: () => undefined }),
+      { kind: 'layout', package: 'pkg-b', names: ['elk'], loader: async () => layered },
+    ]);
+    const warnings = await addDiscovered(m, [
+      found('pkg-a', { id: 'ext', postRender: () => undefined }),
+      { kind: 'layout', package: 'pkg-a', names: ['elk'], loader: async () => layered },
+    ]);
+    expect(warnings.map((w) => [(w as { package?: string }).package, w.message])).toEqual([
+      ['pkg-b', expect.stringContaining('extension "ext" belongs to "pkg-a"')],
+      ['pkg-b', expect.stringContaining('layout "elk" belongs to "pkg-a"')],
+    ]);
+  });
+
+  it('keeps queued warnings when a draw fails, for the next one that succeeds', async () => {
+    const m = createMermaid();
+    await addDiscovered(m, [found('fake', textDiagram('flowchart', 'flowchart'))]);
+    expect(() => m.renderSync(FLOW)).toThrow(/Not loaded/);
+    const r = await m.render('f', FLOW);
+    expect(r.warnings.map((w) => w.code)).toEqual(['PLUGIN_SKIPPED']);
+  });
+
+  it('reports a failing first-use source as PLUGIN_DISCOVERY_FAILED', async () => {
+    const m = createMermaid();
+    discoverOnFirstUse(m, () => Promise.reject(new Error('scan broke')));
+    const r = await m.render('f', FLOW);
+    expect(r.warnings.map((w) => w.code)).toEqual(['PLUGIN_DISCOVERY_FAILED']);
+    expect(r.warnings[0]!.message).toContain('scan broke');
+    expect((await m.render('f', FLOW)).warnings).toEqual([]);
+  });
+
+  it('runs extension hooks discovered-first whenever they arrive', async () => {
+    const log: string[] = [];
+    const ext = (id: string) => ({ id, postRender: () => void log.push(id) });
+    const m = createMermaid();
+    await m.registerExternalDiagrams([ext('explicit')]);
+    discoverOnFirstUse(m, () => [found('pkg-z', ext('z')), found('pkg-a', ext('a'))]);
+    await m.render('f', FLOW);
+    expect(log).toEqual(['a', 'z', 'explicit']);
+  });
+
+  it('drops a layout engine whose loader was replaced while it loaded; loads a name once', async () => {
+    const m = createMermaid();
+    const used: string[] = [];
+    const calls: string[] = [];
+    const engine =
+      (name: string): LayoutEngine =>
+      (graph, ctx) => {
+        used.push(name);
+        return layered(graph, ctx);
+      };
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    await addDiscovered(m, [
+      {
+        kind: 'layout',
+        package: 'slow-elk',
+        names: ['elk'],
+        loader: async () => {
+          calls.push('slow');
+          await gate;
+          return engine('stale');
+        },
+      },
+    ]);
+    const first = Promise.all([m.preload({ layouts: ['elk'] }), m.preload({ layouts: ['elk'] })]);
+    await Promise.resolve();
+    expect(calls).toEqual(['slow']);
+    m.registerLayoutLoaders([{ name: 'elk', loader: async () => engine('explicit') }]);
+    release();
+    await first;
+    await m.render('e', '---\nconfig:\n  layout: elk\n---\n' + FLOW);
+    expect(used).toEqual(['explicit']);
+  });
+
+  it('sync calls do not wait for first-use discovery (await preload first)', async () => {
+    const m = createMermaid();
+    discoverOnFirstUse(m, () => [found('pkg-late', textDiagram('late', 'late'))]);
+    expect(() => m.detectType('late')).toThrow(/No diagram type/);
+    expect(m.supportsFormat('late', 'svg')).toBe(false);
+    await m.preload({});
+    expect(m.detectType('late')).toBe('late');
   });
 });

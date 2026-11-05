@@ -322,17 +322,31 @@ function themeFor(config: ResolvedConfig, s: Snapshot, warn: (w: Warning) => voi
  * `firstParty` in its order. `mermaid` passes the generated table with loaders, `mermaid/slim`
  * the detectors with only the integrator's diagrams loadable.
  */
-export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
-  const registry = new Registry(firstParty);
-  const hooks = new HookRunner<Element, RenderResult>();
-  // Discovery (D166): `PLUGIN_SKIPPED` warnings wait for the next draw; a first-use source
+export function createMermaid(
+  firstParty: readonly FirstPartyEntry[],
+  firstPartyNames?: readonly { readonly type: string; readonly id?: string }[]
+) {
+  const registry = new Registry(firstParty, firstPartyNames);
+  // Rebuilt after each registration, so hooks run in D166 order whenever plugins arrived.
+  let hooks = new HookRunner<Element, RenderResult>();
+  const rebuildHooks = (): void => {
+    const next = new HookRunner<Element, RenderResult>();
+    for (const e of registry.extensions()) next.register(e as ExtensionPlugin);
+    hooks = next;
+  };
+  // Discovery (D166): its warnings wait for the next draw that succeeds; a first-use source
   // (the Node scan, T4) runs once, before the first prepare, render, parse or preload.
   const skipped: Warning[] = [];
   let firstUse: (() => Promise<void>) | undefined;
   let ready: Promise<void> | undefined;
   const discovered = async (): Promise<void> => {
     if (!firstUse) return;
-    ready ??= firstUse().catch(() => undefined);
+    ready ??= firstUse().catch((e: unknown) => {
+      skipped.push({
+        code: 'PLUGIN_DISCOVERY_FAILED',
+        message: `Plugin discovery failed: ${e instanceof Error ? e.message : String(e)}`,
+      });
+    });
     await ready;
   };
   let site: Snapshot = snapshot();
@@ -504,7 +518,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
       diagramType: detected.type,
       width: 0,
       height: 0,
-      warnings: [{ code: 'PLACEHOLDER', message: missing.message }],
+      warnings: [...skipped, { code: 'PLACEHOLDER', message: missing.message }],
     };
   }
 
@@ -519,7 +533,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     const { prepared, plugin } = analysis;
     const { config } = prepared;
     const textOutput = units.id === 'cell';
-    const warnings: Warning[] = [...skipped.splice(0), ...prepared.warnings];
+    const warnings: Warning[] = [...skipped, ...prepared.warnings];
     const warn = (w: Warning): void => void warnings.push(toWarning(w));
     const missing = missingFor(registry, analysis, textOutput);
     if (missing.length > 0) {
@@ -641,7 +655,19 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     };
   }
 
+  /** `drawWith`; the queued discovery warnings leave the queue only once a draw has them. */
   function draw(
+    text: string,
+    s: Snapshot,
+    options: RenderOptions | undefined
+  ): RenderResult | TextRenderResult {
+    const queued = skipped.length;
+    const result = drawWith(text, s, options);
+    skipped.splice(0, queued);
+    return result;
+  }
+
+  function drawWith(
     text: string,
     s: Snapshot,
     options: RenderOptions | undefined
@@ -667,6 +693,10 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     return result;
   }
 
+  /**
+   * Draws synchronously what `prepare`/`preload` loaded. It neither runs nor waits for plugin
+   * discovery (the first-use Node scan): `await preload()` or `prepare()` first.
+   */
   function renderSync(text: string, options: TextRenderOptions): TextRenderResult;
   function renderSync(text: string, options?: SvgRenderOptions): RenderResult;
   function renderSync(text: string, options?: RenderOptions): RenderResult | TextRenderResult {
@@ -742,6 +772,10 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     site = snapshot(config);
   }
 
+  /**
+   * The v12 type of `text`. Synchronous: it neither runs nor waits for plugin discovery, so a
+   * discovered type is known only after an awaited `preload()`, `prepare()`, `parse()` or `render()`.
+   */
   function detectType(text: string, config?: MermaidConfig): string {
     // v12 passed `config` to detectors; v13 detectors get the `initialize()` config.
     void config;
@@ -791,28 +825,36 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     }
   }
 
+  /**
+   * Whether `type` can draw `format`. Synchronous: it neither runs nor waits for plugin
+   * discovery (`await preload()` first for discovered types).
+   */
   function supportsFormat(type: string, format: 'svg' | 'ascii'): boolean {
     return registry.formats(type).includes(format);
   }
 
   /**
    * Third-party diagrams and extensions, detected after first-party and discovered types, in
-   * call order (D166). A first-party id throws `TypeError` unless `replace: true`, which makes
-   * the plugin take over that id (detected in its first-party slot).
+   * call order (D166). A first-party id or v12 type (`flowchart`, `pie`, `classDiagram`) throws
+   * `TypeError` unless `replace: true`, which makes the plugin take over that id or type
+   * (detected in its first-party slot), e.g. to fill a type v13 has no package for.
    */
   async function registerExternalDiagrams(
     diagrams: readonly ExternalDiagram[],
     { lazyLoad = true, replace = false }: { lazyLoad?: boolean; replace?: boolean } = {}
   ): Promise<void> {
     cache.clear();
-    const extensions = await registry.registerExternal(diagrams, lazyLoad, replace);
-    for (const e of extensions) hooks.register(e as ExtensionPlugin);
+    try {
+      await registry.registerExternal(diagrams, lazyLoad, replace);
+    } finally {
+      rebuildHooks();
+    }
   }
 
   async function addDiscovered(list: readonly DiscoveredPlugin[]): Promise<readonly Warning[]> {
     cache.clear();
-    const { extensions, warnings } = await registry.registerDiscovered(list);
-    for (const e of extensions) hooks.register(e as ExtensionPlugin);
+    const warnings = await registry.registerDiscovered(list);
+    rebuildHooks();
     skipped.push(...warnings);
     return warnings;
   }

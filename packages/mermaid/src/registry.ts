@@ -86,7 +86,7 @@ export type DiscoveredPlugin =
       readonly loader: LayoutLoader['loader'];
     };
 
-/** The `PLUGIN_SKIPPED` warning: a discovered package that was not registered, and why. */
+/** The `PLUGIN_SKIPPED` warning: a package (or one of its names) not registered, and why. */
 export interface SkippedPlugin {
   readonly code: 'PLUGIN_SKIPPED';
   readonly message: string;
@@ -207,6 +207,20 @@ function byPackage(a: { readonly package: string }, b: { readonly package: strin
   return a.package < b.package ? -1 : 1;
 }
 
+/** Package-name order, then the entry's own id or name: one package may give several. */
+function byPackageThen(key: (f: never) => string) {
+  return (a: Found<unknown>, b: Found<unknown>): number => {
+    const p = byPackage(a, b);
+    if (p !== 0) return p;
+    const ka = key(a as never);
+    const kb = key(b as never);
+    if (ka === kb) return 0;
+    return ka < kb ? -1 : 1;
+  };
+}
+const byEntryId = byPackageThen((f: Found<Entry>) => f.value.id ?? '');
+const byExtensionId = byPackageThen((f: Found<ExtensionPlugin>) => f.value.id);
+
 const why = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 
 export class Registry {
@@ -222,17 +236,34 @@ export class Registry {
   private readonly external: Entry[] = [];
   /** Detection order, rebuilt after each registration. */
   private order: Entry[] | undefined;
-  private readonly discoveredExtensions: Found<ExtensionPlugin>[] = [];
-  private readonly explicitExtensions = new Set<string>();
+  /** Discovered extensions, sorted by package then id. */
+  private discoveredExtensions: Found<ExtensionPlugin>[] = [];
+  /** Explicit extensions, in call order (a repeated id keeps its place). */
+  private readonly explicitExtensions: ExtensionPlugin[] = [];
   private readonly plugins = new Map<string, AnyPlugin>();
   private readonly loading = new Map<string, Promise<AnyPlugin>>();
   private readonly asciiHooks = new Map<string, AnyAsciiHook>();
   private readonly layoutLoaders = new Map<string, LayoutLoader['loader']>();
   private discoveredLayouts: (Found<LayoutLoader['loader']> & { readonly name: string })[] = [];
   private readonly layouts = new Map<string, LayoutEngine>([['layered', layered]]);
+  private readonly layoutLoading = new Map<
+    string,
+    { readonly loader: LayoutLoader['loader']; readonly pending: Promise<void> }
+  >();
 
-  /** `firstParty`: the generated table, with loaders (`mermaid`) or without (`mermaid/slim`). */
-  constructor(firstParty: readonly FirstPartyEntry[]) {
+  /**
+   * `firstParty`: the generated table, with loaders (`mermaid`) or without (`mermaid/slim`).
+   * `names`: every first-party row, for the collision rules (D166), whatever was loadable;
+   * `mermaid/slim` passes the full detector table.
+   */
+  constructor(
+    firstParty: readonly FirstPartyEntry[],
+    names: readonly { readonly type: string; readonly id?: string }[] = firstParty
+  ) {
+    for (const e of names) {
+      this.firstPartyNames.add(e.type);
+      if (e.id !== undefined) this.firstPartyNames.add(e.id);
+    }
     for (const e of firstParty) {
       this.entries.push({
         type: e.type,
@@ -242,9 +273,14 @@ export class Registry {
         load: e.load,
         loadAscii: e.loadAscii,
       });
-      this.firstPartyNames.add(e.type);
-      if (e.id !== undefined) this.firstPartyNames.add(e.id);
     }
+  }
+
+  /** The `{ replace: true }` plugin that took over a first-party row (by its id or its type). */
+  private replacementOf(row: Entry): Entry | undefined {
+    return (
+      (row.id === undefined ? undefined : this.replaced.get(row.id)) ?? this.replaced.get(row.type)
+    );
   }
 
   /** The discovered entry `match` finds, unless an explicit one has its id. */
@@ -257,12 +293,12 @@ export class Registry {
   private detectionOrder(): Entry[] {
     if (this.order) return this.order;
     const out: Entry[] = [];
-    const seen = new Set<string>();
+    const seen = new Set<Entry>();
     for (const e of this.entries) {
-      const r = e.id === undefined ? undefined : this.replaced.get(e.id);
+      const r = this.replacementOf(e);
       if (!r) out.push(e);
-      else if (!seen.has(r.id!)) out.push(r);
-      if (r) seen.add(r.id!);
+      else if (!seen.has(r)) out.push(r);
+      if (r) seen.add(r);
     }
     const explicit = new Set(this.external.map((e) => e.id));
     for (const { value } of this.discovered) if (!explicit.has(value.id)) out.push(value);
@@ -305,7 +341,7 @@ export class Registry {
     const explicit = this.external.find(match);
     if (explicit) return explicit;
     const first = this.entries.find(match);
-    if (first) return (first.id === undefined ? undefined : this.replaced.get(first.id)) ?? first;
+    if (first) return this.replacementOf(first) ?? first;
     return this.replaced.get(typeOrId) ?? this.discoveredFor(match);
   }
 
@@ -429,21 +465,21 @@ export class Registry {
 
   /**
    * Explicit third-party diagrams, detected after every first-party and discovered type
-   * (ADR-6, D166), in call order. A first-party id throws `TypeError` unless `replace`, which
-   * puts the plugin in that id's first-party slot. Returns the extension plugins among `defs`,
-   * loaded, in the order given, for the hook runner.
+   * (ADR-6, D166), in call order. A first-party id or v12 type throws `TypeError` unless
+   * `replace`, which puts the plugin in the slot of the first-party rows with that id or type.
+   * Extensions join the hook order after the discovered ones ({@link extensions}).
    */
   async registerExternal(
     defs: readonly ExternalDiagram[],
     lazyLoad: boolean,
     replace = false
-  ): Promise<ExtensionPlugin[]> {
-    const extensions: ExtensionPlugin[] = [];
+  ): Promise<void> {
     for (const def of defs) {
       const r = await this.resolve(def);
       if ('extension' in r) {
-        this.explicitExtensions.add(r.extension.id);
-        extensions.push(r.extension);
+        const at = this.explicitExtensions.findIndex((e) => e.id === r.extension.id);
+        if (at >= 0) this.explicitExtensions[at] = r.extension;
+        else this.explicitExtensions.push(r.extension);
         continue;
       }
       const entry = r.diagram;
@@ -451,7 +487,7 @@ export class Registry {
       if (this.firstPartyNames.has(id)) {
         if (!replace)
           throw new TypeError(
-            `"${id}" is a first-party diagram; pass { replace: true } to replace it`
+            `"${id}" is a first-party diagram id or type; pass { replace: true } to replace it`
           );
         this.replaced.set(id, entry);
       } else {
@@ -462,19 +498,26 @@ export class Registry {
       this.reset(id);
       if (!entry.eager && !lazyLoad) await this.load(id);
     }
-    return extensions;
+  }
+
+  /** Extension hook order (D166): discovered by package then id, then explicit in call order. */
+  extensions(): ExtensionPlugin[] {
+    const explicit = new Set(this.explicitExtensions.map((e) => e.id));
+    return [
+      ...this.discoveredExtensions.filter((d) => !explicit.has(d.value.id)).map((d) => d.value),
+      ...this.explicitExtensions,
+    ];
   }
 
   /**
    * The discovered list (D166): diagrams detected after first-party, in package-name order
-   * whatever the input order; extensions loaded now; layouts registered lazily. Never throws:
-   * each package that cannot be used (a first-party id or type, an id or layout name an earlier
-   * package holds, a bad manifest, a failing extension entry) is skipped with one
-   * `PLUGIN_SKIPPED` warning. Returns the extensions that won their id, sorted, and the warnings.
+   * whatever the input or batch order; extensions loaded now; layouts registered lazily. Never
+   * throws. Whatever cannot be used gives one `PLUGIN_SKIPPED` warning naming the package: a
+   * first-party id or type, an id or layout name an earlier package holds (also when that package
+   * arrives in a later batch and displaces it), a repeated entry, a bad manifest, a failing
+   * extension entry. A layout package loses only its offending names.
    */
-  async registerDiscovered(
-    list: readonly DiscoveredPlugin[]
-  ): Promise<{ extensions: ExtensionPlugin[]; warnings: SkippedPlugin[] }> {
+  async registerDiscovered(list: readonly DiscoveredPlugin[]): Promise<SkippedPlugin[]> {
     const warnings: SkippedPlugin[] = [];
     const skip = (pkg: string, reason: string): void =>
       void warnings.push({
@@ -482,89 +525,112 @@ export class Registry {
         message: `Plugin package "${pkg}" was skipped: ${reason}`,
         package: pkg,
       });
+    // One package may give several entries; each (package, kind, id or name) counts once.
     const known = new Set([
-      ...this.discovered.map((d) => d.package),
-      ...this.discoveredExtensions.map((d) => d.package),
-      ...this.discoveredLayouts.map((d) => d.package),
+      ...this.discovered.map((d) => `${d.package}\0diagram\0${d.value.id}`),
+      ...this.discoveredExtensions.map((d) => `${d.package}\0extension\0${d.value.id}`),
+      ...this.discoveredLayouts.map((d) => `${d.package}\0layout\0${d.name}`),
     ]);
-    const extensions: ExtensionPlugin[] = [];
+    const claim = (key: string): void => {
+      if (known.has(key)) throw new TypeError('it was already discovered');
+      known.add(key);
+    };
     for (const item of [...list].sort(byPackage)) {
       const { package: name, kind } = item as { package?: unknown; kind?: unknown };
       const pkg = typeof name === 'string' ? name : '';
       try {
         if (pkg === '') throw new TypeError('it has no package name');
-        if (known.has(pkg)) throw new TypeError('it was already discovered');
         if (kind !== 'layout' && kind !== 'plugin')
           throw new TypeError(`unknown kind ${JSON.stringify(kind)}`);
-        if (item.kind === 'layout') {
-          this.discoverLayout(pkg, item);
-        } else {
-          const ext = this.discoverPlugin(pkg, await this.resolve(item.plugin));
-          if (ext) extensions.push(ext);
-        }
-        known.add(pkg);
+        if (item.kind === 'layout') this.discoverLayout(pkg, item, known, skip);
+        else this.discoverPlugin(pkg, await this.resolve(item.plugin), claim, skip);
       } catch (e) {
         skip(pkg || '(unnamed)', why(e));
       }
     }
-    return { extensions, warnings };
+    return warnings;
   }
 
-  private discoverPlugin(pkg: string, r: Resolved): ExtensionPlugin | undefined {
+  private discoverPlugin(
+    pkg: string,
+    r: Resolved,
+    claim: (key: string) => void,
+    skip: (pkg: string, reason: string) => void
+  ): void {
     if ('extension' in r) {
       const id = r.extension.id;
-      if (this.explicitExtensions.has(id))
+      claim(`${pkg}\0extension\0${id}`);
+      if (this.explicitExtensions.some((e) => e.id === id))
         throw new TypeError(`extension "${id}" is registered explicitly`);
       const owner = this.discoveredExtensions.find((d) => d.value.id === id);
       if (owner && byPackage(owner, { package: pkg }) < 0)
         throw new TypeError(`extension "${id}" belongs to "${owner.package}"`);
-      if (owner) this.discoveredExtensions.splice(this.discoveredExtensions.indexOf(owner), 1);
-      this.discoveredExtensions.push({ package: pkg, value: r.extension });
-      return r.extension;
+      if (owner) skip(owner.package, `extension "${id}" belongs to "${pkg}"`);
+      this.discoveredExtensions = [
+        ...this.discoveredExtensions.filter((d) => d !== owner),
+        { package: pkg, value: r.extension },
+      ].sort(byExtensionId);
+      return;
     }
     const entry = r.diagram;
     const id = entry.id!;
-    if (this.firstPartyNames.has(id)) throw new TypeError(`"${id}" is a first-party diagram`);
+    claim(`${pkg}\0diagram\0${id}`);
+    if (this.firstPartyNames.has(id))
+      throw new TypeError(`"${id}" is a first-party diagram id or type`);
     const owner = this.discovered.find((d) => d.value.id === id);
     if (owner && byPackage(owner, { package: pkg }) < 0)
       throw new TypeError(`diagram "${id}" belongs to "${owner.package}"`);
     // A package sorted earlier takes the id over (a later batch, e.g. the CDN queue).
+    if (owner) skip(owner.package, `diagram "${id}" belongs to "${pkg}"`);
     this.discovered = [
       ...this.discovered.filter((d) => d !== owner),
       { package: pkg, value: entry },
-    ].sort(byPackage);
+    ].sort(byEntryId);
     this.reset(id);
-    return undefined;
   }
 
   private discoverLayout(
     pkg: string,
-    item: { readonly names: readonly string[]; readonly loader: LayoutLoader['loader'] }
+    item: { readonly names: readonly string[]; readonly loader: LayoutLoader['loader'] },
+    known: Set<string>,
+    skip: (pkg: string, reason: string) => void
   ): void {
     if (typeof item.loader !== 'function') throw new TypeError('its layout loader is missing');
     if (!Array.isArray(item.names as unknown) || item.names.length === 0)
       throw new TypeError('it names no layouts');
     for (const name of item.names) {
-      if (typeof (name as unknown) !== 'string' || name === '')
-        throw new TypeError('a layout name is empty');
-      if (FIRST_PARTY_LAYOUTS.has(name)) throw new TypeError(`"${name}" is a first-party layout`);
+      const key = `${pkg}\0layout\0${String(name)}`;
+      let reason: string | undefined;
       const owner = this.discoveredLayouts.find((d) => d.name === name);
-      if (owner && byPackage(owner, { package: pkg }) < 0)
-        throw new TypeError(`layout "${name}" belongs to "${owner.package}"`);
+      if (typeof (name as unknown) !== 'string' || name === '') reason = 'a layout name is empty';
+      else if (known.has(key)) reason = `layout "${name}" was already discovered`;
+      else if (FIRST_PARTY_LAYOUTS.has(name)) reason = `"${name}" is a first-party layout`;
+      else if (owner && byPackage(owner, { package: pkg }) < 0)
+        reason = `layout "${name}" belongs to "${owner.package}"`;
+      if (reason !== undefined) {
+        skip(pkg, reason);
+        continue;
+      }
+      known.add(key);
+      if (owner) skip(owner.package, `layout "${name}" belongs to "${pkg}"`);
+      this.discoveredLayouts = [
+        ...this.discoveredLayouts.filter((d) => d !== owner),
+        { package: pkg, name, value: item.loader },
+      ];
+      if (!this.layoutLoaders.has(name)) this.forgetLayout(name);
     }
-    const names = new Set(item.names);
-    this.discoveredLayouts = [
-      ...this.discoveredLayouts.filter((d) => !names.has(d.name)),
-      ...item.names.map((name) => ({ package: pkg, name, value: item.loader })),
-    ];
-    for (const name of names) if (!this.layoutLoaders.has(name)) this.layouts.delete(name);
+  }
+
+  private forgetLayout(name: string): void {
+    this.layouts.delete(name);
+    this.layoutLoading.delete(name);
   }
 
   /** Explicit layout loaders (R-LAYOUT-2); they win over discovered ones of the same name. */
   registerLayouts(loaders: readonly LayoutLoader[]): void {
     for (const l of loaders) {
       this.layoutLoaders.set(l.name, l.loader);
-      this.layouts.delete(l.name);
+      this.forgetLayout(l.name);
     }
   }
 
@@ -585,10 +651,21 @@ export class Registry {
     return { engine: layered, state: builtIn(name) ? 'ready' : 'unknown' };
   }
 
-  async loadLayout(name: string): Promise<void> {
+  /** Loads `name` once; an engine whose loader was replaced while it loaded is dropped. */
+  loadLayout(name: string): Promise<void> {
     const loader = this.layoutLoader(name);
-    if (!loader || this.layouts.has(name)) return;
-    this.layouts.set(name, unwrap<LayoutEngine>(await loader()));
+    if (!loader || this.layouts.has(name)) return Promise.resolve();
+    const inflight = this.layoutLoading.get(name);
+    if (inflight?.loader === loader) return inflight.pending;
+    const pending: Promise<void> = loader()
+      .then((m) => {
+        if (this.layoutLoader(name) === loader) this.layouts.set(name, unwrap<LayoutEngine>(m));
+      })
+      .finally(() => {
+        if (this.layoutLoading.get(name)?.pending === pending) this.layoutLoading.delete(name);
+      });
+    this.layoutLoading.set(name, { loader, pending });
+    return pending;
   }
 }
 
