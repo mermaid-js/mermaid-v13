@@ -27,3 +27,10 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [I2 #322] Packs named only through `fallbackPrefix` are never reported by `missing()` or loaded: `DiagramPlugin.icons()` names are split without the fallback, so `glyph('database', { fallbackPrefix: 'arch' })` warns "call prepare() first" forever. Latent until M5 architecture; `icons()` likely needs to carry the fallback per name.
 - [I2 #322] Module-level WeakMaps carry `missing()` results to the draw (D294: no module state; `missing` meant to be pure). No leak found, but placeholder detection relies on `ResourceRequest.iconPacks` being the same object as the request views.
 - [I2 #322] `ICON_NOT_RENDERED` text ends "Labels show them as written." even for shape-only failures. The warning path is O(n²) (`filter` + `findIndex`). `@:name` with a fallback differs from v12 `stringToIcon`. Licences: `REQUIRED_CREDITS` lacks `plugin-icons/src/{resolve,name}.ts`; the "Pele-derived files but no THIRD_PARTY_NOTICES" message misleads for Iconify-only packages.
+
+## Decisions from I3 #324 and I4 #326 (also in the PR body)
+
+- #324: label icons that still paint `currentColor` (strokes) are marked `mermaid-label-icon` and recoloured to the label's fill in the plugin's `postRender`, then the class is removed; core's writer is untouched (R-PERF-8 headroom). With the plugin registered, SVG renders go through the tree writer (same bytes as the stream writer).
+- #324: icons cannot go in class relation labels or single-line state notes: the v12 grammar takes no `:` there.
+- #326: an unresolved shape icon keeps its outlined frame (D298 "keeps today's frame-only drawing"): byte-identical without the extension, and a borderless `mainBkg` frame would vanish on a `mainBkg` page. The `ICON_UNAVAILABLE` alias names the shapes' icons. A glyph provider that declines without warning leaves the render quiet (D291: warning is the extension's). Glyph colour ignores the palette slot, as v12.
+- [hand-drawn spec, D301] No node-outline hook on this branch yet: the icon frame is not sketched under hand-drawn. The glyph is a separate `<g>` after the frame, ready for the hook.
