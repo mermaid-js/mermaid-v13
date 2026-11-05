@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import config from '../../vitest.config.ts';
@@ -24,6 +24,7 @@ describe('workspace layout (DESIGN §2)', () => {
     ['packages/diagram-sequence', '@mermaid-js/diagram-sequence', false],
     ['packages/mermaid', 'mermaid', false],
     ['packages/plugin-interactions', '@mermaid-js/plugin-interactions', false],
+    ['packages/layout-elk', '@mermaid-js/layout-elk', false],
     ['packages/language-service', '@mermaid-js/language-service', false],
     ['packages/language-server', '@mermaid-js/language-server', false],
     ['packages/conformance', '@mermaid-js/conformance', true],
@@ -67,6 +68,21 @@ describe('workspace layout (DESIGN §2)', () => {
     });
     expect(tracked).toBe('');
     expect(existsSync(join(root, 'packages/parser/package.json'))).toBe(false);
+  });
+
+  it('keeps the ELK package and elkjs out of core: no import, no dependency (D153, R-LAYOUT-7)', () => {
+    const src = join(root, 'packages/core/src');
+    const files = readdirSync(src, { recursive: true, encoding: 'utf8' }).filter((f) =>
+      f.endsWith('.ts')
+    );
+    expect(files.length).toBeGreaterThan(0);
+    const naming = files.filter((f) =>
+      /layout-elk|['"]elkjs/.test(readFileSync(join(src, f), 'utf8'))
+    );
+    expect(naming).toEqual([]);
+    expect(readFileSync(join(root, 'packages/core/package.json'), 'utf8')).not.toMatch(
+      /layout-elk|elkjs/
+    );
   });
 
   it('runs every test, core included, in plain Node with no DOM shim (R-ARCH-1)', () => {

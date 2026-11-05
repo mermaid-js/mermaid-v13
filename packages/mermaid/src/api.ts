@@ -534,6 +534,12 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
           code: 'LAYOUT_UNKNOWN',
           message: `Unknown layout "${name}"; using the built-in layered engine.`,
         });
+      } else if (found.state === 'elk') {
+        // D173: `mermaid` names the package; core never does (D153).
+        warn({
+          code: 'ELK_NOT_INSTALLED',
+          message: `Layout "${name}" needs @mermaid-js/layout-elk, which is not registered; using the built-in layered engine.`,
+        });
       }
       engine = found.engine;
     }

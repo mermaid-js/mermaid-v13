@@ -9,7 +9,8 @@
  *   `THIRD_PARTY_NOTICES` that holds the upstream's MIT copyright line, lists the file by its
  *   package-relative path (in that upstream's section, when the notices have one per upstream)
  *   and is in the package's `"files"`, so it ships in the tarball;
- * - every path the notices list still exists;
+ * - every path the notices list still exists (notices may also credit a runtime dependency, such
+ *   as layout-elk's elkjs, with no file listed);
  * - the files in `REQUIRED_CREDITS` credit the upstreams listed for them.
  * Spec files are not published and are skipped. Tools are not published either, so only their
  * headers are checked.
@@ -148,6 +149,7 @@ export function checkLicenses(root: string): string[] {
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
       private?: boolean;
       files?: string[];
+      dependencies?: Record<string, string>;
     };
     if (manifest.private) continue;
 
@@ -160,8 +162,13 @@ export function checkLicenses(root: string): string[] {
     }
 
     const notices = readFileSync(noticesPath, 'utf8');
+    // Pele's text is required in every notices file, except one that only credits a runtime
+    // dependency (layout-elk's elkjs) in a package with no ported file.
+    const headings = new Set(notices.split('\n').map((l) => l.trim()));
+    const dependencyOnly =
+      derived.length === 0 && Object.keys(manifest.dependencies ?? {}).some((d) => headings.has(d));
     const used = UPSTREAMS.filter(
-      (u) => u.name === 'Pele' || derived.some((d) => d.upstream === u)
+      (u) => (u.name === 'Pele' && !dependencyOnly) || derived.some((d) => d.upstream === u)
     );
     for (const u of used)
       if (!notices.includes('MIT License') || !notices.includes(u.copyright))

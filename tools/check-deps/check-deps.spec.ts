@@ -122,6 +122,21 @@ describe('runtime dependency check (R-PERF-2)', () => {
     ]);
   });
 
+  it('lets the ELK layout package depend on elkjs, and no other package (D171)', () => {
+    const elk = pkg('packages/layout-elk', {
+      name: '@mermaid-js/layout-elk',
+      dependencies: { elkjs: '0.12.0', d3: '^7' },
+      peerDependencies: { '@mermaid-js/core': 'workspace:*' },
+    });
+    expect(findDependencyViolations([core, elk])).toEqual([
+      '@mermaid-js/layout-elk: runtime dependency "d3" is not a workspace package',
+    ]);
+    const other = pkg('packages/mermaid', { name: 'mermaid', dependencies: { elkjs: '0.12.0' } });
+    expect(findDependencyViolations([other])).toEqual([
+      'mermaid: runtime dependency "elkjs" is not a workspace package',
+    ]);
+  });
+
   it('holds for the real workspace', () => {
     const root = join(import.meta.dirname, '..', '..');
     const packages = readWorkspace(root);

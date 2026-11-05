@@ -28,6 +28,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-state',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',
+      '@mermaid-chart/layout-elk',
       '@mermaid-chart/plugin-interactions',
       '@mermaid-chart/mermaid',
     ]);

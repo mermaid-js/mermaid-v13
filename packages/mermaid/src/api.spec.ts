@@ -349,14 +349,34 @@ describe('layout engines (R-LAYOUT-2)', () => {
     expect(viaStub.width).toBe(plain.width + 1000);
   });
 
-  it('maps the v12 names dagre, elk and elk.* to the built-in engine without a warning', async () => {
+  it('maps the v12 name dagre to the built-in engine without a warning', async () => {
     const plain = await render('l', FLOW);
-    for (const name of ['dagre', 'elk', 'elk.stress']) {
+    const r = await render('l', `---\nconfig:\n  layout: dagre\n---\n${FLOW}`);
+    expect(r.warnings).toEqual([]);
+    expect(r.svg).toBe(plain.svg);
+  });
+
+  it('draws an ELK name with layered and one ELK_NOT_INSTALLED warning without the plugin (D173)', async () => {
+    const plain = await render('l', FLOW);
+    for (const name of ['elk', 'elk.layered', 'elk.stress', 'elk.radial', 'elk.anything']) {
       const r = await render('l', `---\nconfig:\n  layout: ${name}\n---\n${FLOW}`);
-      expect(r.warnings).toEqual([]);
+      expect(r.warnings).toHaveLength(1);
+      expect(r.warnings[0]!.code).toBe('ELK_NOT_INSTALLED');
+      expect(r.warnings[0]!.message).toContain('@mermaid-js/layout-elk');
+      expect(r.warnings[0]!.message).toContain(`"${name}"`);
       expect(r.width).toBe(plain.width);
     }
-    expect((await render('l', `flowchart-elk LR\n  A --> B`)).warnings).toEqual([]);
+  });
+
+  it('warns ELK_NOT_INSTALLED once for the flowchart-elk header without the plugin (D173)', async () => {
+    const text = `flowchart-elk LR\n  A[Start] --> B(End)\n`;
+    expect((await render('l', text)).warnings.map((w) => w.code)).toEqual(['ELK_NOT_INSTALLED']);
+    expect(renderSync(text).warnings.map((w) => w.code)).toEqual(['ELK_NOT_INSTALLED']);
+  });
+
+  it('does not take a name that only starts with elk for an ELK name', async () => {
+    const r = await render('l', `---\nconfig:\n  layout: elkish\n---\n${FLOW}`);
+    expect(r.warnings.map((w) => w.code)).toEqual(['LAYOUT_UNKNOWN']);
   });
 
   it('passes RenderOptions.availableWidth to the engine, which fits the drawing (R-LAYOUT-5)', async () => {
