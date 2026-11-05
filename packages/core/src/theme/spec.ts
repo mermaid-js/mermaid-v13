@@ -21,9 +21,15 @@ export interface ThemeSpec {
   /**
    * Colour lists (D151, D152). A theme with a non-empty `borderColorArray` colours each
    * subgraph from it; an empty `bkgColorArray` means border-only colour. A palette the theme
-   * leaves out is empty.
+   * leaves out is empty. An entry is a colour or a rule (`dsl.ts`), and a rule may name a slot
+   * of a numbered palette (`invert(cScale3)`), so it follows the author's overrides (D258).
    */
   readonly palettes?: Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
+  /**
+   * The palettes that replace `palettes` when the author sets `themeVariables.darkMode`, where
+   * v12 derives its `cScale` with darker steps. A theme's own `dark` flag does not switch them.
+   */
+  readonly darkModePalettes?: Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
 }
 
 /** Shared derivation for light themes, approximating v12's khroma rules (D71). */

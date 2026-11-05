@@ -3,6 +3,7 @@
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
 import type { ThemeSpec } from '../spec.ts';
+import { LABEL_SCALE, mainBkgScale } from './palettes.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
@@ -60,6 +61,10 @@ const redux: ThemeSpec = {
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',
   },
+  // v12 theme-redux.js: mainBkg darkened by 25 in every slot (75 under darkMode). It sets
+  // every slot to mainBkg before it derives the inverses, so they ignore a cScale override.
+  palettes: { ...mainBkgScale(25), cScaleLabel: LABEL_SCALE },
+  darkModePalettes: mainBkgScale(75),
 };
 
 export default redux;

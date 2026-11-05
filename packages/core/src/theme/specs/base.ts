@@ -3,6 +3,7 @@
  * variables and tokens; every other colour comes from the shared rules (R-THEME-5).
  */
 import type { ThemeSpec } from '../spec.ts';
+import { LABEL_SCALE, darkenedScale, hueSources } from './palettes.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -10,6 +11,12 @@ import {
   CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
+
+// v12 derives secondaryColor and tertiaryColor from primaryColor in HSL; the palette keeps
+// that derivation, where the base variables are its hex.
+const SECONDARY = 'ifSet(secondaryColor, adjustHue(primaryColor, -120))';
+const TERTIARY = 'ifSet(tertiaryColor, lightenHsl(adjustHue(primaryColor, 180), 5%))';
+const SOURCES = hueSources(true, 'primaryColor', SECONDARY, TERTIARY);
 
 const base: ThemeSpec = {
   name: 'base',
@@ -39,6 +46,9 @@ const base: ThemeSpec = {
     ...CLASSIC_SEQUENCE,
     useGradient: false,
   },
+  // v12 theme-base.js: hue steps darkened by 25 (75 under darkMode).
+  palettes: { ...darkenedScale(SOURCES, 25), cScaleLabel: LABEL_SCALE },
+  darkModePalettes: darkenedScale(SOURCES, 75),
 };
 
 export default base;

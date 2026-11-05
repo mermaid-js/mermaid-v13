@@ -2,6 +2,7 @@
  * `dark`: v12 `theme-dark.js`.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { darkModeLabels, INVERTED_SCALE, paletteSlots } from './palettes.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -61,6 +62,27 @@ const theme: ThemeSpec = {
     rowOdd: '#2c2d2d',
     rowEven: '#060606',
   },
+  // v12 theme-dark.js: fixed colours after slot 0, which is primaryColor.
+  palettes: {
+    cScale: [
+      'primaryColor',
+      '#0b0000',
+      '#4d1037',
+      '#3f5258',
+      '#4f2f1b',
+      '#6e0a0a',
+      '#3b0048',
+      '#995a01',
+      '#154706',
+      '#161722',
+      '#00296f',
+      '#01629c',
+    ],
+    cScaleInv: INVERTED_SCALE,
+    // v12 sets labelTextColor to its mainContrastColor (lightgrey) before the labels.
+    cScaleLabel: paletteSlots(() => '#d3d3d3'),
+  },
+  darkModePalettes: { cScaleLabel: darkModeLabels() },
 };
 
 export default theme;

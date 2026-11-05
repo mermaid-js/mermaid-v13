@@ -8,6 +8,7 @@ import {
   BASE_VARIABLES,
   DARK_RULES,
   LIGHT_RULES,
+  NUMBERED_PALETTES,
   PALETTE_LIMIT,
   PALETTE_VARIABLES,
   THEME_NAMES,
@@ -48,14 +49,11 @@ export async function themeInventory(): Promise<string> {
     return '| ' + cells.join(' | ').replace(/ {2}/g, ' ') + ' |';
   });
   const palettes = PALETTE_VARIABLES.map((name) => {
-    const names =
-      name === 'cScale'
-        ? `${code(name)}, ${code(name + '0')}–${code(name + String(PALETTE_LIMIT - 1))}`
-        : code(name);
-    const setBy = specs
-      .filter((s) => (s.palettes?.[name]?.length ?? 0) > 0)
-      .map((s) => s.name)
-      .join(', ');
+    const names = NUMBERED_PALETTES.includes(name as (typeof NUMBERED_PALETTES)[number])
+      ? `${code(name)}, ${code(name + '0')}–${code(name + String(PALETTE_LIMIT - 1))}`
+      : code(name);
+    const carriers = specs.filter((s) => (s.palettes?.[name]?.length ?? 0) > 0);
+    const setBy = carriers.length === specs.length ? 'all' : carriers.map((s) => s.name).join(', ');
     return `| ${code(name)} | ${names} | ${setBy} |`;
   });
   return [
@@ -67,7 +65,8 @@ export async function themeInventory(): Promise<string> {
     '`themeVariables`. A **base** variable is set by every theme (at most 8, R-THEME-5); a',
     '**derived** one follows its rule unless a theme or the author sets it; a **token** is a',
     'shape token (R-THEME-11). Rules are in the derivation DSL (`mix`, `lighten`, `darken`,',
-    '`alpha`, `contrast`, `invert`) and compile to `color-mix(in srgb, …)`. Variables of',
+    '`lightenHsl`, `darkenHsl`, `alpha`, `contrast`, `invert`, `adjustHue`, `ifSet`) and compile',
+    'to CSS (`color-mix(in srgb, …)`, relative colours). Variables of',
     'diagram types that are not ported yet are accepted and ignored (R-CONF-5).',
     '',
     '| Variable | CSS variable | Role | Kind | Light rule | Dark rule | Set by themes | Used by |',
@@ -78,8 +77,10 @@ export async function themeInventory(): Promise<string> {
     '',
     'Lists of colours a theme carries as data (D151, D152), read as literal colours rather than',
     'CSS variables. In `themeVariables` a whole list is an array of colours or a comma-separated',
-    'string; `cScale0`–`cScale11` replace one entry of `cScale`. A theme not listed carries an',
-    'empty list.',
+    'string; `cScale0`–`cScale11`, `cScaleInv0`–`cScaleInv11` and `cScaleLabel0`–`cScaleLabel11`',
+    'replace one entry. A theme entry can be a rule over the base colours and other palette',
+    'entries, so `cScaleInv` and `cScaleLabel` follow an override of `cScale` or `primaryColor` as',
+    'in v12 (D258). A theme not listed carries an empty list.',
     '',
     '| Palette | `themeVariables` names | Set by themes |',
     '| --- | --- | --- |',

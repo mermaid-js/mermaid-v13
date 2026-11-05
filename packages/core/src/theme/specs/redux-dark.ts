@@ -4,6 +4,7 @@
  * those values are pinned here rather than left to the shared dark rules.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { DARK_HUE_SOURCES, LABEL_SCALE, darkenedScale } from './palettes.ts';
 import { REDUX_RULES } from './redux-rules.ts';
 import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
 
@@ -14,6 +15,9 @@ const theme: ThemeSpec = {
   tokens: REDUX_DARK_TOKENS,
   rules: REDUX_RULES,
   values: REDUX_DARK_VALUES,
+  // v12 theme-redux-dark.js: hue steps darkened by 25 (75 under darkMode).
+  palettes: { ...darkenedScale(DARK_HUE_SOURCES, 25), cScaleLabel: LABEL_SCALE },
+  darkModePalettes: darkenedScale(DARK_HUE_SOURCES, 75),
 };
 
 export default theme;

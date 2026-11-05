@@ -1,0 +1,128 @@
+/**
+ * #338 (timeline T4a, D258): the `cScale`, `cScaleInv` and `cScaleLabel` palettes of every
+ * built-in theme against v12 12.2.0's resolved `getThemeVariables()` (D151: v12 is the
+ * oracle). The theme values match in every theme, and under base-colour, `darkMode` and
+ * numbered overrides they follow v12's rule.
+ */
+import {
+  THEME_NAMES,
+  createTheme,
+  formatColor,
+  loadTheme,
+  parseColor,
+  type ThemeName,
+} from '@mermaid-js/core/theme';
+import { describe, expect, it } from 'vitest';
+import { loadOracle } from './oracle.ts';
+
+interface V12 {
+  mermaidAPI: {
+    reset(): void;
+    initialize(config: object): void;
+    getConfig(): { themeVariables: Record<string, unknown> };
+  };
+}
+
+await loadOracle();
+const v12 = ((await import('mermaid-v12')) as unknown as { default: V12 }).default;
+
+const PALETTES = ['cScale', 'cScaleInv', 'cScaleLabel'] as const;
+type Palettes = Record<(typeof PALETTES)[number], string[]>;
+
+function hex(v: unknown): string {
+  const rgba = typeof v === 'string' ? parseColor(v) : undefined;
+  return rgba ? formatColor(rgba) : String(v);
+}
+
+function v12Palettes(theme: string, themeVariables: object = {}): Palettes {
+  v12.mermaidAPI.reset();
+  v12.mermaidAPI.initialize({ theme, themeVariables });
+  const vars = v12.mermaidAPI.getConfig().themeVariables;
+  v12.mermaidAPI.reset();
+  const out = {} as Palettes;
+  for (const p of PALETTES) out[p] = Array.from({ length: 12 }, (_, i) => hex(vars[`${p}${i}`]));
+  return out;
+}
+
+async function v13Palettes(theme: ThemeName, themeVariables?: object): Promise<Palettes> {
+  const t = createTheme(await loadTheme(theme), {
+    cssVariables: false,
+    themeVariables: themeVariables as Record<string, unknown>,
+  });
+  const out = {} as Palettes;
+  for (const p of PALETTES) out[p] = t.palette(p).map(hex);
+  return out;
+}
+
+/**
+ * Under `darkMode` v12 also turns these themes' unset `primaryTextColor` to `#eee`, and the
+ * labels follow it. v13's `darkMode` switches the derivation rules, not the base colours, so the
+ * labels keep the theme's `labelTextColor` (GAPS.md "#338 T4a").
+ */
+const TEXT_UNDER_DARK_MODE: readonly ThemeName[] = ['base', 'neo', 'redux', 'redux-color'];
+
+describe('cScale, cScaleInv and cScaleLabel against v12 12.2.0 (#338, D258)', () => {
+  it.each(THEME_NAMES)('%s: the theme values', async (theme) => {
+    expect(await v13Palettes(theme)).toEqual(v12Palettes(theme));
+  });
+
+  it.each(THEME_NAMES)(
+    '%s: under primaryColor, secondaryColor and tertiaryColor',
+    async (theme) => {
+      const vars = { primaryColor: '#3366cc', secondaryColor: '#cc6633', tertiaryColor: '#66cc33' };
+      expect(await v13Palettes(theme, vars)).toEqual(v12Palettes(theme, vars));
+    }
+  );
+
+  it.each(THEME_NAMES)('%s: under primaryColor alone', async (theme) => {
+    const vars = { primaryColor: '#3366cc' };
+    expect(await v13Palettes(theme, vars)).toEqual(v12Palettes(theme, vars));
+  });
+
+  it.each(THEME_NAMES)('%s: under darkMode', async (theme) => {
+    const vars = { darkMode: true };
+    const now = await v13Palettes(theme, vars);
+    const old = v12Palettes(theme, vars);
+    expect(now.cScale).toEqual(old.cScale);
+    expect(now.cScaleInv).toEqual(old.cScaleInv);
+    if (!TEXT_UNDER_DARK_MODE.includes(theme)) expect(now.cScaleLabel).toEqual(old.cScaleLabel);
+    else
+      expect(now.cScaleLabel).toEqual(
+        Array(12).fill(
+          hex(createTheme(await loadTheme(theme), { cssVariables: false }).value('labelTextColor'))
+        )
+      );
+  });
+
+  it('redux follows a mainBkg override, as v12 does', async () => {
+    const vars = { mainBkg: '#3366cc' };
+    expect(await v13Palettes('redux', vars)).toEqual(v12Palettes('redux', vars));
+  });
+
+  it('labels follow a labelTextColor override, as v12 does', async () => {
+    const vars = { labelTextColor: '#3366cc' };
+    for (const theme of THEME_NAMES)
+      expect((await v13Palettes(theme, vars)).cScaleLabel, theme).toEqual(
+        v12Palettes(theme, vars).cScaleLabel
+      );
+  });
+
+  it.each(THEME_NAMES)('%s: a numbered override replaces its slot verbatim', async (theme) => {
+    const vars = { cScale4: '#123456', cScaleInv5: '#654321', cScaleLabel6: '#abcdef' };
+    const now = await v13Palettes(theme, vars);
+    const old = v12Palettes(theme, vars);
+    expect(now.cScale[4]).toBe('#123456');
+    expect(now.cScaleInv[5]).toBe('#654321');
+    expect(now.cScaleLabel[6]).toBe('#abcdef');
+    expect([now.cScale[4], now.cScaleInv[5], now.cScaleLabel[6]]).toEqual([
+      old.cScale[4],
+      old.cScaleInv[5],
+      old.cScaleLabel[6],
+    ]);
+  });
+
+  it.each(THEME_NAMES)('%s: the other palettes follow a cScale override', async (theme) => {
+    const vars = { cScale1: '#123456' };
+    expect(await v13Palettes(theme, vars)).toEqual(v12Palettes(theme, vars));
+  });
+});

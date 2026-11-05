@@ -25,8 +25,9 @@ describe('theme variable inventory (DESIGN §8.3)', () => {
       '| `borderColorArray` | `borderColorArray` | redux-color, redux-dark-color |'
     );
     expect(doc).toContain('| `bkgColorArray` | `bkgColorArray` | redux-color |');
+    expect(doc).toContain('| `cScale` | `cScale`, `cScale0`–`cScale11` | all |');
     expect(doc).toContain(
-      '| `cScale` | `cScale`, `cScale0`–`cScale11` | redux-color, redux-dark-color |'
+      '| `cScaleLabel` | `cScaleLabel`, `cScaleLabel0`–`cScaleLabel11` | all |'
     );
   });
 

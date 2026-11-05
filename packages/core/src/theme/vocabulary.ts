@@ -130,16 +130,26 @@ export const TOKEN_VARIABLES = [
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
 
 /**
- * Palettes (D151, D152): lists of colours a theme carries as data. `themeVariables` replaces
- * a whole list (an array of colours, or a comma-separated string), and v12's numbered names
- * `cScale0`–`cScale11` replace one entry of `cScale`. Palettes are read as literal colours,
- * not CSS variables.
+ * Palettes (D151, D152, D258): lists of colours a theme carries as data. `themeVariables`
+ * replaces a whole list (an array of colours, or a comma-separated string), and v12's numbered
+ * names (`cScale0`–`cScale11`, `cScaleInv<n>`, `cScaleLabel<n>`) replace one entry of
+ * `cScale`, `cScaleInv` or `cScaleLabel`. Palettes are read as literal colours, not CSS
+ * variables.
  */
-export const PALETTE_VARIABLES = ['borderColorArray', 'bkgColorArray', 'cScale'] as const;
+export const PALETTE_VARIABLES = [
+  'borderColorArray',
+  'bkgColorArray',
+  'cScale',
+  'cScaleInv',
+  'cScaleLabel',
+] as const;
+
+/** The palettes with v12's numbered names, `<name>0`–`<name>11`. */
+export const NUMBERED_PALETTES = ['cScale', 'cScaleInv', 'cScaleLabel'] as const;
 
 export type PaletteVariable = (typeof PALETTE_VARIABLES)[number];
 
-/** How many `cScaleN` names v12 has (`THEME_COLOR_LIMIT`). */
+/** How many numbered names each of `NUMBERED_PALETTES` has (v12 `THEME_COLOR_LIMIT`, D258). */
 export const PALETTE_LIMIT = 12;
 
 const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): ThemeVarDef => ({
