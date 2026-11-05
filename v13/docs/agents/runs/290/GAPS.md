@@ -13,6 +13,8 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 - A score of `7` does not overlap the task box: `cy = 300 + (5 − 7)·30 = 240`, box spans y 110–160 (`svgDraw.js:218`); overlap needs a score above about 9.2. D226's clamp to 0–5 still applies.
 - In v12 `fo` mode the tspan fallback has no `sectionColours` fill (`svgDraw.js:370`); it shows only with `textPlacement: 'tspan'`. D225 (honour `sectionColours` only when set) is unaffected.
 - `sectionFills`/`sectionColours` were read once at module load (`journeyRenderer.ts:281-282`), so per-diagram values never applied in v12.
+- The first comment rule `\%%(?!\{)[^\n]*` compiles to `%(?!\{)[^\n]*`: one `%` where a token starts comments out the rest of the line (`%x: 1` is no task; `%{x: 1` is). A `%` inside a name or data (`50% done`) is text. Found by the T1 gate.
+- `\s+` hides a line break only where a blank run starts a token: a blank line, blanks after `journey`, after `;` or after a multi-line description's `}`. A task name keeps its trailing blanks (`B  ` then `NEWLINE`).
 
 ## Open across tickets
 
@@ -21,11 +23,14 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 - **Bands (T3).** v12 opens a band when consecutive tasks change section, not per `section` line, so tasks before the first section get no band and empty sections draw none. Keep v12.
 - **CSS gating (T4/T5).** v12 gates every `fillType1`–`7` rule on `fillType0` being set (`styles.js:93-116`). Irrelevant in v13: each slot reads its own variable.
 - **`useMaxWidth`/`useWidth` (T5).** Base config keys; journey re-declares them with its own status as sequence does (schema L3336-3338).
-- **Oracle descriptor (T1).** The v12 journey DB is a plain module object, not a class: the #285 descriptor must pass the object and call `clear()`, not `new db.constructor()`.
+- **Oracle descriptor (T1), closed.** The v12 journey DB is a plain module object. #285's `defaultYy` (`packages/conformance/src/jison/oracle.ts`) already passes such a DB itself (its `constructor` is `Object`), and journey's lexer actions never read `yy`, so the `journey` descriptor needs no `yy` and no change.
 
 ## #310 T1 lexer gate
 
-- Blocked by #285 (shared jison oracle).
+- Decided in T1: v13 ends every token stream in `EOF`. When the text ends inside an accessibility state (`accTitle:`, `accDescr:` or an unclosed `accDescr {` at the end), jison's value rule matched the empty input, which set `done`, so it returned `$end` without `EOF`: the gate excludes that final v13 `EOF` (`packages/conformance/src/journey/lexer-parity.spec.ts`). **For T2:** v12's `start: journey document 'EOF'` therefore throws on such a text; T2 decides whether v13 reports it as v12 did or accepts the empty value.
+- Decided in T1: a bare `%%` line survives v12's comment strip (it needs a character after `%%`), and `[^\}]%%[^\n]*` then eats it with the line break before it, so the lines either side join (no `NEWLINE`). v13 writes it as one comment from that line break (`\r\n%%` for CRLF).
+- Decided in T1: `journey`'s `\b` reads ASCII word characters only (no `u` flag), checked over every code unit.
+- In every state some jison rule matches (`.` takes the `;`), so v12 never throws on journey text and v13 writes no `Error` token.
 
 ## #302 T2 grammar, parser, model, AST
 

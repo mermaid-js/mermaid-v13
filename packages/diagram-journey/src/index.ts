@@ -1,8 +1,11 @@
 /**
- * `@mermaid-js/diagram-journey`: the user journey diagram plugin (spec #290): the model type and
- * the layout. The parser (T2), renderer (T4) and the plugin export and manifest (T5) follow.
+ * `@mermaid-js/diagram-journey`: the user journey diagram plugin (spec #290): the model type, the
+ * lexer and the layout. The parser (T2), renderer (T4) and the plugin export and manifest (T5)
+ * follow.
  */
 export type * from './model.ts';
+export { JISON_NAMES, journeyTokens, JourneyTokenKind } from './parser/index.ts';
+export type { JourneyToken } from './parser/index.ts';
 export {
   journeyLayoutViolations,
   journeyMetrics,
