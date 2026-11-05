@@ -17,18 +17,14 @@ import { flowchartV12Snapshot } from './v12.ts';
  *   references from any of its occurrences give the same list, with that definition in it;
  *   a name resolving to a `def` occurrence in the node namespace is a v12 vertex or subgraph
  *   (a name only mentioned, as in `click B` for no vertex B, resolves to its first mention);
- * - every named v12 subgraph's definition is on one of its own `subgraph` lines, except one
- *   written quoted (`subgraph "One"`): the parser records the name with the range of the
- *   quoted token, which the service leaves out (#31, GAPS.md), so it has no definition.
+ * - every named v12 subgraph's definition is on one of its own `subgraph` lines, also one
+ *   written quoted (`subgraph "One"`), whose definition is the text between the quotes (#199).
  * - each multi-line v12 subgraph body is a `subgraph` fold range, and each member vertex has
  *   a reference inside one of its bodies.
  */
 
-/**
- * Quoted subgraph ids in the corpus, which the service gives no definition (GAPS.md). Known
- * and left for now: handled by #199.
- */
-const QUOTED_SUBGRAPH_IDS = 13;
+/** Subgraph ids written quoted (`subgraph "One"`, markdown strings) in the corpus that resolve (#199). */
+const QUOTED_RESOLVED = 13;
 
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 const inside = (r: Range, outer: Range) => outer.start <= r.start && r.end <= outer.end;
@@ -51,7 +47,7 @@ describe('flowchart definition, references and folding through the service match
     await service.preload({ types: ['flowchart'] });
     const problems: string[] = [];
     let checked = 0;
-    let quotedIds = 0;
+    let quotedResolved = 0;
     for await (const item of resolveCorpus({}, PARITY_SUITES)) {
       const v12 = await oracle.parse(item.source);
       if (!v12.accepted || !v12.diagramType.startsWith('flowchart')) continue;
@@ -59,6 +55,9 @@ describe('flowchart definition, references and folding through the service match
       if (doc.facet?.id !== 'flowchart') continue;
       if (doc.diagnostics().some((d) => d.severity === 'error')) continue;
       checked++;
+      // Where to put the cursor on an occurrence: inside the quotes of a quoted one.
+      const probe = (r: Range) =>
+        r.start + (/^(?:"`|"|`)/.exec(doc.text.slice(r.start, r.end))?.[0].length ?? 0);
       const fail = (what: string): undefined => {
         problems.push(`${item.id}: ${what}`);
       };
@@ -76,18 +75,19 @@ describe('flowchart definition, references and folding through the service match
         const refLists = new Set<string>();
         let def: Range | undefined;
         for (const o of at) {
-          const d = doc.definition(o.range.start);
+          const d = doc.definition(probe(o.range));
           if (!d || text(doc, d) !== name) return fail(`${name}: definition ${d && text(doc, d)}`);
           defs.add(`${d.start}:${d.end}`);
           def = d;
-          const refs = doc.references(o.range.start);
+          const refs = doc.references(probe(o.range));
           if (refs.some((r) => text(doc, r) !== name)) fail(`${name}: a reference is not ${name}`);
           refLists.add(JSON.stringify(refs));
         }
         if (defs.size !== 1) fail(`${name}: ${defs.size} definitions`);
         if (refLists.size !== 1) fail(`${name}: references differ by occurrence`);
-        const refs = doc.references(at[0]!.range.start);
+        const refs = doc.references(probe(at[0]!.range));
         if (!refs.some((r) => r.start === def!.start)) fail(`${name}: definition not referenced`);
+        if (at.some((o) => text(doc, o.range) !== name)) quotedResolved++;
         return def;
       };
 
@@ -97,11 +97,11 @@ describe('flowchart definition, references and folding through the service match
       for (const v of vertices) resolve(v, NODE);
       for (const c of model.classes) resolve(c.id, ['class']);
       const defStarts = new Set(
-        parsed.symbols.filter((x) => x.role === 'def').map((x) => x.range.start)
+        parsed.symbols.filter((x) => x.role === 'def').map((x) => probe(x.range))
       );
       for (const s of parsed.symbols.filter((x) => NODE.includes(x.kind))) {
         if (vertices.has(s.name) || subgraphIds.has(s.name)) continue;
-        const d = doc.definition(s.range.start);
+        const d = doc.definition(probe(s.range));
         if (d && defStarts.has(d.start)) fail(`${s.name} is defined but is no v12 vertex`);
       }
 
@@ -114,11 +114,10 @@ describe('flowchart definition, references and folding through the service match
           continue;
         }
         const written = occurrences(s.id, ['subgraph']).map((o) => text(doc, o.range));
-        if (written.length > 0 && !written.includes(s.id)) {
-          if (!written.every((w) => /^["`]/.test(w)))
-            fail(`subgraph ${s.id} written ${written.join(' ')}`);
-          else quotedIds++;
-        } else if (!/^subGraph\d+$/.test(s.id)) {
+        const quoted = (w: string) => [`"${s.id}"`, `\`${s.id}\``, `"\`${s.id}\`"`].includes(w);
+        if (!written.every((w) => w === s.id || quoted(w)))
+          fail(`subgraph ${s.id} written ${written.join(' ')}`);
+        else if (!/^subGraph\d+$/.test(s.id)) {
           const def = resolve(s.id, ['subgraph', 'node']);
           if (
             def &&
@@ -137,15 +136,15 @@ describe('flowchart definition, references and folding through the service match
         for (const member of s.nodes) {
           if (!vertices.has(member)) continue;
           const at = occurrences(member, NODE)[0];
-          const refs = at ? doc.references(at.range.start) : [];
+          const refs = at ? doc.references(probe(at.range)) : [];
           if (!refs.some((r) => regions.some((g) => inside(r, g))))
             fail(`member ${member} of ${s.id} has no reference in its fold range`);
         }
       }
     }
     expect(checked).toBeGreaterThan(600);
-    // The quoted subgraph ids left out above; a change here means the gap moved.
-    expect(quotedIds).toBe(QUOTED_SUBGRAPH_IDS);
+    // Names written quoted somewhere that resolved above (#199); a change means coverage moved.
+    expect(quotedResolved).toBe(QUOTED_RESOLVED);
     expect(problems).toEqual([]);
   }, 180_000);
 });

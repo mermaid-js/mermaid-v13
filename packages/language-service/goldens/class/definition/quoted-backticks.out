@@ -1,0 +1,6 @@
+@ 2:17  class `Rubber |Duck`
+  -> 2:10-2:21 "Rubber Duck"
+@ 4:5  To|y --> `Rubber Duck`
+  -> 3:22-3:25 "Toy"
+@ 4:20  Toy --> `Rubber D|uck`
+  -> 2:10-2:21 "Rubber Duck"

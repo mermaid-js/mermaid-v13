@@ -1,0 +1,4 @@
+@ 2:13  "Customer |Account" ||--o{ ORDER : places
+  2:4-2:20 "Customer Account"
+  3:4-3:20 "Customer Account"
+  6:17-6:33 "Customer Account"

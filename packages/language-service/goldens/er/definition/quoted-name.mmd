@@ -1,0 +1,8 @@
+erDiagram
+  "Customer |Account" \|\|--o{ ORDER : places
+  "Customer Account" {
+    string name
+  }
+  ORDER }\|--\|\| "Customer Acc|ount" : for
+  "x" \|\|--\|\| |x : self
+  style "Customer Account" fill:#f00
