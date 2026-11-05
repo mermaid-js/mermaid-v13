@@ -1,0 +1,5 @@
+# pnpm settings of the smoke app; the harness adds the tarball overrides and allowBuilds.
+# No hidden hoisting (node_modules/.pnpm/node_modules): a package must declare what it
+# imports. With it, pnpm 12 hoists the auto-installed @mermaid-js/core peer there, and
+# mermaid resolves the core dependency its package.json no longer lists.
+hoist: false

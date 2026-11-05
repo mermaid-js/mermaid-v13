@@ -4,13 +4,21 @@
  * removed (R-API-5). `run` and `mount` are the DOM adapter (dom.ts).
  */
 import { createMermaid as createInstance, type Mermaid } from './api.ts';
+import { bundledSource } from './bundled.ts';
+import { discoverOnFirstUse } from './discovery.ts';
 import { FIRST_PARTY } from './generated/registry.gen.ts';
 
 export * from './exports.ts';
 
-/** A new `mermaid` API object, with its own registry and defaults and every first-party diagram. */
+/**
+ * A new `mermaid` API object, with its own registry and defaults and every first-party diagram.
+ * In a build with `@mermaid-js/bundler-plugin`, the plugins it found register before the first
+ * `prepare`, `render`, `parse` or `preload`.
+ */
 export function createMermaid(): Mermaid {
-  return createInstance(FIRST_PARTY);
+  const api = createInstance(FIRST_PARTY);
+  if (bundledSource) discoverOnFirstUse(api, bundledSource);
+  return api;
 }
 
 const mermaid = createMermaid();

@@ -129,11 +129,13 @@ describe('architecture lint rules allow the intended directions', () => {
     expect(result?.messages).toEqual([]);
   });
 
-  it('lets the mermaid bin, and only the bin, import node builtins (D85)', async () => {
+  it("lets mermaid's Node-only files, and only those, import node builtins (D85, D165)", async () => {
     const code = "import { parseArgs } from 'node:util';\nexport const p = parseArgs;\n";
     const lint = async (file: string) =>
       (await eslint.lintText(code, { filePath: join(root, file) }))[0]?.messages ?? [];
     expect(await lint('packages/mermaid/src/cli.ts')).toEqual([]);
+    expect(await lint('packages/mermaid/src/node.ts')).toEqual([]);
+    expect(await lint('packages/mermaid/src/node-scan.ts')).toEqual([]);
     expect((await lint(MERMAID)).map((m) => m.ruleId)).toEqual(['mermaid/import-boundaries']);
     expect((await lint('packages/core/src/cli.ts')).map((m) => m.ruleId)).toEqual([
       'mermaid/import-boundaries',

@@ -41,6 +41,8 @@ packages/
   conformance/          (private) parity oracle, corpus runners, normalisers — devDeps: mermaid@12
   bench/                (private) successor of mermaid-v13-approches harness (R-TEST-7)
   plugin-interactions/  @mermaid-js/plugin-interactions — v12 click callbacks as an extension plugin (§12.3)
+  bundler-plugin/       @mermaid-js/bundler-plugin — build-time plugin discovery for Vite, webpack, Rollup
+                                                and esbuild, on unplugin (M3.5, §12.4, D164)
 tools/
   gen-metrics/          font metric table generator (§5.2)
   gen-config/           schema → per-package defaults + config reference doc (§9)
@@ -59,12 +61,22 @@ Later milestones add the `core/ascii` subpath and a `mermaid` CLI bin (M2, §6.3
 - `/config`
 - `/ascii` (M2): the text-grid kit (§6.3), never imported by an SVG render
 
+`mermaid` exports (M3.5, §12.4):
+
+- `.`: the public API. Under the `node` export condition it resolves to `dist/node.js`, the same API plus Node discovery (D165); browser bundlers never take that condition.
+- `/slim`: the API without the first-party diagram loaders (only the plugins passed to `createMermaid` render) and without discovery.
+- `/node-scan`: the manifest scan (`findAppRoot`, `scanPlugins`, `FIRST_PARTY_IDS`). It has `node` and `types` conditions only, so a browser build fails to resolve it. Node discovery and the bundler plugin share it.
+- `/discovered`: the list of discovered plugins. The published module is `export default []`; the bundler plugin replaces it at build time with the scanned list (D164).
+- `dist/mermaid.esm.min.mjs` and `dist/mermaid.min.js`: the CDN build (D162), not in `exports`; `unpkg`/`jsdelivr` point at the loader.
+
 **Allowed dependency directions:**
 
 - `diagram-*` → `core`.
 - `mermaid` → `core` + `diagram-*`.
 - `core` imports nothing.
 - `diagram-*` never imports another `diagram-*`. This carries over the v12 isolation rule, and is now enforced with an eslint `no-restricted-imports` rule.
+- `bundler-plugin` → `mermaid` (peer, for `mermaid/node-scan`) + `unplugin`. It is the one first-party package with a third-party runtime dependency, so `mermaid` keeps first-party dependencies only (D164, R-PERF-2, `check:deps`).
+- `core` and `diagram-*` import no `node:` module (R-ARCH-1). In `mermaid`, only `src/node.ts`, `src/node-scan.ts` and the CLI bin may.
 
 ## 3. Public API and runtime flow (R-API-*, R-COMPAT-5)
 
@@ -588,7 +600,7 @@ class MermaidError extends Error {
 
 **Error image (R-ERR-3, D49).** Behaviour matches v12. `render()` rejects with `MermaidError`, and unless `suppressErrorRendering` is set, the DOM adapter puts an error image where the diagram would be. `run()` catches per diagram and carries on with the rest. The error image is an SVG built by core's `renderErrorSvg(error, ctx)` through the same `SvgWriter`, so it is themed and inside the allow-list; the message is escaped text.
 
-## 12. Plugins and discovery (R-PLUG-*, D35, D40, D41)
+## 12. Plugins and discovery (R-PLUG-*, D35, D40, D41, D162–D169)
 
 There are two kinds of plugin, both pure: **diagram** plugins (one diagram type each) and **extension** plugins (hooks that apply to any type) (R-PLUG-2, D52).
 
@@ -666,12 +678,22 @@ As built in M1: hooks see the AST, not the model, so the AST node of a `click �
 | Environment | Mechanism |
 | --- | --- |
 | First-party, any env | `mermaid` depends on all `@mermaid-js/diagram-*`. A generated `registry.gen.ts` holds `{ id, detector (static import, tiny), load: () => import('@mermaid-js/diagram-x') }`. Bundlers code-split per type (R-PLUG-4). |
-| Node / SSR, third-party | On first `render`, `mermaid/node` scans `node_modules` (`require.resolve` paths) for packages with a `mermaid.plugin` manifest, then caches the result. |
-| Bundlers, third-party | `mermaid/plugin` (unplugin) does the same scan at build time and provides `virtual:mermaid-plugins`, which `mermaid` imports if present. |
-| CDN | First-party diagrams lazy-load from `cdnBase` (default: the URL `mermaid` itself was loaded from). Third-party scripts self-register by calling `globalThis.mermaid.registerExternalDiagrams`. Never loaded from diagram text (R-PLUG-7). |
+| Node / SSR, third-party | On by default (D165). Under the `node` export condition, `mermaid` resolves to `dist/node.js`, which scans on the first `prepare`/`render`/`parse`/`preload` of each API object and caches the scan per root for the process. The root is the nearest directory at or above `process.cwd()` whose `package.json` has a `name` or a dependency field (type-marker files such as `dist/package.json` are walked past). Only `<root>/node_modules/*` and `<root>/node_modules/@scope/*` are read, never ancestor folders. Every manifest path must resolve inside its package, through symlinks too (D157's confinement), and each discovery-time import (detectors, extension entries) has a 5 s limit. A package that fails is skipped with a `PLUGIN_SKIPPED` warning on the first render, never a thrown error; each skip also goes to `nodeDiscovery`'s optional `log`. A root without `node_modules` (a server deployed as a bundle) is reported to `log` only, never on renders. The scan itself is `mermaid/node-scan` (§2), which only reads files. |
+| Bundlers, third-party | `@mermaid-js/bundler-plugin` (D164), one line per bundler: `plugins: [mermaid()]` from `/vite`, `/webpack`, `/rollup` or `/esbuild`. At each build start it runs the same scan from the bundler's project root (Vite `root`, webpack `context`, esbuild `absWorkingDir`, else the working directory; `mermaid({ root })` overrides it), then replaces `mermaid/discovered` with the list: each detector is a static import, each diagram entry a lazy `import()`, so the bundler splits it into its own chunk. Scan warnings are bundler warnings only, never in the bundle. Watch mode, Vite dev and webpack's persistent cache rebuild the list when a package is installed or removed. A bundle built with the plugin skips Node discovery (the scan is already in it). |
+| CDN | `dist/mermaid.esm.min.mjs` (ESM, a chunk per lazy module) and the classic loader `dist/mermaid.min.js` (D162). First-party chunks lazy-load from `cdnBase` (default: the directory `mermaid` itself was loaded from; `initialize({ cdnBase })`, or `data-cdn-base` on the `mermaid.min.js` tag, which loads the whole build from there, D163). For the ESM build, a `cdnBase` other than the entry's own directory still applies but warns that the shared core chunks load a second time; `data-cdn-base` is the way to move the whole build. The loader is a classic script that `import()`s the ESM file, so the browser needs ES2022 module support (R-ARCH-8). Third-party scripts push themselves onto `globalThis.mermaidPlugins`, before or after `mermaid` (D167): `mermaid` drains the queue at startup and replaces `push`, and each entry registers on its own (anything `registerExternalDiagrams` takes, with its npm `package` name so the order matches an npm install, D166; without one the manifest id, then the plugin id stands in, with a console warning; or a seam entry). Every API object of the build, `createMermaid()` ones too, takes every entry, earlier ones included, and `initialize({ cdnBase })`. A second copy of the build on one page finds the queue connected, warns once, and leaves the queue, `globalThis.mermaid` and the startOnLoad render to the first. Never loaded from diagram text (R-PLUG-7). |
 | Explicit | `registerExternalDiagrams()` (R-PLUG-6). |
 
-**Detector order:** first-party detectors run first, in v12's registration order (detection order is part of "syntax is sacred"), then third-party detectors in discovery order. **[ADR-6]**
+Node, bundler and CDN discovery feed one internal seam (`addDiscovered` / `discoverOnFirstUse` in `mermaid/src/discovery.ts`): a list of `{ kind: 'plugin', package, plugin }` or `{ kind: 'layout', package, names, loader }`. Discovered diagrams stay lazy (detector now, entry on first detection, with no time limit); discovered extensions load on discovery, so `@mermaid-js/plugin-interactions` is active on the first render once installed (D169). Diagram text can never enable a plugin. A discovered layout registers its names lazily (`elk`/`elk.*` take over the built-in aliases; `layered` and `dagre` stay first-party); the CDN queue takes layouts today, while the Node scan and the bundler plugin skip layout manifests with a warning until #238's manifest shape lands. The skips from a discovery go into the next draw that succeeds as `PLUGIN_SKIPPED` warnings; a discovery that fails as a whole gives `PLUGIN_DISCOVERY_FAILED`. Draws wait for discovery still in flight at most 5 s per registration (the bundler's first-use list, each CDN entry; Node's first use waits at most 11 s, two rounds of its 5 s import limit), then render without it with `PLUGIN_DISCOVERY_FAILED`; a late registration still lands for later draws. The extension entries of one discovery load in parallel.
+
+**Turning discovery off.** `initialize({ discovery: false })` turns off Node discovery and the bundled list alike (D165). `discovery` and `cdnBase` are integrator-only keys: front matter and `%%{init}%%` cannot set them and get the secure-key warning (D163). `renderSync`, `detectType` and `supportsFormat` neither run nor wait for first-use discovery: `await preload()` first.
+
+**Detector order (D166, [ADR-6](adr/0006-plugin-discovery.md)):**
+
+1. First-party detectors, in v12's registration order (detection order is part of "syntax is sacred").
+2. Discovered third-party detectors, sorted by package name, then id, in code-unit order (never `localeCompare`), so the order is the same on every file system and package manager (R-ARCH-6). The order the scan or the CDN scripts deliver them in never matters.
+3. Detectors from explicit `registerExternalDiagrams` calls, in call order.
+
+A discovered plugin whose id or type is first-party is skipped with a warning; taking over a first-party type needs `registerExternalDiagrams(…, { replace: true })`, whose detector then runs in that type's first-party slot. When two packages claim one diagram id, extension id or layout name, the earlier package (by name) wins and the other is skipped. Explicit registration beats discovery without `replace`, silently, for every kind; a discovered extension whose id is already registered explicitly is not loaded. Extension hooks follow the same order.
 
 ## 13. Testing architecture (R-TEST-*)
 
@@ -715,7 +737,16 @@ A Playwright/Argos baseline on a curated subset: per shape, per edge type, per t
 
 ## 14. Performance plan (R-PERF-*)
 
-**Size budget, core + flowchart ≤ 80 KB gz.** These are estimates, to be tracked from the first PR. Pele's whole core + flowchart is 57 KB gz, and its flowchart parser alone is 7.2 KB.
+**Size budgets (M3.5, D160, D161).** Both limits live in one committed file, [`packages/mermaid/size-budget.json`](../../packages/mermaid/size-budget.json) (gzip level 9), and every check reads them from there (`readSizeBudget` in `packages/bench/src/size-budget.ts`); no spec or gate hard-codes a number.
+
+| Budget | What is measured | Limit (gz) | Enforced by |
+| --- | --- | --- | --- |
+| `loaded`, R-PERF-1 (D160, amends D10) | Core + flowchart as a browser page loads them for one flowchart render: the bench runner renders a two-node flowchart after `initialize` and then reads the fetched resources (report `source: 'loaded'`; the static entry + flowchart-chunk closure is only a fallback) | 120 KB | bench gate `size` |
+| `core`, R-PERF-8 (D161) | Everything loaded before any diagram: the static import closure of `core.entry` (the CDN ESM entry `src/cdn.ts`, which is `src/index.ts` plus the queue and `cdnBase`), bundled with the bench's production esbuild options. No diagram, `ascii`, `language` or theme chunk | 88 KB | `packages/bench/src/core-size.spec.ts` in `pnpm check` (no browser, ~1 s); the bench reports it too (gate `core-size`) |
+
+Measured at the M3.5 close-out (2026-11-05, #232): loaded 110.9 KB (113550 B, 10 files), core 78.0 KB (79871 B, 7 files), CDN loader `mermaid.min.js` 0.9 KB (917 B). Diagram packages still have no budget of their own (D59). M3.5 had no size-reduction pass; the 80 KB below was the M1 target.
+
+**M1 estimate, core + flowchart ≤ 80 KB gz** (superseded by the table above). These were estimates, to be tracked from the first PR. Pele's whole core + flowchart is 57 KB gz, and its flowchart parser alone is 7.2 KB.
 
 | Part | Budget (gz) |
 | --- | --- |
@@ -731,7 +762,7 @@ A Playwright/Argos baseline on a curated subset: per shape, per edge type, per t
 
 Shapes are the biggest risk, because v12 has 113 of them. If they go over budget, split rare shapes into a lazily loaded chunk. The tree-backed writer (§7.1) and the extension hook runner add an estimated 1–2 KB to core.
 
-Only core has its own published size budget (R-PERF-8, D59). Later diagram packages are optional plugins and have none for now; R-PERF-1 still holds for core + flowchart.
+Only core has its own published size budget (R-PERF-8, D59, D161). Later diagram packages are optional plugins and have none for now; R-PERF-1 still holds for core + flowchart.
 
 **Speed:**
 
@@ -791,7 +822,7 @@ The parallel tracks after item 1:
 | ADR-3 | Typed `SvgWriter` with a streaming backing and a compact tree backing (used only when `postRender` hooks exist) | **⚠ reading of D35, D52** |
 | ADR-4 | Theme = v12 vocabulary as CSS vars; derivation DSL compiled to `color-mix(in srgb)` + identical JS fallback; `cssVariables:false` for non-browser consumers | from D20, D39, ⚠ §8.2 |
 | ADR-5 | Default font tables (Trebuchet MS / Verdana / Arial) | **⚠ new** |
-| ADR-6 | Plugin manifest, discovery paths and detector order | from D40, D41 |
+| ADR-6 | Plugin manifest, discovery paths and detector order ([written](adr/0006-plugin-discovery.md), M3.5) | from D40, D41, D162–D167, D169 |
 | ADR-7 | Layered layout port from Pele; layout interface; measurement before layout | from D18 |
 | ADR-8 | Parity oracle and divergence list | from D15, D16 |
 | ADR-9 | Two-phase rendering: `prepare` / `renderSync` / `preload`, resource discovery | from D51 |

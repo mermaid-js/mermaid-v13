@@ -80,6 +80,8 @@ export const INTEGRATOR_ONLY_KEYS: readonly string[] = Object.freeze([
   'idPrefix',
   'output',
   'linkSchemes',
+  'discovery',
+  'cdnBase',
 ]);
 
 /** Never copied from any source: they would reach `Object.prototype` on assignment. */

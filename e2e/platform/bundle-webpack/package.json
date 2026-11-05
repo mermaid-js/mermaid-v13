@@ -1,0 +1,22 @@
+{
+  "name": "platform-bundle-webpack",
+  "version": "0.0.0",
+  "private": true,
+  "description": "R-PLUG-4 bundle test app (spec #218, T3, T5): the bundle-pages built with webpack.",
+  "type": "module",
+  "scripts": {
+    "build": "webpack --no-stats && node -e \"for (const p of ['flowchart', 'all', 'plugin']) require('fs').copyFileSync(p + '.html', 'dist/' + p + '.html')\""
+  },
+  "dependencies": {
+    "@mermaid-js/core": "13.0.0-alpha.0",
+    "@mermaid-js/plugin-interactions": "13.0.0-alpha.0",
+    "mermaid": "13.0.0-alpha.0",
+    "mermaid-fixture-diagram": "1.0.0",
+    "mermaid-fixture-extension": "1.0.0"
+  },
+  "devDependencies": {
+    "@mermaid-js/bundler-plugin": "13.0.0-alpha.0",
+    "webpack": "5.112.0",
+    "webpack-cli": "7.2.3"
+  }
+}

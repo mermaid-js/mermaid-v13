@@ -277,6 +277,25 @@ securityLevel?: ("default" | "strict" | "loose" | "antiscript" | "sandbox")
  */
 startOnLoad?: boolean
 /**
+ * Plugin auto-discovery (D164, D165): before the first render, `mermaid` registers the
+ * plugins found in the app's own `node_modules`, by the Node/SSR scan or, in a bundled
+ * app, by `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.
+ * It does not cover the CDN `globalThis.mermaidPlugins` queue (D167): a script that
+ * pushes itself there always registers. Integrator-only: diagram text cannot set it.
+ * 
+ */
+discovery?: boolean
+/**
+ * CDN build only (D163): the URL first-party chunks (diagrams, their text entries, themes)
+ * load from. Default: the directory `mermaid.esm.min.mjs` was loaded from. A relative URL
+ * resolves against `document.baseURI`; query and hash are dropped. A base other than that
+ * directory loads a second copy of the shared core chunks and warns: to move the whole
+ * build, put `data-cdn-base` on the `mermaid.min.js` tag instead. Integrator-only: diagram
+ * text cannot set it, so no URL in a diagram ever leads to a load (R-PLUG-7).
+ * 
+ */
+cdnBase?: string
+/**
  * Controls whether or arrow markers in html code are absolute paths or anchors.
  * This matters if you are using base tag settings.
  * 

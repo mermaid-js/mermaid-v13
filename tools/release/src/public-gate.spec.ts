@@ -9,6 +9,7 @@ import type {
   DiagramResult,
   RendererRun,
 } from '../../../packages/bench/src/report.ts';
+import { LIMITS } from '../../../packages/bench/src/gates.ts';
 import { evaluatePublicGate } from './public-gate.ts';
 
 const KB = 1024;
@@ -93,10 +94,10 @@ describe('public alpha gate (R-REL-3: R-PERF-1…4)', () => {
     ]);
   });
 
-  it('refuses when the loaded size is over 80 KB (R-PERF-1)', () => {
+  it('refuses when the loaded size is over the budget (R-PERF-1)', () => {
     const outcome = input(
       passing((r) => {
-        r.renderers[0]!.size!.gzip = 82 * KB;
+        r.renderers[0]!.size!.gzip = LIMITS.loadedGzipBytes + 2 * KB;
       })
     );
     expect(outcome.allowed).toBe(false);
@@ -183,7 +184,7 @@ describe('public-gate CLI', () => {
   it('exits 1 and names the failing requirement', () => {
     const out = runCli(
       passing((r) => {
-        r.renderers[0]!.size!.gzip = 90 * KB;
+        r.renderers[0]!.size!.gzip = LIMITS.loadedGzipBytes + 10 * KB;
       })
     );
     expect(out.status).toBe(1);

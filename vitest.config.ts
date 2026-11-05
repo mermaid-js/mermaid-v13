@@ -14,6 +14,7 @@ export default defineConfig({
       // Unit tests of the Playwright helpers the v13 visual baseline uses (R-TEST-5).
       'e2e/helpers/mmd-snapshots.spec.ts',
       'e2e/helpers/argos-metadata.spec.ts',
+      'e2e/helpers/platform-harness.spec.ts',
     ],
     exclude: ['**/node_modules/**', '**/dist/**', 'tools/**/fixtures/**'],
   },

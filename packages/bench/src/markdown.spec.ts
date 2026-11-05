@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { evaluateGates } from './gates.ts';
 import { formatMarkdown } from './markdown.ts';
 import type { BenchReport, DiagramResult } from './report.ts';
+import { readSizeBudget } from './size-budget.ts';
 
 function ok(id: string, warmMs: number, stages?: DiagramResult['stages']): DiagramResult {
   return {
@@ -122,6 +123,29 @@ describe('markdown report', () => {
     expect(out).toMatch(/\| v13-base warm \| vs base \| pele warm \| vs pele \|$/m);
     const row = out.split('\n').find((l) => l.startsWith('| corpus/a'));
     expect(row).toMatch(/\| 0\.4 \| 2× \| 0\.1 \| 0\.5× \|$/);
+  });
+
+  it('prints the loaded size and the core static closure, each against the budget file', () => {
+    const withCore: BenchReport = {
+      ...report,
+      coreSize: { raw: 0, gzip: 75 * 1024, brotli: 0, source: 'static', files: [] },
+    };
+    const out = formatMarkdown(
+      withCore,
+      evaluateGates({ report: withCore, baseline: undefined, mode: 'report', corpusSize: 1 })
+    );
+    const { core, loaded } = readSizeBudget();
+    const kb = (b: number) => `${Math.round((b / 1024) * 10) / 10} KB`;
+    expect(out).toMatch(
+      new RegExp(
+        `\\| R-PERF-1 \\| Loaded size.*\\| 50 KB fetched by the runner for one flowchart render \\(limit ${kb(loaded.gzipBytes)}\\)`
+      )
+    );
+    expect(out).toMatch(
+      new RegExp(
+        `\\| R-PERF-8 \\| Core.*\\| 75 KB in 0 file\\(s\\), no diagram chunk \\(budget ${kb(core.gzipBytes)}\\)`
+      )
+    );
   });
 
   it('says the gates are only reporting while the pipeline is missing', () => {

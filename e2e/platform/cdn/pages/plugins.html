@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CDN: plugins before and after mermaid</title>
+  </head>
+  <body>
+    <pre class="mermaid">fixturebox before</pre>
+    <pre class="mermaid">
+flowchart LR
+  A --> B
+    </pre>
+    <!-- A plugin script placed before mermaid: the queue does not exist yet. -->
+    <script>
+      (globalThis.mermaidPlugins ??= []).push({
+        package: 'mermaid-fixture-diagram',
+        manifest: {
+          plugin: 'diagram',
+          id: 'fixturebox',
+          formats: ['svg'],
+          detector: './detector.js',
+          entry: './index.js',
+          export: 'fixturebox',
+        },
+        detector: (text) => /^\s*fixturebox\b/.test(text),
+        load: () => import('%CDN%/mermaid-fixture-diagram/index.js'),
+      });
+    </script>
+    <script src="%CDN%/mermaid/dist/mermaid.min.js"></script>
+    <!-- A plugin script placed after mermaid. -->
+    <script>
+      mermaid.initialize({ startOnLoad: true });
+      globalThis.mermaidPlugins.push({
+        package: 'mermaid-fixture-extension',
+        manifest: { plugin: 'extension', id: 'fixture-mark', entry: './index.js', export: 'fixtureMark' },
+        load: () => import('%CDN%/mermaid-fixture-extension/index.js'),
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "core": {
+    "description": "Fixture: a 70 KB core budget, below today's core, so the size check must fail.",
+    "entry": "packages/mermaid/src/index.ts",
+    "gzipBytes": 71680
+  },
+  "loaded": {
+    "description": "Fixture: unchanged loaded limit.",
+    "gzipBytes": 122880
+  }
+}
