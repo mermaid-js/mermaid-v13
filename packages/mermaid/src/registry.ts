@@ -169,6 +169,8 @@ export class Registry {
   private readonly loading = new Map<string, Promise<AnyPlugin>>();
   private readonly asciiHooks = new Map<string, AnyAsciiHook>();
   private readonly layoutLoaders = new Map<string, LayoutLoader['loader']>();
+  /** Whether any ELK name (`elk`, `elk.*`) has a registered loader. */
+  private elkRegistered = false;
   private readonly layouts = new Map<string, LayoutEngine>([['layered', layered]]);
 
   /** `firstParty`: the generated table, with loaders (`mermaid`) or without (`mermaid/slim`). */
@@ -374,6 +376,7 @@ export class Registry {
   registerLayouts(loaders: readonly LayoutLoader[]): void {
     for (const l of loaders) {
       this.layoutLoaders.set(l.name, l.loader);
+      if (isElkName(l.name)) this.elkRegistered = true;
       this.layouts.delete(l.name);
     }
   }
@@ -388,8 +391,7 @@ export class Registry {
     if (engine) return { engine, state: 'ready' };
     if (this.layoutLoaders.has(name)) return { engine: layered, state: 'missing' };
     if (builtIn(name)) return { engine: layered, state: 'ready' };
-    const elkInstalled = [...this.layoutLoaders.keys()].some(isElkName);
-    return { engine: layered, state: isElkName(name) && !elkInstalled ? 'elk' : 'unknown' };
+    return { engine: layered, state: isElkName(name) && !this.elkRegistered ? 'elk' : 'unknown' };
   }
 
   async loadLayout(name: string): Promise<void> {

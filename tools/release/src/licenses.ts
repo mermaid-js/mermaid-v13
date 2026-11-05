@@ -149,6 +149,7 @@ export function checkLicenses(root: string): string[] {
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
       private?: boolean;
       files?: string[];
+      dependencies?: Record<string, string>;
     };
     if (manifest.private) continue;
 
@@ -161,8 +162,14 @@ export function checkLicenses(root: string): string[] {
     }
 
     const notices = readFileSync(noticesPath, 'utf8');
-    // Notices may also cover third-party dependencies (layout-elk's elkjs), with no ported file.
-    const used = UPSTREAMS.filter((u) => derived.some((d) => d.upstream === u));
+    // Pele's text is required in every notices file, except one that only credits a runtime
+    // dependency (layout-elk's elkjs) in a package with no ported file.
+    const headings = new Set(notices.split('\n').map((l) => l.trim()));
+    const dependencyOnly =
+      derived.length === 0 && Object.keys(manifest.dependencies ?? {}).some((d) => headings.has(d));
+    const used = UPSTREAMS.filter(
+      (u) => (u.name === 'Pele' && !dependencyOnly) || derived.some((d) => d.upstream === u)
+    );
     for (const u of used)
       if (!notices.includes('MIT License') || !notices.includes(u.copyright))
         problems.push(`${pkg}/${NOTICES}: must contain the MIT License text with "${u.copyright}"`);

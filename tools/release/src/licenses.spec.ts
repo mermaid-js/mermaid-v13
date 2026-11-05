@@ -88,11 +88,27 @@ describe('license check (R-REL-4)', () => {
       'packages/layout/package.json': JSON.stringify({
         name: 'layout',
         files: ['dist', 'THIRD_PARTY_NOTICES'],
+        dependencies: { elkjs: '0.12.0' },
       }),
       'packages/layout/THIRD_PARTY_NOTICES': 'elkjs\n-----\nEPL-2.0 OR GPL-3.0-or-later\n',
       'packages/layout/src/a.ts': '// Our own code.\nexport {};\n',
     });
     expect(checkLicenses(root)).toEqual([]);
+  });
+
+  it('still requires the Pele text in notices that credit no runtime dependency', () => {
+    const root = workspace({
+      'packages/layout/package.json': JSON.stringify({
+        name: 'layout',
+        files: ['dist', 'THIRD_PARTY_NOTICES'],
+        dependencies: { elkjs: '0.12.0' },
+      }),
+      'packages/layout/THIRD_PARTY_NOTICES': 'Some notes\n',
+      'packages/layout/src/a.ts': '// Our own code.\nexport {};\n',
+    });
+    expect(checkLicenses(root)).toEqual([
+      'packages/layout/THIRD_PARTY_NOTICES: must contain the MIT License text with "Copyright (c) 2026 kepano"',
+    ]);
   });
 
   it('reports notice entries for files that no longer exist', () => {
