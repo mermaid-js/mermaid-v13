@@ -27,3 +27,8 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - Follow-up (not this spec): the `mermaid` CLI does not discover plugins.
 - Ancestor `node_modules` plugins are simply not found, no warning (D165 "never ancestors"); the ticket's "skipped with a warning" wording is read that way.
 - `scanPlugins`/`findAppRoot` (`mermaid/node-scan`) are async; T5 awaits them in its unplugin hooks. Layout manifests are skipped with a warning until #238 lands (hook in `scanOne`).
+
+## Cross-spec: #238 layout manifests (from #215, PR #255)
+
+- #238 is merged into `feature/215_feature-plugins`, not yet `mermaid-v13`. Final shape: `"mermaid": { "plugin": "layout", "names": [...] (never layered/dagre), "entry", "id"?, "export"?, "config"? }`; `ManifestPlugin` gains `config?: ConfigFragment`; `registerExternalDiagrams` registers each name lazily with one shared entry load (details: `v13/docs/agents/runs/215/tickets/238.md` on that branch).
+- [ ] Whichever of #218/#215 reaches `mermaid-v13` second adapts: the T1 seam's `layout` arm gains `config`, uses #238's entry resolution; T4 `scanOne` (hook comment), T5's generated module and T6's queue feed layout manifests. Our arm (`{kind:'layout', package, names, loader}`) is compatible; the change is additive.
