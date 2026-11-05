@@ -3,7 +3,11 @@
  * `globalThis.mermaid` at once, so v12's `<script src=".../mermaid.min.js">` followed by
  * `mermaid.initialize(…)` keeps working, and `import()`s `mermaid.esm.min.mjs` from its own
  * directory (or, for a bare package URL such as `https://unpkg.com/mermaid@13`, from its
- * `dist/`). Until that resolves, `globalThis.mermaid` is a stand-in with every method of the
+ * `dist/`). A `data-cdn-base` attribute on its tag (D163 as amended) moves the whole build: the
+ * ESM file loads from that base, so its default `cdnBase` (its own directory) is that base too,
+ * and the entry, the shared chunks and the lazy chunks all come from one place. The attribute is
+ * normalised like `cdnBase`: relative to `document.baseURI`, query and hash dropped, a trailing
+ * `/`. Until that resolves, `globalThis.mermaid` is a stand-in with every method of the
  * API: calls are recorded and replayed on the module strictly in call order (an async one
  * returns a promise of the real result); the synchronous ones that return a value
  * (`renderSync`, `detectType`, `supportsFormat`, `mount`) throw. Properties set on the
@@ -37,9 +41,24 @@ interface Call {
   readonly done?: { resolve(v: unknown): void; reject(e: unknown): void };
 }
 
-/** Where the ESM file is: beside this file, or in `dist/` under a bare package URL. */
-function esmUrl(src: string): string {
-  const url = new URL(src);
+/**
+ * Where the ESM file is: under `data-cdn-base` when the tag has one, else beside this file, or
+ * in `dist/` under a bare package URL.
+ */
+function esmUrl(tag: HTMLScriptElement): string {
+  const attr = tag.getAttribute('data-cdn-base');
+  if (attr !== null && attr.trim() !== '') {
+    try {
+      const base = new URL(attr, document.baseURI);
+      base.search = '';
+      base.hash = '';
+      if (!base.pathname.endsWith('/')) base.pathname += '/';
+      return new URL(ESM_FILE, base).href;
+    } catch (e) {
+      console.warn('mermaid: data-cdn-base ignored: not a URL', e);
+    }
+  }
+  const url = new URL(tag.src);
   if (!/\.[cm]?js$/.test(url.pathname)) url.pathname = url.pathname.replace(/\/?$/, '/dist/');
   return new URL(ESM_FILE, url).href;
 }
@@ -75,7 +94,7 @@ function replay(): void {
   }
 }
 
-import(esmUrl(script.src)).then(
+import(esmUrl(script)).then(
   (m: { default: Api }) => {
     real = m.default;
     replay();
