@@ -1,7 +1,8 @@
 /**
  * `default`: v12's classic lavender theme (`theme-default.js`).
  */
-import type { ThemeSpec } from '../spec.ts';
+import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
+import { pieSlots } from './palettes.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -9,7 +10,31 @@ import {
   CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
-import { PIE_DEFAULT } from './pie.ts';
+
+/**
+ * v12 `theme-default.js`: tertiary −40, secondary −30, tertiary −20, then hue turns. `pie3` and
+ * `pie6` are v12's values: v12 darkens its unrounded HSL tertiary colour, which lands a few steps
+ * off the hex one.
+ */
+const PIE_DEFAULT: ThemeRuleTable = {
+  ...pieSlots([
+    undefined,
+    undefined,
+    '#b5ff20',
+    undefined,
+    'darkenHsl(secondaryColor, 30%)',
+    '#d7ff86',
+    '#ff86ff',
+    '#20ffff',
+    '#ff2020',
+    '#ff20ff',
+    '#20ff8f',
+    '#ff5353',
+  ]),
+  // v12 titles and legends: `taskTextDarkColor` (or `mainContrastColor`).
+  pieTitleTextColor: 'black',
+  pieLegendTextColor: 'black',
+};
 
 const theme: ThemeSpec = {
   name: 'default',

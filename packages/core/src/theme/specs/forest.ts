@@ -1,7 +1,8 @@
 /**
  * `forest`: v12 `theme-forest.js`.
  */
-import type { ThemeSpec } from '../spec.ts';
+import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
+import { pieSlots } from './palettes.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -9,7 +10,22 @@ import {
   CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
-import { PIE_FOREST } from './pie.ts';
+
+/** v12 `theme-forest.js`: primary and secondary −30, then hue turns. */
+const PIE_FOREST: ThemeRuleTable = pieSlots([
+  undefined,
+  undefined,
+  undefined,
+  'darkenHsl(primaryColor, 30%)',
+  'darkenHsl(secondaryColor, 30%)',
+  '#33b42f',
+  '#70d990',
+  '#d99070',
+  '#98cde4',
+  '#1a6330',
+  '#63301a',
+  '#1a4d63',
+]);
 
 const theme: ThemeSpec = {
   name: 'forest',

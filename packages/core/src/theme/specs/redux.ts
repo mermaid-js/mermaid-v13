@@ -2,7 +2,8 @@
  * `redux`: the monochrome redux theme, from v12 `theme-redux.js`. Its tokens (stroke width 2, radius 12)
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
-import type { ThemeSpec } from '../spec.ts';
+import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
+import { pieSlots } from './palettes.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
@@ -11,7 +12,25 @@ import {
   TEXT_SIZES,
 } from './geometry.ts';
 import { REDUX_RULES } from './redux-rules.ts';
-import { PIE_REDUX } from './pie.ts';
+
+/**
+ * v12 `theme-redux.js` and `theme-neo.js`: base's formulas, applied before v12 settles the
+ * theme's own base colours, so every slot is its resolved value.
+ */
+export const PIE_REDUX: ThemeRuleTable = pieSlots([
+  '#ececfe',
+  '#e9e9f1',
+  '#ffffff',
+  '#bcbcfb',
+  '#cacadd',
+  '#fcfccf',
+  '#fbbcfb',
+  '#bcfbfb',
+  '#feecec',
+  '#f98bf9',
+  '#8bf9f9',
+  '#fbbcbc',
+]);
 
 const redux: ThemeSpec = {
   name: 'redux',

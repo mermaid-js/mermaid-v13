@@ -102,7 +102,7 @@ describe('createTheme: opacity (D221)', () => {
       ['0.25', 0.25],
       [0, 0],
       [1, 1],
-      [' .5 ', 0.5],
+      [' 0.5 ', 0.5],
       ['1.0', 1],
     ] as const) {
       const t = createTheme(base, { themeVariables: { pieOpacity: given } });
@@ -111,7 +111,7 @@ describe('createTheme: opacity (D221)', () => {
   });
 
   it('drops anything else with a warning and keeps the theme value', () => {
-    for (const given of [1.5, -0.1, '70%', '1.01', 'abc', 'var(--x)', Number.NaN, true]) {
+    for (const given of [1.5, -0.1, '70%', '1.01', '0.5px', '.5', 'abc', 'var(--x)', NaN, true]) {
       const warnings: ThemeWarning[] = [];
       const t = createTheme(base, {
         themeVariables: { pieOpacity: given },

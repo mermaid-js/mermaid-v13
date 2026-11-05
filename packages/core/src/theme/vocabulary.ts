@@ -165,6 +165,14 @@ const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): Them
   usedBy,
 });
 
+/**
+ * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
+ * in core's size budget (R-PERF-8).
+ */
+const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = Object.fromEntries(
+  Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, def(`pi${i + 1}`, 'color', ['pie'])])
+);
+
 /** The core inventory. Order is the order of the generated table. */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   // base
@@ -222,18 +230,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   altBackground: def('alb', 'color', ['state']),
   // pie chart (#325, v12 names): the slot colours `pie1`–`pie12`, texts, strokes and the slice
   // opacity, derived as each v12 theme derives them.
-  pie1: def('pi1', 'color', ['pie']),
-  pie2: def('pi2', 'color', ['pie']),
-  pie3: def('pi3', 'color', ['pie']),
-  pie4: def('pi4', 'color', ['pie']),
-  pie5: def('pi5', 'color', ['pie']),
-  pie6: def('pi6', 'color', ['pie']),
-  pie7: def('pi7', 'color', ['pie']),
-  pie8: def('pi8', 'color', ['pie']),
-  pie9: def('pi9', 'color', ['pie']),
-  pie10: def('pi10', 'color', ['pie']),
-  pie11: def('pi11', 'color', ['pie']),
-  pie12: def('pi12', 'color', ['pie']),
+  ...PIE_SLOTS,
   pieTitleTextSize: def('pits', 'length', ['pie']),
   pieTitleTextColor: def('pitc', 'color', ['pie']),
   pieSectionTextSize: def('piss', 'length', ['pie']),

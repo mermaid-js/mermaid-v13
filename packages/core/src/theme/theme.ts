@@ -157,8 +157,6 @@ interface Resolved {
 const RE_SIZE = /^(\d{1,6}(?:\.\d{1,6})?)(?:px)?$/;
 /** A multiple of the diagram's padding: `padding` or `<n> * padding`. */
 const RE_PADDING = /^(?:(\d{1,6}(?:\.\d{1,6})?)\s*\*\s*)?padding$/;
-/** An opacity (D221): a plain number from 0 to 1. */
-const RE_OPACITY = /^(?:0?\.\d{1,6}|[01](?:\.0{1,6})?)$/;
 const WEIGHTS = new Set([
   'normal',
   'bold',
@@ -204,7 +202,8 @@ function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
       return f === 'true' || f === 'false' ? f : undefined;
     }
     case 'opacity':
-      return RE_OPACITY.test(v) ? num(Number(v)) : undefined;
+      // A plain number from 0 to 1 (D221): `RE_SIZE` without its `px`.
+      return RE_SIZE.test(v) && +v <= 1 ? v : undefined;
   }
 }
 

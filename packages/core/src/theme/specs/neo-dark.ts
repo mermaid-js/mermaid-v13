@@ -17,7 +17,7 @@ import {
   TEXT_SIZES,
 } from './geometry.ts';
 import { REDUX_RULES } from './redux-rules.ts';
-import { PIE_REDUX_DARK } from './pie.ts';
+import { PIE_REDUX_DARK } from './redux-dark-values.ts';
 
 const neoDark: ThemeSpec = {
   name: 'neo-dark',

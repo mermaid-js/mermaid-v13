@@ -57,8 +57,8 @@ export const LIGHT_RULES: ThemeRuleTable = {
   erEdgeLabelBackground: 'edgeLabelBackground',
   erMarkerFill: '#ffffff',
   // Pie slots (#325), as v12 theme-base derives them: the base colours, then khroma `darken`
-  // by 10. The DSL has no hue turn, so 7-12 are base's resolved v12 values. The other themes
-  // replace them with their own (`specs/pie.ts`).
+  // by 10. The DSL has no hue turn, so 7-12 are base's resolved v12 values; the other themes
+  // set their own (`pieSlots` in their specs).
   pie1: 'primaryColor',
   pie2: 'secondaryColor',
   pie3: 'tertiaryColor',

@@ -15,7 +15,7 @@ import {
   TEXT_SIZES,
 } from './geometry.ts';
 import { REDUX_RULES } from './redux-rules.ts';
-import { PIE_REDUX } from './pie.ts';
+import { PIE_REDUX } from './redux.ts';
 
 const neo: ThemeSpec = {
   name: 'neo',
