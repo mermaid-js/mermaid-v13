@@ -291,6 +291,22 @@ function checkExtension(value: unknown): ExtensionPlugin {
   return p;
 }
 
+/**
+ * A layout loader's extension (D174) runs only on renders that layout draws, which is known only
+ * once the config is resolved: after parse claims are read and while inline providers and
+ * resources are gathered for every render. So it may have hooks and a config fragment, never
+ * those (DESIGN §12.2).
+ */
+function checkLayoutExtension(value: unknown): ExtensionPlugin {
+  const p = checkExtension(value);
+  for (const key of ['claims', 'inline', 'resources'] as const)
+    if (p[key] !== undefined)
+      throw new TypeError(
+        `A layout extension "${p.id}" must not have "${key}": register it with registerExternalDiagrams`
+      );
+  return p;
+}
+
 /** Package-name order, by code unit so it is the same in every locale (R-ARCH-6). */
 function byPackage(a: { readonly package: string }, b: { readonly package: string }): number {
   if (a.package === b.package) return 0;
@@ -750,9 +766,9 @@ export class Registry {
     known: Set<string>,
     skip: (pkg: string, reason: string) => void
   ): void {
-    for (const f of new Set(loaders.flatMap((l) => (l.config === undefined ? [] : [l.config]))))
-      checkFragment(f, THEME_NAMES);
-    for (const l of loaders) if (l.extension !== undefined) checkExtension(l.extension);
+    const own = loaders.flatMap((l) => [l.config, l.extension?.config]);
+    for (const f of new Set(own)) if (f !== undefined) checkFragment(f, THEME_NAMES);
+    for (const l of loaders) if (l.extension !== undefined) checkLayoutExtension(l.extension);
     for (const { name, loader, config, extension } of loaders) {
       const key = `${pkg}\0layout\0${String(name)}`;
       let reason: string | undefined;
@@ -768,6 +784,7 @@ export class Registry {
       }
       known.add(key);
       if (config !== undefined) this.addFragment(config);
+      if (extension?.config !== undefined) this.addFragment(extension.config);
       if (owner) skip(owner.package, `layout "${name}" belongs to "${pkg}"`);
       this.discoveredLayouts = [
         ...this.discoveredLayouts.filter((d) => d !== owner),
@@ -788,8 +805,10 @@ export class Registry {
    * Returns whether any brought an extension.
    */
   registerLayouts(loaders: readonly LayoutLoader[]): boolean {
-    for (const l of loaders) if (l.extension !== undefined) checkExtension(l.extension);
+    for (const l of loaders) if (l.extension !== undefined) checkLayoutExtension(l.extension);
     for (const l of loaders) if (l.config !== undefined) this.addFragment(l.config);
+    for (const l of loaders)
+      if (l.extension?.config !== undefined) this.addFragment(l.extension.config);
     for (const l of loaders) {
       this.layoutLoaders.set(l.name, l.loader);
       if (l.extension !== undefined) this.layoutExtensions.set(l.name, l.extension);

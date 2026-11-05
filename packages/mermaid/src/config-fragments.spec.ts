@@ -309,4 +309,42 @@ describe('layout manifests (D177, DESIGN §12.1)', () => {
       createMermaid().registerExternalDiagrams([{ manifest, load: def.load, extension: marker() }])
     ).rejects.toThrow(/extension but no "config" module/);
   });
+
+  // DESIGN §12.2: a layout's extension runs only on renders it lays out, so it may not bring
+  // what is decided before the layout is known (parse claims, inline boxes, resources).
+  it.each(['inline', 'resources', 'claims'])(
+    'refuses `%s` on a layout extension, in every registration path',
+    async (key) => {
+      const ext = { ...marker(), [key]: [] } as ExtensionPlugin;
+      const message = new RegExp(`layout extension "grid-hooks" must not have "${key}"`);
+      const loader = () => Promise.resolve(layered);
+      expect(() =>
+        createMermaid().registerLayoutLoaders([{ name: 'grid', loader, extension: ext }])
+      ).toThrow(TypeError);
+      expect(() =>
+        createMermaid().registerLayoutLoaders([{ name: 'grid', loader, extension: ext }])
+      ).toThrow(message);
+      const { def } = gridPackage(['grid']);
+      await expect(
+        createMermaid().registerExternalDiagrams([{ ...def, extension: ext }])
+      ).rejects.toThrow(message);
+    }
+  );
+
+  it('adds a layout extension’s config fragment with the layout', async () => {
+    const own: ConfigFragment = { id: 'grid-hooks', keys: { hooks: { on: 0 } }, defaults: {} };
+    const m = createMermaid();
+    m.registerLayoutLoaders([
+      {
+        name: 'grid',
+        loader: () => Promise.resolve(layered),
+        extension: { ...marker(), config: own },
+      },
+    ]);
+    const r = await m.render(
+      'a',
+      `---\nconfig:\n  layout: grid\n  hooks:\n    on: 1\n---\n${FLOW}`
+    );
+    expect(codes(r.warnings)).not.toContain('CONFIG_UNKNOWN_KEY');
+  });
 });

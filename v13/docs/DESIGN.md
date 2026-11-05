@@ -662,7 +662,7 @@ interface ExtensionPlugin {
   inline?: InlineProvider[];                                   // M3.5 (D177): boxes for delimited label spans (§5.3)
   resources?: {                                                // M3.5 (D178): what it loads lazily (R-API-2)
     provides: Resource[];                                      // preload({ math: true }) loads those of kind 'math'
-    missing(parse: ParseResult, req: { config, format }): Resource[];   // sync; prepare loads them, renderSync throws
+    missing(parse: ParseResult, req: { config, format, labels? }): Resource[];   // sync; prepare loads them, renderSync throws; labels(): the label texts (DiagramPlugin.labels)
     load(r: Resource): Promise<void>;
   };
   config?: ConfigFragment;                                     // M3.5 (D153): its own config keys (§12.1)
@@ -678,6 +678,7 @@ type InlineBox = { width: number; height: number; baseline: number; node: SvgFra
 - `postLayout` hooks that only understand graphs act on `kind: 'graph'` and pass other layouts through unchanged. A hook written for one diagram type checks `diagram`. The runner rejects a hook result whose `kind` differs from its input.
 - `postRender` runs on the compact tree; core then re-checks the allow-list, so a hook can't introduce `<script>`, `on*` or unsafe URLs (R-SEC-2).
 - `afterMount` exists only in `mermaid`'s DOM adapter (`run`, `mount`, `bindFunctions`). Core never calls DOM code.
+- A layout loader's extension (`LayoutLoader.extension`, D174, or a layout manifest's `config` module's `extension` export) runs only on SVG renders that layout draws. Which layout draws a render is known only once its config is resolved, after parse claims are read, and inline providers and resources are gathered for every render, so registration refuses such an extension with `claims`, `inline` or `resources` (`TypeError`): register those with `registerExternalDiagrams`. Its `config` fragment joins with the layout's.
 - Inline providers (D177) are registered with the extension, synchronously, and run during label layout, so `box` is synchronous. An engine that loads lazily (math, D178) is a resource its extension asks `prepare()` for; until it has loaded the provider returns `undefined`. The first registered provider of a delimiter wins. The runner checks each box (finite sizes, a fragment node) and reports a throwing provider as `MermaidError('INTERNAL')` naming the extension, as for hooks.
 - As built in M1: hooks get `HookContext` = the frozen `RenderContext` plus `diagram` (the plugin id) and `state`, the extension's own scratch object for that render, which `afterMount(el, result, state)` also gets (how `postParse` hands click callbacks to `afterMount`). Core's `HookRunner` runs the hooks; `RenderResult.bindFunctions` is set when an extension has `afterMount` and is the adapter's entry point. A failing hook, a changed `kind` or an allow-list failure after `postRender` rejects with `MermaidError('INTERNAL')` naming the extension.
 
