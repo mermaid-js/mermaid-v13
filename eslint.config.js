@@ -200,6 +200,7 @@ export default tseslint.config(
       'packages/diagram-class/src/v12-specs/**',
       'packages/diagram-er/src/v12-specs/**',
       'packages/diagram-state/src/v12-specs/**',
+      'packages/diagram-journey/src/v12-specs/*.spec.ts',
     ],
     rules: {
       '@eslint-community/eslint-comments/disable-enable-pair': 'off',

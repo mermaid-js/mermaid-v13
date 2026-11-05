@@ -1,7 +1,7 @@
 /**
  * The journey corpora: the e2e fixtures and harvested v12 spec strings, and the lexer gate's
- * set, which adds line-separator, edge and code-unit cases and a commented and a CRLF copy of
- * every source.
+ * set, which adds line-separator, edge, parser (#302) and code-unit cases and a commented and a
+ * CRLF copy of every source. The parity, grammar and layout specs of #302 run on it too.
  */
 // cspell:words JOURNEY accdescr
 import { readFileSync } from 'node:fs';
@@ -103,6 +103,61 @@ const EDGE_CASES: CorpusItem[] = [
 ].map((source, k) => ({ id: `edge case ${k}`, source }));
 
 /**
+ * Parser cases (#302): the model conversions of v12's grammar actions and DB (scores, people,
+ * sections, titles, accessibility values), statements without separators, and errors, one or
+ * more per source. Also in the lexer gate.
+ */
+const PARSER_CASES: CorpusItem[] = [
+  // Scores: `Number()` of the first piece.
+  'journey\nA: 0\nB:  \nC: 0x10\nD: 2rem\nE: -2\nF: 2.5\nG: 1e1\nH: Infinity\nI: 0b11\nJ: 5 5',
+  'journey\nA: 7: X\nB: +3: Y\nC: .5\nD: 00012\nE: 5 %% c',
+  // People: the second piece split on `,` and trimmed; `''` kept; later pieces dropped.
+  'journey\nA: 5:\nB: 5: ,\nC: 5: x,,y\nD: 5:  b , a ,b\nE: 5: a: b: c\nF: 5::x',
+  'journey\nA: 1: Zed, zed, Äb, 10, 9, _x\nB: 2: zed',
+  'journey\nA: 1: x #amp; y, z\nsection #quot;S#quot;\n#lt;b#gt;: 2: y',
+  // Sections: every line kept, empty and repeated ones too; tasks before the first.
+  'journey\nT0: 1\nsection A\nsection A\nT1: 2\nsection B\nsection A\nT2: 3\nsection C',
+  'journey\nsection  A \nT: 1\nsection A\nU: 2',
+  'journey\nsection A@2\nsection A\nT: 1\nsection A%>#x\nU: 2',
+  // Titles and accessibility values: the last wins; values trimmed.
+  'journey\ntitle  a  \ntitle b: c\naccTitle:  x  \naccTitle: y\naccDescr: p  \naccDescr:  q',
+  'journey\naccDescr {\n   line one\n     line two\n\n  three  }\nT: 1',
+  'journey\naccDescr { one }accDescr: two\naccTitle: t',
+  'journey\naccDescr: one\naccDescr {\ntwo\n}',
+  // Statements need no separator.
+  'journey title t\nT: 1',
+  'journey\naccDescr { d }title t\naccDescr {x}section S\naccDescr {y}T: 1: A',
+  // Front matter and directives.
+  '---\ntitle: Front\n---\njourney\nT: 1',
+  '---\ntitle: Front\n---\njourney\ntitle In text\nT: 1',
+  '---\nconfig:\n  journey:\n    leftMargin: 10\n---\njourney\nT: 1',
+  // Errors (rejected by both), one or several per source.
+  'journey\nMake tea',
+  'journey\nMake tea:\nGo: 5',
+  'journey\nsection A: b\nT: 1',
+  'journey\n: 5\nT: 1',
+  'journey\nT: 5; U: 4',
+  'journey\njourney\nT: 1',
+  'journey\nA\nB: 1\nC\n;\nD: 2',
+  'journey\ntitle\n',
+  'journey\nT: 1\naccTitle:  ',
+  'journey\nT: 1\naccDescr:\n\n',
+  'journey\nT: 1\naccDescr {\n  never closed',
+  'journey\naccDescr {\n%% c\n',
+  'journey\nMake tea # c: 5',
+  'journey\nTask:%% x\nU: 1',
+].map((source, k) => ({ id: `parser case ${k}`, source }));
+
+/**
+ * Actors whose names hold `#…;` entities: v12 sorted them by its entity placeholders
+ * (`ﬂ°lt¶ß`), v13 by the names as written (a listed divergence, `divergences.json`).
+ */
+const ENTITY_ACTORS: CorpusItem = {
+  id: 'parser case entity actors',
+  source: 'journey\nA: 1: #lt;b#gt;, b, #35;1',
+};
+
+/**
  * Every UTF-16 code unit at the start and in the middle of a task name, in a task's data, and
  * in a section name. `{`, `}` are left out of the middle of an accessibility description;
  * jison never stops on journey text, so one source per position holds them all.
@@ -158,11 +213,25 @@ export async function journeyCorpus(): Promise<CorpusItem[]> {
 
 /** The lexer gate's set: the corpus and the cases above, each also commented and with CRLF. */
 export async function journeyGateCorpus(): Promise<CorpusItem[]> {
-  const all = [...(await journeyCorpus()), ...LINE_SEPARATORS, ...EDGE_CASES];
+  const all = [
+    ...(await journeyCorpus()),
+    ...LINE_SEPARATORS,
+    ...EDGE_CASES,
+    ...PARSER_CASES,
+    ENTITY_ACTORS,
+  ];
   return [
     ...all,
     ...all.map((item) => ({ id: `${item.id} (commented)`, source: commented(item.source) })),
     ...all.map((item) => ({ id: `${item.id} (CRLF)`, source: item.source.replace(/\n/g, '\r\n') })),
     ...everyCodeUnit(),
   ];
+}
+
+/**
+ * The gate's set without the every-code-unit sources, for the grammar file's dev-only lexer and
+ * reference parser (the hand-written lexer is gated on those, `lexer-parity.spec.ts`).
+ */
+export async function journeyGrammarCorpus(): Promise<CorpusItem[]> {
+  return (await journeyGateCorpus()).filter((item) => !item.id.startsWith('code units'));
 }

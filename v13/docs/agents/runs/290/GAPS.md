@@ -6,6 +6,7 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 
 - `JourneyModel` (`packages/diagram-journey/src/model.ts`) is landed by T3 #303, which starts first on hand-built models, with the exact shape in the spec's "Parser (T1, T2)" section. T2 #302 produces it and owns any change; a change goes here first.
 - Landed by #303 with the spec's fields plus AST ids: `sections: { ast, name }[]` (`s:<name>`, `s:<name>@2`), `tasks: { ast, name, score, people, section, sectionIndex? }[]` (`t:<n>` from 1), `actors`, `title?`, `accTitle`, `accDescr`, `warnings`. `sectionIndex` (index into `sections` of the line the task follows, undefined before the first) is additive: with repeated names, `section` alone cannot give a band its AST id. T2 fills it.
+- T2 #302: produced unchanged (no field added). Section ids percent-encode `%`, `>`, `@`, `#` (core `AstIds`), so `s:<name>` is the raw name only when it holds none of them; the layout reads ids from `sections[sectionIndex]`, never builds them.
 
 ## Spec errata (found in exploration, source wins)
 
@@ -32,13 +33,20 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 - Decided in T1: `journey`'s `\b` reads ASCII word characters only (no `u` flag), checked over every code unit.
 - In every state some jison rule matches (`.` takes the `;`), so v12 never throws on journey text and v13 writes no `Error` token.
 
-## #302 T2 grammar, parser, model, AST
+## #302 T2 grammar, parser, model, AST (merged)
 
-- Decided by the coordinator: text ending inside an accessibility value is rejected, as v12 rejects it (accept/reject parity, P2), with a message that names no token.
+- Decided by the coordinator: text ending inside an accessibility value is rejected, as v12 rejects it (accept/reject parity, P2), with a message that names no token. Done: `MISSING_ACC_TITLE` / `MISSING_ACC_DESCR` on the keyword (`accTitle:` or `accDescr:` with nothing after it before the end), `UNCLOSED_DESCRIPTION` on an `accDescr {` with no `}`; one diagnostic each.
+- `JourneyModel` adopted unchanged (`sectionIndex` filled for every task after a section line, absent before the first).
+- Decided in T2: actor mentions are AST nodes `a:<name>`, then `a:<name>@2`, `@3`, … over the whole text (as `n:A@2`), children of their task; the `''` actor has none (it draws nothing). The header, `title`, `accTitle` and `accDescr` are `st:1`, `st:2`, … in source order. Repeated titles and descriptions keep a node each; the model keeps the last. **For T5:** T4's renderer gives task dots no `data-ast`, so the AST round-trip (one `data-ast` per node, pitfall 12) needs `data-ast` on each named mention's dot (`render/`), or a rule that skips `Actor` nodes.
+- Decided in T2: listed divergence (`divergences.json`, 2 entries): actor names holding `#…;` entities sort by the names as written (`&lt;b&gt;` before `b`); v12 sorted its placeholder `ﬂ°lt¶ß` after plain names. Changes only the legend order and colour slots of such names. MIGRATION row for T5.
+- Decided in T2: `detectJourney(src, pre?)` in `src/parser/detect.ts` reads the text as v12's detector did (after front matter, directives, comments) for the conformance adapter; `plugin.ts` keeps its own regex (it gets cleaned text), unchanged but for `parse`.
+- Decided in T2: `src/layout/fixtures.ts` builds the corpus fixtures by parsing copies of the 18 `.mmd` texts (a diagram package reads no files), named by file except `working-day` (`default-theme.mmd` without its accessibility lines, as T4's root specs assume), `eight-sections`, `e-commerce`, `legend-long-labels`; the hand-built edge cases stay. `packages/conformance/src/journey/layout-corpus.spec.ts` runs the invariants on the files themselves and the gate corpus. `fixtures.ts` is now left out of `tsconfig.build.json` (it shipped in `dist` before).
+- Shared edit: `tools/gen-grammar/src/mapped-text.ts` appends with a loop instead of `push(...xs)` (journey's gate corpus has 200 000-character sources, over the argument limit). Behaviour unchanged.
+- No probe mode yet (T6 #331): the parser reads through a `TokenCursor`, so a `ProbeCursor` drops in.
 
 ## #303 T3 layout (merged)
 
-- Unmet until T2 merges: the invariants run on hand-built fixtures (`src/layout/fixtures.ts`, one per corpus model plus edge cases); T2 swaps `FIXTURES` for parser output on the `.mmd` files.
+- Closed by T2 #302: the invariants run on parser output (`FIXTURES` from the `.mmd` texts; conformance `journey/layout-corpus.spec.ts` on the files and the gate corpus). Was: hand-built fixtures until T2 merges.
 - Decided in T3: D242's margin is `max(leftMargin, 40 + 2·boxTextMargin + widest legend line + 2·boxTextMargin)`: v12's 150 whenever the legend fits (so v12 positions hold at default config), growing by the overflow only when it does not (no threshold jump), with a gap after the legend equal to its text inset.
 - Decided in T3: legend label at x `40 + 2 × boxTextMargin` (v12's tspan, 50 at default), first baseline 7 below its dot. Legend font is the theme `fontFamily`/`fontSize` (v12 `.legend`). A row advances by `max(20, room for its dot and label)`: one-line rows keep v12's 20, wrapped rows step by core's line height instead of 20 per line. `<br>` breaks in the legend too (v12 replaced it with a space; D225).
 - Decided in T3: task names wrap to `width`, section names to their band, legend names to `maxLabelWidth`; the title does not wrap (breaks at `<br>` only). A label taller than `height` grows its task box or band downward (top, task dots and faces stay); a band grown past 60 px reaches the task row, and a task grown past 90 px reaches the activity line, neither moved. Section names use the task font (v12 drew both in `taskFontSize`/`taskFontFamily`).
@@ -68,10 +76,11 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 
 ## #327 T5 integration
 
+- Coordinator: T5 gives each task dot the `data-ast` of its actor-mention node (`a:<name>`, `a:<name>@2`, from T2's AST; the `''` actor has no node and draws no dot), so the AST round-trip has one element per node; legend entries keep `data-id` only. MIGRATION row for the entity actor sort (T2 divergence).
 - Decided in T5: `fillType0`–`fillType7` are literal values per theme spec (`fillTypes()` in `core/src/theme/specs/palettes.ts`), equal to v12 12.2.0's resolved values (checked against the oracle by `packages/conformance/src/journey/theme.spec.ts`). `base` may carry no values or rules (R-THEME-5 spec), so its fills are the shared light/dark rules: `fillType0`/`fillType1` follow `primaryColor`/`secondaryColor` (as v12, also with custom values), `fillType2`–`7` are base's v12 literals. No other theme re-derives from a custom `primaryColor` (MIGRATION "User journey / Themes").
 - Decided in T5: `faceColor` is the shared rule `#fff8dc` (v12's `.face` fallback). `actor0`–`actor5` have no value in any theme and resolve to `currentColor`; `themes.spec.ts` lists them as author-only instead of requiring a safe literal, and the neo/neo-dark v12 comparisons list all seven as decided differences (v12 leaves them unset).
 - Decided in T5: vocabulary aliases `jf0`–`jf7`, `jfc`, `ja0`–`ja5`; the fifteen rows are built in a loop and the fills are a space-separated string, to keep the always-loaded core small.
-- Decided in T5: config defaults carry no `sectionColours`, `taskFontSize`, `taskFontFamily` or `titleFontFamily` (schema defaults removed with "default changes" reasons; `titleFontFamily` left `required`); `titleColor` keeps `''` (unset → `textColor`). `useWidth` ignored, `useMaxWidth` honoured, both re-declared. `journey` joins `SECTION_OWNERS`; the plugin carries `configDefaults`.
+- Decided in T5: config defaults carry no `sectionColours`, `taskFontSize`, `taskFontFamily` or `titleFontFamily` (schema defaults removed with "default changes" reasons; `titleFontFamily` dropped from `required`); `titleColor` keeps `''` (unset → `textColor`). `useWidth` ignored, `useMaxWidth` honoured, both re-declared. `journey` joins `SECTION_OWNERS`; the plugin carries `configDefaults`.
 - **For the maintainer: core budget.** The CDN ESM closure (`cdn-build.spec.ts`, budget 90112 B gz) went from about 89.7 KB to 90.0 KB: about 300 B is the fifteen variables and the fill values in `redux`/`redux-color`/the shared rules, the rest is esbuild re-splitting shared chunks once a new lazy entry imports a different subset of core (`limits` and `layout/layered` became their own chunks). About 100 B headroom remain; the other wave-1 ports will add rows of their own.
 - Unmet until T6 #331: the manifest has no `language` entry (no `./language` export yet); `cdn-build.spec.ts` now expects a language chunk only for packages that export one.
 
