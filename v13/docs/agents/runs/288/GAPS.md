@@ -28,6 +28,17 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - Closed by #306 (`packages/conformance/src/pie/render.spec.ts`): a `Slice` node that is a model section has exactly one `data-ast` element (its legend row); one with no section (repeat or negative) has none, and must carry a `PIE_DUPLICATE_SLICE`/`PIE_NEGATIVE_VALUE` diagnostic inside its range; header, title and accessibility nodes have no element, as in sequence.
 - [ ] **#325:** `getConfig` ported spec is skipped (no DB config) until the config keys are honoured.
 
+## #306 T4 renderer (merged)
+
+- [ ] **#325:** delete the colour stand-ins in `packages/diagram-pie/src/render/paint.ts` (`pie1`…`pie12` = v12 `default` values in every theme; `pieStrokeColor`/`pieOuterStrokeColor` `black`; title/section/legend text colours = `textColor`; `pieOpacity` 0.7) once the vocabulary has the names. The renderer already prefers a vocabulary entry.
+- [ ] **#325:** replace the eager `registerExternalDiagrams([pie], …)` in `packages/conformance/src/pie/render-api.ts` with the generated registry once the manifest lands.
+- Deviations (orchestrator: accepted; listed for the maintainer):
+  - `data-id` on each slice, percentage and legend row is the section's AST id (`slice:<label>`), as pie has no user ids;
+  - under `hover`, every slice keeps v12's `highlightedOnHover` class, so host CSS can still add a hover (D222 draws nothing extra);
+  - slice AST ids also percent-encode characters XML 1.0 cannot hold (`\0` → `%00`, a lone surrogate → `%D800`), so `data-ast` matches the id;
+  - the highlighted slice is written `scale(1.05,1.05)` (core's helper), the same as D222's `scale(1.05)`.
+- Shared edit: `pie` added to `textColor`'s `usedBy`.
+
 ## #307 T6 language facet (merged)
 
 - [ ] **#325:** drop the pie row in `packages/language-service/src/testing/unlisted-facets.ts` once the manifest has `language` (`goldens.spec.ts` fails until then); drop the eager row in `packages/conformance/src/pie/service-symbols.spec.ts` (its last test fails until then); add the `LEZER_HIGHLIGHTERS` / `MONARCH_HIGHLIGHTERS` rows, run each adapter's `gen`, extend `adapters-agree.spec.ts` and the first-paint e2e specs (`language.md` step 9). Goldens stay in `packages/language-service/goldens/pie/`.
