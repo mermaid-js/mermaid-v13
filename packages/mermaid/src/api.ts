@@ -904,7 +904,7 @@ export function createMermaid(
     onFirstUse(source) {
       if (firstUse || ready) throw new Error('A first-use discovery source is already set');
       firstUse = async () => {
-        const list = await source(site.config);
+        const list = await source(site.config, (w) => void skipped.push(w));
         await addDiscovered(list);
       };
     },
@@ -914,14 +914,19 @@ export function createMermaid(
 
 export type Mermaid = ReturnType<typeof createMermaid>;
 
+/**
+ * A first-use discovery source (see discovery.ts): gets the `initialize()` config and `warn`,
+ * which queues a warning for the first render (a package the scan skipped).
+ */
+export type FirstUseSource = (
+  config: Readonly<Record<string, unknown>>,
+  warn: (warning: Warning) => void
+) => readonly DiscoveredPlugin[] | Promise<readonly DiscoveredPlugin[]>;
+
 /** The discovered-list seam of one API object (see discovery.ts). */
 interface Seam {
   add(list: readonly DiscoveredPlugin[]): Promise<readonly Warning[]>;
-  onFirstUse(
-    source: (
-      config: Readonly<Record<string, unknown>>
-    ) => readonly DiscoveredPlugin[] | Promise<readonly DiscoveredPlugin[]>
-  ): void;
+  onFirstUse(source: FirstUseSource): void;
 }
 
 const seams = new WeakMap<object, Seam>();

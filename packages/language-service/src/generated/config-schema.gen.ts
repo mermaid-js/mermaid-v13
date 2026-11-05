@@ -896,6 +896,15 @@ export const configSchema: ConfigSchema = {
         "reason": "As in v12, the browser build runs `run()` on `window` load unless `initialize()` turns this off."
       }
     },
+    "discovery": {
+      "description": "Node and SSR plugin auto-discovery (D165): before the first render, `mermaid` registers\nthe plugins in the app's own `node_modules`. Set `false` to turn it off. Integrator-only:\ndiagram text cannot set it.\n",
+      "type": "boolean",
+      "x-mermaid": {
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "New in v13. Integrator-only (`initialize()`); no default, so discovery is on unless this is `false`. Read once, at the first `prepare`, `render`, `parse` or `preload`."
+      }
+    },
     "arrowMarkerAbsolute": {
       "description": "Controls whether or arrow markers in html code are absolute paths or anchors.\nThis matters if you are using base tag settings.\n",
       "type": "boolean",
