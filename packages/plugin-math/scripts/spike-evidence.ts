@@ -13,7 +13,7 @@ import { chromium, firefox, webkit, type Page } from '@playwright/test';
 import { build, type Plugin } from 'esbuild';
 import type { LiteElement } from '@mathjax/src/js/adaptors/lite/Element.js';
 import { streamWriter, type SvgWriter } from '@mermaid-js/core/svg';
-import type { MathBox, MathFragment } from '../src/engine.ts';
+import type { InlineBox, SvgFragment } from '@mermaid-js/core/text';
 import { corpus, extra } from './corpus.ts';
 
 // Timed first, so that nothing else has loaded MathJax yet.
@@ -44,7 +44,7 @@ const texDefaultFont: Plugin = {
 };
 const out = (line: unknown) => process.stdout.write(`${JSON.stringify(line)}\n`);
 
-function write(w: SvgWriter, node: MathFragment): void {
+function write(w: SvgWriter, node: SvgFragment): void {
   if (!node.children?.length) return w.leaf(node.tag, node.attrs);
   w.open(node.tag, node.attrs);
   for (const child of node.children) {
@@ -55,7 +55,7 @@ function write(w: SvgWriter, node: MathFragment): void {
 }
 
 /** The box as a standalone SVG document, through core's writer. */
-function svgDocument(box: MathBox): string {
+function svgDocument(box: InlineBox): string {
   const w = streamWriter();
   w.open('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: [0, 0, box.width, box.height] });
   write(w, box.node);

@@ -28,31 +28,11 @@ import { MathJaxTexFont } from '@mathjax/mathjax-tex-font/js/svg.js';
 import {
   checkColor,
   pathBuilder,
-  type AllowedTag,
   type Attrs,
   type Paint,
   type PathBuilder,
 } from '@mermaid-js/core/svg';
-
-/**
- * A detached piece of markup: the shape of core's `SvgFragment` (#237), which this branch
- * does not have yet. M2 uses core's type.
- */
-export interface MathFragment {
-  readonly tag: AllowedTag;
-  readonly attrs?: Attrs;
-  readonly children?: readonly (MathFragment | string)[];
-}
-
-/** A typeset formula: the shape of core's `InlineBox` (#237). Lengths are px. */
-export interface MathBox {
-  readonly width: number;
-  readonly height: number;
-  /** Distance from the top of the box to the math baseline. */
-  readonly baseline: number;
-  /** Drawn with the box's top-left corner at (0,0), y down. */
-  readonly node: MathFragment;
-}
+import type { InlineBox, SvgFragment } from '@mermaid-js/core/text';
 
 export interface TypesetOptions {
   /** One ex of the label font, in px. The math's x-height is matched to it, as MathJax does. */
@@ -682,7 +662,7 @@ interface State {
 
 interface Walk {
   readonly adaptor: LiteAdaptor;
-  readonly out: MathFragment[];
+  readonly out: SvgFragment[];
 }
 
 function walkNode(walk: Walk, node: LiteElement, parent: State): void {
@@ -867,7 +847,7 @@ function ellipseLeaf(leaf: Leaf): void {
 }
 
 /** A character the TeX font lacks: MathJax leaves it as text, drawn in the label's font. */
-function textLeaf(leaf: Leaf, text: string): MathFragment {
+function textLeaf(leaf: Leaf, text: string): SvgFragment {
   const { attrs, m, k, fill } = leaf;
   if (k === undefined) throw new MathError('Refused text under an uneven transform');
   const [x, y] = apply(m, number(attrs, 'x'), number(attrs, 'y'));
@@ -889,7 +869,7 @@ const RE_VIEWBOX = /^\s*(-?[\d.]+)\s+(-?[\d.]+)\s+([\d.]+)\s+([\d.]+)\s*$/;
  * MathJax, its TeX packages and the TeX font all load with this module. Throws `MathError`
  * for TeX that does not parse and for output outside the allow-list.
  */
-export function typeset(tex: string, options: TypesetOptions): MathBox {
+export function typeset(tex: string, options: TypesetOptions): InlineBox {
   const { ex } = options;
   if (!(ex > 0) || !Number.isFinite(ex)) throw new RangeError('ex must be a positive number');
   const em = options.em ?? 2 * ex;
