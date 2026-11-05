@@ -1,0 +1,30 @@
+{
+  "name": "@mermaid-js/layout-elk",
+  "version": "13.0.0-alpha.0",
+  "private": true,
+  "description": "ELK layout for Mermaid v13 (spike E1 #239: synchronous elkjs call; package wiring is E2 #240).",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/layout-elk"
+  },
+  "sideEffects": false,
+  "exports": {
+    "./sync": {
+      "mermaid-source": "./src/sync.ts",
+      "types": "./dist/sync.d.ts",
+      "default": "./dist/sync.js"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "elkjs": "0.12.0"
+  }
+}
