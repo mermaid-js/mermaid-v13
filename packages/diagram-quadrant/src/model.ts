@@ -15,6 +15,8 @@
  * - every style value has passed v12's checks (`radius` `^\d+$`, colours
  *   `^#?([\dA-Fa-f]{6}|[\dA-Fa-f]{3})$`, `stroke-width` `^\d+px$`); a bad one is a diagnostic,
  *   not a model value;
+ * - an overridden statement (a repeated `quadrant-N`, `title` or axis) draws nothing, so it has
+ *   no slot here; its AST node gets `st:<ordinal>`;
  * - coordinates are the lexed text, unconverted. The lexer's rule `(1)|(0(.\d+)?)` lets `0x5` and
  *   `0a5` through; the layout converts them and leaves out a point that is not in [0, 1] (D226).
  */
@@ -66,7 +68,10 @@ export interface QuadrantLabel extends QuadrantText {
 }
 
 export interface QuadrantAxis {
-  /** `ax:x` or `ax:y`. */
+  /**
+   * `ax:x` or `ax:y`: the start label's id. The end label's id is this with `/end` (`ax:x/end`,
+   * `ax:y/end`), so each drawn label has its own `data-ast` (pitfall 12).
+   */
   readonly ast: AstId;
   /** The text before `-->`: the x axis's left label, the y axis's bottom label. */
   readonly start?: QuadrantText;

@@ -38,6 +38,7 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   class: 'packages/diagram-class',
   er: 'packages/diagram-er',
   state: 'packages/diagram-state',
+  quadrantChart: 'packages/diagram-quadrant',
 };
 
 /** A plugin's schema fragment, workspace-relative to its package (D153). */
