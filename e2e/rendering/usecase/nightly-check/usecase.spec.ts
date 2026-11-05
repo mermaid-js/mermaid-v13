@@ -2,7 +2,7 @@ import { test, expect, type Page, type TestInfo } from '@playwright/test';
 import { diagramSvg, renderGraph, imgSnapshotTest } from '../../../helpers/util';
 
 // The dev fixture coverage sweep ('covers every use-case dev fixture' and the
-// per-fixture renders of everything in e2e/platform/dev-diagrams/diagrams/use-case)
+// per-fixture renders of everything in dev-diagrams/diagrams/use-case)
 // used to live here — the 20 dev fixtures existing at the time are now frozen
 // as fixtures under e2e/diagrams/usecase/nightly/ (01-basic-use-cases.mmd
 // through 20-full-featured-order-system.mmd). That trades away automatic

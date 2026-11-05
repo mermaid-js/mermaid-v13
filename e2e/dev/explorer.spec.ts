@@ -1,15 +1,14 @@
 /**
- * The Dev Explorer shell at /dev/ (#58): the folder listing matches the snapshot discovery,
- * opening a file renders it, ←/→ step through its folder, the selectors change the render and
- * survive a reload, and editing the open `.mmd` on disk re-renders it.
+ * The Dev Explorer shell at /dev/ (#58): the root lists the checkout's diagram folders, opening
+ * a file renders it, ←/→ step through its folder, the selectors change the render and survive a
+ * reload, and editing the open `.mmd` on disk re-renders it.
  */
 import { readdirSync, writeFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
-import { supportedFixtureFolders } from '../helpers/mmd-snapshots.ts';
 import { startExplorerServer } from './explorer-server.ts';
 
-const EDGES = 'flowchart/baseline/edges';
-const edgeFiles = readdirSync(`e2e/diagrams/${EDGES}`)
+const EDGES = 'e2e/diagrams/flowchart/baseline/edges';
+const edgeFiles = readdirSync(EDGES)
   .filter((name) => name.endsWith('.mmd'))
   .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
@@ -17,18 +16,25 @@ const diagram = (page: Page) => page.locator('dev-tab-diagram .canvas > svg');
 const open = (page: Page, file: string) =>
   page.goto(`/dev/?path=${EDGES}&file=${EDGES}/${file}`);
 
-test('the root lists the folders the snapshot run collects', async ({ page }) => {
+test('the root lists the dev diagrams and the e2e fixtures', async ({ page }) => {
   await page.goto('/dev/');
   const cards = page.locator('dev-file-explorer button.card[data-kind="dir"]');
   await expect(cards.first()).toBeVisible();
-  expect(await cards.evaluateAll((els) => els.map((el) => el.getAttribute('data-path')))).toEqual(
-    supportedFixtureFolders()
-  );
+  expect(await cards.evaluateAll((els) => els.map((el) => el.getAttribute('data-path')))).toEqual([
+    'dev-diagrams',
+    'e2e',
+  ]);
 });
 
 test('selecting a file renders it and puts it in the URL', async ({ page }) => {
   await page.goto('/dev/');
-  for (const dir of ['flowchart', 'flowchart/baseline', EDGES]) {
+  for (const dir of [
+    'e2e',
+    'e2e/diagrams',
+    'e2e/diagrams/flowchart',
+    'e2e/diagrams/flowchart/baseline',
+    EDGES,
+  ]) {
     await page.locator(`button.card[data-path="${dir}"]`).click();
   }
   await page.locator(`button.card[data-path="${EDGES}/${edgeFiles[0]}"]`).click();

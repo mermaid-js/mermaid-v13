@@ -4,8 +4,9 @@
  * file API over the explorer root.
  *
  * - `GET /dev/api/files?path=<dir>` → `{ root, path, entries: [{ name, kind, path }] }`: folders
- *   first, then `.mmd` files. At the top level only `folders()` are listed (by default, for the
- *   e2e root, the folders the snapshot run collects: `supportedFixtureFolders()`).
+ *   first, then `.mmd` files. A folder is listed only when some `.mmd` lies below it. At the top
+ *   level only `folders()` are listed (by default, for the checkout: `DEFAULT_EXPLORER_FOLDERS`),
+ *   and nothing in another top-level folder can be listed, read or written.
  * - `GET /dev/api/file?path=<file.mmd>` → the text; `PUT` overwrites an existing file; `POST`
  *   creates one (starter text when the body is empty) and answers 409 if it exists.
  *
@@ -14,19 +15,20 @@
  * 400. `root` in the listing is how `/events` reports paths below it (repo-relative posix, or
  * absolute outside the checkout), so the page can match a change to the open file.
  */
+import { existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
-// The e2e snapshot discovery itself (#63), so the explorer lists exactly what CI snapshots.
-import { supportsFormat } from 'mermaid';
-import { supportedFixtureFolders, supportedTypesOf } from './fixture-discovery.ts';
 import { REPO_ROOT } from './fixtures.ts';
 import { readBody, sendFile, type Route } from './routes.ts';
 import type { ServerOptions } from './server.ts';
 import { versionsRoute } from './versions.ts';
 
-export const DEFAULT_EXPLORER_ROOT = join(REPO_ROOT, 'e2e', 'diagrams');
+/** The default explorer root: the checkout, showing only `DEFAULT_EXPLORER_FOLDERS`. */
+export const DEFAULT_EXPLORER_ROOT = REPO_ROOT;
+/** The checkout's diagram folders: the dev diagrams and the e2e fixtures (`e2e/diagrams`). */
+export const DEFAULT_EXPLORER_FOLDERS: readonly string[] = ['dev-diagrams', 'e2e'];
 export const EXPLORER_ENTRY = join(import.meta.dirname, 'browser', 'explorer', 'app.ts');
 /** The Compare tab's iframe script (`www/dev/compare-pane.html` loads `/build/compare-pane.js`). */
 export const COMPARE_PANE_ENTRY = join(import.meta.dirname, 'browser', 'compare-pane.ts');
@@ -46,7 +48,7 @@ const SHOELACE = dirname(
   dirname(createRequire(import.meta.url).resolve('@shoelace-style/shoelace/dist/themes/dark.css'))
 );
 
-/** `MERMAID_DEV_EXPLORER_ROOT` (relative to the checkout), else the e2e fixture folders. */
+/** `MERMAID_DEV_EXPLORER_ROOT` (relative to the checkout), else the checkout. */
 export function resolveExplorerRoot(env: Readonly<Record<string, string | undefined>>): string {
   const override = env.MERMAID_DEV_EXPLORER_ROOT?.trim();
   return override ? resolve(REPO_ROOT, override) : DEFAULT_EXPLORER_ROOT;
@@ -54,8 +56,8 @@ export function resolveExplorerRoot(env: Readonly<Record<string, string | undefi
 
 export interface ExplorerOptions {
   /**
-   * The top-level folders to list. Default: `supportedFixtureFolders()` for the e2e root,
-   * every folder for any other root.
+   * The top-level folders to list, and the only ones the API reaches into. Default: those of
+   * `DEFAULT_EXPLORER_FOLDERS` that exist for the checkout, every folder for any other root.
    */
   readonly folders?: () => readonly string[];
 }
@@ -132,21 +134,41 @@ const CONTENT_TYPES: Readonly<Record<string, string>> = {
   '.svg': 'image/svg+xml',
 };
 
+/** The top-level folders `explorerRoutes` lists, or `undefined` for all of them. */
+function foldersOf(root: string, options: ExplorerOptions): (() => readonly string[]) | undefined {
+  if (options.folders) return options.folders;
+  if (root !== DEFAULT_EXPLORER_ROOT) return undefined;
+  return () => DEFAULT_EXPLORER_FOLDERS.filter((name) => existsSync(join(root, name)));
+}
+
+/** Whether any `.mmd` file lies below `dir`; stops at the first one. */
+async function holdsDiagrams(dir: string): Promise<boolean> {
+  const listed = await readdir(dir, { withFileTypes: true }).catch(() => []);
+  if (listed.some((d) => d.isFile() && d.name.endsWith('.mmd'))) return true;
+  for (const d of listed) {
+    if (d.isDirectory() && (await holdsDiagrams(join(dir, d.name)))) return true;
+  }
+  return false;
+}
+
 export function explorerRoutes(root: string, options: ExplorerOptions = {}): Route[] {
-  const folders =
-    options.folders ??
-    (root === DEFAULT_EXPLORER_ROOT
-      ? () =>
-          supportedFixtureFolders({
-            diagramsDir: root,
-            supportedTypes: supportedTypesOf((type) => supportsFormat(type, 'svg')),
-          })
-      : undefined);
+  const folders = foldersOf(root, options);
+
+  /** `resolveWithin`, refusing a path into a top-level folder that isn't listed. */
+  const within = (requested: string | null): { abs: string; rel: string } => {
+    const target = resolveWithin(root, requested);
+    const top = target.rel.split('/')[0]!;
+    const nested = target.rel.includes('/') || !target.rel.endsWith('.mmd');
+    if (folders && target.rel !== '' && nested && !folders().includes(top)) {
+      throw new BadPath('Path is outside the explorer folders');
+    }
+    return target;
+  };
 
   /** A `.mmd` path below the root, or a 400 (answered here) and `undefined`. */
   const mmd = (res: ServerResponse, url: URL): { abs: string; rel: string } | undefined => {
     try {
-      const target = resolveWithin(root, url.searchParams.get('path'));
+      const target = within(url.searchParams.get('path'));
       if (!target.abs.endsWith('.mmd')) {
         refuse(res, 'Only .mmd files are allowed');
         return undefined;
@@ -202,7 +224,7 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
       handle: async (_req, res, url) => {
         let dir: { abs: string; rel: string };
         try {
-          dir = resolveWithin(root, url.searchParams.get('path'));
+          dir = within(url.searchParams.get('path'));
         } catch {
           refuse(res, 'Invalid path');
           return;
@@ -218,10 +240,11 @@ export function explorerRoutes(root: string, options: ExplorerOptions = {}): Rou
           kind,
           path: dir.rel ? `${dir.rel}/${name}` : name,
         });
-        const dirs = listed
+        const candidates = listed
           .filter((d) => d.isDirectory() && (!allowed || allowed.has(d.name)))
-          .map((d) => d.name)
-          .sort(byName);
+          .map((d) => d.name);
+        const shown = await Promise.all(candidates.map((n) => holdsDiagrams(join(dir.abs, n))));
+        const dirs = candidates.filter((_, i) => shown[i]).sort(byName);
         const files = listed
           .filter((d) => d.isFile() && d.name.endsWith('.mmd'))
           .map((d) => d.name)
@@ -302,10 +325,12 @@ export function explorerServerOptions(
   root: string,
   options: ExplorerOptions = {}
 ): Pick<ServerOptions, 'routes' | 'entries' | 'watch' | 'cors'> {
+  // Only the listed folders: watching the whole checkout would include node_modules.
+  const folders = foldersOf(root, options);
   return {
     routes: [...explorerRoutes(root, options), versionsRoute()],
     entries: { explorer: EXPLORER_ENTRY, 'compare-pane': COMPARE_PANE_ENTRY },
-    watch: { paths: [root] },
+    watch: { paths: folders ? folders().map((name) => join(root, name)) : [root] },
     // The Compare panes run in `sandbox="allow-scripts"` iframes (an opaque origin, so the npm
     // code there can't use the file API); these are the only files they load from here.
     cors: COMPARE_PANE_FILES,
