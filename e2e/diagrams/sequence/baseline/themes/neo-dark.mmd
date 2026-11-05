@@ -1,0 +1,24 @@
+---
+config:
+  theme: neo-dark
+description: one representative sequence diagram in the neo-dark theme
+---
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant W as Web
+  participant D@{ "type": "database" }
+  box Back end
+    participant A as API
+  end
+  U->>+W: open
+  W->>A: request
+  alt found
+    A->>D: query
+    D-->>A: rows
+  else missing
+    A--xW: not found
+  end
+  note over W,A: retries once
+  A-)W: event
+  W-->>-U: page
