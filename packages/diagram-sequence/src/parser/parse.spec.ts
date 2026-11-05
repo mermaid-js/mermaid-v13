@@ -260,22 +260,15 @@ describe('warnings', () => {
   const codes = (body: string) =>
     parseSequence(`sequenceDiagram\n${body}`).diagnostics.map((d) => [d.severity, d.code]);
 
-  it('warns about math, and keeps the text', () => {
-    expect(codes('A->>B: $$x^2$$')).toEqual([['warning', 'SEQUENCE_MATH']]);
+  // Math is core's label layout's (D176): the render warns MATH_NOT_RENDERED, not the parse.
+  it('keeps math as written, with no parse warning', () => {
+    expect(codes('A->>B: $$x^2$$')).toEqual([]);
     expect(first('A->>B: $$x^2$$')).toMatchObject({ text: '$$x^2$$' });
-  });
-
-  it('warns about math in labels too: aliases, fragment and section labels, box titles', () => {
     expect(
       codes(
         'participant A as $$\\alpha$$\nloop $$x$$\nA->>B: hi\nend\nalt a\nelse $$y$$\nend\nbox $$z$$\nend'
       )
-    ).toEqual([
-      ['warning', 'SEQUENCE_MATH'],
-      ['warning', 'SEQUENCE_MATH'],
-      ['warning', 'SEQUENCE_MATH'],
-      ['warning', 'SEQUENCE_MATH'],
-    ]);
+    ).toEqual([]);
   });
 
   it('warns about a message after the destroying one (v12 accepts it)', () => {

@@ -21,8 +21,27 @@ import type { PlacedLabel } from './types.ts';
 /** What the layout reads from the render context. */
 export type SequenceLayoutContext = Pick<
   RenderContext,
-  'config' | 'measurer' | 'units' | 'theme' | 'warn'
+  'config' | 'measurer' | 'units' | 'theme' | 'warn' | 'inline'
 >;
+
+/**
+ * Deprecated alias of core's `MATH_NOT_RENDERED` (D176), raised for one alpha next to it when a
+ * label's `$$…$$` is shown as written. Sequence's own math warning before core drew math (D105).
+ */
+export const SEQUENCE_MATH = {
+  code: 'SEQUENCE_MATH',
+  message:
+    'SEQUENCE_MATH is deprecated and goes in the next alpha: read MATH_NOT_RENDERED (or ASCII_DROPPED in text output). Math ($$…$$) is shown as written.',
+} as const;
+
+/** Whether a label shows a `$$…$$` pair as written: in any run but its inline boxes. */
+function showsMath(label: MeasuredLabel): boolean {
+  const text = label.lines
+    .map((line) => line.map((r) => (r.kind === 'box' ? '' : r.text)).join(''))
+    .join('\n');
+  const at = text.indexOf('$$');
+  return at >= 0 && text.includes('$$', at + 2);
+}
 
 export interface Fonts {
   readonly actor: FontKey;
@@ -171,6 +190,7 @@ export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<En
   const { participants } = model;
   const m = sequenceMetrics(ctx.units, seq, ctx.theme);
   const numbers = sequenceNumbers(model.statements, seq);
+  let mathShown = false;
   return {
     m,
     fonts: fontsOf(ctx, (w) => ctx.warn(w)),
@@ -187,7 +207,16 @@ export function envOf(ctx: SequenceLayoutContext, model: SequenceModel): Omit<En
     order: participants.map((p) => p.id),
     index: new Map(participants.map((p, i) => [p.id, i])),
     warn: (w) => ctx.warn(w),
-    measure: (text, font, max) => layoutLabel(text, font, max > 0 ? max : 1, ctx.measurer),
+    measure: (text, font, max) => {
+      const label = layoutLabel(text, font, max > 0 ? max : 1, ctx.measurer, {
+        inline: ctx.inline,
+      });
+      if (!mathShown && showsMath(label)) {
+        mathShown = true;
+        ctx.warn({ ...SEQUENCE_MATH });
+      }
+      return label;
+    },
   };
 }
 

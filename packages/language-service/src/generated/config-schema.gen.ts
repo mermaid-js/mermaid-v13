@@ -931,7 +931,9 @@ export const configSchema: ConfigSchema = {
       "type": "boolean",
       "default": false,
       "x-mermaid": {
-        "status": "pending"
+        "status": "ignored",
+        "since": "13.0.0",
+        "reason": "v13 never emits MathML or KaTeX HTML (D175): a math extension typesets `$$…$$` TeX into SVG paths."
       }
     },
     "forceLegacyMathML": {
@@ -939,7 +941,9 @@ export const configSchema: ConfigSchema = {
       "type": "boolean",
       "default": false,
       "x-mermaid": {
-        "status": "pending"
+        "status": "ignored",
+        "since": "13.0.0",
+        "reason": "v13 never emits MathML or KaTeX HTML (D175): a math extension typesets `$$…$$` TeX into SVG paths."
       }
     },
     "deterministicIds": {

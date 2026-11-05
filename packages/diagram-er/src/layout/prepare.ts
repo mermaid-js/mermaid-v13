@@ -223,7 +223,8 @@ export function prepareEr(model: ErModel, ctx: ErRenderContext): ErPrepared {
     pad: cellPad(units, er),
     // This is the only place the builder looks at which profile it has.
     rule: units.id === 'cell' ? 1 : 0,
-    label: (text, f, max, bits = 0) => layoutLabel(text, f, max, measurer, { style: bits }),
+    label: (text, f, max, bits = 0) =>
+      layoutLabel(text, f, max, measurer, { style: bits, inline: ctx.inline }),
     styleOf: styleCache(model, ctx),
   };
   const minWidth = sizeKey(units, er, 'minEntityWidth');

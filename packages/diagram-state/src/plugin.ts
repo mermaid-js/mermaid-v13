@@ -11,6 +11,7 @@ import { detectState, parseState } from './parser/index.ts';
 import type { StateModel, StateParseResult } from './parser/index.ts';
 import { renderState } from './render/render.ts';
 import { stateConfigDefaults } from './generated/config-defaults.ts';
+import { stateLabels } from './labels.ts';
 
 /**
  * The state diagram plugin (DESIGN §12.1): `stateDiagram` and `stateDiagram-v2`, one renderer
@@ -30,6 +31,7 @@ export const state = {
       preprocessed: ctx.preprocessed,
       maxDepth: (ctx.limits ?? resolveLimits(ctx.config)).maxDepth,
     }),
+  labels: stateLabels,
   layout: (model: StateModel, ctx: StateRenderContext): CompleteStateLayout =>
     layoutState(model, ctx),
   render: (model: StateModel, layout: StateLayout, ctx: StateRenderContext, w: SvgWriter): void =>

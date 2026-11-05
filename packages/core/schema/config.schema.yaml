@@ -917,7 +917,12 @@ properties:
       fall back to legacy rendering for KaTeX.
     type: boolean
     default: false
-    x-mermaid: { status: pending }
+    x-mermaid:
+      status: ignored
+      since: 13.0.0
+      reason: >-
+        v13 never emits MathML or KaTeX HTML (D175): a math extension typesets `$$…$$` TeX into
+        SVG paths.
   forceLegacyMathML:
     description: |
       This option forces Mermaid to rely on KaTeX's own stylesheet for rendering MathML. Due to differences between OS
@@ -925,7 +930,12 @@ properties:
       If set to true, ignores legacyMathML.
     type: boolean
     default: false
-    x-mermaid: { status: pending }
+    x-mermaid:
+      status: ignored
+      since: 13.0.0
+      reason: >-
+        v13 never emits MathML or KaTeX HTML (D175): a math extension typesets `$$…$$` TeX into
+        SVG paths.
   deterministicIds:
     description: |
       This option controls if the generated ids of nodes in the SVG are

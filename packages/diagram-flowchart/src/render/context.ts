@@ -41,6 +41,6 @@ export interface FlowRenderContext {
   readonly securityLevel?: SecurityLevel;
   /** Integrator link schemes for `click` URLs (default http, https, mailto). */
   readonly linkSchemes?: readonly string[];
-  /** The render's inline-box providers (D177), handed to every label; SVG output only. */
+  /** The render's inline-box providers (D177), handed to every label; text output boxes none. */
   readonly inline?: InlineSpans;
 }

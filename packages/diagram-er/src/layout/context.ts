@@ -1,7 +1,7 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
 import type { Limits } from '@mermaid-js/core/limits';
-import type { Measurer } from '@mermaid-js/core/text';
+import type { InlineSpans, Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
 
 /** A warning the layout raises (style checks). */
@@ -32,4 +32,6 @@ export interface ErRenderContext {
   readonly idPrefix?: string;
   /** Written as `data-mermaid-version`. */
   readonly version?: string;
+  /** The render's inline-box providers (D177), handed to every label; text output boxes none. */
+  readonly inline?: InlineSpans;
 }

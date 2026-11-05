@@ -92,6 +92,11 @@ export interface ResourceRequest {
   readonly config: ResolvedConfig;
   /** The output being prepared or drawn: text output draws no inline boxes (D179). */
   readonly format: 'svg' | 'ascii';
+  /**
+   * The parsed diagram's label texts as written (`DiagramPlugin.labels`), when its plugin lists
+   * them. Without it, every string in the parse may be a label.
+   */
+  labels?(): readonly string[];
 }
 
 /**

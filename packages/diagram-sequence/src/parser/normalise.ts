@@ -232,9 +232,3 @@ export function participantData(text: string): ParticipantData {
   if (typeof alias === 'string' && alias !== '') out.alias = alias;
   return out;
 }
-
-/** `$$…$$` math in a message or note text (D105: kept as written, with a warning). */
-export function hasMath(text: string): boolean {
-  const a = text.indexOf('$$');
-  return a >= 0 && text.includes('$$', a + 2);
-}

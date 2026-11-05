@@ -189,6 +189,8 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `altFontFamily` | ignored | Unused by every renderer, also in v12. |  |
 | `logLevel` | ignored | v13 does not log; problems are returned in `RenderResult.warnings`. |  |
 | `arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
+| `legacyMathML` | ignored | v13 never emits MathML or KaTeX HTML (D175): a math extension typesets `$$…$$` TeX into SVG paths. |  |
+| `forceLegacyMathML` | ignored | v13 never emits MathML or KaTeX HTML (D175): a math extension typesets `$$…$$` TeX into SVG paths. |  |
 | `flowchart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render. The redux themes carry v12's `look: neo` geometry (D152). | `theme`, or the geometry and `dropShadow` theme variables |
 | `flowchart.arrowMarkerAbsolute` | ignored | Arrowheads are inline paths, not `<marker>` references. |  |
 | `flowchart.htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
@@ -504,9 +506,22 @@ variables instead.
 | Any HTML in labels, sanitised by DOMPurify | `<b>`/`<strong>` and `<i>`/`<em>` are drawn bold and italic, `<br>` breaks the line. Other HTML element tags are dropped and their text kept (`<img>` draws nothing, `<a>` is not a link, `<sub>`/`<sup>`/`<u>` draw plain text). Text that only looks like a tag, such as `List<T>`, is shown as written | R-TEXT-3 |
 | Markdown strings (`` "`**bold**`" ``) | Same subset: `**`/`__` bold, `*`/`_` italic, `` `code` `` (monospace), `- ` and `* ` bullet lists (one nesting level), backslash escapes, `<br>` and newlines | R-TEXT-2 |
 | Entities: Mermaid's `#quot;`/`#35;` and HTML `&…;` | Both decoded; about 45 named HTML entities plus numeric ones. Unknown entities stay literal | |
-| KaTeX math (`$$…$$`) | Rendered by the optional `@mermaid-js/plugin-math` (`registerExternalDiagrams([math])`): MathJax typesets the TeX into SVG paths, so glyph shapes differ from KaTeX's. MathJax loads only for a diagram with math; `renderSync` needs `prepare()` or `preload({ math: true })` first. TeX that does not parse is shown as written with a `MATH_ERROR` warning. Without the plugin the TeX is shown as written (`MATH_NOT_RENDERED`). Flowchart labels only so far. `legacyMathML` and `forceLegacyMathML` are pending | D5, D175, D178 |
+| KaTeX math (`$$…$$`) | Rendered by the optional `@mermaid-js/plugin-math` (`registerExternalDiagrams([math])`): MathJax typesets the TeX into SVG paths, so glyph shapes differ from KaTeX's. MathJax loads only for a diagram with math; `renderSync` needs `prepare()` or `preload({ math: true })` first. TeX that does not parse is shown as written with a `MATH_ERROR` warning. Every label core lays out takes math: flowchart nodes, edges and subgraph titles; class, state and ER labels; sequence messages, notes, participants, fragment and box labels. Without the plugin the TeX is shown as written, with one `MATH_NOT_RENDERED` warning per render. Text output always shows the TeX as written, with one `ASCII_DROPPED` warning (`feature: 'math'`). `legacyMathML` and `forceLegacyMathML` are ignored. See [Math](#math) | D5, D175, D176, D178, D179 |
 | Text measured by the browser | Measured by canvas when present, else by built-in tables for Trebuchet MS, Verdana and Arial; line height comes from the font, so labels are not pixel-equal with v12 | R-TEXT-4 |
 | Labels wrap at `flowchart.wrappingWidth` (HTML labels) | Node labels, plain and markdown alike, wrap at `wrappingWidth` (120) and are widened to `minNodeWidth` (120), except circles; edge labels wrap at 200. CJK text breaks between characters, and a word wider than the box is split | |
+
+### Math
+
+v12 rendered `$$…$$` with KaTeX into MathML or HTML; v13 typesets it with MathJax (TeX input, SVG output) into plain `<path>` glyphs, through the optional `@mermaid-js/plugin-math` (D175). The TeX is read as v12 read it: display mode, one formula per `$$…$$` pair, on one line. What differs:
+
+- **Glyphs.** Both use Computer Modern designs, but MathJax's TeX font is not KaTeX's: outlines, kerning and spacing differ slightly, and stretched delimiters, braces and arrows (`\left(`, `\overbrace`, `\xrightarrow`) are built from different pieces. Math is a little smaller next to the label text: its em is 1.13 times the label's font size, where KaTeX's was 1.21.
+- **Colour.** Glyphs take the label's text colour. `\color{red}` is a switch, as in LaTeX and KaTeX: write `{\color{red}x}` to colour one part.
+- **Characters the TeX font lacks** (CJK or emoji in `\text{…}`) are drawn as text in the label's font, measured like the rest of the label.
+- **KaTeX-only names** v12 accepted are mapped: KaTeX's texvc names (`\Alpha`, `\Reals`, `\empty`, `\isin`, `\N`, `\cnums`, …), `\notni`, `\relax`, and `\phase` (drawn with round joins).
+- **Not supported**: the span is shown as written, with `MATH_ERROR`. `\def`, `\newcommand` and `\renewcommand` (MathJax would keep a definition from one formula to the next, so one label could change another), `\href`, `\style`, `\class`, `\unicode` and `\htmlClass` are undefined control sequences; `\tag` (an equation number) is refused. Only the TeX packages `base`, `ams`, `boldsymbol`, `cancel`, `color` and `enclose` are loaded.
+- **Errors.** v12 drew KaTeX's error for TeX that does not parse; v13 shows the span as written, with one `MATH_ERROR` warning naming MathJax's message.
+- **No MathML.** Nothing in v13 output is MathML or HTML, so `legacyMathML` and `forceLegacyMathML` have no effect, and no KaTeX stylesheet is needed.
+- **Loading.** MathJax loads only for a diagram with a `$$…$$` pair in a label. `render()` loads it; `renderSync` needs `prepare()` or `preload({ math: true })` first, or throws `NotLoadedError` naming `math "tex"`.
 
 ## Flowchart syntax
 
@@ -545,8 +560,11 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
   or the destruction (D123).
 - **A message after the destroying one** is accepted as in v12, with a
   `SEQUENCE_AFTER_DESTROY` warning: it is drawn below the participant's end.
-- **Math** (`$$…$$`) in messages, notes, aliases, fragment and box labels is shown as written,
-  with a `SEQUENCE_MATH` warning, until a math plugin exists.
+- **Math** (`$$…$$`) in messages, notes, aliases, fragment and box labels is drawn by the math
+  plugin, as in every type (see [Math](#math)). Without it the TeX is shown as written, with
+  core's `MATH_NOT_RENDERED`. `SEQUENCE_MATH` is deprecated: it is still raised once per render
+  next to `MATH_NOT_RENDERED` (or `ASCII_DROPPED` in text output) for one alpha, and is no longer
+  a parse warning.
 - **An unknown participant type** (`@{ type: robot }`) draws a participant box, with a
   `SEQUENCE_PARTICIPANT_TYPE` warning; v12 drew nothing.
 - **Box colours** are checked without a browser, with the rules a browser's `CSS.supports`

@@ -48,13 +48,18 @@ export interface InlineSpans {
   ): { readonly source: string; readonly boxes: readonly LabelBoxSpan[] } | undefined;
 }
 
-/** Delimiters core knows a feature for, and the warning a label with one gives without it. */
+/**
+ * Delimiters core knows a feature for, the warning a label with one gives without it, and the
+ * `ASCII_DROPPED` feature text output names for it (D179).
+ */
 const FEATURES = [
   {
     open: '$$',
     close: '$$',
     code: 'MATH_NOT_RENDERED',
     message: 'Math ($$…$$) is not rendered without a math extension: the TeX is shown as written.',
+    feature: 'math',
+    ascii: 'Text output has no math ($$…$$): the TeX is shown as written.',
   },
 ] as const;
 
@@ -74,8 +79,16 @@ function hasPair(raw: string, open: string, close: string): boolean {
 /**
  * The inline spans of one render: `providers` in registration order (the first one wins a
  * delimiter), and `warn` for the feature warnings, given once per render.
+ *
+ * Text output (`format: 'ascii'`) draws no boxes, provider or not: every span is shown as
+ * written, with one `ASCII_DROPPED` warning per feature (D179).
  */
-export function inlineSpans(providers: readonly InlineProvider[], warn: Warn): InlineSpans {
+export function inlineSpans(
+  providers: readonly InlineProvider[],
+  warn: Warn,
+  format: 'svg' | 'ascii' = 'svg'
+): InlineSpans {
+  if (format === 'ascii') return asWritten(warn);
   const missing = FEATURES.filter((f) => !providers.some((p) => p.open === f.open));
   const warned = new Set<string>();
   const given = new Set<string>();
@@ -135,4 +148,27 @@ export function inlineSpans(providers: readonly InlineProvider[], warn: Warn): I
       return { source: source + raw.slice(at), boxes };
     },
   };
+}
+
+/** Text output's spans: none are boxed; the first label with a feature's pair warns once. */
+function asWritten(warn: (warning: AsciiDropped) => void): InlineSpans {
+  const warned = new Set<string>();
+  return {
+    extract(raw) {
+      for (const f of FEATURES) {
+        if (!warned.has(f.feature) && hasPair(raw, f.open, f.close)) {
+          warned.add(f.feature);
+          warn({ code: 'ASCII_DROPPED', feature: f.feature, message: f.ascii });
+        }
+      }
+      return undefined;
+    },
+  };
+}
+
+/** The text-output warning (D82), as `Warning` carries it. */
+interface AsciiDropped {
+  readonly code: 'ASCII_DROPPED';
+  readonly feature: string;
+  readonly message: string;
 }

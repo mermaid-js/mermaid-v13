@@ -1,7 +1,7 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
 import type { SecurityLevel } from '@mermaid-js/core/svg';
-import type { Measurer } from '@mermaid-js/core/text';
+import type { InlineSpans, Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
 
 /** A warning the layout or renderer raises (style, URL and link-target checks). */
@@ -34,4 +34,6 @@ export interface StateRenderContext {
   readonly securityLevel?: SecurityLevel;
   /** Integrator link schemes for `click` URLs (default http, https, mailto). */
   readonly linkSchemes?: readonly string[];
+  /** The render's inline-box providers (D177), handed to every label; text output boxes none. */
+  readonly inline?: InlineSpans;
 }

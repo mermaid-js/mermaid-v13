@@ -97,11 +97,13 @@ describe('@mermaid-js/plugin-math', () => {
     expect(thrown(() => m.renderSync(FLOW))).toBeInstanceOf(NotLoadedError);
   });
 
-  // The parse has no diagram-agnostic notion of a label (each type's AST and model differ), so
-  // any string the parse holds counts. Comments are not in the parse; a tooltip is.
+  // Only label texts count (the diagram's `labels`, D178): a tooltip or a URL is drawn as
+  // written by no label layout, and a comment is not in the parse.
   it.each([
     ['a %% comment', 'flowchart LR\n  %% $$x$$\n  A --> B', false],
-    ['a click tooltip', 'flowchart LR\n  A --> B\n  click A "https://example.com" "$$x$$"', true],
+    ['a click tooltip', 'flowchart LR\n  A --> B\n  click A "https://example.com" "$$x$$"', false],
+    ['a click URL', 'flowchart LR\n  A --> B\n  click A "https://example.com/$$x$$"', false],
+    ['a node label', 'flowchart LR\n  A["$$x$$"] --> B', true],
   ])('with $$…$$ only in %s, prepare loads the engine: %s', async (_, source, loads) => {
     const m = await api(await freshMath());
     await m.prepare(source);
@@ -173,4 +175,54 @@ describe('with the plugin enabled (R-SEC-2, R-ARCH-6)', () => {
     }
     expect(drawn).toBeGreaterThanOrEqual(4);
   }, 120_000);
+});
+
+// One label kind at a time holds the only math, so `prepare` must find it among the type's
+// labels (D178) and `renderSync` then draws it (D176).
+const ONE_LABEL: readonly [string, string, string][] = [
+  ['flowchart', 'node', 'flowchart LR\n  A["$$x$$"] --> B'],
+  ['flowchart', 'edge', 'flowchart LR\n  A -- "$$x$$" --> B'],
+  ['flowchart', 'subgraph title', 'flowchart LR\n  subgraph S["$$x$$"]\n    A\n  end'],
+  ['class', 'class label', 'classDiagram\n  class A["$$x$$"]'],
+  ['class', 'member', 'classDiagram\n  class A {\n    +$$x$$ y\n  }'],
+  ['class', 'annotation', 'classDiagram\n  class A {\n    <<$$x$$>>\n  }'],
+  ['class', 'relation label', 'classDiagram\n  A --> B : $$x$$'],
+  ['class', 'multiplicity', 'classDiagram\n  A "$$x$$" --> B'],
+  ['class', 'note', 'classDiagram\n  class A\n  note for A "$$x$$"'],
+  ['class', 'namespace', 'classDiagram\n  namespace N["$$x$$"] {\n    class A\n  }'],
+  ['state', 'description', 'stateDiagram-v2\n  s1 : $$x$$'],
+  ['state', 'state name', 'stateDiagram-v2\n  state "$$x$$" as S'],
+  ['state', 'transition', 'stateDiagram-v2\n  s1 --> s2 : $$x$$'],
+  ['state', 'note', 'stateDiagram-v2\n  s1\n  note right of s1 : $$x$$'],
+  ['er', 'entity alias', 'erDiagram\n  A["$$x$$"]'],
+  ['er', 'relationship', 'erDiagram\n  A ||--o{ B : "$$x$$"'],
+  ['er', 'attribute comment', 'erDiagram\n  A {\n    string name "$$x$$"\n  }'],
+  ['sequence', 'participant', 'sequenceDiagram\n  participant A as $$x$$'],
+  ['sequence', 'message', 'sequenceDiagram\n  A->>B: $$x$$'],
+  ['sequence', 'note', 'sequenceDiagram\n  Note over A: $$x$$'],
+  ['sequence', 'fragment', 'sequenceDiagram\n  loop $$x$$\n    A->>B: hi\n  end'],
+  [
+    'sequence',
+    'section',
+    'sequenceDiagram\n  alt a\n    A->>B: hi\n  else $$x$$\n    A->>B: ho\n  end',
+  ],
+  ['sequence', 'box', 'sequenceDiagram\n  box $$x$$\n    participant A\n  end'],
+  ['sequence', 'title', 'sequenceDiagram\n  title $$x$$\n  A->>B: hi'],
+];
+
+describe('math in every diagram type (D176, D178)', () => {
+  it.each(ONE_LABEL)(
+    '%s %s: prepare loads the engine and the label draws it',
+    async (_, __, source) => {
+      const m = createMermaid();
+      m.initialize({ deterministic: true });
+      await m.registerExternalDiagrams([await freshMath()]);
+      await m.prepare(source);
+      const r = m.renderSync(source);
+      expect(codes(r)).toEqual([]);
+      expect(r.svg).not.toContain('$$');
+      // A box: a translated group (the label's own attributes on it too) holding the glyphs.
+      expect(r.svg).toMatch(/<g [^>]*transform="translate\([^"]*\)"[^>]*><g><path d="/);
+    }
+  );
 });

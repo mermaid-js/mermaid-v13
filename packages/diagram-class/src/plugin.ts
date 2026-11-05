@@ -7,6 +7,7 @@ import type { ClassModel, ClassParseResult } from './parser/index.ts';
 import type { ClassRenderContext } from './render/context.ts';
 import { renderClass } from './render/render.ts';
 import { classConfigDefaults } from './generated/config-defaults.ts';
+import { classLabels } from './labels.ts';
 
 /** The pipeline's limits, or the ones the integrator config implies (`maxEdges`). */
 const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
@@ -43,6 +44,7 @@ export const classDiagram = {
       claims: ctx.claims,
     });
   },
+  labels: classLabels,
   layout: (model: ClassModel, ctx: ClassRenderContext): ClassLayout => layoutClass(model, ctx),
   render: (model: ClassModel, layout: ClassLayout, ctx: ClassRenderContext, w: SvgWriter): void =>
     renderClass(model, layout, ctx, w),

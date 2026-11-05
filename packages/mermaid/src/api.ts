@@ -464,7 +464,12 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
   function extensionNeeds(a: Analysis, ascii: boolean) {
     if (hooks.size === 0) return [];
     const { parse, config } = a.prepared;
-    return hooks.resources(parse, { config, format: ascii ? 'ascii' : 'svg' });
+    const labels = a.plugin.labels?.bind(a.plugin);
+    return hooks.resources(parse, {
+      config,
+      format: ascii ? 'ascii' : 'svg',
+      ...(labels ? { labels: () => labels(parse.model) } : {}),
+    });
   }
 
   async function prepareWith(text: string, s: Snapshot, format?: string): Promise<Analysis> {
@@ -590,8 +595,9 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
           { config }
         );
       },
-      // Inline boxes (D177) are SVG only: text output shows every span as written.
-      ...(textOutput ? {} : { inline: inlineSpans(hooks.inline(), warn) }),
+      // Inline boxes (D177) are SVG only: text output shows every span as written, and warns
+      // ASCII_DROPPED once per feature (D179).
+      inline: inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg'),
       warn,
       // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
       ...textOnly,

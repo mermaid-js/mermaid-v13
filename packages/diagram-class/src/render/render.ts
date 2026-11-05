@@ -392,7 +392,16 @@ function drawRow(w: SvgWriter, row: ClassRow, attrs: Attrs): void {
     return;
   }
   const only = label.lines.length === 1 && first.length === 1 ? first[0]! : undefined;
-  if (only && !only.bold && !only.italic && !only.underline && !only.strike && !only.attrs) {
+  // An inline box (D177) is drawn by the writer, so a lone box run takes the writer's path.
+  if (
+    only &&
+    only.kind !== 'box' &&
+    !only.bold &&
+    !only.italic &&
+    !only.underline &&
+    !only.strike &&
+    !only.attrs
+  ) {
     // One plain run: the writer would centre it, so it is written here, starting at `x`.
     w.open('text', {
       ...attrs,

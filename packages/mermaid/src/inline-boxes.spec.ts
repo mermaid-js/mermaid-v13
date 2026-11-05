@@ -203,3 +203,110 @@ describe('inline boxes from an extension (D177)', () => {
     expect((e as MermaidError).message).toMatch(/"broken-math" failed in inline: .*finite width/);
   });
 });
+
+// Every label core lays out, per type (D176): one `$$…$$` span each, with a distinct TeX length
+// so each box can be told apart (4 px per character).
+const EVERY_TYPE: readonly { type: string; source: string; spans: readonly string[] }[] = [
+  {
+    type: 'flowchart',
+    source: [
+      'flowchart LR',
+      '  subgraph S["$$s_1$$"]',
+      '    A["$$a$$"] -- "$$e_{12}$$" --> B',
+      '  end',
+    ].join('\n'),
+    spans: ['s_1', 'a', 'e_{12}'],
+  },
+  {
+    type: 'class',
+    source: [
+      'classDiagram',
+      '  class A["$$a$$"] {',
+      // Not at the end: a member ending in `$` is static (v12).
+      '    +$$m_1$$ x',
+      '  }',
+      '  A "$$n_{12}$$" --> "1" B : $$f_{123}$$',
+      '  note for A "$$t_{1234}$$"',
+    ].join('\n'),
+    spans: ['a', 'm_1', 'n_{12}', 'f_{123}', 't_{1234}'],
+  },
+  {
+    type: 'state',
+    source: [
+      'stateDiagram-v2',
+      '  state "$$c$$" as C {',
+      '    s1 : $$d_1$$',
+      '  }',
+      '  C --> s2 : $$e_{12}$$',
+      '  note right of s2 : $$n_{123}$$',
+    ].join('\n'),
+    spans: ['c', 'd_1', 'e_{12}', 'n_{123}'],
+  },
+  {
+    type: 'er',
+    source: [
+      'erDiagram',
+      '  A["$$a$$"] {',
+      '    string name "$$k_{12}$$"',
+      '  }',
+      '  A ||--o{ B : "$$r_1$$"',
+    ].join('\n'),
+    spans: ['a', 'r_1', 'k_{12}'],
+  },
+  {
+    type: 'sequence',
+    source: [
+      'sequenceDiagram',
+      '  participant A as $$a$$',
+      '  loop $$l_1$$',
+      '    A->>B: $$m_{12}$$',
+      '  end',
+      '  Note over A: $$n_{123}$$',
+    ].join('\n'),
+    spans: ['a', 'l_1', 'm_{12}', 'n_{123}'],
+  },
+];
+
+describe('math in every diagram type (D176)', () => {
+  it.each(EVERY_TYPE)('$type: draws a box for every label span', async ({ source, spans }) => {
+    const { m, ready } = api(math);
+    await ready;
+    const r = await m.render('x', source);
+    expect(codes(r.warnings)).toEqual([]);
+    // Every fixture box, whatever the label's own attributes on its group.
+    const widths = [...r.svg.matchAll(/<rect width="([\d.]+)" height="30" fill="none"/g)].map(
+      (b) => +b[1]!
+    );
+    for (const tex of spans) expect(widths, tex).toContain(4 * tex.length);
+    expect(r.svg).not.toContain('$$');
+    expect(r.svg).not.toMatch(/[﷐-﷯]/);
+  });
+
+  it.each(EVERY_TYPE)(
+    '$type: without a provider shows the TeX, with one MATH_NOT_RENDERED',
+    async ({ type, source, spans }) => {
+      const r = await api().m.render('x', source);
+      // Sequence keeps its own code for one alpha, as a deprecated alias.
+      const alias = type === 'sequence' ? ['SEQUENCE_MATH'] : [];
+      expect(codes(r.warnings)).toEqual(['MATH_NOT_RENDERED', ...alias]);
+      for (const tex of spans) expect(r.svg).toContain(`$$${tex}$$`);
+    }
+  );
+
+  // D179: text output draws no boxes, provider or not, and says so once.
+  it.each(EVERY_TYPE.filter((t) => ['flowchart', 'er', 'sequence'].includes(t.type)))(
+    '$type: text output shows the TeX as written, with one ASCII_DROPPED for math',
+    async ({ type, source }) => {
+      for (const extensions of [[], [math]]) {
+        const { m, ready } = api(...extensions);
+        await ready;
+        const r = await m.render('x', source, { format: 'ascii' });
+        expect(r.text).toContain('$$a$$');
+        const dropped = r.warnings.filter((w) => w.code === 'ASCII_DROPPED');
+        expect(dropped.filter((w) => w.feature === 'math')).toHaveLength(1);
+        const others = codes(r.warnings).filter((c) => c !== 'ASCII_DROPPED');
+        expect(others).toEqual(type === 'sequence' ? ['SEQUENCE_MATH'] : []);
+      }
+    }
+  );
+});

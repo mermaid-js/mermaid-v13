@@ -4,7 +4,7 @@
  * box (D177).
  *
  * This entry is tiny. It claims the `$$` delimiter and declares one resource, `math "tex"`.
- * `prepare()` asks for that resource only when a string in the parsed diagram has a `$$…$$` pair,
+ * `prepare()` asks for that resource only when a label in the parsed diagram has a `$$…$$` pair,
  * and only then imports the engine (`./engine.ts`, MathJax and its TeX font), so a page without
  * math never downloads MathJax. `renderSync` before the engine has loaded throws
  * `NotLoadedError` naming it; with `placeholders` it draws the TeX as written, with a warning.
@@ -12,7 +12,7 @@
  *
  * Text output (`format: 'ascii'`) draws no inline boxes, so it never asks for the engine (D179).
  */
-import type { ExtensionPlugin, Resource } from '@mermaid-js/core';
+import type { ExtensionPlugin, Resource, ResourceRequest } from '@mermaid-js/core';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import { Style, type InlineProvider, type InlineRequest } from '@mermaid-js/core/text';
 import type * as EngineModule from './engine.ts';
@@ -70,10 +70,16 @@ function mentionsMath(value: unknown): boolean {
 /** Per parse (the API caches it with the analysis), so `renderSync` does not walk it again. */
 const withMath = new WeakMap<object, boolean>();
 
-function needsMath(parse: ParseResult<unknown>): boolean {
+/**
+ * Whether a label of the parsed diagram has a `$$…$$` pair (D178). The diagram's own label
+ * list when its plugin gives one; otherwise any string the parse holds (a tooltip or URL too).
+ */
+function needsMath(parse: ParseResult<unknown>, request: ResourceRequest): boolean {
   let found = withMath.get(parse);
   if (found === undefined) {
-    found = mentionsMath(parse.ast) || mentionsMath(parse.model);
+    found = request.labels
+      ? request.labels().some(hasPair)
+      : mentionsMath(parse.ast) || mentionsMath(parse.model);
     withMath.set(parse, found);
   }
   return found;
@@ -127,8 +133,8 @@ export const math: ExtensionPlugin = {
   inline: [provider],
   resources: {
     provides: [TEX],
-    missing(parse, { format }) {
-      reported = format === 'svg' && engine === undefined && needsMath(parse);
+    missing(parse, request) {
+      reported = request.format === 'svg' && engine === undefined && needsMath(parse, request);
       return reported ? [TEX] : [];
     },
     load,
