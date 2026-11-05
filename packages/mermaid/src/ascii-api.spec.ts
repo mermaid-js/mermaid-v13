@@ -250,3 +250,47 @@ describe('text output details', () => {
     expect(r.text.length).toBeLessThan(3 * 8 + 2);
   });
 });
+
+describe('text output keeps layered (D179)', () => {
+  const withLayout = (name: string) => `---\nconfig:\n  layout: ${name}\n---\n${FLOW}`;
+  const plain = async () => (await createMermaid().render('t', FLOW, { format: 'ascii' })).text;
+
+  it('draws `layout: elk` with layered and one ASCII_DROPPED, not ELK_NOT_INSTALLED', async () => {
+    const r = await createMermaid().render('t', withLayout('elk'), { format: 'ascii' });
+    expect(r.text).toBe(await plain());
+    expect(r.warnings.map((w) => [w.code, w.feature])).toEqual([['ASCII_DROPPED', 'layout']]);
+    expect(r.warnings[0]?.message).toContain('"elk"');
+  });
+
+  it('draws the flowchart-elk header with layered and one ASCII_DROPPED', async () => {
+    const r = await createMermaid().render('t', FLOW.replace('flowchart', 'flowchart-elk'), {
+      format: 'ascii',
+    });
+    expect(r.text).toBe(await plain());
+    expect(r.warnings.map((w) => w.code)).toEqual(['ASCII_DROPPED']);
+  });
+
+  it('never loads or runs a registered engine for text, and needs no prepare of it', async () => {
+    let calls = 0;
+    const m = createMermaid();
+    m.registerLayoutLoaders([
+      {
+        name: 'stub',
+        loader: () => {
+          calls++;
+          return Promise.reject(new Error('not for text'));
+        },
+      },
+    ]);
+    await m.prepare(withLayout('stub'), { format: 'ascii' });
+    const r = m.renderSync(withLayout('stub'), { format: 'ascii' });
+    expect(calls).toBe(0);
+    expect(r.text).toBe(await plain());
+    expect(r.warnings.map((w) => [w.code, w.feature])).toEqual([['ASCII_DROPPED', 'layout']]);
+  });
+
+  it.each(['layered', 'dagre'])('stays silent for `layout: %s`', async (name) => {
+    const r = await createMermaid().render('t', withLayout(name), { format: 'ascii' });
+    expect(r.warnings).toEqual([]);
+  });
+});

@@ -64,6 +64,7 @@ import { createDomAdapter } from './dom.ts';
 import { toMermaidError } from './errors.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
+  builtIn,
   isElkName,
   Registry,
   type AnyPlugin,
@@ -275,6 +276,11 @@ function layoutName(config: ResolvedConfig): string {
   return String(config.layout ?? 'layered');
 }
 
+/** The engine a draw lays out with: text output always uses `layered` and the cell profile (D179). */
+function drawnLayout(config: ResolvedConfig, text: boolean): string {
+  return text ? 'layered' : layoutName(config);
+}
+
 function themeNames(config: ResolvedConfig): ThemeName[] {
   const choice = resolveThemeName(config.theme);
   return choice.dark ? [choice.name, choice.dark] : [choice.name];
@@ -285,7 +291,7 @@ function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
   const missing: Resource[] = [];
   const { config } = a.prepared;
   if (a.plugin.layoutKind === 'graph') {
-    const name = layoutName(config);
+    const name = drawnLayout(config, text);
     if (registry.layout(name).state === 'missing') missing.push({ kind: 'layout', name });
   }
   // Text output draws no colours, so it needs no theme (D82).
@@ -347,9 +353,9 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
    * that lays it out, if it brought one. Other renders never run a layout's hooks, so with no
    * other extension they keep the stream writer.
    */
-  const hooksFor = (analysis: Analysis): HookRunner<Element, RenderResult> => {
+  const hooksFor = (analysis: Analysis, text = false): HookRunner<Element, RenderResult> => {
     if (analysis.plugin.layoutKind !== 'graph') return hooks;
-    const own = registry.layoutExtension(layoutName(analysis.prepared.config));
+    const own = registry.layoutExtension(drawnLayout(analysis.prepared.config, text));
     if (!own) return hooks;
     let runner = layoutRunners.get(own);
     if (!runner) {
@@ -582,7 +588,17 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     let engine: LayoutEngine | undefined;
     let elkName: string | undefined;
     if (plugin.layoutKind === 'graph') {
-      const name = layoutName(config);
+      const asked = layoutName(config);
+      // D179: no other engine knows cells (ELK ignores `grid`), so the name only warns. Text
+      // output never loads it, and gives no ELK_NOT_INSTALLED or LAYOUT_UNKNOWN for it.
+      if (textOutput && !builtIn(asked)) {
+        warn({
+          code: 'ASCII_DROPPED',
+          feature: 'layout',
+          message: `Text output lays out with the built-in layered engine; layout "${asked}" is not used.`,
+        });
+      }
+      const name = drawnLayout(config, textOutput);
       if (isElkName(name)) elkName = name;
       const found = registry.layout(name);
       if (found.state === 'unknown') {
@@ -681,7 +697,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     });
     const textCtx = ctx as TextRenderContext;
     // D86: postParse and postLayout run (LaidOut.units 'cell'); postRender, afterMount never.
-    const textHooks = hooksFor(analysis);
+    const textHooks = hooksFor(analysis, true);
     const run = textHooks.size === 0 ? undefined : textHooks.start(textCtx, plugin.id);
     const out = drawText(
       plugin,

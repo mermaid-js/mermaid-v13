@@ -107,7 +107,7 @@ export interface Detected {
 }
 
 /** Names the built-in engine answers to silently (DESIGN §6.1): `layered` and v12's `dagre`. */
-const builtIn = (name: string): boolean => name === 'layered' || name === 'dagre';
+export const builtIn = (name: string): boolean => name === 'layered' || name === 'dagre';
 
 /**
  * v12's ELK names, `elk` and `elk.<algorithm>` (D171). Without an ELK engine registered they draw

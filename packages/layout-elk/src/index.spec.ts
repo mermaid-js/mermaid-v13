@@ -102,6 +102,44 @@ describe('@mermaid-js/layout-elk (D171)', () => {
   );
 });
 
+describe('text output with the plugin keeps layered (D179)', () => {
+  it.each(['elk', 'elk.stress', 'elk.radial'])(
+    'draws `layout: %s` as layered text with one ASCII_DROPPED for the layout',
+    async (name) => {
+      const layered = await createMermaid().render('d', FLOW, { format: 'ascii' });
+      const m = createMermaidWithElk();
+      const r = await m.render('d', withLayout(name), { format: 'ascii' });
+      expect(r.text).toBe(layered.text);
+      expect(r.warnings.map((w) => [w.code, w.feature])).toEqual([['ASCII_DROPPED', 'layout']]);
+      // Same API object, SVG: still ELK, so the text result is not a fallback of a broken engine.
+      const svg = await m.render('d', withLayout(name));
+      expect(svg.svg).not.toBe((await createMermaid().render('d', FLOW)).svg);
+    }
+  );
+
+  it('gives renderSync the same text after a text prepare, without loading ELK', async () => {
+    const m = createMermaidWithElk();
+    await m.prepare(withLayout('elk'), { format: 'ascii' });
+    const r = m.renderSync(withLayout('elk'), { format: 'ascii' });
+    expect(r.warnings.map((w) => w.code)).toEqual(['ASCII_DROPPED']);
+    // SVG still needs ELK loaded: the text prepare did not load it.
+    expect(() => m.renderSync(withLayout('elk'), { id: 'd' })).toThrow(/layout "elk"|elk/);
+  });
+
+  it('adds no ELK_ALGORITHM_IGNORED: groups are laid out by layered too', async () => {
+    const text = withLayout(
+      'elk',
+      'flowchart TD\n  subgraph S\n    A --> B\n  end\n  S@{ algorithm: stress }\n'
+    );
+    const m = createMermaidWithElk();
+    expect((await m.render('d', text)).warnings.map((w) => w.code)).toContain(
+      'ELK_ALGORITHM_IGNORED'
+    );
+    const r = await m.render('d', text, { format: 'ascii' });
+    expect(r.warnings.map((w) => w.code)).toEqual(['ASCII_DROPPED']);
+  });
+});
+
 function createMermaidWithElk() {
   const m = createMermaid();
   m.registerLayoutLoaders(elkLayouts);
