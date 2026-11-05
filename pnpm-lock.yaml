@@ -312,6 +312,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-timeline:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/language-server:
     dependencies:
       '@mermaid-js/core':

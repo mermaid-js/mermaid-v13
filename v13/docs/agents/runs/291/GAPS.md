@@ -16,9 +16,13 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - [ ] `cScale<n>` overrides are dropped today in every classic theme (no `cScale` list). T4a fixes it.
 
 ### #337 T3 layout
-- [ ] v12 TD advances sections by `height − 2·30`, so consecutive sections overlap by 30 px. **Choice:** the spec's "no overlaps" invariant wins; TD sections do not overlap. MIGRATION.md row (owner #311).
+- [x] v12 TD advances sections by `height − 2·30`, so consecutive sections overlap by 30 px. **Choice:** the spec's "no overlaps" invariant wins; TD sections do not overlap: a section starts at v12's position or 30 px (`TASK_VERTICAL_GAP`) below what the previous group's rows hold, whichever is lower. Most sectioned TD input moves (pr-check/14 overlapped by about 11 px in v12). MIGRATION.md row (owner #311).
+- [x] **Choice:** the LR axis ends at `width + 3·leftMargin` or at the last column's right edge, whichever is further: below a `leftMargin` of 25, v12's axis stopped short of the last period. Default config unchanged.
+- [x] **Choice:** a section box is at least as tall as v12's `maxSectionHeight` and at least its own label (LR measures the floor at 150 px but draws at `200·n − 50`); the period row starts below the tallest drawn section. Identical to v12 for every corpus file.
+- LR connector length uses the virtual event heights (no 50 px floor), as v12; it can end above the last event of a long stack of one-line events (it always reaches the first). Kept.
 - LR draws a connector for a period with no events; `disableMulticolor` does nothing when sections exist. Both kept (v12 behaviour).
 - D251 says leading periods take slot 0 "as Pele does"; Pele actually paints them neutral. The decided answer (slot 0) stands.
+- [ ] Invariants run on hand-built fixtures only (`layout/fixtures.ts`); #336 runs `timelineLayoutViolations` on parser-produced models.
 
 ### #311 T4 renderer
 - [ ] v12's section classes are `section-<slot − 1>`: the first section is `section--1`. **Choice:** keep v12's numbering exactly, so existing author CSS still matches (P2); MIGRATION.md says so.
