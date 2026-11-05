@@ -125,7 +125,7 @@ Mermaid never fails a render over an icon. It reports a warning in `RenderResult
 
 | Code | When |
 | --- | --- |
-| `ICON_NOT_RENDERED` | An icon did not resolve: no icons plugin, no pack of that name, no such icon, or a pack whose loader failed or that is not Iconify JSON. A label shows the icon as written (`fa:fa-car`); an icon shape draws its frame alone. One warning per render names the icons and why. |
+| `ICON_NOT_RENDERED` | An icon did not resolve: no icons plugin, no pack of that name, no such icon, a pack whose loader failed or that is not Iconify JSON, or a shape icon name that is not `pack:name`. A label shows the icon as written (`fa:fa-car`); an icon shape draws its frame alone. One warning per render names the icons and why. |
 | `ICON_PACKS_UNSUPPORTED` | Packs are registered, but no icons plugin is. |
 | `ICON_SIMPLIFIED` | An icon was drawn without parts Mermaid does not draw (below). One warning per render names the icons. |
 | `ICON_UNAVAILABLE` | Deprecated, for flowchart icon shapes: read `ICON_NOT_RENDERED`. It is still raised next to it in this alpha. |

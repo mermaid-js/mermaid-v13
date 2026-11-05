@@ -713,9 +713,10 @@ mermaid.registerIconPacks([
   fails the render: its icons are not drawn, the warning names the pack, and the next `prepare()`
   retries it.
 - **Not drawn: shown as written.** An icon that does not resolve (no plugin, no pack of that
-  name, no such icon, a pack whose loader failed or that is not Iconify JSON) stays in the label
-  as written, `fa:fa-car`, with one `ICON_NOT_RENDERED` warning per render naming the icons and
-  why (D291), as `MATH_NOT_RENDERED` does for math. While packs are registered and no icons
+  name, no such icon, a pack whose loader failed or that is not Iconify JSON, a shape icon name
+  that is not `pack:name`) stays in the label as written, `fa:fa-car`, and an icon shape draws
+  its frame alone, with one `ICON_NOT_RENDERED` warning per render naming the icons and why
+  (D291), as `MATH_NOT_RENDERED` does for math. While packs are registered and no icons
   extension is, every render also warns `ICON_PACKS_UNSUPPORTED`. `ICON_UNAVAILABLE` (flowchart icon
   shapes) is deprecated: for one alpha it is still raised once per render next to
   `ICON_NOT_RENDERED`, naming the icon shapes not drawn, and never for a placeholder render
