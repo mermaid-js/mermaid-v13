@@ -814,11 +814,11 @@ describe('flowchart render: neo gradient (D182, #229)', () => {
   const outlineOf = (tree: SvgView, node: SvgElement): SvgElement => {
     const kids = tree.children(node).flatMap((c) => (tree.tag(c) === 'a' ? tree.children(c) : [c]));
     return kids.find((c) =>
-      ['rect', 'polygon', 'circle', 'path', 'ellipse'].includes(tree.tag(c))
+      ['rect', 'polygon', 'circle', 'path', 'ellipse'].includes(tree.tag(c) ?? '')
     )!;
   };
 
-  it.each(['neo', 'neo-dark'])(
+  it.each(['neo', 'neo-dark'] as const)(
     'strokes every node outline and subgraph rect in %s',
     async (theme) => {
       const { svg, tree } = await draw(SHAPES, { config: { theme } });
@@ -899,8 +899,11 @@ describe('flowchart render: neo gradient (D182, #229)', () => {
     expect(tree.getAttr(outlineOf(tree, byAst(tree, 'n:A')[0]!), 'stroke')).toBe(URL);
   });
 
-  it.each(['default', 'redux-color', 'dark'])('writes no gradient in %s', async (theme) => {
-    const { svg } = await draw(SHAPES, { config: { theme } });
-    expect(svg).not.toMatch(/<defs|url\(/);
-  });
+  it.each(['default', 'redux-color', 'dark'] as const)(
+    'writes no gradient in %s',
+    async (theme) => {
+      const { svg } = await draw(SHAPES, { config: { theme } });
+      expect(svg).not.toMatch(/<defs|url\(/);
+    }
+  );
 });

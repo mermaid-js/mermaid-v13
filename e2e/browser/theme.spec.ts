@@ -114,7 +114,10 @@ function samePaint(a: string, b: string): boolean {
   const parse = (s: string) => /^(\w+) fill=(.*) stroke=(.*)$/.exec(s)!;
   const [, tagA, fillA, strokeA] = parse(a);
   const [, tagB, fillB, strokeB] = parse(b);
+  // Each SVG paints with its own gradient (D182); the stops are compared on their own.
+  const own = (x: string) => x.replace(/^url\("#[\w-]+-gradient"\)$/, 'gradient');
   const close = (x: string, y: string) => {
+    [x, y] = [own(x), own(y)];
     const [cx, cy] = [channels(x), channels(y)];
     if (typeof cx === 'string' || typeof cy === 'string') return x === y;
     return cx.every((v, i) => Math.abs(v - cy[i]) <= (i === 3 ? 0.01 : 1));
@@ -164,6 +167,12 @@ for (const theme of [
       // Same paint per element, each channel within 1/255 (sRGB rounding).
       const off = literal.filter((lit, i) => !samePaint(lit, vars[i]));
       expect(off.map((lit) => `${lit}  vs  ${vars[literal.indexOf(lit)]}`)).toEqual([]);
+      const stops = (sel: string) =>
+        page.evaluate(
+          (q) => [...document.querySelectorAll(q)].map((n) => getComputedStyle(n).stopColor),
+          `${sel} stop`
+        );
+      expect(await stops('#literal svg')).toEqual(await stops('body > .diagram svg'));
     });
   }
 }
