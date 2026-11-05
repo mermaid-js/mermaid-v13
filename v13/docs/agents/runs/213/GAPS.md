@@ -4,6 +4,9 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 ## Contracts
 
+- **Gradient vocabulary (owner #223).** #223 adds `useGradient`, `gradientStart`, `gradientStop` to `vocabulary.ts`, the schema and every shipped spec (off). #225 and #227 do not define them; once #223 is merged, the neo specs set `useGradient: true`, `gradientStart #0042eb`, `gradientStop #eb0042` (whichever of #225/#227 merges after #223 does it, or the coordinator).
+- **`theme.outline(name)` (owner #223).** T3–T7 call it where v12 neo strokes with the gradient; nothing else.
+
 ## #223 T0 core gradient
 
 ## #225 T1 neo
