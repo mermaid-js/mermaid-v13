@@ -3,8 +3,8 @@ import { EditorState } from '@codemirror/state';
 import { Tree as TreeClass } from '@lezer/common';
 import type { Tree } from '@lezer/common';
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight';
-import { describe, expect, it } from 'vitest';
-import { mermaidLanguage } from './language.ts';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { loadHighlighter, mermaidLanguage } from './language.ts';
 
 const highlighter = tagHighlighter([
   { tag: tags.keyword, class: 'keyword' },
@@ -33,6 +33,9 @@ function parts(tree: Tree, offset = 0): [unknown, number][] {
 }
 
 describe('the Lezer language (#21 grammar)', () => {
+  // Loaded on demand (D134); an editor view loads it when a flowchart shows up.
+  beforeAll(() => loadHighlighter('flowchart'));
+
   it('highlights a flowchart', () => {
     expect(spans('flowchart LR\n  A --> B\n')).toEqual([
       'flowchart:keyword',
