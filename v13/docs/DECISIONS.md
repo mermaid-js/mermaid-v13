@@ -306,3 +306,60 @@ D200–D209 belong to spec #265, which follows the v13-vs-Pele research of 2026-
 | D207 | **The R-PERF-3 gap on CI comes from the runner (answers D150).** Pele's code is the same on every machine, yet Pele is 90× faster than frozen `mermaid@12.2.0` on the reference machine and 47× on the CI runner. v13 measures 61.7× and 31.6×, the same drop, while v13 against Pele is 1.45× and 1.48×. R-PERF-3 and D150 are otherwise unchanged. |
 | D208 | **#265's timing is judged on the maintainer's idle M1 Max.** The implementation sessions run on that machine, one ticket at a time, and every fix PR carries a binding interleaved A/B (base, head, Pele) taken while nothing else runs there. This holds for #265 only: the machine is not available to everyone, and O-4 stays open. |
 | D209 | **Order, sources and follow-up of #265.** T0 (identity gate) and T1 (the reorder) are draft PRs straight into `mermaid-v13`; the rest go through `feature/265_render-speed`. T0, T1, T2 and T7 start at once, because the M3.5 branches do not touch the measurer or the layout engine. T3–T6 and T8 wait until the M3.5 integration PRs (#213, #215, #218) merge, because those rewrite `api.ts`, `registry.ts`, `label.ts`, `writer.ts`, `theme.ts` and the bench. T3–T7 are implemented from the research's descriptions, not from its prototypes. Done means: the 14 largest fixtures at 1.15× of Pele or better, and render time independent of page history; tiny diagrams are reported without a threshold. Output changes, the cold-start items and the bigger bets are tracked in #281. |
+
+## M4 — gantt, pie, mindmap, timeline, gitGraph, journey, quadrant, icons, hand-drawn (grilling session, 2026-11-05)
+
+D210–D219 are milestone-wide. Each M4 spec takes its own block of ten (D211). Rows exist only where this session decided something; each spec's own questions fill the rest of its block.
+
+### Milestone-wide
+
+| # | Decision |
+| --- | --- |
+| D210 | **M4 is nine specs.** The seven diagram ports of D34 (gantt, pie, mindmap, timeline, gitGraph, journey, quadrant), plus the icons plugin and the hand-drawn plugin that D170 moved here. Hand-drawn stays in M4: its core hooks are cheaper to add before seven more renderers exist. R-PLUG-8, R-TEXT-12. |
+| D211 | **One spec per item, each with a block of ten D-ids.** pie D220–D229, quadrant D230–D239, journey D240–D249, timeline D250–D259, gitGraph D260–D269, gantt D270–D279, mindmap D280–D289, icons D290–D299, hand-drawn D300–D309. The ports follow `agents/port-diagram/` (T1–T6). |
+| D212 | **A shared jison oracle is M4's T0.** One parameterised jison lexer oracle and harvest CLI in `packages/conformance` replaces the per-type near copies. The M3 types move onto it in the same ticket, which also fixes flowchart's `\n` clipping (the bug the sequence oracle fixed for itself only, #212). It blocks every M4 T1 for the five jison types (gantt, mindmap, timeline, journey, quadrant). T3 work on hand-built fixtures does not wait for it. |
+| D213 | **Pie and gitGraph gate their lexers on v12's Chevrotain tokens.** Both are Langium in v12. `packages/conformance` pins `@mermaid-js/parser` as an aliased dev dependency, at the version `mermaid@12.2.0` depends on, and T1 compares v13's token stream with that lexer's over the corpus. v13 still writes hand-written parsers (D14). |
+| D214 | **Two waves, after M3.5.** Wave 1: pie, quadrant, journey, timeline. Wave 2: gitGraph, gantt, mindmap. Types within a wave run in parallel. Icons starts once #255 merges, because it reuses D177's inline boxes. Hand-drawn starts with its core-hooks T0 at any time. Specs are written now; implementation branches start from `mermaid-v13` once #255 has merged and M3.5 is closed. #212 (M3 close) runs alongside and blocks nothing in M4. |
+| D215 | **Every port ships all four theme families.** T4/T5 add visual baselines in classic, redux, `neo` and `neo-dark`, with the neo gradient and shadow wired through theme variables as #229–#235 did for M3 (D152, D182). It is a done-when item of the port, not a later ticket. R-THEME-7, R-THEME-11. |
+| D216 | **No ASCII in M4.** No M4 type gets an `ascii` hook; `format: 'ascii'` throws `UnsupportedFormatError` for them (R-ASCII-5). R-ASCII-3 stays a Could. |
+| D217 | **Size and speed are reported, not gated, per type.** Every T5 handoff reports the type's load-path gz size and its warm-render ratio against 12.2.0. Whatever #212 decides for D110 applies to the M4 types too. |
+| D218 | **M4 types draw the front-matter `title` where v12 does.** Gantt, pie, quadrant, journey and timeline draw an in-text `title` in v12, and v12 routes front matter `title` to the same place. Each draws it the same way in v13, whatever #212 decides for the M3 types. P2. |
+| D219 | **R-TEXT-12 becomes a Must in M4**, to match R-PLUG-8, which D170 already made a Must for the icons plugin. |
+
+### Timeline and gitGraph
+
+| # | Decision |
+| --- | --- |
+| D250 | **Timeline ports both directions.** `timeline LR` and `timeline TD` are v12 syntax, drawn by two renderers (`timelineRenderer.ts`, `timelineRendererVertical.ts`). Both port, as two render paths in `diagram-timeline`. P2. |
+| D260 | **gitGraph commit ids are derived, not random.** v12 names a commit with no `id` `<seq>-<7 random hex digits>` and shows it as the commit label by default, so every render differs. v13 follows Pele (`src/diagrams/git/db.ts`): the seven digits come from a fixed multiplicative hash of the sequence number, and a collision with an id already in use moves to the next salt. The same text gives the same ids. MIGRATION.md says so. R-ARCH-1. |
+
+### Gantt
+
+| # | Decision |
+| --- | --- |
+| D270 | **Gantt uses host local time, and "now" is a render option.** As in v12 and Pele, dates, `today` and the time axis use the host time zone, with DST handled the way d3-time does. The clock is never read inside core: `RenderOptions.now` (a number or `Date`) is the instant gantt treats as now, and the `mermaid` DOM adapter defaults it to `Date.now()`. It is not a config key, so diagram text cannot set it. Gantt's specs run with `TZ=UTC` pinned in the vitest config, plus Pele's daylight-saving spec under `TZ=America/Los_Angeles`. DESIGN §1 names the host time zone as an input. Maintainer, 2026-11-05: follow Pele. R-API-8, P3. |
+| D271 | **Gantt has no dayjs and no d3; it ports Pele's date code.** `diagram-gantt` ports Pele's `dates.ts` (the dayjs 1.11 subset v12 gantt uses: strict parsing against a format, formatting, calendar arithmetic, with the custom-parse, advanced-format and ISO-week plugins and the English locale, quirks kept) and `axis.ts` (d3-time and d3-time-format: `axisFormat` specifiers, `tickInterval` with d3's `every` rule, automatic ticks). Pele is MIT (© kepano); each ported file keeps its notice in the header and the package carries a third-party notice. T2 model parity against the v12 oracle, which runs the real dayjs and d3, gates both. R-PERF-2. |
+| D272 | **Gantt's width is `gantt.useWidth`, then `availableWidth`, then 1200.** v12 lays out to `parentElement.offsetWidth`, falls back to 1200, and lets `useWidth` win. v13 has no DOM in core, so the container width arrives only through the opt-in `availableWidth` render option (`mount(…, { availableWidth: true })`). The DOM adapter has no per-type logic. MIGRATION.md says that v13 fills the container only with `availableWidth`; otherwise `useMaxWidth` scales the 1200 px chart down. R-LAYOUT-5. |
+
+### Mindmap
+
+| # | Decision |
+| --- | --- |
+| D280 | **A shared `tree` engine in core, owned by the mindmap spec.** v12 lays mindmaps out with cose-bilkent (or `tidy-tree`); v13 core has only `layered`. The new engine is a plain `LayoutEngine` (`LayoutGraph` → `LayoutModel`, DESIGN §6.1) named `tree`, at its own subpath `@mermaid-js/core/layout/tree`, and it is loaded lazily, so it is not in the R-PERF-8 core budget's closure. It is the mindmap spec's T0 (as D102 and D177), and M5's tree-shaped types (treeView, ishikawa) reuse it. Maintainer, 2026-11-05: in core, not in the mindmap package. R-LAYOUT-8. |
+| D281 | **`tree` draws a two-sided tidy tree.** The root sits in the centre; its top-level branches are split between the left and the right, and each side is laid out as a tidy tree. It is deterministic and free of overlaps by construction, and close to v12's `tidy-tree` look. A `direction` or radial option can come later. P2. |
+| D282 | **Mindmap maps v12's layout names to `tree` silently.** `cose-bilkent` and `tidy-tree` become `tree` with no warning, as `dagre` becomes `layered` (D173). Any other registered engine is honoured: `layered`, or `elk.*` when `@mermaid-js/layout-elk` is installed, since v12 honours a user-set `layout` for mindmap too. An ELK name without the plugin draws with `tree` and adds `ELK_NOT_INSTALLED`. |
+
+### Icons
+
+| # | Decision |
+| --- | --- |
+| D290 | **Icons come from Iconify-JSON packs registered in code.** `@mermaid-js/plugin-icons` makes `registerIconPacks` real, with v12's `{ name, icons }` and `{ name, loader }` shapes, and draws each icon as SVG paths. A loader runs in `prepare()` as a declared resource, as math's does (D178); `renderSync` without it throws `NotLoadedError` naming the pack, or draws a placeholder when placeholders are asked for. Diagram text never names a URL, so no icon text leads to a load (R-PLUG-7). R-API-3, R-TEXT-12. |
+| D291 | **`fa:` icons resolve against packs, not page CSS.** v12 turns `fa:fa-car` (flowchart labels) and `::icon(fa fa-book)` (mindmap) into `<i class="fa …">`, which needs Font Awesome's CSS on the page. v13 resolves the prefix (`fa`, `fab`, `fas`, …) against a registered pack of that name, which the integrator registers, for example from `@iconify-json/fa6-solid`. An icon that does not resolve, or any icon without the plugin, shows as written with one `ICON_NOT_RENDERED` warning per render, as `MATH_NOT_RENDERED` does (D176). MIGRATION.md explains the move from CSS to packs. D5. |
+| D292 | **Icons work in every label core lays out.** They reuse D177's inline-box runs, so the rule is the same as math's: flowchart nodes, edges and subgraph titles, class, state, ER, sequence messages and notes, and the M4 types. The plugin also draws the glyph of flowchart icon shapes (`@{ icon: … }`), which ends D186's frame-only stand-in, and mindmap's `::icon()`. |
+
+### Hand-drawn
+
+| # | Decision |
+| --- | --- |
+| D300 | **The hand-drawn plugin uses roughjs, with a fixed default seed.** `@mermaid-js/plugin-hand-drawn` depends on roughjs (MIT, DOM-free generator, as in v12), as `@mermaid-js/layout-elk` depends on elkjs: R-PERF-2's zero-dependency rule covers core and the diagram packages, not optional plugins. v12's `look: handDrawn` activates it through the plugin's config-fragment alias (D153). v12's `handDrawnSeed: 0` means a random seed; in v13, 0 is a fixed seed like any other, so output stays deterministic. MIGRATION.md says so. R-PLUG-8, R-ARCH-1. |
+| D301 | **Hand-drawn covers the types v12 sketched.** v12 sketches only what it draws through the shared `rendering-util` shapes and edges. v13 adds core node-outline and edge hooks (the spec's T0), and flowchart, class, state, ER and mindmap must use them. Sequence, gantt, pie, timeline, journey, quadrant and gitGraph draw themselves and are not sketched in M4; they can opt in later. P1. |
