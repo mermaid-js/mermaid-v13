@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { INVENTORY_PATH, themeInventory } from './theme-inventory.ts';
+import { THEME_VARIABLE_TABLE, THEME_VARIABLES } from '../../../packages/core/src/theme/index.ts';
+import { INVENTORY_PATH, TABLE_PATH, themeInventory, themeTable } from './theme-inventory.ts';
 
 describe('theme variable inventory (DESIGN §8.3)', () => {
   it('lists name, CSS variable, role, rules, the themes that set it, and its users', async () => {
@@ -33,5 +34,13 @@ describe('theme variable inventory (DESIGN §8.3)', () => {
 
   it('is up to date (run `pnpm gen:theme`)', async () => {
     expect(readFileSync(INVENTORY_PATH, 'utf8')).toBe(await themeInventory());
+  });
+
+  it('keeps the runtime alias and kind table up to date (run `pnpm gen:theme`)', () => {
+    expect(readFileSync(TABLE_PATH, 'utf8')).toBe(themeTable());
+    const table = Object.entries(THEME_VARIABLE_TABLE);
+    expect(table).toEqual(
+      Object.entries(THEME_VARIABLES).map(([name, d]) => [name, { alias: d.alias, kind: d.kind }])
+    );
   });
 });
