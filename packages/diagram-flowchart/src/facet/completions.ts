@@ -8,6 +8,10 @@
  * checked by position; `A --|` probes as edge text (mode `edgeText`), so the rest of the arrow
  * is offered from the link start token; shape data is one token, so the replacement range is
  * worked out from its text; label and string modes get nothing.
+ *
+ * And from #179: inside edge text the closing arrow is offered by how the link opened (the
+ * probe may be in edge-text mode or past an unclosed `--`); an arrow glued to an id (`A-`,
+ * `B <-`) lexes as part of the id or a tag, so it is found from the text.
  */
 import { Kind } from '@mermaid-js/core/parser-kit';
 import type {
@@ -29,8 +33,11 @@ import { T } from '../parser/tokens.ts';
 import {
   ARROWS,
   BRACKET_SHAPES,
+  CLOSERS,
+  CURVES,
   DIRECTIONS,
   describeLink,
+  EDGE_DATA,
   KEYWORDS,
   LINK_TARGETS,
   NODE_DATA_KEYS,
@@ -200,12 +207,125 @@ function arrowRest(text: string, tokens: TokenStream, o: number): CompletionItem
   return items.list;
 }
 
-/** Inside `@{ … }`: keys at a key position, shape names after `shape:`. */
-function shapeData(text: string, probe: ProbeResult): CompletionItem[] {
+/** Start of the run of arrow characters (`-`, `=`, `.`) that ends at `o`. */
+function arrowRunStart(text: string, o: number): number {
+  let j = o;
+  while (j > 0 && '-=.'.includes(text.charAt(j - 1))) j--;
+  return j;
+}
+
+/**
+ * `A -- text --|`, `A -. text .|`, `A -- text |`: the arrow that closes edge text, by how the
+ * link was opened. Offered after a blank or a typed part of the closer, once some edge text
+ * is written; undefined when the cursor is not in edge text.
+ */
+function edgeTextClose(text: string, tokens: TokenStream, o: number): CompletionItem[] | undefined {
+  let open = -1;
+  for (let i = tokenBefore(tokens, o - 1); i >= 0; i--) {
+    const k = tokens.kind[i]!;
+    if (k === T.StartLink) {
+      open = i;
+      break;
+    }
+    if (k === T.Link || STATEMENT_END.has(k)) return undefined;
+  }
+  if (open < 0) return undefined;
+  const opened = text.slice(tokens.start[open], tokens.end[open]).trim();
+  const closers = CLOSERS[opened.slice(-2)];
+  const j = arrowRunStart(text, o);
+  const textFrom = tokens.end[open] ?? 0;
+  if (!closers || j <= textFrom || text.slice(textFrom, j).trim() === '') return undefined;
+  if (j === o && !/\s/.test(text.charAt(o - 1))) return [];
+  const typed = text.slice(j, o);
+  const items = new Items(typed, span(j, o));
+  for (const c of closers) {
+    if (c === typed) continue;
+    const { type, stroke, length } = destructLink(c, opened);
+    items.add(c, 'operator', {
+      detail: describeLink(type, stroke, length),
+      documentation: flowchartDocs[T.Link],
+    });
+  }
+  return items.list;
+}
+
+/** `A-|`, `B <-|`: the arrows that start with what is typed right after an id. */
+function gluedArrow(text: string, o: number): CompletionItem[] {
+  let j = arrowRunStart(text, o);
+  if (text.charAt(j - 1) === '<') j--;
+  if (j === o) return [];
+  // Something on the line before it: the arrow's start node.
+  let k = j;
+  while (k > 0 && /[^\S\r\n]/.test(text.charAt(k - 1))) k--;
+  if (k === 0 || /[\r\n;]/.test(text.charAt(k - 1))) return [];
+  const typed = text.slice(j, o);
+  const items = new Items(typed, span(j, o));
+  for (const a of ARROWS) if (a !== typed) arrowItem(items, a);
+  return items.list;
+}
+
+/**
+ * Where the `@{ … }` around `o` opens (the end of its `@{`), and whether the id before it is
+ * an edge id (`e1@{ … }` after `A e1@--> B`); undefined when no `@{` token is found.
+ */
+function dataBlock(
+  text: string,
+  tokens: TokenStream,
+  model: FlowModel,
+  o: number
+): { from: number; to: number; edge: boolean } | undefined {
+  for (let i = tokenBefore(tokens, o - 1); i >= 0 && tokens.kind[i] === T.ShapeData; i--) {
+    const start = tokens.start[i] ?? 0;
+    if (!text.startsWith('@{', start)) continue;
+    const id = tokenBefore(tokens, start - 1);
+    const name = id >= 0 && tokens.end[id] === start ? text.slice(tokens.start[id], start) : '';
+    let last = i;
+    while (tokens.kind[last + 1] === T.ShapeData) last++;
+    return {
+      from: start + 2,
+      to: tokens.end[last] ?? o,
+      edge: name !== '' && model.edges.some((e) => e.id === name),
+    };
+  }
+  return undefined;
+}
+
+/** Keys already written in `text[from, to)`, but for the one at `except`. */
+function writtenKeys(text: string, from: number, to: number, except: number): Set<string> {
+  const keys = new Set<string>();
+  const re = /(^|[\s,{])([A-Za-z]+)[^\S\r\n]*:/g;
+  const block = text.slice(from, to);
+  for (let m = re.exec(block); m; m = re.exec(block)) {
+    if (from + m.index + m[1]!.length !== except) keys.add(m[2]!);
+  }
+  return keys;
+}
+
+/** Every shape name a node's `shape:` accepts, its group's first name as the detail. */
+function shapeNames(items: Items): void {
+  for (const group of SHAPE_GROUPS) {
+    for (const shape of group.filter(acceptedShape)) {
+      items.add(shape, 'shape', { detail: shape === group[0] ? 'shape' : `same as ${group[0]}` });
+    }
+  }
+}
+
+/**
+ * Inside `@{ … }`: keys at a key position, then the values of a key that takes known ones:
+ * shape names after a node's `shape:`, an edge's `animate`, `animation` and `curve` values.
+ */
+function shapeData(
+  text: string,
+  tokens: TokenStream,
+  model: FlowModel,
+  probe: ProbeResult
+): CompletionItem[] {
   // Scanned back from the cursor by hand: a regex anchored at the end retries every blank of
   // a long run (pitfall 5).
   const o = probe.offset;
-  const from = probe.prefix.start;
+  const block = dataBlock(text, tokens, model, o);
+  const from = block?.from ?? probe.prefix.start;
+  const edge = block?.edge ?? false;
   const isSpace = (i: number) => /\s/.test(text.charAt(i));
   const back = (at: number, test: (j: number) => boolean) => {
     let i = at;
@@ -213,25 +333,17 @@ function shapeData(text: string, probe: ProbeResult): CompletionItem[] {
     return i;
   };
   const rest = /^[\w-]*/.exec(text.slice(o, o + 64))?.[0].length ?? 0;
-  // `shape: na|`
+  // `key: va|`
   const name = back(o, (j) => /[\w-]/.test(text.charAt(j)));
   let k = back(name, isSpace);
   if (k > from && text.charAt(k - 1) === ':') {
     k = back(k - 1, isSpace);
-    const at = k - 'shape'.length;
-    if (
-      at >= from &&
-      text.slice(at, k) === 'shape' &&
-      (at === from || /[\s,{]/.test(text.charAt(at - 1)))
-    ) {
-      const typed = text.slice(name, o);
-      const items = new Items(typed, span(name, o + rest));
-      for (const group of SHAPE_GROUPS) {
-        for (const shape of group.filter(acceptedShape)) {
-          const detail = shape === group[0] ? 'shape' : `same as ${group[0]}`;
-          items.add(shape, 'shape', { detail });
-        }
-      }
+    const at = back(k, (j) => /[A-Za-z]/.test(text.charAt(j)));
+    if (at < k && (at === from || /[\s,{]/.test(text.charAt(at - 1)))) {
+      const key = text.slice(at, k);
+      const items = new Items(text.slice(name, o), span(name, o + rest));
+      if (edge) for (const value of EDGE_DATA[key] ?? []) items.add(value, 'constant');
+      else if (key === 'shape') shapeNames(items);
       return items.list;
     }
   }
@@ -245,7 +357,11 @@ function shapeData(text: string, probe: ProbeResult): CompletionItem[] {
   if (!atKey) return [];
   const typed = text.slice(key, o);
   const items = new Items(typed, span(key, o + rest));
-  for (const k2 of NODE_DATA_KEYS) items.add(k2, 'property', { insertText: `${k2}: ` });
+  // A key written twice is a YAML error: only the ones not in the block yet.
+  const written = block ? writtenKeys(text, from, block.to, key) : new Set<string>();
+  for (const k2 of edge ? Object.keys(EDGE_DATA) : NODE_DATA_KEYS) {
+    if (!written.has(k2)) items.add(k2, 'property', { insertText: `${k2}: ` });
+  }
   return items.list;
 }
 
@@ -330,7 +446,10 @@ export function flowchartCompletions(
   const { text, result } = doc;
   const tokens = result.tokens;
   if (!tokens) return [];
-  if (probe.mode === 'shapeData') return shapeData(text, probe);
+  const model = result.model as FlowModel;
+  if (probe.mode === 'shapeData') return shapeData(text, tokens, model, probe);
+  const close = edgeTextClose(text, tokens, probe.offset);
+  if (close) return close;
   // Right after `--`, `==` or `-.`: the rest of the arrow, whichever mode the probe ended in
   // (the link start token takes the line break after it, so the probe may be past it).
   const rest = arrowRest(text, tokens, probe.offset);
@@ -352,15 +471,19 @@ export function flowchartCompletions(
     for (const [dir, meaning] of DIRECTIONS) items.add(dir, 'constant', { detail: meaning });
     return items.list;
   }
-  const subgraphs = new Set((result.model as FlowModel).subgraphs.map((s) => s.id));
+  const subgraphs = new Set(model.subgraphs.map((s) => s.id));
   const nodeKind = (s: SymbolOccurrence): CompletionKind =>
     subgraphs.has(s.name) ? 'subgraph' : 'node';
   if (probe.mode === 'click') {
     ids(items, result.symbols, NODE_KINDS, word.start, nodeKind);
     return items.list;
   }
-  byKind(items, expected);
   const st = statementBefore(tokens, word.start);
+  if (st.prev === T.Interpolate) {
+    for (const curve of CURVES) items.add(curve, 'constant');
+    return items.list;
+  }
+  byKind(items, expected);
   const context = expected.has(T.NodeString) ? idContext(st) : 'none';
   if (context === 'classes') ids(items, result.symbols, CLASS_KINDS, word.start, () => 'class');
   else if (context === 'nodes') {
@@ -368,5 +491,11 @@ export function flowchartCompletions(
     nodes(items, result, st, id, word.start, nodeKind);
   }
   operators(items, expected);
+  // An arrow glued to the id (`A-`, `B <-`): the lexer reads it as part of the id or a tag.
+  if (!expected.has(T.Graph) && st.head !== T.Graph && idContext(st) === 'nodes') {
+    for (const item of gluedArrow(text, probe.offset)) {
+      if (!items.list.some((x) => x.label === item.label)) items.list.push(item);
+    }
+  }
   return items.list;
 }
