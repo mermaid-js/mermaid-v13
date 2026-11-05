@@ -9,7 +9,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 ## #304 T1 lexer (merged)
 
 - Review findings left to later tickets (none blocking):
-  - [ ] **#305:** `harvest-pie.ts` drops literals containing `${`, so the interpolated `it.each` strings of parser `pie.test.ts` are not harvested (27 of 32 kept). Expand the tables by hand into the quirks or the ported specs so those shapes reach the gate. Its `\\\n` continuation branch in `unescape` is unreachable for quoted literals.
+  - [x] **#305:** `harvest-pie.ts` drops literals containing `${`, so the interpolated `it.each` strings of parser `pie.test.ts` are not harvested (27 of 32 kept). Expand the tables by hand into the quirks or the ported specs so those shapes reach the gate. Its `\\\n` continuation branch in `unescape` is unreachable for quoted literals.
+    - Closed by #305: all 32 `pie.test.ts` strings are in `pie-v12-specs.json`; the 5 missing from the count are duplicates within the `it.each` tables (none contains `${`). The whole file is also ported (`src/v12-specs/langium-pie.spec.ts`).
   - [ ] **#306/#325:** drop the pie exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one theme variable") once the renderer reads theme variables.
   - [ ] **#325:** `LANGIUM_NAMES` (test-only) and `pieTokens` are exported from the runtime entry; move them to a test or internal subpath if they show up in the load-path size.
 - Deviations (accepted by the orchestrator, consistent with D220): the lexer-error position is compared as the length of the text v12 read before it (entities decoded), since v12 and v13 offsets differ; unclosed `%%{` directives are a listed gate exclusion (core's `UNCLOSED_DIRECTIVE`, shared by every type). An in-body `---…---` block is its own `Yaml` trivia kind in `PIE_TRIVIA`; #305 skips it.
@@ -23,3 +24,4 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 ## Shared contracts
 
 - **`PieModel`** (`packages/diagram-pie/src/model.ts`): landed by the orchestrator before #305 and #335 started in parallel, shaped from the spec's model list. #305 produces it; #335 reads it. Change it only additively and note the change here.
+  - #305: unchanged. `parsePie` fills it as documented (frozen; `title` absent when neither an in-text nor a front-matter title).

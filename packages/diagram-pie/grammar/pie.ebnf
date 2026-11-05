@@ -10,7 +10,7 @@ decides what is valid, this file is fixed to match, and the parser must match th
 matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
 as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
 `style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
-opaque text; and a line break appended. Keywords are matched with regard to case.
+opaque text; and a line break appended. Keywords are case-sensitive.
 
 Each section and statement ends at a line break (or the end of the text); `;` is not a
 separator. *)
