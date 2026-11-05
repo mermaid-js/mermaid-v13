@@ -1,20 +1,14 @@
 // Pack-and-install check (#174): the installed adapters import in Node, and every per-type
-// first-paint grammar each one maps resolves from the published files and parses.
+// first-paint grammar each one maps resolves from the published files and parses. The ids are
+// the maps' own keys; `adapters-check.ts` compares them with the facet ids.
 import { LEZER_HIGHLIGHTERS } from '@mermaid-js/language-service-codemirror';
 import { MONARCH_HIGHLIGHTERS } from '@mermaid-js/language-service-monaco';
-
-const SAMPLES = {
-  flowchart: 'flowchart LR\n  A[Start] --> B(End)\n',
-  sequence: 'sequenceDiagram\n  Alice->>Bob: Hi\n',
-  class: 'classDiagram\n  class Animal\n',
-  state: 'stateDiagram-v2\n  [*] --> Idle\n',
-  er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
-};
 
 const lezer = {};
 for (const [id, load] of Object.entries(LEZER_HIGHLIGHTERS)) {
   const parser = await load();
-  const tree = parser.parse(SAMPLES[id] ?? `${id}\n`);
+  // Any text tokenizes: the parser is a flat token list.
+  const tree = parser.parse('A --> B : x\n');
   let nodes = 0;
   tree.iterate({ enter: () => void nodes++ });
   if (nodes < 2) throw new Error(`Lezer ${id}: empty tree`);

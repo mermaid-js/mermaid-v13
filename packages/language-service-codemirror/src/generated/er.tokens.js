@@ -4,9 +4,9 @@ import { styleTags, tags as t } from '@lezer/highlight';
 import * as TERMS from './er.parser.terms.js';
 
 /** mode -> [pattern, token, push target, pop] in priority order. */
-const TABLE = {"INITIAL":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["accTitle\\s*:\\s*","Keyword","acc_title",false],["accDescr\\s*:\\s*","Keyword","acc_descr",false],["accDescr\\s*\\{\\s*","Keyword","acc_descr_multiline",false],[".*direction\\s+TB[^\\n]*","Keyword",null,false],[".*direction\\s+BT[^\\n]*","Keyword",null,false],[".*direction\\s+RL[^\\n]*","Keyword",null,false],[".*direction\\s+LR[^\\n]*","Keyword",null,false],["[ \\t\\r]+","Other",null,false],["\\n+","Other",null,false],["\"[^\"%\\r\\n\\v\\b\\\\]+\"","Variable",null,false],["\"[^\"]*\"","String",null,false],["erDiagram\\b","Keyword",null,false],["\\{","Punctuation","block",false],["#","Other",null,false],[",","Punctuation",null,false],[":::","Operator",null,false],[":","Punctuation",null,false],["\\[","Punctuation",null,false],["\\]","Punctuation",null,false],["style\\b","Keyword","style",false],["classDef\\b","Keyword","style",false],["class\\b","Keyword",null,false],["subgraph\\b","Keyword",null,false],["end\\b\\s*","Keyword",null,false],["one or zero\\b","Operator",null,false],["one or more\\b","Operator",null,false],["one or many\\b","Operator",null,false],["1\\+","Operator",null,false],["\\|o","Operator",null,false],["zero or one\\b","Operator",null,false],["zero or more\\b","Operator",null,false],["zero or many\\b","Operator",null,false],["0\\+","Operator",null,false],["\\}o","Operator",null,false],["many\\(0\\)","Operator",null,false],["many\\(1\\)","Operator",null,false],["many\\b","Operator",null,false],["\\}\\|","Operator",null,false],["one\\b","Operator",null,false],["only one\\b","Operator",null,false],["[0-9]+\\.[0-9]+","Number",null,false],["1\\b(?=\\s+[A-Za-z_\"'])","Operator",null,false],["1\\b(?=\\s+[0-9])","Operator",null,false],["1\\b(?=--|\\.\\.|\\.-|-\\.)","Operator",null,false],["1\\b","Number",null,false],["[0-9]+","Number",null,false],["\\|\\|","Operator",null,false],["o\\|","Operator",null,false],["o\\{","Operator",null,false],["\\|\\{","Operator",null,false],["u(?=[.\\-|])","Operator",null,false],["\\.\\.","Operator",null,false],["--","Operator",null,false],["to\\b","Operator",null,false],["optionally to\\b","Operator",null,false],["\\.-","Operator",null,false],["-\\.","Operator",null,false],["(?:[^\\x00-\\x7F]|\\w|-|\\*|\\.)+","Variable",null,false],[".","Other",null,false],["$","Other",null,false]],"block":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\s+","Other",null,false],["\\b(?:PK|FK|UK)\\b","Keyword",null,false],["[^\\s]*[~].*[~][^\\s]*","Variable",null,false],["[*A-Za-z_À-￿][A-Za-z0-9\\-_[\\]().,À-￿*]*","Variable",null,false],["`","String","block_bq",false],["\"[^\"]*\"","String",null,false],["\\n+","Other",null,false],["\\}","Punctuation",null,true],["\\?","Operator",null,false],[",","Punctuation",null,false],[".","Other",null,false]],"block_bq":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^`]+","Variable",null,false],["`","String",null,true]],"acc_title":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr_multiline":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\}","Keyword",null,true],["[^}]*","String",null,false]],"style":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\n+","Other",null,true],["\\s+","Other",null,false],[":","Punctuation",null,false],[",","Punctuation",null,false],["#","Other",null,false],["(?:[^\\x00-\\x7F]|\\w|-|\\*)+","String",null,false],[";","Punctuation",null,false]]};
+const TABLE = {"@frontMatterStart":[["(?=(?:[^\\S\\n]*\\n)*[^\\S\\n]*---[^\\S\\n]*(?:\\n|$))","Other","@frontMatterOpen",true],["","Other",null,true]],"@frontMatterOpen":[["^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)","Meta","@frontMatter",true],["[^\\S\\n]*\\n","Other",null,false]],"@frontMatter":[["^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)","Meta",null,true],["[^\\S\\n]*#[^\\n]*","Comment",null,false],["^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))","Variable",null,false],["[^#\\n]+|\\n","Other",null,false]],"INITIAL":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["accTitle\\s*:\\s*","Keyword","acc_title",false],["accDescr\\s*:\\s*","Keyword","acc_descr",false],["accDescr\\s*\\{\\s*","Keyword","acc_descr_multiline",false],[".*direction\\s+TB[^\\n]*","Keyword",null,false],[".*direction\\s+BT[^\\n]*","Keyword",null,false],[".*direction\\s+RL[^\\n]*","Keyword",null,false],[".*direction\\s+LR[^\\n]*","Keyword",null,false],["[ \\t\\r]+","Other",null,false],["\\n+","Other",null,false],["\"[^\"%\\r\\n\\v\\b\\\\]+\"","Variable",null,false],["\"[^\"]*\"","String",null,false],["erDiagram\\b","Keyword",null,false],["\\{","Punctuation","block",false],["#","Other",null,false],[",","Punctuation",null,false],[":::","Operator",null,false],[":","Punctuation",null,false],["\\[","Punctuation",null,false],["\\]","Punctuation",null,false],["style\\b","Keyword","style",false],["classDef\\b","Keyword","style",false],["class\\b","Keyword",null,false],["subgraph\\b","Keyword",null,false],["end\\b\\s*","Keyword",null,false],["one or zero\\b","Operator",null,false],["one or more\\b","Operator",null,false],["one or many\\b","Operator",null,false],["1\\+","Operator",null,false],["\\|o","Operator",null,false],["zero or one\\b","Operator",null,false],["zero or more\\b","Operator",null,false],["zero or many\\b","Operator",null,false],["0\\+","Operator",null,false],["\\}o","Operator",null,false],["many\\(0\\)","Operator",null,false],["many\\(1\\)","Operator",null,false],["many\\b","Operator",null,false],["\\}\\|","Operator",null,false],["one\\b","Operator",null,false],["only one\\b","Operator",null,false],["[0-9]+\\.[0-9]+","Number",null,false],["1\\b(?=\\s+[A-Za-z_\"'])","Operator",null,false],["1\\b(?=\\s+[0-9])","Operator",null,false],["1\\b(?=--|\\.\\.|\\.-|-\\.)","Operator",null,false],["1\\b","Number",null,false],["[0-9]+","Number",null,false],["\\|\\|","Operator",null,false],["o\\|","Operator",null,false],["o\\{","Operator",null,false],["\\|\\{","Operator",null,false],["u(?=[.\\-|])","Operator",null,false],["\\.\\.","Operator",null,false],["--","Operator",null,false],["to\\b","Operator",null,false],["optionally to\\b","Operator",null,false],["\\.-","Operator",null,false],["-\\.","Operator",null,false],["(?:[^\\x00-\\x7F]|\\w|-|\\*|\\.)+","Variable",null,false],[".","Other",null,false],["$","Other",null,false]],"block":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["\\s+","Other",null,false],["\\b(?:PK|FK|UK)\\b","Keyword",null,false],["[^\\s]*[~].*[~][^\\s]*","Variable",null,false],["[*A-Za-z_À-￿][A-Za-z0-9\\-_[\\]().,À-￿*]*","Variable",null,false],["`","String","block_bq",false],["\"[^\"]*\"","String",null,false],["\\n+","Other",null,false],["\\}","Punctuation",null,true],["\\?","Operator",null,false],[",","Other",null,false],[".","Other",null,false]],"block_bq":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["[^`]+","Variable",null,false],["`","String",null,true]],"acc_title":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr_multiline":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["\\}","Keyword",null,true],["[^}]*","String",null,false]],"style":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["\\n+","Other",null,true],["\\s+","Other",null,false],[":","Punctuation",null,false],[",","Punctuation",null,false],["#","Other",null,false],["(?:[^\\x00-\\x7F]|\\w|-|\\*)+","String",null,false],[";","Punctuation",null,false]]};
 /** Trivia (comments, directives): no other token runs into one (the lexer never sees them). */
-const TRIVIA = ["^[^\\S\\n]*%%(?!\\{)[^\\n]+","[^\\S\\n]*%%\\{.*?\\}%%"].map(
+const TRIVIA = ["^[^\\S\\n]*%%(?!\\{)[^\\n]+","[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%"].map(
   (p) => new RegExp(p, p.startsWith('^') ? 'gm' : 'g')
 );
 const MODES = Object.fromEntries(
@@ -40,7 +40,8 @@ class Modes {
     return stack === this.stack ? this : new Modes(stack);
   }
 }
-const START = new Modes(['INITIAL']);
+/** Front matter modes (`@…`) sit above INITIAL and pop back to it. */
+const START = new Modes(['INITIAL', '@frontMatterStart']);
 
 /** How far a token may look ahead. Each token depends on this much text (incremental reuse). */
 const LOOKAHEAD = 4096;
@@ -101,14 +102,18 @@ function nextTrivia(entry, from, end) {
   return exact ? cut : -1;
 }
 
-/** The text a token is matched against: the lookahead, cut at the next trivia. */
-function ahead(input) {
-  if (!input.input || !input.ranges || input.ranges.length !== 1) return aheadSlow(input);
+/**
+ * The text a token is matched against: the lookahead, cut at the next trivia unless `whole`
+ * (front matter, where no trivia rule runs).
+ */
+function ahead(input, whole) {
+  if (!input.input || !input.ranges || input.ranges.length !== 1) return aheadSlow(input, whole);
   const entry = textOf(input);
   const at = input.pos - entry.from;
   const end = Math.min(at + LOOKAHEAD, entry.text.length);
   if (end <= at) return '';
   input.peek(end - at - 1); // record the lookahead, as reading each character would
+  if (whole) return entry.text.slice(at, end);
   const cut = nextTrivia(entry, at + 1, end);
   if (cut >= 0) return entry.text.slice(at, cut);
   const s = entry.text.slice(at, end);
@@ -116,13 +121,14 @@ function ahead(input) {
   return c < 0 ? s : s.slice(0, c);
 }
 
-function aheadSlow(input) {
+function aheadSlow(input, whole) {
   let s = '';
   for (let i = 0; i < LOOKAHEAD; i++) {
     const c = input.peek(i);
     if (c < 0) break;
     s += String.fromCharCode(c);
   }
+  if (whole) return s;
   const cut = triviaCut(s, 1, s.length);
   return cut < 0 ? s : s.slice(0, cut);
 }
@@ -137,7 +143,7 @@ function atLineStart(input) {
 
 /** The next token: [term, length, modes after it]; empty matches only change the mode. */
 function next(modes, input) {
-  const text = ahead(input);
+  const text = ahead(input, inFrontMatter(modes));
   if (text.length === 0) return undefined;
   // The tokenizer and then the context tracker's shift ask for the same token.
   // The key is the (immutable) Lezer input when there is one, else the text.
@@ -155,10 +161,19 @@ function next(modes, input) {
 }
 let last = { modes: undefined, pos: -1, key: undefined, ranges: undefined, result: undefined };
 
+/** Whether the top mode is a front matter one (`@…`), where no trivia cuts the text. */
+const inFrontMatter = (modes) => modes.top.charCodeAt(0) === 64;
+
 function match(modes, input, text) {
   // A `^` rule matches only at a line start (the regex sees the text from here on).
   const bol = atLineStart(input);
+  let whole = inFrontMatter(modes);
   for (let guard = 0; guard < 8; guard++) {
+    // Left the front matter without reading anything: the diagram's rules see trivia cuts.
+    if (whole && !inFrontMatter(modes)) {
+      text = ahead(input, false);
+      whole = false;
+    }
     let changed = false;
     for (const rule of MODES[modes.top] ?? []) {
       if (rule.bol && !bol) continue;

@@ -41,4 +41,4 @@ The language server does not load third-party facets by default: a client opts i
 
 ## Limitations
 
-- Language support exists for flowchart only. Other types get generic features: comments, directives, and front-matter config.
+- Language support exists for flowchart, sequence, class, state and ER diagrams. Other types get generic features: comments, directives, and front-matter config.

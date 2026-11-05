@@ -4,9 +4,9 @@ import { styleTags, tags as t } from '@lezer/highlight';
 import * as TERMS from './sequence.parser.terms.js';
 
 /** mode -> [pattern, token, push target, pop] in priority order. */
-const TABLE = {"INITIAL":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\n+","Other",null,false],["\\s+","Other",null,false],["#(?!\\w+;)[^\\n]*","Comment",null,false],["%(?!\\{)[^\\n]*","Comment",null,false],["[^}]%%[^\\n]*","Comment",null,false],["(?:[0-9]+(?:\\.[0-9]{1,2})?|\\.[0-9]{1,2})(?=[ \\n]+)","Number",null,false],["(?i:box)\\b","Keyword","LINE",false],["(?i:participant)\\b","Keyword","ID",false],["(?i:actor)\\b","Keyword","ID",false],["(?i:create)\\b","Keyword",null,false],["(?i:destroy)\\b","Keyword","ID",false],["(?i:loop)\\b","Keyword","LINE",false],["(?i:rect)\\b","Keyword","LINE",false],["(?i:opt)\\b","Keyword","LINE",false],["(?i:alt)\\b","Keyword","LINE",false],["(?i:else)\\b","Keyword","LINE",false],["(?i:par)\\b","Keyword","LINE",false],["(?i:par_over)\\b","Keyword","LINE",false],["(?i:and)\\b","Keyword","LINE",false],["(?i:critical)\\b","Keyword","LINE",false],["(?i:option)\\b","Keyword","LINE",false],["(?i:break)\\b","Keyword","LINE",false],["(?i:end)\\b","Keyword",null,false],["(?i:left of)\\b","Keyword",null,false],["(?i:right of)\\b","Keyword",null,false],["(?i:links)(?=[ \\t]+[^/\\\\+()<>:\\n,;\\s-])","Keyword",null,false],["(?i:link)(?=[ \\t]+[^/\\\\+()<>:\\n,;\\s-])","Keyword",null,false],["(?i:properties)(?=[ \\t]+[^/\\\\+()<>:\\n,;\\s-])","Keyword",null,false],["(?i:details)(?=[ \\t]+[^/\\\\+()<>:\\n,;\\s-])","Keyword",null,false],["(?i:over)\\b","Keyword",null,false],["(?i:note)\\b","Keyword",null,false],["(?i:activate)\\b","Keyword","ID",false],["(?i:deactivate)\\b","Keyword","ID",false],["(?i:title)\\s(?:[^#\\n;]|#\\w+;)+","Keyword",null,false],["(?i:title:)\\s(?:[^#\\n;]|#\\w+;)+","Keyword",null,false],["(?i:accTitle)\\s*:\\s*","Keyword","acc_title",false],["(?i:accDescr)\\s*:\\s*","Keyword","acc_descr",false],["(?i:accDescr)\\s*\\{\\s*","Keyword","acc_descr_multiline",false],["(?i:sequenceDiagram)\\b","Keyword",null,false],["(?i:autonumber)\\b","Keyword",null,false],["(?i:off)\\b","Keyword",null,false],[",","Punctuation",null,false],[";","Punctuation",null,false],["(?:#\\w+;|[^/\\\\+()<\\->:\\n,;])+(?:(?!-(?i:x)|--(?i:x)|-\\)|--\\)|-\\|\\\\|-\\\\|-\\/|-\\/\\/|-\\|\\/|\\/\\|-|\\\\\\|-|\\/\\/-|\\\\\\\\-|\\/\\|-|--\\|\\\\|--|\\(\\))-*(?:#\\w+;|[^+<\\->:\\n,;])+)*","Variable",null,false],["->>","Operator",null,false],["<<->>","Operator",null,false],["-->>","Operator",null,false],["<<-->>","Operator",null,false],["->","Operator",null,false],["-->","Operator",null,false],["-(?i:x)","Operator",null,false],["--(?i:x)","Operator",null,false],["-\\)","Operator",null,false],["--\\)","Operator",null,false],["--\\|\\\\","Operator",null,false],["--\\|\\/","Operator",null,false],["--\\\\\\\\","Operator",null,false],["--\\/\\/","Operator",null,false],["\\/\\|--","Operator",null,false],["\\\\\\|--","Operator",null,false],["\\/\\/--","Operator",null,false],["\\\\\\\\--","Operator",null,false],["-\\|\\\\","Operator",null,false],["-\\|\\/","Operator",null,false],["-\\\\\\\\","Operator",null,false],["-\\/\\/","Operator",null,false],["\\/\\|-","Operator",null,false],["\\\\\\|-","Operator",null,false],["\\/\\/-","Operator",null,false],["\\\\\\\\-","Operator",null,false],[":(?i:(?:(?:no)?wrap:)?)(?:[^#\\n;]|#\\w+;)*","String",null,false],["\\+","Operator",null,false],["-","Operator",null,false],["\\(\\)","Operator",null,false],["$","Other",null,false],[".","Other",null,false]],"ID":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?:(?!\\n)\\s)+","Other",null,false],["#(?!\\w+;)[^\\n]*","Comment",null,false],["@\\{","Meta","CONFIG",true],["(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s*@\\{)","Variable",null,false],["(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s+(?i:as)\\s)","Variable","ALIAS",true],["(?:#\\w+;|[^<>:\\n,;@])+(?=\\s*[\\n;#]|$)","Variable",null,true],["[^<>:\\n,;@]*<[^\\n]*","Other",null,true],["[^\\n]+","Other",null,true]],"ALIAS":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?:(?!\\n)\\s)+","Other",null,false],["#(?!\\w+;)[^\\n]*","Comment",null,false],["(?i:as)\\b","Keyword","LINE",true],["(?:)","Other",null,true]],"LINE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["(?:(?!\\n)\\s)+","Other",null,false],["#(?!\\w+;)[^\\n]*","Comment",null,false],["(?i:(?::?(?:no)?wrap:)?)(?:[^#\\n;]|#\\w+;)*","String",null,true]],"CONFIG":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^}]+","Meta",null,false],["\\}(?=\\s+(?i:as)\\s)","Meta","ALIAS",true],["\\}","Meta",null,true]],"acc_title":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr_multiline":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{.*?\\}%%","Meta",null,false],["\\}","Keyword",null,true],["[^}]*","String",null,false]]};
+const TABLE = {"@frontMatterStart":[["(?=(?:[^\\S\\n]*\\n)*[^\\S\\n]*---[^\\S\\n]*(?:\\n|$))","Other","@frontMatterOpen",true],["","Other",null,true]],"@frontMatterOpen":[["^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)","Meta","@frontMatter",true],["[^\\S\\n]*\\n","Other",null,false]],"@frontMatter":[["^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)","Meta",null,true],["[^\\S\\n]*#[^\\n]*","Comment",null,false],["^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))","Variable",null,false],["[^#\\n]+|\\n","Other",null,false]],"INITIAL":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["\\n+","Other",null,false],["\\s+","Other",null,false],["#(?!\\w+;)[^\\n]*","Comment",null,false],["%(?!\\{)[^\\n]*","Comment",null,false],["[^}]%%[^\\n]*","Comment",null,false],["(?:[0-9]+(?:\\.[0-9]{1,2})?|\\.[0-9]{1,2})(?=[ \\n]+)","Number",null,false],["(?i:box)\\b","Keyword","LINE",false],["(?i:participant)\\b","Keyword","ID",false],["(?i:actor)\\b","Keyword","ID",false],["(?i:create)\\b","Keyword",null,false],["(?i:destroy)\\b","Keyword","ID",false],["(?i:loop)\\b","Keyword","LINE",false],["(?i:rect)\\b","Keyword","LINE",false],["(?i:opt)\\b","Keyword","LINE",false],["(?i:alt)\\b","Keyword","LINE",false],["(?i:else)\\b","Keyword","LINE",false],["(?i:par)\\b","Keyword","LINE",false],["(?i:par_over)\\b","Keyword","LINE",false],["(?i:and)\\b","Keyword","LINE",false],["(?i:critical)\\b","Keyword","LINE",false],["(?i:option)\\b","Keyword","LINE",false],["(?i:break)\\b","Keyword","LINE",false],["(?i:end)\\b","Keyword",null,false],["(?i:left of)\\b","Keyword",null,false],["(?i:right of)\\b","Keyword",null,false],["(?i:links)(?=[ \\t]+[^/\\\\+()<>:\\n,;\\s-])","Keyword",null,false],["(?i:link)(?=[ \\t]+[^/\\\\+()<>:\\n,;\\s-])","Keyword",null,false],["(?i:properties)(?=[ \\t]+[^/\\\\+()<>:\\n,;\\s-])","Keyword",null,false],["(?i:details)(?=[ \\t]+[^/\\\\+()<>:\\n,;\\s-])","Keyword",null,false],["(?i:over)\\b","Keyword",null,false],["(?i:note)\\b","Keyword",null,false],["(?i:activate)\\b","Keyword","ID",false],["(?i:deactivate)\\b","Keyword","ID",false],["(?i:title)\\s(?:[^#\\n;]|#\\w+;)+","Keyword",null,false],["(?i:title:)\\s(?:[^#\\n;]|#\\w+;)+","Keyword",null,false],["(?i:accTitle)\\s*:\\s*","Keyword","acc_title",false],["(?i:accDescr)\\s*:\\s*","Keyword","acc_descr",false],["(?i:accDescr)\\s*\\{\\s*","Keyword","acc_descr_multiline",false],["(?i:sequenceDiagram)\\b","Keyword",null,false],["(?i:autonumber)\\b","Keyword",null,false],["(?i:off)\\b","Keyword",null,false],[",","Punctuation",null,false],[";","Punctuation",null,false],["(?:#\\w+;|[^/\\\\+()<\\->:\\n,;])+(?:(?!-(?i:x)|--(?i:x)|-\\)|--\\)|-\\|\\\\|-\\\\|-\\/|-\\/\\/|-\\|\\/|\\/\\|-|\\\\\\|-|\\/\\/-|\\\\\\\\-|\\/\\|-|--\\|\\\\|--|\\(\\))-*(?:#\\w+;|[^+<\\->:\\n,;])+)*","Variable",null,false],["->>","Operator",null,false],["<<->>","Operator",null,false],["-->>","Operator",null,false],["<<-->>","Operator",null,false],["->","Operator",null,false],["-->","Operator",null,false],["-(?i:x)","Operator",null,false],["--(?i:x)","Operator",null,false],["-\\)","Operator",null,false],["--\\)","Operator",null,false],["--\\|\\\\","Operator",null,false],["--\\|\\/","Operator",null,false],["--\\\\\\\\","Operator",null,false],["--\\/\\/","Operator",null,false],["\\/\\|--","Operator",null,false],["\\\\\\|--","Operator",null,false],["\\/\\/--","Operator",null,false],["\\\\\\\\--","Operator",null,false],["-\\|\\\\","Operator",null,false],["-\\|\\/","Operator",null,false],["-\\\\\\\\","Operator",null,false],["-\\/\\/","Operator",null,false],["\\/\\|-","Operator",null,false],["\\\\\\|-","Operator",null,false],["\\/\\/-","Operator",null,false],["\\\\\\\\-","Operator",null,false],[":(?i:(?:(?:no)?wrap:)?)(?:[^#\\n;]|#\\w+;)*","String",null,false],["\\+","Operator",null,false],["-","Operator",null,false],["\\(\\)","Operator",null,false],["$","Other",null,false],[".","Other",null,false]],"ID":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["(?:(?!\\n)\\s)+","Other",null,false],["#(?!\\w+;)[^\\n]*","Comment",null,false],["@\\{","Meta","CONFIG",true],["(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s*@\\{)","Variable",null,false],["(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s+(?i:as)\\s)","Variable","ALIAS",true],["(?:#\\w+;|[^<>:\\n,;@])+(?=\\s*[\\n;#]|$)","Variable",null,true],["[^<>:\\n,;@]*<[^\\n]*","Other",null,true],["[^\\n]+","Other",null,true]],"ALIAS":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["(?:(?!\\n)\\s)+","Other",null,false],["#(?!\\w+;)[^\\n]*","Comment",null,false],["(?i:as)\\b","Keyword","LINE",true],["(?:)","Other",null,true]],"LINE":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["(?:(?!\\n)\\s)+","Other",null,false],["#(?!\\w+;)[^\\n]*","Comment",null,false],["(?i:(?::?(?:no)?wrap:)?)(?:[^#\\n;]|#\\w+;)*","String",null,true]],"CONFIG":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["[^}]+","Meta",null,false],["\\}(?=\\s+(?i:as)\\s)","Meta","ALIAS",true],["\\}","Meta",null,true]],"acc_title":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["[^\\n]*","String",null,true]],"acc_descr_multiline":[["^[^\\S\\n]*%%(?!\\{)[^\\n]+","Comment",null,false],["[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%","Meta",null,false],["\\}","Keyword",null,true],["[^}]*","String",null,false]]};
 /** Trivia (comments, directives): no other token runs into one (the lexer never sees them). */
-const TRIVIA = ["^[^\\S\\n]*%%(?!\\{)[^\\n]+","[^\\S\\n]*%%\\{.*?\\}%%"].map(
+const TRIVIA = ["^[^\\S\\n]*%%(?!\\{)[^\\n]+","[^\\S\\n]*%%\\{[\\s\\S]*?\\}%%"].map(
   (p) => new RegExp(p, p.startsWith('^') ? 'gm' : 'g')
 );
 const MODES = Object.fromEntries(
@@ -40,7 +40,8 @@ class Modes {
     return stack === this.stack ? this : new Modes(stack);
   }
 }
-const START = new Modes(['INITIAL']);
+/** Front matter modes (`@…`) sit above INITIAL and pop back to it. */
+const START = new Modes(['INITIAL', '@frontMatterStart']);
 
 /** How far a token may look ahead. Each token depends on this much text (incremental reuse). */
 const LOOKAHEAD = 4096;
@@ -101,14 +102,18 @@ function nextTrivia(entry, from, end) {
   return exact ? cut : -1;
 }
 
-/** The text a token is matched against: the lookahead, cut at the next trivia. */
-function ahead(input) {
-  if (!input.input || !input.ranges || input.ranges.length !== 1) return aheadSlow(input);
+/**
+ * The text a token is matched against: the lookahead, cut at the next trivia unless `whole`
+ * (front matter, where no trivia rule runs).
+ */
+function ahead(input, whole) {
+  if (!input.input || !input.ranges || input.ranges.length !== 1) return aheadSlow(input, whole);
   const entry = textOf(input);
   const at = input.pos - entry.from;
   const end = Math.min(at + LOOKAHEAD, entry.text.length);
   if (end <= at) return '';
   input.peek(end - at - 1); // record the lookahead, as reading each character would
+  if (whole) return entry.text.slice(at, end);
   const cut = nextTrivia(entry, at + 1, end);
   if (cut >= 0) return entry.text.slice(at, cut);
   const s = entry.text.slice(at, end);
@@ -116,13 +121,14 @@ function ahead(input) {
   return c < 0 ? s : s.slice(0, c);
 }
 
-function aheadSlow(input) {
+function aheadSlow(input, whole) {
   let s = '';
   for (let i = 0; i < LOOKAHEAD; i++) {
     const c = input.peek(i);
     if (c < 0) break;
     s += String.fromCharCode(c);
   }
+  if (whole) return s;
   const cut = triviaCut(s, 1, s.length);
   return cut < 0 ? s : s.slice(0, cut);
 }
@@ -137,7 +143,7 @@ function atLineStart(input) {
 
 /** The next token: [term, length, modes after it]; empty matches only change the mode. */
 function next(modes, input) {
-  const text = ahead(input);
+  const text = ahead(input, inFrontMatter(modes));
   if (text.length === 0) return undefined;
   // The tokenizer and then the context tracker's shift ask for the same token.
   // The key is the (immutable) Lezer input when there is one, else the text.
@@ -155,10 +161,19 @@ function next(modes, input) {
 }
 let last = { modes: undefined, pos: -1, key: undefined, ranges: undefined, result: undefined };
 
+/** Whether the top mode is a front matter one (`@…`), where no trivia cuts the text. */
+const inFrontMatter = (modes) => modes.top.charCodeAt(0) === 64;
+
 function match(modes, input, text) {
   // A `^` rule matches only at a line start (the regex sees the text from here on).
   const bol = atLineStart(input);
+  let whole = inFrontMatter(modes);
   for (let guard = 0; guard < 8; guard++) {
+    // Left the front matter without reading anything: the diagram's rules see trivia cuts.
+    if (whole && !inFrontMatter(modes)) {
+      text = ahead(input, false);
+      whole = false;
+    }
     let changed = false;
     for (const rule of MODES[modes.top] ?? []) {
       if (rule.bol && !bol) continue;

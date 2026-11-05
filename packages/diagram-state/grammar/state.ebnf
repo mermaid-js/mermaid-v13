@@ -91,8 +91,8 @@ name here. *)
 <STATE_ID> ID             /(?:[^\n{%]|%(?!%))*/            pop :variable ;
 <STATE_STRING> -          /"/                              pop attach-prev :string ;
 <STATE_STRING> STATE_DESCR /[^"]*/                         :string ;
-(** A state name is one word. *)
-<STATE> MULTI_WORD_STATE  /\w+\s+\w+.*?\{/ ;
+(** A state name is one word: v12 throws here. The `{` is read on as in a valid one. *)
+<STATE> MULTI_WORD_STATE  /\w+\s+\w+.*?(?=\{)/ ;
 <STATE> COMPOSITE_STATE   /[^\n\s{]+/                      :variable ;
 <STATE> -                 /\n/                             pop ;
 (** `{` and `}` around the statements of a composite state. *)
@@ -126,8 +126,9 @@ transition goes to it. *)
 <INITIAL,struct> EDGE_STATE /\[\*\]/                       :constant ;
 <INITIAL,struct> -        /%%[^:\n\s\-{]*/ ;
 <INITIAL,struct> ID       /(?:[^:\n\s\-{%]|%(?!%))+/       :variable ;
-(** `A : text` gives a state a description; after a transition it is the transition's label. *)
-<INITIAL,struct> DESCR    /\s*:(?:[^:\n;]|:[^:\n;])+/      :string ;
+(** `A : text` gives a state a description; after a transition it is the transition's label.
+An entity's `;` (`#colon;`) does not end it. *)
+<INITIAL,struct> DESCR    /\s*:(?:#\w+;|[^:\n;]|:[^:\n;])+/ :string ;
 (** `A --> B`: a transition. *)
 <INITIAL,struct> ARROW    /-->/                            :operator ;
 (** `--` splits a composite state into concurrent regions. *)
@@ -141,7 +142,8 @@ INVALID                   /./ ;
 
 (** Removed before lexing (see the lexer input); listed for the highlighters. *)
 COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
-DIRECTIVE                 /[^\S\n]*%%\{.*?\}%%/             :meta ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
 
 @grammar
 

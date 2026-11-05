@@ -17,6 +17,18 @@ interface EditorWindow {
     getPosition(): { lineNumber: number; column: number };
     setPosition(p: { lineNumber: number; column: number }): void;
     setValue(text: string): void;
+    executeEdits(
+      source: string,
+      edits: {
+        range: {
+          startLineNumber: number;
+          startColumn: number;
+          endLineNumber: number;
+          endColumn: number;
+        };
+        text: string;
+      }[]
+    ): boolean;
     focus(): void;
     trigger(source: string, id: string, args: unknown): void;
     getScrolledVisiblePosition(p: { lineNumber: number; column: number }): {
@@ -277,4 +289,35 @@ test('a type with no highlighter gets no first-paint colours, not flowchart’s'
   // Past the debounce that re-detects the model's type.
   await page.waitForTimeout(500);
   expect((await tokenTypes(page, pie)).flat().filter((t) => t !== '')).toEqual([]);
+});
+
+test('editing the header back after a type with no highlighter colours it again', async ({
+  page,
+}) => {
+  await open(page);
+  const header = (text: string, from: string) =>
+    page.evaluate(
+      ([t, f]) =>
+        (window as unknown as EditorWindow).editor.executeEdits('e2e', [
+          {
+            range: { startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: f.length + 1 },
+            text: t,
+          },
+        ]),
+      [text, from] as const
+    );
+  await page.evaluate(
+    (t) => (window as unknown as EditorWindow).editor.setValue(t),
+    TYPE_DOCS.flowchart!
+  );
+  await expect.poll(() => wordColour(page, 'flowchart')).toBe('rgb(0, 0, 255)');
+  // `flowchart LR` → `pie`: the same body is now a type with no Monarch file.
+  await header('pie', 'flowchart LR');
+  await page.waitForTimeout(500);
+  expect(await wordColour(page, 'pie')).not.toBe('rgb(0, 0, 255)');
+  // And back: re-picked from the edited line, coloured as a flowchart again.
+  await header('flowchart LR', 'pie');
+  await expect.poll(() => wordColour(page, 'flowchart')).toBe('rgb(0, 0, 255)');
+  const text = await page.evaluate(() => (window as unknown as EditorWindow).editor.getValue());
+  expect((await tokenTypes(page, text))[0]?.[0]).toBe('keyword.mermaid-flowchart');
 });

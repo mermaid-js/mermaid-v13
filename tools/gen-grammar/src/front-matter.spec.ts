@@ -1,7 +1,7 @@
 /**
- * The Monarch tokenizer (#36) and the TextMate grammar (#176) read a leading front matter block
- * as front matter: YAML in it never leaves a flowchart mode open into the diagram, so the
- * diagram's highlighting is the same with or without it.
+ * The Monarch tokenizer (#36), the TextMate grammar (#176) and the Lezer tokenizer read a
+ * leading front matter block as front matter: YAML in it never leaves a flowchart mode open
+ * into the diagram, so the diagram's highlighting is the same with or without it.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { detectFlowchart } from '@mermaid-js/diagram-flowchart';
 import { generate, generatedDir } from './generate.ts';
-import { monarchCategorise, textMateCategorise } from './highlight-testing.ts';
+import { lezerCategorise, monarchCategorise, textMateCategorise } from './highlight-testing.ts';
 import type { Categorise } from './highlight-testing.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -21,6 +21,15 @@ const HIGHLIGHTERS: [string, Categorise][] = [
   [
     'TextMate',
     await textMateCategorise(out('flowchart.tmLanguage.json'), 'source.mermaid-flowchart'),
+  ],
+  [
+    'Lezer',
+    await lezerCategorise(
+      out('flowchart.grammar'),
+      out('flowchart.tokens.js'),
+      'flowchart',
+      join(root, 'tools/gen-grammar/node_modules/.cache/lezer-front-matter')
+    ),
   ],
 ];
 
@@ -83,5 +92,12 @@ describe.each(HIGHLIGHTERS)('%s front matter', (_name, highlight) => {
     const src = '---\na: 1\n---\n---\nflowchart LR\n';
     const cats = highlight(src);
     expect(cats.slice(13, 16)).not.toEqual(['Meta', 'Meta', 'Meta']);
+  });
+
+  it('reads an unclosed block to the end of the text', () => {
+    const src = "---\ntitle: it's (open\nflowchart LR\n  A --> B\n";
+    const cats = highlight(src);
+    expect(cats.slice(0, 3)).toEqual(['Meta', 'Meta', 'Meta']);
+    expect(new Set(cats.slice(src.indexOf('flowchart')))).toEqual(new Set(['Other']));
   });
 });

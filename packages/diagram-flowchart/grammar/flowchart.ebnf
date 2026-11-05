@@ -213,7 +213,8 @@ EOF                       /$/ ;
 whole line (a `%%` after a statement is node text); both take their leading blanks so they win
 over label text that starts at the line start. *)
 COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
-DIRECTIVE                 /[^\S\n]*%%\{.*?\}%%/             :meta ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
 
 @grammar
 

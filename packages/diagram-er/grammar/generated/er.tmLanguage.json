@@ -20,7 +20,8 @@
       "name": "comment.line.mermaid-er"
     },
     "trivia-1": {
-      "match": "(?i)[^\\S\\n]*%%\\{.*?\\}%%",
+      "begin": "(?i)[^\\S\\n]*%%\\{",
+      "end": "(?i)\\}%%",
       "name": "meta.embedded.mermaid-er"
     },
     "rule-0": {
@@ -568,8 +569,7 @@
       "name": "keyword.operator.mermaid-er"
     },
     "rule-32": {
-      "match": "(?i),",
-      "name": "punctuation.definition.mermaid-er"
+      "match": "(?i),"
     },
     "rule-33": {
       "match": "(?i)."
@@ -745,7 +745,7 @@
           "name": "comment.line.mermaid-er"
         },
         {
-          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#]*(?=:(?:\\s|$))",
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
           "name": "variable.other.mermaid-er"
         }
       ]

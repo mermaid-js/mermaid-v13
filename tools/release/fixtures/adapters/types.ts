@@ -4,10 +4,12 @@ import { LEZER_HIGHLIGHTERS, mermaid } from '@mermaid-js/language-service-codemi
 import type { MermaidOptions } from '@mermaid-js/language-service-codemirror';
 import { MONARCH_HIGHLIGHTERS, registerMermaid } from '@mermaid-js/language-service-monaco';
 import type { MonarchDefinition } from '@mermaid-js/language-service-monaco';
+import type { FirstPartyFacetId } from '@mermaid-js/language-service';
 
 const options: MermaidOptions = { delay: 100 };
 export const extension: Promise<Extension> = mermaid(options);
-export const lezerIds: string[] = Object.keys(LEZER_HIGHLIGHTERS);
-export const flowchart: Promise<MonarchDefinition> | undefined =
-  MONARCH_HIGHLIGHTERS.flowchart?.load();
+// Both maps have a row per facet id.
+const id: FirstPartyFacetId = 'flowchart';
+export const lezer: Promise<unknown> = LEZER_HIGHLIGHTERS[id]();
+export const flowchart: Promise<MonarchDefinition> = MONARCH_HIGHLIGHTERS[id].load();
 export const register: typeof registerMermaid = registerMermaid;

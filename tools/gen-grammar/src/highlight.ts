@@ -64,7 +64,7 @@ export function categoryOf(scope = ''): string {
 const has = (r: LexRule, op: string) => r.actions.some((a) => a.op === op);
 const pushTarget = (r: LexRule) =>
   r.actions.find((a) => a.op === 'push' || a.op === 'push-once')?.mode;
-const matchesEmpty = (r: LexRule) => new RegExp(`^(?:${r.pattern})$`).test('');
+const matchesEmpty = (pattern: string) => new RegExp(`^(?:${pattern})$`).test('');
 
 /**
  * The pattern a highlighter uses for a rule that changes no mode. TextMate and Monarch cannot
@@ -72,11 +72,41 @@ const matchesEmpty = (r: LexRule) => new RegExp(`^(?:${r.pattern})$`).test('');
  * matches the same non-empty text; any other pattern that can match empty is left out.
  */
 function progressPattern(r: LexRule): string | undefined {
-  if (!matchesEmpty(r)) return r.pattern;
+  const pattern = lineBased(r.pattern);
+  if (!matchesEmpty(pattern)) return pattern;
   const star = /^(?:\\.|\[(?:\\.|[^\]\\])*\]|[^\\[\](){}|*+?])\*$/;
-  return star.test(r.pattern) ? `${r.pattern.slice(0, -1)}+` : undefined;
+  return star.test(pattern) ? `${pattern.slice(0, -1)}+` : undefined;
 }
 const scopeOf = (r: LexRule) => r.scope;
+
+/** What a rule whose text may run over line breaks, `begin[\s\S]*?end`, is made of. */
+const ANY_LAZY = '[\\s\\S]*?';
+/**
+ * A rule that may span lines (a multi-line directive): TextMate and Monarch read lines one at
+ * a time, so they read it as a scope from `begin` to the first `end`. Lezer runs the pattern.
+ */
+function spanOf(r: LexRule): { begin: string; end: string } | undefined {
+  const i = r.pattern.indexOf(ANY_LAZY);
+  if (i <= 0 || pushTarget(r) !== undefined || has(r, 'pop')) return undefined;
+  const begin = r.pattern.slice(0, i);
+  if (matchesEmpty(begin)) return undefined;
+  return { begin, end: r.pattern.slice(i + ANY_LAZY.length) };
+}
+
+/**
+ * A pattern as a line-based highlighter (TextMate, Monarch) runs it: one that starts with a
+ * line break and blanks (`\n\s*end note`) cannot match there, as the line break ends the line
+ * before; it matches at the start of the next line instead (`^\s*end note`). Text up to such
+ * a line break is read a line at a time.
+ */
+function lineBased(pattern: string): string {
+  // Text up to a line break before something (`[\s\S]*?(?=\n\s*end note)`): whole lines.
+  if (pattern.startsWith(`${ANY_LAZY}(?=\\n`)) return '.+';
+  const lead = '\\n\\s*';
+  return pattern.startsWith(lead) && pattern.length > lead.length
+    ? `^\\s*${pattern.slice(lead.length)}`
+    : pattern;
+}
 
 /** Rules in effect in `mode`, trivia first, in priority order. */
 function rulesIn(g: Grammar, mode: string): LexRule[] {
@@ -124,7 +154,10 @@ export function nonCapturing(pattern: string): string {
 export function textMate(g: Grammar, names: HighlightNames): object {
   const suffix = `.${names.id}`;
   // Oniguruma's `(?i)` makes the rest of the (group of the) pattern ignore case.
-  const tm = (p: string) => (g.ignoreCase ? `(?i)${nonCapturing(p)}` : nonCapturing(p));
+  const tm = (p: string) => {
+    const pattern = nonCapturing(lineBased(p));
+    return g.ignoreCase ? `(?i)${pattern}` : pattern;
+  };
   const scope = (r: LexRule) => {
     const s = scopeOf(r);
     return s ? (TEXTMATE_SCOPES[s] ?? s) + suffix : undefined;
@@ -148,7 +181,8 @@ export function textMate(g: Grammar, names: HighlightNames): object {
     const switches: string[] = [];
     for (const e of rulesIn(g, mode)) {
       if (!isEnd(mode, e)) {
-        const pattern = pushTarget(e) === undefined ? progressPattern(e) : e.pattern;
+        const pattern =
+          spanOf(e)?.begin ?? (pushTarget(e) === undefined ? progressPattern(e) : e.pattern);
         if (byPriority && pattern !== undefined) before.push(tm(pattern));
         continue;
       }
@@ -224,6 +258,12 @@ export function textMate(g: Grammar, names: HighlightNames): object {
     if (key in repository) return key;
     const target = pushTarget(r);
     const name = scope(r);
+    const span = spanOf(r);
+    if (span) {
+      const rule = { begin: tm(span.begin), end: tm(span.end) };
+      repository[key] = name ? { ...rule, name } : rule;
+      return key;
+    }
     if (target === undefined) {
       const pattern = progressPattern(r);
       if (pattern === undefined) return undefined;
@@ -253,6 +293,9 @@ export function textMate(g: Grammar, names: HighlightNames): object {
   };
 }
 
+/** A YAML key up to its `:` (a list item's `- ` included), as front matter colours it. */
+const YAML_KEY = '[^\\S\\n]*(?:- )?[^\\s#:\'"-][^:#\\n]*(?=:(?:\\s|$))';
+
 /**
  * Front matter as Monarch reads it (`MONARCH_FRONT_MATTER`): a `---` fence on the first
  * non-blank line, at any indent, up to the next `---` line. `front-matter-start` opens at the
@@ -281,7 +324,7 @@ function textMateFrontMatter(suffix: string): Record<string, object> {
         { include: '#front-matter-body' },
         { match: '#.*', name: `${TEXTMATE_SCOPES.comment}${suffix}` },
         {
-          match: '^[^\\S\\n]*(?:- )?[^\\s#:\'"-][^:#]*(?=:(?:\\s|$))',
+          match: `^${YAML_KEY}`,
           name: `${TEXTMATE_SCOPES.variable}${suffix}`,
         },
       ],
@@ -305,15 +348,24 @@ export function monarch(g: Grammar, names: HighlightNames): object {
     for (const r of rulesIn(g, mode)) {
       const target = pushTarget(r);
       const pop = mode !== 'INITIAL' && has(r, 'pop');
+      const token = MONARCH_TOKENS[scopeOf(r) ?? ''] ?? '';
+      const span = spanOf(r);
+      if (span) {
+        const inside = `span${g.triviaRules.includes(r) ? 'Trivia' : 'Rule'}${r.index}`;
+        rules.push([span.begin, { token, next: `@${inside}` }]);
+        tokenizer[inside] = [
+          [span.end, { token, next: '@pop' }],
+          [`(?:(?!${span.end})[\\s\\S])+`, { token }],
+        ];
+        continue;
+      }
       const pattern = target === undefined && !pop ? progressPattern(r) : r.pattern;
       if (pattern === undefined) continue;
-      const action: Record<string, string> = {
-        token: MONARCH_TOKENS[scopeOf(r) ?? ''] ?? '',
-      };
+      const action: Record<string, string> = { token };
       if (pop && target !== undefined) action.switchTo = `@${state(target)}`;
       else if (pop) action.next = '@pop';
       else if (target !== undefined) action.next = `@${state(target)}`;
-      rules.push([pattern, action]);
+      rules.push([lineBased(pattern), action]);
     }
     tokenizer[state(mode)] = rules;
   }
@@ -351,7 +403,7 @@ const MONARCH_FRONT_MATTER = {
   frontMatter: [
     [FENCE, { token: 'annotation', switchTo: '@root' }],
     ['[^\\S\\n]*#.*', { token: 'comment' }],
-    ['[^\\S\\n]*(?:- )?[^\\s#:\'"-][^:#]*(?=:(?:\\s|$))', { token: 'variable' }],
+    [YAML_KEY, { token: 'variable' }],
     ['[^#]+', { token: '' }],
   ],
 };
@@ -381,9 +433,36 @@ token { ${tokens.join(' | ')} }
 `;
 }
 
+type LezerRow = [pattern: string, token: string, push: string | null, pop: boolean];
+
+/**
+ * Front matter for the Lezer tokenizer, read as Monarch and TextMate read it: a `---` fence
+ * on the first non-blank line, at any indent, up to the next `---` line; an unclosed block
+ * runs to the end of the text. The tokenizer starts in `@frontMatterStart` above `INITIAL`
+ * (grammar modes have no `@`): it pops at once unless a fence follows blank lines, so a text
+ * without front matter tokenizes as before. After the closing fence the stack is `INITIAL`
+ * alone, as for a text with none. No trivia rule runs in these modes.
+ */
+const LEZER_FRONT_MATTER: Record<string, LezerRow[]> = {
+  '@frontMatterStart': [
+    ['(?=(?:[^\\S\\n]*\\n)*[^\\S\\n]*---[^\\S\\n]*(?:\\n|$))', 'Other', '@frontMatterOpen', true],
+    ['', 'Other', null, true],
+  ],
+  '@frontMatterOpen': [
+    [FENCE, 'Meta', '@frontMatter', true],
+    ['[^\\S\\n]*\\n', 'Other', null, false],
+  ],
+  '@frontMatter': [
+    [FENCE, 'Meta', null, true],
+    ['[^\\S\\n]*#[^\\n]*', 'Comment', null, false],
+    [`^${YAML_KEY}`, 'Variable', null, false],
+    ['[^#\\n]+|\\n', 'Other', null, false],
+  ],
+};
+
 /** Mode table for the Lezer tokenizer: mode -> [pattern, token, push target, pop]. */
-function lezerTable(g: Grammar): Record<string, [string, string, string | null, boolean][]> {
-  const table: Record<string, [string, string, string | null, boolean][]> = {};
+function lezerTable(g: Grammar): Record<string, LezerRow[]> {
+  const table: Record<string, LezerRow[]> = { ...LEZER_FRONT_MATTER };
   for (const mode of ['INITIAL', ...g.modes]) {
     table[mode] = rulesIn(g, mode).map((r) => [
       r.pattern,
@@ -446,7 +525,8 @@ class Modes {
     return stack === this.stack ? this : new Modes(stack);
   }
 }
-const START = new Modes(['INITIAL']);
+/** Front matter modes (\`@…\`) sit above INITIAL and pop back to it. */
+const START = new Modes(['INITIAL', '@frontMatterStart']);
 
 /** How far a token may look ahead. Each token depends on this much text (incremental reuse). */
 const LOOKAHEAD = 4096;
@@ -507,14 +587,18 @@ function nextTrivia(entry, from, end) {
   return exact ? cut : -1;
 }
 
-/** The text a token is matched against: the lookahead, cut at the next trivia. */
-function ahead(input) {
-  if (!input.input || !input.ranges || input.ranges.length !== 1) return aheadSlow(input);
+/**
+ * The text a token is matched against: the lookahead, cut at the next trivia unless \`whole\`
+ * (front matter, where no trivia rule runs).
+ */
+function ahead(input, whole) {
+  if (!input.input || !input.ranges || input.ranges.length !== 1) return aheadSlow(input, whole);
   const entry = textOf(input);
   const at = input.pos - entry.from;
   const end = Math.min(at + LOOKAHEAD, entry.text.length);
   if (end <= at) return '';
   input.peek(end - at - 1); // record the lookahead, as reading each character would
+  if (whole) return entry.text.slice(at, end);
   const cut = nextTrivia(entry, at + 1, end);
   if (cut >= 0) return entry.text.slice(at, cut);
   const s = entry.text.slice(at, end);
@@ -522,13 +606,14 @@ function ahead(input) {
   return c < 0 ? s : s.slice(0, c);
 }
 
-function aheadSlow(input) {
+function aheadSlow(input, whole) {
   let s = '';
   for (let i = 0; i < LOOKAHEAD; i++) {
     const c = input.peek(i);
     if (c < 0) break;
     s += String.fromCharCode(c);
   }
+  if (whole) return s;
   const cut = triviaCut(s, 1, s.length);
   return cut < 0 ? s : s.slice(0, cut);
 }
@@ -543,7 +628,7 @@ function atLineStart(input) {
 
 /** The next token: [term, length, modes after it]; empty matches only change the mode. */
 function next(modes, input) {
-  const text = ahead(input);
+  const text = ahead(input, inFrontMatter(modes));
   if (text.length === 0) return undefined;
   // The tokenizer and then the context tracker's shift ask for the same token.
   // The key is the (immutable) Lezer input when there is one, else the text.
@@ -561,10 +646,19 @@ function next(modes, input) {
 }
 let last = { modes: undefined, pos: -1, key: undefined, ranges: undefined, result: undefined };
 
+/** Whether the top mode is a front matter one (\`@…\`), where no trivia cuts the text. */
+const inFrontMatter = (modes) => modes.top.charCodeAt(0) === 64;
+
 function match(modes, input, text) {
   // A \`^\` rule matches only at a line start (the regex sees the text from here on).
   const bol = atLineStart(input);
+  let whole = inFrontMatter(modes);
   for (let guard = 0; guard < 8; guard++) {
+    // Left the front matter without reading anything: the diagram's rules see trivia cuts.
+    if (whole && !inFrontMatter(modes)) {
+      text = ahead(input, false);
+      whole = false;
+    }
     let changed = false;
     for (const rule of MODES[modes.top] ?? []) {
       if (rule.bol && !bol) continue;

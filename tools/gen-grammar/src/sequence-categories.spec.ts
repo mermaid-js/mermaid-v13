@@ -3,30 +3,15 @@
  * the table with the generated TextMate, Monarch and Lezer grammars over the sequence corpus,
  * as `categories.spec.ts` checks flowchart.
  */
-import { readdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { Kind, sourceView, TOKEN_CATEGORIES } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
+import { Kind, TOKEN_CATEGORIES } from '@mermaid-js/core/parser-kit';
 import {
   detectSequence,
   sequenceCategories,
   SequenceTokenKind as T,
   sequenceTokens,
 } from '@mermaid-js/diagram-sequence/language';
-import { generate, generatedDir } from './generate.ts';
-import {
-  hidingFrontMatter,
-  lezerCategorise,
-  monarchCategorise,
-  textMateCategorise,
-} from './highlight-testing.ts';
-import type { Categorise } from './highlight-testing.ts';
-
-const root = join(dirname(fileURLToPath(import.meta.url)), '../../..');
-const files = generate((p) => readFileSync(join(root, p), 'utf8'));
-const out = (name: string) => files.get(`${generatedDir('sequence')}/${name}`) ?? '';
+import { agreement, corpus, highlighters } from './agreement-testing.ts';
 
 describe('sequence kind → category table', () => {
   it('gives every sequence and shared kind a highlight category', () => {
@@ -45,13 +30,6 @@ describe('sequence kind → category table', () => {
     expect(sequenceCategories[Kind.Comment]).toBe('Comment');
   });
 });
-
-function mmdFiles(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
-    if (e.isDirectory()) return mmdFiles(join(dir, e.name));
-    return e.name.endsWith('.mmd') ? [join(dir, e.name)] : [];
-  });
-}
 
 /** Sources for the kinds the corpus lacks. */
 const FIXTURES: [string, string][] = [
@@ -124,86 +102,19 @@ const FIXTURES: [string, string][] = [
 ];
 
 /** Kinds whose tokens are blanks or empty, so no highlighter colours them. */
-const BLANK_KINDS = new Set<number>([T.AliasEnd, T.Eof]);
-
-/**
- * The kind of each character of `src` as the lexer sees it: its tokens, and the comments and
- * directives it removed (a directive wins over a comment hole that runs over it).
- */
-function lexerKinds(src: string): Map<number, number> {
-  const pre = preprocess(src);
-  const view = sourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  const kinds = new Map<number, number>();
-  const set = (start: number, end: number, kind: number | undefined) => {
-    for (let i = start; i < end; i++) {
-      if (kind === undefined) kinds.delete(i);
-      else kinds.set(i, kind);
-    }
-  };
-  for (const t of sequenceTokens(src)) set(t.range.start, t.range.end, t.kind);
-  for (const h of view.holes) if (h.kind !== 'directive') set(h.start, h.end, undefined);
-  for (const h of view.holes) if (h.kind === 'comment') set(h.start, h.end, Kind.Comment);
-  for (const d of pre.directives) set(d.range.start, d.range.end, Kind.Directive);
-  return kinds;
-}
-
-const NAMES: Record<number, string> = {
-  ...Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])),
-  [Kind.Comment]: 'Comment',
-  [Kind.Directive]: 'Directive',
-};
+const BLANK_KINDS = [T.AliasEnd, T.Eof];
 
 describe('four-way highlighting agreement (sequence)', () => {
   it('table, TextMate, Monarch and Lezer give every token the same category', async () => {
-    const highlighters: [string, Categorise][] = [
-      [
-        'TextMate',
-        await textMateCategorise(out('sequence.tmLanguage.json'), 'source.mermaid-sequence'),
-      ],
-      ['Monarch', monarchCategorise(out('sequence.monarch.json'))],
-      [
-        // As the CodeMirror adapter runs it: front matter hidden.
-        'Lezer',
-        hidingFrontMatter(
-          await lezerCategorise(
-            out('sequence.grammar'),
-            out('sequence.tokens.js'),
-            'sequence',
-            join(root, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
-          )
-        ),
-      ],
-    ];
-    const corpus = mmdFiles(join(root, 'e2e/diagrams'))
-      .map((f) => [f.slice(root.length), readFileSync(f, 'utf8')] as const)
-      .filter(([, src]) => detectSequence(src));
-    expect(corpus.length).toBeGreaterThan(150);
-
-    const disagreements = new Map<string, string>();
-    const covered = new Set<number>();
-    for (const [file, src] of [...FIXTURES, ...corpus]) {
-      const seen = highlighters.map(([name, h]) => [name, h(src)] as const);
-      for (const [i, kind] of lexerKinds(src)) {
-        if (/\s/.test(src[i] ?? '')) continue;
-        covered.add(kind);
-        const want = sequenceCategories[kind];
-        for (const [name, cats] of seen) {
-          const got = cats[i];
-          if (got === want) continue;
-          const key = `${name}: ${NAMES[kind] ?? kind} is ${want}, highlighted ${got}`;
-          if (!disagreements.has(key)) disagreements.set(key, `${file} at ${i}`);
-        }
-      }
-    }
-    expect(Object.fromEntries(disagreements)).toEqual({});
-    const expected = [...Object.values(T), Kind.Comment, Kind.Directive].filter(
-      (k) => !BLANK_KINDS.has(k)
+    const sources = corpus(detectSequence);
+    expect(sources.length).toBeGreaterThan(150);
+    const result = agreement(
+      { kinds: T, categories: sequenceCategories, tokens: sequenceTokens },
+      await highlighters('sequence'),
+      [...FIXTURES, ...sources],
+      BLANK_KINDS
     );
-    const missing = expected.filter((k) => !covered.has(k)).map((k) => NAMES[k]);
-    expect(missing, 'kinds with no sample').toEqual([]);
+    expect(result.disagreements).toEqual({});
+    expect(result.missing, 'kinds with no sample').toEqual([]);
   }, 120_000);
 });

@@ -32,7 +32,7 @@
     "@codemirror/view": "^6.26.0",
     "@lezer/common": "^1.2.0",
     "@lezer/highlight": "^1.2.0",
-    "@lezer/lr": "^1.4.0",
+    "@lezer/lr": "~1.4.2",
     "@mermaid-js/core": "workspace:*",
     "@mermaid-js/language-service": "workspace:*"
   },
@@ -46,9 +46,9 @@
     "@lezer/generator": "1.7.1",
     "@lezer/highlight": "^1.2.5",
     "@lezer/lr": "1.4.2",
-    "@mermaid-js/core": "workspace:^",
-    "@mermaid-js/diagram-flowchart": "workspace:^",
-    "@mermaid-js/language-service": "workspace:^",
+    "@mermaid-js/core": "workspace:*",
+    "@mermaid-js/diagram-flowchart": "workspace:*",
+    "@mermaid-js/language-service": "workspace:*",
     "@types/node": "^22.19.21",
     "tsx": "^4.20.6"
   }

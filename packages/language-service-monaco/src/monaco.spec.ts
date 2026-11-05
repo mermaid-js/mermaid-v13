@@ -55,7 +55,7 @@ describe('registerMermaid', () => {
     ]);
     // The dispatching Monarch definition (D134): no type's states until a model needs them.
     const monarch = fake.monarch.get('mermaid') as { tokenizer: Record<string, unknown> };
-    expect(Object.keys(monarch.tokenizer).sort()).toEqual(['detect', 'plain']);
+    expect(Object.keys(monarch.tokenizer).sort()).toEqual(['detect', 'directive', 'plain']);
     expect(fake.configurations.get('mermaid')).toMatchObject({ comments: { lineComment: '%%' } });
     const kinds = [...fake.providers].filter(([, l]) => l.length > 0).map(([k]) => k);
     expect(kinds.sort()).toEqual(
