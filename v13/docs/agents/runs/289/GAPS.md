@@ -79,3 +79,7 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 - [ ] MIGRATION: v12 `default` derived the quadrant values in its constructor, so it also ignored an author `primaryTextColor` / `primaryBorderColor`; v13 follows them. List it.
 - [ ] **Choice:** borders keep `primaryBorderColor` (one family with the other types, R-THEME-11); core's value approximates v12's (D71) and differs in 7 of 11 themes (dark `#cccccc` → `#4c4d4d`, low contrast). List the per-theme table in MIGRATION and assert the documented values in `quadrant/theme.spec.ts` instead of excusing them. **For the maintainer:** core's dark `primaryBorderColor` contrast is a core follow-up, not a quadrant fix.
 - [ ] **For the maintainer:** `themeVariables.darkMode: true` in redux, redux-color, base and neo makes v12 switch `primaryTextColor`/`textColor` to `#eee`; core does not. Affects quadrant text fills; core behaviour, listed in MIGRATION, not fixed here.
+
+## #317 T5 (in progress)
+
+- **Core budget (D161, 88 KB gz):** with the quadrant registry row the CDN ESM closure is 90,217 B > 90,112 (+21 B for the row, about +320 B from esbuild re-splitting a shared chunk; journey #327 saw the same split). **Choice:** keep the budget and cherry-pick the timeline session's shared core change `975a6528f` ("perf(core): keep theme usedBy out of the runtime closure", from `feature/311_timeline-renderer`, about −216 B). The generated `packages/core/src/theme/generated/variables.ts` is regenerated, never hand-merged, when the timeline PR lands (D112).
