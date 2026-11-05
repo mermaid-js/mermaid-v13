@@ -262,17 +262,23 @@ describe('layered: end labels on an edge drawn without bends', () => {
 
 // Known limit on the grid: an edge between a group and its own member runs down from the group's
 // top border, outside the layered gaps, so its ends get no room of their own. Its labels stay clear
-// of every node, label and title, but the member end's label can land on or past the group's top
-// border row (here, on it, since #198 moved the middle labels into a band below the border).
+// of every node, label, title, border row and route end, but the member end's label can land past
+// the group's top border, outside the group.
 describe('layered: end labels on a grid edge between a group and its member', () => {
-  it('keeps them clear, on or past the top border if need be', () => {
+  it('keeps them clear, outside the group if need be', () => {
     const base = cellFixtures().find((f) => f.name.startsWith('F4'))!.graph;
     const graph = labelled(base, { width: 1, height: 1 }, { width: 3, height: 1 });
     const model = layered(graph);
     expect(validateGrid(graph, model)).toEqual([]);
     const g = model.groups.get('g')!;
     const end = model.edges.get('g->B:abcd#1')!.endLabel!;
-    expect(end.y).toBeLessThan(g.y - g.height / 2 + 1);
+    expect(end.y).toBeLessThan(g.y - g.height / 2 + 0.5);
+    // Clear of every route's end cell, where an arrowhead is drawn.
+    const label = rect(end, { width: 3, height: 1 });
+    for (const [id, e] of model.edges) {
+      for (const p of [e.points[0]!, e.points.at(-1)!])
+        expect(overlaps(label, rect(p, { width: 1, height: 1 })), id).toBe(false);
+    }
   });
 });
 
