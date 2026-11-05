@@ -26,7 +26,6 @@ export {
   type ExtensionNeed,
   type ExtensionPlugin,
   type ExtensionResources,
-  type Glyph,
   type GlyphProvider,
   type GlyphRequest,
   type HookContext,

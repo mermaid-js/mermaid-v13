@@ -158,11 +158,13 @@ describe('pattern providers (D293)', () => {
     expect(boxes(r.svg).map((b) => b.width)).toEqual([10]);
   });
 
-  it('refuses a provider with neither a pair nor a pattern, or with both', async () => {
+  it('refuses a provider with neither a pair nor a pattern, or without box()', async () => {
     for (const p of [
       { box: icon.box },
       { pattern: 'fa:fa-x', box: icon.box },
-      { pattern: icon.pattern, open: '[[', close: ']]', box: icon.box },
+      { open: '[[', box: icon.box },
+      { open: '', close: ']]', box: icon.box },
+      { pattern: icon.pattern },
     ]) {
       const m = createMermaid();
       await expect(
@@ -170,6 +172,74 @@ describe('pattern providers (D293)', () => {
         JSON.stringify(p)
       ).rejects.toThrow(/"bad".*or a pattern/);
     }
+  });
+
+  it('warns about a match a provider takes in isolation but not in the label (sofa:fa-car)', async () => {
+    const bounded: ExtensionPlugin = {
+      id: 'bounded',
+      inline: [{ pattern: /\bfa:fa-[\w-]+/, box: icon.box }],
+    };
+    const { m, ready } = api(bounded);
+    await ready;
+    const r = await m.render('x', 'flowchart LR\n  A["sofa:fa-car"]');
+    expect(boxes(r.svg)).toEqual([]);
+    expect(codes(r.warnings)).toEqual(['ICON_NOT_RENDERED']);
+    const fine = await m.render('x', 'flowchart LR\n  A["so fa:fa-car"]');
+    expect(boxes(fine.svg).map((b) => b.width)).toEqual([30]);
+    expect(codes(fine.warnings)).toEqual([]);
+  });
+
+  it("warns about a match a provider's span covers only in part (fa:fa-car2)", async () => {
+    const letters: ExtensionPlugin = {
+      id: 'letters',
+      inline: [{ pattern: /fa:fa-[a-z]+/, box: icon.box }],
+    };
+    const { m, ready } = api(letters);
+    await ready;
+    const r = await m.render('x', 'flowchart LR\n  A["fa:fa-car2"]');
+    expect(boxes(r.svg).map((b) => b.width)).toEqual([30]);
+    expect(codes(r.warnings)).toEqual(['ICON_NOT_RENDERED']);
+  });
+
+  it("is quiet about an icon inside another provider's span", async () => {
+    const pair: ExtensionPlugin = {
+      id: 'pair',
+      inline: [{ open: '[[', close: ']]', box: (_, r) => icon.box('fa:fa-p', r) }],
+    };
+    const { m, ready } = api(pair);
+    await ready;
+    expect(codes((await m.render('x', 'flowchart LR\n  A["[[fa:fa-x]]"]')).warnings)).toEqual([]);
+  });
+
+  it('steps over an empty match by a code point, also for u and v patterns', async () => {
+    // `v` is ES2024 syntax, so built at run time.
+    for (const pattern of [/x*/u, new RegExp('x*', 'v'), /x*/]) {
+      const seen: string[] = [];
+      const { m, ready } = api({
+        id: 'empty',
+        inline: [{ pattern, box: (s, r) => (seen.push(s), icon.box('fa:fa-x', r)) }],
+      });
+      await ready;
+      await m.render('x', 'flowchart LR\n  A["a😀b x 😀"]');
+      expect(seen, String(pattern)).toEqual(['x']);
+    }
+  });
+
+  it("gives providers the render's icon packs (D294)", async () => {
+    const seen: unknown[] = [];
+    const { m, ready } = api({
+      id: 'packs',
+      inline: [
+        {
+          pattern: icon.pattern,
+          box: (s, r) => (seen.push(r.iconPacks?.get('fa')?.prefix), icon.box(s, r)),
+        },
+      ],
+    });
+    m.registerIconPacks([{ name: 'fa', icons: { prefix: 'fa6-solid', icons: {} } }]);
+    await ready;
+    await m.render('x', FLOW);
+    expect(seen).toEqual(['fa', 'fa', 'fa']);
   });
 
   it('blames the extension for a throwing pattern provider', async () => {
@@ -191,25 +261,25 @@ describe('pattern providers (D293)', () => {
   });
 });
 
-/** The fixture glyph: 16 × 8 in its own units, a frame, so fitting it is visible. */
-const GLYPH = {
-  width: 16,
-  height: 8,
-  node: { tag: 'rect', attrs: { class: 'fixture-glyph', width: 16, height: 8 } },
-} as const;
+/**
+ * The fixture glyph: a frame filling the square it is asked for, so where it lands is visible. The
+ * provider fits its glyph (D293); core draws the fragment as given.
+ */
+const GLYPH = (size: number) =>
+  ({ tag: 'rect', attrs: { class: 'fixture-glyph', width: size, height: size } }) as const;
 const SHAPE = 'flowchart LR\n  A@{ icon: "fa:bell", form: square, h: 64 }';
 const RE_GLYPH =
-  /<g transform="translate\((-?[\d.]+),(-?[\d.]+)\)"><g transform="([^"]+)"><rect class="fixture-glyph"/g;
+  /<g transform="translate\((-?[\d.]+),(-?[\d.]+)\)"><(?:rect|g) class="fixture-glyph"/g;
 
 describe('the glyph slot (D293)', () => {
-  it("reaches flowchart's render context, fitted into the icon's square", async () => {
+  it("reaches flowchart's render context, drawn in the icon's square", async () => {
     const asked: unknown[] = [];
     const { m, ready } = api({
       id: 'fixture-glyphs',
       glyphs: {
         glyph: (name, { size, fallbackPrefix }) => (
           asked.push({ name, size, fallbackPrefix }),
-          GLYPH
+          GLYPH(size)
         ),
       },
     });
@@ -219,17 +289,34 @@ describe('the glyph slot (D293)', () => {
     expect(codes(r.warnings)).toEqual([]);
     const drawn = [...r.svg.matchAll(RE_GLYPH)];
     expect(drawn).toHaveLength(1);
-    // The frame's top-left corner, then xMidYMid meet: 16 × 8 scales by 4 to 64 × 32, centred.
+    // The frame's top-left corner.
     const frame = /<rect x="(-?[\d.]+)" y="(-?[\d.]+)" width="64" height="64"/.exec(r.svg)!;
     expect(drawn[0]!.slice(1, 3)).toEqual([frame[1], frame[2]]);
-    expect(drawn[0]![3]).toBe('translate(0,16) scale(4,4)');
+  });
+
+  it("keeps the provider's fitting exact, as for a 2048-unit pack", async () => {
+    // 2048 units in 64 px: scale 0.03125, which rounding to 0.01 would make 0.03 (61 px).
+    const { m, ready } = api({
+      id: 'fitted',
+      glyphs: {
+        glyph: (_, { size }) => ({
+          tag: 'g',
+          // Exact, as the plugin writes it (the path helpers round to 0.01).
+          attrs: { class: 'fixture-glyph', transform: `scale(${size / 2048})` as never },
+          children: [{ tag: 'rect', attrs: { width: 2048, height: 2048 } }],
+        }),
+      },
+    });
+    await ready;
+    const { svg } = await m.render('x', SHAPE);
+    expect(svg).toContain('<g class="fixture-glyph" transform="scale(0.03125)">');
   });
 
   it('asks each extension in registration order until one has the glyph', async () => {
     const asked: string[] = [];
     const none = { id: 'none', glyphs: { glyph: () => (asked.push('none'), undefined) } };
-    const some = { id: 'some', glyphs: { glyph: () => (asked.push('some'), GLYPH) } };
-    const late = { id: 'late', glyphs: { glyph: () => (asked.push('late'), GLYPH) } };
+    const some = { id: 'some', glyphs: { glyph: () => (asked.push('some'), GLYPH(8)) } };
+    const late = { id: 'late', glyphs: { glyph: () => (asked.push('late'), GLYPH(8)) } };
     const { m, ready } = api(none, some, late);
     await ready;
     expect([...(await m.render('x', SHAPE)).svg.matchAll(RE_GLYPH)]).toHaveLength(1);
@@ -249,19 +336,47 @@ describe('the glyph slot (D293)', () => {
     const warning = { code: 'FIXTURE_GLYPH', message: 'drawn twice' };
     const { m, ready } = api({
       id: 'warns',
-      glyphs: { glyph: (_, { warn }) => (warn(warning), warn(warning), GLYPH) },
+      glyphs: { glyph: (_, { warn }) => (warn(warning), warn(warning), GLYPH(8)) },
     });
     await ready;
     const r = await m.render('x', `${SHAPE}\n  B@{ icon: "fa:car", form: circle }`);
     expect(codes(r.warnings)).toEqual(['FIXTURE_GLYPH']);
   });
 
+  it('gives ICON_NOT_RENDERED once per render across labels, glyphs and core (D291)', async () => {
+    const unresolved = (name: string) => ({
+      code: 'ICON_NOT_RENDERED',
+      message: `Icon "${name}" is not in a registered pack: it is shown as written.`,
+    });
+    const { m, ready } = api({
+      id: 'unresolved',
+      inline: [{ pattern: /fa:fa-car/, box: (s, { warn }) => void warn(unresolved(s)) }],
+      glyphs: { glyph: (name, { warn }) => void warn(unresolved(name)) },
+    });
+    await ready;
+    // A label icon the provider declines, a shape icon it has no glyph for, and one core warns about.
+    const r = await m.render('x', `${SHAPE}\n  B["fa:fa-car fab:fa-x"]`);
+    expect(r.warnings.filter((w) => w.code === 'ICON_NOT_RENDERED')).toHaveLength(1);
+  });
+
+  it("gives glyph providers the render's icon packs (D294)", async () => {
+    const seen: unknown[] = [];
+    const { m, ready } = api({
+      id: 'packs',
+      glyphs: { glyph: (_, { iconPacks }) => void seen.push(iconPacks?.names()) },
+    });
+    m.registerIconPacks([{ name: 'fa', icons: { prefix: 'fa', icons: {} } }]);
+    await ready;
+    await m.render('x', SHAPE);
+    expect(seen).toEqual([['fa']]);
+  });
+
   it('checks the glyph and blames the extension for a bad one', async () => {
     for (const [glyph, why] of [
-      [{ ...GLYPH, width: 0 }, /positive finite width/],
-      [{ ...GLYPH, height: Number.NaN }, /positive finite height/],
-      [{ ...GLYPH, node: { tag: 'script' } }, /<script>, not an allowed SVG element/],
-      [{ ...GLYPH, node: { tag: 'path', attrs: { onclick: 'x' } } }, /onclick on <path>/],
+      [{ tag: 'script' }, /<script>, not an allowed SVG element/],
+      [{ tag: 'path', attrs: { onclick: 'x' } }, /onclick on <path>/],
+      [{ tag: 'g', children: [{ tag: 'foreignObject' }] }, /<foreignObject>, not an allowed/],
+      [{ width: 16, height: 8, node: GLYPH(8) }, /an element without a tag/],
     ] as const) {
       const { m, ready } = api({ id: 'bad-glyphs', glyphs: { glyph: () => glyph as never } });
       await ready;
@@ -314,7 +429,10 @@ function flowchartCorpus(): { id: string; source: string }[] {
 
 describe('the contract over the flowchart corpus', () => {
   it('passes the allow-list and keeps stream and tree output equal with icons drawn (R-SEC-2)', async () => {
-    const glyphs: ExtensionPlugin = { id: 'fixture-glyphs', glyphs: { glyph: () => GLYPH } };
+    const glyphs: ExtensionPlugin = {
+      id: 'fixture-glyphs',
+      glyphs: { glyph: (_, { size }) => GLYPH(size) },
+    };
     const { m, ready } = api(icons, glyphs);
     await ready;
     // A postRender hook switches the writer to its tree backing, which must agree byte for byte.

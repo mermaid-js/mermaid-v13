@@ -5,7 +5,7 @@
  * still count. A loader runs only when a diagram names its pack (or `preload` does); a
  * rejecting loader leaves its pack `failed`, which the next `prepare()` retries (D299).
  */
-import type { IconifyJSON, IconPacks, IconPackSource, IconPackState } from '@mermaid-js/core';
+import type { IconifyJSON, IconPackSource, IconPackState } from '@mermaid-js/core';
 
 /** v12's lazy pack: `loader` may return the pack itself rather than a promise (D294). */
 export interface AsyncIconLoader {
@@ -30,95 +30,57 @@ interface Entry {
   pending?: Promise<void>;
 }
 
-const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
-
-/** `value` as pack `name`, or why it is not an Iconify JSON pack. */
-function asPack(value: unknown, name: string): IconifyJSON | string {
-  if (!isObject(value) || !isObject(value.icons)) return 'it is not Iconify JSON (no icons object)';
-  return { ...(value as unknown as IconifyJSON), prefix: name };
-}
-
-export class IconPackRegistry implements IconPackSource {
-  private readonly entries = new Map<string, Entry>();
-  /** What render contexts get: reads only, no loader (D294). */
-  readonly view: IconPacks = Object.freeze({
-    names: () => this.names(),
-    state: (name: string) => this.state(name),
-    get: (name: string) => this.get(name),
-  });
-
-  /** Checks every loader first, so a bad one registers none (v12 threw on the first). */
-  register(loaders: readonly IconLoader[]): void {
-    if (!Array.isArray(loaders))
-      throw new TypeError(
-        'registerIconPacks() takes an array of { name, icons } or { name, loader }'
-      );
-    const next: [string, Entry][] = [];
-    for (const l of loaders as readonly unknown[]) {
-      if (!isObject(l) || typeof l.name !== 'string' || l.name === '')
-        throw new TypeError('An icon pack needs a "name": a non-empty string');
-      const { name } = l;
-      if (typeof l.loader === 'function' && !('icons' in l)) {
-        next.push([name, { loader: l.loader as AsyncIconLoader['loader'] }]);
-      } else if ('icons' in l && !('loader' in l)) {
-        const pack = asPack(l.icons, name);
-        if (typeof pack === 'string') throw new TypeError(`Icon pack "${name}": ${pack}`);
-        next.push([name, { pack }]);
-      } else {
-        throw new TypeError(`Icon pack "${name}" needs either "icons" or a "loader" function`);
-      }
-    }
-    // A name registered again replaces the pack, keeping its place.
-    for (const [name, entry] of next) this.entries.set(name, entry);
-  }
-
-  get size(): number {
-    return this.entries.size;
-  }
-
-  names(): readonly string[] {
-    return [...this.entries.keys()];
-  }
-
-  state(name: string): IconPackState | undefined {
-    const e = this.entries.get(name);
+/**
+ * One API object's packs (D294): what extensions read (and resource requests load) through, with
+ * no `register`, and what `registerIconPacks` calls. Packs are not checked: the extension checks
+ * what it reads.
+ */
+export function iconPackRegistry(): [IconPackSource, (loaders: readonly IconLoader[]) => void] {
+  let entries = new Map<string, Entry>();
+  const state = (name: string): IconPackState | undefined => {
+    const e = entries.get(name);
     if (!e) return undefined;
     if (e.pack) return 'ready';
-    return e.error !== undefined && !e.pending ? 'failed' : 'pending';
-  }
-
-  get(name: string): IconifyJSON | undefined {
-    return this.entries.get(name)?.pack;
-  }
-
-  /** Why pack `name`'s last load failed, while it is `failed`. */
-  failure(name: string): string | undefined {
-    return this.state(name) === 'failed' ? this.entries.get(name)!.error : undefined;
-  }
-
-  load(name: string): Promise<void> {
-    const e = this.entries.get(name);
+    return e.error === undefined || e.pending ? 'pending' : 'failed';
+  };
+  const load = (name: string): Promise<void> => {
+    const e = entries.get(name);
     if (!e?.loader || e.pack) return Promise.resolve();
-    if (e.pending) return e.pending;
-    const pending = Promise.resolve()
-      .then(() => e.loader!())
+    e.pending ??= Promise.resolve()
+      .then(e.loader)
       .then(
-        (value) => {
-          const pack = asPack(value, name);
-          if (typeof pack === 'string') e.error = `the loader's result: ${pack}`;
-          else {
-            e.pack = pack;
-            delete e.error;
-          }
-        },
+        (value) => void (e.pack = { ...value, prefix: name }),
         (err: unknown) => {
-          e.error = err instanceof Error ? err.message : String(err);
+          e.error = String((err as Error | undefined)?.message ?? err);
+          e.pending = undefined;
         }
-      )
-      .finally(() => {
-        if (e.pending === pending) delete e.pending;
-      });
-    e.pending = pending;
-    return pending;
-  }
+      );
+    // A pack registered again meanwhile loads in its place, so prepare() never leaves it pending.
+    return e.pending.then(() => (entries.get(name) === e ? undefined : load(name)));
+  };
+  return [
+    {
+      names: () => [...entries.keys()],
+      state,
+      get: (name: string) => entries.get(name)?.pack,
+      error: (name: string) => entries.get(name)?.error,
+      load,
+    },
+    (loaders) => {
+      // Every loader is checked first, so a bad one registers none. A name registered again
+      // replaces its pack, keeping its place.
+      const next = new Map(entries);
+      for (const l of Array.isArray(loaders) ? (loaders as unknown[]) : [0]) {
+        const { name, icons, loader } = (l ?? {}) as Partial<AsyncIconLoader & SyncIconLoader>;
+        if (
+          typeof name !== 'string' ||
+          !name ||
+          (icons === undefined ? typeof loader !== 'function' : 'loader' in (l as object))
+        )
+          throw new TypeError('registerIconPacks() takes [{ name, icons } or { name, loader }]');
+        next.set(name, icons === undefined ? { loader } : { pack: { ...icons, prefix: name } });
+      }
+      entries = next;
+    },
+  ];
 }

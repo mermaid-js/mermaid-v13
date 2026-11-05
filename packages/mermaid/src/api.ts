@@ -63,7 +63,7 @@ import {
 } from './config-snapshot.ts';
 import { createDomAdapter } from './dom.ts';
 import { toMermaidError } from './errors.ts';
-import { IconPackRegistry, type IconLoader } from './icon-packs.ts';
+import { iconPackRegistry, type IconLoader } from './icon-packs.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
   builtIn,
@@ -392,7 +392,7 @@ export function createMermaid(
   let site: Snapshot = snapshot();
   let parseErrorHandler: ParseErrorHandler | undefined;
   // One pack registry per API object (D294); an icons extension reads it, keeping no state.
-  const iconPacks = new IconPackRegistry();
+  const [iconPacks, registerPacks] = iconPackRegistry();
   const cache = new AnalysisCache();
   const siteConfigs = new SiteConfigs();
   const overlays = new Overlays();
@@ -522,14 +522,13 @@ export function createMermaid(
   function extensionNeeds(a: Analysis, ascii: boolean) {
     if (hooks.size === 0) return [];
     const { parse, config } = a.prepared;
-    const labels = a.plugin.labels?.bind(a.plugin);
-    const icons = a.plugin.icons?.bind(a.plugin);
+    const { plugin } = a;
     return hooks.resources(parse, {
       iconPacks,
       config,
       format: ascii ? 'ascii' : 'svg',
-      ...(labels ? { labels: () => labels(parse.model) } : {}),
-      ...(icons ? { icons: () => icons(parse.model) } : {}),
+      labels: plugin.labels && (() => plugin.labels!(parse.model)),
+      icons: plugin.icons && (() => plugin.icons!(parse.model)),
     });
   }
 
@@ -594,18 +593,14 @@ export function createMermaid(
     const textOutput = units.id === 'cell';
     const warnings: Warning[] = [...skipped, ...prepared.warnings];
     const warn = (w: Warning): void => void warnings.push(toWarning(w));
-    const missing = missingFor(registry, analysis, textOutput);
-    for (const { resource: r } of extensionNeeds(analysis, textOutput)) {
-      // D299: a pack whose loader rejected is not missing, only unresolved, until the next
-      // prepare() retries it.
-      const failure = r.kind === 'iconPack' ? iconPacks.failure(r.name) : undefined;
-      if (failure === undefined) missing.push(r);
-      else
-        warn({
-          code: 'ICON_NOT_RENDERED',
-          message: `Icon pack "${r.name}" failed to load (${failure}): its icons are not drawn.`,
-        });
-    }
+    const missing = [
+      ...missingFor(registry, analysis, textOutput),
+      // An icon pack is missing only while `pending`: an unregistered one is unresolved (D291),
+      // and so is a `failed` one until the next prepare() retries it (D299).
+      ...extensionNeeds(analysis, textOutput).flatMap(({ resource: r }) =>
+        r.kind !== 'iconPack' || iconPacks.state(r.name) === 'pending' ? r : []
+      ),
+    ];
     if (missing.length > 0) {
       if (textOutput || !options?.placeholders) throw new NotLoadedError(missing);
       warn({
@@ -616,11 +611,10 @@ export function createMermaid(
       });
     }
     // D299: only while no extension claims icons. `mermaid` names the package; core never does.
-    if (iconPacks.size > 0 && !hooks.claims().includes('icons')) {
+    if (iconPacks.names()[0] && !hooks.claims().includes('icons')) {
       warn({
         code: 'ICON_PACKS_UNSUPPORTED',
-        message:
-          'registerIconPacks() has no effect until an icons extension (@mermaid-js/plugin-icons) is registered.',
+        message: 'registerIconPacks() needs @mermaid-js/plugin-icons registered.',
       });
     }
     let engine: LayoutEngine | undefined;
@@ -661,8 +655,11 @@ export function createMermaid(
     // The theme reads the id prefix only for the gradient (D182), after ctx exists.
     const theme = themeFor(config, s, warn, registry.themeRules(), () => ctx.idPrefix);
     let idPrefix: string | undefined;
-    // Glyphs (D293) are SVG only, and absent without an extension that has them.
-    const icon = textOutput ? undefined : hooks.icon(warn);
+    // Inline boxes (D177) are SVG only: text output shows every span as written, and warns
+    // ASCII_DROPPED once per feature (D179). Glyphs (D293) are SVG only too, absent without an
+    // extension that has them, and share the inline spans' once-per-render warnings (D291).
+    const inline = inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg', iconPacks);
+    const icon = textOutput ? undefined : hooks.icon(inline.warn, iconPacks);
     const ctx: RenderContext = {
       config,
       measurer:
@@ -678,7 +675,7 @@ export function createMermaid(
       version: VERSION,
       linkSchemes: s.options.linkSchemes,
       limits: s.limits,
-      iconPacks: iconPacks.view,
+      iconPacks,
       layout: (graph) => {
         if (!engine) throw new TypeError(`${plugin.id} has no graph layout`);
         // D174: `@{ algorithm }` is parsed but not applied yet. `mermaid` says so, not the engine
@@ -700,10 +697,8 @@ export function createMermaid(
           { config }
         );
       },
-      // Inline boxes (D177) are SVG only: text output shows every span as written, and warns
-      // ASCII_DROPPED once per feature (D179).
-      inline: inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg'),
-      ...(icon ? { icon } : {}),
+      inline,
+      icon,
       warn,
       // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
       ...textOnly,
@@ -990,9 +985,7 @@ export function createMermaid(
    * `preload({ iconPacks })`. Without an extension that claims `icons`, renders carry an
    * `ICON_PACKS_UNSUPPORTED` warning (D299). A name registered again replaces its pack.
    */
-  function registerIconPacks(packs: readonly IconLoader[]): void {
-    iconPacks.register(packs);
-  }
+  const registerIconPacks: (packs: readonly IconLoader[]) => void = registerPacks;
 
   /** @deprecated Catch the `MermaidError` that `parse()` rejects with instead. */
   function setParseErrorHandler(handler: ParseErrorHandler): void {

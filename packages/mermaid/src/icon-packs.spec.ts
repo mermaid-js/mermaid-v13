@@ -1,11 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import {
-  createMermaid,
-  MermaidError,
-  NotLoadedError,
-  type ExtensionPlugin,
-  type IconifyJSON,
-} from './index.ts';
+import { createMermaid, NotLoadedError, type ExtensionPlugin, type IconifyJSON } from './index.ts';
 
 /** A tiny Iconify pack, as `@iconify-json/logos` exports it (`prefix` is the pack's own). */
 const LOGOS: IconifyJSON = {
@@ -33,7 +27,7 @@ function icons(log: string[]): ExtensionPlugin {
     resources: {
       provides: [],
       missing(parse, { iconPacks, format }) {
-        if (!iconPacks || format !== 'svg') return [];
+        if (format !== 'svg') return [];
         return named(JSON.stringify(parse.ast), iconPacks.names())
           .filter((name) => iconPacks.state(name) !== 'ready')
           .map((name) => ({ kind: 'iconPack', name }) as const);
@@ -44,7 +38,9 @@ function icons(log: string[]): ExtensionPlugin {
       const packs = ctx.iconPacks;
       for (const n of named(JSON.stringify(ast), packs?.names() ?? [])) {
         const pack = packs!.get(n);
-        log.push(pack ? `${n}: ${pack.prefix} ${Object.keys(pack.icons).join(',')}` : `${n}: -`);
+        if (packs!.state(n) === 'failed') log.push(`${n}: failed (${packs!.error(n)})`);
+        else
+          log.push(pack ? `${n}: ${pack.prefix} ${Object.keys(pack.icons).join(',')}` : `${n}: -`);
       }
       return ast;
     },
@@ -146,7 +142,7 @@ describe('registerIconPacks (D294)', () => {
     expect(log).toEqual(['logos: -', 'logos: logos aws']);
   });
 
-  it('a rejecting loader leaves prepare() resolved, warns naming the pack, and is retried', async () => {
+  it('a rejecting loader leaves prepare() resolved and the pack failed, retried next time', async () => {
     const log: string[] = [];
     let calls = 0;
     const m = await api(log);
@@ -156,16 +152,11 @@ describe('registerIconPacks (D294)', () => {
         loader: () => (++calls === 1 ? Promise.reject(new Error('offline')) : LOGOS),
       },
     ]);
-    const r = await m.render('a', WITH);
-    expect(r.warnings).toEqual([
-      {
-        code: 'ICON_NOT_RENDERED',
-        message: 'Icon pack "logos" failed to load (offline): its icons are not drawn.',
-      },
-    ]);
-    expect(log).toEqual(['logos: -']);
+    // `mermaid` does not warn: the icons extension does, naming the pack (D299).
+    expect((await m.render('a', WITH)).warnings).toEqual([]);
+    expect(log).toEqual(['logos: failed (offline)']);
     // renderSync draws without it until a prepare() retries.
-    expect(m.renderSync(WITH).warnings.map((w) => w.code)).toEqual(['ICON_NOT_RENDERED']);
+    expect(m.renderSync(WITH).warnings).toEqual([]);
     expect(calls).toBe(1);
     await m.prepare(WITH);
     expect(calls).toBe(2);
@@ -173,12 +164,40 @@ describe('registerIconPacks (D294)', () => {
     expect(log.at(-1)).toBe('logos: logos aws');
   });
 
-  it('a loader that resolves to no pack fails as a rejection does', async () => {
-    const m = await api();
-    m.registerIconPacks([{ name: 'logos', loader: () => Promise.resolve({}) as never }]);
-    expect((await m.render('a', WITH)).warnings[0]?.message).toBe(
-      'Icon pack "logos" failed to load (the loader\'s result: it is not Iconify JSON (no icons object)): its icons are not drawn.'
-    );
+  it("does not check a loader's result: the extension reads what it gets", async () => {
+    let seen: unknown;
+    const m = createMermaid();
+    await m.registerExternalDiagrams([
+      {
+        id: 'reads',
+        claims: ['icons'],
+        postParse: (ast, ctx) => (
+          (seen = [ctx.iconPacks?.state('logos'), ctx.iconPacks?.get('logos')]),
+          ast
+        ),
+      },
+    ]);
+    m.registerIconPacks([{ name: 'logos', loader: () => Promise.resolve(7) as never }]);
+    await m.preload({ iconPacks: ['logos'] });
+    await m.render('a', WITH);
+    expect(seen).toEqual(['ready', { prefix: 'logos' }]);
+  });
+
+  it('loads the pack registered again while its first loader runs (prepare never leaves it pending)', async () => {
+    const log: string[] = [];
+    const m = await api(log);
+    let release!: (pack: typeof LOGOS) => void;
+    m.registerIconPacks([
+      { name: 'logos', loader: () => new Promise<typeof LOGOS>((r) => (release = r)) },
+    ]);
+    const prepared = m.prepare(WITH);
+    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
+    m.registerIconPacks([{ name: 'logos', loader: () => Promise.resolve(MDI) }]);
+    release(LOGOS);
+    await prepared;
+    expect(m.renderSync(WITH).warnings).toEqual([]);
+    expect(log.at(-1)).toBe('logos: logos fire');
   });
 
   it('preload({ iconPacks }) runs the named loaders', async () => {
@@ -232,22 +251,29 @@ describe('registerIconPacks (D294)', () => {
   it('refuses a pack without a name, or without exactly one of icons and loader', () => {
     const m = createMermaid();
     const bad = (packs: unknown) => () => m.registerIconPacks(packs as never);
-    expect(bad([{ icons: LOGOS }])).toThrow(
-      new TypeError('An icon pack needs a "name": a non-empty string')
+    const refused = new TypeError(
+      'registerIconPacks() takes [{ name, icons } or { name, loader }]'
     );
-    expect(bad([{ name: 'x' }])).toThrow(
-      new TypeError('Icon pack "x" needs either "icons" or a "loader" function')
-    );
-    expect(bad([{ name: 'x', icons: LOGOS, loader: () => LOGOS }])).toThrow(TypeError);
-    expect(bad([{ name: 'x', icons: {} }])).toThrow(
-      new TypeError('Icon pack "x": it is not Iconify JSON (no icons object)')
-    );
-    expect(bad({ name: 'x', icons: LOGOS })).toThrow(TypeError);
-    // A bad entry registers none of the call's packs.
-    expect(bad([{ name: 'ok', icons: LOGOS }, { name: '' }])).toThrow(TypeError);
+    expect(bad([{ icons: LOGOS }])).toThrow(refused);
+    expect(bad([{ name: '', icons: LOGOS }])).toThrow(refused);
+    expect(bad([{ name: 'x' }])).toThrow(refused);
+    expect(bad([{ name: 'x', loader: LOGOS }])).toThrow(refused);
+    expect(bad([{ name: 'x', icons: LOGOS, loader: () => LOGOS }])).toThrow(refused);
+    expect(bad([null])).toThrow(refused);
+    expect(bad({ name: 'x', icons: LOGOS })).toThrow(refused);
   });
 
-  it("is not the extension's resource: an unregistered pack it reports is its error", async () => {
+  it('keeps the packs of a refused call out', async () => {
+    const log: string[] = [];
+    const m = await api(log);
+    expect(() =>
+      m.registerIconPacks([{ name: 'logos', icons: LOGOS }, { name: '' } as never])
+    ).toThrow(TypeError);
+    await m.render('a', WITH);
+    expect(log).toEqual([]);
+  });
+
+  it('ignores an unregistered pack an extension reports: its icons are unresolved (D291)', async () => {
     const m = createMermaid();
     await m.registerExternalDiagrams([
       {
@@ -255,14 +281,31 @@ describe('registerIconPacks (D294)', () => {
         resources: {
           provides: [],
           missing: () => [{ kind: 'iconPack', name: 'nope' }],
-          load: async () => {},
+          load: () => Promise.reject(new Error("not the extension's to load")),
         },
       },
     ]);
-    const e = await m.render('a', PLAIN).catch((x: unknown) => x);
-    expect(e).toBeInstanceOf(MermaidError);
-    expect((e as MermaidError).message).toBe(
-      'Extension "odd" failed in resources: missing() reported iconPack "nope", which it does not provide'
-    );
+    expect((await m.render('a', PLAIN)).warnings).toEqual([]);
+    expect(m.renderSync(PLAIN).warnings).toEqual([]);
+  });
+
+  it('gives resource requests and render contexts the packs read-only, with no register', async () => {
+    const seen: string[][] = [];
+    const m = createMermaid();
+    await m.registerExternalDiagrams([
+      {
+        id: 'keys',
+        claims: ['icons'],
+        resources: {
+          provides: [],
+          missing: (_, { iconPacks }) => (seen.push(Object.keys(iconPacks).sort()), []),
+          load: async () => {},
+        },
+        postParse: (ast, ctx) => (seen.push(Object.keys(ctx.iconPacks ?? {}).sort()), ast),
+      },
+    ]);
+    await m.render('a', PLAIN);
+    expect(seen[0]).toEqual(['error', 'get', 'load', 'names', 'state']);
+    expect(seen.at(-1)).not.toContain('register');
   });
 });

@@ -65,7 +65,10 @@ export interface RenderContext {
   layout(graph: LayoutGraph): LayoutModel;
   /** Integrator-only limits (R-SEC-5): `resolveLimits(initialize config, limits option)`. */
   readonly limits: Limits;
-  /** The API object's icon packs (D294), read-only, for an icons extension's hooks. */
+  /**
+   * The API object's icon packs (D294), for an icons extension's hooks. Read-only (the same object
+   * as `ResourceRequest.iconPacks`, whose `load` the type leaves out).
+   */
   readonly iconPacks?: IconPacks;
   /**
    * The extensions' inline-box providers for this render (D177), for `layoutLabel`'s `inline`
@@ -75,9 +78,9 @@ export interface RenderContext {
   readonly inline?: InlineSpans;
   /**
    * The extensions' glyphs (D293), for icons a diagram draws outside labels (flowchart icon
-   * shapes, mindmap `::icon()`): `name` as written (`fa:bell`), fitted into a `size` px square at
-   * the origin (xMidYMid meet), or `undefined` when no extension has it. Absent when no extension
-   * has `glyphs`, and in text output.
+   * shapes, mindmap `::icon()`): `name` as written (`fa:bell`), drawn in a `size` px square at
+   * the origin (the provider fits it, xMidYMid meet), or `undefined` when no extension has it.
+   * Absent when no extension has `glyphs`, and in text output.
    */
   readonly icon?: (name: string, size: number, options?: IconOptions) => SvgFragment | undefined;
   warn(warning: Warning): void;

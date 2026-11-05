@@ -1,6 +1,7 @@
 // Inline boxes in labels (DESIGN §5.3, D177): an extension registers a provider for a delimiter
 // pair or a pattern (D293), and label layout hands it each span, which comes back as a measured
 // box drawn on the line's baseline. Math (`$$…$$`) is the first user; icons (`fa:fa-car`) the next.
+import type { IconPacks } from '../pipeline/icon-packs.ts';
 import type { InlineBox, LabelBoxSpan } from '../svg/writer.ts';
 import type { FontKey, Measurer, VerticalMetrics } from './measurer.ts';
 
@@ -14,9 +15,11 @@ export interface InlineRequest {
   readonly ex: number;
   /**
    * The render's warnings, for a provider that declines a span it cannot draw (bad TeX), so the
-   * span shown as written is not silent. The same code and message are given once per render.
+   * span shown as written is not silent. As {@link InlineSpans.warn}: once per render.
    */
   readonly warn: Warn;
+  /** The render's icon packs (D294), read-only, for a provider that draws icons. */
+  readonly iconPacks?: IconPacks;
 }
 
 /**
@@ -51,7 +54,11 @@ export interface InlinePatternProvider {
 }
 
 /** A warning sink, as `RenderContext.warn`. */
-type Warn = (warning: { readonly code: string; readonly message: string }) => void;
+type Warn = (warning: {
+  readonly code: string;
+  readonly message: string;
+  readonly feature?: string;
+}) => void;
 
 /** One render's providers and its once-per-render warnings, for `LabelOptions.inline`. */
 export interface InlineSpans {
@@ -71,44 +78,67 @@ export interface InlineSpans {
    * `PLACEHOLDER`.
    */
   notRendered(feature: string): boolean;
+  /**
+   * The render's warnings as providers get them (`InlineRequest.warn`, `GlyphRequest.warn`): a
+   * feature's not-rendered code (`ICON_NOT_RENDERED`) once per render (D291), any other code and
+   * message once per render.
+   */
+  readonly warn: Warn;
 }
 
-/** A feature core knows: the spans it takes, by delimiter pair or by pattern. */
-type Feature = (
-  | { readonly open: string; readonly close: string; readonly pattern?: undefined }
-  | { readonly pattern: RegExp; readonly open?: undefined; readonly close?: undefined }
-) & {
-  /** The warning a label with such a span gives when no provider claims it. */
-  readonly code: string;
-  readonly message: string;
-  /** The `ASCII_DROPPED` feature text output names for it (D179), and its message. */
-  readonly feature: string;
-  readonly ascii: string;
-};
+/** What core finds spans by: a delimiter pair or a pattern, as providers have them. */
+interface Spans {
+  readonly open?: string;
+  readonly close?: string;
+  readonly pattern?: RegExp;
+}
 
 /**
- * Spans core knows a feature for. A pair is claimed by a provider of the same `open`; a pattern
- * match by a pattern provider that matches all of it, so with an icons extension core is quiet
- * and the extension warns about icons it cannot draw (D291).
+ * A feature core knows: its spans, the `warning` a label gives for a span no provider's span
+ * covers, and the `ASCII_DROPPED` warning text output gives instead (D179).
+ */
+interface Feature extends Spans {
+  readonly warning: { readonly code: string; readonly message: string };
+  readonly ascii: {
+    readonly code: 'ASCII_DROPPED';
+    readonly feature: string;
+    readonly message: string;
+  };
+}
+
+/**
+ * Spans core knows a feature for. A span is claimed when a provider's span covers it, so with an
+ * icons extension core is quiet and the extension warns about icons it cannot draw (D291).
  */
 const FEATURES: readonly Feature[] = [
   {
     open: '$$',
     close: '$$',
-    code: 'MATH_NOT_RENDERED',
-    message: 'Math ($$…$$) is not rendered without a math extension: the TeX is shown as written.',
-    feature: 'math',
-    ascii: 'Text output has no math ($$…$$): the TeX is shown as written.',
+    warning: {
+      code: 'MATH_NOT_RENDERED',
+      message:
+        'Math ($$…$$) is not rendered without a math extension: the TeX is shown as written.',
+    },
+    ascii: {
+      code: 'ASCII_DROPPED',
+      feature: 'math',
+      message: 'Text output has no math ($$…$$): the TeX is shown as written.',
+    },
   },
   {
     // D296: v12's prefixes plus `fad`, with no left boundary (`sofa:fa-x` matches).
     // cspell:disable-next-line
     pattern: /(fa[bdklrs]?):fa-([\w-]+)/,
-    code: 'ICON_NOT_RENDERED',
-    message:
-      'Icons (fa:fa-…) are not rendered without an icons extension: the text is shown as written.',
-    feature: 'icon',
-    ascii: 'Text output has no icons (fa:fa-…): the text is shown as written.',
+    warning: {
+      code: 'ICON_NOT_RENDERED',
+      message:
+        'Icons (fa:fa-…) are not rendered without an icons extension: the text is shown as written.',
+    },
+    ascii: {
+      code: 'ASCII_DROPPED',
+      feature: 'icon',
+      message: 'Text output has no icons (fa:fa-…): the text is shown as written.',
+    },
   },
 ];
 
@@ -125,73 +155,48 @@ const RE_PLACEHOLDER = new RegExp(
   `[\\u${hex(PLACEHOLDER)}-\\u${hex(PLACEHOLDER + MAX_BOXES - 1)}]`
 );
 
-function hasPair(raw: string, open: string, close: string): boolean {
-  const at = raw.indexOf(open);
-  return at >= 0 && raw.includes(close, at + open.length);
-}
-
-/** `pattern` for searching a label: `g` added, `y` and `m` dropped. */
-function searching(pattern: RegExp): RegExp {
-  return new RegExp(pattern.source, `${pattern.flags.replace(/[gmy]/g, '')}g`);
-}
-
-/**
- * The next non-empty match of `re` (a `g` regex) at or after `at`: its start and end. Each match
- * is searched for once per position, so an empty match only moves the search on.
- */
-function nextMatch(re: RegExp, raw: string, at: number): readonly [number, number] | undefined {
-  re.lastIndex = at;
-  for (let m = re.exec(raw); m; m = re.exec(raw)) {
-    if (m[0] !== '') return [m.index, m.index + m[0].length];
-    re.lastIndex = m.index + 1;
-  }
-  return undefined;
-}
-
-/** Whether `raw` holds a span of `f`, claimed or not. */
-const hasSpan = (f: Feature, raw: string): boolean =>
-  f.pattern ? f.pattern.test(raw) : hasPair(raw, f.open, f.close);
-
-/**
- * A provider's next span from `at`: where it starts, where it ends (`next`), and the `source` its
- * provider gets. An open delimiter without a close has no `source`, and `next` just past it.
- */
-interface Found {
-  readonly provider: InlineProvider;
+/** A span found from `at`: its owner (`by`), where it starts and ends (`next`), and its `source`. */
+interface Found<P> {
+  readonly by: P;
   readonly start: number;
   readonly next: number;
-  readonly source?: string;
+  readonly source: string;
 }
 
-/** Whether `found` is all of `text`. */
-const whole = (found: Found | undefined, text: string): boolean =>
-  found?.start === 0 && found.next === text.length;
+/** How to find one provider's (or feature's) spans. */
+type Finder<P> = (raw: string, at: number) => Found<P> | undefined;
 
-/** How to find one provider's spans. */
-type Finder = (raw: string, at: number) => Found | undefined;
-
-function finder(provider: InlineProvider): Finder {
-  if (provider.pattern) {
-    const re = searching(provider.pattern);
-    return (raw, at) => {
-      const m = nextMatch(re, raw, at);
-      return m && { provider, start: m[0], next: m[1], source: raw.slice(m[0], m[1]) };
-    };
-  }
-  const { open, close } = provider;
+/**
+ * `by`'s next span from `at`, as a regex: a pattern with `g` added and `y`, `m` dropped (its
+ * `source` is the whole match), or the pair's `open`, the fewest characters, then `close` (its
+ * `source` is what is between them). An empty match is no span and moves the search on by a code
+ * point: by a code unit, a `u` or `v` pattern would find it again inside a surrogate pair.
+ */
+function finder<P extends Spans>(by: P): Finder<P> {
+  const { open, close, pattern } = by;
+  const re = pattern
+    ? new RegExp(pattern.source, `${pattern.flags.replace(/[gmy]/g, '')}g`)
+    : new RegExp(`${escape(open!)}([^]*?)${escape(close!)}`, 'g');
   return (raw, at) => {
-    const start = raw.indexOf(open, at);
-    if (start < 0) return undefined;
-    const from = start + open.length;
-    const end = raw.indexOf(close, from);
-    if (end < 0) return { provider, start, next: from };
-    return { provider, start, next: end + close.length, source: raw.slice(from, end) };
+    re.lastIndex = at;
+    for (let m = re.exec(raw); m; m = re.exec(raw)) {
+      const start = m.index;
+      if (m[0]) return { by, start, next: re.lastIndex, source: pattern ? m[0] : m[1]! };
+      re.lastIndex = start + (raw.codePointAt(start)! > 0xffff ? 2 : 1);
+    }
+    return undefined;
   };
 }
 
+/** `text` as a regex matching it: every character but a letter, digit, `_` or space escaped. */
+const escape = (text: string): string => text.replace(/[^\w\s]/g, '\\$&');
+
+const FINDERS = FEATURES.map(finder);
+
 /**
  * The inline spans of one render: `providers` in registration order (the span that starts first
- * wins; on a tie, the first registered), and `warn` for the feature warnings, given once per render.
+ * wins; on a tie, the first registered), `warn` for the feature warnings, given once per render,
+ * and the render's icon packs for the providers (D294).
  *
  * Text output (`format: 'ascii'`) draws no boxes, provider or not: every span is shown as
  * written, with one `ASCII_DROPPED` warning per feature (D179).
@@ -199,116 +204,68 @@ function finder(provider: InlineProvider): Finder {
 export function inlineSpans(
   providers: readonly InlineProvider[],
   warn: Warn,
-  format: 'svg' | 'ascii' = 'svg'
+  format: 'svg' | 'ascii' = 'svg',
+  iconPacks?: IconPacks
 ): InlineSpans {
-  if (format === 'ascii') return asWritten(warn);
-  const finders = providers.map(finder);
-  const patterns = finders.filter((_, i) => providers[i]!.pattern);
-  // A pair feature is claimed per render; a pattern feature per match (see FEATURES).
-  const missing = FEATURES.flatMap((f): { f: Feature; has: (raw: string) => boolean }[] => {
-    if (!f.pattern) {
-      const { open, close } = f;
-      if (providers.some((p) => p.open === open)) return [];
-      return [{ f, has: (raw) => hasPair(raw, open, close) }];
-    }
-    const re = searching(f.pattern);
-    const has = (raw: string): boolean => {
-      for (let m = nextMatch(re, raw, 0); m; m = nextMatch(re, raw, m[1])) {
-        const text = raw.slice(m[0], m[1]);
-        if (!patterns.some((find) => whole(find(text, 0), text))) return true;
-      }
-      return false;
-    };
-    return [{ f, has }];
-  });
-  const warned = new Set<string>();
+  const ascii = format === 'ascii';
+  const finders = ascii ? [] : providers.map(finder);
   const given = new Set<string>();
   const notDrawn = new Set<string>();
   const once: Warn = (w) => {
-    for (const f of FEATURES) if (f.code === w.code) notDrawn.add(f.feature);
-    const key = `${w.code}\n${w.message}`;
+    let key = `${w.code}\n${w.message}`;
+    for (const { warning, ascii: dropped } of FEATURES)
+      if (w === dropped || w.code === warning.code) notDrawn.add((key = dropped.feature));
     if (given.has(key)) return;
     given.add(key);
     warn(w);
   };
-  const claimed = (text: string): boolean =>
-    finders.some((find) => find(text, 0)?.source !== undefined);
   return {
+    warn: once,
     notRendered: (feature) => notDrawn.has(feature),
     extract(raw, font, measurer) {
-      for (const { f, has } of missing) {
-        if (!warned.has(f.code) && has(raw)) {
-          warned.add(f.code);
-          notDrawn.add(f.feature);
-          warn({ code: f.code, message: f.message });
-        }
-      }
-      if (providers.length === 0) return undefined;
-      if (RE_PLACEHOLDER.test(raw)) {
-        if (claimed(raw)) once(LIMIT);
-        return undefined;
-      }
-      let request: InlineRequest | undefined;
+      // The spans that may be boxed: a label holding a placeholder character boxes none.
+      const blocked = RE_PLACEHOLDER.test(raw);
+      const spans: Found<InlineProvider>[] = [];
       const boxes: LabelBoxSpan[] = [];
+      let request: InlineRequest | undefined;
       let source = '';
       let at = 0;
-      while (boxes.length < MAX_BOXES) {
-        let found: Found | undefined;
+      for (;;) {
+        let found: Found<InlineProvider> | undefined;
         for (const find of finders) {
           const f = find(raw, at);
           if (f && (!found || f.start < found.start)) found = f;
         }
         if (!found) break;
-        const { provider, start, next } = found;
-        if (found.source === undefined) {
-          source += raw.slice(at, next);
-          at = next;
-          continue;
-        }
-        request ??= {
-          font,
-          measurer,
-          metrics: measurer.metrics(font),
-          ex: font.size / 2,
-          warn: once,
-        };
-        const box = provider.box(found.source, request);
+        const { by, start, next } = found;
+        spans.push(found);
+        let box: InlineBox | undefined;
+        if (blocked || boxes.length === MAX_BOXES) once(LIMIT);
+        else
+          box = by.box(
+            found.source,
+            (request ??= {
+              font,
+              measurer,
+              metrics: measurer.metrics(font),
+              ex: font.size / 2,
+              warn: once,
+              iconPacks,
+            })
+          );
         if (box) {
           source += raw.slice(at, start) + String.fromCharCode(PLACEHOLDER + boxes.length);
           const { width, height, baseline, node } = box;
           boxes.push({ kind: 'box', text: raw.slice(start, next), width, height, baseline, node });
-        } else {
-          source += raw.slice(at, next);
-        }
+        } else source += raw.slice(at, next);
         at = next;
       }
-      if (boxes.length === MAX_BOXES && claimed(raw.slice(at))) once(LIMIT);
-      if (boxes.length === 0) return undefined;
-      return { source: source + raw.slice(at), boxes };
+      // A feature's span that no provider's span covers is not drawn (D291).
+      for (const find of FINDERS)
+        for (let s = find(raw, 0); s && !notDrawn.has(s.by.ascii.feature); s = find(raw, s.next))
+          if (!spans.some((c) => c.start <= s.start && s.next <= c.next))
+            once(ascii ? s.by.ascii : s.by.warning);
+      return boxes.length > 0 ? { source: source + raw.slice(at), boxes } : undefined;
     },
   };
-}
-
-/** Text output's spans: none are boxed; the first label with a feature's span warns once. */
-function asWritten(warn: (warning: AsciiDropped) => void): InlineSpans {
-  const warned = new Set<string>();
-  return {
-    notRendered: (feature) => warned.has(feature),
-    extract(raw) {
-      for (const f of FEATURES) {
-        if (!warned.has(f.feature) && hasSpan(f, raw)) {
-          warned.add(f.feature);
-          warn({ code: 'ASCII_DROPPED', feature: f.feature, message: f.ascii });
-        }
-      }
-      return undefined;
-    },
-  };
-}
-
-/** The text-output warning (D82), as `Warning` carries it. */
-interface AsciiDropped {
-  readonly code: 'ASCII_DROPPED';
-  readonly feature: string;
-  readonly message: string;
 }

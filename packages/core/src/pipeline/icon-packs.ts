@@ -48,19 +48,32 @@ export type IconPackState = 'ready' | 'pending' | 'failed';
 /**
  * One `mermaid` API object's icon packs (D294), read-only. An icons extension's
  * `resources.missing` reports each pack a diagram names that is not `ready` as
- * `{ kind: 'iconPack', name }`; the API object loads it (the extension need not provide it).
+ * `{ kind: 'iconPack', name }`; the API object loads it (the extension need not provide it). A
+ * pack that is not registered is ignored there: its icons are unresolved (D291), not missing.
+ * `mermaid` does not warn about a `failed` pack: the extension does, naming it (D299).
  */
 export interface IconPacks {
   /** Every registered pack name, in registration order. */
   names(): readonly string[];
   /** The state of pack `name`, or `undefined` when no pack of that name is registered. */
   state(name: string): IconPackState | undefined;
-  /** Pack `name` once it is `ready`, its `prefix` the registered name (v12). */
+  /**
+   * Pack `name` once it is `ready`, as registered or loaded with `prefix` set to the registered
+   * name (v12). It is not checked: the extension checks it is Iconify JSON.
+   */
   get(name: string): IconifyJSON | undefined;
+  /**
+   * Why pack `name`'s loader last failed: the error's message, untruncated (shorten it for a
+   * warning). Read it while the pack is `failed`; it is not cleared by a later load.
+   */
+  error(name: string): string | undefined;
 }
 
 /** {@link IconPacks} plus its loader, for the resource request (D294). */
 export interface IconPackSource extends IconPacks {
-  /** Runs pack `name`'s loader; resolves (never rejects) once it is `ready` or `failed`. */
+  /**
+   * Runs pack `name`'s loader; resolves (never rejects) once it is `ready` or `failed`, or once the
+   * pack registered in its place meanwhile is.
+   */
   load(name: string): Promise<void>;
 }
