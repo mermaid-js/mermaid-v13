@@ -14,6 +14,9 @@
  */
 export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter' | 'padding' | 'flag';
 
+/** What the theme reads at render time: a variable's alias and kind. */
+export type ThemeVarEntry = Pick<ThemeVarDef, 'alias' | 'kind'>;
+
 export interface ThemeVarDef {
   /** The short private alias written on the root, without the leading `--_`. */
   readonly alias: string;
@@ -142,13 +145,19 @@ export type PaletteVariable = (typeof PALETTE_VARIABLES)[number];
 /** How many `cScaleN` names v12 has (`THEME_COLOR_LIMIT`). */
 export const PALETTE_LIMIT = 12;
 
+// Pure, so a bundle that never reads `THEME_VARIABLES` drops it with its `usedBy` lists: the
+// runtime reads the generated alias and kind table (`generated/variables.ts`) instead.
+/* @__NO_SIDE_EFFECTS__ */
 const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): ThemeVarDef => ({
   alias,
   kind,
   usedBy,
 });
 
-/** The core inventory. Order is the order of the generated table. */
+/**
+ * The core inventory. Order is the order of the generated table. Tools and specs read it (with
+ * `usedBy`); the theme reads `THEME_VARIABLE_TABLE`, which `pnpm gen:theme` writes from it.
+ */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   // base
   primaryColor: def('p', 'color', ['core']),

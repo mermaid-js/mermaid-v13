@@ -23,9 +23,11 @@ export {
   type BaseVariable,
   type PaletteVariable,
   type ThemeVarDef,
+  type ThemeVarEntry,
   type ThemeVarKind,
   type TokenVariable,
 } from './vocabulary.ts';
+export { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 export {
   createTheme,
   type AliasName,

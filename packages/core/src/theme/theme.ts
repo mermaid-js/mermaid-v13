@@ -45,12 +45,12 @@ import {
 } from './color.ts';
 import { parseRule, type Expr } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
+import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
   PALETTE_LIMIT,
   PALETTE_VARIABLES,
-  THEME_VARIABLES,
   type PaletteVariable,
-  type ThemeVarDef,
+  type ThemeVarEntry,
   type ThemeVarKind,
 } from './vocabulary.ts';
 
@@ -224,7 +224,7 @@ class Resolver {
     private readonly spec: ThemeSpec,
     private readonly rules: ThemeRuleTable,
     private readonly overrides: ReadonlyMap<string, string>,
-    private readonly defs: Readonly<Record<string, ThemeVarDef>>
+    private readonly defs: Readonly<Record<string, ThemeVarEntry>>
   ) {}
 
   /** The spec's own value or rule, ignoring overrides. */
@@ -301,7 +301,7 @@ class Resolver {
         }
         const r = this.get(e.name);
         return {
-          css: `var(--_${(this.defs[e.name] as ThemeVarDef).alias})`,
+          css: `var(--_${(this.defs[e.name] as ThemeVarEntry).alias})`,
           lit: r.lit,
           rgba: r.rgba,
           deps: [e.name],
@@ -456,7 +456,7 @@ function contrastCss(bg: string, a: Rgba, b: Rgba, la: number, lb: number): stri
 
 function checkOverrides(
   vars: Readonly<Record<string, unknown>> | undefined,
-  defs: Readonly<Record<string, ThemeVarDef>>,
+  defs: Readonly<Record<string, ThemeVarEntry>>,
   warn: ThemeOptions['warn']
 ): Map<string, string> {
   const out = new Map<string, string>();
@@ -537,7 +537,7 @@ interface ThemeParts {
   night: Resolver | undefined;
   palettes: Record<PaletteVariable, readonly SafeColor[]>;
   /** `defs` as a map, for the lookups every themed value makes. */
-  byName: ReadonlyMap<string, ThemeVarDef>;
+  byName: ReadonlyMap<string, ThemeVarEntry>;
   /** `rootStyleText()` by the aliases used, in the order they were first used. */
   rootTexts: Map<string, StyleText>;
   /** Each padding variable read so far: a multiple of the diagram's padding, or px. */
@@ -555,10 +555,10 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
     const hit = PLAIN.get(spec)?.get(options.dark);
     if (hit) return hit;
   }
-  const defs: Record<string, ThemeVarDef> = { ...THEME_VARIABLES };
+  const defs: Record<string, ThemeVarEntry> = { ...THEME_VARIABLE_TABLE };
   if (options.rules)
     for (const name of Object.keys(options.rules))
-      if (!own(defs, name)) defs[name] = { alias: name, kind: 'color', usedBy: [] };
+      if (!own(defs, name)) defs[name] = { alias: name, kind: 'color' };
   const overrides = checkOverrides(tv, defs, options.warn);
   const darkMode = spec.dark || tv?.darkMode === true || tv?.darkMode === 'true';
   const rulesFor = (s: ThemeSpec, dark: boolean): ThemeRuleTable => ({
@@ -614,7 +614,7 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
     return grad ?? undefined;
   };
 
-  const def = (name: string): ThemeVarDef => {
+  const def = (name: string): ThemeVarEntry => {
     const d = byName.get(name);
     if (!d) throw new TypeError(`Unknown theme variable ${JSON.stringify(name)}`);
     return d;
