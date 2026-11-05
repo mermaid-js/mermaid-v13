@@ -94,6 +94,13 @@ describe('quadrant charts through the public API (#317)', () => {
     expect(set.svg).toBe(plain.svg);
   });
 
+  it("warns for v12's builder-only showTitle, which is not a config key (R-CONF-2)", async () => {
+    const m = createMermaid();
+    const { svg, warnings } = await m.render('q', withConfig('    showTitle: false\n'));
+    expect(warnings.map((w) => w.code)).toEqual(['CONFIG_UNKNOWN_KEY']);
+    expect(svg).toContain('>Reach and engagement</text>');
+  });
+
   it('renders through mermaid/slim with the quadrant plugin passed in, alike', async () => {
     const slim = createSlim({ diagrams: [quadrant] });
     expect((await slim.render('q', TEXT)).svg).toBe((await createMermaid().render('q', TEXT)).svg);

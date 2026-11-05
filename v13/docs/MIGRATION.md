@@ -766,6 +766,36 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
   top-level transition) warns `CLASS_NOT_APPLIED` (D128). Completion no longer offers
   `classDef`, `class`, `style`, `click` or `scale` inside a composite.
 
+## Quadrant chart config and theme
+
+Spec #289. The SVG changes are under [Quadrant chart SVG structure](#quadrant-chart-svg-structure).
+
+- **`quadrantChart` section:** every key v12's quadrant chart reads works as in v12:
+  `chartWidth`, `chartHeight`, `titleFontSize`, `titlePadding`, `quadrantPadding`,
+  `xAxisLabelPadding`, `yAxisLabelPadding`, `xAxisLabelFontSize`, `yAxisLabelFontSize`,
+  `quadrantLabelFontSize`, `quadrantTextTopPadding`, `pointTextPadding`, `pointLabelFontSize`,
+  `pointRadius`, `xAxisPosition`, `yAxisPosition`, `quadrantInternalBorderStrokeWidth`,
+  `quadrantExternalBorderStrokeWidth` and `useMaxWidth`. A configured `0` is honoured, as in v12.
+- **Ignored:** `useWidth` (only v12's gantt read it), accepted without a warning.
+- **Not config keys:** v12's builder also had `showXAxis`, `showYAxis` and `showTitle`, which
+  no config could reach. They are not schema keys, so setting them gives a `CONFIG_UNKNOWN_KEY`
+  warning (R-CONF-2). An axis shows when it has text, the title when it is not empty.
+- **Descriptions:** v12's schema described `titleFontSize`, `titlePadding` and
+  `quadrantPadding` with the text of the next key. They now say what each key does: the title's
+  font size, the padding above and below the title, and the padding around the quadrant square.
+- **Front-matter `title`** is drawn as the chart title; a `title` statement in the text wins,
+  as in v12 (D218).
+- **Text output:** `format: 'ascii'` is not available for quadrant charts; it throws
+  `UnsupportedFormatError` and `supportsFormat('quadrantChart', 'ascii')` is `false` (D216).
+- **Theme variables:** the 15 `quadrant*` variables keep their v12 names and are listed in
+  [theme variables](theme-variables.md): `quadrant1Fill`–`quadrant4Fill`,
+  `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`,
+  `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`,
+  `quadrantExternalBorderStrokeFill` and `quadrantTitleFill`. Each is also a `--mermaid-<name>`
+  CSS variable, so a host can re-colour a rendered chart (R-THEME-3). They are derived by the
+  same rules as v12 in every theme; where the result differs (`quadrantPointFill`, D231; the
+  fills 2–4, D232; the borders) the SVG structure table says how.
+
 ## State diagram SVG structure
 
 What changed in the state diagram's SVG compared with both v12 renderers: the unified renderer
