@@ -10,6 +10,6 @@ One row per fix ticket, added by its implementer (IMPLEMENTER step 5). The refer
 | Step | Head | Base | head / Pele | Step (head / base) | #265 so far | Since origin (head / origin) |
 | --- | --- | --- | --- | --- | --- | --- |
 | Origin | `f208fab9b` | — | 1.35 · 1.35 · 1.45 | — | 1 | 1 |
-| T1 #272 | `9619ae119` | `f208fab9b` | 1.25 · 1.26 · 1.45 | 0.926 · 0.933 · 1.002 | 0.926 · 0.933 · 1.002 | same run (base is the origin) |
+| T1 #272 | `9619ae119` (merged `935a4b857`) | `f208fab9b` | 1.25 · 1.26 · 1.45 | 0.926 · 0.933 · 1.002 | 0.926 · 0.933 · 1.002 | same run (base is the origin) |
 
 The spec's own measurement at `eba5c0e6c` (1.45× on the 14 largest) is older than the origin. The base had already reached 1.35× before T1, through other merges.
