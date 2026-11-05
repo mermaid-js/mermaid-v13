@@ -51,7 +51,9 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 - Decided in T3: a `journey` length key replaces its default only as a finite number ≥ 0; anything else keeps the default without a warning (T5 owns config validation).
 - Decided in T3: with `height` above about 145 the task box sits below the score-5 face, as in v12; the task line then starts at the box (`y2 = max(450, task y)`).
 
-## #319 T4 renderer
+## #319 T4 renderer (merged)
+
+- Coordinator: when T5 adds the fifteen vocabulary entries, delete the `known()`/fallback path in `src/render/paint.ts` (and its `THEME_VARIABLES` import) so every colour reads through the theme; the v12 values move into the theme specs.
 
 - **For T5: theme variables the renderer reads.** `textColor` (vocabulary `usedBy` += journey, done here), `fontFamily`, `fontSize`, and, through `src/render/paint.ts`, `fillType0`–`fillType7`, `faceColor`, `actor0`–`actor5`. The last fifteen are read only when `THEME_VARIABLES` has them, else v12's value: `fillType<n>` the v12 `default` theme's (`#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff`), `faceColor` `#FFF8DC`, `actor<n>` none. T5 adds the fifteen vocabulary entries (kind `color`, `usedBy: ['journey']`; the names are literals in `paint.ts`, so the `usedBy` scan sees them) and nothing else changes; the fallbacks then never apply and may go.
 - **For T5: `actor0`–`actor5` take no theme value.** The renderer treats an `actor<n>` whose value is `currentColor` (what a vocabulary variable no spec sets resolves to) as unset and uses `actorColours` (D249). `faceColor` needs `#FFF8DC` in the specs; `fillType<n>` the per-theme values above (GAPS "Hue rotation").
