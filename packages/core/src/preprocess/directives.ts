@@ -29,7 +29,7 @@ export type DirectiveKind = 'init' | 'wrap' | 'other';
 export interface Directive {
   /** `init` for `init` and `initialize`, `wrap`, or `other` for any other name. */
   kind: DirectiveKind;
-  /** The name as written (`''` when there is none). */
+  /** The name as written; a `%%{` with no word after it is not a directive (v12). */
   name: string;
   /** From `%%{` to the end of `}%%`; an unclosed directive ends at the end of its line. */
   range: Range;
@@ -61,6 +61,13 @@ export function scanDirectives(src: string, from: number, diagnostics: Diagnosti
   let closable = true;
   let at = src.indexOf('%%{', from);
   while (at !== -1) {
+    // v12 directiveRegex needs a word after `%%{` and blanks; anything else stays text.
+    let n = at + 3;
+    while (n < src.length && isJsonSpace(src.charCodeAt(n))) n++;
+    if (!isWord(src.charCodeAt(n))) {
+      at = src.indexOf('%%{', at + 3);
+      continue;
+    }
     const close = closable ? src.indexOf('}%%', at + 3) : -1;
     if (close === -1) {
       closable = false;
