@@ -312,6 +312,17 @@ export async function quadrantGateCorpus(): Promise<CorpusItem[]> {
 }
 
 /**
+ * The gate corpus less the items the parity suite already reads from its dirs and files
+ * (`registry.ts`), ids prefixed `quadrant-gate/`: model parity over the whole gate corpus.
+ */
+export async function quadrantParityCorpus(): Promise<CorpusItem[]> {
+  const listed = new Set([...(await quadrantCorpus()), ...quadrantCases()].map((c) => c.id));
+  return (await quadrantGateCorpus())
+    .filter((item) => !listed.has(item.id))
+    .map((item) => ({ id: `quadrant-gate/${item.id}`, source: item.source }));
+}
+
+/**
  * `src` with nine comment lines after every line of the body; for a body of one or two lines,
  * one comment line through the middle of the second line, or before a one-line body. The header
  * line is never cut, so v12 still detects the chart. v12 removed the comment lines before

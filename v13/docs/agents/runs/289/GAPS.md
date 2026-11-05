@@ -50,7 +50,7 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 - Size: parser 8.6 KB gz; package 10.4 KB gz.
 - Review of #301 (≈30k inputs through model parity, no model, AST or performance defects). Follow-ups:
   - [x] **#321 T6 (done):** a class `ref` symbol was recorded before its point statement finished (`parser.ts:456`), leaving a stale symbol when the point failed (`P:::a: [0.1, 2]`).
-  - [ ] **Owner #301 follow-up (after T4/T6):** `UNCLOSED_STRING` only fires when `"` starts a label; a later quote (`x-axis a "b⏎…`) gives a generic message that quotes the rest of the document. Junk before the header (`foo⏎quadrantChart`) gives a second, false "comes only once" diagnostic. Model parity runs only on e2e, v12-specs and quadrant-cases; extend it to the whole gate corpus (506 items agree today by hand).
+  - [x] **#301 follow-up (done, `feature/301_parser-diagnostics`):** `UNCLOSED_STRING` only fires when `"` starts a label; a later quote (`x-axis a "b⏎…`) gives a generic message that quotes the rest of the document. Junk before the header (`foo⏎quadrantChart`) gives a second, false "comes only once" diagnostic. Model parity runs only on e2e, v12-specs and quadrant-cases; extend it to the whole gate corpus (506 items agree today by hand). Fixed: `UNCLOSED_STRING` at any quote (recovery reports one it skips), one-line messages (fuzz-checked); text before a later header is one diagnostic; the parity suite's new optional `corpus` hook adds the 372 gate items not already in its files (`corpus.ts`, one additive field).
 
 ## #321 T6 (handoff `tickets/321.md`)
 

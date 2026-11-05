@@ -13,6 +13,8 @@ export interface ParitySuite {
   corpusDirs: string[];
   /** JSON files of `CorpusItem[]` (relative to the repo root), e.g. harvested spec strings. */
   corpusFiles?: string[];
+  /** Further items built in code, e.g. a lexer gate corpus. */
+  corpus?: () => Promise<CorpusItem[]>;
 }
 
 /** Every `.mmd` file under `dir`, sorted by path, with ids `<idPrefix>/<path relative to dir>`. */
@@ -42,6 +44,7 @@ export async function* resolveCorpus(
   for (const file of new Set(suites.flatMap((s) => s.corpusFiles ?? []))) {
     yield* JSON.parse(await readFile(join(REPO_ROOT, file), 'utf8')) as CorpusItem[];
   }
+  for (const suite of suites) if (suite.corpus) yield* await suite.corpus();
 }
 
 async function mmdFiles(dir: string): Promise<string[]> {
