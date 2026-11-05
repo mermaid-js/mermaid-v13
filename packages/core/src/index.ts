@@ -34,6 +34,14 @@ export {
   type LaidOut,
   type ResourceRequest,
 } from './pipeline/extensions.ts';
+export type {
+  IconifyAlias,
+  IconifyIcon,
+  IconifyJSON,
+  IconPacks,
+  IconPackSource,
+  IconPackState,
+} from './pipeline/icon-packs.ts';
 export {
   readManifest,
   type DiagramManifest,

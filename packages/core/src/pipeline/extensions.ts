@@ -24,6 +24,7 @@ import type { SvgTree } from '../svg/tree.ts';
 import { scale, transforms, translate } from '../svg/path.ts';
 import type { SvgFragment } from '../svg/writer.ts';
 import type { InlineProvider } from '../text/inline.ts';
+import type { IconPackSource } from './icon-packs.ts';
 import { MermaidError, type Resource } from './errors.ts';
 import type { IconOptions, RenderContext } from './types.ts';
 
@@ -47,9 +48,10 @@ export type LaidOut =
 
 /**
  * Features an extension handles, so a diagram does not warn about them: `callbacks`
- * (`CALLBACK_IGNORED`), `menus` (element menus, `AstMenu`).
+ * (`CALLBACK_IGNORED`), `menus` (element menus, `AstMenu`), `icons` (icon packs, D294:
+ * `ICON_PACKS_UNSUPPORTED`).
  */
-export type ExtensionClaim = 'callbacks' | 'menus';
+export type ExtensionClaim = 'callbacks' | 'menus' | 'icons';
 
 /** The per-render context hooks get: the frozen render context plus two hook-only fields. */
 export interface HookContext extends RenderContext {
@@ -99,6 +101,11 @@ export interface ResourceRequest {
   readonly config: ResolvedConfig;
   /** The output being prepared or drawn: text output draws no inline boxes (D179). */
   readonly format: 'svg' | 'ascii';
+  /**
+   * The API object's icon packs (D294). An `iconPack` resource whose pack is here need not be
+   * in `provides`: the API object loads it.
+   */
+  readonly iconPacks?: IconPackSource;
   /**
    * The parsed diagram's label texts as written (`DiagramPlugin.labels`), when its plugin lists
    * them. Without it, every string in the parse may be a label.
@@ -358,17 +365,26 @@ export class HookRunner<El = unknown, R = unknown> {
       const resources = this.loaders.get(p);
       if (!resources) continue;
       let missing: readonly Resource[];
+      const packs = request.iconPacks;
+      // An icon pack the API object holds is loaded by it (D294), not by the extension.
+      const hosted = (r: Resource): boolean =>
+        r.kind === 'iconPack' &&
+        packs?.state(r.name) !== undefined &&
+        !resources.provides.some((q) => sameResource(q, r));
       try {
         missing = resources.missing(parse, request);
         for (const r of missing)
-          if (!resources.provides.some((q) => sameResource(q, r)))
+          if (!hosted(r) && !resources.provides.some((q) => sameResource(q, r)))
             throw new TypeError(
               `missing() reported ${r.kind} "${r.name}", which it does not provide`
             );
       } catch (e) {
         throw failed(p, 'resources', e);
       }
-      for (const r of missing) out.push(need(p, resources, r));
+      for (const r of missing)
+        out.push(
+          hosted(r) ? { resource: r, load: () => packs!.load(r.name) } : need(p, resources, r)
+        );
     }
     return out;
   }
