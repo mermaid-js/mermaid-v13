@@ -152,8 +152,9 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-TEXT-7 | `deterministic: true` forces the table measurer in every environment. Browser and Node output are then byte-identical. | Must | M1 | D17 | Cross-environment equality test |
 | R-TEXT-8 | Wrapping honours `wrappingWidth`, is CJK-aware, and handles soft hyphen and zero-width space. Emoji and wide characters are measured as wide. | Must | M1 | D17, P1 | Specs |
 | R-TEXT-9 | The font family comes from `fontFamily` config / `--mermaid-fontFamily`, with v12's default as the fallback (P1). | Must | M1 | D17, D20 | Spec |
-| R-TEXT-10 | Math (KaTeX) and icons are provided by optional plugins that emit SVG paths, never HTML. | Should | M4 | D5, D7 | Plugin exists; allow-list test passes with plugin enabled |
+| R-TEXT-10 | Math (TeX) is provided by an optional plugin that emits SVG paths, never HTML. It renders with MathJax in every label core lays out. | Must | M3.5 | D5, D7, D170, D175–D178 | Plugin exists; allow-list test passes with plugin enabled |
 | R-TEXT-11 | Markdown strings also accept bullet lists (lines starting with "- " or "\* ", one nesting level). They render as indented tspan lines with a bullet glyph. Bullets are recognised only inside markdown strings, never in plain labels, so existing diagrams are not broken. | Should | M1 | D56 | Specs plus visual baseline; oracle corpus shows no change for labels without markdown bullets |
+| R-TEXT-12 | Icons are provided by an optional plugin that emits SVG paths, never HTML. Split from R-TEXT-10 (D175). | Should | M4 | D5, D7, D170 | Plugin exists; allow-list test passes with plugin enabled |
 
 ## 10. Layout (R-LAYOUT)
 
@@ -251,7 +252,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-PLUG-5 | Third-party and heavy plugins activate on install: in Node/SSR by auto-discovering manifests in `node_modules`; in bundlers through a one-line `@mermaid-js/bundler-plugin` (unplugin for Vite, webpack, Rollup and esbuild); on a CDN by adding a self-registering script. | Must | M3.5 | D35, D40, D164–D167 | Example apps for each path in CI |
 | R-PLUG-6 | `registerExternalDiagrams()` always works as an explicit fallback. | Must | M1 | D40 | Spec |
 | R-PLUG-7 | The CDN build lazy-loads first-party diagram packages only from the configured CDN base, never from a URL in diagram text. | Must | M3.5 | D41, D162, D163 | Spec |
-| R-PLUG-8 | Optional features (ELK, math, icons, hand-drawn look) are separate plugin packages. Core size is unaffected by their existence. | Must | M3.5 | D7 | Size check |
+| R-PLUG-8 | Optional features (ELK, math, icons, hand-drawn look) are separate plugin packages. Core size is unaffected by their existence. ELK and math ship in M3.5; icons and hand-drawn in M4 (D170). | Must | M3.5 | D7, D170 | Size check |
 | R-PLUG-9 | A first-party interactions plugin restores v12 click callbacks (click X callback, call) from day one. Core only emits stable node ids; the plugin binds handlers to the rendered DOM after render, so core output stays inside the allow-list (R-SEC-2). The integrator opts in by installing it; diagram text alone cannot enable it. | Must | M1 | D47 | Spec: callback fires with plugin, warning without it; allow-list test passes with plugin enabled |
 
 ## 18. ASCII output (R-ASCII)
