@@ -8,7 +8,9 @@ describe('renderDiagram (the page adapter)', () => {
     async (_path, source) => {
       const { svg, warnings } = await renderDiagram(source);
       expect(warnings).toEqual([]);
-      expect(svg).toMatch(/^<svg [^>]*aria-roledescription="(flowchart|er|sequence)"/);
+      expect(svg).toMatch(
+        /^<svg [^>]*aria-roledescription="(flowchart|er|sequence|classDiagram|stateDiagram)"/
+      );
     }
   );
 

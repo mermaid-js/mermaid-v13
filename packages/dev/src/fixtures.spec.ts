@@ -1,6 +1,6 @@
 import { parseFlowchart } from '@mermaid-js/diagram-flowchart';
 import { describe, expect, it } from 'vitest';
-import { baselineFixtures, M1_THEMES } from './fixtures.ts';
+import { baselineFixtures, galleryFixtures, M1_THEMES } from './fixtures.ts';
 
 // v12.2's documented `@{ shape }` short names (`shapesDefs` in
 // rendering-util/rendering-elements/shapes.ts at fa796a943).
@@ -97,5 +97,31 @@ describe('visual baseline fixtures (R-TEST-5)', () => {
     expect(text.map((f) => f.path)).toEqual(
       expect.arrayContaining(['text/wrapping.mmd', 'text/wrapping-markdown.mmd', 'text/cjk.mmd'])
     );
+  });
+});
+
+describe('gallery fixtures (R-TEST-6, #207)', () => {
+  it('take the baseline folder of every diagram type mermaid renders, under its folder name', () => {
+    const folders = new Set(galleryFixtures().map((f) => f.path.split('/')[0]));
+    expect([...folders].sort()).toEqual([
+      'class-diagram',
+      'er-diagram',
+      'flowchart',
+      'sequence',
+      'state-diagram-v2',
+    ]);
+  });
+
+  it('leave out the folders of types mermaid does not render yet', () => {
+    const supported = new Set(['flowchart-v2']);
+    const folders = new Set(galleryFixtures(supported).map((f) => f.path.split('/')[0]));
+    expect([...folders]).toEqual(['flowchart']);
+  });
+
+  it('keep each baseline whole, in path order', () => {
+    const flowchart = galleryFixtures()
+      .filter((f) => f.path.startsWith('flowchart/'))
+      .map((f) => f.path.slice('flowchart/'.length));
+    expect(flowchart).toEqual(baselineFixtures().map((f) => f.path));
   });
 });

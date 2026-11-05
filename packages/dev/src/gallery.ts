@@ -27,7 +27,7 @@ const esc = (s: string): string =>
 const STYLE = `
 body{margin:0;font:14px/1.4 system-ui,sans-serif;background:#fafafa;color:#222}
 header{padding:16px 24px;background:#fff;border-bottom:1px solid #ddd;position:sticky;top:0;z-index:1}
-h1{font-size:20px;margin:0}h2{font-size:16px;margin:32px 24px 8px;text-transform:capitalize}
+h1{font-size:20px;margin:0}h2{font-size:16px;margin:32px 24px 8px}
 nav a{margin-right:12px}
 .row{margin:0 24px 16px;background:#fff;border:1px solid #ddd;border-radius:6px;padding:8px 12px}
 .row h3{font:600 13px ui-monospace,monospace;margin:0 0 8px}
@@ -73,7 +73,10 @@ export async function buildGallery(
     }
     if (failed) failures.push(fixture.path);
     count += cells.length;
-    const group = fixture.path.includes('/') ? fixture.path.split('/')[0]! : 'other';
+    // The fixture's folder: `flowchart/shapes`, `er-diagram`.
+    const group = fixture.path.includes('/')
+      ? fixture.path.slice(0, fixture.path.lastIndexOf('/'))
+      : 'other';
     const row =
       `<section class="row" id="${esc(fixture.path)}"><h3>${esc(fixture.path)}</h3>` +
       `<div class="cells">${cells.join('')}</div>` +
@@ -85,7 +88,7 @@ export async function buildGallery(
   const body = [...groups]
     .map(([g, rows]) => `<h2 id="group-${esc(g)}">${esc(g)}</h2>${rows.join('')}`)
     .join('');
-  const title = `Mermaid ${esc(options.version)} flowchart gallery`;
+  const title = `Mermaid ${esc(options.version)} theme gallery`;
   const html =
     `<!doctype html><html lang="en"><head><meta charset="utf-8">` +
     `<meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>` +

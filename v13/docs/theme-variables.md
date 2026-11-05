@@ -11,35 +11,35 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 
 | Variable | CSS variable | Role | Kind | Light rule | Dark rule | Set by themes | Used by |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, flowchart |
-| `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core, flowchart |
-| `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core, flowchart |
-| `background` | `--mermaid-background` | base | color | | | all | core, flowchart |
-| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, flowchart |
-| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence |
-| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color | core, flowchart |
-| `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color | core, flowchart |
-| `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color | core, flowchart |
-| `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color | core, flowchart |
-| `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color | core, flowchart |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral | core, flowchart, sequence |
-| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color | flowchart, sequence |
-| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, sequence |
-| `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color | flowchart |
-| `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart |
-| `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart |
-| `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart |
-| `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart |
+| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core |
+| `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
+| `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core |
+| `background` | `--mermaid-background` | base | color | | | all | core |
+| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core |
+| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er |
+| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color | core |
+| `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color | core |
+| `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color | core |
+| `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color | core |
+| `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color | core |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral | core, flowchart, sequence, state, er |
+| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color | flowchart, sequence, class, state, er |
+| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, sequence, class, state, er |
+| `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color | flowchart, state, er |
+| `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
+| `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
+| `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, state, er |
+| `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state |
 | `classText` | `--mermaid-classText` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-color, redux, redux-dark, redux-dark-color | class |
-| `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart |
-| `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | | flowchart |
-| `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color | flowchart |
-| `border2` | `--mermaid-border2` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart |
-| `noteBkgColor` | `--mermaid-noteBkgColor` | derived | color | `#fff5ad` | `secondaryColor` | redux-color, redux, redux-dark, redux-dark-color, neutral | core, sequence |
-| `noteTextColor` | `--mermaid-noteTextColor` | derived | color | `contrast(noteBkgColor, textColor, background)` | `contrast(noteBkgColor, textColor, background)` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral | core, sequence |
-| `noteBorderColor` | `--mermaid-noteBorderColor` | derived | color | `mix(noteBkgColor, black, 30%)` | `mix(noteBkgColor, white, 30%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | core, sequence |
+| `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state |
+| `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | |  |
+| `border1` | `--mermaid-border1` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color |  |
+| `border2` | `--mermaid-border2` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral |  |
+| `noteBkgColor` | `--mermaid-noteBkgColor` | derived | color | `#fff5ad` | `secondaryColor` | redux-color, redux, redux-dark, redux-dark-color, neutral | core, sequence, class, state |
+| `noteTextColor` | `--mermaid-noteTextColor` | derived | color | `contrast(noteBkgColor, textColor, background)` | `contrast(noteBkgColor, textColor, background)` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral | core, sequence, class, state |
+| `noteBorderColor` | `--mermaid-noteBorderColor` | derived | color | `mix(noteBkgColor, black, 30%)` | `mix(noteBkgColor, white, 30%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | core, sequence, class, state |
 | `actorBkg` | `--mermaid-actorBkg` | derived | color | `mainBkg` | `mainBkg` | | sequence |
 | `actorBorder` | `--mermaid-actorBorder` | derived | color | `nodeBorder` | `nodeBorder` | forest, neutral | sequence |
 | `actorTextColor` | `--mermaid-actorTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default, dark, forest, neutral | sequence |
@@ -58,16 +58,16 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `compositeBackground` | `--mermaid-compositeBackground` | derived | color | `background` | `background` | redux-dark, redux-dark-color | state |
 | `compositeTitleBackground` | `--mermaid-compositeTitleBackground` | derived | color | `mainBkg` | `mainBkg` | redux-color, redux, redux-dark, redux-dark-color | state |
 | `altBackground` | `--mermaid-altBackground` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | state |
-| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence |
-| `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart |
-| `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart |
+| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er |
+| `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
+| `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |
 | `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core |
-| `spacing1` | `--mermaid-spacing1` | token | length | | | all | core, flowchart |
-| `spacing2` | `--mermaid-spacing2` | token | length | | | all | core, flowchart |
-| `spacing3` | `--mermaid-spacing3` | token | length | | | all | core, flowchart |
-| `arrowheadGap` | `--mermaid-arrowheadGap` | token | length | | | all | flowchart |
-| `arrowheadLength` | `--mermaid-arrowheadLength` | token | length | | | all | flowchart |
-| `arrowheadWidth` | `--mermaid-arrowheadWidth` | token | length | | | all | flowchart |
+| `spacing1` | `--mermaid-spacing1` | token | length | | | all | core |
+| `spacing2` | `--mermaid-spacing2` | token | length | | | all | core |
+| `spacing3` | `--mermaid-spacing3` | token | length | | | all | core |
+| `arrowheadGap` | `--mermaid-arrowheadGap` | token | length | | | all | flowchart, state |
+| `arrowheadLength` | `--mermaid-arrowheadLength` | token | length | | | all | flowchart, state |
+| `arrowheadWidth` | `--mermaid-arrowheadWidth` | token | length | | | all | flowchart, state |
 | `circleArrowheadSize` | `--mermaid-circleArrowheadSize` | token | length | | | all | flowchart |
 | `circleArrowheadGap` | `--mermaid-circleArrowheadGap` | token | length | | | all | flowchart |
 | `crossArrowheadSize` | `--mermaid-crossArrowheadSize` | token | length | | | all | flowchart |
@@ -109,7 +109,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `rowEven` | `--mermaid-rowEven` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | er |
 | `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
 | `erMarkerFill` | `--mermaid-erMarkerFill` | derived | color | `#ffffff` | `#ffffff` | redux-color, redux, redux-dark, redux-dark-color | er |
-| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color | flowchart, sequence |
+| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color | flowchart, sequence, class, state, er |
 
 ## Palettes
 

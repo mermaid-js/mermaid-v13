@@ -6,16 +6,16 @@ describe('theme variable inventory (DESIGN §8.3)', () => {
   it('lists name, CSS variable, role, rules, the themes that set it, and its users', async () => {
     const doc = await themeInventory();
     expect(doc).toContain(
-      '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, flowchart |'
+      '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core |'
     );
     expect(doc).toContain(
-      '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, sequence |'
+      '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, sequence, class, state, er |'
     );
     expect(doc).toContain(
-      '| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color | core, flowchart |'
+      '| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color | core |'
     );
     expect(doc).toContain(
-      '| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence |'
+      '| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er |'
     );
   });
 
