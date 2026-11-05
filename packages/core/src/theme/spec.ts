@@ -56,6 +56,19 @@ export const LIGHT_RULES: ThemeRuleTable = {
   rowEven: 'lightenHsl(mainBkg, 5%)',
   erEdgeLabelBackground: 'edgeLabelBackground',
   erMarkerFill: '#ffffff',
+  // v12 journey `.face { fill: faceColor or #FFF8DC }`; no v12 theme sets faceColor.
+  faceColor: '#fff8dc',
+  // Journey section fills (#327, D241): v12 theme-base takes primaryColor, secondaryColor and
+  // their hue turns by +64, -64 and 128 degrees. The DSL has no hue turn, so 2-7 are base's
+  // resolved v12 values; every other theme pins all eight (specs/journey-fills.ts).
+  fillType0: 'primaryColor',
+  fillType1: 'secondaryColor',
+  fillType2: '#e6ffdd',
+  fillType3: '#ffdde6',
+  fillType4: '#ffddea',
+  fillType5: '#ddeaff',
+  fillType6: '#ddfff9',
+  fillType7: '#fff9dd',
   // v12 theme-base.js; the other classic themes pin altBackground (#192, D126).
   compositeBackground: 'background',
   compositeTitleBackground: 'mainBkg',

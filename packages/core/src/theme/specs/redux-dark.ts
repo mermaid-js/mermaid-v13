@@ -6,6 +6,7 @@
 import type { ThemeSpec } from '../spec.ts';
 import { REDUX_RULES } from './redux-rules.ts';
 import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
+import { fillTypes } from './journey-fills.ts';
 
 const theme: ThemeSpec = {
   name: 'redux-dark',
@@ -13,7 +14,19 @@ const theme: ThemeSpec = {
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
   rules: REDUX_RULES,
-  values: REDUX_DARK_VALUES,
+  values: {
+    ...REDUX_DARK_VALUES,
+    ...fillTypes([
+      '#1f2020',
+      '#474949',
+      '#1f1f20',
+      '#474749',
+      '#1f201f',
+      '#474947',
+      '#201f20',
+      '#494749',
+    ]),
+  },
 };
 
 export default theme;

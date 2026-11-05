@@ -7,12 +7,18 @@
 import type { ThemeSpec } from '../spec.ts';
 import { TAILWIND_300, TAILWIND_400, TAILWIND_50 } from './palettes.ts';
 import redux from './redux.ts';
+import { fillTypes } from './journey-fills.ts';
 
 const theme: ThemeSpec = {
   ...redux,
   name: 'redux-color',
   // v12 draws ER edge labels on `erEdgeLabelBackground` in the colour themes only.
-  values: { ...redux.values, erEdgeLabelBackground: '#ffffff' },
+  values: {
+    ...redux.values,
+    erEdgeLabelBackground: '#ffffff',
+    // v12 `fillType<i> || bkgColorArray[i]` for the journey section fills (journey-fills.ts)
+    ...fillTypes(TAILWIND_50),
+  },
   palettes: {
     borderColorArray: TAILWIND_400,
     bkgColorArray: TAILWIND_50,

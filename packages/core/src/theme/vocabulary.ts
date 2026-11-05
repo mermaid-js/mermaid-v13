@@ -263,6 +263,23 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   rowEven: def('re', 'color', ['er']),
   erEdgeLabelBackground: def('eel', 'color', ['er']),
   erMarkerFill: def('emf', 'color', ['er']),
+  // user journey (#290): section and task fills by slot (D241), the face, and the author's
+  // actor dot colours, which no theme sets (D249: the renderer then uses `actorColours`).
+  fillType0: def('jf0', 'color', ['journey']),
+  fillType1: def('jf1', 'color', ['journey']),
+  fillType2: def('jf2', 'color', ['journey']),
+  fillType3: def('jf3', 'color', ['journey']),
+  fillType4: def('jf4', 'color', ['journey']),
+  fillType5: def('jf5', 'color', ['journey']),
+  fillType6: def('jf6', 'color', ['journey']),
+  fillType7: def('jf7', 'color', ['journey']),
+  faceColor: def('jfc', 'color', ['journey']),
+  actor0: def('ja0', 'color', ['journey']),
+  actor1: def('ja1', 'color', ['journey']),
+  actor2: def('ja2', 'color', ['journey']),
+  actor3: def('ja3', 'color', ['journey']),
+  actor4: def('ja4', 'color', ['journey']),
+  actor5: def('ja5', 'color', ['journey']),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er']),

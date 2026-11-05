@@ -109,6 +109,21 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `rowEven` | `--mermaid-rowEven` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | er |
 | `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
 | `erMarkerFill` | `--mermaid-erMarkerFill` | derived | color | `#ffffff` | `#ffffff` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | er |
+| `fillType0` | `--mermaid-fillType0` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
+| `fillType1` | `--mermaid-fillType1` | derived | color | `secondaryColor` | `secondaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
+| `fillType2` | `--mermaid-fillType2` | derived | color | `#e6ffdd` | `#e6ffdd` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
+| `fillType3` | `--mermaid-fillType3` | derived | color | `#ffdde6` | `#ffdde6` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
+| `fillType4` | `--mermaid-fillType4` | derived | color | `#ffddea` | `#ffddea` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
+| `fillType5` | `--mermaid-fillType5` | derived | color | `#ddeaff` | `#ddeaff` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
+| `fillType6` | `--mermaid-fillType6` | derived | color | `#ddfff9` | `#ddfff9` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
+| `fillType7` | `--mermaid-fillType7` | derived | color | `#fff9dd` | `#fff9dd` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
+| `faceColor` | `--mermaid-faceColor` | derived | color | `#fff8dc` | `#fff8dc` | | journey |
+| `actor0` | `--mermaid-actor0` | derived | color | | | | journey |
+| `actor1` | `--mermaid-actor1` | derived | color | | | | journey |
+| `actor2` | `--mermaid-actor2` | derived | color | | | | journey |
+| `actor3` | `--mermaid-actor3` | derived | color | | | | journey |
+| `actor4` | `--mermaid-actor4` | derived | color | | | | journey |
+| `actor5` | `--mermaid-actor5` | derived | color | | | | journey |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |

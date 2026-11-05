@@ -54,6 +54,11 @@ const LOOK_GEOMETRY_WHY =
 const DIFFERENCES: Readonly<Record<string, string>> = {
   dropShadow: 'D181: the same blurred shadow, written in the syntax `checkFilter` accepts',
   cScale: 'D181, D152: neo carries no per-item palette',
+  // Journey (#327): v12 sets neither; `.face` falls back to #FFF8DC and dots to actorColours.
+  faceColor: 'D245: v12 sets no faceColor; v13 gives its `.face` fallback #FFF8DC as the value',
+  ...Object.fromEntries(
+    [0, 1, 2, 3, 4, 5].map((i) => [`actor${i}`, 'D249: author-only; no theme sets actor<n>'])
+  ),
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
