@@ -428,7 +428,7 @@ function drawNode(
     lineAttrs = { ...lineAttrs, stroke: paint.node.plainStroke };
   }
   if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
-  else if (v?.icon) drawIcon(w, view, shapeAttrs, warn);
+  else if (v?.icon) drawIcon(w, view, shapeAttrs, warn, ctx.icon);
   else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
   const fill = view.style.shape.fill;
   w.label(view.label, 0, view.dy, {

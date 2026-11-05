@@ -26,6 +26,9 @@ export {
   type ExtensionNeed,
   type ExtensionPlugin,
   type ExtensionResources,
+  type Glyph,
+  type GlyphProvider,
+  type GlyphRequest,
   type HookContext,
   type HookRun,
   type LaidOut,
@@ -42,6 +45,7 @@ export {
 export type {
   DiagramParseContext,
   DiagramPlugin,
+  IconOptions,
   RenderContext,
   TextRenderContext,
   Warning,

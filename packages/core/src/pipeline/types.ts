@@ -8,7 +8,7 @@ import type { Limits } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
 import type { ParseResult } from '../parser-kit/result.ts';
 import type { PreprocessResult } from '../preprocess/preprocess.ts';
-import type { SvgWriter } from '../svg/writer.ts';
+import type { SvgFragment, SvgWriter } from '../svg/writer.ts';
 import type { SecurityLevel } from '../svg/url.ts';
 import type { InlineSpans } from '../text/inline.ts';
 import type { Measurer } from '../text/measurer.ts';
@@ -70,7 +70,20 @@ export interface RenderContext {
    * `ASCII_DROPPED` warning per feature (D179).
    */
   readonly inline?: InlineSpans;
+  /**
+   * The extensions' glyphs (D293), for icons a diagram draws outside labels (flowchart icon
+   * shapes, mindmap `::icon()`): `name` as written (`fa:bell`), fitted into a `size` px square at
+   * the origin (xMidYMid meet), or `undefined` when no extension has it. Absent when no extension
+   * has `glyphs`, and in text output.
+   */
+  readonly icon?: (name: string, size: number, options?: IconOptions) => SvgFragment | undefined;
   warn(warning: Warning): void;
+}
+
+/** How {@link RenderContext.icon} resolves a name. */
+export interface IconOptions {
+  /** The pack a name without a prefix comes from (v12's `fallbackPrefix`); none when absent. */
+  readonly fallbackPrefix?: string;
 }
 
 /**
@@ -109,6 +122,12 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
    * every string the parse holds, so a `$$` in a tooltip or URL loads nothing.
    */
   labels?(model: M): readonly string[];
+  /**
+   * Every icon name the layout draws outside labels for `model`, as written (`fa:bell`, D293):
+   * flowchart icon shapes, mindmap `::icon()`. Label icons are in `labels()`. An icons extension
+   * reads them through `ResourceRequest.icons` to load only the packs a diagram names.
+   */
+  icons?(model: M): readonly string[];
   layout?(model: M, ctx: RenderContext): L;
   /** Writes the whole `<svg>` document. */
   render(model: M, layout: L, ctx: RenderContext, w: SvgWriter): void;

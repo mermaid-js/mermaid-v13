@@ -344,7 +344,8 @@ Open question: Trebuchet MS isn't installed on most Linux systems, so browser ou
 - **Wrapping:** greedy, word-based, CJK-aware with kinsoku rules, and handles soft hyphen and ZWSP (R-TEXT-8).
 - **Emitted** as one `<text>`, with `<tspan>` only for multi-run or multi-line labels.
 - **Inline boxes (D177, M3.5):** an extension registers a provider for a delimiter pair (`ExtensionPlugin.inline`, §12.2). Before anything else, label layout hands each delimited span (the text between the delimiters, untouched by line breaks, markdown or HTML) to its provider with the label's font, `measurer.metrics(font)` and `ex` (half the font size: the tables carry no x-height). The provider returns a measured box `{ width, height, baseline, node }`, where `node` is an `SvgFragment` (a detached `{ tag, attrs, children }` tree), or `undefined` to keep the span as written (for example while its engine has not loaded). The box becomes a run `{ kind: 'box', text, width, height, baseline, node }` whose `text` is its source as written, so text output and other text readers see the TeX. Line breaking treats a box as one unbreakable piece: it moves to a new line when it does not fit and is never split. A box taller than the font grows its line (above and below the baseline), recorded as `LabelBox.baselines`. `SvgWriter.label()` draws a label that holds a box with `text-anchor: start` and every line placed from its measured widths; each box follows the `<text>` as a `<g transform="translate(…)">` at its top-left corner, its baseline on the line's, carrying the label's `class`, `fill` and `style`. The writer replays the fragment through `open`/`leaf`/`text`/`close`, so the allow-list holds (R-SEC-2). Boxes reach a label through `layoutLabel`'s `inline` option, set from `RenderContext.inline` (SVG only; text output shows every span as written). A label boxes at most 32 spans, each marked by a placeholder in U+FDD0–U+FDEF, so a label that already holds one of those boxes none; either case shows the spans as written with one `INLINE_LIMIT` warning per render.
-- **Without a provider**, a label is laid out exactly as before (byte-identical output), and a label with a `$$…$$` pair adds one `MATH_NOT_RENDERED` warning per render. The warning names the feature, not a package (D153, D176).
+- **Pattern providers (D293, M4):** a provider may give a `pattern: RegExp` instead of `open`/`close`. Every non-empty match is a span, and `box` gets the whole match (`fa:fa-car`), so label icons, which have no closing delimiter, use the same boxes. Its flags are kept except `g`, `y` and `m`. Of every provider's next span, the one that starts first wins, whether pair or pattern; on a tie, the first registered provider.
+- **Without a provider**, a label is laid out exactly as before (byte-identical output), and a label with a `$$…$$` pair adds one `MATH_NOT_RENDERED` warning per render. A label with an icon, D296's `(fa[bdklrs]?):fa-([\w-]+)` with no left boundary, adds one `ICON_NOT_RENDERED` per render, unless a pattern provider matches all of that text (the icons extension then warns about icons it cannot draw, D291). The warnings name the feature, not a package (D153, D176). Text output shows both as written, with one `ASCII_DROPPED` per feature (`math`, `icon`; D179, D299).
 
 ## 6. Layout (R-LAYOUT-*, D18)
 
@@ -630,6 +631,7 @@ interface DiagramPlugin<M = unknown, L = LayoutModel> {
   parse(text: string, ctx: RenderContext): ParseResult<M>;
   resources?(ast: AstNode, ctx: RenderContext): Resource[];   // icon packs, math, layout engine (R-API-2)
   labels?(model: M): readonly string[];         // label texts as written, so an extension scans only labels for its delimiter (D176, D178)
+  icons?(model: M): readonly string[];          // M4 (D293): icon names drawn outside labels, as written (flowchart icon shapes, mindmap ::icon())
   layout?(model: M, ctx: RenderContext): L;     // graph: may use ctx.layout(graph); custom: own algorithm
   render(model: M, layout: L, ctx: RenderContext, w: SvgWriter): void;
   ascii?(model: M, layout: L, ctx: RenderContext): string;   // M2: lazily loaded entry, draws with core/ascii (§6.3)
@@ -672,27 +674,31 @@ interface ExtensionPlugin {
   postRender?(tree: SvgTree, ctx: RenderContext): void;        // edits in place, before serialisation (§7.1)
   afterMount?(el: Element, result: RenderResult): void;         // DOM adapter only
   claims?: ('callbacks')[];                                    // features it handles, to silence core's warning
-  inline?: InlineProvider[];                                   // M3.5 (D177): boxes for delimited label spans (§5.3)
+  inline?: InlineProvider[];                                   // M3.5 (D177): boxes for delimited label spans (§5.3); M4: or pattern matches (D293)
+  glyphs?: { glyph(name: string, req: { size, fallbackPrefix?, warn }): Glyph | undefined };  // M4 (D293): icons outside labels, as ctx.icon
   resources?: {                                                // M3.5 (D178): what it loads lazily (R-API-2)
     provides: Resource[];                                      // preload({ math: true }) loads those of kind 'math'
-    missing(parse: ParseResult, req: { config, format, labels? }): Resource[];   // sync; prepare loads them, renderSync throws; labels(): the label texts (DiagramPlugin.labels)
+    missing(parse: ParseResult, req: { config, format, labels?, icons? }): Resource[];   // sync; prepare loads them, renderSync throws; labels(), icons(): DiagramPlugin.labels, .icons
     load(r: Resource): Promise<void>;
   };
   config?: ConfigFragment;                                     // M3.5 (D153): its own config keys (§12.1)
 }
-interface InlineProvider {
-  open: string; close: string;                                 // '$$', '$$'
-  box(source: string, req: { font, measurer, metrics, ex, warn }): InlineBox | undefined;  // sync; undefined = as written
-}
+type InlineProvider =
+  | { open: string; close: string; box(source, req): InlineBox | undefined }   // '$$', '$$': source is the text between
+  | { pattern: RegExp; box(source, req): InlineBox | undefined };             // M4 (D293): source is the whole match
+// req: { font, measurer, metrics, ex, warn }; box is sync; undefined = as written
 type InlineBox = { width: number; height: number; baseline: number; node: SvgFragment };     // px
+type Glyph = { width: number; height: number; node: SvgFragment };                         // its own units, top-left at the origin
+// RenderContext.icon?(name: string, size: number, options?: { fallbackPrefix?: string }): SvgFragment | undefined
 ```
 
 - Hooks run in registration order. Each gets the frozen context, so they can't change config.
 - `postLayout` hooks that only understand graphs act on `kind: 'graph'` and pass other layouts through unchanged. A hook written for one diagram type checks `diagram`. The runner rejects a hook result whose `kind` differs from its input.
 - `postRender` runs on the compact tree; core then re-checks the allow-list, so a hook can't introduce `<script>`, `on*` or unsafe URLs (R-SEC-2).
 - `afterMount` exists only in `mermaid`'s DOM adapter (`run`, `mount`, `bindFunctions`). Core never calls DOM code.
-- A layout loader's extension (`LayoutLoader.extension`, D174, or a layout manifest's `config` module's `extension` export) runs only on SVG renders that layout draws. Which layout draws a render is known only once its config is resolved, after parse claims are read, and inline providers and resources are gathered for every render, so registration refuses such an extension with `claims`, `inline` or `resources` (`TypeError`): register those with `registerExternalDiagrams`. Its `config` fragment joins with the layout's.
+- A layout loader's extension (`LayoutLoader.extension`, D174, or a layout manifest's `config` module's `extension` export) runs only on SVG renders that layout draws. Which layout draws a render is known only once its config is resolved, after parse claims are read, and inline providers, glyphs and resources are gathered for every render, so registration refuses such an extension with `claims`, `inline`, `glyphs` or `resources` (`TypeError`): register those with `registerExternalDiagrams`. Its `config` fragment joins with the layout's.
 - Inline providers (D177) are registered with the extension, synchronously, and run during label layout, so `box` is synchronous. An engine that loads lazily (math, D178) is a resource its extension asks `prepare()` for; until it has loaded the provider returns `undefined`. The first registered provider of a delimiter wins. The runner checks each box (finite sizes, a fragment node) and reports a throwing provider as `MermaidError('INTERNAL')` naming the extension, as for hooks.
+- Glyphs (D293) draw icons a diagram places outside labels: flowchart icon shapes, mindmap `::icon()`, and M5's architecture, treeView and usecase. Core exposes them as `RenderContext.icon?(name, size, { fallbackPrefix })`, which asks each extension's `glyphs.glyph(name, { size, fallbackPrefix, warn })` in registration order and takes the first glyph it gets. The runner checks the glyph (positive finite `width` and `height`, an allow-listed fragment) and fits it into the `size` square at the origin, centred and scaled as `xMidYMid meet`: a `<g transform="translate(…) scale(…)">` around `node`. The diagram places the square and gives the colour. `ctx.icon` is absent when no extension has `glyphs`, and in text output, so without one every output is byte-identical. `warn` gives each warning once per render; a throwing or malformed glyph is `MermaidError('INTERNAL')` naming the extension. The extension finds which packs a diagram needs from `ResourceRequest.labels()` and `ResourceRequest.icons()` (`DiagramPlugin.icons`, the names drawn outside labels).
 - As built in M1: hooks get `HookContext` = the frozen `RenderContext` plus `diagram` (the plugin id) and `state`, the extension's own scratch object for that render, which `afterMount(el, result, state)` also gets (how `postParse` hands click callbacks to `afterMount`). Core's `HookRunner` runs the hooks; `RenderResult.bindFunctions` is set when an extension has `afterMount` and is the adapter's entry point. A failing hook, a changed `kind` or an allow-list failure after `postRender` rejects with `MermaidError('INTERNAL')` naming the extension.
 
 ### 12.3 Interactions plugin (R-PLUG-9, D47)

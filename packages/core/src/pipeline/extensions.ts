@@ -10,6 +10,9 @@
  * An extension can also load things lazily (R-API-2, D178): its `resources` say what a parsed
  * diagram needs from it, `prepare()` loads those, and `renderSync` throws `NotLoadedError` (or
  * draws placeholders) while they are missing, as for a diagram's own resources.
+ *
+ * Its `glyphs` (D293) draw icons outside labels: core asks each extension in registration order
+ * and fits the first glyph into the square the diagram asks for, as `RenderContext.icon`.
  */
 import type { ConfigFragment } from '../config/fragment.ts';
 import type { ResolvedConfig } from '../config/resolve.ts';
@@ -18,10 +21,11 @@ import type { AstNode } from '../parser-kit/ast.ts';
 import type { ParseResult } from '../parser-kit/result.ts';
 import { isAllowedAttr, isAllowedTag } from '../svg/allowlist.ts';
 import type { SvgTree } from '../svg/tree.ts';
-import type { InlineBox } from '../svg/writer.ts';
+import { scale, transforms, translate } from '../svg/path.ts';
+import type { SvgFragment } from '../svg/writer.ts';
 import type { InlineProvider } from '../text/inline.ts';
 import { MermaidError, type Resource } from './errors.ts';
-import type { RenderContext } from './types.ts';
+import type { IconOptions, RenderContext } from './types.ts';
 
 /**
  * What `postLayout` hooks get and return: graph diagrams carry the shared `LayoutModel`.
@@ -74,10 +78,13 @@ export interface ExtensionPlugin<El = unknown, R = unknown> {
   afterMount?(el: El, result: R, state: Record<string, unknown>): void;
   readonly claims?: readonly ExtensionClaim[];
   /**
-   * Inline-box providers, one per delimiter pair (D177): label layout hands each delimited span
-   * to its provider and draws the box it returns. The first registered provider of a pair wins.
+   * Inline-box providers, each for a delimiter pair (D177) or a pattern (D293): label layout hands
+   * each span to its provider and draws the box it returns. The span that starts first wins; on a
+   * tie, the first registered provider.
    */
   readonly inline?: readonly InlineProvider[];
+  /** Glyphs for icons drawn outside labels (D293), which core exposes as `RenderContext.icon`. */
+  readonly glyphs?: GlyphProvider;
   /** What it loads lazily, and when a diagram needs it (R-API-2, D178). */
   readonly resources?: ExtensionResources;
   /**
@@ -97,6 +104,41 @@ export interface ResourceRequest {
    * them. Without it, every string in the parse may be a label.
    */
   labels?(): readonly string[];
+  /**
+   * The icon names the parsed diagram draws outside labels (`DiagramPlugin.icons`, D293), when its
+   * plugin lists them.
+   */
+  icons?(): readonly string[];
+}
+
+/**
+ * An extension's glyphs (D293). `glyph` runs while a diagram draws, so it is synchronous; a glyph
+ * whose data loads later is `undefined` until it has loaded, and its extension asks `prepare()`
+ * for that data as a resource.
+ */
+export interface GlyphProvider {
+  /** The glyph `name` (as written, `fa:bell`) names, or `undefined` when it has none. */
+  glyph(name: string, request: GlyphRequest): Glyph | undefined;
+}
+
+/** What a glyph provider gets with each name. */
+export interface GlyphRequest {
+  /** The side, in px, of the square core fits the glyph into. */
+  readonly size: number;
+  /** The pack for a name without a prefix ({@link IconOptions}). */
+  readonly fallbackPrefix?: string;
+  /** The render's warnings; the same code and message are given once per render. */
+  readonly warn: (warning: { readonly code: string; readonly message: string }) => void;
+}
+
+/**
+ * A glyph in its own units: `node` drawn with its top-left corner at the origin, `width` ×
+ * `height` big (an Iconify view box with `left`/`top` folded in). Core scales it to fit.
+ */
+export interface Glyph {
+  readonly width: number;
+  readonly height: number;
+  readonly node: SvgFragment;
 }
 
 /**
@@ -119,7 +161,14 @@ export interface ExtensionNeed {
   load(): Promise<void>;
 }
 
-type Hook = 'postParse' | 'postLayout' | 'postRender' | 'afterMount' | 'inline' | 'resources';
+type Hook =
+  | 'postParse'
+  | 'postLayout'
+  | 'postRender'
+  | 'afterMount'
+  | 'inline'
+  | 'glyphs'
+  | 'resources';
 
 /** One render's hooks, created by {@link HookRunner.start}. */
 export interface HookRun<El = unknown, R = unknown> {
@@ -142,42 +191,49 @@ function failed(plugin: { id: string }, hook: Hook, e: unknown): MermaidError {
   });
 }
 
-function checkBox(box: InlineBox): InlineBox {
-  const { width, height, baseline } = box as Partial<InlineBox>;
-  const node = (box as { node?: unknown }).node;
-  for (const [name, n] of [
-    ['width', width],
-    ['height', height],
-    ['baseline', baseline],
-  ] as const) {
-    if (typeof n !== 'number' || !Number.isFinite(n) || (name !== 'baseline' && n < 0))
-      throw new TypeError(`an inline box needs a finite ${name}, got ${String(n)}`);
+/**
+ * An inline box's or a glyph's sizes (finite; a box's not negative but its baseline, a glyph's
+ * positive, since core scales by them) and its whole fragment.
+ */
+function checkSized<T>(value: T, what: string, names: readonly string[], positive = false): T {
+  const v = value as Record<string, unknown>;
+  for (const name of names) {
+    const n = v[name];
+    if (
+      typeof n !== 'number' ||
+      !Number.isFinite(n) ||
+      (positive ? n <= 0 : name !== 'baseline' && n < 0)
+    )
+      throw new TypeError(
+        `${what} needs a ${positive ? 'positive ' : ''}finite ${name}, got ${String(n)}`
+      );
   }
-  checkFragment(node, 0);
-  return box;
+  checkFragment(v.node, 0, what);
+  return value;
 }
 
 const MAX_DEPTH = 64;
+const SIZES = ['width', 'height', 'baseline'];
 
 /** The whole fragment: allowed tags and attribute names, children fragments or strings. */
-function checkFragment(node: unknown, depth: number): void {
-  if (depth > MAX_DEPTH)
-    throw new TypeError(`an inline box's node is nested over ${MAX_DEPTH} deep`);
+function checkFragment(node: unknown, depth: number, what: string): void {
+  if (depth > MAX_DEPTH) throw new TypeError(`${what}'s node is nested over ${MAX_DEPTH} deep`);
   const f = node as { tag?: unknown; attrs?: unknown; children?: unknown } | null;
   if (typeof f !== 'object' || f === null || typeof f.tag !== 'string' || !isAllowedTag(f.tag))
-    throw new TypeError(`an inline box's node holds ${describe(f)}, not an allowed SVG element`);
+    throw new TypeError(`${what}'s node holds ${describe(f)}, not an allowed SVG element`);
+  const inside = `in ${what}`;
   if (f.attrs !== undefined) {
     if (typeof f.attrs !== 'object' || f.attrs === null)
-      throw new TypeError(`<${f.tag}> in an inline box has attrs that are not an object`);
+      throw new TypeError(`<${f.tag}> ${inside} has attrs that are not an object`);
     for (const name of Object.keys(f.attrs))
       if (!isAllowedAttr(name))
-        throw new TypeError(`${name} on <${f.tag}> in an inline box is not an allowed attribute`);
+        throw new TypeError(`${name} on <${f.tag}> ${inside} is not an allowed attribute`);
   }
   if (f.children === undefined) return;
   if (!Array.isArray(f.children))
-    throw new TypeError(`<${f.tag}> in an inline box has children that are not an array`);
+    throw new TypeError(`<${f.tag}> ${inside} has children that are not an array`);
   for (const child of f.children as unknown[])
-    if (typeof child !== 'string') checkFragment(child, depth + 1);
+    if (typeof child !== 'string') checkFragment(child, depth + 1, what);
 }
 
 function describe(f: { tag?: unknown } | null): string {
@@ -187,25 +243,46 @@ function describe(f: { tag?: unknown } | null): string {
 
 /** `provider` with its boxes checked, and its failures reported as `plugin`'s. */
 function guarded(plugin: { id: string }, provider: InlineProvider): InlineProvider {
-  const { open, close } = provider;
-  if (typeof open !== 'string' || open === '' || typeof close !== 'string' || close === '')
+  const { open, close, pattern } = provider as Partial<
+    Record<'open' | 'close' | 'pattern', unknown>
+  >;
+  const pair =
+    typeof open === 'string' &&
+    open !== '' &&
+    typeof close === 'string' &&
+    close !== '' &&
+    pattern === undefined;
+  const matches = pattern instanceof RegExp && open === undefined && close === undefined;
+  if (!pair && !matches)
     throw new TypeError(
-      `Extension "${plugin.id}": an inline provider needs open and close strings`
+      `Extension "${plugin.id}": an inline provider needs open and close strings or a pattern`
     );
   if (typeof provider.box !== 'function')
     throw new TypeError(`Extension "${plugin.id}": an inline provider's box must be a function`);
-  return {
-    open,
-    close,
-    box(source, request) {
-      try {
-        const box = provider.box(source, request);
-        return box === undefined ? undefined : checkBox(box);
-      } catch (e) {
-        throw failed(plugin, 'inline', e);
-      }
-    },
+  const box: InlineProvider['box'] = (source, request) => {
+    try {
+      const b = provider.box(source, request);
+      return b === undefined ? undefined : checkSized(b, 'an inline box', SIZES);
+    } catch (e) {
+      throw failed(plugin, 'inline', e);
+    }
   };
+  return pair ? { open, close, box } : { pattern: pattern as RegExp, box };
+}
+
+function checkGlyphs(plugin: { id: string }, g: unknown): void {
+  if (g !== undefined && typeof (g as GlyphProvider | null)?.glyph !== 'function')
+    throw new TypeError(`Extension "${plugin.id}": glyphs needs a glyph() function`);
+}
+
+/** `glyph` fitted into the `size` square at the origin, centred (xMidYMid meet). */
+function fit(glyph: Glyph, size: number): SvgFragment {
+  const s = Math.min(size / glyph.width, size / glyph.height);
+  const transform = transforms(
+    translate((size - glyph.width * s) / 2, (size - glyph.height * s) / 2),
+    scale(s)
+  );
+  return { tag: 'g', attrs: { transform }, children: [glyph.node] };
 }
 
 const sameResource = (a: Resource, b: Resource): boolean => a.kind === b.kind && a.name === b.name;
@@ -260,6 +337,7 @@ export class HookRunner<El = unknown, R = unknown> {
       throw new TypeError(`Extension "${plugin.id}": inline must be an array of providers`);
     const providers = (inline as readonly InlineProvider[]).map((p) => guarded(plugin, p));
     const resources = checkResources(plugin, plugin.resources);
+    checkGlyphs(plugin, plugin.glyphs);
     const at = this.list.findIndex((p) => p.id === plugin.id);
     if (at >= 0) {
       this.providers.delete(this.list[at]!);
@@ -307,6 +385,39 @@ export class HookRunner<El = unknown, R = unknown> {
   /** Every extension's inline-box providers, in registration order (D177). */
   inline(): readonly InlineProvider[] {
     return this.list.flatMap((p) => this.providers.get(p) ?? []);
+  }
+
+  /**
+   * One render's `RenderContext.icon` (D293), or `undefined` when no extension has `glyphs`. It
+   * asks each extension in registration order and fits the first glyph; a size that is not a
+   * positive finite number draws nothing. `warn` gets each provider warning once per render.
+   */
+  icon(warn: GlyphRequest['warn']): RenderContext['icon'] {
+    const list = this.list.filter((p) => p.glyphs);
+    if (list.length === 0) return undefined;
+    const given = new Set<string>();
+    const once: GlyphRequest['warn'] = (w) => {
+      const key = `${w.code}\n${w.message}`;
+      if (given.has(key)) return;
+      given.add(key);
+      warn(w);
+    };
+    return (name: string, size: number, options?: IconOptions) => {
+      if (!Number.isFinite(size) || size <= 0) return undefined;
+      const fallbackPrefix = options?.fallbackPrefix;
+      const request: GlyphRequest = { size, fallbackPrefix, warn: once };
+      for (const p of list) {
+        let glyph: Glyph | undefined;
+        try {
+          glyph = p.glyphs!.glyph(name, request);
+          if (glyph !== undefined) checkSized(glyph, 'a glyph', SIZES.slice(0, 2), true);
+        } catch (e) {
+          throw failed(p, 'glyphs', e);
+        }
+        if (glyph !== undefined) return fit(glyph, size);
+      }
+      return undefined;
+    };
   }
 
   get size(): number {

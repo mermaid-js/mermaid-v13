@@ -1,5 +1,11 @@
 // Image and icon nodes (`img`, `icon`): the asset box with its label above or below it.
-import { checkImageUrl, type Attrs, type SvgWriter } from '@mermaid-js/core/svg';
+import {
+  checkImageUrl,
+  translate,
+  writeFragment,
+  type Attrs,
+  type SvgWriter,
+} from '@mermaid-js/core/svg';
 import type { FlowRenderContext } from './context.ts';
 import type { NodeView } from './prepare.ts';
 import type { ShapeSize } from './shapes.ts';
@@ -58,24 +64,29 @@ export function drawImage(
 }
 
 /**
- * Icon packs are not part of M1: the glyph is left out, and its frame drawn when it has a form.
+ * The frame, when the icon has a form, then the glyph an extension has for it (D293, the context's
+ * `icon`), in the frame's square. Without one the glyph is left out, with `ICON_UNAVAILABLE`.
  * The frame is a square of `assetHeight`, while `assetSize` widens the box to `assetWidth`.
  */
 export function drawIcon(
   w: SvgWriter,
   view: NodeView,
   a: Attrs,
-  warn: FlowRenderContext['warn']
+  warn: FlowRenderContext['warn'],
+  icon?: FlowRenderContext['icon']
 ): void {
   const v = view.vertex!;
   const size = asset(v.assetHeight, ICON);
   const top = assetTop(view, size);
-  warn({
-    code: 'ICON_UNAVAILABLE',
-    message: `The icon ${JSON.stringify(v.icon!.slice(0, 60))} is not available; ${
-      v.form ? 'its frame is drawn without it' : 'it is left out'
-    }.`,
-  });
+  const glyph = icon?.(v.icon!, size);
+  if (!glyph) {
+    warn({
+      code: 'ICON_UNAVAILABLE',
+      message: `The icon ${JSON.stringify(v.icon!.slice(0, 60))} is not available; ${
+        v.form ? 'its frame is drawn without it' : 'it is left out'
+      }.`,
+    });
+  }
   if (v.form === 'circle') w.leaf('circle', { cy: top + size / 2, r: size / 2, ...a });
   else if (v.form === 'square' || v.form === 'rounded') {
     w.leaf('rect', {
@@ -87,4 +98,8 @@ export function drawIcon(
       ...a,
     });
   }
+  if (!glyph) return;
+  w.open('g', { transform: translate(-size / 2, top) });
+  writeFragment(w, glyph);
+  w.close();
 }
