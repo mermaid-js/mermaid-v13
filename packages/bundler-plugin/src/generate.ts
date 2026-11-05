@@ -11,10 +11,10 @@
  *
  * Detectors are evaluated while `mermaid` itself is, so a detector must not import `mermaid`.
  *
- * Layout manifests (#238) are skipped by the scan until `readManifest` accepts them. Their arm
- * is one more case in `entryOf`: a `layout` entry with the manifest's names and a loader that
- * imports the entry lazily and takes its `export` (default `default`), plus a static import of
- * an eager `config` module when the manifest has one.
+ * Layout manifests (#238, D177) go in as manifest plugins, as Node discovery hands them over:
+ * the entry is a lazy `import()` (loaded when a diagram names one of the layouts), and the
+ * manifest's `config` module, when it has one, a static import whose fragment (`config`, else
+ * default) and `extension` join the entry.
  */
 import { readdir } from 'node:fs/promises';
 import { join, relative, win32 } from 'node:path';
@@ -71,6 +71,15 @@ function entryOf(p: ScannedPackage, index: number): { imports: string[]; expr: s
   const load = `load: () => import(${spec(p.files.entry)})`;
   if (p.manifest.plugin === 'extension')
     return { imports: [], expr: `{ ${head}, plugin: { ${manifest}, ${load} } }` };
+  if (p.manifest.plugin === 'layout') {
+    if (p.files.config === undefined)
+      return { imports: [], expr: `{ ${head}, plugin: { ${manifest}, ${load} } }` };
+    const name = `config${index}`;
+    return {
+      imports: [`import * as ${name} from ${spec(p.files.config)};`],
+      expr: `{ ${head}, plugin: { ${manifest}, ${load}, ...layoutConfig(${name}) } }`,
+    };
+  }
   const ascii =
     p.files.ascii === undefined ? '' : `, loadAscii: () => import(${spec(p.files.ascii)})`;
   // No detector path: the registry skips the package with its own PLUGIN_SKIPPED message.
@@ -93,6 +102,8 @@ function render(packages: readonly ScannedPackage[]): string {
     // skip the package (PLUGIN_SKIPPED). Taking the namespace as a value keeps bundlers from
     // warning about a missing named export.
     'const pick = (m) => { const f = m.detector ?? m.default; return typeof f === "function" ? f : undefined; };',
+    // A layout's config module: its fragment (`config`, else default) and its `extension`.
+    'const layoutConfig = (m) => { const c = m.config ?? m.default; return { ...(c === undefined ? {} : { config: c }), ...(m.extension === undefined ? {} : { extension: m.extension }) }; };',
     `export default [${entries.map((e) => `\n  ${e.expr},`).join('')}\n];`,
     '',
   ].join('\n');

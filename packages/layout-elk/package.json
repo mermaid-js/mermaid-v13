@@ -1,0 +1,67 @@
+{
+  "name": "@mermaid-js/layout-elk",
+  "version": "13.0.0-alpha.0",
+  "description": "ELK layouts for Mermaid v13: elk, elk.layered, elk.stress, elk.force, elk.mrtree, elk.sporeOverlap, elk.box, elk.rectpacking and elk.radial (D171).",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/layout-elk"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./plugin": {
+      "mermaid-source": "./src/plugin.ts",
+      "types": "./dist/plugin.d.ts",
+      "default": "./dist/plugin.js"
+    },
+    "./sync": {
+      "mermaid-source": "./src/sync.ts",
+      "types": "./dist/sync.d.ts",
+      "default": "./dist/sync.js"
+    }
+  },
+  "files": [
+    "dist",
+    "THIRD_PARTY_NOTICES"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@mermaid-js/core": "workspace:*"
+  },
+  "dependencies": {
+    "elkjs": "0.12.0"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^",
+    "mermaid": "workspace:*"
+  },
+  "mermaid": {
+    "plugin": "layout",
+    "names": [
+      "elk",
+      "elk.layered",
+      "elk.stress",
+      "elk.force",
+      "elk.mrtree",
+      "elk.sporeOverlap",
+      "elk.box",
+      "elk.rectpacking",
+      "elk.radial"
+    ],
+    "entry": "./dist/index.js",
+    "config": "./dist/plugin.js"
+  }
+}

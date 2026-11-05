@@ -2,6 +2,7 @@
 // diagram measures every box before layout, the engine never measures, and every backend
 // (SVG now, ASCII later) reads the same LayoutModel (R-ARCH-3).
 
+import type { ResolvedConfig } from '../config/resolve.ts';
 import type { LayoutMetrics } from './units.ts';
 
 /** Flow direction: top to bottom, bottom to top, left to right, right to left. */
@@ -93,6 +94,11 @@ export interface LayoutGroup {
   /** Room between the group's border and its content. The title sits inside `padding.top`. */
   padding: Box;
   title?: Size;
+  /**
+   * The layout algorithm the author named for this group (flowchart `id@{ algorithm: … }`), as
+   * written. An engine that cannot lay a group out with another algorithm ignores it.
+   */
+  algorithm?: string;
 }
 
 export interface LayoutSpacing {
@@ -191,6 +197,11 @@ export interface LayoutModel {
 /** What an engine gets besides the graph. Engine-specific settings come from the `layout` config. */
 export interface LayoutContext {
   readonly options?: Readonly<Record<string, unknown>>;
+  /**
+   * The render's resolved config (`mermaid` always passes it). A layout plugin reads its own
+   * fragment's keys here (D153): `ctx.config.<its section>`, defaults already merged in.
+   */
+  readonly config?: ResolvedConfig;
 }
 
 export type LayoutEngine = (graph: LayoutGraph, ctx?: LayoutContext) => LayoutModel;

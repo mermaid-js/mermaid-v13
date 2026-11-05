@@ -148,7 +148,11 @@ export function prepareState(model: StateModel, ctx: StateRenderContext): StateP
     label: (text, style, max) => {
       const [f, bits] = textStyle(style, m.font);
       // v12 gives every state, note and transition label `labelType: 'markdown'`.
-      return layoutLabel(text, f, max, ctx.measurer, { markdown: true, style: bits });
+      return layoutLabel(text, f, max, ctx.measurer, {
+        markdown: true,
+        style: bits,
+        inline: ctx.inline,
+      });
     },
     styleOf: styleCache(model, ctx),
   };

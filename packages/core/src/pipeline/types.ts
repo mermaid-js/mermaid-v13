@@ -10,6 +10,7 @@ import type { ParseResult } from '../parser-kit/result.ts';
 import type { PreprocessResult } from '../preprocess/preprocess.ts';
 import type { SvgWriter } from '../svg/writer.ts';
 import type { SecurityLevel } from '../svg/url.ts';
+import type { InlineSpans } from '../text/inline.ts';
 import type { Measurer } from '../text/measurer.ts';
 import type { Theme } from '../theme/theme.ts';
 import type { Resource } from './errors.ts';
@@ -63,6 +64,12 @@ export interface RenderContext {
   layout(graph: LayoutGraph): LayoutModel;
   /** Integrator-only limits (R-SEC-5): `resolveLimits(initialize config, limits option)`. */
   readonly limits: Limits;
+  /**
+   * The extensions' inline-box providers for this render (D177), for `layoutLabel`'s `inline`
+   * option. In text output it boxes nothing: every span is shown as written, with one
+   * `ASCII_DROPPED` warning per feature (D179).
+   */
+  readonly inline?: InlineSpans;
   warn(warning: Warning): void;
 }
 
@@ -96,6 +103,12 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
   parse(text: string, ctx: DiagramParseContext): ParseResult<M, AstNode>;
   /** Resources the parsed diagram needs beyond the plugin and the layout engine. */
   resources?(parse: ParseResult<M, AstNode>, config: ResolvedConfig): readonly Resource[];
+  /**
+   * Every text the layout hands to core's label layout for `model`, as written (D176, D178).
+   * An extension that loads an engine for a delimiter (math's `$$`) scans these instead of
+   * every string the parse holds, so a `$$` in a tooltip or URL loads nothing.
+   */
+  labels?(model: M): readonly string[];
   layout?(model: M, ctx: RenderContext): L;
   /** Writes the whole `<svg>` document. */
   render(model: M, layout: L, ctx: RenderContext, w: SvgWriter): void;

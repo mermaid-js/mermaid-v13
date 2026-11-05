@@ -2,7 +2,7 @@
  * The Node SSR app (spec #218, T4; R-PLUG-5, D165): `mermaid` and the fixture plugins are
  * packed, installed into a copy of `e2e/platform/ssr/` (npm and pnpm) and served by the app's
  * own Node server, which renders on the server and never registers a plugin. Node discovery
- * finds the fixture diagram and extension; `DISCOVERY=off` (`discovery: false`) turns it off.
+ * finds the fixture diagram and extension and `@mermaid-js/layout-elk` (#243); `DISCOVERY=off` (`discovery: false`) turns it off.
  * The bundled variant (esbuild, `--platform=node`) runs from `dist/server/`, below type-marker
  * package.json files: discovery still finds the app root, imports the plugins at runtime and
  * leaves npm's hoisted first-party packages out.
@@ -74,6 +74,10 @@ for (const [name, manager, bundled] of variants) {
       await expect(page.locator('#flowchart svg.fixture-mark [data-id="A"]')).toHaveCount(1);
       // Nothing skipped: mermaid's own packages (hoisted by npm) are not discovered.
       await expect(page.locator('#fixture')).toHaveAttribute('data-warnings', '');
+      // @mermaid-js/layout-elk by its `layout` manifest (D171): ELK lays it out (no
+      // ELK_NOT_INSTALLED), and the extension from its config module draws a lineHops arc.
+      await expect(page.locator('#elk')).toHaveAttribute('data-warnings', '');
+      await expect(page.locator('#elk svg g.edge path[d*="A6,6"]')).toHaveCount(1);
     } finally {
       server.close();
       app.close();
@@ -92,6 +96,7 @@ test('with discovery: false the fixture type is UNSUPPORTED_DIAGRAM', async ({ p
     );
     await expect(page.locator('#flowchart svg [data-id="A"]')).toHaveCount(1);
     await expect(page.locator('svg.fixture-mark')).toHaveCount(0);
+    await expect(page.locator('#elk')).toHaveAttribute('data-warnings', 'ELK_NOT_INSTALLED');
   } finally {
     server.close();
     app.close();

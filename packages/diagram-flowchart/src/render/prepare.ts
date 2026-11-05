@@ -142,7 +142,7 @@ interface Measure {
  * own lengths are `units.builder`. With the px profile the graph is today's, byte for byte.
  */
 export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
-  const { theme, measurer } = ctx;
+  const { theme, measurer, inline } = ctx;
   const units = ctx.units ?? pxProfile;
   const flow = ctx.config.flowchart ?? {};
   const font: FontKey = {
@@ -161,7 +161,7 @@ export function prepare(model: FlowModel, ctx: FlowRenderContext): Prepared {
     // This is the only place the builder looks at which profile it has.
     cells: units.id === 'cell',
     label: (text, markdown, f, max, bits = 0) =>
-      layoutLabel(text, f, max, measurer, { markdown, style: bits }),
+      layoutLabel(text, f, max, measurer, { markdown, style: bits, inline }),
     styleOf: styleCache(model, ctx),
   };
   const rootDir = dirOf(model.direction) ?? 'TB';
@@ -416,6 +416,9 @@ function layoutGraph(
       if (g.parent !== undefined) group.parent = g.parent;
       const d = dirOf(nest.subgraphs.get(g.id)?.dir);
       if (d) group.direction = d;
+      // `@{ algorithm }` is for the layout engine to read (an ELK plugin); layered ignores it.
+      const algorithm = nest.subgraphs.get(g.id)?.metadata?.algorithm;
+      if (typeof algorithm === 'string') group.algorithm = algorithm;
       return group;
     }),
     edges: edges.map((e) => ({

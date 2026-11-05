@@ -69,6 +69,12 @@ const { text, columns, rows, warnings } = await mermaid.render('id', source, { f
 Text needs no theme and no browser: layout measures in cells with a built-in measurer, so the same
 call works in Node, a worker or the browser.
 
+Text output always lays out with the built-in `layered` engine, whatever `layout` says (D179):
+no other engine knows cells. A diagram that names another layout (`layout: elk`, `elk.stress`,
+the `flowchart-elk` header, a registered engine) is drawn as with `layered`, with one
+`ASCII_DROPPED` warning (`feature: 'layout'`). That engine is never loaded for text, and there is
+no `ELK_NOT_INSTALLED`, whether `@mermaid-js/layout-elk` is registered or not.
+
 ### Extensions
 
 `postParse` and `postLayout` hooks run for text as for SVG. The layout a `postLayout` hook sees

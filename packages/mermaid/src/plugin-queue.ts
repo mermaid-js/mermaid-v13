@@ -8,7 +8,8 @@
  * entry, the ones queued before it was made too. A second copy of the build on the page finds
  * the queue already connected: it warns once and leaves the queue to the first copy.
  */
-import type { AddOptions, Mermaid } from './api.ts';
+import type { Mermaid } from './api.ts';
+import type { AddOptions } from './seam.ts';
 import { addDiscovered } from './discovery.ts';
 import type { DiscoveredPlugin } from './registry.ts';
 

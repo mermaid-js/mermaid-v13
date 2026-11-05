@@ -224,10 +224,12 @@ export function prepare(model: ClassModel, ctx: ClassLayoutContext): ClassPrepar
     model,
     ctx,
     units,
-    label: (text, max = Infinity) => layoutLabel(text, font, max, ctx.measurer, { markdown: true }),
+    label: (text, max = Infinity) =>
+      layoutLabel(text, font, max, ctx.measurer, { markdown: true, inline: ctx.inline }),
     terminal: (text) =>
       layoutLabel(text, { ...font, size: terminalSize(ctx, font.size) }, Infinity, ctx.measurer, {
         markdown: true,
+        inline: ctx.inline,
       }),
     px: (value, axis) => fromPx(units, value, axis),
     groupOf: (ns) => {
@@ -283,7 +285,7 @@ function boxView(node: ClassNode, font: FontKey, metrics: BoxMetrics, build: Bui
     id: node.id,
     ast: node.ast,
     node,
-    ...measureBox(node, font, build.ctx.measurer, metrics),
+    ...measureBox(node, font, build.ctx.measurer, metrics, build.ctx.inline),
     ...withParent(build.groupOf(node.parent)),
   };
   build.views.set(view.layoutId, view);

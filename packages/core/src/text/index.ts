@@ -6,5 +6,7 @@ export type { FontKey, Measurer, StyleBits, VerticalMetrics } from './measurer.t
 export { DEFAULT_FONT_FAMILY, familyNames, fontSizePx, resolveFontFamily } from './fonts.ts';
 export { tableMeasurer } from './table.ts';
 export { layoutLabel } from './label.ts';
-export type { LabelOptions, MeasuredLabel, Run } from './label.ts';
-export type { LabelBox, LabelSpan } from '../svg/writer.ts';
+export type { BoxRun, LabelOptions, MeasuredLabel, Run } from './label.ts';
+export { inlineSpans } from './inline.ts';
+export type { InlineProvider, InlineRequest, InlineSpans } from './inline.ts';
+export type { InlineBox, LabelBox, LabelBoxSpan, LabelSpan, SvgFragment } from '../svg/writer.ts';

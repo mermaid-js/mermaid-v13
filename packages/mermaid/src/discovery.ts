@@ -5,8 +5,8 @@
  * packages and builds the list.
  */
 import type { Warning } from '@mermaid-js/core';
-import type { AddOptions, Mermaid } from './api.ts';
-import { seamOf, type FirstUseSource } from './seam.ts';
+import type { Mermaid } from './api.ts';
+import { seamOf, type AddOptions, type FirstUseSource } from './seam.ts';
 import type { DiscoveredPlugin } from './registry.ts';
 
 export type { DiscoveredPlugin, SkippedPlugin } from './registry.ts';

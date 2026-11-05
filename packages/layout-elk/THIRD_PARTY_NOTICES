@@ -1,0 +1,18 @@
+Third-party notices for @mermaid-js/layout-elk
+==============================================
+
+elkjs
+-----
+
+This package depends on elkjs 0.12.0 (https://github.com/kieler/elkjs), the JavaScript build of
+the Eclipse Layout Kernel (https://www.eclipse.org/elk/), installed from npm as a runtime
+dependency. No elkjs code is copied into this package; `src/sync.ts` calls the in-process worker
+that `elkjs/lib/elk-worker.min.js` exports.
+
+elkjs is Copyright (c) 2017 Kiel University and others, and is made available under the terms of
+the Eclipse Public License 2.0 (https://www.eclipse.org/legal/epl-2.0/), or the GNU General Public
+License, version 3 or later (https://www.gnu.org/licenses/gpl-3.0.html), at your option:
+
+  SPDX-License-Identifier: EPL-2.0 OR GPL-3.0-or-later
+
+The full license text ships with elkjs, in node_modules/elkjs/LICENSE.md.

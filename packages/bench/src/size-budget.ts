@@ -6,10 +6,12 @@
  * `measureStaticClosure` sizes any entry with the bench's production esbuild options, so later
  * entries (a CDN or ESM build) are measured the same way as core.
  */
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdirSync, mkdtempSync, readFileSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { isAbsolute, join } from 'node:path';
+import { dirname, isAbsolute, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { Plugin } from 'esbuild';
 import type { Bundle } from './build.ts';
 import { bundle, summarise } from './build.ts';
 import type { SizeSummary } from './report.ts';
@@ -86,20 +88,73 @@ export interface ClosureSize {
   size: SizeSummary;
 }
 
+/** Which packages a measurement sees, for R-PLUG-8's with/without comparison. */
+export interface ClosureOptions {
+  /**
+   * Packages resolvable by name from every module, as if installed in the app: each is
+   * symlinked into a temporary `node_modules` that esbuild searches when normal resolution fails.
+   */
+  installed?: readonly { name: string; dir: string }[];
+  /** Package names (and their subpaths) that no module may resolve: importing one fails the build. */
+  hidden?: readonly string[];
+}
+
+const escapeRegExp = (s: string) => s.replace(/[$()*+.?[\\\]^{|}]/g, String.raw`\$&`);
+
+function installedPaths(installed: ClosureOptions['installed'] = []): string[] {
+  if (installed.length === 0) return [];
+  const modules = join(mkdtempSync(join(tmpdir(), 'mermaid-installed-')), 'node_modules');
+  for (const { name, dir } of installed) {
+    mkdirSync(dirname(join(modules, name)), { recursive: true });
+    symlinkSync(dir, join(modules, name), 'dir');
+  }
+  return [modules];
+}
+
+function hide(names: ClosureOptions['hidden'] = []): Plugin[] {
+  if (names.length === 0) return [];
+  const filter = new RegExp(`^(?:${names.map(escapeRegExp).join('|')})(?:/.*)?$`);
+  return [
+    {
+      name: 'hide-packages',
+      setup(build) {
+        build.onResolve({ filter }, (args) => ({
+          errors: [{ text: `${args.path} is not installed (hidden for this measurement)` }],
+        }));
+      },
+    },
+  ];
+}
+
 /**
  * Bundles `entry` (repo-relative or absolute) with the bench's production esbuild options and
  * sizes its static import closure. `outdir` defaults to a fresh temporary directory.
  */
 export async function measureStaticClosure(
   entry: string,
-  outdir: string = mkdtempSync(join(tmpdir(), 'mermaid-size-'))
+  outdir: string = mkdtempSync(join(tmpdir(), 'mermaid-size-')),
+  { installed, hidden }: ClosureOptions = {}
 ): Promise<ClosureSize> {
   const b = await bundle({
     entry: isAbsolute(entry) ? entry : join(ROOT, entry),
     outdir,
     bench: false,
+    nodePaths: installedPaths(installed),
+    plugins: hide(hidden),
   });
   return { bundle: b, size: closureSize(b) };
+}
+
+/** sha256 of every output file, by path relative to the outdir: a byte-for-byte fingerprint. */
+export function fileDigests(b: Bundle): Record<string, string> {
+  return Object.fromEntries(
+    b.files.map((f) => [
+      f.path,
+      createHash('sha256')
+        .update(readFileSync(join(b.outdir, f.path)))
+        .digest('hex'),
+    ])
+  );
 }
 
 /**

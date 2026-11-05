@@ -27,6 +27,7 @@ import {
 } from '@mermaid-js/core/config';
 import {
   cellProfile,
+  layered,
   pxProfile,
   type LayoutEngine,
   type UnitProfile,
@@ -35,7 +36,7 @@ import { checkSource } from '@mermaid-js/core/limits';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import { preprocess, type PreprocessResult } from '@mermaid-js/core/preprocess';
 import { resolveSecurityLevel } from '@mermaid-js/core/svg';
-import type { Measurer } from '@mermaid-js/core/text';
+import { inlineSpans, type Measurer } from '@mermaid-js/core/text';
 import {
   createTheme,
   DEFAULT_THEME,
@@ -43,6 +44,7 @@ import {
   loadTheme,
   resolveThemeName,
   type ThemeName,
+  type ThemeRuleTable,
 } from '@mermaid-js/core/theme';
 import { stageEnd, stageStart } from '@mermaid-js/core/timing';
 import type * as TextModule from './ascii.ts';
@@ -63,15 +65,16 @@ import { createDomAdapter } from './dom.ts';
 import { toMermaidError } from './errors.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
+  builtIn,
+  isElkName,
   Registry,
   type AnyPlugin,
   type Detected,
-  type DiscoveredPlugin,
   type ExternalDiagram,
   type FirstPartyEntry,
   type LayoutLoader,
 } from './registry.ts';
-import { registerSeam } from './seam.ts';
+import { DiscoveryQueue, registerSeam } from './seam.ts';
 import { VERSION } from './version.ts';
 
 export type { InitializeConfig, IntegratorOptions } from './config-snapshot.ts';
@@ -193,6 +196,7 @@ export interface PreloadRequest {
   formats?: readonly ('svg' | 'ascii')[];
   /** Accepted and ignored until the icons plugin exists. */
   iconPacks?: readonly string[];
+  /** Loads what a registered math extension provides, for `renderSync` with `$$…$$` (D178). */
   math?: boolean;
 }
 
@@ -283,7 +287,8 @@ function themeNames(config: ResolvedConfig): ThemeName[] {
 function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
   const missing: Resource[] = [];
   const { config } = a.prepared;
-  if (a.plugin.layoutKind === 'graph') {
+  // Text output lays out with core's own `layered`, never a registered engine (D179).
+  if (a.plugin.layoutKind === 'graph' && !text) {
     const name = layoutName(config);
     if (registry.layout(name).state === 'missing') missing.push({ kind: 'layout', name });
   }
@@ -310,6 +315,7 @@ function themeFor(
   config: ResolvedConfig,
   s: Snapshot,
   warn: (w: Warning) => void,
+  rules: ThemeRuleTable | undefined,
   idPrefix: () => string
 ) {
   const choice = resolveThemeName(config.theme, warn);
@@ -318,35 +324,11 @@ function themeFor(
   return createTheme(spec, {
     themeVariables: config.themeVariables as Record<string, unknown> | undefined,
     dark,
+    ...(rules ? { rules } : {}),
     cssVariables: s.options.output?.cssVariables,
     warn,
     idPrefix,
   });
-}
-
-/** How long a draw waits for a discovered registration still in flight (D165's import limit). */
-const ADD_TIME_LIMIT_MS = 5000;
-
-/** Options of the discovered-list seam's `add`. */
-export interface AddOptions {
-  /** How long a draw waits for this registration; default 5 s. */
-  readonly timeLimitMs?: number;
-}
-
-const why = (e: unknown): string => (e instanceof Error ? e.message : String(e));
-
-/** Whether `p` settles before `deadline` (a time from `Date.now()`). */
-function settlesBy(p: Promise<unknown>, deadline: number): Promise<boolean> {
-  const left = deadline - Date.now();
-  if (left <= 0) return Promise.resolve(false);
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  return Promise.race([
-    p.then(
-      () => true,
-      () => true
-    ),
-    new Promise<boolean>((done) => (timer = setTimeout(() => done(false), left))),
-  ]).finally(() => clearTimeout(timer));
 }
 
 /**
@@ -361,42 +343,48 @@ export function createMermaid(
   const registry = new Registry(firstParty, firstPartyNames);
   // Rebuilt after each registration, so hooks run in D166 order whenever plugins arrived.
   let hooks = new HookRunner<Element, RenderResult>();
+  // Every registered extension in hook order, for the per-layout runners below.
+  let extensionList: readonly ExtensionPlugin[] = [];
+  // `hooks` plus one layout loader's extension, per extension (D174), rebuilt on registration.
+  const layoutRunners = new Map<ExtensionPlugin, HookRunner<Element, RenderResult>>();
   const rebuildHooks = (): void => {
     const next = new HookRunner<Element, RenderResult>();
-    for (const e of registry.extensions()) next.register(e as ExtensionPlugin);
+    extensionList = registry.extensions();
+    for (const e of extensionList) next.register(e);
     hooks = next;
+    layoutRunners.clear();
+  };
+  /**
+   * The hooks of a render: the registered extensions, plus the extension of the layout loader
+   * that lays it out, if it brought one. Other renders never run a layout's hooks, so with no
+   * other extension they keep the stream writer.
+   */
+  const hooksFor = (analysis: Analysis, text = false): HookRunner<Element, RenderResult> => {
+    // Text output never runs a layout's hooks: no registered engine lays it out (D179).
+    if (text || analysis.plugin.layoutKind !== 'graph') return hooks;
+    const own = registry.layoutExtension(layoutName(analysis.prepared.config));
+    if (!own) return hooks;
+    let runner = layoutRunners.get(own);
+    if (!runner) {
+      runner = new HookRunner<Element, RenderResult>();
+      for (const e of extensionList) runner.register(e);
+      runner.register(own);
+      layoutRunners.set(own, runner);
+    }
+    return runner;
   };
   // Discovery (D166): its warnings wait for the next draw that succeeds; a first-use source
   // (the Node scan, T4) runs once, before the first prepare, render, parse or preload.
-  const skipped: Warning[] = [];
-  let firstUse: ((deadline: number) => Promise<void>) | undefined;
-  let firstUseLimit = ADD_TIME_LIMIT_MS;
-  let ready: Promise<void> | undefined;
-  // Additions still registering (the CDN queue's pushes, T6), with the time each one's wait
-  // ends: a draw waits for each until then, and renders without it after (one warning).
-  const adding = new Map<Promise<unknown>, { deadline: number; limit: number }>();
-  const failed = (message: string): Warning => ({ code: 'PLUGIN_DISCOVERY_FAILED', message });
-  const late = (limit: number) => `did not finish within ${limit} ms; rendering without it.`;
-  const discovered = async (): Promise<void> => {
-    const start = firstUse;
-    if (start) {
-      // One limit for the source and its registration; past it the draw goes on (see onFirstUse).
-      ready ??= (async () => {
-        const deadline = Date.now() + firstUseLimit;
-        const run = start(deadline).catch(
-          (e: unknown) => void skipped.push(failed(`Plugin discovery failed: ${why(e)}`))
-        );
-        if (!(await settlesBy(run, deadline)))
-          skipped.push(failed(`Plugin discovery ${late(firstUseLimit)}`));
-      })();
-      await ready;
-    }
-    while (adding.size > 0) {
-      const [pending, { deadline, limit }] = adding.entries().next().value!;
-      if (!(await settlesBy(pending, deadline)) && adding.delete(pending))
-        skipped.push(failed(`A plugin registration ${late(limit)}`));
-    }
-  };
+  const discovery = new DiscoveryQueue(
+    (list) =>
+      registry.registerDiscovered(list).then((warnings) => {
+        rebuildHooks();
+        return warnings;
+      }),
+    () => cache.clear(),
+    () => site.config
+  );
+  const skipped = discovery.skipped;
   let site: Snapshot = snapshot();
   let parseErrorHandler: ParseErrorHandler | undefined;
   let iconPacksRequested = false;
@@ -424,7 +412,7 @@ export function createMermaid(
     const section = sectionOf(detected, plugin);
     const front = pre.frontMatter?.config;
     const directives = directiveConfig(pre, section);
-    const hit = siteConfigs.get(snap, plugin, detected, section);
+    const hit = siteConfigs.get(snap, plugin, detected, section, registry.fragments());
     for (const w of hit.warnings) warn(w);
     const config: ResolvedConfig = resolveText(hit.site, front, directives, { warn });
     const t = stageStart();
@@ -525,8 +513,20 @@ export function createMermaid(
     throw new UnsupportedFormatError(type, f);
   }
 
+  /** What the registered extensions still need for `a` (R-API-2, D178): `math`, say. */
+  function extensionNeeds(a: Analysis, ascii: boolean) {
+    if (hooks.size === 0) return [];
+    const { parse, config } = a.prepared;
+    const labels = a.plugin.labels?.bind(a.plugin);
+    return hooks.resources(parse, {
+      config,
+      format: ascii ? 'ascii' : 'svg',
+      ...(labels ? { labels: () => labels(parse.model) } : {}),
+    });
+  }
+
   async function prepareWith(text: string, s: Snapshot, format?: string): Promise<Analysis> {
-    if (firstUse || adding.size > 0) await discovered();
+    if (discovery.pending) await discovery.settle();
     const ascii = checkFormat(text, s, format) === 'ascii';
     let analysis = cache.get(text, s);
     if (!analysis) {
@@ -534,7 +534,10 @@ export function createMermaid(
       analysis = analysisOf(text, s, f, await registry.load(f.detected.id));
     }
     if (ascii) await loadText(analysis);
-    await loadResources(registry, missingFor(registry, analysis, ascii));
+    await Promise.all([
+      loadResources(registry, missingFor(registry, analysis, ascii)),
+      ...extensionNeeds(analysis, ascii).map((n) => n.load()),
+    ]);
     return analysis;
   }
 
@@ -583,7 +586,10 @@ export function createMermaid(
     const textOutput = units.id === 'cell';
     const warnings: Warning[] = [...skipped, ...prepared.warnings];
     const warn = (w: Warning): void => void warnings.push(toWarning(w));
-    const missing = missingFor(registry, analysis, textOutput);
+    const missing = [
+      ...missingFor(registry, analysis, textOutput),
+      ...extensionNeeds(analysis, textOutput).map((n) => n.resource),
+    ];
     if (missing.length > 0) {
       if (textOutput || !options?.placeholders) throw new NotLoadedError(missing);
       warn({
@@ -600,19 +606,42 @@ export function createMermaid(
       });
     }
     let engine: LayoutEngine | undefined;
+    let elkName: string | undefined;
     if (plugin.layoutKind === 'graph') {
-      const name = layoutName(config);
-      const found = registry.layout(name);
+      const asked = layoutName(config);
+      // D179: no other engine knows cells (ELK ignores `grid`), so the name only warns. Text
+      // output never loads it, and gives no ELK_NOT_INSTALLED or LAYOUT_UNKNOWN for it.
+      if (textOutput && !builtIn(asked)) {
+        warn({
+          code: 'ASCII_DROPPED',
+          feature: 'layout',
+          message: `Text output lays out with the built-in layered engine; layout "${asked}" is not used.`,
+        });
+      }
+      // Text output: core's `layered` itself, even when a loader replaced the name for SVG.
+      const name = textOutput ? 'layered' : asked;
+      const found = textOutput
+        ? ({ engine: layered, state: 'ready' } as const)
+        : registry.layout(name);
+      // Only when ELK lays the graph out: with LAYOUT_UNKNOWN or ELK_NOT_INSTALLED, layered
+      // draws every group, as that warning says.
+      if (isElkName(name) && (found.state === 'ready' || found.state === 'missing')) elkName = name;
       if (found.state === 'unknown') {
         warn({
           code: 'LAYOUT_UNKNOWN',
           message: `Unknown layout "${name}"; using the built-in layered engine.`,
         });
+      } else if (found.state === 'elk') {
+        // D173: `mermaid` names the package; core never does (D153).
+        warn({
+          code: 'ELK_NOT_INSTALLED',
+          message: `Layout "${name}" needs @mermaid-js/layout-elk, which is not registered; using the built-in layered engine.`,
+        });
       }
       engine = found.engine;
     }
     // The theme reads the id prefix only for the gradient (D182), after ctx exists.
-    const theme = themeFor(config, s, warn, () => ctx.idPrefix);
+    const theme = themeFor(config, s, warn, registry.themeRules(), () => ctx.idPrefix);
     let idPrefix: string | undefined;
     const ctx: RenderContext = {
       config,
@@ -631,12 +660,28 @@ export function createMermaid(
       limits: s.limits,
       layout: (graph) => {
         if (!engine) throw new TypeError(`${plugin.id} has no graph layout`);
+        // D174: `@{ algorithm }` is parsed but not applied yet. `mermaid` says so, not the engine
+        // (which has no warning channel), once per render.
+        if (elkName !== undefined) {
+          const asked = [...new Set(graph.groups.flatMap((g) => g.algorithm ?? []))];
+          if (asked.length > 0) {
+            warn({
+              code: 'ELK_ALGORITHM_IGNORED',
+              message: `Per-group layout algorithms (@{ algorithm }) are not applied yet: ${asked.join(', ')}. Those groups are laid out with "${elkName}".`,
+            });
+            elkName = undefined;
+          }
+        }
         return engine(
           width !== undefined && graph.availableWidth === undefined
             ? { ...graph, availableWidth: width }
-            : graph
+            : graph,
+          { config }
         );
       },
+      // Inline boxes (D177) are SVG only: text output shows every span as written, and warns
+      // ASCII_DROPPED once per feature (D179).
+      inline: inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg'),
       warn,
       // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
       ...textOnly,
@@ -678,7 +723,8 @@ export function createMermaid(
     });
     const textCtx = ctx as TextRenderContext;
     // D86: postParse and postLayout run (LaidOut.units 'cell'); postRender, afterMount never.
-    const run = hooks.size === 0 ? undefined : hooks.start(textCtx, plugin.id);
+    const textHooks = hooksFor(analysis, true);
+    const run = textHooks.size === 0 ? undefined : textHooks.start(textCtx, plugin.id);
     const out = drawText(
       plugin,
       hook,
@@ -730,11 +776,12 @@ export function createMermaid(
       units: pxProfile,
       width: options?.availableWidth,
     });
-    if (hooks.size === 0) {
+    const renderHooks = hooksFor(analysis);
+    if (renderHooks.size === 0) {
       const drawn = drawDiagram(plugin, prepared.parse.model, ctx);
       return { ...drawn, diagramType: prepared.diagramType, warnings };
     }
-    const run = hooks.start(ctx, plugin.id);
+    const run = renderHooks.start(ctx, plugin.id);
     const drawn = drawDiagram(plugin, prepared.parse.model, ctx, { run, ast: prepared.parse.ast });
     const result: RenderResult = { ...drawn, diagramType: prepared.diagramType, warnings };
     // The DOM adapter's afterMount entry point (DESIGN §12.2, §12.3); `run`/`mount` call it.
@@ -789,7 +836,7 @@ export function createMermaid(
   ): Promise<ParseResult12 | false>;
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12>;
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12 | false> {
-    if (firstUse || adding.size > 0) await discovered();
+    if (discovery.pending) await discovery.settle();
     const s = site;
     try {
       const f = detectSupported(text, s, false);
@@ -836,7 +883,7 @@ export function createMermaid(
   }
 
   async function preload(req: PreloadRequest): Promise<void> {
-    if (firstUse || adding.size > 0) await discovered();
+    if (discovery.pending) await discovery.settle();
     const tasks: Promise<unknown>[] = [];
     for (const t of req.types ?? []) {
       tasks.push(
@@ -853,6 +900,8 @@ export function createMermaid(
       tasks.push(loadTheme(choice.name));
       if (choice.dark) tasks.push(loadTheme(choice.dark));
     }
+    // Extensions' resources by kind: `math: true` loads what a math extension provides (D178).
+    if (req.math) for (const n of hooks.provided('math')) tasks.push(n.load());
     if (req.formats?.includes('ascii')) {
       tasks.push(
         import('./ascii.ts').then((b) => {
@@ -897,48 +946,19 @@ export function createMermaid(
       await registry.registerExternal(diagrams, lazyLoad, replace);
     } finally {
       rebuildHooks();
+      // Again after the await, as `DiscoveryQueue.add` does: a render while it was pending
+      // resolved its config without the new fragments and hooks.
+      cache.clear();
     }
   }
 
-  function addDiscovered(
-    list: readonly DiscoveredPlugin[],
-    { timeLimitMs = ADD_TIME_LIMIT_MS }: AddOptions = {}
-  ): Promise<readonly Warning[]> {
-    return register(list, Date.now() + timeLimitMs, timeLimitMs);
-  }
-  /** `addDiscovered`, waited for by draws until `deadline` (`undefined`: not waited for). */
-  function register(
-    list: readonly DiscoveredPlugin[],
-    deadline: number | undefined,
-    limit: number
-  ): Promise<readonly Warning[]> {
-    cache.clear();
-    // Never rejects; leaves `adding` before its awaiter resumes, so a draw right after it
-    // does not wait. The cache is cleared again: a draw during the wait may have filled it.
-    const pending: Promise<readonly Warning[]> = registry
-      .registerDiscovered(list)
-      .then(
-        (warnings) => {
-          rebuildHooks();
-          skipped.push(...warnings);
-          return warnings;
-        },
-        (e: unknown): readonly Warning[] => {
-          const w = failed(`Plugin registration failed: ${why(e)}`);
-          skipped.push(w);
-          return [w];
-        }
-      )
-      .finally(() => {
-        cache.clear();
-        adding.delete(pending);
-      });
-    if (deadline !== undefined) adding.set(pending, { deadline, limit });
-    return pending;
-  }
-
   function registerLayoutLoaders(loaders: readonly LayoutLoader[]): void {
-    registry.registerLayouts(loaders);
+    const before = registry.fragments();
+    const hooked = registry.registerLayouts(loaders);
+    layoutRunners.clear();
+    // A new fragment changes how config resolves, and a new hook how texts draw: parsed texts
+    // must resolve again.
+    if (registry.fragments() !== before || hooked) cache.clear();
   }
 
   /** No-op until the icons plugin exists; renders then carry an `ICON_PACKS_UNSUPPORTED` warning. */
@@ -977,17 +997,7 @@ export function createMermaid(
     registerIconPacks,
     setParseErrorHandler,
   };
-  registerSeam(api, {
-    add: addDiscovered,
-    onFirstUse(source, { timeLimitMs = ADD_TIME_LIMIT_MS } = {}) {
-      if (firstUse || ready) throw new Error('A first-use discovery source is already set');
-      firstUseLimit = timeLimitMs;
-      firstUse = async (deadline) => {
-        const list = await source(site.config, (w) => void skipped.push(w));
-        void register(list, Date.now() < deadline ? deadline : undefined, timeLimitMs);
-      };
-    },
-  });
+  registerSeam(api, discovery);
   return api;
 }
 

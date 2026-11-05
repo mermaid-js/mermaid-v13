@@ -6,6 +6,7 @@
 import { mkdirSync, mkdtempSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { layered } from '@mermaid-js/core/layout';
 import { describe, expect, it } from 'vitest';
 import { discoverOnFirstUse } from './discovery.ts';
 import { createMermaid, MermaidError } from './index.ts';
@@ -206,7 +207,7 @@ describe('Node discovery', () => {
         { plugin: 'diagram', id: 'missing', detector: './nope.js', entry: './index.js' },
         { 'index.js': ENTRY('missing') }
       ),
-      layout: pkg('layout', { plugin: 'layout', names: ['tree'], entry: './index.js' }),
+      layout: pkg('layout', { plugin: 'layout', names: ['tree'], entry: './nope.js' }),
       plain: { 'package.json': JSON.stringify({ name: 'plain' }) },
       stray: {},
       ok: diagram('ok', 'ok'),
@@ -217,12 +218,72 @@ describe('Node discovery', () => {
     expect(messages).toHaveLength(5);
     expect(messages[0]).toMatch(/^json: unreadable package\.json/);
     expect(messages.slice(1)).toEqual([
-      'kind: Invalid mermaid plugin manifest: "plugin" must be "diagram" or "extension"',
-      // #238: a layout manifest will register its names once readManifest takes it.
-      'layout: Invalid mermaid plugin manifest: "id" must be a plugin id',
+      'kind: Invalid mermaid plugin manifest: "plugin" must be "diagram", "extension" or "layout"',
+      'layout: "entry" (./nope.js) does not exist',
       'missing: "detector" (./nope.js) does not exist',
       'nodetector: the manifest has no "detector"',
     ]);
+  });
+
+  it('registers a layout manifest (D177): its config module now, its entry when a diagram names it', async () => {
+    const root = app({
+      '@x/layout-grid': pkg(
+        '@x/layout-grid',
+        {
+          plugin: 'layout',
+          names: ['grid', 'grid.wide'],
+          entry: './index.js',
+          export: 'layouts',
+          config: './config.js',
+        },
+        {
+          'config.js':
+            "export const config = { id: 'grid', keys: { grid: { gap: 0 } }, defaults: { grid: { gap: 5 } } };\n",
+          'index.js': `globalThis.__gridLog ??= [];
+const engine = (name) => (graph, ctx) => {
+  globalThis.__gridLog.push(name + ':' + ctx.config.grid.gap);
+  return globalThis.__gridLayered(graph, ctx);
+};
+export const layouts = ['grid', 'grid.wide'].map((name) => ({ name, loader: async () => engine(name) }));
+`,
+        }
+      ),
+    });
+    const g = globalThis as { __gridLog?: string[]; __gridLayered?: unknown };
+    const log: string[] = (g.__gridLog = []);
+    g.__gridLayered = layered;
+    const m = discovering(root);
+    const plain = await m.render('a', 'flowchart LR\n  A --> B\n');
+    expect(plain.warnings).toEqual([]);
+    expect(log).toEqual([]);
+    const text =
+      '---\nconfig:\n  layout: grid.wide\n  grid:\n    gap: 2\n---\nflowchart LR\n  A --> B\n';
+    expect((await m.render('a', text)).warnings).toEqual([]);
+    const other = '---\nconfig:\n  layout: grid\n---\nflowchart LR\n  A --> B\n';
+    expect((await m.render('a', other)).warnings).toEqual([]);
+    expect(log).toEqual(['grid.wide:2', 'grid:5']);
+  });
+
+  it('runs a layout package’s extension from its config module, on its own layouts only', async () => {
+    const root = app({
+      '@x/layout-hops': pkg(
+        '@x/layout-hops',
+        { plugin: 'layout', names: ['hops'], entry: './index.js', config: './config.js' },
+        {
+          'config.js': `export const config = { id: 'hops', keys: { hops: { on: 0 } }, defaults: { hops: { on: true } } };
+${EXTENSION.replace("id: 'mark'", "id: 'hops'").replace('export const mark', 'export const extension')}`,
+          'index.js': `export default [{ name: 'hops', loader: async () => globalThis.__hopsLayered }];\n`,
+        }
+      ),
+    });
+    (globalThis as { __hopsLayered?: unknown }).__hopsLayered = layered;
+    const m = discovering(root);
+    const flow = 'flowchart LR\n  A --> B\n';
+    const plain = await m.render('a', flow);
+    expect(plain.svg).not.toContain(' marked');
+    const hops = await m.render('a', `---\nconfig:\n  layout: hops\n---\n${flow}`);
+    expect(hops.warnings).toEqual([]);
+    expect(hops.svg).toMatch(/^<svg [^>]*class="[^"]* marked"/);
   });
 
   it('gives the first-party skip rule (D166) its warning, and leaves mermaid’s own packages out', async () => {

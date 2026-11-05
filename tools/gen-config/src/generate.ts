@@ -2,6 +2,8 @@
  * Everything generated from `packages/core/schema/config.schema.yaml` (DESIGN §9, R-CONF-4):
  * the `MermaidConfig` types, top-level defaults and the key tree in core, each ported
  * diagram's section defaults in its own package, and the config reference / migration docs.
+ * Plugin config fragments (D153, `packages/<pkg>/schema/config.fragment.yaml`) become a
+ * `ConfigFragment` in their own package and a section of the config reference.
  *
  * `generate()` is pure apart from json-schema-to-typescript: schema text in, files out.
  */
@@ -12,6 +14,7 @@ import {
   collectProperties,
   defName,
   isRemoved,
+  loadFragmentSchema,
   loadSchema,
   resolveRef,
   type RootSchema,
@@ -36,6 +39,16 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   er: 'packages/diagram-er',
   state: 'packages/diagram-state',
 };
+
+/** A plugin's schema fragment, workspace-relative to its package (D153). */
+export const FRAGMENT_SCHEMA = 'schema/config.fragment.yaml';
+
+/** One plugin package's fragment source. */
+export interface FragmentSource {
+  /** Workspace-relative package directory, e.g. `packages/layout-elk`. */
+  readonly pkg: string;
+  readonly source: string;
+}
 
 export const MIGRATION_BEGIN = '<!-- BEGIN GENERATED CONFIG SECTION: pnpm gen:config -->';
 export const MIGRATION_END = '<!-- END GENERATED CONFIG SECTION -->';
@@ -319,7 +332,7 @@ function docRows(root: RootSchema): DocRow[] {
   return rows;
 }
 
-function referenceDoc(root: RootSchema): string {
+function referenceDoc(root: RootSchema, fragments: readonly Fragment[]): string {
   const rows = docRows(root);
   const sections = new Set(sectionKeys(root));
   const groups = new Map<string, DocRow[]>();
@@ -355,6 +368,7 @@ function referenceDoc(root: RootSchema): string {
     }
     out.push('');
   }
+  for (const f of fragments) out.push(...fragmentDoc(f));
   return out.join('\n');
 }
 
@@ -454,6 +468,142 @@ function serviceSchema(root: RootSchema): string {
   );
 }
 
+// ---------------------------------------------------------------------------- fragments
+
+interface Alias {
+  readonly from: string;
+  readonly to: string;
+  readonly when?: unknown;
+  readonly value?: unknown;
+}
+
+/** A checked plugin fragment (D153). */
+interface Fragment {
+  readonly pkg: string;
+  /** The package name from its package.json, else the directory. */
+  readonly name: string;
+  readonly root: RootSchema;
+  readonly id: string;
+  readonly aliases: readonly Alias[];
+  readonly themeVariables?: Record<string, string>;
+}
+
+const RE_PLUGIN_ID = /^[a-z][a-z0-9-]*$/i;
+
+/** The fragment of `src`, or the problems with it (each prefixed with the package). */
+function readFragment(
+  src: FragmentSource,
+  core: RootSchema,
+  readExisting: (path: string) => string | undefined
+): Fragment | string[] {
+  const root = loadFragmentSchema(src.source);
+  const problems = annotationErrors(root);
+  const meta = root['x-mermaid-fragment'] as Record<string, unknown> | undefined;
+  const id = meta?.id;
+  if (typeof id !== 'string' || !RE_PLUGIN_ID.test(id))
+    problems.push('x-mermaid-fragment.id must be a plugin id');
+  const aliases = (meta?.aliases ?? []) as Alias[];
+  const isAlias = (a: unknown) => {
+    const x = a as Partial<Alias> | null;
+    return typeof x?.from === 'string' && typeof x.to === 'string';
+  };
+  if (!Array.isArray(aliases) || !aliases.every(isAlias))
+    problems.push('x-mermaid-fragment.aliases must be a list of { from, to, when?, value? }');
+  const themeVariables = meta?.themeVariables as Record<string, unknown> | undefined;
+  if (
+    themeVariables !== undefined &&
+    (typeof themeVariables !== 'object' ||
+      Object.values(themeVariables).some((v) => typeof v !== 'string'))
+  )
+    problems.push('x-mermaid-fragment.themeVariables must map names to strings');
+  for (const key of Object.keys(root.properties ?? {}))
+    if (core.properties?.[key] !== undefined)
+      problems.push(`"${key}" is a core config key; move it out of core's schema first`);
+  if (problems.length > 0) return problems.map((p) => `${src.pkg}: ${p}`);
+  const pkgJson = readExisting(`${src.pkg}/package.json`);
+  const parsed = pkgJson === undefined ? {} : (JSON.parse(pkgJson) as { name?: unknown });
+  const name = typeof parsed.name === 'string' ? parsed.name : src.pkg;
+  return {
+    pkg: src.pkg,
+    name,
+    root,
+    id: id as string,
+    aliases,
+    ...(themeVariables ? { themeVariables: themeVariables as Record<string, string> } : {}),
+  };
+}
+
+/** The key tree of a fragment key, as a value (`keyTreeSource` emits the same shape as code). */
+function treeValue(root: RootSchema, node: SchemaNode): unknown {
+  const status = (annotationOf(node) as Partial<ReturnType<typeof annotationOf>> | undefined)
+    ?.status;
+  if (status === 'removed' || status === 'moved') return status;
+  const whole = defName(node.$ref);
+  if (whole !== undefined) {
+    const target = root.$defs[whole];
+    return target && collectProperties(root, target).size > 0
+      ? objectValue(root, target)
+      : leafValue(target);
+  }
+  if (node.$ref !== undefined)
+    return treeValue(root, { ...resolveRef(root, node.$ref), 'x-mermaid': node['x-mermaid'] });
+  if (node.additionalProperties !== undefined && node.additionalProperties !== false) return 'open';
+  if (node.properties !== undefined || node.allOf !== undefined) return objectValue(root, node);
+  return leafValue(node);
+}
+
+function objectValue(root: RootSchema, node: SchemaNode): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, child] of collectProperties(root, node)) out[key] = treeValue(root, child);
+  return out;
+}
+
+function leafValue(node: SchemaNode | undefined): unknown {
+  const types = node?.type === undefined ? [] : [node.type].flat();
+  return types.length > 0 && !types.includes('object') ? 0 : 'open';
+}
+
+function fragmentSource(f: Fragment): string {
+  const defaults = defaultsOf(f.root, f.root);
+  const value = {
+    id: f.id,
+    keys: objectValue(f.root, f.root),
+    ...(defaults !== undefined ? { defaults } : {}),
+    ...(f.aliases.length > 0 ? { aliases: f.aliases } : {}),
+    ...(f.themeVariables ? { themeVariables: f.themeVariables } : {}),
+  };
+  return (
+    `// Generated by tools/gen-config from ${f.pkg}/${FRAGMENT_SCHEMA}.\n` +
+    '// Do not edit: run `pnpm gen:config`.\n' +
+    "import type { ConfigFragment } from '@mermaid-js/core/config';\n\n" +
+    `/** The config fragment of \`${f.name}\` (D153): core knows these keys while it is registered. */\n` +
+    `export const configFragment: ConfigFragment = ${ts(value)};\n`
+  );
+}
+
+/** The config reference sections of one fragment: one per top-level key. */
+function fragmentDoc(f: Fragment): string[] {
+  const rows = docRows(f.root);
+  const out: string[] = [];
+  for (const key of Object.keys(f.root.properties ?? {})) {
+    out.push(`## \`${key}\` (plugin \`${f.name}\`)`, '');
+    out.push(`Known only while \`${f.name}\` is registered.`);
+    for (const a of f.aliases.filter((x) => x.to.split('.')[0] === key)) {
+      const from = a.when === undefined ? a.from : `${a.from}: ${JSON.stringify(a.when)}`;
+      out.push(`Legacy alias: \`${from}\` sets \`${a.to}\`.`);
+    }
+    out.push('', '| Key | Type | Default | Status | Notes | Description |');
+    out.push('| --- | --- | --- | --- | --- | --- |');
+    for (const r of rows.filter((row) => row.path.split('.')[0] === key)) {
+      out.push(
+        `| \`${r.path}\` | ${cell(r.type)} | ${cell(r.def)} | ${r.status} | ${cell(r.notes)} | ${cell(r.description)} |`
+      );
+    }
+    out.push('');
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------- entry
 
 const ts = (value: unknown) => JSON.stringify(value, null, 2);
@@ -473,14 +623,31 @@ export class SchemaError extends Error {
  * Generates every derived file from the schema source.
  *
  * @param readExisting - reads a workspace file, `undefined` when it does not exist
- *   (used to splice MIGRATION.md).
+ *   (used to splice MIGRATION.md and to name a fragment's package).
+ * @param fragmentSources - the plugin config fragments (`findFragments`), in package order.
  */
 export async function generate(
   schemaSource: string,
-  readExisting: (path: string) => string | undefined
+  readExisting: (path: string) => string | undefined,
+  fragmentSources: readonly FragmentSource[] = []
 ): Promise<Generated> {
   const root = loadSchema(schemaSource);
   const problems = annotationErrors(root);
+  const fragments: Fragment[] = [];
+  const owners = new Map<string, string>();
+  for (const src of fragmentSources) {
+    const f = readFragment(src, root, readExisting);
+    if (Array.isArray(f)) {
+      problems.push(...f);
+      continue;
+    }
+    for (const key of Object.keys(f.root.properties ?? {})) {
+      const other = owners.get(key);
+      if (other !== undefined) problems.push(`${f.pkg}: "${key}" is also ${other}'s`);
+      owners.set(key, f.pkg);
+    }
+    fragments.push(f);
+  }
   if (problems.length > 0) {
     throw new SchemaError(problems);
   }
@@ -511,7 +678,9 @@ export async function generate(
     );
   }
   files.set(SERVICE_SCHEMA, serviceSchema(root));
-  files.set(REFERENCE_DOC, referenceDoc(root));
+  for (const f of fragments)
+    files.set(`${f.pkg}/src/generated/config-fragment.ts`, fragmentSource(f));
+  files.set(REFERENCE_DOC, referenceDoc(root, fragments));
   files.set(MIGRATION_DOC, spliceMigration(readExisting(MIGRATION_DOC), migrationSection(root)));
   return { files };
 }

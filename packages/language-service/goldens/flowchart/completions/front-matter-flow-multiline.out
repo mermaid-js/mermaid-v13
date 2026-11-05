@@ -37,7 +37,6 @@
   handDrawnSeed property (number) 9:4-9:4 "" -> "handDrawnSeed"
   layout property (string) 9:4-9:4 "" -> "layout"
   ascii property (object) 9:4-9:4 "" -> "ascii"
-  elk property (object) 9:4-9:4 "" -> "elk"
   darkMode property (boolean) 9:4-9:4 "" -> "darkMode"
   fontFamily property (string) 9:4-9:4 "" -> "fontFamily"
   altFontFamily property (string) 9:4-9:4 "" -> "altFontFamily"

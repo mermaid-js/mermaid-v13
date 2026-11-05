@@ -33,11 +33,15 @@ export interface ScannedPackage {
   /** The `mermaid` value of its package.json, as written (`readManifest` accepted it). */
   readonly raw: unknown;
   readonly manifest: PluginManifest;
-  /** Absolute real paths of the manifest's `entry`, `detector` and `ascii` modules. */
+  /**
+   * Absolute real paths of the manifest's `entry`, `detector` and `ascii` modules, and of a
+   * layout manifest's `config` module (D177).
+   */
   readonly files: {
     readonly entry: string;
     readonly detector?: string;
     readonly ascii?: string;
+    readonly config?: string;
   };
 }
 
@@ -161,6 +165,27 @@ const skipped = (pkg: string, why: string): ScanWarning => ({
   package: pkg,
 });
 
+/** The manifest's module paths, resolved and confined (`Skip` when one is missing or escapes). */
+async function moduleFiles(
+  dir: string,
+  root: string,
+  manifest: PluginManifest,
+  entryPath: string
+): Promise<ScannedPackage['files']> {
+  const diagram = manifest.plugin === 'diagram' ? manifest : undefined;
+  const layout = manifest.plugin === 'layout' ? manifest : undefined;
+  const entry = await confined(dir, root, entryPath, 'entry');
+  const detector = diagram?.detector && (await confined(dir, root, diagram.detector, 'detector'));
+  const ascii = diagram?.ascii && (await confined(dir, root, diagram.ascii, 'ascii'));
+  const config = layout?.config && (await confined(dir, root, layout.config, 'config'));
+  return {
+    entry,
+    ...(detector ? { detector } : {}),
+    ...(ascii ? { ascii } : {}),
+    ...(config ? { config } : {}),
+  };
+}
+
 /** One package directory: a found plugin, a skip warning, or undefined (not a plugin). */
 async function scanOne(
   dir: string,
@@ -180,9 +205,8 @@ async function scanOne(
   const label = typeof name === 'string' && name !== '' ? name : folder;
   if (raw === undefined) return undefined;
   try {
-    // Layout manifests (#238: `plugin: "layout"`, `names`, `entry`, `export`) go to the seam's
-    // `layout` arm (node.ts `toDiscovered`) once `readManifest` accepts them; until then it
-    // rejects them and they are skipped here. This is the hook for #238.
+    // Layout manifests (#238, D177: `plugin: "layout"`, `names`, `entry`, `export`?, `config`?)
+    // are found like the others; node.ts hands them to the registry as a `ManifestPlugin`.
     let manifest: PluginManifest;
     try {
       manifest = readManifest(raw);
@@ -194,15 +218,12 @@ async function scanOne(
     if (manifest.entry === undefined) throw new Skip('the manifest has no "entry"');
     if (diagram && diagram.detector === undefined) throw new Skip('the manifest has no "detector"');
     const root = await realpath(dir);
-    const entry = await confined(dir, root, manifest.entry, 'entry');
-    const detector = diagram?.detector && (await confined(dir, root, diagram.detector, 'detector'));
-    const ascii = diagram?.ascii && (await confined(dir, root, diagram.ascii, 'ascii'));
     return {
       package: label,
       dir: root,
       raw,
       manifest,
-      files: { entry, ...(detector ? { detector } : {}), ...(ascii ? { ascii } : {}) },
+      files: await moduleFiles(dir, root, manifest, manifest.entry),
     };
   } catch (error) {
     if (!(error instanceof Skip)) throw error;

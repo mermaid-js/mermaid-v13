@@ -7,6 +7,7 @@ import {
   layoutLabel,
   Style,
   type FontKey,
+  type InlineSpans,
   type MeasuredLabel,
   type Measurer,
   type StyleBits,
@@ -94,10 +95,11 @@ export function measureBox(
   node: ClassNode,
   font: FontKey,
   measurer: Measurer,
-  m: BoxMetrics
+  m: BoxMetrics,
+  inline?: InlineSpans
 ): ClassBoxGeometry {
   const measure = (text: string, style: StyleBits): MeasuredLabel =>
-    layoutLabel(text, font, Infinity, measurer, { markdown: true, style });
+    layoutLabel(text, font, Infinity, measurer, { markdown: true, style, inline });
   // A blank row (`class A[" "]`) still takes a line.
   const { lineHeight } = measurer.metrics(font);
   const tall = (label: MeasuredLabel): number => Math.max(label.height, lineHeight);

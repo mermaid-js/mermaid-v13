@@ -6,6 +6,7 @@ import type { ErRenderContext } from './layout/context.ts';
 import { layoutEr, type ErLayout } from './layout/layout.ts';
 import { detectEr, parseEr, type ErModel, type ErParseResult } from './parser/index.ts';
 import { renderEr } from './render/render.ts';
+import { erLabels } from './labels.ts';
 
 /** The pipeline's limits, or the ones the integrator config implies. */
 const limits = (ctx: DiagramParseContext): Readonly<Limits> =>
@@ -33,6 +34,7 @@ export const er = {
       maxDepth: caps.maxDepth,
     });
   },
+  labels: erLabels,
   layout: (model: ErModel, ctx: ErRenderContext): ErLayout => layoutEr(model, ctx),
   render: (model: ErModel, layout: ErLayout, ctx: ErRenderContext, w: SvgWriter): void =>
     renderEr(model, layout, ctx, w),

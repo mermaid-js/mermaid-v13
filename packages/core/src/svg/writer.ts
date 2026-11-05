@@ -6,7 +6,7 @@
 import { BLANK_REL, GRADIENT_FIXED, TEXT_HOLDERS } from './allowlist.ts';
 import { checkTag, formatValue } from './encode.ts';
 import { esc, escAttr } from './escape.ts';
-import { pathBuilder, type PathBuilder } from './path.ts';
+import { pathBuilder, transforms, translate, type PathBuilder } from './path.ts';
 import { CompactTree, type SvgTree } from './tree.ts';
 import type { AllowedTag, Attrs, SvgGradient, ThemeStyleSheet } from './types.ts';
 
@@ -19,7 +19,40 @@ export interface LabelSpan {
   readonly strike?: boolean;
   /** Extra checked attributes for this span's `<tspan>` (for example a theme font). */
   readonly attrs?: Attrs;
+  /** `'box'` for an inline box ({@link LabelBoxSpan}); text spans leave it out. */
+  readonly kind?: 'box';
+  /**
+   * Advance width in px. The label layout always sets it; the writer needs it only for a label
+   * that holds a box, whose lines it then positions itself.
+   */
+  readonly width?: number;
 }
+
+/**
+ * A detached piece of markup: an element, its attributes and its children. The writer replays
+ * it through `open`/`leaf`/`text`/`close`, so it is held to the same allow-list (R-SEC-2).
+ */
+export interface SvgFragment {
+  readonly tag: AllowedTag;
+  readonly attrs?: Attrs;
+  /** Child elements, and character data (only inside `text`/`tspan`/`title`/`desc`). */
+  readonly children?: readonly (SvgFragment | string)[];
+}
+
+/**
+ * A measured box that an extension supplies for a delimited span of label text (D177): typeset
+ * math, icons. Lengths are px. `node` is drawn with the box's top-left corner at its origin.
+ */
+export interface InlineBox {
+  readonly width: number;
+  readonly height: number;
+  /** Distance from the top of the box to its baseline, which sits on the line's baseline. */
+  readonly baseline: number;
+  readonly node: SvgFragment;
+}
+
+/** An inline box in a label line. `text` is its source as written (`$$x^2$$`). */
+export type LabelBoxSpan = LabelSpan & InlineBox & { readonly kind: 'box' };
 
 /**
  * A measured label, as the label layout produces it. Lines are drawn centred on a point;
@@ -43,6 +76,11 @@ export interface LabelBox {
   readonly width?: number;
   /** Offset of each line from the left edge of the box. */
   readonly indents?: readonly number[];
+  /**
+   * Distance from the top of the label to each line's baseline, set when a box taller than the
+   * font grows its line. Without it, line `i`'s baseline is `i * lineHeight + baseline`.
+   */
+  readonly baselines?: readonly number[];
 }
 
 export interface SvgWriter {
@@ -129,6 +167,77 @@ function spanAttrs(span: LabelSpan, pos: Attrs | undefined): Attrs | undefined {
   };
 }
 
+const isBox = (span: LabelSpan): span is LabelBoxSpan => span.kind === 'box';
+
+function writeFragment(w: SvgWriter, node: SvgFragment): void {
+  const children = node.children;
+  if (!children || children.length === 0) {
+    w.leaf(node.tag, node.attrs);
+    return;
+  }
+  w.open(node.tag, node.attrs);
+  for (const child of children) {
+    if (typeof child === 'string') w.text(child);
+    else writeFragment(w, child);
+  }
+  w.close();
+}
+
+/**
+ * A label with inline boxes: every line is placed from its measured widths, with
+ * `text-anchor: start`, so the text after a box starts where the box ends. The text is one
+ * `<text>`; each box follows it as a `<g>` translated to its top-left corner, its baseline on
+ * the line's, carrying the label's paint (`class`, `fill`, `style`) for its node to inherit.
+ */
+function writeBoxed(
+  w: SvgWriter,
+  box: LabelBox,
+  cx: number,
+  cy: number,
+  attrs: Attrs | undefined
+): void {
+  const top = cy - box.height / 2;
+  const left = box.left === true && box.width !== undefined ? cx - box.width / 2 : undefined;
+  const boxes: { x: number; y: number; span: LabelBoxSpan }[] = [];
+  let open = false;
+  for (let i = 0; i < box.lines.length; i++) {
+    const line = box.lines[i] as readonly LabelSpan[];
+    const y = top + (box.baselines?.[i] ?? i * box.lineHeight + box.baseline);
+    let width = 0;
+    for (const span of line) width += span.width ?? 0;
+    let x = left === undefined ? cx - width / 2 : left + (box.indents?.[i] ?? 0);
+    let placed = false;
+    for (const span of line) {
+      if (isBox(span)) {
+        boxes.push({ x, y: y - span.baseline, span });
+        placed = false;
+      } else {
+        if (!open) {
+          w.open('text', { ...attrs, 'text-anchor': 'start', 'xml:space': 'preserve' });
+          open = true;
+        }
+        w.open('tspan', spanAttrs(span, placed ? undefined : { x, y }));
+        w.text(span.text);
+        w.close();
+        placed = true;
+      }
+      x += span.width ?? 0;
+    }
+  }
+  if (open) w.close();
+  for (const { x, y, span } of boxes) {
+    const at = translate(x, y);
+    w.open('g', {
+      class: attrs?.class,
+      fill: attrs?.fill,
+      style: attrs?.style,
+      transform: attrs?.transform === undefined ? at : transforms(attrs.transform, at),
+    });
+    writeFragment(w, span.node);
+    w.close();
+  }
+}
+
 // Written through the primitives, so both backings agree by construction.
 function writeLabel(
   w: SvgWriter,
@@ -139,6 +248,10 @@ function writeLabel(
 ): void {
   const lines = box.lines;
   if (lines.length === 0) return;
+  if (lines.some((line) => line.some(isBox))) {
+    writeBoxed(w, box, cx, cy, attrs);
+    return;
+  }
   const top = cy - box.height / 2;
   const first = lines[0];
   const only = lines.length === 1 && first && first.length === 1 ? first[0] : undefined;

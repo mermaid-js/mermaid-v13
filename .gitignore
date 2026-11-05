@@ -66,6 +66,7 @@ generated/
 !packages/diagram-*/src/generated/
 !packages/mermaid/src/generated/
 !packages/language-service/src/generated/
+!packages/layout-elk/src/generated/
 # The adapters' per-type Lezer parsers and Monarch files (#35, D134), checked by freshness specs
 !packages/language-service-codemirror/src/generated/
 !packages/language-service-monaco/src/generated/

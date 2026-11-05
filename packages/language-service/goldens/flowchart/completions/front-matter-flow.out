@@ -5,7 +5,6 @@
   handDrawnSeed property (number) 2:11-2:13 "th" -> "handDrawnSeed: "
   layout property (string) 2:11-2:13 "th" -> "layout: "
   ascii property (object) 2:11-2:13 "th" -> "ascii: "
-  elk property (object) 2:11-2:13 "th" -> "elk: "
   fontFamily property (string) 2:11-2:13 "th" -> "fontFamily: "
   altFontFamily property (string) 2:11-2:13 "th" -> "altFontFamily: "
   logLevel property (string | number) 2:11-2:13 "th" -> "logLevel: "

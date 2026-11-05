@@ -179,6 +179,47 @@ describe('mermaid() for esbuild', () => {
     expect(out.svg).toMatch(/<svg[^>]*class="[^"]*marked/);
   });
 
+  it('registers a layout package: its config module and extension now, its entry when named', async () => {
+    const root = app({
+      '@x/layout-hops': pkg(
+        '@x/layout-hops',
+        { plugin: 'layout', names: ['hops'], entry: './index.js', config: './config.js' },
+        {
+          'config.js': `export const config = { id: 'hops', keys: { hops: { gap: 0 } }, defaults: { hops: { gap: 5 } } };
+${EXTENSION.replace("id: 'mark'", "id: 'hops'").replace('export const mark', 'export const extension')}`,
+          'index.js': `import { layered } from '@mermaid-js/core/layout';
+globalThis.hopsLog ??= [];
+export default [{ name: 'hops', loader: async () => (graph, ctx) => {
+  globalThis.hopsLog.push(ctx.config.hops.gap);
+  return layered(graph, ctx);
+} }];\n`,
+        }
+      ),
+    });
+    // The layout package's peer, as installed next to it (the same core mermaid bundles).
+    mkdirSync(join(root, 'node_modules', '@mermaid-js'));
+    symlinkSync(
+      realpathSync(join(MERMAID_DIR, 'node_modules', '@mermaid-js', 'core')),
+      join(root, 'node_modules', '@mermaid-js', 'core'),
+      'dir'
+    );
+    const g = globalThis as { hopsLog?: number[] };
+    g.hopsLog = [];
+    const built = await bundle(root, [mermaid()]);
+    expect(built.mainInputs).toContain('node_modules/@x/layout-hops/config.js');
+    expect(built.mainInputs).not.toContain('node_modules/@x/layout-hops/index.js');
+    const flow = 'flowchart LR\n  A --> B\n';
+    const plain = await built.draw(flow);
+    expect(plain.svg).not.toContain(' marked');
+    expect(g.hopsLog).toEqual([]);
+    const hops = await built.draw(
+      `---\nconfig:\n  layout: hops\n  hops:\n    gap: 2\n---\n${flow}`
+    );
+    expect(hops.warnings).toEqual([]);
+    expect(hops.svg).toMatch(/^<svg [^>]*class="[^"]* marked"/);
+    expect(g.hopsLog).toEqual([2]);
+  });
+
   it('without the plugin, the installed type gives UNSUPPORTED_DIAGRAM', async () => {
     const root = app({ 'boxes-plugin': diagram('boxes-plugin', 'boxes') });
     const built = await bundle(root, []);

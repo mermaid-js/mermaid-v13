@@ -4,5 +4,6 @@
     "lib": ["ES2022", "DOM"],
     "types": ["node"]
   },
-  "include": ["src"]
+  // layout-elk's ambient declaration for elkjs's untyped worker build, which its source imports.
+  "include": ["src", "../layout-elk/src/elk-worker.d.ts"]
 }

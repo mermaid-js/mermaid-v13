@@ -7,12 +7,15 @@
  *
  * Diagram plugins: the detector module is imported then, with a time limit; the entry (and the
  * ascii entry) loads on first detection, with no limit: a slow entry delays that render, never
- * fails it. Extensions (`@mermaid-js/plugin-interactions` too, D169) load on discovery.
+ * fails it. Layout packages (D177): the `config` module is imported then, with the limit (its
+ * `extension` export, if any, runs on renders laid out by the package's names); the entry loads
+ * when a diagram names one of the layouts. Extensions (`@mermaid-js/plugin-interactions` too, D169) load on discovery.
  * `initialize({ discovery: false })` turns it off; diagram text cannot set `discovery`
  * (integrator-only). A package that fails is skipped with a warning on the first render.
  */
 import { pathToFileURL } from 'node:url';
-import type { Warning } from '@mermaid-js/core';
+import type { ExtensionPlugin, Warning } from '@mermaid-js/core';
+import type { ConfigFragment } from '@mermaid-js/core/config';
 import { bundledSource } from './bundled.ts';
 import { discoverOnFirstUse, type DiscoveredPlugin, type FirstUseSource } from './discovery.ts';
 import mermaid, { createMermaid as createBase, type Mermaid } from './index.ts';
@@ -61,6 +64,12 @@ function detectorOf(module: unknown): Detector | undefined {
   return typeof fn === 'function' ? (fn as Detector) : undefined;
 }
 
+/** A layout's `config` module: the fragment (`config`, else default) and its `extension`, if any. */
+function configModuleOf(module: unknown): { config: unknown; extension: unknown } {
+  const m = module as Record<string, unknown> | null;
+  return { config: m?.config ?? m?.default, extension: m?.extension };
+}
+
 /** One scanned package as a seam entry; a detector that fails to load gives a skip warning. */
 async function toDiscovered(p: ScannedPackage, ms: number): Promise<DiscoveredPlugin | Warning> {
   const skip = (why: string): Warning =>
@@ -74,8 +83,32 @@ async function toDiscovered(p: ScannedPackage, ms: number): Promise<DiscoveredPl
       package: p.package,
       plugin: { manifest: p.raw, load: () => importWithin(entry, ms) },
     };
-  // Loaded on first detection, during a render: no limit.
+  // Loaded on first detection (or first use of a layout name), during a render: no limit.
   const load = (): Promise<unknown> => importFile(entry);
+  if (p.manifest.plugin === 'layout') {
+    let config: unknown;
+    let extension: unknown;
+    if (p.files.config !== undefined) {
+      try {
+        ({ config, extension } = configModuleOf(await importWithin(p.files.config, ms)));
+      } catch (error) {
+        return skip(
+          `config failed to load (${error instanceof Error ? error.message : String(error)})`
+        );
+      }
+      if (config === undefined) return skip('the config module exports no fragment');
+    }
+    return {
+      kind: 'plugin',
+      package: p.package,
+      plugin: {
+        manifest: p.raw,
+        load,
+        ...(config !== undefined ? { config: config as ConfigFragment } : {}),
+        ...(extension !== undefined ? { extension: extension as ExtensionPlugin } : {}),
+      },
+    };
+  }
   const loadAscii = ascii === undefined ? {} : { loadAscii: () => importFile(ascii) };
   if (p.files.detector === undefined) return skip('the manifest has no "detector"');
   let detector: Detector | undefined;

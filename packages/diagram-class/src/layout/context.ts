@@ -1,6 +1,6 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
-import type { Measurer } from '@mermaid-js/core/text';
+import type { InlineSpans, Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
 
 /**
@@ -16,4 +16,6 @@ export interface ClassLayoutContext {
   readonly theme: Theme;
   /** The layout engine named by `layout` config. Defaults to core's `layered` (D106). */
   layout?(graph: LayoutGraph): LayoutModel;
+  /** The render's inline-box providers (D177), handed to every label; text output boxes none. */
+  readonly inline?: InlineSpans;
 }

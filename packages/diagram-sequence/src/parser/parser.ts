@@ -92,7 +92,6 @@ import { SequenceBuilder } from './builder.ts';
 import type { DeclareParts } from './builder.ts';
 import { lex } from './lexer.ts';
 import {
-  hasMath,
   KINDS,
   menuData,
   messageText,
@@ -288,7 +287,6 @@ class SequenceParser extends TokenRules {
     if (kw !== T.Destroy) parts.kind = keyword as ParticipantKind;
     if (alias) {
       parts.description = parseMessage(alias.text);
-      this.math(parts.description.text, alias.range);
     }
     if (data) this.participantData(data[0], data[1], parts);
     if (create) db.create(parts);
@@ -322,16 +320,6 @@ class SequenceParser extends TokenRules {
   /** Where the current statement's AST node goes. */
   private get body(): SequenceStatementNode[] {
     return this.frames[this.frames.length - 1]?.body ?? this.children;
-  }
-
-  /** `$$…$$` math in a text: kept as written, with a warning (D105). */
-  private math(text: string, range: Range): void {
-    if (!hasMath(text)) return;
-    this.st.diagnostics.warning(
-      'SEQUENCE_MATH',
-      'Math (`$$…$$`) is not rendered yet: the text is shown as written.',
-      range
-    );
   }
 
   /** A message: `A->>B: text`, with `+`, `-` or `()` around the arrow. */
@@ -380,7 +368,6 @@ class SequenceParser extends TokenRules {
     if (text.wrap !== undefined) m.wrap = text.wrap;
     if (activation) m.activation = activation;
     if (central) m.central = central;
-    this.math(text.text, this.range(txt));
     db.message(m, range);
     if (activation === 'activate') db.activate(toName);
     else if (activation === 'deactivate') db.deactivate(fromName, arrowRange);
@@ -429,7 +416,6 @@ class SequenceParser extends TokenRules {
       wrap?: boolean;
     };
     if (text.wrap !== undefined) note.wrap = text.wrap;
-    this.math(text.text, this.range(txt));
     db.statement(note);
     st.statement('note', range);
     this.body.push({ id: ast, type: 'Note', range, placement, text: text.text, children: refs });
@@ -669,7 +655,6 @@ class SequenceParser extends TokenRules {
       const n = (this.fragmentCount.get(fragment) ?? 0) + 1;
       this.fragmentCount.set(fragment, n);
       const label: Wrapped = parseMessage(text);
-      this.math(label.text, this.range(rest));
       node = { ...base, id: `f:${fragment}#${n}`, type: 'Fragment', fragment, label: label.text };
       opened = db.openFragment(node.id, fragment, label);
       kind = fragment;
@@ -680,7 +665,6 @@ class SequenceParser extends TokenRules {
       kind = 'rect';
     } else {
       const data = parseBoxData(text);
-      this.math(data.text ?? '', this.range(rest));
       node = { ...base, id: this.ids.statement('box'), type: 'Box', label: data.text ?? '' };
       if (data.color !== 'transparent') node.color = data.color;
       db.openBox(node.id, data);
@@ -721,7 +705,6 @@ class SequenceParser extends TokenRules {
     this.i++;
     const rest = this.expect(REST);
     const label = parseMessage(this.raw(rest));
-    this.math(label.text, this.range(rest));
     const range = this.range(from, rest);
     const ast = this.ids.statement('st');
     db.section(fragment, ast, label);
