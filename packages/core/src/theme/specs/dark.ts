@@ -36,6 +36,7 @@ const theme: ThemeSpec = {
     ...TEXT_SIZES,
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
+    useGradient: false,
   },
   values: {
     altBackground: '#555555', // v12 (#192)

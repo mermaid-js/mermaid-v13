@@ -86,6 +86,8 @@ test('the selectors offer only what v13 supports', async ({ page }) => {
       'forest',
       'neutral',
       'base',
+      'neo',
+      'neo-dark',
       'auto',
     ]);
   expect(await values('layout')).toEqual(['unset', 'layered']);

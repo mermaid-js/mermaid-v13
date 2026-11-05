@@ -87,3 +87,37 @@ describe('sequence through the public API (#145)', () => {
     );
   });
 });
+
+/**
+ * Neo in sequence (#231). v12 12.2.0 sequence never calls `insertLookDefs` and draws no `.node`
+ * or `.cluster` element, so its global `[data-look="neo"]` gradient rules match nothing: a v12
+ * `theme: neo` render has no `linearGradient` and no element painted with one. Its participant
+ * box corner is the neo 6 (`svgDraw.js`), and its notes and boxes take the theme shadow.
+ */
+describe('sequence in the neo themes (#231)', () => {
+  const NEO_SEQ =
+    'sequenceDiagram\n  participant A\n  participant B\n  box Group\n    participant C\n  end\n  A->>B: hi\n  note over A,B: n\n  B->>C: go\n';
+  for (const theme of ['neo', 'neo-dark'] as const) {
+    it(`draws no gradient under ${theme}, as v12 does not`, async () => {
+      const m = createMermaid();
+      m.initialize({ deterministic: true, theme });
+      const { svg } = await m.render('s', NEO_SEQ);
+      expect(svg).not.toContain('<defs');
+      expect(svg).not.toContain('linearGradient');
+      expect(svg).not.toContain('url(#');
+    });
+
+    it(`gives participant boxes v12 neo's corner 6 and the theme shadow under ${theme}`, async () => {
+      const m = createMermaid();
+      m.initialize({ deterministic: true, theme });
+      const { svg } = await m.render('s', NEO_SEQ);
+      const actors = svg.match(/<rect class="actor"[^>]*>/g) ?? [];
+      expect(actors).toHaveLength(6);
+      for (const a of actors) {
+        expect(a).toContain('rx="6"');
+        expect(a).toContain('filter="var(--_ds)"');
+      }
+      expect(svg).toMatch(/<rect class="note"[^>]*filter="var\(--_ds\)"/);
+    });
+  }
+});

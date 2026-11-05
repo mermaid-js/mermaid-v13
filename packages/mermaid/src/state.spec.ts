@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
-import { assertInert } from '@mermaid-js/core/svg';
+import { assertInert, type SvgNode, type SvgTree } from '@mermaid-js/core/svg';
 import { state } from '@mermaid-js/diagram-state';
-import { createMermaid, MermaidError, UnsupportedFormatError } from './index.ts';
+import {
+  createMermaid,
+  MermaidError,
+  UnsupportedFormatError,
+  type ExtensionPlugin,
+} from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 
 // State is a first-party type (#148): both v12 keywords go to `@mermaid-js/diagram-state`
@@ -106,4 +111,118 @@ describe('state diagrams through the public API (#148)', () => {
     const slim = createSlim({ diagrams: [state] });
     expect((await slim.render('s', V2)).svg).toBe((await createMermaid().render('s', V2)).svg);
   });
+});
+
+/**
+ * v12 12.2.0 under `theme: neo` (computed styles in Chromium, #234): the gradient strokes state
+ * boxes, described states, the choice diamond, fork and join bars, notes, composite outer and
+ * inner rects, the start dot and both end rings; the start dot and bars keep their lineColor
+ * fill, the end dot its nodeBorder fill. Transitions, labels and arrowheads stay plain, and so
+ * does a described state's divider (v12 strokes it nodeBorder).
+ */
+describe('state in the neo themes (D182, #234)', () => {
+  const NEO_STATE = [
+    'stateDiagram-v2',
+    '  state c <<choice>>',
+    '  state f <<fork>>',
+    '  state j <<join>>',
+    '  [*] --> Idle',
+    '  Idle --> c : go',
+    '  c --> Box',
+    '  state Box {',
+    '    [*] --> Inner',
+    '    state Nested {',
+    '      [*] --> Deep',
+    '    }',
+    '    --',
+    '    [*] --> Other',
+    '  }',
+    '  Box --> f',
+    '  f --> A',
+    '  f --> B',
+    '  A --> j',
+    '  B --> j',
+    '  j --> Done',
+    '  Done : Done',
+    '  Done : described',
+    '  note right of Done : a note',
+    '  classDef hot fill:#f96,stroke:#333',
+    '  class B hot',
+    '  Done --> [*]',
+  ].join('\n');
+  const URL = 'url(#s-gradient)';
+
+  type Theme = NonNullable<Parameters<ReturnType<typeof createMermaid>['initialize']>[0]['theme']>;
+  async function draw(theme: Theme): Promise<{ svg: string; tree: SvgTree }> {
+    let tree: SvgTree | undefined;
+    const hook: ExtensionPlugin = {
+      id: 'tree',
+      postRender(t) {
+        tree = t;
+      },
+    };
+    const m = createMermaid();
+    await m.registerExternalDiagrams([hook]);
+    m.initialize({ deterministic: true, theme });
+    const { svg } = await m.render('s', NEO_STATE);
+    return { svg, tree: tree! };
+  }
+  const byId = (tree: SvgTree, id: string): SvgNode =>
+    tree.find((n, t) => t.getAttr(n, 'data-id') === id && !!t.getAttr(n, 'class'))[0]!;
+  const shapes = (tree: SvgTree, node: SvgNode): SvgNode[] => {
+    const kids = tree.children(node).flatMap((c) => (tree.tag(c) === 'a' ? tree.children(c) : [c]));
+    return kids.filter((c) => ['rect', 'polygon', 'circle', 'line'].includes(tree.tag(c)!));
+  };
+  const attr = (tree: SvgTree, n: SvgNode, a: 'stroke' | 'fill') => tree.getAttr(n, a);
+
+  for (const theme of ['neo', 'neo-dark'] as const) {
+    it(`strokes every state outline with the gradient under ${theme}`, async () => {
+      const { tree } = await draw(theme);
+      for (const id of ['Idle', 'c', 'Done', 'Inner', 'Deep', 'Other', 'A', 'f', 'j', 'note:1']) {
+        expect(attr(tree, shapes(tree, byId(tree, id))[0]!, 'stroke'), id).toBe(URL);
+      }
+      for (const id of ['Box', 'Nested']) {
+        const [outer, inner] = shapes(tree, byId(tree, id));
+        expect(attr(tree, outer!, 'stroke'), `${id} outer`).toBe(URL);
+        expect(attr(tree, inner!, 'stroke'), `${id} inner`).toBe(URL);
+      }
+      const [start] = shapes(tree, byId(tree, 'root_start'));
+      expect(attr(tree, start!, 'stroke')).toBe(URL);
+      const [ring, dot] = shapes(tree, byId(tree, 'root_end'));
+      expect(attr(tree, ring!, 'stroke')).toBe(URL);
+      expect(attr(tree, dot!, 'stroke')).toBe(URL);
+    });
+
+    it(`keeps fills, dividers, transitions and labels plain under ${theme}`, async () => {
+      const { svg, tree } = await draw(theme);
+      expect(svg).not.toMatch(/fill="url\(/);
+      const line = tree.getAttr(tree.find({ class: 'edgePaths' })[0]!, 'stroke');
+      expect(line).toBe('var(--_l)');
+      const [start] = shapes(tree, byId(tree, 'root_start'));
+      expect(attr(tree, start!, 'fill')).toBe(line);
+      expect(attr(tree, shapes(tree, byId(tree, 'f'))[0]!, 'fill')).toBe(line);
+      const [, dot] = shapes(tree, byId(tree, 'root_end'));
+      expect(attr(tree, dot!, 'fill')).toBe('var(--_nb)');
+      // A line has a zero-width or zero-height box, which a bounding-box gradient leaves unpainted.
+      const dividers = tree.find({ class: 'divider' });
+      expect(dividers).toHaveLength(2);
+      for (const d of dividers) expect(tree.getAttr(d, 'stroke')).toBe('var(--_nb)');
+      const edges = svg.slice(svg.indexOf('<g class="edgePaths"'), svg.indexOf('<g class="nodes"'));
+      expect(edges).not.toContain('url(');
+    });
+
+    it(`lets classDef and style strokes win over the gradient under ${theme}`, async () => {
+      const { tree } = await draw(theme);
+      expect(attr(tree, shapes(tree, byId(tree, 'B'))[0]!, 'stroke')).toBe('#333');
+    });
+  }
+
+  it.each(['default', 'redux', 'redux-dark-color', 'dark'] as const)(
+    'writes no gradient under %s',
+    async (theme) => {
+      const { svg } = await draw(theme);
+      expect(svg).not.toContain('<defs');
+      expect(svg).not.toContain('url(#');
+    }
+  );
 });

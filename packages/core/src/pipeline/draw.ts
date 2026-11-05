@@ -57,8 +57,10 @@ export function drawDiagram<M, L>(
     const layout = laidOut(plugin, model, ctx, run);
     stageEnd('layout', t);
     t = stageStart();
+    // The gradient is the theme's, its id the render's (D182); off, the id prefix is not read.
+    const gradient = ctx.theme.gradient();
     if (run?.editsTree) {
-      const w = treeWriter();
+      const w = treeWriter({ gradient });
       plugin.render(model, layout, ctx, w);
       run.postRender(w.tree);
       svg = w.finish();
@@ -66,6 +68,7 @@ export function drawDiagram<M, L>(
         securityLevel: ctx.securityLevel,
         linkSchemes: ctx.linkSchemes,
         themeStyle: ctx.theme.autoDeclarations() !== undefined,
+        gradient: gradient?.id ?? false,
       });
       if (problem !== undefined)
         throw new MermaidError(
@@ -73,7 +76,7 @@ export function drawDiagram<M, L>(
           `An extension's postRender output fails the allow-list: ${problem}`
         );
     } else {
-      const w = streamWriter();
+      const w = streamWriter({ gradient });
       plugin.render(model, layout, ctx, w);
       svg = w.finish();
     }

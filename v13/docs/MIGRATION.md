@@ -185,7 +185,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | Key | Status | Reason | Replacement |
 | --- | --- | --- | --- |
 | `themeCSS` | ignored | v13 output carries no author stylesheet (R-SEC-2). | `themeVariables`, or `--mermaid-*` CSS variables set by the host page |
-| `look` | ignored | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes carry neo geometry and the classic themes carry classic geometry (D152). | `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8) |
+| `look` | ignored | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes, `neo` and `neo-dark` carry neo geometry and the classic themes carry classic geometry (D152, D181). | `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8) |
 | `htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
 | `altFontFamily` | ignored | Unused by every renderer, also in v12. |  |
 | `logLevel` | ignored | v13 does not log; problems are returned in `RenderResult.warnings`. |  |
@@ -264,7 +264,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 
 | Key | v13 default | Reason |
 | --- | --- | --- |
-| `theme` | `"redux-color"` | The default changes from `default` to `redux-color`, the theme v12's flowchart renders by default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`, `neutral` and `base`. `neo` renders `redux-color`, `neo-dark` renders `redux-dark-color` and `null` renders `base`, each with a `THEME_UNAVAILABLE` warning. |
+| `theme` | `"redux-color"` | The default changes from `default` to `redux-color`, the theme v12's flowchart renders by default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`, `neutral`, `base`, `neo` (v12 `theme-neo.js`, D180, D181) and `neo-dark` (v12 `theme-neo-dark.js`, cleaned up into a dark theme, D183). `null` renders `base`, with a `THEME_UNAVAILABLE` warning. |
 | `layout` | `"layered"` | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 values `dagre`, `elk` and `elk.<algorithm>` stay valid and map to `layered` until an ELK plugin exists (R-PLUG-8); other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. |
 | `maxEdges` | `5000` | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. |
 | `securityLevel` | `"default"` | The default changes from `strict` to the new level `default` (D48, D75), which keeps v12's absolute `http`/`https`/`mailto` links; `strict` now keeps relative links only, so an integrator who set `strict` explicitly loses absolute links (set `default` to keep them). `loose`, `antiscript` and `sandbox` act as `default` with a warning. |
@@ -326,7 +326,8 @@ Sequence diagrams (`sequence` section, #145):
 - **Per-key font sizes take effect.** v12 replaced `sequence.actorFontSize`, `noteFontSize` and
   `messageFontSize` with the global `fontSize` before drawing, so setting them did nothing and
   every label was drawn at 16 px. v13 draws a set value; unset, they follow the theme's
-  `fontSize`, so a diagram that sets none looks as before (D132).
+  `fontSize` (D132). A diagram that sets none looks as before in a 16 px theme; under the redux
+  family, `neo` and `neo-dark` (`fontSize` 14px) its text is 14 px where v12 drew 16 px.
   The documented defaults 14 and 16 are gone.
 - **Per-key font families follow the Mermaid font** when unset (`fontFamily`), as every
   diagram type's text does; a set `actorFontFamily`, `noteFontFamily` or `messageFontFamily`
@@ -341,16 +342,16 @@ Sequence diagrams (`sequence` section, #145):
 | v12 | v13 | Why |
 | --- | --- | --- |
 | Default theme `default` (the flowchart section defaults to `redux-color` with `look: neo`) | Default theme `redux-color` for every diagram type, with v12's `look: neo` geometry. Set `theme: 'default'` for v12's default colours and classic geometry | D151 |
-| Themes `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`, `null` | 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes ported from v12, plus `default`, `dark`, `forest`, `neutral` and `base`. `neo` renders `redux-color` and `neo-dark` renders `redux-dark-color` until the neo themes are ported; `null` renders `base`. Each stand-in warns `THEME_UNAVAILABLE`. An unknown name renders the default theme with the same warning | D151, R-THEME-6, R-THEME-7 |
+| Themes `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`, `null` | 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes ported from v12, plus `default`, `dark`, `forest`, `neutral`, `base`, `neo` and `neo-dark`. `neo` is v12's `theme-neo.js` with v12's `look: neo` geometry (the redux family's), corner radius 3, its blurred shadow and no per-item palette. `neo-dark` is v12's `theme-neo-dark.js` with the same geometry and tokens, cleaned up into a dark theme ([neo-dark](#neo-dark)). `null` renders `base`, with a `THEME_UNAVAILABLE` warning. An unknown name renders the default theme with the same warning | D151, D180, D181, D183, R-THEME-6, R-THEME-7 |
 | — | `theme: 'auto'`: the default theme, switching to `dark` under `prefers-color-scheme: dark` through a small custom-property `<style>` | R-THEME-8 |
 | Colours computed once in JS (khroma) and written into a `<style>` element | Colours are presentation attributes reading CSS variables: every theme variable is `--mermaid-<name>` on the host page, with the theme value as fallback; derived colours use `color-mix()`, and contrast text and `invert()` use relative colour syntax (`color(from …)`), so they follow a host override of the colour they derive from. A page can re-theme rendered SVGs with CSS. Limit: contrast text picks between the theme's two ink values; overriding the ink variables themselves (`--mermaid-textColor`) does not change contrast-derived text such as `nodeTextColor` (set `--mermaid-nodeTextColor` directly) `initialize({ output: { cssVariables: false } })` writes literal colours instead | R-THEME-2, R-THEME-3, R-THEME-4 |
 | `themeVariables` from diagram text checked against a character set only | Values are checked by kind (colour, length, font, weight) and a bad one is dropped with `THEME_VARIABLE_DROPPED`. Names v13 does not use are ignored | R-SEC-3 |
 | `themeCSS` | Ignored; see [Config behaviour](#config-behaviour) | R-SEC-2 |
 | Label text colour fixed by the theme | When a `style`/`classDef` fill makes the theme's text colour unreadable, the label switches to black or white | R-THEME-12 |
-| `look: neo` / `look: classic` | `look` is removed: the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. What `look` switched in v12 is theme data: the redux themes carry v12's neo geometry and the classic themes (`default`, `dark`, `forest`, `neutral`, `base`) carry v12's classic geometry. For a mix, override the variables ([Theme geometry](#theme-geometry)) | D152, D153 |
+| `look: neo` / `look: classic` | `look` is removed: the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. What `look` switched in v12 is theme data: the redux themes, `neo` and `neo-dark` carry v12's neo geometry and the classic themes (`default`, `dark`, `forest`, `neutral`, `base`) carry v12's classic geometry. For a mix, override the variables ([Theme geometry](#theme-geometry)) | D152, D153 |
 | `look: handDrawn` | Ignored like any other `look`, with the same generic `LOOK_REMOVED` warning; core names no plugin. Hand-drawn strokes will come from an optional plugin, which will claim `look: handDrawn` as a legacy alias of its own key once plugins can declare config | D7, D153, R-PLUG-8 |
-| Neo gradients (`useGradient`, `gradientStart`, `gradientStop`) | Not in 13.0. They come back as theme variables of the `neo` theme when it is ported | D151 |
-| Drop shadow under `look: neo` | A hard drop shadow in the redux themes only, as the CSS `filter` from the `dropShadow` theme variable: offset 4px, no blur, 6% opacity, black on light themes and white on dark. It is on node outlines, icons, subgraphs and collapsed groups, not on edges, edge labels or swimlanes. The classic themes set `dropShadow: none`. No `<defs>` and no ids, so several diagrams on a page never collide | D151, D152 |
+| Neo gradients (`useGradient`, `gradientStart`, `gradientStop`) | Public theme variables. `neo` and `neo-dark` turn the gradient on (`#0042eb` to `#eb0042`, left to right); every other theme has it off, and any theme can turn it on in `themeVariables`. The SVG then carries one `<defs>` with a `<linearGradient id="<idPrefix>-gradient">`, and the outlines v12 neo strokes with the gradient take `url(#<idPrefix>-gradient)`, so two diagrams on a page never share it. The stops read `--mermaid-gradientStart` / `--mermaid-gradientStop`. See [Neo gradient](#neo-gradient) | D182, R-THEME-7 |
+| Drop shadow under `look: neo` | A hard drop shadow in the redux themes, as the CSS `filter` from the `dropShadow` theme variable: offset 4px, no blur, 6% opacity, black on light themes and white on dark. `neo` keeps v12's blurred shadow, `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`, and `neo-dark` its own, `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. It is on node outlines, icons, subgraphs and collapsed groups, not on edges, edge labels or swimlanes. Under `neo` and `neo-dark`, sequence participants take the theme's drop shadow, as notes and fragment labels do; v12 drew them with a separate 6% white offset filter that did not show on `neo` (D184). The classic themes set `dropShadow: none`. No `<defs>` and no ids, so several diagrams on a page never collide | D151, D152, D181, D184 |
 | Per-subgraph colour in `redux-color` | Each subgraph takes a palette slot by declaration order, cycling after twelve: border from `borderColorArray`, fill from `bkgColorArray`. `redux-dark-color` has an empty fill palette, so its subgraphs are coloured on the border only. `redux` and the classic themes carry no palette. Colour is on whenever the theme has a non-empty `borderColorArray` (a `themeVariables` palette turns it on in any theme), and a collapsed subgraph's card, separator and dots take its slot too. As in v12 the slot is written as `data-color-id="color-<n>"` on the cluster or collapsed node, and an author `style` / `classDef` still wins. Swimlanes are not drawn yet, so there is nothing to colour there | D151, D152 |
 | Sequence colours `actorBkg`, `actorBorder`, `actorTextColor`, `actorLineColor`, `signalColor`, `signalTextColor`, `labelBoxBkgColor`, `labelBoxBorderColor`, `labelTextColor`, `loopTextColor`, `activationBkgColor`, `activationBorderColor`, `sequenceNumberColor` | The same names, derived as v12 `theme-base.js` derives them, with each built-in theme's v12 values pinned where they differ; `--mermaid-<name>` like every variable. `activationBorderColor` is `secondaryColor` with 12.5% black, close to khroma's `darken(…, 10)` | R-THEME-2, D71 |
 | Numbered palettes (`pie*`, `git*`) | Not in the 13.0 inventory; they come with the diagram types that use them. `cScale0`–`cScale11` are set by `redux-color` (the fixed Tailwind-300 set) | R-CONF-5 |
@@ -368,7 +369,7 @@ variables feed layout, so they are read as numbers at render time and overriding
 `--mermaid-*` CSS variables has no effect; `dropShadow` is a CSS value. "padding" is
 `flowchart.padding` (default 15), which the classic themes now honour.
 
-| Variable | Redux family (v12 neo) | Classic family (v12 classic) |
+| Variable | Redux family, `neo` and `neo-dark` (v12 neo) | Classic family (v12 classic) |
 | --- | --- | --- |
 | `borderColorArray` | Tailwind-400 × 12 (`redux-color`, `redux-dark-color`) | none |
 | `bkgColorArray` | Tailwind-50 × 12 (`redux-color`); empty (`redux-dark-color`) | none |
@@ -390,21 +391,21 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `messageEndGap` (sequence: a message stops this far short of its target, past the head room; a bidirectional one starts this far in) | 3 | 0 |
 | `labelBoxExtraHeight` (sequence: added to a fragment's label tab) | 15 | 0 |
 | `actorFooterPadding` (sequence: room below a drawing with participants) | 30 | 0 |
-| `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color` | `none` |
+| `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color`; `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))` on `neo`; `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))` on `neo-dark` | `none` |
 | `classText` (colour: class diagram text) | `textColor` | `primaryTextColor` |
 | `classMarkerStrokeWidth` / `classFilledMarkerStrokeWidth` (outline of hollow / filled class markers) | 2 / 0 | 1 / 1 |
 | `extensionMarkerLength` / `extensionMarkerGap` (inheritance triangle) | 8 / 8.25 | 17 / 0.25 |
 | `compositionMarkerGap` / `dependencyMarkerGap` | 2.75 / 4 | 0.25 / 1 |
 | `erZeroOrMoreCircleOffset` (ER, centre of a zero-or-more circle from the outline) | 28 | 30 |
 | `rowOdd` / `rowEven` (ER attribute rows) | the entity fill (`mainBkg`): v12 neo leaves rows unfilled | v12's `rowOdd` / `rowEven`, the same colours (khroma's HSL lightening, D117) |
-| `erEdgeLabelBackground` (ER relationship labels) | white (`redux-color`), `#16141f` (`redux-dark-color`); `edgeLabelBackground` in `redux` and `redux-dark` | `edgeLabelBackground` |
+| `erEdgeLabelBackground` (ER relationship labels) | white (`redux-color`), `#16141f` (`redux-dark-color`); `edgeLabelBackground` in `redux`, `redux-dark`, `neo` and `neo-dark` | `edgeLabelBackground` |
 | `erMarkerFill` (ER zero circles) | `mainBkg` | white |
 | `compositeBackground` (state) | `background`; `#16141f` on `redux-dark` and `redux-dark-color` | `background` |
-| `compositeTitleBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color` | `mainBkg` |
-| `altBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color` | `#f0f0f0` (`default`, `forest`); `#555555` (`dark`); `#f4f4f4` (`neutral`); `tertiaryColor` (`base`) |
+| `compositeTitleBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `mainBkg` on `neo` and `neo-dark` | `mainBkg` |
+| `altBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `#f0f0f0` on `neo`; `#404040` on `neo-dark` (D189) | `#f0f0f0` (`default`, `forest`); `#555555` (`dark`); `#f4f4f4` (`neutral`); `tertiaryColor` (`base`) |
 
-The palette rows apply to the two colour themes only; plain `redux` and `redux-dark` carry no
-palette. A padding variable (the `…Padding…` names) takes a px number or a multiple of
+The palette rows apply to the two colour themes only; plain `redux`, `redux-dark`, `neo` and
+`neo-dark` carry no palette. A padding variable (the `…Padding…` names) takes a px number or a multiple of
 `flowchart.padding` written `padding` or `<n> * padding`, so `nodePaddingX: '2 * padding'`
 gives a redux theme classic node padding. `circlePadding` is added to the label's diagonal,
 so it counts twice towards the diameter compared with the per-side node padding.
@@ -436,6 +437,54 @@ so it counts twice towards the diameter compared with the per-side node padding.
 - **Layout room for arrowheads is fixed.** The layout leaves 7px for an arrowhead in a crossed
   gap whatever the arrowhead variables say, so changing `arrowheadLength` or the other
   arrowhead variables redraws the arrowheads but never moves a node (D154).
+
+### neo-dark
+
+`neo-dark` keeps v12 `theme-neo-dark.js`'s base colours, shadow and corner radius, and takes
+`neo`'s geometry (D181). v12 never set `darkMode` on it, so it derived some colours with the
+light rules; v13 derives them as a dark theme and fixes one contrast miss (D183, R-THEME-9).
+Every other colour is v12 12.2.0's. To get a v12 value back, set it in `themeVariables`.
+
+| Variable | v12 12.2.0 | v13 | Why |
+| --- | --- | --- | --- |
+| `secondaryBorderColor` | `#2f2f2f` (darkened) | `#6c6d6d` (lightened) | D183: dark rules |
+| `tertiaryBorderColor`, `clusterBorder` | `#060606` | `#4d4c4c` | D183: dark rules |
+| `noteBorderColor` | `#e4db95` | `#fff8c6` | D183: dark rules |
+| `edgeLabelBackground`, `erEdgeLabelBackground` | `#474949` (`secondaryColor`) | `#323333` (`secondaryColor` darkened 30%) | D183: dark rules |
+| `strokeWidth` | 1 | 2, as in `neo` | D183 |
+| `secondaryTextColor` | `#b8b6b6` (4.49:1 on `secondaryColor`) | `#b9b7b7` (AA) | D183, R-THEME-9 |
+| `altBackground` (state: a nested composite's body) | `#f0f0f0`, on which the `#cccccc` transitions and arrowheads all but vanish | `#404040` | D189, D183 |
+
+The shadow is v12's, written `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. The ER row,
+ER marker and palette differences are those of `neo` (D152, D181).
+
+### Neo gradient
+
+With `useGradient` on (`neo`, `neo-dark`, or any theme through `themeVariables`), the outlines
+that v12 neo strokes with the gradient take it, and nothing else does (D182):
+
+- **Flowchart:** node outlines (with their inner lines: cylinder rims, double-circle rings,
+  braces) and subgraph rectangles. A linked node (`click … href`) takes the gradient and the
+  shadow like every other node; v12 neo drew it plain (D184). An icon node's frame takes the
+  gradient; v12 put it on the glyph and drew the frame without a border (D186).
+- **Class:** class boxes, their dividers and namespaces; not notes.
+- **State:** states, the choice diamond, composites, notes, the start and end dots, fork and
+  join bars.
+- **ER:** entity outlines, their rules and subgraphs. An entity's column rules take the gradient
+  colour at their position, as the outline does; v12 drew each one half `gradientStart`, half
+  `gradientStop` (D185).
+- **Sequence:** nothing, as in v12.
+- Never edges, edge labels, arrowheads or text. A palette slot and an author `style` /
+  `classDef` stroke still win.
+
+An `objectBoundingBox` gradient cannot paint a line whose box has no width or height, so those
+lines are drawn in plain `nodeBorder`: the rules of a lined document and a lined or divided
+rectangle (v12 stroked them with the gradient), the `fr-circ` inner dot, the `f-circ` and
+`browser` lines, the dashed divider between state concurrency regions (v12 dashed
+each region's frame with the gradient) and a described state's divider. Class dividers are
+lifted 0.01 so they take the gradient (v12 0.001) (D185).
+No node part is filled with the gradient: the flowchart fork and join bar is stroked with it and
+filled in plain `nodeBorder`, the same colour as the `lineColor` v12 neo filled it with (D185).
 
 ## Layout
 
@@ -627,8 +676,9 @@ keyword; 12.2.0 sends both keywords to the unified one). v13 has one renderer fo
 | Described state (`rectWithTitle`): `<rect class="outer title-state">`, `<line class="divider">`, two HTML labels; old: `state-title` text, `descr-divider` line, `state-description` text | `<rect>`, `<text class="state-title">`, `<line class="divider">`, `<text class="state-description">` | Text labels |
 | Start: `<circle class="state-start">`; end: roughjs paths (`outer-path`), old renderer two circles `end-state-outer` / `end-state-inner` | Start `<circle class="state-start">`; end `<circle class="state-end">` (the ring) and `<circle class="end-state-inner">` (the dot) | Plain circles, no roughjs |
 | Choice, fork and join: roughjs `<path>`s | `<polygon>` (choice) and `<rect class="fork-join">` | Plain shapes |
+| The choice diamond drawn without a shadow, in every look | The choice carries the theme's drop shadow like other states | D188 |
 | Composite (`roundedWithTitle`): `<g class="… statediagram-cluster" id data-look>` with `rect.outer`, `rect.inner` and an HTML `cluster-label`; old: `composit` / `alt-composit` rects and a `state-title` text | `<g class="statediagram-state statediagram-cluster [statediagram-cluster-alt] …" data-id data-ast>` with `rect.outer`, `rect.inner` and `<text class="cluster-label">` | Text labels; one element per composite |
-| Concurrency region: a cluster `<g>` with a dashed `<rect class="divider">` filled `altBackground` (and the palette tint) around each region; old: a `<line class="divider">` per `--` node | Each region is `<g class="statediagram-state statediagram-cluster statediagram-region" data-ast="r:X#k">` with an `<rect class="region">` with no fill or stroke; between neighbouring regions the composite holds a dashed `<line class="divider">` from the layout's `dividers`, in the composite's border colour | Regions read as one composite split in parts; the lines come from region geometry (#144). Unfilled, with dashed dividers only (D121) |
+| Concurrency region: a cluster `<g>` with a dashed `<rect class="divider">` filled `altBackground` (and the palette tint) around each region; old: a `<line class="divider">` per `--` node | Each region is `<g class="statediagram-state statediagram-cluster statediagram-region" data-ast="r:X#k">` with an `<rect class="region">` with no fill or stroke; between neighbouring regions the composite holds a dashed `<line class="divider">` from the layout's `dividers`, in the composite's border colour (plain `nodeBorder` under the neo gradient, where v12 dashed each region's frame with the gradient) | Regions read as one composite split in parts; the lines come from region geometry (#144). Unfilled, with dashed dividers only (D121, D185, D188) |
 | Note: a `noteGroup` cluster around the note and its state, `<g class="node statediagram-note">` with a roughjs path | No note group; `<g class="node statediagram-note" data-ast="note:k">` with a `<rect>` | A note sits in its state's scope (#144) |
 | Note edge: `<path class="transition note-edge …">`, dashed by CSS or the neo dash generator | `<g class="transition note-edge edge-thickness-normal edge-pattern-dashed" data-id>` with a `<path stroke-dasharray="5">`, no arrowhead and no `data-ast` (the note element carries the note's AST id) | One `data-ast` per AST node (R-PARSE-8) |
 | Transition: `<path class="transition …" id>` in `edgePaths` | `<g class="transition edge-thickness-normal edge-pattern-solid" data-id data-ast>` holding the `<path>` and its arrowhead | One element per transition |
@@ -760,6 +810,7 @@ rows below are class-specific. Group class names (`clusters`, `edgePaths`, `edge
 | Namespace: `<g class="cluster" id>` with `<rect>` and an HTML label | `<g class="cluster namespace" data-id="<qualified id>" data-ast="s:<id>">` with `<rect>` and `<text class="cluster-label">`. A namespace made only as the ancestor of a dotted one (`X` of `namespace X.Y`) has no `namespace` statement of its own, so it has no `data-ast` | Text labels; one `data-ast` per AST node (R-PARSE-8) |
 | Per-class colour through `[data-look][data-color-id].node .outer-path` rules in the `<style>` | `data-color-id` is kept; the colours are presentation attributes on the box and its dividers; an author `style` / `classDef` still wins | No style sheet |
 | `classDef` styles reached a class through the generated `.name > *` CSS rules, even when the class was given after the `classDef` | The `classDef` styles of every CSS class of the class, then its own `style`, as presentation attributes after the allow-list | Unknown properties and unsafe values are dropped with a warning (R-SEC-3) |
+| Under `look: neo` (the redux family, `neo`, `neo-dark`), the `[data-look=neo]` rules beat a `style` / `classDef` fill and stroke on a class box | `style` and `classDef` fill and stroke on a class box take effect in every theme | D187, D152 |
 | Class ids, labels and member text passed through `sanitizeText` (DOMPurify), so `A : +List<T> items` lost `<T>` | Text is escaped when written, never sanitised: `+List<T> items` is shown as written, and known HTML tags are read as the label subset ([Labels and text](#labels-and-text)) | R-SEC-1; the flowchart's rule |
 | `link` / `click … href` as `<a xlink:href>`; tooltip as an HTML hover div; `callback` / `click … call` bound with `bindFunctions` | `<a href target>` inside the node group (URLs that pass `securityLevel`); the tooltip is an SVG `<title>`; callbacks draw nothing (interactions plugin) | R-SVG-4, R-SVG-5 |
 | Front-matter `title` drawn above the diagram (`classDiagramTitleText`) | Not drawn, as for flowcharts | v13 renderers draw no title yet |
