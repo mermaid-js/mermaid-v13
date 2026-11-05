@@ -530,20 +530,25 @@ importers:
         version: link:../mermaid
 
   packages/plugin-math:
-    dependencies:
+    devDependencies:
       '@mathjax/mathjax-tex-font':
         specifier: 4.1.3
         version: 4.1.3
       '@mathjax/src':
         specifier: 4.1.3
         version: 4.1.3
-    devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      esbuild:
+        specifier: ^0.25.12
+        version: 0.25.12
       mermaid:
         specifier: workspace:*
         version: link:../mermaid
+      tsx:
+        specifier: ^4.20.6
+        version: 4.20.6
 
   tools/gen-config:
     devDependencies:

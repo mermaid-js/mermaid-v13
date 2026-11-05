@@ -12,6 +12,11 @@ export interface InlineRequest {
   readonly metrics: VerticalMetrics;
   /** One ex in px. The tables carry no x-height, so this is half the font size (the MathJax default). */
   readonly ex: number;
+  /**
+   * The render's warnings, for a provider that declines a span it cannot draw (bad TeX), so the
+   * span shown as written is not silent. The same code and message are given once per render.
+   */
+  readonly warn: Warn;
 }
 
 /**
@@ -73,6 +78,13 @@ function hasPair(raw: string, open: string, close: string): boolean {
 export function inlineSpans(providers: readonly InlineProvider[], warn: Warn): InlineSpans {
   const missing = FEATURES.filter((f) => !providers.some((p) => p.open === f.open));
   const warned = new Set<string>();
+  const given = new Set<string>();
+  const once: Warn = (w) => {
+    const key = `${w.code}\n${w.message}`;
+    if (given.has(key)) return;
+    given.add(key);
+    warn(w);
+  };
   return {
     extract(raw, font, measurer) {
       for (const f of missing) {
@@ -102,7 +114,13 @@ export function inlineSpans(providers: readonly InlineProvider[], warn: Warn): I
           continue;
         }
         const next = end + provider.close.length;
-        request ??= { font, measurer, metrics: measurer.metrics(font), ex: font.size / 2 };
+        request ??= {
+          font,
+          measurer,
+          metrics: measurer.metrics(font),
+          ex: font.size / 2,
+          warn: once,
+        };
         const box = provider.box(raw.slice(from, end), request);
         if (box) {
           source += raw.slice(at, start) + String.fromCharCode(PLACEHOLDER + boxes.length);

@@ -37,6 +37,12 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - ~~[E4 #242] post-passes beyond D174's list~~ Closed by #242: `straightenEdges`, `orientFeedbackEdges` and `keepEntryNodeOnTop` are ported, `lineHops` is the package's `postRender`. `evenGroupFrames`, `separateOppositeEdgeLabels`, `slideTerminalLabelsOffFrames`, `putTerminalLabelsOnTheirSide`, `sanitizeElkEdgePoints`, marker segment lengths and `cutter2` stay out (none is tied to an `elk.*` key; reasons in `tickets/242.md`). Two edges into one side can still share an end point (class corpus `C2`).
 - ~~[E4 #242] spacing differs from v12~~ Kept by #242: spacing is `LayoutGraph.spacing` (E3's ticket) and D174 parity is options, not pixels. `minLen`, `headRoom` and `routing` have no ELK mapping (none in v12).
 
+## From M2 #245
+
+- [M3 #246] `needsMath` scans every string in the parse, so `$$` in a click tooltip (not a `%%` comment) loads MathJax. Pinned by a spec in plugin-math. Narrow it with a per-type label-strings walk while wiring each type (`tickets/245.md`).
+- [M3 #246] A front-matter `title` with `$$` doesn't reach label layout in flowchart; check each type's title path when wiring.
+- [Knut] MathJax is bundled into `plugin-math/dist/engine.js` (devDependencies, Apache-2.0 notice) so the `#default-font` → TeX-font alias holds: 677 KB gz engine, 740 B entry.
+
 ## Waiting on #218
 
 - Activates-on-install checks (E2, E5, M3) need #218 T4 (#226). S1 #247 needs #218 T0 (#220).

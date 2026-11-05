@@ -96,6 +96,19 @@ describe('license check (R-REL-4)', () => {
     expect(checkLicenses(root)).toEqual([]);
   });
 
+  it('accepts notices for third-party code the package bundles into its build', () => {
+    const root = workspace({
+      'packages/math/package.json': JSON.stringify({
+        name: 'math',
+        files: ['dist', 'THIRD_PARTY_NOTICES'],
+        devDependencies: { '@mathjax/src': '4.1.3' },
+      }),
+      'packages/math/THIRD_PARTY_NOTICES': '@mathjax/src\n------------\nApache-2.0\n',
+      'packages/math/src/a.ts': '// Our own code.\nexport {};\n',
+    });
+    expect(checkLicenses(root)).toEqual([]);
+  });
+
   it('still requires the Pele text in notices that credit no runtime dependency', () => {
     const root = workspace({
       'packages/layout/package.json': JSON.stringify({

@@ -23,10 +23,13 @@ export {
 export {
   HookRunner,
   type ExtensionClaim,
+  type ExtensionNeed,
   type ExtensionPlugin,
+  type ExtensionResources,
   type HookContext,
   type HookRun,
   type LaidOut,
+  type ResourceRequest,
 } from './pipeline/extensions.ts';
 export {
   readManifest,
