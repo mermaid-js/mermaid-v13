@@ -25,6 +25,7 @@ describe('workspace layout (DESIGN §2)', () => {
     ['packages/mermaid', 'mermaid', false],
     ['packages/plugin-interactions', '@mermaid-js/plugin-interactions', false],
     ['packages/layout-elk', '@mermaid-js/layout-elk', false],
+    ['packages/plugin-math', '@mermaid-js/plugin-math', false],
     ['packages/language-service', '@mermaid-js/language-service', false],
     ['packages/language-server', '@mermaid-js/language-server', false],
     ['packages/conformance', '@mermaid-js/conformance', true],
@@ -82,6 +83,20 @@ describe('workspace layout (DESIGN §2)', () => {
     expect(naming).toEqual([]);
     expect(readFileSync(join(root, 'packages/core/package.json'), 'utf8')).not.toMatch(
       /layout-elk|elkjs/
+    );
+  });
+
+  it('keeps the math package and MathJax out of core: no import, no dependency (D153, D178)', () => {
+    const src = join(root, 'packages/core/src');
+    const files = readdirSync(src, { recursive: true, encoding: 'utf8' }).filter((f) =>
+      f.endsWith('.ts')
+    );
+    const naming = files.filter((f) =>
+      /plugin-math|@mathjax\//.test(readFileSync(join(src, f), 'utf8'))
+    );
+    expect(naming).toEqual([]);
+    expect(readFileSync(join(root, 'packages/core/package.json'), 'utf8')).not.toMatch(
+      /plugin-math|mathjax/i
     );
   });
 

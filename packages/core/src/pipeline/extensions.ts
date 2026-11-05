@@ -6,14 +6,20 @@
  * `postRender` edits the compact tree, and the draw step re-checks the allow-list after the
  * last one (R-SEC-2). `afterMount` is typed here but only `mermaid`'s DOM adapter calls it,
  * through {@link HookRun.afterMount}: core never touches the DOM.
+ *
+ * An extension can also load things lazily (R-API-2, D178): its `resources` say what a parsed
+ * diagram needs from it, `prepare()` loads those, and `renderSync` throws `NotLoadedError` (or
+ * draws placeholders) while they are missing, as for a diagram's own resources.
  */
+import type { ResolvedConfig } from '../config/resolve.ts';
 import type { LayoutModel } from '../layout/types.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
+import type { ParseResult } from '../parser-kit/result.ts';
 import { isAllowedAttr, isAllowedTag } from '../svg/allowlist.ts';
 import type { SvgTree } from '../svg/tree.ts';
 import type { InlineBox } from '../svg/writer.ts';
 import type { InlineProvider } from '../text/inline.ts';
-import { MermaidError } from './errors.ts';
+import { MermaidError, type Resource } from './errors.ts';
 import type { RenderContext } from './types.ts';
 
 /**
@@ -71,9 +77,38 @@ export interface ExtensionPlugin<El = unknown, R = unknown> {
    * to its provider and draws the box it returns. The first registered provider of a pair wins.
    */
   readonly inline?: readonly InlineProvider[];
+  /** What it loads lazily, and when a diagram needs it (R-API-2, D178). */
+  readonly resources?: ExtensionResources;
 }
 
-type Hook = 'postParse' | 'postLayout' | 'postRender' | 'afterMount' | 'inline';
+/** What an extension's `resources.missing` is asked with, besides the parse. */
+export interface ResourceRequest {
+  readonly config: ResolvedConfig;
+  /** The output being prepared or drawn: text output draws no inline boxes (D179). */
+  readonly format: 'svg' | 'ascii';
+}
+
+/**
+ * Resources an extension loads lazily (R-API-2, D178), such as an engine its inline provider
+ * needs. `missing` is synchronous and pure: `prepare` asks it what to load, and `renderSync`
+ * asks it again and throws `NotLoadedError` listing what is still missing.
+ */
+export interface ExtensionResources {
+  /** Every resource it can load; `preload` loads those of a kind it is asked for (`math`). */
+  readonly provides: readonly Resource[];
+  /** Those of `provides` that `parse` needs and that have not loaded yet. */
+  missing(parse: ParseResult<unknown>, request: ResourceRequest): readonly Resource[];
+  /** Loads one of `provides`; once it resolves, `missing` no longer lists it. */
+  load(resource: Resource): Promise<void>;
+}
+
+/** A resource an extension reported, and how to load it. */
+export interface ExtensionNeed {
+  readonly resource: Resource;
+  load(): Promise<void>;
+}
+
+type Hook = 'postParse' | 'postLayout' | 'postRender' | 'afterMount' | 'inline' | 'resources';
 
 /** One render's hooks, created by {@link HookRunner.start}. */
 export interface HookRun<El = unknown, R = unknown> {
@@ -162,6 +197,39 @@ function guarded(plugin: { id: string }, provider: InlineProvider): InlineProvid
   };
 }
 
+const sameResource = (a: Resource, b: Resource): boolean => a.kind === b.kind && a.name === b.name;
+
+function checkResources(plugin: { id: string }, r: unknown): ExtensionResources | undefined {
+  if (r === undefined) return undefined;
+  const res = r as Partial<ExtensionResources> | null;
+  if (
+    typeof res !== 'object' ||
+    res === null ||
+    !Array.isArray(res.provides) ||
+    typeof res.missing !== 'function' ||
+    typeof res.load !== 'function'
+  )
+    throw new TypeError(`Extension "${plugin.id}": resources needs provides, missing() and load()`);
+  return res as ExtensionResources;
+}
+
+/** `resource` and its loader, with a failed load reported as `plugin`'s. */
+function need(
+  plugin: { id: string },
+  resources: ExtensionResources,
+  resource: Resource
+): ExtensionNeed {
+  return {
+    resource,
+    load: () =>
+      Promise.resolve()
+        .then(() => resources.load(resource))
+        .catch((e: unknown) => {
+          throw failed(plugin, 'resources', e);
+        }),
+  };
+}
+
 /**
  * The registered extensions, in registration order. One per `mermaid` API object; call
  * {@link HookRunner.start} once per render.
@@ -178,12 +246,48 @@ export class HookRunner<El = unknown, R = unknown> {
     if (!Array.isArray(inline))
       throw new TypeError(`Extension "${plugin.id}": inline must be an array of providers`);
     const providers = (inline as readonly InlineProvider[]).map((p) => guarded(plugin, p));
+    checkResources(plugin, plugin.resources);
     const at = this.list.findIndex((p) => p.id === plugin.id);
     if (at >= 0) {
       this.providers.delete(this.list[at]!);
       this.list[at] = plugin;
     } else this.list.push(plugin);
     this.providers.set(plugin, providers);
+  }
+
+  /**
+   * What the registered extensions report missing for `parse` (R-API-2, D178), in registration
+   * order, each with its loader. A resource an extension does not provide is an error.
+   */
+  resources(parse: ParseResult<unknown>, request: ResourceRequest): readonly ExtensionNeed[] {
+    const out: ExtensionNeed[] = [];
+    for (const p of this.list) {
+      const resources = checkResources(p, p.resources);
+      if (!resources) continue;
+      let missing: readonly Resource[];
+      try {
+        missing = resources.missing(parse, request);
+        for (const r of missing)
+          if (!resources.provides.some((q) => sameResource(q, r)))
+            throw new TypeError(
+              `missing() reported ${r.kind} "${r.name}", which it does not provide`
+            );
+      } catch (e) {
+        throw failed(p, 'resources', e);
+      }
+      for (const r of missing) out.push(need(p, resources, r));
+    }
+    return out;
+  }
+
+  /** Every resource of `kind` the registered extensions provide, for `preload`. */
+  provided(kind: Resource['kind']): readonly ExtensionNeed[] {
+    return this.list.flatMap((p) => {
+      const resources = checkResources(p, p.resources);
+      return (resources?.provides ?? [])
+        .filter((r) => r.kind === kind)
+        .map((r) => need(p, resources!, r));
+    });
   }
 
   /** Every extension's inline-box providers, in registration order (D177). */

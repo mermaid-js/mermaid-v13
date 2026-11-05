@@ -33,92 +33,25 @@ import {
   type PathBuilder,
 } from '@mermaid-js/core/svg';
 import type { InlineBox, SvgFragment } from '@mermaid-js/core/text';
+import { KATEX_MACROS } from './macros.ts';
 
 export interface TypesetOptions {
   /** One ex of the label font, in px. The math's x-height is matched to it, as MathJax does. */
   readonly ex: number;
   /** One em of the label font, in px: the size of characters the TeX font lacks. `2 × ex` by default. */
   readonly em?: number;
+  /**
+   * Width in px, at `em`, of characters the TeX font lacks (`\text{日本}`, emoji), which are
+   * drawn as `<text>` in the label's font. Without it the width is MathJax's guess (1 em per
+   * CJK character, 0.6 em otherwise).
+   */
+  readonly measure?: (text: string, italic: boolean, bold: boolean) => number;
 }
 
 /** TeX that MathJax cannot parse, or output this engine will not emit. */
 export class MathError extends Error {
   override readonly name = 'MathError';
 }
-
-/**
- * Names v12's KaTeX knows and MathJax does not: KaTeX's texvc.sty block (MediaWiki's names),
- * `\notni`, `\relax` (MathJax has it only in `newcommand`, left out below), and `\phase`
- * (KaTeX's phasor angle, MathJax's `phasorangle` enclosure).
- */
-const KATEX_MACROS: Readonly<Record<string, string | readonly [string, number]>> = {
-  darr: '\\downarrow',
-  dArr: '\\Downarrow',
-  Darr: '\\Downarrow',
-  lang: '\\langle',
-  rang: '\\rangle',
-  uarr: '\\uparrow',
-  uArr: '\\Uparrow',
-  Uarr: '\\Uparrow',
-  N: '\\mathbb{N}',
-  R: '\\mathbb{R}',
-  Z: '\\mathbb{Z}',
-  alef: '\\aleph',
-  alefsym: '\\aleph',
-  Alpha: '\\mathrm{A}',
-  Beta: '\\mathrm{B}',
-  bull: '\\bullet',
-  Chi: '\\mathrm{X}',
-  clubs: '\\clubsuit',
-  cnums: '\\mathbb{C}',
-  Complex: '\\mathbb{C}',
-  Dagger: '\\ddagger',
-  diamonds: '\\diamondsuit',
-  empty: '\\emptyset',
-  Epsilon: '\\mathrm{E}',
-  Eta: '\\mathrm{H}',
-  exist: '\\exists',
-  harr: '\\leftrightarrow',
-  hArr: '\\Leftrightarrow',
-  Harr: '\\Leftrightarrow',
-  hearts: '\\heartsuit',
-  image: '\\Im',
-  infin: '\\infty',
-  Iota: '\\mathrm{I}',
-  isin: '\\in',
-  Kappa: '\\mathrm{K}',
-  larr: '\\leftarrow',
-  lArr: '\\Leftarrow',
-  Larr: '\\Leftarrow',
-  lrarr: '\\leftrightarrow',
-  lrArr: '\\Leftrightarrow',
-  Lrarr: '\\Leftrightarrow',
-  Mu: '\\mathrm{M}',
-  natnums: '\\mathbb{N}',
-  Nu: '\\mathrm{N}',
-  Omicron: '\\mathrm{O}',
-  plusmn: '\\pm',
-  rarr: '\\rightarrow',
-  rArr: '\\Rightarrow',
-  Rarr: '\\Rightarrow',
-  real: '\\Re',
-  reals: '\\mathbb{R}',
-  Reals: '\\mathbb{R}',
-  Rho: '\\mathrm{P}',
-  sdot: '\\cdot',
-  sect: '\\S',
-  spades: '\\spadesuit',
-  sub: '\\subset',
-  sube: '\\subseteq',
-  supe: '\\supseteq',
-  Tau: '\\mathrm{T}',
-  thetasym: '\\vartheta',
-  weierp: '\\wp',
-  Zeta: '\\mathrm{Z}',
-  notni: '\\not\\ni',
-  relax: '',
-  phase: ['\\enclose{phasorangle}{#1}', 1],
-};
 
 /**
  * TeX packages, all loaded with this module so typesetting is synchronous. No `newcommand`:
@@ -133,9 +66,16 @@ interface Engine {
   readonly convert: (tex: string, options: Record<string, unknown>) => LiteElement;
   /** The TeX font's x-height in em. */
   readonly xHeight: number;
+  /** Forgets MathJax's text widths, which depend on the measurer of the call that made them. */
+  readonly forget: () => void;
 }
 
 let engine: Engine | undefined;
+
+/** How the current `typeset` call measures text the font lacks, and its math em in px. */
+let measuring:
+  | { readonly measure: NonNullable<TypesetOptions['measure']>; readonly em: number }
+  | undefined;
 
 function start(): Engine {
   if (engine) return engine;
@@ -162,11 +102,24 @@ function start(): Engine {
   });
   const doc = mathjax.document('', { InputJax: input, OutputJax: output });
   const font = output.font as unknown as { params: { x_height: number } };
+  // MathJax sizes a character the font lacks with `nodeSize`, in math em; the lite adaptor only
+  // guesses. Measure it in the label's font instead, when the caller says how.
+  const guess = adaptor.nodeSize.bind(adaptor);
+  adaptor.nodeSize = (node, em, local) => {
+    const m = measuring;
+    if (!m || adaptor.kind(node) !== 'text') return guess(node, em, local);
+    const italic = adaptor.getAttribute(node, 'font-style') === 'italic';
+    const bold = adaptor.getAttribute(node, 'font-weight') === 'bold';
+    const [, height] = guess(node, em, local);
+    return [m.measure(adaptor.textContent(node), italic, bold) / m.em, height];
+  };
+  const unknown = (output as unknown as { unknownCache: Map<string, unknown> }).unknownCache;
   engine = {
     adaptor,
     input,
     convert: (tex, options) => doc.convert(tex, options) as LiteElement,
     xHeight: font.params.x_height,
+    forget: () => unknown.clear(),
   };
   return engine;
 }
@@ -873,14 +826,19 @@ export function typeset(tex: string, options: TypesetOptions): InlineBox {
   const { ex } = options;
   if (!(ex > 0) || !Number.isFinite(ex)) throw new RangeError('ex must be a positive number');
   const em = options.em ?? 2 * ex;
-  const { adaptor, input, convert, xHeight } = start();
+  const { adaptor, input, convert, xHeight, forget } = start();
   input.reset(); // equation numbers and \label
+  // Each call measures afresh, so one call's measurer never sizes another's text (R-ARCH-6).
+  forget();
+  measuring = options.measure && { measure: options.measure, em: ex / xHeight };
   let container: LiteElement;
   try {
     container = convert(tex, { display: true, em, ex, containerWidth: 1e6 });
   } catch (error) {
     if (error instanceof MathError) throw error;
     throw new MathError(error instanceof Error ? error.message : String(error));
+  } finally {
+    measuring = undefined;
   }
   const children = adaptor.childNodes(container);
   const svg =

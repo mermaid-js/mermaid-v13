@@ -457,3 +457,94 @@ describe('plugin manifests (R-PLUG-3, DESIGN §12.1)', () => {
     expect(() => readManifest('diagram')).toThrow(TypeError);
   });
 });
+
+describe('extension resources (R-API-2, D178)', () => {
+  /** A fixture extension that needs `iconPack "logos"` when the text mentions it. */
+  function lazy(log: string[], fail = false) {
+    let loaded = false;
+    const pack = { kind: 'iconPack', name: 'logos' } as const;
+    const plugin: ExtensionPlugin = {
+      id: 'lazy',
+      resources: {
+        provides: [pack],
+        missing: (parse, { format }) =>
+          !loaded && format === 'svg' && JSON.stringify(parse.ast).includes('logos') ? [pack] : [],
+        load: async (r) => {
+          log.push(`load:${r.kind}:${r.name}`);
+          if (fail) throw new Error('offline');
+          loaded = true;
+        },
+      },
+    };
+    return plugin;
+  }
+  const WITH = 'flowchart LR\n  A[logos] --> B\n';
+
+  async function api(plugin: ExtensionPlugin) {
+    const m = createMermaid();
+    await m.registerExternalDiagrams([plugin]);
+    await m.preload({ types: ['flowchart'] });
+    return m;
+  }
+
+  it('prepare loads what an extension reports missing; renderSync throws until then', async () => {
+    const log: string[] = [];
+    const m = await api(lazy(log));
+    await m.render('a', FLOW);
+    expect(log).toEqual([]);
+    expect(() => m.renderSync(WITH)).toThrow('Not loaded: iconPack "logos"');
+    expect(m.renderSync(WITH, { placeholders: true }).warnings.map((w) => w.code)).toEqual([
+      'PLACEHOLDER',
+    ]);
+    await m.prepare(WITH);
+    expect(log).toEqual(['load:iconPack:logos']);
+    expect(m.renderSync(WITH).warnings).toEqual([]);
+  });
+
+  it('asks with the format: text output can need nothing', async () => {
+    const log: string[] = [];
+    const m = await api(lazy(log));
+    await m.render('a', WITH, { format: 'ascii' });
+    expect(log).toEqual([]);
+  });
+
+  it('preload loads what extensions provide of a kind', async () => {
+    const log: string[] = [];
+    const m = await api({
+      id: 'm',
+      resources: {
+        provides: [{ kind: 'math', name: 'tex' }],
+        missing: () => [],
+        load: async (r) => void log.push(`${r.kind}:${r.name}`),
+      },
+    });
+    await m.preload({ math: true });
+    expect(log).toEqual(['math:tex']);
+  });
+
+  it("reports a failed load, or an unprovided resource, as the extension's error", async () => {
+    const m = await api(lazy([], true));
+    const e = await rejection(m.render('a', WITH));
+    expect(e.code).toBe('INTERNAL');
+    expect(e.message).toBe('Extension "lazy" failed in resources: offline');
+    const odd = await api({
+      id: 'odd',
+      resources: {
+        provides: [],
+        missing: () => [{ kind: 'math', name: 'x' }],
+        load: async () => {},
+      },
+    });
+    expect((await rejection(odd.render('a', FLOW))).message).toBe(
+      'Extension "odd" failed in resources: missing() reported math "x", which it does not provide'
+    );
+  });
+
+  it('refuses resources without provides, missing() and load()', async () => {
+    const m = createMermaid();
+    const bad = { id: 'bad', resources: { provides: [] } } as unknown as ExtensionPlugin;
+    await expect(m.registerExternalDiagrams([bad])).rejects.toThrow(
+      'Extension "bad": resources needs provides, missing() and load()'
+    );
+  });
+});

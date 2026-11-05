@@ -175,6 +175,24 @@ describe('typeset', () => {
     expect(typeset('x', { ex: EX }).width).toBeGreaterThan(0);
   });
 
+  it("sizes characters the TeX font lacks with the caller's measure, as text in px", () => {
+    // MathJax's own guess is 1 math em per CJK character: 8 / 0.442 = 18.1 px at ex = 8.
+    const guessed = typeset('\\text{日本}', { ex: EX, em: 16 });
+    const measured = typeset('\\text{日本}', { ex: EX, em: 16, measure: () => 50 });
+    expect(guessed.width).toBeCloseTo(36.2, 1);
+    expect(measured.width).toBeCloseTo(50, 0);
+    const text = leaves(measured.node).find((l) => l.tag === 'text');
+    expect(text?.children).toEqual(['日本']);
+    // Each call measures afresh: an earlier call's widths are not reused.
+    expect(typeset('\\text{日本}', { ex: EX, em: 16 }).width).toBeCloseTo(36.2, 1);
+  });
+
+  it('passes italic and bold to the measure', () => {
+    const seen: [string, boolean, boolean][] = [];
+    typeset('\\textbf{日}', { ex: EX, em: 16, measure: (t, i, b) => (seen.push([t, i, b]), 10) });
+    expect(seen).toEqual([['日', false, true]]);
+  });
+
   it('needs a positive ex', () => {
     expect(() => typeset('x', { ex: 0 })).toThrow(RangeError);
     expect(() => typeset('x', { ex: Number.NaN })).toThrow(RangeError);

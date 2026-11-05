@@ -641,10 +641,15 @@ interface ExtensionPlugin {
   afterMount?(el: Element, result: RenderResult): void;         // DOM adapter only
   claims?: ('callbacks')[];                                    // features it handles, to silence core's warning
   inline?: InlineProvider[];                                   // M3.5 (D177): boxes for delimited label spans (§5.3)
+  resources?: {                                                // M3.5 (D178): what it loads lazily (R-API-2)
+    provides: Resource[];                                      // preload({ math: true }) loads those of kind 'math'
+    missing(parse: ParseResult, req: { config, format }): Resource[];   // sync; prepare loads them, renderSync throws
+    load(r: Resource): Promise<void>;
+  };
 }
 interface InlineProvider {
   open: string; close: string;                                 // '$$', '$$'
-  box(source: string, req: { font, measurer, metrics, ex }): InlineBox | undefined;  // sync; undefined = as written
+  box(source: string, req: { font, measurer, metrics, ex, warn }): InlineBox | undefined;  // sync; undefined = as written
 }
 type InlineBox = { width: number; height: number; baseline: number; node: SvgFragment };     // px
 ```
