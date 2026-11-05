@@ -43,6 +43,7 @@ import {
   loadTheme,
   resolveThemeName,
   type ThemeName,
+  type ThemeRuleTable,
 } from '@mermaid-js/core/theme';
 import { stageEnd, stageStart } from '@mermaid-js/core/timing';
 import type * as TextModule from './ascii.ts';
@@ -305,13 +306,19 @@ async function loadResources(registry: Registry, missing: readonly Resource[]): 
 }
 
 /** The theme a draw paints with: the config's choice, or the default when it is not loaded. */
-function themeFor(config: ResolvedConfig, s: Snapshot, warn: (w: Warning) => void) {
+function themeFor(
+  config: ResolvedConfig,
+  s: Snapshot,
+  warn: (w: Warning) => void,
+  rules: ThemeRuleTable | undefined
+) {
   const choice = resolveThemeName(config.theme, warn);
   const spec = loadedTheme(choice.name) ?? loadedTheme(DEFAULT_THEME)!;
   const dark = choice.dark ? loadedTheme(choice.dark) : undefined;
   return createTheme(spec, {
     themeVariables: config.themeVariables as Record<string, unknown> | undefined,
     dark,
+    ...(rules ? { rules } : {}),
     cssVariables: s.options.output?.cssVariables,
     warn,
   });
@@ -352,7 +359,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     const section = sectionOf(detected, plugin);
     const front = pre.frontMatter?.config;
     const directives = directiveConfig(pre, section);
-    const hit = siteConfigs.get(snap, plugin, detected, section);
+    const hit = siteConfigs.get(snap, plugin, detected, section, registry.fragments());
     for (const w of hit.warnings) warn(w);
     const config: ResolvedConfig = resolveText(hit.site, front, directives, { warn });
     const t = stageStart();
@@ -557,7 +564,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
       }
       engine = found.engine;
     }
-    const theme = themeFor(config, s, warn);
+    const theme = themeFor(config, s, warn, registry.themeRules());
     let idPrefix: string | undefined;
     const ctx: RenderContext = {
       config,
@@ -579,7 +586,8 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
         return engine(
           width !== undefined && graph.availableWidth === undefined
             ? { ...graph, availableWidth: width }
-            : graph
+            : graph,
+          { config }
         );
       },
       // Inline boxes (D177) are SVG only: text output shows every span as written.
@@ -815,7 +823,10 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
   }
 
   function registerLayoutLoaders(loaders: readonly LayoutLoader[]): void {
+    const before = registry.fragments();
     registry.registerLayouts(loaders);
+    // A new fragment changes how config resolves: parsed texts must resolve again.
+    if (registry.fragments() !== before) cache.clear();
   }
 
   /** No-op until the icons plugin exists; renders then carry an `ICON_PACKS_UNSUPPORTED` warning. */

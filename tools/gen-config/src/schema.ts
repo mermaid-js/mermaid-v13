@@ -48,6 +48,15 @@ export function loadSchema(source: string): RootSchema {
   return schema;
 }
 
+/** A plugin's schema fragment (D153): a schema root whose `$defs` may be left out. */
+export function loadFragmentSchema(source: string): RootSchema {
+  const schema = parse(source, { schema: 'core', maxAliasCount: -1 }) as RootSchema | null;
+  if (typeof schema !== 'object' || schema === null || Array.isArray(schema)) {
+    throw new Error('a config fragment must be an object');
+  }
+  return { ...schema, $defs: (schema.$defs as RootSchema['$defs'] | undefined) ?? {} };
+}
+
 /** Resolves a local `#/$defs/...` pointer. */
 export function resolveRef(root: RootSchema, ref: string): SchemaNode {
   if (!ref.startsWith('#/')) {

@@ -6,6 +6,7 @@
 import {
   CORE_DEFAULTS,
   resolveSite,
+  type ConfigFragment,
   type ConfigInput,
   type MermaidConfig,
   type ResolvedSite,
@@ -224,15 +225,24 @@ export interface SiteConfig {
 
 /**
  * Everything in a resolved config but the diagram text's own part depends only on the
- * snapshot, the plugin and the detected type: it is resolved once, and its warnings replayed.
+ * snapshot, the plugin, the detected type and the registered config fragments: it is resolved
+ * once, and its warnings replayed.
  */
 export class SiteConfigs {
-  private readonly bySnapshot = new WeakMap<
-    Snapshot,
-    WeakMap<AnyPlugin, Map<string, SiteConfig>>
-  >();
+  private bySnapshot = new WeakMap<Snapshot, WeakMap<AnyPlugin, Map<string, SiteConfig>>>();
+  private fragments: readonly ConfigFragment[] = [];
 
-  get(snap: Snapshot, plugin: AnyPlugin, detected: Detected, section?: string): SiteConfig {
+  get(
+    snap: Snapshot,
+    plugin: AnyPlugin,
+    detected: Detected,
+    section: string | undefined,
+    fragments: readonly ConfigFragment[]
+  ): SiteConfig {
+    if (fragments !== this.fragments) {
+      this.fragments = fragments;
+      this.bySnapshot = new WeakMap();
+    }
     let byPlugin = this.bySnapshot.get(snap);
     if (!byPlugin) this.bySnapshot.set(snap, (byPlugin = new WeakMap()));
     let byType = byPlugin.get(plugin);
@@ -248,6 +258,7 @@ export class SiteConfigs {
       const site = resolveSite(CORE_DEFAULTS, snap.config, pluginDefaults as MermaidConfig, {
         warn: (w) => void recorded.push(w),
         section,
+        ...(fragments.length > 0 ? { fragments } : {}),
       });
       hit = { site, warnings: recorded };
       byType.set(key, hit);

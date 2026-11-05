@@ -11,6 +11,7 @@
  * diagram needs from it, `prepare()` loads those, and `renderSync` throws `NotLoadedError` (or
  * draws placeholders) while they are missing, as for a diagram's own resources.
  */
+import type { ConfigFragment } from '../config/fragment.ts';
 import type { ResolvedConfig } from '../config/resolve.ts';
 import type { LayoutModel } from '../layout/types.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
@@ -79,6 +80,11 @@ export interface ExtensionPlugin<El = unknown, R = unknown> {
   readonly inline?: readonly InlineProvider[];
   /** What it loads lazily, and when a diagram needs it (R-API-2, D178). */
   readonly resources?: ExtensionResources;
+  /**
+   * The extension's config fragment (D153): its own keys, defaults, aliases and theme
+   * variables, known to the validator while the extension is registered.
+   */
+  readonly config?: ConfigFragment;
 }
 
 /** What an extension's `resources.missing` is asked with, besides the parse. */

@@ -414,7 +414,7 @@ describe('plugin manifests (R-PLUG-3, DESIGN §12.1)', () => {
       reg({ manifest: { plugin: 'extension', id: 'x', detector: './d.js' }, load })
     ).rejects.toThrow(/must not have a detector/);
     await expect(reg({ manifest: { plugin: 'theme', id: 'x' }, load })).rejects.toThrow(
-      /"plugin" must be "diagram" or "extension"/
+      /"plugin" must be "diagram", "extension" or "layout"/
     );
     await expect(reg({ manifest: { plugin: 'diagram', id: 'x' }, load })).rejects.toThrow(
       /needs its detector function/
@@ -455,6 +455,35 @@ describe('plugin manifests (R-PLUG-3, DESIGN §12.1)', () => {
       /has no ascii entry/
     );
     expect(() => readManifest('diagram')).toThrow(TypeError);
+  });
+
+  it('reads layout manifests (D177): names, entry, optional id, export and config', () => {
+    const names = ['elk', 'elk.layered', 'elk.sporeOverlap'];
+    expect(readManifest({ plugin: 'layout', names, entry: './dist/index.js' })).toEqual({
+      plugin: 'layout',
+      names,
+      entry: './dist/index.js',
+    });
+    const full = {
+      plugin: 'layout',
+      id: 'grid',
+      names: ['grid', 'grid'],
+      entry: './i.js',
+      export: 'layouts',
+      config: './c.js',
+    };
+    expect(readManifest(full)).toEqual({ ...full, names: ['grid'] });
+    const bad = (m: Record<string, unknown>) => () =>
+      readManifest({ plugin: 'layout', names: ['g'], entry: './i.js', ...m });
+    expect(bad({ names: [] })).toThrow(/non-empty array/);
+    expect(bad({ names: ['a b'] })).toThrow(/layout name "a b" is not a name/);
+    expect(bad({ entry: undefined })).toThrow(/needs an "entry"/);
+    expect(bad({ id: '1x' })).toThrow(/"id" must be a plugin id/);
+    for (const key of ['detector', 'formats', 'ascii'])
+      expect(bad({ [key]: './d.js' })).toThrow(`a layout has no "${key}"`);
+    expect(() => readManifest({ plugin: 'theme', id: 'x' })).toThrow(
+      /"diagram", "extension" or "layout"/
+    );
   });
 });
 

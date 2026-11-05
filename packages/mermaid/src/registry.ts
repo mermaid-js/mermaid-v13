@@ -8,10 +8,13 @@ import {
   type AsciiHook,
   type DiagramPlugin,
   type ExtensionPlugin,
+  type LayoutManifest,
   type PluginManifest,
 } from '@mermaid-js/core';
+import { checkFragment, type ConfigFragment } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { diagramStart, type PreprocessResult } from '@mermaid-js/core/preprocess';
+import { THEME_VARIABLES, type ThemeRuleTable } from '@mermaid-js/core/theme';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the registry holds plugins of every model and layout type
 export type AnyPlugin = DiagramPlugin<any, any>;
@@ -44,7 +47,8 @@ export interface LazyDiagram {
 /**
  * A plugin given by its package.json `mermaid` manifest (DESIGN §12.1, R-PLUG-3). A diagram
  * needs the eager `detector` and is loaded on first use; an extension has no detector and is
- * loaded on registration (its activation). `load` imports the manifest's `entry`.
+ * loaded on registration (its activation); a layout package registers each of its `names`
+ * lazily and is loaded when a diagram names one (D177). `load` imports the manifest's `entry`.
  */
 export interface ManifestPlugin {
   /** The `mermaid` value of the plugin's package.json; checked by `readManifest`. */
@@ -54,6 +58,11 @@ export interface ManifestPlugin {
   load(): Promise<unknown>;
   /** Imports the manifest's `ascii` entry (diagrams with one); its `ascii` export is the hook. */
   readonly loadAscii?: () => Promise<unknown>;
+  /**
+   * The fragment the manifest's `config` module exports (layouts with one), loaded eagerly
+   * with the manifest, like a detector (D153).
+   */
+  readonly config?: ConfigFragment;
 }
 
 /** `registerExternalDiagrams` input: a diagram, an extension, or either by manifest. */
@@ -63,6 +72,11 @@ export type ExternalDiagram = AnyPlugin | LazyDiagram | ExtensionPlugin | Manife
 export interface LayoutLoader {
   readonly name: string;
   loader(): Promise<LayoutEngine | { layout: LayoutEngine } | { default: LayoutEngine }>;
+  /**
+   * The layout plugin's config fragment (D153), known from registration on, before the engine
+   * loads. Loaders of one package share one fragment object (one id).
+   */
+  readonly config?: ConfigFragment;
 }
 
 interface Entry {
@@ -102,6 +116,15 @@ function entryExport(module: unknown, manifest: PluginManifest): unknown {
   if (manifest.export !== undefined) return m[manifest.export];
   if (typeof m.id === 'string') return m;
   return m.default ?? m.diagram ?? m.extension;
+}
+
+/** What a layout entry module holds: `manifest.export`, the default export, or itself. */
+function layoutsOf(module: unknown, manifest: LayoutManifest): unknown {
+  if (typeof module === 'function' || Array.isArray(module)) return module;
+  const m = module as Record<string, unknown> | null;
+  if (typeof m !== 'object' || m === null) return m;
+  if (manifest.export !== undefined) return m[manifest.export];
+  return m.default ?? m.layouts ?? m.layout;
 }
 
 function kindOf(def: ExternalDiagram): 'plugin' | 'lazy' | 'manifest' | 'extension' {
@@ -150,6 +173,9 @@ const unwrap = <T>(m: T | { diagram: T } | { layout: T } | { default: T }): T =>
       (m as { default: T }).default)
     : m;
 
+/** Theme variables core defines: a fragment's own must not reuse them. */
+const THEME_NAMES: ReadonlySet<string> = new Set(Object.keys(THEME_VARIABLES));
+
 const HOOKS = ['postParse', 'postLayout', 'postRender', 'afterMount'] as const;
 
 function checkExtension(p: ExtensionPlugin): ExtensionPlugin {
@@ -172,6 +198,9 @@ export class Registry {
   /** Whether any ELK name (`elk`, `elk.*`) has a registered loader. */
   private elkRegistered = false;
   private readonly layouts = new Map<string, LayoutEngine>([['layered', layered]]);
+  private readonly fragmentsById = new Map<string, ConfigFragment>();
+  private fragmentList: readonly ConfigFragment[] = [];
+  private rules: ThemeRuleTable | undefined;
 
   /** `firstParty`: the generated table, with loaders (`mermaid`) or without (`mermaid/slim`). */
   constructor(firstParty: readonly FirstPartyEntry[]) {
@@ -210,6 +239,31 @@ export class Registry {
       `No diagram type detected matching given configuration for text: ${body.slice(0, 200)}`,
       { source: src, offset: start }
     );
+  }
+
+  /**
+   * The config fragments of the registered plugins (D153), in registration order. The array
+   * is replaced, never changed, when a fragment is added: compare it by identity.
+   */
+  fragments(): readonly ConfigFragment[] {
+    return this.fragmentList;
+  }
+
+  /** Checks and adds a plugin's fragment; one per id, a later one replaces it. */
+  private addFragment(fragment: unknown): void {
+    const f = checkFragment(fragment, THEME_NAMES);
+    if (this.fragmentsById.get(f.id) === f) return;
+    this.fragmentsById.delete(f.id);
+    this.fragmentsById.set(f.id, f);
+    this.fragmentList = Object.freeze([...this.fragmentsById.values()]);
+    const rules: Record<string, string> = {};
+    for (const x of this.fragmentList) Object.assign(rules, x.themeVariables);
+    this.rules = Object.keys(rules).length > 0 ? Object.freeze(rules) : undefined;
+  }
+
+  /** The fragments' theme variables with their defaults, for `createTheme`; undefined if none. */
+  themeRules(): ThemeRuleTable | undefined {
+    return this.rules;
   }
 
   /** The loaded plugin for a detected type, if any. */
@@ -290,12 +344,16 @@ export class Registry {
     for (const def of defs) {
       const kind = kindOf(def);
       if (kind === 'extension') {
-        extensions.push(checkExtension(def as ExtensionPlugin));
+        extensions.push(this.withFragment(checkExtension(def as ExtensionPlugin)));
         continue;
       }
       if (kind === 'manifest') {
         const { manifest: raw, detector, load } = def as ManifestPlugin;
         const manifest = readManifest(raw);
+        if (manifest.plugin === 'layout') {
+          this.addLayoutPackage(manifest, def as ManifestPlugin);
+          continue;
+        }
         if (manifest.plugin === 'extension') {
           if (detector !== undefined)
             throw new TypeError(`Extension "${manifest.id}" must not have a detector`);
@@ -304,7 +362,7 @@ export class Registry {
             throw new TypeError(
               `Extension entry has id "${loaded.id}", its manifest says "${manifest.id}"`
             );
-          extensions.push(loaded);
+          extensions.push(this.withFragment(loaded));
           continue;
         }
         if (typeof detector !== 'function')
@@ -345,6 +403,44 @@ export class Registry {
     return extensions;
   }
 
+  /** A layout manifest (D177): each name lazily, one shared load of the entry. */
+  private addLayoutPackage(manifest: LayoutManifest, def: ManifestPlugin): void {
+    const label = manifest.id ?? manifest.names[0]!;
+    if (def.detector !== undefined)
+      throw new TypeError(`Layout package "${label}" must not have a detector`);
+    if (manifest.config !== undefined && def.config === undefined)
+      throw new TypeError(`Layout package "${label}" needs its config fragment`);
+    let pending: Promise<unknown> | undefined;
+    const entry = (): Promise<unknown> => {
+      if (!pending) {
+        pending = def.load().then((m) => layoutsOf(m, manifest));
+        pending.catch(() => (pending = undefined));
+      }
+      return pending;
+    };
+    this.registerLayouts(
+      manifest.names.map((name) => ({
+        name,
+        ...(def.config !== undefined ? { config: def.config } : {}),
+        loader: async () => {
+          const found = await entry();
+          if (typeof found === 'function') return found as LayoutEngine;
+          const l = Array.isArray(found)
+            ? (found as unknown[]).find((x) => (x as LayoutLoader | null)?.name === name)
+            : undefined;
+          if (typeof (l as LayoutLoader | undefined)?.loader !== 'function')
+            throw new TypeError(`Layout entry of "${label}" has no layout "${name}"`);
+          return (l as LayoutLoader).loader();
+        },
+      }))
+    );
+  }
+
+  private withFragment(e: ExtensionPlugin): ExtensionPlugin {
+    if (e.config !== undefined) this.addFragment(e.config);
+    return e;
+  }
+
   private async addDiagram(
     def: AnyPlugin | LazyDiagram,
     isPlugin: boolean,
@@ -374,6 +470,7 @@ export class Registry {
   }
 
   registerLayouts(loaders: readonly LayoutLoader[]): void {
+    for (const l of loaders) if (l.config !== undefined) this.addFragment(l.config);
     for (const l of loaders) {
       this.layoutLoaders.set(l.name, l.loader);
       if (isElkName(l.name)) this.elkRegistered = true;
@@ -397,6 +494,8 @@ export class Registry {
   async loadLayout(name: string): Promise<void> {
     const loader = this.layoutLoaders.get(name);
     if (!loader || this.layouts.has(name)) return;
-    this.layouts.set(name, unwrap<LayoutEngine>(await loader()));
+    const engine = unwrap<LayoutEngine>(await loader());
+    if (typeof engine !== 'function') throw new TypeError(`Layout "${name}" loaded no engine`);
+    this.layouts.set(name, engine);
   }
 }

@@ -9,6 +9,7 @@ import type { DeepReadonly } from './resolve.ts';
 
 export type * from './generated/config.type.ts';
 export type { KeyNote, KeyTree } from './keys.ts';
+export { checkFragment, type ConfigAlias, type ConfigFragment } from './fragment.ts';
 export {
   INTEGRATOR_ONLY_KEYS,
   resolveConfig,
