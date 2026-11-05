@@ -11,7 +11,8 @@
  *   published or not: the editor, the service and core are peers.
  * - Other private packages (conformance, bench, tools) are not published and are skipped.
  * - `THIRD_PARTY_ALLOWED` names the few third-party packages a published package may depend
- *   on and import from its bin, by decision: the LSP server's `vscode-languageserver` (D88).
+ *   on and import from its bin, by decision: the LSP server's `vscode-languageserver` (D88)
+ *   and the bundler plugin's `unplugin` (D164). `mermaid` itself stays first-party only.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
@@ -34,6 +35,7 @@ export interface WorkspacePackage {
 /** Third-party runtime dependencies a published package may have, by package name. */
 export const THIRD_PARTY_ALLOWED: Readonly<Record<string, readonly string[]>> = {
   '@mermaid-js/language-server': ['vscode-languageserver'],
+  '@mermaid-js/bundler-plugin': ['unplugin'],
 };
 
 const allowedThirdParty = (name: string, dep: string) =>

@@ -3,7 +3,9 @@
  * into one example app per bundler (Vite, webpack, Rollup, esbuild) and built. Playwright
  * records every script request: the one-flowchart page loads only the core and flowchart
  * chunks, and on the every-type page each type's chunk loads only when its diagram renders.
- * The pages are `bundle-pages/`, copied into each app before its build.
+ * The pages are `bundle-pages/`, copied into each app before its build. The apps are built
+ * without the bundler plugin here (`MERMAID_PLUGIN=off`): `bundler-plugin.spec.ts` builds them
+ * with it.
  */
 import { cpSync } from 'node:fs';
 import { join } from 'node:path';
@@ -33,7 +35,7 @@ for (const bundler of BUNDLERS) {
     test.beforeAll(async () => {
       app = installApp(`bundle-${bundler}`, { manager: 'pnpm' });
       cpSync(join(PLATFORM_DIR, 'bundle-pages'), app.dir, { recursive: true });
-      app.run('pnpm', ['run', 'build']);
+      app.run('pnpm', ['run', 'build'], { env: { MERMAID_PLUGIN: 'off' } });
       dist = join(app.dir, 'dist');
       server = await serveDir(dist);
     });

@@ -20,5 +20,5 @@ export {
 export type { Manifest, ManifestEdit, PackageSource, PackedPackage, PackOptions } from './pack.ts';
 export { serveDir } from './serve.ts';
 export type { ServeOptions, StaticServer } from './serve.ts';
-export { assertLoadedOnly, chunkParts, partOf, recordScripts } from './chunks.ts';
+export { assertLoadedOnly, chunkParts, chunkSources, partOf, recordScripts } from './chunks.ts';
 export type { ChunkPart, LoadedExpectation, ScriptRecorder } from './chunks.ts';

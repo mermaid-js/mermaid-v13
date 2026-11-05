@@ -13,10 +13,10 @@
  */
 import { pathToFileURL } from 'node:url';
 import type { Warning } from '@mermaid-js/core';
+import { bundledSource } from './bundled.ts';
 import { discoverOnFirstUse, type DiscoveredPlugin, type FirstUseSource } from './discovery.ts';
-import { DETECTORS } from './generated/detectors.gen.ts';
 import mermaid, { createMermaid as createBase, type Mermaid } from './index.ts';
-import { findAppRoot, scanPlugins, type ScannedPackage } from './node-scan.ts';
+import { FIRST_PARTY_IDS, findAppRoot, scanPlugins, type ScannedPackage } from './node-scan.ts';
 
 export * from './index.ts';
 
@@ -54,11 +54,6 @@ function detectorOf(module: unknown): Detector | undefined {
   const fn = m?.detector ?? m?.default;
   return typeof fn === 'function' ? (fn as Detector) : undefined;
 }
-
-/** First-party diagram ids: their own `@mermaid-js/*` packages are never discovered. */
-const FIRST_PARTY_IDS: readonly string[] = DETECTORS.flatMap((e) =>
-  e.id === undefined ? [] : [e.id]
-);
 
 /** One scanned package as a seam entry; a detector that fails to load gives a skip warning. */
 async function toDiscovered(p: ScannedPackage, ms: number): Promise<DiscoveredPlugin | Warning> {
@@ -132,12 +127,14 @@ export function nodeDiscovery(options: NodeDiscoveryOptions = {}): FirstUseSourc
   };
 }
 
-discoverOnFirstUse(mermaid, nodeDiscovery());
+// A server build made with `@mermaid-js/bundler-plugin` already has its plugins (bundled.ts):
+// the build-time scan of the same root, so Node discovery stays off there.
+if (bundledSource === undefined) discoverOnFirstUse(mermaid, nodeDiscovery());
 
 /** A new `mermaid` API object, with every first-party diagram and Node plugin discovery. */
 export function createMermaid(): Mermaid {
   const api = createBase();
-  discoverOnFirstUse(api, nodeDiscovery());
+  if (bundledSource === undefined) discoverOnFirstUse(api, nodeDiscovery());
   return api;
 }
 

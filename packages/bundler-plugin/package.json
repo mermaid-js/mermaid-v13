@@ -1,0 +1,60 @@
+{
+  "name": "@mermaid-js/bundler-plugin",
+  "version": "13.0.0-alpha.0",
+  "description": "One-line Mermaid plugin discovery for Vite, webpack, Rollup and esbuild (D164).",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/bundler-plugin"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./vite": {
+      "mermaid-source": "./src/vite.ts",
+      "types": "./dist/vite.d.ts",
+      "default": "./dist/vite.js"
+    },
+    "./webpack": {
+      "mermaid-source": "./src/webpack.ts",
+      "types": "./dist/webpack.d.ts",
+      "default": "./dist/webpack.js"
+    },
+    "./rollup": {
+      "mermaid-source": "./src/rollup.ts",
+      "types": "./dist/rollup.d.ts",
+      "default": "./dist/rollup.js"
+    },
+    "./esbuild": {
+      "mermaid-source": "./src/esbuild.ts",
+      "types": "./dist/esbuild.d.ts",
+      "default": "./dist/esbuild.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "unplugin": "3.4.0"
+  },
+  "peerDependencies": {
+    "mermaid": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12",
+    "mermaid": "workspace:*"
+  }
+}

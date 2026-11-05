@@ -19,5 +19,5 @@ if (violations.length > 0) {
   process.exit(1);
 }
 process.stdout.write(
-  'Dependency check passed: published packages have no third-party runtime dependencies (beyond D88).\n'
+  'Dependency check passed: published packages have no third-party runtime dependencies (beyond D88, D164).\n'
 );

@@ -39,6 +39,14 @@ export function partOf(source: string): ChunkPart {
 
 /** The parts in the built file at `path` (as served from `dist`), read from its source map. */
 export function chunkParts(dist: string, path: string): Set<ChunkPart> {
+  return new Set(chunkSources(dist, path).map(partOf));
+}
+
+/**
+ * The source paths in the built file at `path` (as served from `dist`), as its source map
+ * lists them: finer than `chunkParts`, e.g. to tell a plugin's detector from its entry.
+ */
+export function chunkSources(dist: string, path: string): string[] {
   const file = join(dist, path);
   const code = readFileSync(file, 'utf8');
   const comment = /[#@] sourceMappingURL=([^\s'"]+)\s*$/.exec(code)?.[1];
@@ -49,11 +57,11 @@ export function chunkParts(dist: string, path: string): Set<ChunkPart> {
   if (!existsSync(mapFile)) {
     // Rolldown (Vite) writes no map for a facade chunk: re-exports of other chunks, which
     // the browser requests (and the recorder records) on their own.
-    if (code.replace(FACADE_STATEMENT, '').trim() === '') return new Set();
+    if (code.replace(FACADE_STATEMENT, '').trim() === '') return [];
     throw new Error(`${path} has no source map: build the app with source maps on`);
   }
   const map = JSON.parse(readFileSync(mapFile, 'utf8')) as { sources: string[] };
-  return new Set(map.sources.map(partOf));
+  return map.sources;
 }
 
 export interface ScriptRecorder {
