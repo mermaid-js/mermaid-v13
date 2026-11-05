@@ -5,6 +5,7 @@
  * list has to match the differences found exactly, so none is unlisted and none is stale.
  */
 import {
+  NUMBERED_PALETTES,
   PALETTE_LIMIT,
   PALETTE_VARIABLES,
   THEME_VARIABLES,
@@ -53,7 +54,6 @@ const LOOK_GEOMETRY_WHY =
 /** Each difference from v12 neo, with the decision that makes it. */
 const DIFFERENCES: Readonly<Record<string, string>> = {
   dropShadow: 'D181: the same blurred shadow, written in the syntax `checkFilter` accepts',
-  cScale: 'D181, D152: neo carries no per-item palette',
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
@@ -88,8 +88,8 @@ function same(name: string): boolean {
 }
 
 function v12Palette(name: string): string[] {
-  if (name === 'cScale')
-    return Array.from({ length: PALETTE_LIMIT }, (_, i) => OLD[`cScale${i}`] as string);
+  if (NUMBERED_PALETTES.includes(name as never))
+    return Array.from({ length: PALETTE_LIMIT }, (_, i) => OLD[`${name}${i}`] as string);
   const list = OLD[name];
   return Array.isArray(list) ? (list as string[]) : [];
 }
@@ -136,8 +136,10 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
     expect(THEME_VARIABLES.border1?.usedBy).toEqual([]);
   });
 
-  it('has no per-item palette (D181)', () => {
-    for (const p of PALETTE_VARIABLES) expect(neo.palette(p), p).toEqual([]);
+  it("has no per-subgraph palette (D181); its cScale palettes are v12 neo's (D258)", () => {
+    expect(neo.palette('borderColorArray')).toEqual([]);
+    expect(neo.palette('bkgColorArray')).toEqual([]);
+    for (const p of NUMBERED_PALETTES) expect(neo.palette(p), p).toHaveLength(PALETTE_LIMIT);
   });
 
   // GAPS.md "Contracts": #223 owns the gradient vocabulary. Until it merges these are not v13

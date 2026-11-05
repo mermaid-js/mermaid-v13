@@ -90,11 +90,13 @@ export function mixColors(a: Rgba, b: Rgba, p: number): Rgba {
 const round10 = (n: number): number => Math.round(n * 1e10) / 1e10;
 
 /**
- * `c` with `delta` (percentage points, ±100) added to its HSL lightness, clamped to 0–100 and
- * converted back to sRGB: khroma's `lighten`/`darken`, which v12's themes derive with (D117),
- * including khroma's rounding of the HSL channels to 10 decimals.
+ * khroma's HSL channels: hue in degrees, kept with its sign as khroma keeps it, saturation and
+ * lightness 0–100. v12's derived colours carry these from step to step (D117).
  */
-export function adjustLightness(c: Rgba, delta: number): Rgba {
+export type Hsl = readonly [number, number, number];
+
+/** `c` as khroma's HSL channels, unrounded. */
+export function rgbToHsl(c: Rgba): Hsl {
   const [r, g, b] = [c[0] / 255, c[1] / 255, c[2] / 255];
   const max = Math.max(r, g, b);
   const min = Math.min(r, g, b);
@@ -108,15 +110,41 @@ export function adjustLightness(c: Rgba, delta: number): Rgba {
     else if (max === g) h = (b - r) / d + 2;
     else h = (r - g) / d + 4;
   }
-  const lt = round10(clamp(l * 100 + delta, 100)) / 100;
-  const sat = round10(s * 100) / 100;
-  const k = sat * Math.min(lt, 1 - lt);
-  const hue = round10(h * 60) / 30; // degrees → twelfths of a turn, as parseColor's hsl
+  return [h * 60, s * 100, l * 100];
+}
+
+/**
+ * khroma's `change` of hue and lightness (its `adjust`, `lighten` and `darken`, which v12's
+ * themes derive with, D117): the hue turned by `dh` degrees (modulo 360, sign
+ * kept), the lightness moved by `dl` points and clamped to 0–100, and every channel rounded to
+ * 10 decimals as khroma writes them.
+ */
+export function shiftHsl(c: Hsl, dh: number, dl: number): Hsl {
+  return [
+    round10(dh === 0 ? c[0] : (c[0] + dh) % 360),
+    round10(c[1]),
+    round10(clamp(c[2] + dl, 100)),
+  ];
+}
+
+/** HSL channels back to sRGB, as a browser converts `hsl()`. */
+export function hslToRgb(c: Hsl, alpha: number): Rgba {
+  const lt = c[2] / 100;
+  const k = (c[1] / 100) * Math.min(lt, 1 - lt);
+  const hue = (c[0] < 0 ? (c[0] % 360) + 360 : c[0]) / 30; // degrees → twelfths of a turn
   const [x, y, z] = [0, 8, 4].map((o) => {
     const t = (o + hue) % 12;
     return (lt - k * Math.max(-1, Math.min(t - 3, 9 - t, 1))) * 255;
   }) as [number, number, number];
-  return [x, y, z, c[3]];
+  return [x, y, z, alpha];
+}
+
+/**
+ * `c` with its channels rounded to 10 decimals, as khroma writes rgb(): how v12's `invert` read
+ * a colour an HSL step made (D258), so a channel on .5 rounds as v12's does.
+ */
+export function khromaRgb(c: Rgba): Rgba {
+  return [round10(c[0]), round10(c[1]), round10(c[2]), c[3]];
 }
 
 export function invertColor(c: Rgba): Rgba {
