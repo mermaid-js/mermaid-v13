@@ -1,0 +1,37 @@
+{
+  "name": "@mermaid-js/plugin-math",
+  "version": "13.0.0-alpha.0",
+  "private": true,
+  "description": "TeX math in Mermaid v13 labels via MathJax (spike M1 #244: TeX to SVG paths; plugin wiring is M2 #245).",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/plugin-math"
+  },
+  "sideEffects": false,
+  "exports": {
+    "./engine": {
+      "mermaid-source": "./src/engine.ts",
+      "types": "./dist/engine.d.ts",
+      "default": "./dist/engine.js"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@mathjax/mathjax-tex-font": "4.1.3",
+    "@mathjax/src": "4.1.3"
+  },
+  "peerDependencies": {
+    "@mermaid-js/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^"
+  }
+}

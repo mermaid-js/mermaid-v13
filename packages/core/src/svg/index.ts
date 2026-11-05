@@ -25,7 +25,7 @@ export type {
 } from './types.ts';
 export { ALLOWED_ATTRS, ALLOWED_TAGS, SVG_NS } from './allowlist.ts';
 export { esc, num } from './escape.ts';
-export { rotate, scale, transforms, translate, type PathBuilder } from './path.ts';
+export { pathBuilder, rotate, scale, transforms, translate, type PathBuilder } from './path.ts';
 export type { SvgMatch, SvgNode, SvgTree } from './tree.ts';
 export {
   streamWriter,
