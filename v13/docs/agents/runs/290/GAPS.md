@@ -86,7 +86,7 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 - Done in T5: `packages/conformance/src/journey/render.spec.ts` (corpus × redux-color, default, neo-dark through `createMermaid().render()`, full `saxes` parse, AST ranges), `packages/mermaid/src/journey.spec.ts`. Baselines: 17 under `e2e/diagrams/journey/baseline/` (11 themes, 6 features); scores outside 0–5 stay out of them, since the gallery requires baselines without warnings.
 - Unmet until T6 #331: the manifest has no `language` entry (no `./language` export yet); `cdn-build.spec.ts` now expects a language chunk only for packages that export one.
 
-## #331 T6 language facet
+## #331 T6 language facet (merged)
 
 - Decided in T6: section and task symbols, and section folding, are added by the facet's `parse` (`parseJourneyForService`, `src/facet/symbols.ts`), not by the parser: the plugin's parse is T2's, unchanged but for the probe. A `section` symbol per section line and a `task` symbol per task, over the name with blanks off both ends (the model keeps v12's untrimmed names), the first of a name `def`, later ones `ref`. Namespaces `[['actor'], ['section'], ['task']]`: a section, a task and an actor of one name are three symbols. A name written otherwise than read (an entity, a tag quote, a directive inside) gets its statement's range, which the service drops, as the parser does for such an actor.
 - Decided in T6: a section's statement span becomes a block holding every statement after it up to the next section line (journey has no closer), so it folds from its `section` line to its last task; statements before the first section stay top-level. A blank-only or task-less section does not fold.
