@@ -82,4 +82,23 @@ describe('the R-LANG-4 budget for sequence, as ratios', () => {
     );
     expect(b! / a!).toBeLessThanOrEqual(6.2);
   }, 60_000);
+
+  /**
+   * Rename alone, where the renamed name occurs four times as often in four times the text:
+   * applying E edits to N characters must be O(N + E), not O(N × E). Rebuilding the text once
+   * per edit made this ratio about 6.4 locally and pushed the whole cycle past 6 on CI.
+   */
+  it('rename on four times the text costs at most five times as much (quadratic gives 16)', () => {
+    const body = SEQUENCE_FIXTURE.slice(SEQUENCE_FIXTURE.indexOf('  %% block 0'));
+    const docOne = service.update('bench:///rename-1x.mmd', SEQUENCE_FIXTURE);
+    const fourText = SEQUENCE_FIXTURE + body + body + body;
+    const docFour = service.update('bench:///rename-4x.mmd', fourText);
+    const at = SEQUENCE_FIXTURE.indexOf(' P7 as ') + 1;
+    const [a, b] = bestOfEach(
+      15,
+      () => docOne.rename(at, 'renamedParticipant'),
+      () => docFour.rename(at, 'renamedParticipant')
+    );
+    expect(b! / a!).toBeLessThanOrEqual(5);
+  }, 60_000);
 });
