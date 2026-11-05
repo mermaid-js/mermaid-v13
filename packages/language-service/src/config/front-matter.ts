@@ -1,7 +1,7 @@
 /**
  * Front matter in the service (DESIGN §4.5, R-LANG-5, D96): the YAML node tree of the front
- * matter (the reader's tree mode, which keeps reading after an error), the key under an
- * offset, and the config warnings of `config:`. The warnings are core's own (`resolveText`,
+ * matter (the reader's tree mode, which keeps reading after an error) and its YAML errors, one
+ * per bad line (#168), the key under an offset, and the config warnings of `config:`. The warnings are core's own (`resolveText`,
  * as a render resolves the front matter), placed on the keys they name. `%%{init}%%`
  * directives keep their preprocess diagnostics only.
  */
@@ -27,6 +27,12 @@ export interface FrontMatterTree {
   readonly unclosed: boolean;
   /** The document's root node; `null` when nothing could be read. */
   readonly root: YamlNode | null;
+  /**
+   * The tree mode's YAML diagnostics (#168): one per bad line, where preprocess (and so the
+   * renderer, D91) stops at the first. Empty for an unclosed block, which preprocess does not
+   * read as YAML.
+   */
+  readonly diagnostics: readonly Diagnostic[];
 }
 
 /** Where an unclosed front matter opens (preprocess reports it, with the opener as related). */
@@ -63,6 +69,7 @@ export function frontMatterTree(ctx: DocumentContext): FrontMatterTree | undefin
     indent: indent.length,
     unclosed: fm === undefined,
     root: read.root,
+    diagnostics: fm === undefined ? [] : read.diagnostics,
   };
 }
 

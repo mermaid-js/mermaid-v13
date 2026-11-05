@@ -1,0 +1,6 @@
+@ 3:10  class `|Rubber Duck`
+  prepare: 3:10-3:21 "Rubber Duck"; rename to "Big Duck":
+  %% rename-to: Big Duck
+  classDiagram
+    class `Big Duck`
+    `Big Duck` <|-- Toy

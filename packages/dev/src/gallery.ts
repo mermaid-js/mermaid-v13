@@ -5,6 +5,7 @@
  */
 import { createTheme, isThemeName, loadTheme } from '@mermaid-js/core/theme';
 import { renderDiagram } from './adapter.ts';
+import { asHostText } from './host-text.ts';
 import { M1_THEMES, setsTheme, type Fixture } from './fixtures.ts';
 
 export interface GalleryOptions {
@@ -76,7 +77,7 @@ export async function buildGallery(
     for (const theme of themes) {
       const idPrefix = `g${count + cells.length}`;
       try {
-        const { svg } = await renderDiagram(fixture.source, {
+        const { svg } = await renderDiagram(asHostText(fixture.source), {
           config: theme ? { theme } : undefined,
           idPrefix,
         });

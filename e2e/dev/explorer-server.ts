@@ -1,6 +1,6 @@
 /**
  * A second dev server over a temporary explorer root, for specs that write `.mmd` files
- * (live reload, saving, creating). The shared Playwright server stays on `e2e/diagrams`, which
+ * (live reload, saving, creating). The shared Playwright server stays on the checkout, which
  * specs only read. Spawns `pnpm --filter @mermaid-js/dev serve` on a free port.
  *
  *     const explorer = await startExplorerServer({ 'a/one.mmd': 'flowchart LR\n  A' });

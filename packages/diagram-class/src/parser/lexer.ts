@@ -11,7 +11,7 @@
  *
  * Every scan is linear in the text it consumes (R-PARSE-7).
  */
-import { Kind, TokenWriter } from '@mermaid-js/core/parser-kit';
+import { codePointEnd, Kind, TokenWriter } from '@mermaid-js/core/parser-kit';
 import type { Hole, Probe, TokenStream } from '@mermaid-js/core/parser-kit';
 import { A, CONDITIONS, RULES, S } from './rules.ts';
 import type { Rule, Scan } from './rules.ts';
@@ -88,10 +88,12 @@ class ClassLexer {
       const at = this.step(p);
       if (at >= 0) p = at;
       else if (p < n) {
-        this.emit(Kind.Error, p, p + 1);
+        // One code point, so the token never splits an emoji.
+        const end = codePointEnd(this.v12.text, p);
+        this.emit(Kind.Error, p, end);
         this.stack.length = 1;
         this.stack[0] = S.INITIAL;
-        p++;
+        p = end;
       }
       probe?.lexed(this.sourceStart(before), this.sourceStart(p), mode);
     }

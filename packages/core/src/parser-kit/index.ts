@@ -9,6 +9,7 @@ export { kindCategories, SHARED_CATEGORIES, TOKEN_CATEGORIES } from './categorie
 export type { TokenCategory } from './categories.ts';
 export {
   charTable,
+  codePointEnd,
   hasClass,
   isBlank,
   isDigit,

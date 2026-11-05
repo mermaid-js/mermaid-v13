@@ -8,6 +8,9 @@
   ],
   "patterns": [
     {
+      "include": "#front-matter-start"
+    },
+    {
       "include": "#mode-INITIAL"
     }
   ],
@@ -17,7 +20,8 @@
       "name": "comment.line.mermaid-sequence"
     },
     "trivia-1": {
-      "match": "[^\\S\\n]*%%\\{.*?\\}%%",
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
       "name": "meta.embedded.mermaid-sequence"
     },
     "rule-0": {
@@ -61,31 +65,85 @@
         }
       }
     },
-    "rule-17": {
-      "begin": "(?i:participant)\\b",
-      "end": "((?:#\\w+;|[^<>:\\n,;@])+(?=\\s*[\\n;#]|$))|([^<>:\\n,;@]*<[^\\n]*)|([^\\n]+)|(?=@\\{)|(?=(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s+(?i:as)\\s))",
+    "phase-ID": {
+      "begin": "\\G(?!(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|(?:(?!\\n)\\s)+|#(?!\\w+;)[^\\n]*)(?=@\\{)|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|(?:(?!\\n)\\s)+|#(?!\\w+;)[^\\n]*|(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s*@\\{))(?=(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s+(?i:as)\\s)))",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|(?:(?!\\n)\\s)+|#(?!\\w+;)[^\\n]*)(?=@\\{)|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|(?:(?!\\n)\\s)+|#(?!\\w+;)[^\\n]*|(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s*@\\{))(?=(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s+(?i:as)\\s))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|(?:(?!\\n)\\s)+|#(?!\\w+;)[^\\n]*|(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s*@\\{))((?:#\\w+;|[^<>:\\n,;@])+(?=\\s*[\\n;#]|$))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|(?:(?!\\n)\\s)+|#(?!\\w+;)[^\\n]*|(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s*@\\{))([^<>:\\n,;@]*<[^\\n]*)|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|(?:(?!\\n)\\s)+|#(?!\\w+;)[^\\n]*|(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s*@\\{))([^\\n]+)",
       "patterns": [
         {
           "include": "#mode-ID"
         }
       ],
-      "beginCaptures": {
-        "0": {
-          "name": "keyword.control.mermaid-sequence"
-        }
-      },
       "endCaptures": {
         "1": {
           "name": "variable.other.mermaid-sequence"
         }
       }
     },
-    "rule-18": {
-      "begin": "(?i:actor)\\b",
-      "end": "((?:#\\w+;|[^<>:\\n,;@])+(?=\\s*[\\n;#]|$))|([^<>:\\n,;@]*<[^\\n]*)|([^\\n]+)|(?=@\\{)|(?=(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s+(?i:as)\\s))",
+    "switch-7": {
+      "begin": "@\\{",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
       "patterns": [
         {
-          "include": "#mode-ID"
+          "include": "#phase-CONFIG"
+        },
+        {
+          "include": "#switch-9"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-sequence"
+        }
+      }
+    },
+    "phase-CONFIG": {
+      "begin": "\\G(?!(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|[^}]+)(?=\\}(?=\\s+(?i:as)\\s)))",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|[^}]+)(?=\\}(?=\\s+(?i:as)\\s))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|[^}]+)(\\})",
+      "patterns": [
+        {
+          "include": "#mode-CONFIG"
+        }
+      ],
+      "endCaptures": {
+        "1": {
+          "name": "meta.embedded.mermaid-sequence"
+        }
+      }
+    },
+    "switch-9": {
+      "begin": "\\}(?=\\s+(?i:as)\\s)",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-ALIAS"
+        },
+        {
+          "include": "#switch-21"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-sequence"
+        }
+      }
+    },
+    "phase-ALIAS": {
+      "begin": "\\G(?!(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|(?:(?!\\n)\\s)+|#(?!\\w+;)[^\\n]*)(?=(?i:as)\\b))",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|(?:(?!\\n)\\s)+|#(?!\\w+;)[^\\n]*)(?=(?i:as)\\b)|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|(?:(?!\\n)\\s)+|#(?!\\w+;)[^\\n]*)((?:))",
+      "patterns": [
+        {
+          "include": "#mode-ALIAS"
+        }
+      ]
+    },
+    "switch-21": {
+      "begin": "(?i:as)\\b",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{|(?:(?!\\n)\\s)+|#(?!\\w+;)[^\\n]*)((?i:(?::?(?:no)?wrap:)?)(?:[^#\\n;]|#\\w+;)*)",
+      "patterns": [
+        {
+          "include": "#mode-LINE"
         }
       ],
       "beginCaptures": {
@@ -95,7 +153,67 @@
       },
       "endCaptures": {
         "1": {
+          "name": "string.quoted.mermaid-sequence"
+        }
+      }
+    },
+    "switch-12": {
+      "begin": "(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s+(?i:as)\\s)",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-ALIAS"
+        },
+        {
+          "include": "#switch-21"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
           "name": "variable.other.mermaid-sequence"
+        }
+      }
+    },
+    "rule-17": {
+      "begin": "(?i:participant)\\b",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-ID"
+        },
+        {
+          "include": "#switch-7"
+        },
+        {
+          "include": "#switch-12"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-sequence"
+        }
+      }
+    },
+    "rule-18": {
+      "begin": "(?i:actor)\\b",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-ID"
+        },
+        {
+          "include": "#switch-7"
+        },
+        {
+          "include": "#switch-12"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-sequence"
         }
       }
     },
@@ -105,20 +223,22 @@
     },
     "rule-20": {
       "begin": "(?i:destroy)\\b",
-      "end": "((?:#\\w+;|[^<>:\\n,;@])+(?=\\s*[\\n;#]|$))|([^<>:\\n,;@]*<[^\\n]*)|([^\\n]+)|(?=@\\{)|(?=(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s+(?i:as)\\s))",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
       "patterns": [
         {
-          "include": "#mode-ID"
+          "include": "#phase-ID"
+        },
+        {
+          "include": "#switch-7"
+        },
+        {
+          "include": "#switch-12"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-sequence"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "variable.other.mermaid-sequence"
         }
       }
     },
@@ -369,39 +489,43 @@
     },
     "rule-44": {
       "begin": "(?i:activate)\\b",
-      "end": "((?:#\\w+;|[^<>:\\n,;@])+(?=\\s*[\\n;#]|$))|([^<>:\\n,;@]*<[^\\n]*)|([^\\n]+)|(?=@\\{)|(?=(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s+(?i:as)\\s))",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
       "patterns": [
         {
-          "include": "#mode-ID"
+          "include": "#phase-ID"
+        },
+        {
+          "include": "#switch-7"
+        },
+        {
+          "include": "#switch-12"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-sequence"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "variable.other.mermaid-sequence"
         }
       }
     },
     "rule-45": {
       "begin": "(?i:deactivate)\\b",
-      "end": "((?:#\\w+;|[^<>:\\n,;@])+(?=\\s*[\\n;#]|$))|([^<>:\\n,;@]*<[^\\n]*)|([^\\n]+)|(?=@\\{)|(?=(?:#\\w+;|[^<>:\\n,;@\\s])+(?=\\s+(?i:as)\\s))",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
       "patterns": [
         {
-          "include": "#mode-ID"
+          "include": "#phase-ID"
+        },
+        {
+          "include": "#switch-7"
+        },
+        {
+          "include": "#switch-12"
         }
       ],
       "beginCaptures": {
         "0": {
           "name": "keyword.control.mermaid-sequence"
-        }
-      },
-      "endCaptures": {
-        "1": {
-          "name": "variable.other.mermaid-sequence"
         }
       }
     },
@@ -961,6 +1085,52 @@
         },
         {
           "include": "#rule-54"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-sequence"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-sequence"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-sequence"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-sequence"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
         }
       ]
     }

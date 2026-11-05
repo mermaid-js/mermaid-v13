@@ -5,7 +5,7 @@
  */
 import { BLANK_REL, GRADIENT_FIXED, TEXT_HOLDERS } from './allowlist.ts';
 import { checkTag, formatValue } from './encode.ts';
-import { esc } from './escape.ts';
+import { esc, escAttr } from './escape.ts';
 import { pathBuilder, type PathBuilder } from './path.ts';
 import { CompactTree, type SvgTree } from './tree.ts';
 import type { AllowedTag, Attrs, SvgGradient, ThemeStyleSheet } from './types.ts';
@@ -142,13 +142,18 @@ function writeLabel(
   const top = cy - box.height / 2;
   const first = lines[0];
   const only = lines.length === 1 && first && first.length === 1 ? first[0] : undefined;
+  const left = box.left === true && box.width !== undefined ? cx - box.width / 2 : undefined;
   if (only && spanAttrs(only, undefined) === undefined) {
-    w.open('text', { ...attrs, x: cx, y: top + box.baseline, 'text-anchor': 'middle' });
+    w.open('text', {
+      ...attrs,
+      x: left === undefined ? cx : left + (box.indents?.[0] ?? 0),
+      y: top + box.baseline,
+      'text-anchor': left === undefined ? 'middle' : 'start',
+    });
     w.text(only.text);
     w.close();
     return;
   }
-  const left = box.left === true && box.width !== undefined ? cx - box.width / 2 : undefined;
   w.open('text', {
     ...attrs,
     'text-anchor': left === undefined ? 'middle' : 'start',
@@ -202,7 +207,7 @@ class Stream implements StreamSvgWriter {
       }
       // Numbers and number lists format to digits, signs, points, commas and spaces only.
       const plain = typeof raw === 'number' || Array.isArray(raw);
-      s += ' ' + name + '="' + (plain ? value : esc(value)) + '"';
+      s += ' ' + name + '="' + (plain ? value : escAttr(value)) + '"';
     }
     if (blank && !rel) s += ' rel="' + BLANK_REL + '"';
     return s;

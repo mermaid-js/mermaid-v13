@@ -64,6 +64,8 @@ const HANDWRITTEN: Program[] = [
       0
     ),
   (w) => w.label(label([]), 0, 0),
+  (w) => w.label({ ...label([[{ text: 'left' }]]), left: true, width: 30, indents: [4] }, 50, 20),
+  (w) => w.leaf('g', { 'data-ast': 'n:a\tb\nc\r\nd', class: 'x\ny' }),
   (w) => {
     w.open('text');
     w.text('');

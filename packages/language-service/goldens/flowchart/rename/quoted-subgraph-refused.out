@@ -1,0 +1,3 @@
+@ 3:13  subgraph "|One"
+  prepare: 3:13-3:16 "One"; rename to "Gr\"oup":
+  refused: 'Gr"oup' cannot be written inside "…".

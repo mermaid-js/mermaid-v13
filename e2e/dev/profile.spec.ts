@@ -6,9 +6,10 @@
 import { readdirSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
-const BIG = 'flowchart/pr-check/12-should-render-a-flowchart-with-long-names-and-class-definitions.mmd';
-const FOLDER = 'flowchart/baseline/subgraphs';
-const folderFiles = readdirSync(`e2e/diagrams/${FOLDER}`)
+const BIG =
+  'e2e/diagrams/flowchart/pr-check/12-should-render-a-flowchart-with-long-names-and-class-definitions.mmd';
+const FOLDER = 'e2e/diagrams/flowchart/baseline/subgraphs';
+const folderFiles = readdirSync(FOLDER)
   .filter((name) => name.endsWith('.mmd'))
   .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
   .map((name) => `${FOLDER}/${name}`);

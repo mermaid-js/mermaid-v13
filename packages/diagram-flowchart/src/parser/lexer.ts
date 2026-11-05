@@ -21,6 +21,7 @@ import {
   BACKTICK,
   CARET,
   charTable,
+  codePointEnd,
   COLON,
   COMMA,
   CR,
@@ -282,9 +283,9 @@ class FlowLexer {
     probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
   }
 
-  /** No rule matches: one Error token, then resume in the initial state. */
+  /** No rule matches: one Error token over one code point, then resume in the initial state. */
   private noMatch(): void {
-    this.emit(Kind.Error, this.p, Math.min(this.p + 1, this.n));
+    this.emit(Kind.Error, this.p, Math.min(codePointEnd(this.text, this.p), this.n));
     this.stack.length = 0;
     this.state = S.INITIAL;
   }
@@ -626,6 +627,8 @@ class FlowLexer {
         if (this.kw('class')) return this.token(T.Class, 5);
         if ((e = this.at(RE_CLICK, p)) >= 0) {
           this.push(S.click);
+          // The keyword alone; the blanks after it belong to no token, as in jison.
+          this.emit(T.ClickKeyword, p, p + 5);
           this.p = e;
           return true;
         }

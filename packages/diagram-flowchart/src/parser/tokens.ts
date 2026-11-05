@@ -85,4 +85,9 @@ export const T = {
   Eof: F + 73,
   /** The `}` closing shape data (jison drops it). */
   ShapeDataEnd: F + 74,
+  /**
+   * The `click` keyword of a click statement (jison returns no token for it: its `CLICK` is
+   * the node id after it). The parser skips it as trivia.
+   */
+  ClickKeyword: F + 75,
 } as const;

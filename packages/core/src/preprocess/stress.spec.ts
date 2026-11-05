@@ -56,6 +56,14 @@ const SHAPES: [string, (n: number) => string][] = [
   ['one huge directive', (n) => '%%{init: {"a": [' + '1,'.repeat(n) + '1]}}%%'],
   ['all whitespace', (n) => ('\n' + ' '.repeat(4)).repeat(n)],
   ['`%%` runs without a newline', (n) => '%%' + 'x%%'.repeat(n)],
+  [
+    'a multi-line plain value in front matter',
+    (n) => '---\na: x\n' + lines(n, (i) => `  y${i}\n`) + '---\ngraph TD\n',
+  ],
+  [
+    'a multi-line plain scalar at the root of front matter',
+    (n) => '---\n' + lines(n, () => 'k0 nope\n') + '---\ngraph TD\n',
+  ],
 ];
 
 describe('preprocess runs in linear time', () => {
@@ -97,6 +105,21 @@ const TREE_SHAPES: [string, (n: number) => string][] = [
   ['an unclosed flow item on every line', (n) => 'l:\n' + lines(n, () => '  - {a\n')],
   ['the same key on every line', (n) => lines(n, () => 'a: 1\n')],
   ['a root that ends early on every other line', (n) => lines(n, (i) => `- a\nk${i}: 1\n`)],
+  // Root flow documents recover per entry (#169).
+  [
+    'a bad entry on every line of a root flow mapping',
+    (n) => '{\n' + lines(n, (i) => ` k${i}: *x,\n`) + '}',
+  ],
+  [
+    'an unclosed nested collection on every line of a root flow',
+    (n) => '[\n' + lines(n, () => ' {a: [1 },\n') + ']',
+  ],
+  [
+    'an unclosed quote in a root flow mapping',
+    (n) => '{ a: "x,\n' + lines(n, (i) => ` k${i}: 1,\n`),
+  ],
+  ['a multi-line plain value', (n) => 'a: x\n' + lines(n, (i) => `  y${i}\n`)],
+  ['a multi-line plain scalar at the root', (n) => lines(n, () => 'k0 nope\n')],
 ];
 
 describe('the YAML tree mode runs in linear time', () => {

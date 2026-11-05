@@ -104,15 +104,10 @@ function extents(tree: SvgTree): { x: number; y: number }[] {
   return out;
 }
 
-// An XML parser reads a tab, LF or CR in an attribute value as a space (attribute-value
-// normalisation), and the writer writes them as they are: a class named across lines
-// (`` `This\nTitle` ``) has a `data-ast` that reads back with spaces (GAPS #156, core).
-const attrForm = (id: string): string => id.replace(/[\t\n\r]/g, ' ');
-
 function astIndex(ast: AstNode): Map<string, AstNode> {
   const index = new Map<string, AstNode>();
   const visit = (n: AstNode): void => {
-    index.set(attrForm(n.id), n);
+    index.set(n.id, n);
     for (const c of n.children ?? []) visit(c);
   };
   visit(ast);
@@ -191,22 +186,20 @@ describe('class render properties over the corpus', () => {
         ...model.interfaces.map((i) => i.id),
       ]);
       for (const k of model.classes) {
-        expect(seen.get(attrForm(k.ast)), `${c.id}: class ${k.id}`).toBe(1);
+        expect(seen.get(k.ast), `${c.id}: class ${k.id}`).toBe(1);
         for (const m of [...k.attributes, ...k.methods])
-          expect(seen.get(attrForm(m.ast)), `${c.id}: member ${m.ast}`).toBe(1);
+          expect(seen.get(m.ast), `${c.id}: member ${m.ast}`).toBe(1);
       }
       for (const r of model.relations) {
         const drawn = (end: (typeof r)['start']) => end.type === 'lollipop' || ends.has(end.id);
         if (drawn(r.start) && drawn(r.end))
-          expect(seen.get(attrForm(r.ast)), `${c.id}: relation ${r.ast}`).toBe(1);
+          expect(seen.get(r.ast), `${c.id}: relation ${r.ast}`).toBe(1);
       }
-      for (const n of model.notes) expect(seen.get(attrForm(n.ast)), `${c.id}: ${n.id}`).toBe(1);
-      for (const i of model.interfaces)
-        expect(seen.get(attrForm(i.ast)), `${c.id}: ${i.id}`).toBe(1);
+      for (const n of model.notes) expect(seen.get(n.ast), `${c.id}: ${n.id}`).toBe(1);
+      for (const i of model.interfaces) expect(seen.get(i.ast), `${c.id}: ${i.id}`).toBe(1);
       const flat = c.prepared.config.class?.hierarchicalNamespaces === false;
       for (const s of model.namespaces) {
-        if (s.ast !== undefined && !flat)
-          expect(seen.get(attrForm(s.ast)), `${c.id}: ${s.id}`).toBe(1);
+        if (s.ast !== undefined && !flat) expect(seen.get(s.ast), `${c.id}: ${s.id}`).toBe(1);
       }
       full++;
     }

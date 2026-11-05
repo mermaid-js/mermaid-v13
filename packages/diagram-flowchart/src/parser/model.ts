@@ -274,6 +274,11 @@ export class FlowBuilder {
     return this.edgeById.has(id);
   }
 
+  /** The edge `id` names (the first one given it), if any. */
+  edgeNamed(id: string): FlowModelEdge | undefined {
+    return this.edgeById.get(id);
+  }
+
   /** v12 `addVertex`: create the vertex `id` if it is new, then apply `parts` to it. */
   addVertex(id: string, ast: AstId, at: Range, parts: VertexParts = {}): void {
     if (!id || id.trim().length === 0) return;

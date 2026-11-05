@@ -1,9 +1,5 @@
-import { readdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { Kind, TOKEN_CATEGORIES } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
 import {
   detectFlowchart,
   flowchartTokens,
@@ -14,15 +10,9 @@ import {
 // the spans the lexer removed (comments, directives, dropped `;`).
 import { flowchartCategories } from '../../../packages/diagram-flowchart/src/generated/categories.ts';
 import { flowSourceView } from '../../../packages/diagram-flowchart/src/parser/lexer.ts';
+import { agreement, corpus, highlighters } from './agreement-testing.ts';
 import { categoryTable, kindKeys } from './categories.ts';
 import { parseGrammar } from './ebnf.ts';
-import { generate, generatedDir } from './generate.ts';
-import { lezerCategorise, monarchCategorise, textMateCategorise } from './highlight-testing.ts';
-import type { Categorise } from './highlight-testing.ts';
-
-const root = join(dirname(fileURLToPath(import.meta.url)), '../../..');
-const files = generate((p) => readFileSync(join(root, p), 'utf8'));
-const out = (name: string) => files.get(`${generatedDir('flowchart')}/${name}`) ?? '';
 
 describe('flowchart kind → category table', () => {
   it('gives every flowchart and shared kind a highlight category', () => {
@@ -41,6 +31,8 @@ describe('flowchart kind → category table', () => {
     expect(flowchartCategories[T.Colon]).toBe('Other');
     // `}` closing shape data is an unnamed rule in the grammar file.
     expect(flowchartCategories[T.ShapeDataEnd]).toBe('Meta');
+    // So is the `click` keyword before a click statement's node id.
+    expect(flowchartCategories[T.ClickKeyword]).toBe('Keyword');
     // Shared kinds are fixed in the parser kit.
     expect(flowchartCategories[Kind.Comment]).toBe('Comment');
     expect(flowchartCategories[Kind.Directive]).toBe('Meta');
@@ -92,13 +84,6 @@ s = { NODE_ID | NUM } ;
   });
 });
 
-function mmdFiles(dir: string): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
-    if (e.isDirectory()) return mmdFiles(join(dir, e.name));
-    return e.name.endsWith('.mmd') ? [join(dir, e.name)] : [];
-  });
-}
-
 /**
  * Sources that exercise every kind the corpus lacks (and the regressions it missed): a
  * callback that must not run on to later lines, comments and directives inside a multi-line
@@ -108,6 +93,8 @@ const FIXTURES: [string, string][] = [
   ['no-dir', 'graph\n  A --> B'],
   ['callback', 'flowchart TD\n  click A call foo(x) "tip"\n  B-->C'],
   ['callback-empty', 'flowchart TD\n  click A call foo()\n  B-->C'],
+  // The arguments open where `call` ends: the name's scope must not open and end in place.
+  ['callback-no-name', 'flowchart TD\n  click A call (x) "tip"\n  B-->C'],
   ['href', 'flowchart TD\n  click A href "http://x" _blank\n  B-->C'],
   ['interpolate', 'flowchart TD\n  A-->B\n  linkStyle default interpolate basis'],
   [
@@ -122,102 +109,39 @@ const FIXTURES: [string, string][] = [
 ];
 
 /** Kinds whose tokens are blanks or empty, so no highlighter colours them. */
-const BLANK_KINDS = new Set<number>([T.Space, T.NoDir, T.Eof]);
+const BLANK_KINDS = [T.Space, T.NoDir, T.Eof];
 
-/**
- * Documented exceptions, where the highlighters see text differently from the lexer:
+/*
+ * The highlighters read the source as written, front matter included: all three model it
+ * (front-matter.spec.ts). The lexer gives front matter no tokens, so only the diagram after it
+ * is compared. Documented exceptions, where the highlighters see text differently from the
+ * lexer:
  *
- * 1. Front matter: the lexer gives it no tokens, so it is blanked before highlighting. Monarch
- *    models it (monarch-front-matter.spec.ts); TextMate and Lezer do not yet (GAPS.md).
- * 2. `ShapeData`: one kind for all of `@{ … }`; the highlighters show its quoted values as
+ * 1. `ShapeData`: one kind for all of `@{ … }`; the highlighters show its quoted values as
  *    String, the table (one category per kind) says Meta.
  *    Input: `A@{ label: "hi" }`.
- * 3. The `;` v12 dropped from the end of a `style` / `classDef` line (a `drop` hole of the
+ * 2. The `;` v12 dropped from the end of a `style` / `classDef` line (a `drop` hole of the
  *    lexer's source view) is part of the previous token's range but never read.
  *    Input: `style A fill:white;`.
  * Comment and directive holes are checked as the shared kinds `Comment` and `Directive`.
  */
-const blankFrontMatter = (src: string) => {
-  const end = preprocess(src).bodyStart;
-  return src.slice(0, end).replace(/[^\n]/g, ' ') + src.slice(end);
-};
-
-/**
- * The kind of each character of `src` as the lexer sees it: its tokens, and the comments and
- * directives it removed (a directive wins over a comment hole that runs over it).
- */
-function lexerKinds(src: string): Map<number, number> {
-  const pre = preprocess(src);
-  const view = flowSourceView(
-    src,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  const kinds = new Map<number, number>();
-  const set = (start: number, end: number, kind: number | undefined) => {
-    for (let i = start; i < end; i++) {
-      if (kind === undefined) kinds.delete(i);
-      else kinds.set(i, kind);
-    }
-  };
-  for (const t of flowchartTokens(src)) set(t.range.start, t.range.end, t.kind);
-  for (const h of view.holes) if (h.kind !== 'directive') set(h.start, h.end, undefined);
-  for (const h of view.holes) if (h.kind === 'comment') set(h.start, h.end, Kind.Comment);
-  for (const d of pre.directives) set(d.range.start, d.range.end, Kind.Directive);
-  return kinds;
-}
-
-const NAMES: Record<number, string> = {
-  ...Object.fromEntries(Object.entries(T).map(([k, v]) => [v, k])),
-  [Kind.Comment]: 'Comment',
-  [Kind.Directive]: 'Directive',
-};
-
 describe('four-way highlighting agreement', () => {
   it('table, TextMate, Monarch and Lezer give every token the same category', async () => {
-    const highlighters: [string, Categorise][] = [
-      [
-        'TextMate',
-        await textMateCategorise(out('flowchart.tmLanguage.json'), 'source.mermaid-flowchart'),
-      ],
-      ['Monarch', monarchCategorise(out('flowchart.monarch.json'))],
-      [
-        'Lezer',
-        await lezerCategorise(
-          out('flowchart.grammar'),
-          out('flowchart.tokens.js'),
-          'flowchart',
-          join(root, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
-        ),
-      ],
-    ];
-    const corpus = mmdFiles(join(root, 'e2e/diagrams'))
-      .map((f) => [f.slice(root.length), readFileSync(f, 'utf8')] as const)
-      .filter(([, src]) => detectFlowchart(src) !== undefined);
-    expect(corpus.length).toBeGreaterThan(400);
-
-    const disagreements = new Map<string, string>();
-    const covered = new Set<number>();
-    for (const [file, src] of [...FIXTURES, ...corpus]) {
-      const text = blankFrontMatter(src);
-      const seen = highlighters.map(([name, h]) => [name, h(text)] as const);
-      for (const [i, kind] of lexerKinds(src)) {
-        if (/\s/.test(src[i] ?? '')) continue;
-        covered.add(kind);
-        const want = flowchartCategories[kind];
-        for (const [name, cats] of seen) {
-          const got = cats[i];
-          if (got === want || (kind === T.ShapeData && got === 'String')) continue;
-          const key = `${name}: ${NAMES[kind] ?? kind} is ${want}, highlighted ${got}`;
-          if (!disagreements.has(key)) disagreements.set(key, `${file} at ${i}`);
-        }
-      }
-    }
-    expect(Object.fromEntries(disagreements)).toEqual({});
-    const expected = [...Object.values(T), Kind.Comment, Kind.Directive].filter(
-      (k) => !BLANK_KINDS.has(k)
+    const sources = corpus(detectFlowchart);
+    expect(sources.length).toBeGreaterThan(400);
+    const result = agreement(
+      {
+        kinds: T,
+        categories: flowchartCategories,
+        tokens: flowchartTokens,
+        holes: (src, from, directives) => flowSourceView(src, from, directives).holes,
+        exempt: (kind, _want, got) => kind === T.ShapeData && got === 'String',
+      },
+      await highlighters('flowchart'),
+      [...FIXTURES, ...sources],
+      BLANK_KINDS
     );
-    const missing = expected.filter((k) => !covered.has(k)).map((k) => NAMES[k]);
-    expect(missing, 'kinds with no sample').toEqual([]);
+    expect(result.disagreements).toEqual({});
+    expect(result.missing, 'kinds with no sample').toEqual([]);
   }, 120_000);
 });

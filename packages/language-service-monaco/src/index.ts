@@ -12,15 +12,11 @@
  * The single providers (`hoverProvider(service)`, …) are exported for hosts that pick
  * features one by one.
  */
-// A generated highlighter, never shipped by the flowchart package (D54): its `./monarch.json`
-// export has only the workspace `mermaid-source` condition, so this private adapter (and the
-// example built from sources) can read it. Publishing the adapter needs a decision on where
-// the tokenizer ships.
-import monarch from '@mermaid-js/diagram-flowchart/monarch.json' with { type: 'json' };
 import { createLanguageService } from '@mermaid-js/language-service';
 import type { LanguageService, PreloadRequest } from '@mermaid-js/language-service';
 import type * as Monaco from 'monaco-editor';
 import type { MonacoApi } from './convert.ts';
+import { watchHighlighters } from './highlighters.ts';
 import { watchDiagnostics } from './markers.ts';
 import {
   completionProvider,
@@ -36,6 +32,8 @@ export { astAtCursor, revealAst, trackAst } from './ast.ts';
 export type { TrackAstOptions } from './ast.ts';
 export { snapshotOf, toRange } from './convert.ts';
 export type { MonacoApi } from './convert.ts';
+export { combineMonarch, MONARCH_HIGHLIGHTERS, watchHighlighters } from './highlighters.ts';
+export type { MonarchDefinition, MonarchHighlighter } from './highlighters.ts';
 export { toMarkers, watchDiagnostics } from './markers.ts';
 export {
   completionProvider,
@@ -47,9 +45,6 @@ export {
   SEMANTIC_TOKENS_LEGEND,
   semanticTokensProvider,
 } from './providers.ts';
-
-/** The Monarch tokenizer generated from the flowchart grammar file (#21), front matter included. */
-export const monarchLanguage = monarch as unknown as Monaco.languages.IMonarchLanguage;
 
 /** Comments, brackets and auto-closing pairs. */
 export const languageConfiguration: Monaco.languages.LanguageConfiguration = {
@@ -103,7 +98,8 @@ interface Shared {
 const registered = new WeakMap<object, Map<string, Shared>>();
 
 /**
- * Register Mermaid in `monaco` (D98): the language id, the Monarch tokens, the language
+ * Register Mermaid in `monaco` (D98): the language id, the Monarch tokens of each model's
+ * diagram type (loaded per type on demand, D134), the language
  * configuration, markers for every model of the language, and the completion, hover,
  * definition, references, rename, folding and semantic-token providers. Awaits
  * `service.preload()` first (D155), so no snapshot is taken before the facets are loaded.
@@ -138,7 +134,7 @@ export async function registerMermaid(
         });
       }
       return [
-        languages.setMonarchTokensProvider(languageId, monarchLanguage),
+        watchHighlighters(monaco, service, languageId, options.delay),
         languages.setLanguageConfiguration(languageId, languageConfiguration),
         languages.registerCompletionItemProvider(languageId, completionProvider(monaco, service)),
         languages.registerHoverProvider(languageId, hoverProvider(service)),

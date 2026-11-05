@@ -12,6 +12,13 @@
   `frontMatterStart`: fence on the first non-blank line, any indent; `monarch-front-matter.spec.ts`;
   a closing fence at another indent also closes, an unclosed block runs to the end). TextMate and
   the #28 exception remain.
+  **TextMate: closed by #176** in gen-grammar (the same rules as Monarch, `front-matter-start`;
+  `front-matter.spec.ts` now runs Monarch and TextMate). The agreement specs no longer blank
+  front matter; their Lezer highlighter runs as the CodeMirror adapter runs it, front matter
+  hidden.
+  **Lezer: closed in the #249 review fixes** in gen-grammar (the tokenizer's `@frontMatter…`
+  modes, the same rules; `front-matter.spec.ts` runs all three). The CodeMirror adapter no
+  longer blanks the block and the agreement specs run Lezer on the text as written.
 - **#30 → owner: open (#33 did not need it): a front matter that is one flow mapping does not recover.** In YAML tree mode an error anywhere in a root flow document (`{a: 1, a: 2}`) gives `root: null`, so no key in it gets a range (no hover or config warnings there). Block front matter recovers per entry. No #33 golden needed it; fix in `Reader.flow` (recover per flow entry) if an editor case does.
 - ~~**#29 → owner #31: `LanguageFacet` lives in `@mermaid-js/core/parser-kit`**~~ Closed by #31: `@mermaid-js/language-service` re-exports it.
 - ~~**#29 → owner #32: `completions` and `hover` are not on `LanguageFacet` yet.**~~ Closed by #32: required members, with `DocumentView` and `HoverTarget`. The facet takes `ProbeResult`, not `Probe` (DESIGN §4.5's name; the kit's `Probe` is the recorder class). A third-party facet without them now fails `preload` with `LANGUAGE_LOAD_FAILED`.

@@ -1455,7 +1455,7 @@
     {
       "id": "perf/huge1",
       "file": "perf/huge1.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/huge1.mmd",
+      "source": "dev-diagrams/performance/flowcharts/huge1.mmd",
       "group": "perf",
       "tier": "huge",
       "lines": 2403,
@@ -1465,7 +1465,7 @@
     {
       "id": "perf/huge2",
       "file": "perf/huge2.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/huge2.mmd",
+      "source": "dev-diagrams/performance/flowcharts/huge2.mmd",
       "group": "perf",
       "tier": "huge",
       "lines": 1708,
@@ -1475,7 +1475,7 @@
     {
       "id": "perf/huge3",
       "file": "perf/huge3.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/huge3.mmd",
+      "source": "dev-diagrams/performance/flowcharts/huge3.mmd",
       "group": "perf",
       "tier": "huge",
       "lines": 189,
@@ -1485,7 +1485,7 @@
     {
       "id": "perf/huge5",
       "file": "perf/huge5.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/huge5.mmd",
+      "source": "dev-diagrams/performance/flowcharts/huge5.mmd",
       "group": "perf",
       "tier": "huge",
       "lines": 769,
@@ -1495,7 +1495,7 @@
     {
       "id": "perf/large1",
       "file": "perf/large1.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/large1.mmd",
+      "source": "dev-diagrams/performance/flowcharts/large1.mmd",
       "group": "perf",
       "tier": "huge",
       "lines": 810,
@@ -1514,7 +1514,7 @@
     {
       "id": "perf/large2",
       "file": "perf/large2.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/large2.mmd",
+      "source": "dev-diagrams/performance/flowcharts/large2.mmd",
       "group": "perf",
       "tier": "huge",
       "lines": 104,
@@ -1524,7 +1524,7 @@
     {
       "id": "perf/large4",
       "file": "perf/large4.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/large4.mmd",
+      "source": "dev-diagrams/performance/flowcharts/large4.mmd",
       "group": "perf",
       "tier": "huge",
       "lines": 116,
@@ -1534,7 +1534,7 @@
     {
       "id": "perf/large5",
       "file": "perf/large5.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/large5.mmd",
+      "source": "dev-diagrams/performance/flowcharts/large5.mmd",
       "group": "perf",
       "tier": "huge",
       "lines": 810,
@@ -1553,7 +1553,7 @@
     {
       "id": "perf/medium1",
       "file": "perf/medium1.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/medium1.mmd",
+      "source": "dev-diagrams/performance/flowcharts/medium1.mmd",
       "group": "perf",
       "tier": "large",
       "lines": 674,
@@ -1563,7 +1563,7 @@
     {
       "id": "perf/medium2",
       "file": "perf/medium2.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/medium2.mmd",
+      "source": "dev-diagrams/performance/flowcharts/medium2.mmd",
       "group": "perf",
       "tier": "large",
       "lines": 800,
@@ -1573,7 +1573,7 @@
     {
       "id": "perf/medium3",
       "file": "perf/medium3.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/medium3.mmd",
+      "source": "dev-diagrams/performance/flowcharts/medium3.mmd",
       "group": "perf",
       "tier": "large",
       "lines": 564,
@@ -1583,7 +1583,7 @@
     {
       "id": "perf/medium4",
       "file": "perf/medium4.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/medium4.mmd",
+      "source": "dev-diagrams/performance/flowcharts/medium4.mmd",
       "group": "perf",
       "tier": "large",
       "lines": 591,
@@ -1593,7 +1593,7 @@
     {
       "id": "perf/medium5",
       "file": "perf/medium5.mmd",
-      "source": "e2e/platform/dev-diagrams/performance/flowcharts/medium5.mmd",
+      "source": "dev-diagrams/performance/flowcharts/medium5.mmd",
       "group": "perf",
       "tier": "large",
       "lines": 482,
@@ -1602,7 +1602,7 @@
     }
   ],
   "skipped": [
-    "e2e/platform/dev-diagrams/performance/flowcharts/huge4.mmd (duplicate of e2e/platform/dev-diagrams/performance/flowcharts/huge2.mmd)",
-    "e2e/platform/dev-diagrams/performance/flowcharts/large3.mmd (duplicate of e2e/platform/dev-diagrams/performance/flowcharts/large1.mmd)"
+    "dev-diagrams/performance/flowcharts/huge4.mmd (duplicate of dev-diagrams/performance/flowcharts/huge2.mmd)",
+    "dev-diagrams/performance/flowcharts/large3.mmd (duplicate of dev-diagrams/performance/flowcharts/large1.mmd)"
   ]
 }
