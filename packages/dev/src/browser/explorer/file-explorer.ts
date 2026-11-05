@@ -115,7 +115,7 @@ export class DevFileExplorer extends LitElement {
       <div class="header">
         <div style="min-width: 0;">
           <div class="title">Dev Explorer</div>
-          <div class="subtle">root: <span class="path">${this.root}</span></div>
+          <div class="subtle">root: <span class="path">${this.root || '(checkout)'}</span></div>
           <div style="margin-top: 6px;">
             <sl-breadcrumb>
               <sl-breadcrumb-item @click=${() => this.#emit('navigate', '')}

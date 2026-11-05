@@ -16,9 +16,12 @@
  *     parent → pane    { type: 'load', bundle: { kind: 'dev' | 'npm', url, label } }
  *     pane   → parent  { type: 'loaded' }
  *     parent → pane    { type: 'render', text, config, background, requestId }
- *     pane   → parent  { type: 'rendered', svg, width, height, requestId }
+ *     pane   → parent  { type: 'rendered', svg, width, height, ms, requestId }
  *     pane   → parent  { type: 'error', message, requestId }   (requestId null: load failed)
  *     parent → pane    { type: 'overlay', dataUrl }             (the diff mask, or null)
+ *
+ * `ms` is how long the mermaid `render()` call took. A pane's first render is preceded by an
+ * untimed warm-up render, so lazy chunk loads and first-run compilation don't count.
  */
 import type * as DevBundleModule from './mermaid.ts';
 
@@ -48,6 +51,8 @@ export type PaneMessage =
       readonly svg: string;
       readonly width: number;
       readonly height: number;
+      /** The `render()` call's duration. */
+      readonly ms: number;
       readonly requestId: number;
     }
   | { readonly type: 'error'; readonly message: string; readonly requestId: number | null };
@@ -114,6 +119,7 @@ function start(): void {
   let renderer: Promise<Renderer> | undefined;
   let label = '';
   let count = 0;
+  let warmedUp = false;
   // One render at a time: older mermaid keeps its render state global.
   let chain: Promise<void> = Promise.resolve();
 
@@ -123,6 +129,15 @@ function start(): void {
   const show = (text: string, error = false): void => {
     msg.textContent = text;
     msg.className = error ? 'error' : '';
+  };
+
+  // Published versions leave scratch containers behind on error.
+  const cleanUp = (id: string): void => {
+    for (const sel of [`#d${id}`, `#${id}`, `#i${id}`]) {
+      document.querySelectorAll(sel).forEach((el) => {
+        if (!stage.contains(el)) el.remove();
+      });
+    }
   };
 
   async function render(m: Extract<ParentMessage, { type: 'render' }>): Promise<void> {
@@ -139,9 +154,18 @@ function start(): void {
       post({ type: 'error', message: errorMessage(e), requestId: m.requestId });
       return;
     }
+    if (!warmedUp) {
+      warmedUp = true;
+      const warmUp = `compare-${++count}`;
+      // A failure here shows again, with its message, in the timed render.
+      await draw(warmUp, m.text, m.config).catch(() => undefined);
+      cleanUp(warmUp);
+    }
     const id = `compare-${++count}`;
     try {
+      const t0 = performance.now();
       const svg = await draw(id, m.text, m.config);
+      const ms = performance.now() - t0;
       if (typeof svg !== 'string' || !svg.includes('<svg')) {
         throw new Error('render() did not return an SVG');
       }
@@ -160,6 +184,7 @@ function start(): void {
         svg: new XMLSerializer().serializeToString(el),
         width,
         height,
+        ms,
         requestId: m.requestId,
       });
     } catch (e) {
@@ -168,12 +193,7 @@ function start(): void {
       show(`Render error (${label}):\n${message}`, true);
       post({ type: 'error', message, requestId: m.requestId });
     } finally {
-      // Published versions leave scratch containers behind on error.
-      for (const sel of [`#d${id}`, `#${id}`, `#i${id}`]) {
-        document.querySelectorAll(sel).forEach((el) => {
-          if (!stage.contains(el)) el.remove();
-        });
-      }
+      cleanUp(id);
     }
   }
 
