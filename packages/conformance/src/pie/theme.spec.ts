@@ -77,7 +77,7 @@ describe('pie theme variables against v12 12.2.0 (#325, D221, D228)', () => {
   it.each(THEME_NAMES.map((n) => [n]))('%s: every pie variable is v12’s', async (name) => {
     const old = v12Vars(name);
     const theme = createTheme(await loadTheme(name), { cssVariables: false });
-    const exception = name === D228.theme ? [D228.name] : [];
+    const exception: string[] = name === D228.theme ? [D228.name] : [];
     const names = PIE_VARIABLES.filter((n) => !exception.includes(n));
     expect(Object.fromEntries(names.map((n) => [n, now(theme, n)]))).toEqual(
       Object.fromEntries(names.map((n) => [n, then(old, n)]))
