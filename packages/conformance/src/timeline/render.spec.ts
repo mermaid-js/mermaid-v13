@@ -160,7 +160,7 @@ const DRAWN: Readonly<Record<string, string>> = {
 
 describe('timeline render properties over the parsed corpus', () => {
   it('renders the corpus in every theme', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(30);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(57);
     expect(cases.length).toBeGreaterThan(70 * THEMES.length);
     expect(cases.reduce((n, c) => n + c.model.periods.length, 0)).toBeGreaterThan(
       300 * THEMES.length
