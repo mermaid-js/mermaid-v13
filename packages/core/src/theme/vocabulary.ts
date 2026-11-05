@@ -89,60 +89,73 @@ export const CLASS_MARKER_VARIABLES = [
 
 export type ClassMarkerVariable = (typeof CLASS_MARKER_VARIABLES)[number];
 
+/**
+ * Name lists joined into one. Called `@__PURE__` with no spread, so a bundle drops a list that
+ * nothing reads at run time (only types and tools read `TOKEN_VARIABLES`; core's size budget,
+ * R-PERF-8). An array spread would keep it, as bundlers cannot prove it has no side effects.
+ */
+const joined = <L extends readonly (readonly string[])[]>(
+  ...lists: L
+): readonly L[number][number][] => lists.flat();
+
 /** Shape tokens (R-THEME-11): sizes every diagram type reads instead of hard-coding them. */
-export const TOKEN_VARIABLES = [
-  'strokeWidth',
-  'clusterStrokeWidth',
-  'radius',
-  'fontWeight',
-  'spacing1',
-  'spacing2',
-  'spacing3',
-  ...ARROWHEAD_VARIABLES,
-  ...CLASS_MARKER_VARIABLES,
-  // A class relationship's multiplicities (v12 `.edgeTerminals { font-size: 11px }`); the same
-  // in every theme, a size key that keeps v12's default.
-  'classTerminalFontSize',
-  // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
-  'nodePaddingX',
-  'nodePaddingY',
-  'stadiumPaddingX',
-  'stadiumPaddingY',
-  'hexagonPaddingX',
-  'hexagonPaddingY',
-  'hexagonSlant',
-  'doubleCircleGap',
-  'doubleCirclePadding',
-  'circlePadding',
-  'circleMinDiameter',
-  // Shapes with their own v12 padding (#89), totals added to the label box.
-  'subroutinePaddingX',
-  'subroutinePaddingY',
-  'cylinderPaddingX',
-  'cylinderPaddingY',
-  'leanPaddingX',
-  'leanPaddingY',
-  'oddPaddingX',
-  'oddPaddingY',
-  // Sequence participant boxes (v12 neo rx 6, classic 3).
-  'actorRadius',
-  // Sequence geometry (v12 `look: neo` / classic, #194): the glyph band participants stand in
-  // (0 draws the classic symbols), the gap at a message's end, the taller fragment label tab
-  // and the room below the drawing.
-  'actorGlyphBand',
-  'messageEndGap',
-  'labelBoxExtraHeight',
-  'actorFooterPadding',
-  // Pie text sizes, stroke widths and slice opacity (#325): the same in every v12 theme.
-  'pieTitleTextSize',
-  'pieSectionTextSize',
-  'pieLegendTextSize',
-  'pieStrokeWidth',
-  'pieOuterStrokeWidth',
-  'pieOpacity',
-  // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
-  'useGradient',
-] as const;
+export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
+  [
+    'strokeWidth',
+    'clusterStrokeWidth',
+    'radius',
+    'fontWeight',
+    'spacing1',
+    'spacing2',
+    'spacing3',
+  ] as const,
+  ARROWHEAD_VARIABLES,
+  CLASS_MARKER_VARIABLES,
+  [
+    // A class relationship's multiplicities (v12 `.edgeTerminals { font-size: 11px }`); the same
+    // in every theme, a size key that keeps v12's default.
+    'classTerminalFontSize',
+    // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
+    'nodePaddingX',
+    'nodePaddingY',
+    'stadiumPaddingX',
+    'stadiumPaddingY',
+    'hexagonPaddingX',
+    'hexagonPaddingY',
+    'hexagonSlant',
+    'doubleCircleGap',
+    'doubleCirclePadding',
+    'circlePadding',
+    'circleMinDiameter',
+    // Shapes with their own v12 padding (#89), totals added to the label box.
+    'subroutinePaddingX',
+    'subroutinePaddingY',
+    'cylinderPaddingX',
+    'cylinderPaddingY',
+    'leanPaddingX',
+    'leanPaddingY',
+    'oddPaddingX',
+    'oddPaddingY',
+    // Sequence participant boxes (v12 neo rx 6, classic 3).
+    'actorRadius',
+    // Sequence geometry (v12 `look: neo` / classic, #194): the glyph band participants stand in
+    // (0 draws the classic symbols), the gap at a message's end, the taller fragment label tab
+    // and the room below the drawing.
+    'actorGlyphBand',
+    'messageEndGap',
+    'labelBoxExtraHeight',
+    'actorFooterPadding',
+    // Pie text sizes, stroke widths and slice opacity (#325): the same in every v12 theme.
+    'pieTitleTextSize',
+    'pieSectionTextSize',
+    'pieLegendTextSize',
+    'pieStrokeWidth',
+    'pieOuterStrokeWidth',
+    'pieOpacity',
+    // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
+    'useGradient',
+  ] as const
+);
 
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
 

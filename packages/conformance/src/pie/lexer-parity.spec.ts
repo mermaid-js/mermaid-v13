@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
-import { LANGIUM_NAMES, pieTokens } from '@mermaid-js/diagram-pie';
+import { LANGIUM_NAMES, pieTokens } from '@mermaid-js/diagram-pie/testing';
 import { decodeEntities } from '../flowchart/v12.ts';
 import { loadLangiumLexerOracle } from '../langium-lexer.ts';
 import type { LangiumLex, LangiumToken } from '../langium-lexer.ts';
@@ -122,7 +122,7 @@ describe('pie lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () => {
       `pie lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
     );
     // Every e2e fixture reaches the pie lexer.
-    expect(e2e).toBe(24);
+    expect(e2e).toBe(46);
     expect(compared).toBeGreaterThan(450);
     expect(diffs).toEqual([]);
   }, 120_000);

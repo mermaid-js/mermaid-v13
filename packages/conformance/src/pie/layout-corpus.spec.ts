@@ -2,7 +2,8 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
-import { layoutPie, parsePie, pieLayoutViolations } from '@mermaid-js/diagram-pie';
+import { layoutPie, parsePie } from '@mermaid-js/diagram-pie';
+import { pieLayoutViolations } from '@mermaid-js/diagram-pie/testing';
 import type { CorpusItem } from '../types.ts';
 import { pieGateCorpus } from './corpus.ts';
 
@@ -48,7 +49,7 @@ describe('pie layout invariants on parser-produced fixtures', () => {
         }
       }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(24);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(46);
     expect(sections).toBeGreaterThan(800);
     expect(failures.slice(0, 10)).toEqual([]);
   }, 120_000);

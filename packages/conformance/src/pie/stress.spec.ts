@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { pieTokens } from '@mermaid-js/diagram-pie';
+import { pieTokens } from '@mermaid-js/diagram-pie/testing';
 
 /**
  * R-PARSE-7, pitfall 5: the pie lexer is linear in input size, in every rule. v12's lexer is
