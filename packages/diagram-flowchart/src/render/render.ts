@@ -19,7 +19,7 @@ import {
 } from '@mermaid-js/core/svg';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
-import { drawIcon, drawImage } from './assets.ts';
+import { drawIcon, drawImage, iconsNotDrawn } from './assets.ts';
 import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
@@ -127,6 +127,11 @@ interface NodePaint {
    * classic themes) writes no filter at all.
    */
   readonly shadow: ReturnType<ThemeOf['filter']> | undefined;
+  /**
+   * An icon shape's glyph without a `stroke` style (D298): nodeBorder, or the gradient under
+   * `useGradient`. Looked up only when an icon shape is drawn.
+   */
+  readonly glyph: OutlinePaint | undefined;
 }
 
 interface Paints {
@@ -160,6 +165,9 @@ function paints(theme: ThemeOf, flow: Prepared): Paints {
     line: theme.color('lineColor'),
     arrow: theme.color('arrowheadColor'),
     shadow: theme.value('dropShadow') === 'none' ? undefined : theme.filter('dropShadow'),
+    glyph: flow.nodes.some((v) => v.vertex?.icon && !v.vertex.img)
+      ? theme.outline('nodeBorder')
+      : undefined,
   };
   const cluster =
     flow.groups.length > 0
@@ -188,6 +196,8 @@ interface Scene {
   readonly ctx: FlowRenderContext;
   readonly paint: Paints;
   readonly warn: (warning: FlowWarning) => void;
+  /** The icon shapes whose glyph was not drawn, as written. */
+  readonly iconsMissed: string[];
 }
 
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
@@ -205,6 +215,7 @@ export function renderFlowchart(
     ctx,
     paint: paints(ctx.theme, flow),
     warn: (warning) => ctx.warn(warning),
+    iconsMissed: [],
   };
   openRoot(scene, model);
   if (scene.paint.cluster) drawClusters(scene);
@@ -225,6 +236,7 @@ export function renderFlowchart(
   for (const view of flow.nodes) drawNode(scene, view, tips.get(view.id));
   w.close();
   w.close();
+  iconsNotDrawn(ctx, scene.iconsMissed);
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
@@ -383,7 +395,7 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
 }
 
 function drawNode(
-  { w, layout, flow, ctx, paint, warn }: Scene,
+  { w, layout, flow, ctx, paint, warn, iconsMissed }: Scene,
   view: NodeView,
   tip?: string
 ): void {
@@ -428,8 +440,11 @@ function drawNode(
     lineAttrs = { ...lineAttrs, stroke: paint.node.plainStroke };
   }
   if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
-  else if (v?.icon) drawIcon(w, view, shapeAttrs, warn, ctx.icon);
-  else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
+  else if (v?.icon) {
+    // D298: the glyph takes the author's stroke, else nodeBorder (the gradient under neo).
+    const glyph = view.style.shape.stroke ?? paint.node.glyph!;
+    if (!drawIcon(w, view, shapeAttrs, glyph, ctx.icon)) iconsMissed.push(v.icon);
+  } else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
   const fill = view.style.shape.fill;
   w.label(view.label, 0, view.dy, {
     fill: fill && shapeFilled(view.shape) && !v?.img && !v?.icon ? ctx.theme.ink(fill) : undefined,

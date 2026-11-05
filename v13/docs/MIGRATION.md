@@ -537,8 +537,9 @@ that v12 neo strokes with the gradient take it, and nothing else does (D182):
 
 - **Flowchart:** node outlines (with their inner lines: cylinder rims, double-circle rings,
   braces) and subgraph rectangles. A linked node (`click … href`) takes the gradient and the
-  shadow like every other node; v12 neo drew it plain (D184). An icon node's frame takes the
-  gradient; v12 put it on the glyph and drew the frame without a border (D186).
+  shadow like every other node; v12 neo drew it plain (D184). An icon shape's glyph takes the
+  gradient and its frame does not, as in v12 (D298); an icon that is not drawn keeps its frame's
+  outline in the gradient.
 - **Class:** class boxes, their dividers and namespaces; not notes.
 - **State:** states, the choice diamond, composites, notes, the start and end dots, fork and
   join bars.
@@ -679,8 +680,16 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 - **Shape data** (`A@{ shape: … }`) is read with v13's YAML reader: YAML anchors (`&a`) are
   rejected, which js-yaml accepted. A few malformed values that js-yaml rejected are accepted.
 - **Shapes** not in the documented shape list (`classBox`, `erBox`, `usecase*`, `bpmn-*`,
-  `kanbanItem`, mindmap shapes) draw as a rectangle. Icon shapes draw their frame only, with an
-  `ICON_UNAVAILABLE` warning, until the icons plugin exists.
+  `kanbanItem`, mindmap shapes) draw as a rectangle.
+- **Icon shapes** (`@{ icon: … }`, `form` `square`, `circle`, `rounded`) draw their glyph with
+  the icons extension (`@mermaid-js/plugin-icons`), as v12 did (D292, D298): the glyph takes the
+  node's `stroke` style, else `nodeBorder` (the gradient under `useGradient`), and the frame is
+  borderless (its stroke is its fill). An icon that is not drawn (no extension, no such pack or
+  icon) keeps the frame with its outline, not v12's blue `?`, with one `ICON_NOT_RENDERED` per
+  render; a pack still loading under `placeholders` draws the frame with `PLACEHOLDER`.
+  `ICON_UNAVAILABLE` is deprecated: it is still raised once per render next to
+  `ICON_NOT_RENDERED` for one alpha, naming the icon shapes not drawn, and is no longer raised
+  for a placeholder render (D299). Read `ICON_NOT_RENDERED` instead.
 - **Step animation** (`step` on edges, `flowchart.stepNumbers`, `flowchart.stepDuration`) and
   edge `animate`/`animation` are parsed but not drawn.
 - **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown

@@ -271,7 +271,8 @@ describe('packs (D290, D294, D299)', () => {
         placeholders: true,
       }
     );
-    expect(codes(r)).toEqual(['PLACEHOLDER', 'ICON_UNAVAILABLE']);
+    // No ICON_UNAVAILABLE: the deprecated alias goes only with ICON_NOT_RENDERED (D299).
+    expect(codes(r)).toEqual(['PLACEHOLDER']);
     expect(message(r, 'PLACEHOLDER')).toContain('iconPack "fa"');
     expect(text(r.svg)).toBe('a b');
     expect(r.svg).toMatch(/<g transform="translate\([^"]*\)"><g\/><\/g>/);
@@ -361,6 +362,8 @@ describe('glyphs (D292, D293)', () => {
     expect(message(r, 'ICON_NOT_RENDERED')).toBe(
       'Icons not rendered: fa:fa-nope (pack "fa" has no icon "nope"), fa:nada (pack "fa" has no icon "nada"), user (not a pack:name icon name). Labels show them as written; their shapes are drawn without them.'
     );
+    // Flowchart's deprecated alias names the shapes (D299).
+    expect(message(r, 'ICON_UNAVAILABLE')).toMatch(/Icons not drawn: "fa:nada", "user";/);
     expect(codes(r).filter((c) => c === 'ICON_NOT_RENDERED')).toHaveLength(1);
   });
 

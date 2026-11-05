@@ -34,7 +34,13 @@ import type {
 } from '@mermaid-js/core';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import type { Paint, SvgNode, SvgTree, Transform } from '@mermaid-js/core/svg';
-import type { InlineBox, InlineProvider, InlineRequest, SvgFragment } from '@mermaid-js/core/text';
+import type {
+  InlineBox,
+  InlineProvider,
+  InlineRequest,
+  InlineSpans,
+  SvgFragment,
+} from '@mermaid-js/core/text';
 import { buildIcon, type BuiltIcon } from './icon.ts';
 import { iconName } from './name.ts';
 import { getIcon, type IconifyJSON } from './resolve.ts';
@@ -77,7 +83,8 @@ interface Notes {
   readonly unresolved: Map<string, string>;
   readonly simplified: Set<string>;
   labels: boolean;
-  glyphs: boolean;
+  /** The glyph names not drawn, as written, in the order met. */
+  readonly glyphs: Set<string>;
 }
 /** Each render's notes, keyed by its warnings sink (one per render, shared by both providers). */
 const notesByRender = new WeakMap<Warn, Notes>();
@@ -85,7 +92,7 @@ const notesByRender = new WeakMap<Warn, Notes>();
 function notesOf(warn: Warn): Notes {
   let notes = notesByRender.get(warn);
   if (!notes) {
-    notes = { unresolved: new Map(), simplified: new Set(), labels: false, glyphs: false };
+    notes = { unresolved: new Map(), simplified: new Set(), labels: false, glyphs: new Set() };
     notesByRender.set(warn, notes);
   }
   return notes;
@@ -184,7 +191,7 @@ function unresolved(warn: Warn, written: string, label: boolean, why: string): v
   if (notes.unresolved.has(key)) return;
   notes.unresolved.set(key, `${quote(written)} (${why})`);
   if (label) notes.labels = true;
-  else notes.glyphs = true;
+  else notes.glyphs.add(written);
 }
 
 function listed(items: Iterable<string>): string {
@@ -195,22 +202,32 @@ function listed(items: Iterable<string>): string {
 
 /**
  * One render's `ICON_NOT_RENDERED` (D291) and `ICON_SIMPLIFIED` (D295), each naming the icons in
- * the order drawn, through the render's once-per-render sink.
+ * the order drawn, through the render's once-per-render sink. In flowchart, the shapes' icons
+ * also get the deprecated alias `ICON_UNAVAILABLE` beside it, for one alpha (D299): flowchart
+ * gives it itself only without an icons extension, since this warning comes after its render.
  */
-function warnFor(warn: Warn): void {
+function warnFor(spans: InlineSpans, diagram: string): void {
+  const { warn } = spans;
   const notes = notesByRender.get(warn);
   if (!notes) return;
   notesByRender.delete(warn);
   if (notes.unresolved.size > 0) {
+    // Another provider's ICON_NOT_RENDERED came first: flowchart has given the alias for it.
+    const aliased = spans.notRendered('icon');
     const where = [
       notes.labels ? 'labels show them as written' : '',
-      notes.glyphs ? 'their shapes are drawn without them' : '',
+      notes.glyphs.size > 0 ? 'their shapes are drawn without them' : '',
     ].filter(Boolean);
     const said = where.join('; ');
     warn({
       code: 'ICON_NOT_RENDERED',
       message: `Icons not rendered: ${listed(notes.unresolved.values())}. ${said[0]!.toUpperCase()}${said.slice(1)}.`,
     });
+    if (diagram === 'flowchart' && notes.glyphs.size > 0 && !aliased)
+      warn({
+        code: 'ICON_UNAVAILABLE',
+        message: `ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED. Icons not drawn: ${listed([...notes.glyphs].map((n) => JSON.stringify(quote(n))))}; an icon with a form draws its frame alone.`,
+      });
   }
   if (notes.simplified.size > 0)
     warn({
@@ -351,7 +368,7 @@ export const icons: ExtensionPlugin = {
       tree.setAttr(n, 'class', undefined);
       tree.setAttr(n, 'color', inheritedFill(tree, n));
     }
-    if (ctx.inline) warnFor(ctx.inline.warn);
+    if (ctx.inline) warnFor(ctx.inline, ctx.diagram);
   },
   resources: {
     // Packs are the API object's (D294): it loads each `iconPack` this reports.

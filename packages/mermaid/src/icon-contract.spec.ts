@@ -270,7 +270,7 @@ const GLYPH = (size: number) =>
   ({ tag: 'rect', attrs: { class: 'fixture-glyph', width: size, height: size } }) as const;
 const SHAPE = 'flowchart LR\n  A@{ icon: "fa:bell", form: square, h: 64 }';
 const RE_GLYPH =
-  /<g transform="translate\((-?[\d.]+),(-?[\d.]+)\)"><(?:rect|g) class="fixture-glyph"/g;
+  /<g transform="translate\((-?[\d.]+),(-?[\d.]+)\)"(?: color="[^"]*")?><(?:rect|g) class="fixture-glyph"/g;
 
 describe('the glyph slot (D293)', () => {
   it("reaches flowchart's render context, drawn in the icon's square", async () => {
@@ -330,7 +330,11 @@ describe('the glyph slot (D293)', () => {
     await ready;
     const declined = await m.render('x', SHAPE);
     expect(declined.svg).toBe(without.svg);
-    expect(codes(declined.warnings)).toEqual(['ICON_UNAVAILABLE']);
+    // The extension that has glyphs warns about one it cannot draw (D291), so one that declines
+    // silently (as the icons extension does for a placeholder) leaves the render quiet.
+    expect(codes(declined.warnings)).toEqual([]);
+    // Without one, flowchart says ICON_NOT_RENDERED itself, with the deprecated alias (D299).
+    expect(codes(without.warnings)).toEqual(['ICON_NOT_RENDERED', 'ICON_UNAVAILABLE']);
   });
 
   it("gives a provider's warning once per render", async () => {
