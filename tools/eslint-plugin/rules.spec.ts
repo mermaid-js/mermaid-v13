@@ -55,6 +55,9 @@ describe('architecture lint rules fire', () => {
     ['import-diagram.ts', OTHER_DIAGRAM, 'mermaid/import-boundaries'],
     ['import-mermaid.ts', CORE, 'mermaid/import-boundaries'],
     ['import-mermaid.ts', DIAGRAM, 'mermaid/import-boundaries'],
+    ['import-optional-package.ts', CORE, 'mermaid/import-boundaries'],
+    ['import-optional-package.ts', DIAGRAM, 'mermaid/import-boundaries'],
+    ['import-optional-package.ts', MERMAID, 'mermaid/import-boundaries'],
     ['import-escapes-package.ts', DIAGRAM, 'mermaid/import-boundaries'],
     ['import-core-ascii.ts', DIAGRAM, 'mermaid/import-boundaries'],
     ['import-core-ascii.ts', MERMAID, 'mermaid/import-boundaries'],
@@ -91,6 +94,14 @@ describe('architecture lint rules fire', () => {
       filePath: join(root, DIAGRAM_PARSER),
     });
     expect(parser?.messages).toHaveLength(2);
+    for (const file of [CORE, DIAGRAM, MERMAID]) {
+      const [optional] = await eslint.lintText(fixture('import-optional-package.ts'), {
+        filePath: join(root, file),
+      });
+      expect(optional?.messages.map((m) => m.ruleId)).toEqual(
+        Array(3).fill('mermaid/import-boundaries')
+      );
+    }
     const [facet] = await eslint.lintText(fixture('import-render-from-facet.ts'), {
       filePath: join(root, DIAGRAM_FACET),
     });

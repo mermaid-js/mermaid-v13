@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   findBinImportViolations,
   findDependencyViolations,
+  findOptionalNameViolations,
+  findOptionalPackages,
   readBinSources,
+  readCoreSources,
   readWorkspace,
   type WorkspacePackage,
 } from './check-deps.ts';
@@ -200,5 +203,124 @@ describe('bin import check (R-PERF-2, D85)', () => {
     const sources = readBinSources(root, packages);
     expect(sources.map((s) => `${s.pkg.dir}/${s.file}`)).toContain('packages/mermaid/src/cli.ts');
     expect(findBinImportViolations(packages, sources)).toEqual([]);
+  });
+});
+
+describe('optional packages stay out of core (R-PLUG-8, D153, D170)', () => {
+  const peerOnCore = { '@mermaid-js/core': 'workspace:*' };
+  const mermaid = pkg('packages/mermaid', {
+    name: 'mermaid',
+    dependencies: {
+      '@mermaid-js/core': 'workspace:*',
+      '@mermaid-js/diagram-flowchart': 'workspace:*',
+    },
+  });
+  const flowchartPlugin = pkg('packages/diagram-flowchart', {
+    name: '@mermaid-js/diagram-flowchart',
+    peerDependencies: peerOnCore,
+    mermaid: { plugin: 'diagram' },
+  });
+  const elk = pkg('packages/layout-elk', {
+    name: '@mermaid-js/layout-elk',
+    dependencies: { elkjs: '0.12.0' },
+    peerDependencies: peerOnCore,
+  });
+  const math = pkg('packages/plugin-math', {
+    name: '@mermaid-js/plugin-math',
+    peerDependencies: peerOnCore,
+    mermaid: { plugin: 'extension' },
+  });
+  const service = pkg('packages/language-service', {
+    name: '@mermaid-js/language-service',
+    peerDependencies: { ...peerOnCore, '@mermaid-js/diagram-flowchart': 'workspace:*' },
+  });
+  const bench = pkg('packages/bench', { name: '@mermaid-js/bench', private: true });
+  const workspace = [core, flowchartPlugin, mermaid, elk, math, service, bench];
+  const names = (ps: WorkspacePackage[]) => ps.map((p) => p.manifest.name);
+
+  it('finds the published plugins mermaid does not ship, by manifest', () => {
+    expect(names(findOptionalPackages(workspace))).toEqual([
+      '@mermaid-js/layout-elk',
+      '@mermaid-js/plugin-math',
+    ]);
+  });
+
+  it('picks up a new plugin package with no code change (M4 icons, hand-drawn)', () => {
+    const icons = pkg('packages/plugin-icons', {
+      name: '@mermaid-js/plugin-icons',
+      peerDependencies: peerOnCore,
+    });
+    const handDrawn = pkg('packages/look-hand-drawn', {
+      name: '@mermaid-js/look-hand-drawn',
+      peerDependencies: peerOnCore,
+      mermaid: { plugin: 'extension' },
+    });
+    expect(names(findOptionalPackages([...workspace, icons, handDrawn]))).toEqual([
+      '@mermaid-js/layout-elk',
+      '@mermaid-js/plugin-math',
+      '@mermaid-js/plugin-icons',
+      '@mermaid-js/look-hand-drawn',
+    ]);
+  });
+
+  it('stops counting a package as optional once mermaid ships it', () => {
+    const shipping = pkg('packages/mermaid', {
+      name: 'mermaid',
+      dependencies: { ...mermaid.manifest.dependencies, '@mermaid-js/plugin-math': 'workspace:*' },
+    });
+    expect(names(findOptionalPackages([core, shipping, elk, math]))).toEqual([
+      '@mermaid-js/layout-elk',
+    ]);
+  });
+
+  it('passes core sources that name no optional package', () => {
+    const sources = [
+      { pkg: core, file: 'src/index.ts', text: "export { layout } from './layout/index.ts';" },
+    ];
+    expect(findOptionalNameViolations(workspace, sources)).toEqual([]);
+  });
+
+  it('fails a fixture core import of an optional package, static or dynamic', () => {
+    const text = [
+      "import { math } from '@mermaid-js/plugin-math';",
+      "const elk = () => import('@mermaid-js/layout-elk/sync');",
+    ].join('\n');
+    expect(
+      findOptionalNameViolations(workspace, [{ pkg: core, file: 'src/fixture.ts', text }])
+    ).toEqual([
+      '@mermaid-js/core: src/fixture.ts names optional package "@mermaid-js/layout-elk" (core never imports or names an optional package, D153)',
+      '@mermaid-js/core: src/fixture.ts names optional package "@mermaid-js/plugin-math" (core never imports or names an optional package, D153)',
+    ]);
+  });
+
+  it('fails core naming an optional package anywhere, a string or a comment', () => {
+    const text = [
+      "const name = '@mermaid-js/plugin-math';",
+      '// install @mermaid-js/layout-elk for ELK',
+    ].join('\n');
+    expect(
+      findOptionalNameViolations(workspace, [{ pkg: core, file: 'src/load.ts', text }])
+    ).toHaveLength(2);
+  });
+
+  it('fails core declaring an optional package in its manifest', () => {
+    const bad = pkg('packages/core', {
+      name: '@mermaid-js/core',
+      devDependencies: { '@mermaid-js/plugin-math': 'workspace:*' },
+    });
+    expect(findOptionalNameViolations([bad, mermaid, math], [])).toEqual([
+      '@mermaid-js/core: package.json names optional package "@mermaid-js/plugin-math" (core never imports or names an optional package, D153)',
+    ]);
+  });
+
+  it('holds for the real workspace: ELK and math are optional, and core names neither', () => {
+    const root = join(import.meta.dirname, '..', '..');
+    const packages = readWorkspace(root);
+    expect(names(findOptionalPackages(packages))).toEqual(
+      expect.arrayContaining(['@mermaid-js/layout-elk', '@mermaid-js/plugin-math'])
+    );
+    const sources = readCoreSources(root, packages);
+    expect(sources.map((s) => s.file)).toContain('src/index.ts');
+    expect(findOptionalNameViolations(packages, sources)).toEqual([]);
   });
 });

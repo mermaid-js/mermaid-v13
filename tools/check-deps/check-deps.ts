@@ -14,9 +14,14 @@
  *   on and import from its bin, by decision: the LSP server's `vscode-languageserver` (D88) and
  *   the ELK layout package's `elkjs` (D171, licensed EPL-2.0 OR GPL-3.0-or-later; see the
  *   package's THIRD_PARTY_NOTICES).
+ * - Optional packages stay out of core (R-PLUG-8, D153, D170): core's sources and package.json
+ *   never name one, so core can neither import one nor change with one installed. A package is
+ *   optional when it is published, `mermaid` does not ship it, and it plugs into core: it has a
+ *   `mermaid` plugin manifest or `@mermaid-js/core` as its only peer. That is read from the
+ *   manifests, so a new plugin package (M4's icons and hand-drawn look) is covered unchanged.
  */
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, join, relative } from 'node:path';
 
 export interface Manifest {
   name: string;
@@ -24,7 +29,10 @@ export interface Manifest {
   dependencies?: Record<string, string>;
   optionalDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
   bin?: string | Record<string, string>;
+  /** The plugin manifest (DESIGN §12.4): `{ plugin: 'diagram' | 'extension' | 'layout', … }`. */
+  mermaid?: { plugin?: string };
 }
 
 export interface WorkspacePackage {
@@ -144,4 +152,79 @@ export function readBinSources(root: string, packages: WorkspacePackage[]): BinS
         return { pkg, file, text: readFileSync(join(root, pkg.dir, file), 'utf8') };
       });
     });
+}
+
+const CORE = '@mermaid-js/core';
+
+/** Runtime and peer dependencies of `mermaid`: the packages it ships, which are not optional. */
+function shippedByMermaid(packages: WorkspacePackage[]): Set<string> {
+  const m = packages.find((p) => p.manifest.name === 'mermaid')?.manifest;
+  return new Set(
+    Object.keys({ ...m?.dependencies, ...m?.optionalDependencies, ...m?.peerDependencies })
+  );
+}
+
+/** Published packages that plug into core and that `mermaid` does not ship, in workspace order. */
+export function findOptionalPackages(packages: WorkspacePackage[]): WorkspacePackage[] {
+  const shipped = shippedByMermaid(packages);
+  return packages.filter(({ manifest }) => {
+    if (manifest.private || manifest.name === CORE || manifest.name === 'mermaid') return false;
+    if (shipped.has(manifest.name)) return false;
+    const peers = Object.keys(manifest.peerDependencies ?? {});
+    const corePeerOnly = peers.length === 1 && peers[0] === CORE;
+    return manifest.mermaid?.plugin !== undefined || corePeerOnly;
+  });
+}
+
+export interface SourceFile {
+  pkg: WorkspacePackage;
+  /** Path relative to the package, e.g. `src/index.ts`. */
+  file: string;
+  text: string;
+}
+
+const escapeRegExp = (s: string) => s.replace(/[$()*+.?[\\\]^{|}]/g, String.raw`\$&`);
+
+/** A name as a whole package name: not a prefix of a longer one (`plugin-math` vs `plugin-maths`). */
+const nameOf = (name: string) => new RegExp(`${escapeRegExp(name)}(?![\\w-])`);
+
+/**
+ * Places core names an optional package: any of its sources (import, string or comment) and
+ * its package.json dependency fields.
+ */
+export function findOptionalNameViolations(
+  packages: WorkspacePackage[],
+  sources: SourceFile[]
+): string[] {
+  const optional = findOptionalPackages(packages).map((p) => p.manifest.name);
+  const core = packages.find((p) => p.manifest.name === CORE)?.manifest;
+  const why = '(core never imports or names an optional package, D153)';
+  const fields = core && {
+    file: 'package.json',
+    text: JSON.stringify([
+      core.dependencies,
+      core.optionalDependencies,
+      core.peerDependencies,
+      core.devDependencies,
+    ]),
+  };
+  return [...sources, ...(fields ? [fields] : [])].flatMap(({ file, text }) =>
+    optional
+      .filter((name) => nameOf(name).test(text))
+      .map((name) => `${CORE}: ${file} names optional package "${name}" ${why}`)
+  );
+}
+
+/** Every file under core's `src/`, with paths relative to the package. */
+export function readCoreSources(root: string, packages: WorkspacePackage[]): SourceFile[] {
+  const pkg = packages.find((p) => p.manifest.name === CORE);
+  if (!pkg) return [];
+  const src = join(root, pkg.dir, 'src');
+  return readdirSync(src, { recursive: true, withFileTypes: true })
+    .filter((e) => e.isFile())
+    .map((e) => {
+      const path = join(e.parentPath, e.name);
+      return { pkg, file: relative(join(root, pkg.dir), path), text: readFileSync(path, 'utf8') };
+    })
+    .sort((a, b) => a.file.localeCompare(b.file));
 }

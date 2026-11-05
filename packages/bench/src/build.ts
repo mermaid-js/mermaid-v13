@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { relative } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { build } from 'esbuild';
-import type { Metafile } from 'esbuild';
+import type { Metafile, Plugin } from 'esbuild';
 import type { SizeSummary, SizedFile } from './report.ts';
 
 /**
@@ -24,6 +24,9 @@ export interface BundleOptions {
   entry: string;
   outdir: string;
   bench: boolean;
+  /** Extra directories searched for bare imports that normal resolution misses (esbuild `nodePaths`). */
+  nodePaths?: string[];
+  plugins?: Plugin[];
 }
 
 export interface Bundle {
@@ -75,7 +78,13 @@ function staticClosure(meta: Metafile, outdir: string, entryOut: string): string
   return seen;
 }
 
-export async function bundle({ entry, outdir, bench }: BundleOptions): Promise<Bundle> {
+export async function bundle({
+  entry,
+  outdir,
+  bench,
+  nodePaths = [],
+  plugins = [],
+}: BundleOptions): Promise<Bundle> {
   const result = await build({
     entryPoints: [entry],
     outdir,
@@ -94,6 +103,8 @@ export async function bundle({ entry, outdir, bench }: BundleOptions): Promise<B
     entryNames: 'index',
     chunkNames: 'chunks/[name]-[hash]',
     define: benchDefine(bench),
+    nodePaths,
+    plugins,
   });
   const outputs = Object.keys(result.metafile.outputs).filter((p) => !p.endsWith('.map'));
   // Output paths in the metafile are relative to esbuild's working directory.
