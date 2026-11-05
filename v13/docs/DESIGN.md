@@ -330,6 +330,8 @@ Open question: Trebuchet MS isn't installed on most Linux systems, so browser ou
 - **HTML subset:** `<br>`, `<b>`, `<strong>`, `<i>`, `<em>` become style bits. Other known tags are dropped and their text kept. Anything else stays as literal text (R-TEXT-3). The final list waits on O-5.
 - **Wrapping:** greedy, word-based, CJK-aware with kinsoku rules, and handles soft hyphen and ZWSP (R-TEXT-8).
 - **Emitted** as one `<text>`, with `<tspan>` only for multi-run or multi-line labels.
+- **Inline boxes (D177, M3.5):** an extension registers a provider for a delimiter pair (`ExtensionPlugin.inline`, §12.2). Before anything else, label layout hands each delimited span (the text between the delimiters, untouched by line breaks, markdown or HTML) to its provider with the label's font, `measurer.metrics(font)` and `ex` (half the font size: the tables carry no x-height). The provider returns a measured box `{ width, height, baseline, node }`, where `node` is an `SvgFragment` (a detached `{ tag, attrs, children }` tree), or `undefined` to keep the span as written (for example while its engine has not loaded). The box becomes a run `{ kind: 'box', text, width, height, baseline, node }` whose `text` is its source as written, so text output and other text readers see the TeX. Line breaking treats a box as one unbreakable piece: it moves to a new line when it does not fit and is never split. A box taller than the font grows its line (above and below the baseline), recorded as `LabelBox.baselines`. `SvgWriter.label()` draws a label that holds a box with `text-anchor: start` and every line placed from its measured widths; each box follows the `<text>` as a `<g transform="translate(…)">` at its top-left corner, its baseline on the line's, carrying the label's `class`, `fill` and `style`. The writer replays the fragment through `open`/`leaf`/`text`/`close`, so the allow-list holds (R-SEC-2). Boxes reach a label through `layoutLabel`'s `inline` option, set from `RenderContext.inline` (SVG only; text output shows every span as written).
+- **Without a provider**, a label is laid out exactly as before (byte-identical output), and a label with a `$$…$$` pair adds one `MATH_NOT_RENDERED` warning per render. The warning names the feature, not a package (D153, D176).
 
 ## 6. Layout (R-LAYOUT-*, D18)
 
@@ -638,13 +640,20 @@ interface ExtensionPlugin {
   postRender?(tree: SvgTree, ctx: RenderContext): void;        // edits in place, before serialisation (§7.1)
   afterMount?(el: Element, result: RenderResult): void;         // DOM adapter only
   claims?: ('callbacks')[];                                    // features it handles, to silence core's warning
+  inline?: InlineProvider[];                                   // M3.5 (D177): boxes for delimited label spans (§5.3)
 }
+interface InlineProvider {
+  open: string; close: string;                                 // '$$', '$$'
+  box(source: string, req: { font, measurer, metrics, ex }): InlineBox | undefined;  // sync; undefined = as written
+}
+type InlineBox = { width: number; height: number; baseline: number; node: SvgFragment };     // px
 ```
 
 - Hooks run in registration order. Each gets the frozen context, so they can't change config.
 - `postLayout` hooks that only understand graphs act on `kind: 'graph'` and pass other layouts through unchanged. A hook written for one diagram type checks `diagram`. The runner rejects a hook result whose `kind` differs from its input.
 - `postRender` runs on the compact tree; core then re-checks the allow-list, so a hook can't introduce `<script>`, `on*` or unsafe URLs (R-SEC-2).
 - `afterMount` exists only in `mermaid`'s DOM adapter (`run`, `mount`, `bindFunctions`). Core never calls DOM code.
+- Inline providers (D177) are registered with the extension, synchronously, and run during label layout, so `box` is synchronous. An engine that loads lazily (math, D178) is a resource its extension asks `prepare()` for; until it has loaded the provider returns `undefined`. The first registered provider of a delimiter wins. The runner checks each box (finite sizes, a fragment node) and reports a throwing provider as `MermaidError('INTERNAL')` naming the extension, as for hooks.
 - As built in M1: hooks get `HookContext` = the frozen `RenderContext` plus `diagram` (the plugin id) and `state`, the extension's own scratch object for that render, which `afterMount(el, result, state)` also gets (how `postParse` hands click callbacks to `afterMount`). Core's `HookRunner` runs the hooks; `RenderResult.bindFunctions` is set when an extension has `afterMount` and is the adapter's entry point. A failing hook, a changed `kind` or an allow-list failure after `postRender` rejects with `MermaidError('INTERNAL')` naming the extension.
 
 ### 12.3 Interactions plugin (R-PLUG-9, D47)
