@@ -1,0 +1,18 @@
+---
+config:
+  theme: default
+description: >-
+  Label icons (@mermaid-js/plugin-icons, I3 #324) in messages, a note, a participant and a loop
+  label, in the default theme. fa:fa-bell is filled with currentColor, fal:fa-circle-check
+  stroked with it: both take the label's text colour, so the four theme families differ by
+  colour only (D215, D227).
+---
+sequenceDiagram
+  participant A as fa:fa-bell Alarm
+  participant U as User
+  A->>U: fa:fa-bell ring
+  U-->>A: fal:fa-circle-check stop
+  Note over A,U: fal:fa-circle-check acknowledged
+  loop fa:fa-bell every minute
+    A->>U: fa:fa-bell again
+  end
