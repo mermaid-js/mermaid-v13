@@ -16,6 +16,8 @@ import { extractBase } from './base.ts';
 import { benchDefine, bundle, sizeOf, summarise } from './build.ts';
 import type { Bundle } from './build.ts';
 import type { Fixture } from './fixtures.ts';
+import { compareIdentity } from './identity.ts';
+import type { IdentityOutcome, IdentityPair, IdentityResult } from './identity.ts';
 import type { Session } from './interleave.ts';
 import { runAll } from './interleave.ts';
 import { stripMermaidOnlyConfig } from './normalize.ts';
@@ -400,4 +402,75 @@ export function driveBrowser(o: BrowserDriveOptions): Promise<RendererRun[]> {
     o.log,
     'browser'
   );
+}
+
+export type IdentityDriveOptions = Omit<DriveOptions, 'renderer'>;
+
+/** Renders one fixture once on an open page, with a timeout; a page that timed out is replaced. */
+async function renderSvgOn(
+  o: DriveOptions,
+  holder: { runner: BenchPage },
+  source: string,
+  id: string
+): Promise<IdentityOutcome> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<'timeout'>(
+    (resolve) => (timer = setTimeout(() => resolve('timeout'), o.timeoutMs))
+  );
+  const reply = await Promise.race([
+    holder.runner.page
+      .evaluate(
+        ([s, i]) => (window as unknown as { __bench: BenchWindow }).__bench.renderSvg(s, i),
+        [source, id] as const
+      )
+      .catch(
+        (e: unknown): IdentityOutcome => ({ error: e instanceof Error ? e.message : String(e) })
+      ),
+    timeout,
+  ]);
+  clearTimeout(timer);
+  if (reply !== 'timeout') return reply;
+  await holder.runner.context.close();
+  holder.runner = await openRunner(o);
+  return { timeout: o.timeoutMs };
+}
+
+/**
+ * The identity gate (D200): renders every fixture once through `v13` and `v13-base`, each in its
+ * own page, alternating, with the same id and the same source, and compares the SVG strings.
+ * Throws when either renderer cannot start, since then nothing can be compared.
+ */
+export async function driveIdentity(o: IdentityDriveOptions): Promise<IdentityResult> {
+  if (!o.site.base) throw new Error(`v13-base not built: ${o.site.baseError ?? 'no base ref'}`);
+  const open = async (renderer: 'v13' | 'v13-base') => {
+    const d = { ...o, renderer };
+    const holder = { runner: await openRunner(d) };
+    const ready = holder.runner.ready;
+    if (!ready.ok) {
+      await holder.runner.context.close();
+      throw new Error(`${renderer} did not start: ${ready.error}`);
+    }
+    return { d, holder };
+  };
+  const head = await open('v13');
+  try {
+    const base = await open('v13-base');
+    try {
+      const pairs: IdentityPair[] = [];
+      for (const [i, f] of o.fixtures.entries()) {
+        const source = o.strip ? stripMermaidOnlyConfig(f.source).source : f.source;
+        const id = `identity${i}`;
+        pairs.push({
+          id: f.id,
+          head: await renderSvgOn(head.d, head.holder, source, id),
+          base: await renderSvgOn(base.d, base.holder, source, id),
+        });
+      }
+      return compareIdentity(pairs);
+    } finally {
+      await base.holder.runner.context.close();
+    }
+  } finally {
+    await head.holder.runner.context.close();
+  }
 }

@@ -2,6 +2,7 @@
  * Runs inside each renderer's page (ported from the approaches harness `src/runner/harness.ts`).
  * Initialises one renderer, then renders diagrams on request from the Node driver.
  */
+import type { IdentityOutcome } from '../identity.ts';
 import { PROBE_SOURCE, errorText } from '../pipeline.ts';
 import type { RendererId } from '../report.ts';
 import { PipelineMissing, adapterFor } from './adapters.ts';
@@ -88,5 +89,18 @@ function render(source: string, reps: number, budgetMs: number): Promise<RenderR
   return job;
 }
 
-const api: BenchWindow = { renderer, ready, render };
+// The source as given, without the per-call `%% run N` comment, so both renderers see the same text.
+function renderSvg(source: string, id: string): Promise<IdentityOutcome> {
+  const job = queue.then(async (): Promise<IdentityOutcome> => {
+    try {
+      return { svg: await adapter.render(source, id) };
+    } catch (e) {
+      return { error: errorText(e) };
+    }
+  });
+  queue = job;
+  return job;
+}
+
+const api: BenchWindow = { renderer, ready, render, renderSvg };
 (window as unknown as { __bench: BenchWindow }).__bench = api;

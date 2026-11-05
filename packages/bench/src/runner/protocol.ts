@@ -1,4 +1,5 @@
 /** Types shared by the Node driver and the in-page runner (`window.__bench`). */
+import type { IdentityOutcome } from '../identity.ts';
 import type { RendererId, Stage } from '../report.ts';
 
 export interface RunnerOptions {
@@ -32,6 +33,8 @@ export interface BenchWindow {
   renderer: RendererId;
   ready: Promise<ReadyInfo>;
   render(source: string, reps: number, budgetMs: number): Promise<RenderReply>;
+  /** Renders `source` once as `id`, untimed and not inserted: the identity gate (D200). */
+  renderSvg(source: string, id: string): Promise<IdentityOutcome>;
 }
 
 /** Where the server publishes each renderer and which file the adapter imports. */

@@ -5,11 +5,12 @@
  * packages and builds the list.
  */
 import type { Warning } from '@mermaid-js/core';
-import { seamOf, type AddOptions, type FirstUseSource, type Mermaid } from './api.ts';
+import type { AddOptions, Mermaid } from './api.ts';
+import { seamOf, type FirstUseSource } from './seam.ts';
 import type { DiscoveredPlugin } from './registry.ts';
 
 export type { DiscoveredPlugin, SkippedPlugin } from './registry.ts';
-export type { FirstUseSource } from './api.ts';
+export type { FirstUseSource } from './seam.ts';
 
 /**
  * Registers discovered packages on `api`. Diagrams are detected after every first-party type
