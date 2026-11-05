@@ -6,6 +6,21 @@ export default {
   "includeLF": true,
   "start": "frontMatterStart",
   "tokenizer": {
+    "spanTrivia1": [
+      [
+        "\\}%%",
+        {
+          "token": "annotation",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\}%%)[\\s\\S])+",
+        {
+          "token": "annotation"
+        }
+      ]
+    ],
     "root": [
       [
         "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
@@ -14,9 +29,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -421,9 +437,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -691,9 +708,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -961,9 +979,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -1231,9 +1250,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -1508,9 +1528,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -1778,9 +1799,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -2042,9 +2064,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -2306,9 +2329,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -2576,9 +2600,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -2860,9 +2885,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -3148,9 +3174,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [
@@ -3439,9 +3466,10 @@ export default {
         }
       ],
       [
-        "[^\\S\\n]*%%\\{.*?\\}%%",
+        "[^\\S\\n]*%%\\{",
         {
-          "token": "annotation"
+          "token": "annotation",
+          "next": "@spanTrivia1"
         }
       ],
       [

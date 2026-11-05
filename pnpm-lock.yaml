@@ -545,6 +545,12 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../../packages/core
+      '@mermaid-js/diagram-class':
+        specifier: workspace:^
+        version: link:../../packages/diagram-class
+      '@mermaid-js/diagram-er':
+        specifier: workspace:^
+        version: link:../../packages/diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../../packages/diagram-flowchart

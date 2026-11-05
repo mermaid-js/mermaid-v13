@@ -64,7 +64,7 @@ export function categoryOf(scope = ''): string {
 const has = (r: LexRule, op: string) => r.actions.some((a) => a.op === op);
 const pushTarget = (r: LexRule) =>
   r.actions.find((a) => a.op === 'push' || a.op === 'push-once')?.mode;
-const matchesEmpty = (r: LexRule) => new RegExp(`^(?:${r.pattern})$`).test('');
+const matchesEmpty = (pattern: string) => new RegExp(`^(?:${pattern})$`).test('');
 
 /**
  * The pattern a highlighter uses for a rule that changes no mode. TextMate and Monarch cannot
@@ -72,11 +72,41 @@ const matchesEmpty = (r: LexRule) => new RegExp(`^(?:${r.pattern})$`).test('');
  * matches the same non-empty text; any other pattern that can match empty is left out.
  */
 function progressPattern(r: LexRule): string | undefined {
-  if (!matchesEmpty(r)) return r.pattern;
+  const pattern = lineBased(r.pattern);
+  if (!matchesEmpty(pattern)) return pattern;
   const star = /^(?:\\.|\[(?:\\.|[^\]\\])*\]|[^\\[\](){}|*+?])\*$/;
-  return star.test(r.pattern) ? `${r.pattern.slice(0, -1)}+` : undefined;
+  return star.test(pattern) ? `${pattern.slice(0, -1)}+` : undefined;
 }
 const scopeOf = (r: LexRule) => r.scope;
+
+/** What a rule whose text may run over line breaks, `begin[\s\S]*?end`, is made of. */
+const ANY_LAZY = '[\\s\\S]*?';
+/**
+ * A rule that may span lines (a multi-line directive): TextMate and Monarch read lines one at
+ * a time, so they read it as a scope from `begin` to the first `end`. Lezer runs the pattern.
+ */
+function spanOf(r: LexRule): { begin: string; end: string } | undefined {
+  const i = r.pattern.indexOf(ANY_LAZY);
+  if (i <= 0 || pushTarget(r) !== undefined || has(r, 'pop')) return undefined;
+  const begin = r.pattern.slice(0, i);
+  if (matchesEmpty(begin)) return undefined;
+  return { begin, end: r.pattern.slice(i + ANY_LAZY.length) };
+}
+
+/**
+ * A pattern as a line-based highlighter (TextMate, Monarch) runs it: one that starts with a
+ * line break and blanks (`\n\s*end note`) cannot match there, as the line break ends the line
+ * before; it matches at the start of the next line instead (`^\s*end note`). Text up to such
+ * a line break is read a line at a time.
+ */
+function lineBased(pattern: string): string {
+  // Text up to a line break before something (`[\s\S]*?(?=\n\s*end note)`): whole lines.
+  if (pattern.startsWith(`${ANY_LAZY}(?=\\n`)) return '.+';
+  const lead = '\\n\\s*';
+  return pattern.startsWith(lead) && pattern.length > lead.length
+    ? `^\\s*${pattern.slice(lead.length)}`
+    : pattern;
+}
 
 /** Rules in effect in `mode`, trivia first, in priority order. */
 function rulesIn(g: Grammar, mode: string): LexRule[] {
@@ -124,7 +154,10 @@ export function nonCapturing(pattern: string): string {
 export function textMate(g: Grammar, names: HighlightNames): object {
   const suffix = `.${names.id}`;
   // Oniguruma's `(?i)` makes the rest of the (group of the) pattern ignore case.
-  const tm = (p: string) => (g.ignoreCase ? `(?i)${nonCapturing(p)}` : nonCapturing(p));
+  const tm = (p: string) => {
+    const onig = nonCapturing(lineBased(p));
+    return g.ignoreCase ? `(?i)${onig}` : onig;
+  };
   const scope = (r: LexRule) => {
     const s = scopeOf(r);
     return s ? (TEXTMATE_SCOPES[s] ?? s) + suffix : undefined;
@@ -148,7 +181,8 @@ export function textMate(g: Grammar, names: HighlightNames): object {
     const switches: string[] = [];
     for (const e of rulesIn(g, mode)) {
       if (!isEnd(mode, e)) {
-        const pattern = pushTarget(e) === undefined ? progressPattern(e) : e.pattern;
+        const pattern =
+          spanOf(e)?.begin ?? (pushTarget(e) === undefined ? progressPattern(e) : e.pattern);
         if (byPriority && pattern !== undefined) before.push(tm(pattern));
         continue;
       }
@@ -224,6 +258,12 @@ export function textMate(g: Grammar, names: HighlightNames): object {
     if (key in repository) return key;
     const target = pushTarget(r);
     const name = scope(r);
+    const span = spanOf(r);
+    if (span) {
+      const rule = { begin: tm(span.begin), end: tm(span.end) };
+      repository[key] = name ? { ...rule, name } : rule;
+      return key;
+    }
     if (target === undefined) {
       const pattern = progressPattern(r);
       if (pattern === undefined) return undefined;
@@ -308,15 +348,24 @@ export function monarch(g: Grammar, names: HighlightNames): object {
     for (const r of rulesIn(g, mode)) {
       const target = pushTarget(r);
       const pop = mode !== 'INITIAL' && has(r, 'pop');
+      const token = MONARCH_TOKENS[scopeOf(r) ?? ''] ?? '';
+      const span = spanOf(r);
+      if (span) {
+        const inside = `span${g.triviaRules.includes(r) ? 'Trivia' : 'Rule'}${r.index}`;
+        rules.push([span.begin, { token, next: `@${inside}` }]);
+        tokenizer[inside] = [
+          [span.end, { token, next: '@pop' }],
+          [`(?:(?!${span.end})[\\s\\S])+`, { token }],
+        ];
+        continue;
+      }
       const pattern = target === undefined && !pop ? progressPattern(r) : r.pattern;
       if (pattern === undefined) continue;
-      const action: Record<string, string> = {
-        token: MONARCH_TOKENS[scopeOf(r) ?? ''] ?? '',
-      };
+      const action: Record<string, string> = { token };
       if (pop && target !== undefined) action.switchTo = `@${state(target)}`;
       else if (pop) action.next = '@pop';
       else if (target !== undefined) action.next = `@${state(target)}`;
-      rules.push([pattern, action]);
+      rules.push([lineBased(pattern), action]);
     }
     tokenizer[state(mode)] = rules;
   }

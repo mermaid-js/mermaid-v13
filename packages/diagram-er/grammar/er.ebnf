@@ -66,7 +66,8 @@ COLON                     /:/                              :punctuation ;
 <block> BLOCK_STOP        /\}/                             pop :punctuation ;
 (** `string? name`: the type is optional. *)
 <block> QMARK             /\?/                             :operator ;
-<block> BLOCK_COMMA       /,/                              :punctuation ;
+(** Uncoloured: the lexer reads it as v12 did, one `CHAR` (no category). *)
+<block> BLOCK_COMMA       /,/ ;
 <block> CHAR              /./ ;
 
 (** `A[alias]`: the name shown for the entity. *)
@@ -136,7 +137,8 @@ EOF                       /$/ ;
 (** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
 whole line; both take their leading blanks. *)
 COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
-DIRECTIVE                 /[^\S\n]*%%\{.*?\}%%/             :meta ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
 
 @grammar
 
