@@ -20,9 +20,6 @@
       "mermaid-source": "./src/language.ts",
       "types": "./dist/language.d.ts",
       "default": "./dist/language.js"
-    },
-    "./monarch.json": {
-      "mermaid-source": "./grammar/generated/state.monarch.json"
     }
   },
   "files": [
