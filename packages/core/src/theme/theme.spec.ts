@@ -101,6 +101,8 @@ describe('createTheme: drop shadow (#85)', () => {
     ['forest', 'none'],
     ['neutral', 'none'],
     ['base', 'none'],
+    // v12 theme-neo.js, normalised (D181).
+    ['neo', 'drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))'],
   ] as const)('%s has dropShadow %s', async (name, value) => {
     const t = createTheme(await loadTheme(name), { cssVariables: false });
     expect(t.value('dropShadow')).toBe(value);
@@ -155,6 +157,7 @@ describe('createTheme: composite state backgrounds (#192, D120)', () => {
     ['forest', '#cde498', '#f0f0f0'],
     ['neutral', '#eeeeee', '#f4f4f4'],
     ['base', '#fff4dd', '#f6f9ff'],
+    ['neo', '#ffffff', '#f0f0f0'],
   ] as const)('%s: compositeTitleBackground %s, altBackground %s', async (name, title, alt) => {
     const t = createTheme(await loadTheme(name), { cssVariables: false });
     expect(t.value('compositeTitleBackground')).toBe(title);
@@ -172,6 +175,7 @@ describe('createTheme: composite state backgrounds (#192, D120)', () => {
     ['forest', '#ffffff'],
     ['neutral', '#ffffff'],
     ['base', '#f4f4f4'],
+    ['neo', '#ffffff'],
   ] as const)('%s: compositeBackground %s (D126)', async (name, body) => {
     const t = createTheme(await loadTheme(name), { cssVariables: false });
     expect(t.value('compositeBackground')).toBe(body);

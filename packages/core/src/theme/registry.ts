@@ -7,7 +7,7 @@ import type { ThemeSpec } from './spec.ts';
 import reduxColor from './specs/redux-color.ts';
 import type { ThemeWarning } from './theme.ts';
 
-/** The themes 13.0 ships (D64, D151). The neo themes follow later. */
+/** The themes 13.0 ships (D64, D151, D180). `neo-dark` follows later. */
 export const THEME_NAMES = [
   'redux-color',
   'redux',
@@ -18,6 +18,7 @@ export const THEME_NAMES = [
   'forest',
   'neutral',
   'base',
+  'neo',
 ] as const;
 export type ThemeName = (typeof THEME_NAMES)[number];
 
@@ -34,6 +35,7 @@ const LOADERS: Readonly<Record<ThemeName, () => Promise<{ default: ThemeSpec }>>
   forest: () => import('./specs/forest.ts'),
   neutral: () => import('./specs/neutral.ts'),
   base: () => import('./specs/base.ts'),
+  neo: () => import('./specs/neo.ts'),
 };
 
 /**
@@ -41,7 +43,6 @@ const LOADERS: Readonly<Record<ThemeName, () => Promise<{ default: ThemeSpec }>>
  * with a `THEME_UNAVAILABLE` warning (D151).
  */
 const STAND_INS: Readonly<Record<string, ThemeName>> = {
-  neo: 'redux-color',
   'neo-dark': 'redux-dark-color',
   null: 'base',
 };

@@ -9,7 +9,7 @@ const fixtures = [
 describe('buildGallery (R-TEST-6)', () => {
   it('shows a fixture without its own theme once per M1 theme', async () => {
     const { html, count } = await buildGallery(fixtures.slice(0, 1), { version: '13.0.0-test' });
-    expect(count).toBe(9);
+    expect(count).toBe(10);
     for (const theme of [
       'redux-color',
       'redux',
@@ -20,9 +20,10 @@ describe('buildGallery (R-TEST-6)', () => {
       'forest',
       'neutral',
       'base',
+      'neo',
     ])
       expect(html).toContain(`data-theme="${theme}"`);
-    expect(html.match(/<svg /g)).toHaveLength(9);
+    expect(html.match(/<svg /g)).toHaveLength(10);
   });
 
   it('shows a fixture that picks its theme once, in that theme', async () => {
