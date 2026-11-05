@@ -7,7 +7,11 @@
  *     [--renderers v13,v13-stages,v13-base,v12-frozen,v12-current,pele] [--base <ref>]
  *     [--set corpus,pele] [--filter text] [--tiers tiny,regular,large,huge] [--reps 10]
  *     [--budget 1000] [--timeout 30] [--headed] [--lift-limits false] [--strip false]
- *     [--mode auto|report|enforce] [--report-only speed,...] [--update-baseline]
+ *     [--mode auto|report|enforce] [--report-only speed,...] [--update-baseline] [--identity]
+ *
+ * `--identity` runs the identity gate (D200) instead of the bench: every selected fixture is
+ * rendered once by `v13` and by `v13-base`, with the same id and source, and the run fails when
+ * any SVG string differs. A fixture that fails in both is identical only with the same error.
  *
  * `v13-base` is v13 built from `--base` (else BENCH_BASE_REF, else origin/mermaid-v13). In the
  * default "every renderer" set it runs only when that ref exists here.
@@ -20,10 +24,12 @@ import { chromium } from '@playwright/test';
 import { asciiSize, asciiSizeByType } from '../ascii-size.ts';
 import { DEFAULT_BASE_REF, resolveRef } from '../base.ts';
 import { runnerId } from '../baseline.ts';
-import { buildSite, driveBrowser, serve } from '../driver.ts';
+import { buildSite, driveBrowser, driveIdentity, serve } from '../driver.ts';
 import { loadFixtures } from '../fixtures.ts';
+import { identityReport } from '../identity.ts';
 import { detectPipeline } from '../pipeline.ts';
 import type { BenchReport, RendererId } from '../report.ts';
+import { measureCoreSize } from '../size-budget.ts';
 import { classifyFixtures } from '../support.ts';
 import { parseArgs } from './args.ts';
 import { commitInfo, gate, modeSetting, publish, reportOnlyGates } from './output.ts';
@@ -76,36 +82,55 @@ log(`Pipeline ${pipeline.present ? 'present' : 'missing'}: ${pipeline.reason}`);
 if (unsupported.length > 0)
   log(`Not run, no v13 package: ${unsupported.map((u) => `${u.id} (${u.type})`).join(', ')}`);
 
-const site = await buildSite(renderers.includes('v13-base') ? { baseRef } : {});
+const identity = args.flag('identity');
+const site = await buildSite(identity || renderers.includes('v13-base') ? { baseRef } : {});
 if (site.base) log(`v13-base: ${baseRef} = ${site.base.version}`);
 const server = await serve(site);
 const browser = await chromium.launch({ headless: !args.flag('headed') });
 try {
-  const report: BenchReport = {
-    schema: 1,
-    createdAt: new Date().toISOString(),
-    runner: runnerId(),
-    ...commitInfo(),
-    browser: `chromium ${browser.version()}`,
-    options: {
-      ...options,
-      renderers,
-      ...(renderers.includes('v13-base') && { base: baseRef }),
-      fixtures: fixtures.length,
-      sets,
-      tiers,
-      filter,
-    },
-    pipeline,
-    unsupported,
-    // R-ASCII-9: the chunks only a text render loads, from the production build's import graph.
-    asciiSize: asciiSize(site.v13),
-    asciiSizeByType: asciiSizeByType(site.v13),
-    renderers: await driveBrowser({ browser, server, site, renderers, fixtures, ...options, log }),
-  };
-  const outcome = gate(report, setting, reportOnly);
-  publish(report, outcome, { updateBaseline: args.flag('update-baseline'), write: true });
-  process.exitCode = outcome.exitCode;
+  if (identity) {
+    const { lines, exitCode } = identityReport(
+      await driveIdentity({ browser, server, site, fixtures, ...options, log })
+    );
+    for (const line of lines) log(line);
+    process.exitCode = exitCode;
+  } else {
+    const report: BenchReport = {
+      schema: 1,
+      createdAt: new Date().toISOString(),
+      runner: runnerId(),
+      ...commitInfo(),
+      browser: `chromium ${browser.version()}`,
+      options: {
+        ...options,
+        renderers,
+        ...(renderers.includes('v13-base') && { base: baseRef }),
+        fixtures: fixtures.length,
+        sets,
+        tiers,
+        filter,
+      },
+      pipeline,
+      unsupported,
+      // R-ASCII-9: the chunks only a text render loads, from the production build's import graph.
+      asciiSize: asciiSize(site.v13),
+      asciiSizeByType: asciiSizeByType(site.v13),
+      // R-PERF-8: core, the entry's static closure (D161).
+      coreSize: await measureCoreSize(),
+      renderers: await driveBrowser({
+        browser,
+        server,
+        site,
+        renderers,
+        fixtures,
+        ...options,
+        log,
+      }),
+    };
+    const outcome = gate(report, setting, reportOnly);
+    publish(report, outcome, { updateBaseline: args.flag('update-baseline'), write: true });
+    process.exitCode = outcome.exitCode;
+  }
 } finally {
   await browser.close();
   await server.close();

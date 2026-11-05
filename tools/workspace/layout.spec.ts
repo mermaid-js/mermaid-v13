@@ -24,6 +24,7 @@ describe('workspace layout (DESIGN §2)', () => {
     ['packages/diagram-sequence', '@mermaid-js/diagram-sequence', false],
     ['packages/mermaid', 'mermaid', false],
     ['packages/plugin-interactions', '@mermaid-js/plugin-interactions', false],
+    ['packages/bundler-plugin', '@mermaid-js/bundler-plugin', false],
     ['packages/language-service', '@mermaid-js/language-service', false],
     ['packages/language-server', '@mermaid-js/language-server', false],
     ['packages/conformance', '@mermaid-js/conformance', true],

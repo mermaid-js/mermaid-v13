@@ -1,0 +1,15 @@
+{
+  "name": "platform-smoke",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Smoke app (spec #218, T2): renders a flowchart and the fixture plugins from packed tarballs.",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --format=esm --splitting --platform=browser --target=es2022 --outdir=dist/assets --log-level=warning && node -e \"require('fs').copyFileSync('index.html','dist/index.html')\""
+  },
+  "dependencies": {
+    "mermaid": "13.0.0-alpha.0",
+    "mermaid-fixture-diagram": "1.0.0",
+    "mermaid-fixture-extension": "1.0.0"
+  }
+}

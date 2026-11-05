@@ -66,10 +66,12 @@ import {
   Registry,
   type AnyPlugin,
   type Detected,
+  type DiscoveredPlugin,
   type ExternalDiagram,
   type FirstPartyEntry,
   type LayoutLoader,
 } from './registry.ts';
+import { registerSeam } from './seam.ts';
 import { VERSION } from './version.ts';
 
 export type { InitializeConfig, IntegratorOptions } from './config-snapshot.ts';
@@ -304,7 +306,12 @@ async function loadResources(registry: Registry, missing: readonly Resource[]): 
 }
 
 /** The theme a draw paints with: the config's choice, or the default when it is not loaded. */
-function themeFor(config: ResolvedConfig, s: Snapshot, warn: (w: Warning) => void) {
+function themeFor(
+  config: ResolvedConfig,
+  s: Snapshot,
+  warn: (w: Warning) => void,
+  idPrefix: () => string
+) {
   const choice = resolveThemeName(config.theme, warn);
   const spec = loadedTheme(choice.name) ?? loadedTheme(DEFAULT_THEME)!;
   const dark = choice.dark ? loadedTheme(choice.dark) : undefined;
@@ -313,7 +320,33 @@ function themeFor(config: ResolvedConfig, s: Snapshot, warn: (w: Warning) => voi
     dark,
     cssVariables: s.options.output?.cssVariables,
     warn,
+    idPrefix,
   });
+}
+
+/** How long a draw waits for a discovered registration still in flight (D165's import limit). */
+const ADD_TIME_LIMIT_MS = 5000;
+
+/** Options of the discovered-list seam's `add`. */
+export interface AddOptions {
+  /** How long a draw waits for this registration; default 5 s. */
+  readonly timeLimitMs?: number;
+}
+
+const why = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
+/** Whether `p` settles before `deadline` (a time from `Date.now()`). */
+function settlesBy(p: Promise<unknown>, deadline: number): Promise<boolean> {
+  const left = deadline - Date.now();
+  if (left <= 0) return Promise.resolve(false);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    p.then(
+      () => true,
+      () => true
+    ),
+    new Promise<boolean>((done) => (timer = setTimeout(() => done(false), left))),
+  ]).finally(() => clearTimeout(timer));
 }
 
 /**
@@ -321,9 +354,49 @@ function themeFor(config: ResolvedConfig, s: Snapshot, warn: (w: Warning) => voi
  * `firstParty` in its order. `mermaid` passes the generated table with loaders, `mermaid/slim`
  * the detectors with only the integrator's diagrams loadable.
  */
-export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
-  const registry = new Registry(firstParty);
-  const hooks = new HookRunner<Element, RenderResult>();
+export function createMermaid(
+  firstParty: readonly FirstPartyEntry[],
+  firstPartyNames?: readonly { readonly type: string; readonly id?: string }[]
+) {
+  const registry = new Registry(firstParty, firstPartyNames);
+  // Rebuilt after each registration, so hooks run in D166 order whenever plugins arrived.
+  let hooks = new HookRunner<Element, RenderResult>();
+  const rebuildHooks = (): void => {
+    const next = new HookRunner<Element, RenderResult>();
+    for (const e of registry.extensions()) next.register(e as ExtensionPlugin);
+    hooks = next;
+  };
+  // Discovery (D166): its warnings wait for the next draw that succeeds; a first-use source
+  // (the Node scan, T4) runs once, before the first prepare, render, parse or preload.
+  const skipped: Warning[] = [];
+  let firstUse: ((deadline: number) => Promise<void>) | undefined;
+  let firstUseLimit = ADD_TIME_LIMIT_MS;
+  let ready: Promise<void> | undefined;
+  // Additions still registering (the CDN queue's pushes, T6), with the time each one's wait
+  // ends: a draw waits for each until then, and renders without it after (one warning).
+  const adding = new Map<Promise<unknown>, { deadline: number; limit: number }>();
+  const failed = (message: string): Warning => ({ code: 'PLUGIN_DISCOVERY_FAILED', message });
+  const late = (limit: number) => `did not finish within ${limit} ms; rendering without it.`;
+  const discovered = async (): Promise<void> => {
+    const start = firstUse;
+    if (start) {
+      // One limit for the source and its registration; past it the draw goes on (see onFirstUse).
+      ready ??= (async () => {
+        const deadline = Date.now() + firstUseLimit;
+        const run = start(deadline).catch(
+          (e: unknown) => void skipped.push(failed(`Plugin discovery failed: ${why(e)}`))
+        );
+        if (!(await settlesBy(run, deadline)))
+          skipped.push(failed(`Plugin discovery ${late(firstUseLimit)}`));
+      })();
+      await ready;
+    }
+    while (adding.size > 0) {
+      const [pending, { deadline, limit }] = adding.entries().next().value!;
+      if (!(await settlesBy(pending, deadline)) && adding.delete(pending))
+        skipped.push(failed(`A plugin registration ${late(limit)}`));
+    }
+  };
   let site: Snapshot = snapshot();
   let parseErrorHandler: ParseErrorHandler | undefined;
   let iconPacksRequested = false;
@@ -453,6 +526,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
   }
 
   async function prepareWith(text: string, s: Snapshot, format?: string): Promise<Analysis> {
+    if (firstUse || adding.size > 0) await discovered();
     const ascii = checkFormat(text, s, format) === 'ascii';
     let analysis = cache.get(text, s);
     if (!analysis) {
@@ -492,7 +566,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
       diagramType: detected.type,
       width: 0,
       height: 0,
-      warnings: [{ code: 'PLACEHOLDER', message: missing.message }],
+      warnings: [...skipped, { code: 'PLACEHOLDER', message: missing.message }],
     };
   }
 
@@ -507,7 +581,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     const { prepared, plugin } = analysis;
     const { config } = prepared;
     const textOutput = units.id === 'cell';
-    const warnings: Warning[] = [...prepared.warnings];
+    const warnings: Warning[] = [...skipped, ...prepared.warnings];
     const warn = (w: Warning): void => void warnings.push(toWarning(w));
     const missing = missingFor(registry, analysis, textOutput);
     if (missing.length > 0) {
@@ -537,7 +611,8 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
       }
       engine = found.engine;
     }
-    const theme = themeFor(config, s, warn);
+    // The theme reads the id prefix only for the gradient (D182), after ctx exists.
+    const theme = themeFor(config, s, warn, () => ctx.idPrefix);
     let idPrefix: string | undefined;
     const ctx: RenderContext = {
       config,
@@ -629,7 +704,19 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     };
   }
 
+  /** `drawWith`; the queued discovery warnings leave the queue only once a draw has them. */
   function draw(
+    text: string,
+    s: Snapshot,
+    options: RenderOptions | undefined
+  ): RenderResult | TextRenderResult {
+    const queued = skipped.length;
+    const result = drawWith(text, s, options);
+    skipped.splice(0, queued);
+    return result;
+  }
+
+  function drawWith(
     text: string,
     s: Snapshot,
     options: RenderOptions | undefined
@@ -655,6 +742,10 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     return result;
   }
 
+  /**
+   * Draws synchronously what `prepare`/`preload` loaded. It neither runs nor waits for plugin
+   * discovery (the first-use Node scan): `await preload()` or `prepare()` first.
+   */
   function renderSync(text: string, options: TextRenderOptions): TextRenderResult;
   function renderSync(text: string, options?: SvgRenderOptions): RenderResult;
   function renderSync(text: string, options?: RenderOptions): RenderResult | TextRenderResult {
@@ -698,6 +789,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
   ): Promise<ParseResult12 | false>;
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12>;
   async function parse(text: string, parseOptions?: ParseOptions): Promise<ParseResult12 | false> {
+    if (firstUse || adding.size > 0) await discovered();
     const s = site;
     try {
       const f = detectSupported(text, s, false);
@@ -729,6 +821,10 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     site = snapshot(config);
   }
 
+  /**
+   * The v12 type of `text`. Synchronous: it neither runs nor waits for plugin discovery, so a
+   * discovered type is known only after an awaited `preload()`, `prepare()`, `parse()` or `render()`.
+   */
   function detectType(text: string, config?: MermaidConfig): string {
     // v12 passed `config` to detectors; v13 detectors get the `initialize()` config.
     void config;
@@ -740,6 +836,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
   }
 
   async function preload(req: PreloadRequest): Promise<void> {
+    if (firstUse || adding.size > 0) await discovered();
     const tasks: Promise<unknown>[] = [];
     for (const t of req.types ?? []) {
       tasks.push(
@@ -777,17 +874,67 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     }
   }
 
+  /**
+   * Whether `type` can draw `format`. Synchronous: it neither runs nor waits for plugin
+   * discovery (`await preload()` first for discovered types).
+   */
   function supportsFormat(type: string, format: 'svg' | 'ascii'): boolean {
     return registry.formats(type).includes(format);
   }
 
+  /**
+   * Third-party diagrams and extensions, detected after first-party and discovered types, in
+   * call order (D166). A first-party id or v12 type (`flowchart`, `pie`, `classDiagram`) throws
+   * `TypeError` unless `replace: true`, which makes the plugin take over that id or type
+   * (detected in its first-party slot), e.g. to fill a type v13 has no package for.
+   */
   async function registerExternalDiagrams(
     diagrams: readonly ExternalDiagram[],
-    { lazyLoad = true }: { lazyLoad?: boolean } = {}
+    { lazyLoad = true, replace = false }: { lazyLoad?: boolean; replace?: boolean } = {}
   ): Promise<void> {
     cache.clear();
-    const extensions = await registry.registerExternal(diagrams, lazyLoad);
-    for (const e of extensions) hooks.register(e as ExtensionPlugin);
+    try {
+      await registry.registerExternal(diagrams, lazyLoad, replace);
+    } finally {
+      rebuildHooks();
+    }
+  }
+
+  function addDiscovered(
+    list: readonly DiscoveredPlugin[],
+    { timeLimitMs = ADD_TIME_LIMIT_MS }: AddOptions = {}
+  ): Promise<readonly Warning[]> {
+    return register(list, Date.now() + timeLimitMs, timeLimitMs);
+  }
+  /** `addDiscovered`, waited for by draws until `deadline` (`undefined`: not waited for). */
+  function register(
+    list: readonly DiscoveredPlugin[],
+    deadline: number | undefined,
+    limit: number
+  ): Promise<readonly Warning[]> {
+    cache.clear();
+    // Never rejects; leaves `adding` before its awaiter resumes, so a draw right after it
+    // does not wait. The cache is cleared again: a draw during the wait may have filled it.
+    const pending: Promise<readonly Warning[]> = registry
+      .registerDiscovered(list)
+      .then(
+        (warnings) => {
+          rebuildHooks();
+          skipped.push(...warnings);
+          return warnings;
+        },
+        (e: unknown): readonly Warning[] => {
+          const w = failed(`Plugin registration failed: ${why(e)}`);
+          skipped.push(w);
+          return [w];
+        }
+      )
+      .finally(() => {
+        cache.clear();
+        adding.delete(pending);
+      });
+    if (deadline !== undefined) adding.set(pending, { deadline, limit });
+    return pending;
   }
 
   function registerLayoutLoaders(loaders: readonly LayoutLoader[]): void {
@@ -813,7 +960,7 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     onParseError: (error) => parseErrorHandler?.(error),
   });
 
-  return {
+  const api = {
     render,
     prepare,
     renderSync,
@@ -830,6 +977,18 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     registerIconPacks,
     setParseErrorHandler,
   };
+  registerSeam(api, {
+    add: addDiscovered,
+    onFirstUse(source, { timeLimitMs = ADD_TIME_LIMIT_MS } = {}) {
+      if (firstUse || ready) throw new Error('A first-use discovery source is already set');
+      firstUseLimit = timeLimitMs;
+      firstUse = async (deadline) => {
+        const list = await source(site.config, (w) => void skipped.push(w));
+        void register(list, Date.now() < deadline ? deadline : undefined, timeLimitMs);
+      };
+    },
+  });
+  return api;
 }
 
 export type Mermaid = ReturnType<typeof createMermaid>;

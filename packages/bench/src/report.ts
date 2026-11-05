@@ -50,8 +50,9 @@ export interface SizeSummary {
   gzip: number;
   brotli: number;
   /**
-   * `loaded`: the files the runner page actually fetched before it could render.
-   * `static`: the static-import closure of the entry, used when the renderer could not start.
+   * `loaded`: the files the runner page fetched by the end of one flowchart render after init.
+   * `static`: measured from the build's import graph instead (for v13's loaded size, when the
+   * renderer could not start: the entry's static closure plus the flowchart chunk's).
    */
   source: 'loaded' | 'static';
   files: SizedFile[];
@@ -100,6 +101,11 @@ export interface BenchReport {
   asciiSize?: SizeSummary | null;
   /** Gzip bytes of each diagram type's text path (`asciiPaths`), so every type stays visible. */
   asciiSizeByType?: Readonly<Record<string, number>>;
+  /**
+   * R-PERF-8 / D161: the `mermaid` entry's static import closure (core, no diagram chunk), from
+   * the production build (`source: 'static'`). Absent in reports older than M3.5.
+   */
+  coreSize?: SizeSummary | null;
   /** Browser runs (Chromium through Playwright); every gate reads these. */
   renderers: RendererRun[];
 }

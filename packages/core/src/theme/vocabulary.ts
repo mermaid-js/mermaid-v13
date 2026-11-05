@@ -9,9 +9,10 @@
 /**
  * How a variable's value is checked and written. A `padding` is a px length or a multiple of
  * the diagram's own `padding` config (`padding`, `2 * padding`), resolved at render time
- * because the classic themes follow `flowchart.padding` (D152).
+ * because the classic themes follow `flowchart.padding` (D152). A `flag` is `true` or `false`,
+ * read literally at render time like geometry, so it has no CSS variable (D182).
  */
-export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter' | 'padding';
+export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter' | 'padding' | 'flag';
 
 export interface ThemeVarDef {
   /** The short private alias written on the root, without the leading `--_`. */
@@ -122,6 +123,8 @@ export const TOKEN_VARIABLES = [
   'messageEndGap',
   'labelBoxExtraHeight',
   'actorFooterPadding',
+  // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
+  'useGradient',
 ] as const;
 
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
@@ -260,4 +263,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er']),
+  // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
+  // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
+  useGradient: def('ug', 'flag', ['core']),
+  gradientStart: def('gs', 'color', ['core']),
+  gradientStop: def('ge', 'color', ['core']),
 };

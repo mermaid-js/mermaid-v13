@@ -1,0 +1,55 @@
+# Gaps — spec #218
+
+Unmet acceptance criteria and shared contracts, filed under the ticket that owns each one.
+
+## Shared contracts
+
+- T1 owns the discovered-list seam (the one input Node scan T4, bundler module T5 and CDN queue T6 feed). Consumers read `tickets/221.md`.
+- T2 owns the pack-and-install helper and the fixture plugins. Consumers read `tickets/222.md`.
+- Layout manifests (from #215, D177, D171): #238 adds `"mermaid": { "plugin": "layout", "names": [...], "entry", "export"? }` and owns the `readManifest` change. The T1 seam and T4/T5/T6 must take layout manifests and register each name lazily (as `registerLayoutLoaders`); a discovered `elk`/`elk.*` takes over the built-in aliases; duplicate names resolve by package name (D166); explicit registration wins. Whichever of #238/#221 lands second adapts. The ELK package is `@mermaid-js/layout-elk` (D171), not `plugin-elk`.
+- Keep stable for #215: T0's size spec/job (#247 builds on it) and T4's discovery (#215's install checks use it).
+
+## T2 #222 (merged)
+
+- [ ] Not yet verified in the Playwright image (docker was down for the implementer); the coordinator runs the platform specs there at close-out (T7).
+- [ ] npm hoists auto-installed peers, so a missing dependency is caught only by the pnpm variant of the smoke app. Later apps should install with pnpm where the check matters.
+- Platform cache lives in `<os tmpdir>/mermaid-v13-platform` (`MERMAID_PLATFORM_CACHE`); nothing prunes it.
+
+## T3 #224 (merged)
+
+- [ ] Not yet run in the Playwright image (close-out, T7).
+- Cold runs fetch the four bundlers from the npm registry (network needed).
+- Chunk attribution reads source maps (`e2e/platform/harness/chunks.ts`): T5 must keep source maps on in all four app configs.
+
+## T4 #226 (merged)
+
+- [ ] Not yet run in the Playwright image (T7).
+- Follow-up (not this spec): the `mermaid` CLI does not discover plugins.
+- Ancestor `node_modules` plugins are simply not found, no warning (D165 "never ancestors"); the ticket's "skipped with a warning" wording is read that way.
+- `scanPlugins`/`findAppRoot` (`mermaid/node-scan`) are async; T5 awaits them in its unplugin hooks. Layout manifests are skipped with a warning until #238 lands (hook in `scanOne`).
+- The spec's confinement list names `language`, but `readManifest` drops that key, so the scan never sees it and does not confine it (only `detector`, `entry`, `ascii`). The LSP's own scan (D157) confines `language`. Revisit if `readManifest` keeps `language`.
+
+## Cross-spec: #238 layout manifests (from #215, PR #255)
+
+- #238 is merged into `feature/215_feature-plugins`, not yet `mermaid-v13`. Final shape: `"mermaid": { "plugin": "layout", "names": [...] (never layered/dagre), "entry", "id"?, "export"?, "config"? }`; `ManifestPlugin` gains `config?: ConfigFragment`; `registerExternalDiagrams` registers each name lazily with one shared entry load (details: `v13/docs/agents/runs/215/tickets/238.md` on that branch).
+- [ ] Whichever of #218/#215 reaches `mermaid-v13` second adapts: the T1 seam's `layout` arm gains `config`, uses #238's entry resolution; T4 `scanOne` (hook comment), T5's generated module and T6's queue feed layout manifests. Our arm (`{kind:'layout', package, names, loader}`) is compatible; the change is additive.
+
+## T6 #230 (merged)
+
+- [ ] Not yet run in the Playwright image (T7).
+- [x] **Resolved (D163 amended 2026-11-05, `feature/230_cdn-base-attr` merged):** a `cdnBase` that is not the directory the ESM entry came from makes lazy chunks load a second copy of the shared core chunks from the mirror (separate module instances; `instanceof LimitError` etc. break). Implementer's recommendation (a′): the classic loader also reads `data-cdn-base` from its own `<script>` tag and imports the whole ESM build from there; for ESM, `cdnBase` must mirror the entry's directory, a different value warns. `data-cdn-base` would be a second source besides `initialize()`, so it needs a D-id in D160–D169. Rejected: rewriting lazy chunks to take core from the entry (custom linker).
+- Bare package URLs (unpkg/jsdelivr → `dist/mermaid.min.js`) are unit-tested only; the test server doesn't redirect.
+
+## T5 #228 (merged)
+
+- [ ] Not yet run in the Playwright image (T7).
+- [ ] Vite dev-server path unverified (apps run `vite build`); a dependency that wraps mermaid also needs `optimizeDeps.exclude` (README).
+- A package.json that gains a `mermaid` key without an install is seen only on the next install/restart.
+- Fixed cost of the empty `mermaid/discovered` wiring: +58 B gz on core.
+
+## T7 #232 (close-out)
+
+- [x] DESIGN §2/§12.4/§14, ADR-6 (`v13/docs/adr/0006-plugin-discovery.md`) and MIGRATION ("Loading and plugins") written; sizes in `tickets/232.md`.
+- [ ] Platform specs (T2–T6) still not run in the Playwright Docker image: the Docker daemon is down on this machine at close-out too. `pnpm e2e` ran on macOS (see `tickets/232.md`).
+- Follow-up (not this spec): the `mermaid` CLI (`src/cli.ts` imports `index.ts`, not `node.ts`) does not discover plugins. Needs a decision on whether the bin's root is `process.cwd()` or the input file's directory, and `discovery: false` as a flag.
+- Follow-up (not this spec): the Vite dev-server path (`vite` serve, `optimizeDeps.exclude: ['mermaid']`, a wrapper dependency that pre-bundles mermaid) has no e2e; the apps only `vite build`. Add a dev-server variant of `bundle-vite` to `bundler-plugin.spec.ts`.

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CDN: one flowchart</title>
+  </head>
+  <body>
+    <!-- %CDN% is the CDN origin's mermaid directory; the spec fills it in. -->
+    <pre class="mermaid">
+flowchart LR
+  A[Start] --> B{Choice}
+  B --> C[Done]
+    </pre>
+    <script src="%CDN%/mermaid/dist/mermaid.min.js"></script>
+    <script>
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+  </body>
+</html>

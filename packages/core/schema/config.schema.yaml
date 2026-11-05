@@ -94,8 +94,9 @@ properties:
         The default changes from `default` to `redux-color`, the theme v12's flowchart renders by
         default (D151, amending D55). 13.0 ships the redux family (`redux`, `redux-color`,
         `redux-dark`, `redux-dark-color`) as real themes, plus `default`, `dark`, `forest`,
-        `neutral` and `base`. `neo` renders `redux-color`, `neo-dark` renders `redux-dark-color`
-        and `null` renders `base`, each with a `THEME_UNAVAILABLE` warning.
+        `neutral`, `base`, `neo` (v12 `theme-neo.js`, D180, D181) and `neo-dark` (v12
+        `theme-neo-dark.js`, cleaned up into a dark theme, D183). `null` renders `base`, with a
+        `THEME_UNAVAILABLE` warning.
   themeVariables:
     tsType: any
     x-mermaid:
@@ -129,7 +130,10 @@ properties:
         `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap`
         2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities)
         is 11 in every theme. "padding" is `flowchart.padding`. Plain `redux` and
-        `redux-dark` carry no palette. Geometry variables are read as numbers at render time,
+        `redux-dark` carry no palette. `neo` carries the redux values of the geometry, ER and
+        `classText` variables (v12 `look: neo`, D181) and no palette, with its own corner
+        (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the
+        same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time,
         because they feed layout, so overriding their CSS variables has no effect;
         `dropShadow` is a CSS value.
     # Named variables are documented here; any other name is still accepted (R-CONF-5).
@@ -443,6 +447,40 @@ properties:
             v12's values (D120): `#f9f9fb` in `redux` and `redux-color`, `#16141f` in
             `redux-dark` and `redux-dark-color`; `#f0f0f0` in `default` and `forest`, `#555555`
             in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`.
+      useGradient:
+        description: |
+          Paint node and cluster outlines with a horizontal gradient from `gradientStart` to
+          `gradientStop` instead of their border colour. The SVG then carries one
+          `<linearGradient>`, its id derived from the render's id prefix.
+        type: [boolean, string]
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            Off in every shipped theme (D182); v12 turned it on for `look: neo` only. `true` or
+            `false` (also as a string). Read at render time, so it has no CSS variable. The
+            diagram types adopt it one by one; until then it changes nothing.
+      gradientStart:
+        description: |
+          The outline gradient's colour at the left edge, when `useGradient` is on.
+        type: string
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            v12's values: `#0042eb` in the redux themes, `primaryBorderColor` in the classic
+            themes. Written on the gradient stop as `var(--mermaid-gradientStart,<value>)`, so a
+            host can re-colour it without a re-render (D182).
+      gradientStop:
+        description: |
+          The outline gradient's colour at the right edge, when `useGradient` is on.
+        type: string
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            v12's values: `#eb0042` in the redux themes, `secondaryBorderColor` in the classic
+            themes. Written on the gradient stop as `var(--mermaid-gradientStop,<value>)` (D182).
       actorRadius:
         description: |
           Corner radius in px of a sequence participant box.
@@ -511,7 +549,8 @@ properties:
       reason: >-
         `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED`
         warning per render. The v12 neo and classic geometry is theme data instead: the redux
-        themes carry neo geometry and the classic themes carry classic geometry (D152).
+        themes, `neo` and `neo-dark` carry neo geometry and the classic themes carry classic
+        geometry (D152, D181).
       replacement: '`theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8)'
   handDrawnSeed:
     description: |
@@ -875,6 +914,31 @@ properties:
       status: honoured
       since: 13.0.0
       reason: As in v12, the browser build runs `run()` on `window` load unless `initialize()` turns this off.
+  discovery:
+    description: |
+      Plugin auto-discovery (D164, D165): before the first render, `mermaid` registers the
+      plugins found in the app's own `node_modules`, by the Node/SSR scan or, in a bundled
+      app, by `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.
+      It does not cover the CDN `globalThis.mermaidPlugins` queue (D167): a script that
+      pushes itself there always registers. Integrator-only: diagram text cannot set it.
+    type: boolean
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+      reason: 'New in v13. Integrator-only (`initialize()`); no default, so discovery is on unless this is `false`. Read once, at the first `prepare`, `render`, `parse` or `preload`.'
+  cdnBase:
+    description: |
+      CDN build only (D163): the URL first-party chunks (diagrams, their text entries, themes)
+      load from. Default: the directory `mermaid.esm.min.mjs` was loaded from. A relative URL
+      resolves against `document.baseURI`; query and hash are dropped. A base other than that
+      directory loads a second copy of the shared core chunks and warns: to move the whole
+      build, put `data-cdn-base` on the `mermaid.min.js` tag instead. Integrator-only: diagram
+      text cannot set it, so no URL in a diagram ever leads to a load (R-PLUG-7).
+    type: string
+    x-mermaid:
+      status: honoured
+      since: 13.0.0
+      reason: 'New in v13. Integrator-only (`initialize()`); no default. Only a present key changes the base (`undefined` returns to the default); ignored outside the CDN build.'
   arrowMarkerAbsolute:
     # YAML anchor, can be used later with `*arrowMarkerAbsolute`
     &arrowMarkerAbsolute

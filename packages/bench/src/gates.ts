@@ -13,11 +13,22 @@ import type {
   Stage,
 } from './report.ts';
 import { STAGES, rendererRun } from './report.ts';
+import { readSizeBudget } from './size-budget.ts';
 import { geomean, round } from './stats.ts';
 
+const budget = readSizeBudget();
+
 export const LIMITS = {
-  /** R-PERF-1: core + flowchart as loaded for a flowchart render, gzip bytes. */
-  loadedGzipBytes: 80 * 1024,
+  /**
+   * R-PERF-1 / D160: core + flowchart as loaded for one flowchart render, gzip bytes. From the
+   * committed budget file (`packages/mermaid/size-budget.json`, `loaded`).
+   */
+  loadedGzipBytes: budget.loaded.gzipBytes,
+  /**
+   * R-PERF-8 / D161: the `mermaid` entry's static import closure, gzip bytes (budget file,
+   * `core`). `pnpm check` enforces it (`core-size.spec.ts`); the bench gate only reports it.
+   */
+  coreGzipBytes: budget.core.gzipBytes,
   /** R-PERF-3: warm geomean speedup over frozen mermaid@12.2.0 with dagre. */
   minSpeedup: 50,
   /** R-PERF-7: a stage may get at most this much slower than the stored baseline. */
@@ -35,7 +46,14 @@ export const LIMITS = {
 
 export type GateMode = 'report' | 'enforce';
 export type GateModeSetting = GateMode | 'auto';
-export type GateId = 'size' | 'speed' | 'ok-count' | 'stage-regression' | 'ready-at' | 'ascii-size';
+export type GateId =
+  | 'size'
+  | 'core-size'
+  | 'speed'
+  | 'ok-count'
+  | 'stage-regression'
+  | 'ready-at'
+  | 'ascii-size';
 export type GateStatus = 'pass' | 'fail' | 'skip';
 
 export interface GateResult {
@@ -153,7 +171,24 @@ export function evaluateGates({
     detail:
       size === null
         ? 'no size measured'
-        : `${kb(size.gzip)} ${size.source === 'loaded' ? 'fetched by the runner' : 'static import closure'} (limit ${kb(LIMITS.loadedGzipBytes)})`,
+        : `${kb(size.gzip)} ${size.source === 'loaded' ? 'fetched by the runner for one flowchart render' : 'static closure of the entry and the flowchart chunk'} (limit ${kb(LIMITS.loadedGzipBytes)})`,
+  });
+
+  const core = report.coreSize ?? null;
+  gates.push({
+    id: 'core-size',
+    title: 'Core, the mermaid entry static import closure (gzip)',
+    requirement: 'R-PERF-8',
+    // D161: `pnpm check` enforces the budget (core-size.spec.ts); the bench reports it.
+    level: 'should',
+    status: core !== null && core.gzip <= LIMITS.coreGzipBytes ? 'pass' : 'fail',
+    enforced: false,
+    actual: core?.gzip ?? null,
+    limit: LIMITS.coreGzipBytes,
+    detail:
+      core === null
+        ? 'no core size measured'
+        : `${kb(core.gzip)} in ${core.files.length} file(s), no diagram chunk (budget ${kb(LIMITS.coreGzipBytes)})`,
   });
 
   const s = speedup(report);
