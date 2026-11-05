@@ -1,6 +1,7 @@
 import type { DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { AstNode, ParseResult } from '@mermaid-js/core/parser-kit';
 import type { SvgWriter } from '@mermaid-js/core/svg';
+import { journeyConfigDefaults } from './generated/config-defaults.ts';
 import { journeyLabels } from './labels.ts';
 import { layoutJourney, type JourneyLayout } from './layout/index.ts';
 import type { JourneyModel } from './model.ts';
@@ -19,6 +20,7 @@ export const journey = {
   id: 'journey',
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
+  configDefaults: journeyConfigDefaults as Readonly<Record<string, unknown>>,
   detector: (text: string): boolean => DETECT.test(text),
   parse: (): ParseResult<JourneyModel, AstNode> => {
     throw new Error('The journey parser is not built yet (spec #290 T2, #302)');

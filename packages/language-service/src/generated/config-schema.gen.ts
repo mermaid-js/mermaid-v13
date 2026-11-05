@@ -885,7 +885,8 @@ export const configSchema: ConfigSchema = {
     "journey": {
       "$ref": "#/$defs/JourneyDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "timeline": {
@@ -3809,18 +3810,37 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the journey renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "diagramMarginX": {
           "$ref": "#/$defs/C4DiagramConfig/properties/diagramMarginX",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The margin left and right of what is drawn (D224, D242). v12 had no left margin and also used it as the gap between section bands and as a task's width in its bounds; bands are now `taskMargin` apart."
           }
         },
         "diagramMarginY": {
           "$ref": "#/$defs/C4DiagramConfig/properties/diagramMarginY",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The margin above and below what is drawn (D224). v12 fixed the top at -25 and added 70 for a title."
           }
         },
         "leftMargin": {
@@ -3829,7 +3849,9 @@ export const configSchema: ConfigSchema = {
           "default": 150,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Where the first task starts, as in v12. It widens by the widest legend line past it, with no threshold, and is counted once in the width (D242); v12 jumped from 150 to about 230 px once a legend line passed `leftMargin / 2`, and counted it twice."
           }
         },
         "maxLabelWidth": {
@@ -3837,7 +3859,9 @@ export const configSchema: ConfigSchema = {
           "type": "integer",
           "default": 360,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The width legend names wrap to (core label layout, D225). Words longer than it split without v12's hyphen."
           }
         },
         "width": {
@@ -3846,7 +3870,8 @@ export const configSchema: ConfigSchema = {
           "default": 150,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "height": {
@@ -3855,7 +3880,8 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "boxMargin": {
@@ -3864,7 +3890,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer read it only in a loop over an empty list, so it had no effect."
           }
         },
         "boxTextMargin": {
@@ -3873,7 +3901,8 @@ export const configSchema: ConfigSchema = {
           "default": 5,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "noteMargin": {
@@ -3882,7 +3911,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "messageMargin": {
@@ -3891,7 +3922,9 @@ export const configSchema: ConfigSchema = {
           "default": 35,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "messageAlign": {
@@ -3904,7 +3937,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "center",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "bottomMarginAdj": {
@@ -3913,7 +3948,9 @@ export const configSchema: ConfigSchema = {
           "default": 1,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "rightAngles": {
@@ -3921,7 +3958,9 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "taskFontSize": {
@@ -3929,23 +3968,27 @@ export const configSchema: ConfigSchema = {
             "string",
             "number"
           ],
-          "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, task and section names are drawn in the theme's `fontSize` (16 by default), as for every diagram type, not v12's 14. A set value takes effect."
           }
         },
         "taskFontFamily": {
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect."
           }
         },
         "taskMargin": {
           "type": "number",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The gap between tasks and, now, between section bands (D242)."
           }
         },
         "activationWidth": {
@@ -3953,7 +3996,9 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "textPlacement": {
@@ -3961,7 +4006,9 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "fo",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Every label is SVG text from core label layout, wrapped to its box, in `textColor`, with `<br>` breaking lines (D225); there is no `foreignObject` or `tspan`-only mode."
           }
         },
         "actorColours": {
@@ -3978,7 +4025,9 @@ export const configSchema: ConfigSchema = {
             "#FFFFE0"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The actor dot colours in every theme, as in v12 (D249); an author's `actor0`–`actor5` theme variable wins. The empty actor `''` takes no colour (D244). A value that is not a colour is dropped with `STYLE_VALUE_DROPPED`."
           }
         },
         "sectionFills": {
@@ -3996,7 +4045,9 @@ export const configSchema: ConfigSchema = {
             "#00008B"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Sections are filled from the theme's `fillType0`–`fillType7`, cycling over all eight (D241). In v12 the theme's `fillType<n>` style rules hid these colours in every theme."
           }
         },
         "sectionColours": {
@@ -4004,11 +4055,10 @@ export const configSchema: ConfigSchema = {
           "items": {
             "type": "string"
           },
-          "default": [
-            "#fff"
-          ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, section and task names are `textColor`. When set, it colours them by section band (D225); v12's `['#fff']` reached only the `tspan` fallback, which its default `fo` labels did not show."
           }
         },
         "titleColor": {
@@ -4016,15 +4066,18 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "An unset (empty) value takes the theme's `textColor` (D248); v12 wrote an empty `fill`, black on dark themes."
           }
         },
         "titleFontFamily": {
           "description": "Font family to be used for the title text in Journey Diagrams",
           "type": "string",
-          "default": "\"trebuchet ms\", verdana, arial, sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D248). A set value takes effect."
           }
         },
         "titleFontSize": {
@@ -4032,7 +4085,9 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "4ex",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`4ex` of the theme `fontSize` by default, as v12 (D248)."
           }
         }
       }

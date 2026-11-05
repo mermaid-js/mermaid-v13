@@ -274,7 +274,17 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `sequence.noteFont` | ignored | v12's internal font helper; v13 reads the `noteFontSize`, `noteFontFamily` and `noteFontWeight` keys. |  |
 | `sequence.actorFont` | ignored | v12's internal font helper; v13 reads the `actorFontSize`, `actorFontFamily` and `actorFontWeight` keys. |  |
 | `gantt.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `journey.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the journey renderer never did. |  |
 | `journey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `journey.boxMargin` | ignored | v12's journey renderer read it only in a loop over an empty list, so it had no effect. |  |
+| `journey.noteMargin` | ignored | v12's journey renderer never read it. |  |
+| `journey.messageMargin` | ignored | v12's journey renderer never read it. |  |
+| `journey.messageAlign` | ignored | v12's journey renderer never read it. |  |
+| `journey.bottomMarginAdj` | ignored | v12's journey renderer never read it. |  |
+| `journey.rightAngles` | ignored | v12's journey renderer never read it. |  |
+| `journey.activationWidth` | ignored | v12's journey renderer never read it. |  |
+| `journey.textPlacement` | ignored | Every label is SVG text from core label layout, wrapped to its box, in `textColor`, with `<br>` breaking lines (D225); there is no `foreignObject` or `tspan`-only mode. |  |
+| `journey.sectionFills` | ignored | Sections are filled from the theme's `fillType0`–`fillType7`, cycling over all eight (D241). In v12 the theme's `fillType<n>` style rules hid these colours in every theme. |  |
 | `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `class.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -347,6 +357,10 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `sequence.noteFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
 | `sequence.messageFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.messageFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
+| `journey.taskFontSize` |  | The default changes: unset, task and section names are drawn in the theme's `fontSize` (16 by default), as for every diagram type, not v12's 14. A set value takes effect. |
+| `journey.taskFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect. |
+| `journey.sectionColours` |  | The default changes: unset, section and task names are `textColor`. When set, it colours them by section band (D225); v12's `['#fff']` reached only the `tspan` fallback, which its default `fo` labels did not show. |
+| `journey.titleFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D248). A set value takes effect. |
 | `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
 | `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
 
@@ -950,6 +964,62 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 | Subgraph `<g class="cluster" id>` with `<g class="cluster-label">` | `<g class="cluster …" data-id="<name>" data-ast="s:<name>">` with `<rect>` and `<text class="cluster-label">` | |
 | Front-matter `title` drawn as `text.erDiagramTitleText` | Not drawn yet, as in the flowchart | |
 | Hand-drawn look: background copies of every entity (`<id>-background`) | None (`look` is removed, D153) | |
+
+## User journey
+
+### Layout
+
+- **Sizing (D242):** at the default config every element sits where v12 put it (bands at y 50,
+  tasks at y 110, faces at `300 + (5 − score) × 30`, legend rows from y 60). The SVG is sized
+  to what is drawn plus `diagramMarginX`/`diagramMarginY` on each side (D224). v12 counted
+  `leftMargin` twice in the width, took `diagramMarginX` as a task's width in its bounds and
+  as the gap between section bands, fixed the height at 450 px and the view box top at −25
+  (+70 for a title), and ended the activity line at `width − leftMargin − 4`. Section bands
+  are now `taskMargin` apart, as tasks are.
+- **Legend margin (D242):** `leftMargin` widens by exactly what the widest legend line needs.
+  v12 widened only once a legend line passed `leftMargin / 2`, jumping from 150 to about
+  230 px.
+- **Section fills (D241):** sections cycle over all eight `fillType0`–`fillType7`, so an
+  eighth section takes `fillType7` and a ninth `fillType0`. v12 cycled over seven (the length
+  of `sectionFills`, read once at module load), so `fillType7` never showed although the redux
+  themes tune eight. `sectionFills` is ignored: v12's `fillType<n>` style rules hid it in
+  every theme anyway.
+- **The empty actor (D244):** a trailing comma (`Task: 5: Me,`) still adds the actor `''` to
+  the model, but it is not drawn: no legend row, no dot, no colour. v12 drew a nameless row
+  and dot, and as `''` sorts first it took the first colour and shifted every other actor's.
+- **Legend order:** the legend lists actors in the model's order (sorted by code unit), and
+  colours follow the same order. v12 gave colours in sorted order but walked the actor
+  object's keys for the legend, so integer-like names (`1`, `42`) came first there.
+- **Legend wrapping (D225):** a legend name wider than `maxLabelWidth` wraps with core label
+  layout, and a word too long for a line splits without the hyphen v12 added at each split.
+
+### Config
+
+- **Honoured:** `diagramMarginX`, `diagramMarginY`, `leftMargin`, `maxLabelWidth`, `width`,
+  `height`, `taskMargin`, `boxTextMargin`, `taskFontSize`, `taskFontFamily`, `actorColours`,
+  `titleColor`, `titleFontFamily`, `titleFontSize`, `useMaxWidth` and `sectionColours`.
+  Unset, `taskFontSize`, `taskFontFamily` and `titleFontFamily` follow the theme font, as in
+  every diagram type (D132, D248), and `sectionColours` leaves names in `textColor` (D225).
+- **Ignored**, accepted without a warning: `noteMargin`, `messageMargin`, `messageAlign`,
+  `bottomMarginAdj`, `rightAngles`, `activationWidth` and `useWidth` (v12's journey renderer
+  never read them), `boxMargin` (read only in a loop over an empty list), `textPlacement`
+  (every label is SVG text, D225) and `sectionFills` (D241).
+- **Per-diagram values now apply:** v12 read `sectionFills` and `sectionColours` once at
+  module load, so a front-matter or directive value never reached the drawing; a
+  `sectionColours` set there now colours the names.
+- **Text output:** `format: 'ascii'` is not available for journeys; it throws
+  `UnsupportedFormatError` and `supportsFormat('journey', 'ascii')` is `false` (D216).
+
+### Themes
+
+- `fillType0`–`fillType7` are each theme's v12 values, written into the theme. v12 derived
+  them from `primaryColor` and `secondaryColor` with hue turns of ±64° and 128°, so a custom
+  `primaryColor` recoloured every section. In v13 it does not, except on `base`, where
+  `fillType0` and `fillType1` follow `primaryColor` and `secondaryColor` while
+  `fillType2`–`fillType7` keep base's v12 values. Set `fillType<n>` to recolour a section.
+- `faceColor` is `#FFF8DC` in every theme (v12's fallback; no v12 theme set it).
+- `actor0`–`actor5` have no theme value: dots take `journey.actorColours` in every theme,
+  redux included, and an author's `actor<n>` wins for n < 6 (D249).
 
 ## Journey SVG structure
 
