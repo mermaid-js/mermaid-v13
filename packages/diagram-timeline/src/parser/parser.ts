@@ -60,15 +60,11 @@ const DIRECTION: Readonly<Record<number, TimelineDirection>> = {
   [T.TimelineTD]: 'TD',
 };
 
-/** `accDescr {` and its `}` (jison returns no token for them) and comments: trivia here. */
-const SKIPPED = kindSet(
-  Kind.Comment,
-  Kind.Directive,
-  Kind.Space,
-  T.AccDescrMultiline,
-  T.AccDescrMultilineEnd
-);
-const COMMENTS = kindSet(Kind.Comment, Kind.Directive, Kind.Space);
+/**
+ * Comments: trivia here. `accDescr {` and its `}` are read (jison returns no token for them),
+ * so an empty `accDescr {}` is a statement of its own; `grammar/timeline.ebnf` names them too.
+ */
+const SKIPPED = kindSet(Kind.Comment, Kind.Directive, Kind.Space);
 
 const HEADER = ['`timeline`'];
 const TEXT = ['text'];
@@ -126,6 +122,8 @@ class TimelineParser {
   private accDescr = '';
   /** An error at the end of the text was reported (the text ends inside a value). */
   private endReported = false;
+  /** A header was read; a missing one was reported once, so a later one is the header. */
+  private headerSeen = false;
   private lines: LineIndex | undefined;
 
   constructor(
@@ -200,8 +198,11 @@ class TimelineParser {
     const k = this.c.kind;
     if (k === Kind.EOF || k === T.Eof) return 'the end of the text';
     if (k === Kind.Newline) return 'a line break';
+    // One line of it: a bare `title` or `section` takes the next line, `: ` may end a line.
     const t = this.raw().trim();
-    return t.length > 24 ? `\`${t.slice(0, 24)}…\`` : `\`${t}\``;
+    const line = /^[^\n\r]*/.exec(t)?.[0] ?? '';
+    const cut = line.length > 24 ? line.slice(0, 24) : line;
+    return cut.length < t.length ? `\`${cut}…\`` : `\`${t}\``;
   }
 
   /** Report what was found where `names` were expected, then stop the statement. */
@@ -214,21 +215,28 @@ class TimelineParser {
   /**
    * Skip to the next statement after an error (R-PARSE-4): the next line, a line break or the
    * end. A token on a later line counts as a line start, since jison's `\s+` takes the line
-   * breaks that follow blanks.
+   * breaks that follow blanks; so does the token after one that runs over a line break (`::`
+   * at a line end: the last `:` and the line break start an event).
    */
   private recover(): void {
-    const { c, src } = this;
+    const { c } = this;
     c.recovering();
     for (;;) {
       const k = c.kind;
       if (k === Kind.EOF || k === T.Eof || k === Kind.Newline) return;
-      const end = c.end;
+      const start = c.start;
       c.next();
-      for (let i = end; i < c.start; i++) {
-        const ch = src.charCodeAt(i);
-        if (ch === LF || ch === CR) return;
-      }
+      if (this.breaksIn(start, c.start)) return;
     }
+  }
+
+  /** Whether the source has a line break in `[from, to)`. */
+  private breaksIn(from: number, to: number): boolean {
+    for (let i = from; i < to; i++) {
+      const ch = this.src.charCodeAt(i);
+      if (ch === LF || ch === CR) return true;
+    }
+    return false;
   }
 
   /** Run one statement rule; on failure, skip to the next statement. */
@@ -247,15 +255,19 @@ class TimelineParser {
   private header(): void {
     this.statement(() => {
       const { c } = this;
-      const k = c.kind;
-      if (!HEADERS.includes(k)) this.fail(HEADER, HEADER_HINT);
-      this.direction = DIRECTION[k] ?? 'LR';
-      const j = c.next();
-      this.add(
-        { id: this.statementId(), type: 'Header', range: this.range(j), direction: this.direction },
-        'header'
-      );
+      if (!HEADERS.includes(c.kind)) this.fail(HEADER, HEADER_HINT);
+      this.takeHeader();
     });
+  }
+
+  private takeHeader(): void {
+    this.headerSeen = true;
+    this.direction = DIRECTION[this.c.kind] ?? 'LR';
+    const j = this.c.next();
+    this.add(
+      { id: this.statementId(), type: 'Header', range: this.range(j), direction: this.direction },
+      'header'
+    );
   }
 
   /** `document EOF`: statements and line breaks up to jison's `EOF` token. */
@@ -313,10 +325,15 @@ class TimelineParser {
     else if (k === T.Section) this.section();
     else if (k === T.Title) this.titleStatement();
     else if (k === T.AccTitle || k === T.AccDescr) this.accStatement(k);
-    else if (k === T.AccDescrMultilineValue) this.multilineDescription();
-    else if (HEADERS.includes(k))
-      this.fail(STATEMENT, '`timeline` starts the diagram and comes only once');
-    else this.fail(STATEMENT, k === T.Invalid ? EVENT_HINT : undefined);
+    else if (k === T.AccDescrMultiline) this.multilineDescription();
+    else if (k === T.AccDescrMultilineValue || k === T.AccDescrMultilineEnd) {
+      // The rest of an `accDescr { … }` whose opener recovery skipped: already reported.
+      this.c.next();
+    } else if (HEADERS.includes(k)) {
+      // The missing header was reported; one error, one diagnostic.
+      if (!this.headerSeen) this.takeHeader();
+      else this.fail(STATEMENT, '`timeline` starts the diagram and comes only once');
+    } else this.fail(STATEMENT, k === T.Invalid ? EVENT_HINT : undefined);
   }
 
   /** `period`: v12 `addTask($1, 0, '')`. */
@@ -408,33 +425,34 @@ class TimelineParser {
     this.add(node, title ? 'accTitle' : 'accDescr');
   }
 
-  /** `accDescr { … }`: the text up to `}`, trimmed; `accDescr {` and `}` join its range. */
+  /**
+   * `accDescr { … }`: the text up to `}`, trimmed. `accDescr {}` sets nothing (jison returned
+   * no token at all), but is a statement of its own.
+   */
   private multilineDescription(): void {
     const { c } = this;
-    const t = c.tokens;
-    const j = c.next();
-    const range = this.range(j);
-    for (let o = j - 1; o >= 0; o--) {
-      const k = t.kind[o] ?? 0;
-      if (k === T.AccDescrMultiline) range.start = t.start[o] ?? range.start;
-      if (COMMENTS[k] !== 1) break;
-    }
-    let closed = false;
-    for (let o = j + 1; o < t.length; o++) {
-      const k = t.kind[o] ?? 0;
-      if (k === T.AccDescrMultilineEnd) {
-        range.end = t.end[o] ?? range.end;
-        closed = true;
+    const open = c.next();
+    let text: string | undefined;
+    if (c.kind === T.AccDescrMultilineValue) {
+      const value = c.next();
+      if (c.kind !== T.AccDescrMultilineEnd) {
+        this.unclosedDescription(this.range(open).start);
+        throw STOP;
       }
-      if (COMMENTS[k] !== 1) break;
+      text = description(this.raw(value).trim(), false);
     }
-    if (!closed) {
-      this.unclosedDescription(range.start);
-      throw STOP;
-    }
-    const text = description(this.raw(j).trim(), false);
-    this.accDescr = text;
-    this.add({ id: this.statementId(), type: 'AccDescr', range, text }, 'accDescr');
+    // The lexer writes a `}` or a value after every `accDescr {`.
+    const close = c.next();
+    if (text !== undefined) this.accDescr = text;
+    this.add(
+      {
+        id: this.statementId(),
+        type: 'AccDescr',
+        range: { start: this.range(open).start, end: this.range(close).end },
+        text: text ?? '',
+      },
+      'accDescr'
+    );
   }
 }
 

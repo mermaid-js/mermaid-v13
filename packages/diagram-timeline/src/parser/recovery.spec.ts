@@ -80,6 +80,29 @@ const CASES: Case[] = [
     ],
     keeps: ['2002', '2003', 'b'],
   },
+  {
+    // Only line 2 is an error to v12 too: the last `:` of each line, the line break and the
+    // next line up to its `::` lex as one event (`:\n b :`), so lines 3 and 4 hold no INVALID.
+    // Recovery skips the line's rest up to that event and stops after it: the rest is kept.
+    name: 'lines that end in `::` (the last `:` and the line break start an event)',
+    lines: ['timeline', ' a ::', ' b ::', ' c ::', ' d : ok'],
+    errors: [['UNEXPECTED', 2]],
+    keeps: ['c :', 'd', 'ok'],
+  },
+  {
+    name: 'lines that end in `::`, with CRLF line breaks',
+    lines: ['timeline\r', ' 2002 ::\r', ' 2003 ::\r', ''],
+    errors: [
+      ['UNEXPECTED', 2],
+      ['UNEXPECTED', 3],
+    ],
+  },
+  {
+    name: 'no header, then a `timeline` later: one error',
+    lines: ['title T', 'timeline TD', '2002 : a'],
+    errors: [['UNEXPECTED', 1]],
+    keeps: ['2002', 'a'],
+  },
 ];
 
 // Token names: jison terminals with `_` or all capitals, and v13 kind names that are compounds.
@@ -106,7 +129,7 @@ describe('timeline recovery set', () => {
     for (const k of keeps) expect(texts).toContain(k);
   });
 
-  it('gives 14 errors over the set', () => {
-    expect(CASES.flatMap((c) => c.errors)).toHaveLength(14);
+  it('gives 18 errors over the set', () => {
+    expect(CASES.flatMap((c) => c.errors)).toHaveLength(18);
   });
 });

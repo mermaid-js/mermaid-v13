@@ -118,6 +118,19 @@ describe('parseTimeline: errors', () => {
   });
 });
 
+describe('parseTimeline: error messages', () => {
+  it('quotes one line of what it found, at `accDescr {` for a description', () => {
+    const src = 'accDescr {\n a\n b\n}\ntimeline';
+    const [d] = parseTimeline(src).diagnostics;
+    expect(d?.message).toBe(
+      'Expected `timeline`, got `accDescr {`; a timeline starts with `timeline`, `timeline LR` or `timeline TD`.'
+    );
+    expect(d && src.slice(d.range.start, d.range.end)).toBe('accDescr {');
+    const title = parseTimeline('title\nfoo\ntimeline').diagnostics[0]?.message;
+    expect(title).toMatch(/got `title…`/);
+  });
+});
+
 describe('parseTimeline: AST', () => {
   it('gives every statement a semantic id and its source range', () => {
     const src = 'timeline\ntitle T\nsection S\n2002 : a : b\naccTitle: x\n';
@@ -140,6 +153,22 @@ describe('parseTimeline: AST', () => {
       'event',
       'accTitle',
     ]);
+  });
+
+  it('gives an empty `accDescr {}` a statement, and leaves the description as it was', () => {
+    for (const body of ['{}', '{   }', '{\n}']) {
+      const src = `timeline\naccDescr: d\naccDescr ${body}\n`;
+      const { ast, statements, model, diagnostics } = parseTimeline(src);
+      expect(diagnostics).toEqual([]);
+      const node = ast.children[2];
+      expect(node && [node.type, node.id, src.slice(node.range.start, node.range.end)]).toEqual([
+        'AccDescr',
+        'st:3',
+        `accDescr ${body}`,
+      ]);
+      expect(statements.map((s) => s.kind)).toEqual(['header', 'accDescr', 'accDescr']);
+      expect(model.accDescr).toBe('d');
+    }
   });
 
   it('takes `accDescr {` and `}` into the description statement', () => {

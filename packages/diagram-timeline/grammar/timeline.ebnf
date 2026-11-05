@@ -46,8 +46,10 @@ acc_title                 /accTitle\s*:\s*/                push(acc_title) :keyw
 <acc_title> acc_title_value /[^\n]*/                       pop :string ;
 acc_descr                 /accDescr\s*:\s*/                push(acc_descr) :keyword ;
 <acc_descr> acc_descr_value /[^\n]*/                       pop :string ;
--                         /accDescr\s*\{\s*/               push(acc_descr_multiline) attach-next :keyword ;
-<acc_descr_multiline> -   /\}/                             pop attach-prev :keyword ;
+(* jison returns no token for `accDescr {` and its `}`; the grammar names them, so that an
+empty `accDescr {}` is a statement too. *)
+acc_descr_multiline       /accDescr\s*\{\s*/               push(acc_descr_multiline) :keyword ;
+<acc_descr_multiline> acc_descr_multiline_end /\}/        pop :keyword ;
 <acc_descr_multiline> acc_descr_multiline_value /[^}]*/    :string ;
 
 (** `section <name>`: the periods after it belong to the section, up to the next one. *)
@@ -88,7 +90,8 @@ Title @Title = title ;
 (** `accTitle: <text>`: the accessible title. *)
 AccTitle @AccTitle = acc_title acc_title_value ;
 (** `accDescr: <text>` or `accDescr { … }`: the accessible description. *)
-AccDescr @AccDescr = acc_descr acc_descr_value | acc_descr_multiline_value ;
+AccDescr @AccDescr = acc_descr acc_descr_value
+  | acc_descr_multiline [ acc_descr_multiline_value ] acc_descr_multiline_end ;
 (** `section <name>`: starts a section; the periods after it are drawn in it. *)
 Section @Section = section ;
 (** A time period such as `2002`, with its events after it: `2002 : LinkedIn : Facebook`. *)

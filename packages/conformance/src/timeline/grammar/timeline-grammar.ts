@@ -38,12 +38,28 @@ export function grammarTokens(source: string): GrammarTokens {
   return { input, tokens, error };
 }
 
+/** `accDescr {` and its `}`: jison matched them and returned no token. */
+const NO_JISON_TOKEN = new Set(['acc_descr_multiline', 'acc_descr_multiline_end']);
+
 /**
- * The same tokens as jison `[name, image]` pairs (the grammar names them as jison does),
- * `['LEXICAL_ERROR', '']` after an error.
+ * The same tokens as jison `[name, image]` pairs (the grammar names them as jison does, less
+ * the two jison returned none for), `['LEXICAL_ERROR', '']` after an error. The oracle takes
+ * v12's appended `\n` off the token that matched it, so the final `\n` comes off the image of
+ * the last non-empty token that ends at the end of the input.
  */
 export function asJison(t: GrammarTokens): [string, string][] {
-  const out: [string, string][] = t.tokens.map((k) => [k.name, k.text]);
+  const images = t.tokens.map((k) => k.text);
+  for (let k = t.tokens.length - 1; k >= 0; k--) {
+    const tok = t.tokens[k];
+    if (!tok || tok.end < t.input.text.length) break;
+    if (tok.start === tok.end) continue;
+    if (tok.text.endsWith('\n')) images[k] = tok.text.slice(0, -1);
+    break;
+  }
+  const out: [string, string][] = [];
+  t.tokens.forEach((k, i) => {
+    if (!NO_JISON_TOKEN.has(k.name)) out.push([k.name, images[i] ?? '']);
+  });
   if (t.error !== undefined) out.push(['LEXICAL_ERROR', '']);
   return out;
 }

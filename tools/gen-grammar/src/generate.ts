@@ -88,15 +88,8 @@ export const GRAMMARS: GrammarTarget[] = [
   {
     type: 'timeline',
     title: 'Timeline syntax',
-    kinds: {
-      module: 'parser/tokens.ts',
-      object: 'T',
-      // `accDescr {` and its `}`: jison returns no token for them, the lexer does.
-      unnamed: {
-        AccDescrMultiline: { mode: 'INITIAL', pattern: 'accDescr\\s*\\{\\s*' },
-        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '\\}' },
-      },
-    },
+    // `accDescr {` and its `}` are named in the grammar file (jison returns no token for them).
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
   },
 ];
 

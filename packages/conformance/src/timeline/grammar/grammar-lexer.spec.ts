@@ -5,8 +5,7 @@ import { asJison, grammarTokens } from './timeline-grammar.ts';
 
 /**
  * Lexer modes first (parser-method §2): the `@lexer` section of `grammar/timeline.ebnf` emits
- * exactly mermaid\@12's jison token stream (names and images; the oracle takes v12's appended
- * `\n` off the token that matched it, so the grammar's image is clipped the same way) on the
+ * exactly mermaid\@12's jison token stream (names and images, as `asJison` reads them) on the
  * text v12's lexer received, over the lexer gate's corpus.
  */
 describe('timeline grammar lexer', () => {
@@ -31,9 +30,7 @@ describe('timeline grammar lexer', () => {
       const v12 = await oracle.tokens(item.source);
       if (!v12) continue;
       compared++;
-      const t = grammarTokens(item.source);
-      const ours = asJison(t);
-      clip(ours, t.input.text.length, t);
+      const ours = asJison(grammarTokens(item.source));
       if (JSON.stringify(ours) === JSON.stringify(v12)) continue;
       let at = 0;
       while (JSON.stringify(ours[at]) === JSON.stringify(v12[at])) at++;
@@ -48,15 +45,3 @@ describe('timeline grammar lexer', () => {
     expect(diffs.slice(0, 10)).toEqual([]);
   }, 120_000);
 });
-
-/** Take the final `\n` off the image of the token that ends at the end of the input. */
-function clip(out: [string, string][], length: number, t: ReturnType<typeof grammarTokens>): void {
-  for (let k = t.tokens.length - 1; k >= 0; k--) {
-    const tok = t.tokens[k];
-    if (!tok || tok.end < length) return;
-    if (tok.start === tok.end) continue;
-    const entry = out[k];
-    if (entry?.[1].endsWith('\n')) entry[1] = entry[1].slice(0, -1);
-    return;
-  }
-}

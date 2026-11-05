@@ -65,7 +65,7 @@ AccTitle @AccTitle = acc_title acc_title_value ;
 
 ```ebnf
 AccDescr @AccDescr = acc_descr acc_descr_value
-                   | acc_descr_multiline_value ;
+                   | acc_descr_multiline [ acc_descr_multiline_value ] acc_descr_multiline_end ;
 ```
 
 `section <name>`: starts a section; the periods after it are drawn in it.
@@ -109,8 +109,8 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 | acc_title | acc_title_value | `[^\n]*` | pop |  |
 | INITIAL | acc_descr | `accDescr\s*:\s*` | push(acc_descr) |  |
 | acc_descr | acc_descr_value | `[^\n]*` | pop |  |
-| INITIAL | — | `accDescr\s*\{\s*` | push(acc_descr_multiline) |  |
-| acc_descr_multiline | — | `\}` | pop |  |
+| INITIAL | acc_descr_multiline | `accDescr\s*\{\s*` | push(acc_descr_multiline) |  |
+| acc_descr_multiline | acc_descr_multiline_end | `\}` | pop |  |
 | acc_descr_multiline | acc_descr_multiline_value | `[^}]*` |  |  |
 | INITIAL | section | `section\s[^:\n]+` |  | `section <name>`: the periods after it belong to the section, up to the next one. |
 | INITIAL | event | `:\s(?:[^:\n]\|:(?!\s))+` |  | `: <event>`: an event of the last time period, up to a `:` with a blank after it. |

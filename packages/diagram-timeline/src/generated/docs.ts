@@ -13,5 +13,7 @@ export const timelineDocs: Readonly<Partial<Record<number, string>>> = {
   [T.Title]: "`title <text>`: the diagram title.",
   [T.AccTitle]: "`accTitle: <text>`: the accessible title.",
   [T.AccDescr]: "`accDescr: <text>` or `accDescr { … }`: the accessible description.",
+  [T.AccDescrMultiline]: "`accDescr: <text>` or `accDescr { … }`: the accessible description.",
+  [T.AccDescrMultilineEnd]: "`accDescr: <text>` or `accDescr { … }`: the accessible description.",
   [T.Section]: "`section <name>`: starts a section; the periods after it are drawn in it.",
 };
