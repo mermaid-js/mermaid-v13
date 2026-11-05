@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateGates, resolveMode } from './gates.ts';
+import { LIMITS, evaluateGates, resolveMode } from './gates.ts';
 import type {
   Baseline,
   BenchReport,
@@ -8,6 +8,7 @@ import type {
   RendererRun,
   StageTimes,
 } from './report.ts';
+import { readSizeBudget } from './size-budget.ts';
 
 const KB = 1024;
 const CORPUS = 158;
@@ -59,6 +60,7 @@ function healthy(): BenchReport {
     options: {},
     pipeline: { present: true, reason: 'render() returned an <svg>' },
     asciiSize: { raw: 0, gzip: 9 * KB, brotli: 0, source: 'static', files: [] },
+    coreSize: { raw: 0, gzip: 50 * KB, brotli: 0, source: 'static', files: [] },
     renderers: [
       run(
         'v13',
@@ -113,6 +115,7 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
     });
     expect(outcome.gates.map((g) => [g.id, g.status])).toEqual([
       ['size', 'pass'],
+      ['core-size', 'pass'],
       ['speed', 'pass'],
       ['ok-count', 'pass'],
       ['stage-regression', 'pass'],
@@ -122,12 +125,34 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
     expect(outcome.exitCode).toBe(0);
   });
 
-  it('fails when the loaded core + flowchart size is over 80 KB gzip', () => {
+  it('reads the loaded limit from the committed budget file (D160)', () => {
+    expect(LIMITS.loadedGzipBytes).toBe(readSizeBudget().loaded.gzipBytes);
+  });
+
+  it('fails when the loaded core + flowchart size is over the budget', () => {
     const report = healthy();
-    report.renderers[0]!.size!.gzip = 80 * KB + 1;
+    report.renderers[0]!.size!.gzip = LIMITS.loadedGzipBytes + 1;
     expect(gate(report, 'size')).toMatchObject({ status: 'fail', enforced: true, exitCode: 1 });
-    report.renderers[0]!.size!.gzip = 80 * KB;
+    report.renderers[0]!.size!.gzip = LIMITS.loadedGzipBytes;
     expect(gate(report, 'size').status).toBe('pass');
+  });
+
+  // D161: `pnpm check` enforces the core budget (core-size.spec.ts); the bench prints it.
+  it('reports the core static closure against the budget file without failing (R-PERF-8)', () => {
+    const report = healthy();
+    const limit = readSizeBudget().core.gzipBytes;
+    report.coreSize!.gzip = limit + 1;
+    expect(gate(report, 'core-size')).toMatchObject({
+      status: 'fail',
+      enforced: false,
+      limit,
+      actual: limit + 1,
+      exitCode: 0,
+    });
+    report.coreSize!.gzip = limit;
+    expect(gate(report, 'core-size').status).toBe('pass');
+    delete report.coreSize;
+    expect(gate(report, 'core-size')).toMatchObject({ status: 'fail', actual: null });
   });
 
   // D87: the 15 KB ascii budget is soft. The gate reports, like R-PERF-9's ready-at, and never

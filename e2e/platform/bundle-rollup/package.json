@@ -1,0 +1,17 @@
+{
+  "name": "platform-bundle-rollup",
+  "version": "0.0.0",
+  "private": true,
+  "description": "R-PLUG-4 bundle test app (spec #218, T3): the bundle-pages built with Rollup.",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c --silent && node -e \"for (const p of ['flowchart', 'all']) require('fs').copyFileSync(p + '.html', 'dist/' + p + '.html')\""
+  },
+  "dependencies": {
+    "mermaid": "13.0.0-alpha.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "16.0.3",
+    "rollup": "4.64.10"
+  }
+}

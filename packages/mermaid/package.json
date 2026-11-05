@@ -11,20 +11,32 @@
   },
   "sideEffects": [
     "./src/index.ts",
-    "./dist/index.js"
+    "./src/node.ts",
+    "./dist/index.js",
+    "./dist/node.js",
+    "./dist/mermaid.esm.min.mjs",
+    "./dist/mermaid.min.js"
   ],
   "exports": {
     ".": {
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
+      "node": "./dist/node.js",
       "default": "./dist/index.js"
     },
     "./slim": {
       "mermaid-source": "./src/slim.ts",
       "types": "./dist/slim.d.ts",
       "default": "./dist/slim.js"
+    },
+    "./node-scan": {
+      "mermaid-source": "./src/node-scan.ts",
+      "types": "./dist/node-scan.d.ts",
+      "node": "./dist/node-scan.js"
     }
   },
+  "unpkg": "./dist/mermaid.min.js",
+  "jsdelivr": "./dist/mermaid.min.js",
   "bin": {
     "mermaid": "./dist/cli.js"
   },
@@ -36,7 +48,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && tsx scripts/cdn-build.ts",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
@@ -46,5 +58,9 @@
     "@mermaid-js/diagram-flowchart": "workspace:*",
     "@mermaid-js/diagram-sequence": "workspace:*",
     "@mermaid-js/diagram-state": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12",
+    "tsx": "^4.20.6"
   }
 }

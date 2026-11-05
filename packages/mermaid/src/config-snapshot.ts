@@ -32,12 +32,24 @@ export interface IntegratorOptions {
    * render rejects with `MermaidError { code: 'LIMIT' }`. Diagram text cannot change them.
    */
   limits?: Partial<Limits>;
+  /**
+   * CDN build only (D163): the URL first-party chunks load from. Default: the directory the
+   * mermaid file was loaded from. Read from `initialize()` alone; other builds ignore it.
+   */
+  cdnBase?: string;
 }
 
 /** `initialize()` input: the schema config plus the integrator-only options. */
 export type InitializeConfig = MermaidConfig & IntegratorOptions;
 
-const INTEGRATOR_KEYS = ['measurer', 'deterministic', 'linkSchemes', 'output', 'limits'] as const;
+const INTEGRATOR_KEYS = [
+  'measurer',
+  'deterministic',
+  'linkSchemes',
+  'output',
+  'limits',
+  'cdnBase',
+] as const;
 
 export type Plain = Record<string, unknown>;
 export const isPlain = (v: unknown): v is Plain =>
@@ -96,7 +108,8 @@ function stableJson(value: unknown): string {
 
 /** Integrator options as they enter a key: a measurer counts by its `id` (DESIGN §5.1). */
 export function optionsKey(options: Readonly<IntegratorOptions>): unknown {
-  const { measurer, ...rest } = options;
+  // Where chunks load from never changes the output.
+  const { measurer, cdnBase: _cdnBase, ...rest } = options;
   return measurer ? { ...rest, measurer: measurer.id } : rest;
 }
 

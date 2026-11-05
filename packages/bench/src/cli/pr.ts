@@ -15,7 +15,6 @@ import { chromium } from '@playwright/test';
 import { asciiSize, asciiSizeByType } from '../ascii-size.ts';
 import { DEFAULT_BASE_REF } from '../base.ts';
 import { runnerId } from '../baseline.ts';
-import { summarise } from '../build.ts';
 import type { Bundle } from '../build.ts';
 import { buildSite, driveBrowser, nodeEntry, serve } from '../driver.ts';
 import { loadFixtures } from '../fixtures.ts';
@@ -25,6 +24,7 @@ import type { PrReport } from '../pr-check.ts';
 import { PR_DIAGRAMS, corpusInNode } from '../pr-check.ts';
 import { formatPrComment, formatPrReport } from '../pr-markdown.ts';
 import type { BenchReport } from '../report.ts';
+import { closureSize } from '../size-budget.ts';
 import { classifyFixtures } from '../support.ts';
 import { parseArgs } from './args.ts';
 import {
@@ -56,11 +56,7 @@ log(`Pipeline ${pipeline.present ? 'present' : 'missing'}: ${pipeline.reason}`);
 const site = await buildSite({ baseRef });
 if (site.base) log(`v13-base: ${baseRef} = ${site.base.version}`);
 else log(`v13-base not built: ${site.baseError}`);
-const staticGzip = (b: Bundle) =>
-  summarise(
-    b.files.filter((f) => b.staticClosure.includes(f.path)),
-    'static'
-  ).gzip;
+const staticGzip = (b: Bundle) => closureSize(b).gzip;
 
 // 1. R-PERF-4: every corpus diagram once, in Node, with the production bundle.
 const corpusCheck = await corpusInNode(nodeEntry(site, 'v13')!, corpus);
@@ -140,6 +136,7 @@ const benchView: BenchReport = {
   pipeline,
   asciiSize: report.asciiSize,
   asciiSizeByType: report.asciiSizeByType,
+  coreSize: closureSize(site.v13),
   renderers,
 };
 const outcome = gate(benchView, setting, reportOnly, {

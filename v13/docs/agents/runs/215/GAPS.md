@@ -52,3 +52,9 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 - [#218 T4 #226 / T0b #238] A layout package can bring an extension (`LayoutLoader.extension`, used by layout-elk for `lineHops` and its warnings). `ManifestPlugin` and the `layout` manifest carry `config` but no extension, so a package activated by discovery gets neither until the manifest names an eager extension module (as `config`).
 - [E5 #243] MIGRATION.md: `ELK_ALGORITHM_IGNORED`, `ELK_RADIAL_NOT_A_TREE`, and `cycleBreakingStrategy: MODEL_ORDER` left off groups laid out with their parent (elkjs 0.12 throws there; v12 develop fails that render). The language-service schema has no fragments, so `elk` no longer completes in front matter.
+
+## From the #218 merge
+
+- Reconciled: `plugin: "layout"` manifests go through one path, `Registry.resolve` (#238's entry resolution and `ManifestPlugin.config`), for `registerExternalDiagrams`, the seam's `plugin` arm, the Node scan (T4: `scanOne` confines `config`, `toDiscovered` imports it under the time limit and passes a `ManifestPlugin`) and the CDN queue. The seam's `layout` arm gained `config?`. Discovered layout names follow D166 (package order, explicit wins) and an `elk`/`elk.*` one stops `ELK_NOT_INSTALLED`.
+- [#218 T4 #226 / T0b #238 / E2 #240] Discovery activates a layout package's names and fragment, never its `extension` (only `registerLayoutLoaders` reads `LayoutLoader.extension`; an entry's loaders are not read for one). `@mermaid-js/layout-elk`'s package.json has no `mermaid` manifest yet, so it is not discovered at all; it needs the manifest and an eager extension key (as `config`) before an install activates lineHops and its warnings.
+- [#218 T5 #228] The bundler plugin is not built yet; its generated module must feed layout manifests the same way (a `ManifestPlugin` with the eagerly imported `config`).
