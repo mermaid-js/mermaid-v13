@@ -85,6 +85,12 @@ export const GRAMMARS: GrammarTarget[] = [
     title: 'Entity relationship diagram syntax',
     kinds: { module: 'parser/tokens.ts', object: 'T' },
   },
+  {
+    type: 'timeline',
+    title: 'Timeline syntax',
+    // `accDescr {` and its `}` are named in the grammar file (jison returns no token for them).
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
 ];
 
 export const grammarPath = (type: string): string =>

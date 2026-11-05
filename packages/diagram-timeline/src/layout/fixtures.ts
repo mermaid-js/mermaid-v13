@@ -1,8 +1,8 @@
 /**
  * Hand-built `TimelineModel` fixtures for the layout specs, written as v12's DB holds the
  * timeline source above each one (raw text: a period keeps the space before its `:`, an event
- * the space before the next `:`). They stand in for parser-produced fixtures until #336 lands;
- * T2 runs `timelineLayoutViolations` on its own models.
+ * the space before the next `:`). Parser-produced models are checked too, over the whole
+ * corpus: `packages/conformance/src/timeline/layout-corpus.spec.ts` (#336).
  *
  * Corpus files are `e2e/diagrams/timeline/<dir>/<n>-….mmd`.
  */

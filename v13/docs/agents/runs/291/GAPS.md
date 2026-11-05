@@ -12,7 +12,11 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Gate exclusions (listed in `packages/conformance/src/timeline/lexer-parity.spec.ts`): the `accDescr {` opener and its `}` (jison returns no token), comments and directives (trivia). The only sources v12 does not lex are commented copies of short bodies whose `%% cut` splits the `timeline` header, and CR-cut copies of sources with a multi-line directive; each is gated as written.
 
 ### #336 T2 parser
-- [ ] **Divergence to list:** v12's DB has no `setDiagramTitle`, so v12 drops a front-matter `title`. D218 draws it; the model-parity adapter lists it as a deliberate divergence.
+- [x] **Divergence listed:** v12's DB has no `setDiagramTitle`, so v12 drops a front-matter `title`. D218 draws it; `divergences.json` lists `timeline-cases/front-matter-title` (model). MIGRATION.md row owned by #311/#315.
+- **Choice:** the AST is flat, one node per jison `statement` in source order (an event is not a child of its period); the model nests. Header is `st:1`; an event before any period (rejected) gets `st:<n>`.
+- **Choice:** `TimelineModel.titleAst` added (the in-text title's `st:<n>`; undefined for a front-matter title), as quadrant's model has.
+- **Choice:** recovery skips to the next line break, or to a token that starts on a later line: jison's `\s+` eats the line breaks after blanks, so `NEWLINE` alone would swallow the next line's error.
+- No probe yet (`ParseOptions.probe` is ignored): T6 (#318) adds it.
 
 ### #338 T4a palettes
 - [x] v12's derivation differs per theme (forest derives as the spec says; default darkens twice and fixes slots 3–11; base and the neo/redux-dark themes darken by 25; dark and neutral use fixed lists; `cScaleInv` is `invert` in most themes and a 180° hue turn in default and forest; some `cScaleLabel` slots are special-cased). **Choice:** every theme's default values equal v12's exactly; under `primaryColor`/`secondaryColor`/`tertiaryColor` overrides the palette follows v12's rule wherever the DSL can express it (a small additive hue-rotation helper is allowed); any remaining difference is listed here.
@@ -33,7 +37,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - LR connector length uses the virtual event heights (no 50 px floor), as v12; it can end above the last event of a long stack of one-line events (it always reaches the first). Kept.
 - LR draws a connector for a period with no events; `disableMulticolor` does nothing when sections exist. Both kept (v12 behaviour).
 - D251 says leading periods take slot 0 "as Pele does"; Pele actually paints them neutral. The decided answer (slot 0) stands.
-- [ ] Invariants run on hand-built fixtures only (`layout/fixtures.ts`); #336 runs `timelineLayoutViolations` on parser-produced models.
+- [x] Invariants run on parser-produced models (#336): `packages/conformance/src/timeline/layout-corpus.spec.ts`, the whole gate corpus, both directions, classic and redux, default and changed config.
 
 ### #311 T4 renderer
 - [x] v12's section classes are `section-<slot − 1>`: the first section is `section--1`. **Choice:** keep v12's numbering exactly, so existing author CSS still matches (P2); MIGRATION.md says so.

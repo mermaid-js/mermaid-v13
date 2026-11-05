@@ -22,5 +22,13 @@
     "reason": "v12 stored a destroyed participant at the next row, here a fragment's start row, so it never drew the destruction; v13 ends it at the next message from or to it (D123, #139, MIGRATION.md).",
     "owner": "#139",
     "since": "2026-11-04"
+  },
+  {
+    "id": "timeline-cases/front-matter-title",
+    "inputHash": "sha256:921e76548fe3789d",
+    "kind": "model",
+    "reason": "v12's timeline DB has no `setDiagramTitle`, so v12 dropped a front-matter `title`; v13 draws it where an in-text `title` goes, as every M4 type does (D218, #336).",
+    "owner": "#336",
+    "since": "2026-11-05"
   }
 ]
