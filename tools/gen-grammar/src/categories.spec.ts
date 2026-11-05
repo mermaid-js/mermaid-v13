@@ -113,6 +113,8 @@ const FIXTURES: [string, string][] = [
   ['no-dir', 'graph\n  A --> B'],
   ['callback', 'flowchart TD\n  click A call foo(x) "tip"\n  B-->C'],
   ['callback-empty', 'flowchart TD\n  click A call foo()\n  B-->C'],
+  // The arguments open where `call` ends: the name's scope must not open and end in place.
+  ['callback-no-name', 'flowchart TD\n  click A call (x) "tip"\n  B-->C'],
   ['href', 'flowchart TD\n  click A href "http://x" _blank\n  B-->C'],
   ['interpolate', 'flowchart TD\n  A-->B\n  linkStyle default interpolate basis'],
   [

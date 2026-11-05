@@ -131,6 +131,92 @@ export function textMate(g: Grammar, names: HighlightNames): object {
   };
   const repository: Record<string, object> = {};
   const isEnd = (mode: string, r: LexRule) => mode !== 'INITIAL' && has(r, 'pop');
+  const endsOf = (mode: string) => rulesIn(g, mode).filter((e) => isEnd(mode, e));
+  /** Rules that pop `mode` and push another (Monarch's switchTo), in priority order. */
+  const switchesOf = (mode: string) => endsOf(mode).filter((e) => pushTarget(e) !== undefined);
+  /**
+   * The end of a scope holding `mode`, its alternatives in priority order: a plain pop takes
+   * its text (and scope), a pop-then-push ends the scope before its text. TextMate tries the
+   * end before the mode's other rules at a position; `byPriority` makes an end give way where
+   * a rule the lexer tries before it matches, as the lexer does.
+   */
+  const endOf = (mode: string, byPriority = false) => {
+    const endCaptures: Record<string, object> = {};
+    let group = 0;
+    const before: string[] = [];
+    const end: string[] = [];
+    const switches: string[] = [];
+    for (const e of rulesIn(g, mode)) {
+      if (!isEnd(mode, e)) {
+        const pattern = pushTarget(e) === undefined ? progressPattern(e) : e.pattern;
+        if (byPriority && pattern !== undefined) before.push(tm(pattern));
+        continue;
+      }
+      const guard = before.length > 0 ? `(?!${before.join('|')})` : '';
+      if (pushTarget(e) !== undefined) {
+        switches.push(`${guard}(?=${tm(e.pattern)})`);
+        end.push(switches.at(-1)!);
+        continue;
+      }
+      group++;
+      const s = scope(e);
+      if (s) endCaptures[String(group)] = { name: s };
+      end.push(`${guard}(${tm(e.pattern)})`);
+    }
+    return { end: end.join('|') || '$', endCaptures, switches };
+  };
+  /** A scope that opens at `r` and holds `mode` up to one of its ends. */
+  const scoped = (r: LexRule, mode: string, byPriority = false) => {
+    const { end, endCaptures } = endOf(mode, byPriority);
+    const name = scope(r);
+    const rule: Record<string, unknown> = {
+      begin: tm(r.pattern),
+      end,
+      patterns: [{ include: `#mode-${mode}` }],
+    };
+    if (name) rule.beginCaptures = { '0': { name } };
+    if (Object.keys(endCaptures).length > 0) rule.endCaptures = endCaptures;
+    return rule;
+  };
+  /**
+   * A rule that pushes `mode` when `mode` has pop-then-push rules (Monarch's switchTo).
+   * TextMate pops a scope only back to its parent, so the rule opens a chain scope. Its phase
+   * opens at once (`\G`, where the chain's begin ended; not where a pop-then-push matches, as
+   * TextMate stops a line at a scope that opens and ends without progress) and holds `mode`
+   * until one of its ends, which keep the lexer's priority among the mode's rules. A
+   * pop-then-push ends it before the rule's text, where the chain opens that rule's own scope
+   * for the next mode (a chain again if that mode switches too). The chain ends as soon as
+   * neither opens: `(?!\G)` matches anywhere after its begin, and `applyEndPatternLast` lets a
+   * scope that opens there win.
+   */
+  const chain = (r: LexRule, mode: string): Record<string, unknown> => {
+    const phase = `phase-${mode}`;
+    if (!(phase in repository)) {
+      const { switches } = endOf(mode, true);
+      const { beginCaptures: _, ...rule } = scoped(r, mode, true);
+      repository[phase] = { ...rule, begin: `\\G(?!${switches.join('|')})` };
+    }
+    const switches = switchesOf(mode);
+    for (const e of switches) {
+      const key = `switch-${e.index}`;
+      if (key in repository) continue;
+      repository[key] = {}; // a cycle of switches includes it before it is built
+      const next = pushTarget(e)!;
+      repository[key] = switchesOf(next).length > 0 ? chain(e, next) : scoped(e, next, true);
+    }
+    const name = scope(r);
+    const rule: Record<string, unknown> = {
+      begin: tm(r.pattern),
+      end: '(?!\\G)',
+      applyEndPatternLast: 1,
+      patterns: [
+        { include: `#${phase}` },
+        ...switches.map((e) => ({ include: `#switch-${e.index}` })),
+      ],
+    };
+    if (name) rule.beginCaptures = { '0': { name } };
+    return rule;
+  };
   // Each rule is defined once in the repository; modes include the rules they use.
   const ruleKey = (r: LexRule) => `${g.triviaRules.includes(r) ? 'trivia' : 'rule'}-${r.index}`;
   const define = (r: LexRule): string | undefined => {
@@ -144,28 +230,7 @@ export function textMate(g: Grammar, names: HighlightNames): object {
       repository[key] = name ? { match: tm(pattern), name } : { match: tm(pattern) };
       return key;
     }
-    const ends = rulesIn(g, target).filter((e) => isEnd(target, e) && !pushTarget(e));
-    // A rule that pops and pushes another mode (Monarch's switchTo) cannot be one TextMate
-    // end: the scope ends before it, and the enclosing mode's rules read on from there.
-    const switches = rulesIn(g, target).filter((e) => isEnd(target, e) && pushTarget(e));
-    const end =
-      [
-        ...ends.map((e) => `(${tm(e.pattern)})`),
-        ...switches.map((e) => `(?=${tm(e.pattern)})`),
-      ].join('|') || '$';
-    const endCaptures: Record<string, object> = {};
-    ends.forEach((e, k) => {
-      const s = scope(e);
-      if (s) endCaptures[String(k + 1)] = { name: s };
-    });
-    const rule: Record<string, unknown> = {
-      begin: tm(r.pattern),
-      end,
-      patterns: [{ include: `#mode-${target}` }],
-    };
-    if (name) rule.beginCaptures = { '0': { name } };
-    if (Object.keys(endCaptures).length > 0) rule.endCaptures = endCaptures;
-    repository[key] = rule;
+    repository[key] = switchesOf(target).length > 0 ? chain(r, target) : scoped(r, target);
     return key;
   };
   for (const mode of ['INITIAL', ...g.modes]) {
