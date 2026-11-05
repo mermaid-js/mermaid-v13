@@ -7,11 +7,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
-import { mermaidLanguage } from '../src/language.ts';
+import { loadHighlighter, mermaidLanguage } from '../src/language.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const text = readFileSync(join(ROOT, 'packages/bench/fixtures/language/flowchart-50k.mmd'), 'utf8');
 const runs = Number(process.argv[2] ?? 10);
+// The flowchart parser is imported on first use (D134); load it before timing.
+await loadHighlighter('flowchart');
 const { parser } = mermaidLanguage().language;
 
 const times: number[] = [];

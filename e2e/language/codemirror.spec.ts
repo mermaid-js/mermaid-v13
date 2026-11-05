@@ -188,3 +188,74 @@ test('closes the document in the shared service when the editor goes away', asyn
   });
   expect(open1).toEqual({ before: true, after: false });
 });
+
+// --- first paint per diagram type (D134, #190) ------------------------------------------
+
+/** One document per v13 type; the header is the first word. */
+const TYPE_DOCS: Record<string, string> = {
+  flowchart: 'flowchart LR\n  A --> B\n',
+  sequence: 'sequenceDiagram\n  Alice->>Bob: Hi\n',
+  class: 'classDiagram\n  class Animal\n',
+  state: 'stateDiagram-v2\n  [*] --> Idle\n',
+  er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
+};
+
+/** `defaultHighlightStyle`'s keyword colour (#708), which no semantic-token class sets. */
+const KEYWORD = 'rgb(119, 0, 136)';
+
+/** The colour the first line's header word is painted in, or `undefined` if not shown. */
+const headerColour = (page: Page, word: string) =>
+  page.evaluate((w) => {
+    const line = document.querySelector('.cm-content .cm-line');
+    const walker = document.createTreeWalker(line!, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (n.textContent?.includes(w)) return getComputedStyle(n.parentElement!).color;
+    }
+    return undefined;
+  }, word);
+
+const setDoc = (page: Page, text: string) =>
+  page.evaluate((t) => {
+    const view = (window as unknown as EditorWindow).editor;
+    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: t } });
+  }, text);
+
+/** The highlighter chunks the page has loaded (`<id>.parser-<hash>.js`). */
+const parserChunks = (page: Page) =>
+  page.evaluate(() =>
+    performance
+      .getEntriesByType('resource')
+      .map((e) => /\/(\w+)\.parser-[\w-]+\.js$/.exec(e.name)?.[1])
+      .filter((id): id is string => id !== undefined)
+      .sort()
+  );
+
+test('a flowchart-only page loads no other type’s highlighter', async ({ page }) => {
+  await open(page);
+  await expect.poll(() => headerColour(page, 'flowchart')).toBe(KEYWORD);
+  expect(await parserChunks(page)).toEqual(['flowchart']);
+});
+
+for (const [id, text] of Object.entries(TYPE_DOCS)) {
+  test(`first paint colours a ${id} document with its own grammar`, async ({ page }) => {
+    await open(page);
+    await setDoc(page, text);
+    const header = text.split(/\s/)[0]!;
+    await expect.poll(() => headerColour(page, header)).toBe(KEYWORD);
+    // Loaded on demand, once the type showed up.
+    expect(await parserChunks(page)).toContain(id);
+  });
+}
+
+test('a type with no highlighter gets no first-paint colours, not flowchart’s', async ({
+  page,
+}) => {
+  await open(page);
+  await setDoc(page, 'pie title Pets\n  "Dogs" : 386\n');
+  // Past the debounce, so semantic tokens (none for pie) would have come too.
+  await page.waitForTimeout(500);
+  expect(await headerColour(page, 'pie')).not.toBe(KEYWORD);
+  // Back to a flowchart: re-picked, coloured again.
+  await setDoc(page, TYPE_DOCS.flowchart!);
+  await expect.poll(() => headerColour(page, 'flowchart')).toBe(KEYWORD);
+});

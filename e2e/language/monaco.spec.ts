@@ -46,10 +46,24 @@ test.afterAll(async () => {
   await example?.close();
 });
 
+/** The Monarch token types of each line of `text` (the page's current definition). */
+const tokenTypes = (page: Page, text: string) =>
+  page.evaluate(
+    (t) =>
+      (window as unknown as EditorWindow).monaco.editor
+        .tokenize(t, 'mermaid')
+        .map((line) => line.map((x) => x.type)),
+    text
+  );
+
 async function open(page: Page): Promise<void> {
   await page.goto(example.origin);
   await page.waitForFunction(() => 'editor' in window);
   await expect(page.locator('#preview svg')).toBeVisible();
+  // The initial flowchart's Monarch file is loaded on demand (D134).
+  await expect
+    .poll(async () => (await tokenTypes(page, 'flowchart LR\n'))[0]?.[0])
+    .toBe('keyword.mermaid-flowchart');
 }
 
 /** Put the cursor at `line`/`column` (1-based) and focus the editor. */
@@ -174,8 +188,9 @@ test('Monarch reads front matter as front matter', async ({ page }) => {
       'mermaid'
     )
   );
-  expect(tokens[0]?.[0]?.type).toBe('annotation.mermaid-flowchart');
-  expect(tokens[1]?.[0]?.type).toBe('variable.mermaid-flowchart');
+  // Front matter is shared by every type: read before the type is known (D134).
+  expect(tokens[0]?.[0]?.type).toBe('annotation.mermaid');
+  expect(tokens[1]?.[0]?.type).toBe('variable.mermaid');
   expect(tokens[3]?.[0]?.type).toBe('keyword.mermaid-flowchart');
   expect(tokens[4]?.map((t) => t.type)).toContain('operator.mermaid-flowchart');
 });
@@ -203,4 +218,63 @@ test('Monarch: front matter after blank lines or indented, and modes a line brea
       'variable.mermaid-flowchart',
     ]);
   }
+});
+
+// --- first paint per diagram type (D134, #190) ------------------------------------------
+
+/** One document per v13 type; the header is the first word. */
+const TYPE_DOCS: Record<string, string> = {
+  flowchart: 'flowchart LR\n  A --> B\n',
+  sequence: 'sequenceDiagram\n  Alice->>Bob: Hi\n',
+  class: 'classDiagram\n  class Animal\n',
+  state: 'stateDiagram-v2\n  [*] --> Idle\n',
+  er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
+};
+
+/** The highlighter chunks the page has loaded (`<id>.monarch-<hash>.js`). */
+const monarchChunks = (page: Page) =>
+  page.evaluate(() =>
+    performance
+      .getEntriesByType('resource')
+      .map((e) => /\/(\w+)\.monarch-[\w-]+\.js$/.exec(e.name)?.[1])
+      .filter((id): id is string => id !== undefined)
+      .sort()
+  );
+
+/** The colour the first view line's `word` is painted in. */
+const wordColour = (page: Page, word: string) =>
+  page.evaluate((w) => {
+    const span = [...document.querySelectorAll('.view-line span span')].find(
+      (s) => s.textContent?.trim() === w
+    );
+    return span && getComputedStyle(span).color;
+  }, word);
+
+test('a flowchart-only page loads no other type’s Monarch file', async ({ page }) => {
+  await open(page);
+  expect(await monarchChunks(page)).toEqual(['flowchart']);
+});
+
+for (const [id, text] of Object.entries(TYPE_DOCS)) {
+  test(`first paint colours a ${id} document with its own grammar`, async ({ page }) => {
+    await open(page);
+    await page.evaluate((t) => (window as unknown as EditorWindow).editor.setValue(t), text);
+    await expect.poll(async () => (await tokenTypes(page, text))[0]?.[0]).toBe(`keyword.mermaid-${id}`);
+    const types = (await tokenTypes(page, text)).flat().filter((t) => t !== '');
+    expect(types.every((t) => t.endsWith(`.mermaid-${id}`))).toBe(true);
+    // Painted: the header in the theme's keyword colour (vs: #0000ff).
+    await expect.poll(() => wordColour(page, text.split(/\s/)[0]!)).toBe('rgb(0, 0, 255)');
+    expect(await monarchChunks(page)).toContain(id);
+  });
+}
+
+test('a type with no highlighter gets no first-paint colours, not flowchart’s', async ({
+  page,
+}) => {
+  await open(page);
+  const pie = 'pie title Pets\n  "Dogs" : 386\n';
+  await page.evaluate((t) => (window as unknown as EditorWindow).editor.setValue(t), pie);
+  // Past the debounce that re-detects the model's type.
+  await page.waitForTimeout(500);
+  expect((await tokenTypes(page, pie)).flat().filter((t) => t !== '')).toEqual([]);
 });
