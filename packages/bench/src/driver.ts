@@ -19,6 +19,7 @@ import type { Fixture } from './fixtures.ts';
 import type { Session } from './interleave.ts';
 import { runAll } from './interleave.ts';
 import { stripMermaidOnlyConfig } from './normalize.ts';
+import { flowchartClosureSize } from './size-budget.ts';
 import { emptyStages, STAGES } from './report.ts';
 import type { DiagramResult, RendererId, RendererRun, SizeSummary, SizedFile } from './report.ts';
 import type { BenchWindow, ReadyInfo, RenderReply } from './runner/protocol.ts';
@@ -350,13 +351,9 @@ export async function openBrowserSession(o: DriveOptions): Promise<Session | Ren
     initMs: null,
     size: null,
   };
+  // R-PERF-1 (D160): the same set the runner fetches for one flowchart render.
   const v13Static = (): SizeSummary | null =>
-    o.renderer === 'v13'
-      ? summarise(
-          o.site.v13.files.filter((f) => o.site.v13.staticClosure.includes(f.path)),
-          'static'
-        )
-      : null;
+    o.renderer === 'v13' ? flowchartClosureSize(o.site.v13) : null;
 
   const ready = holder.runner.ready;
   if (!ready.ok) {

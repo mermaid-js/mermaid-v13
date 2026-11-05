@@ -20,6 +20,8 @@ const { text } = await mermaid.render('id', 'flowchart LR\n  A --> B', { format:
 
 Every first-party diagram type is included. Bundlers split each type into its own chunk, so a page downloads only the types it renders.
 
+The size budget is in [`size-budget.json`](./size-budget.json): core, everything the `mermaid` entry loads before any diagram chunk, is at most 88 KB gzip, and core plus flowchart, as loaded for one flowchart render, at most 120 KB gzip.
+
 ## Pick your diagrams
 
 `mermaid/slim` is the same API without the first-party diagrams. Only the diagrams you pass in are bundled. Each package has its own version. The newest `mermaid@v13-alpha` depends on the newest `@v13-alpha` of each diagram package, so install them together:
