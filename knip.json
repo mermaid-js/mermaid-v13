@@ -3,11 +3,28 @@
   "workspaces": {
     ".": {
       "entry": ["tools/check-deps/cli.ts", "e2e/dom/server.ts", "e2e/dom/page.ts"],
-      "project": ["tools/**/*.{ts,js}", "e2e/{browser,dev,smoke,dom}/**/*.ts", "e2e/helpers/*.ts"]
+      "project": [
+        "tools/**/*.{ts,js}",
+        "e2e/{browser,dev,smoke,dom}/**/*.ts",
+        "e2e/helpers/*.ts",
+        "e2e/platform/*.spec.ts",
+        "e2e/platform/harness/*.ts"
+      ]
     },
     "packages/*": {
       "entry": ["src/index.ts", "src/*/index.ts", "src/cli/*.ts", "src/cli.ts"],
       "project": ["src/**/*.ts"]
+    },
+    "packages/mermaid": {
+      "entry": [
+        "src/index.ts",
+        "src/slim.ts",
+        "src/cli.ts",
+        "src/node.ts",
+        "src/cdn.ts",
+        "src/cdn-loader.ts"
+      ],
+      "project": ["src/**/*.ts", "scripts/**/*.ts"]
     },
     "packages/bench": {
       "entry": ["src/index.ts", "src/cli/*.ts", "src/runner/harness.ts", "src/runner/*-entry.ts"],

@@ -24,6 +24,15 @@ e2e/**/*
 !e2e/helpers/argos-metadata.spec.ts
 !e2e/rendering/
 !e2e/rendering/mmd-snapshots.spec.ts
+!e2e/helpers/platform-harness.spec.ts
+!e2e/platform/
+!e2e/platform/*.spec.ts
+!e2e/platform/harness/
+!e2e/platform/harness/**
+!e2e/platform/fixtures/
+!e2e/platform/fixtures/**
+!e2e/platform/smoke/
+!e2e/platform/smoke/**
 # Domain docs are maintained by hand outside the code formatting rules
 v13/
 docs/

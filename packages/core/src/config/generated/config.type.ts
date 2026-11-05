@@ -148,6 +148,13 @@ securityLevel?: ("default" | "strict" | "loose" | "antiscript" | "sandbox")
  */
 startOnLoad?: boolean
 /**
+ * Node and SSR plugin auto-discovery (D165): before the first render, `mermaid` registers
+ * the plugins in the app's own `node_modules`. Set `false` to turn it off. Integrator-only:
+ * diagram text cannot set it.
+ * 
+ */
+discovery?: boolean
+/**
  * Controls whether or arrow markers in html code are absolute paths or anchors.
  * This matters if you are using base tag settings.
  * 

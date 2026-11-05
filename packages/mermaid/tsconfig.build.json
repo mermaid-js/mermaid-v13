@@ -7,5 +7,6 @@
     "rootDir": "src",
     "customConditions": []
   },
-  "exclude": ["src/**/*.spec.ts"]
+  "include": ["src"],
+  "exclude": ["src/**/*.spec.ts", "src/cdn.ts", "src/cdn-loader.ts"]
 }

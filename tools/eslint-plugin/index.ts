@@ -2,7 +2,8 @@
  * Local eslint plugin holding the v13 architecture in place (DESIGN §2, R-ARCH-1/5, R-PARSE-7).
  *
  * - `mermaid/import-boundaries`: diagram-* → core, mermaid → core + diagram-*, core → nothing;
- *   the mermaid bin (`src/cli.ts`, D85) may also import `node:` builtins;
+ *   mermaid's Node-only files (the bin `src/cli.ts`, D85; the Node entry `src/node.ts` and its
+ *   scan `src/node-scan.ts`, D165) may also import `node:` builtins;
  *   `core/ascii` imports no SVG code and only ASCII code imports it (DESIGN §6.3);
  *   a diagram's language-side code (`src/language*`, `src/facet/`, `src/parser/`) never imports its
  *   renderer, plugin, main entry or ASCII code (R-LANG-8, D89).
@@ -68,9 +69,10 @@ const isTestFile = (filename: string) => /\.(spec|test)\.[cm]?[jt]s$/.test(filen
 const isTestOnly = (s: string) =>
   s === 'vitest' || s.startsWith('vitest/') || s.startsWith('node:');
 
-/** The mermaid package's `bin` entry (D85): the one non-test file that runs only in node. */
+/** mermaid's Node-only files: the bin (D85), and the Node entry and its scan (D165). */
+const NODE_ONLY = ['cli.ts', 'node.ts', 'node-scan.ts'].map((f) => join('src', f));
 const isBin = (pkg: string, dir: string, filename: string) =>
-  pkg === 'mermaid' && relative(dir, filename) === join('src', 'cli.ts');
+  pkg === 'mermaid' && NODE_ONLY.includes(relative(dir, filename));
 
 /** Why `specifier` may not be imported from package `pkg`, or undefined when allowed. */
 function bareImportViolation(

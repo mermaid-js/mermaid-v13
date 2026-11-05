@@ -2,7 +2,7 @@
  * Runs inside each renderer's page (ported from the approaches harness `src/runner/harness.ts`).
  * Initialises one renderer, then renders diagrams on request from the Node driver.
  */
-import { errorText } from '../pipeline.ts';
+import { PROBE_SOURCE, errorText } from '../pipeline.ts';
 import type { RendererId } from '../report.ts';
 import { PipelineMissing, adapterFor } from './adapters.ts';
 import type {
@@ -55,7 +55,16 @@ const ready: Promise<ReadyInfo> = (async () => {
     const t0 = performance.now();
     await adapter.init(options);
     const initMs = performance.now() - t0;
-    return { ok: true, scriptStartAt, initMs, readyAt: performance.now(), resources: resources() };
+    const readyAt = performance.now();
+    // R-PERF-1 (D160): the loaded size is what a flowchart page loads, so one flowchart renders
+    // before the resource list is read and its lazily imported chunks are counted. A failure
+    // here shows up again on every fixture; the size is still what was fetched.
+    try {
+      await adapter.render(PROBE_SOURCE, `size${renderer.replace(/\W/g, '')}`);
+    } catch {
+      // Reported by the fixtures that fail the same way.
+    }
+    return { ok: true, scriptStartAt, initMs, readyAt, resources: resources() };
   } catch (e) {
     return { ok: false, missing: e instanceof PipelineMissing, error: errorText(e) };
   }

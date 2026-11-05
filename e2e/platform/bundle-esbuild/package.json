@@ -1,0 +1,16 @@
+{
+  "name": "platform-bundle-esbuild",
+  "version": "0.0.0",
+  "private": true,
+  "description": "R-PLUG-4 bundle test app (spec #218, T3): the bundle-pages built with esbuild.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "mermaid": "13.0.0-alpha.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

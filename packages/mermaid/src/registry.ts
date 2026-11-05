@@ -85,6 +85,36 @@ export interface LayoutLoader {
   readonly extension?: ExtensionPlugin;
 }
 
+/**
+ * One entry of the discovered list (D166): what a discovery path (Node scan, bundler module,
+ * CDN queue) found in one package. Detection order among discovered diagrams is by `package`
+ * (code-unit order), never by input order. `plugin` is anything `registerExternalDiagrams`
+ * takes (a `plugin: "layout"` manifest too, D177); `layout` registers each of `names` lazily,
+ * as `registerLayoutLoaders` does, with the package's config fragment if it has one (D153).
+ */
+export type DiscoveredPlugin =
+  | {
+      readonly kind: 'plugin';
+      /** The npm package name (`@scope/name`), the sort key and the name in warnings. */
+      readonly package: string;
+      readonly plugin: ExternalDiagram;
+    }
+  | {
+      readonly kind: 'layout';
+      readonly package: string;
+      /** The layout names it answers to (`elk`, `elk.stress`). */
+      readonly names: readonly string[];
+      readonly loader: LayoutLoader['loader'];
+      readonly config?: ConfigFragment;
+    };
+
+/** The `PLUGIN_SKIPPED` warning: a package (or one of its names) not registered, and why. */
+export interface SkippedPlugin {
+  readonly code: 'PLUGIN_SKIPPED';
+  readonly message: string;
+  readonly package: string;
+}
+
 interface Entry {
   readonly type: string;
   readonly id: string | undefined;
@@ -97,6 +127,26 @@ interface Entry {
   ) => boolean;
   readonly load?: () => Promise<AnyPlugin>;
   readonly loadAscii?: () => Promise<AnyAsciiHook>;
+  /** An eagerly given plugin (no loader): ready as soon as the entry is active. */
+  readonly eager?: AnyPlugin;
+}
+
+/** A diagram, extension or layout package checked and ready to enter a source. */
+type Resolved =
+  | { readonly extension: ExtensionPlugin }
+  | { readonly diagram: Entry }
+  | { readonly layouts: readonly LayoutLoader[] };
+
+/** One layout name a discovered package gives. */
+interface DiscoveredLayout {
+  readonly name: string;
+  readonly loader: LayoutLoader['loader'];
+  readonly config?: ConfigFragment;
+}
+
+interface Found<T> {
+  readonly package: string;
+  readonly value: T;
 }
 
 export interface Detected {
@@ -107,7 +157,9 @@ export interface Detected {
 }
 
 /** Names the built-in engine answers to silently (DESIGN §6.1): `layered` and v12's `dagre`. */
-export const builtIn = (name: string): boolean => name === 'layered' || name === 'dagre';
+const FIRST_PARTY_LAYOUTS: ReadonlySet<string> = new Set(['layered', 'dagre']);
+
+export const builtIn = (name: string): boolean => FIRST_PARTY_LAYOUTS.has(name);
 
 /**
  * v12's ELK names, `elk` and `elk.<algorithm>` (D171). Without an ELK engine registered they draw
@@ -132,6 +184,37 @@ function layoutsOf(module: unknown, manifest: LayoutManifest): unknown {
   if (typeof m !== 'object' || m === null) return m;
   if (manifest.export !== undefined) return m[manifest.export];
   return m.default ?? m.layouts ?? m.layout;
+}
+
+/** A layout manifest (D177) as loaders: each name lazily, one shared load of the entry. */
+function layoutPackage(manifest: LayoutManifest, def: ManifestPlugin): LayoutLoader[] {
+  const label = manifest.id ?? manifest.names[0]!;
+  if (def.detector !== undefined)
+    throw new TypeError(`Layout package "${label}" must not have a detector`);
+  if (manifest.config !== undefined && def.config === undefined)
+    throw new TypeError(`Layout package "${label}" needs its config fragment`);
+  let pending: Promise<unknown> | undefined;
+  const entry = (): Promise<unknown> => {
+    if (!pending) {
+      pending = def.load().then((m) => layoutsOf(m, manifest));
+      pending.catch(() => (pending = undefined));
+    }
+    return pending;
+  };
+  return manifest.names.map((name) => ({
+    name,
+    ...(def.config !== undefined ? { config: def.config } : {}),
+    loader: async () => {
+      const found = await entry();
+      if (typeof found === 'function') return found as LayoutEngine;
+      const l = Array.isArray(found)
+        ? (found as unknown[]).find((x) => (x as LayoutLoader | null)?.name === name)
+        : undefined;
+      if (typeof (l as LayoutLoader | undefined)?.loader !== 'function')
+        throw new TypeError(`Layout entry of "${label}" has no layout "${name}"`);
+      return (l as LayoutLoader).loader();
+    },
+  }));
 }
 
 function kindOf(def: ExternalDiagram): 'plugin' | 'lazy' | 'manifest' | 'extension' {
@@ -185,8 +268,9 @@ const THEME_NAMES: ReadonlySet<string> = new Set(Object.keys(THEME_VARIABLES));
 
 const HOOKS = ['postParse', 'postLayout', 'postRender', 'afterMount'] as const;
 
-function checkExtension(p: ExtensionPlugin): ExtensionPlugin {
-  if (typeof p !== 'object' || p === null || typeof p.id !== 'string' || p.id === '')
+function checkExtension(value: unknown): ExtensionPlugin {
+  const p = value as ExtensionPlugin;
+  if (typeof value !== 'object' || value === null || typeof p.id !== 'string' || p.id === '')
     throw new TypeError('An extension plugin needs a non-empty string id');
   for (const h of HOOKS)
     if (p[h] !== undefined && typeof p[h] !== 'function')
@@ -195,23 +279,78 @@ function checkExtension(p: ExtensionPlugin): ExtensionPlugin {
   return p;
 }
 
+/** Package-name order, by code unit so it is the same in every locale (R-ARCH-6). */
+function byPackage(a: { readonly package: string }, b: { readonly package: string }): number {
+  if (a.package === b.package) return 0;
+  return a.package < b.package ? -1 : 1;
+}
+
+/** Package-name order, then the entry's own id or name: one package may give several. */
+function byPackageThen(key: (f: never) => string) {
+  return (a: Found<unknown>, b: Found<unknown>): number => {
+    const p = byPackage(a, b);
+    if (p !== 0) return p;
+    const ka = key(a as never);
+    const kb = key(b as never);
+    if (ka === kb) return 0;
+    return ka < kb ? -1 : 1;
+  };
+}
+const byEntryId = byPackageThen((f: Found<Entry>) => f.value.id ?? '');
+const byExtensionId = byPackageThen((f: Found<ExtensionPlugin>) => f.value.id);
+
+const why = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
 export class Registry {
+  /** First-party rows, in v12 order (ADR-6). */
   private readonly entries: Entry[] = [];
+  /** Every first-party id and v12 type, for the collision rules (D166). */
+  private readonly firstPartyNames = new Set<string>();
+  /** Explicit `{ replace: true }` registrations, by the first-party id they take over. */
+  private readonly replaced = new Map<string, Entry>();
+  /** Discovered diagrams, sorted by package; the first package with an id wins it. */
+  private discovered: Found<Entry>[] = [];
+  /** Explicit diagrams, in call order. */
   private readonly external: Entry[] = [];
+  /** Detection order, rebuilt after each registration. */
+  private order: Entry[] | undefined;
+  /** Discovered extensions, sorted by package then id. */
+  private discoveredExtensions: Found<ExtensionPlugin>[] = [];
+  /** Every discovered (package, kind, id or name) seen so far, registered or not. */
+  private readonly claimed = new Set<string>();
+  /** Explicit extensions, in call order (a repeated id keeps its place). */
+  private readonly explicitExtensions: ExtensionPlugin[] = [];
   private readonly plugins = new Map<string, AnyPlugin>();
   private readonly loading = new Map<string, Promise<AnyPlugin>>();
   private readonly asciiHooks = new Map<string, AnyAsciiHook>();
   private readonly layoutLoaders = new Map<string, LayoutLoader['loader']>();
+  /** The extension each explicitly registered layout name brought (D174). */
   private readonly layoutExtensions = new Map<string, ExtensionPlugin>();
-  /** Whether any ELK name (`elk`, `elk.*`) has a registered loader. */
+  /** Whether any ELK name (`elk`, `elk.*`) has a registered or discovered loader. */
   private elkRegistered = false;
+  private discoveredLayouts: (Found<LayoutLoader['loader']> & { readonly name: string })[] = [];
   private readonly layouts = new Map<string, LayoutEngine>([['layered', layered]]);
+  private readonly layoutLoading = new Map<
+    string,
+    { readonly loader: LayoutLoader['loader']; readonly pending: Promise<void> }
+  >();
   private readonly fragmentsById = new Map<string, ConfigFragment>();
   private fragmentList: readonly ConfigFragment[] = [];
   private rules: ThemeRuleTable | undefined;
 
-  /** `firstParty`: the generated table, with loaders (`mermaid`) or without (`mermaid/slim`). */
-  constructor(firstParty: readonly FirstPartyEntry[]) {
+  /**
+   * `firstParty`: the generated table, with loaders (`mermaid`) or without (`mermaid/slim`).
+   * `names`: every first-party row, for the collision rules (D166), whatever was loadable;
+   * `mermaid/slim` passes the full detector table.
+   */
+  constructor(
+    firstParty: readonly FirstPartyEntry[],
+    names: readonly { readonly type: string; readonly id?: string }[] = firstParty
+  ) {
+    for (const e of names) {
+      this.firstPartyNames.add(e.type);
+      if (e.id !== undefined) this.firstPartyNames.add(e.id);
+    }
     for (const e of firstParty) {
       this.entries.push({
         type: e.type,
@@ -222,31 +361,6 @@ export class Registry {
         loadAscii: e.loadAscii,
       });
     }
-  }
-
-  /** The diagram type of `src`, or throws `MermaidError` (v12 order; first match wins). */
-  detect(src: string, pre: PreprocessResult, config?: Readonly<Record<string, unknown>>): Detected {
-    const start = diagramStart(src, pre);
-    const body = src.slice(start);
-    if (body.trimStart().toLowerCase().startsWith('---')) {
-      throw new MermaidError(
-        'SYNTAX',
-        'Diagrams beginning with --- are not valid. If you were trying to use a YAML front-matter, ' +
-          "please ensure that you've correctly opened and closed the YAML front-matter with un-indented `---` blocks",
-        { source: src, offset: start, length: 3 }
-      );
-    }
-    if (body.trim().toLowerCase() === 'error') return { type: 'error', id: undefined };
-    let clean: string | undefined;
-    const cleaned = () => (clean ??= detectText(src, start, pre));
-    for (const e of [...this.entries, ...this.external]) {
-      if (e.detect(body, cleaned, config)) return { type: e.type, id: e.id };
-    }
-    throw new MermaidError(
-      'UNSUPPORTED_DIAGRAM',
-      `No diagram type detected matching given configuration for text: ${body.slice(0, 200)}`,
-      { source: src, offset: start }
-    );
   }
 
   /**
@@ -274,15 +388,73 @@ export class Registry {
     return this.rules;
   }
 
+  /** The `{ replace: true }` plugin that took over a first-party row (by its id or its type). */
+  private replacementOf(row: Entry): Entry | undefined {
+    return (
+      (row.id === undefined ? undefined : this.replaced.get(row.id)) ?? this.replaced.get(row.type)
+    );
+  }
+
+  /** The discovered entry `match` finds, unless an explicit one has its id. */
+  private discoveredFor(match: (e: Entry) => boolean): Entry | undefined {
+    const hit = this.discovered.find((d) => match(d.value))?.value;
+    return hit && !this.external.some((e) => e.id === hit.id) ? hit : undefined;
+  }
+
+  /** First-party (replacements in their slot), then discovered by package, then explicit. */
+  private detectionOrder(): Entry[] {
+    if (this.order) return this.order;
+    const out: Entry[] = [];
+    const seen = new Set<Entry>();
+    for (const e of this.entries) {
+      const r = this.replacementOf(e);
+      if (!r) out.push(e);
+      else if (!seen.has(r)) out.push(r);
+      if (r) seen.add(r);
+    }
+    const explicit = new Set(this.external.map((e) => e.id));
+    for (const { value } of this.discovered) if (!explicit.has(value.id)) out.push(value);
+    out.push(...this.external);
+    return (this.order = out);
+  }
+
+  /** The diagram type of `src`, or throws `MermaidError` (v12 order; first match wins). */
+  detect(src: string, pre: PreprocessResult, config?: Readonly<Record<string, unknown>>): Detected {
+    const start = diagramStart(src, pre);
+    const body = src.slice(start);
+    if (body.trimStart().toLowerCase().startsWith('---')) {
+      throw new MermaidError(
+        'SYNTAX',
+        'Diagrams beginning with --- are not valid. If you were trying to use a YAML front-matter, ' +
+          "please ensure that you've correctly opened and closed the YAML front-matter with un-indented `---` blocks",
+        { source: src, offset: start, length: 3 }
+      );
+    }
+    if (body.trim().toLowerCase() === 'error') return { type: 'error', id: undefined };
+    let clean: string | undefined;
+    const cleaned = () => (clean ??= detectText(src, start, pre));
+    for (const e of this.detectionOrder()) {
+      if (e.detect(body, cleaned, config)) return { type: e.type, id: e.id };
+    }
+    throw new MermaidError(
+      'UNSUPPORTED_DIAGRAM',
+      `No diagram type detected matching given configuration for text: ${body.slice(0, 200)}`,
+      { source: src, offset: start }
+    );
+  }
+
   /** The loaded plugin for a detected type, if any. */
   plugin(id: string): AnyPlugin | undefined {
     return this.plugins.get(id);
   }
 
   private entryFor(typeOrId: string): Entry | undefined {
-    return [...this.external, ...this.entries].find(
-      (e) => e.type === typeOrId || e.id === typeOrId
-    );
+    const match = (e: Entry): boolean => e.type === typeOrId || e.id === typeOrId;
+    const explicit = this.external.find(match);
+    if (explicit) return explicit;
+    const first = this.entries.find(match);
+    if (first) return this.replacementOf(first) ?? first;
+    return this.replaced.get(typeOrId) ?? this.discoveredFor(match);
   }
 
   /** Loads the plugin `id` (a plugin id or v12 type); undefined if it has no package. */
@@ -294,8 +466,10 @@ export class Registry {
     if (have) return have;
     let pending = this.loading.get(id);
     if (!pending) {
+      const owner = this.entryFor(id);
       pending = entry.load().then((p) => {
-        this.plugins.set(id, p);
+        // A registration while this loaded may have replaced the entry.
+        if (this.entryFor(id) === owner) this.plugins.set(id, p);
         return p;
       });
       this.loading.set(id, pending);
@@ -340,144 +514,261 @@ export class Registry {
     return this.plugins.get(entry.id)?.formats ?? entry.formats;
   }
 
+  /** Forgets what was loaded for `id`; an eager entry is ready again at once. */
+  private reset(id: string): void {
+    this.order = undefined;
+    this.plugins.delete(id);
+    this.loading.delete(id);
+    this.asciiHooks.delete(id);
+    const now = this.entryFor(id);
+    if (now?.eager) this.plugins.set(id, now.eager);
+  }
+
+  /** Checks one `registerExternalDiagrams` input; loads an extension's entry (its activation). */
+  private async resolve(def: ExternalDiagram): Promise<Resolved> {
+    const kind = kindOf(def);
+    if (kind === 'extension') return { extension: checkExtension(def as ExtensionPlugin) };
+    if (kind !== 'manifest') {
+      const isPlugin = kind === 'plugin';
+      return { diagram: diagramEntry(def as AnyPlugin | LazyDiagram, isPlugin) };
+    }
+    const { manifest: raw, detector, load } = def as ManifestPlugin;
+    const manifest = readManifest(raw);
+    if (manifest.plugin === 'layout')
+      return { layouts: layoutPackage(manifest, def as ManifestPlugin) };
+    if (manifest.plugin === 'extension') {
+      if (detector !== undefined)
+        throw new TypeError(`Extension "${manifest.id}" must not have a detector`);
+      const loaded = checkExtension(entryExport(await load(), manifest) as ExtensionPlugin);
+      if (loaded.id !== manifest.id)
+        throw new TypeError(
+          `Extension entry has id "${loaded.id}", its manifest says "${manifest.id}"`
+        );
+      return { extension: loaded };
+    }
+    if (typeof detector !== 'function')
+      throw new TypeError(`Diagram "${manifest.id}" needs its detector function`);
+    const { loadAscii } = def as ManifestPlugin;
+    if (manifest.ascii !== undefined && typeof loadAscii !== 'function')
+      throw new TypeError(`Diagram "${manifest.id}" needs loadAscii for its ascii entry`);
+    return {
+      diagram: diagramEntry(
+        {
+          id: manifest.id,
+          detector,
+          formats: manifest.formats,
+          loader: async () => {
+            const plugin = entryExport(await load(), manifest) as AnyPlugin | undefined;
+            if (plugin?.id !== manifest.id)
+              throw new TypeError(
+                `Diagram entry has id "${String(plugin?.id)}", its manifest says "${manifest.id}"`
+              );
+            return plugin;
+          },
+        },
+        false,
+        manifest.ascii === undefined || !loadAscii
+          ? undefined
+          : async () => {
+              const m = (await loadAscii()) as { ascii?: AnyAsciiHook } | AnyAsciiHook | undefined;
+              return (typeof m === 'function' ? m : m?.ascii) as AnyAsciiHook;
+            }
+      ),
+    };
+  }
+
   /**
-   * Third-party diagrams, detected after every first-party type (ADR-6). Returns the
-   * extension plugins among `defs`, loaded, in the order given, for the hook runner.
+   * Explicit third-party diagrams, detected after every first-party and discovered type
+   * (ADR-6, D166), in call order. A first-party id or v12 type throws `TypeError` unless
+   * `replace`, which puts the plugin in the slot of the first-party rows with that id or type.
+   * Extensions join the hook order after the discovered ones ({@link extensions}).
    */
   async registerExternal(
     defs: readonly ExternalDiagram[],
-    lazyLoad: boolean
-  ): Promise<ExtensionPlugin[]> {
-    const extensions: ExtensionPlugin[] = [];
-    for (const def of defs) {
-      const kind = kindOf(def);
-      if (kind === 'extension') {
-        extensions.push(this.withFragment(checkExtension(def as ExtensionPlugin)));
-        continue;
-      }
-      if (kind === 'manifest') {
-        const { manifest: raw, detector, load } = def as ManifestPlugin;
-        const manifest = readManifest(raw);
-        if (manifest.plugin === 'layout') {
-          this.addLayoutPackage(manifest, def as ManifestPlugin);
-          continue;
-        }
-        if (manifest.plugin === 'extension') {
-          if (detector !== undefined)
-            throw new TypeError(`Extension "${manifest.id}" must not have a detector`);
-          const loaded = checkExtension(entryExport(await load(), manifest) as ExtensionPlugin);
-          if (loaded.id !== manifest.id)
-            throw new TypeError(
-              `Extension entry has id "${loaded.id}", its manifest says "${manifest.id}"`
-            );
-          extensions.push(this.withFragment(loaded));
-          continue;
-        }
-        if (typeof detector !== 'function')
-          throw new TypeError(`Diagram "${manifest.id}" needs its detector function`);
-        const { loadAscii } = def as ManifestPlugin;
-        if (manifest.ascii !== undefined && typeof loadAscii !== 'function')
-          throw new TypeError(`Diagram "${manifest.id}" needs loadAscii for its ascii entry`);
-        await this.addDiagram(
-          {
-            id: manifest.id,
-            detector,
-            formats: manifest.formats,
-            loader: async () => {
-              const plugin = entryExport(await load(), manifest) as AnyPlugin;
-              if (plugin?.id !== manifest.id)
-                throw new TypeError(
-                  `Diagram entry has id "${String(plugin?.id)}", its manifest says "${manifest.id}"`
-                );
-              return plugin;
-            },
-          },
-          false,
-          lazyLoad,
-          manifest.ascii === undefined || !loadAscii
-            ? undefined
-            : async () => {
-                const m = (await loadAscii()) as
-                  | { ascii?: AnyAsciiHook }
-                  | AnyAsciiHook
-                  | undefined;
-                return (typeof m === 'function' ? m : m?.ascii) as AnyAsciiHook;
-              }
-        );
-        continue;
-      }
-      await this.addDiagram(def as AnyPlugin | LazyDiagram, kind === 'plugin', lazyLoad);
-    }
-    return extensions;
-  }
-
-  /** A layout manifest (D177): each name lazily, one shared load of the entry. */
-  private addLayoutPackage(manifest: LayoutManifest, def: ManifestPlugin): void {
-    const label = manifest.id ?? manifest.names[0]!;
-    if (def.detector !== undefined)
-      throw new TypeError(`Layout package "${label}" must not have a detector`);
-    if (manifest.config !== undefined && def.config === undefined)
-      throw new TypeError(`Layout package "${label}" needs its config fragment`);
-    let pending: Promise<unknown> | undefined;
-    const entry = (): Promise<unknown> => {
-      if (!pending) {
-        pending = def.load().then((m) => layoutsOf(m, manifest));
-        pending.catch(() => (pending = undefined));
-      }
-      return pending;
-    };
-    this.registerLayouts(
-      manifest.names.map((name) => ({
-        name,
-        ...(def.config !== undefined ? { config: def.config } : {}),
-        loader: async () => {
-          const found = await entry();
-          if (typeof found === 'function') return found as LayoutEngine;
-          const l = Array.isArray(found)
-            ? (found as unknown[]).find((x) => (x as LayoutLoader | null)?.name === name)
-            : undefined;
-          if (typeof (l as LayoutLoader | undefined)?.loader !== 'function')
-            throw new TypeError(`Layout entry of "${label}" has no layout "${name}"`);
-          return (l as LayoutLoader).loader();
-        },
-      }))
-    );
-  }
-
-  private withFragment(e: ExtensionPlugin): ExtensionPlugin {
-    if (e.config !== undefined) this.addFragment(e.config);
-    return e;
-  }
-
-  private async addDiagram(
-    def: AnyPlugin | LazyDiagram,
-    isPlugin: boolean,
     lazyLoad: boolean,
-    loadAscii?: () => Promise<AnyAsciiHook>
+    replace = false
   ): Promise<void> {
-    checkDiagram(def, isPlugin);
-    const load = isPlugin
-      ? () => Promise.resolve(def as AnyPlugin)
-      : async (): Promise<AnyPlugin> => unwrap<AnyPlugin>(await (def as LazyDiagram).loader());
-    const entry: Entry = {
-      type: def.id,
-      id: def.id,
-      formats: def.formats ?? ['svg'],
-      detect: (_body, clean, config) => def.detector(clean(), config),
-      load,
-      ...(loadAscii ? { loadAscii } : {}),
-    };
-    const at = this.external.findIndex((e) => e.id === def.id);
-    if (at >= 0) this.external[at] = entry;
-    else this.external.push(entry);
-    this.plugins.delete(def.id);
-    this.loading.delete(def.id);
-    this.asciiHooks.delete(def.id);
-    if (isPlugin) this.plugins.set(def.id, def as AnyPlugin);
-    else if (!lazyLoad) await this.load(def.id);
+    for (const def of defs) {
+      const r = await this.resolve(def);
+      if ('layouts' in r) {
+        this.registerLayouts(r.layouts);
+        continue;
+      }
+      if ('extension' in r) {
+        if (r.extension.config !== undefined) this.addFragment(r.extension.config);
+        const at = this.explicitExtensions.findIndex((e) => e.id === r.extension.id);
+        if (at >= 0) this.explicitExtensions[at] = r.extension;
+        else this.explicitExtensions.push(r.extension);
+        continue;
+      }
+      const entry = r.diagram;
+      const id = entry.id!;
+      if (this.firstPartyNames.has(id)) {
+        if (!replace)
+          throw new TypeError(
+            `"${id}" is a first-party diagram id or type; pass { replace: true } to replace it`
+          );
+        this.replaced.set(id, entry);
+      } else {
+        const at = this.external.findIndex((e) => e.id === id);
+        if (at >= 0) this.external[at] = entry;
+        else this.external.push(entry);
+      }
+      this.reset(id);
+      if (!entry.eager && !lazyLoad) await this.load(id);
+    }
   }
 
-  /** Registers `loaders`. Returns whether any brought an extension. */
+  /** Extension hook order (D166): discovered by package then id, then explicit in call order. */
+  extensions(): ExtensionPlugin[] {
+    const explicit = new Set(this.explicitExtensions.map((e) => e.id));
+    return [
+      ...this.discoveredExtensions.filter((d) => !explicit.has(d.value.id)).map((d) => d.value),
+      ...this.explicitExtensions,
+    ];
+  }
+
+  /**
+   * The discovered list (D166): diagrams detected after first-party, in package-name order
+   * whatever the input or batch order; extensions loaded now; layouts registered lazily. Never
+   * throws. Whatever cannot be used gives one `PLUGIN_SKIPPED` warning naming the package: a
+   * first-party id or type, an id or layout name an earlier package holds (also when that package
+   * arrives in a later batch and displaces it), a repeated entry, a bad manifest, a failing
+   * extension entry. A layout package loses only its offending names.
+   */
+  async registerDiscovered(list: readonly DiscoveredPlugin[]): Promise<SkippedPlugin[]> {
+    const warnings: SkippedPlugin[] = [];
+    const skip = (pkg: string, reason: string): void =>
+      void warnings.push({
+        code: 'PLUGIN_SKIPPED',
+        message: `Plugin package "${pkg}" was skipped: ${reason}`,
+        package: pkg,
+      });
+    // One package may give several entries; each (package, kind, id or name) counts once, also
+    // across batches still registering at the same time (the CDN queue's pushes).
+    const known = this.claimed;
+    const claim = (key: string): void => {
+      if (known.has(key)) throw new TypeError('it was already discovered');
+      known.add(key);
+    };
+    for (const item of [...list].sort(byPackage)) {
+      const { package: name, kind } = item as { package?: unknown; kind?: unknown };
+      const pkg = typeof name === 'string' ? name : '';
+      try {
+        if (pkg === '') throw new TypeError('it has no package name');
+        if (kind !== 'layout' && kind !== 'plugin')
+          throw new TypeError(`unknown kind ${JSON.stringify(kind)}`);
+        if (item.kind === 'layout') {
+          if (typeof item.loader !== 'function')
+            throw new TypeError('its layout loader is missing');
+          if (!Array.isArray(item.names as unknown) || item.names.length === 0)
+            throw new TypeError('it names no layouts');
+          const { loader, config } = item;
+          const loaders = item.names.map((layout) => ({
+            name: layout,
+            loader,
+            ...(config !== undefined ? { config } : {}),
+          }));
+          this.discoverLayouts(pkg, loaders, known, skip);
+        } else this.discoverPlugin(pkg, await this.resolve(item.plugin), claim, skip, known);
+      } catch (e) {
+        skip(pkg || '(unnamed)', why(e));
+      }
+    }
+    return warnings;
+  }
+
+  private discoverPlugin(
+    pkg: string,
+    r: Resolved,
+    claim: (key: string) => void,
+    skip: (pkg: string, reason: string) => void,
+    known: Set<string>
+  ): void {
+    if ('layouts' in r) {
+      this.discoverLayouts(pkg, r.layouts, known, skip);
+      return;
+    }
+    if ('extension' in r) {
+      const id = r.extension.id;
+      claim(`${pkg}\0extension\0${id}`);
+      if (this.explicitExtensions.some((e) => e.id === id))
+        throw new TypeError(`extension "${id}" is registered explicitly`);
+      const owner = this.discoveredExtensions.find((d) => d.value.id === id);
+      if (owner && byPackage(owner, { package: pkg }) < 0)
+        throw new TypeError(`extension "${id}" belongs to "${owner.package}"`);
+      if (r.extension.config !== undefined) this.addFragment(r.extension.config);
+      if (owner) skip(owner.package, `extension "${id}" belongs to "${pkg}"`);
+      this.discoveredExtensions = [
+        ...this.discoveredExtensions.filter((d) => d !== owner),
+        { package: pkg, value: r.extension },
+      ].sort(byExtensionId);
+      return;
+    }
+    const entry = r.diagram;
+    const id = entry.id!;
+    claim(`${pkg}\0diagram\0${id}`);
+    if (this.firstPartyNames.has(id))
+      throw new TypeError(`"${id}" is a first-party diagram id or type`);
+    const owner = this.discovered.find((d) => d.value.id === id);
+    if (owner && byPackage(owner, { package: pkg }) < 0)
+      throw new TypeError(`diagram "${id}" belongs to "${owner.package}"`);
+    // A package sorted earlier takes the id over (a later batch, e.g. the CDN queue).
+    if (owner) skip(owner.package, `diagram "${id}" belongs to "${pkg}"`);
+    this.discovered = [
+      ...this.discovered.filter((d) => d !== owner),
+      { package: pkg, value: entry },
+    ].sort(byEntryId);
+    this.reset(id);
+  }
+
+  /**
+   * One package's layouts (a seam `layout` entry or a layout manifest): each name the package
+   * may take is registered lazily; its config fragment joins when at least one name does.
+   * A discovered layout's `extension` is not run (only explicit loaders' are).
+   */
+  private discoverLayouts(
+    pkg: string,
+    loaders: readonly DiscoveredLayout[],
+    known: Set<string>,
+    skip: (pkg: string, reason: string) => void
+  ): void {
+    for (const f of new Set(loaders.flatMap((l) => (l.config === undefined ? [] : [l.config]))))
+      checkFragment(f, THEME_NAMES);
+    for (const { name, loader, config } of loaders) {
+      const key = `${pkg}\0layout\0${String(name)}`;
+      let reason: string | undefined;
+      const owner = this.discoveredLayouts.find((d) => d.name === name);
+      if (typeof (name as unknown) !== 'string' || name === '') reason = 'a layout name is empty';
+      else if (known.has(key)) reason = `layout "${name}" was already discovered`;
+      else if (FIRST_PARTY_LAYOUTS.has(name)) reason = `"${name}" is a first-party layout`;
+      else if (owner && byPackage(owner, { package: pkg }) < 0)
+        reason = `layout "${name}" belongs to "${owner.package}"`;
+      if (reason !== undefined) {
+        skip(pkg, reason);
+        continue;
+      }
+      known.add(key);
+      if (config !== undefined) this.addFragment(config);
+      if (owner) skip(owner.package, `layout "${name}" belongs to "${pkg}"`);
+      this.discoveredLayouts = [
+        ...this.discoveredLayouts.filter((d) => d !== owner),
+        { package: pkg, name, value: loader },
+      ];
+      if (isElkName(name)) this.elkRegistered = true;
+      if (!this.layoutLoaders.has(name)) this.forgetLayout(name);
+    }
+  }
+
+  private forgetLayout(name: string): void {
+    this.layouts.delete(name);
+    this.layoutLoading.delete(name);
+  }
+
+  /**
+   * Explicit layout loaders (R-LAYOUT-2); they win over discovered ones of the same name.
+   * Returns whether any brought an extension.
+   */
   registerLayouts(loaders: readonly LayoutLoader[]): boolean {
     for (const l of loaders) if (l.extension !== undefined) checkExtension(l.extension);
     for (const l of loaders) if (l.config !== undefined) this.addFragment(l.config);
@@ -486,7 +777,7 @@ export class Registry {
       if (l.extension !== undefined) this.layoutExtensions.set(l.name, l.extension);
       else this.layoutExtensions.delete(l.name);
       if (isElkName(l.name)) this.elkRegistered = true;
-      this.layouts.delete(l.name);
+      this.forgetLayout(l.name);
     }
     return loaders.some((l) => l.extension !== undefined);
   }
@@ -494,6 +785,12 @@ export class Registry {
   /** The extension the loader registered for layout `name` brought, if any. */
   layoutExtension(name: string): ExtensionPlugin | undefined {
     return this.layoutExtensions.get(name);
+  }
+
+  private layoutLoader(name: string): LayoutLoader['loader'] | undefined {
+    return (
+      this.layoutLoaders.get(name) ?? this.discoveredLayouts.find((d) => d.name === name)?.value
+    );
   }
 
   /**
@@ -504,16 +801,48 @@ export class Registry {
   layout(name: string): { engine: LayoutEngine; state: 'ready' | 'missing' | 'unknown' | 'elk' } {
     const engine = this.layouts.get(name);
     if (engine) return { engine, state: 'ready' };
-    if (this.layoutLoaders.has(name)) return { engine: layered, state: 'missing' };
+    if (this.layoutLoader(name)) return { engine: layered, state: 'missing' };
     if (builtIn(name)) return { engine: layered, state: 'ready' };
     return { engine: layered, state: isElkName(name) && !this.elkRegistered ? 'elk' : 'unknown' };
   }
 
-  async loadLayout(name: string): Promise<void> {
-    const loader = this.layoutLoaders.get(name);
-    if (!loader || this.layouts.has(name)) return;
-    const engine = unwrap<LayoutEngine>(await loader());
-    if (typeof engine !== 'function') throw new TypeError(`Layout "${name}" loaded no engine`);
-    this.layouts.set(name, engine);
+  /** Loads `name` once; an engine whose loader was replaced while it loaded is dropped. */
+  loadLayout(name: string): Promise<void> {
+    const loader = this.layoutLoader(name);
+    if (!loader || this.layouts.has(name)) return Promise.resolve();
+    const inflight = this.layoutLoading.get(name);
+    if (inflight?.loader === loader) return inflight.pending;
+    const pending: Promise<void> = loader()
+      .then((m) => {
+        const engine = unwrap<LayoutEngine>(m);
+        if (typeof engine !== 'function') throw new TypeError(`Layout "${name}" loaded no engine`);
+        if (this.layoutLoader(name) === loader) this.layouts.set(name, engine);
+      })
+      .finally(() => {
+        if (this.layoutLoading.get(name)?.pending === pending) this.layoutLoading.delete(name);
+      });
+    this.layoutLoading.set(name, { loader, pending });
+    return pending;
   }
+}
+
+/** The registry row of a third-party diagram (checked; `isPlugin`: given eagerly). */
+function diagramEntry(
+  def: AnyPlugin | LazyDiagram,
+  isPlugin: boolean,
+  loadAscii?: () => Promise<AnyAsciiHook>
+): Entry {
+  checkDiagram(def, isPlugin);
+  const load = isPlugin
+    ? () => Promise.resolve(def as AnyPlugin)
+    : async (): Promise<AnyPlugin> => unwrap<AnyPlugin>(await (def as LazyDiagram).loader());
+  return {
+    type: def.id,
+    id: def.id,
+    formats: def.formats ?? ['svg'],
+    detect: (_body, clean, config) => def.detector(clean(), config),
+    load,
+    ...(isPlugin ? { eager: def as AnyPlugin } : {}),
+    ...(loadAscii ? { loadAscii } : {}),
+  };
 }
