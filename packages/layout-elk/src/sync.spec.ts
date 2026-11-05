@@ -1,7 +1,7 @@
 import elkBundled from 'elkjs/lib/elk.bundled.js';
 import type { ElkNode } from 'elkjs/lib/elk-api.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import corpus from '../fixtures/generated/v12-elk-corpus.json' with { type: 'json' };
+import corpus from '../fixtures/v12-elk-corpus.json' with { type: 'json' };
 import { layoutSync } from './sync.ts';
 
 // Every graph v12 develop's ELK adapter hands to elk.layout() for the e2e/diagrams sources
