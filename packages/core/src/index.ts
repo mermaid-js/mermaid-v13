@@ -50,6 +50,7 @@ export {
   type PluginManifest,
 } from './pipeline/manifest.ts';
 export type {
+  DiagramIcon,
   DiagramParseContext,
   DiagramPlugin,
   IconOptions,

@@ -1,6 +1,12 @@
 // The icons extension through the public API (D290–D299): label icons, glyphs, packs, warnings.
-import { assertInert } from '@mermaid-js/core/svg';
-import { createMermaid, NotLoadedError, type IconLoader, type Mermaid } from 'mermaid';
+import { assertInert, writeFragment } from '@mermaid-js/core/svg';
+import {
+  createMermaid,
+  NotLoadedError,
+  type DiagramPlugin,
+  type IconLoader,
+  type Mermaid,
+} from 'mermaid';
 import { describe, expect, it, vi } from 'vitest';
 import { icons } from './index.ts';
 
@@ -352,13 +358,21 @@ describe('glyphs (D292, D293)', () => {
       'i',
       'flowchart LR\n  A["fa:fa-nope"] --> B@{ icon: "fa:nada" }\n  C@{ icon: "user" }'
     );
+    // Each glyph's own failure is named after the label icon's, in the order drawn.
     expect(message(r, 'ICON_NOT_RENDERED')).toBe(
-      'Icons not rendered: fa:fa-nope (pack "fa" has no icon "nope"), fa:nada (pack "fa" has no icon "nada"). Labels show them as written.'
+      'Icons not rendered: fa:fa-nope (pack "fa" has no icon "nope"), fa:nada (pack "fa" has no icon "nada"), user (not a pack:name icon name). Labels show them as written; their shapes are drawn without them.'
     );
-    // `user` has no pack: with the fallback a diagram may pass when it draws it, it could resolve,
-    // so only a warning it gives itself names it (flowchart's deprecated ICON_UNAVAILABLE does).
+    // Flowchart's deprecated alias names the shapes (D299).
     expect(message(r, 'ICON_UNAVAILABLE')).toMatch(/Icons not drawn: "fa:nada", "user";/);
     expect(codes(r).filter((c) => c === 'ICON_NOT_RENDERED')).toHaveLength(1);
+  });
+
+  it('says only what shapes do when only shape icons fail', async () => {
+    const m = await api({ name: 'fa', icons: staticBellIconPack });
+    const r = await m.render('i', 'flowchart LR\n  A["fa:fa-bell"] --> B@{ icon: "fa:nada" }');
+    expect(message(r, 'ICON_NOT_RENDERED')).toBe(
+      'Icons not rendered: fa:nada (pack "fa" has no icon "nada"). Their shapes are drawn without them.'
+    );
   });
 
   it('splits a glyph name as v12 did, not as label text (fa:fa-bell is icon fa-bell)', async () => {
@@ -368,17 +382,45 @@ describe('glyphs (D292, D293)', () => {
     expect(r.svg).toContain('d="M0 0H1V24z"');
   });
 
-  it('resolves a name without a pack through fallbackPrefix', () => {
-    const iconPacks = ready({ 'mermaid-architecture': pack('mermaid-architecture', ['database']) });
-    const warn = vi.fn();
-    const glyph = (name: string, fallbackPrefix?: string) =>
-      icons.glyphs!.glyph(name, { size: 24, warn, iconPacks, fallbackPrefix });
-    expect(glyph('database', 'mermaid-architecture')).toMatchObject({
-      tag: 'g',
-      attrs: { transform: 'scale(1)' },
-    });
-    expect(glyph('database')).toBeUndefined();
-    expect(warn).toHaveBeenCalledTimes(1);
+  // A diagram that draws its icons with a fallback pack (as M5's architecture will), listing
+  // them with it in `icons()` so `prepare()` loads that pack.
+  const fallbackDiagram: DiagramPlugin<readonly string[]> = {
+    id: 'glyphs',
+    layoutKind: 'custom',
+    formats: ['svg'],
+    detector: (source) => source.trimStart().startsWith('glyphs'),
+    parse: (source) => ({
+      model: source.trim().split(/\s+/).slice(1),
+      ast: { id: 'x', type: 'T', range: { start: 0, end: source.length } },
+      diagnostics: [],
+      symbols: [],
+      statements: [],
+    }),
+    icons: (names) => names.map((name) => ({ name, fallbackPrefix: 'arch' })),
+    render(names, _layout, ctx, w) {
+      w.open('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: [0, 0, 24, 24] });
+      for (const name of names) {
+        const glyph = ctx.icon?.(name, 24, { fallbackPrefix: 'arch' });
+        if (glyph) writeFragment(w, glyph);
+      }
+      w.close();
+    },
+  };
+
+  it('loads a pack named only through a fallbackPrefix in icons()', async () => {
+    const loader = vi.fn(() => Promise.resolve(pack('arch', ['database'])));
+    const m = await api({ name: 'arch', loader });
+    await m.registerExternalDiagrams([icons, fallbackDiagram]);
+    const thrownBefore = thrown(() => m.renderSync('glyphs database'));
+    expect((thrownBefore as NotLoadedError).missing).toEqual([{ kind: 'iconPack', name: 'arch' }]);
+    const r = await m.render('i', 'glyphs database');
+    expect(loader).toHaveBeenCalledTimes(1);
+    expect(codes(r)).toEqual([]);
+    expect(r.svg).toContain('<g transform="scale(1)"><path fill="currentColor" d="M0 0H1V24z"/>');
+    const unknown = await m.render('i', 'glyphs nope');
+    expect(message(unknown, 'ICON_NOT_RENDERED')).toBe(
+      'Icons not rendered: nope (pack "arch" has no icon "nope"). Their shapes are drawn without them.'
+    );
   });
 });
 

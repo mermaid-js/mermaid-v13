@@ -53,6 +53,8 @@ export const UPSTREAMS: readonly Upstream[] = [
 /** Workspace-relative files that must credit these upstreams (checked when the file exists). */
 export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
   'packages/core/src/svg/url.ts': ['Pele', '@braintree/sanitize-url'],
+  'packages/plugin-icons/src/resolve.ts': ['@iconify/utils'],
+  'packages/plugin-icons/src/name.ts': ['@iconify/utils'],
 };
 
 const NOTICES = 'THIRD_PARTY_NOTICES';
@@ -166,7 +168,10 @@ export function checkLicenses(root: string): string[] {
     const derived = derivedFiles(root, pkgDir, problems);
     const noticesPath = join(pkgDir, NOTICES);
     if (!existsSync(noticesPath)) {
-      if (derived.length > 0) problems.push(`${pkg}: has Pele-derived files but no ${NOTICES}`);
+      if (derived.length > 0) {
+        const from = [...new Set(derived.map((d) => d.upstream.name))].join(', ');
+        problems.push(`${pkg}: has files ported from ${from} but no ${NOTICES}`);
+      }
       continue;
     }
 

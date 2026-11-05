@@ -133,7 +133,9 @@ const QUOTE = 60;
  * extension that has glyphs, flowchart says `ICON_NOT_RENDERED` itself (with one, the extension
  * says it for the icons it cannot draw, D291). Next to it, once per render and for one alpha, the
  * deprecated alias `ICON_UNAVAILABLE` names them (D299, as sequence's `SEQUENCE_MATH`): not for a
- * placeholder render (`PLACEHOLDER`), where the extension gives no `ICON_NOT_RENDERED`.
+ * placeholder render (`PLACEHOLDER`), where the extension gives no `ICON_NOT_RENDERED`. An
+ * extension that warns only once the render is drawn (the icons extension, in `postRender`) gives
+ * the alias itself.
  */
 export function iconsNotDrawn(ctx: FlowRenderContext, missed: readonly string[]): void {
   if (missed.length === 0) return;

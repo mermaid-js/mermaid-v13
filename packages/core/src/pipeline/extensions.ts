@@ -25,7 +25,7 @@ import type { InlineBox, SvgFragment } from '../svg/writer.ts';
 import type { InlinePairProvider, InlineProvider, InlineRequest } from '../text/inline.ts';
 import type { IconPacks, IconPackSource } from './icon-packs.ts';
 import { MermaidError, type Resource } from './errors.ts';
-import type { IconOptions, RenderContext } from './types.ts';
+import type { DiagramIcon, IconOptions, RenderContext } from './types.ts';
 
 /**
  * What `postLayout` hooks get and return: graph diagrams carry the shared `LayoutModel`.
@@ -115,7 +115,7 @@ export interface ResourceRequest {
    * The icon names the parsed diagram draws outside labels (`DiagramPlugin.icons`, D293), when its
    * plugin lists them.
    */
-  icons?(): readonly string[];
+  icons?(): readonly DiagramIcon[];
 }
 
 /**

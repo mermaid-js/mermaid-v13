@@ -16,13 +16,31 @@
  * diagram names that has not loaded, so `prepare()` runs only those loaders and a diagram
  * without icons runs none (D290). An icon that does not resolve is shown as written, with one
  * `ICON_NOT_RENDERED` per render naming the icons (D291); a pack still loading draws a
- * placeholder, an empty 1em box in labels and nothing in shapes (D299, with the API's
- * `PLACEHOLDER`); an icon the converter changed gives one `ICON_SIMPLIFIED` per render (D295).
+ * placeholder, an empty 1em box in labels and nothing in shapes (D299: `missing()` reported it,
+ * so the API threw `NotLoadedError` or, with placeholders, warned `PLACEHOLDER`); an icon the
+ * converter changed gives one `ICON_SIMPLIFIED` per render (D295). The providers note what they
+ * meet; `postRender` gives the two warnings, once each, naming the icons in the order drawn.
+ *
+ * Module state is caches of pure functions (per parse, per pack object, per built icon) and one
+ * render's notes, keyed by that render's warnings sink and dropped in its `postRender`. Nothing
+ * carries `missing()` results to the draw.
  */
-import type { ExtensionPlugin, GlyphRequest, IconPacks, ResourceRequest } from '@mermaid-js/core';
+import type {
+  DiagramIcon,
+  ExtensionPlugin,
+  GlyphRequest,
+  IconPacks,
+  ResourceRequest,
+} from '@mermaid-js/core';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
 import type { Paint, SvgNode, SvgTree, Transform } from '@mermaid-js/core/svg';
-import type { InlineBox, InlineProvider, InlineRequest, SvgFragment } from '@mermaid-js/core/text';
+import type {
+  InlineBox,
+  InlineProvider,
+  InlineRequest,
+  InlineSpans,
+  SvgFragment,
+} from '@mermaid-js/core/text';
 import { buildIcon, type BuiltIcon } from './icon.ts';
 import { iconName } from './name.ts';
 import { getIcon, type IconifyJSON } from './resolve.ts';
@@ -38,13 +56,6 @@ const QUOTE = 60;
 /** How many icons a warning names. */
 const LISTED = 8;
 
-/** What a parsed diagram draws: label icons (`fa:fa-car`), glyph names, and their packs. */
-interface Wanted {
-  readonly labels: readonly string[];
-  readonly glyphs: readonly string[];
-  readonly packs: ReadonlySet<string>;
-}
-
 type Warn = GlyphRequest['warn'];
 /** An icon ready to draw, a pack still loading that the API reported, or why it is not drawn. */
 type Found = { readonly icon: BuiltIcon } | { readonly pending: true } | { readonly why: string };
@@ -52,14 +63,11 @@ type Found = { readonly icon: BuiltIcon } | { readonly pending: true } | { reado
 /** Why a glyph name is not drawn when it splits into no pack and icon. */
 const NOT_A_NAME = 'not a pack:name icon name';
 
-/** Per parse (the API caches it with the analysis), so `renderSync` does not walk it again. */
-const wantedByParse = new WeakMap<object, Wanted>();
 /**
- * What the last `missing()` found, per API object's packs. The API asks `missing()` right before
- * it draws, synchronously, so while drawing this is the diagram being drawn: its packs that are
- * still `pending` were reported, and the API threw `NotLoadedError` or warned `PLACEHOLDER`.
+ * The packs a parse names, per parse (the API caches it with the analysis), so `renderSync` does
+ * not walk it again.
  */
-const wantedByPacks = new WeakMap<object, Wanted>();
+const packsByParse = new WeakMap<object, ReadonlySet<string>>();
 /** Each pack's built icons, per pack object (a re-registered pack is a new object). */
 const builtByPack = new WeakMap<object, Map<string, BuiltIcon | undefined>>();
 /** Each built icon's nodes as a label draws them, and whether any still paints currentColor. */
@@ -69,8 +77,26 @@ const labelNodes = new WeakMap<BuiltIcon, { nodes: readonly SvgFragment[]; curre
  * icon sets) carries until `postRender` gives it the label's colour and takes the class off.
  */
 const RECOLOUR = 'mermaid-label-icon';
-/** What this render has warned, keyed by its warnings sink (one per render, shared by both). */
-const warned = new WeakMap<Warn, { unresolved?: true; simplified?: true }>();
+/** What one render's providers met, for its `postRender` to warn about once. */
+interface Notes {
+  /** Each icon not drawn, by kind and name as written, with why, in the order met. */
+  readonly unresolved: Map<string, string>;
+  readonly simplified: Set<string>;
+  labels: boolean;
+  /** The glyph names not drawn, as written, in the order met. */
+  readonly glyphs: Set<string>;
+}
+/** Each render's notes, keyed by its warnings sink (one per render, shared by both providers). */
+const notesByRender = new WeakMap<Warn, Notes>();
+
+function notesOf(warn: Warn): Notes {
+  let notes = notesByRender.get(warn);
+  if (!notes) {
+    notes = { unresolved: new Map(), simplified: new Set(), labels: false, glyphs: new Set() };
+    notesByRender.set(warn, notes);
+  }
+  return notes;
+}
 
 /** Every string in `value` (an AST or a model), for a diagram that lists no labels. */
 function strings(value: unknown, out: string[]): void {
@@ -88,10 +114,17 @@ function strings(value: unknown, out: string[]): void {
   }
 }
 
-/** The icons a parsed diagram draws: in its labels (else any string it holds) and its shapes. */
-function wantedOf(parse: ParseResult<unknown>, request: ResourceRequest): Wanted {
-  let wanted = wantedByParse.get(parse);
-  if (wanted) return wanted;
+/** A glyph name as `DiagramPlugin.icons` lists it, split into its pack and icon. */
+const splitIcon = (icon: DiagramIcon) =>
+  typeof icon === 'string' ? iconName(icon) : iconName(icon.name, icon.fallbackPrefix);
+
+/**
+ * The packs a parsed diagram names: in its labels (else any string it holds) and its shapes, with
+ * the fallback each shape is drawn with.
+ */
+function packsOf(parse: ParseResult<unknown>, request: ResourceRequest): ReadonlySet<string> {
+  const cached = packsByParse.get(parse);
+  if (cached) return cached;
   let texts: readonly string[];
   if (request.labels) texts = request.labels();
   else {
@@ -100,21 +133,14 @@ function wantedOf(parse: ParseResult<unknown>, request: ResourceRequest): Wanted
     strings(parse.model, all);
     texts = all;
   }
-  const labels: string[] = [];
-  const packs = new Set<string>();
-  for (const text of texts)
-    for (const m of text.matchAll(LABELS)) {
-      labels.push(m[0]);
-      packs.add(m[1]!);
-    }
-  const glyphs = request.icons?.() ?? [];
-  for (const g of glyphs) {
-    const n = iconName(g);
-    if (n) packs.add(n.prefix);
+  const found = new Set<string>();
+  for (const text of texts) for (const m of text.matchAll(LABELS)) found.add(m[1]!);
+  for (const icon of request.icons?.() ?? []) {
+    const n = splitIcon(icon);
+    if (n) found.add(n.prefix);
   }
-  wanted = { labels, glyphs, packs };
-  wantedByParse.set(parse, wanted);
-  return wanted;
+  packsByParse.set(parse, found);
+  return found;
 }
 
 /** `s`, cut to {@link QUOTE} characters. */
@@ -129,10 +155,8 @@ function find(packs: IconPacks | undefined, prefix: string, name: string): Found
   const pack = `pack "${quote(prefix)}"`;
   const state = packs.state(prefix);
   if (state === undefined) return { why: `no ${pack} is registered` };
-  if (state === 'pending')
-    return wantedByPacks.get(packs)?.packs.has(prefix)
-      ? { pending: true }
-      : { why: `${pack} has not loaded: call prepare() first` };
+  // `missing()` reported it: the API threw NotLoadedError, or warned PLACEHOLDER (D299).
+  if (state === 'pending') return { pending: true };
   if (state === 'failed')
     return { why: `${pack} failed to load (${quote(packs.error(prefix) ?? 'its loader failed')})` };
   const data: unknown = packs.get(prefix);
@@ -148,12 +172,6 @@ function find(packs: IconPacks | undefined, prefix: string, name: string): Found
   return icon ? { icon } : { why: `${pack} has no icon "${quote(name)}"` };
 }
 
-/** An icon as written: in a label (`fa:fa-car`) or outside one (a glyph name, `fa:car`). */
-interface Use {
-  readonly written: string;
-  readonly label: boolean;
-}
-
 /** A label icon's pack and icon (`fa:fa-car` → `fa`, `car`). */
 function inLabelText(packs: IconPacks | undefined, source: string): Found {
   const m = LABEL.exec(source)!;
@@ -166,74 +184,56 @@ function asGlyph(packs: IconPacks | undefined, written: string, fallbackPrefix?:
   return n ? find(packs, n.prefix, n.name) : { why: NOT_A_NAME };
 }
 
-const same = (a: Use, b: Use): boolean => a.written === b.written && a.label === b.label;
-
-const resolve = (packs: IconPacks | undefined, use: Use, fallbackPrefix?: string): Found =>
-  use.label ? inLabelText(packs, use.written) : asGlyph(packs, use.written, fallbackPrefix);
-
-/** The diagram's icons (labels, then shapes), with `current` among them, each once. */
-function drawn(packs: IconPacks | undefined, current: Use): readonly Use[] {
-  const wanted = packs && wantedByPacks.get(packs);
-  const uses: Use[] = wanted
-    ? [
-        ...wanted.labels.map((written) => ({ written, label: true })),
-        ...wanted.glyphs.map((written) => ({ written, label: false })),
-      ]
-    : [];
-  if (!uses.some((u) => same(u, current))) uses.push(current);
-  return uses.filter((u, i) => uses.findIndex((v) => same(u, v)) === i);
+/** Notes that the icon `written` (in a label or a glyph name) is not drawn, and why. */
+function unresolved(warn: Warn, written: string, label: boolean, why: string): void {
+  const notes = notesOf(warn);
+  const key = `${label ? 'l' : 'g'}${written}`;
+  if (notes.unresolved.has(key)) return;
+  notes.unresolved.set(key, `${quote(written)} (${why})`);
+  if (label) notes.labels = true;
+  else notes.glyphs.add(written);
 }
 
-function listed(items: readonly string[]): string {
-  const more = items.length - LISTED;
-  return items.slice(0, LISTED).join(', ') + (more > 0 ? ` and ${String(more)} more` : '');
+function listed(items: Iterable<string>): string {
+  const all = [...items];
+  const more = all.length - LISTED;
+  return all.slice(0, LISTED).join(', ') + (more > 0 ? ` and ${String(more)} more` : '');
 }
 
 /**
- * One `ICON_NOT_RENDERED` per render (D291), naming every icon of the diagram that does not
- * resolve and why. `current` is the first one this render met.
+ * One render's `ICON_NOT_RENDERED` (D291) and `ICON_SIMPLIFIED` (D295), each naming the icons in
+ * the order drawn, through the render's once-per-render sink. In flowchart, the shapes' icons
+ * also get the deprecated alias `ICON_UNAVAILABLE` beside it, for one alpha (D299): flowchart
+ * gives it itself only without an icons extension, since this warning comes after its render.
  */
-function notRendered(
-  warn: Warn,
-  packs: IconPacks | undefined,
-  current: Use,
-  why: string,
-  fallbackPrefix?: string
-): void {
-  const done = warned.get(warn) ?? {};
-  warned.set(warn, done);
-  if (done.unresolved) return;
-  done.unresolved = true;
-  const items: string[] = [];
-  for (const use of drawn(packs, current)) {
-    const isCurrent = same(use, current);
-    const f = isCurrent ? { why } : resolve(packs, use, fallbackPrefix);
-    if (!('why' in f)) continue;
-    // A glyph name without a pack may resolve with the fallback the diagram passes at draw.
-    if (!isCurrent && f.why === NOT_A_NAME) continue;
-    items.push(`${quote(use.written)} (${f.why})`);
+function warnFor(spans: InlineSpans, diagram: string): void {
+  const { warn } = spans;
+  const notes = notesByRender.get(warn);
+  if (!notes) return;
+  notesByRender.delete(warn);
+  if (notes.unresolved.size > 0) {
+    // Another provider's ICON_NOT_RENDERED came first: flowchart has given the alias for it.
+    const aliased = spans.notRendered('icon');
+    const where = [
+      notes.labels ? 'labels show them as written' : '',
+      notes.glyphs.size > 0 ? 'their shapes are drawn without them' : '',
+    ].filter(Boolean);
+    const said = where.join('; ');
+    warn({
+      code: 'ICON_NOT_RENDERED',
+      message: `Icons not rendered: ${listed(notes.unresolved.values())}. ${said[0]!.toUpperCase()}${said.slice(1)}.`,
+    });
+    if (diagram === 'flowchart' && notes.glyphs.size > 0 && !aliased)
+      warn({
+        code: 'ICON_UNAVAILABLE',
+        message: `ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED. Icons not drawn: ${listed([...notes.glyphs].map((n) => JSON.stringify(quote(n))))}; an icon with a form draws its frame alone.`,
+      });
   }
-  warn({
-    code: 'ICON_NOT_RENDERED',
-    message: `Icons not rendered: ${listed(items)}. Labels show them as written.`,
-  });
-}
-
-/** One `ICON_SIMPLIFIED` per render (D295), naming every icon of the diagram drawn simplified. */
-function simplified(warn: Warn, packs: IconPacks | undefined, current: Use): void {
-  const done = warned.get(warn) ?? {};
-  warned.set(warn, done);
-  if (done.simplified) return;
-  done.simplified = true;
-  const items = drawn(packs, current).flatMap((use) => {
-    if (same(use, current)) return [quote(use.written)];
-    const f = resolve(packs, use);
-    return 'icon' in f && f.icon.simplified ? [quote(use.written)] : [];
-  });
-  warn({
-    code: 'ICON_SIMPLIFIED',
-    message: `Icons drawn simplified (gradients, masks, references and other parts an icon may not hold are dropped, url() paints become currentColor): ${listed(items)}.`,
-  });
+  if (notes.simplified.size > 0)
+    warn({
+      code: 'ICON_SIMPLIFIED',
+      message: `Icons drawn simplified (gradients, masks, references and other parts an icon may not hold are dropped, url() paints become currentColor): ${listed(notes.simplified)}.`,
+    });
 }
 
 /** A length for a transform: to a millionth of a px, so fitting stays exact in practice. */
@@ -313,12 +313,11 @@ const label: InlineProvider = {
   pattern: LABEL,
   box(source: string, request: InlineRequest): InlineBox | undefined {
     // `source` is the whole match.
-    const use = { written: source, label: true };
     const f = inLabelText(request.iconPacks, source);
     const size = request.font.size;
     const baseline = 0.875 * size;
     if ('icon' in f) {
-      if (f.icon.simplified) simplified(request.warn, request.iconPacks, use);
+      if (f.icon.simplified) notesOf(request.warn).simplified.add(quote(source));
       const [left, top, w, h] = f.icon.viewBox;
       const s = size / h;
       const { nodes, current } = labelNodesOf(f.icon);
@@ -332,7 +331,7 @@ const label: InlineProvider = {
     }
     // The pack is still loading and the API knows (placeholders): an empty 1em box (D299).
     if ('pending' in f) return { width: size, height: size, baseline, node: { tag: 'g' } };
-    notRendered(request.warn, request.iconPacks, use, f.why);
+    unresolved(request.warn, source, true, f.why);
     return undefined;
   },
 };
@@ -346,17 +345,16 @@ export const icons: ExtensionPlugin = {
     glyph(written, request) {
       const { size, fallbackPrefix, iconPacks } = request;
       if (!(size > 0 && Number.isFinite(size))) return undefined;
-      const use = { written, label: false };
       const f = asGlyph(iconPacks, written, fallbackPrefix);
       if ('icon' in f) {
-        if (f.icon.simplified) simplified(request.warn, iconPacks, use);
+        if (f.icon.simplified) notesOf(request.warn).simplified.add(quote(written));
         const [left, top, w, h] = f.icon.viewBox;
         const s = size / Math.max(w, h);
         return placed(f.icon.nodes, (size - w * s) / 2 - left * s, (size - h * s) / 2 - top * s, s);
       }
       // Still loading, with placeholders: the diagram draws the frame alone (D299).
       if ('pending' in f) return undefined;
-      notRendered(request.warn, iconPacks, use, f.why, fallbackPrefix);
+      unresolved(request.warn, written, false, f.why);
       return undefined;
     },
   },
@@ -364,21 +362,21 @@ export const icons: ExtensionPlugin = {
   // the fill its label text inherits, once the label is placed in the tree. (With this hook,
   // renders write into the tree backing, whose output is the stream's byte for byte.) Only the
   // class alone marks an icon: a user class of the same name sits beside others (`node …`).
-  postRender(tree) {
+  // The warnings go out here, once the providers have met every icon of the render.
+  postRender(tree, ctx) {
     for (const n of tree.find((node, t) => t.getAttr(node, 'class') === RECOLOUR)) {
       tree.setAttr(n, 'class', undefined);
       tree.setAttr(n, 'color', inheritedFill(tree, n));
     }
+    if (ctx.inline) warnFor(ctx.inline, ctx.diagram);
   },
   resources: {
     // Packs are the API object's (D294): it loads each `iconPack` this reports.
     provides: [],
     missing(parse, request) {
       if (request.format !== 'svg') return [];
-      const wanted = wantedOf(parse, request);
-      wantedByPacks.set(request.iconPacks, wanted);
       const packs = request.iconPacks;
-      return [...wanted.packs].flatMap((name) => {
+      return [...packsOf(parse, request)].flatMap((name) => {
         const state = packs.state(name);
         return state === 'pending' || state === 'failed' ? [{ kind: 'iconPack', name }] : [];
       });

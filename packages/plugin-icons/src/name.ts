@@ -21,10 +21,11 @@ export interface IconName {
  */
 export function iconName(value: string, fallbackPrefix?: string): IconName | undefined {
   const parts = value.split(':');
-  const provider = value.startsWith('@');
-  if (provider) {
+  // `@provider:…`: v12 dropped the provider, but a simple name needs it empty (`@:bell`).
+  let provider = '';
+  if (value.startsWith('@')) {
     if (parts.length < 2 || parts.length > 3) return undefined;
-    parts.shift();
+    provider = parts.shift()!.slice(1);
   }
   if (parts.length > 3) return undefined;
   let prefix: string;
@@ -39,8 +40,8 @@ export function iconName(value: string, fallbackPrefix?: string): IconName | und
       prefix = only.slice(0, dash);
       name = only.slice(dash + 1);
     } else {
-      // A simple name: only with a fallback, and never after an `@provider`.
-      if (fallbackPrefix === undefined || provider || only === '') return undefined;
+      // A simple name: only with a fallback, and never after a non-empty `@provider`.
+      if (fallbackPrefix === undefined || provider !== '' || only === '') return undefined;
       return fallbackPrefix === '' ? undefined : { prefix: fallbackPrefix, name: only };
     }
   }
