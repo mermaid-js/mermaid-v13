@@ -20,26 +20,15 @@ export { pieDocs } from './generated/docs.ts';
 export { detectPie, parsePie, PieTokenKind, pieTokens } from './parser/index.ts';
 export type * from './parser/index.ts';
 
-/**
- * Why `name` cannot be a section label, if it cannot. A label is written between `"` (v12 also
- * read `'…'`); the service puts the new name between the quotes as it is, so it must read back
- * unchanged: no `"`, no `\` (an escape), no line break.
- */
-function invalidReason(name: string): string | undefined {
-  if (name === '') return 'A section label cannot be empty.';
-  if (/[\r\n]/.test(name)) return 'A section label cannot contain a line break.';
-  if (name.includes('"')) return 'A section label cannot contain `"`.';
-  if (name.includes('\\')) return 'A section label cannot contain `\\` (it starts an escape).';
-  return undefined;
-}
-
 /** The pie facet. */
 export const pieLanguage: LanguageFacet<PieDocument> = {
   id: 'pie',
   parse: (text, options) => parsePie(text, options),
   categories: pieCategories,
   namespaces: [['slice']],
-  isValidId: invalidReason,
+  // Required by the facet interface, but the service asks only for a name written bare, and a
+  // pie label is always quoted: the quoted-name check and the read-back decide (D229).
+  isValidId: () => undefined,
   completions: pieCompletions,
   hover: pieHover,
 };

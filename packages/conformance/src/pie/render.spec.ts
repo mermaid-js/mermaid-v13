@@ -25,11 +25,17 @@ import { pieApi } from './render-api.ts';
  *
  * The round-trip rule for pie's AST: every `Slice` node that is a model section maps to exactly
  * one `data-ast` element, its legend row. A `Slice` node with no section (a repeated label,
- * `slice:<label>@2`, or a negative value) is not drawn, as v12 drew nothing for it, so it maps
- * to none; its diagnostic (`PIE_DUPLICATE_SLICE`, `PIE_NEGATIVE_VALUE`) points into its range,
- * and a repeat's label is drawn by the section it repeats. The header, title and accessibility
- * statements have no element of their own, as in the other ported types.
+ * `slice:<label>@2`, a negative value, or one too large for a double) is not drawn, as v12
+ * drew nothing for it (or NaN), so it maps to none; its diagnostic (`DROPPED`) points into its
+ * range, and a repeat's label is drawn by the section it repeats. The header, title and
+ * accessibility statements have no element of their own, as in the other ported types.
  */
+const DROPPED: ReadonlySet<string> = new Set([
+  'PIE_DUPLICATE_SLICE',
+  'PIE_NEGATIVE_VALUE',
+  'PIE_VALUE_TOO_LARGE',
+]);
+
 const THEMES = [
   'default',
   'redux-color',
@@ -192,7 +198,7 @@ describe('pie render properties over the corpus', () => {
         expect(seen.get(node.id), `${c.id}: ${node.id}`).toBeUndefined();
         const why = parse.diagnostics.filter(
           (d) =>
-            (d.code === 'PIE_DUPLICATE_SLICE' || d.code === 'PIE_NEGATIVE_VALUE') &&
+            DROPPED.has(d.code) &&
             d.range.start >= node.range.start &&
             d.range.end <= node.range.end
         );

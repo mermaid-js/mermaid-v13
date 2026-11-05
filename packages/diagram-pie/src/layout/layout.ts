@@ -12,6 +12,7 @@ import type { PieDiagramConfig } from '@mermaid-js/core/config';
 import type { RenderContext } from '@mermaid-js/core';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { PieModel } from '../model.ts';
+import { pieSum } from '../shares.ts';
 import { centroid, pieAngles } from './arc.ts';
 import {
   MIN_PERCENT,
@@ -39,9 +40,15 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
     section: font(ctx.theme.number('pieSectionTextSize')),
     legend: font(ctx.theme.number('pieLegendTextSize')),
   };
-  // Title and legend go through core's label layout (D225), unwrapped as v12 drew them.
-  const measure = (text: string, f: FontKey): MeasuredLabel =>
-    layoutLabel(text, f, Infinity, ctx.measurer, ctx.inline ? { inline: ctx.inline } : {});
+  // Title and legend go through core's label layout (D225), unwrapped as v12 drew them; a
+  // markdown string is laid out as markdown, without its backticks. `suffix` is plain text.
+  const inline = ctx.inline ? { inline: ctx.inline } : {};
+  const measure = (text: string, f: FontKey, suffix = ''): MeasuredLabel => {
+    const md = markdownString(text);
+    return md === undefined
+      ? layoutLabel(text + suffix, f, Infinity, ctx.measurer, inline)
+      : layoutLabel(md + suffix, f, Infinity, ctx.measurer, { ...inline, markdown: true });
+  };
 
   const outerStrokeWidth = ctx.theme.number('pieOuterStrokeWidth');
   const strokeWidth = ctx.theme.number('pieStrokeWidth');
@@ -50,34 +57,35 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
   // Measure first: legend rows, then the title.
   const { sections } = model;
   const legendText = sections.map((s) =>
-    measure(model.showData ? `${s.label} [${s.value}]` : s.label, fonts.legend)
+    measure(s.label, fonts.legend, model.showData ? ` [${s.value}]` : '')
   );
   let longest = 0;
   for (const t of legendText) if (t.width > longest) longest = t.width;
   const title = model.title === undefined ? undefined : measure(model.title, fonts.title);
 
+  // A row is v12's 22 px, and taller by the extra lines of its label (D225).
+  const pitches = legendText.map((t) => m.row + extraLines(t));
+  let total = 0;
+  for (const p of pitches) total += p;
+
   const middle = m.width / 2;
-  const { rowX, rowY, shift, chartWidth, chartHeight } = legendPlace(
-    position,
-    sections.length,
-    longest
-  );
+  const { rowX, rowY, shift, chartWidth, chartHeight } = legendPlace(position, total, longest);
   const center: Point = { x: middle + shift.x, y: m.height / 2 + shift.y };
 
   // Slices: under 1% of the sum dropped, the rest fill the circle (D223); percentages over the
-  // sum of all sections.
-  let sum = 0;
-  for (const s of sections) sum += s.value;
+  // sum of all sections, which never overflows (D226).
+  const { unit, sum } = pieSum(sections.map((s) => s.value));
+  const share = (v: number): number => (v / unit / sum) * PERCENT;
   const shown = sections
     .map((s, index) => ({ s, index }))
-    .filter(({ s }) => (s.value / sum) * PERCENT >= MIN_PERCENT);
-  const angles = pieAngles(shown.map(({ s }) => s.value));
+    .filter(({ s }) => share(s.value) >= MIN_PERCENT);
+  const angles = pieAngles(shown.map(({ s }) => s.value / unit));
   const textRadius = m.radius * textPosition;
   const slices: PieSliceLayout[] = shown.map(({ s, index }, i) => {
     const a = angles[i]!;
     const c = centroid(a, textRadius, textRadius);
     const anchor = { x: center.x + c.x, y: center.y + c.y };
-    const text = measure(`${((s.value / sum) * PERCENT).toFixed(0)}%`, fonts.section);
+    const text = measure(`${share(s.value).toFixed(0)}%`, fonts.section);
     return {
       index,
       ast: s.astId,
@@ -92,9 +100,11 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
     };
   });
 
+  let rowTop = m.height / 2 + rowY;
   const legend: PieLegendRow[] = sections.map((s, index) => {
     const x = middle + rowX;
-    const y = m.height / 2 + rowY + index * m.row;
+    const y = rowTop;
+    rowTop += pitches[index]!;
     return {
       index,
       ast: s.astId,
@@ -104,8 +114,10 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
     };
   });
 
-  // The title stays on the canvas centre, whatever moved the pie.
-  const titleBox = title && placed(title, middle - title.width / 2, m.height / 2 - m.titleY);
+  // The title stays on the canvas centre, whatever moved the pie. Its last line sits where
+  // v12's one line did, so extra lines grow up, clear of the pie and the legend (D224 bounds).
+  const titleBox =
+    title && placed(title, middle - title.width / 2, m.height / 2 - m.titleY - extraLines(title));
 
   const outerRadius = m.radius + outerStrokeWidth / 2;
   const box = new Box();
@@ -177,9 +189,11 @@ interface LegendPlace {
   readonly chartHeight: number;
 }
 
-/** v12's legend offsets per position (`pieRenderer.ts` :195-251) for `n` rows. */
-function legendPlace(position: LegendPosition, n: number, longest: number): LegendPlace {
-  const total = n * m.row;
+/**
+ * v12's legend offsets per position (`pieRenderer.ts` :195-251) for rows `total` px tall in all
+ * (v12's `n * 22` when every label is one line).
+ */
+function legendPlace(position: LegendPosition, total: number, longest: number): LegendPlace {
   const centred = -longest / 2 - m.legendTextX;
   const side = m.width + m.margin + m.legendTextX + longest;
   const middle = -total / 2;
@@ -209,6 +223,21 @@ function legendPlace(position: LegendPosition, n: number, longest: number): Lege
     case 'right':
       return { ...base, rowX: m.rightLegendX, rowY: middle, chartWidth: side };
   }
+}
+
+/**
+ * The source of a markdown string (D225), written as in flowcharts: a backtick and a double
+ * quote around it. A section label comes without its quotes, so the backticks are enough; the
+ * title may keep them.
+ */
+function markdownString(text: string): string | undefined {
+  return RE_MARKDOWN.exec(text.trim())?.[2];
+}
+const RE_MARKDOWN = /^("?)`([^]*)`\1$/;
+
+/** How much taller than one line a label is: 0 for one line (or none), as v12 drew every label. */
+function extraLines(text: MeasuredLabel): number {
+  return Math.max(0, text.height - text.lineHeight);
 }
 
 /** A label whose first baseline is at (`x`, `baseline`), its left edge at `x`. */

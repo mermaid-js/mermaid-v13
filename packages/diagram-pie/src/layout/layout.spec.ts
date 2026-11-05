@@ -118,6 +118,38 @@ describe('pie layout: slices', () => {
     expect(empty.slices[0]!.highlighted).toBe(false);
   });
 
+  it('shares two values whose sum is past a double, the same as for small ones (D226)', () => {
+    const big = lay(
+      model([
+        ['A', 1e308],
+        ['B', 1e308],
+      ]),
+      {},
+      tableMeasurer
+    );
+    const small = lay(
+      model([
+        ['A', 1],
+        ['B', 1],
+      ]),
+      {},
+      tableMeasurer
+    );
+    expect(big.slices.map((s) => [s.startAngle, s.endAngle])).toEqual(
+      small.slices.map((s) => [s.startAngle, s.endAngle])
+    );
+    expect(big.slices.map((s) => s.percent.text.lines[0]![0]!.text)).toEqual(['50%', '50%']);
+    expect(
+      pieLayoutViolations(
+        model([
+          ['A', 1e308],
+          ['B', 1e308],
+        ]),
+        big
+      )
+    ).toEqual([]);
+  });
+
   it('draws no slices and no NaN for no sections or a zero sum', () => {
     for (const name of ['empty', 'zero'] as const) {
       const l = lay(FIXTURES[name]!);
@@ -196,6 +228,90 @@ describe('pie layout: legend and title', () => {
     expect(l.legend[0]!.label.text.lines).toHaveLength(2);
     expect(l.legend[1]!.label.text.lines[0]!.map((r) => r.text).join('')).toBe('Tom & Jerry');
     expect(l.title!.text.lines).toHaveLength(2);
+  });
+});
+
+describe('pie layout: labels of several lines and markdown strings (D225)', () => {
+  // tenPx: a legend line is 20.4 px (17 px text), a title line 30 px (25 px) with its
+  // baseline 20 px down.
+  it('a legend row takes its label’s height; rows of one line keep v12’s 22 px', () => {
+    const l = lay(
+      model([
+        ['One<br>two<br>three', 1],
+        ['B', 1],
+        ['C', 1],
+      ])
+    );
+    const ys = l.legend.map((r) => r.swatch.y);
+    expect(ys[1]! - ys[0]!).toBeCloseTo(22 + 2 * 20.4);
+    expect(ys[2]! - ys[1]!).toBe(22);
+    // Still centred on the pie: 3 rows of 22 px and two extra lines.
+    expect(ys[0]).toBeCloseTo(225 - (3 * 22 + 2 * 20.4) / 2);
+    expect(l.legend[0]!.label.y + l.legend[0]!.label.height).toBeLessThanOrEqual(
+      l.legend[1]!.label.y
+    );
+  });
+
+  it('a title of several lines grows up from v12’s baseline, clear of the pie', () => {
+    const l = lay({ ...halves, title: 'L1<br>L2<br>L3' });
+    // The last line's baseline at y = 25, where v12 drew its one line.
+    expect(l.title!.y + 2 * 30 + 20).toBeCloseTo(25);
+    expect(l.title!.y + l.title!.height).toBeLessThanOrEqual(l.center.y - l.outerRadius - 1);
+    expect(l.bounds.y).toBeCloseTo(l.title!.y);
+    expect(l.center).toEqual(lay(halves).center);
+  });
+
+  it('keeps one-line labels where they were', () => {
+    const one = lay({ ...halves, title: 'Pets' }, { legendPosition: 'top' });
+    expect(one.title!.y).toBeCloseTo(5);
+    expect(one.legend.map((r) => r.swatch.y)).toEqual([40, 62]);
+  });
+
+  it('lays out a markdown string as markdown in the legend and the title', () => {
+    const l = lay(
+      model(
+        [
+          ['`**md** x`', 1],
+          ['B', 1],
+        ],
+        { showData: true, title: '"`*T* y`"' }
+      )
+    );
+    const runs = (r: { text: { lines: { text: string; style: number }[][] } }) =>
+      r.text.lines[0]!.map((x) => [x.text, x.style]);
+    const [bold, plain] = runs(l.legend[0]!.label);
+    expect(bold![0]).toBe('md');
+    expect(bold![1]).not.toBe(0);
+    expect(
+      runs(l.legend[0]!.label)
+        .map(([t]) => t)
+        .join('')
+    ).toBe('md x [1]');
+    expect(plain![1]).toBe(0);
+    expect(
+      runs(l.title!)
+        .map(([t]) => t)
+        .join('')
+    ).toBe('T y');
+    expect(runs(l.title!)[0]![1]).not.toBe(0);
+    // Not a markdown string: kept as written.
+    expect(runs(lay(model([['**md**', 1]])).legend[0]!.label)).toEqual([['**md**', 0]]);
+  });
+
+  it('the invariants catch overlapping labels', () => {
+    const l = lay({ ...FIXTURES.breaks!, title: 'Pets' });
+    const row = l.legend[1]!;
+    const broken: PieLayout = {
+      ...l,
+      legend: [l.legend[0]!, { ...row, label: { ...row.label, y: l.legend[0]!.label.y } }],
+      title: { ...l.title!, y: l.center.y - l.radius },
+    };
+    expect(pieLayoutViolations(FIXTURES.breaks!, broken)).toEqual(
+      expect.arrayContaining([
+        "legend row 0's label overlaps legend row 1's label",
+        'the title overlaps the pie',
+      ])
+    );
   });
 });
 

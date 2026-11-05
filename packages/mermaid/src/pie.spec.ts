@@ -26,6 +26,21 @@ describe('pie charts through the public API (#325)', () => {
     assertInert(result.svg);
   });
 
+  it('renders markdown strings in the legend and the title (D225)', async () => {
+    const m = createMermaid();
+    const md = await m.render(
+      'p5',
+      'pie title "`**Bold** title`"\n  "`*it* x`" : 1\n  "**plain**" : 1\n'
+    );
+    // No backtick is drawn (the AST ids keep the label as written).
+    expect(md.svg).not.toMatch(/>[^<]*`/);
+    expect(md.svg).toMatch(/<tspan[^>]*font-weight="bold"[^>]*>Bold<\/tspan>/);
+    expect(md.svg).toMatch(/<tspan[^>]*font-style="italic"[^>]*>it<\/tspan>/);
+    // Not a markdown string: the stars stay.
+    expect(md.svg).toContain('**plain**');
+    assertInert(md.svg);
+  });
+
   it('renders synchronously once prepared', async () => {
     const m = createMermaid();
     await m.prepare(TEXT);

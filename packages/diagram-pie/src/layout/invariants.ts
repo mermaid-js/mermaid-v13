@@ -4,6 +4,7 @@
  * a broken rule.
  */
 import type { PieModel } from '../model.ts';
+import { pieSum } from '../shares.ts';
 import { MIN_PERCENT, PERCENT, PIE_COLOURS as COLOURS } from './metrics.ts';
 import type { PieLayout, Point, Rect } from './types.ts';
 
@@ -27,10 +28,9 @@ export function pieLayoutViolations(model: PieModel, layout: PieLayout): string[
     if (slices[i]!.index <= slices[i - 1]!.index) out.push(`slice ${i} is out of input order`);
 
   // Shown slices: every section of at least 1% of the sum, and only those (D223).
-  let sum = 0;
-  for (const s of model.sections) sum += s.value;
+  const { unit, sum } = pieSum(model.sections.map((s) => s.value));
   const shown = model.sections
-    .map((s, i) => ((s.value / sum) * PERCENT >= MIN_PERCENT ? i : -1))
+    .map((s, i) => ((s.value / unit / sum) * PERCENT >= MIN_PERCENT ? i : -1))
     .filter((i) => i >= 0);
   if (shown.join() !== slices.map((s) => s.index).join())
     out.push(`slices ${slices.map((s) => s.index).join()} for shown sections ${shown.join()}`);
@@ -60,6 +60,8 @@ export function pieLayoutViolations(model: PieModel, layout: PieLayout): string[
     if (b.y < a.y + a.height - EPS) out.push(`legend rows ${i - 1} and ${i} overlap`);
   }
 
+  labelViolations(layout, out);
+
   // Everything drawn inside the bounds (D224).
   const inside = (r: Rect, what: string): void => {
     const b = layout.bounds;
@@ -87,6 +89,60 @@ export function pieLayoutViolations(model: PieModel, layout: PieLayout): string[
   }
   if (layout.title) inside(layout.title, 'the title');
   return out;
+}
+
+/**
+ * Labels apart (D225: a label of several lines takes its height): legend texts from each other,
+ * and the title from the legend, the percentages and the pie.
+ */
+function labelViolations(layout: PieLayout, out: string[]): void {
+  const { slices, legend, center, title } = layout;
+  const labels = legend.map((r) => [r.label, `legend row ${r.index}'s label`] as const);
+  for (let i = 0; i < labels.length; i++)
+    for (let j = i + 1; j < labels.length; j++)
+      if (overlap(labels[i]![0], labels[j]![0]))
+        out.push(`${labels[i]![1]} overlaps ${labels[j]![1]}`);
+  if (!title) return;
+  // v12 draws a `center` legend over the pie; taller than the pie, it runs up into the title,
+  // and v13 keeps that geometry (parity), so only a legend off the pie's centre is checked.
+  if (!overPie(layout))
+    for (const [r, what] of labels) if (overlap(title, r)) out.push(`the title overlaps ${what}`);
+  for (const s of slices)
+    if (overlap(title, s.percent)) out.push(`the title overlaps slice ${s.index}'s percentage`);
+  if (meetsDisc(title, center, layout.outerRadius + layout.outerStrokeWidth / 2))
+    out.push('the title overlaps the pie');
+}
+
+/** The legend is centred on the pie both ways: `legendPosition: center`. */
+function overPie({ legend, center }: PieLayout): boolean {
+  const first = legend[0];
+  const last = legend[legend.length - 1];
+  if (first === undefined || last === undefined) return false;
+  return (
+    first.swatch.x < center.x &&
+    first.label.x + first.label.width > center.x &&
+    first.swatch.y < center.y &&
+    last.swatch.y + last.swatch.height > center.y
+  );
+}
+
+/** Two boxes with some area in common; an empty label (no lines) overlaps nothing. */
+function overlap(a: Rect, b: Rect): boolean {
+  if (a.width <= 0 || a.height <= 0 || b.width <= 0 || b.height <= 0) return false;
+  return (
+    a.x < b.x + b.width - EPS &&
+    b.x < a.x + a.width - EPS &&
+    a.y < b.y + b.height - EPS &&
+    b.y < a.y + a.height - EPS
+  );
+}
+
+/** A non-empty box reaches into the disc of radius `r` about `c`. */
+function meetsDisc(a: Rect, c: Point, r: number): boolean {
+  if (a.width <= 0 || a.height <= 0) return false;
+  const dx = Math.max(a.x - c.x, 0, c.x - (a.x + a.width));
+  const dy = Math.max(a.y - c.y, 0, c.y - (a.y + a.height));
+  return Math.hypot(dx, dy) < r - EPS;
 }
 
 /** Every number in `v`, at any depth, is finite. */

@@ -142,6 +142,20 @@ describe('pie parser', () => {
     expect(model.sections.map((s) => s.label)).toEqual(['cats']);
   });
 
+  it('leaves out a value too large for a double, with a warning, never Infinity (D226)', () => {
+    const big = '9'.repeat(309);
+    const { model, diagnostics } = parse(`pie showData\n"A" : ${big}\n"B" : 1`);
+    expect(diagnostics.map((d) => [d.code, d.severity])).toEqual([
+      ['PIE_VALUE_TOO_LARGE', 'warning'],
+    ]);
+    expect(diagnostics[0]!.message).toBe(
+      '"A" has a value too large to draw: the section is left out. Slice values must be below 1.8e308.'
+    );
+    expect(diagnostics[0]!.range).toEqual({ start: 19, end: 19 + big.length });
+    expect(model.sections.map((s) => s.label)).toEqual(['B']);
+    expect(model.warnings.map((d) => d.code)).toEqual(['PIE_VALUE_TOO_LARGE']);
+  });
+
   it('keeps the first of repeated labels and warns once per dropped section (D226)', () => {
     const src = 'pie\n"a": 1\n"b": 2\n"a": 3\n"a": 4';
     const { model, diagnostics, ast } = parse(src);

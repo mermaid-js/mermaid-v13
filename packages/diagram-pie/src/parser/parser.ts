@@ -446,6 +446,13 @@ class PieParser {
         `"${label}" has invalid value: ${value}. Negative values are not allowed in pie charts. All slice values must be >= 0.`,
         valueRange
       );
+    } else if (!Number.isFinite(value)) {
+      // D226: v12 accepted it and drew NaN; the section is left out, with a warning.
+      diagnostics.warning(
+        'PIE_VALUE_TOO_LARGE',
+        `"${label}" has a value too large to draw: the section is left out. Slice values must be below 1.8e308.`,
+        valueRange
+      );
     } else {
       const first = this.byLabel.get(label);
       if (first) {

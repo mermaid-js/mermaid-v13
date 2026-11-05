@@ -1,13 +1,14 @@
 /**
  * Pie hover (DESIGN §4.5, D93): a section's label or value shows its value and its share of
  * the chart, as the percentage drawn on its slice (`toFixed(0)` over the sum of every section,
- * as v12), and says when the section is a repeat or negative; a keyword the one-line doc of the
- * grammar file (`generated/docs.ts`). Never a preview.
+ * as v12), and says when the section is a repeat, negative or too large; a keyword the
+ * one-line doc of the grammar file (`generated/docs.ts`). Never a preview.
  */
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
 import { pieDocs } from '../generated/docs.ts';
 import type { PieModel } from '../model.ts';
 import type { PieDocument, PieSliceNode } from '../parser/ast.ts';
+import { pieSum } from '../shares.ts';
 import { T } from '../parser/tokens.ts';
 import { code, span } from './tables.ts';
 
@@ -25,10 +26,16 @@ function sliceHover(node: PieSliceNode, model: PieModel): string {
   if (node.value < 0) {
     return `${head}\n\nValue: ${node.value}. Negative values are not allowed in pie charts, so this section is left out.`;
   }
+  if (!Number.isFinite(node.value)) {
+    return `${head}\n\nThis value is too large to draw, so this section is left out.`;
+  }
   const first = model.sections.find((s) => s.label === node.label);
   if (!first) return head;
-  const sum = model.sections.reduce((a, s) => a + s.value, 0);
-  const share = sum > 0 ? ` · ${((first.value / sum) * 100).toFixed(0)}% of ${sum}` : '';
+  // Shares as the layout takes them (D226): the total is left out when it is past a double.
+  const { unit, sum } = pieSum(model.sections.map((s) => s.value));
+  const total = unit * sum;
+  const of = Number.isFinite(total) ? ` of ${total}` : '';
+  const share = sum > 0 ? ` · ${((first.value / unit / sum) * 100).toFixed(0)}%${of}` : '';
   const repeat =
     first.astId === node.id
       ? ''

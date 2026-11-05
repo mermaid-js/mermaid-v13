@@ -128,19 +128,14 @@ describe('pie hover (D93)', () => {
     );
     expect(hover('pie\n  "Dogs" : -¦3\n')).toMatch(/Negative values are not allowed/);
   });
-});
 
-describe('pie isValidId (rename, D92)', () => {
-  it.each(['Dogs', 'Cats and dogs', ' padded ', 'café', '42', "it's"])('accepts %j', (name) => {
-    expect(pieLanguage.isValidId(name, 'slice')).toBeUndefined();
-  });
-
-  it.each([
-    ['', /empty/],
-    ['a\nb', /line break/],
-    ['a"b', /`"`/],
-    ['a\\b', /`\\`/],
-  ])('rejects %j with a reason', (name, reason) => {
-    expect(pieLanguage.isValidId(name, 'slice')).toMatch(reason);
+  it('never shows NaN or Infinity: a value too large, or a sum past a double (D226)', () => {
+    expect(hover(`pie\n  "Dogs" : ${'9'.repeat(309)}¦\n`)).toBe(
+      '**slice** `Dogs`\n\nThis value is too large to draw, so this section is left out.'
+    );
+    const big = '1' + '0'.repeat(308);
+    expect(hover(`pie\n  "Dogs" : ${big}\n  "Cats" : ${big}¦\n`)).toBe(
+      '**slice** `Cats`\n\nValue: 1e+308 · 50%'
+    );
   });
 });

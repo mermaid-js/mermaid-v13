@@ -961,11 +961,17 @@ strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
   first. A negative value is still an error, with v12's message.
 - **A repeated label (D226)** keeps its first value, as v12 did silently; v13 adds one
   `PIE_DUPLICATE_SLICE` warning for it. Nothing is ever drawn at NaN: a pie with no sections, or
-  whose values sum to 0, draws its outer circle and legend only.
+  whose values sum to 0, draws its outer circle and legend only. A value too large for a number
+  (309 digits or more), which v12 drew as `Infinity` and NaN, leaves its section out with a
+  `PIE_VALUE_TOO_LARGE` warning, and values whose sum is past the largest number still share
+  the pie as smaller ones would.
 - **The front-matter `title`** is drawn as the chart title when the text has none (D218), as
   v12 did.
 - **Labels (D225)** go through core's label layout: `<br>` breaks the line, markdown strings and
-  entities render ([Pie SVG structure](#pie-svg-structure)).
+  entities render ([Pie SVG structure](#pie-svg-structure)). A markdown string is written as in
+  flowcharts, `` "`**bold** text`" ``, in a section label or the title. A legend row of several
+  lines is as tall as its label, and a title of several lines grows up from where v12 drew its
+  one line, so neither runs into the pie or the next row; one-line labels sit where v12 put them.
 - **Theme variables.** `pie1`–`pie12`, `pieTitleTextSize`, `pieTitleTextColor`,
   `pieSectionTextSize`, `pieSectionTextColor`, `pieLegendTextSize`, `pieLegendTextColor`,
   `pieStrokeColor`, `pieStrokeWidth`, `pieOuterStrokeColor`, `pieOuterStrokeWidth` and
