@@ -1,0 +1,15 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:4 "pie" keyword
+2:5-2:13 "showData" keyword
+3:3-3:15 "%% a comment" comment
+4:3-4:13 "title Pets" keyword
+5:3-5:17 "accTitle: Pets" keyword
+6:3-8:4 "accDescr {\n    multi\n  }" keyword
+9:3-9:9 "\"Dogs\"" variable [declaration, definition]
+9:10-9:11 ":" operator
+9:12-9:15 "386" number
+10:3-10:9 "'Cats'" variable [declaration, definition]
+10:10-10:11 ":" operator
+10:12-10:16 "85.5" number
+11:3-11:9 "\"Rats\"" string
+11:10-11:11 ":" operator

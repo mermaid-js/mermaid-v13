@@ -88,7 +88,12 @@ export const GRAMMARS: GrammarTarget[] = [
   {
     type: 'pie',
     title: 'Pie chart syntax',
-    kinds: { module: 'parser/tokens.ts', object: 'T' },
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // A label starts a section and `:` follows it: completion offers both, with the doc.
+      documented: ['String', 'Colon'],
+    },
   },
 ];
 

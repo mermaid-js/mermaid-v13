@@ -1,0 +1,8 @@
+@ 6:6  "Do|gs" : 1
+  prepare: 6:4-6:8 "Dogs"; rename to "Puppies":
+  %% rename-to: Puppies
+  pie
+    "Puppies" : 386
+    'Puppies' : 10
+    "Cats" : 85
+    "Puppies" : 1

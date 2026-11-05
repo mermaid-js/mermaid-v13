@@ -78,7 +78,8 @@ Modes: `INITIAL`.
 | INITIAL | PIE | `pie(?:(?=%%)\|(?!\S))` |  | `pie`: starts a pie chart. `pie showData` shows the values in the legend. |
 | INITIAL | COLON | `:` |  |  |
 | INITIAL | NUMBER | `-?[0-9]+\.[0-9]+(?!\.)\|-?(?:0\|[1-9][0-9]*)(?!\.)` |  | A section's value: a number such as `42` or `3.5`, never negative; no sign other than `-`, no exponent, no leading zeros and no `.` without digits on both sides. |
-| INITIAL | ACC_DESCR | `[\t ]*accDescr(?:[\t ]*:(?:[^\n\r]*?(?=%%)\|[^\n\r]*)\|\s*\{[^}]*\})` |  | `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to `}`): the accessible description of the chart. |
+| INITIAL | ACC_DESCR | `[\t ]*accDescr[\t ]*:(?:[^\n\r]*?(?=%%)\|[^\n\r]*)` |  | `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to `}`): the accessible description of the chart. mermaid@12's one rule, as two tried in order; the block's `[\s\S]*?\}` is its `[^}]*\}`, written so that line-based highlighters read the block as one span. |
+| INITIAL | ACC_DESCR | `[\t ]*accDescr\s*\{[\s\S]*?\}` |  |  |
 | INITIAL | ACC_TITLE | `[\t ]*accTitle[\t ]*:(?:[^\n\r]*?(?=%%)\|[^\n\r]*)` |  | `accTitle: …`: the accessible title of the chart, the rest of the line. |
 | INITIAL | TITLE | `[\t ]*title(?:[\t ][^\n\r]*?(?=%%)\|[\t ][^\n\r]*\|)` |  | `title …`: the title drawn above the chart, the rest of the line. |
 | INITIAL | STRING | `"(?:[^"\\]\|\\.)*"\|'(?:[^'\\]\|\\.)*'` |  | A section's label: `"…"` or `'…'`; `\` escapes the next character, and a label may span lines. |

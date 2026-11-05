@@ -17,7 +17,9 @@
  * value is a semantic error with v12's message, and the statement goes on.
  */
 import {
+  APOSTROPHE,
   cook,
+  DQUOTE,
   ExpectedTable,
   Kind,
   kindSet,
@@ -57,11 +59,50 @@ const STATEMENT = [T.String, ...TEXT];
 const DOC = [...STATEMENT, Kind.Newline, Kind.EOF];
 const AFTER_PIE = [T.ShowData, ...DOC];
 const LINE_END = [Kind.Newline, Kind.EOF];
+const HEAD = [T.Pie, Kind.Newline];
 
 /** Where recovery resumes (R-PARSE-4). */
 const BOUNDARY = kindSet(Kind.Newline, Kind.EOF);
-/** Kinds a probe's cursor follows rather than extends (punctuation). */
-const PROBE_FOLLOWS = kindSet(T.Colon);
+/**
+ * Kinds a probe's cursor follows rather than extends: `:`, and a label, which its closing quote
+ * ends (right after `"Dogs"` the parser expects `:`).
+ */
+const PROBE_FOLLOWS = kindSet(T.Colon, T.String);
+
+/** The keyword of each statement-value token, also its probe mode ({@link probeMode}). */
+const VALUE_WORDS: Readonly<Record<number, string>> = {
+  [T.Title]: 'title',
+  [T.AccTitle]: 'accTitle',
+  [T.AccDescr]: 'accDescr',
+};
+
+/**
+ * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
+ * mode names what the offset is in: `title`, `accTitle` or `accDescr` past the keyword of
+ * that statement, `string` inside a label (closed or not), else `INITIAL` (code).
+ */
+function probeMode(src: string, tokens: TokenStream, o: number): string {
+  for (let j = 0; j < tokens.length; j++) {
+    const start = tokens.start[j] ?? 0;
+    const end = tokens.end[j] ?? 0;
+    if (start >= o) break;
+    if (end < o) continue;
+    const kind = tokens.kind[j] ?? Kind.EOF;
+    const c = src.charCodeAt(start);
+    if (kind === T.String && o < end) return 'string';
+    // An unclosed label is an error token from its quote to the line end.
+    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
+    const word = VALUE_WORDS[kind];
+    if (!word) continue;
+    let k = start;
+    while (/[\t ]/.test(src.charAt(k))) k++;
+    k += word.length;
+    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
+    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
+    if (o > k && (o < end || !block)) return word;
+  }
+  return 'INITIAL';
+}
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
@@ -148,6 +189,8 @@ class PieParser {
       const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
       if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
       else probe.trivia(this.full);
+      // Ignored when the offset is outside code.
+      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
     }
   }
 
@@ -318,7 +361,11 @@ class PieParser {
 
   /** `NEWLINE* "pie" "showData"?` */
   private header(): void {
-    while (this.kind() === Kind.Newline) this.i++;
+    for (;;) {
+      this.tested(HEAD);
+      if (this.kind() !== Kind.Newline) break;
+      this.i++;
+    }
     const pie = this.expect(T.Pie);
     const range = this.range(pie);
     this.tested(AFTER_PIE);

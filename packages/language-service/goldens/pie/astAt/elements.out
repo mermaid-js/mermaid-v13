@@ -1,0 +1,16 @@
+@ 1:9  pie show|Data
+  pie 1:1-1:13 "pie showData"
+@ 2:5  ti|tle Pets
+  title 2:3-2:13 "title Pets"
+@ 3:5  "D|ogs" : 386
+  slice:Dogs 3:3-3:15 "\"Dogs\" : 386"
+@ 3:13  "Dogs" : 3|86
+  slice:Dogs 3:3-3:15 "\"Dogs\" : 386"
+@ 4:13  "Dogs" : 1|0
+  slice:Dogs@2 4:3-4:14 "\"Dogs\" : 10"
+@ 5:6  acc|Title: x
+  accTitle 5:3-5:14 "accTitle: x"
+@ 7:10  long |text
+  accDescr 6:3-8:4 "accDescr {\n    long text\n  }"
+@ 9:1  |
+  none
