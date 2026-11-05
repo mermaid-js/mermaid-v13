@@ -575,6 +575,12 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      esbuild:
+        specifier: ^0.25.12
+        version: 0.25.12
+      mermaid:
+        specifier: workspace:*
+        version: link:../mermaid
 
   packages/plugin-interactions:
     devDependencies:

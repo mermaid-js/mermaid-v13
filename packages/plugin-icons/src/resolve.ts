@@ -10,8 +10,12 @@
  * as own properties only, so `__proto__` or `constructor` in diagram text is never an icon.
  */
 
+import type { IconifyAlias, IconifyIcon, IconifyJSON } from '@mermaid-js/core';
+
+export type { IconifyAlias, IconifyIcon, IconifyJSON };
+
 /** Dimensions an icon, an alias or a whole pack may set. */
-export interface IconifyDimensions {
+interface IconifyDimensions {
   readonly left?: number;
   readonly top?: number;
   readonly width?: number;
@@ -19,27 +23,10 @@ export interface IconifyDimensions {
 }
 
 /** Rotation (quarter turns) and flips an icon or alias may set. */
-export interface IconifyTransformations {
+interface IconifyTransformations {
   readonly rotate?: number;
   readonly hFlip?: boolean;
   readonly vFlip?: boolean;
-}
-
-/** One icon in a pack: its SVG body and optional box and transformations. */
-export interface IconifyIcon extends IconifyDimensions, IconifyTransformations {
-  readonly body: string;
-}
-
-/** An alias: another icon of the pack, with dimensions and transformations on top. */
-export interface IconifyAlias extends IconifyDimensions, IconifyTransformations {
-  readonly parent: string;
-}
-
-/** The part of Iconify's JSON pack format (`@iconify/types` `IconifyJSON`) the lookup reads. */
-export interface IconifyJSON extends IconifyDimensions {
-  readonly prefix: string;
-  readonly icons: Readonly<Record<string, IconifyIcon>>;
-  readonly aliases?: Readonly<Record<string, IconifyAlias>>;
 }
 
 /** A resolved icon: every dimension and transformation filled in. */

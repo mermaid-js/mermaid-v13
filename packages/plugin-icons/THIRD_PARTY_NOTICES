@@ -1,17 +1,18 @@
 Third-party notices for @mermaid-js/plugin-icons
 ================================================
 
-This package's own code is MIT-licensed (see LICENSE). The file below is ported from the
+This package's own code is MIT-licensed (see LICENSE). The files below are ported from the
 package that follows, whose license is reproduced here.
 
 @iconify/utils
 --------------
 
 Iconify utilities 3.1.7 (https://github.com/iconify/iconify): the icon lookup (`getIconData`,
-`getIconsTree`, `mergeIconData`, `mergeIconTransformations`) and the box and transform part of
-`iconToSVG`.
+`getIconsTree`, `mergeIconData`, `mergeIconTransformations`), the box and transform part of
+`iconToSVG`, and the icon name split (`stringToIcon`).
 
   src/resolve.ts
+  src/name.ts
 
 MIT License
 

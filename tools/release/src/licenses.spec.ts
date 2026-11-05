@@ -124,6 +124,29 @@ describe('license check (R-REL-4)', () => {
     ]);
   });
 
+  it('needs no Pele text when every ported file comes from another upstream', () => {
+    const header =
+      '// Ported from Iconify (https://github.com/iconify/iconify, MIT License, Copyright (c) 2021-PRESENT Vjacheslav Trushkin).\n';
+    const iconify =
+      '@iconify/utils\n--------------\n  src/a.ts\n\nMIT License\n\nCopyright (c) 2021-PRESENT Vjacheslav Trushkin\n';
+    const files = {
+      'packages/icons/package.json': JSON.stringify({
+        name: 'icons',
+        files: ['dist', 'THIRD_PARTY_NOTICES'],
+      }),
+      'packages/icons/src/a.ts': `${header}export {};\n`,
+    };
+    expect(
+      checkLicenses(workspace({ ...files, 'packages/icons/THIRD_PARTY_NOTICES': iconify }))
+    ).toEqual([]);
+    expect(
+      checkLicenses(workspace({ ...files, 'packages/icons/THIRD_PARTY_NOTICES': 'MIT License\n' }))
+    ).toEqual([
+      'packages/icons/THIRD_PARTY_NOTICES: must contain the MIT License text with "Copyright (c) 2021-PRESENT Vjacheslav Trushkin"',
+      'packages/icons/src/a.ts: not listed under @iconify/utils in packages/icons/THIRD_PARTY_NOTICES',
+    ]);
+  });
+
   it('reports notice entries for files that no longer exist', () => {
     const root = workspace({
       'packages/core/package.json': manifest(),

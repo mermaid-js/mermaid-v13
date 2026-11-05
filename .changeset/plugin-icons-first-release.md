@@ -1,0 +1,5 @@
+---
+'@mermaid-js/plugin-icons': patch
+---
+
+feat: first release of `@mermaid-js/plugin-icons`. Register it with `mermaid.registerExternalDiagrams([icons])` (or install it and let discovery activate it), then register Iconify JSON packs with `mermaid.registerIconPacks([{ name: 'fa', loader: () => import('@iconify-json/fa6-solid').then((m) => m.icons) }])`. `fa:fa-car` and the other Font Awesome prefixes (`fab`, `fad`, `fak`, `fal`, `far`, `fas`) in labels draw the icon from the pack of that name, 1em tall in the label's text colour, and flowchart icon shapes (`A@{ icon: "fa:bell" }`) draw their glyph. Icon bodies become allow-listed SVG nodes: gradients, masks and references are dropped, with one `ICON_SIMPLIFIED` warning. A loader runs in `prepare()`/`render()` only for a diagram that names its pack; `renderSync` before then throws `NotLoadedError` naming the pack, or draws placeholders with `placeholders: true`. An icon that does not resolve, or whose pack failed to load, is shown as written with one `ICON_NOT_RENDERED` warning naming it.

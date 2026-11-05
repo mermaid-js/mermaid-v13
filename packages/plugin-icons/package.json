@@ -1,7 +1,6 @@
 {
   "name": "@mermaid-js/plugin-icons",
   "version": "13.0.0-alpha.0",
-  "private": true,
   "description": "Iconify icon packs in Mermaid v13: icons drawn as allow-listed SVG nodes, packs loaded only for diagrams that use them (D290, D295).",
   "type": "module",
   "license": "MIT",
@@ -37,6 +36,14 @@
     "@iconify-json/logos": "^1.2.18",
     "@iconify-json/mdi": "^1.2.3",
     "@iconify/utils": "3.1.7",
-    "@mermaid-js/core": "workspace:^"
+    "@mermaid-js/core": "workspace:^",
+    "esbuild": "^0.25.12",
+    "mermaid": "workspace:*"
+  },
+  "mermaid": {
+    "plugin": "extension",
+    "id": "icons",
+    "entry": "./dist/index.js",
+    "export": "icons"
   }
 }
