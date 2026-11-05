@@ -16,8 +16,10 @@ const END_DOT = 5 / 14;
 export interface ShapePaint {
   /** Outline and fill of a box, diamond, ring or note. */
   readonly shape: Attrs;
-  /** The filled pseudo-states (start, fork, join) and the end state's ring: fill and stroke. */
+  /** The filled pseudo-states (start, fork, join): fill and stroke. */
   readonly solid: Attrs;
+  /** The end state's ring stroke. */
+  readonly ring: Attrs['stroke'];
   /** A described state's divider line; its stroke also fills the end state's dot. */
   readonly line: Attrs;
 }
@@ -45,7 +47,7 @@ export function drawShape(w: SvgWriter, view: StateNodeView, paint: ShapePaint):
         cy: 0,
         r: width / 2,
         ...paint.shape,
-        stroke: paint.solid.fill,
+        stroke: paint.ring,
         'stroke-width': END_STROKE,
       });
       w.leaf('circle', {
@@ -54,7 +56,7 @@ export function drawShape(w: SvgWriter, view: StateNodeView, paint: ShapePaint):
         cy: 0,
         r: (width * END_DOT) / 2,
         fill: paint.line.stroke,
-        stroke: paint.line.stroke,
+        stroke: paint.shape.stroke,
         'stroke-width': END_STROKE,
       });
       return;
