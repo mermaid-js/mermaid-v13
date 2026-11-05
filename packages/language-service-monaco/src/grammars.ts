@@ -36,6 +36,6 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
   state: { load: () => import('./generated/state.monarch.js').then((m) => m.default) },
   er: { load: () => import('./generated/er.monarch.js').then((m) => m.default) },
   quadrantChart: {
-    load: () => import('./generated/quadrant.monarch.js').then((m) => m.default),
+    load: () => import('./generated/quadrantChart.monarch.js').then((m) => m.default),
   },
 };

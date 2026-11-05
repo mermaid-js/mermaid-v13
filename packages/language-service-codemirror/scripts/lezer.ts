@@ -21,7 +21,7 @@ export const HIGHLIGHTED_TYPES = Object.keys(LEZER_HIGHLIGHTERS);
  */
 const GRAMMAR_TYPES: Readonly<Record<string, string>> = { quadrantChart: 'quadrant' };
 
-/** The gen-grammar type of a facet id; the generated files here are named after it. */
+/** The gen-grammar type of a facet id; the files here are named after the facet id. */
 const grammarType = (id: string): string => GRAMMAR_TYPES[id] ?? id;
 
 const grammarDir = (type: string) => join(ROOT, `packages/diagram-${type}/grammar/generated`);
@@ -33,16 +33,24 @@ const header = (type: string) =>
 /** File name in `src/generated/` → contents. */
 export function lezerFiles(): Map<string, string> {
   const files = new Map<string, string>();
-  for (const id of HIGHLIGHTED_TYPES.map(grammarType)) {
-    const grammar = readFileSync(join(grammarDir(id), `${id}.grammar`), 'utf8');
-    const tokens = readFileSync(join(grammarDir(id), `${id}.tokens.js`), 'utf8');
-    const built = buildParserFile(grammar, { fileName: `${id}.grammar`, moduleStyle: 'es' });
-    files.set(`${id}.parser.js`, header(id) + built.parser);
-    files.set(`${id}.parser.terms.js`, header(id) + built.terms);
-    files.set(`${id}.tokens.js`, tokens);
+  for (const id of HIGHLIGHTED_TYPES) {
+    const type = grammarType(id);
+    // The parser and the tokens import each other by the grammar's name; here they are the id's.
+    const named = (text: string) =>
+      type === id
+        ? text
+        : text.replace(/(["'])\.\/([\w-]+)\./g, (m, q: string, name: string) =>
+            name === type ? `${q}./${id}.` : m
+          );
+    const grammar = readFileSync(join(grammarDir(type), `${type}.grammar`), 'utf8');
+    const tokens = readFileSync(join(grammarDir(type), `${type}.tokens.js`), 'utf8');
+    const built = buildParserFile(grammar, { fileName: `${type}.grammar`, moduleStyle: 'es' });
+    files.set(`${id}.parser.js`, header(type) + named(built.parser));
+    files.set(`${id}.parser.terms.js`, header(type) + built.terms);
+    files.set(`${id}.tokens.js`, named(tokens));
     files.set(
       `${id}.parser.d.ts`,
-      header(id) +
+      header(type) +
         "import type { LRParser } from '@lezer/lr';\n\nexport declare const parser: LRParser;\n"
     );
   }

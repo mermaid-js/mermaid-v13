@@ -198,6 +198,7 @@ const TYPE_DOCS: Record<string, string> = {
   class: 'classDiagram\n  class Animal\n',
   state: 'stateDiagram-v2\n  [*] --> Idle\n',
   er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
+  quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
 };
 
 /** `defaultHighlightStyle`'s keyword colour (#708), which no semantic-token class sets. */

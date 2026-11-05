@@ -103,6 +103,18 @@ const DOCS: Readonly<Record<string, string>> = {
     '  ORDER }|..|{ ITEM : "contains"',
     '',
   ].join('\n'),
+  quadrantChart: [
+    'quadrantChart',
+    '  title Reach and engagement',
+    '  accDescr {',
+    '    two lines',
+    '  }',
+    '  x-axis Low Reach --> High Reach',
+    '  quadrant-1 "We should expand"',
+    '  Campaign A:::hot: [0.3, 0.6] radius: 10',
+    '  classDef hot color: #ff3300',
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */

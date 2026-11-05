@@ -1,14 +1,11 @@
-import { quadrant } from '@mermaid-js/diagram-quadrant';
 import { createMermaid, type InitializeConfig, type Mermaid } from 'mermaid';
 
 /**
- * A `mermaid` API that renders quadrant charts before the plugin is in the generated registry
- * (#317 adds the manifest). The first-party `quadrantChart` row has no loader yet, so the plugin
- * takes that type over with `replace: true`, detected in its first-party slot.
+ * A fresh `mermaid` API object (`deterministic: true`, then `config`) that renders quadrant
+ * charts through the generated registry (#317), as a user's `mermaid` does.
  */
-export async function quadrantApi(config: InitializeConfig = {}): Promise<Mermaid> {
+export function quadrantApi(config: InitializeConfig = {}): Promise<Mermaid> {
   const m = createMermaid();
   m.initialize({ deterministic: true, ...config });
-  await m.registerExternalDiagrams([quadrant], { replace: true });
-  return m;
+  return Promise.resolve(m);
 }

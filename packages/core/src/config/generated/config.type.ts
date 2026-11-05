@@ -1193,6 +1193,14 @@ highlightSlice?: string
  * via the `definition` "QuadrantChartConfig".
  */
 export interface QuadrantChartConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Width of the chart
  */
@@ -1202,15 +1210,15 @@ chartWidth?: number
  */
 chartHeight?: number
 /**
- * Chart title top and bottom padding
+ * Font size of the chart title
  */
 titleFontSize?: number
 /**
- * Padding around the quadrant square
+ * Padding above and below the chart title
  */
 titlePadding?: number
 /**
- * quadrant title padding from top if the quadrant is rendered on top
+ * Padding around the quadrant square
  */
 quadrantPadding?: number
 /**
