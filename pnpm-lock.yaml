@@ -177,6 +177,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-pie':
+        specifier: workspace:^
+        version: link:../diagram-pie
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
@@ -204,6 +207,9 @@ importers:
       mermaid:
         specifier: workspace:*
         version: link:../mermaid
+      mermaid-parser-v12:
+        specifier: npm:@mermaid-js/parser@2.0.1
+        version: '@mermaid-js/parser@2.0.1'
       mermaid-v12:
         specifier: npm:mermaid@^12.2.0
         version: mermaid@12.2.0
@@ -295,6 +301,12 @@ importers:
         version: link:../core
 
   packages/diagram-flowchart:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-pie:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
