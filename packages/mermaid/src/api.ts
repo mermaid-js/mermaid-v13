@@ -857,15 +857,16 @@ export function createMermaid(
 
   function addDiscovered(list: readonly DiscoveredPlugin[]): Promise<readonly Warning[]> {
     cache.clear();
-    const pending = registry.registerDiscovered(list).then((warnings) => {
-      rebuildHooks();
-      skipped.push(...warnings);
-      return warnings;
-    });
-    const tracked: Promise<unknown> = pending
-      .catch(() => undefined)
-      .finally(() => adding.delete(tracked));
-    adding.add(tracked);
+    // Leaves `adding` before its awaiter resumes, so a draw right after it does not wait.
+    const pending: Promise<readonly Warning[]> = registry
+      .registerDiscovered(list)
+      .then((warnings) => {
+        rebuildHooks();
+        skipped.push(...warnings);
+        return warnings;
+      })
+      .finally(() => adding.delete(pending));
+    adding.add(pending);
     return pending;
   }
 
