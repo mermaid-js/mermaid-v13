@@ -38,3 +38,10 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [ ] Not yet run in the Playwright image (T7).
 - [x] **Resolved (D163 amended 2026-11-05, `feature/230_cdn-base-attr` merged):** a `cdnBase` that is not the directory the ESM entry came from makes lazy chunks load a second copy of the shared core chunks from the mirror (separate module instances; `instanceof LimitError` etc. break). Implementer's recommendation (a′): the classic loader also reads `data-cdn-base` from its own `<script>` tag and imports the whole ESM build from there; for ESM, `cdnBase` must mirror the entry's directory, a different value warns. `data-cdn-base` would be a second source besides `initialize()`, so it needs a D-id in D160–D169. Rejected: rewriting lazy chunks to take core from the entry (custom linker).
 - Bare package URLs (unpkg/jsdelivr → `dist/mermaid.min.js`) are unit-tested only; the test server doesn't redirect.
+
+## T5 #228 (merged)
+
+- [ ] Not yet run in the Playwright image (T7).
+- [ ] Vite dev-server path unverified (apps run `vite build`); a dependency that wraps mermaid also needs `optimizeDeps.exclude` (README).
+- A package.json that gains a `mermaid` key without an install is seen only on the next install/restart.
+- Fixed cost of the empty `mermaid/discovered` wiring: +58 B gz on core.
