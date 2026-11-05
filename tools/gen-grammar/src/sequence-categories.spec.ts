@@ -16,7 +16,12 @@ import {
   sequenceTokens,
 } from '@mermaid-js/diagram-sequence/language';
 import { generate, generatedDir } from './generate.ts';
-import { lezerCategorise, monarchCategorise, textMateCategorise } from './highlight-testing.ts';
+import {
+  hidingFrontMatter,
+  lezerCategorise,
+  monarchCategorise,
+  textMateCategorise,
+} from './highlight-testing.ts';
 import type { Categorise } from './highlight-testing.ts';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -165,11 +170,6 @@ function textMateExempt(src: string): Set<number> {
 /** Kinds whose tokens are blanks or empty, so no highlighter colours them. */
 const BLANK_KINDS = new Set<number>([T.AliasEnd, T.Eof]);
 
-const blankFrontMatter = (src: string) => {
-  const end = preprocess(src).bodyStart;
-  return src.slice(0, end).replace(/[^\n]/g, ' ') + src.slice(end);
-};
-
 /**
  * The kind of each character of `src` as the lexer sees it: its tokens, and the comments and
  * directives it removed (a directive wins over a comment hole that runs over it).
@@ -210,12 +210,15 @@ describe('four-way highlighting agreement (sequence)', () => {
       ],
       ['Monarch', monarchCategorise(out('sequence.monarch.json'))],
       [
+        // As the CodeMirror adapter runs it: front matter hidden.
         'Lezer',
-        await lezerCategorise(
-          out('sequence.grammar'),
-          out('sequence.tokens.js'),
-          'sequence',
-          join(root, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
+        hidingFrontMatter(
+          await lezerCategorise(
+            out('sequence.grammar'),
+            out('sequence.tokens.js'),
+            'sequence',
+            join(root, 'tools/gen-grammar/node_modules/.cache/lezer-categories')
+          )
         ),
       ],
     ];
@@ -227,8 +230,7 @@ describe('four-way highlighting agreement (sequence)', () => {
     const disagreements = new Map<string, string>();
     const covered = new Set<number>();
     for (const [file, src] of [...FIXTURES, ...corpus]) {
-      const text = blankFrontMatter(src);
-      const seen = highlighters.map(([name, h]) => [name, h(text)] as const);
+      const seen = highlighters.map(([name, h]) => [name, h(src)] as const);
       const exempt = textMateExempt(src);
       for (const [i, kind] of lexerKinds(src)) {
         if (/\s/.test(src[i] ?? '')) continue;

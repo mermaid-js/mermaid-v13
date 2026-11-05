@@ -177,13 +177,56 @@ export function textMate(g: Grammar, names: HighlightNames): object {
     }
     repository[`mode-${mode}`] = { patterns };
   }
+  Object.assign(repository, textMateFrontMatter(suffix));
   return {
     $schema: 'https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json',
     name: names.id,
     scopeName: `source${suffix}`,
     fileTypes: names.extensions,
-    patterns: [{ include: '#mode-INITIAL' }],
+    patterns: [{ include: '#front-matter-start' }, { include: '#mode-INITIAL' }],
     repository,
+  };
+}
+
+/**
+ * Front matter as Monarch reads it (`MONARCH_FRONT_MATTER`): a `---` fence on the first
+ * non-blank line, at any indent, up to the next `---` line. `front-matter-start` opens at the
+ * start of the text when the first line is blank or a fence, passes blank lines and ends before
+ * any other text. An opening fence inside it starts `front-matter` (fences meta, YAML keys
+ * variables, `#` comments comments); the closing fence starts `front-matter-body`, which holds
+ * the diagram to the end of the text, so a later `---` line opens nothing. Neither ends (`(?!)`
+ * never matches): an unclosed block runs to the end of the text, as in Monarch.
+ */
+function textMateFrontMatter(suffix: string): Record<string, object> {
+  const fence = '^[^\\S\\n]*---[^\\S\\n]*$';
+  const meta = { '0': { name: `${TEXTMATE_SCOPES.meta}${suffix}` } };
+  return {
+    'front-matter-start': {
+      begin: '\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)',
+      end: '(?=\\S)',
+      // The opening fence wins over the end at the same position.
+      applyEndPatternLast: 1,
+      patterns: [{ include: '#front-matter' }],
+    },
+    'front-matter': {
+      begin: fence,
+      beginCaptures: meta,
+      end: '(?!)',
+      patterns: [
+        { include: '#front-matter-body' },
+        { match: '#.*', name: `${TEXTMATE_SCOPES.comment}${suffix}` },
+        {
+          match: '^[^\\S\\n]*(?:- )?[^\\s#:\'"-][^:#]*(?=:(?:\\s|$))',
+          name: `${TEXTMATE_SCOPES.variable}${suffix}`,
+        },
+      ],
+    },
+    'front-matter-body': {
+      begin: fence,
+      beginCaptures: meta,
+      end: '(?!)',
+      patterns: [{ include: '#mode-INITIAL' }],
+    },
   };
 }
 
