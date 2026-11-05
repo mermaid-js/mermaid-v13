@@ -3222,6 +3222,14 @@ export const configSchema: ConfigSchema = {
             "replacement": "`theme`, or the geometry and `dropShadow` theme variables"
           }
         },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "No ER default, as in v12: the top-level `layout` applies, `layered` (D127, R-LAYOUT-7: ELK is never the default). Set here, it wins for ER diagrams. `elk` and `elk.<algorithm>` are drawn by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173)."
+          }
+        },
         "useMaxWidth": {
           "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
           "x-mermaid": {
@@ -3390,7 +3398,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "Defaults to `layered`, not v12's `elk` (D127, R-LAYOUT-7: ELK is never the default). ELK applies only when an author sets it; until an ELK plugin is registered it is drawn with `layered` (D106)."
+            "reason": "Defaults to `layered`, not v12's `elk` (D127, R-LAYOUT-7: ELK is never the default). `elk` and `elk.<algorithm>` apply only when an author sets them, and are drawn by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D106, D173)."
           }
         },
         "useWidth": {
@@ -3629,7 +3637,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "No class default, as in v12: the top-level `layout` applies, `layered` (D127, R-LAYOUT-7: ELK is never the default). `elk` applies only when an author sets it, and is drawn with `layered` until an ELK plugin is registered (D106)."
+            "reason": "No class default, as in v12: the top-level `layout` applies, `layered` (D127, R-LAYOUT-7: ELK is never the default). `elk` and `elk.<algorithm>` apply only when an author sets them, and are drawn by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D106, D173)."
           }
         },
         "useWidth": {
@@ -4916,6 +4924,14 @@ export const configSchema: ConfigSchema = {
             "since": "13.0.0",
             "reason": "`look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render. The redux themes carry v12's `look: neo` geometry (D152).",
             "replacement": "`theme`, or the geometry and `dropShadow` theme variables"
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "No flowchart default, as in v12: the top-level `layout` applies, `layered` (D127, R-LAYOUT-7: ELK is never the default). Set here, it wins for flowcharts. `elk` and `elk.<algorithm>` are drawn by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173)."
           }
         },
         "titleTopMargin": {
