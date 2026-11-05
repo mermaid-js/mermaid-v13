@@ -73,6 +73,8 @@ describe('preprocess: directives', () => {
     ['a colon first', '%%{: {"theme": "dark"}}%%'],
     ['a comment line after the opener', '%%{\n%% c\ninit: {"theme": "dark"}}%%'],
     ['unclosed', '%%{ "a"\ngraph TD'],
+    // An unclosed directive ends at its line, so a name on the next line is outside it.
+    ['unclosed, a name on the next line', '%%{\ninit: dark\ngraph TD'],
   ])('reads no directive from an opener without a name: %s', (_name, src) => {
     const r = preprocess(src);
     expect(r.directives).toEqual([]);
