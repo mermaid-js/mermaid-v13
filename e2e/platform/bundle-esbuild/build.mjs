@@ -1,9 +1,11 @@
-// esbuild app (R-PLUG-4): both pages, ESM with code splitting, as an integrator builds it.
+// esbuild app (R-PLUG-4, D164): the pages, ESM with code splitting, as an integrator builds it,
+// with the Mermaid bundler plugin (`MERMAID_PLUGIN=off` builds without it).
 import { copyFileSync, mkdirSync } from 'node:fs';
+import mermaid from '@mermaid-js/bundler-plugin/esbuild';
 import { build } from 'esbuild';
 
-const pages = ['flowchart', 'all'];
-const plugins = [];
+const pages = ['flowchart', 'all', 'plugin'];
+const plugins = process.env.MERMAID_PLUGIN === 'off' ? [] : [mermaid()];
 
 await build({
   entryPoints: pages.map((p) => `src/${p}.js`),

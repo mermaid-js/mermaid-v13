@@ -22,5 +22,5 @@ if (violations.length > 0) {
   process.exit(1);
 }
 process.stdout.write(
-  'Dependency check passed: published packages have no third-party runtime dependencies (beyond D88, D171), and core names no optional package (R-PLUG-8).\n'
+  'Dependency check passed: published packages have no third-party runtime dependencies (beyond D88, D164, D171), and core names no optional package (R-PLUG-8).\n'
 );

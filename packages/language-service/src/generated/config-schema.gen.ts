@@ -735,12 +735,21 @@ export const configSchema: ConfigSchema = {
       }
     },
     "discovery": {
-      "description": "Node and SSR plugin auto-discovery (D165): before the first render, `mermaid` registers\nthe plugins in the app's own `node_modules`. Set `false` to turn it off. Integrator-only:\ndiagram text cannot set it.\n",
+      "description": "Plugin auto-discovery (D164, D165): before the first render, `mermaid` registers the\nplugins found in the app's own `node_modules`, by the Node/SSR scan or, in a bundled\napp, by `@mermaid-js/bundler-plugin`'s build-time list. Set `false` to turn both off.\nIt does not cover the CDN `globalThis.mermaidPlugins` queue (D167): a script that\npushes itself there always registers. Integrator-only: diagram text cannot set it.\n",
       "type": "boolean",
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
         "reason": "New in v13. Integrator-only (`initialize()`); no default, so discovery is on unless this is `false`. Read once, at the first `prepare`, `render`, `parse` or `preload`."
+      }
+    },
+    "cdnBase": {
+      "description": "CDN build only (D163): the URL first-party chunks (diagrams, their text entries, themes)\nload from. Default: the directory `mermaid.esm.min.mjs` was loaded from. A relative URL\nresolves against `document.baseURI`; query and hash are dropped. A base other than that\ndirectory loads a second copy of the shared core chunks and warns: to move the whole\nbuild, put `data-cdn-base` on the `mermaid.min.js` tag instead. Integrator-only: diagram\ntext cannot set it, so no URL in a diagram ever leads to a load (R-PLUG-7).\n",
+      "type": "string",
+      "x-mermaid": {
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "New in v13. Integrator-only (`initialize()`); no default. Only a present key changes the base (`undefined` returns to the default); ignored outside the CDN build."
       }
     },
     "arrowMarkerAbsolute": {

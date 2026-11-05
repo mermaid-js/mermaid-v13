@@ -24,7 +24,7 @@ import type { PrReport } from '../pr-check.ts';
 import { PR_DIAGRAMS, corpusInNode } from '../pr-check.ts';
 import { formatPrComment, formatPrReport } from '../pr-markdown.ts';
 import type { BenchReport } from '../report.ts';
-import { closureSize } from '../size-budget.ts';
+import { closureSize, measureCoreSize } from '../size-budget.ts';
 import { classifyFixtures } from '../support.ts';
 import { parseArgs } from './args.ts';
 import {
@@ -136,7 +136,7 @@ const benchView: BenchReport = {
   pipeline,
   asciiSize: report.asciiSize,
   asciiSizeByType: report.asciiSizeByType,
-  coreSize: closureSize(site.v13),
+  coreSize: await measureCoreSize(),
   renderers,
 };
 const outcome = gate(benchView, setting, reportOnly, {

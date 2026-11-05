@@ -30,10 +30,17 @@ export function addDiscovered(
 
 /**
  * Sets the source `api` runs once, before its first `prepare`, `render`, `parse` or `preload`
- * (the async Node scan). It gets the `initialize()` config, so it can honour a switch such as
- * `discovery: false`, and `warn`, which queues a warning (a package it skipped) for the first
- * render. A source that rejects registers nothing. One source per API object.
+ * (the async Node scan, the bundler's list). It gets the `initialize()` config, so it can
+ * honour a switch such as `discovery: false`, and `warn`, which queues a warning (a package it
+ * skipped) for the first render. A source that rejects registers nothing. One source per API
+ * object. The first draw waits for the source and its registration (extension entries load
+ * then) at most `options.timeLimitMs` (5 s) in all, then renders without them with a
+ * `PLUGIN_DISCOVERY_FAILED` warning; what the source finds still registers when it ends.
  */
-export function discoverOnFirstUse(api: Mermaid, source: FirstUseSource): void {
-  seamOf(api).onFirstUse(source);
+export function discoverOnFirstUse(
+  api: Mermaid,
+  source: FirstUseSource,
+  options?: AddOptions
+): void {
+  seamOf(api).onFirstUse(source, options);
 }

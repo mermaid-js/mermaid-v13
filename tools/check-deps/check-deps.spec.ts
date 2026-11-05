@@ -140,6 +140,20 @@ describe('runtime dependency check (R-PERF-2)', () => {
     ]);
   });
 
+  it('lets the bundler plugin depend on unplugin, and mermaid not (D164)', () => {
+    const plugin = pkg('packages/bundler-plugin', {
+      name: '@mermaid-js/bundler-plugin',
+      dependencies: { unplugin: '3.4.0', 'webpack-virtual-modules': '^0.6' },
+    });
+    expect(findDependencyViolations([core, plugin])).toEqual([
+      '@mermaid-js/bundler-plugin: runtime dependency "webpack-virtual-modules" is not a workspace package',
+    ]);
+    const other = pkg('packages/mermaid', { name: 'mermaid', dependencies: { unplugin: '3.4.0' } });
+    expect(findDependencyViolations([other])).toEqual([
+      'mermaid: runtime dependency "unplugin" is not a workspace package',
+    ]);
+  });
+
   it('holds for the real workspace', () => {
     const root = join(import.meta.dirname, '..', '..');
     const packages = readWorkspace(root);

@@ -27,6 +27,7 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - Follow-up (not this spec): the `mermaid` CLI does not discover plugins.
 - Ancestor `node_modules` plugins are simply not found, no warning (D165 "never ancestors"); the ticket's "skipped with a warning" wording is read that way.
 - `scanPlugins`/`findAppRoot` (`mermaid/node-scan`) are async; T5 awaits them in its unplugin hooks. Layout manifests (#238) are scanned since the #215 merge: `config` confined, imported under the limit, handed to the registry as a `ManifestPlugin`.
+- The spec's confinement list names `language`, but `readManifest` drops that key, so the scan never sees it and does not confine it (only `detector`, `entry`, `ascii`). The LSP's own scan (D157) confines `language`. Revisit if `readManifest` keeps `language`.
 
 ## Cross-spec: #238 layout manifests (from #215, PR #255)
 
@@ -38,3 +39,17 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [ ] Not yet run in the Playwright image (T7).
 - [x] **Resolved (D163 amended 2026-11-05, `feature/230_cdn-base-attr` merged):** a `cdnBase` that is not the directory the ESM entry came from makes lazy chunks load a second copy of the shared core chunks from the mirror (separate module instances; `instanceof LimitError` etc. break). Implementer's recommendation (a′): the classic loader also reads `data-cdn-base` from its own `<script>` tag and imports the whole ESM build from there; for ESM, `cdnBase` must mirror the entry's directory, a different value warns. `data-cdn-base` would be a second source besides `initialize()`, so it needs a D-id in D160–D169. Rejected: rewriting lazy chunks to take core from the entry (custom linker).
 - Bare package URLs (unpkg/jsdelivr → `dist/mermaid.min.js`) are unit-tested only; the test server doesn't redirect.
+
+## T5 #228 (merged)
+
+- [ ] Not yet run in the Playwright image (T7).
+- [ ] Vite dev-server path unverified (apps run `vite build`); a dependency that wraps mermaid also needs `optimizeDeps.exclude` (README).
+- A package.json that gains a `mermaid` key without an install is seen only on the next install/restart.
+- Fixed cost of the empty `mermaid/discovered` wiring: +58 B gz on core.
+
+## T7 #232 (close-out)
+
+- [x] DESIGN §2/§12.4/§14, ADR-6 (`v13/docs/adr/0006-plugin-discovery.md`) and MIGRATION ("Loading and plugins") written; sizes in `tickets/232.md`.
+- [ ] Platform specs (T2–T6) still not run in the Playwright Docker image: the Docker daemon is down on this machine at close-out too. `pnpm e2e` ran on macOS (see `tickets/232.md`).
+- Follow-up (not this spec): the `mermaid` CLI (`src/cli.ts` imports `index.ts`, not `node.ts`) does not discover plugins. Needs a decision on whether the bin's root is `process.cwd()` or the input file's directory, and `discovery: false` as a flag.
+- Follow-up (not this spec): the Vite dev-server path (`vite` serve, `optimizeDeps.exclude: ['mermaid']`, a wrapper dependency that pre-bundles mermaid) has no e2e; the apps only `vite build`. Add a dev-server variant of `bundle-vite` to `bundler-plugin.spec.ts`.

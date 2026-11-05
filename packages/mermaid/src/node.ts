@@ -16,10 +16,10 @@
 import { pathToFileURL } from 'node:url';
 import type { ExtensionPlugin, Warning } from '@mermaid-js/core';
 import type { ConfigFragment } from '@mermaid-js/core/config';
+import { bundledSource } from './bundled.ts';
 import { discoverOnFirstUse, type DiscoveredPlugin, type FirstUseSource } from './discovery.ts';
-import { DETECTORS } from './generated/detectors.gen.ts';
 import mermaid, { createMermaid as createBase, type Mermaid } from './index.ts';
-import { findAppRoot, scanPlugins, type ScannedPackage } from './node-scan.ts';
+import { FIRST_PARTY_IDS, findAppRoot, scanPlugins, type ScannedPackage } from './node-scan.ts';
 
 export * from './index.ts';
 
@@ -31,6 +31,12 @@ export interface NodeDiscoveryOptions {
   readonly cwd?: string;
   /** Time limit on each discovery-time import (detectors, extension entries), in ms (default 5000). */
   readonly importTimeoutMs?: number;
+  /**
+   * Gets every warning of the scan: each skipped package (also on the first render's
+   * warnings) and `PLUGIN_DISCOVERY_NO_MODULES` (only here: a server deployed without
+   * `node_modules` is normal, so renders do not carry it).
+   */
+  readonly log?: (warning: Warning) => void;
 }
 
 /**
@@ -63,11 +69,6 @@ function configModuleOf(module: unknown): { config: unknown; extension: unknown 
   const m = module as Record<string, unknown> | null;
   return { config: m?.config ?? m?.default, extension: m?.extension };
 }
-
-/** First-party diagram ids: their own `@mermaid-js/*` packages are never discovered. */
-const FIRST_PARTY_IDS: readonly string[] = DETECTORS.flatMap((e) =>
-  e.id === undefined ? [] : [e.id]
-);
 
 /** One scanned package as a seam entry; a detector that fails to load gives a skip warning. */
 async function toDiscovered(p: ScannedPackage, ms: number): Promise<DiscoveredPlugin | Warning> {
@@ -160,17 +161,29 @@ export function nodeDiscovery(options: NodeDiscoveryOptions = {}): FirstUseSourc
     const root = await findAppRoot(options.cwd ?? process.cwd());
     if (root === undefined) return [];
     const { list, warnings } = await discover(root, options.importTimeoutMs ?? IMPORT_TIMEOUT_MS);
-    for (const w of warnings) warn(w);
+    for (const w of warnings) {
+      options.log?.(w);
+      if (w.code !== 'PLUGIN_DISCOVERY_NO_MODULES') warn(w);
+    }
     return list;
   };
 }
 
-discoverOnFirstUse(mermaid, nodeDiscovery());
+/**
+ * How long the first draw waits for Node discovery in all: the detector imports, then the
+ * extension entry imports, each in parallel under `IMPORT_TIMEOUT_MS`, so a slow package is
+ * skipped by its own limit (with its name) before this one ends the wait.
+ */
+const FIRST_USE_LIMIT = { timeLimitMs: 2 * IMPORT_TIMEOUT_MS + 1000 };
+
+// A server build made with `@mermaid-js/bundler-plugin` already has its plugins (bundled.ts):
+// the build-time scan of the same root, so Node discovery stays off there.
+if (bundledSource === undefined) discoverOnFirstUse(mermaid, nodeDiscovery(), FIRST_USE_LIMIT);
 
 /** A new `mermaid` API object, with every first-party diagram and Node plugin discovery. */
 export function createMermaid(): Mermaid {
   const api = createBase();
-  discoverOnFirstUse(api, nodeDiscovery());
+  if (bundledSource === undefined) discoverOnFirstUse(api, nodeDiscovery(), FIRST_USE_LIMIT);
   return api;
 }
 

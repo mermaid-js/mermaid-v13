@@ -37,16 +37,85 @@ What most integrators have to change:
    theme ([Themes](#themes)).
 8. Render errors are thrown as `MermaidError`; nothing is drawn into the page for you
    ([Errors](#errors-and-the-error-image)).
+9. `mermaid.min.js` is now a small loader that imports the ES module build: the browser needs
+   ES2022 module support, and the `chunks/` folder must be served next to it. Plugins are found
+   on install in Node, through `@mermaid-js/bundler-plugin` in bundlers and through
+   `globalThis.mermaidPlugins` on a CDN ([Loading and plugins](#loading-and-plugins)).
 
 ## Packages
 
 | v12 | v13 | Why |
 | --- | --- | --- |
 | One `mermaid` package with every diagram type and its dependencies (d3, dagre, DOMPurify, khroma, KaTeX, …) | `mermaid` depends on `@mermaid-js/core` (pipeline, parser kit, layout, SVG writer, text, themes, config) and one `@mermaid-js/diagram-<type>` package per diagram type. `mermaid` has no other runtime dependencies | Small, DOM-free bundles (R-PERF-1, R-PERF-2) |
-| ESM, IIFE (`mermaid.min.js`) and "tiny" builds | ESM only in the alpha: each package ships its compiled modules (`dist/`), Node 20 or newer. The release pipeline publishes no IIFE, `mermaid.min.js` or tiny build; bundle `mermaid` with your own bundler | |
+| ESM, IIFE (`mermaid.min.js`) and "tiny" builds | Each package ships its compiled ES modules (`dist/`), Node 20 or newer. `mermaid` also ships a CDN build: `dist/mermaid.esm.min.mjs` with a chunk per diagram type, and `dist/mermaid.min.js`, a classic-script loader for it ([Loading and plugins](#loading-and-plugins)). There is no full non-lazy IIFE and no tiny build | D162, R-ARCH-8 |
 | `mermaid@latest`, released from `develop` | Alphas are released from `mermaid-v13`, with dist-tag `v13-alpha` only, so `mermaid@latest` stays v12: install `mermaid@v13-alpha`. Public `mermaid@13.0.0-alpha.N` starts at `13.0.0-alpha.0` (D155) | R-REL-2, R-REL-3, D28, D155 |
 | `@mermaid-js/layout-elk` | Same name, a 13.x line. Register it as in v12 (`mermaid.registerLayoutLoaders(elkLayouts)`); without it `layout: elk` draws with the built-in engine and warns `ELK_NOT_INSTALLED` ([ELK](#elk)) | R-PLUG-8, D171 |
 | ZenUML, tidy-tree and the example diagram package | Not ported in M1 | |
+
+## Loading and plugins
+
+### The CDN script (`mermaid.min.js`)
+
+v12's `mermaid.min.js` was one IIFE with every diagram type in it. In v13 it is a loader of
+under 1 KB gz (D162): it sets `globalThis.mermaid` at once, then `import()`s
+`mermaid.esm.min.mjs` from its own directory, and each diagram type, theme and text-output entry
+loads from `chunks/` on first use. Both v12 tags keep working:
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/mermaid@v13-alpha/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true });</script>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@v13-alpha/dist/mermaid.esm.min.mjs';
+</script>
+```
+
+- **The browser needs ES2022 module support** (R-ARCH-8): the loader is a classic script, but
+  everything it loads is an ES module. There are no polyfills and no fallback build.
+- **Serve `chunks/` next to the file.** If you self-host, copy the whole `dist/` folder
+  (`mermaid.min.js`, `mermaid.esm.min.mjs` and `chunks/`), not just one file. A bare package URL
+  (`https://unpkg.com/mermaid@13`) works: the loader then looks in `dist/`.
+- **Chunks from somewhere else (D163).** Put `data-cdn-base="https://mirror.example/mermaid/"`
+  on the `mermaid.min.js` tag to load the whole build (ESM file and every chunk) from that base.
+  With the ES module build, `initialize({ cdnBase })` moves the lazy chunks; a base other than
+  the ESM file's own directory works but warns, because the shared core chunks then load twice.
+  `cdnBase` is integrator-only: front matter and `%%{init}%%` cannot set it, and no URL in
+  diagram text ever leads to a load (R-PLUG-7).
+- Calls made before the build has loaded (`initialize`, `run`, `render`, …) are queued and
+  replayed in order; the async ones return the real result. `renderSync`, `detectType`,
+  `supportsFormat` and `mount` throw until it has loaded: call them after `await
+  mermaid.preload()`.
+
+### Plugins: installed is enabled (R-PLUG-5)
+
+v12 needed a `registerExternalDiagrams` call for every third-party diagram. In v13 a package
+with a `mermaid` manifest in its `package.json` is found on install, and each path loads only
+the detector up front and the diagram itself on first use. `registerExternalDiagrams` still
+works everywhere (R-PLUG-6).
+
+| Where | What to do | D-id |
+| --- | --- | --- |
+| Node, SSR | Nothing. On first render `mermaid` scans the `node_modules` of the nearest `package.json` at or above `process.cwd()` (its top level and `@scope` folders, never parent folders). A package with a bad manifest, a path outside the package or a detector that takes over 5 s to import is skipped with a `PLUGIN_SKIPPED` warning in `RenderResult.warnings`. A server deployed without `node_modules` gets no warning | D165 |
+| Bundlers | Add `@mermaid-js/bundler-plugin`: `plugins: [mermaid()]` with `mermaid` from `@mermaid-js/bundler-plugin/vite`, `/webpack`, `/rollup` or `/esbuild`. It scans at build time; skipped packages are build warnings. Without it a browser bundle has the first-party types and what you register | D164 |
+| CDN | Add the plugin's script tag, before or after `mermaid.min.js`. The script pushes itself onto `globalThis.mermaidPlugins` with its npm package name (`(globalThis.mermaidPlugins ??= []).push({ ...plugin, package: 'my-plugin' })`), so it orders as in an npm install; without `package` mermaid warns. Load `mermaid` once: a second copy on the page warns and leaves the plugins and the startOnLoad render to the first | D167 |
+
+- **Turning it off:** `initialize({ discovery: false })` stops Node discovery and ignores the
+  bundler plugin's list. Like `cdnBase`, `discovery` is integrator-only.
+- **Discovery runs on the first `render`, `prepare`, `parse` or `preload`.** `renderSync`,
+  `detectType` and `supportsFormat` do not wait for it: `await mermaid.preload()` first. A
+  render waits for a plugin that is still loading for a limited time (5 s), then goes on with a
+  `PLUGIN_DISCOVERY_FAILED` warning; the plugin works on later renders once it has loaded.
+- **Order (D166).** First-party types always win: a discovered package that claims a first-party
+  id or type (`flowchart`, `pie`, …) is skipped with a warning. Replacing one takes
+  `registerExternalDiagrams([plugin], { replace: true })`. Third-party detectors run after the
+  first-party ones, sorted by package name, then the explicitly registered ones in call order.
+  An explicitly registered id wins over a discovered one, with no warning.
+- **Extensions activate on install too (D169).** With `@mermaid-js/plugin-interactions`
+  installed, Node discovery and the bundler plugin turn click callbacks on with no
+  `registerExternalDiagrams` call. Diagram text still cannot enable it.
+- First-party diagram types need none of this: `mermaid` depends on every
+  `@mermaid-js/diagram-*` package and bundlers split them per type (R-PLUG-4).
+- The `mermaid` CLI does not discover plugins yet.
 
 ## Public API
 
@@ -144,8 +213,9 @@ attributes. Without the plugin:
 - `click A "url"` and `click A href "url"` still draw links (they are SVG `<a>` elements, not
   script) and tooltips become SVG `<title>` elements.
 
-With the plugin, callbacks work as in v12. Register it once; diagram text alone can never turn
-it on:
+With the plugin, callbacks work as in v12. In Node, or in a bundle built with
+`@mermaid-js/bundler-plugin`, installing it is enough ([Plugins](#plugins-installed-is-enabled-r-plug-5),
+D169). Otherwise register it once; diagram text alone can never turn it on:
 
 ```js
 import mermaid from 'mermaid';

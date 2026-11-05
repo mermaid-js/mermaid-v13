@@ -29,6 +29,11 @@
       "types": "./dist/slim.d.ts",
       "default": "./dist/slim.js"
     },
+    "./discovered": {
+      "mermaid-source": "./src/discovered.ts",
+      "types": "./dist/discovered.d.ts",
+      "default": "./dist/discovered.js"
+    },
     "./node-scan": {
       "mermaid-source": "./src/node-scan.ts",
       "types": "./dist/node-scan.d.ts",

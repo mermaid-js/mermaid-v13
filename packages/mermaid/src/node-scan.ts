@@ -14,6 +14,15 @@
 import { readdir, readFile, realpath } from 'node:fs/promises';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { readManifest, type PluginManifest } from '@mermaid-js/core';
+import { DETECTORS } from './generated/detectors.gen.ts';
+
+/**
+ * `mermaid`'s own diagram ids, the `firstPartyIds` to pass to `scanPlugins` (the Node entry and
+ * the bundler plugin do): their `@mermaid-js/*` packages are never discovered.
+ */
+export const FIRST_PARTY_IDS: readonly string[] = DETECTORS.flatMap((e) =>
+  e.id === undefined ? [] : [e.id]
+);
 
 /** A package the scan found, with its manifest's module paths resolved and confined. */
 export interface ScannedPackage {

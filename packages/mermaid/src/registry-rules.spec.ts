@@ -384,3 +384,118 @@ describe('review fixes', () => {
     expect(m.detectType('late')).toBe('late');
   });
 });
+
+describe('integration review fixes (#218)', () => {
+  const extensionByManifest = (id: string, load: () => Promise<unknown>): ExternalDiagram => ({
+    manifest: { plugin: 'extension', id, entry: './index.js' },
+    load,
+  });
+  const warns = (id: string, code: string) => ({
+    id,
+    postRender: (_t: unknown, ctx: { warn: (w: { code: string; message: string }) => void }) =>
+      ctx.warn({ code, message: id }),
+  });
+  const tick = () => new Promise((r) => setTimeout(r, 0));
+
+  it('renders after the limit when a first-use extension entry stalls; it registers when it settles', async () => {
+    const m = createMermaid();
+    let settle!: (module: unknown) => void;
+    const entry = new Promise((r) => (settle = r));
+    discoverOnFirstUse(
+      m,
+      () => [
+        found(
+          'pkg-stall',
+          extensionByManifest('stall', () => entry)
+        ),
+      ],
+      {
+        timeLimitMs: 30,
+      }
+    );
+    const first = await m.render('f', FLOW);
+    expect(first.warnings.map((w) => w.code)).toEqual(['PLUGIN_DISCOVERY_FAILED']);
+    expect(first.warnings[0]!.message).toMatch(/within 30 ms/);
+    settle({ default: warns('stall', 'STALL_RAN') });
+    await tick();
+    expect((await m.render('g', FLOW)).warnings.map((w) => w.code)).toEqual(['STALL_RAN']);
+  });
+
+  it('renders after the limit when a first-use source stalls; what it finds registers later', async () => {
+    const m = createMermaid();
+    let finish!: (list: DiscoveredPlugin[]) => void;
+    discoverOnFirstUse(m, () => new Promise<DiscoveredPlugin[]>((r) => (finish = r)), {
+      timeLimitMs: 30,
+    });
+    const first = await m.render('f', FLOW);
+    expect(first.warnings.map((w) => w.code)).toEqual(['PLUGIN_DISCOVERY_FAILED']);
+    finish([found('pkg-late', textDiagram('late', 'late'))]);
+    await tick();
+    const r = await m.render('l', 'late x');
+    expect(r.svg).toContain('late: late x');
+    expect(r.warnings).toEqual([]);
+  });
+
+  it('loads the extension entries of one batch at once, not one after another', async () => {
+    const m = createMermaid();
+    const started: string[] = [];
+    let open!: () => void;
+    const gate = new Promise<void>((r) => (open = r));
+    const slow = (id: string) =>
+      extensionByManifest(id, async () => {
+        started.push(id);
+        await gate;
+        return { default: warns(id, id.toUpperCase()) };
+      });
+    const adding = addDiscovered(m, [
+      found('pkg-c', slow('c')),
+      found('pkg-a', slow('a')),
+      found('pkg-b', slow('b')),
+    ]);
+    await tick();
+    expect(started.sort()).toEqual(['a', 'b', 'c']);
+    open();
+    expect(await adding).toEqual([]);
+    // Hook order is still package order (D166).
+    expect((await m.render('f', FLOW)).warnings.map((w) => w.code)).toEqual(['A', 'B', 'C']);
+  });
+
+  it('lets an explicit id beat a discovered one silently, for every kind, never loading it', async () => {
+    const m = createMermaid();
+    const loads: string[] = [];
+    await m.registerExternalDiagrams([warns('ext', 'EXPLICIT'), textDiagram('box', 'box', 'mine')]);
+    m.registerLayoutLoaders([{ name: 'elk', loader: async () => layered }]);
+    const warnings = await addDiscovered(m, [
+      found(
+        'pkg-ext',
+        extensionByManifest('ext', async () => {
+          loads.push('ext');
+          return { default: warns('ext', 'DISCOVERED') };
+        })
+      ),
+      found('pkg-ext2', warns('ext', 'DISCOVERED2')),
+      found('pkg-box', {
+        ...textDiagram('box', 'box', 'discovered'),
+        loader: async () => {
+          loads.push('box');
+          return (await textDiagram('box', 'box', 'discovered').loader()) as never;
+        },
+      }),
+      {
+        kind: 'layout',
+        package: 'pkg-elk',
+        names: ['elk'],
+        loader: async () => {
+          loads.push('elk');
+          return layered;
+        },
+      },
+    ]);
+    expect(warnings).toEqual([]);
+    await m.preload({ layouts: ['elk'] });
+    const r = await m.render('b', 'box x');
+    expect(r.svg).toContain('mine: box x');
+    expect(r.warnings.map((w) => w.code)).toEqual(['EXPLICIT']);
+    expect(loads).toEqual([]);
+  });
+});

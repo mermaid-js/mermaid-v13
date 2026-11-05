@@ -27,7 +27,7 @@ export type FirstUseSource = (
 /** The discovered-list seam of one API object (see discovery.ts). */
 interface Seam {
   add(list: readonly DiscoveredPlugin[], options?: AddOptions): Promise<readonly Warning[]>;
-  onFirstUse(source: FirstUseSource): void;
+  onFirstUse(source: FirstUseSource, options?: AddOptions): void;
 }
 
 /** Whether `p` settles before `deadline` (a time from `Date.now()`). */
@@ -44,15 +44,15 @@ function settlesBy(p: Promise<unknown>, deadline: number): Promise<boolean> {
   ]).finally(() => clearTimeout(timer));
 }
 
-const failed = (what: string, e: unknown): Warning => ({
-  code: 'PLUGIN_DISCOVERY_FAILED',
-  message: `${what} failed: ${e instanceof Error ? e.message : String(e)}`,
-});
+const why = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+const failed = (message: string): Warning => ({ code: 'PLUGIN_DISCOVERY_FAILED', message });
+const late = (limit: number) => `did not finish within ${limit} ms; rendering without it.`;
 
 export class DiscoveryQueue implements Seam {
   /** Discovery's warnings; they leave only once a draw that succeeds has them. */
   readonly skipped: Warning[] = [];
-  private firstUse: (() => Promise<void>) | undefined;
+  private firstUse: ((deadline: number) => Promise<void>) | undefined;
+  private firstUseLimit = ADD_TIME_LIMIT_MS;
   private ready: Promise<void> | undefined;
   // Additions still registering (the CDN queue's pushes, T6), with the time each one's wait
   // ends: a draw waits for each until then, and renders without it after (one warning).
@@ -75,25 +75,39 @@ export class DiscoveryQueue implements Seam {
 
   /** Runs the first-use source once, then waits for each addition until its deadline. */
   async settle(): Promise<void> {
-    if (this.firstUse) {
-      this.ready ??= this.firstUse().catch((e: unknown) => {
-        this.skipped.push(failed('Plugin discovery', e));
-      });
+    const start = this.firstUse;
+    if (start) {
+      // One limit for the source and its registration; past it the draw goes on (see onFirstUse).
+      this.ready ??= (async () => {
+        const limit = this.firstUseLimit;
+        const deadline = Date.now() + limit;
+        const run = start(deadline).catch(
+          (e: unknown) => void this.skipped.push(failed(`Plugin discovery failed: ${why(e)}`))
+        );
+        if (!(await settlesBy(run, deadline)))
+          this.skipped.push(failed(`Plugin discovery ${late(limit)}`));
+      })();
       await this.ready;
     }
     while (this.adding.size > 0) {
       const [pending, { deadline, limit }] = this.adding.entries().next().value!;
       if (!(await settlesBy(pending, deadline)) && this.adding.delete(pending))
-        this.skipped.push({
-          code: 'PLUGIN_DISCOVERY_FAILED',
-          message: `A plugin registration did not finish within ${limit} ms; rendering without it.`,
-        });
+        this.skipped.push(failed(`A plugin registration ${late(limit)}`));
     }
   }
 
   add(
     list: readonly DiscoveredPlugin[],
     { timeLimitMs = ADD_TIME_LIMIT_MS }: AddOptions = {}
+  ): Promise<readonly Warning[]> {
+    return this.registerBy(list, Date.now() + timeLimitMs, timeLimitMs);
+  }
+
+  /** `add`, waited for by draws until `deadline` (`undefined`: not waited for). */
+  private registerBy(
+    list: readonly DiscoveredPlugin[],
+    deadline: number | undefined,
+    limit: number
   ): Promise<readonly Warning[]> {
     this.clear();
     // Never rejects; leaves `adding` before its awaiter resumes, so a draw right after it
@@ -105,7 +119,7 @@ export class DiscoveryQueue implements Seam {
           return warnings;
         },
         (e: unknown): readonly Warning[] => {
-          const w = failed('Plugin registration', e);
+          const w = failed(`Plugin registration failed: ${why(e)}`);
           this.skipped.push(w);
           return [w];
         }
@@ -114,15 +128,16 @@ export class DiscoveryQueue implements Seam {
         this.clear();
         this.adding.delete(pending);
       });
-    this.adding.set(pending, { deadline: Date.now() + timeLimitMs, limit: timeLimitMs });
+    if (deadline !== undefined) this.adding.set(pending, { deadline, limit });
     return pending;
   }
 
-  onFirstUse(source: FirstUseSource): void {
+  onFirstUse(source: FirstUseSource, { timeLimitMs = ADD_TIME_LIMIT_MS }: AddOptions = {}): void {
     if (this.firstUse || this.ready) throw new Error('A first-use discovery source is already set');
-    this.firstUse = async () => {
+    this.firstUseLimit = timeLimitMs;
+    this.firstUse = async (deadline) => {
       const list = await source(this.config(), (w) => void this.skipped.push(w));
-      await this.add(list);
+      void this.registerBy(list, Date.now() < deadline ? deadline : undefined, timeLimitMs);
     };
   }
 }

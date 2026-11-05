@@ -26,12 +26,14 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-flowchart',
       '@mermaid-chart/diagram-sequence',
       '@mermaid-chart/diagram-state',
+      '@mermaid-chart/mermaid',
+      // Peer of mermaid (D164): after it.
+      '@mermaid-chart/bundler-plugin',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',
       '@mermaid-chart/layout-elk',
       '@mermaid-chart/plugin-interactions',
       '@mermaid-chart/plugin-math',
-      '@mermaid-chart/mermaid',
     ]);
     const mermaid = manifestOf(packed.find((p) => p.name === '@mermaid-chart/mermaid')!.tarball);
     expect(mermaid.name).toBe('@mermaid-chart/mermaid');

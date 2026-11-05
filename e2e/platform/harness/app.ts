@@ -12,8 +12,10 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   renameSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -63,15 +65,40 @@ const skipAppFile = (name: string): boolean =>
   name === 'node_modules' || name === 'dist' || LOCKFILES.has(name);
 
 /**
- * The environment of the app's commands: without the npm and pnpm variables of the
- * `pnpm e2e` that started Playwright, and with the monorepo's `node_modules/.bin` last on
- * PATH, so a build can use a tool (esbuild) the app does not install itself.
+ * A folder with the monorepo's `esbuild` executable itself, not pnpm's `.bin/esbuild` shim:
+ * the shim exports `NODE_PATH` with the monorepo's `node_modules/.pnpm/node_modules`, through
+ * which esbuild resolved an import the installed packages do not declare to the workspace
+ * sources (`packages/core`), so a missing dependency went unnoticed.
  */
-function appEnv(extra: Readonly<Record<string, string>> = {}): NodeJS.ProcessEnv {
+function toolsBin(): string {
+  const bin = join(cacheRoot(), 'bin');
+  const esbuild = join(bin, 'esbuild');
+  if (!existsSync(esbuild)) {
+    mkdirSync(bin, { recursive: true });
+    const real = realpathSync(join(REPO_ROOT, 'node_modules', 'esbuild', 'bin', 'esbuild'));
+    try {
+      symlinkSync(real, esbuild);
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+    }
+  }
+  return bin;
+}
+
+/**
+ * The environment of the app's commands: without the npm and pnpm variables of the
+ * `pnpm e2e` that started Playwright and without `NODE_PATH`, with the monorepo's esbuild
+ * ({@link toolsBin}) first and its `node_modules/.bin` last on PATH, so a build can use a tool
+ * the app does not install itself, and never resolves a package from the monorepo.
+ */
+export function appEnv(extra: Readonly<Record<string, string>> = {}): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {};
   for (const [k, v] of Object.entries(process.env))
-    if (!/^(?:npm|pnpm)_/i.test(k) && k !== 'INIT_CWD') env[k] = v;
-  env.PATH = [env.PATH, join(REPO_ROOT, 'node_modules', '.bin')].filter(Boolean).join(delimiter);
+    if (!/^(?:npm|pnpm)_/i.test(k) && k !== 'INIT_CWD' && k !== 'NODE_PATH') env[k] = v;
+  // First: `pnpm e2e` puts the monorepo's `.bin` (with the shim) at the front of PATH.
+  env.PATH = [toolsBin(), env.PATH, join(REPO_ROOT, 'node_modules', '.bin')]
+    .filter(Boolean)
+    .join(delimiter);
   return { ...env, ...extra };
 }
 
@@ -120,17 +147,41 @@ export function installManifest(
   return out;
 }
 
-/** pnpm reads overrides from `pnpm-workspace.yaml` only: the app's own, plus the tarballs. */
+/**
+ * Dependencies whose install scripts may run. pnpm 11+ fails an install with
+ * `ERR_PNPM_IGNORED_BUILDS` on any unapproved script (esbuild's postinstall); `allowBuilds`
+ * is the key pnpm 10.26+, 11 and 12 all read (11+ ignore `onlyBuiltDependencies`). Which
+ * pnpm runs depends on the machine (Homebrew, corepack's latest in the Playwright image).
+ */
+export const ALLOW_BUILDS: Readonly<Record<string, boolean>> = { esbuild: true };
+
+interface PnpmWorkspaceConfig {
+  overrides?: Deps;
+  allowBuilds?: Record<string, boolean>;
+}
+
+/**
+ * The app's `pnpm-workspace.yaml`: its own settings, the tarballs as overrides (pnpm reads
+ * overrides from there only) and {@link ALLOW_BUILDS}.
+ */
+export function pnpmWorkspaceConfig(
+  config: PnpmWorkspaceConfig | null,
+  packed: readonly PackedPackage[]
+): PnpmWorkspaceConfig {
+  const overrides = Object.fromEntries(packed.map((p) => [p.name, `file:${p.tarball}`]));
+  return {
+    ...config,
+    overrides: { ...config?.overrides, ...overrides },
+    allowBuilds: { ...ALLOW_BUILDS, ...config?.allowBuilds },
+  };
+}
+
 function pnpmWorkspace(dir: string, packed: readonly PackedPackage[]): void {
   const file = join(dir, 'pnpm-workspace.yaml');
-  const config = (existsSync(file) ? yaml.load(readFileSync(file, 'utf8')) : null) as {
-    overrides?: Deps;
-  } | null;
-  const overrides = Object.fromEntries(packed.map((p) => [p.name, `file:${p.tarball}`]));
-  writeFileSync(
-    file,
-    yaml.dump({ ...config, overrides: { ...config?.overrides, ...overrides } }, { lineWidth: -1 })
-  );
+  const config = (
+    existsSync(file) ? yaml.load(readFileSync(file, 'utf8')) : null
+  ) as PnpmWorkspaceConfig | null;
+  writeFileSync(file, yaml.dump(pnpmWorkspaceConfig(config, packed), { lineWidth: -1 }));
 }
 
 const INSTALL_ARGS: Record<PackageManager, string[]> = {
