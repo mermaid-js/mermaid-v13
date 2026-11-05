@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   assertAlphaVersion,
+  danglingExports,
   inexactWorkspaceRanges,
   publishManifest,
   workspaceLeaks,
@@ -103,6 +104,25 @@ describe('published manifests', () => {
         versions
       )
     ).toEqual(['peerDependencies: @mermaid-js/core@^13.0.0-alpha.2 (want exactly 13.0.0-alpha.2)']);
+  });
+
+  it('finds exports that point only at src/ and would publish with no target (#174)', () => {
+    const manifest = publishManifest(
+      {
+        name: '@mermaid-js/language-service-monaco',
+        version: '13.0.0-alpha.0',
+        exports: {
+          '.': { 'mermaid-source': './src/index.ts', default: './dist/index.js' },
+          './monarch.json': { 'mermaid-source': './grammar/generated/monarch.json' },
+          './source-only': './src/index.ts',
+        },
+      },
+      { target: 'public', workspace: [] }
+    );
+    expect(danglingExports(manifest)).toEqual(['./monarch.json', './source-only']);
+    expect(
+      danglingExports(publishManifest(mermaid(), { target: 'public', workspace: [] }))
+    ).toEqual([]);
   });
 
   it('publishes only alpha prereleases, so the alpha tag never moves latest or a release line', () => {

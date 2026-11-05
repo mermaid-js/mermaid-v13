@@ -20,6 +20,7 @@ import {
   BACKSLASH,
   COLON,
   COMMA,
+  codePointEnd,
   CR,
   DASH,
   DOT,
@@ -304,7 +305,7 @@ class SequenceLexer {
     if (!this.step(this.text.charCodeAt(this.p))) {
       // No rule matches (jison throws): an Error token, then the initial state again.
       const c = this.text.charCodeAt(this.p);
-      this.emit(Kind.Error, this.p, c === LF ? this.p : this.p + 1);
+      this.emit(Kind.Error, this.p, c === LF ? this.p : codePointEnd(this.text, this.p));
       this.stack.length = 0;
       this.state = S.INITIAL;
     }

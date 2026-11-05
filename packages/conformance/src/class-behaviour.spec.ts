@@ -108,7 +108,9 @@ describe('class render: structure', () => {
     expect(
       tree.find((n, t) => t.getAttr(n, 'font-weight') === 'bold' && isIn(n, name))
     ).not.toEqual([]);
-    expect(attr(tree, count, 'text-decoration')).toBe('underline');
+    expect(
+      tree.find((n, t) => t.getAttr(n, 'text-decoration') === 'underline' && isIn(n, count))
+    ).not.toEqual([]);
     expect(attr(tree, count, 'data-ast')).toBe('m:Animal#2');
     expect(
       tree.find((n, t) => t.getAttr(n, 'font-style') === 'italic' && isIn(n, move))

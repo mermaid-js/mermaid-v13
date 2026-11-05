@@ -3,12 +3,12 @@
  * two backings with byte-identical output: streaming into a string (default) and the
  * compact tree used when a `postRender` hook is registered.
  */
-import { BLANK_REL, TEXT_HOLDERS } from './allowlist.ts';
+import { BLANK_REL, GRADIENT_FIXED, TEXT_HOLDERS } from './allowlist.ts';
 import { checkTag, formatValue } from './encode.ts';
-import { esc } from './escape.ts';
+import { esc, escAttr } from './escape.ts';
 import { pathBuilder, type PathBuilder } from './path.ts';
 import { CompactTree, type SvgTree } from './tree.ts';
-import type { AllowedTag, Attrs, ThemeStyleSheet } from './types.ts';
+import type { AllowedTag, Attrs, SvgGradient, ThemeStyleSheet } from './types.ts';
 
 /** One run of text with uniform emphasis. */
 export interface LabelSpan {
@@ -62,6 +62,40 @@ export interface SvgWriter {
   styleSheet(css: ThemeStyleSheet): void;
 }
 
+export interface WriterOptions {
+  /**
+   * The render's gradient (D182), `Theme.gradient()`. When an element's `fill` or `stroke`
+   * is `url(#<id>)`, `finish()` writes it as the root's first child.
+   */
+  readonly gradient?: SvgGradient;
+}
+
+/** `url(#id)`, the value an outline that refers to the gradient carries. */
+const refOf = (g: SvgGradient | undefined): string | undefined =>
+  g === undefined ? undefined : `url(#${g.id})`;
+
+const FIXED = Object.entries(GRADIENT_FIXED)
+  .map(([k, v]) => ` ${k}="${v}"`)
+  .join('');
+
+/**
+ * `svg` with the gradient's `<defs>` as the root's first child. Both backings escape `>` in
+ * attribute values, so the first `>` ends the root's start tag.
+ */
+function withGradient(svg: string, g: SvgGradient): string {
+  const end = svg.indexOf('>');
+  if (end < 0 || svg[end - 1] === '/')
+    throw new Error('SvgWriter: the gradient is referred to by an empty root');
+  const stop = (offset: number, color: string) =>
+    `<stop offset="${offset}" stop-color="${esc(color)}"/>`;
+  const defs =
+    `<defs><linearGradient id="${esc(g.id)}"${FIXED}>` +
+    stop(0, g.start) +
+    stop(1, g.stop) +
+    '</linearGradient></defs>';
+  return svg.slice(0, end + 1) + defs + svg.slice(end + 1);
+}
+
 function checkSheetParent(top: string | undefined, depth: number): void {
   if (top !== 'svg' || depth !== 1)
     throw new TypeError('A theme style sheet must be a child of the root <svg>');
@@ -108,13 +142,18 @@ function writeLabel(
   const top = cy - box.height / 2;
   const first = lines[0];
   const only = lines.length === 1 && first && first.length === 1 ? first[0] : undefined;
+  const left = box.left === true && box.width !== undefined ? cx - box.width / 2 : undefined;
   if (only && spanAttrs(only, undefined) === undefined) {
-    w.open('text', { ...attrs, x: cx, y: top + box.baseline, 'text-anchor': 'middle' });
+    w.open('text', {
+      ...attrs,
+      x: left === undefined ? cx : left + (box.indents?.[0] ?? 0),
+      y: top + box.baseline,
+      'text-anchor': left === undefined ? 'middle' : 'start',
+    });
     w.text(only.text);
     w.close();
     return;
   }
-  const left = box.left === true && box.width !== undefined ? cx - box.width / 2 : undefined;
   w.open('text', {
     ...attrs,
     'text-anchor': left === undefined ? 'middle' : 'start',
@@ -144,6 +183,12 @@ class Stream implements StreamSvgWriter {
   private out = '';
   private readonly stack: string[] = [];
   private pending = false;
+  private readonly ref: string | undefined;
+  private referred = false;
+
+  constructor(private readonly gradient: SvgGradient | undefined) {
+    this.ref = refOf(gradient);
+  }
 
   private attrs(tag: string, attrs: Attrs | undefined): string {
     if (!attrs) return '';
@@ -154,13 +199,15 @@ class Stream implements StreamSvgWriter {
       const raw = (attrs as Record<string, unknown>)[name];
       let value = formatValue(tag, name, raw);
       if (value === undefined) continue;
+      if (this.ref !== undefined && value === this.ref && (name === 'stroke' || name === 'fill'))
+        this.referred = true;
       if (name === 'rel' && blank) {
         value = BLANK_REL;
         rel = true;
       }
       // Numbers and number lists format to digits, signs, points, commas and spaces only.
       const plain = typeof raw === 'number' || Array.isArray(raw);
-      s += ' ' + name + '="' + (plain ? value : esc(value)) + '"';
+      s += ' ' + name + '="' + (plain ? value : escAttr(value)) + '"';
     }
     if (blank && !rel) s += ' rel="' + BLANK_REL + '"';
     return s;
@@ -227,13 +274,15 @@ class Stream implements StreamSvgWriter {
   finish(): string {
     if (this.stack.length > 0)
       throw new Error(`SvgWriter.finish() with <${this.stack[this.stack.length - 1]}> still open`);
-    return this.out;
+    return this.referred ? withGradient(this.out, this.gradient as SvgGradient) : this.out;
   }
 }
 
 class Tree implements TreeSvgWriter {
   private readonly compact = new CompactTree();
   private readonly stack: number[] = [0];
+
+  constructor(private readonly gradient: SvgGradient | undefined) {}
 
   get tree(): SvgTree {
     return this.compact;
@@ -275,16 +324,23 @@ class Tree implements TreeSvgWriter {
 
   finish(): string {
     if (this.stack.length > 1) throw new Error('SvgWriter.finish() with an element still open');
-    return this.compact.serialize();
+    const svg = this.compact.serialize();
+    // Read from the tree as the hooks left it, so a reference they add or remove counts.
+    const ref = refOf(this.gradient);
+    const t = this.compact;
+    const referred =
+      ref !== undefined &&
+      t.find((n) => t.getAttr(n, 'stroke') === ref || t.getAttr(n, 'fill') === ref).length > 0;
+    return referred ? withGradient(svg, this.gradient as SvgGradient) : svg;
   }
 }
 
 /** The default backing: writes straight into a string buffer. */
-export function streamWriter(): StreamSvgWriter {
-  return new Stream();
+export function streamWriter(options?: WriterOptions): StreamSvgWriter {
+  return new Stream(options?.gradient);
 }
 
 /** The tree backing, for when a `postRender` hook is registered. */
-export function treeWriter(): TreeSvgWriter {
-  return new Tree();
+export function treeWriter(options?: WriterOptions): TreeSvgWriter {
+  return new Tree(options?.gradient);
 }

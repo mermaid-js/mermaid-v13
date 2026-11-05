@@ -29,7 +29,7 @@ export type DirectiveKind = 'init' | 'wrap' | 'other';
 export interface Directive {
   /** `init` for `init` and `initialize`, `wrap`, or `other` for any other name. */
   kind: DirectiveKind;
-  /** The name as written (`''` when there is none). */
+  /** The name as written; a `%%{` with no word after it is not a directive (v12). */
   name: string;
   /** From `%%{` to the end of `}%%`; an unclosed directive ends at the end of its line. */
   range: Range;
@@ -57,46 +57,65 @@ function isJsonSpace(c: number): boolean {
 /** Find and read every directive in `src` from `from` on. */
 export function scanDirectives(src: string, from: number, diagnostics: Diagnostics): Directive[] {
   const out: Directive[] = [];
-  // Once a search for `}%%` fails, no later opener can close either: the scan stays linear.
+  // Each search result is kept while later openers are still before it, and once a search for
+  // `}%%` fails no later opener can close either: the scan stays linear.
   let closable = true;
+  let close = -1;
+  let eol = -1;
   let at = src.indexOf('%%{', from);
   while (at !== -1) {
-    const close = closable ? src.indexOf('}%%', at + 3) : -1;
-    if (close === -1) {
-      closable = false;
-      const end = lineEnd(src, at);
+    if (closable && close < at + 3) {
+      close = src.indexOf('}%%', at + 3);
+      closable = close !== -1;
+    }
+    if (!closable && eol < at) eol = lineEnd(src, at);
+    // An unclosed directive ends at the end of its line; its name must be inside it.
+    const contentEnd = closable ? close : eol;
+    const name = nameAt(src, at, contentEnd);
+    // v12 directiveRegex needs a word after `%%{` and blanks; anything else stays text.
+    if (name.start === name.end) {
+      at = src.indexOf('%%{', at + 3);
+      continue;
+    }
+    if (!closable) {
       diagnostics.error(
         'UNCLOSED_DIRECTIVE',
         'This directive is never closed. Add `}%%` after it.',
         { start: at, end: at + 3 }
       );
-      out.push(read(src, at, end, end, false, diagnostics));
-      at = src.indexOf('%%{', end);
+      out.push(read(src, at, name, contentEnd, false, diagnostics));
+      at = src.indexOf('%%{', contentEnd);
     } else {
-      out.push(read(src, at, close, close + 3, true, diagnostics));
+      out.push(read(src, at, name, close, true, diagnostics));
       at = src.indexOf('%%{', close + 3);
     }
   }
   return out;
 }
 
+/** The name after the `%%{` at `open` and any blanks, up to `contentEnd`; empty if none. */
+function nameAt(src: string, open: number, contentEnd: number): Range {
+  let i = open + 3;
+  while (i < contentEnd && isJsonSpace(src.charCodeAt(i))) i++;
+  const start = i;
+  while (i < contentEnd && isWord(src.charCodeAt(i))) i++;
+  return { start, end: i };
+}
+
 function read(
   src: string,
   open: number,
+  nameRange: Range,
   contentEnd: number,
-  end: number,
   closed: boolean,
   diagnostics: Diagnostics
 ): Directive {
-  let i = open + 3;
-  while (i < contentEnd && isJsonSpace(src.charCodeAt(i))) i++;
-  const nameStart = i;
-  while (i < contentEnd && isWord(src.charCodeAt(i))) i++;
-  const name = src.slice(nameStart, i);
+  const end = closed ? contentEnd + 3 : contentEnd;
+  const name = src.slice(nameRange.start, nameRange.end);
   const kind: DirectiveKind = DIRECTIVE_KINDS.get(name) ?? 'other';
   const directive: Directive = { kind, name, range: { start: open, end } };
 
-  let a = i;
+  let a = nameRange.end;
   while (a < contentEnd && isJsonSpace(src.charCodeAt(a))) a++;
   if (src.charCodeAt(a) === COLON && a < contentEnd) a++;
   while (a < contentEnd && isJsonSpace(src.charCodeAt(a))) a++;

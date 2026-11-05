@@ -1,8 +1,15 @@
 /**
- * The node tree of the YAML reader's tree mode (`parseYaml(src, { tree: true })`, R-LANG-5):
- * every key and value with its range into the original source.
+ * What the YAML reader (`yaml.ts`) returns: the value, and the node tree of its tree mode
+ * (`parseYaml(src, { tree: true })`, R-LANG-5) with every key and value's range into the
+ * original source. Also the flow collection the reader builds both in. Imports no reader code,
+ * so the reader imports this module and not the other way round.
  */
 import type { Range } from '../parser-kit/positions.ts';
+
+export type YamlValue = null | boolean | number | string | YamlValue[] | YamlMap;
+export interface YamlMap {
+  [key: string]: YamlValue;
+}
 
 /** How a scalar is written in the source. */
 export type YamlScalarStyle = 'plain' | 'single' | 'double' | 'literal' | 'folded';
@@ -39,3 +46,23 @@ export interface YamlPair {
 }
 
 export type YamlNode = YamlScalarNode | YamlSeqNode | YamlMapNode;
+
+/** A flow collection the reader (`yaml.ts`) is reading: its value, in tree mode its nodes. */
+export interface FlowCollection {
+  map: YamlMap;
+  list: YamlValue[];
+  pairs: YamlPair[] | undefined;
+  items: YamlNode[] | undefined;
+  /** The key of the mapping entry being read, once read (tree mode). */
+  key?: YamlPair;
+}
+
+/** The reader's start of a flow mapping (`map`) or sequence; `tree` keeps its nodes too. */
+export function flowCollection(map: boolean, tree: boolean): FlowCollection {
+  return {
+    map: {},
+    list: [],
+    pairs: tree && map ? [] : undefined,
+    items: tree && !map ? [] : undefined,
+  };
+}

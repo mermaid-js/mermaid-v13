@@ -96,6 +96,10 @@ const LEXER_CASES: CorpusItem[] = [
   'classDiagram\nclass A {\n  %% not a comment in a body\n}',
   'classDiagram\nA direction TB\nB direction LR x\nC',
   'classDiagram\ndirection\n\nRL extra\nA',
+  // `#y;` wherever a jison token could end inside its placeholder (`ﬂ°y¶ß`, #208 item 5).
+  'classDiagram\nA : x:#y; z\nA <|-- B : #y;\nclass C~#y;~\nnote "#y;"\nclass D["#y;"]',
+  'classDiagram\nclass A {\n+x #y; y\n}\nA "#y;" --> "#9829;" B\naccTitle: #y;',
+  'classDiagram\nA #y; B',
 ].map((source, i) => ({ id: `lexer case ${i}`, source }));
 
 async function corpus(): Promise<CorpusItem[]> {
@@ -115,13 +119,9 @@ async function corpus(): Promise<CorpusItem[]> {
 
 /**
  * `src` with nine comment lines after every line of the body, or one through the middle of a
- * one-line body. v12 removed them before lexing, so tokens must match across them.
- *
- * Exclusion: none go right after a line that ends in `%%{`. v12's directive regex needs a word
- * right after `%%{` (blanks allowed), so a comment line there made v12 keep the whole directive
- * as text, while core's preprocess still reads it as a directive (D67): a core preprocess
- * difference, not a lexer one (tickets/153.md). Comment lines deeper inside a directive are
- * kept: v12 removed those directives too.
+ * one-line body. v12 removed them before lexing, so tokens must match across them. Comment
+ * lines right after a line ending in `%%{` are included: v12 then kept the directive as text,
+ * and core's preprocess does too since #208.
  */
 function commented(src: string): string {
   const head = /^---[\s\S]*?\n---[^\S\n]*\n/.exec(src)?.[0] ?? '';
@@ -136,8 +136,7 @@ function commented(src: string): string {
     head +
     lines.reduce((out, line, i) => {
       if (i === 0) return line;
-      const after = /%%\{\s*$/.test(lines[i - 1] ?? '') ? '\n' : comments;
-      return out + after + line;
+      return out + comments + line;
     }, '')
   );
 }

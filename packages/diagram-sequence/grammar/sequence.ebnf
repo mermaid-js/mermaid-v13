@@ -182,7 +182,8 @@ INVALID                   /./ ;
 (** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
 whole line; both take their leading blanks. *)
 COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
-DIRECTIVE                 /[^\S\n]*%%\{.*?\}%%/             :meta ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
 
 @grammar
 

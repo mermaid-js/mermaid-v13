@@ -39,6 +39,16 @@ describe('SvgWriter (streaming)', () => {
     expect(w.finish()).toBe('<text>abcdefghi\tj\nk</text>');
   });
 
+  it('writes tab, LF and CR in attribute values as character references (#208)', () => {
+    const w = streamWriter();
+    w.leaf('g', { 'data-ast': 'n:a\tb\nc\r\nd' });
+    w.open('text');
+    w.text('a\tb\nc');
+    w.close();
+    // An XML reader turns a raw tab, LF or CR in an attribute into a space; text keeps them.
+    expect(w.finish()).toBe('<g data-ast="n:a&#9;b&#10;c&#13;&#10;d"/><text>a\tb\nc</text>');
+  });
+
   it('keeps astral characters (valid surrogate pairs)', () => {
     const w = streamWriter();
     w.open('text');
@@ -127,5 +137,24 @@ describe('SvgWriter label', () => {
     expect(w.finish()).toBe(
       '<text text-anchor="start" xml:space="preserve"><tspan x="30" y="18">• ab</tspan><tspan x="37.5" y="28">cd</tspan></text>'
     );
+  });
+
+  it('starts a left-aligned label of one plain run at the box edge (#206)', () => {
+    const w = streamWriter();
+    w.label(
+      {
+        lines: [[{ text: 'ab' }]],
+        lineHeight: 10,
+        height: 10,
+        baseline: 8,
+        left: true,
+        width: 40,
+        indents: [2],
+      },
+      50,
+      20,
+      { class: 'label' }
+    );
+    expect(w.finish()).toBe('<text class="label" x="32" y="23" text-anchor="start">ab</text>');
   });
 });

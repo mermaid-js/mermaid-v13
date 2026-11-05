@@ -150,6 +150,15 @@ const SHAPES: Record<number, [shape: string, close: number, what: string, closeT
 const DIRECTIONS = ['TB', 'BT', 'RL', 'LR', 'TD'];
 
 const LINE_END = [Kind.Newline, T.Semi, T.Eof];
+/**
+ * What the parser reads past besides spaces: comments, directives and the `click` keyword
+ * (jison has no token for it, so `click` heads no statement: the node id after it does). The
+ * completion facet reads a statement's head past the same kinds.
+ */
+const READ_PAST_KINDS = [Kind.Comment, Kind.Directive, T.ClickKeyword] as const;
+export const READ_PAST = kindSet(...READ_PAST_KINDS);
+/** What the parser skips: {@link READ_PAST} and spaces. */
+const PARSER_TRIVIA = kindSet(...READ_PAST_KINDS, Kind.Space);
 /** Where recovery resumes (R-PARSE-4). */
 const BOUNDARY = kindSet(Kind.EOF, T.Eof, Kind.Newline, T.Semi);
 const STATEMENT_START = [
@@ -445,7 +454,7 @@ class FlowParser {
     this.viewFrom = pre.bodyStart;
     this.probe = probe;
     this.fullTokens = lex(src, pre.bodyStart, this.view, true, probe);
-    this.tokens = significantTokens(this.fullTokens);
+    this.tokens = significantTokens(this.fullTokens, PARSER_TRIVIA);
     if (probe) {
       if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
       else probe.trivia(this.fullTokens);
@@ -726,7 +735,10 @@ class FlowParser {
     const lexedAgain = probe !== undefined && from < probe.offset ? probe : undefined;
     if (lexedAgain) lexedAgain.reset();
     else probe?.freeze(true);
-    this.tokens = significantTokens(lex(this.src, from, this.view, false, lexedAgain));
+    this.tokens = significantTokens(
+      lex(this.src, from, this.view, false, lexedAgain),
+      PARSER_TRIVIA
+    );
     this.viewFrom = from;
     this.i = 0;
   }
@@ -823,22 +835,31 @@ class FlowParser {
     this.i++;
     let built = '';
     let inString = false;
+    let close: number;
+    let blockOpener = opener;
     for (;;) {
-      this.tested(SHAPE_DATA_PARTS);
+      for (;;) {
+        this.tested(SHAPE_DATA_PARTS);
+        if (this.kind() !== T.ShapeData) break;
+        const piece = this.raw();
+        if (piece === '"' && this.end(this.i) === this.start(this.i) + 1) {
+          inString = !inString;
+          built += piece;
+        } else built += inString ? piece.replace(/\n\s*/g, '<br/>') : piece;
+        this.i++;
+      }
+      if (this.kind() !== T.ShapeDataEnd) {
+        this.opens.push({ range: blockOpener, what: 'shape data', closer: '`}`' });
+        this.fail([T.ShapeDataEnd]);
+      }
+      close = this.start(this.i);
+      this.i++;
+      // Blocks back to back (`A@{…}@{…}`) are one: v12's `shapeData` rule joins their texts.
+      this.tested(SHAPE_DATA);
       if (this.kind() !== T.ShapeData) break;
-      const piece = this.raw();
-      if (piece === '"' && this.end(this.i) === this.start(this.i) + 1) {
-        inString = !inString;
-        built += piece;
-      } else built += inString ? piece.replace(/\n\s*/g, '<br/>') : piece;
+      blockOpener = this.range(this.i);
       this.i++;
     }
-    if (this.kind() !== T.ShapeDataEnd) {
-      this.opens.push({ range: opener, what: 'shape data', closer: '`}`' });
-      this.fail([T.ShapeDataEnd]);
-    }
-    const close = this.start(this.i);
-    this.i++;
     const whole: Range = { start: opener.start, end: close + 1 };
     const inner = { start: opener.end, end: close };
     // v12 parsed `{\n<data>\n}`; a `#` comment reads differently without those newlines.
@@ -871,10 +892,38 @@ class FlowParser {
   /** A mention that may create the vertex: its definition when it does. */
   private nodeSymbol(name: string, r: Range): void {
     const { db } = this;
-    const creates = !db.vertices.has(name) && !db.hasEdge(name) && name.trim() !== '';
     // An edge id (`e1@{ … }`) names the edge: v12 never makes it a vertex.
-    const edge = !db.vertices.has(name) && db.hasEdge(name);
-    this.st.symbol(name, edge ? 'edge' : 'node', r, creates ? 'def' : 'ref');
+    if (this.namesEdge(name)) return this.edgeSymbol(name, r);
+    const creates = !db.vertices.has(name) && name.trim() !== '';
+    this.st.symbol(name, 'node', r, creates ? 'def' : 'ref');
+  }
+
+  /** Whether `name` is an edge id and no vertex's (`e1` after `A e1@--> B`). */
+  private namesEdge(name: string): boolean {
+    return !this.db.vertices.has(name) && this.db.hasEdge(name);
+  }
+
+  /** A `class` statement target: an edge mention when it names an edge (v12 `setClass`). */
+  private classTarget(name: string, r: Range): void {
+    if (this.namesEdge(name)) this.edgeSymbol(name, r);
+    else this.st.symbol(name, 'node', r, 'ref');
+  }
+
+  /**
+   * A mention of the edge id `name` at `r`. A generated id (`L_B_D_0`) is made of its ends'
+   * names, so each end also gets a node mention inside it: renaming the node then renames the
+   * id with it, and the written id keeps naming the same edge (#170).
+   */
+  private edgeSymbol(name: string, r: Range): void {
+    this.st.symbol(name, 'edge', r, 'ref');
+    const edge = this.db.edgeNamed(name);
+    if (!edge || edge.isUserDefinedId || this.src.slice(r.start, r.end) !== name) return;
+    const { start, end } = edge;
+    if (!name.startsWith(`L_${start}_${end}_`)) return;
+    const from = r.start + 2;
+    const to = from + start.length + 1;
+    this.st.symbol(start, 'node', { start: from, end: from + start.length }, 'ref');
+    this.st.symbol(end, 'node', { start: to, end: to + end.length }, 'ref');
   }
 
   private vertex(): FlowNodeStmt {
@@ -1128,13 +1177,20 @@ class FlowParser {
     return out;
   }
 
-  /** Symbols for a comma list of ids written at `r`, each also pushed to `out`. */
-  private refs(list: string, r: Range, kindName: string, role: 'def' | 'ref', out: string[]) {
+  /**
+   * Each id of a comma list written at `r`, with its own range when the list is written as is
+   * (else `r`): passed to `mention` and pushed to `out`.
+   */
+  private refs(
+    list: string,
+    r: Range,
+    out: string[],
+    mention: (part: string, r: Range) => void
+  ): void {
     let at = r.start;
     const exact = this.src.slice(r.start, r.end) === list;
     for (const part of list.split(',')) {
-      const pr = exact ? { start: at, end: at + part.length } : r;
-      this.st.symbol(part, kindName, pr, role);
+      mention(part, exact ? { start: at, end: at + part.length } : r);
       out.push(part);
       at += part.length + 1;
     }
@@ -1187,7 +1243,9 @@ class FlowParser {
     const at = this.i;
     const id = this.raw(this.i++);
     // The token's own range: `range` would widen it over `click`.
-    this.refs(id, { start: this.start(at), end: this.end(at) }, 'node', 'ref', out);
+    this.refs(id, { start: this.start(at), end: this.end(at) }, out, (part, pr) =>
+      this.st.symbol(part, 'node', pr, 'ref')
+    );
     this.tested(CLICK_ACTION);
     const k = this.kind();
     if (k === T.CallbackName) {
@@ -1281,7 +1339,7 @@ class FlowParser {
         const [id, r] = this.idString();
         this.expect(T.Space);
         const styles = this.stylesOpt();
-        this.refs(id, r, 'class', 'def', refList);
+        this.refs(id, r, refList, (part, pr) => st.symbol(part, 'class', pr, 'def'));
         db.addClass(id, styles);
         out.push(this.simple('ClassDef', from, refList));
         this.separator();
@@ -1293,7 +1351,7 @@ class FlowParser {
         const [targets, r] = this.idString();
         this.expect(T.Space);
         const [cls, cr] = this.idString();
-        this.refs(targets, r, 'node', 'ref', refList);
+        this.refs(targets, r, refList, (part, pr) => this.classTarget(part, pr));
         st.symbol(cls, 'class', cr, 'ref');
         refList.push(cls);
         db.setClass(targets, cls);

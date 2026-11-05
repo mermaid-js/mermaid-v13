@@ -305,7 +305,12 @@ async function loadResources(registry: Registry, missing: readonly Resource[]): 
 }
 
 /** The theme a draw paints with: the config's choice, or the default when it is not loaded. */
-function themeFor(config: ResolvedConfig, s: Snapshot, warn: (w: Warning) => void) {
+function themeFor(
+  config: ResolvedConfig,
+  s: Snapshot,
+  warn: (w: Warning) => void,
+  idPrefix: () => string
+) {
   const choice = resolveThemeName(config.theme, warn);
   const spec = loadedTheme(choice.name) ?? loadedTheme(DEFAULT_THEME)!;
   const dark = choice.dark ? loadedTheme(choice.dark) : undefined;
@@ -314,6 +319,7 @@ function themeFor(config: ResolvedConfig, s: Snapshot, warn: (w: Warning) => voi
     dark,
     cssVariables: s.options.output?.cssVariables,
     warn,
+    idPrefix,
   });
 }
 
@@ -604,7 +610,8 @@ export function createMermaid(
       }
       engine = found.engine;
     }
-    const theme = themeFor(config, s, warn);
+    // The theme reads the id prefix only for the gradient (D182), after ctx exists.
+    const theme = themeFor(config, s, warn, () => ctx.idPrefix);
     let idPrefix: string | undefined;
     const ctx: RenderContext = {
       config,

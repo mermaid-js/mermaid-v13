@@ -37,6 +37,7 @@ const base: ThemeSpec = {
     ...TEXT_SIZES,
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
+    useGradient: false,
   },
 };
 

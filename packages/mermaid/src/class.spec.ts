@@ -141,3 +141,77 @@ describe('class diagrams through the public API (#157)', () => {
     expect((await slim.render('c', V1)).svg).toBe((await createMermaid().render('c', V1)).svg);
   });
 });
+
+describe('class in the neo themes (#233)', () => {
+  // A class with both compartments (two dividers), a namespace, a note, a relationship.
+  const NEO_CLASS =
+    'classDiagram\n  class Animal {\n    +name\n    +eat()\n  }\n  namespace Home {\n    class Owner\n  }\n  Owner --> Animal : walks\n  note for Animal "n"\n';
+  const draw = async (theme: string, text = NEO_CLASS, extra: object = {}): Promise<string> => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true, theme, ...extra } as never);
+    return (await m.render('c', text)).svg;
+  };
+  const tags = (svg: string, re: RegExp): string[] => svg.match(re) ?? [];
+
+  for (const theme of ['neo', 'neo-dark'] as const) {
+    it(`outlines boxes, dividers and namespaces with the gradient under ${theme} (v12 classBox.ts)`, async () => {
+      const svg = await draw(theme);
+      expect(tags(svg, /<linearGradient /g)).toHaveLength(1);
+      const url = 'url(#c-gradient)';
+      const boxes = tags(svg, /<rect class="outer-path"[^>]*>/g);
+      // Two class boxes and one note.
+      expect(boxes).toHaveLength(3);
+      const [animal, owner, note] = boxes;
+      expect(animal).toContain(`stroke="${url}"`);
+      expect(owner).toContain(`stroke="${url}"`);
+      // v12 draws class notes with noteBorderColor (an inline !important style), no gradient.
+      expect(note).not.toContain('url(');
+      const dividers = tags(svg, /<path class="divider"[^>]*>/g);
+      expect(dividers.length).toBeGreaterThanOrEqual(2);
+      for (const d of dividers) {
+        expect(d).toContain(`stroke="${url}"`);
+        // A level line has a zero-height box, which an objectBoundingBox gradient doesn't
+        // paint; v12 lifts the end by 0.001 (the writer's precision is 0.01).
+        const [, y0, y1] = /d="M[-\d.]+,([-\d.]+)L[-\d.]+,([-\d.]+)"/.exec(d)!;
+        expect(Number(y1) - Number(y0)).toBeCloseTo(0.01, 5);
+      }
+      expect(tags(svg, /<g class="cluster namespace"[^>]*>\s*<rect[^>]*>/g)[0]).toContain(
+        `stroke="${url}"`
+      );
+      // Not relationships, markers or labels: the gradient is on boxes, dividers, namespace only.
+      expect(tags(svg, /url\(#c-gradient\)/g)).toHaveLength(2 + dividers.length + 1);
+    });
+  }
+
+  it('keeps an author style and classDef stroke over the gradient', async () => {
+    const svg = await draw(
+      'neo',
+      'classDiagram\n  class A {\n    +x\n  }\n  class B {\n    +y\n  }\n  style A stroke:#ff0000\n  classDef c stroke:#00ff00\n  class B:::c\n'
+    );
+    const [a, b] = tags(svg, /<rect class="outer-path"[^>]*>/g);
+    expect(a).toContain('stroke="#ff0000"');
+    expect(b).toContain('stroke="#00ff00"');
+    for (const d of tags(svg, /<path class="divider"[^>]*>/g)) {
+      expect(d).not.toContain('url(');
+      // A plain colour needs no lift.
+      const [, y0, y1] = /d="M[-\d.]+,([-\d.]+)L[-\d.]+,([-\d.]+)"/.exec(d)!;
+      expect(y1).toBe(y0);
+    }
+  });
+
+  it('keeps a palette slot stroke over the gradient (data-color-id)', async () => {
+    const svg = await draw('redux-color', NEO_CLASS, { themeVariables: { useGradient: true } });
+    const animal = tags(svg, /<g class="node[^"]*"[^>]*data-color-id[^>]*>\s*<rect[^>]*>/g)[0]!;
+    expect(animal).not.toContain('url(');
+    // The namespace has no slot, so it still takes the gradient.
+    expect(svg).toContain('url(#c-gradient)');
+  });
+
+  it('draws no gradient in the other shipped themes', async () => {
+    for (const theme of ['default', 'redux', 'redux-dark-color', 'dark']) {
+      const svg = await draw(theme);
+      expect(svg).not.toContain('<defs');
+      expect(svg).not.toContain('url(#');
+    }
+  });
+});

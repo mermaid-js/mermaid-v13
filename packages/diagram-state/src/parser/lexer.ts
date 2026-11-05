@@ -14,6 +14,7 @@
  * line (`.*direction…`, `.*<<fork>>`, `end note`) keep the next match found as a memo.
  */
 import {
+  codePointEnd,
   COLON,
   COMMA,
   CR,
@@ -381,8 +382,9 @@ class StateLexer {
       this.pop();
       return;
     }
-    this.emit(Kind.Error, this.p, this.p + 1);
-    this.p++;
+    const end = codePointEnd(this.t, this.p);
+    this.emit(Kind.Error, this.p, end);
+    this.p = end;
   }
 
   private token(kind: number, end: number): void {

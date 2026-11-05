@@ -13,7 +13,7 @@ export interface ThemeSpec {
   /** Derive with the dark rules (borders lighten instead of darken, and so on). */
   readonly dark: boolean;
   readonly base: Readonly<Record<BaseVariable, string>>;
-  readonly tokens: Readonly<Record<TokenVariable, number | string>>;
+  readonly tokens: Readonly<Record<TokenVariable, number | string | boolean>>;
   /** Literal values for derived variables, where v12 hard-codes them for this theme. */
   readonly values?: Readonly<Record<string, string>>;
   /** Rules that replace the shared ones for this theme. */
@@ -75,6 +75,9 @@ export const LIGHT_RULES: ThemeRuleTable = {
   // khroma darken(secondaryColor, 10): ten points of lightness, about 12.5% black on a grey.
   activationBorderColor: 'mix(secondaryColor, black, 12.5%)',
   sequenceNumberColor: 'invert(lineColor)',
+  // The neo gradient's stops, as v12 theme-base derives them (D182).
+  gradientStart: 'primaryBorderColor',
+  gradientStop: 'secondaryBorderColor',
 };
 
 /** Shared derivation for dark themes. */

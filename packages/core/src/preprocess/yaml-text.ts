@@ -17,6 +17,7 @@ import {
   SPACE,
   TAB,
 } from '../parser-kit/char-codes.ts';
+import { lineEnd } from '../parser-kit/scanner.ts';
 
 const RE_KEY_START = /[\s#:,[\]{}&*!|>'"%@`]/;
 
@@ -191,4 +192,50 @@ export function nonPrintable(src: string, start: number, end: number): number {
 
 export function leading(s: string): number {
   return s.length - s.trimStart().length;
+}
+
+/**
+ * The offset after the quoted value opening at `at` in `s` (`"…"` with `\\` escapes, `'…'`
+ * with `''` for a quote), or -1 when it is not closed before `limit`.
+ */
+export function quotedEnd(s: string, at: number, limit: number): number {
+  const q = s[at];
+  for (let i = at + 1; i < limit; i++) {
+    if (q === '"' && s[i] === '\\') i++;
+    else if (s[i] === q && q === "'" && s[i + 1] === q) i++;
+    else if (s[i] === q) return i + 1;
+  }
+  return -1;
+}
+
+/**
+ * Tree mode, inside a flow collection of `s`: from `pos`, the offset of the next `,` or closing
+ * bracket outside nested collections, quoted values and comments (or `limit`). A quote that is
+ * never closed is read as a plain character. `start` is where the YAML text starts.
+ */
+export function flowResync(s: string, pos: number, limit: number, start: number): number {
+  let depth = 0;
+  for (; pos < limit; pos++) {
+    const c = s[pos];
+    if (c === '"' || c === "'") {
+      const end = quotedEnd(s, pos, limit);
+      if (end !== -1) pos = end - 1;
+    } else if (c === '#' && (pos === start || /\s/.test(s[pos - 1] ?? ''))) {
+      pos = Math.min(lineEnd(s, pos), limit) - 1;
+    } else if (c === '{' || c === '[') {
+      depth++;
+    } else if (c === '}' || c === ']') {
+      if (depth === 0) return pos;
+      depth--;
+    } else if (c === ',' && depth === 0) {
+      return pos;
+    }
+  }
+  return limit;
+}
+
+/** `end` moved back over the blanks before it in `s`, not before `floor`. */
+export function trimBack(s: string, end: number, floor: number): number {
+  while (end > floor && isSpaceOrBreak(s[end - 1])) end--;
+  return end;
 }

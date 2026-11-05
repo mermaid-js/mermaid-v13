@@ -51,6 +51,10 @@
       "entry": ["src/index.ts", "scripts/generate.ts"],
       "project": ["src/**/*.ts", "scripts/**/*.ts"]
     },
+    "packages/language-service-monaco": {
+      "entry": ["src/index.ts", "scripts/generate.ts"],
+      "project": ["src/**/*.ts", "scripts/**/*.ts"]
+    },
     "packages/language-service/examples/*": {
       "entry": ["src/main.ts", "vite.config.ts"],
       "project": ["src/**/*.ts"]

@@ -1,8 +1,7 @@
 /**
  * Which e2e fixtures run (#63): the top-level folders under `e2e/diagrams` whose diagram types
- * all have a v13 package, and the `.mmd` files below them. The snapshot run
- * (`e2e/helpers/mmd-snapshots.ts` re-exports this) and the dev explorer's folder list both
- * read it, so they can't drift apart.
+ * all have a v13 package, and the `.mmd` files below them. The snapshot run reads it through
+ * `e2e/helpers/mmd-snapshots.ts`, which re-exports it.
  */
 import { readdirSync } from 'node:fs';
 import { globby } from 'globby';

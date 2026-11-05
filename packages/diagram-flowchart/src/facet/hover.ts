@@ -152,9 +152,9 @@ function shapeHover(text: string, token: Range, at: number): Hover | undefined {
 }
 
 /** Keywords the lexer emits no token for, and the kind of the token they come before. */
-const BARE_KEYWORDS: Readonly<Record<string, number>> = { click: T.Click, call: T.CallbackName };
+const BARE_KEYWORDS: Readonly<Record<string, number>> = { call: T.CallbackName };
 
-/** `click` / `call` under the cursor: the doc of the token right after it. */
+/** `call` under the cursor: the doc of the token right after it. */
 function bareKeyword(text: string, tokens: TokenStream | undefined, at: number): Hover | undefined {
   if (!tokens) return undefined;
   let start = at;

@@ -11,6 +11,7 @@ import {
   themeStyleSheet,
   translate,
   type Attrs,
+  type OutlinePaint,
   type Paint,
   type SafeValue,
   type SvgWriter,
@@ -70,7 +71,12 @@ function paletteSlots(theme: ThemeOf): (order: number) => Tint | undefined {
 
 interface TablePaint {
   readonly fill: Color;
-  readonly stroke: Color;
+  /**
+   * The entity outline and its rules: the theme's gradient when `useGradient` is on (D182, v12
+   * neo `erBox.ts`). The rules are one path with the outline, so its box is the entity's and
+   * an objectBoundingBox gradient paints it (no lift, unlike class dividers).
+   */
+  readonly stroke: OutlinePaint;
   readonly strokeWidth: Length;
   readonly text: Color;
   readonly rowOdd?: Color;
@@ -85,7 +91,7 @@ interface Paints {
   readonly table: TablePaint;
   readonly line?: { stroke: Color; strokeWidth: Length };
   readonly ends?: EndPaint;
-  readonly cluster?: { fill: Color; stroke: Color; strokeWidth: Length; text: Color };
+  readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
   readonly edgeLabel?: { fill: Color; text: Color };
   readonly slotOf: (order: number) => Tint | undefined;
 }
@@ -98,7 +104,7 @@ function paints(theme: ThemeOf, er: ErPrepared): Paints {
   const rows = er.entities.some((e) => e.rows.length > 0);
   const table: TablePaint = {
     fill: theme.color('mainBkg'),
-    stroke: theme.color('nodeBorder'),
+    stroke: theme.outline('nodeBorder'),
     // The shared token for outline and rules, not v12 classic's 1.3px (D117).
     strokeWidth: theme.length('strokeWidth'),
     text: theme.color('nodeTextColor'),
@@ -125,7 +131,8 @@ function paints(theme: ThemeOf, er: ErPrepared): Paints {
     er.groups.length > 0
       ? {
           fill: theme.color('clusterBkg'),
-          stroke: theme.color('clusterBorder'),
+          // v12 neo `.cluster rect`: the gradient (D182).
+          stroke: theme.outline('clusterBorder'),
           strokeWidth: theme.length('clusterStrokeWidth'),
           text: theme.color('titleColor'),
         }

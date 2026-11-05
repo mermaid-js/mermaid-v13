@@ -382,13 +382,13 @@ importers:
         specifier: 1.4.2
         version: 1.4.2
       '@mermaid-js/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@mermaid-js/diagram-flowchart':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../diagram-flowchart
       '@mermaid-js/language-service':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../language-service
       '@types/node':
         specifier: ^22.19.21
@@ -405,17 +405,20 @@ importers:
       '@codemirror/state':
         specifier: ^6.7.6
         version: 6.7.6
+      '@mermaid-js/core':
+        specifier: workspace:*
+        version: link:../core
       '@mermaid-js/diagram-flowchart':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../diagram-flowchart
       '@mermaid-js/language-server':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../language-server
       '@mermaid-js/language-service':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../language-service
       '@mermaid-js/language-service-codemirror':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../language-service-codemirror
       '@types/node':
         specifier: ^22.19.21
@@ -423,6 +426,9 @@ importers:
       monaco-editor:
         specifier: ^0.57.0
         version: 0.57.0
+      tsx:
+        specifier: ^4.20.6
+        version: 4.20.6
       vscode-languageserver:
         specifier: ^11.0.0
         version: 11.0.0
@@ -559,6 +565,12 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../../packages/core
+      '@mermaid-js/diagram-class':
+        specifier: workspace:^
+        version: link:../../packages/diagram-class
+      '@mermaid-js/diagram-er':
+        specifier: workspace:^
+        version: link:../../packages/diagram-er
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../../packages/diagram-flowchart

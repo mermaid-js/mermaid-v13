@@ -4,6 +4,7 @@
  * bundle, the URL state, and the config an npm version renders with. DOM-free: the versions
  * proxy (`src/versions.ts`) uses it too.
  */
+import { LOCAL_LIMITS } from './settings.ts';
 
 const CDN = 'https://cdn.jsdelivr.net/npm';
 
@@ -141,7 +142,8 @@ const NPM_LAYOUTS: Readonly<Record<string, string>> = { layered: 'dagre' };
 /**
  * The `initialize()` config a published mermaid renders with, for the v13 settings: the same
  * theme (`auto` → `dark` or `default` by the colour scheme) and layout (mapped), unset keys
- * left out, every diagram at its natural size so both panes overlay pixel for pixel.
+ * left out, every diagram at its natural size so both panes overlay pixel for pixel, and the
+ * size limits lifted like the dev pane's (`LOCAL_LIMITS`, in v12's terms).
  */
 export function npmRenderConfig(
   settings: { readonly theme?: string; readonly layout?: string },
@@ -153,8 +155,38 @@ export function npmRenderConfig(
   return {
     startOnLoad: false,
     securityLevel: 'strict',
+    maxTextSize: LOCAL_LIMITS.maxSourceLength,
+    maxEdges: LOCAL_LIMITS.maxEdges,
     ...(theme ? { theme } : {}),
     ...(layout ? { layout } : {}),
     flowchart: { useMaxWidth: false },
   };
+}
+
+/** A render time for a chip: two decimals under 10 ms, one under 100, then whole ms, then s. */
+export function formatRenderMs(ms: number): string {
+  if (ms >= 1000) return `${(ms / 1000).toFixed(2)} s`;
+  if (ms >= 100) return `${ms.toFixed(0)} ms`;
+  if (ms >= 10) return `${ms.toFixed(1)} ms`;
+  return `${ms.toFixed(2)} ms`;
+}
+
+/** Within this factor of each other, two render times count as the same speed. */
+const SAME_SPEED = 1.05;
+
+export interface SpeedComparison {
+  readonly kind: 'faster' | 'slower' | 'same';
+  /** The larger time over the smaller one, so at least 1. */
+  readonly ratio: number;
+  /** `2.4× faster`, `12× slower`, `same speed`. */
+  readonly label: string;
+}
+
+/** How a pane's render time `ms` compares with the other pane's; `undefined` without both. */
+export function compareSpeed(ms: number, otherMs: number): SpeedComparison | undefined {
+  if (!(ms > 0) || !(otherMs > 0)) return undefined;
+  const ratio = Math.max(ms, otherMs) / Math.min(ms, otherMs);
+  if (ratio < SAME_SPEED) return { kind: 'same', ratio, label: 'same speed' };
+  const kind = ms < otherMs ? 'faster' : 'slower';
+  return { kind, ratio, label: `${ratio.toFixed(ratio >= 10 ? 0 : 1)}× ${kind}` };
 }

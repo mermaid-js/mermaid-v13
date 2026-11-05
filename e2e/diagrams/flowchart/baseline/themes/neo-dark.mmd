@@ -1,0 +1,18 @@
+---
+config:
+  theme: neo-dark
+description: one representative flowchart in the neo-dark theme
+---
+flowchart LR
+  start([Start]) --> check{Valid?}
+  check -- yes --> proc[Process]
+  check -- no --> fix[/Fix input/]
+  fix -.-> start
+  proc ==> db[(Store)]
+  subgraph svc [Service]
+    proc
+    db
+  end
+  db --> done((Done))
+  classDef hot fill:#f96,stroke:#333
+  class fix hot

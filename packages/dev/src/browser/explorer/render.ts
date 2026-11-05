@@ -9,6 +9,7 @@
  */
 import type * as DevBundleModule from '../mermaid.ts';
 import type { MermaidError, RenderResult, Warning } from '../mermaid.ts';
+import { asHostText } from '../../host-text.ts';
 import { renderConfig, type RenderSettings } from './settings.ts';
 
 /** The dev bundle's module (`src/browser/mermaid.ts`). */
@@ -105,7 +106,7 @@ export async function renderText(
     const { instance } = await loadMermaid(build);
     // `render` reads the site config when called, so initialize + render can't interleave.
     instance.initialize(renderConfig(settings));
-    const result = await instance.render(`dev-explorer-${++counter}`, text);
+    const result = await instance.render(`dev-explorer-${++counter}`, asHostText(text));
     return { ok: true, result, warnings: result.warnings, ms: performance.now() - start };
   } catch (e) {
     const error = e instanceof Error ? e : new Error(String(e));
