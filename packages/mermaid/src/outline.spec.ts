@@ -1,5 +1,11 @@
 import { flowchart } from '@mermaid-js/diagram-flowchart';
-import { assertInert, type Attrs, type OutlineSink, type StyleText } from '@mermaid-js/core/svg';
+import {
+  assertInert,
+  type Attrs,
+  type OutlineSink,
+  type StyleText,
+  type SvgWriter,
+} from '@mermaid-js/core/svg';
 import { outlineFixture, outliningEveryLeaf } from '@mermaid-js/core/svg/testing';
 import { describe, expect, it } from 'vitest';
 import { createMermaid as createFull } from './index.ts';
@@ -210,6 +216,36 @@ describe('an outline drawer that breaks the sink rules', () => {
     });
     expect(e.code).toBe('INTERNAL');
     expect(e.message).toMatch(/^Extension "bad"'s outline output fails the allow-list: /);
+  });
+
+  it('re-checks only a render the drawer wrote in, so a type that never outlines is not blamed', async () => {
+    // A type that writes its outlines as plain leaves (as sequence does), with a style value
+    // only the re-check rejects: the writer passes it, as for every type without a drawer.
+    const style = 'fill:url(javascript:alert(1))' as StyleText;
+    const plainLeaves = (w: SvgWriter): SvgWriter => ({
+      open: (tag, attrs) => w.open(tag, attrs),
+      close: () => w.close(),
+      leaf: (tag, attrs) => w.leaf(tag, attrs),
+      outline: (_r, tag, attrs) => w.leaf(tag, { ...attrs, style }),
+      text: (content) => w.text(content),
+      label: (box, x, y, attrs) => w.label(box, x, y, attrs),
+      path: () => w.path(),
+      styleSheet: (css) => w.styleSheet(css),
+    });
+    const unoutlined: DiagramPlugin<unknown, unknown> = {
+      ...(flowchart as DiagramPlugin<unknown, unknown>),
+      render: (model, layout, ctx, w) =>
+        flowchart.render(model as never, layout as never, ctx, plainLeaves(w)),
+    };
+    const svg = async (...extensions: ExtensionPlugin[]): Promise<string> => {
+      const m = createMermaid({ diagrams: [unoutlined] });
+      m.initialize({ deterministic: true });
+      await m.registerExternalDiagrams(extensions);
+      await m.prepare(FLOW);
+      return m.renderSync(FLOW, { id: 's' }).svg;
+    };
+    const idle = { id: 'idle', outline: drawer(() => true) };
+    expect(await svg(idle)).toBe(await svg());
   });
 
   it('a malformed drawer is refused at registration', async () => {

@@ -122,6 +122,8 @@ export interface ActiveOutline {
   /** The extension's id, for errors. */
   readonly id: string;
   readonly draw: OutlineDraw;
+  /** Whether `draw` wrote through its sink in this render: only then is the output checked again. */
+  readonly wrote: boolean;
 }
 
 /** What an extension's `resources.missing` is asked with, besides the parse. */
@@ -272,14 +274,18 @@ function checkOutline(plugin: { id: string }, o: unknown): OutlineDrawer | undef
 
 /**
  * `drawer.draw` behind a sink that admits `<g>` and `<path>` (the writer checks attribute names),
- * balanced within each call, and with its failures reported as `plugin`'s.
+ * balanced within each call, and with its failures reported as `plugin`'s; `wrote` once it writes.
  */
-function guardedOutline(plugin: { id: string }, drawer: OutlineDrawer): OutlineDraw {
-  return (role, tag, attrs, w) => {
+function guardedOutline(plugin: { id: string }, drawer: OutlineDrawer): ActiveOutline {
+  const active = { id: plugin.id, wrote: false } as {
+    -readonly [K in keyof ActiveOutline]: ActiveOutline[K];
+  };
+  active.draw = (role, tag, attrs, w) => {
     let depth = 0;
     let live = true;
     const alive = (): void => {
       if (!live) throw new TypeError('an outline sink was used after its draw() returned');
+      active.wrote = true;
     };
     const sink: OutlineSink = {
       open(t, a) {
@@ -319,6 +325,7 @@ function guardedOutline(plugin: { id: string }, drawer: OutlineDrawer): OutlineD
       live = false;
     }
   };
+  return active;
 }
 
 const sameResource = (a: Resource, b: Resource): boolean => a.kind === b.kind && a.name === b.name;
@@ -476,7 +483,7 @@ export class HookRunner<El = unknown, R = unknown> {
       } catch (e) {
         throw failed(p, 'outline', e);
       }
-      outline = on ? { id: p.id, draw: guardedOutline(p, drawer) } : undefined;
+      outline = on ? guardedOutline(p, drawer) : undefined;
       return outline;
     };
     return {

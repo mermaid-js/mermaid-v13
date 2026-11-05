@@ -74,7 +74,7 @@ export function drawDiagram<M, L>(
       svg = w.finish();
     }
     // What extensions wrote is checked again, values as well as names (R-SEC-2).
-    if (run?.editsTree || outline) {
+    if (run?.editsTree || outline?.wrote) {
       const problem = inertProblem(svg, {
         securityLevel: ctx.securityLevel,
         linkSchemes: ctx.linkSchemes,
