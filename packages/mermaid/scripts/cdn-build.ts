@@ -9,10 +9,11 @@
  * - `dist/mermaid.min.js`: `src/cdn-loader.ts` as a classic script, with no imports.
  *
  * Lazy imports load against `cdnBase` (R-PLUG-7): before bundling, every `import('…')` in the
- * sources is rewritten to `import(globalThis[Symbol.for("mermaid.cdnBase")] + "chunks/<name>.mjs")`.
- * `cdn.ts` sets that base (by default, the directory of the ESM file) and `initialize({ cdnBase })`
- * changes it. A lazy import the build cannot name fails the build, so nothing loads relative to
- * a URL the integrator did not choose.
+ * sources is rewritten to `import(cdnUrl("chunks/<name>.mjs"))`, with `cdnUrl` from
+ * `src/cdn-base.ts` (one module per build, so the base is never page-wide). `cdn.ts` sets the
+ * base (by default, the directory of the ESM file) and `initialize({ cdnBase })` changes it. A
+ * lazy import the build cannot name fails the build, so nothing loads relative to a URL the
+ * integrator did not choose.
  *
  * Source maps sit beside each file with their sources embedded; source paths read
  * `node_modules/<package>/<path>` so tools (and the platform e2e) can tell the packages apart.
@@ -31,8 +32,9 @@ const REPO_DIR = resolve(PACKAGES_DIR, '..');
 
 export const ESM_FILE = 'mermaid.esm.min.mjs';
 export const LOADER_FILE = 'mermaid.min.js';
-/** The global the rewritten lazy imports read; `cdn.ts` sets it. */
-const BASE = 'globalThis[Symbol.for("mermaid.cdnBase")]';
+/** The module the rewritten lazy imports take their URLs from; `cdn.ts` sets its base. */
+const CDN_BASE_MODULE = join(PACKAGE_DIR, 'src/cdn-base.ts');
+const CDN_URL = '__mermaidCdnUrl';
 
 /** A lazy import's dynamic `import('…')` in source text (single or double quotes). */
 const DYNAMIC_IMPORT = /\bimport\((['"])([^'"]+)\1\)/g;
@@ -149,10 +151,12 @@ function cdnImports(importers: ReadonlySet<string>, names: ReadonlyMap<string, s
           if (!name) throw new Error(`cdn build: cannot name the lazy import "${spec}" in ${file}`);
           urls.set(spec!, `${name}.mjs`);
         }
-        const contents = source.replace(
-          DYNAMIC_IMPORT,
-          (_m, _q, spec: string) => `import(${BASE} + ${JSON.stringify(urls.get(spec))})`
-        );
+        // The import goes last (imports hoist), so the source map's lines stay put.
+        const contents =
+          source.replace(
+            DYNAMIC_IMPORT,
+            (_m, _q, spec: string) => `import(${CDN_URL}(${JSON.stringify(urls.get(spec))}))`
+          ) + `\nimport { cdnUrl as ${CDN_URL} } from ${JSON.stringify(CDN_BASE_MODULE)};\n`;
         return { contents, loader: file.endsWith('.ts') ? 'ts' : 'js', resolveDir: dirname(file) };
       });
     },

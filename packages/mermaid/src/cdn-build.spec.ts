@@ -60,8 +60,17 @@ describe('the CDN build (D162)', () => {
   it('loads every lazy chunk from cdnBase, never relative to the importing file', () => {
     expect(out.files.filter((f) => f.lazy.length > 0)).toEqual([]);
     const entry = [...new Set([ESM_FILE, ...(file(ESM_FILE)?.imports ?? [])])].map(read).join('');
-    expect(entry).toContain('Symbol.for("mermaid.cdnBase")');
     expect(entry).toContain('"chunks/diagram-flowchart.mjs"');
+    // The base lives in the build (cdn-base.ts), never on the page.
+    expect(entry).not.toContain('Symbol.for(');
+    const manifest = JSON.parse(
+      readFileSync(new URL('../package.json', import.meta.url), 'utf8')
+    ) as Record<string, string>;
+    // A bare package URL (unpkg, jsDelivr) serves the classic loader, as in v12.
+    expect([manifest.unpkg, manifest.jsdelivr]).toEqual([
+      `./dist/${LOADER_FILE}`,
+      `./dist/${LOADER_FILE}`,
+    ]);
   });
 
   it('ships a loader with no imports of its own', () => {

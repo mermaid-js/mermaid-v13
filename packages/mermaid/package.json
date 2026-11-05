@@ -27,8 +27,8 @@
       "default": "./dist/slim.js"
     }
   },
-  "unpkg": "./dist/mermaid.esm.min.mjs",
-  "jsdelivr": "./dist/mermaid.esm.min.mjs",
+  "unpkg": "./dist/mermaid.min.js",
+  "jsdelivr": "./dist/mermaid.min.js",
   "bin": {
     "mermaid": "./dist/cli.js"
   },

@@ -2,7 +2,7 @@
  * The CDN build's API side (spec #218 T6; R-PLUG-7, D162, D163, D167): `cdnBase` is set only by
  * the integrator, and `globalThis.mermaidPlugins` feeds the discovered-list seam.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import { createMermaid } from './index.ts';
 import { connectPluginQueue } from './plugin-queue.ts';
@@ -138,18 +138,169 @@ describe('globalThis.mermaidPlugins (D167)', () => {
   });
 });
 
-describe('the CDN entry (D163, D167)', () => {
-  const key = Symbol.for('mermaid.cdnBase');
-  const base = () => (globalThis as Record<symbol, unknown>)[key];
+/** A manifest extension whose `load` never settles, or settles when `release` is called. */
+function stuck(id: string): { manifest: unknown; load: () => Promise<unknown>; release(): void } {
+  let release!: () => void;
+  const gate = new Promise<void>((r) => (release = r));
+  const plugin: ExtensionPlugin = { id, postRender: () => undefined };
+  return {
+    manifest: { plugin: 'extension', id, entry: './index.js', export: 'plugin' },
+    load: () => gate.then(() => ({ plugin })),
+    release: () => release(),
+  };
+}
 
-  it('defaults to the directory of the ESM file and follows initialize()', async () => {
+describe('the plugin queue under bad plugins (D167)', () => {
+  it('renders without a registration that never finishes, after the time limit', async () => {
+    const scope: { mermaidPlugins?: unknown[] } = {};
+    const api = createMermaid();
+    connectPluginQueue(api, scope, { timeLimitMs: 30 });
+    scope.mermaidPlugins!.push(stuck('never'), textDiagram('fine', 'fine'));
+    const r = await api.render('f', 'fine ok');
+    expect(r.svg).toContain('fine: ok');
+    expect(r.warnings).toEqual([expect.objectContaining({ code: 'PLUGIN_DISCOVERY_FAILED' })]);
+    // Later renders do not wait again.
+    const t = Date.now();
+    expect((await api.render('g', FLOW)).warnings).toEqual([]);
+    expect(Date.now() - t).toBeLessThan(30);
+  });
+
+  it('does not deadlock when a plugin load awaits a render', async () => {
+    const scope: { mermaidPlugins?: unknown[] } = {};
+    const api = createMermaid();
+    connectPluginQueue(api, scope, { timeLimitMs: 30 });
+    const plugin: ExtensionPlugin = { id: 'waits', postRender: () => undefined };
+    scope.mermaidPlugins!.push({
+      manifest: { plugin: 'extension', id: 'waits', entry: './index.js', export: 'plugin' },
+      load: async () => {
+        await api.render('inner', FLOW);
+        return { plugin };
+      },
+    });
+    expect((await api.render('outer', FLOW)).svg).toContain('<svg');
+  });
+
+  it('registers a late finisher for the renders after it, with a fresh analysis', async () => {
+    const scope: { mermaidPlugins?: unknown[] } = {};
+    const api = createMermaid();
+    connectPluginQueue(api, scope, { timeLimitMs: 10 });
+    const mark = marker('slow-mark');
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    let loaded!: () => void;
+    const done = new Promise<void>((r) => (loaded = r));
+    scope.mermaidPlugins!.push({
+      ...mark,
+      load: () => gate.then(mark.load).finally(() => setTimeout(loaded, 0)),
+    });
+    const text = 'flowchart LR\n  S --> T';
+    expect((await api.render('a', text)).svg).not.toContain('slow-mark');
+    release();
+    await done;
+    expect((await api.render('a', text)).svg).toContain('slow-mark');
+  });
+
+  it('skips an entry that throws when read, without breaking the queue', async () => {
+    const scope: { mermaidPlugins?: unknown[] } = {
+      mermaidPlugins: [
+        new Proxy(
+          {},
+          {
+            get() {
+              throw new Error('boom');
+            },
+            has() {
+              throw new Error('boom');
+            },
+          }
+        ),
+        textDiagram('ok', 'ok'),
+      ],
+    };
+    const api = createMermaid();
+    expect(() => connectPluginQueue(api, scope)).not.toThrow();
+    const r = await api.render('o', 'ok fine');
+    expect(r.svg).toContain('ok: fine');
+    expect(r.warnings).toEqual([expect.objectContaining({ code: 'PLUGIN_SKIPPED' })]);
+  });
+
+  it('reports a pushed duplicate as already discovered, even while the first registers', async () => {
+    const scope: { mermaidPlugins?: unknown[] } = {};
+    const api = createMermaid();
+    connectPluginQueue(api, scope);
+    const twice = { ...marker('twice'), package: 'twice-pkg' };
+    scope.mermaidPlugins!.push(twice);
+    scope.mermaidPlugins!.push(twice);
+    const { warnings } = await api.render('d', FLOW);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatchObject({ code: 'PLUGIN_SKIPPED' });
+    expect(warnings[0]!.message).toMatch(/already discovered/);
+  });
+
+  it('registers a push made while the queue drains', async () => {
+    const api = createMermaid();
+    const scope: { mermaidPlugins?: unknown[] } = {};
+    const early = {
+      ...textDiagram('first', 'first'),
+      get package() {
+        scope.mermaidPlugins!.push(textDiagram('second', 'second'));
+        return 'first-pkg';
+      },
+    };
+    scope.mermaidPlugins = [early];
+    connectPluginQueue(api, scope);
+    expect((await api.render('s', 'second x')).svg).toContain('second: x');
+  });
+});
+
+describe('the CDN entry (D163, D167)', () => {
+  const here = new URL('./', import.meta.url).href;
+  const chunk = async () => (await import('./cdn-base.ts')).cdnUrl('chunks/x.mjs');
+
+  it('sets globalThis.mermaid and keeps the base in the build, not on the page', async () => {
     const cdn = await import('./cdn.ts');
-    expect(base()).toBe(new URL('./', new URL('./cdn.ts', import.meta.url)).href);
     expect((globalThis as { mermaid?: unknown }).mermaid).toBe(cdn.default);
-    cdn.default.initialize({ cdnBase: 'https://cdn.example/npm/mermaid@13/dist' });
-    expect(base()).toBe('https://cdn.example/npm/mermaid@13/dist/');
-    cdn.initialize({});
-    expect(base()).toBe(new URL('./', new URL('./cdn.ts', import.meta.url)).href);
-    expect(() => cdn.initialize({ cdnBase: 42 as never })).toThrow(TypeError);
+    expect(Object.getOwnPropertySymbols(globalThis).map(String)).not.toContain(
+      'Symbol(mermaid.cdnBase)'
+    );
+    expect(await chunk()).toBe(`${here}chunks/x.mjs`);
+  });
+
+  it('takes cdnBase from initialize(), dropping its query and hash', async () => {
+    const cdn = await import('./cdn.ts');
+    cdn.default.initialize({ cdnBase: 'https://cdn.example/npm/mermaid@13/dist?v=1#top' });
+    expect(await chunk()).toBe('https://cdn.example/npm/mermaid@13/dist/chunks/x.mjs');
+    // Only a present cdnBase key changes it.
+    cdn.initialize({ theme: 'dark' });
+    expect(await chunk()).toBe('https://cdn.example/npm/mermaid@13/dist/chunks/x.mjs');
+    cdn.initialize({ cdnBase: undefined });
+    expect(await chunk()).toBe(`${here}chunks/x.mjs`);
+  });
+
+  it('resolves a relative cdnBase against document.baseURI', async () => {
+    const cdn = await import('./cdn.ts');
+    const g = globalThis as { document?: unknown };
+    g.document = { baseURI: 'https://page.example/app/index.html' };
+    try {
+      cdn.initialize({ cdnBase: '../cdn/mermaid' });
+      expect(await chunk()).toBe('https://page.example/cdn/mermaid/chunks/x.mjs');
+    } finally {
+      delete g.document;
+      cdn.initialize({ cdnBase: undefined });
+    }
+  });
+
+  it('ignores a cdnBase that is not a URL string, and takes a missing config', async () => {
+    const cdn = await import('./cdn.ts');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      expect(() => cdn.initialize({ cdnBase: 42 as never })).not.toThrow();
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/cdnBase ignored/));
+      expect(await chunk()).toBe(`${here}chunks/x.mjs`);
+      expect(() => cdn.initialize()).not.toThrow();
+      expect(() => cdn.initialize(null as never)).not.toThrow();
+    } finally {
+      warn.mockRestore();
+    }
   });
 });

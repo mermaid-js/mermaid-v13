@@ -5,7 +5,7 @@
  * packages and builds the list.
  */
 import type { Warning } from '@mermaid-js/core';
-import { seamOf, type Mermaid } from './api.ts';
+import { seamOf, type AddOptions, type Mermaid } from './api.ts';
 import type { DiscoveredPlugin } from './registry.ts';
 
 export type { DiscoveredPlugin, SkippedPlugin } from './registry.ts';
@@ -15,13 +15,15 @@ export type { DiscoveredPlugin, SkippedPlugin } from './registry.ts';
  * and before explicit `registerExternalDiagrams` ones, in package-name order whatever the order
  * of `list` or of earlier calls. Extensions load now; layouts load when a diagram names them.
  * Never throws: a skipped package gives one `PLUGIN_SKIPPED` warning, returned here and added
- * to the next render's warnings.
+ * to the next render's warnings. A draw waits for it at most `options.timeLimitMs` (5 s), then
+ * renders without it with a `PLUGIN_DISCOVERY_FAILED` warning; it still registers if it ends.
  */
 export function addDiscovered(
   api: Mermaid,
-  list: readonly DiscoveredPlugin[]
+  list: readonly DiscoveredPlugin[],
+  options?: AddOptions
 ): Promise<readonly Warning[]> {
-  return seamOf(api).add(list);
+  return seamOf(api).add(list, options);
 }
 
 /**

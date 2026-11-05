@@ -147,7 +147,7 @@ test('initialize({ cdnBase }) moves the first-party chunk loads to that base', a
     const m = (globalThis as unknown as PageGlobals).mermaid;
     m.initialize({ startOnLoad: false, cdnBase: base, theme: 'forest' });
     return (await m.render('s', 'stateDiagram-v2\n  [*] --> Still')).svg;
-  }, s.other.url('/mermaid/dist'));
+  }, s.other.url('/mermaid/dist?v=1#base'));
   expect(svg).toContain('<svg');
   expect(fromOther.all).toEqual(
     expect.arrayContaining([

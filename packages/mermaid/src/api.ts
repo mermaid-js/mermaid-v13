@@ -317,6 +317,29 @@ function themeFor(config: ResolvedConfig, s: Snapshot, warn: (w: Warning) => voi
   });
 }
 
+/** How long a draw waits for a discovered registration still in flight (D165's import limit). */
+const ADD_TIME_LIMIT_MS = 5000;
+
+/** Options of the discovered-list seam's `add`. */
+export interface AddOptions {
+  /** How long a draw waits for this registration; default 5 s. */
+  readonly timeLimitMs?: number;
+}
+
+/** Whether `p` settles before `deadline` (a time from `Date.now()`). */
+function settlesBy(p: Promise<unknown>, deadline: number): Promise<boolean> {
+  const left = deadline - Date.now();
+  if (left <= 0) return Promise.resolve(false);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    p.then(
+      () => true,
+      () => true
+    ),
+    new Promise<boolean>((done) => (timer = setTimeout(() => done(false), left))),
+  ]).finally(() => clearTimeout(timer));
+}
+
 /**
  * One `mermaid` API object with its own registry and defaults, detecting the types of
  * `firstParty` in its order. `mermaid` passes the generated table with loaders, `mermaid/slim`
@@ -339,8 +362,9 @@ export function createMermaid(
   const skipped: Warning[] = [];
   let firstUse: (() => Promise<void>) | undefined;
   let ready: Promise<void> | undefined;
-  // Additions still registering (the CDN queue's pushes, T6): a draw waits for them.
-  const adding = new Set<Promise<unknown>>();
+  // Additions still registering (the CDN queue's pushes, T6), with the time each one's wait
+  // ends: a draw waits for each until then, and renders without it after (one warning).
+  const adding = new Map<Promise<unknown>, { deadline: number; limit: number }>();
   const discovered = async (): Promise<void> => {
     if (firstUse) {
       ready ??= firstUse().catch((e: unknown) => {
@@ -351,7 +375,14 @@ export function createMermaid(
       });
       await ready;
     }
-    while (adding.size > 0) await Promise.all(adding);
+    while (adding.size > 0) {
+      const [pending, { deadline, limit }] = adding.entries().next().value!;
+      if (!(await settlesBy(pending, deadline)) && adding.delete(pending))
+        skipped.push({
+          code: 'PLUGIN_DISCOVERY_FAILED',
+          message: `A plugin registration did not finish within ${limit} ms; rendering without it.`,
+        });
+    }
   };
   let site: Snapshot = snapshot();
   let parseErrorHandler: ParseErrorHandler | undefined;
@@ -855,18 +886,35 @@ export function createMermaid(
     }
   }
 
-  function addDiscovered(list: readonly DiscoveredPlugin[]): Promise<readonly Warning[]> {
+  function addDiscovered(
+    list: readonly DiscoveredPlugin[],
+    { timeLimitMs = ADD_TIME_LIMIT_MS }: AddOptions = {}
+  ): Promise<readonly Warning[]> {
     cache.clear();
-    // Leaves `adding` before its awaiter resumes, so a draw right after it does not wait.
+    // Never rejects; leaves `adding` before its awaiter resumes, so a draw right after it
+    // does not wait. The cache is cleared again: a draw during the wait may have filled it.
     const pending: Promise<readonly Warning[]> = registry
       .registerDiscovered(list)
-      .then((warnings) => {
-        rebuildHooks();
-        skipped.push(...warnings);
-        return warnings;
-      })
-      .finally(() => adding.delete(pending));
-    adding.add(pending);
+      .then(
+        (warnings) => {
+          rebuildHooks();
+          skipped.push(...warnings);
+          return warnings;
+        },
+        (e: unknown): readonly Warning[] => {
+          const w: Warning = {
+            code: 'PLUGIN_DISCOVERY_FAILED',
+            message: `Plugin registration failed: ${e instanceof Error ? e.message : String(e)}`,
+          };
+          skipped.push(w);
+          return [w];
+        }
+      )
+      .finally(() => {
+        cache.clear();
+        adding.delete(pending);
+      });
+    adding.set(pending, { deadline: Date.now() + timeLimitMs, limit: timeLimitMs });
     return pending;
   }
 
@@ -927,7 +975,7 @@ export type Mermaid = ReturnType<typeof createMermaid>;
 
 /** The discovered-list seam of one API object (see discovery.ts). */
 interface Seam {
-  add(list: readonly DiscoveredPlugin[]): Promise<readonly Warning[]>;
+  add(list: readonly DiscoveredPlugin[], options?: AddOptions): Promise<readonly Warning[]>;
   onFirstUse(
     source: (
       config: Readonly<Record<string, unknown>>
