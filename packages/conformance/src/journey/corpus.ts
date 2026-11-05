@@ -145,7 +145,7 @@ function commented(src: string): string {
 }
 
 /** The journey corpus: the e2e fixtures and the v12 spec strings. */
-async function journeyCorpus(): Promise<CorpusItem[]> {
+export async function journeyCorpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
   for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/journey'), 'e2e')) {
     items.push(item);
