@@ -192,6 +192,7 @@ export interface PreloadRequest {
   formats?: readonly ('svg' | 'ascii')[];
   /** Accepted and ignored until the icons plugin exists. */
   iconPacks?: readonly string[];
+  /** Loads what a registered math extension provides, for `renderSync` with `$$…$$` (D178). */
   math?: boolean;
 }
 
@@ -459,6 +460,13 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     throw new UnsupportedFormatError(type, f);
   }
 
+  /** What the registered extensions still need for `a` (R-API-2, D178): `math`, say. */
+  function extensionNeeds(a: Analysis, ascii: boolean) {
+    if (hooks.size === 0) return [];
+    const { parse, config } = a.prepared;
+    return hooks.resources(parse, { config, format: ascii ? 'ascii' : 'svg' });
+  }
+
   async function prepareWith(text: string, s: Snapshot, format?: string): Promise<Analysis> {
     const ascii = checkFormat(text, s, format) === 'ascii';
     let analysis = cache.get(text, s);
@@ -467,7 +475,10 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
       analysis = analysisOf(text, s, f, await registry.load(f.detected.id));
     }
     if (ascii) await loadText(analysis);
-    await loadResources(registry, missingFor(registry, analysis, ascii));
+    await Promise.all([
+      loadResources(registry, missingFor(registry, analysis, ascii)),
+      ...extensionNeeds(analysis, ascii).map((n) => n.load()),
+    ]);
     return analysis;
   }
 
@@ -516,7 +527,10 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
     const textOutput = units.id === 'cell';
     const warnings: Warning[] = [...prepared.warnings];
     const warn = (w: Warning): void => void warnings.push(toWarning(w));
-    const missing = missingFor(registry, analysis, textOutput);
+    const missing = [
+      ...missingFor(registry, analysis, textOutput),
+      ...extensionNeeds(analysis, textOutput).map((n) => n.resource),
+    ];
     if (missing.length > 0) {
       if (textOutput || !options?.placeholders) throw new NotLoadedError(missing);
       warn({
@@ -772,6 +786,8 @@ export function createMermaid(firstParty: readonly FirstPartyEntry[]) {
       tasks.push(loadTheme(choice.name));
       if (choice.dark) tasks.push(loadTheme(choice.dark));
     }
+    // Extensions' resources by kind: `math: true` loads what a math extension provides (D178).
+    if (req.math) for (const n of hooks.provided('math')) tasks.push(n.load());
     if (req.formats?.includes('ascii')) {
       tasks.push(
         import('./ascii.ts').then((b) => {

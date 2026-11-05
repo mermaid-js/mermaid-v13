@@ -1,8 +1,7 @@
 {
   "name": "@mermaid-js/plugin-math",
   "version": "13.0.0-alpha.0",
-  "private": true,
-  "description": "TeX math in Mermaid v13 labels via MathJax (spike M1 #244: TeX to SVG paths; plugin wiring is M2 #245).",
+  "description": "TeX math in Mermaid v13 labels: $$…$$ typeset by MathJax into SVG paths, loaded only for diagrams with math (D175, D178).",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -12,27 +11,38 @@
   },
   "sideEffects": false,
   "exports": {
-    "./engine": {
-      "mermaid-source": "./src/engine.ts",
-      "types": "./dist/engine.d.ts",
-      "default": "./dist/engine.js"
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
+  "files": [
+    "dist",
+    "THIRD_PARTY_NOTICES"
+  ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json && tsx scripts/build.ts",
     "typecheck": "tsc -p tsconfig.json"
-  },
-  "dependencies": {
-    "@mathjax/mathjax-tex-font": "4.1.3",
-    "@mathjax/src": "4.1.3"
   },
   "peerDependencies": {
     "@mermaid-js/core": "workspace:*"
   },
   "devDependencies": {
+    "@mathjax/mathjax-tex-font": "4.1.3",
+    "@mathjax/src": "4.1.3",
     "@mermaid-js/core": "workspace:^",
-    "mermaid": "workspace:*"
+    "esbuild": "^0.25.12",
+    "mermaid": "workspace:*",
+    "tsx": "^4.20.6"
+  },
+  "mermaid": {
+    "plugin": "extension",
+    "id": "math",
+    "entry": "./dist/index.js",
+    "export": "math"
   }
 }

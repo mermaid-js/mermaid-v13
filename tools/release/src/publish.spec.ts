@@ -30,6 +30,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/language-server',
       '@mermaid-chart/layout-elk',
       '@mermaid-chart/plugin-interactions',
+      '@mermaid-chart/plugin-math',
       '@mermaid-chart/mermaid',
     ]);
     const mermaid = manifestOf(packed.find((p) => p.name === '@mermaid-chart/mermaid')!.tarball);
