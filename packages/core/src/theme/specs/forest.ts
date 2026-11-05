@@ -9,6 +9,7 @@ import {
   CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
+import { PIE_FOREST } from './pie.ts';
 
 const theme: ThemeSpec = {
   name: 'forest',
@@ -39,7 +40,7 @@ const theme: ThemeSpec = {
     useGradient: false,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
-  rules: { rowEven: 'lightenHsl(mainBkg, 20%)' },
+  rules: { rowEven: 'lightenHsl(mainBkg, 20%)', ...PIE_FOREST },
   values: {
     altBackground: '#f0f0f0', // v12 (#192)
     // sequence (v12 theme-forest.js: actorBorder is darken(mainBkg, 20))

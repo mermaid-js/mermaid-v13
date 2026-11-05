@@ -10,9 +10,19 @@
  * How a variable's value is checked and written. A `padding` is a px length or a multiple of
  * the diagram's own `padding` config (`padding`, `2 * padding`), resolved at render time
  * because the classic themes follow `flowchart.padding` (D152). A `flag` is `true` or `false`,
- * read literally at render time like geometry, so it has no CSS variable (D182).
+ * read literally at render time like geometry, so it has no CSS variable (D182). An `opacity` is
+ * a number from 0 to 1, read with `Theme.number` like geometry, so it has no CSS variable either
+ * (D221).
  */
-export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter' | 'padding' | 'flag';
+export type ThemeVarKind =
+  | 'color'
+  | 'length'
+  | 'font'
+  | 'weight'
+  | 'filter'
+  | 'padding'
+  | 'flag'
+  | 'opacity';
 
 export interface ThemeVarDef {
   /** The short private alias written on the root, without the leading `--_`. */
@@ -123,6 +133,13 @@ export const TOKEN_VARIABLES = [
   'messageEndGap',
   'labelBoxExtraHeight',
   'actorFooterPadding',
+  // Pie text sizes, stroke widths and slice opacity (#325): the same in every v12 theme.
+  'pieTitleTextSize',
+  'pieSectionTextSize',
+  'pieLegendTextSize',
+  'pieStrokeWidth',
+  'pieOuterStrokeWidth',
+  'pieOpacity',
   // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
   'useGradient',
 ] as const;
@@ -165,7 +182,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
   tertiaryTextColor: def('tt', 'color', ['core']),
-  textColor: def('tx', 'color', ['core', 'flowchart', 'sequence', 'state', 'er', 'pie']),
+  textColor: def('tx', 'color', ['core', 'flowchart', 'sequence', 'state', 'er']),
   mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er']),
   nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er']),
   nodeTextColor: def('nt', 'color', ['flowchart', 'state', 'er']),
@@ -203,6 +220,31 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   compositeBackground: def('cbg', 'color', ['state']),
   compositeTitleBackground: def('ctb', 'color', ['state']),
   altBackground: def('alb', 'color', ['state']),
+  // pie chart (#325, v12 names): the slot colours `pie1`–`pie12`, texts, strokes and the slice
+  // opacity, derived as each v12 theme derives them.
+  pie1: def('pi1', 'color', ['pie']),
+  pie2: def('pi2', 'color', ['pie']),
+  pie3: def('pi3', 'color', ['pie']),
+  pie4: def('pi4', 'color', ['pie']),
+  pie5: def('pi5', 'color', ['pie']),
+  pie6: def('pi6', 'color', ['pie']),
+  pie7: def('pi7', 'color', ['pie']),
+  pie8: def('pi8', 'color', ['pie']),
+  pie9: def('pi9', 'color', ['pie']),
+  pie10: def('pi10', 'color', ['pie']),
+  pie11: def('pi11', 'color', ['pie']),
+  pie12: def('pi12', 'color', ['pie']),
+  pieTitleTextSize: def('pits', 'length', ['pie']),
+  pieTitleTextColor: def('pitc', 'color', ['pie']),
+  pieSectionTextSize: def('piss', 'length', ['pie']),
+  pieSectionTextColor: def('pisc', 'color', ['pie']),
+  pieLegendTextSize: def('pils', 'length', ['pie']),
+  pieLegendTextColor: def('pilc', 'color', ['pie']),
+  pieStrokeColor: def('pikc', 'color', ['pie']),
+  pieStrokeWidth: def('pikw', 'length', ['pie']),
+  pieOuterStrokeColor: def('pioc', 'color', ['pie']),
+  pieOuterStrokeWidth: def('piow', 'length', ['pie']),
+  pieOpacity: def('piop', 'opacity', ['pie']),
   // tokens
   strokeWidth: def('sw', 'length', ['core', 'flowchart', 'sequence', 'class', 'state', 'er']),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),

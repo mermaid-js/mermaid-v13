@@ -9,6 +9,7 @@ import {
   CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
+import { PIE_DARK } from './pie.ts';
 
 const theme: ThemeSpec = {
   name: 'dark',
@@ -38,6 +39,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_SEQUENCE,
     useGradient: false,
   },
+  rules: PIE_DARK,
   values: {
     altBackground: '#555555', // v12 (#192)
     // sequence (v12 theme-dark.js: mainContrastColor is lightgrey)

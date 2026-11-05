@@ -20,7 +20,6 @@ import {
   PIE_COLOURS as COLOURS,
   PIE_METRICS as m,
   PIE_OPTIONS,
-  pieThemeLength,
 } from './metrics.ts';
 import type { PieLayout, PieLegendRow, PieSliceLayout, PlacedLabel, Point, Rect } from './types.ts';
 
@@ -36,16 +35,16 @@ export function layoutPie(model: PieModel, ctx: PieLayoutContext): PieLayout {
   const family = ctx.theme.value('fontFamily');
   const font = (size: number): FontKey => ({ family, size, weight: NORMAL_WEIGHT });
   const fonts = {
-    title: font(pieThemeLength(ctx.theme, 'pieTitleTextSize')),
-    section: font(pieThemeLength(ctx.theme, 'pieSectionTextSize')),
-    legend: font(pieThemeLength(ctx.theme, 'pieLegendTextSize')),
+    title: font(ctx.theme.number('pieTitleTextSize')),
+    section: font(ctx.theme.number('pieSectionTextSize')),
+    legend: font(ctx.theme.number('pieLegendTextSize')),
   };
   // Title and legend go through core's label layout (D225), unwrapped as v12 drew them.
   const measure = (text: string, f: FontKey): MeasuredLabel =>
     layoutLabel(text, f, Infinity, ctx.measurer, ctx.inline ? { inline: ctx.inline } : {});
 
-  const outerStrokeWidth = pieThemeLength(ctx.theme, 'pieOuterStrokeWidth');
-  const strokeWidth = pieThemeLength(ctx.theme, 'pieStrokeWidth');
+  const outerStrokeWidth = ctx.theme.number('pieOuterStrokeWidth');
+  const strokeWidth = ctx.theme.number('pieStrokeWidth');
   const { textPosition, donut, position, highlight, hover } = optionsOf(ctx.config.pie ?? {});
 
   // Measure first: legend rows, then the title.

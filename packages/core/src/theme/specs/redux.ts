@@ -11,6 +11,7 @@ import {
   TEXT_SIZES,
 } from './geometry.ts';
 import { REDUX_RULES } from './redux-rules.ts';
+import { PIE_REDUX } from './pie.ts';
 
 const redux: ThemeSpec = {
   name: 'redux',
@@ -40,7 +41,7 @@ const redux: ThemeSpec = {
     ...NEO_SEQUENCE,
     useGradient: false,
   },
-  rules: REDUX_RULES,
+  rules: { ...REDUX_RULES, ...PIE_REDUX },
   values: {
     // v12's hard drop shadow (insertLookDefs: dx/dy 4, no blur, 6% black) as a CSS filter.
     dropShadow: 'drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))',

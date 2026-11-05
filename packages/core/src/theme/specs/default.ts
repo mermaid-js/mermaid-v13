@@ -9,6 +9,7 @@ import {
   CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
+import { PIE_DEFAULT } from './pie.ts';
 
 const theme: ThemeSpec = {
   name: 'default',
@@ -56,7 +57,11 @@ const theme: ThemeSpec = {
     noteBorderColor: '#aaaa33',
   },
   // v12 theme-default derives the ER rows from primaryColor with khroma (D117).
-  rules: { rowOdd: 'lightenHsl(primaryColor, 75%)', rowEven: 'lightenHsl(primaryColor, 1%)' },
+  rules: {
+    rowOdd: 'lightenHsl(primaryColor, 75%)',
+    rowEven: 'lightenHsl(primaryColor, 1%)',
+    ...PIE_DEFAULT,
+  },
 };
 
 export default theme;

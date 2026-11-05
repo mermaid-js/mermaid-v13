@@ -157,6 +157,8 @@ interface Resolved {
 const RE_SIZE = /^(\d{1,6}(?:\.\d{1,6})?)(?:px)?$/;
 /** A multiple of the diagram's padding: `padding` or `<n> * padding`. */
 const RE_PADDING = /^(?:(\d{1,6}(?:\.\d{1,6})?)\s*\*\s*)?padding$/;
+/** An opacity (D221): a plain number from 0 to 1. */
+const RE_OPACITY = /^(?:0?\.\d{1,6}|[01](?:\.0{1,6})?)$/;
 const WEIGHTS = new Set([
   'normal',
   'bold',
@@ -179,7 +181,7 @@ const own = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.c
 function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
   if (typeof raw === 'boolean') return kind === 'flag' ? String(raw) : undefined;
   if (typeof raw === 'number')
-    return kind === 'length' || kind === 'padding' || kind === 'weight'
+    return kind === 'length' || kind === 'padding' || kind === 'weight' || kind === 'opacity'
       ? checkValue(kind, String(raw))
       : undefined;
   if (typeof raw !== 'string') return undefined;
@@ -201,6 +203,8 @@ function checkValue(kind: ThemeVarKind, raw: unknown): string | undefined {
       const f = v.toLowerCase();
       return f === 'true' || f === 'false' ? f : undefined;
     }
+    case 'opacity':
+      return RE_OPACITY.test(v) ? num(Number(v)) : undefined;
   }
 }
 
@@ -640,7 +644,8 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
     },
     number(name) {
       const kind = def(name).kind;
-      if (kind !== 'length' && kind !== 'padding') throw new TypeError(`${name} is not a length`);
+      if (kind !== 'length' && kind !== 'padding' && kind !== 'opacity')
+        throw new TypeError(`${name} is not a length`);
       return Number(main.get(name).lit);
     },
     padding(name, padding) {

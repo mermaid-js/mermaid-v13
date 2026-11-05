@@ -4,7 +4,6 @@
  * (`packages/conformance/src/pie-layout-literals.spec.ts`). Pie draws SVG only (D216), so there
  * is no cell set.
  */
-import { THEME_VARIABLES, type Theme } from '@mermaid-js/core/theme';
 
 /** v12's fixed canvas and legend constants (`pieRenderer.ts` :38-42, :157-251). */
 const HEIGHT = 450;
@@ -56,32 +55,6 @@ export const PIE_METRICS: PieMetrics = {
   titleY: (HEIGHT - TITLE_GAP) / 2,
   highlightScale: HIGHLIGHT_SCALE,
 };
-
-/**
- * v12's values of the pie theme variables the layout reads (every v12 theme sets the same ones,
- * `theme-*.js` under `pie`). Stand-ins until #325 adds the variables to the vocabulary: a name
- * the vocabulary knows is read from the theme instead, so #325 only deletes this table.
- */
-export const PIE_THEME_DEFAULTS = {
-  pieTitleTextSize: 25,
-  pieSectionTextSize: 17,
-  pieLegendTextSize: 17,
-  pieStrokeWidth: 2,
-  pieOuterStrokeWidth: 2,
-} as const;
-
-export type PieThemeLength = keyof typeof PIE_THEME_DEFAULTS;
-
-/**
- * A pie length variable in px: the theme's value once the vocabulary has it, else v12's default.
- * A value that is not a finite length of zero or more takes v12's default too (v12
- * `parseFontSize(…) ?? 2`).
- */
-export function pieThemeLength(theme: Pick<Theme, 'number'>, name: PieThemeLength): number {
-  if (!Object.hasOwn(THEME_VARIABLES, name)) return PIE_THEME_DEFAULTS[name];
-  const v = theme.number(name);
-  return Number.isFinite(v) && v >= 0 ? v : PIE_THEME_DEFAULTS[name];
-}
 
 /** The CSS weight pie text is measured and drawn at: v12 sets none, so normal. */
 export const NORMAL_WEIGHT = 400;

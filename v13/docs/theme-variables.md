@@ -24,7 +24,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er, pie |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | flowchart, state, er |
@@ -58,6 +58,29 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `compositeBackground` | `--mermaid-compositeBackground` | derived | color | `background` | `background` | redux-dark, redux-dark-color | state |
 | `compositeTitleBackground` | `--mermaid-compositeTitleBackground` | derived | color | `mainBkg` | `mainBkg` | redux-color, redux, redux-dark, redux-dark-color | state |
 | `altBackground` | `--mermaid-altBackground` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | state |
+| `pie1` | `--mermaid-pie1` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark-color, dark, neutral, neo | pie |
+| `pie2` | `--mermaid-pie2` | derived | color | `secondaryColor` | `secondaryColor` | redux-color, redux, redux-dark-color, dark, neutral, neo | pie |
+| `pie3` | `--mermaid-pie3` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark-color, default, dark, neutral, neo | pie |
+| `pie4` | `--mermaid-pie4` | derived | color | `darkenHsl(primaryColor, 10%)` | `darkenHsl(primaryColor, 10%)` | redux-color, redux, redux-dark-color, dark, forest, neutral, neo | pie |
+| `pie5` | `--mermaid-pie5` | derived | color | `darkenHsl(secondaryColor, 10%)` | `darkenHsl(secondaryColor, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie6` | `--mermaid-pie6` | derived | color | `darkenHsl(tertiaryColor, 10%)` | `darkenHsl(tertiaryColor, 10%)` | redux-color, redux, redux-dark-color, default, dark, forest, neutral, neo | pie |
+| `pie7` | `--mermaid-pie7` | derived | color | `#c5ffaa` | `#c5ffaa` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie8` | `--mermaid-pie8` | derived | color | `#ffaac5` | `#ffaac5` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie9` | `--mermaid-pie9` | derived | color | `#ddfff4` | `#ddfff4` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie10` | `--mermaid-pie10` | derived | color | `#a3ff77` | `#a3ff77` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie11` | `--mermaid-pie11` | derived | color | `#ff77a3` | `#ff77a3` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pie12` | `--mermaid-pie12` | derived | color | `#aaffe3` | `#aaffe3` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
+| `pieTitleTextSize` | `--mermaid-pieTitleTextSize` | token | length | | | all | pie |
+| `pieTitleTextColor` | `--mermaid-pieTitleTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
+| `pieSectionTextSize` | `--mermaid-pieSectionTextSize` | token | length | | | all | pie |
+| `pieSectionTextColor` | `--mermaid-pieSectionTextColor` | derived | color | `textColor` | `textColor` | redux-dark-color | pie |
+| `pieLegendTextSize` | `--mermaid-pieLegendTextSize` | token | length | | | all | pie |
+| `pieLegendTextColor` | `--mermaid-pieLegendTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
+| `pieStrokeColor` | `--mermaid-pieStrokeColor` | derived | color | `black` | `black` | | pie |
+| `pieStrokeWidth` | `--mermaid-pieStrokeWidth` | token | length | | | all | pie |
+| `pieOuterStrokeColor` | `--mermaid-pieOuterStrokeColor` | derived | color | `black` | `black` | | pie |
+| `pieOuterStrokeWidth` | `--mermaid-pieOuterStrokeWidth` | token | length | | | all | pie |
+| `pieOpacity` | `--mermaid-pieOpacity` | token | opacity | | | all | pie |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |

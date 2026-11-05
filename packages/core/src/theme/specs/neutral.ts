@@ -9,6 +9,7 @@ import {
   CLASSIC_SEQUENCE,
   TEXT_SIZES,
 } from './geometry.ts';
+import { PIE_NEUTRAL } from './pie.ts';
 
 const theme: ThemeSpec = {
   name: 'neutral',
@@ -38,6 +39,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_SEQUENCE,
     useGradient: false,
   },
+  rules: PIE_NEUTRAL,
   values: {
     altBackground: '#f4f4f4', // v12 (#192)
     // sequence (v12 theme-neutral.js: actorBorder is lighten(border1, 23))

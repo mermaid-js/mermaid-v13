@@ -5,6 +5,7 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { REDUX_RULES } from './redux-rules.ts';
+import { PIE_REDUX_DARK } from './pie.ts';
 import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
 
 const theme: ThemeSpec = {
@@ -12,7 +13,7 @@ const theme: ThemeSpec = {
   dark: true,
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
-  rules: REDUX_RULES,
+  rules: { ...REDUX_RULES, ...PIE_REDUX_DARK },
   values: REDUX_DARK_VALUES,
 };
 

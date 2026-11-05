@@ -312,16 +312,45 @@ describe('pie render: what is drawn', () => {
     expect([fixed.getAttr(r, 'width'), fixed.getAttr(r, 'height')]).toEqual([String(w), String(h)]);
   });
 
-  it('reads the pie theme stand-ins: black strokes, v12 opacity, text in textColor', async () => {
+  it('paints from the pie theme variables (#325): strokes, opacity, texts', async () => {
     const tree = parseSvg((await api.render('x', 'pie title T\n"a": 1')).svg);
     const [s] = slices(tree);
-    expect(tree.getAttr(s!, 'stroke')).toBe('black');
+    expect(tree.getAttr(s!, 'fill')).toBe('var(--_pi1)');
+    expect(tree.getAttr(s!, 'stroke')).toBe('var(--_pikc)');
     expect(tree.getAttr(s!, 'stroke-width')).toBe('2');
+    expect(tree.getAttr(s!, 'opacity')).toBe('0.7');
     const outer = tree.find({ tag: 'circle', class: 'pieOuterCircle' })[0]!;
-    expect([tree.getAttr(outer, 'stroke'), tree.getAttr(outer, 'fill')]).toEqual(['black', 'none']);
+    expect([tree.getAttr(outer, 'stroke'), tree.getAttr(outer, 'fill')]).toEqual([
+      'var(--_pioc)',
+      'none',
+    ]);
     const title = tree.find({ tag: 'text', class: 'pieTitleText' })[0]!;
-    expect(tree.getAttr(title, 'fill')).toBe('var(--_tx)');
+    expect(tree.getAttr(title, 'fill')).toBe('var(--_pitc)');
     expect(tree.getAttr(title, 'font-size')).toBe('25');
+    expect(tree.getAttr(tree.find({ tag: 'text', class: 'slice' })[0]!, 'fill')).toBe(
+      'var(--_pisc)'
+    );
+  });
+
+  it('takes the theme’s values and an author’s pie variables (#325)', async () => {
+    const config = {
+      theme: 'dark',
+      output: { cssVariables: false },
+      themeVariables: { pie2: '#123456', pieOpacity: 0.4, pieStrokeWidth: 5, pieTitleTextSize: 30 },
+    } as const;
+    const m = await pieApi(config as MermaidConfig);
+    const tree = parseSvg((await m.render('x', 'pie title T\n"a": 1\n"b": 1')).svg);
+    const [a, b] = slices(tree);
+    // dark takes v12's off-by-one cScale: slot 1 is cScale1.
+    expect(tree.getAttr(a!, 'fill')).toBe('#0b0000');
+    expect(tree.getAttr(b!, 'fill')).toBe('#123456');
+    expect(tree.getAttr(a!, 'opacity')).toBe('0.4');
+    expect(tree.getAttr(a!, 'stroke-width')).toBe('5');
+    const title = tree.find({ tag: 'text', class: 'pieTitleText' })[0]!;
+    expect([tree.getAttr(title, 'fill'), tree.getAttr(title, 'font-size')]).toEqual([
+      'lightgrey',
+      '30',
+    ]);
   });
 });
 

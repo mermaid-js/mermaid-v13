@@ -44,7 +44,7 @@ describe('createTheme: CSS variables (R-THEME-2, -4)', () => {
       themeVariables: {
         primaryColor: 'url(javascript:alert(1))',
         lineColor: 'red;}svg{fill:red',
-        pie1: '#123456',
+        notAThemeVariable: '#123456',
         fontFamily: 'x</style><script>',
       },
       cssVariables: false,
@@ -84,6 +84,45 @@ describe('createTheme: shape tokens (R-THEME-11)', () => {
     expect(t.length('strokeWidth')).toBe('var(--_sw)');
     expect(t.rootStyle()).toEqual({ '--_sw': 'var(--mermaid-strokeWidth,3px)' });
     expect(t.font()).toBe('var(--_ff)');
+  });
+});
+
+describe('createTheme: opacity (D221)', () => {
+  it('reads an opacity as a number in [0, 1], with no CSS variable', () => {
+    const t = createTheme(base);
+    expect(t.number('pieOpacity')).toBe(0.7);
+    expect(t.rootStyle()).toEqual({});
+    expect(() => t.color('pieOpacity')).toThrow(TypeError);
+    expect(() => t.length('pieOpacity')).toThrow(TypeError);
+  });
+
+  it('takes a number or a numeric string between 0 and 1', () => {
+    for (const [given, read] of [
+      [0.4, 0.4],
+      ['0.25', 0.25],
+      [0, 0],
+      [1, 1],
+      [' .5 ', 0.5],
+      ['1.0', 1],
+    ] as const) {
+      const t = createTheme(base, { themeVariables: { pieOpacity: given } });
+      expect(t.number('pieOpacity'), String(given)).toBe(read);
+    }
+  });
+
+  it('drops anything else with a warning and keeps the theme value', () => {
+    for (const given of [1.5, -0.1, '70%', '1.01', 'abc', 'var(--x)', Number.NaN, true]) {
+      const warnings: ThemeWarning[] = [];
+      const t = createTheme(base, {
+        themeVariables: { pieOpacity: given },
+        warn: (w) => warnings.push(w),
+      });
+      expect(t.number('pieOpacity'), String(given)).toBe(0.7);
+      expect(
+        warnings.map((w) => w.code),
+        String(given)
+      ).toEqual(['THEME_VARIABLE_DROPPED']);
+    }
   });
 });
 
