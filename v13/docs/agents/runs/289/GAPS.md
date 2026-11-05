@@ -28,7 +28,7 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 
 ## #332 T3 (merged; handoff `tickets/332.md`)
 
-- [ ] **Owner #301 T2:** run the layout invariants and builder parity on parser-produced models: swap the parser's model in for `v12Quadrant(...).model` in `packages/conformance/src/quadrant/layout-parity.spec.ts`. T2 adopts `QuadrantModel` (`packages/diagram-quadrant/src/model.ts`): an axis statement sets only the labels it names (v12 merge), overridden statements get `st:<ordinal>` and draw nothing.
+- [x] **Done in #301:** run the layout invariants and builder parity on parser-produced models: swap the parser's model in for `v12Quadrant(...).model` in `packages/conformance/src/quadrant/layout-parity.spec.ts`. T2 adopts `QuadrantModel` (`packages/diagram-quadrant/src/model.ts`): an axis statement sets only the labels it names (v12 merge), overridden statements get `st:<ordinal>` and draw nothing.
 - [ ] **Owner #312 T4:** remove quadrant's `NOT_YET_DRAWN` exemption in `tools/gen-config/src/theme-used-by.spec.ts`; grow the viewBox for point labels (D224); `fill`/`stroke` undefined in the layout means `quadrantPointFill`.
 - [ ] **Owner #317 T5:** drop `"private": true`, add the manifest, a `feat: first release` changeset and the `publish.spec.ts` entry.
 - **Choices:** axis end labels get `ax:x/end` / `ax:y/end` so each drawn label has one AST id (pitfall 12). The square's width/height clamp at 0 (v12 wrote negative `<rect>` sizes for schema-valid tiny charts). Coordinates convert with `Number(text)` like v12's d3; a dropped point still counts as "has points" (v12 layout). Builder parity sets options with v12's `initialize()`, since 12.2.0's `getDiagramFromText` drops `%%{init}` config.
@@ -37,7 +37,14 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 ## #300 T1 (merged; handoff `tickets/300.md`)
 
 - [x] All 13 quirks (7 in the spec, 6 found in exploration) have named cases checked on v12 and v13. Gate: 278 sources (e2e, harvested strings and docs, `quadrantDb.spec.ts` styles in statements, commented and line-separator variants), 100% token and text parity. Every jison rule fires except 41 (a duplicate `=` rule).
-- [ ] **Owner #301 T2:** v12 removes an unclosed directive (`A %%{x}`); core's preprocess does not. Two such lexer cases were dropped from the gate as core behaviour. T2 checks the accept/reject result for that input against the oracle and lists it as a divergence if it differs.
+- [x] **#301 T2 (closed):** listed as two `reject` divergences in `divergences.json`. v12 removes an unclosed directive (`A %%{x}`); core's preprocess does not. Two such lexer cases were dropped from the gate as core behaviour. T2 checks the accept/reject result for that input against the oracle and lists it as a divergence if it differs.
 - **Choice:** `src/parser/v12-text.ts` copies diagram-class's v12 source view (no cross-package imports; only T0 edits core). A candidate to move into the parser kit later.
 - Size: 4.3 KB gz (lexer).
 - [x] **#300 follow-up (`feature/300_lexer-fixes`, merged):** review found that `x-axis Low - --> High` lexes differently from v12 (the `-->` rule's failed-match skip swallows a following space). The commented gate variants silently drop 20 sources whose header got cut. The gate never compares source ranges (and a `class_name` error on an entity duplicates a range). The final NEWLINE range encloses a trailing comment. All four fixed: the gate now requires v12 detection or a justified `NOT_DETECTED` entry (28), compares an exact count (336 of 364), and checks source ranges over every source.
+
+## #301 T2 (merged; handoff `tickets/301.md`)
+
+- Parity: oracle accept/reject and model parity green; quadrant divergences are the two unclosed-directive `reject` entries. Grammar differential (corpus + 3,000 generated sentences), grammar-lexer gate, recovery set (23 errors / 11 cases), message fuzz, `v12-specs/` (27 pass, 2 skipped with reasons).
+- **Choices:** one diagnostic per bad style; a style cut short by a syntax error is not also checked. An overridden `classDef` gets `st:<n>` like other overridden statements. Token kind `AxisDelimiter` renamed `AxisTextDelimiter` (gen:grammar matches kinds to terminals by name). `oracle.ts` gets one additive patch call (`quadrant/oracle-env.ts`) recording v12's DB calls.
+- [ ] **Owner #321 T6:** probe support (completion context) is not in the parser yet.
+- Size: parser 8.6 KB gz; package 10.4 KB gz.
