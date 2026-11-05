@@ -79,7 +79,10 @@ export interface QuadrantAxisLabel {
   readonly axis: 'x' | 'y';
   /** x: `start` is the left label; y: `start` is the bottom one. */
   readonly end: 'start' | 'end';
-  /** `ax:x` or `ax:y`. */
+  /**
+   * One id per label (pitfall 12): the start label has the axis's id (`ax:x`, `ax:y`), the end
+   * label that id with `/end` (`ax:x/end`, `ax:y/end`).
+   */
   readonly ast: AstId;
   readonly text: QuadrantTextAnchor;
 }

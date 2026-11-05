@@ -18,12 +18,14 @@ import {
 
 /**
  * Builder parity (spec #289 T3): `layoutQuadrant` equals v12's `getQuadrantData()` to 0.01 px on
- * rects, lines, text anchors and radii, over the corpus and the cases below. Colours are left
- * out: the oracle's default point fill is `hsl(240, 100%, NaN%)` (D231), and v13 reads paints
- * from the theme. The models are built from v12's own DB calls (`v12.ts`) until the parser (#301)
+ * rects, lines, text anchors, radii and styled point paints, over the corpus and the cases below.
+ * Theme colours are left out: the oracle's default point fill is `hsl(240, 100%, NaN%)` (D231),
+ * and v13 reads them from the theme. The models are built from v12's own DB calls (`v12.ts`) until the parser (#301)
  * lands; the parser-produced run is GAPS #332.
  *
- * No case configures a 0: v12's builder replaces it by its default (`||`), v13 honours it.
+ * Paints: a point's fill and stroke are compared with v12's, `#` added (D235), where a style sets
+ * them. v12's default (its `quadrantPointFill`, `hsl(240, 100%, NaN%)`) reads as `null`, the
+ * layout's "use the theme".
  */
 const EXTRA: CorpusItem[] = [
   {
@@ -45,6 +47,12 @@ const EXTRA: CorpusItem[] = [
     source:
       'quadrantChart\n  A:::c1: [0.2, 0.2] radius: 12\n  A: [0.8, 0.8]\n  B:::nope: [0.5, 0.5]\n' +
       '  C:::c1: [0.4, 0.6] stroke-width: 2px\n  classDef c1 color: #ff0000, radius: 9, stroke-width: 4px\n  classDef c1 radius: 6\n',
+  },
+  {
+    id: 'extra/zero-config',
+    source:
+      '%%{init: {"quadrantChart": {"quadrantPadding": 0, "titlePadding": 0, "pointRadius": 0, "pointTextPadding": 0, "xAxisLabelPadding": 0, "quadrantExternalBorderStrokeWidth": 0}}}%%\n' +
+      'quadrantChart\n  title Z\n  x-axis L --> R\n  y-axis B\n  A: [0, 1]\n  B: [1, 0] color: 00ff00, stroke-color: abc\n',
   },
   {
     id: 'extra/axis-merge',
@@ -82,7 +90,7 @@ const v12Anchor = (t: V12QuadrantText) => ({
   rotation: t.rotation,
 });
 
-/** The v13 layout, without colours, in v12's terms and order. */
+/** The v13 layout, without theme colours, in v12's terms and order. */
 const v13Shape = (l: QuadrantLayout) => ({
   quadrants: l.quadrants.map((q) => ({
     x: q.x,
@@ -97,13 +105,19 @@ const v13Shape = (l: QuadrantLayout) => ({
     x: p.cx,
     y: p.cy,
     radius: p.radius,
+    fill: p.fill ?? null,
+    stroke: p.stroke ?? null,
     strokeWidth: p.strokeWidth,
     text: anchor(p.text),
   })),
   title: l.title ? anchor(l.title) : null,
 });
 
-/** v12's builder output, without colours; points in source order (v12 prepends). */
+/** A v12 point paint: its NaN default is `null` (the theme's), a style's colour gets its `#`. */
+const paint = (colour: string): string | null =>
+  colour.includes('NaN') ? null : colour.startsWith('#') ? colour : `#${colour}`;
+
+/** v12's builder output, without theme colours; points in source order (v12 prepends). */
 const v12Shape = (d: V12QuadrantData) => ({
   quadrants: d.quadrants.map((q) => ({
     x: q.x,
@@ -124,6 +138,8 @@ const v12Shape = (d: V12QuadrantData) => ({
     x: p.x,
     y: p.y,
     radius: p.radius,
+    fill: paint(p.fill),
+    stroke: paint(p.strokeColor),
     strokeWidth: Number.parseFloat(p.strokeWidth),
     text: v12Anchor(p.text),
   })),

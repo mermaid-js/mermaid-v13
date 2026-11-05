@@ -43,8 +43,9 @@ function square(
   return {
     left: c.quadrantPadding + yLeft,
     top: c.quadrantPadding + xTop + titleSpace,
-    width: c.chartWidth - c.quadrantPadding * 2 - yLeft - yRight,
-    height: c.chartHeight - c.quadrantPadding * 2 - xTop - xBottom - titleSpace,
+    // Clamped: a small chart (schema-valid) left v12 a negative size, an invalid `<rect>`.
+    width: Math.max(0, c.chartWidth - c.quadrantPadding * 2 - yLeft - yRight),
+    height: Math.max(0, c.chartHeight - c.quadrantPadding * 2 - xTop - xBottom - titleSpace),
     titleSpace,
   };
 }
@@ -149,7 +150,7 @@ function axisLabels(
     const at = (label: QuadrantText, end: 'start' | 'end', from: number): QuadrantAxisLabel => ({
       axis: 'x',
       end,
-      ast: x.ast,
+      ast: end === 'end' ? `${x.ast}/end` : x.ast,
       text: {
         label,
         x: from + (middle ? halfW / 2 : 0),
@@ -173,7 +174,7 @@ function axisLabels(
     const at = (label: QuadrantText, end: 'start' | 'end', from: number): QuadrantAxisLabel => ({
       axis: 'y',
       end,
-      ast: y.ast,
+      ast: end === 'end' ? `${y.ast}/end` : y.ast,
       text: {
         label,
         x: xAt,

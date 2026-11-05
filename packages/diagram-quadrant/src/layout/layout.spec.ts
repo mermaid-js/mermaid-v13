@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
 import { layoutQuadrant } from './layout.ts';
+import { quadrantLayoutViolations } from './invariants.ts';
 import { axis, config, model, point } from './fixtures.ts';
 
 describe('layoutQuadrant', () => {
@@ -79,9 +80,9 @@ describe('layoutQuadrant', () => {
       ])
     ).toEqual([
       ['x', 'start', 'ax:x', 'Low', 147, 45, 'middle', 0],
-      ['x', 'end', 'ax:x', 'High', 379, 45, 'middle', 0],
+      ['x', 'end', 'ax:x/end', 'High', 379, 45, 'middle', 0],
       ['y', 'start', 'ax:y', 'Bottom', 5, 389, 'middle', -90],
-      ['y', 'end', 'ax:y', 'Top', 5, 177, 'middle', -90],
+      ['y', 'end', 'ax:y/end', 'Top', 5, 177, 'middle', -90],
     ]);
     expect(l.axisLabels.every((a) => a.text.baseline === 'hanging')).toBe(true);
     expect(l.axisLabels.map((a) => a.text.fontSize)).toEqual([16, 16, 16, 16]);
@@ -201,7 +202,7 @@ describe('layoutQuadrant', () => {
     );
   });
 
-  it('honours a configured 0, which v12 replaced by its default', () => {
+  it('honours a configured 0', () => {
     const l = layoutQuadrant(
       model({ points: [point('A', '0', '1')] }),
       config({ quadrantPadding: 0, pointRadius: 0 })
@@ -222,5 +223,20 @@ describe('layoutQuadrant', () => {
       [undefined, { text: '', markdown: false }],
       [undefined, { text: '', markdown: false }],
     ]);
+  });
+
+  it('clamps the square to no size when the chart is too small for its bands', () => {
+    const l = layoutQuadrant(
+      model({ yAxis: axis('y', 'Eng'), points: [point('A', '0.5', '0.5')] }),
+      config({ chartWidth: 20 })
+    );
+    expect(l.quadrants.map((q) => [q.x, q.width])).toEqual([
+      [31, 0],
+      [31, 0],
+      [31, 0],
+      [31, 0],
+    ]);
+    expect(l.points.map((p) => p.cx)).toEqual([31]);
+    expect(quadrantLayoutViolations(l)).toEqual([]);
   });
 });
