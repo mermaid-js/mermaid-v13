@@ -5,7 +5,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## Exploration findings (2026-11-05), see `01-v12-timeline.md` "Surprises"
 
 ### #308 T1 lexer
-- [ ] #285's oracle is not committed yet. Timeline's v12 DB is a module namespace, so sequence's `db.constructor` trick for a fresh `yy` does not apply: the descriptor must reset it with `clear()` (owner #285; check when it lands).
+- [x] #285 merged into the integration branch at e5f920116 (PR #346 ready). Earlier: #285's oracle was not committed yet. Timeline's v12 DB is a module namespace, so sequence's `db.constructor` trick for a fresh `yy` does not apply: the descriptor must reset it with `clear()` (owner #285; check when it lands).
 - A period named `timeline` is rejected (jison's implicit `\b`): kept, the oracle decides.
 
 ### #336 T2 parser
