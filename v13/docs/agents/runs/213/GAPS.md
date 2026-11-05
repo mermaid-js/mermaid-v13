@@ -27,7 +27,14 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 ## #229 T3 flowchart
 
+- [x] Merged (PR #261). Carries a8669b5f4 from #257 (cherry-picked): the new fixtures move the grammar sampler onto `A@{…}@{…}`.
+- [ ] Escalated to Knut, built as v13 does it; MIGRATION.md lines and D-ids wait for the answer: linked nodes get the gradient (v12 bug drew them plain); `lin-doc` rule and `fr-circ` dot in plain nodeBorder; icon frames take the gradient until the icons plugin.
+
 ## #231 T4 sequence
+
+- [x] Merged (PR #260). No gradient, as in v12 (evidence in tickets/231.md). Text size follows the theme (D132).
+- [ ] Escalated to Knut: participant boxes take the theme shadow; v12's white offset filter did not show.
+- [ ] For #236: MIGRATION.md still says neo gradients are "Not in 13.0".
 
 ## #233 T5 class
 

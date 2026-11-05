@@ -94,6 +94,8 @@ exports[`layered over parser-produced flowchart graphs > lays out every corpus g
   "flowchart/baseline/themes/dark.mmd": 0,
   "flowchart/baseline/themes/default.mmd": 0,
   "flowchart/baseline/themes/forest.mmd": 0,
+  "flowchart/baseline/themes/neo-dark.mmd": 0,
+  "flowchart/baseline/themes/neo.mmd": 0,
   "flowchart/baseline/themes/neutral.mmd": 0,
   "flowchart/baseline/themes/redux.mmd": 0,
   "flowchart/nightly-check/8292-elk-edge-label-jog.mmd": 0,

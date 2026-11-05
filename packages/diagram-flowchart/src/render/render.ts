@@ -12,6 +12,7 @@ import {
   themeStyleSheet,
   translate,
   type Attrs,
+  type OutlinePaint,
   type Paint,
   type SafeValue,
   type SvgWriter,
@@ -21,7 +22,7 @@ import type { FlowRenderContext, FlowWarning } from './context.ts';
 import { drawIcon, drawImage } from './assets.ts';
 import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
-import { drawShape, shapeFilled, shapeInset, type Pads } from './shapes.ts';
+import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
 
 /** The flowchart's layout: the engine's LayoutModel, plus the measured views when they are fresh. */
 export interface FlowLayout extends LayoutModel {
@@ -107,7 +108,14 @@ interface NodePaint {
   readonly font: ReturnType<ThemeOf['font']>;
   readonly fontSize: Length;
   readonly fill: Color;
-  readonly stroke: Color;
+  /** The outline: the theme's gradient when `useGradient` is on (D182), else nodeBorder. */
+  readonly stroke: OutlinePaint;
+  /**
+   * nodeBorder as a colour where the outline is the gradient: a filled dot's fill, and a
+   * one-segment inner line, whose bounding box has no width or height (shapes.ts `Drawer`).
+   * Read only when the gradient is on and such a shape is drawn.
+   */
+  readonly plainStroke: Color | undefined;
   readonly text: Color;
   readonly strokeWidth: Length;
   readonly line: Color;
@@ -123,7 +131,7 @@ interface NodePaint {
 interface Paints {
   readonly heads: Arrowheads;
   readonly node: NodePaint;
-  readonly cluster?: { fill: Color; stroke: Color; strokeWidth: Length; text: Color };
+  readonly cluster?: { fill: Color; stroke: OutlinePaint; strokeWidth: Length; text: Color };
   /** A collapsed subgraph's separator and dots take clusterBorder (v12 `.collapsed-*` rules). */
   readonly collapsedLine?: Attrs;
   readonly slotOf: (view: NodeView) => Tint | undefined;
@@ -141,7 +149,11 @@ function paints(theme: ThemeOf, flow: Prepared): Paints {
     font: theme.font(),
     fontSize: theme.length('fontSize'),
     fill: theme.color('mainBkg'),
-    stroke: theme.color('nodeBorder'),
+    stroke: theme.outline('nodeBorder'),
+    plainStroke:
+      theme.gradient() && flow.nodes.some((v) => usesPlain(v.shape))
+        ? theme.color('nodeBorder')
+        : undefined,
     text: theme.color('nodeTextColor'),
     strokeWidth: theme.length('strokeWidth'),
     line: theme.color('lineColor'),
@@ -152,7 +164,7 @@ function paints(theme: ThemeOf, flow: Prepared): Paints {
     flow.groups.length > 0
       ? {
           fill: theme.color('clusterBkg'),
-          stroke: theme.color('clusterBorder'),
+          stroke: theme.outline('clusterBorder'),
           strokeWidth: theme.length('clusterStrokeWidth'),
           text: theme.color('titleColor'),
         }
@@ -410,6 +422,9 @@ function drawNode(
   };
   if (paint.collapsedLine && view.shape === 'collapsedGroup') {
     lineAttrs = slot ? { stroke: slot.stroke } : paint.collapsedLine;
+  }
+  if (paint.node.plainStroke && lineAttrs.stroke === paint.node.stroke && usesPlain(view.shape)) {
+    lineAttrs = { ...lineAttrs, stroke: paint.node.plainStroke };
   }
   if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
   else if (v?.icon) drawIcon(w, view, shapeAttrs, warn);
