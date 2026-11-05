@@ -306,13 +306,13 @@ function checkExtension(value: unknown): ExtensionPlugin {
 
 /**
  * A layout loader's extension (D174) runs only on renders that layout draws, which is known only
- * once the config is resolved: after parse claims are read and while inline providers and
- * resources are gathered for every render. So it may have hooks and a config fragment, never
+ * once the config is resolved: after parse claims are read and while inline providers, glyphs
+ * and resources are gathered for every render. So it may have hooks and a config fragment, never
  * those (DESIGN §12.2).
  */
 function checkLayoutExtension(value: unknown): ExtensionPlugin {
   const p = checkExtension(value);
-  for (const key of ['claims', 'inline', 'resources'] as const)
+  for (const key of ['claims', 'inline', 'glyphs', 'resources'] as const)
     if (p[key] !== undefined)
       throw new TypeError(
         `A layout extension "${p.id}" must not have "${key}": register it with registerExternalDiagrams`

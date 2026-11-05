@@ -1,0 +1,342 @@
+// The core contract icons build on (D293, T0 #314): pattern providers, the icon feature's
+// warning, the glyph slot (`RenderContext.icon`) and `DiagramPlugin.icons`.
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
+import { assertInert } from '@mermaid-js/core/svg';
+import type { InlinePatternProvider } from '@mermaid-js/core/text';
+import { createMermaid, MermaidError, type ExtensionPlugin } from './index.ts';
+
+function api(...extensions: ExtensionPlugin[]) {
+  const m = createMermaid();
+  m.initialize({ deterministic: true });
+  return { m, ready: m.registerExternalDiagrams(extensions) };
+}
+
+const codes = (warnings: readonly { code: string }[]): string[] => warnings.map((w) => w.code);
+
+const FLOW = 'flowchart LR\n  A["fa:fa-car Car"] --> B("fab:fa-github and fa:fa-x")';
+
+describe('label icons without a provider (D291, D296)', () => {
+  it('shows them as written, with one ICON_NOT_RENDERED per render', async () => {
+    const { m } = api();
+    for (let i = 0; i < 2; i++) {
+      const r = await m.render('x', FLOW);
+      expect(codes(r.warnings)).toEqual(['ICON_NOT_RENDERED']);
+      expect(r.svg).toContain('fa:fa-car Car');
+    }
+    expect(codes(m.renderSync(FLOW).warnings)).toEqual(['ICON_NOT_RENDERED']);
+  });
+
+  it('takes the D296 prefixes, with no left boundary, and nothing else', async () => {
+    const { m } = api();
+    for (const label of ['fad:fa-x', 'fak:fa-x', 'sofa:fa-x', 'fas:fa-a-b_c'])
+      expect(codes((await m.render('x', `flowchart LR\n  A["${label}"]`)).warnings), label).toEqual(
+        ['ICON_NOT_RENDERED']
+      );
+    for (const label of ['note:item', 'mdi:fire', 'fa:car', 'fax:fa-x', 'fa: fa-x'])
+      expect(codes((await m.render('x', `flowchart LR\n  A["${label}"]`)).warnings), label).toEqual(
+        []
+      );
+  });
+
+  it('names the feature, not a package (D153)', async () => {
+    const [w] = (await api().m.render('x', FLOW)).warnings;
+    expect(w?.message).toMatch(/icon/i);
+    expect(w?.message).not.toMatch(/@mermaid-js|plugin/);
+  });
+
+  it('warns ASCII_DROPPED for icons in text output (D299)', async () => {
+    const r = await api().m.render('x', FLOW, { format: 'ascii' });
+    expect(r.warnings.map((w) => `${w.code}:${w.feature ?? ''}`)).toEqual(['ASCII_DROPPED:icon']);
+  });
+});
+
+/**
+ * The fixture pattern provider: D296's pattern, a box 1em tall and 10 px wide per character of the
+ * icon name, baseline at 0.875em (v12's `.label-icon`), drawn as a frame.
+ */
+const icon: InlinePatternProvider = {
+  pattern: /(fa[bdklrs]?):fa-([\w-]+)/,
+  box: (source, { font }) => {
+    const name = /fa-([\w-]+)$/.exec(source)![1]!;
+    const width = 10 * name.length;
+    return {
+      width,
+      height: font.size,
+      baseline: 0.875 * font.size,
+      node: { tag: 'rect', attrs: { class: 'fixture-icon', width, height: font.size } },
+    };
+  },
+};
+const icons: ExtensionPlugin = { id: 'fixture-icons', inline: [icon] };
+
+const RE_BOX =
+  /<g transform="translate\((-?[\d.]+),(-?[\d.]+)\)"><rect class="fixture-icon" width="([\d.]+)"/g;
+/** Each drawn box: its top-left corner and width. */
+const boxes = (svg: string): { x: number; y: number; width: number }[] =>
+  [...svg.matchAll(RE_BOX)].map((m) => ({ x: +m[1]!, y: +m[2]!, width: +m[3]! }));
+/** The baselines (`y`) of every positioned tspan. */
+const baselines = (svg: string): number[] =>
+  [...svg.matchAll(/<tspan x="-?[\d.]+" y="(-?[\d.]+)"/g)].map((m) => +m[1]!);
+/** How many lines these baselines make (equal within 0.01 px). */
+const lines = (ys: number[]): number =>
+  ys.sort((a, b) => a - b).filter((y, i, all) => i === 0 || y - all[i - 1]! > 0.01).length;
+
+describe('pattern providers (D293)', () => {
+  it('box every match, each handed the whole match, and silence the feature warning', async () => {
+    const seen: string[] = [];
+    const spy: ExtensionPlugin = {
+      id: 'spy',
+      inline: [{ pattern: icon.pattern, box: (s, r) => (seen.push(s), icon.box(s, r)) }],
+    };
+    const { m, ready } = api(spy);
+    await ready;
+    const r = await m.render('x', FLOW);
+    expect(codes(r.warnings)).toEqual([]);
+    expect(seen).toEqual(['fa:fa-car', 'fab:fa-github', 'fa:fa-x']);
+    expect(boxes(r.svg).map((b) => b.width)).toEqual([30, 60, 10]);
+    expect(r.svg).not.toContain('fa-');
+  });
+
+  it('wraps a box as one piece at several widths', async () => {
+    const label = 'flowchart LR\n  A["aaaa fa:fa-wxyz aaaa"]';
+    const rows: number[] = [];
+    for (const wrappingWidth of [200, 60, 30, 5]) {
+      const m = createMermaid();
+      m.initialize({ deterministic: true, flowchart: { wrappingWidth } });
+      await m.registerExternalDiagrams([icons]);
+      const { svg } = await m.render('x', label);
+      expect(
+        boxes(svg).map((b) => b.width),
+        String(wrappingWidth)
+      ).toEqual([40]);
+      // The label font is 14 px, so a box's baseline is 12.25 px below its top.
+      rows.push(lines([...baselines(svg), ...boxes(svg).map((b) => b.y + 12.25)]));
+    }
+    // The 40 px box: one line at 200; at 60 it fits beside neither 'aaaa' (about 35 px), so it
+    // takes a line of its own; at 30 each 'aaaa' splits in two and the box keeps its line; at 5
+    // every character takes a line and the box one more, whole.
+    expect(rows).toEqual([1, 3, 5, 9]);
+  });
+
+  it('lets the span that starts first win, pairs and patterns alike', async () => {
+    const seen: string[] = [];
+    const pair: ExtensionPlugin = {
+      id: 'pair',
+      inline: [
+        {
+          open: '[[',
+          close: ']]',
+          box: (s, r) => (seen.push(`pair ${s}`), icon.box('fa:fa-p', r)),
+        },
+      ],
+    };
+    const pattern: ExtensionPlugin = {
+      id: 'pattern',
+      inline: [
+        { pattern: icon.pattern, box: (s, r) => (seen.push(`pattern ${s}`), icon.box(s, r)) },
+      ],
+    };
+    const { m, ready } = api(pair, pattern);
+    await ready;
+    await m.render('x', 'flowchart LR\n  A["[[fa:fa-in]] fa:fa-out [[x]]"]');
+    expect(seen).toEqual(['pair fa:fa-in', 'pattern fa:fa-out', 'pair x']);
+  });
+
+  it('warns about a match no pattern provider takes whole', async () => {
+    const narrow: ExtensionPlugin = {
+      id: 'narrow',
+      inline: [{ pattern: /fa:fa-x\b/, box: icon.box }],
+    };
+    const { m, ready } = api(narrow);
+    await ready;
+    expect(codes((await m.render('x', 'flowchart LR\n  A["fa:fa-x"]')).warnings)).toEqual([]);
+    const r = await m.render('x', FLOW);
+    expect(codes(r.warnings)).toEqual(['ICON_NOT_RENDERED']);
+    expect(boxes(r.svg).map((b) => b.width)).toEqual([10]);
+  });
+
+  it('refuses a provider with neither a pair nor a pattern, or with both', async () => {
+    for (const p of [
+      { box: icon.box },
+      { pattern: 'fa:fa-x', box: icon.box },
+      { pattern: icon.pattern, open: '[[', close: ']]', box: icon.box },
+    ]) {
+      const m = createMermaid();
+      await expect(
+        m.registerExternalDiagrams([{ id: 'bad', inline: [p as never] }]),
+        JSON.stringify(p)
+      ).rejects.toThrow(/"bad".*or a pattern/);
+    }
+  });
+
+  it('blames the extension for a throwing pattern provider', async () => {
+    const { m, ready } = api({
+      id: 'broken-icons',
+      inline: [
+        {
+          pattern: icon.pattern,
+          box: () => {
+            throw new Error('boom');
+          },
+        },
+      ],
+    });
+    await ready;
+    const e = await m.render('x', FLOW).catch((x: unknown) => x);
+    expect(e).toBeInstanceOf(MermaidError);
+    expect((e as MermaidError).message).toMatch(/"broken-icons" failed in inline: boom/);
+  });
+});
+
+/** The fixture glyph: 16 × 8 in its own units, a frame, so fitting it is visible. */
+const GLYPH = {
+  width: 16,
+  height: 8,
+  node: { tag: 'rect', attrs: { class: 'fixture-glyph', width: 16, height: 8 } },
+} as const;
+const SHAPE = 'flowchart LR\n  A@{ icon: "fa:bell", form: square, h: 64 }';
+const RE_GLYPH =
+  /<g transform="translate\((-?[\d.]+),(-?[\d.]+)\)"><g transform="([^"]+)"><rect class="fixture-glyph"/g;
+
+describe('the glyph slot (D293)', () => {
+  it("reaches flowchart's render context, fitted into the icon's square", async () => {
+    const asked: unknown[] = [];
+    const { m, ready } = api({
+      id: 'fixture-glyphs',
+      glyphs: {
+        glyph: (name, { size, fallbackPrefix }) => (
+          asked.push({ name, size, fallbackPrefix }),
+          GLYPH
+        ),
+      },
+    });
+    await ready;
+    const r = await m.render('x', SHAPE);
+    expect(asked).toEqual([{ name: 'fa:bell', size: 64, fallbackPrefix: undefined }]);
+    expect(codes(r.warnings)).toEqual([]);
+    const drawn = [...r.svg.matchAll(RE_GLYPH)];
+    expect(drawn).toHaveLength(1);
+    // The frame's top-left corner, then xMidYMid meet: 16 × 8 scales by 4 to 64 × 32, centred.
+    const frame = /<rect x="(-?[\d.]+)" y="(-?[\d.]+)" width="64" height="64"/.exec(r.svg)!;
+    expect(drawn[0]!.slice(1, 3)).toEqual([frame[1], frame[2]]);
+    expect(drawn[0]![3]).toBe('translate(0,16) scale(4,4)');
+  });
+
+  it('asks each extension in registration order until one has the glyph', async () => {
+    const asked: string[] = [];
+    const none = { id: 'none', glyphs: { glyph: () => (asked.push('none'), undefined) } };
+    const some = { id: 'some', glyphs: { glyph: () => (asked.push('some'), GLYPH) } };
+    const late = { id: 'late', glyphs: { glyph: () => (asked.push('late'), GLYPH) } };
+    const { m, ready } = api(none, some, late);
+    await ready;
+    expect([...(await m.render('x', SHAPE)).svg.matchAll(RE_GLYPH)]).toHaveLength(1);
+    expect(asked).toEqual(['none', 'some']);
+  });
+
+  it('keeps the frame-only drawing when no extension has the glyph', async () => {
+    const without = await api().m.render('x', SHAPE);
+    const { m, ready } = api({ id: 'none', glyphs: { glyph: () => undefined } });
+    await ready;
+    const declined = await m.render('x', SHAPE);
+    expect(declined.svg).toBe(without.svg);
+    expect(codes(declined.warnings)).toEqual(['ICON_UNAVAILABLE']);
+  });
+
+  it("gives a provider's warning once per render", async () => {
+    const warning = { code: 'FIXTURE_GLYPH', message: 'drawn twice' };
+    const { m, ready } = api({
+      id: 'warns',
+      glyphs: { glyph: (_, { warn }) => (warn(warning), warn(warning), GLYPH) },
+    });
+    await ready;
+    const r = await m.render('x', `${SHAPE}\n  B@{ icon: "fa:car", form: circle }`);
+    expect(codes(r.warnings)).toEqual(['FIXTURE_GLYPH']);
+  });
+
+  it('checks the glyph and blames the extension for a bad one', async () => {
+    for (const [glyph, why] of [
+      [{ ...GLYPH, width: 0 }, /positive finite width/],
+      [{ ...GLYPH, height: Number.NaN }, /positive finite height/],
+      [{ ...GLYPH, node: { tag: 'script' } }, /<script>, not an allowed SVG element/],
+      [{ ...GLYPH, node: { tag: 'path', attrs: { onclick: 'x' } } }, /onclick on <path>/],
+    ] as const) {
+      const { m, ready } = api({ id: 'bad-glyphs', glyphs: { glyph: () => glyph as never } });
+      await ready;
+      const e = await m.render('x', SHAPE).catch((x: unknown) => x);
+      expect(e, String(why)).toBeInstanceOf(MermaidError);
+      expect((e as MermaidError).message).toMatch(/"bad-glyphs" failed in glyphs/);
+      expect((e as MermaidError).message).toMatch(why);
+    }
+  });
+
+  it('refuses glyphs without a glyph function', async () => {
+    await expect(
+      createMermaid().registerExternalDiagrams([{ id: 'bad', glyphs: {} as never }])
+    ).rejects.toThrow(/"bad": glyphs needs a glyph\(\) function/);
+  });
+});
+
+describe('DiagramPlugin.icons (D293)', () => {
+  it("reaches an extension's resource request with flowchart's shape icons", async () => {
+    const seen: (readonly string[] | undefined)[] = [];
+    const { m, ready } = api({
+      id: 'packs',
+      resources: {
+        provides: [{ kind: 'iconPack', name: 'fa' }],
+        missing: (_, request) => (seen.push(request.icons?.()), []),
+        load: async () => {},
+      },
+    });
+    await ready;
+    await m.prepare(`${SHAPE}\n  B@{ icon: "aws:s3", label: "fa:fa-car" }\n  C["fa:fa-x"] --> A`);
+    // Label icons are in labels(), not here.
+    expect(seen).toEqual([['fa:bell', 'aws:s3']]);
+  });
+});
+
+const CORPUS = fileURLToPath(new URL('../../../e2e/diagrams/flowchart/', import.meta.url));
+function flowchartCorpus(): { id: string; source: string }[] {
+  const out: { id: string; source: string }[] = [];
+  const walk = (d: string): void => {
+    for (const e of readdirSync(d).sort()) {
+      const p = join(d, e);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (p.endsWith('.mmd'))
+        out.push({ id: p.slice(CORPUS.length), source: readFileSync(p, 'utf8') });
+    }
+  };
+  walk(CORPUS);
+  return out;
+}
+
+describe('the contract over the flowchart corpus', () => {
+  it('passes the allow-list and keeps stream and tree output equal with icons drawn (R-SEC-2)', async () => {
+    const glyphs: ExtensionPlugin = { id: 'fixture-glyphs', glyphs: { glyph: () => GLYPH } };
+    const { m, ready } = api(icons, glyphs);
+    await ready;
+    // A postRender hook switches the writer to its tree backing, which must agree byte for byte.
+    const { m: tree, ready: treeReady } = api(icons, glyphs, { id: 'tree', postRender: () => {} });
+    await treeReady;
+    let labels = 0;
+    let shapes = 0;
+    for (const { id, source } of flowchartCorpus()) {
+      let r;
+      try {
+        r = await m.render('mermaid-0', source);
+      } catch (e) {
+        if (e instanceof MermaidError) continue;
+        throw e;
+      }
+      if (boxes(r.svg).length > 0) labels++;
+      if (r.svg.includes('fixture-glyph')) shapes++;
+      expect(codes(r.warnings), id).not.toContain('ICON_NOT_RENDERED');
+      expect(() => assertInert(r.svg, { themeStyle: r.svg.includes('<style>') }), id).not.toThrow();
+      expect((await tree.render('mermaid-0', source)).svg, id).toBe(r.svg);
+    }
+    expect(labels).toBeGreaterThanOrEqual(50);
+    expect(shapes).toBeGreaterThanOrEqual(4);
+  });
+});

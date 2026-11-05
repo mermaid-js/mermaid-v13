@@ -518,10 +518,12 @@ export function createMermaid(
     if (hooks.size === 0) return [];
     const { parse, config } = a.prepared;
     const labels = a.plugin.labels?.bind(a.plugin);
+    const icons = a.plugin.icons?.bind(a.plugin);
     return hooks.resources(parse, {
       config,
       format: ascii ? 'ascii' : 'svg',
       ...(labels ? { labels: () => labels(parse.model) } : {}),
+      ...(icons ? { icons: () => icons(parse.model) } : {}),
     });
   }
 
@@ -643,6 +645,8 @@ export function createMermaid(
     // The theme reads the id prefix only for the gradient (D182), after ctx exists.
     const theme = themeFor(config, s, warn, registry.themeRules(), () => ctx.idPrefix);
     let idPrefix: string | undefined;
+    // Glyphs (D293) are SVG only, and absent without an extension that has them.
+    const icon = textOutput ? undefined : hooks.icon(warn);
     const ctx: RenderContext = {
       config,
       measurer:
@@ -682,6 +686,7 @@ export function createMermaid(
       // Inline boxes (D177) are SVG only: text output shows every span as written, and warns
       // ASCII_DROPPED once per feature (D179).
       inline: inlineSpans(hooks.inline(), warn, textOutput ? 'ascii' : 'svg'),
+      ...(icon ? { icon } : {}),
       warn,
       // Spread into the literal, not over `ctx`: a spread would run the lazy idPrefix getter.
       ...textOnly,

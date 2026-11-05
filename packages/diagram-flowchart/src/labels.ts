@@ -11,3 +11,11 @@ export function flowchartLabels(model: FlowModel): readonly string[] {
     ...model.subgraphs.map((s) => s.title),
   ];
 }
+
+/**
+ * Every icon the layout draws outside labels (`DiagramPlugin.icons`, D293): icon shapes'
+ * `icon`, as written. Icons in labels are in {@link flowchartLabels}.
+ */
+export function flowchartIcons(model: FlowModel): readonly string[] {
+  return model.vertices.flatMap((v) => (v.icon === undefined ? [] : [v.icon]));
+}
