@@ -44,4 +44,6 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 ## #235 T7 ER
 
+- [ ] Escalated (tickets/235.md): column rules take the gradient colour at their x; v12 drew each half gradientStart, half gradientStop (0.0001-wide polygons). Proposed MIGRATION.md line there.
+
 ## #236 T8 close
