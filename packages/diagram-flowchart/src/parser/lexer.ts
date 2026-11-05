@@ -626,6 +626,8 @@ class FlowLexer {
         if (this.kw('class')) return this.token(T.Class, 5);
         if ((e = this.at(RE_CLICK, p)) >= 0) {
           this.push(S.click);
+          // The keyword alone; the blanks after it belong to no token, as in jison.
+          this.emit(T.ClickKeyword, p, p + 5);
           this.p = e;
           return true;
         }

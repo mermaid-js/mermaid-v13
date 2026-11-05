@@ -87,4 +87,5 @@ export const flowchartCategories = /* @__PURE__ */ kindCategories(T, {
   Space: 'Other',
   Eof: 'Other',
   ShapeDataEnd: 'Meta',
+  ClickKeyword: 'Keyword',
 });

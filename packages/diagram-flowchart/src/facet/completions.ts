@@ -83,7 +83,8 @@ function statementBefore(tokens: TokenStream, at: number): Statement {
     const k = tokens.kind[i]!;
     if ((tokens.end[i] ?? 0) > at) continue;
     if (STATEMENT_END.has(k)) break;
-    if (k === Kind.Comment || k === Kind.Directive) continue;
+    // As the parser reads it: `click` heads no statement, the node id after it does.
+    if (k === Kind.Comment || k === Kind.Directive || k === T.ClickKeyword) continue;
     kinds.push(k);
   }
   kinds.reverse();

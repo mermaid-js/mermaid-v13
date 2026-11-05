@@ -15,9 +15,10 @@ export interface KindSource {
   object: string;
   /**
    * Kinds the hand-written lexer emits for an unnamed (`-`) grammar rule: kind key → the
-   * rule's mode and pattern source.
+   * rule's mode and pattern source, and for a keyword the terminal whose doc it shares (an
+   * unnamed rule names no terminal for the doc table to look up).
    */
-  unnamed?: Record<string, { mode: string; pattern: string }>;
+  unnamed?: Record<string, { mode: string; pattern: string; docOf?: string }>;
   /**
    * Terminals whose rules have different scopes; the first rule's scope is used. Any other
    * mixed terminal fails generation.
@@ -25,7 +26,8 @@ export interface KindSource {
   mixed?: string[];
   /**
    * Kinds that get a hover doc (D93) although their category is not keyword or operator: the
-   * text before them is a keyword the lexer emits no token for (`click`, `call`).
+   * text before them is a keyword the lexer emits no token for (`call`), or a keyword
+   * completion is offered for them (`click`, whose node id the parser expects).
    */
   documented?: string[];
 }
