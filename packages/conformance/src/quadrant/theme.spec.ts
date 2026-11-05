@@ -51,14 +51,29 @@ describe('quadrant theme variables against v12 12.2.0', () => {
     }
   });
 
+  /**
+   * The borders are `primaryBorderColor`, as for every other type (R-THEME-11). Core derives it
+   * with its own rules, so where v12's khroma value differs the border does too: v12 → v13, as
+   * MIGRATION.md lists them. Every other theme keeps v12's border.
+   */
+  const BORDER_CHANGES: Readonly<Record<string, readonly [string, string]>> = {
+    default: ['#c7c7f1', '#c9c9d9'],
+    dark: ['#cccccc', '#4c4d4d'],
+    forest: ['#abb594', '#aec281'],
+    neutral: ['#d4d4d4', '#cacaca'],
+    base: ['#eeddbb', '#d9cfbc'],
+    redux: ['#171717', '#28253d'],
+    'redux-color': ['#171717', '#28253d'],
+  };
+
   it.each(THEME_NAMES)('derive as v12 does in %s', async (name) => {
     const old = v12Vars(name);
     const theme = createTheme(await loadTheme(name), { cssVariables: false });
-    // The borders are v12's `primaryBorderColor`, which core already approximates (D71).
     const BORDERS = ['quadrantInternalBorderStrokeFill', 'quadrantExternalBorderStrokeFill'];
+    const change = BORDER_CHANGES[name];
     for (const n of BORDERS) {
-      expect(hex(old[n]), n).toBe(hex(old.primaryBorderColor));
       expect(theme.value(n), n).toBe(theme.value('primaryBorderColor'));
+      expect([hex(old[n]), hex(theme.value(n))], n).toEqual(change ?? [hex(old[n]), hex(old[n])]);
     }
     const differs = QUADRANT.filter((n) => !BORDERS.includes(n)).filter(
       (n) => hex(old[n]) !== hex(theme.value(n))
@@ -67,6 +82,11 @@ describe('quadrant theme variables against v12 12.2.0', () => {
     // D231: v12's precedence bug left the point fill unusable; points showed the root text colour.
     expect(String(old.quadrantPointFill)).toMatch(/NaN/);
     expect(theme.value('quadrantPointFill')).toBe(theme.value('textColor'));
+  });
+
+  it('list a border change only where v12 and v13 differ', () => {
+    for (const [name, [was, now]] of Object.entries(BORDER_CHANGES))
+      expect(was, name).not.toBe(now);
   });
 
   const FILLS = ['quadrant1Fill', 'quadrant2Fill', 'quadrant3Fill', 'quadrant4Fill'];
@@ -94,6 +114,38 @@ describe('quadrant theme variables against v12 12.2.0', () => {
     expect(both[0]).toEqual({ quadrant1Fill: '#ececff' });
     expect(both[4]).toEqual({ quadrant1Fill: '#336699' });
   });
+
+  it('follow a user primaryTextColor and primaryBorderColor in default, where v12 did not', async () => {
+    const vars = { primaryTextColor: '#112233', primaryBorderColor: '#445566' };
+    const old = v12Vars('default', vars);
+    const theme = createTheme(await loadTheme('default'), {
+      cssVariables: false,
+      themeVariables: vars,
+    });
+    for (const n of ['quadrant1TextFill', 'quadrantTitleFill', 'quadrantPointTextFill']) {
+      expect(hex(old[n]), n).toBe('#131300');
+      expect(theme.value(n), n).toBe('#112233');
+    }
+    expect(hex(old.quadrantExternalBorderStrokeFill)).toBe('#c7c7f1');
+    expect(theme.value('quadrantExternalBorderStrokeFill')).toBe('#445566');
+  });
+
+  // Core behaviour, listed in MIGRATION.md and left to core: v12's redux, redux-color, base and
+  // neo switch the text colours to #eee under `darkMode: true`; v13's specs do not.
+  it.each(['redux', 'redux-color', 'base', 'neo'] as const)(
+    'keep the text colour under darkMode in %s, where v12 switched to #eee',
+    async (name) => {
+      const vars = { darkMode: true };
+      const old = v12Vars(name, vars);
+      const theme = createTheme(await loadTheme(name), {
+        cssVariables: false,
+        themeVariables: vars,
+      });
+      expect(hex(old.primaryTextColor)).toBe('#eeeeee');
+      expect(hex(old.quadrantTitleFill)).toBe('#eeeeee');
+      expect(hex(theme.value('quadrantTitleFill'))).not.toBe('#eeeeee');
+    }
+  );
 
   it('honour a user quadrantPointFill (D231)', async () => {
     const theme = createTheme(await loadTheme('default'), {
