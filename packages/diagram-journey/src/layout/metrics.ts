@@ -73,6 +73,15 @@ export interface FixedLengths {
   readonly flatDrop: number;
   readonly flatHalf: number;
   readonly taskLineStroke: number;
+  /** The task line's dash and gap (v12 `stroke-dasharray: 4 2`). */
+  readonly taskDash: number;
+  readonly taskGap: number;
+  /** Band and task corners (v12 `rx = ry = 3`) and their outline (v12 note rect, 1 px). */
+  readonly cornerRadius: number;
+  readonly boxStroke: number;
+  /** v12 strokes its eyes 2 px wide and its mouth 1 px. */
+  readonly eyeStroke: number;
+  readonly mouthStroke: number;
   /** The title's first baseline. */
   readonly titleBaseline: number;
 }
@@ -130,6 +139,12 @@ export const FIXED: FixedLengths = {
   flatDrop: 7,
   flatHalf: 5,
   taskLineStroke: 1,
+  taskDash: 4,
+  taskGap: 2,
+  cornerRadius: 3,
+  boxStroke: 1,
+  eyeStroke: 2,
+  mouthStroke: 1,
   titleBaseline: 25,
 };
 

@@ -46,6 +46,17 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 
 ## #319 T4 renderer
 
+- **For T5: theme variables the renderer reads.** `textColor` (vocabulary `usedBy` += journey, done here), `fontFamily`, `fontSize`, and, through `src/render/paint.ts`, `fillType0`–`fillType7`, `faceColor`, `actor0`–`actor5`. The last fifteen are read only when `THEME_VARIABLES` has them, else v12's value: `fillType<n>` the v12 `default` theme's (`#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff`), `faceColor` `#FFF8DC`, `actor<n>` none. T5 adds the fifteen vocabulary entries (kind `color`, `usedBy: ['journey']`; the names are literals in `paint.ts`, so the `usedBy` scan sees them) and nothing else changes; the fallbacks then never apply and may go.
+- **For T5: `actor0`–`actor5` take no theme value.** The renderer treats an `actor<n>` whose value is `currentColor` (what a vocabulary variable no spec sets resolves to) as unset and uses `actorColours` (D249). `faceColor` needs `#FFF8DC` in the specs; `fillType<n>` the per-theme values above (GAPS "Hue rotation").
+- **For T5: `sectionColours` is honoured whenever the config has it** (D225 "only when set"): journey's config defaults must not carry the schema default `['#fff']`, or every name turns white. `actorColours` falls back to v12's six colours when absent.
+- Decided in T4: the section and task classes sit on the group (`<g class="task task-type-<n>">`), not on the `<rect>` or the label, so `fill`/`stroke` rules on them cannot reach label text by inheritance; MIGRATION row says to write `.task-type-<n> > rect`. New classes: `legend-entries`, `legend-entry`, `sections`, `tasks`, `section-label`, `task-label`, `eye`, `mouth-smile|sad|flat`, `journey-title`, `activity`, `activity-line`, `arrowhead`, `journey-section empty`.
+- Decided in T4: a section line with no band (empty, or a repeat folded into the run before it) gets an empty `<g class="journey-section empty" data-id data-ast>`; a band whose section has no model line (hand-built models only) gets `data-id` and no `data-ast`.
+- Decided in T4: the mouth arc is filled and stroked `#666` (v12 filled it black, stroked `#666`; D245 lists the mouth as `#666`); the flat mouth is a `<path>` too. Eyes keep v12's 2 px stroke. Task dots keep v12's `<title>` tooltip; legend dots have none (as v12).
+- Decided in T4: the title and legend lines are left-aligned at their box (v12 `text-anchor: start`); section and task names centred. `preserveAspectRatio` is dropped.
+- Decided in T4: the renderer's lengths (corner radius 3, box stroke 1, eye stroke 2, mouth stroke 1, task dash `4 2`) joined the layout's metrics table (pitfall 13).
+- Decided in T4: the in-package well-formed check is core's `inertProblem` scan plus one root, because `import-boundaries` keeps `saxes` out of diagram packages; T5's conformance render spec adds the full XML parse over the corpus.
+- Unmet until T2/T5: render properties run on the hand-built `FIXTURES` (6 themes, `auto`, literal colours), not on parser output through `createMermaid().render()`; the AST round-trip checks `data-ast` against the model's ids (one element each), not against AST ranges.
+
 ## #327 T5 integration
 
 ## #331 T6 language facet

@@ -168,7 +168,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
   tertiaryTextColor: def('tt', 'color', ['core']),
-  textColor: def('tx', 'color', ['core', 'flowchart', 'sequence', 'state', 'er']),
+  textColor: def('tx', 'color', ['core', 'flowchart', 'sequence', 'state', 'er', 'journey']),
   mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er']),
   nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er']),
   nodeTextColor: def('nt', 'color', ['flowchart', 'state', 'er']),
