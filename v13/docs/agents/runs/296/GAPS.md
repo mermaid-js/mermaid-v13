@@ -39,6 +39,15 @@ Unmet criteria and open choices, filed under the ticket that owns each one. Each
 
 ## H3 (#343)
 
+- Choice: the baselines are `e2e/diagrams/<type>/baseline/handdrawn/{default,redux,neo,neo-dark}.mmd`, not the spec's `<type>/handdrawn/`. The second level under a type is the tier (`baseline`, `pr-check`, `nightly-check`, `visual-check`; `MERMAID_E2E_FIXTURE_TIER` filters on it), and curated topic folders sit under `baseline/` (`baseline/themes/`), which the gallery and the page adapter's spec read. State's baselines are in `state-diagram-v2`, as its theme baselines are.
+- Choice: the page adapter (`packages/dev/src/adapter.ts`: e2e page, gallery, dev server) registers the plugin, as it does math. So the 168 corpus files with `look: handDrawn` in the four types now render sketched in the snapshot run, where they drew plain with `LOOK_REMOVED`.
+- Found and fixed (H1's `sketch.ts`): under tsx, which runs the dev server, `import rough from 'roughjs/bundled/rough.esm.js'` gave `{ default: rough }` (roughjs has no `type: module`), so the server would not start. The import now unwraps that default. Node's own loader, vitest and esbuild were not affected.
+- Activates on install: checked for Node only. The SSR app (`e2e/platform/ssr`, npm, pnpm, bundled server) installs the packed plugin and sketches `look: handDrawn` with no registration code; with `discovery: false` it warns `LOOK_REMOVED`. The bundler plugin and CDN paths are generic for extensions (D167, D169) but no app exercises this plugin through them.
+- Unsketched types: only sequence has a v13 package here. Gantt, pie, timeline, journey, quadrant and gitGraph are skipped in `unsketched.spec.ts` and join it when their ports land.
+- PNGs are not committed (`e2e/__snapshots__/` is ignored). They were made in `mcr.microsoft.com/playwright:v1.62.1-noble` under `.tmp/t343-vis/`.
+- For the maintainer (D306): the plugin is 11,151 B gz with roughjs, against v12's roughjs chunk of 9,549 B gz (`mermaid@12.2.0`, `chunk-F6PIGZHG.mjs`). Eager loading kept; revisit if wanted.
+- Not measured: warm render time (not measured on a steady machine) and output bytes against `mermaid@12.2.0`, whose hand-drawn output needs a DOM (`rough.svg`).
+
 ## H4 (#344)
 
 - Waits for the mindmap port's T5 (#294). Left open when the integration PR is marked ready.
