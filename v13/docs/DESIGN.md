@@ -606,6 +606,7 @@ interface DiagramPlugin<M = unknown, L = LayoutModel> {
   layoutKind: 'graph' | 'custom';               // 'graph' requires L = LayoutModel (§6.1)
   parse(text: string, ctx: RenderContext): ParseResult<M>;
   resources?(ast: AstNode, ctx: RenderContext): Resource[];   // icon packs, math, layout engine (R-API-2)
+  labels?(model: M): readonly string[];         // label texts as written, so an extension scans only labels for its delimiter (D176, D178)
   layout?(model: M, ctx: RenderContext): L;     // graph: may use ctx.layout(graph); custom: own algorithm
   render(model: M, layout: L, ctx: RenderContext, w: SvgWriter): void;
   ascii?(model: M, layout: L, ctx: RenderContext): string;   // M2: lazily loaded entry, draws with core/ascii (§6.3)
