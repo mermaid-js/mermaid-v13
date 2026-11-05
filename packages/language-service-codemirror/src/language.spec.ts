@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { performance } from 'node:perf_hooks';
 import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { Tree as TreeClass } from '@lezer/common';
@@ -89,6 +92,24 @@ describe('the Lezer language (#21 grammar)', () => {
     },
     20_000
   );
+
+  it('parses the 50k bench fixture in well under a second (#171)', () => {
+    // Was 1.1–3 s with a 4,096-character copy per token, ~30 ms after #171. The bound is loose
+    // so a loaded machine does not fail it; `scripts/bench-parse.ts` reports the time.
+    const text = readFileSync(
+      join(import.meta.dirname, '../../bench/fixtures/language/flowchart-50k.mmd'),
+      'utf8'
+    );
+    const { parser } = mermaidLanguage().language;
+    expect(parser.parse(text).length).toBe(text.length); // also the warm-up
+    let best = Infinity;
+    for (let i = 0; i < 3; i++) {
+      const t = performance.now();
+      parser.parse(text);
+      best = Math.min(best, performance.now() - t);
+    }
+    expect(best).toBeLessThan(500);
+  }, 30_000);
 
   it('reuses the diagram after an edit inside the front matter (#35 review)', () => {
     // Longer than the generated tokenizer's 4,096-character lookahead, which stops reuse
