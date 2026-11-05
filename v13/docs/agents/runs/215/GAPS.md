@@ -37,6 +37,12 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [E4 #242] Not ported by E3 (post-passes beyond D174's list): v12's `evenGroupFrames` (pulls a frame in past an edge lane), `separateOppositeEdgeLabels`, `slideTerminalLabelsOffFrames`, `putTerminalLabelsOnTheirSide`, `sanitizeElkEdgePoints`, marker segment lengths, `cutter2` (clip to the outline). DDLT invariants hold without them. Two edges into one side can still share an end point (class corpus `C2`).
 - [E4 #242] Spacing comes from `LayoutGraph.spacing` (ticket), not v12's `spacing.baseValue` 40/24 and fixed group spacings, so pixel sizes differ from v12. v12's `minLen`, `headRoom` and `routing` have no ELK mapping (v12 had none either).
 
+## From M2 #245
+
+- [M3 #246] `needsMath` scans every string in the parse, so `$$` in a click tooltip (not a `%%` comment) loads MathJax. Pinned by a spec in plugin-math. Narrow it with a per-type label-strings walk while wiring each type (`tickets/245.md`).
+- [M3 #246] A front-matter `title` with `$$` doesn't reach label layout in flowchart; check each type's title path when wiring.
+- [Knut] MathJax is bundled into `plugin-math/dist/engine.js` (devDependencies, Apache-2.0 notice) so the `#default-font` → TeX-font alias holds: 677 KB gz engine, 740 B entry.
+
 ## Waiting on #218
 
 - Activates-on-install checks (E2, E5, M3) need #218 T4 (#226). S1 #247 needs #218 T0 (#220).
