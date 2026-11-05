@@ -5,12 +5,12 @@ Integration branch `feature/291_timeline` (from `mermaid-v13` + `docs/m4-specs`,
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T1 lexer parity gate | #308 | #285 (merged in e5f920116) | merged (ff 63cb58b7e) |
-| T2 grammar, parser, model, AST | #336 | #308 | in progress |
+| T2 grammar, parser, model, AST | #336 | #308 | merged (ff f32238274) |
 | T3 layout (LR and TD) | #337 | #336 (hand-built fixtures meanwhile) | merged (ff 70ad3a5d2) |
 | T4a classic `cScale*`, `cScaleInv*`, `cScaleLabel*` palettes | #338 | — | merged |
 | T4 SVG renderer | #311 | #337, #338 | in progress |
 | T5 integration | #315 | #311, #318 | |
-| T6 language facet | #318 | #336 | |
+| T6 language facet | #318 | #336 | in progress |
 
 - `01-v12-timeline.md`: pointer notes on v12 grammar, DB, renderers, styles, themes, corpus.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.
