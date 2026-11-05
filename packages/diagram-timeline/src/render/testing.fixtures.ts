@@ -1,10 +1,12 @@
 /**
- * Test-only (not built, not exported): the internal render entry the render specs use until the
- * plugin can register (the parser, #336, is not merged). It builds the render context as the
- * public pipeline does (`mermaid/src/api.ts` `themeFor`, `core/src/pipeline/draw.ts`): core's
- * config defaults under the integrator's config, the theme with its `themeVariables` and its
- * dark half for `theme: 'auto'`, the deterministic table measurer, and the writer with the
- * theme's gradient. T5 swaps it for `createMermaid().render()` over parsed sources.
+ * Test-only (not built, not exported): renders a hand-built `TimelineModel` for the package's
+ * own specs, which read no files and hold no parser-produced corpus. It builds the render
+ * context much as the public pipeline does (`mermaid/src/api.ts` `themeFor`,
+ * `core/src/pipeline/draw.ts`): core's config defaults under the integrator's config, the theme
+ * with its `themeVariables` and its dark half for `theme: 'auto'`, the deterministic table
+ * measurer, and the writer with the theme's gradient; it has no `inline` or `labels`. Parsed
+ * sources go through `createMermaid().render()` instead (`packages/mermaid/src/timeline.spec.ts`,
+ * `packages/conformance/src/timeline/render.spec.ts`).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ResolvedConfig } from '@mermaid-js/core/config';

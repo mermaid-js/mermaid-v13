@@ -107,6 +107,15 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     if (!bright || live) return ref;
     return brighter(ref, theme.rgba(name));
   };
+  // A palette entry is literal, from the light theme under `auto` (D151). Text, outlines and
+  // rules drawn on it come from that same resolver, so the pair never flips separately; on a
+  // live fill they stay live.
+  const on = (literal: boolean, name: string, bright: boolean): Paint => {
+    if (!live || !literal) return named(name, bright);
+    const c = checkColor(theme.value(name));
+    if (c === undefined) return named(name, bright);
+    return bright ? brighter(c, theme.rgba(name)) : c;
+  };
   // Slots wrap at v12's 12 classes first, so boxes that share a `section-<n>` class share
   // their colour, then at a shorter author list.
   const at = (slot: number, length: number): number => (slot % PALETTE_SLOTS) % length;
@@ -136,20 +145,22 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     if (gradient || fill.length === 0) named('mainBkg', false);
     if (gradient || inv.length === 0 || text.length === 0) named('nodeBorder', false);
     const outline = gradient ? theme.outline('nodeBorder') : undefined;
-    paintOf = (slot, bright) => ({
-      fill: gradient
-        ? named('mainBkg', bright)
-        : (slotted('cScale', slot, bright) ?? named('mainBkg', bright)),
-      stroke: outline,
-      strokeWidth: gradient ? (widths.outline as Length) : undefined,
-      text: slotted('cScaleLabel', slot, bright) ?? named('nodeBorder', bright),
-      rule: {
-        stroke: gradient
-          ? named('nodeBorder', bright)
-          : (slotted('cScaleInv', slot, bright) ?? named('nodeBorder', bright)),
-        width: widths.rule,
-      },
-    });
+    paintOf = (slot, bright) => {
+      const tint = gradient ? undefined : slotted('cScale', slot, bright);
+      const lit = tint !== undefined;
+      return {
+        fill: tint ?? named('mainBkg', bright),
+        stroke: outline,
+        strokeWidth: gradient ? (widths.outline as Length) : undefined,
+        text: slotted('cScaleLabel', slot, bright) ?? on(lit, 'nodeBorder', bright),
+        rule: {
+          stroke: gradient
+            ? named('nodeBorder', bright)
+            : (slotted('cScaleInv', slot, bright) ?? on(lit, 'nodeBorder', bright)),
+          width: widths.rule,
+        },
+      };
+    };
   } else {
     // D257: the border palette slot fills where the theme carries a fill palette too.
     const border = theme.palette('borderColorArray');
@@ -161,13 +172,14 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     if (!solid || border.length === 0) named('mainBkg', false);
     paintOf = (slot, bright) => {
       const tint = slotted('borderColorArray', slot, bright);
+      const lit = solid && tint !== undefined;
       return {
         fill: (solid ? tint : undefined) ?? named('mainBkg', bright),
         // The palette slot wins over the gradient (theming.md); an event's plain outline is
         // brightened with the rest of its group, a gradient one is not.
         stroke: tint ?? (gradient ? outline : named('nodeBorder', bright)),
         strokeWidth,
-        text: named('nodeBorder', bright),
+        text: on(lit, 'nodeBorder', bright),
         colorId: border.length > 0 ? `color-${at(slot, border.length)}` : undefined,
       };
     };

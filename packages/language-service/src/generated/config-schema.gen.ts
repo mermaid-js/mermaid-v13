@@ -89,7 +89,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "Every theme carries v12's values (D258): derived from `primaryColor`, `secondaryColor` and `tertiaryColor` by hue steps and khroma `darken` in `base` (25, 75 under `darkMode`), `forest` (10), `neo-dark` and `redux-dark` (25), from `mainBkg` in `redux`; fixed lists in `default`, `dark` (slot 0 is `primaryColor`), `neutral`, `neo` and the colour themes (Tailwind-300). Read as literal colours, not CSS variables. An unsafe colour drops that override with `THEME_VARIABLE_DROPPED`."
+            "reason": "Every theme carries v12's values (D258): derived from `primaryColor`, `secondaryColor` and `tertiaryColor` by hue steps and khroma `darken` in `base` (25, 75 under `darkMode`), `forest` (10), `neo-dark` and `redux-dark` (25), from `mainBkg` in `redux`; fixed lists in `default`, `dark` (slot 0 is `primaryColor`), `neutral`, `neo` and the colour themes (Tailwind-300). Read as literal colours, not CSS variables. An unsafe colour drops that override with `THEME_VARIABLE_DROPPED`. The timeline paints with it only where `timelineScaleColors` is true and the gradient is off: an override changes nothing in the redux themes (the default `redux-color` included), `theme: 'auto'`, `neo` or `neo-dark`, as v12's redux and neo timeline paint ignored it (D227, D257); v12's default theme was `default`."
           }
         },
         "cScaleInv": {
@@ -104,7 +104,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "v12's values in every theme (D258): the inverse of the slot (a half turn of hue in `forest`), fixed in `default`. Where v12 inverts the slot before it applies an author's `cScale<n>`, so does v13. Read as literal colours, not CSS variables."
+            "reason": "v12's values in every theme (D258): the inverse of the slot (a half turn of hue in `forest`), fixed in `default`. Where v12 inverts the slot before it applies an author's `cScale<n>`, so does v13. Read as literal colours, not CSS variables. The timeline draws it only where `timelineScaleColors` is true and the gradient is off: an override changes nothing in the redux themes (the default `redux-color` included), `theme: 'auto'`, `neo` or `neo-dark` (v12's redux and neo paint, D227, D257)."
           }
         },
         "cScaleLabel": {
@@ -119,7 +119,7 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "honoured",
             "since": "13.0.0",
-            "reason": "v12's values in every theme (D258): `labelTextColor` in most themes, with slots 0 and 3 inverted in `default`, slots 0 and 2 `cScale1` in `neutral`, black under `darkMode` in `dark` and `neutral`, and each slot darkened by 75 in `redux-dark-color`. Read as literal colours, not CSS variables."
+            "reason": "v12's values in every theme (D258): `labelTextColor` in most themes, with slots 0 and 3 inverted in `default`, slots 0 and 2 `cScale1` in `neutral`, black under `darkMode` in `dark` and `neutral`, and each slot darkened by 75 in `redux-dark-color`. Read as literal colours, not CSS variables. The timeline reads it only where `timelineScaleColors` is true: an override changes nothing in the redux themes (the default `redux-color` included) or `theme: 'auto'`; in `neo` and `neo-dark` it is the box text and (slot 11) the axis and connectors (v12's redux and neo paint, D227, D257)."
           }
         },
         "THEME_COLOR_LIMIT": {
@@ -624,7 +624,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "timelineLabelOffset": {
-          "description": "How far below the top of a timeline section or period box its label starts: px, or a\nmultiple of the box's padding (`padding`, `0.5 * padding`).\n",
+          "description": "How far below the top of a timeline section or period box its label starts: px, or a\nmultiple of the box's padding (`padding`, `0.5 * padding`). The multiplied form works\nthrough `initialize()` and site config, not through `%%{init}%%` directives: their\ntheme-variable values cannot hold `*`, so a directive's `0.5 * padding` is dropped.\n",
           "type": [
             "number",
             "string"
@@ -4187,7 +4187,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "leftMargin": {
-          "description": "Margin between actors",
+          "description": "Space in px left of the timeline: the content starts `50 + leftMargin` from the left,\nand the LR axis starts at `leftMargin`.\n",
           "type": "integer",
           "default": 150,
           "minimum": 0,
@@ -4220,6 +4220,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "padding": {
+          "description": "Margin in px around the timeline drawing in its viewBox.\n",
           "type": "number",
           "x-mermaid": {
             "status": "honoured",
@@ -4411,6 +4412,7 @@ export const configSchema: ConfigSchema = {
           }
         },
         "disableMulticolor": {
+          "description": "Draws a timeline without sections in one colour slot instead of one slot per period.\n",
           "type": "boolean",
           "default": false,
           "x-mermaid": {

@@ -10,7 +10,10 @@ import type { Arrowhead, PlacedLabel, Point, Rect, TimelineLine } from './types.
 
 /** What the layout reads from the render context. */
 export type TimelineLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
-  Partial<Pick<RenderContext, 'inline'>>;
+  Partial<Pick<RenderContext, 'inline' | 'warn'>>;
+
+/** A config length the layout can't honour (pitfall 22): it draws with the default instead. */
+const TIMELINE_CONFIG_IGNORED = 'TIMELINE_CONFIG_IGNORED';
 
 const WEIGHT_NORMAL = 400;
 const WEIGHT_BOLD = 700;
@@ -21,9 +24,24 @@ function weightOf(value: string): number {
   return Number.isFinite(n) && n > 0 ? n : WEIGHT_NORMAL;
 }
 
-/** A config length: the value when it is a finite number at least 0, else the default. */
-function lengthOf(value: unknown, fallback: number): number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : fallback;
+/**
+ * A config length: the value when it is a finite number at least 0, else the default, with a
+ * warning when the key is set (core's config resolution checks no value types).
+ */
+function lengthOf(
+  value: unknown,
+  fallback: number,
+  path: string,
+  warn: TimelineLayoutContext['warn']
+): number {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) return value;
+  if (value !== undefined)
+    warn?.({
+      code: TIMELINE_CONFIG_IGNORED,
+      message: `Ignored ${path}: it is not a number of at least 0; using ${fallback}`,
+      path,
+    });
+  return fallback;
 }
 
 export interface Env {
@@ -91,7 +109,7 @@ export function envOf(ctx: TimelineLayoutContext): Env {
   const m = TIMELINE_METRICS;
   const conf = ctx.config.timeline ?? {};
   const fontSize = ctx.theme.number('fontSize');
-  const formulaSize = lengthOf(ctx.config.fontSize, m.common.fontSize);
+  const formulaSize = lengthOf(ctx.config.fontSize, m.common.fontSize, 'fontSize', ctx.warn);
   const family = ctx.theme.value('fontFamily');
   const font: FontKey = { family, size: fontSize, weight: weightOf(ctx.theme.value('fontWeight')) };
   const titleSize = fontSizePx(m.common.titleFontSize, fontSize) ?? fontSize;
@@ -101,8 +119,8 @@ export function envOf(ctx: TimelineLayoutContext): Env {
   return {
     m,
     fontSize: formulaSize,
-    leftMargin: lengthOf(conf.leftMargin, m.common.leftMargin),
-    padding: lengthOf(conf.padding, m.common.padding),
+    leftMargin: lengthOf(conf.leftMargin, m.common.leftMargin, 'timeline.leftMargin', ctx.warn),
+    padding: lengthOf(conf.padding, m.common.padding, 'timeline.padding', ctx.warn),
     multicolor: conf.disableMulticolor !== true,
     axisWidth: stroke ?? m.common.axisWidth,
     connectorWidth: stroke ?? m.common.connectorWidth,

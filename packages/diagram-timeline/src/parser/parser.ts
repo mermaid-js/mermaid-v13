@@ -147,7 +147,7 @@ class TimelineParser {
   private readonly sections: TimelineSection[] = [];
   private readonly periods: OpenPeriod[] = [];
   private direction: TimelineDirection = 'LR';
-  private title: TimelineTextStatementNode | undefined;
+  private title: string | undefined;
   private accTitle = '';
   private accDescr = '';
   /** An error at the end of the text was reported (the text ends inside a value). */
@@ -192,10 +192,11 @@ class TimelineParser {
       periods: this.periods,
       warnings: st.diagnostics.list.filter((d) => d.severity === 'warning'),
     };
-    if (this.title) {
-      model.title = this.title.text;
-      model.titleAst = this.title.id;
-    } else if (pre.frontMatter?.title !== undefined) model.title = pre.frontMatter.title;
+    // A non-empty in-text title wins (D218); a blank one falls back to the front matter's.
+    const text = this.title;
+    const front = pre.frontMatter?.title;
+    if (text !== undefined && (text.trim() !== '' || front === undefined)) model.title = text;
+    else if (front !== undefined) model.title = front;
     const ast: TimelineDocument = {
       id: 'doc',
       type: 'Document',
@@ -474,7 +475,7 @@ class TimelineParser {
       range: this.range(j),
       text: this.raw(j).slice(TITLE_PREFIX),
     };
-    this.title = node;
+    this.title = node.text;
     this.add(node, 'title');
   }
 

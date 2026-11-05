@@ -15,7 +15,6 @@ describe('parseTimeline: model', () => {
     expect(model).toEqual({
       direction: 'LR',
       title: 'History',
-      titleAst: 'st:2',
       accTitle: '',
       accDescr: '',
       sections: [{ ast: 'sec:1', text: 'Web 2' }],
@@ -61,7 +60,6 @@ describe('parseTimeline: model', () => {
       'timeline\ntitle one\ntitle two \naccTitle:  A t \naccDescr {\n  line one\n    line two\n}\n2002 : x'
     );
     expect(model.title).toBe('two ');
-    expect(model.titleAst).toBe('st:3');
     expect(model.accTitle).toBe('A t');
     expect(model.accDescr).toBe('line one\nline two');
   });
@@ -69,7 +67,6 @@ describe('parseTimeline: model', () => {
   it('uses the front-matter title when the text has none (D218)', () => {
     const src = '---\ntitle: From front matter\n---\ntimeline\n2002 : x';
     expect(parseTimeline(src).model.title).toBe('From front matter');
-    expect(parseTimeline(src).model.titleAst).toBeUndefined();
     expect(parseTimeline(src.replace('2002', 'title In text\n2002')).model.title).toBe('In text');
   });
 

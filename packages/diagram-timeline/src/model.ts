@@ -50,13 +50,11 @@ export interface TimelinePeriod {
 
 export interface TimelineModel {
   readonly direction: TimelineDirection;
-  /** In-text `title …` or front-matter `title` (D218); undefined when neither is set. */
-  readonly title?: string;
   /**
-   * `st:<n>` of the in-text `title` statement that {@link title} comes from (the last one, as
-   * v12 kept it); undefined when the title is the front matter's or there is none.
+   * The last in-text `title …` when it is not blank, else the front-matter `title` (D218), else
+   * the blank in-text title; undefined when neither is set.
    */
-  readonly titleAst?: AstId;
+  readonly title?: string;
   readonly accTitle: string;
   readonly accDescr: string;
   /** In source order; names may repeat, and each one is its own section (D251). */

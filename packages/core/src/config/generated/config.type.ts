@@ -886,7 +886,9 @@ diagramMarginX?: number
  */
 diagramMarginY?: number
 /**
- * Margin between actors
+ * Space in px left of the timeline: the content starts `50 + leftMargin` from the left,
+ * and the LR axis starts at `leftMargin`.
+ * 
  */
 leftMargin?: number
 /**
@@ -897,6 +899,10 @@ width?: number
  * Height of actor boxes
  */
 height?: number
+/**
+ * Margin in px around the timeline drawing in its viewBox.
+ * 
+ */
 padding?: number
 /**
  * Margin around loop boxes
@@ -948,6 +954,10 @@ textPlacement?: string
 actorColours?: string[]
 sectionFills?: string[]
 sectionColours?: string[]
+/**
+ * Draws a timeline without sections in one colour slot instead of one slot per period.
+ * 
+ */
 disableMulticolor?: boolean
 }
 /**

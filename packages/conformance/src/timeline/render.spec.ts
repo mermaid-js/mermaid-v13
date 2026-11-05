@@ -1,39 +1,27 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { RenderContext, Warning } from '@mermaid-js/core';
-import { CORE_DEFAULTS, resolveConfig } from '@mermaid-js/core/config';
-import { pxProfile } from '@mermaid-js/core/layout';
-import { resolveLimits } from '@mermaid-js/core/limits';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
-import { assertInert, streamWriter } from '@mermaid-js/core/svg';
-import { tableMeasurer } from '@mermaid-js/core/text';
-import { THEME_NAMES, createTheme, loadTheme, resolveThemeName } from '@mermaid-js/core/theme';
-import {
-  layoutTimeline,
-  parseTimeline,
-  renderTimeline,
-  type TimelineDocument,
-  type TimelineModel,
-} from '@mermaid-js/diagram-timeline';
+import { assertInert } from '@mermaid-js/core/svg';
+import { THEME_NAMES } from '@mermaid-js/core/theme';
+import type { TimelineDocument, TimelineModel } from '@mermaid-js/diagram-timeline';
+import { createMermaid, MermaidError } from 'mermaid';
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 import type { CorpusItem } from '../types.ts';
 import { EDGE_CASES, timelineCases, timelineCorpus } from './corpus.ts';
 
 /**
- * Render properties and the AST round-trip of the timeline renderer (spec #291 T4, DESIGN
- * §13.2, §13.4, R-PARSE-8) over the parsed corpus: the e2e fixtures, the v12 spec strings, the
- * parser cases and the edge cases, each in every theme and `theme: 'auto'` (a source's own
- * front matter and directives still win). The plugin is not registered yet (#315), so the
- * render context is built as the pipeline builds it (`mermaid/src/api.ts` and
- * `core/src/pipeline/draw.ts`); #315 moves this onto `createMermaid().render()`.
+ * Render properties and the AST round-trip of the timeline (spec #291 T4, DESIGN §13.2, §13.4,
+ * R-PARSE-8) over the parsed corpus, through the public `createMermaid().render()` with
+ * `deterministic: true`: the e2e fixtures, the v12 spec strings, the parser cases and the edge
+ * cases, each in every theme and `theme: 'auto'` set by `initialize()` (a source's own front
+ * matter and directives still win).
  *
  * Properties: well-formed XML, `assertInert`, deterministic, no NaN/Infinity/undefined, no
  * `foreignObject` or `<marker>`, ids only `<prefix>-title`/`-desc`, every drawn coordinate in
  * the viewBox, every alias declared. Round-trip: every `data-ast` names an AST node whose range
- * lies in the source and holds its text (punctuation aside, as entities are encoded); each section, period and event node has exactly one
- * `data-ast` element of its kind, and no other node (header, title, `accTitle`, `accDescr`,
- * `st:<n>`) has one.
+ * lies in the source and holds its text (punctuation aside, as entities are encoded); each
+ * section, period and event node has exactly one `data-ast` element of its kind, and no other
+ * node (header, title, `accTitle`, `accDescr`, `st:<n>`) has one.
  */
 const THEMES = [...THEME_NAMES, 'auto'] as const;
 const PREFIX = 'mermaid-0';
@@ -45,50 +33,10 @@ interface Rendered {
   readonly themeStyle: boolean;
 }
 
-async function render(source: string, theme: string, model: TimelineModel): Promise<Rendered> {
-  const warn = (_: Warning): void => undefined;
-  const pre = preprocess(source);
-  const directives = pre.directives
-    .filter((d) => d.kind === 'init' && d.args !== null && typeof d.args === 'object')
-    .map((d) => d.args as Record<string, unknown>);
-  const config = resolveConfig(
-    CORE_DEFAULTS,
-    { theme } as never,
-    pre.frontMatter?.config,
-    directives,
-    undefined,
-    { warn, section: 'timeline' }
-  );
-  const choice = resolveThemeName(config.theme, warn);
-  const themed = createTheme(await loadTheme(choice.name), {
-    themeVariables: config.themeVariables as Record<string, unknown> | undefined,
-    dark: choice.dark ? await loadTheme(choice.dark) : undefined,
-    warn,
-    idPrefix: () => PREFIX,
-  });
-  const ctx: RenderContext = {
-    config,
-    measurer: tableMeasurer,
-    units: pxProfile,
-    theme: themed,
-    securityLevel: 'default',
-    idPrefix: PREFIX,
-    version: '13.0.0-alpha.0',
-    layout: () => {
-      throw new Error('timeline lays itself out');
-    },
-    limits: resolveLimits(config),
-    warn,
-  };
-  const layout = layoutTimeline(model, ctx);
-  const gradient = themed.gradient();
-  const w = streamWriter({ gradient });
-  renderTimeline(model, layout, ctx, w);
-  return {
-    svg: w.finish(),
-    gradient: gradient?.id ?? false,
-    themeStyle: themed.autoDeclarations() !== undefined,
-  };
+function api(theme: (typeof THEMES)[number]): ReturnType<typeof createMermaid> {
+  const m = createMermaid();
+  m.initialize({ theme, deterministic: true });
+  return m;
 }
 
 interface Case {
@@ -102,28 +50,36 @@ interface Case {
 }
 
 const cases: Case[] = [];
-const rejected: string[] = [];
+const rejected = new Set<string>();
 let corpus: CorpusItem[];
 
 beforeAll(async () => {
   corpus = [...(await timelineCorpus()), ...timelineCases(), ...EDGE_CASES];
-  for (const item of corpus) {
-    const parse = parseTimeline(item.source);
-    if (parse.diagnostics.some((d) => d.severity === 'error')) {
-      rejected.push(item.id);
-      continue;
-    }
-    for (const theme of THEMES) {
-      const r = await render(item.source, theme, parse.model);
-      cases.push({
-        id: `${item.id} ${theme}`,
-        theme,
-        source: item.source,
-        model: parse.model,
-        ast: parse.ast,
-        r,
-        tree: parseSvg(r.svg),
-      });
+  for (const theme of THEMES) {
+    const m = api(theme);
+    for (const item of corpus) {
+      if (rejected.has(item.id)) continue;
+      try {
+        const prepared = await m.prepare(item.source, { id: PREFIX });
+        const { svg } = m.renderSync(item.source, { id: PREFIX });
+        expect(prepared.diagramType, item.id).toBe('timeline');
+        cases.push({
+          id: `${item.id} ${theme}`,
+          theme,
+          source: item.source,
+          model: prepared.parse.model as TimelineModel,
+          ast: prepared.parse.ast as TimelineDocument,
+          r: {
+            svg,
+            gradient: svg.includes('<linearGradient') ? `${PREFIX}-gradient` : false,
+            themeStyle: String(prepared.config.theme) === 'auto',
+          },
+          tree: parseSvg(svg),
+        });
+      } catch (e) {
+        if (!(e instanceof MermaidError)) throw new Error(`${item.id}: ${String(e)}`, { cause: e });
+        rejected.add(item.id);
+      }
     }
   }
 }, 300_000);
@@ -166,7 +122,7 @@ describe('timeline render properties over the parsed corpus', () => {
       300 * THEMES.length
     );
     // Only sources v12 rejects stay out (#336's accept/reject parity).
-    expect(rejected.length).toBeLessThan(corpus.length / 4);
+    expect(rejected.size).toBeLessThan(corpus.length / 4);
   });
 
   it('writes well-formed, inert XML with no NaN, Infinity, undefined, foreignObject or marker', () => {
@@ -180,9 +136,10 @@ describe('timeline render properties over the parsed corpus', () => {
     }
   });
 
-  it('is deterministic: rendering again writes the same bytes (R-ARCH-6)', async () => {
+  it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
+    const apis = new Map(THEMES.map((t) => [t as string, api(t)]));
     for (const c of cases)
-      expect((await render(c.source, c.theme, c.model)).svg, c.id).toBe(c.r.svg);
+      expect((await apis.get(c.theme)!.render(PREFIX, c.source)).svg, c.id).toBe(c.r.svg);
   });
 
   it('writes no element ids but the title, the description and the gradient', () => {
