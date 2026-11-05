@@ -148,6 +148,9 @@ const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): Them
   usedBy,
 });
 
+/** Who reads the base text variables (`fontFamily`, `fontSize`): a new type appends here. */
+const TEXT_USERS = ['core', 'flowchart', 'sequence', 'class', 'state', 'er', 'journey'];
+
 /** The core inventory. Order is the order of the generated table. */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   // base
@@ -157,24 +160,8 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   background: def('bg', 'color', ['core']),
   primaryTextColor: def('pt', 'color', ['core']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
-  fontFamily: def('ff', 'font', [
-    'core',
-    'flowchart',
-    'sequence',
-    'class',
-    'state',
-    'er',
-    'journey',
-  ]),
-  fontSize: def('fs', 'length', [
-    'core',
-    'flowchart',
-    'sequence',
-    'class',
-    'state',
-    'er',
-    'journey',
-  ]),
+  fontFamily: def('ff', 'font', TEXT_USERS),
+  fontSize: def('fs', 'length', TEXT_USERS),
   // derived
   primaryBorderColor: def('pb', 'color', ['core']),
   secondaryBorderColor: def('sb', 'color', ['core']),

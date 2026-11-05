@@ -46,8 +46,8 @@ export interface LegendEntry {
 export interface BandLayout extends Rect {
   /** The AST id of the section line that opened the run. */
   readonly ast: AstId;
-  /** Index into `JourneyModel.sections` of that line. */
-  readonly section: number;
+  /** Index into `JourneyModel.sections` of that line; undefined when the model has none. */
+  readonly section?: number;
   readonly name: string;
   /** v12 `section-type-<n>`, cycling over the eight `fillType`s (D241). */
   readonly slot: number;
@@ -106,7 +106,7 @@ export interface JourneyLayout {
   readonly activity: ActivityLine;
   /** Drawn bold at (`left`, v12's baseline 25). */
   readonly title?: PlacedLabel;
-  /** The x tasks start at: `leftMargin` widened by the widest legend line (D242). */
+  /** The x tasks start at: `leftMargin`, or past the legend when it is wider (D242). */
   readonly left: number;
   /** What is drawn, `diagramMarginX`/`Y` around it: the SVG `viewBox` (D224). */
   readonly bounds: Rect;

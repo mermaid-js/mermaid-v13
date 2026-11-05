@@ -264,6 +264,24 @@ export const FIXTURES: Readonly<Record<string, Fixture>> = {
       task('A task name long enough to wrap inside its box twice', 4, 'Actor<br>name')
     ),
   },
+  'three-line-labels': {
+    model: journey(
+      undefined,
+      section('A section name long enough to wrap onto three lines'),
+      task('A task name long enough to wrap onto three lines', 4, 'A'),
+      section('B'),
+      task('Short', 2, 'A')
+    ),
+  },
+  'missing-section-index': {
+    model: {
+      ...journey(undefined, section('A'), section('B'), section('A')),
+      tasks: [
+        { ast: 't:1', name: 'One', score: 3, people: [], section: 'A' },
+        { ast: 't:2', name: 'Two', score: 3, people: [], section: 'Gone' },
+      ],
+    },
+  },
   empty: { model: journey(undefined) },
   'blank-names': {
     model: journey('   ', section('   '), task('  ', 3, ''), task('Named', 3, ' x '.trim())),

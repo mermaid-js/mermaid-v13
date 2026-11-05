@@ -132,17 +132,29 @@ describe('journey layout: v12 geometry at default config', () => {
 });
 
 describe('journey layout: sizing (D224, D242)', () => {
-  it('widens the left margin by the widest legend line, with no threshold', () => {
-    const short = lay(fixture('working-day'));
-    const widest = Math.max(...short.legend.map((e) => e.label.width));
-    expect(widest).toBeGreaterThan(0);
-    expect(widest).toBeLessThan(75);
-    expect(short.left).toBe(150 + widest);
+  it('keeps v12’s 150 px margin while the legend fits in it', () => {
+    const layout = lay(fixture('working-day'));
+    expect(layout.left).toBe(150);
+    expect(layout.bands[0]!.x).toBe(150);
+    expect(layout.tasks[0]!.x).toBe(150);
     expect(lay(fixture('simple-test')).left).toBe(150);
+  });
+
+  it('grows the margin past a wider legend, a text inset clear of it, with no jump', () => {
     const long = lay(fixture('legend-long-labels'));
     const wide = Math.max(...long.legend.map((e) => e.label.width));
-    expect(wide).toBeLessThanOrEqual(360);
-    expect(long.left).toBe(150 + wide);
+    expect(wide).toBeGreaterThan(100);
+    // Legend text at 40 + 2 × 5, then the widest line, then a gap of 2 × 5.
+    expect(long.left).toBeCloseTo(50 + wide + 10);
+    // Just past fitting, the margin moves by the overflow only.
+    const name = (n: number) => 'x'.repeat(n);
+    let prev = 150;
+    for (let n = 1; n < 40; n++) {
+      const left = lay(journey(undefined, section('S'), task('T', 3, name(n)))).left;
+      expect(left - prev).toBeLessThan(15);
+      prev = left;
+    }
+    expect(prev).toBeGreaterThan(150);
   });
 
   it('gaps bands by taskMargin, not diagramMarginX', () => {
@@ -243,6 +255,14 @@ describe("journey layout: the '' actor (D244)", () => {
 });
 
 describe('journey layout: sections', () => {
+  it('finds the band’s line by name when sectionIndex is missing, never section 0', () => {
+    const layout = lay(fixture('missing-section-index'));
+    expect(layout.bands.map((b) => [b.ast, b.section])).toEqual([
+      ['s:A@2', 2],
+      ['s:Gone', undefined],
+    ]);
+  });
+
   it('cycles band slots over the eight fillTypes (D241)', () => {
     expect(lay(fixture('eight-sections')).bands.map((b) => b.slot)).toEqual([
       0, 1, 2, 3, 4, 5, 6, 7,
@@ -273,6 +293,22 @@ describe('journey layout: sections', () => {
 });
 
 describe('journey layout: labels (D225)', () => {
+  it('grows a task box and a band downward for a label taller than them', () => {
+    const layout = lay(fixture('three-line-labels'));
+    const [tall, short] = layout.tasks;
+    expect(tall!.label!.text.lines.length).toBe(3);
+    expect(tall!.y).toBe(110);
+    expect(tall!.height).toBeCloseTo(tall!.label!.height);
+    expect(tall!.height).toBeGreaterThan(50);
+    expect(short!.height).toBe(50);
+    expect(tall!.dots[0]!.cy).toBe(110);
+    expect(tall!.face.cy).toBe(330);
+    const band = layout.bands[0]!;
+    expect(band.label!.text.lines.length).toBe(3);
+    expect(band.y).toBe(50);
+    expect(band.height).toBeCloseTo(band.label!.height);
+  });
+
   it('wraps legend labels to maxLabelWidth and steps rows by their height', () => {
     const layout = lay(fixture('whitespace-wrapping-no-hyphens'), { maxLabelWidth: 200 });
     const [entry] = layout.legend;
@@ -288,7 +324,7 @@ describe('journey layout: labels (D225)', () => {
     expect(t.label!.text.lines.length).toBeGreaterThan(1);
     expect(t.label!.width).toBeLessThanOrEqual(150);
     expect(t.label!.x + t.label!.width / 2).toBeCloseTo(t.x + 75);
-    expect(t.label!.y + t.label!.height / 2).toBeCloseTo(t.y + 25);
+    expect(t.label!.y + t.label!.height / 2).toBeCloseTo(t.y + t.height / 2);
     expect(layout.bands[0]!.label!.text.lines.length).toBe(2);
     expect(layout.title!.text.lines.length).toBe(2);
     expect(layout.legend[0]!.label.text.lines.length).toBe(2);
@@ -343,6 +379,20 @@ describe('journeyLayoutViolations', () => {
     expect(journeyLayoutViolations(model, { ...layout, tasks: layout.tasks.slice(1) })[0]).toBe(
       '4 tasks laid out for 5 in the model'
     );
+  });
+
+  it('reports a task or band label outside its box', () => {
+    const tall = fixture('three-line-labels');
+    const layout = lay(tall);
+    const squashed = {
+      ...layout,
+      tasks: layout.tasks.map((t, i) => (i === 0 ? { ...t, height: 50 } : t)),
+      bands: layout.bands.map((b, i) => (i === 0 ? { ...b, height: 50 } : b)),
+    };
+    expect(journeyLayoutViolations(tall, squashed)).toEqual([
+      'task t:1: its label is outside its box',
+      'band s:A section name long enough to wrap onto three lines: its label is outside its box',
+    ]);
   });
 
   it('reports overlapping legend rows, a dot for the empty actor and short bounds', () => {

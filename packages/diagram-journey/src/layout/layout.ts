@@ -6,12 +6,13 @@
  * Kept from v12 at default config: bands at y 50, tasks at `2 × height + diagramMarginY` one
  * `width + taskMargin` apart, faces at `300 + (5 − score) × 30`, legend rows from y 60, dots of
  * r 7 every 10 px, the title at (`left`, 25), the activity line at `4 × height`. Changed (D242):
- * bands gap by `taskMargin`, the margin widens by the widest legend line with no threshold, and
- * the bounds are what is drawn (D224).
+ * bands gap by `taskMargin`, the margin grows past a legend wider than it with no threshold
+ * jump, a label taller than its box grows the box downward, and the bounds are what is drawn
+ * (D224).
  */
 import { pathBuilder } from '@mermaid-js/core/svg';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
-import type { JourneyModel, JourneyTask } from '../model.ts';
+import type { JourneyModel, JourneySection, JourneyTask } from '../model.ts';
 import { envOf, type Env, type JourneyLayoutContext } from './env.ts';
 import { drawnRects, union } from './extent.ts';
 import { drawnScore, faceOf, lineEnd } from './faces.ts';
@@ -94,6 +95,17 @@ function warnScores(env: Env, tasks: readonly JourneyTask[]): void {
   });
 }
 
+/**
+ * The section line a task's run opened under: its `sectionIndex`, else the last line of that
+ * name; undefined when there is none.
+ */
+function sectionOf(model: JourneyModel, t: JourneyTask): number | undefined {
+  if (t.sectionIndex !== undefined && model.sections[t.sectionIndex]) return t.sectionIndex;
+  for (let i = model.sections.length - 1; i >= 0; i--)
+    if (model.sections[i]!.name === t.section) return i;
+  return undefined;
+}
+
 /** v12 `drawTasks`: a band per run of tasks under one section name, a box per task. */
 function tasksOf(
   model: JourneyModel,
@@ -115,30 +127,29 @@ function tasksOf(
     if (t.section !== last) {
       let count = 1;
       while (all[i + count]?.section === t.section) count++;
-      const at = t.sectionIndex ?? 0;
-      const line = model.sections[at];
+      const at = sectionOf(model, t);
       band = bands.length;
       slot = band % SECTION_SLOTS;
-      const box = {
-        x,
-        y: m.bandTop,
-        width: count * m.width + (count - 1) * m.taskMargin,
-        height: m.height,
-      };
-      const label = centred(env.measure(t.section, env.fonts.task, box.width), box);
+      const width = count * m.width + (count - 1) * m.taskMargin;
+      const text = env.measure(t.section, env.fonts.task, width);
+      // A label taller than the band grows it downward; its top stays at v12's.
+      const box = { x, y: m.bandTop, width, height: Math.max(m.height, text.height) };
+      const label = centred(text, box);
       bands.push({
         ...box,
-        ast: line?.ast ?? `s:${t.section}`,
-        section: at,
+        ast: at === undefined ? `s:${t.section}` : (model.sections[at] as JourneySection).ast,
+        ...(at === undefined ? {} : { section: at }),
         name: t.section,
         slot,
         ...(label ? { label } : {}),
       });
       last = t.section;
     }
-    const box = { x, y: taskY, width: m.width, height: m.height };
+    const text = env.measure(t.name, env.fonts.task, m.width);
+    // A label taller than the box grows it downward; the top edge, its dots and the face stay.
+    const box = { x, y: taskY, width: m.width, height: Math.max(m.height, text.height) };
     const cx = x + m.width / 2;
-    const label = centred(env.measure(t.name, env.fonts.task, m.width), box);
+    const label = centred(text, box);
     const dots: ActorDot[] = [];
     for (const actor of t.people) {
       const s = slots.get(actor);
@@ -205,7 +216,13 @@ export function layoutJourney(model: JourneyModel, ctx: JourneyLayoutContext): J
   warnScores(env, model.tasks);
   const slots = actorSlots(model);
   const { legend, widest } = legendOf(env, slots);
-  const left = m.leftMargin + widest;
+  // D242: v12's `leftMargin` while the legend fits in it, else the legend's right edge plus a
+  // gap as wide as its text inset; no threshold jump.
+  const inset = 2 * m.boxTextMargin;
+  const left =
+    slots.size === 0
+      ? m.leftMargin
+      : Math.max(m.leftMargin, m.legendTextX + inset + widest + inset);
   const { bands, tasks } = tasksOf(model, env, left, slots);
   const activity = activityOf(env, left, tasks);
   const title = titleOf(model, env, left);

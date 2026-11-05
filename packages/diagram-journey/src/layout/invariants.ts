@@ -2,7 +2,7 @@
  * Layout invariants for `JourneyLayout` (spec #290 T3), the custom layout's counterpart of the
  * graph engine's `validateLayout`. Each is a property of the output: no NaN or Infinity, in
  * numbers or path data; every model task laid out, in order; every task inside its band and
- * bands apart; every face on its task's line; legend rows clear of each other, of the bands and
+ * bands apart; every task and band label inside its box; every face on its task's line; legend rows clear of each other, of the bands and
  * of the tasks; nothing drawn for the `''` actor (D244); the bounds holding everything drawn
  * (D224). Each violation is one readable line. Comparisons allow a float tolerance.
  */
@@ -72,6 +72,7 @@ export function journeyLayoutViolations(model: JourneyModel, layout: JourneyLayo
         );
       else if (band.slot !== t.slot) out.push(`${where} has slot ${t.slot}, its band ${band.slot}`);
     }
+    if (t.label && !contains(t, t.label)) out.push(`${where}: its label is outside its box`);
     if (Math.abs(t.face.cx - t.line.x) > EPS || !within(t.face.cy, t.line.y1, t.line.y2))
       out.push(`${where}: its face (${t.face.cx}, ${t.face.cy}) is not on its line`);
     if (Math.abs(t.line.x - (t.x + t.width / 2)) > EPS)
@@ -84,8 +85,7 @@ export function journeyLayoutViolations(model: JourneyModel, layout: JourneyLayo
   layout.bands.forEach((b, i) => {
     const next = layout.bands[i + 1];
     if (next && overlaps(b, next)) out.push(`band ${b.ast} overlaps ${next.ast}`);
-    if (b.label && !within(b.label.x + b.label.width / 2, b.x, b.x + b.width))
-      out.push(`band ${b.ast}: its label is off the band`);
+    if (b.label && !contains(b, b.label)) out.push(`band ${b.ast}: its label is outside its box`);
   });
 
   const rows = layout.legend.map(rowOf);
