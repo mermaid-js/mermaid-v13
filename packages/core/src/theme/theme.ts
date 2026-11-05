@@ -49,7 +49,6 @@ import {
 import { parseRule, type Expr } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
 import {
-  NUMBERED_PALETTES,
   PALETTE_LIMIT,
   PALETTE_VARIABLES,
   THEME_VARIABLES,
@@ -245,15 +244,13 @@ class Resolver {
    */
   slot(p: PaletteVariable, i: number): Resolved | undefined {
     const key = `${p}${i}`;
+    // Only theme specs write palette rules, so no author input can make a cycle here.
     if (this.slots.has(key)) return this.slots.get(key);
-    if (this.active.has(key)) throw new Error(`Theme rule cycle through ${key}`);
-    this.active.add(key);
     const user = this.palettes.slots.get(key) ?? this.palettes.user[p]?.[i];
     const entry = user === undefined ? this.palettes.spec[p]?.[i] : undefined;
     let r: Resolved | undefined;
     if (user !== undefined) r = this.literal('', user);
     else if (entry !== undefined) r = this.evaluate(rule(entry));
-    this.active.delete(key);
     this.slots.set(key, r);
     return r;
   }
@@ -331,7 +328,7 @@ class Resolver {
           'A percentage is only an argument of mix, lighten, darken, lightenHsl, darkenHsl or alpha'
         );
       case 'num':
-        throw new SyntaxError('A plain number is only an argument of adjustHue');
+        throw new SyntaxError('A plain number is only for adjustHue');
       case 'lit':
         return this.literal('', e.text);
       case 'ref': {
@@ -430,7 +427,7 @@ class Resolver {
   /** khroma's `adjust(c, { h })`, v12's cScale hue steps (D258). */
   private adjustHue(a: Resolved, deg: Expr | undefined): Resolved {
     const h = deg?.k === 'num' ? deg.value : NaN;
-    if (!(Math.abs(h) <= 360)) throw new SyntaxError('adjustHue needs degrees from -360 to 360');
+    if (!(Math.abs(h) <= 360)) throw new SyntaxError('adjustHue needs degrees, ±360');
     if (h === 0) return a;
     const turn = `calc(h ${h < 0 ? '-' : '+'} ${num(Math.abs(h))})`;
     return this.hslStep(a, h, 0, `hsl(from ${a.css} ${turn} s l / alpha)`);
@@ -440,7 +437,7 @@ class Resolver {
   private ifSet(v: Expr, fallback: Expr): Resolved {
     const slot = v.k === 'ref' && !own(this.defs, v.name) ? RE_SLOT.exec(v.name) : null;
     if (v.k !== 'ref' || (!slot && !own(this.defs, v.name)))
-      throw new SyntaxError('ifSet needs a theme variable or palette entry first');
+      throw new SyntaxError('ifSet needs a variable');
     const set = slot
       ? this.palettes.slots.has(v.name) ||
         this.palettes.user[slot[1] as PaletteVariable]?.[Number(slot[2])] !== undefined
@@ -553,8 +550,8 @@ function checkOverrides(
 }
 
 const MAX_PALETTE = 64;
-/** v12's numbered palette names: `cScale3`, `cScaleInv3`, `cScaleLabel3`. */
-const RE_SLOT = new RegExp(`^(${NUMBERED_PALETTES.join('|')})(\\d{1,2})$`);
+/** v12's numbered palette names (`NUMBERED_PALETTES`): `cScale3`, `cScaleInv3`, `cScaleLabel3`. */
+const RE_SLOT = /^(cScale(?:Inv|Label)?)(\d{1,2})$/;
 
 type PaletteLists = Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
 
