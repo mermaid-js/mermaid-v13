@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { PALETTE_LIMIT } from '@mermaid-js/core/theme';
 import * as fx from '../layout/fixtures.ts';
 import type { TimelineBox } from '../layout/index.ts';
 import type { TimelineModel } from '../model.ts';
+import { PALETTE_SLOTS } from './paint.ts';
 import { elementsOf, type Element } from './properties.fixtures.ts';
 import { renderForTest } from './testing.fixtures.ts';
 
@@ -331,5 +333,11 @@ describe('structure', () => {
       width: String(w),
       height: String(Math.ceil(off.r.layout.bounds.height)),
     });
+  });
+});
+
+describe('palette slots', () => {
+  it('wrap at core’s palette length, kept as a literal to stay out of core’s theme chunk', () => {
+    expect(PALETTE_SLOTS).toBe(PALETTE_LIMIT);
   });
 });
