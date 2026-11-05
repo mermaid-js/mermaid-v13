@@ -24,7 +24,10 @@ import { flowchartV12Snapshot } from './v12.ts';
  *   a reference inside one of its bodies.
  */
 
-/** Quoted subgraph ids in the corpus, which the service gives no definition (GAPS.md). */
+/**
+ * Quoted subgraph ids in the corpus, which the service gives no definition (GAPS.md). Known
+ * and left for now: handled by #199.
+ */
 const QUOTED_SUBGRAPH_IDS = 13;
 
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
