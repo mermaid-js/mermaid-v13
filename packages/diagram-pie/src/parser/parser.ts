@@ -145,7 +145,7 @@ const STOP = new Stop();
 const ESCAPED = '%>@#\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ud800-\\udfff\\ufffe\\uffff';
 const RE_NEEDS_ESC = new RegExp(`[${ESCAPED}]`, 'u');
 const RE_ESC = new RegExp(`[${ESCAPED}]`, 'gu');
-/** Code units below this take two hex digits (`%00`…`%7F`), the rest four (`%D800`, `%FFFE`). */
+/** Code units below this take two hex digits (`%00`…`%7F`), the rest four (`%D800`, `%FFFF`). */
 const TWO_DIGITS = 0x80;
 function esc(name: string): string {
   return RE_NEEDS_ESC.test(name)
