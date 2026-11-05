@@ -40,8 +40,8 @@ export function replaceMapped(
     const whole = match[0];
     const rep = fn(whole, ...match.slice(1));
     parts.push(m.text.slice(last, at));
-    out.from.push(...m.from.slice(last, at));
-    out.to.push(...m.to.slice(last, at));
+    pushAll(out.from, m.from.slice(last, at));
+    pushAll(out.to, m.to.slice(last, at));
     parts.push(rep);
     // Characters the replacement keeps at either end map 1:1; the rest maps to what it replaced.
     let pre = 0;
@@ -54,8 +54,8 @@ export function replaceMapped(
       rep[rep.length - 1 - suf] === whole[whole.length - 1 - suf]
     )
       suf++;
-    out.from.push(...m.from.slice(at, at + pre));
-    out.to.push(...m.to.slice(at, at + pre));
+    pushAll(out.from, m.from.slice(at, at + pre));
+    pushAll(out.to, m.to.slice(at, at + pre));
     const midFrom = at + pre;
     const midTo = at + whole.length - suf;
     const s0 =
@@ -69,15 +69,20 @@ export function replaceMapped(
     if (rep.length - suf === pre && midTo > midFrom && out.to.length > 0) {
       out.to[out.to.length - 1] = e0;
     }
-    out.from.push(...m.from.slice(midTo, at + whole.length));
-    out.to.push(...m.to.slice(midTo, at + whole.length));
+    pushAll(out.from, m.from.slice(midTo, at + whole.length));
+    pushAll(out.to, m.to.slice(midTo, at + whole.length));
     last = at + whole.length;
   }
   parts.push(m.text.slice(last));
-  out.from.push(...m.from.slice(last));
-  out.to.push(...m.to.slice(last));
+  pushAll(out.from, m.from.slice(last));
+  pushAll(out.to, m.to.slice(last));
   out.text = parts.join('');
   return out;
+}
+
+/** `dst.push(...src)` without the argument limit (inputs run to hundreds of thousands). */
+function pushAll(dst: number[], src: readonly number[]): void {
+  for (const v of src) dst.push(v);
 }
 
 /** Drop the first `n` characters. */

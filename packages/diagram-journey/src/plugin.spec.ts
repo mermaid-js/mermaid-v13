@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type { DiagramParseContext } from '@mermaid-js/core';
+import { preprocess } from '@mermaid-js/core/preprocess';
 import { FIXTURES } from './layout/fixtures.ts';
 import { journey } from './plugin.ts';
 
@@ -17,8 +19,16 @@ describe('journey plugin (spec #290)', () => {
     expect(journey.detector('flowchart\njourney')).toBe(false);
   });
 
-  it('throws from parse until the parser lands (T2 #302)', () => {
-    expect(() => journey.parse()).toThrow(/T2/);
+  it('parses with the preprocessed text it is given (T2 #302)', () => {
+    const text = '---\ntitle: Front\n---\njourney\nsection S\nT: 3: Me';
+    const result = journey.parse(text, {
+      preprocessed: preprocess(text),
+    } as unknown as DiagramParseContext);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.model.title).toBe('Front');
+    expect(result.model.tasks.map((t) => [t.ast, t.name, t.score, t.section])).toEqual([
+      ['t:1', 'T', 3, 'S'],
+    ]);
   });
 
   it('lists the title, section, task and named actor texts as labels', () => {

@@ -1,6 +1,6 @@
 /**
- * The journey parser's public surface: the lexer gated against v12's jison lexer (T1). The
- * parser, model builder and AST follow in T2.
+ * The journey parser's public surface: the parser and its AST (T2), detection, and the lexer
+ * gated against v12's jison lexer (T1).
  */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
@@ -8,6 +8,10 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { JISON_NAMES, T as JourneyTokenKind } from './tokens.ts';
+export { parseJourney } from './parser.ts';
+export type { JourneyParseOptions, JourneyParseResult } from './parser.ts';
+export { detectJourney } from './detect.ts';
+export type * from './ast.ts';
 
 export interface JourneyToken {
   /** A `JourneyTokenKind` or a shared `Kind`. */
