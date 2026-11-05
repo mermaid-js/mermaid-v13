@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { contrastRatio, formatColor, invertColor, mixColors, parseColor } from './index.ts';
+import { adjustChannels } from './color.ts';
 
 describe('colour maths (no khroma)', () => {
   it('parses hex, named, rgb() and hsl() colours', () => {
@@ -30,6 +31,13 @@ describe('colour maths (no khroma)', () => {
     expect(formatColor([127.5, 127.5, 127.5, 1])).toBe('#808080');
     expect(formatColor([255, 0, 0, 0.25])).toBe('#ff000040');
     expect(invertColor([255, 0, 16, 1])).toEqual([0, 255, 239, 1]);
+  });
+
+  it('adds per-channel offsets clamped to 0–255, keeping alpha (khroma adjust, D232)', () => {
+    // khroma 2.1.0 adjust('#336699', { r: 10, g: -20, b: 0 }) = #3d5299
+    expect(adjustChannels([51, 102, 153, 1], 10, -20, 0)).toEqual([61, 82, 153, 1]);
+    expect(adjustChannels([250, 5, 128, 0.5], 10, -10, 2.5)).toEqual([255, 0, 130.5, 0.5]);
+    expect(adjustChannels([0, 255, 9, 1], -255, 255, 0)).toEqual([0, 255, 9, 1]);
   });
 
   it('computes WCAG 2 contrast ratios', () => {
