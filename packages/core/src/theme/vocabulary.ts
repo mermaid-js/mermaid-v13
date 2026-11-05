@@ -157,7 +157,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   background: def('bg', 'color', ['core']),
   primaryTextColor: def('pt', 'color', ['core']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
-  fontFamily: def('ff', 'font', ['core', 'flowchart', 'sequence', 'class', 'state', 'er']),
+  fontFamily: def('ff', 'font', ['core', 'flowchart', 'sequence', 'class', 'state', 'er', 'pie']),
   fontSize: def('fs', 'length', ['core', 'flowchart', 'sequence', 'class', 'state', 'er']),
   // derived
   primaryBorderColor: def('pb', 'color', ['core']),
