@@ -120,11 +120,12 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-PERF-2 | Core and every first-party diagram package have **zero** runtime npm dependencies. | Must | M1 | D10 | CI check on `dependencies` of published packages |
 | R-PERF-3 | Warm render is ≥ 50× faster than frozen `mermaid@12.2.0` with dagre, as a geomean over the corpus. | Must | M1 | D10, D45, D150 | Approaches harness geomean, reported in CI and enforced on a local run (D150); current v12 also reported |
 | R-PERF-4 | 100% of the flowchart corpus renders without error, including the large and huge tiers. | Must | M1 | D10 | Harness OK count = corpus size |
-| R-PERF-5 | Benchmarks report time per stage: parse, measure, layout and serialise. | Must | M1 | D43 | Harness output contains stage columns |
+| R-PERF-5 | Benchmarks report time per stage: parse, measure, layout and serialise. | Must | M1 | D43, D203 | Harness output contains stage columns; `measure` is filled for flowchart fixtures, other types follow with their own tickets (D203) |
 | R-PERF-6 | The fixed benchmark fixtures include the Pele/#8635 set (7-, 50- and 500-node flowcharts, sequence, class) plus the 158-diagram corpus. | Must | M1 | D43 | Fixtures committed |
 | R-PERF-7 | CI fails when any stage regresses by more than 10% on the reference runner. | Must | M1 | D43 | CI job with a stored baseline |
 | R-PERF-8 | Core has a published size budget, enforced in CI: everything the `mermaid` entry loads before any diagram chunk (`@mermaid-js/core` plus the public API, registry, detectors and DOM adapter) is ≤ 88 KB gzip. Later diagram packages are optional plugins and have no size budget for now. | Should | M3.5 | D7, D59, D161 | Committed budget file; esbuild size spec in `pnpm check` |
 | R-PERF-9 | The time from loading the module to the first possible render is ≤ 15 ms on the reference runner (Pele: 10 ms). | Should | M1 | – | Harness "Ready at" |
+| R-PERF-10 | The warm geomean against Pele (at Pele's default settings) over the bench fixtures does not get worse than the last recorded close-out ratio plus 5%. Recorded: 1.45× slower (2026-11-05, before #265). The aim is to render faster than Pele; 2× is the aspiration (D206). | Should | M3.5 | D205, D206 | Bench gate, enforced on a local run on the reference machine and report-only on CI (as R-PERF-3, D150) |
 
 ## 8. Parsing (R-PARSE)
 
@@ -327,7 +328,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 - **O-1. Theme variable inventory.** v12 has about 270 theme variables. R-THEME-2 exposes "every variable a diagram uses". DESIGN must decide which ones are base and which derived, and how per-diagram variables (e.g. `pie1…pie12`, `git0…7`) map to CSS. Confirmed 2026-11-02: settled in DESIGN.
 - **O-2. The other v12 themes.** v12 ships 11 themes. This draft makes the 5 documented ones Must and the rest Should (R-THEME-7). Resolved 2026-11-02: keep all 11 for parity; R-THEME-7 is now Must.
 - **O-3. Parity-corpus location and licensing.** The 10,000+ diagram set lives outside the repo. Decided 2026-11-02: it is not run in CI. Quality assurance runs it; CI uses the in-repo corpora. Still open: where QA reads it from and whether any of it can be committed.
-- **O-4. Reference runner.** R-PERF-7 needs a stable machine for per-stage regression checks. GitHub-hosted runners vary by ±20%.
+- **O-4. Reference runner.** R-PERF-7 needs a stable machine for per-stage regression checks. GitHub-hosted runners vary by ±20%. For spec #265 the maintainer's M1 Max is the reference machine (D208); the general question stays open.
 - **O-5. HTML subset in labels.** R-TEXT-3 lists a minimal subset. Check the corpus for other tags in real use (`<sub>`, `<sup>`, `<u>`, `<a>`) before freezing the list.
 - **O-6. Number targets.** R-PERF-9 (≤ 15 ms ready) and R-THEME-5 (≤ 8 base variables) are my proposals. Accepted 2026-11-02.
 - **O-7. Pele layout: port or depend.** The layered layout (R-LAYOUT) is derived from Pele. Decide whether to port the code into core (we own and adapt it; MIT attribution per R-REL) or depend on Pele's published package (upstream fixes for free, but an external runtime dependency against R-PERF-2, and less control over the API and determinism). Decided 2026-11-02: port.
