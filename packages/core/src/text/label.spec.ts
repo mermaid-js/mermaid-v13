@@ -160,6 +160,16 @@ describe('HTML subset (R-TEXT-3)', () => {
     expect(line).toEqual([{ text: 'x', style: B | I, bold: true, italic: true, width: 5.56 }]);
   });
 
+  it('marks underlined runs from the base style for the SVG writer (#208)', () => {
+    const U = Style.Underline;
+    const plain = layoutLabel('x', arial, Infinity, tableMeasurer, { style: U });
+    expect(plain.lines).toEqual([[{ text: 'x', style: U, underline: true, width: 5 }]]);
+    const marked = layoutLabel('<b>x</b>', arial, Infinity, tableMeasurer, { style: U });
+    expect(marked.lines).toEqual([
+      [{ text: 'x', style: U | B, bold: true, underline: true, width: 5.56 }],
+    ]);
+  });
+
   it('nests tags: closing an inner tag keeps the outer style', () => {
     expect(runs(layout('<b>a<strong>b</strong>c</b>d'))).toEqual([
       [
