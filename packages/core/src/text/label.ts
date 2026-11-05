@@ -3,16 +3,23 @@
 // styled runs, measured through the injected Measurer, ready to emit as <text>/<tspan>.
 // Fast path, CJK pieces and soft-hyphen fitting are based on Pele's text/label.ts
 // (https://github.com/obsidianmd/pele, MIT, (c) 2026 kepano).
-import type { LabelBox, LabelSpan } from '../svg/writer.ts';
+import type { LabelBox, LabelBoxSpan, LabelSpan } from '../svg/writer.ts';
 import type { SafeValue } from '../svg/types.ts';
 import { entityAt } from './entities.ts';
+import { PLACEHOLDER, type InlineSpans } from './inline.ts';
 import { Style, type FontKey, type Measurer, type StyleBits } from './measurer.ts';
 
-/** A run of text drawn in one style. `width` is its advance in px. */
+/**
+ * A run of text drawn in one style, or an inline box (`kind: 'box'`, D177) whose `text` is its
+ * source as written. `width` is its advance in px.
+ */
 export interface Run extends LabelSpan {
   readonly style: StyleBits;
   readonly width: number;
 }
+
+/** An inline box in a line: a measured box an extension drew for a delimited span. */
+export type BoxRun = Run & LabelBoxSpan;
 
 /**
  * A laid-out label: the `LabelBox` that `SvgWriter.label()` draws, with the measurements
@@ -36,11 +43,18 @@ export interface LabelOptions {
   readonly markdown?: boolean;
   /** Style bits every run starts from. Default 0. */
   readonly style?: StyleBits;
+  /**
+   * The render's inline-box providers (`RenderContext.inline`, D177). Without it, or with no
+   * provider for a label's spans, the label is laid out as written.
+   */
+  readonly inline?: InlineSpans;
 }
 
 interface Piece {
   text: string;
   style: StyleBits;
+  /** Set on an inline box's piece, whose text is one placeholder character. */
+  box?: LabelBoxSpan;
 }
 
 // Anything that needs more than measuring once: markup, entities, escapes, explicit breaks,
@@ -78,26 +92,30 @@ export function layoutLabel(
 ): MeasuredLabel {
   const base = options.style ?? 0;
   const { ascent, lineHeight } = measurer.metrics(font);
+  const spans = options.inline?.extract(raw, font, measurer);
+  const src = spans?.source ?? raw;
   let left = false;
   const box = (lines: Run[][], indents: number[], widths: number[]): MeasuredLabel => {
     let width = 0;
     for (const w of widths) if (w > width) width = w;
+    const baselines = spans ? grownBaselines(lines, ascent, lineHeight) : undefined;
     return {
       lines,
       indents,
       widths,
       width,
-      height: lines.length * lineHeight,
+      height: baselines ? baselines.height : lines.length * lineHeight,
       lineHeight,
       baseline: ascent,
       ...(left ? { left } : {}),
+      ...(baselines ? { baselines: baselines.at } : {}),
     };
   };
-  const text = raw.trim();
+  const text = src.trim();
   if (text === '') return box([], [], []);
 
   const markdown = options.markdown === true;
-  if (!RE_SLOW.test(text) && !(markdown && RE_BULLET.test(text))) {
+  if (!spans && !RE_SLOW.test(text) && !(markdown && RE_BULLET.test(text))) {
     const width = measurer.width(text, font, base);
     if (width <= maxWidth) return box([[run(text, base, width)]], [0], [width]);
   }
@@ -106,8 +124,9 @@ export function layoutLabel(
   const indents: number[] = [];
   const widths: number[] = [];
   const tags: Tags = { bold: 0, italic: 0 };
-  for (const { source, bullet } of markdown ? markdownLines(raw) : plainLines(text)) {
-    const pieces = tidy(inline(source, base, tags, markdown));
+  for (const { source, bullet } of markdown ? markdownLines(src) : plainLines(text)) {
+    const styled = inline(source, base, tags, markdown);
+    const pieces = tidy(spans ? withBoxes(styled, spans.boxes) : styled);
     let indent = 0;
     let hang = 0;
     if (bullet !== undefined) {
@@ -128,6 +147,55 @@ export function layoutLabel(
     }
   }
   return box(lines, indents, widths);
+}
+
+/**
+ * Baselines of lines grown around boxes taller than the font, with the label's height, or
+ * undefined when every line keeps the font's height.
+ */
+function grownBaselines(
+  lines: readonly Run[][],
+  ascent: number,
+  lineHeight: number
+): { at: number[]; height: number } | undefined {
+  const descent = lineHeight - ascent;
+  const at: number[] = [];
+  let y = 0;
+  let grown = false;
+  for (const line of lines) {
+    let above = ascent;
+    let below = descent;
+    for (const r of line) {
+      if (r.kind !== 'box') continue;
+      const box = r as BoxRun;
+      above = Math.max(above, box.baseline);
+      below = Math.max(below, box.height - box.baseline);
+    }
+    if (above > ascent || below > descent) grown = true;
+    at.push(y + above);
+    y += above + below;
+  }
+  return grown ? { at, height: y } : undefined;
+}
+
+/** Splits pieces at box placeholders, wherever markup left them, into box pieces. */
+function withBoxes(pieces: Piece[], boxes: readonly LabelBoxSpan[]): Piece[] {
+  const out: Piece[] = [];
+  for (const piece of pieces) {
+    let text = '';
+    for (const ch of piece.text) {
+      const box = boxes[ch.charCodeAt(0) - PLACEHOLDER];
+      if (box === undefined || ch.length !== 1) {
+        text += ch;
+        continue;
+      }
+      if (text !== '') out.push({ text, style: piece.style });
+      out.push({ text: ch, style: piece.style, box });
+      text = '';
+    }
+    if (text !== '') out.push({ text, style: piece.style });
+  }
+  return out;
 }
 
 /** One source line of a label; `bullet` is the list nesting level of a bullet item. */
@@ -280,6 +348,11 @@ function tidy(pieces: Piece[]): Piece[] {
   const out: Piece[] = [];
   let space = true; // at line start, leading space is dropped
   for (const piece of pieces) {
+    if (piece.box) {
+      out.push(piece);
+      space = false;
+      continue;
+    }
     let text = piece.text.replace(RE_SPACES, ' ');
     if (space) text = text.replace(/^ /, '');
     if (text === '') continue;
@@ -287,7 +360,7 @@ function tidy(pieces: Piece[]): Piece[] {
     out.push({ text, style: piece.style });
   }
   const last = out[out.length - 1];
-  if (last) last.text = last.text.replace(/ $/, '');
+  if (last && !last.box) last.text = last.text.replace(/ $/, '');
   return out.filter((p) => p.text !== '');
 }
 
@@ -313,6 +386,13 @@ function wrap(pieces: Piece[], font: FontKey, measurer: Measurer, max: number): 
     width = 0;
   };
   for (const piece of pieces) {
+    if (piece.box) {
+      // One unbreakable piece: it starts a new line when it does not fit, and is never split.
+      if (width > 0 && width + piece.box.width > max) commit();
+      current.push(piece);
+      width += piece.box.width;
+      continue;
+    }
     const style = piece.style;
     const parts = piece.text.match(RE_PIECE) ?? [];
     for (let p = 0; p < parts.length; p++) {
@@ -407,19 +487,23 @@ function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measure
   const merged: Piece[] = [];
   for (const piece of line) {
     const last = merged[merged.length - 1];
-    if (last && last.style === piece.style) last.text += piece.text;
+    if (last && !last.box && !piece.box && last.style === piece.style) last.text += piece.text;
     else merged.push({ ...piece });
   }
   const first = merged[0];
-  if (first) first.text = first.text.trimStart();
+  if (first && !first.box) first.text = first.text.trimStart();
   const last = merged[merged.length - 1];
-  if (last) {
+  if (last && !last.box) {
     last.text = last.text.trimEnd();
     // A soft hyphen at a line break shows as '-'.
     if (broken && last.text.endsWith(SHY)) last.text = last.text.slice(0, -1) + '-';
   }
   const runs: Run[] = [];
   for (const piece of merged) {
+    if (piece.box) {
+      runs.push({ ...piece.box, style: piece.style } satisfies BoxRun);
+      continue;
+    }
     const text = piece.text.replace(RE_HINTS, '');
     if (text === '') continue;
     runs.push(run(text, piece.style, measurer.width(text, font, piece.style)));
