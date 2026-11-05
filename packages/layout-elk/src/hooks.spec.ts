@@ -98,7 +98,7 @@ describe('elk.lineHops (a postRender edit, D174)', () => {
 });
 
 describe('what the engine could not do as asked', () => {
-  // A cycle: ELK says "The given graph is not a tree!".
+  // A cycle: not a tree.
   const forest = 'flowchart TD\n  A --> B\n  B --> A\n';
 
   it('elk.radial on a graph that is not a tree draws with layered and warns once', async () => {

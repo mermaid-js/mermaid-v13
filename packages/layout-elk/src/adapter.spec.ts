@@ -116,6 +116,36 @@ describe('elkEngine (LayoutGraph → ELK → LayoutModel)', () => {
     expect(takeNotes(config)).toEqual([]);
   });
 
+  it('elk.radial never hands ELK a cycle or a node with two parents: layered, noted', () => {
+    // ELK finds a root and recurses from it; a cycle under that root overflows the stack.
+    const graphOf = (pairs: string): LayoutGraph => {
+      const edges = pairs.split(' ').map((p, i) => ({
+        id: `e${i}`,
+        source: p[0]!,
+        target: p[1]!,
+        minLen: 1,
+      }));
+      const ids = [...new Set(edges.flatMap((e) => [e.source, e.target]))];
+      return {
+        direction: 'TB',
+        spacing,
+        nodes: ids.map((id) => ({ id, width: 40, height: 20 })),
+        edges,
+        groups: [],
+      };
+    };
+    for (const pairs of ['XY YX ZY', 'RA AB BC CA', 'AB AC BD CD']) {
+      const graph = graphOf(pairs);
+      const config = {} as ResolvedConfig;
+      expect(elkEngine('radial')(graph, { config }), pairs).toEqual(layered(graph));
+      expect(takeNotes(config).map((n) => n.code)).toEqual(['ELK_RADIAL_NOT_A_TREE']);
+    }
+    const tree = graphOf('AB AC CD');
+    const config = {} as ResolvedConfig;
+    expect(validateLayout(tree, elkEngine('radial')(tree, { config }))).toEqual([]);
+    expect(takeNotes(config)).toEqual([]);
+  });
+
   describe('groups (v12 `buildSubgraphLayoutOptions`, `configureCrossHierarchyEdges`)', () => {
     const pad = { top: 8, right: 8, bottom: 8, left: 8 };
     /** TB outside, a group of two running LR inside, and `X`, joined to the group or into it. */

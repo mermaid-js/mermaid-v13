@@ -34,7 +34,7 @@ Warnings:
 | --- | --- |
 | `ELK_NOT_INSTALLED` | A diagram names an ELK layout and this package is not registered. Comes from `mermaid`; the diagram is drawn with `layered`. |
 | `ELK_ALGORITHM_IGNORED` | A subgraph sets `@{ algorithm: … }`. Parsed, not applied yet: the subgraph is laid out with the diagram's algorithm. |
-| `ELK_RADIAL_NOT_A_TREE` | `elk.radial` on a graph ELK refuses as "not a tree" (a cycle). Drawn with `layered`. |
+| `ELK_RADIAL_NOT_A_TREE` | `elk.radial` on a graph that is not a tree (a cycle, or a node with two parents). Drawn with `layered`. |
 
 What differs from v12 is listed in MIGRATION.md under "ELK". Parity is with v12's ELK options, not its pixels.
 

@@ -27,7 +27,7 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 ## From E2 #240
 
-- ~~[E4 #242] `elk.radial` on a non-tree fails the render~~ Closed by #242: v12 had no behaviour to match (the name was a container id only, and such a render failed), so the engine draws with core's `layered` and the package's hook adds one `ELK_RADIAL_NOT_A_TREE`. ELK only rejects cycles in practice; several roots lay out fine.
+- ~~[E4 #242] `elk.radial` on a non-tree fails the render~~ Closed by #242: v12 had no behaviour to match (the name was a container id only, and such a render failed), so the engine draws with core's `layered` and the package's hook adds one `ELK_RADIAL_NOT_A_TREE`. ELK throws when no node is a root and overflows the stack on a cycle under a root, so the engine checks the edges before calling ELK: a cycle or a node with two parents takes the same fallback (from the final review). Several roots (a forest) lay out fine.
 - ~~[E5 #243] With `layout: elk` and the plugin, text output gets ELK's px coordinates (the engine ignores `grid`); without the plugin it gets `ELK_NOT_INSTALLED`. D179: always `layered`, one `ASCII_DROPPED`. The package has no README yet.~~ Closed by #243 (README added).
 - [T0b #238] The manifest E2 wants: `{"plugin":"layout","names":[the 9 names],"entry":"./dist/index.js"}` (`tickets/240.md`).
 

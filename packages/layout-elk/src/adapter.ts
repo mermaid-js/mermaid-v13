@@ -19,8 +19,10 @@
  * (`straighten.ts`). `lineHops` changes how edges are drawn, so it is the package's `postRender`
  * hook (`hops.ts`). A group's `algorithm` is not applied (D174): `mermaid` warns.
  *
- * `elk.radial` needs a tree. On a graph that is not one ELK throws; the engine then lays the graph
- * out with core's `layered` and notes it (`takeNotes`), and the package's hook warns.
+ * `elk.radial` needs a tree. ELK throws when no node is a root, and recurses without end (a stack
+ * overflow) on a cycle under one, so the engine checks the edges first (`isEdgeTree`: no cycle, no
+ * node with two parents). On a graph that is not a tree it lays the graph out with core's
+ * `layered` and notes it (`takeNotes`), and the package's hook warns.
  *
  * Coordinates: every shape and edge is read in root coordinates (`elk.json.*Coords: ROOT`).
  * Only `x`, `y`, `width`, `height`, sections and labels are read back, never GWT's `$H` hash
@@ -596,6 +598,27 @@ function note(config: object | undefined, n: EngineNote): void {
   notes.set(config, list);
 }
 
+/**
+ * Whether the edges form a forest: every node and group has at most one parent and following
+ * parents never comes back (no cycle, self loops included). ELK's radial recurses through
+ * children, so it must never see a cycle.
+ */
+function isEdgeTree(graph: LayoutGraph): boolean {
+  const parent = new Map<string, string>();
+  for (const e of graph.edges) {
+    if (e.source === e.target || parent.has(e.target)) return false;
+    parent.set(e.target, e.source);
+  }
+  for (const start of parent.keys()) {
+    const seen = new Set<string>([start]);
+    for (let at = parent.get(start); at !== undefined; at = parent.get(at)) {
+      if (seen.has(at)) return false;
+      seen.add(at);
+    }
+  }
+  return true;
+}
+
 const notATree = (e: unknown): boolean =>
   /not a tree/i.test(
     e instanceof Error ? e.message : String((e as { message?: unknown } | null)?.message)
@@ -608,18 +631,23 @@ const notATree = (e: unknown): boolean =>
 export function elkEngine(algorithm: ElkAlgorithm): LayoutEngine {
   return (graph, ctx) => {
     const elk = elkConfigOf(ctx?.config);
+    // v12 never had `elk.radial` as a layout name, and ELK cannot lay out a graph that is not a tree.
+    const notTree = (): LayoutModel => {
+      note(ctx?.config, {
+        code: 'ELK_RADIAL_NOT_A_TREE',
+        message:
+          'elk.radial needs a tree (no cycle, one parent per node), and this graph is not one, so it is drawn with layered.',
+      });
+      return layeredEngine(graph);
+    };
+    if (algorithm === 'radial' && !isEdgeTree(graph)) return notTree();
     const built = toElkGraph(graph, algorithm, elk);
     try {
       layoutSync(built.root);
     } catch (e) {
-      // v12 never had `elk.radial` as a layout name, and ELK refuses a graph that is not a tree.
+      // ELK: "The given graph is not a tree!" (no root at the top level, e.g. every node in a group).
       if (algorithm !== 'radial' || !notATree(e)) throw e;
-      note(ctx?.config, {
-        code: 'ELK_RADIAL_NOT_A_TREE',
-        message:
-          'elk.radial cannot lay out this graph (ELK: "The given graph is not a tree!"), so it is drawn with layered.',
-      });
-      return layeredEngine(graph);
+      return notTree();
     }
     return readModel(graph, built, elk);
   };

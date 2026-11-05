@@ -103,17 +103,24 @@ describe('@mermaid-js/layout-elk (D171)', () => {
 });
 
 describe('text output with the plugin keeps layered (D179)', () => {
-  it.each(['elk', 'elk.stress', 'elk.radial'])(
+  // elk.radial needs a tree (FLOW's `B` has two parents), so it gets one.
+  const TREE = 'flowchart LR\n  A[Start] --> B(End)\n  A --> C{Choice}\n';
+  it.each([
+    ['elk', FLOW],
+    ['elk.stress', FLOW],
+    ['elk.radial', TREE],
+  ])(
     'draws `layout: %s` as layered text with one ASCII_DROPPED for the layout',
-    async (name) => {
-      const layered = await createMermaid().render('d', FLOW, { format: 'ascii' });
+    async (name, text) => {
+      const layered = await createMermaid().render('d', text, { format: 'ascii' });
       const m = createMermaidWithElk();
-      const r = await m.render('d', withLayout(name), { format: 'ascii' });
+      const r = await m.render('d', withLayout(name, text), { format: 'ascii' });
       expect(r.text).toBe(layered.text);
       expect(r.warnings.map((w) => [w.code, w.feature])).toEqual([['ASCII_DROPPED', 'layout']]);
       // Same API object, SVG: still ELK, so the text result is not a fallback of a broken engine.
-      const svg = await m.render('d', withLayout(name));
-      expect(svg.svg).not.toBe((await createMermaid().render('d', FLOW)).svg);
+      const svg = await m.render('d', withLayout(name, text));
+      expect(svg.warnings).toEqual([]);
+      expect(svg.svg).not.toBe((await createMermaid().render('d', text)).svg);
     }
   );
 
