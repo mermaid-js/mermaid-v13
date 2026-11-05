@@ -1,0 +1,45 @@
+@ 1:1  |quadrantChart
+  1:1-1:14 "quadrantChart"
+  | **`quadrantChart`**
+  |
+  | `quadrantChart`: starts a quadrant chart; statements follow, one per line.
+@ 2:6  tit|le Reach
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title <text>`: the chart title, the rest of the line.
+@ 3:6  acc|Title: Campaigns
+  3:3-3:12 "accTitle:"
+  | **`accTitle:`**
+  |
+  | `accTitle: …`: the accessible title of the chart.
+@ 4:7  x-ax|is Low --> High
+  4:3-4:9 "x-axis"
+  | **`x-axis`**
+  |
+  | `x-axis Low --> High` or `y-axis Low --> High`: an axis's labels, start then end. One label, or one label and `-->`, set the start only.
+@ 4:15  x-axis Low -|-> High
+  4:14-4:17 "-->"
+  | **`-->`**
+  |
+  | `-->` (two or more dashes): between an axis's two labels.
+@ 5:12  quadrant-|2 Need to promote
+  5:3-5:13 "quadrant-2"
+  | **`quadrant-2`** the top left quadrant
+  |
+  | `quadrant-1 <text>` … `quadrant-4 <text>`: a quadrant's label. Quadrant 1 is the top right, 2 the top left, 3 the bottom left and 4 the bottom right.
+@ 6:8  class|Def hot radius: 10
+  6:3-6:11 "classDef"
+  | **`classDef`**
+  |
+  | `classDef <name> <styles>`: a class of point styles, given with `:::name`.
+@ 7:6  acc|Descr {
+  7:3-7:13 "accDescr {"
+  | **`accDescr {`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description of the chart.
+@ 9:3  |}
+  9:3-9:4 "}"
+  | **`}`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description of the chart.

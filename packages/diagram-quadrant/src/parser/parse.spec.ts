@@ -133,6 +133,17 @@ describe('quadrant parser: AST, symbols and spans', () => {
     expect(r.statements.map((s) => s.kind)).toEqual(['header', 'point', 'classDef']);
   });
 
+  it('records no class reference for a point that fails, so a rename leaves it alone', () => {
+    const r = parseQuadrant(H + 'P:::a: [0.1, 2]\n');
+    expect(r.diagnostics.filter((d) => d.severity === 'error')).toHaveLength(1);
+    expect(r.symbols).toEqual([]);
+    expect(r.statements.map((s) => s.kind)).toEqual(['header']);
+    // A bad style is a diagnostic only: the point, and its reference, stay.
+    const styled = parseQuadrant(H + 'Q:::a: [0.1, 0.2] radius: x\n');
+    expect(styled.symbols.map((s) => `${s.name}:${s.role}`)).toEqual(['a:ref']);
+    expect(styled.statements.map((s) => s.kind)).toEqual(['header', 'point']);
+  });
+
   it('ranges cover quotes and `]`, not the blanks a keyword takes', () => {
     const src = H + '  quadrant-1 "a"  \n  P: [0.1, 0.2]  \n';
     const r = parseQuadrant(src);

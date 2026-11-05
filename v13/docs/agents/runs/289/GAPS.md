@@ -46,5 +46,12 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 
 - Parity: oracle accept/reject and model parity green; quadrant divergences are the two unclosed-directive `reject` entries. Grammar differential (corpus + 3,000 generated sentences), grammar-lexer gate, recovery set (23 errors / 11 cases), message fuzz, `v12-specs/` (27 pass, 2 skipped with reasons).
 - **Choices:** one diagnostic per bad style; a style cut short by a syntax error is not also checked. An overridden `classDef` gets `st:<n>` like other overridden statements. Token kind `AxisDelimiter` renamed `AxisTextDelimiter` (gen:grammar matches kinds to terminals by name). `oracle.ts` gets one additive patch call (`quadrant/oracle-env.ts`) recording v12's DB calls.
-- [ ] **Owner #321 T6:** probe support (completion context) is not in the parser yet.
+- [x] **#321 T6 (closed):** probe support added (ProbeCursor, lexer start condition as mode).
 - Size: parser 8.6 KB gz; package 10.4 KB gz.
+
+## #321 T6 (handoff `tickets/321.md`)
+
+- [x] T2 review: the `:::` class `ref` symbol is recorded only once its point statement completes (a failed point has no symbol, so rename leaves it alone).
+- [ ] **Owner #317 T5:** add `quadrantChart` rows to `LEZER_HIGHLIGHTERS` / `MONARCH_HIGHLIGHTERS` (keyed by `FirstPartyFacetId`, which needs the manifest's `language` entry), run each adapter's `gen`, extend adapters-agree and first-paint specs, and drop the test-only row in `language-service/src/testing/unlisted-facets.ts`.
+- **Choice:** style-key completions insert an example value (`radius: 10`): a key without a value is an error inside the inserted text.
+- Size: `./language` 11.5 KB gz; parser 8.8 KB gz (+0.2 KB probe). R-LANG-4 timing not measured on a steady machine.

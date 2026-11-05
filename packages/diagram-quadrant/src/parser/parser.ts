@@ -10,7 +10,8 @@
  * which jison returns none, are trivia here, as are comments. Values convert as v12's DB did
  * (`quadrantDb.ts`): labels trimmed, styles checked as `parseStyles` (`styles.ts`). Unlike jison
  * it does not stop at the first error: it reports it, skips to the end of the statement (a line
- * break, `;` or the end of the text) and carries on (R-PARSE-4).
+ * break, `;` or the end of the text) and carries on (R-PARSE-4). With `probe`, a
+ * {@link ProbeCursor} records what the parser tests at the probed offset (R-LANG-7, D95).
  */
 import {
   Kind,
@@ -18,6 +19,8 @@ import {
   LineIndex,
   nodeId,
   ParseState,
+  Probe,
+  ProbeCursor,
   syncTo,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
@@ -96,6 +99,17 @@ const STYLE_PART = [T.Alpha, T.Num, T.Colon, T.Space, T.Brkt, T.Minus];
 const EOL = [Kind.Newline, T.Semi, T.Eof];
 const STYLE_END = [T.Comma, ...EOL];
 const QUADRANTS = [T.Quadrant1, T.Quadrant2, T.Quadrant3, T.Quadrant4];
+/** What may start a statement: its keywords (`accDescr {` as `AccDescr`) and a point's label. */
+const STATEMENT_START = [
+  T.Title,
+  T.AccTitle,
+  T.AccDescr,
+  T.XAxis,
+  T.YAxis,
+  ...QUADRANTS,
+  T.ClassDef,
+  ...LABEL_START,
+];
 
 /** Text jison matched without returning a token: trivia to the parser. */
 const GLUE = [
@@ -115,6 +129,21 @@ const OPENS = kindSet(T.StringStart, T.MdStringStart, T.AccDescrMultiline);
 /** Glue whose text counts towards the previous token's range (a closing quote, the `]`). */
 const CLOSES = kindSet(T.StringEnd, T.MdStringEnd, T.AccDescrMultilineEnd, T.PointEnd);
 const COMMENTS = kindSet(Kind.Comment, Kind.Directive);
+/**
+ * Kinds a probe's cursor follows rather than extends when the token ends at the offset:
+ * blanks, separators and punctuation (`:::`, `-->`, `: [`, `,`, `]`).
+ */
+const PROBE_FOLLOWS = kindSet(
+  T.Space,
+  T.Colon,
+  T.Comma,
+  T.Semi,
+  T.AxisTextDelimiter,
+  T.ClassMarker,
+  T.PointStart,
+  T.PointComma,
+  T.PointEnd
+);
 
 /** The node type and statement-span kind of `title`, `accTitle:` and `accDescr:`. */
 const TEXT_STATEMENTS: Record<number, [QuadrantTextStatementNode['type'], string]> = {
@@ -170,6 +199,7 @@ class QuadrantParser {
   private readonly lexed: QuadrantLex;
   private readonly st = new ParseState();
   private readonly c: TokenCursor;
+  private readonly probe: Probe | undefined;
   private readonly children: QuadrantStatementNode[] = [];
   /** Source range of each token with the quotes and `]` next to it (jison's text). */
   private readonly outerStart: Uint32Array;
@@ -186,8 +216,16 @@ class QuadrantParser {
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
     if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
     const directives = pre.directives.map((d) => d.range);
-    this.lexed = lex(src, v12Text(src, pre.bodyStart, directives));
-    this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
+    const probe =
+      options.probe === undefined
+        ? undefined
+        : (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+    this.lexed = lex(src, v12Text(src, pre.bodyStart, directives), undefined, probe);
+    if (probe === undefined) this.c = new TokenCursor(this.lexed.tokens, SKIPPED);
+    else {
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      this.c = new ProbeCursor(this.lexed.tokens, probe, SKIPPED);
+    }
     [this.outerStart, this.outerEnd] = outerRanges(this.lexed);
   }
 
@@ -201,7 +239,7 @@ class QuadrantParser {
       range: { start: this.pre.bodyStart, end: this.src.length },
       children: this.children,
     };
-    return this.st.result(model, ast, this.lexed.tokens, this.options);
+    return this.st.result(model, ast, this.lexed.tokens, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -324,7 +362,10 @@ class QuadrantParser {
   /** `{ eol | SPACE } QUADRANT`. Without a header, the rest is still read as statements. */
   private header(): void {
     const { c } = this;
-    while (c.kind === T.Space || EOL.includes(c.kind)) c.next();
+    while (c.kind === T.Space || EOL.includes(c.kind)) {
+      c.tested([T.Quadrant]);
+      c.next();
+    }
     this.statement(() => {
       const first = c.pos;
       this.expect([T.Quadrant], ['`quadrantChart`']);
@@ -335,14 +376,19 @@ class QuadrantParser {
   /** `{ { SPACE } [ statement ] eol }`. */
   private document(): void {
     const { c } = this;
+    // Whether a statement may start at the current token: not before the `eol` ending one.
+    let fresh = true;
     for (;;) {
       const k = c.kind;
+      if (fresh) c.tested(STATEMENT_START);
       if (k === Kind.EOF) break;
       if (k === T.Space || EOL.includes(k)) {
+        if (k !== T.Space) fresh = true;
         c.next();
         continue;
       }
       this.statement(() => this.stmt());
+      fresh = false;
     }
   }
 
@@ -455,7 +501,6 @@ class QuadrantParser {
     if (this.in([T.ClassName])) {
       classRange = this.here();
       className = this.take();
-      this.st.symbol(className, 'class', classRange, 'ref');
     }
     this.expect([T.PointStart], POINT_START);
     this.hint = COORDINATE_HINT;
@@ -474,9 +519,11 @@ class QuadrantParser {
       y,
       styles,
     };
-    if (className !== undefined) {
+    if (className !== undefined && classRange !== undefined) {
       node.className = className;
       node.classRange = classRange;
+      // Only once the statement is complete, as `classDef`'s `def`: a failed point has none.
+      this.st.symbol(className, 'class', classRange, 'ref');
     }
     this.add(node, 'point');
   }

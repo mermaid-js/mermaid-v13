@@ -24,6 +24,7 @@ const PACKAGES = [
     dir: 'diagram-class',
     renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
   },
+  { name: 'quadrant', dir: 'diagram-quadrant', renderer: ['render/', 'layout/', 'index.ts'] },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */

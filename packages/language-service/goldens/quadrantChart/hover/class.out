@@ -1,0 +1,21 @@
+@ 2:12  classDef |hot radius: 10, color: #ff0000
+  2:12-2:15 "hot"
+  | **class** `hot`
+  |
+  | `classDef hot radius: 10, color: #ff0000`
+  |
+  | Used by 2 points
+@ 3:8  A:::h|ot: [0.3, 0.6]
+  3:7-3:10 "hot"
+  | **class** `hot`
+  |
+  | `classDef hot radius: 10, color: #ff0000`
+  |
+  | Used by 2 points
+@ 5:9  C:::co|ld: [0.5, 0.5]
+  5:7-5:11 "cold"
+  | **class** `cold`
+  |
+  | No `classDef` defines it.
+  |
+  | Used by 1 point
