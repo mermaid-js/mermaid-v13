@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { createTheme, loadTheme, type ThemeName, type ThemeWarning } from './index.ts';
+import {
+  NUMBERED_PALETTES,
+  THEME_NAMES,
+  createTheme,
+  loadTheme,
+  parseColor,
+  type ThemeName,
+  type ThemeWarning,
+} from './index.ts';
 
 // v12 12.2.0 `theme-redux-color.js` / `theme-redux-dark-color.js`, written out by hand.
 const BORDER_400 = [
@@ -143,6 +151,31 @@ describe('palette overrides through themeVariables (D152)', () => {
     expect(t.palette('cScaleLabel')[11]).toBe('red');
     expect(t.palette('cScaleLabel')[10]).toBe('#333333');
   });
+
+  it('ignores a numbered name with a leading zero, as v12 does (R-CONF-5)', async () => {
+    const warnings: ThemeWarning[] = [];
+    const t = createTheme(await loadTheme('neutral'), {
+      cssVariables: false,
+      themeVariables: { cScale05: '#123456', cScaleInv012: '#123456' },
+      warn: (w) => warnings.push(w),
+    });
+    expect(t.palette('cScale')[5]).toBe('#999999');
+    expect(warnings).toEqual([]);
+  });
+
+  it.each(THEME_NAMES)(
+    '%s: every cScale, cScaleInv and cScaleLabel slot is a safe colour',
+    async (name) => {
+      for (const darkMode of [false, true]) {
+        const t = await literal(name, { darkMode });
+        for (const p of NUMBERED_PALETTES) {
+          const list = t.palette(p);
+          expect(list, `${p} darkMode ${darkMode}`).toHaveLength(12);
+          for (const c of list) expect(parseColor(c), `${p} ${c}`).toBeDefined();
+        }
+      }
+    }
+  );
 
   it('derives cScaleInv and cScaleLabel from the cScale the author gives (D258)', async () => {
     const t = await literal('neutral', { cScale: ['#000000', '#ffffff'] });

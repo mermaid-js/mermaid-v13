@@ -550,8 +550,11 @@ function checkOverrides(
 }
 
 const MAX_PALETTE = 64;
-/** v12's numbered palette names (`NUMBERED_PALETTES`): `cScale3`, `cScaleInv3`, `cScaleLabel3`. */
-const RE_SLOT = /^(cScale(?:Inv|Label)?)(\d{1,2})$/;
+/**
+ * v12's numbered palette names (`NUMBERED_PALETTES`): `cScale3`, `cScaleInv3`, `cScaleLabel3`.
+ * v12 reads no leading zero, so `cScale05` is an unknown name, ignored (R-CONF-5).
+ */
+const RE_SLOT = /^(cScale(?:Inv|Label)?)(0|[1-9]\d?)$/;
 
 type PaletteLists = Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
 
@@ -599,14 +602,15 @@ function numberedOverrides(
 function paletteSource(
   spec: ThemeSpec,
   vars: Readonly<Record<string, unknown>> | undefined,
-  warn: ThemeOptions['warn']
+  warn: ThemeOptions['warn'],
+  /** The author's `themeVariables.darkMode`, not the theme's `dark` flag. */
+  darkMode: boolean
 ): PaletteSource {
   const drop = (name: string, raw: unknown) =>
     warn?.({
       code: 'THEME_VARIABLE_DROPPED',
       message: `themeVariables.${name} value ${JSON.stringify(String(raw).slice(0, 60))} is not allowed and was dropped.`,
     });
-  const darkMode = vars?.darkMode === true || vars?.darkMode === 'true';
   const lists: PaletteLists = darkMode
     ? { ...spec.palettes, ...spec.darkModePalettes }
     : (spec.palettes ?? {});
@@ -665,7 +669,8 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
     for (const name of Object.keys(options.rules))
       if (!own(defs, name)) defs[name] = { alias: name, kind: 'color', usedBy: [] };
   const overrides = checkOverrides(tv, defs, options.warn);
-  const darkMode = spec.dark || tv?.darkMode === true || tv?.darkMode === 'true';
+  const authorDark = tv?.darkMode === true || tv?.darkMode === 'true';
+  const darkMode = spec.dark || authorDark;
   const rulesFor = (s: ThemeSpec, dark: boolean): ThemeRuleTable => ({
     ...(dark ? DARK_RULES : LIGHT_RULES),
     ...s.rules,
@@ -678,7 +683,7 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
       rulesFor(spec, darkMode),
       overrides,
       defs,
-      paletteSource(spec, tv, options.warn)
+      paletteSource(spec, tv, options.warn, authorDark)
     ),
     night: options.dark
       ? new Resolver(options.dark, rulesFor(options.dark, true), overrides, defs)
