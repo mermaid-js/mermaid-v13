@@ -22,6 +22,8 @@ export interface ConfigLengths {
   readonly height: number;
   /** The gap between two tasks, and between two bands (D242). */
   readonly taskMargin: number;
+  /** A legend label starts two of these right of `legendTextX` (v12 `drawText`'s tspan x). */
+  readonly boxTextMargin: number;
 }
 
 /** Lengths v12 wrote into its renderer. */
@@ -43,7 +45,7 @@ export interface FixedLengths {
   /** The centre of the first legend dot, and the step between rows of one line. */
   readonly legendTop: number;
   readonly legendRow: number;
-  /** The x of the legend dots' centre, and of the start of their labels. */
+  /** The x of the legend dots' centre, and v12's legend text x before its `boxTextMargin`s. */
   readonly legendDotX: number;
   readonly legendTextX: number;
   /** A legend label's first baseline is this far below its dot's centre. */
@@ -95,6 +97,7 @@ export const CONFIG_DEFAULTS: ConfigLengths = {
   width: 150,
   height: 50,
   taskMargin: 50,
+  boxTextMargin: 5,
 };
 
 export const FIXED: FixedLengths = {
@@ -148,5 +151,6 @@ export function journeyMetrics(config: Readonly<Record<string, unknown>> = {}): 
     width: set('width'),
     height: set('height'),
     taskMargin: set('taskMargin'),
+    boxTextMargin: set('boxTextMargin'),
   };
 }

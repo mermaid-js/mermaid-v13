@@ -60,7 +60,7 @@ function legendOf(
       actor,
       dot: { actor, slot, cx: m.legendDotX, cy: y, r: m.dotRadius },
       label: {
-        x: m.legendTextX,
+        x: m.legendTextX + 2 * m.boxTextMargin,
         y: y + m.legendBaseline - text.baseline,
         width: text.width,
         height: text.height,

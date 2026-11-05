@@ -45,6 +45,7 @@ describe('journey layout invariants', () => {
           width: 110,
           height: 70,
           taskMargin: 15,
+          boxTextMargin: 12,
           taskFontSize: 20,
         },
       ],
@@ -92,7 +93,9 @@ describe('journey layout: v12 geometry at default config', () => {
       ['Cat', 20, 60, 7, 0],
       ['Me', 20, 80, 7, 1],
     ]);
-    expect(layout.legend.map((e) => e.label.x)).toEqual([40, 40]);
+    // v12 writes the text at x 40 and its tspan two boxTextMargins on.
+    expect(layout.legend.map((e) => e.label.x)).toEqual([50, 50]);
+    expect(lay(fixture('working-day'), { boxTextMargin: 0 }).legend[0]!.label.x).toBe(40);
     // The first baseline is 7 px below the dot's centre, as v12's text y.
     for (const e of layout.legend)
       expect(e.label.y + e.label.text.baseline).toBeCloseTo(e.dot.cy + 7);
