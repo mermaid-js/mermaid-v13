@@ -2,7 +2,7 @@
 
 **Verdict: it works. No stop rule tripped.** elkjs 0.12.0 (v12 develop's lock) lays out synchronously, in-process, with no worker, no timer and no Promise, by calling its in-process worker's dispatcher directly. Over all 80 corpus graphs the output equals elkjs's own `layout()` (Node, Chromium, Firefox), and nothing is scheduled. The layout contract stays synchronous (D172).
 
-Code: `packages/layout-elk/src/sync.ts` (`layoutSync`), spec `src/sync.spec.ts`, fixture `fixtures/generated/v12-elk-corpus.json`, scripts `scripts/capture-v12-corpus.ts`, `scripts/spike-evidence.ts`. The package is `private` with `exports["./sync"]` only. E2 publishes it.
+Code: `packages/layout-elk/src/sync.ts` (`layoutSync`), spec `src/sync.spec.ts`, fixture `fixtures/v12-elk-corpus.json`, scripts `scripts/capture-v12-corpus.ts`, `scripts/spike-evidence.ts`. The package is `private` with `exports["./sync"]` only. E2 publishes it.
 
 ## How it works
 

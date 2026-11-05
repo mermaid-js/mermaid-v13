@@ -1,5 +1,5 @@
 /**
- * Spike E1 #239: regenerates fixtures/generated/v12-elk-corpus.json.
+ * Spike E1 #239: regenerates fixtures/v12-elk-corpus.json.
  *
  * Renders every e2e/diagrams source that selects ELK with v12 develop's built mermaid
  * (`packages/mermaid/dist` of a v12 develop checkout) in Chromium, and records the graph v12's
@@ -22,9 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
-const fixture = fileURLToPath(
-  new URL('../fixtures/generated/v12-elk-corpus.json', import.meta.url)
-);
+const fixture = fileURLToPath(new URL('../fixtures/v12-elk-corpus.json', import.meta.url));
 // `layout: elk…` in frontmatter or `'layout': 'elk'` in an init directive.
 const SELECTS_ELK = String.raw`^\s*layout:\s*elk|['"]layout['"]\s*:\s*['"]elk|^\s*flowchart-elk`;
 
@@ -127,7 +125,11 @@ async function main() {
   writeFileSync(fullOut, JSON.stringify(corpus));
   writeFileSync(
     fixture,
-    `${JSON.stringify(corpus.map(({ source, input }) => ({ source, input })))}\n`
+    `${JSON.stringify(
+      corpus.map(({ source, input }) => ({ source, input })),
+      null,
+      2
+    )}\n`
   );
   process.stdout.write(`${corpus.length} graphs\n`);
 }
