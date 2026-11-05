@@ -99,12 +99,34 @@
         }
       }
     },
-    "rule-13": {
-      "begin": "call\\s+",
-      "end": "(\\(\\s*\\))|(?=\\()",
+    "phase-callbackname": {
+      "begin": "\\G(?!(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{.*?\\}%%)(?=\\())",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{.*?\\}%%)(\\(\\s*\\))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{.*?\\}%%)(?=\\()",
       "patterns": [
         {
           "include": "#mode-callbackname"
+        }
+      ]
+    },
+    "switch-15": {
+      "begin": "\\(",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{.*?\\}%%)(\\))",
+      "patterns": [
+        {
+          "include": "#mode-callbackargs"
+        }
+      ]
+    },
+    "rule-13": {
+      "begin": "call\\s+",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-callbackname"
+        },
+        {
+          "include": "#switch-15"
         }
       ],
       "beginCaptures": {

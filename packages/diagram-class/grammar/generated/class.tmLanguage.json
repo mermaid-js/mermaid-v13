@@ -121,12 +121,34 @@
     "rule-17": {
       "match": "\\[\\*\\]"
     },
-    "rule-18": {
-      "begin": "call\\s+",
-      "end": "(\\(\\s*\\))|(?=\\()",
+    "phase-callback_name": {
+      "begin": "\\G(?!(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{.*?\\}%%)(?=\\())",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{.*?\\}%%)(\\(\\s*\\))|(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{.*?\\}%%)(?=\\()",
       "patterns": [
         {
           "include": "#mode-callback_name"
+        }
+      ]
+    },
+    "switch-20": {
+      "begin": "\\(",
+      "end": "(?!^[^\\S\\n]*%%(?!\\{)[^\\n]+|[^\\S\\n]*%%\\{.*?\\}%%)(\\))",
+      "patterns": [
+        {
+          "include": "#mode-callback_args"
+        }
+      ]
+    },
+    "rule-18": {
+      "begin": "call\\s+",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-callback_name"
+        },
+        {
+          "include": "#switch-20"
         }
       ],
       "beginCaptures": {

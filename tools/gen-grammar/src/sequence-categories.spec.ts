@@ -123,50 +123,6 @@ const FIXTURES: [string, string][] = [
   ],
 ];
 
-/**
- * Documented exception (GAPS.md, #149): TextMate has no mode switch, and the generator cannot
- * add one without changing flowchart's TextMate grammar (its `callbackname` switch). A rule that
- * pops one mode and pushes another (`pop push(…)`) ends the TextMate scope before it, and the
- * statement rules read on. So TextMate may colour exactly these tokens of a `participant` or
- * `actor` declaration otherwise: the data `@{ … }` (on any number of lines), `as` and the alias
- * text after it. And TextMate tries the id mode's end rules before its other rules at each
- * position: unless the plain id rule (`ACTOR … pop`) matches the whole rest of the line from the
- * blank after the keyword, the catch-all `INVALID` (`[^\n]+`) does, and ends the scope there. So
- * when that rest holds `@{`, `<`, `,` or `:` (data, or an alias such as `Multi<br/>line` or
- * `Alice, the talkative one`), the line from the id on has no colour in TextMate, a statement
- * after a `;` on it included. Everything else, the id before `as` and statements after a
- * `;` that follows an alias included, must agree. Monarch (`switchTo`) and Lezer model the switch.
- */
-const SWITCH_KINDS = new Set<number>([T.ConfigStart, T.ConfigContent, T.ConfigEnd, T.As]);
-/** Keywords that open the id mode. */
-const ID_KEYWORDS = new Set<number>([
-  T.Participant,
-  T.ParticipantActor,
-  T.Destroy,
-  T.Activate,
-  T.Deactivate,
-]);
-
-/** Offsets of the tokens TextMate may colour otherwise (see above). */
-function textMateExempt(src: string): Set<number> {
-  const tokens = sequenceTokens(src);
-  const exempt = new Set<number>();
-  tokens.forEach((t, j) => {
-    let end = -1;
-    if (SWITCH_KINDS.has(t.kind) || (t.kind === T.RestOfLine && tokens[j - 1]?.kind === T.As)) {
-      end = t.range.end;
-    } else if (t.kind === T.Actor && ID_KEYWORDS.has(tokens[j - 1]?.kind ?? -1)) {
-      const from = tokens[j - 1]!.range.end;
-      const nl = src.indexOf('\n', from);
-      const lineEnd = nl < 0 ? src.length : nl;
-      const whole = /^(?:#\w+;|[^<>:\n,;@])+(?=\s*[\n;#]|$)/.exec(src.slice(from, lineEnd + 1));
-      if (!whole) end = lineEnd;
-    }
-    for (let i = t.range.start; i < end; i++) exempt.add(i);
-  });
-  return exempt;
-}
-
 /** Kinds whose tokens are blanks or empty, so no highlighter colours them. */
 const BLANK_KINDS = new Set<number>([T.AliasEnd, T.Eof]);
 
@@ -231,7 +187,6 @@ describe('four-way highlighting agreement (sequence)', () => {
     const covered = new Set<number>();
     for (const [file, src] of [...FIXTURES, ...corpus]) {
       const seen = highlighters.map(([name, h]) => [name, h(src)] as const);
-      const exempt = textMateExempt(src);
       for (const [i, kind] of lexerKinds(src)) {
         if (/\s/.test(src[i] ?? '')) continue;
         covered.add(kind);
@@ -239,7 +194,6 @@ describe('four-way highlighting agreement (sequence)', () => {
         for (const [name, cats] of seen) {
           const got = cats[i];
           if (got === want) continue;
-          if (name === 'TextMate' && exempt.has(i)) continue;
           const key = `${name}: ${NAMES[kind] ?? kind} is ${want}, highlighted ${got}`;
           if (!disagreements.has(key)) disagreements.set(key, `${file} at ${i}`);
         }
