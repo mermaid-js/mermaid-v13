@@ -91,3 +91,14 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 - **For T4/maintainer:** a multi-line `title` or rotated axis label (`<br>`) overlaps the chart: layout reserves one line (`titleFontSize + 2 × titlePadding`, axis label font size). v12 drew `<br>` literally, so v12 had no such case (D225). Baselines use one-line titles and axis labels.
 - [ ] **Unmet, for the maintainer: R-PERF-1 (D160).** The local bench (`--set pele`, report mode) WARNs on `loaded`: core + flowchart as fetched = 123,329 B gz against 122,880 with the quadrant row, 122,849 without. Cause: the shared core chunk re-splits when a diagram imports core `svg`/`text` without `layout/layered` (bench entry 89,307 → 89,755 B with the row); the flowchart chunk is unchanged. Every wave-1 type (pie, journey, timeline) adds the same split; a milestone-wide build issue, not worked around in the package. Not part of `pnpm check`; the limit is unchanged.
 - Warm-render ratio against 12.2.0: not measured on a steady machine (D217).
+
+## Final review (follow-up `feature/289_final-review-fixes`, handoff `tickets/final-review.md`)
+
+- [x] Prototype style keys (`constructor: 5`, `classDef c toString: 1`) threw INTERNAL / `LANGUAGE_FACET_FAILED`. Fix: a `Map` lookup; one `QUADRANT_STYLE_UNKNOWN` per bad style. `__proto__` is `UNEXPECTED` (`_` is not a style key character, as in v12). Recovery, parse, render and service specs; two corpus cases.
+- [x] Config values were cast, not read: `"pointRadius": "big"` wrote NaN, `"7"` joined strings, `"titleFontSize": "20"` blew up the viewBox. Fix: `src/config.ts` reads each length as sequence/ER `configNumber()` (numeric string → number); anything else, and a bad axis side, falls back to the schema default with one `QUADRANT_CONFIG_INVALID` per key (D226).
+  - **Choice:** a length must be a finite number ≥ 0 (as sequence and ER); a negative one falls back too. No upper cap (sequence caps at 1e4): not asked, and v12 had none.
+  - **Choice:** `null` is dropped by the config resolver before the plugin sees it, so it gives no warning.
+- [x] Multi-line title / top x-axis / left y-axis labels ran into the square (the T5 "For T4/maintainer" item above). Fix: anchors and the square stay v12's; extra lines grow away from the square (title and top x axis up, left y axis left), and the title moves up over a multi-line top x axis so they do not overlap. viewBox covers it (min may go negative). Single-line output byte-identical.
+  - **Choice:** the side is a new `QuadrantAxisLabel.side` from the layout; the lift (`height - lineHeight`) is the renderer's, which measures.
+- [x] MIGRATION D225 row: `<b>`/`<i>` render, other tags dropped with their text, raw newline in quotes breaks, outward growth. Config value types bullet.
+- Size: `diagram-quadrant` entry 13,204 → 13,760 B gz (esbuild, core external).
