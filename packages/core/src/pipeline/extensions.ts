@@ -270,17 +270,8 @@ function checkOutline(plugin: { id: string }, o: unknown): OutlineDrawer | undef
   return d as OutlineDrawer;
 }
 
-function checkSinkAttrs(tag: string, attrs: unknown): void {
-  if (attrs === undefined) return;
-  if (typeof attrs !== 'object' || attrs === null)
-    throw new TypeError(`<${tag}> from an outline drawer has attrs that are not an object`);
-  for (const name of Object.keys(attrs))
-    if (!isAllowedAttr(name))
-      throw new TypeError(`${name} on <${tag}> from an outline drawer is not an allowed attribute`);
-}
-
 /**
- * `drawer.draw` behind a sink that admits `<g>` and `<path>` with allowed attribute names,
+ * `drawer.draw` behind a sink that admits `<g>` and `<path>` (the writer checks attribute names),
  * balanced within each call, and with its failures reported as `plugin`'s.
  */
 function guardedOutline(plugin: { id: string }, drawer: OutlineDrawer): OutlineDraw {
@@ -296,7 +287,7 @@ function guardedOutline(plugin: { id: string }, drawer: OutlineDrawer): OutlineD
         // Untyped callers can pass any tag.
         if ((t as string) !== 'g')
           throw new TypeError(`an outline sink opens <g> only, not <${String(t as unknown)}>`);
-        checkSinkAttrs(t, a);
+        // Both backings reject a disallowed attribute name as they write it.
         w.open(t, a);
         depth++;
       },
@@ -306,7 +297,6 @@ function guardedOutline(plugin: { id: string }, drawer: OutlineDrawer): OutlineD
           throw new TypeError(
             `an outline sink writes <path> leaves only, not <${String(t as unknown)}>`
           );
-        checkSinkAttrs(t, a);
         w.leaf(t, a);
       },
       close() {

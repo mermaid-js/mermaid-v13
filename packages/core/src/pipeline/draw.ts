@@ -43,15 +43,6 @@ function laidOut<M, L>(
     .layout as L;
 }
 
-/** Whose output the allow-list re-check is about, for its error. */
-function outputOf(editsTree: boolean, outline: string | undefined): string {
-  const drawer = outline === undefined ? undefined : `extension "${outline}"'s outline output`;
-  if (!editsTree) return `The ${drawer as string}`;
-  return drawer === undefined
-    ? "An extension's postRender output"
-    : `An extension's postRender output or ${drawer}`;
-}
-
 export function drawDiagram<M, L>(
   plugin: DiagramPlugin<M, L>,
   model: M,
@@ -93,7 +84,7 @@ export function drawDiagram<M, L>(
       if (problem !== undefined)
         throw new MermaidError(
           'INTERNAL',
-          `${outputOf(run?.editsTree === true, outline?.id)} fails the allow-list: ${problem}`
+          `${outline && !run?.editsTree ? `Extension "${outline.id}"'s outline` : "An extension's postRender"} output fails the allow-list: ${problem}`
         );
     }
     stageEnd('serialise', t);

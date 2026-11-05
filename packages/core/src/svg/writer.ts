@@ -145,7 +145,11 @@ export interface WriterOptions {
    * is `url(#<id>)`, `finish()` writes it as the root's first child.
    */
   readonly gradient?: SvgGradient;
-  /** The active outline drawer, if any (D302). Without one, `outline` is `leaf`. */
+  /**
+   * Internal: the active outline drawer (D302), which gets the writer itself as its sink. Only
+   * the draw step sets it, with a drawer already guarded by `HookRun.outline` (the D302 sink
+   * rules). Without one, `outline` is `leaf`.
+   */
   readonly outline?: OutlineDraw;
 }
 

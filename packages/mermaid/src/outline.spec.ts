@@ -145,7 +145,7 @@ describe('an outline drawer that breaks the sink rules', () => {
     [
       'writes an on* attribute',
       (s) => s.leaf('path', { onclick: 'x' } as Attrs),
-      /onclick on <path> from an outline drawer is not an allowed attribute/,
+      /onclick is not an allowed SVG attribute/,
     ],
     ['leaves a <g> open', (s) => (s.open('g'), true), /returned with 1 <g> still open/],
     ['closes what it did not open', (s) => (s.close(), true), /close\(\) without its open\(\)/],
@@ -206,7 +206,7 @@ describe('an outline drawer that breaks the sink rules', () => {
       outline: drawer((s) => (s.leaf('path', { style }), true)),
     });
     expect(e.code).toBe('INTERNAL');
-    expect(e.message).toMatch(/^The extension "bad"'s outline output fails the allow-list: /);
+    expect(e.message).toMatch(/^Extension "bad"'s outline output fails the allow-list: /);
   });
 
   it('a malformed drawer is refused at registration', async () => {
