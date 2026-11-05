@@ -91,6 +91,24 @@ for (const [name, manager, bundled] of variants) {
   });
 }
 
+// Node before 20.19 and 22.7 (`engines` is >=20) has no module-syntax detection: an ES module
+// file in a package without `type: module` does not load. roughjs is such a package.
+test('Node without module-syntax detection sketches with the installed plugin', async ({
+  page,
+}) => {
+  const app = installApp('ssr', { manager: 'pnpm' });
+  const server = await start(app.dir, { NODE_OPTIONS: '--no-experimental-detect-module' });
+  try {
+    await page.goto(`${server.origin}/`);
+    await expect(page.locator('#handdrawn')).toHaveAttribute('data-warnings', '');
+    await expect(page.locator('#handdrawn svg [data-id="A"] rect')).toHaveCount(0);
+    await expect(page.locator('#handdrawn svg [data-id="A"] > g > path')).not.toHaveCount(0);
+  } finally {
+    server.close();
+    app.close();
+  }
+});
+
 test('with discovery: false the fixture type is UNSUPPORTED_DIAGRAM', async ({ page }) => {
   const app = installApp('ssr', { manager: 'pnpm' });
   const server = await start(app.dir, { DISCOVERY: 'off' });

@@ -5,7 +5,6 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["node"]
   },
-  // The ambient declarations its plugins' sources import: layout-elk's for elkjs's untyped worker
-  // build, plugin-hand-drawn's for roughjs's ES module bundle.
-  "include": ["src", "../layout-elk/src/elk-worker.d.ts", "../plugin-hand-drawn/src/roughjs.d.ts"]
+  // layout-elk's ambient declaration for elkjs's untyped worker build, which its source imports.
+  "include": ["src", "../layout-elk/src/elk-worker.d.ts"]
 }

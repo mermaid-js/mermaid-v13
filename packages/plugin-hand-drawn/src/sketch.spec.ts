@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Attrs, PathData, SafeColor, SafeValue } from '@mermaid-js/core/svg';
 import { pathBuilder } from '@mermaid-js/core/svg';
-import rough from 'roughjs/bundled/rough.esm.js';
+import roughModule from 'roughjs';
 import type { Drawable, Options } from 'roughjs/bin/core.js';
 import { sketch, strokeLineDash, type SketchOptions } from './sketch.ts';
+
+// The default import is roughjs's object itself (see `sketch.ts`); its types put it under `.default`.
+const rough = roughModule as unknown as typeof roughModule.default;
 
 const FILL = '#ffeeaa' as SafeColor;
 const STROKE = '#333' as SafeColor;
