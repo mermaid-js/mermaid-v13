@@ -316,9 +316,16 @@ class Reader {
     return out;
   }
 
-  /** Characters that cannot start a plain value in a block (js-yaml readPlainScalar). */
-  plainStart(text: string, at: number): void {
+  /**
+   * Characters that cannot start a plain value in a block (js-yaml readPlainScalar). A lone
+   * `-` or `?` after `key:` is an indicator too; after `- ` or at the root a lone `?` is an
+   * explicit key in js-yaml, which this subset leaves alone.
+   */
+  plainStart(text: string, at: number, mappingValue: boolean): void {
     const c = text[0];
+    if ((c === '-' || (c === '?' && mappingValue)) && text.length === 1) {
+      this.fail('bad indentation of a mapping entry', at);
+    }
     if (c === ']' || c === '}' || c === ',' || c === '%') {
       this.fail('bad indentation of a mapping entry', at);
     }
@@ -452,6 +459,18 @@ class Reader {
     if (inFlow && (ch === '>' || ch === '|' || ch === '%')) {
       this.fail(`\`${ch}\` cannot start a plain value inside \`{…}\` or \`[…]\``, pos);
     }
+    // `-` or `?` before a blank or flow indicator is no value to js-yaml (`?` + blank is an
+    // explicit key, which is read as text here).
+    if (inFlow && (ch === '-' || ch === '?')) {
+      const next = s[pos + 1];
+      if (
+        pos + 1 >= limit ||
+        RE_FLOW_INDICATOR.test(next ?? '') ||
+        (ch === '-' && isSpaceOrBreak(next))
+      ) {
+        this.fail('missed comma between flow collection entries', pos);
+      }
+    }
     while (end < limit) {
       const c = s[end] ?? '';
       if (
@@ -536,7 +555,13 @@ class Reader {
   }
 
   /** The value after `key:` or `- `, starting at offset `at`; line `this.i - 1` holds it. */
-  inlineValue(rest: string, at: number, indent: number, depth: number): YamlValue {
+  inlineValue(
+    rest: string,
+    at: number,
+    indent: number,
+    depth: number,
+    mappingValue = false
+  ): YamlValue {
     const first = rest[0];
     if ((first === '|' || first === '>') && RE_BLOCK_HEADER.test(rest)) {
       const header = this.i - 1;
@@ -570,7 +595,7 @@ class Reader {
     let text = body.trim();
     let textEnd = at + text.length;
     this.printable(at, textEnd);
-    this.plainStart(text, at);
+    this.plainStart(text, at, mappingValue);
     const indicator = mappingIndicator(text, true);
     // `k: a: b` or `k: a:` at a line end: js-yaml reads a second mapping entry and fails.
     if (indicator >= 0) this.fail('bad indentation of a mapping entry', at + indicator);
@@ -720,7 +745,7 @@ class Reader {
             }
           }
         } else {
-          value = this.inlineValue(rest.trim(), restAt, indent, depth + 1);
+          value = this.inlineValue(rest.trim(), restAt, indent, depth + 1, true);
         }
         const node = pairs ? this.take(restAt) : undefined;
         if (this.assign(out, key, value, keyAt, keyEnd) && pairs && node) {

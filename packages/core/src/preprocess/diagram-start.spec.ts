@@ -22,6 +22,13 @@ describe('diagramStart', () => {
     ],
     ['directive after the keyword', 'graph TD\n%%{wrap}%%\nA-->B', 'graph TD\n%%{wrap}%%\nA-->B'],
     ['only trivia', '%% c\n%%{wrap}%%\n  ', ''],
+    // v12 anyCommentRegex removed a `%%{` line that held no directive (#208).
+    ['an opener without a name', '%%{}%%\n%%{ "a"\ngraph TD', 'graph TD'],
+    [
+      'a comment line after an opener: the rest is text (v12 failed in the grammar)',
+      '%%{\n%% c\ninit: {}}%%\ngraph TD',
+      'init: {}}%%\ngraph TD',
+    ],
   ])('%s', (_name, src, expected) => {
     expect(rest(src)).toBe(expected);
   });
