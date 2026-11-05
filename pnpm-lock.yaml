@@ -183,6 +183,9 @@ importers:
       '@mermaid-js/diagram-state':
         specifier: workspace:^
         version: link:../diagram-state
+      '@mermaid-js/diagram-timeline':
+        specifier: workspace:^
+        version: link:../diagram-timeline
       '@mermaid-js/gen-grammar':
         specifier: workspace:^
         version: link:../../tools/gen-grammar
