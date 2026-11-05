@@ -137,6 +137,7 @@ for (const theme of [
   'neutral',
   'base',
   'neo',
+  'neo-dark',
 ]) {
   for (const themeVariables of [undefined, { primaryColor: '#3366cc', lineColor: '#aa5500' }]) {
     const label = themeVariables ? ' with overrides' : '';

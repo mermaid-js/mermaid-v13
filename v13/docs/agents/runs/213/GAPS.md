@@ -16,6 +16,9 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 
 ## #227 T2 neo-dark
 
+- [ ] Gradient values in `neo-dark.ts` once #223 merges (Contracts).
+- [ ] `altBackground #f0f0f0` kept from v12 (D126) on a dark theme; not a text pair, flagged for the coordinator.
+
 ## #229 T3 flowchart
 
 ## #231 T4 sequence
