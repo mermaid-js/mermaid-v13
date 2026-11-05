@@ -45,3 +45,10 @@ Unmet acceptance criteria and shared contracts, filed under the ticket that owns
 - [ ] Vite dev-server path unverified (apps run `vite build`); a dependency that wraps mermaid also needs `optimizeDeps.exclude` (README).
 - A package.json that gains a `mermaid` key without an install is seen only on the next install/restart.
 - Fixed cost of the empty `mermaid/discovered` wiring: +58 B gz on core.
+
+## T7 #232 (close-out)
+
+- [x] DESIGN §2/§12.4/§14, ADR-6 (`v13/docs/adr/0006-plugin-discovery.md`) and MIGRATION ("Loading and plugins") written; sizes in `tickets/232.md`.
+- [ ] Platform specs (T2–T6) still not run in the Playwright Docker image: the Docker daemon is down on this machine at close-out too. `pnpm e2e` ran on macOS (see `tickets/232.md`).
+- Follow-up (not this spec): the `mermaid` CLI (`src/cli.ts` imports `index.ts`, not `node.ts`) does not discover plugins. Needs a decision on whether the bin's root is `process.cwd()` or the input file's directory, and `discovery: false` as a flag.
+- Follow-up (not this spec): the Vite dev-server path (`vite` serve, `optimizeDeps.exclude: ['mermaid']`, a wrapper dependency that pre-bundles mermaid) has no e2e; the apps only `vite build`. Add a dev-server variant of `bundle-vite` to `bundler-plugin.spec.ts`.
