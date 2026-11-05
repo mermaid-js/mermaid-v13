@@ -58,3 +58,8 @@ Quirks the spec does not list, probed on 12.2.0; each needs a named parity case:
 - [ ] **Owner #317 T5:** add `quadrantChart` rows to `LEZER_HIGHLIGHTERS` / `MONARCH_HIGHLIGHTERS` (keyed by `FirstPartyFacetId`, which needs the manifest's `language` entry), run each adapter's `gen`, extend adapters-agree and first-paint specs, and drop the test-only row in `language-service/src/testing/unlisted-facets.ts`.
 - **Choice:** style-key completions insert an example value (`radius: 10`): a key without a value is an error inside the inserted text.
 - Size: `./language` 11.5 KB gz; parser 8.8 KB gz (+0.2 KB probe). R-LANG-4 timing not measured on a steady machine.
+- Review of #321 (through `createLanguageService`). Follow-up on `feature/321_language-fixes`:
+  - [ ] `:::` completion offers class names `:::` cannot read (`a-b`, `café`); `classDef ¦` offers `:::`-only names (`a_b`).
+  - [ ] **Choice, reversing the earlier one:** a class ref is recorded whenever `:::name` lexes, even in a failed point, so rename covers it and the clash check sees it (recording only completed statements let `cold → warm` silently merge classes). The ref links to no statement.
+  - [ ] `-->` offered before an existing `-->`; completion after a full `title` / `accDescr ` gives nothing.
+  - [ ] **Choice:** only the effective (last) `classDef` of a name is the definition; earlier ones are references (v12: last wins; hover already shows the last).
