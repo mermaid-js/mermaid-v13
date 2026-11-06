@@ -92,7 +92,7 @@ beforeAll(async () => {
 
 describe('gantt render properties over the parsed corpus', () => {
   it('renders the corpus in every theme', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(52);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(80);
     expect(cases.length).toBeGreaterThan(150 * RUNS.length);
     expect(cases.reduce((n, c) => n + c.model.tasks.length, 0)).toBeGreaterThan(500 * RUNS.length);
     expect(cases.some((c) => c.svg.includes('<line class="today"'))).toBe(true);
