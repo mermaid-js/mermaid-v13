@@ -16,9 +16,8 @@ import { cynefinThemeLengths, type CynefinThemeLengths } from '../theme/lengths.
 import { cliffCurve, confusionEllipse, foldCurve, horizonCurve } from './boundaries.ts';
 import { cynefinOptions, type CynefinOptions } from './config.ts';
 import { Box, cubicBox, grow, pointsBox, quadBox } from './geometry.ts';
-import { DOMAIN_META } from '../domains.ts';
-import { domainTitle } from './meta.ts';
-import { ARROWS, FONTS, ITEMS, LABELS, TITLE } from './metrics.ts';
+import { DOMAIN_META, domainTitle } from '../domains.ts';
+import { ARROWS, BADGES, FONTS, LABELS, TITLE } from './metrics.ts';
 import { resolveSeed } from './random.ts';
 import type {
   CynefinEllipse,
@@ -61,7 +60,7 @@ interface Env {
 interface Canvas {
   readonly quadrants: readonly CynefinQuadrant[];
   readonly confusion: CynefinEllipse;
-  centre(name: CynefinDomainName): Point;
+  center(name: CynefinDomainName): Point;
 }
 
 /** Lays out a cynefin diagram in px. */
@@ -87,7 +86,7 @@ export function layoutCynefin(model: CynefinModel, ctx: CynefinLayoutContext): C
     boundary: lengths.boundaryWidth,
     cliff: lengths.cliffWidth,
     arrow: lengths.arrowWidth,
-    item: ITEMS.strokeWidth,
+    item: BADGES.strokeWidth,
   };
 
   const drawn: Omit<CynefinLayout, 'bounds' | 'viewBox'> = {
@@ -187,7 +186,7 @@ function canvasOf(
   return {
     quadrants,
     confusion,
-    centre: (name) =>
+    center: (name) =>
       name === 'confusion' ? confusion.center : quadrants[QUADRANTS.indexOf(name)]!.center,
   };
 }
@@ -200,7 +199,7 @@ function fixedTexts(
   const desc = env.o.showDomainDescriptions;
   const fixed = (domain: CynefinDomainName, text: MeasuredLabel, x: number, y: number) => ({
     domain,
-    ...centred(text, x, y),
+    ...centered(text, x, y),
   });
   const name = (d: CynefinDomainName): MeasuredLabel => env.plain(domainTitle(d), env.fonts.label);
   const sub = (text: string): MeasuredLabel => env.plain(text, env.fonts.subtitle);
@@ -224,8 +223,16 @@ function fixedTexts(
 
 /** Where a domain's first badge starts, under its centre (:255-258). */
 function firstBadgeTop(name: CynefinDomainName, desc: boolean): number {
-  if (name === 'confusion') return desc ? ITEMS.confusionTop : ITEMS.confusionTopBare;
-  return desc ? ITEMS.quadrantTop : ITEMS.quadrantTopBare;
+  if (name === 'confusion') return desc ? BADGES.confusionTop : BADGES.confusionTopBare;
+  return desc ? BADGES.quadrantTop : BADGES.quadrantTopBare;
+}
+
+/**
+ * The items a domain draws a badge for: all of them, but only confusion's first
+ * `BADGES.maxConfusion`; a `+N more` badge stands for the rest (:300-348).
+ */
+export function drawnItems<T>(name: CynefinDomainName, items: readonly T[]): readonly T[] {
+  return name === 'confusion' ? items.slice(0, BADGES.maxConfusion) : items;
 }
 
 /** Item badges (:229-348): centred on the domain, stepping down; confusion shows three. */
@@ -239,16 +246,16 @@ function badges(
   for (const name of DOMAINS) {
     const domain = declared.get(name);
     if (!domain || domain.items.length === 0) continue;
-    const c = canvas.centre(name);
-    const shown = name === 'confusion' ? domain.items.slice(0, ITEMS.maxConfusion) : domain.items;
+    const c = canvas.center(name);
+    const shown = drawnItems(name, domain.items);
     let top = c.y + firstBadgeTop(name, env.o.showDomainDescriptions);
     const badge = (text: MeasuredLabel) => {
-      const width = text.width + ITEMS.paddingX * 2;
+      const width = text.width + BADGES.paddingX * 2;
       // 26 px is a minimum that grows with the label's extra lines (D363).
-      const height = ITEMS.height + extraLines(text);
+      const height = BADGES.height + extraLines(text);
       const box = { domain: name, x: c.x - width / 2, y: top, width, height };
-      top += height + ITEMS.gap;
-      return { ...box, label: centred(text, c.x, box.y + height / 2), radius: ITEMS.radius };
+      top += height + BADGES.gap;
+      return { ...box, label: centered(text, c.x, box.y + height / 2), radius: BADGES.radius };
     };
     shown.forEach((item, index) => {
       items.push({
@@ -276,8 +283,8 @@ function transition(
   lengths: CynefinThemeLengths
 ): CynefinTransitionLayout[] {
   if (t.from === t.to) return [];
-  const start = canvas.centre(t.from);
-  const end = canvas.centre(t.to);
+  const start = canvas.center(t.from);
+  const end = canvas.center(t.to);
   const dx = end.x - start.x;
   const dy = end.y - start.y;
   // v12's `sqrt(dx² + dy²)`, without the overflow of the squares at a huge canvas.
@@ -358,7 +365,7 @@ function arrowhead(
 }
 
 /** A label centred on (`cx`, `cy`). */
-function centred(text: MeasuredLabel, cx: number, cy: number): PlacedLabel {
+function centered(text: MeasuredLabel, cx: number, cy: number): PlacedLabel {
   const { width, height } = text;
   return { x: cx - width / 2, y: cy - height / 2, width, height, text };
 }

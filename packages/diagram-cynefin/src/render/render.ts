@@ -11,24 +11,14 @@
 import type { RenderContext } from '@mermaid-js/core';
 import { px, styleScope, styleText, themeStyleSheet, translate } from '@mermaid-js/core/svg';
 import type { Attrs, SvgWriter } from '@mermaid-js/core/svg';
-import {
-  arrowheadData,
-  curveData,
-  ellipseData,
-  transitionData,
-  type CynefinBadge,
-  type CynefinFont,
-  type CynefinLayout,
-  type PlacedLabel,
-} from '../layout/index.ts';
+import type { CynefinBadge, CynefinFont, CynefinLayout, PlacedLabel } from '../layout/index.ts';
+import { FONTS } from '../layout/metrics.ts';
 import type { CynefinModel } from '../model.ts';
 import { CYNEFIN_PAINT, paints, type Paints } from './paint.ts';
+import { arrowheadData, curveData, ellipseData, transitionData } from './path.ts';
 
 /** What the renderer reads from the render context. */
 export type CynefinRenderContext = Pick<RenderContext, 'config' | 'theme' | 'idPrefix' | 'version'>;
-
-/** CSS weights at and above this are bold. */
-const BOLD = 600;
 
 /** Writes the whole `<svg>` document for a laid-out cynefin diagram. */
 export function renderCynefin(
@@ -226,7 +216,8 @@ function label(w: SvgWriter, p: PlacedLabel, font: CynefinFont, attrs: Attrs): v
 function fontAttrs(f: CynefinFont): Attrs {
   return {
     'font-size': f.size,
-    'font-weight': f.weight >= BOLD ? 'bold' : undefined,
+    // The layout measures bold at `FONTS.bold`; v12's CSS wrote it `bold`.
+    'font-weight': f.weight >= FONTS.bold ? 'bold' : undefined,
     'font-style': f.style === 'italic' ? 'italic' : undefined,
   };
 }

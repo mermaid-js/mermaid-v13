@@ -7,7 +7,31 @@
  * `CYNEFIN_CONFIG_INVALID` warning per render. `showDomainDescriptions` is read as v12 read it.
  */
 import type { Warning } from '@mermaid-js/core';
-import { CANVAS, CYNEFIN_DEFAULTS as D } from './metrics.ts';
+import { cynefinConfigDefaults } from '../generated/config-defaults.ts';
+import { CANVAS } from './metrics.ts';
+
+/** Every key of the generated defaults is set: the schema gives each one a `default`. */
+const GIVEN = cynefinConfigDefaults as Required<typeof cynefinConfigDefaults>;
+
+/**
+ * The `cynefin` config defaults (`pnpm gen:config` from `config.schema.yaml`
+ * `CynefinDiagramConfig`, the plugin's `configDefaults`) and the schema's bounds, which the
+ * generated defaults do not carry. An invalid value falls back to its default (D366).
+ */
+const D = {
+  width: GIVEN.width,
+  height: GIVEN.height,
+  padding: GIVEN.padding,
+  showDomainDescriptions: GIVEN.showDomainDescriptions,
+  boundaryAmplitude: GIVEN.boundaryAmplitude,
+  seed: GIVEN.seed,
+  /** `width` and `height` are at least 1, `padding` at least 0. */
+  minSize: 1,
+  minPadding: 0,
+  /** `boundaryAmplitude` lies in [0, 50]. */
+  minAmplitude: 0,
+  maxAmplitude: 50,
+} as const;
 
 /** The options, each valid. */
 export interface CynefinOptions {

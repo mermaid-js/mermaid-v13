@@ -6,7 +6,8 @@
  */
 import type { CynefinDomainName, CynefinModel } from '../model.ts';
 import { cubicBox, grow, pointsBox, quadBox } from './geometry.ts';
-import { ARROWS, ITEMS } from './metrics.ts';
+import { drawnItems } from './layout.ts';
+import { ARROWS, BADGES } from './metrics.ts';
 import type { CynefinBadge, CynefinLayout, Point, Rect } from './types.ts';
 
 /** Float tolerance of the checks. */
@@ -113,7 +114,7 @@ function itemViolations(model: CynefinModel, layout: CynefinLayout, out: string[
   let overflow = 0;
   for (const name of order) {
     const items = model.domains.find((d) => d.name === name)?.items ?? [];
-    const shown = name === 'confusion' ? items.slice(0, ITEMS.maxConfusion) : items;
+    const shown = drawnItems(name, items);
     want.push(...shown.map((i) => i.ast));
     if (name === 'confusion') overflow = items.length - shown.length;
   }
@@ -122,18 +123,18 @@ function itemViolations(model: CynefinModel, layout: CynefinLayout, out: string[
   if ((layout.overflow?.count ?? 0) !== overflow)
     out.push(`an overflow of ${layout.overflow?.count ?? 0} for ${overflow} hidden items`);
 
-  const centres = new Map<CynefinDomainName, Point>(
+  const centers = new Map<CynefinDomainName, Point>(
     layout.quadrants.map((q) => [q.name, q.center])
   );
-  centres.set('confusion', layout.confusion.center);
+  centers.set('confusion', layout.confusion.center);
   const all = badges(layout);
   all.forEach((b, i) => {
     if (!contains(b, b.label)) out.push(`a ${b.domain} badge does not hold its label`);
-    if (b.height < ITEMS.height - EPS) out.push(`a ${b.domain} badge is ${b.height} px tall`);
-    const c = centres.get(b.domain)!;
+    if (b.height < BADGES.height - EPS) out.push(`a ${b.domain} badge is ${b.height} px tall`);
+    const c = centers.get(b.domain)!;
     if (Math.abs(b.x + b.width / 2 - c.x) > EPS) out.push(`a ${b.domain} badge is off its centre`);
     const prev = all[i - 1];
-    if (prev && prev.domain === b.domain && b.y < prev.y + prev.height + ITEMS.gap - EPS)
+    if (prev && prev.domain === b.domain && b.y < prev.y + prev.height + BADGES.gap - EPS)
       out.push(`two ${b.domain} badges overlap`);
   });
 }
@@ -143,7 +144,7 @@ function transitionViolations(model: CynefinModel, layout: CynefinLayout, out: s
   const want = model.transitions.filter((t) => t.from !== t.to).map((t) => t.ast);
   const got = layout.transitions.map((t) => t.ast);
   if (got.join('\n') !== want.join('\n')) out.push(`transitions ${got.join()} for ${want.join()}`);
-  const centre = (name: CynefinDomainName): Point =>
+  const center = (name: CynefinDomainName): Point =>
     name === 'confusion'
       ? layout.confusion.center
       : layout.quadrants.find((q) => q.name === name)!.center;
@@ -151,7 +152,7 @@ function transitionViolations(model: CynefinModel, layout: CynefinLayout, out: s
     ((ARROWS.markerBox - ARROWS.markerRefX) * ARROWS.markerWidth * layout.strokes.arrow) /
     ARROWS.markerBox;
   for (const t of layout.transitions) {
-    if (!near(t.start, centre(t.from)) || !near(t.end, centre(t.to)))
+    if (!near(t.start, center(t.from)) || !near(t.end, center(t.to)))
       out.push(`${t.ast} does not run centre to centre`);
     const d = Math.hypot(t.head[1].x - t.end.x, t.head[1].y - t.end.y);
     // On a huge canvas a pixel is below the coordinates' precision: allow a few units in their last place.

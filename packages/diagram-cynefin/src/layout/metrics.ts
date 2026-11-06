@@ -3,33 +3,9 @@
  * `cynefinRenderer.ts`, `cynefinBoundaries.ts` and `styles.ts` that places something, in px
  * or as a fraction of the canvas. No other file in `layout/` writes a length literal
  * (`packages/conformance/src/cynefin-layout-literals.spec.ts`); `random.ts` holds only the
- * bit-mixing constants of v12's PRNG. Line numbers are `mermaid@12.2.0`'s.
+ * bit-mixing constants of v12's PRNG, and `config.ts` the config schema's bounds. Line numbers
+ * are `mermaid@12.2.0`'s.
  */
-
-import { cynefinConfigDefaults } from '../generated/config-defaults.ts';
-
-/** Every key of the generated defaults is set: the schema gives each one a `default`. */
-const GIVEN = cynefinConfigDefaults as Required<typeof cynefinConfigDefaults>;
-
-/**
- * The `cynefin` config defaults (`pnpm gen:config` from `config.schema.yaml`
- * `CynefinDiagramConfig`, the plugin's `configDefaults`) and the schema's bounds. The layout
- * falls back to them for an invalid value (D366).
- */
-export const CYNEFIN_DEFAULTS = {
-  width: GIVEN.width,
-  height: GIVEN.height,
-  padding: GIVEN.padding,
-  showDomainDescriptions: GIVEN.showDomainDescriptions,
-  boundaryAmplitude: GIVEN.boundaryAmplitude,
-  seed: GIVEN.seed,
-  /** `width` and `height` are at least 1, `padding` at least 0. */
-  minSize: 1,
-  minPadding: 0,
-  /** `boundaryAmplitude` lies in [0, 50]. */
-  minAmplitude: 0,
-  maxAmplitude: 50,
-} as const;
 
 /**
  * The canvas (renderer :40-50, :158): four quadrants of half the size, each centred on its
@@ -60,7 +36,7 @@ export const LABELS = {
 } as const;
 
 /** Item badges (renderer :229-348, styles.ts :46-58). */
-export const ITEMS = {
+export const BADGES = {
   /** A badge's height: a minimum that grows with the label's lines (D363). */
   height: 26,
   /** Space each side of the label. */

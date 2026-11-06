@@ -7,7 +7,8 @@ import { REPO_ROOT } from './index.ts';
 // no file in `packages/diagram-cynefin/src/layout/` but `metrics.ts` holds a length literal.
 // `random.ts` is skipped too: it is v12's mulberry32 and string hash, ported exactly, and its
 // numbers are bit-mixing constants, not lengths. The numbers the others may still write are
-// counts, halves, Bézier coefficients and the invariants' tolerance.
+// counts, halves, Bézier coefficients and the invariants' tolerance; `config.ts` also writes
+// the config schema's bounds (the generated defaults carry no bounds).
 const ALLOWED: Readonly<Record<string, string>> = {
   '0': 'empty sizes, comparisons, no offset, the marker box origin',
   '1': 'the previous index; a Bézier’s 1 − t; a unit vector',
@@ -17,6 +18,10 @@ const ALLOWED: Readonly<Record<string, string>> = {
   '5': 'the five domain labels the invariants count',
   '9': 'the nine subtitles the invariants count',
   '1e-6': 'the float tolerance of the invariant checks',
+};
+/** Literals one file alone may write. */
+const ALLOWED_IN: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  'config.ts': { '50': 'the config schema’s `boundaryAmplitude` maximum' },
 };
 
 /** The numeric literals in TypeScript source, outside comments and strings. */
@@ -52,8 +57,9 @@ describe('cynefin layout', () => {
   });
 
   it.each(SOURCES)('%s holds no length literal outside the metrics table', (file) => {
+    const own = ALLOWED_IN[file] ?? {};
     const stray = numericLiterals(readFileSync(join(DIR, file), 'utf8')).filter(
-      (n) => !(n in ALLOWED)
+      (n) => !(n in ALLOWED) && !(n in own)
     );
     expect(stray).toEqual([]);
   });

@@ -1,4 +1,4 @@
-import { ITEMS } from './layout/metrics.ts';
+import { drawnItems } from './layout/layout.ts';
 import type { CynefinModel } from './model.ts';
 
 /**
@@ -9,9 +9,7 @@ import type { CynefinModel } from './model.ts';
 export function cynefinLabels(model: CynefinModel): readonly string[] {
   return [
     ...(model.title === undefined ? [] : [model.title]),
-    ...model.domains.flatMap((d) =>
-      (d.name === 'confusion' ? d.items.slice(0, ITEMS.maxConfusion) : d.items).map((i) => i.label)
-    ),
+    ...model.domains.flatMap((d) => drawnItems(d.name, d.items).map((i) => i.label)),
     ...model.transitions.flatMap((t) => (t.label ? [t.label] : [])),
   ];
 }

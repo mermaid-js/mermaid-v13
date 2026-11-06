@@ -8,7 +8,7 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
-export { CYNEFIN_TRIVIA, LANGIUM_NAMES, T as CynefinTokenKind } from './tokens.ts';
+export { LANGIUM_NAMES, T as CynefinTokenKind } from './tokens.ts';
 export { parseCynefin } from './parser.ts';
 export type { CynefinParseOptions, CynefinParseResult } from './parser.ts';
 export { detectCynefin } from './detect.ts';

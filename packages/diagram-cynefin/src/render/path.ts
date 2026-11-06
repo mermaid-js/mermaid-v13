@@ -1,10 +1,11 @@
 /**
  * Path data for the layout's curves, through core's path builder (two decimals, `num()`): what
- * the renderer writes as `d`.
+ * the renderer writes as `d`. The conformance gates read `curveData` and `ellipseData` too
+ * (`./testing`), to compare the boundaries with v12's generator.
  */
 import { pathBuilder } from '@mermaid-js/core/svg';
 import type { PathData } from '@mermaid-js/core/svg';
-import type { CubicCurve, CynefinEllipse, CynefinTransitionLayout } from './types.ts';
+import type { CubicCurve, CynefinEllipse, CynefinTransitionLayout } from '../layout/types.ts';
 
 /** `M from C c1 c2 to …`. */
 export function curveData(curve: CubicCurve): PathData {

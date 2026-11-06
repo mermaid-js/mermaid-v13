@@ -57,7 +57,7 @@ const F = {
   repeats: fixture('baseline/layout/repeated-transitions'),
 };
 
-const centre = (r: { x: number; y: number; width: number; height: number }): Point => ({
+const center = (r: { x: number; y: number; width: number; height: number }): Point => ({
   x: r.x + r.width / 2,
   y: r.y + r.height / 2,
 });
@@ -110,14 +110,14 @@ describe('cynefin layout: the canvas (v12 cynefinRenderer.ts :40-50, :83-112, :1
 describe('cynefin layout: labels and subtitles (:168-225)', () => {
   it('puts a quadrant name 30 above its centre, its model and practice at −10 and +5', () => {
     const l = lay(F.empty);
-    expect(l.labels.map((t) => [t.domain, t.text.lines[0]![0]!.text, centre(t)])).toEqual([
+    expect(l.labels.map((t) => [t.domain, t.text.lines[0]![0]!.text, center(t)])).toEqual([
       ['complex', 'Complex', { x: 200, y: 120 }],
       ['complicated', 'Complicated', { x: 600, y: 120 }],
       ['chaotic', 'Chaotic', { x: 200, y: 420 }],
       ['clear', 'Clear', { x: 600, y: 420 }],
       ['confusion', 'Confusion', { x: 400, y: 290 }],
     ]);
-    expect(l.subtitles.map((t) => [t.text.lines[0]![0]!.text, centre(t)])).toEqual([
+    expect(l.subtitles.map((t) => [t.text.lines[0]![0]!.text, center(t)])).toEqual([
       ['Probe → Sense → Respond', { x: 200, y: 140 }],
       ['Emergent Practices', { x: 200, y: 155 }],
       ['Sense → Analyse → Respond', { x: 600, y: 140 }],
@@ -145,7 +145,7 @@ describe('cynefin layout: labels and subtitles (:168-225)', () => {
 
   it('centres the names without descriptions, and draws no subtitles', () => {
     const l = lay(F.bare, { showDomainDescriptions: false });
-    expect(l.labels.map(centre)).toEqual([
+    expect(l.labels.map(center)).toEqual([
       { x: 200, y: 150 },
       { x: 600, y: 150 },
       { x: 200, y: 450 },
@@ -166,7 +166,7 @@ describe('cynefin layout: item badges (:229-348)', () => {
       ['i:complex/User behavior analysis', 200 - 120, 205, 240, 26],
       ['i:complex/A/B testing strategy', 200 - 110, 235, 220, 26],
     ]);
-    expect(centre(complex[0]!.label)).toEqual({ x: 200, y: 188 });
+    expect(center(complex[0]!.label)).toEqual({ x: 200, y: 188 });
     expect(complex[0]!.radius).toBe(4);
   });
 
@@ -295,7 +295,7 @@ describe('cynefin layout: transitions (:350-419)', () => {
 describe('cynefin layout: the title (:424-433)', () => {
   it('centres it half the padding above the canvas, at domainFontSize + 2 bold', () => {
     const l = lay(F.transitions);
-    expect(centre(l.title!)).toEqual({ x: 400, y: -20 });
+    expect(center(l.title!)).toEqual({ x: 400, y: -20 });
     expect(l.title!.width).toBe(230);
     expect(lay(F.two).title).toBeUndefined();
   });
