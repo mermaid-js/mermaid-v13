@@ -145,11 +145,18 @@ function bitNumberViolations(
  * `PACKET_TRUNCATED` may have it, as the last field drawn.
  */
 function coverViolations(model: PacketModel, layout: PacketLayout, out: string[]): void {
-  const pieces = layout.rows.flatMap((r) => r.pieces);
+  const byField = new Map<number, PacketPieceLayout[]>();
+  let last: number | undefined;
+  for (const row of layout.rows)
+    for (const p of row.pieces) {
+      const own = byField.get(p.field);
+      if (own) own.push(p);
+      else byField.set(p.field, [p]);
+      last = p.field;
+    }
   const truncated = model.warnings.some((w) => w.code === 'PACKET_TRUNCATED');
-  const last = pieces[pieces.length - 1]?.field;
   model.fields.forEach((f, i) => {
-    const own = pieces.filter((p) => p.field === i);
+    const own = byField.get(i) ?? [];
     if (own.length === 0) {
       out.push(`field ${f.start}-${f.end} has no pieces`);
       return;
@@ -171,20 +178,24 @@ function coverViolations(model: PacketModel, layout: PacketLayout, out: string[]
   });
 }
 
-/** The title: there iff the model has one, centred, its first line below the last row. */
+/**
+ * The title: there iff the model has one, centred, its first line on v12's point unless that
+ * would put its box over the last row, and its box below the last row's bottom.
+ */
 function titleViolations(model: PacketModel, layout: PacketLayout, out: string[]): void {
   const { title } = layout;
   if (!model.title !== !title) out.push(`the title is ${title ? 'drawn' : 'missing'}`);
   if (!title) return;
   if (Math.abs(title.x + title.width / 2 - layout.width / 2) > EPS)
     out.push('the title is not centred on the canvas');
-  const middle = title.y + title.text.lineHeight / 2;
-  const pitch = layout.options.rowHeight + layout.paddingY;
-  if (Math.abs(middle - (layout.height - pitch / 2)) > EPS)
-    out.push(`the title's first line is centred at y ${middle}`);
   const lastRow = layout.rows[layout.rows.length - 1];
-  if (lastRow && middle <= lastRow.y + layout.options.rowHeight + EPS)
-    out.push('the title is not below the last row');
+  const bottom = lastRow ? lastRow.y + layout.options.rowHeight : -Infinity;
+  if (title.y < bottom - EPS)
+    out.push(`the title's top ${title.y} is above the last row's bottom ${bottom}`);
+  const pitch = layout.options.rowHeight + layout.paddingY;
+  const middle = title.y + title.text.lineHeight / 2;
+  const want = Math.max(layout.height - pitch / 2, bottom + title.text.lineHeight / 2);
+  if (Math.abs(middle - want) > EPS) out.push(`the title's first line is centred at y ${middle}`);
 }
 
 /** Every number in `v`, at any depth, is finite. */

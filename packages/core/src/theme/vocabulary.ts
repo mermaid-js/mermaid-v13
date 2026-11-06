@@ -243,7 +243,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   background: def('bg', 'color', ['core']),
   primaryTextColor: def('pt', 'color', ['core']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
-  // Pie draws in the font family but sizes its text by its own variables.
+  // Pie and packet draw in the font family but size their text by their own variables.
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'packet']),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived

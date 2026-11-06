@@ -55,7 +55,8 @@ export function packetThemeLength(theme: Pick<Theme, 'number'>, name: PacketThem
 export const NORMAL_WEIGHT = 400;
 
 /**
- * D343: a label wider than its piece shrinks, its size scaled by the fit; this many steps at
- * most, since a measurer need not scale exactly with the size.
+ * D343: a label wider than its piece shrinks, its size scaled by the overflow, at most this many
+ * measurements after the first; the last one is at the floor (the bit-number size), since a
+ * measurer need not scale with the size.
  */
 export const FIT_STEPS = 4;

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { PacketDiagramConfig, ResolvedConfig } from '@mermaid-js/core/config';
-import type { Measurer } from '@mermaid-js/core/text';
+import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
 import {
   createTheme,
   loadTheme,
@@ -9,7 +9,7 @@ import {
 } from '@mermaid-js/core/theme';
 import type { PacketModel } from '../model.ts';
 import { FIXTURES, model, REGISTER } from './fixtures.ts';
-import { layoutPacket, type PacketLayout } from './index.ts';
+import { layoutPacket, packetLayoutViolations, type PacketLayout } from './index.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {
@@ -44,11 +44,12 @@ const sizes = (tokens: Record<string, number>): DiagramThemeTable => ({
 function lay(
   m: PacketModel,
   packet: Readonly<PacketDiagramConfig> = {},
-  diagram?: DiagramThemeTable
+  diagram?: DiagramThemeTable,
+  measurer: Measurer = halfEm
 ): PacketLayout {
   return layoutPacket(m, {
     config: { packet } as unknown as ResolvedConfig,
-    measurer: halfEm,
+    measurer,
     theme: createTheme(spec, diagram ? { diagram } : {}),
   });
 }
@@ -227,6 +228,19 @@ describe('packet layout: labels wider than their field (D343)', () => {
     expect(lay(model([[0, 0, 'ab']])).rows[0]!.pieces[0]!.label.font.size).toBe(12);
   });
 
+  it('ends at the bit-number size when a measurer does not scale with the size', () => {
+    // Every size above 10 px measures 6 px a character, so scaling by the overflow never fits.
+    const stepped: Measurer = {
+      ...halfEm,
+      id: 'stepped',
+      width: (text, font) => text.length * (font.size > 10 ? 6 : 5),
+    };
+    // A 29.5 px piece and a 30 px label: each proportional step takes off under 2%.
+    const l = lay(model([[0, 0, 'abcde']]), { paddingX: 2.5 }, undefined, stepped);
+    const label = l.rows[0]!.pieces[0]!.label;
+    expect([label.font.size, label.width]).toEqual([10, 25]);
+  });
+
   it('never grows a label when the bit numbers are larger than the labels', () => {
     const l = lay(model([[0, 0, 'abcdefgh']]), {}, sizes({ packetByteFontSize: 20 }));
     expect(l.rows[0]!.pieces[0]!.label.font.size).toBe(12);
@@ -295,5 +309,53 @@ describe('packet layout: config and theme', () => {
       themed.fonts.title.size,
       themed.strokeWidth,
     ]).toEqual([16, 8, 20, 3]);
+  });
+});
+
+describe('packet layout: positions do not depend on measurements', () => {
+  // Measurements only shrink labels (D343) and grow the bounds (D344): two measurers that
+  // disagree on every width and line height give the same boxes and anchor points.
+  const wide: Measurer = {
+    id: 'wide',
+    width: (text, font) => text.length * font.size * 1.7,
+    metrics: (font) => ({
+      ascent: font.size * 1.1,
+      descent: font.size * 0.4,
+      lineHeight: font.size * 1.9,
+    }),
+  };
+  const points = (l: PacketLayout) => ({
+    canvas: [l.width, l.height],
+    pieces: l.rows.flatMap((r) =>
+      r.pieces.map((p) => ({
+        box: p.box,
+        label: [p.label.x + p.label.width / 2, p.label.y + p.label.height / 2],
+        bits: p.bitNumbers.map((b) => [b.x, b.y, b.anchor]),
+      }))
+    ),
+    title: l.title && [l.title.x + l.title.width / 2, titlePoint(l)],
+  });
+  // A title line taller than the row pitch sits on the last row (`tiny`'s 1 px rows): the one
+  // place a measurement moves something, so it is compared as that rule, not as a point.
+  const titlePoint = (l: PacketLayout) => {
+    const t = l.title!;
+    const last = l.rows[l.rows.length - 1];
+    if (last && t.y === last.y + l.options.rowHeight) return 'on the last row';
+    return t.y + t.text.lineHeight / 2;
+  };
+
+  it.each(Object.keys(FIXTURES))('%s', (name) => {
+    const { model: m, config } = FIXTURES[name]!;
+    const a = lay(m, config, undefined, tableMeasurer);
+    const b = lay(m, config, undefined, wide);
+    expect(points(b)).toEqual(points(a));
+    expect(packetLayoutViolations(m, b)).toEqual([]);
+  });
+
+  it('keeps the title below the last row when its font is larger than the row pitch', () => {
+    const m = FIXTURES.hello!.model;
+    const l = lay(m, { showBits: false }, sizes({ packetTitleFontSize: 60 }));
+    expect(packetLayoutViolations(m, l)).toEqual([]);
+    expect(l.title!.y).toBe(l.rows[0]!.y + 32);
   });
 });

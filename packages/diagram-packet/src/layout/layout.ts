@@ -30,7 +30,7 @@ export type PacketLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 't
 /** Lays out a packet diagram in px. */
 export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): PacketLayout {
   // The parse already warned about each option it could not use (`PACKET_CONFIG_INVALID`).
-  const checked = packetConfig(ctx.config.packet as Readonly<Record<string, unknown>>).config;
+  const checked = packetConfig(ctx.config.packet ?? {}).config;
   const options = { ...checked, bitsPerRow: model.bitsPerRow };
   const { rowHeight, bitWidth, bitsPerRow, paddingX, showBits } = options;
   const descending = options.bitOrder === 'descending';
@@ -55,8 +55,11 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
     let f = fonts.label;
     let t = measure(text, f);
     const min = Math.min(fonts.label.size, fonts.byte.size);
-    for (let i = 0; i < FIT_STEPS && t.width > width && f.size > min; i++) {
-      f = font(Math.max(min, (f.size * Math.max(width, 0)) / t.width));
+    // Scale by the overflow; a measurer need not scale with the size, so the last step is the
+    // floor itself, and a label that still does not fit overflows at the bit-number size.
+    for (let i = 1; t.width > width && f.size > min; i++) {
+      const scaled = (f.size * Math.max(width, 0)) / t.width;
+      f = font(i < FIT_STEPS ? Math.max(min, scaled) : min);
       t = measure(text, f);
     }
     return { text: t, font: f };
@@ -135,11 +138,14 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
   const width = bitWidth * bitsPerRow + 2 * m.margin;
   const height = pitch * (rows.length + 1) - (model.title ? 0 : rowHeight);
 
-  // The title's first line is centred where v12 centred its one line; more lines grow down.
+  // The title's first line is centred where v12 centred its one line; more lines grow down. A
+  // title taller than the row pitch moves down to sit on the last row instead of over it, the
+  // one place a measurement moves something (output changes only where v12 overlapped).
   let title: PlacedLabel | undefined;
   if (model.title) {
     const text = measure(model.title, fonts.title);
-    const y = height - pitch / 2 - text.lineHeight / 2;
+    const bottom = rows.length > 0 ? rows[rows.length - 1]!.y + rowHeight : -Infinity;
+    const y = Math.max(height - pitch / 2 - text.lineHeight / 2, bottom);
     title = {
       x: width / 2 - text.width / 2,
       y,
