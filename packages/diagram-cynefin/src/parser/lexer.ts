@@ -63,17 +63,30 @@ const DOMAIN_NAMES = ['complex', 'complicated', 'clear', 'chaotic', 'confusion']
 /** Not in `[^\n\r]`. */
 const isBreak = (c: number) => c === LF || c === CR;
 
+export interface LexOptions {
+  /**
+   * Lex the view's text as given, as Chevrotain lexes a text handed to it directly: no line
+   * break appended and no leading blanks trimmed (v12's preprocessing did both). Default false.
+   */
+  readonly verbatim?: boolean;
+}
+
 /**
  * Lex the cynefin body `src[from…]`. `view` comes from {@link sourceView} (default options:
  * v12's cynefin ran every shared rewrite).
  */
-export function lex(src: string, from: number, view: SourceView): TokenStream {
-  return new CynefinLexer(src, from, view).run();
+export function lex(
+  src: string,
+  from: number,
+  view: SourceView,
+  options: LexOptions = {}
+): TokenStream {
+  return new CynefinLexer(src, from, view, options.verbatim === true).run();
 }
 
 /** One lex. Offsets are into {@link text}; {@link emit} maps them to the source. */
 class CynefinLexer {
-  /** The text v12 lexed (tag quotes as `'`), plus the line break v12 appended. */
+  /** The text v12 lexed (tag quotes as `'`), plus the line break v12 appended (unless verbatim). */
   private readonly text: string;
   /** Length of {@link text} without the appended line break. */
   private readonly len: number;
@@ -101,10 +114,11 @@ class CynefinLexer {
   constructor(
     private readonly src: string,
     from: number,
-    view: SourceView
+    view: SourceView,
+    private readonly verbatim: boolean
   ) {
     const text = view.mask ? tagQuotes(view) : view.text;
-    this.text = text + '\n';
+    this.text = verbatim ? text : text + '\n';
     this.len = text.length;
     this.n = this.text.length;
     this.offsets = view.runs && new SourceOffsets(view.runs);
@@ -118,7 +132,7 @@ class CynefinLexer {
   run(): TokenStream {
     const { text, n } = this;
     // v12 trimmed leading blanks (after removing comment lines) before lexing.
-    while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
+    if (!this.verbatim) while (this.p < this.len && isSpace(text.charCodeAt(this.p))) this.p++;
     let error = -1;
     while (this.p < n) {
       const p = this.p;
