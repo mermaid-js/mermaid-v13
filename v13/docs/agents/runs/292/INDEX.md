@@ -27,6 +27,10 @@ Integration branch `feature/292_gitgraph` (from `mermaid-v13` 38d663b44). Draft 
 | #410 alone (`mermaid-v13` 0f831fcc8 + fix) | 92,181 | 92,520 |
 | after T4a #369 (on #410) | 92,645 | 93,011 |
 
+## Wave 2 merge order (coordinator)
+
+gantt (#398) → gitGraph (#404) → mindmap (#406): each PR contains the one before it. When gantt's PR is ready, merge `mermaid-js/feature/293_gantt` (sha from the coordinator) into `feature/292_gitgraph`, regenerate generated files (D112), `pnpm check`, push, CI; measure both core gates on the combined tree; then the final whole-branch review. Mindmap stacks on this tip and copies the `git` palette blocks: keep them stable. Report the ready sha to the coordinator.
+
 ## Finish rule
 
 The integration PR stays a draft until every ticket is merged, the final whole-branch `/code-review` is fixed, and `pnpm check`, `pnpm e2e` (Playwright image) and hosted CI are green. Then `gh pr ready`; never merge into `mermaid-v13`. The PR body lists the issues to close.
