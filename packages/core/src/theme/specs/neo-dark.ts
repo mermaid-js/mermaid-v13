@@ -24,6 +24,7 @@ import { PIE_REDUX_DARK } from './redux-dark-values.ts';
 const neoDark: ThemeSpec = {
   name: 'neo-dark',
   dark: true,
+  family: 'neo',
   base: {
     primaryColor: '#1f2020',
     // v12 lighten(primaryColor, 16) and adjust(primaryColor, { h: -160 }).

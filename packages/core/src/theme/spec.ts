@@ -3,6 +3,7 @@
  * derived values a v12 theme hard-codes, and rules that override the shared derivation
  * table. Built-in specs live in `specs/`, one lazily imported file each.
  */
+import type { ThemeFamily } from './diagram.ts';
 import { fillTypes } from './specs/palettes.ts';
 import type { BaseVariable, PaletteVariable, TokenVariable } from './vocabulary.ts';
 
@@ -11,8 +12,13 @@ export type ThemeRuleTable = Readonly<Record<string, string>>;
 
 export interface ThemeSpec {
   readonly name: string;
-  /** Derive with the dark rules (borders lighten instead of darken, and so on). */
+  /** Derive with the dark rules (borders lighten instead of darken, and so on). A trait (D331). */
   readonly dark: boolean;
+  /**
+   * The theme's family (D331): which entries of a diagram's theme table apply
+   * (`DiagramThemeTable.families`). A new theme declares one and every diagram is themed.
+   */
+  readonly family: ThemeFamily;
   readonly base: Readonly<Record<BaseVariable, string>>;
   readonly tokens: Readonly<Record<TokenVariable, number | string | boolean>>;
   /** Literal values for derived variables, where v12 hard-codes them for this theme. */
@@ -23,7 +29,8 @@ export interface ThemeSpec {
    * Colour lists (D151, D152). A theme with a non-empty `borderColorArray` colours each
    * subgraph from it; an empty `bkgColorArray` means border-only colour. A palette the theme
    * leaves out is empty. An entry is a colour or a rule (`dsl.ts`), and a rule may name a slot
-   * of a numbered palette (`invert(cScale3)`), so it follows the author's overrides (D258).
+   * of any palette (`invert(cScale3)`, `bkgColorArray2`), so it follows the author's overrides
+   * (D258, D332).
    */
   readonly palettes?: Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
   /**
@@ -66,12 +73,13 @@ export const LIGHT_RULES: ThemeRuleTable = {
   // v12 journey `.face { fill: faceColor or #FFF8DC }`; no v12 theme sets faceColor.
   faceColor: '#fff8dc',
   // Journey section fills (#327, D241): v12 theme-base takes primaryColor, secondaryColor and
-  // their hue turns by +64, -64 and 128 degrees. The DSL has no hue turn, so 2-7 are base's
-  // resolved v12 values; every other theme pins all eight (`fillTypes`, specs/palettes.ts).
+  // their hue turns by +64, -64 and 128 degrees. 2-7 are base's resolved v12 values; every other
+  // theme pins all eight (`fillTypes`, specs/palettes.ts). A rule can now write a hue turn as a
+  // literal (`literal(adjustHue(primaryColor, 64))`, D332), which the T0 migration uses.
   ...fillTypes('primaryColor secondaryColor #e6ffdd #ffdde6 #ffddea #ddeaff #ddfff9 #fff9dd'),
   // Pie slots (#325), as v12 theme-base derives them: the base colours, then khroma `darken`
-  // by 10. The DSL has no hue turn, so 7-12 are base's resolved v12 values; the other themes
-  // set their own (`pieSlots` in their specs).
+  // by 10. 7-12 are base's resolved v12 values (hue turns, which `literal()` can now derive,
+  // D332); the other themes set their own (`pieSlots` in their specs).
   pie1: 'primaryColor',
   pie2: 'secondaryColor',
   pie3: 'tertiaryColor',
@@ -130,6 +138,9 @@ export const LIGHT_RULES: ThemeRuleTable = {
   // The neo gradient's stops, as v12 theme-base derives them (D182).
   gradientStart: 'primaryBorderColor',
   gradientStop: 'secondaryBorderColor',
+  // A shared input that names no diagram (D334): v12's `scaleLabelColor`, the ink `cScaleLabel`
+  // and any per-slot label take; the theme's text ink unless a theme pins it.
+  scaleLabelColor: 'primaryTextColor',
 };
 
 /** Shared derivation for dark themes. */

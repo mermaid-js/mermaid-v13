@@ -37,6 +37,7 @@ const PIE_NEUTRAL: ThemeRuleTable = {
 const theme: ThemeSpec = {
   name: 'neutral',
   dark: false,
+  family: 'classic',
   base: {
     primaryColor: '#eeeeee',
     secondaryColor: '#fcfcfc',
@@ -71,6 +72,7 @@ const theme: ThemeSpec = {
     // sequence (v12 theme-neutral.js: actorBorder is lighten(border1, 23))
     actorBorder: '#d4d4d4',
     actorTextColor: '#333333',
+    scaleLabelColor: '#333333', // v12: `labelTextColor` (D334)
     signalColor: '#333333',
     signalTextColor: '#333333',
     activationBkgColor: '#f4f4f4',
@@ -110,7 +112,7 @@ const theme: ThemeSpec = {
     ],
     cScaleInv: INVERTED_SCALE,
     // v12 sets labelTextColor to its own text colour (#333) before the labels.
-    cScaleLabel: paletteSlots((i) => (i === 0 || i === 2 ? 'cScale1' : '#333333')),
+    cScaleLabel: paletteSlots((i) => (i === 0 || i === 2 ? 'cScale1' : 'scaleLabelColor')),
   },
   darkModePalettes: { cScaleLabel: darkModeLabels({ 0: 'cScale1', 2: 'cScale1' }) },
 };
