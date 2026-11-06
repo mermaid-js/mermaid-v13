@@ -1,10 +1,9 @@
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
-import { layoutKanban, type KanbanLayout } from './layout/index.ts';
+import { kanbanLayoutInput, layoutKanban, type KanbanLayout } from './layout/index.ts';
 import type { KanbanModel } from './model.ts';
 import { parseKanban, type KanbanParseResult } from './parser/index.ts';
-import { kanbanLayoutInput } from './render/input.ts';
 import { renderKanban } from './render/render.ts';
 import { perSlot } from './render/slots.ts';
 

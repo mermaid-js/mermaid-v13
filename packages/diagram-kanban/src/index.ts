@@ -13,8 +13,13 @@ export {
 export type * from './parser/index.ts';
 export { kanbanBoardOrder } from './model.ts';
 export type * from './model.ts';
-export { layoutKanban } from './layout/index.ts';
-export type { KanbanLayout, KanbanLayoutContext, KanbanLayoutInput } from './layout/index.ts';
+export {
+  KANBAN_CONFIG_IGNORED,
+  kanbanLayoutInput,
+  kanbanLayoutViolations,
+  layoutKanban,
+} from './layout/index.ts';
+export type * from './layout/index.ts';
 export { renderKanban } from './render/render.ts';
 export type { KanbanRenderContext } from './render/context.ts';
 export { KANBAN_PRIORITY } from './render/links.ts';

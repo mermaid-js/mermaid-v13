@@ -6,8 +6,8 @@ Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft
 | --- | --- | --- | --- |
 | T1 lexer parity gate and corpus restore | #451 | #285 (merged) | merged (ff e3b5b9d4d; package entry 2,830 B gz, no core change) |
 | T2 grammar, parser, model, AST | #453 | #451 | done on `feature/453_kanban-parser` (handoff `tickets/453.md`; package entry 7,985 B gz, no core change) |
-| T3 layout | #455 | #453 | in progress, part 2 (parser-produced fixtures) (`.claude/worktrees/t455`) |
-| T4 SVG renderer | #457 | #455 (T0a merged in at d562508ea) | in progress on T3's 85f73dc9a (`.claude/worktrees/t457`, `feature/457_kanban-render`) |
+| T3 layout | #455 | #453 | merged (ff b5e02727e; package entry 10,785 B gz, core unchanged) |
+| T4 SVG renderer | #457 | #455 (T0a merged in at d562508ea) | in progress (`.claude/worktrees/t457`, `feature/457_kanban-render`) |
 | T6 language facet | #463 | #453; #406 (`LanguageFacet.standalone`) | blocked |
 | T5 integration | #459 | #457, #463 (T0a merged in) | blocked |
 | T7 ascii (Should) | #466 | #459 | blocked |
@@ -35,3 +35,7 @@ M4 wave 2 (gantt #398, gitGraph #404, mindmap #406) first, then the Theme T0 (#4
 ## Finish rule
 
 The integration PR stays a draft until every ticket is merged, the final whole-branch `/code-review` is fixed, and `pnpm check`, `pnpm e2e` and hosted CI are green. Then `gh pr ready`; never merge into `mermaid-v13`. The PR body lists the issues to close.
+
+## Environment notes
+
+- `check:grammar` twice reported kanban's four generated grammar files stale right after a merge (push of 9a0a28b67, and T3 part 2); `gen:grammar` changed nothing and the next run passed. Seen only right after `pnpm install`; rerun before regenerating.

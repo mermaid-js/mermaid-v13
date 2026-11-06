@@ -3,15 +3,18 @@ import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { cellProfile, pxProfile } from '@mermaid-js/core/layout';
-import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { tableMeasurer } from '@mermaid-js/core/text';
-import { board, card, column, FIXTURES, gridMeasurer } from './fixtures.ts';
+import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
+import { EDGE_CASES, gridMeasurer, kanban, parsed } from './fixtures.ts';
 import {
   kanbanLayoutViolations,
   layoutKanban,
   type KanbanLayout,
   type KanbanLayoutInput,
 } from './index.ts';
+
+/** The parsed layout input of a board. */
+const board = (...lines: string[]): KanbanLayoutInput => parsed(kanban(...lines)).input;
 
 let spec: ThemeSpec;
 beforeAll(async () => {
@@ -20,11 +23,11 @@ beforeAll(async () => {
 
 function lay(
   input: KanbanLayoutInput,
-  kanban: Record<string, unknown> = {},
+  kanbanConfig: Record<string, unknown> = {},
   warnings: Warning[] = []
 ): KanbanLayout {
   return layoutKanban(input, {
-    config: { kanban } as ResolvedConfig,
+    config: { kanban: kanbanConfig } as ResolvedConfig,
     measurer: gridMeasurer,
     units: pxProfile,
     theme: createTheme(spec),
@@ -42,14 +45,11 @@ function lay(
 // from top + 2 to bottom − 2. The 24 px lines are what `gridMeasurer` measures.
 describe('kanban layout: v12 geometry at default config', () => {
   const input = board(
-    column(
-      'Todo',
-      'Todo',
-      card('a', 'Card one'),
-      card('b', 'Card two', { ticket: 'MC-1', assigned: 'knsv', priority: 'High' }),
-      card('c', 'one<br>two<br>three')
-    ),
-    column('Done')
+    '  Todo',
+    '    a[Card one]',
+    "    b[Card two]@{ ticket: MC-1, assigned: knsv, priority: 'High' }",
+    '    c[one<br>two<br>three]',
+    '  Done'
   );
 
   it('gives a card without metadata the height of its title plus 20 (no metadata row)', () => {
@@ -64,14 +64,11 @@ describe('kanban layout: v12 geometry at default config', () => {
 
 describe('kanban layout: v12 label and column geometry', () => {
   const input = board(
-    column(
-      'Todo',
-      'Todo',
-      card('a', 'Card one'),
-      card('b', 'Card two', { ticket: 'MC-1', assigned: 'knsv', priority: 'High' }),
-      card('c', 'one<br>two<br>three')
-    ),
-    column('Done')
+    '  Todo',
+    '    a[Card one]',
+    "    b[Card two]@{ ticket: MC-1, assigned: knsv, priority: 'High' }",
+    '    c[one<br>two<br>three]',
+    '  Done'
   );
 
   it('places columns W + 5 apart at v12 x, top −1.5 W, each its own height', () => {
@@ -104,9 +101,18 @@ describe('kanban layout: v12 label and column geometry', () => {
   });
 
   it('draws a bar only for the four v12 priorities, matched exactly (D375)', () => {
-    const priorities = ['Very High', 'High', 'Low', 'Very Low', 'Medium', 'high', 'Urgent', ''];
+    const priorities = [
+      "'Very High'",
+      "'High'",
+      "'Low'",
+      "'Very Low'",
+      "'Medium'",
+      "'high'",
+      "'Urgent'",
+      '1',
+    ];
     const { cards } = lay(
-      board(column('a', 'A', ...priorities.map((p, i) => card(`c${i}`, 'x', { priority: p }))))
+      board('  a[A]', ...priorities.map((p, i) => `    c${i}[x]@{ priority: ${p} }`))
     );
     expect(cards.map((c) => c.bar?.priority)).toEqual([
       'Very High',
@@ -137,9 +143,11 @@ describe('kanban layout: v12 label and column geometry', () => {
 // title row (heights 126, 126 and 97), both cards' tops sat at −300 + 72, and W was 200.
 describe('kanban layout: the shared title row', () => {
   const input = board(
-    column('a', 'Short', card('c1', 'Card')),
-    column('b', 'one<br>two<br>three', card('c2', 'Card')),
-    column('e', 'Empty')
+    '  a[Short]',
+    '    c1[Card]',
+    '  b[one<br>two<br>three]',
+    '    c2[Card]',
+    '  e[Empty]'
   );
 
   it('is the tallest title, shared by every column', () => {
@@ -151,17 +159,16 @@ describe('kanban layout: the shared title row', () => {
   });
 
   it('is 25 high when every title is shorter', () => {
-    const layout = lay(board(column('a', 'A'), column('b', '')));
+    const layout = lay(board('  a[A]', '  b[B]'));
     expect(layout.titleRow).toBe(25);
     expect(layout.columns.map((c) => c.height)).toEqual([50, 50]);
-    expect(layout.columns[1]!.title).toBeUndefined();
   });
 });
 
 describe('kanban layout: font', () => {
   it('carries the font it measured in, for the renderer to draw in (pitfall 16)', () => {
     const theme = createTheme(spec);
-    expect(lay(board()).font).toEqual({
+    expect(lay(board('')).font).toEqual({
       family: theme.value('fontFamily'),
       size: theme.number('fontSize'),
       weight: 400,
@@ -172,8 +179,8 @@ describe('kanban layout: font', () => {
 describe('kanban layout: config', () => {
   it('takes kanban.sectionWidth as W, wrapping card titles at W − 25', () => {
     const title = 'aaaa bbbb cccc dddd eeee ffff gggg hhhh';
-    const narrow = lay(board(column('a', 'A', card('x', title))), { sectionWidth: 100 });
-    const wide = lay(board(column('a', 'A', card('x', title))), { sectionWidth: 300 });
+    const narrow = lay(board('  a[A]', `    x[${title}]`), { sectionWidth: 100 });
+    const wide = lay(board('  a[A]', `    x[${title}]`), { sectionWidth: 300 });
     expect(narrow.cards[0]!.width).toBe(85);
     // 75 px wrap: 'aaaa bbbb' is 72 wide.
     expect(narrow.cards[0]!.title!.text.lines.length).toBe(4);
@@ -183,7 +190,7 @@ describe('kanban layout: config', () => {
 
   it('warns once per refused length and lays out with the default', () => {
     const warnings: Warning[] = [];
-    const layout = lay(board(column('a')), { sectionWidth: -1, padding: 'wide' }, warnings);
+    const layout = lay(board('  a'), { sectionWidth: -1, padding: 'wide' }, warnings);
     expect(layout.sectionWidth).toBe(200);
     expect(layout.bounds.x).toBe(layout.columns[0]!.x - 0.5 - 8);
     expect(warnings.map((w) => [w.code, w.path])).toEqual([
@@ -195,7 +202,7 @@ describe('kanban layout: config', () => {
   it('raises a sectionWidth too narrow for its cards to the least width, with a warning', () => {
     for (const sectionWidth of [1, 10, 25.5]) {
       const warnings: Warning[] = [];
-      const layout = lay(board(column('a', 'A', card('x', 'a b'))), { sectionWidth }, warnings);
+      const layout = lay(board('  a[A]', '    x[a b]'), { sectionWidth }, warnings);
       expect(layout.sectionWidth).toBe(26);
       // W − 15 wide, its title wrapped at W − 25 = 1: one word a line.
       expect(layout.cards[0]!.width).toBe(11);
@@ -204,21 +211,24 @@ describe('kanban layout: config', () => {
         ['KANBAN_CONFIG_IGNORED', 'kanban.sectionWidth'],
       ]);
     }
-    expect(lay(board(column('a')), { sectionWidth: 26 }).sectionWidth).toBe(26);
+    expect(lay(board('  a'), { sectionWidth: 26 }).sectionWidth).toBe(26);
   });
 
   it('takes a numeric string as v12 did, and sectionWidth 0 as 200 with no warning', () => {
     const warnings: Warning[] = [];
-    expect(lay(board(column('a')), { sectionWidth: '300' }, warnings).sectionWidth).toBe(300);
-    expect(lay(board(column('a')), { sectionWidth: 0 }, warnings).sectionWidth).toBe(200);
+    expect(lay(board('  a'), { sectionWidth: '300' }, warnings).sectionWidth).toBe(300);
+    expect(lay(board('  a'), { sectionWidth: 0 }, warnings).sectionWidth).toBe(200);
     expect(warnings).toEqual([]);
   });
 });
 
+// The corpus files and cases are swept by conformance's `src/kanban/layout-corpus.spec.ts`.
+const CASES = Object.entries(EDGE_CASES).map(([name, src]) => [name, parsed(src)] as const);
+
 describe('kanban layout invariants', () => {
-  for (const [name, { input, config }] of Object.entries(FIXTURES))
+  for (const [name, { input, config }] of CASES)
     for (const [variant, extra] of [
-      ['fixture config', {}],
+      ['source config', {}],
       ['sectionWidth 80, padding 0', { sectionWidth: 80, padding: 0 }],
       ['sectionWidth 10 (raised to the least)', { sectionWidth: 10 }],
     ] as const)
@@ -227,10 +237,10 @@ describe('kanban layout invariants', () => {
         expect(kanbanLayoutViolations(input, layout)).toEqual([]);
       });
 
-  it('in the theme font measured by the table measurer, every fixture holds them too', () => {
-    for (const { input, config } of Object.values(FIXTURES)) {
+  it('in the theme font measured by the table measurer, every case holds them too', () => {
+    for (const [, { input, config }] of CASES) {
       const layout = layoutKanban(input, {
-        config: { kanban: config ?? {} } as ResolvedConfig,
+        config: { kanban: config } as ResolvedConfig,
         measurer: tableMeasurer,
         units: pxProfile,
         theme: createTheme(spec),
@@ -241,18 +251,26 @@ describe('kanban layout invariants', () => {
   });
 
   it('catches what it checks', () => {
-    const input = FIXTURES['10-full-example']!.input;
+    const input = board('  a[A]', '    x[One]', '    y[Two]', '  b[B]');
     const good = lay(input);
     const [first, second] = good.cards;
     const moved: KanbanLayout = {
       ...good,
-      cards: [{ ...first!, x: first!.x - 50 }, { ...second!, y: first!.y }, ...good.cards.slice(2)],
+      cards: [
+        { ...first!, x: first!.x - 50 },
+        { ...second!, y: first!.y },
+      ],
       bounds: { ...good.bounds, height: 1 },
     };
     const found = kanbanLayoutViolations(input, moved);
     expect(found.some((v) => v.includes('is outside its column'))).toBe(true);
     expect(found.some((v) => v.includes('overlaps'))).toBe(true);
     expect(found.some((v) => v.startsWith('the bounds do not hold'))).toBe(true);
+    expect(
+      kanbanLayoutViolations(input, { ...good, cards: [{ ...first!, width: -1 }, second!] })
+    ).toContain(
+      `card ${first!.ast} has a negative size (${first!.x}, ${first!.y}, -1 × ${first!.height})`
+    );
     expect(kanbanLayoutViolations(input, { ...good, titleRow: NaN })).toEqual([
       'layout.titleRow is NaN',
     ]);
@@ -261,9 +279,9 @@ describe('kanban layout invariants', () => {
 
 describe('kanban layout in cells', () => {
   it('converts every length through the unit profile, and holds the invariants', () => {
-    for (const { input, config } of Object.values(FIXTURES)) {
+    for (const [, { input, config }] of CASES) {
       const layout = layoutKanban(input, {
-        config: { kanban: config ?? {} } as ResolvedConfig,
+        config: { kanban: config } as ResolvedConfig,
         measurer: cellMeasurer,
         units: cellProfile(),
         theme: createTheme(spec),
@@ -272,7 +290,7 @@ describe('kanban layout in cells', () => {
       expect(layout.units).toBe('cell');
       expect(kanbanLayoutViolations(input, layout)).toEqual([]);
     }
-    const { sectionWidth, radius } = layoutKanban(board(column('a')), {
+    const { sectionWidth, radius } = layoutKanban(board('  a'), {
       config: {} as ResolvedConfig,
       measurer: cellMeasurer,
       units: cellProfile(),
@@ -282,7 +300,7 @@ describe('kanban layout in cells', () => {
     // 200 px and 5 px at 8 px a cell.
     expect([sectionWidth, radius]).toEqual([25, 1]);
     // The least W in cells still leaves card labels a cell to wrap at.
-    const narrow = layoutKanban(board(column('a', 'A', card('x'))), {
+    const narrow = layoutKanban(board('  a[A]', '    x'), {
       config: { kanban: { sectionWidth: 26 } } as unknown as ResolvedConfig,
       measurer: cellMeasurer,
       units: cellProfile(),
