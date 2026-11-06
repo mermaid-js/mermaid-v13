@@ -4,10 +4,10 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T0 core `tree` engine and engine selection | #380 | — | done on `feature/380_tree-engine` (`tickets/380.md`) |
+| T0 core `tree` engine and engine selection | #380 | — | merged (ff a635d9bcb; `tree` chunk 3,407 B gz, lazy) |
 | T1 lexer parity gate | #383 | #285 (merged) | merged (ff 5bbf475e9) |
 | T2 grammar, parser, model, AST | #386 | #383 | in progress (`.claude/worktrees/t386`, `feature/386_mindmap-parser`) |
-| T3 layout (builder, shape sizing) | #387 | #386, #380 | blocked |
+| T3 layout (builder, shape sizing) | #387 | #386, #380 | in progress on hand-built fixtures (`.claude/worktrees/t387`, `feature/387_mindmap-layout`); merges after #386 |
 | T4 SVG renderer | #388 | #387 | blocked |
 | T6 language facet | #389 | #386 | blocked |
 | T5 integration | #390 | #388, #389 | blocked |
