@@ -46,14 +46,22 @@ export interface GanttBar extends Rect {
   readonly active: boolean;
   readonly done: boolean;
   readonly crit: boolean;
-  /** A `click` names its id (v12's `clickable` class, on the last task with that id). */
+  /** A `click` names it (v12's `clickable` class: the latest task with the id before the click). */
   readonly clickable: boolean;
+  /** The `click … href` URL of a clickable task, as written (v12 `setLink`); unchecked. */
+  readonly href?: string;
   /** Section colour slot: the section's index among sections with tasks, mod `numberSectionStyles`. */
   readonly slot: number;
   /** v12 `rx`/`ry`. */
   readonly radius: number;
-  /** A milestone's diamond is this rectangle rotated 45° and scaled about its centre. */
+  /** The `milestone` tag: also set on a `vert` marker that has it (`kind` is then `vert`). */
+  readonly milestone: boolean;
+  /**
+   * A milestone is this rectangle rotated 45° and scaled by `scale` about `pivot` (v12's CSS
+   * `transform` and `transform-origin`): the square's centre, or above a `vert` marker.
+   */
   readonly scale?: number;
+  readonly pivot?: { readonly x: number; readonly y: number };
   readonly label: GanttTaskLabel;
 }
 

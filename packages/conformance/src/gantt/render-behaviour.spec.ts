@@ -109,6 +109,20 @@ describe('gantt bars and labels keep v12 classes', () => {
     expect(attr(tree, label, 'font-size')).toBe('15');
     expect(attr(tree, label, 'fill')).toBe('var(--_gvl)');
   });
+
+  it('keeps both vert and milestone on one task, as v12 did', async () => {
+    const { tree } = await render('T :t, 2014-01-01, 4d\nW :milestone, vert, w, 2014-01-03, 0d');
+    const [bar] = byClass(tree, 'rect', 'vert');
+    expect(attr(tree, bar, 'class')).toBe('task vert milestone task0');
+    // The milestone's square, barHeight wide, rotated and scaled about v12's transform-origin.
+    expect(attr(tree, bar, 'width')).toBe('20');
+    expect(attr(tree, bar, 'transform')).toMatch(
+      /^rotate\(45,[\d.]+,[\d.]+\) .*scale\(0\.8,0\.8\)/
+    );
+    const label = byClass(tree, 'text', 'vertText')[0];
+    expect(attr(tree, label, 'class')).toMatch(/ milestoneText vertText$/);
+    expect(attr(tree, label, 'font-style')).toBe('italic');
+  });
 });
 
 describe('gantt links (R-SVG-4, R-SEC-4)', () => {
@@ -146,6 +160,22 @@ describe('gantt links (R-SVG-4, R-SEC-4)', () => {
     expect(abs.tree.find({ tag: 'a' })).toEqual([]);
     const rel = await render('a :a1, 2014-01-01, 1d\nclick a1 href "#here"', strict);
     expect(attr(rel.tree, rel.tree.find({ tag: 'a' })[0], 'href')).toBe('#here');
+  });
+
+  it('links only a task that exists when the click is read, as v12 setLink', async () => {
+    const { tree, warnings } = await render(
+      'click a1 href "https://example.com"\nA :a1, 2014-01-01, 1d\nclick a1 call f()'
+    );
+    expect(tree.find({ tag: 'a' })).toEqual([]);
+    expect(byClass(tree, 'rect', 'clickable')).toHaveLength(1);
+    expect(warnings.map((w) => w.code)).not.toContain('URL_REFUSED');
+  });
+
+  it('checks no URL of a click naming no task', async () => {
+    const { warnings } = await render(
+      'A :a1, 2014-01-01, 1d\nclick nobody href "javascript:alert(1)"'
+    );
+    expect(warnings.map((w) => w.code)).not.toContain('URL_REFUSED');
   });
 
   it('marks a call target clickable without a link', async () => {
@@ -232,5 +262,26 @@ describe('gantt theme variables (D152, D278)', () => {
     expect(attr(tree, bar, 'class')).toBe('task task5');
     expect(attr(tree, bar, 'fill')).toBe('var(--_tx)');
     expect(attr(tree, bar, 'stroke')).toBeUndefined();
+  });
+});
+
+describe('gantt sections (R-PARSE-8)', () => {
+  const dataAst = (tree: SvgView): string[] =>
+    tree
+      .find((n, t) => t.getAttr(n, 'data-ast')?.startsWith('s:') === true)
+      .map((n) => tree.getAttr(n, 'data-ast')!);
+
+  it('gives a repeated section and a vert-only section one data-ast element each', async () => {
+    const { tree } = await render(
+      'section A\na :a1, 2014-01-01, 1d\nsection B\nV :vert, v1, 2014-01-02, 0d\nsection A\nb :b1, 2014-01-02, 1d'
+    );
+    expect(dataAst(tree).sort()).toEqual(['s:A', 's:A@2', 's:B']);
+    // One drawn title per name, as v12.
+    expect(byClass(tree, 'text', 'sectionTitle')).toHaveLength(1);
+  });
+
+  it('writes no empty group when the only section is unnamed', async () => {
+    const { svg } = await render('a :a1, 2014-01-01, 1d');
+    expect(svg).not.toMatch(/<g\/>|<g><\/g>/);
   });
 });

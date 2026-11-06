@@ -80,6 +80,8 @@ export interface GanttMetrics {
   readonly tickOpacity: number;
   /** v12 `.milestone { transform: rotate(45deg) … }`, in degrees. */
   readonly milestoneRotation: number;
+  /** Degrees in half a turn, to turn `milestoneRotation` into radians. */
+  readonly halfTurnDegrees: number;
   /** v12 `styles.js` styles `section0`–`section3` (and their bars and labels) only. */
   readonly styledSlots: number;
 }
@@ -138,5 +140,6 @@ export const GANTT_METRICS: GanttMetrics = {
   bandOpacity: 0.2,
   tickOpacity: 0.8,
   milestoneRotation: 45,
+  halfTurnDegrees: 180,
   styledSlots: 4,
 };
