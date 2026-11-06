@@ -15,7 +15,6 @@ import {
   resolveSeed,
   seededRandom,
 } from './adapter.ts';
-// skipped: should return config — config honoured in #469 T5: v13 has no cynefin DB config until then, and a stub returning v13's own defaults would pass without checking v12's
 
 /** Test helper: build a partial DomainBlock with just the fields the DB reads. */
 const block = (domain: string, items: { label: string }[] = []): DomainBlock =>
@@ -102,7 +101,7 @@ describe('Cynefin Database', () => {
     expect(db.getDomains().get('complex')!.items).toHaveLength(4);
   });
 
-  it.skip('should return config', () => {
+  it('should return config', () => {
     const config = db.getConfig();
     expect(typeof config).toBe('object');
   });

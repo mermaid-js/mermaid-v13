@@ -6,14 +6,23 @@
  * bit-mixing constants of v12's PRNG. Line numbers are `mermaid@12.2.0`'s.
  */
 
-/** The `cynefin` config defaults and bounds (`config.schema.yaml` `CynefinDiagramConfig`). */
+import { cynefinConfigDefaults } from '../generated/config-defaults.ts';
+
+/** Every key of the generated defaults is set: the schema gives each one a `default`. */
+const GIVEN = cynefinConfigDefaults as Required<typeof cynefinConfigDefaults>;
+
+/**
+ * The `cynefin` config defaults (`pnpm gen:config` from `config.schema.yaml`
+ * `CynefinDiagramConfig`, the plugin's `configDefaults`) and the schema's bounds. The layout
+ * falls back to them for an invalid value (D366).
+ */
 export const CYNEFIN_DEFAULTS = {
-  width: 800,
-  height: 600,
-  padding: 40,
-  showDomainDescriptions: true,
-  boundaryAmplitude: 8,
-  seed: 0,
+  width: GIVEN.width,
+  height: GIVEN.height,
+  padding: GIVEN.padding,
+  showDomainDescriptions: GIVEN.showDomainDescriptions,
+  boundaryAmplitude: GIVEN.boundaryAmplitude,
+  seed: GIVEN.seed,
   /** `width` and `height` are at least 1, `padding` at least 0. */
   minSize: 1,
   minPadding: 0,
