@@ -4,7 +4,7 @@ Integration branch `feature/423_cynefin`, checked out at `/Users/knsv/repos/merm
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate | #461 | — | open |
+| T1 lexer parity gate | #461 | — | merged |
 | T2 grammar, parser, model, AST, ported specs | #465 | #461 | open |
 | T3 custom layout (`CynefinLayout`), seeded boundaries | #467 | #465 (soft) | open |
 | T4 SVG renderer | #468 | #465, #467 | open |
