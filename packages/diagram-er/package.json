@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-er",
-  "version": "13.0.0-alpha.0",
+  "version": "13.0.0-alpha.1",
   "description": "Entity relationship diagram plugin for Mermaid: parser, model, graph builder, renderer and text output.",
   "type": "module",
   "license": "MIT",
