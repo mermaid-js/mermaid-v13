@@ -32,6 +32,8 @@ export {
 } from './layout/index.ts';
 export type * from './layout/index.ts';
 export { schedule, ScheduleError } from './schedule/index.ts';
+export { renderGantt, type GanttRenderContext } from './render/index.ts';
+export { gantt } from './plugin.ts';
 export type {
   Schedule,
   ScheduledTask,

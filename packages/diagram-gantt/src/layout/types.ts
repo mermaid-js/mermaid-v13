@@ -113,6 +113,9 @@ export interface GanttLayout {
   readonly domain?: { readonly start: number; readonly end: number };
   readonly rows: number;
   readonly compact: boolean;
+  /** `gantt.fontSize` and `gantt.sectionFontSize` in px: the sizes labels were measured in. */
+  readonly fontSize: number;
+  readonly sectionFontSize: number;
   readonly bands: readonly GanttBand[];
   /** In v12's drawing order: by start, `vert` markers last. */
   readonly bars: readonly GanttBar[];

@@ -72,6 +72,16 @@ export interface GanttMetrics {
   /** CSS font weights: normal, and bold for clickable labels (v12 `.taskText.clickable`). */
   readonly weightNormal: number;
   readonly weightBold: number;
+  /** The renderer's v12 CSS lengths (`styles.js`): bars and the today line `stroke-width: 2`. */
+  readonly barStrokeWidth: number;
+  readonly todayStrokeWidth: number;
+  /** v12 `.section { opacity: 0.2 }` and `.grid .tick { opacity: 0.8 }`. */
+  readonly bandOpacity: number;
+  readonly tickOpacity: number;
+  /** v12 `.milestone { transform: rotate(45deg) … }`, in degrees. */
+  readonly milestoneRotation: number;
+  /** v12 `styles.js` styles `section0`–`section3` (and their bars and labels) only. */
+  readonly styledSlots: number;
 }
 
 export const GANTT_METRICS: GanttMetrics = {
@@ -123,4 +133,10 @@ export const GANTT_METRICS: GanttMetrics = {
   titleFontSize: 18,
   weightNormal: 400,
   weightBold: 700,
+  barStrokeWidth: 2,
+  todayStrokeWidth: 2,
+  bandOpacity: 0.2,
+  tickOpacity: 0.8,
+  milestoneRotation: 45,
+  styledSlots: 4,
 };

@@ -57,6 +57,8 @@ export function layoutGantt(model: GanttModel, ctx: GanttLayoutContext): GanttLa
     ...(c.domain ? { domain: c.domain } : {}),
     rows: c.rows.count,
     compact: env.compact,
+    fontSize: env.fontSize,
+    sectionFontSize: env.sectionFontSize,
     bands,
     bars,
     sections,
