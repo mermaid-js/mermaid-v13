@@ -36,12 +36,13 @@ beforeAll(async () => {
 }, 120_000);
 
 describe('core is unaffected by optional packages (R-PLUG-8, D170)', () => {
-  it('measures with and without ELK, math and the hand-drawn look', () => {
+  it('measures with and without ELK, math, icons and the hand-drawn look', () => {
     expect(hidden).toEqual(
       expect.arrayContaining([
         '@mermaid-js/layout-elk',
         '@mermaid-js/plugin-math',
         '@mermaid-js/plugin-hand-drawn',
+        '@mermaid-js/plugin-icons',
       ])
     );
   });
@@ -56,21 +57,20 @@ describe('core is unaffected by optional packages (R-PLUG-8, D170)', () => {
     expect(check, check.detail).toMatchObject({ ok: true });
   });
 
-  describe('a fixture entry that imports an optional package', () => {
+  describe.each(['layout-elk', 'plugin-icons'])('a fixture entry that imports %s', (dirName) => {
+    const name = `@mermaid-js/${dirName}`;
     const dir = realpathSync(mkdtempSync(join(tmpdir(), 'mermaid-optional-')));
-    const fixture = join(dir, 'imports-elk.ts');
-    writeFileSync(fixture, "export const load = () => import('@mermaid-js/layout-elk');\n");
+    const fixture = join(dir, `imports-${dirName}.ts`);
+    writeFileSync(fixture, `export const load = () => import('${name}');\n`);
 
     it('bundles it when the packages are installed', async () => {
       const { bundle } = await measureStaticClosure(fixture, undefined, { installed });
       const inputs = Object.values(bundle.graph).flatMap((n) => n.inputs);
-      expect(inputs.some((i) => i.startsWith('packages/layout-elk/src/'))).toBe(true);
+      expect(inputs.some((i) => i.startsWith(`packages/${dirName}/src/`))).toBe(true);
     }, 60_000);
 
     it('fails the build when they are hidden', async () => {
-      await expect(measureStaticClosure(fixture, undefined, { hidden })).rejects.toThrow(
-        /@mermaid-js\/layout-elk/
-      );
+      await expect(measureStaticClosure(fixture, undefined, { hidden })).rejects.toThrow(name);
     }, 60_000);
   });
 });

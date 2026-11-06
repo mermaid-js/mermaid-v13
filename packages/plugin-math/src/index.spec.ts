@@ -81,6 +81,7 @@ describe('@mermaid-js/plugin-math', () => {
       metrics: { ascent: 12, descent: 4, lineHeight: 19 },
       ex: 8,
       warn: (w: { code: string; message: string }) => void warnings.push(w),
+      scratch: {},
     };
     expect(math.inline![0]!.box('x^2', request)).toBeUndefined();
     expect(warnings.map((w) => w.code)).toEqual(['MATH_NOT_RENDERED']);

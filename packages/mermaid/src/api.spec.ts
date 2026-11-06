@@ -557,9 +557,11 @@ describe('plugins and v12 leftovers (R-API-3, R-API-4, R-PLUG-6)', () => {
     expect(r.svg).toContain('<text>hello world</text>');
   });
 
-  it('accepts registerIconPacks as a no-op and says so in the warnings', async () => {
+  it('says registerIconPacks has no effect while no extension claims icons (D299)', async () => {
     const m = createMermaid();
-    m.registerIconPacks([{ name: 'logos', loader: () => Promise.resolve({}) }]);
+    m.registerIconPacks([
+      { name: 'logos', loader: () => Promise.resolve({ prefix: 'x', icons: {} }) },
+    ]);
     const r = await m.render('i', FLOW);
     expect(r.warnings.map((w) => w.code)).toEqual(['ICON_PACKS_UNSUPPORTED']);
   });
@@ -593,7 +595,7 @@ describe('no console output (R-ERR-4)', () => {
     );
     const m = createMermaid();
     m.initialize({ securityLevel: 'sandbox', theme: 'nope' as 'dark' });
-    m.registerIconPacks();
+    m.registerIconPacks([{ name: 'logos', icons: { prefix: 'logos', icons: {} } }]);
     const r = await m.render(
       'q',
       '---\nconfig:\n  layout: nope\n  foo: 1\n---\nflowchart TD\n  A --> B\n  style A cursor:pointer\n  click A "javascript:x"'

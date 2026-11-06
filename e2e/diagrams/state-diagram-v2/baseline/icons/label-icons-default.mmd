@@ -1,0 +1,18 @@
+---
+config:
+  theme: default
+description: >-
+  Label icons (@mermaid-js/plugin-icons, I3 #324) in state descriptions, a transition, a
+  composite title and a note, in the default theme. fa:fa-bell is filled with currentColor,
+  fal:fa-circle-check stroked with it: both take the label's text colour, so the four theme
+  families differ by colour only (D215, D227).
+---
+stateDiagram-v2
+  Idle : fa:fa-bell waiting
+  Idle --> Ringing : fal:fa-circle-check press
+  state "fa:fa-bell Ringing" as Ringing {
+    Loud : fal:fa-circle-check loud
+  }
+  note right of Idle
+    fa:fa-bell quiet
+  end note

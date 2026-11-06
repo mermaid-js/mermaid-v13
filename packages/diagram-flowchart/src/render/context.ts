@@ -1,8 +1,8 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Limits } from '@mermaid-js/core/limits';
 import type { LayoutGraph, LayoutModel, UnitProfile } from '@mermaid-js/core/layout';
-import type { SecurityLevel } from '@mermaid-js/core/svg';
-import type { InlineSpans, Measurer } from '@mermaid-js/core/text';
+import type { OutlinePaint, SecurityLevel } from '@mermaid-js/core/svg';
+import type { InlineSpans, Measurer, SvgFragment } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
 
 /** A warning the renderer raises (style, URL and link-target checks, unavailable icons). */
@@ -43,4 +43,15 @@ export interface FlowRenderContext {
   readonly linkSchemes?: readonly string[];
   /** The render's inline-box providers (D177), handed to every label; text output boxes none. */
   readonly inline?: InlineSpans;
+  /**
+   * The extensions' glyphs (D293): an icon shape's glyph fitted into a `size` square at the
+   * origin, its `currentColor` painted with `paint` (D298); `null` when an extension reported it unresolved (it warns `ICON_NOT_RENDERED`);
+   * `undefined` when none has it, or for a placeholder. Absent without an extension that has
+   * glyphs.
+   */
+  readonly icon?: (
+    name: string,
+    size: number,
+    options: { readonly paint: OutlinePaint }
+  ) => SvgFragment | null | undefined;
 }

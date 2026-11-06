@@ -24,6 +24,7 @@
     "@mermaid-js/diagram-flowchart": "workspace:^",
     "@mermaid-js/layout-elk": "workspace:^",
     "@mermaid-js/plugin-hand-drawn": "workspace:^",
+    "@mermaid-js/plugin-icons": "workspace:^",
     "@mermaid-js/plugin-interactions": "workspace:^",
     "@mermaid-js/plugin-math": "workspace:^",
     "@shoelace-style/shoelace": "^2.20.1",

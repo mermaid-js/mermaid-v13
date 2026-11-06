@@ -227,7 +227,8 @@ function spanAttrs(span: LabelSpan, pos: Attrs | undefined): Attrs | undefined {
 
 const isBox = (span: LabelSpan): span is LabelBoxSpan => span.kind === 'box';
 
-function writeFragment(w: SvgWriter, node: SvgFragment): void {
+/** Replays `node` into `w` through `open`/`leaf`/`text`/`close`, so the allow-list holds. */
+export function writeFragment(w: SvgWriter, node: SvgFragment): void {
   const children = node.children;
   if (!children || children.length === 0) {
     w.leaf(node.tag, node.attrs);

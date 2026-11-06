@@ -42,6 +42,8 @@ What most integrators have to change:
    ES2022 module support, and the `chunks/` folder must be served next to it. Plugins are found
    on install in Node, through `@mermaid-js/bundler-plugin` in bundlers and through
    `globalThis.mermaidPlugins` on a CDN ([Loading and plugins](#loading-and-plugins)).
+10. Font Awesome's CSS no longer draws `fa:fa-car` in labels: register an icon pack (for example
+    `@iconify-json/fa6-solid` as `fa`) and `@mermaid-js/plugin-icons` ([Icons](#icons)).
 
 ## Packages
 
@@ -143,7 +145,7 @@ test checks them against the mermaid@12 declarations.
 | `registerExternalDiagrams([{ id, detector, loader }])` where the loader returns a v12 `DiagramDefinition` (parser, db, D3 renderer) | Same call shape, but the loader returns a v13 diagram plugin `{ id, detector, parse, layout?, render }`. v12 diagram definitions do not run in v13 | D35, R-PLUG-2 |
 | `registerLayoutLoaders([{ name, loader, algorithm? }])` where the loader returns a DOM renderer | `registerLayoutLoaders([{ name, loader }])` where the loader returns a layout engine `(graph, ctx?) → LayoutModel`; selected with `layout:` | R-LAYOUT-2 |
 | `layout: elk` / `elk.<algorithm>` uses the ELK package | Laid out by `@mermaid-js/layout-elk` once registered (`mermaid.registerLayoutLoaders(elkLayouts)`, as in v12; it registers v12's seven names plus `elk.layered` and `elk.radial`); without it, drawn with the built-in `layered` engine and one `ELK_NOT_INSTALLED` warning naming the package | DESIGN §6.1, D171, D173 |
-| `registerIconPacks(...)` | Accepted and ignored; renders carry an `ICON_PACKS_UNSUPPORTED` warning until the icons plugin exists | R-API-3 |
+| `registerIconPacks([{ name, icons } \| { name, loader }])` | Same call shape and quirks (`name` overrides the pack's `prefix`; a loader may return the pack itself). Packs belong to one `mermaid` object (`createMermaid()`), not the page, and are drawn by `@mermaid-js/plugin-icons`. Loaders run in `prepare()`/`render()` only for a diagram that names their pack, or in the new `preload({ iconPacks })`; a rejecting loader no longer fails the render. See [Icons](#icons) | R-API-2, R-API-3, D290, D294, D299 |
 | `setParseErrorHandler(fn)` gets the raw error | Deprecated; `fn` gets the `MermaidError` of a failed `parse()` | R-API-4 |
 | `initialize()` replaces the site config | Same: it swaps in a new frozen defaults object; renders already started keep the old one | R-ARCH-4, D72 |
 | Integrator options beyond the schema | `initialize()` also takes `measurer`, `deterministic`, `linkSchemes`, `output.cssVariables` and `limits`; diagram text can never set them | R-SEC-5, R-SEC-6 |
@@ -581,8 +583,9 @@ that v12 neo strokes with the gradient take it, and nothing else does (D182):
 
 - **Flowchart:** node outlines (with their inner lines: cylinder rims, double-circle rings,
   braces) and subgraph rectangles. A linked node (`click … href`) takes the gradient and the
-  shadow like every other node; v12 neo drew it plain (D184). An icon node's frame takes the
-  gradient; v12 put it on the glyph and drew the frame without a border (D186).
+  shadow like every other node; v12 neo drew it plain (D184). An icon shape's glyph takes the
+  gradient and its frame does not, as in v12 (D298); an icon that is not drawn keeps its frame's
+  outline in the gradient.
 - **Class:** class boxes, their dividers and namespaces; not notes.
 - **State:** states, the choice diamond, composites, notes, the start and end dots, fork and
   join bars.
@@ -777,6 +780,7 @@ variables instead.
 | Markdown strings (`` "`**bold**`" ``) | Same subset: `**`/`__` bold, `*`/`_` italic, `` `code` `` (monospace), `- ` and `* ` bullet lists (one nesting level), backslash escapes, `<br>` and newlines | R-TEXT-2 |
 | Entities: Mermaid's `#quot;`/`#35;` and HTML `&…;` | Both decoded; about 45 named HTML entities plus numeric ones. Unknown entities stay literal | |
 | KaTeX math (`$$…$$`) | Rendered by the optional `@mermaid-js/plugin-math` (`registerExternalDiagrams([math])`): MathJax typesets the TeX into SVG paths, so glyph shapes differ from KaTeX's. MathJax loads only for a diagram with math; `renderSync` needs `prepare()` or `preload({ math: true })` first. TeX that does not parse is shown as written with a `MATH_ERROR` warning. Every label core lays out takes math: flowchart nodes, edges and subgraph titles; class, state and ER labels; sequence messages, notes, participants, fragment and box labels. Without the plugin the TeX is shown as written, with one `MATH_NOT_RENDERED` warning per render. Text output always shows the TeX as written, with one `ASCII_DROPPED` warning (`feature: 'math'`). `legacyMathML` and `forceLegacyMathML` are ignored. See [Math](#math) | D5, D175, D176, D178, D179 |
+| `fa:fa-car` in HTML labels: an icon from a registered pack, else `<i class="fa fa-car">` for Font Awesome's CSS to draw | An icon from a registered Iconify pack, drawn as SVG paths by the optional `@mermaid-js/plugin-icons`, in every label core lays out (sequence too); page CSS draws nothing. An icon that does not resolve is shown as written, with one `ICON_NOT_RENDERED` warning per render. See [Icons](#icons) | D290, D291, D292, D296 |
 | Text measured by the browser | Measured by canvas when present, else by built-in tables for Trebuchet MS, Verdana and Arial; line height comes from the font, so labels are not pixel-equal with v12 | R-TEXT-4 |
 | Labels wrap at `flowchart.wrappingWidth` (HTML labels) | Node labels, plain and markdown alike, wrap at `wrappingWidth` (120) and are widened to `minNodeWidth` (120), except circles; edge labels wrap at 200. CJK text breaks between characters, and a word wider than the box is split | |
 
@@ -795,6 +799,77 @@ v12 rendered `$$…$$` with KaTeX into MathML or HTML; v13 typesets it with Math
 - **No MathML.** Nothing in v13 output is MathML or HTML, so `legacyMathML` and `forceLegacyMathML` have no effect, and no KaTeX stylesheet is needed.
 - **Loading.** MathJax loads only for a diagram with a `$$…$$` pair in a label. `render()` loads it; `renderSync` needs `prepare()` or `preload({ math: true })` first, or throws `NotLoadedError` naming `math "tex"`.
 
+### Icons
+
+v12 drew `fa:fa-car` in a label only in HTML labels (`htmlLabels: true`): as the icon of a
+registered pack, or else as `<i class="fa fa-car">` for Font Awesome's CSS to draw. v13 labels
+are SVG text (D5), so there is no `<i>` element and page CSS cannot draw an icon. Icons come from
+[Iconify JSON](https://icones.js.org/) packs registered in code and are drawn as SVG paths by
+the optional `@mermaid-js/plugin-icons` (D290, D291). To keep `fa:` icons, install the plugin
+and a Font Awesome pack, and register the pack under the prefix your diagrams use:
+
+```js
+import mermaid from 'mermaid';
+import { icons } from '@mermaid-js/plugin-icons';
+
+await mermaid.registerExternalDiagrams([icons]); // not needed when it is discovered on install
+mermaid.registerIconPacks([
+  { name: 'fa', loader: () => import('@iconify-json/fa6-solid').then((m) => m.icons) },
+  { name: 'fab', loader: () => import('@iconify-json/fa6-brands').then((m) => m.icons) },
+]);
+```
+
+[Icons](./icons.md) has the setup in full. What differs from v12:
+
+- **Prefixes and names.** Labels read v12's prefixes plus `fad`: `fa`, `fab`, `fad`, `fak`,
+  `fal`, `far` and `fas` (D296). `fa:fa-car` is the icon `car` of the pack registered as `fa`, so
+  each prefix your diagrams use needs its own pack. Names are the pack's: `fa6-solid` has Font
+  Awesome 6 names, so a Font Awesome 5 name it renamed (`fa:fa-home`, now `house`) does not
+  resolve; register `@iconify-json/fa-solid` (Font Awesome 5) as `fa` to keep those. There is no
+  generic `pack:name` in labels, so text such as `note:item` stays text.
+- **No `htmlLabels` gate, every type.** Icons are drawn in every label core lays out: flowchart
+  nodes, edges and subgraph titles; class, state and ER labels; sequence messages, notes,
+  participants, fragment and box labels, which v12 drew as plain text (D292). Class relation
+  labels and single-line state notes cannot hold `:` (v12's grammar), so they cannot hold an icon.
+- **Look.** A label icon is 1em tall at the label's font size, as wide as its aspect makes it,
+  with its bottom 0.125em below the baseline (v12's `.label-icon`), in the label's text colour:
+  `currentColor` fills and strokes both take it. It has no class, so CSS aimed at `.label-icon`
+  or `i.fa` selects nothing.
+- **Loading.** A loader runs only for a diagram that names its pack: in `render()` and
+  `prepare()`, or up front with `preload({ iconPacks: ['fa'] })`. `renderSync` before that throws
+  `NotLoadedError` naming the pack; with `placeholders: true` it draws an empty 1em box instead
+  (an icon shape draws its frame, or nothing without a `form`), with `PLACEHOLDER` (D299). A loader that rejects no longer
+  fails the render: its icons are not drawn, the warning names the pack, and the next `prepare()`
+  retries it.
+- **Not drawn: shown as written.** An icon that does not resolve (no plugin, no pack of that
+  name, no such icon, a pack whose loader failed or that is not Iconify JSON, a shape icon name
+  that is not `pack:name`) stays in the label as written, `fa:fa-car`, and an icon shape draws
+  its frame alone (nothing, without a `form`), with one `ICON_NOT_RENDERED` warning per render
+  (D291), as `MATH_NOT_RENDERED` does for math. With the plugin it names the icons and why;
+  without it, it says icons need an icons extension. While packs are registered and no icons
+  extension is, every render also warns `ICON_PACKS_UNSUPPORTED`. `ICON_UNAVAILABLE` (flowchart icon
+  shapes) is deprecated: for one alpha it is still raised once per render next to
+  `ICON_NOT_RENDERED`, naming the icon shapes not drawn, and never for a placeholder render
+  (D299). Read `ICON_NOT_RENDERED` instead.
+- **What an icon may hold (D295).** An icon's body is not inserted as markup: the plugin
+  rebuilds it from `g`, `path`, `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon` and
+  `text` with their presentation attributes (`style="…"` declarations become attributes), so no
+  icon pack can put script or links into a diagram (R-SEC-2). `defs`, gradients, `mask`,
+  `clipPath`, `use`, `style`, `image` and animation are dropped, as are `id`, `class` and event
+  attributes, and `url(#…)` paints become `currentColor`. A diagram with an icon changed that way
+  gets one `ICON_SIMPLIFIED` warning per render naming them. No `fa6-solid` or `mdi` icon is
+  changed; about one `logos` icon in five uses a gradient and is drawn flatter than in v12.
+- **Icon shapes** (`@{ icon: … }`) draw their glyph with the plugin, as in v12; an icon not drawn
+  keeps its frame (see [Flowchart syntax](#flowchart-syntax)).
+- **Mindmap** is not ported yet (`UNSUPPORTED_DIAGRAM`). When it is, `::icon(fa fa-book)` and
+  `::icon(mdi:fire)` draw from the registered packs, placed as v12's older mindmap renderer
+  placed them (D297). 12.2.0 parsed `::icon()` but drew nothing, so any mindmap icon is new; one
+  that does not resolve is shown as written in the icon's place, with `ICON_NOT_RENDERED` (D286).
+- **Text output** shows label icons as written, with one `ASCII_DROPPED` warning
+  (`feature: 'icon'`); an icon shape is a box with its label (`feature: 'image'`) (D299).
+- **Size.** Core does not change with the plugin installed (R-PLUG-8); the plugin is about
+  5.5 KB gz, plus the packs your diagrams load.
+
 ## Flowchart syntax
 
 The flowchart parser accepts exactly the v12 language: a differential test runs v12 and v13
@@ -808,8 +883,13 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 - **Shape data** (`A@{ shape: … }`) is read with v13's YAML reader: YAML anchors (`&a`) are
   rejected, which js-yaml accepted. A few malformed values that js-yaml rejected are accepted.
 - **Shapes** not in the documented shape list (`classBox`, `erBox`, `usecase*`, `bpmn-*`,
-  `kanbanItem`, mindmap shapes) draw as a rectangle. Icon shapes draw their frame only, with an
-  `ICON_UNAVAILABLE` warning, until the icons plugin exists.
+  `kanbanItem`, mindmap shapes) draw as a rectangle.
+- **Icon shapes** (`@{ icon: … }`, `form` `square`, `circle`, `rounded`) draw their glyph with
+  `@mermaid-js/plugin-icons`, as v12 did (D292, D298): the glyph takes the node's `stroke`
+  style, else `nodeBorder` (the gradient under `useGradient`), and the frame is borderless (its
+  stroke is its fill). An icon that is not drawn (no plugin, no such pack or icon, a pack still
+  loading under `placeholders`) keeps the frame with its outline, not v12's blue `?`.
+  `ICON_UNAVAILABLE` is deprecated in favour of `ICON_NOT_RENDERED`. See [Icons](#icons).
 - **Step animation** (`step` on edges, `flowchart.stepNumbers`, `flowchart.stepDuration`) and
   edge `animate`/`animation` are parsed but not drawn.
 - **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown
@@ -838,6 +918,8 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
   next to `MATH_NOT_RENDERED` (or `ASCII_DROPPED` in text output) for one alpha, and is no longer
   a parse warning. It is not raised for TeX the math plugin refuses (`MATH_ERROR`) or for a
   placeholder render (`PLACEHOLDER`).
+- **Icons** (`fa:fa-car`) in messages, notes, participants, fragment and box labels are drawn by
+  the icons plugin from a registered pack; v12 drew them as plain text (see [Icons](#icons)).
 - **An unknown participant type** (`@{ type: robot }`) draws a participant box, with a
   `SEQUENCE_PARTICIPANT_TYPE` warning; v12 drew nothing.
 - **Box colours** are checked without a browser, with the rules a browser's `CSS.supports`

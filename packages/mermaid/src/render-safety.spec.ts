@@ -26,8 +26,15 @@ describe('render ids and links', () => {
     expect(mail.warnings.find((w) => w.code === 'URL_REFUSED')?.message).toMatch(/^The image/);
   });
 
-  it('says an icon without a form is left out, not that its frame is drawn', async () => {
-    const { warnings } = await createMermaid().render('k', 'flowchart LR\n  A@{ icon: "fa:user" }');
-    expect(warnings.find((w) => w.code === 'ICON_UNAVAILABLE')?.message).toMatch(/it is left out/);
+  it('warns ICON_NOT_RENDERED for an icon shape without an icons extension (D299)', async () => {
+    const { svg, warnings } = await createMermaid().render(
+      'k',
+      'flowchart LR\n  A@{ icon: "fa:user" }'
+    );
+    expect(warnings.map((w) => w.code)).toEqual(['ICON_NOT_RENDERED', 'ICON_UNAVAILABLE']);
+    expect(warnings[1]?.message).toBe(
+      'ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED.'
+    );
+    expect(svg).not.toMatch(/<(rect|circle)\b/);
   });
 });
