@@ -10,10 +10,36 @@
  *   divergence listed in the conformance parity spec, which v13's model does not carry;
  * - `packetParse` stands for `@mermaid-js/parser`'s Langium parse: `value` is the AST as Langium
  *   built it (every block, the last of each text statement), and the errors are the syntax
- *   errors (a misplaced field is the DB's error, not Langium's).
+ *   errors (a misplaced field is the DB's error, not Langium's);
+ * - `configApi` stands for v12's config module: `setConfig({ packet })` sets the `packet`
+ *   section the parse splits rows with and the renderer draws with, `reset()` clears it;
+ * - `renderer.draw` stands for v12's packet renderer: it lays out and renders the loaded model
+ *   with the v13 layout and renderer, and `document` answers the renderer spec's DOM reads from
+ *   the rendered tree: `body.innerHTML =` clears it, `querySelectorAll('#<id> > g')` gives the
+ *   root's row groups and `querySelectorAll('.<class>')` the elements of a class, each with
+ *   `children`, `getAttribute` and `textContent`.
  */
+import type { ResolvedConfig } from '@mermaid-js/core/config';
+import { treeWriter, type SvgNode, type SvgTree } from '@mermaid-js/core/svg';
+import { tableMeasurer } from '@mermaid-js/core/text';
+import { createTheme, loadTheme } from '@mermaid-js/core/theme';
+import { layoutPacket } from '../layout/index.ts';
 import { isWholeField, PACKET_SEMANTIC_ERRORS, parsePacket } from '../parser/index.ts';
 import type { PacketModel } from '../model.ts';
+import { packet } from '../plugin.ts';
+import { renderPacket } from '../render/index.ts';
+
+/** The `packet` config section v12's `setConfig` last set. */
+let section: Readonly<Record<string, unknown>> = {};
+
+export const configApi = {
+  setConfig(next: { packet?: Readonly<Record<string, unknown>> }): void {
+    section = { ...section, ...next.packet };
+  },
+  reset(): void {
+    section = {};
+  },
+};
 
 interface Block {
   start: number;
@@ -27,6 +53,11 @@ export class PacketDB {
 
   load(model: PacketModel): void {
     this.model = model;
+  }
+
+  /** The loaded model, for `renderer.draw`. */
+  current(): PacketModel | undefined {
+    return this.model;
   }
 
   getPacket(): Block[][] {
@@ -62,7 +93,7 @@ export class PacketDB {
 export const parser = {
   parser: { yy: undefined as PacketDB | undefined },
   parse(text: string): Promise<void> {
-    const result = parsePacket(text);
+    const result = parsePacket(text, { config: section });
     const error = result.diagnostics.find((d) => d.severity === 'error');
     if (error) return Promise.reject(new Error(error.message));
     const db = parser.parser.yy;
@@ -113,3 +144,76 @@ export function expectNoErrorsOrAlternatives(result: ReturnType<typeof packetPar
     throw new Error([...result.lexerErrors, ...result.parserErrors].join('\n'));
   }
 }
+
+/** The tree the last `draw` rendered. */
+let drawn: SvgTree | undefined;
+
+export const renderer = {
+  /** v12 `draw(text, id, version, diagram)`: renders the model `diagram.db` holds. */
+  async draw(
+    _text: string,
+    _id: string,
+    version: string,
+    diagram: { db: PacketDB }
+  ): Promise<void> {
+    const model = diagram.db.current();
+    if (!model) throw new Error('draw: nothing parsed');
+    const ctx = {
+      config: { packet: section } as unknown as ResolvedConfig,
+      theme: createTheme(await loadTheme('default'), { diagram: packet.theme }),
+      measurer: tableMeasurer,
+      idPrefix: 'packet-diagram',
+      version,
+    };
+    const w = treeWriter();
+    renderPacket(model, layoutPacket(model, ctx), ctx, w);
+    w.finish();
+    drawn = w.tree;
+  },
+};
+
+/** An element as the spec reads it. */
+interface Element {
+  readonly children: Element[];
+  readonly textContent: string;
+  getAttribute(name: string): string | null;
+}
+
+function element(tree: SvgTree, n: SvgNode): Element {
+  const text = (m: SvgNode): string => tree.textOf(m) ?? tree.children(m).map(text).join('');
+  return {
+    get children() {
+      return tree
+        .children(n)
+        .filter((c) => tree.tag(c) !== undefined)
+        .map((c) => element(tree, c));
+    },
+    get textContent() {
+      return text(n);
+    },
+    getAttribute: (name) => tree.getAttr(n, name as Parameters<SvgTree['getAttr']>[1]) ?? null,
+  };
+}
+
+export const document = {
+  body: {
+    set innerHTML(_html: string) {
+      drawn = undefined;
+    },
+  },
+  querySelectorAll(selector: string): Element[] {
+    if (!drawn) return [];
+    const tree = drawn;
+    if (/^#[\w-]+ > g$/.test(selector)) {
+      const root = tree.find({ tag: 'svg' })[0];
+      if (root === undefined) return [];
+      return tree
+        .children(root)
+        .filter((c) => tree.tag(c) === 'g')
+        .map((c) => element(tree, c));
+    }
+    const m = /^\.([\w-]+)$/.exec(selector);
+    if (!m) throw new Error(`document shim: unsupported selector ${selector}`);
+    return tree.find({ class: m[1]! }).map((c) => element(tree, c));
+  },
+};

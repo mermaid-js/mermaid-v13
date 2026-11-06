@@ -2,7 +2,7 @@
   "name": "@mermaid-js/diagram-packet",
   "version": "0.0.0",
   "private": true,
-  "description": "Packet diagram plugin for Mermaid: lexer, parser, model and layout (renderer to follow).",
+  "description": "Packet diagram plugin for Mermaid: parser, layout and SVG renderer.",
   "type": "module",
   "license": "MIT",
   "repository": {

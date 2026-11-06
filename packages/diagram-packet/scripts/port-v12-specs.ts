@@ -3,7 +3,8 @@
  * through `src/v12-specs/adapter.ts`: v12's `parser` and `PacketDB` for the diagram spec, and the
  * Langium `packetParse` result for the parser package's spec. The spec bodies are copied
  * unchanged from the last v12 commit; only imports are rewritten, and tests listed in `SKIP`
- * (with a reason) are turned into `it.skip`. `renderer.spec.ts` is the renderer ticket's (#460).
+ * (with a reason) are turned into `it.skip`. `renderer.spec.ts` (#460) draws through the v13
+ * layout and renderer, read back through the adapter's `document` shim.
  *
  * Usage: `pnpm --filter @mermaid-js/diagram-packet port:v12-specs` (also runs prettier).
  */
@@ -32,6 +33,14 @@ const SOURCES: Source[] = [
     imports: [
       "import { beforeEach, describe, expect, it } from 'vitest';",
       "import { PacketDB, parser } from './adapter.ts';",
+    ],
+  },
+  {
+    file: 'packages/mermaid/src/diagrams/packet/renderer.spec.ts',
+    name: 'renderer.spec.ts',
+    imports: [
+      "import { beforeEach, describe, expect, it } from 'vitest';",
+      "import { configApi, document, PacketDB, parser, renderer } from './adapter.ts';",
     ],
   },
   {

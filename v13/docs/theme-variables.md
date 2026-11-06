@@ -15,8 +15,8 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core |
-| `background` | `--mermaid-background` | base | color | | | all | core |
-| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core |
+| `background` | `--mermaid-background` | base | color | | | all | core, packet |
+| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, packet |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, pie, packet |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant |

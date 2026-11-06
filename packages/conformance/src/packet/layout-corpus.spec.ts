@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
-import { layoutPacket, parsePacket } from '@mermaid-js/diagram-packet';
+import { layoutPacket, packet, parsePacket } from '@mermaid-js/diagram-packet';
 import { packetLayoutViolations } from '@mermaid-js/diagram-packet/testing';
 import type { CorpusItem } from '../types.ts';
 import { packetGateCorpus } from './corpus.ts';
@@ -33,7 +33,7 @@ beforeAll(async () => {
 
 describe('packet layout invariants on parser-produced fixtures', () => {
   it('hold over the corpus, in both bit orders and every option set', () => {
-    const theme = createTheme(spec);
+    const theme = createTheme(spec, { diagram: packet.theme });
     const failures: string[] = [];
     let pieces = 0;
     let split = 0;

@@ -4,6 +4,7 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { FIXTURES, type Fixture } from './fixtures.ts';
 import { layoutPacket, packetLayoutViolations, type PacketLayout } from './index.ts';
+import { packet as plugin } from '../plugin.ts';
 
 let spec: ThemeSpec;
 beforeAll(async () => {
@@ -14,7 +15,7 @@ const lay = ({ model, config = {} }: Fixture, packet = {}): PacketLayout =>
   layoutPacket(model, {
     config: { packet: { ...config, ...packet } } as unknown as ResolvedConfig,
     measurer: tableMeasurer,
-    theme: createTheme(spec),
+    theme: createTheme(spec, { diagram: plugin.theme }),
   });
 
 const ORDERS = [{}, { bitOrder: 'descending' }, { showBits: false }] as const;

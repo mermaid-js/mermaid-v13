@@ -1,13 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { PacketDiagramConfig, ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer, type Measurer } from '@mermaid-js/core/text';
-import {
-  createTheme,
-  loadTheme,
-  type DiagramThemeTable,
-  type ThemeSpec,
-} from '@mermaid-js/core/theme';
+import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { PacketModel } from '../model.ts';
+import { packet as plugin } from '../plugin.ts';
 import { FIXTURES, model, REGISTER } from './fixtures.ts';
 import { layoutPacket, packetLayoutViolations, type PacketLayout } from './index.ts';
 
@@ -29,28 +25,17 @@ const halfEm: Measurer = {
   }),
 };
 
-// Packet's theme table is T4's (#460); this stand-in declares the four lengths the layout reads.
-const sizes = (tokens: Record<string, number>): DiagramThemeTable => ({
-  vars: {
-    packetByteFontSize: { alias: 'tpkb', kind: 'length' },
-    packetLabelFontSize: { alias: 'tpkl', kind: 'length' },
-    packetTitleFontSize: { alias: 'tpkt', kind: 'length' },
-    packetBlockStrokeWidth: { alias: 'tpks', kind: 'length' },
-  },
-  rules: { light: {} },
-  families: { classic: { tokens } },
-});
-
+/** Lays `m` out in `default` with packet's theme table and the author's `themeVariables`. */
 function lay(
   m: PacketModel,
   packet: Readonly<PacketDiagramConfig> = {},
-  diagram?: DiagramThemeTable,
+  themeVariables?: Readonly<Record<string, unknown>>,
   measurer: Measurer = halfEm
 ): PacketLayout {
   return layoutPacket(m, {
     config: { packet } as unknown as ResolvedConfig,
     measurer,
-    theme: createTheme(spec, diagram ? { diagram } : {}),
+    theme: createTheme(spec, { diagram: plugin.theme, ...(themeVariables && { themeVariables }) }),
   });
 }
 
@@ -242,7 +227,7 @@ describe('packet layout: labels wider than their field (D343)', () => {
   });
 
   it('never grows a label when the bit numbers are larger than the labels', () => {
-    const l = lay(model([[0, 0, 'abcdefgh']]), {}, sizes({ packetByteFontSize: 20 }));
+    const l = lay(model([[0, 0, 'abcdefgh']]), {}, { packetByteFontSize: 20 });
     expect(l.rows[0]!.pieces[0]!.label.font.size).toBe(12);
   });
 });
@@ -287,21 +272,20 @@ describe('packet layout: config and theme', () => {
     expect(pieces.map((p) => p.box.width)).toEqual([0, 184]);
   });
 
-  it('reads the three font sizes from the theme once packet declares them, else v12’s', () => {
+  it('reads the font sizes and the stroke from packet’s theme variables, v12’s by default', () => {
     const l = lay(twoFields());
     expect([l.fonts.label.size, l.fonts.byte.size, l.fonts.title.size, l.strokeWidth]).toEqual([
       12, 10, 14, 1,
     ]);
     expect(l.fonts.label.family).toBe(createTheme(spec).value('fontFamily'));
+    // v12's nested keys (D335), and a flat name beside them.
     const themed = lay(
       twoFields(),
       {},
-      sizes({
-        packetLabelFontSize: 16,
-        packetByteFontSize: 8,
-        packetTitleFontSize: 20,
+      {
+        packet: { labelFontSize: 16, byteFontSize: '8px', titleFontSize: 20 },
         packetBlockStrokeWidth: 3,
-      })
+      }
     );
     expect([
       themed.fonts.label.size,
@@ -354,7 +338,7 @@ describe('packet layout: positions do not depend on measurements', () => {
 
   it('keeps the title below the last row when its font is larger than the row pitch', () => {
     const m = FIXTURES.hello!.model;
-    const l = lay(m, { showBits: false }, sizes({ packetTitleFontSize: 60 }));
+    const l = lay(m, { showBits: false }, { packetTitleFontSize: 60 });
     expect(packetLayoutViolations(m, l)).toEqual([]);
     expect(l.title!.y).toBe(l.rows[0]!.y + 32);
   });

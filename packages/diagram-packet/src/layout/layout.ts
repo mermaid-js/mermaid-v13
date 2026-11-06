@@ -13,7 +13,7 @@ import type { RenderContext } from '@mermaid-js/core';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import { packetConfig } from '../config.ts';
 import type { PacketModel, PacketPiece } from '../model.ts';
-import { FIT_STEPS, NORMAL_WEIGHT, PACKET_METRICS as m, packetThemeLength } from './metrics.ts';
+import { FIT_STEPS, NORMAL_WEIGHT, PACKET_METRICS as m } from './metrics.ts';
 import type {
   BitNumber,
   PacketLayout,
@@ -39,12 +39,13 @@ export function layoutPacket(model: PacketModel, ctx: PacketLayoutContext): Pack
 
   const family = ctx.theme.value('fontFamily');
   const font = (size: number): FontKey => ({ family, size, weight: NORMAL_WEIGHT });
+  // Packet's own theme variables (its table, `plugin.ts`): the theme needs the table.
   const fonts = {
-    label: font(packetThemeLength(ctx.theme, 'packetLabelFontSize')),
-    byte: font(packetThemeLength(ctx.theme, 'packetByteFontSize')),
-    title: font(packetThemeLength(ctx.theme, 'packetTitleFontSize')),
+    label: font(ctx.theme.number('packetLabelFontSize')),
+    byte: font(ctx.theme.number('packetByteFontSize')),
+    title: font(ctx.theme.number('packetTitleFontSize')),
   };
-  const strokeWidth = packetThemeLength(ctx.theme, 'packetBlockStrokeWidth');
+  const strokeWidth = ctx.theme.number('packetBlockStrokeWidth');
   const inline = ctx.inline ? { inline: ctx.inline } : {};
   const measure = (text: string, f: FontKey): MeasuredLabel =>
     layoutLabel(text, f, Infinity, ctx.measurer, inline);
