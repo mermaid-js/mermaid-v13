@@ -528,3 +528,17 @@ The maintainer accepted every recommended answer on 2026-11-06, relayed through 
 | D357 | **Radar names that start with a keyword are rejected, as in v12.** Pele's longer-name rule is not taken; T1 gates on v12's token stream. The diagnostic says the name starts with a keyword, and `isValidId` refuses such names. D325. |
 | D358 | **Radar language symbols.** Each axis name is an `axis` symbol: the `axis` statement defines it, each detailed entry's name and a repeated `axis` statement are references (as D229). Curve names are `curve` symbols with definitions only, in their own namespace. An entry naming no axis is an unresolved reference with D356's warning. Rename changes the definition and every reference, and refuses a name `isValidId` rejects or an existing axis name. |
 | D359 | **All ten radar theme keys become variables, and `radarLegendBoxSize` sizes the legend swatch**, which v12 declared but never read. With the default (12) nothing changes. |
+
+### Cynefin (#423)
+
+The maintainer accepted every recommended answer on 2026-11-06, relayed through the wave coordinator session: "We follow the recommendations for the questions in ticket 423." Where a question offered an alternative, the recommendation was taken. D360 stays free for the first escalation found while implementing; D368–D369 stay free.
+
+| # | Decision |
+| --- | --- |
+| D361 | **Cynefin keeps v12's fixed geometry, and the bounding box grows to cover what is drawn**: items below the canvas, a title wider than it or above it (D224). Pele's measured layout (quadrants sized to their blocks, wrapped items, clipped and bowed arrows, a reserved title row) is recorded as a candidate for a later opt-in, not taken now. P2, D325. |
+| D362 | **Cynefin's default seed (`seed: 0`) hashes `ctx.idPrefix`** with v12's `hashString`, as Pele does, instead of the SVG element id. This is deterministic under R-ARCH-6, since `idPrefix` is an option, and diagrams on one page still differ. Non-zero seeds give v12's exact paths. Hashing the source text (D260's style) was not taken. |
+| D363 | **Cynefin items, transition labels and the title use core's label layout** (D225), with no wrapping, as v12 has none. The badge's 26 px is a minimum height that grows with lines. The fixed domain texts and `+N more` stay plain constants. MIGRATION.md notes that `<br>` now breaks lines. |
+| D364 | **A repeated cynefin domain block keeps v12's result**: the first block's position, the last block's items. One `CYNEFIN_DUPLICATE_DOMAIN` warning per render names the replaced blocks (D226). Merging the items was not taken. P2. |
+| D365 | **Cynefin self-loops are dropped with one `CYNEFIN_SELF_LOOP` warning per render**; the statement stays in the AST. Repeated transitions draw on top of each other as in v12, without Pele's offset (D361). |
+| D366 | **Invalid cynefin config falls back.** A non-finite or out-of-range `width`, `height` or `padding` takes its default, `boundaryAmplitude` clamps to [0, 50], and a non-finite `seed` counts as 0, each with one `CYNEFIN_CONFIG_INVALID` warning per render. Output changes only where v12 drew broken SVG. D226. |
+| D367 | **Cynefin domain names are `domain` language symbols; rename is refused.** The first block defines a domain; later blocks and both ends of a transition are references, so go-to-definition and find-references work. The names are fixed keywords, so rename is refused. Items are not symbols. |
