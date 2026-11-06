@@ -43,5 +43,17 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "cynefin",
+    "types": [
+      "cynefin"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "cynefin",
+    "language": "./dist/language.js"
   }
 }

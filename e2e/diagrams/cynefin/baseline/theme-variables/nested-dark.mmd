@@ -1,0 +1,29 @@
+---
+config:
+  theme: dark
+  cynefin:
+    seed: 7
+  themeVariables:
+    cynefin:
+      complexBg: '#2E7D32'
+      clearBg: '#6D4C41'
+      cliffColor: '#FFD54F'
+      boundaryColor: '#90CAF9'
+      boundaryWidth: 3
+      labelColor: '#FFFFFF'
+      itemFontSize: 14
+description: >-
+  nested themeVariables.cynefin overrides under the dark theme (D335), two
+  backgrounds, cliff, boundaries and their width, label colour and item size
+---
+cynefin-beta
+  title Nested overrides in dark
+  complex
+    "Probe"
+  complicated
+    "Analyse"
+  chaotic
+    "Act"
+  clear
+    "Categorise"
+  complex --> clear : "stabilise"

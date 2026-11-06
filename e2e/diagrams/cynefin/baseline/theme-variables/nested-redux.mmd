@@ -1,0 +1,26 @@
+---
+config:
+  theme: redux
+  cynefin:
+    seed: 7
+  themeVariables:
+    lineColor: '#5C6BC0'
+    cynefinChaoticBg: '#FFCDD2'
+    cynefin:
+      chaoticBg: '#000000'
+      confusionBg: '#E1BEE7'
+      arrowColor: '#D81B60'
+      arrowWidth: 3
+      domainFontSize: 18
+description: nested themeVariables.cynefin overrides under the redux theme (D335); the flat cynefinChaoticBg wins over the nested chaoticBg (D540), and lineColor moves the boundaries (D333(b))
+---
+cynefin-beta
+  title Nested overrides in redux
+  complex
+    "Probe"
+  chaotic
+    "Act"
+  confusion
+    "Unsure"
+  chaotic --> complex : "stabilise"
+  complex --> chaotic

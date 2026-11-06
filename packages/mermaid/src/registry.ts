@@ -127,11 +127,18 @@ interface Entry {
   readonly type: string;
   readonly id: string | undefined;
   readonly formats: readonly string[];
-  /** `clean` is v12's detector text (third-party detectors), built on first use. */
+  /**
+   * `body` is the text from the diagram's start (front matter, leading directives and comments
+   * skipped). `clean` is the text third-party detectors are given: directives removed by their
+   * preprocess ranges and each `%%` comment cut from its line. `v12` is the same text with a
+   * `%%` on the last line kept, as v12's `detectType` kept one with no line break after it
+   * (`detectText`), which first-party rows fall back to. Both are built on first use.
+   */
   readonly detect: (
     body: string,
     clean: () => string,
-    config: Readonly<Record<string, unknown>> | undefined
+    config: Readonly<Record<string, unknown>> | undefined,
+    v12: () => string
   ) => boolean;
   readonly load?: () => Promise<AnyPlugin>;
   readonly loadAscii?: () => Promise<AnyAsciiHook>;
@@ -260,9 +267,13 @@ function checkDiagram(def: AnyPlugin | LazyDiagram, eager: boolean): void {
       throw new TypeError(`Diagram "${p.id}": ${m} must be a function`);
 }
 
-// v12 detectType's cleaning of the text after front matter: directives removed (their ranges
-// come from preprocess), and each `%%` comment cut from its line.
-function detectText(src: string, start: number, pre: PreprocessResult): string {
+// The body with directives removed (their ranges come from preprocess) and each `%%` comment
+// cut from its line: the text third-party detectors are given. With `v12`, a `%%` on the last
+// line, which has no line break after it, stays, as v12's `stripAnyComments` left it: the text
+// first-party rows fall back to, so `cynefin-beta%% c` plus a line break is detected and alone it
+// is not, as in v12 (#469). It is not v12's text: v12's own directive regex is not reproduced
+// (size, R-PERF-8), and blank space before a comment stays (no pattern depends on it).
+function detectText(src: string, start: number, pre: PreprocessResult, v12 = false): string {
   let text = '';
   let at = start;
   for (const { range } of pre.directives) {
@@ -272,11 +283,11 @@ function detectText(src: string, start: number, pre: PreprocessResult): string {
   }
   text += src.slice(at);
   if (!text.includes('%%')) return text;
-  return text
-    .split('\n')
-    .map((line) => {
+  const lines = text.split('\n');
+  return lines
+    .map((line, i) => {
       const c = line.indexOf('%%');
-      return c < 0 ? line : line.slice(0, c).trimEnd();
+      return c < 0 || (v12 && i === lines.length - 1) ? line : line.slice(0, c).trimEnd();
     })
     .join('\n');
 }
@@ -400,7 +411,10 @@ export class Registry {
         type: e.type,
         id: e.id,
         formats: e.formats ?? [],
-        detect: (body) => e.pattern.test(body),
+        // The raw body first; when it holds a `%%`, also the body with comments cut as v12's
+        // detectType cut them, so `cynefin-beta%% c` plus a line break matches as in v12 (#469).
+        detect: (body, _clean, _config, v12) =>
+          e.pattern.test(body) || (body.includes('%%') && e.pattern.test(v12())),
         load: e.load,
         loadAscii: e.loadAscii,
       });
@@ -477,8 +491,10 @@ export class Registry {
     if (body.trim().toLowerCase() === 'error') return { type: 'error', id: undefined };
     let clean: string | undefined;
     const cleaned = () => (clean ??= detectText(src, start, pre));
+    let old: string | undefined;
+    const v12 = () => (old ??= detectText(src, start, pre, true));
     for (const e of this.detectionOrder()) {
-      if (e.detect(body, cleaned, config)) return { type: e.type, id: e.id };
+      if (e.detect(body, cleaned, config, v12)) return { type: e.type, id: e.id };
     }
     throw new MermaidError(
       'UNSUPPORTED_DIAGRAM',

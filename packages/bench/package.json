@@ -12,6 +12,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "language": "tsx --conditions=mermaid-source src/cli/language.ts",
     "language:sequence": "tsx --conditions=mermaid-source src/cli/language-sequence.ts",
+    "language:cynefin": "tsx --conditions=mermaid-source src/cli/language-cynefin.ts",
     "theme-identity": "tsx --conditions=mermaid-source src/cli/theme-identity.ts"
   },
   "devDependencies": {

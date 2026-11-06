@@ -61,7 +61,8 @@ describe.skipIf(parseCynefin === undefined)('cynefin layout invariants on parsed
         if (v.length > 0) failures.push(`${item.id} ${JSON.stringify(options)}: ${v.join('; ')}`);
       }
     }
-    expect(corpus.length).toBe(12);
+    // The 12 v12 fixtures and the 17 baselines (#469).
+    expect(corpus.length).toBe(29);
     expect(items).toBeGreaterThan(40);
     expect(failures.slice(0, 10)).toEqual([]);
   });

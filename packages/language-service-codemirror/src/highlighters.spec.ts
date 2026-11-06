@@ -33,6 +33,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
   it('has a row for each v13 diagram type', () => {
     expect(Object.keys(LEZER_HIGHLIGHTERS).sort()).toEqual([
       'class',
+      'cynefin',
       'er',
       'flowchart',
       'journey',
@@ -106,6 +107,16 @@ describe('the per-type first-paint highlighters (D134)', () => {
       const out = spans('quadrantChart\n  x-axis Low --> High\n  A: [0.3, 0.6]\n');
       expect(out[0]).toBe('quadrantChart:keyword');
       expect(out).toContain('x-axis:keyword');
+      expect(out).toContain('-->:operator');
+    });
+
+    it('highlights a cynefin diagram with the cynefin grammar', () => {
+      const out = spans(
+        'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n'
+      );
+      expect(out[0]).toBe('cynefin-beta:keyword');
+      expect(out).toContain('complex:keyword');
+      expect(out).toContain('"Probe":string');
       expect(out).toContain('-->:operator');
     });
 

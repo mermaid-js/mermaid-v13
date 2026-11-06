@@ -16,7 +16,9 @@
  *   #468): they lay out and render a diagram of that canvas, seed and amplitude, and return the
  *   `d` the renderer wrote on the fold, the horizon, the cliff or the ellipse. The horizon is
  *   drawn with `seed + 100` (v12 `cynefinRenderer.ts:146`), so it renders `seed - 100`; the
- *   ellipse's centre and radii are v12's arguments, set on the laid-out ellipse.
+ *   ellipse's centre and radii are v12's arguments, set on the laid-out ellipse;
+ * - `db.getConfig()` is the plugin's generated `configDefaults` (#469); conformance compares
+ *   them and the resolved section with v12's `getConfig()` (`cynefin/config.spec.ts`).
  */
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { treeWriter, type SvgNode, type SvgTree } from '@mermaid-js/core/svg';
@@ -187,6 +189,11 @@ class CynefinDB {
 
   getAccDescription(): string {
     return this.model?.accDescr ?? '';
+  }
+
+  /** v12's `cleanAndMerge(DEFAULT_CONFIG.cynefin, …)`: the plugin's generated defaults (#469). */
+  getConfig(): Record<string, unknown> {
+    return { ...cynefin.configDefaults };
   }
 }
 

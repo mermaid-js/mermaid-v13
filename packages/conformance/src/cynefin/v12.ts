@@ -11,7 +11,7 @@
  * - the title is the in-text one: the oracle never passes the front matter on, so
  *   `getDiagramTitle()` holds no front-matter title (the v13 side leaves it out too).
  *
- * `getConfig()` is not compared until T5 (#469) honours the `cynefin` keys.
+ * `getConfig()` is compared on its own, in `config.spec.ts` (#469).
  */
 import { decodeEntities as d } from '../flowchart/v12.ts';
 

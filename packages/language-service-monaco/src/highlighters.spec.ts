@@ -39,12 +39,14 @@ const DOCS = {
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   pie: 'pie\n  "Dogs" : 386\n',
   quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
+  cynefin: 'cynefin-beta\n  complex\n    "Probe"\n  complex --> clear : "stabilise"\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
   it('has a row for each v13 diagram type', () => {
     expect(Object.keys(MONARCH_HIGHLIGHTERS).sort()).toEqual([
       'class',
+      'cynefin',
       'er',
       'flowchart',
       'journey',
