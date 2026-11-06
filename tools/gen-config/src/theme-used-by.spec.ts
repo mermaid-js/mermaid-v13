@@ -9,8 +9,9 @@ import { packageReadErrors, themePackages } from './theme-packages.ts';
  * `usedBy` in the theme vocabulary names the diagram types that read each variable (#207).
  * A diagram reads a variable by passing its name as a string literal to a call, either a `Theme`
  * method (`theme.color('lineColor')`) or a local helper over one (`n('extensionMarkerGap')`), or
- * through a table of names (`glyphBand: 'actorGlyphBand'`). This spec scans each diagram
- * package's sources for both and checks the lists both ways, for core's vocabulary and for every
+ * through a table of names (`glyphBand: 'actorGlyphBand'`), or in a table rule as `inline(name)`
+ * (D332). This spec scans each diagram package's sources for these and checks the lists both
+ * ways, for core's vocabulary and for every
  * package's own (`src/theme/vocabulary.ts`, spec #414 T0b), whose rows only their own type may
  * read: a row another type reads belongs in core.
  */
@@ -48,7 +49,11 @@ function readsOf(type: string): Set<string> {
   const text = sources(join(PACKAGES, `diagram-${type}`, 'src'))
     .map((f) => readFileSync(f, 'utf8'))
     .join('\n');
-  const names = [...text.matchAll(/(?:\b\w+\(|\w:)\s*'(\w+)'/g)].map((m) => m[1]!);
+  const names = [
+    ...[...text.matchAll(/(?:\b\w+\(|\w:)\s*'(\w+)'/g)].map((m) => m[1]!),
+    // A table rule's read of a shared input as the theme wrote it (`'inline(mutedBkg)'`, D332).
+    ...[...text.matchAll(/\binline\((\w+)\)/g)].map((m) => m[1]!),
+  ];
   return new Set([...names, ...(DYNAMIC_READS[type] ?? [])].filter((n) => KNOWN.has(n)));
 }
 

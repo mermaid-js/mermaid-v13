@@ -65,7 +65,7 @@ const neoDark: ThemeSpec = {
     border2: '#ffffff40',
     noteBkgColor: '#fff5ad',
     // khroma darken(secondaryColor, 10), whatever the mode.
-    activationBorderColor: '#2e3030',
+    mutedBorder: '#2e3030',
     errorBkgColor: '#201f1f',
     errorTextColor: '#dfe0e0',
     // v12 kept the light theme's #f0f0f0, on which the #cccccc lines of a nested composite all

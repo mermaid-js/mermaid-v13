@@ -31,19 +31,30 @@ const CLASSIC = {
 
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
-  // As v12 `theme-base.js` derives them, in every theme.
+  // As v12 `theme-base.js` derives them. Where themes of one family write a colour differently,
+  // it reads a shared input as each theme wrote it (`inline()`, D332), byte for byte.
   rules: {
     light: {
       actorBkg: 'mainBkg',
+      // v12's label ink, which v12 derives `scaleLabelColor` from.
+      actorTextColor: 'inline(scaleLabelColor)',
       actorLineColor: 'actorBorder',
+      signalColor: 'inline(linkInkColor)',
+      signalTextColor: 'inline(linkInkColor)',
       labelBoxBkgColor: 'actorBkg',
       labelTextColor: 'actorTextColor',
       loopTextColor: 'actorTextColor',
+      activationBkgColor: 'inline(mutedBkg)',
+      activationBorderColor: 'inline(mutedBorder)',
+      // Drawn in a circle filled with `lineColor`.
+      sequenceNumberColor: 'inline(lineTextColor)',
     },
   },
   families: {
     classic: { tokens: CLASSIC },
-    redux: { tokens: NEO },
-    neo: { fallback: 'redux' },
+    // v12 theme-redux-dark*.js draw messages in white, their text in the text ink.
+    redux: { tokens: NEO, dark: { values: { signalColor: '#ffffff' } } },
+    // The redux geometry, without redux's dark message colour.
+    neo: { tokens: NEO },
   },
 };

@@ -62,13 +62,12 @@ const theme: ThemeSpec = {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff'),
     altBackground: '#f0f0f0', // v12 (#192)
-    // sequence (v12 theme-default.js)
-    actorTextColor: '#000000',
-    // v12 `scaleLabelColor`: `labelTextColor`, which theme-default sets to `actorTextColor`.
+    // v12 theme-default.js: the label ink (v12 `labelTextColor`, set to `actorTextColor`), the
+    // grey muted surface and border, white text on lines.
     scaleLabelColor: '#000000',
-    activationBkgColor: '#f4f4f4',
-    activationBorderColor: '#666666',
-    sequenceNumberColor: '#ffffff',
+    mutedBkg: '#f4f4f4',
+    mutedBorder: '#666666',
+    lineTextColor: '#ffffff',
     textColor: '#333333',
     nodeBorder: '#9370db',
     clusterBkg: '#ffffde',

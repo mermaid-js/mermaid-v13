@@ -63,13 +63,11 @@ const theme: ThemeSpec = {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'),
     altBackground: '#555555', // v12 (#192)
-    // sequence (v12 theme-dark.js: mainContrastColor is lightgrey)
-    actorTextColor: '#d3d3d3',
+    // v12 theme-dark.js: mainContrastColor (lightgrey) for labels and links
     scaleLabelColor: '#d3d3d3', // v12: `labelTextColor` (D334)
-    signalColor: '#d3d3d3',
-    signalTextColor: '#d3d3d3',
-    activationBorderColor: '#cccccc',
-    sequenceNumberColor: '#000000',
+    linkInkColor: '#d3d3d3',
+    mutedBorder: '#cccccc',
+    lineTextColor: '#000000',
     textColor: '#cccccc',
     nodeBorder: '#cccccc',
     clusterBkg: '#474949',

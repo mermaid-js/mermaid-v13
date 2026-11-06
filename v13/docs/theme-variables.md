@@ -41,13 +41,7 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `noteTextColor` | `--mermaid-noteTextColor` | derived | color | `contrast(noteBkgColor, textColor, background)` | `contrast(noteBkgColor, textColor, background)` | redux-color, redux, redux-dark, redux-dark-color, default, forest, neutral | core, sequence, class, state |
 | `noteBorderColor` | `--mermaid-noteBorderColor` | derived | color | `mix(noteBkgColor, black, 30%)` | `mix(noteBkgColor, white, 30%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo | core, sequence, class, state |
 | `actorBorder` | `--mermaid-actorBorder` | derived | color | `nodeBorder` | `nodeBorder` | forest, neutral, neo | sequence |
-| `actorTextColor` | `--mermaid-actorTextColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default, dark, forest, neutral | sequence |
-| `signalColor` | `--mermaid-signalColor` | derived | color | `textColor` | `textColor` | redux-dark, redux-dark-color, dark, forest, neutral | sequence |
-| `signalTextColor` | `--mermaid-signalTextColor` | derived | color | `textColor` | `textColor` | dark, forest, neutral | sequence |
 | `labelBoxBorderColor` | `--mermaid-labelBoxBorderColor` | derived | color | `actorBorder` | `actorBorder` | redux-dark, redux-dark-color, forest | sequence |
-| `activationBkgColor` | `--mermaid-activationBkgColor` | derived | color | `secondaryColor` | `secondaryColor` | default, forest, neutral | sequence |
-| `activationBorderColor` | `--mermaid-activationBorderColor` | derived | color | `mix(secondaryColor, black, 12.5%)` | `mix(secondaryColor, black, 12.5%)` | default, dark, forest, neutral, neo-dark | sequence |
-| `sequenceNumberColor` | `--mermaid-sequenceNumberColor` | derived | color | `invert(lineColor)` | `invert(lineColor)` | default, dark, forest, neutral | sequence |
 | `errorBkgColor` | `--mermaid-errorBkgColor` | derived | color | `#552222` | `#a44141` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `errorTextColor` | `--mermaid-errorTextColor` | derived | color | `contrast(background, #552222, #ffdddd)` | `contrast(background, #dddddd, #552222)` | redux-color, redux, redux-dark, redux-dark-color, dark, neo, neo-dark | core |
 | `compositeBackground` | `--mermaid-compositeBackground` | derived | color | `background` | `background` | redux-dark, redux-dark-color | state |
@@ -150,7 +144,11 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `actor4` | `--mermaid-actor4` | derived | color | | | | journey |
 | `actor5` | `--mermaid-actor5` | derived | color | | | | journey |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
-| `scaleLabelColor` | `--mermaid-scaleLabelColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default, dark, forest, neutral | core |
+| `scaleLabelColor` | `--mermaid-scaleLabelColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default, dark, forest, neutral | core, sequence |
+| `mutedBkg` | `--mermaid-mutedBkg` | derived | color | `secondaryColor` | `secondaryColor` | default, forest, neutral | sequence |
+| `mutedBorder` | `--mermaid-mutedBorder` | derived | color | `mix(secondaryColor, black, 12.5%)` | `mix(secondaryColor, black, 12.5%)` | default, dark, forest, neutral, neo-dark | sequence |
+| `linkInkColor` | `--mermaid-linkInkColor` | derived | color | `textColor` | `textColor` | dark, forest, neutral | sequence |
+| `lineTextColor` | `--mermaid-lineTextColor` | derived | color | `invert(lineColor)` | `invert(lineColor)` | default, dark, forest, neutral | sequence |
 | `useGradient` | `--mermaid-useGradient` | token | flag | | | all | core |
 | `gradientStart` | `--mermaid-gradientStart` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `gradientStop` | `--mermaid-gradientStop` | derived | color | `secondaryBorderColor` | `secondaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
@@ -201,10 +199,16 @@ flags and opacities, which are read literally.
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `actorBkg` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
+| `actorTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#000000` | `#d3d3d3` | `#000000` | `#333333` | `#333333` | `#333333` | `#e0dfdf` |
 | `actorLineColor` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#9370db` | `#cccccc` | `#a6cf47` | `#d4d4d4` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `signalColor` | | color | `#28253d` | `#28253d` | `#ffffff` | `#ffffff` | `#333333` | `#d3d3d3` | `#333333` | `#333333` | `#333333` | `#333333` | `#cccccc` |
+| `signalTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#d3d3d3` | `#333333` | `#333333` | `#333333` | `#333333` | `#cccccc` |
 | `labelBoxBkgColor` | | color | `#ffffff` | `#ffffff` | `#111113` | `#111113` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ffffff` | `#2a2020` |
 | `labelTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#000000` | `#d3d3d3` | `#000000` | `#333333` | `#333333` | `#333333` | `#e0dfdf` |
 | `loopTextColor` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#000000` | `#d3d3d3` | `#000000` | `#333333` | `#333333` | `#333333` | `#e0dfdf` |
+| `activationBkgColor` | | color | `#cccccc` | `#cccccc` | `#474949` | `#474949` | `#f4f4f4` | `#474949` | `#f4f4f4` | `#f4f4f4` | `#f4ddff` | `#cccccc` | `#474949` |
+| `activationBorderColor` | | color | `#b3b3b3` | `#b3b3b3` | `#3e4040` | `#3e4040` | `#666666` | `#cccccc` | `#666666` | `#666666` | `#d6c1df` | `#b3b3b3` | `#2e3030` |
+| `sequenceNumberColor` | | color | `#ffffff` | `#ffffff` | `#333333` | `#333333` | `#ffffff` | `#000000` | `#ffffff` | `#ffffff` | `#f4f4f4` | `#ffffff` | `#333333` |
 | `actorRadius` | | length | `6` | `6` | `6` | `6` | `3` | `3` | `3` | `3` | `3` | `6` | `6` |
 | `actorGlyphBand` | | length | `44` | `44` | `44` | `44` | `0` | `0` | `0` | `0` | `0` | `44` | `44` |
 | `messageEndGap` | | length | `3` | `3` | `3` | `3` | `0` | `0` | `0` | `0` | `0` | `3` | `3` |

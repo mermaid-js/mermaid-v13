@@ -62,13 +62,11 @@ const theme: ThemeSpec = {
     altBackground: '#f4f4f4', // v12 (#192)
     // sequence (v12 theme-neutral.js: actorBorder is lighten(border1, 23))
     actorBorder: '#d4d4d4',
-    actorTextColor: '#333333',
     scaleLabelColor: '#333333', // v12: `labelTextColor` (D334)
-    signalColor: '#333333',
-    signalTextColor: '#333333',
-    activationBkgColor: '#f4f4f4',
-    activationBorderColor: '#666666',
-    sequenceNumberColor: '#ffffff',
+    linkInkColor: '#333333',
+    mutedBkg: '#f4f4f4',
+    mutedBorder: '#666666',
+    lineTextColor: '#ffffff',
     textColor: '#000000',
     nodeBorder: '#999999',
     clusterBkg: '#fcfcfc',

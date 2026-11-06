@@ -248,16 +248,11 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   noteBkgColor: def('nk', 'color', ['core', 'sequence', 'class', 'state']),
   noteTextColor: def('nx', 'color', ['core', 'sequence', 'class', 'state']),
   noteBorderColor: def('no', 'color', ['core', 'sequence', 'class', 'state']),
-  // sequence (v12 names): the colours whose values differ between themes of one family, which
-  // the sequence table cannot key by trait yet (GAPS.md "T2"); the rest are its own.
+  // sequence (v12 names): forest pins `labelBoxBorderColor` where the other themes read
+  // `actorBorder`, which no shared input can reproduce byte for byte (GAPS.md "T2"); the rest
+  // are the sequence table's.
   actorBorder: def('ar', 'color', ['sequence']),
-  actorTextColor: def('at', 'color', ['sequence']),
-  signalColor: def('sc', 'color', ['sequence']),
-  signalTextColor: def('stc', 'color', ['sequence']),
   labelBoxBorderColor: def('lbr', 'color', ['sequence']),
-  activationBkgColor: def('acb', 'color', ['sequence']),
-  activationBorderColor: def('acr', 'color', ['sequence']),
-  sequenceNumberColor: def('snc', 'color', ['sequence']),
   errorBkgColor: def('eb', 'color', ['core']),
   errorTextColor: def('et', 'color', ['core']),
   // composite states (#192, D120, D126): the body, the title strip and the alternate
@@ -365,7 +360,15 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   // A shared input (D334): v12's `scaleLabelColor`, the label ink of `cScaleLabel`, which read
   // a sequence variable before.
-  scaleLabelColor: def('slc', 'color', ['core']),
+  scaleLabelColor: def('slc', 'color', ['core', 'sequence']),
+  // Shared inputs that name no diagram (D332), which themes of one family write differently and
+  // a diagram reads with `inline()`: a quiet fill for a highlighted span and its outline, the
+  // ink of links and their labels, and text on a `lineColor` fill (as `secondaryTextColor` is
+  // text on `secondaryColor`). v13 names; v12 has none.
+  mutedBkg: def('mbk', 'color', ['sequence']),
+  mutedBorder: def('mbd', 'color', ['sequence']),
+  linkInkColor: def('lki', 'color', ['sequence']),
+  lineTextColor: def('ltx', 'color', ['sequence']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

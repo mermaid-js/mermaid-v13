@@ -103,14 +103,7 @@ export const LIGHT_RULES: ThemeRuleTable = {
   altBackground: 'tertiaryColor',
   // sequence, as v12 `theme-base.js` derives them (its other colours are its table's)
   actorBorder: 'nodeBorder',
-  actorTextColor: 'primaryTextColor',
-  signalColor: 'textColor',
-  signalTextColor: 'textColor',
   labelBoxBorderColor: 'actorBorder',
-  activationBkgColor: 'secondaryColor',
-  // khroma darken(secondaryColor, 10): ten points of lightness, about 12.5% black on a grey.
-  activationBorderColor: 'mix(secondaryColor, black, 12.5%)',
-  sequenceNumberColor: 'invert(lineColor)',
   // quadrant chart, as v12's `/* quadrant-graph */` block in every theme file derives them.
   // Fills 2–4 follow `quadrant1Fill`, so a theme that pins it moves them too (D232); points
   // default to `textColor`, the colour v12 points showed (D231).
@@ -135,6 +128,13 @@ export const LIGHT_RULES: ThemeRuleTable = {
   // A shared input that names no diagram (D334): v12's `scaleLabelColor`, the ink `cScaleLabel`
   // and any per-slot label take; the theme's text ink unless a theme pins it.
   scaleLabelColor: 'primaryTextColor',
+  // Shared inputs (D332), as v12 theme-base derives the values they carry: a muted surface on
+  // the secondary colour and its border (khroma darken(secondaryColor, 10): ten points of
+  // lightness, about 12.5% black on a grey), links in the text ink, text on a line inverted.
+  mutedBkg: 'secondaryColor',
+  mutedBorder: 'mix(secondaryColor, black, 12.5%)',
+  linkInkColor: 'textColor',
+  lineTextColor: 'invert(lineColor)',
 };
 
 /** Shared derivation for dark themes. */

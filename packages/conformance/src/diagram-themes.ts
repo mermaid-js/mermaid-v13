@@ -40,6 +40,18 @@ export const DIAGRAM_TABLES: Readonly<Record<string, DiagramThemeTable | undefin
   timeline: table(timeline),
 };
 
+/**
+ * The D332 generic shared inputs: v13-only names that themes of one family write differently and
+ * a diagram's table reads with `inline()`. v12 has no such name, so the oracle specs leave them
+ * out of the v12 comparison; the diagram variables reading them are still compared.
+ */
+export const D332_INPUTS: readonly string[] = [
+  'mutedBkg',
+  'mutedBorder',
+  'linkInkColor',
+  'lineTextColor',
+];
+
 /** Every variable a render can read: core's vocabulary and every table's `vars`. */
 export const VOCABULARY: Readonly<Record<string, ThemeVarEntry>> =
   Object.fromEntries<ThemeVarEntry>([

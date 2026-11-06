@@ -58,14 +58,12 @@ const theme: ThemeSpec = {
     altBackground: '#f0f0f0', // v12 (#192)
     // sequence (v12 theme-forest.js: actorBorder is darken(mainBkg, 20))
     actorBorder: '#a6cf47',
-    actorTextColor: '#000000',
     scaleLabelColor: '#000000', // v12: `labelTextColor`, set to `actorTextColor`
-    signalColor: '#333333',
-    signalTextColor: '#333333',
     labelBoxBorderColor: '#326932',
-    activationBkgColor: '#f4f4f4',
-    activationBorderColor: '#666666',
-    sequenceNumberColor: '#ffffff',
+    linkInkColor: '#333333',
+    mutedBkg: '#f4f4f4',
+    mutedBorder: '#666666',
+    lineTextColor: '#ffffff',
     textColor: '#000000',
     nodeBorder: '#13540c',
     clusterBkg: '#cdffb2',

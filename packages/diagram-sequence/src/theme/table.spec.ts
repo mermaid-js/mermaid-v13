@@ -9,7 +9,19 @@ import { describe, expect, it } from 'vitest';
 import { sequence } from '../plugin.ts';
 
 const { theme: table }: Pick<DiagramPlugin, 'id' | 'theme'> = sequence;
-const OWN = ['actorBkg', 'actorLineColor', 'labelBoxBkgColor', 'labelTextColor', 'loopTextColor'];
+const OWN = [
+  'actorBkg',
+  'actorTextColor',
+  'actorLineColor',
+  'signalColor',
+  'signalTextColor',
+  'labelBoxBkgColor',
+  'labelTextColor',
+  'loopTextColor',
+  'activationBkgColor',
+  'activationBorderColor',
+  'sequenceNumberColor',
+];
 const GEOMETRY = [
   'actorRadius',
   'actorGlyphBand',
@@ -45,5 +57,43 @@ describe('the sequence theme table (#414 T2)', () => {
     expect(t.value('labelBoxBkgColor')).toBe('#123456');
     expect(t.value('actorLineColor')).toBe(t.value('actorBorder'));
     expect([t.value('labelTextColor'), t.value('loopTextColor')]).toEqual(['#654321', '#654321']);
+  });
+
+  it("reads each theme's shared inputs in the theme's own shape (D332, inline)", async () => {
+    const decl = async (name: string, v: string) => {
+      const t = createTheme(await loadTheme(name as 'default'), { diagram: table });
+      t.color(v);
+      return Object.values(t.rootStyle())[0];
+    };
+    // default pins v12's grey, base derives it from secondaryColor: both as v12 wrote them.
+    expect(await decl('default', 'activationBkgColor')).toBe(
+      'var(--mermaid-activationBkgColor,#f4f4f4)'
+    );
+    expect(await decl('base', 'activationBkgColor')).toBe(
+      'var(--mermaid-activationBkgColor,var(--_s))'
+    );
+    expect(await decl('forest', 'signalColor')).toBe('var(--mermaid-signalColor,#333333)');
+    expect(await decl('neutral', 'actorTextColor')).toBe('var(--mermaid-actorTextColor,#333333)');
+    expect(await decl('dark', 'sequenceNumberColor')).toBe(
+      'var(--mermaid-sequenceNumberColor,#000000)'
+    );
+  });
+
+  it('draws redux-dark messages white and their text in the text ink, as v12', async () => {
+    for (const name of ['redux-dark', 'redux-dark-color']) {
+      const t = createTheme(await loadTheme(name as 'default'), {
+        diagram: table,
+        cssVariables: false,
+      });
+      expect([t.value('signalColor'), t.value('signalTextColor')], name).toEqual([
+        '#ffffff',
+        t.value('textColor'),
+      ]);
+    }
+    const neoDark = createTheme(await loadTheme('neo-dark'), {
+      diagram: table,
+      cssVariables: false,
+    });
+    expect(neoDark.value('signalColor')).toBe(neoDark.value('textColor'));
   });
 });
