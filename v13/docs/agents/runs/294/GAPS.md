@@ -63,5 +63,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Fixture descriptions: also `text-should-wrap-with-icon.mmd` has no icon (four wrong descriptions, not three).
 
 ## #328 icons I5
+- **Choice:** the glyph is asked for by `mindmapIconName` (D297), 40 px, `paint` = `cScaleLabel<section>` (the reference's colour, a colour under every family: no gradient as flowchart's neo glyphs take, since D297 names the colour), no `fallbackPrefix` (a bare reference is shown as written, as v12's CSS class needed a pack). Drawn as `g.mindmap-icon[transform=translate(…)]` round the fitted glyph, where `text.mindmap-icon` goes without one; layout is unchanged.
+- **Choice:** `null` (the extension reports it unresolved) shows the reference as written and mindmap gives no warning (the extension's `ICON_NOT_RENDERED` names it, D291); mindmap's own `ICON_NOT_RENDERED` comes only when no extension has glyphs. `undefined` (a placeholder while the pack loads, D299) leaves the slot empty, as flowchart's frame alone and the plugin's "nothing in shapes".
+- **Choice:** the e2e page's static packs gain `fa`'s `book` and an `mdi` pack with `fire` (`packages/dev/src/icon-packs.ts`), the two glyphs the corpus names; no other fixture names them.
 
 ## #344 hand-drawn H4

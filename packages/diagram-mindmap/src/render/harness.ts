@@ -31,6 +31,8 @@ export interface RenderMindmapOptions {
   /** An outline drawer (D302) installed on the writer, as an active extension's would be. */
   readonly outline?: OutlineDraw;
   readonly measurer?: Measurer;
+  /** The extensions' glyphs (`RenderContext.icon`, D293), as an icons extension would give them. */
+  readonly icon?: RenderContext['icon'];
 }
 
 export interface RenderedMindmap {
@@ -98,6 +100,7 @@ export async function renderMindmapForTest(
     layout: (graph) => engine(graph, { config }),
     limits: resolveLimits(config),
     warn,
+    ...(options.icon ? { icon: options.icon } : {}),
   };
   const layout = layoutMindmap(model, ctx);
   const gradient = theme.gradient();

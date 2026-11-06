@@ -151,6 +151,51 @@ describe('mindmap render properties over the parsed corpus', () => {
   });
 });
 
+describe('mindmap ::icon() glyphs over the parsed corpus (#328, D297)', () => {
+  /** An extension's glyph: a `size` square at the origin, as `RenderContext.icon` gives one. */
+  const icon = (_: string, size: number) =>
+    ({ tag: 'rect', attrs: { class: 'fixture-glyph', width: size, height: size } }) as const;
+
+  it('draws each icon as one 40 px glyph inside its node, inert, with no warning', async () => {
+    // Every parsed source with an icon (the 5 e2e fixtures among them), in the four families.
+    const withIcons = cases.filter(
+      (c) => c.theme === 'default' && c.r.model.nodes.some((n) => n.icon)
+    );
+    expect(withIcons.filter((c) => c.id.startsWith('e2e/')).length).toBe(5);
+    for (const theme of ['default', 'redux', 'neo', 'neo-dark'])
+      for (const item of withIcons) {
+        const id = `${item.id.replace(/ default$/, '')} ${theme}`;
+        const r = await renderMindmapForTest(item.source, { config: { theme }, icon });
+        assertInert(r.svg, { gradient: r.gradient, themeStyle: r.themeStyle });
+        expect(
+          r.warnings.filter((w) => w.code.startsWith('ICON')),
+          id
+        ).toEqual([]);
+        const tree = parseSvg(r.svg);
+        expect(tree.find({ tag: 'text', class: 'mindmap-icon' }), id).toEqual([]);
+        const glyphs = tree.find({ tag: 'g', class: 'mindmap-icon' });
+        const views = r.layout.mindmap.nodes.filter((v) => v.icon);
+        expect(glyphs.length, id).toBe(views.length);
+        views.forEach((v, k) => {
+          const t = /^translate\((-?[\d.]+),(-?[\d.]+)\)$/.exec(
+            tree.getAttr(glyphs[k]!, 'transform')!
+          )!;
+          const [x, y] = [Number(t[1]), Number(t[2])];
+          const box = r.layout.nodes.get(v.id)!;
+          expect(v.icon!.glyph, id).toBe(40);
+          expect(
+            x >= box.x - box.width / 2 - TOL && x + 40 <= box.x + box.width / 2 + TOL,
+            id
+          ).toBe(true);
+          expect(
+            y >= box.y - box.height / 2 - TOL && y + 40 <= box.y + box.height / 2 + TOL,
+            id
+          ).toBe(true);
+        });
+      }
+  });
+});
+
 describe('mindmap AST round-trip over the parsed corpus (R-PARSE-8)', () => {
   it('maps each Node to exactly one g.mindmap-node, and nothing else has data-ast', () => {
     for (const c of cases) {

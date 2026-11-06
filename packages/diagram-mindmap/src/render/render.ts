@@ -2,7 +2,7 @@
 // (`layoutMindmap`) measured and placed everything; this file only paints it: the edges under
 // the nodes, as v12's `edgePaths` before `nodes`. Each node is one `g.mindmap-node` with
 // `data-id` and `data-ast` (its AST id, R-PARSE-8) holding its outline, the rule under a plain
-// node, the icon reference and the label; edges carry `data-id` only (`edge:<child>`, D289).
+// node, the icon (its glyph or the reference as written) and the label; edges carry `data-id` only (`edge:<child>`, D289).
 // v12's classes stay: `section-<n>` (`section-root section--1` for the root) and the author's
 // `:::` classes on nodes, `edge section-edge-<n> edge-depth-<d>` on edges (`d` from the raw
 // indent, GAPS #388). Coordinates are absolute; nothing has a transform.
@@ -17,7 +17,7 @@ import {
 import type { MindmapLayout } from '../layout/layout.ts';
 import type { MindmapNodeView } from '../layout/prepare.ts';
 import type { MindmapModel } from '../model.ts';
-import { drawIconReference, iconsNotRendered } from './assets.ts';
+import { drawIcon, iconsNotRendered } from './assets.ts';
 import type { MindmapRenderContext } from './context.ts';
 import { drawEdge } from './edges.ts';
 import { paints, type Paints } from './paint.ts';
@@ -111,7 +111,8 @@ function drawNodes(scene: Scene): void {
   for (const v of layout.mindmap.nodes) {
     const at = layout.nodes.get(v.id);
     if (!at) continue;
-    if (drawNode(scene, v, at.x + v.frame.dx, at.y + v.frame.dy) && !iconShown) {
+    // Without glyphs (no extension has them) mindmap warns itself; else the extension does.
+    if (drawNode(scene, v, at.x + v.frame.dx, at.y + v.frame.dy) && !iconShown && !scene.ctx.icon) {
       iconShown = true;
       iconsNotRendered(scene.ctx);
     }
@@ -119,9 +120,9 @@ function drawNodes(scene: Scene): void {
   w.close();
 }
 
-/** One node, its frame centred at (`x`, `y`); true when it drew an icon reference. */
+/** One node, its frame centred at (`x`, `y`); true when it has an icon. */
 function drawNode(scene: Scene, v: MindmapNodeView, x: number, y: number): boolean {
-  const { w, model, paint } = scene;
+  const { w, model, paint, ctx } = scene;
   const node = model.nodes[v.index]!;
   const n = node.section ?? -1;
   const p = paint.node(node.section);
@@ -150,8 +151,10 @@ function drawNode(scene: Scene, v: MindmapNodeView, x: number, y: number): boole
       'stroke-width': p.ruleWidth,
     });
   }
-  if (v.icon)
-    drawIconReference(w, v.icon, x + v.icon.at.x, y + v.icon.at.y, paint.icon(node.section));
+  if (v.icon && node.icon) {
+    const at = { x: x + v.icon.at.x, y: y + v.icon.at.y };
+    drawIcon(w, ctx, node.icon.text, v.icon, at, paint.icon(node.section));
+  }
   w.label(v.label, x + v.labelAt.x, y + v.labelAt.y, { class: 'mindmap-node-label', fill: p.text });
   w.close();
   return v.icon !== undefined;
