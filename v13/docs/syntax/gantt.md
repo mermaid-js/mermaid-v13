@@ -48,9 +48,6 @@ statement = Setting
           | Click ;
 ```
 
-A setting: `dateFormat`, `axisFormat`, `tickInterval`, `includes`, `excludes`,
-`todayMarker`, `inclusiveEndDates`, `topAxis`, `weekday <day>` or `weekend <day>`.
-
 ```ebnf
 Setting @Setting = dateFormat
                  | inclusiveEndDates
@@ -161,14 +158,14 @@ Every rule ignores case: a rule for `ab` also matches `AB` and `aB`.
 | INITIAL | excludes | `excludes\s[^#\n;]+` |  | `excludes <days>`: days a task skips, e.g. `weekends`, `friday`, `2024-01-01`. |
 | INITIAL | todayMarker | `todayMarker\s[^\n;]+` |  | `todayMarker off` or `todayMarker <style>`: hides or styles the today line. |
 | INITIAL | weekday_monday | `weekday\s+monday\b` |  | `weekday <day>`: the day week ticks start on. |
-| INITIAL | weekday_tuesday | `weekday\s+tuesday\b` |  |  |
-| INITIAL | weekday_wednesday | `weekday\s+wednesday\b` |  |  |
-| INITIAL | weekday_thursday | `weekday\s+thursday\b` |  |  |
-| INITIAL | weekday_friday | `weekday\s+friday\b` |  |  |
-| INITIAL | weekday_saturday | `weekday\s+saturday\b` |  |  |
-| INITIAL | weekday_sunday | `weekday\s+sunday\b` |  |  |
+| INITIAL | weekday_tuesday | `weekday\s+tuesday\b` |  | `weekday <day>`: the day week ticks start on. |
+| INITIAL | weekday_wednesday | `weekday\s+wednesday\b` |  | `weekday <day>`: the day week ticks start on. |
+| INITIAL | weekday_thursday | `weekday\s+thursday\b` |  | `weekday <day>`: the day week ticks start on. |
+| INITIAL | weekday_friday | `weekday\s+friday\b` |  | `weekday <day>`: the day week ticks start on. |
+| INITIAL | weekday_saturday | `weekday\s+saturday\b` |  | `weekday <day>`: the day week ticks start on. |
+| INITIAL | weekday_sunday | `weekday\s+sunday\b` |  | `weekday <day>`: the day week ticks start on. |
 | INITIAL | weekend_friday | `weekend\s+friday\b` |  | `weekend friday\|saturday`: the first day of the weekend `excludes weekends` skips. |
-| INITIAL | weekend_saturday | `weekend\s+saturday\b` |  |  |
+| INITIAL | weekend_saturday | `weekend\s+saturday\b` |  | `weekend friday\|saturday`: the first day of the weekend `excludes weekends` skips. |
 | INITIAL | date | `\d\d\d\d-\d\d-\d\d\b` |  | A date where a statement starts: no statement starts with one. |
 | INITIAL | title | `title\s[^\n]+` |  | `title <text>`: the chart title, the rest of the line. |
 | INITIAL | accDescription | `accDescription\s[^#\n;]+` |  | `accDescription …`: lexed, but no statement takes it; write `accDescr: …`. |

@@ -53,6 +53,40 @@ describe('gantt error recovery', () => {
     expect(src.slice(d?.range.start, d?.range.end)).toBe('%%{');
   });
 
+  /** The text each error diagnostic of `src` covers. */
+  const covered = (src: string) =>
+    parseGantt(src)
+      .diagnostics.filter((d) => d.severity === 'error')
+      .map((d) => src.slice(d.range.start, d.range.end));
+
+  it('reports a `click` without `href` or `call` over the click, not the next line', () => {
+    expect(covered('gantt\nclick a1\n  B :1d')).toEqual(['click a1']);
+    expect(covered('gantt\nclick a1,b2 \nB :1d')).toEqual(['click a1,b2']);
+    // `click` at a line end takes the next line's first word as its ids: at its line end.
+    const src = 'gantt\nclick \nB :1d';
+    const [d] = parseGantt(src).diagnostics;
+    expect([d?.range.start, d?.range.end]).toEqual([12, 12]);
+  });
+
+  it('reports a task with no data over its text, not the line break after it', () => {
+    expect(covered('gantt\nB\nC :1d')).toEqual(['B']);
+    expect(covered('gantt\n  Design it  \nC :1d')).toEqual(['Design it']);
+    // v12 lexes the `;` after task data as the text of another task.
+    expect(covered('gantt\nA :a1, 2024-01-01, 1d;\nC :1d')).toEqual([';']);
+    expect(covered('gantt\nB')).toEqual(['B']);
+  });
+
+  it('reports a keyword with nothing after it where its value belongs', () => {
+    // v12 lexes `section ` at a line end as a task text; the name is what is missing.
+    const src = 'gantt\n  section \n  B :1d\n  click ';
+    const errors = parseGantt(src).diagnostics.filter((d) => d.severity === 'error');
+    expect(errors.map((d) => [d.range.start, d.range.end])).toEqual([
+      [16, 16],
+      [src.length, src.length],
+    ]);
+    expect(errors[0]?.message).toMatch(/^Expected a section name, got a line break; write it as/);
+  });
+
   it('never names a token or grammar rule', () => {
     const { diagnostics } = parseGantt(
       'x\ngantt\n:1d\n2024-01-01\nclick a1\nclick a1 href ""\naccDescription y\n'
