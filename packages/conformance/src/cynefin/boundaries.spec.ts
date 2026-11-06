@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { num } from '@mermaid-js/core/svg';
 import {
@@ -11,6 +13,9 @@ import {
   resolveSeed,
   seededRandom,
 } from '@mermaid-js/diagram-cynefin/testing';
+import { createMermaid } from 'mermaid';
+import { REPO_ROOT } from '../corpus.ts';
+import { parseSvg } from '../svg-tree.ts';
 import { loadV12Boundaries } from './v12-boundaries.ts';
 
 /**
@@ -97,5 +102,34 @@ describe('cynefin seed randomness equals v12', () => {
   it('resolveSeed hashes the id prefix where v12 hashed the element id (D362)', () => {
     for (const seed of [0, Number.NaN, Infinity, -Infinity, 7, -3, 0.5])
       expect(resolveSeed(seed, 'mermaid-9')).toBe(v12.resolveSeed(seed, 'mermaid-9'));
+  });
+});
+
+/** The e2e fixture with `cynefin.seed: 42` in its front matter (US7). */
+const SEEDED = readFileSync(
+  join(
+    REPO_ROOT,
+    'e2e/diagrams/cynefin/pr-check/should-render-cynefin-deterministically-with-an-explicit-seed-override.mmd'
+  ),
+  'utf8'
+);
+
+describe('a seeded render draws v12’s boundaries (US7)', () => {
+  it('writes v12’s fold, horizon, cliff and ellipse for `seed: 42`, whatever the render id', async () => {
+    const m = createMermaid();
+    // As v12's renderer calls the generator (cynefinRenderer.ts :140-163) at its defaults: an
+    // 800 × 600 canvas, amplitude 8, the horizon seeded `seed + 100`, the ellipse 0.15 a side.
+    const want = [
+      v12.generateFoldPath(800, 600, 42, 8),
+      v12.generateHorizontalBoundary(800, 600, 42 + 100, 8),
+      v12.generateCliffPath(800, 600),
+      v12.generateConfusionPath(400, 300, 120, 90),
+    ].map(rounded);
+    for (const id of ['first', 'second']) {
+      const tree = parseSvg((await m.render(id, SEEDED)).svg);
+      const d = (cls: string) => tree.find({ tag: 'path', class: cls }).map((p) => p.attrs.d ?? '');
+      const got = [...d('cynefinBoundary'), ...d('cynefinCliff'), ...d('cynefinConfusion')];
+      expect(got.map(rounded), id).toEqual(want);
+    }
   });
 });
