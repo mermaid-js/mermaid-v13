@@ -1,6 +1,7 @@
 /**
  * The rules the lazily loaded themes derive their `cScale`, `cScaleInv` and `cScaleLabel` with
- * (D258), kept out of `palettes.ts` so the default theme's static chunk does not carry them.
+ * (D258), and their git palettes (D267), kept out of `palettes.ts` so the default theme's static
+ * chunk does not carry them.
  */
 import { paletteSlots } from './palettes.ts';
 
@@ -62,3 +63,49 @@ export const DARK_HUE_SOURCES = hueSources(
 /** `cScaleLabel` where v12 writes `black` under `darkMode` (`theme-dark.js`, `theme-neutral.js`). */
 export const darkModeLabels = (keep: Readonly<Record<number, string>> = {}): readonly string[] =>
   paletteSlots((i) => keep[i] ?? '#000000');
+
+/**
+ * `gitBranchLabel` of `theme-forest.js` and `theme-dark.js`: v12's `labelTextColor`, inverted in
+ * slots 0 and 3. Both set `labelTextColor` themselves before the labels (forest to
+ * `actorTextColor`, dark to its `mainContrastColor`), so `label` is that rule.
+ */
+export const classicGitLabels = (label: string): readonly string[] =>
+  paletteSlots((i) => (i === 0 || i === 3 ? `invert(${label})` : label), 8);
+
+/**
+ * `git` and `gitInv` where v12 derives a slot without reading the author's `git<n>` first
+ * (`theme-dark.js`, `theme-neutral.js`): each rule, and its inverse.
+ */
+export const fixedGit = (
+  git: readonly string[]
+): { readonly git: readonly string[]; readonly gitInv: readonly string[] } => ({
+  git,
+  gitInv: git.map((c) => `invert(${c})`),
+});
+
+/**
+ * The colours v12 starts its `git0`–`git7` from (D267): the primary, secondary and tertiary
+ * colours, then the primary turned by −30, −60, −90, 60 and 120 degrees. Each argument is a rule.
+ */
+export const gitSources = (p: string, s: string, t: string): readonly string[] => [
+  p,
+  s,
+  t,
+  ...[-30, -60, -90, 60, 120].map((h) => `adjustHue(${p}, ${h})`),
+];
+
+/**
+ * v12's `git`, `gitInv` and `gitBranchLabel` (`theme-base.js` and the themes that copy it): each
+ * source darkened by 25 points of HSL lightness (`lightenHsl` under `darkMode`), the inverse of
+ * that step, and one label rule in every slot. v12 steps an author's `git<n>` too before it inverts
+ * it, then draws the author's colour as given; `ifSet` keeps both.
+ */
+export const gitPalettes = (
+  sources: readonly string[],
+  step = 'darkenHsl',
+  label = 'labelTextColor'
+): Readonly<Record<'git' | 'gitInv' | 'gitBranchLabel', readonly string[]>> => ({
+  git: sources.map((c) => `${step}(${c}, 25%)`),
+  gitInv: sources.map((c, i) => `invert(${step}(ifSet(git${i}, ${c}), 25%))`),
+  gitBranchLabel: sources.map(() => label),
+});

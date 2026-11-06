@@ -23,6 +23,12 @@ export interface MindmapIconSlot {
   readonly slot: number;
   /** Side of the glyph, centred in the slot. */
   readonly glyph: number;
+  /**
+   * The reference as written (trimmed), laid out in `size` px, the theme's font size or less so
+   * that it fits the glyph square: what is drawn when no glyph is (D286, D291).
+   */
+  readonly text: MeasuredLabel;
+  readonly size: number;
 }
 
 export interface MindmapNodeView {
@@ -30,6 +36,10 @@ export interface MindmapNodeView {
   readonly id: string;
   /** Index into `MindmapModel.nodes`. */
   readonly index: number;
+  /**
+   * The shape drawn: the node's, except that a plain node is `rounded` where the theme's
+   * `mindmapRoundedNodes` is on (v12 redux, D288).
+   */
   readonly shape: MindmapShape;
   readonly label: MeasuredLabel;
   /** The layout box: what the shape draws fits it exactly. */
@@ -99,8 +109,11 @@ interface Build {
   readonly font: FontKey;
   /** Wrap width, units. */
   readonly wrap: number;
-  /** `mindmap.padding`, units across and down. */
+  /** `mindmap.padding`, px, and in units across and down. */
+  readonly paddingPx: number;
   readonly padding: Point;
+  /** The theme draws plain nodes rounded (`mindmapRoundedNodes`, D288). */
+  readonly rounded: boolean;
   /** A px length along an axis, in units. */
   px(v: number, axis: 'x' | 'y'): number;
 }
@@ -114,11 +127,28 @@ interface Frame {
   icon?: MindmapIconSlot;
 }
 
+/**
+ * A shape's padding along `axis`, units: the theme's padding variable where the shape has one
+ * (v12 neo and classic differ, D152), with the fixed or `mindmap.padding`-based padding it
+ * multiplies; else that padding.
+ */
+function padOf(b: Build, m: ShapeMetrics, axis: 'x' | 'y'): number {
+  const base = m.pad ?? b.paddingPx * m.padScale;
+  const name = m.themed?.[axis];
+  return b.px(name === undefined ? base : b.ctx.theme.padding(name, base), axis);
+}
+
+/** A hexagon's slant: the theme's `hexagonSlant` when above 0, else v12 classic's. */
+function slantOf(b: Build, m: ShapeMetrics): number | undefined {
+  if (m.slant === undefined) return undefined;
+  const f = b.ctx.theme.number('hexagonSlant');
+  return Number.isFinite(f) && f > 0 ? f : m.slant;
+}
+
 /** The frame round a `label`, with the icon slot when there is one (D297). */
-function frameOf(b: Build, shape: MindmapShape, label: MeasuredLabel, icon: boolean): Frame {
+function frameOf(b: Build, shape: MindmapShape, label: MeasuredLabel, icon?: IconText): Frame {
   const m: ShapeMetrics = MINDMAP_METRICS.shapes[shape];
-  const pad = (axis: 'x' | 'y'): number =>
-    m.pad === undefined ? b.padding[axis] * m.padScale : b.px(m.pad, axis);
+  const pad = (axis: 'x' | 'y'): number => padOf(b, m, axis);
   const { slot, minHeight, glyph } = MINDMAP_METRICS.icon;
   const iconAcross = b.px(slot, 'x');
   const iconDown = b.px(slot, 'y');
@@ -133,7 +163,12 @@ function frameOf(b: Build, shape: MindmapShape, label: MeasuredLabel, icon: bool
       arcWidth: d + iconAcross,
       height: d + iconDown,
       labelAt: { x: 0, y: iconDown / 2 },
-      icon: { at: { x: 0, y: -label.height / 2 }, slot: iconDown, glyph: b.px(glyph, 'y') },
+      icon: {
+        at: { x: 0, y: -label.height / 2 },
+        slot: iconDown,
+        glyph: b.px(glyph, 'y'),
+        ...icon,
+      },
     };
   }
   width = label.width + m.grow.x * pad('x');
@@ -143,7 +178,8 @@ function frameOf(b: Build, shape: MindmapShape, label: MeasuredLabel, icon: bool
     width = Math.max(width, label.width + b.px(m.minGrow, 'x'));
     height = Math.max(height, label.height + b.px(m.minGrow, 'y'));
   }
-  if (m.slant !== undefined) width += (2 * height) / m.slant;
+  const slant = slantOf(b, m);
+  if (slant !== undefined) width += (2 * height) / slant;
   if (!icon) return { width, height, arcWidth: unclamped, labelAt: { x: 0, y: 0 } };
   // The icon sits left of the label; the two are centred together.
   return {
@@ -151,8 +187,29 @@ function frameOf(b: Build, shape: MindmapShape, label: MeasuredLabel, icon: bool
     arcWidth: unclamped + iconAcross,
     height: Math.max(height, b.px(minHeight, 'y')),
     labelAt: { x: iconAcross / 2, y: 0 },
-    icon: { at: { x: -label.width / 2, y: 0 }, slot: iconAcross, glyph: b.px(glyph, 'x') },
+    icon: { at: { x: -label.width / 2, y: 0 }, slot: iconAcross, glyph: b.px(glyph, 'x'), ...icon },
   };
+}
+
+interface IconText {
+  readonly text: MeasuredLabel;
+  readonly size: number;
+}
+
+/**
+ * The `::icon()` reference as written (D286), on one line per line written, in the theme's
+ * font made smaller where it would not fit the glyph square.
+ */
+function iconText(b: Build, raw: string): IconText {
+  const side = b.px(MINDMAP_METRICS.icon.glyph, 'x');
+  const text = raw.trim();
+  const at = (size: number): MeasuredLabel =>
+    layoutLabel(text, { ...b.font, size }, Number.MAX_SAFE_INTEGER, b.ctx.measurer);
+  const full = at(b.font.size);
+  const fit = Math.min(1, side / Math.max(full.width, 1), side / Math.max(full.height, 1));
+  if (fit >= 1) return { text: full, size: b.font.size };
+  const size = b.font.size * fit;
+  return { text: at(size), size };
 }
 
 function nodeView(b: Build, model: MindmapModel, index: number): MindmapNodeView {
@@ -161,18 +218,19 @@ function nodeView(b: Build, model: MindmapModel, index: number): MindmapNodeView
     markdown: true,
     inline: b.ctx.inline,
   });
-  const f = frameOf(b, node.shape, label, node.icon !== undefined);
+  const shape = node.shape === 'default' && b.rounded ? 'rounded' : node.shape;
+  const f = frameOf(b, shape, label, node.icon && iconText(b, node.icon.text));
   const base = {
     id: node.ast,
     index,
-    shape: node.shape,
+    shape,
     label,
     labelAt: f.labelAt,
     ...(f.icon ? { icon: f.icon } : {}),
   };
-  if (node.shape === 'cloud' || node.shape === 'bang') {
+  if (shape === 'cloud' || shape === 'bang') {
     const outline =
-      node.shape === 'cloud'
+      shape === 'cloud'
         ? cloudOutline(f.width, f.height)
         : bangOutline(f.width, f.height, f.arcWidth);
     const box = outlineBox(outline);
@@ -189,7 +247,7 @@ function nodeView(b: Build, model: MindmapModel, index: number): MindmapNodeView
       outline,
     };
   }
-  const slant = MINDMAP_METRICS.shapes[node.shape].slant;
+  const slant = slantOf(b, MINDMAP_METRICS.shapes[shape]);
   return {
     ...base,
     width: f.width,
@@ -220,7 +278,9 @@ export function prepareMindmap(model: MindmapModel, ctx: MindmapLayoutContext): 
       weight: MINDMAP_METRICS.fontWeight,
     },
     wrap: Math.max(px(maxWidth, 'x'), MINDMAP_METRICS.minWrap),
+    paddingPx: padding,
     padding: { x: px(padding, 'x'), y: px(padding, 'y') },
+    rounded: ctx.theme.value('mindmapRoundedNodes') === 'true',
     px,
   };
   const nodes = model.nodes.map((_, i) => nodeView(b, model, i));

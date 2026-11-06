@@ -10,13 +10,13 @@ describe('theme variable inventory (DESIGN §8.3)', () => {
       '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core |'
     );
     expect(doc).toContain(
-      '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline |'
+      '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap |'
     );
     expect(doc).toContain(
       '| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |'
     );
     expect(doc).toContain(
-      '| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline |'
+      '| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap |'
     );
   });
 
@@ -30,6 +30,13 @@ describe('theme variable inventory (DESIGN §8.3)', () => {
     expect(doc).toContain(
       '| `cScaleLabel` | `cScaleLabel`, `cScaleLabel0`–`cScaleLabel11` | all |'
     );
+  });
+
+  it('gives every variable its own private alias', () => {
+    const byAlias = new Map<string, string[]>();
+    for (const [name, def] of Object.entries(THEME_VARIABLES))
+      byAlias.set(def.alias, [...(byAlias.get(def.alias) ?? []), name]);
+    expect([...byAlias.values()].filter((names) => names.length > 1)).toEqual([]);
   });
 
   it('is up to date (run `pnpm gen:theme`)', async () => {

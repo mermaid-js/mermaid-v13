@@ -8,7 +8,7 @@
 import {
   DARK_RULES,
   NUMBERED_PALETTES,
-  PALETTE_LIMIT,
+  PALETTE_LIMITS,
   PALETTE_VARIABLES,
   THEME_VARIABLES,
   contrastRatio,
@@ -17,6 +17,7 @@ import {
   loadTheme,
   parseColor,
   type Rgba,
+  type NumberedPalette,
   type Theme,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
@@ -98,6 +99,11 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ...Object.fromEntries(
     TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])
   ),
+  ...Object.fromEntries(
+    Object.keys(THEME_VARIABLES)
+      .filter((n) => n.startsWith('mindmap'))
+      .map((n) => [n, 'D288, D152: v12 has no variable; it chose mindmap paint by look and theme'])
+  ),
 };
 
 const hex = (v: unknown): string | undefined => {
@@ -125,7 +131,10 @@ function same(name: string): boolean {
 
 function v12Palette(name: string): string[] {
   if (NUMBERED_PALETTES.includes(name as never))
-    return Array.from({ length: PALETTE_LIMIT }, (_, i) => OLD[`${name}${i}`] as string);
+    return Array.from(
+      { length: PALETTE_LIMITS[name as NumberedPalette] },
+      (_, i) => OLD[`${name}${i}`] as string
+    );
   const list = OLD[name];
   return Array.isArray(list) ? (list as string[]) : [];
 }
@@ -199,7 +208,8 @@ describe('neo-dark against v12 12.2.0 (#227, D151, D181, D183)', () => {
   it("has no per-subgraph palette (D181); its cScale palettes are v12 neo-dark's (D258)", () => {
     expect(neoDark.palette('borderColorArray')).toEqual([]);
     expect(neoDark.palette('bkgColorArray')).toEqual([]);
-    for (const p of NUMBERED_PALETTES) expect(neoDark.palette(p), p).toHaveLength(PALETTE_LIMIT);
+    for (const p of NUMBERED_PALETTES)
+      expect(neoDark.palette(p), p).toHaveLength(PALETTE_LIMITS[p]);
   });
 
   // GAPS.md "Contracts": #223 owns the gradient vocabulary. Until it merges these are not v13

@@ -3,13 +3,14 @@
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
 import { fillTypes, INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
-import { darkModeLabels } from './scales.ts';
+import { classicGitLabels, darkModeLabels, fixedGit } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
   CLASSIC_PADDING,
   CLASSIC_SEQUENCE,
   CLASSIC_TIMELINE,
+  CLASSIC_MINDMAP,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -64,6 +65,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
     ...CLASSIC_TIMELINE,
+    ...CLASSIC_MINDMAP,
     useGradient: false,
   },
   rules: PIE_DARK,
@@ -111,6 +113,20 @@ const theme: ThemeSpec = {
     cScaleInv: INVERTED_SCALE,
     // v12 sets labelTextColor to its mainContrastColor (lightgrey) before the labels.
     cScaleLabel: paletteSlots(() => '#d3d3d3'),
+    // v12 theme-dark.js: lighten(pie<n+1>) by 20 (10 in slots 5 and 6), slot 0 from
+    // secondaryColor, whatever darkMode is; it never reads git<n> before inverting. v12's
+    // `pie<i>` is `cScale<i>` here; the shared palette reads `cScale<i>`, never pie's (D334).
+    ...fixedGit([
+      'lightenHsl(ifSet(secondaryColor, lightenHsl(#1f2020, 16%)), 20%)',
+      'lightenHsl(cScale2, 20%)',
+      'lightenHsl(cScale3, 20%)',
+      'lightenHsl(cScale4, 20%)',
+      'lightenHsl(cScale5, 20%)',
+      'lightenHsl(cScale6, 10%)',
+      'lightenHsl(cScale7, 10%)',
+      'lightenHsl(cScale8, 20%)',
+    ]),
+    gitBranchLabel: classicGitLabels('#d3d3d3'),
   },
   darkModePalettes: { cScaleLabel: darkModeLabels() },
 };

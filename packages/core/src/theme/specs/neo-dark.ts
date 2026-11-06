@@ -10,16 +10,26 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { fillTypes, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
-import { DARK_HUE_SOURCES, darkenedScale } from './scales.ts';
+import { DARK_HUE_SOURCES, darkenedScale, gitPalettes } from './scales.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
   CLASSIC_TIMELINE,
+  NEO_MINDMAP,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
 import { PIE_REDUX_DARK } from './redux-dark-values.ts';
+
+/**
+ * v12 `theme-neo-dark.js`: fixed `git0`–`git7` (the dark theme's pie colours), always lightened
+ * by 25 (`gitDarkMode`), whatever `darkMode` is (D267).
+ */
+const NEO_DARK_GIT = gitPalettes(
+  ['#0b0000', '#4d1037', '#3f5258', '#4f2f1b', '#6e0a0a', '#3b0048', '#995a01', '#154706'],
+  'lightenHsl'
+);
 
 const neoDark: ThemeSpec = {
   name: 'neo-dark',
@@ -50,6 +60,9 @@ const neoDark: ThemeSpec = {
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
     ...CLASSIC_TIMELINE,
+    ...NEO_MINDMAP,
+    // v12 `styles.ts`: neo-dark edges take `nodeBorder`, as the redux themes do.
+    mindmapBorderEdges: true,
     // v12 theme-neo-dark.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
@@ -84,8 +97,15 @@ const neoDark: ThemeSpec = {
     gradientStop: '#eb0042',
   },
   // v12 theme-neo-dark.js: hue steps darkened by 25 (75 under darkMode).
-  palettes: { ...darkenedScale(DARK_HUE_SOURCES, 25), cScaleLabel: LABEL_SCALE },
-  darkModePalettes: darkenedScale(DARK_HUE_SOURCES, 75),
+  palettes: {
+    ...darkenedScale(DARK_HUE_SOURCES, 25),
+    cScaleLabel: LABEL_SCALE,
+    ...NEO_DARK_GIT,
+  },
+  darkModePalettes: {
+    ...darkenedScale(DARK_HUE_SOURCES, 75),
+    gitBranchLabel: NEO_DARK_GIT.gitBranchLabel.map(() => 'black'),
+  },
 };
 
 export default neoDark;

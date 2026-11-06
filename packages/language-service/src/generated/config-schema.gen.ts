@@ -122,13 +122,58 @@ export const configSchema: ConfigSchema = {
             "reason": "v12's values in every theme (D258): `labelTextColor` in most themes, with slots 0 and 3 inverted in `default`, slots 0 and 2 `cScale1` in `neutral`, black under `darkMode` in `dark` and `neutral`, and each slot darkened by 75 in `redux-dark-color`. Read as literal colours, not CSS variables. The timeline reads it only where `timelineScaleColors` is true: an override changes nothing in the redux themes (the default `redux-color` included) or `theme: 'auto'`; in `neo` and `neo-dark` it is the box text and (slot 11) the axis and connectors (v12's redux and neo paint, D227, D257)."
           }
         },
+        "git": {
+          "description": "gitGraph branch colours (commit bullets, branch lines, arrows, label backgrounds), eight\nslots. A list of colours, or one comma-separated string; `git0`–`git7` replace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values in every theme (D267): `primaryColor`, `secondaryColor`, `tertiaryColor` and the primary turned by −30, −60, −90, 60 and 120 degrees, darkened by 25 (lightened under `darkMode`) in `base`, `forest`, `redux-dark` and `redux-dark-color`; the same steps from fixed colours in `neo`, `redux` and `redux-color`; the dark pie colours lightened by 25 in `neo-dark`; `pie2`–`pie8` lightened in `dark` and as given in `neutral`; fixed in `default`. Read as literal colours, not CSS variables. An unsafe colour drops that override with `THEME_VARIABLE_DROPPED`."
+          }
+        },
+        "gitInv": {
+          "description": "gitGraph highlight colour against each `git` slot, eight slots. A list of colours, or one\ncomma-separated string; `gitInv0`–`gitInv7` replace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values in every theme (D267): the inverse of the slot (darkened by 25 in slot 0 of `default`). Where v12 steps an author's `git<n>` before it inverts it, so does v13; `default`, `dark` and `neutral` ignore it, as in v12. Read as literal colours, not CSS variables."
+          }
+        },
+        "gitBranchLabel": {
+          "description": "gitGraph branch label text colour on each `git` slot, eight slots. A list of colours, or\none comma-separated string; `gitBranchLabel0`–`gitBranchLabel7` replace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values in every theme (D267): `labelTextColor` (black under `darkMode`) in `base`, `neo`, `neo-dark` and the redux themes; slots 0 and 3 inverted in `default` (fixed), `forest` (from `actorTextColor`) and `dark`; slots 1 and 3 white in `neutral`. v12's `branchLabelColor` is not read: set `gitBranchLabel`. Read as literal colours, not CSS variables."
+          }
+        },
         "THEME_COLOR_LIMIT": {
           "description": "v12's number of colour-scale slots.\n",
           "type": "number",
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "The numbered palettes always have twelve slots, and a diagram cycles through them (D258)."
+            "reason": "The numbered `cScale` palettes always have twelve slots and the git palettes eight, and a diagram cycles through them (D258, D267)."
           }
         },
         "arrowheadGap": {
@@ -657,6 +702,42 @@ export const configSchema: ConfigSchema = {
             "status": "honoured",
             "since": "13.0.0",
             "reason": "`false` in the redux themes, `true` in the classic and neo themes (v12 `styles.js`, D227, D257). Read literally at render time, so it has no CSS variable."
+          }
+        },
+        "mindmapRoundedNodes": {
+          "description": "`true`: a mindmap node written without a shape is drawn rounded (D288), and with\n`mindmapOutlinedNodes` the root takes `mainBkg` and `nodeBorder` text and, where\n`borderColorArray` is empty, every node takes `mainBkg` with a `nodeBorder` outline and\ntext. `false`: plain nodes are v12's default shape, and the root takes `git0`.\n",
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`true` in the redux themes, `false` in the classic and neo themes (v12 `mindmapDb.ts` and `styles.ts` for a theme name with `redux`, D288). Read literally at render time, so it has no CSS variable."
+          }
+        },
+        "mindmapOutlinedNodes": {
+          "description": "`true`: mindmap nodes take an outline at `strokeWidth` (`cScale<n>`, `nodeBorder` or the\ngradient) and the theme's `dropShadow`, plain nodes are flat-bottomed, labels take\n`cScaleLabel<n>` (the root `cScaleLabel0`), and edges are `max(10 − 2d, 2)` px wide at\ndepth class `d`. `false`: no outline or shadow, four rounded corners, the root label\n`gitBranchLabel0`, and edges `14 − 3d` px wide (3 px from depth class 5).\n",
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`true` in the redux and neo themes, `false` in the classic themes (v12 `look: neo`, `styles.ts`, D288). Read literally at render time, so it has no CSS variable."
+          }
+        },
+        "mindmapBorderEdges": {
+          "description": "`true`: mindmap edges are drawn in `nodeBorder`; `false`: in their section's `cScale<n>`.\nRead only with `mindmapOutlinedNodes`, as in v12.\n",
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`true` in the redux themes and `neo-dark`, `false` in the classic themes and `neo` (v12 `styles.ts`). Read literally at render time, so it has no CSS variable."
           }
         }
       }

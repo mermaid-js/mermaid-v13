@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   NUMBERED_PALETTES,
+  PALETTE_LIMITS,
   THEME_NAMES,
   createTheme,
   loadTheme,
@@ -164,13 +165,13 @@ describe('palette overrides through themeVariables (D152)', () => {
   });
 
   it.each(THEME_NAMES)(
-    '%s: every cScale, cScaleInv and cScaleLabel slot is a safe colour',
+    '%s: every slot of the numbered palettes is a safe colour (cScale*, git*)',
     async (name) => {
       for (const darkMode of [false, true]) {
         const t = await literal(name, { darkMode });
         for (const p of NUMBERED_PALETTES) {
           const list = t.palette(p);
-          expect(list, `${p} darkMode ${darkMode}`).toHaveLength(12);
+          expect(list, `${p} darkMode ${darkMode}`).toHaveLength(PALETTE_LIMITS[p]);
           for (const c of list) expect(parseColor(c), `${p} ${c}`).toBeDefined();
         }
       }
@@ -220,5 +221,42 @@ describe('palette overrides through themeVariables (D152)', () => {
       'THEME_VARIABLE_DROPPED',
       'THEME_VARIABLE_DROPPED',
     ]);
+  });
+
+  it('has eight git, gitInv and gitBranchLabel slots, named git0–git7 (D267)', async () => {
+    const t = await literal('redux-color', { git8: '#123456', gitInv8: '#123456', git3: 'red' });
+    expect(t.palette('git')).toHaveLength(8);
+    expect(t.palette('gitInv')).toHaveLength(8);
+    expect(t.palette('gitBranchLabel')).toHaveLength(8);
+    expect(t.palette('git')[3]).toBe('red');
+    expect(t.palette('git')).not.toContain('#123456');
+    expect(t.palette('gitInv')).not.toContain('#123456');
+  });
+
+  it('replaces the whole git palette with a list, and gitInv follows it (D267)', async () => {
+    const t = await literal('base', { git: '#000000, #ffffff' });
+    expect(t.palette('git')).toEqual(['#000000', '#ffffff']);
+    // khroma darken by 25, then invert: #000000 stays black, so its inverse is white.
+    expect(t.palette('gitInv').slice(0, 2)).toEqual(['#ffffff', '#404040']);
+    expect(t.palette('gitInv')).toHaveLength(8);
+  });
+
+  it('drops an unsafe git colour with THEME_VARIABLE_DROPPED and keeps the theme value', async () => {
+    const warnings: ThemeWarning[] = [];
+    const t = createTheme(await loadTheme('redux-color'), {
+      cssVariables: false,
+      themeVariables: { git0: 'red;x', gitBranchLabel1: 'url(#x)', gitInv: ['#000', 'x(y)'] },
+      warn: (w) => warnings.push(w),
+    });
+    const plain = await literal('redux-color');
+    expect(t.palette('git')).toEqual(plain.palette('git'));
+    expect(t.palette('gitInv')).toEqual(plain.palette('gitInv'));
+    expect(t.palette('gitBranchLabel')).toEqual(plain.palette('gitBranchLabel'));
+    expect(warnings.map((w) => w.message.split(' ')[0])).toEqual([
+      'themeVariables.gitInv',
+      'themeVariables.git0',
+      'themeVariables.gitBranchLabel1',
+    ]);
+    expect(new Set(warnings.map((w) => w.code))).toEqual(new Set(['THEME_VARIABLE_DROPPED']));
   });
 });

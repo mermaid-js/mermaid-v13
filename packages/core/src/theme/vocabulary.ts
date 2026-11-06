@@ -161,6 +161,11 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'timelineLabelOffset',
     'timelineEventLabelShift',
     'timelineScaleColors',
+    // Mindmap nodes and edges (spec #294 T4, D288): plain nodes drawn rounded with v12's redux
+    // paints, v12 neo's outlined nodes, and edges in `nodeBorder`.
+    'mindmapRoundedNodes',
+    'mindmapOutlinedNodes',
+    'mindmapBorderEdges',
     // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
     'useGradient',
   ] as const
@@ -169,11 +174,11 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
 
 /**
- * Palettes (D151, D152, D258): lists of colours a theme carries as data. `themeVariables`
+ * Palettes (D151, D152, D258, D267): lists of colours a theme carries as data. `themeVariables`
  * replaces a whole list (an array of colours, or a comma-separated string), and v12's numbered
- * names (`cScale0`–`cScale11`, `cScaleInv<n>`, `cScaleLabel<n>`) replace one entry of
- * `cScale`, `cScaleInv` or `cScaleLabel`. Palettes are read as literal colours, not CSS
- * variables.
+ * names (`cScale0`–`cScale11`, `cScaleInv<n>`, `cScaleLabel<n>`, `git0`–`git7`, `gitInv<n>`,
+ * `gitBranchLabel<n>`) replace one entry of the palette they name. Palettes are read as literal
+ * colours, not CSS variables.
  */
 export const PALETTE_VARIABLES = [
   'borderColorArray',
@@ -181,15 +186,42 @@ export const PALETTE_VARIABLES = [
   'cScale',
   'cScaleInv',
   'cScaleLabel',
+  'git',
+  'gitInv',
+  'gitBranchLabel',
 ] as const;
 
-/** The palettes with v12's numbered names, `<name>0`–`<name>11`. */
-export const NUMBERED_PALETTES = ['cScale', 'cScaleInv', 'cScaleLabel'] as const;
+/** The palettes with v12's numbered names, `<name>0` up to `PALETTE_LIMITS[name] - 1`. */
+export const NUMBERED_PALETTES = [
+  'cScale',
+  'cScaleInv',
+  'cScaleLabel',
+  'git',
+  'gitInv',
+  'gitBranchLabel',
+] as const;
 
 export type PaletteVariable = (typeof PALETTE_VARIABLES)[number];
+export type NumberedPalette = (typeof NUMBERED_PALETTES)[number];
 
-/** How many numbered names each of `NUMBERED_PALETTES` has (v12 `THEME_COLOR_LIMIT`, D258). */
+/**
+ * How many numbered names `cScale`, `cScaleInv` and `cScaleLabel` have (v12 `THEME_COLOR_LIMIT`,
+ * D258).
+ */
 export const PALETTE_LIMIT = 12;
+
+/** How many numbered names the git palettes have (v12 `git0`–`git7`, D267). */
+export const GIT_PALETTE_LIMIT = 8;
+
+/** How many numbered names each of `NUMBERED_PALETTES` has. */
+export const PALETTE_LIMITS: Readonly<Record<NumberedPalette, number>> = {
+  cScale: PALETTE_LIMIT,
+  cScaleInv: PALETTE_LIMIT,
+  cScaleLabel: PALETTE_LIMIT,
+  git: GIT_PALETTE_LIMIT,
+  gitInv: GIT_PALETTE_LIMIT,
+  gitBranchLabel: GIT_PALETTE_LIMIT,
+};
 
 // Pure, so a bundle that never reads `THEME_VARIABLES` drops it with its `usedBy` lists: the
 // runtime reads the generated alias and kind table (`generated/variables.ts`) instead.
@@ -257,8 +289,24 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'journey',
     'timeline',
   ]),
-  mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
-  nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  mainBkg: def('mb', 'color', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+  ]),
+  nodeBorder: def('nb', 'color', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+  ]),
   nodeTextColor: def('nt', 'color', ['flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
@@ -334,9 +382,10 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'state',
     'er',
     'timeline',
+    'mindmap',
   ]),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),
-  radius: def('r', 'length', ['core', 'flowchart', 'state']),
+  radius: def('r', 'length', ['core', 'flowchart', 'state', 'mindmap']),
   fontWeight: def('fw', 'weight', ['core', 'timeline']),
   spacing1: def('g1', 'length', ['core']),
   spacing2: def('g2', 'length', ['core']),
@@ -360,16 +409,16 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   classTerminalFontSize: def('ctf', 'length', ['class']),
   erZeroOrMoreCircleOffset: def('ezc', 'length', ['er']),
   // Node padding, read as numbers at render time (D152), so their aliases are never written.
-  nodePaddingX: def('npx', 'padding', ['flowchart']),
-  nodePaddingY: def('npy', 'padding', ['flowchart']),
+  nodePaddingX: def('npx', 'padding', ['flowchart', 'mindmap']),
+  nodePaddingY: def('npy', 'padding', ['flowchart', 'mindmap']),
   stadiumPaddingX: def('spx', 'padding', ['flowchart']),
   stadiumPaddingY: def('spy', 'padding', ['flowchart']),
-  hexagonPaddingX: def('hpx', 'padding', ['flowchart']),
-  hexagonPaddingY: def('hpy', 'padding', ['flowchart']),
-  hexagonSlant: def('hs', 'length', ['flowchart']),
+  hexagonPaddingX: def('hpx', 'padding', ['flowchart', 'mindmap']),
+  hexagonPaddingY: def('hpy', 'padding', ['flowchart', 'mindmap']),
+  hexagonSlant: def('hs', 'length', ['flowchart', 'mindmap']),
   doubleCircleGap: def('dcg', 'length', ['flowchart']),
   doubleCirclePadding: def('dcp', 'padding', ['flowchart']),
-  circlePadding: def('cp', 'padding', ['flowchart']),
+  circlePadding: def('cp', 'padding', ['flowchart', 'mindmap']),
   circleMinDiameter: def('cmd', 'length', ['flowchart']),
   subroutinePaddingX: def('srx', 'padding', ['flowchart']),
   subroutinePaddingY: def('sry', 'padding', ['flowchart']),
@@ -388,6 +437,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   timelineLabelOffset: def('tlo', 'padding', ['timeline']),
   timelineEventLabelShift: def('tle', 'length', ['timeline']),
   timelineScaleColors: def('tls', 'flag', ['timeline']),
+  mindmapRoundedNodes: def('mmr', 'flag', ['mindmap']),
+  mindmapOutlinedNodes: def('mmo', 'flag', ['mindmap']),
+  mindmapBorderEdges: def('mme', 'flag', ['mindmap']),
   // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
   // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
   rowOdd: def('ro', 'color', ['er']),
@@ -404,7 +456,15 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   ...Object.fromEntries([...'012345'].map((n) => [`actor${n}`, def(`ja${n}`, 'color', JOURNEY)])),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
-  dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  dropShadow: def('ds', 'filter', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+  ]),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

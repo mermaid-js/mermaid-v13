@@ -17,7 +17,16 @@ export interface ShapeMetrics {
   readonly grow: { readonly x: number; readonly y: number };
   /** The least growth over the label, px, both sides together (`bang.ts`: `bbox + 20`). */
   readonly minGrow?: number;
-  /** A hexagon's point is `height / slant` deep (`hexagon.ts` `f`). */
+  /**
+   * The theme's padding variables (D152) for this shape, across and down, read with `pad` as
+   * the diagram padding they multiply (`theme.padding`): v12 `look: neo` px in the redux
+   * family, v12 classic's multiples of `pad` in the classic themes. `grow` multiplies them.
+   */
+  readonly themed?: { readonly x: string; readonly y: string };
+  /**
+   * A hexagon's point is `height / slant` deep (`hexagon.ts` `f`): the theme's `hexagonSlant`
+   * (3.5 / 4), or this when the theme's is not above 0.
+   */
   readonly slant?: number;
 }
 
@@ -34,15 +43,22 @@ export interface MindmapMetrics {
     readonly default: ShapeMetrics;
     /** `roundedRect.ts` with the renderer's `padding: 15`: 15 on each side. */
     readonly rounded: ShapeMetrics;
-    /** `squareRect.ts` with the renderer's `padding: 10`: `2 · 10` across and 10 down, per side. */
+    /**
+     * `squareRect.ts` with the renderer's `padding: 10`: `nodePaddingX` / `nodePaddingY` per
+     * side (classic `2 · 10` and 10, neo 16 and 12).
+     */
     readonly rect: ShapeMetrics;
-    /** `circle.ts`: radius = half the label's diagonal + padding (`grow` unused). */
+    /** `circle.ts`: radius = half the label's diagonal + `circlePadding` (classic `padding`, neo 16). */
     readonly circle: ShapeMetrics;
     /** `cloud.ts`: `bbox + 2 · padding/2`. */
     readonly cloud: ShapeMetrics;
     /** `bang.ts`: `bbox.w + 10 · padding/2`, `bbox.h + 8 · padding/2`, at least `bbox + 20`. */
     readonly bang: ShapeMetrics;
-    /** `hexagon.ts` at padding `2p`: `h = bbox.h + 2p`, `w = bbox.w + 2h/4 + 2p`. */
+    /**
+     * `hexagon.ts` at padding `2p`: `w = bbox.w + 2h/f + hexagonPaddingX`,
+     * `h = bbox.h + hexagonPaddingY` (classic `2p` both and `f` 4; neo 70, 32 and 3.5, with v12's swapped
+     * axes corrected as the flowchart's are, D151).
+     */
     readonly hexagon: ShapeMetrics;
   };
   /**
@@ -66,11 +82,25 @@ export const MINDMAP_METRICS: MindmapMetrics = {
   shapes: {
     default: { padScale: 1, grow: { x: 4, y: 1 } },
     rounded: { pad: 15, padScale: 1, grow: { x: 2, y: 2 } },
-    rect: { pad: 10, padScale: 1, grow: { x: 4, y: 2 } },
-    circle: { padScale: 1, grow: { x: 0, y: 0 } },
+    rect: {
+      pad: 10,
+      padScale: 1,
+      grow: { x: 2, y: 2 },
+      themed: { x: 'nodePaddingX', y: 'nodePaddingY' },
+    },
+    circle: {
+      padScale: 1,
+      grow: { x: 0, y: 0 },
+      themed: { x: 'circlePadding', y: 'circlePadding' },
+    },
     cloud: { padScale: 1, grow: { x: 1, y: 1 } },
     bang: { padScale: 1, grow: { x: 5, y: 4 }, minGrow: 20 },
-    hexagon: { padScale: 2, grow: { x: 1, y: 1 }, slant: 4 },
+    hexagon: {
+      padScale: 2,
+      grow: { x: 1, y: 1 },
+      themed: { x: 'hexagonPaddingX', y: 'hexagonPaddingY' },
+      slant: 4,
+    },
   },
   icon: { slot: 50, minHeight: 60, glyph: 40 },
   spacing: { node: 20, rank: 40 },
