@@ -6,7 +6,8 @@ import { readFileSync } from 'node:fs';
 import { relative } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { build } from 'esbuild';
-import type { Metafile, Plugin } from 'esbuild';
+import type { BuildOptions, Metafile, Plugin } from 'esbuild';
+import { stableCorePlan, stableCorePlugin } from './stable-chunks.ts';
 import type { SizeSummary, SizedFile } from './report.ts';
 
 /**
@@ -27,6 +28,11 @@ export interface BundleOptions {
   /** Extra directories searched for bare imports that normal resolution misses (esbuild `nodePaths`). */
   nodePaths?: string[];
   plugins?: Plugin[];
+  /**
+   * Bundle core's shared modules into one chunk, whichever lazy chunks import them (D313, the
+   * CDN build does the same). Default on; off only to show the split it prevents.
+   */
+  stableCore?: boolean;
 }
 
 export interface Bundle {
@@ -84,8 +90,9 @@ export async function bundle({
   bench,
   nodePaths = [],
   plugins = [],
+  stableCore = true,
 }: BundleOptions): Promise<Bundle> {
-  const result = await build({
+  const options = {
     entryPoints: [entry],
     outdir,
     bundle: true,
@@ -105,7 +112,14 @@ export async function bundle({
     define: benchDefine(bench),
     nodePaths,
     plugins,
-  });
+  } satisfies BuildOptions;
+  // D313: a first pass finds core's shared modules; the second anchors every lazy entry to them.
+  const plan = stableCore
+    ? stableCorePlan((await build({ ...options, write: false })).metafile, ROOT, entry)
+    : undefined;
+  const result = await build(
+    plan ? { ...options, plugins: [...plugins, stableCorePlugin(plan)] } : options
+  );
   const outputs = Object.keys(result.metafile.outputs).filter((p) => !p.endsWith('.map'));
   // Output paths in the metafile are relative to esbuild's working directory.
   const abs = (p: string) => new URL(p, `file://${ROOT}`).pathname;
