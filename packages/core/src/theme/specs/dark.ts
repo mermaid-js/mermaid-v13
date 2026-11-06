@@ -40,6 +40,7 @@ const PIE_DARK: ThemeRuleTable = {
 const theme: ThemeSpec = {
   name: 'dark',
   dark: true,
+  family: 'classic',
   base: {
     primaryColor: '#1f2020',
     secondaryColor: '#474949',
@@ -73,6 +74,7 @@ const theme: ThemeSpec = {
     altBackground: '#555555', // v12 (#192)
     // sequence (v12 theme-dark.js: mainContrastColor is lightgrey)
     actorTextColor: '#d3d3d3',
+    scaleLabelColor: '#d3d3d3', // v12: `labelTextColor` (D334)
     signalColor: '#d3d3d3',
     signalTextColor: '#d3d3d3',
     activationBorderColor: '#cccccc',
@@ -110,7 +112,7 @@ const theme: ThemeSpec = {
     ],
     cScaleInv: INVERTED_SCALE,
     // v12 sets labelTextColor to its mainContrastColor (lightgrey) before the labels.
-    cScaleLabel: paletteSlots(() => '#d3d3d3'),
+    cScaleLabel: paletteSlots(() => 'scaleLabelColor'),
   },
   darkModePalettes: { cScaleLabel: darkModeLabels() },
 };

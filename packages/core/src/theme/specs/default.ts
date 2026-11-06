@@ -40,6 +40,7 @@ const PIE_DEFAULT: ThemeRuleTable = {
 const theme: ThemeSpec = {
   name: 'default',
   dark: false,
+  family: 'classic',
   base: {
     primaryColor: '#ececff',
     secondaryColor: '#ffffde',
@@ -72,6 +73,8 @@ const theme: ThemeSpec = {
     altBackground: '#f0f0f0', // v12 (#192)
     // sequence (v12 theme-default.js)
     actorTextColor: '#000000',
+    // v12 `scaleLabelColor`: `labelTextColor`, which theme-default sets to `actorTextColor`.
+    scaleLabelColor: '#000000',
     activationBkgColor: '#f4f4f4',
     activationBorderColor: '#666666',
     sequenceNumberColor: '#ffffff',
@@ -122,9 +125,9 @@ const theme: ThemeSpec = {
       '#ffb9b9',
       '#ffdcb9',
     ],
-    cScaleLabel: paletteSlots((i) =>
-      i === 0 || i === 3 ? 'invert(labelTextColor)' : 'labelTextColor'
-    ),
+    // v12 inverts its label ink (`actorTextColor`, black) in slots 0 and 3 and ignores
+    // `scaleLabelColor`: the resolved colours, so no sequence variable is read (D334).
+    cScaleLabel: paletteSlots((i) => (i === 0 || i === 3 ? '#ffffff' : '#000000')),
   },
 };
 

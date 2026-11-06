@@ -19,6 +19,12 @@
  *                       v12's `cScale` hue steps, D258), `hsl(from a calc(h + 30) s l / alpha)`
  *   ifSet(v, b)         the variable v when the author sets it, else b (v12's `v || b`, D258),
  *                       `var(--mermaid-v, b)`
+ *   literal(a)          a's computed colour as a literal, so a hue turn or a palette read writes
+ *                       the value a theme would pin (D332)
+ *
+ * `cScale3`, `bkgColorArray2` and any other palette name with a slot number read that entry of
+ * the palette (D258, D332), as a literal colour, except `seriesColorArray<n>`, which reads as
+ * the theme wrote the entry, so its CSS follows the base colours.
  *
  * An identifier is a theme variable when the table knows it, otherwise a CSS colour name.
  * Each rule compiles to a CSS expression over the private aliases (DESIGN §8.1 item 2) and to the same value in
@@ -43,7 +49,8 @@ export type Fn =
   | 'invert'
   | 'adjust'
   | 'adjustHue'
-  | 'ifSet';
+  | 'ifSet'
+  | 'literal';
 
 const ARITY: Readonly<Record<Fn, number>> = {
   mix: 3,
@@ -57,6 +64,7 @@ const ARITY: Readonly<Record<Fn, number>> = {
   adjust: 4,
   adjustHue: 2,
   ifSet: 2,
+  literal: 1,
 };
 
 const RE_TOKEN =

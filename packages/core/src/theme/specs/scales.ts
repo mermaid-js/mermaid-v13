@@ -59,6 +59,9 @@ export const DARK_HUE_SOURCES = hueSources(
   'ifSet(tertiaryColor, adjustHue(#1f2020, -160))'
 );
 
-/** `cScaleLabel` where v12 writes `black` under `darkMode` (`theme-dark.js`, `theme-neutral.js`). */
+/**
+ * `cScaleLabel` where v12 writes `scaleLabelColor || 'black'` under `darkMode` (`theme-dark.js`,
+ * `theme-neutral.js`).
+ */
 export const darkModeLabels = (keep: Readonly<Record<number, string>> = {}): readonly string[] =>
-  paletteSlots((i) => keep[i] ?? '#000000');
+  paletteSlots((i) => keep[i] ?? 'ifSet(scaleLabelColor, #000000)');

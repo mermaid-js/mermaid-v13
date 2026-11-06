@@ -7,6 +7,10 @@
  *
  * Each case registers one stub diagram, as a port does: it turns the `venn` placeholder row of
  * the generated registry into a lazily loaded row. The stubs import different core subpaths.
+ *
+ * Spec #414 (D331, D322): a diagram's theme table is plain data on its plugin, loaded with its
+ * chunk, so a themed stub grows core by its row only too. Its control imports the same table
+ * statically, as core held each type's variables before, and grows core by the table.
  */
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -36,21 +40,30 @@ const STUBS = {
   'text only': new URL('./__fixtures__/stub-diagram/text.ts', import.meta.url),
   'layout only': new URL('./__fixtures__/stub-diagram/layout.ts', import.meta.url),
   'parser-kit only': new URL('./__fixtures__/stub-diagram/parser.ts', import.meta.url),
+  'a theme table': new URL('./__fixtures__/stub-diagram/themed.ts', import.meta.url),
 };
 type Stub = keyof typeof STUBS;
 
-/** Registers `stub` as a lazily loaded first-party diagram, in place of the `venn` placeholder. */
-function registerStub(stub: URL): Plugin {
+/**
+ * Registers `stub` as a lazily loaded first-party diagram, in place of the `venn` placeholder.
+ * `inCore` imports it statically instead, into core's closure (the control for a theme table).
+ */
+function registerStub(stub: URL, inCore = false): Plugin {
   return {
     name: 'register-stub-diagram',
     setup(b) {
       b.onLoad({ filter: /registry\.gen\.ts$/ }, () => {
         const source = readFileSync(REGISTRY, 'utf8');
         if (!source.includes(PLACEHOLDER)) throw new Error(`no ${PLACEHOLDER} row to replace`);
+        const path = JSON.stringify(fileURLToPath(stub));
+        const load = inCore
+          ? `() => Promise.resolve(stubInCore)`
+          : `() => import(${path}).then((m) => m.stub)`;
         const row =
           `{ type: 'venn', pattern: /^\\s*venn-beta/, id: 'venn', formats: ['svg'], ` +
-          `load: () => import(${JSON.stringify(fileURLToPath(stub))}).then((m) => m.stub) },`;
-        return { contents: source.replace(PLACEHOLDER, row), loader: 'ts' };
+          `load: ${load} },`;
+        const head = inCore ? `import { stub as stubInCore } from ${path};\n` : '';
+        return { contents: head + source.replace(PLACEHOLDER, row), loader: 'ts' };
       });
     },
   };
@@ -63,12 +76,12 @@ interface Measured {
   loaded: number;
 }
 
-async function measure(stableCore: boolean, stub?: URL): Promise<Measured> {
+async function measure(stableCore: boolean, stub?: URL, inCore = false): Promise<Measured> {
   const b = await bundle({
     entry: ENTRY,
     outdir: mkdtempSync(join(tmpdir(), 'mermaid-chunks-')),
     bench: false,
-    plugins: stub ? [registerStub(stub)] : [],
+    plugins: stub ? [registerStub(stub, inCore)] : [],
     stableCore,
   });
   const core = closureSize(b);
@@ -88,9 +101,14 @@ const stubs = Object.keys(STUBS) as Stub[];
 let stable: Measured;
 let plain: Measured;
 const withStub = {} as Record<Stub, { stable: Measured; plain: Measured }>;
+let themedInCore: Measured;
 
 beforeAll(async () => {
-  [stable, plain] = await Promise.all([measure(true), measure(false)]);
+  [stable, plain, themedInCore] = await Promise.all([
+    measure(true),
+    measure(false),
+    measure(true, STUBS['a theme table'], true),
+  ]);
   await Promise.all(
     stubs.map(async (s) => {
       const [st, pl] = await Promise.all([measure(true, STUBS[s]), measure(false, STUBS[s])]);
@@ -116,6 +134,15 @@ describe('stable core chunking (D313, R-PERF-8)', () => {
     expect(next.loaded - stable.loaded, 'loaded growth, gzip bytes').toBeLessThanOrEqual(
       ROW_ALLOWANCE
     );
+  });
+
+  // Otherwise the theme-table case would pass with the table in core and guard nothing.
+  it('grows core by the table when the themed stub is in core (the control, spec #414)', () => {
+    const lazy = withStub['a theme table'].stable;
+    expect(themedInCore.core - stable.core, 'core growth, gzip bytes').toBeGreaterThan(
+      ROW_ALLOWANCE
+    );
+    expect(themedInCore.core).toBeGreaterThan(lazy.core);
   });
 
   // Otherwise the cases above would pass without the fix and guard nothing.
