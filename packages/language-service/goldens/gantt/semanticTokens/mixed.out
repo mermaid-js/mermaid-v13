@@ -1,0 +1,29 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:6 "gantt" keyword
+3:3-3:24 "dateFormat YYYY-MM-DD" keyword
+4:3-4:13 "title Plan" keyword
+5:3-5:15 "%% a comment" comment
+6:3-6:12 "section A" keyword
+7:3-7:9 "Design" variable
+7:10-7:16 ":crit," string
+7:17-7:19 "a1" variable [declaration, definition]
+7:19-7:35 ", 2024-01-01, 3d" string
+8:3-8:8 "Build" variable
+8:9-8:15 ":after" string
+8:16-8:18 "a1" variable
+8:18-8:22 ", 2d" string
+9:3-9:8 "click" keyword
+9:9-9:11 "a1" variable
+9:12-9:18 "href \"" keyword
+9:18-9:37 "https://example.com" string
+9:37-9:38 "\"" string
+9:39-9:43 "call" keyword
+9:44-9:48 "show" function
+9:48-9:49 "(" operator
+9:49-9:51 "a1" string
+9:51-9:52 ")" operator
+10:3-10:12 "accTitle:" keyword
+10:13-10:17 "Plan" string
+11:3-11:13 "accDescr {" keyword
+11:14-11:20 "A plan" string
+11:21-11:22 "}" keyword

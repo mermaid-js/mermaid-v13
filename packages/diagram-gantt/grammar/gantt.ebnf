@@ -90,14 +90,21 @@ excludes                  /excludes\s[^#\n;]+/             :keyword ;
 todayMarker               /todayMarker\s[^\n;]+/           :keyword ;
 (** `weekday <day>`: the day week ticks start on. *)
 weekday_monday            /weekday\s+monday\b/             :keyword ;
+(** `weekday <day>`: the day week ticks start on. *)
 weekday_tuesday           /weekday\s+tuesday\b/            :keyword ;
+(** `weekday <day>`: the day week ticks start on. *)
 weekday_wednesday         /weekday\s+wednesday\b/          :keyword ;
+(** `weekday <day>`: the day week ticks start on. *)
 weekday_thursday          /weekday\s+thursday\b/           :keyword ;
+(** `weekday <day>`: the day week ticks start on. *)
 weekday_friday            /weekday\s+friday\b/             :keyword ;
+(** `weekday <day>`: the day week ticks start on. *)
 weekday_saturday          /weekday\s+saturday\b/           :keyword ;
+(** `weekday <day>`: the day week ticks start on. *)
 weekday_sunday            /weekday\s+sunday\b/             :keyword ;
 (** `weekend friday|saturday`: the first day of the weekend `excludes weekends` skips. *)
 weekend_friday            /weekend\s+friday\b/             :keyword ;
+(** `weekend friday|saturday`: the first day of the weekend `excludes weekends` skips. *)
 weekend_saturday          /weekend\s+saturday\b/           :keyword ;
 (** A date where a statement starts: no statement starts with one. *)
 date                      /\d\d\d\d-\d\d-\d\d\b/           :constant ;
@@ -140,8 +147,9 @@ statement = Setting
   | Task
   | Click ;
 
-(** A setting: `dateFormat`, `axisFormat`, `tickInterval`, `includes`, `excludes`,
-`todayMarker`, `inclusiveEndDates`, `topAxis`, `weekday <day>` or `weekend <day>`. *)
+(* A setting: `dateFormat`, `axisFormat`, `tickInterval`, `includes`, `excludes`,
+`todayMarker`, `inclusiveEndDates`, `topAxis`, `weekday <day>` or `weekend <day>`. Each keyword
+is documented at its token rule, which hover shows. *)
 Setting @Setting = dateFormat
   | inclusiveEndDates
   | topAxis
