@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { createTheme, loadTheme, type ThemeName, type ThemeWarning } from './index.ts';
+import {
+  NUMBERED_PALETTES,
+  THEME_NAMES,
+  createTheme,
+  loadTheme,
+  parseColor,
+  type ThemeName,
+  type ThemeWarning,
+} from './index.ts';
 
 // v12 12.2.0 `theme-redux-color.js` / `theme-redux-dark-color.js`, written out by hand.
 const BORDER_400 = [
@@ -49,7 +57,7 @@ const literal = async (name: ThemeName, themeVariables?: Record<string, unknown>
   createTheme(await loadTheme(name), { cssVariables: false, themeVariables });
 
 describe('the redux family (D151)', () => {
-  it('redux keeps its monochrome values and carries no palette', async () => {
+  it('redux keeps its monochrome values and carries no per-subgraph palette', async () => {
     const t = await literal('redux');
     expect(t.value('nodeBorder')).toBe('#28253d');
     expect(t.value('primaryBorderColor')).toBe('#28253d');
@@ -59,7 +67,8 @@ describe('the redux family (D151)', () => {
     expect(t.value('noteBkgColor')).toBe('#fff5ad');
     expect(t.palette('borderColorArray')).toEqual([]);
     expect(t.palette('bkgColorArray')).toEqual([]);
-    expect(t.palette('cScale')).toEqual([]);
+    // v12 theme-redux.js: every slot is mainBkg darkened by 25 (D258).
+    expect(t.palette('cScale')).toEqual(Array(12).fill('#bfbfbf'));
   });
 
   it('redux-color carries the v12 redux-color values and palettes', async () => {
@@ -106,12 +115,13 @@ describe('the redux family (D151)', () => {
   });
 
   it.each(['default', 'dark', 'forest', 'neutral', 'base', 'neo', 'neo-dark'] as const)(
-    '%s carries no palette',
+    '%s carries no per-subgraph palette, and twelve cScale slots (D258)',
     async (name) => {
       const t = await literal(name);
       expect(t.palette('borderColorArray')).toEqual([]);
       expect(t.palette('bkgColorArray')).toEqual([]);
-      expect(t.palette('cScale')).toEqual([]);
+      for (const p of ['cScale', 'cScaleInv', 'cScaleLabel'] as const)
+        expect(t.palette(p), p).toHaveLength(12);
     }
   );
 });
@@ -135,16 +145,78 @@ describe('palette overrides through themeVariables (D152)', () => {
     ]);
   });
 
+  it('replaces one cScaleInv or cScaleLabel entry by its v12 name (D258)', async () => {
+    const t = await literal('neutral', { cScaleInv2: '#123456', cScaleLabel11: 'red' });
+    expect(t.palette('cScaleInv')[2]).toBe('#123456');
+    expect(t.palette('cScaleLabel')[11]).toBe('red');
+    expect(t.palette('cScaleLabel')[10]).toBe('#333333');
+  });
+
+  it('ignores a numbered name with a leading zero, as v12 does (R-CONF-5)', async () => {
+    const warnings: ThemeWarning[] = [];
+    const t = createTheme(await loadTheme('neutral'), {
+      cssVariables: false,
+      themeVariables: { cScale05: '#123456', cScaleInv012: '#123456' },
+      warn: (w) => warnings.push(w),
+    });
+    expect(t.palette('cScale')[5]).toBe('#999999');
+    expect(warnings).toEqual([]);
+  });
+
+  it.each(THEME_NAMES)(
+    '%s: every cScale, cScaleInv and cScaleLabel slot is a safe colour',
+    async (name) => {
+      for (const darkMode of [false, true]) {
+        const t = await literal(name, { darkMode });
+        for (const p of NUMBERED_PALETTES) {
+          const list = t.palette(p);
+          expect(list, `${p} darkMode ${darkMode}`).toHaveLength(12);
+          for (const c of list) expect(parseColor(c), `${p} ${c}`).toBeDefined();
+        }
+      }
+    }
+  );
+
+  it('derives cScaleInv and cScaleLabel from the cScale the author gives (D258)', async () => {
+    const t = await literal('neutral', { cScale: ['#000000', '#ffffff'] });
+    expect(t.palette('cScale')).toEqual(['#000000', '#ffffff']);
+    // Past the author's list, an entry derives from the theme's own slot (#555555).
+    expect(t.palette('cScaleInv').slice(0, 3)).toEqual(['#ffffff', '#000000', '#aaaaaa']);
+    // v12 theme-neutral: labels 0 and 2 are cScale1.
+    expect(t.palette('cScaleLabel')[0]).toBe('#ffffff');
+  });
+
+  it('derives cScale from primaryColor where v12 does (D258)', async () => {
+    // khroma darken('#ff0000', 25) is hsl(0, 100%, 25%).
+    expect((await literal('base', { primaryColor: '#ff0000' })).palette('cScale')[0]).toBe(
+      '#800000'
+    );
+    expect((await literal('default', { primaryColor: '#ff0000' })).palette('cScale')[0]).toBe(
+      '#8686ff'
+    );
+  });
+
+  it("switches to the darkMode palettes on the author's darkMode only (D258)", async () => {
+    expect((await literal('dark')).palette('cScaleLabel')[1]).toBe('#d3d3d3');
+    expect((await literal('dark', { darkMode: true })).palette('cScaleLabel')[1]).toBe('#000000');
+  });
+
   it('drops an unsafe palette with THEME_VARIABLE_DROPPED and keeps the theme value', async () => {
     const warnings: ThemeWarning[] = [];
     const t = createTheme(await loadTheme('redux-color'), {
       cssVariables: false,
-      themeVariables: { borderColorArray: ['#ff0000', 'url(#x)'], cScale0: 'red;x' },
+      themeVariables: {
+        borderColorArray: ['#ff0000', 'url(#x)'],
+        cScale0: 'red;x',
+        cScaleLabel1: 'url(#x)',
+      },
       warn: (w) => warnings.push(w),
     });
     expect(t.palette('borderColorArray')).toEqual(BORDER_400);
     expect(t.palette('cScale')[0]).toBe('#f4a8ff');
+    expect(t.palette('cScaleLabel')[1]).toBe('#28253d');
     expect(warnings.map((w) => w.code)).toEqual([
+      'THEME_VARIABLE_DROPPED',
       'THEME_VARIABLE_DROPPED',
       'THEME_VARIABLE_DROPPED',
     ]);

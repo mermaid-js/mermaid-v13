@@ -35,7 +35,9 @@
         "pele",
         "@mermaid-js/diagram-flowchart",
         "@mermaid-js/diagram-er",
-        "@mermaid-js/diagram-journey"
+        "@mermaid-js/diagram-journey",
+        "@mermaid-js/diagram-timeline",
+        "@mermaid-js/diagram-pie"
       ]
     },
     "packages/dev": {

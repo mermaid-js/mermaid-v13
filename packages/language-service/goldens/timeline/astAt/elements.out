@@ -1,0 +1,17 @@
+@ 2:5  ti|tle History
+  st:2 2:3-2:16 "title History"
+@ 3:3  |2001 : before any section
+  per:1 3:3-3:8 "2001 "
+@ 4:11  section |Web
+  sec:1 4:3-4:14 "section Web"
+@ 5:10  2002 |: LinkedIn : Facebook
+  per:2 5:5-5:10 "2002 "
+  ev:2.1 5:10-5:21 ": LinkedIn "
+@ 5:27  2002 : LinkedIn : Face|book
+  ev:2.2 5:21-5:31 ": Facebook"
+@ 6:12  : |MySpace
+  ev:2.3 6:10-6:19 ": MySpace"
+@ 8:9  a de|scription
+  st:3 7:3-9:4 "accDescr {\n    a description\n  }"
+@ 10:3  |
+  none

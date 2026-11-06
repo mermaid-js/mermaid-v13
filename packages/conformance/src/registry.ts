@@ -3,8 +3,10 @@ import type { ParitySuite } from './corpus.ts';
 import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
 import { journeyAdapter } from './journey/v13.ts';
+import { pieAdapter } from './pie/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
+import { timelineAdapter } from './timeline/v13.ts';
 
 /**
  * The diagrams under oracle parity. Each first-party diagram ticket adds its suite here, e.g.
@@ -43,6 +45,19 @@ export const PARITY_SUITES: ParitySuite[] = [
     adapter: journeyAdapter,
     corpusDirs: ['e2e/diagrams/journey'],
     corpusFiles: ['packages/conformance/corpus/journey-v12-specs.json'],
+  },
+  {
+    adapter: timelineAdapter,
+    corpusDirs: ['e2e/diagrams/timeline'],
+    corpusFiles: [
+      'packages/conformance/corpus/timeline-v12-specs.json',
+      'packages/conformance/corpus/timeline-cases.json',
+    ],
+  },
+  {
+    adapter: pieAdapter,
+    corpusDirs: ['e2e/diagrams/pie'],
+    corpusFiles: ['packages/conformance/corpus/pie-v12-specs.json'],
   },
 ];
 

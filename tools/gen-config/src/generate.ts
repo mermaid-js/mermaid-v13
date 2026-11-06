@@ -39,6 +39,7 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   er: 'packages/diagram-er',
   state: 'packages/diagram-state',
   journey: 'packages/diagram-journey',
+  pie: 'packages/diagram-pie',
 };
 
 /** A plugin's schema fragment, workspace-relative to its package (D153). */
@@ -112,6 +113,7 @@ function coreDefaults(root: RootSchema): Record<string, unknown> {
 /** `0` = a known leaf, `'open'` = an object whose keys are free (themeVariables, dictionaries). */
 function keyTreeSource(root: RootSchema): string {
   const defs = new Map<string, string>(); // def name -> emitted const source
+  const entries = new Map<string, Map<string, string>>(); // def name -> its keys' emitted trees
   const order: string[] = [];
   const pending = new Set<string>();
 
@@ -127,14 +129,18 @@ function keyTreeSource(root: RootSchema): string {
       if (def === undefined) {
         throw new Error(`unknown def ${name}`);
       }
-      defs.set(name, objectTree(def));
+      const own = new Map<string, string>();
+      defs.set(name, objectTree(def, own));
+      entries.set(name, own);
       pending.delete(name);
       order.push(name);
     }
     return constName(name);
   };
 
-  const objectTree = (node: SchemaNode): string => {
+  // `own` collects the object's keys and their trees. A key a spread def already gives the
+  // same tree is not written again: the object is the same, in the same key order.
+  const objectTree = (node: SchemaNode, own = new Map<string, string>()): string => {
     const parts: string[] = [];
     for (const part of node.allOf ?? []) {
       const name = defName(part.$ref);
@@ -142,9 +148,13 @@ function keyTreeSource(root: RootSchema): string {
         throw new Error('allOf entries must $ref a whole def');
       }
       parts.push(`...${emitDef(name)}`);
+      for (const [key, value] of entries.get(name) ?? []) own.set(key, value);
     }
     for (const [key, child] of Object.entries(node.properties ?? {})) {
-      parts.push(`${JSON.stringify(key)}: ${tree(child)}`);
+      const value = tree(child);
+      if (own.get(key) === value) continue;
+      own.set(key, value);
+      parts.push(`${JSON.stringify(key)}: ${value}`);
     }
     return `{ ${parts.join(', ')} }`;
   };

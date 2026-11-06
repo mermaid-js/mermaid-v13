@@ -108,3 +108,12 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 - A task dot's `<title>` is the actor's legend text (the measured label's lines joined with a space: `A#amp;B` shows `A&B`, `x<br>y` shows `x y`), and the dot carries `data-id="a:<name>"`, its legend entry's id, beside its mention's `data-ast` (MIGRATION row updated).
 - `facet/completions.ts`: the names a task already lists are a `Set` (was `Array.includes` per actor). No spec fails before it: the behaviour is unchanged, and timing is not trusted on this machine.
 - Stale comments in `src/index.ts` and `src/plugin.ts` updated.
+
+## Merge of mermaid-v13 at b60dd3f63 (hand-drawn #348, pie #349, timeline #350)
+
+- Theme: upstream moved `REDUX_RULES` into `specs/palettes.ts` (deleted `redux-rules.ts`) and added `pieSlots`/`paletteSlots`/`scales.ts`. Each theme spec takes upstream's imports, rules and palettes and keeps journey's `fillTypes(...)` in its `values` (redux, redux-dark, redux-color and redux-dark-color included). `spec.ts` keeps both the journey (`faceColor`, `fillType*`) and pie (`pie1`–`pie12`, `pie*Text`) shared rules.
+- Vocabulary: `TEXT_USERS` is now `core … er, journey, timeline`. Pie reads `fontFamily` but not `fontSize` (upstream's lists), so `fontFamily` is `[...TEXT_USERS, 'pie']` and `fontSize` is `TEXT_USERS`. `textColor` lists both journey and timeline.
+- Neo specs: upstream's D258 removed the `cScale` exception; journey's `faceColor` and `actor<n>` exceptions stay.
+- Shared spec fix: `tools/release/src/adapters-bundle.spec.ts` took the first metafile output with an `entryPoint` as the adapter entry. With code splitting, every lazily loaded grammar chunk has one too, and esbuild orders the outputs by chunk hash, so after the merge it picked `pie.parser-*.js` and reported pie's grammar as "eager". It now selects the output whose `entryPoint` resolves to the adapter's `src/index.ts`. The gate is unchanged; it now checks the entry it names.
+- Goldens: the pie and timeline empty-text completions list `journey` (regenerated with `vitest -u`).
+- Sizes after the merge (local, gzip 9): core 92,643 B (budget 94,208 B), static loaded stand-in (`flowchartClosureSize`) 126,315 B (limit 126,976 B, 661 B headroom), journey load path 107,278 B.

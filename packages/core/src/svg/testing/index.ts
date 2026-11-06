@@ -9,6 +9,10 @@
  * writer entry point they reach.
  */
 
+import type { PathBuilder } from '../path.ts';
+import type { Attrs } from '../types.ts';
+import type { OutlineDraw, OutlineRole, OutlineTag, SvgWriter } from '../writer.ts';
+
 /* cspell:disable */
 
 export const PAYLOADS: readonly string[] = [
@@ -222,3 +226,111 @@ export const V12_XSS_CASES: readonly V12XssCase[] = [
     urls: ['/empty.html'],
   },
 ];
+
+/* cspell:enable */
+
+/** The geometry attributes the fixture drawer turns into `d`; the rest go on the `<path>`. */
+const GEOMETRY = new Set([
+  'x',
+  'y',
+  'width',
+  'height',
+  'rx',
+  'ry',
+  'cx',
+  'cy',
+  'r',
+  'x1',
+  'y1',
+  'x2',
+  'y2',
+  'points',
+  'd',
+]);
+
+const n = (v: unknown): number => (typeof v === 'number' ? v : Number(v ?? 0) || 0);
+
+/** An ellipse as two arcs from its left end. */
+const ellipse = (p: PathBuilder, cx: number, cy: number, rx: number, ry: number): PathBuilder =>
+  p
+    .moveTo(cx - rx, cy)
+    .arcTo(rx, ry, 0, false, true, cx + rx, cy)
+    .arcTo(rx, ry, 0, false, true, cx - rx, cy)
+    .close();
+
+function outlineD(tag: OutlineTag, a: Attrs, p: PathBuilder): string {
+  switch (tag) {
+    case 'rect': {
+      const x = n(a.x);
+      const y = n(a.y);
+      const r = x + n(a.width);
+      const b = y + n(a.height);
+      return p.moveTo(x, y).lineTo(r, y).lineTo(r, b).lineTo(x, b).close().done();
+    }
+    case 'circle':
+      return ellipse(p, n(a.cx), n(a.cy), n(a.r), n(a.r)).done();
+    case 'ellipse':
+      return ellipse(p, n(a.cx), n(a.cy), n(a.rx), n(a.ry)).done();
+    case 'line':
+      return p.moveTo(n(a.x1), n(a.y1)).lineTo(n(a.x2), n(a.y2)).done();
+    case 'polygon': {
+      const pts = a.points ?? [];
+      for (let i = 0; i + 1 < pts.length; i += 2)
+        if (i === 0) p.moveTo(pts[0] as number, pts[1] as number);
+        else p.lineTo(pts[i] as number, pts[i + 1] as number);
+      return pts.length >= 2 ? p.close().done() : p.done();
+    }
+    case 'path':
+      return a.d ?? '';
+  }
+}
+
+/**
+ * A fixture outline drawer (D302) for tests: each outline becomes `<g class="outline-<role>">`
+ * around one `<path>` that traces the shape (rect corners square, circle and ellipse as two
+ * arcs) and carries the shape's other attributes. Register it as
+ * `{ id: 'fixture-outline', outline: outlineFixture }`.
+ */
+export const outlineFixture: {
+  active(): boolean;
+  readonly draw: OutlineDraw;
+} = {
+  active: () => true,
+  draw(role, tag, attrs, sink) {
+    const rest: Record<string, unknown> = {};
+    for (const name of Object.keys(attrs))
+      if (!GEOMETRY.has(name)) rest[name] = (attrs as Record<string, unknown>)[name];
+    sink.open('g', { class: `outline-${role}` });
+    sink.leaf('path', { ...(rest as Attrs), d: outlineD(tag, attrs, sink.path()) as Attrs['d'] });
+    sink.close();
+    return true;
+  },
+};
+
+const OUTLINE_TAGS: ReadonlySet<string> = new Set([
+  'rect',
+  'circle',
+  'ellipse',
+  'polygon',
+  'line',
+  'path',
+]);
+
+/**
+ * `w`, with every `leaf` whose tag can be an outline written as `w.outline(role, …)` instead:
+ * a stand-in for a diagram that draws all its shapes through the hook, for identity tests.
+ * Labels go straight to `w`.
+ */
+export function outliningEveryLeaf(w: SvgWriter, role: OutlineRole = 'node'): SvgWriter {
+  return {
+    open: (tag, attrs) => w.open(tag, attrs),
+    close: () => w.close(),
+    leaf: (tag, attrs) =>
+      OUTLINE_TAGS.has(tag) ? w.outline(role, tag as OutlineTag, attrs) : w.leaf(tag, attrs),
+    outline: (r, tag, attrs) => w.outline(r, tag, attrs),
+    text: (content) => w.text(content),
+    label: (box, x, y, attrs) => w.label(box, x, y, attrs),
+    path: () => w.path(),
+    styleSheet: (css) => w.styleSheet(css),
+  };
+}

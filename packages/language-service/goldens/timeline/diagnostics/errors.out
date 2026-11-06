@@ -1,0 +1,4 @@
+2:3-2:31 ": an event before any period" error TIMELINE_EVENT_BEFORE_PERIOD: An event needs a time period before it: write it as `<period> : <event>`, e.g. `2002 : LinkedIn`.
+4:10-4:11 ":" error UNEXPECTED: Expected a time period such as `2002`, an event such as `: LinkedIn` or a statement such as `section` or `title`, got `:`; an event is `:`, a blank and its text, e.g. `2002 : LinkedIn`.
+6:3-6:14 "timeline TD" error UNEXPECTED: Expected a time period such as `2002`, an event such as `: LinkedIn` or a statement such as `section` or `title`, got `timeline TD`; `timeline` starts the diagram and comes only once.
+8:3-8:11 "accDescr" error UNCLOSED_DESCRIPTION: Unclosed description: the `accDescr {` at line 8 has no closing `}`. Add `}` after the description.

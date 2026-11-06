@@ -38,5 +38,21 @@
     "reason": "v12 sorted actor names after `encodeEntities` had turned `#lt;` into its placeholder `ﬂ°lt¶ß` (U+FB02), so a name holding an entity sorted after plain names; v13 sorts the names as written (`&lt;b&gt;` before `b`), which only changes the legend order and colour slots of such names (#302, GAPS #302).",
     "owner": "#302",
     "since": "2026-11-05"
+  },
+  {
+    "id": "timeline-cases/front-matter-title",
+    "inputHash": "sha256:921e76548fe3789d",
+    "kind": "model",
+    "reason": "v12's timeline DB has no `setDiagramTitle`, so v12 dropped a front-matter `title`; v13 draws it where an in-text `title` goes, as every M4 type does (D218, #336).",
+    "owner": "#336",
+    "since": "2026-11-05"
+  },
+  {
+    "id": "e2e/diagrams/timeline/baseline/text/title-and-accessibility.mmd",
+    "inputHash": "sha256:810040392a2f3197",
+    "kind": "model",
+    "reason": "The front-matter `title` baseline (D218): v12's timeline DB has no `setDiagramTitle`, so v12 dropped it; v13 draws it where an in-text `title` goes, as in timeline-cases/front-matter-title.",
+    "owner": "#315",
+    "since": "2026-11-05"
   }
 ]

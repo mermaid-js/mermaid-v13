@@ -1,0 +1,100 @@
+(** Timeline syntax (R-PARSE-9, D54): the normative grammar of `timeline` diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text that no rule takes apart; and a line break appended. Keywords are matched without
+regard to case.
+
+Statements need no separator: a time period runs to its first `:` (or `#`, which starts a
+comment), each event starts at a `:` with a blank after it, and `title`, `section`,
+`accTitle:` and `accDescr:` take the rest of the line. *)
+
+@lexer
+
+@options case-insensitive ;
+
+@modes acc_title acc_descr acc_descr_multiline ;
+
+(* jison read `\%%(?!\{)` as one `%`. *)
+-                         /%(?!\{)[^\n]*/                  :comment ;
+(** A `%%` comment after other text on a line, to the end of the line; it takes the character
+before it. *)
+-                         /[^}]%%[^\n]*/                   :comment ;
+NEWLINE                   /\n+/ ;
+-                         /\s+/ ;
+(** `#` where a statement starts, or after a time period, comments out the rest of the line. *)
+-                         /#[^\n]*/                        :comment ;
+
+(** `timeline LR`: the periods run left to right (the default). *)
+timeline_lr               /timeline[ \t]+LR\b/             :keyword ;
+(** `timeline TD`: the periods run top to bottom. *)
+timeline_td               /timeline[ \t]+TD\b/             :keyword ;
+(** `timeline`: starts a timeline; the periods run left to right. *)
+timeline                  /timeline\b/                     :keyword ;
+(** `title <text>`: the diagram title, the rest of the line. *)
+title                     /title\s[^\n]+/                  :keyword ;
+
+(** `accTitle: …` and `accDescr: …` take the rest of the line; `accDescr { … }` runs to `}`. *)
+acc_title                 /accTitle\s*:\s*/                push(acc_title) :keyword ;
+<acc_title> acc_title_value /[^\n]*/                       pop :string ;
+acc_descr                 /accDescr\s*:\s*/                push(acc_descr) :keyword ;
+<acc_descr> acc_descr_value /[^\n]*/                       pop :string ;
+(* jison returns no token for `accDescr {` and its `}`; the grammar names them, so that an
+empty `accDescr {}` is a statement too. *)
+acc_descr_multiline       /accDescr\s*\{\s*/               push(acc_descr_multiline) :keyword ;
+<acc_descr_multiline> acc_descr_multiline_end /\}/        pop :keyword ;
+<acc_descr_multiline> acc_descr_multiline_value /[^}]*/    :string ;
+
+(** `section <name>`: the periods after it belong to the section, up to the next one. *)
+section                   /section\s[^:\n]+/               :keyword ;
+(** `: <event>`: an event of the last time period, up to a `:` with a blank after it. *)
+event                     /:\s(?:[^:\n]|:(?!\s))+/         :string ;
+(** A time period such as `2002`: the text up to a `:` or `#`. *)
+period                    /[^#:\n]+/                       :variable ;
+(** The end of the text. *)
+EOF                       /$/ ;
+INVALID                   /./ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A timeline is `timeline`, `timeline LR` or `timeline TD`, then statements. *)
+diagram = Header document EOF ;
+Header @Header = timeline | timeline_lr | timeline_td ;
+
+document = { statement | NEWLINE } ;
+
+statement = Title
+  | AccTitle
+  | AccDescr
+  | Section
+  | Period
+  | Event ;
+
+(** `title <text>`: the diagram title. *)
+Title @Title = title ;
+(** `accTitle: <text>`: the accessible title. *)
+AccTitle @AccTitle = acc_title acc_title_value ;
+(** `accDescr: <text>` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = acc_descr acc_descr_value
+  | acc_descr_multiline [ acc_descr_multiline_value ] acc_descr_multiline_end ;
+(** `section <name>`: starts a section; the periods after it are drawn in it. *)
+Section @Section = section ;
+(** A time period such as `2002`, with its events after it: `2002 : LinkedIn : Facebook`. *)
+Period @Period = period ;
+(** `: <event>`: an event of the time period before it, on its line or on a line of its own. *)
+Event @Event = event ;

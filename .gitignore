@@ -63,10 +63,13 @@ vite.config.ts.timestamp-*
 generated/
 # Generated from the config schema by tools/gen-config, committed so CI can check staleness
 !packages/core/src/config/generated/
+# The theme's runtime alias and kind table, from vocabulary.ts by `pnpm gen:theme`
+!packages/core/src/theme/generated/
 !packages/diagram-*/src/generated/
 !packages/mermaid/src/generated/
 !packages/language-service/src/generated/
 !packages/layout-elk/src/generated/
+!packages/plugin-hand-drawn/src/generated/
 # The adapters' per-type Lezer parsers and Monarch files (#35, D134), checked by freshness specs
 !packages/language-service-codemirror/src/generated/
 !packages/language-service-monaco/src/generated/

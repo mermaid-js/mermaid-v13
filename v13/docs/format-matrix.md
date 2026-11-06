@@ -18,12 +18,12 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `er` | `@mermaid-js/diagram-er` | yes | yes |
 | `gantt` | not ported | no | no |
 | `info` | not ported | no | no |
-| `pie` | not ported | no | no |
+| `pie` | `@mermaid-js/diagram-pie` | yes | no |
 | `requirement` | not ported | no | no |
 | `sequence` | `@mermaid-js/diagram-sequence` | yes | yes |
 | `swimlane` | not ported | no | no |
 | `flowchart-v2` | `@mermaid-js/diagram-flowchart` | yes | yes |
-| `timeline` | not ported | no | no |
+| `timeline` | `@mermaid-js/diagram-timeline` | yes | no |
 | `gitGraph` | not ported | no | no |
 | `stateDiagram` | `@mermaid-js/diagram-state` | yes | no |
 | `journey` | `@mermaid-js/diagram-journey` | yes | no |

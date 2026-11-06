@@ -1,0 +1,8 @@
+@ 3:6  "Do|gs" : 10
+  -> 2:4-2:8 "Dogs"
+@ 4:4  '|Dogs' : 2
+  -> 2:4-2:8 "Dogs"
+@ 5:17  "Dogs and cats|" : 1
+  -> 5:4-5:17 "Dogs and cats"
+@ 7:7  "a\"|b" : 2
+  -> none
