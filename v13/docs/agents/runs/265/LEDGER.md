@@ -14,6 +14,7 @@ One row per fix ticket, added by its implementer (IMPLEMENTER step 5). The refer
 | T2 #273 | `f81eacae0` | `eb61e00ae` | 1.18 · 1.19 · 1.40 | 0.941 · 0.945 · 0.986 | 0.871 · 0.882 · 0.988 | 0.875 · 0.886 · 0.981 |
 | T7 #278 | `af7fef1d4` | `4a7842fc8` | 1.16 · 1.18 · 1.40 | 0.966 · 0.967 · 0.985 | 0.841 · 0.853 · 0.973 | 0.852 · 0.863 · 0.974 |
 | T3 #274 | `c483f8c12` | `6c557ebfd` | 1.17 · 1.18 · 1.40 | 0.981 · 0.983 · 0.997 | 0.825 · 0.838 · 0.970 | 0.851 · 0.864 · 0.981 |
+| T4 #275 | `d89813684` | `d22cfee90` | 1.15 · 1.17 · 1.38 | 1.007 · 1.005 · 0.991 | 0.831 · 0.842 · 0.961 | 0.853 · 0.867 · 1.001 |
 
 T3's base is the integration branch after its sync with `mermaid-v13` (276 commits, M4 wave 1, D314). Since origin trails "#265 so far" by about 3% from there: that sync's drift.
 

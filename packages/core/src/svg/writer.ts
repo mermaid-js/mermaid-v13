@@ -5,7 +5,7 @@
  */
 import { BLANK_REL, GRADIENT_FIXED, TEXT_HOLDERS } from './allowlist.ts';
 import { checkTag, formatValue } from './encode.ts';
-import { esc, escAttr } from './escape.ts';
+import { esc, escAttr, num } from './escape.ts';
 import { pathBuilder, transforms, translate, type PathBuilder } from './path.ts';
 import { CompactTree, type SvgTree } from './tree.ts';
 import type { AllowedTag, Attrs, SvgGradient, ThemeStyleSheet } from './types.ts';
@@ -227,6 +227,16 @@ function spanAttrs(span: LabelSpan, pos: Attrs | undefined): Attrs | undefined {
 
 const isBox = (span: LabelSpan): span is LabelBoxSpan => span.kind === 'box';
 
+/**
+ * Whether `{ ...attrs, x, y, 'text-anchor', 'xml:space' }` lists `attrs`'s own attributes and
+ * then the label's, in that order: `attrs` sets none of the label's and is a plain object.
+ */
+function ownLabelAttrs(attrs: Attrs): boolean {
+  const proto: unknown = Object.getPrototypeOf(attrs);
+  if (proto !== Object.prototype && proto !== null) return false;
+  return !('x' in attrs || 'y' in attrs || 'text-anchor' in attrs || 'xml:space' in attrs);
+}
+
 /** Replays `node` into `w` through `open`/`leaf`/`text`/`close`, so the allow-list holds. */
 export function writeFragment(w: SvgWriter, node: SvgFragment): void {
   const children = node.children;
@@ -437,7 +447,69 @@ class Stream implements StreamSvgWriter {
   }
 
   label(box: LabelBox, x: number, y: number, attrs?: Attrs): void {
-    writeLabel(this, box, x, y, attrs);
+    if (!this.plainLabel(box, x, y, attrs)) writeLabel(this, box, x, y, attrs);
+  }
+
+  /**
+   * `writeLabel` for a label without inline boxes, written straight into the buffer (#275): the
+   * same markup, without an attribute object per element. Returns false, writing nothing, where
+   * spreading `attrs` would put the label's own attributes elsewhere in the order (`attrs` sets
+   * one of them, or has inherited keys), so `writeLabel` draws it. Styled runs still go through
+   * `open`.
+   */
+  private plainLabel(box: LabelBox, cx: number, cy: number, attrs: Attrs | undefined): boolean {
+    const lines = box.lines;
+    if (lines.length === 0) return true;
+    if (attrs && !ownLabelAttrs(attrs)) return false;
+    if (lines.some((line) => line.some(isBox))) return false;
+    const top = cy - box.height / 2;
+    const first = lines[0];
+    const only = lines.length === 1 && first && first.length === 1 ? first[0] : undefined;
+    const left = box.left === true && box.width !== undefined ? cx - box.width / 2 : undefined;
+    const anchor = left === undefined ? 'middle' : 'start';
+    const own = this.attrs('text', attrs);
+    if (only && spanAttrs(only, undefined) === undefined) {
+      const x = left === undefined ? cx : left + (box.indents?.[0] ?? 0);
+      const at = ' x="' + num(x) + '" y="' + num(top + box.baseline) + '"';
+      const e = esc(only.text);
+      this.flush();
+      this.out += '<text' + own + at + ' text-anchor="' + anchor + '"';
+      this.out += e === '' ? '/>' : '>' + e + '</text>';
+      return true;
+    }
+    this.flush();
+    this.out += '<text' + own + ' text-anchor="' + anchor + '" xml:space="preserve"';
+    this.pending = true;
+    this.stack.push('text');
+    for (let i = 0; i < lines.length; i++) {
+      const y = top + i * box.lineHeight + box.baseline;
+      const x = left === undefined ? cx : left + (box.indents?.[i] ?? 0);
+      this.plainLine(lines[i] as readonly LabelSpan[], x, y);
+    }
+    this.close();
+    return true;
+  }
+
+  /** One line of `plainLabel`'s `<text>`: its first `<tspan>` placed at (x, y). */
+  private plainLine(line: readonly LabelSpan[], x: number, y: number): void {
+    const at = ' x="' + num(x) + '" y="' + num(y) + '"';
+    if (line.length === 0) {
+      this.flush();
+      this.out += '<tspan' + at + '> </tspan>';
+      return;
+    }
+    for (let j = 0; j < line.length; j++) {
+      const span = line[j] as LabelSpan;
+      if (spanAttrs(span, undefined) !== undefined) {
+        this.open('tspan', spanAttrs(span, j === 0 ? { x, y } : undefined));
+        this.text(span.text);
+        this.close();
+        continue;
+      }
+      const e = esc(span.text);
+      this.flush();
+      this.out += '<tspan' + (j === 0 ? at : '') + (e === '' ? '/>' : '>' + e + '</tspan>');
+    }
   }
 
   path(): PathBuilder {

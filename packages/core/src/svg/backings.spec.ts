@@ -77,6 +77,42 @@ const HANDWRITTEN: Program[] = [
     w.close();
   },
   (w) => w.leaf('rect', { fill: checkColor('#f9f'), stroke: 'none', 'stroke-width': px(2.5) }),
+  // Labels in every shape the writer draws (#275): one plain run, plain lines, styled runs, empty
+  // lines and empty text, text that needs escaping, and attributes the label sets itself.
+  (w) =>
+    w.label(label([[{ text: 'a < b & "c" > d' }]]), 1.234, -5, { class: 'l', 'data-id': 'x"y' }),
+  (w) => w.label(label([[{ text: '' }]]), 0, 0, { class: 'empty' }),
+  (w) => w.label(label([[{ text: 'naïve 日本語 😀 \u0000\ud800 ok' }]]), 3, 4),
+  (w) => w.label(label([[{ text: 'one' }]]), 10, 20, { 'text-anchor': 'end', class: 'c' }),
+  (w) => w.label(label([[{ text: 'one' }]]), 10, 20, { x: 99, class: 'c', y: 98 }),
+  (w) => w.label(label([[{ text: 'one' }]]), 10, 20, { 'xml:space': 'preserve' }),
+  (w) =>
+    w.label(label([[{ text: 'one' }], [{ text: 'two' }], [], [{ text: 'four' }]]), 5, 6, {
+      class: 'lines',
+      transform: translate(1, 2),
+    }),
+  (w) =>
+    w.label(
+      {
+        ...label([[{ text: '• a' }], [{ text: 'b' }, { text: 'c', bold: true }]]),
+        left: true,
+        width: 40,
+        indents: [0, 8],
+      },
+      50,
+      20,
+      { class: 'list' }
+    ),
+  (w) =>
+    w.label(label([[{ text: 'x' }, { text: 'y' }], [{ text: '<z>', strike: true }]]), 0, 0, {
+      'text-anchor': 'start',
+    }),
+  (w) =>
+    w.label(
+      label([[{ text: 'mono', attrs: { 'font-family': 'monospace' as never } }], [{ text: 'p' }]]),
+      0,
+      0
+    ),
 ];
 
 // Seeded LCG, as in Pele's fuzz corpus.
@@ -102,6 +138,7 @@ function randomProgram(seed: number): Program {
       if (rnd() < 0.3) a.y = n();
       if (rnd() < 0.2) a.fill = checkColor(text()) ?? 'none';
       if (rnd() < 0.2) a.transform = translate(n(), n());
+      if (rnd() < 0.1) a['text-anchor'] = 'end';
       return a as Attrs;
     };
     let depth = 0;
@@ -117,12 +154,14 @@ function randomProgram(seed: number): Program {
       } else if (r < 0.65) {
         w.leaf(pick(['rect', 'circle', 'path', 'line'] as const), attrs());
       } else if (r < 0.85) {
-        w.label(
-          label([[{ text: text(), bold: rnd() < 0.3 }], [{ text: text() }]]),
-          n(),
-          n(),
-          attrs()
-        );
+        const shape = rnd();
+        const lines: LabelBox['lines'] =
+          shape < 0.4
+            ? [[{ text: text() }]]
+            : shape < 0.7
+              ? [[{ text: text() }], [], [{ text: text() }]]
+              : [[{ text: text(), bold: rnd() < 0.3 }, { text: text() }], [{ text: text() }]];
+        w.label(label(lines), n(), n(), attrs());
       } else if (depth > 0) {
         try {
           w.text(text());
