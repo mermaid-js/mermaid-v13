@@ -1,7 +1,8 @@
 /**
  * The packet layout's lengths (spec #421 §Layout, pitfall 13): v12's constants in px
  * (`renderer.ts:14-112`, `db.ts:26-28`, `styles.ts:5-16`, `config.schema.yaml`
- * `PacketDiagramConfig`). No other file in `layout/` writes a length literal
+ * `PacketDiagramConfig`); the `packet` config's defaults are `PACKET_CONFIG_DEFAULTS` (`../config.ts`,
+ * #454). No other file in `layout/` writes a length literal
  * (`packages/conformance/src/packet-layout-literals.spec.ts`). Packet draws SVG in px (D216).
  */
 import type { Theme } from '@mermaid-js/core/theme';
@@ -21,20 +22,6 @@ export const PACKET_METRICS: PacketMetrics = {
   bitsPadding: 10,
   bitNumberGap: 2,
 };
-
-/** v12's `packet` config defaults (`config.schema.yaml`), and their minimums (D342). */
-export const PACKET_DEFAULTS = {
-  rowHeight: 32,
-  bitWidth: 32,
-  /** A count, not a length: the parser splits rows with it (`PacketModel.bitsPerRow`). */
-  bitsPerRow: 32,
-  paddingX: 5,
-  paddingY: 5,
-  /** `rowHeight` and `bitWidth` below this fall back to the default (D342). */
-  minSize: 1,
-  /** A padding below this falls back to the default (D342). */
-  minPadding: 0,
-} as const;
 
 /**
  * Packet's own length variables (#421 T4 declares them in the package's theme table) and v12's
