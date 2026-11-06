@@ -7,15 +7,15 @@ import { createMermaid, MermaidError } from 'mermaid';
 import { astIndex, extents, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgView } from '../svg-tree.ts';
 import type { CorpusItem } from '../types.ts';
-import { CLICK_CASES, DB_SPEC_CASES, EDGE_CASES, ganttCases, ganttCorpus } from './corpus.ts';
+import { ganttCases, ganttCorpus } from './corpus.ts';
 import { GANTT_PARITY_NOW } from './oracle-env.ts';
 
 /**
  * Render properties and the AST round-trip of the gantt renderer (spec #293 T4, DESIGN §13.2,
  * §13.4, R-PARSE-8) over the parsed corpus, through the public `createMermaid().render()` with
- * `deterministic: true` and a fixed `now`: the e2e fixtures, the v12 spec strings, the parser,
- * DB, click and edge cases, in every theme and `theme: 'auto'`, and once more in `default` at a
- * `now` inside most charts (so the today line is drawn). Gantt loads through the generated
+ * `deterministic: true` and a fixed `now`: the e2e fixtures, the v12 spec strings and the parser
+ * cases, in every theme and `theme: 'auto'`, and once more in `default` at a `now` inside most
+ * charts (so the today line is drawn). Gantt loads through the generated
  * registry (#385).
  *
  * Properties: well-formed XML, `assertInert`, deterministic, no NaN/Infinity/undefined, ids
@@ -57,13 +57,7 @@ const rejected = new Map<string, string>();
 let corpus: CorpusItem[];
 
 beforeAll(async () => {
-  corpus = [
-    ...(await ganttCorpus()),
-    ...ganttCases(),
-    ...DB_SPEC_CASES,
-    ...CLICK_CASES,
-    ...EDGE_CASES,
-  ];
+  corpus = [...(await ganttCorpus()), ...ganttCases()];
   for (const { theme, now } of RUNS) {
     const m = api({ theme });
     for (const item of corpus) {
@@ -93,7 +87,7 @@ beforeAll(async () => {
 
 describe('gantt render properties over the parsed corpus', () => {
   it('renders the corpus in every theme', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(80);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(93);
     expect(cases.length).toBeGreaterThan(150 * RUNS.length);
     expect(cases.reduce((n, c) => n + c.model.tasks.length, 0)).toBeGreaterThan(500 * RUNS.length);
     expect(cases.some((c) => c.svg.includes('<line class="today"'))).toBe(true);

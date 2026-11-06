@@ -34,6 +34,11 @@ const FIXED_CLOCKS: Partial<Record<string, string>> = {
   // Seconds-based dateFormat: lands the marker between the "01" and "02"
   // tick marks, clear of both the task-start edge and any task boundary.
   'gantt/pr-check/should-render-a-gantt-diagram-with-a-vert-tag.mmd': '1010-10-10T00:00:01.500Z',
+  // An `after`/`until` naming no task falls back to today: keep today beside the 2013 task.
+  'gantt/nightly-check/should-warn-about-unknown-ids-in-an-after-statement-issue-4121.mmd':
+    '2013-01-10T12:00:00Z',
+  'gantt/nightly-check/should-warn-about-unknown-ids-in-an-until-statement.mmd':
+    '2013-01-10T12:00:00Z',
 };
 
 const fixedClockFor = (relativePath: string): string | undefined => {

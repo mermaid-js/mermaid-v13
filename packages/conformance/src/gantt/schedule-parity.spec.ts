@@ -22,8 +22,8 @@ import { GANTT_PARITY_NOW, v12Schedule, type V12Schedule, type V12Task } from '.
  * with the same error kind at the same task (D274's position). It runs in
  * both gantt zones (UTC, America/Los_Angeles: root `vitest.config.ts`).
  *
- * Corpus: the lexer gate's (e2e files, harvested v12 spec strings, `ganttDb.spec.ts` as text,
- * click, edge and line-separator cases, each also commented and CR-cut) and generated charts.
+ * Corpus: the lexer gate's (e2e files, harvested v12 spec strings, parser cases and
+ * line-separator cases, each also commented and CR-cut) and generated charts.
  * A reference to an id the text never declares compares with the today fallback, not with
  * v12's stale `taskDb` (`v12-schedule.ts` flushes it).
  *

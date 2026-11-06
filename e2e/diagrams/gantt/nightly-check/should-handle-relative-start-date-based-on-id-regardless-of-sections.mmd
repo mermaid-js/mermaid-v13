@@ -1,0 +1,12 @@
+---
+description: >-
+  From v12's ganttDb.spec.ts: "after id3" names a task declared later,
+  in another section; test2 starts when test3 ends.
+---
+gantt
+  dateFormat YYYY-MM-DD
+  section sec1
+  test1 :id1,2013-01-01,2w
+  test2 :id2,after id3,1d
+  section sec2
+  test3 :id3,after id1,2d

@@ -218,5 +218,317 @@
   {
     "id": "gantt-cases/invalid-date",
     "source": "gantt\ndateFormat YYYY-MM-DD\na :2024-13-45x, 1d\n"
+  },
+  {
+    "id": "gantt-cases/reject-excluding-every-day",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nexcludes weekends,monday,tuesday,wednesday,thursday,friday\nweekend saturday\nsection weekends skip test\ntest1 :id1,2019-02-01,7d"
+  },
+  {
+    "id": "gantt-cases/reject-call-without-parens-after-link",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 2014-01-01, 1d\nclick a1 href \"https://example.com\" call cb"
+  },
+  {
+    "id": "gantt-cases/click-blank-runs-and-tabs",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick   a1   href   \"u\"\nclick a1\thref\t\"u\""
+  },
+  {
+    "id": "gantt-cases/reject-click-ids-across-lines",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick\na1 href \"u\"\nclick a1\nb :1d"
+  },
+  {
+    "id": "gantt-cases/click-call-across-lines",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1 call  f(x)\nclick a1 call\nf(x)"
+  },
+  {
+    "id": "gantt-cases/click-line-breaks-in-arguments-and-link",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1 call f(\nx\n) href \"a\nb\""
+  },
+  {
+    "id": "gantt-cases/reject-unclosed-link-before-task",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1 href \"never closed\nb :1d"
+  },
+  {
+    "id": "gantt-cases/reject-unclosed-arguments-before-task",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1 call f(never closed\nb :1d"
+  },
+  {
+    "id": "gantt-cases/reject-call-without-parens-before-task",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1 call f\nb :1d"
+  },
+  {
+    "id": "gantt-cases/reject-click-at-end",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick "
+  },
+  {
+    "id": "gantt-cases/reject-open-link-at-end",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1 href \""
+  },
+  {
+    "id": "gantt-cases/reject-call-at-end",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1 call "
+  },
+  {
+    "id": "gantt-cases/reject-click-keywords-in-task-text",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nclick me :1d\ncall me :1d\nhref \"me\" :1d\ncallme :1d\nclicked :1d\nhrefs :1d"
+  },
+  {
+    "id": "gantt-cases/text-after-click",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1 href \"u\" more :1d\nclick a1 call f() x :1d"
+  },
+  {
+    "id": "gantt-cases/reject-unquoted-link",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1 href u\nclick a1 hreff \"u\""
+  },
+  {
+    "id": "gantt-cases/click-hash-semicolon-percent-inside",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1 href \"u#x;y%z\"\nclick a1 call f(#a; %b)"
+  },
+  {
+    "id": "gantt-cases/semicolon-and-percent-in-click-ids",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1;b1 href \"u\"\nclick a1%b1 call f()"
+  },
+  {
+    "id": "gantt-cases/click-entities-in-link",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :a1, 1d\nclick a1 href \"#quot;u#59;\""
+  },
+  {
+    "id": "gantt-cases/percent-at-a-token-start",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :1d\n5% buffer :3d\nab% c :1d\na%b :1d\n}% x :1d\n  b :1d"
+  },
+  {
+    "id": "gantt-cases/percent-comment-lines",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :1d\n% single\n\n\nb :1d\n%\nc :1d"
+  },
+  {
+    "id": "gantt-cases/comment-forms",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :1d %% c\nb :1d%x\n%%\nc :1d\n %%\nd :1d %%"
+  },
+  {
+    "id": "gantt-cases/percent-task-text",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :1d\n%x :1d\nb :1d\n%%x\nc :1d"
+  },
+  {
+    "id": "gantt-cases/reject-acc-description-forms",
+    "source": "gantt\ndateFormat YYYY-MM-DD\naccDescription a long description\naccDescription x;y\naccDescription\nz"
+  },
+  {
+    "id": "gantt-cases/reject-leading-hash-and-semicolon-without-data",
+    "source": "gantt\ndateFormat YYYY-MM-DD\n;a :1d\n#b :1d\n#c\n;d"
+  },
+  {
+    "id": "gantt-cases/reject-hash-and-semicolon-in-task-data",
+    "source": "gantt\ndateFormat YYYY-MM-DD\na :1d #x\nb :1d;c\nd :#e\nf :;g\nh :\ni ::j"
+  },
+  {
+    "id": "gantt-cases/reject-date-like-task-text",
+    "source": "gantt\ndateFormat YYYY-MM-DD\n2020-01-01 x :1d\n2020-01-011 :1d\n2020-01-01x :1d\n2020-1-01 :1d\n20200101 :1d"
+  },
+  {
+    "id": "gantt-cases/reject-gantt-keyword-prefixes",
+    "source": "gantt\ndateFormat YYYY-MM-DD\ngantt plan :1d\nganttx :1d\ngantt_x :1d\nganttä :1d\nGANTT\nGantt chart :1d"
+  },
+  {
+    "id": "gantt-cases/reject-top-axis-and-inclusive-end-dates-prefixes",
+    "source": "gantt\ndateFormat YYYY-MM-DD\ntopAxis x :1d\ntopAxisx :1d\nTOPAXIS\ninclusiveEndDates\ninclusiveEndDatesx :1d"
+  },
+  {
+    "id": "gantt-cases/weekday-and-weekend-forms",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nweekend friday party :1d\nweekday  Monday\nweekday\nsunday\nweekdays monday :1d"
+  },
+  {
+    "id": "gantt-cases/weekday-and-weekend-word-bounds",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nweekday mondays :1d\nweekend sunday :1d\nweekday monday_x :1d\nweekend saturday"
+  },
+  {
+    "id": "gantt-cases/every-weekday",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nweekday tuesday\nweekday wednesday\nweekday thursday\nweekday friday\nweekday saturday"
+  },
+  {
+    "id": "gantt-cases/reject-title-forms",
+    "source": "gantt\ndateFormat YYYY-MM-DD\ntitle x\ntitlex :1d\ntitle\nfoo\ntitle\n\nbar :1d\ntitle"
+  },
+  {
+    "id": "gantt-cases/reject-section-forms",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nsection x\nsectionx :1d\nsection\nfoo\nsection\n\nbar :1d\nsection"
+  },
+  {
+    "id": "gantt-cases/hash-and-semicolon-in-section-and-title",
+    "source": "gantt\ndateFormat YYYY-MM-DD\nsection a #b ;c: d\ntitle #t ;u: v\na :1d"
+  },
+  {
+    "id": "gantt-cases/reject-hash-and-semicolon-end-settings",
+    "source": "gantt\ndateFormat YYYY-MM-DD #x\naxisFormat %d;x\ntickInterval 1day #y\nexcludes a;b"
+  },
+  {
+    "id": "gantt-cases/reject-today-marker-and-includes-forms",
+    "source": "gantt\nincludes 2020-01-01 # c\ntodayMarker stroke:#f00;x\ntodayMarker\noff\ntodayMarker"
+  },
+  {
+    "id": "gantt-cases/reject-settings-across-lines",
+    "source": "gantt\ndateFormat\nYYYY\naxisFormat\n\nx :1d\ndateFormat #x\ndateFormatx :1d"
+  },
+  {
+    "id": "gantt-cases/setting-keyword-case",
+    "source": "gantt\nDATEFORMAT YYYY\nAxisFormat %d\nTICKINTERVAL 1week\nExcludes weekends\nINCLUDES x"
+  },
+  {
+    "id": "gantt-cases/blank-runs",
+    "source": "gantt\na   :1d   \n   b\t:\t2d\t\n  \n\t\nc :1d  "
+  },
+  {
+    "id": "gantt-cases/acc-hash-and-semicolon",
+    "source": "gantt\naccTitle: a;b#c\naccDescr: d;e#f\na :1d"
+  },
+  {
+    "id": "gantt-cases/acc-across-lines",
+    "source": "gantt\naccTitle:\n\nT\naccDescr :  D\na :1d"
+  },
+  {
+    "id": "gantt-cases/acc-descr-block-forms",
+    "source": "gantt\naccDescr{x}\naccDescr\n{\n y \n}\naccDescr {\n}\na :1d"
+  },
+  {
+    "id": "gantt-cases/acc-keyword-case",
+    "source": "gantt\nACCTITLE: x\nACCDESCR: y\nAccDescr { z }"
+  },
+  {
+    "id": "gantt-cases/acc-keywords-as-task-text",
+    "source": "gantt\naccTitle x :1d\naccDescr x :1d\naccDescr : \naccTitle :"
+  },
+  {
+    "id": "gantt-cases/reject-acc-title-blank-at-end",
+    "source": "gantt\naccTitle: "
+  },
+  {
+    "id": "gantt-cases/reject-acc-title-at-end",
+    "source": "gantt\naccTitle:"
+  },
+  {
+    "id": "gantt-cases/reject-acc-descr-blank-at-end",
+    "source": "gantt\naccDescr: "
+  },
+  {
+    "id": "gantt-cases/reject-open-directive-after-call",
+    "source": "gantt\na :a1, 1d\nclick a1 call f()%%{ :1d\nb :1d"
+  },
+  {
+    "id": "gantt-cases/reject-open-directive-after-link",
+    "source": "gantt\na :a1, 1d\nclick a1 href \"u\"%%{ :1d"
+  },
+  {
+    "id": "gantt-cases/reject-open-directive-after-top-axis",
+    "source": "gantt\ntopAxis%%{ ;x"
+  },
+  {
+    "id": "gantt-cases/reject-open-directive-after-date",
+    "source": "gantt\n2020-01-01%%{ ;x"
+  },
+  {
+    "id": "gantt-cases/reject-open-directive-after-acc-descr",
+    "source": "gantt\naccDescr{x}%%{ ;y"
+  },
+  {
+    "id": "gantt-cases/open-directive-forms",
+    "source": "gantt\n%%{ :1d\nx %%{ :1d\n}%%{ :1d"
+  },
+  {
+    "id": "gantt-cases/reject-entities-and-style-lines",
+    "source": "gantt\na #quot;b#59; :1d #amp;\nstyle a:#f00;\n#9829; :1d\ntitle #lt;t\nsection #a;b"
+  },
+  {
+    "id": "gantt-cases/reject-style-lines",
+    "source": "gantt\nstyle x:#f00; :1d\na :style x:#f00;\nclassDef a:#b; c"
+  },
+  {
+    "id": "gantt-cases/quotes-in-tags",
+    "source": "gantt\na :a1, 1d\nclick a1 href \"<a b=\"c\">\"\n<b x=\"y\"> :1d"
+  },
+  {
+    "id": "gantt-cases/cr-line-breaks",
+    "source": "gantt\ra :1d\r\rb :1d"
+  },
+  {
+    "id": "gantt-cases/reject-crlf-settings-across-lines",
+    "source": "gantt\r\ntitle\r\nfoo\r\nsection\r\nbar\r\ndateFormat\r\nYYYY\r\na :\r\nz"
+  },
+  {
+    "id": "gantt-cases/crlf-accessibility",
+    "source": "gantt\r\naccDescr {\r\na\r\nb\r\n}\r\naccTitle:\r\nT\r\na :1d"
+  },
+  {
+    "id": "gantt-cases/reject-crlf-click",
+    "source": "gantt\r\na :a1, 1d\r\nclick\r\na1\r\nhref \"u\"\r\nclick a1\r\nb :1d"
+  },
+  {
+    "id": "gantt-cases/crlf-percent-comments",
+    "source": "gantt\r\na :1d\r\n5% x\r\nb :1d\r\n% y\r\nc :1d"
+  },
+  {
+    "id": "gantt-cases/reject-cr-then-directive-in-title",
+    "source": "gantt\ntitle\r%%{init:{}}%%\nfoo"
+  },
+  {
+    "id": "gantt-cases/reject-cr-then-comment-in-title",
+    "source": "gantt\ntitle\r%% c\n\nfoo"
+  },
+  {
+    "id": "gantt-cases/reject-cr-then-comment-in-section",
+    "source": "gantt\nsection\r%% c\n\nfoo"
+  },
+  {
+    "id": "gantt-cases/reject-cr-then-comment-in-task-data",
+    "source": "gantt\na :\r%% c\n\nx"
+  },
+  {
+    "id": "gantt-cases/cr-then-comment-in-acc-title",
+    "source": "gantt\naccTitle:\r%% c\n\nx"
+  },
+  {
+    "id": "gantt-cases/cr-then-comment-after-task",
+    "source": "gantt\na :1d\r%% c\n\nb :1d"
+  },
+  {
+    "id": "gantt-cases/reject-cr-then-comment-in-click",
+    "source": "gantt\na :a1, 1d\nclick a1\r%% c\n\nb :1d"
+  },
+  {
+    "id": "gantt-cases/reject-cr-then-comment-then-percent",
+    "source": "gantt\nx\r%% c\n%y\nb :1d"
+  },
+  {
+    "id": "gantt-cases/reject-crlf-comment-forms",
+    "source": "gantt\r\na :1d\r\n%%\r\nb :1d\r\n}%%\r\nc :1d\r\n%%"
+  },
+  {
+    "id": "gantt-cases/empty-without-line-break",
+    "source": "gantt"
+  },
+  {
+    "id": "gantt-cases/blank-lines-only",
+    "source": "gantt\n   \n\n  "
+  },
+  {
+    "id": "gantt-cases/task-on-the-header-line",
+    "source": "gantt a :1d"
+  },
+  {
+    "id": "gantt-cases/mid-line-directive-across-lines",
+    "source": "gantt\na :1d %%{init: {\n  %%x \"a\": 1}}%%\nb :1d"
+  },
+  {
+    "id": "gantt-cases/mid-line-directive-in-task",
+    "source": "gantt\na %%{init: {}}%% b :1d\nc :1d"
+  },
+  {
+    "id": "gantt-cases/mid-line-directive-in-title-and-section",
+    "source": "gantt\ntitle a %%{init: {}}%% b\nsection s %%{init: {}}%% t\na :1d"
+  },
+  {
+    "id": "gantt-cases/mid-line-directive-in-comment",
+    "source": "gantt\na :1d\n%% c %%{init:\n{}}%% d\nb :1d"
+  },
+  {
+    "id": "gantt-cases/mid-line-directive-in-link",
+    "source": "gantt\na :a1, 1d\nclick a1 href \"u%%{init: {}}%%v\""
   }
 ]
