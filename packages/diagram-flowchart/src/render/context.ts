@@ -9,6 +9,8 @@ import type { Theme } from '@mermaid-js/core/theme';
 export interface FlowWarning {
   readonly code: string;
   readonly message: string;
+  /** Config key path, for config warnings. */
+  readonly path?: string;
   /** Text output (D82): the feature kind an `ASCII_DROPPED` warning is about. */
   readonly feature?: string;
   /** Text output (D82): the shapes an `ASCII_SHAPE` warning lists. */

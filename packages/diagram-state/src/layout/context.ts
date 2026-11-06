@@ -8,6 +8,8 @@ import type { Theme } from '@mermaid-js/core/theme';
 export interface StateWarning {
   readonly code: string;
   readonly message: string;
+  /** Config key path, for config warnings. */
+  readonly path?: string;
   /** AST ids of what the warning is about. */
   readonly astIds?: readonly string[];
 }
