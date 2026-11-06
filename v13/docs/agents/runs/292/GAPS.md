@@ -58,7 +58,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** completion: on the `gitGraph` line only a direction (`TB:`) or `:`, not the statements v12 also reads there; branch and commit items are kind `value` (no `branch`/`commit` kind). After a cherry-pick's `id:` only ids written before the cursor and not on the branch checked out (a merge only with a `parent:`), after `parent:` the merge's parents with written ids: every item then parses clean (`completion-validity.spec.ts`).
 - Parser changes (probe and a range only): the probe's mode is `string` from an unclosed quote to its line end (the lexer makes the quote alone an error token); a cherry-pick without `id:` reports `GIT_CHERRY_PICK_UNKNOWN_COMMIT` zero-width after the statement and its blanks (was the keyword), as timeline's `accTitle:`.
 - Four-way agreement pins two line-based gaps of TextMate/Monarch (Lezer agrees): a string over lines (corpus `97-…multi-line-text…`) and a body `---` block (fixture), as pie.
-- [ ] **For T5 (#374):** see `tickets/372.md` (unlisted row, eager row, adapter rows).
+- [x] **For T5 (#374):** see `tickets/372.md` (unlisted row, eager row, adapter rows). Done in #374.
 
 ## #373 T4 renderer
 - [x] Drop the `gitgraph` exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one variable"), added by #368. Done in #371: the layout reads `fontFamily`, `fontSize`, `fontWeight`, `strokeWidth`, `commitLabelFontSize`, `tagLabelFontSize` (their `usedBy` lists `gitgraph`). T4 adds `gitgraph` to what the renderer reads; T5 to the geometry variables (the scan sees the `GIT_GEOMETRY` names once they exist).
