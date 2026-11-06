@@ -181,6 +181,11 @@ export const PALETTE_VARIABLES = [
   'cScale',
   'cScaleInv',
   'cScaleLabel',
+  // Shared inputs that name no diagram (D332, D381): a theme's series colours, which charts
+  // and slotted diagrams read by slot (`seriesColorArray3`), and a ten-colour chart palette
+  // (v12's xychart `plotColorPalette`), empty until a theme supplies it.
+  'seriesColorArray',
+  'plotColorArray',
 ] as const;
 
 /** The palettes with v12's numbered names, `<name>0`–`<name>11`. */
@@ -258,7 +263,8 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   ]),
   mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
-  nodeTextColor: def('nt', 'color', ['flowchart', 'state', 'er']),
+  // Shared: three diagram types and core's `Theme.ink()` read it (D334).
+  nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
   titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er']),
@@ -404,6 +410,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  // A shared input (D334): v12's `scaleLabelColor`, the label ink of `cScaleLabel`, which read
+  // sequence's `labelTextColor` before.
+  scaleLabelColor: def('slc', 'color', ['core']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

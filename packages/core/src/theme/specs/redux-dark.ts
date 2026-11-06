@@ -16,6 +16,7 @@ import {
 const theme: ThemeSpec = {
   name: 'redux-dark',
   dark: true,
+  family: 'redux',
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
   rules: { ...REDUX_RULES, ...PIE_REDUX_DARK },

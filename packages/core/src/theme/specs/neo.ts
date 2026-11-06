@@ -24,6 +24,7 @@ const SOURCES = hueSources(true, '#ececfe', '#e9e9f1', 'lightenHsl(adjustHue(#ec
 const neo: ThemeSpec = {
   name: 'neo',
   dark: false,
+  family: 'neo',
   base: {
     primaryColor: '#cccccc',
     // v12 adjust(primaryColor, { h: -120 }), a no-op on a grey.

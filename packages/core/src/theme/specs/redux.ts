@@ -43,6 +43,7 @@ export const PIE_REDUX: ThemeRuleTable = pieSlots([
 const redux: ThemeSpec = {
   name: 'redux',
   dark: false,
+  family: 'redux',
   base: {
     primaryColor: '#cccccc',
     secondaryColor: '#cccccc',
