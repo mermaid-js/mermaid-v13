@@ -43,7 +43,9 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - [x] **#465:** enable `conformance/src/cynefin/layout-corpus.spec.ts` — closed by #465 (runs and passes). Was: (skipped until the package exports `parseCynefin(source) → { model }`; change that one lookup if T2 names it differently).
 - [x] **#468:** replace `src/theme/stand-in.ts` (v12's five lengths, theme ignored) with the T0a table's variables — closed by #468 (`src/theme/lengths.ts` reads `theme.number('cynefin…')` from the plugin's table).
 
-## #468 T4 renderer
+## #468 T4 renderer (merged)
+
+- Review fixes landed (`cf4dad268`): `CYNEFIN_PAINT` by name; `CynefinItemBadge.id` (additive layout field) carries the item's `data-id`; the `+N more` badge has neither `data-id` nor `data-ast`; the table in `src/theme/table.ts`; nested/flat override tests under default, dark and redux, the dark entry for `redux-dark-color`; the v12-spec adapter uses `DEFAULT_THEME`.
 
 - Review sent back: the one-letter paint bag (pitfall 18); item `data-id` carried on the layout; no `data-id` on the `+N more` badge; the theme table in `src/theme/table.ts`; nested/flat override tests under `dark` and `redux`, the dark entry for `redux-dark-color`.
 - Accepted deviations (for the maintainer):
