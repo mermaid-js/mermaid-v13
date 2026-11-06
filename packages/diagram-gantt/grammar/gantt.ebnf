@@ -1,0 +1,176 @@
+(** Gantt syntax (R-PARSE-9, D54): the normative grammar of `gantt` diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; `#name;` / `#123;` entities
+read as opaque text that no rule takes apart; and a line break appended. Keywords are matched
+without regard to case.
+
+Statements need no separator: each starts with its own keyword, or is a task, whose text runs
+to its first `:`; `title` and `section` take the rest of the line (a bare one takes the next
+line), settings run to a `#`, `;` or the end of the line. A task's data is
+`[tags,] [id,] [start,] end`; v12's DB reads it, the grammar does not take it apart. *)
+
+@lexer
+
+@options case-insensitive ;
+
+@modes open_directive acc_title acc_descr acc_descr_multiline click href callbackname
+  callbackargs ;
+
+(** `%%{` with no directive name after it: jison begins a start condition the grammar never
+declares, so the next character is a lexical error. *)
+open_directive            /%%\{/                           push(open_directive) :meta ;
+
+(** `accTitle: …` and `accDescr: …` take the rest of the line; `accDescr { … }` runs to `}`. *)
+acc_title                 /accTitle\s*:\s*/                push(acc_title) :keyword ;
+(* jison's `(?!\n|;|#)*` lookahead is optional, so the value is the rest of the line. *)
+<acc_title> acc_title_value /[^\n]*/                       pop :string ;
+acc_descr                 /accDescr\s*:\s*/                push(acc_descr) :keyword ;
+<acc_descr> acc_descr_value /[^\n]*/                       pop :string ;
+(* jison returns no token for `accDescr {` and its `}`; the grammar names them, so that an
+empty `accDescr {}` is a statement too. *)
+acc_descr_multiline       /accDescr\s*\{\s*/               push(acc_descr_multiline) :keyword ;
+<acc_descr_multiline> acc_descr_multiline_end /\}/        pop :keyword ;
+<acc_descr_multiline> acc_descr_multiline_value /[^}]*/    :string ;
+
+(* jison read `\%\%(?!\{)*` as `%%` (the lookahead is optional). *)
+-                         /%%[^\n]*/                       :comment ;
+(** A `%` after any one character but `}` (a line break too) comments out the rest of the
+line: `5% buffer :3d` vanishes. *)
+-                         /[^}]%[^\n]*/                    :comment ;
+(** A `%` where a token starts comments out the rest of the line and the line breaks after
+it. *)
+-                         /%[^\n]*\n*/                     :comment ;
+NL                        /\n+/ ;
+-                         /\s+/ ;
+
+(* jison returns no token for the openers and closers of `href`, `call` and `click`; the
+grammar names them, so that the statements' ranges start at their keyword. *)
+(** `href "<url>"`: the link a click opens, after `click <ids>`. *)
+href_keyword              /href\s+"/                       push(href) :keyword ;
+<href> href_end           /"/                              pop :string ;
+<href> href               /[^"]*/                          :string ;
+(** `call <function>(<args>)`: the function a click calls, after `click <ids>`. *)
+call_keyword              /call\s+/                        push(callbackname) :keyword ;
+<callbackname> callback_empty_args /\(\s*\)/               pop :operator ;
+<callbackname> callback_args_open /\(/                     pop push(callbackargs) :operator ;
+<callbackname> callbackname /[^(]*/                        :function ;
+<callbackargs> callback_args_close /\)/                    pop :operator ;
+<callbackargs> callbackargs /[^)]*/                        :string ;
+(** `click <ids> …`: what clicking the tasks with these ids does, `href` and/or `call`. *)
+click_keyword             /click\s+/                       push(click) :keyword ;
+(* The one blank or line break that ends the ids. *)
+<click> click_end         /[\s\n]/                         pop ;
+(** The task ids after `click`, comma-separated, no blanks. *)
+<click> click_id          /[^\s\n]*/                       :variable ;
+
+(** `gantt`: starts a gantt chart. *)
+gantt                     /gantt\b/                        :keyword ;
+(** `dateFormat <format>`: how the task dates are written, e.g. `YYYY-MM-DD`. *)
+dateFormat                /dateFormat\s[^#\n;]+/           :keyword ;
+(** `inclusiveEndDates`: an end date includes its whole day. *)
+inclusiveEndDates         /inclusiveEndDates\b/            :keyword ;
+(** `topAxis`: draws the date axis above the chart too. *)
+topAxis                   /topAxis\b/                      :keyword ;
+(** `axisFormat <format>`: how the axis labels the dates, e.g. `%Y-%m-%d`. *)
+axisFormat                /axisFormat\s[^#\n;]+/           :keyword ;
+(** `tickInterval <n><unit>`: the axis tick spacing, e.g. `1week`. *)
+tickInterval              /tickInterval\s[^#\n;]+/         :keyword ;
+(** `includes <days>`: days drawn as work days though `excludes` names them. *)
+includes                  /includes\s[^#\n;]+/             :keyword ;
+(** `excludes <days>`: days a task skips, e.g. `weekends`, `friday`, `2024-01-01`. *)
+excludes                  /excludes\s[^#\n;]+/             :keyword ;
+(** `todayMarker off` or `todayMarker <style>`: hides or styles the today line. *)
+todayMarker               /todayMarker\s[^\n;]+/           :keyword ;
+(** `weekday <day>`: the day week ticks start on. *)
+weekday_monday            /weekday\s+monday\b/             :keyword ;
+weekday_tuesday           /weekday\s+tuesday\b/            :keyword ;
+weekday_wednesday         /weekday\s+wednesday\b/          :keyword ;
+weekday_thursday          /weekday\s+thursday\b/           :keyword ;
+weekday_friday            /weekday\s+friday\b/             :keyword ;
+weekday_saturday          /weekday\s+saturday\b/           :keyword ;
+weekday_sunday            /weekday\s+sunday\b/             :keyword ;
+(** `weekend friday|saturday`: the first day of the weekend `excludes weekends` skips. *)
+weekend_friday            /weekend\s+friday\b/             :keyword ;
+weekend_saturday          /weekend\s+saturday\b/           :keyword ;
+(** A date where a statement starts: no statement starts with one. *)
+date                      /\d\d\d\d-\d\d-\d\d\b/           :constant ;
+(** `title <text>`: the chart title, the rest of the line. *)
+title                     /title\s[^\n]+/                  :keyword ;
+(** `accDescription …`: lexed, but no statement takes it; write `accDescr: …`. *)
+accDescription            /accDescription\s[^#\n;]+/       :keyword ;
+(** `section <name>`: the tasks after it belong to the section, up to the next one. *)
+section                   /section\s[^\n]+/                :keyword ;
+(** A task's text, up to its `:`. *)
+task_text                 /[^:\n]+/                        :variable ;
+(** A task's data after `:`, up to `#`, `;` or the end of the line. *)
+taskData                  /:[^#\n;]+/                      :string ;
+(** A `:` with no task data after it. *)
+colon                     /:/                              :operator ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A gantt chart is `gantt`, then statements. *)
+diagram = Header document EOF ;
+Header @Header = gantt ;
+
+document = { statement | NL } ;
+
+statement = Setting
+  | Title
+  | AccTitle
+  | AccDescr
+  | Section
+  | Task
+  | Click ;
+
+(** A setting: `dateFormat`, `axisFormat`, `tickInterval`, `includes`, `excludes`,
+`todayMarker`, `inclusiveEndDates`, `topAxis`, `weekday <day>` or `weekend <day>`. *)
+Setting @Setting = dateFormat
+  | inclusiveEndDates
+  | topAxis
+  | axisFormat
+  | tickInterval
+  | includes
+  | excludes
+  | todayMarker
+  | weekday_monday
+  | weekday_tuesday
+  | weekday_wednesday
+  | weekday_thursday
+  | weekday_friday
+  | weekday_saturday
+  | weekday_sunday
+  | weekend_friday
+  | weekend_saturday ;
+(** `title <text>`: the chart title. *)
+Title @Title = title ;
+(** `accTitle: <text>`: the accessible title. *)
+AccTitle @AccTitle = acc_title acc_title_value ;
+(** `accDescr: <text>` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = acc_descr acc_descr_value
+  | acc_descr_multiline [ acc_descr_multiline_value ] acc_descr_multiline_end ;
+(** `section <name>`: starts a section; the tasks after it are drawn in it. *)
+Section @Section = section ;
+(** `<text> :<data>`: a task, e.g. `Design :done, a1, 2024-01-01, 3d`. *)
+Task @Task = task_text taskData ;
+(** `click <ids> href "<url>"` and/or `call <function>(<args>)`, either first. *)
+Click @Click = click_keyword click_id [ click_end ] ( callback [ link ] | link [ callback ] ) ;
+callback = call_keyword callbackname ( callback_empty_args | callback_args_open callbackargs callback_args_close ) ;
+link = href_keyword href href_end ;

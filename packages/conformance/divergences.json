@@ -70,5 +70,37 @@
     "reason": "The front-matter `title` baseline (D218): v12's timeline DB has no `setDiagramTitle`, so v12 dropped it; v13 draws it where an in-text `title` goes, as in timeline-cases/front-matter-title.",
     "owner": "#315",
     "since": "2026-11-05"
+  },
+  {
+    "id": "gantt-cases/top-axis",
+    "inputHash": "sha256:8d66e8836dc2a321",
+    "kind": "accept",
+    "reason": "v12's grammar calls `yy.TopAxis()`, which its DB does not define, so any text with the `topAxis` statement fails; v13 accepts it and draws the top axis (D273).",
+    "owner": "#378",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "gantt-cases/first-task-without-start",
+    "inputHash": "sha256:6cbb78e14079a6fd",
+    "kind": "accept",
+    "reason": "A first task with one field has no task to start after: v12 throws this scheduling error in `getTasks()` (the oracle's acceptance runs it); v13's parse keeps raw data and `schedule()` raises it at layout as SEMANTIC (D274). T3 (#379) runs `schedule()` in the parity adapter and removes this entry.",
+    "owner": "#379",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "gantt-cases/too-many-fields",
+    "inputHash": "sha256:e059d95942a049d5",
+    "kind": "accept",
+    "reason": "Task data with more than three fields: v12 throws this scheduling error in `getTasks()` (the oracle's acceptance runs it); v13's parse keeps raw data and `schedule()` raises it at layout as SEMANTIC (D274). T3 (#379) runs `schedule()` in the parity adapter and removes this entry.",
+    "owner": "#379",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "gantt-cases/invalid-date",
+    "inputHash": "sha256:e0f8a15d20b06069",
+    "kind": "accept",
+    "reason": "A start that is neither a date nor a reference (`Invalid date:`): v12 throws this scheduling error in `getTasks()` (the oracle's acceptance runs it); v13's parse keeps raw data and `schedule()` raises it at layout as SEMANTIC (D274). T3 (#379) runs `schedule()` in the parity adapter and removes this entry.",
+    "owner": "#379",
+    "since": "2026-11-06"
   }
 ]

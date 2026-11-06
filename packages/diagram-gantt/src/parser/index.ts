@@ -1,13 +1,17 @@
 /**
- * The gantt parser's public surface so far: the lexer gated against v12's jison lexer (#377).
- * T2 (#378) adds the parser, the model and the AST.
+ * The gantt parser's public surface: the parser, detection, and the lexer gated against v12's
+ * jison lexer (#377).
  */
-import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
+import { cook, Kind, significantTokens, sourceView, TRIVIA } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { JISON_NAMES, T as GanttTokenKind } from './tokens.ts';
+export { parseGantt } from './parser.ts';
+export type { GanttParseOptions, GanttParseResult } from './parser.ts';
+export { detectGantt } from './detect.ts';
+export type * from './ast.ts';
 
 export interface GanttToken {
   /** A `GanttTokenKind` or a shared `Kind`. */
@@ -28,19 +32,13 @@ export function ganttTokens(src: string): GanttToken[] {
     pre.bodyStart,
     pre.directives.map((d) => d.range)
   );
-  const stream = lex(src, pre.bodyStart, view);
+  const t = significantTokens(lex(src, pre.bodyStart, view), TRIVIA);
   const out: GanttToken[] = [];
-  for (let j = 0; j < stream.length; j++) {
-    const kind = stream.kind[j] ?? Kind.EOF;
-    if (
-      kind === Kind.Comment ||
-      kind === Kind.Directive ||
-      kind === Kind.Space ||
-      kind === Kind.EOF
-    )
-      continue;
-    const start = stream.start[j] ?? 0;
-    const end = stream.end[j] ?? 0;
+  for (let j = 0; j < t.length; j++) {
+    const kind = t.kind[j] ?? Kind.EOF;
+    if (kind === Kind.EOF) continue;
+    const start = t.start[j] ?? 0;
+    const end = t.end[j] ?? 0;
     out.push({ kind, text: cook(src, start, end, view), range: { start, end } });
   }
   return out;

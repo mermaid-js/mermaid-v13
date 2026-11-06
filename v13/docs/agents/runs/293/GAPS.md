@@ -51,9 +51,19 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - `tools/gen-config/src/theme-used-by.spec.ts` requires every `packages/diagram-*` to read a theme variable. The skeleton reads none, so the spec lists gantt in `NOT_DRAWN_YET`, where a package must read **none**. **#379 (T3) removes the entry** when gantt reads its first variable (the spec then fails until it does). `.changeset/diagram-gantt-first-release.md` added for the release spec.
 
 ### #377 review findings, owned by #378 (T2)
-- [ ] The probe records `after + 1` for non-INITIAL steps, so a value at the end of the text reports an end past `src.length` (`lexer.ts` `run`). Clamp it.
-- [ ] `%%{` at a line end gives a zero-width `Error` token; give it a visible range before T2 turns it into a diagnostic.
-- [ ] `valueKeyword()` tries all eight keywords at every token start; dispatch on the first letter as `keywords()` does.
-- [ ] `ganttTokens` copies `timelineTokens`; use `significantTokens()` for the trivia filter.
-- [ ] The gate's `skipped.length < 4` repeats the filter check; assert the exact skipped ids.
+- [x] The probe records `after + 1` for non-INITIAL steps, so a value at the end of the text reports an end past `src.length` (`lexer.ts` `run`). Clamp it.
+- [x] `%%{` at a line end gives a zero-width `Error` token; give it a visible range before T2 turns it into a diagnostic. (The token stays; the diagnostic covers `%%{` and its `Error`.)
+- [x] `valueKeyword()` tries all eight keywords at every token start; dispatch on the first letter as `keywords()` does.
+- [x] `ganttTokens` copies `timelineTokens`; use `significantTokens()` for the trivia filter.
+- [x] The gate's `skipped.length < 4` repeats the filter check; assert the exact skipped ids.
+
+### #378 T2 parser
+- **Choice:** D274 wins over the ticket's "rejected as v12 rejects" list: `parse()` rejects only what v12's parse rejects (syntax, and tags-only data in `addTask`, `GANTT_TASK_NO_DATA`). Too many fields, a first task with no start and invalid dates reach the model raw (`fields`, `prevId`, `start`/`end`) for T3. "A tag after a non-tag field" is no v12 check (`:2024-01-01, crit` is accepted, end `crit` a bad duration; `:a, done, 1d` an invalid date at schedule).
+- **Choice:** the model carries `source` (the parsed text) and each task its `range` and `dataRange`, so layout can raise schedule errors as `SEMANTIC` with the task's position (D274) without a core change.
+- **Choice:** a task with more than three fields takes `fields[0]` as its id (v12 gave none and counted none); the render fails there anyway (T3).
+- **Choice:** the in-text title replaces the front-matter one even when blank (v12 set the front-matter title first, then `setDiagramTitle` again); `titleAst` marks an in-text title. The oracle never passes front matter's title on, so parity compares the in-text title only.
+- **Choice:** v12's never-cleared `taskDb` made oracle acceptance depend on earlier charts in one case (a first one-field task resolves `taskDb.undefined` after a chart with a 4+-field task); the oracle env throws v12's own `TypeError` there, as on a fresh page. Click data is recorded from the grammar's calls, so stale ids never reach the snapshot. Stale `after`/`until` resolution only moves dates: T3 compares those against the today fallback.
+- **Choice:** the oracle's fixed clock is a `Date` swap (`atFixedTime`), not `vi.setSystemTime`, so the oracle CLI (`tsx`) works too.
+- Unmet: the two ported parser specs that read `startTime`/`endTime` are skipped until T3 (reason in `scripts/port-v12-specs.ts`), not oracle-backed.
+- For T3: remove the three `#379` rows of `divergences.json` once the adapter runs `schedule()`; `GANTT_PARITY_NOW` is in `conformance/src/gantt/oracle-env.ts`.
 - Follow-up (coordinator, not gantt): T1 says timeline's lexer tests jison's `\b` with parser-kit's Unicode `isWord`, though JS `\b` is ASCII-only, so it may be a latent parity bug there.

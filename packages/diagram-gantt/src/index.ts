@@ -4,9 +4,17 @@
  * SVG renderer (#381), language facet (#382) and the manifest (#385).
  */
 import type { DiagramPlugin } from '@mermaid-js/core';
+import type { GanttModel } from './model.ts';
 
-/** The plugin's contract. T2 and T3 replace `unknown` with `GanttModel` and `GanttLayout`. */
-export type GanttPlugin = DiagramPlugin<unknown, unknown>;
+/** The plugin's contract. T3 replaces `unknown` with `GanttLayout`. */
+export type GanttPlugin = DiagramPlugin<GanttModel, unknown>;
 
-export { ganttTokens, GanttTokenKind, JISON_NAMES } from './parser/index.ts';
-export type { GanttToken } from './parser/index.ts';
+export {
+  detectGantt,
+  ganttTokens,
+  GanttTokenKind,
+  JISON_NAMES,
+  parseGantt,
+} from './parser/index.ts';
+export type * from './parser/index.ts';
+export type * from './model.ts';
