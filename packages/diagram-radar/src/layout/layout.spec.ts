@@ -4,6 +4,7 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import type { Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { RadarModel } from '../model.ts';
+import { radar as plugin } from '../plugin.ts';
 import { FIXTURES, axis, curve, model } from './fixtures.ts';
 import { layoutRadar, type RadarLayout } from './index.ts';
 
@@ -33,7 +34,7 @@ function lay(
   return layoutRadar(m, {
     config: { radar } as unknown as ResolvedConfig,
     measurer: tenPx,
-    theme: createTheme(spec, { themeVariables }),
+    theme: createTheme(spec, { themeVariables, diagram: plugin.theme }),
     warn: (w) => warnings.push(w),
   });
 }

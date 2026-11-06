@@ -15,7 +15,7 @@ import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { RadarModel } from '../model.ts';
-import { radarLayoutConfig, radarThemeNumber, type RadarLayoutConfig } from '../stand-ins.ts';
+import { radarLayoutConfig, type RadarLayoutConfig } from '../stand-ins.ts';
 import { closedRoundCurve, relativeRadius } from './curve.ts';
 import { MAX_TICKS, NORMAL_WEIGHT, RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
 import type {
@@ -73,17 +73,18 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
   const config = radarLayoutConfig(
     ctx.config.radar as Readonly<Record<string, unknown>> | undefined
   );
-  const family = ctx.theme.value('fontFamily');
+  const { theme } = ctx;
+  const family = theme.value('fontFamily');
   const font = (size: number): FontKey => ({ family, size, weight: NORMAL_WEIGHT });
   const fonts = {
-    axis: font(radarThemeNumber('radarAxisLabelFontSize')),
-    legend: font(radarThemeNumber('radarLegendFontSize')),
-    title: font(ctx.theme.number('fontSize')),
+    axis: font(theme.number('radarAxisLabelFontSize')),
+    legend: font(theme.number('radarLegendFontSize')),
+    title: font(theme.number('fontSize')),
   };
   const strokes = {
-    axis: radarThemeNumber('radarAxisStrokeWidth'),
-    curve: radarThemeNumber('radarCurveStrokeWidth'),
-    graticule: radarThemeNumber('radarGraticuleStrokeWidth'),
+    axis: theme.number('radarAxisStrokeWidth'),
+    curve: theme.number('radarCurveStrokeWidth'),
+    graticule: theme.number('radarGraticuleStrokeWidth'),
   };
   const inline = ctx.inline ? { inline: ctx.inline } : {};
   const measure = (text: string, labelFont: FontKey): MeasuredLabel => {
@@ -148,7 +149,7 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
   });
   if (ctx.warn) warnAbout({ axes: frame.n, curves, skipped, min, max }, ctx.warn);
 
-  const legend = legendOf(model, legendText, config, center);
+  const legend = legendOf(model, legendText, config, center, theme.number('radarLegendBoxSize'));
   // The title (`:41-45`): middle-anchored at the canvas top, `hanging`.
   const title = titleText && placeAt(titleText, { x: center.x, y: 0 }, 'middle', 'hanging');
 
@@ -265,10 +266,10 @@ function legendOf(
   model: RadarModel,
   text: readonly MeasuredLabel[],
   config: RadarLayoutConfig,
-  center: Point
+  center: Point,
+  size: number
 ): RadarLegendRow[] {
   const { legendFactor, legendTextX, legendRow } = RADAR_METRICS;
-  const size = radarThemeNumber('radarLegendBoxSize');
   const x = center.x + legendFactor * (config.width / 2 + config.marginRight);
   let y = center.y - legendFactor * (config.height / 2 + config.marginTop);
   return text.map((label, index) => {

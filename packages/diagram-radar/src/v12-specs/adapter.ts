@@ -11,23 +11,67 @@
  *   errors are the syntax errors (v12's DB threw the semantic ones, not Langium);
  * - `parseAsync('radar', text)` stands for `@mermaid-js/parser`'s `parse`: it rejects with a
  *   {@link MermaidParseError} whose message places each syntax error as v12's did;
- * - `relativeRadius` is the layout's; `closedRoundCurve`, `Diagram` and `mermaidAPI` serve
- *   only skipped renderer specs (#448).
+ * - `relativeRadius` is the layout's; `closedRoundCurve` is the renderer's path data for the
+ *   layout's segments, spaced as v12 wrote it (`M0,0 C… Z`): numbers are the writer's (two
+ *   decimals), so the strings match v12's modulo number format;
+ * - `mermaidAPI.parse`, `Diagram.fromText` and `diagram.renderer.draw` stand for v12's render
+ *   path: they parse, lay out and render with the v13 plugin into a tree writer.
  */
+import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { LineIndex } from '@mermaid-js/core/parser-kit';
 import type { Diagnostic } from '@mermaid-js/core/parser-kit';
-import { relativeRadius } from '../layout/index.ts';
+import { pathBuilder, treeWriter } from '@mermaid-js/core/svg';
+import { tableMeasurer } from '@mermaid-js/core/text';
+import { createTheme, loadTheme } from '@mermaid-js/core/theme';
+import { closedRoundCurve as segments, layoutRadar, relativeRadius } from '../layout/index.ts';
+import type { Point } from '../layout/index.ts';
 import type { RadarModel } from '../model.ts';
 import { parseRadar, RADAR_MISSING_ENTRY, RADAR_NO_AXES } from '../parser/index.ts';
+import { radar } from '../plugin.ts';
+import { curvePath, renderRadar } from '../render/index.ts';
 
 export { relativeRadius };
 
-const notPorted = (): never => {
-  throw new Error('v12 renderer API: ported with the renderer (#448)');
+/** v12 `closedRoundCurve(points, tension)`: the path data, with v12's spaces before `C` and `Z`. */
+export function closedRoundCurve(points: Point[], tension: number): string {
+  const d = curvePath(points, segments(points, tension), pathBuilder());
+  return d.replace(/([CZ])/g, ' $1');
+}
+
+/** v12 `mermaidAPI.parse`: rejects as v12 did on an error. */
+export const mermaidAPI = {
+  parse: (text: string): Promise<void> => parser.parse(text),
 };
-export const closedRoundCurve = notPorted;
-export const Diagram = { fromText: notPorted };
-export const mermaidAPI = { parse: notPorted };
+
+/** v12's diagram object as the draw spec uses it. */
+interface DrawableDiagram {
+  readonly renderer: { draw(text: string, id: string, version: string): Promise<string> };
+}
+
+/** v12 `Diagram.fromText(text)`: a diagram whose `renderer.draw` renders the parsed model. */
+export const Diagram = {
+  async fromText(text: string): Promise<DrawableDiagram> {
+    const { model } = parseRadar(text);
+    const theme = createTheme(await loadTheme('default'), { diagram: radar.theme });
+    return {
+      renderer: {
+        draw(_text: string, id: string, version: string): Promise<string> {
+          const ctx = {
+            config: { radar: {} } as unknown as ResolvedConfig,
+            theme,
+            measurer: tableMeasurer,
+            warn: () => undefined,
+            idPrefix: id,
+            version,
+          };
+          const w = treeWriter();
+          renderRadar(model, layoutRadar(model, ctx), ctx, w);
+          return Promise.resolve(w.finish());
+        },
+      },
+    };
+  },
+};
 
 /** v12's radar DB: plain functions (the spec reads them off the object), over the last parsed model. */
 function radarDb() {

@@ -18,7 +18,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **For the maintainer (core, not radar): indented front matter closed at column 0.** `dev-diagrams/knsv/knsv2-03-radar.mmd` opens its fence with six spaces and closes it at column 0. v12 never sees front matter there (the YAML is a hidden Langium token, no title) and renders the chart; v13's preprocess reads the indented fence (#7613) and reports `UNCLOSED_FRONT_MATTER`, so v13 rejects it. It is a gate exclusion in `packages/conformance/src/radar/lexer-parity.spec.ts`, and the same divergence will show in #446's parity. It is shared core behaviour (every type), so the radar port does not change it; the D218 front-matter title is covered by a dedented copy.
 - Accepted: `commented()` copies of one- and two-line sources often cut inside the header and never reach v12, so those copies are not gated (pie's helper, same limit); `LINE_SEPARATORS` are nine hand-written cases, as pie's.
 - Shared edits: `harvest:pie` became `harvest:langium <pie|radar>|--all` (pie's corpus byte-identical; drift spec added); jison `runSpec` exported with `functionNames`.
-- [ ] **#448:** drop radar's "reads at least one variable" skip in `tools/gen-config/src/theme-used-by.spec.ts`.
+- [x] **#448:** drop radar's "reads at least one variable" skip in `tools/gen-config/src/theme-used-by.spec.ts`. Done in #448.
 
 ## T3 (#447)
 
@@ -37,3 +37,11 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 ## Theme T0a merged (2026-11-06)
 
 - `origin/feature/414_theme-t0` at `462aef4e9` merged into `feature/422_radar` (API: `v13/docs/agents/runs/414/CONTRACT.md`). **Orchestrator choice:** the radar `DiagramThemeTable` (ten `radar*` vars, `section: 'radar'` with `nested` keys, `radarAxisColor` the rule `lineColor`) lands in #448 (T4) with the plugin object, declared inline on the plugin until T0b's per-package file convention lands; #448 deletes the theme half of `stand-ins.ts`. #449 (T5) keeps the theme oracle specs, the D333(b) differences and the nested-override fixture.
+
+## T4 (#448)
+
+- **`RadarModel` changed additively:** `titleAstId?` (the in-text title's AST id, for its `data-ast`); set by the parser (#446's code, one field).
+- **Theme table landed** inline on `radar.theme` (ten vars, `section: 'radar'`, `radarAxisColor` = rule `lineColor`, one literal entry for every family); theme half of `stand-ins.ts` deleted. `textColor`'s `usedBy` lists `radar`.
+- `neo` computed styles checked against 12.2.0 in Chromium: equal to v13 except the axis colour (D333(b), #449's DIFFERENCES).
+- Choices: `data-id` = AST id on axis groups, curves, legend rows and swatches; labels drawn centred on the layout's boxes (legend left-aligned), not with v12's per-label anchors.
+- For #449: `render-api.ts` registers with `replace: true`; drop it with the manifest.

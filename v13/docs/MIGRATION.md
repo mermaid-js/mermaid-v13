@@ -1445,3 +1445,37 @@ where v12 and v13 differ; the other themes keep v12's colour.
 | `neutral` | `#d4d4d4` | `#cacaca` |
 | `base` | `#eeddbb` | `#d9cfbc` |
 | `redux`, `redux-color` | `#171717` | `#28253d` |
+
+## Radar chart
+
+The radar parser accepts the v12 language (oracle parity over every e2e fixture and the v12 spec
+strings; grammar in [syntax/radar.md](./syntax/radar.md)). What changes in the drawing
+(spec #422):
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| `radar.axisColor` was each classic theme's `lineColor`, computed once, so a `lineColor` override never moved the axes | `radarAxisColor` is the rule `lineColor` in every theme, so the axes follow an author's `lineColor` (an explicit `radarAxisColor` or `themeVariables.radar.axisColor` still wins) | D351 |
+| `.radarTitle` and `.radarAxisLabel` set CSS `color` (`titleColor`, `axisColor`), which paints no SVG text, so all text filled with the root `textColor` | All radar text is drawn in `textColor`, as v12 drew it; radar does not read `titleColor` | D352 |
+| Curves past the twelfth (`radarCurve-12`, …) had no rule and filled opaque black with no stroke | Curve *i* takes slot *i* mod 12 (`radarCurve-0` again for the thirteenth), as pie's slices | D353 |
+| `max` equal to `min` wrote `NaN` paths; a curve whose entry count is not the axis count was skipped silently; `ticks` over 32 was only logged | Curves drawn at the centre with one `RADAR_EMPTY_RANGE` warning; the curve is still left out, with one `RADAR_CURVE_SKIPPED` warning naming every such curve; `RADAR_TICKS_CLAMPED`. A detailed entry naming no axis is still ignored, with `RADAR_UNKNOWN_AXIS` | D356 |
+| `radar.legendBoxSize` (12) was declared and never read: the swatch was always 12 px | `radarLegendBoxSize` sizes the swatch; with the default, nothing changes | D359 |
+| `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
+
+## Radar SVG structure
+
+What changed in the radar chart's SVG compared with v12 (spec #422, DESIGN §7.2). The v12 class
+names are kept (`radarGraticule`, `radarAxisLine`, `radarAxisLabel`, `radarCurve-<i>`,
+`radarLegendBox-<i>`, `radarLegendText`, `radarTitle`) and so is v12's draw order: rings, axes,
+curves, legend, title.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, `aria-roledescription="radar"`, `overflow="visible"`, a `<style>` scoped by the id | No root `id` and no `overflow`; `class="mermaid mermaid-radar"`, `role="img"`, `aria-roledescription="radar"`, `data-mermaid-version`; colours, opacities, stroke widths and font sizes are presentation attributes on each element, theme colours reading `var(--_x)` aliases on the root `style` (the `cScale` slots are literal colours) | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
+| Everything in one `<g transform="translate(cx, cy)">`; the legend rows in `<g transform="translate(x,y)">` | No transforms: every element in root coordinates | The layout places everything |
+| Each axis a `<line>` and a `<text text-anchor dominant-baseline>`, siblings | Each axis a `<g data-id data-ast="axis:<name>">` holding its `line.radarAxisLine` and `text.radarAxisLabel`; the label's box sits where v12's anchor and baseline put it | One element per axis maps it to its source (R-PARSE-8) |
+| Curves: `<path class="radarCurve-<i>">` (circle graticule) or `<polygon>`, no source mapping | The same, with `data-id` and `data-ast="curve:<name>"`; a skipped curve has no element but keeps its index, colour slot and legend row | R-PARSE-8, pitfall 12 |
+| Legend row: `<g transform>` with `<rect class="radarLegendBox-<i>" width="12" height="12">` and `<text x="16" class="radarLegendText">` | `<g data-id="curve:<name>">` with the `rect` (`data-id` too) and a start-anchored `text`, in root coordinates; no `data-ast` (the curve's shape carries it) | R-PARSE-8, D359 |
+| `<text class="radarTitle">` always written, empty when there is no title | Written only when there is a title, with `data-ast="title"` (`title@2`, … for the last of several) when it comes from the text; a front-matter title (D218) has no `data-ast` | Nothing invisible is drawn |
+| Labels, legend and title set with d3 `.text()`: `<br>` and tags printed as written, a newline collapsed to a space | Core's label layout: `<br>` and newlines break the line, markdown strings render, math and icons work, entities decode. A label of several lines grows away from the chart; legend rows below it move down | D355 |
+| A fixed `viewBox` (the 700 × 700 canvas by default) that axis labels, wide legend labels, a fractional-`ticks` ring and a large title overflowed (clipped in `<img>` and server renders) | v12's positions; the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover everything drawn and may start at a negative `x` or `y`. A chart where everything fits keeps v12's canvas | D354 |
+| `look: neo` and the redux themes: the same chart as the classic themes | The same: radar differs between families by colour only (computed styles checked in `neo` and `neo-dark`) | D227 |

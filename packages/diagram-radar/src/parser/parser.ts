@@ -231,6 +231,8 @@ class RadarParser {
   private readonly options = new Map<OptionName, RadarOptionNode>();
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
   private title = '';
+  /** The AST id of the last `title` statement. */
+  private titleId: AstId | undefined;
   private accTitle = '';
   private accDescr = '';
 
@@ -702,7 +704,9 @@ class RadarParser {
     else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
     else text = this.accDescr = accDescrValue(image);
     const kind = ID_OF[type];
-    this.children.push({ id: this.id(kind), type, range, text });
+    const id = this.id(kind);
+    if (type === 'Title') this.titleId = id;
+    this.children.push({ id, type, range, text });
     this.st.statement(kind, range);
     this.eol();
   }
@@ -723,11 +727,13 @@ class RadarParser {
     const warnings = diagnostics.list.filter((d) => d.severity === 'warning');
     // D218: the in-text title if non-empty, else the front-matter one.
     const title = this.title || this.pre.frontMatter?.title;
+    const titleAstId = this.title ? this.titleId : undefined;
     return Object.freeze({
       axes: Object.freeze(axes),
       curves: Object.freeze(curves),
       options,
       ...(title ? { title } : {}),
+      ...(titleAstId ? { titleAstId } : {}),
       accTitle: this.accTitle,
       accDescr: this.accDescr,
       warnings: Object.freeze(warnings),

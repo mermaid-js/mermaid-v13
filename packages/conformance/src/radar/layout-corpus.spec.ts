@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
-import { layoutRadar, parseRadar } from '@mermaid-js/diagram-radar';
+import { layoutRadar, parseRadar, radar as plugin } from '@mermaid-js/diagram-radar';
 import { radarLayoutViolations } from '@mermaid-js/diagram-radar/testing';
 import type { CorpusItem } from '../types.ts';
 import { radarGateCorpus } from './corpus.ts';
@@ -31,7 +31,7 @@ beforeAll(async () => {
 
 describe('radar layout invariants on parser-produced fixtures', () => {
   it('hold over the corpus, both graticules and every config', () => {
-    const theme = createTheme(spec);
+    const theme = createTheme(spec, { diagram: plugin.theme });
     const failures: string[] = [];
     let curves = 0;
     for (const item of corpus) {

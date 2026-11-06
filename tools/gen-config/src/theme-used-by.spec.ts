@@ -59,10 +59,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'state',
       'timeline',
     ]);
-    // Radar draws nothing yet (#422: T4 draws, T5 adds its theme table).
-    for (const type of TYPES.filter((t) => t !== 'radar')) {
-      expect(READS.get(type)!.size).toBeGreaterThan(0);
-    }
+    for (const type of TYPES) expect(READS.get(type)!.size, type).toBeGreaterThan(0);
   });
 
   it.each(TYPES)('lists %s for every variable it reads, and for no other', (type) => {

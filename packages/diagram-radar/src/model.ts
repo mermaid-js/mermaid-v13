@@ -56,6 +56,11 @@ export interface RadarModel {
   readonly options: RadarOptions;
   /** The in-text `title` if non-empty, else the front-matter `title` (D218); absent when neither. */
   readonly title?: string;
+  /**
+   * The AST id of the `title` statement the title comes from (`title`, `title@2`, …); absent for
+   * a front-matter title or none. Added by #448 for the title's `data-ast`.
+   */
+  readonly titleAstId?: AstId;
   readonly accTitle: string;
   readonly accDescr: string;
   /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */

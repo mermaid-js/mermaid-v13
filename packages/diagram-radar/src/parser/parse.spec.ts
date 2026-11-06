@@ -58,6 +58,7 @@ describe('radar parser', () => {
       ],
       options: { showLegend: true, ticks: 10, max: null, min: 0, graticule: 'circle' },
       title: 'Radar diagram',
+      titleAstId: 'title',
       accTitle: 'Radar accTitle',
       accDescr: 'Radar accDescription',
       warnings: [],
@@ -195,6 +196,10 @@ describe('radar parser', () => {
     expect(parse(`${fm}radar-beta\ntitle In text\ntitle\naxis A`).model.title).toBe('Front');
     expect(parse('radar-beta\ntitle   a   b   %% c').model.title).toBe('a b');
     expect('title' in parse('radar-beta\ntitle').model).toBe(false);
+    // The title's AST id (#448, its `data-ast`): the last in-text title's, none from front matter.
+    expect(parse(`${fm}radar-beta\ntitle a\ntitle b\naxis A`).model.titleAstId).toBe('title@2');
+    expect('titleAstId' in parse(`${fm}radar-beta\ntitle a\ntitle\naxis A`).model).toBe(false);
+    expect('titleAstId' in parse(`${fm}radar-beta\naxis A`).model).toBe(false);
   });
 
   it('converts labels as Langium did: either quote, escapes, line breaks, untrimmed', () => {
