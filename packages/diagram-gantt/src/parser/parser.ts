@@ -638,7 +638,7 @@ class GanttParser {
     const value = this.next();
     if (this.kind() === Kind.EOF) {
       // Nothing after `accTitle:` at the very end: jison's lexer returned no `EOF` after it.
-      this.emptyValueAtEnd(k, this.range(first));
+      this.emptyValueAtEnd(k, first);
       throw STOP;
     }
     const title = k === T.AccTitle;
@@ -719,8 +719,9 @@ class GanttParser {
       const bare = k === T.Colon ? undefined : BARE_KEYWORDS[this.raw(textAt).trim().toLowerCase()];
       // A keyword with nothing after it: reported where its value belongs.
       if (bare) this.fail([bare[0]], `write it as \`${bare[1]}\``, this.lineEndIn(textAt));
-      // Reported over the task text (blanks after it left out), not what follows it.
-      this.fail(TASK_DATA, k === T.Colon ? undefined : TASK_HINT, this.trimmedRange(textAt));
+      // A bare `:` over itself; else over the task text, the blanks after it left out.
+      if (k === T.Colon) this.fail(TASK_DATA);
+      this.fail(TASK_DATA, TASK_HINT, this.trimmedRange(textAt));
     }
     const dataAt = this.next();
     const text = this.raw(textAt);
@@ -911,7 +912,7 @@ class GanttParser {
         return this.reportUnclosed('UNCLOSED_STRING', 'link', 'href "', '"', j);
       if (k === T.CallbackArgsOpen)
         return this.reportUnclosed('UNCLOSED_CALLBACK_ARGS', 'callback arguments', '(', ')', j);
-      if (k === T.AccTitle || k === T.AccDescr) return this.emptyValueAtEnd(k, this.range(j));
+      if (k === T.AccTitle || k === T.AccDescr) return this.emptyValueAtEnd(k, j);
       if (k === T.CallKeyword || k === T.ClickKeyword) {
         this.endReported = true;
         this.st.diagnostics.error(
@@ -943,12 +944,10 @@ class GanttParser {
    * `accTitle:` or `accDescr:` with nothing after it at the very end. Reported where the text
    * belongs: after the keyword and the blanks on its line.
    */
-  private emptyValueAtEnd(k: number, keyword: Range): void {
+  private emptyValueAtEnd(k: number, keyword: number): void {
     this.endReported = true;
     const word = k === T.AccTitle ? 'accTitle' : 'accDescr';
-    let p = keyword.start;
-    while (p < keyword.end && !this.breaksIn(p, p + 1)) p++;
-    const at = { start: p, end: p };
+    const at = this.lineEndIn(keyword);
     const d = this.st.diagnostics.unexpected('UNEXPECTED', at, ['text'], 'the end of the text');
     d.message = `${d.message.slice(0, -1)}; write it as \`${word}: <text>\`.`;
   }

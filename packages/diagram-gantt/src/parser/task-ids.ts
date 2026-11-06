@@ -11,6 +11,12 @@ import type { ParseState } from '@mermaid-js/core/parser-kit';
 const AFTER = /^after\s+([\d\w- ]+)/;
 const UNTIL = /^until\s+([\d\w- ]+)/;
 
+/**
+ * The id v12's plain-object `taskDb` never stores (assigning it sets the prototype), so nothing
+ * finds a task by it; the schedule and layout skip it too.
+ */
+export const NEVER_STORED = '__proto__';
+
 /** A task-id occurrence; `start` is relative to its token until it is recorded. */
 interface Mention {
   name: string;
@@ -84,13 +90,16 @@ export class TaskIds {
    * Record the symbols (kind `task`) in source order. v12 looks an id up last-wins (`taskDb`),
    * so the last task written with an id is its definition and earlier ones mention it. A name
    * v12 also gives a task without an id (`task<n>`, of the first `autoIds` tasks) is no symbol:
-   * that task could not be renamed with its mentions. Nor is a name a removed span cuts.
+   * that task could not be renamed with its mentions. Nor is a name a removed span cuts, nor
+   * {@link NEVER_STORED}.
    */
   record(st: ParseState, autoIds: number): void {
     const last = new Map<string, Mention>();
     for (const m of this.mentions) if (m.role === 'def') last.set(m.name, m);
     for (const m of this.mentions) {
-      if (this.unmapped.has(m.name) || isAutoId(m.name, autoIds)) continue;
+      if (this.unmapped.has(m.name) || isAutoId(m.name, autoIds) || m.name === NEVER_STORED) {
+        continue;
+      }
       const role = m.role === 'def' && last.get(m.name) !== m ? 'ref' : m.role;
       st.symbol(m.name, 'task', { start: m.start, end: m.start + m.name.length }, role);
     }

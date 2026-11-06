@@ -103,6 +103,12 @@ describe('gantt task-id symbols', () => {
     ).toEqual([]);
   });
 
+  it('gives no symbol to `__proto__`, an id v12 never stores', () => {
+    expect(symbols('gantt\n  a :__proto__, 2024-01-01, 1d\n  b :after __proto__, 1d\n')).toEqual(
+      []
+    );
+  });
+
   it('gives no symbol to an id whose task data a directive cuts in two', () => {
     expect(symbols('gantt\n  a :a1, 2024-%%{init: {}}%%01-01, 1d\n  b :after a1, 1d\n')).toEqual(
       []
@@ -127,6 +133,8 @@ describe('task ids (isValidId)', () => {
     expect(ganttLanguage.isValidId('a#b')).toMatch(/not a task id/);
     expect(ganttLanguage.isValidId('a;b')).toMatch(/not a task id/);
     expect(ganttLanguage.isValidId('done')).toMatch(/not a task id/);
+    // v12 keeps ids on a plain object, which never stores `__proto__` (nor does the schedule).
+    expect(ganttLanguage.isValidId('__proto__')).toMatch(/never/);
   });
 });
 
@@ -214,7 +222,8 @@ describe('gantt completions (D95)', () => {
   it('offers the day words of `excludes` and `includes`', () => {
     expect(complete('gantt\n  excludes ¦')).toEqual(['weekends', ...WEEKDAY_NAMES]);
     expect(complete('gantt\n  excludes 2024-01-01, we¦')).toEqual(['weekends', 'wednesday']);
-    expect(complete('gantt\n  includes sat¦')).toEqual(['saturday']);
+    // v12 reads `includes` as dates only.
+    expect(complete('gantt\n  includes sat¦')).toEqual([]);
   });
 
   it('offers the tags while only tags come before, and `after`/`until`', () => {
@@ -242,6 +251,13 @@ describe('gantt completions (D95)', () => {
     // Not the task's own id.
     expect(complete(`${TASKS}  Ship :s1, after ¦, 1d`)).toEqual(['a1', 'b1']);
     expect(edits(`${TASKS}  Ship :after a¦1, 1d`)).toEqual([['a1', 'a1']]);
+  });
+
+  it('offers only the ids v12 reads at that spot', () => {
+    const odd = `${TASKS}  c :my id, 2024-01-01, 1d\n  d :a.b, 2024-01-01, 1d\n  e :x'y, 2024-01-01, 1d\n`;
+    // `after`/`until` read `[\d\w-]+`; a click reads ids up to a blank or `,`.
+    expect(complete(`${odd}  Ship :after ¦`)).toEqual(['a1', 'b1']);
+    expect(complete(`${odd}  click ¦`)).toEqual(['a1', 'b1', 'a.b', "x'y"]);
   });
 
   it('offers the duration units after a number', () => {
@@ -326,5 +342,15 @@ describe('gantt hover (D93)', () => {
     expect(hover('gantt\n  a :cr¦it, a1, 2024-01-01, 1d\n')).toMatch(/^crit => .*critical/s);
     expect(hover(`${TASKS}  Ship :af¦ter a1, 1d\n`)).toMatch(/^after => .*starts when/s);
     expect(hover('gantt\n  a :a1, 2024-01-01, 1¦d\n')).toBeUndefined();
+  });
+
+  it('explains them only where v12 reads them', () => {
+    // Tags lead the data; `after` is read in the start field, `until` in the end field.
+    expect(hover('gantt\n  a :x, do¦ne, 1d\n')).toBeUndefined();
+    expect(hover('gantt\n  a :af¦ter y\n')).toBeUndefined();
+    expect(hover('gantt\n  a :x, 2024-01-01, af¦ter y\n')).toBeUndefined();
+    expect(hover('gantt\n  a :x, un¦til y, 1d\n')).toBeUndefined();
+    expect(hover('gantt\n  a :done, x, af¦ter y, 1d\n')).toMatch(/^after => /);
+    expect(hover('gantt\n  a :un¦til y\n')).toMatch(/^until => /);
   });
 });
