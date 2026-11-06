@@ -708,6 +708,9 @@ importers:
       '@mermaid-js/core':
         specifier: workspace:^
         version: link:../core
+      '@mermaid-js/diagram-gantt':
+        specifier: workspace:^
+        version: link:../diagram-gantt
       mermaid:
         specifier: workspace:*
         version: link:../mermaid

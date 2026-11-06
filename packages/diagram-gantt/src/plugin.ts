@@ -3,6 +3,7 @@ import type { SvgWriter } from '@mermaid-js/core/svg';
 import type { GanttPlugin } from './index.ts';
 import { layoutGantt, type GanttLayout } from './layout/index.ts';
 import type { GanttModel } from './model.ts';
+import { withCallbackClaims } from './parser/callbacks.ts';
 import { detectGantt, parseGantt } from './parser/index.ts';
 import { renderGantt } from './render/index.ts';
 
@@ -18,7 +19,7 @@ export const gantt = {
   layoutKind: 'custom' as const,
   detector: (text: string): boolean => detectGantt(text),
   parse: (text: string, ctx: DiagramParseContext) =>
-    parseGantt(text, { preprocessed: ctx.preprocessed }),
+    withCallbackClaims(parseGantt(text, { preprocessed: ctx.preprocessed }), ctx.claims),
   layout: (model: GanttModel, ctx: RenderContext): GanttLayout => layoutGantt(model, ctx),
   render: (model: GanttModel, layout: GanttLayout, ctx: RenderContext, w: SvgWriter): void =>
     renderGantt(model, layout, ctx, w),
