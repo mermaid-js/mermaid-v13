@@ -5,6 +5,7 @@
  */
 import { execFileSync } from 'node:child_process';
 import type { ExecFileSyncOptions } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import {
   cpSync,
   existsSync,
@@ -12,6 +13,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  readlinkSync,
   realpathSync,
   renameSync,
   rmSync,
@@ -69,20 +71,39 @@ const skipAppFile = (name: string): boolean =>
  * the shim exports `NODE_PATH` with the monorepo's `node_modules/.pnpm/node_modules`, through
  * which esbuild resolved an import the installed packages do not declare to the workspace
  * sources (`packages/core`), so a missing dependency went unnoticed.
+ *
+ * The cache is shared by every checkout and worktree, so each checkout gets its own folder
+ * (keyed by its path): one checkout never runs another's esbuild, which may be another
+ * version or, once that worktree is deleted, gone. A link that does not point at this
+ * checkout's esbuild (dangling, or left by an older esbuild) is replaced: the new link is
+ * made under a unique name and renamed over the old one, which is atomic, so concurrent
+ * runs never see the link missing.
  */
 function toolsBin(): string {
-  const bin = join(cacheRoot(), 'bin');
+  const real = realpathSync(join(REPO_ROOT, 'node_modules', 'esbuild', 'bin', 'esbuild'));
+  const bin = join(cacheRoot(), `bin-${sha256(REPO_ROOT).slice(0, 16)}`);
   const esbuild = join(bin, 'esbuild');
-  if (!existsSync(esbuild)) {
+  if (linkTarget(esbuild) !== real) {
     mkdirSync(bin, { recursive: true });
-    const real = realpathSync(join(REPO_ROOT, 'node_modules', 'esbuild', 'bin', 'esbuild'));
+    const temp = `${esbuild}.${process.pid}-${randomBytes(6).toString('hex')}`;
+    symlinkSync(real, temp);
     try {
-      symlinkSync(real, esbuild);
+      renameSync(temp, esbuild);
     } catch (e) {
-      if ((e as NodeJS.ErrnoException).code !== 'EEXIST') throw e;
+      rmSync(temp, { force: true });
+      throw e;
     }
   }
   return bin;
+}
+
+/** Where the symlink `path` points, or `undefined` when it is missing or not a symlink. */
+function linkTarget(path: string): string | undefined {
+  try {
+    return readlinkSync(path);
+  } catch {
+    return undefined;
+  }
 }
 
 /**
