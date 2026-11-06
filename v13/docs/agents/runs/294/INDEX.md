@@ -6,10 +6,10 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 | --- | --- | --- | --- |
 | T0 core `tree` engine and engine selection | #380 | — | merged (ff a635d9bcb; `tree` chunk 3,407 B gz, lazy) |
 | T1 lexer parity gate | #383 | #285 (merged) | merged (ff 5bbf475e9) |
-| T2 grammar, parser, model, AST | #386 | #383 | in progress (`.claude/worktrees/t386`, `feature/386_mindmap-parser`) |
+| T2 grammar, parser, model, AST | #386 | #383 | merged (ff f106ba322) |
 | T3 layout (builder, shape sizing) | #387 | #386, #380 | in progress on hand-built fixtures (`.claude/worktrees/t387`, `feature/387_mindmap-layout`); merges after #386 |
 | T4 SVG renderer | #388 | #387 | blocked |
-| T6 language facet | #389 | #386 | blocked |
+| T6 language facet | #389 | #386 | in progress (`.claude/worktrees/t389`, `feature/389_mindmap-language`) |
 | T5 integration | #390 | #388, #389 | blocked |
 | icons I5 `::icon()` glyphs | #328 | #322 (merged), #388 | blocked |
 | hand-drawn H4 baselines | #344 | #390 | blocked |
