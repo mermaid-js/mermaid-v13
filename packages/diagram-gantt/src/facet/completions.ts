@@ -137,14 +137,19 @@ const CLICK_ID = /^[^\s,]+$/;
 
 /**
  * The task ids written in the chart that v12 reads as one id where `readable` holds (each once,
- * in source order), but those in `skip`.
+ * in source order), but those in `skip`; with `before`, only ids a task written before that
+ * offset has (a click names nothing else, `ids.ts`), each described by the latest such task.
  */
 function taskIds(
   doc: DocumentView<GanttDocument>,
   skip: Tok | undefined,
-  readable: RegExp
+  readable: RegExp,
+  before?: number
 ): { name: string; detail: string }[] {
-  const tasks = tasksById(doc.result.model as GanttModel | undefined);
+  const model = doc.result.model as GanttModel | undefined;
+  const earlier =
+    before === undefined ? undefined : model?.tasks.filter((t) => t.range.start < before);
+  const tasks = earlier ? tasksById({ ...model!, tasks: earlier }) : tasksById(model);
   const seen = new Set<string>();
   const out: { name: string; detail: string }[] = [];
   const defs = doc.result.symbols.filter(
@@ -152,7 +157,7 @@ function taskIds(
       s.role === 'def' && !(skip && skip.start <= s.range.start && s.range.end <= skip.end)
   );
   for (const s of defs) {
-    if (seen.has(s.name) || !readable.test(s.name)) continue;
+    if (seen.has(s.name) || !readable.test(s.name) || (earlier && !tasks.has(s.name))) continue;
     seen.add(s.name);
     const task = tasks.get(s.name);
     out.push({ name: s.name, detail: task ? task.text.trim() : 'task' });
@@ -253,7 +258,7 @@ export function ganttCompletions(
   const inKeyword = tok?.kind === T.ClickKeyword && offset >= tok.start + 'click '.length;
   if (probe.mode === 'click' || inKeyword) {
     const word = inKeyword ? '' : (/[^\s,]*$/.exec(lineBefore(text, offset))?.[0] ?? '');
-    const ids = taskIds(doc, undefined, CLICK_ID).map(
+    const ids = taskIds(doc, undefined, CLICK_ID, offset).map(
       ({ name, detail }) => [name, detail] as const
     );
     return words(ids, word, offset - word.length, wordEnd(text, offset, /[^\s,]/), 'node');

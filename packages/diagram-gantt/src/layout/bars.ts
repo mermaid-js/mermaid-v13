@@ -2,6 +2,7 @@
  * Bars, milestones, `vert` markers and their labels (v12 `drawRects`), in v12's drawing order:
  * by start, `vert` markers last.
  */
+import { clickTargets } from '../ids.ts';
 import type { ScheduledTask } from '../schedule/index.ts';
 import { byStart, isVert, resolved, type Chart } from './chart.ts';
 import { Style } from './env.ts';
@@ -14,26 +15,22 @@ const ANCHORS: Readonly<Record<LabelSide, 'start' | 'middle' | 'end'>> = {
 };
 
 /**
- * Tasks a `click` names: v12's `setClass` ran at parse time, so a click marks the latest task
- * with each id defined before it (`taskDb` held only those), none when the task comes later.
- * Its `setLink` likewise kept a URL only for an id with such a task, the last one winning.
+ * The tasks a `click` marks `clickable`, by v12's parse-time rule (`ids.ts` `clickTargets`):
+ * the latest task with each id written before the click. Its `setLink` likewise kept a URL only
+ * for an id with such a task, the last one winning.
  */
 function clickableTasks(c: Chart): { tasks: Set<number>; links: Map<string, string> } {
   const out = new Set<number>();
   const links = new Map<string, string>();
   const { tasks, clicks } = c.model;
-  const latest = new Map<string, number>();
-  let t = 0;
-  for (const click of clicks) {
-    for (; t < tasks.length && tasks[t]!.range.start < click.range.start; t++)
-      latest.set(tasks[t]!.id, t);
-    for (const id of click.ids) {
-      const at = id === '__proto__' ? undefined : latest.get(id);
-      if (at === undefined) continue;
+  clickTargets(tasks, clicks).forEach((targets, i) => {
+    const click = clicks[i]!;
+    targets.forEach((at, k) => {
+      if (at === undefined) return;
       out.add(at);
-      if (click.href !== undefined) links.set(id, click.href);
-    }
-  }
+      if (click.href !== undefined) links.set(click.ids[k]!, click.href);
+    });
+  });
   return { tasks: out, links };
 }
 

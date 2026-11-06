@@ -6,22 +6,15 @@
  * (`setLink`, `setClickEvent`).
  */
 import type { ParseState } from '@mermaid-js/core/parser-kit';
-
-/** v12 `getStartDate`/`getEndDate`: `after <ids>` (a start) or `until <ids>` (an end). */
-const AFTER = /^after\s+([\d\w- ]+)/;
-const UNTIL = /^until\s+([\d\w- ]+)/;
-
-/**
- * The id v12's plain-object `taskDb` never stores (assigning it sets the prototype), so nothing
- * finds a task by it; the schedule and layout skip it too.
- */
-export const NEVER_STORED = '__proto__';
+import { NEVER_STORED, RE_AFTER as AFTER, RE_UNTIL as UNTIL } from '../ids.ts';
 
 /** A task-id occurrence; `start` is relative to its token until it is recorded. */
 interface Mention {
   name: string;
   start: number;
   role: 'def' | 'ref';
+  /** A click's id: it names a task only if one with the id is written before it (`ids.ts`). */
+  click?: true;
 }
 
 /** Whether `name` is `task<n>`, an id v12 gave one of the first `count` tasks without one. */
@@ -80,7 +73,7 @@ export class TaskIds {
     const found: Mention[] = [];
     let p = 0;
     for (const name of ids) {
-      if (name !== '') found.push({ name, start: p, role: 'ref' });
+      if (name !== '') found.push({ name, start: p, role: 'ref', click: true });
       p += name.length + 1;
     }
     this.add(base, found);
@@ -91,15 +84,19 @@ export class TaskIds {
    * so the last task written with an id is its definition and earlier ones mention it. A name
    * v12 also gives a task without an id (`task<n>`, of the first `autoIds` tasks) is no symbol:
    * that task could not be renamed with its mentions. Nor is a name a removed span cuts, nor
-   * {@link NEVER_STORED}.
+   * {@link NEVER_STORED}, nor a click's id that no task written before the click has.
    */
   record(st: ParseState, autoIds: number): void {
     const last = new Map<string, Mention>();
     for (const m of this.mentions) if (m.role === 'def') last.set(m.name, m);
+    const written = new Set<string>();
     for (const m of this.mentions) {
+      if (m.role === 'def') written.add(m.name);
       if (this.unmapped.has(m.name) || isAutoId(m.name, autoIds) || m.name === NEVER_STORED) {
         continue;
       }
+      // A click naming no task written before it names nothing (v12 bound it as it read it).
+      if (m.click && !written.has(m.name)) continue;
       const role = m.role === 'def' && last.get(m.name) !== m ? 'ref' : m.role;
       st.symbol(m.name, 'task', { start: m.start, end: m.start + m.name.length }, role);
     }

@@ -20,6 +20,7 @@ import {
   readStartDate,
   WEEKDAYS,
 } from '../dates/index.ts';
+import { lastById, RE_AFTER, RE_UNTIL } from '../ids.ts';
 import {
   ScheduleError,
   type Schedule,
@@ -33,8 +34,6 @@ const MAX_PASSES = 11;
 /** v12 `fixTaskDates`: an end pushed past this many days fails. */
 const MAX_PUSHED_DAYS = 10000;
 const WEEKEND_START_DAY = { friday: 5, saturday: 6 } as const;
-const RE_AFTER = /^after\s+([\d\w- ]+)/;
-const RE_UNTIL = /^until\s+([\d\w- ]+)/;
 const MANUAL_END_FORMAT = 'YYYY-MM-DD';
 const NAMES = WEEKDAYS.map((d) => d.toLowerCase());
 
@@ -61,7 +60,7 @@ class Scheduler {
   private readonly tasks: readonly ScheduleTask[];
   private readonly state: State[];
   /** v12 `taskDb`: id → index of its last definition. */
-  private readonly byId = new Map<string, number>();
+  private readonly byId: ReadonlyMap<string, number>;
   private readonly nowDate: Date;
   private readonly today: number;
   private readonly format: string;
@@ -77,11 +76,9 @@ class Scheduler {
     now: number
   ) {
     this.tasks = input.tasks;
+    this.byId = lastById(input.tasks);
     this.state = input.tasks.map(() => ({ manualEnd: false, processed: false }));
-    input.tasks.forEach((t, i) => {
-      // v12 assigns `taskDb[id]`, a plain object: `__proto__` is never stored.
-      if (t.id !== '__proto__') this.byId.set(t.id, i);
-    });
+
     this.nowDate = new Date(now);
     const midnight = new Date(now);
     midnight.setHours(0, 0, 0, 0);

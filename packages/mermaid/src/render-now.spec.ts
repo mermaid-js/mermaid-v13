@@ -102,6 +102,18 @@ describe('RenderOptions.now (D270, D275)', () => {
     expect(seen.map((s) => s.now)).toEqual([NOW]);
   });
 
+  it.each([NaN, Infinity, '2024-01-10', new Date('nope')])(
+    'rejects a now that is no instant (%s) at the call, as other bad render options',
+    async (now) => {
+      const { m, seen } = await setup();
+      const bad = { now: now as number };
+      expect(() => m.renderSync(TEXT, bad)).toThrow(/RenderOptions\.now/);
+      expect(() => m.renderSync(TEXT, bad)).toThrow(expect.objectContaining({ code: 'INTERNAL' }));
+      await expect(m.render('probe', TEXT, bad)).rejects.toMatchObject({ code: 'INTERNAL' });
+      expect(seen).toEqual([]);
+    }
+  );
+
   it('does not enter the parse cache: one parse serves every now (D274)', async () => {
     const { m, parses } = await setup();
     m.renderSync(TEXT, { now: 1 });
