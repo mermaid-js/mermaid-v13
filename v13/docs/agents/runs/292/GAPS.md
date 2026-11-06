@@ -27,8 +27,13 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
   - Review (#369): `timelineRadius`'s alias had been renamed to `gto`, colliding with `tagLabelBorder`; restored to `tlr`, and `theme-inventory.spec.ts` now asserts every alias is unique.
 
 ## #370 T2 parser
-- v12 needs no line break after the header: `gitGraph commit`, `gitGraph:commit`, `gitGraph TB: commit` parse (probed). The spec's grammar text implies a newline; the oracle decides (accept them).
-- Duplicate ids (D264) do not always give a self-parent: for `A`, `B`, `A` the first `A` disappears, `B`'s parent is the later `A` and that `A`'s parent is `B`, a cycle. Model, layout (`findClosestParent`, ordering) and renderer must terminate on parent cycles; T2 adds such fixtures. A front-matter `title` exists in the corpus (nightly 66).
+- v12 needs no line break after the header: `gitGraph commit`, `gitGraph:commit`, `gitGraph TB: commit` parse (probed). The spec's grammar text implies a newline; the oracle decides (accept them). Done in T2: accepted, parity-checked (quirks and parser cases).
+- Duplicate ids (D264) do not always give a self-parent: for `A`, `B`, `A` the first `A` disappears, `B`'s parent is the later `A` and that `A`'s parent is `B`, a cycle. Model, layout (`findClosestParent`, ordering) and renderer must terminate on parent cycles; Done in T2: parser cases 26–29 (and `parse.spec.ts`) pin the cycle in the model; T3/T4 still owe termination. A front-matter `title` exists in the corpus (nightly 66).
+- **Choice:** derived ids (D260) also skip every commit and merge `id:` written later in the text (cherry-pick `id:`s are references), not only ids already used: otherwise `commit` + `commit id:"0-9e3779b"` collapses two commits where v12 (random digits) keeps both. Same text, same ids still holds.
+- **Choice:** v13's DB-check messages are its own wording (R-ERR-2); the ported specs' adapter rewords them as v12 did. A statement with a syntax error changes nothing and gets no AST node; one with a DB error keeps its node (pie's rule).
+- **Choice:** five ported `getConfig` tests are skipped (no DB config; the config section is #374's); three Langium tests are skipped because mermaid@12 rejects their text (oracle-checked).
+
+- **Shared-file edit:** `packages/conformance/src/flowchart/probe.spec.ts` timeout 60 s → 180 s (assertions and source set unchanged). The sweep probes every `PARITY_SUITES` source (≈4,200 with gitGraph's); on a loaded machine (load ~20) it ran 55–60 s and timed out. `parseFlowchart` over all of them is 0.85 s, gitGraph's no slower than the rest: a bigger sweep, not a regression.
 
 ## #371 T3 layout
 - **Choice:** where v12 drew branch labels over each other (TB: a long name after a short one, as `setBranchPosition` spaces by the previous name only; LR: names of four or more lines), the lane moves out until the boxes are 10 apart (`GIT_METRICS.branchLabel.labelGap`). Elsewhere v12's positions stand (as D224 for clipping). MIGRATION.md (T5).
@@ -36,7 +41,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** branch label text sits centred in its box less 2 px, with v12's first baseline 1em below; TB redux comes out 1 px below v12's `-2·padY + 7`.
 - Core: `usedBy` (documentation, not in the bundle) lists `gitgraph` for the six variables the layout reads; core size unchanged (bench 92,645 before and after).
 - For T5: eight geometry variables (`GIT_GEOMETRY`, ticket 371.md), two signed (`gitLaneOffset` −2/7, `gitBranchLabelOffsetX` 0/−11). Until then `geometryOf` falls back to classic values for names core does not know.
-- [ ] Invariants on parser-produced fixtures: waits for T2 (#370) on the branch; then `conformance/src/gitgraph/layout-corpus.spec.ts`.
+- [x] Invariants on parser-produced fixtures: `conformance/src/gitgraph/layout-corpus.spec.ts` (`parseGitGraph` over the gate corpus, LR/TB/BT, parallel on/off, classic/redux, default and changed options), after T2 merged.
 
 ## #372 T6 language facet
 

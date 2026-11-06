@@ -1,0 +1,799 @@
+// cspell:words accdescr
+/**
+ * gitGraph parser: recursive descent over the significant {@link lex} tokens (gated against
+ * v12's Langium lexer, #368), producing a {@link GitModel}, the typed AST, symbols, statement
+ * spans and diagnostics (DESIGN §4.2).
+ *
+ * The grammar is v12's `gitGraph.langium` (with `common.langium`), ported rule for rule;
+ * `grammar/gitgraph.ebnf` is the normative form:
+ *
+ *     GitGraph: NEWLINE* ("gitGraph" | "gitGraph" ":" | "gitGraph:" | "gitGraph" Direction ":")
+ *               (NEWLINE | TitleAndAccessibilities | Statement)*
+ *     Commit: "commit" ("id:" STRING | "msg:"? STRING | "tag:" STRING | "type:" CommitType)* EOL
+ *     Branch: "branch" (REFERENCE | STRING) ("order:" INT)? EOL
+ *     Merge: "merge" (REFERENCE | STRING) ("id:" STRING | "tag:" STRING | "type:" CommitType)* EOL
+ *     Checkout: ("checkout" | "switch") (REFERENCE | STRING) EOL
+ *     CherryPicking: "cherry-pick" ("id:" STRING | "tag:" STRING | "parent:" STRING)* EOL
+ *     EOL: NEWLINE+ | EOF
+ *
+ * so it accepts and rejects what v12's parser does; nothing separates the header from the
+ * first statement (`gitGraph commit` parses). Each statement that parses is handed to the
+ * model builder ({@link GitBuilder}, v12's DB), whose checks are diagnostics. Unlike v12 the
+ * parser does not stop at the first error: it reports it, skips to the next line break and
+ * carries on (R-PARSE-4). A statement with a syntax error changes nothing.
+ */
+import {
+  APOSTROPHE,
+  cook,
+  DQUOTE,
+  ExpectedTable,
+  Kind,
+  kindSet,
+  LineIndex,
+  ParseState,
+  Probe,
+  significantTokens,
+  skipTo,
+  sourceView,
+} from '@mermaid-js/core/parser-kit';
+import type {
+  AstId,
+  ParseOptions,
+  ParseResult,
+  Range,
+  SourceView,
+  TokenStream,
+  TokenView,
+} from '@mermaid-js/core/parser-kit';
+import { preprocess } from '@mermaid-js/core/preprocess';
+import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import type { GitDirection, GitModel, GitWrittenType } from '../model.ts';
+import type {
+  GitCommitNode,
+  GitGraphDocument,
+  GitMergeNode,
+  GitStatementNode,
+  GitTextNode,
+  GitValue,
+} from './ast.ts';
+import { GitBuilder, WRITTEN_TYPES } from './build.ts';
+import { accDescrValue, accTitleValue, stringValue, titleValue } from './convert.ts';
+import { lex } from './lexer.ts';
+import { GITGRAPH_TRIVIA, T } from './tokens.ts';
+
+export interface GitGraphParseOptions extends ParseOptions {
+  /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
+  preprocessed?: PreprocessResult;
+  /** `gitGraph.mainBranchName`: the branch that exists before the first statement. */
+  mainBranchName?: string;
+  /** `gitGraph.mainBranchOrder`: its place among the branches. */
+  mainBranchOrder?: number;
+}
+
+export type GitGraphParseResult = ParseResult<GitModel, GitGraphDocument>;
+
+/** v12's `gitGraph` config defaults (`config.schema.yaml`). */
+const MAIN_BRANCH = 'main';
+const MAIN_ORDER = 0;
+
+const TEXT = [T.Title, T.AccTitle, T.AccDescr];
+const STATEMENT = [T.Commit, T.Branch, T.Merge, T.Checkout, T.Switch, T.CherryPick];
+const LINE_END = [Kind.Newline, Kind.EOF];
+const DOC = [...STATEMENT, ...TEXT, ...LINE_END];
+const HEAD = [T.GitGraph, T.GitGraphColon, Kind.Newline];
+const DIRECTIONS = [T.LR, T.TB, T.BT];
+const AFTER_GIT_GRAPH = [T.Colon, ...DIRECTIONS, ...DOC];
+const NAME = [T.Reference, T.String];
+const TYPES = [T.Normal, T.Reverse, T.Highlight];
+const COMMIT_OPTIONS = [T.Id, T.Msg, T.String, T.Tag, T.Type];
+const MERGE_OPTIONS = [T.Id, T.Tag, T.Type];
+const PICK_OPTIONS = [T.Id, T.Tag, T.Parent];
+const AFTER_BRANCH = [T.Order, ...LINE_END];
+
+/** Where recovery resumes (R-PARSE-4). */
+const BOUNDARY = kindSet(Kind.Newline, Kind.EOF);
+/**
+ * Kinds a probe's cursor follows rather than extends: the `…:` keywords and `:`, and a string,
+ * which its closing quote ends (right after `id:"a"` the parser expects the next option).
+ */
+const PROBE_FOLLOWS = kindSet(
+  T.GitGraphColon,
+  T.Colon,
+  T.Id,
+  T.Msg,
+  T.Tag,
+  T.Type,
+  T.Parent,
+  T.Order,
+  T.String
+);
+
+/** The keyword of each statement-value token, also its probe mode ({@link probeMode}). */
+const VALUE_WORDS: Readonly<Record<number, string>> = {
+  [T.Title]: 'title',
+  [T.AccTitle]: 'accTitle',
+  [T.AccDescr]: 'accDescr',
+};
+
+/**
+ * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
+ * mode names what the offset is in: `title`, `accTitle` or `accDescr` past the keyword of
+ * that statement, `string` inside a string (closed or not), else `INITIAL` (code).
+ */
+function probeMode(src: string, tokens: TokenStream, o: number): string {
+  for (let j = 0; j < tokens.length; j++) {
+    const start = tokens.start[j] ?? 0;
+    const end = tokens.end[j] ?? 0;
+    if (start >= o) break;
+    if (end < o) continue;
+    const kind = tokens.kind[j] ?? Kind.EOF;
+    const c = src.charCodeAt(start);
+    if (kind === T.String && o < end) return 'string';
+    // An unclosed string is an error token from its quote to the line end.
+    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
+    const word = VALUE_WORDS[kind];
+    if (!word) continue;
+    let k = start;
+    while (/[\t ]/.test(src.charAt(k))) k++;
+    k += word.length;
+    // A block `accDescr { … }` ends at its `}`; the other values run to the line end.
+    const block = kind === T.AccDescr && /^\s*\{/.test(src.slice(k, end));
+    if (o > k && (o < end || !block)) return word;
+  }
+  return 'INITIAL';
+}
+
+/** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
+const EXPECTED = new ExpectedTable([
+  ['`gitGraph`', [T.GitGraph, T.GitGraphColon]],
+  ['a direction `LR`, `TB` or `BT`', DIRECTIONS],
+  ['`:`', [T.Colon]],
+  ['a statement such as `commit`, `branch`, `checkout`, `merge` or `cherry-pick`', STATEMENT],
+  ['`title`, `accTitle:` or `accDescr`', TEXT],
+  ['a branch name', [T.Reference]],
+  ['a quoted text such as `"text"`', [T.String]],
+  ['an option such as `id:` or `tag:`', [T.Id, T.Msg, T.Tag, T.Type, T.Parent, T.Order]],
+  ['a commit type `NORMAL`, `REVERSE` or `HIGHLIGHT`', TYPES],
+  ['a whole number such as `1`', [T.Int]],
+  ['a line break', [Kind.Newline]],
+  ['the end of the text', [Kind.EOF]],
+]);
+
+const KIND_OF: Record<number, GitTextNode['type']> = {
+  [T.Title]: 'Title',
+  [T.AccTitle]: 'AccTitle',
+  [T.AccDescr]: 'AccDescr',
+};
+const SPAN_OF: Record<GitTextNode['type'], string> = {
+  Title: 'title',
+  AccTitle: 'accTitle',
+  AccDescr: 'accDescr',
+};
+const DIRECTION_OF: Record<number, GitDirection> = { [T.LR]: 'LR', [T.TB]: 'TB', [T.BT]: 'BT' };
+const ONE_PER_LINE = 'put each statement on a line of its own';
+/** The word keywords, for "case-sensitive" and "put a blank after" hints. */
+const KEYWORDS = ['cherry-pick', 'checkout', 'commit', 'branch', 'switch', 'merge'];
+/** The options each statement takes, for hints. */
+const OPTIONS_OF: Record<number, string> = {
+  [T.Commit]: '`commit` takes `id:`, `msg:` (or a quoted message), `tag:` and `type:`',
+  [T.Merge]: '`merge <branch>` takes `id:`, `tag:` and `type:`',
+  [T.CherryPick]: '`cherry-pick` takes `id:`, `parent:` and `tag:`',
+  [T.Branch]: '`branch <name>` takes `order:`',
+};
+
+/**
+ * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
+ * instance, so its stack is captured once.
+ */
+class Stop extends Error {}
+const STOP = new Stop();
+
+/**
+ * `%`, `>`, `@` and `#` percent-encoded, as in every AST id (DESIGN §4.2), and so are the
+ * characters XML 1.0 cannot hold (C0 controls but tab, LF and CR; DEL; lone surrogates; U+FFFE,
+ * U+FFFF), which a name can carry through `\0`, `\b`, `\f`, `\v` or the source: the SVG writer
+ * drops them, so `data-ast` would not be the id. Two hex digits up to U+007F, four above, so
+ * the encoding stays one-to-one.
+ */
+const ESCAPED = '%>@#\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f\\ud800-\\udfff\\ufffe\\uffff';
+const RE_NEEDS_ESC = new RegExp(`[${ESCAPED}]`, 'u');
+const RE_ESC = new RegExp(`[${ESCAPED}]`, 'gu');
+/** Code units below this take two hex digits (`%00`…`%7F`), the rest four (`%D800`, `%FFFF`). */
+const TWO_DIGITS = 0x80;
+function esc(name: string): string {
+  return RE_NEEDS_ESC.test(name)
+    ? name.replace(RE_ESC, (c) => {
+        const n = c.charCodeAt(0);
+        return `%${n
+          .toString(16)
+          .toUpperCase()
+          .padStart(n < TWO_DIGITS ? 2 : 4, '0')}`;
+      })
+    : name;
+}
+
+/** Parse a git graph. Never throws: problems are error diagnostics. */
+export function parseGitGraph(
+  src: string,
+  options: GitGraphParseOptions = {}
+): GitGraphParseResult {
+  return new GitGraphParser(src, options).parse();
+}
+
+/**
+ * One parse. Each grammar rule is a method that returns what it read; a rule that fails
+ * records a diagnostic and throws {@link STOP}, and the statement loop recovers.
+ */
+class GitGraphParser {
+  private readonly pre: PreprocessResult;
+  private readonly view: SourceView;
+  private readonly full: TokenStream;
+  private readonly t: TokenView;
+  private i = 0;
+  private readonly st = new ParseState();
+  private readonly probe: Probe | undefined;
+  private readonly git: GitBuilder;
+  private readonly children: GitStatementNode[] = [];
+  private lines: LineIndex | undefined;
+  /** `@n` mentions per id base (`c:A`, `b:dev`). */
+  private readonly mentions = new Map<string, number>();
+  /** `#k` ordinals per id base (`c`, `m:dev`, `cp:A`, `co:dev`, `st`). */
+  private readonly ordinals = new Map<string, number>();
+  private direction: GitDirection = 'LR';
+  /** The last in-text value of each (v12's Langium assignments: the last one wins). */
+  private title = '';
+  private accTitle = '';
+  private accDescr = '';
+
+  constructor(
+    private readonly src: string,
+    private readonly options: GitGraphParseOptions
+  ) {
+    const pre = (this.pre = options.preprocessed ?? preprocess(src));
+    if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
+    this.view = sourceView(
+      src,
+      pre.bodyStart,
+      pre.directives.map((d) => d.range)
+    );
+    this.full = lex(src, pre.bodyStart, this.view);
+    this.t = significantTokens(this.full, GITGRAPH_TRIVIA);
+    this.git = new GitBuilder(
+      this.st.diagnostics,
+      options.mainBranchName ?? MAIN_BRANCH,
+      options.mainBranchOrder ?? MAIN_ORDER,
+      this.writtenIds()
+    );
+    if (options.probe !== undefined) {
+      const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+      if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+      else probe.trivia(this.full);
+      // Ignored when the offset is outside code.
+      probe.lexed(probe.offset, probe.offset, probeMode(src, this.full, probe.offset));
+    }
+  }
+
+  parse(): GitGraphParseResult {
+    const { st, src, git } = this;
+    this.statement(() => this.header());
+    this.document();
+    const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
+    // D265 (as D218): the in-text title if non-empty, else the front-matter one.
+    const title = this.title || this.pre.frontMatter?.title;
+    const model: GitModel = Object.freeze({
+      direction: this.direction,
+      commits: Object.freeze(git.commitList()),
+      branches: Object.freeze(git.branchList()),
+      mainBranch: git.mainBranch,
+      currentBranch: git.currentBranch,
+      head: git.headId,
+      ...(title ? { title } : {}),
+      accTitle: this.accTitle,
+      accDescr: this.accDescr,
+      warnings: Object.freeze(warnings),
+    });
+    const ast: GitGraphDocument = {
+      id: 'doc',
+      type: 'Document',
+      range: { start: this.pre.bodyStart, end: src.length },
+      children: this.children,
+    };
+    return st.result(model, ast, this.full, this.options, this.probe);
+  }
+
+  /**
+   * Every `id:` value a `commit` or `merge` writes (the ids the text defines), which derived ids
+   * keep clear of (see {@link GitBuilder}). A cherry-pick's `id:` names an existing commit, so
+   * it may name a derived id.
+   */
+  private writtenIds(): Set<string> {
+    const ids = new Set<string>();
+    const { kind } = this.t;
+    let statement: number | undefined;
+    for (let j = 0; j + 1 < this.t.length; j++) {
+      const k = kind[j] ?? Kind.EOF;
+      if (k === Kind.Newline) statement = undefined;
+      else if (STATEMENT.includes(k)) statement = k;
+      else if (
+        k === T.Id &&
+        kind[j + 1] === T.String &&
+        (statement === T.Commit || statement === T.Merge)
+      ) {
+        ids.add(stringValue(this.raw(j + 1)));
+      }
+    }
+    return ids;
+  }
+
+  // ---- tokens -------------------------------------------------------------------------
+
+  private kind(j = this.i): number {
+    return this.t.kind[j] ?? Kind.EOF;
+  }
+
+  private range(j = this.i): Range {
+    return { start: this.t.start[j] ?? 0, end: this.t.end[j] ?? 0 };
+  }
+
+  /** A token's text as v12's lexer read it (removed spans dropped, entities decoded). */
+  private raw(j = this.i): string {
+    const { start, end } = this.range(j);
+    return cook(this.src, start, end, this.view);
+  }
+
+  /**
+   * Probe hook: the parser tests the current token for `kinds` (a constant list), or would
+   * accept them there. Records them when it is the probed token.
+   */
+  private tested(kinds: readonly number[]): void {
+    const p = this.probe;
+    if (p?.isAt(this.t, this.i, this.pre.bodyStart)) p.tested(kinds, this.range().start);
+  }
+
+  /** Consume a token of `kind` and return its index, or fail. */
+  private expect(kind: number, hint?: string): number {
+    this.tested([kind]);
+    if (this.kind() !== kind) this.fail([kind], hint);
+    return this.i++;
+  }
+
+  /** `base@2`, `base@3`, … for the second and later mentions of `base`. */
+  private mention(base: string): AstId {
+    const n = (this.mentions.get(base) ?? 0) + 1;
+    this.mentions.set(base, n);
+    return n === 1 ? base : `${base}@${n}`;
+  }
+
+  /** `base#k`: the k-th id handed out for `base`. */
+  private ordinal(base: string): AstId {
+    const n = (this.ordinals.get(base) ?? 0) + 1;
+    this.ordinals.set(base, n);
+    return `${base}#${n}`;
+  }
+
+  /** `st:<k>`, for the header and the title and accessibility lines. */
+  private line(): AstId {
+    const n = (this.ordinals.get('st') ?? 0) + 1;
+    this.ordinals.set('st', n);
+    return `st:${n}`;
+  }
+
+  // ---- errors and recovery ------------------------------------------------------------
+
+  private lineOf(at: number): number {
+    return (this.lines ??= new LineIndex(this.src)).position(at).line + 1;
+  }
+
+  /** How an error message names the current token. */
+  private found(): string {
+    const k = this.kind();
+    if (k === Kind.EOF) return 'the end of the text';
+    if (k === Kind.Newline) return 'a line break';
+    const text = this.raw().trim();
+    const line = text.split('\n', 1)[0] ?? '';
+    return line.length > 24 || line !== text ? `\`${line.slice(0, 24)}…\`` : `\`${line}\``;
+  }
+
+  /** Report what was found where one of `want` was expected, then stop the statement. */
+  private fail(want: readonly number[], hint?: string): never {
+    const { st } = this;
+    const where = this.range();
+    // `title` and the accessibility tokens take the blanks before them.
+    while (where.start < where.end && /[\t ]/.test(this.src[where.start] ?? '')) where.start++;
+    if (this.kind() === Kind.Error) this.badCharacters(where);
+    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
+    const why = hint ?? this.explain();
+    if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
+    throw STOP;
+  }
+
+  /**
+   * Text no token rule matched: an unclosed string, or stray characters. (An unclosed
+   * `accDescr {` or an `accTitle` without `:` lexes as a name, which {@link explain} covers.)
+   */
+  private badCharacters(where: Range): never {
+    const { st } = this;
+    const text = this.raw();
+    const line = this.lineOf(where.start);
+    if (text.startsWith('"') || text.startsWith("'")) {
+      const q = text[0] ?? '"';
+      st.diagnostics.error(
+        'UNCLOSED_STRING',
+        `Unclosed text: the \`${q}\` at line ${line} has no closing \`${q}\`. Add \`${q}\` after the text.`,
+        where,
+        { expected: [`\`${q}\``] }
+      );
+      throw STOP;
+    }
+    const shown = text.length > 24 ? `${text.slice(0, 24)}…` : text;
+    let why = '';
+    if (text.startsWith(';'))
+      why = `; \`;\` does not end a statement in a git graph: ${ONE_PER_LINE}`;
+    else if (/^[^\w\s"']/.test(text)) {
+      why =
+        '; a branch name is letters, digits, `_`, `-`, `.` and `/`: quote any other name, e.g. `"my branch"`';
+    }
+    st.diagnostics.error('UNEXPECTED_CHARACTER', `Unexpected character \`${shown}\`${why}.`, where);
+    throw STOP;
+  }
+
+  private explain(): string | undefined {
+    const k = this.kind();
+    if (k === T.GitGraph || k === T.GitGraphColon)
+      return 'a git graph has one `gitGraph`, at its start';
+    if (DIRECTIONS.includes(k))
+      return 'the direction goes on the `gitGraph` line, as `gitGraph TB:`';
+    if (STATEMENT.includes(k) || TEXT.includes(k)) return ONE_PER_LINE;
+    if (k !== T.Reference) return undefined;
+    const word = this.raw();
+    if (word === 'accTitle') return 'write the accessible title as `accTitle: …`';
+    if (word === 'accDescr') {
+      return 'write the accessible description as `accDescr: …`, or as `accDescr { … }` closed by `}`';
+    }
+    const keyword = KEYWORDS.find((w) => w.toLowerCase() === word.toLowerCase());
+    if (keyword) return `keywords are case-sensitive: write \`${keyword}\``;
+    const glued = KEYWORDS.find((w) => word.startsWith(w));
+    if (glued) return `put a blank after \`${glued}\``;
+    return undefined;
+  }
+
+  /** Skip to the next line break after an error (R-PARSE-4). */
+  private recover(): void {
+    this.probe?.freeze();
+    this.i = skipTo(this.t, this.i, BOUNDARY);
+  }
+
+  /** Run one statement rule; on failure, recover. */
+  private statement(rule: () => void): void {
+    try {
+      rule();
+    } catch (error) {
+      if (error !== STOP) throw error;
+      this.recover();
+    }
+  }
+
+  // ---- rules --------------------------------------------------------------------------
+
+  /** `NEWLINE* ("gitGraph" | "gitGraph" ":" | "gitGraph:" | "gitGraph" Direction ":")` */
+  private header(): void {
+    for (;;) {
+      this.tested(HEAD);
+      if (this.kind() !== Kind.Newline) break;
+      this.i++;
+    }
+    this.tested(HEAD);
+    const k = this.kind();
+    if (k !== T.GitGraph && k !== T.GitGraphColon) {
+      const glued = k === T.Reference && this.raw().startsWith('gitGraph');
+      this.fail(
+        [T.GitGraph],
+        glued
+          ? '`gitGraph` is followed by a blank, a `:` or the end of the line'
+          : 'a git graph starts with `gitGraph`'
+      );
+    }
+    const range = this.range(this.i++);
+    let direction: GitDirection | undefined;
+    if (k === T.GitGraph) {
+      this.tested(AFTER_GIT_GRAPH);
+      const next = this.kind();
+      if (next === T.Colon) range.end = this.range(this.i++).end;
+      else if (DIRECTIONS.includes(next)) {
+        direction = DIRECTION_OF[next];
+        this.i++;
+        const colon = this.expect(T.Colon, 'a direction takes a `:` after it, as `gitGraph TB:`');
+        range.end = this.range(colon).end;
+      }
+    }
+    if (direction) this.direction = direction;
+    this.st.statement('header', range);
+    this.children.push({
+      id: this.line(),
+      type: 'Header',
+      range,
+      ...(direction ? { direction } : {}),
+    });
+  }
+
+  /** `(NEWLINE | TitleAndAccessibilities | Statement)* EOF` */
+  private document(): void {
+    for (;;) {
+      this.tested(DOC);
+      const k = this.kind();
+      if (k === Kind.EOF) return;
+      if (k === Kind.Newline) {
+        this.i++;
+        continue;
+      }
+      this.statement(() => {
+        if (k === T.Commit) this.commit();
+        else if (k === T.Branch) this.branch();
+        else if (k === T.Merge) this.merge();
+        else if (k === T.Checkout || k === T.Switch) this.checkout(k);
+        else if (k === T.CherryPick) this.cherryPick();
+        else if (TEXT.includes(k)) this.text(k);
+        else this.fail([...STATEMENT, ...TEXT]);
+      });
+    }
+  }
+
+  /** `EOL: NEWLINE+ | EOF` (the loop takes the line breaks after the first). */
+  private eol(statement: number, options: readonly number[]): void {
+    this.tested([...options, ...LINE_END]);
+    const k = this.kind();
+    if (k === Kind.EOF) return;
+    if (k !== Kind.Newline) {
+      let hint: string | undefined;
+      if (STATEMENT.includes(k) || TEXT.includes(k)) hint = ONE_PER_LINE;
+      else if (k === T.Reference && /^\w+$/.test(this.raw()) && options.length > 0) {
+        hint = `${OPTIONS_OF[statement] ?? ''}, each written as \`name:\``;
+      } else if (options.length > 0) hint = OPTIONS_OF[statement];
+      this.fail([...options, ...LINE_END], hint);
+    }
+    this.i++;
+  }
+
+  /** The end of the last token read, for statement ranges. */
+  private lastEnd(): number {
+    return this.t.end[this.i - 1] ?? 0;
+  }
+
+  /** `STRING`, converted. */
+  private string(after: string): GitValue {
+    const j = this.expect(T.String, `${after} takes a quoted text, as \`${after}"text"\``);
+    return { value: stringValue(this.raw(j)), range: this.range(j) };
+  }
+
+  /** `REFERENCE | STRING`: a branch name. */
+  private name(keyword: string): GitValue {
+    this.tested(NAME);
+    const k = this.kind();
+    if (k === T.Reference) {
+      const j = this.i++;
+      return { value: this.raw(j), range: this.range(j) };
+    }
+    if (k === T.String) {
+      const j = this.i++;
+      return { value: stringValue(this.raw(j)), range: this.range(j) };
+    }
+    let hint: string | undefined;
+    if (k === T.Title) {
+      // D269: `title` starts a title line wherever it is, so `branch titled` cannot be a name.
+      hint = `a name that starts with \`title\` must be quoted, as \`${keyword} "titled"\``;
+    } else if (k === T.Int) {
+      hint = `a name that starts with a number must be quoted, as \`${keyword} "123"\``;
+    } else if (STATEMENT.includes(k) || DIRECTIONS.includes(k) || TYPES.includes(k)) {
+      hint = `quote a name that is a keyword, as \`${keyword} "${this.raw().trim()}"\``;
+    } else if (k === Kind.Newline || k === Kind.EOF) {
+      hint = `write the branch name after \`${keyword}\``;
+    }
+    this.fail(NAME, hint);
+  }
+
+  /** `"type:" (NORMAL | REVERSE | HIGHLIGHT)` after `type:`. */
+  private commitType(): GitWrittenType {
+    this.tested(TYPES);
+    const k = this.kind();
+    if (!TYPES.includes(k)) this.fail(TYPES);
+    return WRITTEN_TYPES[this.raw(this.i++)] ?? 'NORMAL';
+  }
+
+  /** `Commit: "commit" ("id:" STRING | "msg:"? STRING | "tag:" STRING | "type:" type)* EOL` */
+  private commit(): void {
+    const keyword = this.range(this.i++);
+    let commitId: GitValue | undefined;
+    let message: GitValue | undefined;
+    let commitType: GitWrittenType | undefined;
+    const tags: GitValue[] = [];
+    for (;;) {
+      this.tested(COMMIT_OPTIONS);
+      const k = this.kind();
+      if (k === T.Id) {
+        this.i++;
+        commitId = this.string('id:');
+      } else if (k === T.Msg) {
+        this.i++;
+        message = this.string('msg:');
+      } else if (k === T.String) message = this.string('msg:');
+      else if (k === T.Tag) {
+        this.i++;
+        tags.push(this.string('tag:'));
+      } else if (k === T.Type) {
+        this.i++;
+        commitType = this.commitType();
+      } else break;
+    }
+    const range = { start: keyword.start, end: this.lastEnd() };
+    this.eol(T.Commit, COMMIT_OPTIONS);
+    const astId = commitId?.value ? this.mention(`c:${esc(commitId.value)}`) : this.ordinal('c');
+    const node: GitCommitNode = {
+      id: astId,
+      type: 'Commit',
+      range,
+      ...(commitId ? { commitId } : {}),
+      ...(message ? { message } : {}),
+      tags,
+      ...(commitType ? { commitType } : {}),
+    };
+    this.children.push(node);
+    this.st.statement('commit', range);
+    if (commitId) this.st.symbol(commitId.value, 'commit', commitId.range, 'def');
+    this.git.commit({
+      ...(commitId ? { id: commitId } : {}),
+      message: message?.value ?? '',
+      ...(commitType ? { type: commitType } : {}),
+      tags: tags.map((t) => t.value),
+      astId,
+      keyword,
+    });
+  }
+
+  /** `Branch: "branch" (REFERENCE | STRING) ("order:" INT)? EOL` */
+  private branch(): void {
+    const keyword = this.range(this.i++);
+    const name = this.name('branch');
+    let order: number | undefined;
+    this.tested(AFTER_BRANCH);
+    if (this.kind() === T.Order) {
+      this.i++;
+      const j = this.expect(T.Int, '`order:` takes a whole number, as `order: 2`');
+      order = Number(this.raw(j));
+    }
+    const range = { start: keyword.start, end: this.lastEnd() };
+    this.eol(T.Branch, order === undefined ? [T.Order] : []);
+    const base = `b:${esc(name.value)}`;
+    const id = this.mention(base);
+    this.children.push({
+      id,
+      type: 'Branch',
+      range,
+      name,
+      ...(order === undefined ? {} : { order }),
+    });
+    this.st.statement('branch', range);
+    this.st.symbol(name.value, 'branch', name.range, id === base ? 'def' : 'ref');
+    this.git.branch(name, order ?? 0, id);
+  }
+
+  /** `Merge: "merge" (REFERENCE | STRING) ("id:" STRING | "tag:" STRING | "type:" type)* EOL` */
+  private merge(): void {
+    const keyword = this.range(this.i++);
+    const branch = this.name('merge');
+    let commitId: GitValue | undefined;
+    let commitType: GitWrittenType | undefined;
+    const tags: GitValue[] = [];
+    for (;;) {
+      this.tested(MERGE_OPTIONS);
+      const k = this.kind();
+      if (k === T.Id) {
+        this.i++;
+        commitId = this.string('id:');
+      } else if (k === T.Tag) {
+        this.i++;
+        tags.push(this.string('tag:'));
+      } else if (k === T.Type) {
+        this.i++;
+        commitType = this.commitType();
+      } else break;
+    }
+    const range = { start: keyword.start, end: this.lastEnd() };
+    this.eol(T.Merge, MERGE_OPTIONS);
+    const astId = this.ordinal(`m:${esc(branch.value)}`);
+    const node: GitMergeNode = {
+      id: astId,
+      type: 'Merge',
+      range,
+      branch,
+      ...(commitId ? { commitId } : {}),
+      tags,
+      ...(commitType ? { commitType } : {}),
+    };
+    this.children.push(node);
+    this.st.statement('merge', range);
+    this.st.symbol(branch.value, 'branch', branch.range, 'ref');
+    if (commitId) this.st.symbol(commitId.value, 'commit', commitId.range, 'def');
+    this.git.merge({
+      branch,
+      ...(commitId ? { id: commitId } : {}),
+      ...(commitType ? { type: commitType } : {}),
+      tags: tags.map((t) => t.value),
+      astId,
+      keyword,
+    });
+  }
+
+  /** `Checkout: ("checkout" | "switch") (REFERENCE | STRING) EOL` */
+  private checkout(k: number): void {
+    const keyword = this.range(this.i++);
+    const word = k === T.Switch ? 'switch' : 'checkout';
+    const branch = this.name(word);
+    const range = { start: keyword.start, end: this.lastEnd() };
+    this.eol(k, []);
+    const id = this.ordinal(`co:${esc(branch.value)}`);
+    this.children.push({ id, type: 'Checkout', range, keyword: word, branch });
+    this.st.statement('checkout', range);
+    this.st.symbol(branch.value, 'branch', branch.range, 'ref');
+    this.git.checkout(branch);
+  }
+
+  /** `CherryPicking: "cherry-pick" ("id:" STRING | "tag:" STRING | "parent:" STRING)* EOL` */
+  private cherryPick(): void {
+    const keyword = this.range(this.i++);
+    let commitId: GitValue | undefined;
+    let parent: GitValue | undefined;
+    const tags: GitValue[] = [];
+    for (;;) {
+      this.tested(PICK_OPTIONS);
+      const k = this.kind();
+      if (k === T.Id) {
+        this.i++;
+        commitId = this.string('id:');
+      } else if (k === T.Parent) {
+        this.i++;
+        parent = this.string('parent:');
+      } else if (k === T.Tag) {
+        this.i++;
+        tags.push(this.string('tag:'));
+      } else break;
+    }
+    const range = { start: keyword.start, end: this.lastEnd() };
+    this.eol(T.CherryPick, PICK_OPTIONS);
+    const astId = this.ordinal(`cp:${esc(commitId?.value ?? '')}`);
+    this.children.push({
+      id: astId,
+      type: 'CherryPick',
+      range,
+      ...(commitId ? { commitId } : {}),
+      ...(parent ? { parent } : {}),
+      tags,
+    });
+    this.st.statement('cherryPick', range);
+    if (commitId) this.st.symbol(commitId.value, 'commit', commitId.range, 'ref');
+    if (parent) this.st.symbol(parent.value, 'commit', parent.range, 'ref');
+    this.git.cherryPick({
+      ...(commitId ? { id: commitId } : {}),
+      ...(parent ? { parent } : {}),
+      // v12: Langium's empty array became `undefined`, so no `tag:` gives the default tag.
+      ...(tags.length > 0 ? { tags: tags.map((t) => t.value) } : {}),
+      astId,
+      keyword,
+    });
+  }
+
+  /** `(ACC_DESCR | ACC_TITLE | TITLE) EOL` */
+  private text(k: number): void {
+    const j = this.i++;
+    const image = this.raw(j);
+    const type = KIND_OF[k] ?? 'Title';
+    const range = this.range(j);
+    while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
+    this.eol(k, []);
+    let text: string;
+    if (type === 'Title') text = this.title = titleValue(image);
+    else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
+    else text = this.accDescr = accDescrValue(image);
+    this.children.push({ id: this.line(), type, range, text });
+    this.st.statement(SPAN_OF[type], range);
+  }
+}

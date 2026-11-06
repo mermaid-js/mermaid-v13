@@ -115,6 +115,16 @@ export const GRAMMARS: GrammarTarget[] = [
     },
   },
   {
+    type: 'gitgraph',
+    title: 'Git graph syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // A quoted text and a name follow keywords: completion offers them, with the doc.
+      documented: ['String', 'Reference'],
+    },
+  },
+  {
     type: 'quadrant',
     title: 'Quadrant chart syntax',
     kinds: {

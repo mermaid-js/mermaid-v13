@@ -1,5 +1,6 @@
 /**
- * The gitGraph parser's public surface: the lexer gated against v12's Langium lexer (#368).
+ * The gitGraph parser's public surface: the parser and model builder (#370), detection, and
+ * the lexer gated against v12's Langium lexer (#368).
  */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
@@ -7,6 +8,10 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { LANGIUM_NAMES, GITGRAPH_TRIVIA, T as GitGraphTokenKind } from './tokens.ts';
+export { parseGitGraph } from './parser.ts';
+export type { GitGraphParseOptions, GitGraphParseResult } from './parser.ts';
+export { detectGitGraph } from './detect.ts';
+export type * from './ast.ts';
 
 export interface GitGraphToken {
   /** A `GitGraphTokenKind` or a shared `Kind`. */
