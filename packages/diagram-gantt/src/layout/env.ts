@@ -15,7 +15,7 @@ import { GANTT_METRICS, type GanttMetrics } from './metrics.ts';
 
 /** What the layout reads from the render context. */
 export type GanttLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme' | 'warn'> &
-  Partial<Pick<RenderContext, 'inline' | 'now' | 'availableWidth'>>;
+  Partial<Pick<RenderContext, 'inline' | 'now' | 'availableWidth' | 'limits'>>;
 
 /** A `gantt.*` value the layout cannot honour (pitfall 22): it uses the default instead. */
 export const GANTT_CONFIG_IGNORED = 'GANTT_CONFIG_IGNORED';

@@ -6,6 +6,7 @@
 import { MermaidError } from '@mermaid-js/core';
 import { formatDiagnostic, type Diagnostic } from '@mermaid-js/core/parser-kit';
 import { clickTargets } from '../ids.ts';
+import { Steps } from '../steps.ts';
 import {
   schedule,
   ScheduleError,
@@ -41,12 +42,14 @@ export function layoutGantt(model: GanttModel, ctx: GanttLayoutContext): GanttLa
     );
   }
   const env = envOf(ctx);
-  const plan = scheduled(model, now);
+  // One work counter for the schedule and the exclude ranges (D542).
+  const steps = new Steps(ctx.limits?.maxLayoutWork);
+  const plan = scheduled(model, now, steps);
   warnings(model, plan, ctx);
   const c = chartOf(env, model, plan);
   const sections = sectionsOf(c);
   const bands = bandsOf(c);
-  const excludes = c.domain ? excludesOf(c, ctx.warn) : [];
+  const excludes = c.domain ? excludesOf(c, ctx.warn, steps) : [];
   const bars = c.domain ? barsOf(c) : [];
   const axes = axesOf(c, ctx.warn, ctx.measurer.metrics(env.fonts.tick));
   const today = todayOf(c, now);
@@ -72,9 +75,9 @@ export function layoutGantt(model: GanttModel, ctx: GanttLayoutContext): GanttLa
 }
 
 /** The schedule, or the render's `SEMANTIC` error at the task that failed (D274). */
-function scheduled(model: GanttModel, now: number): Schedule {
+function scheduled(model: GanttModel, now: number, steps: Steps): Schedule {
   try {
-    return schedule(model, { now });
+    return schedule(model, { now, steps });
   } catch (e) {
     if (!(e instanceof ScheduleError)) throw e;
     const range = model.tasks[e.index]?.dataRange;

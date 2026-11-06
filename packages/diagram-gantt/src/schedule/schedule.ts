@@ -21,6 +21,7 @@ import {
   WEEKDAYS,
 } from '../dates/index.ts';
 import { lastById, RE_AFTER, RE_UNTIL } from '../ids.ts';
+import { dayCost, Steps } from '../steps.ts';
 import {
   ScheduleError,
   type Schedule,
@@ -49,11 +50,16 @@ interface State {
 export interface ScheduleOptions {
   /** The instant treated as now (ms since the epoch, D270). */
   readonly now: number;
+  /**
+   * The work counter (D542): a `maxLayoutWork` limit's, shared with the layout. Default: a
+   * fresh one at core's default limit.
+   */
+  readonly steps?: Steps;
 }
 
 /** Schedules `input` against `now` as v12's `getTasks()` did. */
 export function schedule(input: ScheduleInput, options: ScheduleOptions): Schedule {
-  return new Scheduler(input, options.now).run();
+  return new Scheduler(input, options.now, options.steps ?? new Steps()).run();
 }
 
 class Scheduler {
@@ -71,10 +77,15 @@ class Scheduler {
   private readonly unknown = new Set<string>();
   private readonly bad = new Set<string>();
 
+  /** What each walked day costs (`steps.ts`). */
+  private readonly cost: number;
+
   constructor(
     private readonly input: ScheduleInput,
-    now: number
+    now: number,
+    private readonly steps: Steps
   ) {
+    this.cost = dayCost(input.dateFormat);
     this.tasks = input.tasks;
     this.byId = lastById(input.tasks);
     this.state = input.tasks.map(() => ({ manualEnd: false, processed: false }));
@@ -109,7 +120,12 @@ class Scheduler {
         order: task.tags.includes('vert') ? -1 : order++,
       };
     });
-    return { tasks, unknownIds: [...this.unknown], badDurations: [...this.bad] };
+    return {
+      tasks,
+      unknownIds: [...this.unknown],
+      badDurations: [...this.bad],
+      steps: this.steps.taken,
+    };
   }
 
   /** v12 `compileTask`: whether the task is processed after this pass. */
@@ -221,6 +237,7 @@ class Scheduler {
     let invalid = false;
     let renderEnd: number | undefined;
     while (day.getTime() <= end.getTime()) {
+      this.steps.take(this.cost);
       if (!invalid) renderEnd = end.getTime();
       invalid = this.excluded(day);
       if (invalid) {

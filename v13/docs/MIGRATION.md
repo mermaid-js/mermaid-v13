@@ -187,6 +187,7 @@ is reported as a `CONFIG_SECURE_KEY` warning). Over a limit, the render rejects 
 | `maxNodes` | 10,000 | none |
 | `maxDepth` | subgraphs nested 100 deep; a stack overflow in any stage is reported as this limit | none |
 | `maxOutputLength` | 4,000,000 characters of SVG | none |
+| `maxLayoutWork` | 1,500,000 steps of a layout loop the text can make long (`MAX_STEPS`, D542); gantt counts each day its schedule walks for excluded days, on every pass | none |
 
 ### Errors and the error image
 
@@ -1463,7 +1464,14 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   position (`GANTT_INVALID_DATE`, `GANTT_NO_START`, `GANTT_TOO_MANY_FIELDS`,
   `GANTT_EXCLUDED_ALL`), with v12's messages. v12 threw from its renderer. Parsing no longer
   depends on `now`, so a cached parse stays valid.
-- **Warnings (D276):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`) and data that
+- **Scheduling work limit (D542, R-SEC-5):** a chart whose schedule walks more than
+  `maxLayoutWork` days (default 1,500,000; every day a task spans is walked for its excluded
+  days, on each pass) is refused with a `LIMIT` error. v12 rendered it, after minutes: about
+  2,000 tasks of `9000y` with any `excludes` fit in the source limit. The largest corpus chart
+  walks 689 days. Raise it with `initialize({ limits: { maxLayoutWork } })` or a per-call
+  `config.limits`.
+- **Warnings (D276):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`; a click names
+  only a task written before it, as v12 bound it while reading the line) and data that
   is neither a date nor a duration (`GANTT_BAD_DURATION`), one each per render, where v12 only
   logged. Also new: `GANTT_TICK_INTERVAL_IGNORED` (a `tickInterval` that would draw more than
   10,000 ticks: automatic ticks instead), `GANTT_EXCLUDES_NOT_DRAWN` (a chart over five years

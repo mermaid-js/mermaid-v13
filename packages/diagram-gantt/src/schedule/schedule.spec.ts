@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { LimitError } from '@mermaid-js/core/limits';
+import { Steps } from '../steps.ts';
 import { FixtureDb } from './fixtures.ts';
 import { schedule } from './schedule.ts';
 import { ScheduleError, type ScheduledTask } from './types.ts';
@@ -250,3 +252,38 @@ describe.runIf(Intl.DateTimeFormat().resolvedOptions().timeZone === 'America/Los
     });
   }
 );
+
+describe('scheduling work (D542)', () => {
+  it('counts one step per day walked for excluded days, on every pass', () => {
+    // 10 days, walked from the day after the start to the end: 10 steps; no excludes, none.
+    expect(run(ymd().setExcludes('1999-01-01').addTask('a', 'a,2020-01-01,10d')).steps).toBe(10);
+    expect(run(ymd().addTask('a', 'a,2020-01-01,10d')).steps).toBe(0);
+    // A forward reference resolves on pass 2: b is walked on both passes, a on the second.
+    const two = ymd()
+      .setExcludes('1999-01-01')
+      .addTask('a', 'a,after b,5d')
+      .addTask('b', 'b,2020-01-01,5d');
+    expect(run(two).steps).toBe(5 + 5 + 5);
+  });
+
+  it('counts a day once per 10 characters of a longer dateFormat', () => {
+    const long = new FixtureDb()
+      .setDateFormat('YYYY-MM-DD HH:mm:ss')
+      .setExcludes('1999-01-01')
+      .addTask('a', 'a,2020-01-01 00:00:00,10d');
+    expect(run(long).steps).toBe(20);
+  });
+
+  it('stops at the limit with a LimitError naming gantt scheduling', () => {
+    const db = ymd().setExcludes('1999-01-01').addTask('a', 'a,2020-01-01,100d');
+    let error: unknown;
+    try {
+      schedule(db.input(), { now: NOW, steps: new Steps(50) });
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeInstanceOf(LimitError);
+    expect(error).toMatchObject({ limit: 'maxLayoutWork', max: 50, found: 51 });
+    expect((error as Error).message).toMatch(/gantt chart's schedule needs more than 50 steps/);
+  });
+});

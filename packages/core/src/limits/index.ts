@@ -19,7 +19,16 @@ export interface Limits {
   readonly maxDepth: number;
   /** Characters of the serialised SVG. */
   readonly maxOutputLength: number;
+  /**
+   * Steps a layout may take where its work is not bounded by the other limits: a loop whose
+   * length the text sets apart from its size. Each layout that counts against it says what a
+   * step is (D542; first, gantt's scheduling: one calendar day walked).
+   */
+  readonly maxLayoutWork: number;
 }
+
+/** The default {@link Limits.maxLayoutWork}: about a second of the slowest steps measured (D542). */
+export const MAX_STEPS = 1_500_000;
 
 export type LimitName = keyof Limits;
 
@@ -31,6 +40,7 @@ export const DEFAULT_LIMITS: Readonly<Limits> = Object.freeze({
   maxNodes: 10_000,
   maxDepth: 100,
   maxOutputLength: 4_000_000,
+  maxLayoutWork: MAX_STEPS,
 });
 
 const NAMES = Object.keys(DEFAULT_LIMITS) as LimitName[];
@@ -42,6 +52,7 @@ export const LIMIT_CODES: Readonly<Record<LimitName, string>> = Object.freeze({
   maxNodes: 'NODE_LIMIT',
   maxDepth: 'DEPTH_LIMIT',
   maxOutputLength: 'OUTPUT_LIMIT',
+  maxLayoutWork: 'LAYOUT_LIMIT',
 });
 
 const CODES = new Set(Object.values(LIMIT_CODES));

@@ -3,7 +3,13 @@ import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
-import { ganttLayoutViolations, layoutGantt, parseGantt } from '@mermaid-js/diagram-gantt';
+import { MAX_STEPS } from '@mermaid-js/core/limits';
+import {
+  ganttLayoutViolations,
+  layoutGantt,
+  parseGantt,
+  schedule,
+} from '@mermaid-js/diagram-gantt';
 import type { CorpusItem } from '../types.ts';
 import { ganttGateCorpus } from './corpus.ts';
 import { scheduleFuzz } from './fuzz.ts';
@@ -72,4 +78,27 @@ describe('gantt layout invariants on parser-produced models', () => {
     expect(bars).toBeGreaterThan(20000);
     expect(failures.slice(0, 10)).toEqual([]);
   }, 300_000);
+});
+
+describe('the scheduling work of real charts (D542)', () => {
+  it('stays far under maxLayoutWork for every corpus file', async () => {
+    let max = 0;
+    let at = '';
+    for (const item of await ganttGateCorpus()) {
+      const { model, diagnostics } = parseGantt(item.source);
+      if (diagnostics.some((d) => d.severity === 'error')) continue;
+      let steps = 0;
+      try {
+        steps = schedule(model, { now: GANTT_PARITY_NOW }).steps;
+      } catch {
+        continue;
+      }
+      if (steps > max) [max, at] = [steps, item.id];
+    }
+    process.stdout.write(
+      `scheduling work: at most ${max} steps (${at}), ${((100 * max) / MAX_STEPS).toFixed(3)}% of MAX_STEPS\n`
+    );
+    expect(max).toBeGreaterThan(0);
+    expect(max).toBeLessThan(MAX_STEPS / 100);
+  });
 });
