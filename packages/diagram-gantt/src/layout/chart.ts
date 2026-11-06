@@ -73,7 +73,11 @@ export function chartOf(env: Env, model: GanttModel, plan: Schedule): Chart {
   const plotWidth = w - env.leftPadding - env.rightPadding;
   const plain = plan.tasks.filter((t) => !isVert(t));
   // Unique sections of the tasks with rows, in order (v12 `categories`).
-  const categories = [...new Set(plain.map((t) => names[t.index]!))];
+  const categories = new Map<string, number>();
+  for (const t of plain) {
+    const name = names[t.index]!;
+    if (!categories.has(name)) categories.set(name, categories.size);
+  }
   const domain = domainOf(plan.tasks);
   return {
     env,
@@ -88,8 +92,8 @@ export function chartOf(env: Env, model: GanttModel, plan: Schedule): Chart {
     plain,
     ...(domain ? { domain } : {}),
     slot(section) {
-      const i = categories.indexOf(section);
-      return i < 0 ? 0 : i % env.numberSectionStyles;
+      const i = categories.get(section);
+      return i === undefined ? 0 : i % env.numberSectionStyles;
     },
     scale: scaleOf(domain, plotWidth),
     bounds: new Bounds().rect({ x: 0, y: 0, width: w, height: h }),

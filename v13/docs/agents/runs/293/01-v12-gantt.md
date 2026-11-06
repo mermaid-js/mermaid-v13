@@ -90,7 +90,7 @@ The oracle (12.2.0 dist) matches the source: `<main checkout>/node_modules/.pnpm
   - Skips when there are no excludes and no includes, and when the span is over 5 years (L567–572, warn).
   - Day walk min→max; ranges of `isInvalidDate` days. **A range still open at the end is never pushed** (no flush after L595).
   - Rect `id=${id}-exclude-<date>`, `x scale(startOf day)+leftPad`, `y gridLineStartPadding`, `width scale(endOf day) − scale(startOf day)`, `height h − topPad − gridLineStartPadding`, class `exclude-range`.
-- L631–641 `getEstimatedTickCount` (dayjs.duration ms; month = 30 d).
+- L631–641 `getEstimatedTickCount` (dayjs.duration ms; month = 365/12 d).
 - makeGrid L649–797:
   - axisFormat = db value, else `'%d'` if dateFormat is exactly `D` (untrimmed compare), else `conf.axisFormat ?? '%Y-%m-%d'`.
   - L661–663 `axisBottom`, `tickSize(−h + topPad + gridLineStartPadding)`. L665 `/^([1-9]\d*)(millisecond|…|month)$/` on `db.getTickInterval() || conf.tickInterval` (no `year`).
@@ -188,7 +188,7 @@ The oracle (12.2.0 dist) matches the source: `<main checkout>/node_modules/.pnpm
 8. `RenderOptions` lives in `packages/mermaid/src/api.ts:85`, not core. T0's "`RenderOptions.now`" is a mermaid-package change; only `RenderContext` (`core/src/pipeline/types.ts:50`) is core.
 9. `useWidth`/`useMaxWidth` have no gantt entry in the v13 schema (pending via `BaseDiagramConfig`). T5 must add per-diagram `$ref` overrides like journey L3013–3021, not just flip statuses.
 10. Label placement uses `renderEndTime||endTime` for x but `endTime` for the class (L406 vs L444): with excludes a label can sit inside while classed outside, or the reverse. "Placed by v12's rule" has two rules.
-11. Pele's `dates.test.ts` imports `parseDuration` from Pele's `db.ts` (which needs `PeleError`, `safeUrl`). D1 must repoint that import. Pele files carry no licence header, so the notice comes only from the v13 header and `THIRD_PARTY_NOTICES`. `intervalTicks`' limit test differs from v12's tick estimate (30-day month via dayjs duration).
+11. Pele's `dates.test.ts` imports `parseDuration` from Pele's `db.ts` (which needs `PeleError`, `safeUrl`). D1 must repoint that import. Pele files carry no licence header, so the notice comes only from the v13 header and `THIRD_PARTY_NOTICES`. `intervalTicks`' limit test differs from v12's tick estimate (a month of 365/12 days via dayjs duration).
 12. `axisFormat '%d'` for `dateFormat D` compares the **untrimmed** value (`dateFormat  D` with two spaces does not get it). `includes` appears in no corpus file. Exclude matching compares lowercased tokens with `format(dateFormat)`, so a format with capitals (`MMM`) never matches.
 13. Only section indices 0–3 are styled (styles.js); `numberSectionStyles > 4` gives unstyled `section4+` bands and bars in v12.
 14. `vert` tasks join the time domain (L159–167) but take no row. A chart of only vert markers has a domain but zero rows (D277 covers the drawing). The vert bar's class is usually `task vert  task0`, so it is filled `taskBkgColor`.

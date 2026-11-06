@@ -47,13 +47,16 @@ export function bandsOf(c: Chart): GanttBand[] {
 /** v12 `vertLabels`: one title per section name, centred on its rows. */
 export function sectionsOf(c: Chart): GanttSectionLabel[] {
   const { env } = c;
+  // The first section with each name (v12 keyed sections by name).
+  const asts = new Map<string, string>();
+  for (const s of c.model.sections) if (!asts.has(s.text)) asts.set(s.text, s.ast);
   let before = 0;
   return c.rows.sections.map(([name, n]) => {
     const y = (n * c.gap) / 2 + before * c.gap + env.topPadding;
     before += n;
     const text = env.sectionLabel(name);
     const lineHeight = env.m.sectionLineEm * env.fonts.section.size;
-    const ast = c.model.sections.find((s) => s.text === name)?.ast;
+    const ast = asts.get(name);
     // Each line is centred on its own baseline (`alignment-baseline: central`), 1em apart.
     const pitch = (Math.max(1, text.lines.length) - 1) * lineHeight;
     const top = y - pitch / 2 - text.lineHeight / 2;
@@ -144,7 +147,9 @@ function ticksFor(c: Chart, warn: Warn): GanttTick[] {
   if (ticks.tooMany) {
     warn({
       code: GANTT_TICK_INTERVAL_IGNORED,
-      message: `tickInterval ${ticks.tooMany.interval} would draw more than ${env.m.maxTicks} ticks (about ${ticks.tooMany.estimate}), so automatic ticks are drawn instead.`,
+      message: Number.isFinite(ticks.tooMany.estimate)
+        ? `tickInterval ${ticks.tooMany.interval} would draw more than ${env.m.maxTicks} ticks (about ${ticks.tooMany.estimate}), so automatic ticks are drawn instead.`
+        : `tickInterval ${ticks.tooMany.interval} is not used: the chart starts after it ends, so automatic ticks are drawn instead.`,
     });
   }
   const format = axisFormatOf(c);
@@ -208,7 +213,9 @@ export function axesOf(
 export function todayOf(c: Chart, now: number): GanttToday | undefined {
   const { domain, env } = c;
   const marker = c.model.todayMarker;
-  if (!domain || marker === 'off' || now < domain.start || now > domain.end) return undefined;
+  if (!domain || marker === 'off') return undefined;
+  const [lo, hi] = [Math.min(domain.start, domain.end), Math.max(domain.start, domain.end)];
+  if (now < lo || now > hi) return undefined;
   const today: GanttToday = {
     x: c.scale(now) + env.leftPadding,
     y1: env.titleTopMargin,

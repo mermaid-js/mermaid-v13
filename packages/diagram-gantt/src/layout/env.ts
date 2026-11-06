@@ -116,7 +116,10 @@ export function envOf(ctx: GanttLayoutContext): Env {
   );
   const font = (size: number): FontKey => ({ family, size, weight: m.weightNormal });
   const useWidth = conf.useWidth;
-  let width = ctx.availableWidth ?? m.width;
+  // A non-finite or non-positive `availableWidth` is no width (R-LAYOUT-3): fall back.
+  const available = ctx.availableWidth;
+  let width =
+    available !== undefined && Number.isFinite(available) && available > 0 ? available : m.width;
   if (useWidth !== undefined) width = lengthOf(useWidth, width, 'useWidth', warn);
   const fonts = {
     task: font(fontSize),
