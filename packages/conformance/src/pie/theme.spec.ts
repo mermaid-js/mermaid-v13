@@ -12,6 +12,7 @@ import {
   parseColor,
   type Theme,
 } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import { describe, expect, it } from 'vitest';
 import { loadOracle } from '../oracle.ts';
 
@@ -76,7 +77,10 @@ describe('pie theme variables against v12 12.2.0 (#325, D221, D228)', () => {
 
   it.each(THEME_NAMES.map((n) => [n]))('%s: every pie variable is v12’s', async (name) => {
     const old = v12Vars(name);
-    const theme = createTheme(await loadTheme(name), { cssVariables: false });
+    const theme = createTheme(await loadTheme(name), {
+      diagram: DIAGRAM_TABLES.pie,
+      cssVariables: false,
+    });
     const exception: string[] = name === D228.theme ? [D228.name] : [];
     const names = PIE_VARIABLES.filter((n) => !exception.includes(n));
     expect(Object.fromEntries(names.map((n) => [n, now(theme, n)]))).toEqual(
@@ -87,7 +91,10 @@ describe('pie theme variables against v12 12.2.0 (#325, D221, D228)', () => {
   it('dark: pie12 is cScale0, where v12 leaves it unset (D228)', async () => {
     const old = v12Vars('dark');
     expect(old.pie12).toBeUndefined();
-    const theme = createTheme(await loadTheme('dark'), { cssVariables: false });
+    const theme = createTheme(await loadTheme('dark'), {
+      diagram: DIAGRAM_TABLES.pie,
+      cssVariables: false,
+    });
     expect(hex(theme.value('pie12'))).toBe(hex(old[D228.from]));
   });
 
@@ -107,7 +114,11 @@ describe('pie theme variables against v12 12.2.0 (#325, D221, D228)', () => {
         pieOpacity: 0.4,
       };
       const old = v12Vars(name, themeVariables);
-      const theme = createTheme(await loadTheme(name), { themeVariables, cssVariables: false });
+      const theme = createTheme(await loadTheme(name), {
+        diagram: DIAGRAM_TABLES.pie,
+        themeVariables,
+        cssVariables: false,
+      });
       const names = Object.keys(themeVariables);
       expect(Object.fromEntries(names.map((n) => [n, now(theme, n)]))).toEqual(
         Object.fromEntries(names.map((n) => [n, then(old, n)]))
@@ -122,7 +133,11 @@ describe('pie theme variables against v12 12.2.0 (#325, D221, D228)', () => {
       tertiaryColor: '#f1faee',
     };
     const old = v12Vars('base', themeVariables);
-    const theme = createTheme(await loadTheme('base'), { themeVariables, cssVariables: false });
+    const theme = createTheme(await loadTheme('base'), {
+      diagram: DIAGRAM_TABLES.pie,
+      themeVariables,
+      cssVariables: false,
+    });
     const derived = SLOTS.slice(0, 6);
     expect(derived.map((n) => now(theme, n))).toEqual(derived.map((n) => then(old, n)));
   });

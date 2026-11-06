@@ -14,7 +14,13 @@ Choices the spec and D-ids did not settle, made the way most consistent with the
 
 ## T0b (#439)
 
-- Discover tables from `packages/diagram-*/src/theme/vocabulary.ts` (spec) — the direction check finds them from the exported plugin today; switch it to the vocabulary files.
+- **Names from the vocabulary, rules from the plugin.** The direction check takes a type's names from `src/theme/vocabulary.ts` and its table's `vars`, and its rules and family entries from the plugin `src/index.ts` exports (a vocabulary holds no rules). A new rule 4 fails when both exist and differ. A plugin table with no vocabulary is still allowed ("if both exist").
+- **`fallback: 'redux'` is a family, not a theme.** The direction check's rule 2 and the three conformance theme-names scans (`er-`, `timeline-`, `quadrant/theme-names`) skip a `fallback: '<family>'` literal; every other `'redux'` or `'neo'` still fails.
+- **Twelfth theme in gen-config, not `themes.spec.ts`.** Core can't import the packages, so `tools/gen-config/src/theme-tables.spec.ts` resolves every table (packages, the bench themed stub, the gen-config fixture) in the eleven themes and in a twelfth theme of base colours, the shared tokens `ThemeSpec` requires, a family and the dark trait. With no palettes a slot read is `currentColor` (D332); that counts as resolved only where the built-in theme with the same traits gives a colour.
+- **Package `usedBy`** is `[<own type>]` when the package's sources read the row, else `[]`; any other type reading it fails (`packageReadErrors`).
+- **The oracle specs read every table.** `packages/conformance/src/diagram-themes.ts` holds each plugin's `theme`, `VOCABULARY` (core's rows and every table's vars) and `everyTable(spec)`, a theme that answers each name from the table owning it; the neo and neo-dark specs enumerate `VOCABULARY`.
+- **`dev/src/gallery.ts` is unchanged**: it reads only core's `background`, never a diagram variable.
+- **`gen:theme` runs with `--conditions=mermaid-source`**, so it can import a package's plugin for its table.
 
 ## T1 (#440)
 

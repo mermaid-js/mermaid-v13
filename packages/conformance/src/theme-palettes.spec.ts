@@ -12,6 +12,7 @@ import {
   parseColor,
   type ThemeName,
 } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from './diagram-themes.ts';
 import { describe, expect, it } from 'vitest';
 import { loadOracle } from './oracle.ts';
 
@@ -89,7 +90,12 @@ describe('cScale, cScaleInv and cScaleLabel against v12 12.2.0 (#338, D258)', ()
     else
       expect(now.cScaleLabel).toEqual(
         Array(12).fill(
-          hex(createTheme(await loadTheme(theme), { cssVariables: false }).value('labelTextColor'))
+          hex(
+            createTheme(await loadTheme(theme), {
+              diagram: DIAGRAM_TABLES.sequence,
+              cssVariables: false,
+            }).value('labelTextColor')
+          )
         )
       );
   });

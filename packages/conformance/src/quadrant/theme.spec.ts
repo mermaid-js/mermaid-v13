@@ -14,6 +14,7 @@ import {
   parseColor,
   type ThemeName,
 } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import { describe, expect, it } from 'vitest';
 import { loadOracle } from '../oracle.ts';
 
@@ -68,7 +69,10 @@ describe('quadrant theme variables against v12 12.2.0', () => {
 
   it.each(THEME_NAMES)('derive as v12 does in %s', async (name) => {
     const old = v12Vars(name);
-    const theme = createTheme(await loadTheme(name), { cssVariables: false });
+    const theme = createTheme(await loadTheme(name), {
+      diagram: DIAGRAM_TABLES.quadrant,
+      cssVariables: false,
+    });
     const BORDERS = ['quadrantInternalBorderStrokeFill', 'quadrantExternalBorderStrokeFill'];
     const change = BORDER_CHANGES[name];
     for (const n of BORDERS) {
@@ -92,7 +96,11 @@ describe('quadrant theme variables against v12 12.2.0', () => {
   const FILLS = ['quadrant1Fill', 'quadrant2Fill', 'quadrant3Fill', 'quadrant4Fill'];
   const userPrimary = async (name: ThemeName): Promise<Record<string, unknown>[]> => {
     const vars = { primaryColor: '#336699' };
-    const theme = createTheme(await loadTheme(name), { cssVariables: false, themeVariables: vars });
+    const theme = createTheme(await loadTheme(name), {
+      diagram: DIAGRAM_TABLES.quadrant,
+      cssVariables: false,
+      themeVariables: vars,
+    });
     const old = v12Vars(name, vars);
     return [
       ...FILLS.map((n) => ({ [n]: hex(old[n]) })),
@@ -119,6 +127,7 @@ describe('quadrant theme variables against v12 12.2.0', () => {
     const vars = { primaryTextColor: '#112233', primaryBorderColor: '#445566' };
     const old = v12Vars('default', vars);
     const theme = createTheme(await loadTheme('default'), {
+      diagram: DIAGRAM_TABLES.quadrant,
       cssVariables: false,
       themeVariables: vars,
     });
@@ -138,6 +147,7 @@ describe('quadrant theme variables against v12 12.2.0', () => {
       const vars = { darkMode: true };
       const old = v12Vars(name, vars);
       const theme = createTheme(await loadTheme(name), {
+        diagram: DIAGRAM_TABLES.quadrant,
         cssVariables: false,
         themeVariables: vars,
       });
@@ -149,6 +159,7 @@ describe('quadrant theme variables against v12 12.2.0', () => {
 
   it('honour a user quadrantPointFill (D231)', async () => {
     const theme = createTheme(await loadTheme('default'), {
+      diagram: DIAGRAM_TABLES.quadrant,
       cssVariables: false,
       themeVariables: { quadrantPointFill: '#0149ff' },
     });

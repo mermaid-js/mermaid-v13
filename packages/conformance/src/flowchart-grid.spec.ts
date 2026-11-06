@@ -9,6 +9,7 @@ import {
   type LayoutModel,
 } from '@mermaid-js/core/layout';
 import { createTheme, loadTheme } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from './diagram-themes.ts';
 import { flowchart, type FlowModel, type FlowRenderContext } from '@mermaid-js/diagram-flowchart';
 import { createMermaid, MermaidError } from 'mermaid';
 import { REPO_ROOT, corpusFromDir } from './index.ts';
@@ -27,7 +28,7 @@ const cases: Case[] = [];
 beforeAll(async () => {
   const m = createMermaid();
   m.initialize({ deterministic: true });
-  const theme = createTheme(await loadTheme('redux'), {});
+  const theme = createTheme(await loadTheme('redux'), { diagram: DIAGRAM_TABLES.flowchart });
   for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/flowchart'), 'flowchart')) {
     let prepared;
     try {

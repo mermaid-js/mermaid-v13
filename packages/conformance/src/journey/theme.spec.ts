@@ -12,6 +12,7 @@ import {
   loadTheme,
   parseColor,
 } from '@mermaid-js/core/theme';
+import { DIAGRAM_TABLES } from '../diagram-themes.ts';
 import { describe, expect, it } from 'vitest';
 import { loadOracle } from '../oracle.ts';
 
@@ -44,7 +45,10 @@ const ACTORS = Array.from({ length: 6 }, (_, i) => `actor${i}`);
 describe('journey theme variables against v12 12.2.0 (#327, D249)', () => {
   it.each(THEME_NAMES.map((n) => [n]))('%s: fillType0–7 are v12’s', async (name) => {
     const old = v12Vars(name);
-    const theme = createTheme(await loadTheme(name), { cssVariables: false });
+    const theme = createTheme(await loadTheme(name), {
+      diagram: DIAGRAM_TABLES.journey,
+      cssVariables: false,
+    });
     expect(FILLS.map((f) => hex(theme.value(f)))).toEqual(FILLS.map((f) => hex(old[f])));
   });
 
@@ -52,7 +56,10 @@ describe('journey theme variables against v12 12.2.0 (#327, D249)', () => {
     '%s: faceColor is v12’s fallback, actors unset',
     async (name) => {
       const old = v12Vars(name);
-      const theme = createTheme(await loadTheme(name), { cssVariables: false });
+      const theme = createTheme(await loadTheme(name), {
+        diagram: DIAGRAM_TABLES.journey,
+        cssVariables: false,
+      });
       expect(old.faceColor).toBeUndefined();
       expect(hex(theme.value('faceColor'))).toBe('#fff8dc');
       for (const a of ACTORS) {
@@ -67,7 +74,11 @@ describe('journey theme variables against v12 12.2.0 (#327, D249)', () => {
     v12.mermaidAPI.reset();
     v12.mermaidAPI.initialize({ theme: 'base', themeVariables });
     const old = v12.mermaidAPI.getConfig().themeVariables;
-    const theme = createTheme(await loadTheme('base'), { themeVariables, cssVariables: false });
+    const theme = createTheme(await loadTheme('base'), {
+      diagram: DIAGRAM_TABLES.journey,
+      themeVariables,
+      cssVariables: false,
+    });
     expect([hex(theme.value('fillType0')), hex(theme.value('fillType1'))]).toEqual([
       hex(old.fillType0),
       hex(old.fillType1),

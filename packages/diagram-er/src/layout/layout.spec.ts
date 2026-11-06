@@ -1,3 +1,4 @@
+import type { DiagramPlugin } from '@mermaid-js/core';
 import { describe, expect, it } from 'vitest';
 import { cellMeasurer } from '@mermaid-js/core/ascii';
 import {
@@ -12,8 +13,12 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme } from '@mermaid-js/core/theme';
 import { parseEr } from '../index.ts';
 import { layoutEr, type ErLayout, type ErRenderContext } from './layout.ts';
+import { er as diagramPlugin } from '../plugin.ts';
 
-const theme = createTheme(await loadTheme('redux'), {});
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = diagramPlugin;
+
+const theme = createTheme(await loadTheme('redux'), { diagram: diagramTheme });
 
 /** Lays `src` out through `ctx.layout`, keeping the graph the builder hands the engine. */
 function lay(

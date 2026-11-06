@@ -53,6 +53,16 @@ export interface DiagramThemeVar extends ThemeVarEntry {
   readonly nested?: string;
 }
 
+/**
+ * A row of a diagram package's `src/theme/vocabulary.ts` (spec #414 T0b): a {@link DiagramThemeVar}
+ * and the types that read it, as core's `ThemeVarDef`. Tools and specs read it as data;
+ * `pnpm gen:theme` writes the runtime half (no `usedBy`) to `src/theme/generated/variables.ts`.
+ */
+export interface DiagramThemeVarDef extends DiagramThemeVar {
+  /** The package's own type, or nothing while no source reads it: another reader means core. */
+  readonly usedBy: readonly string[];
+}
+
 /** `DiagramPlugin.theme` (D331, DESIGN §12.1). */
 export interface DiagramThemeTable {
   /** The nested `themeVariables` key v12 reads (`packet`), for the vars that set `nested`. */

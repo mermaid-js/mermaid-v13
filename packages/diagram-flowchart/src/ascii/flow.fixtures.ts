@@ -1,5 +1,6 @@
 // Test helper: renders a flowchart to text through the `./ascii` entry, as a pipeline does
 // (parse → plugin layout → `ascii` hook), with the table measurer in the context.
+import type { DiagramPlugin } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ResolvedConfig } from '@mermaid-js/core/config';
 import { cellMeasurer } from '@mermaid-js/core/ascii';
 import { cellProfile } from '@mermaid-js/core/layout';
@@ -12,6 +13,9 @@ import { parseFlowchart } from '../parser/index.ts';
 import { flowchart } from '../plugin.ts';
 import type { FlowWarning } from '../render/context.ts';
 import type { FlowLayout } from '../render/render.ts';
+
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = flowchart;
 
 export interface Drawn {
   text: string;
@@ -39,7 +43,7 @@ export async function draw(src: string, options: DrawOptions = {}): Promise<Draw
   const config = { ...resolved, ascii: section } as unknown as ResolvedConfig;
   const parse = parseFlowchart(src, { preprocessed: pre });
   const warnings: FlowWarning[] = [];
-  theme ??= createTheme(await loadTheme('default'), {});
+  theme ??= createTheme(await loadTheme('default'), { diagram: diagramTheme });
   const ctx: FlowAsciiContext = {
     config,
     measurer: tableMeasurer,

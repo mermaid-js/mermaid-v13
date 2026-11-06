@@ -53,3 +53,21 @@ Read the variables as any other: `ctx.theme.color('packetStartByteColor')`, `ctx
 
 - `createTheme(spec, { diagram: theme })` resolves a table in unit tests and tools.
 - `pnpm --filter @mermaid-js/bench theme-identity --out <file> [--compare <base file>]` renders every e2e `.mmd` and bench fixture in all eleven themes and `auto`, under four variants, and compares digests.
+
+## Vocabulary and generation (T0b, #439)
+
+A port that moves rows writes `packages/diagram-<type>/src/theme/vocabulary.ts`:
+
+```ts
+import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
+
+export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
+  packetStartByteColor: { alias: 'pkb', kind: 'color', usedBy: ['packet'], nested: 'startByteColor' },
+};
+```
+
+- `usedBy` is `['<type>']` (the package directory without `diagram-`) when the package's sources read the row, else `[]`. A row another type reads belongs in core.
+- `pnpm gen:theme` writes `src/theme/generated/variables.ts` (`THEME_VARIABLE_TABLE`, the rows without `usedBy`, built in a `@__PURE__` call). The table takes it: `vars: THEME_VARIABLE_TABLE`. It also adds the package to `v13/docs/theme-variables.md` ("Diagram variables": each variable's value in every theme, with its nested form).
+- `gen:theme` fails, and so does `theme-inventory.spec.ts`, when a name or alias is core's or another package's, or a nested key repeats (D337).
+- Checks that pick the package up with no edit: `theme-direction.spec.ts` (rule 4: the plugin's `theme.vars` equal the vocabulary), `theme-used-by.spec.ts`, `theme-tables.spec.ts` (every row in eleven themes and a twelfth), and the conformance specs, which pass `plugin.theme` already (`packages/conformance/src/diagram-themes.ts`; the neo and neo-dark specs read every table through `everyTable`).
+- knip treats `src/theme/vocabulary.ts` as an entry.

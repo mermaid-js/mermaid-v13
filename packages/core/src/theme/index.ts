@@ -17,6 +17,7 @@ export type {
   DiagramThemeFamily,
   DiagramThemeTable,
   DiagramThemeVar,
+  DiagramThemeVarDef,
   ThemeFamily,
 } from './diagram.ts';
 export {

@@ -13,6 +13,7 @@
  *   by class, and an element's `__data__.data` is the section its `data-id` names, as d3
  *   bound it in v12.
  */
+import type { DiagramPlugin } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { treeWriter, type SvgNode, type SvgTree } from '@mermaid-js/core/svg';
 import { tableMeasurer } from '@mermaid-js/core/text';
@@ -22,6 +23,9 @@ import { parsePie } from '../parser/index.ts';
 import { renderPie } from '../render/index.ts';
 import type { PieModel } from '../model.ts';
 import { pie } from '../plugin.ts';
+
+/** The diagram's own theme table (D331), passed to `createTheme` as the pipeline does. */
+const { theme: diagramTheme }: Pick<DiagramPlugin, 'id' | 'theme'> = pie;
 
 /** The specs set `securityLevel`; the parse reads no config. */
 export function setConfig(next: Record<string, unknown>): void {
@@ -149,7 +153,7 @@ export async function draw(
 ): Promise<void> {
   const model = diagObj.db.current();
   if (!model) throw new Error('draw: nothing parsed');
-  const theme = createTheme(await loadTheme('default'));
+  const theme = createTheme(await loadTheme('default'), { diagram: diagramTheme });
   const ctx = {
     config: { pie: {} } as unknown as ResolvedConfig,
     theme,

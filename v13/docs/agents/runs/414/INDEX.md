@@ -5,7 +5,7 @@ Integration branch `feature/414_theme-t0`, cut from `mermaid-v13` at `dd4b9d19f`
 | Ticket | Issue | Branch | State |
 | --- | --- | --- | --- |
 | T0a traits, `DiagramThemeTable`, direction check | #438 | on the integration branch | done |
-| T0b per-package `gen:theme`, checks over every table | #439 | | |
+| T0b per-package `gen:theme`, checks over every table | #439 | `feature/439_theme-t0b` | done |
 | T1 pie, quadrant, journey, timeline, gitGraph, gantt, mindmap | #440 | | waits for #398, #404, #406 for wave 2's rows |
 | T2 sequence, class | #441 | | |
 | T3 state, ER | #442 | | |
@@ -22,3 +22,4 @@ Files: `CONTRACT.md` (the T0a API the ports use), `IMPLEMENTER.md` (ticket brief
 | --- | ---: | --- |
 | Base `dd4b9d19f` | 92,181 | |
 | T0a | 92,622 | +441; themed stub +32 (≤ 64), in-core control +443 |
+| T0b | 92,619 | ±0 against its base re-measured (92,619); CDN 92,962 both |
