@@ -21,7 +21,10 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - Accepted deviations (for the maintainer): the lexer repeats pie's code for the `common.langium` terminals (sharing it is a core change); Pele's 12 oracle seeds are not harvested (not on this machine); the harvest pins `fa796a943` (identical to `mermaid@12.2.0` for these files); the line-separator cases are hand-written JSON cases, as in pie and quadrant; the changeset and `publish.spec.ts` entry for the new package are in T1 (they fix specs the skeleton turned red).
 - [x] `tools/gen-config/src/theme-used-by.spec.ts` was red since the skeleton; closed by #467 (cynefin reads `fontFamily`). Was: (every diagram package must read a theme variable). Owner: orchestrator, at the T3 merge (add `cynefin` to the package list and to the `usedBy` of the shared variables it reads). Blocks pushing until then (the pre-push hook runs `pnpm check`).
 
-## #465 T2 parser
+## #465 T2 parser (merged)
+
+- Review fixes landed (`7f6798642`): `parser-stress.spec.ts` (20 shapes; v12's `/\s+$/gm` fails it at 64x); fuzz exemption narrowed to unclosed/multi-line directives and one-line directives v12's `directiveRegex` cuts short (`%%{init: x{}}%%`), exempt count asserted < 3%; 31 recovery cases, 5 with N>1; every capitalised rule name in the no-names check (`cynefin`, `ended` are words in messages); `getConfig` skipped until #469; ebnf prose (a lone CR is a lexer error only in text handed straight to Langium: v12's preprocessing turns it into LF).
+- **Additive model change:** `CYNEFIN_DOMAIN_NAMES` in `model.ts`, `CynefinDomainName` derived from it (same union).
 
 - Review sent back: parser/convert stress spec; narrow the fuzz's directive exemption to the core difference; recovery cases with N>1 errors and every rule name in the no-names check; `getConfig` compared with the oracle (or skipped with a reason); ebnf lexer-input prose; one domain-name source, no silent fallbacks, clearer names.
 - Accepted deviations (for the maintainer):
@@ -37,11 +40,13 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 - Review sent back: NaN/Infinity at huge finite config (`width: 1e200`, 1e308): `Math.hypot`, and a canvas that is not finite counts as invalid (D366 fallback + warning); `fixtures.ts` ships in dist; unused `CANVAS.quarter`; the subtitle's italic style recorded in the layout.
 - Accepted deviations (for the maintainer): one `CYNEFIN_CONFIG_INVALID` per invalid key (D366 "Each gets one"); a non-number config value (string, null, object) counts as invalid; a NaN `boundaryAmplitude` takes the default 8, ±Infinity clamps; extra lines of a title or transition label grow upward (last line at v12's anchor); config defaults in `metrics.ts` (`CYNEFIN_DEFAULTS`) until T5 generates them; `markdownString` copied from pie (a core helper would be a core change); `cynefin` added to `fontFamily`'s `usedBy`.
-- [ ] **#465:** enable `conformance/src/cynefin/layout-corpus.spec.ts` (skipped until the package exports `parseCynefin(source) → { model }`; change that one lookup if T2 names it differently).
+- [x] **#465:** enable `conformance/src/cynefin/layout-corpus.spec.ts` — closed by #465 (runs and passes). Was: (skipped until the package exports `parseCynefin(source) → { model }`; change that one lookup if T2 names it differently).
 - [ ] **#468:** replace `src/theme/stand-in.ts` (v12's five lengths, theme ignored) with the T0a table's variables.
 
 ## #468 T4 renderer
 
 ## #469 T5 integration
+
+- [ ] Un-skip the ported `getConfig` v12 spec ("config honoured in #469 T5") and compare with the oracle's `getConfig()`.
 
 ## #470 T6 language facet

@@ -5,7 +5,7 @@ Integration PR: #479 (draft). Integration branch `feature/423_cynefin`, checked 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T1 lexer parity gate | #461 | — | merged |
-| T2 grammar, parser, model, AST, ported specs | #465 | #461 | open |
+| T2 grammar, parser, model, AST, ported specs | #465 | #461 | merged |
 | T3 custom layout (`CynefinLayout`), seeded boundaries | #467 | #465 (soft) | merged |
 | T4 SVG renderer | #468 | #465, #467 | open |
 | T5 integration (manifest, config, theme table, baselines) | #469 | #468, #414 T0a | open |
