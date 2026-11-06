@@ -328,7 +328,8 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   quadrantExternalBorderStrokeFill: def('qeb', 'color', ['quadrant']),
   quadrantTitleFill: def('qtf', 'color', ['quadrant']),
   // gantt (#381, v12 names from v12's gantt `styles.js`): row bands, excluded days, grid, today
-  // and `vert` lines, bars by state, and task label colours.
+  // and `vert` lines, bars by state, and task label colours. A clickable label is v12's #003163
+  // in every theme, a renderer constant (#385).
   sectionBkgColor: def('gb0', 'color', GANTT),
   altSectionBkgColor: def('gb1', 'color', GANTT),
   sectionBkgColor2: def('gb2', 'color', GANTT),
@@ -347,7 +348,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   taskTextColor: def('gtt', 'color', GANTT),
   taskTextOutsideColor: def('gtx', 'color', GANTT),
   taskTextDarkColor: def('gtd', 'color', GANTT),
-  taskTextClickableColor: def('gtc', 'color', GANTT),
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',

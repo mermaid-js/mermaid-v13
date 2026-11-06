@@ -5,7 +5,7 @@
  * in a higher slot took the root's `fill: textColor` and no stroke, as it does here.
  */
 import type { RenderContext } from '@mermaid-js/core';
-import type { Paint } from '@mermaid-js/core/svg';
+import { checkColor, type Paint } from '@mermaid-js/core/svg';
 import { GANTT_METRICS } from '../layout/metrics.ts';
 import type { GanttBar, GanttLayout } from '../layout/types.ts';
 
@@ -51,8 +51,13 @@ const V = {
   inside: 'taskTextColor',
   outside: 'taskTextOutsideColor',
   dark: 'taskTextDarkColor',
-  clickable: 'taskTextClickableColor',
 } as const;
+
+/**
+ * A clickable label (`.taskText.clickable`): v12's `taskTextClickableColor`, #003163 in every
+ * theme, so a constant rather than a theme variable (#385, theming.md).
+ */
+const CLICKABLE = checkColor('#003163')!;
 
 const styled = (slot: number): boolean => slot < GANTT_METRICS.styledSlots;
 
@@ -70,11 +75,12 @@ function barColours(bar: GanttBar): { fill: string; stroke?: string } {
  * state rules in sheet order (`activeText`, `doneText`, `doneCritText`, `vertText`,
  * `activeCritText`, the last winning). Then `.taskTextOutside0` over `.taskTextOutsideLeft`, and `.taskText0`.
  */
+/** A theme variable's name, or {@link CLICKABLE}. */
 function labelColour(bar: GanttBar): string {
   const own = styled(bar.slot);
   const outside = bar.label.side !== 'inside';
   if (own && outside && bar.done) return V.outside;
-  if (bar.clickable) return V.clickable;
+  if (bar.clickable) return CLICKABLE;
   if (own && bar.active && bar.crit) return V.dark;
   if (bar.kind === 'vert') return V.vert;
   if (own && (bar.active || bar.done)) return V.dark;
@@ -116,7 +122,10 @@ export function paints(theme: Theme, layout: GanttLayout): Paints {
       const { fill, stroke } = barColours(b);
       return { fill: c(fill), ...(stroke ? { stroke: c(stroke) } : {}) };
     }),
-    labels: layout.bars.map((b) => c(labelColour(b))),
+    labels: layout.bars.map((b) => {
+      const name = labelColour(b);
+      return name === CLICKABLE ? CLICKABLE : c(name);
+    }),
     bands: layout.bands.map((b) => c(BAND_FILL[b.slot] ?? V.text)),
     sections: layout.sections.map((s) => c(styled(s.slot) ? V.title : V.text)),
     exclude: when(layout.excludes.length > 0, V.exclude),

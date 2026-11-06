@@ -127,8 +127,10 @@ export const LIGHT_RULES: ThemeRuleTable = {
   quadrantInternalBorderStrokeFill: 'primaryBorderColor',
   quadrantExternalBorderStrokeFill: 'primaryBorderColor',
   quadrantTitleFill: 'primaryTextColor',
-  // gantt (#381): v12 theme-base's derivation, from shared variables and literals only (D331).
-  // The themes v12 gave their own gantt colours pin them in their specs (#385).
+  // gantt (#381, #385): v12 theme-base's derivation, from shared variables and literals only
+  // (D331); no theme spec names a gantt variable. `vertLineColor` is the redux family's
+  // `primaryBorderColor` (v12 theme-base: navy). Values only a per-theme literal could give are
+  // listed in the spec #293 notes (GAPS #385).
   sectionBkgColor: 'tertiaryColor',
   altSectionBkgColor: 'white',
   sectionBkgColor2: 'primaryColor',
@@ -143,11 +145,10 @@ export const LIGHT_RULES: ThemeRuleTable = {
   critBorderColor: '#ff8888',
   critBkgColor: 'red',
   todayLineColor: 'red',
-  vertLineColor: 'navy',
+  vertLineColor: 'primaryBorderColor',
   taskTextColor: 'textColor',
   taskTextOutsideColor: 'textColor',
   taskTextDarkColor: 'textColor',
-  taskTextClickableColor: '#003163',
   // The neo gradient's stops, as v12 theme-base derives them (D182).
   gradientStart: 'primaryBorderColor',
   gradientStop: 'secondaryBorderColor',
@@ -167,4 +168,7 @@ export const DARK_RULES: ThemeRuleTable = {
   // v12 theme-dark: khroma lighten(mainBkg, 5) and darken(mainBkg, 10), exactly (D117).
   rowOdd: 'lightenHsl(mainBkg, 5%)',
   rowEven: 'darkenHsl(mainBkg, 10%)',
+  // gantt: v12 theme-redux-dark and theme-neo-dark fill done tasks with `secondBkg`, khroma
+  // lighten(mainBkg, 16) (#385).
+  doneTaskBkgColor: 'lightenHsl(mainBkg, 16%)',
 };
