@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-state",
-  "version": "13.0.0-alpha.0",
+  "version": "13.0.0-alpha.1",
   "description": "State diagram plugin for Mermaid: lexer, parser, model, graph builder and renderer.",
   "type": "module",
   "license": "MIT",

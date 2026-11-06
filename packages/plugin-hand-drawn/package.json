@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/plugin-hand-drawn",
-  "version": "13.0.0-alpha.0",
+  "version": "13.0.0-alpha.1",
   "description": "The hand-drawn look for Mermaid v13: node, group and edge outlines sketched by roughjs's DOM-free generator, with a fixed seed (D300, D304).",
   "type": "module",
   "license": "MIT",
