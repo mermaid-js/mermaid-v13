@@ -1,12 +1,12 @@
 # Run notes, spec #294 (mindmap and the core `tree` engine)
 
-Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draft PR: not opened yet.
+Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draft PR: #406.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T0 core `tree` engine and engine selection | #380 | — | done on `feature/380_tree-engine` (`tickets/380.md`) |
-| T1 lexer parity gate | #383 | #285 (merged) | in progress (`.claude/worktrees/t383`, `feature/383_mindmap-lexer`) |
-| T2 grammar, parser, model, AST | #386 | #383 | blocked |
+| T1 lexer parity gate | #383 | #285 (merged) | merged (ff 5bbf475e9) |
+| T2 grammar, parser, model, AST | #386 | #383 | in progress (`.claude/worktrees/t386`, `feature/386_mindmap-parser`) |
 | T3 layout (builder, shape sizing) | #387 | #386, #380 | blocked |
 | T4 SVG renderer | #388 | #387 | blocked |
 | T6 language facet | #389 | #386 | blocked |
@@ -25,7 +25,10 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 | After | Core gz | Δ |
 | --- | --- | --- |
 | base (38d663b44) | 93,551 B | — (657 B spare) |
+| #383 T1 | 93,551 B | 0 (no core change) |
 | #380 (tree loader, engine selection) | 93,760 B | +209 (448 B spare) |
+
+- Coordinator, 2026-11-06: `fix/theme-variables-pure` (gitGraph's find: core keeps the whole `THEME_VARIABLES` inventory) drops about 1.3 KB gz from core. Merge `mermaid-v13` when it lands. Until then, a ticket that would go over the gate records its bytes and the run continues with the tickets that don't depend on it.
 
 ## Finish rule
 
