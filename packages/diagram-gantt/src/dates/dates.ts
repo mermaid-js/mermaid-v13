@@ -5,7 +5,7 @@
 // R-ARCH-4), so `compile` runs per call; index reads carry `!` for noUncheckedIndexedAccess.
 // `readStartDate` and `readEndDate` are new: the written-date branches of v12's `getStartDate`
 // and `getEndDate` (ganttDb.js at fa796a943). The date code is otherwise unchanged.
-// cspell:ignore kepano gggg zzz
+// cspell:ignore kepano gggg zzz Mdhmswy
 //
 // The parts of dayjs 1.11 that Mermaid's gantt code relies on, with the plugins it loads (custom parse format,
 // advanced format, ISO week) and the English locale: strict parsing against a format, formatting, and calendar
