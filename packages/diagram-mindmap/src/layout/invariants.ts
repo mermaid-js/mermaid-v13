@@ -64,6 +64,8 @@ export function mindmapProblems(layout: MindmapLayout): string[] {
       out.push(`node '${v.id}': graph node differs from its view`);
     if (!layout.nodes.has(v.id)) out.push(`node '${v.id}': not laid out`);
   }
+  if (new Set(edges.map((e) => e.id)).size !== edges.length) out.push('edge ids repeat');
+  if (layout.edges.size !== edges.length) out.push('edges lost in the layout');
   for (const e of edges) {
     const m = layout.edges.get(e.id);
     if (!m || m.points.length < 2) out.push(`edge '${e.id}': not routed`);

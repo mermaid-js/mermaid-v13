@@ -33,6 +33,8 @@ beforeAll(async () => {
     ...mindmapCases(),
     ...EDGE_CASES,
     ...LINE_SEPARATORS,
+    // A label holding `~n:` once made two edge ids the same (#387 review).
+    { id: 'edge id probe', source: 'mindmap\n  root\n    x~n:y\n      z\n    x\n      y~n:z\n' },
   ]) {
     const pre = preprocess(item.source);
     const directives = pre.directives.flatMap((d) =>

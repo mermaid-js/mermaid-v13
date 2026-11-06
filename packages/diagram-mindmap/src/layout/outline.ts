@@ -75,9 +75,13 @@ export function cloudOutline(w: number, h: number): Outline {
   ]);
 }
 
-/** `bang.ts`: fourteen arcs of radius `0.15 w` round a `w` × `h` frame (`r · 0.8` mid-side). */
-export function bangOutline(w: number, h: number): Outline {
-  const r = 0.15 * w;
+/**
+ * `bang.ts`: fourteen arcs round a `w` × `h` frame (v12's `effectiveWidth` × `effectiveHeight`),
+ * of radius `0.15 · arcWidth` (`r · 0.8` mid-side). v12 took the radius from its width before the
+ * least growth (`w = bbox.width + 10 · halfPadding`), so `arcWidth` is that width.
+ */
+export function bangOutline(w: number, h: number, arcWidth = w): Outline {
+  const r = 0.15 * arcWidth;
   const s = r * 0.8;
   return outline(w, h, false, [
     [r, r, 1, w * 0.25, -h * 0.1],

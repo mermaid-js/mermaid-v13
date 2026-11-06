@@ -55,6 +55,7 @@ export interface MindmapNodeView {
 }
 
 export interface MindmapEdgeView {
+  /** `edge:<child's AST id>`: unique (a child has one parent) and never a node id. */
   readonly id: string;
   /** Layout ids of the parent and the child. */
   readonly source: string;
@@ -71,7 +72,10 @@ export interface MindmapPrepared {
   readonly edges: readonly MindmapEdgeView[];
 }
 
-/** A config length at least `least`, else the default with a warning when the key is set. */
+/**
+ * A config length (a number, or a numeric string as v12 and flowchart's `size()` take it) of at
+ * least 0, or above 0 when `positive`; else the default, with a warning when the key is set.
+ */
 function lengthOf(
   ctx: MindmapLayoutContext,
   value: unknown,
@@ -79,8 +83,8 @@ function lengthOf(
   path: string,
   positive: boolean
 ): number {
-  if (typeof value === 'number' && Number.isFinite(value) && (positive ? value > 0 : value >= 0))
-    return value;
+  const n = typeof value === 'string' ? parseFloat(value) : value;
+  if (typeof n === 'number' && Number.isFinite(n) && (positive ? n > 0 : n >= 0)) return n;
   if (value !== undefined)
     ctx.warn({
       code: MINDMAP_CONFIG_IGNORED,
@@ -104,6 +108,8 @@ interface Build {
 interface Frame {
   width: number;
   height: number;
+  /** A bang's width before its least growth (`bang.ts` `w`): its arcs' radius is `0.15` of it. */
+  arcWidth: number;
   labelAt: Point;
   icon?: MindmapIconSlot;
 }
@@ -120,10 +126,11 @@ function frameOf(b: Build, shape: MindmapShape, label: MeasuredLabel, icon: bool
   let height: number;
   if (shape === 'circle') {
     const d = Math.hypot(label.width, label.height) + 2 * pad('x');
-    if (!icon) return { width: d, height: d, labelAt: { x: 0, y: 0 } };
+    if (!icon) return { width: d, height: d, arcWidth: d, labelAt: { x: 0, y: 0 } };
     // The icon row sits above the label; the two are centred together.
     return {
       width: d + iconAcross,
+      arcWidth: d + iconAcross,
       height: d + iconDown,
       labelAt: { x: 0, y: iconDown / 2 },
       icon: { at: { x: 0, y: -label.height / 2 }, slot: iconDown, glyph: b.px(glyph, 'y') },
@@ -131,15 +138,17 @@ function frameOf(b: Build, shape: MindmapShape, label: MeasuredLabel, icon: bool
   }
   width = label.width + m.grow.x * pad('x');
   height = label.height + m.grow.y * pad('y');
+  const unclamped = width;
   if (m.minGrow !== undefined) {
     width = Math.max(width, label.width + b.px(m.minGrow, 'x'));
     height = Math.max(height, label.height + b.px(m.minGrow, 'y'));
   }
   if (m.slant !== undefined) width += (2 * height) / m.slant;
-  if (!icon) return { width, height, labelAt: { x: 0, y: 0 } };
+  if (!icon) return { width, height, arcWidth: unclamped, labelAt: { x: 0, y: 0 } };
   // The icon sits left of the label; the two are centred together.
   return {
     width: width + iconAcross,
+    arcWidth: unclamped + iconAcross,
     height: Math.max(height, b.px(minHeight, 'y')),
     labelAt: { x: iconAcross / 2, y: 0 },
     icon: { at: { x: -label.width / 2, y: 0 }, slot: iconAcross, glyph: b.px(glyph, 'x') },
@@ -162,7 +171,10 @@ function nodeView(b: Build, model: MindmapModel, index: number): MindmapNodeView
     ...(f.icon ? { icon: f.icon } : {}),
   };
   if (node.shape === 'cloud' || node.shape === 'bang') {
-    const outline = (node.shape === 'cloud' ? cloudOutline : bangOutline)(f.width, f.height);
+    const outline =
+      node.shape === 'cloud'
+        ? cloudOutline(f.width, f.height)
+        : bangOutline(f.width, f.height, f.arcWidth);
     const box = outlineBox(outline);
     return {
       ...base,
@@ -217,7 +229,8 @@ export function prepareMindmap(model: MindmapModel, ctx: MindmapLayoutContext): 
     if (n.parent === undefined) return;
     const source = nodes[n.parent]!.id;
     const target = nodes[i]!.id;
-    edges.push({ id: `${source}~${target}`, source, target, child: i });
+    // A child has one parent, so its AST id names the edge; no node id starts `edge:`.
+    edges.push({ id: `edge:${target}`, source, target, child: i });
   });
   const graph: LayoutGraph = {
     // v12 handed its engines `TB` (`mindmapDb.ts` `getData`); `tree` takes no direction.

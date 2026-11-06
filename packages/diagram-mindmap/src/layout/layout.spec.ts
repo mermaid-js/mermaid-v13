@@ -58,6 +58,11 @@ describe('shape sizes at default config (v12 formulas, padding 10)', () => {
     const tight = await only('abcd', 'bang', { mindmap: { padding: 0 } });
     expect(tight.frame).toMatchObject({ width: 60, height: 40 });
     expect(tight.outline?.arcs).toHaveLength(14);
+    // The arcs' radius is v12's unclamped `0.15 · (label + 5·padding)`; only their offsets take
+    // the clamped width (#387 review).
+    expect(tight.outline?.arcs[0]).toMatchObject({ rx: 6, ry: 6 });
+    expect(tight.outline?.arcs[0]!.x).toBeCloseTo(-30 + 15, 9);
+    expect((await only('abcd', 'bang')).outline?.arcs[0]).toMatchObject({ rx: 13.5 });
   });
 
   it('hexagon: padding doubled; h = label + 20, w = label + 2h/4 + 20 (hexagon.ts)', async () => {
@@ -138,10 +143,49 @@ describe('the icon slot (D297)', () => {
   });
 });
 
+describe('the graph', () => {
+  it('names each edge after its child alone, so no label can make two the same', async () => {
+    // A label holding `~n:` once made `<parent>~<child>` ids collide (#387 review).
+    const model = fixtureModel([
+      { label: 'root', depth: 0 },
+      { label: 'x~n:y', depth: 1 },
+      { label: 'z', depth: 2 },
+      { label: 'x', depth: 1 },
+      { label: 'y~n:z', depth: 2 },
+      { label: 'x', depth: 1 },
+      { label: 'x', depth: 2 },
+    ]);
+    const layout = layoutMindmap(model, contextFor(tree, await themeNamed()));
+    const ids = layout.mindmap.edges.map((e) => e.id);
+    expect(ids).toEqual([
+      'edge:n:x~n:y',
+      'edge:n:z',
+      'edge:n:x',
+      'edge:n:y~n:z',
+      'edge:n:x@5',
+      'edge:n:x@6',
+    ]);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(layout.edges.size).toBe(ids.length);
+    // No node id takes that form.
+    expect(layout.mindmap.nodes.some((n) => n.id.startsWith('edge:'))).toBe(false);
+  });
+});
+
 describe('config', () => {
+  it('takes numeric strings, as v12 and flowchart do', async () => {
+    const ctx = contextFor(tree, await themeNamed(), {
+      mindmap: { padding: '5', maxNodeWidth: '50' } as never,
+    });
+    const n = layoutMindmap(fixtureModel([{ label: 'aaaa bbbb', depth: 0 }]), ctx).mindmap
+      .nodes[0]!;
+    expect(size(n)).toEqual([40 + 20, 40 + 5]);
+    expect(ctx.warnings).toEqual([]);
+  });
+
   it('warns and uses the default for a padding or width it cannot take (pitfall 22)', async () => {
     const ctx = contextFor(tree, await themeNamed(), {
-      mindmap: { padding: -1, maxNodeWidth: 0 },
+      mindmap: { padding: -1, maxNodeWidth: 'wide' as never },
     });
     const n = layoutMindmap(fixtureModel([{ label: 'abcd', depth: 0 }]), ctx).mindmap.nodes[0]!;
     expect(size(n)).toEqual([80, 30]);

@@ -34,7 +34,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** cloud and bang nodes are laid out at the box their v12 path covers (v12 sized them from `getBBox` of the bulging arcs, `updateNodeBounds`), not at the formula's `w` × `h`; the view keeps the formula frame and its offset in that box (`frame.dx/dy`), and the arcs (`outline`) for T4 to draw.
 - **Choice:** the icon slot is a 50 px square beside the label (left of it; above it in a circle), the pair centred in the shape; the glyph is 40 px in the slot. "The margin is `mindmap.padding`" is read as the drawing's margin (`diagramPadding`, v12 `setupViewPortForSVG`).
 - **Choice:** labels are measured in the theme's `fontFamily`/`fontSize` at weight 400, as flowchart and class do, so mindmap reads theme variables from T3 on: it joins `TEXT_USERS` (`vocabulary.ts`, +7 B core) and leaves `NOT_RENDERING_YET` (`theme-used-by.spec.ts`), ahead of #388.
-- **Choice:** a `mindmap.padding` below 0 or a `maxNodeWidth` of 0 or less (or not a number) lays out with the default and warns `MINDMAP_CONFIG_IGNORED` (pitfall 22).
+- **Choice:** `mindmap.padding` and `maxNodeWidth` take numbers and numeric strings (`"20"`, as v12 and flowchart's `size()`); a non-numeric value, a padding below 0 or a width of 0 or less lays out with the default and warns `MINDMAP_CONFIG_IGNORED` (pitfall 22).
 - **For #388:** sizes are v12's classic ones in every theme. The family geometry (D288 default drawn rounded in redux; neo's `squareRect` 16/12, circle 16, hexagon slant 3.5 and paddings 70/32) changes sizes, so the variables T4 adds must be read in `prepare.ts` (`frameOf`, `MINDMAP_METRICS.shapes`), not only in the renderer.
 
 ## #388 T4 renderer
