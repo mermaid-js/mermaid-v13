@@ -35,6 +35,7 @@ const DOCS = {
   class: 'classDiagram\n  class Animal\n',
   state: 'stateDiagram-v2\n  [*] --> Idle\n',
   er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
+  timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   pie: 'pie\n  "Dogs" : 386\n',
 };
 
@@ -47,6 +48,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'pie',
       'sequence',
       'state',
+      'timeline',
     ]);
   });
 

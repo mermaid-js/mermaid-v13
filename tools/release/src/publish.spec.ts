@@ -28,6 +28,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-pie',
       '@mermaid-chart/diagram-sequence',
       '@mermaid-chart/diagram-state',
+      '@mermaid-chart/diagram-timeline',
       '@mermaid-chart/mermaid',
       // Peer of mermaid (D164): after it.
       '@mermaid-chart/bundler-plugin',

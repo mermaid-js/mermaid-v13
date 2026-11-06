@@ -3,15 +3,23 @@
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { pieSlots } from './palettes.ts';
+import { LABEL_SCALE, paletteSlots, pieSlots, REDUX_RULES } from './palettes.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
+  REDUX_TIMELINE,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
-import { REDUX_RULES } from './redux-rules.ts';
+
+/** `theme-redux.js`: `mainBkg` darkened by `step` in every slot, and its inverse. */
+const mainBkgScale = (
+  step: number
+): { readonly cScale: readonly string[]; readonly cScaleInv: readonly string[] } => ({
+  cScale: paletteSlots(() => `darkenHsl(mainBkg, ${step}%)`),
+  cScaleInv: paletteSlots(() => `invert(darkenHsl(mainBkg, ${step}%))`),
+});
 
 /**
  * v12 `theme-redux.js` and `theme-neo.js`: base's formulas, applied before v12 settles the
@@ -58,6 +66,7 @@ const redux: ThemeSpec = {
     ...TEXT_SIZES,
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
+    ...REDUX_TIMELINE,
     useGradient: false,
   },
   rules: { ...REDUX_RULES, ...PIE_REDUX },
@@ -80,6 +89,10 @@ const redux: ThemeSpec = {
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',
   },
+  // v12 theme-redux.js: mainBkg darkened by 25 in every slot (75 under darkMode). It sets
+  // every slot to mainBkg before it derives the inverses, so they ignore a cScale override.
+  palettes: { ...mainBkgScale(25), cScaleLabel: LABEL_SCALE },
+  darkModePalettes: mainBkgScale(75),
 };
 
 export default redux;

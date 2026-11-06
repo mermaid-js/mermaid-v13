@@ -32,24 +32,28 @@ import type {
 } from '../svg/types.ts';
 import { num } from '../svg/escape.ts';
 import {
-  adjustLightness,
   composite,
   contrastRatio,
   formatColor,
+  hslToRgb,
   invertColor,
+  khromaRgb,
   luminance,
   mixColors,
   parseColor,
+  rgbToHsl,
+  shiftHsl,
+  type Hsl,
   type Rgba,
 } from './color.ts';
 import { parseRule, type Expr } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
+import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
   PALETTE_LIMIT,
   PALETTE_VARIABLES,
-  THEME_VARIABLES,
   type PaletteVariable,
-  type ThemeVarDef,
+  type ThemeVarEntry,
   type ThemeVarKind,
 } from './vocabulary.ts';
 
@@ -137,6 +141,8 @@ export interface Theme {
    * else the theme's; empty when the theme carries none.
    */
   palette(name: PaletteVariable): readonly SafeColor[];
+  /** {@link palette}'s entries as colour channels, where JS can compute them. */
+  paletteRgba(name: PaletteVariable): readonly (Rgba | undefined)[];
 }
 
 export interface AutoDeclarations {
@@ -150,6 +156,11 @@ interface Resolved {
   /** The value in literal mode. */
   readonly lit: string;
   readonly rgba: Rgba | undefined;
+  /**
+   * khroma's HSL channels, when an HSL step made the colour: the next HSL step starts from
+   * them, so a hue survives lightness 0 or 100 as it does in v12 (D258).
+   */
+  readonly hsl?: Hsl;
   /** Variables `css` references. */
   readonly deps: readonly string[];
 }
@@ -226,8 +237,39 @@ class Resolver {
     private readonly spec: ThemeSpec,
     private readonly rules: ThemeRuleTable,
     private readonly overrides: ReadonlyMap<string, string>,
-    private readonly defs: Readonly<Record<string, ThemeVarDef>>
+    private readonly defs: Readonly<Record<string, ThemeVarEntry>>,
+    private readonly palettes: PaletteSource = NO_PALETTES
   ) {}
+
+  private readonly slots = new Map<string, Resolved | undefined>();
+
+  /**
+   * Entry `i` of a palette: the author's numbered override, else the author's list, else the
+   * theme's colour or rule. Undefined past the end of every list.
+   */
+  slot(p: PaletteVariable, i: number): Resolved | undefined {
+    const key = `${p}${i}`;
+    // Only theme specs write palette rules, so no author input can make a cycle here.
+    if (this.slots.has(key)) return this.slots.get(key);
+    const user = this.palettes.slots.get(key) ?? this.palettes.user[p]?.[i];
+    const entry = user === undefined ? this.palettes.spec[p]?.[i] : undefined;
+    let r: Resolved | undefined;
+    if (user !== undefined) r = this.literal('', user);
+    else if (entry !== undefined) r = this.evaluate(rule(entry));
+    this.slots.set(key, r);
+    return r;
+  }
+
+  /** The palette's entries as literal colours, or as channels. */
+  palette(p: PaletteVariable): SafeColor[];
+  palette(p: PaletteVariable, rgba: true): (Rgba | undefined)[];
+  palette(p: PaletteVariable, rgba?: true): (SafeColor | Rgba | undefined)[] {
+    const n = (this.palettes.user[p] ?? this.palettes.spec[p] ?? []).length;
+    return Array.from({ length: n }, (_, i) => {
+      const r = this.slot(p, i);
+      return rgba ? r?.rgba : ((checkColor(r?.lit ?? '') ?? 'currentColor') as SafeColor);
+    });
+  }
 
   /** The spec's own value or rule, ignoring overrides. */
   private source(name: string): string | undefined {
@@ -292,18 +334,28 @@ class Resolver {
         throw new SyntaxError(
           'A percentage is only an argument of mix, lighten, darken, lightenHsl, darkenHsl or alpha'
         );
+      case 'num':
+        throw new SyntaxError('A plain number is only for adjustHue');
       case 'lit':
         return this.literal('', e.text);
       case 'ref': {
+        const slot = own(this.defs, e.name) ? undefined : RE_SLOT.exec(e.name);
+        if (slot) {
+          // A palette entry is a literal colour, so a rule over one is too (D258).
+          const r = this.slot(slot[1] as PaletteVariable, Number(slot[2]));
+          const lit = r?.lit ?? 'currentColor';
+          return { css: lit, lit, rgba: r?.rgba, hsl: r?.hsl, deps: [] };
+        }
         if (!own(this.defs, e.name)) {
           if (parseColor(e.name) === undefined) throw new SyntaxError(`Unknown colour ${e.name}`);
           return this.literal('', e.name);
         }
         const r = this.get(e.name);
         return {
-          css: `var(--_${(this.defs[e.name] as ThemeVarDef).alias})`,
+          css: `var(--_${(this.defs[e.name] as ThemeVarEntry).alias})`,
           lit: r.lit,
           rgba: r.rgba,
+          hsl: r.hsl,
           deps: [e.name],
         };
       }
@@ -330,12 +382,14 @@ class Resolver {
         // khroma's lighten/darken, as v12's classic themes derive with them (D117).
         const a = this.evaluate(x);
         const d = e.fn === 'lightenHsl' ? pct(y) : -pct(y);
-        const rgba = a.rgba && adjustLightness(a.rgba, d);
         // Clamped as khroma does: relative colour syntax keeps an out-of-range lightness.
         const l = `l ${d < 0 ? '-' : '+'} ${num(Math.abs(d))}`;
-        const css = `hsl(from ${a.css} h s clamp(0, ${l}, 100) / alpha)`;
-        return { css, lit: rgba ? formatColor(rgba) : a.lit, rgba, deps: a.deps };
+        return this.hslStep(a, 0, d, `hsl(from ${a.css} h s clamp(0, ${l}, 100) / alpha)`);
       }
+      case 'adjustHue':
+        return this.adjustHue(this.evaluate(x), y);
+      case 'ifSet':
+        return this.ifSet(x, y as Expr);
       case 'alpha': {
         const a = this.evaluate(x);
         const p = pct(y);
@@ -347,14 +401,8 @@ class Resolver {
           deps: a.deps,
         };
       }
-      case 'invert': {
-        const a = this.evaluate(x);
-        const rgba = a.rgba && invertColor(a.rgba);
-        const lit = rgba ? formatColor(rgba) : a.lit;
-        // Relative colour syntax, so the inverse follows a host override of `a` (R-THEME-4).
-        const css = `color(from ${a.css} srgb calc(1 - r) calc(1 - g) calc(1 - b) / alpha)`;
-        return { css, lit, rgba, deps: a.deps };
-      }
+      case 'invert':
+        return this.invert(this.evaluate(x));
       case 'contrast': {
         const on = this.evaluate(x);
         const bg = this.opaque(on.rgba);
@@ -370,6 +418,51 @@ class Resolver {
         return { css, lit: pick.lit, rgba: pick.rgba, deps: on.deps };
       }
     }
+  }
+
+  /**
+   * An HSL step (khroma's `adjust`, `lighten`, `darken`; D117, D258). It starts from the HSL
+   * channels of an earlier HSL step, as khroma reads v12's hsl() strings.
+   */
+  private hslStep(a: Resolved, dh: number, dl: number, css: string): Resolved {
+    if (!a.rgba) return { css, lit: a.lit, rgba: undefined, deps: a.deps };
+    const hsl = shiftHsl(a.hsl ?? rgbToHsl(a.rgba), dh, dl);
+    const rgba = hslToRgb(hsl, a.rgba[3]);
+    return { css, lit: formatColor(rgba), rgba, hsl, deps: a.deps };
+  }
+
+  /** khroma's `adjust(c, { h })`, v12's cScale hue steps (D258). */
+  private adjustHue(a: Resolved, deg: Expr | undefined): Resolved {
+    const h = deg?.k === 'num' ? deg.value : NaN;
+    if (!(Math.abs(h) <= 360)) throw new SyntaxError('adjustHue needs degrees, ±360');
+    if (h === 0) return a;
+    const turn = `calc(h ${h < 0 ? '-' : '+'} ${num(Math.abs(h))})`;
+    return this.hslStep(a, h, 0, `hsl(from ${a.css} ${turn} s l / alpha)`);
+  }
+
+  /** v12's `this.v || derived`: the author's value, else the theme's derivation (D258). */
+  private ifSet(v: Expr, fallback: Expr): Resolved {
+    const slot = v.k === 'ref' && !own(this.defs, v.name) ? RE_SLOT.exec(v.name) : null;
+    if (v.k !== 'ref' || (!slot && !own(this.defs, v.name)))
+      throw new SyntaxError('ifSet needs a variable');
+    const set = slot
+      ? this.palettes.slots.has(v.name) ||
+        this.palettes.user[slot[1] as PaletteVariable]?.[Number(slot[2])] !== undefined
+      : this.overrides.has(v.name);
+    if (set) return this.evaluate(v);
+    const b = this.evaluate(fallback);
+    // A palette entry is literal only, so it has no CSS variable to prefer.
+    return slot ? b : { ...b, css: `var(--mermaid-${v.name},${b.css})` };
+  }
+
+  private invert(a: Resolved): Resolved {
+    // After an HSL step, khroma's own conversion, as v12's invert of an hsl() string (D258).
+    const from = a.hsl && a.rgba ? khromaRgb(a.rgba) : a.rgba;
+    const rgba = from && invertColor(from);
+    const lit = rgba ? formatColor(rgba) : a.lit;
+    // Relative colour syntax, so the inverse follows a host override of `a` (R-THEME-4).
+    const css = `color(from ${a.css} srgb calc(1 - r) calc(1 - g) calc(1 - b) / alpha)`;
+    return { css, lit, rgba, deps: a.deps };
   }
 
   private mix(a: Resolved, b: Resolved, p: number): Resolved {
@@ -441,7 +534,7 @@ function contrastCss(bg: string, a: Rgba, b: Rgba, la: number, lb: number): stri
 
 function checkOverrides(
   vars: Readonly<Record<string, unknown>> | undefined,
-  defs: Readonly<Record<string, ThemeVarDef>>,
+  defs: Readonly<Record<string, ThemeVarEntry>>,
   warn: ThemeOptions['warn']
 ): Map<string, string> {
   const out = new Map<string, string>();
@@ -464,33 +557,75 @@ function checkOverrides(
 }
 
 const MAX_PALETTE = 64;
-const RE_C_SCALE = /^cScale(\d{1,2})$/;
+/**
+ * v12's numbered palette names (`NUMBERED_PALETTES`): `cScale3`, `cScaleInv3`, `cScaleLabel3`.
+ * v12 reads no leading zero, so `cScale05` is an unknown name, ignored (R-CONF-5).
+ */
+const RE_SLOT = /^(cScale(?:Inv|Label)?)(0|[1-9]\d?)$/;
+
+type PaletteLists = Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
+
+/** What the palettes of one render are built from (D258). */
+interface PaletteSource {
+  /** The theme's entries: colours or rules. */
+  readonly spec: PaletteLists;
+  /** The author's whole lists, checked colours. */
+  readonly user: Readonly<Partial<Record<PaletteVariable, readonly SafeColor[]>>>;
+  /** The author's numbered entries (`cScale3`), checked colours. */
+  readonly slots: ReadonlyMap<string, SafeColor>;
+}
+
+const NO_PALETTES: PaletteSource = { spec: {}, user: {}, slots: new Map() };
 
 /** A palette override as a list: an array as given, or a comma-separated string. */
 function paletteItems(raw: unknown): readonly unknown[] | undefined {
   if (Array.isArray(raw)) return raw as unknown[];
   return typeof raw === 'string' ? splitTopLevel(raw, 'comma') : undefined;
 }
+/** The author's numbered palette entries (`cScale3`) that are safe colours; the rest dropped. */
+function numberedOverrides(
+  vars: Readonly<Record<string, unknown>>,
+  drop: (name: string, raw: unknown) => void
+): [string, SafeColor][] {
+  const out: [string, SafeColor][] = [];
+  for (const key of Object.keys(vars)) {
+    const m = RE_SLOT.exec(key);
+    const raw = vars[key];
+    if (!m || Number(m[2]) >= PALETTE_LIMIT || raw === undefined || raw === null || raw === '')
+      continue;
+    const c = typeof raw === 'string' ? checkColor(raw) : undefined;
+    if (c === undefined) drop(key, raw);
+    else out.push([key, c]);
+  }
+  return out;
+}
+
 /**
- * The palettes for one render: the spec's lists with the author's overrides applied. A whole
- * list (`borderColorArray`, `bkgColorArray`, `cScale`) is an array or a comma-separated string;
- * `cScale0`–`cScale11` replace one entry of the theme's `cScale`. Any unsafe colour drops
- * that override with a warning.
+ * The palette overrides of one render, checked: a whole list (`borderColorArray`, `cScale`, …)
+ * is an array or a comma-separated string; `cScale0`–`cScale11`, `cScaleInv<n>` and
+ * `cScaleLabel<n>` replace one entry. Any unsafe colour drops that override with a warning.
+ * The theme's own entries are evaluated when a renderer reads the palette.
  */
-function resolvePalettes(
+function paletteSource(
   spec: ThemeSpec,
   vars: Readonly<Record<string, unknown>> | undefined,
-  warn: ThemeOptions['warn']
-): Record<PaletteVariable, readonly SafeColor[]> {
+  warn: ThemeOptions['warn'],
+  /** The author's `themeVariables.darkMode`, not the theme's `dark` flag. */
+  darkMode: boolean
+): PaletteSource {
   const drop = (name: string, raw: unknown) =>
     warn?.({
       code: 'THEME_VARIABLE_DROPPED',
       message: `themeVariables.${name} value ${JSON.stringify(String(raw).slice(0, 60))} is not allowed and was dropped.`,
     });
-  const out = {} as Record<PaletteVariable, SafeColor[]>;
+  const lists: PaletteLists = darkMode
+    ? { ...spec.palettes, ...spec.darkModePalettes }
+    : (spec.palettes ?? {});
+  const user: Partial<Record<PaletteVariable, readonly SafeColor[]>> = {};
+  const slots = new Map<string, SafeColor>();
+  if (!vars) return { spec: lists, user, slots };
   for (const name of PALETTE_VARIABLES) {
-    out[name] = (spec.palettes?.[name] ?? []).map((c) => checkColor(c) as SafeColor);
-    const raw = vars && own(vars, name) ? vars[name] : undefined;
+    const raw = own(vars, name) ? vars[name] : undefined;
     if (raw === undefined || raw === null) continue;
     const checked = paletteItems(raw)?.map((c) =>
       typeof c === 'string' ? checkColor(c) : undefined
@@ -499,20 +634,15 @@ function resolvePalettes(
       drop(name, raw);
       continue;
     }
-    out[name] = checked as SafeColor[];
+    user[name] = checked as SafeColor[];
   }
-  for (const key of vars ? Object.keys(vars) : []) {
-    const m = RE_C_SCALE.exec(key);
-    const i = m ? Number(m[1]) : NaN;
-    if (Number.isNaN(i) || i >= PALETTE_LIMIT) continue;
-    const raw = (vars as Record<string, unknown>)[key];
-    if (raw === undefined || raw === null || raw === '') continue;
-    const c = typeof raw === 'string' ? checkColor(raw) : undefined;
-    if (c === undefined) drop(key, raw);
-    // An entry the theme has no colour for is accepted and ignored (R-CONF-5).
-    else if (i < out.cScale.length) out.cScale[i] = c;
+  for (const [key, c] of numberedOverrides(vars, drop)) {
+    // An entry the palette has no slot for is accepted and ignored (R-CONF-5).
+    const m = RE_SLOT.exec(key) as RegExpExecArray;
+    const p = m[1] as PaletteVariable;
+    if (Number(m[2]) < (user[p] ?? lists[p] ?? []).length) slots.set(key, c);
   }
-  return out;
+  return { spec: lists, user, slots };
 }
 
 /** Builds one render's theme. */
@@ -520,9 +650,10 @@ interface ThemeParts {
   darkMode: boolean;
   main: Resolver;
   night: Resolver | undefined;
-  palettes: Record<PaletteVariable, readonly SafeColor[]>;
+  /** Each palette read so far, as literal colours. */
+  palettes: Map<PaletteVariable, readonly SafeColor[]>;
   /** `defs` as a map, for the lookups every themed value makes. */
-  byName: ReadonlyMap<string, ThemeVarDef>;
+  byName: ReadonlyMap<string, ThemeVarEntry>;
   /** `rootStyleText()` by the aliases used, in the order they were first used. */
   rootTexts: Map<string, StyleText>;
   /** Each padding variable read so far: a multiple of the diagram's padding, or px. */
@@ -540,12 +671,13 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
     const hit = PLAIN.get(spec)?.get(options.dark);
     if (hit) return hit;
   }
-  const defs: Record<string, ThemeVarDef> = { ...THEME_VARIABLES };
+  const defs: Record<string, ThemeVarEntry> = { ...THEME_VARIABLE_TABLE };
   if (options.rules)
     for (const name of Object.keys(options.rules))
-      if (!own(defs, name)) defs[name] = { alias: name, kind: 'color', usedBy: [] };
+      if (!own(defs, name)) defs[name] = { alias: name, kind: 'color' };
   const overrides = checkOverrides(tv, defs, options.warn);
-  const darkMode = spec.dark || tv?.darkMode === true || tv?.darkMode === 'true';
+  const authorDark = tv?.darkMode === true || tv?.darkMode === 'true';
+  const darkMode = spec.dark || authorDark;
   const rulesFor = (s: ThemeSpec, dark: boolean): ThemeRuleTable => ({
     ...(dark ? DARK_RULES : LIGHT_RULES),
     ...s.rules,
@@ -553,11 +685,17 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
   });
   const parts: ThemeParts = {
     darkMode,
-    main: new Resolver(spec, rulesFor(spec, darkMode), overrides, defs),
+    main: new Resolver(
+      spec,
+      rulesFor(spec, darkMode),
+      overrides,
+      defs,
+      paletteSource(spec, tv, options.warn, authorDark)
+    ),
     night: options.dark
       ? new Resolver(options.dark, rulesFor(options.dark, true), overrides, defs)
       : undefined,
-    palettes: resolvePalettes(spec, tv, options.warn),
+    palettes: new Map(),
     byName: new Map(Object.entries(defs)),
     rootTexts: new Map(),
     paddings: new Map(),
@@ -599,7 +737,7 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
     return grad ?? undefined;
   };
 
-  const def = (name: string): ThemeVarDef => {
+  const def = (name: string): ThemeVarEntry => {
     const d = byName.get(name);
     if (!d) throw new TypeError(`Unknown theme variable ${JSON.stringify(name)}`);
     return d;
@@ -692,7 +830,12 @@ export function createTheme(spec: ThemeSpec, options: ThemeOptions = {}): Theme 
       vars && night
         ? { light: decls(main, used, true), dark: decls(night, used, true) }
         : undefined,
-    palette: (name) => palettes[name],
+    paletteRgba: (name) => main.palette(name, true),
+    palette(name) {
+      let list = palettes.get(name);
+      if (!list) palettes.set(name, (list = main.palette(name)));
+      return list;
+    },
   };
   return theme;
 }

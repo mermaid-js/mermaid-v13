@@ -42,7 +42,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no palette. `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
+        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
       },
       "type": "object",
       "additionalProperties": true,
@@ -75,6 +75,60 @@ export const configSchema: ConfigSchema = {
             "status": "honoured",
             "since": "13.0.0",
             "reason": "Tailwind-50 × 12 in `redux-color`; empty in `redux-dark-color` and every other theme (D151). Read as literal colours, not CSS variables. An unsafe colour drops the whole list with `THEME_VARIABLE_DROPPED`."
+          }
+        },
+        "cScale": {
+          "description": "The section colour scale (timeline, mindmap), twelve slots. A list of colours, or one\ncomma-separated string; `cScale0`–`cScale11` replace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Every theme carries v12's values (D258): derived from `primaryColor`, `secondaryColor` and `tertiaryColor` by hue steps and khroma `darken` in `base` (25, 75 under `darkMode`), `forest` (10), `neo-dark` and `redux-dark` (25), from `mainBkg` in `redux`; fixed lists in `default`, `dark` (slot 0 is `primaryColor`), `neutral`, `neo` and the colour themes (Tailwind-300). Read as literal colours, not CSS variables. An unsafe colour drops that override with `THEME_VARIABLE_DROPPED`. The timeline paints with it only where `timelineScaleColors` is true and the gradient is off: an override changes nothing in the redux themes (the default `redux-color` included), `theme: 'auto'`, `neo` or `neo-dark`, as v12's redux and neo timeline paint ignored it (D227, D257); v12's default theme was `default`."
+          }
+        },
+        "cScaleInv": {
+          "description": "The colour drawn against each `cScale` slot (the timeline's rule under a box), twelve\nslots. A list of colours, or one comma-separated string; `cScaleInv0`–`cScaleInv11`\nreplace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values in every theme (D258): the inverse of the slot (a half turn of hue in `forest`), fixed in `default`. Where v12 inverts the slot before it applies an author's `cScale<n>`, so does v13. Read as literal colours, not CSS variables. The timeline draws it only where `timelineScaleColors` is true and the gradient is off: an override changes nothing in the redux themes (the default `redux-color` included), `theme: 'auto'`, `neo` or `neo-dark` (v12's redux and neo paint, D227, D257)."
+          }
+        },
+        "cScaleLabel": {
+          "description": "Text colour on each `cScale` slot, twelve slots. A list of colours, or one\ncomma-separated string; `cScaleLabel0`–`cScaleLabel11` replace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values in every theme (D258): `labelTextColor` in most themes, with slots 0 and 3 inverted in `default`, slots 0 and 2 `cScale1` in `neutral`, black under `darkMode` in `dark` and `neutral`, and each slot darkened by 75 in `redux-dark-color`. Read as literal colours, not CSS variables. The timeline reads it only where `timelineScaleColors` is true: an override changes nothing in the redux themes (the default `redux-color` included) or `theme: 'auto'`; in `neo` and `neo-dark` it is the box text and (slot 11) the axis and connectors (v12's redux and neo paint, D227, D257)."
+          }
+        },
+        "THEME_COLOR_LIMIT": {
+          "description": "v12's number of colour-scale slots.\n",
+          "type": "number",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "The numbered palettes always have twelve slots, and a diagram cycles through them (D258)."
           }
         },
         "arrowheadGap": {
@@ -556,6 +610,54 @@ export const configSchema: ConfigSchema = {
             "since": "13.0.0",
             "reason": "30 in the redux themes (v12 `look: neo` viewBox), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect."
           }
+        },
+        "timelineRadius": {
+          "description": "Corner radius in px of the top corners of a timeline section, period or event box.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "0 in the redux themes, 5 in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "timelineLabelOffset": {
+          "description": "How far below the top of a timeline section or period box its label starts: px, or a\nmultiple of the box's padding (`padding`, `0.5 * padding`). The multiplied form works\nthrough `initialize()` and site config, not through `%%{init}%%` directives: their\ntheme-variable values cannot hold `*`, so a directive's `0.5 * padding` is dropped.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`padding` in the redux themes, `0.5 * padding` in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "timelineEventLabelShift": {
+          "description": "Extra px below half the box padding at which a timeline event's label starts.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "3 in the redux themes, 0 in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "timelineScaleColors": {
+          "description": "`true`: timeline boxes take `cScale<n>` fills and `cScaleLabel<n>` text with a\n3px `cScaleInv<n>` rule under each box, and the axis and connectors are\n`cScaleLabel11` at 4px and 2px. `false`: boxes take `mainBkg` (the `borderColorArray`\nslot when `bkgColorArray` is non-empty) with a `nodeBorder` outline at `strokeWidth`\nand the theme's `dropShadow`, `nodeBorder` text, and the axis and connectors are\n`nodeBorder` at `strokeWidth`.\n",
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`false` in the redux themes, `true` in the classic and neo themes (v12 `styles.js`, D227, D257). Read literally at render time, so it has no CSS variable."
+          }
         }
       }
     },
@@ -883,7 +985,8 @@ export const configSchema: ConfigSchema = {
     "timeline": {
       "$ref": "#/$defs/TimelineDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "class": {
@@ -1054,7 +1157,9 @@ export const configSchema: ConfigSchema = {
       "type": "number",
       "default": 16,
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "Read by timeline, as v12's renderer read it: each box is `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. Text is drawn at `themeVariables.fontSize`; no other type reads this key."
       }
     },
     "markdownAutoWrap": {
@@ -4062,27 +4167,49 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the timeline renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12 with its default config merged (true): `width=\"100%\"` and a `max-width`. v12's renderer fell back to false only when the key was missing from its config."
+          }
+        },
         "diagramMarginX": {
           "$ref": "#/$defs/C4DiagramConfig/properties/diagramMarginX",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "diagramMarginY": {
           "$ref": "#/$defs/C4DiagramConfig/properties/diagramMarginY",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "leftMargin": {
-          "description": "Margin between actors",
+          "description": "Space in px left of the timeline: the content starts `50 + leftMargin` from the left,\nand the LR axis starts at `leftMargin`.\n",
           "type": "integer",
           "default": 150,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: the content starts `50 + leftMargin` from the left and the title is placed from it. The LR axis starts at `leftMargin` and ends at `width + 3 × leftMargin` or at the last period, whichever is further."
           }
         },
         "width": {
@@ -4091,7 +4218,9 @@ export const configSchema: ConfigSchema = {
           "default": 150,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "height": {
@@ -4100,13 +4229,18 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "padding": {
+          "description": "Margin in px around the timeline drawing in its viewBox.\n",
           "type": "number",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The margin around the drawing in the viewBox, as v12's `setupGraphViewbox`. The schema has no default, as v12's; unset it is 50, v12's renderer fallback."
           }
         },
         "boxMargin": {
@@ -4115,7 +4249,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "boxTextMargin": {
@@ -4124,7 +4260,9 @@ export const configSchema: ConfigSchema = {
           "default": 5,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "noteMargin": {
@@ -4133,7 +4271,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "messageMargin": {
@@ -4142,7 +4282,9 @@ export const configSchema: ConfigSchema = {
           "default": 35,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "messageAlign": {
@@ -4155,7 +4297,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "center",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "bottomMarginAdj": {
@@ -4164,7 +4308,9 @@ export const configSchema: ConfigSchema = {
           "default": 1,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "rightAngles": {
@@ -4172,7 +4318,9 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "taskFontSize": {
@@ -4182,21 +4330,27 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; box text is drawn at `themeVariables.fontSize`."
           }
         },
         "taskFontFamily": {
           "type": "string",
           "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; box text is drawn at `themeVariables.fontFamily`."
           }
         },
         "taskMargin": {
           "type": "number",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "activationWidth": {
@@ -4204,7 +4358,9 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "textPlacement": {
@@ -4212,7 +4368,9 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "fo",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "actorColours": {
@@ -4229,7 +4387,9 @@ export const configSchema: ConfigSchema = {
             "#FFFFE0"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`."
           }
         },
         "sectionFills": {
@@ -4247,7 +4407,9 @@ export const configSchema: ConfigSchema = {
             "#00008B"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`."
           }
         },
         "sectionColours": {
@@ -4259,14 +4421,19 @@ export const configSchema: ConfigSchema = {
             "#fff"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`."
           }
         },
         "disableMulticolor": {
+          "description": "Draws a timeline without sections in one colour slot instead of one slot per period.\n",
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "With no sections, every period and its events take colour slot 0 instead of one slot per period, as v12. With sections it does nothing, as in v12."
           }
         }
       }

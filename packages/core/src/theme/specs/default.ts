@@ -2,12 +2,13 @@
  * `default`: v12's classic lavender theme (`theme-default.js`).
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { pieSlots } from './palettes.ts';
+import { paletteSlots, pieSlots } from './palettes.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
   CLASSIC_PADDING,
   CLASSIC_SEQUENCE,
+  CLASSIC_TIMELINE,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -62,6 +63,7 @@ const theme: ThemeSpec = {
     ...TEXT_SIZES,
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
+    ...CLASSIC_TIMELINE,
     useGradient: false,
   },
   values: {
@@ -86,6 +88,41 @@ const theme: ThemeSpec = {
     rowOdd: 'lightenHsl(primaryColor, 75%)',
     rowEven: 'lightenHsl(primaryColor, 1%)',
     ...PIE_DEFAULT,
+  },
+  // v12 theme-default.js fills cScale and cScaleInv in its constructor, darkens cScale again
+  // when it calculates, and never recomputes them: fixed lists that ignore the base colours.
+  palettes: {
+    cScale: [
+      '#8686ff',
+      '#ffff78',
+      '#d7ff86',
+      '#c286ff',
+      '#ff86ff',
+      '#ff86c2',
+      '#ff8686',
+      '#ffc286',
+      '#c2ff86',
+      '#86ffc2',
+      '#86ffff',
+      '#86c2ff',
+    ],
+    cScaleInv: [
+      '#ffffb9',
+      '#ababff',
+      '#d0b9ff',
+      '#dcffb9',
+      '#b9ffb9',
+      '#b9ffdc',
+      '#b9ffff',
+      '#b9dcff',
+      '#dcb9ff',
+      '#ffb9dc',
+      '#ffb9b9',
+      '#ffdcb9',
+    ],
+    cScaleLabel: paletteSlots((i) =>
+      i === 0 || i === 3 ? 'invert(labelTextColor)' : 'labelTextColor'
+    ),
   },
 };
 

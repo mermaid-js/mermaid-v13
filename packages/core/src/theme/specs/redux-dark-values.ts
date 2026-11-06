@@ -8,6 +8,7 @@ import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
+  REDUX_TIMELINE,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
@@ -36,6 +37,7 @@ export const REDUX_DARK_TOKENS: ThemeSpec['tokens'] = {
   ...TEXT_SIZES,
   ...REDUX_PADDING,
   ...NEO_SEQUENCE,
+  ...REDUX_TIMELINE,
   useGradient: false,
 };
 

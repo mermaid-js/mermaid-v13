@@ -5,6 +5,7 @@
  * list has to match the differences found exactly, so none is unlisted and none is stale.
  */
 import {
+  NUMBERED_PALETTES,
   PALETTE_LIMIT,
   PALETTE_VARIABLES,
   THEME_VARIABLES,
@@ -43,8 +44,15 @@ const GRADIENT = ['useGradient', 'gradientStart', 'gradientStop'] as const;
 const PENDING_GRADIENT = GRADIENT.filter((n) => !Object.hasOwn(THEME_VARIABLES, n));
 
 /** Geometry v12 takes from `look: neo`, not from a theme variable; v13 carries it as tokens. */
+/**
+ * Timeline's box variables (spec #291): v12 chose its timeline geometry and paint by a theme
+ * name with `redux`, not by `look`, so `theme: neo` drew the classic values (D227).
+ */
+const TIMELINE = Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('timeline'));
+
 const LOOK_GEOMETRY = Object.entries(THEME_VARIABLES)
   .filter(([name, d]) => (d.kind === 'length' || d.kind === 'padding') && !(name in OLD))
+  .filter(([name]) => !TIMELINE.includes(name))
   .map(([name]) => name);
 
 const LOOK_GEOMETRY_WHY =
@@ -53,7 +61,6 @@ const LOOK_GEOMETRY_WHY =
 /** Each difference from v12 neo, with the decision that makes it. */
 const DIFFERENCES: Readonly<Record<string, string>> = {
   dropShadow: 'D181: the same blurred shadow, written in the syntax `checkFilter` accepts',
-  cScale: 'D181, D152: neo carries no per-item palette',
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
@@ -62,6 +69,9 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
     'D152: v12 ER labels use edgeLabelBackground outside its COLOR_THEMES (redux-color, redux-dark-color)',
   border1: 'D152: v12 neo leaves it unset; no ported diagram reads it (usedBy is empty)',
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
+  ...Object.fromEntries(
+    TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])
+  ),
 };
 
 const hex = (v: unknown): string | undefined => {
@@ -88,8 +98,8 @@ function same(name: string): boolean {
 }
 
 function v12Palette(name: string): string[] {
-  if (name === 'cScale')
-    return Array.from({ length: PALETTE_LIMIT }, (_, i) => OLD[`cScale${i}`] as string);
+  if (NUMBERED_PALETTES.includes(name as never))
+    return Array.from({ length: PALETTE_LIMIT }, (_, i) => OLD[`${name}${i}`] as string);
   const list = OLD[name];
   return Array.isArray(list) ? (list as string[]) : [];
 }
@@ -124,6 +134,12 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
       expect(v13Value(neo, name), name).toEqual(v13Value(redux, name));
   });
 
+  it('takes the classic timeline values, as v12 theme neo drew (D227)', async () => {
+    const classic = createTheme(await loadTheme('default'), { cssVariables: false });
+    expect(TIMELINE.length).toBe(4);
+    for (const name of TIMELINE) expect(v13Value(neo, name), name).toEqual(v13Value(classic, name));
+  });
+
   it('gives the ER variables what v12 neo draws (D152)', () => {
     expect(hex(neo.value('rowOdd'))).toBe(hex(OLD.mainBkg));
     expect(hex(neo.value('rowEven'))).toBe(hex(OLD.mainBkg));
@@ -136,8 +152,10 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
     expect(THEME_VARIABLES.border1?.usedBy).toEqual([]);
   });
 
-  it('has no per-item palette (D181)', () => {
-    for (const p of PALETTE_VARIABLES) expect(neo.palette(p), p).toEqual([]);
+  it("has no per-subgraph palette (D181); its cScale palettes are v12 neo's (D258)", () => {
+    expect(neo.palette('borderColorArray')).toEqual([]);
+    expect(neo.palette('bkgColorArray')).toEqual([]);
+    for (const p of NUMBERED_PALETTES) expect(neo.palette(p), p).toHaveLength(PALETTE_LIMIT);
   });
 
   // GAPS.md "Contracts": #223 owns the gradient vocabulary. Until it merges these are not v13

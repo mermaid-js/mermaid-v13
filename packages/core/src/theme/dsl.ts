@@ -12,6 +12,10 @@
  *   contrast(bg, a, b)  a, unless it misses AA on bg and b reads better (WCAG ratio); in CSS
  *                       the choice follows bg live, between a's and b's theme values
  *   invert(a)           the sRGB inverse, `color(from a srgb calc(1 - r) …)`
+ *   adjustHue(a, 30)    a with its HSL hue turned by 30 degrees (khroma's `adjust(a, { h })`,
+ *                       v12's `cScale` hue steps, D258), `hsl(from a calc(h + 30) s l / alpha)`
+ *   ifSet(v, b)         the variable v when the author sets it, else b (v12's `v || b`, D258),
+ *                       `var(--mermaid-v, b)`
  *
  * An identifier is a theme variable when the table knows it, otherwise a CSS colour name.
  * Each rule compiles to a CSS expression over the private aliases (DESIGN §8.1 item 2) and to the same value in
@@ -22,6 +26,7 @@ export type Expr =
   | { readonly k: 'ref'; readonly name: string }
   | { readonly k: 'lit'; readonly text: string }
   | { readonly k: 'pct'; readonly value: number }
+  | { readonly k: 'num'; readonly value: number }
   | { readonly k: 'call'; readonly fn: Fn; readonly args: readonly Expr[] };
 
 export type Fn =
@@ -32,7 +37,9 @@ export type Fn =
   | 'darkenHsl'
   | 'alpha'
   | 'contrast'
-  | 'invert';
+  | 'invert'
+  | 'adjustHue'
+  | 'ifSet';
 
 const ARITY: Readonly<Record<Fn, number>> = {
   mix: 3,
@@ -43,10 +50,12 @@ const ARITY: Readonly<Record<Fn, number>> = {
   alpha: 2,
   contrast: 3,
   invert: 1,
+  adjustHue: 2,
+  ifSet: 2,
 };
 
 const RE_TOKEN =
-  /\s*(?:([A-Za-z][\w-]{0,63})|(#[0-9A-Fa-f]{3,8})|(\d{1,3}(?:\.\d{1,4})?)%|([(),]))/y;
+  /\s*(?:([A-Za-z][\w-]{0,63})|(#[0-9A-Fa-f]{3,8})|(\d{1,3}(?:\.\d{1,4})?)%|([(),])|([+-]?\d{1,3}(?:\.\d{1,4})?))/y;
 
 /** Parses a rule. Throws a SyntaxError naming the rule on anything else. */
 export function parseRule(source: string): Expr {
@@ -69,6 +78,7 @@ export function parseRule(source: string): Expr {
     if (depth > 8) fail('nested too deep');
     const m = next() ?? fail('expected a value');
     if (m[3] !== undefined) return { k: 'pct', value: Number(m[3]) };
+    if (m[5] !== undefined) return { k: 'num', value: Number(m[5]) };
     if (m[2] !== undefined) return { k: 'lit', text: m[2] };
     const word = m[1] ?? fail('expected a value');
     if (peekSymbol() !== '(') return { k: 'ref', name: word };

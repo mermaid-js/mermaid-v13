@@ -1,0 +1,35 @@
+@ 1:5  time|line TD
+  1:1-1:12 "timeline TD"
+  | **`timeline TD`**
+  |
+  | A timeline is `timeline`, `timeline LR` or `timeline TD`, then statements.
+@ 2:5  ti|tle History
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title <text>`: the diagram title.
+@ 3:6  sec|tion Web
+  3:3-3:10 "section"
+  | **`section`**
+  |
+  | `section <name>`: starts a section; the periods after it are drawn in it.
+@ 4:6  acc|Title: Social media
+  4:3-4:12 "accTitle:"
+  | **`accTitle:`**
+  |
+  | `accTitle: <text>`: the accessible title.
+@ 5:7  accD|escr: The first years
+  5:3-5:12 "accDescr:"
+  | **`accDescr:`**
+  |
+  | `accDescr: <text>` or `accDescr { … }`: the accessible description.
+@ 6:12  accDescr |{
+  6:3-6:13 "accDescr {"
+  | **`accDescr {`**
+  |
+  | `accDescr: <text>` or `accDescr { … }`: the accessible description.
+@ 8:3  |}
+  8:3-8:4 "}"
+  | **`}`**
+  |
+  | `accDescr: <text>` or `accDescr { … }`: the accessible description.

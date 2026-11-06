@@ -2,12 +2,14 @@
  * `forest`: v12 `theme-forest.js`.
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { pieSlots } from './palettes.ts';
+import { paletteSlots, pieSlots } from './palettes.ts';
+import { darkenedScale, hueSources } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
   CLASSIC_PADDING,
   CLASSIC_SEQUENCE,
+  CLASSIC_TIMELINE,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -53,6 +55,7 @@ const theme: ThemeSpec = {
     ...TEXT_SIZES,
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
+    ...CLASSIC_TIMELINE,
     useGradient: false,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
@@ -78,6 +81,22 @@ const theme: ThemeSpec = {
     border2: '#6eaa49',
     noteTextColor: '#000000',
     noteBorderColor: '#6eaa49',
+  },
+  // v12 theme-forest.js: hue steps darkened by 10, inverses a half turn of hue. Its
+  // tertiaryColor is khroma lighten('#cde498', 10), of which the base variable is the hex.
+  palettes: {
+    ...darkenedScale(
+      hueSources(
+        false,
+        'primaryColor',
+        'secondaryColor',
+        'ifSet(tertiaryColor, lightenHsl(#cde498, 10%))'
+      ),
+      10,
+      (c) => `adjustHue(${c}, 180)`
+    ),
+    // v12 sets labelTextColor to actorTextColor before the labels.
+    cScaleLabel: paletteSlots(() => 'actorTextColor'),
   },
 };
 

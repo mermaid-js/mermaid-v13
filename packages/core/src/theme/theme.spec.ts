@@ -282,3 +282,18 @@ describe('standalone SVG (R-THEME-2)', () => {
     for (const m of svg.matchAll(/var\((--_\w+)\)/g)) expect(svg).toContain(m[1] + ':');
   });
 });
+
+describe('createTheme: extra rules (config fragments, D153)', () => {
+  it('reads a variable a rule table adds as a colour aliased by its name', async () => {
+    const spec = await loadTheme('default');
+    const theme = createTheme(spec, { rules: { fixtureInk: 'primaryTextColor' } });
+    expect(theme.color('fixtureInk')).toBe('var(--_fixtureInk)');
+    expect(theme.value('fixtureInk')).toBe(theme.value('primaryTextColor'));
+    expect(theme.rootStyle()).toHaveProperty('--_fixtureInk');
+    const set = createTheme(spec, {
+      rules: { fixtureInk: 'primaryTextColor' },
+      themeVariables: { fixtureInk: '#ff0000' },
+    });
+    expect(set.value('fixtureInk')).toBe('#ff0000');
+  });
+});

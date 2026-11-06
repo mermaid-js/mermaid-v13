@@ -7,15 +7,19 @@
  * `packages/conformance/src/neo-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { LABEL_SCALE, REDUX_RULES } from './palettes.ts';
+import { darkenedScale, hueSources } from './scales.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
+  CLASSIC_TIMELINE,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
-import { REDUX_RULES } from './redux-rules.ts';
 import { PIE_REDUX } from './redux.ts';
+
+const SOURCES = hueSources(true, '#ececfe', '#e9e9f1', 'lightenHsl(adjustHue(#ececfe, 180), 5%)');
 
 const neo: ThemeSpec = {
   name: 'neo',
@@ -46,6 +50,7 @@ const neo: ThemeSpec = {
     ...TEXT_SIZES,
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
+    ...CLASSIC_TIMELINE,
     // v12 theme-neo.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
@@ -73,6 +78,10 @@ const neo: ThemeSpec = {
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',
   },
+  // v12 theme-neo.js derives cScale from its own constants (#ECECFE, #E9E9F1), not from
+  // primaryColor, darkened by 25 (75 under darkMode).
+  palettes: { ...darkenedScale(SOURCES, 25), cScaleLabel: LABEL_SCALE },
+  darkModePalettes: darkenedScale(SOURCES, 75),
 };
 
 export default neo;

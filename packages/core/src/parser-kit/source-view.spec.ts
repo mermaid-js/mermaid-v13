@@ -125,6 +125,21 @@ describe('cook', () => {
     const src = 'a\n%% c\nb';
     expect(cook(src, 0, src.length, sourceView(src, 0, []))).toBe('a\nb');
   });
+
+  it('keeps a CR and an LF that a removed span left side by side as two line ends', () => {
+    // v12 turned the CR into an LF before it removed the comment line.
+    const src = 'a\r%% c\n\nb\r\nc';
+    expect(cook(src, 0, src.length, sourceView(src, 0, []))).toBe('a\n\nb\nc');
+  });
+});
+
+describe('SourceOffsets', () => {
+  it('starts at the run holding `near`, and still walks both ways', () => {
+    const src = 'a\n%% c\nb\n%% d\nc\n%% e\nd';
+    const runs = sourceView(src, 0, []).runs ?? new Uint32Array();
+    const at = new SourceOffsets(runs, 4);
+    expect([4, 5, 0, 2, 6].map((i) => at.source(i))).toEqual([14, 15, 0, 7, 21]);
+  });
 });
 
 describe('per-diagram options', () => {

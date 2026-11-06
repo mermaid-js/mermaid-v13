@@ -38,6 +38,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'pie',
       'sequence',
       'state',
+      'timeline',
     ]);
   });
 

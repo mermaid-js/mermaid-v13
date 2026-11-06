@@ -47,7 +47,7 @@ const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
-    expect(TYPES).toEqual(['class', 'er', 'flowchart', 'pie', 'sequence', 'state']);
+    expect(TYPES).toEqual(['class', 'er', 'flowchart', 'pie', 'sequence', 'state', 'timeline']);
     for (const type of TYPES) expect(READS.get(type)!.size).toBeGreaterThan(0);
   });
 

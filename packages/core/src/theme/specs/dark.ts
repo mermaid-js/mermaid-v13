@@ -2,12 +2,14 @@
  * `dark`: v12 `theme-dark.js`.
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { pieSlots } from './palettes.ts';
+import { INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
+import { darkModeLabels } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
   CLASSIC_PADDING,
   CLASSIC_SEQUENCE,
+  CLASSIC_TIMELINE,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -61,6 +63,7 @@ const theme: ThemeSpec = {
     ...TEXT_SIZES,
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
+    ...CLASSIC_TIMELINE,
     useGradient: false,
   },
   rules: PIE_DARK,
@@ -87,6 +90,27 @@ const theme: ThemeSpec = {
     rowOdd: '#2c2d2d',
     rowEven: '#060606',
   },
+  // v12 theme-dark.js: fixed colours after slot 0, which is primaryColor.
+  palettes: {
+    cScale: [
+      'primaryColor',
+      '#0b0000',
+      '#4d1037',
+      '#3f5258',
+      '#4f2f1b',
+      '#6e0a0a',
+      '#3b0048',
+      '#995a01',
+      '#154706',
+      '#161722',
+      '#00296f',
+      '#01629c',
+    ],
+    cScaleInv: INVERTED_SCALE,
+    // v12 sets labelTextColor to its mainContrastColor (lightgrey) before the labels.
+    cScaleLabel: paletteSlots(() => '#d3d3d3'),
+  },
+  darkModePalettes: { cScaleLabel: darkModeLabels() },
 };
 
 export default theme;

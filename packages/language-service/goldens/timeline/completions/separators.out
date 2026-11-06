@@ -1,0 +1,17 @@
+@ 2:6  acc|Title: Social media
+  accTitle keyword 2:3-2:11 "accTitle" -> "accTitle"
+  accDescr keyword 2:3-2:11 "accTitle" -> "accDescr"
+@ 3:6  acc| The first years
+  accTitle keyword 3:3-3:6 "acc" -> "accTitle:"
+  accDescr keyword 3:3-3:6 "acc" -> "accDescr:"
+@ 4:6  sec|tion Web
+  section keyword 4:3-4:10 "section" -> "section"
+@ 5:5  ti|tle History
+  title keyword 5:3-5:8 "title" -> "title"
+@ 6:6  acc|Descr {
+  accDescr keyword 6:3-6:11 "accDescr" -> "accDescr"
+@ 9:3  |2002 : LinkedIn
+  title keyword 9:3-9:3 "" -> "title "
+  section keyword 9:3-9:3 "" -> "section "
+  accTitle keyword 9:3-9:3 "" -> "accTitle: "
+  accDescr keyword 9:3-9:3 "" -> "accDescr: "

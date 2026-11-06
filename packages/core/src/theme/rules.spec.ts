@@ -65,6 +65,36 @@ describe('diagram plugin rule tables (DESIGN §12.1)', () => {
     );
   });
 
+  it('adjustHue turns the HSL hue as khroma does, in JS and CSS (D258)', () => {
+    const rules = { a: 'adjustHue(#ff0000, 120)', b: 'adjustHue(primaryColor, -120)' };
+    const lit = createTheme(base, { rules, cssVariables: false });
+    expect(lit.color('a')).toBe('#00ff00');
+    // v12 theme-base: secondaryColor is adjust(primaryColor, { h: -120 }), #f4ddff.
+    expect(lit.color('b')).toBe('#f4ddff');
+    const t = createTheme(base, { rules });
+    t.color('b');
+    expect(t.rootStyle()['--_b']).toBe(
+      'var(--mermaid-b,hsl(from var(--_p) calc(h - 120) s l / alpha))'
+    );
+  });
+
+  it('HSL steps keep the hue through white, as v12 does with its hsl() strings (D258)', () => {
+    const rules = { a: 'darkenHsl(lightenHsl(#ff0000, 100%), 50%)' };
+    expect(createTheme(base, { rules, cssVariables: false }).color('a')).toBe('#ff0000');
+  });
+
+  it("ifSet takes the author's value, else its fallback, in JS and CSS (D258)", () => {
+    const rules = { a: 'ifSet(secondaryColor, #000000)' };
+    expect(createTheme(base, { rules, cssVariables: false }).color('a')).toBe('#000000');
+    const set = { secondaryColor: '#123456' };
+    expect(createTheme(base, { rules, cssVariables: false, themeVariables: set }).color('a')).toBe(
+      '#123456'
+    );
+    const t = createTheme(base, { rules });
+    t.color('a');
+    expect(t.rootStyle()['--_a']).toBe('var(--mermaid-a,var(--mermaid-secondaryColor,#000000))');
+  });
+
   it('rejects malformed rules and cycles', () => {
     const bad = (rule: string) => () =>
       createTheme(base, { rules: { x: rule }, cssVariables: false }).color('x');
@@ -73,6 +103,10 @@ describe('diagram plugin rule tables (DESIGN §12.1)', () => {
     expect(bad('mix(primaryColor, black, 15%) junk')).toThrow(/unexpected text/);
     expect(bad('url(javascript:x)')).toThrow(SyntaxError);
     expect(bad('notAColourOrVariable')).toThrow(/Unknown colour/);
+    expect(bad('adjustHue(primaryColor, 400)')).toThrow(/degrees/);
+    expect(bad('adjustHue(primaryColor, 30%)')).toThrow(/degrees/);
+    expect(bad('invert(30)')).toThrow(/plain number/);
+    expect(bad('ifSet(#ffffff, black)')).toThrow(/ifSet needs/);
     expect(() =>
       createTheme(base, { rules: { x: 'y', y: 'x' }, cssVariables: false }).color('x')
     ).toThrow(/cycle/);

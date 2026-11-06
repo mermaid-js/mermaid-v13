@@ -256,6 +256,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 
 | Key | Status | Reason | Replacement |
 | --- | --- | --- | --- |
+| `themeVariables.THEME_COLOR_LIMIT` | ignored | The numbered palettes always have twelve slots, and a diagram cycles through them (D258). |  |
 | `themeCSS` | ignored | v13 output carries no author stylesheet (R-SEC-2). | `themeVariables`, or `--mermaid-*` CSS variables set by the host page |
 | `look` | ignored | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes, `neo` and `neo-dark` carry neo geometry and the classic themes carry classic geometry (D152, D181). | `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8) |
 | `htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
@@ -277,7 +278,27 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `sequence.actorFont` | ignored | v12's internal font helper; v13 reads the `actorFontSize`, `actorFontFamily` and `actorFontWeight` keys. |  |
 | `gantt.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `journey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `timeline.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the timeline renderer never did. |  |
 | `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `timeline.diagramMarginX` | ignored | v12's timeline never read it. |  |
+| `timeline.diagramMarginY` | ignored | v12's timeline never read it. |  |
+| `timeline.width` | ignored | v12's timeline never read it. |  |
+| `timeline.height` | ignored | v12's timeline never read it. |  |
+| `timeline.boxMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.boxTextMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.noteMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.messageMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.messageAlign` | ignored | v12's timeline never read it. |  |
+| `timeline.bottomMarginAdj` | ignored | v12's timeline never read it. |  |
+| `timeline.rightAngles` | ignored | v12's timeline never read it. |  |
+| `timeline.taskFontSize` | ignored | v12's timeline never read it; box text is drawn at `themeVariables.fontSize`. |  |
+| `timeline.taskFontFamily` | ignored | v12's timeline never read it; box text is drawn at `themeVariables.fontFamily`. |  |
+| `timeline.taskMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.activationWidth` | ignored | v12's timeline never read it. |  |
+| `timeline.textPlacement` | ignored | v12's timeline never read it. |  |
+| `timeline.actorColours` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
+| `timeline.sectionFills` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
+| `timeline.sectionColours` | ignored | v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`. |  |
 | `class.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `class.titleTopMargin` | ignored | The class SVG draws no front-matter `title`, as flowchart's. |  |
@@ -417,7 +438,7 @@ Sequence diagrams (`sequence` section, #145):
 | v12 | v13 | Why |
 | --- | --- | --- |
 | Default theme `default` (the flowchart section defaults to `redux-color` with `look: neo`) | Default theme `redux-color` for every diagram type, with v12's `look: neo` geometry. Set `theme: 'default'` for v12's default colours and classic geometry | D151 |
-| Themes `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`, `null` | 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes ported from v12, plus `default`, `dark`, `forest`, `neutral`, `base`, `neo` and `neo-dark`. `neo` is v12's `theme-neo.js` with v12's `look: neo` geometry (the redux family's), corner radius 3, its blurred shadow and no per-item palette. `neo-dark` is v12's `theme-neo-dark.js` with the same geometry and tokens, cleaned up into a dark theme ([neo-dark](#neo-dark)). `null` renders `base`, with a `THEME_UNAVAILABLE` warning. An unknown name renders the default theme with the same warning | D151, D180, D181, D183, R-THEME-6, R-THEME-7 |
+| Themes `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`, `null` | 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes ported from v12, plus `default`, `dark`, `forest`, `neutral`, `base`, `neo` and `neo-dark`. `neo` is v12's `theme-neo.js` with v12's `look: neo` geometry (the redux family's), corner radius 3, its blurred shadow and no per-subgraph palette. `neo-dark` is v12's `theme-neo-dark.js` with the same geometry and tokens, cleaned up into a dark theme ([neo-dark](#neo-dark)). `null` renders `base`, with a `THEME_UNAVAILABLE` warning. An unknown name renders the default theme with the same warning | D151, D180, D181, D183, R-THEME-6, R-THEME-7 |
 | — | `theme: 'auto'`: the default theme, switching to `dark` under `prefers-color-scheme: dark` through a small custom-property `<style>` | R-THEME-8 |
 | Colours computed once in JS (khroma) and written into a `<style>` element | Colours are presentation attributes reading CSS variables: every theme variable is `--mermaid-<name>` on the host page, with the theme value as fallback; derived colours use `color-mix()`, and contrast text and `invert()` use relative colour syntax (`color(from …)`), so they follow a host override of the colour they derive from. A page can re-theme rendered SVGs with CSS. Limit: contrast text picks between the theme's two ink values; overriding the ink variables themselves (`--mermaid-textColor`) does not change contrast-derived text such as `nodeTextColor` (set `--mermaid-nodeTextColor` directly) `initialize({ output: { cssVariables: false } })` writes literal colours instead | R-THEME-2, R-THEME-3, R-THEME-4 |
 | `themeVariables` from diagram text checked against a character set only | Values are checked by kind (colour, length, font, weight) and a bad one is dropped with `THEME_VARIABLE_DROPPED`. Names v13 does not use are ignored | R-SEC-3 |
@@ -429,7 +450,8 @@ Sequence diagrams (`sequence` section, #145):
 | Drop shadow under `look: neo` | A hard drop shadow in the redux themes, as the CSS `filter` from the `dropShadow` theme variable: offset 4px, no blur, 6% opacity, black on light themes and white on dark. `neo` keeps v12's blurred shadow, `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`, and `neo-dark` its own, `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. It is on node outlines, icons, subgraphs and collapsed groups, not on edges, edge labels or swimlanes. Under `neo` and `neo-dark`, sequence participants take the theme's drop shadow, as notes and fragment labels do; v12 drew them with a separate 6% white offset filter that did not show on `neo` (D184). The classic themes set `dropShadow: none`. No `<defs>` and no ids, so several diagrams on a page never collide | D151, D152, D181, D184 |
 | Per-subgraph colour in `redux-color` | Each subgraph takes a palette slot by declaration order, cycling after twelve: border from `borderColorArray`, fill from `bkgColorArray`. `redux-dark-color` has an empty fill palette, so its subgraphs are coloured on the border only. `redux` and the classic themes carry no palette. Colour is on whenever the theme has a non-empty `borderColorArray` (a `themeVariables` palette turns it on in any theme), and a collapsed subgraph's card, separator and dots take its slot too. As in v12 the slot is written as `data-color-id="color-<n>"` on the cluster or collapsed node, and an author `style` / `classDef` still wins. Swimlanes are not drawn yet, so there is nothing to colour there | D151, D152 |
 | Sequence colours `actorBkg`, `actorBorder`, `actorTextColor`, `actorLineColor`, `signalColor`, `signalTextColor`, `labelBoxBkgColor`, `labelBoxBorderColor`, `labelTextColor`, `loopTextColor`, `activationBkgColor`, `activationBorderColor`, `sequenceNumberColor` | The same names, derived as v12 `theme-base.js` derives them, with each built-in theme's v12 values pinned where they differ; `--mermaid-<name>` like every variable. `activationBorderColor` is `secondaryColor` with 12.5% black, close to khroma's `darken(…, 10)` | R-THEME-2, D71 |
-| Numbered palettes (`pie*`, `git*`) | `pie1`–`pie12` and the other pie variables are in the inventory ([Pie chart](#pie-chart)); `git*` come with gitGraph. `cScale0`–`cScale11` are set by `redux-color` (the fixed Tailwind-300 set) | R-CONF-5 |
+| Numbered palettes (`pie*`, `git*`) | `pie1`–`pie12` and the other pie variables are in the inventory ([Pie chart](#pie-chart)); `git*` come with gitGraph. | R-CONF-5 |
+| `cScale0`–`cScale11`, `cScaleInv0`–`cScaleInv11`, `cScaleLabel0`–`cScaleLabel11` | Three palettes, `cScale`, `cScaleInv` and `cScaleLabel`, with v12's values in every theme, derived as v12 derives them: they follow `primaryColor` (and the secondary and tertiary colours) where v12's theme does (`base`, `forest`, `dark` slot 0, `neo-dark`, `redux-dark`; `mainBkg` in `redux`), the darker steps under `darkMode`, and an override of one slot or of the whole list (`cScale: [...]`). A `cScaleInv` or `cScaleLabel` slot that v12 derived from the `cScale` slot follows its override as in v12. `THEME_COLOR_LIMIT` is ignored: twelve slots, cycling. `scaleLabelColor` is not read: set `cScaleLabel` or `labelTextColor`. Under `darkMode`, v12 also turned the unset text colour of `base`, `neo`, `redux` and `redux-color` to `#eee`, which their labels followed; v13 keeps the theme's `labelTextColor`. The timeline paints with them only in the classic themes, and with `cScaleLabel` in the neo themes ([Timeline config](#timeline-config)) | D258 |
 
 Colours are close to, but not byte-equal with, v12. Where a v12 colour pair failed WCAG AA
 contrast, v13 changes it (for example the dark theme's `edgeLabelBackground`).
@@ -466,6 +488,10 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `messageEndGap` (sequence: a message stops this far short of its target, past the head room; a bidirectional one starts this far in) | 3 | 0 |
 | `labelBoxExtraHeight` (sequence: added to a fragment's label tab) | 15 | 0 |
 | `actorFooterPadding` (sequence: room below a drawing with participants) | 30 | 0 |
+| `timelineRadius` (timeline box top corners) | 0 (`neo`, `neo-dark`: 5, D227) | 5 |
+| `timelineLabelOffset` (timeline: a section or period label below its box's top) | padding (`neo`, `neo-dark`: 0.5 × padding) | 0.5 × padding |
+| `timelineEventLabelShift` (timeline: added to half the padding above an event label) | 3 (`neo`, `neo-dark`: 0) | 0 |
+| `timelineScaleColors` (timeline boxes take `cScale<n>` fills, `cScaleLabel<n>` text and a 3px `cScaleInv<n>` rule; the axis and connectors `cScaleLabel11` at 4px / 2px) | `false`: `mainBkg` fill (the `borderColorArray` slot when `bkgColorArray` is non-empty, D257), `nodeBorder` outline at `strokeWidth` with `dropShadow`, `nodeBorder` text, axis and connectors at `strokeWidth` (`neo`, `neo-dark`: `true`, D227) | `true` |
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color`; `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))` on `neo`; `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))` on `neo-dark` | `none` |
 | `classText` (colour: class diagram text) | `textColor` | `primaryTextColor` |
 | `classMarkerStrokeWidth` / `classFilledMarkerStrokeWidth` (outline of hollow / filled class markers) | 2 / 0 | 1 / 1 |
@@ -480,7 +506,8 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `altBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `#f0f0f0` on `neo`; `#404040` on `neo-dark` (D189) | `#f0f0f0` (`default`, `forest`); `#555555` (`dark`); `#f4f4f4` (`neutral`); `tertiaryColor` (`base`) |
 
 The palette rows apply to the two colour themes only; plain `redux`, `redux-dark`, `neo` and
-`neo-dark` carry no palette. A padding variable (the `…Padding…` names) takes a px number or a multiple of
+`neo-dark` carry no per-subgraph palette (every theme carries `cScale`, `cScaleInv` and
+`cScaleLabel`, D258). A padding variable (the `…Padding…` names) takes a px number or a multiple of
 `flowchart.padding` written `padding` or `<n> * padding`, so `nodePaddingX: '2 * padding'`
 gives a redux theme classic node padding. `circlePadding` is added to the label's diagonal,
 so it counts twice towards the diameter compared with the per-side node padding.
@@ -1038,6 +1065,63 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 | Subgraph `<g class="cluster" id>` with `<g class="cluster-label">` | `<g class="cluster …" data-id="<name>" data-ast="s:<name>">` with `<rect>` and `<text class="cluster-label">` | |
 | Front-matter `title` drawn as `text.erDiagramTitleText` | Not drawn yet, as in the flowchart | |
 | Hand-drawn look: background copies of every entity (`<id>-background`) | None (`look` is removed, D153) | |
+
+## Timeline config
+
+- **SVG only:** `timeline`, `timeline LR` and `timeline TD` are detected by v12's case-sensitive
+  `timeline` detector, after `flowchart-v2` and before `gitGraph`. `format: 'ascii'` throws
+  `UnsupportedFormatError` (D216).
+- **Honoured** in the `timeline` section, with v12's effective values when unset (v12's renderer
+  with its default config merged): `leftMargin` (150), `padding` (no schema default; 50, v12's
+  fallback), `useMaxWidth` (true) and `disableMulticolor` (false). The top-level `fontSize` (16)
+  is read as v12's timeline read it: each box is `0.55 × fontSize` taller than its text, and the
+  TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. The
+  text itself is drawn at `themeVariables.fontSize`, as in v12. A `leftMargin`, `padding` or
+  `fontSize` that is not a number of at least 0 is replaced by its default, with a
+  `TIMELINE_CONFIG_IGNORED` warning naming the key.
+- **Ignored**, as v12's timeline never read them (keys copied from the sequence config):
+  `diagramMarginX`, `diagramMarginY`, `width`, `height`, `boxMargin`, `boxTextMargin`,
+  `noteMargin`, `messageMargin`, `messageAlign`, `bottomMarginAdj`, `rightAngles`,
+  `taskFontSize`, `taskFontFamily`, `taskMargin`, `activationWidth`, `textPlacement`,
+  `actorColours`, `sectionFills`, `sectionColours` and `useWidth`. Box colours come from the
+  `cScale`, `cScaleInv` and `cScaleLabel` palettes or `mainBkg` / `nodeBorder` (D258).
+- **`cScale<n>`, `cScaleLabel<n>` and `cScaleInv<n>` overrides** recolour a timeline only in the
+  classic themes (`default`, `base`, `dark`, `forest`, `neutral`). They change nothing in the
+  redux themes, the default `redux-color` included, or under `theme: 'auto'` (which is
+  `redux-color` and `dark`); in `neo` and `neo-dark` only `cScaleLabel` counts (box text, and
+  slot 11 for the axis and connectors). This follows v12's redux and neo timeline paint (D227,
+  D257), but v12's default theme was `default`, so a v12 diagram that set them without a `theme`
+  needs `theme: 'default'` to keep its colours.
+
+## Timeline SVG structure
+
+What changed in the timeline's SVG compared with v12's `timelineRenderer.ts` (LR) and
+`timelineRendererVertical.ts` (TD), and why (DESIGN §7.2, spec #291). v12's class names are kept
+where the element still exists: `timeline-node`, `section-<n>`, `node-bkg`, `node-line-<n>`,
+`taskWrapper`, `eventWrapper`, `lineWrapper`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, a `<style>` scoped by the id; no `role`; `accTitle` / `accDescr` parsed but never written (the DB had no `getAccTitle`) | No root `id`; `class="mermaid mermaid-timeline"`, `role="img"`, `aria-roledescription="timeline"`, `data-mermaid-version`; colours are presentation attributes reading `var(--_x)` aliases. `accTitle` and `accDescr` give `<title id="<id>-title">` and `<desc id="<id>-desc">` with `aria-labelledby` / `aria-describedby` | Inert output (R-SEC-2), only the title and description ids (R-A11Y-1) |
+| An empty first `<g>`; sections in an unclassed `<g transform>`; boxes placed by `transform` | No empty group. A section is `<g class="timeline-node section-<n>" data-id="sec:<k>" data-ast="sec:<k>">`; a period `<g class="taskWrapper" data-id data-ast="per:<k>">` and an event `<g class="eventWrapper" data-id data-ast="ev:<p>.<k>">`, each holding its `timeline-node` group. Coordinates are absolute, no `transform` | One element per section, period and event maps it to its source (R-PARSE-8) |
+| Box path `id="<id>-node-<n>"` (TD `undefined-node-<n>`), `class="node-bkg node-undefined"` | `<path class="node-bkg">`, no id | No ids; `node.type` was never set |
+| The class of slot *n* is `section-<n mod 12 − 1>`, so the first section is `section--1` | Kept as is, so author CSS written for v12 still matches | P2 |
+| Label `<text dy="1em" dominant-baseline="middle">` wrapped by `getComputedTextLength`; only lowercase `<br>` breaks | `<text data-id>` with a `<tspan>` per line from core's label layout. Labels stay plain text, as in v12: every `<br>` form breaks and entities decode (D225), and any other markup (`<b>`, `<i>`, `<u>`) is shown as written. Labels carry `data-id` only. Box labels are drawn at the theme's `fontWeight` (600 in the redux themes, as v12's redux CSS did) | D225, R-PARSE-8 |
+| `<marker id="<id>-arrowhead">` and `marker-end` on the axis and the connectors; TD referred to `url(#arrowhead)`, which did not exist, so it drew none; the marker was always black | Inline `<path class="arrowhead">` at v12's marker size and place, in the line's colour, in both directions | D253; no `<defs>` or ids |
+| Axis and connectors `stroke="black"` overridden by `.lineWrapper line`: `cScaleLabel11` (classic) or `nodeBorder` at `strokeWidth` (redux) | The same paint as attributes. A connector's `lineWrapper` carries the `data-id` of its period (LR) or event (TD), no `data-ast` | |
+| `.eventWrapper { filter: brightness(120%) }` | The event's colours are computed at 120% brightness (a gradient outline stays as it is). Under `theme: 'auto'` a theme variable an event reads keeps its CSS variable unbrightened, so it still switches with the page, except on a palette fill (next row); a page that overrides `--mermaid-mainBkg` or `--mermaid-nodeBorder` in CSS changes periods but not events | `brightness()` is not an allowed `filter` value (R-SEC-2) |
+| Redux geometry, paint and shadow chosen by `theme.includes('redux')`; the `<filter id="<id>-drop-shadow">` written only under `look: neo` (its opacity 0.2 white on the dark redux themes) | The `timelineRadius`, `timelineLabelOffset`, `timelineEventLabelShift` and `timelineScaleColors` theme variables ([Theme geometry](#theme-geometry)) and the shared `dropShadow` CSS filter, in every look: the dark redux themes' shadow is white at 6%, as everywhere else | D152, D153 |
+| `redux-color` filled each box with its `borderColorArray` slot; `redux-dark-color` with `mainBkg` | Kept: the border slot fills where `bkgColorArray` is non-empty, else `mainBkg`; the outline takes the slot in both, and the box carries `data-color-id="color-<n>"`. A palette slot is a literal colour, under `theme: 'auto'` the light theme's, so the text and rule drawn on a palette fill are that theme's literal colours too and the pair never switches separately with the page | D257, D151 |
+| A redux theme with `useGradient` turned on | `redux-color` and `redux-dark-color` keep the palette slot as the outline (a palette slot wins over the gradient, as in every diagram); `redux` and `redux-dark` outline with the gradient at `strokeWidth` | theming.md |
+| `theme: neo` (and 12.2.0's default `look: neo`): classic geometry, `mainBkg` fill and gradient outlines through `[data-look=neo]` rules; the rule under each box stroked with the gradient, which a zero-height line can't show; TD wrote no gradient defs, so its gradient paint pointed at nothing | `neo` and `neo-dark` keep classic geometry and colours (no shadow), fill `mainBkg` and outline with the gradient at 2px in both directions; the rule is drawn in plain `nodeBorder` at 2px | D227, D182, D185 |
+| Periods before the first section were never drawn, and two sections with one name each drew both groups | Periods are grouped by section position: leading periods are drawn first with no section box, in slot 0; each section draws its own periods | D251 |
+| A period over about 150px tall put its events on the axis (events started 200px below the period top) | Events start at v12's place or 50px below the axis, whichever is lower | D252 |
+| `maxTaskHeight` was always one line (v12 measured `[object Object]`), so only a tall period grew | Every period takes the height of the tallest, and the axis follows it | #337 |
+| TD: the next section started 30px above the end of the previous section's last row, so full rows overlapped | A TD section starts at v12's place or 30px below what the previous group's rows hold, whichever is lower; most sectioned TD input moves down | No overlaps (#337) |
+| TD: the axis started `2 × fontSize` above the content, through a title wider than about 285px | The axis starts below the title when the title spans it | #337 |
+| Title an unclassed `<text>` in the root's `textColor`, `font-size="4ex"`, bold, at `bbox.width / 2 − leftMargin` (LR under `look: neo`: `bbox.x × 2 + leftMargin`); a front-matter `title` was dropped | `<text class="timeline-title">` in `textColor`, bold, at the px size of `4ex` the layout measured, left-aligned at the classic place in every theme. The `title` statement and a front-matter `title` are both drawn there: a non-empty in-text `title` wins, and a blank one (`title` and spaces) falls back to the front-matter `title`. A title taller than one 16px line moves the content down | D218, D254, D225 |
+| LR: the axis ended at `width + 3 × leftMargin`, short of the last period below a `leftMargin` of 25 | The axis ends there or at the last period's right edge, whichever is further; the default `leftMargin` (150) draws as v12 | #337 |
+| `timeline.useMaxWidth` fell back to `false` in the renderer, but v12's default config set it to `true` | Unchanged by default: `true` sets `width="100%"` and `max-width`; `false` writes the drawing's width and height. `leftMargin` (150), `padding` (50 when unset) and `disableMulticolor` likewise take v12's effective values, and the top-level `fontSize` still adds `0.55 × fontSize` to each box and sets the TD axis ends while the text is drawn at `themeVariables.fontSize`. The keys v12's timeline never read are ignored ([Removed, moved and ignored keys](#removed-moved-and-ignored-keys)) | #315 |
 
 ## Pie chart
 
