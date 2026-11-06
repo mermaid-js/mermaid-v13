@@ -129,7 +129,14 @@ properties:
         `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1,
         `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap`
         2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities)
-        is 11 in every theme. "padding" is `flowchart.padding`. Plain `redux` and
+        is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`,
+        `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`,
+        `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`,
+        `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every
+        theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`;
+        fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take
+        5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the
+        other text fills `primaryTextColor`; both borders `primaryBorderColor`. "padding" is `flowchart.padding`. Plain `redux` and
         `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`,
         `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and
         `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner
@@ -980,7 +987,7 @@ properties:
     x-mermaid: { status: honoured, since: 13.0.0 }
   quadrantChart:
     $ref: '#/$defs/QuadrantChartConfig'
-    x-mermaid: { status: pending }
+    x-mermaid: { status: honoured, since: 13.0.0 }
   xyChart:
     $ref: '#/$defs/XYChartConfig'
     x-mermaid: { status: pending }
@@ -2145,90 +2152,99 @@ $defs:
       - quadrantExternalBorderStrokeWidth
       - useMaxWidth
     properties:
+      useWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useWidth'
+        x-mermaid:
+          status: ignored
+          since: 13.0.0
+          reason: Only v12's gantt renderer read `useWidth`; the quadrant chart renderer never did.
+      useMaxWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useMaxWidth'
+        x-mermaid: { status: honoured, since: 13.0.0 }
       chartWidth:
         description: Width of the chart
         type: number
         minimum: 0
         default: 500
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       chartHeight:
         description: Height of the chart
         type: number
         minimum: 0
         default: 500
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       titleFontSize:
-        description: Chart title top and bottom padding
+        description: Font size of the chart title
         type: number
         minimum: 0
         default: 20
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       titlePadding:
-        description: Padding around the quadrant square
+        description: Padding above and below the chart title
         type: number
         minimum: 0
         default: 10
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       quadrantPadding:
-        description: quadrant title padding from top if the quadrant is rendered on top
+        description: Padding around the quadrant square
         type: number
         minimum: 0
         default: 5
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       xAxisLabelPadding:
         description: Padding around x-axis labels
         type: number
         minimum: 0
         default: 5
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       yAxisLabelPadding:
         description: Padding around y-axis labels
         type: number
         minimum: 0
         default: 5
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       xAxisLabelFontSize:
         description: x-axis label font size
         type: number
         minimum: 0
         default: 16
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       yAxisLabelFontSize:
         description: y-axis label font size
         type: number
         minimum: 0
         default: 16
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       quadrantLabelFontSize:
         description: quadrant title font size
         type: number
         minimum: 0
         default: 16
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       quadrantTextTopPadding:
         description: quadrant title padding from top if the quadrant is rendered on top
         type: number
         minimum: 0
         default: 5
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       pointTextPadding:
         description: padding between point and point label
         type: number
         minimum: 0
         default: 5
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       pointLabelFontSize:
         description: point title font size
         type: number
         minimum: 0
         default: 12
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       pointRadius:
         description: radius of the point to be drawn
         type: number
         minimum: 0
         default: 5
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       xAxisPosition:
         description: position of x-axis labels
         type: string
@@ -2236,7 +2252,7 @@ $defs:
           - top
           - bottom
         default: top
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       yAxisPosition:
         description: position of y-axis labels
         type: string
@@ -2244,19 +2260,19 @@ $defs:
           - left
           - right
         default: left
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       quadrantInternalBorderStrokeWidth:
         description: stroke width of edges of the box that are inside the quadrant
         type: number
         minimum: 0
         default: 1
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       quadrantExternalBorderStrokeWidth:
         description: stroke width of edges of the box that are outside the quadrant
         type: number
         minimum: 0
         default: 2
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
 
   XYChartAxisConfig:
     title: XYChart axis config

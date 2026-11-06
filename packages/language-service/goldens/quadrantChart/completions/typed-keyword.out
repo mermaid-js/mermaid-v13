@@ -1,0 +1,9 @@
+@ 2:8  title|
+  title keyword 2:3-2:8 "title" -> "title "
+@ 3:12  accDescr |
+  : operator 3:12-3:12 "" -> ": "
+  { operator 3:12-3:12 "" -> "{"
+@ 4:12  accTitle |
+  : operator 4:12-4:12 "" -> ": "
+@ 5:14  x-axis Low |--> High
+  none

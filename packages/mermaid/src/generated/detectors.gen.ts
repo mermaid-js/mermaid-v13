@@ -22,7 +22,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'gitGraph', pattern: /^\s*gitGraph/ },
   { type: 'stateDiagram', pattern: /^\s*stateDiagram/, id: 'state', formats: ['svg'] },
   { type: 'journey', pattern: /^\s*journey/, id: 'journey', formats: ['svg'] },
-  { type: 'quadrantChart', pattern: /^\s*quadrantChart/ },
+  { type: 'quadrantChart', pattern: /^\s*quadrantChart/, id: 'quadrantChart', formats: ['svg'] },
   { type: 'sankey', pattern: /^\s*sankey(-beta)?/ },
   { type: 'packet', pattern: /^\s*packet(-beta)?/ },
   { type: 'xychart', pattern: /^\s*xychart(-beta)?/ },

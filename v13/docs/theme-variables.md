@@ -18,8 +18,8 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `background` | `--mermaid-background` | base | color | | | all | core |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, pie |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, pie |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
@@ -82,6 +82,21 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `pieOuterStrokeColor` | `--mermaid-pieOuterStrokeColor` | derived | color | `black` | `black` | | pie |
 | `pieOuterStrokeWidth` | `--mermaid-pieOuterStrokeWidth` | token | length | | | all | pie |
 | `pieOpacity` | `--mermaid-pieOpacity` | token | opacity | | | all | pie |
+| `quadrant1Fill` | `--mermaid-quadrant1Fill` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, neo | quadrant |
+| `quadrant2Fill` | `--mermaid-quadrant2Fill` | derived | color | `adjust(quadrant1Fill, 5, 5, 5)` | `adjust(quadrant1Fill, 5, 5, 5)` | | quadrant |
+| `quadrant3Fill` | `--mermaid-quadrant3Fill` | derived | color | `adjust(quadrant1Fill, 10, 10, 10)` | `adjust(quadrant1Fill, 10, 10, 10)` | | quadrant |
+| `quadrant4Fill` | `--mermaid-quadrant4Fill` | derived | color | `adjust(quadrant1Fill, 15, 15, 15)` | `adjust(quadrant1Fill, 15, 15, 15)` | | quadrant |
+| `quadrant1TextFill` | `--mermaid-quadrant1TextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
+| `quadrant2TextFill` | `--mermaid-quadrant2TextFill` | derived | color | `adjust(primaryTextColor, -5, -5, -5)` | `adjust(primaryTextColor, -5, -5, -5)` | | quadrant |
+| `quadrant3TextFill` | `--mermaid-quadrant3TextFill` | derived | color | `adjust(primaryTextColor, -10, -10, -10)` | `adjust(primaryTextColor, -10, -10, -10)` | | quadrant |
+| `quadrant4TextFill` | `--mermaid-quadrant4TextFill` | derived | color | `adjust(primaryTextColor, -15, -15, -15)` | `adjust(primaryTextColor, -15, -15, -15)` | | quadrant |
+| `quadrantPointFill` | `--mermaid-quadrantPointFill` | derived | color | `textColor` | `textColor` | | quadrant |
+| `quadrantPointTextFill` | `--mermaid-quadrantPointTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
+| `quadrantXAxisTextFill` | `--mermaid-quadrantXAxisTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
+| `quadrantYAxisTextFill` | `--mermaid-quadrantYAxisTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
+| `quadrantInternalBorderStrokeFill` | `--mermaid-quadrantInternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
+| `quadrantExternalBorderStrokeFill` | `--mermaid-quadrantExternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
+| `quadrantTitleFill` | `--mermaid-quadrantTitleFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |

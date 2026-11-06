@@ -116,6 +116,9 @@ importers:
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../diagram-pie
+      '@mermaid-js/diagram-quadrant':
+        specifier: workspace:^
+        version: link:../diagram-quadrant
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
@@ -192,6 +195,9 @@ importers:
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../diagram-pie
+      '@mermaid-js/diagram-quadrant':
+        specifier: workspace:^
+        version: link:../diagram-quadrant
       '@mermaid-js/diagram-sequence':
         specifier: workspace:^
         version: link:../diagram-sequence
@@ -339,6 +345,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-quadrant:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-sequence:
     devDependencies:
       '@mermaid-js/core':
@@ -377,6 +389,9 @@ importers:
       '@mermaid-js/diagram-pie':
         specifier: workspace:*
         version: link:../diagram-pie
+      '@mermaid-js/diagram-quadrant':
+        specifier: workspace:*
+        version: link:../diagram-quadrant
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
@@ -417,6 +432,9 @@ importers:
       '@mermaid-js/diagram-pie':
         specifier: workspace:*
         version: link:../diagram-pie
+      '@mermaid-js/diagram-quadrant':
+        specifier: workspace:*
+        version: link:../diagram-quadrant
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence
@@ -613,6 +631,9 @@ importers:
       '@mermaid-js/diagram-pie':
         specifier: workspace:*
         version: link:../diagram-pie
+      '@mermaid-js/diagram-quadrant':
+        specifier: workspace:*
+        version: link:../diagram-quadrant
       '@mermaid-js/diagram-sequence':
         specifier: workspace:*
         version: link:../diagram-sequence

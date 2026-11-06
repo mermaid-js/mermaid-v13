@@ -147,6 +147,14 @@ export function khromaRgb(c: Rgba): Rgba {
   return [round10(c[0]), round10(c[1]), round10(c[2]), c[3]];
 }
 
+/**
+ * `c` with `r`, `g` and `b` added to its channels, each clamped to 0–255: khroma's
+ * `adjust(c, { r, g, b })`, which v12's quadrant fills derive with (D232).
+ */
+export function adjustChannels(c: Rgba, r: number, g: number, b: number): Rgba {
+  return [clamp(c[0] + r, 255), clamp(c[1] + g, 255), clamp(c[2] + b, 255), c[3]];
+}
+
 export function invertColor(c: Rgba): Rgba {
   return [255 - c[0], 255 - c[1], 255 - c[2], c[3]];
 }

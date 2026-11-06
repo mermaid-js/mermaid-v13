@@ -4,6 +4,8 @@ import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
 import { journeyAdapter } from './journey/v13.ts';
 import { pieAdapter } from './pie/v13.ts';
+import { quadrantParityCorpus } from './quadrant/corpus.ts';
+import { quadrantAdapter } from './quadrant/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
 import { timelineAdapter } from './timeline/v13.ts';
@@ -58,6 +60,15 @@ export const PARITY_SUITES: ParitySuite[] = [
     adapter: pieAdapter,
     corpusDirs: ['e2e/diagrams/pie'],
     corpusFiles: ['packages/conformance/corpus/pie-v12-specs.json'],
+  },
+  {
+    adapter: quadrantAdapter,
+    corpusDirs: ['e2e/diagrams/quadrant-chart'],
+    corpusFiles: [
+      'packages/conformance/corpus/quadrant-v12-specs.json',
+      'packages/conformance/corpus/quadrant-cases.json',
+    ],
+    corpus: quadrantParityCorpus,
   },
 ];
 

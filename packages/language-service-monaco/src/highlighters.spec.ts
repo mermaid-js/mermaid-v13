@@ -38,6 +38,7 @@ const DOCS = {
   journey: 'journey\n  section Go to work\n  Make tea: 5: Me\n',
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   pie: 'pie\n  "Dogs" : 386\n',
+  quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -48,6 +49,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'flowchart',
       'journey',
       'pie',
+      'quadrantChart',
       'sequence',
       'state',
       'timeline',
