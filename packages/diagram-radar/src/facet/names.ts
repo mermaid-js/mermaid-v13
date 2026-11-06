@@ -3,33 +3,21 @@
  * decides: a name is valid when the lexer, reading it where `axis` expects a name, gives one
  * `ID` token over all of it. So a word keyword (`max`), a number, and a name starting with
  * `circle`, `polygon`, `true`, `false` or `title` (which v12's lexer reads before a name, so
- * `circles` is `circle` and `s`) are refused, and so are `accTitle` and `accDescr`, which start
- * a statement when a `:` follows them, as in a detailed entry `accTitle: 1`.
+ * `circles` is `circle` and `s`) are refused, and so is an axis named `accTitle` or `accDescr`,
+ * which start a statement when a `:` follows them, as in a detailed entry `accTitle: 1` (a curve
+ * name is never followed by `:`). Keywords are the kinds the generated category table calls
+ * `Keyword`, so this list follows the grammar file.
  */
 import { formatExpected, Kind, sourceView } from '@mermaid-js/core/parser-kit';
+import { radarCategories } from '../generated/categories.ts';
 import { lex } from '../parser/lexer.ts';
 import { PREFIX_KEYWORDS, T } from '../parser/tokens.ts';
 
 const BEFORE = 'radar-beta\naxis ';
 /** Names the lexer reads as an `ID` alone but as a statement before `:`. */
 const STATEMENT_NAMES = new Set(['accTitle', 'accDescr']);
-/** Kinds whose token is a keyword (all but the punctuation, values and trivia). */
-const KEYWORDS = new Set<number>([
-  T.RadarBetaColon,
-  T.RadarBeta,
-  T.ShowLegend,
-  T.Graticule,
-  T.Curve,
-  T.Ticks,
-  T.Axis,
-  T.Max,
-  T.Min,
-  T.GraticuleValue,
-  T.Boolean,
-  T.AccDescr,
-  T.AccTitle,
-  T.Title,
-]);
+/** Kinds whose token is a keyword (`:keyword` in the grammar file). */
+const KEYWORDS = new Set<number>(Object.values(T).filter((k) => radarCategories[k] === 'Keyword'));
 const PREFIXES = new Set<number>(PREFIX_KEYWORDS.map((k) => k.kind));
 /** `circle`, `polygon`, `true`, `false` or `title`. */
 const PREFIX_WORDS = formatExpected(PREFIX_KEYWORDS.flatMap((k) => k.words).map((w) => `\`${w}\``));
@@ -50,7 +38,7 @@ export function nameReason(name: string, kind = 'axis'): string | undefined {
   const end = tokens.end[j] ?? 0;
   const whole = (tokens.start[j] ?? 0) <= from && end === to;
   if (k === T.Id && whole) {
-    return STATEMENT_NAMES.has(name)
+    return kind === 'axis' && STATEMENT_NAMES.has(name)
       ? `\`${name}\` is a keyword, so it cannot be ${noun}.`
       : undefined;
   }

@@ -46,7 +46,8 @@ const STATEMENTS = [
   'curve',
   'title',
   'accTitle',
-  'accDescr',
+  'accDescr:',
+  'accDescr {',
   'showLegend',
   'ticks',
   'max',
@@ -76,6 +77,16 @@ describe('radar language facet', () => {
       'curve:def:c',
     ]);
   });
+
+  it('records no symbol for an entry naming no axis, an unresolved reference (D358)', () => {
+    const text = 'radar-beta\n  curve c{A: 1, X: 2}\n  axis A\n';
+    const { symbols } = radarLanguage.parse(text, { keepTokens: true });
+    expect(symbols.map((s) => `${s.kind}:${s.role}:${s.name}`)).toEqual([
+      'axis:ref:A',
+      'curve:def:c',
+      'axis:def:A',
+    ]);
+  });
 });
 
 describe('radar isValidId (D357)', () => {
@@ -86,6 +97,9 @@ describe('radar isValidId (D357)', () => {
       expect(ok(name), name).toBeUndefined();
       expect(ok(name, 'curve'), name).toBeUndefined();
     }
+    // A curve name is never followed by `:`, so `accTitle` and `accDescr` stay names there.
+    expect(ok('accTitle', 'curve')).toBeUndefined();
+    expect(ok('accDescr', 'curve')).toBeUndefined();
   });
 
   it('refuses a keyword, and a name that starts with `circle`, `polygon`, `true`, `false` or `title`', () => {
@@ -94,7 +108,7 @@ describe('radar isValidId (D357)', () => {
     expect(ok('true')).toMatch(/^`true` is a keyword/);
     expect(ok('title')).toMatch(/^`title` is a keyword/);
     expect(ok('accDescr')).toMatch(/^`accDescr` is a keyword/);
-    expect(ok('accTitle', 'curve')).toMatch(/^`accTitle` is a keyword/);
+    expect(ok('accTitle')).toMatch(/^`accTitle` is a keyword/);
     expect(ok('circles')).toMatch(/^`circles` starts with the keyword `circle`/);
     expect(ok('trueish', 'curve')).toMatch(/^`trueish` starts with the keyword `true`/);
     expect(ok('titleX')).toMatch(/^`titleX` starts with the keyword `title`/);
@@ -121,7 +135,7 @@ describe('radar completions (D95)', () => {
     expect(complete('radar-beta\n¦')).toEqual(STATEMENTS);
     expect(complete('radar-beta\n  axis A\n  ¦')).toEqual(STATEMENTS);
     expect(complete('radar-beta\n  axis A\n  curve c{1}\n¦\n  ticks 3')).toEqual(STATEMENTS);
-    expect(complete('radar-beta\n  acc¦')).toEqual(['accTitle', 'accDescr']);
+    expect(complete('radar-beta\n  acc¦')).toEqual(['accTitle', 'accDescr:', 'accDescr {']);
     expect(complete('radar-beta\n  m¦')).toEqual(['max', 'min']);
   });
 
@@ -159,6 +173,16 @@ describe('radar completions (D95)', () => {
     expect(complete('radar-beta\n  accDescr {\n  a ¦\n  }')).toEqual([]);
     expect(complete('radar-beta\n  %% a ¦comment')).toEqual([]);
     expect(complete('---\ntitle: ¦\n---\nradar-beta')).toEqual([]);
+  });
+
+  it('offers both forms of `accDescr`: one line and a block', () => {
+    const text = 'radar-beta\n  accD';
+    const result = radarLanguage.parse(text, { keepTokens: true, probe: text.length });
+    const items = radarLanguage.completions(result.probe!, { text, result });
+    expect(items).toMatchObject([
+      { label: 'accDescr:', insertText: 'accDescr: ' },
+      { label: 'accDescr {', insertText: 'accDescr { }' },
+    ]);
   });
 
   it('replaces the whole word being typed', () => {
@@ -209,7 +233,7 @@ describe('radar hover (D93)', () => {
 
   it('says a repeated axis is drawn again, and an entry naming no axis is ignored', () => {
     expect(hover('radar-beta\n  axis A["One"]\n  axis A¦["Two"]')).toBe(
-      '**axis** `A`\n\nLabel: `Two`\n\nRepeated: an axis `A` comes first, at line 2. Both are drawn; entries `A: …` give both the same value.'
+      '**axis** `A`\n\nLabel: `One`\n\nRepeated: this refers to the first `axis A`, at line 2. v12 still draws a second spoke, labelled `Two`, and entries `A: …` give both the same value.'
     );
     expect(hover('radar-beta\n  axis A\n  curve c{A: 1, X¦: 2}')).toBe(
       '**axis** `X`\n\nNo axis is named `X`, so this value is ignored.'

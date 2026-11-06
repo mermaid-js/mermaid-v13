@@ -3,6 +3,8 @@
  * table with the generated TextMate, Monarch and Lezer grammars over the radar corpus, as
  * `pie-agreement.spec.ts` checks pie.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   detectRadar,
@@ -10,13 +12,13 @@ import {
   RadarTokenKind as T,
   radarTokens,
 } from '@mermaid-js/diagram-radar/language';
-import { agreement, corpus, highlighters } from './agreement-testing.ts';
+import { agreement, corpus, highlighters, ROOT } from './agreement-testing.ts';
 
 /**
  * Where TextMate and Monarch, which read a line at a time, cannot follow two tokens that run
  * over line breaks (Lezer, which runs the patterns, agrees), as for pie: a label written over
  * lines (`D["g` newline `h"]`, only in that parser fixture), and a `---` … `---` block inside
- * the body (v12's skipped YAML token, only in the fixture below). The block `accDescr { … }`
+ * the body (v12's skipped YAML token, only in `radar-cases/hidden-yaml`). The block `accDescr { … }`
  * is written as a span and agrees.
  */
 const FIXTURE = '/e2e/diagrams/radar/nightly-check/parser-label-escapes.mmd';
@@ -24,28 +26,39 @@ const LINE_BASED = Object.fromEntries(
   ['Monarch', 'TextMate'].flatMap((h) => [
     [`${h}: String is String, highlighted Other`, `${FIXTURE} at 53`],
     [`${h}: String is String, highlighted Variable`, `${FIXTURE} at 54`],
-    [`${h}: Yaml is Meta, highlighted Number`, 'yaml in the body at 18'],
-    [`${h}: Yaml is Meta, highlighted Other`, 'yaml in the body at 11'],
-    [`${h}: Yaml is Meta, highlighted Punctuation`, 'yaml in the body at 16'],
-    [`${h}: Yaml is Meta, highlighted Variable`, 'yaml in the body at 15'],
+    [`${h}: Yaml is Meta, highlighted Number`, 'radar-cases/hidden-yaml at 18'],
+    [`${h}: Yaml is Meta, highlighted Other`, 'radar-cases/hidden-yaml at 11'],
+    [`${h}: Yaml is Meta, highlighted Punctuation`, 'radar-cases/hidden-yaml at 16'],
+    [`${h}: Yaml is Meta, highlighted Variable`, 'radar-cases/hidden-yaml at 15'],
   ])
 );
 
-/** Sources for the kinds the corpus lacks. */
-const FIXTURES: [string, string][] = [
-  ['headers', 'radar-beta:\n  axis A\n'],
-  [
-    'acc',
-    'radar-beta\n  title Skills\n  accTitle: Skills\n  accDescr: one line\n  accDescr {\n    multi\n  }\n',
-  ],
-  [
-    'values',
-    "radar-beta\n  axis A['Alpha'], B\n  curve c{A: 1, B 2.5}\n  showLegend false\n  graticule polygon\n  ticks 3 max 5 min 0\n",
-  ],
-  ['comments', 'radar-beta\n  %% a comment\n  %%{init: {}}%%\n  axis A %% after\n'],
-  ['keyword-prefixed', 'radar-beta\n  axis circles, trueish\n'],
-  ['yaml in the body', 'radar-beta\n---\nx: 1\n---\n  axis A'],
+/**
+ * Cases of `packages/conformance/corpus/radar-cases.json` for the kinds the e2e corpus lacks:
+ * the `radar-beta:` header, the accessibility statements, quotes, options, comments and
+ * directives, keyword-prefixed names and a YAML block in the body.
+ */
+const CASES = [
+  'radar-cases/header-colon',
+  'radar-cases/acc-comments',
+  'radar-cases/acc-descr-block',
+  'radar-cases/render-acc-indented',
+  'radar-cases/string-quotes',
+  'radar-cases/options-all',
+  'radar-cases/hidden-trailing',
+  'radar-cases/keyword-names-split',
+  'radar-cases/hidden-yaml',
 ];
+
+function cases(): [string, string][] {
+  const file = join(ROOT, 'packages/conformance/corpus/radar-cases.json');
+  const all = JSON.parse(readFileSync(file, 'utf8')) as { id: string; source: string }[];
+  return CASES.map((id) => {
+    const found = all.find((c) => c.id === id);
+    if (!found) throw new Error(`no case ${id} in radar-cases.json`);
+    return [id, found.source];
+  });
+}
 
 describe('four-way highlighting agreement (radar)', () => {
   it('table, TextMate, Monarch and Lezer give every token the same category', async () => {
@@ -54,7 +67,7 @@ describe('four-way highlighting agreement (radar)', () => {
     const result = agreement(
       { kinds: T, categories: radarCategories, tokens: radarTokens },
       await highlighters('radar'),
-      [...FIXTURES, ...sources]
+      [...cases(), ...sources]
     );
     expect(result.disagreements).toEqual(LINE_BASED);
     expect(result.missing, 'kinds with no sample').toEqual([]);

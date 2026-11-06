@@ -252,6 +252,7 @@ class RadarParser {
     const { st, src } = this;
     this.statement(() => this.header());
     this.document();
+    this.unresolved();
     const model = this.model();
     const ast: RadarDocument = {
       id: 'doc',
@@ -662,7 +663,8 @@ class RadarParser {
     const valueRange = this.range(v);
     const n = (mentions.get(axis) ?? 0) + 1;
     mentions.set(axis, n);
-    // D358: an entry's name refers to its axis (resolved or not).
+    // D358: an entry's name refers to its axis; one naming no axis is dropped once the axes
+    // are known ({@link unresolved}).
     this.st.symbol(axis, 'axis', axisRange, 'ref');
     return {
       id: `${curve}>${axis}${n === 1 ? '' : `@${n}`}`,
@@ -713,6 +715,19 @@ class RadarParser {
     this.children.push({ id, type, range, text });
     this.st.statement(kind, range);
     this.eol();
+  }
+
+  /**
+   * D358: an entry naming no axis is an unresolved reference. The service has no role for one,
+   * so it gets no symbol (no definition, references or rename; `RADAR_UNKNOWN_AXIS` says why).
+   * Run after the parse: axes declared after a curve still resolve its entries.
+   */
+  private unresolved(): void {
+    const names = new Set(this.axes.map((a) => a.name));
+    const { symbols } = this.st;
+    let k = 0;
+    for (const s of symbols) if (s.kind !== 'axis' || names.has(s.name)) symbols[k++] = s;
+    symbols.length = k;
   }
 
   // ---- the model ----------------------------------------------------------------------

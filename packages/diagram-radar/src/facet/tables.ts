@@ -3,6 +3,7 @@
  * not here: they come from the grammar file (`generated/docs.ts`).
  */
 import type { CompletionKind, Range, TokenStream } from '@mermaid-js/core/parser-kit';
+import type { RadarAxisNode, RadarDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
 
 /** An item offered when the parser expects `kind`. */
@@ -31,7 +32,9 @@ export const ITEMS: readonly KeywordItem[] = [
   statement(T.Curve, 'curve'),
   statement(T.Title, 'title'),
   statement(T.AccTitle, 'accTitle', 'accTitle: '),
-  statement(T.AccDescr, 'accDescr', 'accDescr: '),
+  // `accDescr` takes one line or a block: both forms are offered.
+  statement(T.AccDescr, 'accDescr:', 'accDescr: '),
+  statement(T.AccDescr, 'accDescr {', 'accDescr { }'),
   statement(T.ShowLegend, 'showLegend'),
   statement(T.Ticks, 'ticks'),
   statement(T.Max, 'max'),
@@ -42,6 +45,21 @@ export const ITEMS: readonly KeywordItem[] = [
   { kind: T.GraticuleValue, label: 'circle', item: 'constant' },
   { kind: T.GraticuleValue, label: 'polygon', item: 'constant' },
 ];
+
+/**
+ * The declared axes by name, in the order the names are first declared; each name's `axis`
+ * statements in source order, the first its definition (D358).
+ */
+export function declaredAxes(doc: RadarDocument): Map<string, RadarAxisNode[]> {
+  const out = new Map<string, RadarAxisNode[]>();
+  for (const n of doc.children) {
+    if (n.type !== 'Axis') continue;
+    const list = out.get(n.name);
+    if (list) list.push(n);
+    else out.set(n.name, [n]);
+  }
+  return out;
+}
 
 /** Index of the last token of `tokens` starting at or before `offset`, or -1. */
 export function tokenBefore(tokens: TokenStream, offset: number): number {

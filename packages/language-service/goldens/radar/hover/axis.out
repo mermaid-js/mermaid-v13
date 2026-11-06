@@ -7,9 +7,9 @@
   3:8-3:9 "A"
   | **axis** `A`
   |
-  | Label: `Again`
+  | Label: `Speed`
   |
-  | Repeated: an axis `A` comes first, at line 2. Both are drawn; entries `A: …` give both the same value.
+  | Repeated: this refers to the first `axis A`, at line 2. v12 still draws a second spoke, labelled `Again`, and entries `A: …` give both the same value.
 @ 4:13  curve one{|A: 1, B: 2, X: 3}
   4:13-4:14 "A"
   | **axis** `A`

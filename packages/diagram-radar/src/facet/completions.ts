@@ -14,9 +14,9 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { radarDocs } from '../generated/docs.ts';
-import type { RadarAxisNode, RadarDocument } from '../parser/ast.ts';
+import type { RadarDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { ITEMS, span, tokenBefore } from './tables.ts';
+import { declaredAxes, ITEMS, span, tokenBefore } from './tables.ts';
 
 /** The probed word's range: the prefix, plus the rest of the word after the cursor. */
 function wordRange(text: string, tokens: TokenStream | undefined, probe: ProbeResult): Range {
@@ -50,13 +50,6 @@ function inBraces(tokens: TokenStream | undefined, at: number): boolean {
   return false;
 }
 
-/** The declared axes, one per name (the first), in source order. */
-function declaredAxes(doc: RadarDocument): RadarAxisNode[] {
-  const seen = new Map<string, RadarAxisNode>();
-  for (const n of doc.children) if (n.type === 'Axis' && !seen.has(n.name)) seen.set(n.name, n);
-  return [...seen.values()];
-}
-
 export function radarCompletions(
   probe: ProbeResult,
   doc: DocumentView<RadarDocument>
@@ -81,8 +74,8 @@ export function radarCompletions(
     });
   }
   if (expected.has(T.Id) && inBraces(result.tokens, range.start)) {
-    for (const a of declaredAxes(result.ast)) {
-      if (!a.name.startsWith(prefix)) continue;
+    for (const [name, [a]] of declaredAxes(result.ast)) {
+      if (!a || !name.startsWith(prefix)) continue;
       const detail = a.label === undefined ? 'axis' : `axis ${JSON.stringify(a.label)}`;
       out.push({ label: a.name, kind: 'node', insertText: a.name, range, detail });
     }
