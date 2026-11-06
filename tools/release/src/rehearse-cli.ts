@@ -28,7 +28,7 @@ import { dirname, join } from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { build } from 'esbuild';
 import { parseArgs } from '../../../packages/bench/src/cli/args.ts';
-import { ADAPTER_FIXTURES, ADAPTERS, adapterChecks, FACET_IDS } from './adapters-check.ts';
+import { ADAPTER_FIXTURES, ADAPTERS, adapterChecks, FACET_PEERS } from './adapters-check.ts';
 import { pendingChangesets } from './changesets.ts';
 import { packAll, publishAll } from './publish.ts';
 
@@ -403,7 +403,7 @@ async function main(): Promise<void> {
       'install',
       ...ADAPTERS.map((a) => `${a}@v13-alpha`),
       // The service's optional facet peers: a bundle needs each one it may import.
-      ...FACET_IDS.map((id) => `@mermaid-js/diagram-${id}@v13-alpha`),
+      ...FACET_PEERS.map((name) => `${name}@v13-alpha`),
       '--save-exact',
       '--no-audit',
       '--no-fund',
