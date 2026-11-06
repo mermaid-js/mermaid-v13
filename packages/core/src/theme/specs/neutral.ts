@@ -3,13 +3,15 @@
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
 import { fillTypes, INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
-import { darkModeLabels } from './scales.ts';
+import { darkModeLabels, fixedGit, gitLabelRules } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
   CLASSIC_PADDING,
   CLASSIC_SEQUENCE,
   CLASSIC_TIMELINE,
+  CLASSIC_MINDMAP,
+  CLASSIC_GITGRAPH,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -61,9 +63,11 @@ const theme: ThemeSpec = {
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
     ...CLASSIC_TIMELINE,
+    ...CLASSIC_MINDMAP,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
-  rules: PIE_NEUTRAL,
+  rules: { ...PIE_NEUTRAL, ...gitLabelRules('#030303', '#d4d4d4') },
   values: {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc'),
@@ -111,6 +115,11 @@ const theme: ThemeSpec = {
     cScaleInv: INVERTED_SCALE,
     // v12 sets labelTextColor to its own text colour (#333) before the labels.
     cScaleLabel: paletteSlots((i) => (i === 0 || i === 2 ? 'cScale1' : '#333333')),
+    // v12 theme-neutral.js: pie1 darkened by 25, then pie2–pie8; labels 1 and 3 white, the
+    // others its own text colour, as for cScaleLabel. v12's `pie<i>` is `cScale<i>` here; the
+    // shared palette reads `cScale<i>`, never pie's (D334).
+    ...fixedGit(['darkenHsl(cScale1, 25%)', ...[2, 3, 4, 5, 6, 7, 8].map((n) => `cScale${n}`)]),
+    gitBranchLabel: paletteSlots((i) => (i === 1 || i === 3 ? 'white' : '#333333'), 8),
   },
   darkModePalettes: { cScaleLabel: darkModeLabels({ 0: 'cScale1', 2: 'cScale1' }) },
 };

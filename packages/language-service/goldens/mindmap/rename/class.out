@@ -1,0 +1,18 @@
+@ 5:8  :::|urgent large
+  prepare: 5:8-5:14 "urgent"; rename to "critical":
+  %% rename-to: critical
+  mindmap
+    root
+      a
+      :::critical large
+      b
+      :::large critical
+@ 7:20  :::large urgent|
+  prepare: 7:14-7:20 "urgent"; rename to "critical":
+  %% rename-to: critical
+  mindmap
+    root
+      a
+      :::critical large
+      b
+      :::large critical

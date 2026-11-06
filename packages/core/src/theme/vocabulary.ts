@@ -155,12 +155,38 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'pieStrokeWidth',
     'pieOuterStrokeWidth',
     'pieOpacity',
+    // gitGraph commit and tag label sizes (D267): 10px in every v12 theme.
+    'commitLabelFontSize',
+    'tagLabelFontSize',
     // Timeline boxes (spec #291, D227): the top corner, the label offset (sections and periods)
     // and the extra offset of event labels, and whether boxes take the `cScale` palettes.
     'timelineRadius',
     'timelineLabelOffset',
     'timelineEventLabelShift',
     'timelineScaleColors',
+    // Mindmap nodes and edges (spec #294 T4, D288): plain nodes drawn rounded with v12's redux
+    // paints, v12 neo's outlined nodes, and edges in `nodeBorder`.
+    'mindmapRoundedNodes',
+    'mindmapOutlinedNodes',
+    'mindmapBorderEdges',
+    // gitGraph (spec #292, D266): the bullet radius, how far the LR lanes sit below v12
+    // classic's spot, the branch label box (padding, corner, the TB/BT shift left and away from
+    // the commits), the arrow width, the bullet insides, and whether the node colours and the
+    // git palettes paint the branches. Unsigned: a shift has its direction in its name.
+    'gitCommitRadius',
+    'gitLaneShift',
+    'gitBranchLabelPaddingX',
+    'gitBranchLabelPaddingY',
+    'gitBranchLabelRadius',
+    'gitBranchLabelShiftX',
+    'gitBranchLabelOffsetY',
+    'gitArrowWidth',
+    'gitHighlightInnerSize',
+    'gitMergeRadius',
+    'gitReverseCrossSize',
+    'gitCherryPickDotRadius',
+    'gitNodeColors',
+    'gitPaletteColors',
     // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
     'useGradient',
   ] as const
@@ -169,11 +195,11 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
 
 /**
- * Palettes (D151, D152, D258): lists of colours a theme carries as data. `themeVariables`
+ * Palettes (D151, D152, D258, D267): lists of colours a theme carries as data. `themeVariables`
  * replaces a whole list (an array of colours, or a comma-separated string), and v12's numbered
- * names (`cScale0`–`cScale11`, `cScaleInv<n>`, `cScaleLabel<n>`) replace one entry of
- * `cScale`, `cScaleInv` or `cScaleLabel`. Palettes are read as literal colours, not CSS
- * variables.
+ * names (`cScale0`–`cScale11`, `cScaleInv<n>`, `cScaleLabel<n>`, `git0`–`git7`, `gitInv<n>`,
+ * `gitBranchLabel<n>`) replace one entry of the palette they name. Palettes are read as literal
+ * colours, not CSS variables.
  */
 export const PALETTE_VARIABLES = [
   'borderColorArray',
@@ -181,15 +207,42 @@ export const PALETTE_VARIABLES = [
   'cScale',
   'cScaleInv',
   'cScaleLabel',
+  'git',
+  'gitInv',
+  'gitBranchLabel',
 ] as const;
 
-/** The palettes with v12's numbered names, `<name>0`–`<name>11`. */
-export const NUMBERED_PALETTES = ['cScale', 'cScaleInv', 'cScaleLabel'] as const;
+/** The palettes with v12's numbered names, `<name>0` up to `PALETTE_LIMITS[name] - 1`. */
+export const NUMBERED_PALETTES = [
+  'cScale',
+  'cScaleInv',
+  'cScaleLabel',
+  'git',
+  'gitInv',
+  'gitBranchLabel',
+] as const;
 
 export type PaletteVariable = (typeof PALETTE_VARIABLES)[number];
+export type NumberedPalette = (typeof NUMBERED_PALETTES)[number];
 
-/** How many numbered names each of `NUMBERED_PALETTES` has (v12 `THEME_COLOR_LIMIT`, D258). */
+/**
+ * How many numbered names `cScale`, `cScaleInv` and `cScaleLabel` have (v12 `THEME_COLOR_LIMIT`,
+ * D258).
+ */
 export const PALETTE_LIMIT = 12;
+
+/** How many numbered names the git palettes have (v12 `git0`–`git7`, D267). */
+export const GIT_PALETTE_LIMIT = 8;
+
+/** How many numbered names each of `NUMBERED_PALETTES` has. */
+export const PALETTE_LIMITS: Readonly<Record<NumberedPalette, number>> = {
+  cScale: PALETTE_LIMIT,
+  cScaleInv: PALETTE_LIMIT,
+  cScaleLabel: PALETTE_LIMIT,
+  git: GIT_PALETTE_LIMIT,
+  gitInv: GIT_PALETTE_LIMIT,
+  gitBranchLabel: GIT_PALETTE_LIMIT,
+};
 
 // Pure, so a bundle that never reads `THEME_VARIABLES` drops it with its `usedBy` lists: the
 // runtime reads the generated alias and kind table (`generated/variables.ts`) instead.
@@ -211,10 +264,13 @@ const TEXT_USERS = [
   'journey',
   'timeline',
   'quadrant',
+  'mindmap',
+  'gitgraph',
   'gantt',
 ];
 
 const JOURNEY = ['journey'];
+const GIT = ['gitgraph'];
 const GANTT = ['gantt'];
 
 /**
@@ -234,12 +290,12 @@ const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() =>
  */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() => ({
   // base
-  primaryColor: def('p', 'color', ['core']),
+  primaryColor: def('p', 'color', ['core', 'gitgraph']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core']),
   background: def('bg', 'color', ['core']),
   primaryTextColor: def('pt', 'color', ['core']),
-  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
+  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph']),
   // Pie draws in the font family but sizes its text by its own variables.
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'info']),
   fontSize: def('fs', 'length', TEXT_USERS),
@@ -257,11 +313,30 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'er',
     'journey',
     'timeline',
-    'info',
+    'gitgraph',
     'gantt',
+    'info',
   ]),
-  mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
-  nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  mainBkg: def('mb', 'color', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+    'gitgraph',
+  ]),
+  nodeBorder: def('nb', 'color', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+    'gitgraph',
+  ]),
   nodeTextColor: def('nt', 'color', ['flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
@@ -328,6 +403,21 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   quadrantInternalBorderStrokeFill: def('qib', 'color', ['quadrant']),
   quadrantExternalBorderStrokeFill: def('qeb', 'color', ['quadrant']),
   quadrantTitleFill: def('qtf', 'color', ['quadrant']),
+  // gitGraph commit and tag labels (D267, v12 names), derived as every v12 theme derives them.
+  // `tagBorder` is v12's other name for `tagLabelBorder`, which an author's `tagLabelBorder`
+  // overrides; no theme sets it.
+  commitLabelColor: def('gcc', 'color', ['gitgraph']),
+  commitLabelBackground: def('glb', 'color', ['gitgraph']),
+  commitLabelFontSize: def('gcs', 'length', ['gitgraph']),
+  tagLabelColor: def('gtc', 'color', ['gitgraph']),
+  tagLabelBackground: def('gtk', 'color', ['gitgraph']),
+  tagLabelBorder: def('gtr', 'color', ['gitgraph']),
+  tagBorder: def('gtg', 'color', []),
+  tagLabelFontSize: def('gts', 'length', ['gitgraph']),
+  // v12's branch line colour (`lineColor` unless a redux theme sets it), and the cherry-pick
+  // mark (#374): white on light themes, black on dark ones.
+  commitLineColor: def('gcl', 'color', ['gitgraph']),
+  gitCherryPickInk: def('gci', 'color', ['gitgraph']),
   // gantt (#381, v12 names from v12's gantt `styles.js`): row bands, excluded days, grid, today
   // and `vert` lines, bars by state, and task label colours. A clickable label is v12's #003163
   // in every theme, a renderer constant (#385).
@@ -358,10 +448,12 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'state',
     'er',
     'timeline',
+    'mindmap',
+    'gitgraph',
   ]),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),
-  radius: def('r', 'length', ['core', 'flowchart', 'state']),
-  fontWeight: def('fw', 'weight', ['core', 'timeline']),
+  radius: def('r', 'length', ['core', 'flowchart', 'state', 'mindmap']),
+  fontWeight: def('fw', 'weight', ['core', 'timeline', 'gitgraph']),
   spacing1: def('g1', 'length', ['core']),
   spacing2: def('g2', 'length', ['core']),
   spacing3: def('g3', 'length', ['core']),
@@ -384,16 +476,16 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   classTerminalFontSize: def('ctf', 'length', ['class']),
   erZeroOrMoreCircleOffset: def('ezc', 'length', ['er']),
   // Node padding, read as numbers at render time (D152), so their aliases are never written.
-  nodePaddingX: def('npx', 'padding', ['flowchart']),
-  nodePaddingY: def('npy', 'padding', ['flowchart']),
+  nodePaddingX: def('npx', 'padding', ['flowchart', 'mindmap']),
+  nodePaddingY: def('npy', 'padding', ['flowchart', 'mindmap']),
   stadiumPaddingX: def('spx', 'padding', ['flowchart']),
   stadiumPaddingY: def('spy', 'padding', ['flowchart']),
-  hexagonPaddingX: def('hpx', 'padding', ['flowchart']),
-  hexagonPaddingY: def('hpy', 'padding', ['flowchart']),
-  hexagonSlant: def('hs', 'length', ['flowchart']),
+  hexagonPaddingX: def('hpx', 'padding', ['flowchart', 'mindmap']),
+  hexagonPaddingY: def('hpy', 'padding', ['flowchart', 'mindmap']),
+  hexagonSlant: def('hs', 'length', ['flowchart', 'mindmap']),
   doubleCircleGap: def('dcg', 'length', ['flowchart']),
   doubleCirclePadding: def('dcp', 'padding', ['flowchart']),
-  circlePadding: def('cp', 'padding', ['flowchart']),
+  circlePadding: def('cp', 'padding', ['flowchart', 'mindmap']),
   circleMinDiameter: def('cmd', 'length', ['flowchart']),
   subroutinePaddingX: def('srx', 'padding', ['flowchart']),
   subroutinePaddingY: def('sry', 'padding', ['flowchart']),
@@ -412,6 +504,23 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   timelineLabelOffset: def('tlo', 'padding', ['timeline']),
   timelineEventLabelShift: def('tle', 'length', ['timeline']),
   timelineScaleColors: def('tls', 'flag', ['timeline']),
+  mindmapRoundedNodes: def('mmr', 'flag', ['mindmap']),
+  mindmapOutlinedNodes: def('mmo', 'flag', ['mindmap']),
+  mindmapBorderEdges: def('mme', 'flag', ['mindmap']),
+  gitCommitRadius: def('gcr', 'length', GIT),
+  gitLaneShift: def('gls', 'length', GIT),
+  gitBranchLabelPaddingX: def('gpx', 'length', GIT),
+  gitBranchLabelPaddingY: def('gpy', 'length', GIT),
+  gitBranchLabelRadius: def('gbr', 'length', GIT),
+  gitBranchLabelShiftX: def('gbx', 'length', GIT),
+  gitBranchLabelOffsetY: def('gby', 'length', GIT),
+  gitArrowWidth: def('gaw', 'length', GIT),
+  gitHighlightInnerSize: def('ghi', 'length', GIT),
+  gitMergeRadius: def('gmr', 'length', GIT),
+  gitReverseCrossSize: def('grc', 'length', GIT),
+  gitCherryPickDotRadius: def('gcd', 'length', GIT),
+  gitNodeColors: def('gnc', 'flag', GIT),
+  gitPaletteColors: def('gpc', 'flag', GIT),
   // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
   // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
   rowOdd: def('ro', 'color', ['er']),
@@ -428,7 +537,16 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   ...Object.fromEntries([...'012345'].map((n) => [`actor${n}`, def(`ja${n}`, 'color', JOURNEY)])),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
-  dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  dropShadow: def('ds', 'filter', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'mindmap',
+    'gitgraph',
+  ]),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

@@ -1,0 +1,3 @@
+@ 5:14  checkout de|v
+  prepare: 5:12-5:15 "dev"; rename to "two words":
+  refused: 'two words' is not a bare branch name: letters, digits and `_`, with `-`, `.` and `/` inside, not ending in `.` or `/`, not starting with a digit or `title`, and not a keyword; quote any other name.

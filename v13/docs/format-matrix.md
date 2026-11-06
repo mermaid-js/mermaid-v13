@@ -9,7 +9,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | Diagram type | Package | SVG | ASCII |
 | --- | --- | --- | --- |
 | `flowchart-elk` | `@mermaid-js/diagram-flowchart` | yes | yes |
-| `mindmap` | not ported | no | no |
+| `mindmap` | `@mermaid-js/diagram-mindmap` | yes | no |
 | `architecture` | not ported | no | no |
 | `agentflow` | not ported | no | no |
 | `c4` | not ported | no | no |
@@ -24,7 +24,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `swimlane` | not ported | no | no |
 | `flowchart-v2` | `@mermaid-js/diagram-flowchart` | yes | yes |
 | `timeline` | `@mermaid-js/diagram-timeline` | yes | no |
-| `gitGraph` | not ported | no | no |
+| `gitGraph` | `@mermaid-js/diagram-gitgraph` | yes | no |
 | `stateDiagram` | `@mermaid-js/diagram-state` | yes | no |
 | `journey` | `@mermaid-js/diagram-journey` | yes | no |
 | `quadrantChart` | `@mermaid-js/diagram-quadrant` | yes | no |

@@ -1,7 +1,9 @@
 /**
  * Definition, references and rename (D92) from the parser's symbol occurrences, grouped by the
  * facet's namespaces: an occurrence's name space is every kind in its group, so an edge to a
- * subgraph id finds the subgraph. The definition is the first `def` in source order.
+ * subgraph id finds the subgraph. The definition is the first `def` in source order. An
+ * occurrence of one of the facet's `standalone` kinds is a symbol of its own (mindmap node
+ * ids, D289): its name space is its group and its place.
  */
 import type { LanguageFacet, Range, SymbolOccurrence } from '@mermaid-js/core/parser-kit';
 import type { DocumentContext } from './context.ts';
@@ -9,7 +11,10 @@ import { deepFreeze } from './freeze.ts';
 
 /** A symbol occurrence whose range covers exactly its name, with its namespace. */
 export interface Occurrence extends SymbolOccurrence {
-  /** Namespace key: the index of the facet group holding `kind`, else the kind itself. */
+  /**
+   * Namespace key: the index of the facet group holding `kind`, else the kind itself; for a
+   * `standalone` kind, also the start of the occurrence as recorded.
+   */
   readonly space: string;
   /** The opening quote the name is written in (`"Customer Account"`), when it is (#199). */
   readonly quote?: string;
@@ -51,13 +56,21 @@ export interface TextEdit {
 export type PrepareRenameResult = { range: Range; placeholder: string } | { refused: string };
 export type RenameResult = { edits: readonly TextEdit[] } | { refused: string };
 
-/** Namespace key of each symbol kind: its facet group's index, else the kind itself. */
-function spaces(facet: LanguageFacet): (kind: string) => string {
+/**
+ * Namespace key of each recorded symbol: its kind's facet group index, else the kind itself;
+ * a symbol of a `standalone` kind adds its recorded start, so it shares its key with no other.
+ * A rename's single edit keeps that start, so the renamed symbol keeps its key.
+ */
+function spaces(facet: LanguageFacet): (s: SymbolOccurrence) => string {
   const spaceOf = new Map<string, string>();
   facet.namespaces.forEach((group, i) => {
     for (const kind of group) if (!spaceOf.has(kind)) spaceOf.set(kind, String(i));
   });
-  return (kind) => spaceOf.get(kind) ?? `kind:${kind}`;
+  const standalone = new Set(facet.standalone ?? []);
+  return (s) => {
+    const space = spaceOf.get(s.kind) ?? `kind:${s.kind}`;
+    return standalone.has(s.kind) ? `${space}@${s.range.start}` : space;
+  };
 }
 
 /**
@@ -81,7 +94,7 @@ export function occurrences(ctx: DocumentContext): readonly Occurrence[] {
       start += quote.length;
       end -= quote.length;
     } else if (!bare) continue;
-    const space = spaceOf(s.kind);
+    const space = spaceOf(s);
     const o = { name: s.name, kind: s.kind, role: s.role, range: { start, end }, space };
     out.push(quote ? { ...o, quote } : o);
   }
@@ -209,11 +222,11 @@ function readsBack(
   const byStart = (list: readonly SymbolOccurrence[]) => [
     ...new Map(list.map((s) => [s.range.start, s] as const)).values(),
   ];
-  const renamed = byStart(before.filter((s) => spaceOf(s.kind) === o.space && s.name === o.name));
+  const renamed = byStart(before.filter((s) => spaceOf(s) === o.space && s.name === o.name));
   if (renamed.length !== edits.length) return false;
   const after = facet.parse(applyEdits(ctx.text, edits), { keepTokens: true }).symbols;
   if (after.length !== before.length) return false;
-  const got = byStart(after.filter((s) => spaceOf(s.kind) === o.space && s.name === newName))
+  const got = byStart(after.filter((s) => spaceOf(s) === o.space && s.name === newName))
     .map((s) => `${s.range.start}:${s.range.end}:${s.kind}`)
     .sort();
   // Where each renamed occurrence lands: shifted by the length change of the edits before it.

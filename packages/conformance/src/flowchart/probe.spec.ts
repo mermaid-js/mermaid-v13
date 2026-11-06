@@ -53,6 +53,7 @@ describe('flowchart probe leaves the parse unchanged', () => {
     }
     expect(problems).toEqual([]);
     expect(probes).toBeGreaterThan(5000);
-    // ~12k parses: about 3 s alone, longer beside a full `pnpm test` (it is a sweep, not a timing).
-  }, 60_000);
+    // The corpus spans every parity suite (≈4,200 sources, ~50 probes each): a sweep, not a
+    // timing, so the timeout leaves room for a loaded machine beside a full `pnpm test`.
+  }, 180_000);
 });

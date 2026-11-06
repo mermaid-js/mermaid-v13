@@ -50,7 +50,7 @@ Unmet criteria and open choices, filed under the ticket that owns each one. Each
 
 ## H4 (#344)
 
-- Waits for the mindmap port's T5 (#294). Left open when the integration PR is marked ready.
+- Done on the mindmap branch (#294, `feature/344_mindmap-handdrawn`): 32 baselines under `e2e/diagrams/mindmap/baseline/handdrawn/<shape>/<family>.mmd`, one per node shape plus edges in the four families (choice and output sizes in `runs/294/GAPS.md`, #344).
 
 ## Final review
 

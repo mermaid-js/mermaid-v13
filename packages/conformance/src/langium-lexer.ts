@@ -1,6 +1,6 @@
 /**
- * v12's Langium lexers as oracles (lexer-parity gate, parser-method §1, D213, D220). Pie, info
- * and gitGraph were Langium grammars in v12, lexed by Chevrotain from `@mermaid-js/parser`. This
+ * v12's Langium lexers as oracles (lexer-parity gate, parser-method §1, D213, D220). Pie and
+ * gitGraph were Langium grammars in v12, lexed by Chevrotain from `@mermaid-js/parser`. This
  * runs that lexer, from the same package version `mermaid@12.2.0` resolves (the
  * `mermaid-parser-v12` alias), on exactly the text v12's parser received for a source.
  *
@@ -32,6 +32,7 @@ export interface LangiumLexerDescriptor {
 export const LANGIUM_LEXERS = {
   pie: { probe: 'pie\n"a": 1', factory: 'createPieServices', key: 'Pie' },
   info: { probe: 'info', factory: 'createInfoServices', key: 'Info' },
+  gitGraph: { probe: 'gitGraph\n  commit', factory: 'createGitGraphServices', key: 'GitGraph' },
 } as const satisfies Record<string, LangiumLexerDescriptor>;
 
 export type LangiumLexerType = keyof typeof LANGIUM_LEXERS;

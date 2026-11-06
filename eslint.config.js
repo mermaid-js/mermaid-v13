@@ -202,8 +202,10 @@ export default tseslint.config(
       'packages/diagram-journey/src/v12-specs/*.spec.ts',
       'packages/diagram-quadrant/src/v12-specs/**',
       'packages/diagram-timeline/src/v12-specs/**',
+      'packages/diagram-mindmap/src/v12-specs/*.spec.ts',
       'packages/diagram-gantt/src/v12-specs/*.spec.ts',
       'packages/diagram-pie/src/v12-specs/*.spec.ts',
+      'packages/diagram-gitgraph/src/v12-specs/*.spec.ts',
     ],
     rules: {
       '@eslint-community/eslint-comments/disable-enable-pair': 'off',

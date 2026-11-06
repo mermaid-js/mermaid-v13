@@ -1,0 +1,16 @@
+@ 4:15  :::x #35; |y
+  prepare: 4:15-4:16 "y"; rename to "z":
+  %% rename-to: z
+  mindmap
+    root
+      :::x #35; z
+      b
+      :::z
+@ 6:8  :::|y
+  prepare: 6:8-6:9 "y"; rename to "z":
+  %% rename-to: z
+  mindmap
+    root
+      :::x #35; z
+      b
+      :::z

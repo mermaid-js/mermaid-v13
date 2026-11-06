@@ -4,7 +4,7 @@ import type { FirstPartyEntry } from '../registry.ts';
 /** First-party detectors in v12 detection order, without loaders (`mermaid/slim`). */
 export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'flowchart-elk', pattern: /^\s*flowchart-elk/, id: 'flowchart', formats: ['svg', 'ascii'] },
-  { type: 'mindmap', pattern: /^\s*mindmap/ },
+  { type: 'mindmap', pattern: /^\s*mindmap/, id: 'mindmap', formats: ['svg'] },
   { type: 'architecture', pattern: /^\s*architecture/ },
   { type: 'agentflow', pattern: /^\s*agentflow-beta\b/ },
   { type: 'c4', pattern: /^\s*C4Context|C4Container|C4Component|C4Dynamic|C4Deployment/ },
@@ -19,7 +19,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'swimlane', pattern: /^\s*swimlane-beta\b/ },
   { type: 'flowchart-v2', pattern: /^\s*(graph|flowchart)/, id: 'flowchart', formats: ['svg', 'ascii'] },
   { type: 'timeline', pattern: /^\s*timeline/, id: 'timeline', formats: ['svg'] },
-  { type: 'gitGraph', pattern: /^\s*gitGraph/ },
+  { type: 'gitGraph', pattern: /^\s*gitGraph/, id: 'gitGraph', formats: ['svg'] },
   { type: 'stateDiagram', pattern: /^\s*stateDiagram/, id: 'state', formats: ['svg'] },
   { type: 'journey', pattern: /^\s*journey/, id: 'journey', formats: ['svg'] },
   { type: 'quadrantChart', pattern: /^\s*quadrantChart/, id: 'quadrantChart', formats: ['svg'] },

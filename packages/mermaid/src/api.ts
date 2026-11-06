@@ -70,6 +70,8 @@ import {
   isElkName,
   Registry,
   type AnyPlugin,
+  layoutName,
+  type LayoutFound,
   type Detected,
   type ExternalDiagram,
   type FirstPartyEntry,
@@ -272,10 +274,6 @@ class AnalysisCache {
   }
 }
 
-function layoutName(config: ResolvedConfig): string {
-  return String(config.layout ?? 'layered');
-}
-
 function themeNames(config: ResolvedConfig): ThemeName[] {
   const choice = resolveThemeName(config.theme);
   return choice.dark ? [choice.name, choice.dark] : [choice.name];
@@ -287,8 +285,8 @@ function missingFor(registry: Registry, a: Analysis, text = false): Resource[] {
   const { config } = a.prepared;
   // Text output lays out with core's own `layered`, never a registered engine (D179).
   if (a.plugin.layoutKind === 'graph' && !text) {
-    const name = layoutName(config);
-    if (registry.layout(name).state === 'missing') missing.push({ kind: 'layout', name });
+    const { need } = registry.layout(layoutName(config, a.plugin), a.plugin.layoutEngine);
+    if (need !== undefined) missing.push({ kind: 'layout', name: need });
   }
   // Text output draws no colours, so it needs no theme (D82).
   for (const name of text ? [] : themeNames(config)) {
@@ -360,7 +358,7 @@ export function createMermaid(
   const hooksFor = (analysis: Analysis, text = false): HookRunner<Element, RenderResult> => {
     // Text output never runs a layout's hooks: no registered engine lays it out (D179).
     if (text || analysis.plugin.layoutKind !== 'graph') return hooks;
-    const own = registry.layoutExtension(layoutName(analysis.prepared.config));
+    const own = registry.layoutExtension(layoutName(analysis.prepared.config, analysis.plugin));
     if (!own) return hooks;
     let runner = layoutRunners.get(own);
     if (!runner) {
@@ -614,7 +612,7 @@ export function createMermaid(
     let engine: LayoutEngine | undefined;
     let elkName: string | undefined;
     if (plugin.layoutKind === 'graph') {
-      const asked = layoutName(config);
+      const asked = layoutName(config, plugin);
       // D179: no other engine knows cells (ELK ignores `grid`), so the name only warns. Text
       // output never loads it, and gives no ELK_NOT_INSTALLED or LAYOUT_UNKNOWN for it.
       if (textOutput && !builtIn(asked)) {
@@ -627,21 +625,22 @@ export function createMermaid(
       // Text output: core's `layered` itself, even when a loader replaced the name for SVG.
       const name = textOutput ? 'layered' : asked;
       const found = textOutput
-        ? ({ engine: layered, state: 'ready' } as const)
-        : registry.layout(name);
+        ? ({ engine: layered, state: 'ready' } as LayoutFound)
+        : registry.layout(name, plugin.layoutEngine);
+      const using = `using the built-in ${found.standIn ?? 'layered'} engine`;
       // Only when ELK lays the graph out: with LAYOUT_UNKNOWN or ELK_NOT_INSTALLED, layered
       // draws every group, as that warning says.
       if (isElkName(name) && (found.state === 'ready' || found.state === 'missing')) elkName = name;
       if (found.state === 'unknown') {
         warn({
           code: 'LAYOUT_UNKNOWN',
-          message: `Unknown layout "${name}"; using the built-in layered engine.`,
+          message: `Unknown layout "${name}"; ${using}.`,
         });
       } else if (found.state === 'elk') {
         // D173: `mermaid` names the package; core never does (D153).
         warn({
           code: 'ELK_NOT_INSTALLED',
-          message: `Layout "${name}" needs @mermaid-js/layout-elk, which is not registered; using the built-in layered engine.`,
+          message: `Layout "${name}" needs @mermaid-js/layout-elk, which is not registered; ${using}.`,
         });
       }
       engine = found.engine;
@@ -898,13 +897,23 @@ export function createMermaid(
   async function preload(req: PreloadRequest): Promise<void> {
     if (discovery.pending) await discovery.settle();
     const tasks: Promise<unknown>[] = [];
+    const ascii = req.formats?.includes('ascii');
+    if (ascii) tasks.push(import('./ascii.ts').then((b) => void (textBackend = b)));
     for (const t of req.types ?? []) {
       tasks.push(
         registry.load(t).then((p) => {
           if (!p)
             throw new MermaidError('UNSUPPORTED_DIAGRAM', `Diagram type "${t}" is not supported.`);
+          // The plugin's own default engine (D284) comes with it, as `layered` does.
+          if (p.layoutEngine) return registry.loadLayout(p.layoutEngine.default);
         })
       );
+      if (ascii)
+        tasks.push(
+          registry.loadAscii(t).then((hook) => {
+            if (!hook) throw new UnsupportedFormatError(t, 'ascii');
+          })
+        );
     }
     for (const l of req.layouts ?? []) tasks.push(registry.loadLayout(l));
     // `auto` needs its dark spec too.
@@ -916,20 +925,6 @@ export function createMermaid(
     // Extensions' resources by kind: `math: true` loads what a math extension provides (D178).
     if (req.math) for (const n of hooks.provided('math')) tasks.push(n.load());
     for (const name of req.iconPacks ?? []) tasks.push(iconPacks.load(name));
-    if (req.formats?.includes('ascii')) {
-      tasks.push(
-        import('./ascii.ts').then((b) => {
-          textBackend = b;
-        })
-      );
-      for (const t of req.types ?? []) {
-        tasks.push(
-          registry.loadAscii(t).then((hook) => {
-            if (!hook) throw new UnsupportedFormatError(t, 'ascii');
-          })
-        );
-      }
-    }
     try {
       await Promise.all(tasks);
     } catch (e) {

@@ -39,7 +39,9 @@ const DOCS = {
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   pie: 'pie\n  "Dogs" : 386\n',
   quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
+  mindmap: 'mindmap\n  root((Root))\n    A[Square]\n',
   gantt: 'gantt\n  section Build\n  Code :crit, a1, 2024-01-01, 3d\n',
+  gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -49,8 +51,10 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'er',
       'flowchart',
       'gantt',
+      'gitGraph',
       'info',
       'journey',
+      'mindmap',
       'pie',
       'quadrantChart',
       'sequence',

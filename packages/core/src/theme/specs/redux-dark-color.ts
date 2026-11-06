@@ -13,7 +13,14 @@ import {
   TAILWIND_300,
   TAILWIND_400,
 } from './palettes.ts';
-import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
+import { gitLabelRules } from './scales.ts';
+import {
+  REDUX_DARK_BASE,
+  REDUX_DARK_GIT,
+  REDUX_DARK_GIT_DARK_MODE,
+  REDUX_DARK_TOKENS,
+  REDUX_DARK_VALUES,
+} from './redux-dark-values.ts';
 
 const theme: ThemeSpec = {
   name: 'redux-dark-color',
@@ -21,7 +28,12 @@ const theme: ThemeSpec = {
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
   // v12 draws pie section text in the light ink here (`pieSectionTextColor`).
-  rules: { ...REDUX_RULES, ...pieSlots(TAILWIND_300), pieSectionTextColor: '#28253d' },
+  rules: {
+    ...REDUX_RULES,
+    ...pieSlots(TAILWIND_300),
+    pieSectionTextColor: '#28253d',
+    ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
+  },
   values: {
     ...REDUX_DARK_VALUES,
     erEdgeLabelBackground: '#16141f',
@@ -35,7 +47,9 @@ const theme: ThemeSpec = {
     cScaleInv: INVERTED_SCALE,
     // v12 theme-redux-dark-color.js: each label is its slot darkened by 75.
     cScaleLabel: paletteSlots((i) => `darkenHsl(cScale${i}, 75%)`),
+    ...REDUX_DARK_GIT,
   },
+  darkModePalettes: REDUX_DARK_GIT_DARK_MODE,
 };
 
 export default theme;
