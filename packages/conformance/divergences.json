@@ -70,5 +70,69 @@
     "reason": "The front-matter `title` baseline (D218): v12's timeline DB has no `setDiagramTitle`, so v12 dropped it; v13 draws it where an in-text `title` goes, as in timeline-cases/front-matter-title.",
     "owner": "#315",
     "since": "2026-11-05"
+  },
+  {
+    "id": "kanban-cases/columns-share-an-id",
+    "inputHash": "sha256:bcdb4791abb13cb1",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/columns-share-an-id (commented)",
+    "inputHash": "sha256:09458c2671ab7d40",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/columns-share-an-id (CRLF)",
+    "inputHash": "sha256:6aeac0b044edc11a",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/columns-share-an-id (tabs)",
+    "inputHash": "sha256:c81061529002987f",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/columns-share-an-id (mid-line directive)",
+    "inputHash": "sha256:17c676d8650cf0a7",
+    "kind": "model",
+    "reason": "Columns that share an id (D373): v12's getData listed every card whose parentId is the column's id under each column with that id, so both `docs` columns drew both columns' cards; v13 gives each card to the column it follows (by position), keeping v12's parentId (MIGRATION.md, #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/priority-kinds (multi-line shape data)",
+    "inputHash": "sha256:8cbc312bdab2d904",
+    "kind": "accept",
+    "reason": "core's parseYaml reads a plain scalar continued on the next line inside a flow sequence (`[1⏎2]` is `['1 2']`), as the YAML 1.2 spec allows; js-yaml 4, which v12 used, rejects it (`missed comma between flow collection entries`). Only the generated multi-line variant splits a flow sequence over lines (core YAML, not kanban; #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/shape-data-list-values (multi-line shape data)",
+    "inputHash": "sha256:b44e38765dacb714",
+    "kind": "accept",
+    "reason": "core's parseYaml reads a plain scalar continued on the next line inside a flow sequence (`[1⏎2]` is `['1 2']`), as the YAML 1.2 spec allows; js-yaml 4, which v12 used, rejects it (`missed comma between flow collection entries`). Only the generated multi-line variant splits a flow sequence over lines (core YAML, not kanban; #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
+  },
+  {
+    "id": "kanban-gate/kanban-cases/shape-data-scalar-multi-line (tabs)",
+    "inputHash": "sha256:2dae249410387433",
+    "kind": "reject",
+    "reason": "core's parseYaml rejects a tab-indented plain scalar document (`tabs are not allowed for indentation`), where js-yaml 4, which v12 used, read it as text; v12 then ignored the non-mapping data. Only the generated tabs variant writes it (core YAML, not kanban; #453).",
+    "owner": "#453",
+    "since": "2026-11-06"
   }
 ]

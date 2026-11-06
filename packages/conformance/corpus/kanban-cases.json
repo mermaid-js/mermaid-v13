@@ -490,5 +490,57 @@
   {
     "id": "kanban-cases/directive",
     "source": "%%{init: {\"theme\": \"forest\"}}%%\nkanban\n  a"
+  },
+  {
+    "id": "kanban-cases/columns-share-an-id",
+    "source": "kanban\n  docs\n    a\n  docs\n    b"
+  },
+  {
+    "id": "kanban-cases/shape-data-scalar-multi-line",
+    "source": "kanban\n  a\n    b@{\n      hello\n    }"
+  },
+  {
+    "id": "kanban-cases/shape-data-list",
+    "source": "kanban\n  a\n    b@{\n      - x\n    }"
+  },
+  {
+    "id": "kanban-cases/shape-data-shape-boolean",
+    "source": "kanban\n  a\n    b@{ shape: true }"
+  },
+  {
+    "id": "kanban-cases/shape-data-falsy-values",
+    "source": "kanban\n  a\n    b@{ shape: 0, label: '', ticket: false, assigned: 0, icon: null }"
+  },
+  {
+    "id": "kanban-cases/shape-data-list-values",
+    "source": "kanban\n  a\n    b@{ label: [x, y], ticket: [1, 2], assigned: [me, you] }"
+  },
+  {
+    "id": "kanban-cases/shape-data-number-values",
+    "source": "kanban\n  a\n    b@{ label: 5, ticket: 2038, icon: 3 }"
+  },
+  {
+    "id": "kanban-cases/shape-data-duplicate-key",
+    "source": "kanban\n  a\n    b@{ x: 1, x: 2 }"
+  },
+  {
+    "id": "kanban-cases/shape-data-null-multi-line",
+    "source": "kanban\n  a\n    b@{\n      null\n    }"
+  },
+  {
+    "id": "kanban-cases/shape-data-hash-comment",
+    "source": "kanban\n  a\n    b@{\n      ticket: X # the ticket\n    }"
+  },
+  {
+    "id": "kanban-cases/shape-data-then-decorations",
+    "source": "kanban\n  a\n    b@{ ticket: X, icon: star }\n    ::icon(moon)\n    :::hot"
+  },
+  {
+    "id": "kanban-cases/misplaced-indent-twice",
+    "source": "kanban\n    a\n  b\n      c\n  d\n      e"
+  },
+  {
+    "id": "kanban-cases/misplaced-indent-then-decoration",
+    "source": "kanban\n    a\n  b\n  :::c"
   }
 ]

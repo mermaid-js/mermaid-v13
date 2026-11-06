@@ -98,7 +98,7 @@ describe('kanban lexer parity with mermaid@12 (jison)', () => {
     // the lexer.
     expect(e2e).toBe(30);
     expect(specs).toBe(32);
-    expect(cases).toBe(123);
+    expect(cases).toBe(136);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(
       diffs.map((d) => `${d.id} @${d.at}\n  v12 ${show(d.v12)}\n  v13 ${show(d.v13)}`)
