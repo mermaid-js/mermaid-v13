@@ -1,3 +1,4 @@
+// cspell:words bdklrs
 /**
  * The icons a mindmap draws outside its labels (`DiagramPlugin.icons`, D293): every node's
  * `::icon(…)`, as the glyph name the icons plugin looks up (D297).
