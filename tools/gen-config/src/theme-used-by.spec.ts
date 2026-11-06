@@ -54,6 +54,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'journey',
       'pie',
       'quadrant',
+      'radar',
       'sequence',
       'state',
       'timeline',
