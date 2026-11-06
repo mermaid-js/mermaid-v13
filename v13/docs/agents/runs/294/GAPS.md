@@ -60,7 +60,12 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** a subtree's fold also takes the `%%` comment lines right after it that are indented deeper than its node (review of #389, after D259's timeline rule); blank lines after them stay out.
 
 ## #390 T5 integration
-- Fixture descriptions: also `text-should-wrap-with-icon.mmd` has no icon (four wrong descriptions, not three).
+- Fixture descriptions: also `text-should-wrap-with-icon.mmd` has no icon (four wrong descriptions, not three). **Closed** (#390): `rounded-rect-shape.mmd` says circle, `circle-shape.mmd` rounded rectangle, `text-should-wrap-with-icon.mmd` that it has no icon. The two `bang-and-cloud-shape*.mmd` descriptions already matched their content; the file names are swapped (`-with-icons` has none), so its description says so instead of trading descriptions.
+- #386's integrator limits: **Closed** (#390): `parseMindmap({ maxNodes, maxDepth })`, defaults `DEFAULT_LIMITS`; the plugin passes `ctx.limits`. `NODE_LIMIT` at the first node over `maxNodes` (the root counts), `DEPTH_LIMIT` at the first node more than `maxDepth` levels under the root, each once. **Choice:** `maxEdges` is not applied: a mindmap's edges are derived (one per non-root node), so with the defaults (10,000 nodes, 5,000 edges) it would cap mindmaps at 5,001 nodes; v12's edge cap was flowchart's only.
+- #389's list: **Closed** (#390): manifest `language`, `gen:registry`; the `unlisted-facets.ts` row and the conformance eager row are gone; `LEZER_HIGHLIGHTERS` / `MONARCH_HIGHLIGHTERS` rows and each adapter's `gen`; `adapters-agree`, highlighter specs and both first-paint e2e specs cover mindmap; `@mermaid-js/diagram-mindmap` is an optional peer of the service (the package is now public, `13.0.0-alpha.0`, as `workspace-release.spec.ts` needs).
+- **Choice:** `configDefaults` are generated (`mindmap` in `SECTION_OWNERS`, `gen:config`), as for flowchart and class: every key has v12's default in the schema (`padding` 10, `maxNodeWidth` 200 are also `MINDMAP_METRICS`' fallbacks).
+- **Choice:** the `icon` baselines wait for #328: the dev gallery renders with the icons extension and requires no warnings, but the renderer still shows references as written with `ICON_NOT_RENDERED`. The theme baselines carry no `::icon()`; the nightly-check icon fixtures still run in `mmd-snapshots`.
+- Not done: MIGRATION.md's hand-drawn section still says "Mindmap will be sketched once it is ported" (#344's).
 
 ## #328 icons I5
 
