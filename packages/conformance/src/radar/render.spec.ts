@@ -12,7 +12,7 @@ import {
 import { pathPoints } from '../sequence/path-bounds.ts';
 import { astIndex, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
-import { radarGateCorpus } from './corpus.ts';
+import { radarCases, radarGateCorpus } from './corpus.ts';
 import { radarApi } from './render-api.ts';
 
 /**
@@ -27,8 +27,13 @@ import { radarApi } from './render-api.ts';
  * The round-trip rule for radar's AST: every model axis maps to exactly one `data-ast` element
  * (its `<g>`), every drawn curve to one (its shape), and the in-text title to one. A curve
  * whose entry count is not the axis count is not drawn (v12 skipped it), so it maps to none and
- * `RADAR_CURVE_SKIPPED` names it. Entries, options, the header and the accessibility statements
- * have no element of their own; a front-matter title is drawn with no `data-ast`.
+ * `RADAR_CURVE_SKIPPED` names it. Of several `title` statements only the last is drawn (v12's
+ * last title wins), so the earlier ones (`title`, … before `title@n`) map to none, and so does
+ * every `title` when the last is empty. Entries, options, the header and the accessibility
+ * statements have no element of their own; a front-matter title is drawn with no `data-ast`.
+ *
+ * The probes below are `corpus/radar-cases.json`'s `radar-cases/render-*` cases (also in the
+ * gate corpus above).
  */
 const THEMES = [
   'default',
@@ -224,7 +229,15 @@ const render = async (src: string, m: Mermaid = api) => {
   return { ...result, tree: parseSvg(result.svg) };
 };
 
-const SIMPLE = 'radar-beta\ntitle T\naxis A, B, C\ncurve c{1, 2, 3}\ncurve d{3, 2, 1}';
+/** A `radar-cases/render-<name>` source from `corpus/radar-cases.json`. */
+const CASES = new Map(radarCases().map((c) => [c.id, c.source]));
+function probe(name: string): string {
+  const source = CASES.get(`radar-cases/render-${name}`);
+  if (source === undefined) throw new Error(`no radar-cases/render-${name}`);
+  return source;
+}
+
+const SIMPLE = probe('simple');
 
 describe('radar render: what is drawn', () => {
   it('draws in v12 order: rings, axes, curves, legend, title', async () => {
@@ -265,9 +278,7 @@ describe('radar render: what is drawn', () => {
   });
 
   it('skips a curve with the wrong entry count, keeping its slot and legend row (D356)', async () => {
-    const { tree, warnings } = await render(
-      'radar-beta\naxis A, B\ncurve a{1, 2}\ncurve b{1}\ncurve c{2, 1}'
-    );
+    const { tree, warnings } = await render(probe('skipped-curve'));
     const curves = prefixed(tree, 'radarCurve-');
     expect(curves.map((n) => attr(tree, n, 'class'))).toEqual(['radarCurve-0', 'radarCurve-2']);
     expect(curves.map((n) => attr(tree, n, 'data-ast'))).toEqual(['curve:a', 'curve:c']);
@@ -285,12 +296,7 @@ describe('radar render: what is drawn', () => {
   });
 
   it('takes colour slot = curve index mod 12 (D353)', async () => {
-    const src = [
-      'radar-beta',
-      'axis A, B',
-      ...Array.from({ length: 14 }, (_, i) => `curve c${i}{1, 2}`),
-    ].join('\n');
-    const { tree } = await render(src);
+    const { tree } = await render(probe('fourteen-curves'));
     const curves = prefixed(tree, 'radarCurve-');
     expect(curves.map((n) => attr(tree, n, 'class')).slice(11)).toEqual([
       'radarCurve-11',
@@ -304,50 +310,45 @@ describe('radar render: what is drawn', () => {
   });
 
   it('draws polygons under graticule polygon, and no ring without axes', async () => {
-    const { tree } = await render(
-      'radar-beta\naxis A, B, C\ncurve c{1, 2, 3}\ngraticule polygon\nticks 3'
-    );
+    const { tree } = await render(probe('polygon-graticule'));
     expect(tree.find({ tag: 'polygon', class: 'radarGraticule' })).toHaveLength(3);
     expect(tree.find({ tag: 'circle' })).toEqual([]);
     const [curve] = prefixed(tree, 'radarCurve-');
     expect(tree.tag(curve!)).toBe('polygon');
     expect(attr(tree, curve, 'points')!.split(/[ ,]+/)).toHaveLength(6);
-    const bare = await render('radar-beta\ngraticule polygon\ntitle Nothing');
+    const bare = await render(probe('polygon-no-axes'));
     expect(bare.tree.find({ tag: 'polygon' })).toEqual([]);
     expect(bare.svg).not.toMatch(/points=""/);
   });
 
   it('draws v12 rings for ticks 0, fractional and over 32 (clamped with a warning)', async () => {
-    const rings = async (ticks: string) =>
-      (await render(`radar-beta\naxis A, B\ncurve c{1, 2}\nticks ${ticks}`)).tree.find({
-        tag: 'circle',
-        class: 'radarGraticule',
-      });
-    expect(await rings('0')).toEqual([]);
-    expect(await rings('2.5')).toHaveLength(3);
-    const many = await render('radar-beta\naxis A, B\ncurve c{1, 2}\nticks 40');
+    const rings = async (name: string) =>
+      (await render(probe(name))).tree.find({ tag: 'circle', class: 'radarGraticule' });
+    expect(await rings('ticks-zero')).toEqual([]);
+    expect(await rings('ticks-fractional')).toHaveLength(3);
+    const many = await render(probe('ticks-over-max'));
     expect(many.tree.find({ tag: 'circle' })).toHaveLength(32);
     expect(many.warnings.map((w) => w.code)).toContain('RADAR_TICKS_CLAMPED');
   });
 
   it('draws max = min at the centre with one warning, no NaN (D356)', async () => {
-    const { svg, warnings } = await render('radar-beta\naxis A, B\ncurve c{1, 1}\nmax 1\nmin 1');
+    const { svg, warnings } = await render(probe('empty-range'));
     expect(svg).not.toMatch(/NaN|Infinity/);
     expect(warnings.filter((w) => w.code === 'RADAR_EMPTY_RANGE')).toHaveLength(1);
   });
 
   it('draws no legend under showLegend false', async () => {
-    const { tree } = await render('radar-beta\naxis A\ncurve c{1}\nshowLegend false');
+    const { tree } = await render(probe('no-legend'));
     expect(prefixed(tree, 'radarLegendBox-')).toEqual([]);
     expect(byClass(tree, 'radarLegendText')).toEqual([]);
   });
 
   it('draws the in-text title with data-ast, a front-matter one without (D218)', async () => {
-    const own = await render('radar-beta\ntitle First\ntitle Last\naxis A');
+    const own = await render(probe('repeated-title'));
     const [t] = byClass(own.tree, 'radarTitle');
     expect(textOf(own.tree, t!)).toBe('Last');
     expect(attr(own.tree, t, 'data-ast')).toBe('title@2');
-    const front = await render('---\ntitle: Front\n---\nradar-beta\naxis A');
+    const front = await render(probe('front-matter-title'));
     const [f] = byClass(front.tree, 'radarTitle');
     expect(textOf(front.tree, f!)).toBe('Front');
     expect(attr(front.tree, f, 'data-ast')).toBeUndefined();
@@ -356,9 +357,7 @@ describe('radar render: what is drawn', () => {
   });
 
   it('breaks <br> and newlines in labels, legend and title into lines (D355)', async () => {
-    const { tree } = await render(
-      'radar-beta\ntitle One<br>Two\naxis A["a<br>b"], B\ncurve c["x<br/>y"]{1, 2}'
-    );
+    const { tree } = await render(probe('label-breaks'));
     for (const cls of ['radarTitle', 'radarAxisLabel', 'radarLegendText']) {
       const [n] = byClass(tree, cls);
       expect(tree.children(n!).filter((k) => tree.tag(k) === 'tspan').length, cls).toBe(2);
@@ -371,8 +370,7 @@ describe('radar render: what is drawn', () => {
     expect(attr(wide.tree, root, 'width')).toBe('100%');
     expect(attr(wide.tree, root, 'style')).toMatch(/max-width:700px/);
     expect(attr(wide.tree, root, 'viewBox')).toBe('0 0 700 700');
-    const src = '%%{init: {"radar": {"useMaxWidth": false}}}%%\nradar-beta\naxis A';
-    const fixed = await render(src);
+    const fixed = await render(probe('no-max-width'));
     const r = fixed.tree.find({ tag: 'svg' })[0]!;
     const [, , w, h] = attr(fixed.tree, r, 'viewBox')!.split(' ').map(Number);
     expect([attr(fixed.tree, r, 'width'), attr(fixed.tree, r, 'height')]).toEqual([
@@ -497,12 +495,12 @@ describe('radar render: paints (D215, D227, D351–D353, D359)', () => {
 
 describe('radar render: accessibility, ids, security and formats', () => {
   it('names the diagram by accTitle alone, describes it by accDescr (D133)', async () => {
-    const titled = await render('radar-beta\ntitle Visible\naxis A');
+    const titled = await render(probe('visible-title'));
     const root = titled.tree.find({ tag: 'svg' })[0]!;
     expect(attr(titled.tree, root, 'aria-labelledby')).toBeUndefined();
     expect(attr(titled.tree, root, 'aria-roledescription')).toBe('radar');
     expect(attr(titled.tree, root, 'role')).toBe('img');
-    const named = await render('radar-beta\naccTitle: Skills\naccDescr {\n  Two axes\n}\naxis A');
+    const named = await render(probe('acc-title-descr'));
     const r = named.tree.find({ tag: 'svg' })[0]!;
     expect(attr(named.tree, r, 'aria-labelledby')).toBe('x-title');
     expect(attr(named.tree, r, 'aria-describedby')).toBe('x-desc');
@@ -511,7 +509,7 @@ describe('radar render: accessibility, ids, security and formats', () => {
   });
 
   it('gives two renders in one document no colliding ids', async () => {
-    const source = 'radar-beta\n  accTitle: T\n  accDescr: D\n  axis A';
+    const source = probe('acc-indented');
     const ids = (svg: string): string[] => [...svg.matchAll(/ id="([^"]*)"/g)].map((m) => m[1]!);
     const a = ids((await api.render('mermaid-1', source)).svg);
     const b = ids((await api.render('mermaid-2', source)).svg);
@@ -520,12 +518,9 @@ describe('radar render: accessibility, ids, security and formats', () => {
   });
 
   it('renders hostile labels and titles inert', async () => {
-    const hostile = [
-      'radar-beta\ntitle </text><script>alert(1)</script>\naxis A',
-      'radar-beta\naxis A["<img src=x onerror=alert(1)>"], B["<svg onload=alert(1)>"]\ncurve c["<script>x</script>"]{1, 2}',
-      'radar-beta\naccTitle: <script>x</script>\naccDescr: ]]><x\naxis A["&<>\'"]',
-      'radar-beta\naxis A["\\u0000\\0\\b"]\ncurve c["javascript:alert(1)"]{1}',
-    ];
+    const hostile = ['title', 'labels', 'accessibility', 'escapes'].map((k) =>
+      probe(`hostile-${k}`)
+    );
     for (const source of hostile) {
       const { svg } = await api.render('x', source);
       expect(() => assertInert(svg), source).not.toThrow();

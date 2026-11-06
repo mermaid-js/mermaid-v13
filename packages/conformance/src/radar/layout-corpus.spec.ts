@@ -1,9 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { ResolvedConfig } from '@mermaid-js/core/config';
-import { tableMeasurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
-import { layoutRadar, parseRadar, radar as plugin } from '@mermaid-js/diagram-radar';
-import { radarLayoutViolations } from '@mermaid-js/diagram-radar/testing';
+import type { Theme } from '@mermaid-js/core/theme';
+import { layoutRadar, parseRadar } from '@mermaid-js/diagram-radar';
+import {
+  radarLayoutViolations,
+  radarTestContext,
+  radarTestTheme,
+} from '@mermaid-js/diagram-radar/testing';
 import type { CorpusItem } from '../types.ts';
 import { radarGateCorpus } from './corpus.ts';
 
@@ -22,16 +24,15 @@ const CONFIGS: readonly Record<string, unknown>[] = [
   { axisScaleFactor: 2, curveTension: 1, marginBottom: 0 },
 ];
 
-let spec: ThemeSpec;
+let theme: Theme;
 let corpus: CorpusItem[];
 beforeAll(async () => {
-  spec = await loadTheme('default');
+  theme = await radarTestTheme();
   corpus = await radarGateCorpus();
 });
 
 describe('radar layout invariants on parser-produced fixtures', () => {
   it('hold over the corpus, both graticules and every config', () => {
-    const theme = createTheme(spec, { diagram: plugin.theme });
     const failures: string[] = [];
     let curves = 0;
     for (const item of corpus) {
@@ -40,11 +41,7 @@ describe('radar layout invariants on parser-produced fixtures', () => {
       for (const graticule of GRATICULES) {
         const m = { ...model, options: { ...model.options, graticule } };
         for (const radar of CONFIGS) {
-          const layout = layoutRadar(m, {
-            config: { radar } as unknown as ResolvedConfig,
-            measurer: tableMeasurer,
-            theme,
-          });
+          const layout = layoutRadar(m, radarTestContext(theme, radar));
           const v = radarLayoutViolations(m, layout);
           if (v.length > 0)
             failures.push(`${item.id} ${graticule} ${JSON.stringify(radar)}: ${v.join('; ')}`);

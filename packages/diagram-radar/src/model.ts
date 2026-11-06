@@ -57,8 +57,8 @@ export interface RadarModel {
   /** The in-text `title` if non-empty, else the front-matter `title` (D218); absent when neither. */
   readonly title?: string;
   /**
-   * The AST id of the `title` statement the title comes from (`title`, `title@2`, …); absent for
-   * a front-matter title or none. Added by #448 for the title's `data-ast`.
+   * The AST id of the `title` statement the title comes from (`title`, `title@2`, …), which the
+   * drawn title carries as `data-ast`; absent for a front-matter title or none.
    */
   readonly titleAstId?: AstId;
   readonly accTitle: string;

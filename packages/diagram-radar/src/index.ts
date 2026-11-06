@@ -1,9 +1,8 @@
 /**
- * `@mermaid-js/diagram-radar` (spec #422): the radar chart plugin, in progress. T2 (#446): the
- * parser, detection, the model and the AST. T3 (#447): the layout, exported for the
- * conformance gates. T4 (#448): the SVG renderer and the plugin object with radar's theme
- * table. The token stream and the layout invariants, which only the conformance gates read, are
- * at `./testing`.
+ * `@mermaid-js/diagram-radar` (spec #422): the radar chart plugin (with its theme table), its
+ * parser and detection, the model and the AST, the layout (exported for the conformance gates)
+ * and the SVG renderer. The token stream, the layout invariants and the test context, which only
+ * tests read, are at `./testing`.
  */
 export { radar } from './plugin.ts';
 export { renderRadar } from './render/index.ts';

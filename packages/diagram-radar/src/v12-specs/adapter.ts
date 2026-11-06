@@ -17,24 +17,21 @@
  * - `mermaidAPI.parse`, `Diagram.fromText` and `diagram.renderer.draw` stand for v12's render
  *   path: they parse, lay out and render with the v13 plugin into a tree writer.
  */
-import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { LineIndex } from '@mermaid-js/core/parser-kit';
 import type { Diagnostic } from '@mermaid-js/core/parser-kit';
 import { pathBuilder, treeWriter } from '@mermaid-js/core/svg';
-import { tableMeasurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme } from '@mermaid-js/core/theme';
-import { closedRoundCurve as segments, layoutRadar, relativeRadius } from '../layout/index.ts';
+import { closedRoundCurve as curveSegments, layoutRadar, relativeRadius } from '../layout/index.ts';
 import type { Point } from '../layout/index.ts';
 import type { RadarModel } from '../model.ts';
 import { parseRadar, RADAR_MISSING_ENTRY, RADAR_NO_AXES } from '../parser/index.ts';
-import { radar } from '../plugin.ts';
 import { curvePath, renderRadar } from '../render/index.ts';
+import { radarTestContext, radarTestTheme } from '../test-context.ts';
 
 export { relativeRadius };
 
 /** v12 `closedRoundCurve(points, tension)`: the path data, with v12's spaces before `C` and `Z`. */
 export function closedRoundCurve(points: Point[], tension: number): string {
-  const d = curvePath(points, segments(points, tension), pathBuilder());
+  const d = curvePath(points, curveSegments(points, tension), pathBuilder());
   return d.replace(/([CZ])/g, ' $1');
 }
 
@@ -52,18 +49,11 @@ interface DrawableDiagram {
 export const Diagram = {
   async fromText(text: string): Promise<DrawableDiagram> {
     const { model } = parseRadar(text);
-    const theme = createTheme(await loadTheme('default'), { diagram: radar.theme });
+    const theme = await radarTestTheme();
     return {
       renderer: {
         draw(_text: string, id: string, version: string): Promise<string> {
-          const ctx = {
-            config: { radar: {} } as unknown as ResolvedConfig,
-            theme,
-            measurer: tableMeasurer,
-            warn: () => undefined,
-            idPrefix: id,
-            version,
-          };
+          const ctx = radarTestContext(theme, {}, id, version);
           const w = treeWriter();
           renderRadar(model, layoutRadar(model, ctx), ctx, w);
           return Promise.resolve(w.finish());
