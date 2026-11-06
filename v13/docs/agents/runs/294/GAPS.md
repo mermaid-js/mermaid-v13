@@ -77,6 +77,10 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** plugin-icons' glyph-miss clause reads "icons outside labels get no glyph" (was "their shapes are drawn without them", false for mindmap, which shows the reference as written); true of flowchart's frame-only shapes too.
 
 ## #344 hand-drawn H4
+- **Choice:** the fixtures are `e2e/diagrams/mindmap/baseline/handdrawn/<shape>/<family>.mmd` (7 shapes + `edges`, × `default`, `redux`, `neo`, `neo-dark`: 32), not the ticket's `mindmap/handdrawn/`: the level below a type is the tier, as H3 placed the other types' (296 GAPS, H3). The gallery, the page adapter's spec and the mmd snapshot run pick them up.
+- Found: no renderer defect. Every outline, the classic rule and every edge already went through `w.outline` (#388); classic nodes have no stroke, so they sketch as hachure only (paints pass through, D307).
+- Output size (sketched / plain SVG characters): the 32 fixtures 6.9–13.7×; mindmap's other 53 e2e files with `handDrawn: true` 4.7–14.2×, median 9.9×, geomean 9.5×, 11.2× in total; the largest is 249,109 characters (`all-shapes-neo-look-neo-dark-theme.mmd`).
+- Closed: MIGRATION.md's hand-drawn section (#390's item).
 
 ## Corpus cleanup (maintainer rule, 2026-11-06: "Only real diagrams")
 - [ ] Before #406 is ready: go through `EDGE_CASES` and any other hand-written source list in `packages/conformance/src/mindmap/` (lexer `corpus.ts`, parser cases, layout corpus). A real, renderable mindmap moves to a `.mmd` fixture under `e2e/diagrams/mindmap/<tier>/`, or is dropped if the corpus already covers it. Input meant to fail, or lexer-only text, may stay, preferably in `packages/conformance/corpus/mindmap-cases.json` (the timeline/quadrant convention) instead of a TS array. Generated variants stay. Re-run the gates and `pnpm check`; record counts under "For the maintainer".

@@ -90,7 +90,7 @@ describe('renderDiagram (the page adapter)', () => {
     expect((await renderDiagram(text)).svg).toMatch(/<rect /);
   });
 
-  it('has a hand-drawn baseline per diagram type the plugin sketches, in each theme family (D307)', () => {
+  it('has a hand-drawn baseline per diagram type the plugin sketches (per shape for mindmap), in each theme family (D307)', () => {
     const handDrawn = galleryFixtures()
       .filter((f) => f.path.split('/')[1] === 'handdrawn')
       .map((f) => [
@@ -99,10 +99,14 @@ describe('renderDiagram (the page adapter)', () => {
         f.source.includes('look: handDrawn'),
       ]);
     const families = ['default', 'neo-dark', 'neo', 'redux'];
-    expect(handDrawn).toEqual(
-      ['class-diagram', 'er-diagram', 'flowchart', 'state-diagram-v2'].flatMap((folder) =>
-        families.map((theme) => [`${folder}/handdrawn/${theme}.mmd`, theme, true])
-      )
-    );
+    const each = (prefix: string) =>
+      families.map((theme) => [`${prefix}/${theme}.mmd`, theme, true]);
+    // Mindmap has one per node shape, plus its edges (H4, #344).
+    const mindmap = ['bang', 'circle', 'cloud', 'default', 'edges', 'hexagon', 'rounded', 'square'];
+    expect(handDrawn).toEqual([
+      ...['class-diagram', 'er-diagram', 'flowchart'].flatMap((f) => each(`${f}/handdrawn`)),
+      ...mindmap.flatMap((shape) => each(`mindmap/handdrawn/${shape}`)),
+      ...each('state-diagram-v2/handdrawn'),
+    ]);
   });
 });
