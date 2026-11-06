@@ -77,7 +77,8 @@ function corners(tree: SvgView): { x: number; y: number }[] {
 
 describe('mindmap render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every shape and icon references', () => {
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(33);
+    // v12's 33 fixtures and #328's 4 icon baselines.
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(37);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     const shapes = new Set(cases.flatMap((c) => c.r.layout.mindmap.nodes.map((n) => n.shape)));
     expect([...shapes].sort()).toEqual(
@@ -157,11 +158,14 @@ describe('mindmap ::icon() glyphs over the parsed corpus (#328, D297)', () => {
     ({ tag: 'rect', attrs: { class: 'fixture-glyph', width: size, height: size } }) as const;
 
   it('draws each icon as one 40 px glyph inside its node, inert, with no warning', async () => {
-    // Every parsed source with an icon (the 5 e2e fixtures among them), in the four families.
+    // Every parsed source with an icon (v12's 5 e2e fixtures and the 4 baselines among them), in
+    // the four families.
     const withIcons = cases.filter(
       (c) => c.theme === 'default' && c.r.model.nodes.some((n) => n.icon)
     );
-    expect(withIcons.filter((c) => c.id.startsWith('e2e/')).length).toBe(5);
+    const e2e = withIcons.filter((c) => c.id.startsWith('e2e/'));
+    expect(e2e.filter((c) => !c.id.includes('/baseline/')).length).toBe(5);
+    expect(e2e.filter((c) => c.id.includes('/baseline/icons/')).length).toBe(4);
     for (const theme of ['default', 'redux', 'neo', 'neo-dark'])
       for (const item of withIcons) {
         const id = `${item.id.replace(/ default$/, '')} ${theme}`;
