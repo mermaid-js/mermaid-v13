@@ -161,7 +161,7 @@ function points(tree: SvgView, node: SvgElement): [number, number][] {
 
 describe('gitGraph render properties over the gate corpus', () => {
   it('renders the corpus in every theme', () => {
-    expect(corpus.filter((i) => /^e2e\/[^(]*$/.test(i.id)).length).toBe(135);
+    expect(corpus.filter((i) => /^e2e\/[^(]*$/.test(i.id)).length).toBe(166);
     const perTheme = cases.length / THEMES.length;
     expect(perTheme).toBeGreaterThan(900);
     // Only sources v12 rejects stay out (#370's accept/reject parity).
