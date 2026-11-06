@@ -56,6 +56,15 @@ describe('gitGraph parser', () => {
     expect(ids('gitGraph\ncommit\ncommit id:"0-9e3779b"')).toEqual(['0-9e1e461', '0-9e3779b']);
   });
 
+  it('lets a cherry-pick name a derived id: only commit and merge ids are kept clear of', () => {
+    const src = 'gitGraph\ncommit\nbranch b\ncommit\ncherry-pick id:"0-9e3779b"';
+    expect(codes(src)).toEqual([]);
+    expect(ids(src)).toEqual(['0-9e3779b', '1-3c6ef36', '2-daa66d1']);
+    expect(
+      ids('gitGraph\ncommit\nbranch b\ncommit\ncheckout main\nmerge b id:"0-9e3779b"')[0]
+    ).toBe('0-9e1e461');
+  });
+
   it('reads the headers v12 accepts, and the direction', () => {
     for (const [src, dir] of [
       ['gitGraph\ncommit', 'LR'],
@@ -230,6 +239,12 @@ describe('gitGraph parser', () => {
     expect(warning?.related?.[0]?.range).toEqual({ start: 19, end: 22 });
     expect(self.model.warnings).toEqual([warning]);
     // A, B, A: the first A is gone, B's parent is the later A, whose parent is B (a cycle).
+    // A third use still points at the first (D264).
+    const third = parse('gitGraph\ncommit id:"A"\ncommit id:"A"\ncommit id:"A"').diagnostics;
+    expect(third.map((d) => d.related?.[0]?.range)).toEqual([
+      { start: 19, end: 22 },
+      { start: 19, end: 22 },
+    ]);
     const cycle = parse('gitGraph\ncommit id:"A"\ncommit id:"B"\ncommit id:"A"').model;
     expect(cycle.commits.map((c) => [c.id, c.seq, c.parents])).toEqual([
       ['B', 1, ['A']],

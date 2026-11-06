@@ -30,7 +30,7 @@ const GOLDEN = 0x9e3779b1;
 export class GitBuilder {
   /** By id, in first-insertion order; a later commit with the same id replaces the value. */
   private readonly commits = new Map<string, GitCommit>();
-  /** Where each commit id was given (the `id:` value, or the statement for a derived id). */
+  /** Where each commit id was first given (the `id:` value, or the statement for a derived id). */
   private readonly idAt = new Map<string, Range>();
   /** Each branch's head id, `null` while it has none; creation order. */
   private readonly heads = new Map<string, string | null>();
@@ -70,7 +70,8 @@ export class GitBuilder {
   private add(commit: GitCommit, at: Range): void {
     this.head = commit;
     this.commits.set(commit.id, commit);
-    this.idAt.set(commit.id, at);
+    // D264: a repeated id's warning points at its first use.
+    if (!this.idAt.has(commit.id)) this.idAt.set(commit.id, at);
     this.heads.set(this.current, commit.id);
   }
 

@@ -27,7 +27,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #370 T2 parser
 - v12 needs no line break after the header: `gitGraph commit`, `gitGraph:commit`, `gitGraph TB: commit` parse (probed). The spec's grammar text implies a newline; the oracle decides (accept them). Done in T2: accepted, parity-checked (quirks and parser cases).
 - Duplicate ids (D264) do not always give a self-parent: for `A`, `B`, `A` the first `A` disappears, `B`'s parent is the later `A` and that `A`'s parent is `B`, a cycle. Model, layout (`findClosestParent`, ordering) and renderer must terminate on parent cycles; Done in T2: parser cases 26–29 (and `parse.spec.ts`) pin the cycle in the model; T3/T4 still owe termination. A front-matter `title` exists in the corpus (nightly 66).
-- **Choice:** derived ids (D260) also skip every `id:` written later in the text, not only ids already used: otherwise `commit` + `commit id:"0-9e3779b"` collapses two commits where v12 (random digits) keeps both. Same text, same ids still holds.
+- **Choice:** derived ids (D260) also skip every commit and merge `id:` written later in the text (cherry-pick `id:`s are references), not only ids already used: otherwise `commit` + `commit id:"0-9e3779b"` collapses two commits where v12 (random digits) keeps both. Same text, same ids still holds.
 - **Choice:** v13's DB-check messages are its own wording (R-ERR-2); the ported specs' adapter rewords them as v12 did. A statement with a syntax error changes nothing and gets no AST node; one with a DB error keeps its node (pie's rule).
 - **Choice:** five ported `getConfig` tests are skipped (no DB config; the config section is #374's); three Langium tests are skipped because mermaid@12 rejects their text (oracle-checked).
 

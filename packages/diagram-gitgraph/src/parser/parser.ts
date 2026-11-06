@@ -301,12 +301,26 @@ class GitGraphParser {
     return st.result(model, ast, this.full, this.options, this.probe);
   }
 
-  /** Every `id:` value in the text, which derived ids keep clear of (see {@link GitBuilder}). */
+  /**
+   * Every `id:` value a `commit` or `merge` writes (the ids the text defines), which derived ids
+   * keep clear of (see {@link GitBuilder}). A cherry-pick's `id:` names an existing commit, so
+   * it may name a derived id.
+   */
   private writtenIds(): Set<string> {
     const ids = new Set<string>();
     const { kind } = this.t;
+    let statement: number | undefined;
     for (let j = 0; j + 1 < this.t.length; j++) {
-      if (kind[j] === T.Id && kind[j + 1] === T.String) ids.add(stringValue(this.raw(j + 1)));
+      const k = kind[j] ?? Kind.EOF;
+      if (k === Kind.Newline) statement = undefined;
+      else if (STATEMENT.includes(k)) statement = k;
+      else if (
+        k === T.Id &&
+        kind[j + 1] === T.String &&
+        (statement === T.Commit || statement === T.Merge)
+      ) {
+        ids.add(stringValue(this.raw(j + 1)));
+      }
     }
     return ids;
   }
