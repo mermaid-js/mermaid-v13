@@ -42,6 +42,12 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - [x] CI (run 42206560597) failed `check:grammar`: #370 never committed `packages/diagram-gitgraph/grammar/generated/*` (ignored by `.gitignore` `generated/`; other diagrams force-add theirs). Force-added in d7f6a4bce, checked identical to a Linux Node 24.16 generation.
 
 ## #371 T3 layout
+- **Choice:** where v12 drew branch labels over each other (TB: a long name after a short one, as `setBranchPosition` spaces by the previous name only; LR: names of four or more lines), the lane moves out until the boxes are 10 apart (`GIT_METRICS.branchLabel.labelGap`). Elsewhere v12's positions stand (as D224 for clipping). MIGRATION.md (T5).
+- **Choice:** parent cycles (D264): only parents with a smaller `seq`, never the commit itself, count for `parallelCommits`; a commit with none is placed as a root. v12 threw in BT parallel and drew pass-dependent positions in LR/TB. Arrows run in seq order (v12: DB insertion order, which differs only for duplicate ids).
+- **Choice:** branch label text sits centred in its box less 2 px, with v12's first baseline 1em below; TB redux comes out 1 px below v12's `-2·padY + 7`.
+- Core: `usedBy` (documentation, not in the bundle) lists `gitgraph` for the six variables the layout reads; core size unchanged (bench 92,645 before and after).
+- For T5: eight geometry variables (`GIT_GEOMETRY`, ticket 371.md), two signed (`gitLaneOffset` −2/7, `gitBranchLabelOffsetX` 0/−11). Until then `geometryOf` falls back to classic values for names core does not know.
+- [x] Invariants on parser-produced fixtures: `conformance/src/gitgraph/layout-corpus.spec.ts` (`parseGitGraph` over the gate corpus, LR/TB/BT, parallel on/off, classic/redux, default and changed options), after T2 merged.
 
 ## #372 T6 language facet
 - **Choice:** the main branch is no symbol: the facet's parse drops its occurrences (its name is config, not text). Renaming it is refused at prepare with the service's generic "There is no id or class name here to rename."; definition and references on it are empty; hover says its name is set in `gitGraph.mainBranchName`. A specific refusal message needs an optional hook on core's `LanguageFacet` (type-only, 0 B), left for the maintainer (D102: no core change here). Refusing at `rename` instead would add a `KNOWN_REFUSALS` entry per corpus file that mentions `main` (about 100).
@@ -53,6 +59,6 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - [ ] **For T5 (#374):** see `tickets/372.md` (unlisted row, eager row, adapter rows).
 
 ## #373 T4 renderer
-- [ ] Drop the `gitgraph` exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one variable"), added by #368.
+- [x] Drop the `gitgraph` exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one variable"), added by #368. Done in #371: the layout reads `fontFamily`, `fontSize`, `fontWeight`, `strokeWidth`, `commitLabelFontSize`, `tagLabelFontSize` (their `usedBy` lists `gitgraph`). T4 adds `gitgraph` to what the renderer reads; T5 to the geometry variables (the scan sees the `GIT_GEOMETRY` names once they exist).
 
 ## #374 T5 integration

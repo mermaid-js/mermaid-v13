@@ -11,3 +11,7 @@ export {
   LANGIUM_NAMES,
 } from './parser/index.ts';
 export type { GitGraphToken } from './parser/index.ts';
+// T3 (#371): the layout invariants, for the corpus sweep.
+export { gitLayoutViolations, type ViolationOptions } from './layout/index.ts';
+// The redux geometry stand-in until T5 adds the geometry variables to core.
+export { reduxGeometry } from './layout/fixtures.ts';
