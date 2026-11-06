@@ -23,7 +23,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - `gen-grammar`'s `unnamed` kind map gains an optional `terminal`, so the lexer's four `SHAPE_DATA` kinds map to their own rules (additive; flowchart and the others unchanged).
 
 ## #455 T3 layout
-- **Unmet (waits on #453):** the layout invariants run on hand-built `KanbanLayoutInput`s (`src/layout/fixtures.ts`, the corpus transcribed as T2 should read it), not on parser-produced fixtures. Once T2 merges: add the `KanbanModel` → `KanbanLayoutInput` adapter, build `FIXTURES` from `parseKanban` over copies of the corpus, and add `conformance/src/kanban/layout-corpus.spec.ts` on the files, as journey's.
+- Closed (part 2, after #453 merged): the invariants run on parser-produced inputs (`kanbanLayoutInput(parseKanban(…).model)`) over all 30 e2e files, the harvested strings and the cases file (`conformance/src/kanban/layout-corpus.spec.ts`); the hand-built transcriptions are gone. **Choice:** the three cases no corpus file has (an overflowing word, a multi-line ticket and assignee, a three-line column title) are sources in `src/layout/fixtures.ts`, parsed, not new e2e fixtures (which would move T1's pins and T5's baselines).
+- **Choice:** the package entry exports the layout (`layoutKanban`, `kanbanLayoutInput`, `kanbanLayoutViolations`, `KANBAN_CONFIG_IGNORED`, types) so conformance can sweep it; T4 adds the plugin.
 - Exploration (v12 render): a card without metadata is `title + 20` (the empty ticket and assignee labels measure 0 high); see `tickets/455.md` for the numbers.
 - Exploration: v12 wraps the ticket and the assignee at `W − 25` too, and a ticket or assignee over 40 px high (two lines or more) sticks out of the card's bottom, as the title then starts above the card. Kept as v12; not an invariant.
 - **Choice:** the layout keeps v12's coordinates (column tops at `−1.5 W`, column k centred at `W·k + 5(k − 1)`); the bounds move the viewBox origin.
