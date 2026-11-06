@@ -1,10 +1,10 @@
-/**
- * State's theme table (`DiagramPlugin.theme`, D331, spec #414 T3): keyed by family, never by
- * theme name, so a new theme that declares a family draws state diagrams with no entry here.
- */
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
+/**
+ * State's theme table (`DiagramPlugin.theme`, D331, spec #414 T3): its composite state fills by
+ * family.
+ */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   // v12 theme-base.js. The classic themes write the nested body differently from one another

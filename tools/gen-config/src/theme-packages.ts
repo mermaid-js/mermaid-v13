@@ -18,10 +18,13 @@ import type {
 } from '../../../packages/core/src/theme/diagram.ts';
 import type { ThemeVarEntry } from '../../../packages/core/src/theme/vocabulary.ts';
 
+/** The repository's `packages/` directory, where the `diagram-*` packages are. */
 export const PACKAGES = fileURLToPath(new URL('../../../packages', import.meta.url));
 
+/** A package's `THEME_VARIABLES`: each row by name, with `usedBy` and its nested key. */
 export type Vocabulary = Readonly<Record<string, DiagramThemeVarDef>>;
 
+/** A diagram package's theme files, as {@link themePackages} finds them. */
 export interface ThemePackage {
   /** The diagram type: the package directory without `diagram-` (`usedBy`'s name for it). */
   readonly type: string;
@@ -32,7 +35,9 @@ export interface ThemePackage {
   readonly table?: DiagramThemeTable;
 }
 
+/** A package's vocabulary file, `src/theme/vocabulary.ts`. */
 export const vocabularyPath = (dir: string): string => join(dir, 'src/theme/vocabulary.ts');
+/** The file `gen:theme` writes from a package's vocabulary, `src/theme/generated/variables.ts`. */
 export const generatedPath = (dir: string): string => join(dir, 'src/theme/generated/variables.ts');
 
 /** The theme table on a plugin a module exports (an object with `id`, `render` and `theme`). */

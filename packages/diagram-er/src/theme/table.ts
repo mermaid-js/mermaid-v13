@@ -1,10 +1,10 @@
-/**
- * ER's theme table (`DiagramPlugin.theme`, D331, spec #414 T3): keyed by family, never by theme
- * name, so a new theme that declares a family draws ER diagrams with no entry here.
- */
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
+/**
+ * ER's theme table (`DiagramPlugin.theme`, D331, spec #414 T3): its row, label and marker
+ * colours and its crow's-foot geometry by family.
+ */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   // Where themes of one family write a colour differently (the classic row fills, the redux

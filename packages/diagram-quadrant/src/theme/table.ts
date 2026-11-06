@@ -2,11 +2,11 @@ import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
 /**
- * The quadrant chart's theme table (D331, spec #414 T1), as the quadrant-graph block of every v12
- * theme file derives the variables. Fills 2–4 follow `quadrant1Fill`, so a theme that pins
- * it moves them too (D232); points default to `textColor`, the colour v12 points showed (D231).
- * The light redux and neo themes derive the fills from v12's literal `#ececfe`, not from
- * `primaryColor` (D232); their dark themes from `primaryColor`.
+ * The quadrant chart's theme table (`DiagramPlugin.theme`, D331, spec #414 T1), as the
+ * quadrant-graph block of every v12 theme file derives the variables. Fills 2–4 follow
+ * `quadrant1Fill`, so a theme that pins it moves them too (D232); points default to `textColor`,
+ * the colour v12 points showed (D231). The light redux and neo themes derive the fills from
+ * v12's literal `#ececfe`, not from `primaryColor` (D232); their dark themes from `primaryColor`.
  */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,

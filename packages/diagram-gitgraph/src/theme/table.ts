@@ -1,10 +1,3 @@
-/**
- * gitGraph's theme table (`DiagramPlugin.theme`, D331, spec #414 T1b): keyed by family and the
- * dark trait, never by theme name. Where themes of one family write a label colour differently,
- * it reads a shared input as each theme wrote it (`inline()`, D332), byte for byte: the badge
- * (commit labels) and the callout (tags). The branch palettes are core's `git`, `gitInv` and
- * `gitBranchLabel`, which mindmap reads too.
- */
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
@@ -62,6 +55,12 @@ const REDUX = {
 /** The cherry-pick ink of v12's `DARK_THEMES` (#374). */
 const DARK_INK = { values: { gitCherryPickInk: '#000000' } };
 
+/**
+ * gitGraph's theme table (`DiagramPlugin.theme`, D331, spec #414 T1b): by family and the dark
+ * trait. A label colour that themes of one family write differently is a shared input read with
+ * `inline()` (D332): the badge (commit labels) and the callout (tags). The branch palettes are
+ * core's `git`, `gitInv` and `gitBranchLabel`, which mindmap reads too.
+ */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   rules: {

@@ -1,7 +1,3 @@
-/**
- * Sequence's theme table (`DiagramPlugin.theme`, D331, spec #414 T2): keyed by family, never by
- * theme name, so a new theme that declares a family draws sequence diagrams with no entry here.
- */
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
@@ -29,6 +25,10 @@ const CLASSIC = {
   actorFooterPadding: 0,
 };
 
+/**
+ * Sequence's theme table (`DiagramPlugin.theme`, D331, spec #414 T2): its participant, message
+ * and fragment colours, and its geometry by family.
+ */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   // As v12 `theme-base.js` derives them. Where themes of one family write a colour differently,

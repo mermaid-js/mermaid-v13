@@ -11,13 +11,12 @@ import {
   unreadInputs,
   type DirectionInput,
 } from './theme-direction.ts';
-import { themePackages, type ThemePackage } from './theme-packages.ts';
+import { PACKAGES, themePackages, type ThemePackage } from './theme-packages.ts';
 
 /**
  * D331: dependencies between themes and diagrams run one way (spec #414). The check runs over the
  * repository, and each rule fails on a planted violation.
  */
-const PACKAGES = fileURLToPath(new URL('../../../packages', import.meta.url));
 const DIAGRAMS = readdirSync(PACKAGES).filter((d) => d.startsWith('diagram-'));
 
 /**
@@ -157,7 +156,7 @@ describe('theme direction (D331)', () => {
     const v = checkThemeDirection(planted({ tables: { demo: TABLE, other } }));
     expect(v).toEqual([
       { rule: 'table-reads-foreign', where: 'other rules', name: 'demoFill' },
-      { rule: 'table-reads-foreign', where: 'other entries', name: 'mainBkg' },
+      { rule: 'table-writes-foreign', where: 'other entries', name: 'mainBkg' },
     ]);
   });
 
@@ -168,6 +167,7 @@ describe('theme direction (D331)', () => {
     };
     const v = checkThemeDirection(planted({ tables: { demo: TABLE, dup } }));
     expect(v.map((x) => x.name).sort()).toEqual(['demoFill', 'mainBkg']);
+    expect(new Set(v.map((x) => x.rule))).toEqual(new Set(['table-name-collision']));
   });
 
   it("accepts a package whose table declares its vocabulary's variables", () => {

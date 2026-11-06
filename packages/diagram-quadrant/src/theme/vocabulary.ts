@@ -1,11 +1,12 @@
 import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
 
+/** A colour row that quadrant reads. */
+const q = (alias: string): DiagramThemeVarDef => ({ alias, kind: 'color', usedBy: ['quadrant'] });
+
 /**
  * The quadrant chart's theme variables (spec #414 T1, D331), v12's names, moved out of core with
  * their aliases. `pnpm gen:theme` writes `generated/variables.ts` from them.
  */
-const q = (alias: string): DiagramThemeVarDef => ({ alias, kind: 'color', usedBy: ['quadrant'] });
-
 export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   quadrant1Fill: q('q1f'),
   quadrant2Fill: q('q2f'),

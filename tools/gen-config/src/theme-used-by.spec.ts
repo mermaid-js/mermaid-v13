@@ -1,9 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { THEME_VARIABLES } from '../../../packages/core/src/theme/index.ts';
-import { packageReadErrors, themePackages } from './theme-packages.ts';
+import { PACKAGES, packageReadErrors, themePackages } from './theme-packages.ts';
 
 /**
  * `usedBy` in the theme vocabulary names the diagram types that read each variable (#207).
@@ -15,7 +14,6 @@ import { packageReadErrors, themePackages } from './theme-packages.ts';
  * package's own (`src/theme/vocabulary.ts`, spec #414 T0b), whose rows only their own type may
  * read: a row another type reads belongs in core.
  */
-const PACKAGES = fileURLToPath(new URL('../../../packages', import.meta.url));
 const OWNERS = (await themePackages(PACKAGES, { tables: 'vocabulary' })).filter(
   (p) => p.vocabulary !== undefined
 );

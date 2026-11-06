@@ -2,7 +2,7 @@ import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
 /**
- * The timeline's theme table (D331, spec #414 T1): its geometry by family, never by theme name.
+ * The timeline's theme table (`DiagramPlugin.theme`, D331, spec #414 T1): its geometry by family.
  *
  * - **redux** (v12 `svgDraw.js` and `styles.js` for the redux family's names): square corners,
  *   labels `padding` below the top (events `padding / 2 + 3`), and the `mainBkg` / `nodeBorder`

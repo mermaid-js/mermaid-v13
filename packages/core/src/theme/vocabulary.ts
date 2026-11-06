@@ -130,6 +130,12 @@ export const PALETTE_VARIABLES = [
   'gitBranchLabel',
 ] as const;
 
+/**
+ * A rule's read of one palette entry: any palette's name and a slot number with no leading zero
+ * (`bkgColorArray2`, `seriesColorArray19`, D332). Group 1 is the palette, group 2 the slot.
+ */
+export const PALETTE_SLOT = new RegExp(`^(${PALETTE_VARIABLES.join('|')})(0|[1-9]\\d?)$`);
+
 /** The palettes with v12's numbered names, `<name>0` up to `PALETTE_LIMITS[name] - 1`. */
 export const NUMBERED_PALETTES = [
   'cScale',

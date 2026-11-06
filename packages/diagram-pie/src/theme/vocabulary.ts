@@ -1,12 +1,13 @@
 import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
 
+/** `usedBy` of every row: pie reads them all. */
+const PIE: readonly string[] = ['pie'];
+
 /**
  * The pie chart's theme variables (#325, v12 names; spec #414 T1, D331), moved out of core with
  * their aliases: the slot colours `pie1`–`pie12`, the texts, the strokes and the slice opacity.
  * `pnpm gen:theme` writes `generated/variables.ts` from them.
  */
-const PIE: readonly string[] = ['pie'];
-
 export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   pie1: { alias: 'pi1', kind: 'color', usedBy: PIE },
   pie2: { alias: 'pi2', kind: 'color', usedBy: PIE },

@@ -1,5 +1,8 @@
 import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
 
+/** `usedBy` of the rows gitGraph reads. */
+const GIT: readonly string[] = ['gitgraph'];
+
 /**
  * gitGraph's theme variables (D266, D267, #374; spec #414 T1b, D331), moved out of core with
  * their aliases: the commit and tag labels (v12 names), the branch line and cherry-pick inks,
@@ -7,8 +10,6 @@ import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
  * `gitBranchLabel` palettes stay in core: mindmap's root reads them too. `pnpm gen:theme` writes
  * `generated/variables.ts` from them.
  */
-const GIT: readonly string[] = ['gitgraph'];
-
 export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   commitLabelColor: { alias: 'gcc', kind: 'color', usedBy: GIT },
   commitLabelBackground: { alias: 'glb', kind: 'color', usedBy: GIT },

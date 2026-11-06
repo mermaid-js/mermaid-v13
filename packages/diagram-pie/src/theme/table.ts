@@ -15,12 +15,12 @@ const SIZES = {
 } as const;
 
 /**
- * The pie chart's theme table (D331, spec #414 T1). Every colour v12 sets per theme comes from
- * the theme's series palette (D332), read as the theme wrote each entry, so a slot a theme
- * derives from its base colours follows them: `pie<n>` is slot `n - 1`. Titles and legends take
- * the theme's heading ink (v12 `taskTextDarkColor`), slice labels its ink for labels on the
- * series colours, both shared inputs read as the theme wrote them (`inline()`). v12 12.2.0's resolved `getThemeVariables()` is the oracle
- * (`packages/conformance/src/pie/theme.spec.ts`). Strokes are black in every theme.
+ * The pie chart's theme table (`DiagramPlugin.theme`, D331, spec #414 T1). Every colour v12 sets
+ * per theme comes from the theme's series palette (D332): `pie<n>` is slot `n - 1`. Titles and
+ * legends take the theme's heading ink (v12 `taskTextDarkColor`), slice labels its ink for labels
+ * on the series colours, both shared inputs read with `inline()`. v12 12.2.0's resolved
+ * `getThemeVariables()` is the oracle (`packages/conformance/src/pie/theme.spec.ts`). Strokes
+ * are black in every theme.
  */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,

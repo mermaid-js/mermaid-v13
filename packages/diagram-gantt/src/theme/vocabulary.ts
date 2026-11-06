@@ -1,13 +1,14 @@
 import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
 
+/** `usedBy` of every row: gantt reads them all. */
+const GANTT: readonly string[] = ['gantt'];
+
 /**
  * Gantt's theme variables (#381, v12 names from v12's gantt `styles.js`; spec #414 T1b, D331),
  * moved out of core with their aliases: row bands, excluded days, grid, today and `vert` lines,
  * bars by state, and task label colours. A clickable label is v12's #003163 in every theme, a
  * renderer constant (#385). `pnpm gen:theme` writes `generated/variables.ts` from them.
  */
-const GANTT: readonly string[] = ['gantt'];
-
 export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   sectionBkgColor: { alias: 'gb0', kind: 'color', usedBy: GANTT },
   altSectionBkgColor: { alias: 'gb1', kind: 'color', usedBy: GANTT },

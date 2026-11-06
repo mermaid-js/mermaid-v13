@@ -55,6 +55,7 @@ import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
   GIT_PALETTE_LIMIT,
   PALETTE_LIMIT,
+  PALETTE_SLOT,
   PALETTE_VARIABLES,
   type PaletteVariable,
   type ThemeVarEntry,
@@ -386,7 +387,7 @@ class Resolver {
       case 'lit':
         return this.literal('', e.text);
       case 'ref': {
-        const slot = own(this.defs, e.name) ? undefined : RE_READ.exec(e.name);
+        const slot = own(this.defs, e.name) ? undefined : PALETTE_SLOT.exec(e.name);
         if (slot) {
           const r = this.slot(slot[1] as PaletteVariable, Number(slot[2]));
           // A series entry reads as the theme wrote it, so its CSS follows the base colours as
@@ -527,7 +528,7 @@ class Resolver {
 
   /** v12's `this.v || derived`: the author's value, else the theme's derivation (D258). */
   private ifSet(v: Expr, fallback: Expr): Resolved {
-    const slot = v.k === 'ref' && !own(this.defs, v.name) ? RE_READ.exec(v.name) : null;
+    const slot = v.k === 'ref' && !own(this.defs, v.name) ? PALETTE_SLOT.exec(v.name) : null;
     if (v.k !== 'ref' || (!slot && !own(this.defs, v.name)))
       throw new SyntaxError('ifSet needs a variable');
     const set = slot
@@ -648,8 +649,6 @@ const MAX_PALETTE = 64;
  * name, ignored (R-CONF-5).
  */
 const RE_SLOT = /^(cScale(?:Inv|Label)?|git(?:Inv|BranchLabel)?)(0|[1-9]\d?)$/;
-/** A rule's read of one palette entry: any palette's slot (`bkgColorArray2`, D332). */
-const RE_READ = new RegExp(`^(${PALETTE_VARIABLES.join('|')})(0|[1-9]\\d?)$`);
 
 type PaletteLists = Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
 

@@ -26,19 +26,22 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import ts from 'typescript';
-import type {
-  DiagramThemeTable,
-  DiagramThemeVarDef,
+import {
+  THEME_FAMILIES,
+  type DiagramThemeTable,
+  type DiagramThemeVarDef,
 } from '../../../packages/core/src/theme/diagram.ts';
 import { parseRule, ruleRefs } from '../../../packages/core/src/theme/dsl.ts';
 import { parseColor } from '../../../packages/core/src/theme/color.ts';
-import { PALETTE_VARIABLES } from '../../../packages/core/src/theme/vocabulary.ts';
+import { PALETTE_SLOT } from '../../../packages/core/src/theme/vocabulary.ts';
 
+/** One source file of a runtime import graph: its absolute path and its text. */
 export interface SourceFile {
   readonly path: string;
   readonly text: string;
 }
 
+/** What the direction check reads: the tables, the shared names and the runtime files. */
 export interface DirectionInput {
   /** Each diagram type's theme table. */
   readonly tables: Readonly<Record<string, DiagramThemeTable>>;
@@ -54,11 +57,19 @@ export interface DirectionInput {
   readonly diagrams: Readonly<Record<string, readonly SourceFile[]>>;
 }
 
+/**
+ * One broken rule: which (`core-names-diagram` rule 1; `diagram-names-theme` rule 2;
+ * `table-name-collision`, `table-reads-foreign` and `table-writes-foreign` rule 3;
+ * `table-not-vocabulary` rule 4), where (a file, or a type and the part of its table) and the
+ * name at fault.
+ */
 export interface Violation {
   readonly rule:
     | 'core-names-diagram'
     | 'diagram-names-theme'
+    | 'table-name-collision'
     | 'table-reads-foreign'
+    | 'table-writes-foreign'
     | 'table-not-vocabulary';
   readonly where: string;
   readonly name: string;
@@ -67,8 +78,7 @@ export interface Violation {
 /** Theme names that are also ordinary words, checked only in a comparison with a theme. */
 const WORDS = new Set(['default', 'base', 'dark', 'neutral']);
 /** The families a table's `fallback` may name (`ThemeFamily`). */
-const FAMILIES = new Set(['classic', 'redux', 'neo']);
-const RE_SLOT = new RegExp(`^(${PALETTE_VARIABLES.join('|')})(0|[1-9]\\d?)$`);
+const FAMILIES: ReadonlySet<string> = new Set(THEME_FAMILIES);
 
 function literals(file: SourceFile, visit: (node: ts.StringLiteralLike) => void): void {
   const sf = ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true);
@@ -170,10 +180,11 @@ export function unreadInputs(
 ): string[] {
   const read = new Set<string>();
   for (const table of Object.values(tables))
-    for (const name of tableReads(table).reads) read.add(RE_SLOT.exec(name)?.[1] ?? name);
+    for (const name of tableReads(table).reads) read.add(PALETTE_SLOT.exec(name)?.[1] ?? name);
   return inputs.filter((name) => !read.has(name));
 }
 
+/** Every violation of the four direction rules (D331) in `input`; empty when they all hold. */
 export function checkThemeDirection(input: DirectionInput): Violation[] {
   const out: Violation[] = [];
   const owner = new Map<string, string>();
@@ -182,7 +193,7 @@ export function checkThemeDirection(input: DirectionInput): Violation[] {
       const other = owner.get(name);
       if (other === type) continue;
       if (input.shared.has(name) || other !== undefined)
-        out.push({ rule: 'table-reads-foreign', where: `${type} ${where}`, name });
+        out.push({ rule: 'table-name-collision', where: `${type} ${where}`, name });
       owner.set(name, type);
     }
   };
@@ -235,11 +246,11 @@ export function checkThemeDirection(input: DirectionInput): Violation[] {
   for (const [type, table] of Object.entries(input.tables)) {
     const { reads, writes } = tableReads(table);
     for (const name of reads)
-      if (!input.shared.has(name) && !Object.hasOwn(table.vars, name) && !RE_SLOT.test(name))
+      if (!input.shared.has(name) && !Object.hasOwn(table.vars, name) && !PALETTE_SLOT.test(name))
         out.push({ rule: 'table-reads-foreign', where: `${type} rules`, name });
     for (const name of writes)
       if (!Object.hasOwn(table.vars, name))
-        out.push({ rule: 'table-reads-foreign', where: `${type} entries`, name });
+        out.push({ rule: 'table-writes-foreign', where: `${type} entries`, name });
   }
   // 4. A plugin's table declares its vocabulary's variables.
   for (const [type, vocabulary] of Object.entries(input.vocabularies ?? {})) {

@@ -1,11 +1,11 @@
-/**
- * The mindmap's theme table (`DiagramPlugin.theme`, D331, spec #414 T1b): its three paint flags
- * by family, never by theme name (D288). Its root reads the shared `git` and `gitBranchLabel`
- * palettes (slot 0) and its levels `cScale`, `cScaleInv` and `cScaleLabel`, all core's.
- */
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
+/**
+ * The mindmap's theme table (`DiagramPlugin.theme`, D331, spec #414 T1b): its three paint flags
+ * by family (D288). Its root reads the shared `git` and `gitBranchLabel` palettes (slot 0) and
+ * its levels `cScale`, `cScaleInv` and `cScaleLabel`, all core's.
+ */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   rules: { light: {} },

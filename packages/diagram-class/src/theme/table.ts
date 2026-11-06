@@ -1,7 +1,3 @@
-/**
- * Class's theme table (`DiagramPlugin.theme`, D331, spec #414 T2): keyed by family, never by
- * theme name, so a new theme that declares a family draws class diagrams with no entry here.
- */
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
@@ -39,6 +35,10 @@ const CLASSIC = {
   classTerminalFontSize: 11,
 };
 
+/**
+ * Class's theme table (`DiagramPlugin.theme`, D331, spec #414 T2): its text colour and its marker
+ * geometry by family.
+ */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   // v12's classic theme files set `classText` to `primaryTextColor`, its redux ones (and neo)

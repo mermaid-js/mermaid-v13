@@ -1,7 +1,7 @@
 /**
  * The names of the theme variables the gitGraph renderer reads besides core's (D152, spec #292
  * T4): every difference between v12's theme families that is not a layout length (those are
- * `GIT_GEOMETRY`). No theme name is read (D153): the values are the package's theme table, by
+ * `GIT_GEOMETRY`). No theme name is read (D152): the values are the package's theme table, by
  * family (`theme/table.ts`, spec #414 T1b, D331).
  */
 export const GIT_PAINT = {

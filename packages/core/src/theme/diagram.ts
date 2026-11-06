@@ -13,10 +13,14 @@ import type { ThemeRuleTable } from './spec.ts';
 import type { ThemeVarEntry } from './vocabulary.ts';
 
 /**
- * A theme's family (D331): `classic` (default, dark, forest, neutral, base), `redux` (the four
- * redux themes) or `neo` (neo, neo-dark). It decides which of a table's family entries apply.
+ * The theme families (D331): `classic` (default, dark, forest, neutral, base), `redux` (the four
+ * redux themes) and `neo` (neo, neo-dark). The one list `ThemeFamily` and the direction check
+ * (which lets a table's `fallback` name one) both take.
  */
-export type ThemeFamily = 'classic' | 'redux' | 'neo';
+export const THEME_FAMILIES = ['classic', 'redux', 'neo'] as const;
+
+/** A theme's family (D331, `THEME_FAMILIES`): which of a table's family entries apply. */
+export type ThemeFamily = (typeof THEME_FAMILIES)[number];
 
 /** Literal values and rules for one family, or for that family's dark themes. */
 export interface DiagramThemeEntries {

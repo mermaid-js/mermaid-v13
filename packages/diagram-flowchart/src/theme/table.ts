@@ -1,7 +1,3 @@
-/**
- * Flowchart's theme table (`DiagramPlugin.theme`, D331, spec #414 T4): keyed by family, never by
- * theme name, so a new theme that declares a family draws flowcharts with no entry here.
- */
 import type { DiagramThemeTable } from '@mermaid-js/core/theme';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 
@@ -64,6 +60,10 @@ const CLASSIC = {
   oddPaddingY: 'padding',
 };
 
+/**
+ * Flowchart's theme table (`DiagramPlugin.theme`, D331, spec #414 T4): its arrowhead and shape
+ * padding geometry by family.
+ */
 export const theme: DiagramThemeTable = {
   vars: THEME_VARIABLE_TABLE,
   rules: { light: {} },
