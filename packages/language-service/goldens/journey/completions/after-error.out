@@ -1,0 +1,7 @@
+@ 5:11  section |B
+  none
+@ 6:3  |
+  section keyword 6:3-6:3 "" -> "section "
+  title keyword 6:3-6:3 "" -> "title "
+  accTitle keyword 6:3-6:3 "" -> "accTitle: "
+  accDescr keyword 6:3-6:3 "" -> "accDescr: "

@@ -1,7 +1,24 @@
 /**
  * The redux colour palettes, from v12 `theme-redux-color.js` and `theme-redux-dark-color.js`
- * (D151). Plain data, shared by the two colour themes.
+ * (D151). Plain data, shared by the two colour themes; with the redux family's rules and the pie slot
+ * helpers (#325).
  */
+import type { ThemeRuleTable } from '../spec.ts';
+
+/**
+ * Colours the redux family derives differently from the classic themes (D152). Shared by the
+ * redux and neo specs. `classText`: v12's redux theme files set it to `textColor`, the classic
+ * ones to `primaryTextColor` (the shared rule). ER rows have no fill of their own in v12 neo, so
+ * they show the entity's; the zero circle takes the node fill (`zero_or_one_neo`). Kept in this
+ * module, which every theme loads, so it adds no chunk of its own to the default theme's
+ * closure (D161).
+ */
+export const REDUX_RULES: ThemeRuleTable = {
+  classText: 'textColor',
+  rowOdd: 'mainBkg',
+  rowEven: 'mainBkg',
+  erMarkerFill: 'mainBkg',
+};
 
 /** `borderColorArray`: Tailwind-400, one per subgraph slot. */
 export const TAILWIND_400: readonly string[] = [
@@ -50,3 +67,49 @@ export const TAILWIND_300: readonly string[] = [
   '#74d4ff',
   '#ffa1ad',
 ];
+
+/**
+ * The user journey's section fills `fillType0`–`fillType7` (#327, D241) as literal values.
+ * v12 derives them per theme as `primaryColor`, `secondaryColor` and their khroma hue turns
+ * by ±64° and 128°; redux-color takes `bkgColorArray`, redux-dark-color fixed 900 shades. The
+ * theme DSL has no hue turn, so each spec pins v12 12.2.0's resolved values (checked by
+ * `packages/conformance/src/journey/theme.spec.ts`). A custom `primaryColor` therefore does
+ * not re-derive them, apart from `base`, whose `fillType0` and `fillType1` follow
+ * `primaryColor` and `secondaryColor` through the shared rules (`spec.ts`).
+ *
+ * `colours` is the eight values, space-separated (a list costs the always-loaded core more).
+ */
+export function fillTypes(colours: string): Readonly<Record<string, string>> {
+  const out: Record<string, string> = {};
+  colours.split(' ').forEach((c, i) => (out[`fillType${i}`] = c));
+  return out;
+}
+
+/** One palette entry per slot (12, v12's `THEME_COLOR_LIMIT`, D258). */
+export const paletteSlots = (entry: (i: number) => string): readonly string[] =>
+  Array.from({ length: 12 }, (_, i) => entry(i));
+
+/** `cScaleInv` as v12 derives it from a fixed `cScale`: `invert(cScale<n>)`. */
+export const INVERTED_SCALE = paletteSlots((i) => `invert(cScale${i})`);
+
+/** `cScaleLabel` as most v12 themes derive it: `labelTextColor` (v12 `scaleLabelColor`). */
+export const LABEL_SCALE = paletteSlots(() => 'labelTextColor');
+
+/**
+ * The pie slot colours `pie1`–`pie12` and text colours of the built-in themes (#325), which each
+ * theme spec writes as rules that replace the shared ones (`LIGHT_RULES` carries `base`'s). v12
+ * 12.2.0's resolved `getThemeVariables()` is the oracle (`packages/conformance/src/pie/theme.spec.ts`).
+ * A slot v12 derives by lightness alone (khroma `darken`) stays a rule, so it follows the theme's
+ * base colours; a hue turn, or a slot v12 takes from its `cScale`, is v12's resolved value, since
+ * the DSL has no hue turn and rules cannot read a palette. Each theme keeps its own table in its
+ * spec file, so its pie colours load with that theme only; the helpers live here, in a module the
+ * default theme already loads, so they add no chunk.
+ */
+/** `pie1`–`pie12` from twelve rules; `undefined` keeps the shared rule. */
+export function pieSlots(rules: readonly (string | undefined)[]): ThemeRuleTable {
+  const out: Record<string, string> = {};
+  rules.forEach((r, i) => {
+    if (r !== undefined) out[`pie${i + 1}`] = r;
+  });
+  return out;
+}

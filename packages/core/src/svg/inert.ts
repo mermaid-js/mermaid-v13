@@ -263,6 +263,9 @@ function attrProblem(
         if (!TRANSFORMS.has(word)) return `transform="${value}"`;
       return undefined;
     }
+    case 'fill-rule':
+    case 'clip-rule':
+      return value === 'nonzero' || value === 'evenodd' ? undefined : `${name}="${value}"`;
     case 'data-color-id':
       return RE_COLOR_ID.test(value) ? undefined : `data-color-id="${value}"`;
     case 'filter':

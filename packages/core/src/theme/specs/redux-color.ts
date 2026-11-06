@@ -5,19 +5,38 @@
  * (`primaryBorderColor` from `#28253D`, `clusterBkg`, `clusterBorder`).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { TAILWIND_300, TAILWIND_400, TAILWIND_50 } from './palettes.ts';
+import {
+  fillTypes,
+  INVERTED_SCALE,
+  LABEL_SCALE,
+  pieSlots,
+  TAILWIND_300,
+  TAILWIND_400,
+  TAILWIND_50,
+} from './palettes.ts';
 import redux from './redux.ts';
 
 const theme: ThemeSpec = {
   ...redux,
   name: 'redux-color',
   // v12 draws ER edge labels on `erEdgeLabelBackground` in the colour themes only.
-  values: { ...redux.values, erEdgeLabelBackground: '#ffffff' },
+  // v12 `pie<i+1> ||= cScale<i>`: the Tailwind-300 set.
+  rules: { ...redux.rules, ...pieSlots(TAILWIND_300) },
+  values: {
+    ...redux.values,
+    erEdgeLabelBackground: '#ffffff',
+    // v12 `fillType<i> || bkgColorArray[i]` for the journey section fills (`fillTypes`)
+    ...fillTypes(TAILWIND_50.slice(0, 8).join(' ')),
+  },
   palettes: {
     borderColorArray: TAILWIND_400,
     bkgColorArray: TAILWIND_50,
     cScale: TAILWIND_300,
+    cScaleInv: INVERTED_SCALE,
+    cScaleLabel: LABEL_SCALE,
   },
+  // v12 theme-redux-color.js does not darken its fixed cScale under darkMode.
+  darkModePalettes: {},
 };
 
 export default theme;

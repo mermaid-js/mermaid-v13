@@ -1,0 +1,14 @@
+@ 2:5  time|line LR
+  prepare: refused: There is no id or class name here to rename.
+@ 3:9  title |History
+  prepare: refused: There is no id or class name here to rename.
+@ 4:11  section |Web
+  prepare: refused: There is no id or class name here to rename.
+@ 5:5  |2002 : LinkedIn
+  prepare: refused: There is no id or class name here to rename.
+@ 5:12  2002 : |LinkedIn
+  prepare: refused: There is no id or class name here to rename.
+@ 6:13  accTitle: |Social
+  prepare: refused: There is no id or class name here to rename.
+@ 7:3  |
+  prepare: refused: There is no id or class name here to rename.

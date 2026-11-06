@@ -35,8 +35,12 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'class',
       'er',
       'flowchart',
+      'journey',
+      'pie',
+      'quadrantChart',
       'sequence',
       'state',
+      'timeline',
     ]);
   });
 
@@ -91,13 +95,27 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out).toContain('ORDER:variable');
     });
 
+    it('highlights a user journey with the journey grammar', () => {
+      const out = spans('journey\n  section Go to work\n  Make tea: 5: Me\n');
+      expect(out[0]).toBe('journey:keyword');
+      expect(out).toContain('Make tea:variable');
+      expect(out).toContain(': 5: Me:string');
+    });
+
+    it('highlights a quadrant chart with the quadrant grammar', () => {
+      const out = spans('quadrantChart\n  x-axis Low --> High\n  A: [0.3, 0.6]\n');
+      expect(out[0]).toBe('quadrantChart:keyword');
+      expect(out).toContain('x-axis:keyword');
+      expect(out).toContain('-->:operator');
+    });
+
     it('finds the type after front matter, directives and comments', () => {
       const text = '---\ntitle: T\n---\n%%{init: {}}%%\n%% note\nsequenceDiagram\n  A->>B: x\n';
       expect(spans(text)).toContain('sequenceDiagram:keyword');
     });
 
     it.each([
-      ['a type with no v13 highlighter', 'pie title Pets\n  "Dogs" : 386\n'],
+      ['a type with no v13 highlighter', 'gantt\n  title Plan\n'],
       ['a type v12 does not know', 'notADiagram\n  A --> B\n'],
       ['an empty text', ''],
       ['a header being typed', 'flo'],
@@ -119,7 +137,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(spans(state.doc.toString(), treeOf(state))).toEqual(spans(state.doc.toString()));
       expect(spans(state.doc.toString(), treeOf(state))[0]).toBe('flowchart:keyword');
       state = state.update({
-        changes: { from: 0, to: 'flowchart LR'.length, insert: 'pie' },
+        changes: { from: 0, to: 'flowchart LR'.length, insert: 'gantt' },
       }).state;
       expect(spans(state.doc.toString(), treeOf(state))).toEqual([]);
     });

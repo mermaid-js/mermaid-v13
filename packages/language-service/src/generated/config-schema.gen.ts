@@ -42,7 +42,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no palette. `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
+        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
       },
       "type": "object",
       "additionalProperties": true,
@@ -75,6 +75,60 @@ export const configSchema: ConfigSchema = {
             "status": "honoured",
             "since": "13.0.0",
             "reason": "Tailwind-50 × 12 in `redux-color`; empty in `redux-dark-color` and every other theme (D151). Read as literal colours, not CSS variables. An unsafe colour drops the whole list with `THEME_VARIABLE_DROPPED`."
+          }
+        },
+        "cScale": {
+          "description": "The section colour scale (timeline, mindmap), twelve slots. A list of colours, or one\ncomma-separated string; `cScale0`–`cScale11` replace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Every theme carries v12's values (D258): derived from `primaryColor`, `secondaryColor` and `tertiaryColor` by hue steps and khroma `darken` in `base` (25, 75 under `darkMode`), `forest` (10), `neo-dark` and `redux-dark` (25), from `mainBkg` in `redux`; fixed lists in `default`, `dark` (slot 0 is `primaryColor`), `neutral`, `neo` and the colour themes (Tailwind-300). Read as literal colours, not CSS variables. An unsafe colour drops that override with `THEME_VARIABLE_DROPPED`. The timeline paints with it only where `timelineScaleColors` is true and the gradient is off: an override changes nothing in the redux themes (the default `redux-color` included), `theme: 'auto'`, `neo` or `neo-dark`, as v12's redux and neo timeline paint ignored it (D227, D257); v12's default theme was `default`."
+          }
+        },
+        "cScaleInv": {
+          "description": "The colour drawn against each `cScale` slot (the timeline's rule under a box), twelve\nslots. A list of colours, or one comma-separated string; `cScaleInv0`–`cScaleInv11`\nreplace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values in every theme (D258): the inverse of the slot (a half turn of hue in `forest`), fixed in `default`. Where v12 inverts the slot before it applies an author's `cScale<n>`, so does v13. Read as literal colours, not CSS variables. The timeline draws it only where `timelineScaleColors` is true and the gradient is off: an override changes nothing in the redux themes (the default `redux-color` included), `theme: 'auto'`, `neo` or `neo-dark` (v12's redux and neo paint, D227, D257)."
+          }
+        },
+        "cScaleLabel": {
+          "description": "Text colour on each `cScale` slot, twelve slots. A list of colours, or one\ncomma-separated string; `cScaleLabel0`–`cScaleLabel11` replace one slot.\n",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "v12's values in every theme (D258): `labelTextColor` in most themes, with slots 0 and 3 inverted in `default`, slots 0 and 2 `cScale1` in `neutral`, black under `darkMode` in `dark` and `neutral`, and each slot darkened by 75 in `redux-dark-color`. Read as literal colours, not CSS variables. The timeline reads it only where `timelineScaleColors` is true: an override changes nothing in the redux themes (the default `redux-color` included) or `theme: 'auto'`; in `neo` and `neo-dark` it is the box text and (slot 11) the axis and connectors (v12's redux and neo paint, D227, D257)."
+          }
+        },
+        "THEME_COLOR_LIMIT": {
+          "description": "v12's number of colour-scale slots.\n",
+          "type": "number",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "The numbered palettes always have twelve slots, and a diagram cycles through them (D258)."
           }
         },
         "arrowheadGap": {
@@ -556,6 +610,54 @@ export const configSchema: ConfigSchema = {
             "since": "13.0.0",
             "reason": "30 in the redux themes (v12 `look: neo` viewBox), 0 in the classic themes. Read as a number at render time (D152), so its CSS variable has no effect."
           }
+        },
+        "timelineRadius": {
+          "description": "Corner radius in px of the top corners of a timeline section, period or event box.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "0 in the redux themes, 5 in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "timelineLabelOffset": {
+          "description": "How far below the top of a timeline section or period box its label starts: px, or a\nmultiple of the box's padding (`padding`, `0.5 * padding`). The multiplied form works\nthrough `initialize()` and site config, not through `%%{init}%%` directives: their\ntheme-variable values cannot hold `*`, so a directive's `0.5 * padding` is dropped.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`padding` in the redux themes, `0.5 * padding` in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "timelineEventLabelShift": {
+          "description": "Extra px below half the box padding at which a timeline event's label starts.\n",
+          "type": [
+            "number",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "3 in the redux themes, 0 in the classic and neo themes (v12 `svgDraw.js`, D227). Read as a number at render time (D152), so its CSS variable has no effect."
+          }
+        },
+        "timelineScaleColors": {
+          "description": "`true`: timeline boxes take `cScale<n>` fills and `cScaleLabel<n>` text with a\n3px `cScaleInv<n>` rule under each box, and the axis and connectors are\n`cScaleLabel11` at 4px and 2px. `false`: boxes take `mainBkg` (the `borderColorArray`\nslot when `bkgColorArray` is non-empty) with a `nodeBorder` outline at `strokeWidth`\nand the theme's `dropShadow`, `nodeBorder` text, and the axis and connectors are\n`nodeBorder` at `strokeWidth`.\n",
+          "type": [
+            "boolean",
+            "string"
+          ],
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`false` in the redux themes, `true` in the classic and neo themes (v12 `styles.js`, D227, D257). Read literally at render time, so it has no CSS variable."
+          }
         }
       }
     },
@@ -575,14 +677,6 @@ export const configSchema: ConfigSchema = {
         "since": "13.0.0",
         "reason": "`look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes, `neo` and `neo-dark` carry neo geometry and the classic themes carry classic geometry (D152, D181).",
         "replacement": "`theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8)"
-      }
-    },
-    "handDrawnSeed": {
-      "description": "Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed.\n",
-      "type": "number",
-      "default": 0,
-      "x-mermaid": {
-        "status": "pending"
       }
     },
     "layout": {
@@ -885,13 +979,15 @@ export const configSchema: ConfigSchema = {
     "journey": {
       "$ref": "#/$defs/JourneyDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "timeline": {
       "$ref": "#/$defs/TimelineDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "class": {
@@ -917,13 +1013,15 @@ export const configSchema: ConfigSchema = {
     "pie": {
       "$ref": "#/$defs/PieDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "quadrantChart": {
       "$ref": "#/$defs/QuadrantChartConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "xyChart": {
@@ -1061,7 +1159,9 @@ export const configSchema: ConfigSchema = {
       "type": "number",
       "default": 16,
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0",
+        "reason": "Read by timeline, as v12's renderer read it: each box is `fontSize × 0.55` px taller than its text, and the TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. Text is drawn at `themeVariables.fontSize`; no other type reads this key."
       }
     },
     "markdownAutoWrap": {
@@ -2763,6 +2863,21 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the pie renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "textPosition": {
           "type": "number",
           "minimum": 0,
@@ -2770,7 +2885,8 @@ export const configSchema: ConfigSchema = {
           "description": "Axial position of slice's label from zero at the center to 1 at the outside edges.\n",
           "default": 0.75,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "donutHole": {
@@ -2780,7 +2896,9 @@ export const configSchema: ConfigSchema = {
           "description": "Donut hole ratio. Valid value are from 0 to 0.9. Default to 0.\n",
           "default": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As in v12, a value outside (0, 0.9] draws no hole."
           }
         },
         "legendPosition": {
@@ -2795,7 +2913,9 @@ export const configSchema: ConfigSchema = {
           "description": "Legend's position relative to the chart. Default to right.\n",
           "default": "right",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As in v12; the bounding box now covers every legend row and label, where v12 clipped long legends (D224)."
           }
         },
         "highlightSlice": {
@@ -2803,7 +2923,9 @@ export const configSchema: ConfigSchema = {
           "description": "Highlight specific slice with matching label. Set to 'hover' to highlight hovered slice.\n",
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The slice with that label is drawn `scale(1.05)` at opacity 1, as v12's `highlighted` class (D222); the empty default highlights nothing. `hover` is accepted but draws nothing extra, with one `PIE_HOVER_IGNORED` warning, since the SVG has no hover styles (D6)."
           }
         }
       }
@@ -2818,13 +2940,29 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the quadrant chart renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "chartWidth": {
           "description": "Width of the chart",
           "type": "number",
           "minimum": 0,
           "default": 500,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "chartHeight": {
@@ -2833,34 +2971,38 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 500,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "titleFontSize": {
-          "description": "Chart title top and bottom padding",
+          "description": "Font size of the chart title",
           "type": "number",
           "minimum": 0,
           "default": 20,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "titlePadding": {
-          "description": "Padding around the quadrant square",
+          "description": "Padding above and below the chart title",
           "type": "number",
           "minimum": 0,
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "quadrantPadding": {
-          "description": "quadrant title padding from top if the quadrant is rendered on top",
+          "description": "Padding around the quadrant square",
           "type": "number",
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "xAxisLabelPadding": {
@@ -2869,7 +3011,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "yAxisLabelPadding": {
@@ -2878,7 +3021,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "xAxisLabelFontSize": {
@@ -2887,7 +3031,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 16,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "yAxisLabelFontSize": {
@@ -2896,7 +3041,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 16,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "quadrantLabelFontSize": {
@@ -2905,7 +3051,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 16,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "quadrantTextTopPadding": {
@@ -2914,7 +3061,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "pointTextPadding": {
@@ -2923,7 +3071,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "pointLabelFontSize": {
@@ -2932,7 +3081,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 12,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "pointRadius": {
@@ -2941,7 +3091,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "xAxisPosition": {
@@ -2953,7 +3104,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "top",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "yAxisPosition": {
@@ -2965,7 +3117,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "left",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "quadrantInternalBorderStrokeWidth": {
@@ -2974,7 +3127,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "quadrantExternalBorderStrokeWidth": {
@@ -2983,7 +3137,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 2,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         }
       }
@@ -3809,18 +3964,37 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the journey renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "diagramMarginX": {
           "$ref": "#/$defs/C4DiagramConfig/properties/diagramMarginX",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The margin left and right of what is drawn (D224, D242). v12 had no left margin and also used it as the gap between section bands and as a task's width in its bounds; bands are now `taskMargin` apart."
           }
         },
         "diagramMarginY": {
           "$ref": "#/$defs/C4DiagramConfig/properties/diagramMarginY",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The margin above and below what is drawn (D224). v12 fixed the top at -25 and added 70 for a title."
           }
         },
         "leftMargin": {
@@ -3829,7 +4003,9 @@ export const configSchema: ConfigSchema = {
           "default": 150,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Where the first task starts, as in v12. It widens by the widest legend line past it, with no threshold, and is counted once in the width (D242); v12 jumped from 150 to about 230 px once a legend line passed `leftMargin / 2`, and counted it twice."
           }
         },
         "maxLabelWidth": {
@@ -3837,7 +4013,9 @@ export const configSchema: ConfigSchema = {
           "type": "integer",
           "default": 360,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The width legend names wrap to (core label layout, D225). Words longer than it split without v12's hyphen."
           }
         },
         "width": {
@@ -3846,7 +4024,8 @@ export const configSchema: ConfigSchema = {
           "default": 150,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "height": {
@@ -3855,7 +4034,8 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "boxMargin": {
@@ -3864,7 +4044,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer read it only in a loop over an empty list, so it had no effect."
           }
         },
         "boxTextMargin": {
@@ -3873,7 +4055,8 @@ export const configSchema: ConfigSchema = {
           "default": 5,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "noteMargin": {
@@ -3882,7 +4065,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "messageMargin": {
@@ -3891,7 +4076,9 @@ export const configSchema: ConfigSchema = {
           "default": 35,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "messageAlign": {
@@ -3904,7 +4091,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "center",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "bottomMarginAdj": {
@@ -3913,7 +4102,9 @@ export const configSchema: ConfigSchema = {
           "default": 1,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "rightAngles": {
@@ -3921,7 +4112,9 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "taskFontSize": {
@@ -3929,23 +4122,27 @@ export const configSchema: ConfigSchema = {
             "string",
             "number"
           ],
-          "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, task and section names are drawn in the theme's `fontSize` (16 by default), as for every diagram type, not v12's 14. A set value takes effect."
           }
         },
         "taskFontFamily": {
           "type": "string",
-          "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect."
           }
         },
         "taskMargin": {
           "type": "number",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The gap between tasks and, now, between section bands (D242)."
           }
         },
         "activationWidth": {
@@ -3953,7 +4150,9 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's journey renderer never read it."
           }
         },
         "textPlacement": {
@@ -3961,7 +4160,9 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "fo",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Every label is SVG text from core label layout, wrapped to its box, in `textColor`, with `<br>` breaking lines (D225); there is no `foreignObject` or `tspan`-only mode."
           }
         },
         "actorColours": {
@@ -3969,16 +4170,10 @@ export const configSchema: ConfigSchema = {
           "items": {
             "type": "string"
           },
-          "default": [
-            "#8FBC8F",
-            "#7CFC00",
-            "#00FFFF",
-            "#20B2AA",
-            "#B0E0E6",
-            "#FFFFE0"
-          ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The actor dot colours in every theme (D249); an author's `actor0`–`actor5` theme variable wins. Unset, dots take v12's six colours (`#8FBC8F`, `#7CFC00`, `#00FFFF`, `#20B2AA`, `#B0E0E6`, `#FFFFE0`); a list set by the author replaces them (v12 appended it after them). The empty actor `''` takes no colour (D244). A value that is not a colour is dropped with `STYLE_VALUE_DROPPED`."
           }
         },
         "sectionFills": {
@@ -3996,7 +4191,9 @@ export const configSchema: ConfigSchema = {
             "#00008B"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Sections are filled from the theme's `fillType0`–`fillType7`, cycling over all eight (D241). In v12 the theme's `fillType<n>` style rules hid these colours in every theme."
           }
         },
         "sectionColours": {
@@ -4004,11 +4201,10 @@ export const configSchema: ConfigSchema = {
           "items": {
             "type": "string"
           },
-          "default": [
-            "#fff"
-          ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, section and task names are `textColor`. When set, it colours them by section band (D225); v12's `['#fff']` reached only the `tspan` fallback, which its default `fo` labels did not show."
           }
         },
         "titleColor": {
@@ -4016,15 +4212,18 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "An unset (empty) value takes the theme's `textColor` (D248); v12 wrote an empty `fill`, black on dark themes."
           }
         },
         "titleFontFamily": {
           "description": "Font family to be used for the title text in Journey Diagrams",
           "type": "string",
-          "default": "\"trebuchet ms\", verdana, arial, sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D248). A set value takes effect."
           }
         },
         "titleFontSize": {
@@ -4032,7 +4231,9 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "4ex",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "`4ex` of the theme `fontSize` by default, as v12 (D248)."
           }
         }
       }
@@ -4047,27 +4248,49 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the timeline renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12 with its default config merged (true): `width=\"100%\"` and a `max-width`. v12's renderer fell back to false only when the key was missing from its config."
+          }
+        },
         "diagramMarginX": {
           "$ref": "#/$defs/C4DiagramConfig/properties/diagramMarginX",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "diagramMarginY": {
           "$ref": "#/$defs/C4DiagramConfig/properties/diagramMarginY",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "leftMargin": {
-          "description": "Margin between actors",
+          "description": "Space in px left of the timeline: the content starts `50 + leftMargin` from the left,\nand the LR axis starts at `leftMargin`.\n",
           "type": "integer",
           "default": 150,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: the content starts `50 + leftMargin` from the left and the title is placed from it. The LR axis starts at `leftMargin` and ends at `width + 3 × leftMargin` or at the last period, whichever is further."
           }
         },
         "width": {
@@ -4076,7 +4299,9 @@ export const configSchema: ConfigSchema = {
           "default": 150,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "height": {
@@ -4085,13 +4310,18 @@ export const configSchema: ConfigSchema = {
           "default": 50,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "padding": {
+          "description": "Margin in px around the timeline drawing in its viewBox.\n",
           "type": "number",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The margin around the drawing in the viewBox, as v12's `setupGraphViewbox`. The schema has no default, as v12's; unset it is 50, v12's renderer fallback."
           }
         },
         "boxMargin": {
@@ -4100,7 +4330,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "boxTextMargin": {
@@ -4109,7 +4341,9 @@ export const configSchema: ConfigSchema = {
           "default": 5,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "noteMargin": {
@@ -4118,7 +4352,9 @@ export const configSchema: ConfigSchema = {
           "default": 10,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "messageMargin": {
@@ -4127,7 +4363,9 @@ export const configSchema: ConfigSchema = {
           "default": 35,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "messageAlign": {
@@ -4140,7 +4378,9 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "center",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "bottomMarginAdj": {
@@ -4149,7 +4389,9 @@ export const configSchema: ConfigSchema = {
           "default": 1,
           "minimum": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "rightAngles": {
@@ -4157,7 +4399,9 @@ export const configSchema: ConfigSchema = {
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "taskFontSize": {
@@ -4167,21 +4411,27 @@ export const configSchema: ConfigSchema = {
           ],
           "default": 14,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; box text is drawn at `themeVariables.fontSize`."
           }
         },
         "taskFontFamily": {
           "type": "string",
           "default": "\"Open Sans\", sans-serif",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; box text is drawn at `themeVariables.fontFamily`."
           }
         },
         "taskMargin": {
           "type": "number",
           "default": 50,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "activationWidth": {
@@ -4189,7 +4439,9 @@ export const configSchema: ConfigSchema = {
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "textPlacement": {
@@ -4197,7 +4449,9 @@ export const configSchema: ConfigSchema = {
           "type": "string",
           "default": "fo",
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it."
           }
         },
         "actorColours": {
@@ -4214,7 +4468,9 @@ export const configSchema: ConfigSchema = {
             "#FFFFE0"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`."
           }
         },
         "sectionFills": {
@@ -4232,7 +4488,9 @@ export const configSchema: ConfigSchema = {
             "#00008B"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`."
           }
         },
         "sectionColours": {
@@ -4244,14 +4502,19 @@ export const configSchema: ConfigSchema = {
             "#fff"
           ],
           "x-mermaid": {
-            "status": "pending"
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`."
           }
         },
         "disableMulticolor": {
+          "description": "Draws a timeline without sections in one colour slot instead of one slot per period.\n",
           "type": "boolean",
           "default": false,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "With no sections, every period and its events take colour slot 0 instead of one slot per period, as v12. With sections it does nothing, as in v12."
           }
         }
       }

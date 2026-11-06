@@ -26,7 +26,12 @@ describe.each(ADAPTERS)('%s, bundled from source', (name) => {
       logLevel: 'silent',
     });
     const meta = result.metafile;
-    const out = Object.keys(meta.outputs).find((o) => meta.outputs[o]?.entryPoint)!;
+    // The adapter's own entry: every dynamic-import chunk has an `entryPoint` too, and which
+    // output comes first changes with the number of types.
+    const out = Object.keys(meta.outputs).find((o) =>
+      meta.outputs[o]?.entryPoint?.endsWith(`${name.slice('@mermaid-js/'.length)}/src/index.ts`)
+    )!;
+    expect(out).toBeDefined();
     const grammars = FACET_IDS.map((id) => ({
       id,
       file: `src/generated/${GRAMMAR_FILE[name](id)}`,

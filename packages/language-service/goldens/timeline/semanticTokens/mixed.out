@@ -1,0 +1,16 @@
+1:1-1:32 "%%{init: {\"theme\": \"forest\"}}%%" macro
+2:1-2:12 "timeline LR" keyword
+3:3-3:32 "title History #59; of the web" keyword
+4:3-4:12 "accTitle:" keyword
+4:13-4:25 "Social media" string
+5:3-5:12 "accDescr:" keyword
+5:13-5:28 "The first years" string
+6:3-6:16 "section Web 2" keyword
+7:5-7:9 "2002" variable
+7:10-7:20 ": LinkedIn" string
+8:5-8:9 "2004" variable
+8:10-8:20 ": Facebook" string
+8:21-8:29 ": Google" string
+9:3-9:13 "accDescr {" keyword
+10:5-10:10 "multi" string
+11:3-11:4 "}" keyword

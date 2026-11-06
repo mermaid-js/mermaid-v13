@@ -1,0 +1,22 @@
+Third-party notices for @mermaid-js/plugin-hand-drawn
+=====================================================
+
+roughjs
+-------
+
+This package depends on roughjs 4.6.6 (https://github.com/rough-stuff/rough), installed from npm
+as a runtime dependency. No roughjs code is copied into this package; `src/sketch.ts` calls the
+DOM-free `RoughGenerator` and writes its drawing ops through @mermaid-js/core's `PathBuilder`.
+roughjs in turn depends on hachure-fill, path-data-parser, points-on-curve and points-on-path,
+by the same author and under the same license.
+
+roughjs is made available under the terms of the MIT License:
+
+  SPDX-License-Identifier: MIT
+
+  roughjs: Copyright (c) 2019 Preet Shihn
+  hachure-fill: Copyright (c) 2023 Preet Shihn
+  path-data-parser, points-on-curve: Copyright (c) 2020 Preet Shihn
+  points-on-path: Copyright (c) 2020 Preet
+
+The full license text ships with each package, in node_modules/<package>/LICENSE.

@@ -25,8 +25,12 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-class',
       '@mermaid-chart/diagram-er',
       '@mermaid-chart/diagram-flowchart',
+      '@mermaid-chart/diagram-journey',
+      '@mermaid-chart/diagram-pie',
+      '@mermaid-chart/diagram-quadrant',
       '@mermaid-chart/diagram-sequence',
       '@mermaid-chart/diagram-state',
+      '@mermaid-chart/diagram-timeline',
       '@mermaid-chart/mermaid',
       // Peer of mermaid (D164): after it.
       '@mermaid-chart/bundler-plugin',
@@ -35,6 +39,8 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/language-service-codemirror',
       '@mermaid-chart/language-service-monaco',
       '@mermaid-chart/layout-elk',
+      '@mermaid-chart/plugin-hand-drawn',
+      '@mermaid-chart/plugin-icons',
       '@mermaid-chart/plugin-interactions',
       '@mermaid-chart/plugin-math',
     ]);

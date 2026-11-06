@@ -72,11 +72,6 @@ themeCSS?: string
  */
 look?: ("classic" | "handDrawn" | "neo")
 /**
- * Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed.
- * 
- */
-handDrawnSeed?: number
-/**
  * Defines which layout algorithm to use for rendering the diagram.
  * 
  * Defaults to `layered`, the layout engine built into core (DESIGN §6.1).
@@ -773,6 +768,14 @@ weekday?: ("monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturda
  * via the `definition` "JourneyDiagramConfig".
  */
 export interface JourneyDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Margin to the right and left of the c4 diagram, must be a positive value.
  * 
@@ -867,6 +870,14 @@ titleFontSize?: string
  * via the `definition` "TimelineDiagramConfig".
  */
 export interface TimelineDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Margin to the right and left of the c4 diagram, must be a positive value.
  * 
@@ -878,7 +889,9 @@ diagramMarginX?: number
  */
 diagramMarginY?: number
 /**
- * Margin between actors
+ * Space in px left of the timeline: the content starts `50 + leftMargin` from the left,
+ * and the LR axis starts at `leftMargin`.
+ * 
  */
 leftMargin?: number
 /**
@@ -889,6 +902,10 @@ width?: number
  * Height of actor boxes
  */
 height?: number
+/**
+ * Margin in px around the timeline drawing in its viewBox.
+ * 
+ */
 padding?: number
 /**
  * Margin around loop boxes
@@ -940,6 +957,10 @@ textPlacement?: string
 actorColours?: string[]
 sectionFills?: string[]
 sectionColours?: string[]
+/**
+ * Draws a timeline without sections in one colour slot instead of one slot per period.
+ * 
+ */
 disableMulticolor?: boolean
 }
 /**
@@ -1167,6 +1188,14 @@ fontSize?: number
  * via the `definition` "PieDiagramConfig".
  */
 export interface PieDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Axial position of slice's label from zero at the center to 1 at the outside edges.
  * 
@@ -1193,6 +1222,14 @@ highlightSlice?: string
  * via the `definition` "QuadrantChartConfig".
  */
 export interface QuadrantChartConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Width of the chart
  */
@@ -1202,15 +1239,15 @@ chartWidth?: number
  */
 chartHeight?: number
 /**
- * Chart title top and bottom padding
+ * Font size of the chart title
  */
 titleFontSize?: number
 /**
- * Padding around the quadrant square
+ * Padding above and below the chart title
  */
 titlePadding?: number
 /**
- * quadrant title padding from top if the quadrant is rendered on top
+ * Padding around the quadrant square
  */
 quadrantPadding?: number
 /**

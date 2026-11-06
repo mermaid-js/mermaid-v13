@@ -85,6 +85,55 @@ export const GRAMMARS: GrammarTarget[] = [
     title: 'Entity relationship diagram syntax',
     kinds: { module: 'parser/tokens.ts', object: 'T' },
   },
+  {
+    type: 'journey',
+    title: 'User journey syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // `accDescr {` and its `}`: jison returns no token for them, the lexer does.
+      unnamed: {
+        AccDescrMultiline: { mode: 'INITIAL', pattern: 'accDescr\\s*\\{\\s*' },
+        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '\\}' },
+      },
+    },
+  },
+  {
+    type: 'timeline',
+    title: 'Timeline syntax',
+    // `accDescr {` and its `}` are named in the grammar file (jison returns no token for them).
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
+    type: 'pie',
+    title: 'Pie chart syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // A label starts a section and `:` follows it: completion offers both, with the doc.
+      documented: ['String', 'Colon'],
+    },
+  },
+  {
+    type: 'quadrant',
+    title: 'Quadrant chart syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // Text jison matches without returning a token; the hand-written lexer keeps one for it.
+      unnamed: {
+        AccDescrMultiline: { mode: 'INITIAL', pattern: 'accDescr\\s*\\{\\s*' },
+        AccDescrMultilineEnd: { mode: 'acc_descr_multiline', pattern: '\\}' },
+        MdStringStart: { mode: 'INITIAL', pattern: '"`' },
+        MdStringEnd: { mode: 'md_string', pattern: '`"' },
+        StringStart: { mode: 'INITIAL', pattern: '"' },
+        StringEnd: { mode: 'string', pattern: '"' },
+        ClassMarker: { mode: 'INITIAL', pattern: ':::' },
+        PointComma: { mode: 'point_x', pattern: '\\s*,\\s*' },
+        PointEnd: { mode: 'point_start', pattern: '\\s*\\][ ]*' },
+      },
+    },
+  },
 ];
 
 export const grammarPath = (type: string): string =>

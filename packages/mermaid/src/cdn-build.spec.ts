@@ -2,7 +2,7 @@
  * The CDN build (D162, D163; spec #218 T6): the real esbuild build into a temporary directory.
  * The browser behaviour (loader, `cdnBase`, plugin queue) is in e2e/platform/cdn.spec.ts.
  */
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
@@ -19,6 +19,17 @@ const budget = JSON.parse(
   readFileSync(new URL('../size-budget.json', import.meta.url), 'utf8')
 ) as { core: { gzipBytes: number } };
 const ids = [...new Set(DETECTORS.flatMap((d) => (d.id ? [d.id] : [])))];
+/** Plugin id → the package directory chunks are named after (`quadrantChart` → `diagram-quadrant`). */
+const packageDir = new Map(
+  readdirSync(new URL('../../', import.meta.url)).flatMap((dir) => {
+    if (!dir.startsWith('diagram-')) return [];
+    const pkg = JSON.parse(
+      readFileSync(new URL(`../../${dir}/package.json`, import.meta.url), 'utf8')
+    ) as { mermaid?: { id?: string } };
+    return pkg.mermaid?.id ? [[pkg.mermaid.id, dir] as const] : [];
+  })
+);
+const chunk = (id: string) => `chunks/${packageDir.get(id) ?? `diagram-${id}`}`;
 let out: CdnBuild;
 
 beforeAll(async () => {
@@ -34,11 +45,11 @@ const read = (path: string) => readFileSync(join(out.outdir, path), 'utf8');
 describe('the CDN build (D162)', () => {
   it('gives every first-party diagram, its ascii and language entries a stable chunk', () => {
     for (const id of ids) {
-      expect(file(`chunks/diagram-${id}.mjs`), id).toBeDefined();
-      expect(file(`chunks/diagram-${id}-language.mjs`), id).toBeDefined();
+      expect(file(`${chunk(id)}.mjs`), id).toBeDefined();
+      expect(file(`${chunk(id)}-language.mjs`), id).toBeDefined();
     }
     for (const id of DETECTORS.filter((d) => d.formats?.includes('ascii')).map((d) => d.id))
-      expect(file(`chunks/diagram-${id}-ascii.mjs`), id).toBeDefined();
+      expect(file(`${chunk(id!)}-ascii.mjs`), id).toBeDefined();
     expect(file('chunks/core-theme-specs-dark.mjs')).toBeDefined();
   });
 

@@ -1,0 +1,22 @@
+@ 2:3  |
+  title keyword 2:3-2:3 "" -> "title "
+  x-axis keyword 2:3-2:3 "" -> "x-axis "
+  y-axis keyword 2:3-2:3 "" -> "y-axis "
+  quadrant-1 keyword (top right) 2:3-2:3 "" -> "quadrant-1 "
+  quadrant-2 keyword (top left) 2:3-2:3 "" -> "quadrant-2 "
+  quadrant-3 keyword (bottom left) 2:3-2:3 "" -> "quadrant-3 "
+  quadrant-4 keyword (bottom right) 2:3-2:3 "" -> "quadrant-4 "
+  classDef keyword 2:3-2:3 "" -> "classDef "
+  accTitle keyword 2:3-2:3 "" -> "accTitle: "
+  accDescr keyword 2:3-2:3 "" -> "accDescr: "
+  accDescr { keyword 2:3-2:3 "" -> "accDescr {"
+@ 4:4  q|
+  quadrant-1 keyword (top right) 4:3-4:4 "q" -> "quadrant-1 "
+  quadrant-2 keyword (top left) 4:3-4:4 "q" -> "quadrant-2 "
+  quadrant-3 keyword (bottom left) 4:3-4:4 "q" -> "quadrant-3 "
+  quadrant-4 keyword (bottom right) 4:3-4:4 "q" -> "quadrant-4 "
+@ 5:5  cl|
+  classDef keyword 5:3-5:5 "cl" -> "classDef "
+@ 6:7  accD|
+  accDescr keyword 6:3-6:7 "accD" -> "accDescr: "
+  accDescr { keyword 6:3-6:7 "accD" -> "accDescr {"

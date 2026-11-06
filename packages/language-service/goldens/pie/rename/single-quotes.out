@@ -1,0 +1,6 @@
+@ 3:6  'Do|gs' : 386
+  prepare: 3:4-3:8 "Dogs"; rename to "Big dogs":
+  %% rename-to: Big dogs
+  pie
+    'Big dogs' : 386
+    "Big dogs" : 1

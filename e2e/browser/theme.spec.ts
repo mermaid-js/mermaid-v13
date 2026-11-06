@@ -48,7 +48,7 @@ test('contrast text follows a host override of the base colour it sits on (R-THE
   expect(channels(await page.evaluate(label))).toEqual([255, 255, 255, 1]);
 });
 
-test('contrast(), invert(), lightenHsl() and darkenHsl() CSS equals the JS-computed literal on many backgrounds', async ({
+test('contrast(), invert(), lightenHsl(), darkenHsl() and adjust() CSS equals the JS-computed literal on many backgrounds', async ({
   page,
 }) => {
   await openHarness(page);
@@ -61,8 +61,10 @@ test('contrast(), invert(), lightenHsl() and darkenHsl() CSS equals the JS-compu
       ink2: 'contrast(primaryColor, #ffffff, #333333)',
       up: 'lightenHsl(primaryColor, 20%)',
       down: 'darkenHsl(primaryColor, 15%)',
+      adj: 'adjust(primaryColor, 15, 15, 15)',
+      adj2: 'adjust(primaryColor, -15, 40, -255)',
     };
-    for (const name of ['inv', 'ink', 'ink2', 'up', 'down']) {
+    for (const name of ['inv', 'ink', 'ink2', 'up', 'down', 'adj', 'adj2']) {
       const vars = createTheme(base, { rules });
       vars.color(name);
       const style = Object.entries({ ...vars.rootStyle(), '--mermaid-primaryColor': bg })

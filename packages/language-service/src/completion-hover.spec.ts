@@ -42,11 +42,19 @@ describe('completion', () => {
       'swimlane-beta',
       'classDiagram',
       'erDiagram',
+      'pie',
       'sequenceDiagram',
+      'timeline',
+      'timeline LR',
+      'timeline TD',
       'stateDiagram-v2',
       'stateDiagram',
+      'journey',
+      'quadrantChart',
     ]);
+    expect(labels('qua|')).toEqual(['quadrantChart']);
     expect(labels('cla|')).toEqual(['classDiagram']);
+    expect(labels('jour|')).toEqual(['journey']);
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);
     expect(complete('flo|')).toEqual([
       expect.objectContaining({ label: 'flowchart', range: { start: 0, end: 3 } }),

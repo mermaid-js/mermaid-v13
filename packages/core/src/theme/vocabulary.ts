@@ -10,9 +10,22 @@
  * How a variable's value is checked and written. A `padding` is a px length or a multiple of
  * the diagram's own `padding` config (`padding`, `2 * padding`), resolved at render time
  * because the classic themes follow `flowchart.padding` (D152). A `flag` is `true` or `false`,
- * read literally at render time like geometry, so it has no CSS variable (D182).
+ * read literally at render time like geometry, so it has no CSS variable (D182). An `opacity` is
+ * a number from 0 to 1, read with `Theme.number` like geometry, so it has no CSS variable either
+ * (D221).
  */
-export type ThemeVarKind = 'color' | 'length' | 'font' | 'weight' | 'filter' | 'padding' | 'flag';
+export type ThemeVarKind =
+  | 'color'
+  | 'length'
+  | 'font'
+  | 'weight'
+  | 'filter'
+  | 'padding'
+  | 'flag'
+  | 'opacity';
+
+/** What the theme reads at render time: a variable's alias and kind. */
+export type ThemeVarEntry = Pick<ThemeVarDef, 'alias' | 'kind'>;
 
 export interface ThemeVarDef {
   /** The short private alias written on the root, without the leading `--_`. */
@@ -79,76 +92,141 @@ export const CLASS_MARKER_VARIABLES = [
 
 export type ClassMarkerVariable = (typeof CLASS_MARKER_VARIABLES)[number];
 
+/**
+ * Name lists joined into one. Called `@__PURE__` with no spread, so a bundle drops a list that
+ * nothing reads at run time (only types and tools read `TOKEN_VARIABLES`; core's size budget,
+ * R-PERF-8). An array spread would keep it, as bundlers cannot prove it has no side effects.
+ */
+const joined = <L extends readonly (readonly string[])[]>(
+  ...lists: L
+): readonly L[number][number][] => lists.flat();
+
 /** Shape tokens (R-THEME-11): sizes every diagram type reads instead of hard-coding them. */
-export const TOKEN_VARIABLES = [
-  'strokeWidth',
-  'clusterStrokeWidth',
-  'radius',
-  'fontWeight',
-  'spacing1',
-  'spacing2',
-  'spacing3',
-  ...ARROWHEAD_VARIABLES,
-  ...CLASS_MARKER_VARIABLES,
-  // A class relationship's multiplicities (v12 `.edgeTerminals { font-size: 11px }`); the same
-  // in every theme, a size key that keeps v12's default.
-  'classTerminalFontSize',
-  // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
-  'nodePaddingX',
-  'nodePaddingY',
-  'stadiumPaddingX',
-  'stadiumPaddingY',
-  'hexagonPaddingX',
-  'hexagonPaddingY',
-  'hexagonSlant',
-  'doubleCircleGap',
-  'doubleCirclePadding',
-  'circlePadding',
-  'circleMinDiameter',
-  // Shapes with their own v12 padding (#89), totals added to the label box.
-  'subroutinePaddingX',
-  'subroutinePaddingY',
-  'cylinderPaddingX',
-  'cylinderPaddingY',
-  'leanPaddingX',
-  'leanPaddingY',
-  'oddPaddingX',
-  'oddPaddingY',
-  // Sequence participant boxes (v12 neo rx 6, classic 3).
-  'actorRadius',
-  // Sequence geometry (v12 `look: neo` / classic, #194): the glyph band participants stand in
-  // (0 draws the classic symbols), the gap at a message's end, the taller fragment label tab
-  // and the room below the drawing.
-  'actorGlyphBand',
-  'messageEndGap',
-  'labelBoxExtraHeight',
-  'actorFooterPadding',
-  // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
-  'useGradient',
-] as const;
+export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
+  [
+    'strokeWidth',
+    'clusterStrokeWidth',
+    'radius',
+    'fontWeight',
+    'spacing1',
+    'spacing2',
+    'spacing3',
+  ] as const,
+  ARROWHEAD_VARIABLES,
+  CLASS_MARKER_VARIABLES,
+  [
+    // A class relationship's multiplicities (v12 `.edgeTerminals { font-size: 11px }`); the same
+    // in every theme, a size key that keeps v12's default.
+    'classTerminalFontSize',
+    // Node padding (D151, D152): v12 neo values in the redux family, v12 classic in the others.
+    'nodePaddingX',
+    'nodePaddingY',
+    'stadiumPaddingX',
+    'stadiumPaddingY',
+    'hexagonPaddingX',
+    'hexagonPaddingY',
+    'hexagonSlant',
+    'doubleCircleGap',
+    'doubleCirclePadding',
+    'circlePadding',
+    'circleMinDiameter',
+    // Shapes with their own v12 padding (#89), totals added to the label box.
+    'subroutinePaddingX',
+    'subroutinePaddingY',
+    'cylinderPaddingX',
+    'cylinderPaddingY',
+    'leanPaddingX',
+    'leanPaddingY',
+    'oddPaddingX',
+    'oddPaddingY',
+    // Sequence participant boxes (v12 neo rx 6, classic 3).
+    'actorRadius',
+    // Sequence geometry (v12 `look: neo` / classic, #194): the glyph band participants stand in
+    // (0 draws the classic symbols), the gap at a message's end, the taller fragment label tab
+    // and the room below the drawing.
+    'actorGlyphBand',
+    'messageEndGap',
+    'labelBoxExtraHeight',
+    'actorFooterPadding',
+    // Pie text sizes, stroke widths and slice opacity (#325): the same in every v12 theme.
+    'pieTitleTextSize',
+    'pieSectionTextSize',
+    'pieLegendTextSize',
+    'pieStrokeWidth',
+    'pieOuterStrokeWidth',
+    'pieOpacity',
+    // Timeline boxes (spec #291, D227): the top corner, the label offset (sections and periods)
+    // and the extra offset of event labels, and whether boxes take the `cScale` palettes.
+    'timelineRadius',
+    'timelineLabelOffset',
+    'timelineEventLabelShift',
+    'timelineScaleColors',
+    // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
+    'useGradient',
+  ] as const
+);
 
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
 
 /**
- * Palettes (D151, D152): lists of colours a theme carries as data. `themeVariables` replaces
- * a whole list (an array of colours, or a comma-separated string), and v12's numbered names
- * `cScale0`–`cScale11` replace one entry of `cScale`. Palettes are read as literal colours,
- * not CSS variables.
+ * Palettes (D151, D152, D258): lists of colours a theme carries as data. `themeVariables`
+ * replaces a whole list (an array of colours, or a comma-separated string), and v12's numbered
+ * names (`cScale0`–`cScale11`, `cScaleInv<n>`, `cScaleLabel<n>`) replace one entry of
+ * `cScale`, `cScaleInv` or `cScaleLabel`. Palettes are read as literal colours, not CSS
+ * variables.
  */
-export const PALETTE_VARIABLES = ['borderColorArray', 'bkgColorArray', 'cScale'] as const;
+export const PALETTE_VARIABLES = [
+  'borderColorArray',
+  'bkgColorArray',
+  'cScale',
+  'cScaleInv',
+  'cScaleLabel',
+] as const;
+
+/** The palettes with v12's numbered names, `<name>0`–`<name>11`. */
+export const NUMBERED_PALETTES = ['cScale', 'cScaleInv', 'cScaleLabel'] as const;
 
 export type PaletteVariable = (typeof PALETTE_VARIABLES)[number];
 
-/** How many `cScaleN` names v12 has (`THEME_COLOR_LIMIT`). */
+/** How many numbered names each of `NUMBERED_PALETTES` has (v12 `THEME_COLOR_LIMIT`, D258). */
 export const PALETTE_LIMIT = 12;
 
+// Pure, so a bundle that never reads `THEME_VARIABLES` drops it with its `usedBy` lists: the
+// runtime reads the generated alias and kind table (`generated/variables.ts`) instead.
+/* @__NO_SIDE_EFFECTS__ */
 const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): ThemeVarDef => ({
   alias,
   kind,
   usedBy,
 });
 
-/** The core inventory. Order is the order of the generated table. */
+/** Who reads the base text variables (`fontFamily`, `fontSize`): a new type appends here. */
+const TEXT_USERS = [
+  'core',
+  'flowchart',
+  'sequence',
+  'class',
+  'state',
+  'er',
+  'journey',
+  'timeline',
+  'quadrant',
+];
+
+const JOURNEY = ['journey'];
+
+/**
+ * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
+ * in core's size budget (R-PERF-8).
+ */
+const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = Object.fromEntries(
+  Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, def(`pi${i + 1}`, 'color', ['pie'])])
+);
+
+/**
+ * The core inventory. Order is the order of the generated table. Tools and specs read it (with
+ * `usedBy`); the theme reads `THEME_VARIABLE_TABLE`, which `pnpm gen:theme` writes from it.
+ */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   // base
   primaryColor: def('p', 'color', ['core']),
@@ -157,17 +235,26 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   background: def('bg', 'color', ['core']),
   primaryTextColor: def('pt', 'color', ['core']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
-  fontFamily: def('ff', 'font', ['core', 'flowchart', 'sequence', 'class', 'state', 'er']),
-  fontSize: def('fs', 'length', ['core', 'flowchart', 'sequence', 'class', 'state', 'er']),
+  // Pie draws in the font family but sizes its text by its own variables.
+  fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie']),
+  fontSize: def('fs', 'length', TEXT_USERS),
   // derived
   primaryBorderColor: def('pb', 'color', ['core']),
   secondaryBorderColor: def('sb', 'color', ['core']),
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
   tertiaryTextColor: def('tt', 'color', ['core']),
-  textColor: def('tx', 'color', ['core', 'flowchart', 'sequence', 'state', 'er']),
-  mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er']),
-  nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er']),
+  textColor: def('tx', 'color', [
+    'core',
+    'flowchart',
+    'sequence',
+    'state',
+    'er',
+    'journey',
+    'timeline',
+  ]),
+  mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   nodeTextColor: def('nt', 'color', ['flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
@@ -203,11 +290,50 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   compositeBackground: def('cbg', 'color', ['state']),
   compositeTitleBackground: def('ctb', 'color', ['state']),
   altBackground: def('alb', 'color', ['state']),
+  // pie chart (#325, v12 names): the slot colours `pie1`–`pie12`, texts, strokes and the slice
+  // opacity, derived as each v12 theme derives them.
+  ...PIE_SLOTS,
+  pieTitleTextSize: def('pts', 'length', ['pie']),
+  pieTitleTextColor: def('ptc', 'color', ['pie']),
+  pieSectionTextSize: def('pss', 'length', ['pie']),
+  pieSectionTextColor: def('psc', 'color', ['pie']),
+  pieLegendTextSize: def('pls', 'length', ['pie']),
+  pieLegendTextColor: def('plc', 'color', ['pie']),
+  pieStrokeColor: def('pkc', 'color', ['pie']),
+  pieStrokeWidth: def('pkw', 'length', ['pie']),
+  pieOuterStrokeColor: def('poc', 'color', ['pie']),
+  pieOuterStrokeWidth: def('pow', 'length', ['pie']),
+  pieOpacity: def('pop', 'opacity', ['pie']),
+  // quadrant chart (v12 names, derived as v12's `/* quadrant-graph */` block derives them;
+  // D231, D232)
+  quadrant1Fill: def('q1f', 'color', ['quadrant']),
+  quadrant2Fill: def('q2f', 'color', ['quadrant']),
+  quadrant3Fill: def('q3f', 'color', ['quadrant']),
+  quadrant4Fill: def('q4f', 'color', ['quadrant']),
+  quadrant1TextFill: def('q1t', 'color', ['quadrant']),
+  quadrant2TextFill: def('q2t', 'color', ['quadrant']),
+  quadrant3TextFill: def('q3t', 'color', ['quadrant']),
+  quadrant4TextFill: def('q4t', 'color', ['quadrant']),
+  quadrantPointFill: def('qpf', 'color', ['quadrant']),
+  quadrantPointTextFill: def('qpt', 'color', ['quadrant']),
+  quadrantXAxisTextFill: def('qxt', 'color', ['quadrant']),
+  quadrantYAxisTextFill: def('qyt', 'color', ['quadrant']),
+  quadrantInternalBorderStrokeFill: def('qib', 'color', ['quadrant']),
+  quadrantExternalBorderStrokeFill: def('qeb', 'color', ['quadrant']),
+  quadrantTitleFill: def('qtf', 'color', ['quadrant']),
   // tokens
-  strokeWidth: def('sw', 'length', ['core', 'flowchart', 'sequence', 'class', 'state', 'er']),
+  strokeWidth: def('sw', 'length', [
+    'core',
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+  ]),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),
   radius: def('r', 'length', ['core', 'flowchart', 'state']),
-  fontWeight: def('fw', 'weight', ['core']),
+  fontWeight: def('fw', 'weight', ['core', 'timeline']),
   spacing1: def('g1', 'length', ['core']),
   spacing2: def('g2', 'length', ['core']),
   spacing3: def('g3', 'length', ['core']),
@@ -254,15 +380,27 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   messageEndGap: def('meg', 'length', ['sequence']),
   labelBoxExtraHeight: def('lbx', 'length', ['sequence']),
   actorFooterPadding: def('afp', 'length', ['sequence']),
+  timelineRadius: def('tlr', 'length', ['timeline']),
+  timelineLabelOffset: def('tlo', 'padding', ['timeline']),
+  timelineEventLabelShift: def('tle', 'length', ['timeline']),
+  timelineScaleColors: def('tls', 'flag', ['timeline']),
   // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
   // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
   rowOdd: def('ro', 'color', ['er']),
   rowEven: def('re', 'color', ['er']),
   erEdgeLabelBackground: def('eel', 'color', ['er']),
   erMarkerFill: def('emf', 'color', ['er']),
+  // user journey (#290): section and task fills by slot (D241), the face, and the author's
+  // actor dot colours, which no theme sets (D249: the renderer then uses `actorColours`).
+  // Built in a loop: fifteen near-identical rows cost the always-loaded core bytes.
+  ...Object.fromEntries(
+    [...'01234567'].map((n) => [`fillType${n}`, def(`jf${n}`, 'color', JOURNEY)])
+  ),
+  faceColor: def('jfc', 'color', JOURNEY),
+  ...Object.fromEntries([...'012345'].map((n) => [`actor${n}`, def(`ja${n}`, 'color', JOURNEY)])),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
-  dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er']),
+  dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

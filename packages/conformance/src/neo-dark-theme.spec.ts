@@ -7,6 +7,7 @@
  */
 import {
   DARK_RULES,
+  NUMBERED_PALETTES,
   PALETTE_LIMIT,
   PALETTE_VARIABLES,
   THEME_VARIABLES,
@@ -48,8 +49,15 @@ const GRADIENT = ['useGradient', 'gradientStart', 'gradientStop'] as const;
 const PENDING_GRADIENT = GRADIENT.filter((n) => !Object.hasOwn(THEME_VARIABLES, n));
 
 /** Geometry v12 takes from `look: neo`, not from a theme variable; v13 carries it as tokens. */
+/**
+ * Timeline's box variables (spec #291): v12 chose its timeline geometry and paint by a theme
+ * name with `redux`, not by `look`, so `theme: neo` drew the classic values (D227).
+ */
+const TIMELINE = Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('timeline'));
+
 const LOOK_GEOMETRY = Object.entries(THEME_VARIABLES)
   .filter(([name, d]) => (d.kind === 'length' || d.kind === 'padding') && !(name in OLD))
+  .filter(([name]) => !TIMELINE.includes(name))
   .map(([name]) => name);
 
 const LOOK_GEOMETRY_WHY =
@@ -70,10 +78,16 @@ const DARK_WHY = 'D183: derived with the dark rules; v12 never set darkMode';
 const DIFFERENCES: Readonly<Record<string, string>> = {
   ...Object.fromEntries(DARK_DERIVED.map((n) => [n, DARK_WHY])),
   strokeWidth: 'D183: 2, as in neo; v12 neo-dark drew with 1',
+  quadrantPointFill:
+    'D231: v12 resolved it to hsl(…, NaN%); v13 defaults to textColor, as v12 points showed',
   secondaryTextColor: 'D183, R-THEME-9: v12 #b8b6b6 is 4.49:1 on secondaryColor; #b9b7b7 meets AA',
   altBackground: 'D189: #404040; v12 #f0f0f0 hid the #cccccc lines on a nested composite',
   dropShadow: 'D181: the same blurred shadow, written in the syntax `checkFilter` accepts',
-  cScale: 'D181, D152: neo-dark carries no per-item palette',
+  // Journey (#327): v12 sets neither; `.face` falls back to #FFF8DC and dots to actorColours.
+  faceColor: 'D245: v12 sets no faceColor; v13 gives its `.face` fallback #FFF8DC as the value',
+  ...Object.fromEntries(
+    [0, 1, 2, 3, 4, 5].map((i) => [`actor${i}`, 'D249: author-only; no theme sets actor<n>'])
+  ),
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
@@ -81,6 +95,9 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   erEdgeLabelBackground:
     'D152, D183: v12 ER labels use edgeLabelBackground outside its COLOR_THEMES; it is dark-derived',
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
+  ...Object.fromEntries(
+    TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])
+  ),
 };
 
 const hex = (v: unknown): string | undefined => {
@@ -107,8 +124,8 @@ function same(name: string): boolean {
 }
 
 function v12Palette(name: string): string[] {
-  if (name === 'cScale')
-    return Array.from({ length: PALETTE_LIMIT }, (_, i) => OLD[`cScale${i}`] as string);
+  if (NUMBERED_PALETTES.includes(name as never))
+    return Array.from({ length: PALETTE_LIMIT }, (_, i) => OLD[`${name}${i}`] as string);
   const list = OLD[name];
   return Array.isArray(list) ? (list as string[]) : [];
 }
@@ -179,8 +196,10 @@ describe('neo-dark against v12 12.2.0 (#227, D151, D181, D183)', () => {
     expect(hex(neoDark.value('erMarkerFill'))).toBe(hex(OLD.mainBkg));
   });
 
-  it('has no per-item palette (D181)', () => {
-    for (const p of PALETTE_VARIABLES) expect(neoDark.palette(p), p).toEqual([]);
+  it("has no per-subgraph palette (D181); its cScale palettes are v12 neo-dark's (D258)", () => {
+    expect(neoDark.palette('borderColorArray')).toEqual([]);
+    expect(neoDark.palette('bkgColorArray')).toEqual([]);
+    for (const p of NUMBERED_PALETTES) expect(neoDark.palette(p), p).toHaveLength(PALETTE_LIMIT);
   });
 
   // GAPS.md "Contracts": #223 owns the gradient vocabulary. Until it merges these are not v13

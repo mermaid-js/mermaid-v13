@@ -34,13 +34,16 @@ What most integrators have to change:
    default layout is `layered`; set `theme: 'default'` to keep v12's `default` colours and
    classic geometry ([Changed defaults](#changed-defaults), [Themes](#themes)).
 7. `look` is ignored with a `LOOK_REMOVED` warning; neo and classic geometry now come with the
-   theme ([Themes](#themes)).
+   theme ([Themes](#themes)). `look: handDrawn` needs `@mermaid-js/plugin-hand-drawn`
+   ([Hand-drawn look](#hand-drawn-look)).
 8. Render errors are thrown as `MermaidError`; nothing is drawn into the page for you
    ([Errors](#errors-and-the-error-image)).
 9. `mermaid.min.js` is now a small loader that imports the ES module build: the browser needs
    ES2022 module support, and the `chunks/` folder must be served next to it. Plugins are found
    on install in Node, through `@mermaid-js/bundler-plugin` in bundlers and through
    `globalThis.mermaidPlugins` on a CDN ([Loading and plugins](#loading-and-plugins)).
+10. Font Awesome's CSS no longer draws `fa:fa-car` in labels: register an icon pack (for example
+    `@iconify-json/fa6-solid` as `fa`) and `@mermaid-js/plugin-icons` ([Icons](#icons)).
 
 ## Packages
 
@@ -51,6 +54,7 @@ What most integrators have to change:
 | `mermaid@latest`, released from `develop` | Alphas are released from `mermaid-v13`, with dist-tag `v13-alpha` only, so `mermaid@latest` stays v12: install `mermaid@v13-alpha`. Public `mermaid@13.0.0-alpha.N` starts at `13.0.0-alpha.0` (D159) | R-REL-2, R-REL-3, D28, D159 |
 | No language-service or editor packages | Editor support is published as packages: `@mermaid-js/language-service` (editor-agnostic), `@mermaid-js/language-server` (LSP over stdio), and the adapters `@mermaid-js/language-service-codemirror` (CodeMirror 6) and `@mermaid-js/language-service-monaco` (Monaco). The adapters ship the generated first-paint grammars, one lazily loaded file per diagram type; the diagram packages ship none | R-LANG-2, D135, D158 |
 | `@mermaid-js/layout-elk` | Same name, a 13.x line. Register it as in v12 (`mermaid.registerLayoutLoaders(elkLayouts)`); without it `layout: elk` draws with the built-in engine and warns `ELK_NOT_INSTALLED` ([ELK](#elk)) | R-PLUG-8, D171 |
+| `look: handDrawn`, drawn by roughjs inside `mermaid` | `@mermaid-js/plugin-hand-drawn`, an optional extension with roughjs 4.6.6 as its one dependency. Installed is enabled; without it `look: handDrawn` draws the plain diagram and warns `LOOK_REMOVED` ([Hand-drawn look](#hand-drawn-look)) | R-PLUG-8, D300 |
 | ZenUML, tidy-tree and the example diagram package | Not ported in M1 | |
 
 ## Loading and plugins
@@ -141,7 +145,7 @@ test checks them against the mermaid@12 declarations.
 | `registerExternalDiagrams([{ id, detector, loader }])` where the loader returns a v12 `DiagramDefinition` (parser, db, D3 renderer) | Same call shape, but the loader returns a v13 diagram plugin `{ id, detector, parse, layout?, render }`. v12 diagram definitions do not run in v13 | D35, R-PLUG-2 |
 | `registerLayoutLoaders([{ name, loader, algorithm? }])` where the loader returns a DOM renderer | `registerLayoutLoaders([{ name, loader }])` where the loader returns a layout engine `(graph, ctx?) → LayoutModel`; selected with `layout:` | R-LAYOUT-2 |
 | `layout: elk` / `elk.<algorithm>` uses the ELK package | Laid out by `@mermaid-js/layout-elk` once registered (`mermaid.registerLayoutLoaders(elkLayouts)`, as in v12; it registers v12's seven names plus `elk.layered` and `elk.radial`); without it, drawn with the built-in `layered` engine and one `ELK_NOT_INSTALLED` warning naming the package | DESIGN §6.1, D171, D173 |
-| `registerIconPacks(...)` | Accepted and ignored; renders carry an `ICON_PACKS_UNSUPPORTED` warning until the icons plugin exists | R-API-3 |
+| `registerIconPacks([{ name, icons } \| { name, loader }])` | Same call shape and quirks (`name` overrides the pack's `prefix`; a loader may return the pack itself). Packs belong to one `mermaid` object (`createMermaid()`), not the page, and are drawn by `@mermaid-js/plugin-icons`. Loaders run in `prepare()`/`render()` only for a diagram that names their pack, or in the new `preload({ iconPacks })`; a rejecting loader no longer fails the render. See [Icons](#icons) | R-API-2, R-API-3, D290, D294, D299 |
 | `setParseErrorHandler(fn)` gets the raw error | Deprecated; `fn` gets the `MermaidError` of a failed `parse()` | R-API-4 |
 | `initialize()` replaces the site config | Same: it swaps in a new frozen defaults object; renders already started keep the old one | R-ARCH-4, D72 |
 | Integrator options beyond the schema | `initialize()` also takes `measurer`, `deterministic`, `linkSchemes`, `output.cssVariables` and `limits`; diagram text can never set them | R-SEC-5, R-SEC-6 |
@@ -254,6 +258,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 
 | Key | Status | Reason | Replacement |
 | --- | --- | --- | --- |
+| `themeVariables.THEME_COLOR_LIMIT` | ignored | The numbered palettes always have twelve slots, and a diagram cycles through them (D258). |  |
 | `themeCSS` | ignored | v13 output carries no author stylesheet (R-SEC-2). | `themeVariables`, or `--mermaid-*` CSS variables set by the host page |
 | `look` | ignored | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes, `neo` and `neo-dark` carry neo geometry and the classic themes carry classic geometry (D152, D181). | `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8) |
 | `htmlLabels` | removed | Labels are SVG text only; there is no HTML label mode (D5). | none; labels support a markdown subset rendered as SVG text |
@@ -274,8 +279,38 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `sequence.noteFont` | ignored | v12's internal font helper; v13 reads the `noteFontSize`, `noteFontFamily` and `noteFontWeight` keys. |  |
 | `sequence.actorFont` | ignored | v12's internal font helper; v13 reads the `actorFontSize`, `actorFontFamily` and `actorFontWeight` keys. |  |
 | `gantt.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `journey.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the journey renderer never did. |  |
 | `journey.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `journey.boxMargin` | ignored | v12's journey renderer read it only in a loop over an empty list, so it had no effect. |  |
+| `journey.noteMargin` | ignored | v12's journey renderer never read it. |  |
+| `journey.messageMargin` | ignored | v12's journey renderer never read it. |  |
+| `journey.messageAlign` | ignored | v12's journey renderer never read it. |  |
+| `journey.bottomMarginAdj` | ignored | v12's journey renderer never read it. |  |
+| `journey.rightAngles` | ignored | v12's journey renderer never read it. |  |
+| `journey.activationWidth` | ignored | v12's journey renderer never read it. |  |
+| `journey.textPlacement` | ignored | Every label is SVG text from core label layout, wrapped to its box, in `textColor`, with `<br>` breaking lines (D225); there is no `foreignObject` or `tspan`-only mode. |  |
+| `journey.sectionFills` | ignored | Sections are filled from the theme's `fillType0`–`fillType7`, cycling over all eight (D241). In v12 the theme's `fillType<n>` style rules hid these colours in every theme. |  |
+| `timeline.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the timeline renderer never did. |  |
 | `timeline.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `timeline.diagramMarginX` | ignored | v12's timeline never read it. |  |
+| `timeline.diagramMarginY` | ignored | v12's timeline never read it. |  |
+| `timeline.width` | ignored | v12's timeline never read it. |  |
+| `timeline.height` | ignored | v12's timeline never read it. |  |
+| `timeline.boxMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.boxTextMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.noteMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.messageMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.messageAlign` | ignored | v12's timeline never read it. |  |
+| `timeline.bottomMarginAdj` | ignored | v12's timeline never read it. |  |
+| `timeline.rightAngles` | ignored | v12's timeline never read it. |  |
+| `timeline.taskFontSize` | ignored | v12's timeline never read it; box text is drawn at `themeVariables.fontSize`. |  |
+| `timeline.taskFontFamily` | ignored | v12's timeline never read it; box text is drawn at `themeVariables.fontFamily`. |  |
+| `timeline.taskMargin` | ignored | v12's timeline never read it. |  |
+| `timeline.activationWidth` | ignored | v12's timeline never read it. |  |
+| `timeline.textPlacement` | ignored | v12's timeline never read it. |  |
+| `timeline.actorColours` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
+| `timeline.sectionFills` | ignored | v12's timeline never read it; boxes take the `cScale` palettes or `mainBkg`. |  |
+| `timeline.sectionColours` | ignored | v12's timeline never read it; box text takes `cScaleLabel` or `nodeBorder`. |  |
 | `class.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the class renderers never did. |  |
 | `class.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `class.titleTopMargin` | ignored | The class SVG draws no front-matter `title`, as flowchart's. |  |
@@ -308,7 +343,9 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `er.stroke` | ignored | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. | `themeVariables.nodeBorder` and `lineColor` |
 | `er.fill` | ignored | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. | `themeVariables.mainBkg` |
 | `er.fontSize` | ignored | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. Entities use the theme font size. | `themeVariables.fontSize` |
+| `pie.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the pie renderer never did. |  |
 | `pie.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `quadrantChart.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the quadrant chart renderer never did. |  |
 | `quadrantChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `xyChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `requirement.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -347,6 +384,10 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `sequence.noteFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
 | `sequence.messageFontSize` |  | The default changes: unset, it is the theme's `fontSize` (16 by default), the size v12 drew, since v12 replaced every per-key size with the global `fontSize`. A set value now takes effect. |
 | `sequence.messageFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not a per-key font. A set value takes effect. |
+| `journey.taskFontSize` |  | The default changes: unset, task and section names are drawn in the theme's `fontSize` (16 by default), as for every diagram type, not v12's 14. A set value takes effect. |
+| `journey.taskFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type, not v12's Open Sans. A set value takes effect. |
+| `journey.sectionColours` |  | The default changes: unset, section and task names are `textColor`. When set, it colours them by section band (D225); v12's `['#fff']` reached only the `tspan` fallback, which its default `fo` labels did not show. |
+| `journey.titleFontFamily` |  | The default changes: unset, it is the theme's `fontFamily`, as for every diagram type (D248). A set value takes effect. |
 | `class.padding` | `12` | The documented default changes from 5 to 12, the padding v12 drew class boxes with (D125): its schema said 5 but its renderer never got it. Unset, namespaces keep v12's 16 and notes its 6; set, the value pads all three. |
 | `class.diagramPadding` | `8` | The documented default changes from 20 to 8, the padding v12 drew class diagrams with (D125): its renderer ignored the key and used 8. |
 
@@ -414,19 +455,20 @@ Sequence diagrams (`sequence` section, #145):
 | v12 | v13 | Why |
 | --- | --- | --- |
 | Default theme `default` (the flowchart section defaults to `redux-color` with `look: neo`) | Default theme `redux-color` for every diagram type, with v12's `look: neo` geometry. Set `theme: 'default'` for v12's default colours and classic geometry | D151 |
-| Themes `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`, `null` | 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes ported from v12, plus `default`, `dark`, `forest`, `neutral`, `base`, `neo` and `neo-dark`. `neo` is v12's `theme-neo.js` with v12's `look: neo` geometry (the redux family's), corner radius 3, its blurred shadow and no per-item palette. `neo-dark` is v12's `theme-neo-dark.js` with the same geometry and tokens, cleaned up into a dark theme ([neo-dark](#neo-dark)). `null` renders `base`, with a `THEME_UNAVAILABLE` warning. An unknown name renders the default theme with the same warning | D151, D180, D181, D183, R-THEME-6, R-THEME-7 |
+| Themes `default`, `base`, `dark`, `forest`, `neutral`, `neo`, `neo-dark`, `redux`, `redux-dark`, `redux-color`, `redux-dark-color`, `null` | 13.0 ships the redux family (`redux`, `redux-color`, `redux-dark`, `redux-dark-color`) as real themes ported from v12, plus `default`, `dark`, `forest`, `neutral`, `base`, `neo` and `neo-dark`. `neo` is v12's `theme-neo.js` with v12's `look: neo` geometry (the redux family's), corner radius 3, its blurred shadow and no per-subgraph palette. `neo-dark` is v12's `theme-neo-dark.js` with the same geometry and tokens, cleaned up into a dark theme ([neo-dark](#neo-dark)). `null` renders `base`, with a `THEME_UNAVAILABLE` warning. An unknown name renders the default theme with the same warning | D151, D180, D181, D183, R-THEME-6, R-THEME-7 |
 | — | `theme: 'auto'`: the default theme, switching to `dark` under `prefers-color-scheme: dark` through a small custom-property `<style>` | R-THEME-8 |
 | Colours computed once in JS (khroma) and written into a `<style>` element | Colours are presentation attributes reading CSS variables: every theme variable is `--mermaid-<name>` on the host page, with the theme value as fallback; derived colours use `color-mix()`, and contrast text and `invert()` use relative colour syntax (`color(from …)`), so they follow a host override of the colour they derive from. A page can re-theme rendered SVGs with CSS. Limit: contrast text picks between the theme's two ink values; overriding the ink variables themselves (`--mermaid-textColor`) does not change contrast-derived text such as `nodeTextColor` (set `--mermaid-nodeTextColor` directly) `initialize({ output: { cssVariables: false } })` writes literal colours instead | R-THEME-2, R-THEME-3, R-THEME-4 |
 | `themeVariables` from diagram text checked against a character set only | Values are checked by kind (colour, length, font, weight) and a bad one is dropped with `THEME_VARIABLE_DROPPED`. Names v13 does not use are ignored | R-SEC-3 |
 | `themeCSS` | Ignored; see [Config behaviour](#config-behaviour) | R-SEC-2 |
 | Label text colour fixed by the theme | When a `style`/`classDef` fill makes the theme's text colour unreadable, the label switches to black or white | R-THEME-12 |
 | `look: neo` / `look: classic` | `look` is removed: the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. What `look` switched in v12 is theme data: the redux themes, `neo` and `neo-dark` carry v12's neo geometry and the classic themes (`default`, `dark`, `forest`, `neutral`, `base`) carry v12's classic geometry. For a mix, override the variables ([Theme geometry](#theme-geometry)) | D152, D153 |
-| `look: handDrawn` | Ignored like any other `look`, with the same generic `LOOK_REMOVED` warning; core names no plugin. Hand-drawn strokes will come from an optional plugin, which will claim `look: handDrawn` as a legacy alias of its own key once plugins can declare config | D7, D153, R-PLUG-8 |
+| `look: handDrawn` | Drawn by the optional `@mermaid-js/plugin-hand-drawn`, whose config fragment takes `look: handDrawn` as an alias of its `handDrawn` key. Without the plugin it is ignored like any other `look`, with one `LOOK_REMOVED` warning that names the plugin. See [Hand-drawn look](#hand-drawn-look) | D7, D153, D300, D303, R-PLUG-8 |
 | Neo gradients (`useGradient`, `gradientStart`, `gradientStop`) | Public theme variables. `neo` and `neo-dark` turn the gradient on (`#0042eb` to `#eb0042`, left to right); every other theme has it off, and any theme can turn it on in `themeVariables`. The SVG then carries one `<defs>` with a `<linearGradient id="<idPrefix>-gradient">`, and the outlines v12 neo strokes with the gradient take `url(#<idPrefix>-gradient)`, so two diagrams on a page never share it. The stops read `--mermaid-gradientStart` / `--mermaid-gradientStop`. See [Neo gradient](#neo-gradient) | D182, R-THEME-7 |
 | Drop shadow under `look: neo` | A hard drop shadow in the redux themes, as the CSS `filter` from the `dropShadow` theme variable: offset 4px, no blur, 6% opacity, black on light themes and white on dark. `neo` keeps v12's blurred shadow, `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`, and `neo-dark` its own, `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. It is on node outlines, icons, subgraphs and collapsed groups, not on edges, edge labels or swimlanes. Under `neo` and `neo-dark`, sequence participants take the theme's drop shadow, as notes and fragment labels do; v12 drew them with a separate 6% white offset filter that did not show on `neo` (D184). The classic themes set `dropShadow: none`. No `<defs>` and no ids, so several diagrams on a page never collide | D151, D152, D181, D184 |
 | Per-subgraph colour in `redux-color` | Each subgraph takes a palette slot by declaration order, cycling after twelve: border from `borderColorArray`, fill from `bkgColorArray`. `redux-dark-color` has an empty fill palette, so its subgraphs are coloured on the border only. `redux` and the classic themes carry no palette. Colour is on whenever the theme has a non-empty `borderColorArray` (a `themeVariables` palette turns it on in any theme), and a collapsed subgraph's card, separator and dots take its slot too. As in v12 the slot is written as `data-color-id="color-<n>"` on the cluster or collapsed node, and an author `style` / `classDef` still wins. Swimlanes are not drawn yet, so there is nothing to colour there | D151, D152 |
 | Sequence colours `actorBkg`, `actorBorder`, `actorTextColor`, `actorLineColor`, `signalColor`, `signalTextColor`, `labelBoxBkgColor`, `labelBoxBorderColor`, `labelTextColor`, `loopTextColor`, `activationBkgColor`, `activationBorderColor`, `sequenceNumberColor` | The same names, derived as v12 `theme-base.js` derives them, with each built-in theme's v12 values pinned where they differ; `--mermaid-<name>` like every variable. `activationBorderColor` is `secondaryColor` with 12.5% black, close to khroma's `darken(…, 10)` | R-THEME-2, D71 |
-| Numbered palettes (`pie*`, `git*`) | Not in the 13.0 inventory; they come with the diagram types that use them. `cScale0`–`cScale11` are set by `redux-color` (the fixed Tailwind-300 set) | R-CONF-5 |
+| Numbered palettes (`pie*`, `git*`) | `pie1`–`pie12` and the other pie variables are in the inventory ([Pie chart](#pie-chart)); `git*` come with gitGraph. | R-CONF-5 |
+| `cScale0`–`cScale11`, `cScaleInv0`–`cScaleInv11`, `cScaleLabel0`–`cScaleLabel11` | Three palettes, `cScale`, `cScaleInv` and `cScaleLabel`, with v12's values in every theme, derived as v12 derives them: they follow `primaryColor` (and the secondary and tertiary colours) where v12's theme does (`base`, `forest`, `dark` slot 0, `neo-dark`, `redux-dark`; `mainBkg` in `redux`), the darker steps under `darkMode`, and an override of one slot or of the whole list (`cScale: [...]`). A `cScaleInv` or `cScaleLabel` slot that v12 derived from the `cScale` slot follows its override as in v12. `THEME_COLOR_LIMIT` is ignored: twelve slots, cycling. `scaleLabelColor` is not read: set `cScaleLabel` or `labelTextColor`. Under `darkMode`, v12 also turned the unset text colour of `base`, `neo`, `redux` and `redux-color` to `#eee`, which their labels followed; v13 keeps the theme's `labelTextColor`. The timeline paints with them only in the classic themes, and with `cScaleLabel` in the neo themes ([Timeline config](#timeline-config)) | D258 |
 
 Colours are close to, but not byte-equal with, v12. Where a v12 colour pair failed WCAG AA
 contrast, v13 changes it (for example the dark theme's `edgeLabelBackground`).
@@ -463,6 +505,10 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `messageEndGap` (sequence: a message stops this far short of its target, past the head room; a bidirectional one starts this far in) | 3 | 0 |
 | `labelBoxExtraHeight` (sequence: added to a fragment's label tab) | 15 | 0 |
 | `actorFooterPadding` (sequence: room below a drawing with participants) | 30 | 0 |
+| `timelineRadius` (timeline box top corners) | 0 (`neo`, `neo-dark`: 5, D227) | 5 |
+| `timelineLabelOffset` (timeline: a section or period label below its box's top) | padding (`neo`, `neo-dark`: 0.5 × padding) | 0.5 × padding |
+| `timelineEventLabelShift` (timeline: added to half the padding above an event label) | 3 (`neo`, `neo-dark`: 0) | 0 |
+| `timelineScaleColors` (timeline boxes take `cScale<n>` fills, `cScaleLabel<n>` text and a 3px `cScaleInv<n>` rule; the axis and connectors `cScaleLabel11` at 4px / 2px) | `false`: `mainBkg` fill (the `borderColorArray` slot when `bkgColorArray` is non-empty, D257), `nodeBorder` outline at `strokeWidth` with `dropShadow`, `nodeBorder` text, axis and connectors at `strokeWidth` (`neo`, `neo-dark`: `true`, D227) | `true` |
 | `dropShadow` | `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))`; white instead of black on `redux-dark` and `redux-dark-color`; `drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))` on `neo`; `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))` on `neo-dark` | `none` |
 | `classText` (colour: class diagram text) | `textColor` | `primaryTextColor` |
 | `classMarkerStrokeWidth` / `classFilledMarkerStrokeWidth` (outline of hollow / filled class markers) | 2 / 0 | 1 / 1 |
@@ -477,7 +523,8 @@ variables feed layout, so they are read as numbers at render time and overriding
 | `altBackground` (state) | `#f9f9fb`; `#16141f` on `redux-dark` and `redux-dark-color`; `#f0f0f0` on `neo`; `#404040` on `neo-dark` (D189) | `#f0f0f0` (`default`, `forest`); `#555555` (`dark`); `#f4f4f4` (`neutral`); `tertiaryColor` (`base`) |
 
 The palette rows apply to the two colour themes only; plain `redux`, `redux-dark`, `neo` and
-`neo-dark` carry no palette. A padding variable (the `…Padding…` names) takes a px number or a multiple of
+`neo-dark` carry no per-subgraph palette (every theme carries `cScale`, `cScaleInv` and
+`cScaleLabel`, D258). A padding variable (the `…Padding…` names) takes a px number or a multiple of
 `flowchart.padding` written `padding` or `<n> * padding`, so `nodePaddingX: '2 * padding'`
 gives a redux theme classic node padding. `circlePadding` is added to the label's diagonal,
 so it counts twice towards the diameter compared with the per-side node padding.
@@ -537,8 +584,9 @@ that v12 neo strokes with the gradient take it, and nothing else does (D182):
 
 - **Flowchart:** node outlines (with their inner lines: cylinder rims, double-circle rings,
   braces) and subgraph rectangles. A linked node (`click … href`) takes the gradient and the
-  shadow like every other node; v12 neo drew it plain (D184). An icon node's frame takes the
-  gradient; v12 put it on the glyph and drew the frame without a border (D186).
+  shadow like every other node; v12 neo drew it plain (D184). An icon shape's glyph takes the
+  gradient and its frame does not, as in v12 (D298); an icon that is not drawn keeps its frame's
+  outline in the gradient.
 - **Class:** class boxes, their dividers and namespaces; not notes.
 - **State:** states, the choice diamond, composites, notes, the start and end dots, fork and
   join bars.
@@ -557,6 +605,91 @@ each region's frame with the gradient) and a described state's divider. Class di
 lifted 0.01 so they take the gradient (v12 0.001) (D185).
 No node part is filled with the gradient: the flowchart fork and join bar is stroked with it and
 filled in plain `nodeBorder`, the same colour as the `lineColor` v12 neo filled it with (D185).
+
+## Hand-drawn look
+
+v12 drew `look: handDrawn` with roughjs inside `mermaid`. v13 draws it with the optional
+`@mermaid-js/plugin-hand-drawn` (D300), which sketches the outlines a diagram draws with roughjs's
+DOM-free generator. `renderSync` works with it in Node and the browser, with no DOM.
+
+```sh
+npm install @mermaid-js/plugin-hand-drawn
+```
+
+- **Activation.** Installed is enabled ([Plugins](#plugins-installed-is-enabled-r-plug-5)): Node
+  discovery finds it, as does `@mermaid-js/bundler-plugin`. Elsewhere, register it once:
+  `import { handDrawn } from '@mermaid-js/plugin-hand-drawn'; await
+  mermaid.registerExternalDiagrams([handDrawn]);`. Diagram text cannot install it.
+- **Keys.** The plugin owns `handDrawn` (boolean, default `false`) and `handDrawnSeed` (number,
+  default 0), which left core's schema; see the plugin's sections of
+  [config-reference.md](./config-reference.md). `look: handDrawn` sets `handDrawn: true`, at the
+  top level or in a diagram section, and gives no warning. Other `look` values still warn
+  `LOOK_REMOVED`. Installing the plugin changes no default: a diagram without the look draws as
+  before (D303).
+- **A section's `look` applies to the diagram drawn,** whatever its type: `sequence.look:
+  handDrawn` in the config of a flowchart sketches that flowchart. v12 read only the drawn type's
+  section.
+- **Only `handDrawn: false` turns the sketch off.** `look: classic` and `look: neo` still only
+  warn `LOOK_REMOVED`: they do not beat a `look: handDrawn` set in another source (`initialize`,
+  front matter, a directive) or at the top level. In v12 the diagram text's `look`, and the
+  drawn type's section, won. To draw one diagram plain under a site-wide hand-drawn look, set
+  `handDrawn: false` in its front matter or directive.
+- **Without the plugin,** `look: handDrawn` draws the plain diagram with one `LOOK_REMOVED`
+  warning naming `@mermaid-js/plugin-hand-drawn`, and `handDrawn` or `handDrawnSeed` give
+  `CONFIG_UNKNOWN_KEY`, as `elk.*` keys do without ELK (D153).
+- **Seed 0 is a fixed seed (D300, D304).** v12's default `handDrawnSeed: 0` drew a random sketch
+  on every render. In v13 every seed, 0 included, gives the same drawing on every render and
+  machine, and another seed another drawing. A non-zero seed gives roughjs's v12 strokes for the
+  same geometry, but v13's geometry is not v12's, so the drawings still differ. Every outline
+  shares the seed, as in v12.
+- **Node bounds are not measured from the sketch.** v12 measured the roughjs paths (`getBBox`)
+  and sized nodes, edges and the viewBox from them. v13 lays out first and sketches after
+  (DESIGN §6): the layout, every node and edge position and the viewBox are the same with and
+  without the look. A stroke strays at most a few units off the outline (about 2.6 units for a
+  120 × 40 node, about 5.6 with its hachure fill), inside the viewBox padding.
+- **Paints come from the theme and the diagram (D152, D307),** in every theme: `style`,
+  `classDef` and `linkStyle` colours, widths and dash patterns are kept. Under `neo` and
+  `neo-dark` the gradient strokes the sketch and the `dropShadow` filter sits on the sketch's
+  `<g>`; v12 never combined neo and hand-drawn. Fills are hachured as in v12; state composites
+  are solid.
+- **What is sketched (D301):** flowchart (node shapes, their inner lines, subgraphs, the
+  collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state
+  (states, composites, notes, start and end, choice, fork and join, region dividers,
+  transitions) and ER (entities, attribute rows, dividers, subgraphs, relationship lines).
+  Mindmap will be sketched once it is ported. Arrowheads, edge-label backgrounds and text are never
+  sketched, as in v12. Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges.
+  State composites are drawn at 0.7, where v12 used roughjs's default of 1. An outline with no
+  fill and no stroke (flowchart's `text` and brace hit boxes, state's region frame) stays the
+  plain element.
+- **Not sketched:** sequence draws exactly as without the plugin, with no warning, as in v12
+  (D305). Gantt, pie, timeline, journey, quadrant and gitGraph will do the same once they are
+  ported. Types v12 sketched that v13 has not ported yet (requirement, block, kanban, swimlanes,
+  venn, ishikawa, treemap, usecase, agentflow) are sketched once their ports adopt it.
+- **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
+  `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
+  included (D305).
+- **Size.** roughjs loads with the plugin, not lazily (D306): about 11.2 KB gz for the plugin,
+  8.9 KB of it roughjs. `mermaid` and core are the same bytes with or without it (R-PLUG-8).
+- **Output size.** A sketched SVG is much larger than the plain one: hachure fills at v12's
+  `hachureGap` of 1.5 draw a stroke every 1.5 units, so the SVG grows roughly 5–25× (about 14×
+  for a 40-node flowchart), most for large filled shapes. A large diagram can reach the `maxOutputLength` limit (4,000,000
+  characters) and fail with a `LIMIT` error. The integrator can raise it with
+  `initialize({ limits: { maxOutputLength: 20_000_000 } })` or a per-call `config.limits`
+  ([Limits](#limits)); diagram text cannot.
+
+### Hand-drawn SVG structure
+
+v13 keeps its own class names on sketched elements (D308): there is no `rough-node` class (v12
+swapped it in for `node`) and no `data-look` attribute on clusters. CSS that targets v13's
+classes works the same with the look on.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| A sketched node's outline is a `<g>` that `rough.svg` drew, inside a node classed `rough-node` | The node keeps its v13 classes. Its outline (`<rect>`, `<circle>`, `<polygon>`, `<path>`, …) becomes a `<g>` that carries the outline's own attributes other than geometry and paint (`class`, `filter`, `opacity`, `transform`, `style`, data attributes), holding roughjs's paths in its order: the fill, then the outline. A hachure fill is a `<path>` stroked in the fill colour (`fill="none"`), a solid one a `<path>` filled with it (`stroke="none"`). The paths have no ids | D302, D308, R-SEC-2 |
+| Clusters with `data-look="handDrawn"`, drawn as a rounded-rectangle path of radius 0 | No `data-look`. A subgraph, namespace or ER subgraph frame is sketched as a rectangle (a rounded one when the frame has rounded corners), with v12's options, so its strokes differ from v12's | D308 |
+| Edges: one `<path>` with a sketched `d` | The same: the edge's `<path>` keeps its attributes and gets roughjs's `d`; paint it inherits from its `edgePaths` group stays there | D302 |
+| ER: a solid copy of each hachured entity underneath it, so markers do not show through | Dropped: no v13 ER edge or end marker is drawn under an entity, so nothing shows through. A subgraph's fill still shows through a hachured entity, as for a flowchart node in a subgraph | D308 |
+| State composites: the title band and an alternate (`statediagram-cluster-alt`) body hachured | Both composite parts are solid: the drawer sees only the outline it draws, and an alternate body's outline does not say it is one. Known gap of 13.0 | D302 |
 
 ## Layout
 
@@ -648,6 +781,7 @@ variables instead.
 | Markdown strings (`` "`**bold**`" ``) | Same subset: `**`/`__` bold, `*`/`_` italic, `` `code` `` (monospace), `- ` and `* ` bullet lists (one nesting level), backslash escapes, `<br>` and newlines | R-TEXT-2 |
 | Entities: Mermaid's `#quot;`/`#35;` and HTML `&…;` | Both decoded; about 45 named HTML entities plus numeric ones. Unknown entities stay literal | |
 | KaTeX math (`$$…$$`) | Rendered by the optional `@mermaid-js/plugin-math` (`registerExternalDiagrams([math])`): MathJax typesets the TeX into SVG paths, so glyph shapes differ from KaTeX's. MathJax loads only for a diagram with math; `renderSync` needs `prepare()` or `preload({ math: true })` first. TeX that does not parse is shown as written with a `MATH_ERROR` warning. Every label core lays out takes math: flowchart nodes, edges and subgraph titles; class, state and ER labels; sequence messages, notes, participants, fragment and box labels. Without the plugin the TeX is shown as written, with one `MATH_NOT_RENDERED` warning per render. Text output always shows the TeX as written, with one `ASCII_DROPPED` warning (`feature: 'math'`). `legacyMathML` and `forceLegacyMathML` are ignored. See [Math](#math) | D5, D175, D176, D178, D179 |
+| `fa:fa-car` in HTML labels: an icon from a registered pack, else `<i class="fa fa-car">` for Font Awesome's CSS to draw | An icon from a registered Iconify pack, drawn as SVG paths by the optional `@mermaid-js/plugin-icons`, in every label core lays out (sequence too); page CSS draws nothing. An icon that does not resolve is shown as written, with one `ICON_NOT_RENDERED` warning per render. See [Icons](#icons) | D290, D291, D292, D296 |
 | Text measured by the browser | Measured by canvas when present, else by built-in tables for Trebuchet MS, Verdana and Arial; line height comes from the font, so labels are not pixel-equal with v12 | R-TEXT-4 |
 | Labels wrap at `flowchart.wrappingWidth` (HTML labels) | Node labels, plain and markdown alike, wrap at `wrappingWidth` (120) and are widened to `minNodeWidth` (120), except circles; edge labels wrap at 200. CJK text breaks between characters, and a word wider than the box is split | |
 
@@ -666,6 +800,77 @@ v12 rendered `$$…$$` with KaTeX into MathML or HTML; v13 typesets it with Math
 - **No MathML.** Nothing in v13 output is MathML or HTML, so `legacyMathML` and `forceLegacyMathML` have no effect, and no KaTeX stylesheet is needed.
 - **Loading.** MathJax loads only for a diagram with a `$$…$$` pair in a label. `render()` loads it; `renderSync` needs `prepare()` or `preload({ math: true })` first, or throws `NotLoadedError` naming `math "tex"`.
 
+### Icons
+
+v12 drew `fa:fa-car` in a label only in HTML labels (`htmlLabels: true`): as the icon of a
+registered pack, or else as `<i class="fa fa-car">` for Font Awesome's CSS to draw. v13 labels
+are SVG text (D5), so there is no `<i>` element and page CSS cannot draw an icon. Icons come from
+[Iconify JSON](https://icones.js.org/) packs registered in code and are drawn as SVG paths by
+the optional `@mermaid-js/plugin-icons` (D290, D291). To keep `fa:` icons, install the plugin
+and a Font Awesome pack, and register the pack under the prefix your diagrams use:
+
+```js
+import mermaid from 'mermaid';
+import { icons } from '@mermaid-js/plugin-icons';
+
+await mermaid.registerExternalDiagrams([icons]); // not needed when it is discovered on install
+mermaid.registerIconPacks([
+  { name: 'fa', loader: () => import('@iconify-json/fa6-solid').then((m) => m.icons) },
+  { name: 'fab', loader: () => import('@iconify-json/fa6-brands').then((m) => m.icons) },
+]);
+```
+
+[Icons](./icons.md) has the setup in full. What differs from v12:
+
+- **Prefixes and names.** Labels read v12's prefixes plus `fad`: `fa`, `fab`, `fad`, `fak`,
+  `fal`, `far` and `fas` (D296). `fa:fa-car` is the icon `car` of the pack registered as `fa`, so
+  each prefix your diagrams use needs its own pack. Names are the pack's: `fa6-solid` has Font
+  Awesome 6 names, so a Font Awesome 5 name it renamed (`fa:fa-home`, now `house`) does not
+  resolve; register `@iconify-json/fa-solid` (Font Awesome 5) as `fa` to keep those. There is no
+  generic `pack:name` in labels, so text such as `note:item` stays text.
+- **No `htmlLabels` gate, every type.** Icons are drawn in every label core lays out: flowchart
+  nodes, edges and subgraph titles; class, state and ER labels; sequence messages, notes,
+  participants, fragment and box labels, which v12 drew as plain text (D292). Class relation
+  labels and single-line state notes cannot hold `:` (v12's grammar), so they cannot hold an icon.
+- **Look.** A label icon is 1em tall at the label's font size, as wide as its aspect makes it,
+  with its bottom 0.125em below the baseline (v12's `.label-icon`), in the label's text colour:
+  `currentColor` fills and strokes both take it. It has no class, so CSS aimed at `.label-icon`
+  or `i.fa` selects nothing.
+- **Loading.** A loader runs only for a diagram that names its pack: in `render()` and
+  `prepare()`, or up front with `preload({ iconPacks: ['fa'] })`. `renderSync` before that throws
+  `NotLoadedError` naming the pack; with `placeholders: true` it draws an empty 1em box instead
+  (an icon shape draws its frame, or nothing without a `form`), with `PLACEHOLDER` (D299). A loader that rejects no longer
+  fails the render: its icons are not drawn, the warning names the pack, and the next `prepare()`
+  retries it.
+- **Not drawn: shown as written.** An icon that does not resolve (no plugin, no pack of that
+  name, no such icon, a pack whose loader failed or that is not Iconify JSON, a shape icon name
+  that is not `pack:name`) stays in the label as written, `fa:fa-car`, and an icon shape draws
+  its frame alone (nothing, without a `form`), with one `ICON_NOT_RENDERED` warning per render
+  (D291), as `MATH_NOT_RENDERED` does for math. With the plugin it names the icons and why;
+  without it, it says icons need an icons extension. While packs are registered and no icons
+  extension is, every render also warns `ICON_PACKS_UNSUPPORTED`. `ICON_UNAVAILABLE` (flowchart icon
+  shapes) is deprecated: for one alpha it is still raised once per render next to
+  `ICON_NOT_RENDERED`, naming the icon shapes not drawn, and never for a placeholder render
+  (D299). Read `ICON_NOT_RENDERED` instead.
+- **What an icon may hold (D295).** An icon's body is not inserted as markup: the plugin
+  rebuilds it from `g`, `path`, `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon` and
+  `text` with their presentation attributes (`style="…"` declarations become attributes), so no
+  icon pack can put script or links into a diagram (R-SEC-2). `defs`, gradients, `mask`,
+  `clipPath`, `use`, `style`, `image` and animation are dropped, as are `id`, `class` and event
+  attributes, and `url(#…)` paints become `currentColor`. A diagram with an icon changed that way
+  gets one `ICON_SIMPLIFIED` warning per render naming them. No `fa6-solid` or `mdi` icon is
+  changed; about one `logos` icon in five uses a gradient and is drawn flatter than in v12.
+- **Icon shapes** (`@{ icon: … }`) draw their glyph with the plugin, as in v12; an icon not drawn
+  keeps its frame (see [Flowchart syntax](#flowchart-syntax)).
+- **Mindmap** is not ported yet (`UNSUPPORTED_DIAGRAM`). When it is, `::icon(fa fa-book)` and
+  `::icon(mdi:fire)` draw from the registered packs, placed as v12's older mindmap renderer
+  placed them (D297). 12.2.0 parsed `::icon()` but drew nothing, so any mindmap icon is new; one
+  that does not resolve is shown as written in the icon's place, with `ICON_NOT_RENDERED` (D286).
+- **Text output** shows label icons as written, with one `ASCII_DROPPED` warning
+  (`feature: 'icon'`); an icon shape is a box with its label (`feature: 'image'`) (D299).
+- **Size.** Core does not change with the plugin installed (R-PLUG-8); the plugin is about
+  5.5 KB gz, plus the packs your diagrams load.
+
 ## Flowchart syntax
 
 The flowchart parser accepts exactly the v12 language: a differential test runs v12 and v13
@@ -679,8 +884,13 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 - **Shape data** (`A@{ shape: … }`) is read with v13's YAML reader: YAML anchors (`&a`) are
   rejected, which js-yaml accepted. A few malformed values that js-yaml rejected are accepted.
 - **Shapes** not in the documented shape list (`classBox`, `erBox`, `usecase*`, `bpmn-*`,
-  `kanbanItem`, mindmap shapes) draw as a rectangle. Icon shapes draw their frame only, with an
-  `ICON_UNAVAILABLE` warning, until the icons plugin exists.
+  `kanbanItem`, mindmap shapes) draw as a rectangle.
+- **Icon shapes** (`@{ icon: … }`, `form` `square`, `circle`, `rounded`) draw their glyph with
+  `@mermaid-js/plugin-icons`, as v12 did (D292, D298): the glyph takes the node's `stroke`
+  style, else `nodeBorder` (the gradient under `useGradient`), and the frame is borderless (its
+  stroke is its fill). An icon that is not drawn (no plugin, no such pack or icon, a pack still
+  loading under `placeholders`) keeps the frame with its outline, not v12's blue `?`.
+  `ICON_UNAVAILABLE` is deprecated in favour of `ICON_NOT_RENDERED`. See [Icons](#icons).
 - **Step animation** (`step` on edges, `flowchart.stepNumbers`, `flowchart.stepDuration`) and
   edge `animate`/`animation` are parsed but not drawn.
 - **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown
@@ -709,6 +919,8 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
   next to `MATH_NOT_RENDERED` (or `ASCII_DROPPED` in text output) for one alpha, and is no longer
   a parse warning. It is not raised for TeX the math plugin refuses (`MATH_ERROR`) or for a
   placeholder render (`PLACEHOLDER`).
+- **Icons** (`fa:fa-car`) in messages, notes, participants, fragment and box labels are drawn by
+  the icons plugin from a registered pack; v12 drew them as plain text (see [Icons](#icons)).
 - **An unknown participant type** (`@{ type: robot }`) draws a participant box, with a
   `SEQUENCE_PARTICIPANT_TYPE` warning; v12 drew nothing.
 - **Box colours** are checked without a browser, with the rules a browser's `CSS.supports`
@@ -764,6 +976,41 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
   (on a state written on its own, or anywhere inside a composite: v12 applies `:::` only in a
   top-level transition) warns `CLASS_NOT_APPLIED` (D128). Completion no longer offers
   `classDef`, `class`, `style`, `click` or `scale` inside a composite.
+
+## Quadrant chart config and theme
+
+Spec #289. The SVG changes are under [Quadrant chart SVG structure](#quadrant-chart-svg-structure).
+
+- **`quadrantChart` section:** every key v12's quadrant chart reads works as in v12:
+  `chartWidth`, `chartHeight`, `titleFontSize`, `titlePadding`, `quadrantPadding`,
+  `xAxisLabelPadding`, `yAxisLabelPadding`, `xAxisLabelFontSize`, `yAxisLabelFontSize`,
+  `quadrantLabelFontSize`, `quadrantTextTopPadding`, `pointTextPadding`, `pointLabelFontSize`,
+  `pointRadius`, `xAxisPosition`, `yAxisPosition`, `quadrantInternalBorderStrokeWidth`,
+  `quadrantExternalBorderStrokeWidth` and `useMaxWidth`. A configured `0` is honoured, as in v12.
+- **Value types:** a numeric string (`"pointRadius": "7"`) is read as its number, as v12 drew
+  it. A length that is no number of 0 or more (`"big"`, `-3`, `true`), or an axis side that is
+  not one of its two (`xAxisPosition: "middle"`), falls back to the default with one
+  `QUADRANT_CONFIG_INVALID` warning per key (D226). v12 wrote `NaN` or joined the string into
+  its sums.
+- **Ignored:** `useWidth` (only v12's gantt read it), accepted without a warning.
+- **Not config keys:** v12's builder also had `showXAxis`, `showYAxis` and `showTitle`, which
+  no config could reach. They are not schema keys, so setting them gives a `CONFIG_UNKNOWN_KEY`
+  warning (R-CONF-2). An axis shows when it has text, the title when it is not empty.
+- **Descriptions:** v12's schema described `titleFontSize`, `titlePadding` and
+  `quadrantPadding` with the text of the next key. They now say what each key does: the title's
+  font size, the padding above and below the title, and the padding around the quadrant square.
+- **Front-matter `title`** is drawn as the chart title; a `title` statement in the text wins,
+  as in v12 (D218).
+- **Text output:** `format: 'ascii'` is not available for quadrant charts; it throws
+  `UnsupportedFormatError` and `supportsFormat('quadrantChart', 'ascii')` is `false` (D216).
+- **Theme variables:** the 15 `quadrant*` variables keep their v12 names and are listed in
+  [theme variables](theme-variables.md): `quadrant1Fill`–`quadrant4Fill`,
+  `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`,
+  `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`,
+  `quadrantExternalBorderStrokeFill` and `quadrantTitleFill`. Each is also a `--mermaid-<name>`
+  CSS variable, so a host can re-colour a rendered chart (R-THEME-3). They are derived by the
+  same rules as v12 in every theme; where the result differs (`quadrantPointFill`, D231; the
+  fills 2–4, D232; the borders) the SVG structure table says how.
 
 ## State diagram SVG structure
 
@@ -950,3 +1197,249 @@ where the element still exists (`node default <classDef>`, `outer-path`, `row-re
 | Subgraph `<g class="cluster" id>` with `<g class="cluster-label">` | `<g class="cluster …" data-id="<name>" data-ast="s:<name>">` with `<rect>` and `<text class="cluster-label">` | |
 | Front-matter `title` drawn as `text.erDiagramTitleText` | Not drawn yet, as in the flowchart | |
 | Hand-drawn look: background copies of every entity (`<id>-background`) | None (`look` is removed, D153) | |
+
+## User journey
+
+### Layout
+
+- **Sizing (D242):** at the default config every element sits where v12 put it (bands at y 50,
+  tasks at y 110, faces at `300 + (5 − score) × 30`, legend rows from y 60). The SVG is sized
+  to what is drawn plus `diagramMarginX`/`diagramMarginY` on each side (D224). v12 counted
+  `leftMargin` twice in the width, took `diagramMarginX` as a task's width in its bounds and
+  as the gap between section bands, fixed the height at 450 px and the view box top at −25
+  (+70 for a title), and ended the activity line at `width − leftMargin − 4`. Section bands
+  are now `taskMargin` apart, as tasks are.
+- **Legend margin (D242):** `leftMargin` widens by exactly what the widest legend line needs.
+  v12 widened only once a legend line passed `leftMargin / 2`, jumping from 150 to about
+  230 px.
+- **Section fills (D241):** sections cycle over all eight `fillType0`–`fillType7`, so an
+  eighth section takes `fillType7` and a ninth `fillType0`. v12 cycled over seven (the length
+  of `sectionFills`, read once at module load), so `fillType7` never showed although the redux
+  themes tune eight. `sectionFills` is ignored: v12's `fillType<n>` style rules hid it in
+  every theme anyway.
+- **The empty actor (D244):** a trailing comma (`Task: 5: Me,`) still adds the actor `''` to
+  the model, but it is not drawn: no legend row, no dot, no colour. v12 drew a nameless row
+  and dot, and as `''` sorts first it took the first colour and shifted every other actor's.
+- **Legend order:** the legend lists actors in the model's order (sorted by code unit), and
+  colours follow the same order. v12 gave colours in sorted order but walked the actor
+  object's keys for the legend, so integer-like names (`1`, `42`) came first there.
+- **Actor names with entities:** a name written with a `#…;` entity (`#lt;b#gt;`, held as
+  `&lt;b&gt;`) sorts by that text, so before plain names. v12 sorted the placeholder its
+  entity encoding left in the name, after plain names. Only such names' legend order and
+  colour slots change (#302).
+- **Legend wrapping (D225):** a legend name wider than `maxLabelWidth` wraps with core label
+  layout, and a word too long for a line splits without the hyphen v12 added at each split.
+
+### Config
+
+- **Honoured:** `diagramMarginX`, `diagramMarginY`, `leftMargin`, `maxLabelWidth`, `width`,
+  `height`, `taskMargin`, `boxTextMargin`, `taskFontSize`, `taskFontFamily`, `actorColours`,
+  `titleColor`, `titleFontFamily`, `titleFontSize`, `useMaxWidth` and `sectionColours`.
+  Unset, `taskFontSize`, `taskFontFamily` and `titleFontFamily` follow the theme font, as in
+  every diagram type (D132, D248), and `sectionColours` leaves names in `textColor` (D225).
+- **Ignored**, accepted without a warning: `noteMargin`, `messageMargin`, `messageAlign`,
+  `bottomMarginAdj`, `rightAngles`, `activationWidth` and `useWidth` (v12's journey renderer
+  never read them), `boxMargin` (read only in a loop over an empty list), `textPlacement`
+  (every label is SVG text, D225) and `sectionFills` (D241).
+- **`actorColours` replaces the defaults:** an author's list is the whole palette, cycling
+  from the first actor. v12 appended the author's colours after its six defaults (`#8FBC8F`,
+  `#7CFC00`, `#00FFFF`, `#20B2AA`, `#B0E0E6`, `#FFFFE0`), so they reached only the seventh
+  actor on. Unset, the six defaults apply as before.
+- **Lengths are checked:** a length key (`diagramMarginX`, `diagramMarginY`, `leftMargin`,
+  `maxLabelWidth`, `width`, `height`, `taskMargin`, `boxTextMargin`) that is not a number from
+  0 to 10000 px keeps its default, with one `JOURNEY_CONFIG` warning per key. v12 used any
+  value as it was.
+- **Per-diagram values now apply:** v12 read `sectionFills` and `sectionColours` once at
+  module load, so a front-matter or directive value never reached the drawing; a
+  `sectionColours` set there now colours the names.
+- **Text output:** `format: 'ascii'` is not available for journeys; it throws
+  `UnsupportedFormatError` and `supportsFormat('journey', 'ascii')` is `false` (D216).
+
+### Themes
+
+- `fillType0`–`fillType7` are each theme's v12 values, written into the theme. v12 derived
+  them from `primaryColor` and `secondaryColor` with hue turns of ±64° and 128°, so a custom
+  `primaryColor` recoloured every section. In v13 it does not, except on `base`, where
+  `fillType0` and `fillType1` follow `primaryColor` and `secondaryColor` while
+  `fillType2`–`fillType7` keep base's v12 values. Set `fillType<n>` to recolour a section.
+- `faceColor` is `#FFF8DC` in every theme (v12's fallback; no v12 theme set it).
+- `actor0`–`actor5` have no theme value: dots take `journey.actorColours` in every theme,
+  redux included, and an author's `actor<n>` wins for n < 6 (D249).
+
+## Journey SVG structure
+
+What changed in the user journey's SVG compared with v12 (spec #290, D240–D249). The v12
+element classes (`journey-section`, `section-type-<n>`, `task`, `task-type-<n>`, `task-line`,
+`face`, `mouth`, `actor-<n>`, `legend`) are kept so selectors that use them keep working; the
+section and task classes now sit on the group that holds the box and its label.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, a `<style>` scoped by the id, `viewBox="<x> -25 <width> <height + 70 with a title>"`, `preserveAspectRatio="xMinYMin meet"` and a `height` of the view box plus 25 | No root `id`; `class="mermaid mermaid-journey"`, `role="img"`, `aria-roledescription="journey"`, `data-mermaid-version`; the `viewBox` is what is drawn plus `diagramMarginX`/`diagramMarginY` on each side; `width="100%"` and `max-width`, or `width` and `height` with `useMaxWidth: false`; no `preserveAspectRatio` | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), the bounding box covers what is drawn (D224, D242) |
+| `<defs><marker id="<id>-arrowhead">` and `marker-end` on the activity line; the head black in every theme | No `<defs>`. `<g class="activity">` holds `<line class="activity-line">` and `<path class="arrowhead">`, both in `textColor` | No ids; the head takes its line's colour (D245) |
+| Task lines `<line id="<id>-task<n>">` | `<line class="task-line">`, no id | Only `<id>-title` and `<id>-desc` ids remain |
+| A section: an unclassed `<g>` with `<rect class="journey-section section-type-<n>">` and its label (a `<switch><foreignObject>` by default) with the same classes | `<g class="journey-section section-type-<n>" data-id="s:<name>" data-ast="s:<name>">` holding the `<rect>` and `<text class="section-label" data-id>`. A rule on `.section-type-<n>` now matches the group: write `.section-type-<n> > rect` for the box | One element per section maps it to its source (R-PARSE-8) |
+| A `section` line with no tasks, or a repeated name that continues the run before it, drew nothing | Still no band; an empty `<g class="journey-section empty" data-id data-ast>` stands for the line | One `data-ast` element per AST node |
+| A task: an unclassed `<g>` with the line, the face, an unclassed `<g>` of eyes and mouth, `<rect class="task task-type-<n>">`, the actor dots and a label of class `task` | `<g class="task task-type-<n>" data-id="t:<n>" data-ast="t:<n>">` holding, in v12's paint order, `<line class="task-line">`, `<circle class="face">`, two `<circle class="eye">`, `<path class="mouth mouth-smile\|mouth-sad\|mouth-flat">`, the `<rect>`, a `<circle class="actor-<n>" data-id="a:<name>" data-ast="a:<name>">` per named actor mention (`data-id` the legend entry's; its `<title>`, as v12, the name as the legend shows it: entities decoded, a `<br>` a space) and `<text class="task-label" data-id>` | Same |
+| Mouth: a d3 `arc` path moved by `transform`; a score of 3 or `NaN` a `<line class="mouth">` | An absolute `<path>` for every mouth, no `transform`; v12's shapes and its rule on the score as written | No d3 (R-PERF-2) |
+| Faces at `300 + (5 − score) × 30` for any score; `NaN` wrote `cy="NaN"` | `NaN` is drawn at 3 and other scores clamped to 0–5, with one `JOURNEY_SCORE` warning per render | D226 |
+| Legend: `<circle class="actor-<n>">` and `<text class="legend"><tspan>` siblings at the root, one row per actor including `''`, which took the first colour | `<g class="legend-entries">` with one `<g class="legend-entry" data-id="a:<name>">` per named actor, holding the `<circle class="actor-<n>">` and `<text class="legend">`; no `data-ast` (the task dots carry the mentions' ids). `''` draws nothing and takes no colour | D244 |
+| Labels: an HTML `<div>` in `<foreignObject>` (`textPlacement: fo`) or `<tspan>`s, `<br>` literal in the HTML and a hyphen at each split word in the legend | `<text>`/`<tspan>` from core's label layout: task names wrap to the task, section names to the band, legend names to `maxLabelWidth`, `<br>` breaks, long words split without a hyphen; `textPlacement` is ignored | D225 |
+| Colours from the `<style>`: `.task-type-<n>, .section-type-<n> { fill: fillType<n> }` (every rule gated on `fillType0`), `line { stroke: textColor }`, `.face { fill: faceColor or #FFF8DC; stroke: #999 }`, `.legend { fill: textColor }`, `.actor-<n> { fill: actor<n> }`; `#666` outlines, eyes and mouth, `#000` dot outlines | Presentation attributes: band and task fills from `fillType<slot>`, lines, arrowhead, legend and names from `textColor`, the face from `faceColor`, dots from `journey.actorColours` unless the author sets `actor<n>` (n < 6); `#666`, `#999` and `#000` stay constants in every theme | No style sheet (R-SEC-2); D152, D245, D249 |
+| `sectionColours` reached the `tspan` fallback only (the default `fo` label ignored it) | Colours section and task names, by band, when set; otherwise names are `textColor` | D225 |
+| Title: an unclassed bold `<text>` at (`leftMargin`, 25) with `fill="<titleColor>"` (default empty: black on dark themes) and `font-family="<titleFontFamily>"` | `<text class="journey-title">` at the same place, bold, `4ex` of the theme `fontSize` by default, in `titleColor` or else `textColor`; `titleFontFamily` inherits the Mermaid font when unset | D248 |
+| Task text in `taskFontSize`/`taskFontFamily` (defaults 14 and Open Sans) via an inline `style` | Unset, both follow the theme font; when set, `font-family`/`font-size` are written on the `sections` and `tasks` groups | Fonts are uniform across diagrams (D132) |
+| A `journey.titleColor`, `actorColours` or `sectionColours` value that is not a colour went into the markup | Dropped with `STYLE_VALUE_DROPPED`; the default colour is used | Inert output (R-SEC-3) |
+
+The `data-ast` ids come from the source (R-PARSE-8): `s:<name>` for a section line (a repeat
+of a name `s:<name>@2`, `@3`, …), `t:<n>` for the n-th task, counting from 1, and
+`a:<name>` for a task's dot, the first mention of that actor (a later one `a:<name>@2`, …).
+Legend entries carry `data-id="a:<name>"` only.
+
+## Timeline config
+
+- **SVG only:** `timeline`, `timeline LR` and `timeline TD` are detected by v12's case-sensitive
+  `timeline` detector, after `flowchart-v2` and before `gitGraph`. `format: 'ascii'` throws
+  `UnsupportedFormatError` (D216).
+- **Honoured** in the `timeline` section, with v12's effective values when unset (v12's renderer
+  with its default config merged): `leftMargin` (150), `padding` (no schema default; 50, v12's
+  fallback), `useMaxWidth` (true) and `disableMulticolor` (false). The top-level `fontSize` (16)
+  is read as v12's timeline read it: each box is `0.55 × fontSize` taller than its text, and the
+  TD axis starts `2 × fontSize` above the content and ends `0.5 × fontSize + 20` below it. The
+  text itself is drawn at `themeVariables.fontSize`, as in v12. A `leftMargin`, `padding` or
+  `fontSize` that is not a number of at least 0 is replaced by its default, with a
+  `TIMELINE_CONFIG_IGNORED` warning naming the key.
+- **Ignored**, as v12's timeline never read them (keys copied from the sequence config):
+  `diagramMarginX`, `diagramMarginY`, `width`, `height`, `boxMargin`, `boxTextMargin`,
+  `noteMargin`, `messageMargin`, `messageAlign`, `bottomMarginAdj`, `rightAngles`,
+  `taskFontSize`, `taskFontFamily`, `taskMargin`, `activationWidth`, `textPlacement`,
+  `actorColours`, `sectionFills`, `sectionColours` and `useWidth`. Box colours come from the
+  `cScale`, `cScaleInv` and `cScaleLabel` palettes or `mainBkg` / `nodeBorder` (D258).
+- **`cScale<n>`, `cScaleLabel<n>` and `cScaleInv<n>` overrides** recolour a timeline only in the
+  classic themes (`default`, `base`, `dark`, `forest`, `neutral`). They change nothing in the
+  redux themes, the default `redux-color` included, or under `theme: 'auto'` (which is
+  `redux-color` and `dark`); in `neo` and `neo-dark` only `cScaleLabel` counts (box text, and
+  slot 11 for the axis and connectors). This follows v12's redux and neo timeline paint (D227,
+  D257), but v12's default theme was `default`, so a v12 diagram that set them without a `theme`
+  needs `theme: 'default'` to keep its colours.
+
+## Timeline SVG structure
+
+What changed in the timeline's SVG compared with v12's `timelineRenderer.ts` (LR) and
+`timelineRendererVertical.ts` (TD), and why (DESIGN §7.2, spec #291). v12's class names are kept
+where the element still exists: `timeline-node`, `section-<n>`, `node-bkg`, `node-line-<n>`,
+`taskWrapper`, `eventWrapper`, `lineWrapper`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, a `<style>` scoped by the id; no `role`; `accTitle` / `accDescr` parsed but never written (the DB had no `getAccTitle`) | No root `id`; `class="mermaid mermaid-timeline"`, `role="img"`, `aria-roledescription="timeline"`, `data-mermaid-version`; colours are presentation attributes reading `var(--_x)` aliases. `accTitle` and `accDescr` give `<title id="<id>-title">` and `<desc id="<id>-desc">` with `aria-labelledby` / `aria-describedby` | Inert output (R-SEC-2), only the title and description ids (R-A11Y-1) |
+| An empty first `<g>`; sections in an unclassed `<g transform>`; boxes placed by `transform` | No empty group. A section is `<g class="timeline-node section-<n>" data-id="sec:<k>" data-ast="sec:<k>">`; a period `<g class="taskWrapper" data-id data-ast="per:<k>">` and an event `<g class="eventWrapper" data-id data-ast="ev:<p>.<k>">`, each holding its `timeline-node` group. Coordinates are absolute, no `transform` | One element per section, period and event maps it to its source (R-PARSE-8) |
+| Box path `id="<id>-node-<n>"` (TD `undefined-node-<n>`), `class="node-bkg node-undefined"` | `<path class="node-bkg">`, no id | No ids; `node.type` was never set |
+| The class of slot *n* is `section-<n mod 12 − 1>`, so the first section is `section--1` | Kept as is, so author CSS written for v12 still matches | P2 |
+| Label `<text dy="1em" dominant-baseline="middle">` wrapped by `getComputedTextLength`; only lowercase `<br>` breaks | `<text data-id>` with a `<tspan>` per line from core's label layout. Labels stay plain text, as in v12: every `<br>` form breaks and entities decode (D225), and any other markup (`<b>`, `<i>`, `<u>`) is shown as written. Labels carry `data-id` only. Box labels are drawn at the theme's `fontWeight` (600 in the redux themes, as v12's redux CSS did) | D225, R-PARSE-8 |
+| `<marker id="<id>-arrowhead">` and `marker-end` on the axis and the connectors; TD referred to `url(#arrowhead)`, which did not exist, so it drew none; the marker was always black | Inline `<path class="arrowhead">` at v12's marker size and place, in the line's colour, in both directions | D253; no `<defs>` or ids |
+| Axis and connectors `stroke="black"` overridden by `.lineWrapper line`: `cScaleLabel11` (classic) or `nodeBorder` at `strokeWidth` (redux) | The same paint as attributes. A connector's `lineWrapper` carries the `data-id` of its period (LR) or event (TD), no `data-ast` | |
+| `.eventWrapper { filter: brightness(120%) }` | The event's colours are computed at 120% brightness (a gradient outline stays as it is). Under `theme: 'auto'` a theme variable an event reads keeps its CSS variable unbrightened, so it still switches with the page, except on a palette fill (next row); a page that overrides `--mermaid-mainBkg` or `--mermaid-nodeBorder` in CSS changes periods but not events | `brightness()` is not an allowed `filter` value (R-SEC-2) |
+| Redux geometry, paint and shadow chosen by `theme.includes('redux')`; the `<filter id="<id>-drop-shadow">` written only under `look: neo` (its opacity 0.2 white on the dark redux themes) | The `timelineRadius`, `timelineLabelOffset`, `timelineEventLabelShift` and `timelineScaleColors` theme variables ([Theme geometry](#theme-geometry)) and the shared `dropShadow` CSS filter, in every look: the dark redux themes' shadow is white at 6%, as everywhere else | D152, D153 |
+| `redux-color` filled each box with its `borderColorArray` slot; `redux-dark-color` with `mainBkg` | Kept: the border slot fills where `bkgColorArray` is non-empty, else `mainBkg`; the outline takes the slot in both, and the box carries `data-color-id="color-<n>"`. A palette slot is a literal colour, under `theme: 'auto'` the light theme's, so the text and rule drawn on a palette fill are that theme's literal colours too and the pair never switches separately with the page | D257, D151 |
+| A redux theme with `useGradient` turned on | `redux-color` and `redux-dark-color` keep the palette slot as the outline (a palette slot wins over the gradient, as in every diagram); `redux` and `redux-dark` outline with the gradient at `strokeWidth` | theming.md |
+| `theme: neo` (and 12.2.0's default `look: neo`): classic geometry, `mainBkg` fill and gradient outlines through `[data-look=neo]` rules; the rule under each box stroked with the gradient, which a zero-height line can't show; TD wrote no gradient defs, so its gradient paint pointed at nothing | `neo` and `neo-dark` keep classic geometry and colours (no shadow), fill `mainBkg` and outline with the gradient at 2px in both directions; the rule is drawn in plain `nodeBorder` at 2px | D227, D182, D185 |
+| Periods before the first section were never drawn, and two sections with one name each drew both groups | Periods are grouped by section position: leading periods are drawn first with no section box, in slot 0; each section draws its own periods | D251 |
+| A period over about 150px tall put its events on the axis (events started 200px below the period top) | Events start at v12's place or 50px below the axis, whichever is lower | D252 |
+| `maxTaskHeight` was always one line (v12 measured `[object Object]`), so only a tall period grew | Every period takes the height of the tallest, and the axis follows it | #337 |
+| TD: the next section started 30px above the end of the previous section's last row, so full rows overlapped | A TD section starts at v12's place or 30px below what the previous group's rows hold, whichever is lower; most sectioned TD input moves down | No overlaps (#337) |
+| TD: the axis started `2 × fontSize` above the content, through a title wider than about 285px | The axis starts below the title when the title spans it | #337 |
+| Title an unclassed `<text>` in the root's `textColor`, `font-size="4ex"`, bold, at `bbox.width / 2 − leftMargin` (LR under `look: neo`: `bbox.x × 2 + leftMargin`); a front-matter `title` was dropped | `<text class="timeline-title">` in `textColor`, bold, at the px size of `4ex` the layout measured, left-aligned at the classic place in every theme. The `title` statement and a front-matter `title` are both drawn there: a non-empty in-text `title` wins, and a blank one (`title` and spaces) falls back to the front-matter `title`. A title taller than one 16px line moves the content down | D218, D254, D225 |
+| LR: the axis ended at `width + 3 × leftMargin`, short of the last period below a `leftMargin` of 25 | The axis ends there or at the last period's right edge, whichever is further; the default `leftMargin` (150) draws as v12 | #337 |
+| `timeline.useMaxWidth` fell back to `false` in the renderer, but v12's default config set it to `true` | Unchanged by default: `true` sets `width="100%"` and `max-width`; `false` writes the drawing's width and height. `leftMargin` (150), `padding` (50 when unset) and `disableMulticolor` likewise take v12's effective values, and the top-level `fontSize` still adds `0.55 × fontSize` to each box and sets the TD axis ends while the text is drawn at `themeVariables.fontSize`. The keys v12's timeline never read are ignored ([Removed, moved and ignored keys](#removed-moved-and-ignored-keys)) | #315 |
+
+## Pie chart
+
+The pie parser accepts the v12 language (oracle parity over every e2e fixture and the v12 spec
+strings; grammar in [syntax/pie.md](./syntax/pie.md)). The differences:
+
+- **Error messages** are new, as for flowchart, and every error is reported, not only the
+  first. A negative value is still an error, with v12's message.
+- **A repeated label (D226)** keeps its first value, as v12 did silently; v13 adds one
+  `PIE_DUPLICATE_SLICE` warning for it. Nothing is ever drawn at NaN: a pie with no sections, or
+  whose values sum to 0, draws its outer circle and legend only. A value too large for a number
+  (309 digits or more), which v12 drew as `Infinity` and NaN, leaves its section out with a
+  `PIE_VALUE_TOO_LARGE` warning, and values whose sum is past the largest number still share
+  the pie as smaller ones would.
+- **The front-matter `title`** is drawn as the chart title when the text has none (D218), as
+  v12 did.
+- **Labels (D225)** go through core's label layout: `<br>` breaks the line, markdown strings and
+  entities render ([Pie SVG structure](#pie-svg-structure)). A markdown string is written as in
+  flowcharts, `` "`**bold** text`" ``, in a section label or the title. A legend row of several
+  lines is as tall as its label, and a title of several lines grows up from where v12 drew its
+  one line, so neither runs into the pie or the next row; one-line labels sit where v12 put them.
+- **Theme variables.** `pie1`–`pie12`, `pieTitleTextSize`, `pieTitleTextColor`,
+  `pieSectionTextSize`, `pieSectionTextColor`, `pieLegendTextSize`, `pieLegendTextColor`,
+  `pieStrokeColor`, `pieStrokeWidth`, `pieOuterStrokeColor`, `pieOuterStrokeWidth` and
+  `pieOpacity` keep v12's names and each theme's v12 12.2.0 values
+  ([theme-variables.md](./theme-variables.md)). Slots v12 derives by lightness alone follow the
+  theme's base colours; hue-turned and `cScale` slots are fixed values, so in `redux-color` and
+  `redux-dark-color` a `cScale<n>` override no longer recolours `pie<n+1>` (set `pie<n+1>`).
+  `pieOpacity` is a number from 0 to 1 (D221); any other value is dropped with
+  `THEME_VARIABLE_DROPPED`.
+- **`dark` slot 12 (D228):** `dark` and `neutral` keep v12's `cScale` offset (slice *n* takes
+  `cScale`*n*, so the first slice is `cScale1`). v12 `dark` left `pie12` unset, so a twelfth
+  slice drew black; it is now `cScale0`, as in `neutral`.
+- **`format: 'ascii'`** throws `UnsupportedFormatError`: pie has no text output (D216).
+
+## Pie SVG structure
+
+What changed in the pie chart's SVG compared with v12 (spec #288, DESIGN §7.2). The v12 class
+names are kept (`pieOuterCircle`, `pieCircle`, `highlighted`, `highlightedOnHover`, `slice`,
+`pieTitleText`, `legend`), so selectors that use them keep working.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `aria-roledescription="pie"`, `role="graphics-document document"`, a `<style>` scoped by the id | No root `id`; `class="mermaid mermaid-pie"`, `role="img"`, `aria-roledescription="pie"`, `data-mermaid-version`; colours, strokes, sizes and the opacity are presentation attributes on each element, colours reading `var(--_x)` aliases on the root `style` | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
+| Everything in one `<g transform="translate(225,225)">`: the pie in an inner `<g>`, the title at `y=-200` and each legend row in it | The outer circle, slices and percentages in one `<g transform="translate(cx,cy)">` at the pie's centre; the title and the legend rows are siblings after it, in root coordinates | The layout places them; a `left` or `top` legend moves the pie, not the title |
+| Percentages: `<text class="slice" transform="translate(x,y)" style="text-anchor: middle">` | `<text class="slice" data-id x y text-anchor="middle">` | No transform per label |
+| Legend row: `<g class="legend" transform="translate(x,y)">` with `<rect style="fill;stroke">` at the origin and `<text x="22" y="14">` | `<g class="legend" data-id data-ast>` with `<rect x y width height fill stroke>` and a start-anchored `<text>`, both in root coordinates | One element per section maps it to its source (R-PARSE-8) |
+| No source mapping; d3 bound each section as `__data__` | Each legend row carries `data-ast="slice:<label>"` (every section has a row, shown or not); its slice `<path>` and percentage `<text>` carry the same `data-id` only. A repeated label (`slice:<label>@2`) is not drawn and has no element | One `data-ast` element per AST node (R-PARSE-8, pitfall 12) |
+| `highlightSlice: "<label>"`: class `highlighted`, and `scale: 1.05; opacity: 1` from the `<style>` | Class `highlighted` and `transform="scale(1.05,1.05)" opacity="1"` on that slice's path | No style sheet (D222) |
+| `highlightSlice: "hover"`: class `highlightedOnHover` and a `:hover` rule that scaled the slice | Class `highlightedOnHover` on every slice, no hover effect, and one `PIE_HOVER_IGNORED` warning per render. Host CSS can target the class | No style sheet (D222); an interactions hover can come later |
+| `highlightSlice: ""` (the default) highlighted a slice labelled `""` | Highlights nothing | v12 bug (#335) |
+| Title and legend text set with d3 `.text()`: `<br>` and tags printed as written, entities decoded | Core's label layout ([Labels and text](#labels-and-text)): `<br>` breaks the line, `<b>`/`<i>` are drawn bold and italic, entities decode; a legend label of several lines stays left-aligned | D225 |
+| The viewBox widened only for the title; many sections or a wide `top`/`bottom` legend were clipped | The viewBox covers everything drawn, and may start at a negative `x` or `y` | D224 |
+| `neo` and the redux themes: the same pie as the classic themes | The same: pie differs between families by colour only, with no gradient and no shadow | D227 |
+
+## Quadrant chart SVG structure
+
+What changed in the quadrant chart's SVG compared with v12 (spec #289, #312). v12's groups and
+classes are kept, in v12's order: `g.main` > `g.quadrants` (`g.quadrant`: `rect` + `text`),
+`g.border` (six `line`s), `g.data-points` (`g.data-point`: `circle` + `text`), `g.labels`
+(`g.label`: `text`) and `g.title`, each written even when empty. The last-declared point is
+still drawn first, so the first is on top. Text keeps v12's `text-anchor`, `dominant-baseline`
+and `transform="translate(x,y) rotate(r)"` placement.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, a `<style>` scoped by the id that gave every text its `fill` | No root `id`; `class="mermaid mermaid-quadrant"`, `role="img"`, `aria-roledescription="quadrantChart"` (kept), `data-mermaid-version`; every element carries its colour as a presentation attribute reading a `var(--_x)` alias on the root `style` | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
+| A fixed `viewBox="0 0 chartWidth chartHeight"`: a point label near the edge ran off it and the browser clipped it | The same placement; the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover any label or point drawn past the chart. A chart where everything fits keeps `0 0 chartWidth chartHeight` | The bounding box covers what is drawn (D224) |
+| Groups had no ids | `g.quadrant` has `data-id="quadrant-<n>"` and, when labelled, `data-ast="q:<n>"`; `g.data-point` has `data-id="<point name>"` and `data-ast="pt:<name>"` (`pt:<name>@2` for a repeated name); `g.label` has `data-id="x-axis-start"` (`-end`, `y-axis-…`) and `data-ast="ax:x"` / `ax:x/end` / `ax:y` / `ax:y/end`; `g.title` has `data-id="title"` and the `title` statement's `data-ast` | One element per AST node maps it to its source (R-PARSE-8) |
+| An unlabelled quadrant drew an empty `<text>` | Only its `<rect>` | Nothing invisible is drawn |
+| Border lines styled with `style="stroke: …; stroke-width: …"` | `stroke` and `stroke-width` attributes | No inline style (R-SEC-2) |
+| Labels set as `textContent`: a quoted `<br>`, a raw line break inside quotes, `<b>`/`<i>` and a markdown string's `**` showed literally, entities as written | Core's label layout with no wrap width: every `<br>` form and a raw line break inside a quoted string break the line, `<b>` and `<i>` in a quoted label render bold and italic, other tags are dropped with their text kept (`"<script>x</script>"` draws `x`, where v12 showed the tags), markdown renders, entities decode, and math works (D176). A plain label is still one `<text>`; one with breaks or emphasis is a `<text>` with `<tspan>`s. Every v12 anchor and the square stay where v12 put them, and a label's extra lines grow away from the square: a title's earlier lines go above it, so its last line sits where v12's one line sat; a top x-axis label grows up (the title above it moves up with it); a left y-axis label grows left; bottom and right labels grow down and right. The bounding box grows over them, so `viewBox` can start below 0 | D225, D224 |
+| Points: `fill="hsl(…, NaN%)"` and the same `stroke` (v12's `quadrantPointFill` rule had a precedence bug and a khroma call with no amount), so points showed the root `fill: textColor` and no stroke, even with a `stroke-width`; a user `quadrantPointFill` was ignored | `fill` from `quadrantPointFill`, which defaults to `textColor`: the same look in every theme, and a user value is honoured. A `stroke` is written only when an inline or class `stroke-color` sets one, so `stroke-width` alone still draws no ring; a drawn stroke counts toward the bounding box | D231, D224 |
+| A style colour without `#` (`color: ff0000`) was written as `fill="ff0000"`, which browsers ignore | Written as `fill="#ff0000"` | D235 |
+| Quadrant fills 2–4 derived from `primaryColor` (or `#ECECFE` in `redux`, `redux-color` and `neo`) | Derived from `quadrant1Fill`, which is `primaryColor` (`#ececfe` in those three): the same colours unless an author sets `quadrant1Fill` alone, which now moves 2–4 too. `default` also follows an author `primaryColor`, `primaryTextColor` and `primaryBorderColor`, which v12's `theme-default.js` ignored for the quadrant fills, text fills and borders (it derived them once, in its constructor, before the overrides) | D232 |
+| A point whose coordinate lexed but was not a number in [0, 1] (`0x5`, `0a5`) was drawn off the chart or at `NaN` | Left out, with one `QUADRANT_POINT_INVALID` warning per point | D226 |
+| `look: neo` changed nothing in a quadrant chart | Every theme family draws it plain, without gradient, shadow or palette; families differ by colour only | D227 |
+| Border lines in v12's khroma `primaryBorderColor` | Core's `primaryBorderColor`, the border colour of every other type, so some themes change (table below) | R-THEME-11 |
+| `themeVariables.darkMode: true` switched `primaryTextColor` and `textColor` to `#eee` in `redux`, `redux-color`, `base` and `neo`, and so every quadrant text | Core's theme specs keep their text colours under `darkMode`, so quadrant text does too. This is core behaviour for every type, not a quadrant change | Core |
+
+Quadrant border colours (`quadrantExternalBorderStrokeFill` and `quadrantInternalBorderStrokeFill`)
+where v12 and v13 differ; the other themes keep v12's colour.
+
+| Theme | v12 | v13 |
+| --- | --- | --- |
+| `default` | `#c7c7f1` | `#c9c9d9` |
+| `dark` | `#cccccc` | `#4c4d4d` |
+| `forest` | `#abb594` | `#aec281` |
+| `neutral` | `#d4d4d4` | `#cacaca` |
+| `base` | `#eeddbb` | `#d9cfbc` |
+| `redux`, `redux-color` | `#171717` | `#28253d` |

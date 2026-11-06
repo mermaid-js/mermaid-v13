@@ -8,6 +8,11 @@ export {
   type DiagramPlugin,
   type ExtensionClaim,
   type HookContext,
+  type IconifyAlias,
+  type IconifyIcon,
+  type IconifyJSON,
+  type IconPacks,
+  type IconPackState,
   type LaidOut,
   type MermaidErrorCode,
   type PluginManifest,
@@ -33,4 +38,5 @@ export {
   type TextRenderResult,
 } from './api.ts';
 export type { Mounted, MountOptions, RunOptions } from './dom.ts';
+export type { AsyncIconLoader, IconLoader, SyncIconLoader } from './icon-packs.ts';
 export type { ExternalDiagram, LayoutLoader, LazyDiagram, ManifestPlugin } from './registry.ts';

@@ -101,14 +101,14 @@ describe('diagnostics (D91)', () => {
   });
 
   it('gives a v12 type with no facet one info diagnostic on its header', async () => {
-    const doc = await open('%% hi\njourney\n  title T\n');
+    const doc = await open('%% hi\ngantt\n  title T\n');
     expect(doc.facet).toBeUndefined();
-    expect(doc.type).toBe('journey');
+    expect(doc.type).toBe('gantt');
     const [d, ...rest] = doc.diagnostics();
     expect(rest).toEqual([]);
     expect(d?.severity).toBe('info');
     expect(d?.code).toBe('NO_LANGUAGE_SUPPORT');
-    expect(doc.text.slice(d!.range.start, d!.range.end)).toBe('journey');
+    expect(doc.text.slice(d!.range.start, d!.range.end)).toBe('gantt');
   });
 
   it('gives an unknown type UNSUPPORTED_DIAGRAM, as the renderer does', async () => {
@@ -243,11 +243,11 @@ describe('definition, references and rename (D92)', () => {
   });
 
   it('refuses everything on a type with no facet', async () => {
-    const doc = await open('journey\n  title T\n');
+    const doc = await open('gantt\n  title T\n');
     expect(doc.definition(11)).toBeUndefined();
     expect(doc.references(11)).toEqual([]);
     expect(doc.rename(11, 'X')).toEqual({
-      refused: 'journey diagrams are not supported by the v13 language service yet.',
+      refused: 'gantt diagrams are not supported by the v13 language service yet.',
     });
   });
 });
@@ -262,5 +262,33 @@ describe('astAt and rangeOf (D97)', () => {
     const r = doc.rangeOf('e:A>B');
     expect(r && src.slice(r.start, r.end)).toBe('A --> B');
     expect(doc.rangeOf('n:nope')).toBeUndefined();
+  });
+});
+
+describe('folding ranges: where a fold ends (every diagram type)', () => {
+  const folds = async (text: string, kind: string): Promise<string[]> => {
+    const doc = await open(text, 'file:///fold.mmd');
+    return doc
+      .foldingRanges()
+      .filter((f) => f.kind === kind)
+      .map((f) => doc.text.slice(f.range.start, f.range.end));
+  };
+
+  it('drops the trailing line break of a range whose last line has text', async () => {
+    expect(await folds('flowchart TD\n  subgraph S\n    A\n  end\n  B\n', 'subgraph')).toEqual([
+      'subgraph S\n    A\n  end',
+    ]);
+    expect(
+      await folds('timeline\nsection A\n2002 : a\r\nsection B\n2003 : b\r\n', 'section')
+    ).toEqual(['section A\n2002 : a', 'section B\n2003 : b']);
+  });
+
+  it('keeps it when the range ends on an empty line, so the fold ends on that line', async () => {
+    expect(
+      await folds('timeline\nsection A\n2002 : a\n\nsection B\n2003 : b\n\n', 'section')
+    ).toEqual(['section A\n2002 : a\n\n', 'section B\n2003 : b\n\n']);
+    expect(
+      await folds('timeline\r\nsection A\r\n2002 : a\r\n\r\nsection B\r\n', 'section')
+    ).toEqual(['section A\r\n2002 : a\r\n\r\n']);
   });
 });

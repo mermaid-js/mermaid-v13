@@ -280,7 +280,7 @@ function drawClusters({ w, layout, flow, ctx, paint }: Scene): void {
       'data-color-id': slot?.id,
     });
     // The author's `style` / `classDef` still wins over the palette (spread after).
-    w.leaf('rect', {
+    w.outline('group', 'rect', {
       x: box.x - box.width / 2,
       y: box.y - box.height / 2,
       width: box.width,
@@ -330,7 +330,7 @@ function drawEdge({ w, layout, flow, paint }: Scene, e: EdgeView): void {
       markerTrim(e.start, paint.heads),
       markerTrim(e.end, paint.heads)
     );
-    w.leaf('path', {
+    w.outline('edge', 'path', {
       d: path.d,
       'stroke-width': edge.stroke === 'thick' ? THICK : undefined,
       'stroke-dasharray': edge.stroke === 'dotted' ? DOTTED : undefined,
@@ -428,8 +428,11 @@ function drawNode(
     lineAttrs = { ...lineAttrs, stroke: paint.node.plainStroke };
   }
   if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
-  else if (v?.icon) drawIcon(w, view, shapeAttrs, warn);
-  else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
+  else if (v?.icon) {
+    // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
+    // under neo).
+    drawIcon(w, view, shapeAttrs, view.style.shape.stroke ?? paint.node.stroke, ctx);
+  } else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
   const fill = view.style.shape.fill;
   w.label(view.label, 0, view.dy, {
     fill: fill && shapeFilled(view.shape) && !v?.img && !v?.icon ? ctx.theme.ink(fill) : undefined,

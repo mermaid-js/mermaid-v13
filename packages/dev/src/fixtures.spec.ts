@@ -109,8 +109,12 @@ describe('gallery fixtures (R-TEST-6, #207)', () => {
       'class-diagram',
       'er-diagram',
       'flowchart',
+      'journey',
+      'pie',
+      'quadrant-chart',
       'sequence',
       'state-diagram-v2',
+      'timeline',
     ]);
   });
 

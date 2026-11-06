@@ -35,6 +35,10 @@ const DOCS = {
   class: 'classDiagram\n  class Animal\n',
   state: 'stateDiagram-v2\n  [*] --> Idle\n',
   er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
+  journey: 'journey\n  section Go to work\n  Make tea: 5: Me\n',
+  timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
+  pie: 'pie\n  "Dogs" : 386\n',
+  quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -43,8 +47,12 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'class',
       'er',
       'flowchart',
+      'journey',
+      'pie',
+      'quadrantChart',
       'sequence',
       'state',
+      'timeline',
     ]);
   });
 
@@ -78,7 +86,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
     );
     const states = Object.keys(monarch().tokenizer);
     expect(states.some((s) => s.startsWith('flowchart__'))).toBe(true);
-    for (const other of ['sequence', 'class', 'state', 'er']) {
+    for (const other of ['sequence', 'class', 'state', 'er', 'journey']) {
       expect(states.some((s) => s.startsWith(`${other}__`))).toBe(false);
     }
     expect(spans(DOCS.sequence)).toEqual([]);
@@ -126,7 +134,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
   });
 
   it.each([
-    ['a type with no v13 highlighter', 'pie title Pets\n  "Dogs" : 386\n'],
+    ['a type with no v13 highlighter', 'gantt\n  title Plan\n'],
     ['a type v12 does not know', 'notADiagram\n  A --> B\n'],
     ['a header being typed', 'flo'],
   ])('colours nothing for %s, not as flowchart', async (_label, text) => {

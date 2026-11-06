@@ -5,16 +5,20 @@ const base = await loadTheme('base');
 
 describe('diagram plugin rule tables (DESIGN §12.1)', () => {
   it('adds derived variables a plugin reads, overridable like the built-in ones', () => {
-    const rules = { pie1: 'lighten(primaryColor, 20%)', pie2: 'alpha(pie1, 50%)' };
+    const rules = { slice1: 'lighten(primaryColor, 20%)', slice2: 'alpha(slice1, 50%)' };
     const t = createTheme(base, { rules });
-    t.color('pie2');
+    t.color('slice2');
     expect(t.rootStyle()).toEqual({
-      '--_pie2': 'var(--mermaid-pie2,color-mix(in srgb,var(--_pie1) 50%,transparent))',
-      '--_pie1': 'var(--mermaid-pie1,color-mix(in srgb,var(--_p) 80%,white))',
+      '--_slice2': 'var(--mermaid-slice2,color-mix(in srgb,var(--_slice1) 50%,transparent))',
+      '--_slice1': 'var(--mermaid-slice1,color-mix(in srgb,var(--_p) 80%,white))',
       '--_p': 'var(--mermaid-primaryColor,#fff4dd)',
     });
-    const lit = createTheme(base, { rules, cssVariables: false, themeVariables: { pie1: '#000' } });
-    expect(lit.color('pie2')).toBe('#00000080');
+    const lit = createTheme(base, {
+      rules,
+      cssVariables: false,
+      themeVariables: { slice1: '#000' },
+    });
+    expect(lit.color('slice2')).toBe('#00000080');
   });
 
   it('computes invert and contrast when the theme is built', () => {
@@ -61,6 +65,52 @@ describe('diagram plugin rule tables (DESIGN §12.1)', () => {
     );
   });
 
+  it('adjust offsets each RGB channel as khroma does, clamped to 0–255, in JS and CSS (D232)', () => {
+    const lit = (rule: string) =>
+      createTheme(base, { rules: { x: rule }, cssVariables: false }).color('x');
+    // v12 theme-base quadrant2Fill: khroma adjust('#fff4dd', { r: 5, g: 5, b: 5 }).
+    expect(lit('adjust(primaryColor, 5, 5, 5)')).toBe('#fff9e2');
+    expect(lit('adjust(#ececff, -15, -15, -15)')).toBe('#ddddf0');
+    expect(lit('adjust(#336699, 10, -20, 0)')).toBe('#3d5299');
+    expect(lit('adjust(#0a0a0a, -20, 255, 2.5)')).toBe('#00ff0d');
+    expect(lit('adjust(#11223380, 1, 1, 1)')).toBe('#12233480');
+    const t = createTheme(base, { rules: { a: 'adjust(primaryColor, 5, -10, 0)' } });
+    t.color('a');
+    expect(t.rootStyle()['--_a']).toBe(
+      'var(--mermaid-a,rgb(from var(--_p) clamp(0, r + 5, 255) clamp(0, g - 10, 255) clamp(0, b + 0, 255) / alpha))'
+    );
+  });
+
+  it('adjustHue turns the HSL hue as khroma does, in JS and CSS (D258)', () => {
+    const rules = { a: 'adjustHue(#ff0000, 120)', b: 'adjustHue(primaryColor, -120)' };
+    const lit = createTheme(base, { rules, cssVariables: false });
+    expect(lit.color('a')).toBe('#00ff00');
+    // v12 theme-base: secondaryColor is adjust(primaryColor, { h: -120 }), #f4ddff.
+    expect(lit.color('b')).toBe('#f4ddff');
+    const t = createTheme(base, { rules });
+    t.color('b');
+    expect(t.rootStyle()['--_b']).toBe(
+      'var(--mermaid-b,hsl(from var(--_p) calc(h - 120) s l / alpha))'
+    );
+  });
+
+  it('HSL steps keep the hue through white, as v12 does with its hsl() strings (D258)', () => {
+    const rules = { a: 'darkenHsl(lightenHsl(#ff0000, 100%), 50%)' };
+    expect(createTheme(base, { rules, cssVariables: false }).color('a')).toBe('#ff0000');
+  });
+
+  it("ifSet takes the author's value, else its fallback, in JS and CSS (D258)", () => {
+    const rules = { a: 'ifSet(secondaryColor, #000000)' };
+    expect(createTheme(base, { rules, cssVariables: false }).color('a')).toBe('#000000');
+    const set = { secondaryColor: '#123456' };
+    expect(createTheme(base, { rules, cssVariables: false, themeVariables: set }).color('a')).toBe(
+      '#123456'
+    );
+    const t = createTheme(base, { rules });
+    t.color('a');
+    expect(t.rootStyle()['--_a']).toBe('var(--mermaid-a,var(--mermaid-secondaryColor,#000000))');
+  });
+
   it('rejects malformed rules and cycles', () => {
     const bad = (rule: string) => () =>
       createTheme(base, { rules: { x: rule }, cssVariables: false }).color('x');
@@ -69,6 +119,15 @@ describe('diagram plugin rule tables (DESIGN §12.1)', () => {
     expect(bad('mix(primaryColor, black, 15%) junk')).toThrow(/unexpected text/);
     expect(bad('url(javascript:x)')).toThrow(SyntaxError);
     expect(bad('notAColourOrVariable')).toThrow(/Unknown colour/);
+    expect(bad('adjust(primaryColor, 5, 5)')).toThrow(/adjust takes 4 arguments/);
+    expect(bad('adjust(primaryColor, 5%, 5, 5)')).toThrow(/adjust needs a number/);
+    expect(bad('adjust(primaryColor, 256, 0, 0)')).toThrow(/adjust needs a number/);
+    expect(bad('lighten(primaryColor, 5)')).toThrow(/lighten needs a percentage/);
+    expect(bad('5')).toThrow(SyntaxError);
+    expect(bad('adjustHue(primaryColor, 400)')).toThrow(/degrees/);
+    expect(bad('adjustHue(primaryColor, 30%)')).toThrow(/degrees/);
+    expect(bad('invert(30)')).toThrow(/plain number/);
+    expect(bad('ifSet(#ffffff, black)')).toThrow(/ifSet needs/);
     expect(() =>
       createTheme(base, { rules: { x: 'y', y: 'x' }, cssVariables: false }).color('x')
     ).toThrow(/cycle/);

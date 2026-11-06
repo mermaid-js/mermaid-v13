@@ -1,0 +1,16 @@
+---
+config:
+  theme: neo
+description: >-
+  Label icons (@mermaid-js/plugin-icons, I3 #324) in a class title, members, a note and
+  multiplicities, in the neo theme. fa:fa-bell is filled with currentColor, fal:fa-circle-check
+  stroked with it: both take the label's text colour, so the four theme families differ by
+  colour only (D215, D227).
+---
+classDiagram
+  class Alarm["fa:fa-bell Alarm"] {
+    +fal:fa-circle-check armed
+    +fa:fa-bell ring()
+  }
+  Alarm "fa:fa-bell 1" --> "fal:fa-circle-check *" Check
+  note for Alarm "fal:fa-circle-check tested"

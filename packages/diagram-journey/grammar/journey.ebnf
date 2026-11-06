@@ -1,0 +1,88 @@
+(** User journey syntax (R-PARSE-9, D54): the normative grammar of `journey` diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4).
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text (letters outside ASCII); and a line break appended. Keywords are matched without
+regard to case.
+
+Statements need no separator: a statement ends where its token does, mostly at the end of the
+line. A task is a name, `:`, a score and, after a second `:`, actors separated by `,`. A name
+holds no `#`, `:` or `;`; `#` starts a comment, and so does `%` where a token would start. *)
+
+@lexer
+
+@options case-insensitive ;
+
+@modes acc_title acc_descr acc_descr_multiline ;
+
+(** A comment where a token would start: one `%` will do (jison read `\%%(?!\{)` as `%(?!\{)`),
+and `%%` takes the character before it. *)
+-                         /%(?!\{)[^\n]*/                  :comment ;
+-                         /[^}]%%[^\n]*/                   :comment ;
+(** Line breaks. Blanks before a line break hide it. *)
+NEWLINE                   /\n+/ ;
+-                         /\s+/ ;
+-                         /#[^\n]*/                        :comment ;
+
+(** `journey` starts the diagram. *)
+journey                   /journey\b/                      :keyword ;
+(** `title <text>`: the diagram title, the rest of the line (`:` included). *)
+title                     /title\s[^#\n;]+/                :keyword ;
+(** `accTitle: …` and `accDescr: …` take the rest of the line; `accDescr { … }` runs to `}`. *)
+acc_title                 /accTitle\s*:\s*/                push(acc_title) :keyword ;
+<acc_title> acc_title_value /[^\n]*/                       pop :string ;
+acc_descr                 /accDescr\s*:\s*/                push(acc_descr) :keyword ;
+<acc_descr> acc_descr_value /[^\n]*/                       pop :string ;
+-                         /accDescr\s*\{\s*/               push(acc_descr_multiline) attach-next :keyword ;
+<acc_descr_multiline> -   /\}/                             pop attach-prev :keyword ;
+<acc_descr_multiline> acc_descr_multiline_value /[^}]*/    :string ;
+(** `section <name>`: starts a section; the tasks after it belong to it. *)
+section                   /section\s[^#:\n;]+/             :keyword ;
+(** A task's name. *)
+taskName                  /[^#:\n;]+/                      :variable ;
+(** `: <score>: <actor>, <actor>`: a task's score, 0 to 5, and who takes part. *)
+taskData                  /:[^#\n;]+/                      :string ;
+COLON                     /:/                              :punctuation ;
+(** The end of the text. *)
+EOF                       /$/ ;
+INVALID                   /./ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A user journey is `journey`, then titles, sections and tasks, one per line. *)
+journeyDiagram = Header document EOF ;
+Header @Header = journey ;
+
+document = { statement | NEWLINE } ;
+
+statement = Title
+  | AccTitle
+  | AccDescr
+  | Section
+  | Task ;
+
+(** `title <text>`: the diagram title. *)
+Title @Title = title ;
+(** `accTitle: <text>`: the accessible title. *)
+AccTitle @AccTitle = acc_title acc_title_value ;
+(** `accDescr: <text>` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = acc_descr acc_descr_value | acc_descr_multiline_value ;
+(** `section <name>`: a section; the tasks after it are drawn in its band. *)
+Section @Section = section ;
+(** `Make tea: 5: Me, Cat`: a task with its score (0 worst to 5 best) and the actors in it. *)
+Task @Task = taskName taskData ;

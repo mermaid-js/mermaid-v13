@@ -1,0 +1,17 @@
+# Implementer brief — spec #289 (M4 quadrant chart)
+
+- Ticket: `gh issue view -R mermaid-js/mermaid-v13 <N>`. Spec: #289 (read its "Maintainer decisions": decided). Docs: v13/docs/{DESIGN,REQUIREMENTS,DECISIONS}.md (D210–D239; D224–D227 are in pie's block and apply here). Recipe: v13/docs/agents/port-diagram/ (README, parser-method, pitfalls, theming, language). Worked example: `packages/diagram-sequence` (custom layout), `packages/conformance`.
+- v12 source: `git show fa796a943:packages/mermaid/src/diagrams/quadrant-chart/…` (`parser/quadrant.jison`, `quadrantDb.ts`, `quadrantBuilder.ts`, `quadrantRenderer.ts`, `utils.ts`, specs); theme rules in `…/themes/theme-*.js` (`/* quadrant-graph */`). Oracle: the `mermaid-v12` dev dependency in `packages/conformance`. Corpus: `e2e/diagrams/quadrant-chart/**/*.mmd` (14). Pele (`/Users/knsv/repos/pele/src/diagrams/quadrant/`) is a reference, never the oracle.
+- Tickets: T0 #309, T1 #300, T2 #301, T3 #332, T4 #312, T5 #317, T6 #321.
+- Notes: this folder. Read INDEX.md, GAPS.md (close the items listed for your ticket) and tickets/<dep>.md for each blocker.
+- Integration branch: `feature/289_quadrant` (worktree `/Users/knsv/repos/mermaid-v13/.claude/worktrees/289-quadrant-6c8aad`). Your worktree: `/Users/knsv/repos/mermaid-v13/.claude/worktrees/t<N>` on `feature/<N>_<short>`. Use absolute paths; stay out of the main checkout and other worktrees. Run `pnpm install` first.
+- Constraints: the package imports only from `@mermaid-js/core` subpaths. Only T0 edits core. Other M4 sessions (pie, journey, timeline, icons, hand-drawn, #285) edit the same shared files (theme vocabulary and DSL, conformance registry, generated registry and config): keep shared edits small and additive. Generated files are regenerated, never hand-merged (D112). Don't edit `.github/workflows/*`. Don't add root package.json scripts. Cite R-ids/D-ids where a choice rests on one.
+- Undecided points: the maintainer is not available. Pick the option most consistent with P1/P2, the spec and the D-ids, implement it, and list it under "Deviations / choices" in your reply (it goes to GAPS.md and the PR body).
+
+1. Confirm your base: `git merge-base --is-ancestor feature/289_quadrant HEAD`. If that fails, reset onto feature/289_quadrant.
+2. Use the Skill tool with `tdd`. Test through `createMermaid().render()` / `renderSync()`, except where the ticket names another seam (lexer gate: token streams; layout: `QuadrantModel → QuadrantLayout`).
+3. Stay in the ticket's scope. Touch shared files minimally and additively.
+4. Run `pnpm check` until it is green. Machine-wide, only one full check and one e2e run at a time: run them as `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check` and `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-e2e.lock pnpm e2e`. A timing test that fails under load is not a regression; rerun it under the lock. Timing on this machine is not trusted: report gz sizes, mark timing "not measured on a steady machine". Commit with no AI attribution (no Co-Authored-By, no "Generated with"). Don't push, open PRs, or comment on or close issues.
+5. Before reporting, merge `feature/289_quadrant` and run `pnpm check` again.
+6. Write `v13/docs/agents/runs/289/tickets/<N>.md` in your branch (≤ 40 lines): exports, how to use them, test helpers, gz size, unmet criteria. Commit it.
+7. Reply in ≤ 12 lines: branch, head sha, checks, deviations, unmet criteria.

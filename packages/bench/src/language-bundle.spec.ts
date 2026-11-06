@@ -24,6 +24,22 @@ const PACKAGES = [
     dir: 'diagram-class',
     renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
   },
+  { name: 'quadrant', dir: 'diagram-quadrant', renderer: ['render/', 'layout/', 'index.ts'] },
+  {
+    name: 'journey',
+    dir: 'diagram-journey',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'labels.ts'],
+  },
+  {
+    name: 'timeline',
+    dir: 'diagram-timeline',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'model.ts'],
+  },
+  {
+    name: 'pie',
+    dir: 'diagram-pie',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
+  },
 ] as const;
 
 /** The `./language` source entry, read from the installed package's export map. */

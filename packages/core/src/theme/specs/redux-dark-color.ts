@@ -4,8 +4,15 @@
  * subgraph is coloured on its border only and keeps its contrast in dark mode.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { REDUX_RULES } from './redux-rules.ts';
-import { TAILWIND_300, TAILWIND_400 } from './palettes.ts';
+import {
+  fillTypes,
+  INVERTED_SCALE,
+  paletteSlots,
+  pieSlots,
+  REDUX_RULES,
+  TAILWIND_300,
+  TAILWIND_400,
+} from './palettes.ts';
 import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
 
 const theme: ThemeSpec = {
@@ -13,12 +20,21 @@ const theme: ThemeSpec = {
   dark: true,
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
-  rules: REDUX_RULES,
-  values: { ...REDUX_DARK_VALUES, erEdgeLabelBackground: '#16141f' },
+  // v12 draws pie section text in the light ink here (`pieSectionTextColor`).
+  rules: { ...REDUX_RULES, ...pieSlots(TAILWIND_300), pieSectionTextColor: '#28253d' },
+  values: {
+    ...REDUX_DARK_VALUES,
+    erEdgeLabelBackground: '#16141f',
+    // v12's fixed 900 shades for the journey section fills (`fillTypes`)
+    ...fillTypes('#701a75 #134e4a #7c2d12 #581c87 #14532d #4c1d95 #7f1d1d #713f12'),
+  },
   palettes: {
     borderColorArray: TAILWIND_400,
     bkgColorArray: [],
     cScale: TAILWIND_300,
+    cScaleInv: INVERTED_SCALE,
+    // v12 theme-redux-dark-color.js: each label is its slot darkened by 75.
+    cScaleLabel: paletteSlots((i) => `darkenHsl(cScale${i}, 75%)`),
   },
 };
 

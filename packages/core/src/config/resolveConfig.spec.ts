@@ -441,6 +441,7 @@ describe('CORE_DEFAULTS', () => {
       securityLevel: 'default',
       maxEdges: 5000,
       look: undefined, // removed, no default (D153)
+      handDrawnSeed: undefined, // the hand-drawn plugin's own key (D303)
     });
   });
 });

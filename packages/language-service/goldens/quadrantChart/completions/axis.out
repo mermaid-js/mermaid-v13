@@ -1,0 +1,6 @@
+@ 2:14  x-axis Low |
+  --> operator 2:14-2:14 "" -> "-->"
+@ 3:16  y-axis Low --|
+  --> operator 3:14-3:16 "--" -> "-->"
+@ 4:18  x-axis Low --> |
+  none

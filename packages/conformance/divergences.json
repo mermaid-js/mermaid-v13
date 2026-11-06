@@ -22,5 +22,53 @@
     "reason": "v12 stored a destroyed participant at the next row, here a fragment's start row, so it never drew the destruction; v13 ends it at the next message from or to it (D123, #139, MIGRATION.md).",
     "owner": "#139",
     "since": "2026-11-04"
+  },
+  {
+    "id": "parser case entity actors",
+    "inputHash": "sha256:f38132648039f4a2",
+    "kind": "model",
+    "reason": "v12 sorted actor names after `encodeEntities` had turned `#lt;` into its placeholder `ﬂ°lt¶ß` (U+FB02), so a name holding an entity sorted after plain names; v13 sorts the names as written (`&lt;b&gt;` before `b`), which only changes the legend order and colour slots of such names (#302, GAPS #302).",
+    "owner": "#302",
+    "since": "2026-11-05"
+  },
+  {
+    "id": "parser case entity actors (CRLF)",
+    "inputHash": "sha256:2879ab0c4720ec39",
+    "kind": "model",
+    "reason": "v12 sorted actor names after `encodeEntities` had turned `#lt;` into its placeholder `ﬂ°lt¶ß` (U+FB02), so a name holding an entity sorted after plain names; v13 sorts the names as written (`&lt;b&gt;` before `b`), which only changes the legend order and colour slots of such names (#302, GAPS #302).",
+    "owner": "#302",
+    "since": "2026-11-05"
+  },
+  {
+    "id": "quadrant-cases/unclosed-directive",
+    "inputHash": "sha256:f315ebfb42881e73",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (so later statements vanish); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour; GAPS #300, #301).",
+    "owner": "#301",
+    "since": "2026-11-05"
+  },
+  {
+    "id": "quadrant-cases/unclosed-directive-end",
+    "inputHash": "sha256:7011b1c6fe1ec37c",
+    "kind": "reject",
+    "reason": "v12's directive regex treats an unclosed `%%{` as a directive and removes it, with the rest of the text after it (so later statements vanish); v13's preprocess keeps the text and reports UNCLOSED_DIRECTIVE, so the chart is rejected rather than silently cut (core preprocess behaviour; GAPS #300, #301).",
+    "owner": "#301",
+    "since": "2026-11-05"
+  },
+  {
+    "id": "timeline-cases/front-matter-title",
+    "inputHash": "sha256:921e76548fe3789d",
+    "kind": "model",
+    "reason": "v12's timeline DB has no `setDiagramTitle`, so v12 dropped a front-matter `title`; v13 draws it where an in-text `title` goes, as every M4 type does (D218, #336).",
+    "owner": "#336",
+    "since": "2026-11-05"
+  },
+  {
+    "id": "e2e/diagrams/timeline/baseline/text/title-and-accessibility.mmd",
+    "inputHash": "sha256:810040392a2f3197",
+    "kind": "model",
+    "reason": "The front-matter `title` baseline (D218): v12's timeline DB has no `setDiagramTitle`, so v12 dropped it; v13 draws it where an in-text `title` goes, as in timeline-cases/front-matter-title.",
+    "owner": "#315",
+    "since": "2026-11-05"
   }
 ]

@@ -327,11 +327,15 @@ describe('optional packages stay out of core (R-PLUG-8, D153, D170)', () => {
     ]);
   });
 
-  it('holds for the real workspace: ELK and math are optional, and core names neither', () => {
+  it('holds for the real workspace: ELK, math and icons are optional, and core names none', () => {
     const root = join(import.meta.dirname, '..', '..');
     const packages = readWorkspace(root);
     expect(names(findOptionalPackages(packages))).toEqual(
-      expect.arrayContaining(['@mermaid-js/layout-elk', '@mermaid-js/plugin-math'])
+      expect.arrayContaining([
+        '@mermaid-js/layout-elk',
+        '@mermaid-js/plugin-math',
+        '@mermaid-js/plugin-icons',
+      ])
     );
     const sources = readCoreSources(root, packages);
     expect(sources.map((s) => s.file)).toContain('src/index.ts');

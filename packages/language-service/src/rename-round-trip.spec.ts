@@ -54,6 +54,18 @@ const KNOWN_BACK_REFUSALS = [
   "state-diagram/pr-check/should-render-forks-in-composit-states.mmd &lt;&lt;join&gt;&gt;@431: back refused: '&lt;&lt;join&gt;&gt;' cannot be named in `class` or `style` statements (letters, digits and `_` only).",
 ];
 
+/**
+ * Model lists a facet keeps in name order, sorted again once the name is written back: a rename
+ * moves the name in them, which is no model change. Journey's `actors` are sorted by code unit
+ * (its legend order, D244), so renaming `Cat` to `renamedZq7` puts it after `Me` (#331).
+ */
+const NAME_ORDERED: Readonly<Record<string, (model: unknown) => unknown>> = {
+  journey: (model) => {
+    const m = model as { actors: string[] };
+    return { ...m, actors: [...m.actors].sort() };
+  },
+};
+
 /** Refused renames: safe, but each one is listed so a new refusal is seen. */
 const KNOWN_REFUSALS = [
   // An `L_B_D_0@{ … }` naming a generated edge id: the id is made of its ends' names, so
@@ -117,7 +129,8 @@ describe('rename, re-parse, same model modulo the name', () => {
       if (text.includes(FRESH)) continue;
       const doc = service.update(`corpus:///${file}`, text);
       if (!doc.facet) continue;
-      const before = modulo(contextOf(doc).result?.model, FRESH, FRESH);
+      const order = NAME_ORDERED[doc.facet.id] ?? ((m: unknown) => m);
+      const before = order(modulo(contextOf(doc).result?.model, FRESH, FRESH));
       for (const at of symbolPositions(doc)) {
         const name = (doc.prepareRename(at) as { placeholder: string }).placeholder;
         const where = `${file.split('\\').join('/')} ${name}@${at}`;
@@ -128,7 +141,7 @@ describe('rename, re-parse, same model modulo the name', () => {
         }
         renamed++;
         const next = service.update(`corpus:///${file}#renamed`, apply(text, result.edits));
-        const after = modulo(contextOf(next).result?.model, FRESH, name);
+        const after = order(modulo(contextOf(next).result?.model, FRESH, name));
         if (JSON.stringify(after) !== JSON.stringify(before)) problems.push(`${where}: model`);
         const codes = (d: DocumentSnapshot) => d.diagnostics().map((x) => x.code);
         if (JSON.stringify(codes(next)) !== JSON.stringify(codes(doc)))

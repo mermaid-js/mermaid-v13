@@ -1,0 +1,15 @@
+---
+config:
+  theme: neo-dark
+description: icon shapes in the neo-dark theme (D298), drawn with the e2e static packs; the glyph takes the gradient, the frames do not, and every frame is borderless
+---
+flowchart LR
+  plain@{ icon: "fa:bell", label: "Plain" }
+  square@{ icon: "fa:bell", form: square, label: "Square" }
+  circle@{ icon: "fa:bell", form: circle, label: "Circle" }
+  rounded@{ icon: "fa:bell", form: rounded, label: "Top label", pos: t }
+  aws@{ icon: "aws:arch-amazon-route-53", form: square, h: 64 }
+  styled@{ icon: "fa:bell", form: circle, label: "Styled" }
+  plain --> square --> circle --> rounded
+  aws --> styled
+  style styled stroke:#e0115f,fill:#ffe4ec

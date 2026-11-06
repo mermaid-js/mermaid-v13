@@ -1,0 +1,8 @@
+@ 4:5  |Make tea : 5: Me
+  prepare: 4:5-4:13 "Make tea"; rename to "Brew coffee":
+  %% rename-to: Brew coffee
+  journey
+    section Morning
+      Brew coffee : 5: Me
+    section Evening
+      Brew coffee: 3: Me

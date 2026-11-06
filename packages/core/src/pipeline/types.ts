@@ -8,12 +8,14 @@ import type { Limits } from '../limits/index.ts';
 import type { AstNode } from '../parser-kit/ast.ts';
 import type { ParseResult } from '../parser-kit/result.ts';
 import type { PreprocessResult } from '../preprocess/preprocess.ts';
-import type { SvgWriter } from '../svg/writer.ts';
+import type { OutlinePaint } from '../svg/types.ts';
+import type { SvgFragment, SvgWriter } from '../svg/writer.ts';
 import type { SecurityLevel } from '../svg/url.ts';
 import type { InlineSpans } from '../text/inline.ts';
 import type { Measurer } from '../text/measurer.ts';
 import type { Theme } from '../theme/theme.ts';
 import type { Resource } from './errors.ts';
+import type { IconPacks } from './icon-packs.ts';
 
 /** A problem that did not stop the render, as returned in `RenderResult.warnings`. */
 export interface Warning {
@@ -65,13 +67,52 @@ export interface RenderContext {
   /** Integrator-only limits (R-SEC-5): `resolveLimits(initialize config, limits option)`. */
   readonly limits: Limits;
   /**
+   * The API object's icon packs (D294), for an icons extension's hooks: a view without the
+   * loader `ResourceRequest.iconPacks` has, so a draw cannot start one (R-ARCH-6).
+   */
+  readonly iconPacks?: IconPacks;
+  /**
    * The extensions' inline-box providers for this render (D177), for `layoutLabel`'s `inline`
    * option. In text output it boxes nothing: every span is shown as written, with one
    * `ASCII_DROPPED` warning per feature (D179).
    */
   readonly inline?: InlineSpans;
+  /**
+   * The extensions' glyphs (D293), for icons a diagram draws outside labels (flowchart icon
+   * shapes, mindmap `::icon()`): `name` as written (`fa:bell`), drawn in a `size` px square at
+   * the origin (the provider fits it, xMidYMid meet); `null` when an extension reported it
+   * unresolved (and warns `ICON_NOT_RENDERED`, D291); `undefined` when none has it (or it is a
+   * placeholder). Absent when no extension has `glyphs`, and in text output.
+   */
+  readonly icon?: (
+    name: string,
+    size: number,
+    options?: GlyphOptions
+  ) => SvgFragment | null | undefined;
   warn(warning: Warning): void;
 }
+
+/** How {@link RenderContext.icon} resolves a name. */
+export interface IconOptions {
+  /** The pack a name without a prefix comes from (v12's `fallbackPrefix`); none when absent. */
+  readonly fallbackPrefix?: string;
+}
+
+/** How {@link RenderContext.icon} resolves and paints a glyph. */
+export interface GlyphOptions extends IconOptions {
+  /**
+   * What the glyph's `currentColor` paints take (D298): a colour, which the provider sets as the
+   * glyph's `color`, or the render's gradient (`url(#…)`), which it puts in place of each
+   * `currentColor` fill and stroke. Absent, they stay `currentColor`.
+   */
+  readonly paint?: OutlinePaint;
+}
+
+/**
+ * An icon a diagram draws outside labels ({@link DiagramPlugin.icons}): its name as written, or
+ * that name with the `fallbackPrefix` the diagram passes to {@link RenderContext.icon} for it.
+ */
+export type DiagramIcon = string | ({ readonly name: string } & IconOptions);
 
 /**
  * What a diagram's `ascii` hook gets (DESIGN §6.3, D82): the render context, laid out in
@@ -109,6 +150,13 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
    * every string the parse holds, so a `$$` in a tooltip or URL loads nothing.
    */
   labels?(model: M): readonly string[];
+  /**
+   * Every icon name the layout draws outside labels for `model`, as written (`fa:bell`, D293):
+   * flowchart icon shapes, mindmap `::icon()`, each with the fallback pack it is drawn with, if any.
+   * Label icons are in `labels()`. An icons extension reads them through `ResourceRequest.icons`
+   * to load only the packs a diagram names.
+   */
+  icons?(model: M): readonly DiagramIcon[];
   layout?(model: M, ctx: RenderContext): L;
   /** Writes the whole `<svg>` document. */
   render(model: M, layout: L, ctx: RenderContext, w: SvgWriter): void;

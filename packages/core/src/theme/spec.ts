@@ -3,6 +3,7 @@
  * derived values a v12 theme hard-codes, and rules that override the shared derivation
  * table. Built-in specs live in `specs/`, one lazily imported file each.
  */
+import { fillTypes } from './specs/palettes.ts';
 import type { BaseVariable, PaletteVariable, TokenVariable } from './vocabulary.ts';
 
 /** Derivation rules by variable name, in the DSL of `dsl.ts`. */
@@ -21,9 +22,15 @@ export interface ThemeSpec {
   /**
    * Colour lists (D151, D152). A theme with a non-empty `borderColorArray` colours each
    * subgraph from it; an empty `bkgColorArray` means border-only colour. A palette the theme
-   * leaves out is empty.
+   * leaves out is empty. An entry is a colour or a rule (`dsl.ts`), and a rule may name a slot
+   * of a numbered palette (`invert(cScale3)`), so it follows the author's overrides (D258).
    */
   readonly palettes?: Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
+  /**
+   * The palettes that replace `palettes` when the author sets `themeVariables.darkMode`, where
+   * v12 derives its `cScale` with darker steps. A theme's own `dark` flag does not switch them.
+   */
+  readonly darkModePalettes?: Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
 }
 
 /** Shared derivation for light themes, approximating v12's khroma rules (D71). */
@@ -56,6 +63,33 @@ export const LIGHT_RULES: ThemeRuleTable = {
   rowEven: 'lightenHsl(mainBkg, 5%)',
   erEdgeLabelBackground: 'edgeLabelBackground',
   erMarkerFill: '#ffffff',
+  // v12 journey `.face { fill: faceColor or #FFF8DC }`; no v12 theme sets faceColor.
+  faceColor: '#fff8dc',
+  // Journey section fills (#327, D241): v12 theme-base takes primaryColor, secondaryColor and
+  // their hue turns by +64, -64 and 128 degrees. The DSL has no hue turn, so 2-7 are base's
+  // resolved v12 values; every other theme pins all eight (`fillTypes`, specs/palettes.ts).
+  ...fillTypes('primaryColor secondaryColor #e6ffdd #ffdde6 #ffddea #ddeaff #ddfff9 #fff9dd'),
+  // Pie slots (#325), as v12 theme-base derives them: the base colours, then khroma `darken`
+  // by 10. The DSL has no hue turn, so 7-12 are base's resolved v12 values; the other themes
+  // set their own (`pieSlots` in their specs).
+  pie1: 'primaryColor',
+  pie2: 'secondaryColor',
+  pie3: 'tertiaryColor',
+  pie4: 'darkenHsl(primaryColor, 10%)',
+  pie5: 'darkenHsl(secondaryColor, 10%)',
+  pie6: 'darkenHsl(tertiaryColor, 10%)',
+  pie7: '#c5ffaa',
+  pie8: '#ffaac5',
+  pie9: '#ddfff4',
+  pie10: '#a3ff77',
+  pie11: '#ff77a3',
+  pie12: '#aaffe3',
+  // v12 titles and legends in `taskTextDarkColor`, sections in `textColor`, strokes black.
+  pieTitleTextColor: 'textColor',
+  pieSectionTextColor: 'textColor',
+  pieLegendTextColor: 'textColor',
+  pieStrokeColor: 'black',
+  pieOuterStrokeColor: 'black',
   // v12 theme-base.js; the other classic themes pin altBackground (#192, D126).
   compositeBackground: 'background',
   compositeTitleBackground: 'mainBkg',
@@ -75,6 +109,24 @@ export const LIGHT_RULES: ThemeRuleTable = {
   // khroma darken(secondaryColor, 10): ten points of lightness, about 12.5% black on a grey.
   activationBorderColor: 'mix(secondaryColor, black, 12.5%)',
   sequenceNumberColor: 'invert(lineColor)',
+  // quadrant chart, as v12's `/* quadrant-graph */` block in every theme file derives them.
+  // Fills 2–4 follow `quadrant1Fill`, so a theme that pins it moves them too (D232); points
+  // default to `textColor`, the colour v12 points showed (D231).
+  quadrant1Fill: 'primaryColor',
+  quadrant2Fill: 'adjust(quadrant1Fill, 5, 5, 5)',
+  quadrant3Fill: 'adjust(quadrant1Fill, 10, 10, 10)',
+  quadrant4Fill: 'adjust(quadrant1Fill, 15, 15, 15)',
+  quadrant1TextFill: 'primaryTextColor',
+  quadrant2TextFill: 'adjust(primaryTextColor, -5, -5, -5)',
+  quadrant3TextFill: 'adjust(primaryTextColor, -10, -10, -10)',
+  quadrant4TextFill: 'adjust(primaryTextColor, -15, -15, -15)',
+  quadrantPointFill: 'textColor',
+  quadrantPointTextFill: 'primaryTextColor',
+  quadrantXAxisTextFill: 'primaryTextColor',
+  quadrantYAxisTextFill: 'primaryTextColor',
+  quadrantInternalBorderStrokeFill: 'primaryBorderColor',
+  quadrantExternalBorderStrokeFill: 'primaryBorderColor',
+  quadrantTitleFill: 'primaryTextColor',
   // The neo gradient's stops, as v12 theme-base derives them (D182).
   gradientStart: 'primaryBorderColor',
   gradientStop: 'secondaryBorderColor',
