@@ -47,6 +47,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'class',
       'er',
       'flowchart',
+      'info',
       'journey',
       'pie',
       'quadrantChart',
