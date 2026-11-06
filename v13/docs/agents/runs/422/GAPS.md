@@ -54,3 +54,9 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - `neo` computed styles checked against 12.2.0 in Chromium: equal to v13 except the axis colour (D333(b), #449's DIFFERENCES).
 - Choices: `data-id` = AST id on axis groups, curves, legend rows and swatches; labels drawn centred on the layout's boxes (legend left-aligned), not with v12's per-label anchors.
 - For #449: `render-api.ts` registers with `replace: true`; drop it with the manifest.
+
+## T4 (#448, merged)
+
+- Review fixes (orchestrator): multi-line and hostile render sources moved to `corpus/radar-cases.json` (`render-*`); round-trip comment covers superseded titles; MIGRATION.md row for label placement by measured box (D355); shared `radarTestContext()` in `./testing`.
+- Accepted deviations: `RadarModel.titleAstId` (additive); `data-id` = AST id on axis groups, curves, legend rows and swatches; labels centred on their measured boxes; no title element without a title; a skipped curve keeps its legend row (spec Layout); rings' stroke opaque, only fill-opacity, as v12's CSS; `textColor` `usedBy` lists radar.
+- Left to #449: manifest and `gen:registry`, `configDefaults`, theme oracle specs vs 12.2.0, D333(b) DIFFERENCES and MIGRATION rows, baselines, deleting `stand-ins.ts`, dropping `replace` in `conformance/src/radar/render-api.ts`.
