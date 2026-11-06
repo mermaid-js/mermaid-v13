@@ -7,8 +7,8 @@ Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft
 | T1 lexer parity gate and corpus restore | #451 | #285 (merged) | merged (ff e3b5b9d4d; package entry 2,830 B gz, no core change) |
 | T2 grammar, parser, model, AST | #453 | #451 | done on `feature/453_kanban-parser` (handoff `tickets/453.md`; package entry 7,985 B gz, no core change) |
 | T3 layout | #455 | #453 | merged (ff b5e02727e; package entry 10,785 B gz, core unchanged) |
-| T4 SVG renderer | #457 | #455 (T0a merged in at d562508ea) | in progress (`.claude/worktrees/t457`, `feature/457_kanban-render`) |
-| T6 language facet | #463 | #453; #406 (`LanguageFacet.standalone`) | blocked |
+| T4 SVG renderer | #457 | #455 (T0a merged in at d562508ea) | merged (ff 194da70d7; package entry 12,706 B gz, core 92,619 unchanged) |
+| T6 language facet | #463 | #453 (merged); #406 via `feature/414_theme-t0` | blocked on T0 taking `mermaid-v13` |
 | T5 integration | #459 | #457, #463 (T0a merged in) | blocked |
 | T7 ascii (Should) | #466 | #459 | blocked |
 
