@@ -30,17 +30,26 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 ## T2 (#446)
 
 - **`RadarModel` unchanged** by T2. Additive export: `layoutRadar` and the `RadarLayout` types from the runtime entry (for the layout corpus spec, as pie's #305).
-- Parity over the gate corpus: 0 divergences; exclusions as T1's (unclosed directives, the indented-front-matter dev diagram), each asserted to differ only in core. Nothing added to `divergences.json`.
-- Choices: a curve with a semantic error (`Missing entry …`, `Axes must be populated …`) stays in the model with the entries it has; `UNCLOSED_ACC_DESCR` is reported for a name `accDescr` followed by `{` (radar's lexer yields no error token there); one `RADAR_UNKNOWN_AXIS` per parse with the others `related` (D356).
+- Parity over the gate corpus: 0 unlisted. The core divergences (unclosed directives, the indented-front-matter dev diagram, each plain/CRLF/commented) are 9 rows in `divergences.json` (owner #446), and the parity spec asserts nothing else differs.
+- Choices: a curve with a semantic error (`Missing entry …`, `Axes must be populated …`) stays in the model with the entries it has; `UNCLOSED_ACC_DESCR` is reported for a name `accDescr` followed by `{` (radar's lexer yields no error token there); one `RADAR_UNKNOWN_AXIS` per parse, `related` its curve and the other unknown entries (D356).
 - Skipped ported specs: `closedRoundCurve` path strings and `draw` (#448 ports them, edit `SKIP` in `scripts/port-v12-specs.ts`); v12's "unknown location at the end of input" (v13 locates it).
 
 ## Theme T0a merged (2026-11-06)
 
 - `origin/feature/414_theme-t0` at `462aef4e9` merged into `feature/422_radar` (API: `v13/docs/agents/runs/414/CONTRACT.md`). **Orchestrator choice:** the radar `DiagramThemeTable` (ten `radar*` vars, `section: 'radar'` with `nested` keys, `radarAxisColor` the rule `lineColor`) lands in #448 (T4) with the plugin object, declared inline on the plugin until T0b's per-package file convention lands; #448 deletes the theme half of `stand-ins.ts`. #449 (T5) keeps the theme oracle specs, the D333(b) differences and the nested-override fixture.
 
+## Base sync (2026-11-06)
+
+- `mermaid-v13` gained gantt #398 and gitGraph #404. Merging it here conflicts in 11 core theme files between T0a and M4 wave 2 (`theme/spec.ts`, `theme.ts`, `vocabulary.ts`, `specs/*`, `generated/variables.ts`): the T0's to resolve. Aborted; coordinator rule (until #472 merges): M5a ports take `mermaid-v13` only through `feature/414_theme-t0`, never directly; the T0 session merges all three wave-2 types (mindmap #406 too) and the coordinator sends the sha. Radar-owned conflicts expected then: `conformance/package.json`, `jison/harvest.ts` (gitGraph's harvest vs #445's `harvest:langium`), `langium-lexer.ts` row order, `theme-used-by.spec.ts`. Hosted CI does not run on #474 until the conflicts are gone.
+
+## T2 (#446, merged)
+
+- Review fixes (orchestrator): divergences listed in `divergences.json` (9 rows: unclosed directives and the indented-front-matter dev diagram, each plain/CRLF/commented; a spec pins them to core's codes); `RADAR_UNKNOWN_AXIS` always has `related` (its curve first); recovery set 39 cases, 13 multi-error; recovery cases in `corpus/radar-recovery.json`, multi-line diagrams in `e2e/diagrams/radar/nightly-check/parser-*.mmd`; model resolution in `normalise.ts`, one keyword table (`PREFIX_KEYWORDS`).
+- Accepted deviations: `layoutRadar` exported from the runtime entry; parser-stress spec; symbols, statements and probe hooks in the parser; `UNCLOSED_ACC_DESCR`; `@n` ids for repeated `title`/`accTitle`/`accDescr`/options; a curve with v12's semantic error stays in the model with what it has, the text still rejected (error severity).
+
 ## T4 (#448)
 
-- **`RadarModel` changed additively:** `titleAstId?` (the in-text title's AST id, for its `data-ast`); set by the parser (#446's code, one field).
+- **`RadarModel` changed additively:** `titleAstId?` (the in-text title's AST id, for its `data-ast`); set by the parser and carried through `normalise.ts` (`RadarParts.titleId`).
 - **Theme table landed** inline on `radar.theme` (ten vars, `section: 'radar'`, `radarAxisColor` = rule `lineColor`, one literal entry for every family); theme half of `stand-ins.ts` deleted. `textColor`'s `usedBy` lists `radar`.
 - `neo` computed styles checked against 12.2.0 in Chromium: equal to v13 except the axis colour (D333(b), #449's DIFFERENCES).
 - Choices: `data-id` = AST id on axis groups, curves, legend rows and swatches; labels drawn centred on the layout's boxes (legend left-aligned), not with v12's per-label anchors.

@@ -8,13 +8,13 @@ import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { LANGIUM_NAMES, RADAR_TRIVIA, T as RadarTokenKind } from './tokens.ts';
+export { parseRadar } from './parser.ts';
 export {
-  parseRadar,
   RADAR_MISSING_ENTRY,
   RADAR_NO_AXES,
   RADAR_TICKS_CLAMPED,
   RADAR_UNKNOWN_AXIS,
-} from './parser.ts';
+} from './normalise.ts';
 export type { RadarParseOptions, RadarParseResult } from './parser.ts';
 export { detectRadar } from './detect.ts';
 export type * from './ast.ts';

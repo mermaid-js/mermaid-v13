@@ -60,7 +60,7 @@ import {
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
-import { T } from './tokens.ts';
+import { PREFIX_KEYWORDS, T } from './tokens.ts';
 
 /** `kind` of a rule that matched and writes no token (WHITESPACE). */
 const SKIP = -1;
@@ -91,12 +91,9 @@ const PUNCTUATION: ReadonlyMap<number, number> = new Map([
 ]);
 
 /** The terminals GRATICULE and BOOLEAN: literal alternatives with no boundary. */
-const TERMINALS: readonly (readonly [word: string, kind: number])[] = [
-  ['circle', T.GraticuleValue],
-  ['polygon', T.GraticuleValue],
-  ['true', T.Boolean],
-  ['false', T.Boolean],
-];
+const TERMINALS: readonly (readonly [word: string, kind: number])[] = PREFIX_KEYWORDS.filter(
+  (k) => k.kind !== T.Title
+).flatMap((k) => k.words.map((w) => [w, k.kind] as const));
 
 /** Not in `[^\n\r]`. */
 const isBreak = (c: number) => c === LF || c === CR;
