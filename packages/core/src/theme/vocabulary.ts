@@ -241,6 +241,7 @@ const TEXT_USERS = [
   'journey',
   'timeline',
   'quadrant',
+  'gitgraph',
 ];
 
 const JOURNEY = ['journey'];
@@ -359,12 +360,12 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   // overrides; no theme sets it.
   commitLabelColor: def('gcc', 'color', []),
   commitLabelBackground: def('gcb', 'color', []),
-  commitLabelFontSize: def('gcs', 'length', []),
+  commitLabelFontSize: def('gcs', 'length', ['gitgraph']),
   tagLabelColor: def('gtc', 'color', []),
   tagLabelBackground: def('gtb', 'color', []),
   tagLabelBorder: def('gto', 'color', []),
   tagBorder: def('gtg', 'color', []),
-  tagLabelFontSize: def('gts', 'length', []),
+  tagLabelFontSize: def('gts', 'length', ['gitgraph']),
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',
@@ -374,10 +375,11 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'state',
     'er',
     'timeline',
+    'gitgraph',
   ]),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),
   radius: def('r', 'length', ['core', 'flowchart', 'state']),
-  fontWeight: def('fw', 'weight', ['core', 'timeline']),
+  fontWeight: def('fw', 'weight', ['core', 'timeline', 'gitgraph']),
   spacing1: def('g1', 'length', ['core']),
   spacing2: def('g2', 'length', ['core']),
   spacing3: def('g3', 'length', ['core']),

@@ -31,10 +31,16 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Duplicate ids (D264) do not always give a self-parent: for `A`, `B`, `A` the first `A` disappears, `B`'s parent is the later `A` and that `A`'s parent is `B`, a cycle. Model, layout (`findClosestParent`, ordering) and renderer must terminate on parent cycles; T2 adds such fixtures. A front-matter `title` exists in the corpus (nightly 66).
 
 ## #371 T3 layout
+- **Choice:** where v12 drew branch labels over each other (TB: a long name after a short one, as `setBranchPosition` spaces by the previous name only; LR: names of four or more lines), the lane moves out until the boxes are 10 apart (`GIT_METRICS.branchLabel.labelGap`). Elsewhere v12's positions stand (as D224 for clipping). MIGRATION.md (T5).
+- **Choice:** parent cycles (D264): only parents with a smaller `seq`, never the commit itself, count for `parallelCommits`; a commit with none is placed as a root. v12 threw in BT parallel and drew pass-dependent positions in LR/TB. Arrows run in seq order (v12: DB insertion order, which differs only for duplicate ids).
+- **Choice:** branch label text sits centred in its box less 2 px, with v12's first baseline 1em below; TB redux comes out 1 px below v12's `-2·padY + 7`.
+- Core: `usedBy` (documentation, not in the bundle) lists `gitgraph` for the six variables the layout reads; core size unchanged (bench 92,645 before and after).
+- For T5: eight geometry variables (`GIT_GEOMETRY`, ticket 371.md), two signed (`gitLaneOffset` −2/7, `gitBranchLabelOffsetX` 0/−11). Until then `geometryOf` falls back to classic values for names core does not know.
+- [ ] Invariants on parser-produced fixtures: waits for T2 (#370) on the branch; then `conformance/src/gitgraph/layout-corpus.spec.ts`.
 
 ## #372 T6 language facet
 
 ## #373 T4 renderer
-- [ ] Drop the `gitgraph` exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one variable"), added by #368.
+- [x] Drop the `gitgraph` exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one variable"), added by #368. Done in #371: the layout reads `fontFamily`, `fontSize`, `fontWeight`, `strokeWidth`, `commitLabelFontSize`, `tagLabelFontSize` (their `usedBy` lists `gitgraph`). T4 adds `gitgraph` to what the renderer reads; T5 to the geometry variables (the scan sees the `GIT_GEOMETRY` names once they exist).
 
 ## #374 T5 integration

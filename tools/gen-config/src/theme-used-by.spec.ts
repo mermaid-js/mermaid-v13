@@ -59,9 +59,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'state',
       'timeline',
     ]);
-    // gitGraph has only its lexer so far: it reads theme variables from its renderer (#373) on.
-    const drawing = TYPES.filter((type) => type !== 'gitgraph');
-    for (const type of drawing) expect(READS.get(type)!.size).toBeGreaterThan(0);
+    for (const type of TYPES) expect(READS.get(type)!.size).toBeGreaterThan(0);
   });
 
   it.each(TYPES)('lists %s for every variable it reads, and for no other', (type) => {
