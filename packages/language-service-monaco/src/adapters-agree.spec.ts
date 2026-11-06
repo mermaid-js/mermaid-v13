@@ -155,6 +155,22 @@ const DOCS: Readonly<Record<string, string>> = {
     "  'Cats' : 85.5",
     '',
   ].join('\n'),
+  packet: [
+    'packet-beta',
+    '  title UDP datagram',
+    '  accTitle: UDP',
+    '  accDescr {',
+    '    The eight-byte header',
+    '    and its data',
+    '  }',
+    '  %% the header',
+    '  0-15: "Source Port"',
+    "  16-31: 'Destination Port'",
+    '  +16: "Length"',
+    '  +16: "Checksum"',
+    '  64-95: "Data (variable length)"',
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */

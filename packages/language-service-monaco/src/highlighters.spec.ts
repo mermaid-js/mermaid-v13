@@ -39,6 +39,7 @@ const DOCS = {
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   pie: 'pie\n  "Dogs" : 386\n',
   quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
+  packet: 'packet\n  0-15: "Source Port"\n  +16: "Length"\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -48,6 +49,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'er',
       'flowchart',
       'journey',
+      'packet',
       'pie',
       'quadrantChart',
       'sequence',

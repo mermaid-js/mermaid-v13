@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { detectPacket, packetLanguage, parsePacket } from '@mermaid-js/diagram-packet/language';
+import { parsePacket } from '@mermaid-js/diagram-packet/language';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { DocumentSnapshot } from '@mermaid-js/language-service';
@@ -31,18 +31,15 @@ import { packetAdapter } from './v13.ts';
  * Sources whose model is a listed parity divergence (D342's `bitsPerRow` 0 and -4, where v12
  * drew garbage or nothing) are skipped: v12's fields are not the written ones there.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until packet's
- * manifest has its `language` entry (#462); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (packet's manifest
+ * `language` entry, #462).
  */
 
 /** v12 field labels written otherwise than their name in the corpus (skipped above). */
 const ESCAPED = 46;
 
-const service = createLanguageService({
-  facets: [
-    { type: 'packet', id: 'packet', detector: (t) => detectPacket(t), facet: packetLanguage },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['packet'] });
 /** `id` and source hash of each listed model divergence. */
 const DIVERGENT = new Set(
   loadDivergences(fileURLToPath(DIVERGENCES_FILE))
@@ -127,8 +124,9 @@ describe('packet definition, references and folding through the service match v1
     expect(problems).toEqual([]);
   }, 300_000);
 
-  it('runs with an eager row only while packet has no manifest `language` entry', () => {
+  it('loads the facet from the generated registry (#462)', () => {
     const row = firstPartyFacets.find((e) => e.type === 'packet');
-    expect(row?.load, 'drop the eager row: the manifest registers the facet').toBeUndefined();
+    expect(row?.load).toBeTypeOf('function');
+    expect(service.update('x:///p', 'packet\n0-7: "a"\n').facet?.id).toBe('packet');
   });
 });

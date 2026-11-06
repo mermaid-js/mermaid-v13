@@ -36,6 +36,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'er',
       'flowchart',
       'journey',
+      'packet',
       'pie',
       'quadrantChart',
       'sequence',
@@ -107,6 +108,20 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out[0]).toBe('quadrantChart:keyword');
       expect(out).toContain('x-axis:keyword');
       expect(out).toContain('-->:operator');
+    });
+
+    it('highlights a packet diagram with the packet grammar', () => {
+      const out = spans('packet\n  title UDP\n  0-15: "Source Port"\n  +16: "Length"\n');
+      expect(out).toEqual([
+        'packet:keyword',
+        'title UDP:keyword',
+        '-:punctuation',
+        '::punctuation',
+        '"Source Port":string',
+        '+:punctuation',
+        '::punctuation',
+        '"Length":string',
+      ]);
     });
 
     it('finds the type after front matter, directives and comments', () => {
