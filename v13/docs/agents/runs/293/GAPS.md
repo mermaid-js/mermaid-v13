@@ -35,6 +35,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** jison's `\b` is tested with ASCII word characters (JS `\b`), not parser-kit's Unicode `isWord`: `ganttä` lexes as `gantt` + `ä…` in v12. (Timeline's lexer uses `isWord` there; not changed here.)
 
 ### #379 T3 schedule and layout
+- [ ] From the #376 review: the `gantt-utc` / `gantt-la` vitest projects take only `packages/diagram-gantt/src/**/*.spec.ts`; gantt specs in `packages/conformance` run in the host zone (the dev Mac is Europe/Stockholm, CI is UTC). The schedule-parity spec must run under both zones: add `packages/conformance/src/gantt/**/*.spec.ts` (or the zone-sensitive ones) to the gantt projects in `vitest.config.ts` and exclude them from `workspace`.
 - [ ] From the #375 review: `RenderOptions.now` is `+(now ?? Date.now())`, so an invalid `Date` (or a non-number from JS) reaches `ctx.now` as `NaN`. T3 must not draw NaN (R-LAYOUT-3). **Choice for T3:** reject a non-finite `ctx.now` before scheduling with a clear error, rather than fall back to some instant. `ctx.now` is optional on `RenderContext`, so any context T3 builds by hand must set it.
 - v12's exclude-range walk never pushes a range still open at the end of the domain, so trailing excluded days get no rect. Follow v12 (P2) unless it breaks an invariant.
 - A label's x uses `renderEndTime`, its class uses `endTime`; with excludes they can disagree. Follow v12.

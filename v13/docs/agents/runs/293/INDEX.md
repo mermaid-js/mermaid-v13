@@ -6,7 +6,7 @@ Integration branch `feature/293_gantt` (from `mermaid-v13` at 38d663b44). Draft 
 | --- | --- | --- | --- |
 | Package skeleton | — | — | on the integration branch (setup) |
 | T0 core `now`, `availableWidth` on the context | #375 | — | merged (ff 46431e19d) |
-| D1 dates and axis (Pele port) | #376 | — | open |
+| D1 dates and axis (Pele port) | #376 | — | merged (no-ff) |
 | T1 lexer parity gate | #377 | #285 (merged) | merged (ff 935787bfe) |
 | T2 grammar, parser, model, AST | #378 | #377 | open |
 | T3 schedule and layout | #379 | #375, #376, #378 | open |
