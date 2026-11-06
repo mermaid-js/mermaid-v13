@@ -20,8 +20,8 @@ function viewProblems(v: MindmapNodeView): string[] {
   const out: string[] = [];
   const where = `node '${v.id}'`;
   const { width: fw, height: fh } = v.frame;
-  const nums = [v.width, v.height, fw, fh, v.frame.dx, v.frame.dy, v.labelAt.x, v.labelAt.y];
-  if (!nums.every(Number.isFinite)) return [`${where}: non-finite size`];
+  const lengths = [v.width, v.height, fw, fh, v.frame.dx, v.frame.dy, v.labelAt.x, v.labelAt.y];
+  if (!lengths.every(Number.isFinite)) return [`${where}: non-finite size`];
   const lw = v.label.width;
   const lh = v.label.height;
   if (v.shape === 'circle') {
