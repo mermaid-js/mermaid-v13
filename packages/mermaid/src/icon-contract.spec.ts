@@ -380,8 +380,9 @@ describe('the glyph slot (D293)', () => {
       'flowchart LR\n  A@{ icon: "no:a", form: square }\n  B@{ icon: "fa:b" }\n  C@{ icon: "no:c" }';
     const r = await m.render('x', source);
     expect(codes(r.warnings)).toEqual(['ICON_NOT_RENDERED', 'ICON_UNAVAILABLE']);
+    // A fixed message, as sequence's SEQUENCE_MATH: the extension's warning names the icons.
     expect(r.warnings[1]!.message).toBe(
-      'ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED. Icons not drawn: "no:a", "no:c"; an icon with a form draws its frame alone.'
+      'ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED.'
     );
     // The frame-only drawing, as without an extension.
     expect(r.svg).toBe((await api().m.render('x', source)).svg);

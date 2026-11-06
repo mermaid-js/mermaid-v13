@@ -42,7 +42,7 @@ import type {
 } from '../text/inline.ts';
 import type { IconPacks, IconPackSource } from './icon-packs.ts';
 import { MermaidError, type Resource } from './errors.ts';
-import type { DiagramIcon, IconOptions, RenderContext } from './types.ts';
+import type { DiagramIcon, GlyphOptions, RenderContext } from './types.ts';
 
 /**
  * What `postLayout` hooks get and return: graph diagrams carry the shared `LayoutModel`.
@@ -183,8 +183,10 @@ export interface GlyphProvider {
 export interface GlyphRequest {
   /** The side, in px, of the square the glyph is drawn in. */
   readonly size: number;
-  /** The pack for a name without a prefix ({@link IconOptions}). */
+  /** The pack for a name without a prefix ({@link GlyphOptions}). */
   readonly fallbackPrefix?: string;
+  /** What the glyph's `currentColor` paints take ({@link GlyphOptions}); the provider applies it. */
+  readonly paint?: GlyphOptions['paint'];
   /** The render's warnings, as `InlineRequest.warn`: once per render. */
   readonly warn: (warning: { readonly code: string; readonly message: string }) => void;
   /** The render's icon packs (D294), read-only. */
@@ -507,7 +509,7 @@ export class HookRunner<El = unknown, R = unknown> {
     const list = this.list.filter((p) => p.glyphs);
     if (!list[0]) return undefined;
     const { warn, scratch } = spans;
-    return (name: string, size: number, options?: IconOptions) => {
+    return (name: string, size: number, options?: GlyphOptions) => {
       const request: GlyphRequest = { ...options, size, warn, iconPacks, scratch };
       let unresolved;
       for (const p of list) {

@@ -32,8 +32,9 @@ const themed = (theme: string, body: string) =>
 /** The frame (`rect`/`circle`) of the first node. */
 const frame = (svg: string) =>
   /<g class="node [^>]*>(<(?:rect|circle) [^>]*>)/.exec(svg)?.[1] ?? '';
-/** The glyph's wrapper: the `<g>` that places the fitted glyph in the frame's square. */
-const wrapper = (svg: string) => /<g transform="translate\(-24,[^"]*\)"[^>]*>/.exec(svg)?.[0] ?? '';
+/** The fitted glyph's `<g>` (in the one that places it in the frame's square): it takes the colour. */
+const wrapper = (svg: string) =>
+  /<g transform="translate\(-24,[^"]*\)"><(g [^>]*)>/.exec(svg)?.[1] ?? '';
 const attr = (tag: string, name: string) => new RegExp(`\\s${name}="([^"]*)"`).exec(tag)?.[1];
 
 describe('the glyph (D298)', () => {
@@ -117,14 +118,15 @@ describe('an icon that is not drawn (D298, D299)', () => {
     expect(attr(frame(r.svg), 'stroke')).not.toBe(attr(frame(r.svg), 'fill'));
   });
 
-  it("gives flowchart's deprecated ICON_UNAVAILABLE naming the shapes, then one ICON_NOT_RENDERED", async () => {
+  it("gives flowchart's deprecated ICON_UNAVAILABLE, then one ICON_NOT_RENDERED naming the shapes", async () => {
     const m = await api();
     const r = await m.render('x', UNRESOLVED);
     // Flowchart gives the alias as it draws; the extension's warning comes after the draw.
     expect(codes(r)).toEqual(['ICON_UNAVAILABLE', 'ICON_NOT_RENDERED']);
     expect(r.warnings[0]!.message).toBe(
-      'ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED. Icons not drawn: "fa:nope", "user", "fa:nada"; an icon with a form draws its frame alone.'
+      'ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED.'
     );
+    expect(r.warnings[1]!.message).toMatch(/fa:nope .*user .*fa:nada /);
   });
 
   it("gives the alias without an icons extension too, beside core's label warning", async () => {
@@ -159,7 +161,8 @@ describe('an icon that is not drawn (D298, D299)', () => {
     const source = 'flowchart LR\n  A@{ icon: "fa:bell", form: square }\n  B@{ icon: "mdi:x" }';
     const r = m.renderSync(source, { placeholders: true });
     expect(codes(r)).toEqual(['PLACEHOLDER', 'ICON_UNAVAILABLE', 'ICON_NOT_RENDERED']);
-    expect(r.warnings[1]!.message).toContain('Icons not drawn: "mdi:x";');
+    expect(r.warnings[2]!.message).toContain('mdi:x');
+    expect(r.warnings[2]!.message).not.toContain('fa:bell');
   });
 
   it('gives no alias when every glyph is drawn, even if a label icon is not', async () => {

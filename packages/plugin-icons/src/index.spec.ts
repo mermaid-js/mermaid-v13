@@ -336,7 +336,7 @@ describe('glyphs (D292, D293)', () => {
     expect(codes(r)).toEqual([]);
     // 448 × 512 in a 48 px square: scale 48/512, centred across, 3 px in from each side.
     expect(r.svg).toContain(
-      '<g transform="translate(3,0) scale(0.09375)"><path fill="currentColor" d="M224 0'
+      '<g transform="translate(3,0) scale(0.09375)" color="var(--_nb)"><path fill="currentColor" d="M224 0'
     );
   });
 
@@ -350,7 +350,9 @@ describe('glyphs (D292, D293)', () => {
     });
     const r = await m.render('i', 'flowchart LR\n  A@{ icon: "w:wide", form: "circle" }');
     // s = 48/40 = 1.2; across: −(−10)·1.2 = 12; down: (48 − 24)/2 − 5·1.2 = 6.
-    expect(r.svg).toContain('<g transform="translate(12,6) scale(1.2)"><path d="M0 0H1z"/></g>');
+    expect(r.svg).toContain(
+      '<g transform="translate(12,6) scale(1.2)" color="var(--_nb)"><path d="M0 0H1z"/></g>'
+    );
   });
 
   it('names unresolved glyphs in the one ICON_NOT_RENDERED, beside label icons', async () => {
@@ -363,8 +365,10 @@ describe('glyphs (D292, D293)', () => {
     expect(message(r, 'ICON_NOT_RENDERED')).toBe(
       'Icons not rendered: fa:fa-nope (pack "fa" has no icon "nope"), fa:nada (pack "fa" has no icon "nada"), user (not a pack:name icon name). Labels show them as written; their shapes are drawn without them.'
     );
-    // Flowchart's deprecated alias names the shapes (D299).
-    expect(message(r, 'ICON_UNAVAILABLE')).toMatch(/Icons not drawn: "fa:nada", "user";/);
+    // Flowchart's deprecated alias, a fixed message (D299).
+    expect(message(r, 'ICON_UNAVAILABLE')).toBe(
+      'ICON_UNAVAILABLE is deprecated and goes in the next alpha: read ICON_NOT_RENDERED.'
+    );
     expect(codes(r).filter((c) => c === 'ICON_NOT_RENDERED')).toHaveLength(1);
   });
 

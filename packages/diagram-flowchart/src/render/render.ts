@@ -19,7 +19,7 @@ import {
 } from '@mermaid-js/core/svg';
 import type { FlowModel } from '../parser/index.ts';
 import type { FlowRenderContext, FlowWarning } from './context.ts';
-import { drawIcon, drawImage, iconsNotDrawn } from './assets.ts';
+import { drawIcon, drawImage } from './assets.ts';
 import { arrowheads, marker, markerTrim, routePath, type Arrowheads } from './edges.ts';
 import { prepare, type EdgeView, type NodeView, type Prepared } from './prepare.ts';
 import { drawShape, shapeFilled, shapeInset, usesPlain, type Pads } from './shapes.ts';
@@ -188,8 +188,6 @@ interface Scene {
   readonly ctx: FlowRenderContext;
   readonly paint: Paints;
   readonly warn: (warning: FlowWarning) => void;
-  /** The icon shapes whose glyph was not drawn, as written. */
-  readonly iconsMissed: string[];
 }
 
 /** Writes the whole `<svg>` document for a laid-out flowchart. */
@@ -207,7 +205,6 @@ export function renderFlowchart(
     ctx,
     paint: paints(ctx.theme, flow),
     warn: (warning) => ctx.warn(warning),
-    iconsMissed: [],
   };
   openRoot(scene, model);
   if (scene.paint.cluster) drawClusters(scene);
@@ -228,7 +225,6 @@ export function renderFlowchart(
   for (const view of flow.nodes) drawNode(scene, view, tips.get(view.id));
   w.close();
   w.close();
-  iconsNotDrawn(ctx, scene.iconsMissed);
 }
 
 /** The `<svg>` root with its title and description (R-A11Y-1). */
@@ -387,7 +383,7 @@ function drawEdgeLabel({ w, layout, paint }: Scene, e: EdgeView): void {
 }
 
 function drawNode(
-  { w, layout, flow, ctx, paint, warn, iconsMissed }: Scene,
+  { w, layout, flow, ctx, paint, warn }: Scene,
   view: NodeView,
   tip?: string
 ): void {
@@ -434,10 +430,8 @@ function drawNode(
   if (v?.img) drawImage(w, view, v.img, securityLevel, warn);
   else if (v?.icon) {
     // D298: the glyph takes the author's stroke, else nodeBorder (`node.stroke`, the gradient
-    // under neo). Unresolved: no extension has glyphs, or one reported it (`null`).
-    const glyph = view.style.shape.stroke ?? paint.node.stroke;
-    const drawn = drawIcon(w, view, shapeAttrs, glyph, ctx.icon);
-    if (drawn === null || !ctx.icon) iconsMissed.push(v.icon);
+    // under neo).
+    drawIcon(w, view, shapeAttrs, view.style.shape.stroke ?? paint.node.stroke, ctx);
   } else drawShape(view.shape, w, view.w, view.h, shapeAttrs, lineAttrs, flow.pads);
   const fill = view.style.shape.fill;
   w.label(view.label, 0, view.dy, {

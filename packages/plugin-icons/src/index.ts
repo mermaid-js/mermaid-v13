@@ -31,7 +31,7 @@
  */
 import type { DiagramIcon, ExtensionPlugin, IconPacks, ResourceRequest } from '@mermaid-js/core';
 import type { ParseResult } from '@mermaid-js/core/parser-kit';
-import type { Paint, SvgNode, SvgTree, Transform } from '@mermaid-js/core/svg';
+import type { OutlinePaint, Paint, SvgNode, SvgTree, Transform } from '@mermaid-js/core/svg';
 import type {
   InlineBox,
   InlineProvider,
@@ -228,13 +228,36 @@ function warnFor({ warn, scratch }: InlineSpans): void {
 const len = (n: number): string => String(Math.round(n * 1e6) / 1e6 || 0);
 
 /** `nodes` scaled by `s` and moved by (`dx`, `dy`). */
-function placed(nodes: readonly SvgFragment[], dx: number, dy: number, s: number): SvgFragment {
+function placed(
+  nodes: readonly (SvgFragment | string)[],
+  dx: number,
+  dy: number,
+  s: number
+): SvgFragment {
   const at = dx === 0 && dy === 0 ? '' : `translate(${len(dx)},${len(dy)}) `;
   return { tag: 'g', attrs: { transform: `${at}scale(${len(s)})` as Transform }, children: nodes };
 }
 
 const isCurrent = (paint: unknown): boolean =>
   typeof paint === 'string' && /^currentColor$/i.test(paint);
+
+/** `nodes` with each `currentColor` fill and stroke painted with `paint` (the render's gradient). */
+function painted(
+  nodes: readonly (SvgFragment | string)[],
+  paint: OutlinePaint
+): (SvgFragment | string)[] {
+  return nodes.map((n) => {
+    if (typeof n === 'string') return n;
+    const attrs = n.attrs && { ...n.attrs };
+    if (attrs)
+      for (const key of ['fill', 'stroke'] as const) if (isCurrent(attrs[key])) attrs[key] = paint;
+    return {
+      tag: n.tag,
+      ...(attrs ? { attrs } : {}),
+      ...(n.children ? { children: painted(n.children, paint) } : {}),
+    };
+  });
+}
 
 /**
  * `nodes` with each `currentColor` fill left off where nothing in the icon above it sets a fill,
@@ -331,14 +354,22 @@ export const icons: ExtensionPlugin = {
   inline: [label],
   glyphs: {
     glyph(written, request) {
-      const { size, fallbackPrefix, iconPacks } = request;
+      const { size, fallbackPrefix, iconPacks, paint } = request;
       if (!(size > 0 && Number.isFinite(size))) return undefined;
       const f = asGlyph(iconPacks, written, fallbackPrefix);
       if ('icon' in f) {
         if (f.icon.simplified) notesOf(request.scratch).simplified.add(quote(written));
         const [left, top, w, h] = f.icon.viewBox;
         const s = size / Math.max(w, h);
-        return placed(f.icon.nodes, (size - w * s) / 2 - left * s, (size - h * s) / 2 - top * s, s);
+        // D298: a colour is the glyph's `color`; the gradient goes on its `currentColor` paints.
+        const gradient = paint?.startsWith('url(');
+        const g = placed(
+          gradient ? painted(f.icon.nodes, paint!) : f.icon.nodes,
+          (size - w * s) / 2 - left * s,
+          (size - h * s) / 2 - top * s,
+          s
+        );
+        return paint && !gradient ? { ...g, attrs: { ...g.attrs, color: paint as Paint } } : g;
       }
       // Still loading, with placeholders: the diagram draws the frame alone (D299).
       if ('pending' in f) return undefined;
