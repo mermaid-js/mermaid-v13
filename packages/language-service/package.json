@@ -32,6 +32,8 @@
     "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-er": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*",
+    "@mermaid-js/diagram-gantt": "workspace:*",
+    "@mermaid-js/diagram-gitgraph": "workspace:*",
     "@mermaid-js/diagram-journey": "workspace:*",
     "@mermaid-js/diagram-pie": "workspace:*",
     "@mermaid-js/diagram-quadrant": "workspace:*",
@@ -47,6 +49,12 @@
       "optional": true
     },
     "@mermaid-js/diagram-flowchart": {
+      "optional": true
+    },
+    "@mermaid-js/diagram-gantt": {
+      "optional": true
+    },
+    "@mermaid-js/diagram-gitgraph": {
       "optional": true
     },
     "@mermaid-js/diagram-journey": {
@@ -73,6 +81,8 @@
     "@mermaid-js/diagram-class": "workspace:*",
     "@mermaid-js/diagram-er": "workspace:*",
     "@mermaid-js/diagram-flowchart": "workspace:*",
+    "@mermaid-js/diagram-gantt": "workspace:*",
+    "@mermaid-js/diagram-gitgraph": "workspace:*",
     "@mermaid-js/diagram-journey": "workspace:*",
     "@mermaid-js/diagram-pie": "workspace:*",
     "@mermaid-js/diagram-quadrant": "workspace:*",

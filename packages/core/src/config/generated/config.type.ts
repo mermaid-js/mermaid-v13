@@ -683,6 +683,14 @@ actorFont?: FontCalculator
  * via the `definition` "GanttDiagramConfig".
  */
 export interface GanttDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Margin top for the text over the diagram
  */
@@ -1554,6 +1562,14 @@ ticketBaseUrl?: string
  * via the `definition` "GitGraphDiagramConfig".
  */
 export interface GitGraphDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Margin top for the text over the diagram
  */

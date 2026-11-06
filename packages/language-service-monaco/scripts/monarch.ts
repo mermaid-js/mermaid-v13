@@ -18,9 +18,13 @@ export const HIGHLIGHTED_TYPES = Object.keys(MONARCH_HIGHLIGHTERS);
 
 /**
  * Facet id → gen-grammar type (the package `diagram-<type>` and its `<type>.*` files), where
- * the two differ: the quadrant facet's id is its diagram type, `quadrantChart` (#317).
+ * the two differ: the quadrant and gitGraph facets' ids are their diagram types,
+ * `quadrantChart` (#317) and `gitGraph` (#374).
  */
-const GRAMMAR_TYPES: Readonly<Record<string, string>> = { quadrantChart: 'quadrant' };
+const GRAMMAR_TYPES: Readonly<Record<string, string>> = {
+  quadrantChart: 'quadrant',
+  gitGraph: 'gitgraph',
+};
 
 /**
  * The gen-grammar type of a facet id. The files here are named after the facet id, and so is

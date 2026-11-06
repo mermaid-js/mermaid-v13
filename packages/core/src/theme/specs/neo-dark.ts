@@ -10,9 +10,18 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { LABEL_SCALE, REDUX_RULES } from './palettes.ts';
-import { DARK_HUE_SOURCES, darkenedScale } from './scales.ts';
-import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
+import { DARK_HUE_SOURCES, darkenedScale, gitLabelRules, gitPalettes } from './scales.ts';
+import { NEO_ARROWHEADS, NEO_GITGRAPH, REDUX_PADDING, TEXT_SIZES } from './geometry.ts';
 import { REDUX_DARK_SERIES } from './redux-dark-values.ts';
+
+/**
+ * v12 `theme-neo-dark.js`: fixed `git0`–`git7` (the dark theme's pie colours), always lightened
+ * by 25 (`gitDarkMode`), whatever `darkMode` is (D267).
+ */
+const NEO_DARK_GIT = gitPalettes(
+  ['#0b0000', '#4d1037', '#3f5258', '#4f2f1b', '#6e0a0a', '#3b0048', '#995a01', '#154706'],
+  'lightenHsl'
+);
 
 const neoDark: ThemeSpec = {
   name: 'neo-dark',
@@ -40,13 +49,20 @@ const neoDark: ThemeSpec = {
     spacing3: 16,
     ...NEO_ARROWHEADS,
     ...REDUX_PADDING,
+    ...TEXT_SIZES,
+    ...NEO_GITGRAPH,
     // v12 theme-neo-dark.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
   // As `neo`: v12 neo-dark has no ER row fill of its own, and the neo-look zero circle takes
   // the node fill.
-  rules: REDUX_RULES,
+  rules: {
+    ...REDUX_RULES,
+    ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
+  },
   values: {
+    // gitGraph: the cherry-pick ink of v12's `DARK_THEMES` (#374).
+    gitCherryPickInk: '#000000',
     // v12 `drop-shadow( 1px 2px 2px rgba(185,185,185,0.2))`, normalised for `checkFilter`.
     dropShadow: 'drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))',
     mainBkg: '#2a2020',
@@ -76,8 +92,12 @@ const neoDark: ThemeSpec = {
     ...darkenedScale(DARK_HUE_SOURCES, 25),
     cScaleLabel: LABEL_SCALE,
     seriesColorArray: REDUX_DARK_SERIES,
+    ...NEO_DARK_GIT,
   },
-  darkModePalettes: darkenedScale(DARK_HUE_SOURCES, 75),
+  darkModePalettes: {
+    ...darkenedScale(DARK_HUE_SOURCES, 75),
+    gitBranchLabel: NEO_DARK_GIT.gitBranchLabel.map(() => 'black'),
+  },
 };
 
 export default neoDark;

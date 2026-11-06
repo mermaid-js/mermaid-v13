@@ -85,12 +85,12 @@ describe('render (R-API-1, R-COMPAT-5)', () => {
 
   it('reports a v12 diagram type without a v13 package as UNSUPPORTED_DIAGRAM (R-COMPAT-7)', async () => {
     const e = await rejection(
-      render('x', 'gantt\n  title A\n  section S\n  t1 :a1, 2024-01-01, 3d')
+      render('x', 'requirementDiagram\n  requirement R {\n    id: 1\n  }\n')
     );
     expect(e.code).toBe('UNSUPPORTED_DIAGRAM');
-    expect(e.message).toContain('"gantt"');
-    expect(thrown(() => renderSync('gantt\n')).code).toBe('UNSUPPORTED_DIAGRAM');
-    expect(detectType('gantt\n')).toBe('gantt');
+    expect(e.message).toContain('"requirement"');
+    expect(thrown(() => renderSync('requirementDiagram\n')).code).toBe('UNSUPPORTED_DIAGRAM');
+    expect(detectType('requirementDiagram\n')).toBe('requirement');
   });
 
   it('rejects text no detector knows with UNSUPPORTED_DIAGRAM', async () => {
@@ -211,7 +211,7 @@ describe('prepare and renderSync (R-API-2)', () => {
   it('reports which formats a type supports (R-ASCII-5)', () => {
     expect(mermaid.supportsFormat('flowchart-v2', 'svg')).toBe(true);
     expect(mermaid.supportsFormat('flowchart', 'ascii')).toBe(true);
-    expect(mermaid.supportsFormat('gantt', 'svg')).toBe(false);
+    expect(mermaid.supportsFormat('requirement', 'svg')).toBe(false);
   });
 });
 
@@ -603,7 +603,7 @@ describe('no console output (R-ERR-4)', () => {
     );
     expect(r.warnings.length).toBeGreaterThan(4);
     await rejection(m.render('q', 'flowchart TD\n  A['));
-    await rejection(m.render('q', 'gantt'));
+    await rejection(m.render('q', 'requirementDiagram'));
     for (const spy of spies) expect(spy).not.toHaveBeenCalled();
   });
 });

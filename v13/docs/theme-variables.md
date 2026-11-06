@@ -12,26 +12,26 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 
 | Variable | CSS variable | Role | Kind | Light rule | Dark rule | Set by themes | Used by |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant |
+| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant, gitgraph |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core |
 | `background` | `--mermaid-background` | base | color | | | all | core |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant |
-| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, pie |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant |
+| `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er, gitgraph |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt, pie |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant |
-| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
-| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gitgraph, gantt |
+| `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, gitgraph |
+| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, gitgraph |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
-| `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er |
+| `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt |
 | `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state |
 | `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state |
 | `defaultLinkColor` | `--mermaid-defaultLinkColor` | derived | color | `lineColor` | `lineColor` | |  |
@@ -45,10 +45,38 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `compositeBackground` | `--mermaid-compositeBackground` | derived | color | `background` | `background` | redux-dark, redux-dark-color | state |
 | `compositeTitleBackground` | `--mermaid-compositeTitleBackground` | derived | color | `mainBkg` | `mainBkg` | redux-color, redux, redux-dark, redux-dark-color | state |
 | `altBackground` | `--mermaid-altBackground` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | state |
-| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline |
+| `commitLabelColor` | `--mermaid-commitLabelColor` | derived | color | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
+| `commitLabelBackground` | `--mermaid-commitLabelBackground` | derived | color | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
+| `commitLabelFontSize` | `--mermaid-commitLabelFontSize` | token | length | | | all | gitgraph |
+| `tagLabelColor` | `--mermaid-tagLabelColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default | gitgraph |
+| `tagLabelBackground` | `--mermaid-tagLabelBackground` | derived | color | `primaryColor` | `primaryColor` | default | gitgraph |
+| `tagLabelBorder` | `--mermaid-tagLabelBorder` | derived | color | `ifSet(tagBorder, primaryBorderColor)` | `ifSet(tagBorder, primaryBorderColor)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
+| `tagBorder` | `--mermaid-tagBorder` | derived | color | | | |  |
+| `tagLabelFontSize` | `--mermaid-tagLabelFontSize` | token | length | | | all | gitgraph |
+| `commitLineColor` | `--mermaid-commitLineColor` | derived | color | | | redux-color, redux, redux-dark, redux-dark-color, dark | gitgraph |
+| `gitCherryPickInk` | `--mermaid-gitCherryPickInk` | derived | color | | | redux-color, redux, redux-dark, redux-dark-color, dark, neo-dark | gitgraph |
+| `sectionBkgColor` | `--mermaid-sectionBkgColor` | derived | color | `tertiaryColor` | `tertiaryColor` | | gantt |
+| `altSectionBkgColor` | `--mermaid-altSectionBkgColor` | derived | color | `white` | `white` | | gantt |
+| `sectionBkgColor2` | `--mermaid-sectionBkgColor2` | derived | color | `primaryColor` | `primaryColor` | | gantt |
+| `excludeBkgColor` | `--mermaid-excludeBkgColor` | derived | color | `#eeeeee` | `#eeeeee` | | gantt |
+| `gridColor` | `--mermaid-gridColor` | derived | color | `lightgrey` | `lightgrey` | | gantt |
+| `todayLineColor` | `--mermaid-todayLineColor` | derived | color | `red` | `red` | | gantt |
+| `vertLineColor` | `--mermaid-vertLineColor` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | gantt |
+| `taskBkgColor` | `--mermaid-taskBkgColor` | derived | color | `primaryColor` | `primaryColor` | | gantt |
+| `taskBorderColor` | `--mermaid-taskBorderColor` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | gantt |
+| `activeTaskBkgColor` | `--mermaid-activeTaskBkgColor` | derived | color | `lightenHsl(primaryColor, 23%)` | `lightenHsl(primaryColor, 23%)` | | gantt |
+| `activeTaskBorderColor` | `--mermaid-activeTaskBorderColor` | derived | color | `primaryColor` | `primaryColor` | | gantt |
+| `doneTaskBkgColor` | `--mermaid-doneTaskBkgColor` | derived | color | `lightgrey` | `lightenHsl(mainBkg, 16%)` | | gantt |
+| `doneTaskBorderColor` | `--mermaid-doneTaskBorderColor` | derived | color | `grey` | `grey` | | gantt |
+| `critBkgColor` | `--mermaid-critBkgColor` | derived | color | `red` | `red` | | gantt |
+| `critBorderColor` | `--mermaid-critBorderColor` | derived | color | `#ff8888` | `#ff8888` | | gantt |
+| `taskTextColor` | `--mermaid-taskTextColor` | derived | color | `textColor` | `textColor` | | gantt |
+| `taskTextOutsideColor` | `--mermaid-taskTextOutsideColor` | derived | color | `textColor` | `textColor` | | gantt |
+| `taskTextDarkColor` | `--mermaid-taskTextDarkColor` | derived | color | `textColor` | `textColor` | | gantt |
+| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, gitgraph |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |
-| `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core, timeline |
+| `fontWeight` | `--mermaid-fontWeight` | token | weight | | | all | core, timeline, gitgraph |
 | `spacing1` | `--mermaid-spacing1` | token | length | | | all | core |
 | `spacing2` | `--mermaid-spacing2` | token | length | | | all | core |
 | `spacing3` | `--mermaid-spacing3` | token | length | | | all | core |
@@ -80,11 +108,25 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart |
 | `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
 | `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart |
+| `gitCommitRadius` | `--mermaid-gitCommitRadius` | token | length | | | all | gitgraph |
+| `gitLaneShift` | `--mermaid-gitLaneShift` | token | length | | | all | gitgraph |
+| `gitBranchLabelPaddingX` | `--mermaid-gitBranchLabelPaddingX` | token | length | | | all | gitgraph |
+| `gitBranchLabelPaddingY` | `--mermaid-gitBranchLabelPaddingY` | token | length | | | all | gitgraph |
+| `gitBranchLabelRadius` | `--mermaid-gitBranchLabelRadius` | token | length | | | all | gitgraph |
+| `gitBranchLabelShiftX` | `--mermaid-gitBranchLabelShiftX` | token | length | | | all | gitgraph |
+| `gitBranchLabelOffsetY` | `--mermaid-gitBranchLabelOffsetY` | token | length | | | all | gitgraph |
+| `gitArrowWidth` | `--mermaid-gitArrowWidth` | token | length | | | all | gitgraph |
+| `gitHighlightInnerSize` | `--mermaid-gitHighlightInnerSize` | token | length | | | all | gitgraph |
+| `gitMergeRadius` | `--mermaid-gitMergeRadius` | token | length | | | all | gitgraph |
+| `gitReverseCrossSize` | `--mermaid-gitReverseCrossSize` | token | length | | | all | gitgraph |
+| `gitCherryPickDotRadius` | `--mermaid-gitCherryPickDotRadius` | token | length | | | all | gitgraph |
+| `gitNodeColors` | `--mermaid-gitNodeColors` | token | flag | | | all | gitgraph |
+| `gitPaletteColors` | `--mermaid-gitPaletteColors` | token | flag | | | all | gitgraph |
 | `rowOdd` | `--mermaid-rowOdd` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, neutral, neo, neo-dark | er |
 | `rowEven` | `--mermaid-rowEven` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | er |
 | `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
 | `erMarkerFill` | `--mermaid-erMarkerFill` | derived | color | `#ffffff` | `#ffffff` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | er |
-| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
+| `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline, gitgraph |
 | `headingTextColor` | `--mermaid-headingTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
 | `seriesTextColor` | `--mermaid-seriesTextColor` | derived | color | `textColor` | `textColor` | redux-dark-color | pie |
 | `scaleLabelColor` | `--mermaid-scaleLabelColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default, dark, forest, neutral | core, sequence |
@@ -116,6 +158,9 @@ in v12 (D258). A theme not listed carries an empty list.
 | `cScaleLabel` | `cScaleLabel`, `cScaleLabel0`–`cScaleLabel11` | all |
 | `seriesColorArray` | `seriesColorArray` | all |
 | `plotColorArray` | `plotColorArray` |  |
+| `git` | `git`, `git0`–`git7` | all |
+| `gitInv` | `gitInv`, `gitInv0`–`gitInv7` | all |
+| `gitBranchLabel` | `gitBranchLabel`, `gitBranchLabel0`–`gitBranchLabel7` | all |
 
 ## Diagram variables
 

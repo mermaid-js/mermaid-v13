@@ -22,7 +22,6 @@ import {
 import {
   INTEGRATOR_ONLY_KEYS,
   resolveText,
-  type ConfigFragment,
   type MermaidConfig,
   type ResolvedConfig,
 } from '@mermaid-js/core/config';
@@ -63,7 +62,7 @@ import {
   type Snapshot,
 } from './config-snapshot.ts';
 import { createDomAdapter } from './dom.ts';
-import { toMermaidError } from './errors.ts';
+import { toMermaidError, toWarning } from './errors.ts';
 import { iconPackRegistry, packsUnsupported, type IconLoader } from './icon-packs.ts';
 import { selectMeasurer } from './measurer.ts';
 import {
@@ -105,6 +104,12 @@ export interface RenderOptions {
    * element's width. SVG only: text output fits `ascii.maxWidth` columns instead (D84).
    */
   availableWidth?: number;
+  /**
+   * The instant the diagram treats as now (D270): gantt's `today` line and `today`-relative
+   * dates. Defaults to `Date.now()` at each call (D275). Not a config key: diagram text
+   * cannot set it.
+   */
+  now?: number | Date;
 }
 
 /** Options of an SVG render (`format` absent or `svg`). */
@@ -207,28 +212,6 @@ export interface PreloadRequest {
 
 /** @deprecated v12 compatibility: receives the `MermaidError` of a failed `parse`. */
 export type ParseErrorHandler = (error: MermaidError) => void;
-
-const WARNING_KEYS = ['path', 'source', 'feature', 'shapes', 'astIds'] as const;
-
-/**
- * A copy of a warning with only the `Warning` keys (text output adds `feature`, `shapes`, `astIds`).
- * `LOOK_REMOVED` names the hand-drawn package here, core never names one (D153, as D173), and
- * only while no registered fragment declares `handDrawn` (the plugin's, or any that takes it).
- */
-const toWarning = (w: Warning, fragments: readonly ConfigFragment[]): Warning => {
-  const out: Plain = {
-    code: w.code,
-    message:
-      w.code === 'LOOK_REMOVED' && !fragments.some((f) => 'handDrawn' in f.keys)
-        ? `${w.message} For handDrawn, register @mermaid-js/plugin-hand-drawn.`
-        : w.message,
-  };
-  for (const k of WARNING_KEYS) {
-    const v = w[k];
-    if (v !== undefined) out[k] = Array.isArray(v) ? [...(v as unknown[])] : v;
-  }
-  return out as unknown as Warning;
-};
 
 /** `render`'s third argument: v12's container element, or an options object (D80). */
 function renderOptions(arg: unknown): RenderOptions | undefined {
@@ -602,6 +585,10 @@ export function createMermaid(
   ): { ctx: RenderContext; warnings: Warning[] } {
     const { prepared, plugin } = analysis;
     const { config } = prepared;
+    // A usage error, as a bad `limits` option is: `+now` of a bad Date or a string is NaN.
+    const now = +(options?.now ?? Date.now());
+    if (!Number.isFinite(now))
+      throw new TypeError(`RenderOptions.now is no instant: ${String(options?.now)}`);
     const textOutput = units.id === 'cell';
     const warnings: Warning[] = [...skipped, ...prepared.warnings];
     const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
@@ -682,6 +669,8 @@ export function createMermaid(
       version: VERSION,
       linkSchemes: s.options.linkSchemes,
       limits: s.limits,
+      now,
+      availableWidth: width,
       iconPacks: packs,
       layout: (graph) => {
         if (!engine) throw new TypeError(`${plugin.id} has no graph layout`);

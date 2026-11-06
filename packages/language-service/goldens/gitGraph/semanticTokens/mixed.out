@@ -1,0 +1,34 @@
+1:1-1:30 "%%{init: {\"theme\": \"dark\"}}%%" macro
+2:1-2:9 "gitGraph" keyword
+2:10-2:12 "LR" keyword
+2:12-2:13 ":" operator
+3:3-3:15 "%% a comment" comment
+4:3-4:13 "title Flow" keyword
+5:3-5:17 "accTitle: Flow" keyword
+6:3-6:9 "commit" keyword
+6:10-6:13 "id:" keyword
+6:13-6:16 "\"A\"" variable [declaration, definition]
+6:17-6:21 "msg:" keyword
+6:21-6:28 "\"first\"" string
+6:29-6:33 "tag:" keyword
+6:33-6:37 "\"v1\"" string
+6:38-6:43 "type:" keyword
+6:44-6:51 "REVERSE" keyword
+7:3-7:9 "branch" keyword
+7:10-7:18 "\"my dev\"" variable [declaration, definition]
+7:19-7:25 "order:" keyword
+7:26-7:27 "2" number
+8:3-8:11 "checkout" keyword
+8:12-8:20 "\"my dev\"" variable
+9:3-9:9 "commit" keyword
+10:3-10:11 "checkout" keyword
+10:12-10:16 "main" variable
+11:3-11:8 "merge" keyword
+11:9-11:17 "\"my dev\"" variable
+11:18-11:21 "id:" keyword
+11:21-11:24 "\"M\"" variable [declaration, definition]
+12:3-12:14 "cherry-pick" keyword
+12:15-12:18 "id:" keyword
+12:18-12:21 "\"A\"" variable
+12:22-12:29 "parent:" keyword
+12:29-12:32 "\"M\"" variable

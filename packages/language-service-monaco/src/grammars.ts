@@ -40,5 +40,7 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
     load: () => import('./generated/quadrantChart.monarch.js').then((m) => m.default),
   },
   timeline: { load: () => import('./generated/timeline.monarch.js').then((m) => m.default) },
+  gitGraph: { load: () => import('./generated/gitGraph.monarch.js').then((m) => m.default) },
   pie: { load: () => import('./generated/pie.monarch.js').then((m) => m.default) },
+  gantt: { load: () => import('./generated/gantt.monarch.js').then((m) => m.default) },
 };

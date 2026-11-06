@@ -1,0 +1,523 @@
+{
+  "tokenPostfix": ".mermaid-gantt",
+  "defaultToken": "",
+  "ignoreCase": true,
+  "includeLF": true,
+  "start": "frontMatterStart",
+  "tokenizer": {
+    "spanTrivia1": [
+      [
+        "\\}%%",
+        {
+          "token": "annotation",
+          "next": "@pop"
+        }
+      ],
+      [
+        "(?:(?!\\}%%)[\\s\\S])+",
+        {
+          "token": "annotation"
+        }
+      ]
+    ],
+    "root": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "%%\\{",
+        {
+          "token": "annotation",
+          "next": "@open_directive"
+        }
+      ],
+      [
+        "accTitle\\s*:\\s*",
+        {
+          "token": "keyword",
+          "next": "@acc_title"
+        }
+      ],
+      [
+        "accDescr\\s*:\\s*",
+        {
+          "token": "keyword",
+          "next": "@acc_descr"
+        }
+      ],
+      [
+        "accDescr\\s*\\{\\s*",
+        {
+          "token": "keyword",
+          "next": "@acc_descr_multiline"
+        }
+      ],
+      [
+        "%%[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^}]%[^\\n]*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "%[^\\n]*\\n*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "\\n+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "\\s+",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "href\\s+\"",
+        {
+          "token": "keyword",
+          "next": "@href"
+        }
+      ],
+      [
+        "call\\s+",
+        {
+          "token": "keyword",
+          "next": "@callbackname"
+        }
+      ],
+      [
+        "click\\s+",
+        {
+          "token": "keyword",
+          "next": "@click"
+        }
+      ],
+      [
+        "gantt\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "dateFormat\\s[^#\\n;]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "inclusiveEndDates\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "topAxis\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "axisFormat\\s[^#\\n;]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "tickInterval\\s[^#\\n;]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "includes\\s[^#\\n;]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "excludes\\s[^#\\n;]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "todayMarker\\s[^\\n;]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "weekday\\s+monday\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "weekday\\s+tuesday\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "weekday\\s+wednesday\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "weekday\\s+thursday\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "weekday\\s+friday\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "weekday\\s+saturday\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "weekday\\s+sunday\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "weekend\\s+friday\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "weekend\\s+saturday\\b",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "\\d\\d\\d\\d-\\d\\d-\\d\\d\\b",
+        {
+          "token": "constant"
+        }
+      ],
+      [
+        "title\\s[^\\n]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "accDescription\\s[^#\\n;]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "section\\s[^\\n]+",
+        {
+          "token": "keyword"
+        }
+      ],
+      [
+        "[^:\\n]+",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        ":[^#\\n;]+",
+        {
+          "token": "string"
+        }
+      ],
+      [
+        ":",
+        {
+          "token": "operator"
+        }
+      ]
+    ],
+    "open_directive": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ]
+    ],
+    "acc_title": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "[^\\n]*",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "acc_descr": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "[^\\n]*",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ]
+    ],
+    "acc_descr_multiline": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\\}",
+        {
+          "token": "keyword",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[^}]+",
+        {
+          "token": "string"
+        }
+      ]
+    ],
+    "click": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "[\\s\\n]",
+        {
+          "token": "",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[^\\s\\n]+",
+        {
+          "token": "variable"
+        }
+      ]
+    ],
+    "href": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\"",
+        {
+          "token": "string",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[^\"]+",
+        {
+          "token": "string"
+        }
+      ]
+    ],
+    "callbackname": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\\(\\s*\\)",
+        {
+          "token": "operator",
+          "next": "@pop"
+        }
+      ],
+      [
+        "\\(",
+        {
+          "token": "operator",
+          "switchTo": "@callbackargs"
+        }
+      ],
+      [
+        "[^(]+",
+        {
+          "token": "function"
+        }
+      ]
+    ],
+    "callbackargs": [
+      [
+        "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*%%\\{",
+        {
+          "token": "annotation",
+          "next": "@spanTrivia1"
+        }
+      ],
+      [
+        "\\)",
+        {
+          "token": "operator",
+          "next": "@pop"
+        }
+      ],
+      [
+        "[^)]+",
+        {
+          "token": "string"
+        }
+      ]
+    ],
+    "frontMatterStart": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@frontMatter"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": ""
+        }
+      ],
+      [
+        "",
+        {
+          "token": "",
+          "switchTo": "@root"
+        }
+      ]
+    ],
+    "frontMatter": [
+      [
+        "^[^\\S\\n]*---[^\\S\\n]*(?:\\n|$)",
+        {
+          "token": "annotation",
+          "switchTo": "@root"
+        }
+      ],
+      [
+        "[^\\S\\n]*#.*",
+        {
+          "token": "comment"
+        }
+      ],
+      [
+        "[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+        {
+          "token": "variable"
+        }
+      ],
+      [
+        "[^#]+",
+        {
+          "token": ""
+        }
+      ]
+    ]
+  }
+}

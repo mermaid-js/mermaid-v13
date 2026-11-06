@@ -3,7 +3,18 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { paletteSlots, series } from './palettes.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
+import { gitSources } from './scales.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_GITGRAPH, CLASSIC_PADDING, TEXT_SIZES } from './geometry.ts';
+
+/**
+ * v12 `theme-default.js` derives its git palettes in the constructor, from its own colours, and
+ * steps them again when it calculates without recomputing them (D267): fixed lists that ignore
+ * the base colours, `labelTextColor` and the author's `git<n>` (drawn as given). These are the
+ * constructor's values, darkened by 25.
+ */
+const DEFAULT_GIT = gitSources('#ececff', '#ffffde', 'adjustHue(#ececff, -160)').map(
+  (c) => `darkenHsl(${c}, 25%)`
+);
 
 const theme: ThemeSpec = {
   name: 'default',
@@ -29,6 +40,8 @@ const theme: ThemeSpec = {
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
+    ...TEXT_SIZES,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   values: {
@@ -55,6 +68,12 @@ const theme: ThemeSpec = {
   rules: {
     rowOdd: 'lightenHsl(primaryColor, 75%)',
     rowEven: 'lightenHsl(primaryColor, 1%)',
+    // v12 sets the gitGraph labels in its constructor too, from its own colours, and keeps them.
+    commitLabelColor: '#000021',
+    commitLabelBackground: '#ffffde',
+    tagLabelColor: '#131300',
+    tagLabelBackground: '#ececff',
+    tagLabelBorder: 'ifSet(tagBorder, ifSet(primaryBorderColor, #c7c7f1))',
   },
   // v12 theme-default.js fills cScale and cScaleInv in its constructor, darkens cScale again
   // when it calculates, and never recomputes them: fixed lists that ignore the base colours.
@@ -98,7 +117,11 @@ const theme: ThemeSpec = {
     // v12 inverts its label ink (black) in slots 0 and 3 and ignores
     // `scaleLabelColor`: the resolved colours, so no sequence variable is read (D334).
     cScaleLabel: paletteSlots((i) => (i === 0 || i === 3 ? '#ffffff' : '#000000')),
+    git: DEFAULT_GIT.map((c) => `darkenHsl(${c}, 25%)`),
+    gitInv: DEFAULT_GIT.map((c, i) => (i ? `invert(${c})` : `darkenHsl(invert(${c}), 25%)`)),
+    gitBranchLabel: paletteSlots((i) => (i === 0 || i === 3 ? 'white' : 'black'), 8),
   },
+  darkModePalettes: { git: DEFAULT_GIT.map((c) => `lightenHsl(${c}, 25%)`) },
 };
 
 export default theme;

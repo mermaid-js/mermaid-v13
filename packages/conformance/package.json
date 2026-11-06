@@ -12,7 +12,8 @@
     "harvest": "tsx --conditions=mermaid-source src/cli/harvest.ts",
     "fuzz": "tsx --conditions=mermaid-source src/cli/fuzz.ts",
     "smoke": "tsx --conditions=mermaid-source src/cli/smoke.ts",
-    "harvest:pie": "tsx --conditions=mermaid-source src/cli/harvest-pie.ts"
+    "harvest:pie": "tsx --conditions=mermaid-source src/cli/harvest-pie.ts",
+    "harvest:gitgraph": "tsx --conditions=mermaid-source src/cli/harvest-gitgraph.ts"
   },
   "devDependencies": {
     "@asamuzakjp/css-color": "3.2.0",
@@ -21,6 +22,8 @@
     "@mermaid-js/diagram-class": "workspace:^",
     "@mermaid-js/diagram-er": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/diagram-gantt": "workspace:^",
+    "@mermaid-js/diagram-gitgraph": "workspace:^",
     "@mermaid-js/diagram-journey": "workspace:^",
     "@mermaid-js/diagram-pie": "workspace:^",
     "@mermaid-js/diagram-quadrant": "workspace:^",

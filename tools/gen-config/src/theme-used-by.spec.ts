@@ -62,6 +62,11 @@ const TYPES = readdirSync(PACKAGES)
   .filter((d) => d.startsWith('diagram-'))
   .map((d) => d.slice('diagram-'.length))
   .sort();
+/**
+ * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
+ * must read none (so it is removed as soon as it reads one). Empty since gantt's layout (#379).
+ */
+const NOT_DRAWN_YET = new Set<string>([]);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
@@ -70,6 +75,8 @@ describe('theme vocabulary usedBy (#207)', () => {
       'class',
       'er',
       'flowchart',
+      'gantt',
+      'gitgraph',
       'journey',
       'pie',
       'quadrant',
@@ -77,7 +84,10 @@ describe('theme vocabulary usedBy (#207)', () => {
       'state',
       'timeline',
     ]);
-    for (const type of TYPES) expect(READS.get(type)!.size).toBeGreaterThan(0);
+    for (const type of TYPES) {
+      if (NOT_DRAWN_YET.has(type)) expect(READS.get(type)!.size, type).toBe(0);
+      else expect(READS.get(type)!.size, type).toBeGreaterThan(0);
+    }
   });
 
   it.each(TYPES)('lists %s for every variable it reads, and for no other', (type) => {

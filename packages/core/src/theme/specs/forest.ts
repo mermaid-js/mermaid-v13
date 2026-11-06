@@ -3,8 +3,21 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { paletteSlots, series } from './palettes.ts';
-import { darkenedScale, hueSources } from './scales.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
+import {
+  classicGitLabels,
+  darkenedScale,
+  gitLabelRules,
+  gitPalettes,
+  gitSources,
+  hueSources,
+} from './scales.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_GITGRAPH, CLASSIC_PADDING, TEXT_SIZES } from './geometry.ts';
+
+const GIT = gitSources(
+  'primaryColor',
+  'secondaryColor',
+  'ifSet(tertiaryColor, lightenHsl(#cde498, 10%))'
+);
 
 const theme: ThemeSpec = {
   name: 'forest',
@@ -30,10 +43,15 @@ const theme: ThemeSpec = {
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
+    ...TEXT_SIZES,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
-  rules: { rowEven: 'lightenHsl(mainBkg, 20%)' },
+  rules: {
+    rowEven: 'lightenHsl(mainBkg, 20%)',
+    ...gitLabelRules('#32004d', '#abb594'),
+  },
   values: {
     altBackground: '#f0f0f0', // v12 (#192)
     // v12 theme-forest.js: the participant border is darken(mainBkg, 20), the fragment tab's
@@ -77,6 +95,14 @@ const theme: ThemeSpec = {
       'primaryColor secondaryColor tertiaryColor darkenHsl(primaryColor,30%) darkenHsl(secondaryColor,30%) #33b42f #70d990 #d99070 #98cde4 #1a6330 #63301a #1a4d63 ' +
         '#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff'
     ),
+    // v12: git darkened by 25 (lightened under darkMode), labels 0 and 3 inverted; the label is
+    // v12's `labelTextColor`, which forest sets to its label ink (`scaleLabelColor`, D334).
+    ...gitPalettes(GIT),
+    gitBranchLabel: classicGitLabels('scaleLabelColor'),
+  },
+  darkModePalettes: {
+    ...gitPalettes(GIT, 'lightenHsl'),
+    gitBranchLabel: classicGitLabels('scaleLabelColor'),
   },
 };
 

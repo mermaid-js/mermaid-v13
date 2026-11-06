@@ -43,7 +43,9 @@
         "@mermaid-js/diagram-er",
         "@mermaid-js/diagram-journey",
         "@mermaid-js/diagram-timeline",
-        "@mermaid-js/diagram-pie"
+        "@mermaid-js/diagram-pie",
+        "@mermaid-js/diagram-gitgraph",
+        "@mermaid-js/diagram-gantt"
       ]
     },
     "packages/dev": {

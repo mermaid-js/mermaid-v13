@@ -1,0 +1,18 @@
+---
+title: Release flow
+---
+gitGraph TB:
+  accTitle: Releases
+  accDescr {
+    main, a feature branch and a hotfix
+  }
+  commit id:"init"
+  branch develop order: 1
+  checkout develop
+  commit msg:"feature" tag:"v0.1"
+  checkout main
+  merge develop id:"release" type: HIGHLIGHT
+  branch "hot fix"
+  commit id:"fix"
+  checkout main
+  cherry-pick id:"fix"

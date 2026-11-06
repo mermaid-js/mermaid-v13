@@ -2,9 +2,9 @@
  * `redux`: the monochrome redux theme, from v12 `theme-redux.js`. Its tokens (stroke width 2, radius 12)
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
-import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE, paletteSlots, REDUX_RULES, series } from './palettes.ts';
-import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
+import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
+import { BASE_SECONDARY, LABEL_SCALE, paletteSlots, REDUX_RULES, series } from './palettes.ts';
+import { NEO_ARROWHEADS, REDUX_GITGRAPH, REDUX_PADDING, TEXT_SIZES } from './geometry.ts';
 
 /** `theme-redux.js`: `mainBkg` darkened by `step` in every slot, and its inverse. */
 const mainBkgScale = (
@@ -13,6 +13,43 @@ const mainBkgScale = (
   cScale: paletteSlots(() => `darkenHsl(mainBkg, ${step}%)`),
   cScaleInv: paletteSlots(() => `invert(darkenHsl(mainBkg, ${step}%))`),
 });
+
+/**
+ * v12 `theme-redux.js`, `theme-redux-color.js` and `theme-neo.js` derive `git0`–`git7` from their
+ * own constants (`#ECECFE`, `#E9E9F1`), not from `primaryColor` (D267): `gitSources` of those,
+ * darkened by 25 (lightened under `darkMode`, which turns every slot white). Written out as data,
+ * so the git builders stay in the lazily loaded `scales.ts`. `gitInv` inverts the step of the
+ * author's `git<n>` or the source, as v12 does; branch labels are v12's `labelTextColor`, the label ink
+ * `scaleLabelColor` (D334; black under `darkMode`).
+ */
+const NEO_GIT_SOURCES = [
+  '#ececfe',
+  '#e9e9f1',
+  'lightenHsl(adjustHue(#ececfe, 180), 5%)',
+  'adjustHue(#ececfe, -30)',
+  'adjustHue(#ececfe, -60)',
+  'adjustHue(#ececfe, -90)',
+  'adjustHue(#ececfe, 60)',
+  'adjustHue(#ececfe, 120)',
+];
+const neoGitInv = (step: string): readonly string[] =>
+  NEO_GIT_SOURCES.map((c, i) => `invert(${step}(ifSet(git${i}, ${c}), 25%))`);
+export const NEO_GIT = {
+  git: ['#7373f8', '#9b9bbf', '#f9f986', '#73b5f8', '#73f8f8', '#73f8b5', '#f873f8', '#f87373'],
+  gitInv: neoGitInv('darkenHsl'),
+  gitBranchLabel: NEO_GIT_SOURCES.map(() => 'scaleLabelColor'),
+};
+export const NEO_GIT_DARK_MODE = {
+  git: NEO_GIT_SOURCES.map(() => '#ffffff'),
+  gitInv: neoGitInv('lightenHsl'),
+  gitBranchLabel: NEO_GIT_SOURCES.map(() => 'black'),
+};
+/** v12's commit labels of `theme-base.js` with redux's fixed tag border (`gitLabelRules`). */
+const REDUX_GIT_LABELS: ThemeRuleTable = {
+  commitLabelColor: `ifSet(secondaryTextColor, invert(${BASE_SECONDARY}))`,
+  commitLabelBackground: BASE_SECONDARY,
+  tagLabelBorder: 'ifSet(tagBorder, ifSet(primaryBorderColor, #171717))',
+};
 
 /**
  * The series palette (D332) of v12 `theme-redux.js` and `theme-neo.js`: base's formulas, applied
@@ -48,12 +85,18 @@ const redux: ThemeSpec = {
     spacing3: 16,
     ...NEO_ARROWHEADS,
     ...REDUX_PADDING,
+    ...TEXT_SIZES,
+    ...REDUX_GITGRAPH,
     useGradient: false,
   },
-  rules: REDUX_RULES,
+  rules: { ...REDUX_RULES, ...REDUX_GIT_LABELS },
   values: {
     // v12's hard drop shadow (insertLookDefs: dx/dy 4, no blur, 6% black) as a CSS filter.
     dropShadow: 'drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))',
+    // v12 `theme-redux*.js`: gitGraph branch lines. The cherry-pick ink white, so `theme: 'auto'`
+    // (`redux-color` light) has a light value to switch from (#374).
+    commitLineColor: '#BDBCCC',
+    gitCherryPickInk: '#ffffff',
     primaryBorderColor: '#28253d',
     mainBkg: '#ffffff',
     clusterBkg: '#f9f9fb',
@@ -72,8 +115,13 @@ const redux: ThemeSpec = {
   },
   // v12 theme-redux.js: mainBkg darkened by 25 in every slot (75 under darkMode). It sets
   // every slot to mainBkg before it derives the inverses, so they ignore a cScale override.
-  palettes: { ...mainBkgScale(25), cScaleLabel: LABEL_SCALE, seriesColorArray: REDUX_SERIES },
-  darkModePalettes: mainBkgScale(75),
+  palettes: {
+    ...mainBkgScale(25),
+    cScaleLabel: LABEL_SCALE,
+    seriesColorArray: REDUX_SERIES,
+    ...NEO_GIT,
+  },
+  darkModePalettes: { ...mainBkgScale(75), ...NEO_GIT_DARK_MODE },
 };
 
 export default redux;

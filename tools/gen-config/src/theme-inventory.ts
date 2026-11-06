@@ -10,7 +10,7 @@ import {
   DARK_RULES,
   LIGHT_RULES,
   NUMBERED_PALETTES,
-  PALETTE_LIMIT,
+  PALETTE_LIMITS,
   PALETTE_VARIABLES,
   THEME_NAMES,
   THEME_VARIABLES,
@@ -18,6 +18,7 @@ import {
   createTheme,
   loadTheme,
   type ThemeSpec,
+  type NumberedPalette,
 } from '../../../packages/core/src/theme/index.ts';
 import { runtimeVars, type ThemePackage } from './theme-packages.ts';
 
@@ -110,8 +111,8 @@ export async function themeInventory(packages: readonly ThemePackage[] = []): Pr
     return '| ' + cells.join(' | ').replace(/ {2}/g, ' ') + ' |';
   });
   const palettes = PALETTE_VARIABLES.map((name) => {
-    const names = NUMBERED_PALETTES.includes(name as (typeof NUMBERED_PALETTES)[number])
-      ? `${code(name)}, ${code(name + '0')}–${code(name + String(PALETTE_LIMIT - 1))}`
+    const names = NUMBERED_PALETTES.includes(name as NumberedPalette)
+      ? `${code(name)}, ${code(name + '0')}–${code(name + String(PALETTE_LIMITS[name as NumberedPalette] - 1))}`
       : code(name);
     const carriers = specs.filter((s) => (s.palettes?.[name]?.length ?? 0) > 0);
     const setBy = carriers.length === specs.length ? 'all' : carriers.map((s) => s.name).join(', ');

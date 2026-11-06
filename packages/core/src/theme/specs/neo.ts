@@ -7,10 +7,10 @@
  * `packages/conformance/src/neo-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE, REDUX_RULES } from './palettes.ts';
-import { darkenedScale, hueSources } from './scales.ts';
-import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
-import { REDUX_SERIES } from './redux.ts';
+import { BASE_SECONDARY, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
+import { darkenedScale, gitLabelRules, hueSources } from './scales.ts';
+import { NEO_ARROWHEADS, NEO_GITGRAPH, REDUX_PADDING, TEXT_SIZES } from './geometry.ts';
+import { NEO_GIT, NEO_GIT_DARK_MODE, REDUX_SERIES } from './redux.ts';
 
 const SOURCES = hueSources(true, '#ececfe', '#e9e9f1', 'lightenHsl(adjustHue(#ececfe, 180), 5%)');
 
@@ -41,12 +41,17 @@ const neo: ThemeSpec = {
     spacing3: 16,
     ...NEO_ARROWHEADS,
     ...REDUX_PADDING,
+    ...TEXT_SIZES,
+    ...NEO_GITGRAPH,
     // v12 theme-neo.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
   // v12 neo derives these as theme-redux.js does: no ER row fill of its own, and the neo-look
   // zero circle on the node fill.
-  rules: REDUX_RULES,
+  rules: {
+    ...REDUX_RULES,
+    ...gitLabelRules(`invert(${BASE_SECONDARY})`, '#b3b3b3', BASE_SECONDARY),
+  },
   values: {
     // v12 `drop-shadow( 0px 1px 2px rgba(0, 0, 0, 0.25));`, normalised for `checkFilter`.
     dropShadow: 'drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))',
@@ -74,8 +79,9 @@ const neo: ThemeSpec = {
     ...darkenedScale(SOURCES, 25),
     cScaleLabel: LABEL_SCALE,
     seriesColorArray: REDUX_SERIES,
+    ...NEO_GIT,
   },
-  darkModePalettes: darkenedScale(SOURCES, 75),
+  darkModePalettes: { ...darkenedScale(SOURCES, 75), ...NEO_GIT_DARK_MODE },
 };
 
 export default neo;
