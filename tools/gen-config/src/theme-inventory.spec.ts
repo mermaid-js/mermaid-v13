@@ -7,16 +7,16 @@ describe('theme variable inventory (DESIGN §8.3)', () => {
   it('lists name, CSS variable, role, rules, the themes that set it, and its users', async () => {
     const doc = await themeInventory();
     expect(doc).toContain(
-      '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core |'
+      '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, gitgraph |'
     );
     expect(doc).toContain(
-      '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap |'
+      '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |'
     );
     expect(doc).toContain(
       '| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |'
     );
     expect(doc).toContain(
-      '| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap |'
+      '| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, mindmap, gitgraph |'
     );
   });
 

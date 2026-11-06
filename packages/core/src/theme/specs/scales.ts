@@ -3,6 +3,7 @@
  * (D258), and their git palettes (D267), kept out of `palettes.ts` so the default theme's static
  * chunk does not carry them.
  */
+import type { ThemeRuleTable } from '../spec.ts';
 import { paletteSlots } from './palettes.ts';
 
 /** v12's hue steps from the primary colour for slots 3–11 (khroma `adjust(…, { h })`). */
@@ -108,4 +109,20 @@ export const gitPalettes = (
   git: sources.map((c) => `${step}(${c}, 25%)`),
   gitInv: sources.map((c, i) => `invert(${step}(ifSet(git${i}, ${c}), 25%))`),
   gitBranchLabel: sources.map(() => label),
+});
+
+/**
+ * gitGraph's commit label colours and tag border (D267) as one v12 theme derives them: the
+ * author's `secondaryTextColor`, else v12's `invert(secondaryColor)` (`text`); `background`; the
+ * author's `tagBorder`, else the author's `primaryBorderColor`, else v12's resolved border
+ * (`border`, a khroma saturation step the DSL has no function for).
+ */
+export const gitLabelRules = (
+  text: string,
+  border: string,
+  background = 'secondaryColor'
+): ThemeRuleTable => ({
+  commitLabelColor: `ifSet(secondaryTextColor, ${text})`,
+  commitLabelBackground: background,
+  tagLabelBorder: `ifSet(tagBorder, ifSet(primaryBorderColor, ${border}))`,
 });

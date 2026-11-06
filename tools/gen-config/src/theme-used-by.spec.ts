@@ -36,16 +36,21 @@ function readsOf(type: string): Set<string> {
     .map((f) => readFileSync(f, 'utf8'))
     .join('\n');
   const names = [...text.matchAll(/(?:\b\w+\(|\w:)\s*'(\w+)'/g)].map((m) => m[1]!);
-  return new Set([...names, ...(DYNAMIC_READS[type] ?? [])].filter((n) => n in THEME_VARIABLES));
+  return new Set(
+    [...names, ...(DYNAMIC_READS[type] ?? [])].filter((n) => Object.hasOwn(THEME_VARIABLES, n))
+  );
 }
 
 const TYPES = readdirSync(PACKAGES)
   .filter((d) => d.startsWith('diagram-'))
   .map((d) => d.slice('diagram-'.length))
   .sort();
+/**
+ * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
+ * must read none (so it is removed as soon as it reads one). Empty since gantt's layout (#379).
+ */
+const NOT_DRAWN_YET = new Set<string>([]);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
-/** Packages with no renderer yet, so no theme reads. */
-const NOT_RENDERING_YET: readonly string[] = [];
 
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
@@ -53,6 +58,8 @@ describe('theme vocabulary usedBy (#207)', () => {
       'class',
       'er',
       'flowchart',
+      'gantt',
+      'gitgraph',
       'journey',
       'mindmap',
       'pie',
@@ -61,10 +68,9 @@ describe('theme vocabulary usedBy (#207)', () => {
       'state',
       'timeline',
     ]);
-    // A listed package reads nothing yet; once it does, it must leave the list.
     for (const type of TYPES) {
-      if (NOT_RENDERING_YET.includes(type)) expect(READS.get(type)!.size).toBe(0);
-      else expect(READS.get(type)!.size).toBeGreaterThan(0);
+      if (NOT_DRAWN_YET.has(type)) expect(READS.get(type)!.size, type).toBe(0);
+      else expect(READS.get(type)!.size, type).toBeGreaterThan(0);
     }
   });
 

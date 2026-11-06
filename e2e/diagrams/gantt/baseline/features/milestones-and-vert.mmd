@@ -1,0 +1,13 @@
+---
+description: milestones as diamonds and vert markers as full-height lines with their labels
+---
+gantt
+  dateFormat YYYY-MM-DD
+  section Plan
+    Kick-off :milestone, m1, 2024-01-02, 0d
+    Work     :w1, after m1, 5d
+    Gate     :vert, g1, 2024-01-05, 0d
+    Done     :milestone, m2, after w1, 0d
+  section Later
+    Polish   :p1, after m2, 3d
+    Freeze   :vert, g2, 2024-01-11, 0d

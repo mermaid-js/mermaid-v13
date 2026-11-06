@@ -1,0 +1,10 @@
+@ 6:12  checkout |
+  main value (branch) 6:12-6:12 "" -> "main"
+  develop value (branch) 6:12-6:12 "" -> "develop"
+  "my feature" value (branch) 6:12-6:12 "" -> "\"my feature\""
+@ 7:9  merge |
+  main value (branch) 7:9-7:9 "" -> "main"
+  develop value (branch) 7:9-7:9 "" -> "develop"
+@ 8:12  switch "m|
+  "main" value (branch) 8:10-8:12 "\"m" -> "\"main\""
+  "my feature" value (branch) 8:10-8:12 "\"m" -> "\"my feature\""

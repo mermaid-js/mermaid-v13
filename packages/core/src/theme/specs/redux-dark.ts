@@ -5,7 +5,7 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { fillTypes, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
-import { DARK_HUE_SOURCES, darkenedScale } from './scales.ts';
+import { DARK_HUE_SOURCES, darkenedScale, gitLabelRules } from './scales.ts';
 import {
   PIE_REDUX_DARK,
   REDUX_DARK_GIT,
@@ -20,7 +20,11 @@ const theme: ThemeSpec = {
   dark: true,
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
-  rules: { ...REDUX_RULES, ...PIE_REDUX_DARK },
+  rules: {
+    ...REDUX_RULES,
+    ...PIE_REDUX_DARK,
+    ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
+  },
   values: {
     ...REDUX_DARK_VALUES,
     // journey section fills, v12's resolved values (`fillTypes`)

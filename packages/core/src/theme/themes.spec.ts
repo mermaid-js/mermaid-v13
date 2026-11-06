@@ -32,9 +32,14 @@ const TEXT_ON_FILL: readonly [text: string, fill: string][] = [
 
 /**
  * Variables no theme sets, only an author (D249: journey `actor0`–`actor5`, which win over
- * `journey.actorColours` when set). Unset, they resolve to `currentColor`.
+ * `journey.actorColours` when set; D267: `tagBorder`, v12's other name for `tagLabelBorder`). Unset, they resolve to `currentColor`.
  */
-const AUTHOR_ONLY = ['actor0', 'actor1', 'actor2', 'actor3', 'actor4', 'actor5'];
+const AUTHOR_ONLY = ['actor0', 'actor1', 'actor2', 'actor3', 'actor4', 'actor5', 'tagBorder'];
+/**
+ * Set only by the themes v12 sets them in (#374, D331): the gitGraph renderer draws v12's
+ * fallback where a theme gives none (`lineColor`, white).
+ */
+const SOME_THEMES = new Set(['commitLineColor', 'gitCherryPickInk']);
 
 describe('built-in themes', () => {
   it('ships the redux family and default, dark, forest, neutral and base (D64, D151)', () => {
@@ -85,6 +90,7 @@ describe('built-in themes', () => {
       for (const [name, def] of Object.entries(THEME_VARIABLES)) {
         const v = t.value(name);
         if (AUTHOR_ONLY.includes(name)) expect(v, `${spec.name}.${name}`).toBe('currentColor');
+        else if (SOME_THEMES.has(name) && v === 'currentColor') continue;
         else if (def.kind === 'color')
           expect(parseColor(v), `${spec.name}.${name}=${v}`).toBeDefined();
         else expect(v, name).not.toBe('');

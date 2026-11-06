@@ -1,0 +1,314 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-gitgraph",
+  "scopeName": "source.mermaid-gitgraph",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-gitgraph"
+    },
+    "trivia-1": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-gitgraph"
+    },
+    "rule-0": {
+      "match": "cherry-pick(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-1": {
+      "match": "gitGraph:",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-2": {
+      "match": "HIGHLIGHT(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-3": {
+      "match": "gitGraph(?:(?=%%)|(?!\\S))",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-4": {
+      "match": "checkout(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-5": {
+      "match": "REVERSE(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-6": {
+      "match": "parent:",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-7": {
+      "match": "commit(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-8": {
+      "match": "NORMAL(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-9": {
+      "match": "branch(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-10": {
+      "match": "order:",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-11": {
+      "match": "switch(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-12": {
+      "match": "type:",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-13": {
+      "match": "merge(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-14": {
+      "match": "msg:",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-15": {
+      "match": "tag:",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-16": {
+      "match": "id:",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-17": {
+      "match": "LR(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-18": {
+      "match": "TB(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-19": {
+      "match": "BT(?![-.\\/\\w]*[-\\w])",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-20": {
+      "match": ":",
+      "name": "punctuation.definition.mermaid-gitgraph"
+    },
+    "rule-21": {
+      "match": "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-22": {
+      "begin": "[\\t ]*accDescr\\s*\\{",
+      "end": "\\}",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-23": {
+      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-24": {
+      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-gitgraph"
+    },
+    "rule-25": {
+      "match": "0|[1-9][0-9]*(?!\\.)",
+      "name": "constant.numeric.mermaid-gitgraph"
+    },
+    "rule-26": {
+      "match": "\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'",
+      "name": "string.quoted.mermaid-gitgraph"
+    },
+    "rule-27": {
+      "match": "\\r?\\n"
+    },
+    "rule-28": {
+      "match": "[\\t ]+"
+    },
+    "rule-29": {
+      "match": "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-gitgraph"
+    },
+    "rule-30": {
+      "match": "[\\t ]*%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-gitgraph"
+    },
+    "rule-31": {
+      "match": "[\\t ]*%%[^\\n\\r]*",
+      "name": "comment.line.mermaid-gitgraph"
+    },
+    "rule-32": {
+      "match": "\\w(?:[-.\\/\\w]*[-\\w])?",
+      "name": "variable.other.mermaid-gitgraph"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-25"
+        },
+        {
+          "include": "#rule-26"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-28"
+        },
+        {
+          "include": "#rule-29"
+        },
+        {
+          "include": "#rule-30"
+        },
+        {
+          "include": "#rule-31"
+        },
+        {
+          "include": "#rule-32"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-gitgraph"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-gitgraph"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-gitgraph"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-gitgraph"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

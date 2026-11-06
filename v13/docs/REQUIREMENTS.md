@@ -38,7 +38,9 @@ v13 closes the gap on **size, speed, theming and security** while keeping Mermai
 | **M3** | sequence, class, state, ER | D34, D100–D105, D107–D133 |
 | **M3.5** | Plugin platform: lazy-loaded first-party packages, plugin auto-discovery and CDN loading, ELK plugin, optional-feature packages, `neo` themes, core size budget | D106, D160–D169 |
 | **M4** | gantt, pie, mindmap, timeline, gitGraph, journey, quadrant; shared `tree` layout engine; icons plugin; hand-drawn plugin | D34, D170, D210–D309 |
-| **M5** | Remaining v12 diagram types | D34 |
+| **M5a** | info, packet, radar, cynefin, kanban, xychart, sankey, treemap, venn, wardley; theme variables leave core | D34, D314–D329 |
+| **M5b** | requirement, block, c4, agentflow, usecase, treeView, ishikawa, architecture, railroad, eventmodeling; swimlane layout; `compass` layout engine | D34, D314–D329 |
+| **M6** | Beta and 13.0.0 release criteria (to be grilled) | D323 |
 | **Parallel** | Small v12 performance track | D44 |
 
 **Out of scope for v13:**
@@ -49,6 +51,7 @@ v13 closes the gap on **size, speed, theming and security** while keeping Mermai
 - A bridge that delegates to v12 renderers.
 - Zoom/pan in core.
 - Pixel parity with v12.
+- zenuml: it renders HTML through `@zenuml/core`. v13 reports `UNSUPPORTED_DIAGRAM` for it (D317).
 
 **Glossary:**
 
@@ -169,6 +172,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-LAYOUT-6 | Layout honours `nodeSpacing`, `rankSpacing`, `padding` and `diagramPadding` with v12 default values. | Must | M1 | D22, P1 | Specs |
 | R-LAYOUT-7 | ELK is available only as an optional plugin package. It is never the default and never part of core. | Must | M3.5 | D7 | Package exists; core size unaffected |
 | R-LAYOUT-8 | Core has a deterministic `tree` engine (a two-sided tidy tree) at its own lazily loaded subpath, used by mindmap and reusable by later tree-shaped types. It stays outside the R-PERF-8 core budget. | Must | M4 | D280–D282 | DDLT checks on mindmap fixtures; size spec shows the core closure unchanged |
+| R-LAYOUT-9 | Core has a deterministic `compass` engine at its own lazily loaded subpath, which places nodes by the sides edges name (`L/R/T/B`), with groups and `align` hints. Architecture uses it by default, and any graph type can select it by name; without sides it derives them from `direction`. It stays outside the R-PERF-8 core budget. | Must | M5b | D326, D327 | DDLT checks on architecture fixtures; byte-identical output across runs; size spec shows the core closure unchanged |
 
 ## 11. SVG output (R-SVG)
 
@@ -217,7 +221,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-SEC-2 | Output passes a per-diagram **element and attribute allow-list**: no `<script>`, `foreignObject`, `on*` attributes, `javascript:`/`data:` URLs (except allow-listed image types), or `<style>` (except R-THEME-8). | Must | M1 | D6, D26 | Allow-list property test over the corpus + XSS corpus (v12's GHSA/XSS pages ported) |
 | R-SEC-3 | `style`, `classDef` and `linkStyle` values pass a per-property allow-list (fill, stroke, stroke-width, stroke-dasharray, color, opacity, font-weight, font-style, font-size, …). They are emitted as presentation attributes, and the rest is dropped with a warning. | Must | M1 | D21 | Specs, including CSS-injection cases |
 | R-SEC-4 | Link URLs are checked against a scheme allow-list (http, https, mailto, relative) at the default security level. With securityLevel strict, only relative links are allowed. | Must | M1 | D6, D48 | Spec |
-| R-SEC-5 | Default limits are 50,000 source characters, 5,000 edges, plus a node cap, a nesting-depth cap and an output-size cap. Only the integrator can change them, never the diagram. | Must | M1 | D31 | Specs incl. attempt to raise via front matter |
+| R-SEC-5 | Default limits are 50,000 source characters, 5,000 edges, plus a node cap, a nesting-depth cap, an output-size cap and a layout work cap (`maxLayoutWork`, steps of a layout loop the text can make long, D542). Only the integrator can change them, never the diagram. | Must | M1 | D31, D542 | Specs incl. attempt to raise via front matter |
 | R-SEC-6 | `securityLevel` is kept with two levels: the default applies the R-SEC-4 scheme allow-list, and strict allows only relative links. Sandbox/iframe mode is removed; other v12 values (loose, antiscript, sandbox) are treated as the default, with a warning. | Must | M1 | D48 | MIGRATION.md; config warning |
 | R-SEC-7 | Parsers and the SVG writer are fuzzed in CI, with no crashes, hangs or allow-list violations. | Must | M1 | D15, D26 | Fuzz job |
 
@@ -264,7 +268,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | --- | --- | --- | --- | --- | --- |
 | R-ASCII-1 | An ASCII/Unicode text backend renders flowcharts from the shared layout model. Layout runs with the cell measurer and the cell unit profile, `stepped` routing and an integer grid quantum; routes are snapped to cells and only colliding segments are re-routed by the repair router. Every edge end has its own cell on a box side; a side with too many ends grows the box, and ends are never bundled. The flowchart draws through its `ascii` hook with the `core/ascii` text-grid kit. | Must | M2 | D11, D24, D76, D77, D78, D140 | Golden-file tests; no two edge ends share a cell or a box corner (corpus property); every direction, edge type, subgraph case and shape in the corpus renders |
 | R-ASCII-2 | mermaid-ascii's 142 flowchart golden files are ported as fixtures. v13's own `expected.txt` goldens compare exactly; the upstream output is checked structurally only. Inputs Mermaid rejects or reads differently, and structural failures, are listed in `ascii-divergences.json` with a reason; an unlisted failure or a stale entry fails CI. | Must | M2 | D24, D83 | Ported fixtures and divergence list in CI |
-| R-ASCII-3 | Diagram types may provide a native cell layout (e.g. sequence, ER) through the `ascii` hook. | Could | M3 | D24, D35 | Contract supports it |
+| R-ASCII-3 | Diagram types may provide a native cell layout (e.g. sequence, ER) through the `ascii` hook. M5 specs offer it per type as an optional ticket (D320). | Could | M3 | D24, D35, D320 | Contract supports it |
 | R-ASCII-4 | ASCII output is available via API (`render(id, text, { format: 'ascii' })`, `renderSync(text, { format: 'ascii' })`, returning `TextRenderResult { format, text, columns, rows, diagramType, warnings }`) and the zero-dependency `mermaid` CLI bin (`mermaid render [file\|-] --format ascii\|svg [--charset ascii] [--width N\|auto]`). Text uses `\n`, has no trailing spaces and is byte-deterministic. The CLI writes diagnostics to stderr and exits 1 on an error, 2 on an unsupported format. | Must | M2 | D11, D80, D85 | Specs; CLI specs over stdin and files |
 | R-ASCII-5 | ASCII support is opt-in per diagram type. A type supports it through the ascii hook, or by being graph-based on the shared layout, and declares it in its manifest. supportsFormat(type, 'ascii') lets hosts check up front. Requesting ASCII for an unsupported type throws a typed UnsupportedFormatError and never produces an approximation. Within a supported type, features with no text form (colours, styles, images, icons, curves, links, bold/italic) are dropped with one `ASCII_DROPPED` warning per feature kind; shapes without their own text form are drawn as boxes with one `ASCII_SHAPE` warning. The docs carry a type × format support matrix. | Must | M2 | D58, D82 | Specs: unsupported type throws UnsupportedFormatError; supportsFormat matches manifests; dropped features produce warnings; matrix generated from manifests |
 | R-ASCII-6 | Two glyph sets: `unicode` box drawing (default) and pure `ascii`, chosen by `ascii.charset` (diagram text may set it). Solid, dotted and thick edges, every arrowhead kind, tees and all junctions (heavy and dashed included) have a glyph in both sets. | Must | M2 | D79 | Glyph-table specs; goldens in both sets |

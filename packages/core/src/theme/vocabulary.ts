@@ -155,6 +155,9 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'pieStrokeWidth',
     'pieOuterStrokeWidth',
     'pieOpacity',
+    // gitGraph commit and tag label sizes (D267): 10px in every v12 theme.
+    'commitLabelFontSize',
+    'tagLabelFontSize',
     // Timeline boxes (spec #291, D227): the top corner, the label offset (sections and periods)
     // and the extra offset of event labels, and whether boxes take the `cScale` palettes.
     'timelineRadius',
@@ -166,6 +169,24 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'mindmapRoundedNodes',
     'mindmapOutlinedNodes',
     'mindmapBorderEdges',
+    // gitGraph (spec #292, D266): the bullet radius, how far the LR lanes sit below v12
+    // classic's spot, the branch label box (padding, corner, the TB/BT shift left and away from
+    // the commits), the arrow width, the bullet insides, and whether the node colours and the
+    // git palettes paint the branches. Unsigned: a shift has its direction in its name.
+    'gitCommitRadius',
+    'gitLaneShift',
+    'gitBranchLabelPaddingX',
+    'gitBranchLabelPaddingY',
+    'gitBranchLabelRadius',
+    'gitBranchLabelShiftX',
+    'gitBranchLabelOffsetY',
+    'gitArrowWidth',
+    'gitHighlightInnerSize',
+    'gitMergeRadius',
+    'gitReverseCrossSize',
+    'gitCherryPickDotRadius',
+    'gitNodeColors',
+    'gitPaletteColors',
     // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
     'useGradient',
   ] as const
@@ -244,9 +265,13 @@ const TEXT_USERS = [
   'timeline',
   'quadrant',
   'mindmap',
+  'gitgraph',
+  'gantt',
 ];
 
 const JOURNEY = ['journey'];
+const GIT = ['gitgraph'];
+const GANTT = ['gantt'];
 
 /**
  * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
@@ -265,12 +290,12 @@ const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() =>
  */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() => ({
   // base
-  primaryColor: def('p', 'color', ['core']),
+  primaryColor: def('p', 'color', ['core', 'gitgraph']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core']),
   background: def('bg', 'color', ['core']),
   primaryTextColor: def('pt', 'color', ['core']),
-  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
+  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph']),
   // Pie draws in the font family but sizes its text by its own variables.
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie']),
   fontSize: def('fs', 'length', TEXT_USERS),
@@ -288,6 +313,8 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'er',
     'journey',
     'timeline',
+    'gitgraph',
+    'gantt',
   ]),
   mainBkg: def('mb', 'color', [
     'flowchart',
@@ -297,6 +324,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'er',
     'timeline',
     'mindmap',
+    'gitgraph',
   ]),
   nodeBorder: def('nb', 'color', [
     'flowchart',
@@ -306,11 +334,12 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'er',
     'timeline',
     'mindmap',
+    'gitgraph',
   ]),
   nodeTextColor: def('nt', 'color', ['flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
-  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er']),
+  titleColor: def('tc', 'color', ['flowchart', 'class', 'state', 'er', 'gantt']),
   edgeLabelBackground: def('el', 'color', ['flowchart', 'state']),
   // v12 `classText`: every text of a class diagram but notes and namespace titles.
   classText: def('ct', 'color', ['class']),
@@ -373,6 +402,42 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   quadrantInternalBorderStrokeFill: def('qib', 'color', ['quadrant']),
   quadrantExternalBorderStrokeFill: def('qeb', 'color', ['quadrant']),
   quadrantTitleFill: def('qtf', 'color', ['quadrant']),
+  // gitGraph commit and tag labels (D267, v12 names), derived as every v12 theme derives them.
+  // `tagBorder` is v12's other name for `tagLabelBorder`, which an author's `tagLabelBorder`
+  // overrides; no theme sets it.
+  commitLabelColor: def('gcc', 'color', ['gitgraph']),
+  commitLabelBackground: def('glb', 'color', ['gitgraph']),
+  commitLabelFontSize: def('gcs', 'length', ['gitgraph']),
+  tagLabelColor: def('gtc', 'color', ['gitgraph']),
+  tagLabelBackground: def('gtk', 'color', ['gitgraph']),
+  tagLabelBorder: def('gtr', 'color', ['gitgraph']),
+  tagBorder: def('gtg', 'color', []),
+  tagLabelFontSize: def('gts', 'length', ['gitgraph']),
+  // v12's branch line colour (`lineColor` unless a redux theme sets it), and the cherry-pick
+  // mark (#374): white on light themes, black on dark ones.
+  commitLineColor: def('gcl', 'color', ['gitgraph']),
+  gitCherryPickInk: def('gci', 'color', ['gitgraph']),
+  // gantt (#381, v12 names from v12's gantt `styles.js`): row bands, excluded days, grid, today
+  // and `vert` lines, bars by state, and task label colours. A clickable label is v12's #003163
+  // in every theme, a renderer constant (#385).
+  sectionBkgColor: def('gb0', 'color', GANTT),
+  altSectionBkgColor: def('gb1', 'color', GANTT),
+  sectionBkgColor2: def('gb2', 'color', GANTT),
+  excludeBkgColor: def('gxb', 'color', GANTT),
+  gridColor: def('ggc', 'color', GANTT),
+  todayLineColor: def('gtl', 'color', GANTT),
+  vertLineColor: def('gvl', 'color', GANTT),
+  taskBkgColor: def('gtb', 'color', GANTT),
+  taskBorderColor: def('gto', 'color', GANTT),
+  activeTaskBkgColor: def('gab', 'color', GANTT),
+  activeTaskBorderColor: def('gao', 'color', GANTT),
+  doneTaskBkgColor: def('gdb', 'color', GANTT),
+  doneTaskBorderColor: def('gdo', 'color', GANTT),
+  critBkgColor: def('gcb', 'color', GANTT),
+  critBorderColor: def('gco', 'color', GANTT),
+  taskTextColor: def('gtt', 'color', GANTT),
+  taskTextOutsideColor: def('gtx', 'color', GANTT),
+  taskTextDarkColor: def('gtd', 'color', GANTT),
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',
@@ -383,10 +448,11 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'er',
     'timeline',
     'mindmap',
+    'gitgraph',
   ]),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),
   radius: def('r', 'length', ['core', 'flowchart', 'state', 'mindmap']),
-  fontWeight: def('fw', 'weight', ['core', 'timeline']),
+  fontWeight: def('fw', 'weight', ['core', 'timeline', 'gitgraph']),
   spacing1: def('g1', 'length', ['core']),
   spacing2: def('g2', 'length', ['core']),
   spacing3: def('g3', 'length', ['core']),
@@ -440,6 +506,20 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   mindmapRoundedNodes: def('mmr', 'flag', ['mindmap']),
   mindmapOutlinedNodes: def('mmo', 'flag', ['mindmap']),
   mindmapBorderEdges: def('mme', 'flag', ['mindmap']),
+  gitCommitRadius: def('gcr', 'length', GIT),
+  gitLaneShift: def('gls', 'length', GIT),
+  gitBranchLabelPaddingX: def('gpx', 'length', GIT),
+  gitBranchLabelPaddingY: def('gpy', 'length', GIT),
+  gitBranchLabelRadius: def('gbr', 'length', GIT),
+  gitBranchLabelShiftX: def('gbx', 'length', GIT),
+  gitBranchLabelOffsetY: def('gby', 'length', GIT),
+  gitArrowWidth: def('gaw', 'length', GIT),
+  gitHighlightInnerSize: def('ghi', 'length', GIT),
+  gitMergeRadius: def('gmr', 'length', GIT),
+  gitReverseCrossSize: def('grc', 'length', GIT),
+  gitCherryPickDotRadius: def('gcd', 'length', GIT),
+  gitNodeColors: def('gnc', 'flag', GIT),
+  gitPaletteColors: def('gpc', 'flag', GIT),
   // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
   // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
   rowOdd: def('ro', 'color', ['er']),
@@ -464,6 +544,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'er',
     'timeline',
     'mindmap',
+    'gitgraph',
   ]),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.

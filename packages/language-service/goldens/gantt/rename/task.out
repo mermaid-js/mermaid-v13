@@ -1,0 +1,8 @@
+@ 3:17  Design :crit, |a1, 2024-01-01, 3d
+  prepare: 3:17-3:19 "a1"; rename to "design":
+  %% rename-to: design
+  gantt
+    Design :crit, design, 2024-01-01, 3d
+    Build :b1, after design, 5d
+    Test :until design
+    click design,b1 href "https://example.com"

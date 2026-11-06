@@ -55,10 +55,19 @@ const PENDING_GRADIENT = GRADIENT.filter((n) => !Object.hasOwn(THEME_VARIABLES, 
  * name with `redux`, not by `look`, so `theme: neo` drew the classic values (D227).
  */
 const TIMELINE = Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('timeline'));
+/**
+ * gitGraph's v13 variables (#374): v12 chose its gitGraph geometry by a theme name with `redux`
+ * and its node colours by `NEO_COLOR_GEN_THEMES`, so `theme: neo` drew classic geometry with the
+ * node colours (D266). `commitLineColor` is v12's, which no neo theme sets (`?? lineColor`).
+ */
+const GITGRAPH = [
+  ...Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('git')),
+  'commitLineColor',
+];
 
 const LOOK_GEOMETRY = Object.entries(THEME_VARIABLES)
   .filter(([name, d]) => (d.kind === 'length' || d.kind === 'padding') && !(name in OLD))
-  .filter(([name]) => !TIMELINE.includes(name))
+  .filter(([name]) => !TIMELINE.includes(name) && !GITGRAPH.includes(name))
   .map(([name]) => name);
 
 const LOOK_GEOMETRY_WHY =
@@ -89,6 +98,7 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ...Object.fromEntries(
     [0, 1, 2, 3, 4, 5].map((i) => [`actor${i}`, 'D249: author-only; no theme sets actor<n>'])
   ),
+  tagBorder: "D267: author-only, v12's other name for tagLabelBorder; no theme sets it",
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
@@ -103,6 +113,9 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
     Object.keys(THEME_VARIABLES)
       .filter((n) => n.startsWith('mindmap'))
       .map((n) => [n, 'D288, D152: v12 has no variable; it chose mindmap paint by look and theme'])
+  ),
+  ...Object.fromEntries(
+    GITGRAPH.map((n) => [n, 'D266: v12 has no value; theme neo drew classic gitGraph geometry'])
   ),
 };
 

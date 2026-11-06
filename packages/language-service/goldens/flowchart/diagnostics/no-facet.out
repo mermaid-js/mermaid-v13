@@ -1,1 +1,1 @@
-2:1-2:6 "gantt" info NO_LANGUAGE_SUPPORT: gantt diagrams are not supported by the v13 language service yet.
+2:1-2:19 "requirementDiagram" info NO_LANGUAGE_SUPPORT: requirement diagrams are not supported by the v13 language service yet.
