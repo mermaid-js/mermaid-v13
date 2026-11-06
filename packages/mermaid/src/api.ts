@@ -78,6 +78,7 @@ import {
 } from './registry.ts';
 import { DiscoveryQueue, registerSeam } from './seam.ts';
 import { VERSION } from './version.ts';
+import { TextCache } from './text-cache.ts';
 
 export type { InitializeConfig, IntegratorOptions } from './config-snapshot.ts';
 export { defaultIdPrefix } from './config-snapshot.ts';
@@ -252,13 +253,6 @@ interface Found {
   readonly pre: PreprocessResult;
 }
 
-interface CacheEntry {
-  readonly snap: Snapshot;
-  readonly analysis: Analysis;
-}
-
-const CACHE_SIZE = 32;
-
 /** How a render measures and sizes: px for SVG, cells for text (D77, D84). */
 interface Units {
   readonly units: UnitProfile;
@@ -267,26 +261,6 @@ interface Units {
   readonly width?: number;
   /** Text output: the config with its `ascii` section, and what the text entry reads besides. */
   readonly text?: Pick<TextRenderContext, 'config' | 'title' | 'ast'>;
-}
-
-/** The analyses of recent texts, each valid only for the snapshot it was made with. */
-class AnalysisCache {
-  private readonly entries = new Map<string, CacheEntry>();
-
-  get(text: string, snap: Snapshot): Analysis | undefined {
-    const hit = this.entries.get(text);
-    return hit && hit.snap === snap ? hit.analysis : undefined;
-  }
-
-  set(text: string, snap: Snapshot, analysis: Analysis): void {
-    this.entries.delete(text);
-    this.entries.set(text, { snap, analysis });
-    if (this.entries.size > CACHE_SIZE) this.entries.delete(this.entries.keys().next().value!);
-  }
-
-  clear(): void {
-    this.entries.clear();
-  }
 }
 
 function layoutName(config: ResolvedConfig): string {
@@ -406,7 +380,7 @@ export function createMermaid(
   const [iconPacks, registerPacks] = iconPackRegistry();
   // What a draw reads: the packs without their loader, so a draw cannot start one (R-ARCH-6).
   const { load: _, ...packs } = iconPacks;
-  const cache = new AnalysisCache();
+  const cache = new TextCache<Snapshot, Analysis>();
   const siteConfigs = new SiteConfigs();
   const overlays = new Overlays();
   // `core/ascii`'s cell measurer and width, loaded by the first text `prepare` (D87).
@@ -775,13 +749,15 @@ export function createMermaid(
   }
 
   /** `drawWith`; the queued discovery warnings leave the queue only once a draw has them. */
+  /** Draws `text`, from `known` when the caller has just made or found its analysis. */
   function draw(
     text: string,
     s: Snapshot,
-    options: RenderOptions | undefined
+    options: RenderOptions | undefined,
+    known?: Analysis
   ): RenderResult | TextRenderResult {
     const queued = skipped.length;
-    const result = drawWith(text, s, options);
+    const result = drawWith(text, s, options, known);
     skipped.splice(0, queued);
     return result;
   }
@@ -789,10 +765,11 @@ export function createMermaid(
   function drawWith(
     text: string,
     s: Snapshot,
-    options: RenderOptions | undefined
+    options: RenderOptions | undefined,
+    known: Analysis | undefined
   ): RenderResult | TextRenderResult {
     const format = checkFormat(text, s, options?.format);
-    const analysis = analysisFor(text, s, options, format === 'ascii');
+    const analysis = known ?? analysisFor(text, s, options, format === 'ascii');
     if (!('prepared' in analysis)) return analysis;
     if (format === 'ascii') return drawAscii(text, s, options, analysis);
     const { prepared, plugin } = analysis;
@@ -847,8 +824,8 @@ export function createMermaid(
     const options = renderOptions(containerOrOptions);
     const s = snapshotFor(options);
     try {
-      await prepareWith(text, s, options?.format);
-      return draw(text, s, { ...options, id });
+      const analysis = await prepareWith(text, s, options?.format);
+      return draw(text, s, { ...options, id }, analysis);
     } catch (e) {
       throw toMermaidError(e);
     }
