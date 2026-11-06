@@ -160,6 +160,15 @@ describe('stress: the gantt schedule and layout are linear', () => {
     60_000
   );
 
+  // Unbounded inside v12's caps; enable once the maintainer decides (GAPS.md #379 "For the maintainer").
+  it.skip('a source-cap chart of 9000-year tasks over a sparse exclude', () => {
+    const f = fixture().setExcludes('1999-01-01');
+    for (let i = 0; f.tasks.length * 26 < 50_000; i++) f.addTask('t', `t${i},2000-01-01,9000y`);
+    const t = cost(() => lay(f));
+    const base = cost(() => lay(fixture().addTask('t', 't,2000-01-01,9000y')));
+    expect(t / Math.max(base, 2)).toBeLessThan(24);
+  });
+
   it('tickInterval 1millisecond over a year falls back to automatic ticks at once', () => {
     const t = cost(() => {
       const { layout, warnings } = lay(
