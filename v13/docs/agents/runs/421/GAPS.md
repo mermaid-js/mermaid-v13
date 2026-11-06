@@ -24,6 +24,25 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - Review findings fixed before the merge (`b1454682f`): a package lexer unit spec (pitfall 4), a harvest drift spec for the pie and packet corpora, the 15 sources v12 does not lex pinned by id, test names dropped from the harvest (pie unchanged), stress small runs sized past the 2 ms floor.
 - [ ] **#460 or #462:** remove packet's `NOT_DRAWN_YET` skip in `tools/gen-config/src/theme-used-by.spec.ts` once the renderer reads theme variables.
 
+## #454 T2 parser (merged at `0739831cc`; review fixes pending)
+
+Merged before its review fixes so T3 could build on it while the load rule allows one ticket agent; the T2 agent fixes these on a new branch once T3 is done, before T4 starts.
+
+- Deviations (orchestrator: accepted; listed for the maintainer):
+  - a field the 10,000-row cap drops whole is left out of `fields`; a field it cuts keeps its written `end`/`bits` (`model.ts` doc change only, no type change). T3's "pieces cover the field" invariant allows that one case, flagged by `PACKET_TRUNCATED`;
+  - `PACKET_CONFIG_INVALID`: one warning per bad key, zero-width at the body start; defaults hand-kept until T5's `gen:config`;
+  - `DiagramAdapter.v12ConfigFor(text)` (optional, conformance): the oracle applies neither front matter nor directives, and rows depend on `bitsPerRow`;
+  - recovery cases live in `packet-cases.json` with `errors`/`keeps` fields;
+  - a `Header` AST node with id `packet`, as pie has `pie`.
+- [ ] **Review fix (spec): a stray line resets the bit count.** After a field whose bits failed to parse, restarting the count is right (one error per broken field); after text that was never a field it hides a real gap (`0-7: "a"\n@\n20: "b"` reports only the stray character). Only a failed field should reset; add that recovery case.
+- [ ] **Review fix (spec): D342 config cases against the oracle.** Add invalid-config cases (`bitsPerRow: 0`, `-4`, `10.5`, `"8"`, `rowHeight: 0`, negative padding) to `packet-cases.json` and list each as a parity divergence with its reason (D342), instead of leaving the difference unexercised.
+- [ ] **Review fix (spec): pin escapes.** A `packet-cases` entry for `\n`, `\t` and `\x` in labels, so the control-character conversion is oracle-checked, not only v13-checked.
+- [ ] **Review fix (standards): no side channel.** `parser.ts`'s `lost` flag travels between `field()`, `document()` and `resolve()` (pitfall 6); return it or pass it.
+- [ ] **Review fix (standards): row splitting out of the grammar class.** Move `place()` and the `word`/`row`/`truncated`/`rows` state to `normalise.ts` (parser-method §4).
+- [ ] **Review fix (standards): one "whole field" helper.** `packetV13Snapshot` (conformance) and `v12-specs/adapter.ts` both test whether a piece is its whole field; export one helper. Export the semantic codes once rather than repeating them in `adapter.ts`'s `SEMANTIC`.
+- Smells left as is (pie has the same shape): `VALUE_WORDS`/`KIND_OF`/`ID_OF` triple table, `WrittenBits` optional fields, positional `undefined` in `fail()`; follow-up with the lexer duplication above.
+- Early T6 work in T2 (D346 symbols, probe hooks) follows pie's pattern; T6 owns them from here.
+
 ## Shared contracts
 
 - **`PacketModel`** (`packages/diagram-packet/src/model.ts`): landed by the orchestrator before #454 and #456 start in parallel, shaped from the spec's model list. #454 produces it; #456 and #464 read it. Change it only additively and note the change here.
