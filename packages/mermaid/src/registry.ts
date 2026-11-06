@@ -13,7 +13,12 @@ import {
 } from '@mermaid-js/core';
 import { checkFragment, type ConfigFragment } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
-import { diagramStart, type PreprocessResult } from '@mermaid-js/core/preprocess';
+import {
+  detectText,
+  diagramStart,
+  firstPartyDetects,
+  type PreprocessResult,
+} from '@mermaid-js/core/preprocess';
 import { THEME_VARIABLE_TABLE, type ThemeRuleTable } from '@mermaid-js/core/theme';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the registry holds plugins of every model and layout type
@@ -129,10 +134,9 @@ interface Entry {
   readonly formats: readonly string[];
   /**
    * `body` is the text from the diagram's start (front matter, leading directives and comments
-   * skipped). `clean` is the text third-party detectors are given: directives removed by their
-   * preprocess ranges and each `%%` comment cut from its line. `v12` is the same text with a
-   * `%%` on the last line kept, as v12's `detectType` kept one with no line break after it
-   * (`detectText`), which first-party rows fall back to. Both are built on first use.
+   * skipped). `clean` is the text third-party detectors are given and `v12` the one first-party
+   * rows fall back to (core's `detectText`, without and with `keepLastLineComment`). Both are
+   * built on first use.
    */
   readonly detect: (
     body: string,
@@ -267,31 +271,6 @@ function checkDiagram(def: AnyPlugin | LazyDiagram, eager: boolean): void {
       throw new TypeError(`Diagram "${p.id}": ${m} must be a function`);
 }
 
-// The body with directives removed (their ranges come from preprocess) and each `%%` comment
-// cut from its line: the text third-party detectors are given. With `v12`, a `%%` on the last
-// line, which has no line break after it, stays, as v12's `stripAnyComments` left it: the text
-// first-party rows fall back to, so `cynefin-beta%% c` plus a line break is detected and alone it
-// is not, as in v12 (#469). It is not v12's text: v12's own directive regex is not reproduced
-// (size, R-PERF-8), and blank space before a comment stays (no pattern depends on it).
-function detectText(src: string, start: number, pre: PreprocessResult, v12 = false): string {
-  let text = '';
-  let at = start;
-  for (const { range } of pre.directives) {
-    if (range.end <= at) continue;
-    text += src.slice(at, Math.max(at, range.start));
-    at = range.end;
-  }
-  text += src.slice(at);
-  if (!text.includes('%%')) return text;
-  const lines = text.split('\n');
-  return lines
-    .map((line, i) => {
-      const c = line.indexOf('%%');
-      return c < 0 || (v12 && i === lines.length - 1) ? line : line.slice(0, c).trimEnd();
-    })
-    .join('\n');
-}
-
 const unwrap = <T>(m: T | { diagram: T } | { layout: T } | { default: T }): T =>
   typeof m === 'object' && m !== null && ('diagram' in m || 'layout' in m || 'default' in m)
     ? ((m as { diagram?: T }).diagram ??
@@ -411,10 +390,8 @@ export class Registry {
         type: e.type,
         id: e.id,
         formats: e.formats ?? [],
-        // The raw body first; when it holds a `%%`, also the body with comments cut as v12's
-        // detectType cut them, so `cynefin-beta%% c` plus a line break matches as in v12 (#469).
         detect: (body, _clean, _config, v12) =>
-          e.pattern.test(body) || (body.includes('%%') && e.pattern.test(v12())),
+          firstPartyDetects((text) => e.pattern.test(text), body, v12),
         load: e.load,
         loadAscii: e.loadAscii,
       });
@@ -492,7 +469,7 @@ export class Registry {
     let clean: string | undefined;
     const cleaned = () => (clean ??= detectText(src, start, pre));
     let old: string | undefined;
-    const v12 = () => (old ??= detectText(src, start, pre, true));
+    const v12 = () => (old ??= detectText(src, start, pre, { keepLastLineComment: true }));
     for (const e of this.detectionOrder()) {
       if (e.detect(body, cleaned, config, v12)) return { type: e.type, id: e.id };
     }

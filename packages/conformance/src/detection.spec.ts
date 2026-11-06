@@ -5,10 +5,11 @@
  * together with its line break (`stripAnyComments`, which leaves a `%%` with no line break after
  * it). v13 tests each row's pattern on the raw body first, then on the body with directives
  * removed as core's preprocess reads them and each comment cut, a `%%` on the last line kept
- * (`detectText` in `packages/mermaid/src/registry.ts`). For each type's header `H`, the cases are
+ * (`detectText` in `packages/core/src/preprocess/detect-text.ts`, shared by the registry and the language service). For each type's header `H`, the cases are
  * a comment right after it with and without a line break, a directive after it, a directive
  * inside the keyword, and the detector order when one row matches only the cleaned text and a
  * later one the raw text; then seeded mixes of every header with comment and directive pieces.
+ * The language service must detect what mermaid detects, for the same cases and mixes.
  * v13 must give v12's type, or reject where v12 rejects, except the listed divergences and, in
  * the mixes, three kinds:
  * - an unclosed `%%{` is an UNCLOSED_DIRECTIVE error in core's preprocess, every type (the
@@ -20,6 +21,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { diagramStart, preprocess } from '@mermaid-js/core/preprocess';
+import { createLanguageService } from '@mermaid-js/language-service';
 import { createMermaid } from 'mermaid';
 import { describe, expect, it } from 'vitest';
 import { loadOracle } from './oracle.ts';
@@ -31,6 +33,10 @@ const v12 = (
   }
 ).default;
 const v13 = createMermaid();
+const service = createLanguageService();
+/** The type the language service detects, as `outcome` writes mermaid's. */
+const serviceType = (text: string): string =>
+  service.update('file:///d.mmd', text).type ?? 'rejected';
 
 const TABLE = readFileSync(
   new URL('../../../tools/gen-config/src/registry.ts', import.meta.url),
@@ -302,6 +308,36 @@ describe('first-party detection against v12 detectType (#469)', () => {
     expect(unclosed).toBeLessThan(300);
     expect(raw).toBeLessThan(300);
     expect(cutOtherwise).toBeLessThan(400);
+    expect(found).toEqual([]);
+  });
+
+  it('gives the language service mermaid’s type for every case (one detection rule)', () => {
+    const all = [
+      ...ROWS.flatMap((type) => cases(HEADERS[type]!)),
+      ...ORDER,
+      ...DIRECTIVE_SPLITS,
+    ].map(([, t]) => t);
+    let seed = 470;
+    const next = (n: number): number => {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      return seed % n;
+    };
+    const headers = Object.values(HEADERS);
+    for (let i = 0; i < 1000; i++) {
+      const h = headers[next(headers.length)]!;
+      const cut = next(h.length + 1);
+      const piece = FRAGMENTS[next(FRAGMENTS.length)]!;
+      all.push(h.slice(0, cut) + piece + h.slice(cut) + TAILS[next(TAILS.length)]!);
+    }
+    const found: string[] = [];
+    for (const text of all) {
+      const now = outcome((t) => v13.detectType(t), text);
+      // The service reads an unclosed `%%{` as core's preprocess does and reports it as a
+      // diagnostic; mermaid refuses the text.
+      if (now === 'unclosed directive') continue;
+      const lsp = serviceType(text);
+      if (lsp !== now) found.push(`${JSON.stringify(text)}: mermaid ${now}, service ${lsp}`);
+    }
     expect(found).toEqual([]);
   });
 
