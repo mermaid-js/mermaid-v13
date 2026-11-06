@@ -1,0 +1,8 @@
+@ 3:6  cha|otic --> complex : "Stabilise"
+  3:3-3:10 "chaotic"
+  4:15-4:22 "chaotic"
+@ 4:18  complex --> cha|otic
+  3:3-3:10 "chaotic"
+  4:15-4:22 "chaotic"
+@ 5:20  complex --> clear|
+  5:15-5:20 "clear"

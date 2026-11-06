@@ -9,7 +9,6 @@
   accDescr keyword 3:3-3:3 "" -> "accDescr: "
   " value (an item such as "Probe") 3:3-3:3 "" -> "\""
 @ 5:15  complex --> |
-  complex keyword (Probe → Sense → Respond · Emergent Practices) 5:15-5:15 "" -> "complex"
   complicated keyword (Sense → Analyse → Respond · Good Practices) 5:15-5:15 "" -> "complicated"
   clear keyword (Sense → Categorise → Respond · Best Practices) 5:15-5:15 "" -> "clear"
   chaotic keyword (Act → Sense → Respond · Novel Practices) 5:15-5:15 "" -> "chaotic"

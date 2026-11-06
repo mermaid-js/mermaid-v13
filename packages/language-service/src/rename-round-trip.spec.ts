@@ -75,10 +75,17 @@ const KNOWN_REFUSALS = [
 ];
 
 /**
- * Facets whose symbols are fixed names, so every rename is refused by design: cynefin's five
- * domains (D367). Checked, not listed: each of their symbols must be refused, and at least one is.
+ * Facets whose symbols are fixed names, so every rename is refused by design, and the reason it
+ * must give: cynefin's five domains (D367). Checked, not listed: each of their symbols must be
+ * refused with that reason (a refusal for any other, such as a failed read-back, fails), and at
+ * least one is.
  */
-const FIXED_NAMES = new Set(['cynefin']);
+const FIXED_NAMES: ReadonlyMap<string, string> = new Map([
+  [
+    'cynefin',
+    'Domain names are fixed: a cynefin diagram has the five domains `complex`, `complicated`, `clear`, `chaotic` and `confusion`, so a domain cannot be renamed.',
+  ],
+]);
 
 const corpus = (readdirSync(CORPUS, { recursive: true }) as string[])
   .filter((f) => f.endsWith('.mmd'))
@@ -142,9 +149,11 @@ describe('rename, re-parse, same model modulo the name', () => {
         const name = (doc.prepareRename(at) as { placeholder: string }).placeholder;
         const where = `${file.split('\\').join('/')} ${name}@${at}`;
         const result = doc.rename(at, FRESH);
-        if (FIXED_NAMES.has(doc.facet.id)) {
-          if ('refused' in result) fixed++;
-          else problems.push(`${where}: a fixed name was renamed`);
+        const reason = FIXED_NAMES.get(doc.facet.id);
+        if (reason !== undefined) {
+          if (!('refused' in result)) problems.push(`${where}: a fixed name was renamed`);
+          else if (result.refused !== reason) problems.push(`${where}: refused: ${result.refused}`);
+          else fixed++;
           continue;
         }
         if ('refused' in result) {

@@ -49,6 +49,8 @@ describe('cynefin language facet', () => {
     expect(cynefinLanguage.id).toBe('cynefin');
     expect(language).toBe(cynefinLanguage);
     expect(cynefinLanguage.namespaces).toEqual([['domain']]);
+    // D367: a domain no block declares has no definition.
+    expect(cynefinLanguage.declaredOnly).toBe(true);
   });
 
   it('parses with the tokens kept and a category for every token kind it emits', () => {
@@ -96,10 +98,14 @@ describe('cynefin completions (D95)', () => {
     expect(complete(`${H}complex -¦`)).toEqual(['-->']);
   });
 
-  it('offers the domains after `-->`', () => {
-    expect(complete(`${H}complex --> ¦`)).toEqual(DOMAINS);
-    expect(complete(`${H}complex -->¦`)).toEqual(DOMAINS);
+  it('offers the domains after `-->`, but not the source: a self-loop is not drawn (D365)', () => {
+    const others = DOMAINS.filter((d) => d !== 'complex');
+    expect(complete(`${H}complex --> ¦`)).toEqual(others);
+    expect(complete(`${H}complex -->¦`)).toEqual(others);
+    expect(complete(`${H}  complex-->¦`)).toEqual(others);
     expect(complete(`${H}complex --> ch¦`)).toEqual(['chaotic']);
+    expect(complete(`${H}complex --> comp¦`)).toEqual(['complicated']);
+    expect(complete(`${H}confusion --> ¦`)).toEqual(DOMAINS.slice(0, 4));
   });
 
   it('offers `:` after a transition target, then a label', () => {
@@ -132,16 +138,22 @@ describe('cynefin completions (D95)', () => {
 });
 
 describe('cynefin hover (D93)', () => {
-  it("shows a domain's decision model and practice, as v12 drew them", () => {
+  it("shows a domain's meaning (v12's syntax page), then its decision model and practice", () => {
     expect(hover(`${H}com¦plex "a"`)).toMatch(
-      /^\*\*`complex`\*\* domain\n\nProbe → Sense → Respond · Emergent Practices\n\n/
+      /^\*\*`complex`\*\* domain\n\nCause and effect can only be deduced in retrospect\.\n\nProbe → Sense → Respond · Emergent Practices\n\n/
     );
     expect(hover(`${H}complex --> cle¦ar`)).toMatch(
-      /^\*\*`clear`\*\* domain\n\nSense → Categorise → Respond · Best Practices/
+      /^\*\*`clear`\*\* domain\n\nCause and effect are obvious\.\n\nSense → Categorise → Respond · Best Practices/
     );
-    expect(hover(`${H}complicated¦`)).toMatch(/Sense → Analyse → Respond · Good Practices/);
-    expect(hover(`${H}cha¦otic`)).toMatch(/Act → Sense → Respond · Novel Practices/);
-    expect(hover(`${H}conf¦usion`)).toMatch(/^\*\*`confusion`\*\* domain\n\nDisorder\n\n/);
+    expect(hover(`${H}complicated¦`)).toMatch(
+      /Cause and effect require analysis or expertise\.\n\nSense → Analyse → Respond · Good Practices/
+    );
+    expect(hover(`${H}cha¦otic`)).toMatch(
+      /No perceivable cause and effect\.\n\nAct → Sense → Respond · Novel Practices/
+    );
+    expect(hover(`${H}conf¦usion`)).toMatch(
+      /^\*\*`confusion`\*\* domain\n\nYou do not know which domain you are in\. The goal is to move items out of this state into one of the other four\.\n\nDisorder\n\n/
+    );
   });
 
   it('says when a block is replaced by a later one (D364)', () => {

@@ -18,8 +18,9 @@ import { CYNEFIN_V12_TYPES, cynefinV12Snapshot } from './v12.ts';
  *   v12 keeps the first position of a domain, D364), and references from any of its
  *   occurrences (every block, both ends of every transition) give the same list, with that
  *   definition in it;
- * - only a v12 domain has a definition written as a block: a domain no block declares (named
- *   only by transitions) has none;
+ * - only a v12 domain has a definition: a domain no block declares (named only by
+ *   transitions) has a `def` occurrence nowhere and `definition()` gives nothing at any of its
+ *   mentions, while `references()` still lists them all;
  * - rename is refused at every occurrence: the five names are fixed (D367);
  * - the block v12 draws folds over exactly the items v12 keeps, when it spans lines, and a
  *   multi-line v12 `accDescr` is an `accDescr` fold range.
@@ -48,6 +49,7 @@ describe('cynefin definition, references, rename and folding through the service
     let checked = 0;
     let domains = 0;
     let folds = 0;
+    let undeclared = 0;
     for (const item of await cynefinGateCorpus()) {
       const v12 = await oracle.parse(item.source);
       if (!v12.accepted || !CYNEFIN_V12_TYPES.includes(v12.diagramType)) continue;
@@ -103,8 +105,14 @@ describe('cynefin definition, references, rename and folding through the service
           fail(`${name}: fold holds ${strings.length} items, v12 ${items.length}`);
       }
       for (const s of parsed.symbols) {
-        if (s.role === 'def' && !declared.has(s.name))
-          fail(`${s.name} is defined but no v12 domain`);
+        if (declared.has(s.name)) continue;
+        undeclared++;
+        if (s.role === 'def') fail(`${s.name} is defined but no v12 domain`);
+        const d = doc.definition(s.range.start);
+        if (d) fail(`${s.name} at ${s.range.start}: definition at ${d.start}, but no v12 domain`);
+        const mentions = parsed.symbols.filter((x) => x.name === s.name).length;
+        if (doc.references(s.range.start).length !== mentions)
+          fail(`${s.name} at ${s.range.start}: references miss some of its ${mentions} mentions`);
       }
       const multiLine = LINE_BREAK.test(model.accDescr);
       const fold = doc.foldingRanges().some((f) => f.kind === 'accDescr');
@@ -113,6 +121,7 @@ describe('cynefin definition, references, rename and folding through the service
     expect(checked).toBeGreaterThan(300);
     expect(domains).toBeGreaterThan(400);
     expect(folds).toBeGreaterThan(300);
+    expect(undeclared).toBeGreaterThan(0);
     expect(problems).toEqual([]);
   }, 300_000);
 

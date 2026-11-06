@@ -19,6 +19,19 @@ export interface KeywordItem {
   readonly detail?: string;
 }
 
+/**
+ * What each domain means, as v12's syntax page (`docs/syntax/cynefin.md` at `mermaid@12.2.0`,
+ * "Introduction") puts it. Hover shows it above the decision model and practice.
+ */
+export const DOMAIN_MEANING: Readonly<Record<CynefinDomainName, string>> = {
+  complex: 'Cause and effect can only be deduced in retrospect.',
+  complicated: 'Cause and effect require analysis or expertise.',
+  clear: 'Cause and effect are obvious.',
+  chaotic: 'No perceivable cause and effect.',
+  confusion:
+    'You do not know which domain you are in. The goal is to move items out of this state into one of the other four.',
+};
+
 /** The text v12 drew under a domain's name: `Probe → Sense → Respond · Emergent Practices`. */
 export function domainLine(name: CynefinDomainName): string {
   const { model, practice } = DOMAIN_META[name];

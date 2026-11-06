@@ -132,7 +132,7 @@ function probeMode(src: string, tokens: TokenStream, o: number): string {
 }
 
 /** `a`, `a and b`, `a, b and c` (or `or`). */
-function listOf(parts: readonly string[], conjunction = 'and'): string {
+export function listOf(parts: readonly string[], conjunction = 'and'): string {
   if (parts.length < 2) return parts.join('');
   return `${parts.slice(0, -1).join(', ')} ${conjunction} ${parts[parts.length - 1] ?? ''}`;
 }

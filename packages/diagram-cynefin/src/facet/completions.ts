@@ -2,7 +2,8 @@
  * Cynefin completion (DESIGN §4.5, D95, R-LANG-7): the probe's expected kinds mapped to items.
  * An item is offered only when the parser tests its kind at the cursor: `cynefin-beta` at the
  * start; the five domains, `title`, `accTitle:` and `accDescr` at the start of a line; `-->`
- * after a domain name; the domains after `-->`; `:` after a transition's target; `"` inside a
+ * after a domain name; the domains after `-->`, but not the source (a self-loop is not drawn,
+ * D365); `:` after a transition's target; `"` inside a
  * block and after `:`. Inside an item, a label or a statement's text (probe modes `string`,
  * `title`, `accTitle`, `accDescr`) and outside code nothing is offered.
  */
@@ -49,10 +50,13 @@ export function cynefinCompletions(
   const prefix = text.slice(range.start, probe.offset);
   const before = lineBefore(text, range.start);
   const lineStart = /^[\t ]*$/.test(before);
-  const afterArrow = /-->[\t ]*$/.test(before);
+  // After `-->`: the source domain, which completion leaves out.
+  const source = /([a-z]+)[\t ]*-->[\t ]*$/.exec(before)?.[1];
+  const afterArrow = source !== undefined;
   const out: CompletionItem[] = [];
   for (const k of ITEMS) {
     if (!expected.has(k.kind) || !k.label.startsWith(prefix)) continue;
+    if (k.kind === T.DomainName && k.label === source) continue;
     if (LINE_START.has(k.kind) && !lineStart && !(k.kind === T.DomainName && afterArrow)) continue;
     const documentation = cynefinDocs[k.kind];
     out.push({

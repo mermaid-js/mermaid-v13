@@ -1,7 +1,7 @@
 /**
  * Cynefin hover (DESIGN §4.5, D93): a domain name, in a block or at either end of a transition,
- * shows the decision model and practice v12 drew under it (`domains.ts`) and the domain's
- * keyword doc, and says when its block is replaced by a later one (D364); any other keyword the
+ * shows what the domain means (v12's syntax page), the decision model and practice v12 drew
+ * under it (`domains.ts`) and the domain's keyword doc, and says when its block is replaced by a later one (D364); any other keyword the
  * one-line doc of the grammar file (`generated/docs.ts`). Items and labels have none. Never a
  * preview.
  */
@@ -11,7 +11,7 @@ import { cynefinDocs } from '../generated/docs.ts';
 import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
 import type { CynefinDocument, CynefinDomainNode } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { code, domainLine, span } from './tables.ts';
+import { code, DOMAIN_MEANING, domainLine, span } from './tables.ts';
 
 /** Statement tokens that hold their text too: only the keyword is hovered. */
 const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {
@@ -38,7 +38,7 @@ function replacedBy(doc: DocumentView<CynefinDocument>, range: Range, name: stri
 function domainHover(doc: DocumentView<CynefinDocument>, range: Range): Hover | undefined {
   const name = CYNEFIN_DOMAIN_NAMES.find((n) => n === doc.text.slice(range.start, range.end));
   if (name === undefined) return undefined;
-  const parts = [`**${code(name)}** domain`, domainLine(name)];
+  const parts = [`**${code(name)}** domain`, DOMAIN_MEANING[name], domainLine(name)];
   const docText = cynefinDocs[T.DomainName];
   if (docText !== undefined) parts.push(docText);
   const line = replacedBy(doc, range, name);
