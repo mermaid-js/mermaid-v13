@@ -40,6 +40,9 @@ export const RADAR_EMPTY_RANGE = 'RADAR_EMPTY_RANGE';
 
 const TAU = 2 * Math.PI;
 
+/** For a layout run without a `warn` sink (unit tests, the invariants). */
+const ignoreWarning = (): void => undefined;
+
 /** The chart's polar frame (`:50-62`): spoke `i` of `n` at `angle(i)`, clockwise from 12 o'clock. */
 interface Frame {
   readonly center: Point;
@@ -72,7 +75,7 @@ function frameOf(config: RadarLayoutConfig, n: number): Frame {
 export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLayout {
   const config = radarLayoutConfig(
     ctx.config.radar as Readonly<Record<string, unknown>> | undefined,
-    ctx.warn
+    ctx.warn ?? ignoreWarning
   );
   const { theme } = ctx;
   const family = theme.value('fontFamily');

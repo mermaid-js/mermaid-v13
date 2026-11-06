@@ -1455,9 +1455,11 @@ strings; grammar in [syntax/radar.md](./syntax/radar.md)). What changes in the d
 
 | v12 | v13 | Why |
 | --- | --- | --- |
-| `radar.axisColor` was each classic theme's `lineColor`; in `default` and `dark` it was computed once, so a `lineColor` override never moved the axes (in `forest`, `neutral` and `base` it did) | `radarAxisColor` is the rule `lineColor` in every theme, so the axes follow an author's `lineColor` (an explicit `radarAxisColor` or `themeVariables.radar.axisColor` still wins) | D351 |
-| `redux`, `redux-color`: no `radar` block, so the axes took theme-default's `#333333` | The axes take the theme's `lineColor`, `#000000` | D333(b) |
-| `redux-dark`, `redux-dark-color`: no `radar` block, so the axes took theme-default's `#333333`, barely visible on the `#333333` background | The axes take the theme's `lineColor`, `#cccccc` | D333(b) |
+| `radar.axisColor` was each classic theme's `lineColor`, but an author's `lineColor` override moved the axes only in `forest`, `neutral` and `base`: `default` kept `#333333`, and `dark`'s `updateColors()` resets `lineColor` to `mainContrastColor` (`lightgrey`) before it builds the `radar` block, so the axes stayed `lightgrey` | `radarAxisColor` is the rule `lineColor` in every theme, so the axes follow an author's `lineColor` (an explicit `radarAxisColor` or `themeVariables.radar.axisColor` still wins) | D351 |
+| `redux`: no `radar` block, so the axes took theme-default's `#333333` | The axes take the theme's `lineColor`, `#000000` | D333(b) |
+| `redux-color`: no `radar` block, so the axes took theme-default's `#333333` | The axes take the theme's `lineColor`, `#000000` | D333(b) |
+| `redux-dark`: no `radar` block, so the axes took theme-default's `#333333`, barely visible on the `#333333` background | The axes take the theme's `lineColor`, `#cccccc` | D333(b) |
+| `redux-dark-color`: no `radar` block, so the axes took theme-default's `#333333`, barely visible on the `#333333` background | The axes take the theme's `lineColor`, `#cccccc` | D333(b) |
 | `neo`: no `radar` block, so the axes took theme-default's `#333333` | The axes take the theme's `lineColor`, `#000000` | D333(b) |
 | `neo-dark`: no `radar` block, so the axes took theme-default's `#333333`, barely visible on the `#333333` background | The axes take the theme's `lineColor`, `#cccccc` | D333(b) |
 | `themeVariables.radar.*` (nested only) | Each key is also the flat variable `radar<Key>` (`radarAxisColor`, … `radarLegendFontSize`); the nested key still works, and the flat name wins when both are set | D335, D540 |

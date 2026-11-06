@@ -175,8 +175,9 @@ describe('radar theme variables against v12 12.2.0 (#449, D333(b), D335, D351, D
     '%s: the axes follow an author lineColor in every theme (D351)',
     async (name) => {
       const old = v12Radar(name, { lineColor: '#ff00ff' });
-      // v12 recomputed the block after the override only in forest, neutral and base; default
-      // and dark fixed it in the constructor, and the redux/neo themes have none.
+      // v12's block followed the override only in forest, neutral and base: default kept
+      // #333333, dark's updateColors() resets lineColor to mainContrastColor (lightgrey) before
+      // it builds the block, and the redux/neo themes have no block.
       expect(hex(old.axisColor) === '#ff00ff').toBe(V12_FOLLOWS_LINE_COLOR.includes(name));
       const theme = await v13Theme(name, { lineColor: '#ff00ff' });
       expect(hex(theme.value('radarAxisColor'))).toBe('#ff00ff');
