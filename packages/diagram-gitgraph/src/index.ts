@@ -5,3 +5,7 @@
  */
 export { GITGRAPH_TRIVIA, GitGraphTokenKind } from './parser/index.ts';
 export type { GitGraphToken } from './parser/index.ts';
+// T3 (#371): the custom layout.
+export { GIT_GEOMETRY, GIT_METRICS, layoutGitGraph } from './layout/index.ts';
+export type * from './layout/types.ts';
+export type { GitGeometry, GitLayoutContext, GitMetrics } from './layout/index.ts';

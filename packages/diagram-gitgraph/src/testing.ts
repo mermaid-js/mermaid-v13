@@ -11,3 +11,5 @@ export {
   LANGIUM_NAMES,
 } from './parser/index.ts';
 export type { GitGraphToken } from './parser/index.ts';
+// T3 (#371): the layout invariants, for the corpus sweep.
+export { gitLayoutViolations, type ViolationOptions } from './layout/index.ts';
