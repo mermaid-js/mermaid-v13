@@ -7,7 +7,7 @@ Integration branch `feature/292_gitgraph` (from `mermaid-v13` 38d663b44). Draft 
 | T1 lexer parity gate | #368 | — | merged (ff 189662975) |
 | T4a `git`, `gitInv`, `gitBranchLabel` palettes | #369 | — (on #410) | merged (--no-ff, branch 64e08434c) |
 | T2 grammar, parser, model, AST | #370 | #368 | merged (ff 7fa9ac108) |
-| T3 custom layout (`GitLayout`) | #371 | #370 (hand-built fixtures meanwhile) | in review: parser-backed invariants left |
+| T3 custom layout (`GitLayout`) | #371 | #370 (hand-built fixtures meanwhile) | merged (ff e8bae97a8) |
 | T6 language facet | #372 | #370 | open |
 | T4 SVG renderer | #373 | #371, #369 | open |
 | T5 integration | #374 | #373, #372 | open |
