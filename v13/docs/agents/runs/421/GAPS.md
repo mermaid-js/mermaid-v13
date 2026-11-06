@@ -43,6 +43,11 @@ Merged before its review fixes so T3 could build on it while the load rule allow
 - Smells left as is (pie has the same shape): `VALUE_WORDS`/`KIND_OF`/`ID_OF` triple table, `WrittenBits` optional fields, positional `undefined` in `fail()`; follow-up with the lexer duplication above.
 - Early T6 work in T2 (D346 symbols, probe hooks) follows pie's pattern; T6 owns them from here.
 
+## #456 T3 layout (open)
+
+- [ ] **#460 T4:** declare `packetByteFontSize`, `packetLabelFontSize`, `packetTitleFontSize` and `packetBlockStrokeWidth` (kind `length`) in packet's theme table. Until then `packetThemeLength` (`src/layout/metrics.ts`) catches core's `Unknown theme variable` and uses v12's 10, 12, 14 and 1 from `PACKET_THEME_DEFAULTS`; a value that is not finite and above 0 falls back too. Once the table has them, drop the `try` and the defaults table (the theme's light entry holds them).
+- Orchestrator choices to record (no D-id covers them): a title of several lines keeps its first line where v12 centred its one line and grows down (D344 grows the bounds); the bounds include half of `packetBlockStrokeWidth` round each piece; a label shrinks in proportion to its overflow, at most `FIT_STEPS` (4) measurements, down to `min(label size, bit-number size)`, so it never grows (D343); each piece of a split field fits its own label; bit numbers are plain digits measured with the measurer, not through `layoutLabel`; the layout uses `model.bitsPerRow`, never re-reads it from config, and reads the other options from T2's `packetConfig()` without warning again.
+
 ## Shared contracts
 
 - **`PacketModel`** (`packages/diagram-packet/src/model.ts`): landed by the orchestrator before #454 and #456 start in parallel, shaped from the spec's model list. #454 produces it; #456 and #464 read it. Change it only additively and note the change here.
