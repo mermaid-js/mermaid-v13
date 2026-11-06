@@ -57,7 +57,12 @@ const SOURCES: Source[] = [
 ];
 
 /** `file name: { test title (or its unique start): reason }`. Reasons are written into the file. */
-export const SKIP: Record<string, Record<string, string>> = {};
+export const SKIP: Record<string, Record<string, string>> = {
+  'cynefin.spec.ts': {
+    'should return config':
+      "config honoured in #469 T5: v13 has no cynefin DB config until then, and a stub returning v13's own defaults would pass without checking v12's",
+  },
+};
 
 const git = (...args: string[]) =>
   execFileSync('git', ['-C', ROOT, ...args], { encoding: 'utf8', maxBuffer: 1 << 26 });

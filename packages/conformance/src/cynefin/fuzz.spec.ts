@@ -18,39 +18,35 @@ import { cynefinAdapter } from './v13.ts';
  * detect either. Pele's 51 fragments are
  * not on this machine (GAPS.md); {@link FRAGMENTS} is built from the spec's quirks instead.
  *
- * The known differences are core's: its directive reading, which every type shares (the
- * parity suite excludes unclosed directives for the same reason). v12's directive regex cut an
- * unclosed `%%{` with the rest of its line, or with a word after the `{` the rest of the text,
- * and ended a directive at the first line break that no `}%%` follows; core's preprocess
- * reports `UNCLOSED_DIRECTIVE`, reads a bare `%%{` as a comment, and runs a directive to its
- * `}%%` over line breaks. So a mutant may differ only where it made, broke or changed a
- * directive ({@link coreDirective}); nothing else may.
+ * The known differences are core's directive reading, which every type shares (the parity
+ * suite excludes unclosed directives for the same reason), and only these
+ * ({@link coreDirective}; the run prints how many mutants they exempt, and asserts it is few):
+ * - a `%%{` with no `}%%` before its line end, or with its `}%%` on a later line: v12's
+ *   `directiveRegex` cut it with the rest of the line (or of the text, when a word follows the
+ *   `{`) and parsed on; core reports `UNCLOSED_DIRECTIVE`, reads a bare `%%{` as a comment, or
+ *   runs the directive to its `}%%` over line breaks;
+ * - a closed one-line directive that v12's `directiveRegex` (`diagram-api/regexes.ts`) cuts
+ *   short: a word right after `%%{name:` or after a bare `%%{name` ends its match, so
+ *   `%%{init: x{}}%%` lost only `%%{init: x` and the rest reached v12's lexer; core removes the
+ *   whole `%%{…}%%`.
+ * Any other directive, a closed one on one line included (the "mid-line directive eats its
+ * newline" quirk), is compared.
  */
-interface Mutant extends CorpusItem {
-  /** The source before the mutation, and the span the mutation replaced. */
-  original: string;
-  from: number;
-  to: number;
-  fragment: string;
-}
+/** v12's `directiveRegex` (`mermaid@12.2.0` `diagram-api/regexes.ts`), which `removeDirectives` cut. */
+// eslint-disable-next-line mermaid/no-nested-quantifier -- v12's released directiveRegex is the oracle; small inputs only
+const DIRECTIVE = /%{2}{\s*(?:(\w+)\s*:|(\w+))\s*(?:(\w+)|((?:(?!}%{2}).|\r?\n)*))?\s*(?:}%{2})?/gi;
 
-/** The `%%{` … `}%%` spans of `source`, an unclosed one to the end. */
-function directiveSpans(source: string): [number, number][] {
-  const out: [number, number][] = [];
+/** Whether `source` has a directive that v12 and core read differently (see above). */
+function coreDirective(source: string): boolean {
   for (let at = source.indexOf('%%{'); at >= 0; at = source.indexOf('%%{', at + 3)) {
-    const end = source.indexOf('}%%', at + 3);
-    out.push([at, end < 0 ? source.length : end + 3]);
+    const close = source.indexOf('}%%', at + 3);
+    if (close < 0 || /[\n\r]/.test(source.slice(at, close))) return true;
   }
-  return out;
-}
-
-/** The mutant left a directive unclosed, or its mutation made, broke or edited one. */
-function coreDirective(m: Mutant): boolean {
-  const after = directiveSpans(m.source);
-  const before = directiveSpans(m.original);
-  const unclosed = after.some(([, end]) => end === m.source.length);
-  const edited = before.some(([a, b]) => m.from <= b && m.to >= a);
-  return unclosed || edited || after.length !== before.length;
+  for (const m of source.matchAll(DIRECTIVE)) {
+    const close = source.indexOf('}%%', m.index + 3);
+    if (m.index + m[0].length !== close + 3) return true;
+  }
+  return false;
 }
 
 const FRAGMENTS = [
@@ -132,8 +128,8 @@ function rng(seed: number): () => number {
 
 const MUTANTS = 3000;
 
-function mutants(sources: readonly CorpusItem[]): Mutant[] {
-  const out: Mutant[] = [];
+function mutants(sources: readonly CorpusItem[]): CorpusItem[] {
+  const out: CorpusItem[] = [];
   const r = rng(465);
   const pick = <V>(xs: readonly V[]): V => xs[Math.floor(r() * xs.length)] as V;
   for (let n = 1; n <= MUTANTS; n++) {
@@ -155,14 +151,7 @@ function mutants(sources: readonly CorpusItem[]): Mutant[] {
       how = `replace ${at} with ${JSON.stringify(fragment)}`;
     }
     const text = source.slice(0, at) + put + source.slice(to);
-    out.push({
-      id: `mutant ${n}: ${id}, ${how}`,
-      source: text,
-      original: source,
-      from: at,
-      to,
-      fragment: put,
-    });
+    out.push({ id: `mutant ${n}: ${id}, ${how}`, source: text });
   }
   return out;
 }
@@ -173,15 +162,12 @@ describe('cynefin fuzzing against mermaid@12', () => {
     const items = mutants(sources);
     const report = await runParity({ adapters: [cynefinAdapter], corpus: items, divergences: [] });
     const byId = new Map(items.map((i) => [i.id, i]));
-    const core = (id: string) => {
-      const m = byId.get(id);
-      return m !== undefined && coreDirective(m);
-    };
+    const core = (id: string) => coreDirective(byId.get(id)?.source ?? '');
     const unexpected = report.unlisted.filter((d) => !core(d.id));
     const compared = report.results.filter((r) => r.status !== 'skipped');
     const accepted = compared.filter((r) => r.oracleAccepted).length;
     process.stdout.write(
-      `cynefin fuzz: ${items.length} mutants, ${compared.length} compared, ${accepted} accepted by v12, ${report.unlisted.length - unexpected.length} directive differences (core)\n`
+      `cynefin fuzz: ${items.length} mutants, ${compared.length} compared, ${accepted} accepted by v12, ${report.unlisted.length - unexpected.length} exempt (core directive reading)\n`
     );
     // A source no adapter claims is skipped: v12 and v13 must agree it is not cynefin. A body
     // that starts with `---` is a front-matter error in v12 before any detector runs.
@@ -197,6 +183,14 @@ describe('cynefin fuzzing against mermaid@12', () => {
     expect(detection.slice(0, 10)).toEqual([]);
     expect(compared.length).toBeGreaterThan(MUTANTS * 0.6);
     expect(accepted).toBeGreaterThan(MUTANTS * 0.15);
+    // Closed one-line directives are compared, not exempt.
+    const directives = compared.filter((r) => {
+      const source = byId.get(r.id)?.source ?? '';
+      return source.includes('%%{') && !coreDirective(source);
+    });
+    expect(directives.length).toBeGreaterThan(50);
+    // The exemptions stay a small share of the mutants (most do not touch a directive).
+    expect(report.unlisted.length - unexpected.length).toBeLessThan(MUTANTS * 0.03);
     expect(unexpected.slice(0, 10)).toEqual([]);
   }, 300_000);
 });

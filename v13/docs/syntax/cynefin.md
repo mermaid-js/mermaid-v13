@@ -10,11 +10,17 @@ decides what is valid, this file is fixed to match, and the parser must match th
 (DESIGN §4.4). mermaid@12 parsed cynefin with Langium (`cynefin.langium` and `common.langium`
 in `@mermaid-js/parser`); the rules below are its token rules, in its order, and its grammar.
 
-**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
-matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
-as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
-`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
-opaque text; and a line break appended. Keywords and domain names are case-sensitive.
+**Lexer input.** The lexer reads the diagram body as mermaid@12's rendering path handed it to
+Chevrotain (checked against `mermaid@12.2.0`, `cynefin-cases.json`): front matter and `%%{…}%%`
+directives removed; CRLF and a lone CR read as LF (`lone-cr` and `crlf` parse as with LF;
+only a text given to the Langium parser directly, as v12's integration spec did, keeps a lone
+CR, and there it is a lexer error); `="x"` inside an HTML tag read as `='x'` (in an item, so
+`"<b class="x">"` is one item); `%%` comment lines removed and leading blanks trimmed; on a
+line with `style…:…#…;` or `classDef…` the last `;` dropped, which here only a title or
+`accTitle` text can hold (`title style a:#f00;` is the title `style a:#f00`); `#name;` /
+`#123;` entities read as opaque text; and a line break appended. Keywords and domain names are
+case-sensitive and have no word boundary: `Complex` is a lexer error, and `complexity` is
+`complex` followed by one.
 
 A domain's items follow its name, on the same line or on the lines after it; a transition, a
 title and an accessibility statement each end at a line break (or the end of the text). `;`

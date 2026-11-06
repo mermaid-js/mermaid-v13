@@ -8,7 +8,7 @@
  * | the first block of a domain, `complex …`   | `d:complex`                         |
  * | a later block of the same domain           | `d:complex@2`, `d:complex@3`, …     |
  * | item `"Probe"` of a `complex` block        | `i:complex/Probe`                   |
- * | the same label again in a `complex` block  | `i:complex/Probe@2`, …              |
+ * | `"Probe"` again in any `complex` block      | `i:complex/Probe@2`, … (diagram-wide) |
  * | `complex --> clear`                        | `t:complex>clear`                   |
  * | a parallel repeat of it                    | `t:complex>clear#2`, …              |
  * | `title …`, `accTitle: …`, `accDescr …`     | `title`, `accTitle`, `accDescr`; then `@2`, … |

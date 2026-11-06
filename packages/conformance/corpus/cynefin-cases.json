@@ -616,6 +616,58 @@
     "keeps": ["c", "d"]
   },
   {
+    "id": "cynefin-cases/recovery-two-errors-names",
+    "source": "cynefin-beta\nComplex \"a\"\nclear \"b\"\nclear --> chaotic : x\nchaotic \"c\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 4]
+    ],
+    "keeps": ["b", "c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-two-errors-header-and-item",
+    "source": "cynefin-beta\ncynefin-beta\ncomplex \"a\"\ntitle T\n\"b\"\nclear \"c\"",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-three-errors-acc-block-transition",
+    "source": "cynefin-beta\naccTitle x\ncomplex \"a\" ;\n\"b\"\nclear --> chaotic \"c\"\nchaotic \"d\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 2],
+      ["UNEXPECTED_CHARACTER", 3],
+      ["UNEXPECTED", 5]
+    ],
+    "keeps": ["a", "b", "d"]
+  },
+  {
+    "id": "cynefin-cases/recovery-five-errors",
+    "source": "cynefin-beta\n\"a\"\ncomplex \"b\"\ncomplexity\nclear -> chaotic\nchaotic \"c\"\nconfusion --> clear :\naccDescr { open\nclear \"d\"",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED_CHARACTER", 5],
+      ["UNEXPECTED", 7],
+      ["UNCLOSED_ACC_DESCR", 8]
+    ],
+    "keeps": ["c", "d"]
+  },
+  {
+    "id": "cynefin-cases/recovery-five-errors-statements",
+    "source": "cynefin-beta\ntitlecomplex\nclear \"a\"\ncomplex --> clearly\naccDescr {x} chaotic\ncomplex : \"b\"\nchaotic 'c\nconfusion \"d\"",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED", 5],
+      ["UNEXPECTED", 6],
+      ["UNCLOSED_STRING", 7]
+    ],
+    "keeps": ["a"]
+  },
+  {
     "id": "cynefin-cases/unclosed-directive-line",
     "source": "cynefin-beta\n%%{ never closed\ncomplex"
   },

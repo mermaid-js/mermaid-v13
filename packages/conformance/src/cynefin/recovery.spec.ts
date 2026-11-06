@@ -25,15 +25,25 @@ const CASES = cynefinCases().filter((c): c is RecoveryCase =>
 /** Token type names (`DOMAIN_NAME`, …) and grammar rule names, which no message may name. */
 const INTERNAL = [
   ...Object.values(LANGIUM_NAMES).filter((n) => /^[A-Z_]{3,}$/.test(n)),
+  // v12's `cynefin.langium` / `common.langium` rules and `grammar/cynefin.ebnf`'s.
+  'Cynefin',
   'DomainBlock',
   'DomainItem',
+  'Transition',
   'TitleAndAccessibilities',
   'EOL',
+  'Header',
+  'Domain',
+  'Item',
+  'AccTitle',
+  'AccDescr',
 ];
 
 describe('cynefin recovery (R-PARSE-4)', () => {
-  it('has at least 20 cases', () => {
+  it('has at least 20 cases, several with more than one error', () => {
     expect(CASES.length).toBeGreaterThanOrEqual(20);
+    expect(CASES.filter((c) => c.errors.length >= 2).length).toBeGreaterThanOrEqual(4);
+    expect(Math.max(...CASES.map((c) => c.errors.length))).toBeGreaterThanOrEqual(5);
   });
 
   for (const c of CASES) {

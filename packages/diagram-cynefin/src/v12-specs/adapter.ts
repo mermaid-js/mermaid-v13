@@ -15,7 +15,6 @@
  *   path data as the renderer writes them (two decimals).
  */
 import {
-  CYNEFIN_DEFAULTS,
   cliffCurve,
   curveData,
   ellipseData,
@@ -119,11 +118,6 @@ class CynefinDB {
 
   getTransitions(): { from: string; to: string; label: string | undefined }[] {
     return (this.model?.transitions ?? []).map((t) => ({ from: t.from, to: t.to, label: t.label }));
-  }
-
-  /** v12's `getConfig()`: the `cynefin` defaults (T5, #469, honours the keys). */
-  getConfig(): Record<string, unknown> {
-    return { ...CYNEFIN_DEFAULTS };
   }
 
   getDiagramTitle(): string {

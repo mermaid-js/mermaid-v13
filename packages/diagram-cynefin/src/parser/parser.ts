@@ -45,6 +45,7 @@ import type {
 } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
 import type {
   CynefinDomain,
   CynefinDomainName,
@@ -77,14 +78,17 @@ const LINE_END = [Kind.Newline, Kind.EOF];
 /** Where recovery resumes (R-PARSE-4). */
 const BOUNDARY = kindSet(Kind.Newline, Kind.EOF);
 
-const DOMAIN_NAMES: readonly CynefinDomainName[] = [
-  'complex',
-  'complicated',
-  'clear',
-  'chaotic',
-  'confusion',
-];
-const DOMAIN_LIST = '`complex`, `complicated`, `clear`, `chaotic` or `confusion`';
+/** `a`, `a and b`, `a, b and c` (or `or`). */
+function listOf(parts: readonly string[], conjunction = 'and'): string {
+  if (parts.length < 2) return parts.join('');
+  return `${parts.slice(0, -1).join(', ')} ${conjunction} ${parts[parts.length - 1] ?? ''}`;
+}
+
+/** The domain names quoted and joined with `or`, for messages. */
+const DOMAIN_LIST = listOf(
+  CYNEFIN_DOMAIN_NAMES.map((n) => `\`${n}\``),
+  'or'
+);
 
 /** Human names for what the parser expects (R-ERR-2, R-ERR-5). */
 const EXPECTED = new ExpectedTable([
@@ -144,12 +148,6 @@ function esc(name: string): string {
     : name;
 }
 
-/** `a`, `a and b`, `a, b and c`. */
-function and(parts: readonly string[]): string {
-  if (parts.length < 2) return parts.join('');
-  return `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1] ?? ''}`;
-}
-
 /** Parse a cynefin diagram. Never throws: problems are error diagnostics. */
 export function parseCynefin(src: string, options: CynefinParseOptions = {}): CynefinParseResult {
   return new CynefinParser(src, options).parse();
@@ -165,7 +163,7 @@ class CynefinParser {
   private readonly full: TokenStream;
   private readonly t: TokenView;
   private i = 0;
-  private readonly st = new ParseState();
+  private readonly state = new ParseState();
   private readonly children: CynefinStatementNode[] = [];
   private lines: LineIndex | undefined;
   /** Mentions per id base (`d:complex`, `i:complex/a`, `title`, …), for the `@n` suffixes. */
@@ -190,7 +188,7 @@ class CynefinParser {
     private readonly options: CynefinParseOptions
   ) {
     const pre = (this.pre = options.preprocessed ?? preprocess(src));
-    if (!options.preprocessed) this.st.diagnostics.list.push(...pre.diagnostics);
+    if (!options.preprocessed) this.state.diagnostics.list.push(...pre.diagnostics);
     this.view = sourceView(
       src,
       pre.bodyStart,
@@ -201,12 +199,12 @@ class CynefinParser {
   }
 
   parse(): CynefinParseResult {
-    const { st, src } = this;
+    const { state, src } = this;
     this.statement(() => this.header());
     this.document();
     this.warnDuplicates();
     this.warnSelfLoops();
-    const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
+    const warnings = state.diagnostics.list.filter((d) => d.severity === 'warning');
     const domains: CynefinDomain[] = [];
     for (const [name, nodes] of this.blocks) {
       const last = nodes[nodes.length - 1];
@@ -230,7 +228,7 @@ class CynefinParser {
       range: { start: this.pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.full, this.options);
+    return state.result(model, ast, this.full, this.options);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -255,10 +253,12 @@ class CynefinParser {
     return this.i++;
   }
 
-  /** The domain name token `j` holds (the lexer matches only the five). */
+  /** The domain name token `j` holds; the lexer matches only the five. */
   private domain(j: number): CynefinDomainName {
     const text = this.raw(j);
-    return DOMAIN_NAMES.find((n) => n === text) ?? 'complex';
+    const name = CYNEFIN_DOMAIN_NAMES.find((n) => n === text);
+    if (name === undefined) throw new Error(`cynefin parser: \`${text}\` is not a domain name`);
+    return name;
   }
 
   /** `t:<from>><to>`, then `#2`, `#3`, … for a parallel repeat (as edges, DESIGN §4.2). */
@@ -294,10 +294,10 @@ class CynefinParser {
 
   /** Report what was found where one of `want` was expected, then stop the statement. */
   private fail(want: readonly number[], hint?: string): never {
-    const { st } = this;
+    const { state } = this;
     const where = this.range();
     if (this.kind() === Kind.Error) this.badCharacters(where, hint);
-    const d = st.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
+    const d = state.diagnostics.unexpected('UNEXPECTED', where, EXPECTED.names(want), this.found());
     const why = hint ?? this.explain();
     if (why) d.message = `${d.message.slice(0, -1)}; ${why}.`;
     throw STOP;
@@ -305,12 +305,12 @@ class CynefinParser {
 
   /** Text no token rule matched: an unclosed string or `accDescr {`, or stray characters. */
   private badCharacters(where: Range, hint: string | undefined): never {
-    const { st } = this;
+    const { state } = this;
     const text = this.raw();
     const line = this.lineOf(where.start);
     if (text.startsWith('"') || text.startsWith("'")) {
       const q = text[0] ?? '"';
-      st.diagnostics.error(
+      state.diagnostics.error(
         'UNCLOSED_STRING',
         `Unclosed label: the \`${q}\` at line ${line} has no closing \`${q}\`. Add \`${q}\` after the label.`,
         where,
@@ -320,7 +320,7 @@ class CynefinParser {
     }
     const word = /^[\t ]*(accDescr|accTitle)/.exec(text)?.[1];
     if (word === 'accDescr') {
-      st.diagnostics.error(
+      state.diagnostics.error(
         'UNCLOSED_ACC_DESCR',
         `Unclosed accessible description: the \`accDescr {\` at line ${line} has no closing \`}\`, and \`accDescr\` without \`{\` takes a \`:\`. Write \`accDescr: …\` or \`accDescr { … }\`.`,
         where
@@ -328,7 +328,7 @@ class CynefinParser {
       throw STOP;
     }
     if (word === 'accTitle') {
-      st.diagnostics.error(
+      state.diagnostics.error(
         'UNEXPECTED_CHARACTER',
         'Expected `:` after `accTitle`; write it as `accTitle: …`.',
         where,
@@ -338,7 +338,7 @@ class CynefinParser {
     }
     const shown = text.length > 24 ? `${text.slice(0, 24)}…` : text;
     const why = hint ?? this.explainCharacters(text, where);
-    st.diagnostics.error(
+    state.diagnostics.error(
       'UNEXPECTED_CHARACTER',
       `Unexpected character \`${shown}\`${why ? `; ${why}` : ''}.`,
       where
@@ -356,10 +356,10 @@ class CynefinParser {
     if (glued && /^\w/.test(text)) {
       return `a domain is one of ${DOMAIN_LIST}, with a blank or a line break after it`;
     }
-    if (DOMAIN_NAMES.some((n) => lower.startsWith(n) && !text.startsWith(n))) {
+    if (CYNEFIN_DOMAIN_NAMES.some((n) => lower.startsWith(n) && !text.startsWith(n))) {
       return `domain names are written in lower case: ${DOMAIN_LIST}`;
     }
-    if (DOMAIN_NAMES.some((n) => n.startsWith(text))) {
+    if (CYNEFIN_DOMAIN_NAMES.some((n) => n.startsWith(text))) {
       return `a domain is one of ${DOMAIN_LIST}`;
     }
     if (text.startsWith('-')) return 'a transition is written `complex --> clear`, with `-->`';
@@ -399,7 +399,7 @@ class CynefinParser {
     const k = this.kind();
     if (!HEADER.includes(k)) this.fail(HEADER);
     const range = this.range(this.i++);
-    this.st.statement('header', range);
+    this.state.statement('header', range);
     this.children.push({ id: 'header', type: 'Header', range, colon: k === T.HeaderColon });
   }
 
@@ -463,11 +463,11 @@ class CynefinParser {
     if (nodes) nodes.push(node);
     else this.blocks.set(name, [node]);
     // D367: the first block defines the domain, later blocks refer to it.
-    this.st.symbol(name, 'domain', nameRange, nodes ? 'ref' : 'def');
+    this.state.symbol(name, 'domain', nameRange, nodes ? 'ref' : 'def');
     this.children.push(node);
-    const span = this.st.beginStatement('domain', nameRange.start);
+    const span = this.state.beginStatement('domain', nameRange.start);
     this.items(node);
-    this.st.endStatement(span, node.range.end);
+    this.state.endStatement(span, node.range.end);
     this.open = node;
   }
 
@@ -483,27 +483,27 @@ class CynefinParser {
       const id = this.id(`i:${node.name}/${esc(label)}`);
       node.children.push({ id, type: 'Item', range, label });
       node.range.end = range.end;
-      this.st.statement('item', range);
+      this.state.statement('item', range);
     }
   }
 
   /** `Transition: DOMAIN_NAME "-->" DOMAIN_NAME (":" STRING)? EOL` */
   private transition(): void {
-    const f = this.i;
-    this.i += 2;
-    const t = this.expect(T.DomainName, `a transition goes to a domain: ${DOMAIN_LIST}`);
-    const from = this.domain(f);
-    const to = this.domain(t);
-    const fromRange = this.range(f);
-    const toRange = this.range(t);
+    const fromToken = this.i;
+    this.i += 2; // the domain name and `-->`, which `document()` saw
+    const toToken = this.expect(T.DomainName, `a transition goes to a domain: ${DOMAIN_LIST}`);
+    const from = this.domain(fromToken);
+    const to = this.domain(toToken);
+    const fromRange = this.range(fromToken);
+    const toRange = this.range(toToken);
     const range = { start: fromRange.start, end: toRange.end };
     let label: string | undefined;
     let labelRange: Range | undefined;
     if (this.kind() === T.Colon) {
       this.i++;
-      const s = this.expect(T.String, QUOTE_LABEL);
-      labelRange = this.range(s);
-      label = labelValue(this.raw(s));
+      const labelToken = this.expect(T.String, QUOTE_LABEL);
+      labelRange = this.range(labelToken);
+      label = labelValue(this.raw(labelToken));
       range.end = labelRange.end;
     }
     const node: CynefinTransitionNode = {
@@ -517,9 +517,9 @@ class CynefinParser {
       ...(labelRange ? { label, labelRange } : {}),
     };
     this.children.push(node);
-    this.st.statement('transition', range);
-    this.st.symbol(from, 'domain', fromRange, 'ref');
-    this.st.symbol(to, 'domain', toRange, 'ref');
+    this.state.statement('transition', range);
+    this.state.symbol(from, 'domain', fromRange, 'ref');
+    this.state.symbol(to, 'domain', toRange, 'ref');
     if (from === to) this.selfLoops.push(node);
     else {
       // v12's `t.label || undefined`: an empty label is none.
@@ -533,7 +533,8 @@ class CynefinParser {
   private text(k: number): void {
     const j = this.i++;
     const image = this.raw(j);
-    const type = KIND_OF[k] ?? 'Title';
+    const type = KIND_OF[k];
+    if (type === undefined) throw new Error(`cynefin parser: token kind ${k} is not a statement`);
     const range = this.range(j);
     while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
     let text: string;
@@ -542,7 +543,7 @@ class CynefinParser {
     else text = this.accDescr = accDescrValue(image);
     const kind = ID_OF[type];
     this.children.push({ id: this.id(kind), type, range, text });
-    this.st.statement(kind, range);
+    this.state.statement(kind, range);
     this.eol();
   }
 
@@ -559,9 +560,9 @@ class CynefinParser {
       (n) => `the \`${n.name}\` block at line ${this.lineOf(n.range.start)}`
     );
     const verb = replaced.length === 1 ? 'is' : 'are';
-    this.st.diagnostics.warning(
+    this.state.diagnostics.warning(
       'CYNEFIN_DUPLICATE_DOMAIN',
-      `Only the last block of a domain is drawn: ${and(named)} ${verb} replaced by a later block, and ${replaced.length === 1 ? 'its' : 'their'} items are not drawn. Put all the items of a domain in one block.`,
+      `Only the last block of a domain is drawn: ${listOf(named)} ${verb} replaced by a later block, and ${replaced.length === 1 ? 'its' : 'their'} items are not drawn. Put all the items of a domain in one block.`,
       first.nameRange
     );
   }
@@ -573,9 +574,9 @@ class CynefinParser {
     const named = this.selfLoops.map(
       (n) => `\`${n.from} --> ${n.to}\` at line ${this.lineOf(n.range.start)}`
     );
-    this.st.diagnostics.warning(
+    this.state.diagnostics.warning(
       'CYNEFIN_SELF_LOOP',
-      `A transition from a domain to itself is not drawn: ${and(named)}. A transition goes from one domain to another.`,
+      `A transition from a domain to itself is not drawn: ${listOf(named)}. A transition goes from one domain to another.`,
       first.range
     );
   }

@@ -8,8 +8,21 @@
  */
 import type { AstId, Diagnostic } from '@mermaid-js/core/parser-kit';
 
-/** The five fixed domains (v12 `DOMAIN_NAME`). */
-export type CynefinDomainName = 'complex' | 'complicated' | 'clear' | 'chaotic' | 'confusion';
+/**
+ * The five fixed domains, in the order of v12's `DOMAIN_NAME` terminal
+ * (`complex|complicated|clear|chaotic|confusion`; none is a prefix of another). The one list the
+ * lexer, the parser and its messages read.
+ */
+export const CYNEFIN_DOMAIN_NAMES = [
+  'complex',
+  'complicated',
+  'clear',
+  'chaotic',
+  'confusion',
+] as const;
+
+/** One of the five fixed domains (v12 `DOMAIN_NAME`). */
+export type CynefinDomainName = (typeof CYNEFIN_DOMAIN_NAMES)[number];
 
 /** One quoted item of a domain block. */
 export interface CynefinItem {

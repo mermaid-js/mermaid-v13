@@ -49,6 +49,7 @@ import {
   TokenWriter,
 } from '@mermaid-js/core/parser-kit';
 import type { Hole, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
+import { CYNEFIN_DOMAIN_NAMES } from '../model.ts';
 import { T } from './tokens.ts';
 
 /** `kind` of a rule that matched and writes no token (WHITESPACE). */
@@ -57,8 +58,6 @@ const SKIP = -1;
 const UNSET = -2;
 
 const HEADER = 'cynefin-beta';
-/** DOMAIN_NAME's alternatives, in the regex's order (none is a prefix of another). */
-const DOMAIN_NAMES = ['complex', 'complicated', 'clear', 'chaotic', 'confusion'] as const;
 
 /** Not in `[^\n\r]`. */
 const isBreak = (c: number) => c === LF || c === CR;
@@ -194,7 +193,7 @@ class CynefinLexer {
 
   /** DOMAIN_NAME: `complex|complicated|clear|chaotic|confusion`, with no boundary after it. */
   private domainName(p: number): number {
-    for (const name of DOMAIN_NAMES) {
+    for (const name of CYNEFIN_DOMAIN_NAMES) {
       if (this.text.startsWith(name, p)) return this.match(T.DomainName, p + name.length);
     }
     return -1;
