@@ -50,6 +50,13 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - [x] Invariants on parser-produced fixtures: `conformance/src/gitgraph/layout-corpus.spec.ts` (`parseGitGraph` over the gate corpus, LR/TB/BT, parallel on/off, classic/redux, default and changed options), after T2 merged.
 
 ## #372 T6 language facet
+- **Choice:** the main branch is no symbol: the facet's parse drops its occurrences (its name is config, not text). Renaming it is refused at prepare with the service's generic "There is no id or class name here to rename."; definition and references on it are empty; hover says its name is set in `gitGraph.mainBranchName`. A specific refusal message needs an optional hook on core's `LanguageFacet` (type-only, 0 B), left for the maintainer (D102: no core change here). Refusing at `rename` instead would add a `KNOWN_REFUSALS` entry per corpus file that mentions `main` (about 100).
+- **Choice:** the facet reads `mainBranchName`/`mainBranchOrder` from the document's front matter and `init` directives (last wins, an `init` `config` key after its `gitGraph` key); the site config is the integrator's and not in the text. Without it `checkout trunk` under `mainBranchName: trunk` (3 corpus files) is a false error.
+- **Choice:** folding is the parser's statement spans, so a statement with a string written over lines folds too (as pie's labels), not only `accDescr { … }`.
+- **Choice:** completion: on the `gitGraph` line only a direction (`TB:`) or `:`, not the statements v12 also reads there; branch and commit items are kind `value` (no `branch`/`commit` kind). After a cherry-pick's `id:` only ids written before the cursor and not on the branch checked out (a merge only with a `parent:`), after `parent:` the merge's parents with written ids: every item then parses clean (`completion-validity.spec.ts`).
+- Parser changes (probe and a range only): the probe's mode is `string` from an unclosed quote to its line end (the lexer makes the quote alone an error token); a cherry-pick without `id:` reports `GIT_CHERRY_PICK_UNKNOWN_COMMIT` zero-width after the statement and its blanks (was the keyword), as timeline's `accTitle:`.
+- Four-way agreement pins two line-based gaps of TextMate/Monarch (Lezer agrees): a string over lines (corpus `97-…multi-line-text…`) and a body `---` block (fixture), as pie.
+- [ ] **For T5 (#374):** see `tickets/372.md` (unlisted row, eager row, adapter rows).
 
 ## #373 T4 renderer
 - [x] Drop the `gitgraph` exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one variable"), added by #368. Done in #371: the layout reads `fontFamily`, `fontSize`, `fontWeight`, `strokeWidth`, `commitLabelFontSize`, `tagLabelFontSize` (their `usedBy` lists `gitgraph`). T4 adds `gitgraph` to what the renderer reads; T5 to the geometry variables (the scan sees the `GIT_GEOMETRY` names once they exist).
@@ -64,3 +71,6 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Not done here (T5): manifest and registry row, `format: 'ascii'` throwing, the "Theme geometry" rows for the variables above, baselines.
 
 ## #374 T5 integration
+- [ ] From #372 (`tickets/372.md`): adapter highlighter rows (`LEZER_HIGHLIGHTERS`, `MONARCH_HIGHLIGHTERS`), adapter `gen`, `adapters-agree.spec.ts` and first-paint e2e cases once `FirstPartyFacetId` has `gitGraph`; drop the test-only unlisted-facet row and the eager row in `service-symbols.spec.ts`; make the package public and add `@mermaid-js/diagram-gitgraph` as a language-service peer (now a devDependency only, `workspace-release.spec.ts`).
+- [ ] From #369/#371: add T3's geometry variables to core (`tickets/371.md` table; neo takes classic, D266) in the vocabulary pattern, with any new core table in a pure call; measure both core gates.
+- [ ] Mention under "For the maintainer": gitGraph's theme rows move in the Theme T0 (D322).

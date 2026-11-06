@@ -1,0 +1,9 @@
+gitGraph
+  commit id:"A" msg:"first" tag:"v1"
+  branch dev
+  commit id:"B" type: HIGHLIGHT
+  checkout main
+  merge dev id:"M" type: REVERSE
+  cherry-pick id:"|A"
+  cherry-pick id:"M|" parent:"B"
+  cherry-pick id:"no|ne"

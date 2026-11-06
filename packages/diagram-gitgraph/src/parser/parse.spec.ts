@@ -358,3 +358,45 @@ describe('gitGraph parser', () => {
     expect(detectGitGraph('graph TD')).toBe(false);
   });
 });
+
+describe('gitGraph probe (R-LANG-7)', () => {
+  /** The probe's mode at `¦`. */
+  const mode = (marked: string) => {
+    const at = marked.indexOf('¦');
+    const src = marked.slice(0, at) + marked.slice(at + 1);
+    return parse(src, { probe: at }).probe?.mode;
+  };
+
+  it('names what the offset is in: code, a string or a statement value', () => {
+    expect(mode('gitGraph\ncommit ¦')).toBe('INITIAL');
+    expect(mode('gitGraph\ncommit msg:"a¦b"')).toBe('string');
+    expect(mode('gitGraph\ncommit msg:"ab"¦')).toBe('INITIAL');
+    expect(mode('gitGraph\ntitle Re¦lease')).toBe('title');
+    expect(mode('gitGraph\naccTitle: x¦')).toBe('accTitle');
+    expect(mode('gitGraph\naccDescr {\n  x¦\n}')).toBe('accDescr');
+    expect(mode('gitGraph\naccDescr {\n  x\n}¦')).toBe('INITIAL');
+    expect(mode('gitGraph\n%% c¦')).toBe('comment');
+  });
+
+  it('is in a string to the end of the line after an unclosed quote', () => {
+    // The lexer makes the quote alone an error token and reads on after it.
+    expect(mode('gitGraph\ncherry-pick id:"¦')).toBe('string');
+    expect(mode('gitGraph\ncherry-pick id:"a¦')).toBe('string');
+    expect(mode("gitGraph\ncherry-pick id:'a b¦\ncommit")).toBe('string');
+    expect(mode('gitGraph\ncherry-pick id:"a\ncommit¦')).toBe('INITIAL');
+  });
+});
+
+describe('gitGraph cherry-pick without an id', () => {
+  it('reports where the id is still to be written, after the statement and its blanks', () => {
+    for (const [src, at] of [
+      ['gitGraph\ncommit\ncherry-pick', 27],
+      ['gitGraph\ncommit\ncherry-pick  \ncommit', 29],
+      ['gitGraph\ncommit\ncherry-pick tag:"x" ', 36],
+    ] as const) {
+      const [d] = parse(src).diagnostics;
+      expect(d?.code, src).toBe('GIT_CHERRY_PICK_UNKNOWN_COMMIT');
+      expect(d?.range, src).toEqual({ start: at, end: at });
+    }
+  });
+});

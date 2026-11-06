@@ -125,12 +125,16 @@ function probeMode(src: string, tokens: TokenStream, o: number): string {
     const start = tokens.start[j] ?? 0;
     const end = tokens.end[j] ?? 0;
     if (start >= o) break;
-    if (end < o) continue;
     const kind = tokens.kind[j] ?? Kind.EOF;
     const c = src.charCodeAt(start);
+    // An unclosed string: its quote alone is an error token and the lexer reads the rest of
+    // the line as code, but the author is still writing the string, to the end of the line.
+    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) {
+      if (!/[\n\r]/.test(src.slice(start, o))) return 'string';
+      continue;
+    }
+    if (end < o) continue;
     if (kind === T.String && o < end) return 'string';
-    // An unclosed string is an error token from its quote to the line end.
-    if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
     const word = VALUE_WORDS[kind];
     if (!word) continue;
     let k = start;
@@ -758,6 +762,10 @@ class GitGraphParser {
       } else break;
     }
     const range = { start: keyword.start, end: this.lastEnd() };
+    // A missing `id:` is the rest of the statement still to be written: it is reported after
+    // the statement and the blanks on its line, so a just-completed `cherry-pick ` holds none.
+    let gap = range.end;
+    while (/[\t ]/.test(this.src.charAt(gap))) gap++;
     this.eol(T.CherryPick, PICK_OPTIONS);
     const astId = this.ordinal(`cp:${esc(commitId?.value ?? '')}`);
     this.children.push({
@@ -778,6 +786,7 @@ class GitGraphParser {
       ...(tags.length > 0 ? { tags: tags.map((t) => t.value) } : {}),
       astId,
       keyword,
+      missing: { start: gap, end: gap },
     });
   }
 

@@ -10,4 +10,14 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #292: the manifest comes with T5 (#374).
+  {
+    type: 'gitGraph',
+    id: 'gitGraph',
+    section: 'gitGraph',
+    pattern: /^\s*gitGraph/,
+    detector: (text) => /^\s*gitGraph/.test(text),
+    load: () => import('@mermaid-js/diagram-gitgraph/language').then((m) => m.language),
+  },
+];

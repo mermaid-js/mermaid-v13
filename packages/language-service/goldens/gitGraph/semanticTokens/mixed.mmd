@@ -1,0 +1,12 @@
+%%{init: {"theme": "dark"}}%%
+gitGraph LR:
+  %% a comment
+  title Flow
+  accTitle: Flow
+  commit id:"A" msg:"first" tag:"v1" type: REVERSE
+  branch "my dev" order: 2
+  checkout "my dev"
+  commit
+  checkout main
+  merge "my dev" id:"M"
+  cherry-pick id:"A" parent:"M"
