@@ -8,7 +8,7 @@ Integration branch `feature/422_radar` (draft PR #474), cut from `mermaid-v13` a
 | T2 grammar, parser, model, AST, ported specs | #446 | #445 | merged |
 | T3 custom layout (`RadarLayout`) | #447 | #446 (soft) | merged |
 | T4 SVG renderer (+ theme table) | #448 | #446, #447 | merged |
-| T5 integration | #449 | #448, #414 T0a | in progress (after #450) |
+| T5 integration | #449 | #448, #414 T0a | merged |
 | T6 language facet | #450 | #446 | merged |
 
 No T0 (radar adds no core contract; the theme table comes from #414 T0a, D322, D335) and no T7 (D320).
