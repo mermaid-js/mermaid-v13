@@ -99,7 +99,7 @@ function drawsNode(g: Element, id: string): boolean {
  * The `clickable` elements of `svg` whose `data-id` is in `ids`: a gantt task's bar and label
  * (v12 bound both, `<id>` and `<id>-text`), which are not `g.node` groups.
  */
-function clickables(svg: Element, ids: ReadonlySet<string>): Map<string, Element[]> {
+function clickableElements(svg: Element, ids: ReadonlySet<string>): Map<string, Element[]> {
   const out = new Map<string, Element[]>();
   for (const el of svg.querySelectorAll('[data-id]')) {
     const id = el.getAttribute('data-id') ?? '';
@@ -135,7 +135,8 @@ const callbacks = defineFeature<Binding[]>({
       const ids = new Set(bindings.map((b) => b.id));
       const anchors = scope.anchors(ids, isNode);
       const rest = new Set([...ids].filter((id) => !anchors.has(id)));
-      if (rest.size > 0) for (const [id, els] of clickables(scope.svg, rest)) anchors.set(id, els);
+      if (rest.size > 0)
+        for (const [id, els] of clickableElements(scope.svg, rest)) anchors.set(id, els);
       for (const b of bindings)
         for (const node of anchors.get(b.id) ?? [])
           scope.listen(node, 'click', () => runFunction(b.name, b.args));
