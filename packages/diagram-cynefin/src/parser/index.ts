@@ -1,6 +1,6 @@
 /**
- * The cynefin parser's public surface. T1 (#461): the lexer, gated against v12's Langium lexer.
- * The parser, detection and AST land in T2 (#465).
+ * The cynefin parser's public surface: the lexer, gated against v12's Langium lexer (T1, #461),
+ * and the parser, detection and AST (T2, #465).
  */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range, SourceView, TokenStream } from '@mermaid-js/core/parser-kit';
@@ -9,6 +9,10 @@ import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { CYNEFIN_TRIVIA, LANGIUM_NAMES, T as CynefinTokenKind } from './tokens.ts';
+export { parseCynefin } from './parser.ts';
+export type { CynefinParseOptions, CynefinParseResult } from './parser.ts';
+export { detectCynefin } from './detect.ts';
+export type * from './ast.ts';
 
 export interface CynefinToken {
   /** A `CynefinTokenKind` or a shared `Kind`. */

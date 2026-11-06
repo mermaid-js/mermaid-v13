@@ -456,6 +456,166 @@
     "source": "\u2028cynefin-beta\ncomplex"
   },
   {
+    "id": "cynefin-cases/recovery-item-before-domain",
+    "source": "cynefin-beta\n\"a\"\ncomplex \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-items-before-domain",
+    "source": "cynefin-beta\n\"a\"\n\"b\"\ncomplex \"c\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-item-after-title",
+    "source": "cynefin-beta\ncomplex \"a\"\ntitle T\n\"b\"\nclear \"c\"",
+    "errors": [["UNEXPECTED", 4]],
+    "keeps": ["a", "c"]
+  },
+  {
+    "id": "cynefin-cases/recovery-domain-no-boundary",
+    "source": "cynefin-beta\ncomplexity\n\"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-domain-case",
+    "source": "cynefin-beta\nComplex\n\"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-domain-prefix",
+    "source": "cynefin-beta\ncompl \"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-semicolon",
+    "source": "cynefin-beta\ncomplex;\n\"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-long-arrow",
+    "source": "cynefin-beta\ncomplex ---> clear\nchaotic \"a\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-short-arrow",
+    "source": "cynefin-beta\ncomplex -> clear\nchaotic \"a\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-arrow-first",
+    "source": "cynefin-beta\n--> clear\ncomplex \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-bare-label",
+    "source": "cynefin-beta\ncomplex --> clear : x\nchaotic \"a\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-bare-colon",
+    "source": "cynefin-beta\ncomplex --> clear :\nchaotic \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-colon-after-domain",
+    "source": "cynefin-beta\ncomplex : \"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-transition-trailing",
+    "source": "cynefin-beta\ncomplex --> clear : \"a\" clear\nchaotic \"b\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-transition-split",
+    "source": "cynefin-beta\ncomplex -->\nclear \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-transition-bad-target",
+    "source": "cynefin-beta\ncomplex --> clearly\nchaotic \"a\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-unclosed-string",
+    "source": "cynefin-beta\ncomplex \"a\"\n\"never closed\nchaotic",
+    "errors": [["UNCLOSED_STRING", 3]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-unclosed-single-quote",
+    "source": "cynefin-beta\ncomplex \"a\"\nclear 'b",
+    "errors": [["UNCLOSED_STRING", 3]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-unclosed-acc-descr",
+    "source": "cynefin-beta\naccDescr { never closed\ncomplex \"a\"",
+    "errors": [["UNCLOSED_ACC_DESCR", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-acc-title-no-colon",
+    "source": "cynefin-beta\naccTitle x\ncomplex \"a\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-header-twice",
+    "source": "cynefin-beta\ncynefin-beta\ncomplex \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-title-glued-domain",
+    "source": "cynefin-beta\ntitlecomplex\nclear \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-acc-descr-trailing",
+    "source": "cynefin-beta\naccDescr {a} complex\nclear \"a\"",
+    "errors": [["UNEXPECTED", 2]],
+    "keeps": ["a"]
+  },
+  {
+    "id": "cynefin-cases/recovery-stray-character",
+    "source": "cynefin-beta\ncomplex \"a\"\n@\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 3]],
+    "keeps": ["a", "b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-nbsp",
+    "source": "cynefin-beta\ncomplex\u00a0\"a\"\nclear \"b\"",
+    "errors": [["UNEXPECTED_CHARACTER", 2]],
+    "keeps": ["b"]
+  },
+  {
+    "id": "cynefin-cases/recovery-three-errors",
+    "source": "cynefin-beta\n\"a\"\ncomplex \"b\"\ncomplex -> clear\nclear \"c\"\nchaotic --> complex \"x\"\nconfusion \"d\"",
+    "errors": [
+      ["UNEXPECTED", 2],
+      ["UNEXPECTED_CHARACTER", 4],
+      ["UNEXPECTED", 6]
+    ],
+    "keeps": ["c", "d"]
+  },
+  {
     "id": "cynefin-cases/unclosed-directive-line",
     "source": "cynefin-beta\n%%{ never closed\ncomplex"
   },
