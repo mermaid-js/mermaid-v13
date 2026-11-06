@@ -44,6 +44,8 @@ const TYPES = readdirSync(PACKAGES)
   .map((d) => d.slice('diagram-'.length))
   .sort();
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
+/** Packages with no renderer yet, so no theme reads: packet until its T4 (#460) draws. */
+const NOT_DRAWN_YET = new Set(['packet']);
 
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
@@ -52,13 +54,16 @@ describe('theme vocabulary usedBy (#207)', () => {
       'er',
       'flowchart',
       'journey',
+      'packet',
       'pie',
       'quadrant',
       'sequence',
       'state',
       'timeline',
     ]);
-    for (const type of TYPES) expect(READS.get(type)!.size).toBeGreaterThan(0);
+    for (const type of TYPES) {
+      if (!NOT_DRAWN_YET.has(type)) expect(READS.get(type)!.size).toBeGreaterThan(0);
+    }
   });
 
   it.each(TYPES)('lists %s for every variable it reads, and for no other', (type) => {

@@ -192,6 +192,9 @@ importers:
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
+      '@mermaid-js/diagram-packet':
+        specifier: workspace:^
+        version: link:../diagram-packet
       '@mermaid-js/diagram-pie':
         specifier: workspace:^
         version: link:../diagram-pie
@@ -334,6 +337,12 @@ importers:
         version: link:../core
 
   packages/diagram-journey:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-packet:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^

@@ -1,0 +1,438 @@
+[
+  {
+    "id": "packet-cases/header-beta-glued-int",
+    "source": "packet-beta0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-beta-glued-word",
+    "source": "packet-betax\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-glued-word",
+    "source": "packetx\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-glued-dash",
+    "source": "packet-\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-upper",
+    "source": "PACKET\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-mixed-case",
+    "source": "Packet-Beta\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-comment",
+    "source": "packet%%c\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-percent",
+    "source": "packet%c\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-beta-comment",
+    "source": "packet-beta%%c\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-field-same-line",
+    "source": "packet 0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-title-same-line",
+    "source": "packet title x\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-twice",
+    "source": "packet packet\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-later-line",
+    "source": "packet\npacket-beta\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/header-only",
+    "source": "packet"
+  },
+  {
+    "id": "packet-cases/header-blank-body",
+    "source": "packet\n\n\n"
+  },
+  {
+    "id": "packet-cases/header-blanks",
+    "source": "   packet   \n\t\n  0: \"a\"  \n"
+  },
+  {
+    "id": "packet-cases/int-leading-zero",
+    "source": "packet\n01: \"a\""
+  },
+  {
+    "id": "packet-cases/int-zeros",
+    "source": "packet\n000: \"a\""
+  },
+  {
+    "id": "packet-cases/int-dot-after-run",
+    "source": "packet\n10.: \"a\""
+  },
+  {
+    "id": "packet-cases/int-fraction",
+    "source": "packet\n1.5: \"a\""
+  },
+  {
+    "id": "packet-cases/int-exponent",
+    "source": "packet\n1e3: \"a\""
+  },
+  {
+    "id": "packet-cases/int-negative",
+    "source": "packet\n-1: \"a\""
+  },
+  {
+    "id": "packet-cases/int-zero-dot",
+    "source": "packet\n0.: \"a\""
+  },
+  {
+    "id": "packet-cases/int-zero-fraction",
+    "source": "packet\n0.5: \"a\""
+  },
+  {
+    "id": "packet-cases/int-dot-after-long-run",
+    "source": "packet\n12345.: \"a\""
+  },
+  {
+    "id": "packet-cases/int-huge",
+    "source": "packet\n0-99999999999999999999: \"a\""
+  },
+  {
+    "id": "packet-cases/int-zero-range",
+    "source": "packet\n0-0: \"a\""
+  },
+  {
+    "id": "packet-cases/int-plus-zero",
+    "source": "packet\n+0: \"a\""
+  },
+  {
+    "id": "packet-cases/int-double-plus",
+    "source": "packet\n++1: \"a\""
+  },
+  {
+    "id": "packet-cases/int-double-dash",
+    "source": "packet\n1--2: \"a\""
+  },
+  {
+    "id": "packet-cases/int-plus-range",
+    "source": "packet\n+1-2: \"a\""
+  },
+  {
+    "id": "packet-cases/int-dot-start",
+    "source": "packet\n.5: \"a\""
+  },
+  {
+    "id": "packet-cases/blanks-spaces",
+    "source": "packet\n0 - 10 : \"a\""
+  },
+  {
+    "id": "packet-cases/blanks-tabs",
+    "source": "packet\n0\t-\t10\t:\t\"a\""
+  },
+  {
+    "id": "packet-cases/blanks-plus",
+    "source": "packet\n+ 8 : \"a\""
+  },
+  {
+    "id": "packet-cases/blanks-none",
+    "source": "packet\n0-10:\"a\"\n+8:\"b\""
+  },
+  {
+    "id": "packet-cases/blanks-before-dash",
+    "source": "packet\n0 -10: \"a\""
+  },
+  {
+    "id": "packet-cases/blanks-indented",
+    "source": "packet\n    0-7: \"a\"\n\t8-15: \"b\""
+  },
+  {
+    "id": "packet-cases/string-single",
+    "source": "packet\n0: 'a'\n1: \"b\"\n2: ' c '"
+  },
+  {
+    "id": "packet-cases/string-escapes",
+    "source": "packet\n0: \"a\\\"b\"\n1: 'c\\'d'\n2: \"e\\\\\"\n3: \"f\\x\""
+  },
+  {
+    "id": "packet-cases/string-multiline",
+    "source": "packet\n0: \"a\nb\"\n1: 'c\n\nd'"
+  },
+  {
+    "id": "packet-cases/string-padded",
+    "source": "packet\n0: \"  pad  \""
+  },
+  {
+    "id": "packet-cases/string-empty",
+    "source": "packet\n0: \"\""
+  },
+  {
+    "id": "packet-cases/string-backslash-newline",
+    "source": "packet\n0: \"a\\\nb\""
+  },
+  {
+    "id": "packet-cases/string-tag-quotes",
+    "source": "packet\n0: \"<b class=\"x\">bold</b>\"\n1: \"<i a=\"1\" b=\"2\">\""
+  },
+  {
+    "id": "packet-cases/string-unquoted-label",
+    "source": "packet\n0: a"
+  },
+  {
+    "id": "packet-cases/string-unterminated-double",
+    "source": "packet\n0: \"never closed\n1: \"b\""
+  },
+  {
+    "id": "packet-cases/string-unterminated-single",
+    "source": "packet\n0: 'never closed"
+  },
+  {
+    "id": "packet-cases/string-entities",
+    "source": "packet\n0: \"#amp;x #quot;y#quot; #9829;\""
+  },
+  {
+    "id": "packet-cases/string-emoji",
+    "source": "packet\n0: \"😀\"\n1: \"a😀b\""
+  },
+  {
+    "id": "packet-cases/string-number-label",
+    "source": "packet\n0: 1"
+  },
+  {
+    "id": "packet-cases/semicolon-end",
+    "source": "packet\n0: \"a\";"
+  },
+  {
+    "id": "packet-cases/semicolon-between",
+    "source": "packet\n0: \"a\";\n1: \"b\""
+  },
+  {
+    "id": "packet-cases/semicolon-entity",
+    "source": "packet\n0: \"a#59;b\""
+  },
+  {
+    "id": "packet-cases/semicolon-style",
+    "source": "packet\ntitle style a:#f00;\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/two-fields-one-line",
+    "source": "packet\n0: \"a\" 1: \"b\""
+  },
+  {
+    "id": "packet-cases/field-after-title",
+    "source": "packet\ntitle t 0: \"a\""
+  },
+  {
+    "id": "packet-cases/title-glued",
+    "source": "packet\ntitlex\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/title-empty",
+    "source": "packet\ntitle\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/title-blank",
+    "source": "packet\ntitle \n0: \"a\""
+  },
+  {
+    "id": "packet-cases/title-comment",
+    "source": "packet\ntitle   a   b   %% c\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/title-glued-comment",
+    "source": "packet\ntitle%%x\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/title-twice",
+    "source": "packet\ntitle one\ntitle two\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/title-front-matter",
+    "source": "---\ntitle: Front\n---\npacket\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/title-front-matter-and-empty",
+    "source": "---\ntitle: Front\n---\npacket\ntitle\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/title-front-matter-and-text",
+    "source": "---\ntitle: Front\n---\npacket title In text\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/title-tab",
+    "source": "packet\ntitle\ta\tb\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/acc-title-comment",
+    "source": "packet\naccTitle: a %% b\naccTitle : c %% d\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/acc-title-no-colon",
+    "source": "packet\naccTitle x\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/acc-empty",
+    "source": "packet\n  accTitle:\n  accDescr:\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/acc-descr-line",
+    "source": "packet\naccDescr: a %% b\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/acc-descr-block",
+    "source": "packet\naccDescr {\n  line one\n\n  line two\n}\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/acc-descr-glued",
+    "source": "packet accDescr{x}\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/acc-descr-brace-later",
+    "source": "packet\naccDescr\n\n{\nx\n}\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/acc-descr-unclosed",
+    "source": "packet\naccDescr { never closed\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/acc-descr-unclosed-run",
+    "source": "packet\naccDescr {accDescr {accDescr {\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/acc-descr-word",
+    "source": "packet\naccDescription: x"
+  },
+  {
+    "id": "packet-cases/acc-descr-then-field",
+    "source": "packet\naccDescr {a} 0: \"b\""
+  },
+  {
+    "id": "packet-cases/yaml-in-body",
+    "source": "packet\n0: \"a\"\n---\nx: 1\n---\n1: \"b\""
+  },
+  {
+    "id": "packet-cases/yaml-empty",
+    "source": "packet\n---\n---\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/yaml-blanks-after-opener",
+    "source": "packet\n---  \nx\n---x\n---\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/yaml-unclosed",
+    "source": "packet\n---\nnever closed\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/yaml-mid-line",
+    "source": "packet\n0: \"a\" ---\n---"
+  },
+  {
+    "id": "packet-cases/yaml-later-close",
+    "source": "packet\n0: \"a\"\n---\n---\n1: \"b\"\n---\n---\n"
+  },
+  {
+    "id": "packet-cases/yaml-close-at-end",
+    "source": "packet\n---\n---\n0: \"a\"\n---"
+  },
+  {
+    "id": "packet-cases/dash-run",
+    "source": "packet\n- --\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/dash-triple-glued",
+    "source": "packet\n---x\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/comment-trailing",
+    "source": "packet\n0: \"a\" %% trailing\n1: \"b\" %%"
+  },
+  {
+    "id": "packet-cases/comment-line",
+    "source": "packet\n%% a comment\n0: \"a\"\n  %% indented\n1: \"b\""
+  },
+  {
+    "id": "packet-cases/directive-in-line",
+    "source": "packet\n0: \"a\" %%{init: {}}%%\n1: \"b\""
+  },
+  {
+    "id": "packet-cases/directive-glued",
+    "source": "packet\n0: \"a\" %%{ x }%%y\n1: \"b\""
+  },
+  {
+    "id": "packet-cases/directive-before",
+    "source": "%%{init: {\"packet\": {\"bitsPerRow\": 8}}}%%\npacket\n0-15: \"a\""
+  },
+  {
+    "id": "packet-cases/config-front-matter",
+    "source": "---\nconfig:\n  packet:\n    bitsPerRow: 8\n---\npacket\n0-15: \"a\""
+  },
+  {
+    "id": "packet-cases/stray-at",
+    "source": "packet\n0: \"a\"\n@\n1: \"b\""
+  },
+  {
+    "id": "packet-cases/stray-blank-lines",
+    "source": "packet\n0: \"a\"\n\t\n  \n1: \"b\""
+  },
+  {
+    "id": "packet-cases/cr-only",
+    "source": "packet\r0: \"a\"\r1: \"b\""
+  },
+  {
+    "id": "packet-cases/crlf",
+    "source": "packet\r\n0: \"a\"\r\n\r\n1: \"b\"\r\n"
+  },
+  {
+    "id": "packet-cases/line-separator-header",
+    "source": "packet 0: \"a\""
+  },
+  {
+    "id": "packet-cases/line-separator-fields",
+    "source": "packet\n0: \"a\" 1: \"b\""
+  },
+  {
+    "id": "packet-cases/line-separator-title",
+    "source": "packet\ntitle a b\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/line-separator-acc",
+    "source": "packet\naccTitle: a b\naccDescr: c d\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/line-separator-acc-block",
+    "source": "packet\naccDescr { a }\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/line-separator-string",
+    "source": "packet\n0: \"a b\""
+  },
+  {
+    "id": "packet-cases/line-separator-comment",
+    "source": "packet\n0: \"a\"\n %% c\n1: \"b\""
+  },
+  {
+    "id": "packet-cases/line-separator-trailing-comment",
+    "source": "packet\n0: \"a\" %% c 1: \"b\""
+  },
+  {
+    "id": "packet-cases/line-separator-before-header",
+    "source": " packet\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/line-separator-beta",
+    "source": "packet-beta 0: \"a\""
+  },
+  {
+    "id": "packet-cases/unclosed-directive",
+    "source": "packet\n%%{ never closed\n0: \"a\""
+  },
+  {
+    "id": "packet-cases/unclosed-directive-brace",
+    "source": "packet\n%%{init: {\n0: \"a\""
+  }
+]
