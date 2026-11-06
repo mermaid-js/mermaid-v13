@@ -58,3 +58,6 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - [ ] `ganttTokens` copies `timelineTokens`; use `significantTokens()` for the trivia filter.
 - [ ] The gate's `skipped.length < 4` repeats the filter check; assert the exact skipped ids.
 - Follow-up (coordinator, not gantt): T1 says timeline's lexer tests jison's `\b` with parser-kit's Unicode `isWord`, though JS `\b` is ASCII-only, so it may be a latent parity bug there.
+
+### #385 T5 integration (coordinator, 2026-11-06)
+- [x] Core size: #410 (`fix/theme-variables-pure`, the theme vocabulary built in a pure call) is merged into `mermaid-v13` (586e00c8f) and from there into `feature/293_gantt`. It freed about 1.4 KB of core. `cdn-build.spec.ts` now fails if a theme table not built in a pure call lands in core: T5 wraps any table gantt adds the way `THEME_VARIABLES` and `PIE_SLOTS` are wrapped in `packages/core/src/theme/vocabulary.ts`, and keeps gantt's variables in the existing vocabulary pattern. Draft #411 (D322, a "Theme T0" moving per-type variables out of core) is not decided; don't wait on it.

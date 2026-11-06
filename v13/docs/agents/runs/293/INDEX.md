@@ -22,10 +22,13 @@ Integration branch `feature/293_gantt` (from `mermaid-v13` at 38d663b44). Draft 
 
 ## Core size (R-PERF-8, limit 94,208 B gz)
 
+Measured with `measureStaticClosure(readSizeBudget().core.entry).size.gzip` from `packages/bench/src/size-budget.ts`, imported at run time from the checkout being measured.
+
 | After | Core bytes | Spare | Note |
 | --- | --- | --- | --- |
 | base 38d663b44 | 93,551 | 657 | skeleton adds nothing to core |
 | #375 T0 | 93,573 | 635 | `now`, `availableWidth` on the context (+22 B) |
+| merge `mermaid-v13` 586e00c8f (#410) | 92,204 | 2,004 | `mermaid-v13` alone: 92,181; gantt's T0 adds 23 |
 
 ## Finish rule
 
