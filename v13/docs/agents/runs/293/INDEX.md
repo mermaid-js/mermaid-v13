@@ -8,7 +8,7 @@ Integration branch `feature/293_gantt` (from `mermaid-v13` at 38d663b44). Draft 
 | T0 core `now`, `availableWidth` on the context | #375 | — | merged (ff 46431e19d) |
 | D1 dates and axis (Pele port) | #376 | — | merged (no-ff) |
 | T1 lexer parity gate | #377 | #285 (merged) | merged (ff 935787bfe) |
-| T2 grammar, parser, model, AST | #378 | #377 | open |
+| T2 grammar, parser, model, AST | #378 | #377 | merged (no-ff), + generated grammar files committed |
 | T3 schedule and layout | #379 | #375, #376, #378 | open |
 | T4 SVG renderer | #381 | #379 | open |
 | T6 language facet | #382 | #378 | open |
