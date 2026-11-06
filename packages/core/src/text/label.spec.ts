@@ -94,6 +94,65 @@ describe('plain labels', () => {
   });
 });
 
+describe('measuring work (#274)', () => {
+  // The table measurer, recording every string it is asked to measure.
+  const counting = (): { measurer: typeof tableMeasurer; measured: string[] } => {
+    const measured: string[] = [];
+    const measurer = {
+      ...tableMeasurer,
+      width: (...a: Parameters<typeof tableMeasurer.width>) => (
+        measured.push(a[0]),
+        tableMeasurer.width(...a)
+      ),
+    };
+    return { measurer, measured };
+  };
+
+  it('measures a plain label with *, _ or a backtick once, reading them as text', () => {
+    const { measurer, measured } = counting();
+    const box = layoutLabel('snake_case **a** `b`', arial, 200, measurer);
+    expect(runs(box)).toEqual([[['snake_case **a** `b`', 0]]]);
+    expect(measured).toEqual(['snake_case **a** `b`']);
+  });
+
+  it('still reads *, _ and backticks in a markdown label', () => {
+    const box = layoutLabel('snake_case **a** `b`', arial, 200, tableMeasurer, { markdown: true });
+    expect(runs(box)).toEqual([
+      [
+        ['snake_case ', 0],
+        ['a', Style.Bold],
+        [' ', 0],
+        ['b', Style.Mono],
+      ],
+    ]);
+  });
+
+  it('lays out a blank label without looking for inline boxes, with the font’s metrics', () => {
+    let extracted = 0;
+    const inline = {
+      extract: () => (extracted++, undefined),
+      notRendered: () => false,
+      warn: () => undefined,
+      scratch: {},
+    };
+    const box = layoutLabel('  \t ', arial, 200, tableMeasurer, { inline });
+    expect(extracted).toBe(0);
+    expect(box).toMatchObject({ lines: [], width: 0, height: 0 });
+    expect(box.lineHeight).toBeCloseTo(11.5, 9);
+    expect(box.baseline).toBeCloseTo(9.05, 9);
+  });
+
+  it('measures a word that makes a line of its own once', () => {
+    // 'aaaa' = 22.24 fits in 25; 'aaaa bbbb' does not.
+    const { measurer, measured } = counting();
+    const box = layoutLabel('aaaa bbbb cccc', arial, 25, measurer);
+    expect(texts(box)).toEqual(['aaaa', 'bbbb', 'cccc']);
+    expect(box.widths.map((w) => +w.toFixed(2))).toEqual([22.24, 22.24, 20]);
+    for (const word of ['aaaa', 'bbbb', 'cccc'])
+      expect(measured.filter((t) => t === word)).toHaveLength(1);
+  });
+});
+
 describe('wrapping (R-TEXT-8)', () => {
   it('breaks between CJK characters, which measure one em', () => {
     // 漢 = 10 each, so 4 fit in 45
