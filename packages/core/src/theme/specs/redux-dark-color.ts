@@ -18,6 +18,7 @@ import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-d
 const theme: ThemeSpec = {
   name: 'redux-dark-color',
   dark: true,
+  family: 'redux',
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
   // v12 draws pie section text in the light ink here (`pieSectionTextColor`).
