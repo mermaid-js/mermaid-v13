@@ -32,9 +32,9 @@ const TEXT_ON_FILL: readonly [text: string, fill: string][] = [
 
 /**
  * Variables no theme sets, only an author (D249: journey `actor0`–`actor5`, which win over
- * `journey.actorColours` when set). Unset, they resolve to `currentColor`.
+ * `journey.actorColours` when set; D267: `tagBorder`, v12's other name for `tagLabelBorder`). Unset, they resolve to `currentColor`.
  */
-const AUTHOR_ONLY = ['actor0', 'actor1', 'actor2', 'actor3', 'actor4', 'actor5'];
+const AUTHOR_ONLY = ['actor0', 'actor1', 'actor2', 'actor3', 'actor4', 'actor5', 'tagBorder'];
 
 describe('built-in themes', () => {
   it('ships the redux family and default, dark, forest, neutral and base (D64, D151)', () => {

@@ -97,6 +97,14 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `quadrantInternalBorderStrokeFill` | `--mermaid-quadrantInternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
 | `quadrantExternalBorderStrokeFill` | `--mermaid-quadrantExternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
 | `quadrantTitleFill` | `--mermaid-quadrantTitleFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
+| `commitLabelColor` | `--mermaid-commitLabelColor` | derived | color | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | `ifSet(secondaryTextColor, invert(ifSet(secondaryColor, adjustHue(primaryColor, -120))))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark |  |
+| `commitLabelBackground` | `--mermaid-commitLabelBackground` | derived | color | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | `ifSet(secondaryColor, adjustHue(primaryColor, -120))` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark |  |
+| `commitLabelFontSize` | `--mermaid-commitLabelFontSize` | token | length | | | all |  |
+| `tagLabelColor` | `--mermaid-tagLabelColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default |  |
+| `tagLabelBackground` | `--mermaid-tagLabelBackground` | derived | color | `primaryColor` | `primaryColor` | default |  |
+| `tagLabelBorder` | `--mermaid-tagLabelBorder` | derived | color | `ifSet(tagBorder, primaryBorderColor)` | `ifSet(tagBorder, primaryBorderColor)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark |  |
+| `tagBorder` | `--mermaid-tagBorder` | derived | color | | | |  |
+| `tagLabelFontSize` | `--mermaid-tagLabelFontSize` | token | length | | | all |  |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |
@@ -188,3 +196,6 @@ in v12 (D258). A theme not listed carries an empty list.
 | `cScale` | `cScale`, `cScale0`–`cScale11` | all |
 | `cScaleInv` | `cScaleInv`, `cScaleInv0`–`cScaleInv11` | all |
 | `cScaleLabel` | `cScaleLabel`, `cScaleLabel0`–`cScaleLabel11` | all |
+| `git` | `git`, `git0`–`git7` | all |
+| `gitInv` | `gitInv`, `gitInv0`–`gitInv7` | all |
+| `gitBranchLabel` | `gitBranchLabel`, `gitBranchLabel0`–`gitBranchLabel7` | all |

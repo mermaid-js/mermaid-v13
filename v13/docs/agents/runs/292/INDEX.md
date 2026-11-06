@@ -5,7 +5,7 @@ Integration branch `feature/292_gitgraph` (from `mermaid-v13` 38d663b44). Draft 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
 | T1 lexer parity gate | #368 | — | merged (ff 189662975) |
-| T4a `git`, `gitInv`, `gitBranchLabel` palettes | #369 | — | stopped: 244 B over the CDN core gate (GAPS.md, for the maintainer) |
+| T4a `git`, `gitInv`, `gitBranchLabel` palettes | #369 | — (on #410) | merged (--no-ff, branch 64e08434c) |
 | T2 grammar, parser, model, AST | #370 | #368 | open |
 | T3 custom layout (`GitLayout`) | #371 | #370 (hand-built fixtures meanwhile) | open |
 | T6 language facet | #372 | #370 | open |
@@ -23,8 +23,9 @@ Integration branch `feature/292_gitgraph` (from `mermaid-v13` 38d663b44). Draft 
 | --- | --- | --- |
 | `mermaid-v13` 38d663b44 (start) | 93,551 | 93,901 |
 | after T1 #368 | unchanged | unchanged |
-| #369 palettes (not merged) | ~94,080 | 94,452 (over by 244) |
-| #369 + `fix/theme-variables-pure` (not merged) | 92,714 | 93,080 |
+| #369 palettes alone (not merged) | ~94,080 | 94,452 (over by 244) |
+| #410 alone (`mermaid-v13` 0f831fcc8 + fix) | 92,181 | 92,520 |
+| after T4a #369 (on #410) | 92,645 | 93,011 |
 
 ## Finish rule
 

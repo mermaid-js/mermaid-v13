@@ -32,6 +32,13 @@ describe('theme variable inventory (DESIGN §8.3)', () => {
     );
   });
 
+  it('gives every variable its own private alias', () => {
+    const byAlias = new Map<string, string[]>();
+    for (const [name, def] of Object.entries(THEME_VARIABLES))
+      byAlias.set(def.alias, [...(byAlias.get(def.alias) ?? []), name]);
+    expect([...byAlias.values()].filter((names) => names.length > 1)).toEqual([]);
+  });
+
   it('is up to date (run `pnpm gen:theme`)', async () => {
     expect(readFileSync(INVENTORY_PATH, 'utf8')).toBe(await themeInventory());
   });

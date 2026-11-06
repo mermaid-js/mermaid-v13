@@ -3,7 +3,7 @@
  * derived values a v12 theme hard-codes, and rules that override the shared derivation
  * table. Built-in specs live in `specs/`, one lazily imported file each.
  */
-import { fillTypes } from './specs/palettes.ts';
+import { BASE_SECONDARY, fillTypes } from './specs/palettes.ts';
 import type { BaseVariable, PaletteVariable, TokenVariable } from './vocabulary.ts';
 
 /** Derivation rules by variable name, in the DSL of `dsl.ts`. */
@@ -127,6 +127,14 @@ export const LIGHT_RULES: ThemeRuleTable = {
   quadrantInternalBorderStrokeFill: 'primaryBorderColor',
   quadrantExternalBorderStrokeFill: 'primaryBorderColor',
   quadrantTitleFill: 'primaryTextColor',
+  // gitGraph labels, as v12 theme-base derives them (D267); the built-in themes set their own
+  // commit label and border rules (`gitLabelRules`). An author's `tagBorder` fills
+  // `tagLabelBorder` unless the author sets that too.
+  commitLabelColor: `ifSet(secondaryTextColor, invert(${BASE_SECONDARY}))`,
+  commitLabelBackground: BASE_SECONDARY,
+  tagLabelColor: 'primaryTextColor',
+  tagLabelBackground: 'primaryColor',
+  tagLabelBorder: 'ifSet(tagBorder, primaryBorderColor)',
   // The neo gradient's stops, as v12 theme-base derives them (D182).
   gradientStart: 'primaryBorderColor',
   gradientStop: 'secondaryBorderColor',
