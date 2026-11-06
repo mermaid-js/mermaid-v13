@@ -13,7 +13,13 @@ import {
   TAILWIND_300,
   TAILWIND_400,
 } from './palettes.ts';
-import { REDUX_DARK_BASE, REDUX_DARK_TOKENS, REDUX_DARK_VALUES } from './redux-dark-values.ts';
+import {
+  REDUX_DARK_BASE,
+  REDUX_DARK_GIT,
+  REDUX_DARK_GIT_DARK_MODE,
+  REDUX_DARK_TOKENS,
+  REDUX_DARK_VALUES,
+} from './redux-dark-values.ts';
 
 const theme: ThemeSpec = {
   name: 'redux-dark-color',
@@ -35,7 +41,9 @@ const theme: ThemeSpec = {
     cScaleInv: INVERTED_SCALE,
     // v12 theme-redux-dark-color.js: each label is its slot darkened by 75.
     cScaleLabel: paletteSlots((i) => `darkenHsl(cScale${i}, 75%)`),
+    ...REDUX_DARK_GIT,
   },
+  darkModePalettes: REDUX_DARK_GIT_DARK_MODE,
 };
 
 export default theme;

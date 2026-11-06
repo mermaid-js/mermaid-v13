@@ -188,3 +188,6 @@ in v12 (D258). A theme not listed carries an empty list.
 | `cScale` | `cScale`, `cScale0`–`cScale11` | all |
 | `cScaleInv` | `cScaleInv`, `cScaleInv0`–`cScaleInv11` | all |
 | `cScaleLabel` | `cScaleLabel`, `cScaleLabel0`–`cScaleLabel11` | all |
+| `git` | `git`, `git0`–`git7` | all |
+| `gitInv` | `gitInv`, `gitInv0`–`gitInv7` | all |
+| `gitBranchLabel` | `gitBranchLabel`, `gitBranchLabel0`–`gitBranchLabel7` | all |

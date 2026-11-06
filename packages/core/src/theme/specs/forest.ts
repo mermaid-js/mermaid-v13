@@ -3,7 +3,7 @@
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
 import { fillTypes, paletteSlots, pieSlots } from './palettes.ts';
-import { darkenedScale, hueSources } from './scales.ts';
+import { classicGitLabels, darkenedScale, gitPalettes, gitSources, hueSources } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -28,6 +28,12 @@ const PIE_FOREST: ThemeRuleTable = pieSlots([
   '#63301a',
   '#1a4d63',
 ]);
+
+const GIT = gitSources(
+  'primaryColor',
+  'secondaryColor',
+  'ifSet(tertiaryColor, lightenHsl(#cde498, 10%))'
+);
 
 const theme: ThemeSpec = {
   name: 'forest',
@@ -99,6 +105,13 @@ const theme: ThemeSpec = {
     ),
     // v12 sets labelTextColor to actorTextColor before the labels.
     cScaleLabel: paletteSlots(() => 'actorTextColor'),
+    // v12: git darkened by 25 (lightened under darkMode), labels 0 and 3 inverted.
+    ...gitPalettes(GIT),
+    gitBranchLabel: classicGitLabels('actorTextColor'),
+  },
+  darkModePalettes: {
+    ...gitPalettes(GIT, 'lightenHsl'),
+    gitBranchLabel: classicGitLabels('actorTextColor'),
   },
 };
 

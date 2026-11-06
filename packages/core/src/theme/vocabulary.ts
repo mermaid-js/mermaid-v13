@@ -169,11 +169,11 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
 export type TokenVariable = (typeof TOKEN_VARIABLES)[number];
 
 /**
- * Palettes (D151, D152, D258): lists of colours a theme carries as data. `themeVariables`
+ * Palettes (D151, D152, D258, D267): lists of colours a theme carries as data. `themeVariables`
  * replaces a whole list (an array of colours, or a comma-separated string), and v12's numbered
- * names (`cScale0`–`cScale11`, `cScaleInv<n>`, `cScaleLabel<n>`) replace one entry of
- * `cScale`, `cScaleInv` or `cScaleLabel`. Palettes are read as literal colours, not CSS
- * variables.
+ * names (`cScale0`–`cScale11`, `cScaleInv<n>`, `cScaleLabel<n>`, `git0`–`git7`, `gitInv<n>`,
+ * `gitBranchLabel<n>`) replace one entry of the palette they name. Palettes are read as literal
+ * colours, not CSS variables.
  */
 export const PALETTE_VARIABLES = [
   'borderColorArray',
@@ -181,15 +181,42 @@ export const PALETTE_VARIABLES = [
   'cScale',
   'cScaleInv',
   'cScaleLabel',
+  'git',
+  'gitInv',
+  'gitBranchLabel',
 ] as const;
 
-/** The palettes with v12's numbered names, `<name>0`–`<name>11`. */
-export const NUMBERED_PALETTES = ['cScale', 'cScaleInv', 'cScaleLabel'] as const;
+/** The palettes with v12's numbered names, `<name>0` up to `PALETTE_LIMITS[name] - 1`. */
+export const NUMBERED_PALETTES = [
+  'cScale',
+  'cScaleInv',
+  'cScaleLabel',
+  'git',
+  'gitInv',
+  'gitBranchLabel',
+] as const;
 
 export type PaletteVariable = (typeof PALETTE_VARIABLES)[number];
+export type NumberedPalette = (typeof NUMBERED_PALETTES)[number];
 
-/** How many numbered names each of `NUMBERED_PALETTES` has (v12 `THEME_COLOR_LIMIT`, D258). */
+/**
+ * How many numbered names `cScale`, `cScaleInv` and `cScaleLabel` have (v12 `THEME_COLOR_LIMIT`,
+ * D258).
+ */
 export const PALETTE_LIMIT = 12;
+
+/** How many numbered names the git palettes have (v12 `git0`–`git7`, D267). */
+export const GIT_PALETTE_LIMIT = 8;
+
+/** How many numbered names each of `NUMBERED_PALETTES` has. */
+export const PALETTE_LIMITS: Readonly<Record<NumberedPalette, number>> = {
+  cScale: PALETTE_LIMIT,
+  cScaleInv: PALETTE_LIMIT,
+  cScaleLabel: PALETTE_LIMIT,
+  git: GIT_PALETTE_LIMIT,
+  gitInv: GIT_PALETTE_LIMIT,
+  gitBranchLabel: GIT_PALETTE_LIMIT,
+};
 
 // Pure, so a bundle that never reads `THEME_VARIABLES` drops it with its `usedBy` lists: the
 // runtime reads the generated alias and kind table (`generated/variables.ts`) instead.
