@@ -219,9 +219,10 @@ const JOURNEY = ['journey'];
  * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
  * in core's size budget (R-PERF-8).
  */
-const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = Object.fromEntries(
-  Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, def(`pi${i + 1}`, 'color', ['pie'])])
-);
+const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() =>
+  Object.fromEntries(
+    Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, def(`pi${i + 1}`, 'color', ['pie'])])
+  ))();
 
 /**
  * The core inventory. Order is the order of the generated table. Tools and specs read it (with
