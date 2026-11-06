@@ -50,10 +50,19 @@ const PENDING_GRADIENT = GRADIENT.filter((n) => !Object.hasOwn(THEME_VARIABLES, 
  * name with `redux`, not by `look`, so `theme: neo` drew the classic values (D227).
  */
 const TIMELINE = Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('timeline'));
+/**
+ * gitGraph's v13 variables (#374): v12 chose its gitGraph geometry by a theme name with `redux`
+ * and its node colours by `NEO_COLOR_GEN_THEMES`, so `theme: neo` drew classic geometry with the
+ * node colours (D266). `commitLineColor` is v12's, which no neo theme sets (`?? lineColor`).
+ */
+const GITGRAPH = [
+  ...Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('git')),
+  'commitLineColor',
+];
 
 const LOOK_GEOMETRY = Object.entries(THEME_VARIABLES)
   .filter(([name, d]) => (d.kind === 'length' || d.kind === 'padding') && !(name in OLD))
-  .filter(([name]) => !TIMELINE.includes(name))
+  .filter(([name]) => !TIMELINE.includes(name) && !GITGRAPH.includes(name))
   .map(([name]) => name);
 
 const LOOK_GEOMETRY_WHY =
@@ -67,6 +76,7 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   ...Object.fromEntries(
     [0, 1, 2, 3, 4, 5].map((i) => [`actor${i}`, 'D249: author-only; no theme sets actor<n>'])
   ),
+  tagBorder: "D267: author-only, v12's other name for tagLabelBorder; no theme sets it",
   // v13 variables for what v12 decides by look or by theme name.
   rowOdd: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
   rowEven: 'D152: v12 neo-look ER rows show the entity fill (mainBkg)',
@@ -76,6 +86,14 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   border1: 'D152: v12 neo leaves it unset; no ported diagram reads it (usedBy is empty)',
   quadrantPointFill:
     'D231: v12 resolved it to hsl(…, NaN%); v13 defaults to textColor, as v12 points showed',
+  // Gantt (#385): v12 theme-neo took these from its own #ECECFE, which no shared variable holds;
+  // they derive from primaryColor (GAPS #385, "For the maintainer").
+  ...Object.fromEntries(
+    ['sectionBkgColor2', 'taskBkgColor', 'activeTaskBorderColor'].map((n) => [
+      n,
+      'D331: no theme spec names a gantt variable; derived from primaryColor',
+    ])
+  ),
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
   ...Object.fromEntries(
     TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])
@@ -84,6 +102,9 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
     Object.keys(THEME_VARIABLES)
       .filter((n) => n.startsWith('mindmap'))
       .map((n) => [n, 'D288, D152: v12 has no variable; it chose mindmap paint by look and theme'])
+  ),
+  ...Object.fromEntries(
+    GITGRAPH.map((n) => [n, 'D266: v12 has no value; theme neo drew classic gitGraph geometry'])
   ),
 };
 
@@ -154,6 +175,16 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
     const classic = createTheme(await loadTheme('default'), { cssVariables: false });
     expect(TIMELINE.length).toBe(4);
     for (const name of TIMELINE) expect(v13Value(neo, name), name).toEqual(v13Value(classic, name));
+  });
+
+  it('takes classic gitGraph geometry with the node colours, as v12 theme neo drew (D266)', async () => {
+    const classic = createTheme(await loadTheme('default'), { cssVariables: false });
+    for (const name of GITGRAPH.filter((n) => n.startsWith('git') && n !== 'gitNodeColors'))
+      expect(v13Value(neo, name), name).toEqual(v13Value(classic, name));
+    expect(neo.value('gitNodeColors')).toBe('true');
+    expect(classic.value('gitNodeColors')).toBe('false');
+    // Neither sets it: the renderer draws `lineColor`, as v12's `commitLineColor ?? lineColor`.
+    expect(neo.value('commitLineColor')).toBe('currentColor');
   });
 
   it('gives the ER variables what v12 neo draws (D152)', () => {

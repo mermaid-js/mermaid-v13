@@ -1,0 +1,5 @@
+%% rename-to: a.b
+%% `after` would read `a.b` as `a`: refused.
+gantt
+  Design :|a1, 2024-01-01, 3d
+  Build :after a1, 5d

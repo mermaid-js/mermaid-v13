@@ -10,13 +10,14 @@
  */
 import type { ThemeSpec } from '../spec.ts';
 import { fillTypes, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
-import { DARK_HUE_SOURCES, darkenedScale, gitPalettes } from './scales.ts';
+import { DARK_HUE_SOURCES, darkenedScale, gitLabelRules, gitPalettes } from './scales.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
   CLASSIC_TIMELINE,
   NEO_MINDMAP,
+  NEO_GITGRAPH,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
@@ -63,13 +64,20 @@ const neoDark: ThemeSpec = {
     ...NEO_MINDMAP,
     // v12 `styles.ts`: neo-dark edges take `nodeBorder`, as the redux themes do.
     mindmapBorderEdges: true,
+    ...NEO_GITGRAPH,
     // v12 theme-neo-dark.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
   // As `neo`: v12 neo-dark sets `classText` from `textColor`, has no ER row fill of its own,
   // and the neo-look zero circle takes the node fill.
-  rules: { ...REDUX_RULES, ...PIE_REDUX_DARK },
+  rules: {
+    ...REDUX_RULES,
+    ...PIE_REDUX_DARK,
+    ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
+  },
   values: {
+    // gitGraph: the cherry-pick ink of v12's `DARK_THEMES` (#374).
+    gitCherryPickInk: '#000000',
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'),
     // v12 `drop-shadow( 1px 2px 2px rgba(185,185,185,0.2))`, normalised for `checkFilter`.

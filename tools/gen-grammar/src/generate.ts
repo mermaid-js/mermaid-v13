@@ -126,6 +126,12 @@ export const GRAMMARS: GrammarTarget[] = [
     },
   },
   {
+    type: 'gantt',
+    title: 'Gantt chart syntax',
+    // The openers and closers of jison's start conditions are named in the grammar file.
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
     type: 'pie',
     title: 'Pie chart syntax',
     kinds: {
@@ -133,6 +139,16 @@ export const GRAMMARS: GrammarTarget[] = [
       object: 'T',
       // A label starts a section and `:` follows it: completion offers both, with the doc.
       documented: ['String', 'Colon'],
+    },
+  },
+  {
+    type: 'gitgraph',
+    title: 'Git graph syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // A quoted text and a name follow keywords: completion offers them, with the doc.
+      documented: ['String', 'Reference'],
     },
   },
   {

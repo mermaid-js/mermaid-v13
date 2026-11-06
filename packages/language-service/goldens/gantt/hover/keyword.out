@@ -1,0 +1,52 @@
+@ 1:2  g|antt
+  1:1-1:6 "gantt"
+  | **`gantt`**
+  |
+  | A gantt chart is `gantt`, then statements.
+@ 2:7  date|Format YYYY-MM-DD
+  2:3-2:13 "dateFormat"
+  | **`dateFormat`**
+  |
+  | `dateFormat <format>`: how the task dates are written, e.g. `YYYY-MM-DD`.
+@ 3:18  dateFormat YYYY|-MM-DD
+  none
+@ 4:5  ex|cludes weekends
+  4:3-4:11 "excludes"
+  | **`excludes`**
+  |
+  | `excludes <days>`: days a task skips, e.g. `weekends`, `friday`, `2024-01-01`.
+@ 5:14  weekday mon|day
+  5:3-5:17 "weekday monday"
+  | **`weekday monday`**
+  |
+  | `weekday <day>`: the day week ticks start on.
+@ 6:5  ti|tle Plan
+  6:3-6:8 "title"
+  | **`title`**
+  |
+  | `title <text>`: the chart title.
+@ 7:6  sec|tion A
+  7:3-7:10 "section"
+  | **`section`**
+  |
+  | `section <name>`: starts a section; the tasks after it are drawn in it.
+@ 8:6  acc|Title: Plan
+  8:3-8:12 "accTitle:"
+  | **`accTitle:`**
+  |
+  | `accTitle: <text>`: the accessible title.
+@ 9:5  cl|ick a1 href "https://example.com" call show()
+  9:3-9:8 "click"
+  | **`click`**
+  |
+  | `click <ids> href "<url>"` and/or `call <function>(<args>)`, either first.
+@ 9:13  click a1 h|ref "https://example.com" call show()
+  9:12-9:16 "href"
+  | **`href`**
+  |
+  | `href "<url>"`: the link a click opens, after `click <ids>`.
+@ 9:41  click a1 href "https://example.com" ca|ll show()
+  9:39-9:43 "call"
+  | **`call`**
+  |
+  | `call <function>(<args>)`: the function a click calls, after `click <ids>`.

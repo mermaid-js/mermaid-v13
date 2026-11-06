@@ -37,7 +37,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     load: () => import('@mermaid-js/diagram-er').then((m) => m.er),
     loadAscii: () => import('@mermaid-js/diagram-er/ascii').then((m) => m.ascii),
   },
-  { type: 'gantt', pattern: /^\s*gantt/ },
+  {
+    type: 'gantt',
+    pattern: /^\s*gantt/,
+    id: 'gantt',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-gantt').then((m) => m.gantt),
+  },
   { type: 'info', pattern: /^\s*info/ },
   {
     type: 'pie',
@@ -71,7 +77,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-timeline').then((m) => m.timeline),
   },
-  { type: 'gitGraph', pattern: /^\s*gitGraph/ },
+  {
+    type: 'gitGraph',
+    pattern: /^\s*gitGraph/,
+    id: 'gitGraph',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-gitgraph').then((m) => m.gitGraph),
+  },
   {
     type: 'stateDiagram',
     pattern: /^\s*stateDiagram/,

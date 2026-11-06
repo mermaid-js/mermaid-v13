@@ -3,7 +3,14 @@
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
 import { fillTypes, paletteSlots, pieSlots } from './palettes.ts';
-import { classicGitLabels, darkenedScale, gitPalettes, gitSources, hueSources } from './scales.ts';
+import {
+  classicGitLabels,
+  darkenedScale,
+  gitLabelRules,
+  gitPalettes,
+  gitSources,
+  hueSources,
+} from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -11,6 +18,7 @@ import {
   CLASSIC_SEQUENCE,
   CLASSIC_TIMELINE,
   CLASSIC_MINDMAP,
+  CLASSIC_GITGRAPH,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -64,10 +72,15 @@ const theme: ThemeSpec = {
     ...CLASSIC_SEQUENCE,
     ...CLASSIC_TIMELINE,
     ...CLASSIC_MINDMAP,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
-  rules: { rowEven: 'lightenHsl(mainBkg, 20%)', ...PIE_FOREST },
+  rules: {
+    rowEven: 'lightenHsl(mainBkg, 20%)',
+    ...PIE_FOREST,
+    ...gitLabelRules('#32004d', '#abb594'),
+  },
   values: {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff'),

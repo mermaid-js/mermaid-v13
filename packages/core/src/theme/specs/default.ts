@@ -11,6 +11,7 @@ import {
   CLASSIC_SEQUENCE,
   CLASSIC_TIMELINE,
   CLASSIC_MINDMAP,
+  CLASSIC_GITGRAPH,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -77,6 +78,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_SEQUENCE,
     ...CLASSIC_TIMELINE,
     ...CLASSIC_MINDMAP,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   values: {
@@ -103,6 +105,12 @@ const theme: ThemeSpec = {
     rowOdd: 'lightenHsl(primaryColor, 75%)',
     rowEven: 'lightenHsl(primaryColor, 1%)',
     ...PIE_DEFAULT,
+    // v12 sets the gitGraph labels in its constructor too, from its own colours, and keeps them.
+    commitLabelColor: '#000021',
+    commitLabelBackground: '#ffffde',
+    tagLabelColor: '#131300',
+    tagLabelBackground: '#ececff',
+    tagLabelBorder: 'ifSet(tagBorder, ifSet(primaryBorderColor, #c7c7f1))',
   },
   // v12 theme-default.js fills cScale and cScaleInv in its constructor, darkens cScale again
   // when it calculates, and never recomputes them: fixed lists that ignore the base colours.

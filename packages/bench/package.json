@@ -18,6 +18,8 @@
     "@mermaid-js/diagram-class": "workspace:^",
     "@mermaid-js/diagram-er": "workspace:^",
     "@mermaid-js/diagram-flowchart": "workspace:^",
+    "@mermaid-js/diagram-gantt": "workspace:^",
+    "@mermaid-js/diagram-gitgraph": "workspace:^",
     "@mermaid-js/diagram-journey": "workspace:^",
     "@mermaid-js/diagram-mindmap": "workspace:^",
     "@mermaid-js/diagram-pie": "workspace:^",

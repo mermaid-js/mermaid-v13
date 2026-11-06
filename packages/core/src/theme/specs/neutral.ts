@@ -3,7 +3,7 @@
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
 import { fillTypes, INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
-import { darkModeLabels, fixedGit } from './scales.ts';
+import { darkModeLabels, fixedGit, gitLabelRules } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -11,6 +11,7 @@ import {
   CLASSIC_SEQUENCE,
   CLASSIC_TIMELINE,
   CLASSIC_MINDMAP,
+  CLASSIC_GITGRAPH,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -63,9 +64,10 @@ const theme: ThemeSpec = {
     ...CLASSIC_SEQUENCE,
     ...CLASSIC_TIMELINE,
     ...CLASSIC_MINDMAP,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
-  rules: PIE_NEUTRAL,
+  rules: { ...PIE_NEUTRAL, ...gitLabelRules('#030303', '#d4d4d4') },
   values: {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc'),

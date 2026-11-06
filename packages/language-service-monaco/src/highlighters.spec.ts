@@ -40,6 +40,8 @@ const DOCS = {
   pie: 'pie\n  "Dogs" : 386\n',
   quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
   mindmap: 'mindmap\n  root((Root))\n    A[Square]\n',
+  gantt: 'gantt\n  section Build\n  Code :crit, a1, 2024-01-01, 3d\n',
+  gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -48,6 +50,8 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'class',
       'er',
       'flowchart',
+      'gantt',
+      'gitGraph',
       'journey',
       'mindmap',
       'pie',
@@ -136,7 +140,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
   });
 
   it.each([
-    ['a type with no v13 highlighter', 'gantt\n  title Plan\n'],
+    ['a type with no v13 highlighter', 'requirementDiagram\n  element E {\n  }\n'],
     ['a type v12 does not know', 'notADiagram\n  A --> B\n'],
     ['a header being typed', 'flo'],
   ])('colours nothing for %s, not as flowchart', async (_label, text) => {

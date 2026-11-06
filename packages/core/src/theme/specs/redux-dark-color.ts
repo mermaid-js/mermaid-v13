@@ -13,6 +13,7 @@ import {
   TAILWIND_300,
   TAILWIND_400,
 } from './palettes.ts';
+import { gitLabelRules } from './scales.ts';
 import {
   REDUX_DARK_BASE,
   REDUX_DARK_GIT,
@@ -27,7 +28,12 @@ const theme: ThemeSpec = {
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
   // v12 draws pie section text in the light ink here (`pieSectionTextColor`).
-  rules: { ...REDUX_RULES, ...pieSlots(TAILWIND_300), pieSectionTextColor: '#28253d' },
+  rules: {
+    ...REDUX_RULES,
+    ...pieSlots(TAILWIND_300),
+    pieSectionTextColor: '#28253d',
+    ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
+  },
   values: {
     ...REDUX_DARK_VALUES,
     erEdgeLabelBackground: '#16141f',

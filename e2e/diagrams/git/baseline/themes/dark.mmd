@@ -1,0 +1,23 @@
+---
+config:
+  theme: dark
+description: one representative LR git graph (every commit type, tags, a cherry-pick, merges) in the dark theme
+---
+gitGraph
+  commit id: "init"
+  commit id: "setup" tag: "v0.1"
+  branch develop
+  checkout develop
+  commit id: "feat-a"
+  commit id: "feat-b" type: HIGHLIGHT
+  branch feature
+  checkout feature
+  commit id: "wip" type: REVERSE
+  checkout main
+  commit id: "hotfix"
+  cherry-pick id: "feat-a"
+  checkout develop
+  merge feature id: "merge-feature"
+  checkout main
+  merge develop id: "release" tag: "v1.0"
+  commit id: "after"
