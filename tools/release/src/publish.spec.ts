@@ -34,6 +34,8 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/mermaid',
       // Peer of mermaid (D164): after it.
       '@mermaid-chart/bundler-plugin',
+      // No workspace package depends on it yet (mermaid does from #469 T5).
+      '@mermaid-chart/diagram-cynefin',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',
       '@mermaid-chart/language-service-codemirror',
