@@ -10,7 +10,7 @@ Integration branch `feature/421_packet`, cut from `mermaid-v13` at `dd4b9d19f` (
 | T4 SVG renderer and theme table | #460 | #454, #456 | merged |
 | T5 integration | #462 | #460, #414 T0a/T0b | merged |
 | T6 language facet | #458 | #454 | merged |
-| T7 ASCII renderer (optional, D347) | #464 | #462 | running |
+| T7 ASCII renderer (optional, D347) | #464 | #462 | done on `feature/464_packet-ascii` |
 
 - `01-v12-packet.md`: pointer notes on v12 grammar, DB, renderer, specs, corpus and the v13 seams.
 - `IMPLEMENTER.md`: the brief every ticket agent reads.

@@ -3,7 +3,6 @@ import { assertInert } from '@mermaid-js/core/svg';
 import { detectPacket, type PacketModel } from '@mermaid-js/diagram-packet';
 import {
   MermaidError,
-  UnsupportedFormatError,
   type Mermaid,
   type MermaidConfig,
   type Prepared,
@@ -448,11 +447,5 @@ describe('packet render: accessibility, ids, security and formats', () => {
     const err = await api.render('x', 'packet\n0-99999999: "a"').catch((e: unknown) => e);
     expect(err).toBeInstanceOf(MermaidError);
     expect((err as MermaidError).code).toBe('LIMIT');
-  });
-
-  it('draws SVG only: ascii throws UnsupportedFormatError until T7', async () => {
-    await expect(api.render('x', 'packet\n0: "a"', { format: 'ascii' })).rejects.toBeInstanceOf(
-      UnsupportedFormatError
-    );
   });
 });

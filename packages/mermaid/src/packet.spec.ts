@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
 import { packet } from '@mermaid-js/diagram-packet';
-import { createMermaid, UnsupportedFormatError } from './index.ts';
+import { createMermaid } from './index.ts';
 import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
 
@@ -17,12 +17,6 @@ const TEXT = [
   '  +16: "Checksum"',
   '',
 ].join('\n');
-
-const rejection = (p: Promise<unknown>): Promise<unknown> =>
-  p.then(
-    () => undefined,
-    (x: unknown) => x
-  );
 
 const blocks = (svg: string): number => svg.match(/class="packetBlock"/g)?.length ?? 0;
 const viewBox = (svg: string): string | undefined => /viewBox="([^"]*)"/.exec(svg)?.[1];
@@ -91,12 +85,29 @@ describe('packet diagrams through the public API (#462)', () => {
     expect(svg).not.toContain('#123456');
   });
 
-  it('supports svg only: ascii is refused with UnsupportedFormatError (#464 is separate)', async () => {
+  it('draws ascii as one table of boxes, 65 columns for 32 bits (#464, D347)', async () => {
     const m = createMermaid();
     expect(m.supportsFormat('packet', 'svg')).toBe(true);
-    expect(m.supportsFormat('packet', 'ascii')).toBe(false);
-    const e = await rejection(m.render('k5', TEXT, { format: 'ascii' }));
-    expect(e).toBeInstanceOf(UnsupportedFormatError);
-    expect((e as UnsupportedFormatError).diagramType).toBe('packet');
+    expect(m.supportsFormat('packet', 'ascii')).toBe(true);
+    const result = await m.render('k5', TEXT, { format: 'ascii' });
+    expect(result).toMatchObject({ format: 'ascii', diagramType: 'packet', columns: 65, rows: 9 });
+    const lines = result.text.split('\n');
+    expect(lines[2]).toBe('│          Source Port          │       Destination Port        │');
+    expect(lines.at(-1)).toBe(' '.repeat(31) + 'UDP');
+    expect(result.warnings).toEqual([]);
+    expect(
+      m.renderSync(TEXT, { format: 'ascii', config: { ascii: { charset: 'ascii' } } }).text
+    ).toContain('+-------------------------------+-------------------------------+');
+  });
+
+  it('never crops: a drawing wider than ascii.maxWidth warns ASCII_TOO_WIDE (R-ASCII-8)', async () => {
+    const m = createMermaid();
+    const wide = await m.render('k6', TEXT, {
+      format: 'ascii',
+      config: { ascii: { maxWidth: 40 } },
+    });
+    expect(wide.columns).toBe(65);
+    expect(wide.text).toBe((await m.render('k6', TEXT, { format: 'ascii' })).text);
+    expect(wide.warnings.map((w) => w.code)).toEqual(['ASCII_TOO_WIDE']);
   });
 });

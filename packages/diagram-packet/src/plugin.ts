@@ -80,12 +80,13 @@ const theme: DiagramThemeTable = {
  * The packet diagram plugin (DESIGN §12.1, spec #421): `layoutKind: 'custom'` with its own
  * `PacketLayout`. `parse` takes the whole source and the `packet` config (rows depend on
  * `bitsPerRow`); `layout` measures and places everything on v12's canvas; `render` writes the
- * whole `<svg>` document. SVG only. The registry loads it from the package's `mermaid` manifest
- * (#462); `configDefaults` are the `packet` section's generated defaults.
+ * whole `<svg>` document. The registry loads it from the package's `mermaid` manifest (#462);
+ * `configDefaults` are the `packet` section's generated defaults.
  */
 export const packet = {
   id: 'packet',
-  formats: ['svg'] as const,
+  // Text output is the lazily loaded `./ascii` entry (manifest key `ascii`, #464).
+  formats: ['svg', 'ascii'] as const,
   layoutKind: 'custom' as const,
   configDefaults: { ...packetConfigDefaults },
   theme,

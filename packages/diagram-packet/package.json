@@ -1,7 +1,7 @@
 {
   "name": "@mermaid-js/diagram-packet",
   "version": "13.0.0-alpha.0",
-  "description": "Packet diagram plugin for Mermaid: parser, layout and SVG renderer.",
+  "description": "Packet diagram plugin for Mermaid: parser, layout, SVG renderer and text output.",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -15,6 +15,11 @@
       "mermaid-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./ascii": {
+      "mermaid-source": "./src/ascii.ts",
+      "types": "./dist/ascii.d.ts",
+      "default": "./dist/ascii.js"
     },
     "./language": {
       "mermaid-source": "./src/language.ts",
@@ -51,9 +56,11 @@
       "packet"
     ],
     "formats": [
-      "svg"
+      "svg",
+      "ascii"
     ],
     "export": "packet",
+    "ascii": "./dist/ascii.js",
     "language": "./dist/language.js"
   }
 }

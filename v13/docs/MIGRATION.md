@@ -1434,7 +1434,9 @@ e2e fixture, the v12 spec strings and the syntax page; grammar in
 - **Source mapping (D345).** Each field is the AST node `field:<start>-<end>`, from the range it
   resolves to, so its id survives a label edit; a `+N` field's id moves when an earlier field
   changes width.
-- **`format: 'ascii'`** throws `UnsupportedFormatError`: packet has no text output yet.
+- **`format: 'ascii'`** is new (v12 had no text output): the rows as one table of boxes, two
+  columns a bit, labels cut to their field with `…`, the bit numbers above each row and the
+  title below (D347; [ASCII output](ascii.md#packet-diagrams)).
 
 ### Packet theme colours
 

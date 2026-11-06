@@ -6,8 +6,9 @@ cells instead of pixels, and is drawn by the diagram's own `ascii` entry (DESIGN
 
 Only diagram types that declare `ascii` in their manifest support it. In 13.0 those are the
 flowchart (`graph` / `flowchart`), the ER diagram (`erDiagram`): entities are boxed tables,
-relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`), and the
-sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)). See [the format matrix](format-matrix.md) for every type.
+relationships carry their cardinality marks at both ends (`||`, `|o`, `}|`, `}o`), the
+sequence diagram (`sequenceDiagram`, [below](#sequence-diagrams)) and the packet diagram
+(`packet`, [below](#packet-diagrams)). See [the format matrix](format-matrix.md) for every type.
 
 ```
                ┌───◇────┐            ╭─────────╮
@@ -114,8 +115,8 @@ Errors are printed to stderr with the source line and a caret under the problem 
 | 1         | Any error: a usage error (unknown option or command, a `--format` other than `ascii` or `svg`, a bad `--width` or `--charset`), syntax, unknown diagram, unreadable file. |
 | 2         | The API's `UNSUPPORTED_FORMAT`: the diagram type has no form in the asked-for format.  |
 
-Of the diagram types built into 13.0, the flowchart, the ER diagram and the sequence diagram
-render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
+Of the diagram types built into 13.0, the flowchart, the ER diagram, the sequence diagram and
+the packet diagram render as SVG and as text; the state diagram has no text form yet, so `--format ascii` on a
 `stateDiagram` exits 2 (D58, D100).
 
 No browser is involved: text is measured in cells, and SVG output measures with the built-in
@@ -282,6 +283,49 @@ sequenceDiagram
 `sequence.width` to 120 and boxes are at least 15 columns wide. Wrapped text (`wrap`) wraps
 to at least 19 columns.
 
+## Packet diagrams
+
+The packet diagram's text entry (`@mermaid-js/diagram-packet/ascii`, D347) draws from the bit
+grid itself, not from the SVG layout: each bit is two columns, so 32 bits a row give 65.
+
+```
+ 0                            15 16                           31
+┌───────────────────────────────┬───────────────────────────────┐
+│          Source Port          │       Destination Port        │
+└───────────────────────────────┴───────────────────────────────┘
+ 32                           47 48                           63
+┌───────────────────────────────┬───────────────────────────────┐
+│            Length             │           Checksum            │
+└───────────────────────────────┴───────────────────────────────┘
+                               UDP
+```
+
+from
+
+```mermaid
+packet
+  title UDP
+  0-15: "Source Port"
+  16-31: "Destination Port"
+  +16: "Length"
+  +16: "Checksum"
+```
+
+- Each row is a run of boxes sharing their borders. With `packet.showBits: false` the rows share
+  theirs too and make one table; with bit numbers on (the default) a line of them sits above
+  each row: a field's first and last bit, or the one bit of a one-bit field. A number that
+  would run into the one before it is left out, so two never read as one.
+- A label is centred in its field and cut to it with `…` (`~` in ASCII); a split field's
+  label is in each of its pieces. Labels and the title go through the same label layout as
+  SVG, so entities decode, and a label's `<br>` lines join with a space.
+- `packet.bitOrder: descending` mirrors the rows, bit 0 on the right, as in SVG.
+- The title (the `title` statement, else the front-matter one) is centred under the rows.
+- `rowHeight`, `bitWidth`, `paddingX` and `paddingY` are pixel geometry: text ignores them, with
+  no warning. The width is fixed by `bitsPerRow`; a drawing wider than `ascii.maxWidth` is
+  not cropped and warns `ASCII_TOO_WIDE`.
+- Dropped, one `ASCII_DROPPED` warning per kind: `emphasis` (bold and italic labels) and
+  `accessibility` (`accTitle`, `accDescr`).
+
 ## What gets dropped
 
 Text output is plain: no colour. Features with no text form are left out, with **one**
@@ -309,7 +353,8 @@ The other text warnings (`ASCII_SHAPE` is D82's; `ASCII_ROUTE` comes from the re
 ## Size
 
 The text entry is loaded only when text is asked for: an SVG render never fetches it. `core/ascii`
-plus one diagram type's text entry (the flowchart's, the ER diagram's or the sequence diagram's)
+plus one diagram type's text entry (the flowchart's, the ER diagram's, the sequence diagram's or
+the packet diagram's)
 have their own budget of 15 KB gzip, East Asian width data included, outside the 80 KB R-PERF-1
 budget for SVG (D87, R-ASCII-9). The 15 KB budget is soft: the bench's `ascii-size` gate measures
 each type's text path and reports the largest (D130), but never fails. That an SVG render loads

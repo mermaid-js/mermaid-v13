@@ -13,6 +13,7 @@ import {
 } from './ascii-size.ts';
 import type { Bundle } from './build.ts';
 import { bundle } from './build.ts';
+import { chunkOf, closureSize } from './size-budget.ts';
 
 const entry = fileURLToPath(new URL('../../mermaid/src/index.ts', import.meta.url));
 
@@ -39,6 +40,18 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     expect(leaked).toEqual([]);
   });
 
+  // #464: packet's text entry is its own lazily imported chunk, apart from its plugin.
+  it('a packet SVG render loads the packet plugin and no ascii module', () => {
+    const plugin = chunkOf(prod, 'packages/diagram-packet/src/index.ts');
+    expect(plugin).toBeDefined();
+    const { svg } = splitByFormat(prod);
+    expect(svg).toContain(plugin);
+    const loaded = closureSize(prod, [prod.entryFile, plugin!]).files.map((f) => f.path);
+    const inputs = loaded.flatMap((f) => prod.graph[f]!.inputs);
+    expect(inputs).toContain('packages/diagram-packet/src/plugin.ts');
+    expect(inputs.filter(isAsciiModule)).toEqual([]);
+  });
+
   it('keeps the SVG flowchart path loading the flowchart plugin (the R-PERF-1 set)', () => {
     const { svg } = splitByFormat(prod);
     const inputs = svg.flatMap((f) => prod.graph[f]!.inputs);
@@ -49,7 +62,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
     const { ascii } = splitByFormat(prod);
     const inputs = ascii.flatMap((f) => prod.graph[f]!.inputs);
     expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
-    for (const type of ['flowchart', 'er', 'sequence'])
+    for (const type of ['flowchart', 'er', 'sequence', 'packet'])
       expect(inputs.some((i) => i.includes(`diagram-${type}/src/ascii.ts`))).toBe(true);
   });
 
@@ -57,7 +70,7 @@ describe('ascii chunks in the production bundle (R-ASCII-9, D76, D87)', () => {
   // budget is the largest of them, not every type's drawing at once.
   it('measures one text path per diagram type, each holding core/ascii and only its own entry', () => {
     const paths = asciiPaths(prod);
-    expect(paths.map((p) => p.diagram)).toEqual(['er', 'flowchart', 'sequence']);
+    expect(paths.map((p) => p.diagram)).toEqual(['er', 'flowchart', 'packet', 'sequence']);
     for (const { diagram, size } of paths) {
       const inputs = size.files.flatMap((f) => prod.graph[f.path]!.inputs);
       expect(inputs.some((i) => i.includes('core/src/ascii/canvas.ts'))).toBe(true);
