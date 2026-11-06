@@ -15,7 +15,7 @@ import { GANTT_METRICS, type GanttMetrics } from './metrics.ts';
 
 /** What the layout reads from the render context. */
 export type GanttLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme' | 'warn'> &
-  Partial<Pick<RenderContext, 'inline' | 'now' | 'availableWidth'>>;
+  Partial<Pick<RenderContext, 'inline' | 'now' | 'availableWidth' | 'limits'>>;
 
 /** A `gantt.*` value the layout cannot honour (pitfall 22): it uses the default instead. */
 export const GANTT_CONFIG_IGNORED = 'GANTT_CONFIG_IGNORED';
@@ -84,16 +84,18 @@ const textOf = (value: unknown): string | undefined =>
   typeof value === 'string' && value !== '' ? value : undefined;
 
 // Task labels are plain text, as v12 drew them with `.text()`: markup, character references and
-// `\n` are shown as written, so they are escaped before core's label layout reads them. Math
-// spans (`$$…$$`, D176) are passed through untouched for an inline-box provider; icons (D292)
-// contain none of the escaped characters.
+// `\n` are shown as written, so they are escaped before core's label layout reads them. A math
+// span (`$$…$$`, D176) an inline-box provider takes is passed through untouched; one none takes
+// is shown as written too. Icons (D292) contain none of the escaped characters.
 const RE_MATH = /(\$\$[\s\S]*?\$\$)/;
 const RE_ESCAPED = /[&<]|\\(?=n)/g;
 const ESCAPES: Readonly<Record<string, string>> = { '&': '&amp;', '<': '&lt;', '\\': '&#92;' };
-export const literal = (text: string): string =>
+const escaped = (part: string): string => part.replace(RE_ESCAPED, (c) => ESCAPES[c]!);
+/** `text` shown as written, but the math spans `boxed` says a provider takes. */
+export const literal = (text: string, boxed: (span: string) => boolean = () => false): string =>
   text
     .split(RE_MATH)
-    .map((part, i) => (i % 2 === 1 ? part : part.replace(RE_ESCAPED, (c) => ESCAPES[c]!)))
+    .map((part, i) => (i % 2 === 1 && boxed(part) ? part : escaped(part)))
     .join('');
 
 /** v12 `common.lineBreakRegex`: `<br>`, `<br/>`, `</br>`, any case. */
@@ -128,6 +130,11 @@ export function envOf(ctx: GanttLayoutContext): Env {
     title: font(m.titleFontSize),
     vert: font(m.vertFontSize),
   };
+  // Whether an inline-box provider takes the whole span (it comes back as one placeholder).
+  const boxed = (span: string, f: FontKey): boolean => {
+    const out = ctx.inline?.extract(span, f, ctx.measurer);
+    return out !== undefined && out.boxes.length === 1 && out.source.length === 1;
+  };
   const measure = (raw: string, f: FontKey, style = 0): MeasuredLabel =>
     layoutLabel(raw, f, Infinity, ctx.measurer, {
       style,
@@ -161,9 +168,20 @@ export function envOf(ctx: GanttLayoutContext): Env {
     compact: conf.displayMode === 'compact',
     width,
     fonts,
-    label: (text, f, style = 0) => measure(literal(text), f, style),
+    label: (text, f, style = 0) =>
+      measure(
+        literal(text, (span) => boxed(span, f)),
+        f,
+        style
+      ),
     sectionLabel: (text) =>
-      measure(text.split(RE_V12_BREAK).map(literal).join('<br>'), fonts.section),
+      measure(
+        text
+          .split(RE_V12_BREAK)
+          .map((part) => literal(part, (span) => boxed(span, fonts.section)))
+          .join('<br>'),
+        fonts.section
+      ),
   };
 }
 

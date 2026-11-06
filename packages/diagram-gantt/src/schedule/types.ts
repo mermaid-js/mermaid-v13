@@ -42,6 +42,8 @@ export interface Schedule {
   readonly unknownIds: readonly string[];
   /** End fields that are neither a date nor a duration, in first-seen order (D276). */
   readonly badDurations: readonly string[];
+  /** The steps the schedule took (`steps.ts`, D542), on the counter it was given. */
+  readonly steps: number;
 }
 
 export type ScheduleErrorKind = 'invalidDate' | 'noStart' | 'tooManyFields' | 'excluded';

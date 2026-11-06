@@ -587,7 +587,7 @@ themeVariables (config)  ──►  ThemeSpec  ──►  root style aliases  �
 | Extension plugins (`postRender`) | The `SvgTree` view only accepts allowed tags, attributes and branded values, and the allow-list check runs after all hooks (R-PLUG-2) | `core/svg/tree.ts` |
 | Click callbacks | Not in core output. The interactions plugin binds them in the DOM after mount, only when the integrator installed it; diagram text cannot turn it on (R-PLUG-9) | `plugin-interactions` |
 | Theme-variable injection | `safeColor`: charset + function allow-list (`rgb hsl lab oklch color-mix light-dark var(--mermaid-*)`) | `core/theme` |
-| DoS: input size, edges, nesting, output size | Limits in `RenderContext`, integrator-only; `RangeError` → `LIMIT` error | `core/limits.ts` |
+| DoS: input size, edges, nesting, output size, layout work | Limits in `RenderContext`, integrator-only; `RangeError` → `LIMIT` error. `maxLayoutWork` (default `MAX_STEPS`) caps the steps of a layout loop the text can make long, counted, never timed (D542; gantt's scheduling day walk) | `core/limits.ts` |
 | DoS: ReDoS | Linear scanners; regex lint; stress suite (50k runs, 1000-deep nesting, unclosed constructs) | parser kit |
 | Prototype pollution | YAML/JSON merge skips `__proto__`, `constructor`, `prototype` | `core/config` |
 
@@ -600,7 +600,7 @@ class MermaidError extends Error {
   code: 'SYNTAX' | 'SEMANTIC' | 'UNSUPPORTED_DIAGRAM' | 'UNSUPPORTED_FORMAT' | 'NOT_LOADED' | 'LIMIT' | 'INTERNAL';
   line: number; column: number; offset: number; length: number;   // original source, 1-based line/col
   expected?: string[]; diagnostics: Diagnostic[];                   // all diagnostics, first is primary
-  limit?: 'maxSourceLength' | 'maxEdges' | 'maxNodes' | 'maxDepth' | 'maxOutputLength'; // code LIMIT
+  limit?: 'maxSourceLength' | 'maxEdges' | 'maxNodes' | 'maxDepth' | 'maxOutputLength' | 'maxLayoutWork'; // code LIMIT
 }
 ```
 

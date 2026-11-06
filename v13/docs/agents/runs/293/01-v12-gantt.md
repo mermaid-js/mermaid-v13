@@ -150,7 +150,7 @@ The oracle (12.2.0 dist) matches the source: `<main checkout>/node_modules/.pnpm
 - Headers: Pele files carry only a descriptive comment (dates L1–4, axis L3–4), no licence line. v13 adds the header.
 - `tests/gantt/dates.test.ts` (252 lines, 20 `it`): imports `vitest` `{describe, expect, it}`, `axis.js`, `dates.js`, **and `parseDuration` from `src/diagrams/gantt/db.js`** (L4; L170 'reads durations').
   - No `vi`, no `TZ` pin: dates are built with local `new Date(...)` and `NOW = new Date(2031,4,6,9,30,15,250)`.
-- `db.ts` imports `PeleError` (`../../errors.js`), `safeUrl` (`../../util/url.js`), dates, types. `parseDuration` L34, `WORK_LIMIT = 4e8` L23.
+- `db.ts` imports `PeleError` (`../../errors.js`), `safeUrl` (`../../util/url.js`), dates, types. `parseDuration` L34.
   - So the test's `parseDuration` import must be repointed (to v13's schedule) or copied. db.ts does not come along.
 - `tests/compat/gantt/adapter.ts` (110 lines): a `GanttDB extends GanttDb` with v12 getter names, `clear()` = `Object.assign(this, new GanttDb())`; `parser.parse` → `parseGantt`; a `dayjs(text, fmt)` stub for two formats; `convert`.
   - Specs there were ported from mermaid@12.1.0 (`gantt.spec.js` 291 lines, `ganttDb.spec.ts` 622; same 17/28 blocks). `SKIPPED.md` lists none. `tests/gantt/oracle.test.ts`, `stress.test.ts` also exist.

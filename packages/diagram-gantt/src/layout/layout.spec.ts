@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { MermaidError, type Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import { tableMeasurer } from '@mermaid-js/core/text';
+import { inlineSpans, tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { GanttModel } from '../model.ts';
 import { parseGantt } from '../parser/index.ts';
@@ -471,5 +471,62 @@ describe('review fixes (#379 fix round)', () => {
 
   it.each([NaN, 0, -5, Infinity])('ignores availableWidth %s, falling back to 1200', (w) => {
     expect(lay(two(), {}, { availableWidth: w }).layout.width).toBe(1200);
+  });
+});
+
+describe('final review fixes', () => {
+  const parsed = (src: string): GanttModel => parseGantt(src).model;
+
+  it('warns GANTT_UNKNOWN_TASK for a click naming no task written before it', () => {
+    const { warnings } = lay(
+      parsed('gantt\ndateFormat YYYY-MM-DD\nclick a href "u"\na :a, 2024-01-01, 3d')
+    );
+    expect(warnings.map((w) => w.code)).toEqual(['GANTT_UNKNOWN_TASK']);
+    expect(warnings[0]!.message).toContain('"a"');
+  });
+
+  it('shows a math span as written when no inline provider takes it', () => {
+    const { layout } = lay(fixture().addTask('$$<b>x</b>$$ & y', 'a,2014-01-01,1d'));
+    const runs = layout.bars[0]!.label.text.lines.flat();
+    expect(runs.map((r) => r.text).join('')).toBe('$$<b>x</b>$$ & y');
+    expect(runs.every((r) => r.style === 0)).toBe(true);
+  });
+
+  it('passes a math span an inline provider takes through untouched', () => {
+    const inline = inlineSpans(
+      [
+        {
+          open: '$$',
+          close: '$$',
+          box: () => ({ width: 8, height: 10, baseline: 8, node: { tag: 'rect', attrs: {} } }),
+        },
+      ],
+      () => undefined
+    );
+    const layout = layoutGantt(fixture().addTask('$$<b>x</b>$$ & y', 'a,2014-01-01,1d').model(), {
+      config: { gantt: {} } as ResolvedConfig,
+      measurer: tableMeasurer,
+      theme: createTheme(spec),
+      warn: () => undefined,
+      now: NOW,
+      inline,
+    });
+    const runs = layout.bars[0]!.label.text.lines.flat();
+    expect(runs.map((r) => [r.kind ?? 'text', r.text])).toEqual([
+      ['box', '$$<b>x</b>$$'],
+      ['text', ' & y'],
+    ]);
+  });
+
+  it('gives a section title the AST id of the section that holds its tasks', () => {
+    const { layout } = lay(
+      parsed(
+        'gantt\ndateFormat YYYY-MM-DD\nsection A\nsection B\nb :b, 2024-01-01, 1d\nsection A\na :a, 2024-01-01, 1d'
+      )
+    );
+    expect(layout.sections.map((s) => [s.section, s.ast])).toEqual([
+      ['B', 's:B'],
+      ['A', 's:A@2'],
+    ]);
   });
 });

@@ -187,6 +187,7 @@ is reported as a `CONFIG_SECURE_KEY` warning). Over a limit, the render rejects 
 | `maxNodes` | 10,000 | none |
 | `maxDepth` | subgraphs nested 100 deep; a stack overflow in any stage is reported as this limit | none |
 | `maxOutputLength` | 4,000,000 characters of SVG | none |
+| `maxLayoutWork` | 1,500,000 steps of a layout loop the text can make long (`MAX_STEPS`, D542); gantt counts each day its schedule walks for excluded days, on every pass | none |
 
 ### Errors and the error image
 
@@ -1463,7 +1464,14 @@ strings; the schedule is compared with v12's DB at a fixed instant). The differe
   position (`GANTT_INVALID_DATE`, `GANTT_NO_START`, `GANTT_TOO_MANY_FIELDS`,
   `GANTT_EXCLUDED_ALL`), with v12's messages. v12 threw from its renderer. Parsing no longer
   depends on `now`, so a cached parse stays valid.
-- **Warnings (D276):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`) and data that
+- **Scheduling work limit (D542, R-SEC-5):** a chart whose schedule walks more than
+  `maxLayoutWork` days (default 1,500,000; every day a task spans is walked for its excluded
+  days, on each pass) is refused with a `LIMIT` error. v12 rendered it, after minutes: about
+  2,000 tasks of `9000y` with any `excludes` fit in the source limit. The largest corpus chart
+  walks 689 days. Raise it with `initialize({ limits: { maxLayoutWork } })` or a per-call
+  `config.limits`.
+- **Warnings (D276):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`; a click names
+  only a task written before it, as v12 bound it while reading the line) and data that
   is neither a date nor a duration (`GANTT_BAD_DURATION`), one each per render, where v12 only
   logged. Also new: `GANTT_TICK_INTERVAL_IGNORED` (a `tickInterval` that would draw more than
   10,000 ticks: automatic ticks instead), `GANTT_EXCLUDES_NOT_DRAWN` (a chart over five years
@@ -1534,7 +1542,7 @@ Class lists are written with single spaces and no trailing blank.
 | Element ids `<id>-<task id>` on bars, `<id>-<task id>-text` on labels, `<id>-exclude-<date>` on excluded days | No ids. A bar carries `data-id="<task id>"` and `data-ast="t:<id>"`, its label `data-id` only; a section title `data-id="<section>"` and `data-ast="s:<section>"`. A section statement v12 drew no title for (a repeated name, a section of only `vert` markers) gets an empty `<g class="sectionTitle" data-id data-ast>` | R-PARSE-8, no colliding ids |
 | `width-<n>` classes on labels | Dropped | They held the measured width, which depends on the measurer |
 | A linked task wrapped in `<a xlink:href target="_top">` only under `securityLevel: sandbox`; otherwise `href` was a `window.open(url, '_self')` handler on the bar and label. v12's sanitizer rewrote the URL (`https://example.com` → `…com/`) | The bar and label of a task a `click … href` names sit in one `<a href>`, after the other tasks, in every security level, with no `target`. The URL is kept as written and checked by core: an unsafe one draws the task unlinked with one `URL_REFUSED` warning | R-SVG-4, R-SEC-4, D23, D62 |
-| `todayMarker` written as a `style` attribute with `,` turned into `;` | Split on `,` (and `;`, which v12's `style` also separated on) and checked: allowed properties become presentation attributes on the line, others are dropped with `STYLE_PROPERTY_DROPPED` | R-SEC-2 |
+| `todayMarker` written as a `style` attribute with `,` turned into `;` | Split on `,` (the statement stops at `;`, so none reaches the value) and checked: allowed properties become presentation attributes on the line, others are dropped with `STYLE_PROPERTY_DROPPED` | R-SEC-2 |
 | A `transform-origin` attribute on every bar and every excluded-day rect; milestones turned by CSS, `transform: rotate(45deg) scale(0.8, 0.8)` about it | No `transform-origin`. A milestone carries the same geometry as a `transform` attribute about v12's origin (its square's centre; above the marker for a task tagged both `vert` and `milestone`, which keeps both, as in v12) | No CSS in the output |
 | `<g class="grid" transform="translate(leftPadding, h − 50)">` (top axis: `translate(leftPadding, topPadding)`) and d3's `<g class="tick" transform="translate(x, 0)">` per tick | The same elements at absolute coordinates, without `transform` | The renderer writes absolute coordinates |
 | Tick text `fill="#000"` `stroke="none"` `font-size="10"`, overridden by `.grid .tick text { fill: textColor }`; d3's tick lines `stroke="currentColor"` (the page's colour, as v12's `.grid .tick { stroke: gridColor }` matched only the group); d3's axis path, hidden by `.grid path { stroke-width: 0 }`; `shape-rendering: crispEdges` on ticks and `doneCrit` bars | Tick text in `textColor` at 10px; tick lines in `gridColor` at v12's 0.8 opacity; no axis path; no `shape-rendering` | What v12's CSS meant; `shape-rendering` is not an allowed attribute |

@@ -5,6 +5,8 @@
  */
 import { MermaidError } from '@mermaid-js/core';
 import { formatDiagnostic, type Diagnostic } from '@mermaid-js/core/parser-kit';
+import { clickTargets } from '../ids.ts';
+import { Steps } from '../steps.ts';
 import {
   schedule,
   ScheduleError,
@@ -40,12 +42,14 @@ export function layoutGantt(model: GanttModel, ctx: GanttLayoutContext): GanttLa
     );
   }
   const env = envOf(ctx);
-  const plan = scheduled(model, now);
+  // One work counter for the schedule and the exclude ranges (D542).
+  const steps = new Steps(ctx.limits?.maxLayoutWork);
+  const plan = scheduled(model, now, steps);
   warnings(model, plan, ctx);
   const c = chartOf(env, model, plan);
   const sections = sectionsOf(c);
   const bands = bandsOf(c);
-  const excludes = c.domain ? excludesOf(c, ctx.warn) : [];
+  const excludes = c.domain ? excludesOf(c, ctx.warn, steps) : [];
   const bars = c.domain ? barsOf(c) : [];
   const axes = axesOf(c, ctx.warn, ctx.measurer.metrics(env.fonts.tick));
   const today = todayOf(c, now);
@@ -71,9 +75,9 @@ export function layoutGantt(model: GanttModel, ctx: GanttLayoutContext): GanttLa
 }
 
 /** The schedule, or the render's `SEMANTIC` error at the task that failed (D274). */
-function scheduled(model: GanttModel, now: number): Schedule {
+function scheduled(model: GanttModel, now: number, steps: Steps): Schedule {
   try {
-    return schedule(model, { now });
+    return schedule(model, { now, steps });
   } catch (e) {
     if (!(e instanceof ScheduleError)) throw e;
     const range = model.tasks[e.index]?.dataRange;
@@ -94,15 +98,17 @@ const quoted = (list: Iterable<string>): string => [...list].map((s) => `"${s}"`
 
 /** D276: one warning each for unknown ids (`after`, `until`, `click`) and bad durations. */
 function warnings(model: GanttModel, plan: Schedule, ctx: GanttLayoutContext): void {
-  const known = new Set(model.tasks.map((t) => t.id));
-  // v12 kept ids on a plain object, where `__proto__` is never stored.
-  known.delete('__proto__');
   const unknown = new Set(plan.unknownIds);
-  for (const click of model.clicks) for (const id of click.ids) if (!known.has(id)) unknown.add(id);
+  // A click names the latest task with the id written before it, or nothing (`ids.ts`).
+  clickTargets(model.tasks, model.clicks).forEach((targets, i) =>
+    targets.forEach((at, k) => {
+      if (at === undefined) unknown.add(model.clicks[i]!.ids[k]!);
+    })
+  );
   if (unknown.size > 0) {
     ctx.warn({
       code: GANTT_UNKNOWN_TASK,
-      message: `No task has the id ${quoted(unknown)}: "after" then starts and "until" ends at midnight today, and a click does nothing. Milestones need an id and a duration, e.g. "Milestone :milestone, m1, 2023-01-01, 0d".`,
+      message: `No task has the id ${quoted(unknown)} (for a click: none written before it): "after" then starts and "until" ends at midnight today, and a click does nothing. Milestones need an id and a duration, e.g. "Milestone :milestone, m1, 2023-01-01, 0d".`,
     });
   }
   if (plan.badDurations.length > 0) {

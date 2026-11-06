@@ -20,6 +20,8 @@ import {
   readStartDate,
   WEEKDAYS,
 } from '../dates/index.ts';
+import { lastById, RE_AFTER, RE_UNTIL } from '../ids.ts';
+import { dayCost, Steps } from '../steps.ts';
 import {
   ScheduleError,
   type Schedule,
@@ -33,8 +35,6 @@ const MAX_PASSES = 11;
 /** v12 `fixTaskDates`: an end pushed past this many days fails. */
 const MAX_PUSHED_DAYS = 10000;
 const WEEKEND_START_DAY = { friday: 5, saturday: 6 } as const;
-const RE_AFTER = /^after\s+([\d\w- ]+)/;
-const RE_UNTIL = /^until\s+([\d\w- ]+)/;
 const MANUAL_END_FORMAT = 'YYYY-MM-DD';
 const NAMES = WEEKDAYS.map((d) => d.toLowerCase());
 
@@ -50,18 +50,23 @@ interface State {
 export interface ScheduleOptions {
   /** The instant treated as now (ms since the epoch, D270). */
   readonly now: number;
+  /**
+   * The work counter (D542): a `maxLayoutWork` limit's, shared with the layout. Default: a
+   * fresh one at core's default limit.
+   */
+  readonly steps?: Steps;
 }
 
 /** Schedules `input` against `now` as v12's `getTasks()` did. */
 export function schedule(input: ScheduleInput, options: ScheduleOptions): Schedule {
-  return new Scheduler(input, options.now).run();
+  return new Scheduler(input, options.now, options.steps ?? new Steps()).run();
 }
 
 class Scheduler {
   private readonly tasks: readonly ScheduleTask[];
   private readonly state: State[];
   /** v12 `taskDb`: id → index of its last definition. */
-  private readonly byId = new Map<string, number>();
+  private readonly byId: ReadonlyMap<string, number>;
   private readonly nowDate: Date;
   private readonly today: number;
   private readonly format: string;
@@ -72,16 +77,19 @@ class Scheduler {
   private readonly unknown = new Set<string>();
   private readonly bad = new Set<string>();
 
+  /** What each walked day costs (`steps.ts`). */
+  private readonly cost: number;
+
   constructor(
     private readonly input: ScheduleInput,
-    now: number
+    now: number,
+    private readonly steps: Steps
   ) {
+    this.cost = dayCost(input.dateFormat);
     this.tasks = input.tasks;
+    this.byId = lastById(input.tasks);
     this.state = input.tasks.map(() => ({ manualEnd: false, processed: false }));
-    input.tasks.forEach((t, i) => {
-      // v12 assigns `taskDb[id]`, a plain object: `__proto__` is never stored.
-      if (t.id !== '__proto__') this.byId.set(t.id, i);
-    });
+
     this.nowDate = new Date(now);
     const midnight = new Date(now);
     midnight.setHours(0, 0, 0, 0);
@@ -112,7 +120,12 @@ class Scheduler {
         order: task.tags.includes('vert') ? -1 : order++,
       };
     });
-    return { tasks, unknownIds: [...this.unknown], badDurations: [...this.bad] };
+    return {
+      tasks,
+      unknownIds: [...this.unknown],
+      badDurations: [...this.bad],
+      steps: this.steps.taken,
+    };
   }
 
   /** v12 `compileTask`: whether the task is processed after this pass. */
@@ -224,6 +237,7 @@ class Scheduler {
     let invalid = false;
     let renderEnd: number | undefined;
     while (day.getTime() <= end.getTime()) {
+      this.steps.take(this.cost);
       if (!invalid) renderEnd = end.getTime();
       invalid = this.excluded(day);
       if (invalid) {

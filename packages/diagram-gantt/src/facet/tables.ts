@@ -5,7 +5,7 @@
  */
 import type { CompletionKind, Range } from '@mermaid-js/core/parser-kit';
 import type { GanttModel, GanttTag, GanttTask } from '../model.ts';
-import { NEVER_STORED } from '../parser/task-ids.ts';
+import { clickTargets, lastById } from '../ids.ts';
 import { T } from '../parser/tokens.ts';
 
 /** An item offered when the parser expects `kind`. */
@@ -158,14 +158,27 @@ export function lineBefore(text: string, at: number): string {
   return text.slice(start, at);
 }
 
-/**
- * Each id's last task: the one v12 finds (`taskDb` is last-wins). One pass; `__proto__` is
- * left out, as v12 never stores it.
- */
+/** Each id's last task: the one `after`/`until` name (`ids.ts` `lastById`). */
 export function tasksById(model: GanttModel | undefined): Map<string, GanttTask> {
-  const out = new Map<string, GanttTask>();
-  for (const t of model?.tasks ?? []) if (t.id !== NEVER_STORED) out.set(t.id, t);
-  return out;
+  const tasks = model?.tasks ?? [];
+  return new Map([...lastById(tasks)].map(([id, i]) => [id, tasks[i]!]));
+}
+
+/**
+ * The task the id `name` of the `click` at `offset` names: the latest task with it written
+ * before the click (`ids.ts` `clickTargets`), undefined when none is (or no click is there).
+ */
+export function clickTask(
+  model: GanttModel | undefined,
+  offset: number,
+  name: string
+): GanttTask | undefined {
+  if (!model) return undefined;
+  const i = model.clicks.findIndex((c) => c.range.start <= offset && offset <= c.range.end);
+  const click = model.clicks[i];
+  if (!click) return undefined;
+  const at = clickTargets(model.tasks, [click])[0]![click.ids.indexOf(name)];
+  return at === undefined ? undefined : model.tasks[at];
 }
 
 /** Whether a task data field is a tag (v12 `getTaskTags`: `^\s*tag\s*$`, case-sensitive). */

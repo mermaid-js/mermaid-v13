@@ -6,6 +6,7 @@
 import type { Warning } from '@mermaid-js/core';
 import { add, addDays } from '../dates/index.ts';
 import { isExcluded, WEEKEND_START_DAY } from '../schedule/index.ts';
+import { dayCost, type Steps } from '../steps.ts';
 import { byStart, type Chart, type Domain } from './chart.ts';
 import { GANTT_TICK_INTERVAL_IGNORED, tickLabel, ticksOf } from './ticks.ts';
 import type {
@@ -47,9 +48,14 @@ export function bandsOf(c: Chart): GanttBand[] {
 /** v12 `vertLabels`: one title per section name, centred on its rows. */
 export function sectionsOf(c: Chart): GanttSectionLabel[] {
   const { env } = c;
-  // The first section with each name (v12 keyed sections by name).
+  // v12 keyed titles by name: each takes the AST id of the first section with that name that
+  // holds a drawn task (tasks are in source order), not of an empty one before it.
   const asts = new Map<string, string>();
-  for (const s of c.model.sections) if (!asts.has(s.text)) asts.set(s.text, s.ast);
+  for (const t of c.plain) {
+    const at = c.model.tasks[t.index]?.section;
+    const s = at === undefined ? undefined : c.model.sections[at];
+    if (s && !asts.has(s.text)) asts.set(s.text, s.ast);
+  }
   let before = 0;
   return c.rows.sections.map(([name, n]) => {
     const y = (n * c.gap) / 2 + before * c.gap + env.topPadding;
@@ -91,7 +97,7 @@ function spanOf(c: Chart): Domain | undefined {
 }
 
 /** v12 `drawExcludeDays`: runs of excluded days over the tasks, none past five years. */
-export function excludesOf(c: Chart, warn: Warn): Rect[] {
+export function excludesOf(c: Chart, warn: Warn, steps: Steps): Rect[] {
   const { env, model } = c;
   if (model.excludes.length === 0 && model.includes.length === 0) return [];
   const span = spanOf(c);
@@ -112,7 +118,9 @@ export function excludesOf(c: Chart, warn: Warn): Rect[] {
   const height = c.h - env.topPadding - env.gridLineStartPadding;
   const out: Rect[] = [];
   let run: [Date, Date] | undefined;
+  const cost = dayCost(model.dateFormat);
   for (let d = new Date(span.start); d.getTime() <= span.end; d = addDays(d, 1)) {
+    steps.take(cost);
     if (isExcluded(d, model.dateFormat, includes, excludes, weekend)) {
       run = [run ? run[0] : d, d];
       continue;
