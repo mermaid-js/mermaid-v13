@@ -519,16 +519,16 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `mindmap` | object |  | pending |  | The object containing configurations specific for mindmap diagrams |
-| `mindmap.useWidth` | number |  | pending |  |  |
-| `mindmap.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `mindmap` | object |  | honoured (13.0.0) |  | The object containing configurations specific for mindmap diagrams |
+| `mindmap.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
+| `mindmap.useMaxWidth` | boolean | `true` | honoured (13.0.0) | As v12's `setupViewPortForSVG`, `width="100%"` and a `max-width` when true. | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `mindmap.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `mindmap.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
-| `mindmap.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `mindmap.colorBy` | "branch" \\| "depth" | `"branch"` | pending |  | Color nodes by their top-level branch or by their depth in the tree. Depth is counted from the root, independently of indentation width. |
-| `mindmap.padding` | number | `10` | pending |  |  |
-| `mindmap.maxNodeWidth` | number | `200` | pending |  |  |
-| `mindmap.layoutAlgorithm` | string | `"cose-bilkent"` | ignored (13.0.0) | Mindmap lays out with core's `tree` engine (D284); the top-level `layout` key chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`. Replacement: `layout`. | Layout algorithm to use for positioning mindmap nodes |
+| `mindmap.layout` | string |  | honoured (13.0.0) | Set here, it wins over the top-level `layout` for mindmaps. Unset in both, mindmaps lay out with `tree`, core's two-sided tidy tree (D284). v12's `cose-bilkent` and `tidy-tree` map to `tree` silently (D282); `layered`, `dagre` and an installed `elk.*` are honoured; an unknown or uninstalled name draws with `tree` and warns `LAYOUT_UNKNOWN` or `ELK_NOT_INSTALLED`. | Defines which layout algorithm to use for rendering the diagram. |
+| `mindmap.colorBy` | "branch" \\| "depth" | `"branch"` | honoured (13.0.0) | As v12: eleven sections, by top-level branch or by depth below the root; any other value colours by branch. | Color nodes by their top-level branch or by their depth in the tree. Depth is counted from the root, independently of indentation width. |
+| `mindmap.padding` | number | `10` | honoured (13.0.0) | Where v12 read it (D287): the margin around the drawing, and the padding inside default, cloud and bang nodes in every theme. In the classic themes it also pads circles, and twice it pads hexagons; in the redux family, `neo` and `neo-dark` the theme's `circlePadding` and `hexagonPaddingX` / `hexagonPaddingY` take over there. Square and rounded nodes keep their own paddings. Numeric strings are read as numbers; anything else, or a value below 0, lays out with 10 and warns `MINDMAP_CONFIG_IGNORED`. | Padding in px inside default, cloud and bang nodes (and, in the classic themes, circles, and twice this inside hexagons), and the margin around the drawing. |
+| `mindmap.maxNodeWidth` | number | `200` | honoured (13.0.0) | Labels wrap at it in every shape (D287); v12 wrapped square, rounded and hexagon nodes at `flowchart.wrappingWidth` instead (both 200 by default). Numeric strings are read as numbers; anything else, or a value of 0 or less, lays out with 200 and warns `MINDMAP_CONFIG_IGNORED`. | The width in px at which node labels wrap. |
+| `mindmap.layoutAlgorithm` | string | `"cose-bilkent"` | ignored (13.0.0) | v12 never read it. Mindmap lays out with core's `tree` engine (D284); `mindmap.layout` or the top-level `layout` chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`. Replacement: `mindmap.layout` or `layout`. | Layout algorithm to use for positioning mindmap nodes |
 
 ## `ishikawa`
 

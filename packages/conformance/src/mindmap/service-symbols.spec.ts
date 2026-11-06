@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectMindmap, parseMindmap } from '@mermaid-js/diagram-mindmap';
-import { mindmapLanguage } from '@mermaid-js/diagram-mindmap/language';
+import { parseMindmap } from '@mermaid-js/diagram-mindmap';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';
@@ -19,19 +18,11 @@ import { classWords, mindmapV12Snapshot } from './v12.ts';
  * - folding per subtree: every v12 node with a child on a later line has a `node` fold starting
  *   at it that holds its whole subtree and no node after it.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until mindmap's
- * manifest has its `language` entry (#390); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (mindmap's manifest
+ * `language` entry, #390).
  */
-const service = createLanguageService({
-  facets: [
-    {
-      type: 'mindmap',
-      id: 'mindmap',
-      detector: (t) => detectMindmap(t),
-      facet: mindmapLanguage,
-    },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['mindmap'] });
 
 const inside = (r: Range, outer: Range) => outer.start <= r.start && r.end <= outer.end;
 const key = (r: Range) => `${r.start}:${r.end}`;
@@ -140,8 +131,9 @@ describe('mindmap symbols and folding through the service match v12', () => {
     expect(problems).toEqual([]);
   }, 300_000);
 
-  it('runs with an eager row only while mindmap has no manifest `language` entry', () => {
+  it('loads the facet from the generated registry (#390)', () => {
     const row = firstPartyFacets.find((e) => e.type === 'mindmap');
-    expect(row?.load, 'drop the eager row: the manifest registers the facet').toBeUndefined();
+    expect(row?.load).toBeTypeOf('function');
+    expect(service.update('x:///m', 'mindmap\n  root').facet?.id).toBe('mindmap');
   });
 });

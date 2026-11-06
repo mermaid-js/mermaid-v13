@@ -22,7 +22,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Exploration: a node's level is its raw indent width (jison), not its tree depth; `edge-depth-<d>` comes from it (`mindmapDb.ts:326`). Keep the raw level in the model next to the depth. **Closed** (#386): `MindmapNode.level` and `.depth`.
 - Exploration: a second `:::` line on the same node replaces its classes (one `:::a b` line sets two). Follow v12. **Closed** (#386): also `::: ` (blanks only) clears them, as in v12.
 - The corpus has no `:::` classes: add hand-written fixtures. **Closed** (#386): `corpus/mindmap-cases.json`.
-- Found: v12 rejects a node right after a blank line that follows `mindmap` (`mindmap\n\n  root`), and after two blank or comment runs in a row: `SPACELINE` is a statement and a separator in `mindmap.jison`. Followed (oracle); the message says to remove a blank line, and recovery still reads the node.
+- Found: v12 rejects a node right after a blank line that follows `mindmap` (`mindmap\n\n  root`), and after two `SPACELINE` tokens in a row: `SPACELINE` is a statement and a separator in `mindmap.jison`. These are token runs, not lines (review of #390): two blank lines, or two comment lines, are accepted; what is rejected is a comment line between blank lines in some layouts (`root\n\n%%\n\n    b`); every case agrees with the oracle. Followed (oracle); the message says to remove a blank line, and recovery still reads the node.
 - **Choice:** AST ids use the id with blanks around it dropped (`a ` and `a` are `n:a`, `n:a@2`); the model keeps v12's id as written.
 - **Choice:** a second root is in the AST but not in the model (v12 threw before adding it), and the parents of later nodes are found as if it were not there; a decoration after it lands on its AST node only.
 - **Choice:** `icons(model)` strips the second word's prefix only when it is the pack (`mdi mdi-fire`) or `fa` after a Font Awesome pack (`fab fa-github`); any other reference is listed trimmed, as written (it resolves to nothing, so the icons plugin shows it as written). Review of #386.
@@ -60,7 +60,12 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** a subtree's fold also takes the `%%` comment lines right after it that are indented deeper than its node (review of #389, after D259's timeline rule); blank lines after them stay out.
 
 ## #390 T5 integration
-- Fixture descriptions: also `text-should-wrap-with-icon.mmd` has no icon (four wrong descriptions, not three).
+- Fixture descriptions: also `text-should-wrap-with-icon.mmd` has no icon (four wrong descriptions, not three). **Closed** (#390): `rounded-rect-shape.mmd` says circle, `circle-shape.mmd` rounded rectangle, `text-should-wrap-with-icon.mmd` that it has no icon. The two `bang-and-cloud-shape*.mmd` descriptions already matched their content; the file names are swapped (`-with-icons` has none), so its description says so instead of trading descriptions.
+- #386's integrator limits: **Closed** (#390): `parseMindmap({ maxNodes, maxDepth })`, defaults `DEFAULT_LIMITS`; the plugin passes `ctx.limits`. `NODE_LIMIT` at the first node over `maxNodes` (the root counts), `DEPTH_LIMIT` at the first node more than `maxDepth` levels under the root, each once. **Choice:** `maxEdges` is not applied: a mindmap's edges are derived (one per non-root node), so with the defaults (10,000 nodes, 5,000 edges) it would cap mindmaps at 5,001 nodes; v12's edge cap was flowchart's only.
+- #389's list: **Closed** (#390): manifest `language`, `gen:registry`; the `unlisted-facets.ts` row and the conformance eager row are gone; `LEZER_HIGHLIGHTERS` / `MONARCH_HIGHLIGHTERS` rows and each adapter's `gen`; `adapters-agree`, highlighter specs and both first-paint e2e specs cover mindmap; `@mermaid-js/diagram-mindmap` is an optional peer of the service (the package is now public, `13.0.0-alpha.0`, as `workspace-release.spec.ts` needs).
+- **Choice:** `configDefaults` are generated (`mindmap` in `SECTION_OWNERS`, `gen:config`), as for flowchart and class: every key has v12's default in the schema (`padding` 10, `maxNodeWidth` 200 are also `MINDMAP_METRICS`' fallbacks).
+- **Choice:** the `icon` baselines wait for #328: the dev gallery renders with the icons extension and requires no warnings, but the renderer still shows references as written with `ICON_NOT_RENDERED`. The theme baselines carry no `::icon()`; the nightly-check icon fixtures still run in `mmd-snapshots`.
+- Not done: MIGRATION.md's hand-drawn section still says "Mindmap will be sketched once it is ported" (#344's).
 
 ## #328 icons I5
 - **Choice:** the glyph is asked for by `mindmapIconName` (D297), 40 px, `paint` = `cScaleLabel<section>` (the reference's colour, a colour under every family: no gradient as flowchart's neo glyphs take, since D297 names the colour), no `fallbackPrefix` (a bare reference is shown as written, as v12's CSS class needed a pack). Drawn as `g.mindmap-icon[transform=translate(…)]` round the fitted glyph, where `text.mindmap-icon` goes without one; layout is unchanged.
@@ -68,3 +73,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** the e2e page's static packs gain `fa`'s `book` and an `mdi` pack with `fire` (`packages/dev/src/icon-packs.ts`), the two glyphs the corpus names; no other fixture names them.
 
 ## #344 hand-drawn H4
+
+## Corpus cleanup (maintainer rule, 2026-11-06: "Only real diagrams")
+- [ ] Before #406 is ready: go through `EDGE_CASES` and any other hand-written source list in `packages/conformance/src/mindmap/` (lexer `corpus.ts`, parser cases, layout corpus). A real, renderable mindmap moves to a `.mmd` fixture under `e2e/diagrams/mindmap/<tier>/`, or is dropped if the corpus already covers it. Input meant to fail, or lexer-only text, may stay, preferably in `packages/conformance/corpus/mindmap-cases.json` (the timeline/quadrant convention) instead of a TS array. Generated variants stay. Re-run the gates and `pnpm check`; record counts under "For the maintainer".
+

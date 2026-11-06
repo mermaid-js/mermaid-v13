@@ -133,10 +133,11 @@ describe('stress: the mindmap parser is linear in input size', () => {
   );
 
   it('parses a 10k-node mindmap', () => {
-    const body = Array.from({ length: 10_000 }, (_, k) => `${' '.repeat((k % 8) + 1)}n${k}`);
+    // The root and 9,999 nodes: the default node limit (R-SEC-5).
+    const body = Array.from({ length: 9_999 }, (_, k) => `${' '.repeat((k % 8) + 1)}n${k}`);
     const src = ['mindmap', 'root', ...body].join('\n');
     const r = parseMindmap(src);
     expect(r.diagnostics).toEqual([]);
-    expect(r.model.nodes).toHaveLength(10_001);
+    expect(r.model.nodes).toHaveLength(10_000);
   });
 });

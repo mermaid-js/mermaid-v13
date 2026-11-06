@@ -1,8 +1,13 @@
 /**
- * `@mermaid-js/diagram-mindmap`: the mindmap diagram plugin (spec #294). The parser, its model
- * and AST, the lexer, the layout and the renderer are here; the plugin export and manifest land
- * with T5 (#390).
+ * `@mermaid-js/diagram-mindmap`: the mindmap diagram plugin (spec #294): the plugin export
+ * (`mindmap`), the lexer, parser, layout and SVG renderer entries, and the model and AST types.
+ * The package's `mermaid` manifest registers it, with `./language` as the language facet.
  */
+import type { DiagramPlugin } from '@mermaid-js/core';
+import type { MindmapModel } from './model.ts';
+import type { MindmapLayout } from './layout/layout.ts';
+
+export { mindmap } from './plugin.ts';
 export {
   detectMindmap,
   JISON_NAMES,
@@ -29,3 +34,6 @@ export type { Outline, OutlineArc } from './layout/outline.ts';
 export { renderMindmap } from './render/render.ts';
 export type { MindmapRenderContext } from './render/context.ts';
 export { ICON_NOT_RENDERED } from './render/assets.ts';
+
+/** The plugin's contract. */
+export type MindmapPlugin = DiagramPlugin<MindmapModel, MindmapLayout>;
