@@ -2,10 +2,10 @@
  * The cynefin theme variables, read through one module until they exist (spec #423, #414 T0a).
  *
  * v12 reads 15 variables from `themeVariables.cynefin` (`theme-default.js:298-315`). v13 has
- * none of them yet: T5 (#469) adds them to the package's `DiagramPlugin.theme` table (D322,
- * D331, D335), and `Theme.number('cynefin…')` throws for a name it does not know. Until then
- * every cynefin reader goes through here, so T5 swaps this one module for theme reads and
- * nothing else changes. An author's `themeVariables.cynefin.*` override is not honoured yet.
+ * none of them yet: T4 (#468) declares them in the plugin's `DiagramPlugin.theme` table (#414
+ * T0a, D322, D331, D335), and `Theme.number('cynefin…')` throws for a name it does not know.
+ * Until then every cynefin reader goes through here, so T4 swaps this one module for theme
+ * reads and nothing else changes. An author's `themeVariables.cynefin.*` override is not honoured yet.
  *
  * The lengths are v12's defaults, identical in every v12 theme. T4 (#468) adds the colours.
  */
@@ -33,7 +33,7 @@ const V12_LENGTHS: CynefinThemeLengths = {
   arrowWidth: 2,
 };
 
-/** The cynefin lengths of `theme` (v12's defaults until T5 adds the variables). */
+/** The cynefin lengths of `theme` (v12's defaults until T4 adds the variables). */
 export function cynefinThemeLengths(theme: Theme): CynefinThemeLengths {
   void theme;
   return V12_LENGTHS;
