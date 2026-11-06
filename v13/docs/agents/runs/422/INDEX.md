@@ -1,6 +1,6 @@
 # Run notes, spec #422 (radar)
 
-Integration branch `feature/422_radar`, cut from `mermaid-v13` at `dd4b9d19f` (#411 merged: D314–D339, D341–D428, D540–D541). Worktree: `/Users/knsv/repos/mermaid-v13/.claude/worktrees/422-radar-0da684`.
+Integration branch `feature/422_radar` (draft PR #474), cut from `mermaid-v13` at `dd4b9d19f` (#411 merged: D314–D339, D341–D428, D540–D541). Worktree: `/Users/knsv/repos/mermaid-v13/.claude/worktrees/422-radar-0da684`.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
