@@ -11,6 +11,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #368 T1 lexer
 - `INT` beats `REFERENCE`: `branch 123` is rejected in v12 (not in the spec). The oracle decides; T1 reproduces it, T2 rejects it. Done in T1: reproduced and gated (quirks `branch 123`, `10abc`, `10.5`, `007`).
 
+- Review note (#368): `runSpec` swallows async rejections, so a v12 test that parses again after an `await` would lose that source. Every gitGraph test parses once before its first await today (68 sites, 69 sources with the `__proto__` loop), so nothing is lost; kept.
+
 ## #369 T4a palettes
 - D267 says v12 ignores a user's `tagLabelBorder`; probing shows every v12 theme re-applies user overrides after deriving, so a user's `tagLabelBorder`, `git<n>` and `gitBranchLabel<n>` win in every theme. D267's outcome (honour it, `tagBorder` an alias) still matches v12; the spec's reasoning is what is off. MIGRATION.md should not claim a change there.
 - Core's `NUMBERED_PALETTES` / `PALETTE_LIMIT` assume 12 slots; the git palettes have 8 (D267), and git's hue steps are not core's `HUE_STEPS`. T4a extends this additively (per-palette slot count).
@@ -24,5 +26,6 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #372 T6 language facet
 
 ## #373 T4 renderer
+- [ ] Drop the `gitgraph` exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one variable"), added by #368.
 
 ## #374 T5 integration
