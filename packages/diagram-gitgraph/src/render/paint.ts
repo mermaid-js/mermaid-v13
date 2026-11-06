@@ -87,7 +87,15 @@ export interface Paints {
   readonly cherryPickDot: number;
 }
 
+/** What a theme gives a colour variable it has no value or rule for. */
+const UNSET = 'currentColor';
+/** v12's cherry-pick ink where a theme sets none: white (v12 `isDark ? '#000000' : '#fff'`). */
+const CHERRY_INK = '#ffffff' as SafeColor;
+
 const flagOf = (theme: Theme, v: GitFlagVariable): boolean => theme.value(v.name) === 'true';
+/** A colour variable, or `fallback` where the theme gives it no value (v12's `??`). */
+const colorOr = (theme: Theme, name: string, fallback: Paint): Paint =>
+  theme.value(name) === UNSET ? fallback : theme.color(name);
 const numberOf = (theme: Theme, v: GitLengthVariable): number => theme.number(v.name);
 
 const weightOf = (value: string): SafeValue | undefined =>
@@ -174,10 +182,10 @@ export function paints(ctx: Pick<RenderContext, 'theme'>, titled: boolean): Pain
     crossWidth: nodeColors ? strokeWidth : CLASSIC_CROSS_WIDTH,
     cherry: {
       fill: nodeColors ? nodeBorder : undefined,
-      ink: theme.color(GIT_PAINT.cherryPickInk.name),
+      ink: colorOr(theme, GIT_PAINT.cherryPickInk.name, CHERRY_INK),
     },
     line: {
-      stroke: theme.color(GIT_PAINT.commitLineColor.name),
+      stroke: colorOr(theme, GIT_PAINT.commitLineColor.name, theme.color('lineColor')),
       dash: nodeColors ? NODE_DASH : CLASSIC_DASH,
     },
     commitLabel: { ...commitLabel, size: theme.length('commitLabelFontSize') },

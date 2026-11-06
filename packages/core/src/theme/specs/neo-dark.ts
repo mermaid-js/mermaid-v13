@@ -72,6 +72,8 @@ const neoDark: ThemeSpec = {
     ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
   },
   values: {
+    // gitGraph: the cherry-pick ink of v12's `DARK_THEMES` (#374).
+    gitCherryPickInk: '#000000',
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'),
     // v12 `drop-shadow( 1px 2px 2px rgba(185,185,185,0.2))`, normalised for `checkFilter`.

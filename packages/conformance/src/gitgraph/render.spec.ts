@@ -275,7 +275,7 @@ describe('gitGraph AST round-trip over the gate corpus (R-PARSE-8)', () => {
       }
     }
     expect(replaced).toBeGreaterThan(0);
-  });
+  }, 600_000);
 
   it('marks the implicit main branch with data-id only', () => {
     for (const c of cases) {

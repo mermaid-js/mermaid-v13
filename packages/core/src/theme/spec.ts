@@ -135,11 +135,6 @@ export const LIGHT_RULES: ThemeRuleTable = {
   tagLabelColor: 'primaryTextColor',
   tagLabelBackground: 'primaryColor',
   tagLabelBorder: 'ifSet(tagBorder, primaryBorderColor)',
-  // gitGraph branch lines (v12 `commitLineColor ?? lineColor`; the redux themes set `#BDBCCC`)
-  // and the cherry-pick mark, white on a light theme and black on a dark one (#374). Light and
-  // dark rules, as `base` carries no rules of its own (R-THEME-5).
-  commitLineColor: 'lineColor',
-  gitCherryPickInk: '#ffffff',
   // The neo gradient's stops, as v12 theme-base derives them (D182).
   gradientStart: 'primaryBorderColor',
   gradientStop: 'secondaryBorderColor',
@@ -159,5 +154,4 @@ export const DARK_RULES: ThemeRuleTable = {
   // v12 theme-dark: khroma lighten(mainBkg, 5) and darken(mainBkg, 10), exactly (D117).
   rowOdd: 'lightenHsl(mainBkg, 5%)',
   rowEven: 'darkenHsl(mainBkg, 10%)',
-  gitCherryPickInk: '#000000',
 };

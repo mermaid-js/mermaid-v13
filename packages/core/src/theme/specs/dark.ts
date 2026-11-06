@@ -68,8 +68,16 @@ const theme: ThemeSpec = {
     ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
-  rules: { ...PIE_DARK, ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc') },
+  rules: {
+    ...PIE_DARK,
+    ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
+    // gitGraph branch lines, v12's `commitLineColor ?? lineColor`: `theme: 'auto'` pairs
+    // `redux-color` (which sets it) with this theme, so its dark side needs a value (#374).
+    commitLineColor: 'lineColor',
+  },
   values: {
+    // gitGraph: the cherry-pick ink of v12's `DARK_THEMES` (#374).
+    gitCherryPickInk: '#000000',
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'),
     altBackground: '#555555', // v12 (#192)

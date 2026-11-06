@@ -170,7 +170,8 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
       expect(v13Value(neo, name), name).toEqual(v13Value(classic, name));
     expect(neo.value('gitNodeColors')).toBe('true');
     expect(classic.value('gitNodeColors')).toBe('false');
-    expect(neo.value('commitLineColor')).toBe(neo.value('lineColor'));
+    // Neither sets it: the renderer draws `lineColor`, as v12's `commitLineColor ?? lineColor`.
+    expect(neo.value('commitLineColor')).toBe('currentColor');
   });
 
   it('gives the ER variables what v12 neo draws (D152)', () => {

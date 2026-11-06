@@ -25,6 +25,13 @@ const rejection = (p: Promise<unknown>): Promise<unknown> =>
 
 const count = (svg: string, re: RegExp): number => svg.match(re)?.length ?? 0;
 
+/** The SVG of `text` with literal colours (`cssVariables: false`) under `config`. */
+async function literal(config: object, text = TEXT): Promise<string> {
+  const m = createMermaid();
+  m.initialize({ ...config, output: { cssVariables: false } } as never);
+  return (await m.render('l', text)).svg;
+}
+
 /** The SVG of `text` with `config` in an init directive, and its warnings. */
 async function withInit(
   config: object,
@@ -189,5 +196,25 @@ describe('gitGraph theme variables (#374, D152, D266)', () => {
     expect(svg).toMatch(
       /prefers-color-scheme: ?dark[^}]*--_gci:var\(--mermaid-gitCherryPickInk,#000000\)/
     );
+  });
+
+  it('draws lineColor where a theme sets no commitLineColor, as v12’s `??`', async () => {
+    const line = (svg: string) =>
+      /<line class="branch branch0"[^>]* stroke="([^"]*)"/.exec(svg)?.[1]?.toLowerCase();
+    expect(line(await literal({ theme: 'default' }))).toBe('#333333');
+    expect(line(await literal({ theme: 'redux' }))).toBe('#bdbccc');
+    const set = { theme: 'default', themeVariables: { commitLineColor: '#123456' } };
+    expect(line(await literal(set))).toBe('#123456');
+  });
+
+  it('keeps the cherry-pick ink white under darkMode on a light theme, as v12', async () => {
+    const ink = (svg: string) => [
+      ...new Set(
+        [...svg.matchAll(/commit-cherry-pick"[^>]* r="[^"]*" fill="([^"]*)"/g)].map((m) => m[1])
+      ),
+    ];
+    const light = await literal({ theme: 'default', themeVariables: { darkMode: true } });
+    expect(ink(light)).toEqual(['#ffffff']);
+    expect(ink(await literal({ theme: 'dark' }))).toEqual(['#000000']);
   });
 });

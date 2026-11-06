@@ -74,11 +74,15 @@ export interface GitPaintVariables {
   readonly reverseCross: GitLengthVariable;
   /** The two dots of a cherry-pick bullet, their radius: 2.75 classic, 2.5 redux. */
   readonly cherryPickDot: GitLengthVariable;
-  /** v12's own variable for the branch lines: `lineColor` unless set; redux `#BDBCCC`. */
+  /**
+   * v12's own variable for the branch lines: redux `#BDBCCC`; where a theme sets none, the lines
+   * take `lineColor` (v12 `commitLineColor ?? lineColor`).
+   */
   readonly commitLineColor: GitColorVariable;
   /**
-   * The cherry-pick mark (its dots and stems): white on light themes, black on dark ones (v12
-   * keyed it on the four dark theme names). A colour variable, so `theme: 'auto'` switches it.
+   * The cherry-pick mark (its dots and stems): black in the four dark themes of v12's
+   * `DARK_THEMES`, which set it, and white where a theme sets none. A colour variable, so
+   * `theme: 'auto'` switches it.
    */
   readonly cherryPickInk: GitInkVariable;
 }

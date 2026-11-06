@@ -105,8 +105,8 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tagLabelBorder` | `--mermaid-tagLabelBorder` | derived | color | `ifSet(tagBorder, primaryBorderColor)` | `ifSet(tagBorder, primaryBorderColor)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
 | `tagBorder` | `--mermaid-tagBorder` | derived | color | | | |  |
 | `tagLabelFontSize` | `--mermaid-tagLabelFontSize` | token | length | | | all | gitgraph |
-| `commitLineColor` | `--mermaid-commitLineColor` | derived | color | `lineColor` | `lineColor` | redux-color, redux, redux-dark, redux-dark-color | gitgraph |
-| `gitCherryPickInk` | `--mermaid-gitCherryPickInk` | derived | color | `#ffffff` | `#000000` | | gitgraph |
+| `commitLineColor` | `--mermaid-commitLineColor` | derived | color | | | redux-color, redux, redux-dark, redux-dark-color, dark | gitgraph |
+| `gitCherryPickInk` | `--mermaid-gitCherryPickInk` | derived | color | | | redux-color, redux, redux-dark, redux-dark-color, dark, neo-dark | gitgraph |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, gitgraph |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |
