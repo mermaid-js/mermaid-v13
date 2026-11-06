@@ -87,6 +87,19 @@ describe('tree: linear in the number of nodes', () => {
         return g;
       },
     ],
+    [
+      'nested groups',
+      (n: number) => {
+        const g = treeGraph(n, (i) => i - 1);
+        g.groups = Array.from({ length: n }, (_, k) => ({
+          id: `g${k}`,
+          ...(k > 0 ? { parent: `g${k - 1}` } : {}),
+          padding: { top: 1, right: 1, bottom: 1, left: 1 },
+        }));
+        g.nodes[n - 1]!.parent = `g${n - 1}`;
+        return g;
+      },
+    ],
   ] as const)(
     '%s',
     (_, build) => {

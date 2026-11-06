@@ -55,6 +55,36 @@ function randomTree(n: number, seed: number, outsized = 0): LayoutGraph {
   );
 }
 
+/**
+ * A random tree with some zero-size nodes, plus edges that are not tree edges: `n / 4` at random
+ * and about half the sibling pairs. Each runs from an earlier node to a later one and comes after
+ * every tree edge, so no node's first incoming edge changes.
+ */
+function randomGraph(n: number, seed: number): LayoutGraph {
+  const g = randomTree(n, seed);
+  const r = rng(seed + 1000);
+  for (const node of g.nodes) {
+    if (r() < 0.4) node.width = 0;
+    if (r() < 0.2) node.height = 0;
+  }
+  for (let k = 0; k < n / 4; k++) {
+    const a = Math.floor(r() * n);
+    const b = Math.floor(r() * n);
+    if (a === b) continue;
+    const [s, t] = a < b ? [a, b] : [b, a];
+    g.edges.push({ id: `x${k}`, source: `n${s}`, target: `n${t}`, minLen: 1 });
+  }
+  // Edges between siblings too: stacked one above the other, at the same x when equally wide.
+  const last = new Map<string, number>();
+  g.edges.slice(0, n - 1).forEach((e, k) => {
+    const prev = last.get(e.source);
+    if (prev !== undefined && r() < 0.5)
+      g.edges.push({ id: `s${k}`, source: `n${prev}`, target: e.target, minLen: 1 });
+    last.set(e.source, k + 1);
+  });
+  return g;
+}
+
 const unit: Size = () => [60, 24];
 const FIXTURES: [string, LayoutGraph][] = [
   ['one node', treeGraph(1, () => 0, unit)],
@@ -101,6 +131,18 @@ const FIXTURES: [string, LayoutGraph][] = [
   ]),
   ['random 300 with outsized nodes', randomTree(300, 7, 0.1)],
   ['random 10,000', randomTree(10_000, 11)],
+  ...[1, 2, 3].map((s): [string, LayoutGraph] => {
+    // Labels on a third of the edges, some taller than the nodes they join.
+    const g = randomTree(300, 40 + s);
+    const r = rng(s);
+    for (const e of g.edges)
+      if (r() < 0.3) e.label = { width: 10 + r() * 80, height: 10 + r() * 90 };
+    return [`random 300 with edge labels (seed ${s})`, g];
+  }),
+  ...Array.from({ length: 20 }, (_, s): [string, LayoutGraph] => [
+    `random 200 with zero-size nodes and extra edges (seed ${s})`,
+    randomGraph(200, 100 + s),
+  ]),
 ];
 
 function plain(model: LayoutModel): unknown {
@@ -110,8 +152,14 @@ function plain(model: LayoutModel): unknown {
 /** Problems with `tree`'s own promises: root centred, sides kept, parents centred (D281, D283). */
 function treeProblems(graph: LayoutGraph, model: LayoutModel): string[] {
   const problems: string[] = [];
+  // Tree edges only: each node's first incoming edge (the fixtures make no cycles).
   const kids = new Map<string, string[]>();
-  for (const e of graph.edges) kids.set(e.source, [...(kids.get(e.source) ?? []), e.target]);
+  const parented = new Set<string>();
+  for (const e of graph.edges) {
+    if (e.source === e.target || parented.has(e.target)) continue;
+    parented.add(e.target);
+    kids.set(e.source, [...(kids.get(e.source) ?? []), e.target]);
+  }
   const at = (id: string) => model.nodes.get(id)!;
   const near = (a: number, b: number) => Math.abs(a - b) < 1e-6;
   const root = at(graph.nodes[0]!.id);

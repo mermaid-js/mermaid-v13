@@ -197,3 +197,101 @@ describe('tree: input that is not one tree (D285)', () => {
     expect(() => tree(graph([['r', Number.NaN, 20]], []))).toThrow(RangeError);
   });
 });
+
+/** Overlaps of a group with a box that is not in it (see the D285 groups block below). */
+const groupOverlap = (g: LayoutGraph, problem: string): boolean => {
+  const m = /^'(.+)' and '(.+)' overlap$/.exec(problem);
+  const ids = new Set(g.groups.map((x) => x.id));
+  return !!m && (ids.has(m[1]!) || ids.has(m[2]!));
+};
+
+describe('tree: review findings', () => {
+  it('routes an edge between zero-width boxes one above the other without NaN', () => {
+    const g = graph(
+      [
+        ['r', 40, 20],
+        ['a', 0, 10],
+        ['b', 0, 10],
+        ['c', 40, 10],
+        ['d', 40, 10],
+      ],
+      ['r>a', 'r>b', 'r>c', 'r>d', 'a>b']
+    );
+    const m = tree(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    expect(m.edges.get('e4')!.ports).toEqual({ source: 'bottom', target: 'top' });
+  });
+
+  it('stacks an empty group below the other groups’ boxes, padding included', () => {
+    const g = graph([['r', 40, 20]], [], {
+      nodes: [{ id: 'r', width: 40, height: 20, parent: 'G1' }],
+      groups: [
+        { id: 'G1', padding: { top: 5, right: 5, bottom: 50, left: 5 } },
+        { id: 'G2', padding: { top: 5, right: 5, bottom: 5, left: 5 } },
+      ],
+    });
+    const m = tree(g);
+    expect(validateLayout(g, m)).toEqual([]);
+    const [g1, g2] = [m.groups.get('G1')!, m.groups.get('G2')!];
+    // One node gap between G1's bottom and G2's top.
+    expect(g2.y - g2.height / 2 - (g1.y + g1.height / 2)).toBe(10);
+  });
+
+  it('reserves room across the flow for an edge label, so it clears the next subtree', () => {
+    const g = graph(
+      [
+        ['r', 40, 20],
+        ['p', 40, 20],
+        ['a', 40, 20],
+        ['s', 300, 20],
+        ['x', 40, 20],
+      ],
+      ['r>p', 'p>a', 'p>s', 'a>x']
+    );
+    g.edges[3]!.label = { width: 40, height: 60 };
+    expect(validateLayout(g, tree(g))).toEqual([]);
+  });
+});
+
+// D285: a group gets its content's bounds plus padding, and placement ignores groups. When the
+// members are not next to each other in the tree (on both sides of the root, or with a
+// non-member between them), the box encloses non-members. No M4 diagram sends groups; GAPS.md
+// records this for the maintainer. These specs pin the behaviour; the overlap check leaves
+// group/non-member overlaps out.
+describe('tree: groups whose members are not next to each other (D285)', () => {
+  it('encloses the root when the members sit on both sides of it', () => {
+    const g = graph([], ['r>a', 'r>b'], {
+      nodes: [
+        { id: 'r', width: 40, height: 20 },
+        { id: 'a', width: 40, height: 20, parent: 'G' },
+        { id: 'b', width: 40, height: 20, parent: 'G' },
+      ],
+      groups: [{ id: 'G', padding: { top: 0, right: 0, bottom: 0, left: 0 } }],
+    });
+    const m = tree(g);
+    const box = m.groups.get('G')!;
+    const [r, a, b] = [at(m, 'r'), at(m, 'a'), at(m, 'b')];
+    expect(box.width).toBe(Math.abs(a.x - b.x) + 40);
+    expect(Math.abs(box.x - r.x)).toBeLessThan(box.width / 2);
+    expect(validateLayout(g, m).filter((p) => !groupOverlap(g, p))).toEqual([]);
+    expect(validateLayout(g, m)).toEqual(["'r' and 'G' overlap"]);
+  });
+
+  it('encloses a non-member between two members, and two such groups overlap', () => {
+    const g = graph([], ['r>a', 'r>b', 'r>c'], {
+      nodes: [
+        { id: 'r', width: 40, height: 20 },
+        { id: 'a', width: 40, height: 20, parent: 'A' },
+        { id: 'b', width: 40, height: 20, parent: 'B' },
+        { id: 'c', width: 40, height: 20, parent: 'A' },
+      ],
+      groups: [
+        { id: 'A', padding: { top: 0, right: 0, bottom: 0, left: 0 } },
+        { id: 'B', padding: { top: 0, right: 0, bottom: 0, left: 0 } },
+      ],
+    });
+    const m = tree(g);
+    expect(validateLayout(g, m).filter((p) => !groupOverlap(g, p))).toEqual([]);
+    expect(validateLayout(g, m).some(groupOverlap.bind(null, g))).toBe(true);
+  });
+});

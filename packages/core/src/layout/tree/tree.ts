@@ -10,6 +10,7 @@
 import type {
   LayoutEdge,
   LayoutGraph,
+  LayoutGroup,
   LayoutModel,
   LayoutModelEdge,
   LayoutModelGroup,
@@ -37,6 +38,8 @@ interface Forest {
   readonly next: Int32Array;
   /** Gap from a node out to its children. */
   readonly gap: Float64Array;
+  /** Height of the label on a node's tree edge, 0 for none. */
+  readonly label: Float64Array;
   readonly w: Float64Array;
   readonly h: Float64Array;
   /** Depth-first order, roots in source order, so going backwards visits children first. */
@@ -130,11 +133,13 @@ function forestOf(graph: LayoutGraph): Forest {
   const via = treeEdges(graph, index);
   const w = Float64Array.from(graph.nodes, (d) => d.width);
   const h = Float64Array.from(graph.nodes, (d) => d.height);
-  // A node's gap out is the rank gap, or wider to fit the widest label on its children's edges.
+  // A node's gap out is the rank gap, or wider to fit the widest label on its children's edges;
+  // each label's height is reserved in the parent's band (`Bands`).
   const first = new Int32Array(n).fill(-1);
   const last = new Int32Array(n).fill(-1);
   const next = new Int32Array(n).fill(-1);
   const gap = new Float64Array(n).fill(graph.spacing.rank);
+  const label = new Float64Array(n);
   graph.edges.forEach((e, k) => {
     const t = index.get(e.target)!;
     if (via[t] !== k) return;
@@ -142,7 +147,9 @@ function forestOf(graph: LayoutGraph): Forest {
     if (first[s] === -1) first[s] = t;
     else next[last[s]!] = t;
     last[s] = t;
-    if (e.label) gap[s] = Math.max(gap[s]!, e.label.width);
+    if (!e.label) return;
+    gap[s] = Math.max(gap[s]!, e.label.width);
+    label[t] = e.label.height;
   });
   const order: number[] = [];
   const stack: number[] = [];
@@ -158,12 +165,14 @@ function forestOf(graph: LayoutGraph): Forest {
       for (let k = kids.length - 1; k >= 0; k--) stack.push(kids[k]!);
     }
   }
-  return { graph, index, via, first, next, gap, w, h, order };
+  return { graph, index, via, first, next, gap, label, w, h, order };
 }
 
 /**
  * Each subtree's band across the flow: `extent` its height, `rel` its offset among its siblings,
- * `own` the node's top inside it, and `kids` where its children's bands start.
+ * `own` the node's top inside it, and `kids` where its children's bands start. The band also
+ * holds the labels on the edges to the node's children: each sits in the gap out from the node,
+ * halfway between the node's middle and its child's, where nothing else is.
  */
 class Bands {
   readonly extent: Float64Array;
@@ -179,7 +188,7 @@ class Bands {
     this.rel = new Float64Array(n);
     this.own = new Float64Array(n);
     this.kids = new Float64Array(n);
-    const { order, via, first, h } = f;
+    const { order, via, first, next, h, label } = f;
     for (let k = order.length - 1; k >= 0; k--) {
       const v = order[k]!;
       if (via[v] === -1) continue;
@@ -187,9 +196,17 @@ class Bands {
         this.extent[v] = h[v]!;
         continue;
       }
-      const top = this.stack(first[v]!, -1) - h[v]! / 2;
-      const low = Math.min(0, top);
-      this.extent[v] = Math.max(this.stacked, top + h[v]!) - low;
+      const middle = this.stack(first[v]!, -1);
+      const top = middle - h[v]! / 2;
+      let low = Math.min(0, top);
+      let high = Math.max(this.stacked, top + h[v]!);
+      for (let c = first[v]!; c !== -1; c = next[c]!) {
+        if (label[c] === 0) continue;
+        const mid = (middle + this.rel[c]! + this.own[c]! + h[c]! / 2) / 2;
+        low = Math.min(low, mid - label[c]! / 2);
+        high = Math.max(high, mid + label[c]! / 2);
+      }
+      this.extent[v] = high - low;
       this.own[v] = top - low;
       this.kids[v] = -low;
     }
@@ -246,7 +263,7 @@ function split(f: Forest, b: Bands, root: number): number {
 
 /** Node centres and sides (1 right, -1 left); returns the bottom of the last tree. */
 function place(f: Forest, b: Bands, x: Float64Array, y: Float64Array, side: Int8Array): number {
-  const { order, via, first, next, w, h, gap } = f;
+  const { order, via, first, next, w, h, gap, label } = f;
   const band = new Float64Array(w.length);
   let cursor = 0;
   // Trees in source order, stacked down the page a node gap apart, roots on one vertical line.
@@ -282,6 +299,11 @@ function place(f: Forest, b: Bands, x: Float64Array, y: Float64Array, side: Int8
         x[c] = x[v]! + side[c]! * (w[v]! / 2 + gap[v]! + w[c]! / 2);
       }
     }
+    // The root's edge labels sit outside every band, halfway out to its branches (root at 0).
+    for (let c = first[root]!; c !== -1; c = next[c]!) {
+      top = Math.min(top, y[c]! / 2 - label[c]! / 2);
+      bottom = Math.max(bottom, y[c]! / 2 + label[c]! / 2);
+    }
     const shift = start === 0 ? 0 : cursor - top;
     for (let k = start; k < end; k++) y[order[k]!]! += shift;
     cursor = bottom + shift + f.graph.spacing.node;
@@ -301,31 +323,47 @@ function grow(into: Map<string, Rect>, id: string, r: Rect): void {
 }
 
 /**
+ * Each group's nesting depth (1 at the top), memoised so a deep chain costs linear time. A
+ * cycle of `parent`s counts from where the walk met itself.
+ */
+function groupDepths(groups: LayoutGraph['groups']): Map<string, number> {
+  const byId = new Map(groups.map((g) => [g.id, g]));
+  const depth = new Map<string, number>();
+  const chain: string[] = [];
+  const onChain = new Set<string>();
+  for (const g of groups) {
+    chain.length = 0;
+    onChain.clear();
+    let at: string | undefined = g.id;
+    while (at !== undefined && byId.has(at) && !depth.has(at) && !onChain.has(at)) {
+      chain.push(at);
+      onChain.add(at);
+      at = byId.get(at)!.parent;
+    }
+    let d = at !== undefined && depth.has(at) ? depth.get(at)! : 0;
+    for (let k = chain.length - 1; k >= 0; k--) depth.set(chain[k]!, ++d);
+  }
+  return depth;
+}
+
+/**
  * Group boxes (D285): their content's bounds plus padding, inner groups first, at least as wide
- * as the title. An empty group is stacked below the trees, from `cursor`.
+ * as the title. A group with no nodes in it is stacked below everything else, from `below` or
+ * the bottom of the other groups' boxes, whichever is lower; the groups around it then grow to
+ * hold it.
  */
 function groupBoxes(graph: LayoutGraph, boxes: Map<string, Rect>, below: number): void {
-  let cursor = below;
   const byId = new Map(graph.groups.map((g) => [g.id, g]));
   const content = new Map<string, Rect>();
   for (const n of graph.nodes)
     if (n.parent !== undefined && byId.has(n.parent)) grow(content, n.parent, boxes.get(n.id)!);
-  const depth = (id: string): number => {
-    const seen = new Set<string>([id]);
-    for (let p = byId.get(id)!.parent; p !== undefined && byId.has(p) && !seen.has(p); )
-      p = (seen.add(p), byId.get(p)!.parent);
-    return seen.size;
-  };
+  const depth = groupDepths(graph.groups);
   const inner = graph.groups
-    .map((g, k) => ({ g, k, d: depth(g.id) }))
-    .sort((a, b) => b.d - a.d || a.k - b.k);
-  for (const { g } of inner) {
+    .map((g, k) => ({ g, k, d: depth.get(g.id)! }))
+    .sort((a, b) => b.d - a.d || a.k - b.k)
+    .map(({ g }) => g);
+  const close = (g: LayoutGroup, c: Rect): void => {
     const pad = g.padding;
-    let c = content.get(g.id);
-    if (!c) {
-      c = { x0: 0, y0: cursor + pad.top, x1: 0, y1: cursor + pad.top };
-      cursor += pad.top + pad.bottom + graph.spacing.node;
-    }
     const r = {
       x0: c.x0 - pad.left,
       y0: c.y0 - pad.top,
@@ -340,15 +378,42 @@ function groupBoxes(graph: LayoutGraph, boxes: Map<string, Rect>, below: number)
     boxes.set(g.id, r);
     if (g.parent !== undefined && g.parent !== g.id && byId.has(g.parent))
       grow(content, g.parent, r);
+  };
+  const empty = new Set<LayoutGroup>();
+  for (const g of inner) {
+    const c = content.get(g.id);
+    if (c) close(g, c);
+    else empty.add(g);
   }
+  if (empty.size === 0) return;
+  let cursor = below;
+  for (const g of graph.groups) {
+    const r = boxes.get(g.id);
+    if (r) cursor = Math.max(cursor, r.y1 + graph.spacing.node);
+  }
+  for (const g of empty) {
+    let c = content.get(g.id);
+    if (!c) {
+      const pad = g.padding;
+      c = { x0: 0, y0: cursor + pad.top, x1: 0, y1: cursor + pad.top };
+      cursor += pad.top + pad.bottom + graph.spacing.node;
+    }
+    close(g, c);
+  }
+  // The groups closed first, again, now that their content may hold an empty group.
+  for (const g of inner) if (!empty.has(g)) close(g, content.get(g.id)!);
 }
 
-// Where the line from a box's centre towards (dx, dy) leaves it, and through which side.
+// Where the line from a box's centre towards (dx, dy), not both 0, leaves it, and through which
+// side. A direction along an axis never reaches the sides parallel to it (no 0 / 0 for a box of
+// no width or height).
 function exit(r: Rect, dx: number, dy: number): { p: RoutePoint; side: Side } {
   const hw = (r.x1 - r.x0) / 2;
   const hh = (r.y1 - r.y0) / 2;
-  const flat = hw * Math.abs(dy) <= hh * Math.abs(dx);
-  const t = flat ? hw / Math.abs(dx) : hh / Math.abs(dy);
+  const tx = dx === 0 ? Infinity : hw / Math.abs(dx);
+  const ty = dy === 0 ? Infinity : hh / Math.abs(dy);
+  const flat = tx <= ty;
+  const t = Math.min(tx, ty);
   let side: Side = dy > 0 ? 'bottom' : 'top';
   if (flat) side = dx > 0 ? 'right' : 'left';
   return { p: { x: r.x0 + hw + t * dx, y: r.y0 + hh + t * dy, axis: flat ? 'h' : 'v' }, side };
