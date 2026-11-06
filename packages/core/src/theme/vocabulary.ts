@@ -122,6 +122,11 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     // gitGraph commit and tag label sizes (D267): 10px in every v12 theme.
     'commitLabelFontSize',
     'tagLabelFontSize',
+    // Mindmap nodes and edges (spec #294 T4, D288): plain nodes drawn rounded with v12's redux
+    // paints, v12 neo's outlined nodes, and edges in `nodeBorder`.
+    'mindmapRoundedNodes',
+    'mindmapOutlinedNodes',
+    'mindmapBorderEdges',
     // gitGraph (spec #292, D266): the bullet radius, how far the LR lanes sit below v12
     // classic's spot, the branch label box (padding, corner, the TB/BT shift left and away from
     // the commits), the arrow width, the bullet insides, and whether the node colours and the
@@ -223,6 +228,7 @@ const TEXT_USERS = [
   'journey',
   'timeline',
   'quadrant',
+  'mindmap',
   'gitgraph',
   'gantt',
 ];
@@ -273,6 +279,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'state',
     'er',
     'timeline',
+    'mindmap',
     'gitgraph',
   ]),
   nodeBorder: def('nb', 'color', [
@@ -282,6 +289,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'state',
     'er',
     'timeline',
+    'mindmap',
     'gitgraph',
   ]),
   // Shared: three diagram types and core's `Theme.ink()` read it (D334).
@@ -348,10 +356,11 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'state',
     'er',
     'timeline',
+    'mindmap',
     'gitgraph',
   ]),
   clusterStrokeWidth: def('cw', 'length', ['flowchart', 'class', 'er']),
-  radius: def('r', 'length', ['core', 'flowchart', 'state']),
+  radius: def('r', 'length', ['core', 'flowchart', 'state', 'mindmap']),
   fontWeight: def('fw', 'weight', ['core', 'timeline', 'gitgraph']),
   spacing1: def('g1', 'length', ['core']),
   spacing2: def('g2', 'length', ['core']),
@@ -367,16 +376,16 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   crossArrowheadStrokeWidth: def('xw', 'length', ['flowchart']),
   erZeroOrMoreCircleOffset: def('ezc', 'length', ['er']),
   // Node padding, read as numbers at render time (D152), so their aliases are never written.
-  nodePaddingX: def('npx', 'padding', ['flowchart']),
-  nodePaddingY: def('npy', 'padding', ['flowchart']),
+  nodePaddingX: def('npx', 'padding', ['flowchart', 'mindmap']),
+  nodePaddingY: def('npy', 'padding', ['flowchart', 'mindmap']),
   stadiumPaddingX: def('spx', 'padding', ['flowchart']),
   stadiumPaddingY: def('spy', 'padding', ['flowchart']),
-  hexagonPaddingX: def('hpx', 'padding', ['flowchart']),
-  hexagonPaddingY: def('hpy', 'padding', ['flowchart']),
-  hexagonSlant: def('hs', 'length', ['flowchart']),
+  hexagonPaddingX: def('hpx', 'padding', ['flowchart', 'mindmap']),
+  hexagonPaddingY: def('hpy', 'padding', ['flowchart', 'mindmap']),
+  hexagonSlant: def('hs', 'length', ['flowchart', 'mindmap']),
   doubleCircleGap: def('dcg', 'length', ['flowchart']),
   doubleCirclePadding: def('dcp', 'padding', ['flowchart']),
-  circlePadding: def('cp', 'padding', ['flowchart']),
+  circlePadding: def('cp', 'padding', ['flowchart', 'mindmap']),
   circleMinDiameter: def('cmd', 'length', ['flowchart']),
   subroutinePaddingX: def('srx', 'padding', ['flowchart']),
   subroutinePaddingY: def('sry', 'padding', ['flowchart']),
@@ -386,6 +395,9 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   leanPaddingY: def('lny', 'padding', ['flowchart']),
   oddPaddingX: def('odx', 'padding', ['flowchart']),
   oddPaddingY: def('ody', 'padding', ['flowchart']),
+  mindmapRoundedNodes: def('mmr', 'flag', ['mindmap']),
+  mindmapOutlinedNodes: def('mmo', 'flag', ['mindmap']),
+  mindmapBorderEdges: def('mme', 'flag', ['mindmap']),
   gitCommitRadius: def('gcr', 'length', GIT),
   gitLaneShift: def('gls', 'length', GIT),
   gitBranchLabelPaddingX: def('gpx', 'length', GIT),
@@ -415,6 +427,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'state',
     'er',
     'timeline',
+    'mindmap',
     'gitgraph',
   ]),
   // Shared inputs that name no diagram (D332), read with `inline()`: the ink of a diagram's own

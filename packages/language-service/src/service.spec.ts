@@ -242,6 +242,30 @@ describe('definition, references and rename (D92)', () => {
     expect(await renamed(cls, at(cls, 'b'), 'c')).toBe(cls.replace(/\bb\b/g, 'c'));
   });
 
+  it('keeps each occurrence of a `standalone` kind a symbol of its own (D289)', () => {
+    const own = createLanguageService({
+      facets: [
+        {
+          type: 'flowchart-v2',
+          id: 'flowchart',
+          detector: (t) => t.startsWith('flowchart'),
+          facet: { ...flowchartLanguage, standalone: ['node'] },
+        },
+      ],
+    });
+    const text = 'flowchart TD\n  A --> B\n  A --> C\n';
+    const doc = own.update('file:///standalone.mmd', text);
+    const second = at(text, 'A', 2);
+    const itself = { start: second, end: second + 1 };
+    expect(doc.definition(second)).toEqual(itself);
+    expect(doc.references(second)).toEqual([itself]);
+    expect(doc.references(second, false)).toEqual([]);
+    // Only that occurrence is renamed, and a name another occurrence has is no clash.
+    expect(doc.rename(second, 'B')).toEqual({ edits: [{ range: itself, newText: 'B' }] });
+    // Other kinds still group by name.
+    expect(doc.rename(second, 'a b')).toEqual({ refused: 'An id cannot contain spaces.' });
+  });
+
   it('refuses everything on a type with no facet', async () => {
     const doc = await open('requirementDiagram\n  element E {\n  }\n');
     expect(doc.definition(11)).toBeUndefined();

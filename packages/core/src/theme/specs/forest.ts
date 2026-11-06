@@ -11,7 +11,13 @@ import {
   gitSources,
   hueSources,
 } from './scales.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_GITGRAPH, CLASSIC_PADDING, TEXT_SIZES } from './geometry.ts';
+import {
+  CLASSIC_ARROWHEADS,
+  CLASSIC_GITGRAPH,
+  CLASSIC_PADDING,
+  TEXT_SIZES,
+  CLASSIC_MINDMAP,
+} from './geometry.ts';
 
 const GIT = gitSources(
   'primaryColor',
@@ -44,6 +50,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
     ...TEXT_SIZES,
+    ...CLASSIC_MINDMAP,
     ...CLASSIC_GITGRAPH,
     useGradient: false,
   },

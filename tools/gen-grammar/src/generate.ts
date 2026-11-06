@@ -105,6 +105,27 @@ export const GRAMMARS: GrammarTarget[] = [
     kinds: { module: 'parser/tokens.ts', object: 'T' },
   },
   {
+    type: 'mindmap',
+    title: 'Mindmap syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // Text jison matches without returning a token; the hand-written lexer keeps one for it.
+      unnamed: {
+        ClassStart: { mode: 'INITIAL', pattern: ':::', docOf: 'CLASS' },
+        ClassEnd: { mode: 'class', pattern: '\\n' },
+        IconStart: { mode: 'INITIAL', pattern: '::icon\\(', docOf: 'ICON' },
+        IconEnd: { mode: 'icon', pattern: '\\)' },
+        MdStringStart: { mode: 'node', pattern: '["][`]' },
+        MdStringEnd: { mode: 'nstr2', pattern: '[`]["]' },
+        StringStart: { mode: 'node', pattern: '["]' },
+        StringEnd: { mode: 'nstr', pattern: '["]' },
+      },
+      // A `%%` comment v12 left and a blank run are both SPACELINE.
+      mixed: ['SPACELINE'],
+    },
+  },
+  {
     type: 'gantt',
     title: 'Gantt chart syntax',
     // The openers and closers of jison's start conditions are named in the grammar file.

@@ -4,7 +4,13 @@
 import type { ThemeSpec } from '../spec.ts';
 import { INVERTED_SCALE, paletteSlots, series } from './palettes.ts';
 import { darkModeLabels, fixedGit, gitLabelRules } from './scales.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_GITGRAPH, CLASSIC_PADDING, TEXT_SIZES } from './geometry.ts';
+import {
+  CLASSIC_ARROWHEADS,
+  CLASSIC_GITGRAPH,
+  CLASSIC_PADDING,
+  TEXT_SIZES,
+  CLASSIC_MINDMAP,
+} from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'neutral',
@@ -31,6 +37,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
     ...TEXT_SIZES,
+    ...CLASSIC_MINDMAP,
     ...CLASSIC_GITGRAPH,
     useGradient: false,
   },

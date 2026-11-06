@@ -209,7 +209,7 @@ function warnFor({ warn, scratch }: InlineSpans): void {
   if (notes.unresolved.size > 0) {
     const where = [
       notes.labels ? 'labels show them as written' : '',
-      notes.glyphs ? 'their shapes are drawn without them' : '',
+      notes.glyphs ? 'icons outside labels get no glyph' : '',
     ].filter(Boolean);
     const said = where.join('; ');
     warn({

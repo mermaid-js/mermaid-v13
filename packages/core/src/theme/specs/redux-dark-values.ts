@@ -5,7 +5,13 @@
 import type { ThemeSpec } from '../spec.ts';
 import { series } from './palettes.ts';
 import { DARK_HUE_SOURCES, gitPalettes, gitSources } from './scales.ts';
-import { NEO_ARROWHEADS, REDUX_GITGRAPH, REDUX_PADDING, TEXT_SIZES } from './geometry.ts';
+import {
+  NEO_ARROWHEADS,
+  REDUX_GITGRAPH,
+  REDUX_PADDING,
+  TEXT_SIZES,
+  REDUX_MINDMAP,
+} from './geometry.ts';
 
 export const REDUX_DARK_BASE: ThemeSpec['base'] = {
   primaryColor: '#1f2020',
@@ -29,6 +35,7 @@ export const REDUX_DARK_TOKENS: ThemeSpec['tokens'] = {
   ...NEO_ARROWHEADS,
   ...REDUX_PADDING,
   ...TEXT_SIZES,
+  ...REDUX_MINDMAP,
   ...REDUX_GITGRAPH,
   useGradient: false,
 };

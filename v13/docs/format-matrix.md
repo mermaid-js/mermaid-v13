@@ -9,7 +9,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | Diagram type | Package | SVG | ASCII |
 | --- | --- | --- | --- |
 | `flowchart-elk` | `@mermaid-js/diagram-flowchart` | yes | yes |
-| `mindmap` | not ported | no | no |
+| `mindmap` | `@mermaid-js/diagram-mindmap` | yes | no |
 | `architecture` | not ported | no | no |
 | `agentflow` | not ported | no | no |
 | `c4` | not ported | no | no |

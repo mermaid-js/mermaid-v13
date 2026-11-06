@@ -11,7 +11,13 @@
 import type { ThemeSpec } from '../spec.ts';
 import { LABEL_SCALE, REDUX_RULES } from './palettes.ts';
 import { DARK_HUE_SOURCES, darkenedScale, gitLabelRules, gitPalettes } from './scales.ts';
-import { NEO_ARROWHEADS, NEO_GITGRAPH, REDUX_PADDING, TEXT_SIZES } from './geometry.ts';
+import {
+  NEO_ARROWHEADS,
+  NEO_GITGRAPH,
+  REDUX_PADDING,
+  TEXT_SIZES,
+  NEO_MINDMAP,
+} from './geometry.ts';
 import { REDUX_DARK_SERIES } from './redux-dark-values.ts';
 
 /**
@@ -50,6 +56,9 @@ const neoDark: ThemeSpec = {
     ...NEO_ARROWHEADS,
     ...REDUX_PADDING,
     ...TEXT_SIZES,
+    ...NEO_MINDMAP,
+    // v12 `styles.ts`: neo-dark edges take `nodeBorder`, as the redux themes do.
+    mindmapBorderEdges: true,
     ...NEO_GITGRAPH,
     // v12 theme-neo-dark.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,

@@ -5,7 +5,13 @@
 import type { ThemeSpec } from '../spec.ts';
 import { BASE_SECONDARY, LABEL_SCALE, series } from './palettes.ts';
 import { darkenedScale, gitPalettes, gitSources, hueSources } from './scales.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_GITGRAPH, CLASSIC_PADDING, TEXT_SIZES } from './geometry.ts';
+import {
+  CLASSIC_ARROWHEADS,
+  CLASSIC_GITGRAPH,
+  CLASSIC_PADDING,
+  TEXT_SIZES,
+  CLASSIC_MINDMAP,
+} from './geometry.ts';
 
 // v12 derives secondaryColor and tertiaryColor from primaryColor in HSL; the palette keeps
 // that derivation, where the base variables are its hex.
@@ -39,6 +45,7 @@ const base: ThemeSpec = {
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
     ...TEXT_SIZES,
+    ...CLASSIC_MINDMAP,
     ...CLASSIC_GITGRAPH,
     useGradient: false,
   },

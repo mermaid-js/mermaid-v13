@@ -1,0 +1,3 @@
+3:6-3:7 "{" error UNEXPECTED: Expected a line break, got `{`; a hexagon is written `{{text}}`.
+4:3-4:14 "second root" error MINDMAP_SECOND_ROOT: There can be only one root. No parent could be found for ("second root"). Indent it deeper than the first node, the root.
+6:6-6:7 "[" error UNCLOSED_SHAPE: Unclosed shape: the `[` at line 6 has no closing `]`. Add `]` after its text.

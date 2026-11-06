@@ -4,7 +4,13 @@
 import type { ThemeSpec } from '../spec.ts';
 import { paletteSlots, series } from './palettes.ts';
 import { gitSources } from './scales.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_GITGRAPH, CLASSIC_PADDING, TEXT_SIZES } from './geometry.ts';
+import {
+  CLASSIC_ARROWHEADS,
+  CLASSIC_GITGRAPH,
+  CLASSIC_PADDING,
+  TEXT_SIZES,
+  CLASSIC_MINDMAP,
+} from './geometry.ts';
 
 /**
  * v12 `theme-default.js` derives its git palettes in the constructor, from its own colours, and
@@ -41,6 +47,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_ARROWHEADS,
     ...CLASSIC_PADDING,
     ...TEXT_SIZES,
+    ...CLASSIC_MINDMAP,
     ...CLASSIC_GITGRAPH,
     useGradient: false,
   },

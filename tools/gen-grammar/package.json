@@ -22,6 +22,7 @@
     "@mermaid-js/diagram-gantt": "workspace:^",
     "@mermaid-js/diagram-gitgraph": "workspace:^",
     "@mermaid-js/diagram-journey": "workspace:^",
+    "@mermaid-js/diagram-mindmap": "workspace:^",
     "@mermaid-js/diagram-pie": "workspace:^",
     "@mermaid-js/diagram-sequence": "workspace:^",
     "@mermaid-js/diagram-state": "workspace:^",

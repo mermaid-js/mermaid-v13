@@ -120,6 +120,35 @@ export const CLASSIC_PADDING: Readonly<Record<PaddingToken, number | string>> = 
   oddPaddingY: 'padding',
 };
 
+type MindmapGeometry = Extract<
+  TokenVariable,
+  'mindmapRoundedNodes' | 'mindmapOutlinedNodes' | 'mindmapBorderEdges'
+>;
+
+/**
+ * Mindmap in the redux themes (v12 `mindmapDb.ts` and `styles.ts` for a theme name with `redux`,
+ * D288): plain nodes rounded, v12 neo's outlined nodes, edges in `nodeBorder`.
+ */
+export const REDUX_MINDMAP: Readonly<Record<MindmapGeometry, boolean>> = {
+  mindmapRoundedNodes: true,
+  mindmapOutlinedNodes: true,
+  mindmapBorderEdges: true,
+};
+
+/** v12 `theme: neo` (`look: neo`): outlined nodes, plain ones flat-bottomed, `cScale` edges. */
+export const NEO_MINDMAP: Readonly<Record<MindmapGeometry, boolean>> = {
+  mindmapRoundedNodes: false,
+  mindmapOutlinedNodes: true,
+  mindmapBorderEdges: false,
+};
+
+/** v12 classic: plain nodes with four rounded corners and a rule, no outline, `cScale` edges. */
+export const CLASSIC_MINDMAP: Readonly<Record<MindmapGeometry, boolean>> = {
+  mindmapRoundedNodes: false,
+  mindmapOutlinedNodes: false,
+  mindmapBorderEdges: false,
+};
+
 type GitGeometry = Extract<
   TokenVariable,
   | 'gitCommitRadius'
