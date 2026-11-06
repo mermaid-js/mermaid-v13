@@ -203,3 +203,18 @@ describe('commit and tag label variables against v12 12.2.0 (#369, D267)', () =>
     }
   });
 });
+
+// D334: in dark and neutral the git palette reads `cScale<n>` (v12 read `pie<n+1>`, which v12
+// derives from `cScale`): an author's `cScale<n>` moves it, as in v12, and an author's `pie<n>`
+// does not (v12 ignores it there too).
+describe('dark and neutral git follow cScale, not pie (D334)', () => {
+  it.each(['dark', 'neutral'] as const)('%s', async (theme) => {
+    for (const vars of [
+      { cScale1: '#abcdef', cScale5: '#fedcba' },
+      { pie2: '#111111', pie5: '#222222' },
+    ])
+      expect((await v13Palettes(theme, vars)).git, JSON.stringify(vars)).toEqual(
+        v12Palettes(theme, vars).git
+      );
+  });
+});
