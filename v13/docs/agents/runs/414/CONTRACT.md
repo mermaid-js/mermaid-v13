@@ -49,7 +49,8 @@ Read the variables as any other: `ctx.theme.color('packetStartByteColor')`, `ctx
 ## Shared inputs added (D332, D334, D381)
 
 - `scaleLabelColor` (v12's name): the label ink `cScaleLabel` reads. Use it instead of sequence's `labelTextColor`.
-- Palettes `seriesColorArray` (a theme's series colours; empty until T1 fills it) and `plotColorArray` (D381's ten-colour chart palette; empty until xychart fills it).
+- Palettes `seriesColorArray` (a theme's series colours in slots 0–11 and tints in 12–19, filled by every theme since T1a; pie and journey read it) and `plotColorArray` (D381's ten-colour chart palette; empty until xychart fills it).
+- `headingTextColor` (a diagram's own titles and legends on the page) and `seriesTextColor` (labels on the series colours), rule `textColor` unless a theme pins them (T1a). Read with `inline()`. Every D332 input is listed in `D332_INPUTS` (`packages/conformance/src/diagram-themes.ts`), which the neo and neo-dark oracles leave out of the v12 comparison.
 
 ## Tests and tools
 

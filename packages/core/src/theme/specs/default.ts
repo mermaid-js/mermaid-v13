@@ -1,34 +1,9 @@
 /**
  * `default`: v12's classic lavender theme (`theme-default.js`).
  */
-import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, paletteSlots, pieSlots } from './palettes.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING, CLASSIC_TIMELINE, TEXT_SIZES } from './geometry.ts';
-
-/**
- * v12 `theme-default.js`: tertiary −40, secondary −30, tertiary −20, then hue turns. `pie3` and
- * `pie6` are v12's values: v12 darkens its unrounded HSL tertiary colour, which lands a few steps
- * off the hex one.
- */
-const PIE_DEFAULT: ThemeRuleTable = {
-  ...pieSlots([
-    undefined,
-    undefined,
-    '#b5ff20',
-    undefined,
-    'darkenHsl(secondaryColor, 30%)',
-    '#d7ff86',
-    '#ff86ff',
-    '#20ffff',
-    '#ff2020',
-    '#ff20ff',
-    '#20ff8f',
-    '#ff5353',
-  ]),
-  // v12 titles and legends: `taskTextDarkColor` (or `mainContrastColor`).
-  pieTitleTextColor: 'black',
-  pieLegendTextColor: 'black',
-};
+import type { ThemeSpec } from '../spec.ts';
+import { paletteSlots, series } from './palettes.ts';
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'default',
@@ -53,14 +28,12 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
-    ...TEXT_SIZES,
     ...CLASSIC_PADDING,
-    ...CLASSIC_TIMELINE,
     useGradient: false,
   },
   values: {
-    // journey section fills, v12's resolved values (`fillTypes`)
-    ...fillTypes('#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff'),
+    // v12 titles and legends: `taskTextDarkColor`.
+    headingTextColor: 'black',
     altBackground: '#f0f0f0', // v12 (#192)
     // v12 theme-default.js: the label ink (black), the grey muted surface and border, white
     // text on lines.
@@ -82,11 +55,18 @@ const theme: ThemeSpec = {
   rules: {
     rowOdd: 'lightenHsl(primaryColor, 75%)',
     rowEven: 'lightenHsl(primaryColor, 1%)',
-    ...PIE_DEFAULT,
   },
   // v12 theme-default.js fills cScale and cScaleInv in its constructor, darkens cScale again
   // when it calculates, and never recomputes them: fixed lists that ignore the base colours.
   palettes: {
+    // v12 theme-default.js: the base colours, tertiary −40, secondary −30, tertiary −20, then hue
+    // turns. Slots 2 and 5 are v12's values: v12 darkens its unrounded HSL tertiary colour, which
+    // lands a few steps off the hex one. Then the tints (±64° and 128° turns of the primary and
+    // secondary colours).
+    seriesColorArray: series(
+      'primaryColor secondaryColor #b5ff20 darkenHsl(primaryColor,10%) darkenHsl(secondaryColor,30%) #d7ff86 #ff86ff #20ffff #ff2020 #ff20ff #20ff8f #ff5353 ' +
+        '#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff'
+    ),
     cScale: [
       '#8686ff',
       '#ffff78',

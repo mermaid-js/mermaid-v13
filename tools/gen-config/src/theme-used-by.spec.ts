@@ -51,7 +51,8 @@ function readsOf(type: string): Set<string> {
     .join('\n');
   const names = [
     ...[...text.matchAll(/(?:\b\w+\(|\w:)\s*'(\w+)'/g)].map((m) => m[1]!),
-    // A table rule's read of a shared input as the theme wrote it (`'inline(mutedBkg)'`, D332).
+    // A table rule's `inline(name)` or `inline(name, fallback)`: a shared input read as the
+    // theme wrote it (D332).
     ...[...text.matchAll(/\binline\((\w+)[,)]/g)].map((m) => m[1]!),
   ];
   return new Set([...names, ...(DYNAMIC_READS[type] ?? [])].filter((n) => KNOWN.has(n)));

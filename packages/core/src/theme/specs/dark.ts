@@ -1,34 +1,10 @@
 /**
  * `dark`: v12 `theme-dark.js`.
  */
-import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
+import type { ThemeSpec } from '../spec.ts';
+import { INVERTED_SCALE, paletteSlots, series } from './palettes.ts';
 import { darkModeLabels } from './scales.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING, CLASSIC_TIMELINE, TEXT_SIZES } from './geometry.ts';
-
-/**
- * v12 `theme-dark.js` sets `pie<i>` to `cScale<i>`, so slot 1 is `cScale1`, and leaves `pie12`
- * unset; v13 gives it `cScale0`, as `neutral` has (D228).
- */
-const PIE_DARK: ThemeRuleTable = {
-  ...pieSlots([
-    '#0b0000',
-    '#4d1037',
-    '#3f5258',
-    '#4f2f1b',
-    '#6e0a0a',
-    '#3b0048',
-    '#995a01',
-    '#154706',
-    '#161722',
-    '#00296f',
-    '#01629c',
-    '#1f2020',
-  ]),
-  // v12 titles and legends: `taskTextDarkColor` (or `mainContrastColor`).
-  pieTitleTextColor: 'lightgrey',
-  pieLegendTextColor: 'lightgrey',
-};
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'dark',
@@ -53,15 +29,12 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
-    ...TEXT_SIZES,
     ...CLASSIC_PADDING,
-    ...CLASSIC_TIMELINE,
     useGradient: false,
   },
-  rules: PIE_DARK,
   values: {
-    // journey section fills, v12's resolved values (`fillTypes`)
-    ...fillTypes('#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'),
+    // v12 titles and legends: `mainContrastColor`.
+    headingTextColor: 'lightgrey',
     altBackground: '#555555', // v12 (#192)
     // v12 theme-dark.js: mainContrastColor (lightgrey) for labels and links
     scaleLabelColor: '#d3d3d3', // v12: `labelTextColor` (D334)
@@ -100,6 +73,12 @@ const theme: ThemeSpec = {
       '#01629c',
     ],
     cScaleInv: INVERTED_SCALE,
+    // v12 theme-dark.js: series colour `i` is `cScale<i>`, so slot 0 is `cScale1`; v12 leaves the
+    // twelfth unset and v13 gives it `cScale0`, as `neutral` has (D228). Then the tints.
+    seriesColorArray: series(
+      '#0b0000 #4d1037 #3f5258 #4f2f1b #6e0a0a #3b0048 #995a01 #154706 #161722 #00296f #01629c #1f2020 ' +
+        '#1f2020 #474949 #1f1f20 #474749 #1f201f #474947 #201f20 #494749'
+    ),
     // v12 sets labelTextColor to its mainContrastColor (lightgrey) before the labels.
     cScaleLabel: paletteSlots(() => 'scaleLabelColor'),
   },

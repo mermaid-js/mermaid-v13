@@ -2,9 +2,9 @@
  * `redux`: the monochrome redux theme, from v12 `theme-redux.js`. Its tokens (stroke width 2, radius 12)
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
-import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, LABEL_SCALE, paletteSlots, pieSlots, REDUX_RULES } from './palettes.ts';
-import { NEO_ARROWHEADS, REDUX_TIMELINE, REDUX_PADDING, TEXT_SIZES } from './geometry.ts';
+import type { ThemeSpec } from '../spec.ts';
+import { LABEL_SCALE, paletteSlots, REDUX_RULES, series } from './palettes.ts';
+import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 
 /** `theme-redux.js`: `mainBkg` darkened by `step` in every slot, and its inverse. */
 const mainBkgScale = (
@@ -15,23 +15,14 @@ const mainBkgScale = (
 });
 
 /**
- * v12 `theme-redux.js` and `theme-neo.js`: base's formulas, applied before v12 settles the
- * theme's own base colours, so every slot is its resolved value.
+ * The series palette (D332) of v12 `theme-redux.js` and `theme-neo.js`: base's formulas, applied
+ * before v12 settles the theme's own base colours, so every entry is its resolved value; the tints
+ * likewise.
  */
-export const PIE_REDUX: ThemeRuleTable = pieSlots([
-  '#ececfe',
-  '#e9e9f1',
-  '#ffffff',
-  '#bcbcfb',
-  '#cacadd',
-  '#fcfccf',
-  '#fbbcfb',
-  '#bcfbfb',
-  '#feecec',
-  '#f98bf9',
-  '#8bf9f9',
-  '#fbbcbc',
-]);
+export const REDUX_SERIES = series(
+  '#ececfe #e9e9f1 #ffffff #bcbcfb #cacadd #fcfccf #fbbcfb #bcfbfb #feecec #f98bf9 #8bf9f9 #fbbcbc ' +
+    '#ececfe #e9e9f1 #feecfd #f1e9f0 #ecfefd #e9f1f0 #feeeec #f1eae9'
+);
 
 const redux: ThemeSpec = {
   name: 'redux',
@@ -56,15 +47,11 @@ const redux: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...NEO_ARROWHEADS,
-    ...TEXT_SIZES,
     ...REDUX_PADDING,
-    ...REDUX_TIMELINE,
     useGradient: false,
   },
-  rules: { ...REDUX_RULES, ...PIE_REDUX },
+  rules: REDUX_RULES,
   values: {
-    // journey section fills, v12's resolved values (`fillTypes`)
-    ...fillTypes('#ececfe #e9e9f1 #feecfd #f1e9f0 #ecfefd #e9f1f0 #feeeec #f1eae9'),
     // v12's hard drop shadow (insertLookDefs: dx/dy 4, no blur, 6% black) as a CSS filter.
     dropShadow: 'drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))',
     primaryBorderColor: '#28253d',
@@ -82,12 +69,10 @@ const redux: ThemeSpec = {
     // v12 theme-redux*.js; off until a theme or the author turns it on (D182).
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',
-    // v12 derives the quadrant fills from a literal, not `primaryColor` (D232).
-    quadrant1Fill: '#ececfe',
   },
   // v12 theme-redux.js: mainBkg darkened by 25 in every slot (75 under darkMode). It sets
   // every slot to mainBkg before it derives the inverses, so they ignore a cScale override.
-  palettes: { ...mainBkgScale(25), cScaleLabel: LABEL_SCALE },
+  palettes: { ...mainBkgScale(25), cScaleLabel: LABEL_SCALE, seriesColorArray: REDUX_SERIES },
   darkModePalettes: mainBkgScale(75),
 };
 

@@ -12,20 +12,20 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 
 | Variable | CSS variable | Role | Kind | Light rule | Dark rule | Set by themes | Used by |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core |
+| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core |
 | `background` | `--mermaid-background` | base | color | | | all | core |
-| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class |
+| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, class, quadrant |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, pie |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant |
-| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
+| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, class, state, er, journey, timeline, quadrant |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
@@ -45,44 +45,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `compositeBackground` | `--mermaid-compositeBackground` | derived | color | `background` | `background` | redux-dark, redux-dark-color | state |
 | `compositeTitleBackground` | `--mermaid-compositeTitleBackground` | derived | color | `mainBkg` | `mainBkg` | redux-color, redux, redux-dark, redux-dark-color | state |
 | `altBackground` | `--mermaid-altBackground` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | state |
-| `pie1` | `--mermaid-pie1` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark-color, dark, neutral, neo | pie |
-| `pie2` | `--mermaid-pie2` | derived | color | `secondaryColor` | `secondaryColor` | redux-color, redux, redux-dark-color, dark, neutral, neo | pie |
-| `pie3` | `--mermaid-pie3` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark-color, default, dark, neutral, neo | pie |
-| `pie4` | `--mermaid-pie4` | derived | color | `darkenHsl(primaryColor, 10%)` | `darkenHsl(primaryColor, 10%)` | redux-color, redux, redux-dark-color, dark, forest, neutral, neo | pie |
-| `pie5` | `--mermaid-pie5` | derived | color | `darkenHsl(secondaryColor, 10%)` | `darkenHsl(secondaryColor, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie6` | `--mermaid-pie6` | derived | color | `darkenHsl(tertiaryColor, 10%)` | `darkenHsl(tertiaryColor, 10%)` | redux-color, redux, redux-dark-color, default, dark, forest, neutral, neo | pie |
-| `pie7` | `--mermaid-pie7` | derived | color | `#c5ffaa` | `#c5ffaa` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie8` | `--mermaid-pie8` | derived | color | `#ffaac5` | `#ffaac5` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie9` | `--mermaid-pie9` | derived | color | `#ddfff4` | `#ddfff4` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie10` | `--mermaid-pie10` | derived | color | `#a3ff77` | `#a3ff77` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie11` | `--mermaid-pie11` | derived | color | `#ff77a3` | `#ff77a3` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pie12` | `--mermaid-pie12` | derived | color | `#aaffe3` | `#aaffe3` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | pie |
-| `pieTitleTextSize` | `--mermaid-pieTitleTextSize` | token | length | | | all | pie |
-| `pieTitleTextColor` | `--mermaid-pieTitleTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
-| `pieSectionTextSize` | `--mermaid-pieSectionTextSize` | token | length | | | all | pie |
-| `pieSectionTextColor` | `--mermaid-pieSectionTextColor` | derived | color | `textColor` | `textColor` | redux-dark-color | pie |
-| `pieLegendTextSize` | `--mermaid-pieLegendTextSize` | token | length | | | all | pie |
-| `pieLegendTextColor` | `--mermaid-pieLegendTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
-| `pieStrokeColor` | `--mermaid-pieStrokeColor` | derived | color | `black` | `black` | | pie |
-| `pieStrokeWidth` | `--mermaid-pieStrokeWidth` | token | length | | | all | pie |
-| `pieOuterStrokeColor` | `--mermaid-pieOuterStrokeColor` | derived | color | `black` | `black` | | pie |
-| `pieOuterStrokeWidth` | `--mermaid-pieOuterStrokeWidth` | token | length | | | all | pie |
-| `pieOpacity` | `--mermaid-pieOpacity` | token | opacity | | | all | pie |
-| `quadrant1Fill` | `--mermaid-quadrant1Fill` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, neo | quadrant |
-| `quadrant2Fill` | `--mermaid-quadrant2Fill` | derived | color | `adjust(quadrant1Fill, 5, 5, 5)` | `adjust(quadrant1Fill, 5, 5, 5)` | | quadrant |
-| `quadrant3Fill` | `--mermaid-quadrant3Fill` | derived | color | `adjust(quadrant1Fill, 10, 10, 10)` | `adjust(quadrant1Fill, 10, 10, 10)` | | quadrant |
-| `quadrant4Fill` | `--mermaid-quadrant4Fill` | derived | color | `adjust(quadrant1Fill, 15, 15, 15)` | `adjust(quadrant1Fill, 15, 15, 15)` | | quadrant |
-| `quadrant1TextFill` | `--mermaid-quadrant1TextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrant2TextFill` | `--mermaid-quadrant2TextFill` | derived | color | `adjust(primaryTextColor, -5, -5, -5)` | `adjust(primaryTextColor, -5, -5, -5)` | | quadrant |
-| `quadrant3TextFill` | `--mermaid-quadrant3TextFill` | derived | color | `adjust(primaryTextColor, -10, -10, -10)` | `adjust(primaryTextColor, -10, -10, -10)` | | quadrant |
-| `quadrant4TextFill` | `--mermaid-quadrant4TextFill` | derived | color | `adjust(primaryTextColor, -15, -15, -15)` | `adjust(primaryTextColor, -15, -15, -15)` | | quadrant |
-| `quadrantPointFill` | `--mermaid-quadrantPointFill` | derived | color | `textColor` | `textColor` | | quadrant |
-| `quadrantPointTextFill` | `--mermaid-quadrantPointTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrantXAxisTextFill` | `--mermaid-quadrantXAxisTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrantYAxisTextFill` | `--mermaid-quadrantYAxisTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrantInternalBorderStrokeFill` | `--mermaid-quadrantInternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
-| `quadrantExternalBorderStrokeFill` | `--mermaid-quadrantExternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
-| `quadrantTitleFill` | `--mermaid-quadrantTitleFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |
@@ -118,30 +80,13 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `leanPaddingY` | `--mermaid-leanPaddingY` | token | padding | | | all | flowchart |
 | `oddPaddingX` | `--mermaid-oddPaddingX` | token | padding | | | all | flowchart |
 | `oddPaddingY` | `--mermaid-oddPaddingY` | token | padding | | | all | flowchart |
-| `timelineRadius` | `--mermaid-timelineRadius` | token | length | | | all | timeline |
-| `timelineLabelOffset` | `--mermaid-timelineLabelOffset` | token | padding | | | all | timeline |
-| `timelineEventLabelShift` | `--mermaid-timelineEventLabelShift` | token | length | | | all | timeline |
-| `timelineScaleColors` | `--mermaid-timelineScaleColors` | token | flag | | | all | timeline |
 | `rowOdd` | `--mermaid-rowOdd` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, neutral, neo, neo-dark | er |
 | `rowEven` | `--mermaid-rowEven` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | er |
 | `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
 | `erMarkerFill` | `--mermaid-erMarkerFill` | derived | color | `#ffffff` | `#ffffff` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | er |
-| `fillType0` | `--mermaid-fillType0` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType1` | `--mermaid-fillType1` | derived | color | `secondaryColor` | `secondaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType2` | `--mermaid-fillType2` | derived | color | `#e6ffdd` | `#e6ffdd` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType3` | `--mermaid-fillType3` | derived | color | `#ffdde6` | `#ffdde6` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType4` | `--mermaid-fillType4` | derived | color | `#ffddea` | `#ffddea` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType5` | `--mermaid-fillType5` | derived | color | `#ddeaff` | `#ddeaff` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType6` | `--mermaid-fillType6` | derived | color | `#ddfff9` | `#ddfff9` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `fillType7` | `--mermaid-fillType7` | derived | color | `#fff9dd` | `#fff9dd` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | journey |
-| `faceColor` | `--mermaid-faceColor` | derived | color | `#fff8dc` | `#fff8dc` | | journey |
-| `actor0` | `--mermaid-actor0` | derived | color | | | | journey |
-| `actor1` | `--mermaid-actor1` | derived | color | | | | journey |
-| `actor2` | `--mermaid-actor2` | derived | color | | | | journey |
-| `actor3` | `--mermaid-actor3` | derived | color | | | | journey |
-| `actor4` | `--mermaid-actor4` | derived | color | | | | journey |
-| `actor5` | `--mermaid-actor5` | derived | color | | | | journey |
 | `dropShadow` | `--mermaid-dropShadow` | derived | filter | | | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
+| `headingTextColor` | `--mermaid-headingTextColor` | derived | color | `textColor` | `textColor` | default, dark, neutral | pie |
+| `seriesTextColor` | `--mermaid-seriesTextColor` | derived | color | `textColor` | `textColor` | redux-dark-color | pie |
 | `scaleLabelColor` | `--mermaid-scaleLabelColor` | derived | color | `primaryTextColor` | `primaryTextColor` | default, dark, forest, neutral | core, sequence |
 | `mutedBkg` | `--mermaid-mutedBkg` | derived | color | `secondaryColor` | `secondaryColor` | default, forest, neutral | sequence |
 | `mutedBorder` | `--mermaid-mutedBorder` | derived | color | `mix(secondaryColor, black, 12.5%)` | `mix(secondaryColor, black, 12.5%)` | default, dark, forest, neutral, neo-dark | sequence |
@@ -169,7 +114,7 @@ in v12 (D258). A theme not listed carries an empty list.
 | `cScale` | `cScale`, `cScale0`–`cScale11` | all |
 | `cScaleInv` | `cScaleInv`, `cScaleInv0`–`cScaleInv11` | all |
 | `cScaleLabel` | `cScaleLabel`, `cScaleLabel0`–`cScaleLabel11` | all |
-| `seriesColorArray` | `seriesColorArray` |  |
+| `seriesColorArray` | `seriesColorArray` | all |
 | `plotColorArray` | `plotColorArray` |  |
 
 ## Diagram variables
@@ -194,6 +139,74 @@ flags and opacities, which are read literally.
 | `dependencyMarkerGap` | | length | `4` | `4` | `4` | `4` | `1` | `1` | `1` | `1` | `1` | `4` | `4` |
 | `classTerminalFontSize` | | length | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` | `11` |
 
+### journey
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `fillType0` | | color | `#fdf4ff` | `#ececfe` | `#1f2020` | `#701a75` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ececfe` | `#1f2020` |
+| `fillType1` | | color | `#f0fdfa` | `#e9e9f1` | `#474949` | `#134e4a` | `#ffffde` | `#474949` | `#cdffb2` | `#fcfcfc` | `#f4ddff` | `#e9e9f1` | `#474949` |
+| `fillType2` | | color | `#fff7ed` | `#feecfd` | `#1f1f20` | `#7c2d12` | `#ffecfe` | `#1f1f20` | `#98e4b4` | `#eeeeee` | `#e6ffdd` | `#feecfd` | `#1f1f20` |
+| `fillType3` | | color | `#ecfeff` | `#f1e9f0` | `#474749` | `#581c87` | `#deffe0` | `#474749` | `#b2ffe9` | `#fcfcfc` | `#ffdde6` | `#f1e9f0` | `#474749` |
+| `fillType4` | | color | `#f0fdf4` | `#ecfefd` | `#1f201f` | `#14532d` | `#ecfffe` | `#1f201f` | `#e4aa98` | `#eeeeee` | `#ffddea` | `#ecfefd` | `#1f201f` |
+| `fillType5` | | color | `#f5f3ff` | `#e9f1f0` | `#474947` | `#4c1d95` | `#ffdee0` | `#474947` | `#ffdfb2` | `#fcfcfc` | `#ddeaff` | `#e9f1f0` | `#474947` |
+| `fillType6` | | color | `#fef2f2` | `#feeeec` | `#201f20` | `#7f1d1d` | `#ffefec` | `#201f20` | `#98c3e4` | `#eeeeee` | `#ddfff9` | `#feeeec` | `#201f20` |
+| `fillType7` | | color | `#fefce8` | `#f1eae9` | `#494749` | `#713f12` | `#defbff` | `#494749` | `#b2c3ff` | `#fcfcfc` | `#fff9dd` | `#f1eae9` | `#494749` |
+| `faceColor` | | color | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` | `#fff8dc` |
+| `actor0` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `actor1` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `actor2` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `actor3` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `actor4` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+| `actor5` | | color | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` | `currentColor` |
+
+### pie
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `pie1` | | color | `#f4a8ff` | `#ececfe` | `#1f2020` | `#f4a8ff` | `#ececff` | `#0b0000` | `#cde498` | `#f4f4f4` | `#fff4dd` | `#ececfe` | `#1f2020` |
+| `pie2` | | color | `#46ecd5` | `#e9e9f1` | `#474949` | `#46ecd5` | `#ffffde` | `#4d1037` | `#cdffb2` | `#555555` | `#f4ddff` | `#e9e9f1` | `#474949` |
+| `pie3` | | color | `#ffb86a` | `#ffffff` | `#201f1f` | `#ffb86a` | `#b5ff20` | `#3f5258` | `#e1efc0` | `#bbbbbb` | `#f6f9ff` | `#ffffff` | `#201f1f` |
+| `pie4` | | color | `#dab2ff` | `#bcbcfb` | `#060606` | `#dab2ff` | `#b9b9ff` | `#4f2f1b` | `#8cb42f` | `#777777` | `#ffe3aa` | `#bcbcfb` | `#060606` |
+| `pie5` | | color | `#7bf1a8` | `#cacadd` | `#2e3030` | `#7bf1a8` | `#ffff45` | `#6e0a0a` | `#6aff19` | `#999999` | `#e3aaff` | `#cacadd` | `#2e3030` |
+| `pie6` | | color | `#c4b4ff` | `#fcfccf` | `#060606` | `#c4b4ff` | `#d7ff86` | `#3b0048` | `#33b42f` | `#dddddd` | `#c3d7ff` | `#fcfccf` | `#060606` |
+| `pie7` | | color | `#ffa2a2` | `#fbbcfb` | `#060606` | `#ffa2a2` | `#ff86ff` | `#995a01` | `#70d990` | `#ffffff` | `#c5ffaa` | `#fbbcfb` | `#060606` |
+| `pie8` | | color | `#ffdf20` | `#bcfbfb` | `#060606` | `#ffdf20` | `#20ffff` | `#154706` | `#d99070` | `#dddddd` | `#ffaac5` | `#bcfbfb` | `#060606` |
+| `pie9` | | color | `#a3b3ff` | `#feecec` | `#201f20` | `#a3b3ff` | `#ff2020` | `#161722` | `#98cde4` | `#bbbbbb` | `#ddfff4` | `#feecec` | `#201f20` |
+| `pie10` | | color | `#bbf451` | `#f98bf9` | `#000000` | `#bbf451` | `#ff20ff` | `#00296f` | `#1a6330` | `#999999` | `#a3ff77` | `#f98bf9` | `#000000` |
+| `pie11` | | color | `#74d4ff` | `#8bf9f9` | `#000000` | `#74d4ff` | `#20ff8f` | `#01629c` | `#63301a` | `#777777` | `#ff77a3` | `#8bf9f9` | `#000000` |
+| `pie12` | | color | `#ffa1ad` | `#fbbcbc` | `#060606` | `#ffa1ad` | `#ff5353` | `#1f2020` | `#1a4d63` | `#555555` | `#aaffe3` | `#fbbcbc` | `#060606` |
+| `pieTitleTextSize` | | length | `25` | `25` | `25` | `25` | `25` | `25` | `25` | `25` | `25` | `25` | `25` |
+| `pieTitleTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `black` | `lightgrey` | `#000000` | `#333333` | `#333333` | `#333333` | `#cccccc` |
+| `pieSectionTextSize` | | length | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` |
+| `pieSectionTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#28253d` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `pieLegendTextSize` | | length | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` | `17` |
+| `pieLegendTextColor` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `black` | `lightgrey` | `#000000` | `#333333` | `#333333` | `#333333` | `#cccccc` |
+| `pieStrokeColor` | | color | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` |
+| `pieStrokeWidth` | | length | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` |
+| `pieOuterStrokeColor` | | color | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` | `black` |
+| `pieOuterStrokeWidth` | | length | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` | `2` |
+| `pieOpacity` | | opacity | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` | `0.7` |
+
+### quadrant
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `quadrant1Fill` | | color | `#ececfe` | `#ececfe` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ececfe` | `#1f2020` |
+| `quadrant2Fill` | | color | `#f1f1ff` | `#f1f1ff` | `#242525` | `#242525` | `#f1f1ff` | `#242525` | `#d2e99d` | `#f3f3f3` | `#fff9e2` | `#f1f1ff` | `#242525` |
+| `quadrant3Fill` | | color | `#f6f6ff` | `#f6f6ff` | `#292a2a` | `#292a2a` | `#f6f6ff` | `#292a2a` | `#d7eea2` | `#f8f8f8` | `#fffee7` | `#f6f6ff` | `#292a2a` |
+| `quadrant4Fill` | | color | `#fbfbff` | `#fbfbff` | `#2e2f2f` | `#2e2f2f` | `#fbfbff` | `#2e2f2f` | `#dcf3a7` | `#fdfdfd` | `#ffffec` | `#fbfbff` | `#2e2f2f` |
+| `quadrant1TextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrant2TextFill` | | color | `#232038` | `#232038` | `#dbdada` | `#dbdada` | `#0e0e00` | `#dbdada` | `#2d1662` | `#0c0c0c` | `#2e2e2e` | `#2e2e2e` | `#dbdada` |
+| `quadrant3TextFill` | | color | `#1e1b33` | `#1e1b33` | `#d6d5d5` | `#d6d5d5` | `#090900` | `#d6d5d5` | `#28115d` | `#070707` | `#292929` | `#292929` | `#d6d5d5` |
+| `quadrant4TextFill` | | color | `#19162e` | `#19162e` | `#d1d0d0` | `#d1d0d0` | `#040400` | `#d1d0d0` | `#230c58` | `#020202` | `#242424` | `#242424` | `#d1d0d0` |
+| `quadrantPointFill` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `quadrantPointTextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrantXAxisTextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrantYAxisTextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrantInternalBorderStrokeFill` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `quadrantExternalBorderStrokeFill` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `quadrantTitleFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+
 ### sequence
 
 | Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
@@ -216,3 +229,12 @@ flags and opacities, which are read literally.
 | `messageEndGap` | | length | `3` | `3` | `3` | `3` | `0` | `0` | `0` | `0` | `0` | `3` | `3` |
 | `labelBoxExtraHeight` | | length | `15` | `15` | `15` | `15` | `0` | `0` | `0` | `0` | `0` | `15` | `15` |
 | `actorFooterPadding` | | length | `30` | `30` | `30` | `30` | `0` | `0` | `0` | `0` | `0` | `30` | `30` |
+
+### timeline
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `timelineRadius` | | length | `0` | `0` | `0` | `0` | `5` | `5` | `5` | `5` | `5` | `5` | `5` |
+| `timelineLabelOffset` | | padding | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` |
+| `timelineEventLabelShift` | | length | `3` | `3` | `3` | `3` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `timelineScaleColors` | | flag | `false` | `false` | `false` | `false` | `true` | `true` | `true` | `true` | `true` | `true` | `true` |

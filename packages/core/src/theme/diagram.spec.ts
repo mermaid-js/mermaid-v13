@@ -279,6 +279,22 @@ describe('rule DSL: palette reads and literal() (D332)', () => {
     expect(user.value('a')).toBe('#abcdef');
   });
 
+  it("reads the dark spec's seriesColorArray under theme: 'auto'", () => {
+    const night: ThemeSpec = {
+      ...spec.dark,
+      palettes: { ...spec.dark.palettes, seriesColorArray: ['#123456', 'textColor'] },
+    };
+    const t = createTheme(spec['redux-color'], {
+      dark: night,
+      diagram: table({ a: 'seriesColorArray0', b: 'seriesColorArray1' }),
+    });
+    t.color('a');
+    t.color('b');
+    const dark = t.autoDeclarations()!.dark;
+    expect(dark['--_x0']).toBe('var(--mermaid-a,#123456)');
+    expect(dark['--_x1']).toBe('var(--mermaid-b,var(--_tx))');
+  });
+
   it('writes inline(v) as the theme wrote v, with no alias of its own', () => {
     const derived = createTheme(spec.base, { diagram: table({ a: 'inline(mainBkg)' }) });
     derived.color('a');

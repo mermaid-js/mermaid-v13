@@ -1,31 +1,10 @@
 /**
  * `neutral`: v12 `theme-neutral.js`, greys for print.
  */
-import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
+import type { ThemeSpec } from '../spec.ts';
+import { INVERTED_SCALE, paletteSlots, series } from './palettes.ts';
 import { darkModeLabels } from './scales.ts';
-import { CLASSIC_ARROWHEADS, CLASSIC_PADDING, CLASSIC_TIMELINE, TEXT_SIZES } from './geometry.ts';
-
-/** v12 `theme-neutral.js`: `pie<i>` is `cScale<i>`, `pie12` is `cScale0`. */
-const PIE_NEUTRAL: ThemeRuleTable = {
-  ...pieSlots([
-    '#f4f4f4',
-    '#555555',
-    '#bbbbbb',
-    '#777777',
-    '#999999',
-    '#dddddd',
-    '#ffffff',
-    '#dddddd',
-    '#bbbbbb',
-    '#999999',
-    '#777777',
-    '#555555',
-  ]),
-  // v12 titles and legends: `taskTextDarkColor` (or `mainContrastColor`).
-  pieTitleTextColor: '#333333',
-  pieLegendTextColor: '#333333',
-};
+import { CLASSIC_ARROWHEADS, CLASSIC_PADDING } from './geometry.ts';
 
 const theme: ThemeSpec = {
   name: 'neutral',
@@ -50,15 +29,12 @@ const theme: ThemeSpec = {
     spacing2: 8,
     spacing3: 16,
     ...CLASSIC_ARROWHEADS,
-    ...TEXT_SIZES,
     ...CLASSIC_PADDING,
-    ...CLASSIC_TIMELINE,
     useGradient: false,
   },
-  rules: PIE_NEUTRAL,
   values: {
-    // journey section fills, v12's resolved values (`fillTypes`)
-    ...fillTypes('#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc'),
+    // v12 titles and legends: `taskTextDarkColor`.
+    headingTextColor: '#333333',
     altBackground: '#f4f4f4', // v12 (#192)
     // v12 theme-neutral.js: the participant border is lighten(border1, 23)
     softBorder: '#d4d4d4',
@@ -100,6 +76,12 @@ const theme: ThemeSpec = {
       '#777777',
     ],
     cScaleInv: INVERTED_SCALE,
+    // v12 theme-neutral.js: series colour `i` is `cScale<i>`, the twelfth `cScale0`; then the
+    // tints.
+    seriesColorArray: series(
+      '#f4f4f4 #555555 #bbbbbb #777777 #999999 #dddddd #ffffff #dddddd #bbbbbb #999999 #777777 #555555 ' +
+        '#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc'
+    ),
     // v12 sets labelTextColor to its own text colour (#333) before the labels.
     cScaleLabel: paletteSlots((i) => (i === 0 || i === 2 ? 'cScale1' : 'scaleLabelColor')),
   },

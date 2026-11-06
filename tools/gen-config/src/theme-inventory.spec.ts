@@ -23,13 +23,13 @@ describe('theme variable inventory (DESIGN §8.3)', () => {
   it('lists name, CSS variable, role, rules, the themes that set it, and its users', async () => {
     const doc = await themeInventory();
     expect(doc).toContain(
-      '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core |'
+      '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant |'
     );
     expect(doc).toContain(
       '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline |'
     );
     expect(doc).toContain(
-      '| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |'
+      '| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant |'
     );
     expect(doc).toContain(
       '| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline |'
@@ -122,9 +122,11 @@ describe('package theme vocabularies (spec #414 T0b)', () => {
     );
   });
 
-  it("adds each package's variables to the inventory, and nothing else (T2, #441)", async () => {
+  it("adds each package's variables to the inventory, and nothing else (T1, T2)", async () => {
     const owners = REPO.filter((p) => p.vocabulary).map((p) => p.type);
-    expect(owners).toEqual(expect.arrayContaining(['class', 'sequence']));
+    expect(owners).toEqual(
+      expect.arrayContaining(['class', 'journey', 'pie', 'quadrant', 'sequence', 'timeline'])
+    );
     const [core, all] = [await themeInventory(), await themeInventory(REPO)];
     expect(all.startsWith(core.trimEnd())).toBe(true);
     expect(all).toContain('| `classText` | | color |');

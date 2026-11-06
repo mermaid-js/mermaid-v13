@@ -6,7 +6,8 @@ Integration branch `feature/414_theme-t0`, cut from `mermaid-v13` at `dd4b9d19f`
 | --- | --- | --- | --- |
 | T0a traits, `DiagramThemeTable`, direction check | #438 | on the integration branch | done |
 | T0b per-package `gen:theme`, checks over every table | #439 | `feature/439_theme-t0b` | done |
-| T1 pie, quadrant, journey, timeline, gitGraph, gantt, mindmap | #440 | | waits for #398, #404, #406 for wave 2's rows |
+| T1a pie, quadrant, journey, timeline | #440 | `feature/440_theme-t1` | done |
+| T1b gitGraph, gantt, mindmap | #440 | | waits for #398, #404, #406 for wave 2's rows |
 | T2 sequence, class | #441 | | |
 | T3 state, ER | #442 | | |
 | T4 flowchart | #443 | | |
@@ -24,3 +25,5 @@ Files: `CONTRACT.md` (the T0a API the ports use), `IMPLEMENTER.md` (ticket brief
 | T0a | 92,622 | +441; themed stub +32 (≤ 64), in-core control +443 |
 | T0b | 92,619 | ±0 against its base re-measured (92,619); CDN 92,962 both |
 | T2 | 92,359 | −260 against T0b (all 26 rows, with `inline()` and `inline(v, b)`); CDN 92,959 → 92,711 |
+| T1a | 91,402 | −866 against `13efc0b61` re-measured (92,268); CDN 92,623 → 91,759 |
+| T1a + T2 | 91,490 | T1a's 91,402 plus T2's last step (+88, `inline(v, b)` and two inputs); CDN 91,837 |

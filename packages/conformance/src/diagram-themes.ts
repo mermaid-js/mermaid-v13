@@ -40,12 +40,26 @@ export const DIAGRAM_TABLES: Readonly<Record<string, DiagramThemeTable | undefin
   timeline: table(timeline),
 };
 
+/** Every variable a render can read: core's vocabulary and every table's `vars`. */
+export const VOCABULARY: Readonly<Record<string, ThemeVarEntry>> =
+  Object.fromEntries<ThemeVarEntry>([
+    ...Object.entries(THEME_VARIABLES),
+    ...Object.values(DIAGRAM_TABLES).flatMap((t) => Object.entries(t?.vars ?? {})),
+  ]);
+
 /**
- * The D332 generic shared inputs: v13-only names that themes of one family write differently and
- * a diagram's table reads with `inline()`. v12 has no such name, so the oracle specs leave them
- * out of the v12 comparison; the diagram variables reading them are still compared.
+ * The shared inputs of D332 and D381: v13's, with no v12 counterpart. A theme fills them with
+ * v12's values of the diagram variables that read them (`pie1`, `fillType0`, `pieTitleTextColor`,
+ * `activationBkgColor`, …), which the oracle specs compare instead, so the neo and neo-dark specs
+ * leave these out of their v12 comparison rather than listing them in `DIFFERENCES`. The
+ * palettes and inks of T1a; the muted surface, its border, link ink, text on lines, soft border
+ * and frame border of T2 (read with `inline()`).
  */
 export const D332_INPUTS: readonly string[] = [
+  'seriesColorArray',
+  'plotColorArray',
+  'headingTextColor',
+  'seriesTextColor',
   'mutedBkg',
   'mutedBorder',
   'linkInkColor',
@@ -53,13 +67,6 @@ export const D332_INPUTS: readonly string[] = [
   'softBorder',
   'frameBorder',
 ];
-
-/** Every variable a render can read: core's vocabulary and every table's `vars`. */
-export const VOCABULARY: Readonly<Record<string, ThemeVarEntry>> =
-  Object.fromEntries<ThemeVarEntry>([
-    ...Object.entries(THEME_VARIABLES),
-    ...Object.values(DIAGRAM_TABLES).flatMap((t) => Object.entries(t?.vars ?? {})),
-  ]);
 
 /**
  * One theme over every table: each method that takes a variable name answers from the theme

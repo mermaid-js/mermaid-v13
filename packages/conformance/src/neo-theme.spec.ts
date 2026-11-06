@@ -6,8 +6,8 @@
  */
 import {
   NUMBERED_PALETTES,
-  PALETTE_LIMIT,
   PALETTE_VARIABLES,
+  PALETTE_LIMIT,
   THEME_VARIABLES,
   formatColor,
   loadTheme,
@@ -119,7 +119,7 @@ describe('neo against v12 12.2.0 (#225, D151, D181)', () => {
 
   it('differs from v12 only where a decision says so', () => {
     const vocabulary = Object.keys(VOCABULARY).filter((n) => !D332_INPUTS.includes(n) && !same(n));
-    const palettes = PALETTE_VARIABLES.filter(
+    const palettes = PALETTE_VARIABLES.filter((p) => !D332_INPUTS.includes(p)).filter(
       (p) => JSON.stringify(v12Palette(p).map(hex)) !== JSON.stringify(neo.palette(p).map(hex))
     );
     expect([...vocabulary, ...palettes].sort()).toEqual(Object.keys(DIFFERENCES).sort());

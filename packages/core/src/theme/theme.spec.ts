@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert, streamWriter, styleText } from '../svg/index.ts';
-import { createTheme, loadTheme, type ThemeWarning } from './index.ts';
+import { createTheme, loadTheme, type DiagramThemeTable, type ThemeWarning } from './index.ts';
 
 const base = await loadTheme('base');
 
@@ -88,12 +88,19 @@ describe('createTheme: shape tokens (R-THEME-11)', () => {
 });
 
 describe('createTheme: opacity (D221)', () => {
+  // A diagram's opacity variable, 0.7 in the classic family (as pie's slices, #325).
+  const OPACITY: DiagramThemeTable = {
+    vars: { sliceOpacity: { alias: 'so', kind: 'opacity' } },
+    rules: { light: {} },
+    families: { classic: { tokens: { sliceOpacity: 0.7 } } },
+  };
+
   it('reads an opacity as a number in [0, 1], with no CSS variable', () => {
-    const t = createTheme(base);
-    expect(t.number('pieOpacity')).toBe(0.7);
+    const t = createTheme(base, { diagram: OPACITY });
+    expect(t.number('sliceOpacity')).toBe(0.7);
     expect(t.rootStyle()).toEqual({});
-    expect(() => t.color('pieOpacity')).toThrow(TypeError);
-    expect(() => t.length('pieOpacity')).toThrow(TypeError);
+    expect(() => t.color('sliceOpacity')).toThrow(TypeError);
+    expect(() => t.length('sliceOpacity')).toThrow(TypeError);
   });
 
   it('takes a number or a numeric string between 0 and 1', () => {
@@ -105,8 +112,8 @@ describe('createTheme: opacity (D221)', () => {
       [' 0.5 ', 0.5],
       ['1.0', 1],
     ] as const) {
-      const t = createTheme(base, { themeVariables: { pieOpacity: given } });
-      expect(t.number('pieOpacity'), String(given)).toBe(read);
+      const t = createTheme(base, { diagram: OPACITY, themeVariables: { sliceOpacity: given } });
+      expect(t.number('sliceOpacity'), String(given)).toBe(read);
     }
   });
 
@@ -114,10 +121,11 @@ describe('createTheme: opacity (D221)', () => {
     for (const given of [1.5, -0.1, '70%', '1.01', '0.5px', '.5', 'abc', 'var(--x)', NaN, true]) {
       const warnings: ThemeWarning[] = [];
       const t = createTheme(base, {
-        themeVariables: { pieOpacity: given },
+        diagram: OPACITY,
+        themeVariables: { sliceOpacity: given },
         warn: (w) => warnings.push(w),
       });
-      expect(t.number('pieOpacity'), String(given)).toBe(0.7);
+      expect(t.number('sliceOpacity'), String(given)).toBe(0.7);
       expect(
         warnings.map((w) => w.code),
         String(given)

@@ -119,19 +119,6 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'leanPaddingY',
     'oddPaddingX',
     'oddPaddingY',
-    // Pie text sizes, stroke widths and slice opacity (#325): the same in every v12 theme.
-    'pieTitleTextSize',
-    'pieSectionTextSize',
-    'pieLegendTextSize',
-    'pieStrokeWidth',
-    'pieOuterStrokeWidth',
-    'pieOpacity',
-    // Timeline boxes (spec #291, D227): the top corner, the label offset (sections and periods)
-    // and the extra offset of event labels, and whether boxes take the `cScale` palettes.
-    'timelineRadius',
-    'timelineLabelOffset',
-    'timelineEventLabelShift',
-    'timelineScaleColors',
     // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
     'useGradient',
   ] as const
@@ -152,9 +139,10 @@ export const PALETTE_VARIABLES = [
   'cScale',
   'cScaleInv',
   'cScaleLabel',
-  // Shared inputs that name no diagram (D332, D381): a theme's series colours, which charts
-  // and slotted diagrams read by slot (`seriesColorArray3`), and a ten-colour chart palette
-  // (v12's xychart `plotColorPalette`), empty until a theme supplies it.
+  // Shared inputs that name no diagram (D332, D381): a theme's series colours and tints,
+  // which charts and slotted diagrams read by slot (`seriesColorArray3`; the layout is
+  // `series` in specs/palettes.ts), and a ten-colour chart palette (v12's xychart
+  // `plotColorPalette`), empty until a theme supplies it.
   'seriesColorArray',
   'plotColorArray',
 ] as const;
@@ -189,36 +177,25 @@ const TEXT_USERS = [
   'quadrant',
 ];
 
-const JOURNEY = ['journey'];
-
-/**
- * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
- * in core's size budget (R-PERF-8).
- */
-const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() =>
-  Object.fromEntries(
-    Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, def(`pi${i + 1}`, 'color', ['pie'])])
-  ))();
-
 /**
  * The core inventory. Order is the order of the generated table. Tools and specs read it (with
  * `usedBy`); the theme reads `THEME_VARIABLE_TABLE`, which `pnpm gen:theme` writes from it.
- * Built in a pure call: its spreads (`PIE_SLOTS`, the journey rows) made the object literal
- * look side-effecting, so the CDN core kept the whole table with its `usedBy` lists (R-PERF-8).
+ * Built in a pure call: spreads once made the object literal look side-effecting, so the CDN
+ * core kept the whole table with its `usedBy` lists (R-PERF-8).
  */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() => ({
   // base
-  primaryColor: def('p', 'color', ['core']),
+  primaryColor: def('p', 'color', ['core', 'quadrant']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core']),
   background: def('bg', 'color', ['core']),
-  primaryTextColor: def('pt', 'color', ['core', 'class']),
+  primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
   // Pie draws in the font family but sizes its text by its own variables.
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie']),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived
-  primaryBorderColor: def('pb', 'color', ['core']),
+  primaryBorderColor: def('pb', 'color', ['core', 'quadrant']),
   secondaryBorderColor: def('sb', 'color', ['core']),
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
@@ -232,6 +209,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'er',
     'journey',
     'timeline',
+    'quadrant',
   ]),
   mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
@@ -255,37 +233,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   compositeBackground: def('cbg', 'color', ['state']),
   compositeTitleBackground: def('ctb', 'color', ['state']),
   altBackground: def('alb', 'color', ['state']),
-  // pie chart (#325, v12 names): the slot colours `pie1`–`pie12`, texts, strokes and the slice
-  // opacity, derived as each v12 theme derives them.
-  ...PIE_SLOTS,
-  pieTitleTextSize: def('pts', 'length', ['pie']),
-  pieTitleTextColor: def('ptc', 'color', ['pie']),
-  pieSectionTextSize: def('pss', 'length', ['pie']),
-  pieSectionTextColor: def('psc', 'color', ['pie']),
-  pieLegendTextSize: def('pls', 'length', ['pie']),
-  pieLegendTextColor: def('plc', 'color', ['pie']),
-  pieStrokeColor: def('pkc', 'color', ['pie']),
-  pieStrokeWidth: def('pkw', 'length', ['pie']),
-  pieOuterStrokeColor: def('poc', 'color', ['pie']),
-  pieOuterStrokeWidth: def('pow', 'length', ['pie']),
-  pieOpacity: def('pop', 'opacity', ['pie']),
-  // quadrant chart (v12 names, derived as v12's `/* quadrant-graph */` block derives them;
-  // D231, D232)
-  quadrant1Fill: def('q1f', 'color', ['quadrant']),
-  quadrant2Fill: def('q2f', 'color', ['quadrant']),
-  quadrant3Fill: def('q3f', 'color', ['quadrant']),
-  quadrant4Fill: def('q4f', 'color', ['quadrant']),
-  quadrant1TextFill: def('q1t', 'color', ['quadrant']),
-  quadrant2TextFill: def('q2t', 'color', ['quadrant']),
-  quadrant3TextFill: def('q3t', 'color', ['quadrant']),
-  quadrant4TextFill: def('q4t', 'color', ['quadrant']),
-  quadrantPointFill: def('qpf', 'color', ['quadrant']),
-  quadrantPointTextFill: def('qpt', 'color', ['quadrant']),
-  quadrantXAxisTextFill: def('qxt', 'color', ['quadrant']),
-  quadrantYAxisTextFill: def('qyt', 'color', ['quadrant']),
-  quadrantInternalBorderStrokeFill: def('qib', 'color', ['quadrant']),
-  quadrantExternalBorderStrokeFill: def('qeb', 'color', ['quadrant']),
-  quadrantTitleFill: def('qtf', 'color', ['quadrant']),
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',
@@ -332,27 +279,19 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   leanPaddingY: def('lny', 'padding', ['flowchart']),
   oddPaddingX: def('odx', 'padding', ['flowchart']),
   oddPaddingY: def('ody', 'padding', ['flowchart']),
-  timelineRadius: def('tlr', 'length', ['timeline']),
-  timelineLabelOffset: def('tlo', 'padding', ['timeline']),
-  timelineEventLabelShift: def('tle', 'length', ['timeline']),
-  timelineScaleColors: def('tls', 'flag', ['timeline']),
   // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
   // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
   rowOdd: def('ro', 'color', ['er']),
   rowEven: def('re', 'color', ['er']),
   erEdgeLabelBackground: def('eel', 'color', ['er']),
   erMarkerFill: def('emf', 'color', ['er']),
-  // user journey (#290): section and task fills by slot (D241), the face, and the author's
-  // actor dot colours, which no theme sets (D249: the renderer then uses `actorColours`).
-  // Built in a loop: fifteen near-identical rows cost the always-loaded core bytes.
-  ...Object.fromEntries(
-    [...'01234567'].map((n) => [`fillType${n}`, def(`jf${n}`, 'color', JOURNEY)])
-  ),
-  faceColor: def('jfc', 'color', JOURNEY),
-  ...Object.fromEntries([...'012345'].map((n) => [`actor${n}`, def(`ja${n}`, 'color', JOURNEY)])),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  // Shared inputs that name no diagram (D332), read with `inline()`: the ink of a diagram's own
+  // titles and legends on the page, and the ink of labels on the series colours.
+  headingTextColor: def('hdt', 'color', ['pie']),
+  seriesTextColor: def('sxt', 'color', ['pie']),
   // A shared input (D334): v12's `scaleLabelColor`, the label ink of `cScaleLabel`, which read
   // a sequence variable before.
   scaleLabelColor: def('slc', 'color', ['core', 'sequence']),

@@ -35,7 +35,8 @@ function v12Vars(theme: string, themeVariables: object = {}): Record<string, unk
   return { ...v12.mermaidAPI.getConfig().themeVariables };
 }
 
-const QUADRANT = Object.keys(THEME_VARIABLES).filter((n) => n.startsWith('quadrant'));
+const VARS = DIAGRAM_TABLES.quadrant!.vars;
+const QUADRANT = Object.keys(VARS);
 
 const hex = (v: unknown): string | undefined => {
   if (typeof v !== 'string') return undefined;
@@ -44,11 +45,12 @@ const hex = (v: unknown): string | undefined => {
 };
 
 describe('quadrant theme variables against v12 12.2.0', () => {
-  it('are the 15 v12 names, read by the quadrant package only', () => {
+  it("are the 15 v12 names, in the quadrant package's table, not core's (spec #414 T1)", () => {
     expect(QUADRANT).toHaveLength(15);
     for (const n of QUADRANT) {
-      expect(THEME_VARIABLES[n]!.kind, n).toBe('color');
-      expect(THEME_VARIABLES[n]!.usedBy, n).toEqual(['quadrant']);
+      expect(n, n).toMatch(/^quadrant/);
+      expect(VARS[n]!.kind, n).toBe('color');
+      expect(THEME_VARIABLES[n], n).toBeUndefined();
     }
   });
 
