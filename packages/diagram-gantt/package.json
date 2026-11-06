@@ -1,0 +1,36 @@
+{
+  "name": "@mermaid-js/diagram-gantt",
+  "version": "13.0.0-alpha.0",
+  "description": "Gantt diagram plugin for Mermaid: parser, model, schedule, layout, SVG renderer and language facet.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/diagram-gantt"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@mermaid-js/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^"
+  }
+}
