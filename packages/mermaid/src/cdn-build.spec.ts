@@ -29,6 +29,12 @@ const packageDir = new Map(
     return pkg.mermaid?.id ? [[pkg.mermaid.id, dir] as const] : [];
   })
 );
+/**
+ * Diagrams registered before their language facet's ticket merged, so they have no `language`
+ * entry yet: radar (#449 before #450). Each is asserted still without one, so the row has to go
+ * when the facet lands.
+ */
+const NO_LANGUAGE_YET: ReadonlySet<string> = new Set(['radar']);
 const chunk = (id: string) => `chunks/${packageDir.get(id) ?? `diagram-${id}`}`;
 let out: CdnBuild;
 
@@ -57,7 +63,10 @@ describe('the CDN build (D162)', () => {
   it('gives every first-party diagram, its ascii and language entries a stable chunk', () => {
     for (const id of ids) {
       expect(file(`${chunk(id)}.mjs`), id).toBeDefined();
-      expect(file(`${chunk(id)}-language.mjs`), id).toBeDefined();
+      const language = file(`${chunk(id)}-language.mjs`);
+      if (NO_LANGUAGE_YET.has(id))
+        expect(language, `${id}: drop it from NO_LANGUAGE_YET`).toBeUndefined();
+      else expect(language, id).toBeDefined();
     }
     for (const id of DETECTORS.filter((d) => d.formats?.includes('ascii')).map((d) => d.id))
       expect(file(`${chunk(id!)}-ascii.mjs`), id).toBeDefined();
