@@ -7,3 +7,6 @@ import type { DiagramPlugin } from '@mermaid-js/core';
 
 /** The plugin's contract. T2 and T3 replace `unknown` with `GanttModel` and `GanttLayout`. */
 export type GanttPlugin = DiagramPlugin<unknown, unknown>;
+
+export { ganttTokens, GanttTokenKind, JISON_NAMES } from './parser/index.ts';
+export type { GanttToken } from './parser/index.ts';
