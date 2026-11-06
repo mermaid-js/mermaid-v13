@@ -10,4 +10,13 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #421: the manifest comes with T5 (#462).
+  {
+    type: 'packet',
+    id: 'packet',
+    section: 'packet',
+    detector: (text) => /^\s*packet(-beta)?/.test(text),
+    load: () => import('@mermaid-js/diagram-packet/language').then((m) => m.language),
+  },
+];

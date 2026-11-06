@@ -82,10 +82,11 @@ const AFTER_START = [T.Dash, T.Colon];
 /** Where recovery resumes (R-PARSE-4). */
 const BOUNDARY = kindSet(Kind.Newline, Kind.EOF);
 /**
- * Kinds a probe's cursor follows rather than extends: `:`, and a label, which its closing quote
- * ends (right after `"Data"` the parser expects a line break).
+ * Kinds a probe's cursor follows rather than extends: `:`, `+` and `-` (right after them the
+ * parser expects a label or a bit number), and a label, which its closing quote ends (right
+ * after `"Data"` the parser expects a line break).
  */
-const PROBE_FOLLOWS = kindSet(T.Colon, T.String);
+const PROBE_FOLLOWS = kindSet(T.Colon, T.Plus, T.Dash, T.String);
 
 /** The keyword of each statement-value token, also its probe mode ({@link probeMode}). */
 const VALUE_WORDS: Readonly<Record<number, string>> = {

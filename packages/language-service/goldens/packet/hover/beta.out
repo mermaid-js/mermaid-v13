@@ -1,0 +1,5 @@
+@ 1:9  packet-b|eta
+  1:1-1:12 "packet-beta"
+  | **`packet-beta`**
+  |
+  | `packet-beta`: starts a packet diagram (the older name of `packet`).

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parsePacket } from './parser.ts';
+import { T } from './tokens.ts';
 
 /** Expected values are mermaid\@12.2.0's `getPacket()` and DB getters for the same text. */
 describe('parsePacket', () => {
@@ -162,5 +163,41 @@ describe('parsePacket', () => {
       'accDescr',
     ]);
     expect(ast.children[0]).toMatchObject({ type: 'Header', beta: true });
+  });
+});
+
+describe('parsePacket probe (T6, R-LANG-7)', () => {
+  const probe = (marked: string) => {
+    const at = marked.indexOf('¦');
+    const src = marked.slice(0, at) + marked.slice(at + 1);
+    return parsePacket(src, { probe: at }).probe;
+  };
+
+  it('names where the probe is: code, or inside a label or a statement value', () => {
+    const mode = (marked: string) => probe(marked)?.mode;
+    expect(mode('¦')).toBe('INITIAL');
+    expect(mode('packet\n  tit¦')).toBe('INITIAL');
+    expect(mode('packet\n  title TC¦P')).toBe('title');
+    expect(mode('packet\n  accTitle: x¦')).toBe('accTitle');
+    expect(mode('packet\n  accDescr {\n  a¦\n}')).toBe('accDescr');
+    expect(mode('packet\n  accDescr {\n  a\n}¦')).toBe('INITIAL');
+    expect(mode('packet\n  0-15: "So¦urce"')).toBe('string');
+    expect(mode('packet\n  0-15: "So¦')).toBe('string');
+    expect(mode('packet\n  0-15: "Source"¦')).toBe('INITIAL');
+    expect(mode('packet\n  %% a ¦comment')).toBe('comment');
+  });
+
+  it('follows `+`, `-` and `:`: right after them the parser expects bits or a label', () => {
+    expect(probe('packet\n  +¦')).toMatchObject({ expected: [T.Int], prefix: { start: 10 } });
+    expect(probe('packet\n  0-¦')).toMatchObject({ expected: [T.Int], prefix: { start: 11 } });
+    expect(probe('packet\n  0-15:¦')).toMatchObject({ expected: [T.String] });
+  });
+
+  it('expects a field, `+` or a statement at a line start, and `-` or `:` after a start bit', () => {
+    expect(probe('packet\n¦')?.expected).toEqual(
+      expect.arrayContaining([T.Int, T.Plus, T.Title, T.AccTitle, T.AccDescr])
+    );
+    expect(probe('packet\n  16 ¦')?.expected).toEqual([T.Dash, T.Colon]);
+    expect(probe('packet\n  0-15 ¦')?.expected).toEqual([T.Colon]);
   });
 });

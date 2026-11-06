@@ -1,0 +1,18 @@
+@ 3:3  |
+  title keyword 3:3-3:3 "" -> "title "
+  accTitle keyword 3:3-3:3 "" -> "accTitle: "
+  accDescr keyword 3:3-3:3 "" -> "accDescr: "
+  + operator (a width in bits: +8: "label") 3:3-3:3 "" -> "+"
+  16 value (the next free bit) 3:3-3:3 "" -> "16"
+@ 5:3  |
+  title keyword 5:3-5:3 "" -> "title "
+  accTitle keyword 5:3-5:3 "" -> "accTitle: "
+  accDescr keyword 5:3-5:3 "" -> "accDescr: "
+  + operator (a width in bits: +8: "label") 5:3-5:3 "" -> "+"
+  17 value (the next free bit) 5:3-5:3 "" -> "17"
+@ 7:3  |
+  title keyword 7:3-7:3 "" -> "title "
+  accTitle keyword 7:3-7:3 "" -> "accTitle: "
+  accDescr keyword 7:3-7:3 "" -> "accDescr: "
+  + operator (a width in bits: +8: "label") 7:3-7:3 "" -> "+"
+  25 value (the next free bit) 7:3-7:3 "" -> "25"
