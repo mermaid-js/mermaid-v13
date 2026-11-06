@@ -28,3 +28,4 @@ Files: `CONTRACT.md` (the T0a API the ports use), `IMPLEMENTER.md` (ticket brief
 | T1a | 91,402 | −866 against `13efc0b61` re-measured (92,268); CDN 92,623 → 91,759 |
 | T1a + T2 | 91,490 | T1a's 91,402 plus T2's last step (+88, `inline(v, b)` and two inputs); CDN 91,837 |
 | T3 | 91,330 | −160 against T1a + T2 re-measured (91,490; 8 rows, 4 inputs); CDN 91,839 → 91,682 |
+| T3 + wave 2 | 92,643 | −139 against the integration branch at `b2a76631e` (wave 2 in, 92,782); CDN 93,235 → 93,115 |
