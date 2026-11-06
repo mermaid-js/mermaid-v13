@@ -44,8 +44,8 @@ const TYPES = readdirSync(PACKAGES)
   .map((d) => d.slice('diagram-'.length))
   .sort();
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
-/** Packages with no renderer yet, so no theme reads (mindmap's renderer is #388, which removes it). */
-const NOT_RENDERING_YET: readonly string[] = ['mindmap'];
+/** Packages with no renderer yet, so no theme reads. */
+const NOT_RENDERING_YET: readonly string[] = [];
 
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
