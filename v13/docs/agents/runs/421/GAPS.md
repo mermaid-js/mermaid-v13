@@ -14,7 +14,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 - **Base merge goes through #414.** M4 wave 2 (#398, #404, #406) merged into `mermaid-v13` at `488a4bf5e`. Merging it here directly conflicts in 15 files, almost all core theme files where T0a and M4 wave 2 both edit (`theme.ts`, `vocabulary.ts`, `spec.ts`, `specs/*.ts`, generated variables). That resolution belongs to #414, so this branch takes the new base through `feature/414_theme-t0` once it has merged `mermaid-v13`, rather than resolving T0's conflicts twice. The wave coordinator made this the rule for every M5a port until the Theme T0 PR (#472) merges; the coordinator sends the new T0 tip. Packet-owned conflicts left for that merge: `langium-lexer.ts` (gitGraph's row and packet's: keep both), `conformance/package.json`, `theme-used-by.spec.ts`, `pnpm-lock.yaml` (regenerate).
 
-## #460 T4 renderer (running)
+## #460 T4 renderer (merged; implementer notes)
 
 - Orchestrator choices to record (no D-id covers them): the dark entry is each family's `dark` entry (the `dark` trait), not the table's `rules.dark`, so an author's `darkMode: true` on a light theme keeps v12's black on `#efefef` (v12 keyed packet colours by theme only); the light colours are the table's `rules.light` (literals), the lengths every family's `tokens`. An empty label draws no `<text>` (core's label writer writes nothing for no lines). The 10,000-row cap draws about 4.3 MB of SVG (427 characters a one-piece row, after hoisting the shared paints onto the root; 407 without the explicit `text-anchor="start"` the ported v12 spec reads), past the default `maxOutputLength` of 4,000,000: it is a `LIMIT` error at the default limits (pinned, MIGRATION.md row; review asked to fit it, it does not), and the conformance render corpus lifts the limit to cover it. `neo` repeats the classic/redux entry instead of `{ fallback: 'redux' }`: `theme-direction.ts` rule 2 reads the literal `'redux'` as the theme name (for #414 T0b).
 - Shared edits: `background` and `primaryTextColor` list `packet` in `usedBy` (`gen:theme`); `theme-used-by.spec.ts`'s scanner skips a var's `nested:` key. (The review dropped the "reads every table var" check: T0b's job.)
@@ -38,7 +38,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **Size (for the maintainer, D217, R-PERF-8):** the CDN measure of core grows 92,961 → 92,976 B gz (+15 B, the registry row) of 94,208; load path for one packet render 106,532 B gz by the bench method (107,475 on the CDN build). The theme table adds nothing to core. The local bench (`--mode report`) passes every gate; its corpus has no per-type fixtures, so it does not render packet (the warm ratio, 15.3×, is a one-off run over packet's e2e fixtures).
 - Review fixes: `PACKET_CONFIG_DEFAULTS` without casts (a key record makes a missing key a type error; the generated type makes every key optional, so a type guard checks the defaults exist when the module loads); `PACKET_METRICS` at `./testing`.
 
-## #458 T6 language facet (running)
+## #458 T6 language facet (merged; implementer notes)
 
 - Deviations (for the maintainer):
   - `LanguageFacet.standalone` and its service handling (`language-service/src/symbols.ts`, `service.spec.ts`, DESIGN.md, language.md) are copied hunk for hunk from mindmap's #389 (`e99d313ef`, on `mermaid-v13`, not yet here): D346's "each its own definition, no references, duplicates allowed" needs it, and identical hunks keep the base merge through the T0 branch clean. Packet's facet sets `standalone: ['field']`.
@@ -48,7 +48,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - `PacketFieldNode.dropped` (additive): why a field is not in the model, set by the parser; hover reads it (review fix).
   - Budget (R-LANG-4): `bench/src/language-budget-packet.spec.ts` on `fixtures/language/packet-50k.mmd`; a cycle is 4.0–4.1 bare parses under vitest, best of 15 under tsx 15.5 ms with flowchart at 18.8 on the same loaded machine: *not measured on a steady machine*. No `language:packet` CLI.
   - Completion offers `packet`, not `packet-beta` (the older name), at the start; on the `packet` line only `title`; `:` after a field's bits once a blank follows (right after a bit number the cursor extends it); `"` after the `:`.
-  - Hover on a field without a model entry says "Not drawn:" with its D341 message (or the row cap); the facet parses without the document's config (the service passes none), so rows are not shown.
+  - Hover on a field without a model entry says "Not drawn:" with its D341 message (or the row cap); the facet parsed without the document's config (fixed in the #458 review by `packetSectionOf`) (the service passes none), so rows are not shown.
   - A label written otherwise than its name (escape, entity, tag quote, comment line or CRLF inside) is no service occurrence, as pie's (46 in the gate corpus, pinned in the oracle spec).
 
 ## #452 T1 lexer (merged)
@@ -107,6 +107,17 @@ Merged before its review fixes so T3 could build on it while the load rule allow
 - Review fixes merged: the facet reads the source's own `packet` config (front matter, then `%%{init}%%`) via `packetSectionOf`; field nodes carry `dropped` (error or row cap) set by the parser; the next-bit completion reparses only the lines since the last field.
 - **For the maintainer: R-LANG-4 budget.** New `packages/bench/src/language-budget-packet.spec.ts` (as sequence's; pie has none): one cycle ≤ 4.5 bare parses (measured 4.0–4.1), 4× text ≤ 6.2× cycle (measured 4.4–4.6). Best of 15 on the 50k fixture is 15.5 ms against R-LANG-4's 15 ms, at load average 14 (flowchart measured 18.8 ms in the same run): not measured on a steady machine. The ratio margins are about 10%; if it flakes on CI as `language-budget-sequence.spec.ts` does, rerun once before acting.
 - Copied verbatim from `mermaid-v13`'s `e99d313ef` (mindmap #389): `LanguageFacet.standalone` and its service handling (core `parser-kit/language.ts` types, `language-service/src/symbols.ts`, `service.spec.ts`, DESIGN.md, `language.md`); identical hunks, so the base merge resolves them cleanly.
+
+## Final whole-branch review (findings; fixes after T7, one implementer)
+
+- [ ] **Cross-port (reported to the coordinator):** packet's generic `conformance/src/cli/harvest-v12.ts` (`HARVESTS` table) and radar's `harvest-langium.ts`/`src/langium-harvest.ts` both replace `harvest-pie.ts`; info and cynefin add their own harvesters. The wave picks one shape; packet adapts.
+- [ ] **D342 cap vs `maxOutputLength`:** confirmed (`packet\n0-319999: "x"` draws 4,264,246 characters against 4,000,000; at `bitsPerRow: 1` it fits, 3.26 MB). A maintainer decision, listed in the PR.
+- [ ] **`LANGIUM_NAMES` leaks into the render chunk** (computed keys keep it, ~128 B gz): move it to a module only `testing.ts` imports; drop it from `parser/index.ts`.
+- [ ] **`layout/fixtures.ts` ships in `dist`:** `tsconfig.build.json` excludes `*.fixtures.ts` only; exclude it (pie has the same; fix packet's).
+- [ ] **Stale text:** `render/render.ts:10-12` ("still passes the default `maxOutputLength`" should say it exceeds it); `src/index.ts` header stops at T4; GAPS "(running)" headings and the T6 "parses without the document's config" line (fixed by `packetSectionOf`).
+- [ ] **Base merge:** `tools/gen-config/src/theme-used-by.spec.ts`'s scanner line is also rewritten by `feature/414_theme-t0`; keep the `nested:` exclusion when merging. When T0b lands, packet's `background`/`primaryTextColor` reads (rule right-hand sides) may need `DYNAMIC_READS`.
+- For #414 T0b: `v13/docs/theme-variables.md` lists none of packet's ten flat variables (the generator reads only core's `THEME_VARIABLES`); per-package `gen:theme` should cover diagram tables. Only MIGRATION.md names them today.
+- Checked, nothing found: config read once, warnings not duplicated across `render()` and `prepare`+`renderSync`; AST ids, `data-ast`/`data-id` and facet symbols agree; `standalone` hunks byte-identical to `e99d313ef`; packet chunk 9,355 B gz with no `invariants.ts`; neo-dark/redux-dark/redux-dark-color and forest colours as MIGRATION.md says; no unchecked GAPS box and the T1–T6 acceptance table met.
 
 ## Shared contracts
 
