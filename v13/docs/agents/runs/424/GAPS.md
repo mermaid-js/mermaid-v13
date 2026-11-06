@@ -23,6 +23,16 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - `gen-grammar`'s `unnamed` kind map gains an optional `terminal`, so the lexer's four `SHAPE_DATA` kinds map to their own rules (additive; flowchart and the others unchanged).
 
 ## #455 T3 layout
+- **Unmet (waits on #453):** the layout invariants run on hand-built `KanbanLayoutInput`s (`src/layout/fixtures.ts`, the corpus transcribed as T2 should read it), not on parser-produced fixtures. Once T2 merges: add the `KanbanModel` → `KanbanLayoutInput` adapter, build `FIXTURES` from `parseKanban` over copies of the corpus, and add `conformance/src/kanban/layout-corpus.spec.ts` on the files, as journey's.
+- Exploration (v12 render): a card without metadata is `title + 20` (the empty ticket and assignee labels measure 0 high); see `tickets/455.md` for the numbers.
+- Exploration: v12 wraps the ticket and the assignee at `W − 25` too, and a ticket or assignee over 40 px high (two lines or more) sticks out of the card's bottom, as the title then starts above the card. Kept as v12; not an invariant.
+- **Choice:** the layout keeps v12's coordinates (column tops at `−1.5 W`, column k centred at `W·k + 5(k − 1)`); the bounds move the viewBox origin.
+- **Choice:** `kanban.sectionWidth` and `kanban.padding` take a number or a whole numeric string from 0 to 10,000 px (v12's arithmetic took numeric strings); `sectionWidth: 0` is 200 silently (`|| 200`); a `sectionWidth` above 0 and below 26 px (`wrapInset + minWrap`: card labels keep 1 px to wrap at, cards 11 px wide) is raised to 26 (pitfall 22; v12 drew negative widths); anything else is the default. Each adjustment warns `KANBAN_CONFIG_IGNORED` once per key (mindmap's `MINDMAP_CONFIG_IGNORED`).
+- **Choice:** lengths go through the render's unit profile (`fromPx`), so T7 can rerun the layout in cells; T7 may still want its own cell values.
+- **Choice:** bounds include half the 1 px outline of columns and cards (journey's `drawnRects`), so the default viewBox is 1.5 px tighter per side than v12's (8 + 0.5 against 10).
+- **Choice:** `KANBAN_PRIORITY` (D375) is raised by T4, not by the layout.
+- **Choice:** the layout reads `fontFamily`/`fontSize` (pitfall 16), so `kanban` joins core's `TEXT_USERS` in this ticket and `NOT_RENDERING_YET` in `theme-used-by.spec.ts` is emptied, not in #457.
+- **Choice:** the length-literal scan is `packages/conformance/src/kanban-layout-literals.spec.ts` (the diagram packages have no Node types), outside `src/layout/`.
 
 ## #457 T4 renderer
 - Column colours (D374): T0a (#438) is merged into this branch (`d562508ea`). **Choice:** twelve table vars (one per `cScale` slot, used for column k as slot `(k + 1) mod 12`) whose `rules.light` is `lightenHsl(cScale<n>, 10%)` and `rules.dark` `darkenHsl(cScale<n>, 10%)` (khroma's lighten/darken, as v12's `styles.ts`), so `cScale<n>` overrides recolour columns and there is no HSL code in the package or core. "No new variable" in D374 is read as no new *core* variable.

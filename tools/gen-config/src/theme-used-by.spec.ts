@@ -44,8 +44,8 @@ const TYPES = readdirSync(PACKAGES)
   .map((d) => d.slice('diagram-'.length))
   .sort();
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
-/** Packages with no renderer yet, so no theme reads (kanban's renderer is #457, which removes it). */
-const NOT_RENDERING_YET: readonly string[] = ['kanban'];
+/** Packages with no renderer yet, so no theme reads (none now: kanban's layout reads the font, #455). */
+const NOT_RENDERING_YET: readonly string[] = [];
 
 describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {

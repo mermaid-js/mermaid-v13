@@ -216,6 +216,7 @@ const TEXT_USERS = [
   'journey',
   'timeline',
   'quadrant',
+  'kanban',
 ];
 
 const JOURNEY = ['journey'];
