@@ -1,0 +1,451 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`layered: graphs without groups > lays out every fixture without groups as before 1`] = `
+"f9484dd2 single node
+85787679 empty graph
+2cd54fbb chain TB
+f9fdfeb3 chain BT
+19a1cc33 chain RL
+a75783fa docs decision flow
+e463976b cycle
+2ffb2aab labelled LR with minLen
+ff78bd9f parallel edges
+9727798b self loops
+db09599a self loop LR
+4b985a0a K3,3
+f72c9c15 disconnected parts
+b0bebcc0 stepped routing
+288e4e57 straight routing
+b61413c5 tree 50
+c7751668 tree 500
+0686bc5d single node
+0dccd5a3 chain TB
+9a602ee9 chain BT
+f45f2ae4 chain LR
+24c458e0 chain RL
+5225a0ad odd and even widths in line
+96cc11f0 docs decision flow
+7668fc88 cycle
+4524d93a labelled LR with minLen
+8d2b044c parallel edges
+22e4f7f1 self loops
+4b0ccacc self loop LR
+36713b8e K3,3
+c44af671 fan out TB five
+f5e80181 fan in TB five
+670eaced fan out LR four
+4d00fc8b fan in RL four
+f6e79340 fan out BT three
+2024bb92 ampersands LR
+ea1b4fb3 disconnected parts
+4c81c9ed tree 40
+e82f0f19 tree 40 LR
+583a8980 F1 loop and two ends on a narrow box
+95951a2d F1 loop beside a back edge
+5feaa204 F6 two loops on one node
+e3d4f93c F6 two loops LR
+64da2673 F7 drawing margin
+583a8980 F1 loop and two ends on a narrow box
+95951a2d F1 loop beside a back edge
+5feaa204 F6 two loops on one node
+e3d4f93c F6 two loops LR
+64da2673 F7 drawing margin
+ce13154b random 0 TB
+c51fae72 random 1 LR
+532a4b98 random 3 RL
+8aaf14f7 random 5 LR
+7b98b00f random 9 LR
+1ef42b45 random 10 BT
+a4d71167 random 18 BT
+3e302061 random 22 BT
+4ca3fe96 random 23 RL
+e4ec6237 random 24 TB
+418094f9 random 25 LR
+92deb6f0 random 26 BT
+153d3d6a random 28 TB
+2da39602 random 32 TB
+43fc570e random 33 LR
+100b5fb6 random 34 BT
+9e1ce9ee random 35 RL
+111c06d7 random 36 TB"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph BT curved as before 1`] = `
+"BT 356 x 745
+node A 317,710 60 x 54
+node B 148,531 120 x 54
+node C 235.5,349 84 x 54
+node D 235.5,243 60 x 54
+node E 235.5,139 99 x 54
+node F 281,35 60 x 54
+edge ab top-bottom label 140,601 start - end - | 299,683v 299,655v 140,655v 140,615v 140,587v 140,558v
+edge ab2 top-bottom label - start - end - | 311,683v 311,643v 183,643v 183,608v 183,594v 183,558v
+edge bc top-bottom label - start - end - | 148,504v 227.5,376v
+edge ca bottom-top label 323,436 start - end - | 243.5,376v 323,422v 323,450v 323,504v 323,558v 323,683v
+edge bb right-right label 264,531 start - end - | 208,517.5h 234,517.5h 234,544.5v 208,544.5h
+edge dd right-right label - start - end - | 265.5,229.5h 291.5,229.5h 291.5,256.5v 265.5,256.5h
+edge cd top-bottom label - start 251.5,309 end 258.5,291 | 235.5,322v 235.5,270v
+edge de top-bottom label - start - end - | 235.5,216v 235.5,166v
+edge af top-bottom label - start - end - | 335,683v 348,558v 348,504v 348,443v 348,429v 348,376v 348,322v 348,270v 348,216v 348,166v 348,112v 289,62v
+edge ef top-bottom label - start - end 287,83 | 235.5,112v 273,62v"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph BT on the grid as before 1`] = `
+"BT 42 x 52
+node A 34,50 9 x 3
+node B 17,37 13 x 5
+node C 26,24 9 x 3
+node D 26,16 7 x 5
+node E 26,8 11 x 3
+node F 30,1 7 x 3
+edge ab top-bottom label 15,44 start - end - | 32,48v 32,46v 15,46v 15,40v
+edge ab2 top-bottom label - start - end - | 34,48v 34,41v 17,41v 17,40v
+edge bc top-bottom label - start - end - | 17,34v 17,27v 25,27v 25,26v
+edge ca bottom-top label 36,30 start - end - | 27,26v 27,27v 36,27v 36,48v
+edge bb right-right label 31,37 start - end - | 24,36h 26,36h 26,38v 24,38h
+edge dd right-right label - start - end - | 30,15h 32,15h 32,17v 30,17h
+edge cd top-bottom label - start 29.5,22 end 30.5,20 | 26,22v 26,19v
+edge de top-bottom label - start - end - | 26,13v 26,10v
+edge af top-bottom label - start - end - | 37,48v 37,46v 39,46v 39,4v 31,4v 31,3v
+edge ef top-bottom label - start - end 32.5,4 | 26,6v 26,4v 29,4v 29,3v"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph BT stepped as before 1`] = `
+"BT 390 x 719
+node A 317,684 60 x 54
+node B 148,531 120 x 54
+node C 235.5,349 84 x 54
+node D 235.5,243 60 x 54
+node E 235.5,139 99 x 54
+node F 281,35 60 x 54
+edge ab top-bottom label 140,597 start - end - | 299,657v 299,639v 140,639v 140,611v 140,583v 140,558v
+edge ab2 top-bottom label - start - end - | 311,657v 311,629v 183,629v 183,611v 183,583v 183,558v
+edge bc top-bottom label - start - end - | 148,504v 148,454v 148,426v 148,401v 227.5,401v 227.5,376v
+edge ca bottom-top label 323,440 start - end - | 243.5,376v 243.5,401v 323,401v 323,426v 323,454v 323,504v 323,558v 323,583v 323,611v 323,657v
+edge bb right-right label 264,531 start - end - | 208,517.5h 234,517.5h 234,544.5v 208,544.5h
+edge dd right-right label - start - end - | 265.5,229.5h 291.5,229.5h 291.5,256.5v 265.5,256.5h
+edge cd top-bottom label - start 251.5,309 end 258.5,291 | 235.5,322v 235.5,270v
+edge de top-bottom label - start - end - | 235.5,216v 235.5,166v
+edge af top-bottom label - start - end - | 335,657v 335,639v 348,639v 348,611v 348,583v 348,558v 348,504v 348,454v 348,426v 348,376v 348,322v 348,270v 348,216v 348,166v 348,112v 348,87v 289,87v 289,62v
+edge ef top-bottom label - start - end 287,83 | 235.5,112v 235.5,87v 273,87v 273,62v"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph BT straight as before 1`] = `
+"BT 356 x 698
+node A 317,663 60 x 54
+node B 148,531 120 x 54
+node C 235.5,349 84 x 54
+node D 235.5,243 60 x 54
+node E 235.5,139 99 x 54
+node F 281,35 60 x 54
+edge ab top-bottom label 140,601 start - end - | 299,636v 140,615v 140,587v 140,558v
+edge ab2 top-bottom label - start - end - | 311,636v 183,608v 183,594v 183,558v
+edge bc top-bottom label - start - end - | 148,504v 227.5,376v
+edge ca bottom-top label 323,436 start - end - | 243.5,376v 323,422v 323,450v 323,504v 323,558v 323,636v
+edge bb right-right label 264,531 start - end - | 208,517.5h 234,517.5h 234,544.5v 208,544.5h
+edge dd right-right label - start - end - | 265.5,229.5h 291.5,229.5h 291.5,256.5v 265.5,256.5h
+edge cd top-bottom label - start 251.5,309 end 258.5,291 | 235.5,322v 235.5,270v
+edge de top-bottom label - start - end - | 235.5,216v 235.5,166v
+edge af top-bottom label - start - end - | 335,636v 348,558v 348,504v 348,443v 348,429v 348,376v 348,322v 348,270v 348,216v 348,166v 348,112v 289,62v
+edge ef top-bottom label - start - end 287,83 | 235.5,112v 273,62v"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph LR curved as before 1`] = `
+"LR 962 x 252
+node A 38,212 60 x 54
+node B 291,95 120 x 54
+node C 523,156 84 x 54
+node D 665,156 60 x 54
+node E 794.5,156 99 x 54
+node F 924,200 60 x 54
+edge ab right-left label 169,87 start - end - | 68,197h 96,197h 96,87h 136,87h 202,87h 231,83h
+edge ab2 right-left label - start - end - | 68,207h 108,207h 108,111h 152.5,111h 185.5,111h 231,99h
+edge bc right-left label - start - end - | 351,95h 481,148h
+edge ca left-right label 420,217 start - end - | 481,164h 435,217h 405,217h 351,217h 231,217h 68,217h
+edge bb bottom-bottom label 291,168 start - end - | 261,122v 261,148v 321,148h 321,122v
+edge dd bottom-bottom label - start - end - | 650,183v 650,209v 680,209h 680,183v
+edge cd right-left label - start 579,171 end 606,171 | 565,156h 635,156h
+edge de right-left label - start - end - | 695,156h 745,156h
+edge af right-left label - start - end - | 68,227h 231,244h 351,244h 412.5,244h 427.5,244h 481,244h 565,244h 635,244h 695,244h 745,244h 844,244h 894,208h
+edge ef right-left label - start - end 874,207 | 844,156h 894,192h"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph LR on the grid as before 1`] = `
+"LR 103 x 20
+node A 3,15 7 x 9
+node B 29,7 13 x 5
+node C 53,12 9 x 5
+node D 72,12 7 x 3
+node E 85,12 11 x 3
+node F 99,13 7 x 5
+edge ab right-left label 16,6 start - end - | 7,12h 9,12h 9,6h 22,6h
+edge ab2 right-left label - start - end - | 7,14h 10,14h 10,8h 22,8h
+edge bc right-left label - start - end - | 36,7h 47,7h 47,11h 48,11h
+edge ca left-right label 42,16 start - end - | 48,13h 47,13h 47,16h 7,16h
+edge bb bottom-bottom label 29,14 start - end - | 28,10v 28,12v 30,12h 30,10v
+edge dd bottom-bottom label - start - end - | 71,14v 71,16v 73,16h 73,14v
+edge cd right-left label - start 59.5,14 end 64.5,14 | 58,12h 68,12h
+edge de right-left label - start - end - | 76,12h 79,12h
+edge af right-left label - start - end - | 7,18h 93,18h 93,14h 95,14h
+edge ef right-left label - start - end 92.5,14 | 91,12h 95,12h"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph LR stepped as before 1`] = `
+"LR 947 x 282
+node A 38,212 60 x 54
+node B 276,95 120 x 54
+node C 508,156 84 x 54
+node D 650,156 60 x 54
+node E 779.5,156 99 x 54
+node F 909,200 60 x 54
+edge ab right-left label 147,87 start - end - | 68,197h 86,197h 86,87h 114,87h 180,87h 198,87h 198,83h 216,83h
+edge ab2 right-left label - start - end - | 68,207h 96,207h 96,111h 114,111h 180,111h 198,111h 198,99h 216,99h
+edge bc right-left label - start - end - | 336,95h 386,95h 416,95h 441,95h 441,148h 466,148h
+edge ca left-right label 401,217 start - end - | 466,164h 441,164h 441,217h 416,217h 386,217h 336,217h 216,217h 180,217h 114,217h 68,217h
+edge bb bottom-bottom label 276,168 start - end - | 246,122v 246,148v 306,148h 306,122v
+edge dd bottom-bottom label - start - end - | 635,183v 635,209v 665,209h 665,183v
+edge cd right-left label - start 564,171 end 591,171 | 550,156h 620,156h
+edge de right-left label - start - end - | 680,156h 730,156h
+edge af right-left label - start - end - | 68,227h 86,227h 86,244h 114,244h 180,244h 216,244h 336,244h 386,244h 416,244h 466,244h 550,244h 620,244h 680,244h 730,244h 829,244h 854,244h 854,208h 879,208h
+edge ef right-left label - start - end 859,207 | 829,156h 854,156h 854,192h 879,192h"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph LR straight as before 1`] = `
+"LR 915 x 252
+node A 38,212 60 x 54
+node B 244,95 120 x 54
+node C 476,156 84 x 54
+node D 618,156 60 x 54
+node E 747.5,156 99 x 54
+node F 877,200 60 x 54
+edge ab right-left label 122,87 start - end - | 68,197h 89,87h 155,87h 184,83h
+edge ab2 right-left label - start - end - | 68,207h 105.5,111h 138.5,111h 184,99h
+edge bc right-left label - start - end - | 304,95h 434,148h
+edge ca left-right label 373,217 start - end - | 434,164h 388,217h 358,217h 304,217h 184,217h 68,217h
+edge bb bottom-bottom label 244,168 start - end - | 214,122v 214,148v 274,148h 274,122v
+edge dd bottom-bottom label - start - end - | 603,183v 603,209v 633,209h 633,183v
+edge cd right-left label - start 532,171 end 559,171 | 518,156h 588,156h
+edge de right-left label - start - end - | 648,156h 698,156h
+edge af right-left label - start - end - | 68,227h 184,244h 304,244h 365.5,244h 380.5,244h 434,244h 518,244h 588,244h 648,244h 698,244h 797,244h 847,208h
+edge ef right-left label - start - end 827,207 | 797,156h 847,192h"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph LR tight as before 1`] = `
+"LR 905.75 x 236.5
+node A 38,199.5 60 x 54
+node B 284.75,95 120 x 54
+node C 491.75,149.75 84 x 54
+node D 633.75,149.75 60 x 54
+node E 750.75,149.75 99 x 54
+node F 867.75,187.5 60 x 54
+edge ab right-left label 169,87 start - end - | 68,184.5h 96,184.5h 96,87h 136,87h 202,87h 224.75,83h
+edge ab2 right-left label - start - end - | 68,194.5h 108,194.5h 108,111h 152.5,111h 185.5,111h 224.75,99h
+edge bc right-left label - start - end - | 344.75,95h 449.75,141.75h
+edge ca left-right label 401.25,204.5 start - end - | 449.75,157.75h 416.25,204.5h 386.25,204.5h 344.75,204.5h 224.75,204.5h 68,204.5h
+edge bb bottom-bottom label 284.75,168 start - end - | 254.75,122v 254.75,148v 314.75,148h 314.75,122v
+edge dd bottom-bottom label - start - end - | 618.75,176.75v 618.75,202.75v 648.75,202.75h 648.75,176.75v
+edge cd right-left label - start 547.75,164.75 end 574.75,164.75 | 533.75,149.75h 603.75,149.75h
+edge de right-left label - start - end - | 663.75,149.75h 701.25,149.75h
+edge af right-left label - start - end - | 68,214.5h 224.75,228.5h 344.75,228.5h 393.75,228.5h 408.75,228.5h 449.75,228.5h 533.75,228.5h 603.75,228.5h 663.75,228.5h 701.25,228.5h 800.25,228.5h 837.75,195.5h
+edge ef right-left label - start - end 817.75,194.5 | 800.25,149.75h 837.75,179.5h"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph LR turned as before 1`] = `
+"TB 343.5 x 688.75
+node A 304.5,35 60 x 54
+node B 148,207.75 120 x 54
+node C 229.25,364.75 84 x 54
+node D 229.25,470.75 60 x 54
+node E 229.25,562.25 99 x 54
+node F 268.5,653.75 60 x 54
+edge ab bottom-top label 140,144 start - end - | 286.5,62v 286.5,90v 140,90v 140,130v 140,158v 140,180.75v
+edge ab2 bottom-top label - start - end - | 298.5,62v 298.5,102v 183,102v 183,137v 183,151v 183,180.75v
+edge bc bottom-top label - start - end - | 148,234.75v 221.25,337.75v
+edge ca top-bottom label 310.5,290.25 start - end - | 237.25,337.75v 310.5,304.25v 310.5,276.25v 310.5,234.75v 310.5,180.75v 310.5,62v
+edge bb right-right label 264,207.75 start - end - | 208,194.25h 234,194.25h 234,221.25v 208,221.25h
+edge dd right-right label - start - end - | 259.25,457.25h 285.25,457.25h 285.25,484.25v 259.25,484.25h
+edge cd bottom-top label - start 245.25,404.75 end 252.25,422.75 | 229.25,391.75v 229.25,443.75v
+edge de bottom-top label - start - end - | 229.25,497.75v 229.25,535.25v
+edge af bottom-top label - start - end - | 322.5,62v 335.5,180.75v 335.5,234.75v 335.5,283.25v 335.5,297.25v 335.5,337.75v 335.5,391.75v 335.5,443.75v 335.5,497.75v 335.5,535.25v 335.5,589.25v 276.5,626.75v
+edge ef bottom-top label - start - end 274.5,605.75 | 229.25,589.25v 260.5,626.75v"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph RL curved as before 1`] = `
+"RL 962 x 252
+node A 924,212 60 x 54
+node B 671,95 120 x 54
+node C 439,156 84 x 54
+node D 297,156 60 x 54
+node E 167.5,156 99 x 54
+node F 38,200 60 x 54
+edge ab left-right label 793,87 start - end - | 894,197h 866,197h 866,87h 826,87h 760,87h 731,83h
+edge ab2 left-right label - start - end - | 894,207h 854,207h 854,111h 809.5,111h 776.5,111h 731,99h
+edge bc left-right label - start - end - | 611,95h 481,148h
+edge ca right-left label 542,217 start - end - | 481,164h 527,217h 557,217h 611,217h 731,217h 894,217h
+edge bb bottom-bottom label 671,168 start - end - | 641,122v 641,148v 701,148h 701,122v
+edge dd bottom-bottom label - start - end - | 282,183v 282,209v 312,209h 312,183v
+edge cd left-right label - start 383,171 end 356,171 | 397,156h 327,156h
+edge de left-right label - start - end - | 267,156h 217,156h
+edge af left-right label - start - end - | 894,227h 731,244h 611,244h 549.5,244h 534.5,244h 481,244h 397,244h 327,244h 267,244h 217,244h 118,244h 68,208h
+edge ef left-right label - start - end 88,207 | 118,156h 68,192h"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph RL on the grid as before 1`] = `
+"RL 103 x 20
+node A 99,15 7 x 9
+node B 73,7 13 x 5
+node C 49,12 9 x 5
+node D 30,12 7 x 3
+node E 17,12 11 x 3
+node F 3,13 7 x 5
+edge ab left-right label 86,6 start - end - | 95,12h 93,12h 93,6h 80,6h
+edge ab2 left-right label - start - end - | 95,14h 92,14h 92,8h 80,8h
+edge bc left-right label - start - end - | 66,7h 55,7h 55,11h 54,11h
+edge ca right-left label 60,16 start - end - | 54,13h 55,13h 55,16h 95,16h
+edge bb bottom-bottom label 73,14 start - end - | 72,10v 72,12v 74,12h 74,10v
+edge dd bottom-bottom label - start - end - | 29,14v 29,16v 31,16h 31,14v
+edge cd left-right label - start 42.5,14 end 37.5,14 | 44,12h 34,12h
+edge de left-right label - start - end - | 26,12h 23,12h
+edge af left-right label - start - end - | 95,18h 9,18h 9,14h 7,14h
+edge ef left-right label - start - end 9.5,14 | 11,12h 7,12h"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph RL stepped as before 1`] = `
+"RL 947 x 282
+node A 909,212 60 x 54
+node B 671,95 120 x 54
+node C 439,156 84 x 54
+node D 297,156 60 x 54
+node E 167.5,156 99 x 54
+node F 38,200 60 x 54
+edge ab left-right label 800,87 start - end - | 879,197h 861,197h 861,87h 833,87h 767,87h 749,87h 749,83h 731,83h
+edge ab2 left-right label - start - end - | 879,207h 851,207h 851,111h 833,111h 767,111h 749,111h 749,99h 731,99h
+edge bc left-right label - start - end - | 611,95h 561,95h 531,95h 506,95h 506,148h 481,148h
+edge ca right-left label 546,217 start - end - | 481,164h 506,164h 506,217h 531,217h 561,217h 611,217h 731,217h 767,217h 833,217h 879,217h
+edge bb bottom-bottom label 671,168 start - end - | 641,122v 641,148v 701,148h 701,122v
+edge dd bottom-bottom label - start - end - | 282,183v 282,209v 312,209h 312,183v
+edge cd left-right label - start 383,171 end 356,171 | 397,156h 327,156h
+edge de left-right label - start - end - | 267,156h 217,156h
+edge af left-right label - start - end - | 879,227h 861,227h 861,244h 833,244h 767,244h 731,244h 611,244h 561,244h 531,244h 481,244h 397,244h 327,244h 267,244h 217,244h 118,244h 93,244h 93,208h 68,208h
+edge ef left-right label - start - end 88,207 | 118,156h 93,156h 93,192h 68,192h"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph RL straight as before 1`] = `
+"RL 915 x 252
+node A 877,212 60 x 54
+node B 671,95 120 x 54
+node C 439,156 84 x 54
+node D 297,156 60 x 54
+node E 167.5,156 99 x 54
+node F 38,200 60 x 54
+edge ab left-right label 793,87 start - end - | 847,197h 826,87h 760,87h 731,83h
+edge ab2 left-right label - start - end - | 847,207h 809.5,111h 776.5,111h 731,99h
+edge bc left-right label - start - end - | 611,95h 481,148h
+edge ca right-left label 542,217 start - end - | 481,164h 527,217h 557,217h 611,217h 731,217h 847,217h
+edge bb bottom-bottom label 671,168 start - end - | 641,122v 641,148v 701,148h 701,122v
+edge dd bottom-bottom label - start - end - | 282,183v 282,209v 312,209h 312,183v
+edge cd left-right label - start 383,171 end 356,171 | 397,156h 327,156h
+edge de left-right label - start - end - | 267,156h 217,156h
+edge af left-right label - start - end - | 847,227h 731,244h 611,244h 549.5,244h 534.5,244h 481,244h 397,244h 327,244h 267,244h 217,244h 118,244h 68,208h
+edge ef left-right label - start - end 88,207 | 118,156h 68,192h"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph TB curved as before 1`] = `
+"TB 356 x 745
+node A 317,35 60 x 54
+node B 148,214 120 x 54
+node C 235.5,396 84 x 54
+node D 235.5,502 60 x 54
+node E 235.5,606 99 x 54
+node F 281,710 60 x 54
+edge ab bottom-top label 140,144 start - end - | 299,62v 299,90v 140,90v 140,130v 140,158v 140,187v
+edge ab2 bottom-top label - start - end - | 311,62v 311,102v 183,102v 183,137v 183,151v 183,187v
+edge bc bottom-top label - start - end - | 148,241v 227.5,369v
+edge ca top-bottom label 323,309 start - end - | 243.5,369v 323,323v 323,295v 323,241v 323,187v 323,62v
+edge bb right-right label 264,214 start - end - | 208,200.5h 234,200.5h 234,227.5v 208,227.5h
+edge dd right-right label - start - end - | 265.5,488.5h 291.5,488.5h 291.5,515.5v 265.5,515.5h
+edge cd bottom-top label - start 251.5,436 end 258.5,454 | 235.5,423v 235.5,475v
+edge de bottom-top label - start - end - | 235.5,529v 235.5,579v
+edge af bottom-top label - start - end - | 335,62v 348,187v 348,241v 348,302v 348,316v 348,369v 348,423v 348,475v 348,529v 348,579v 348,633v 289,683v
+edge ef bottom-top label - start - end 287,662 | 235.5,633v 273,683v"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph TB on the grid as before 1`] = `
+"TB 42 x 52
+node A 34,1 9 x 3
+node B 17,14 13 x 5
+node C 26,27 9 x 3
+node D 26,35 7 x 5
+node E 26,43 11 x 3
+node F 30,50 7 x 3
+edge ab bottom-top label 15,7 start - end - | 32,3v 32,5v 15,5v 15,11v
+edge ab2 bottom-top label - start - end - | 34,3v 34,10v 17,10v 17,11v
+edge bc bottom-top label - start - end - | 17,17v 17,24v 25,24v 25,25v
+edge ca top-bottom label 36,21 start - end - | 27,25v 27,24v 36,24v 36,3v
+edge bb right-right label 31,14 start - end - | 24,13h 26,13h 26,15v 24,15h
+edge dd right-right label - start - end - | 30,34h 32,34h 32,36v 30,36h
+edge cd bottom-top label - start 29.5,29 end 30.5,31 | 26,29v 26,32v
+edge de bottom-top label - start - end - | 26,38v 26,41v
+edge af bottom-top label - start - end - | 37,3v 37,5v 39,5v 39,47v 31,47v 31,48v
+edge ef bottom-top label - start - end 32.5,47 | 26,45v 26,47v 29,47v 29,48v"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph TB stepped as before 1`] = `
+"TB 390 x 719
+node A 317,35 60 x 54
+node B 148,188 120 x 54
+node C 235.5,370 84 x 54
+node D 235.5,476 60 x 54
+node E 235.5,580 99 x 54
+node F 281,684 60 x 54
+edge ab bottom-top label 140,122 start - end - | 299,62v 299,80v 140,80v 140,108v 140,136v 140,161v
+edge ab2 bottom-top label - start - end - | 311,62v 311,90v 183,90v 183,108v 183,136v 183,161v
+edge bc bottom-top label - start - end - | 148,215v 148,265v 148,293v 148,318v 227.5,318v 227.5,343v
+edge ca top-bottom label 323,279 start - end - | 243.5,343v 243.5,318v 323,318v 323,293v 323,265v 323,215v 323,161v 323,136v 323,108v 323,62v
+edge bb right-right label 264,188 start - end - | 208,174.5h 234,174.5h 234,201.5v 208,201.5h
+edge dd right-right label - start - end - | 265.5,462.5h 291.5,462.5h 291.5,489.5v 265.5,489.5h
+edge cd bottom-top label - start 251.5,410 end 258.5,428 | 235.5,397v 235.5,449v
+edge de bottom-top label - start - end - | 235.5,503v 235.5,553v
+edge af bottom-top label - start - end - | 335,62v 335,80v 348,80v 348,108v 348,136v 348,161v 348,215v 348,265v 348,293v 348,343v 348,397v 348,449v 348,503v 348,553v 348,607v 348,632v 289,632v 289,657v
+edge ef bottom-top label - start - end 287,636 | 235.5,607v 235.5,632v 273,632v 273,657v"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph TB straight as before 1`] = `
+"TB 356 x 698
+node A 317,35 60 x 54
+node B 148,167 120 x 54
+node C 235.5,349 84 x 54
+node D 235.5,455 60 x 54
+node E 235.5,559 99 x 54
+node F 281,663 60 x 54
+edge ab bottom-top label 140,97 start - end - | 299,62v 140,83v 140,111v 140,140v
+edge ab2 bottom-top label - start - end - | 311,62v 183,90v 183,104v 183,140v
+edge bc bottom-top label - start - end - | 148,194v 227.5,322v
+edge ca top-bottom label 323,262 start - end - | 243.5,322v 323,276v 323,248v 323,194v 323,140v 323,62v
+edge bb right-right label 264,167 start - end - | 208,153.5h 234,153.5h 234,180.5v 208,180.5h
+edge dd right-right label - start - end - | 265.5,441.5h 291.5,441.5h 291.5,468.5v 265.5,468.5h
+edge cd bottom-top label - start 251.5,389 end 258.5,407 | 235.5,376v 235.5,428v
+edge de bottom-top label - start - end - | 235.5,482v 235.5,532v
+edge af bottom-top label - start - end - | 335,62v 348,140v 348,194v 348,255v 348,269v 348,322v 348,376v 348,428v 348,482v 348,532v 348,586v 289,636v
+edge ef bottom-top label - start - end 287,615 | 235.5,586v 273,636v"
+`;
+
+exports[`layered: graphs without groups > lays out the branch graph TB tight as before 1`] = `
+"TB 371.25 x 662.75
+node A 304.5,35 60 x 54
+node B 148,181.75 120 x 54
+node C 229.25,338.75 84 x 54
+node D 229.25,444.75 60 x 54
+node E 229.25,536.25 99 x 54
+node F 268.5,627.75 60 x 54
+edge ab bottom-top label 140,122 start - end - | 286.5,62v 286.5,80v 140,80v 140,108v 140,136v 140,154.75v
+edge ab2 bottom-top label - start - end - | 298.5,62v 298.5,90v 183,90v 183,108v 183,136v 183,154.75v
+edge bc bottom-top label - start - end - | 148,208.75v 148,246.25v 148,274.25v 148,293v 221.25,293v 221.25,311.75v
+edge ca top-bottom label 310.5,260.25 start - end - | 237.25,311.75v 237.25,293v 310.5,293v 310.5,274.25v 310.5,246.25v 310.5,208.75v 310.5,154.75v 310.5,136v 310.5,108v 310.5,62v
+edge bb right-right label 264,181.75 start - end - | 208,168.25h 234,168.25h 234,195.25v 208,195.25h
+edge dd right-right label - start - end - | 259.25,431.25h 285.25,431.25h 285.25,458.25v 259.25,458.25h
+edge cd bottom-top label - start 245.25,378.75 end 252.25,396.75 | 229.25,365.75v 229.25,417.75v
+edge de bottom-top label - start - end - | 229.25,471.75v 229.25,509.25v
+edge af bottom-top label - start - end - | 322.5,62v 322.5,80v 335.5,80v 335.5,108v 335.5,136v 335.5,154.75v 335.5,208.75v 335.5,246.25v 335.5,274.25v 335.5,311.75v 335.5,365.75v 335.5,417.75v 335.5,471.75v 335.5,509.25v 335.5,563.25v 335.5,582v 276.5,582v 276.5,600.75v
+edge ef bottom-top label - start - end 274.5,579.75 | 229.25,563.25v 229.25,582v 260.5,582v 260.5,600.75v"
+`;
