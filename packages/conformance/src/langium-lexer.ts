@@ -30,6 +30,7 @@ export interface LangiumLexerDescriptor {
 
 /** The Langium types, by v13 diagram id. */
 export const LANGIUM_LEXERS = {
+  radar: { probe: 'radar-beta\naxis A', factory: 'createRadarServices', key: 'Radar' },
   pie: { probe: 'pie\n"a": 1', factory: 'createPieServices', key: 'Pie' },
 } as const satisfies Record<string, LangiumLexerDescriptor>;
 

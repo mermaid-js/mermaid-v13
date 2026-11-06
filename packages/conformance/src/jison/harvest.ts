@@ -73,7 +73,8 @@ export function harvest(type: JisonType): CorpusItem[] {
       let n = 0;
       const text = show(file);
       const js = file.endsWith('.ts') ? stripTypeScriptTypes(text) : text;
-      runSpec(js, method.parsers, (source) => {
+      // Sync: a jison spec's sources are all recorded before its first `await`.
+      void runSpec(js, method.parsers, (source) => {
         n++;
         if (typeof source === 'string') add(idOf(file, n), source);
       });
@@ -208,18 +209,26 @@ function inert(): unknown {
  * Runs v12 spec `text` with its imports stubbed: the `describe`/`it` callbacks are called in
  * order, `expect` is inert (it calls a function passed to it, for `toThrow`), and
  * `<name>.parser.parse` / `<name>.parse` call `record` with their argument, for each of
- * `parserNames`.
+ * `parserNames`. Each of `functionNames` is a function that calls `record` with each of its
+ * arguments (the Langium specs' `parse(text)` and `parseAsync('radar', text)`).
+ *
+ * The returned promise settles on the next turn of the event loop: an async test goes on
+ * after its first `await`, and what it records by then is recorded too (a loop of
+ * `await parse(…)`). A test that awaits an inert value stops there.
  */
-function runSpec(
+export function runSpec(
   text: string,
   parserNames: readonly string[],
-  record: (source: unknown) => void
-): void {
+  record: (source: unknown) => void,
+  functionNames: readonly string[] = []
+): Promise<void> {
   const queue: Fn[] = [];
   const hooks: Fn[][] = [[]];
   const call = (fn: Fn, ...args: unknown[]) => {
     try {
-      fn(...args);
+      const result = fn(...args);
+      // An async test's rejection is the same as a throw.
+      if (result instanceof Promise) result.catch(noop);
     } catch {
       // An assertion on the inert DB, or an expected parse error: the source is recorded.
     }
@@ -266,6 +275,15 @@ function runSpec(
     afterEach: noop,
     expect,
     ...Object.fromEntries(parserNames.map((name) => [name, parser()])),
+    ...Object.fromEntries(
+      functionNames.map((name) => [
+        name,
+        (...args: unknown[]) => {
+          for (const arg of args) record(arg);
+          return inert();
+        },
+      ])
+    ),
   };
   const body = stripImports(text);
   const names = Object.keys(scope);
@@ -278,6 +296,7 @@ function runSpec(
   const spec = new Function('__free', ...names, `with (__free) {\n${body}\n}`) as Fn;
   spec(free, ...names.map((k) => scope[k]));
   for (const test of queue) test();
+  return new Promise((resolve) => setImmediate(resolve));
 }
 
 /**
