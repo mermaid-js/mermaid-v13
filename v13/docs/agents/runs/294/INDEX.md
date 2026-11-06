@@ -12,6 +12,7 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 | T6 language facet | #389 | #386 | merged (ff 9c162dcaa) |
 | T5 integration | #390 | #388, #389 | merged (--no-ff 08e6ced10) |
 | icons I5 `::icon()` glyphs | #328 | #322 (merged), #388 (merged) | merged (ff 66a564e2c) |
+| corpus cleanup ("only real diagrams") | — | — | merged (`tickets/corpus-cleanup.md`) |
 | hand-drawn H4 baselines | #344 | #390 (merged) | merged (ff b834dd012) |
 
 - `01-v12-mindmap.md`: pointer notes on v12 grammar, DB, renderer, styles, shapes, tidy-tree, corpus, Pele.
