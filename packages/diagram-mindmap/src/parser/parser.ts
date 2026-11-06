@@ -33,14 +33,19 @@
  */
 import {
   cook,
+  CR,
   inKindSet,
+  isSpace,
   Kind,
   kindSet,
+  LF,
   LineIndex,
   ParseState,
   Probe,
   ProbeCursor,
   sourceView,
+  SPACE,
+  TAB,
   TokenCursor,
 } from '@mermaid-js/core/parser-kit';
 import type {
@@ -224,8 +229,7 @@ class MindmapParser {
   parse(): MindmapParseResult {
     this.start();
     this.document();
-    const root = this.open[0];
-    if (root) this.st.endStatement(root.span, this.lastEnd);
+    this.closeOpen(0, this.lastEnd);
     const { st, pre, src } = this;
     const colorBy = this.options.colorBy ?? 'branch';
     const sections = mindmapSections(this.nodes, colorBy);
@@ -279,29 +283,54 @@ class MindmapParser {
   }
 
   /**
-   * Each word of a `:::` line: a class reference; the words rename together (D289). Where the
-   * source differs from v12's text (a directive or comment cut out of the line), each word is
-   * looked up in the source in order; one not found there (and every one after it) keeps the
-   * token's range, which the service drops.
+   * Each word of a `:::` line: a class reference; the words rename together (D289). The words
+   * of v12's text are paired in order with the words of the source (blank-separated, removed
+   * spans skipped): a word whose source differs from it (an encoded entity such as `#35;`, or a
+   * word cut by a directive) keeps the token's range, which the service drops, and the others
+   * keep their own. When the counts differ (an entity read as a blank), every word keeps it.
    */
   private classSymbols(text: string, j: number): void {
     const r = this.range(j);
-    const same = this.src.slice(r.start, r.end) === text;
-    const holes = same ? [] : this.holesIn(r);
-    let from = r.start;
-    for (const m of text.matchAll(CLASS_WORD)) {
+    const spots = this.sourceWords(r);
+    const words = [...text.matchAll(CLASS_WORD)];
+    const paired = spots.length === words.length;
+    words.forEach((m, k) => {
       const name = m[0];
-      let range = r;
-      if (same) range = { start: r.start + m.index, end: r.start + m.index + name.length };
-      else if (from >= 0) {
-        // After a word not found (an entity in it), the rest keep the token's range: each
-        // lookup then stays short, so the line is read in linear time.
-        const at = this.wordIn(name, from, r, holes);
-        if (at >= 0) range = { start: at, end: (from = at + name.length) };
-        else from = -1;
+      const spot = paired ? spots[k] : undefined;
+      const exact = spot !== undefined && this.src.slice(spot.start, spot.end) === name;
+      this.st.symbol(name, 'class', exact ? spot : r, 'ref');
+    });
+  }
+
+  /**
+   * The blank-separated words of the source in `r`, in order, with the removed spans skipped
+   * (a word a removed span cuts in two is one, its range over the cut). Linear in `r`.
+   */
+  private sourceWords(r: Range): Range[] {
+    const { src } = this;
+    const holes = this.holesIn(r);
+    const out: Range[] = [];
+    let h = 0;
+    let start = -1;
+    let end = -1;
+    for (let i = r.start; i < r.end; ) {
+      const hole = holes[h];
+      if (hole && i >= hole.start) {
+        i = Math.max(i, hole.end);
+        h++;
+        continue;
       }
-      this.st.symbol(name, 'class', range, 'ref');
+      if (CLASS_BLANK.test(src.charAt(i))) {
+        if (start >= 0) out.push({ start, end });
+        start = -1;
+      } else {
+        if (start < 0) start = i;
+        end = i + 1;
+      }
+      i++;
     }
+    if (start >= 0) out.push({ start, end });
+    return out;
   }
 
   /** The removed spans that overlap `r`, found by binary search (they are in source order). */
@@ -317,28 +346,6 @@ class MindmapParser {
     let end = lo;
     while (end < holes.length && (holes[end]?.start ?? 0) < r.end) end++;
     return holes.slice(lo, end);
-  }
-
-  /**
-   * The first source offset at or after `from` in `within` where `word` stands as a word of its
-   * own (blanks, a removed span or `within`'s ends around it) outside the removed spans
-   * (`holes`, those in `within`), or -1.
-   */
-  private wordIn(word: string, from: number, within: Range, holes: readonly Range[]): number {
-    const { src } = this;
-    // Searched in the token's own text, so each lookup costs the token's length at most.
-    const token = src.slice(within.start, within.end);
-    const edge = (at: number, side: number) =>
-      at === (side < 0 ? within.start : within.end) ||
-      CLASS_BLANK.test(src.charAt(side < 0 ? at - 1 : at)) ||
-      holes.some((h) => (side < 0 ? h.end : h.start) === at);
-    for (let k = token.indexOf(word, from - within.start); k >= 0; k = token.indexOf(word, k + 1)) {
-      const at = within.start + k;
-      const end = at + word.length;
-      if (holes.some((h) => h.start < end && at < h.end)) continue;
-      if (edge(at, -1) && edge(end, 1)) return at;
-    }
-    return -1;
   }
 
   /**
@@ -731,9 +738,7 @@ class MindmapParser {
     let top = open.length;
     while (top > 0 && (open[top - 1]?.level ?? 0) >= level) top--;
     const parentOpen = open[top - 1];
-    const closing = open[top];
-    if (closing) this.st.endStatement(closing.span, before);
-    open.length = top;
+    this.closeOpen(top, before);
     const index = this.nodes.length;
     const parent = parentOpen ? this.nodes[parentOpen.index] : undefined;
     const model: OpenNode = {
@@ -755,6 +760,54 @@ class MindmapParser {
     const span = this.st.beginStatement('node', range.start);
     span.range.end = range.end;
     open.push({ index, level, span });
+  }
+
+  /**
+   * End the spans of the open nodes from `from` on at `at`, innermost first, and drop them:
+   * each also takes the comment lines right after `at` that are indented deeper than its node
+   * (its subtree's trailing comments; blank lines between them stay out of the end), as a
+   * timeline section keeps its trailing comment lines (D259). One scan of those lines for all.
+   */
+  private closeOpen(from: number, at: number): void {
+    const { open } = this;
+    if (from >= open.length) return;
+    const comments = this.commentsAfter(at);
+    let k = 0;
+    let end = at;
+    for (let i = open.length - 1; i >= from; i--) {
+      const node = open[i]!;
+      for (let c = comments[k]; c && c.level > node.level; c = comments[++k]) end = c.end;
+      this.st.endStatement(node.span, end);
+    }
+    open.length = from;
+  }
+
+  /**
+   * The `%%` comment lines after the line holding `at`, up to the first line that is neither
+   * blank nor one: each with its indent less the root's and the end of its text.
+   */
+  private commentsAfter(at: number): { level: number; end: number }[] {
+    const { src } = this;
+    const n = src.length;
+    const lineEnd = (i: number) => {
+      let e = i;
+      while (e < n && src.charCodeAt(e) !== LF && src.charCodeAt(e) !== CR) e++;
+      return e;
+    };
+    const out: { level: number; end: number }[] = [];
+    for (let i = lineEnd(at); i < n; ) {
+      i += src.charCodeAt(i) === CR && src.charCodeAt(i + 1) === LF ? 2 : 1;
+      let s = i;
+      while (s < n && (src.charCodeAt(s) === SPACE || src.charCodeAt(s) === TAB)) s++;
+      const e = lineEnd(s);
+      if (s < e && src.startsWith('%%', s) && !src.startsWith('%%{', s)) {
+        let t = e;
+        while (t > s && isSpace(src.charCodeAt(t - 1))) t--;
+        out.push({ level: s - i - this.base, end: t });
+      } else if (s < e) break;
+      i = e;
+    }
+    return out;
   }
 
   /** `ICON` or `CLASS`: v12 `decorateNode`, on the last node in source order. */

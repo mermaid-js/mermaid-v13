@@ -24,6 +24,7 @@ import type {
 } from '@mermaid-js/core/parser-kit';
 import { mindmapDocs } from '../generated/docs.ts';
 import type { MindmapDocument } from '../parser/ast.ts';
+import { mindmapTokens } from '../parser/index.ts';
 import { T } from '../parser/tokens.ts';
 import { CLOSER_OF, lineAfter, lineBefore, SHAPES, span } from './tables.ts';
 
@@ -106,12 +107,53 @@ function closerItems(probe: ProbeResult, tokens: TokenStream, text: string): Com
   return [{ label: close, kind: 'shape', insertText: close, range: at, detail: name }];
 }
 
-/** The six shapes around the id at `range`, replacing it. */
+/** A line holding a node at a statement start, to lex an item alone (one short lex). */
+const SAMPLE = 'mindmap\n  root\n    ';
+
+/**
+ * Whether `parts`, written at a statement start, lexes as exactly those tokens in that order
+ * (`[kind, text]`), with nothing after them on the line: the node the item names.
+ */
+function readsAs(parts: readonly (readonly [number, string])[]): boolean {
+  const written = parts.map(([, t]) => t).join('');
+  const tokens = mindmapTokens(SAMPLE + written);
+  let at = SAMPLE.length;
+  let k = tokens.findIndex((t) => t.range.start === at);
+  if (k < 0) return false;
+  for (const [kind, text] of parts) {
+    const t = tokens[k++];
+    if (t?.kind !== kind || t.range.start !== at || t.range.end !== at + text.length) return false;
+    at = t.range.end;
+  }
+  const next = tokens[k];
+  return next === undefined || next.kind === Kind.Newline || next.kind === T.Eof;
+}
+
+/**
+ * The six shapes around the id at `range`, replacing it, each kept only where v12 reads it as
+ * that shape with that text: the text is quoted when it would not read bare (`q]` →
+ * `q]["q]"]`, `-q` → `-q("-q")`), and an item that reads as neither is dropped.
+ */
 function shapeItems(id: string, range: Range): CompletionItem[] {
-  return SHAPES.map(({ open, close, name }) => {
-    const label = `${id}${open}${id}${close}`;
-    return { label, kind: 'shape', insertText: label, range, detail: name };
-  });
+  const out: CompletionItem[] = [];
+  for (const { open, close, name } of SHAPES) {
+    const head = [T.NodeId, id] as const;
+    const bare = [head, [T.NodeDStart, open], [T.NodeDescr, id], [T.NodeDEnd, close]] as const;
+    const quoted = [
+      head,
+      [T.NodeDStart, open],
+      [T.StringStart, '"'],
+      [T.NodeDescr, id],
+      [T.StringEnd, '"'],
+      [T.NodeDEnd, close],
+    ] as const;
+    let label: string | undefined;
+    if (readsAs(bare)) label = `${id}${open}${id}${close}`;
+    else if (!id.includes('"') && readsAs(quoted)) label = `${id}${open}"${id}"${close}`;
+    if (label !== undefined)
+      out.push({ label, kind: 'shape', insertText: label, range, detail: name });
+  }
+  return out;
 }
 
 export function mindmapCompletions(

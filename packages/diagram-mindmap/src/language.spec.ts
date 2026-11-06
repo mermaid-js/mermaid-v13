@@ -88,6 +88,28 @@ describe('mindmap language facet', () => {
     ]);
   });
 
+  it('keeps every class word that reads as written on its range, past an encoded one', () => {
+    const text = 'mindmap\n  root\n    :::x #35; y\n    b\n    :::y\n';
+    const result = mindmapLanguage.parse(text, { keepTokens: true });
+    const at = result.symbols
+      .filter((s) => s.kind === 'class')
+      .map((s) => text.slice(s.range.start, s.range.end));
+    expect(at).toEqual(['x', 'x #35; y', 'y', 'y']);
+    const cut = 'mindmap\n  root\n    :::a %%{init: {}}%% b c\n';
+    const words = mindmapLanguage
+      .parse(cut, { keepTokens: true })
+      .symbols.filter((s) => s.kind === 'class')
+      .map((s) => cut.slice(s.range.start, s.range.end));
+    expect(words).toEqual(['a', 'b', 'c']);
+  });
+
+  it('folds a subtree over the comment lines indented inside it', () => {
+    const text = 'mindmap\n  root\n    a\n      b\n      %% trailing\n\n    %% not in a\n    d\n';
+    const { statements } = mindmapLanguage.parse(text, { keepTokens: true });
+    const a = statements.find((s) => s.kind === 'node')!.children![0]!;
+    expect(text.slice(a.range.start, a.range.end)).toBe('a\n      b\n      %% trailing');
+  });
+
   it('drops the blanks around an id from its range', () => {
     const text = 'mindmap\n  root node \n';
     const [s] = mindmapLanguage.parse(text, { keepTokens: true }).symbols;
@@ -137,6 +159,11 @@ describe('mindmap completions (D95)', () => {
     expect(complete('mindmap\n  root¦')).toEqual(SHAPED('root'));
     expect(complete('mindmap\n  root\n    a b¦\n    c')).toEqual(SHAPED('a b'));
     expect(edits('mindmap\n  root\n    a¦')[0]).toEqual(['a', 'a[a]']);
+    // Each item reads back as the shape it names: quoted where the bare text would not, else
+    // dropped.
+    expect(complete('mindmap\n  root\n    q]¦')[0]).toBe('q]["q]"]');
+    expect(complete('mindmap\n  root\n    -q¦')[1]).toBe('-q("-q")');
+    expect(complete('mindmap\n  root\n    "q¦')).toEqual([]);
     // Not in the middle of an id, before a shape, or after the blanks it took.
     expect(complete('mindmap\n  ro¦ot')).toEqual([]);
     expect(complete('mindmap\n  root\n    a¦[b]')).toEqual([]);
@@ -149,6 +176,7 @@ describe('mindmap completions (D95)', () => {
     expect(complete('mindmap\n  root\n    a)text¦\n    b')).toEqual(['(']);
     expect(complete('mindmap\n  root\n    {{hex¦')).toEqual(['}}']);
     expect(edits('mindmap\n  root\n    a(text¦')).toEqual([['', ')']]);
+    expect(complete('mindmap\n  root\n    a(-text¦')).toEqual([')']);
     // Not before any text, nor where a closer follows.
     expect(complete('mindmap\n  root\n    a[¦')).toEqual([]);
     expect(complete('mindmap\n  root\n    a[te¦xt]')).toEqual([]);

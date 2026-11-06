@@ -26,11 +26,14 @@ export const SHAPES: readonly ShapeForm[] = [
   { open: '{{', close: '}}', shape: 'hexagon', name: 'hexagon' },
 ];
 
-/** The closer each opener is written with; `-)` and `(-` (the default shape) too. */
+/**
+ * The closer each opener is written with; `-)` and `(-` (the default shape) too. `(-` takes
+ * `)`: in `a(-x-)` the `-` of `-)` is read as text, as in v12.
+ */
 export const CLOSER_OF: Readonly<Record<string, string>> = {
   ...Object.fromEntries(SHAPES.map((s) => [s.open, s.close])),
   '-)': '(-',
-  '(-': '-)',
+  '(-': ')',
 };
 
 /** What hover calls each shape. */
