@@ -352,7 +352,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `architecture.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `mindmap.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the mindmap renderer never did. |  |
 | `mindmap.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
-| `mindmap.layoutAlgorithm` | ignored | Mindmap lays out with core's `tree` engine (D284); the top-level `layout` key chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`. | `layout` |
+| `mindmap.layoutAlgorithm` | ignored | v12 never read it. Mindmap lays out with core's `tree` engine (D284); `mindmap.layout` or the top-level `layout` chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`. | `mindmap.layout` or `layout` |
 | `ishikawa.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `kanban.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `gitGraph.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -1341,13 +1341,17 @@ Legend entries carry `data-id="a:<name>"` only.
 - **SVG only:** `mindmap` is detected by v12's case-sensitive `mindmap` detector, second after
   `flowchart-elk` as in v12, where it shipped only in the large-feature build. `format: 'ascii'`
   throws `UnsupportedFormatError` (D216). The language service, CodeMirror and Monaco know it.
+  For `renderSync`, `preload({ types: ['mindmap'] })` (or `prepare()`) also loads the `tree`
+  engine; `layouts` is needed only for another engine, such as an `elk.*` one.
 - **Syntax** is v12's: a differential test runs v12 and v13 over every e2e fixture and the v12
   spec and docs examples, and the grammar is in [syntax/mindmap.md](./syntax/mindmap.md). Every
   error is reported, not only the first, with messages in words (R-PARSE-4). A second root
   (`There can be only one root …`) and an `::icon()` or `:::` line before any node are errors,
   as in v12 (the second was a `TypeError` there). v12 also rejects a node right after a blank
-  line that follows `mindmap`, or after two blank or comment lines in a row; v13 does too, and
-  says to remove the blank line.
+  line under the `mindmap` line (`mindmap`, a blank line, then `root`), and after some runs
+  where a comment line sits between blank lines (a blank line, `%%`, a blank line, then the
+  node); v13 rejects exactly the same texts, and the message says to remove a blank line. Other
+  blank and comment lines, two or more in a row included, are accepted as in v12.
 - **Layout.** v12 laid mindmaps out with `cose-bilkent`, force-directed and different on every
   render, or with `tidy-tree` when that plugin was registered. v13 uses `tree`, core's two-sided
   tidy tree, so positions differ from both and are the same on every render ([Layout](#layout)):
@@ -1358,15 +1362,19 @@ Legend entries carry `data-id="a:<name>"` only.
   With `layout: layered` (or `dagre`) or an installed `elk.*` the same tree is drawn top-down.
 - **Config.** Honoured in the `mindmap` section, with v12's defaults: `colorBy` (`branch`; eleven
   sections, as v12), `padding` (10), `maxNodeWidth` (200) and `useMaxWidth` (true). `padding`
-  reaches what v12's renderer let it reach (D287): default, circle, cloud and bang nodes, twice it
-  in hexagons, and the margin round the drawing; square and rounded nodes keep their own
-  paddings (v12's fixed 10 and 15 in the classic themes). v12 meant circles to have a fixed 10, but its check never matched, so `padding` sized
-  circles there too and does here. `maxNodeWidth` wraps every shape: v12 wrapped square, rounded
+  reaches what v12's renderer let it reach (D287): the margin round the drawing and default,
+  cloud and bang nodes in every theme, and in the classic themes circles too, and hexagons twice
+  over. In the redux family, `neo` and `neo-dark` circles and hexagons take the theme's
+  `circlePadding` and `hexagonPaddingX` / `hexagonPaddingY` instead
+  ([Theme geometry](#theme-geometry)). Square and rounded nodes keep their own paddings (v12's
+  fixed 10 and 15 in the classic themes). v12 meant circles to have a fixed 10, but its check
+  never matched, so `padding` sized classic circles there too and does here. `maxNodeWidth` wraps every shape: v12 wrapped square, rounded
   and hexagon nodes at `flowchart.wrappingWidth` instead (both 200 by default, so nothing changes
   unless one of them is set). A `padding` below 0, a `maxNodeWidth` of 0 or less or a value that
   is not a number lays out with the default and warns `MINDMAP_CONFIG_IGNORED`; numeric strings
   (`"20"`) are read as numbers, as in v12. `useWidth` and `layoutAlgorithm` are ignored (v12 never
-  read them), and `look` is ignored as everywhere (D153).
+  read them), and `look` is ignored as everywhere (D153). `mindmap.layout` picks the engine for
+  mindmaps and wins over the top-level `layout`, with the same names and fallbacks.
 - **Labels** are SVG text, measured in the theme's font, with every label markdown as in v12
   (bold, italic, `<br>` line breaks), instead of HTML in `<foreignObject>`
   ([Mindmap SVG structure](#mindmap-svg-structure)).

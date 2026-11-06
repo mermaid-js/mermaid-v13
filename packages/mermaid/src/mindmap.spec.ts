@@ -74,6 +74,14 @@ describe('mindmaps through the public API (#390)', () => {
     expect(sync.svg).toBe((await createMermaid().render('m1', TEXT)).svg);
   });
 
+  it('renders synchronously after preload of the type alone: its engine comes with it', async () => {
+    const m = createMermaid();
+    await m.preload({ types: ['mindmap'] });
+    expect(m.renderSync(TEXT, { id: 'm1' }).svg).toBe(
+      (await createMermaid().render('m1', TEXT)).svg
+    );
+  });
+
   it('keeps v12’s detector place, second after flowchart-elk', () => {
     const types = DETECTORS.map((d) => d.type);
     expect(types.indexOf('mindmap')).toBe(1);
@@ -124,6 +132,19 @@ describe('mindmap layout engines (D282, D284)', () => {
     const unknown = await withInit({ layout: 'spring' });
     expect(unknown.svg).toBe(tree.svg);
     expect(unknown.warnings).toContain('LAYOUT_UNKNOWN');
+  });
+});
+
+describe('mindmap.layout', () => {
+  it('wins over the top-level layout, with the same aliases', async () => {
+    const tree = (await withInit({})).svg;
+    const layered = (await withInit({ layout: 'layered' })).svg;
+    expect((await withInit({ layout: 'tidy-tree', mindmap: { layout: 'layered' } })).svg).toBe(
+      layered
+    );
+    const alias = await withInit({ layout: 'layered', mindmap: { layout: 'cose-bilkent' } });
+    expect(alias.svg).toBe(tree);
+    expect(alias.warnings).toEqual((await withInit({})).warnings);
   });
 });
 
@@ -188,6 +209,7 @@ describe('mindmap limits (R-SEC-5)', () => {
   }
 
   it('turns the node and depth caps into LIMIT, and diagram text cannot raise them', async () => {
+    expect((await limit(chain(11), { maxNodes: 2.5 })).limit).toBe('maxNodes');
     const nodesHit = await limit(chain(6), { maxNodes: 5 });
     expect(nodesHit.limit).toBe('maxNodes');
     expect(nodesHit.message).toMatch(/more than 5 nodes/);

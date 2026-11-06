@@ -211,7 +211,8 @@ class MindmapParser {
   private lines: LineIndex | undefined;
   private readonly maxNodes: number;
   private readonly maxDepth: number;
-  /** The depth limit was reported (once per parse, as the node limit). */
+  /** The node and depth limits were reported (each once per parse). */
+  private tooMany = false;
   private tooDeep = false;
 
   constructor(
@@ -777,7 +778,8 @@ class MindmapParser {
   /** The integrator's node and depth caps (R-SEC-5): each reported once, at the first breach. */
   private checkLimits(node: OpenNode, range: Range): void {
     const { maxNodes, maxDepth } = this;
-    if (this.nodes.length === maxNodes + 1) {
+    if (this.nodes.length > maxNodes && !this.tooMany) {
+      this.tooMany = true;
       this.st.diagnostics.error(
         LIMIT_CODES.maxNodes,
         `The diagram has more than ${maxNodes} nodes, the limit. The limit is set by the page or app that renders the diagram.`,

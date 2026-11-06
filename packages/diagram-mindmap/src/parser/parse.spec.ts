@@ -98,6 +98,11 @@ describe('mindmap parser: limits (R-SEC-5)', () => {
     expect(limitErrors(src, { maxNodes: 8 })).toEqual([]);
   });
 
+  it('reports a fractional node cap once, at the first node over it', () => {
+    const src = chain(11);
+    expect(limitErrors(src, { maxNodes: 2.5 })).toEqual([`NODE_LIMIT ${src.indexOf('n2')}`]);
+  });
+
   it('reports the depth cap once, at the first node deeper than it', () => {
     const src = chain(8);
     // n3 is three levels under the root n0.
