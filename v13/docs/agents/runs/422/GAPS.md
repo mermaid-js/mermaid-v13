@@ -16,4 +16,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 - [ ] **Invariants on parser-produced fixtures.** #446 had not landed; the invariants run on hand-built `RadarModel` fixtures (`layout/fixtures.ts`). #446's merge adds the corpus spec through `@mermaid-js/diagram-radar/testing`'s `radarLayoutViolations`.
 - **`RadarModel` unchanged** by T3.
-- **Stand-ins** in `packages/diagram-radar/src/stand-ins.ts` (theme variables and `radar` config defaults); T5 deletes the module.
+- **Stand-ins** in `packages/diagram-radar/src/stand-ins.ts` (theme variables and `radar` config defaults); #448 replaces the theme half with the radar `DiagramThemeTable`, #449 the config half.
+
+## Theme T0a merged (2026-11-06)
+
+- `origin/feature/414_theme-t0` at `462aef4e9` merged into `feature/422_radar` (API: `v13/docs/agents/runs/414/CONTRACT.md`). **Orchestrator choice:** the radar `DiagramThemeTable` (ten `radar*` vars, `section: 'radar'` with `nested` keys, `radarAxisColor` the rule `lineColor`) lands in #448 (T4) with the plugin object, declared inline on the plugin until T0b's per-package file convention lands; #448 deletes the theme half of `stand-ins.ts`. #449 (T5) keeps the theme oracle specs, the D333(b) differences and the nested-override fixture.
