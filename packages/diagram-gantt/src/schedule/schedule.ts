@@ -233,7 +233,7 @@ class Scheduler {
           throw new ScheduleError(
             'excluded',
             i,
-            `Task "${this.tasks[i]!.text.trim()}": failed to find a valid date that was not excluded by \`excludes\` after 10,000 iterations.`
+            `Failed to find a valid date that was not excluded by \`excludes\` after 10,000 iterations (task "${this.tasks[i]!.text.trim()}").`
           );
         }
       }
