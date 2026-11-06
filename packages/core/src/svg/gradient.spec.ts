@@ -49,6 +49,27 @@ describe('SvgWriter: the render’s gradient (D182)', () => {
     expect(inertProblem(stream!, { themeStyle: true, gradient: 'd1-gradient' })).toBeUndefined();
   });
 
+  it('sees a label painted with it, on one line and on several (#275)', () => {
+    const box = (lines: number) => ({
+      lines: Array.from({ length: lines }, () => [{ text: 'x' }]),
+      lineHeight: 10,
+      height: lines * 10,
+      baseline: 8,
+    });
+    for (const lines of [1, 2]) {
+      const [stream, tree] = [streamWriter({ gradient: G }), treeWriter({ gradient: G })].map(
+        (w) => {
+          w.open('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: [0, 0, 10, 10] });
+          w.label(box(lines), 5, 5, { fill: REF });
+          w.close();
+          return w.finish();
+        }
+      );
+      expect(stream).toBe(tree);
+      expect(stream!.startsWith(ROOT + DEFS)).toBe(true);
+    }
+  });
+
   it('writes nothing when nothing refers to it, or there is none', () => {
     const plain = both(undefined, undefined);
     expect(both(G, undefined)).toEqual(plain);

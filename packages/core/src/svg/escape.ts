@@ -19,9 +19,18 @@ const ESC: Readonly<Record<string, string>> = {
   '"': '&quot;',
 };
 
+// Printable ASCII but the markup characters: text that neither `esc()` nor `escAttr()` changes.
+// One test of this plain class answers most values (path data, transforms, classes, ids) before
+// the Unicode-aware tests run.
+const RE_CHANGED = /[^ !#-%'-;=?-~]/;
+
+function escaped(text: string): string {
+  return RE_NEEDS_ESC.test(text) ? text.replace(RE_ESC, (c) => ESC[c] ?? '') : text;
+}
+
 /** Escapes text for XML text and double-quoted attribute values, dropping invalid characters. */
 export function esc(text: string): string {
-  return RE_NEEDS_ESC.test(text) ? text.replace(RE_ESC, (c) => ESC[c] ?? '') : text;
+  return RE_CHANGED.test(text) ? escaped(text) : text;
 }
 
 const RE_ATTR_WS = /[\t\n\r]/;
@@ -33,7 +42,8 @@ const ATTR_WS: Readonly<Record<string, string>> = { '\t': '&#9;', '\n': '&#10;',
  * references too, since an XML reader turns them into spaces (attribute-value normalisation).
  */
 export function escAttr(value: string): string {
-  const e = esc(value);
+  if (!RE_CHANGED.test(value)) return value;
+  const e = escaped(value);
   return RE_ATTR_WS.test(e) ? e.replace(RE_ATTR_WS_G, (c) => ATTR_WS[c] as string) : e;
 }
 
