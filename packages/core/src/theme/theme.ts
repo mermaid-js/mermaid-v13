@@ -47,7 +47,8 @@ import {
   type Hsl,
   type Rgba,
 } from './color.ts';
-import { parseRule, type Expr } from './dsl.ts';
+import type { DiagramThemeFamily, DiagramThemeTable, ThemeFamily } from './diagram.ts';
+import { parseRule, type Expr, type Fn } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
@@ -68,8 +69,13 @@ export interface ThemeOptions {
   readonly themeVariables?: Readonly<Record<string, unknown>>;
   /** `output.cssVariables` (integrator option). `false` writes literal values. Default true. */
   readonly cssVariables?: boolean;
-  /** A diagram plugin's own derived colours (DESIGN §12.1 `themeVariables`). */
+  /**
+   * The registered plugin fragments' derived colours (DESIGN §12.1 `themeVariables`). A name the
+   * diagram's own table defines keeps the table's (D337).
+   */
   readonly rules?: ThemeRuleTable;
+  /** The diagram's own theme table (`DiagramPlugin.theme`, D331); none for core's own output. */
+  readonly diagram?: DiagramThemeTable;
   /**
    * `theme: 'auto'` (R-THEME-8): the spec used under `prefers-color-scheme: dark`. Colour
    * aliases then move from the root `style` into `styleSheet()`.
@@ -229,6 +235,9 @@ function rule(source: string): Expr {
   return e;
 }
 
+/** A call of a colour function; `literal()` is handled by `evaluate`. */
+type Call = Expr & { k: 'call'; fn: Exclude<Fn, 'literal'> };
+
 /** Resolves every variable of one spec under one set of overrides. */
 class Resolver {
   private readonly memo = new Map<string, Resolved>();
@@ -237,6 +246,8 @@ class Resolver {
   constructor(
     private readonly spec: ThemeSpec,
     private readonly rules: ThemeRuleTable,
+    /** The diagram's family values and tokens (D331), which beat every rule as spec values do. */
+    private readonly lits: Literals,
     private readonly overrides: ReadonlyMap<string, string>,
     private readonly defs: Readonly<Record<string, ThemeVarEntry>>,
     private readonly palettes: PaletteSource = NO_PALETTES
@@ -279,7 +290,7 @@ class Resolver {
     if (own(s.tokens, name))
       return String((s.tokens as Record<string, number | string | boolean>)[name]);
     if (s.values && own(s.values, name)) return s.values[name];
-    return undefined;
+    return own(this.lits, name) ? String(this.lits[name]) : undefined;
   }
 
   get(name: string): Resolved {
@@ -340,10 +351,13 @@ class Resolver {
       case 'lit':
         return this.literal('', e.text);
       case 'ref': {
-        const slot = own(this.defs, e.name) ? undefined : RE_SLOT.exec(e.name);
+        const slot = own(this.defs, e.name) ? undefined : RE_READ.exec(e.name);
         if (slot) {
-          // A palette entry is a literal colour, so a rule over one is too (D258).
           const r = this.slot(slot[1] as PaletteVariable, Number(slot[2]));
+          // A series entry reads as the theme wrote it, so its CSS follows the base colours as
+          // the rule it replaces did (D332).
+          if (r && slot[1] === 'seriesColorArray') return r;
+          // Any other palette entry is a literal colour, so a rule over one is too (D258).
           const lit = r?.lit ?? 'currentColor';
           return { css: lit, lit, rgba: r?.rgba, hsl: r?.hsl, deps: [] };
         }
@@ -360,12 +374,17 @@ class Resolver {
           deps: [e.name],
         };
       }
-      case 'call':
-        return this.call(e);
+      case 'call': {
+        if (e.fn !== 'literal') return this.call(e as Call);
+        // The computed colour, written as a literal (D332): a hue turn stays byte-identical
+        // to the value a theme pinned.
+        const a = this.evaluate(e.args[0] as Expr);
+        return { css: a.lit, lit: a.lit, rgba: a.rgba, hsl: a.hsl, deps: [] };
+      }
     }
   }
 
-  private call(e: Expr & { k: 'call' }): Resolved {
+  private call(e: Call): Resolved {
     const pct = (x: Expr | undefined): number => {
       if (x?.k !== 'pct' || x.value > 100) throw new SyntaxError(`${e.fn} needs a percentage`);
       return x.value;
@@ -460,7 +479,7 @@ class Resolver {
 
   /** v12's `this.v || derived`: the author's value, else the theme's derivation (D258). */
   private ifSet(v: Expr, fallback: Expr): Resolved {
-    const slot = v.k === 'ref' && !own(this.defs, v.name) ? RE_SLOT.exec(v.name) : null;
+    const slot = v.k === 'ref' && !own(this.defs, v.name) ? RE_READ.exec(v.name) : null;
     if (v.k !== 'ref' || (!slot && !own(this.defs, v.name)))
       throw new SyntaxError('ifSet needs a variable');
     const set = slot
@@ -580,6 +599,8 @@ const MAX_PALETTE = 64;
  * v12 reads no leading zero, so `cScale05` is an unknown name, ignored (R-CONF-5).
  */
 const RE_SLOT = /^(cScale(?:Inv|Label)?)(0|[1-9]\d?)$/;
+/** A rule's read of one palette entry: any palette's slot (`bkgColorArray2`, D332). */
+const RE_READ = new RegExp(`^(${PALETTE_VARIABLES.join('|')})(0|[1-9]\\d?)$`);
 
 type PaletteLists = Readonly<Partial<Record<PaletteVariable, readonly string[]>>>;
 
@@ -678,51 +699,114 @@ interface ThemeParts {
   paddings: Map<string, { readonly scale: boolean; readonly n: number }>;
 }
 
-// Without overrides or extra rules a theme derives the same values on every render, so its
-// resolvers (and their memos) are kept per spec. A render's own state is only `used`.
-const PLAIN = new WeakMap<ThemeSpec, Map<ThemeSpec | undefined, ThemeParts>>();
+/** Literal values and tokens from a diagram table's family entries. */
+type Literals = Readonly<Record<string, string | number | boolean>>;
+
+/**
+ * The family entries of `table` that apply under `spec` (D331): the fallback chain from the
+ * deepest fallback up to the spec's own family, each level's dark entries over its own when the
+ * spec is a dark theme (its trait, not the author's `darkMode`, as for a spec's own values).
+ */
+function familyEntries(
+  table: DiagramThemeTable | undefined,
+  spec: ThemeSpec
+): { rules: ThemeRuleTable; lits: Literals } {
+  const chain: DiagramThemeFamily[] = [];
+  for (let f: ThemeFamily | undefined = spec.family; f; ) {
+    const e: DiagramThemeFamily | undefined = table?.families?.[f];
+    if (!e || chain.includes(e)) break;
+    chain.unshift(e);
+    f = e.fallback;
+  }
+  const rules: Record<string, string> = {};
+  const lits: Record<string, string | number | boolean> = {};
+  for (const e of chain)
+    for (const x of [e, spec.dark ? e.dark : undefined]) {
+      Object.assign(rules, x?.rules);
+      Object.assign(lits, x?.values, x?.tokens);
+    }
+  return { rules, lits };
+}
+
+/**
+ * `themeVariables` with the table's nested section (`themeVariables.packet.startByteColor`)
+ * mapped onto its flat names key by key (D335, D540). A flat name the author set wins.
+ */
+function flatten(
+  tv: Readonly<Record<string, unknown>> | undefined,
+  table: DiagramThemeTable | undefined
+): Readonly<Record<string, unknown>> | undefined {
+  const sec = table?.section !== undefined ? tv?.[table.section] : undefined;
+  if (!tv || typeof sec !== 'object' || sec === null) return tv;
+  const out: Record<string, unknown> = { ...tv };
+  for (const [name, v] of Object.entries(table!.vars)) {
+    const key = v.nested;
+    const flat = out[name];
+    if (key !== undefined && own(sec, key) && (flat === undefined || flat === null || flat === ''))
+      out[name] = (sec as Record<string, unknown>)[key];
+  }
+  return out;
+}
+
+// Without overrides a theme derives the same values on every render, so its resolvers (and
+// their memos) are kept, keyed by the spec, the `auto` dark spec, the diagram's table and the
+// registered fragment rules (D336). A render's own state is only `used`.
+type Cache = WeakMap<object, Cache | ThemeParts>;
+const PLAIN: Cache = new WeakMap();
+const NONE = {};
 
 function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
-  const tv = options.themeVariables;
-  const plain = (tv === undefined || Object.keys(tv).length === 0) && !options.rules;
+  const table = options.diagram;
+  const tv = flatten(options.themeVariables, table);
+  const plain = tv === undefined || Object.keys(tv).length === 0;
+  const keys: object[] = [spec, options.dark ?? NONE, table ?? NONE, options.rules ?? NONE];
+  let level: Cache = PLAIN;
   if (plain) {
-    const hit = PLAIN.get(spec)?.get(options.dark);
+    for (const k of keys.slice(0, -1)) {
+      let next = level.get(k) as Cache | undefined;
+      if (!next) level.set(k, (next = new WeakMap()));
+      level = next;
+    }
+    const hit = level.get(keys[3]!) as ThemeParts | undefined;
     if (hit) return hit;
   }
   const defs: Record<string, ThemeVarEntry> = { ...THEME_VARIABLE_TABLE };
-  if (options.rules)
-    for (const name of Object.keys(options.rules))
-      if (!own(defs, name)) defs[name] = { alias: name, kind: 'color' };
+  // A fragment's rule for a name the diagram's own table defines loses to the table (D337).
+  const fragment: Record<string, string> = {};
+  for (const [name, r] of Object.entries(options.rules ?? {})) {
+    if (table && own(table.vars, name)) continue;
+    fragment[name] = r;
+    if (!own(defs, name)) defs[name] = { alias: name, kind: 'color' };
+  }
+  for (const [name, v] of Object.entries(table?.vars ?? {}))
+    if (!own(THEME_VARIABLE_TABLE, name)) defs[name] = v;
   const overrides = checkOverrides(tv, defs, options.warn);
   const authorDark = tv?.darkMode === true || tv?.darkMode === 'true';
   const darkMode = spec.dark || authorDark;
-  const rulesFor = (s: ThemeSpec, dark: boolean): ThemeRuleTable => ({
-    ...(dark ? DARK_RULES : LIGHT_RULES),
-    ...s.rules,
-    ...options.rules,
-  });
+  // The layers of today's precedence (spec #414): shared and diagram light/dark rules, the
+  // theme's rules, the diagram's family rules, then the fragments'. Values beat every rule.
+  const resolver = (s: ThemeSpec, dark: boolean, palettes?: PaletteSource): Resolver => {
+    const fam = familyEntries(table, s);
+    const rules: ThemeRuleTable = {
+      ...(dark ? DARK_RULES : LIGHT_RULES),
+      ...table?.rules.light,
+      ...(dark ? table?.rules.dark : undefined),
+      ...s.rules,
+      ...fam.rules,
+      ...fragment,
+    };
+    return new Resolver(s, rules, fam.lits, overrides, defs, palettes);
+  };
   const parts: ThemeParts = {
     darkMode,
-    main: new Resolver(
-      spec,
-      rulesFor(spec, darkMode),
-      overrides,
-      defs,
-      paletteSource(spec, tv, options.warn, authorDark)
-    ),
-    night: options.dark
-      ? new Resolver(options.dark, rulesFor(options.dark, true), overrides, defs)
-      : undefined,
+    main: resolver(spec, darkMode, paletteSource(spec, tv, options.warn, authorDark)),
+    night: options.dark ? resolver(options.dark, true) : undefined,
     palettes: new Map(),
     byName: new Map(Object.entries(defs)),
     rootTexts: new Map(),
     paddings: new Map(),
   };
-  if (plain) {
-    let byDark = PLAIN.get(spec);
-    if (!byDark) PLAIN.set(spec, (byDark = new Map<ThemeSpec | undefined, ThemeParts>()));
-    byDark.set(options.dark, parts);
-  }
+  if (plain) level.set(keys[3]!, parts);
   return parts;
 }
 

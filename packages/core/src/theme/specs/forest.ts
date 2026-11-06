@@ -32,6 +32,7 @@ const PIE_FOREST: ThemeRuleTable = pieSlots([
 const theme: ThemeSpec = {
   name: 'forest',
   dark: false,
+  family: 'classic',
   base: {
     primaryColor: '#cde498',
     secondaryColor: '#cdffb2',
@@ -67,6 +68,7 @@ const theme: ThemeSpec = {
     // sequence (v12 theme-forest.js: actorBorder is darken(mainBkg, 20))
     actorBorder: '#a6cf47',
     actorTextColor: '#000000',
+    scaleLabelColor: '#000000', // v12: `labelTextColor`, set to `actorTextColor`
     signalColor: '#333333',
     signalTextColor: '#333333',
     labelBoxBorderColor: '#326932',
@@ -97,8 +99,8 @@ const theme: ThemeSpec = {
       10,
       (c) => `adjustHue(${c}, 180)`
     ),
-    // v12 sets labelTextColor to actorTextColor before the labels.
-    cScaleLabel: paletteSlots(() => 'actorTextColor'),
+    // v12 sets labelTextColor to actorTextColor before the labels: `scaleLabelColor` (D334).
+    cScaleLabel: paletteSlots(() => 'scaleLabelColor'),
   },
 };
 
