@@ -5,7 +5,7 @@
  */
 import type { FontKey, Measurer } from '@mermaid-js/core/text';
 import type { Theme } from '@mermaid-js/core/theme';
-import { GIT_GEOMETRY } from './metrics.ts';
+import { gitThemeStandIn } from '../stand-in.ts';
 import type {
   GitBranch,
   GitCommit,
@@ -226,12 +226,4 @@ export const halfEm: Measurer = {
  * `theme` with v12's redux geometry: what a redux theme gives once T5 (#374) adds the geometry
  * variables to core. A stand-in for the specs only.
  */
-export function reduxGeometry(theme: Theme): Theme {
-  const values = new Map(Object.values(GIT_GEOMETRY).map((v) => [v.name, v.redux]));
-  return new Proxy(theme, {
-    get(target, key, receiver) {
-      if (key === 'number') return (name: string) => values.get(name) ?? target.number(name);
-      return Reflect.get(target, key, receiver) as unknown;
-    },
-  });
-}
+export const reduxGeometry = (theme: Theme): Theme => gitThemeStandIn(theme, 'redux');

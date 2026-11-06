@@ -5,8 +5,8 @@
  * defaults of the config keys the layout reads.
  *
  * Lengths that differ between the theme families are geometry theme variables (D152): v12's
- * redux geometry in the redux themes, v12 classic in the classic themes and in `neo` and
- * `neo-dark` (D266). They are listed in {@link GIT_GEOMETRY}. Until T5 (#374) adds them to core,
+ * redux geometry in the redux themes, v12 classic in the classic themes and in the two neo
+ * themes (D266). They are listed in {@link GIT_GEOMETRY}. Until T5 (#374) adds them to core,
  * a theme that does not know one gives its classic value.
  */
 
@@ -212,9 +212,9 @@ export interface GitGeometry {
 export interface GeometryVariable {
   /** The theme variable's name. */
   readonly name: string;
-  /** v12 classic, also `neo` and `neo-dark` (D266). */
+  /** v12 classic, also the neo themes' (D266). */
   readonly classic: number;
-  /** v12 redux geometry (`redux`, `redux-dark`, `redux-color`, `redux-dark-color`). */
+  /** v12 redux geometry (the four redux themes). */
   readonly redux: number;
 }
 

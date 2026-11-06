@@ -263,12 +263,12 @@ const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() =>
  */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() => ({
   // base
-  primaryColor: def('p', 'color', ['core']),
+  primaryColor: def('p', 'color', ['core', 'gitgraph']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core']),
   background: def('bg', 'color', ['core']),
   primaryTextColor: def('pt', 'color', ['core']),
-  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
+  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph']),
   // Pie draws in the font family but sizes its text by its own variables.
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie']),
   fontSize: def('fs', 'length', TEXT_USERS),
@@ -286,9 +286,26 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'er',
     'journey',
     'timeline',
+    'gitgraph',
   ]),
-  mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
-  nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  mainBkg: def('mb', 'color', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'gitgraph',
+  ]),
+  nodeBorder: def('nb', 'color', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'gitgraph',
+  ]),
   nodeTextColor: def('nt', 'color', ['flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),
   clusterBorder: def('cs', 'color', ['flowchart', 'class', 'er']),
@@ -358,12 +375,12 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   // gitGraph commit and tag labels (D267, v12 names), derived as every v12 theme derives them.
   // `tagBorder` is v12's other name for `tagLabelBorder`, which an author's `tagLabelBorder`
   // overrides; no theme sets it.
-  commitLabelColor: def('gcc', 'color', []),
-  commitLabelBackground: def('gcb', 'color', []),
+  commitLabelColor: def('gcc', 'color', ['gitgraph']),
+  commitLabelBackground: def('gcb', 'color', ['gitgraph']),
   commitLabelFontSize: def('gcs', 'length', ['gitgraph']),
-  tagLabelColor: def('gtc', 'color', []),
-  tagLabelBackground: def('gtb', 'color', []),
-  tagLabelBorder: def('gto', 'color', []),
+  tagLabelColor: def('gtc', 'color', ['gitgraph']),
+  tagLabelBackground: def('gtb', 'color', ['gitgraph']),
+  tagLabelBorder: def('gto', 'color', ['gitgraph']),
   tagBorder: def('gtg', 'color', []),
   tagLabelFontSize: def('gts', 'length', ['gitgraph']),
   // tokens
@@ -446,7 +463,15 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   ...Object.fromEntries([...'012345'].map((n) => [`actor${n}`, def(`ja${n}`, 'color', JOURNEY)])),
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
-  dropShadow: def('ds', 'filter', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  dropShadow: def('ds', 'filter', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'gitgraph',
+  ]),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

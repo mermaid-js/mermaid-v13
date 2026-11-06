@@ -1444,3 +1444,29 @@ where v12 and v13 differ; the other themes keep v12's colour.
 | `neutral` | `#d4d4d4` | `#cacaca` |
 | `base` | `#eeddbb` | `#d9cfbc` |
 | `redux`, `redux-color` | `#171717` | `#28253d` |
+
+## gitGraph SVG structure
+
+What changed in the gitGraph's SVG compared with v12's `gitGraphRenderer.ts` and `styles.js`
+(spec #292, DESIGN §7.2). v12's class names are kept where the element still exists:
+`commit-bullets`, `commit-labels`, `commit-arrows`, `commit`, `commit<n>`,
+`commit-highlight<n>`, `commit-<type>`, `commit-<type>-outer` / `-inner`, `branch`,
+`branch<n>`, `branchLabelBkg`, `label<n>`, `branchLabel`, `label`, `branch-label<n>`,
+`commit-label-bkg`, `commit-label`, `tag-label-bkg`, `tag-hole`, `tag-label`, `arrow`,
+`arrow<n>`, `gitTitleText`.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, a `<style>` scoped by the id, `aria-roledescription="gitGraph"` | No root `id`; `class="mermaid mermaid-gitGraph"`, `role="img"`, `aria-roledescription="gitGraph"` (kept), `data-mermaid-version`; colours, widths, dashes and sizes are presentation attributes, colours reading `var(--_x)` aliases on the root `style`. `accTitle` and `accDescr` give `<title id="<id>-title">` and `<desc id="<id>-desc">` | Inert output (R-SEC-2), only the title and description ids (R-A11Y-1) |
+| The measuring pass left an empty `g.commit-bullets` and `g.commit-labels` at the top | One of each, after the branches and arrows, in v12's stacking order | Nothing invisible is drawn |
+| Branches: one unclassed `<g>` holding each branch's `line`, `rect` and `g.branchLabel > g.label.branch-label<n> > text > tspan.row`, only with `showBranches` | `g.branches` holds one `g.branch-lane` per branch with `data-id="<branch name>"` and, for a `branch` statement, `data-ast="b:<name>"` (the implicit main branch has `data-id` only); inside, the `line`, the `rect` and `g.branchLabel > text.label.branch-label<n>`. Without `showBranches` the lane groups are written empty | One element per statement maps it to its source (R-PARSE-8) |
+| The commit id in the class list: `commit <id> commit<n>`, so an id with a space or a dot made odd classes | The id leaves the class list. Each commit is a `g.commit-bullet.commit-<type>` group with `data-id="<id>"` and the `data-ast` of the statement that made it (`c:<id>`, `c#<k>`, `m:<branch>#<k>`, `cp:<source>#<k>`); its circles, squares, cross and cherry-pick marks keep v12's other classes | R-SVG-2, R-PARSE-8 |
+| `path.arrow.arrow<n>`, one per parent; a commit that lists itself as parent (a repeated id) drew a zero-length path | The same, with `data-id="<parent>><child>"`, `fill="none"`, round caps and the width as attributes; no path for a self-parent | D264 |
+| Commit labels and tags carried no id | The commit label's wrapper `<g>` (which keeps v12's rotation `transform`) and each tag's `polygon`, `circle` and `text` carry the commit's `data-id` | R-SVG-2; labels carry `data-id` only (pitfall 12) |
+| Colour classes from `calcColorIndex` with v12's moduli: bullets and arrows over 8 slots, branch labels over 12 in the redux themes, slot 0 skipped only in `redux-color` and `redux-dark-color` | `<n>` is the branch's one slot for every part (D267): its index mod 8, or, with a non-empty `borderColorArray`, slot 0 for the first branch and 1–7 round the rest, as v12's bullets | D267 |
+| Text set with d3 `.text()` after the DB's `&lt;`, `&gt;`, `&equals;`; branch names split on `\n` and `<br>` into `tspan.row` with `dy="1em"` | Each label is one `<text>` start-anchored where the layout measured it, in the font it measured; a branch name's lines are `<tspan x y>`. Ids, tags and names are drawn as written and escaped by the writer, a branch name breaks only on a newline, and `$$…$$` or `fa:` stays as written | D263, D268 |
+| Colours from a `<style>` chosen by theme name (`REDUX_GEOMETRY_THEMES`, `COLOR_THEMES`, `NEO_THEMES`, `DARK_THEMES`, `NEO_COLOR_GEN_THEMES`) | The same colours from theme variables, read in every theme: the `git`, `gitInv` and `gitBranchLabel` palettes, `borderColorArray` when non-empty, the node colours (`nodeBorder`, `mainBkg`) where v12's neo and redux themes used them, the label variables, `primaryColor`, `textColor` and `commitLineColor`. The redux and neo differences are the flags `gitNodeColors` and `gitPaletteColors` and the bullet sizes `gitHighlightInnerSize`, `gitMergeRadius`, `gitReverseCrossSize` and `gitCherryPickDotRadius`, next to the layout's geometry variables ([Theme geometry](#theme-geometry)). A classic cherry-pick body is still unpainted (black), as in v12 | D152, D153 |
+| `look: neo` gave branch label boxes `style="filter: …"` (a `<filter id="<id>-drop-shadow">` in the redux themes) and `data-look="neo"`; `useGradient` wrote `<linearGradient id="<id>-gradient">` whatever the look | The box takes the theme's `dropShadow` as a `filter` attribute wherever it is not `none`, whatever the look, and no `data-look`; the neo outline is core's gradient (`<prefix>-gradient`, written only when referred to). Tags take the shadow in the neo and redux themes, as v12's `.tag-label-bkg` did | D153, D182 |
+| Branch names and ids at `noteFontWeight` in the redux themes (CSS) | `font-weight` from the theme's `fontWeight`, which the layout measures with: the same weight in every v12 theme. An author's `noteFontWeight` is not read; set `fontWeight` | Measure in the font drawn (pitfall 16) |
+| The cherry-pick mark white, black in `dark`, `redux-dark`, `redux-dark-color` and `neo-dark` | Black whenever the theme is dark, `darkMode: true` included; under `theme: 'auto'` the light theme's white | D152 |
+| `utils.insertTitle`: `text.gitTitleText` centred by the svg's `getBBox`, 18px and `textColor` from CSS | `text.gitTitleText` where the layout centred it over the drawing, with `fill` and `font-size="18"` attributes. The in-text `title` and a front-matter `title` are both drawn | D265 |

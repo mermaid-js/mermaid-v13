@@ -5,7 +5,9 @@ import { REPO_ROOT } from '../index.ts';
 
 // The gitGraph custom layout takes every length from its metrics table (D108, spec #292 T3): no
 // file in `packages/diagram-gitgraph/src/layout/` but `metrics.ts` holds a length literal. The
-// numbers the others may still write are counts, multipliers and non-length values.
+// numbers the others may still write are counts, multipliers and non-length values. The renderer
+// (`render/`, T4) reads its lengths from the layout and the theme variables (`variables.ts`);
+// its own v12 drawing constants are named top-level constants, never literals in the code.
 const ALLOWED: Readonly<Record<string, string>> = {
   '0': 'empty sizes, comparisons, the first index, an arc sweep flag',
   '1': 'a counter step, a sign, an arc sweep flag',
@@ -57,6 +59,50 @@ describe('gitGraph layout', () => {
     const stray = numericLiterals(readFileSync(join(DIR, file), 'utf8')).filter(
       (n) => !(n in ALLOWED)
     );
+    expect(stray).toEqual([]);
+  });
+});
+
+/** `source` with its top-level `const UPPER_CASE = …;` declarations blanked out. */
+function withoutNamedConstants(source: string): string {
+  const out: string[] = [];
+  let depth = 0;
+  let inConst = false;
+  for (const line of source.split('\n')) {
+    if (depth === 0 && /^(export )?const [A-Z][A-Z0-9_]*\b/.test(line)) inConst = true;
+    const code = line.replace(/\/\/.*$/, '');
+    if (inConst) {
+      for (const ch of code) {
+        if ('([{'.includes(ch)) depth++;
+        else if (')]}'.includes(ch)) depth--;
+      }
+      out.push('');
+      if (depth === 0 && /;\s*$/.test(code)) inConst = false;
+    } else out.push(line);
+  }
+  return out.join('\n');
+}
+
+const RENDER = join(REPO_ROOT, 'packages/diagram-gitgraph/src/render');
+const RENDER_SOURCES = readdirSync(RENDER).filter(
+  (f) => f.endsWith('.ts') && !f.endsWith('.spec.ts')
+);
+
+describe('gitGraph renderer', () => {
+  it('blanks named constants and keeps literals in code', () => {
+    const src = 'const A = { b: [1, 22] };\nconst C = 2.5 *\n  3;\nf(17);\n';
+    expect(numericLiterals(withoutNamedConstants(src))).toEqual(['17']);
+  });
+
+  it('scans the renderer sources', () => {
+    expect(RENDER_SOURCES).toEqual(
+      expect.arrayContaining(['render.ts', 'paint.ts', 'variables.ts'])
+    );
+  });
+
+  it.each(RENDER_SOURCES)('%s writes no length literal outside a named constant', (file) => {
+    const source = withoutNamedConstants(readFileSync(join(RENDER, file), 'utf8'));
+    const stray = numericLiterals(source).filter((n) => !(n in ALLOWED));
     expect(stray).toEqual([]);
   });
 });
