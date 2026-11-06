@@ -4,7 +4,13 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { DiagramThemeTable } from '../../../packages/core/src/theme/diagram.ts';
 import { THEME_NAMES, THEME_VARIABLES } from '../../../packages/core/src/theme/index.ts';
-import { checkThemeDirection, packageGraph, type DirectionInput } from './theme-direction.ts';
+import { D332_INPUTS } from '../../../packages/conformance/src/diagram-themes.ts';
+import {
+  checkThemeDirection,
+  packageGraph,
+  unreadInputs,
+  type DirectionInput,
+} from './theme-direction.ts';
 import { themePackages, type ThemePackage } from './theme-packages.ts';
 
 /**
@@ -80,6 +86,38 @@ describe('theme direction (D331)', () => {
       planted({ core: [file("const r = { x: 'mix(demoFill, black, 10%)' };", 'specs/x.ts')] })
     );
     expect(v).toEqual([{ rule: 'core-names-diagram', where: 'specs/x.ts', name: 'demoFill' }]);
+  });
+
+  it('fails when core names a diagram variable as a property or property access', () => {
+    const v = checkThemeDirection(
+      planted({
+        core: [
+          file('const a = { values: { demoFill: 1 } };', 'key.ts'),
+          file("const b = { 'demoFill': 1 };", 'quoted.ts'),
+          file('const demo = 1; const c = { demoFill };', 'shorthand.ts'),
+          file('const d = t.vars.demoFill;', 'access.ts'),
+          file('// demoFill is the fill\n/* t.vars.demoFill */ const e = 1;', 'comment.ts'),
+        ],
+      })
+    );
+    expect(v).toEqual(
+      ['key.ts', 'quoted.ts', 'shorthand.ts', 'access.ts'].map((where) => ({
+        rule: 'core-names-diagram',
+        where,
+        name: 'demoFill',
+      }))
+    );
+  });
+
+  // The oracle specs leave D332's inputs out of their v12 comparison, so each must be read by a
+  // table, where the diagram variable that reads it is compared. plotColorArray waits for xychart
+  // (D381).
+  it('reads every shared input from some table', () => {
+    const inputs = D332_INPUTS.filter((n) => n !== 'plotColorArray');
+    expect(unreadInputs(repo.tables, inputs)).toEqual([]);
+    expect(unreadInputs(repo.tables, ['plotColorArray'])).toEqual(['plotColorArray']);
+    const t = { demo: TABLE };
+    expect(unreadInputs(t, ['mainBkg', 'cScale', 'mutedBkg'])).toEqual(['mutedBkg']);
   });
 
   it('fails when a diagram names a theme', () => {

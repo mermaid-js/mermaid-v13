@@ -3,11 +3,15 @@
  * way.
  *
  * 1. Core and the theme specs never name a diagram's own variable: no string literal in the
- *    runtime import graph of `@mermaid-js/core` or `mermaid` holds one as a word.
+ *    runtime import graph of `@mermaid-js/core` or `mermaid` holds one as a word, and no
+ *    identifier there is one as a property name (`values: { pie1: … }`), a shorthand property
+ *    (`{ pie1 }`) or a property access (`t.vars.pie1`). Comments may name them.
  * 2. A diagram never names a theme: no string literal in its runtime import graph is a theme
  *    name, and it never reads `theme.name`. The theme names that are also ordinary words
  *    (`default`, `base`, `dark`, `neutral`) count only where they are compared with an
  *    expression that mentions a theme (`config.theme === 'dark'`, `THEMES.has(theme)`).
+ *    Indirection is out of its reach: `const n = config.theme; n === 'dark'` compares with a
+ *    name that does not mention a theme, so it passes; review catches it.
  * 3. A diagram's table reads only the shared vocabulary, palette slots and its own variables, and
  *    writes only its own variables; its names are none of core's and none of another table's.
  * 4. A package's vocabulary (`src/theme/vocabulary.ts`, spec #414 T0b) and its plugin's table
@@ -79,6 +83,26 @@ function literals(file: SourceFile, visit: (node: ts.StringLiteralLike) => void)
   walk(sf);
 }
 
+/**
+ * Every identifier a file uses as a property name: an object literal's key (`{ pie1: … }`), a
+ * shorthand property (`{ pie1 }`) and a property access (`t.vars.pie1`). Quoted keys are string
+ * literals, which {@link literals} visits; comments are not part of the tree.
+ */
+function propertyNames(file: SourceFile, visit: (name: string) => void): void {
+  const sf = ts.createSourceFile(file.path, file.text, ts.ScriptTarget.Latest, true);
+  const walk = (node: ts.Node): void => {
+    if (
+      (ts.isPropertyAssignment(node) || ts.isShorthandPropertyAssignment(node)) &&
+      ts.isIdentifier(node.name)
+    )
+      visit(node.name.text);
+    else if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.name))
+      visit(node.name.text);
+    ts.forEachChild(node, walk);
+  };
+  walk(sf);
+}
+
 /** Whether a literal is compared with, or looked up beside, an expression naming a theme. */
 function comparedWithTheme(node: ts.Node): boolean {
   const mentions = (n: ts.Node | undefined) => n !== undefined && /theme/i.test(n.getText());
@@ -135,6 +159,21 @@ function tableReads(table: DiagramThemeTable): { reads: string[]; writes: string
   return { reads, writes };
 }
 
+/**
+ * The shared inputs (D332) no table reads: an input counts as read when a table's rule names it
+ * or, for a palette, one of its slots (`seriesColorArray3`). The oracle specs leave the inputs
+ * out of their v12 comparison, so an input nothing reads would be compared nowhere.
+ */
+export function unreadInputs(
+  tables: Readonly<Record<string, DiagramThemeTable>>,
+  inputs: readonly string[]
+): string[] {
+  const read = new Set<string>();
+  for (const table of Object.values(tables))
+    for (const name of tableReads(table).reads) read.add(RE_SLOT.exec(name)?.[1] ?? name);
+  return inputs.filter((name) => !read.has(name));
+}
+
 export function checkThemeDirection(input: DirectionInput): Violation[] {
   const out: Violation[] = [];
   const owner = new Map<string, string>();
@@ -152,13 +191,17 @@ export function checkThemeDirection(input: DirectionInput): Violation[] {
   for (const [type, table] of Object.entries(input.tables))
     own(type, Object.keys(table.vars), 'vars');
 
-  // 1. Core names no diagram variable.
-  for (const file of input.core)
+  // 1. Core names no diagram variable: in a string literal, a property name or a property access.
+  const named = (where: string, word: string) => {
+    if (owner.has(word) && !input.shared.has(word))
+      out.push({ rule: 'core-names-diagram', where, name: word });
+  };
+  for (const file of input.core) {
     literals(file, (node) => {
-      for (const word of node.text.split(/[^A-Za-z0-9_]+/))
-        if (owner.has(word) && !input.shared.has(word))
-          out.push({ rule: 'core-names-diagram', where: file.path, name: word });
+      for (const word of node.text.split(/[^A-Za-z0-9_]+/)) named(file.path, word);
     });
+    propertyNames(file, (word) => named(file.path, word));
+  }
 
   // 2. Diagrams name no theme.
   const themes = new Set(input.themes);
