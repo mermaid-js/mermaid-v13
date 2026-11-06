@@ -1,0 +1,15 @@
+---
+description: >-
+  Point styles from classDef and inline, an inline style winning over its class, a hex colour
+  written without `#` (D235), and an unstyled point in quadrantPointFill (D231).
+---
+quadrantChart
+  title Point styles
+  x-axis Low --> High
+  y-axis Low --> High
+  Plain: [0.15, 0.85]
+  Classed:::big: [0.4, 0.7]
+  Overridden:::big: [0.65, 0.55] color: #1971c2
+  No hash: [0.3, 0.3] color: e03131, radius: 7
+  Outlined: [0.8, 0.2] radius: 10, stroke-color: #343a40, stroke-width: 3px, color: #ffd43b
+  classDef big color: #9c36b5, radius: 12

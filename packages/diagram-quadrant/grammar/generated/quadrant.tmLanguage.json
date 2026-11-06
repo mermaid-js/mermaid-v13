@@ -1,0 +1,616 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-quadrant",
+  "scopeName": "source.mermaid-quadrant",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-quadrant"
+    },
+    "trivia-1": {
+      "begin": "(?i)[^\\S\\n]*%%\\{",
+      "end": "(?i)\\}%%",
+      "name": "meta.embedded.mermaid-quadrant"
+    },
+    "rule-0": {
+      "match": "(?i)%%(?!\\{)[^\\n]*",
+      "name": "comment.line.mermaid-quadrant"
+    },
+    "rule-1": {
+      "match": "(?i)[^}]%%[^\\n]*",
+      "name": "comment.line.mermaid-quadrant"
+    },
+    "rule-2": {
+      "match": "(?i)[\\n\\r]+"
+    },
+    "rule-3": {
+      "match": "(?i)%%[^\\n]*",
+      "name": "comment.line.mermaid-quadrant"
+    },
+    "rule-4": {
+      "begin": "(?i)title\\b",
+      "end": "((?i)[^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-title"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-quadrant"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-quadrant"
+        }
+      }
+    },
+    "rule-6": {
+      "begin": "(?i)accTitle\\s*:\\s*",
+      "end": "((?i)[^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-acc_title"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-quadrant"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-quadrant"
+        }
+      }
+    },
+    "rule-8": {
+      "begin": "(?i)accDescr\\s*:\\s*",
+      "end": "((?i)[^\\n]*)",
+      "patterns": [
+        {
+          "include": "#mode-acc_descr"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-quadrant"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-quadrant"
+        }
+      }
+    },
+    "rule-10": {
+      "begin": "(?i)accDescr\\s*\\{\\s*",
+      "end": "((?i)\\})",
+      "patterns": [
+        {
+          "include": "#mode-acc_descr_multiline"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.control.mermaid-quadrant"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "keyword.control.mermaid-quadrant"
+        }
+      }
+    },
+    "rule-13": {
+      "match": "(?i)[ ]*x-axis[ ]*",
+      "name": "keyword.control.mermaid-quadrant"
+    },
+    "rule-14": {
+      "match": "(?i)[ ]*y-axis[ ]*",
+      "name": "keyword.control.mermaid-quadrant"
+    },
+    "rule-15": {
+      "match": "(?i)[ ]*--+>[ ]*",
+      "name": "keyword.operator.mermaid-quadrant"
+    },
+    "rule-16": {
+      "match": "(?i)[ ]*quadrant-1[ ]*",
+      "name": "keyword.control.mermaid-quadrant"
+    },
+    "rule-17": {
+      "match": "(?i)[ ]*quadrant-2[ ]*",
+      "name": "keyword.control.mermaid-quadrant"
+    },
+    "rule-18": {
+      "match": "(?i)[ ]*quadrant-3[ ]*",
+      "name": "keyword.control.mermaid-quadrant"
+    },
+    "rule-19": {
+      "match": "(?i)[ ]*quadrant-4[ ]*",
+      "name": "keyword.control.mermaid-quadrant"
+    },
+    "rule-20": {
+      "match": "(?i)classDef\\b",
+      "name": "keyword.control.mermaid-quadrant"
+    },
+    "rule-21": {
+      "begin": "(?i)\"`",
+      "end": "((?i)`\")",
+      "patterns": [
+        {
+          "include": "#mode-md_string"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-quadrant"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-quadrant"
+        }
+      }
+    },
+    "rule-24": {
+      "begin": "(?i)\"",
+      "end": "((?i)\")",
+      "patterns": [
+        {
+          "include": "#mode-string"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "string.quoted.mermaid-quadrant"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "string.quoted.mermaid-quadrant"
+        }
+      }
+    },
+    "rule-27": {
+      "begin": "(?i):::",
+      "end": "((?i)\\w+)",
+      "patterns": [
+        {
+          "include": "#mode-class_name"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "keyword.operator.mermaid-quadrant"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "variable.other.mermaid-quadrant"
+        }
+      }
+    },
+    "rule-29": {
+      "begin": "(?i)\\s*:\\s*\\[\\s*",
+      "end": "((?i)\\s*\\][ ]*)",
+      "patterns": [
+        {
+          "include": "#mode-point_start"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-quadrant"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.mermaid-quadrant"
+        }
+      }
+    },
+    "rule-34": {
+      "match": "(?i)[ ]*quadrantChart[ ]*",
+      "name": "keyword.control.mermaid-quadrant"
+    },
+    "rule-35": {
+      "match": "(?i)[A-Za-z]+"
+    },
+    "rule-36": {
+      "match": "(?i)[^\\x00-\\x7F]+"
+    },
+    "rule-37": {
+      "match": "(?i):"
+    },
+    "rule-38": {
+      "match": "(?i)\\+"
+    },
+    "rule-39": {
+      "match": "(?i),"
+    },
+    "rule-40": {
+      "match": "(?i)="
+    },
+    "rule-41": {
+      "match": "(?i)\\*"
+    },
+    "rule-42": {
+      "match": "(?i)#"
+    },
+    "rule-43": {
+      "match": "(?i)_"
+    },
+    "rule-44": {
+      "match": "(?i)\\."
+    },
+    "rule-45": {
+      "match": "(?i)&"
+    },
+    "rule-46": {
+      "match": "(?i)-"
+    },
+    "rule-47": {
+      "match": "(?i)[0-9]+"
+    },
+    "rule-48": {
+      "match": "(?i)\\s"
+    },
+    "rule-49": {
+      "match": "(?i);"
+    },
+    "rule-50": {
+      "match": "(?i)[!\"#$%&'*+,\\-.`?\\\\_\\/]"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-29"
+        },
+        {
+          "include": "#rule-34"
+        },
+        {
+          "include": "#rule-35"
+        },
+        {
+          "include": "#rule-36"
+        },
+        {
+          "include": "#rule-37"
+        },
+        {
+          "include": "#rule-38"
+        },
+        {
+          "include": "#rule-39"
+        },
+        {
+          "include": "#rule-40"
+        },
+        {
+          "include": "#rule-41"
+        },
+        {
+          "include": "#rule-42"
+        },
+        {
+          "include": "#rule-43"
+        },
+        {
+          "include": "#rule-44"
+        },
+        {
+          "include": "#rule-45"
+        },
+        {
+          "include": "#rule-46"
+        },
+        {
+          "include": "#rule-47"
+        },
+        {
+          "include": "#rule-48"
+        },
+        {
+          "include": "#rule-49"
+        },
+        {
+          "include": "#rule-50"
+        }
+      ]
+    },
+    "mode-title": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-acc_title": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-acc_descr": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "rule-12": {
+      "match": "(?i)[^}]+",
+      "name": "string.quoted.mermaid-quadrant"
+    },
+    "mode-acc_descr_multiline": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-12"
+        }
+      ]
+    },
+    "rule-22": {
+      "match": "(?i)[^`\"]+",
+      "name": "string.quoted.mermaid-quadrant"
+    },
+    "mode-md_string": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-22"
+        }
+      ]
+    },
+    "rule-26": {
+      "match": "(?i)[^\"]+",
+      "name": "string.quoted.mermaid-quadrant"
+    },
+    "mode-string": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-26"
+        }
+      ]
+    },
+    "mode-class_name": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "phase-point_x": {
+      "begin": "\\G(?!(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)\\s*,\\s*))",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)(?=(?i)\\s*,\\s*)",
+      "patterns": [
+        {
+          "include": "#mode-point_x"
+        }
+      ]
+    },
+    "switch-32": {
+      "begin": "(?i)\\s*,\\s*",
+      "end": "(?!(?i)^[^\\S\\n]*%%(?!\\{)[^\\n]+|(?i)[^\\S\\n]*%%\\{)((?i)1|0(?:.\\d+)?)",
+      "patterns": [
+        {
+          "include": "#mode-point_y"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.mermaid-quadrant"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "constant.numeric.mermaid-quadrant"
+        }
+      }
+    },
+    "rule-30": {
+      "begin": "(?i)1|0(?:.\\d+)?",
+      "end": "(?!\\G)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#phase-point_x"
+        },
+        {
+          "include": "#switch-32"
+        }
+      ],
+      "beginCaptures": {
+        "0": {
+          "name": "constant.numeric.mermaid-quadrant"
+        }
+      }
+    },
+    "mode-point_start": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-30"
+        }
+      ]
+    },
+    "mode-point_x": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "mode-point_y": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-quadrant"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-quadrant"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-quadrant"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-quadrant"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

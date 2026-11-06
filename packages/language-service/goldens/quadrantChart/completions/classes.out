@@ -1,0 +1,8 @@
+@ 4:7  A:::|
+  hot class 4:7-4:7 "" -> "hot"
+  cold class 4:7-4:7 "" -> "cold"
+@ 5:8  C:::h|ot: [0.5, 0.5]
+  hot class 5:7-5:10 "hot" -> "hot"
+@ 6:12  classDef |
+  hot class 6:12-6:12 "" -> "hot"
+  cold class 6:12-6:12 "" -> "cold"

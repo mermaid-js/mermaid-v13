@@ -1,0 +1,15 @@
+---
+config:
+  theme: neo
+description: >-
+  Label icons (@mermaid-js/plugin-icons, I3 #324) in nodes, an edge label and a subgraph title,
+  in the neo theme. fa:fa-bell is filled with currentColor, fal:fa-circle-check stroked with it:
+  both take the label's text colour, so the four theme families differ by colour only (D215,
+  D227).
+---
+flowchart LR
+  subgraph S["fa:fa-bell Alerts"]
+    A["fa:fa-bell Ring"] -- "fal:fa-circle-check ok" --> B["fal:fa-circle-check Done"]
+  end
+  B --> C["Two lines<br/>fa:fa-bell then fal:fa-circle-check"]
+  style C color:#c00

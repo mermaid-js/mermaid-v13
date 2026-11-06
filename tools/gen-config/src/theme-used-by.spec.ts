@@ -53,6 +53,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'flowchart',
       'journey',
       'pie',
+      'quadrant',
       'sequence',
       'state',
       'timeline',

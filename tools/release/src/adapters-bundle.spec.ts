@@ -4,7 +4,7 @@
  * the entry reaches only through a dynamic `import()`, so a page that edits only flowcharts
  * loads no other type's grammar. `adapterChecks` holds the same for the published tarballs.
  */
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 import { build } from 'esbuild';
 import { describe, expect, it } from 'vitest';
 import { ADAPTERS, FACET_IDS, GRAMMAR_FILE, lazyGrammarProblems } from './adapters-check.ts';
@@ -26,12 +26,11 @@ describe.each(ADAPTERS)('%s, bundled from source', (name) => {
       logLevel: 'silent',
     });
     const meta = result.metafile;
-    // Every lazily imported chunk has an `entryPoint` too, and esbuild's output order follows
-    // the chunk hashes: pick the adapter entry's own output by its source path.
-    const out = Object.keys(meta.outputs).find((o) => {
-      const from = meta.outputs[o]?.entryPoint;
-      return from !== undefined && resolve(from) === entry;
-    })!;
+    // The adapter's own entry: every dynamic-import chunk has an `entryPoint` too, and which
+    // output comes first changes with the number of types.
+    const out = Object.keys(meta.outputs).find((o) =>
+      meta.outputs[o]?.entryPoint?.endsWith(`${name.slice('@mermaid-js/'.length)}/src/index.ts`)
+    )!;
     expect(out).toBeDefined();
     const grammars = FACET_IDS.map((id) => ({
       id,

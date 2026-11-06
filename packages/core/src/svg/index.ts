@@ -46,6 +46,7 @@ export {
   type SvgWriter,
   type TreeSvgWriter,
   type WriterOptions,
+  writeFragment,
 } from './writer.ts';
 export {
   checkImageUrl,

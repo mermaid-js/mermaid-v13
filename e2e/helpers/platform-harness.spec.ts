@@ -76,6 +76,7 @@ describe('packClosure', () => {
       '@mermaid-js/diagram-flowchart',
       '@mermaid-js/diagram-journey',
       '@mermaid-js/diagram-pie',
+      '@mermaid-js/diagram-quadrant',
       '@mermaid-js/diagram-sequence',
       '@mermaid-js/diagram-state',
       '@mermaid-js/diagram-timeline',

@@ -1,0 +1,17 @@
+@ 2:3  |title Reach
+  st:2 2:3-2:14 "title Reach"
+@ 3:20  x-axis Low --> Hi|gh
+  ax:x/end 3:18-3:22 "High"
+  ax:x 3:3-3:22 "x-axis Low --> High"
+@ 4:17  quadrant-1 Exp|and
+  st:3 4:3-4:20 "quadrant-1 Expand"
+@ 6:12  Campaign |A:::hot: [0.3, 0.6]
+  pt:Campaign A 6:3-6:31 "Campaign A:::hot: [0.3, 0.6]"
+@ 6:29  Campaign A:::hot: [0.3, 0.|6]
+  pt:Campaign A 6:3-6:31 "Campaign A:::hot: [0.3, 0.6]"
+@ 8:13  classDef h|ot radius: 10
+  c:hot 8:3-8:26 "classDef hot radius: 10"
+@ 10:7  A |description
+  st:4 9:3-11:4 "accDescr {\n    A description\n  }"
+@ 12:3  |
+  none

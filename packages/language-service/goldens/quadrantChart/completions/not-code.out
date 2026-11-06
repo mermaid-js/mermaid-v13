@@ -1,0 +1,12 @@
+@ 2:8  title: |x
+  none
+@ 5:8  %% a |comment
+  none
+@ 6:15  title Reach |and engagement
+  none
+@ 7:14  accTitle: a|
+  none
+@ 8:13  "Campaign |B": [0.1, 0.2]
+  none
+@ 9:9  A: [0.|
+  none

@@ -42,7 +42,7 @@ export const configSchema: ConfigSchema = {
       "x-mermaid": {
         "status": "honoured",
         "since": "13.0.0",
-        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
+        "reason": "Exposed as `--mermaid-<name>` CSS variables (see theme-variables.md). Every difference between the redux and classic theme families is a theme variable (D152), listed here as redux / classic value: `borderColorArray` Tailwind-400 × 12 in `redux-color` and `redux-dark-color` / none; `bkgColorArray` Tailwind-50 × 12 in `redux-color`, empty in `redux-dark-color` / none; `arrowheadGap` 4 / 0; `arrowheadLength` 10.5 / 8; `arrowheadWidth` ≈12.8 / 8; `circleArrowheadSize` 14 / 11; `circleArrowheadGap` ≈3.15 / ≈1.1; `crossArrowheadSize` 10.4 / 9; `crossArrowheadGap` ≈2.96 / ≈2; `crossArrowheadStrokeWidth` 2 / 2; `erZeroOrMoreCircleOffset` 28 / 30; `rowOdd` and `rowEven` the entity fill (`mainBkg`) / v12's lightened `mainBkg`; `erEdgeLabelBackground` white (`redux-color`) or `#16141f` (`redux-dark-color`), else `edgeLabelBackground`; `erMarkerFill` `mainBkg` / white; `nodePaddingX` (per side) 16 / 2 × padding; `nodePaddingY` (per side) 12 / padding; `stadiumPaddingX` (total) 40 / padding; `stadiumPaddingY` (total) 24 / padding; `hexagonPaddingX` 70 / padding; `hexagonPaddingY` 32 / padding; `hexagonSlant` 3.5 / 4; `doubleCircleGap` 12 / 5; `doubleCirclePadding` 16 / padding; `circlePadding` 16 / padding; `circleMinDiameter` 44 / none; `subroutinePaddingX` / `subroutinePaddingY` (totals) 28 / 12 and padding; `cylinderPaddingX` / `cylinderPaddingY` (totals) 24 and padding; `leanPaddingX` / `leanPaddingY` (totals) 2 × padding / padding and padding; `oddPaddingX` / `oddPaddingY` (totals) 42 / 24 and padding; `actorRadius` 6 / 3; `actorGlyphBand` 44 / 0; `messageEndGap` 3 / 0; `labelBoxExtraHeight` 15 / 0; `actorFooterPadding` 30 / 0; timeline `timelineRadius` 0 / 5, `timelineLabelOffset` padding / 0.5 × padding, `timelineEventLabelShift` 3 / 0, `timelineScaleColors` false / true (the neo themes take the classic timeline values, D227); `dropShadow` `drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))` (white instead of black on the dark redux themes) / `none`; `compositeBackground` `background` (`#16141f` on the dark redux themes) / `background`; `compositeTitleBackground` `#f9f9fb` (`#16141f` on the dark redux themes) / `mainBkg`; `altBackground` `#f9f9fb` (`#16141f`) / `#f0f0f0` (`#555555` in `dark`, `#f4f4f4` in `neutral`, `tertiaryColor` in `base`); `classText` `textColor` / `primaryTextColor`; class markers `classMarkerStrokeWidth` 2 / 1, `classFilledMarkerStrokeWidth` 0 / 1, `extensionMarkerLength` 8 / 17, `extensionMarkerGap` 8.25 / 0.25, `compositionMarkerGap` 2.75 / 0.25, `dependencyMarkerGap` 4 / 1. `classTerminalFontSize` (class multiplicities) is 11 in every theme. The quadrant chart's 15 colours (`quadrant1Fill`–`quadrant4Fill`, `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`, `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`, `quadrantExternalBorderStrokeFill`, `quadrantTitleFill`) follow v12's rules in every theme: `quadrant1Fill` `#ececfe` in `redux`, `redux-color` and `neo` / `primaryColor`; fills 2–4 add 5, 10 and 15 to each RGB channel of `quadrant1Fill` and text fills 2–4 take 5, 10 and 15 off `primaryTextColor` (D232); `quadrantPointFill` `textColor` (D231); the other text fills `primaryTextColor`; both borders `primaryBorderColor`. \"padding\" is `flowchart.padding`. Plain `redux` and `redux-dark` carry no per-subgraph palette; every theme carries v12's `cScale`, `cScaleInv` and `cScaleLabel` (D258). `neo` carries the redux values of the geometry, ER and `classText` variables (v12 `look: neo`, D181) and no per-subgraph palette, with its own corner (`radius` 3) and shadow (`drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))`); `neo-dark` the same, with `drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))`. Geometry variables are read as numbers at render time, because they feed layout, so overriding their CSS variables has no effect; `dropShadow` is a CSS value."
       },
       "type": "object",
       "additionalProperties": true,
@@ -1020,7 +1020,8 @@ export const configSchema: ConfigSchema = {
     "quadrantChart": {
       "$ref": "#/$defs/QuadrantChartConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "xyChart": {
@@ -2939,13 +2940,29 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the quadrant chart renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "chartWidth": {
           "description": "Width of the chart",
           "type": "number",
           "minimum": 0,
           "default": 500,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "chartHeight": {
@@ -2954,34 +2971,38 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 500,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "titleFontSize": {
-          "description": "Chart title top and bottom padding",
+          "description": "Font size of the chart title",
           "type": "number",
           "minimum": 0,
           "default": 20,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "titlePadding": {
-          "description": "Padding around the quadrant square",
+          "description": "Padding above and below the chart title",
           "type": "number",
           "minimum": 0,
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "quadrantPadding": {
-          "description": "quadrant title padding from top if the quadrant is rendered on top",
+          "description": "Padding around the quadrant square",
           "type": "number",
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "xAxisLabelPadding": {
@@ -2990,7 +3011,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "yAxisLabelPadding": {
@@ -2999,7 +3021,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "xAxisLabelFontSize": {
@@ -3008,7 +3031,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 16,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "yAxisLabelFontSize": {
@@ -3017,7 +3041,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 16,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "quadrantLabelFontSize": {
@@ -3026,7 +3051,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 16,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "quadrantTextTopPadding": {
@@ -3035,7 +3061,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "pointTextPadding": {
@@ -3044,7 +3071,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "pointLabelFontSize": {
@@ -3053,7 +3081,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 12,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "pointRadius": {
@@ -3062,7 +3091,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 5,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "xAxisPosition": {
@@ -3074,7 +3104,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "top",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "yAxisPosition": {
@@ -3086,7 +3117,8 @@ export const configSchema: ConfigSchema = {
           ],
           "default": "left",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "quadrantInternalBorderStrokeWidth": {
@@ -3095,7 +3127,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 1,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "quadrantExternalBorderStrokeWidth": {
@@ -3104,7 +3137,8 @@ export const configSchema: ConfigSchema = {
           "minimum": 0,
           "default": 2,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         }
       }

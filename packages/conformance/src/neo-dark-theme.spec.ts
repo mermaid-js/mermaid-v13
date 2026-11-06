@@ -78,6 +78,8 @@ const DARK_WHY = 'D183: derived with the dark rules; v12 never set darkMode';
 const DIFFERENCES: Readonly<Record<string, string>> = {
   ...Object.fromEntries(DARK_DERIVED.map((n) => [n, DARK_WHY])),
   strokeWidth: 'D183: 2, as in neo; v12 neo-dark drew with 1',
+  quadrantPointFill:
+    'D231: v12 resolved it to hsl(…, NaN%); v13 defaults to textColor, as v12 points showed',
   secondaryTextColor: 'D183, R-THEME-9: v12 #b8b6b6 is 4.49:1 on secondaryColor; #b9b7b7 meets AA',
   altBackground: 'D189: #404040; v12 #f0f0f0 hid the #cccccc lines on a nested composite',
   dropShadow: 'D181: the same blurred shadow, written in the syntax `checkFilter` accepts',

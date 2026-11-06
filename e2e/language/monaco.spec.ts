@@ -242,6 +242,7 @@ const TYPE_DOCS: Record<string, string> = {
   state: 'stateDiagram-v2\n  [*] --> Idle\n',
   er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
   journey: 'journey\n  section Go to work\n  Make tea: 5: Me\n',
+  quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   pie: 'pie\n  "Dogs" : 386\n',
 };

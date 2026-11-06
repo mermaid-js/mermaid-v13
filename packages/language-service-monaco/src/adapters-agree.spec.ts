@@ -116,6 +116,18 @@ const DOCS: Readonly<Record<string, string>> = {
     '    Sit down: 5: Me',
     '',
   ].join('\n'),
+  quadrantChart: [
+    'quadrantChart',
+    '  title Reach and engagement',
+    '  accDescr {',
+    '    two lines',
+    '  }',
+    '  x-axis Low Reach --> High Reach',
+    '  quadrant-1 "We should expand"',
+    '  Campaign A:::hot: [0.3, 0.6] radius: 10',
+    '  classDef hot color: #ff3300',
+    '',
+  ].join('\n'),
   timeline: [
     'timeline TD',
     '  title History of Social Media',

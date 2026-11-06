@@ -37,6 +37,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'flowchart',
       'journey',
       'pie',
+      'quadrantChart',
       'sequence',
       'state',
       'timeline',
@@ -99,6 +100,13 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out[0]).toBe('journey:keyword');
       expect(out).toContain('Make tea:variable');
       expect(out).toContain(': 5: Me:string');
+    });
+
+    it('highlights a quadrant chart with the quadrant grammar', () => {
+      const out = spans('quadrantChart\n  x-axis Low --> High\n  A: [0.3, 0.6]\n');
+      expect(out[0]).toBe('quadrantChart:keyword');
+      expect(out).toContain('x-axis:keyword');
+      expect(out).toContain('-->:operator');
     });
 
     it('finds the type after front matter, directives and comments', () => {

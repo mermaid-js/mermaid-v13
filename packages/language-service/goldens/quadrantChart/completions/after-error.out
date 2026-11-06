@@ -1,0 +1,17 @@
+@ 3:3  |
+  title keyword 3:3-3:3 "" -> "title "
+  x-axis keyword 3:3-3:3 "" -> "x-axis "
+  y-axis keyword 3:3-3:3 "" -> "y-axis "
+  quadrant-1 keyword (top right) 3:3-3:3 "" -> "quadrant-1 "
+  quadrant-2 keyword (top left) 3:3-3:3 "" -> "quadrant-2 "
+  quadrant-3 keyword (bottom left) 3:3-3:3 "" -> "quadrant-3 "
+  quadrant-4 keyword (bottom right) 3:3-3:3 "" -> "quadrant-4 "
+  classDef keyword 3:3-3:3 "" -> "classDef "
+  accTitle keyword 3:3-3:3 "" -> "accTitle: "
+  accDescr keyword 3:3-3:3 "" -> "accDescr: "
+  accDescr { keyword 3:3-3:3 "" -> "accDescr {"
+@ 5:17  B: [0.1, 0.2] |
+  radius property (a whole number) 5:17-5:17 "" -> "radius: 10"
+  color property (a hex colour) 5:17-5:17 "" -> "color: #ff0000"
+  stroke-color property (a hex colour) 5:17-5:17 "" -> "stroke-color: #ff0000"
+  stroke-width property (a size in pixels) 5:17-5:17 "" -> "stroke-width: 2px"

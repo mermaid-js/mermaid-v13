@@ -1,0 +1,15 @@
+---
+config:
+  theme: default
+description: >-
+  Label icons (@mermaid-js/plugin-icons, I3 #324) in an entity alias, a relationship label and
+  an attribute comment, in the default theme. fa:fa-bell is filled with currentColor, fal:fa-
+  circle-check stroked with it: both take the label's text colour, so the four theme families
+  differ by colour only (D215, D227).
+---
+erDiagram
+  ALARM["fa:fa-bell Alarm"] {
+    string id PK "fal:fa-circle-check key"
+    int volume "fa:fa-bell loud"
+  }
+  ALARM ||--o{ CHECK : "fal:fa-circle-check runs"

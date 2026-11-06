@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { renderDiagram } from './adapter.ts';
 import { galleryFixtures } from './fixtures.ts';
@@ -9,7 +10,7 @@ describe('renderDiagram (the page adapter)', () => {
       const { svg, warnings } = await renderDiagram(source);
       expect(warnings).toEqual([]);
       expect(svg).toMatch(
-        /^<svg [^>]*aria-roledescription="(flowchart|er|sequence|classDiagram|stateDiagram|journey|timeline|pie)"/
+        /^<svg [^>]*aria-roledescription="(flowchart|er|sequence|classDiagram|stateDiagram|journey|timeline|pie|quadrantChart)"/
       );
     }
   );
@@ -31,6 +32,27 @@ describe('renderDiagram (the page adapter)', () => {
     const elk = await renderDiagram(`---\nconfig:\n  layout: elk\n---\n${text}`);
     expect(elk.warnings).toEqual([]);
     expect(elk.svg).not.toEqual((await renderDiagram(text)).svg);
+  });
+
+  // The corpus's icon shapes (I4 #326), with the pages' static packs (`icon-packs.ts`).
+  it.each([
+    ['pr-check/5-icon-shape-bundled.mmd', 1],
+    [
+      'visual-check/should-render-single-aws-icon-with-rect-elements-without-unintended-opacity.mmd',
+      1,
+    ],
+    ['visual-check/should-render-multiple-aws-icons-with-rect-elements-in-a-flowchart.mmd', 3],
+    ['visual-check/should-render-aws-icons-with-labels-and-rect-elements.mmd', 3],
+  ])('draws the glyphs of flowchart/%s with the icons extension', async (path, glyphs) => {
+    const source = readFileSync(
+      new URL(`../../../e2e/diagrams/flowchart/${path}`, import.meta.url),
+      'utf8'
+    );
+    const { svg, warnings } = await renderDiagram(source);
+    expect(warnings).toEqual([]);
+    expect(
+      svg.match(/<g transform="translate\([^)]*\)"(?: color="[^"]*")?><g transform="/g)
+    ).toHaveLength(glyphs);
   });
 
   it('sketches `look: handDrawn` with @mermaid-js/plugin-hand-drawn, as an installed plugin would (D300)', async () => {

@@ -116,7 +116,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 
 | ID | Requirement | Pri | MS | Src | Acceptance |
 | --- | --- | --- | --- | --- | --- |
-| R-PERF-1 | Core + flowchart, as loaded for a flowchart render, is ≤ 124 KB gzip (D160, D311; was 80 KB, then 120 KB). | Must | M1 | D10, D160, D311 | Bench "Loaded" size, measured after one flowchart render |
+| R-PERF-1 | Core + flowchart, as loaded for a flowchart render, is ≤ 128 KB gzip (D160, D311, D312; was 80 KB, then 120 KB, then 124 KB). | Must | M1 | D10, D160, D311, D312 | Bench "Loaded" size, measured after one flowchart render |
 | R-PERF-2 | Core and every first-party diagram package have **zero** runtime npm dependencies. | Must | M1 | D10 | CI check on `dependencies` of published packages |
 | R-PERF-3 | Warm render is ≥ 50× faster than frozen `mermaid@12.2.0` with dagre, as a geomean over the corpus. | Must | M1 | D10, D45, D150 | Approaches harness geomean, reported in CI and enforced on a local run (D150); current v12 also reported |
 | R-PERF-4 | 100% of the flowchart corpus renders without error, including the large and huge tiers. | Must | M1 | D10 | Harness OK count = corpus size |
@@ -237,7 +237,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | --- | --- | --- | --- | --- | --- |
 | R-API-1 | `render`, `parse`, `initialize` and `run` are kept (R-COMPAT-5). | Must | M1 | D2 | – |
 | R-API-2 | `renderSync(text, options)` is added, with rendering split into two phases. prepare(text) is async: it detects the type, parses, finds every resource the diagram needs (diagram package, icon packs, math, layout engine) and loads them. renderSync is sync and pure, and uses only what is already loaded. render() is prepare + renderSync. If something is missing, renderSync throws a typed NotLoadedError listing the missing resources. An option renders placeholders (e.g. an empty icon box) with a warning instead. preload({ types, iconPacks, … }) lets hosts that cannot await at render time (markdown-it, SSR) load everything up front. | Must | M1 | D32, D51 | Specs: renderSync after prepare equals render() output; icon diagram without its pack throws NotLoadedError naming it; placeholder option renders with a warning |
-| R-API-3 | `registerExternalDiagrams`, `registerLayoutLoaders` and `detectType` are kept. `registerIconPacks` is kept, and is a no-op with a warning until the icons plugin exists (M4). | Must | M1 | D32, D290 | Specs |
+| R-API-3 | `registerExternalDiagrams`, `registerLayoutLoaders` and `detectType` are kept. `registerIconPacks` is kept and registers the packs on the API object (M4, D294); while no extension claims `icons` (the icons plugin), renders with registered packs warn `ICON_PACKS_UNSUPPORTED`. | Must | M1 | D32, D290 | Specs |
 | R-API-4 | `setParseErrorHandler` is kept but deprecated, and receives `MermaidError`. | Should | M1 | D32 | Spec |
 | R-API-5 | The `mermaidAPI` object is removed. | Must | M1 | D32 | MIGRATION.md |
 | R-API-6 | `run()` finds `pre.mermaid`/`.mermaid` elements and replaces them as in v12. | Must | M1 | D33, P1 | Browser test |

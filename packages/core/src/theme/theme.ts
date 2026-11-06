@@ -32,6 +32,7 @@ import type {
 } from '../svg/types.ts';
 import { num } from '../svg/escape.ts';
 import {
+  adjustChannels,
   composite,
   contrastRatio,
   formatColor,
@@ -335,7 +336,7 @@ class Resolver {
           'A percentage is only an argument of mix, lighten, darken, lightenHsl, darkenHsl or alpha'
         );
       case 'num':
-        throw new SyntaxError('A plain number is only for adjustHue');
+        throw new SyntaxError('A plain number is only an argument of adjust or adjustHue');
       case 'lit':
         return this.literal('', e.text);
       case 'ref': {
@@ -403,6 +404,23 @@ class Resolver {
       }
       case 'invert':
         return this.invert(this.evaluate(x));
+      case 'adjust': {
+        // khroma's adjust(c, { r, g, b }), as v12's quadrant fills derive (D232).
+        const a = this.evaluate(x);
+        const [r, g, b] = e.args.slice(1).map((arg) => {
+          if (arg.k !== 'num' || Math.abs(arg.value) > 255)
+            throw new SyntaxError('adjust needs a number from -255 to 255');
+          return arg.value;
+        }) as [number, number, number];
+        // After an HSL step, khroma's own conversion, as for invert (D258).
+        const from = a.hsl && a.rgba ? khromaRgb(a.rgba) : a.rgba;
+        const rgba = from && adjustChannels(from, r, g, b);
+        // Clamped as khroma does: relative colour syntax keeps an out-of-range channel.
+        const ch = (c: string, d: number) =>
+          `clamp(0, ${c} ${d < 0 ? '-' : '+'} ${num(Math.abs(d))}, 255)`;
+        const css = `rgb(from ${a.css} ${ch('r', r)} ${ch('g', g)} ${ch('b', b)} / alpha)`;
+        return { css, lit: rgba ? formatColor(rgba) : a.lit, rgba, deps: a.deps };
+      }
       case 'contrast': {
         const on = this.evaluate(x);
         const bg = this.opaque(on.rgba);

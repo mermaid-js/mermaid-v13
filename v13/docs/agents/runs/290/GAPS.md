@@ -117,3 +117,9 @@ Unmet acceptance criteria, open contracts and decisions taken without the mainta
 - Shared spec fix: `tools/release/src/adapters-bundle.spec.ts` took the first metafile output with an `entryPoint` as the adapter entry. With code splitting, every lazily loaded grammar chunk has one too, and esbuild orders the outputs by chunk hash, so after the merge it picked `pie.parser-*.js` and reported pie's grammar as "eager". It now selects the output whose `entryPoint` resolves to the adapter's `src/index.ts`. The gate is unchanged; it now checks the entry it names.
 - Goldens: the pie and timeline empty-text completions list `journey` (regenerated with `vitest -u`).
 - Sizes after the merge (local, gzip 9): core 92,643 B (budget 94,208 B), static loaded stand-in (`flowchartClosureSize`) 126,315 B (limit 126,976 B, 661 B headroom), journey load path 107,278 B.
+
+## Merge of quadrant's tip 312246670 (mermaid-v13 + icons 86fa873d0 + D312 128 KB loaded limit)
+
+- Quadrant made the same `adapters-bundle.spec.ts` entry fix (by path suffix); its version is taken. `cdn-build.spec.ts` takes quadrant's version (a language chunk for every diagram, chunk dir from the manifest id); the `hasLanguage` assertion added for journey is dropped, since journey's facet landed (#331).
+- `TEXT_USERS` adds `quadrant` (it reads both `fontFamily` and `fontSize`). Generated files and the five empty-completion goldens are regenerated; each lists `journey` and `quadrantChart`.
+- Sizes after the merge (local, gzip 9): core 94,009 B (budget 94,208 B, 199 B headroom), static loaded stand-in 127,859 B (limit 131,072 B), journey load path 108,641 B.

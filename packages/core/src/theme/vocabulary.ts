@@ -201,7 +201,17 @@ const def = (alias: string, kind: ThemeVarKind, usedBy: readonly string[]): Them
 });
 
 /** Who reads the base text variables (`fontFamily`, `fontSize`): a new type appends here. */
-const TEXT_USERS = ['core', 'flowchart', 'sequence', 'class', 'state', 'er', 'journey', 'timeline'];
+const TEXT_USERS = [
+  'core',
+  'flowchart',
+  'sequence',
+  'class',
+  'state',
+  'er',
+  'journey',
+  'timeline',
+  'quadrant',
+];
 
 const JOURNEY = ['journey'];
 
@@ -294,6 +304,23 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   pieOuterStrokeColor: def('poc', 'color', ['pie']),
   pieOuterStrokeWidth: def('pow', 'length', ['pie']),
   pieOpacity: def('pop', 'opacity', ['pie']),
+  // quadrant chart (v12 names, derived as v12's `/* quadrant-graph */` block derives them;
+  // D231, D232)
+  quadrant1Fill: def('q1f', 'color', ['quadrant']),
+  quadrant2Fill: def('q2f', 'color', ['quadrant']),
+  quadrant3Fill: def('q3f', 'color', ['quadrant']),
+  quadrant4Fill: def('q4f', 'color', ['quadrant']),
+  quadrant1TextFill: def('q1t', 'color', ['quadrant']),
+  quadrant2TextFill: def('q2t', 'color', ['quadrant']),
+  quadrant3TextFill: def('q3t', 'color', ['quadrant']),
+  quadrant4TextFill: def('q4t', 'color', ['quadrant']),
+  quadrantPointFill: def('qpf', 'color', ['quadrant']),
+  quadrantPointTextFill: def('qpt', 'color', ['quadrant']),
+  quadrantXAxisTextFill: def('qxt', 'color', ['quadrant']),
+  quadrantYAxisTextFill: def('qyt', 'color', ['quadrant']),
+  quadrantInternalBorderStrokeFill: def('qib', 'color', ['quadrant']),
+  quadrantExternalBorderStrokeFill: def('qeb', 'color', ['quadrant']),
+  quadrantTitleFill: def('qtf', 'color', ['quadrant']),
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',

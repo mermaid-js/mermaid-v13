@@ -1,0 +1,15 @@
+@ 2:17  A: [0.1, 0.2] |
+  radius property (a whole number) 2:17-2:17 "" -> "radius: 10"
+  color property (a hex colour) 2:17-2:17 "" -> "color: #ff0000"
+  stroke-color property (a hex colour) 2:17-2:17 "" -> "stroke-color: #ff0000"
+  stroke-width property (a size in pixels) 2:17-2:17 "" -> "stroke-width: 2px"
+@ 3:36  B: [0.1, 0.2] radius: 10, stroke-|
+  stroke-color property (a hex colour) 3:29-3:36 "stroke-" -> "stroke-color: #ff0000"
+  stroke-width property (a size in pixels) 3:29-3:36 "stroke-" -> "stroke-width: 2px"
+@ 4:16  classDef hot |
+  radius property (a whole number) 4:16-4:16 "" -> "radius: 10"
+  color property (a hex colour) 4:16-4:16 "" -> "color: #ff0000"
+  stroke-color property (a hex colour) 4:16-4:16 "" -> "stroke-color: #ff0000"
+  stroke-width property (a size in pixels) 4:16-4:16 "" -> "stroke-width: 2px"
+@ 5:25  classDef cold radius: |
+  none

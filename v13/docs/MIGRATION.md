@@ -42,6 +42,8 @@ What most integrators have to change:
    ES2022 module support, and the `chunks/` folder must be served next to it. Plugins are found
    on install in Node, through `@mermaid-js/bundler-plugin` in bundlers and through
    `globalThis.mermaidPlugins` on a CDN ([Loading and plugins](#loading-and-plugins)).
+10. Font Awesome's CSS no longer draws `fa:fa-car` in labels: register an icon pack (for example
+    `@iconify-json/fa6-solid` as `fa`) and `@mermaid-js/plugin-icons` ([Icons](#icons)).
 
 ## Packages
 
@@ -143,7 +145,7 @@ test checks them against the mermaid@12 declarations.
 | `registerExternalDiagrams([{ id, detector, loader }])` where the loader returns a v12 `DiagramDefinition` (parser, db, D3 renderer) | Same call shape, but the loader returns a v13 diagram plugin `{ id, detector, parse, layout?, render }`. v12 diagram definitions do not run in v13 | D35, R-PLUG-2 |
 | `registerLayoutLoaders([{ name, loader, algorithm? }])` where the loader returns a DOM renderer | `registerLayoutLoaders([{ name, loader }])` where the loader returns a layout engine `(graph, ctx?) → LayoutModel`; selected with `layout:` | R-LAYOUT-2 |
 | `layout: elk` / `elk.<algorithm>` uses the ELK package | Laid out by `@mermaid-js/layout-elk` once registered (`mermaid.registerLayoutLoaders(elkLayouts)`, as in v12; it registers v12's seven names plus `elk.layered` and `elk.radial`); without it, drawn with the built-in `layered` engine and one `ELK_NOT_INSTALLED` warning naming the package | DESIGN §6.1, D171, D173 |
-| `registerIconPacks(...)` | Accepted and ignored; renders carry an `ICON_PACKS_UNSUPPORTED` warning until the icons plugin exists | R-API-3 |
+| `registerIconPacks([{ name, icons } \| { name, loader }])` | Same call shape and quirks (`name` overrides the pack's `prefix`; a loader may return the pack itself). Packs belong to one `mermaid` object (`createMermaid()`), not the page, and are drawn by `@mermaid-js/plugin-icons`. Loaders run in `prepare()`/`render()` only for a diagram that names their pack, or in the new `preload({ iconPacks })`; a rejecting loader no longer fails the render. See [Icons](#icons) | R-API-2, R-API-3, D290, D294, D299 |
 | `setParseErrorHandler(fn)` gets the raw error | Deprecated; `fn` gets the `MermaidError` of a failed `parse()` | R-API-4 |
 | `initialize()` replaces the site config | Same: it swaps in a new frozen defaults object; renders already started keep the old one | R-ARCH-4, D72 |
 | Integrator options beyond the schema | `initialize()` also takes `measurer`, `deterministic`, `linkSchemes`, `output.cssVariables` and `limits`; diagram text can never set them | R-SEC-5, R-SEC-6 |
@@ -343,6 +345,7 @@ Generated from the `x-mermaid` annotations in `packages/core/schema/config.schem
 | `er.fontSize` | ignored | mermaid 12.2.0 does not read it either; only the legacy ER renderer, no longer used, did. Entities use the theme font size. | `themeVariables.fontSize` |
 | `pie.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the pie renderer never did. |  |
 | `pie.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
+| `quadrantChart.useWidth` | ignored | Only v12's gantt renderer read `useWidth`; the quadrant chart renderer never did. |  |
 | `quadrantChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `xyChart.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
 | `requirement.look` | ignored | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. | `theme`, or the geometry and `dropShadow` theme variables |
@@ -581,8 +584,9 @@ that v12 neo strokes with the gradient take it, and nothing else does (D182):
 
 - **Flowchart:** node outlines (with their inner lines: cylinder rims, double-circle rings,
   braces) and subgraph rectangles. A linked node (`click … href`) takes the gradient and the
-  shadow like every other node; v12 neo drew it plain (D184). An icon node's frame takes the
-  gradient; v12 put it on the glyph and drew the frame without a border (D186).
+  shadow like every other node; v12 neo drew it plain (D184). An icon shape's glyph takes the
+  gradient and its frame does not, as in v12 (D298); an icon that is not drawn keeps its frame's
+  outline in the gradient.
 - **Class:** class boxes, their dividers and namespaces; not notes.
 - **State:** states, the choice diamond, composites, notes, the start and end dots, fork and
   join bars.
@@ -777,6 +781,7 @@ variables instead.
 | Markdown strings (`` "`**bold**`" ``) | Same subset: `**`/`__` bold, `*`/`_` italic, `` `code` `` (monospace), `- ` and `* ` bullet lists (one nesting level), backslash escapes, `<br>` and newlines | R-TEXT-2 |
 | Entities: Mermaid's `#quot;`/`#35;` and HTML `&…;` | Both decoded; about 45 named HTML entities plus numeric ones. Unknown entities stay literal | |
 | KaTeX math (`$$…$$`) | Rendered by the optional `@mermaid-js/plugin-math` (`registerExternalDiagrams([math])`): MathJax typesets the TeX into SVG paths, so glyph shapes differ from KaTeX's. MathJax loads only for a diagram with math; `renderSync` needs `prepare()` or `preload({ math: true })` first. TeX that does not parse is shown as written with a `MATH_ERROR` warning. Every label core lays out takes math: flowchart nodes, edges and subgraph titles; class, state and ER labels; sequence messages, notes, participants, fragment and box labels. Without the plugin the TeX is shown as written, with one `MATH_NOT_RENDERED` warning per render. Text output always shows the TeX as written, with one `ASCII_DROPPED` warning (`feature: 'math'`). `legacyMathML` and `forceLegacyMathML` are ignored. See [Math](#math) | D5, D175, D176, D178, D179 |
+| `fa:fa-car` in HTML labels: an icon from a registered pack, else `<i class="fa fa-car">` for Font Awesome's CSS to draw | An icon from a registered Iconify pack, drawn as SVG paths by the optional `@mermaid-js/plugin-icons`, in every label core lays out (sequence too); page CSS draws nothing. An icon that does not resolve is shown as written, with one `ICON_NOT_RENDERED` warning per render. See [Icons](#icons) | D290, D291, D292, D296 |
 | Text measured by the browser | Measured by canvas when present, else by built-in tables for Trebuchet MS, Verdana and Arial; line height comes from the font, so labels are not pixel-equal with v12 | R-TEXT-4 |
 | Labels wrap at `flowchart.wrappingWidth` (HTML labels) | Node labels, plain and markdown alike, wrap at `wrappingWidth` (120) and are widened to `minNodeWidth` (120), except circles; edge labels wrap at 200. CJK text breaks between characters, and a word wider than the box is split | |
 
@@ -795,6 +800,77 @@ v12 rendered `$$…$$` with KaTeX into MathML or HTML; v13 typesets it with Math
 - **No MathML.** Nothing in v13 output is MathML or HTML, so `legacyMathML` and `forceLegacyMathML` have no effect, and no KaTeX stylesheet is needed.
 - **Loading.** MathJax loads only for a diagram with a `$$…$$` pair in a label. `render()` loads it; `renderSync` needs `prepare()` or `preload({ math: true })` first, or throws `NotLoadedError` naming `math "tex"`.
 
+### Icons
+
+v12 drew `fa:fa-car` in a label only in HTML labels (`htmlLabels: true`): as the icon of a
+registered pack, or else as `<i class="fa fa-car">` for Font Awesome's CSS to draw. v13 labels
+are SVG text (D5), so there is no `<i>` element and page CSS cannot draw an icon. Icons come from
+[Iconify JSON](https://icones.js.org/) packs registered in code and are drawn as SVG paths by
+the optional `@mermaid-js/plugin-icons` (D290, D291). To keep `fa:` icons, install the plugin
+and a Font Awesome pack, and register the pack under the prefix your diagrams use:
+
+```js
+import mermaid from 'mermaid';
+import { icons } from '@mermaid-js/plugin-icons';
+
+await mermaid.registerExternalDiagrams([icons]); // not needed when it is discovered on install
+mermaid.registerIconPacks([
+  { name: 'fa', loader: () => import('@iconify-json/fa6-solid').then((m) => m.icons) },
+  { name: 'fab', loader: () => import('@iconify-json/fa6-brands').then((m) => m.icons) },
+]);
+```
+
+[Icons](./icons.md) has the setup in full. What differs from v12:
+
+- **Prefixes and names.** Labels read v12's prefixes plus `fad`: `fa`, `fab`, `fad`, `fak`,
+  `fal`, `far` and `fas` (D296). `fa:fa-car` is the icon `car` of the pack registered as `fa`, so
+  each prefix your diagrams use needs its own pack. Names are the pack's: `fa6-solid` has Font
+  Awesome 6 names, so a Font Awesome 5 name it renamed (`fa:fa-home`, now `house`) does not
+  resolve; register `@iconify-json/fa-solid` (Font Awesome 5) as `fa` to keep those. There is no
+  generic `pack:name` in labels, so text such as `note:item` stays text.
+- **No `htmlLabels` gate, every type.** Icons are drawn in every label core lays out: flowchart
+  nodes, edges and subgraph titles; class, state and ER labels; sequence messages, notes,
+  participants, fragment and box labels, which v12 drew as plain text (D292). Class relation
+  labels and single-line state notes cannot hold `:` (v12's grammar), so they cannot hold an icon.
+- **Look.** A label icon is 1em tall at the label's font size, as wide as its aspect makes it,
+  with its bottom 0.125em below the baseline (v12's `.label-icon`), in the label's text colour:
+  `currentColor` fills and strokes both take it. It has no class, so CSS aimed at `.label-icon`
+  or `i.fa` selects nothing.
+- **Loading.** A loader runs only for a diagram that names its pack: in `render()` and
+  `prepare()`, or up front with `preload({ iconPacks: ['fa'] })`. `renderSync` before that throws
+  `NotLoadedError` naming the pack; with `placeholders: true` it draws an empty 1em box instead
+  (an icon shape draws its frame, or nothing without a `form`), with `PLACEHOLDER` (D299). A loader that rejects no longer
+  fails the render: its icons are not drawn, the warning names the pack, and the next `prepare()`
+  retries it.
+- **Not drawn: shown as written.** An icon that does not resolve (no plugin, no pack of that
+  name, no such icon, a pack whose loader failed or that is not Iconify JSON, a shape icon name
+  that is not `pack:name`) stays in the label as written, `fa:fa-car`, and an icon shape draws
+  its frame alone (nothing, without a `form`), with one `ICON_NOT_RENDERED` warning per render
+  (D291), as `MATH_NOT_RENDERED` does for math. With the plugin it names the icons and why;
+  without it, it says icons need an icons extension. While packs are registered and no icons
+  extension is, every render also warns `ICON_PACKS_UNSUPPORTED`. `ICON_UNAVAILABLE` (flowchart icon
+  shapes) is deprecated: for one alpha it is still raised once per render next to
+  `ICON_NOT_RENDERED`, naming the icon shapes not drawn, and never for a placeholder render
+  (D299). Read `ICON_NOT_RENDERED` instead.
+- **What an icon may hold (D295).** An icon's body is not inserted as markup: the plugin
+  rebuilds it from `g`, `path`, `rect`, `circle`, `ellipse`, `line`, `polyline`, `polygon` and
+  `text` with their presentation attributes (`style="…"` declarations become attributes), so no
+  icon pack can put script or links into a diagram (R-SEC-2). `defs`, gradients, `mask`,
+  `clipPath`, `use`, `style`, `image` and animation are dropped, as are `id`, `class` and event
+  attributes, and `url(#…)` paints become `currentColor`. A diagram with an icon changed that way
+  gets one `ICON_SIMPLIFIED` warning per render naming them. No `fa6-solid` or `mdi` icon is
+  changed; about one `logos` icon in five uses a gradient and is drawn flatter than in v12.
+- **Icon shapes** (`@{ icon: … }`) draw their glyph with the plugin, as in v12; an icon not drawn
+  keeps its frame (see [Flowchart syntax](#flowchart-syntax)).
+- **Mindmap** is not ported yet (`UNSUPPORTED_DIAGRAM`). When it is, `::icon(fa fa-book)` and
+  `::icon(mdi:fire)` draw from the registered packs, placed as v12's older mindmap renderer
+  placed them (D297). 12.2.0 parsed `::icon()` but drew nothing, so any mindmap icon is new; one
+  that does not resolve is shown as written in the icon's place, with `ICON_NOT_RENDERED` (D286).
+- **Text output** shows label icons as written, with one `ASCII_DROPPED` warning
+  (`feature: 'icon'`); an icon shape is a box with its label (`feature: 'image'`) (D299).
+- **Size.** Core does not change with the plugin installed (R-PLUG-8); the plugin is about
+  5.5 KB gz, plus the packs your diagrams load.
+
 ## Flowchart syntax
 
 The flowchart parser accepts exactly the v12 language: a differential test runs v12 and v13
@@ -808,8 +884,13 @@ over every e2e fixture and the v12 spec and docs examples, and the grammar is pu
 - **Shape data** (`A@{ shape: … }`) is read with v13's YAML reader: YAML anchors (`&a`) are
   rejected, which js-yaml accepted. A few malformed values that js-yaml rejected are accepted.
 - **Shapes** not in the documented shape list (`classBox`, `erBox`, `usecase*`, `bpmn-*`,
-  `kanbanItem`, mindmap shapes) draw as a rectangle. Icon shapes draw their frame only, with an
-  `ICON_UNAVAILABLE` warning, until the icons plugin exists.
+  `kanbanItem`, mindmap shapes) draw as a rectangle.
+- **Icon shapes** (`@{ icon: … }`, `form` `square`, `circle`, `rounded`) draw their glyph with
+  `@mermaid-js/plugin-icons`, as v12 did (D292, D298): the glyph takes the node's `stroke`
+  style, else `nodeBorder` (the gradient under `useGradient`), and the frame is borderless (its
+  stroke is its fill). An icon that is not drawn (no plugin, no such pack or icon, a pack still
+  loading under `placeholders`) keeps the frame with its outline, not v12's blue `?`.
+  `ICON_UNAVAILABLE` is deprecated in favour of `ICON_NOT_RENDERED`. See [Icons](#icons).
 - **Step animation** (`step` on edges, `flowchart.stepNumbers`, `flowchart.stepDuration`) and
   edge `animate`/`animation` are parsed but not drawn.
 - **`style`, `classDef` and `linkStyle`** go through a per-property allow-list; an unknown
@@ -838,6 +919,8 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
   next to `MATH_NOT_RENDERED` (or `ASCII_DROPPED` in text output) for one alpha, and is no longer
   a parse warning. It is not raised for TeX the math plugin refuses (`MATH_ERROR`) or for a
   placeholder render (`PLACEHOLDER`).
+- **Icons** (`fa:fa-car`) in messages, notes, participants, fragment and box labels are drawn by
+  the icons plugin from a registered pack; v12 drew them as plain text (see [Icons](#icons)).
 - **An unknown participant type** (`@{ type: robot }`) draws a participant box, with a
   `SEQUENCE_PARTICIPANT_TYPE` warning; v12 drew nothing.
 - **Box colours** are checked without a browser, with the rules a browser's `CSS.supports`
@@ -893,6 +976,41 @@ v12 spec strings; grammar in [syntax/sequence.md](./syntax/sequence.md)). The di
   (on a state written on its own, or anywhere inside a composite: v12 applies `:::` only in a
   top-level transition) warns `CLASS_NOT_APPLIED` (D128). Completion no longer offers
   `classDef`, `class`, `style`, `click` or `scale` inside a composite.
+
+## Quadrant chart config and theme
+
+Spec #289. The SVG changes are under [Quadrant chart SVG structure](#quadrant-chart-svg-structure).
+
+- **`quadrantChart` section:** every key v12's quadrant chart reads works as in v12:
+  `chartWidth`, `chartHeight`, `titleFontSize`, `titlePadding`, `quadrantPadding`,
+  `xAxisLabelPadding`, `yAxisLabelPadding`, `xAxisLabelFontSize`, `yAxisLabelFontSize`,
+  `quadrantLabelFontSize`, `quadrantTextTopPadding`, `pointTextPadding`, `pointLabelFontSize`,
+  `pointRadius`, `xAxisPosition`, `yAxisPosition`, `quadrantInternalBorderStrokeWidth`,
+  `quadrantExternalBorderStrokeWidth` and `useMaxWidth`. A configured `0` is honoured, as in v12.
+- **Value types:** a numeric string (`"pointRadius": "7"`) is read as its number, as v12 drew
+  it. A length that is no number of 0 or more (`"big"`, `-3`, `true`), or an axis side that is
+  not one of its two (`xAxisPosition: "middle"`), falls back to the default with one
+  `QUADRANT_CONFIG_INVALID` warning per key (D226). v12 wrote `NaN` or joined the string into
+  its sums.
+- **Ignored:** `useWidth` (only v12's gantt read it), accepted without a warning.
+- **Not config keys:** v12's builder also had `showXAxis`, `showYAxis` and `showTitle`, which
+  no config could reach. They are not schema keys, so setting them gives a `CONFIG_UNKNOWN_KEY`
+  warning (R-CONF-2). An axis shows when it has text, the title when it is not empty.
+- **Descriptions:** v12's schema described `titleFontSize`, `titlePadding` and
+  `quadrantPadding` with the text of the next key. They now say what each key does: the title's
+  font size, the padding above and below the title, and the padding around the quadrant square.
+- **Front-matter `title`** is drawn as the chart title; a `title` statement in the text wins,
+  as in v12 (D218).
+- **Text output:** `format: 'ascii'` is not available for quadrant charts; it throws
+  `UnsupportedFormatError` and `supportsFormat('quadrantChart', 'ascii')` is `false` (D216).
+- **Theme variables:** the 15 `quadrant*` variables keep their v12 names and are listed in
+  [theme variables](theme-variables.md): `quadrant1Fill`–`quadrant4Fill`,
+  `quadrant1TextFill`–`quadrant4TextFill`, `quadrantPointFill`, `quadrantPointTextFill`,
+  `quadrantXAxisTextFill`, `quadrantYAxisTextFill`, `quadrantInternalBorderStrokeFill`,
+  `quadrantExternalBorderStrokeFill` and `quadrantTitleFill`. Each is also a `--mermaid-<name>`
+  CSS variable, so a host can re-colour a rendered chart (R-THEME-3). They are derived by the
+  same rules as v12 in every theme; where the result differs (`quadrantPointFill`, D231; the
+  fills 2–4, D232; the borders) the SVG structure table says how.
 
 ## State diagram SVG structure
 
@@ -1288,3 +1406,40 @@ names are kept (`pieOuterCircle`, `pieCircle`, `highlighted`, `highlightedOnHove
 | Title and legend text set with d3 `.text()`: `<br>` and tags printed as written, entities decoded | Core's label layout ([Labels and text](#labels-and-text)): `<br>` breaks the line, `<b>`/`<i>` are drawn bold and italic, entities decode; a legend label of several lines stays left-aligned | D225 |
 | The viewBox widened only for the title; many sections or a wide `top`/`bottom` legend were clipped | The viewBox covers everything drawn, and may start at a negative `x` or `y` | D224 |
 | `neo` and the redux themes: the same pie as the classic themes | The same: pie differs between families by colour only, with no gradient and no shadow | D227 |
+
+## Quadrant chart SVG structure
+
+What changed in the quadrant chart's SVG compared with v12 (spec #289, #312). v12's groups and
+classes are kept, in v12's order: `g.main` > `g.quadrants` (`g.quadrant`: `rect` + `text`),
+`g.border` (six `line`s), `g.data-points` (`g.data-point`: `circle` + `text`), `g.labels`
+(`g.label`: `text`) and `g.title`, each written even when empty. The last-declared point is
+still drawn first, so the first is on top. Text keeps v12's `text-anchor`, `dominant-baseline`
+and `transform="translate(x,y) rotate(r)"` placement.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, `role="graphics-document document"`, a `<style>` scoped by the id that gave every text its `fill` | No root `id`; `class="mermaid mermaid-quadrant"`, `role="img"`, `aria-roledescription="quadrantChart"` (kept), `data-mermaid-version`; every element carries its colour as a presentation attribute reading a `var(--_x)` alias on the root `style` | Inert output (R-SEC-2), no colliding ids (R-A11Y-1), host re-theming with `--mermaid-*` (R-THEME-3) |
+| A fixed `viewBox="0 0 chartWidth chartHeight"`: a point label near the edge ran off it and the browser clipped it | The same placement; the `viewBox` (and `max-width`, or `width`/`height` with `useMaxWidth: false`) grows to cover any label or point drawn past the chart. A chart where everything fits keeps `0 0 chartWidth chartHeight` | The bounding box covers what is drawn (D224) |
+| Groups had no ids | `g.quadrant` has `data-id="quadrant-<n>"` and, when labelled, `data-ast="q:<n>"`; `g.data-point` has `data-id="<point name>"` and `data-ast="pt:<name>"` (`pt:<name>@2` for a repeated name); `g.label` has `data-id="x-axis-start"` (`-end`, `y-axis-…`) and `data-ast="ax:x"` / `ax:x/end` / `ax:y` / `ax:y/end`; `g.title` has `data-id="title"` and the `title` statement's `data-ast` | One element per AST node maps it to its source (R-PARSE-8) |
+| An unlabelled quadrant drew an empty `<text>` | Only its `<rect>` | Nothing invisible is drawn |
+| Border lines styled with `style="stroke: …; stroke-width: …"` | `stroke` and `stroke-width` attributes | No inline style (R-SEC-2) |
+| Labels set as `textContent`: a quoted `<br>`, a raw line break inside quotes, `<b>`/`<i>` and a markdown string's `**` showed literally, entities as written | Core's label layout with no wrap width: every `<br>` form and a raw line break inside a quoted string break the line, `<b>` and `<i>` in a quoted label render bold and italic, other tags are dropped with their text kept (`"<script>x</script>"` draws `x`, where v12 showed the tags), markdown renders, entities decode, and math works (D176). A plain label is still one `<text>`; one with breaks or emphasis is a `<text>` with `<tspan>`s. Every v12 anchor and the square stay where v12 put them, and a label's extra lines grow away from the square: a title's earlier lines go above it, so its last line sits where v12's one line sat; a top x-axis label grows up (the title above it moves up with it); a left y-axis label grows left; bottom and right labels grow down and right. The bounding box grows over them, so `viewBox` can start below 0 | D225, D224 |
+| Points: `fill="hsl(…, NaN%)"` and the same `stroke` (v12's `quadrantPointFill` rule had a precedence bug and a khroma call with no amount), so points showed the root `fill: textColor` and no stroke, even with a `stroke-width`; a user `quadrantPointFill` was ignored | `fill` from `quadrantPointFill`, which defaults to `textColor`: the same look in every theme, and a user value is honoured. A `stroke` is written only when an inline or class `stroke-color` sets one, so `stroke-width` alone still draws no ring; a drawn stroke counts toward the bounding box | D231, D224 |
+| A style colour without `#` (`color: ff0000`) was written as `fill="ff0000"`, which browsers ignore | Written as `fill="#ff0000"` | D235 |
+| Quadrant fills 2–4 derived from `primaryColor` (or `#ECECFE` in `redux`, `redux-color` and `neo`) | Derived from `quadrant1Fill`, which is `primaryColor` (`#ececfe` in those three): the same colours unless an author sets `quadrant1Fill` alone, which now moves 2–4 too. `default` also follows an author `primaryColor`, `primaryTextColor` and `primaryBorderColor`, which v12's `theme-default.js` ignored for the quadrant fills, text fills and borders (it derived them once, in its constructor, before the overrides) | D232 |
+| A point whose coordinate lexed but was not a number in [0, 1] (`0x5`, `0a5`) was drawn off the chart or at `NaN` | Left out, with one `QUADRANT_POINT_INVALID` warning per point | D226 |
+| `look: neo` changed nothing in a quadrant chart | Every theme family draws it plain, without gradient, shadow or palette; families differ by colour only | D227 |
+| Border lines in v12's khroma `primaryBorderColor` | Core's `primaryBorderColor`, the border colour of every other type, so some themes change (table below) | R-THEME-11 |
+| `themeVariables.darkMode: true` switched `primaryTextColor` and `textColor` to `#eee` in `redux`, `redux-color`, `base` and `neo`, and so every quadrant text | Core's theme specs keep their text colours under `darkMode`, so quadrant text does too. This is core behaviour for every type, not a quadrant change | Core |
+
+Quadrant border colours (`quadrantExternalBorderStrokeFill` and `quadrantInternalBorderStrokeFill`)
+where v12 and v13 differ; the other themes keep v12's colour.
+
+| Theme | v12 | v13 |
+| --- | --- | --- |
+| `default` | `#c7c7f1` | `#c9c9d9` |
+| `dark` | `#cccccc` | `#4c4d4d` |
+| `forest` | `#abb594` | `#aec281` |
+| `neutral` | `#d4d4d4` | `#cacaca` |
+| `base` | `#eeddbb` | `#d9cfbc` |
+| `redux`, `redux-color` | `#171717` | `#28253d` |
