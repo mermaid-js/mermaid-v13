@@ -11,7 +11,7 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 | T4 SVG renderer | #388 | #387 | merged (--no-ff c4765ec77) |
 | T6 language facet | #389 | #386 | merged (ff 9c162dcaa) |
 | T5 integration | #390 | #388, #389 | merged (--no-ff 08e6ced10) |
-| icons I5 `::icon()` glyphs | #328 | #322 (merged), #388 (merged) | in progress (`.claude/worktrees/t328`, `feature/328_mindmap-icons`); baselines after #390 |
+| icons I5 `::icon()` glyphs | #328 | #322 (merged), #388 (merged) | merged (ff 66a564e2c) |
 | hand-drawn H4 baselines | #344 | #390 (merged) | merged (ff b834dd012) |
 
 - `01-v12-mindmap.md`: pointer notes on v12 grammar, DB, renderer, styles, shapes, tidy-tree, corpus, Pele.
