@@ -13,8 +13,8 @@ Implementing a whole spec with agents (`/implement-spec`)? Also read [orchestrat
 | v12 at runtime (the **oracle**) | the `mermaid-v12` dev dependency in `packages/conformance`. `src/oracle.ts` stubs DOMPurify so it parses in Node. |
 | Plugin contract | `DiagramPlugin<M, L>` in `@mermaid-js/core` (DESIGN §12.1) |
 | Worked example | `packages/diagram-flowchart` (`parser/`, `render/`, `grammar/`, `v12-specs/`) |
-| Parity runner | `packages/conformance`: add a `DiagramAdapter` to `PARITY_SUITES` (`src/registry.ts`). The flowchart jison lexer oracle is `src/flowchart/jison-lexer.ts`. |
-| Corpus | `e2e/diagrams/<type>/**/*.mmd` plus strings harvested from the v12 specs |
+| Parity runner | `packages/conformance`: add a `DiagramAdapter` to `PARITY_SUITES` (`src/registry.ts`). The jison lexer oracle for every jison type is `loadJisonLexerOracle(type)` in `src/jison/oracle.ts` (D212). |
+| Corpus | `e2e/diagrams/<type>/**/*.mmd` plus strings harvested from the v12 specs (`harvest <type>`, `corpus/<type>-v12-specs.json`) |
 | Generators and gates | the `gen:*` / `check:*` scripts in the root `package.json`. `pnpm check` is the full gate. |
 
 M3 types are all jison in v12: `sequence/parser/sequenceDiagram.jison`, `class/parser/classDiagram.jison`, `state/parser/stateDiagram.jison`, `er/parser/erDiagram.jison`.

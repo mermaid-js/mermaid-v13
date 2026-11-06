@@ -5,8 +5,8 @@ import { JISON_NAMES, lexClass } from '@mermaid-js/diagram-class';
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 import { decodeEntities } from '../flowchart/v12.ts';
-import { loadClassLexerOracle } from './jison-lexer.ts';
-import type { JisonToken } from './jison-lexer.ts';
+import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
+import type { JisonToken } from '../jison/oracle.ts';
 
 /**
  * Lexer-parity gate (#153, parser-method.md §1): the v13 class lexer emits the same terminals,
@@ -143,15 +143,17 @@ function commented(src: string): string {
 
 describe('class lexer parity with mermaid@12 (jison)', () => {
   it('emits the same tokens over the e2e fixtures and the v12 spec strings', async () => {
-    const oracle = await loadClassLexerOracle();
+    const oracle = await loadJisonLexerOracle('class');
     const items = await corpus();
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
     let compared = 0;
     for (const item of items) {
-      const v12 = await oracle.tokens(item.source);
+      const v12 = (await oracle.tokens(item.source, { keepAppendedNewline: true }))?.map(
+        ([n, i]): [string, string] => [n === LEXICAL_ERROR ? 'INVALID' : n, i]
+      );
       if (!v12) continue;
       compared++;
-      const input = await oracle.input(item.source);
+      const input = await oracle.lexedText(item.source);
       if (input !== lexClass(item.source).v12.text) {
         diffs.push({ id: `${item.id} (lexed text)`, at: 0, v12: [['TEXT', input ?? '']], v13: [] });
         continue;
