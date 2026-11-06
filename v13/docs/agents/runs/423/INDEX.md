@@ -19,7 +19,7 @@ Integration branch `feature/423_cynefin`, checked out at `/Users/knsv/repos/merm
 ## Shared contracts
 
 - **`CynefinModel`** (`packages/diagram-cynefin/src/model.ts`): landed by the orchestrator with the package skeleton before T1 and T3 started. T2 produces it; T3 reads it. Change it only additively and note the change in GAPS.md.
-- **Theme table** (#414 T0a, `feature/414_theme-t0`): `DiagramThemeTable` and `DiagramPlugin.theme`. Until it is merged here, T3/T4 read lengths and colours through a single stand-in module the T5 table replaces.
+- **Theme table** (#414 T0a, `feature/414_theme-t0` at `462aef4e9`, merged here in `b926c9994`): `DiagramThemeTable` on `DiagramPlugin.theme`. API: `v13/docs/agents/runs/414/CONTRACT.md`. T4 declares cynefin's table inline on the plugin (T0b's per-package `src/theme/vocabulary.ts` convention is still in progress and will be additive); T5 adds the theme oracle specs, nested-override fixtures and baselines. Never add cynefin rows to core.
 
 ## Finish rule
 
