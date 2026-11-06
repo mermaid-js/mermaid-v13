@@ -8,6 +8,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 ## Exploration findings (2026-11-06), see `01-v12-gitgraph.md` "Surprises"
 
+- Maintainer (via the coordinator, 2026-11-06): "Wave 2 first". gitGraph lands before the Theme T0 (D322, #411); gitGraph's theme variables stay in the existing core vocabulary pattern, with any new table in core built in a pure call (the #410 guard in `cdn-build.spec.ts`), and the T0 moves them out of core later. For the maintainer: say so in the PR body.
+
 ## #368 T1 lexer
 - `INT` beats `REFERENCE`: `branch 123` is rejected in v12 (not in the spec). The oracle decides; T1 reproduces it, T2 rejects it. Done in T1: reproduced and gated (quirks `branch 123`, `10abc`, `10.5`, `007`).
 
