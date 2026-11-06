@@ -7,6 +7,7 @@
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { FontKey, MeasuredLabel } from '@mermaid-js/core/text';
+import type { RadarOptions } from '../model.ts';
 
 export interface Point {
   readonly x: number;
@@ -87,7 +88,7 @@ export interface RadarLegendRow {
   readonly slot: number;
   /** `radarLegendBoxSize` square at the row's origin. */
   readonly swatch: Rect;
-  /** Left edge 16 px right of the row's origin, `hanging` from its top. */
+  /** Left edge `legendTextGap` right of the swatch, `hanging` from its top. */
   readonly label: PlacedLabel;
 }
 
@@ -100,8 +101,8 @@ export interface RadarLayout {
   readonly axisLength: number;
   /** A label anchor's distance from the centre: `radius · axisLabelFactor + 4`. */
   readonly labelRadius: number;
-  readonly graticule: 'circle' | 'polygon';
-  /** The ticks the rings were drawn for (after the 32 clamp). */
+  readonly graticule: RadarOptions['graticule'];
+  /** The ticks the rings were drawn for: the model's (at most 32), 0 if not finite or negative. */
   readonly ticks: number;
   /** The value at the centre and at `radius` (D356: `max = min` draws every point at the centre). */
   readonly min: number;

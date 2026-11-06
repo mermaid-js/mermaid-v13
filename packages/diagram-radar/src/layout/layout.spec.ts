@@ -5,6 +5,7 @@ import type { Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { RadarModel } from '../model.ts';
 import { radar as plugin } from '../plugin.ts';
+import { parseRadar } from '../parser/index.ts';
 import { FIXTURES, axis, curve, model } from './fixtures.ts';
 import { layoutRadar, type RadarLayout } from './index.ts';
 
@@ -155,7 +156,9 @@ describe('radar layout: graticule (v12 drawGraticule)', () => {
     expect(lay(FIXTURES.halfTicks!).rings.map((r) => r.radius)).toEqual([200, 400]);
     expect(lay(FIXTURES.noTicks!).rings).toEqual([]);
     expect(lay(FIXTURES.maxTicks!).rings).toHaveLength(32);
-    expect(lay(model(abc, [], { ticks: 40 })).rings).toHaveLength(32);
+    // The model holds ticks at 32 (`RADAR_TICKS_CLAMPED`); the layout draws what it is given.
+    expect(lay(parseRadar('radar-beta\nticks 40').model).rings).toHaveLength(32);
+    expect(lay(model(abc, [], { ticks: 40 })).rings).toHaveLength(40);
   });
 
   it('draws no polygon ring without axes (v12 wrote points="")', () => {
@@ -198,7 +201,7 @@ describe('radar layout: curves (v12 drawCurves)', () => {
     expect(lay(FIXTURES.ninjas!).curves.map((c) => c.segments.length)).toEqual([0, 0, 0]);
   });
 
-  it('skips a curve whose entry count is not the axis count, with one warning (D356)', () => {
+  it('skips a curve whose entry count is not the axis count, and does not warn (D356)', () => {
     const warnings: Warning[] = [];
     const l = lay(
       model(abc, [
@@ -215,20 +218,16 @@ describe('radar layout: curves (v12 drawCurves)', () => {
       [3, 3],
     ]);
     expect(l.legend.map((r) => r.index)).toEqual([0, 1, 2, 3]);
-    expect(warnings).toEqual([
-      expect.objectContaining({ code: 'RADAR_CURVE_SKIPPED', astIds: ['curve:c2', 'curve:c3'] }),
-    ]);
+    // `RADAR_CURVE_SKIPPED` is the parser's, with positions.
+    expect(warnings).toEqual([]);
   });
 
-  it('draws an empty range at the centre with one warning, never NaN (D356)', () => {
+  it('draws an empty range at the centre, never NaN, and does not warn (D356)', () => {
     const warnings: Warning[] = [];
     const l = lay(FIXTURES.emptyRange!, {}, warnings);
     expect(l.curves[0]!.points.every((p) => p.x === 350 && p.y === 350)).toBe(true);
-    expect(warnings.map((w) => w.code)).toEqual(['RADAR_EMPTY_RANGE']);
-    // No curve drawn, no warning.
-    const none: Warning[] = [];
-    lay(model(abc, [], { max: 0 }), {}, none);
-    expect(none).toEqual([]);
+    // `RADAR_EMPTY_RANGE` is the parser's, with positions.
+    expect(warnings).toEqual([]);
   });
 
   it('keeps v12’s formula for max under min: every point on the radius', () => {
@@ -329,13 +328,13 @@ describe('radar layout: an entry past a double (309+ digits, D356)', () => {
     expect(r[1]).toBeCloseTo(300);
   });
 
-  it('max = min = Infinity: the centre, with RADAR_EMPTY_RANGE', () => {
-    const warnings: Warning[] = [];
-    expect(radii(lay(FIXTURES.infiniteRange!, {}, warnings), 0)).toEqual([0, 0, 0]);
-    expect(warnings.map((w) => w.code)).toEqual(['RADAR_EMPTY_RANGE']);
+  it('max = min = Infinity: the centre', () => {
+    expect(radii(lay(FIXTURES.infiniteRange!), 0)).toEqual([0, 0, 0]);
   });
 
-  it('ticks past a double draw 32 rings', () => {
-    expect(lay(model(abc, [], { ticks: Infinity })).rings).toHaveLength(32);
+  it('ticks past a double: 32 rings from the parser, none from a non-finite model', () => {
+    expect(lay(parseRadar(`radar-beta\nticks 1${'0'.repeat(400)}`).model).rings).toHaveLength(32);
+    for (const ticks of [Infinity, Number.NaN, -1])
+      expect(lay(model(abc, [], { ticks })).rings, String(ticks)).toEqual([]);
   });
 });

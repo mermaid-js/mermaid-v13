@@ -1,8 +1,9 @@
 // cspell:ignore Stam Naruto Uzumaki Sasuke
 /**
  * Hand-built `RadarModel` fixtures for the layout specs, written as v12 would parse the radar
- * source above each one. They stand in for parser-produced fixtures until #446 lands; its merge
- * adds a spec that runs `radarLayoutViolations` over the parsed corpus.
+ * source above each one: the edge cases the specs work by hand. The parser-produced corpus is
+ * `packages/conformance/src/radar/layout-corpus.spec.ts`'s, which runs `radarLayoutViolations`
+ * over every parsed gate source.
  */
 import type { RadarAxis, RadarCurve, RadarModel, RadarOptions } from '../model.ts';
 

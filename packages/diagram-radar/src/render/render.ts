@@ -10,6 +10,7 @@ import { px, styleScope, styleText, themeStyleSheet, type PathBuilder } from '@m
 import type { PathData, SvgWriter } from '@mermaid-js/core/svg';
 import type { CubicSegment, PlacedLabel, Point, RadarLayout } from '../layout/index.ts';
 import type { RadarModel } from '../model.ts';
+import { radarUseMaxWidth } from '../config.ts';
 import { paints, type Paints } from './paint.ts';
 
 /** What the renderer reads from the render context. */
@@ -153,7 +154,7 @@ function openRoot(
   const { x, y } = layout.bounds;
   const width = Math.max(1, Math.ceil(layout.bounds.width));
   const height = Math.max(1, Math.ceil(layout.bounds.height));
-  const maxWidth = config.radar?.useMaxWidth !== false;
+  const maxWidth = radarUseMaxWidth(config.radar);
   const title = model.accTitle.trim();
   const desc = model.accDescr.trim();
   // Read before the root style is written, so it declares its alias.

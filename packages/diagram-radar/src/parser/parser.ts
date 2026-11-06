@@ -58,13 +58,12 @@ import type {
   RadarEntryNode,
   RadarOptionNode,
   RadarStatementNode,
-  RadarTextNode,
 } from './ast.ts';
 import { normalise } from './normalise.ts';
 import type { OptionName } from './normalise.ts';
 import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
-import { PREFIX_KEYWORDS, RADAR_TRIVIA, T } from './tokens.ts';
+import { PREFIX_KEYWORDS, RADAR_TRIVIA, T, TEXT_STATEMENTS } from './tokens.ts';
 
 export interface RadarParseOptions extends ParseOptions {
   /** The preprocess result for this text; computed (and its diagnostics kept) when absent. */
@@ -118,13 +117,6 @@ const OPTION_OF: Readonly<Record<number, { readonly name: OptionName; readonly v
   [T.Graticule]: { name: 'graticule', value: T.GraticuleValue },
 };
 
-/** The keyword of each statement-value token, also its probe mode ({@link probeMode}). */
-const VALUE_WORDS: Readonly<Record<number, string>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
-
 /**
  * The probe's mode at `o` (R-LANG-7). The lexer has no modes (Langium's has none), so the
  * mode names what the offset is in: `title`, `accTitle` or `accDescr` past the keyword of
@@ -141,7 +133,7 @@ function probeMode(src: string, tokens: TokenStream, o: number): string {
     if (kind === T.String && o < end) return 'string';
     // An unclosed label is an error token from its quote on.
     if (kind === Kind.Error && (c === DQUOTE || c === APOSTROPHE)) return 'string';
-    const word = VALUE_WORDS[kind];
+    const word = TEXT_STATEMENTS[kind]?.word;
     if (!word) continue;
     let k = start;
     while (/[\t ]/.test(src.charAt(k))) k++;
@@ -173,17 +165,6 @@ const EXPECTED = new ExpectedTable([
   ['a line break', [Kind.Newline]],
   ['the end of the text', [Kind.EOF]],
 ]);
-
-const KIND_OF: Record<number, RadarTextNode['type']> = {
-  [T.Title]: 'Title',
-  [T.AccTitle]: 'AccTitle',
-  [T.AccDescr]: 'AccDescr',
-};
-const ID_OF: Record<RadarTextNode['type'], string> = {
-  Title: 'title',
-  AccTitle: 'accTitle',
-  AccDescr: 'accDescr',
-};
 
 /**
  * Thrown inside the parser after a diagnostic is recorded; caught at statement level. One
@@ -222,7 +203,7 @@ class RadarParser {
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
   private title = '';
   /** The AST id of the last `title` statement. */
-  private titleId: AstId | undefined;
+  private titleAstId: AstId | undefined;
   private accTitle = '';
   private accDescr = '';
 
@@ -702,16 +683,15 @@ class RadarParser {
   private text(k: number): void {
     const j = this.i++;
     const image = this.raw(j);
-    const type = KIND_OF[k] ?? 'Title';
+    const { type, word: kind } = TEXT_STATEMENTS[k] ?? TEXT_STATEMENTS[T.Title]!;
     const range = this.range(j);
     while (range.start < range.end && /[\t ]/.test(this.src[range.start] ?? '')) range.start++;
     let text: string;
     if (type === 'Title') text = this.title = titleValue(image);
     else if (type === 'AccTitle') text = this.accTitle = accTitleValue(image);
     else text = this.accDescr = accDescrValue(image);
-    const kind = ID_OF[type];
     const id = this.id(kind);
-    if (type === 'Title') this.titleId = id;
+    if (type === 'Title') this.titleAstId = id;
     this.children.push({ id, type, range, text });
     this.st.statement(kind, range);
     this.eol();
@@ -741,7 +721,7 @@ class RadarParser {
         curves: this.curves,
         options: this.options,
         title: this.title,
-        titleId: this.titleId,
+        titleAstId: this.titleAstId,
         accTitle: this.accTitle,
         accDescr: this.accDescr,
         frontMatterTitle: this.pre.frontMatter?.title,

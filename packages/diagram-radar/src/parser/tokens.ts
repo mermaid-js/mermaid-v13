@@ -4,6 +4,7 @@
  * lexer (parser-method §1, D213). Kinds are plain numbers (TS enums are banned).
  */
 import { FIRST_DIAGRAM_KIND, Kind, kindSet } from '@mermaid-js/core/parser-kit';
+import type { RadarTextNode } from './ast.ts';
 
 const F = FIRST_DIAGRAM_KIND;
 
@@ -66,6 +67,23 @@ export const PREFIX_KEYWORDS: readonly {
   { kind: T.Boolean, words: ['true', 'false'] },
   { kind: T.Title, words: ['title'] },
 ];
+
+/** A statement whose token holds its text too: its AST node type and its keyword. */
+export interface TextStatement {
+  readonly type: RadarTextNode['type'];
+  /** The keyword, also the stem of the AST id and the probe's mode past it. */
+  readonly word: 'title' | 'accTitle' | 'accDescr';
+}
+
+/**
+ * `title …`, `accTitle: …` and `accDescr …` by token kind: the one table the parser (nodes,
+ * ids, probe modes) and hover (only the keyword is hovered) read.
+ */
+export const TEXT_STATEMENTS: Readonly<Partial<Record<number, TextStatement>>> = {
+  [T.Title]: { type: 'Title', word: 'title' },
+  [T.AccTitle]: { type: 'AccTitle', word: 'accTitle' },
+  [T.AccDescr]: { type: 'AccDescr', word: 'accDescr' },
+};
 
 /**
  * Trivia for the radar parser: the shared trivia kinds and {@link T.Yaml}. In-text `%%`

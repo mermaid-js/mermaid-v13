@@ -30,9 +30,6 @@ export const RADAR_METRICS: RadarMetrics = {
   legendFactor: 3 / 4,
 };
 
-/** v12 `db.ts` `MAX_TICKS`: more rings are clamped (`RADAR_TICKS_CLAMPED`, D356). */
-export { MAX_TICKS } from '../model.ts';
-
 /** v12 writes `radarCurve-0`…`radarCurve-11`: a curve takes slot `index mod 12` (D353). */
 export const RADAR_SLOTS = 12;
 

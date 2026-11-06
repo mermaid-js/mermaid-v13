@@ -1,0 +1,4 @@
+4:9-4:18 "two{1, 2}" warning RADAR_CURVE_SKIPPED: The curve `two` has 2 values for 3 axes (and 1 more curve): it is not drawn. Give it one value per axis.
+5:21-5:22 "X" warning RADAR_UNKNOWN_AXIS: `X` in curve `three` names no axis: the value is ignored. Declare the axis with `axis`, or use the name of one.
+7:9-7:11 "40" warning RADAR_TICKS_CLAMPED: `ticks 40` is more than 32: the chart draws 32 rings.
+8:3-8:8 "max 2" warning RADAR_EMPTY_RANGE: `max 2` and `min 2` are the same value: every curve is drawn at the centre.

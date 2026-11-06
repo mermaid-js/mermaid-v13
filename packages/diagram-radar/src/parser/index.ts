@@ -10,6 +10,8 @@ import { lex } from './lexer.ts';
 export { LANGIUM_NAMES, RADAR_TRIVIA, T as RadarTokenKind } from './tokens.ts';
 export { parseRadar } from './parser.ts';
 export {
+  RADAR_CURVE_SKIPPED,
+  RADAR_EMPTY_RANGE,
   RADAR_MISSING_ENTRY,
   RADAR_NO_AXES,
   RADAR_TICKS_CLAMPED,

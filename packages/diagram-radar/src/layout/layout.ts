@@ -6,18 +6,18 @@
  * past v12's canvas wherever something drawn reaches out of it (D354). Lengths come from the
  * `radar` config, the theme and the metrics table (pitfall 13).
  *
- * v12 bugs fixed on the way (D356): `max = min` draws every point at the centre (v12 wrote NaN,
- * `RADAR_EMPTY_RANGE`), a curve whose entry count is not the axis count is skipped with
- * `RADAR_CURVE_SKIPPED` (v12 skipped it silently), an entry past a double (Infinity) lands at
- * its clamp, and a polygon graticule with no axes draws no ring (v12 wrote `points=""`).
+ * v12 bugs fixed on the way (D356): `max = min` draws every point at the centre (v12 wrote NaN),
+ * a curve whose entry count is not the axis count is skipped (v12 did so too), an entry past a
+ * double (Infinity) lands at its clamp, and a polygon graticule with no axes draws no ring (v12
+ * wrote `points=""`). The parser warns about the first two (`RADAR_EMPTY_RANGE`,
+ * `RADAR_CURVE_SKIPPED`, with positions); the layout only guards against them.
  */
-import type { RenderContext, Warning } from '@mermaid-js/core';
-import type { AstId } from '@mermaid-js/core/parser-kit';
+import type { RenderContext } from '@mermaid-js/core';
 import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
-import type { RadarModel } from '../model.ts';
+import { largestEntry, type RadarModel, type RadarOptions } from '../model.ts';
 import { radarLayoutConfig, type RadarLayoutConfig } from '../config.ts';
 import { closedRoundCurve, relativeRadius } from './curve.ts';
-import { MAX_TICKS, NORMAL_WEIGHT, RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
+import { NORMAL_WEIGHT, RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
 import type {
   PlacedLabel,
   Point,
@@ -34,9 +34,6 @@ import type {
 /** What the layout reads from the render context. */
 export type RadarLayoutContext = Pick<RenderContext, 'config' | 'measurer' | 'theme'> &
   Partial<Pick<RenderContext, 'inline' | 'warn'>>;
-
-export const RADAR_CURVE_SKIPPED = 'RADAR_CURVE_SKIPPED';
-export const RADAR_EMPTY_RANGE = 'RADAR_EMPTY_RANGE';
 
 const TAU = 2 * Math.PI;
 
@@ -130,16 +127,13 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
     };
   });
 
-  // Curves (`:140-173`): the range over every entry of every curve, drawn or not.
+  // Curves (`:140-173`): the range over every entry of every curve, drawn or not. A curve
+  // whose entry count is not the axis count is left out (`RADAR_CURVE_SKIPPED`, the parser's).
   const { min } = model.options;
-  const max = model.options.max ?? largest(model);
-  const skipped: AstId[] = [];
+  const max = model.options.max ?? largestEntry(model.curves);
   const curves: RadarCurveLayout[] = [];
   model.curves.forEach((curve, index) => {
-    if (frame.n === 0 || curve.entries.length !== frame.n) {
-      skipped.push(curve.astId);
-      return;
-    }
+    if (frame.n === 0 || curve.entries.length !== frame.n) return;
     const points = curve.entries.map((entry, i) =>
       frame.toward(frame.angle(i), relativeRadius(entry.value, min, max, radius))
     );
@@ -151,9 +145,14 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
       segments: graticule === 'circle' ? closedRoundCurve(points, config.curveTension) : [],
     });
   });
-  if (ctx.warn) warnAbout({ axes: frame.n, curves, skipped, min, max }, ctx.warn);
 
-  const legend = legendOf(model, legendText, config, center, theme.number('radarLegendBoxSize'));
+  const legend = legendOf({
+    model,
+    labels: legendText,
+    config,
+    center,
+    swatchSize: theme.number('radarLegendBoxSize'),
+  });
   // The title (`:41-45`): middle-anchored at the canvas top, `hanging`.
   const title = titleText && placeAt(titleText, { x: center.x, y: 0 }, 'middle', 'hanging');
 
@@ -207,13 +206,16 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
   };
 }
 
-/** The ticks to draw rings for: v12's value, at most 32 (Infinity too), none under 0 or NaN. */
+/**
+ * The ticks to draw rings for: the model's, which the parser holds at 32 at most
+ * (`RADAR_TICKS_CLAMPED`); none for a negative or non-finite count (a hand-built model).
+ */
 function ticksOf(ticks: number): number {
-  return ticks > 0 ? Math.min(ticks, MAX_TICKS) : 0;
+  return Number.isFinite(ticks) && ticks > 0 ? ticks : 0;
 }
 
 /** v12 `drawGraticule` (`:64-93`): ring `k` (1…⌈ticks⌉) at `radius · k / ticks`. */
-function ringsOf(graticule: 'circle' | 'polygon', ticks: number, frame: Frame): RadarRing[] {
+function ringsOf(graticule: RadarOptions['graticule'], ticks: number, frame: Frame): RadarRing[] {
   if (graticule === 'polygon' && frame.n === 0) return [];
   const rings: RadarRing[] = [];
   for (let k = 1; k <= Math.ceil(ticks); k++) {
@@ -227,57 +229,29 @@ function ringsOf(graticule: 'circle' | 'polygon', ticks: number, frame: Frame): 
   return rings;
 }
 
-/** The largest entry of any curve (v12 `Math.max` over all curves); 0 when there is none. */
-function largest(model: RadarModel): number {
-  let max = -Infinity;
-  for (const curve of model.curves)
-    for (const entry of curve.entries) if (entry.value > max) max = entry.value;
-  return max === -Infinity ? 0 : max;
-}
-
-/** What the layout warns about. */
-interface Findings {
-  readonly axes: number;
-  readonly curves: readonly RadarCurveLayout[];
-  readonly skipped: readonly AstId[];
-  readonly min: number;
-  readonly max: number;
-}
-
-/** One warning per kind per render (D356), naming every curve it is about. */
-function warnAbout(found: Findings, warn: (w: Warning) => void): void {
-  const { axes, curves, skipped, min, max } = found;
-  if (skipped.length > 0)
-    warn({
-      code: RADAR_CURVE_SKIPPED,
-      message: `Left out ${skipped.length === 1 ? 'a curve' : `${skipped.length} curves`} whose entry count is not the axis count (${axes})`,
-      astIds: skipped,
-    });
-  if (max === min && curves.length > 0)
-    warn({
-      code: RADAR_EMPTY_RANGE,
-      message: `max and min are both ${max}: every curve is drawn at the centre`,
-      astIds: curves.map((curve) => curve.ast),
-    });
+/** What the legend is placed from. */
+interface LegendParts {
+  readonly model: RadarModel;
+  /** The measured legend labels, one per curve (none without `showLegend`). */
+  readonly labels: readonly MeasuredLabel[];
+  readonly config: RadarLayoutConfig;
+  readonly center: Point;
+  /** `radarLegendBoxSize`. */
+  readonly swatchSize: number;
 }
 
 /**
  * v12 `drawLegend` (`:209-244`): row `i` at `(¾(w/2 + mR), −¾(h/2 + mT) + 20·i)` from the
- * centre, its swatch there and its text 4 px right of the swatch (16 px with v12's 12 px
- * swatch), `hanging`. A label of several lines
- * (D355) pushes the rows after it down by its extra lines.
+ * centre, its swatch there and its text `legendTextGap` right of the swatch (16 px from the
+ * row's origin with v12's 12 px swatch), `hanging`. A label of several lines (D355) pushes
+ * the rows after it down by its extra lines.
  */
-function legendOf(
-  model: RadarModel,
-  text: readonly MeasuredLabel[],
-  config: RadarLayoutConfig,
-  center: Point,
-  size: number
-): RadarLegendRow[] {
+function legendOf(parts: LegendParts): RadarLegendRow[] {
+  const { model, labels, config, center, swatchSize: size } = parts;
   const { legendFactor, legendTextGap, legendRow } = RADAR_METRICS;
   const x = center.x + legendFactor * (config.width / 2 + config.marginRight);
   let y = center.y - legendFactor * (config.height / 2 + config.marginTop);
-  return text.map((label, index) => {
+  return labels.map((label, index) => {
     const row: RadarLegendRow = {
       index,
       ast: model.curves[index]!.astId,

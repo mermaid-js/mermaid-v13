@@ -9,15 +9,9 @@ import { LineIndex } from '@mermaid-js/core/parser-kit';
 import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
 import { radarDocs } from '../generated/docs.ts';
 import type { RadarAxisNode, RadarDocument, RadarEntryNode } from '../parser/ast.ts';
-import { T } from '../parser/tokens.ts';
+import { T, TEXT_STATEMENTS } from '../parser/tokens.ts';
 import { code, declaredAxes, span } from './tables.ts';
 
-/** Statement tokens that hold their text too: only the keyword is hovered. */
-const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {
-  [T.Title]: 'title',
-  [T.AccTitle]: 'accTitle',
-  [T.AccDescr]: 'accDescr',
-};
 /** Tokens with a doc that hover leaves alone: punctuation and values. */
 const NO_DOC = new Set<number>([T.String, T.Number, T.Id]);
 
@@ -60,7 +54,8 @@ export function radarHover(at: HoverTarget, doc: DocumentView<RadarDocument>): H
   const t = at.token;
   if (!t || NO_DOC.has(t.kind)) return undefined;
   let range = t.range;
-  const word = VALUE_WORDS[t.kind];
+  // A statement token holds its text too: only the keyword is hovered.
+  const word = TEXT_STATEMENTS[t.kind]?.word;
   if (word !== undefined) {
     const start =
       range.start + (/^[\t ]*/.exec(text.slice(range.start, range.end))?.[0].length ?? 0);

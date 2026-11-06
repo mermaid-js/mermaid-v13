@@ -27,7 +27,7 @@ import { radarApi } from './render-api.ts';
  * The round-trip rule for radar's AST: every model axis maps to exactly one `data-ast` element
  * (its `<g>`), every drawn curve to one (its shape), and the in-text title to one. A curve
  * whose entry count is not the axis count is not drawn (v12 skipped it), so it maps to none and
- * `RADAR_CURVE_SKIPPED` names it. Of several `title` statements only the last is drawn (v12's
+ * the parse's `RADAR_CURVE_SKIPPED` points at it. Of several `title` statements only the last is drawn (v12's
  * last title wins), so the earlier ones (`title`, … before `title@n`) map to none, and so does
  * every `title` when the last is empty. Entries, options, the header and the accessibility
  * statements have no element of their own; a front-matter title is drawn with no `data-ast`.
@@ -58,10 +58,10 @@ const skipped: { id: string; reason: string }[] = [];
 let api: Mermaid;
 
 beforeAll(async () => {
-  api = await radarApi();
+  api = radarApi();
   const corpus = await radarGateCorpus();
   for (const theme of THEMES) {
-    const themed = await radarApi({ theme });
+    const themed = radarApi({ theme });
     for (const item of corpus) {
       if (!detectRadar(item.source)) continue;
       try {
@@ -137,7 +137,7 @@ describe('radar render properties over the corpus', () => {
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();
-    for (const theme of THEMES) fresh.set(theme, await radarApi({ theme }));
+    for (const theme of THEMES) fresh.set(theme, radarApi({ theme }));
     for (const c of cases) {
       const again = await fresh.get(c.theme)!.render('mermaid-0', c.source);
       expect(again.svg, c.id).toBe(c.result.svg);
@@ -192,15 +192,20 @@ describe('radar render properties over the corpus', () => {
         expect(tree.getAttr(el, 'data-id'), `${c.id}: ${id}`).toBe(id);
       }
       for (const a of model.axes) expect(seen.get(a.astId), `${c.id}: ${a.astId}`).toBe(1);
-      const skippedIds = c.result.warnings
-        .filter((w) => w.code === 'RADAR_CURVE_SKIPPED')
-        .flatMap((w) => w.astIds ?? []);
+      // Where the parse's one `RADAR_CURVE_SKIPPED` points: its range and its `related`.
+      const skippedAt = parse.diagnostics.flatMap((d) =>
+        d.code === 'RADAR_CURVE_SKIPPED'
+          ? [d.range.start, ...(d.related ?? []).map((r) => r.range.start)]
+          : []
+      );
       for (const curve of model.curves) {
         const drawn = curve.entries.length === model.axes.length && model.axes.length > 0;
         expect(seen.get(curve.astId), `${c.id}: ${curve.astId}`).toBe(drawn ? 1 : undefined);
         if (!drawn) {
           skippedCurves++;
-          expect(skippedIds, `${c.id}: ${curve.astId}`).toContain(curve.astId);
+          expect(skippedAt, `${c.id}: ${curve.astId}`).toContain(
+            index.get(curve.astId)!.range.start
+          );
         }
       }
       if (model.titleAstId !== undefined) {
@@ -290,8 +295,12 @@ describe('radar render: what is drawn', () => {
     ]);
     expect(attr(tree, curves[1], 'fill')).toBe(attr(tree, boxes[2], 'fill'));
     expect(attr(tree, boxes[1], 'fill')).not.toBe(attr(tree, boxes[2], 'fill'));
-    expect(warnings.filter((w) => w.code === 'RADAR_CURVE_SKIPPED')).toMatchObject([
-      { astIds: ['curve:b'] },
+    expect(warnings.filter((w) => w.code === 'RADAR_CURVE_SKIPPED')).toEqual([
+      {
+        code: 'RADAR_CURVE_SKIPPED',
+        message:
+          'The curve `b` has 1 value for 2 axes: it is not drawn. Give it one value per axis.',
+      },
     ]);
   });
 
@@ -334,7 +343,7 @@ describe('radar render: what is drawn', () => {
   it('draws max = min at the centre with one warning, no NaN (D356)', async () => {
     const { svg, warnings } = await render(probe('empty-range'));
     expect(svg).not.toMatch(/NaN|Infinity/);
-    expect(warnings.filter((w) => w.code === 'RADAR_EMPTY_RANGE')).toHaveLength(1);
+    expect(warnings.map((w) => w.code)).toEqual(['RADAR_EMPTY_RANGE']);
   });
 
   it('draws no legend under showLegend false', async () => {
@@ -433,7 +442,7 @@ describe('radar render: paints (D215, D227, D351–D353, D359)', () => {
   });
 
   it("takes an author's flat and nested radar variables, the flat name winning (D335, D540)", async () => {
-    const m = await literal('default', {
+    const m = literal('default', {
       themeVariables: {
         radarAxisColor: '#111111',
         radarCurveOpacity: 0.25,
@@ -462,7 +471,7 @@ describe('radar render: paints (D215, D227, D351–D353, D359)', () => {
   });
 
   it("moves the axes with an author's lineColor (D351)", async () => {
-    const m = await literal('forest', {
+    const m = literal('forest', {
       themeVariables: { lineColor: '#ff0000' },
     } as MermaidConfig);
     expect((await paintsOf(m)).axis.stroke).toBe('#ff0000');
@@ -476,7 +485,7 @@ describe('radar render: paints (D215, D227, D351–D353, D359)', () => {
     ['neo', '#000000', '#7373f8', '#9b9bbf', '#333333', '14'],
     ['neo-dark', '#cccccc', '#000000', '#080909', '#cccccc', '14'],
   ] as const)('draws v12 computed styles in %s', async (theme, axis, c0, c1, text, title) => {
-    const p = await paintsOf(await literal(theme, { look: 'neo' } as MermaidConfig));
+    const p = await paintsOf(literal(theme, { look: 'neo' } as MermaidConfig));
     expect(p.graticule).toEqual({
       fill: '#DEDEDE',
       'fill-opacity': '0.3',

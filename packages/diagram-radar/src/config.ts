@@ -1,9 +1,9 @@
 /**
- * The `radar` options the layout reads, checked (D356: never NaN, warn once). The config
- * resolver does not check value types, so a directive can set `"width": "wide"`. Each key is
- * read as the other ports read a length: a number, or a numeric string as its number, inside the
- * key's schema range. Anything else falls back to the schema default with one
- * `RADAR_CONFIG_INVALID` warning per key.
+ * The `radar` options, read here for the layout and the renderer. The layout's are checked
+ * (D356: never NaN, warn once). The config resolver does not check value types, so a
+ * directive can set `"width": "wide"`. Each key is read as the other ports read a length: a
+ * number, or a numeric string as its number, inside the key's schema range. Anything else
+ * falls back to the schema default with one `RADAR_CONFIG_INVALID` warning per key.
  */
 import type { Warning } from '@mermaid-js/core';
 import type { RadarDiagramConfig } from '@mermaid-js/core/config';
@@ -82,4 +82,11 @@ export function radarLayoutConfig(
       });
   }
   return out;
+}
+
+/** `radar.useMaxWidth`, for the renderer: anything but `false` scales to the container. */
+export function radarUseMaxWidth(
+  section: Readonly<Pick<RadarDiagramConfig, 'useMaxWidth'>> | undefined
+): boolean {
+  return section?.useMaxWidth !== false;
 }

@@ -5,7 +5,7 @@
  * corpus spec.
  */
 import type { RadarModel } from '../model.ts';
-import { MAX_TICKS, RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
+import { RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
 import type { Point, RadarLayout, Rect } from './types.ts';
 
 /** Float tolerance of the checks, relative to the chart's size. */
@@ -44,8 +44,10 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
     if (s.textAnchor !== want) out.push(`spoke ${i}'s label is anchored ${s.textAnchor}`);
   });
 
-  // Rings: ring k at radius·k/ticks, ⌈ticks⌉ of them (none for a polygon without axes).
-  const ticks = Math.min(Math.max(model.options.ticks, 0), MAX_TICKS);
+  // Rings: ring k at radius·k/ticks, ⌈ticks⌉ of them (none for a polygon without axes); the
+  // model's ticks (at most 32, the parser's clamp), none when negative or not finite.
+  const t = model.options.ticks;
+  const ticks = Number.isFinite(t) && t > 0 ? t : 0;
   const want = layout.graticule === 'polygon' && n === 0 ? 0 : Math.ceil(ticks);
   if (layout.ticks !== ticks) out.push(`rings for ${layout.ticks} ticks, not ${ticks}`);
   if (rings.length !== want) out.push(`${rings.length} rings, not ${want}`);

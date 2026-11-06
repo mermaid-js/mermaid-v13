@@ -30,7 +30,7 @@ export interface RadarCurve {
   /**
    * Positional entries as written; detailed entries reordered to the axes (the first entry per axis
    * wins, one naming no axis is dropped with `RADAR_UNKNOWN_AXIS`). A count other than the axis
-   * count is kept: the layout skips the curve (D356).
+   * count is kept: the layout skips the curve, with `RADAR_CURVE_SKIPPED` (D356).
    */
   readonly entries: readonly RadarEntry[];
   /** `curve:<name>`; a repeat is `curve:<name>@2`, …. */
@@ -71,4 +71,16 @@ export interface RadarModel {
   readonly accDescr: string;
   /** Warning diagnostics of the parse (also in `ParseResult.diagnostics`). */
   readonly warnings: readonly Diagnostic[];
+}
+
+/**
+ * The value at `radius` when `max` is unset: the largest entry of any curve, drawn or not (v12
+ * `Math.max` over all curves); 0 when there is none. The parser's `RADAR_EMPTY_RANGE` and the
+ * layout both read it.
+ */
+export function largestEntry(curves: readonly RadarCurve[]): number {
+  let max = -Infinity;
+  for (const curve of curves)
+    for (const entry of curve.entries) if (entry.value > max) max = entry.value;
+  return max === -Infinity ? 0 : max;
 }

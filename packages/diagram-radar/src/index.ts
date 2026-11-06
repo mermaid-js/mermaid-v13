@@ -11,6 +11,8 @@ export type { RadarRenderContext } from './render/index.ts';
 export {
   detectRadar,
   parseRadar,
+  RADAR_CURVE_SKIPPED,
+  RADAR_EMPTY_RANGE,
   RADAR_MISSING_ENTRY,
   RADAR_NO_AXES,
   RADAR_TICKS_CLAMPED,

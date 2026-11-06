@@ -20,8 +20,11 @@ export interface Paints {
   readonly text: Paint;
 }
 
-/** Past the end of a palette (an author's shorter list): `currentColor`, as core's DSL. */
-const NO_SLOT = 'currentColor' as Paint;
+/**
+ * `currentColor`, as core's DSL: past the end of a palette (an author's shorter list), and for
+ * a paint nothing drawn uses, so that its alias is not declared.
+ */
+const CURRENT_COLOR = 'currentColor' as Paint;
 
 /**
  * Every paint the chart uses, read before the root is written so that it declares their
@@ -32,11 +35,11 @@ export function paints(theme: Theme, layout: RadarLayout): Paints {
   const anyText =
     layout.title !== undefined || layout.spokes.length > 0 || layout.legend.length > 0;
   return {
-    slot: (s) => scale[s] ?? NO_SLOT,
-    axis: layout.spokes.length > 0 ? theme.color('radarAxisColor') : NO_SLOT,
-    graticule: layout.rings.length > 0 ? theme.color('radarGraticuleColor') : NO_SLOT,
+    slot: (s) => scale[s] ?? CURRENT_COLOR,
+    axis: layout.spokes.length > 0 ? theme.color('radarAxisColor') : CURRENT_COLOR,
+    graticule: layout.rings.length > 0 ? theme.color('radarGraticuleColor') : CURRENT_COLOR,
     curveOpacity: theme.number('radarCurveOpacity'),
     graticuleOpacity: theme.number('radarGraticuleOpacity'),
-    text: anyText ? theme.color('textColor') : NO_SLOT,
+    text: anyText ? theme.color('textColor') : CURRENT_COLOR,
   };
 }

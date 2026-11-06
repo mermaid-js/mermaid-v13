@@ -3,11 +3,13 @@
  * statements to the {@link RadarModel}. Axes come before curves whatever the text order;
  * positional entries are kept as written and detailed ones reordered to the axes (the first per
  * axis wins); options are the last of each name, with v12's defaults and `ticks` at most 32.
- * v12's two DB throws are error diagnostics with its messages, D356's two parse-time findings
- * warnings, one per kind with `related` positions.
+ * v12's two DB throws are error diagnostics with its messages; D356's four findings are
+ * warnings, one per kind with `related` positions. Two of them are about drawing (a curve the
+ * layout leaves out, an empty range) but known from the text, so they are found here, where
+ * they have positions; the layout only keeps its guards.
  */
 import type { AstId, Diagnostics, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
-import { MAX_TICKS } from '../model.ts';
+import { largestEntry, MAX_TICKS } from '../model.ts';
 import type { RadarAxis, RadarCurve, RadarEntry, RadarModel, RadarOptions } from '../model.ts';
 import type { RadarAxisNode, RadarCurveNode, RadarEntryNode, RadarOptionNode } from './ast.ts';
 
@@ -19,6 +21,10 @@ export const RADAR_TICKS_CLAMPED = 'RADAR_TICKS_CLAMPED';
 export const RADAR_MISSING_ENTRY = 'RADAR_MISSING_ENTRY';
 /** v12 `db.ts`'s `Axes must be populated …`: detailed entries and no axis at all. */
 export const RADAR_NO_AXES = 'RADAR_NO_AXES';
+/** A curve whose entry count is not the axis count: not drawn (D356; v12 skipped it silently). */
+export const RADAR_CURVE_SKIPPED = 'RADAR_CURVE_SKIPPED';
+/** `max = min`: every curve is drawn at the centre (D356; v12 wrote NaN). */
+export const RADAR_EMPTY_RANGE = 'RADAR_EMPTY_RANGE';
 
 export type OptionName = RadarOptionNode['name'];
 
@@ -32,7 +38,7 @@ export interface RadarParts {
   /** The last in-text values ('' when none). */
   readonly title: string;
   /** The AST id of the last `title` statement, if any. */
-  readonly titleId: AstId | undefined;
+  readonly titleAstId: AstId | undefined;
   readonly accTitle: string;
   readonly accDescr: string;
   /** The front-matter title, for D218. */
@@ -69,10 +75,11 @@ export function normalise(
   const curves = parts.curves.map((c) => resolveCurve(c, axes, unknown, diagnostics));
   if (axes.length > 0) unknownAxes(unknown, diagnostics);
   const options = resolveOptions(parts, diagnostics);
+  drawingWarnings(parts, curves, options, diagnostics);
   // D218: the in-text title if non-empty, else the front-matter one.
   const title = parts.title || parts.frontMatterTitle;
   // The drawn title's `data-ast`: the last `title` statement's, when its text is the title.
-  const titleAstId = parts.title ? parts.titleId : undefined;
+  const titleAstId = parts.title ? parts.titleAstId : undefined;
   return {
     axes: Object.freeze(axes),
     curves: Object.freeze(curves),
@@ -152,6 +159,90 @@ function unknownAxes(unknown: readonly UnknownEntry[], diagnostics: Diagnostics)
     at(first),
     { related }
   );
+}
+
+/** A curve as `related` names it. */
+const theCurve = (c: RadarCurveNode, rest = ''): RelatedInfo => ({
+  message: `The curve \`${c.name}\`${rest}.`,
+  range: c.range,
+});
+
+const values = (n: number): string => `${n} ${n === 1 ? 'value' : 'values'}`;
+
+/**
+ * D356's two findings about what is drawn, as the layout will draw it: a positional curve
+ * whose entry count is not the axis count is left out (`RADAR_CURVE_SKIPPED`), and with
+ * `max = min` (`max` unset: the largest entry of any curve) the drawn curves sit at the centre
+ * (`RADAR_EMPTY_RANGE`). A detailed curve's entries are the axes' once resolved, or it is
+ * already an error.
+ */
+function drawingWarnings(
+  parts: RadarParts,
+  curves: readonly RadarCurve[],
+  options: RadarOptions,
+  diagnostics: Diagnostics
+): void {
+  const n = parts.axes.length;
+  const drawn: RadarCurveNode[] = [];
+  const skipped: RadarCurveNode[] = [];
+  parts.curves.forEach((c, i) => {
+    if (n > 0 && curves[i]!.entries.length === n) drawn.push(c);
+    else if (c.children[0]?.axis === undefined) skipped.push(c);
+  });
+  const [first, ...rest] = skipped;
+  if (first) {
+    const k = rest.length;
+    const more = k === 0 ? '' : ` (and ${k} more ${k === 1 ? 'curve' : 'curves'})`;
+    const has = values(first.children.length);
+    const firstAxis = parts.axes[0];
+    diagnostics.warning(
+      RADAR_CURVE_SKIPPED,
+      firstAxis
+        ? `The curve \`${first.name}\` has ${has} for ${n} ${n === 1 ? 'axis' : 'axes'}${more}: it is not drawn. Give it one value per axis.`
+        : `The curve \`${first.name}\` has ${has} and there is no axis${more}: it is not drawn. Declare the axes with \`axis\`.`,
+      first.range,
+      {
+        related: [
+          ...rest.map((c) => theCurve(c, `, with ${values(c.children.length)}`)),
+          ...(firstAxis
+            ? [{ message: `The first of the ${n} axes.`, range: firstAxis.range }]
+            : []),
+        ],
+      }
+    );
+  }
+  const max = options.max ?? largestEntry(curves);
+  if (drawn.length === 0 || max !== options.min) return;
+  emptyRange(parts, drawn, diagnostics);
+}
+
+/**
+ * `RADAR_EMPTY_RANGE`, at the `max` option, else the `min` one, else the first drawn curve;
+ * its message names only the options written.
+ */
+function emptyRange(
+  parts: RadarParts,
+  drawn: readonly RadarCurveNode[],
+  diagnostics: Diagnostics
+): void {
+  const maxOption = parts.options.get('max');
+  const minOption = parts.options.get('min');
+  const written = (o: RadarOptionNode): string =>
+    `\`${o.name} ${parts.src.slice(o.valueRange.start, o.valueRange.end)}\``;
+  const tail = 'every curve is drawn at the centre.';
+  let message = `Every value is 0, so the chart has no range: ${tail}`;
+  if (maxOption && minOption)
+    message = `${written(maxOption)} and ${written(minOption)} are the same value: ${tail}`;
+  else if (maxOption)
+    message = `${written(maxOption)} gives the chart no range, as values start at 0: ${tail}`;
+  else if (minOption)
+    message = `${written(minOption)} is the largest value too, so the chart has no range: ${tail}`;
+  const at = maxOption ?? minOption;
+  const related: RelatedInfo[] = [
+    ...(maxOption && minOption ? [{ message: 'The `min` option.', range: minOption.range }] : []),
+    ...(at ? drawn : drawn.slice(1)).map((c) => theCurve(c, ', drawn at the centre')),
+  ];
+  diagnostics.warning(RADAR_EMPTY_RANGE, message, (at ?? drawn[0]!).range, { related });
 }
 
 /** v12 `setOptions`: the last of each name, else the default; `ticks` at most 32. */
