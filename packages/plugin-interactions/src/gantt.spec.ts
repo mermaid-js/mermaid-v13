@@ -115,7 +115,7 @@ describe('gantt interactions (#293 I1, D47)', () => {
     expect(clickable(bound(result).root)).toEqual([]);
   });
 
-  it('binds neither a section title nor a vert line label that shares the id', async () => {
+  it('binds a vert marker and its label, and not a section title named like a task', async () => {
     const result = await render(
       'section a\nC :c, 2024-01-03, 1d\nV :vert, v, 2024-01-02, 0d\nclick a,v call cb()\n'
     );
