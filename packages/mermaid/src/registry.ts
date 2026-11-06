@@ -14,6 +14,7 @@ import {
 import { checkFragment, type ConfigFragment } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { diagramStart, type PreprocessResult } from '@mermaid-js/core/preprocess';
+import { v12DetectText } from './v12-detect-text.ts';
 import { THEME_VARIABLE_TABLE, type ThemeRuleTable } from '@mermaid-js/core/theme';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the registry holds plugins of every model and layout type
@@ -127,11 +128,18 @@ interface Entry {
   readonly type: string;
   readonly id: string | undefined;
   readonly formats: readonly string[];
-  /** `clean` is v12's detector text (third-party detectors), built on first use. */
+  /**
+   * `body` is the text from the diagram's start (front matter, leading directives and comments
+   * skipped). `clean` is the text third-party detectors are given: directives removed by their
+   * preprocess ranges and each `%%` comment cut from its line. `v12` is the text v12's
+   * `detectType` tested (`v12-detect-text.ts`), which first-party rows fall back to. Both are
+   * built on first use.
+   */
   readonly detect: (
     body: string,
     clean: () => string,
-    config: Readonly<Record<string, unknown>> | undefined
+    config: Readonly<Record<string, unknown>> | undefined,
+    v12: () => string
   ) => boolean;
   readonly load?: () => Promise<AnyPlugin>;
   readonly loadAscii?: () => Promise<AnyAsciiHook>;
@@ -260,8 +268,10 @@ function checkDiagram(def: AnyPlugin | LazyDiagram, eager: boolean): void {
       throw new TypeError(`Diagram "${p.id}": ${m} must be a function`);
 }
 
-// v12 detectType's cleaning of the text after front matter: directives removed (their ranges
-// come from preprocess), and each `%%` comment cut from its line.
+// The text third-party detectors are given: the body with directives removed (their ranges
+// come from preprocess) and each `%%` comment cut from its line. Close to v12 detectType's text,
+// not the same (v12 cut a comment only with its line break, and its directive regex differs);
+// the first-party rows fall back to the exact one, `v12DetectText`.
 function detectText(src: string, start: number, pre: PreprocessResult): string {
   let text = '';
   let at = start;
@@ -400,10 +410,10 @@ export class Registry {
         type: e.type,
         id: e.id,
         formats: e.formats ?? [],
-        // v12 ran its detectors on the cleaned text; the raw body is tried first, since it
-        // answers almost every input without cutting comments (`cynefin-beta%% c` needs the cut).
-        detect: (body, cleaned) =>
-          e.pattern.test(body) || (body.includes('%%') && e.pattern.test(cleaned())),
+        // The raw body first; when it holds a `%%`, also the text v12's detectType tested, so
+        // `cynefin-beta%% c` plus a line break matches as in v12 (#469).
+        detect: (body, _clean, _config, v12) =>
+          e.pattern.test(body) || (body.includes('%%') && e.pattern.test(v12())),
         load: e.load,
         loadAscii: e.loadAscii,
       });
@@ -480,8 +490,10 @@ export class Registry {
     if (body.trim().toLowerCase() === 'error') return { type: 'error', id: undefined };
     let clean: string | undefined;
     const cleaned = () => (clean ??= detectText(src, start, pre));
+    let old: string | undefined;
+    const v12 = () => (old ??= v12DetectText(src, pre.bodyStart));
     for (const e of this.detectionOrder()) {
-      if (e.detect(body, cleaned, config)) return { type: e.type, id: e.id };
+      if (e.detect(body, cleaned, config, v12)) return { type: e.type, id: e.id };
     }
     throw new MermaidError(
       'UNSUPPORTED_DIAGRAM',
