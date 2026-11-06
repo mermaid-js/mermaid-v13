@@ -372,7 +372,7 @@ export const icons: ExtensionPlugin = {
         return paint && !gradient ? { ...g, attrs: { ...g.attrs, color: paint as Paint } } : g;
       }
       // Still loading, with placeholders: the diagram draws the frame alone (D299).
-      if ('pending' in f) return undefined;
+      if ('pending' in f) return 'pending';
       unresolved(notesOf(request.scratch), written, false, f.why);
       // Unresolved, and warned in postRender: the diagram may give its own alias (D299).
       return null;
