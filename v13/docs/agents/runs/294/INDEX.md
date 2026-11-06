@@ -27,6 +27,8 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 | base (38d663b44) | 93,551 B | — (657 B spare) |
 | #383 T1 | 93,551 B | 0 (no core change) |
 
+- Coordinator, 2026-11-06: `fix/theme-variables-pure` (gitGraph's find: core keeps the whole `THEME_VARIABLES` inventory) drops about 1.3 KB gz from core. Merge `mermaid-v13` when it lands. Until then, a ticket that would go over the gate records its bytes and the run continues with the tickets that don't depend on it.
+
 ## Finish rule
 
 The integration PR stays a draft until every ticket is merged, the final whole-branch `/code-review` is fixed, and `pnpm check`, `pnpm e2e` (Playwright image) and hosted CI are green. Then `gh pr ready`; never merge into `mermaid-v13`. The PR body lists the issues to close.
