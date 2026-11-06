@@ -300,7 +300,7 @@ describe('gitGraph hover (D93)', () => {
 
   it('describes a commit where its id is written', () => {
     expect(hover(`${graph}cherry-pick id:"A¦"`)).toBe(
-      '"A" => **commit** `A` on `main`\n\nMessage: Fix · type: HIGHLIGHT · tags: `v1`'
+      '"A" => **commit** `A` on `main`\n\nMessage: `Fix` · type: HIGHLIGHT · tags: `v1`'
     );
     expect(hover(graph.replace('id:"M"', 'id:"M¦"'))).toBe(
       '"M" => **commit** `M` on `main`\n\nMerge of `dev` · parents: `A`, `2-daa66d1`'

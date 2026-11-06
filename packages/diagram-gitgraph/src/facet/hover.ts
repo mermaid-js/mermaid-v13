@@ -57,7 +57,7 @@ function commitFacts(commit: GitCommit, node: GitStatementNode | undefined): str
     if (node?.type === 'Merge') facts.push(`Merge of ${code(node.branch.value)}`);
     if (commit.customType) facts.push(`type: ${commit.customType}`);
   } else {
-    if (commit.message !== '') facts.push(`Message: ${commit.message}`);
+    if (commit.message !== '') facts.push(`Message: ${code(commit.message)}`);
     if (commit.type !== 'NORMAL') facts.push(`type: ${commit.type}`);
   }
   if (commit.tags.length > 0) facts.push(`tags: ${commit.tags.map(code).join(', ')}`);
