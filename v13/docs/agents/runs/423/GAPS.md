@@ -31,7 +31,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
   - **Core directive reading differs from v12 (every type).** v12 ends a `%%{` directive at the first line break with no `}%%`, and an unclosed `%%{ word` cuts the rest of the text; core runs a directive to its `}%%` across lines and reads a bare `%%{` as a comment. The fuzz exempts those mutants and the gates exclude `unclosed-directive-*`, as for pie.
   - header AST id is `header`; recovery expectations are `errors`/`keeps` fields on `cynefin-cases.json` items; 63 fuzz fragments of our own (Pele's 51 not here); `convert.ts` repeats pie's value conversion and `parser.ts` pie's id escaping (core's `AstIds` could own them); `detectCynefin` matches the text v12's `detectType` saw (directives inside the header word removed, `cynefin-beta%%` + line break accepted); the v12 boundary cases run in T2 through v12-named wrappers on T3's generator; symbols and statements (D367) are built by the parser.
   - Recovery jumps to the line end after a lexer error, so `complex "a" ; "b"` reports one error and keeps neither `"b"` nor anything after it on that line (v12 rejects the whole text).
-- [ ] **#469:** render spec for the D218 front-matter title (only a parser unit spec until the manifest).
+- [x] **#469:** render spec for the D218 front-matter title — closed by #469 (`packages/mermaid/src/cynefin.spec.ts`, and the `baseline/text/front-matter-title.mmd` baseline). Was: (only a parser unit spec until the manifest).
 
 ## #467 T3 layout (merged)
 
@@ -60,7 +60,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## #469 T5 integration
 
-- [ ] Un-skip the ported `getConfig` v12 spec ("config honoured in #469 T5") and compare with the oracle's `getConfig()`.
+- [x] Un-skip the ported `getConfig` v12 spec and compare with the oracle's `getConfig()` — closed by #469 (`SKIP` empty; `conformance/src/cynefin/config.spec.ts`: defaults and the resolved section from site config, directive and front matter equal v12's `getConfig()`).
 
 ## #470 T6 language facet (merged)
 
@@ -70,4 +70,4 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - Review sent back: undeclared domains (named only in transitions) must have no definition (D367); pin the D367 refusal reason in the rename round-trip; a meaning line per domain in hover (v12 docs); no source domain after `-->`; reuse `listOf()`; drop the `layout/meta.ts` re-export.
 - **Rename gate mechanism (for the maintainer):** `packages/language-service/src/rename-round-trip.spec.ts` gains `FIXED_NAMES` (cynefin): every cynefin rename must be refused with the D367 reason and at least one refusal must occur, instead of listing ~38 refusals in `KNOWN_REFUSALS`. Owner: #470.
 - Accepted deviations (for the maintainer): `prepareRename` still returns the name's range and only `rename` refuses (the facet contract has no per-kind refusal at prepare time; adding one is a core change); after a transition target, `:` is offered and `"` only after the `:` (the grammar's order); domains and statements are offered at line start (and domains after `-->`) only; the parser's diagnostics are now sorted into source order; `DOMAIN_META` moved to `src/domains.ts` so `./language` holds no layout code; `cynefin-beta` joins five other types' empty-text completion goldens.
-- [ ] **#469:** `LEZER_HIGHLIGHTERS`/`MONARCH_HIGHLIGHTERS` rows, each adapter's `gen`, `adapters-agree.spec.ts`, first-paint specs (language.md step 9); drop the unlisted-facet row and the eager row in `service-symbols.spec.ts`; a `bench language:cynefin` script.
+- [x] **#469:** `LEZER_HIGHLIGHTERS`/`MONARCH_HIGHLIGHTERS` rows, each adapter's `gen`, `adapters-agree.spec.ts`, first-paint specs (language.md step 9); drop the unlisted-facet row and the eager row in `service-symbols.spec.ts`; a `bench language:cynefin` script — closed by #469.
