@@ -400,7 +400,10 @@ export class Registry {
         type: e.type,
         id: e.id,
         formats: e.formats ?? [],
-        detect: (body) => e.pattern.test(body),
+        // v12 ran its detectors on the cleaned text; the raw body is tried first, since it
+        // answers almost every input without cutting comments (`cynefin-beta%% c` needs the cut).
+        detect: (body, cleaned) =>
+          e.pattern.test(body) || (body.includes('%%') && e.pattern.test(cleaned())),
         load: e.load,
         loadAscii: e.loadAscii,
       });

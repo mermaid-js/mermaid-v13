@@ -72,6 +72,7 @@ describe('packClosure', () => {
     expect([...list].sort()).toEqual([
       '@mermaid-js/core',
       '@mermaid-js/diagram-class',
+      '@mermaid-js/diagram-cynefin',
       '@mermaid-js/diagram-er',
       '@mermaid-js/diagram-flowchart',
       '@mermaid-js/diagram-journey',

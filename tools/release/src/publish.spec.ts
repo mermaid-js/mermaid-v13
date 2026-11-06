@@ -23,6 +23,7 @@ describe('packAll (this workspace)', () => {
     expect(names).toEqual([
       '@mermaid-chart/core',
       '@mermaid-chart/diagram-class',
+      '@mermaid-chart/diagram-cynefin',
       '@mermaid-chart/diagram-er',
       '@mermaid-chart/diagram-flowchart',
       '@mermaid-chart/diagram-journey',
@@ -34,8 +35,6 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/mermaid',
       // Peer of mermaid (D164): after it.
       '@mermaid-chart/bundler-plugin',
-      // No workspace package depends on it yet (mermaid does from #469 T5).
-      '@mermaid-chart/diagram-cynefin',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',
       '@mermaid-chart/language-service-codemirror',

@@ -4,8 +4,8 @@
  * styles read the `cynefin` block of `theme-default.getThemeVariables()` cleaned and merged
  * under `getConfig().themeVariables` (`cynefinRenderer.ts:61-66`, `styles.ts:11-27`): a
  * theme's own `cynefin` block where it has one (the five classic themes), else `default`'s
- * literals (neo, neo-dark and the
- * four redux themes). Colours compare as hex, lengths as px numbers.
+ * literals (neo, neo-dark and the four redux themes). Colours compare as hex, lengths as px
+ * numbers.
  *
  * Every pair that differs is in `DIFFERENCES` with the decision that makes it, and the list has
  * to match the differences found exactly, so none is unlisted and none is stale:
@@ -23,6 +23,7 @@ import {
   loadTheme,
   parseColor,
   type Theme,
+  type ThemeName,
 } from '@mermaid-js/core/theme';
 import { describe, expect, it } from 'vitest';
 import { loadOracle } from '../oracle.ts';
@@ -75,8 +76,11 @@ function then(block: Block, name: string): string | number | undefined {
   return isColour(name) ? hex(v) : Number.parseFloat(String(v));
 }
 
-async function v13Theme(name: string, themeVariables?: object): Promise<Theme> {
-  return createTheme(await loadTheme(name), {
+async function v13Theme(
+  name: string,
+  themeVariables?: Readonly<Record<string, unknown>>
+): Promise<Theme> {
+  return createTheme(await loadTheme(name as ThemeName), {
     diagram: cynefin.theme,
     cssVariables: false,
     ...(themeVariables ? { themeVariables } : {}),

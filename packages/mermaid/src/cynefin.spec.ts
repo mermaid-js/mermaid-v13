@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { assertInert } from '@mermaid-js/core/svg';
+import { cynefin } from '@mermaid-js/diagram-cynefin';
 import { createMermaid, UnsupportedFormatError } from './index.ts';
+import { createMermaid as createSlim } from './slim.ts';
 import { DETECTORS } from './generated/detectors.gen.ts';
 
 // The cynefin diagram is a first-party type (#469): `cynefin-beta` goes to
@@ -43,6 +45,13 @@ describe('cynefin diagrams through the public API (#469)', () => {
     assertInert(result.svg);
   });
 
+  it('renders through mermaid/slim with the plugin passed in, byte for byte as mermaid does', async () => {
+    const slim = createSlim({ diagrams: [cynefin] });
+    expect((await slim.render('c6', TEXT)).svg).toBe(
+      (await createMermaid().render('c6', TEXT)).svg
+    );
+  });
+
   it('renders synchronously once prepared', async () => {
     const m = createMermaid();
     await m.prepare(TEXT);
@@ -56,6 +65,15 @@ describe('cynefin diagrams through the public API (#469)', () => {
     expect(m.detectType('  cynefin-beta\n complex "a"')).toBe('cynefin');
     expect(m.detectType('cynefin-beta: x')).toBe('cynefin');
     expect(() => m.detectType('cynefin-betax\n')).toThrow();
+  });
+
+  it('detects a header with a comment right after it, as v12’s detectType does', async () => {
+    // v12 cut each `%%` comment before its detectors ran, so `cynefin-beta%% c` matched.
+    const m = createMermaid();
+    const text = 'cynefin-beta%% c\ncomplex\n  "a"\n';
+    expect(m.detectType(text)).toBe('cynefin');
+    expect((await m.render('c7', text)).diagramType).toBe('cynefin');
+    expect(() => m.detectType('cynefin-betax%% c\n')).toThrow();
   });
 
   it('draws a front-matter title where v12 draws the title statement (D218)', async () => {

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectCynefin, parseCynefin } from '@mermaid-js/diagram-cynefin';
-import { cynefinLanguage } from '@mermaid-js/diagram-cynefin/language';
+import { parseCynefin } from '@mermaid-js/diagram-cynefin';
 import { CynefinTokenKind as T, cynefinTokens } from '@mermaid-js/diagram-cynefin/testing';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
@@ -25,20 +24,12 @@ import { CYNEFIN_V12_TYPES, cynefinV12Snapshot } from './v12.ts';
  * - the block v12 draws folds over exactly the items v12 keeps, when it spans lines, and a
  *   multi-line v12 `accDescr` is an `accDescr` fold range.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until cynefin's
- * manifest has its `language` entry (#469); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (cynefin's manifest
+ * `language` entry, #469).
  */
 
-const service = createLanguageService({
-  facets: [
-    {
-      type: 'cynefin',
-      id: 'cynefin',
-      detector: (t) => detectCynefin(t),
-      facet: cynefinLanguage,
-    },
-  ],
-});
+const service = createLanguageService();
+await service.preload({ types: ['cynefin'] });
 const text = (doc: DocumentSnapshot, r: Range) => doc.text.slice(r.start, r.end);
 const LINE_BREAK = /[\r\n]/;
 
@@ -125,8 +116,9 @@ describe('cynefin definition, references, rename and folding through the service
     expect(problems).toEqual([]);
   }, 300_000);
 
-  it('runs with an eager row only while cynefin has no manifest `language` entry', () => {
+  it('loads the facet from the generated registry (#469)', () => {
     const row = firstPartyFacets.find((e) => e.type === 'cynefin');
-    expect(row?.load, 'drop the eager row: the manifest registers the facet').toBeUndefined();
+    expect(row?.load).toBeTypeOf('function');
+    expect(service.update('x:///c', 'cynefin-beta\n  complex\n').facet?.id).toBe('cynefin');
   });
 });

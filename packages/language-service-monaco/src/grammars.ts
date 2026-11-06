@@ -41,4 +41,5 @@ export const MONARCH_HIGHLIGHTERS: Readonly<Record<FirstPartyFacetId, MonarchHig
   },
   timeline: { load: () => import('./generated/timeline.monarch.js').then((m) => m.default) },
   pie: { load: () => import('./generated/pie.monarch.js').then((m) => m.default) },
+  cynefin: { load: () => import('./generated/cynefin.monarch.js').then((m) => m.default) },
 };
