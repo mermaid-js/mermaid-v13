@@ -115,6 +115,16 @@ export const GRAMMARS: GrammarTarget[] = [
     },
   },
   {
+    type: 'packet',
+    title: 'Packet diagram syntax',
+    kinds: {
+      module: 'parser/tokens.ts',
+      object: 'T',
+      // A field's label: `"` is offered after `:` (T6), with the doc.
+      documented: ['String', 'Colon'],
+    },
+  },
+  {
     type: 'quadrant',
     title: 'Quadrant chart syntax',
     kinds: {

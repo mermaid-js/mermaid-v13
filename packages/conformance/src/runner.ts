@@ -78,8 +78,8 @@ async function checkItem(
   if (!adapter) return { id: item.id, status: 'skipped', oracleAccepted: v12.accepted };
 
   // Normalise v12 first: its DB may be a singleton that the v13 side must not see changed.
-  const withConfig =
-    v12.accepted && adapter.v12Config ? await oracle.parse(item.source, adapter.v12Config) : v12;
+  const config = adapter.v12ConfigFor?.(item.source) ?? adapter.v12Config;
+  const withConfig = v12.accepted && config ? await oracle.parse(item.source, config) : v12;
   const v12Model = withConfig.accepted ? adapter.normaliseV12(withConfig.db) : undefined;
   let v13Model: unknown;
   let v13Error: string | undefined;

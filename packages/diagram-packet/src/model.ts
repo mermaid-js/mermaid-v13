@@ -31,7 +31,11 @@ export interface PacketPiece {
 }
 
 export interface PacketModel {
-  /** Fields in source order. A field with a semantic error (D341) is not in the list. */
+  /**
+   * Fields in source order. A field with a semantic error (D341) is not in the list, nor one the
+   * row cap dropped whole (D342), so every field has at least one piece; a field the cap cut
+   * keeps its written `end` and `bits`, and its pieces stop at the last row.
+   */
   readonly fields: readonly PacketField[];
   /** Rows top to bottom, each its pieces in bit order; at most 10,000 rows (D342). */
   readonly rows: readonly (readonly PacketPiece[])[];
