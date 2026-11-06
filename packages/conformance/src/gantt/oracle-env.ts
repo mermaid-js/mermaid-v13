@@ -6,9 +6,11 @@
  * fixed at {@link GANTT_PARITY_NOW}, and a throw there rejects the source. The tasks it returns
  * are kept for the snapshot ({@link ganttOracleTasks}).
  *
- * v12's DB has no getter for `weekend` and keeps no click data it can be read back from (links
- * only for known ids, the callbacks as closures), so the grammar's `setWeekend`, `setClickEvent`
- * and `setLink` calls are recorded as they are made; `clear()`, which v12 calls before each
+ * v12's DB has no getter for `weekend`, reports `weekday` as `sunday` whether or not a statement
+ * set it, keeps a task's section only by name, and keeps no click data it can be read back from
+ * (links only for known ids, the callbacks as closures), so the grammar's `setWeekday`,
+ * `setWeekend`, `addSection`, `addTask`, `setClickEvent` and `setLink` calls are recorded as
+ * they are made; `clear()`, which v12 calls before each
  * parse, empties the record. Calls run through to v12's own DB.
  *
  * v12's `taskDb` (id → index) is never cleared, so an id the text never declares can resolve to
@@ -26,7 +28,14 @@ export const GANTT_PARITY_NOW = new Date(2026, 10, 5, 12, 0, 0).getTime();
 /** One recorded call of the grammar on v12's gantt DB: the method and its arguments. */
 export type GanttCall = readonly [method: string, args: readonly unknown[]];
 
-const RECORDED = ['setWeekend', 'setClickEvent', 'setLink'] as const;
+const RECORDED = [
+  'setWeekday',
+  'setWeekend',
+  'addSection',
+  'addTask',
+  'setClickEvent',
+  'setLink',
+] as const;
 
 let calls: GanttCall[] = [];
 let tasks: unknown[] = [];

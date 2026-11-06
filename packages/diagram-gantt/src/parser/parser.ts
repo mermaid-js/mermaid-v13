@@ -624,12 +624,22 @@ class GanttParser {
     }
     const { tags, fields } = parsed;
     const many = fields.length >= 3;
-    const id = many ? (fields[0] ?? '') : `task${++this.autoIds}`;
+    // More than three fields: v12's `parseData` set no id (and counted none), so the task
+    // takes the statement's AST id, and the next task has no previous id (D274: the
+    // schedule rejects this task first).
+    const tooMany = fields.length > 3;
+    let id = '';
+    if (!many) id = `task${++this.autoIds}`;
+    else if (!tooMany) id = fields[0] ?? '';
     const prev = this.tasks[this.tasks.length - 1];
     const section = this.sections.length - 1;
-    const n = (this.taskIds.get(id) ?? 0) + 1;
-    this.taskIds.set(id, n);
-    const ast = n === 1 ? `t:${esc(id)}` : `t:${esc(id)}@${n}`;
+    let ast: string;
+    if (tooMany) ast = this.statementId();
+    else {
+      const n = (this.taskIds.get(id) ?? 0) + 1;
+      this.taskIds.set(id, n);
+      ast = n === 1 ? `t:${esc(id)}` : `t:${esc(id)}@${n}`;
+    }
     const task: { -readonly [K in keyof GanttTask]: GanttTask[K] } = {
       ast,
       id,
@@ -642,10 +652,10 @@ class GanttParser {
     };
     if (section >= 0) task.section = section;
     if (fields.length > 1) task.start = fields[many ? 1 : 0] ?? '';
-    if (prev) task.prevId = prev.id;
+    if (prev && prev.fields.length <= 3) task.prevId = prev.id;
     this.tasks.push(task);
     node.id = ast;
-    node.task = id;
+    if (!tooMany) node.task = id;
     this.add(node, 'task');
   }
 

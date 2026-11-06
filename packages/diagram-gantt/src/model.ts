@@ -49,7 +49,8 @@ export interface GanttSection {
  * | ------ | ---------- | ------------------------ | --- |
  * | 1      | `task<n>`  | the previous task's end  | 1st |
  * | 2      | `task<n>`  | 1st                      | 2nd |
- * | 3+     | 1st        | 2nd                      | 3rd |
+ * | 3      | 1st        | 2nd                      | 3rd |
+ * | 4+     | `''`       | 2nd                      | 3rd |
  *
  * More than three fields is a schedule error (v12 threw in `getTasks`; D274), as are a start or
  * end that is neither a date, a duration nor a reference, and a first task with no start.
@@ -58,8 +59,10 @@ export interface GanttTask {
   /** `t:<id>`, `t:<id>@2` for the second task with that id. */
   readonly ast: AstId;
   /**
-   * The id: the first field of three or more, else `task<n>`, `n` counting the tasks with fewer
-   * than three fields (v12 `parseId`). Ids repeat; a reference takes the last task with the id.
+   * The id: the first of three fields, else `task<n>`, `n` counting the tasks with fewer than
+   * three fields (v12 `parseId`); `''` with more than three (v12 set none, and the next task
+   * then has no {@link GanttTask.prevId}). Ids repeat; a reference takes the last task with
+   * the id.
    */
   readonly id: string;
   /** The text before `:` as written (v12 `task`), trailing blanks kept. */

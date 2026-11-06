@@ -24,8 +24,11 @@ import { schedule } from '../schedule/index.ts';
 export const SPEC_NOW = new Date(2026, 10, 5, 12).getTime();
 
 let model: GanttModel | undefined;
-/** Every model parsed since `clear()`: v12's DB kept the tasks of each parse until then. */
-let parsed: GanttModel[] = [];
+/**
+ * Every model parsed since `clear()` (v12's DB kept the tasks of each parse until then), with
+ * each task's data as v12's parser read it (cooked: a directive or comment cut out of it).
+ */
+let parsed: { model: GanttModel; data: string[] }[] = [];
 
 /** v12's task, as `getTasks()` returned it. */
 interface RawTask {
@@ -94,11 +97,11 @@ export const ganttDb = {
     if (!m) return [];
     // v12's tasks run on across parses until `clear()`: the first task of a later parse starts
     // after the last of the one before (`lastTaskID`), and the row counter goes on.
-    const all = parsed.flatMap((p) =>
-      p.tasks.map((t) => ({
+    const all = parsed.flatMap(({ model: p, data }) =>
+      p.tasks.map((t, i) => ({
         task: t,
         section: t.section === undefined ? '' : (p.sections[t.section]?.text ?? ''),
-        source: p.source,
+        data: data[i] ?? '',
       }))
     );
     const tasks = all.map(({ task }, i) =>
@@ -106,7 +109,7 @@ export const ganttDb = {
     );
     const plan = schedule({ ...m, tasks }, { now: SPEC_NOW }).tasks;
     let order = 0;
-    return all.map(({ task: t, section, source }, i) => {
+    return all.map(({ task: t, section, data }, i) => {
       const s = plan[i]!;
       const vert = t.tags.includes('vert');
       return {
@@ -121,7 +124,7 @@ export const ganttDb = {
         vert,
         order: vert ? -1 : order++,
         classes: [],
-        raw: { data: source.slice(t.dataRange.start, t.dataRange.end) },
+        raw: { data },
         ...(s.start !== undefined ? { startTime: new Date(s.start) } : {}),
         ...(s.end !== undefined ? { endTime: new Date(s.end) } : {}),
         renderEndTime: date(s.renderEnd) ?? null,
@@ -133,8 +136,10 @@ export const ganttDb = {
 
 type Db = typeof ganttDb;
 
+const RE_MULTILINE = /^accDescr\s*\{/;
+
 /** Replay the parse as v12's grammar called its DB, in source order. */
-function replay(db: Db, statements: readonly GanttStatementNode[]): void {
+function replay(db: Db, statements: readonly GanttStatementNode[], source: string): void {
   for (const node of statements) {
     if (node.type === 'Setting') {
       const v = node.value;
@@ -150,8 +155,12 @@ function replay(db: Db, statements: readonly GanttStatementNode[]): void {
       else db.setWeekend(v);
     } else if (node.type === 'Title') db.setDiagramTitle(node.text);
     else if (node.type === 'AccTitle') db.setAccTitle(node.text);
-    else if (node.type === 'AccDescr') db.setAccDescription(node.text);
-    else if (node.type === 'Section') db.addSection(node.text);
+    else if (node.type === 'AccDescr') {
+      // `accDescr {}` (blanks only): jison's `accDescr\s*{\s*` took them, so no value reached
+      // the grammar and v12 never called `setAccDescription`.
+      const multiline = RE_MULTILINE.test(source.slice(node.range.start, node.range.end));
+      if (!(multiline && node.text === '')) db.setAccDescription(node.text);
+    } else if (node.type === 'Section') db.addSection(node.text);
     else if (node.type === 'Task') db.addTask(node.text, node.data);
     else if (node.type === 'Click') {
       const ids = node.ids.join(',');
@@ -168,7 +177,8 @@ export const parser = {
     const error = result.diagnostics.find((d) => d.severity === 'error');
     if (error) throw new Error(error.message);
     model = result.model;
-    parsed.push(result.model);
-    replay(parser.yy, result.ast.children);
+    const data = result.ast.children.flatMap((n) => (n.type === 'Task' ? [n.data] : []));
+    parsed.push({ model: result.model, data });
+    replay(parser.yy, result.ast.children, result.model.source);
   },
 };

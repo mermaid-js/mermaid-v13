@@ -16,9 +16,9 @@ export function ganttV13Snapshot(model: GanttModel): GanttSnapshot {
   let order = 0;
   const clicks: unknown[][] = [];
   for (const c of model.clicks) {
-    const ids = c.ids.join(',');
-    if (c.call) clicks.push(['setClickEvent', ids, c.call.name, c.call.args ?? null]);
-    if (c.href !== undefined) clicks.push(['setLink', ids, c.href]);
+    if (c.call)
+      for (const id of c.ids) clicks.push(['setClickEvent', id, c.call.name, c.call.args ?? null]);
+    if (c.href !== undefined) for (const id of c.ids) clicks.push(['setLink', id, c.href]);
   }
   return {
     // The oracle never passes the front-matter title on (v12's render did, D218: T4's spec).
@@ -33,8 +33,8 @@ export function ganttV13Snapshot(model: GanttModel): GanttSnapshot {
     excludes: [...model.excludes],
     inclusiveEndDates: model.inclusiveEndDates,
     topAxis: model.topAxis,
-    // v12's DB starts at `sunday`; v13 leaves it to `gantt.weekday` (D279).
-    weekday: model.weekday ?? 'sunday',
+    // Raw: unset is `null` (v13 leaves it to `gantt.weekday`, D279).
+    weekday: model.weekday ?? null,
     weekend: model.weekend,
     sections: model.sections.map((s) => s.text),
     tasks: model.tasks.map((t) => {
@@ -42,7 +42,7 @@ export function ganttV13Snapshot(model: GanttModel): GanttSnapshot {
       return {
         id: t.id,
         text: t.text,
-        section: t.section === undefined ? '' : (model.sections[t.section]?.text ?? ''),
+        section: t.section ?? null,
         tags: {
           active: t.tags.includes('active'),
           done: t.tags.includes('done'),

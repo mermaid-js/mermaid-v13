@@ -5,8 +5,10 @@
  * the scheduled fields).
  *
  * - a task's start is `null` when it starts at the previous task's end (one field);
- * - its section is the section's name (v12 kept no index), `''` before the first one;
- * - clicks are the grammar's `setClickEvent`/`setLink` calls in order, ids as written;
+ * - its section is the index of the `addSection` call before its `addTask` (v12 kept only the
+ *   name, and two sections can share one), `null` before the first;
+ * - `weekday` is the last `setWeekday` call's day, `null` when none (v12 reports `sunday`);
+ * - clicks are the grammar's `setClickEvent`/`setLink` calls in order, one entry per id;
  * - texts with v12's `encodeEntities` placeholders decoded, as v13 reads them.
  */
 import { decodeEntities } from '../flowchart/v12.ts';
@@ -18,7 +20,7 @@ export const GANTT_V12_TYPES = ['gantt'];
 export interface GanttTaskSnapshot {
   id: string;
   text: string;
-  section: string;
+  section: number | null;
   tags: { active: boolean; done: boolean; crit: boolean; milestone: boolean; vert: boolean };
   start: string | null;
   end: string;
@@ -39,11 +41,11 @@ export interface GanttSnapshot {
   excludes: string[];
   inclusiveEndDates: boolean;
   topAxis: boolean;
-  weekday: string;
+  weekday: string | null;
   weekend: string;
   sections: string[];
   tasks: GanttTaskSnapshot[];
-  /** `['setClickEvent', ids, name, args | null]` and `['setLink', ids, url]`, in call order. */
+  /** `['setClickEvent', id, name, args | null]` and `['setLink', id, url]`, in call order. */
   clicks: unknown[][];
 }
 
@@ -73,7 +75,6 @@ interface GanttDbV12 {
   getExcludes(): string[];
   endDatesAreInclusive(): boolean;
   topAxisEnabled(): boolean;
-  getWeekday(): string;
   getSections(): string[];
 }
 
@@ -82,10 +83,19 @@ const text = (v: unknown): unknown => (typeof v === 'string' ? decodeEntities(v)
 export function ganttV12Snapshot(dbValue: unknown): GanttSnapshot {
   const db = dbValue as GanttDbV12;
   let weekend = 'saturday';
+  let weekday: string | null = null;
   const clicks: unknown[][] = [];
+  const sectionOf: (number | null)[] = [];
+  let section = -1;
   for (const [method, args] of ganttOracleCalls()) {
     if (method === 'setWeekend') weekend = String(args[0]);
-    else clicks.push([method, ...args.map(text)]);
+    else if (method === 'setWeekday') weekday = String(args[0]);
+    else if (method === 'addSection') section++;
+    else if (method === 'addTask') sectionOf.push(section < 0 ? null : section);
+    else {
+      const [ids, ...rest] = args;
+      for (const id of String(ids).split(',')) clicks.push([method, text(id), ...rest.map(text)]);
+    }
   }
   return {
     title: decodeEntities(db.getDiagramTitle()),
@@ -100,13 +110,13 @@ export function ganttV12Snapshot(dbValue: unknown): GanttSnapshot {
     excludes: db.getExcludes().map(decodeEntities),
     inclusiveEndDates: db.endDatesAreInclusive(),
     topAxis: db.topAxisEnabled(),
-    weekday: db.getWeekday(),
+    weekday,
     weekend,
     sections: db.getSections().map(decodeEntities),
-    tasks: (ganttOracleTasks() as RawTaskV12[]).map((t) => ({
+    tasks: (ganttOracleTasks() as RawTaskV12[]).map((t, i) => ({
       id: decodeEntities(t.id),
       text: decodeEntities(t.task),
-      section: decodeEntities(t.section),
+      section: sectionOf[i] ?? null,
       tags: {
         active: !!t.active,
         done: !!t.done,

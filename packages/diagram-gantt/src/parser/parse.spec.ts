@@ -51,7 +51,7 @@ describe('parseGantt', () => {
     const src =
       S +
       'section A\nDesign  :crit, active, a1, 2024-01-01, 3d\nBuild :after a1, 2d\nShip :2d\n' +
-      'section B\nM :milestone, m1, 2024-01-10, 0d\nToo many :x, 2024-01-01, 1d, 2d\n';
+      'section B\nM :milestone, m1, 2024-01-10, 0d\nToo many :x, 2024-01-01, 1d, 2d\nNext :1d\n';
     const { model } = parse(src);
     expect(model.sections.map((s) => [s.ast, s.text])).toEqual([
       ['s:A', 'A'],
@@ -64,7 +64,10 @@ describe('parseGantt', () => {
       ['t:task1', 'task1', 'Build ', 0, [], 'after a1', '2d', 'a1'],
       ['t:task2', 'task2', 'Ship ', 0, [], undefined, '2d', 'task1'],
       ['t:m1', 'm1', 'M ', 1, ['milestone'], '2024-01-10', '0d', 'task2'],
-      ['t:x', 'x', 'Too many ', 1, [], '2024-01-01', '1d', 'm1'],
+      // More than three fields: no id (v12 set none) and the statement's AST id; the next
+      // task has no previous id.
+      ['st:3', '', 'Too many ', 1, [], '2024-01-01', '1d', 'm1'],
+      ['t:task3', 'task3', 'Next ', 1, [], undefined, '1d', undefined],
     ]);
     // More than three fields is a schedule error (D274): the fields are kept for it.
     expect(model.tasks[4]?.fields).toEqual(['x', '2024-01-01', '1d', '2d']);
