@@ -60,8 +60,8 @@ const theme: ThemeSpec = {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc #eeeeee #fcfcfc'),
     altBackground: '#f4f4f4', // v12 (#192)
-    // sequence (v12 theme-neutral.js: actorBorder is lighten(border1, 23))
-    actorBorder: '#d4d4d4',
+    // v12 theme-neutral.js: the participant border is lighten(border1, 23)
+    softBorder: '#d4d4d4',
     scaleLabelColor: '#333333', // v12: `labelTextColor` (D334)
     linkInkColor: '#333333',
     mutedBkg: '#f4f4f4',

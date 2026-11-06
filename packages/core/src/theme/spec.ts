@@ -101,9 +101,6 @@ export const LIGHT_RULES: ThemeRuleTable = {
   compositeBackground: 'background',
   compositeTitleBackground: 'mainBkg',
   altBackground: 'tertiaryColor',
-  // sequence, as v12 `theme-base.js` derives them (its other colours are its table's)
-  actorBorder: 'nodeBorder',
-  labelBoxBorderColor: 'actorBorder',
   // quadrant chart, as v12's `/* quadrant-graph */` block in every theme file derives them.
   // Fills 2–4 follow `quadrant1Fill`, so a theme that pins it moves them too (D232); points
   // default to `textColor`, the colour v12 points showed (D231).
@@ -135,6 +132,11 @@ export const LIGHT_RULES: ThemeRuleTable = {
   mutedBorder: 'mix(secondaryColor, black, 12.5%)',
   linkInkColor: 'textColor',
   lineTextColor: 'invert(lineColor)',
+  // A soft border is the node border unless a theme softens it; a frame's tab takes it too. A
+  // diagram that reads `frameBorder` with a fallback (`inline(frameBorder, b)`) gets b instead
+  // where no theme wrote one: the rule below does not count as set.
+  softBorder: 'nodeBorder',
+  frameBorder: 'softBorder',
 };
 
 /** Shared derivation for dark themes. */

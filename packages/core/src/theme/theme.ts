@@ -246,8 +246,12 @@ class Resolver {
   constructor(
     private readonly spec: ThemeSpec,
     private readonly rules: ThemeRuleTable,
-    /** The diagram's family values and tokens (D331), which beat every rule as spec values do. */
-    private readonly lits: Literals,
+    /**
+     * What the theme writes beyond its base, tokens and values: the diagram's family values and
+     * tokens (D331), which beat every rule as spec values do, and the names the spec's rules and
+     * the family's rules write, for `inline(v, b)`.
+     */
+    private readonly writes: { readonly lits: Literals; readonly rules: ReadonlySet<string> },
     private readonly overrides: ReadonlyMap<string, string>,
     private readonly defs: Readonly<Record<string, ThemeVarEntry>>,
     private readonly palettes: PaletteSource = NO_PALETTES
@@ -283,6 +287,16 @@ class Resolver {
     });
   }
 
+  /**
+   * Whether the author or the theme wrote `name`: an override, the spec's base, tokens, values
+   * or rules, or a family entry. A shared or diagram light/dark rule does not count.
+   */
+  private isSet(name: string): boolean {
+    return (
+      this.overrides.has(name) || this.source(name) !== undefined || this.writes.rules.has(name)
+    );
+  }
+
   /** The spec's own value or rule, ignoring overrides. */
   private source(name: string): string | undefined {
     const s = this.spec;
@@ -290,7 +304,8 @@ class Resolver {
     if (own(s.tokens, name))
       return String((s.tokens as Record<string, number | string | boolean>)[name]);
     if (s.values && own(s.values, name)) return s.values[name];
-    return own(this.lits, name) ? String(this.lits[name]) : undefined;
+    const { lits } = this.writes;
+    return own(lits, name) ? String(lits[name]) : undefined;
   }
 
   get(name: string): Resolved {
@@ -381,6 +396,9 @@ class Resolver {
           // no alias of its own, so a diagram reads each theme's own shape byte-identically.
           if (x.k !== 'ref' || !own(this.defs, x.name))
             throw new SyntaxError('inline needs a variable');
+          // `inline(v, b)`: b where neither the author nor the theme wrote v.
+          const b = e.args[1];
+          if (b !== undefined && !this.isSet(x.name)) return this.evaluate(b);
           return this.get(x.name);
         }
         if (e.fn !== 'literal') return this.call(e as Call);
@@ -803,7 +821,8 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
       ...fam.rules,
       ...fragment,
     };
-    return new Resolver(s, rules, fam.lits, overrides, defs, palettes);
+    const written = new Set([...Object.keys(s.rules ?? {}), ...Object.keys(fam.rules)]);
+    return new Resolver(s, rules, { lits: fam.lits, rules: written }, overrides, defs, palettes);
   };
   const parts: ThemeParts = {
     darkMode,

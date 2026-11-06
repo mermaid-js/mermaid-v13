@@ -3,16 +3,17 @@ import type { DiagramThemeVarDef } from '@mermaid-js/core/theme';
 /**
  * Sequence's own theme variables (spec #414 T2, D331): v12 names, so `themeVariables` and the
  * `--mermaid-<name>` CSS variables work as before. `pnpm gen:theme` writes the runtime half to
- * `generated/variables.ts`. `actorBorder` and `labelBoxBorderColor` stay in core for now
- * (GAPS.md "T2").
+ * `generated/variables.ts`.
  */
 export const THEME_VARIABLES: Readonly<Record<string, DiagramThemeVarDef>> = {
   actorBkg: { alias: 'ab', kind: 'color', usedBy: ['sequence'] },
+  actorBorder: { alias: 'ar', kind: 'color', usedBy: ['sequence'] },
   actorTextColor: { alias: 'at', kind: 'color', usedBy: ['sequence'] },
   actorLineColor: { alias: 'alc', kind: 'color', usedBy: ['sequence'] },
   signalColor: { alias: 'sc', kind: 'color', usedBy: ['sequence'] },
   signalTextColor: { alias: 'stc', kind: 'color', usedBy: ['sequence'] },
   labelBoxBkgColor: { alias: 'lbb', kind: 'color', usedBy: ['sequence'] },
+  labelBoxBorderColor: { alias: 'lbr', kind: 'color', usedBy: ['sequence'] },
   labelTextColor: { alias: 'ltc', kind: 'color', usedBy: ['sequence'] },
   loopTextColor: { alias: 'lpt', kind: 'color', usedBy: ['sequence'] },
   activationBkgColor: { alias: 'acb', kind: 'color', usedBy: ['sequence'] },

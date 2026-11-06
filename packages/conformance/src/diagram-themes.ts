@@ -50,6 +50,8 @@ export const D332_INPUTS: readonly string[] = [
   'mutedBorder',
   'linkInkColor',
   'lineTextColor',
+  'softBorder',
+  'frameBorder',
 ];
 
 /** Every variable a render can read: core's vocabulary and every table's `vars`. */

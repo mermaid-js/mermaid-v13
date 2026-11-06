@@ -23,6 +23,9 @@
  *                       the value a theme would pin (D332)
  *   inline(v)           the variable v as the theme wrote it, CSS included, with no alias of its
  *                       own: a diagram reads a shared input in each theme's own shape (D332)
+ *   inline(v, b)        the same when v is set (the author's override, the theme spec's base,
+ *                       tokens, values or rules, or a diagram table's family entry), else b; a
+ *                       shared or diagram light/dark rule for v does not count as set
  *
  * `cScale3`, `bkgColorArray2` and any other palette name with a slot number read that entry of
  * the palette (D258, D332), as a literal colour, except `seriesColorArray<n>`, which reads as
@@ -109,7 +112,9 @@ export function parseRule(source: string): Expr {
       if (p === ')') break;
       if (p !== ',') fail('expected , or )');
     }
-    if (args.length !== ARITY[fn]) fail(`${fn} takes ${ARITY[fn]} arguments`);
+    // `inline` takes an optional fallback, `inline(v, b)`.
+    const ok = args.length === ARITY[fn] || (fn === 'inline' && args.length === 2);
+    if (!ok) fail(`${fn} takes ${ARITY[fn]} arguments`);
     return { k: 'call', fn, args };
   };
   const e = expr(0);

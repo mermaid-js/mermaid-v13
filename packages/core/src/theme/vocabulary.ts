@@ -248,11 +248,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   noteBkgColor: def('nk', 'color', ['core', 'sequence', 'class', 'state']),
   noteTextColor: def('nx', 'color', ['core', 'sequence', 'class', 'state']),
   noteBorderColor: def('no', 'color', ['core', 'sequence', 'class', 'state']),
-  // sequence (v12 names): forest pins `labelBoxBorderColor` where the other themes read
-  // `actorBorder`, which no shared input can reproduce byte for byte (GAPS.md "T2"); the rest
-  // are the sequence table's.
-  actorBorder: def('ar', 'color', ['sequence']),
-  labelBoxBorderColor: def('lbr', 'color', ['sequence']),
   errorBkgColor: def('eb', 'color', ['core']),
   errorTextColor: def('et', 'color', ['core']),
   // composite states (#192, D120, D126): the body, the title strip and the alternate
@@ -363,12 +358,15 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   scaleLabelColor: def('slc', 'color', ['core', 'sequence']),
   // Shared inputs that name no diagram (D332), which themes of one family write differently and
   // a diagram reads with `inline()`: a quiet fill for a highlighted span and its outline, the
-  // ink of links and their labels, and text on a `lineColor` fill (as `secondaryTextColor` is
-  // text on `secondaryColor`). v13 names; v12 has none.
+  // ink of links and their labels, text on a `lineColor` fill (as `secondaryTextColor` is text
+  // on `secondaryColor`), a softer outline than `nodeBorder` for boxes that frame rather than
+  // hold content, and the outline of a frame's label tab. v13 names; v12 has none.
   mutedBkg: def('mbk', 'color', ['sequence']),
   mutedBorder: def('mbd', 'color', ['sequence']),
   linkInkColor: def('lki', 'color', ['sequence']),
   lineTextColor: def('ltx', 'color', ['sequence']),
+  softBorder: def('sfb', 'color', ['sequence']),
+  frameBorder: def('frb', 'color', ['sequence']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

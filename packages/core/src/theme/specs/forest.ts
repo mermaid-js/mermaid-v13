@@ -56,10 +56,11 @@ const theme: ThemeSpec = {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff'),
     altBackground: '#f0f0f0', // v12 (#192)
-    // sequence (v12 theme-forest.js: actorBorder is darken(mainBkg, 20))
-    actorBorder: '#a6cf47',
-    scaleLabelColor: '#000000', // v12: `labelTextColor`, set to `actorTextColor`
-    labelBoxBorderColor: '#326932',
+    // v12 theme-forest.js: the participant border is darken(mainBkg, 20), the fragment tab's
+    // a dark green
+    softBorder: '#a6cf47',
+    frameBorder: '#326932',
+    scaleLabelColor: '#000000', // v12: its label ink, black
     linkInkColor: '#333333',
     mutedBkg: '#f4f4f4',
     mutedBorder: '#666666',
@@ -88,7 +89,7 @@ const theme: ThemeSpec = {
       10,
       (c) => `adjustHue(${c}, 180)`
     ),
-    // v12 sets labelTextColor to actorTextColor before the labels: `scaleLabelColor` (D334).
+    // v12 sets its label ink before the labels: `scaleLabelColor` (D334).
     cScaleLabel: paletteSlots(() => 'scaleLabelColor'),
   },
 };

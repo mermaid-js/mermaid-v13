@@ -64,7 +64,7 @@ const neo: ThemeSpec = {
     titleColor: '#000000',
     noteBorderColor: '#e4db95',
     // v12 neo leaves the participant border at primaryBorderColor, not nodeBorder.
-    actorBorder: '#b3b3b3',
+    softBorder: '#b3b3b3',
     errorBkgColor: '#ffffff',
     errorTextColor: '#000000',
     altBackground: '#f0f0f0', // v12 (#192, D126)

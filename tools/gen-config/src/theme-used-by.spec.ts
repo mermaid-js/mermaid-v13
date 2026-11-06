@@ -52,7 +52,7 @@ function readsOf(type: string): Set<string> {
   const names = [
     ...[...text.matchAll(/(?:\b\w+\(|\w:)\s*'(\w+)'/g)].map((m) => m[1]!),
     // A table rule's read of a shared input as the theme wrote it (`'inline(mutedBkg)'`, D332).
-    ...[...text.matchAll(/\binline\((\w+)\)/g)].map((m) => m[1]!),
+    ...[...text.matchAll(/\binline\((\w+)[,)]/g)].map((m) => m[1]!),
   ];
   return new Set([...names, ...(DYNAMIC_READS[type] ?? [])].filter((n) => KNOWN.has(n)));
 }

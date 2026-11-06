@@ -5,9 +5,11 @@ import {
   THEME_NAMES,
   type DiagramThemeTable,
   type ThemeFamily,
+  type ThemeOptions,
   type ThemeSpec,
   type ThemeWarning,
 } from './index.ts';
+import { parseRule } from './dsl.ts';
 
 /**
  * The diagram theme table (D331, spec #414 T0a): a diagram's own variables, keyed by theme traits,
@@ -293,6 +295,38 @@ describe('rule DSL: palette reads and literal() (D332)', () => {
         'a'
       )
     ).toThrow(/inline needs a variable/);
+  });
+
+  it('writes inline(v, b) as v when the author or the theme wrote v, else as b', () => {
+    const rule = { a: 'inline(edgeLabelBackground, lineColor)' };
+    const decl = (s: ThemeSpec, options: ThemeOptions = {}) => {
+      const t = createTheme(s, { ...options, diagram: table(rule) });
+      t.color('a');
+      return t.rootStyle()['--_x0'];
+    };
+    // base leaves it to the shared rule (secondaryColor), which does not count as set.
+    expect(decl(spec.base)).toBe('var(--mermaid-a,var(--_l))');
+    const values: ThemeSpec = { ...spec.base, values: { edgeLabelBackground: '#eeeeee' } };
+    expect(decl(values)).toBe('var(--mermaid-a,#eeeeee)');
+    const rules: ThemeSpec = { ...spec.base, rules: { edgeLabelBackground: 'tertiaryColor' } };
+    expect(decl(rules)).toBe('var(--mermaid-a,var(--_t))');
+    const user = decl(spec.base, { themeVariables: { edgeLabelBackground: '#123456' } });
+    expect(user).toBe('var(--mermaid-a,#123456)');
+    // A family entry of the diagram's own table counts too (base is classic).
+    const own: DiagramThemeTable = {
+      vars: { a: { alias: 'x0', kind: 'color' }, b: { alias: 'x1', kind: 'color' } },
+      rules: { light: { a: 'inline(b, lineColor)' } },
+      families: { classic: { values: { b: '#abcdef' } }, redux: { rules: { b: 'mainBkg' } } },
+    };
+    const of = (s: ThemeSpec) => {
+      const t = createTheme(s, { diagram: own });
+      t.color('a');
+      return t.rootStyle()['--_x0'];
+    };
+    expect(of(spec.base)).toBe('var(--mermaid-a,#abcdef)');
+    expect(of(spec.redux)).toBe('var(--mermaid-a,var(--_mb))');
+    expect(() => parseRule('inline(a, b, c)')).toThrow(/inline takes 1 arguments/);
+    expect(() => parseRule('literal(a, b)')).toThrow(/literal takes 1 arguments/);
   });
 
   it('writes literal(x) as the computed colour, with no dependencies', () => {

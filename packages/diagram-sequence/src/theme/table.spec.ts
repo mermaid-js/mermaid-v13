@@ -11,11 +11,13 @@ import { sequence } from '../plugin.ts';
 const { theme: table }: Pick<DiagramPlugin, 'id' | 'theme'> = sequence;
 const OWN = [
   'actorBkg',
+  'actorBorder',
   'actorTextColor',
   'actorLineColor',
   'signalColor',
   'signalTextColor',
   'labelBoxBkgColor',
+  'labelBoxBorderColor',
   'labelTextColor',
   'loopTextColor',
   'activationBkgColor',
@@ -77,6 +79,14 @@ describe('the sequence theme table (#414 T2)', () => {
     expect(await decl('dark', 'sequenceNumberColor')).toBe(
       'var(--mermaid-sequenceNumberColor,#000000)'
     );
+    // The fragment tab reads the participant border unless the theme writes a frame border.
+    expect(await decl('default', 'labelBoxBorderColor')).toBe(
+      'var(--mermaid-labelBoxBorderColor,var(--_ar))'
+    );
+    expect(await decl('forest', 'labelBoxBorderColor')).toBe(
+      'var(--mermaid-labelBoxBorderColor,#326932)'
+    );
+    expect(await decl('neo', 'actorBorder')).toBe('var(--mermaid-actorBorder,#b3b3b3)');
   });
 
   it('draws redux-dark messages white and their text in the text ink, as v12', async () => {

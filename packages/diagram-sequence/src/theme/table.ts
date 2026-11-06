@@ -36,12 +36,15 @@ export const theme: DiagramThemeTable = {
   rules: {
     light: {
       actorBkg: 'mainBkg',
+      actorBorder: 'inline(softBorder)',
       // v12's label ink, which v12 derives `scaleLabelColor` from.
       actorTextColor: 'inline(scaleLabelColor)',
       actorLineColor: 'actorBorder',
       signalColor: 'inline(linkInkColor)',
       signalTextColor: 'inline(linkInkColor)',
       labelBoxBkgColor: 'actorBkg',
+      // The fragment tab: the participant border unless the theme writes a frame border.
+      labelBoxBorderColor: 'inline(frameBorder, actorBorder)',
       labelTextColor: 'actorTextColor',
       loopTextColor: 'actorTextColor',
       activationBkgColor: 'inline(mutedBkg)',

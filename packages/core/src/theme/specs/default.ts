@@ -62,8 +62,8 @@ const theme: ThemeSpec = {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#ececff #ffffde #ffecfe #deffe0 #ecfffe #ffdee0 #ffefec #defbff'),
     altBackground: '#f0f0f0', // v12 (#192)
-    // v12 theme-default.js: the label ink (v12 `labelTextColor`, set to `actorTextColor`), the
-    // grey muted surface and border, white text on lines.
+    // v12 theme-default.js: the label ink (black), the grey muted surface and border, white
+    // text on lines.
     scaleLabelColor: '#000000',
     mutedBkg: '#f4f4f4',
     mutedBorder: '#666666',
@@ -115,7 +115,7 @@ const theme: ThemeSpec = {
       '#ffb9b9',
       '#ffdcb9',
     ],
-    // v12 inverts its label ink (`actorTextColor`, black) in slots 0 and 3 and ignores
+    // v12 inverts its label ink (black) in slots 0 and 3 and ignores
     // `scaleLabelColor`: the resolved colours, so no sequence variable is read (D334).
     cScaleLabel: paletteSlots((i) => (i === 0 || i === 3 ? '#ffffff' : '#000000')),
   },
