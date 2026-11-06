@@ -10,17 +10,26 @@ describe('mindmap icons', () => {
     expect(mindmapIconName(' fa  fa-book ')).toBe('fa:book');
     expect(mindmapIconName('fab fa-github')).toBe('fab:github');
     expect(mindmapIconName('fas fa-car')).toBe('fas:car');
-    // Other references are kept as written: they resolve to no glyph.
-    expect(mindmapIconName('bomb')).toBe('bomb');
-    expect(mindmapIconName('mdi arrow-left')).toBe('mdi arrow-left');
-    expect(mindmapIconName('mdi fa-book')).toBe('mdi fa-book');
-    expect(mindmapIconName('fa mdi-fire')).toBe('fa mdi-fire');
-    expect(mindmapIconName('mdi\nmdi-fire')).toBe('mdi\nmdi-fire');
+    // Any other reference is no glyph name (D297): it is shown as written, never looked up.
+    for (const other of [
+      'bomb',
+      'fa-book',
+      'mdi-fire',
+      'mdi arrow-left',
+      'mdi fa-book',
+      'fa mdi-fire',
+      'mdi\nmdi-fire',
+      'mdi:',
+      ':fire',
+      'a:b:c',
+      'mdi :fire',
+    ])
+      expect(mindmapIconName(other), other).toBeUndefined();
   });
 
   it('lists the icons of the model in source order', () => {
     const { model } = parseMindmap(
-      'mindmap\n  root\n  ::icon(fa fa-book)\n    a\n    b\n    ::icon(mdi:fire)\n'
+      'mindmap\n  root\n  ::icon(fa fa-book)\n    a\n    ::icon(fa-book)\n    b\n    ::icon(mdi:fire)\n'
     );
     expect(mindmapIcons(model)).toEqual(['fa:book', 'mdi:fire']);
   });

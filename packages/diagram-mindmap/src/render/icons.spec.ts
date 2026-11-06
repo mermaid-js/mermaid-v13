@@ -2,7 +2,7 @@
 // whose `icon` stands in for an icons extension's glyphs (core's `RenderContext.icon`). The glyph
 // is drawn in the slot the layout reserved, 40 px, painted `cScaleLabel<section>`; what the
 // extension does not draw keeps the reference as written. Without an extension: `render.spec.ts`.
-import type { RenderContext } from '@mermaid-js/core';
+import type { IconPacks, IconPackState, RenderContext } from '@mermaid-js/core';
 import type { OutlinePaint } from '@mermaid-js/core/svg';
 import type { SvgFragment } from '@mermaid-js/core/text';
 import { describe, expect, it } from 'vitest';
@@ -14,17 +14,30 @@ interface Asked {
   paint?: OutlinePaint;
 }
 
-/** A resolver that draws every name but `nope` (null: unresolved) and `later` (a placeholder). */
+/**
+ * A resolver that draws every name but `<pack>:nope` (null: unresolved) and those of packs `later` and
+ * `other` (`undefined`: a placeholder, or no glyph for it).
+ */
 function resolver(asked: Asked[] = []): NonNullable<RenderContext['icon']> {
   return (name, size, options) => {
     asked.push({ name, size, paint: options?.paint });
-    if (name === 'nope') return null;
-    if (name === 'later') return undefined;
+    if (name.endsWith(':nope')) return null;
+    if (/^(later|other):/.test(name)) return undefined;
     const glyph: SvgFragment = {
       tag: 'rect',
       attrs: { class: 'fixture-glyph', width: size, height: size },
     };
     return glyph;
+  };
+}
+
+/** Registered packs in the given states (`RenderContext.iconPacks`, D294). */
+function packs(states: Record<string, IconPackState>): IconPacks {
+  return {
+    names: () => Object.keys(states),
+    state: (name) => states[name],
+    get: () => undefined,
+    error: () => undefined,
   };
 }
 
@@ -76,18 +89,53 @@ describe('::icon() glyphs (D297)', () => {
   });
 
   it('shows an unresolved icon as written, and leaves the warning to the extension (D291)', async () => {
-    const src = 'mindmap\nroot\n  a\n  ::icon(nope)\n  b\n  ::icon(fa fa-book)\n';
+    const src = 'mindmap\nroot\n  a\n  ::icon(mdi:nope)\n  b\n  ::icon(fa fa-book)\n';
     const r = await renderMindmapForTest(src, { config: THEMED, icon: resolver() });
-    expect(r.svg).toMatch(/<text class="mindmap-icon"[^>]*>nope</);
+    expect(r.svg).toMatch(/<text class="mindmap-icon"[^>]*>mdi:nope</);
     expect([...r.svg.matchAll(RE_GLYPH)]).toHaveLength(1);
     expect(r.warnings).toEqual([]);
   });
 
-  it('leaves the slot empty, quietly, while the pack loads (a placeholder, D299)', async () => {
-    const src = 'mindmap\nroot\n  a\n  ::icon(later)\n';
+  it('shows a name no extension has a glyph for as written, with one ICON_NOT_RENDERED', async () => {
+    // `undefined` without a loading pack: another glyph extension, or none with this name.
+    const src = 'mindmap\nroot\n  a\n  ::icon(other:x)\n  b\n  ::icon(other:y)\n';
     const r = await renderMindmapForTest(src, { config: THEMED, icon: resolver() });
+    expect(r.svg.match(/<text class="mindmap-icon"[^>]*>other:[xy]</g)).toHaveLength(2);
+    expect(r.warnings.map((w) => w.code)).toEqual(['ICON_NOT_RENDERED']);
+  });
+
+  it('leaves the slot empty, quietly, while the pack loads (a placeholder, D299)', async () => {
+    const src = 'mindmap\nroot\n  a\n  ::icon(later:fire)\n';
+    const r = await renderMindmapForTest(src, {
+      config: THEMED,
+      icon: resolver(),
+      iconPacks: packs({ later: 'pending' }),
+    });
     expect(r.svg).not.toMatch(/mindmap-icon/);
     expect(r.svg).not.toMatch(/later/);
     expect(r.warnings).toEqual([]);
+  });
+
+  it('shows a pack that failed to load as written, with one ICON_NOT_RENDERED', async () => {
+    const src = 'mindmap\nroot\n  a\n  ::icon(later:fire)\n';
+    const r = await renderMindmapForTest(src, {
+      config: THEMED,
+      icon: resolver(),
+      iconPacks: packs({ later: 'failed' }),
+    });
+    expect(r.svg).toMatch(/<text class="mindmap-icon"[^>]*>later:fire</);
+    expect(r.warnings.map((w) => w.code)).toEqual(['ICON_NOT_RENDERED']);
+  });
+
+  it('never asks for a reference D297 does not name, and shows it as written (fa-book)', async () => {
+    const asked: Asked[] = [];
+    const src =
+      'mindmap\nroot\n  a\n  ::icon(fa-book)\n  b\n  ::icon(mdi-fire)\n  c\n  ::icon(mdi:fire)\n';
+    const r = await renderMindmapForTest(src, { config: THEMED, icon: resolver(asked) });
+    expect(asked.map((a) => a.name)).toEqual(['mdi:fire']);
+    expect(r.svg).toMatch(/<text class="mindmap-icon"[^>]*>fa-book</);
+    expect(r.svg).toMatch(/<text class="mindmap-icon"[^>]*>mdi-fire</);
+    expect([...r.svg.matchAll(RE_GLYPH)]).toHaveLength(1);
+    expect(r.warnings.map((w) => w.code)).toEqual(['ICON_NOT_RENDERED']);
   });
 });

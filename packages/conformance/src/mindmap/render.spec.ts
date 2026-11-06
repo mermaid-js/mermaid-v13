@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { assertInert } from '@mermaid-js/core/svg';
 import { THEME_NAMES } from '@mermaid-js/core/theme';
+import { mindmapIconName } from '@mermaid-js/diagram-mindmap';
 import { renderMindmapForTest, type RenderedMindmap } from '@mermaid-js/diagram-mindmap/testing';
 import { astIndex, extents, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgView } from '../svg-tree.ts';
@@ -157,30 +158,37 @@ describe('mindmap ::icon() glyphs over the parsed corpus (#328, D297)', () => {
   const icon = (_: string, size: number) =>
     ({ tag: 'rect', attrs: { class: 'fixture-glyph', width: size, height: size } }) as const;
 
-  it('draws each icon as one 40 px glyph inside its node, inert, with no warning', async () => {
+  it('draws each D297 icon as one 40 px glyph inside its node, and any other as written', async () => {
     // Every parsed source with an icon (v12's 5 e2e fixtures and the 4 baselines among them), in
-    // the four families.
+    // the four families. A reference in no D297 form (`bomb`) is never asked for: it is shown
+    // as written, with the render's one ICON_NOT_RENDERED.
     const withIcons = cases.filter(
       (c) => c.theme === 'default' && c.r.model.nodes.some((n) => n.icon)
     );
     const e2e = withIcons.filter((c) => c.id.startsWith('e2e/'));
     expect(e2e.filter((c) => !c.id.includes('/baseline/')).length).toBe(5);
     expect(e2e.filter((c) => c.id.includes('/baseline/icons/')).length).toBe(4);
+    expect(
+      withIcons.some((c) => c.r.model.nodes.some((n) => n.icon && !mindmapIconName(n.icon.text)))
+    ).toBe(true);
     for (const theme of ['default', 'redux', 'neo', 'neo-dark'])
       for (const item of withIcons) {
         const id = `${item.id.replace(/ default$/, '')} ${theme}`;
         const r = await renderMindmapForTest(item.source, { config: { theme }, icon });
         assertInert(r.svg, { gradient: r.gradient, themeStyle: r.themeStyle });
-        expect(
-          r.warnings.filter((w) => w.code.startsWith('ICON')),
-          id
-        ).toEqual([]);
-        const tree = parseSvg(r.svg);
-        expect(tree.find({ tag: 'text', class: 'mindmap-icon' }), id).toEqual([]);
-        const glyphs = tree.find({ tag: 'g', class: 'mindmap-icon' });
         const views = r.layout.mindmap.nodes.filter((v) => v.icon);
-        expect(glyphs.length, id).toBe(views.length);
-        views.forEach((v, k) => {
+        const named = views.filter((v) => mindmapIconName(r.model.nodes[v.index]!.icon!.text));
+        const others = views.length - named.length;
+        expect(
+          r.warnings.filter((w) => w.code.startsWith('ICON')).map((w) => w.code),
+          id
+        ).toEqual(others > 0 ? ['ICON_NOT_RENDERED'] : []);
+        if (e2e.includes(item)) expect(others, id).toBe(0);
+        const tree = parseSvg(r.svg);
+        expect(tree.find({ tag: 'text', class: 'mindmap-icon' }).length, id).toBe(others);
+        const glyphs = tree.find({ tag: 'g', class: 'mindmap-icon' });
+        expect(glyphs.length, id).toBe(named.length);
+        named.forEach((v, k) => {
           const t = /^translate\((-?[\d.]+),(-?[\d.]+)\)$/.exec(
             tree.getAttr(glyphs[k]!, 'transform')!
           )!;

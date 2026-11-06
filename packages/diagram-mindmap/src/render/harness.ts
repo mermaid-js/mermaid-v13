@@ -33,6 +33,8 @@ export interface RenderMindmapOptions {
   readonly measurer?: Measurer;
   /** The extensions' glyphs (`RenderContext.icon`, D293), as an icons extension would give them. */
   readonly icon?: RenderContext['icon'];
+  /** The API's icon packs (`RenderContext.iconPacks`, D294): whether a pack is still loading. */
+  readonly iconPacks?: RenderContext['iconPacks'];
 }
 
 export interface RenderedMindmap {
@@ -101,6 +103,7 @@ export async function renderMindmapForTest(
     limits: resolveLimits(config),
     warn,
     ...(options.icon ? { icon: options.icon } : {}),
+    ...(options.iconPacks ? { iconPacks: options.iconPacks } : {}),
   };
   const layout = layoutMindmap(model, ctx);
   const gradient = theme.gradient();

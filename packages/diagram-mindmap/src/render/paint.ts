@@ -40,6 +40,7 @@ export interface NodePaint {
   readonly strokeWidth?: Length;
   /** The theme's shadow on outlined nodes; undefined when none is drawn. */
   readonly filter?: Shadow;
+  /** The label's fill, and the icon's: its glyph's colour or its reference as written (D297). */
   readonly text: Paint;
   /** The rule under a plain node (v12 `.section-<n> line`); undefined where none is drawn. */
   readonly rule?: Paint;
@@ -56,8 +57,6 @@ export interface Paints {
   node(section: number | undefined): NodePaint;
   /** An edge into a node of `section`, of v12's class `edge-depth-<depth>`. */
   edge(section: number, depth: number): EdgePaint;
-  /** The icon reference's colour (D297: `cScaleLabel` in the node's slot). */
-  icon(section: number | undefined): Paint;
   /** `radius`: the rounded shape's corner (v12 `roundedRect.ts`), geometry (D152). */
   readonly radius: number;
   /** Plain nodes are flat-bottomed (v12 neo `defaultMindmapNode.ts`). */
@@ -134,14 +133,12 @@ export function paints(theme: Theme): Paints {
   const edges = Array.from({ length: SLOTS }, (_, k) =>
     borderEdges ? named('nodeBorder') : slot('cScale', k, 'mainBkg')
   );
-  const icons = Array.from({ length: SLOTS }, (_, k) => slot('cScaleLabel', k, 'nodeBorder'));
   return {
     node: (section) => nodes[slotOf(section)]!,
     edge: (section, depth) => ({
       stroke: edges[slotOf(section)]!,
       width: edgeWidth(outlined, depth),
     }),
-    icon: (section) => icons[slotOf(section)]!,
     radius: theme.number('radius'),
     flat: outlined,
   };

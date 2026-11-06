@@ -106,22 +106,23 @@ function drawEdges({ w, model, layout, paint }: Scene): void {
 
 function drawNodes(scene: Scene): void {
   const { w, layout } = scene;
-  let iconShown = false;
+  const asWritten: string[] = [];
   w.open('g', { class: 'mindmap-nodes' });
   for (const v of layout.mindmap.nodes) {
     const at = layout.nodes.get(v.id);
     if (!at) continue;
-    // Without glyphs (no extension has them) mindmap warns itself; else the extension does.
-    if (drawNode(scene, v, at.x + v.frame.dx, at.y + v.frame.dy) && !iconShown && !scene.ctx.icon) {
-      iconShown = true;
-      iconsNotRendered(scene.ctx);
-    }
+    const shown = drawNode(scene, v, at.x + v.frame.dx, at.y + v.frame.dy);
+    if (shown !== undefined) asWritten.push(shown);
   }
   w.close();
+  if (asWritten.length > 0) iconsNotRendered(scene.ctx, asWritten);
 }
 
-/** One node, its frame centred at (`x`, `y`); true when it has an icon. */
-function drawNode(scene: Scene, v: MindmapNodeView, x: number, y: number): boolean {
+/**
+ * One node, its frame centred at (`x`, `y`); its icon reference when that is shown as written
+ * and no extension warned about it.
+ */
+function drawNode(scene: Scene, v: MindmapNodeView, x: number, y: number): string | undefined {
   const { w, model, paint, ctx } = scene;
   const node = model.nodes[v.index]!;
   const n = node.section ?? -1;
@@ -151,11 +152,12 @@ function drawNode(scene: Scene, v: MindmapNodeView, x: number, y: number): boole
       'stroke-width': p.ruleWidth,
     });
   }
+  let asWritten: string | undefined;
   if (v.icon && node.icon) {
     const at = { x: x + v.icon.at.x, y: y + v.icon.at.y };
-    drawIcon(w, ctx, node.icon.text, v.icon, at, paint.icon(node.section));
+    if (drawIcon(w, ctx, node.icon.text, v.icon, at, p.text)) asWritten = node.icon.text;
   }
   w.label(v.label, x + v.labelAt.x, y + v.labelAt.y, { class: 'mindmap-node-label', fill: p.text });
   w.close();
-  return v.icon !== undefined;
+  return asWritten;
 }

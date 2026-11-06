@@ -223,3 +223,61 @@ describe('mindmap limits (R-SEC-5)', () => {
     );
   });
 });
+
+// `::icon()` with a glyph extension that is not the icons plugin (#328 review): one that has no
+// glyph for a name says `undefined`, which is not "the pack is loading", so the reference shows
+// as written with one ICON_NOT_RENDERED.
+describe('mindmap ::icon() with another glyph extension', () => {
+  const emoji = {
+    id: 'emoji',
+    glyphs: {
+      glyph: (name: string, { size }: { size: number }) =>
+        name.startsWith('emoji:')
+          ? ({ tag: 'rect', attrs: { class: 'emoji-glyph', width: size, height: size } } as const)
+          : undefined,
+    },
+  };
+
+  it('shows a name it has no glyph for as written, with one ICON_NOT_RENDERED', async () => {
+    const m = createMermaid();
+    m.initialize({ deterministic: true });
+    await m.registerExternalDiagrams([emoji]);
+    const r = await m.render(
+      'mm',
+      'mindmap\nroot\n  a\n  ::icon(mdi:fire)\n  b\n  ::icon(fa fa-book)\n  c\n  ::icon(emoji:ok)'
+    );
+    expect(r.warnings.map((w) => w.code)).toEqual(['ICON_NOT_RENDERED']);
+    expect(r.svg).toMatch(/<text class="mindmap-icon"[^>]*>mdi:fire</);
+    expect(r.svg).toMatch(/<text class="mindmap-icon"[^>]*>fa fa-book</);
+    expect(count(r.svg, /<g class="mindmap-icon"[^>]*><rect class="emoji-glyph"/g)).toBe(1);
+  });
+});
+
+describe('mindmap ::icon() paint (#328 review)', () => {
+  /** Each node's label fill and icon fill, in node order. */
+  const fills = (svg: string): { label?: string; icon?: string }[] =>
+    [
+      ...svg.matchAll(
+        /<g class="mindmap-node [^"]*"[^>]*>(.*?)<\/g>(?=<g class="mindmap-node |<\/g>)/g
+      ),
+    ].map((m) => ({
+      icon: /class="mindmap-icon" fill="([^"]*)"/.exec(m[1]!)?.[1],
+      label: /class="mindmap-node-label" fill="([^"]*)"/.exec(m[1]!)?.[1],
+    }));
+
+  it.each(['auto', 'default', 'dark', 'redux', 'redux-dark', 'neo', 'neo-dark'])(
+    'paints the icon as its node label under theme %s',
+    async (theme) => {
+      const r = await createMermaid().render(
+        'mm',
+        `---\nconfig:\n  theme: ${theme}\n---\nmindmap\nroot((Root))\n::icon(mdi:ok)\n  a\n  ::icon(mdi:ok)\n  b[B]\n  ::icon(mdi:ok)`
+      );
+      const all = fills(r.svg);
+      expect(all).toHaveLength(3);
+      for (const f of all) {
+        expect(f.icon).toBeDefined();
+        expect(f.icon).toBe(f.label);
+      }
+    }
+  );
+});
