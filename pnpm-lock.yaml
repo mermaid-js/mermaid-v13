@@ -110,6 +110,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-gantt':
+        specifier: workspace:^
+        version: link:../diagram-gantt
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
@@ -435,6 +438,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:*
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-gantt':
+        specifier: workspace:*
+        version: link:../diagram-gantt
       '@mermaid-js/diagram-journey':
         specifier: workspace:*
         version: link:../diagram-journey
@@ -759,6 +765,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../../packages/diagram-flowchart
+      '@mermaid-js/diagram-gantt':
+        specifier: workspace:^
+        version: link:../../packages/diagram-gantt
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../../packages/diagram-journey

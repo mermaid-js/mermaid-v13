@@ -1,4 +1,4 @@
-// cspell:words LALR
+// cspell:words LALR axisformat tickinterval todaymarker
 /**
  * Gantt parser: recursive descent over the {@link lex} tokens (gated against v12's jison lexer,
  * #377), producing a {@link GanttModel}, the typed AST, statement spans and diagnostics
@@ -27,6 +27,7 @@ import {
   LF,
   LineIndex,
   ParseState,
+  Probe,
   significantTokens,
   skipTo,
   sourceView,
@@ -60,6 +61,7 @@ import type {
   GanttTextStatementNode,
 } from './ast.ts';
 import { lex } from './lexer.ts';
+import { TaskIds } from './task-ids.ts';
 import { T } from './tokens.ts';
 
 export interface GanttParseOptions extends ParseOptions {
@@ -116,6 +118,57 @@ const WEEKEND: Readonly<Record<number, GanttWeekend>> = {
   [T.WeekendFriday]: 'friday',
   [T.WeekendSaturday]: 'saturday',
 };
+// What the parser accepts at its decision points, for the probe (R-LANG-7, D95). Constants,
+// so a parse without a probe allocates nothing for them.
+/** What may start a statement after the header. */
+const STATEMENT_KINDS = [
+  T.TaskText,
+  T.Section,
+  T.Title,
+  T.DateFormat,
+  T.AxisFormat,
+  T.TickInterval,
+  T.Includes,
+  T.Excludes,
+  T.TodayMarker,
+  T.InclusiveEndDates,
+  T.TopAxis,
+  T.WeekdayMonday,
+  T.WeekdayTuesday,
+  T.WeekdayWednesday,
+  T.WeekdayThursday,
+  T.WeekdayFriday,
+  T.WeekdaySaturday,
+  T.WeekdaySunday,
+  T.WeekendFriday,
+  T.WeekendSaturday,
+  T.ClickKeyword,
+  T.AccTitle,
+  T.AccDescr,
+  T.AccDescrMultiline,
+];
+const HEADER_KINDS = [T.Gantt];
+const TASK_DATA_KINDS = [T.TaskData];
+const CLICK_ID_KINDS = [T.ClickId];
+const CLICK_ACTION_KINDS = [T.HrefKeyword, T.CallKeyword];
+const HREF_KINDS = [T.HrefKeyword];
+const CALL_KINDS = [T.CallKeyword];
+const CALLBACK_NAME_KINDS = [T.CallbackName];
+/**
+ * Kinds a probe's cursor follows rather than extends when the token ends at the offset:
+ * punctuation and the closers of jison's start conditions.
+ */
+const PROBE_FOLLOWS = kindSet(
+  T.Colon,
+  T.ClickEnd,
+  T.HrefEnd,
+  T.CallbackEmptyArgs,
+  T.CallbackArgsOpen,
+  T.CallbackArgsClose,
+  T.AccDescrMultilineEnd,
+  Kind.Error
+);
+
 /** v12's `tags`, in the order `getTaskTags` tries them. */
 const TAGS: readonly GanttTag[] = ['active', 'done', 'crit', 'milestone', 'vert'];
 const TAG_PATTERNS = TAGS.map((t) => new RegExp(`^\\s*${t}\\s*$`));
@@ -135,6 +188,23 @@ const CLICK_ACTION = ['a link such as `href "https://…"`', 'a callback such as
 const CLICK_IDS = ['task ids such as `a1,a2`'];
 const LINK = ['a link between the quotes'];
 const FUNCTION = ['a function name'];
+
+/**
+ * A statement keyword v12 lexed as a task text because nothing follows it on its line
+ * (`section ` at a line end): what it needs, and how it is written.
+ */
+const BARE_KEYWORDS: Readonly<Record<string, readonly [string, string]>> = {
+  section: ['a section name', 'section <name>'],
+  title: ['a title', 'title <text>'],
+  dateformat: ['a date format such as `YYYY-MM-DD`', 'dateFormat <format>'],
+  axisformat: ['an axis format such as `%Y-%m-%d`', 'axisFormat <format>'],
+  tickinterval: ['a tick interval such as `1week`', 'tickInterval <interval>'],
+  includes: ['days such as `weekends` or `2024-01-01`', 'includes <days>'],
+  excludes: ['days such as `weekends` or `2024-01-01`', 'excludes <days>'],
+  todaymarker: ['`off` or a style', 'todayMarker <style>'],
+  weekday: ['a day such as `monday`', 'weekday <day>'],
+  weekend: ['`friday` or `saturday`', 'weekend <day>'],
+};
 
 const HEADER_HINT = 'a gantt chart starts with `gantt`';
 const TASK_HINT = 'a task is its text, `:` and its data, e.g. `Design :a1, 2024-01-01, 3d`';
@@ -190,6 +260,9 @@ class GanttParser {
   private readonly t: TokenView;
   private i = 0;
   private readonly stream: ReturnType<typeof lex>;
+  /** Probe mode only (R-LANG-7), and the index in {@link t} of the probed token. */
+  private readonly probe: Probe | undefined;
+  private readonly target: number = -1;
   private readonly children: GanttStatementNode[] = [];
   private readonly sections: GanttSection[] = [];
   private readonly tasks: GanttTask[] = [];
@@ -209,6 +282,8 @@ class GanttParser {
   };
   /** v12 `taskCnt`: the tasks given an id `task<n>`. */
   private autoIds = 0;
+  /** Task-id symbols, recorded at the end. */
+  private readonly idSymbols = new TaskIds();
   /** Tasks per id, for `t:<id>@n`. */
   private readonly taskIds = new Map<string, number>();
   /** An error at the end of the text was reported (the text ends inside a value). */
@@ -234,14 +309,25 @@ class GanttParser {
       pre.bodyStart,
       pre.directives.map((d) => d.range)
     );
-    this.stream = lex(src, pre.bodyStart, this.view);
+    if (options.probe === undefined) {
+      this.stream = lex(src, pre.bodyStart, this.view);
+      this.t = significantTokens(this.stream, SKIPPED);
+      return;
+    }
+    const probe = (this.probe = new Probe(src, options.probe, PROBE_FOLLOWS));
+    if (pre.frontMatter && probe.offset < pre.bodyStart) probe.outside('frontMatter');
+    this.stream = lex(src, pre.bodyStart, this.view, probe);
+    // An offset inside a comment or directive is outside code.
+    probe.trivia(this.stream);
     this.t = significantTokens(this.stream, SKIPPED);
+    this.target = probe.targetIn(this.t);
   }
 
   parse(): GanttParseResult {
     this.header();
     this.document();
     this.closeSection(this.src.length);
+    this.idSymbols.record(this.st, this.autoIds);
     const { st, pre, src, draft } = this;
     const model: { -readonly [K in keyof GanttModel]: GanttModel[K] } = {
       source: src,
@@ -272,7 +358,7 @@ class GanttParser {
       range: { start: pre.bodyStart, end: src.length },
       children: this.children,
     };
-    return st.result(model, ast, this.stream, this.options);
+    return st.result(model, ast, this.stream, this.options, this.probe);
   }
 
   // ---- tokens -------------------------------------------------------------------------
@@ -299,6 +385,11 @@ class GanttParser {
 
   private span(from: number, to: number): Range {
     return { start: this.t.start[from] ?? 0, end: this.t.end[to] ?? 0 };
+  }
+
+  /** The parser tests the current token for `kinds`: recorded when it is the probed one. */
+  private tested(kinds: readonly number[]): void {
+    if (this.probe && this.i === this.target) this.probe.tested(kinds, this.t.start[this.i] ?? 0);
   }
 
   private add(node: GanttStatementNode, kind: string): void {
@@ -333,8 +424,24 @@ class GanttParser {
   private fail(names: string[], hint?: string, at: Range = this.range()): never {
     const d = this.st.diagnostics.unexpected('UNEXPECTED', at, names, this.found());
     if (hint) d.message = `${d.message.slice(0, -1)}; ${hint}.`;
-    if (this.kind() === Kind.EOF) this.endReported = true;
+    // At the end of the text: the error the end would give is this one.
+    if (this.kind() === Kind.EOF || at.start >= this.src.length) this.endReported = true;
     throw STOP;
+  }
+
+  /** Tokens `a` to `b` without the blanks and line breaks after them (never empty). */
+  private trimmedRange(a: number, b = a): Range {
+    const range = this.span(a, b);
+    while (range.end > range.start + 1 && /\s/.test(this.src.charAt(range.end - 1))) range.end--;
+    return range;
+  }
+
+  /** The empty range after token `j`'s text and blanks on its first line. */
+  private lineEndIn(j: number): Range {
+    let p = this.t.start[j] ?? 0;
+    const end = this.t.end[j] ?? p;
+    while (p < end && !this.breaksIn(p, p + 1)) p++;
+    return { start: p, end: p };
   }
 
   /** Whether the source has a line break in `[from, to)`. */
@@ -375,6 +482,7 @@ class GanttParser {
       rule();
     } catch (error) {
       if (error !== STOP) throw error;
+      this.probe?.freeze();
       this.recover();
     }
   }
@@ -384,6 +492,7 @@ class GanttParser {
   /** `gantt`. Without it the rest is still read. */
   private header(): void {
     this.statement(() => {
+      this.tested(HEADER_KINDS);
       if (this.kind() !== T.Gantt) this.fail(HEADER, HEADER_HINT);
       this.takeHeader();
     });
@@ -399,6 +508,7 @@ class GanttParser {
   private document(): void {
     for (;;) {
       const k = this.kind();
+      this.tested(this.headerSeen ? STATEMENT_KINDS : HEADER_KINDS);
       if (k === Kind.EOF) break;
       if (k === T.Eof) {
         this.eofSeen = true;
@@ -604,7 +714,14 @@ class GanttParser {
   private task(): void {
     const textAt = this.next();
     const k = this.kind();
-    if (k !== T.TaskData) this.fail(TASK_DATA, k === T.Colon ? undefined : TASK_HINT);
+    this.tested(TASK_DATA_KINDS);
+    if (k !== T.TaskData) {
+      const bare = k === T.Colon ? undefined : BARE_KEYWORDS[this.raw(textAt).trim().toLowerCase()];
+      // A keyword with nothing after it: reported where its value belongs.
+      if (bare) this.fail([bare[0]], `write it as \`${bare[1]}\``, this.lineEndIn(textAt));
+      // Reported over the task text (blanks after it left out), not what follows it.
+      this.fail(TASK_DATA, k === T.Colon ? undefined : TASK_HINT, this.trimmedRange(textAt));
+    }
     const dataAt = this.next();
     const text = this.raw(textAt);
     const data = this.raw(dataAt);
@@ -624,6 +741,7 @@ class GanttParser {
     }
     const { tags, fields } = parsed;
     const many = fields.length >= 3;
+    this.idSymbols.task(this.mappedAt(dataAt, data), fields, parsed.at);
     // More than three fields: v12's `parseData` set no id (and counted none), so the task
     // takes the statement's AST id, and the next task has no previous id (D274: the
     // schedule rejects this task first).
@@ -665,24 +783,35 @@ class GanttParser {
    */
   private click(): void {
     const first = this.next();
+    this.tested(CLICK_ID_KINDS);
     if (this.kind() !== T.ClickId || this.t.end[this.i] === this.t.start[this.i]) {
       this.fail(CLICK_IDS, CLICK_HINT);
     }
     const idsAt = this.next();
     const ids = this.raw(idsAt).split(',');
+    this.idSymbols.click(this.mappedAt(idsAt, ids.join(',')), ids);
     // The one blank or line break after the ids (none at the very end).
     if (this.kind() === T.ClickEnd) this.next();
     let href: string | undefined;
     let call: GanttCall | undefined;
     let last: number;
     const k = this.kind();
+    this.tested(CLICK_ACTION_KINDS);
     if (k === T.CallKeyword) {
       [call, last] = this.callback();
+      this.tested(HREF_KINDS);
       if (this.kind() === T.HrefKeyword) [href, last] = this.link();
     } else if (k === T.HrefKeyword) {
       [href, last] = this.link();
+      this.tested(CALL_KINDS);
       if (this.kind() === T.CallKeyword) [call, last] = this.callback();
-    } else this.fail(CLICK_ACTION, CLICK_HINT);
+    } else {
+      // Over the click and its ids; when `click` took a line break, its ids are on a later line,
+      // so at the end of its own line, where they and the action belong.
+      const wrapped = this.breaksIn(this.t.start[first] ?? 0, this.t.end[first] ?? 0);
+      const at = wrapped ? this.lineEndIn(first) : this.trimmedRange(first, idsAt);
+      this.fail(CLICK_ACTION, CLICK_HINT, at);
+    }
     const ast = this.st.ids.statement('click');
     const range = this.span(first, last);
     const click: { -readonly [K in keyof GanttClick]: GanttClick[K] } = { ast, ids, range };
@@ -698,9 +827,16 @@ class GanttParser {
     this.add(node, 'click');
   }
 
+  /** Where token `j` starts in the source, if it is written as v12 read it, as `text`. */
+  private mappedAt(j: number, text: string): number | undefined {
+    const start = this.t.start[j] ?? 0;
+    return this.src.slice(start, this.t.end[j] ?? 0) === text ? start : undefined;
+  }
+
   /** `call <name>(<args>)`, `call <name>()`. Returns the call and its last token. */
   private callback(): [GanttCall, number] {
     const keyword = this.next();
+    this.tested(CALLBACK_NAME_KINDS);
     if (this.kind() !== T.CallbackName) this.fail(FUNCTION, CALL_HINT);
     const nameAt = this.next();
     const name = this.raw(nameAt);
@@ -781,7 +917,8 @@ class GanttParser {
         this.st.diagnostics.error(
           'UNEXPECTED',
           `The \`${k === T.CallKeyword ? 'call' : 'click'}\` at line ${this.lineOf(at)} runs to the end of the text; ${k === T.CallKeyword ? CALL_HINT : CLICK_HINT}.`,
-          this.range(j)
+          // Where what it needs belongs.
+          this.lineEndIn(j)
         );
         return;
       }
@@ -836,8 +973,16 @@ function mergeTokens(list: string[], seen: Set<string>, text: string): void {
  * `getTaskTags`: any order, each `^\s*tag\s*$`), the rest trimmed. Undefined when nothing is
  * left after the tags (v12 threw a TypeError there).
  */
-function splitData(data: string): { tags: GanttTag[]; fields: string[] } | undefined {
-  const parts = (data.startsWith(':') ? data.slice(1) : data).split(',');
+interface SplitData {
+  tags: GanttTag[];
+  fields: string[];
+  /** Where each field starts in `data` (after its leading blanks). */
+  at: number[];
+}
+
+function splitData(data: string): SplitData | undefined {
+  const colon = data.startsWith(':') ? 1 : 0;
+  const parts = data.slice(colon).split(',');
   const tags: GanttTag[] = [];
   let k = 0;
   for (let found = true; found; ) {
@@ -853,7 +998,19 @@ function splitData(data: string): { tags: GanttTag[]; fields: string[] } | undef
     }
   }
   if (k >= parts.length) return undefined;
-  return { tags, fields: parts.slice(k).map((f) => f.trim()) };
+  const fields: string[] = [];
+  const at: number[] = [];
+  let p = colon;
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i] ?? '';
+    if (i >= k) {
+      const field = part.trim();
+      fields.push(field);
+      at.push(p + (field === '' ? 0 : part.indexOf(field)));
+    }
+    p += part.length + 1;
+  }
+  return { tags, fields, at };
 }
 
 /** `%`, `>`, `@` and `#` in an id, percent-encoded as core's AST ids are. */

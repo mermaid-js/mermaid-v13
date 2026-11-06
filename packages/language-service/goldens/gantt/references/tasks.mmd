@@ -1,0 +1,7 @@
+gantt
+  section Plan
+  Design :|a1, 2024-01-01, 3d
+  Build :b1, after a1, 5d
+  Test :t1, after a1 b1, until a1
+  click a1,b1 call show(a1)
+  Ship :2d

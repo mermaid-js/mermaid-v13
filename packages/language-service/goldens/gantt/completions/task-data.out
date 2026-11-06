@@ -1,0 +1,28 @@
+@ 4:9  Test :|
+  active keyword (drawn as in progress) 4:9-4:9 "" -> "active"
+  done keyword (drawn as finished) 4:9-4:9 "" -> "done"
+  crit keyword (drawn as critical) 4:9-4:9 "" -> "crit"
+  milestone keyword (drawn as a diamond at its start) 4:9-4:9 "" -> "milestone"
+  vert keyword (drawn as a vertical line, not a bar) 4:9-4:9 "" -> "vert"
+  after keyword 4:9-4:9 "" -> "after "
+  until keyword 4:9-4:9 "" -> "until "
+@ 5:16  Test :done, c|
+  crit keyword (drawn as critical) 5:15-5:16 "c" -> "crit"
+@ 6:13  Test :c1, |
+  after keyword 6:13-6:13 "" -> "after "
+  until keyword 6:13-6:13 "" -> "until "
+@ 7:15  Test :after |
+  a1 node (Design) 7:15-7:15 "" -> "a1"
+  b1 node (Build) 7:15-7:15 "" -> "b1"
+  c1 node (Test) 7:15-7:15 "" -> "c1"
+@ 8:32  Test :c1, 2024-01-01, until b|
+  b1 node (Build) 8:31-8:32 "b" -> "b1"
+@ 9:10  Test :3|
+  3d constant (days) 9:9-9:10 "3" -> "3d"
+  3w constant (weeks) 9:9-9:10 "3" -> "3w"
+  3h constant (hours) 9:9-9:10 "3" -> "3h"
+  3m constant (minutes) 9:9-9:10 "3" -> "3m"
+  3s constant (seconds) 9:9-9:10 "3" -> "3s"
+  3ms constant (milliseconds) 9:9-9:10 "3" -> "3ms"
+  3M constant (months) 9:9-9:10 "3" -> "3M"
+  3y constant (years) 9:9-9:10 "3" -> "3y"

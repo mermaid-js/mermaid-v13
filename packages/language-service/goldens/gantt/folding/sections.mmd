@@ -1,0 +1,21 @@
+---
+title: Folding
+---
+gantt
+  dateFormat YYYY-MM-DD
+  Before :2024-01-01, 1d
+  section Plan
+    Design :a1, 2024-01-01, 3d
+    Build :after a1, 2d
+
+  section Empty
+  section Build
+    Code :c1, after a1, 5d
+    %% a comment line stays in the section
+  accDescr {
+    A description
+    over two lines
+  }
+
+  section Last
+    Ship :2d

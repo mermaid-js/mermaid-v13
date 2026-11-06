@@ -219,8 +219,11 @@ class GanttLexer {
         const state = this.state;
         this.step(text.charCodeAt(this.p));
         const after = this.source(this.p);
-        // A value that runs to the line end holds the offset at its end too (typing extends it).
-        const value = state === S.INITIAL ? 0 : 1;
+        // A value holds the offset at its end too (typing extends it): a step that stays in its
+        // start condition, or the one-line value of `accTitle:`/`accDescr:`. A closer that leaves
+        // one (`click`'s blank, `"`, `)`, `}`) does not.
+        const stays = this.state === state || state === S.acc_title || state === S.acc_descr;
+        const value = state !== S.INITIAL && stays ? 1 : 0;
         probe.lexed(before, Math.min(after + value, this.src.length), S_NAMES[state] ?? '');
       }
       probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
