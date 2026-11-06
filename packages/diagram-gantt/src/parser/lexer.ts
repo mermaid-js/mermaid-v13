@@ -110,6 +110,18 @@ const VALUE_KEYWORDS: readonly (readonly [word: string, kind: number, hash: bool
 /** Keywords tested with `\b` instead of a value. */
 const BARE = new Set<number>([T.InclusiveEndDates, T.TopAxis]);
 
+/** {@link VALUE_KEYWORDS} by first letter (lower case), each list in rule order. */
+const VALUE_KEYWORDS_BY_LETTER = /* @__PURE__ */ (() => {
+  const out = new Map<number, (typeof VALUE_KEYWORDS)[number][]>();
+  for (const entry of VALUE_KEYWORDS) {
+    const c = entry[0].charCodeAt(0);
+    const list = out.get(c);
+    if (list) list.push(entry);
+    else out.set(c, [entry]);
+  }
+  return out;
+})();
+
 const WEEKDAYS: readonly (readonly [day: string, kind: number])[] = [
   ['monday', T.WeekdayMonday],
   ['tuesday', T.WeekdayTuesday],
@@ -209,7 +221,7 @@ class GanttLexer {
         const after = this.source(this.p);
         // A value that runs to the line end holds the offset at its end too (typing extends it).
         const value = state === S.INITIAL ? 0 : 1;
-        probe.lexed(before, after + value, S_NAMES[state] ?? '');
+        probe.lexed(before, Math.min(after + value, this.src.length), S_NAMES[state] ?? '');
       }
       probe.lexed(this.src.length, this.src.length, S_NAMES[this.state] ?? '');
     }
@@ -460,7 +472,7 @@ class GanttLexer {
       this.emit(T.Gantt, p, p + 5);
       return true;
     }
-    if (this.valueKeyword()) return true;
+    if (this.valueKeyword(l)) return true;
     if (l === LOWER_W) return this.week();
     if (isDigit(c)) return this.date();
     if (l === LOWER_T) return this.line('title', T.Title);
@@ -493,11 +505,14 @@ class GanttLexer {
 
   /**
    * `dateFormat\s[^#\n;]+`, `inclusiveEndDates\b`, `topAxis\b`, `axisFormat…`, `tickInterval…`,
-   * `includes…`, `excludes…` and `todayMarker\s[^\n;]+`, in rule order.
+   * `includes…`, `excludes…` and `todayMarker\s[^\n;]+`, in rule order. Only the keywords
+   * starting with `l` (the token's first letter, lower case) are tried.
    */
-  private valueKeyword(): boolean {
+  private valueKeyword(l: number): boolean {
     const { p } = this;
-    for (const [word, kind, hash] of VALUE_KEYWORDS) {
+    const list = VALUE_KEYWORDS_BY_LETTER.get(l);
+    if (!list) return false;
+    for (const [word, kind, hash] of list) {
       if (BARE.has(kind)) {
         if (!this.keyword(word, p)) continue;
         this.emit(kind, p, p + word.length);
