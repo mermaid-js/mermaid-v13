@@ -37,3 +37,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 ## Theme T0a merged (2026-11-06)
 
 - `origin/feature/414_theme-t0` at `462aef4e9` merged into `feature/422_radar` (API: `v13/docs/agents/runs/414/CONTRACT.md`). **Orchestrator choice:** the radar `DiagramThemeTable` (ten `radar*` vars, `section: 'radar'` with `nested` keys, `radarAxisColor` the rule `lineColor`) lands in #448 (T4) with the plugin object, declared inline on the plugin until T0b's per-package file convention lands; #448 deletes the theme half of `stand-ins.ts`. #449 (T5) keeps the theme oracle specs, the D333(b) differences and the nested-override fixture.
+
+## Base sync (2026-11-06)
+
+- `mermaid-v13` gained gantt #398 and gitGraph #404. Merging it here conflicts in 11 core theme files between T0a and M4 wave 2 (`theme/spec.ts`, `theme.ts`, `vocabulary.ts`, `specs/*`, `generated/variables.ts`): the T0's to resolve. Aborted; coordinator rule (until #472 merges): M5a ports take `mermaid-v13` only through `feature/414_theme-t0`, never directly; the T0 session merges all three wave-2 types (mindmap #406 too) and the coordinator sends the sha. Radar-owned conflicts expected then: `conformance/package.json`, `jison/harvest.ts` (gitGraph's harvest vs #445's `harvest:langium`), `langium-lexer.ts` row order, `theme-used-by.spec.ts`. Hosted CI does not run on #474 until the conflicts are gone.
