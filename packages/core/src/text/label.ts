@@ -55,11 +55,14 @@ interface Piece {
   style: StyleBits;
   /** Set on an inline box's piece, whose text is one placeholder character. */
   box?: LabelBoxSpan;
+  /** What `wrap` measured of this piece, so a line of this piece alone is not measured again. */
+  measured?: { readonly text: string; readonly width: number };
 }
 
 // Anything that needs more than measuring once: markup, entities, escapes, explicit breaks,
-// runs of white space and break hints.
-const RE_SLOW = /[<&*_`\\\n\r\t\u00ad\u200b]| {2}/;
+// runs of white space and break hints, and in a markdown label emphasis and inline code too.
+const RE_SLOW = /[<&\\\n\r\t\u00ad\u200b]| {2}/;
+const RE_SLOW_MARKDOWN = /[<&*_`\\\n\r\t\u00ad\u200b]| {2}/;
 const RE_PLAIN_BREAK = /\\n|\r\n?|\n|<br\s*\/?>/i;
 const RE_SPACES = /[ \t]+/g;
 const SHY = '\u00ad';
@@ -92,7 +95,9 @@ export function layoutLabel(
 ): MeasuredLabel {
   const base = options.style ?? 0;
   const { ascent, lineHeight } = measurer.metrics(font);
-  const spans = options.inline?.extract(raw, font, measurer);
+  // A blank label has no lines, and so no inline boxes to look for.
+  const blank = raw.trim() === '';
+  const spans = blank ? undefined : options.inline?.extract(raw, font, measurer);
   const src = spans?.source ?? raw;
   let left = false;
   const box = (lines: Run[][], indents: number[], widths: number[]): MeasuredLabel => {
@@ -115,7 +120,8 @@ export function layoutLabel(
   if (text === '') return box([], [], []);
 
   const markdown = options.markdown === true;
-  if (!spans && !RE_SLOW.test(text) && !(markdown && RE_BULLET.test(text))) {
+  const slow = markdown ? RE_SLOW_MARKDOWN.test(text) || RE_BULLET.test(text) : RE_SLOW.test(text);
+  if (!spans && !slow) {
     const width = measurer.width(text, font, base);
     if (width <= maxWidth) return box([[run(text, base, width)]], [0], [width]);
   }
@@ -382,14 +388,17 @@ function lineWidth(runs: Run[]): number {
 
 /**
  * Greedy word wrap. Returns lines of pieces whose trimmed width fits `max` where possible. Each
- * word is measured once; the white space around it and single characters come from `small`.
+ * word is measured once, and so is the white space around it. The characters of a split word are
+ * measured one by one: the measurer answers repeats from its cache (single ASCII characters from
+ * a table, T2), so a label keeps no cache of its own.
  */
 function wrap(pieces: Piece[], font: FontKey, measurer: Measurer, max: number): Piece[][] {
   const out: Piece[][] = [];
   let current: Piece[] = [];
   let width = 0;
   const measure = (text: string, style: StyleBits): number => measurer.width(text, font, style);
-  const small = smallWidths(measure);
+  const small = (text: string, style: StyleBits): number =>
+    text === '' ? 0 : measure(text, style);
   const commit = (): void => {
     out.push(current);
     current = [];
@@ -435,11 +444,16 @@ function wrap(pieces: Piece[], font: FontKey, measurer: Measurer, max: number): 
       }
       if (width === 0 && lead + coreWidth > max) {
         part = split(part, style, small, max, out);
-        current.push({ text: part, style });
-        width += measure(part, style);
+        const rest = measure(part, style);
+        current.push({ text: part, style, measured: { text: part, width: rest } });
+        width += rest;
         continue;
       }
-      current.push({ text: part, style });
+      current.push(
+        core === ''
+          ? { text: part, style }
+          : { text: part, style, measured: { text: core, width: coreWidth } }
+      );
       width += lead + coreWidth + trail;
     }
   }
@@ -448,19 +462,6 @@ function wrap(pieces: Piece[], font: FontKey, measurer: Measurer, max: number): 
 }
 
 type Width = (text: string, style: StyleBits) => number;
-
-/** Widths of short strings that repeat within a label (spaces, single characters), per style. */
-function smallWidths(measure: Width): Width {
-  const byStyle = new Map<StyleBits, Map<string, number>>();
-  return (text, style) => {
-    if (text === '') return 0;
-    let widths = byStyle.get(style);
-    if (!widths) byStyle.set(style, (widths = new Map<string, number>()));
-    let w = widths.get(text);
-    if (w === undefined) widths.set(text, (w = measure(text, style)));
-    return w;
-  };
-}
 
 /**
  * Splits a piece wider than the whole line at characters, pushing every full line to `out` and
@@ -492,7 +493,10 @@ function split(
   return chunk;
 }
 
-/** Merges same-style pieces, trims the line ends, resolves break hints and measures the runs. */
+/**
+ * Merges same-style pieces, trims the line ends, resolves break hints and measures the runs. A
+ * line of one piece whose text is what `wrap` measured keeps that width.
+ */
 function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measurer): Run[] {
   const merged: Piece[] = [];
   for (const piece of line) {
@@ -516,7 +520,9 @@ function finish(line: Piece[], broken: boolean, font: FontKey, measurer: Measure
     }
     const text = piece.text.replace(RE_HINTS, '');
     if (text === '') continue;
-    runs.push(run(text, piece.style, measurer.width(text, font, piece.style)));
+    const known = line.length === 1 && piece.measured?.text === text;
+    const width = known ? piece.measured!.width : measurer.width(text, font, piece.style);
+    runs.push(run(text, piece.style, width));
   }
   return runs;
 }
