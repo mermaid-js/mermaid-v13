@@ -8,8 +8,8 @@
  *
  * v12 bugs fixed on the way (D356): `max = min` draws every point at the centre (v12 wrote NaN,
  * `RADAR_EMPTY_RANGE`), a curve whose entry count is not the axis count is skipped with
- * `RADAR_CURVE_SKIPPED` (v12 skipped it silently), and a polygon graticule with no axes draws
- * no ring (v12 wrote `points=""`).
+ * `RADAR_CURVE_SKIPPED` (v12 skipped it silently), an entry past a double (Infinity) lands at
+ * its clamp, and a polygon graticule with no axes draws no ring (v12 wrote `points=""`).
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import type { AstId } from '@mermaid-js/core/parser-kit';
@@ -17,7 +17,7 @@ import { layoutLabel, type FontKey, type MeasuredLabel } from '@mermaid-js/core/
 import type { RadarModel } from '../model.ts';
 import { radarLayoutConfig, radarThemeNumber, type RadarLayoutConfig } from '../stand-ins.ts';
 import { closedRoundCurve, relativeRadius } from './curve.ts';
-import { MAX_TICKS, NORMAL_WEIGHT, RADAR_METRICS as m, RADAR_SLOTS } from './metrics.ts';
+import { MAX_TICKS, NORMAL_WEIGHT, RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
 import type {
   PlacedLabel,
   Point,
@@ -40,9 +40,39 @@ export const RADAR_EMPTY_RANGE = 'RADAR_EMPTY_RANGE';
 
 const TAU = 2 * Math.PI;
 
+/** The chart's polar frame (`:50-62`): spoke `i` of `n` at `angle(i)`, clockwise from 12 o'clock. */
+interface Frame {
+  readonly center: Point;
+  readonly radius: number;
+  /** The axis count. */
+  readonly n: number;
+  angle(i: number): number;
+  /** The point `r` from the centre along `angle`. */
+  toward(angle: number, r: number): Point;
+}
+
+function frameOf(config: RadarLayoutConfig, n: number): Frame {
+  const center: Point = {
+    x: config.marginLeft + config.width / 2,
+    y: config.marginTop + config.height / 2,
+  };
+  return {
+    center,
+    radius: Math.min(config.width, config.height) / 2,
+    n,
+    angle: (i) => (TAU * i) / n - Math.PI / 2,
+    toward: (angle, r) => ({
+      x: center.x + r * Math.cos(angle),
+      y: center.y + r * Math.sin(angle),
+    }),
+  };
+}
+
 /** Lays out a radar chart in px. */
 export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLayout {
-  const c = radarLayoutConfig(ctx.config.radar as Readonly<Record<string, unknown>> | undefined);
+  const config = radarLayoutConfig(
+    ctx.config.radar as Readonly<Record<string, unknown>> | undefined
+  );
   const family = ctx.theme.value('fontFamily');
   const font = (size: number): FontKey => ({ family, size, weight: NORMAL_WEIGHT });
   const fonts = {
@@ -56,47 +86,38 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
     graticule: radarThemeNumber('radarGraticuleStrokeWidth'),
   };
   const inline = ctx.inline ? { inline: ctx.inline } : {};
-  const measure = (text: string, f: FontKey): MeasuredLabel => {
+  const measure = (text: string, labelFont: FontKey): MeasuredLabel => {
     const md = markdownString(text);
     return md === undefined
-      ? layoutLabel(text, f, Infinity, ctx.measurer, inline)
-      : layoutLabel(md, f, Infinity, ctx.measurer, { ...inline, markdown: true });
+      ? layoutLabel(text, labelFont, Infinity, ctx.measurer, inline)
+      : layoutLabel(md, labelFont, Infinity, ctx.measurer, { ...inline, markdown: true });
   };
 
   // Measure first: axis labels, legend rows, the title.
-  const axisText = model.axes.map((a) => measure(a.label, fonts.axis));
-  const showLegend = model.options.showLegend;
-  const legendText = showLegend ? model.curves.map((cv) => measure(cv.label, fonts.legend)) : [];
+  const axisText = model.axes.map((axis) => measure(axis.label, fonts.axis));
+  const legendText = model.options.showLegend
+    ? model.curves.map((curve) => measure(curve.label, fonts.legend))
+    : [];
   const titleText = model.title === undefined ? undefined : measure(model.title, fonts.title);
 
-  // The frame (`:50-62`).
-  const center: Point = { x: c.marginLeft + c.width / 2, y: c.marginTop + c.height / 2 };
-  const radius = Math.min(c.width, c.height) / 2;
-  const n = model.axes.length;
-  const angle = (i: number): number => (TAU * i) / n - Math.PI / 2;
-  const toward = (a: number, r: number): Point => ({
-    x: center.x + r * Math.cos(a),
-    y: center.y + r * Math.sin(a),
-  });
-
+  const frame = frameOf(config, model.axes.length);
+  const { center, radius } = frame;
   const { graticule } = model.options;
   const ticks = ticksOf(model.options.ticks);
-  const rings = ringsOf(graticule, ticks, n, radius, angle, toward);
+  const rings = ringsOf(graticule, ticks, frame);
 
-  const axisLength = radius * c.axisScaleFactor;
-  const labelRadius = radius * c.axisLabelFactor + m.labelPad;
-  const spokes: RadarSpoke[] = model.axes.map((a, i) => {
-    const th = angle(i);
-    const cos = Math.cos(th);
-    const sin = Math.sin(th);
-    const textAnchor = side<RadarTextAnchor>(cos, 'start', 'end', 'middle');
-    const baseline = side<RadarBaseline>(sin, 'hanging', 'auto', 'central');
-    const anchor = toward(th, labelRadius);
+  const axisLength = radius * config.axisScaleFactor;
+  const labelRadius = radius * config.axisLabelFactor + RADAR_METRICS.labelPad;
+  const spokes: RadarSpoke[] = model.axes.map((axis, i) => {
+    const angle = frame.angle(i);
+    const textAnchor = side<RadarTextAnchor>(Math.cos(angle), 'start', 'end', 'middle');
+    const baseline = side<RadarBaseline>(Math.sin(angle), 'hanging', 'auto', 'central');
+    const anchor = frame.toward(angle, labelRadius);
     return {
       index: i,
-      ast: a.astId,
-      angle: th,
-      end: toward(th, axisLength),
+      ast: axis.astId,
+      angle,
+      end: frame.toward(angle, axisLength),
       anchor,
       textAnchor,
       baseline,
@@ -109,25 +130,25 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
   const max = model.options.max ?? largest(model);
   const skipped: AstId[] = [];
   const curves: RadarCurveLayout[] = [];
-  model.curves.forEach((cv, index) => {
-    if (n === 0 || cv.entries.length !== n) {
-      skipped.push(cv.astId);
+  model.curves.forEach((curve, index) => {
+    if (frame.n === 0 || curve.entries.length !== frame.n) {
+      skipped.push(curve.astId);
       return;
     }
-    const points = cv.entries.map((e, i) =>
-      toward(angle(i), relativeRadius(e.value, min, max, radius))
+    const points = curve.entries.map((entry, i) =>
+      frame.toward(frame.angle(i), relativeRadius(entry.value, min, max, radius))
     );
     curves.push({
       index,
-      ast: cv.astId,
+      ast: curve.astId,
       slot: index % RADAR_SLOTS,
       points,
-      segments: graticule === 'circle' ? closedRoundCurve(points, c.curveTension) : [],
+      segments: graticule === 'circle' ? closedRoundCurve(points, config.curveTension) : [],
     });
   });
-  warnings(model, curves, skipped, min, max, ctx.warn);
+  if (ctx.warn) warnAbout({ axes: frame.n, curves, skipped, min, max }, ctx.warn);
 
-  const legend = legendOf(model, legendText, c, center);
+  const legend = legendOf(model, legendText, config, center);
   // The title (`:41-45`): middle-anchored at the canvas top, `hanging`.
   const title = titleText && placeAt(titleText, { x: center.x, y: 0 }, 'middle', 'hanging');
 
@@ -135,29 +156,29 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
   box.add({
     x: 0,
     y: 0,
-    width: c.width + c.marginLeft + c.marginRight,
-    height: c.height + c.marginTop + c.marginBottom,
+    width: config.width + config.marginLeft + config.marginRight,
+    height: config.height + config.marginTop + config.marginBottom,
   });
-  const g = strokes.graticule / 2;
-  for (const r of rings)
-    if (r.points.length === 0) box.circle(center, r.radius + g);
-    else for (const p of r.points) box.circle(p, g);
-  for (const s of spokes) {
-    box.circle(center, strokes.axis / 2);
-    box.circle(s.end, strokes.axis / 2);
-    box.add(s.label);
+  const ringStroke = strokes.graticule / 2;
+  for (const ring of rings)
+    if (ring.points.length === 0) box.addDisc(center, ring.radius + ringStroke);
+    else for (const corner of ring.points) box.addDisc(corner, ringStroke);
+  for (const spoke of spokes) {
+    box.addDisc(center, strokes.axis / 2);
+    box.addDisc(spoke.end, strokes.axis / 2);
+    box.add(spoke.label);
   }
   // A Bézier segment stays inside the hull of its control points.
-  for (const cv of curves) {
-    for (const p of cv.points) box.circle(p, strokes.curve / 2);
-    for (const s of cv.segments) {
-      box.circle(s.c1, strokes.curve / 2);
-      box.circle(s.c2, strokes.curve / 2);
+  for (const curve of curves) {
+    for (const point of curve.points) box.addDisc(point, strokes.curve / 2);
+    for (const segment of curve.segments) {
+      box.addDisc(segment.c1, strokes.curve / 2);
+      box.addDisc(segment.c2, strokes.curve / 2);
     }
   }
-  for (const r of legend) {
-    box.add(r.swatch);
-    box.add(r.label);
+  for (const row of legend) {
+    box.add(row.swatch);
+    box.add(row.label);
   }
   if (title) box.add(title);
 
@@ -181,26 +202,21 @@ export function layoutRadar(model: RadarModel, ctx: RadarLayoutContext): RadarLa
   };
 }
 
-/** The ticks to draw rings for: v12's value, at most 32, and none for a value under 0 or NaN. */
+/** The ticks to draw rings for: v12's value, at most 32 (Infinity too), none under 0 or NaN. */
 function ticksOf(ticks: number): number {
-  return Number.isFinite(ticks) && ticks > 0 ? Math.min(ticks, MAX_TICKS) : 0;
+  return ticks > 0 ? Math.min(ticks, MAX_TICKS) : 0;
 }
 
 /** v12 `drawGraticule` (`:64-93`): ring `k` (1…⌈ticks⌉) at `radius · k / ticks`. */
-function ringsOf(
-  graticule: 'circle' | 'polygon',
-  ticks: number,
-  n: number,
-  radius: number,
-  angle: (i: number) => number,
-  toward: (a: number, r: number) => Point
-): RadarRing[] {
-  if (graticule === 'polygon' && n === 0) return [];
+function ringsOf(graticule: 'circle' | 'polygon', ticks: number, frame: Frame): RadarRing[] {
+  if (graticule === 'polygon' && frame.n === 0) return [];
   const rings: RadarRing[] = [];
   for (let k = 1; k <= Math.ceil(ticks); k++) {
-    const r = (radius * k) / ticks;
+    const r = (frame.radius * k) / ticks;
     const points =
-      graticule === 'circle' ? [] : Array.from({ length: n }, (_, i) => toward(angle(i), r));
+      graticule === 'circle'
+        ? []
+        : Array.from({ length: frame.n }, (_, i) => frame.toward(frame.angle(i), r));
     rings.push({ radius: r, points });
   }
   return rings;
@@ -209,32 +225,34 @@ function ringsOf(
 /** The largest entry of any curve (v12 `Math.max` over all curves); 0 when there is none. */
 function largest(model: RadarModel): number {
   let max = -Infinity;
-  for (const cv of model.curves) for (const e of cv.entries) if (e.value > max) max = e.value;
+  for (const curve of model.curves)
+    for (const entry of curve.entries) if (entry.value > max) max = entry.value;
   return max === -Infinity ? 0 : max;
 }
 
+/** What the layout warns about. */
+interface Findings {
+  readonly axes: number;
+  readonly curves: readonly RadarCurveLayout[];
+  readonly skipped: readonly AstId[];
+  readonly min: number;
+  readonly max: number;
+}
+
 /** One warning per kind per render (D356), naming every curve it is about. */
-function warnings(
-  model: RadarModel,
-  curves: readonly RadarCurveLayout[],
-  skipped: readonly AstId[],
-  min: number,
-  max: number,
-  warn: ((w: Warning) => void) | undefined
-): void {
-  if (!warn) return;
-  const n = model.axes.length;
+function warnAbout(found: Findings, warn: (w: Warning) => void): void {
+  const { axes, curves, skipped, min, max } = found;
   if (skipped.length > 0)
     warn({
       code: RADAR_CURVE_SKIPPED,
-      message: `Left out ${skipped.length === 1 ? 'a curve' : `${skipped.length} curves`} whose entry count is not the axis count (${n})`,
+      message: `Left out ${skipped.length === 1 ? 'a curve' : `${skipped.length} curves`} whose entry count is not the axis count (${axes})`,
       astIds: skipped,
     });
   if (max === min && curves.length > 0)
     warn({
       code: RADAR_EMPTY_RANGE,
       message: `max and min are both ${max}: every curve is drawn at the centre`,
-      astIds: curves.map((cv) => cv.ast),
+      astIds: curves.map((curve) => curve.ast),
     });
 }
 
@@ -246,30 +264,30 @@ function warnings(
 function legendOf(
   model: RadarModel,
   text: readonly MeasuredLabel[],
-  c: RadarLayoutConfig,
+  config: RadarLayoutConfig,
   center: Point
 ): RadarLegendRow[] {
-  const box = radarThemeNumber('radarLegendBoxSize');
-  const x = center.x + m.legendFactor * (c.width / 2 + c.marginRight);
-  let y = center.y - m.legendFactor * (c.height / 2 + c.marginTop);
-  return text.map((t, index) => {
-    const cv = model.curves[index]!;
+  const { legendFactor, legendTextX, legendRow } = RADAR_METRICS;
+  const size = radarThemeNumber('radarLegendBoxSize');
+  const x = center.x + legendFactor * (config.width / 2 + config.marginRight);
+  let y = center.y - legendFactor * (config.height / 2 + config.marginTop);
+  return text.map((label, index) => {
     const row: RadarLegendRow = {
       index,
-      ast: cv.astId,
+      ast: model.curves[index]!.astId,
       slot: index % RADAR_SLOTS,
-      swatch: { x, y, width: box, height: box },
-      label: { x: x + m.legendTextX, y, width: t.width, height: t.height, text: t },
+      swatch: { x, y, width: size, height: size },
+      label: { x: x + legendTextX, y, width: label.width, height: label.height, text: label },
     };
-    y += m.legendRow + extraLines(t);
+    y += legendRow + extraLines(label);
     return row;
   });
 }
 
 /** v12's three-way choice by `cos θ` or `sin θ` (`:116-117`), with its ±0.01 dead band. */
 function side<T>(v: number, positive: T, negative: T, near: T): T {
-  if (v > m.anchorThreshold) return positive;
-  if (v < -m.anchorThreshold) return negative;
+  if (v > RADAR_METRICS.anchorThreshold) return positive;
+  if (v < -RADAR_METRICS.anchorThreshold) return negative;
   return near;
 }
 
@@ -320,8 +338,9 @@ class Box {
     this.x1 = Math.max(this.x1, r.x + r.width);
     this.y1 = Math.max(this.y1, r.y + r.height);
   }
-  circle(c: Point, r: number): void {
-    this.add({ x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r });
+  /** The square around the disc of radius `r` about `center`. */
+  addDisc(center: Point, r: number): void {
+    this.add({ x: center.x - r, y: center.y - r, width: 2 * r, height: 2 * r });
   }
   rect(): Rect {
     return { x: this.x0, y: this.y0, width: this.x1 - this.x0, height: this.y1 - this.y0 };

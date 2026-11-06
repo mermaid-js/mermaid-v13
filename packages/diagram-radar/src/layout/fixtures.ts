@@ -130,6 +130,13 @@ export const FIXTURES: Readonly<Record<string, RadarModel>> = {
     {},
     { title: 'A title far longer than the six hundred px wide canvas that v12 drew it on, centred' }
   ),
+  // A 309-digit entry parses to Infinity (D356: never NaN): without `max` the range is
+  // [0, Infinity], so it lands on the radius and every finite value at the centre…
+  infinite: model(abc, [curve('c1', [1, Infinity, 3]), curve('c2', [Infinity, 2, 1])]),
+  // …and with `max` it clamps to the radius.
+  infiniteMax: model(abc, [curve('c1', [1, Infinity, 3])], { max: 4 }),
+  // A 309-digit `max` and `min`: an empty range at Infinity draws at the centre.
+  infiniteRange: model(abc, [curve('c1', [1, 2, 3])], { max: Infinity, min: Infinity }),
   // Huge values: no overflow.
   huge: model(abc, [curve('c1', [1e308, 1.5e308, 1.7e308])]),
 };

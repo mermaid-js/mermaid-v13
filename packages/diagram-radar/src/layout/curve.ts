@@ -25,11 +25,16 @@ export function closedRoundCurve(points: readonly Point[], tension: number): Cub
 
 /**
  * v12's `relativeRadius` (`renderer.ts:175-183`): `value` clamped to `[min, max]`, scaled to
- * `[0, radius]`. An empty range (`max = min`) is the centre, where v12 gave NaN (D356).
+ * `[0, radius]`. Never NaN (D356): an empty range (`max = min`, v12's NaN) is the centre; a value
+ * at an end of the range lands there, so a 309-digit entry (Infinity) at an Infinity `max` is on
+ * the radius; a share past a double (a finite value over an Infinity range) is the centre.
  */
 export function relativeRadius(value: number, min: number, max: number, radius: number): number {
-  if (max === min) return 0;
+  if (!(max > min || max < min)) return 0;
   const clipped = Math.min(Math.max(value, min), max);
-  // Divided first, so huge values do not overflow (D356: never NaN).
-  return radius * ((clipped - min) / (max - min));
+  if (clipped === max) return radius;
+  if (clipped === min) return 0;
+  // Divided first, so huge values do not overflow.
+  const share = (clipped - min) / (max - min);
+  return Number.isFinite(share) ? radius * share : 0;
 }

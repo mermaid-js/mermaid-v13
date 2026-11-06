@@ -5,7 +5,7 @@
  * corpus spec.
  */
 import type { RadarModel } from '../model.ts';
-import { MAX_TICKS, RADAR_METRICS as m, RADAR_SLOTS as SLOTS } from './metrics.ts';
+import { MAX_TICKS, RADAR_METRICS, RADAR_SLOTS } from './metrics.ts';
 import type { Point, RadarLayout, Rect } from './types.ts';
 
 /** Float tolerance of the checks, relative to the chart's size. */
@@ -14,7 +14,14 @@ const TAU = 2 * Math.PI;
 
 export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): string[] {
   const out: string[] = [];
-  finite(layout, 'layout', out);
+  // Geometry is finite; the range may be Infinity (a 309-digit entry), never NaN (D356).
+  const { min, max, ...geometry } = layout;
+  finite(geometry, 'layout', out);
+  for (const [name, v] of [
+    ['min', min],
+    ['max', max],
+  ] as const)
+    if (Number.isNaN(v)) out.push(`layout.${name} is NaN`);
   const { center, radius, spokes, rings, curves, legend } = layout;
   const n = model.axes.length;
   const tol = EPS * Math.max(1, radius);
@@ -32,8 +39,8 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
       out.push(`spoke ${i}'s label anchor is not ${layout.labelRadius} along its angle`);
     const cos = Math.cos(s.angle);
     let want = 'middle';
-    if (cos > m.anchorThreshold) want = 'start';
-    else if (cos < -m.anchorThreshold) want = 'end';
+    if (cos > RADAR_METRICS.anchorThreshold) want = 'start';
+    else if (cos < -RADAR_METRICS.anchorThreshold) want = 'end';
     if (s.textAnchor !== want) out.push(`spoke ${i}'s label is anchored ${s.textAnchor}`);
   });
 
@@ -61,7 +68,7 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
   if (drawn.join() !== drawable.join())
     out.push(`drawn curves ${drawn.join()} for drawable curves ${drawable.join()}`);
   for (const c of curves) {
-    if (c.slot !== c.index % SLOTS) out.push(`curve ${c.index} has slot ${c.slot}`);
+    if (c.slot !== c.index % RADAR_SLOTS) out.push(`curve ${c.index} has slot ${c.slot}`);
     c.points.forEach((p, i) => {
       const r = dist(p);
       if (r > radius + tol) out.push(`curve ${c.index}, point ${i} is past the radius`);
@@ -83,10 +90,11 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
   if (legend.length !== rows) out.push(`${legend.length} legend rows for ${rows} curves`);
   legend.forEach((r, i) => {
     if (r.index !== i) out.push(`legend row ${i} is curve ${r.index}`);
-    if (r.slot !== i % SLOTS) out.push(`legend row ${i} has slot ${r.slot}`);
+    if (r.slot !== i % RADAR_SLOTS) out.push(`legend row ${i} has slot ${r.slot}`);
     const prev = legend[i - 1];
     if (!prev) return;
-    const step = m.legendRow + Math.max(0, prev.label.height - prev.label.text.lineHeight);
+    const step =
+      RADAR_METRICS.legendRow + Math.max(0, prev.label.height - prev.label.text.lineHeight);
     if (Math.abs(r.swatch.y - prev.swatch.y - step) > tol || r.swatch.x !== prev.swatch.x)
       out.push(`legend rows ${i - 1} and ${i} are not ${step} px apart`);
   });
@@ -102,7 +110,7 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
     )
       out.push(`${what} is outside the bounds`);
   };
-  const disc = (c: Point, r: number): Rect => ({
+  const discBox = (c: Point, r: number): Rect => ({
     x: c.x - r,
     y: c.y - r,
     width: 2 * r,
@@ -110,18 +118,18 @@ export function radarLayoutViolations(model: RadarModel, layout: RadarLayout): s
   });
   const { axis, curve, graticule } = layout.strokes;
   rings.forEach((r, i) => {
-    if (r.points.length === 0) inside(disc(center, r.radius + graticule / 2), `ring ${i + 1}`);
-    r.points.forEach((p, j) => inside(disc(p, graticule / 2), `ring ${i + 1}, corner ${j}`));
+    if (r.points.length === 0) inside(discBox(center, r.radius + graticule / 2), `ring ${i + 1}`);
+    r.points.forEach((p, j) => inside(discBox(p, graticule / 2), `ring ${i + 1}, corner ${j}`));
   });
   for (const s of spokes) {
-    inside(disc(s.end, axis / 2), `spoke ${s.index}`);
+    inside(discBox(s.end, axis / 2), `spoke ${s.index}`);
     inside(s.label, `spoke ${s.index}'s label`);
   }
   for (const c of curves) {
-    c.points.forEach((p, i) => inside(disc(p, curve / 2), `curve ${c.index}, point ${i}`));
+    c.points.forEach((p, i) => inside(discBox(p, curve / 2), `curve ${c.index}, point ${i}`));
     c.segments.forEach((s, i) => {
-      inside(disc(s.c1, curve / 2), `curve ${c.index}, segment ${i}`);
-      inside(disc(s.c2, curve / 2), `curve ${c.index}, segment ${i}`);
+      inside(discBox(s.c1, curve / 2), `curve ${c.index}, segment ${i}`);
+      inside(discBox(s.c2, curve / 2), `curve ${c.index}, segment ${i}`);
     });
   }
   for (const r of legend) {

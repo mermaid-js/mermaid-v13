@@ -295,3 +295,31 @@ describe('radar layout: bounds (D354)', () => {
     expect(b.height).toBeCloseTo(801);
   });
 });
+
+describe('radar layout: an entry past a double (309+ digits, D356)', () => {
+  const radii = (l: RadarLayout, i: number): number[] =>
+    l.curves[i]!.points.map((p) => Math.hypot(p.x - 350, p.y - 350));
+
+  it('without max: Infinity on the radius, finite values at the centre, never NaN', () => {
+    const l = lay(FIXTURES.infinite!);
+    expect(l.max).toBe(Infinity);
+    expect(radii(l, 0)).toEqual([0, 300, 0]);
+    expect(radii(l, 1)).toEqual([300, 0, 0]);
+  });
+
+  it('with max: Infinity clamps to the radius', () => {
+    const r = radii(lay(FIXTURES.infiniteMax!), 0);
+    expect(r[0]).toBeCloseTo(75);
+    expect(r[1]).toBeCloseTo(300);
+  });
+
+  it('max = min = Infinity: the centre, with RADAR_EMPTY_RANGE', () => {
+    const warnings: Warning[] = [];
+    expect(radii(lay(FIXTURES.infiniteRange!, {}, warnings), 0)).toEqual([0, 0, 0]);
+    expect(warnings.map((w) => w.code)).toEqual(['RADAR_EMPTY_RANGE']);
+  });
+
+  it('ticks past a double draw 32 rings', () => {
+    expect(lay(model(abc, [], { ticks: Infinity })).rings).toHaveLength(32);
+  });
+});
