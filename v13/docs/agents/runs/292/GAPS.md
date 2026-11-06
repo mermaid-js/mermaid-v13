@@ -62,3 +62,6 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - [x] Drop the `gitgraph` exemption in `tools/gen-config/src/theme-used-by.spec.ts` ("reads at least one variable"), added by #368. Done in #371: the layout reads `fontFamily`, `fontSize`, `fontWeight`, `strokeWidth`, `commitLabelFontSize`, `tagLabelFontSize` (their `usedBy` lists `gitgraph`). T4 adds `gitgraph` to what the renderer reads; T5 to the geometry variables (the scan sees the `GIT_GEOMETRY` names once they exist).
 
 ## #374 T5 integration
+- [ ] From #372 (`tickets/372.md`): adapter highlighter rows (`LEZER_HIGHLIGHTERS`, `MONARCH_HIGHLIGHTERS`), adapter `gen`, `adapters-agree.spec.ts` and first-paint e2e cases once `FirstPartyFacetId` has `gitGraph`; drop the test-only unlisted-facet row and the eager row in `service-symbols.spec.ts`; make the package public and add `@mermaid-js/diagram-gitgraph` as a language-service peer (now a devDependency only, `workspace-release.spec.ts`).
+- [ ] From #369/#371: add T3's geometry variables to core (`tickets/371.md` table; neo takes classic, D266) in the vocabulary pattern, with any new core table in a pure call; measure both core gates.
+- [ ] Mention under "For the maintainer": gitGraph's theme rows move in the Theme T0 (D322).
