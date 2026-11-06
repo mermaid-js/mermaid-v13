@@ -60,6 +60,12 @@ const neo: ThemeSpec = {
   values: {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#ececfe #e9e9f1 #feecfd #f1e9f0 #ecfefd #e9f1f0 #feeeec #f1eae9'),
+    // gantt (#381): v12 theme-neo derives these from its own `#ECECFE`, not `primaryColor`;
+    // `vertLineColor` is v12's `primaryBorderColor` (`hsl(0, 0%, 70%)`).
+    sectionBkgColor2: '#ececfe',
+    taskBkgColor: '#ececfe',
+    activeTaskBorderColor: '#ececfe',
+    vertLineColor: '#b3b3b3',
     // v12 `drop-shadow( 0px 1px 2px rgba(0, 0, 0, 0.25));`, normalised for `checkFilter`.
     dropShadow: 'drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))',
     mainBkg: '#ffffff',
