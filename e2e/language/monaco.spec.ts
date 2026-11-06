@@ -244,6 +244,7 @@ const TYPE_DOCS: Record<string, string> = {
   journey: 'journey\n  section Go to work\n  Make tea: 5: Me\n',
   quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
+  gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
   pie: 'pie\n  "Dogs" : 386\n',
   gantt: 'gantt\n  section Build\n  Code :a1, 2024-01-01, 3d\n',
 };

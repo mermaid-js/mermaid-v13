@@ -1,0 +1,10 @@
+gitGraph
+  commit id:"A"
+  branch "A"
+  commit id:"B"
+  checkout main
+  merge A id:"M"
+  checkout A
+  cherry-pick id:"|A"
+  cherry-pick id:"M" parent:"B"
+  cherry-pick id:"M|" parent:"B"

@@ -3,7 +3,7 @@
  * derived values a v12 theme hard-codes, and rules that override the shared derivation
  * table. Built-in specs live in `specs/`, one lazily imported file each.
  */
-import { fillTypes } from './specs/palettes.ts';
+import { BASE_SECONDARY, fillTypes } from './specs/palettes.ts';
 import type { BaseVariable, PaletteVariable, TokenVariable } from './vocabulary.ts';
 
 /** Derivation rules by variable name, in the DSL of `dsl.ts`. */
@@ -127,6 +127,14 @@ export const LIGHT_RULES: ThemeRuleTable = {
   quadrantInternalBorderStrokeFill: 'primaryBorderColor',
   quadrantExternalBorderStrokeFill: 'primaryBorderColor',
   quadrantTitleFill: 'primaryTextColor',
+  // gitGraph labels, as v12 theme-base derives them (D267); the built-in themes set their own
+  // commit label and border rules (`gitLabelRules`). An author's `tagBorder` fills
+  // `tagLabelBorder` unless the author sets that too.
+  commitLabelColor: `ifSet(secondaryTextColor, invert(${BASE_SECONDARY}))`,
+  commitLabelBackground: BASE_SECONDARY,
+  tagLabelColor: 'primaryTextColor',
+  tagLabelBackground: 'primaryColor',
+  tagLabelBorder: 'ifSet(tagBorder, primaryBorderColor)',
   // gantt (#381, #385): v12 theme-base's derivation, from shared variables and literals only
   // (D331); no theme spec names a gantt variable. `vertLineColor` is the redux family's
   // `primaryBorderColor` (v12 theme-base: navy). Values only a per-theme literal could give are

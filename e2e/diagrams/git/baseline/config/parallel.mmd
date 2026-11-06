@@ -1,0 +1,19 @@
+---
+config:
+  theme: redux-color
+  gitGraph:
+    parallelCommits: true
+description: parallelCommits, so branches run side by side
+---
+gitGraph
+  commit id: "1"
+  branch a
+  commit id: "a1"
+  commit id: "a2"
+  checkout main
+  branch b
+  commit id: "b1"
+  checkout main
+  commit id: "2"
+  merge a id: "3"
+  merge b id: "4"

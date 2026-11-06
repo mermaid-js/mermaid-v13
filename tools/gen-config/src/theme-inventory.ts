@@ -9,12 +9,13 @@ import {
   DARK_RULES,
   LIGHT_RULES,
   NUMBERED_PALETTES,
-  PALETTE_LIMIT,
+  PALETTE_LIMITS,
   PALETTE_VARIABLES,
   THEME_NAMES,
   THEME_VARIABLES,
   TOKEN_VARIABLES,
   loadTheme,
+  type NumberedPalette,
 } from '../../../packages/core/src/theme/index.ts';
 
 export const INVENTORY_PATH = fileURLToPath(
@@ -80,8 +81,8 @@ export async function themeInventory(): Promise<string> {
     return '| ' + cells.join(' | ').replace(/ {2}/g, ' ') + ' |';
   });
   const palettes = PALETTE_VARIABLES.map((name) => {
-    const names = NUMBERED_PALETTES.includes(name as (typeof NUMBERED_PALETTES)[number])
-      ? `${code(name)}, ${code(name + '0')}–${code(name + String(PALETTE_LIMIT - 1))}`
+    const names = NUMBERED_PALETTES.includes(name as NumberedPalette)
+      ? `${code(name)}, ${code(name + '0')}–${code(name + String(PALETTE_LIMITS[name as NumberedPalette] - 1))}`
       : code(name);
     const carriers = specs.filter((s) => (s.palettes?.[name]?.length ?? 0) > 0);
     const setBy = carriers.length === specs.length ? 'all' : carriers.map((s) => s.name).join(', ');

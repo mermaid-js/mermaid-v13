@@ -204,6 +204,7 @@ export default tseslint.config(
       'packages/diagram-timeline/src/v12-specs/**',
       'packages/diagram-gantt/src/v12-specs/*.spec.ts',
       'packages/diagram-pie/src/v12-specs/*.spec.ts',
+      'packages/diagram-gitgraph/src/v12-specs/*.spec.ts',
     ],
     rules: {
       '@eslint-community/eslint-comments/disable-enable-pair': 'off',

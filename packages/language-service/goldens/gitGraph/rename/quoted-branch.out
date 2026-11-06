@@ -1,0 +1,9 @@
+@ 7:14  merge "my f|eature"
+  prepare: 7:10-7:20 "my feature"; rename to "login work":
+  %% rename-to: login work
+  gitGraph
+    commit
+    branch "login work"
+    commit
+    checkout main
+    merge "login work"

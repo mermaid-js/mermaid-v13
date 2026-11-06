@@ -1,0 +1,4 @@
+@ 1:10  gitGraph |
+  LR: constant (left to right) 1:10-1:10 "" -> "LR:"
+  TB: constant (top to bottom) 1:10-1:10 "" -> "TB:"
+  BT: constant (bottom to top) 1:10-1:10 "" -> "BT:"

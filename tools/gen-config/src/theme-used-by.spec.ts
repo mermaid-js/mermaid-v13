@@ -59,6 +59,7 @@ describe('theme vocabulary usedBy (#207)', () => {
       'er',
       'flowchart',
       'gantt',
+      'gitgraph',
       'journey',
       'pie',
       'quadrant',

@@ -71,7 +71,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     formats: ['svg'],
     load: () => import('@mermaid-js/diagram-timeline').then((m) => m.timeline),
   },
-  { type: 'gitGraph', pattern: /^\s*gitGraph/ },
+  {
+    type: 'gitGraph',
+    pattern: /^\s*gitGraph/,
+    id: 'gitGraph',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-gitgraph').then((m) => m.gitGraph),
+  },
   {
     type: 'stateDiagram',
     pattern: /^\s*stateDiagram/,

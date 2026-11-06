@@ -41,6 +41,11 @@ const PACKAGES = [
     renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts'],
   },
   {
+    name: 'gitGraph',
+    dir: 'diagram-gitgraph',
+    renderer: ['render/', 'layout/', 'plugin.ts', 'index.ts', 'model.ts'],
+  },
+  {
     name: 'gantt',
     dir: 'diagram-gantt',
     renderer: ['schedule/', 'layout/', 'render/', 'dates/', 'plugin.ts', 'index.ts'],

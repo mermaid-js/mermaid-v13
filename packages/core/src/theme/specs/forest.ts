@@ -3,13 +3,21 @@
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
 import { fillTypes, paletteSlots, pieSlots } from './palettes.ts';
-import { darkenedScale, hueSources } from './scales.ts';
+import {
+  classicGitLabels,
+  darkenedScale,
+  gitLabelRules,
+  gitPalettes,
+  gitSources,
+  hueSources,
+} from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
   CLASSIC_PADDING,
   CLASSIC_SEQUENCE,
   CLASSIC_TIMELINE,
+  CLASSIC_GITGRAPH,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -28,6 +36,12 @@ const PIE_FOREST: ThemeRuleTable = pieSlots([
   '#63301a',
   '#1a4d63',
 ]);
+
+const GIT = gitSources(
+  'primaryColor',
+  'secondaryColor',
+  'ifSet(tertiaryColor, lightenHsl(#cde498, 10%))'
+);
 
 const theme: ThemeSpec = {
   name: 'forest',
@@ -56,10 +70,15 @@ const theme: ThemeSpec = {
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
     ...CLASSIC_TIMELINE,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
-  rules: { rowEven: 'lightenHsl(mainBkg, 20%)', ...PIE_FOREST },
+  rules: {
+    rowEven: 'lightenHsl(mainBkg, 20%)',
+    ...PIE_FOREST,
+    ...gitLabelRules('#32004d', '#abb594'),
+  },
   values: {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#cde498 #cdffb2 #98e4b4 #b2ffe9 #e4aa98 #ffdfb2 #98c3e4 #b2c3ff'),
@@ -99,6 +118,13 @@ const theme: ThemeSpec = {
     ),
     // v12 sets labelTextColor to actorTextColor before the labels.
     cScaleLabel: paletteSlots(() => 'actorTextColor'),
+    // v12: git darkened by 25 (lightened under darkMode), labels 0 and 3 inverted.
+    ...gitPalettes(GIT),
+    gitBranchLabel: classicGitLabels('actorTextColor'),
+  },
+  darkModePalettes: {
+    ...gitPalettes(GIT, 'lightenHsl'),
+    gitBranchLabel: classicGitLabels('actorTextColor'),
   },
 };
 

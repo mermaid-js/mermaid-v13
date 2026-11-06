@@ -40,6 +40,7 @@ const DOCS = {
   pie: 'pie\n  "Dogs" : 386\n',
   quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
   gantt: 'gantt\n  section Build\n  Code :crit, a1, 2024-01-01, 3d\n',
+  gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -49,6 +50,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'er',
       'flowchart',
       'gantt',
+      'gitGraph',
       'journey',
       'pie',
       'quadrantChart',
