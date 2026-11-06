@@ -42,6 +42,7 @@ describe('completion', () => {
       'swimlane-beta',
       'classDiagram',
       'erDiagram',
+      'pie',
       'sequenceDiagram',
       'timeline',
       'timeline LR',

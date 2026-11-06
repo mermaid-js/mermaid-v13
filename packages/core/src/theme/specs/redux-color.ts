@@ -8,6 +8,7 @@ import type { ThemeSpec } from '../spec.ts';
 import {
   INVERTED_SCALE,
   LABEL_SCALE,
+  pieSlots,
   TAILWIND_300,
   TAILWIND_400,
   TAILWIND_50,
@@ -18,6 +19,8 @@ const theme: ThemeSpec = {
   ...redux,
   name: 'redux-color',
   // v12 draws ER edge labels on `erEdgeLabelBackground` in the colour themes only.
+  // v12 `pie<i+1> ||= cScale<i>`: the Tailwind-300 set.
+  rules: { ...redux.rules, ...pieSlots(TAILWIND_300) },
   values: { ...redux.values, erEdgeLabelBackground: '#ffffff' },
   palettes: {
     borderColorArray: TAILWIND_400,

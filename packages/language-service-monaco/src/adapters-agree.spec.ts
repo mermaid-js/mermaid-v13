@@ -118,6 +118,18 @@ const DOCS: Readonly<Record<string, string>> = {
     '         : Orkut',
     '',
   ].join('\n'),
+  pie: [
+    'pie showData',
+    '  title Pets adopted',
+    '  accDescr {',
+    '    Pets adopted',
+    '    by volunteers',
+    '  }',
+    '  %% counted in May',
+    '  "Dogs" : 386',
+    "  'Cats' : 85.5",
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */

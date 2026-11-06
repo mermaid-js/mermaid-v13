@@ -1,8 +1,8 @@
 /**
  * `neutral`: v12 `theme-neutral.js`, greys for print.
  */
-import type { ThemeSpec } from '../spec.ts';
-import { INVERTED_SCALE, paletteSlots } from './palettes.ts';
+import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
+import { INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
 import { darkModeLabels } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
@@ -12,6 +12,27 @@ import {
   CLASSIC_TIMELINE,
   TEXT_SIZES,
 } from './geometry.ts';
+
+/** v12 `theme-neutral.js`: `pie<i>` is `cScale<i>`, `pie12` is `cScale0`. */
+const PIE_NEUTRAL: ThemeRuleTable = {
+  ...pieSlots([
+    '#f4f4f4',
+    '#555555',
+    '#bbbbbb',
+    '#777777',
+    '#999999',
+    '#dddddd',
+    '#ffffff',
+    '#dddddd',
+    '#bbbbbb',
+    '#999999',
+    '#777777',
+    '#555555',
+  ]),
+  // v12 titles and legends: `taskTextDarkColor` (or `mainContrastColor`).
+  pieTitleTextColor: '#333333',
+  pieLegendTextColor: '#333333',
+};
 
 const theme: ThemeSpec = {
   name: 'neutral',
@@ -42,6 +63,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_TIMELINE,
     useGradient: false,
   },
+  rules: PIE_NEUTRAL,
   values: {
     altBackground: '#f4f4f4', // v12 (#192)
     // sequence (v12 theme-neutral.js: actorBorder is lighten(border1, 23))

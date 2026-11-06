@@ -19,6 +19,7 @@ import {
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
+import { PIE_REDUX_DARK } from './redux-dark-values.ts';
 
 const neoDark: ThemeSpec = {
   name: 'neo-dark',
@@ -54,7 +55,7 @@ const neoDark: ThemeSpec = {
   },
   // As `neo`: v12 neo-dark sets `classText` from `textColor`, has no ER row fill of its own,
   // and the neo-look zero circle takes the node fill.
-  rules: REDUX_RULES,
+  rules: { ...REDUX_RULES, ...PIE_REDUX_DARK },
   values: {
     // v12 `drop-shadow( 1px 2px 2px rgba(185,185,185,0.2))`, normalised for `checkFilter`.
     dropShadow: 'drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))',

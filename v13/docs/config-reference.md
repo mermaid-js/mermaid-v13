@@ -73,7 +73,6 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 | `themeVariables.timelineScaleColors` | boolean \\| string |  | honoured (13.0.0) | `false` in the redux themes, `true` in the classic and neo themes (v12 `styles.js`, D227, D257). Read literally at render time, so it has no CSS variable. | `true`: timeline boxes take `cScale<n>` fills and `cScaleLabel<n>` text with a 3px `cScaleInv<n>` rule under each box, and the axis and connectors are `cScaleLabel11` at 4px and 2px. `false`: boxes take `mainBkg` (the `borderColorArray` slot when `bkgColorArray` is non-empty) with a `nodeBorder` outline at `strokeWidth` and the theme's `dropShadow`, `nodeBorder` text, and the axis and connectors are `nodeBorder` at `strokeWidth`. |
 | `themeCSS` | string |  | ignored (13.0.0) | v13 output carries no author stylesheet (R-SEC-2). Replacement: `themeVariables`, or `--mermaid-*` CSS variables set by the host page. |  |
 | `look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): the key is accepted and ignored, with one `LOOK_REMOVED` warning per render. The v12 neo and classic geometry is theme data instead: the redux themes, `neo` and `neo-dark` carry neo geometry and the classic themes carry classic geometry (D152, D181). Replacement: `theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8). | Defines which main look to use for the diagram. |
-| `handDrawnSeed` | number | `0` | pending |  | Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed. |
 | `layout` | string | `"layered"` | honoured (13.0.0) | The default changes from `elk` to `layered`, the built-in engine (DESIGN §6.1). The v12 value `dagre` stays valid and maps to `layered` silently. `elk` and `elk.<algorithm>` (and the `flowchart-elk` header) are laid out by `@mermaid-js/layout-elk` once it is registered; without it they draw with `layered` and add one `ELK_NOT_INSTALLED` warning (D173). Other engines come in through `registerLayoutLoaders` (R-LAYOUT-2), and an unknown name falls back to `layered` with a `LAYOUT_UNKNOWN` warning. Text output (`format: 'ascii'`) always lays out with `layered` and the cell profile, plugin or not: any other name gives one `ASCII_DROPPED` warning (`feature: 'layout'`) and nothing else, and its engine is never loaded (D179). | Defines which layout algorithm to use for rendering the diagram. Defaults to `layered`, the layout engine built into core (DESIGN §6.1). The v12 name `dagre` is still accepted and maps to `layered`. `elk` and `elk.<algorithm>` need an ELK layout plugin; without one they draw with `layered` and warn `ELK_NOT_INSTALLED`. Text output (`format: 'ascii'`) always uses `layered`. |
 | `maxTextSize` | number | `50000` | honoured (13.0.0) | Integrator-only. Sets the `maxSourceLength` render limit (R-SEC-5); an explicit `limits.maxSourceLength` wins. Over the limit, render() rejects with a `LIMIT` error instead of drawing a placeholder. | The maximum allowed size of the users text diagram |
 | `maxEdges` | integer | `5000` | honoured (13.0.0) | The default changes from 500 to 5,000 (D31): one `A & … --> B & …` line multiplies edges, and v13 draws 5,000 quickly. Integrator-only; it sets the `maxEdges` render limit (R-SEC-5); an explicit `limits.maxEdges` wins. Over the limit, render() rejects with a `LIMIT` error. | Defines the maximum number of edges that can be drawn in a graph. |
@@ -381,16 +380,16 @@ Keys not listed here produce an "unknown key" warning and are dropped from diagr
 
 | Key | Type | Default | Status | Notes | Description |
 | --- | --- | --- | --- | --- | --- |
-| `pie` | object |  | pending |  |  |
-| `pie.useWidth` | number |  | pending |  |  |
-| `pie.useMaxWidth` | boolean | `true` | pending |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
+| `pie` | object |  | honoured (13.0.0) |  |  |
+| `pie.useWidth` | number |  | ignored (13.0.0) | Only v12's gantt renderer read `useWidth`; the pie renderer never did. |  |
+| `pie.useMaxWidth` | boolean | `true` | honoured (13.0.0) |  | When this flag is set to `true`, the height and width is set to 100% and is then scaled with the available space. If set to `false`, the absolute space required is used. |
 | `pie.theme` | "default" \\| "base" \\| "dark" \\| "forest" \\| "neutral" \\| "neo" \\| "neo-dark" \\| "redux" \\| "redux-dark" \\| "redux-color" \\| "redux-dark-color" \\| "null" |  | pending |  | Theme, the CSS style sheet. You may also use `themeCSS` to override this value. |
 | `pie.look` | "classic" \\| "handDrawn" \\| "neo" |  | ignored (13.0.0) | `look` is removed (D153): ignored, with one `LOOK_REMOVED` warning per render, whatever the diagram section. Replacement: `theme`, or the geometry and `dropShadow` theme variables. | Defines which main look to use for the diagram. |
 | `pie.layout` | string |  | pending |  | Defines which layout algorithm to use for rendering the diagram. |
-| `pie.textPosition` | number | `0.75` | pending |  | Axial position of slice's label from zero at the center to 1 at the outside edges. |
-| `pie.donutHole` | number | `0` | pending |  | Donut hole ratio. Valid value are from 0 to 0.9. Default to 0. |
-| `pie.legendPosition` | "top" \\| "bottom" \\| "left" \\| "right" \\| "center" | `"right"` | pending |  | Legend's position relative to the chart. Default to right. |
-| `pie.highlightSlice` | string | `""` | pending |  | Highlight specific slice with matching label. Set to 'hover' to highlight hovered slice. |
+| `pie.textPosition` | number | `0.75` | honoured (13.0.0) |  | Axial position of slice's label from zero at the center to 1 at the outside edges. |
+| `pie.donutHole` | number | `0` | honoured (13.0.0) | As in v12, a value outside (0, 0.9] draws no hole. | Donut hole ratio. Valid value are from 0 to 0.9. Default to 0. |
+| `pie.legendPosition` | "top" \\| "bottom" \\| "left" \\| "right" \\| "center" | `"right"` | honoured (13.0.0) | As in v12; the bounding box now covers every legend row and label, where v12 clipped long legends (D224). | Legend's position relative to the chart. Default to right. |
+| `pie.highlightSlice` | string | `""` | honoured (13.0.0) | The slice with that label is drawn `scale(1.05)` at opacity 1, as v12's `highlighted` class (D222); the empty default highlights nothing. `hover` is accepted but draws nothing extra, with one `PIE_HOVER_IGNORED` warning, since the SVG has no hover styles (D6). | Highlight specific slice with matching label. Set to 'hover' to highlight hovered slice. |
 
 ## `quadrantChart`
 
@@ -960,3 +959,51 @@ Known only while `@mermaid-js/layout-elk` is registered.
 | `elk.considerModelOrder` | "NONE" \\| "NODES_AND_EDGES" \\| "PREFER_EDGES" \\| "PREFER_NODES" | `"NODES_AND_EDGES"` | honoured |  | Preserves the order of nodes and edges in the model file if this does not lead to additional edge crossings. Depending on the strategy this is not always possible since the node and edge order might be conflicting. |
 | `elk.keepEntryNodeOnTop` | boolean | `false` | honoured |  | Elk specific option that keeps the entry node of a recursive flow at the top of the layout. When a flow loops back on itself (a back-edge to an earlier node), ELK's degree-based cycle-breaking has no notion of an "entry point" and may rank the first-declared node in the middle, scrambling the reading order. When enabled, the entry node of each cyclic component is pinned to the first layer so the diagram still reads from its entry. Acyclic flows always have a natural source, so this has no effect on them. Only applies when the cyclic flow has no node without incoming edges: if the loop is fed from outside (e.g. a start node pointing into it), that component already has a natural source and nothing is pinned. Detection is also scoped per container, so cycles that cross a subgraph boundary are not detected. |
 | `elk.orientFeedbackEdges` | boolean | `true` | honoured |  | Routes an edge that re-enters a subgraph downstream instead of around the subgraph. ELK lays out a subgraph as one node of its parent graph. A node outside a subgraph that both receives an edge from it and sends one back into it therefore closes a cycle there, even when the nodes inside do not. ELK breaks that cycle by reversing one of the edges and routes it into the subgraph's input side, around the outside of the subgraph. When enabled, such edges are found before layout, on the graph with each subgraph collapsed, and handed to ELK in the other direction. The edge is drawn with its arrowhead at its real target. Cycles between plain nodes are left to `cycleBreakingStrategy`. |
+
+## `handDrawn` (plugin `@mermaid-js/plugin-hand-drawn`)
+
+Known only while `@mermaid-js/plugin-hand-drawn` is registered.
+Legacy alias: `look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `flowchart.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `swimlane.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `agentflow.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `sequence.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `gantt.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `journey.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `timeline.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `class.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `state.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `er.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `pie.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `quadrantChart.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `xyChart.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `requirement.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `architecture.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `mindmap.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `ishikawa.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `kanban.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `gitGraph.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `c4.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `sankey.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `packet.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `block.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `eventmodeling.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `treeView.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `radar.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `usecase.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `venn.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `wardley-beta.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `cynefin.look: "handDrawn"` sets `handDrawn`.
+Legacy alias: `railroad.look: "handDrawn"` sets `handDrawn`.
+
+| Key | Type | Default | Status | Notes | Description |
+| --- | --- | --- | --- | --- | --- |
+| `handDrawn` | boolean | `false` | honoured (13.0.0) |  | Draws the outlines of nodes, groups and edges hand-drawn, sketched by roughjs, in flowchart, class, state and ER diagrams. Other types draw as usual. The layout does not change: the sketch follows the outlines the plain drawing has. Text output is never sketched (one `ASCII_DROPPED` warning, `feature: 'handDrawn'`). v12's `look: handDrawn` sets it, at the top level or in a diagram section. |
+
+## `handDrawnSeed` (plugin `@mermaid-js/plugin-hand-drawn`)
+
+Known only while `@mermaid-js/plugin-hand-drawn` is registered.
+
+| Key | Type | Default | Status | Notes | Description |
+| --- | --- | --- | --- | --- | --- |
+| `handDrawnSeed` | number | `0` | honoured (13.0.0) | 0 is a fixed seed, not a random one (D300). | The seed of the hand-drawn sketch. Every outline uses it, so the same text gives the same drawing on every render and machine, and another seed gives another drawing. A non-zero seed draws as v12 did for the same geometry. 0, the default, is a fixed seed too: v12 used a random one. |

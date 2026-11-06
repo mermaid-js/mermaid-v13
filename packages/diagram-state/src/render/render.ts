@@ -299,8 +299,9 @@ function drawComposite({ w, layout, ctx, paint, titlePad }: Scene, g: StateGroup
     'data-color-id': slot?.id,
   });
   const stroke = slot?.stroke ?? paint.border;
-  // The author's `style` / `classDef` still wins over the palette (spread after).
-  w.leaf('rect', {
+  // The author's `style` / `classDef` still wins over the palette (spread after). The title
+  // band and the body are the composite's two `part`s (D302).
+  w.outline('part', 'rect', {
     class: 'outer',
     x: left,
     y: top,
@@ -313,7 +314,7 @@ function drawComposite({ w, layout, ctx, paint, titlePad }: Scene, g: StateGroup
     filter: paint.shadow,
     ...g.style.shape,
   });
-  w.leaf('rect', {
+  w.outline('part', 'rect', {
     class: 'inner',
     x: left,
     y: band,
@@ -335,7 +336,7 @@ function drawComposite({ w, layout, ctx, paint, titlePad }: Scene, g: StateGroup
   const divider = slot?.stroke ?? paint.plainBorder;
   for (const d of layout.dividers) {
     if (d.composite !== g.id) continue;
-    w.leaf('line', {
+    w.outline('divider', 'line', {
       class: 'divider',
       x1: d.x1,
       y1: d.y1,
@@ -363,7 +364,7 @@ function drawRegion({ w, layout, paint }: Scene, g: StateGroupView): void {
     'data-ast': g.ast,
     'data-color-id': slot?.id,
   });
-  w.leaf('rect', {
+  w.outline('group', 'rect', {
     class: 'region',
     x: box.x - box.width / 2,
     y: box.y - box.height / 2,
@@ -395,7 +396,8 @@ function drawEdge({ w, layout, paint }: Scene, e: StateEdgeView): void {
       e.source === e.target ? 'rounded' : 'curved',
       e.note ? 0 : arrowTrim(paint.head)
     );
-    w.leaf('path', {
+    // Paint comes from the `edgePaths` group (stroke, width, no fill).
+    w.outline('edge', 'path', {
       d: path.d,
       'stroke-dasharray': e.note ? NOTE_DASH : undefined,
       'stroke-linecap': e.note ? 'butt' : undefined,

@@ -242,6 +242,7 @@ const TYPE_DOCS: Record<string, string> = {
   state: 'stateDiagram-v2\n  [*] --> Idle\n',
   er: 'erDiagram\n  CUSTOMER ||--o{ ORDER : places\n',
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
+  pie: 'pie\n  "Dogs" : 386\n',
 };
 
 /** The highlighter chunks the page has loaded (`<id>.monarch-<hash>.js`). */
@@ -285,11 +286,11 @@ test('a type with no highlighter gets no first-paint colours, not flowchart’s'
   page,
 }) => {
   await open(page);
-  const pie = 'pie title Pets\n  "Dogs" : 386\n';
-  await page.evaluate((t) => (window as unknown as EditorWindow).editor.setValue(t), pie);
+  const gantt = 'gantt\n  title Plan\n';
+  await page.evaluate((t) => (window as unknown as EditorWindow).editor.setValue(t), gantt);
   // Past the debounce that re-detects the model's type.
   await page.waitForTimeout(500);
-  expect((await tokenTypes(page, pie)).flat().filter((t) => t !== '')).toEqual([]);
+  expect((await tokenTypes(page, gantt)).flat().filter((t) => t !== '')).toEqual([]);
 });
 
 test('editing the header back after a type with no highlighter colours it again', async ({
@@ -312,12 +313,12 @@ test('editing the header back after a type with no highlighter colours it again'
     TYPE_DOCS.flowchart!
   );
   await expect.poll(() => wordColour(page, 'flowchart')).toBe('rgb(0, 0, 255)');
-  // `flowchart LR` → `pie`: the same body is now a type with no Monarch file.
-  await header('pie', 'flowchart LR');
+  // `flowchart LR` → `gantt`: the same body is now a type with no Monarch file.
+  await header('gantt', 'flowchart LR');
   await page.waitForTimeout(500);
-  expect(await wordColour(page, 'pie')).not.toBe('rgb(0, 0, 255)');
+  expect(await wordColour(page, 'gantt')).not.toBe('rgb(0, 0, 255)');
   // And back: re-picked from the edited line, coloured as a flowchart again.
-  await header('flowchart LR', 'pie');
+  await header('flowchart LR', 'gantt');
   await expect.poll(() => wordColour(page, 'flowchart')).toBe('rgb(0, 0, 255)');
   const text = await page.evaluate(() => (window as unknown as EditorWindow).editor.getValue());
   expect((await tokenTypes(page, text))[0]?.[0]).toBe('keyword.mermaid-flowchart');

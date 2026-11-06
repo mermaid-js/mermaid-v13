@@ -1,0 +1,29 @@
+@ 2:6  "Do|gs" : 386
+  2:4-2:8 "Dogs"
+  | **slice** `Dogs`
+  |
+  | Value: 386 · 82% of 471
+@ 3:13  "Cats" : 8|5
+  3:12-3:14 "85"
+  | **slice** `Cats`
+  |
+  | Value: 85 · 18% of 471
+@ 5:12  "Dogs" : |1
+  5:12-5:13 "1"
+  | **slice** `Dogs`
+  |
+  | Value: 386 · 82% of 471
+  |
+  | Repeated: this value, 1, is ignored and the first is kept.
+@ 6:13  "Fish" : -|2
+  6:12-6:14 "-2"
+  | **slice** `Fish`
+  |
+  | Value: -2. Negative values are not allowed in pie charts, so this section is left out.
+@ 7:3  |"Cats" : 1
+  7:3-7:9 "\"Cats\""
+  | **slice** `Cats`
+  |
+  | Value: 85 · 18% of 471
+  |
+  | Repeated: this value, 1, is ignored and the first is kept.

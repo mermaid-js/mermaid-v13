@@ -33,7 +33,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
   },
   { type: 'gantt', pattern: /^\s*gantt/ },
   { type: 'info', pattern: /^\s*info/ },
-  { type: 'pie', pattern: /^\s*pie/ },
+  {
+    type: 'pie',
+    pattern: /^\s*pie/,
+    id: 'pie',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-pie').then((m) => m.pie),
+  },
   { type: 'requirement', pattern: /^\s*requirement(Diagram)?/ },
   {
     type: 'sequence',

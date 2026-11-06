@@ -2,7 +2,6 @@
   theme property (string) 3:4-3:6 "th" -> "theme"
   themeVariables property (object) 3:4-3:6 "th" -> "themeVariables"
   themeCSS property (string) 3:4-3:6 "th" -> "themeCSS"
-  handDrawnSeed property (number) 3:4-3:6 "th" -> "handDrawnSeed"
   layout property (string) 3:4-3:6 "th" -> "layout"
   ascii property (object) 3:4-3:6 "th" -> "ascii"
   darkMode property (boolean) 3:4-3:6 "th" -> "darkMode"

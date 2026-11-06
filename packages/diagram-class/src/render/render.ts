@@ -285,7 +285,7 @@ function drawNamespaces({ w, layout, p, paint }: Scene): void {
     const box = layout.groups.get(g.layoutId);
     if (!box) continue;
     w.open('g', { class: 'cluster namespace', 'data-id': g.id, 'data-ast': g.ast });
-    w.leaf('rect', {
+    w.outline('group', 'rect', {
       x: box.x - box.width / 2,
       y: box.y - box.height / 2,
       width: box.width,
@@ -338,7 +338,8 @@ function drawEdges(scene: Scene, idOf: (e: ClassEdgeView) => string): void {
         markerTrim(e.startMarker, paint.markers),
         markerTrim(e.endMarker, paint.markers)
       );
-      w.leaf('path', {
+      // Paint comes from the `edgePaths` group (stroke, width, no fill).
+      w.outline('edge', 'path', {
         d: path.d,
         'stroke-dasharray': DASH[pattern],
         // v12 drew patterned edges with butt caps; round caps would close the dashes' gaps.
@@ -441,7 +442,7 @@ function drawClass(
     'stroke-width': paint.strokeWidth,
     ...style.shape,
   };
-  w.leaf('rect', {
+  w.outline('node', 'rect', {
     class: 'outer-path',
     x: 0,
     y: 0,
@@ -454,7 +455,7 @@ function drawClass(
   // `neo-line`), lifted so the gradient paints.
   const lift = shape.stroke === paint.box.stroke ? paint.lift : 0;
   for (const y of view.dividers) {
-    w.leaf('path', {
+    w.outline('divider', 'path', {
       class: 'divider',
       d: w
         .path()
@@ -505,7 +506,7 @@ function drawNote({ w, layout, paint }: Scene, view: NoteView): void {
     'data-ast': view.ast,
     transform: translate(at.x, at.y),
   });
-  w.leaf('rect', {
+  w.outline('node', 'rect', {
     class: 'outer-path',
     x: 0,
     y: 0,

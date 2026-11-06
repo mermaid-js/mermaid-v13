@@ -1,8 +1,8 @@
 /**
  * `default`: v12's classic lavender theme (`theme-default.js`).
  */
-import type { ThemeSpec } from '../spec.ts';
-import { paletteSlots } from './palettes.ts';
+import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
+import { paletteSlots, pieSlots } from './palettes.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,
@@ -11,6 +11,31 @@ import {
   CLASSIC_TIMELINE,
   TEXT_SIZES,
 } from './geometry.ts';
+
+/**
+ * v12 `theme-default.js`: tertiary −40, secondary −30, tertiary −20, then hue turns. `pie3` and
+ * `pie6` are v12's values: v12 darkens its unrounded HSL tertiary colour, which lands a few steps
+ * off the hex one.
+ */
+const PIE_DEFAULT: ThemeRuleTable = {
+  ...pieSlots([
+    undefined,
+    undefined,
+    '#b5ff20',
+    undefined,
+    'darkenHsl(secondaryColor, 30%)',
+    '#d7ff86',
+    '#ff86ff',
+    '#20ffff',
+    '#ff2020',
+    '#ff20ff',
+    '#20ff8f',
+    '#ff5353',
+  ]),
+  // v12 titles and legends: `taskTextDarkColor` (or `mainContrastColor`).
+  pieTitleTextColor: 'black',
+  pieLegendTextColor: 'black',
+};
 
 const theme: ThemeSpec = {
   name: 'default',
@@ -59,7 +84,11 @@ const theme: ThemeSpec = {
     noteBorderColor: '#aaaa33',
   },
   // v12 theme-default derives the ER rows from primaryColor with khroma (D117).
-  rules: { rowOdd: 'lightenHsl(primaryColor, 75%)', rowEven: 'lightenHsl(primaryColor, 1%)' },
+  rules: {
+    rowOdd: 'lightenHsl(primaryColor, 75%)',
+    rowEven: 'lightenHsl(primaryColor, 1%)',
+    ...PIE_DEFAULT,
+  },
   // v12 theme-default.js fills cScale and cScaleInv in its constructor, darkens cScale again
   // when it calculates, and never recomputes them: fixed lists that ignore the base colours.
   palettes: {

@@ -17,6 +17,7 @@ import {
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
+import { PIE_REDUX } from './redux.ts';
 
 const SOURCES = hueSources(true, '#ececfe', '#e9e9f1', 'lightenHsl(adjustHue(#ececfe, 180), 5%)');
 
@@ -55,7 +56,7 @@ const neo: ThemeSpec = {
   },
   // v12 neo derives these as theme-redux.js does: `classText` from `textColor`, no ER row fill
   // of its own, and the neo-look zero circle on the node fill.
-  rules: REDUX_RULES,
+  rules: { ...REDUX_RULES, ...PIE_REDUX },
   values: {
     // v12 `drop-shadow( 0px 1px 2px rgba(0, 0, 0, 0.25));`, normalised for `checkFilter`.
     dropShadow: 'drop-shadow(0 1px 2px rgb(0 0 0 / 0.25))',

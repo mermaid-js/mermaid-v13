@@ -7,6 +7,7 @@ import type { ThemeSpec } from '../spec.ts';
 import {
   INVERTED_SCALE,
   paletteSlots,
+  pieSlots,
   REDUX_RULES,
   TAILWIND_300,
   TAILWIND_400,
@@ -18,7 +19,8 @@ const theme: ThemeSpec = {
   dark: true,
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
-  rules: REDUX_RULES,
+  // v12 draws pie section text in the light ink here (`pieSectionTextColor`).
+  rules: { ...REDUX_RULES, ...pieSlots(TAILWIND_300), pieSectionTextColor: '#28253d' },
   values: { ...REDUX_DARK_VALUES, erEdgeLabelBackground: '#16141f' },
   palettes: {
     borderColorArray: TAILWIND_400,

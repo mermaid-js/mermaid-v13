@@ -72,11 +72,6 @@ themeCSS?: string
  */
 look?: ("classic" | "handDrawn" | "neo")
 /**
- * Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed.
- * 
- */
-handDrawnSeed?: number
-/**
  * Defines which layout algorithm to use for rendering the diagram.
  * 
  * Defaults to `layered`, the layout engine built into core (DESIGN §6.1).
@@ -1185,6 +1180,14 @@ fontSize?: number
  * via the `definition` "PieDiagramConfig".
  */
 export interface PieDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Axial position of slice's label from zero at the center to 1 at the outside edges.
  * 

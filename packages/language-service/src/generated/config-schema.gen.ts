@@ -679,14 +679,6 @@ export const configSchema: ConfigSchema = {
         "replacement": "`theme`, or the geometry and `dropShadow` theme variables; `handDrawn` comes from the hand-drawn plugin (R-PLUG-8)"
       }
     },
-    "handDrawnSeed": {
-      "description": "Defines the seed to be used when using handDrawn look. This is important for the automated tests as they will always find differences without the seed. The default value is 0 which gives a random seed.\n",
-      "type": "number",
-      "default": 0,
-      "x-mermaid": {
-        "status": "pending"
-      }
-    },
     "layout": {
       "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
       "description": "Defines which layout algorithm to use for rendering the diagram.\n\nDefaults to `layered`, the layout engine built into core (DESIGN §6.1).\nThe v12 name `dagre` is still accepted and maps to `layered`. `elk` and\n`elk.<algorithm>` need an ELK layout plugin; without one they draw with\n`layered` and warn `ELK_NOT_INSTALLED`. Text output (`format: 'ascii'`)\nalways uses `layered`.\n",
@@ -1020,7 +1012,8 @@ export const configSchema: ConfigSchema = {
     "pie": {
       "$ref": "#/$defs/PieDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "quadrantChart": {
@@ -2868,6 +2861,21 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the pie renderer never did."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0"
+          }
+        },
         "textPosition": {
           "type": "number",
           "minimum": 0,
@@ -2875,7 +2883,8 @@ export const configSchema: ConfigSchema = {
           "description": "Axial position of slice's label from zero at the center to 1 at the outside edges.\n",
           "default": 0.75,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0"
           }
         },
         "donutHole": {
@@ -2885,7 +2894,9 @@ export const configSchema: ConfigSchema = {
           "description": "Donut hole ratio. Valid value are from 0 to 0.9. Default to 0.\n",
           "default": 0,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As in v12, a value outside (0, 0.9] draws no hole."
           }
         },
         "legendPosition": {
@@ -2900,7 +2911,9 @@ export const configSchema: ConfigSchema = {
           "description": "Legend's position relative to the chart. Default to right.\n",
           "default": "right",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As in v12; the bounding box now covers every legend row and label, where v12 clipped long legends (D224)."
           }
         },
         "highlightSlice": {
@@ -2908,7 +2921,9 @@ export const configSchema: ConfigSchema = {
           "description": "Highlight specific slice with matching label. Set to 'hover' to highlight hovered slice.\n",
           "default": "",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "The slice with that label is drawn `scale(1.05)` at opacity 1, as v12's `highlighted` class (D222); the empty default highlights nothing. `hover` is accepted but draws nothing extra, with one `PIE_HOVER_IGNORED` warning, since the SVG has no hover styles (D6)."
           }
         }
       }

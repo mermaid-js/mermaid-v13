@@ -5,6 +5,7 @@
   swimlane-beta keyword 1:1-1:1 "" -> "swimlane-beta"
   classDiagram keyword 1:1-1:1 "" -> "classDiagram"
   erDiagram keyword 1:1-1:1 "" -> "erDiagram"
+  pie keyword 1:1-1:1 "" -> "pie"
   sequenceDiagram keyword 1:1-1:1 "" -> "sequenceDiagram"
   timeline keyword 1:1-1:1 "" -> "timeline"
   timeline LR keyword (left to right) 1:1-1:1 "" -> "timeline LR"

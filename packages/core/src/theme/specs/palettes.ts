@@ -1,6 +1,7 @@
 /**
  * The redux colour palettes, from v12 `theme-redux-color.js` and `theme-redux-dark-color.js`
- * (D151). Plain data, shared by the two colour themes; with the redux family's rules.
+ * (D151). Plain data, shared by the two colour themes; with the redux family's rules and the pie slot
+ * helpers (#325).
  */
 import type { ThemeRuleTable } from '../spec.ts';
 
@@ -76,3 +77,22 @@ export const INVERTED_SCALE = paletteSlots((i) => `invert(cScale${i})`);
 
 /** `cScaleLabel` as most v12 themes derive it: `labelTextColor` (v12 `scaleLabelColor`). */
 export const LABEL_SCALE = paletteSlots(() => 'labelTextColor');
+
+/**
+ * The pie slot colours `pie1`–`pie12` and text colours of the built-in themes (#325), which each
+ * theme spec writes as rules that replace the shared ones (`LIGHT_RULES` carries `base`'s). v12
+ * 12.2.0's resolved `getThemeVariables()` is the oracle (`packages/conformance/src/pie/theme.spec.ts`).
+ * A slot v12 derives by lightness alone (khroma `darken`) stays a rule, so it follows the theme's
+ * base colours; a hue turn, or a slot v12 takes from its `cScale`, is v12's resolved value, since
+ * the DSL has no hue turn and rules cannot read a palette. Each theme keeps its own table in its
+ * spec file, so its pie colours load with that theme only; the helpers live here, in a module the
+ * default theme already loads, so they add no chunk.
+ */
+/** `pie1`–`pie12` from twelve rules; `undefined` keeps the shared rule. */
+export function pieSlots(rules: readonly (string | undefined)[]): ThemeRuleTable {
+  const out: Record<string, string> = {};
+  rules.forEach((r, i) => {
+    if (r !== undefined) out[`pie${i + 1}`] = r;
+  });
+  return out;
+}

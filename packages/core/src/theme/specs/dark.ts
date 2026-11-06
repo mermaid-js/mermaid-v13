@@ -1,8 +1,8 @@
 /**
  * `dark`: v12 `theme-dark.js`.
  */
-import type { ThemeSpec } from '../spec.ts';
-import { INVERTED_SCALE, paletteSlots } from './palettes.ts';
+import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
+import { INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
 import { darkModeLabels } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
@@ -12,6 +12,30 @@ import {
   CLASSIC_TIMELINE,
   TEXT_SIZES,
 } from './geometry.ts';
+
+/**
+ * v12 `theme-dark.js` sets `pie<i>` to `cScale<i>`, so slot 1 is `cScale1`, and leaves `pie12`
+ * unset; v13 gives it `cScale0`, as `neutral` has (D228).
+ */
+const PIE_DARK: ThemeRuleTable = {
+  ...pieSlots([
+    '#0b0000',
+    '#4d1037',
+    '#3f5258',
+    '#4f2f1b',
+    '#6e0a0a',
+    '#3b0048',
+    '#995a01',
+    '#154706',
+    '#161722',
+    '#00296f',
+    '#01629c',
+    '#1f2020',
+  ]),
+  // v12 titles and legends: `taskTextDarkColor` (or `mainContrastColor`).
+  pieTitleTextColor: 'lightgrey',
+  pieLegendTextColor: 'lightgrey',
+};
 
 const theme: ThemeSpec = {
   name: 'dark',
@@ -42,6 +66,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_TIMELINE,
     useGradient: false,
   },
+  rules: PIE_DARK,
   values: {
     altBackground: '#555555', // v12 (#192)
     // sequence (v12 theme-dark.js: mainContrastColor is lightgrey)

@@ -4,9 +4,18 @@
  * pack, install and browser render themselves run in e2e/platform/pack-smoke.spec.ts.
  */
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import {
+  mkdtempSync,
+  readFileSync,
+  readlinkSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  unlinkSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { delimiter, join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { readManifest } from '../../packages/core/src/index.ts';
 import {
   FIXTURE_DIAGRAM,
@@ -19,6 +28,7 @@ import {
   pnpmWorkspaceConfig,
 } from '../platform/harness/index.ts';
 import type { PackedPackage } from '../platform/harness/index.ts';
+import { REPO_ROOT } from '../platform/harness/pack.ts';
 
 const names = (list: readonly { name: string }[]): string[] => list.map((p) => p.name);
 
@@ -64,6 +74,7 @@ describe('packClosure', () => {
       '@mermaid-js/diagram-class',
       '@mermaid-js/diagram-er',
       '@mermaid-js/diagram-flowchart',
+      '@mermaid-js/diagram-pie',
       '@mermaid-js/diagram-sequence',
       '@mermaid-js/diagram-state',
       '@mermaid-js/diagram-timeline',
@@ -141,6 +152,43 @@ describe('appEnv', () => {
     expect(path).not.toContain(join('node_modules', '.bin'));
     expect(readFileSync(path, 'latin1')).not.toContain('export NODE_PATH');
     expect(out).toContain('NODE_PATH=\n');
+  });
+
+  describe('with a stale esbuild link in the cache', () => {
+    const realEsbuild = realpathSync(join(REPO_ROOT, 'node_modules', 'esbuild', 'bin', 'esbuild'));
+    const saved = process.env.MERMAID_PLATFORM_CACHE;
+    let cache: string;
+    beforeEach(() => {
+      cache = mkdtempSync(join(tmpdir(), 'mermaid-platform-cache-'));
+      process.env.MERMAID_PLATFORM_CACHE = cache;
+    });
+    afterEach(() => {
+      if (saved === undefined) delete process.env.MERMAID_PLATFORM_CACHE;
+      else process.env.MERMAID_PLATFORM_CACHE = saved;
+      rmSync(cache, { recursive: true, force: true });
+    });
+
+    const firstEsbuild = (): string =>
+      execFileSync('sh', ['-c', 'command -v esbuild'], { env: appEnv(), encoding: 'utf8' }).trim();
+    /** Points this checkout's cached link at `target`, as another run may have left it. */
+    const replaceLink = (target: string): void => {
+      const link = join(appEnv().PATH!.split(delimiter)[0], 'esbuild');
+      expect(realpathSync(link)).toBe(realEsbuild);
+      unlinkSync(link);
+      symlinkSync(target, link);
+    };
+
+    it('replaces a dangling link (its worktree was deleted)', () => {
+      replaceLink(join(cache, 'deleted-worktree', 'node_modules', 'esbuild', 'bin', 'esbuild'));
+      const path = firstEsbuild();
+      expect(path.startsWith(cache)).toBe(true);
+      expect(readlinkSync(path)).toBe(realEsbuild);
+    });
+
+    it('replaces a link to some other esbuild', () => {
+      replaceLink(realpathSync(process.execPath));
+      expect(readlinkSync(firstEsbuild())).toBe(realEsbuild);
+    });
   });
 });
 
