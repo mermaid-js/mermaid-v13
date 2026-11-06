@@ -489,3 +489,12 @@ The maintainer accepted every recommended answer on 2026-11-06 except Q2, which 
 | D337 | **Names.** No runtime list of reserved names: first-party uniqueness is checked at build time, and at render the diagram's own table beats a fragment rule of the same name (MIGRATION.md). `defaultLinkColor`, `border1` and `border2` stay in core for v12 `themeVariables` compatibility, as `usedBy: ['core']` with a comment that no v13 renderer reads them. `compositeTitleBackground` and `altBackground`, read only by state, move to `diagram-state` in T3; author-facing names and CSS variables are unchanged. Amends D120. |
 | D338 | **The core budget stays at 94,208 B gz** after the migration; no ratchet. Maintainer: "keep the current". |
 | D339 | **Acceptance is byte identity.** Every T0 ticket passes the bench identity gate (D200) in all eleven themes and leaves the e2e baselines unchanged, apart from D333's listed exceptions. Emitting only the variables a diagram uses changes output and goes to its own spec. |
+
+### Theme T0 follow-ups (#414 Q12–Q13)
+
+Raised by the M5a wave-1 specs (#421–#424) on 2026-11-06. The T0 and programme blocks are full, so these take the first ids after the spec blocks. The maintainer accepted both recommendations ("Q12 I accept", "Q13 I accept"), relayed through the wave coordinator session.
+
+| # | Decision |
+| --- | --- |
+| D540 | **Nested theme sections map key by key, and the flat name wins.** Each diagram table maps its nested keys explicitly (`packet.startByteColor` → `packetStartByteColor`); there is no prefix rule. If an author sets both forms, the flat name wins, with no warning: it is the CSS variable's name. The inventory doc lists the nested form beside each flat variable. Refines D335. |
+| D541 | **New ports match v12's resolved theme values wherever the traits allow, and list every place they cannot.** A one-off per-theme value in v12 (forest's cynefin tints and cliff `#C8E6C9` … `#8B4513`; forest's packet reading its own `primaryTextColor` and `mainBkg` where default uses literals) becomes a generic shared input when one has meaning across diagrams, decided in the first spec that needs it (a "region tints" palette, for example). Otherwise it becomes a family-rule approximation, listed in the port's oracle theme spec `DIFFERENCES` with a MIGRATION.md row. D339's byte identity binds the T0 migration, not new ports. Refines D331 and D333. |
