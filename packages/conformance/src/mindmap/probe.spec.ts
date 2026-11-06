@@ -27,7 +27,7 @@ function offsets(r: MindmapParseResult, length: number): number[] {
 /**
  * R-LANG-7 (#389): a probe changes nothing but `probe`. Model, AST, diagnostics, symbols and
  * statements are the same with and without one, at offsets across the mindmap gate corpus
- * (the e2e fixtures, the v12 spec strings, the parser, edge and line-separator cases, rejected
+ * (the e2e fixtures, the v12 spec strings, the parser and lexer cases, rejected
  * ones included, each also commented and CR-cut); the probe reports the offset and a mode (a
  * jison start condition, or where the offset is outside code).
  */

@@ -19,7 +19,7 @@ import { mindmapGateCorpus } from './corpus.ts';
  *
  * Every source is also lexed with comment lines added, which v12 removed before lexing, and
  * with every line break a CR followed by a removed comment or directive line; plus a set of
- * line-separator, edge and mid-line-directive cases.
+ * the line-separator, edge and mid-line-directive cases of `corpus/mindmap-cases.json`.
  *
  * Exclusions (v13 kinds with no jison name, left out of the v13 stream):
  * - `:::`, `::icon(`, the `)` closing an icon, the quote (or quote and backtick) pairs around a shape's
@@ -83,7 +83,7 @@ describe('mindmap lexer parity with mermaid@12 (jison)', () => {
     }
     process.stdout.write(`lexer parity: ${compared} of ${items.length} sources lexed by v12\n`);
     // Every e2e fixture and every harvested spec and syntax-page string reaches the lexer.
-    expect(e2e).toBe(89); // 85 and #328's 4 icon baselines
+    expect(e2e).toBe(103); // 85, #328's 4 icon baselines and 14 from the corpus cleanup
     expect(specs).toBe(46);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(

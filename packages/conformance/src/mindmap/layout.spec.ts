@@ -8,11 +8,11 @@ import { createTheme, isThemeName, loadTheme, type ThemeName } from '@mermaid-js
 import { layoutMindmap, parseMindmap, type MindmapModel } from '@mermaid-js/diagram-mindmap';
 import { mindmapProblems, treeProblems } from '@mermaid-js/diagram-mindmap/testing';
 import elkLayouts from '@mermaid-js/layout-elk';
-import { EDGE_CASES, LINE_SEPARATORS, mindmapCases, mindmapCorpus } from './corpus.ts';
+import { mindmapCases, mindmapCorpus } from './corpus.ts';
 
 // DDLT on parser-produced mindmaps (spec #294 T3, the `ddlt` rule: parse the source, never hand
 // build the graph): the e2e corpus, the harvested v12 spec and syntax-page strings and the
-// parser cases and the lexer gate's edge cases, parsed by the v13 parser, measured with the table measurer in each
+// parser and lexer cases, parsed by the v13 parser, measured with the table measurer in each
 // source's theme and laid out by `layoutMindmap`, the entry point the plugin calls, through
 // `tree` (the default, D284), `layered` and ELK (`@mermaid-js/layout-elk`, D282).
 
@@ -28,14 +28,9 @@ let elk: LayoutEngine;
 
 beforeAll(async () => {
   elk = await elkLayouts.find((l) => l.name === 'elk')!.loader();
-  for (const item of [
-    ...(await mindmapCorpus()),
-    ...mindmapCases(),
-    ...EDGE_CASES,
-    ...LINE_SEPARATORS,
-    // A label holding `~n:` once made two edge ids the same (#387 review).
-    { id: 'edge id probe', source: 'mindmap\n  root\n    x~n:y\n      z\n    x\n      y~n:z\n' },
-  ]) {
+  // A label holding `~n:` once made two edge ids the same (#387 review): the e2e fixture
+  // `baseline/layout/labels-holding-edge-id-text.mmd`.
+  for (const item of [...(await mindmapCorpus()), ...mindmapCases()]) {
     const pre = preprocess(item.source);
     const directives = pre.directives.flatMap((d) =>
       d.kind === 'init' && d.args && typeof d.args === 'object' ? [d.args as ConfigInput] : []

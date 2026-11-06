@@ -7,12 +7,12 @@ import { renderMindmapForTest, type RenderedMindmap } from '@mermaid-js/diagram-
 import { astIndex, extents, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgView } from '../svg-tree.ts';
 import type { CorpusItem } from '../types.ts';
-import { EDGE_CASES, LINE_SEPARATORS, mindmapCases, mindmapCorpus } from './corpus.ts';
+import { mindmapCases, mindmapCorpus } from './corpus.ts';
 
 /**
  * Render properties and the AST round-trip of the mindmap (spec #294 T4, DESIGN §13.2, §13.4,
  * R-PARSE-8, D224) over the parsed corpus: the e2e fixtures, the v12 spec and syntax-page
- * strings, the parser cases and the lexer gate's edge cases, each in every theme and
+ * strings and the parser and lexer cases, each in every theme and
  * `theme: 'auto'` set as `initialize()` would (a source's own front matter and directives still
  * win). The plugin is T5's (#390), so sources go through the renderer's own seam, parse →
  * layout (`tree`) → render, with core's render context (`renderMindmapForTest`); sources the
@@ -40,7 +40,7 @@ let corpus: CorpusItem[];
 const rejected = new Set<string>();
 
 beforeAll(async () => {
-  corpus = [...(await mindmapCorpus()), ...mindmapCases(), ...EDGE_CASES, ...LINE_SEPARATORS];
+  corpus = [...(await mindmapCorpus()), ...mindmapCases()];
   for (const theme of THEMES)
     for (const item of corpus) {
       if (rejected.has(item.id)) continue;
@@ -78,8 +78,8 @@ function corners(tree: SvgView): { x: number; y: number }[] {
 
 describe('mindmap render properties over the parsed corpus', () => {
   it('renders the corpus in every theme, with every shape and icon references', () => {
-    // 85 fixtures and #328's 4 icon baselines.
-    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(89);
+    // 85 fixtures, #328's 4 icon baselines and the corpus cleanup's 14.
+    expect(corpus.filter((i) => i.id.startsWith('e2e/')).length).toBe(103);
     expect(cases.length).toBeGreaterThan(100 * THEMES.length);
     const shapes = new Set(cases.flatMap((c) => c.r.layout.mindmap.nodes.map((n) => n.shape)));
     expect([...shapes].sort()).toEqual(
