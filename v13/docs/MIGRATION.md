@@ -1395,7 +1395,7 @@ Legend entries carry `data-id="a:<name>"` only.
   and hexagon nodes at `flowchart.wrappingWidth` instead (both 200 by default, so nothing changes
   unless one of them is set). A `padding` below 0, a `maxNodeWidth` of 0 or less or a value that
   is not a number lays out with the default and warns `MINDMAP_CONFIG_IGNORED`; numeric strings
-  (`"20"`) are read as numbers, as in v12. `useWidth` and `layoutAlgorithm` are ignored (v12 never
+  (`"20"`, not `"20px"`) are read as numbers, as in v12. `useWidth` and `layoutAlgorithm` are ignored (v12 never
   read them), and `look` is ignored as everywhere (D153), except that `look: handDrawn` sketches
   the mindmap when `@mermaid-js/plugin-hand-drawn` is installed
   ([Hand-drawn look](#hand-drawn-look)). `mindmap.layout` picks the engine for mindmaps and wins

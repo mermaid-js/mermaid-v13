@@ -25,7 +25,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Found: v12 rejects a node right after a blank line that follows `mindmap` (`mindmap\n\n  root`), and after two `SPACELINE` tokens in a row: `SPACELINE` is a statement and a separator in `mindmap.jison`. These are token runs, not lines (review of #390): two blank lines, or two comment lines, are accepted; what is rejected is a comment line between blank lines in some layouts (`root\n\n%%\n\n    b`); every case agrees with the oracle. Followed (oracle); the message says to remove a blank line, and recovery still reads the node.
 - **Choice:** AST ids use the id with blanks around it dropped (`a ` and `a` are `n:a`, `n:a@2`); the model keeps v12's id as written.
 - **Choice:** a second root is in the AST but not in the model (v12 threw before adding it), and the parents of later nodes are found as if it were not there; a decoration after it lands on its AST node only.
-- **Choice:** `icons(model)` strips the second word's prefix only when it is the pack (`mdi mdi-fire`) or `fa` after a Font Awesome pack (`fab fa-github`); any other reference is listed trimmed, as written (it resolves to nothing, so the icons plugin shows it as written). Review of #386.
+- **Choice:** `icons(model)` strips the second word's prefix only when it is the pack (`mdi mdi-fire`) or `fa` after a Font Awesome pack (`fab fa-github`); any other reference is not listed (superseded by #328: only D297's two forms are glyph names, `mindmapIcons` in `icons.ts`; the rest is shown as written with `ICON_NOT_RENDERED`). Review of #386.
 - **Choice:** symbols (D289) are left to T6 (#389), as timeline's T2 left them to its T6.
 
 ## #387 T3 layout
@@ -65,7 +65,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - #389's list: **Closed** (#390): manifest `language`, `gen:registry`; the `unlisted-facets.ts` row and the conformance eager row are gone; `LEZER_HIGHLIGHTERS` / `MONARCH_HIGHLIGHTERS` rows and each adapter's `gen`; `adapters-agree`, highlighter specs and both first-paint e2e specs cover mindmap; `@mermaid-js/diagram-mindmap` is an optional peer of the service (the package is now public, `13.0.0-alpha.0`, as `workspace-release.spec.ts` needs).
 - **Choice:** `configDefaults` are generated (`mindmap` in `SECTION_OWNERS`, `gen:config`), as for flowchart and class: every key has v12's default in the schema (`padding` 10, `maxNodeWidth` 200 are also `MINDMAP_METRICS`' fallbacks).
 - **Choice:** the `icon` baselines wait for #328: the dev gallery renders with the icons extension and requires no warnings, but the renderer still shows references as written with `ICON_NOT_RENDERED`. The theme baselines carry no `::icon()`; the nightly-check icon fixtures still run in `mmd-snapshots`.
-- Not done: MIGRATION.md's hand-drawn section still says "Mindmap will be sketched once it is ported" (#344's).
+- MIGRATION.md's hand-drawn section said "Mindmap will be sketched once it is ported" (#344's). **Closed** (#344): it lists what mindmap sketches (D301, D308).
 
 ## #328 icons I5
 - **Choice:** only D297's two forms are glyph names (`mindmapIconName`: `pack:name`, one colon, no blank; `<pack> <x>-<name>` with `<x>` the pack or `fa` after a Font Awesome pack). Any other reference (`fa-book`, `bomb`, `mdi fa-book`) is never asked for and not listed in `icons(model)`: shown as written, with `ICON_NOT_RENDERED` (review of #328). No `fallbackPrefix`.

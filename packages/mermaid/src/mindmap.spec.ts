@@ -158,6 +158,13 @@ describe('mindmap config (#390, spec #294 "Config")', () => {
     expect(unset.svg).toContain('width="100%"');
   });
 
+  it('honours mindmap.theme, over the top-level theme', async () => {
+    const plain = await withInit({ theme: 'default' });
+    expect(plain.svg).not.toBe((await withInit({})).svg);
+    expect((await withInit({ mindmap: { theme: 'default' } })).svg).toBe(plain.svg);
+    expect((await withInit({ theme: 'dark', mindmap: { theme: 'default' } })).svg).toBe(plain.svg);
+  });
+
   it('ignores useWidth and layoutAlgorithm without a warning', async () => {
     const unset = await withInit({});
     const ignored = await withInit({
@@ -183,6 +190,28 @@ describe('mindmap config (#390, spec #294 "Config")', () => {
     const narrow = viewBox((await withInit({ mindmap: { maxNodeWidth: 80 } }, long)).svg);
     expect(narrow[2]!).toBeLessThan(wide[2]!);
     expect(narrow[3]!).toBeGreaterThan(wide[3]!);
+  });
+
+  it('reads a whole numeric string as a number, and warns on any other string', async () => {
+    const small = 'mindmap\n  root((mindmap))\n    A\n    B\n';
+    const asNumber = await withInit({ mindmap: { padding: 20, maxNodeWidth: 2.5 } }, small);
+    for (const [padding, maxNodeWidth] of [
+      ['20', '2.5'],
+      [' 20 ', ' 2.5'],
+    ]) {
+      const r = await withInit({ mindmap: { padding, maxNodeWidth } }, small);
+      expect(r.svg).toBe(asNumber.svg);
+      expect(r.warnings).toEqual(asNumber.warnings);
+    }
+    const unset = await withInit({}, small);
+    for (const [padding, maxNodeWidth] of [
+      ['20px', '10abc'],
+      ['', '0x10'],
+    ]) {
+      const r = await withInit({ mindmap: { padding, maxNodeWidth } }, small);
+      expect(r.svg, `${padding} ${maxNodeWidth}`).toBe(unset.svg);
+      expect(r.warnings.filter((w) => w === 'MINDMAP_CONFIG_IGNORED')).toHaveLength(2);
+    }
   });
 
   it('colours by depth with colorBy: depth', async () => {

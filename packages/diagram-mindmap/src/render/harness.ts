@@ -5,8 +5,7 @@
  * `core/src/pipeline/draw.ts`): core's config defaults under the integrator's config and the
  * source's front matter and directives, the theme with its `themeVariables` and its dark half
  * for `theme: 'auto'`, the table measurer, the `tree` engine (or the one given) and the stream
- * writer with the theme's gradient and an optional outline drawer. Until the plugin lands
- * (T5, #390), parsed sources render here rather than through `createMermaid().render()`.
+ * writer with the theme's gradient and an optional outline drawer.
  */
 import type { RenderContext, Warning } from '@mermaid-js/core';
 import { CORE_DEFAULTS, resolveConfig, type ConfigInput } from '@mermaid-js/core/config';

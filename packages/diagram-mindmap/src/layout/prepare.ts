@@ -82,9 +82,12 @@ export interface MindmapPrepared {
   readonly edges: readonly MindmapEdgeView[];
 }
 
+/** A whole decimal number, spaces around it allowed: `"20"`, `" 20 "`, `"2.5"`; not `"20px"`. */
+const NUMERIC = /^\s*[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?\s*$/i;
+
 /**
- * A config length (a number, or a numeric string as v12 and flowchart's `size()` take it) of at
- * least 0, or above 0 when `positive`; else the default, with a warning when the key is set.
+ * A config length (a number, or a whole numeric string, as v12 takes it) of at least 0, or above
+ * 0 when `positive`; else the default, with a warning when the key is set.
  */
 function lengthOf(
   ctx: MindmapLayoutContext,
@@ -93,7 +96,8 @@ function lengthOf(
   path: string,
   positive: boolean
 ): number {
-  const n = typeof value === 'string' ? parseFloat(value) : value;
+  // Any other string stays a string, and so is not taken.
+  const n = typeof value === 'string' && NUMERIC.test(value) ? Number(value) : value;
   if (typeof n === 'number' && Number.isFinite(n) && (positive ? n > 0 : n >= 0)) return n;
   if (value !== undefined)
     ctx.warn({

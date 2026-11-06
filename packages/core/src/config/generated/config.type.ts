@@ -1520,6 +1520,12 @@ seed?: number
  * via the `definition` "MindmapDiagramConfig".
  */
 export interface MindmapDiagramConfig extends BaseDiagramConfig {
+/**
+ * Theme, the CSS style sheet.
+ * You may also use `themeCSS` to override this value.
+ * 
+ */
+theme?: ("default" | "base" | "dark" | "forest" | "neutral" | "neo" | "neo-dark" | "redux" | "redux-dark" | "redux-color" | "redux-dark-color" | "null")
 useWidth?: number
 /**
  * Defines which layout algorithm to use for rendering the diagram.
