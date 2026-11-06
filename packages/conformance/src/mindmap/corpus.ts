@@ -105,6 +105,13 @@ export const MID_LINE_DIRECTIVES: CorpusItem[] = [
   MM + 'root\n  ::icon(a %%{init: {}}%% b)\n  :::c %%{init: {}}%% d',
 ].map((source, k) => ({ id: `mid-line directive ${k}`, source }));
 
+/** The parser cases (`corpus/mindmap-cases.json`): each corpus gap (classes), and rejections. */
+export function mindmapCases(): CorpusItem[] {
+  return JSON.parse(
+    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/mindmap-cases.json'), 'utf8')
+  ) as CorpusItem[];
+}
+
 /** The mindmap corpus: the e2e fixtures and the v12 spec and syntax-page strings. */
 export async function mindmapCorpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
@@ -118,12 +125,13 @@ export async function mindmapCorpus(): Promise<CorpusItem[]> {
 }
 
 /**
- * The e2e fixtures, the v12 spec strings, the cases above, and each of them commented and
- * CR-cut (by a comment line and by a directive).
+ * The e2e fixtures, the v12 spec strings, the parser cases, the cases above, and each of them
+ * commented and CR-cut (by a comment line and by a directive).
  */
 export async function mindmapGateCorpus(): Promise<CorpusItem[]> {
   const all = [
     ...(await mindmapCorpus()),
+    ...mindmapCases(),
     ...LINE_SEPARATORS,
     ...EDGE_CASES,
     ...MID_LINE_DIRECTIVES,
@@ -137,4 +145,15 @@ export async function mindmapGateCorpus(): Promise<CorpusItem[]> {
       source: crCut(item.source, '%%{init: {}}%%'),
     })),
   ];
+}
+
+/**
+ * The gate corpus less the items the parity suite already reads from its dirs and files
+ * (`registry.ts`), ids prefixed `mindmap-gate/`: model parity over the whole gate corpus.
+ */
+export async function mindmapParityCorpus(): Promise<CorpusItem[]> {
+  const listed = new Set([...(await mindmapCorpus()), ...mindmapCases()].map((c) => c.id));
+  return (await mindmapGateCorpus())
+    .filter((item) => !listed.has(item.id))
+    .map((item) => ({ id: `mindmap-gate/${item.id}`, source: item.source }));
 }

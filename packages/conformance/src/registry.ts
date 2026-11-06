@@ -3,6 +3,8 @@ import type { ParitySuite } from './corpus.ts';
 import { erAdapter } from './er/v13.ts';
 import { flowchartAdapter } from './flowchart/v13.ts';
 import { journeyAdapter } from './journey/v13.ts';
+import { mindmapParityCorpus } from './mindmap/corpus.ts';
+import { mindmapAdapter } from './mindmap/v13.ts';
 import { pieAdapter } from './pie/v13.ts';
 import { quadrantParityCorpus } from './quadrant/corpus.ts';
 import { quadrantAdapter } from './quadrant/v13.ts';
@@ -55,6 +57,15 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/timeline-v12-specs.json',
       'packages/conformance/corpus/timeline-cases.json',
     ],
+  },
+  {
+    adapter: mindmapAdapter,
+    corpusDirs: ['e2e/diagrams/mindmap'],
+    corpusFiles: [
+      'packages/conformance/corpus/mindmap-v12-specs.json',
+      'packages/conformance/corpus/mindmap-cases.json',
+    ],
+    corpus: mindmapParityCorpus,
   },
   {
     adapter: pieAdapter,
