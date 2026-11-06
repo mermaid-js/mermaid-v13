@@ -45,8 +45,26 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## #468 T4 renderer
 
+- Review sent back: the one-letter paint bag (pitfall 18); item `data-id` carried on the layout; no `data-id` on the `+N more` badge; the theme table in `src/theme/table.ts`; nested/flat override tests under `dark` and `redux`, the dark entry for `redux-dark-color`.
+- Accepted deviations (for the maintainer):
+  - **Core `usedBy` metadata:** `cynefin` added to the `usedBy` of `lineColor`, `textColor` and `primaryTextColor` (and `fontFamily`, #467), as `theme-used-by.spec.ts` requires for the table's rule inputs. No cynefin rows in core; `v13/docs/theme-variables.md` regenerated.
+  - **Dark keys on the theme's dark trait**, not the author's `darkMode` (v12's literals ignore `darkMode`), so `darkMode: true` on a light theme keeps the light backgrounds.
+  - **Forest** takes the light entry (default's literals, not v12 forest's `#C8E6C9`… and cliff `#8B4513`): no trait separates forest from default and a shared input is a core change (D541 approximation). Owner of the `DIFFERENCES` entry and MIGRATION.md row: #469.
+  - Renders before the manifest use `createMermaid()` + `registerExternalDiagrams([cynefin], { lazyLoad: false, replace: true })` (`conformance/src/cynefin/render-api.ts`), as pie's T4; `mermaid/slim` refuses a detector row with no plugin id.
+  - `<style>` only for the `auto` theme, as pie and quadrant; `openRoot`/`textElement` copied from pie/quadrant (third copy, a core helper candidate); font weight written `bold`.
+  - Pitfall 17: v12 12.2.0's computed styles in Chromium, 11 themes, with and without `look: neo`: only colours and `fontFamily` differ (no filter, gradient or shadow).
+- Size: `.` 13.1 kB gz (was 10.8 kB before the renderer).
+
 ## #469 T5 integration
 
 - [ ] Un-skip the ported `getConfig` v12 spec ("config honoured in #469 T5") and compare with the oracle's `getConfig()`.
 
-## #470 T6 language facet
+## #470 T6 language facet (merged)
+
+- Review fixes landed (`be0928840`): undeclared domains have no definition; `FIXED_NAMES` pins the D367 refusal message; a meaning line per domain in hover; no source domain after `-->`; `listOf` reused; `DOMAIN_META` imported from `src/domains.ts` (`layout/meta.ts` keeps only `domainTitle`).
+- **Additive core change (for the maintainer):** optional `declaredOnly?: boolean` on `LanguageFacet` (`packages/core/src/parser-kit/language.ts`), read by the language service's definition, references and semantic tokens (`symbols.ts`, `snapshot.ts`, `semantic-tokens.ts`). When set, only a `def` occurrence defines a symbol. D367 needs it ("Its definition is the first block"), and the service's "first mention defines" fallback otherwise gives a transition-only domain a definition. Every other facet is unchanged. The spec says "no core change of its own"; this is the smallest change that meets D367.
+
+- Review sent back: undeclared domains (named only in transitions) must have no definition (D367); pin the D367 refusal reason in the rename round-trip; a meaning line per domain in hover (v12 docs); no source domain after `-->`; reuse `listOf()`; drop the `layout/meta.ts` re-export.
+- **Rename gate mechanism (for the maintainer):** `packages/language-service/src/rename-round-trip.spec.ts` gains `FIXED_NAMES` (cynefin): every cynefin rename must be refused with the D367 reason and at least one refusal must occur, instead of listing ~38 refusals in `KNOWN_REFUSALS`. Owner: #470.
+- Accepted deviations (for the maintainer): `prepareRename` still returns the name's range and only `rename` refuses (the facet contract has no per-kind refusal at prepare time; adding one is a core change); after a transition target, `:` is offered and `"` only after the `:` (the grammar's order); domains and statements are offered at line start (and domains after `-->`) only; the parser's diagnostics are now sorted into source order; `DOMAIN_META` moved to `src/domains.ts` so `./language` holds no layout code; `cynefin-beta` joins five other types' empty-text completion goldens.
+- [ ] **#469:** `LEZER_HIGHLIGHTERS`/`MONARCH_HIGHLIGHTERS` rows, each adapter's `gen`, `adapters-agree.spec.ts`, first-paint specs (language.md step 9); drop the unlisted-facet row and the eager row in `service-symbols.spec.ts`; a `bench language:cynefin` script.
