@@ -46,6 +46,8 @@ Checks run here: `npx vitest run packages/diagram-gitgraph packages/mermaid/src/
   - In `layout.spec.ts`, take redux geometry from `loadTheme('redux')`.
   - Stop exporting the tables from `index.ts`, or export the names only.
 
+- **Fixed in e7631d094:** `GIT_PAINT` and `GIT_GEOMETRY` are name tables only (`as const`, no per-family values; the `Git*Variable` and `GeometryVariable` types are gone). `layout.spec.ts` lays redux geometry read from `loadTheme('redux')` over `default`.
+
 ### 3. Theme docs still say the `dark` and `neutral` git palettes follow the pie colours, which has been wrong since D334 (low-medium, author-facing)
 
 - **Where:**
@@ -54,6 +56,8 @@ Checks run here: `npx vitest run packages/diagram-gitgraph packages/mermaid/src/
 - **What is wrong:** since D334, `dark.ts` and `neutral.ts` derive `git` from `cScale<n>`.
 - **Verified:** in `dark`, `themeVariables: { pie3: '#ff0000' }` leaves `git[2]` at `#6a8993`, while `cScale3: '#ff0000'` turns it into `#ff6666`. `neutral` behaves the same way (`#bbbbbb` and `#ff0000`). An author who follows the docs and sets `pie<n>` sees no change.
 - **Fix:** say `cScale2`–`cScale8` (v12's `pie<n>`) in the schema reason and MIGRATION.md, then run `gen:config`.
+
+- **Fixed in e7631d094:** the schema reason (`config-reference.md`) and MIGRATION.md say `cScale2`–`cScale8` (v12's `pie2`–`pie8`, D334).
 
 ### 4. Hover tells the wrong story for a rejected merge `id:` (low)
 
@@ -71,6 +75,8 @@ Checks run here: `npx vitest run packages/diagram-gitgraph packages/mermaid/src/
   Hovering the merge's `"A"` says "A later commit takes this id, so this one is not drawn." In fact the merge is rejected with `GIT_MERGE_DUPLICATE_ID`, and the earlier commit `A` is the one that is drawn. The check `defines && commit.astId !== node.id` treats every non-owning definition as a D264 replacement.
 - **Fix:** say "later" only when the owning statement comes after this node. For a `Merge` node whose id belongs to an earlier statement, say that the id is already used and this merge is rejected, or show no commit facts.
 
+- **Fixed in e7631d094:** a merge whose `id:` an earlier commit or merge wrote says "An earlier commit has this id, so this merge is rejected and the earlier commit is drawn." Unit cases in `language.spec.ts`, golden `goldens/gitGraph/hover/merge-taken`.
+
 ### 5. Arrow `data-id` is neither unique nor unambiguous (low)
 
 - **Where:** `render/render.ts:205-206` (`'data-id': `${a.from}>${a.to}``), fed by `layout/arrows.ts:54` (one arrow per parent entry).
@@ -86,6 +92,8 @@ Checks run here: `npx vitest run packages/diagram-gitgraph packages/mermaid/src/
 - **Scenario 2, ambiguous (verified):** ids keep `>` as written (D263). `commit id:"ab"` followed by `commit id:"x>y"` gives `data-id="ab>x>y"`. A pair `a>b` → `c` and a pair `a` → `b>c` would both give `a>b>c`.
 - **Fix:** skip a parent entry already drawn for the same child. The two v12 paths are coincident, so nothing visible changes. Percent-encode `%` and `>` inside the ids of the arrow `data-id`, as the AST ids already do (`parser.ts` `esc`). If this changes the documented structure, note it in MIGRATION.md.
 
+- **Fixed in e7631d094:** `arrowsOf` skips a repeated parent (one arrow for `[A, A]`); `data-id` percent-encodes `%` and `>` in each id (`a%3Eb>c%25d`). Specs in `layout.spec.ts` and `render-behaviour.spec.ts`; MIGRATION.md's gitGraph SVG row says so. The AST round-trip spec is unchanged and green.
+
 ### 6. Test-only scaffolding left over: a hand-built stand-in DB and a stale "once T2" comment (low)
 
 - **Where:**
@@ -97,11 +105,15 @@ Checks run here: `npx vitest run packages/diagram-gitgraph packages/mermaid/src/
   - Keep a hand-built model only for something the parser cannot produce, and say so.
   - Make `gitApi` synchronous, or inline it.
 
+- **Fixed in e7631d094:** the fixtures are gitGraph text through `parseGitGraph` (the stand-in DB and the T2 note are gone; `v12Positions` cherry-picks `M` with `parent:"ZERO"`, which the parser accepts; positions unchanged). `gitApi` is synchronous.
+
 ### 7. Config and MIGRATION wording is inaccurate in three places (low)
 
 - **`gitGraph.rotateCommitLabel`** (`config.schema.yaml:1968-1975`): the reason says "LR commit ids at −45 degrees". TB and BT ids rotate too (`layout/labels.ts:107-109`, as in v12), and the 40 px lane pitch applies in every direction. Fix: "commit ids at −45 degrees (LR, TB, BT), with 40 px more between the lanes".
 - **`gitGraph.nodeLabel.width`, `.height`, `.x`, `.y`** are still `pending` (`config-reference.md:577-580`), while their parent is `ignored` because v12 never read it. Fix: mark them `ignored` too.
 - **`MIGRATION.md:678`** (hand-drawn) still says "Gantt, pie, … and gitGraph will do the same once they are ported". gitGraph is ported now. This text is outside the diff but stale because of it.
+
+- **Fixed in e7631d094:** `rotateCommitLabel` reason names LR, TB and BT; `nodeLabel.width`/`height`/`x`/`y` are `ignored`; MIGRATION.md's hand-drawn "Not sketched" names the ported self-drawn types as not sketched (D301, D305). `gen:config` rerun.
 
 ### 8. The size on the combined gantt and gitGraph tree is not in the run notes (low, process)
 
