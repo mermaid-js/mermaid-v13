@@ -10,6 +10,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 - Maintainer (via the coordinator, 2026-11-06): "Wave 2 first". gitGraph lands before the Theme T0 (D322, #411); gitGraph's theme variables stay in the existing core vocabulary pattern, with any new table in core built in a pure call (the #410 guard in `cdn-build.spec.ts`), and the T0 moves them out of core later. For the maintainer: say so in the PR body.
 
+- **Gantt merge (570624bd0, f7089b7e2):** three theme-variable aliases collided with gantt's (`gtb`, `gto`, `gcb`). gantt lands first, so gitGraph's yield: `commitLabelBackground` → `glb`, `tagLabelBackground` → `gtk`, `tagLabelBorder` → `gtr`; gantt's are as on its branch. The aliases are private CSS custom properties (`--_<alias>`), so no public name changes.
+
 ## #368 T1 lexer
 - `INT` beats `REFERENCE`: `branch 123` is rejected in v12 (not in the spec). The oracle decides; T1 reproduces it, T2 rejects it. Done in T1: reproduced and gated (quirks `branch 123`, `10abc`, `10.5`, `007`).
 

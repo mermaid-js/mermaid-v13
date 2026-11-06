@@ -225,7 +225,7 @@ describe('gantt theme variables (D152, D278)', () => {
     const { svg } = await render('section S\na :done, a1, 2014-01-01, 1d\nb :b1, after a1, 1d', {
       themeVariables: { taskBkgColor: '#123456', doneTaskBkgColor: '#654321' },
     });
-    expect(svg).toContain('--_gkb:var(--mermaid-taskBkgColor,#123456)');
+    expect(svg).toContain('--_gtb:var(--mermaid-taskBkgColor,#123456)');
     expect(svg).toContain('--_gdb:var(--mermaid-doneTaskBkgColor,#654321)');
     expect(svg).toContain('--_gb0:var(--mermaid-sectionBkgColor,');
   });
