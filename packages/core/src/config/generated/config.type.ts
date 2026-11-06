@@ -74,11 +74,13 @@ look?: ("classic" | "handDrawn" | "neo")
 /**
  * Defines which layout algorithm to use for rendering the diagram.
  * 
- * Defaults to `layered`, the layout engine built into core (DESIGN §6.1).
+ * Defaults to `layered`, the layout engine built into core (DESIGN §6.1);
+ * mindmap defaults to `tree`, core's two-sided tidy tree, and maps v12's
+ * `cose-bilkent` and `tidy-tree` to it.
  * The v12 name `dagre` is still accepted and maps to `layered`. `elk` and
  * `elk.<algorithm>` need an ELK layout plugin; without one they draw with
- * `layered` and warn `ELK_NOT_INSTALLED`. Text output (`format: 'ascii'`)
- * always uses `layered`.
+ * the diagram's default engine and warn `ELK_NOT_INSTALLED`. Text output
+ * (`format: 'ascii'`) always uses `layered`.
  * 
  */
 layout?: string
