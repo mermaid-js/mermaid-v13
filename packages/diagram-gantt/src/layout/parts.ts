@@ -80,7 +80,7 @@ export function sectionsOf(c: Chart): GanttSectionLabel[] {
 function spanOf(c: Chart): Domain | undefined {
   let start: number | undefined;
   let end: number | undefined;
-  for (const t of c.sched.tasks) {
+  for (const t of c.plan.tasks) {
     if (t.start !== undefined && (start === undefined || t.start < start)) start = t.start;
     if (t.end !== undefined && (end === undefined || t.end > end)) end = t.end;
   }

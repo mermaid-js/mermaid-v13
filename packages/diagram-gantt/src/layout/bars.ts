@@ -109,7 +109,7 @@ function diamond(c: Chart, r: Rect): void {
 
 export function barsOf(c: Chart): GanttBar[] {
   const clickable = clickableTasks(c);
-  const sorted = byStart(c.sched.tasks.filter(resolved));
+  const sorted = byStart(c.plan.tasks.filter(resolved));
   const out: GanttBar[] = [];
   for (const t of [...sorted.filter((x) => !isVert(x)), ...sorted.filter(isVert)]) {
     const kind = kindOf(t);

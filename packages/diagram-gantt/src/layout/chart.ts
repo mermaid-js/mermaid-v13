@@ -19,7 +19,7 @@ export interface Domain {
 export interface Chart {
   readonly env: Env;
   readonly model: GanttLayoutModel;
-  readonly sched: Schedule;
+  readonly plan: Schedule;
   /** v12 `w` and `h`. */
   readonly w: number;
   readonly h: number;
@@ -60,20 +60,20 @@ function scaleOf(domain: Domain | undefined, width: number): (t: number) => numb
   return (t) => Math.round(width * ((t - domain.start) / span));
 }
 
-export function chartOf(env: Env, model: GanttLayoutModel, sched: Schedule): Chart {
-  const rows = rowsOf(sched.tasks, env.compact);
+export function chartOf(env: Env, model: GanttLayoutModel, plan: Schedule): Chart {
+  const rows = rowsOf(plan.tasks, env.compact);
   const gap = env.barHeight + env.barGap;
   const w = env.width;
   const h = 2 * env.topPadding + rows.count * gap;
   const plotWidth = w - env.leftPadding - env.rightPadding;
-  const plain = sched.tasks.filter((t) => !isVert(t));
+  const plain = plan.tasks.filter((t) => !isVert(t));
   // Unique sections of the tasks with rows, in order (v12 `categories`).
   const categories = [...new Set(plain.map((t) => t.task.section))];
-  const domain = domainOf(sched.tasks);
+  const domain = domainOf(plan.tasks);
   return {
     env,
     model,
-    sched,
+    plan,
     w,
     h,
     gap,

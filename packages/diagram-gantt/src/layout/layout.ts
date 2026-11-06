@@ -39,9 +39,9 @@ export function layoutGantt(model: GanttLayoutModel, ctx: GanttLayoutContext): G
     );
   }
   const env = envOf(ctx);
-  const sched = scheduled(model, now);
-  warnings(model, sched, ctx);
-  const c = chartOf(env, model, sched);
+  const plan = scheduled(model, now);
+  warnings(model, plan, ctx);
+  const c = chartOf(env, model, plan);
   const sections = sectionsOf(c);
   const bands = bandsOf(c);
   const excludes = c.domain ? excludesOf(c, ctx.warn) : [];
@@ -90,11 +90,11 @@ function scheduled(model: GanttLayoutModel, now: number): Schedule {
 const quoted = (list: Iterable<string>): string => [...list].map((s) => `"${s}"`).join(', ');
 
 /** D276: one warning each for unknown ids (`after`, `until`, `click`) and bad durations. */
-function warnings(model: GanttLayoutModel, sched: Schedule, ctx: GanttLayoutContext): void {
+function warnings(model: GanttLayoutModel, plan: Schedule, ctx: GanttLayoutContext): void {
   const known = new Set(model.tasks.map((t) => t.id));
   // v12 kept ids on a plain object, where `__proto__` is never stored.
   known.delete('__proto__');
-  const unknown = new Set(sched.unknownIds);
+  const unknown = new Set(plan.unknownIds);
   for (const click of model.clicks) for (const id of click.ids) if (!known.has(id)) unknown.add(id);
   if (unknown.size > 0) {
     ctx.warn({
@@ -102,10 +102,10 @@ function warnings(model: GanttLayoutModel, sched: Schedule, ctx: GanttLayoutCont
       message: `No task has the id ${quoted(unknown)}: "after" then starts and "until" ends at midnight today, and a click does nothing. Milestones need an id and a duration, e.g. "Milestone :milestone, m1, 2023-01-01, 0d".`,
     });
   }
-  if (sched.badDurations.length > 0) {
+  if (plan.badDurations.length > 0) {
     ctx.warn({
       code: GANTT_BAD_DURATION,
-      message: `${quoted(sched.badDurations)}: neither a date in the dateFormat nor a duration such as "3d", so the task gets no duration.`,
+      message: `${quoted(plan.badDurations)}: neither a date in the dateFormat nor a duration such as "3d", so the task gets no duration.`,
     });
   }
 }
