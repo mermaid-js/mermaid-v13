@@ -216,6 +216,7 @@ const TEXT_USERS = [
   'journey',
   'timeline',
   'quadrant',
+  'radar',
 ];
 
 const JOURNEY = ['journey'];
@@ -242,7 +243,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   tertiaryColor: def('t', 'color', ['core']),
   background: def('bg', 'color', ['core']),
   primaryTextColor: def('pt', 'color', ['core']),
-  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
+  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'radar']),
   // Pie draws in the font family but sizes its text by its own variables.
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie']),
   fontSize: def('fs', 'length', TEXT_USERS),
