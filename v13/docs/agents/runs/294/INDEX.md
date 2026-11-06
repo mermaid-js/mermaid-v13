@@ -9,7 +9,7 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 | T2 grammar, parser, model, AST | #386 | #383 | merged (ff f106ba322) |
 | T3 layout (builder, shape sizing) | #387 | #386, #380 | merged (ff 3e8f53071) |
 | T4 SVG renderer | #388 | #387 | in progress (`.claude/worktrees/t388`, `feature/388_mindmap-renderer`) |
-| T6 language facet | #389 | #386 | in progress (`.claude/worktrees/t389`, `feature/389_mindmap-language`) |
+| T6 language facet | #389 | #386 | merged (ff 9c162dcaa) |
 | T5 integration | #390 | #388, #389 | blocked |
 | icons I5 `::icon()` glyphs | #328 | #322 (merged), #388 | blocked |
 | hand-drawn H4 baselines | #344 | #390 | blocked |
