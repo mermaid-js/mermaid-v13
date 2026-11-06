@@ -17,5 +17,5 @@
   friday constant 4:22-4:22 "" -> "friday"
   saturday constant 4:22-4:22 "" -> "saturday"
   sunday constant 4:22-4:22 "" -> "sunday"
-@ 5:15  includes fri|
-  friday constant 5:12-5:15 "fri" -> "friday"
+@ 6:15  includes fri|
+  none

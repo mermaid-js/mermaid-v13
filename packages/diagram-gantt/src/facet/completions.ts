@@ -20,7 +20,6 @@ import type {
   SymbolOccurrence,
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
-import { preprocess } from '@mermaid-js/core/preprocess';
 import { ganttDocs } from '../generated/docs.ts';
 import type { GanttModel } from '../model.ts';
 import type { GanttDocument } from '../parser/ast.ts';
@@ -37,7 +36,7 @@ import {
   span,
   STATEMENT_ITEMS,
   TAGS,
-  taskById,
+  tasksById,
   WEEKDAYS,
   WEEKENDS,
 } from './tables.ts';
@@ -63,21 +62,18 @@ function holding(t: TokenStream, offset: number): Tok | undefined {
   return undefined;
 }
 
-/** The kind and start of the significant token of `text` holding `offset`, as v12 lexes it. */
-function tokenAt(text: string, offset: number): Tok | undefined {
-  const pre = preprocess(text);
-  const view = sourceView(
-    text,
-    pre.bodyStart,
-    pre.directives.map((d) => d.range)
-  );
-  const t = lex(text, pre.bodyStart, view);
+/**
+ * The kind of the first token v12 lexes from a statement start: `line` is the text from there
+ * to its line end. A statement starts in the lexer's initial state, and what a statement
+ * keyword lexes as depends on its own line only (the inserted text holds its value), so the
+ * rest of the document is not lexed again (#382 review).
+ */
+function firstToken(line: string): Tok | undefined {
+  const t = lex(line, 0, sourceView(line, 0, []));
   for (let j = 0; j < t.length; j++) {
     const kind = t.kind[j] ?? Kind.EOF;
-    const start = t.start[j] ?? 0;
-    if (TRIVIA.has(kind) || start > offset) continue;
-    const end = t.end[j] ?? 0;
-    if (offset < end) return { kind, start, end };
+    if (TRIVIA.has(kind)) continue;
+    return { kind, start: t.start[j] ?? 0, end: t.end[j] ?? 0 };
   }
   return undefined;
 }
@@ -112,15 +108,15 @@ function keywords(
   if (/[\n\r]/.test(prefix)) return [];
   // The word being typed, to its end; at a word's first character nothing is replaced.
   const end = prefix === '' ? probe.offset : wordEnd(text, probe.offset, /[^\s:{"]/);
-  const head = text.slice(0, start);
   const rest = text.slice(end);
+  const restOfLine = /^[^\n\r]*/.exec(rest)?.[0] ?? '';
   const out: CompletionItem[] = [];
   for (const k of items) {
     if (!expected.has(k.kind) || !k.label.toLowerCase().startsWith(prefix)) continue;
     const insert = insertText(k, rest);
-    const sample = `${head}${insert}${/[ :"]$/.test(insert) ? (k.sample ?? 'x') : ''}${rest}`;
-    const t = tokenAt(sample, start);
-    if (!t || t.start !== start || !(k.reads ?? [k.kind]).includes(t.kind)) continue;
+    const sample = `${insert}${/[ :"]$/.test(insert) ? (k.sample ?? 'x') : ''}${restOfLine}`;
+    const t = firstToken(sample);
+    if (!t || t.start !== 0 || !(k.reads ?? [k.kind]).includes(t.kind)) continue;
     const documentation = ganttDocs[k.kind];
     out.push({
       label: k.label,
@@ -134,12 +130,21 @@ function keywords(
   return out;
 }
 
-/** The task ids written in the chart (each once, in source order), but those in `skip`. */
+/** What `after`/`until` read as one id (v12 `[\d\w- ]+`, split on blanks). */
+const REFERENCE_ID = /^[\d\w-]+$/;
+/** What a click reads as one id (up to a blank or `,`). */
+const CLICK_ID = /^[^\s,]+$/;
+
+/**
+ * The task ids written in the chart that v12 reads as one id where `readable` holds (each once,
+ * in source order), but those in `skip`.
+ */
 function taskIds(
   doc: DocumentView<GanttDocument>,
-  skip: Tok | undefined
+  skip: Tok | undefined,
+  readable: RegExp
 ): { name: string; detail: string }[] {
-  const model = doc.result.model as GanttModel | undefined;
+  const tasks = tasksById(doc.result.model as GanttModel | undefined);
   const seen = new Set<string>();
   const out: { name: string; detail: string }[] = [];
   const defs = doc.result.symbols.filter(
@@ -147,9 +152,9 @@ function taskIds(
       s.role === 'def' && !(skip && skip.start <= s.range.start && s.range.end <= skip.end)
   );
   for (const s of defs) {
-    if (seen.has(s.name)) continue;
+    if (seen.has(s.name) || !readable.test(s.name)) continue;
     seen.add(s.name);
-    const task = taskById(model, s.name);
+    const task = tasks.get(s.name);
     out.push({ name: s.name, detail: task ? task.text.trim() : 'task' });
   }
   return out;
@@ -195,7 +200,7 @@ function taskData(doc: DocumentView<GanttDocument>, tok: Tok, offset: number): C
   const field = parts.filter((p, i) => !parts.slice(0, i + 1).every(isTag)).length;
   if (/^(after|until)\s+[\d\w- ]*$/.test(typed)) {
     const word = /[\d\w-]*$/.exec(typed)?.[0] ?? '';
-    const ids = taskIds(doc, tok).map(({ name, detail }) => [name, detail] as const);
+    const ids = taskIds(doc, tok, REFERENCE_ID).map(({ name, detail }) => [name, detail] as const);
     return words(ids, word, offset - word.length, wordEnd(text, offset, /[\d\w-]/), 'node');
   }
   const end = wordEnd(text, offset, /[\w.]/);
@@ -248,7 +253,9 @@ export function ganttCompletions(
   const inKeyword = tok?.kind === T.ClickKeyword && offset >= tok.start + 'click '.length;
   if (probe.mode === 'click' || inKeyword) {
     const word = inKeyword ? '' : (/[^\s,]*$/.exec(lineBefore(text, offset))?.[0] ?? '');
-    const ids = taskIds(doc, undefined).map(({ name, detail }) => [name, detail] as const);
+    const ids = taskIds(doc, undefined, CLICK_ID).map(
+      ({ name, detail }) => [name, detail] as const
+    );
     return words(ids, word, offset - word.length, wordEnd(text, offset, /[^\s,]/), 'node');
   }
   if (probe.mode !== 'INITIAL') return [];
@@ -258,7 +265,8 @@ export function ganttCompletions(
   }
   const line = lineBefore(text, offset);
   // `excludes\s…` up to a `#` or `;` (or the bare keyword and one blank, still a task text).
-  const dayList = /^[\t ]*(?:excludes|includes)\s[^#;]*$/i.exec(line);
+  // Not `includes`: v12 reads it as dates only.
+  const dayList = /^[\t ]*excludes\s[^#;]*$/i.exec(line);
   if (dayList) return days(text, offset, DAY_WORDS);
   const week = /^[\t ]*(weekday|weekend)[\t ]+[a-z]*$/i.exec(line);
   if (week) {

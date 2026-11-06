@@ -74,6 +74,8 @@ describe('gantt error recovery', () => {
     // v12 lexes the `;` after task data as the text of another task.
     expect(covered('gantt\nA :a1, 2024-01-01, 1d;\nC :1d')).toEqual([';']);
     expect(covered('gantt\nB')).toEqual(['B']);
+    // A `:` with nothing after it: the message names the `:`, so does the range.
+    expect(covered('gantt\n Design :\nB :1d')).toEqual([':']);
   });
 
   it('reports a keyword with nothing after it where its value belongs', () => {

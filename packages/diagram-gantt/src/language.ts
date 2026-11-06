@@ -14,6 +14,7 @@ import { ganttHover } from './facet/hover.ts';
 import { ganttCategories } from './generated/categories.ts';
 import { parseGantt } from './parser/index.ts';
 import type { GanttDocument } from './parser/index.ts';
+import { NEVER_STORED } from './parser/task-ids.ts';
 
 export { ganttCategories } from './generated/categories.ts';
 export { ganttDocs } from './generated/docs.ts';
@@ -54,6 +55,8 @@ function invalidReason(name: string): string | undefined {
   if (name === '') return 'A task id cannot be empty.';
   if (/[\r\n]/.test(name)) return 'A task id cannot contain a line break.';
   if (/\s/.test(name)) return 'A task id cannot contain a blank.';
+  if (name === NEVER_STORED)
+    return `v12 never stores the id \`${NEVER_STORED}\`: nothing finds it.`;
   return readsBack(name)
     ? undefined
     : `'${name}' is not a task id (no \`,\`, \`#\` or \`;\`, and not a tag such as \`done\`).`;

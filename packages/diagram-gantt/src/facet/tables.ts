@@ -5,6 +5,7 @@
  */
 import type { CompletionKind, Range } from '@mermaid-js/core/parser-kit';
 import type { GanttModel, GanttTag, GanttTask } from '../model.ts';
+import { NEVER_STORED } from '../parser/task-ids.ts';
 import { T } from '../parser/tokens.ts';
 
 /** An item offered when the parser expects `kind`. */
@@ -157,11 +158,14 @@ export function lineBefore(text: string, at: number): string {
   return text.slice(start, at);
 }
 
-/** The last task written with id `name`: the one v12 finds (`taskDb` is last-wins). */
-export function taskById(model: GanttModel | undefined, name: string): GanttTask | undefined {
-  const tasks = model?.tasks ?? [];
-  for (let i = tasks.length - 1; i >= 0; i--) if (tasks[i]?.id === name) return tasks[i];
-  return undefined;
+/**
+ * Each id's last task: the one v12 finds (`taskDb` is last-wins). One pass; `__proto__` is
+ * left out, as v12 never stores it.
+ */
+export function tasksById(model: GanttModel | undefined): Map<string, GanttTask> {
+  const out = new Map<string, GanttTask>();
+  for (const t of model?.tasks ?? []) if (t.id !== NEVER_STORED) out.set(t.id, t);
+  return out;
 }
 
 /** Whether a task data field is a tag (v12 `getTaskTags`: `^\s*tag\s*$`, case-sensitive). */
