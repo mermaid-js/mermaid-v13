@@ -28,14 +28,20 @@ export function ticksOf(
   interval: string | undefined,
   weekday: string
 ): TickSet {
-  const auto = (): number[] =>
-    // d3 has no ticks for a one-instant domain (its tick step is infinite).
-    start === end ? [] : autoTicks(start, end, env.m.tickCount);
+  const auto = (): number[] => {
+    // d3 has no ticks for a one-instant domain (its tick step is infinite), and gives a
+    // reversed domain (a start after every end) its ticks in reverse.
+    if (start === end) return [];
+    if (start > end) return autoTicks(end, start, env.m.tickCount).reverse();
+    return autoTicks(start, end, env.m.tickCount);
+  };
   const match = interval === undefined ? null : RE_TICK_INTERVAL.exec(interval);
   if (!match) return { times: auto() };
   const every = Number(match[1]);
   const unit = match[2]!;
-  const estimate = Math.ceil((end - start) / (env.m.tickUnitMs[unit]! * every));
+  // v12 `getEstimatedTickCount`: Infinity for a reversed domain.
+  const estimate =
+    start > end ? Infinity : Math.ceil((end - start) / (env.m.tickUnitMs[unit]! * every));
   if (estimate <= env.m.maxTicks) {
     const times = intervalTicks(`${every}${unit}`, weekday, start, end, env.m.maxTicks);
     if (times) return { times };

@@ -38,6 +38,19 @@ const RECORDED = [
 ] as const;
 
 let calls: GanttCall[] = [];
+/** The instant the wrapped `getTasks()` runs at: {@link GANTT_PARITY_NOW} unless a caller sets another. */
+let oracleNow = GANTT_PARITY_NOW;
+
+/** Run `fn` with the oracle's `getTasks()` at `now` (the schedule parity's second instant). */
+export async function atOracleNow<T>(now: number, fn: () => Promise<T>): Promise<T> {
+  const before = oracleNow;
+  oracleNow = now;
+  try {
+    return await fn();
+  } finally {
+    oracleNow = before;
+  }
+}
 let tasks: unknown[] = [];
 
 /** The recorded calls of the last gantt parse (valid until the next one). */
@@ -108,7 +121,7 @@ export async function patchGanttOracle(mermaid: MermaidV12): Promise<void> {
   const getTasks = db.getTasks as () => unknown[];
   parser.parse = (text: string) => {
     const out = parse(text);
-    const scheduled = atFixedTime(GANTT_PARITY_NOW, () => getTasks()) as RawTask[];
+    const scheduled = atFixedTime(oracleNow, () => getTasks()) as RawTask[];
     if (
       scheduled.some((t) => t.raw?.startTime?.type === 'prevTaskEnd' && t.prevTaskId === undefined)
     ) {

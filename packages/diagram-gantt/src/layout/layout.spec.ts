@@ -421,3 +421,55 @@ describe('the invariants', () => {
     expect(found.some((v) => v.includes('not ascending'))).toBe(true);
   });
 });
+
+describe('review fixes (#379 fix round)', () => {
+  const parsed = (src: string): GanttModel => parseGantt(src).model;
+
+  it('marks the task a click names as v12 parse-time setClass did: the latest one before it', () => {
+    const { layout } = lay(
+      parsed(
+        'gantt\ndateFormat YYYY-MM-DD\nclick a href "u"\na :a,2024-01-01,3d\nb :b,2024-01-02,3d\n' +
+          'click b href "u"\nb :b,2024-01-05,3d'
+      )
+    );
+    const byTask = new Map(layout.bars.map((b) => [b.task, b.clickable]));
+    expect([byTask.get(0), byTask.get(1), byTask.get(2)]).toEqual([false, true, false]);
+  });
+
+  it('gives a compact section whose tasks never resolve one lane and its title', () => {
+    const { layout } = lay(
+      parsed(
+        'gantt\ndateFormat YYYY-MM-DD\nsection A\na :a,2024-01-01,3d\nsection B\nc :c, after c, 1d'
+      ),
+      { displayMode: 'compact' }
+    );
+    expect([layout.rows, layout.height]).toEqual([2, 148]);
+    expect(layout.sections.map((s) => [s.section, s.rows])).toEqual([
+      ['A', 1],
+      ['B', 1],
+    ]);
+  });
+
+  it("estimates a month as dayjs's 365 / 12 days, so 9,900 monthly ticks are drawn", () => {
+    const { layout, warnings } = lay(
+      fixture().setTickInterval('1month').addTask('a', 'a,2000-01-01,2825-01-01')
+    );
+    expect(warnings).toEqual([]);
+    expect(layout.bottomAxis.ticks).toHaveLength(9901);
+  });
+
+  it('draws d3 ticks over a reversed domain, warning for a tickInterval as v12 did', () => {
+    const f = (): LayoutFixture => fixture().addTask('a', 'a, 2024-01-10, 2024-01-05');
+    const auto = lay(f());
+    expect(auto.layout.domain).toEqual({ start: at(2024, 1, 10), end: at(2024, 1, 5) });
+    expect(auto.layout.bottomAxis.ticks).toHaveLength(11);
+    expect(auto.warnings).toEqual([]);
+    const every = lay(f().setTickInterval('1day'));
+    expect(every.layout.bottomAxis.ticks).toHaveLength(11);
+    expect(every.warnings.map((w) => w.code)).toEqual(['GANTT_TICK_INTERVAL_IGNORED']);
+  });
+
+  it.each([NaN, 0, -5, Infinity])('ignores availableWidth %s, falling back to 1200', (w) => {
+    expect(lay(two(), {}, { availableWidth: w }).layout.width).toBe(1200);
+  });
+});

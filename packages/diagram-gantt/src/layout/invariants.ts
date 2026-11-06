@@ -65,11 +65,14 @@ function overlapViolations(l: GanttLayout, out: string[]): void {
   }
 }
 
+/** Ticks run left to right, their times all one way (a reversed domain's descend, as d3's). */
 function tickViolations(axis: GanttAxis | undefined, out: string[]): void {
   const ticks = axis?.ticks ?? [];
+  const way = Math.sign((ticks.at(-1)?.time ?? 0) - (ticks[0]?.time ?? 0));
   for (let i = 1; i < ticks.length; i++) {
     const [a, b] = [ticks[i - 1]!, ticks[i]!];
-    if (!(b.time > a.time) || b.x < a.x) out.push(`ticks ${a.label}, ${b.label} are not ascending`);
+    if (Math.sign(b.time - a.time) !== way || b.x < a.x)
+      out.push(`ticks ${a.label}, ${b.label} are not ascending`);
   }
 }
 

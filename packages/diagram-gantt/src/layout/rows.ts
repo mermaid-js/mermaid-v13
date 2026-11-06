@@ -50,11 +50,12 @@ export function rowsOf(
       sections: objectKeyOrder(counts.keys()).map((k) => [k, counts.get(k)!] as const),
     };
   }
+  // Every section name with a task takes at least one lane (v12 `getMaxIntersections` + 1),
+  // even when none of its tasks resolves; an unresolved task takes no lane.
   const groups = new Map<string, ScheduledTask[]>();
   for (const t of plain) {
-    if (!resolved(t)) continue;
     const list = groups.get(names[t.index]!) ?? [];
-    list.push(t);
+    if (resolved(t)) list.push(t);
     groups.set(names[t.index]!, list);
   }
   const sections: [string, number][] = [];

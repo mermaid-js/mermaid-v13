@@ -13,17 +13,23 @@ const ANCHORS: Readonly<Record<LabelSide, 'start' | 'middle' | 'end'>> = {
   left: 'end',
 };
 
-/** Tasks a `click` names: v12 marks the last task with each id `clickable`. */
+/**
+ * Tasks a `click` names: v12's `setClass` ran at parse time, so a click marks the latest task
+ * with each id defined before it (`taskDb` held only those), none when the task comes later.
+ */
 function clickableTasks(c: Chart): Set<number> {
-  const last = new Map<string, number>();
-  c.model.tasks.forEach((t, i) => last.set(t.id, i));
-  last.delete('__proto__');
   const out = new Set<number>();
-  for (const click of c.model.clicks)
+  const { tasks, clicks } = c.model;
+  const latest = new Map<string, number>();
+  let t = 0;
+  for (const click of clicks) {
+    for (; t < tasks.length && tasks[t]!.range.start < click.range.start; t++)
+      latest.set(tasks[t]!.id, t);
     for (const id of click.ids) {
-      const at = last.get(id);
+      const at = id === '__proto__' ? undefined : latest.get(id);
       if (at !== undefined) out.add(at);
     }
+  }
   return out;
 }
 

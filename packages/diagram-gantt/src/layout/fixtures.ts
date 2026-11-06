@@ -40,7 +40,7 @@ export class LayoutFixture extends FixtureDb {
     return this;
   }
   click(...ids: string[]): this {
-    this.clicks.push({ ast: `click:${this.clicks.length + 1}`, ids, range: { start: 0, end: 0 } });
+    this.clicks.push({ ast: `click:${this.clicks.length + 1}`, ids, range: this.nextRange() });
     return this;
   }
 
