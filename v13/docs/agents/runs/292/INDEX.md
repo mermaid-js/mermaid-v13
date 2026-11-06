@@ -26,6 +26,8 @@ Integration branch `feature/292_gitgraph` (from `mermaid-v13` 38d663b44). Draft 
 | #369 palettes alone (not merged) | ~94,080 | 94,452 (over by 244) |
 | #410 alone (`mermaid-v13` 0f831fcc8 + fix) | 92,181 | 92,520 |
 | after T4a #369 (on #410) | 92,645 | 93,011 |
+| after T5 #374 | 93,027 | 93,416 |
+| combined with gantt (570624bd0), 72ceaf354 | 93,124 | 93,570 |
 | after T4 #373 (start of T5) | 92,646 | 93,012 |
 | T5 #374 (registry row, 16 theme variables) | 93,037 | 93,418 |
 
