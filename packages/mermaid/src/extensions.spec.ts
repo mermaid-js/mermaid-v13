@@ -488,10 +488,13 @@ describe('plugin manifests (R-PLUG-3, DESIGN §12.1)', () => {
 });
 
 describe('extension resources (R-API-2, D178)', () => {
-  /** A fixture extension that needs `iconPack "logos"` when the text mentions it. */
+  /**
+   * A fixture extension that needs `math "logos"` when the text mentions it. (`iconPack`
+   * resources are the API object's to load, D294: `icon-packs.spec.ts`.)
+   */
   function lazy(log: string[], fail = false) {
     let loaded = false;
-    const pack = { kind: 'iconPack', name: 'logos' } as const;
+    const pack = { kind: 'math', name: 'logos' } as const;
     const plugin: ExtensionPlugin = {
       id: 'lazy',
       resources: {
@@ -521,12 +524,12 @@ describe('extension resources (R-API-2, D178)', () => {
     const m = await api(lazy(log));
     await m.render('a', FLOW);
     expect(log).toEqual([]);
-    expect(() => m.renderSync(WITH)).toThrow('Not loaded: iconPack "logos"');
+    expect(() => m.renderSync(WITH)).toThrow('Not loaded: math "logos"');
     expect(m.renderSync(WITH, { placeholders: true }).warnings.map((w) => w.code)).toEqual([
       'PLACEHOLDER',
     ]);
     await m.prepare(WITH);
-    expect(log).toEqual(['load:iconPack:logos']);
+    expect(log).toEqual(['load:math:logos']);
     expect(m.renderSync(WITH).warnings).toEqual([]);
   });
 

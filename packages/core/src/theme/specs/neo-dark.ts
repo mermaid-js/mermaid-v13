@@ -9,14 +9,17 @@
  * `packages/conformance/src/neo-dark-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
+import { LABEL_SCALE, REDUX_RULES } from './palettes.ts';
+import { DARK_HUE_SOURCES, darkenedScale } from './scales.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
+  CLASSIC_TIMELINE,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
-import { REDUX_RULES } from './redux-rules.ts';
+import { PIE_REDUX_DARK } from './redux-dark-values.ts';
 
 const neoDark: ThemeSpec = {
   name: 'neo-dark',
@@ -46,12 +49,13 @@ const neoDark: ThemeSpec = {
     ...TEXT_SIZES,
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
+    ...CLASSIC_TIMELINE,
     // v12 theme-neo-dark.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
   // As `neo`: v12 neo-dark sets `classText` from `textColor`, has no ER row fill of its own,
   // and the neo-look zero circle takes the node fill.
-  rules: REDUX_RULES,
+  rules: { ...REDUX_RULES, ...PIE_REDUX_DARK },
   values: {
     // v12 `drop-shadow( 1px 2px 2px rgba(185,185,185,0.2))`, normalised for `checkFilter`.
     dropShadow: 'drop-shadow(1px 2px 2px rgb(185 185 185 / 0.2))',
@@ -77,6 +81,9 @@ const neoDark: ThemeSpec = {
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',
   },
+  // v12 theme-neo-dark.js: hue steps darkened by 25 (75 under darkMode).
+  palettes: { ...darkenedScale(DARK_HUE_SOURCES, 25), cScaleLabel: LABEL_SCALE },
+  darkModePalettes: darkenedScale(DARK_HUE_SOURCES, 75),
 };
 
 export default neoDark;

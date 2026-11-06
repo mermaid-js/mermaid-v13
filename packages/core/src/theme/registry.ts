@@ -1,10 +1,13 @@
 /**
  * The built-in themes (D64, D151): each spec is its own file behind a dynamic `import()`, so
  * an unused theme costs no bundle size. `redux-color`, the default (D151), is imported
- * statically so `renderSync` always has a theme.
+ * statically so `renderSync` always has a theme. `redux`, which it extends, is in the default
+ * theme's closure anyway, so its loader resolves the module already loaded: behind an
+ * `import()` it was a chunk of its own in that closure, and cost gzip bytes (D161).
  */
 import type { ThemeSpec } from './spec.ts';
 import reduxColor from './specs/redux-color.ts';
+import redux from './specs/redux.ts';
 import type { ThemeWarning } from './theme.ts';
 
 /** The themes 13.0 ships (D64, D151, D180). */
@@ -28,7 +31,7 @@ export const DEFAULT_THEME: ThemeName = 'redux-color';
 
 const LOADERS: Readonly<Record<ThemeName, () => Promise<{ default: ThemeSpec }>>> = {
   'redux-color': () => Promise.resolve({ default: reduxColor }),
-  redux: () => import('./specs/redux.ts'),
+  redux: () => Promise.resolve({ default: redux }),
   'redux-dark': () => import('./specs/redux-dark.ts'),
   'redux-dark-color': () => import('./specs/redux-dark-color.ts'),
   default: () => import('./specs/default.ts'),

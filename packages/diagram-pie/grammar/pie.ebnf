@@ -1,0 +1,76 @@
+(** Pie chart syntax (R-PARSE-9, D54): the normative grammar of `pie` diagrams.
+
+The hand-written parser in `src/parser/` implements it; `tools/gen-grammar` builds a reference
+parser, a sentence generator, highlighters and the syntax reference page from it. mermaid@12
+decides what is valid, this file is fixed to match, and the parser must match this file
+(DESIGN §4.4). mermaid@12 parsed pie with Langium (`pie.langium` and `common.langium` in
+`@mermaid-js/parser`); the rules below are its token rules, in its order, and its grammar.
+
+**Lexer input.** The lexer reads the diagram body as mermaid@12 handed it to its lexer: front
+matter and `%%{…}%%` directives removed; CRLF and CR read as LF; `="x"` inside an HTML tag read
+as `='x'`; `%%` comment lines removed and leading blanks trimmed; on a line with
+`style…:…#…;` (or `classDef…`) the last `;` dropped; `#name;` / `#123;` entities read as
+opaque text; and a line break appended. Keywords are case-sensitive.
+
+Each section and statement ends at a line break (or the end of the text); `;` is not a
+separator. *)
+
+@lexer
+
+(** `pie showData`: the legend shows each value after its label, as `Dogs [386]`. *)
+SHOW_DATA                 /showData(?:(?=%%)|(?!\S))/      :keyword ;
+(** `pie`: starts a pie chart. `pie showData` shows the values in the legend. *)
+PIE                       /pie(?:(?=%%)|(?!\S))/           :keyword ;
+COLON                     /:/                              :punctuation ;
+(** A section's value: a number such as `42` or `3.5`, never negative; no sign other than
+`-`, no exponent, no leading zeros and no `.` without digits on both sides. *)
+NUMBER                    /-?[0-9]+\.[0-9]+(?!\.)|-?(?:0|[1-9][0-9]*)(?!\.)/ :number ;
+(** `accDescr: …` (the rest of the line) or `accDescr { … }` (over lines, to `}`): the accessible
+description of the chart. mermaid@12's one rule, as two tried in order; the block's
+`[\s\S]*?\}` is its `[^}]*\}`, written so that line-based highlighters read the block as one span. *)
+ACC_DESCR                 /[\t ]*accDescr[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+ACC_DESCR                 /[\t ]*accDescr\s*\{[\s\S]*?\}/ :keyword ;
+(** `accTitle: …`: the accessible title of the chart, the rest of the line. *)
+ACC_TITLE                 /[\t ]*accTitle[\t ]*:(?:[^\n\r]*?(?=%%)|[^\n\r]*)/ :keyword ;
+(** `title …`: the title drawn above the chart, the rest of the line. *)
+TITLE                     /[\t ]*title(?:[\t ][^\n\r]*?(?=%%)|[\t ][^\n\r]*|)/ :keyword ;
+(** A section's label: `"…"` or `'…'`; `\` escapes the next character, and a label may span
+lines. *)
+STRING                    /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/ :string ;
+NEWLINE                   /\r?\n/ ;
+-                         /[\t ]+/ ;
+(** A `---` … `---` block inside the body: skipped. *)
+YAML                      /---[\t ]*\r?\n(?:[\S\s]*?\r?\n)?---(?:\r?\n|(?!\S))/ :meta ;
+(** A `%%{…}%%` left in the text the lexer reads: skipped. *)
+DIRECTIVE                 /[\t ]*%%\{[\S\s]*?\}%%(?:\r?\n|(?!\S))/ :meta ;
+(** `%%` to the end of the line, after other text: a comment. *)
+COMMENT                   /[\t ]*%%[^\n\r]*/              :comment ;
+(** The end of the text. *)
+EOF                       /$/ ;
+
+@trivia
+
+(** Removed before lexing (see the lexer input); listed for the highlighters. A comment is a
+whole line; both take their leading blanks. *)
+COMMENT                   /^[^\S\n]*%%(?!\{)[^\n]+/         :comment ;
+(** From `%%{` to the first `}%%`, over line breaks (core preprocess). *)
+DIRECTIVE                 /[^\S\n]*%%\{[\s\S]*?\}%%/        :meta ;
+
+@grammar
+
+(** A chart is `pie` (with `showData`), then sections and statements, one per line. The
+`YAML`, `DIRECTIVE` and `COMMENT` tokens of the lexer are skipped before parsing. *)
+pie = { NEWLINE } Header { NEWLINE | statement NEWLINE } [ statement ] EOF ;
+Header @Header = PIE [ SHOW_DATA ] ;
+
+statement = Slice | Title | AccTitle | AccDescr ;
+
+(** `"Dogs" : 386`: a section, its label and its value. A repeated label keeps its first
+value. *)
+Slice @Slice = STRING COLON NUMBER ;
+(** `title Pets adopted`: the title drawn above the chart (the last one wins). *)
+Title @Title = TITLE ;
+(** `accTitle: …`: the accessible title. *)
+AccTitle @AccTitle = ACC_TITLE ;
+(** `accDescr: …` or `accDescr { … }`: the accessible description. *)
+AccDescr @AccDescr = ACC_DESCR ;

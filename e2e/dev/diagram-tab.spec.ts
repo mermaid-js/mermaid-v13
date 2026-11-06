@@ -31,10 +31,10 @@ const logs = (page: Page) => tab(page).locator('dev-console-panel .logline');
 test('a render warning is listed with its code and message', async ({ page }) => {
   await page.goto(explorer.url('a/warn.mmd'));
   await expect(diagramSvg(page)).toContainText('User');
-  const warning = messages(page).filter({ hasText: 'ICON_UNAVAILABLE' });
+  const warning = messages(page).filter({ hasText: 'without an icons extension' });
   await expect(warning).toHaveCount(1);
   await expect(warning).toHaveAttribute('data-severity', 'warning');
-  await expect(warning).toContainText('is not available');
+  await expect(warning).toContainText('ICON_NOT_RENDERED');
 });
 
 test('a syntax error lists its diagnostic at line:column; clicking opens Code there', async ({

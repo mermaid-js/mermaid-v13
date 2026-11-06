@@ -34,7 +34,6 @@
 @ 9:4  "|"
   themeVariables property (object) 9:4-9:4 "" -> "themeVariables"
   themeCSS property (string) 9:4-9:4 "" -> "themeCSS"
-  handDrawnSeed property (number) 9:4-9:4 "" -> "handDrawnSeed"
   layout property (string) 9:4-9:4 "" -> "layout"
   ascii property (object) 9:4-9:4 "" -> "ascii"
   darkMode property (boolean) 9:4-9:4 "" -> "darkMode"

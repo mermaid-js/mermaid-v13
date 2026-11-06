@@ -58,6 +58,13 @@ describe('MIGRATION.md', () => {
     ['theme name fallbacks', /`redux-dark`/],
     ['layout names dagre/elk', /`dagre`[^\n]*`layered`/],
     ['registerIconPacks', /`registerIconPacks/],
+    // #330: icons move from page CSS to registered packs (D291, D295, D297, D299).
+    ['an Icons section', /### Icons/],
+    ['icons from a pack, not Font Awesome CSS', /`@iconify-json\/fa6-solid`/],
+    ['unresolved icons warn ICON_NOT_RENDERED', /`ICON_NOT_RENDERED`/],
+    ['the deprecated ICON_UNAVAILABLE alias', /`ICON_UNAVAILABLE`[^\n]*deprecated/],
+    ['what the icon converter drops', /`ICON_SIMPLIFIED`/],
+    ['mindmap icons', /`::icon\(/],
     ['error image', /`renderErrorSvg\(/],
     ['front matter and directive divergences', /## Front matter and directives/],
     ['DOM-free rendering', /`container`/],

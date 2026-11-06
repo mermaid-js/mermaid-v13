@@ -292,7 +292,8 @@ elements and statements involved, so an editor can point at them (D82, R-ASCII-5
 | --------------- | ---------------------------------------------------------------- |
 | `style`         | Colours and styles: `style`, `classDef`, `class`, `linkStyle`.   |
 | `curve`         | Edge curves; edges are always drawn as straight, stepped lines. |
-| `image`         | Images and icons; the label is kept.                             |
+| `image`         | Images and icon shapes; the label is kept.                       |
+| `icon`          | Label icons (`fa:fa-car`), shown as written ([Icons](icons.md)). |
 | `emphasis`      | Bold and italic text.                                            |
 | `link`          | `click` links, tooltips and callbacks.                           |
 | `accessibility` | `accTitle` and `accDescr`.                                       |

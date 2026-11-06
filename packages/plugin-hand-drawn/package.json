@@ -1,0 +1,47 @@
+{
+  "name": "@mermaid-js/plugin-hand-drawn",
+  "version": "13.0.0-alpha.0",
+  "description": "The hand-drawn look for Mermaid v13: node, group and edge outlines sketched by roughjs's DOM-free generator, with a fixed seed (D300, D304).",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/plugin-hand-drawn"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "THIRD_PARTY_NOTICES"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@mermaid-js/core": "workspace:*"
+  },
+  "dependencies": {
+    "roughjs": "4.6.6"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^",
+    "mermaid": "workspace:*"
+  },
+  "mermaid": {
+    "plugin": "extension",
+    "id": "hand-drawn",
+    "entry": "./dist/index.js",
+    "export": "handDrawn"
+  }
+}

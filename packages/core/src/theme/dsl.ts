@@ -15,6 +15,10 @@
  *   adjust(a, 5, -5, 0) 5, -5 and 0 added to a's red, green and blue (0–255), each clamped
  *                       (khroma's `adjust`, which v12's quadrant fills used, D232),
  *                       `rgb(from a clamp(0, r + 5, 255) clamp(0, g - 5, 255) … / alpha)`
+ *   adjustHue(a, 30)    a with its HSL hue turned by 30 degrees (khroma's `adjust(a, { h })`,
+ *                       v12's `cScale` hue steps, D258), `hsl(from a calc(h + 30) s l / alpha)`
+ *   ifSet(v, b)         the variable v when the author sets it, else b (v12's `v || b`, D258),
+ *                       `var(--mermaid-v, b)`
  *
  * An identifier is a theme variable when the table knows it, otherwise a CSS colour name.
  * Each rule compiles to a CSS expression over the private aliases (DESIGN §8.1 item 2) and to the same value in
@@ -37,7 +41,9 @@ export type Fn =
   | 'alpha'
   | 'contrast'
   | 'invert'
-  | 'adjust';
+  | 'adjust'
+  | 'adjustHue'
+  | 'ifSet';
 
 const ARITY: Readonly<Record<Fn, number>> = {
   mix: 3,
@@ -49,6 +55,8 @@ const ARITY: Readonly<Record<Fn, number>> = {
   contrast: 3,
   invert: 1,
   adjust: 4,
+  adjustHue: 2,
+  ifSet: 2,
 };
 
 const RE_TOKEN =

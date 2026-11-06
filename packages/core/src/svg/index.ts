@@ -38,10 +38,15 @@ export {
   treeWriter,
   type LabelBox,
   type LabelSpan,
+  type OutlineDraw,
+  type OutlineRole,
+  type OutlineSink,
+  type OutlineTag,
   type StreamSvgWriter,
   type SvgWriter,
   type TreeSvgWriter,
   type WriterOptions,
+  writeFragment,
 } from './writer.ts';
 export {
   checkImageUrl,

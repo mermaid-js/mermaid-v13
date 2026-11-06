@@ -66,6 +66,8 @@ const ATTR_TABLE: Record<AllowedAttr | GradientAttr, true> = {
   points: true,
   fill: true,
   'fill-opacity': true,
+  'fill-rule': true,
+  'clip-rule': true,
   stroke: true,
   'stroke-width': true,
   'stroke-dasharray': true,

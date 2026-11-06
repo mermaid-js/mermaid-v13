@@ -22,15 +22,27 @@ export {
 } from './pipeline/draw.ts';
 export {
   HookRunner,
+  type ActiveOutline,
   type ExtensionClaim,
   type ExtensionNeed,
   type ExtensionPlugin,
   type ExtensionResources,
+  type GlyphProvider,
+  type GlyphRequest,
   type HookContext,
   type HookRun,
   type LaidOut,
+  type OutlineDrawer,
   type ResourceRequest,
 } from './pipeline/extensions.ts';
+export type {
+  IconifyAlias,
+  IconifyIcon,
+  IconifyJSON,
+  IconPacks,
+  IconPackSource,
+  IconPackState,
+} from './pipeline/icon-packs.ts';
 export {
   readManifest,
   type DiagramManifest,
@@ -40,8 +52,10 @@ export {
   type PluginManifest,
 } from './pipeline/manifest.ts';
 export type {
+  DiagramIcon,
   DiagramParseContext,
   DiagramPlugin,
+  IconOptions,
   RenderContext,
   TextRenderContext,
   Warning,

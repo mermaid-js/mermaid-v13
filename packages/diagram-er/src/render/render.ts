@@ -280,7 +280,7 @@ function drawCluster(
     'data-id': sg.name,
     'data-ast': sg.id,
   });
-  w.leaf('rect', {
+  w.outline('group', 'rect', {
     x: box.x - box.width / 2,
     y: box.y - box.height / 2,
     width: box.width,
@@ -318,7 +318,7 @@ function drawEdge({ w, layout, paint, ends }: Scene, e: EdgeView, i: number): vo
     'data-ast': e.id,
   });
   if (route && route.points.length > 1 && paint.line && paint.ends) {
-    w.leaf('path', {
+    w.outline('edge', 'path', {
       d: routePath(w, route.points),
       stroke: paint.line.stroke,
       'stroke-width': paint.line.strokeWidth,
@@ -371,7 +371,7 @@ function drawEntity(scene: Scene, view: EntityView): void {
     'stroke-width': t.strokeWidth,
     ...shape,
   };
-  w.leaf('rect', {
+  w.outline('node', 'rect', {
     class: 'outer-path',
     x: left,
     y: top,
@@ -414,7 +414,7 @@ function drawRows(
       'data-id': row.attribute.name,
       'data-ast': row.attribute.id,
     });
-    w.leaf('rect', {
+    w.outline('part', 'rect', {
       x: left,
       y: top + row.band.at,
       width: view.width,
@@ -464,7 +464,7 @@ function drawDividers(
     if (col.size === 0) continue;
     b.moveTo(left + col.at, under).lineTo(left + col.at, bottom);
   }
-  w.leaf('path', {
+  w.outline('divider', 'path', {
     class: 'divider',
     d: b.done(),
     fill: 'none',

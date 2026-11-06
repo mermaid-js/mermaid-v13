@@ -1,0 +1,34 @@
+---
+config:
+  theme: neo-dark
+  look: handDrawn
+description: one representative ER diagram, hand-drawn in the neo-dark theme (D307)
+---
+erDiagram
+  CUSTOMER {
+    string id PK "the customer number"
+    string name
+    string email UK
+  }
+  ORDER {
+    int id PK
+    string customerId FK "who placed it"
+    date placed
+  }
+  LINE_ITEM {
+    int orderId PK, FK
+    int line PK
+    decimal price
+  }
+  CUSTOMER ||--o{ ORDER : places
+  ORDER ||--|{ LINE_ITEM : contains
+  subgraph Catalogue
+    PRODUCT {
+      string sku PK
+    }
+    NOTE
+  end
+  LINE_ITEM }o--|| PRODUCT : for
+  PRODUCT |o--o| NOTE : "described by"
+  classDef hot fill:#f96,stroke:#333
+  class NOTE hot

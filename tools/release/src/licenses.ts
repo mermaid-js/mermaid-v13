@@ -2,7 +2,7 @@
  * License check (R-REL-4, D12): ported code carries its upstreams' MIT attribution.
  *
  * `UPSTREAMS` maps each upstream to the marker that credits it in a file's leading comment
- * block (Pele's repository URL; Braintree's sanitize-url package name). A file is derived from an upstream
+ * block (Pele's and Iconify's repository URLs; Braintree's sanitize-url package name). A file is derived from an upstream
  * when its header has that marker. Then:
  * - that header names the MIT license and the upstream's copyright holder;
  * - in a published package (`packages/*` without `"private": true`), the package root has a
@@ -41,11 +41,20 @@ export const UPSTREAMS: readonly Upstream[] = [
     holder: 'Braintree',
     copyright: 'Copyright (c) 2017 Braintree',
   },
+  {
+    // cspell:ignore Vjacheslav Trushkin
+    name: '@iconify/utils',
+    marker: 'https://github.com/iconify/iconify',
+    holder: 'Vjacheslav Trushkin',
+    copyright: 'Copyright (c) 2021-PRESENT Vjacheslav Trushkin',
+  },
 ];
 
 /** Workspace-relative files that must credit these upstreams (checked when the file exists). */
 export const REQUIRED_CREDITS: Readonly<Record<string, readonly string[]>> = {
   'packages/core/src/svg/url.ts': ['Pele', '@braintree/sanitize-url'],
+  'packages/plugin-icons/src/resolve.ts': ['@iconify/utils'],
+  'packages/plugin-icons/src/name.ts': ['@iconify/utils'],
 };
 
 const NOTICES = 'THIRD_PARTY_NOTICES';
@@ -159,20 +168,27 @@ export function checkLicenses(root: string): string[] {
     const derived = derivedFiles(root, pkgDir, problems);
     const noticesPath = join(pkgDir, NOTICES);
     if (!existsSync(noticesPath)) {
-      if (derived.length > 0) problems.push(`${pkg}: has Pele-derived files but no ${NOTICES}`);
+      if (derived.length > 0) {
+        const from = [...new Set(derived.map((d) => d.upstream.name))].join(', ');
+        problems.push(`${pkg}: has files ported from ${from} but no ${NOTICES}`);
+      }
       continue;
     }
 
     const notices = readFileSync(noticesPath, 'utf8');
     // Pele's text is required in every notices file, except one that only credits a runtime
     // dependency (layout-elk's elkjs) or bundled code (plugin-math's MathJax, a dev dependency)
-    // in a package with no ported file.
+    // in a package with no ported file, and one whose ported files all come from other upstreams
+    // (plugin-icons' @iconify/utils).
     const headings = new Set(notices.split('\n').map((l) => l.trim()));
     const credited = { ...manifest.dependencies, ...manifest.devDependencies };
     const dependencyOnly =
       derived.length === 0 && Object.keys(credited).some((d) => headings.has(d));
+    const othersOnly = derived.length > 0 && derived.every((d) => d.upstream.name !== 'Pele');
     const used = UPSTREAMS.filter(
-      (u) => (u.name === 'Pele' && !dependencyOnly) || derived.some((d) => d.upstream === u)
+      (u) =>
+        (u.name === 'Pele' && !dependencyOnly && !othersOnly) ||
+        derived.some((d) => d.upstream === u)
     );
     for (const u of used)
       if (!notices.includes('MIT License') || !notices.includes(u.copyright))
