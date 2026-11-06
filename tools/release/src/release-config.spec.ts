@@ -83,7 +83,7 @@ describe('changesets (R-REL-1, R-REL-2)', () => {
       .map((dir) => json(`packages/${dir}/package.json`) as { name: string; private?: boolean })
       .filter((pkg) => pkg.private !== true && !released.includes(pkg.name))
       .map((pkg) => pkg.name);
-    expect(unreleased.length).toBeGreaterThan(0);
+    // Empty right after a release, when `changeset version` has added every package to pre.json.
     for (const name of unreleased) {
       const first = pending.filter(
         (md) => md.includes(`'${name}': `) && md.includes(`feat: first release of \`${name}\``)

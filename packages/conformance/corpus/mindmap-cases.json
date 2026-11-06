@@ -1,0 +1,214 @@
+[
+  {
+    "id": "mindmap-cases/class-one",
+    "source": "mindmap\n  root\n  :::urgent\n"
+  },
+  {
+    "id": "mindmap-cases/class-two-words",
+    "source": "mindmap\n  root\n    a\n    :::urgent large\n"
+  },
+  {
+    "id": "mindmap-cases/class-replaced",
+    "source": "mindmap\n  root\n    a\n    :::first one\n    :::second\n"
+  },
+  {
+    "id": "mindmap-cases/class-blank-replaces",
+    "source": "mindmap\n  root\n    a\n    :::x\n    ::: \n"
+  },
+  {
+    "id": "mindmap-cases/class-bare-marker",
+    "source": "mindmap\n  root\n    a\n    :::\n"
+  },
+  {
+    "id": "mindmap-cases/class-last-node-any-indent",
+    "source": "mindmap\n  root\n    a\n      b\n  :::deep\n"
+  },
+  {
+    "id": "mindmap-cases/class-then-child",
+    "source": "mindmap\n  root(Root)\n    Child(Child)\n    :::hot\n      a(a)\n      b[New Stuff]\n"
+  },
+  {
+    "id": "mindmap-cases/class-and-icon",
+    "source": "mindmap\n  root[The root]\n  :::m-4 p-8\n  ::icon(bomb)\n"
+  },
+  {
+    "id": "mindmap-cases/class-no-indent",
+    "source": "mindmap\nroot\n:::a\n  b\n  :::c d\n"
+  },
+  {
+    "id": "mindmap-cases/class-tabs",
+    "source": "mindmap\n  root\n  :::a\tb  c\n"
+  },
+  {
+    "id": "mindmap-cases/class-on-each",
+    "source": "mindmap\n  root\n    a\n    :::x\n    b\n    :::y\n      c\n      :::z\n"
+  },
+  {
+    "id": "mindmap-cases/class-id-colons",
+    "source": "mindmap\n  root\n    a:::b\n"
+  },
+  {
+    "id": "mindmap-cases/icon-forms",
+    "source": "mindmap\n  root\n    a\n    ::icon(fa fa-book)\n    b\n    ::icon(mdi:fire)\n    c\n    ::icon(mdi mdi-fire)\n"
+  },
+  {
+    "id": "mindmap-cases/icon-replaced",
+    "source": "mindmap\n  root\n  ::icon(x)\n  ::icon(y)\n"
+  },
+  {
+    "id": "mindmap-cases/icon-empty",
+    "source": "mindmap\n  root\n  ::icon()\n    a\n"
+  },
+  {
+    "id": "mindmap-cases/icon-multi-line",
+    "source": "mindmap\n  root\n  ::icon(a\n  b)\n    c\n"
+  },
+  {
+    "id": "mindmap-cases/icon-case",
+    "source": "mindmap\n  root\n  ::ICON(x)\n"
+  },
+  {
+    "id": "mindmap-cases/shapes",
+    "source": "mindmap\n  root\n    a[rect]\n    b(rounded)\n    c((circle))\n    d)cloud(\n    e))bang((\n    f{{hexagon}}\n    g\n"
+  },
+  {
+    "id": "mindmap-cases/shapes-without-id",
+    "source": "mindmap\n  ((root))\n    [a]\n    (b)\n    ))c((\n    {{d}}\n    )e(\n"
+  },
+  {
+    "id": "mindmap-cases/shape-mismatched",
+    "source": "mindmap\n  root\n    b(x]\n    c[y)\n    d)z)\n    e(w((\n    f((v)\n"
+  },
+  {
+    "id": "mindmap-cases/shape-dash",
+    "source": "mindmap\n  root\n    (-x-)\n    k-)l(-\n    -)m(-\n"
+  },
+  {
+    "id": "mindmap-cases/label-multi-line",
+    "source": "mindmap\n  root(\n    The root\n  )\n    child\n"
+  },
+  {
+    "id": "mindmap-cases/strings",
+    "source": "mindmap\n  root[\"String containing []\"]\n    a[\"`**bold** _it_`\"]\n    b(\"()\")\n"
+  },
+  {
+    "id": "mindmap-cases/markdown-label",
+    "source": "mindmap\n  root\n    **bold** and _it_\n"
+  },
+  {
+    "id": "mindmap-cases/br-label",
+    "source": "mindmap\n  root\n    a[one<br/>two]\n"
+  },
+  {
+    "id": "mindmap-cases/indent-mixed",
+    "source": "mindmap\n    root((Root))\n          ownerA{{Owner A}}\n            repoA[Repo A]\n                leafA[Leaf A]\n              leafB[Leaf B]\n          ownerB{{Owner B}}\n"
+  },
+  {
+    "id": "mindmap-cases/indent-tabs",
+    "source": "mindmap\nroot\n\ta\n\t\tb\n\tc\n"
+  },
+  {
+    "id": "mindmap-cases/indent-unindented-root",
+    "source": "mindmap\nroot\n  a\n    b\n  c\n"
+  },
+  {
+    "id": "mindmap-cases/indent-same-line",
+    "source": "mindmap root\n  a\n"
+  },
+  {
+    "id": "mindmap-cases/repeated-ids",
+    "source": "mindmap\n  a\n    a\n      a[x]\n    b\n    b\n"
+  },
+  {
+    "id": "mindmap-cases/blank-and-comment-lines",
+    "source": "mindmap\n  root\n    a\n\n    b\n    %% note\n    c(c) %% end\n    d\n"
+  },
+  {
+    "id": "mindmap-cases/trailing-blanks",
+    "source": "mindmap\n  root  \n    a  \n"
+  },
+  {
+    "id": "mindmap-cases/many-branches",
+    "source": "mindmap\n  root\n    b0\n    b1\n    b2\n    b3\n    b4\n    b5\n    b6\n    b7\n    b8\n    b9\n    b10\n    b11\n    b12\n"
+  },
+  {
+    "id": "mindmap-cases/deep-chain",
+    "source": "mindmap\nroot\n  n1\n    n2\n      n3\n        n4\n          n5\n            n6\n              n7\n                n8\n                  n9\n                    n10\n                      n11\n                        n12\n                          n13\n"
+  },
+  {
+    "id": "mindmap-cases/front-matter-title",
+    "source": "---\ntitle: Title\n---\nmindmap\n  root\n"
+  },
+  {
+    "id": "mindmap-cases/crlf",
+    "source": "mindmap\r\n  root\r\n    a\r\n    :::x\r\n"
+  },
+  {
+    "id": "mindmap-cases/entities",
+    "source": "mindmap\n  root[#quot;hi#quot;]\n    #amp; b\n"
+  },
+  {
+    "id": "mindmap-cases/empty-body-line-break",
+    "source": "mindmap\n"
+  },
+  {
+    "id": "mindmap-cases/reject-second-root",
+    "source": "mindmap\n  root\n  fakeRoot\n"
+  },
+  {
+    "id": "mindmap-cases/reject-root-in-wrong-place",
+    "source": "mindmap\n          root\n        fakeRoot\n    realRootWrongPlace\n"
+  },
+  {
+    "id": "mindmap-cases/reject-decoration-first",
+    "source": "mindmap\n  ::icon(x)\n  root\n"
+  },
+  {
+    "id": "mindmap-cases/reject-class-first",
+    "source": "mindmap\n:::a\n  root\n"
+  },
+  {
+    "id": "mindmap-cases/reject-header-only",
+    "source": "mindmap"
+  },
+  {
+    "id": "mindmap-cases/reject-blank-after-header",
+    "source": "mindmap\n\n  root\n"
+  },
+  {
+    "id": "mindmap-cases/reject-two-blank-runs",
+    "source": "mindmap\n  root\n\n%%\n\n    b\n"
+  },
+  {
+    "id": "mindmap-cases/reject-icon-same-line",
+    "source": "mindmap\n  root\n    a[b] ::icon(x)\n"
+  },
+  {
+    "id": "mindmap-cases/reject-two-nodes-one-line",
+    "source": "mindmap\n  root\n    a[b] c\n"
+  },
+  {
+    "id": "mindmap-cases/reject-empty-shape",
+    "source": "mindmap\n  root\n    a[]\n"
+  },
+  {
+    "id": "mindmap-cases/reject-unclosed-shape",
+    "source": "mindmap\n  root\n    a(b\n"
+  },
+  {
+    "id": "mindmap-cases/reject-unclosed-icon",
+    "source": "mindmap\n  root\n  ::icon(x\n"
+  },
+  {
+    "id": "mindmap-cases/reject-brace",
+    "source": "mindmap\n  root\n    a{b}\n"
+  },
+  {
+    "id": "mindmap-cases/reject-keyword-child",
+    "source": "mindmap\n  root\n    mindmap\n"
+  },
+  {
+    "id": "mindmap-cases/reject-bare-class-then-node",
+    "source": "mindmap\n  root\n    a\n  :::\n    b\n"
+  }
+]

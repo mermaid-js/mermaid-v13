@@ -1,6 +1,6 @@
 {
   "name": "@mermaid-js/diagram-flowchart",
-  "version": "13.0.0-alpha.0",
+  "version": "13.0.0-alpha.1",
   "description": "Flowchart diagram plugin for Mermaid: parser, model, graph builder, shapes and renderer.",
   "type": "module",
   "license": "MIT",
