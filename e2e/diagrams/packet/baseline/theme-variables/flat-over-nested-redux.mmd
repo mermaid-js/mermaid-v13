@@ -1,0 +1,19 @@
+---
+config:
+  theme: redux
+  themeVariables:
+    packetBlockFillColor: '#E3F2FD'
+    packetTitleFontSize: 20
+    packet:
+      blockFillColor: '#FFCDD2'
+      byteFontSize: 12px
+description: >-
+  flat packet names win over the nested themeVariables.packet keys (D540) in
+  redux; a nested key with no flat name (byteFontSize) still applies
+---
+packet
+  title Flat names win in redux
+  0-15: "Source Port"
+  16-31: "Destination Port"
+  +16: "Length"
+  +16: "Checksum"

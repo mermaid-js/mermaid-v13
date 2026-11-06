@@ -36,7 +36,7 @@ import { packetAdapter } from './v13.ts';
  */
 
 /** v12 field labels written otherwise than their name in the corpus (skipped above). */
-const ESCAPED = 46;
+const ESCAPED = 49;
 
 const service = createLanguageService();
 await service.preload({ types: ['packet'] });
