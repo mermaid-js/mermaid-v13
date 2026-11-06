@@ -4,8 +4,8 @@ Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate and corpus restore | #451 | #285 (merged) | open |
-| T2 grammar, parser, model, AST | #453 | #451 | blocked |
+| T1 lexer parity gate and corpus restore | #451 | #285 (merged) | merged (ff e3b5b9d4d; package entry 2,830 B gz, no core change) |
+| T2 grammar, parser, model, AST | #453 | #451 | in progress (`.claude/worktrees/t453`, `feature/453_kanban-parser`) |
 | T3 layout | #455 | #453 | blocked (may start on hand-built models) |
 | T4 SVG renderer | #457 | #455 (T0a merged in at d562508ea) | blocked |
 | T6 language facet | #463 | #453; #406 (`LanguageFacet.standalone`) | blocked |
@@ -20,6 +20,8 @@ Integration branch `feature/424_kanban` (from `mermaid-v13` at dd4b9d19f). Draft
 
 ## Merge order (coordinator)
 
+- 2026-11-06: merging `mermaid-v13` 488a4bf5e (mindmap #406) here conflicts in 14 files with T0a (core theme specs, vocabulary, generated variables, MIGRATION.md). Aborted: `mermaid-v13` comes in through `feature/414_theme-t0` once T0 has merged it, so T0's resolution is the only one.
+
 M4 wave 2 (gantt #398, gitGraph #404, mindmap #406) first, then the Theme T0 (#414), then the M5a ports. Merge `mermaid-v13` into this branch as each lands, keeping both sides; regenerate generated files rather than hand-merging.
 
 ## Core size (R-PERF-8, CDN limit 94,208 B gz)
@@ -27,6 +29,7 @@ M4 wave 2 (gantt #398, gitGraph #404, mindmap #406) first, then the Theme T0 (#4
 | After | Core gz | Δ |
 | --- | --- | --- |
 | base (dd4b9d19f) | 91,530 B | — (2,678 B spare) |
+| #451 T1 | 91,530 B | 0 (no core change) |
 
 ## Finish rule
 
