@@ -23,5 +23,5 @@
 ## Machine-wide locks (many sessions share one machine)
 
 - Every full `pnpm check`: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-check.lock pnpm check`.
-- Every Playwright e2e run: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-e2e.lock <command>`.
+- Every Playwright e2e run: `lockf /Users/knsv/repos/mermaid-v13/.tmp/m3-e2e.lock <command>`. While the wave coordinator's load rule is on (AI-Max overloaded), `pnpm e2e` and pushes take `m3-check.lock` too, so all heavy runs queue.
 - A timing test that fails under load is not a regression: rerun it under the lock before acting on it. `language-budget-sequence.spec.ts` (R-LANG-4) is a known timing flake.
