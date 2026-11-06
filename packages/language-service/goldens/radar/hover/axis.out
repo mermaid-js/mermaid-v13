@@ -1,0 +1,29 @@
+@ 2:8  axis |A["Speed"], B
+  2:8-2:9 "A"
+  | **axis** `A`
+  |
+  | Label: `Speed`
+@ 3:9  axis A|["Again"]
+  3:8-3:9 "A"
+  | **axis** `A`
+  |
+  | Label: `Again`
+  |
+  | Repeated: an axis `A` comes first, at line 2. Both are drawn; entries `A: …` give both the same value.
+@ 4:13  curve one{|A: 1, B: 2, X: 3}
+  4:13-4:14 "A"
+  | **axis** `A`
+  |
+  | Label: `Speed`
+@ 4:20  curve one{A: 1, B|: 2, X: 3}
+  4:19-4:20 "B"
+  | **axis** `B`
+  |
+  | No label: the chart shows the name.
+@ 4:26  curve one{A: 1, B: 2, X|: 3}
+  4:25-4:26 "X"
+  | **axis** `X`
+  |
+  | No axis is named `X`, so this value is ignored.
+@ 5:11  curve tw|o{1, 2, 3}
+  none

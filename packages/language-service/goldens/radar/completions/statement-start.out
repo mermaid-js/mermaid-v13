@@ -1,0 +1,23 @@
+@ 3:3  |
+  axis keyword 3:3-3:3 "" -> "axis "
+  curve keyword 3:3-3:3 "" -> "curve "
+  title keyword 3:3-3:3 "" -> "title "
+  accTitle keyword 3:3-3:3 "" -> "accTitle: "
+  accDescr keyword 3:3-3:3 "" -> "accDescr: "
+  showLegend keyword 3:3-3:3 "" -> "showLegend "
+  ticks keyword 3:3-3:3 "" -> "ticks "
+  max keyword 3:3-3:3 "" -> "max "
+  min keyword 3:3-3:3 "" -> "min "
+  graticule keyword 3:3-3:3 "" -> "graticule "
+@ 4:5  ax|
+  axis keyword 4:3-4:5 "ax" -> "axis "
+@ 5:6  acc|
+  accTitle keyword 5:3-5:6 "acc" -> "accTitle: "
+  accDescr keyword 5:3-5:6 "acc" -> "accDescr: "
+@ 6:4  m|
+  max keyword 6:3-6:4 "m" -> "max "
+  min keyword 6:3-6:4 "m" -> "min "
+@ 7:10  axis B |
+  none
+@ 8:17  curve c{1, 2} |
+  none

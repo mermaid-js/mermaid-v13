@@ -37,6 +37,12 @@ export interface RadarCurve {
   readonly astId: AstId;
 }
 
+/**
+ * v12 `db.ts` `MAX_TICKS`: more rings are clamped (`RADAR_TICKS_CLAMPED`, D356). Here, not in
+ * `layout/`, so the parser (and the `./language` bundle) reads it without the layout.
+ */
+export const MAX_TICKS = 32;
+
 /** The options as v12 resolves them: the last of each name wins (`db.ts:95-109`). */
 export interface RadarOptions {
   readonly showLegend: boolean;

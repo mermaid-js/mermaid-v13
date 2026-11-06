@@ -7,7 +7,7 @@
  * warnings, one per kind with `related` positions.
  */
 import type { Diagnostics, Range, RelatedInfo } from '@mermaid-js/core/parser-kit';
-import { MAX_TICKS } from '../layout/metrics.ts';
+import { MAX_TICKS } from '../model.ts';
 import type { RadarAxis, RadarCurve, RadarEntry, RadarModel, RadarOptions } from '../model.ts';
 import type { RadarAxisNode, RadarCurveNode, RadarEntryNode, RadarOptionNode } from './ast.ts';
 

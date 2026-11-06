@@ -1,0 +1,17 @@
+@ 4:3  |
+  axis keyword 4:3-4:3 "" -> "axis "
+  curve keyword 4:3-4:3 "" -> "curve "
+  title keyword 4:3-4:3 "" -> "title "
+  accTitle keyword 4:3-4:3 "" -> "accTitle: "
+  accDescr keyword 4:3-4:3 "" -> "accDescr: "
+  showLegend keyword 4:3-4:3 "" -> "showLegend "
+  ticks keyword 4:3-4:3 "" -> "ticks "
+  max keyword 4:3-4:3 "" -> "max "
+  min keyword 4:3-4:3 "" -> "min "
+  graticule keyword 4:3-4:3 "" -> "graticule "
+@ 5:14  showLegend |
+  true constant 5:14-5:14 "" -> "true"
+  false constant 5:14-5:14 "" -> "false"
+@ 6:19  curve two{A: 1, |
+  A node (axis) 6:19-6:19 "" -> "A"
+  B node (axis) 6:19-6:19 "" -> "B"

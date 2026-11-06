@@ -10,4 +10,14 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #422: the manifest comes with T5 (#449).
+  {
+    type: 'radar',
+    id: 'radar',
+    section: 'radar',
+    pattern: /^\s*radar-beta/,
+    detector: (text) => /^\s*radar-beta/.test(text),
+    load: () => import('@mermaid-js/diagram-radar/language').then((m) => m.language),
+  },
+];

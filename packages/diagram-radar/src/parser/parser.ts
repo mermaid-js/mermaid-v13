@@ -81,6 +81,12 @@ const DOC = [...STARTS, Kind.Newline, Kind.EOF];
 const HEAD = [T.RadarBeta, T.RadarBetaColon, Kind.Newline];
 const LINE_END = [Kind.Newline, Kind.EOF];
 const STARTS_SET = kindSet(...STARTS);
+/** What line breaks may be followed by, inside a curve's `{ }` and elsewhere (probe lists). */
+const NEWLINE_ONLY = [Kind.Newline];
+const BEFORE_ENTRIES = [Kind.Newline, T.Number, T.Id];
+const BEFORE_DETAILED = [Kind.Newline, T.Id];
+const BEFORE_NUMBER = [Kind.Newline, T.Number];
+const BEFORE_RBRACE = [Kind.Newline, T.RBrace];
 /** Tokens that cannot start or continue a name although they look like one (D357). */
 const KEYWORD_PREFIX = kindSet(...PREFIX_KEYWORDS.map((k) => k.kind));
 /** `a`, `b` or `c`, each in backticks. */
@@ -286,10 +292,14 @@ class RadarParser {
     return this.i++;
   }
 
-  /** Consume the line breaks at the cursor. */
-  private newlines(): void {
+  /**
+   * Consume the line breaks at the cursor. `next` (a constant list, with `Kind.Newline`) is
+   * what may follow them, tested at each: on a blank line inside `{ }` the cursor is at a line
+   * break, where an entry may be typed.
+   */
+  private newlines(next: readonly number[] = NEWLINE_ONLY): void {
     for (;;) {
-      this.tested([Kind.Newline]);
+      this.tested(next);
       if (this.kind() !== Kind.Newline) return;
       this.i++;
     }
@@ -606,7 +616,7 @@ class RadarParser {
    * `DetailedEntry`, chosen by the first.
    */
   private entries(curve: AstId): RadarEntryNode[] {
-    this.newlines();
+    this.newlines(BEFORE_ENTRIES);
     this.tested([T.Number, T.Id]);
     const first = this.kind();
     if (first !== T.Number && first !== T.Id) this.fail([T.Number, T.Id]);
@@ -620,9 +630,9 @@ class RadarParser {
       this.tested([T.Comma, Kind.Newline, T.RBrace]);
       if (this.kind() !== T.Comma) break;
       this.i++;
-      this.newlines();
+      this.newlines(detailed ? BEFORE_DETAILED : BEFORE_NUMBER);
     }
-    this.newlines();
+    this.newlines(BEFORE_RBRACE);
     return out;
   }
 

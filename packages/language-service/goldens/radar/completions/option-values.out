@@ -1,0 +1,12 @@
+@ 2:14  showLegend |
+  true constant 2:14-2:14 "" -> "true"
+  false constant 2:14-2:14 "" -> "false"
+@ 3:15  showLegend t|
+  true constant 3:14-3:15 "t" -> "true"
+@ 4:13  graticule |
+  circle constant 4:13-4:13 "" -> "circle"
+  polygon constant 4:13-4:13 "" -> "polygon"
+@ 5:15  graticule po|lygon
+  polygon constant 5:13-5:20 "polygon" -> "polygon"
+@ 6:9  ticks |
+  none
