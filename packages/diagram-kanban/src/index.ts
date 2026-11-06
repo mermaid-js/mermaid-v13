@@ -22,5 +22,5 @@ export {
 export type * from './layout/index.ts';
 export { renderKanban } from './render/render.ts';
 export type { KanbanRenderContext } from './render/context.ts';
-export { KANBAN_PRIORITY } from './render/links.ts';
+export { KANBAN_PRIORITY } from './render/priority.ts';
 export { kanban, kanbanLabels } from './plugin.ts';

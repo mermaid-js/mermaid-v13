@@ -25,12 +25,18 @@ export const PRIORITY_COLORS: Readonly<Record<KanbanPriority, Paint>> = {
   'Very Low': fixed('lightblue'),
 };
 
+/** A card's rect: v12's `.node rect`. */
+export interface CardPaint {
+  readonly fill: Paint;
+  readonly stroke: Paint;
+}
+
 export interface Paints {
   /** Column `slot` (from 1, `ColumnLayout.slot`): its fill and stroke. */
   column(slot: number): Paint;
   readonly text: Paint;
-  readonly cardFill: Paint;
-  readonly cardStroke: Paint;
+  /** Undefined on a board with no card, so its root declares neither variable. */
+  readonly card?: CardPaint;
 }
 
 export function paints(theme: Theme, layout: KanbanLayout): Paints {
@@ -41,11 +47,13 @@ export function paints(theme: Theme, layout: KanbanLayout): Paints {
     if (!columns.has(n)) columns.set(n, theme.color(columnVar(n)));
   }
   const text = theme.color('textColor');
-  const card = layout.cards.length > 0;
+  const card =
+    layout.cards.length > 0
+      ? { fill: theme.color('background'), stroke: theme.color('nodeBorder') }
+      : undefined;
   return {
-    column: (slot) => columns.get(columnSlot(slot)) ?? text,
+    column: (slot) => columns.get(columnSlot(slot))!,
     text,
-    cardFill: card ? theme.color('background') : text,
-    cardStroke: card ? theme.color('nodeBorder') : text,
+    ...(card ? { card } : {}),
   };
 }

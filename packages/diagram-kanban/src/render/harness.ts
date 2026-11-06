@@ -68,10 +68,10 @@ export async function renderKanbanForTest(
     undefined,
     { warn, section: 'kanban' }
   );
+  const limits = resolveLimits(config);
   let model: KanbanModel;
   let ast: KanbanDocument | undefined;
   if (typeof input === 'string') {
-    const limits = resolveLimits(config);
     const parse = kanban.parse(input, { config, preprocessed: pre!, limits });
     const error = parse.diagnostics.find((d) => d.severity === 'error');
     if (error) throw new Error(`kanban parse error: ${error.message}`);
@@ -98,7 +98,7 @@ export async function renderKanbanForTest(
     layout: () => {
       throw new Error('kanban lays itself out (layoutKind: custom)');
     },
-    limits: resolveLimits(config),
+    limits,
     warn,
     ...(options.linkSchemes ? { linkSchemes: options.linkSchemes } : {}),
   };

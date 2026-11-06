@@ -18,8 +18,9 @@ import type { FontKey } from '@mermaid-js/core/text';
 import type { CardLayout, ColumnLayout, KanbanLayout, PlacedLabel } from '../layout/index.ts';
 import type { KanbanItem, KanbanModel } from '../model.ts';
 import type { KanbanRenderContext } from './context.ts';
-import { priorityWarning, ticketUrl } from './links.ts';
-import { paints, PRIORITY_COLORS, type Paints } from './paint.ts';
+import { ticketUrl } from './links.ts';
+import { paints, PRIORITY_COLORS, type CardPaint, type Paints } from './paint.ts';
+import { priorityWarning } from './priority.ts';
 
 interface Scene {
   readonly w: SvgWriter;
@@ -28,6 +29,13 @@ interface Scene {
   readonly paint: Paints;
   /** The model item of each AST id drawn. */
   readonly items: ReadonlyMap<string, KanbanItem>;
+}
+
+/** The model item an AST id the layout placed came from; every one has one. */
+function itemOf(items: ReadonlyMap<string, KanbanItem>, ast: string): KanbanItem {
+  const item = items.get(ast);
+  if (!item) throw new Error(`kanban: no item for ${ast}`);
+  return item;
 }
 
 /** An author's `:::` classes as class names: characters outside `[\w-]` dropped. */
@@ -55,7 +63,7 @@ export function renderKanban(
   drawColumns(scene);
   drawCards(scene);
   w.close();
-  const cards = layout.cards.flatMap((c) => items.get(c.ast) ?? []);
+  const cards = layout.cards.map((c) => itemOf(items, c.ast));
   const warning = priorityWarning(cards);
   if (warning) ctx.warn(warning);
 }
@@ -128,9 +136,9 @@ function drawColumns(scene: Scene): void {
 
 /** v12 `kanbanSection`: `g.cluster.section-<k>` with the column rect and its centred title. */
 function drawColumn({ w, layout, paint, items }: Scene, c: ColumnLayout): void {
-  const item = items.get(c.ast);
+  const item = itemOf(items, c.ast);
   w.open('g', {
-    class: `cluster section-${c.slot}${userClasses(item?.classes ?? [])}`,
+    class: `cluster section-${c.slot}${userClasses(item.classes)}`,
     'data-id': c.ast,
     'data-ast': c.ast,
   });
@@ -150,11 +158,16 @@ function drawColumn({ w, layout, paint, items }: Scene, c: ColumnLayout): void {
   w.close();
 }
 
+/** A card's title, ticket or assignee: left-aligned in its box, in `textColor`. */
+function drawCardLabel({ w, paint }: Scene, label: PlacedLabel): void {
+  drawLabel(w, label, 'label', paint.text, true);
+}
+
 function drawCards(scene: Scene): void {
-  const { w, layout } = scene;
-  if (layout.cards.length === 0) return;
+  const { w, layout, paint } = scene;
+  if (!paint.card) return;
   w.open('g', { class: 'items' });
-  for (const card of layout.cards) drawCard(scene, card);
+  for (const card of layout.cards) drawCard(scene, card, paint.card);
   w.close();
 }
 
@@ -162,11 +175,11 @@ function drawCards(scene: Scene): void {
  * v12 `kanbanItem`: `g.node` with the card rect, the priority bar, the title, the ticket (a link
  * when `kanban.ticketBaseUrl` gives one that passes `checkUrl`, D377) and the assignee.
  */
-function drawCard(scene: Scene, card: CardLayout): void {
-  const { w, layout, paint, ctx, items } = scene;
-  const item = items.get(card.ast);
+function drawCard(scene: Scene, card: CardLayout, rect: CardPaint): void {
+  const { w, layout, ctx, items } = scene;
+  const item = itemOf(items, card.ast);
   w.open('g', {
-    class: `node${userClasses(item?.classes ?? [])}`,
+    class: `node${userClasses(item.classes)}`,
     'data-id': card.ast,
     'data-ast': card.ast,
   });
@@ -178,8 +191,8 @@ function drawCard(scene: Scene, card: CardLayout): void {
     height: card.height,
     rx: layout.radius,
     ry: layout.radius,
-    fill: paint.cardFill,
-    stroke: paint.cardStroke,
+    fill: rect.fill,
+    stroke: rect.stroke,
     'stroke-width': layout.stroke,
   });
   if (card.bar)
@@ -192,9 +205,9 @@ function drawCard(scene: Scene, card: CardLayout): void {
       stroke: PRIORITY_COLORS[card.bar.priority],
       'stroke-width': card.bar.width,
     });
-  if (card.title) drawLabel(w, card.title, 'label', paint.text, true);
+  if (card.title) drawCardLabel(scene, card.title);
   if (card.ticket) {
-    const href = ticketUrl(item?.ticket, ctx);
+    const href = ticketUrl(item.ticket, ctx);
     if (href) {
       w.open('a', {
         class: 'kanban-ticket-link',
@@ -202,10 +215,10 @@ function drawCard(scene: Scene, card: CardLayout): void {
         target: '_blank',
         'text-decoration': 'underline',
       });
-      drawLabel(w, card.ticket, 'label', paint.text, true);
+      drawCardLabel(scene, card.ticket);
       w.close();
-    } else drawLabel(w, card.ticket, 'label', paint.text, true);
+    } else drawCardLabel(scene, card.ticket);
   }
-  if (card.assignee) drawLabel(w, card.assignee, 'label', paint.text, true);
+  if (card.assignee) drawCardLabel(scene, card.assignee);
   w.close();
 }
