@@ -3,8 +3,8 @@
  * variables and tokens; every other colour comes from the shared rules (R-THEME-5).
  */
 import type { ThemeSpec } from '../spec.ts';
-import { BASE_SECONDARY, gitPalettes, gitSources, LABEL_SCALE } from './palettes.ts';
-import { darkenedScale, hueSources } from './scales.ts';
+import { BASE_SECONDARY, LABEL_SCALE } from './palettes.ts';
+import { darkenedScale, gitPalettes, gitSources, hueSources } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,

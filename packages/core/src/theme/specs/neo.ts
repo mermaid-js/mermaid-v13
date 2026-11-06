@@ -7,8 +7,8 @@
  * `packages/conformance/src/neo-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { fillTypes, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
-import { darkenedScale, hueSources } from './scales.ts';
+import { BASE_SECONDARY, fillTypes, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
+import { darkenedScale, gitLabelRules, hueSources } from './scales.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
@@ -17,7 +17,7 @@ import {
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
-import { NEO_GIT, NEO_GIT_DARK_MODE, neoGitLabels, PIE_REDUX } from './redux.ts';
+import { NEO_GIT, NEO_GIT_DARK_MODE, PIE_REDUX } from './redux.ts';
 
 const SOURCES = hueSources(true, '#ececfe', '#e9e9f1', 'lightenHsl(adjustHue(#ececfe, 180), 5%)');
 
@@ -56,7 +56,11 @@ const neo: ThemeSpec = {
   },
   // v12 neo derives these as theme-redux.js does: `classText` from `textColor`, no ER row fill
   // of its own, and the neo-look zero circle on the node fill.
-  rules: { ...REDUX_RULES, ...PIE_REDUX, ...neoGitLabels('#b3b3b3') },
+  rules: {
+    ...REDUX_RULES,
+    ...PIE_REDUX,
+    ...gitLabelRules(`invert(${BASE_SECONDARY})`, '#b3b3b3', BASE_SECONDARY),
+  },
   values: {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#ececfe #e9e9f1 #feecfd #f1e9f0 #ecfefd #e9f1f0 #feeeec #f1eae9'),

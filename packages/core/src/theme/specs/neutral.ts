@@ -2,8 +2,8 @@
  * `neutral`: v12 `theme-neutral.js`, greys for print.
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, gitLabelRules, INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
-import { darkModeLabels, fixedGit } from './scales.ts';
+import { fillTypes, INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
+import { darkModeLabels, fixedGit, gitLabelRules } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,

@@ -2,6 +2,7 @@
  * The rules the lazily loaded themes derive their `cScale`, `cScaleInv` and `cScaleLabel` with
  * (D258), and their git palettes (D267), kept out of `palettes.ts` so the default theme's static chunk does not carry them.
  */
+import type { ThemeRuleTable } from '../spec.ts';
 import { paletteSlots } from './palettes.ts';
 
 /** v12's hue steps from the primary colour for slots 3–11 (khroma `adjust(…, { h })`). */
@@ -80,4 +81,47 @@ export const fixedGit = (
 ): { readonly git: readonly string[]; readonly gitInv: readonly string[] } => ({
   git,
   gitInv: git.map((c) => `invert(${c})`),
+});
+
+/**
+ * The colours v12 starts its `git0`–`git7` from (D267): the primary, secondary and tertiary
+ * colours, then the primary turned by −30, −60, −90, 60 and 120 degrees. Each argument is a rule.
+ */
+export const gitSources = (p: string, s: string, t: string): readonly string[] => [
+  p,
+  s,
+  t,
+  ...[-30, -60, -90, 60, 120].map((h) => `adjustHue(${p}, ${h})`),
+];
+
+/**
+ * v12's `git`, `gitInv` and `gitBranchLabel` (`theme-base.js` and the themes that copy it): each
+ * source darkened by 25 points of HSL lightness (`lightenHsl` under `darkMode`), the inverse of
+ * that step, and one label rule in every slot. v12 steps an author's `git<n>` too before it inverts
+ * it, then draws the author's colour as given; `ifSet` keeps both.
+ */
+export const gitPalettes = (
+  sources: readonly string[],
+  step = 'darkenHsl',
+  label = 'labelTextColor'
+): Readonly<Record<'git' | 'gitInv' | 'gitBranchLabel', readonly string[]>> => ({
+  git: sources.map((c) => `${step}(${c}, 25%)`),
+  gitInv: sources.map((c, i) => `invert(${step}(ifSet(git${i}, ${c}), 25%))`),
+  gitBranchLabel: sources.map(() => label),
+});
+
+/**
+ * gitGraph's commit label colours and tag border (D267) as one v12 theme derives them: the
+ * author's `secondaryTextColor`, else v12's `invert(secondaryColor)` (`text`); `background`; the
+ * author's `tagBorder`, else the author's `primaryBorderColor`, else v12's resolved border
+ * (`border`, a khroma saturation step the DSL has no function for).
+ */
+export const gitLabelRules = (
+  text: string,
+  border: string,
+  background = 'secondaryColor'
+): ThemeRuleTable => ({
+  commitLabelColor: `ifSet(secondaryTextColor, ${text})`,
+  commitLabelBackground: background,
+  tagLabelBorder: `ifSet(tagBorder, ifSet(primaryBorderColor, ${border}))`,
 });

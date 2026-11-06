@@ -4,8 +4,8 @@
  * those values are pinned here rather than left to the shared dark rules.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { fillTypes, gitLabelRules, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
-import { DARK_HUE_SOURCES, darkenedScale } from './scales.ts';
+import { fillTypes, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
+import { DARK_HUE_SOURCES, darkenedScale, gitLabelRules } from './scales.ts';
 import {
   PIE_REDUX_DARK,
   REDUX_DARK_GIT,

@@ -6,7 +6,6 @@
 import type { ThemeSpec } from '../spec.ts';
 import {
   fillTypes,
-  gitLabelRules,
   INVERTED_SCALE,
   paletteSlots,
   pieSlots,
@@ -14,6 +13,7 @@ import {
   TAILWIND_300,
   TAILWIND_400,
 } from './palettes.ts';
+import { gitLabelRules } from './scales.ts';
 import {
   REDUX_DARK_BASE,
   REDUX_DARK_GIT,

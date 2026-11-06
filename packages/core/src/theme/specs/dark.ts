@@ -2,8 +2,8 @@
  * `dark`: v12 `theme-dark.js`.
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, gitLabelRules, INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
-import { classicGitLabels, darkModeLabels, fixedGit } from './scales.ts';
+import { fillTypes, INVERTED_SCALE, paletteSlots, pieSlots } from './palettes.ts';
+import { classicGitLabels, darkModeLabels, fixedGit, gitLabelRules } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,

@@ -2,15 +2,15 @@
  * `forest`: v12 `theme-forest.js`.
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
+import { fillTypes, paletteSlots, pieSlots } from './palettes.ts';
 import {
-  fillTypes,
+  classicGitLabels,
+  darkenedScale,
   gitLabelRules,
   gitPalettes,
   gitSources,
-  paletteSlots,
-  pieSlots,
-} from './palettes.ts';
-import { classicGitLabels, darkenedScale, hueSources } from './scales.ts';
+  hueSources,
+} from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,

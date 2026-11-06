@@ -2,7 +2,8 @@
  * `default`: v12's classic lavender theme (`theme-default.js`).
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, gitSources, paletteSlots, pieSlots } from './palettes.ts';
+import { fillTypes, paletteSlots, pieSlots } from './palettes.ts';
+import { gitSources } from './scales.ts';
 import {
   CLASSIC_ARROWHEADS,
   CLASSIC_CLASS_MARKERS,

@@ -3,8 +3,8 @@
  * `theme-redux-dark-color.js` at 12.2.0 (identical for every variable v13 reads).
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { gitPalettes, gitSources, pieSlots } from './palettes.ts';
-import { DARK_HUE_SOURCES } from './scales.ts';
+import { pieSlots } from './palettes.ts';
+import { DARK_HUE_SOURCES, gitPalettes, gitSources } from './scales.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
