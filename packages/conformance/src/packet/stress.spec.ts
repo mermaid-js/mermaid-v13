@@ -4,10 +4,12 @@ import { packetTokens } from '@mermaid-js/diagram-packet/testing';
 /**
  * R-PARSE-7, pitfall 5: the packet lexer is linear in input size, in every rule. v12's lexer is
  * quadratic on a run of unclosed `accDescr {` (its ACC_DESCR rule searches for `}` from every
- * one) and on runs of escaped quotes. Shape copied from `../pie/stress.spec.ts`: n and 8n units;
- * linear is ~8x, quadratic ~64x, and the bar is 24x. Times are this thread's CPU time, best of
- * five, and small and large lexes alternate. Not measured on a steady machine: the bar is a
- * ratio. The unclosed `accDescr {` shapes are timed at 32 times the size: without the memo
+ * one) and on runs of escaped quotes. Shape from `../pie/stress.spec.ts`: n and 8n units; linear
+ * is ~8x, quadratic ~64x, and the bar is 24x. Times are this thread's CPU time, best of five,
+ * and small and large lexes alternate. Each measurement repeats its lex as often as the small
+ * one needs to take at least {@link MIN_MS} (the same count for both), so the bar stays a ratio
+ * of two times well above the timer's noise, never an absolute bound. Not measured on a steady
+ * machine. The unclosed `accDescr {` shapes are timed at 32 times the size: without the memo
  * their quadratic part is a native `indexOf` for `}`, which only outweighs the per-token work
  * there (removing the memo fails them at that size, and not at the base one).
  */
@@ -57,10 +59,19 @@ const cpuMs = (): number => {
     typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : process.cpuUsage();
   return (u.user + u.system) / 1000;
 };
-const cost = (run: () => unknown): number => {
+/** CPU ms of `reps` runs of `run`. */
+const cost = (run: () => unknown, reps: number): number => {
   const t0 = cpuMs();
-  run();
+  for (let k = 0; k < reps; k++) run();
   return cpuMs() - t0;
+};
+/** The shortest small measurement. */
+const MIN_MS = 8;
+/** How many runs of `run` take at least {@link MIN_MS}. */
+const repeatsFor = (run: () => unknown): number => {
+  let reps = 1;
+  while (cost(run, reps) < MIN_MS) reps *= 2;
+  return reps;
 };
 
 describe('stress: the packet lexer is linear in input size', () => {
@@ -69,21 +80,21 @@ describe('stress: the packet lexer is linear in input size', () => {
     (_name, build, scale = 1) => {
       const small = build(4_000 * scale);
       const large = build(32_000 * scale);
-      packetTokens(small); // warm up
-      packetTokens(large);
+      packetTokens(large); // warm up
+      const reps = repeatsFor(() => packetTokens(small));
       let tSmall = Infinity;
       let tLarge = Infinity;
       for (let round = 0; round < 5; round++) {
         tSmall = Math.min(
           tSmall,
-          cost(() => packetTokens(small))
+          cost(() => packetTokens(small), reps)
         );
         tLarge = Math.min(
           tLarge,
-          cost(() => packetTokens(large))
+          cost(() => packetTokens(large), reps)
         );
       }
-      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+      expect(tLarge / tSmall).toBeLessThan(24);
     },
     30_000
   );

@@ -1,82 +1,70 @@
 [
   {
     "id": "v12-specs/packet.spec.ts#1",
-    "source": "packet diagrams"
-  },
-  {
-    "id": "v12-specs/packet.spec.ts#2",
     "source": "packet-beta"
   },
   {
-    "id": "v12-specs/packet.spec.ts#3",
+    "id": "v12-specs/packet.spec.ts#2",
     "source": "packet"
   },
   {
-    "id": "v12-specs/packet.spec.ts#4",
+    "id": "v12-specs/packet.spec.ts#3",
     "source": "packet\n    title Packet diagram\n    accTitle: Packet accTitle\n    accDescr: Packet accDescription\n    0-10: \"test\"\n    "
   },
   {
-    "id": "v12-specs/packet.spec.ts#5",
+    "id": "v12-specs/packet.spec.ts#4",
     "source": "packet\n    0-10: \"test\"\n    11: \"single\"\n    "
   },
   {
-    "id": "v12-specs/packet.spec.ts#6",
+    "id": "v12-specs/packet.spec.ts#5",
     "source": "packet\n    +8: \"byte\"\n    +16: \"word\"\n    "
   },
   {
-    "id": "v12-specs/packet.spec.ts#8",
+    "id": "v12-specs/packet.spec.ts#7",
     "source": "packet\n    0-10: \"test\"\n    11-90: \"multiple\"\n    "
   },
   {
-    "id": "v12-specs/packet.spec.ts#9",
+    "id": "v12-specs/packet.spec.ts#8",
     "source": "packet\n    0-16: \"test\"\n    17-63: \"multiple\"\n    "
   },
   {
-    "id": "v12-specs/packet.spec.ts#10",
+    "id": "v12-specs/packet.spec.ts#9",
     "source": "packet\n    0-16: \"test\"\n    18-20: \"error\"\n    "
   },
   {
-    "id": "v12-specs/packet.spec.ts#11",
+    "id": "v12-specs/packet.spec.ts#10",
     "source": "packet\n    +16: \"test\"\n    18-20: \"error\"\n    "
   },
   {
-    "id": "v12-specs/packet.spec.ts#12",
+    "id": "v12-specs/packet.spec.ts#11",
     "source": "packet\n    0-16: \"test\"\n    18: \"error\"\n    "
   },
   {
-    "id": "v12-specs/packet.spec.ts#13",
+    "id": "v12-specs/packet.spec.ts#12",
     "source": "packet\n    +16: \"test\"\n    18: \"error\"\n    "
   },
   {
-    "id": "v12-specs/packet.spec.ts#14",
+    "id": "v12-specs/packet.spec.ts#13",
     "source": "packet\n    0-16: \"test\"\n    17: \"good\"\n    19: \"error\"\n    "
   },
   {
-    "id": "v12-specs/packet.spec.ts#15",
+    "id": "v12-specs/packet.spec.ts#14",
     "source": "packet\n    0-16: \"test\"\n    25-20: \"error\"\n    "
   },
   {
-    "id": "v12-specs/packet.spec.ts#16",
+    "id": "v12-specs/packet.spec.ts#15",
     "source": "packet\n    +0: \"test\"\n    "
   },
   {
     "id": "v12-specs/renderer.spec.ts#1",
-    "source": "packet-diagram"
-  },
-  {
-    "id": "v12-specs/renderer.spec.ts#2",
     "source": "packet\n0-7: \"foo\"\n8-15: \"bar\"\n"
   },
   {
-    "id": "v12-specs/renderer.spec.ts#3",
+    "id": "v12-specs/renderer.spec.ts#2",
     "source": "packet\n0-7: \"DATA\"\n8-11: \"TYPE\"\n12: \"EN\"\n13-15: \"RESERVED\"\n"
   },
   {
-    "id": "v12-specs/renderer.spec.ts#4",
-    "source": "packet renderer"
-  },
-  {
-    "id": "v12-specs/renderer.spec.ts#5",
+    "id": "v12-specs/renderer.spec.ts#3",
     "source": "packet\n0-7: \"foo\"\n"
   },
   {

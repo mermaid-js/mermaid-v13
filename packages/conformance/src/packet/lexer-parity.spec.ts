@@ -40,6 +40,30 @@ const EXCLUDED: ReadonlyMap<string, string> = new Map([
     'core ends an unclosed directive at its line end (UNCLOSED_DIRECTIVE)',
   ],
 ]);
+/**
+ * The sources v12 never lexes as packet (no diagram type detected, so its parser for the type
+ * is not reached). `PACKET` and `Packet-Beta`, with every variant: v12's detector is
+ * case-sensitive. The `commented()` copies of sources of at most two lines: `commented()` puts
+ * its comment line in the middle of the text, which cuts the header word in two (`pac` and
+ * `ket`). Pinned so that a growing skip fails.
+ */
+const NOT_LEXED = [
+  'packet-cases/header-mixed-case',
+  'packet-cases/header-mixed-case (CRLF)',
+  'packet-cases/header-mixed-case (commented)',
+  'packet-cases/header-only (commented)',
+  'packet-cases/header-upper',
+  'packet-cases/header-upper (CRLF)',
+  'packet-cases/header-upper (commented)',
+  'packet-cases/string-number-label (commented)',
+  'packet-cases/string-unquoted-label (commented)',
+  'v12-specs/packet.spec.ts#1 (commented)',
+  'v12-specs/packet.spec.ts#2 (commented)',
+  'v12-specs/packet.test.ts#3 (commented)',
+  'v12-specs/packet.test.ts#4 (commented)',
+  'v12-specs/packet.test.ts#7 (commented)',
+  'v12-specs/packet.test.ts#8 (commented)',
+];
 const ERROR = 'LEXICAL_ERROR';
 const HIDDEN = new Set(['YAML', 'DIRECTIVE', 'SINGLE_LINE_COMMENT']);
 
@@ -102,9 +126,13 @@ describe('packet lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () =>
     let compared = 0;
     let e2e = 0;
     let errors = 0;
+    const notLexed: string[] = [];
     for (const item of items) {
       const lexed = await oracle.lex(item.source);
-      if (!lexed) continue;
+      if (!lexed) {
+        notLexed.push(item.id);
+        continue;
+      }
       compared++;
       if (item.id.startsWith('e2e/') && !item.id.endsWith(')')) e2e++;
       if (lexed.errorAt !== undefined) errors++;
@@ -121,12 +149,13 @@ describe('packet lexer parity with @mermaid-js/parser@2.0.1 (Chevrotain)', () =>
       if (hidden) diffs.push(`${item.id} hidden ${hidden}`);
     }
     expect([...needed].sort()).toEqual([...EXCLUDED.keys()].sort());
+    expect(notLexed.sort()).toEqual(NOT_LEXED);
     process.stdout.write(
       `packet lexer parity: ${compared} of ${items.length} sources lexed by v12, ${errors} with a lexer error\n`
     );
     // Every e2e fixture reaches the packet lexer.
     expect(e2e).toBe(6);
-    expect(compared).toBeGreaterThan(400);
+    expect(compared).toBe(items.length - NOT_LEXED.length);
     expect(diffs).toEqual([]);
   }, 120_000);
 });
