@@ -23,6 +23,13 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## #465 T2 parser
 
+- Review sent back: parser/convert stress spec; narrow the fuzz's directive exemption to the core difference; recovery cases with N>1 errors and every rule name in the no-names check; `getConfig` compared with the oracle (or skipped with a reason); ebnf lexer-input prose; one domain-name source, no silent fallbacks, clearer names.
+- Accepted deviations (for the maintainer):
+  - **Core directive reading differs from v12 (every type).** v12 ends a `%%{` directive at the first line break with no `}%%`, and an unclosed `%%{ word` cuts the rest of the text; core runs a directive to its `}%%` across lines and reads a bare `%%{` as a comment. The fuzz exempts those mutants and the gates exclude `unclosed-directive-*`, as for pie.
+  - header AST id is `header`; recovery expectations are `errors`/`keeps` fields on `cynefin-cases.json` items; 63 fuzz fragments of our own (Pele's 51 not here); `convert.ts` repeats pie's value conversion and `parser.ts` pie's id escaping (core's `AstIds` could own them); `detectCynefin` matches the text v12's `detectType` saw (directives inside the header word removed, `cynefin-beta%%` + line break accepted); the v12 boundary cases run in T2 through v12-named wrappers on T3's generator; symbols and statements (D367) are built by the parser.
+  - Recovery jumps to the line end after a lexer error, so `complex "a" ; "b"` reports one error and keeps neither `"b"` nor anything after it on that line (v12 rejects the whole text).
+- [ ] **#469:** render spec for the D218 front-matter title (only a parser unit spec until the manifest).
+
 ## #467 T3 layout (merged)
 
 - Review fixes landed (`fc356a3b7`): `Math.hypot` and a canvas that is not finite (×16 headroom) counts as invalid; `cynefin.fixtures.ts`; `CANVAS.half/quarter` gone; `CynefinFont` carries `style` (subtitles italic).
