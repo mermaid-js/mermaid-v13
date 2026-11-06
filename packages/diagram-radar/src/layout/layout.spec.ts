@@ -263,6 +263,12 @@ describe('radar layout: legend and title', () => {
     expect(l.fonts.legend.size).toBe(12);
   });
 
+  it('keeps the text 4 px right of a swatch radarLegendBoxSize wide, as v12’s 16 from 12 (D359)', () => {
+    const l = lay(FIXTURES.multiple!, {}, [], { radarLegendBoxSize: 18 });
+    expect(l.legend[0]!.swatch).toMatchObject({ width: 18, height: 18 });
+    expect(l.legend[0]!.label.x).toBe(350 + 262.5 + 18 + 4);
+  });
+
   it('draws no rows without showLegend', () => {
     expect(lay(FIXTURES.noLegend!).legend).toEqual([]);
   });

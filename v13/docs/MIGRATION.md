@@ -1465,7 +1465,7 @@ strings; grammar in [syntax/radar.md](./syntax/radar.md)). What changes in the d
 | `.radarTitle` and `.radarAxisLabel` set CSS `color` (`titleColor`, `axisColor`), which paints no SVG text, so all text filled with the root `textColor` | All radar text is drawn in `textColor`, as v12 drew it; radar does not read `titleColor` | D352 |
 | Curves past the twelfth (`radarCurve-12`, …) had no rule and filled opaque black with no stroke | Curve *i* takes slot *i* mod 12 (`radarCurve-0` again for the thirteenth), as pie's slices | D353 |
 | `max` equal to `min` wrote `NaN` paths; a curve whose entry count is not the axis count was skipped silently; `ticks` over 32 was only logged | Curves drawn at the centre with one `RADAR_EMPTY_RANGE` warning; the curve is still left out, with one `RADAR_CURVE_SKIPPED` warning naming every such curve; `RADAR_TICKS_CLAMPED`. A detailed entry naming no axis is still ignored, with `RADAR_UNKNOWN_AXIS` | D356 |
-| `radar.legendBoxSize` (12) was declared and never read: the swatch was always 12 px | `radarLegendBoxSize` sizes the swatch; with the default, nothing changes | D359 |
+| `radar.legendBoxSize` (12) was declared and never read: the swatch was always 12 px | `radarLegendBoxSize` sizes the swatch, and the legend text stays 4 px right of it; with the default, nothing changes | D359 |
 | `format: 'ascii'`: no text output | Throws `UnsupportedFormatError` | D320 |
 
 ## Radar SVG structure

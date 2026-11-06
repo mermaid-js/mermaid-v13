@@ -13,8 +13,11 @@ export interface RadarMetrics {
   readonly anchorThreshold: number;
   /** v12 `lineHeight`: one legend row (`:222`). */
   readonly legendRow: number;
-  /** The legend text's left edge, right of its row's origin (`:235`). */
-  readonly legendTextX: number;
+  /**
+   * The gap from the swatch's right edge to the legend text: v12 put the text 16 px right of
+   * its row's origin with a 12 px swatch (`:235`); the swatch is `radarLegendBoxSize` (D359).
+   */
+  readonly legendTextGap: number;
   /** The legend sits `¾` of the way from the centre to the canvas corner (`:220-221`). */
   readonly legendFactor: number;
 }
@@ -23,7 +26,7 @@ export const RADAR_METRICS: RadarMetrics = {
   labelPad: 4,
   anchorThreshold: 0.01,
   legendRow: 20,
-  legendTextX: 16,
+  legendTextGap: 4,
   legendFactor: 3 / 4,
 };
 

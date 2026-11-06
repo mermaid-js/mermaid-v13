@@ -260,7 +260,8 @@ function warnAbout(found: Findings, warn: (w: Warning) => void): void {
 
 /**
  * v12 `drawLegend` (`:209-244`): row `i` at `(¾(w/2 + mR), −¾(h/2 + mT) + 20·i)` from the
- * centre, its swatch there and its text 16 px right, `hanging`. A label of several lines
+ * centre, its swatch there and its text 4 px right of the swatch (16 px with v12's 12 px
+ * swatch), `hanging`. A label of several lines
  * (D355) pushes the rows after it down by its extra lines.
  */
 function legendOf(
@@ -270,7 +271,7 @@ function legendOf(
   center: Point,
   size: number
 ): RadarLegendRow[] {
-  const { legendFactor, legendTextX, legendRow } = RADAR_METRICS;
+  const { legendFactor, legendTextGap, legendRow } = RADAR_METRICS;
   const x = center.x + legendFactor * (config.width / 2 + config.marginRight);
   let y = center.y - legendFactor * (config.height / 2 + config.marginTop);
   return text.map((label, index) => {
@@ -279,7 +280,13 @@ function legendOf(
       ast: model.curves[index]!.astId,
       slot: index % RADAR_SLOTS,
       swatch: { x, y, width: size, height: size },
-      label: { x: x + legendTextX, y, width: label.width, height: label.height, text: label },
+      label: {
+        x: x + size + legendTextGap,
+        y,
+        width: label.width,
+        height: label.height,
+        text: label,
+      },
     };
     y += legendRow + extraLines(label);
     return row;
