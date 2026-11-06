@@ -155,6 +155,22 @@ const DOCS: Readonly<Record<string, string>> = {
     "  'Cats' : 85.5",
     '',
   ].join('\n'),
+  mindmap: [
+    'mindmap',
+    '  root((mindmap))',
+    '    %% the branches',
+    '    Origins',
+    '      ::icon(fa fa-book)',
+    '      id1[Long history]',
+    '      :::urgent large',
+    '    Research',
+    '      id2(On effectiveness)',
+    '      id3)Cloud(',
+    '      id4))Bang((',
+    '      id5{{Hexagon}}',
+    '      "a string"',
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */

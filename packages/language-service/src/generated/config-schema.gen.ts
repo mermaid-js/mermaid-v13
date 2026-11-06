@@ -1126,7 +1126,8 @@ export const configSchema: ConfigSchema = {
     "mindmap": {
       "$ref": "#/$defs/MindmapDiagramConfig",
       "x-mermaid": {
-        "status": "pending"
+        "status": "honoured",
+        "since": "13.0.0"
       }
     },
     "ishikawa": {
@@ -2832,6 +2833,30 @@ export const configSchema: ConfigSchema = {
       "type": "object",
       "unevaluatedProperties": false,
       "properties": {
+        "useWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useWidth",
+          "x-mermaid": {
+            "status": "ignored",
+            "since": "13.0.0",
+            "reason": "Only v12's gantt renderer read `useWidth`; the mindmap renderer never did."
+          }
+        },
+        "layout": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/layout",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Set here, it wins over the top-level `layout` for mindmaps. Unset in both, mindmaps lay out with `tree`, core's two-sided tidy tree (D284). v12's `cose-bilkent` and `tidy-tree` map to `tree` silently (D282); `layered`, `dagre` and an installed `elk.*` are honoured; an unknown or uninstalled name draws with `tree` and warns `LAYOUT_UNKNOWN` or `ELK_NOT_INSTALLED`."
+          }
+        },
+        "useMaxWidth": {
+          "$ref": "#/$defs/BaseDiagramConfig/properties/useMaxWidth",
+          "x-mermaid": {
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12's `setupViewPortForSVG`, `width=\"100%\"` and a `max-width` when true."
+          }
+        },
         "colorBy": {
           "description": "Color nodes by their top-level branch or by their depth in the tree.\nDepth is counted from the root, independently of indentation width.\n",
           "type": "string",
@@ -2845,21 +2870,29 @@ export const configSchema: ConfigSchema = {
           },
           "default": "branch",
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "As v12: eleven sections, by top-level branch or by depth below the root; any other value colours by branch."
           }
         },
         "padding": {
+          "description": "Padding in px inside default, cloud and bang nodes (and, in the classic themes,\ncircles, and twice this inside hexagons), and the margin around the drawing.\n",
           "type": "number",
           "default": 10,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Where v12 read it (D287): the margin around the drawing, and the padding inside default, cloud and bang nodes in every theme. In the classic themes it also pads circles, and twice it pads hexagons; in the redux family, `neo` and `neo-dark` the theme's `circlePadding` and `hexagonPaddingX` / `hexagonPaddingY` take over there. Square and rounded nodes keep their own paddings. Numeric strings are read as numbers; anything else, or a value below 0, lays out with 10 and warns `MINDMAP_CONFIG_IGNORED`."
           }
         },
         "maxNodeWidth": {
+          "description": "The width in px at which node labels wrap.\n",
           "type": "number",
           "default": 200,
           "x-mermaid": {
-            "status": "pending"
+            "status": "honoured",
+            "since": "13.0.0",
+            "reason": "Labels wrap at it in every shape (D287); v12 wrapped square, rounded and hexagon nodes at `flowchart.wrappingWidth` instead (both 200 by default). Numeric strings are read as numbers; anything else, or a value of 0 or less, lays out with 200 and warns `MINDMAP_CONFIG_IGNORED`."
           }
         },
         "layoutAlgorithm": {
@@ -2869,8 +2902,8 @@ export const configSchema: ConfigSchema = {
           "x-mermaid": {
             "status": "ignored",
             "since": "13.0.0",
-            "reason": "Mindmap lays out with core's `tree` engine (D284); the top-level `layout` key chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`.",
-            "replacement": "`layout`"
+            "reason": "v12 never read it. Mindmap lays out with core's `tree` engine (D284); `mindmap.layout` or the top-level `layout` chooses another engine, and `cose-bilkent` and `tidy-tree` there map to `tree`.",
+            "replacement": "`mindmap.layout` or `layout`"
           }
         }
       }

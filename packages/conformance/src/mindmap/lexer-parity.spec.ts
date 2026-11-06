@@ -83,7 +83,7 @@ describe('mindmap lexer parity with mermaid@12 (jison)', () => {
     }
     process.stdout.write(`lexer parity: ${compared} of ${items.length} sources lexed by v12\n`);
     // Every e2e fixture and every harvested spec and syntax-page string reaches the lexer.
-    expect(e2e).toBe(33);
+    expect(e2e).toBe(53);
     expect(specs).toBe(46);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(

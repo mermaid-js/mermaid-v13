@@ -10,14 +10,4 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [
-  // Spec #294: the manifest comes with T5 (#390).
-  {
-    type: 'mindmap',
-    id: 'mindmap',
-    section: 'mindmap',
-    pattern: /^\s*mindmap/,
-    detector: (text) => /^\s*mindmap/.test(text),
-    load: () => import('@mermaid-js/diagram-mindmap/language').then((m) => m.language),
-  },
-];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [];

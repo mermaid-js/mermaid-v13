@@ -1512,13 +1512,35 @@ seed?: number
  * via the `definition` "MindmapDiagramConfig".
  */
 export interface MindmapDiagramConfig extends BaseDiagramConfig {
+useWidth?: number
+/**
+ * Defines which layout algorithm to use for rendering the diagram.
+ * 
+ */
+layout?: string
+/**
+ * When this flag is set to `true`, the height and width is set to 100%
+ * and is then scaled with the available space.
+ * If set to `false`, the absolute space required is used.
+ * 
+ */
+useMaxWidth?: boolean
 /**
  * Color nodes by their top-level branch or by their depth in the tree.
  * Depth is counted from the root, independently of indentation width.
  * 
  */
 colorBy?: ("branch" | "depth")
+/**
+ * Padding in px inside default, cloud and bang nodes (and, in the classic themes,
+ * circles, and twice this inside hexagons), and the margin around the drawing.
+ * 
+ */
 padding?: number
+/**
+ * The width in px at which node labels wrap.
+ * 
+ */
 maxNodeWidth?: number
 /**
  * Layout algorithm to use for positioning mindmap nodes

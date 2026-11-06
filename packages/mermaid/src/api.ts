@@ -908,13 +908,23 @@ export function createMermaid(
   async function preload(req: PreloadRequest): Promise<void> {
     if (discovery.pending) await discovery.settle();
     const tasks: Promise<unknown>[] = [];
+    const ascii = req.formats?.includes('ascii');
+    if (ascii) tasks.push(import('./ascii.ts').then((b) => void (textBackend = b)));
     for (const t of req.types ?? []) {
       tasks.push(
         registry.load(t).then((p) => {
           if (!p)
             throw new MermaidError('UNSUPPORTED_DIAGRAM', `Diagram type "${t}" is not supported.`);
+          // The plugin's own default engine (D284) comes with it, as `layered` does.
+          if (p.layoutEngine) return registry.loadLayout(p.layoutEngine.default);
         })
       );
+      if (ascii)
+        tasks.push(
+          registry.loadAscii(t).then((hook) => {
+            if (!hook) throw new UnsupportedFormatError(t, 'ascii');
+          })
+        );
     }
     for (const l of req.layouts ?? []) tasks.push(registry.loadLayout(l));
     // `auto` needs its dark spec too.
@@ -926,20 +936,6 @@ export function createMermaid(
     // Extensions' resources by kind: `math: true` loads what a math extension provides (D178).
     if (req.math) for (const n of hooks.provided('math')) tasks.push(n.load());
     for (const name of req.iconPacks ?? []) tasks.push(iconPacks.load(name));
-    if (req.formats?.includes('ascii')) {
-      tasks.push(
-        import('./ascii.ts').then((b) => {
-          textBackend = b;
-        })
-      );
-      for (const t of req.types ?? []) {
-        tasks.push(
-          registry.loadAscii(t).then((hook) => {
-            if (!hook) throw new UnsupportedFormatError(t, 'ascii');
-          })
-        );
-      }
-    }
     try {
       await Promise.all(tasks);
     } catch (e) {

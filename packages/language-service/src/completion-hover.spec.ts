@@ -40,6 +40,7 @@ describe('completion', () => {
       'graph',
       'flowchart-elk',
       'swimlane-beta',
+      'mindmap',
       'classDiagram',
       'erDiagram',
       'pie',

@@ -75,10 +75,47 @@ describe('mindmap parser: tree', () => {
       'root',
       ...Array.from({ length: 2000 }, (_, k) => `${' '.repeat(k + 1)}n${k}`),
     ];
-    const m = model(chain.join('\n'));
+    // Past the default depth limit (100): lifted here, as an integrator can.
+    const deep = parseMindmap(chain.join('\n'), { maxDepth: Infinity });
+    expect(deep.diagnostics).toEqual([]);
+    const m = deep.model;
     expect(m.nodes.at(-1)?.depth).toBe(2000);
-    const fan = ['mindmap', 'root', ...Array.from({ length: 10_000 }, (_, k) => `  n${k}`)];
-    expect(model(fan.join('\n')).nodes[0]?.children).toHaveLength(10_000);
+    // The root and 9,999 children: the default node limit.
+    const fan = ['mindmap', 'root', ...Array.from({ length: 9_999 }, (_, k) => `  n${k}`)];
+    expect(model(fan.join('\n')).nodes[0]?.children).toHaveLength(9_999);
+  });
+});
+
+describe('mindmap parser: limits (R-SEC-5)', () => {
+  const chain = (n: number) =>
+    ['mindmap', ...Array.from({ length: n }, (_, k) => `${' '.repeat(k + 1)}n${k}`)].join('\n');
+  const limitErrors = (src: string, options: { maxNodes?: number; maxDepth?: number }) =>
+    parseMindmap(src, options).diagnostics.map((d) => `${d.code} ${d.range.start}`);
+
+  it('reports the node cap once, at the first node over it', () => {
+    const src = chain(8);
+    expect(limitErrors(src, { maxNodes: 5 })).toEqual([`NODE_LIMIT ${src.indexOf('n5')}`]);
+    expect(limitErrors(src, { maxNodes: 8 })).toEqual([]);
+  });
+
+  it('reports a fractional node cap once, at the first node over it', () => {
+    const src = chain(11);
+    expect(limitErrors(src, { maxNodes: 2.5 })).toEqual([`NODE_LIMIT ${src.indexOf('n2')}`]);
+  });
+
+  it('reports the depth cap once, at the first node deeper than it', () => {
+    const src = chain(8);
+    // n3 is three levels under the root n0.
+    expect(limitErrors(src, { maxDepth: 2 })).toEqual([`DEPTH_LIMIT ${src.indexOf('n3')}`]);
+    expect(limitErrors(src, { maxDepth: 7 })).toEqual([]);
+    expect(parseMindmap(src, { maxDepth: 2 }).diagnostics[0]?.message).toMatch(
+      /nested 3 deep here, over the limit of 2\. The limit is set by the page or app/
+    );
+  });
+
+  it('defaults to core’s limits', () => {
+    expect(errors(chain(102))).toEqual(['DEPTH_LIMIT']);
+    expect(errors(chain(101))).toEqual([]);
   });
 });
 
