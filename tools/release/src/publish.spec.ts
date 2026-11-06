@@ -26,6 +26,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-er',
       '@mermaid-chart/diagram-flowchart',
       '@mermaid-chart/diagram-journey',
+      '@mermaid-chart/diagram-packet',
       '@mermaid-chart/diagram-pie',
       '@mermaid-chart/diagram-quadrant',
       '@mermaid-chart/diagram-sequence',
