@@ -1,0 +1,37 @@
+{
+  "name": "@mermaid-js/diagram-radar",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Radar chart plugin for Mermaid: parser, layout and SVG renderer (in progress).",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mermaid-js/mermaid-v13",
+    "directory": "packages/diagram-radar"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "mermaid-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@mermaid-js/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@mermaid-js/core": "workspace:^"
+  }
+}

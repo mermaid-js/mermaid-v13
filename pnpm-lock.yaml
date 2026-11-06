@@ -351,6 +351,12 @@ importers:
         specifier: workspace:^
         version: link:../core
 
+  packages/diagram-radar:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
   packages/diagram-sequence:
     devDependencies:
       '@mermaid-js/core':
