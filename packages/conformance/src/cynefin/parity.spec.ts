@@ -38,8 +38,8 @@ describe('cynefin oracle parity with mermaid@12', () => {
     process.stdout.write(
       `cynefin parity: ${report.results.length} sources, ${agree.length} agree (${rejected} rejected by both)\n`
     );
-    expect(agree.length).toBeGreaterThan(400);
-    expect(rejected).toBeGreaterThan(100);
+    expect(agree.length).toBeGreaterThan(500);
+    expect(rejected).toBeGreaterThan(180);
     expect({ unlisted: report.unlisted, disappeared: report.disappeared }).toEqual({
       unlisted: [],
       disappeared: [],
