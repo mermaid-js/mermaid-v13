@@ -1,3 +1,4 @@
+// cspell:words pkbz pklz pktz pkbw
 import type { DiagramParseContext, DiagramPlugin, RenderContext } from '@mermaid-js/core';
 import type { SvgWriter } from '@mermaid-js/core/svg';
 import type { DiagramThemeEntries, DiagramThemeTable } from '@mermaid-js/core/theme';
