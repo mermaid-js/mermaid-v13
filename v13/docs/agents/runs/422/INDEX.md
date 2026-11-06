@@ -4,9 +4,9 @@ Integration branch `feature/422_radar`, cut from `mermaid-v13` at `dd4b9d19f` (#
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate on the Langium oracle | #445 | — | open |
-| T2 grammar, parser, model, AST, ported specs | #446 | #445 | open |
-| T3 custom layout (`RadarLayout`) | #447 | #446 (soft) | open |
+| T1 lexer parity gate on the Langium oracle | #445 | — | merged |
+| T2 grammar, parser, model, AST, ported specs | #446 | #445 | in progress |
+| T3 custom layout (`RadarLayout`) | #447 | #446 (soft) | merged |
 | T4 SVG renderer | #448 | #446, #447 | open |
 | T5 integration | #449 | #448, #414 T0a | open |
 | T6 language facet | #450 | #446 | open |

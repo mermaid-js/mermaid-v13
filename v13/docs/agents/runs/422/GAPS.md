@@ -12,9 +12,18 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - **`RadarModel`** (`packages/diagram-radar/src/model.ts`): landed by the orchestrator before #446 and #447 started in parallel, shaped from the spec's model list. #446 produces it; #447 reads it. Change it only additively and note the change here.
 - **Package skeleton** (`packages/diagram-radar`, private, no manifest until #449): landed with the model. #445 adds the lexer to it.
 
+## T1 (#445, merged)
+
+- Review (orchestrator): no hard standards violations. Accepted judgement calls: the lexer plumbing mirrors pie's (extract a parser-kit base if a third Langium lexer copies it); `radar/corpus.ts` imports `commented` from `../sequence/corpus.ts`, as pie's does.
+- **For the maintainer (core, not radar): indented front matter closed at column 0.** `dev-diagrams/knsv/knsv2-03-radar.mmd` opens its fence with six spaces and closes it at column 0. v12 never sees front matter there (the YAML is a hidden Langium token, no title) and renders the chart; v13's preprocess reads the indented fence (#7613) and reports `UNCLOSED_FRONT_MATTER`, so v13 rejects it. It is a gate exclusion in `packages/conformance/src/radar/lexer-parity.spec.ts`, and the same divergence will show in #446's parity. It is shared core behaviour (every type), so the radar port does not change it; the D218 front-matter title is covered by a dedented copy.
+- Accepted: `commented()` copies of one- and two-line sources often cut inside the header and never reach v12, so those copies are not gated (pie's helper, same limit); `LINE_SEPARATORS` are nine hand-written cases, as pie's.
+- Shared edits: `harvest:pie` became `harvest:langium <pie|radar>|--all` (pie's corpus byte-identical; drift spec added); jison `runSpec` exported with `functionNames`.
+- [ ] **#448:** drop radar's "reads at least one variable" skip in `tools/gen-config/src/theme-used-by.spec.ts`.
+
 ## T3 (#447)
 
 - [ ] **Invariants on parser-produced fixtures.** #446 had not landed; the invariants run on hand-built `RadarModel` fixtures (`layout/fixtures.ts`). #446's merge adds the corpus spec through `@mermaid-js/diagram-radar/testing`'s `radarLayoutViolations`.
+- Review fixes (orchestrator): Infinity entries never give NaN; >4-param helpers take a `Frame`; names. Accepted deviations: no title element when there is no title (no empty element); multi-line legend labels push later rows down (as pie's final review); out-of-range config values fall back to v12's default silently until #449.
 - **`RadarModel` unchanged** by T3.
 - **Stand-ins** in `packages/diagram-radar/src/stand-ins.ts` (theme variables and `radar` config defaults); #448 replaces the theme half with the radar `DiagramThemeTable`, #449 the config half.
 
