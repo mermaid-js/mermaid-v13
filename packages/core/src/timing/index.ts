@@ -27,18 +27,28 @@ export const STAGE_TIMING: boolean =
   typeof __MERMAID_BENCH__ !== 'undefined' && __MERMAID_BENCH__ === true;
 
 let clock: StageClock | undefined;
+// For each stage that has started and not ended, the time of the stages that ran inside it: a
+// stage records its own time, without theirs (flowchart's `measure` inside core's `layout`, D203).
+const inner: number[] = [];
 
 /** Installs (or with `undefined`, removes) the bench clock. Does nothing outside bench builds. */
 export function installStageClock(next: StageClock | undefined): void {
-  if (STAGE_TIMING) clock = next;
+  if (!STAGE_TIMING) return;
+  clock = next;
+  inner.length = 0;
 }
 
 /** Start of a stage; pass the result to `stageEnd`. Returns 0 when timing is off. */
 export function stageStart(): number {
-  return STAGE_TIMING && clock ? clock.now() : 0;
+  if (!STAGE_TIMING || !clock) return 0;
+  inner.push(0);
+  return clock.now();
 }
 
 /** End of a stage started with `stageStart`. */
 export function stageEnd(stage: Stage, start: number): void {
-  if (STAGE_TIMING && clock) clock.record(stage, clock.now() - start);
+  if (!STAGE_TIMING || !clock) return;
+  const elapsed = clock.now() - start;
+  clock.record(stage, elapsed - (inner.pop() ?? 0));
+  if (inner.length > 0) inner[inner.length - 1]! += elapsed;
 }

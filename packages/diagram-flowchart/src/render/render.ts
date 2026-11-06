@@ -3,6 +3,7 @@
 // one element with `data-id`, `data-ast` and semantic classes (R-SVG-2, -3, R-PARSE-8).
 import type { LayoutModel, LayoutModelNode, RoutePoint } from '@mermaid-js/core/layout';
 import { layered } from '@mermaid-js/core/layout';
+import { stageEnd, stageStart } from '@mermaid-js/core/timing';
 import {
   checkLinkTarget,
   checkUrl,
@@ -30,9 +31,14 @@ export interface FlowLayout extends LayoutModel {
   readonly flow?: Prepared;
 }
 
-/** Measures the model and lays it out with `ctx.layout` (default `layered`). */
+/**
+ * Measures the model and lays it out with `ctx.layout` (default `layered`). The bench times the
+ * measuring as `measure`, so core's `layout` is the engine alone (D203).
+ */
 export function layoutFlowchart(model: FlowModel, ctx: FlowRenderContext): FlowLayout {
+  const t = stageStart();
   const prepared = prepare(model, ctx);
+  stageEnd('measure', t);
   const laid = (ctx.layout ?? layered)(prepared.graph);
   return { ...laid, flow: prepared };
 }

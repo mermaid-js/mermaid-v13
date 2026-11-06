@@ -23,7 +23,14 @@ import { runAll } from './interleave.ts';
 import { stripMermaidOnlyConfig } from './normalize.ts';
 import { flowchartClosureSize } from './size-budget.ts';
 import { emptyStages, STAGES } from './report.ts';
-import type { DiagramResult, RendererId, RendererRun, SizeSummary, SizedFile } from './report.ts';
+import type {
+  DiagramResult,
+  PageHistory,
+  RendererId,
+  RendererRun,
+  SizeSummary,
+  SizedFile,
+} from './report.ts';
 import type { BenchWindow, ReadyInfo, RenderReply } from './runner/protocol.ts';
 import { median, quantile } from './stats.ts';
 
@@ -298,6 +305,10 @@ export function fromReply(f: Fixture, reply: RenderReply): DiagramResult {
     batch: reply.batch,
     samples: reply.samples.length,
     stages,
+    ...(reply.renderSamples && {
+      renderMs: median(reply.renderSamples),
+      browserMs: median(reply.browserSamples ?? []),
+    }),
   };
 }
 
@@ -391,16 +402,60 @@ export async function openBrowserSession(o: DriveOptions): Promise<Session | Ren
   };
 }
 
-export type BrowserDriveOptions = Omit<DriveOptions, 'renderer'> & { renderers: RendererId[] };
+export type BrowserDriveOptions = Omit<DriveOptions, 'renderer'> & {
+  renderers: RendererId[];
+  /** Filled with the page-history line when v13 and Pele both run (#265). */
+  pageHistory?: PageHistory[];
+};
+
+/** The fixtures timed again in a fresh page and after the corpus (#265's finish rule). */
+export const PAGE_HISTORY_IDS = ['perf/huge1', 'perf/medium4', 'perf/medium5'] as const;
+const PAGE_HISTORY_RENDERERS = ['v13', 'pele'] as const;
+
+/**
+ * Times each page-history fixture on v13 and Pele again: on the pages that rendered the corpus,
+ * and in a fresh page each, opened for that one fixture.
+ */
+async function pageHistory(
+  o: BrowserDriveOptions,
+  sessions: Session[],
+  out: PageHistory[]
+): Promise<void> {
+  const open = PAGE_HISTORY_RENDERERS.map((r) => sessions.find((s) => s.renderer === r));
+  if (open.includes(undefined)) return;
+  for (const id of PAGE_HISTORY_IDS) {
+    const f = o.fixtures.find((x) => x.id === id);
+    if (!f) continue;
+    const entry: PageHistory = { id, fresh: {}, after: {} };
+    for (const s of open as Session[]) {
+      const r = await s.measure(f);
+      entry.after[s.renderer] = r.status === 'ok' ? r.warmMs : null;
+      const fresh = await openBrowserSession({ ...o, renderer: s.renderer });
+      if (!('measure' in fresh)) continue;
+      try {
+        const rf = await fresh.measure(f);
+        entry.fresh[s.renderer] = rf.status === 'ok' ? rf.warmMs : null;
+      } finally {
+        await fresh.close();
+      }
+    }
+    o.log(
+      `  page history ${id}: after ${JSON.stringify(entry.after)}, fresh ${JSON.stringify(entry.fresh)}`
+    );
+    out.push(entry);
+  }
+}
 
 /** Runs every fixture through every renderer in the browser, alternating (`interleave.ts`). */
 export function driveBrowser(o: BrowserDriveOptions): Promise<RendererRun[]> {
+  const out = o.pageHistory;
   return runAll(
     o.renderers,
     (renderer) => openBrowserSession({ ...o, renderer }),
     o.fixtures,
     o.log,
-    'browser'
+    'browser',
+    out ? (sessions) => pageHistory(o, sessions, out) : undefined
   );
 }
 

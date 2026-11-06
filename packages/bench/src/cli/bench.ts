@@ -28,7 +28,7 @@ import { buildSite, driveBrowser, driveIdentity, serve } from '../driver.ts';
 import { loadFixtures } from '../fixtures.ts';
 import { identityReport } from '../identity.ts';
 import { detectPipeline } from '../pipeline.ts';
-import type { BenchReport, RendererId } from '../report.ts';
+import type { BenchReport, PageHistory, RendererId } from '../report.ts';
 import { measureCoreSize } from '../size-budget.ts';
 import { classifyFixtures } from '../support.ts';
 import { parseArgs } from './args.ts';
@@ -95,6 +95,8 @@ try {
     for (const line of lines) log(line);
     process.exitCode = exitCode;
   } else {
+    // Filled during the run: the page-history fixtures again, fresh and after the corpus (#265).
+    const pageHistory: PageHistory[] = [];
     const report: BenchReport = {
       schema: 1,
       createdAt: new Date().toISOString(),
@@ -125,7 +127,9 @@ try {
         fixtures,
         ...options,
         log,
+        pageHistory,
       }),
+      pageHistory,
     };
     const outcome = gate(report, setting, reportOnly);
     publish(report, outcome, { updateBaseline: args.flag('update-baseline'), write: true });

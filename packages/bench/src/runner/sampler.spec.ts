@@ -47,6 +47,44 @@ describe('sample', () => {
     expect(cleaned).toBe(1);
   });
 
+  it('reports, per warm sample, the time in render() and in the browser (D204)', async () => {
+    // Each render spends 0.3 ms in render() and 0.2 ms inserting and laying out its SVG.
+    let parts = { render: 0, browser: 0 };
+    const reply = await sample(
+      {
+        renderOnce: () => {
+          parts = { render: parts.render + 0.3, browser: parts.browser + 0.2 };
+          return Promise.resolve(0.5);
+        },
+        takeParts: () => {
+          const out = parts;
+          parts = { render: 0, browser: 0 };
+          return out;
+        },
+        adapter,
+        errorText,
+      },
+      's',
+      2,
+      1000
+    );
+    expect(reply.ok).toBe(true);
+    if (!reply.ok) return;
+    expect(reply.batch).toBe(4);
+    expect(reply.renderSamples?.map((v) => +v.toFixed(9))).toEqual([0.3, 0.3]);
+    expect(reply.browserSamples?.map((v) => +v.toFixed(9))).toEqual([0.2, 0.2]);
+  });
+
+  it('reports no split where the runner cannot time one (Node)', async () => {
+    const reply = await sample(
+      { renderOnce: () => Promise.resolve(3), adapter, errorText },
+      's',
+      2,
+      1000
+    );
+    expect(reply.ok && reply.renderSamples).toBeUndefined();
+  });
+
   it('records per-render stage times from adapters that have them', async () => {
     let n = 0;
     const staged: Adapter = { ...adapter, takeStages: () => (n++ % 2 ? { parse: 0.4 } : {}) };

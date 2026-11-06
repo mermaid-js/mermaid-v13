@@ -36,6 +36,20 @@ export interface DiagramResult {
   samples: number;
   /** Median per-render time of each stage; null when the renderer has no stage timing. */
   stages: StageTimes;
+  /** Median per-render time in the renderer's `render()` (D204); absent outside the browser. */
+  renderMs?: number | null;
+  /** Median per-render time inserting the SVG and laying it out (`getBBox`, D204). */
+  browserMs?: number | null;
+}
+
+/**
+ * One fixture's warm time in a fresh page and after the rest of the corpus, per renderer: whether
+ * render time depends on what the page rendered before (#265's finish rule).
+ */
+export interface PageHistory {
+  id: string;
+  fresh: Partial<Record<RendererId, number | null>>;
+  after: Partial<Record<RendererId, number | null>>;
 }
 
 export interface SizedFile {
@@ -108,6 +122,8 @@ export interface BenchReport {
   coreSize?: SizeSummary | null;
   /** Browser runs (Chromium through Playwright); every gate reads these. */
   renderers: RendererRun[];
+  /** The page-history fixtures, timed again in a fresh page and after the corpus. */
+  pageHistory?: PageHistory[];
 }
 
 export interface UnsupportedFixture {

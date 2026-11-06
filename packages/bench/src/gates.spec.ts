@@ -119,6 +119,7 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
       ['speed', 'pass'],
       ['ok-count', 'pass'],
       ['stage-regression', 'pass'],
+      ['pele-ratchet', 'skip'],
       ['ready-at', 'pass'],
       ['ascii-size', 'pass'],
     ]);
@@ -229,6 +230,46 @@ describe('bench gates (R-PERF-1, -3, -4, -7, -9)', () => {
       status: 'skip',
       enforced: false,
       exitCode: 0,
+    });
+  });
+
+  describe('R-PERF-10: the warm geomean against Pele (D206)', () => {
+    const withPele = (ratio: number): BenchReport => {
+      const r = healthy();
+      r.renderers.push(
+        run(
+          'pele',
+          ids.map((id) => result(id, 0.1 / ratio))
+        )
+      );
+      return r;
+    };
+    const pele = (report: BenchReport, reportOnly: ('speed' | 'pele-ratchet')[] = []) =>
+      evaluateGates({
+        report,
+        baseline: undefined,
+        mode: 'enforce',
+        corpusSize: CORPUS,
+        reportOnly,
+      }).gates.find((g) => g.id === 'pele-ratchet')!;
+
+    it('passes up to the recorded ratio plus 5%, and prints both', () => {
+      expect(LIMITS.peleRatio).toBe(1.45);
+      const g = pele(withPele(1.4));
+      expect(g).toMatchObject({ status: 'pass', actual: 1.4, limit: 1.52, enforced: true });
+      expect(g.detail).toBe(
+        `v13 1.4× Pele's warm time over ${CORPUS} common diagrams (recorded 1.45×, limit 1.52×)`
+      );
+    });
+
+    it('fails past the limit, and is report-only wherever R-PERF-3 is (D150)', () => {
+      expect(pele(withPele(1.6))).toMatchObject({ status: 'fail', enforced: true });
+      expect(pele(withPele(1.6), ['speed'])).toMatchObject({ status: 'fail', enforced: false });
+      expect(pele(withPele(1.6), ['pele-ratchet'])).toMatchObject({ enforced: false });
+    });
+
+    it('skips a run without Pele', () => {
+      expect(pele(healthy())).toMatchObject({ status: 'skip', enforced: false, actual: null });
     });
   });
 

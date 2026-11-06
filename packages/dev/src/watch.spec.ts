@@ -98,7 +98,7 @@ describe('the dev bundle', () => {
     expect(res.body).not.toMatch(/from\s*["']\.\/chunk-/);
   });
 
-  it('has stage timing on: a render records parse, layout and serialise', async () => {
+  it('has stage timing on: a flowchart records parse, measure, layout and serialise', async () => {
     const res = await get('/mermaid.esm.mjs');
     const dir = mkdtempSync(join(tmpdir(), 'dev-timing-'));
     try {
@@ -114,7 +114,7 @@ describe('the dev bundle', () => {
       let tick = 0;
       bundle.installStageClock({ now: () => ++tick, record: (stage) => stages.push(stage) });
       await bundle.createMermaid().render('timing', 'flowchart LR\n  A --> B\n');
-      expect([...new Set(stages)].sort()).toEqual(['layout', 'parse', 'serialise']);
+      expect([...new Set(stages)].sort()).toEqual(['layout', 'measure', 'parse', 'serialise']);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

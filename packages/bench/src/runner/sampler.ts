@@ -20,6 +20,11 @@ export interface SampleOptions {
   errorText(e: unknown): string;
   /** Runs after every attempt, failed or not (the page clears its stage). */
   cleanup?(): void;
+  /**
+   * The time spent since the last call in the renderer's `render()` and in the browser
+   * (inserting the SVG and laying it out), when the runner can tell them apart (D204).
+   */
+  takeParts?(): { render: number; browser: number };
 }
 
 /** A cold render, a probe that sizes the batch, then warm samples until reps or the budget. */
@@ -38,16 +43,24 @@ export async function sample(
         batch = Math.min(MAX_BATCH, Math.ceil(MIN_SAMPLE_MS / Math.max(probe, 0.02)));
     }
     const samples: number[] = [];
+    const renderSamples: number[] = [];
+    const browserSamples: number[] = [];
     const stageSamples: Partial<Record<Stage, number[]>> = {};
     let spent = 0;
     for (let i = 0; i < reps; i++) {
       // Always take at least one warm sample; then stop once the budget is spent.
       if (i > 0 && spent > budgetMs) break;
       o.adapter.takeStages?.();
+      o.takeParts?.();
       const t0 = performance.now();
       for (let b = 0; b < batch; b++) await o.renderOnce(source);
       const elapsed = performance.now() - t0;
       samples.push(elapsed / batch);
+      const parts = o.takeParts?.();
+      if (parts) {
+        renderSamples.push(parts.render / batch);
+        browserSamples.push(parts.browser / batch);
+      }
       spent += elapsed;
       const st = o.adapter.takeStages?.() ?? {};
       for (const s of STAGES) {
@@ -55,7 +68,8 @@ export async function sample(
         if (v !== undefined) (stageSamples[s] ??= []).push(v / batch);
       }
     }
-    return { ok: true, firstMs, samples, batch, stageSamples };
+    const split = o.takeParts ? { renderSamples, browserSamples } : {};
+    return { ok: true, firstMs, samples, batch, stageSamples, ...split };
   } catch (e) {
     return { ok: false, error: o.errorText(e) };
   } finally {

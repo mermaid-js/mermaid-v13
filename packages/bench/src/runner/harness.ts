@@ -28,6 +28,8 @@ const adapter = adapterFor(
 );
 const stage = document.getElementById('stage')!;
 let seq = 0;
+// Time in `render()` and in the browser since `takeParts` last ran (D204).
+let parts = { render: 0, browser: 0 };
 
 function resources(): ResourceEntry[] {
   return (performance.getEntriesByType('resource') as PerformanceResourceTiming[]).map((e) => ({
@@ -44,11 +46,21 @@ async function renderOnce(source: string): Promise<number> {
   const input = `${source}\n%% run ${seq}\n`;
   const t0 = performance.now();
   const svg = await adapter.render(input, `d${renderer.replace(/\W/g, '')}${seq++}`);
+  const t1 = performance.now();
   stage.innerHTML = svg;
   const el = stage.querySelector('svg');
   if (!el) throw new Error('Renderer produced no <svg> element');
   el.getBBox();
-  return performance.now() - t0;
+  const t2 = performance.now();
+  parts.render += t1 - t0;
+  parts.browser += t2 - t1;
+  return t2 - t0;
+}
+
+function takeParts(): { render: number; browser: number } {
+  const out = parts;
+  parts = { render: 0, browser: 0 };
+  return out;
 }
 
 const ready: Promise<ReadyInfo> = (async () => {
@@ -73,6 +85,7 @@ const ready: Promise<ReadyInfo> = (async () => {
 
 const sampler = {
   renderOnce,
+  takeParts,
   adapter,
   errorText,
   cleanup: () => {

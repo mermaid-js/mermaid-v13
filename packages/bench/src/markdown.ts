@@ -2,7 +2,7 @@
 import type { GateOutcome } from './gates.ts';
 import { speedup } from './gates.ts';
 import { dash, kb, ms, num, row, rule } from './md.ts';
-import type { BenchReport, DiagramResult, RendererId, RendererRun } from './report.ts';
+import type { BenchReport, DiagramResult, PageHistory, RendererId, RendererRun } from './report.ts';
 import { STAGES, rendererRun } from './report.ts';
 import { round } from './stats.ts';
 
@@ -28,8 +28,10 @@ export function counts(results: DiagramResult[]): string {
   return `${n('ok')}/${n('error')}/${n('timeout')}/${n('missing')}`;
 }
 
-function sum(results: DiagramResult[], common: Set<string>, key: 'warmMs' | 'firstMs') {
-  const picked = results.filter((r) => common.has(r.id) && r[key] !== null);
+type Summed = 'warmMs' | 'firstMs' | 'renderMs' | 'browserMs';
+
+function sum(results: DiagramResult[], common: Set<string>, key: Summed) {
+  const picked = results.filter((r) => common.has(r.id) && (r[key] ?? null) !== null);
   return picked.length === 0 ? null : picked.reduce((a, r) => a + r[key]!, 0);
 }
 
@@ -74,10 +76,12 @@ function renderersLines(report: BenchReport): string[] {
       'Counts',
       'Σ warm (common)',
       'Σ first (common)',
+      'Σ render (common)',
+      'Σ browser (common)',
       'vs v12-frozen (geomean)',
       ...(hasBase ? ['vs v13-base (geomean)'] : []),
     ]),
-    rule(hasBase ? 10 : 9)
+    rule(hasBase ? 12 : 11)
   );
   const notes: string[] = [];
   for (const r of report.renderers) {
@@ -91,6 +95,8 @@ function renderersLines(report: BenchReport): string[] {
         counts(r.results),
         ms(sum(r.results, common, 'warmMs')),
         ms(sum(r.results, common, 'firstMs')),
+        ms(sum(r.results, common, 'renderMs')),
+        ms(sum(r.results, common, 'browserMs')),
         times(speedup(report, r.renderer, 'v12-frozen').value),
         ...(hasBase ? [times(speedup(report, r.renderer, 'v13-base').value)] : []),
       ])
@@ -131,10 +137,12 @@ function diagramsTable(runs: RendererRun[], comparisons: TableColumn[]): string[
       'First',
       'Warm',
       'p95',
+      'Render',
+      'Browser',
       ...STAGES.map(capital),
       ...shown.flatMap((c) => [`${c.id} warm`, c.ratio]),
     ]),
-    rule(6 + STAGES.length + shown.length * 2),
+    rule(8 + STAGES.length + shown.length * 2),
   ];
   for (const id of ids) {
     const r = v13ById.get(id);
@@ -147,6 +155,8 @@ function diagramsTable(runs: RendererRun[], comparisons: TableColumn[]): string[
         num(r?.firstMs),
         num(r?.warmMs),
         num(r?.p95Ms),
+        num(r?.renderMs),
+        num(r?.browserMs),
         ...STAGES.map((s) => num(st?.[s])),
         ...shown.flatMap((c) => {
           const w = okWarm(c.byId.get(id));
@@ -157,6 +167,40 @@ function diagramsTable(runs: RendererRun[], comparisons: TableColumn[]): string[
   }
   out.push('');
   return out;
+}
+
+/**
+ * Each page-history fixture's warm time against Pele, in a fresh page and after the corpus, and
+ * how far apart the two ratios are (#265: render time should not depend on page history).
+ */
+function pageHistoryLines(report: BenchReport): string[] {
+  const history = report.pageHistory ?? [];
+  if (history.length === 0) return [];
+  const ratio = (t: PageHistory['fresh']) => {
+    const v13 = t.v13 ?? null;
+    const pele = t.pele ?? null;
+    return v13 !== null && pele !== null && pele > 0 ? v13 / pele : null;
+  };
+  return [
+    '## Page history',
+    '',
+    "v13 warm time over Pele's, each in a fresh page and on the page that rendered the corpus.",
+    '',
+    row(['Diagram', 'Fresh page', 'After the corpus', 'Gap']),
+    rule(4),
+    ...history.map(({ id, fresh, after }) => {
+      const f = ratio(fresh);
+      const a = ratio(after);
+      const gap = f !== null && a !== null ? `${Math.round(Math.abs(a / f - 1) * 100)}%` : dash;
+      return row([
+        id,
+        times(f === null ? null : round(f, 1)),
+        times(a === null ? null : round(a, 1)),
+        gap,
+      ]);
+    }),
+    '',
+  ];
 }
 
 function unsupportedLines(report: BenchReport): string[] {
@@ -188,6 +232,7 @@ export function formatMarkdown(report: BenchReport, outcome: GateOutcome): strin
       { id: 'v13-base', ratio: 'vs base' },
       { id: 'pele', ratio: 'vs pele' },
     ]),
+    ...pageHistoryLines(report),
     ...unsupportedLines(report),
   ].join('\n');
 }

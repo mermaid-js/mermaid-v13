@@ -148,6 +148,52 @@ describe('markdown report', () => {
     );
   });
 
+  it('prints the time in render() and in the browser per diagram and their sums (D204)', () => {
+    const split = (r: DiagramResult, renderMs: number, browserMs: number): DiagramResult => ({
+      ...r,
+      renderMs,
+      browserMs,
+    });
+    const withSplit: BenchReport = {
+      ...report,
+      renderers: report.renderers.map((run) => ({
+        ...run,
+        results: run.results.map((r) =>
+          run.renderer === 'v13' ? split(r, 0.12, 0.08) : split(r, 12, 8)
+        ),
+      })),
+    };
+    const out = formatMarkdown(
+      withSplit,
+      evaluateGates({ report: withSplit, baseline: undefined, mode: 'report', corpusSize: 1 })
+    );
+    expect(out).toMatch(
+      /\| Σ warm \(common\) \| Σ first \(common\) \| Σ render \(common\) \| Σ browser \(common\) \|/
+    );
+    expect(out).toMatch(/\| v13 \| 13\.0\.0-alpha\.0 \|.*\| 0\.12 ms \| 0\.08 ms \|/);
+    expect(out).toMatch(/\| p95 \| Render \| Browser \| Parse \|/);
+    const row = out.split('\n').find((l) => l.startsWith('| corpus/a'));
+    expect(row).toContain('| 0.3 | 0.12 | 0.08 | 0.04 |');
+  });
+
+  it('prints the page-history line: each fixture against Pele, fresh and after the corpus', () => {
+    const withHistory: BenchReport = {
+      ...report,
+      pageHistory: [
+        { id: 'perf/huge1', fresh: { v13: 3, pele: 2 }, after: { v13: 2.8, pele: 2 } },
+        { id: 'perf/medium4', fresh: { v13: 1.6, pele: 1 }, after: { v13: null, pele: 1 } },
+      ],
+    };
+    const out = formatMarkdown(
+      withHistory,
+      evaluateGates({ report: withHistory, baseline: undefined, mode: 'report', corpusSize: 1 })
+    );
+    expect(out).toContain('## Page history');
+    expect(out).toContain('| perf/huge1 | 1.5× | 1.4× | 7% |');
+    expect(out).toContain('| perf/medium4 | 1.6× | – | – |');
+    expect(md).not.toContain('Page history');
+  });
+
   it('says the gates are only reporting while the pipeline is missing', () => {
     expect(md).toContain('Gates: report');
     expect(md).toMatch(/\| R-PERF-1 \| Loaded size, core \+ flowchart \(gzip\) \| pass \| no \|/);

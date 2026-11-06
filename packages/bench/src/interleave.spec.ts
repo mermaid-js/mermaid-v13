@@ -86,6 +86,27 @@ describe('interleave', () => {
     expect(closed.sort()).toEqual(['pele', 'v13', 'v13-base']);
   });
 
+  it('runs finish on the open sessions after the last fixture, before closing them', async () => {
+    const calls: string[] = [];
+    const closed: string[] = [];
+    const sessions = (['v13', 'pele'] as const).map((r) => fakeSession(r, calls, closed));
+    let seen: string[] = [];
+    await interleave(
+      sessions,
+      [fixture('x')],
+      () => {},
+      'test',
+      async (open) => {
+        seen = open.map((s) => s.renderer);
+        expect(closed).toEqual([]);
+        await open[0]!.measure(fixture('again'));
+      }
+    );
+    expect(seen).toEqual(['v13', 'pele']);
+    expect(calls).toEqual(['x:v13', 'x:pele', 'again:v13']);
+    expect(closed.sort()).toEqual(['pele', 'v13']);
+  });
+
   it('closes every session when a measurement throws', async () => {
     const closed: string[] = [];
     const good = fakeSession('v13', [], closed);
