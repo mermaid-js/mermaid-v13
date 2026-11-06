@@ -65,6 +65,8 @@ generated/
 !packages/core/src/config/generated/
 # The theme's runtime alias and kind table, from vocabulary.ts by `pnpm gen:theme`
 !packages/core/src/theme/generated/
+# A diagram package's theme alias and kind table, from its src/theme/vocabulary.ts (spec #414)
+!packages/diagram-*/src/theme/generated/
 !packages/diagram-*/src/generated/
 !packages/mermaid/src/generated/
 !packages/language-service/src/generated/

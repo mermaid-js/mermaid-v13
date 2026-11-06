@@ -10,7 +10,6 @@ import {
   CLASSIC_CLASS_MARKERS,
   CLASSIC_PADDING,
   CLASSIC_SEQUENCE,
-  CLASSIC_TIMELINE,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -47,7 +46,6 @@ const base: ThemeSpec = {
     ...TEXT_SIZES,
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
-    ...CLASSIC_TIMELINE,
     useGradient: false,
   },
   // v12 theme-base.js: hue steps darkened by 25 (75 under darkMode).

@@ -155,12 +155,6 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'pieStrokeWidth',
     'pieOuterStrokeWidth',
     'pieOpacity',
-    // Timeline boxes (spec #291, D227): the top corner, the label offset (sections and periods)
-    // and the extra offset of event labels, and whether boxes take the `cScale` palettes.
-    'timelineRadius',
-    'timelineLabelOffset',
-    'timelineEventLabelShift',
-    'timelineScaleColors',
     // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
     'useGradient',
   ] as const
@@ -237,17 +231,17 @@ const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() =>
  */
 export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() => ({
   // base
-  primaryColor: def('p', 'color', ['core']),
+  primaryColor: def('p', 'color', ['core', 'quadrant']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core']),
   background: def('bg', 'color', ['core']),
-  primaryTextColor: def('pt', 'color', ['core']),
+  primaryTextColor: def('pt', 'color', ['core', 'quadrant']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
   // Pie draws in the font family but sizes its text by its own variables.
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie']),
   fontSize: def('fs', 'length', TEXT_USERS),
   // derived
-  primaryBorderColor: def('pb', 'color', ['core']),
+  primaryBorderColor: def('pb', 'color', ['core', 'quadrant']),
   secondaryBorderColor: def('sb', 'color', ['core']),
   tertiaryBorderColor: def('tb', 'color', ['core']),
   secondaryTextColor: def('st', 'color', ['core']),
@@ -260,6 +254,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'er',
     'journey',
     'timeline',
+    'quadrant',
   ]),
   mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
@@ -313,23 +308,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   pieOuterStrokeColor: def('poc', 'color', ['pie']),
   pieOuterStrokeWidth: def('pow', 'length', ['pie']),
   pieOpacity: def('pop', 'opacity', ['pie']),
-  // quadrant chart (v12 names, derived as v12's `/* quadrant-graph */` block derives them;
-  // D231, D232)
-  quadrant1Fill: def('q1f', 'color', ['quadrant']),
-  quadrant2Fill: def('q2f', 'color', ['quadrant']),
-  quadrant3Fill: def('q3f', 'color', ['quadrant']),
-  quadrant4Fill: def('q4f', 'color', ['quadrant']),
-  quadrant1TextFill: def('q1t', 'color', ['quadrant']),
-  quadrant2TextFill: def('q2t', 'color', ['quadrant']),
-  quadrant3TextFill: def('q3t', 'color', ['quadrant']),
-  quadrant4TextFill: def('q4t', 'color', ['quadrant']),
-  quadrantPointFill: def('qpf', 'color', ['quadrant']),
-  quadrantPointTextFill: def('qpt', 'color', ['quadrant']),
-  quadrantXAxisTextFill: def('qxt', 'color', ['quadrant']),
-  quadrantYAxisTextFill: def('qyt', 'color', ['quadrant']),
-  quadrantInternalBorderStrokeFill: def('qib', 'color', ['quadrant']),
-  quadrantExternalBorderStrokeFill: def('qeb', 'color', ['quadrant']),
-  quadrantTitleFill: def('qtf', 'color', ['quadrant']),
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',
@@ -389,10 +367,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   messageEndGap: def('meg', 'length', ['sequence']),
   labelBoxExtraHeight: def('lbx', 'length', ['sequence']),
   actorFooterPadding: def('afp', 'length', ['sequence']),
-  timelineRadius: def('tlr', 'length', ['timeline']),
-  timelineLabelOffset: def('tlo', 'padding', ['timeline']),
-  timelineEventLabelShift: def('tle', 'length', ['timeline']),
-  timelineScaleColors: def('tls', 'flag', ['timeline']),
   // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
   // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
   rowOdd: def('ro', 'color', ['er']),

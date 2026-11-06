@@ -23,13 +23,13 @@ describe('theme variable inventory (DESIGN §8.3)', () => {
   it('lists name, CSS variable, role, rules, the themes that set it, and its users', async () => {
     const doc = await themeInventory();
     expect(doc).toContain(
-      '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core |'
+      '| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant |'
     );
     expect(doc).toContain(
       '| `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline |'
     );
     expect(doc).toContain(
-      '| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |'
+      '| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant |'
     );
     expect(doc).toContain(
       '| `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline |'
@@ -122,9 +122,11 @@ describe('package theme vocabularies (spec #414 T0b)', () => {
     );
   });
 
-  it('leaves the inventory as it is while no package has a vocabulary', async () => {
-    expect(REPO.filter((p) => p.vocabulary)).toEqual([]);
-    expect(await themeInventory(REPO)).toBe(await themeInventory());
+  it("adds the packages' rows after core's, leaving core's part as it is (spec #414 T1)", async () => {
+    expect(REPO.filter((p) => p.vocabulary).map((p) => p.type)).toEqual(['quadrant', 'timeline']);
+    const core = (await themeInventory()).trimEnd();
+    const doc = await themeInventory(REPO);
+    expect(doc.startsWith(core + '\n\n## Diagram variables\n')).toBe(true);
   });
 
   it("keeps every package's generated table up to date (run `pnpm gen:theme`)", () => {

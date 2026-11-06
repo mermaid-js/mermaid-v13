@@ -800,7 +800,10 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
   const parts: ThemeParts = {
     darkMode,
     main: resolver(spec, darkMode, paletteSource(spec, tv, options.warn, authorDark)),
-    night: options.dark ? resolver(options.dark, true) : undefined,
+    // The dark spec's own palettes, so a series slot read follows it there (D332).
+    night: options.dark
+      ? resolver(options.dark, true, paletteSource(options.dark, tv, undefined, authorDark))
+      : undefined,
     palettes: new Map(),
     byName: new Map(Object.entries(defs)),
     rootTexts: new Map(),

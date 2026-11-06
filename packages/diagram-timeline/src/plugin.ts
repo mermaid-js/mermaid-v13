@@ -5,6 +5,7 @@ import type { TimelineModel } from './model.ts';
 import { detectTimeline, parseTimeline, type TimelineParseResult } from './parser/index.ts';
 import { renderTimeline } from './render/index.ts';
 import { timelineLabels } from './labels.ts';
+import { theme } from './theme/table.ts';
 
 /**
  * The timeline plugin (DESIGN §12.1, spec #291): `layoutKind: 'custom'` with its own
@@ -21,6 +22,7 @@ export const timeline = {
   parse: (text: string, ctx: DiagramParseContext): TimelineParseResult =>
     parseTimeline(text, { preprocessed: ctx.preprocessed }),
   labels: timelineLabels,
+  theme,
   layout: (model: TimelineModel, ctx: RenderContext): TimelineLayout => layoutTimeline(model, ctx),
   render: (model: TimelineModel, layout: TimelineLayout, ctx: RenderContext, w: SvgWriter): void =>
     renderTimeline(model, layout, ctx, w),

@@ -149,34 +149,6 @@ export const CLASSIC_SEQUENCE: Readonly<Record<SequenceGeometry, number>> = {
   actorFooterPadding: 0,
 };
 
-type TimelineGeometry = Extract<
-  TokenVariable,
-  'timelineRadius' | 'timelineLabelOffset' | 'timelineEventLabelShift' | 'timelineScaleColors'
->;
-
-/**
- * Timeline boxes in the redux themes (v12 `svgDraw.js` and `styles.js` for a theme name with
- * `redux`): square corners, labels `padding` below the top (events `padding / 2 + 3`), and the
- * `mainBkg` / `nodeBorder` paint with the border palette and the theme's shadow.
- */
-export const REDUX_TIMELINE: Readonly<Record<TimelineGeometry, number | string | boolean>> = {
-  timelineRadius: 0,
-  timelineLabelOffset: 'padding',
-  timelineEventLabelShift: 3,
-  timelineScaleColors: false,
-};
-
-/**
- * v12 classic, also the neo themes' (D227: v12 `theme: neo` drew classic timeline geometry):
- * top corners 5, labels `padding / 2` below the top, `cScale` fills with a `cScaleInv` rule.
- */
-export const CLASSIC_TIMELINE: Readonly<Record<TimelineGeometry, number | string | boolean>> = {
-  timelineRadius: 5,
-  timelineLabelOffset: '0.5 * padding',
-  timelineEventLabelShift: 0,
-  timelineScaleColors: true,
-};
-
 /**
  * Class relationship markers, v12 neo (`*-margin` markers in rendering-elements/markers.js at
  * fa796a943), each measured from the node outline after `markerOffsets` shortens the line

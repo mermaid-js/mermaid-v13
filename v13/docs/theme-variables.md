@@ -12,20 +12,20 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 
 | Variable | CSS variable | Role | Kind | Light rule | Dark rule | Set by themes | Used by |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core |
+| `primaryColor` | `--mermaid-primaryColor` | base | color | | | all | core, quadrant |
 | `secondaryColor` | `--mermaid-secondaryColor` | base | color | | | all | core |
 | `tertiaryColor` | `--mermaid-tertiaryColor` | base | color | | | all | core |
 | `background` | `--mermaid-background` | base | color | | | all | core |
-| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core |
+| `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core, quadrant |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er |
 | `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, pie |
 | `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant |
-| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
+| `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core, quadrant |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er, journey, timeline |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er, journey, timeline, quadrant |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | core, flowchart, state, er |
@@ -82,21 +82,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `pieOuterStrokeColor` | `--mermaid-pieOuterStrokeColor` | derived | color | `black` | `black` | | pie |
 | `pieOuterStrokeWidth` | `--mermaid-pieOuterStrokeWidth` | token | length | | | all | pie |
 | `pieOpacity` | `--mermaid-pieOpacity` | token | opacity | | | all | pie |
-| `quadrant1Fill` | `--mermaid-quadrant1Fill` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, neo | quadrant |
-| `quadrant2Fill` | `--mermaid-quadrant2Fill` | derived | color | `adjust(quadrant1Fill, 5, 5, 5)` | `adjust(quadrant1Fill, 5, 5, 5)` | | quadrant |
-| `quadrant3Fill` | `--mermaid-quadrant3Fill` | derived | color | `adjust(quadrant1Fill, 10, 10, 10)` | `adjust(quadrant1Fill, 10, 10, 10)` | | quadrant |
-| `quadrant4Fill` | `--mermaid-quadrant4Fill` | derived | color | `adjust(quadrant1Fill, 15, 15, 15)` | `adjust(quadrant1Fill, 15, 15, 15)` | | quadrant |
-| `quadrant1TextFill` | `--mermaid-quadrant1TextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrant2TextFill` | `--mermaid-quadrant2TextFill` | derived | color | `adjust(primaryTextColor, -5, -5, -5)` | `adjust(primaryTextColor, -5, -5, -5)` | | quadrant |
-| `quadrant3TextFill` | `--mermaid-quadrant3TextFill` | derived | color | `adjust(primaryTextColor, -10, -10, -10)` | `adjust(primaryTextColor, -10, -10, -10)` | | quadrant |
-| `quadrant4TextFill` | `--mermaid-quadrant4TextFill` | derived | color | `adjust(primaryTextColor, -15, -15, -15)` | `adjust(primaryTextColor, -15, -15, -15)` | | quadrant |
-| `quadrantPointFill` | `--mermaid-quadrantPointFill` | derived | color | `textColor` | `textColor` | | quadrant |
-| `quadrantPointTextFill` | `--mermaid-quadrantPointTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrantXAxisTextFill` | `--mermaid-quadrantXAxisTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrantYAxisTextFill` | `--mermaid-quadrantYAxisTextFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
-| `quadrantInternalBorderStrokeFill` | `--mermaid-quadrantInternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
-| `quadrantExternalBorderStrokeFill` | `--mermaid-quadrantExternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
-| `quadrantTitleFill` | `--mermaid-quadrantTitleFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |
@@ -144,10 +129,6 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `messageEndGap` | `--mermaid-messageEndGap` | token | length | | | all | sequence |
 | `labelBoxExtraHeight` | `--mermaid-labelBoxExtraHeight` | token | length | | | all | sequence |
 | `actorFooterPadding` | `--mermaid-actorFooterPadding` | token | length | | | all | sequence |
-| `timelineRadius` | `--mermaid-timelineRadius` | token | length | | | all | timeline |
-| `timelineLabelOffset` | `--mermaid-timelineLabelOffset` | token | padding | | | all | timeline |
-| `timelineEventLabelShift` | `--mermaid-timelineEventLabelShift` | token | length | | | all | timeline |
-| `timelineScaleColors` | `--mermaid-timelineScaleColors` | token | flag | | | all | timeline |
 | `rowOdd` | `--mermaid-rowOdd` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, neutral, neo, neo-dark | er |
 | `rowEven` | `--mermaid-rowEven` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | er |
 | `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |
@@ -191,3 +172,41 @@ in v12 (D258). A theme not listed carries an empty list.
 | `cScaleLabel` | `cScaleLabel`, `cScaleLabel0`–`cScaleLabel11` | all |
 | `seriesColorArray` | `seriesColorArray` |  |
 | `plotColorArray` | `plotColorArray` |  |
+
+## Diagram variables
+
+Each diagram package's own variables (D331), listed in its `src/theme/vocabulary.ts` and
+loaded with the diagram, never with core. The values are what `createTheme(spec, { diagram })`
+resolves in each theme: a table is keyed by the theme's family and dark traits, never by its
+name. **Nested** is the same variable under `themeVariables.<section>` (D540); the flat name
+wins when an author sets both. Each is also a CSS variable `--mermaid-<name>`, apart from
+flags and opacities, which are read literally.
+
+### quadrant
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `quadrant1Fill` | | color | `#ececfe` | `#ececfe` | `#1f2020` | `#1f2020` | `#ececff` | `#1f2020` | `#cde498` | `#eeeeee` | `#fff4dd` | `#ececfe` | `#1f2020` |
+| `quadrant2Fill` | | color | `#f1f1ff` | `#f1f1ff` | `#242525` | `#242525` | `#f1f1ff` | `#242525` | `#d2e99d` | `#f3f3f3` | `#fff9e2` | `#f1f1ff` | `#242525` |
+| `quadrant3Fill` | | color | `#f6f6ff` | `#f6f6ff` | `#292a2a` | `#292a2a` | `#f6f6ff` | `#292a2a` | `#d7eea2` | `#f8f8f8` | `#fffee7` | `#f6f6ff` | `#292a2a` |
+| `quadrant4Fill` | | color | `#fbfbff` | `#fbfbff` | `#2e2f2f` | `#2e2f2f` | `#fbfbff` | `#2e2f2f` | `#dcf3a7` | `#fdfdfd` | `#ffffec` | `#fbfbff` | `#2e2f2f` |
+| `quadrant1TextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrant2TextFill` | | color | `#232038` | `#232038` | `#dbdada` | `#dbdada` | `#0e0e00` | `#dbdada` | `#2d1662` | `#0c0c0c` | `#2e2e2e` | `#2e2e2e` | `#dbdada` |
+| `quadrant3TextFill` | | color | `#1e1b33` | `#1e1b33` | `#d6d5d5` | `#d6d5d5` | `#090900` | `#d6d5d5` | `#28115d` | `#070707` | `#292929` | `#292929` | `#d6d5d5` |
+| `quadrant4TextFill` | | color | `#19162e` | `#19162e` | `#d1d0d0` | `#d1d0d0` | `#040400` | `#d1d0d0` | `#230c58` | `#020202` | `#242424` | `#242424` | `#d1d0d0` |
+| `quadrantPointFill` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#333333` | `#cccccc` | `#000000` | `#000000` | `#333333` | `#333333` | `#cccccc` |
+| `quadrantPointTextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrantXAxisTextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrantYAxisTextFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+| `quadrantInternalBorderStrokeFill` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `quadrantExternalBorderStrokeFill` | | color | `#28253d` | `#28253d` | `#cccccc` | `#cccccc` | `#c9c9d9` | `#4c4d4d` | `#aec281` | `#cacaca` | `#d9cfbc` | `#b3b3b3` | `#cccccc` |
+| `quadrantTitleFill` | | color | `#28253d` | `#28253d` | `#e0dfdf` | `#e0dfdf` | `#131300` | `#e0dfdf` | `#321b67` | `#111111` | `#333333` | `#333333` | `#e0dfdf` |
+
+### timeline
+
+| Variable | Nested | Kind | redux-color | redux | redux-dark | redux-dark-color | default | dark | forest | neutral | base | neo | neo-dark |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `timelineRadius` | | length | `0` | `0` | `0` | `0` | `5` | `5` | `5` | `5` | `5` | `5` | `5` |
+| `timelineLabelOffset` | | padding | `1*padding` | `1*padding` | `1*padding` | `1*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` | `0.5*padding` |
+| `timelineEventLabelShift` | | length | `3` | `3` | `3` | `3` | `0` | `0` | `0` | `0` | `0` | `0` | `0` |
+| `timelineScaleColors` | | flag | `false` | `false` | `false` | `false` | `true` | `true` | `true` | `true` | `true` | `true` | `true` |

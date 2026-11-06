@@ -13,7 +13,6 @@ import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
-  CLASSIC_TIMELINE,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
@@ -51,7 +50,6 @@ const neo: ThemeSpec = {
     ...TEXT_SIZES,
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
-    ...CLASSIC_TIMELINE,
     // v12 theme-neo.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
@@ -80,8 +78,6 @@ const neo: ThemeSpec = {
     // v12 theme-neo.js (D182).
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',
-    // v12 derives the quadrant fills from a literal, not `primaryColor` (D232).
-    quadrant1Fill: '#ececfe',
   },
   // v12 theme-neo.js derives cScale from its own constants (#ECECFE, #E9E9F1), not from
   // primaryColor, darkened by 25 (75 under darkMode).

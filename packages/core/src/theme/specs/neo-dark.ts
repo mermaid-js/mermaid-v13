@@ -15,7 +15,6 @@ import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
   NEO_SEQUENCE,
-  CLASSIC_TIMELINE,
   REDUX_PADDING,
   TEXT_SIZES,
 } from './geometry.ts';
@@ -50,7 +49,6 @@ const neoDark: ThemeSpec = {
     ...TEXT_SIZES,
     ...REDUX_PADDING,
     ...NEO_SEQUENCE,
-    ...CLASSIC_TIMELINE,
     // v12 theme-neo-dark.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
