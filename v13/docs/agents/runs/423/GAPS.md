@@ -45,6 +45,8 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## #468 T4 renderer
 
+- **Additive layout change:** `CynefinItemBadge.id` (the item's label as written), the item `g`'s `data-id`, so the renderer reads no model to label items.
+
 ## #469 T5 integration
 
 - [ ] Un-skip the ported `getConfig` v12 spec ("config honoured in #469 T5") and compare with the oracle's `getConfig()`.

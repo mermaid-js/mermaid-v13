@@ -250,7 +250,12 @@ function badges(
       return { ...box, label: centred(text, c.x, box.y + height / 2), radius: ITEMS.radius };
     };
     shown.forEach((item, index) => {
-      items.push({ ...badge(env.rich(item.label, env.fonts.item)), ast: item.ast, index });
+      items.push({
+        ...badge(env.rich(item.label, env.fonts.item)),
+        ast: item.ast,
+        index,
+        id: item.label,
+      });
     });
     const count = domain.items.length - shown.length;
     if (count > 0) overflow = { ...badge(env.plain(`+${count} more`, env.fonts.item)), count };

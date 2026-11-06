@@ -22,7 +22,7 @@ import {
   type PlacedLabel,
 } from '../layout/index.ts';
 import type { CynefinModel } from '../model.ts';
-import { CYNEFIN_PAINT as P, paints, type Paints } from './paint.ts';
+import { CYNEFIN_PAINT, paints, type Paints } from './paint.ts';
 
 /** What the renderer reads from the render context. */
 export type CynefinRenderContext = Pick<RenderContext, 'config' | 'theme' | 'idPrefix' | 'version'>;
@@ -42,7 +42,7 @@ export function renderCynefin(
   w.open('g', { transform: translate(layout.offset.x, layout.offset.y) });
   drawCanvas(layout, paint, w);
   drawTexts(layout, paint, w);
-  drawItems(model, layout, paint, w);
+  drawItems(layout, paint, w);
   drawTransitions(layout, paint, w);
   if (layout.title)
     label(w, layout.title, layout.fonts.title, {
@@ -67,7 +67,7 @@ function drawCanvas(layout: CynefinLayout, paint: Paints, w: SvgWriter): void {
       width: q.width,
       height: q.height,
       fill: paint.background(q.name),
-      'fill-opacity': P.quadrantOpacity,
+      'fill-opacity': CYNEFIN_PAINT.quadrantOpacity,
       stroke: 'none',
     });
   w.close();
@@ -78,7 +78,7 @@ function drawCanvas(layout: CynefinLayout, paint: Paints, w: SvgWriter): void {
     fill: 'none',
     stroke: paint.boundary,
     'stroke-width': layout.strokes.boundary,
-    'stroke-dasharray': P.boundaryDash,
+    'stroke-dasharray': CYNEFIN_PAINT.boundaryDash,
   } as const;
   w.open('g', { class: 'cynefin-boundaries' });
   w.leaf('path', { ...boundary, d: curveData(fold) });
@@ -99,10 +99,10 @@ function drawCanvas(layout: CynefinLayout, paint: Paints, w: SvgWriter): void {
     'data-ast': e.ast,
     d: ellipseData(e),
     fill: paint.background('confusion'),
-    'fill-opacity': P.ellipseOpacity,
+    'fill-opacity': CYNEFIN_PAINT.ellipseOpacity,
     stroke: paint.boundary,
     'stroke-width': e.strokeWidth,
-    'stroke-dasharray': P.ellipseDash,
+    'stroke-dasharray': CYNEFIN_PAINT.ellipseDash,
   });
 }
 
@@ -127,31 +127,33 @@ function drawTexts(layout: CynefinLayout, paint: Paints, w: SvgWriter): void {
   w.close();
 }
 
-/** Item badges and confusion's `+N more` (:229-348), each a translated `g` as in v12. */
-function drawItems(model: CynefinModel, layout: CynefinLayout, paint: Paints, w: SvgWriter): void {
+/**
+ * Item badges and confusion's `+N more` (:229-348), each a translated `g` as in v12. The badge
+ * stands for confusion's items past the third, which have no element of their own, so it
+ * carries neither `data-id` nor `data-ast`.
+ */
+function drawItems(layout: CynefinLayout, paint: Paints, w: SvgWriter): void {
   const stroke = layout.strokes.item;
-  const labels = new Map(model.domains.map((d) => [d.name, d.items.map((i) => i.label)]));
+  const font = layout.fonts.item;
   w.open('g', { class: 'cynefin-items' });
   for (const item of layout.items) {
-    const text = layout.fonts.item;
-    w.open('g', {
-      'data-id': labels.get(item.domain)?.[item.index],
-      'data-ast': item.ast,
-      transform: translate(item.x, item.y),
+    w.open('g', { 'data-id': item.id, 'data-ast': item.ast, transform: translate(item.x, item.y) });
+    badge(w, item, paint, stroke, {
+      class: 'cynefinItem',
+      'fill-opacity': CYNEFIN_PAINT.itemOpacity,
     });
-    badge(w, item, paint, stroke, { class: 'cynefinItem', 'fill-opacity': P.itemOpacity });
-    badgeLabel(w, item, text, paint);
+    badgeLabel(w, item, font, paint);
     w.close();
   }
   const more = layout.overflow;
   if (more) {
-    w.open('g', { 'data-id': 'confusion', transform: translate(more.x, more.y) });
+    w.open('g', { transform: translate(more.x, more.y) });
     badge(w, more, paint, stroke, {
       class: 'cynefinItemOverflow',
-      'fill-opacity': P.overflowOpacity,
-      'stroke-dasharray': P.overflowDash,
+      'fill-opacity': CYNEFIN_PAINT.overflowOpacity,
+      'stroke-dasharray': CYNEFIN_PAINT.overflowDash,
     });
-    badgeLabel(w, more, layout.fonts.item, paint);
+    badgeLabel(w, more, font, paint);
     w.close();
   }
   w.close();

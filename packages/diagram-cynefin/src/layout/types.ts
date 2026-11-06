@@ -81,6 +81,8 @@ export interface CynefinItemBadge extends CynefinBadge {
   readonly ast: AstId;
   /** The item's index in its domain's `items`. */
   readonly index: number;
+  /** The item's label as written: its `data-id` (T4, #468). */
+  readonly id: string;
 }
 
 /** Confusion's `+N more` badge, after its first three items. */

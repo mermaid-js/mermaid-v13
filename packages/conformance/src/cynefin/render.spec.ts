@@ -391,6 +391,10 @@ describe('cynefin render: what is drawn', () => {
       'a',
       'b',
       'c',
+      // The `+N more` badge stands for items that have no element: no data-id, no data-ast.
+      undefined,
+    ]);
+    expect(byClass(tree, 'cynefinConfusion').map((n) => tree.getAttr(n, 'data-id'))).toEqual([
       'confusion',
     ]);
     for (const cls of [
@@ -505,7 +509,7 @@ describe('cynefin render: what is drawn', () => {
       /<svg[^>]*style="([^"]*)"/.exec(
         (await (await cynefinApi({ theme })).render('x', ALL)).svg
       )![1]!;
-    for (const theme of ['dark', 'redux-dark', 'neo-dark'] as const) {
+    for (const theme of ['dark', 'redux-dark', 'redux-dark-color', 'neo-dark'] as const) {
       const s = await style(theme);
       expect(s, theme).toContain('--_cnx:var(--mermaid-cynefinComplexBg,#1B5E20)');
       expect(s, theme).toContain('--_cnl:var(--mermaid-cynefinCliffColor,#FF6B6B)');
@@ -522,22 +526,34 @@ describe('cynefin render: what is drawn', () => {
     );
   });
 
-  it('honours themeVariables.cynefin.* and the flat names, the flat name winning (D335, D540)', async () => {
-    const m = await cynefinApi({
-      themeVariables: {
-        cynefinClearBg: '#010203',
-        cynefin: { complexBg: '#abcdef', clearBg: '#ffffff', boundaryWidth: 0, itemFontSize: 20 },
-      },
-    });
-    const { svg } = await m.render('x', ALL);
-    expect(svg).toContain('var(--mermaid-cynefinComplexBg,#abcdef)');
-    expect(svg).toContain('var(--mermaid-cynefinClearBg,#010203)');
-    const tree = parseSvg(svg);
-    // An author 0 stays 0, as v12 reapplied the override after its `||` defaults.
-    expect(tree.getAttr(byClass(tree, 'cynefinBoundary')[0]!, 'stroke-width')).toBe('0');
-    expect(tree.getAttr(byClass(tree, 'cynefinItemText')[0]!, 'font-size')).toBe('20');
-    expect(tree.getAttr(byClass(tree, 'cynefinSubtitle')[0]!, 'font-size')).toBe('19');
-  });
+  it.each(['default', 'dark', 'redux'] as const)(
+    'honours themeVariables.cynefin.* and the flat names in %s, the flat name winning (D335, D540)',
+    async (theme) => {
+      const m = await cynefinApi({
+        theme,
+        themeVariables: {
+          cynefinClearBg: '#010203',
+          cynefin: {
+            complexBg: '#abcdef',
+            clearBg: '#ffffff',
+            cliffColor: '#123456',
+            boundaryWidth: 0,
+            itemFontSize: 20,
+          },
+        },
+      });
+      const { svg } = await m.render('x', ALL);
+      expect(svg).toContain('var(--mermaid-cynefinComplexBg,#abcdef)');
+      expect(svg).toContain('var(--mermaid-cynefinClearBg,#010203)');
+      // Over the dark entry's literal too.
+      expect(svg).toContain('var(--mermaid-cynefinCliffColor,#123456)');
+      const tree = parseSvg(svg);
+      // An author 0 stays 0, as v12 reapplied the override after its `||` defaults.
+      expect(tree.getAttr(byClass(tree, 'cynefinBoundary')[0]!, 'stroke-width')).toBe('0');
+      expect(tree.getAttr(byClass(tree, 'cynefinItemText')[0]!, 'font-size')).toBe('20');
+      expect(tree.getAttr(byClass(tree, 'cynefinSubtitle')[0]!, 'font-size')).toBe('19');
+    }
+  );
 
   it('draws no subtitles group without descriptions, and no arrows group without transitions', async () => {
     const src = '%%{init: {"cynefin": {"showDomainDescriptions": false}}}%%\ncynefin-beta\ncomplex';

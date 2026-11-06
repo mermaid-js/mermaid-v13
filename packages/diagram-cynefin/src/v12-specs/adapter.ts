@@ -21,7 +21,7 @@
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { treeWriter, type SvgNode, type SvgTree } from '@mermaid-js/core/svg';
 import { tableMeasurer } from '@mermaid-js/core/text';
-import { createTheme, loadTheme } from '@mermaid-js/core/theme';
+import { createTheme, DEFAULT_THEME, loadTheme } from '@mermaid-js/core/theme';
 import {
   hashString,
   layoutCynefin,
@@ -44,7 +44,8 @@ const FALLBACK_AMPLITUDE = 0.015;
 /** v12's renderer seeds the horizon with `seed + 100` (`cynefinRenderer.ts:146`). */
 const HORIZON_SEED_OFFSET = 100;
 
-const THEME = createTheme(await loadTheme('default'), { diagram: cynefin.theme });
+// v13's default theme, unnamed: the specs read only path data, which no theme changes.
+const THEME = createTheme(await loadTheme(DEFAULT_THEME), { diagram: cynefin.theme });
 const EMPTY = parseCynefin('cynefin-beta').model;
 
 /**
