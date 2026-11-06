@@ -18,20 +18,20 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `background` | `--mermaid-background` | base | color | | | all | core |
 | `primaryTextColor` | `--mermaid-primaryTextColor` | base | color | | | all | core |
 | `lineColor` | `--mermaid-lineColor` | base | color | | | all | flowchart, class, state, er |
-| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, pie, info |
-| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant |
+| `fontFamily` | `--mermaid-fontFamily` | base | font | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gantt, pie, info |
+| `fontSize` | `--mermaid-fontSize` | base | length | | | all | core, flowchart, sequence, class, state, er, journey, timeline, quadrant, gantt |
 | `primaryBorderColor` | `--mermaid-primaryBorderColor` | derived | color | `mix(primaryColor, black, 15%)` | `mix(primaryColor, white, 20%)` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | core |
 | `secondaryBorderColor` | `--mermaid-secondaryBorderColor` | derived | color | `mix(secondaryColor, black, 15%)` | `mix(secondaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `tertiaryBorderColor` | `--mermaid-tertiaryBorderColor` | derived | color | `mix(tertiaryColor, black, 15%)` | `mix(tertiaryColor, white, 20%)` | redux-dark, redux-dark-color, neo | core |
 | `secondaryTextColor` | `--mermaid-secondaryTextColor` | derived | color | `contrast(secondaryColor, primaryTextColor, background)` | `contrast(secondaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo-dark | core |
 | `tertiaryTextColor` | `--mermaid-tertiaryTextColor` | derived | color | `contrast(tertiaryColor, primaryTextColor, background)` | `contrast(tertiaryColor, primaryTextColor, background)` | redux-dark, redux-dark-color, neo, neo-dark | core |
-| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er, journey, timeline, info |
+| `textColor` | `--mermaid-textColor` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo-dark | core, flowchart, sequence, state, er, journey, timeline, info, gantt |
 | `mainBkg` | `--mermaid-mainBkg` | derived | color | `primaryColor` | `primaryColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | flowchart, sequence, class, state, er, timeline |
 | `nodeBorder` | `--mermaid-nodeBorder` | derived | color | `primaryBorderColor` | `primaryBorderColor` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo | flowchart, sequence, class, state, er, timeline |
 | `nodeTextColor` | `--mermaid-nodeTextColor` | derived | color | `contrast(mainBkg, textColor, background)` | `contrast(mainBkg, textColor, background)` | redux-dark, redux-dark-color, neo-dark | flowchart, state, er |
 | `clusterBkg` | `--mermaid-clusterBkg` | derived | color | `tertiaryColor` | `tertiaryColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
 | `clusterBorder` | `--mermaid-clusterBorder` | derived | color | `tertiaryBorderColor` | `tertiaryBorderColor` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, class, er |
-| `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er |
+| `titleColor` | `--mermaid-titleColor` | derived | color | `contrast(clusterBkg, textColor, background)` | `contrast(clusterBkg, textColor, background)` | redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | flowchart, class, state, er, gantt |
 | `edgeLabelBackground` | `--mermaid-edgeLabelBackground` | derived | color | `secondaryColor` | `mix(secondaryColor, black, 30%)` | redux-dark, redux-dark-color, default, dark, forest, neutral | flowchart, state |
 | `classText` | `--mermaid-classText` | derived | color | `primaryTextColor` | `primaryTextColor` | redux-color, redux, redux-dark, redux-dark-color, neo, neo-dark | class |
 | `arrowheadColor` | `--mermaid-arrowheadColor` | derived | color | `lineColor` | `lineColor` | forest, neutral | flowchart, state |
@@ -97,6 +97,24 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `quadrantInternalBorderStrokeFill` | `--mermaid-quadrantInternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
 | `quadrantExternalBorderStrokeFill` | `--mermaid-quadrantExternalBorderStrokeFill` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | quadrant |
 | `quadrantTitleFill` | `--mermaid-quadrantTitleFill` | derived | color | `primaryTextColor` | `primaryTextColor` | | quadrant |
+| `sectionBkgColor` | `--mermaid-sectionBkgColor` | derived | color | `tertiaryColor` | `tertiaryColor` | | gantt |
+| `altSectionBkgColor` | `--mermaid-altSectionBkgColor` | derived | color | `white` | `white` | | gantt |
+| `sectionBkgColor2` | `--mermaid-sectionBkgColor2` | derived | color | `primaryColor` | `primaryColor` | | gantt |
+| `excludeBkgColor` | `--mermaid-excludeBkgColor` | derived | color | `#eeeeee` | `#eeeeee` | | gantt |
+| `gridColor` | `--mermaid-gridColor` | derived | color | `lightgrey` | `lightgrey` | | gantt |
+| `todayLineColor` | `--mermaid-todayLineColor` | derived | color | `red` | `red` | | gantt |
+| `vertLineColor` | `--mermaid-vertLineColor` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | gantt |
+| `taskBkgColor` | `--mermaid-taskBkgColor` | derived | color | `primaryColor` | `primaryColor` | | gantt |
+| `taskBorderColor` | `--mermaid-taskBorderColor` | derived | color | `primaryBorderColor` | `primaryBorderColor` | | gantt |
+| `activeTaskBkgColor` | `--mermaid-activeTaskBkgColor` | derived | color | `lightenHsl(primaryColor, 23%)` | `lightenHsl(primaryColor, 23%)` | | gantt |
+| `activeTaskBorderColor` | `--mermaid-activeTaskBorderColor` | derived | color | `primaryColor` | `primaryColor` | | gantt |
+| `doneTaskBkgColor` | `--mermaid-doneTaskBkgColor` | derived | color | `lightgrey` | `lightenHsl(mainBkg, 16%)` | | gantt |
+| `doneTaskBorderColor` | `--mermaid-doneTaskBorderColor` | derived | color | `grey` | `grey` | | gantt |
+| `critBkgColor` | `--mermaid-critBkgColor` | derived | color | `red` | `red` | | gantt |
+| `critBorderColor` | `--mermaid-critBorderColor` | derived | color | `#ff8888` | `#ff8888` | | gantt |
+| `taskTextColor` | `--mermaid-taskTextColor` | derived | color | `textColor` | `textColor` | | gantt |
+| `taskTextOutsideColor` | `--mermaid-taskTextOutsideColor` | derived | color | `textColor` | `textColor` | | gantt |
+| `taskTextDarkColor` | `--mermaid-taskTextDarkColor` | derived | color | `textColor` | `textColor` | | gantt |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |

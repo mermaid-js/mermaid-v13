@@ -1,0 +1,11 @@
+---
+description: click href makes the bar and label a link, in bold and v12's clickable colour (R-SVG-4)
+---
+gantt
+  dateFormat YYYY-MM-DD
+  section Links
+    Linked   :l1, 2024-01-02, 3d
+    Plain    :l2, after l1, 3d
+    Linked 2 :l3, after l2, 3d
+  click l1 href "https://example.com/one"
+  click l3 href "https://example.com/three"

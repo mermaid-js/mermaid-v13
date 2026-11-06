@@ -1,0 +1,17 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#1d3557'
+    primaryTextColor: '#f1faee'
+    tertiaryColor: '#a8dadc'
+    critBkgColor: '#e63946'
+    doneTaskBkgColor: '#457b9d'
+description: 'themeVariables: base colours re-derive the bars; gantt variables override directly'
+---
+gantt
+  dateFormat YYYY-MM-DD
+  section A
+    Plain  :a1, 2024-01-02, 3d
+    Crit   :crit, a2, after a1, 3d
+    Done   :done, a3, after a2, 3d

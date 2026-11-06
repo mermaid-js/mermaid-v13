@@ -1,0 +1,4 @@
+3:3-3:9 "Design" error UNEXPECTED: Expected task data such as `:3d` or `:a1, 2024-01-01, 3d`, got a line break; a task is its text, `:` and its data, e.g. `Design :a1, 2024-01-01, 3d`.
+5:3-5:11 "click b1" error UNEXPECTED: Expected a link such as `href "https://…"` or a callback such as `call show()`, got `Ship`; write `click <ids> href "<url>"` or `click <ids> call <function>()`.
+6:8-6:13 ":done" error GANTT_TASK_NO_DATA: A task needs a start, an end or a duration after its tags, e.g. `Design :done, 2024-01-01, 3d`.
+7:3-7:13 "2024-01-01" error UNEXPECTED: Expected a task such as `Design :a1, 2024-01-01, 3d`, a section such as `section Planning`, a setting such as `dateFormat YYYY-MM-DD` or a statement such as `title` or `click`, got `2024-01-01`; a task text cannot start with a date such as `2024-01-01`.

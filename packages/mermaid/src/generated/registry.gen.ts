@@ -31,7 +31,13 @@ export const FIRST_PARTY: readonly FirstPartyEntry[] = [
     load: () => import('@mermaid-js/diagram-er').then((m) => m.er),
     loadAscii: () => import('@mermaid-js/diagram-er/ascii').then((m) => m.ascii),
   },
-  { type: 'gantt', pattern: /^\s*gantt/ },
+  {
+    type: 'gantt',
+    pattern: /^\s*gantt/,
+    id: 'gantt',
+    formats: ['svg'],
+    load: () => import('@mermaid-js/diagram-gantt').then((m) => m.gantt),
+  },
   {
     type: 'info',
     pattern: /^\s*info/,

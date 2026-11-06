@@ -64,6 +64,16 @@ export interface RenderContext {
   readonly linkSchemes?: readonly string[];
   /** The layout engine named by `layout` config. */
   layout(graph: LayoutGraph): LayoutModel;
+  /**
+   * The instant the diagram treats as now, in ms since the epoch (D270): `RenderOptions.now`,
+   * or the clock the `mermaid` API read at the call (D275). Core never reads the clock.
+   */
+  readonly now?: number;
+  /**
+   * `RenderOptions.availableWidth` in the profile's units (R-LAYOUT-5, D272), for a custom
+   * layout; `ctx.layout()` already passes it to the graph engine. Absent unless asked for.
+   */
+  readonly availableWidth?: number;
   /** Integrator-only limits (R-SEC-5): `resolveLimits(initialize config, limits option)`. */
   readonly limits: Limits;
   /**

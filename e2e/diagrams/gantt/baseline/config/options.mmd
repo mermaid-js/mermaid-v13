@@ -1,0 +1,25 @@
+---
+config:
+  gantt:
+    barHeight: 30
+    barGap: 10
+    topPadding: 80
+    leftPadding: 140
+    rightPadding: 40
+    gridLineStartPadding: 50
+    fontSize: 14
+    sectionFontSize: 16
+    titleTopMargin: 40
+    numberSectionStyles: 2
+description: the gantt lengths and font sizes set in config
+---
+gantt
+  title Config options
+  dateFormat YYYY-MM-DD
+  section First section
+    One :a1, 2024-01-02, 3d
+    Two :a2, after a1, 3d
+  section Second
+    Three :b1, after a2, 3d
+  section Third
+    Four :c1, after b1, 2d

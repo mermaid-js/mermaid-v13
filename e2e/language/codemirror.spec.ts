@@ -203,6 +203,7 @@ const TYPE_DOCS: Record<string, string> = {
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   pie: 'pie\n  "Dogs" : 386\n',
   info: 'info showInfo\n  title Version\n',
+  gantt: 'gantt\n  section Build\n  Code :a1, 2024-01-01, 3d\n',
 };
 
 /** `defaultHighlightStyle`'s keyword colour (#708), which no semantic-token class sets. */
@@ -256,10 +257,10 @@ test('a type with no highlighter gets no first-paint colours, not flowchart’s'
   page,
 }) => {
   await open(page);
-  await setDoc(page, 'gantt\n  title Plan\n');
-  // Past the debounce, so semantic tokens (none for gantt) would have come too.
+  await setDoc(page, 'requirementDiagram\n  element E {\n  }\n');
+  // Past the debounce, so semantic tokens (none for requirementDiagram) would have come too.
   await page.waitForTimeout(500);
-  expect(await headerColour(page, 'gantt')).not.toBe(KEYWORD);
+  expect(await headerColour(page, 'requirementDiagram')).not.toBe(KEYWORD);
   // Back to a flowchart: re-picked, coloured again.
   await setDoc(page, TYPE_DOCS.flowchart!);
   await expect.poll(() => headerColour(page, 'flowchart')).toBe(KEYWORD);

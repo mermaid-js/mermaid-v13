@@ -1,0 +1,8 @@
+---
+description: >-
+  From v12's ganttDb.spec.ts: "until m1" names no task, so task1 ends
+  today (the e2e clock is fixed for this fixture) and v12 warns.
+---
+gantt
+  dateFormat YYYY-MM-DD
+  task1 :id1,2013-01-01,until m1
