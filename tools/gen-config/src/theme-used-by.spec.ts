@@ -49,6 +49,7 @@ describe('theme vocabulary usedBy (#207)', () => {
   it('scans every diagram package', () => {
     expect(TYPES).toEqual([
       'class',
+      'cynefin',
       'er',
       'flowchart',
       'journey',
