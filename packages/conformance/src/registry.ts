@@ -74,10 +74,8 @@ export const PARITY_SUITES: ParitySuite[] = [
   {
     adapter: packetAdapter,
     corpusDirs: ['e2e/diagrams/packet'],
-    corpusFiles: [
-      'packages/conformance/corpus/packet-v12-specs.json',
-      'packages/conformance/corpus/packet-cases.json',
-    ],
+    // The cases run in `packet/parity.spec.ts`, with its unclosed-directive exclusion (as pie's).
+    corpusFiles: ['packages/conformance/corpus/packet-v12-specs.json'],
   },
 ];
 
