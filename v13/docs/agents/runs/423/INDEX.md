@@ -1,6 +1,6 @@
 # Run notes, spec #423 (cynefin)
 
-Integration branch `feature/423_cynefin`, checked out at `/Users/knsv/repos/mermaid-v13/.claude/worktrees/423-cynefin-6600fe`.
+Integration PR: #479 (draft). Integration branch `feature/423_cynefin`, checked out at `/Users/knsv/repos/mermaid-v13/.claude/worktrees/423-cynefin-6600fe`.
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
@@ -23,7 +23,9 @@ Integration branch `feature/423_cynefin`, checked out at `/Users/knsv/repos/merm
 
 ## Base rule (coordinator, until #472 Theme T0 merges)
 
-Take `mermaid-v13` only through `feature/414_theme-t0`, never directly (M4 wave 2 on `mermaid-v13` conflicts with T0a in 11 core theme files; the T0 session resolves them once and pushes a new tip). Build on `462aef4e9` until the coordinator sends the new sha.
+Take `mermaid-v13` only through `feature/414_theme-t0`, never directly (M4 wave 2 on `mermaid-v13` conflicts with T0a in 11 core theme files; the T0 session resolves them once and pushes a new tip). Build on `462aef4e9` until the coordinator sends the new sha. Until then #479 conflicts with `mermaid-v13` (T0a vs M4 wave 2), so GitHub runs no `pull_request` CI on it; hosted CI starts once the resolved T0 tip is merged here.
+
+- Pushing: the pre-push `pnpm check` timed out twice on `conformance/src/flowchart/probe.spec.ts` (80–95 s of 60 s) at load ~30 on 10 cores; it passes alone in 44 s. Push with `VITEST_MAX_WORKERS=4` (every test still runs).
 
 ## Finish rule
 
