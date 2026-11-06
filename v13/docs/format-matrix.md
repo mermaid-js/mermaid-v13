@@ -16,7 +16,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `kanban` | not ported | no | no |
 | `classDiagram` | `@mermaid-js/diagram-class` | yes | no |
 | `er` | `@mermaid-js/diagram-er` | yes | yes |
-| `gantt` | not ported | no | no |
+| `gantt` | `@mermaid-js/diagram-gantt` | yes | no |
 | `info` | not ported | no | no |
 | `pie` | `@mermaid-js/diagram-pie` | yes | no |
 | `requirement` | not ported | no | no |

@@ -109,6 +109,7 @@ describe('gallery fixtures (R-TEST-6, #207)', () => {
       'class-diagram',
       'er-diagram',
       'flowchart',
+      'gantt',
       'journey',
       'pie',
       'quadrant-chart',

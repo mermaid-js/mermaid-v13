@@ -75,6 +75,14 @@ const DIFFERENCES: Readonly<Record<string, string>> = {
   border1: 'D152: v12 neo leaves it unset; no ported diagram reads it (usedBy is empty)',
   quadrantPointFill:
     'D231: v12 resolved it to hsl(…, NaN%); v13 defaults to textColor, as v12 points showed',
+  // Gantt (#385): v12 theme-neo took these from its own #ECECFE, which no shared variable holds;
+  // they derive from primaryColor (GAPS #385, "For the maintainer").
+  ...Object.fromEntries(
+    ['sectionBkgColor2', 'taskBkgColor', 'activeTaskBorderColor'].map((n) => [
+      n,
+      'D331: no theme spec names a gantt variable; derived from primaryColor',
+    ])
+  ),
   ...Object.fromEntries(LOOK_GEOMETRY.map((n) => [n, LOOK_GEOMETRY_WHY])),
   ...Object.fromEntries(
     TIMELINE.map((n) => [n, 'D227: v12 has no variable; theme neo drew classic timeline boxes'])

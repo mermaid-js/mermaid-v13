@@ -3520,55 +3520,73 @@ $defs:
       - topAxis
       - weekday
     properties:
+      useWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useWidth'
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The chart's width in px (D272): `gantt.useWidth`, then the `availableWidth` render
+            option, then 1200. v12 laid out to the container's width; v13 has no DOM in core, so
+            the container's width arrives only with `availableWidth` (`mount(…, { availableWidth:
+            true })`).
+      useMaxWidth:
+        $ref: '#/$defs/BaseDiagramConfig/properties/useMaxWidth'
+        x-mermaid: { status: honoured, since: 13.0.0 }
       titleTopMargin:
         $ref: '#/$defs/GitGraphDiagramConfig/properties/titleTopMargin'
         default: 25
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       barHeight:
         description: The height of the bars in the graph
         type: integer
         default: 20
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       barGap:
         description: The margin between the different activities in the gantt diagram
         type: integer
         default: 4
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       topPadding:
         description: |
           Margin between title and gantt diagram and between axis and gantt diagram.
         type: integer
         default: 50
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       rightPadding:
         description: |
           The space allocated for the section name to the right of the activities
         type: integer
         default: 75
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       leftPadding:
         description: |
           The space allocated for the section name to the left of the activities
         type: integer
         default: 75
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       gridLineStartPadding:
         description: Vertical starting position of the grid lines
         type: integer
         default: 35
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       fontSize:
         description: Font size
         type: integer
         default: 11
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The task label size. A number is px; a CSS size v12 wrote into `font-size` (`14px`)
+            is read too. Anything else is ignored with `GANTT_CONFIG_IGNORED`.
       sectionFontSize:
         description: Font size for sections
         type: integer
@@ -3576,13 +3594,23 @@ $defs:
         tsType: 'string | number'
         default: 11
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The section title size, read as `fontSize` is.
       numberSectionStyles:
         description: The number of alternating section styles
         type: integer
         default: 4
         minimum: 0
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            The number of section slots before they repeat, as v12. Slots past 4 are drawn as
+            v12 drew them: no band or bar colour of their own. Less than 1 is ignored with
+            `GANTT_CONFIG_IGNORED`.
       axisFormat:
         description: |
           Date/time format of the axis
@@ -3590,7 +3618,7 @@ $defs:
           This might need adjustment to match your locale and preferences.
         type: string
         default: '%Y-%m-%d'
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       tickInterval:
         description: |
           axis ticks
@@ -3602,13 +3630,13 @@ $defs:
           ```
         type: string
         pattern: ^([1-9][0-9]*)(millisecond|second|minute|hour|day|week|month)$
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       topAxis:
         description: |
           When this flag is set, date labels will be added to the top of the chart
         type: boolean
         default: false
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       displayMode:
         description: |
           Controls the display mode.
@@ -3619,7 +3647,7 @@ $defs:
         meta:enum:
           compact: Enables displaying multiple tasks on the same row.
         default: ''
-        x-mermaid: { status: pending }
+        x-mermaid: { status: honoured, since: 13.0.0 }
       weekday:
         description: |
           On which day a week-based interval should start
@@ -3633,7 +3661,12 @@ $defs:
           - saturday
           - sunday
         default: sunday
-        x-mermaid: { status: pending }
+        x-mermaid:
+          status: honoured
+          since: 13.0.0
+          reason: >-
+            v12 never read this key, only the `weekday` statement (D279). v13 reads it; the
+            statement wins. It sets the day a `week` tick interval starts on.
 
   SequenceDiagramConfig:
     title: Sequence Diagram Config

@@ -187,6 +187,7 @@ is reported as a `CONFIG_SECURE_KEY` warning). Over a limit, the render rejects 
 | `maxNodes` | 10,000 | none |
 | `maxDepth` | subgraphs nested 100 deep; a stack overflow in any stage is reported as this limit | none |
 | `maxOutputLength` | 4,000,000 characters of SVG | none |
+| `maxLayoutWork` | 1,500,000 steps of a layout loop the text can make long (`MAX_STEPS`, D542); gantt counts each day its schedule walks for excluded days, on every pass | none |
 
 ### Errors and the error image
 
@@ -1443,3 +1444,111 @@ where v12 and v13 differ; the other themes keep v12's colour.
 | `neutral` | `#d4d4d4` | `#cacaca` |
 | `base` | `#eeddbb` | `#d9cfbc` |
 | `redux`, `redux-color` | `#171717` | `#28253d` |
+
+## Gantt chart
+
+The gantt parser accepts the v12 language (oracle parity over every e2e fixture and the v12 spec
+strings; the schedule is compared with v12's DB at a fixed instant). The differences:
+
+### Time and now
+
+- **Host local time (D270):** dates, `today` and the time axis use the host time zone, with
+  daylight saving handled as d3-time does, as in v12. There is no dayjs or d3 any more: the date
+  code is a port of Pele's (D271), with v12's dayjs quirks kept.
+- **`now` is a render option (D270, D275):** the instant the chart treats as today is
+  `render(id, text, { now })` (a number or a `Date`); `mermaid` defaults it to `Date.now()` at
+  each call, in the browser, Node and the CLI. Diagram text cannot set it. The today line is
+  drawn only when `now` lies in the chart's time domain.
+- **Schedule errors (D274):** an invalid date, a first task with no start, more than three
+  fields in a task, or excludes that leave no day reject the render as `SEMANTIC` at the task's
+  position (`GANTT_INVALID_DATE`, `GANTT_NO_START`, `GANTT_TOO_MANY_FIELDS`,
+  `GANTT_EXCLUDED_ALL`), with v12's messages. v12 threw from its renderer. Parsing no longer
+  depends on `now`, so a cached parse stays valid.
+- **Scheduling work limit (D542, R-SEC-5):** a chart whose schedule walks more than
+  `maxLayoutWork` days (default 1,500,000; every day a task spans is walked for its excluded
+  days, on each pass) is refused with a `LIMIT` error. v12 rendered it, after minutes: about
+  2,000 tasks of `9000y` with any `excludes` fit in the source limit. The largest corpus chart
+  walks 689 days. Raise it with `initialize({ limits: { maxLayoutWork } })` or a per-call
+  `config.limits`.
+- **Warnings (D276):** unknown `after`/`until`/`click` ids (`GANTT_UNKNOWN_TASK`; a click names
+  only a task written before it, as v12 bound it while reading the line) and data that
+  is neither a date nor a duration (`GANTT_BAD_DURATION`), one each per render, where v12 only
+  logged. Also new: `GANTT_TICK_INTERVAL_IGNORED` (a `tickInterval` that would draw more than
+  10,000 ticks: automatic ticks instead), `GANTT_EXCLUDES_NOT_DRAWN` (a chart over five years
+  draws no excluded days, as v12) and `GANTT_CONFIG_IGNORED`.
+- **Nothing at NaN (D277, R-LAYOUT-3):** a chart with nothing to schedule draws its title and
+  an empty plot with no ticks; a task in a cycle of `after`/`until` keeps its row but draws no
+  bar; an `x`/`X` timestamp past the `Date` range is an invalid date; a bar whose `until` is
+  before its start is 0 wide. v12 drew NaN coordinates in each case.
+
+### Syntax
+
+- **`topAxis` works (D273):** v12's grammar called a DB function that does not exist, so any
+  text with the `topAxis` statement failed. v13 accepts it and draws the top axis, as
+  `gantt.topAxis` does. A listed parity divergence; nothing that rendered in v12 changes.
+
+### Config
+
+- **Honoured:** `titleTopMargin`, `barHeight`, `barGap`, `topPadding`, `rightPadding`,
+  `leftPadding`, `gridLineStartPadding`, `fontSize`, `sectionFontSize`, `numberSectionStyles`,
+  `axisFormat`, `tickInterval`, `topAxis`, `displayMode`, `useWidth`, `useMaxWidth` and
+  `weekday`. Unset, each takes v12 12.2.0's merged default. `look` is ignored (D153).
+- **Width (D272):** the chart is laid out `gantt.useWidth` px wide, else to the
+  `availableWidth` render option, else 1200 px. v12 laid out to its container's
+  `offsetWidth`; v13 has no DOM in core, so it fills the container only with
+  `mount(…, { availableWidth: true })`. Otherwise `useMaxWidth` (on by default) scales the
+  1200 px chart down to the container, so a narrow page shows smaller text than v12 did.
+- **`gantt.weekday` (D279):** the day a `week` tick interval starts on, the `weekday`
+  statement winning. v12 never read the config key.
+- **Checked values:** a length that is not a number of at least 0, a `numberSectionStyles`
+  below 1 or a font size that is no CSS size keeps the default, with one `GANTT_CONFIG_IGNORED`
+  warning per key. `fontSize` and `sectionFontSize` take a number (px) or a CSS size such as
+  `14px`, as v12 wrote them into `font-size`.
+- **Text output:** `format: 'ascii'` is not available for gantt charts; it throws
+  `UnsupportedFormatError` (D216).
+
+### Themes
+
+- The gantt variables keep v12's names (`sectionBkgColor`, `altSectionBkgColor`,
+  `sectionBkgColor2`, `excludeBkgColor`, `gridColor`, `todayLineColor`, `vertLineColor`,
+  `taskBkgColor`, `taskBorderColor`, `activeTaskBkgColor`, `activeTaskBorderColor`,
+  `doneTaskBkgColor`, `doneTaskBorderColor`, `critBkgColor`, `critBorderColor`,
+  `taskTextColor`, `taskTextOutsideColor`, `taskTextDarkColor`), and `themeVariables`
+  override each one in every theme ([theme-variables.md](./theme-variables.md)).
+- **Derived in every theme (D331):** each is derived from the shared variables as v12's
+  `theme-base.js` derives it (`vertLineColor` from `primaryBorderColor`, as v12's redux and neo
+  themes do; dark themes fill done tasks with `mainBkg` lightened, v12's `secondBkg`). v12's
+  classic themes set their own gantt colours, and `redux-color` and `redux-dark-color` took
+  the bands from `cScale0`/`cScale1`; those are not carried, so gantt colours differ from v12
+  most in `default`, `dark`, `forest` and `neutral` (bars are the theme's `primaryColor`, text
+  `textColor`). Set the variables in `themeVariables` for v12's look.
+- **`taskTextClickableColor` is gone:** a clickable label is v12's `#003163` in every theme, a
+  constant. The variable is ignored (R-CONF-5).
+- **No gradient or shadow (D278):** `neo` and `neo-dark` take neo colours only, as v12.
+
+## Gantt SVG structure
+
+What changed in the gantt's SVG compared with v12's `ganttRenderer.js` and `styles.js`, and why
+(DESIGN §7.2, spec #293). v12's classes stay on the elements they were on: `section sectionN`,
+`task`, `milestone`, `vert`, `task|active|done|crit|activeCrit|doneCrit` + N, `clickable`,
+`taskText`, `taskTextOutsideLeft|Right`, the `taskTextN`, `taskTextOutsideN`, `activeTextN`,
+`doneTextN`, `critTextN`, `activeCritTextN`, `doneCritTextN`, `milestoneText` and `vertText`
+classes, `sectionTitle sectionTitleN`, `grid`, `tick`, `today`, `exclude-range` and `titleText`.
+Class lists are written with single spaces and no trailing blank.
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, a `<style>` scoped by the id that gave every element its colour; `viewBox="0 0 w h"` fixed | No root `id`; `class="mermaid mermaid-gantt"`, `role="img"`, `aria-roledescription="gantt"`, `data-mermaid-version`; colours are presentation attributes reading `var(--_x)` aliases of v12's gantt theme variables. The `viewBox` is `0 0 w h` grown to cover what is drawn (an outside label, a wide title) | Inert output (R-SEC-2), R-A11Y-1, D224 |
+| Element ids `<id>-<task id>` on bars, `<id>-<task id>-text` on labels, `<id>-exclude-<date>` on excluded days | No ids. A bar carries `data-id="<task id>"` and `data-ast="t:<id>"`, its label `data-id` only; a section title `data-id="<section>"` and `data-ast="s:<section>"`. A section statement v12 drew no title for (a repeated name, a section of only `vert` markers) gets an empty `<g class="sectionTitle" data-id data-ast>` | R-PARSE-8, no colliding ids |
+| `width-<n>` classes on labels | Dropped | They held the measured width, which depends on the measurer |
+| A linked task wrapped in `<a xlink:href target="_top">` only under `securityLevel: sandbox`; otherwise `href` was a `window.open(url, '_self')` handler on the bar and label. v12's sanitizer rewrote the URL (`https://example.com` → `…com/`) | The bar and label of a task a `click … href` names sit in one `<a href>`, after the other tasks, in every security level, with no `target`. The URL is kept as written and checked by core: an unsafe one draws the task unlinked with one `URL_REFUSED` warning | R-SVG-4, R-SEC-4, D23, D62 |
+| `todayMarker` written as a `style` attribute with `,` turned into `;` | Split on `,` (the statement stops at `;`, so none reaches the value) and checked: allowed properties become presentation attributes on the line, others are dropped with `STYLE_PROPERTY_DROPPED` | R-SEC-2 |
+| A `transform-origin` attribute on every bar and every excluded-day rect; milestones turned by CSS, `transform: rotate(45deg) scale(0.8, 0.8)` about it | No `transform-origin`. A milestone carries the same geometry as a `transform` attribute about v12's origin (its square's centre; above the marker for a task tagged both `vert` and `milestone`, which keeps both, as in v12) | No CSS in the output |
+| `<g class="grid" transform="translate(leftPadding, h − 50)">` (top axis: `translate(leftPadding, topPadding)`) and d3's `<g class="tick" transform="translate(x, 0)">` per tick | The same elements at absolute coordinates, without `transform` | The renderer writes absolute coordinates |
+| Tick text `fill="#000"` `stroke="none"` `font-size="10"`, overridden by `.grid .tick text { fill: textColor }`; d3's tick lines `stroke="currentColor"` (the page's colour, as v12's `.grid .tick { stroke: gridColor }` matched only the group); d3's axis path, hidden by `.grid path { stroke-width: 0 }`; `shape-rendering: crispEdges` on ticks and `doneCrit` bars | Tick text in `textColor` at 10px; tick lines in `gridColor` at v12's 0.8 opacity; no axis path; no `shape-rendering` | What v12's CSS meant; `shape-rendering` is not an allowed attribute |
+| `cursor: pointer` on clickable bars and labels; `text-height` on labels | Dropped; the `clickable` class stays for host CSS | No CSS in the output |
+| A `<text class="titleText">` always, empty without a title | Only when there is a title | Nothing invisible is drawn |
+| An HCL colour scale (`#00B9FA` → `#F95002`) built and never used | Dropped | It never reached the output |
+| Section titles `<text dy="−(n−1)/2 em">` with `alignment-baseline: central` `<tspan dy="1em">`s | One `<text>` with a `<tspan>` per `<br>` line at an absolute `y`, 1em apart, each line centred on its own row as v12 drew it | `alignment-baseline` is not an allowed attribute |
+| Slots past `section3` (`numberSectionStyles` over 4) had no rule, so their bands, bars and inside labels took the root's `fill: textColor`, bars no stroke, and outside labels `taskTextDarkColor` (`.taskTextOutsideLeft`/`Right`) | Kept | P2 |
+| `look: neo` changed only colour variables | Every theme draws gantt without gradient outline or shadow | D278 |
