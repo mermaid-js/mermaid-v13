@@ -3,7 +3,14 @@
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { fillTypes, LABEL_SCALE, paletteSlots, pieSlots, REDUX_RULES } from './palettes.ts';
+import {
+  fillTypes,
+  BASE_SECONDARY,
+  LABEL_SCALE,
+  paletteSlots,
+  pieSlots,
+  REDUX_RULES,
+} from './palettes.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
@@ -20,6 +27,43 @@ const mainBkgScale = (
   cScale: paletteSlots(() => `darkenHsl(mainBkg, ${step}%)`),
   cScaleInv: paletteSlots(() => `invert(darkenHsl(mainBkg, ${step}%))`),
 });
+
+/**
+ * v12 `theme-redux.js`, `theme-redux-color.js` and `theme-neo.js` derive `git0`–`git7` from their
+ * own constants (`#ECECFE`, `#E9E9F1`), not from `primaryColor` (D267): `gitSources` of those,
+ * darkened by 25 (lightened under `darkMode`, which turns every slot white). Written out as data,
+ * so the git builders stay in the lazily loaded `scales.ts`. `gitInv` inverts the step of the
+ * author's `git<n>` or the source, as v12 does; branch labels are `labelTextColor` (black under
+ * `darkMode`).
+ */
+const NEO_GIT_SOURCES = [
+  '#ececfe',
+  '#e9e9f1',
+  'lightenHsl(adjustHue(#ececfe, 180), 5%)',
+  'adjustHue(#ececfe, -30)',
+  'adjustHue(#ececfe, -60)',
+  'adjustHue(#ececfe, -90)',
+  'adjustHue(#ececfe, 60)',
+  'adjustHue(#ececfe, 120)',
+];
+const neoGitInv = (step: string): readonly string[] =>
+  NEO_GIT_SOURCES.map((c, i) => `invert(${step}(ifSet(git${i}, ${c}), 25%))`);
+export const NEO_GIT = {
+  git: ['#7373f8', '#9b9bbf', '#f9f986', '#73b5f8', '#73f8f8', '#73f8b5', '#f873f8', '#f87373'],
+  gitInv: neoGitInv('darkenHsl'),
+  gitBranchLabel: NEO_GIT_SOURCES.map(() => 'labelTextColor'),
+};
+export const NEO_GIT_DARK_MODE = {
+  git: NEO_GIT_SOURCES.map(() => '#ffffff'),
+  gitInv: neoGitInv('lightenHsl'),
+  gitBranchLabel: NEO_GIT_SOURCES.map(() => 'black'),
+};
+/** v12's commit labels of `theme-base.js` with redux's fixed tag border (`gitLabelRules`). */
+const REDUX_GIT_LABELS: ThemeRuleTable = {
+  commitLabelColor: `ifSet(secondaryTextColor, invert(${BASE_SECONDARY}))`,
+  commitLabelBackground: BASE_SECONDARY,
+  tagLabelBorder: 'ifSet(tagBorder, ifSet(primaryBorderColor, #171717))',
+};
 
 /**
  * v12 `theme-redux.js` and `theme-neo.js`: base's formulas, applied before v12 settles the
@@ -69,7 +113,7 @@ const redux: ThemeSpec = {
     ...REDUX_TIMELINE,
     useGradient: false,
   },
-  rules: { ...REDUX_RULES, ...PIE_REDUX },
+  rules: { ...REDUX_RULES, ...PIE_REDUX, ...REDUX_GIT_LABELS },
   values: {
     // journey section fills, v12's resolved values (`fillTypes`)
     ...fillTypes('#ececfe #e9e9f1 #feecfd #f1e9f0 #ecfefd #e9f1f0 #feeeec #f1eae9'),
@@ -95,8 +139,8 @@ const redux: ThemeSpec = {
   },
   // v12 theme-redux.js: mainBkg darkened by 25 in every slot (75 under darkMode). It sets
   // every slot to mainBkg before it derives the inverses, so they ignore a cScale override.
-  palettes: { ...mainBkgScale(25), cScaleLabel: LABEL_SCALE },
-  darkModePalettes: mainBkgScale(75),
+  palettes: { ...mainBkgScale(25), cScaleLabel: LABEL_SCALE, ...NEO_GIT },
+  darkModePalettes: { ...mainBkgScale(75), ...NEO_GIT_DARK_MODE },
 };
 
 export default redux;

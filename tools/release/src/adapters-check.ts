@@ -27,6 +27,22 @@ export const FACET_IDS: readonly string[] = [
   ...new Set(firstPartyFacets.filter((e) => e.load !== undefined).map((e) => e.id)),
 ];
 
+/**
+ * The diagram packages `@mermaid-js/language-service` takes as optional peers, one per facet.
+ * Read from its manifest: a facet id is not a package name (`quadrantChart` lives in
+ * `@mermaid-js/diagram-quadrant`).
+ */
+export const FACET_PEERS: readonly string[] = Object.keys(
+  (
+    JSON.parse(
+      readFileSync(
+        join(import.meta.dirname, '..', '..', '..', 'packages/language-service/package.json'),
+        'utf8'
+      )
+    ) as { peerDependencies?: Record<string, string> }
+  ).peerDependencies ?? {}
+).filter((name) => name.startsWith('@mermaid-js/diagram-'));
+
 /** Each adapter's per-type grammar file under `src/generated/` and `dist/generated/`. */
 export const GRAMMAR_FILE: Record<(typeof ADAPTERS)[number], (id: string) => string> = {
   '@mermaid-js/language-service-codemirror': (id) => `${id}.parser.js`,

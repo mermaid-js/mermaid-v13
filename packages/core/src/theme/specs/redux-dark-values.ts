@@ -4,6 +4,7 @@
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
 import { pieSlots } from './palettes.ts';
+import { DARK_HUE_SOURCES, gitPalettes, gitSources } from './scales.ts';
 import {
   NEO_ARROWHEADS,
   NEO_CLASS_MARKERS,
@@ -96,3 +97,12 @@ export const PIE_REDUX_DARK: ThemeRuleTable = pieSlots([
   '#000000',
   '#060606',
 ]);
+
+/**
+ * v12 `theme-redux-dark.js` and `theme-redux-dark-color.js` derive `git0`–`git7` from
+ * `primaryColor` and their own secondary and tertiary steps, darkened by 25 (lightened under
+ * `darkMode`, with black branch labels), as `theme-base.js` does (D267).
+ */
+const GIT_SOURCES = gitSources(...(DARK_HUE_SOURCES.slice(0, 3) as [string, string, string]));
+export const REDUX_DARK_GIT = gitPalettes(GIT_SOURCES);
+export const REDUX_DARK_GIT_DARK_MODE = gitPalettes(GIT_SOURCES, 'lightenHsl', 'black');

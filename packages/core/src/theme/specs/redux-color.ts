@@ -14,7 +14,7 @@ import {
   TAILWIND_400,
   TAILWIND_50,
 } from './palettes.ts';
-import redux from './redux.ts';
+import redux, { NEO_GIT, NEO_GIT_DARK_MODE } from './redux.ts';
 
 const theme: ThemeSpec = {
   ...redux,
@@ -34,9 +34,10 @@ const theme: ThemeSpec = {
     cScale: TAILWIND_300,
     cScaleInv: INVERTED_SCALE,
     cScaleLabel: LABEL_SCALE,
+    ...NEO_GIT,
   },
   // v12 theme-redux-color.js does not darken its fixed cScale under darkMode.
-  darkModePalettes: {},
+  darkModePalettes: NEO_GIT_DARK_MODE,
 };
 
 export default theme;

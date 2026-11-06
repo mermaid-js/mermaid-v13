@@ -41,6 +41,17 @@ beforeAll(async () => {
 
 const file = (path: string) => out.files.find((f) => f.path === path);
 const read = (path: string) => readFileSync(join(out.outdir, path), 'utf8');
+/** The ESM entry and every file it imports statically, transitively. */
+function staticClosure(): Set<string> {
+  const seen = new Set<string>();
+  const visit = (p: string): void => {
+    if (seen.has(p)) return;
+    seen.add(p);
+    for (const i of file(p)?.imports ?? []) visit(i);
+  };
+  visit(ESM_FILE);
+  return seen;
+}
 
 describe('the CDN build (D162)', () => {
   it('gives every first-party diagram, its ascii and language entries a stable chunk', () => {
@@ -54,13 +65,7 @@ describe('the CDN build (D162)', () => {
   });
 
   it('keeps diagrams, text output and other themes out of the ESM entry static closure', () => {
-    const seen = new Set<string>();
-    const visit = (p: string): void => {
-      if (seen.has(p)) return;
-      seen.add(p);
-      for (const i of file(p)?.imports ?? []) visit(i);
-    };
-    visit(ESM_FILE);
+    const seen = staticClosure();
     expect([...seen].filter((p) => !/^(?:mermaid\.esm\.min\.mjs|chunks\/chunk-)/.test(p))).toEqual(
       []
     );
@@ -93,5 +98,13 @@ describe('the CDN build (D162)', () => {
     expect(out.esmClosureGzip).toBe(closureGzip(out.files, ESM_FILE));
     expect(out.esmClosureGzip).toBeLessThanOrEqual(budget.core.gzipBytes);
     expect(out.loaderGzip).toBeLessThan(out.esmClosureGzip);
+  });
+
+  // The theme vocabulary inventory (`THEME_VARIABLES`, with its `usedBy` lists) is for tools and
+  // specs; the runtime reads the generated alias table. Any spread or side effect in it pulls
+  // the whole inventory back into core (R-PERF-8).
+  it('keeps the theme vocabulary inventory out of the ESM entry static closure', () => {
+    const seen = staticClosure();
+    for (const p of seen) expect(read(p), p).not.toMatch(/\busedBy\b/);
   });
 });
