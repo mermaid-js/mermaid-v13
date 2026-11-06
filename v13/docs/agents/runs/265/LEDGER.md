@@ -16,9 +16,12 @@ One row per fix ticket, added by its implementer (IMPLEMENTER step 5). The refer
 | T3 #274 | `c483f8c12` | `6c557ebfd` | 1.17 · 1.18 · 1.40 | 0.981 · 0.983 · 0.997 | 0.825 · 0.838 · 0.970 | 0.851 · 0.864 · 0.981 |
 | T4 #275 | `d89813684` | `d22cfee90` | 1.15 · 1.17 · 1.38 | 1.007 · 1.005 · 0.991 | 0.831 · 0.842 · 0.961 | 0.853 · 0.867 · 1.001 |
 | T5 #276 | `363ce51cb` | `bdad2fc01` | 1.14 · 1.16 · 1.42 | 0.991 · 0.995 · 1.025 | 0.824 · 0.838 · 0.985 | 0.840 · 0.850 · 0.950 |
+| T6 #277 | `d2457c276` | `0d2904e9d` | 1.15 · 1.17 · 1.38 | 1.004 · 1.005 · 0.999 | 0.827 · 0.842 · 0.984 | 0.840 · 0.851 · 0.942 |
 
 T3's base is the integration branch after its sync with `mermaid-v13` (276 commits, M4 wave 1, D314). Since origin trails "#265 so far" by about 3% from there: that sync's drift.
 
 T5's tiny step (1.025) is noise: two runs of the tiny tier alone, at 30 reps, gave 0.981 and 0.998.
+
+T6's runs were taken while the maintainer had other work on the machine. Load was under 3 at the start and end of each, but the CPU log took one sample per run, so they are indicative.
 
 The spec's own measurement at `eba5c0e6c` (1.45× on the 14 largest) is older than the origin. The base had already reached 1.35× before T1, through other merges.
