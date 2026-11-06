@@ -6,7 +6,7 @@ Integration branch `feature/421_packet`, cut from `mermaid-v13` at `dd4b9d19f` (
 | --- | --- | --- | --- |
 | T1 lexer parity gate on the shared Langium oracle | #452 | — | merged |
 | T2 grammar, parser, model, AST, ported specs | #454 | #452 | merged (review fixes pending, GAPS) |
-| T3 custom layout (`PacketLayout`) | #456 | #454 (soft) | running |
+| T3 custom layout (`PacketLayout`) | #456 | #454 (soft) | merged (review fixes pending, GAPS) |
 | T4 SVG renderer | #460 | #454, #456 | open |
 | T5 integration | #462 | #460, #414 T0a/T0b | open |
 | T6 language facet | #458 | #454 | open |
