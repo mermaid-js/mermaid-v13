@@ -22,22 +22,35 @@ export interface PacketConfig {
   readonly paddingY: number;
 }
 
-/** Every key of the generated defaults is set: the schema gives each one a `default`. */
-const GIVEN = packetConfigDefaults as Required<typeof packetConfigDefaults>;
+/** Every `PacketConfig` key: leaving one out fails to type-check. */
+const KEYS: Readonly<Record<keyof PacketConfig, true>> = {
+  rowHeight: true,
+  bitWidth: true,
+  bitsPerRow: true,
+  showBits: true,
+  bitOrder: true,
+  paddingX: true,
+  paddingY: true,
+};
+
+const { useMaxWidth: _onlyTheRendererReadsIt, ...schemaDefaults } = packetConfigDefaults;
+
+/**
+ * Whether the schema gives every key a default. The generated `PacketDiagramConfig` makes every
+ * key optional, so this is checked when the module loads; the config spec pins it.
+ */
+function hasEveryDefault(d: typeof schemaDefaults): d is typeof schemaDefaults & PacketConfig {
+  return Object.keys(KEYS).every((k) => Reflect.get(d, k) !== undefined);
+}
+if (!hasEveryDefault(schemaDefaults)) {
+  throw new Error('config.schema.yaml gives a PacketDiagramConfig key no default');
+}
 
 /**
  * `PacketDiagramConfig`'s defaults (`pnpm gen:config` from `core/schema/config.schema.yaml`, the
  * plugin's `configDefaults`), less `useMaxWidth`, which only the renderer reads.
  */
-export const PACKET_CONFIG_DEFAULTS: PacketConfig = Object.freeze({
-  rowHeight: GIVEN.rowHeight,
-  bitWidth: GIVEN.bitWidth,
-  bitsPerRow: GIVEN.bitsPerRow,
-  showBits: GIVEN.showBits,
-  bitOrder: GIVEN.bitOrder,
-  paddingX: GIVEN.paddingX,
-  paddingY: GIVEN.paddingY,
-});
+export const PACKET_CONFIG_DEFAULTS: PacketConfig = Object.freeze(schemaDefaults);
 
 /** One key that fell back to its default. */
 export interface PacketConfigProblem {

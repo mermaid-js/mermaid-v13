@@ -87,7 +87,7 @@ export const packet = {
   id: 'packet',
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
-  configDefaults: packetConfigDefaults as Readonly<Record<string, unknown>>,
+  configDefaults: { ...packetConfigDefaults },
   theme,
   detector: (text: string): boolean => detectPacket(text),
   parse: (text: string, ctx: DiagramParseContext): PacketParseResult =>

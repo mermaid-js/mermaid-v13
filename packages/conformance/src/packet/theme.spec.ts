@@ -112,11 +112,13 @@ const hex = (v: unknown): string | undefined => {
   return rgba ? formatColor(rgba) : undefined;
 };
 
-function now(t: Theme, name: string): string | number | undefined {
+/** v13's value of a flat variable in v12's terms: hex for a colour, px number for a length. */
+function v13Value(t: Theme, name: string): string | number | undefined {
   return isColour(name) ? hex(t.value(name)) : t.number(name);
 }
 
-function then(drawn: Drawn, name: string): string | number | undefined {
+/** The same for what v12 drew: the value of the variable's nested key in a {@link v12Drawn}. */
+function v12Value(drawn: Drawn, name: string): string | number | undefined {
   const v = drawn[NESTED[name]!];
   return isColour(name) ? hex(v) : Number.parseFloat(String(v));
 }
@@ -177,7 +179,8 @@ describe('packet theme variables against v12 12.2.0 (#462, D333(b), D541)', () =
     for (const name of THEME_NAMES) {
       const old = v12Drawn(name);
       const theme = await v13Theme(name);
-      for (const n of NAMES) if (now(theme, n) !== then(old, n)) found.push(`${name}/${n}`);
+      for (const n of NAMES)
+        if (v13Value(theme, n) !== v12Value(old, n)) found.push(`${name}/${n}`);
     }
     expect(found.sort()).toEqual(Object.keys(DIFFERENCES).sort());
   });
@@ -194,7 +197,7 @@ describe('packet theme variables against v12 12.2.0 (#462, D333(b), D541)', () =
       const own = v12Vars(name);
       for (const n of COLOURS) {
         const from = n === 'packetBlockFillColor' ? 'background' : 'primaryTextColor';
-        expect(now(theme, n), `${name}/${n}`).toBe(hex(own[from]));
+        expect(v13Value(theme, n), `${name}/${n}`).toBe(hex(own[from]));
       }
     }
   );
@@ -202,16 +205,16 @@ describe('packet theme variables against v12 12.2.0 (#462, D333(b), D541)', () =
   it('forest: black on #efefef, default’s (the light entry, D541)', async () => {
     const forest = await v13Theme('forest');
     const old = v12Drawn('default');
-    for (const n of COLOURS) expect(now(forest, n), n).toBe(then(old, n));
+    for (const n of COLOURS) expect(v13Value(forest, n), n).toBe(v12Value(old, n));
   });
 
   it('the four lengths are v12’s in every theme', async () => {
     for (const name of THEME_NAMES) {
       const theme = await v13Theme(name);
       expect(
-        LENGTHS.map((n) => now(theme, n)),
+        LENGTHS.map((n) => v13Value(theme, n)),
         name
-      ).toEqual(LENGTHS.map((n) => then(v12Drawn(name), n)));
+      ).toEqual(LENGTHS.map((n) => v12Value(v12Drawn(name), n)));
     }
   });
 
@@ -234,8 +237,8 @@ describe('packet theme variables against v12 12.2.0 (#462, D333(b), D541)', () =
       const old = v12Drawn(name, NESTED_OVERRIDE);
       const theme = await v13Theme(name, NESTED_OVERRIDE);
       expect(OVERRIDDEN).toHaveLength(5);
-      expect(Object.fromEntries(OVERRIDDEN.map((n) => [n, now(theme, n)]))).toEqual(
-        Object.fromEntries(OVERRIDDEN.map((n) => [n, then(old, n)]))
+      expect(Object.fromEntries(OVERRIDDEN.map((n) => [n, v13Value(theme, n)]))).toEqual(
+        Object.fromEntries(OVERRIDDEN.map((n) => [n, v12Value(old, n)]))
       );
     }
   );
@@ -244,8 +247,8 @@ describe('packet theme variables against v12 12.2.0 (#462, D333(b), D541)', () =
     const vars = { packet: { labelColor: '#123456' } };
     const old = v12Drawn('dark', vars);
     const theme = await v13Theme('dark', vars);
-    expect(Object.fromEntries(NAMES.map((n) => [n, now(theme, n)]))).toEqual(
-      Object.fromEntries(NAMES.map((n) => [n, then(old, n)]))
+    expect(Object.fromEntries(NAMES.map((n) => [n, v13Value(theme, n)]))).toEqual(
+      Object.fromEntries(NAMES.map((n) => [n, v12Value(old, n)]))
     );
   });
 
@@ -257,9 +260,9 @@ describe('packet theme variables against v12 12.2.0 (#462, D333(b), D541)', () =
         packetTitleFontSize: 30,
         packet: { labelColor: '#123456', titleFontSize: '20px', endByteColor: '#fedcba' },
       });
-      expect(now(theme, 'packetLabelColor')).toBe('#654321');
-      expect(now(theme, 'packetTitleFontSize')).toBe(30);
-      expect(now(theme, 'packetEndByteColor')).toBe('#fedcba');
+      expect(v13Value(theme, 'packetLabelColor')).toBe('#654321');
+      expect(v13Value(theme, 'packetTitleFontSize')).toBe(30);
+      expect(v13Value(theme, 'packetEndByteColor')).toBe('#fedcba');
     }
   );
 
@@ -267,13 +270,13 @@ describe('packet theme variables against v12 12.2.0 (#462, D333(b), D541)', () =
     const vars = { primaryTextColor: '#1d3557' };
     const old = v12Drawn('dark', vars);
     const theme = await v13Theme('dark', vars);
-    expect(then(old, 'packetLabelColor')).toBe('#1d3557');
-    for (const n of COLOURS) expect(now(theme, n), n).toBe(then(old, n));
+    expect(v12Value(old, 'packetLabelColor')).toBe('#1d3557');
+    for (const n of COLOURS) expect(v13Value(theme, n), n).toBe(v12Value(old, n));
   });
 
   it('forest: a primaryTextColor override moves v12’s inks, not v13’s (D541)', async () => {
     const vars = { primaryTextColor: '#1d3557' };
-    expect(then(v12Drawn('forest', vars), 'packetLabelColor')).toBe('#1d3557');
-    expect(now(await v13Theme('forest', vars), 'packetLabelColor')).toBe('#000000');
+    expect(v12Value(v12Drawn('forest', vars), 'packetLabelColor')).toBe('#1d3557');
+    expect(v13Value(await v13Theme('forest', vars), 'packetLabelColor')).toBe('#000000');
   });
 });

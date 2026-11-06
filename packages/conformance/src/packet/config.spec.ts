@@ -3,11 +3,12 @@
  * (`cleanAndMerge({...DEFAULT_PACKET_CONFIG, ...getConfig().packet})`): the plugin's generated
  * defaults, and the section a render hands the layout, equal what v12's DB returns for the same
  * site config, less `useWidth` (ignored: only v12's gantt read it). v12's `getConfig()` adds the
- * bit numbers' 10 px to `paddingY` when `showBits` is on (`db.ts:49-51`); v13's config keeps the
- * author's value and the layout adds the 10 px (`PacketLayout.paddingY`), so the v12 side takes
- * them off again. Out-of-range values are D342's and are gated by the parser and layout specs.
+ * bit numbers' room to `paddingY` when `showBits` is on (`db.ts:49-51`); v13's config keeps the
+ * author's value and the layout adds `PACKET_METRICS.bitsPadding` (`PacketLayout.paddingY`), so
+ * the v12 side takes it off again. Out-of-range values are D342's and are gated by the parser and layout specs.
  */
 import { packet, PACKET_CONFIG_DEFAULTS } from '@mermaid-js/diagram-packet';
+import { PACKET_METRICS } from '@mermaid-js/diagram-packet/testing';
 import { createMermaid } from 'mermaid';
 import { describe, expect, it } from 'vitest';
 import { loadOracle } from '../oracle.ts';
@@ -33,7 +34,9 @@ async function v12Config(config: Record<string, unknown> = {}): Promise<Record<s
     const { useWidth: _ignored, ...rest } = (
       await v12.mermaidAPI.getDiagramFromText(BODY)
     ).db.getConfig() as Record<string, unknown>;
-    return rest.showBits ? { ...rest, paddingY: Number(rest.paddingY) - 10 } : rest;
+    return rest.showBits
+      ? { ...rest, paddingY: Number(rest.paddingY) - PACKET_METRICS.bitsPadding }
+      : rest;
   } finally {
     v12.mermaidAPI.reset();
   }

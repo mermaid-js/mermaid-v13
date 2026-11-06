@@ -1448,7 +1448,9 @@ theme's values. The lengths (10, 12 and 14 px, stroke 1) and the colours in `def
 
 | Themes | v12 | v13 | Why |
 | --- | --- | --- | --- |
-| `neo-dark`, `redux-dark`, `redux-dark-color` | No packet block: `styles.ts`'s literals, black bit numbers, labels, title and outlines on `#efefef` blocks, on a dark page | `dark`'s entry: the theme's own `primaryTextColor` (`#e0dfdf`) for the five inks and its `background` (`#333333`) for the blocks, as `dark` draws; an override of either moves them | D333(b), R-THEME-11 |
+| `neo-dark` | No packet block: `styles.ts`'s literals, black bit numbers, labels, title and outlines on `#efefef` blocks, on a dark page | The dark entry, as `dark` draws: neo-dark's own `primaryTextColor` (`#e0dfdf`) for the five inks and its `background` (`#333333`) for the blocks; an override of either moves them | D333(b), R-THEME-11 |
+| `redux-dark` | No packet block: `styles.ts`'s literals, black bit numbers, labels, title and outlines on `#efefef` blocks, on a dark page | The dark entry, as `dark` draws: redux-dark's own `primaryTextColor` (`#e0dfdf`) for the five inks and its `background` (`#333333`) for the blocks; an override of either moves them | D333(b), R-THEME-11 |
+| `redux-dark-color` | No packet block: `styles.ts`'s literals, black bit numbers, labels, title and outlines on `#efefef` blocks, on a dark page | The dark entry, as `dark` draws: redux-dark-color's own `primaryTextColor` (`#e0dfdf`) for the five inks and its `background` (`#333333`) for the blocks; an override of either moves them | D333(b), R-THEME-11 |
 | `forest` | Its own block: the five inks in `primaryTextColor` (`#321b67`), the blocks in `mainBkg` (`#cde498`), following an override of either | `default`'s black on `#efefef`, whatever forest's `primaryTextColor` and `mainBkg`. Set `themeVariables.packet` to draw v12 forest's | D541 |
 
 ## Packet SVG structure

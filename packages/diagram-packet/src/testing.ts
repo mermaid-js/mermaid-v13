@@ -6,4 +6,4 @@
  */
 export { LANGIUM_NAMES, PACKET_TRIVIA, PacketTokenKind, packetTokens } from './parser/index.ts';
 export type { PacketToken } from './parser/index.ts';
-export { packetLayoutViolations } from './layout/index.ts';
+export { PACKET_METRICS, packetLayoutViolations } from './layout/index.ts';
