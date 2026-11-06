@@ -141,6 +141,86 @@ export const QUIRKS: CorpusItem[] = [
 ].map((source, k) => ({ id: `quirk ${k}`, source }));
 
 /**
+ * Parser and model cases (#370): each of v12's DB checks, repeated and duplicate ids (D264,
+ * cycles included), cherry-pick tags, branch order, title and accessibility lines, names that
+ * need quotes, and several errors in one text.
+ */
+export const PARSER_CASES: CorpusItem[] = [
+  // v12's DB checks: branch, checkout, merge (7), cherry-pick (5).
+  'gitGraph\ncommit\nbranch main',
+  'gitGraph\ncommit\nbranch a\nbranch a',
+  'gitGraph\ncommit\ncheckout nope',
+  'gitGraph\ncommit\nbranch a\ncommit\ncheckout main\nmerge a\ncheckout a\nmerge main',
+  'gitGraph\ncommit\nbranch a\nmerge a',
+  'gitGraph\ncommit\nbranch a\ncommit\ncheckout main\nmerge main',
+  'gitGraph\nbranch a\ncommit\ncheckout main\nmerge a',
+  'gitGraph\ncommit\nmerge nope',
+  'gitGraph\nbranch a\ncheckout main\ncommit\nmerge a',
+  'gitGraph\ncommit\nbranch a\ncheckout main\nmerge a',
+  'gitGraph\ncommit id:"A"\nbranch a\ncommit\ncheckout main\nmerge a id:"A"',
+  'gitGraph\ncommit\ncherry-pick',
+  'gitGraph\ncommit\ncherry-pick id:"nope"',
+  'gitGraph\ncommit id:"A"\nbranch a\ncommit id:"B"\ncheckout main\ncommit id:"C"\nmerge a id:"M"\nbranch b\ncommit\ncherry-pick id:"M" parent:"B2"',
+  'gitGraph\ncommit id:"A"\nbranch a\ncommit id:"B"\ncheckout main\ncommit id:"C"\nmerge a id:"M"\nbranch b\ncommit\ncherry-pick id:"M"',
+  'gitGraph\ncommit id:"A"\ncherry-pick id:"A"',
+  'gitGraph\nbranch b\ncheckout main\ncommit id:"A"\ncheckout b\ncherry-pick id:"A"',
+  // Successful cherry-picks: the default tag, a merge source, tag "" and several tags.
+  'gitGraph\ncommit id:"A" msg:"first"\nbranch a\ncommit\ncherry-pick id:"A"',
+  'gitGraph\ncommit id:"A"\nbranch a\ncommit\ncherry-pick id:"A" tag:""',
+  'gitGraph\ncommit id:"A"\nbranch a\ncommit\ncherry-pick id:"A" tag:"x" tag:"" tag:"y"',
+  'gitGraph\ncommit id:"A"\nbranch a\ncommit\ncherry-pick id:"A" parent:"Z"',
+  'gitGraph\ncommit id:"A"\nbranch a\ncommit\ncherry-pick id:"A" parent:""',
+  'gitGraph\ncommit id:"A"\nbranch a\ncommit id:"B"\ncheckout main\ncommit id:"C"\nmerge a id:"M"\nbranch b\ncommit\ncherry-pick id:"M" parent:"B"\ncherry-pick id:"C"',
+  // Merges: ids, types, tags, an empty id, a type and tags in any order.
+  'gitGraph\ncommit\nbranch a\ncommit\ncheckout main\nmerge a id:"" tag:"t" type:HIGHLIGHT tag:"u"',
+  'gitGraph\ncommit\nbranch a\ncommit\ncheckout main\nmerge "a" type:REVERSE id:"m" type:NORMAL',
+  'gitGraph\ncommit\nbranch a\ncommit\ncheckout main\ncommit\nmerge a\nswitch a\ncommit\nswitch main\nmerge a',
+  // Duplicate ids (D264): consecutive, a cycle, across branches, a derived id written out.
+  'gitGraph\ncommit id:"A"\ncommit id:"A"',
+  'gitGraph\ncommit id:"A"\ncommit id:"B"\ncommit id:"A"',
+  'gitGraph\ncommit id:"A"\ncommit id:"B"\ncommit id:"A"\ncommit id:"B"\ncommit',
+  'gitGraph\ncommit id:"A"\nbranch a\ncommit id:"A"\ncheckout main\ncommit',
+  'gitGraph\ncommit\ncommit id:"0-9e3779b"\ncommit',
+  'gitGraph\ncommit id:"1-3c6ef36"\ncommit',
+  'gitGraph\ncommit id:""\ncommit id:"" msg:"x"',
+  // Branch order: ties keep creation order; unordered branches are 0.
+  'gitGraph\ncommit\nbranch a order:3\nbranch b\nbranch c order:1\nbranch d order:0',
+  'gitGraph\nbranch x order:99999999999999999999\nbranch y',
+  // Commit options: repeats, types, bare and `msg:` messages, empty values.
+  'gitGraph\ncommit "a" msg:"b" "c" id:"x" id:"y" type:REVERSE type:HIGHLIGHT tag:"1" tag:"1"',
+  'gitGraph\ncommit msg:""\ncommit type:NORMAL',
+  'gitGraph\ncommit msg:"a = b < c > d <br> e"\nbranch "x<br>y"\ncommit tag:"a=b"',
+  'gitGraph\ncommit id:"__proto__"\nbranch constructor\ncommit\ncheckout main\nmerge constructor',
+  'gitGraph\nbranch "quoted name"\ncommit\ncheckout "main"\nmerge "quoted name"',
+  'gitGraph\nbranch a\nbranch b\ncheckout a\ncheckout main\ncommit',
+  // Title and accessibility lines: in-text, repeated, empty, with the front matter.
+  'gitGraph\ntitle Release flow\naccTitle: Releases\naccDescr: How releases branch off\ncommit',
+  'gitGraph TB:\n  title  One  two  \n  commit\n  title second\n  branch a\n  commit',
+  'gitGraph\naccDescr {\n  line one\n    line two\n}\ncommit\naccTitle: x\naccTitle: ',
+  '---\ntitle: Front\n---\ngitGraph\ncommit\ntitle\ncommit',
+  '---\ntitle: Front\n---\ngitGraph BT:\naccTitle: Front matter and text\ncommit',
+  'gitGraph title On the header line\ncommit',
+  'gitGraph accTitle: a\naccDescr: b\ncommit',
+  // Names that need quotes (D269), keywords as names.
+  'gitGraph\ncommit\nbranch "titled"\ncommit',
+  'gitGraph\ncommit\nbranch title',
+  'gitGraph\ncommit\nbranch "123"\ncheckout "123"',
+  'gitGraph\ncommit\nbranch commit',
+  'gitGraph\ncommit\nbranch "commit"\ncheckout "commit"',
+  'gitGraph\ncommit\nbranch LR\nbranch NORMAL',
+  'gitGraph\ncommit\nbranch\ncommit',
+  'gitGraph\ncommit\nmerge',
+  // Statements on the header line and several errors in one text.
+  'gitGraph TB: commit\nbranch a',
+  'gitGraph: branch a\ncommit',
+  'gitGraph\ncommit id:"a" oops:"x"\ncommit',
+  'gitGraph\ncommit id:"1" commit id:"2"',
+  'gitGraph\ncommit\ncheckout x\nbranch a order:x\nmerge y\ncommit',
+  'gitGraph\ncommit id "a"\ncommit tag "b"\ncommit',
+  'gitGraph\ncommit type:OTHER\ncommit\ncherry-pick id:"x" msg:"y"',
+].map((source, k) => ({ id: `parser case ${k}`, source }));
+
+/**
  * Unclosed `%%{` directives. Core's preprocess ends one at its line end and reports
  * `UNCLOSED_DIRECTIVE` (an error, so v13 rejects the source); v12's directive regex removed
  * the line break after it too, or every line after it. That is core's reading of directives
@@ -163,7 +243,13 @@ export async function gitGraphCorpus(): Promise<CorpusItem[]> {
 
 /** The corpus, the cases above, and a CRLF and a commented copy of each. */
 export async function gitGraphGateCorpus(): Promise<CorpusItem[]> {
-  const all = [...(await gitGraphCorpus()), ...LINE_SEPARATORS, ...QUIRKS, ...UNCLOSED_DIRECTIVES];
+  const all = [
+    ...(await gitGraphCorpus()),
+    ...LINE_SEPARATORS,
+    ...QUIRKS,
+    ...PARSER_CASES,
+    ...UNCLOSED_DIRECTIVES,
+  ];
   return [
     ...all,
     ...all.map((item) => ({ id: `${item.id} (CRLF)`, source: item.source.replace(/\n/g, '\r\n') })),
