@@ -5,8 +5,8 @@ import { flowchartTokens, FlowTokenKind, JISON_NAMES } from '@mermaid-js/diagram
 import { corpusFromDir, REPO_ROOT } from '../corpus.ts';
 import type { CorpusItem } from '../types.ts';
 import { decodeEntities } from './v12.ts';
-import { loadFlowLexerOracle } from './jison-lexer.ts';
-import type { JisonToken } from './jison-lexer.ts';
+import { LEXICAL_ERROR, loadJisonLexerOracle } from '../jison/oracle.ts';
+import type { JisonToken } from '../jison/oracle.ts';
 
 /**
  * Lexer-parity gate (notes/07): the v13 flowchart lexer emits the same terminals, with the same
@@ -18,13 +18,16 @@ import type { JisonToken } from './jison-lexer.ts';
  * - images are compared as v12's parser read them: entity placeholders decoded (after the
  *   merge, as a placeholder can span split tokens), CRLF as LF;
  * - v12 appended a `\n` before lexing; v13 lexes a sentinel line break there whose image is
- *   clipped to the source, so that last character is taken off v12's last token.
+ *   clipped to the source, and the shared oracle takes that `\n` off the token that matched it
+ *   (none when a skipped run took it, D212). Inside an unclosed quoted shape-data value jison
+ *   folded it into `<br/>`, which v13 folds too.
  *
  * Every source is also lexed with comment lines added, which v12 removed before lexing.
  *
  * Deliberate differences: the `@{` opener keeps its image in v13 (jison clears it); v13 also emits the closing `}` of shape data (jison drops it), and
  * comments and directives as trivia; both are left out. After a lexical error jison stops, so
- * both streams are cut at the first `INVALID`.
+ * both streams are cut at the first `INVALID` (the oracle's `LEXICAL_ERROR`; flowchart's jison
+ * has no `INVALID` terminal).
  */
 const MERGED = new Set(['TEXT', 'EDGE_TEXT', 'STR', 'MD_STR']);
 
@@ -54,10 +57,9 @@ function v13Tokens(source: string): JisonToken[] {
       if (t.text === '@{') return [[name, '']];
       if (t.text === '"') quoted = !quoted;
       else if (quoted) {
-        // At the end of the text v12's appended line break folded in too (and is taken off).
+        // At the end of the text v12's appended line break folded in too.
         const atEnd = t.range.end === source.length;
-        const folded = (atEnd ? t.text + '\n' : t.text).replace(/\n\s*/g, '<br/>');
-        return [[name, atEnd ? folded.replace(/<br\/>$/, '') : folded]];
+        return [[name, (atEnd ? t.text + '\n' : t.text).replace(/\n\s*/g, '<br/>')]];
       }
       return [[name, t.text]];
     })
@@ -70,19 +72,6 @@ function cutEntityError(tokens: JisonToken[]): JisonToken[] {
     ([n, img], k) => n === 'UNICODE_TEXT' && img === 'ﬂ' && tokens[k + 1]?.[0] === 'INVALID'
   );
   return i < 0 ? tokens : [...tokens.slice(0, i), ['INVALID', '']];
-}
-
-/** The last non-empty image of a stream that lexed to the end held v12's appended `\n`. */
-function dropAppendedNewline(tokens: JisonToken[]): void {
-  if (tokens[tokens.length - 1]?.[0] === 'INVALID') return;
-  for (let k = tokens.length - 1; k >= 0 && k >= tokens.length - 3; k--) {
-    const t = tokens[k];
-    if (!t || t[1] === '') continue;
-    if (t[1].endsWith('\n')) t[1] = t[1].slice(0, -1);
-    // Inside an unclosed quoted shape-data value it was folded into `<br/>`.
-    else if (t[0] === 'SHAPE_DATA' && t[1].endsWith('<br/>')) t[1] = t[1].slice(0, -5);
-    return;
-  }
 }
 
 // U+2028 and U+2029: a regex `.` stops at them and `^` follows them, as LF does.
@@ -128,6 +117,13 @@ const EDGE_TEXT_ENTITIES: CorpusItem[] = [
   { id: 'edge text entity 3', source: 'flowchart LR\nA -. #amp; .-> B' },
 ];
 
+// v12's appended `\n` taken by a rule that returns no token (`"click"[\s]+` here, #212 §4): the
+// line break before it is the source's own, and keeps its image on both sides.
+const SKIPPED_APPENDED_NEWLINE: CorpusItem[] = [
+  { id: 'skipped appended newline 0', source: 'flowchart LR\nA\nclick\n' },
+  { id: 'skipped appended newline 1', source: 'flowchart LR\nA-->B\nclick ' },
+];
+
 async function corpus(): Promise<CorpusItem[]> {
   const items: CorpusItem[] = [];
   for await (const item of corpusFromDir(join(REPO_ROOT, 'e2e/diagrams/flowchart'), 'e2e')) {
@@ -142,6 +138,7 @@ async function corpus(): Promise<CorpusItem[]> {
     ...LINE_SEPARATORS,
     ...MID_LINE_DIRECTIVES,
     ...EDGE_TEXT_ENTITIES,
+    ...SKIPPED_APPENDED_NEWLINE,
   ];
   return [
     ...all,
@@ -164,19 +161,20 @@ function commented(src: string): string {
 
 describe('flowchart lexer parity with mermaid@12 (jison)', () => {
   it('emits the same tokens over the e2e fixtures and the v12 spec strings', async () => {
-    const oracle = await loadFlowLexerOracle();
+    const oracle = await loadJisonLexerOracle('flowchart');
     const items = await corpus();
     const diffs: { id: string; at: number; v12: JisonToken[]; v13: JisonToken[] }[] = [];
     let compared = 0;
     for (const item of items) {
-      const v12 = await oracle.tokens(item.source);
+      const v12 = (await oracle.tokens(item.source))?.map(
+        ([n, i]): JisonToken => [n === LEXICAL_ERROR ? 'INVALID' : n, i]
+      );
       if (!v12) continue;
       compared++;
       // Merged first: a placeholder split over per-character tokens decodes only when whole.
       const expected = normalise(cutEntityError(v12)).map(
         ([n, i]): JisonToken => [n, decodeEntities(i)]
       );
-      dropAppendedNewline(expected);
       const actual = v13Tokens(item.source);
       if (JSON.stringify(expected) === JSON.stringify(actual)) continue;
       let at = 0;

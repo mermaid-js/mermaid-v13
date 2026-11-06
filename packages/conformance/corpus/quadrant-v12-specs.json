@@ -1,0 +1,198 @@
+[
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#1",
+    "source": "quadrant-1 do"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#2",
+    "source": "quadrantChart"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#3",
+    "source": "quadrantChart\nx-axis urgent --> not urgent"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#4",
+    "source": "quadrantChart\n       x-AxIs         Urgent     -->        Not Urgent    \n"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#5",
+    "source": "quadrantChart\n       x-AxIs         \"Urgent(* +=[❤\"     -->        \"Not Urgent (* +=[❤\"\n    "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#6",
+    "source": "quadrantChart\n       x-AxIs         \"Urgent(* +=[❤\""
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#7",
+    "source": "quadrantChart\n       x-AxIs         \"Urgent(* +=[❤\"  --> "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#8",
+    "source": "quadrantChart\ny-axis urgent --> not urgent"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#9",
+    "source": "quadrantChart\n       y-AxIs         Urgent     -->        Not Urgent    \n"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#10",
+    "source": "quadrantChart\n       Y-AxIs         \"Urgent(* +=[❤\"     -->        \"Not Urgent (* +=[❤\"\n    "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#11",
+    "source": "quadrantChart\n       y-AxIs         \"Urgent(* +=[❤\""
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#12",
+    "source": "quadrantChart\n       y-AxIs         \"Urgent(* +=[❤\"  --> "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#13",
+    "source": "quadrantChart\nquadrant-1 Plan"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#14",
+    "source": "QuadRantChart   \n     QuaDrant-1 Plan    "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#15",
+    "source": "QuadRantChart   \n     QuaDrant-1 \"Plan(* +=[❤\""
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#16",
+    "source": "quadrantChart\nquadrant-2 do"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#17",
+    "source": "QuadRantChart   \n     QuaDrant-2 Do    "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#18",
+    "source": "QuadRantChart   \n     QuaDrant-2 \"Do(* +=[❤\""
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#19",
+    "source": "quadrantChart\nquadrant-3 delegate"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#20",
+    "source": "QuadRantChart   \n     QuaDrant-3 Delegate    "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#21",
+    "source": "QuadRantChart   \n     QuaDrant-3 \"Delegate(* +=[❤\""
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#22",
+    "source": "quadrantChart\nquadrant-4 delete"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#23",
+    "source": "QuadRantChart   \n     QuaDrant-4 Delete    "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#24",
+    "source": "QuadRantChart   \n     QuaDrant-4 \"Delete(* +=[❤\""
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#25",
+    "source": "quadrantChart\ntitle this is title"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#26",
+    "source": "QuadRantChart   \n     TiTle this Is title    "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#27",
+    "source": "QuadRantChart   \n     title \"this is title (* +=[❤\""
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#28",
+    "source": "quadrantChart\npoint1: [0.1, 0.4]"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#29",
+    "source": "QuadRantChart   \n     Point1      : [0.1, 0.4]   "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#30",
+    "source": "QuadRantChart   \n     \"Point1 : (* +=[❤\": [1, 0]   "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#31",
+    "source": "QuadRantChart   \n     Point1 : [1.2, 0.4]   "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#32",
+    "source": "quadrantChart\n      title Analytics and Business Intelligence Platforms\n      x-axis \"Completeness of Vision ❤\" --> \"x-axis-2\"\n      y-axis Ability to Execute --> \"y-axis-2\"\n      quadrant-1 Leaders\n      quadrant-2 Challengers\n      quadrant-3 Niche\n      quadrant-4 Visionaries\n      Microsoft: [0.75, 0.75]\n      Salesforce: [0.55, 0.60]\n      IBM: [0.51, 0.40]\n      Incorta: [0.20, 0.30]"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#33",
+    "source": "quadrantChart\n      title Analytics and Business Intelligence Platforms\n      x-axis \"Completeness of Vision ❤\" --> \"x-axis-2\"\n      y-axis Ability to Execute --> \"y-axis-2\"\n      quadrant-1 Leaders\n      quadrant-2 Challengers\n      quadrant-3 Niche\n      quadrant-4 Visionaries\n      Microsoft: [0.75, 0.75] radius: 10\n      Salesforce: [0.55, 0.60] radius: 10, color: #ff0000\n      IBM: [0.51, 0.40] radius: 10, color: #ff0000, stroke-color: #ff00ff\n      Incorta: [0.20, 0.30] radius: 10 ,color: #ff0000 ,stroke-color: #ff00ff ,stroke-width: 10px"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#34",
+    "source": "quadrantChart\n      title Analytics and Business Intelligence Platforms\n      x-axis \"Completeness of Vision ❤\" --> \"x-axis-2\"\n      y-axis Ability to Execute --> \"y-axis-2\"\n      quadrant-1 Leaders\n      quadrant-2 Challengers\n      quadrant-3 Niche\n      quadrant-4 Visionaries\n      Microsoft: [0.75, 0.75] stroke-color: #ff00ff ,stroke-width: 10px, color: #ff0000, radius: 10\n      Salesforce:::class1: [0.55, 0.60] radius: 10, color: #ff0000\n      IBM: [0.51, 0.40] stroke-color: #ff00ff ,stroke-width: 10px\n      Incorta: [0.20, 0.30] stroke-width: 10px"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#35",
+    "source": "quadrantChart\n    classDef constructor fill:#ff0000\n    Microsoft:::constructor: [0.75, 0.75]\n    "
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#36",
+    "source": "quadrantChart\nquadrant-1 需要扩展"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#37",
+    "source": "quadrantChart\nquadrant-2 需要推广\nquadrant-3 重新评估\nquadrant-4 可以改进"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#38",
+    "source": "quadrantChart\nx-axis 低覆盖率 --> 高覆盖率"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#39",
+    "source": "quadrantChart\ny-axis 低参与度 --> 高参与度"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#40",
+    "source": "quadrantChart\n产品A: [0.3, 0.6]"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#41",
+    "source": "quadrantChart\ntitle 分析象限图\nx-axis 低覆盖率 --> 高覆盖率\ny-axis 低参与度 --> 高参与度\nquadrant-1 需要扩展\nquadrant-2 需要推广\nquadrant-3 重新评估\nquadrant-4 可以改进\n产品A: [0.3, 0.6]\n产品B: [0.45, 0.23]"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#42",
+    "source": "quadrantChart\nquadrant-1 拡張が必要\nx-axis 低い --> 高い"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#43",
+    "source": "quadrantChart\nx-axis 낮음 --> 높음"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#44",
+    "source": "quadrantChart\nquadrant-2 🚀Growth"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#45",
+    "source": "quadrantChart\nx-axis Café --> Größe"
+  },
+  {
+    "id": "v12-specs/parser/quadrant.jison.spec.ts#46",
+    "source": "quadrantChart\nquadrant-1 catégoría\nquadrant-2 naïve"
+  },
+  {
+    "id": "v12-docs/quadrantChart.md#1",
+    "source": "quadrantChart\n    title Reach and engagement of campaigns\n    x-axis Low Reach --> High Reach\n    y-axis Low Engagement --> High Engagement\n    quadrant-1 We should expand\n    quadrant-2 Need to promote\n    quadrant-3 Re-evaluate\n    quadrant-4 May be improved\n    Campaign A: [0.3, 0.6]\n    Campaign B: [0.45, 0.23]\n    Campaign C: [0.57, 0.69]\n    Campaign D: [0.78, 0.34]\n    Campaign E: [0.40, 0.34]\n    Campaign F: [0.35, 0.78]\n"
+  },
+  {
+    "id": "v12-docs/quadrantChart.md#2",
+    "source": "---\nconfig:\n  quadrantChart:\n    chartWidth: 400\n    chartHeight: 400\n  themeVariables:\n    quadrant1TextFill: \"ff0000\"\n---\nquadrantChart\n  x-axis Urgent --> Not Urgent\n  y-axis Not Important --> \"Important ❤\"\n  quadrant-1 Plan\n  quadrant-2 Do\n  quadrant-3 Delegate\n  quadrant-4 Delete\n"
+  },
+  {
+    "id": "v12-docs/quadrantChart.md#3",
+    "source": "quadrantChart\n  title Reach and engagement of campaigns\n  x-axis Low Reach --> High Reach\n  y-axis Low Engagement --> High Engagement\n  quadrant-1 We should expand\n  quadrant-2 Need to promote\n  quadrant-3 Re-evaluate\n  quadrant-4 May be improved\n  Campaign A: [0.9, 0.0] radius: 12\n  Campaign B:::class1: [0.8, 0.1] color: #ff3300, radius: 10\n  Campaign C: [0.7, 0.2] radius: 25, color: #00ff33, stroke-color: #10f0f0\n  Campaign D: [0.6, 0.3] radius: 15, stroke-color: #00ff0f, stroke-width: 5px ,color: #ff33f0\n  Campaign E:::class2: [0.5, 0.4]\n  Campaign F:::class3: [0.4, 0.5] color: #0000ff\n  classDef class1 color: #109060\n  classDef class2 color: #908342, radius : 10, stroke-color: #310085, stroke-width: 10px\n  classDef class3 color: #f00fff, radius : 10\n"
+  }
+]

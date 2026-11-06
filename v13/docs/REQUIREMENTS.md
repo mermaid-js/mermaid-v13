@@ -37,7 +37,7 @@ v13 closes the gap on **size, speed, theming and security** while keeping Mermai
 | **M2.5** | `@mermaid-js/language-service` + CodeMirror/Monaco adapters + LSP server (flowchart first) | D37, D88–D99 |
 | **M3** | sequence, class, state, ER | D34, D100–D105, D107–D133 |
 | **M3.5** | Plugin platform: lazy-loaded first-party packages, plugin auto-discovery and CDN loading, ELK plugin, optional-feature packages, `neo` themes, core size budget | D106, D160–D169 |
-| **M4** | gantt, pie, mindmap, timeline, gitGraph, journey, quadrant | D34 |
+| **M4** | gantt, pie, mindmap, timeline, gitGraph, journey, quadrant; shared `tree` layout engine; icons plugin; hand-drawn plugin | D34, D170, D210–D309 |
 | **M5** | Remaining v12 diagram types | D34 |
 | **Parallel** | Small v12 performance track | D44 |
 
@@ -116,14 +116,14 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 
 | ID | Requirement | Pri | MS | Src | Acceptance |
 | --- | --- | --- | --- | --- | --- |
-| R-PERF-1 | Core + flowchart, as loaded for a flowchart render, is ≤ 120 KB gzip (D160; was 80 KB). | Must | M1 | D10, D160 | Bench "Loaded" size, measured after one flowchart render |
+| R-PERF-1 | Core + flowchart, as loaded for a flowchart render, is ≤ 124 KB gzip (D160, D311; was 80 KB, then 120 KB). | Must | M1 | D10, D160, D311 | Bench "Loaded" size, measured after one flowchart render |
 | R-PERF-2 | Core and every first-party diagram package have **zero** runtime npm dependencies. | Must | M1 | D10 | CI check on `dependencies` of published packages |
 | R-PERF-3 | Warm render is ≥ 50× faster than frozen `mermaid@12.2.0` with dagre, as a geomean over the corpus. | Must | M1 | D10, D45, D150 | Approaches harness geomean, reported in CI and enforced on a local run (D150); current v12 also reported |
 | R-PERF-4 | 100% of the flowchart corpus renders without error, including the large and huge tiers. | Must | M1 | D10 | Harness OK count = corpus size |
 | R-PERF-5 | Benchmarks report time per stage: parse, measure, layout and serialise. | Must | M1 | D43, D203 | Harness output contains stage columns; `measure` is filled for flowchart fixtures, other types follow with their own tickets (D203) |
 | R-PERF-6 | The fixed benchmark fixtures include the Pele/#8635 set (7-, 50- and 500-node flowcharts, sequence, class) plus the 158-diagram corpus. | Must | M1 | D43 | Fixtures committed |
 | R-PERF-7 | CI fails when any stage regresses by more than 10% on the reference runner. | Must | M1 | D43 | CI job with a stored baseline |
-| R-PERF-8 | Core has a published size budget, enforced in CI: everything the `mermaid` entry loads before any diagram chunk (`@mermaid-js/core` plus the public API, registry, detectors and DOM adapter) is ≤ 88 KB gzip. Later diagram packages are optional plugins and have no size budget for now. | Should | M3.5 | D7, D59, D161 | Committed budget file; esbuild size spec in `pnpm check` |
+| R-PERF-8 | Core has a published size budget, enforced in CI: everything the `mermaid` entry loads before any diagram chunk (`@mermaid-js/core` plus the public API, registry, detectors and DOM adapter) is ≤ 92 KB gzip. Later diagram packages are optional plugins and have no size budget for now. | Should | M3.5 | D7, D59, D161, D310 | Committed budget file; esbuild size spec in `pnpm check` |
 | R-PERF-9 | The time from loading the module to the first possible render is ≤ 15 ms on the reference runner (Pele: 10 ms). | Should | M1 | – | Harness "Ready at" |
 | R-PERF-10 | The warm geomean against Pele (at Pele's default settings) over the bench fixtures does not get worse than the last recorded close-out ratio plus 5%. Recorded: 1.45× slower (2026-11-05, before #265). The aim is to render faster than Pele; 2× is the aspiration (D206). | Should | M3.5 | D205, D206 | Bench gate, enforced on a local run on the reference machine and report-only on CI (as R-PERF-3, D150) |
 
@@ -155,7 +155,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-TEXT-9 | The font family comes from `fontFamily` config / `--mermaid-fontFamily`, with v12's default as the fallback (P1). | Must | M1 | D17, D20 | Spec |
 | R-TEXT-10 | Math (TeX) is provided by an optional plugin that emits SVG paths, never HTML. It renders with MathJax in every label core lays out. | Must | M3.5 | D5, D7, D170, D175–D178 | Plugin exists; allow-list test passes with plugin enabled |
 | R-TEXT-11 | Markdown strings also accept bullet lists (lines starting with "- " or "\* ", one nesting level). They render as indented tspan lines with a bullet glyph. Bullets are recognised only inside markdown strings, never in plain labels, so existing diagrams are not broken. | Should | M1 | D56 | Specs plus visual baseline; oracle corpus shows no change for labels without markdown bullets |
-| R-TEXT-12 | Icons are provided by an optional plugin that emits SVG paths, never HTML. Split from R-TEXT-10 (D175). | Should | M4 | D5, D7, D170 | Plugin exists; allow-list test passes with plugin enabled |
+| R-TEXT-12 | Icons are provided by an optional plugin that emits SVG paths, never HTML. Split from R-TEXT-10 (D175). | Must | M4 | D5, D7, D170, D219, D290–D292 | Plugin exists; allow-list test passes with plugin enabled |
 
 ## 10. Layout (R-LAYOUT)
 
@@ -168,6 +168,7 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | R-LAYOUT-5 | Optional `availableWidth` makes the layout adapt to the width: tighten spacing first, then switch LR to TB under a threshold. It is off by default. | Should | M1 | D19 | Specs at several widths |
 | R-LAYOUT-6 | Layout honours `nodeSpacing`, `rankSpacing`, `padding` and `diagramPadding` with v12 default values. | Must | M1 | D22, P1 | Specs |
 | R-LAYOUT-7 | ELK is available only as an optional plugin package. It is never the default and never part of core. | Must | M3.5 | D7 | Package exists; core size unaffected |
+| R-LAYOUT-8 | Core has a deterministic `tree` engine (a two-sided tidy tree) at its own lazily loaded subpath, used by mindmap and reusable by later tree-shaped types. It stays outside the R-PERF-8 core budget. | Must | M4 | D280–D282 | DDLT checks on mindmap fixtures; size spec shows the core closure unchanged |
 
 ## 11. SVG output (R-SVG)
 
@@ -236,11 +237,12 @@ A requirement that holds at milestone *n* keeps holding afterwards. Diagram-spec
 | --- | --- | --- | --- | --- | --- |
 | R-API-1 | `render`, `parse`, `initialize` and `run` are kept (R-COMPAT-5). | Must | M1 | D2 | – |
 | R-API-2 | `renderSync(text, options)` is added, with rendering split into two phases. prepare(text) is async: it detects the type, parses, finds every resource the diagram needs (diagram package, icon packs, math, layout engine) and loads them. renderSync is sync and pure, and uses only what is already loaded. render() is prepare + renderSync. If something is missing, renderSync throws a typed NotLoadedError listing the missing resources. An option renders placeholders (e.g. an empty icon box) with a warning instead. preload({ types, iconPacks, … }) lets hosts that cannot await at render time (markdown-it, SSR) load everything up front. | Must | M1 | D32, D51 | Specs: renderSync after prepare equals render() output; icon diagram without its pack throws NotLoadedError naming it; placeholder option renders with a warning |
-| R-API-3 | `registerExternalDiagrams`, `registerLayoutLoaders` and `detectType` are kept. `registerIconPacks` is kept, and is a no-op with a warning until the icons plugin exists. | Must | M1 | D32 | Specs |
+| R-API-3 | `registerExternalDiagrams`, `registerLayoutLoaders` and `detectType` are kept. `registerIconPacks` is kept, and is a no-op with a warning until the icons plugin exists (M4). | Must | M1 | D32, D290 | Specs |
 | R-API-4 | `setParseErrorHandler` is kept but deprecated, and receives `MermaidError`. | Should | M1 | D32 | Spec |
 | R-API-5 | The `mermaidAPI` object is removed. | Must | M1 | D32 | MIGRATION.md |
 | R-API-6 | `run()` finds `pre.mermaid`/`.mermaid` elements and replaces them as in v12. | Must | M1 | D33, P1 | Browser test |
 | R-API-7 | `mount(el, text, options)` re-renders on resize only when `availableWidth` is used, re-measures after fonts load, and needs no re-render on theme change. | Should | M1 | D33 | Browser test |
+| R-API-8 | `RenderOptions.now` (a number or `Date`) is the instant time-based types such as gantt treat as now. Core never reads the clock; the `mermaid` API defaults it to `Date.now()` at each call. It is not a config key, so diagram text cannot set it. | Must | M4 | D270, D275 | Spec: a fixed `now` gives identical output on repeated renders |
 
 ## 17. Packaging and plugins (R-PLUG)
 
