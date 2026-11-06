@@ -6,7 +6,7 @@ Integration branch `feature/423_cynefin`, checked out at `/Users/knsv/repos/merm
 | --- | --- | --- | --- |
 | T1 lexer parity gate | #461 | — | merged |
 | T2 grammar, parser, model, AST, ported specs | #465 | #461 | open |
-| T3 custom layout (`CynefinLayout`), seeded boundaries | #467 | #465 (soft) | open |
+| T3 custom layout (`CynefinLayout`), seeded boundaries | #467 | #465 (soft) | merged |
 | T4 SVG renderer | #468 | #465, #467 | open |
 | T5 integration (manifest, config, theme table, baselines) | #469 | #468, #414 T0a | open |
 | T6 language facet | #470 | #465 | open |
