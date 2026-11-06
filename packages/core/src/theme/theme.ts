@@ -823,10 +823,11 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
     if (hit) return hit;
   }
   const defs: Record<string, ThemeVarEntry> = { ...THEME_VARIABLE_TABLE };
-  // A fragment's rule for a name the diagram's own table defines loses to the table (D337).
+  // A fragment's rule for a name the diagram's own table defines loses to the table (D337). A
+  // table var that shadows a core name is ignored, so it takes no fragment rule away either.
   const fragment: Record<string, string> = {};
   for (const [name, r] of Object.entries(options.rules ?? {})) {
-    if (table && own(table.vars, name)) continue;
+    if (table && own(table.vars, name) && !own(THEME_VARIABLE_TABLE, name)) continue;
     fragment[name] = r;
     if (!own(defs, name)) defs[name] = { alias: name, kind: 'color' };
   }

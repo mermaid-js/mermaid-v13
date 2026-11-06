@@ -149,6 +149,19 @@ describe('DiagramThemeTable (D331, spec #414 T0a)', () => {
     });
     expect(t.color('mainBkg')).toBe('#fff4dd');
   });
+
+  it("keeps a fragment's rule for a core name the table shadows (D337)", () => {
+    // The table's mainBkg is ignored (a core name), so it does not take the fragment's rule away.
+    const rules = { mainBkg: 'red' };
+    const plain = createTheme(spec.base, { cssVariables: false, rules });
+    const shadowed = createTheme(spec.base, {
+      cssVariables: false,
+      rules,
+      diagram: { vars: { mainBkg: { alias: 'zz', kind: 'color' } }, rules: { light: {} } },
+    });
+    expect(plain.value('mainBkg')).toBe('red');
+    expect(shadowed.value('mainBkg')).toBe('red');
+  });
 });
 
 describe('nested theme sections (D335, D540)', () => {
