@@ -13,6 +13,7 @@ import type { SvgFragment, SvgWriter } from '../svg/writer.ts';
 import type { SecurityLevel } from '../svg/url.ts';
 import type { InlineSpans } from '../text/inline.ts';
 import type { Measurer } from '../text/measurer.ts';
+import type { DiagramThemeTable } from '../theme/diagram.ts';
 import type { Theme } from '../theme/theme.ts';
 import type { Resource } from './errors.ts';
 import type { IconPacks } from './icon-packs.ts';
@@ -140,6 +141,11 @@ export interface DiagramPlugin<M = unknown, L = unknown> {
   readonly layoutKind: 'graph' | 'custom';
   /** Its config section's defaults. */
   readonly configDefaults?: Readonly<Record<string, unknown>>;
+  /**
+   * Its own theme variables (D331, spec #414): plain data, loaded with the diagram, keyed by theme
+   * traits and never by theme name. Core passes it to `createTheme` for the diagram's renders.
+   */
+  readonly theme?: DiagramThemeTable;
   /** `text` is the whole source; every range is into it. Never throws. */
   parse(text: string, ctx: DiagramParseContext): ParseResult<M, AstNode>;
   /** Resources the parsed diagram needs beyond the plugin and the layout engine. */
