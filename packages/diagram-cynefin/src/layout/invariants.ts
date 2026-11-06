@@ -154,9 +154,9 @@ function transitionViolations(model: CynefinModel, layout: CynefinLayout, out: s
     if (!near(t.start, centre(t.from)) || !near(t.end, centre(t.to)))
       out.push(`${t.ast} does not run centre to centre`);
     const d = Math.hypot(t.head[1].x - t.end.x, t.head[1].y - t.end.y);
-    // On a huge canvas a pixel is below the coordinates' precision: allow a few of their ulps.
-    const ulps = Math.max(Math.abs(t.end.x), Math.abs(t.end.y)) * Number.EPSILON * 4;
-    if (Math.abs(d - tip) > EPS + ulps)
+    // On a huge canvas a pixel is below the coordinates' precision: allow a few units in their last place.
+    const slack = Math.max(Math.abs(t.end.x), Math.abs(t.end.y)) * Number.EPSILON * 4;
+    if (Math.abs(d - tip) > EPS + slack)
       out.push(`${t.ast}'s arrowhead tip is ${d} px past its end`);
   }
 }
