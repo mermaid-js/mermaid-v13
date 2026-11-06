@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import type { AstNode } from '@mermaid-js/core/parser-kit';
 import { assertInert } from '@mermaid-js/core/svg';
 import { THEME_NAMES } from '@mermaid-js/core/theme';
-import { gantt, type GanttDocument, type GanttModel } from '@mermaid-js/diagram-gantt';
+import type { GanttDocument, GanttModel } from '@mermaid-js/diagram-gantt';
 import { createMermaid, MermaidError } from 'mermaid';
 import { astIndex, extents, wellFormed } from '../svg-props.ts';
 import { parseSvg, type SvgView } from '../svg-tree.ts';
@@ -15,8 +15,8 @@ import { GANTT_PARITY_NOW } from './oracle-env.ts';
  * §13.4, R-PARSE-8) over the parsed corpus, through the public `createMermaid().render()` with
  * `deterministic: true` and a fixed `now`: the e2e fixtures, the v12 spec strings, the parser,
  * DB, click and edge cases, in every theme and `theme: 'auto'`, and once more in `default` at a
- * `now` inside most charts (so the today line is drawn). The plugin is registered in place of
- * the first-party entry until the integration (#385) adds its manifest.
+ * `now` inside most charts (so the today line is drawn). Gantt loads through the generated
+ * registry (#385).
  *
  * Properties: well-formed XML, `assertInert`, deterministic, no NaN/Infinity/undefined, ids
  * only `<prefix>-title`/`-desc`, every drawn coordinate in the viewBox, every alias declared.
@@ -28,9 +28,8 @@ const PREFIX = 'mermaid-0';
 const IN_DOMAIN = new Date(2014, 0, 8, 12).getTime();
 const TOL = 0.01;
 
-async function api(config: Record<string, unknown>): Promise<ReturnType<typeof createMermaid>> {
+function api(config: Record<string, unknown>): ReturnType<typeof createMermaid> {
   const m = createMermaid();
-  await m.registerExternalDiagrams([gantt], { replace: true });
   m.initialize({ deterministic: true, ...config });
   return m;
 }
@@ -65,7 +64,7 @@ beforeAll(async () => {
     ...EDGE_CASES,
   ];
   for (const { theme, now } of RUNS) {
-    const m = await api({ theme });
+    const m = api({ theme });
     for (const item of corpus) {
       try {
         const prepared = await m.prepare(item.source, { id: PREFIX, now });
@@ -120,8 +119,8 @@ describe('gantt render properties over the parsed corpus', () => {
   });
 
   it('is deterministic: a fresh API object renders the same bytes (R-ARCH-6)', async () => {
-    const apis = new Map<string, Awaited<ReturnType<typeof api>>>();
-    for (const theme of new Set(RUNS.map((r) => r.theme))) apis.set(theme, await api({ theme }));
+    const apis = new Map<string, ReturnType<typeof api>>();
+    for (const theme of new Set(RUNS.map((r) => r.theme))) apis.set(theme, api({ theme }));
     for (const c of cases)
       expect((await apis.get(c.theme)!.render(PREFIX, c.source, { now: c.now })).svg, c.id).toBe(
         c.svg

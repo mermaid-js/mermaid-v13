@@ -10,14 +10,4 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [
-  // Spec #293: the manifest comes with T5 (#385).
-  {
-    type: 'gantt',
-    id: 'gantt',
-    section: 'gantt',
-    pattern: /^\s*gantt/,
-    detector: (text) => /^\s*gantt/.test(text),
-    load: () => import('@mermaid-js/diagram-gantt/language').then((m) => m.language),
-  },
-];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [];

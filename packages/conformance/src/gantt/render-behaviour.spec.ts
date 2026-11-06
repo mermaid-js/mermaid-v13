@@ -1,14 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { Warning } from '@mermaid-js/core';
-import { gantt } from '@mermaid-js/diagram-gantt';
 import { createMermaid } from 'mermaid';
 import { parseSvg, type SvgElement, type SvgView } from '../svg-tree.ts';
 
 /**
  * The gantt renderer's behaviour (spec #293 T4) through `createMermaid().render()` at a fixed
  * `now`: v12's classes, the milestone diamond, links (R-SVG-4, R-SEC-4), the today marker
- * (R-SEC-2) and the theme variables it paints with (D152, D278). The plugin is registered in
- * place of the first-party entry until the integration (#385).
+ * (R-SEC-2) and the theme variables it paints with (D152, D278). Gantt loads through the
+ * generated registry (#385).
  */
 const NOW = new Date(2014, 0, 3, 12).getTime();
 const HEAD = 'gantt\ndateFormat YYYY-MM-DD\n';
@@ -18,7 +17,6 @@ async function render(
   config: Record<string, unknown> = {}
 ): Promise<{ svg: string; tree: SvgView; warnings: readonly Warning[] }> {
   const m = createMermaid();
-  await m.registerExternalDiagrams([gantt], { replace: true });
   m.initialize({ deterministic: true, theme: 'default', ...config });
   const r = await m.render('g', HEAD + source, { now: NOW });
   return { svg: r.svg, tree: parseSvg(r.svg), warnings: r.warnings };
@@ -204,7 +202,6 @@ describe('gantt theme variables (D152, D278)', () => {
 
   it('writes literal colours with cssVariables off', async () => {
     const m = createMermaid();
-    await m.registerExternalDiagrams([gantt], { replace: true });
     m.initialize({
       deterministic: true,
       output: { cssVariables: false },

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectGantt, parseGantt } from '@mermaid-js/diagram-gantt';
-import { ganttLanguage } from '@mermaid-js/diagram-gantt/language';
+import { parseGantt } from '@mermaid-js/diagram-gantt';
 import { createLanguageService, firstPartyFacets } from '@mermaid-js/language-service';
 import type { Range } from '@mermaid-js/language-service';
 import { loadOracle } from '../oracle.ts';
@@ -19,12 +18,11 @@ import { ganttV12Snapshot } from './v12.ts';
  * - folding by section: every task v12 adds after a section sits in exactly one `section` fold,
  *   the one starting at that `section`; a task before the first section in none.
  *
- * The service gets the facet as an eager row, as a host bundling it would, until gantt's
- * manifest has its `language` entry (#385); the last test then fails: drop the row.
+ * The service loads the facet through the generated registry row (gantt's manifest
+ * `language` entry, #385).
  */
-const service = createLanguageService({
-  facets: [{ type: 'gantt', id: 'gantt', detector: (t) => detectGantt(t), facet: ganttLanguage }],
-});
+const service = createLanguageService();
+await service.preload({ types: ['gantt'] });
 
 const AFTER = /^after\s+(?<ids>[\d\w- ]+)/;
 const UNTIL = /^until\s+(?<ids>[\d\w- ]+)/;
@@ -121,8 +119,9 @@ describe('gantt symbols and folding through the service match v12', () => {
     expect(problems).toEqual([]);
   }, 300_000);
 
-  it('runs with an eager row only while gantt has no manifest `language` entry', () => {
+  it('loads the facet from the generated registry (#385)', () => {
     const row = firstPartyFacets.find((e) => e.type === 'gantt');
-    expect(row?.load, 'drop the eager row: the manifest registers the facet').toBeUndefined();
+    expect(row?.load).toBeTypeOf('function');
+    expect(service.update('x:///g', 'gantt\n  a :a1, 2024-01-01, 1d').facet?.id).toBe('gantt');
   });
 });

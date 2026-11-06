@@ -219,10 +219,13 @@ describe('mermaid render: stderr and exit codes (R-ASCII-4, D85)', () => {
   it.concurrent(
     'exits 1 for a diagram type this build does not have',
     async () => {
-      const r = await cli(['render', '--format', 'ascii'], 'gantt\n  title g\n');
+      const r = await cli(
+        ['render', '--format', 'ascii'],
+        'requirementDiagram\n  element E {\n  }\n'
+      );
       expect(r.code).toBe(1);
       expect(r.stdout).toBe('');
-      expect(r.stderr).toContain('"gantt" is not supported');
+      expect(r.stderr).toContain('"requirement" is not supported');
     },
     T
   );

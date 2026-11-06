@@ -155,6 +155,23 @@ const DOCS: Readonly<Record<string, string>> = {
     "  'Cats' : 85.5",
     '',
   ].join('\n'),
+  gantt: [
+    'gantt',
+    '  title A plan',
+    '  accDescr {',
+    '    two lines',
+    '  }',
+    '  dateFormat YYYY-MM-DD',
+    '  excludes weekends',
+    '  %% the first week',
+    '  section Design',
+    '    Sketch :done, a1, 2024-01-01, 3d',
+    '    Review :active, a2, after a1, 2d',
+    '  section Build',
+    '    Code :crit, b1, 2024-01-08, 5d',
+    '  click a1 href "https://example.com"',
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */

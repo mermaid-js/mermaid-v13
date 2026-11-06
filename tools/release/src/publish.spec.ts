@@ -25,6 +25,7 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/diagram-class',
       '@mermaid-chart/diagram-er',
       '@mermaid-chart/diagram-flowchart',
+      '@mermaid-chart/diagram-gantt',
       '@mermaid-chart/diagram-journey',
       '@mermaid-chart/diagram-pie',
       '@mermaid-chart/diagram-quadrant',
@@ -34,8 +35,6 @@ describe('packAll (this workspace)', () => {
       '@mermaid-chart/mermaid',
       // Peer of mermaid (D164): after it.
       '@mermaid-chart/bundler-plugin',
-      // Not a dependency of mermaid until its manifest lands (#385).
-      '@mermaid-chart/diagram-gantt',
       '@mermaid-chart/language-service',
       '@mermaid-chart/language-server',
       '@mermaid-chart/language-service-codemirror',

@@ -39,5 +39,17 @@
   },
   "devDependencies": {
     "@mermaid-js/core": "workspace:^"
+  },
+  "mermaid": {
+    "plugin": "diagram",
+    "id": "gantt",
+    "types": [
+      "gantt"
+    ],
+    "formats": [
+      "svg"
+    ],
+    "export": "gantt",
+    "language": "./dist/language.js"
   }
 }

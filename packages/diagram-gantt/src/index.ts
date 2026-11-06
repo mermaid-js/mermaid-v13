@@ -1,7 +1,7 @@
 /**
- * `@mermaid-js/diagram-gantt`: the gantt diagram plugin (spec #293). The tickets fill it in:
- * dates and axis (#376), lexer (#377), parser and model (#378), schedule and layout (#379),
- * SVG renderer (#381), language facet (#382) and the manifest (#385).
+ * `@mermaid-js/diagram-gantt`: the gantt diagram plugin (spec #293): the plugin export
+ * (`gantt`), the lexer, parser, schedule, layout and SVG renderer entries, and the model and AST
+ * types. The package's `mermaid` manifest registers it, with `./language` as the language facet.
  */
 import type { DiagramPlugin } from '@mermaid-js/core';
 import type { GanttLayout } from './layout/index.ts';
