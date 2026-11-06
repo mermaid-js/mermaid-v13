@@ -666,12 +666,13 @@ npm install @mermaid-js/plugin-hand-drawn
 - **What is sketched (D301):** flowchart (node shapes, their inner lines, subgraphs, the
   collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state
   (states, composites, notes, start and end, choice, fork and join, region dividers,
-  transitions) and ER (entities, attribute rows, dividers, subgraphs, relationship lines).
-  Mindmap will be sketched once it is ported. Arrowheads, edge-label backgrounds and text are never
-  sketched, as in v12. Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges.
-  State composites are drawn at 0.7, where v12 used roughjs's default of 1. An outline with no
-  fill and no stroke (flowchart's `text` and brace hit boxes, state's region frame) stays the
-  plain element.
+  transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines) and
+  mindmap (every node shape, the rule under a plain node, edges). v12 did not sketch mindmap's
+  plain node in the classic themes; v13 does (D308). Arrowheads, edge-label backgrounds and text
+  are never sketched, as in v12. Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for
+  edges. State composites are drawn at 0.7, where v12 used roughjs's default of 1. An outline
+  with no fill and no stroke (flowchart's `text` and brace hit boxes, state's region frame) stays
+  the plain element.
 - **Not sketched:** sequence draws exactly as without the plugin, with no warning, as in v12
   (D305). Gantt, pie, timeline, journey, quadrant and gitGraph will do the same once they are
   ported. Types v12 sketched that v13 has not ported yet (requirement, block, kanban, swimlanes,
@@ -683,8 +684,9 @@ npm install @mermaid-js/plugin-hand-drawn
   8.9 KB of it roughjs. `mermaid` and core are the same bytes with or without it (R-PLUG-8).
 - **Output size.** A sketched SVG is much larger than the plain one: hachure fills at v12's
   `hachureGap` of 1.5 draw a stroke every 1.5 units, so the SVG grows roughly 5–25× (about 14×
-  for a 40-node flowchart), most for large filled shapes. A large diagram can reach the `maxOutputLength` limit (4,000,000
-  characters) and fail with a `LIMIT` error. The integrator can raise it with
+  for a 40-node flowchart; 5–14×, about 10× typically, for mindmaps), most for large filled
+  shapes. A large diagram can reach the `maxOutputLength` limit (4,000,000 characters) and fail
+  with a `LIMIT` error. The integrator can raise it with
   `initialize({ limits: { maxOutputLength: 20_000_000 } })` or a per-call `config.limits`
   ([Limits](#limits)); diagram text cannot.
 
@@ -1373,8 +1375,10 @@ Legend entries carry `data-id="a:<name>"` only.
   unless one of them is set). A `padding` below 0, a `maxNodeWidth` of 0 or less or a value that
   is not a number lays out with the default and warns `MINDMAP_CONFIG_IGNORED`; numeric strings
   (`"20"`) are read as numbers, as in v12. `useWidth` and `layoutAlgorithm` are ignored (v12 never
-  read them), and `look` is ignored as everywhere (D153). `mindmap.layout` picks the engine for
-  mindmaps and wins over the top-level `layout`, with the same names and fallbacks.
+  read them), and `look` is ignored as everywhere (D153), except that `look: handDrawn` sketches
+  the mindmap when `@mermaid-js/plugin-hand-drawn` is installed
+  ([Hand-drawn look](#hand-drawn-look)). `mindmap.layout` picks the engine for mindmaps and wins
+  over the top-level `layout`, with the same names and fallbacks.
 - **Labels** are SVG text, measured in the theme's font, with every label markdown as in v12
   (bold, italic, `<br>` line breaks), instead of HTML in `<foreignObject>`
   ([Mindmap SVG structure](#mindmap-svg-structure)).
