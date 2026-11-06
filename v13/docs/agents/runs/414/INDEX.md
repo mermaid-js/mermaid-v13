@@ -9,7 +9,7 @@ Integration branch `feature/414_theme-t0`, cut from `mermaid-v13` at `dd4b9d19f`
 | T1a pie, quadrant, journey, timeline | #440 | `feature/440_theme-t1` | done |
 | T1b gitGraph, gantt, mindmap | #440 | `feature/440_theme-t1b` | done |
 | T2 sequence, class | #441 | | |
-| T3 state, ER | #442 | | |
+| T3 state, ER | #442 | `feature/442_theme-t3` | done |
 | T4 flowchart | #443 | | |
 | T5 docs, closure scan, final core size | #444 | | |
 
@@ -27,5 +27,8 @@ Files: `CONTRACT.md` (the T0a API the ports use), `IMPLEMENTER.md` (ticket brief
 | T2 | 92,359 | −260 against T0b (all 26 rows, with `inline()` and `inline(v, b)`); CDN 92,959 → 92,711 |
 | T1a | 91,402 | −866 against `13efc0b61` re-measured (92,268); CDN 92,623 → 91,759 |
 | T1a + T2 | 91,490 | T1a's 91,402 plus T2's last step (+88, `inline(v, b)` and two inputs); CDN 91,837 |
+| T3 | 91,330 | −160 against T1a + T2 re-measured (91,490; 8 rows, 4 inputs); CDN 91,839 → 91,682 |
 | Wave 2 merged (`488a4bf5e`) | 92,782 | gantt, gitGraph and mindmap rows still in core; CDN 93,234 |
-| T1b | 92,012 | −770 (gantt 18, gitGraph 24, mindmap 3 rows out; five inputs in); CDN 93,234 → 92,453 |
+| T3 + wave 2 | 92,643 | −139 against the integration branch at `b2a76631e` (wave 2 in, 92,782); CDN 93,235 → 93,115 |
+| T1b | 92,012 | −770 against wave 2 merged (gantt 18, gitGraph 24, mindmap 3 rows out; five inputs in); CDN 93,234 → 92,453 |
+| T1b + T3 | 91,887 | −756 against T3 + wave 2 (92,643); CDN 93,115 → 92,311 |

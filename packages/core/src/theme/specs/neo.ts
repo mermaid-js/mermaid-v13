@@ -7,7 +7,7 @@
  * `packages/conformance/src/neo-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { BASE_SECONDARY, LABEL_SCALE, REDUX_RULES } from './palettes.ts';
+import { BASE_SECONDARY, LABEL_SCALE } from './palettes.ts';
 import { darkenedScale, gitLabelRules, hueSources } from './scales.ts';
 import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 import { NEO_GIT, NEO_GIT_DARK_MODE, REDUX_SERIES } from './redux.ts';
@@ -44,10 +44,7 @@ const neo: ThemeSpec = {
     // v12 theme-neo.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
-  // v12 neo derives these as theme-redux.js does: no ER row fill of its own, and the neo-look
-  // zero circle on the node fill.
   rules: {
-    ...REDUX_RULES,
     ...gitLabelRules(`invert(${BASE_SECONDARY})`, '#b3b3b3', BASE_SECONDARY),
   },
   values: {
@@ -66,7 +63,6 @@ const neo: ThemeSpec = {
     softBorder: '#b3b3b3',
     errorBkgColor: '#ffffff',
     errorTextColor: '#000000',
-    altBackground: '#f0f0f0', // v12 (#192, D126)
     // v12 theme-neo.js (D182).
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',

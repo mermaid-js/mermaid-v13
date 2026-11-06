@@ -4,14 +4,7 @@
  * subgraph is coloured on its border only and keeps its contrast in dark mode.
  */
 import type { ThemeSpec } from '../spec.ts';
-import {
-  INVERTED_SCALE,
-  paletteSlots,
-  REDUX_RULES,
-  series,
-  TAILWIND_300,
-  TAILWIND_400,
-} from './palettes.ts';
+import { INVERTED_SCALE, paletteSlots, series, TAILWIND_300, TAILWIND_400 } from './palettes.ts';
 import { gitLabelRules } from './scales.ts';
 import {
   REDUX_DARK_BASE,
@@ -28,12 +21,12 @@ const theme: ThemeSpec = {
   base: REDUX_DARK_BASE,
   tokens: REDUX_DARK_TOKENS,
   rules: {
-    ...REDUX_RULES,
     ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
   },
   values: {
     ...REDUX_DARK_VALUES,
-    erEdgeLabelBackground: '#16141f',
+    // v12 draws ER edge labels on a plain fill here.
+    linkLabelBkg: '#16141f',
     // v12 draws labels on its series colours in the light ink here.
     seriesTextColor: '#28253d',
   },

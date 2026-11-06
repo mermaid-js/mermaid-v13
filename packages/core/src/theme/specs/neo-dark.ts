@@ -9,7 +9,7 @@
  * `packages/conformance/src/neo-dark-theme.spec.ts` checks every one against v12.
  */
 import type { ThemeSpec } from '../spec.ts';
-import { LABEL_SCALE, REDUX_RULES } from './palettes.ts';
+import { LABEL_SCALE } from './palettes.ts';
 import { DARK_HUE_SOURCES, darkenedScale, gitLabelRules, gitPalettes } from './scales.ts';
 import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 import { REDUX_DARK_SERIES } from './redux-dark-values.ts';
@@ -52,10 +52,7 @@ const neoDark: ThemeSpec = {
     // v12 theme-neo-dark.js: outlines take the blue-to-red gradient (D182).
     useGradient: true,
   },
-  // As `neo`: v12 neo-dark has no ER row fill of its own, and the neo-look zero circle takes
-  // the node fill.
   rules: {
-    ...REDUX_RULES,
     ...gitLabelRules('invert(lightenHsl(#1f2020, 16%))', '#cccccc'),
   },
   values: {
@@ -76,9 +73,6 @@ const neoDark: ThemeSpec = {
     mutedBorder: '#2e3030',
     errorBkgColor: '#201f1f',
     errorTextColor: '#dfe0e0',
-    // v12 kept the light theme's #f0f0f0, on which the #cccccc lines of a nested composite all
-    // but vanished (D189).
-    altBackground: '#404040',
     // v12 theme-neo-dark.js (D182).
     gradientStart: '#0042eb',
     gradientStop: '#eb0042',

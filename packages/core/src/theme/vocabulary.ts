@@ -70,8 +70,6 @@ export const ARROWHEAD_VARIABLES = [
   'crossArrowheadSize',
   'crossArrowheadGap',
   'crossArrowheadStrokeWidth',
-  // ER crow's-foot ends: where the zero-or-more circle sits, out from the outline.
-  'erZeroOrMoreCircleOffset',
 ] as const;
 
 export type ArrowheadVariable = (typeof ARROWHEAD_VARIABLES)[number];
@@ -218,7 +216,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core', 'quadrant', 'gitgraph', 'gantt']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core', 'gantt']),
-  background: def('bg', 'color', ['core']),
+  background: def('bg', 'color', ['core', 'state']),
   primaryTextColor: def('pt', 'color', ['core', 'class', 'quadrant']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'gitgraph']),
   // Pie draws in the font family but sizes its text by its own variables.
@@ -278,11 +276,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   noteBorderColor: def('no', 'color', ['core', 'sequence', 'class', 'state']),
   errorBkgColor: def('eb', 'color', ['core']),
   errorTextColor: def('et', 'color', ['core']),
-  // composite states (#192, D120, D126): the body, the title strip and the alternate
-  // (nested) body.
-  compositeBackground: def('cbg', 'color', ['state']),
-  compositeTitleBackground: def('ctb', 'color', ['state']),
-  altBackground: def('alb', 'color', ['state']),
+
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',
@@ -310,7 +304,6 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   crossArrowheadSize: def('xs', 'length', ['flowchart']),
   crossArrowheadGap: def('xg', 'length', ['flowchart']),
   crossArrowheadStrokeWidth: def('xw', 'length', ['flowchart']),
-  erZeroOrMoreCircleOffset: def('ezc', 'length', ['er']),
   // Node padding, read as numbers at render time (D152), so their aliases are never written.
   nodePaddingX: def('npx', 'padding', ['flowchart', 'mindmap']),
   nodePaddingY: def('npy', 'padding', ['flowchart', 'mindmap']),
@@ -331,12 +324,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   leanPaddingY: def('lny', 'padding', ['flowchart']),
   oddPaddingX: def('odx', 'padding', ['flowchart']),
   oddPaddingY: def('ody', 'padding', ['flowchart']),
-  // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
-  // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
-  rowOdd: def('ro', 'color', ['er']),
-  rowEven: def('re', 'color', ['er']),
-  erEdgeLabelBackground: def('eel', 'color', ['er']),
-  erMarkerFill: def('emf', 'color', ['er']),
+
   // effects: a CSS `filter` (`none` or `drop-shadow(…)`, checked by `checkFilter`). A theme
   // that sets no value has no shadow.
   dropShadow: def('ds', 'filter', [
@@ -377,6 +365,13 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   calloutBkg: def('clk', 'color', ['gitgraph']),
   calloutTextColor: def('clt', 'color', ['gitgraph']),
   calloutBorder: def('clb', 'color', ['gitgraph']),
+  // a diagram reads with `inline()`: the fills of a table's odd and even rows, the fill behind a
+  // label on a link drawn on a plain surface rather than the edge label chip, and the body of a
+  // region nested in another of its kind. v13 names; v12 has none.
+  rowBkg: def('rbk', 'color', ['er']),
+  rowAltBkg: def('rab', 'color', ['er']),
+  linkLabelBkg: def('llb', 'color', ['er']),
+  nestedBkg: def('nbk', 'color', ['state']),
   // The neo gradient (D182). `useGradient` is read literally, so its alias is never written;
   // the stops are written on the gradient as `var(--mermaid-<name>,<computed value>)`.
   useGradient: def('ug', 'flag', ['core']),

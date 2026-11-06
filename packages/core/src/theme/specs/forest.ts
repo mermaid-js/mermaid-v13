@@ -47,11 +47,11 @@ const theme: ThemeSpec = {
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).
   rules: {
-    rowEven: 'lightenHsl(mainBkg, 20%)',
+    rowAltBkg: 'lightenHsl(mainBkg, 20%)',
     ...gitLabelRules('#32004d', '#abb594'),
   },
   values: {
-    altBackground: '#f0f0f0', // v12 (#192)
+    nestedBkg: '#f0f0f0', // v12 `altBackground` (#192)
     // v12 theme-forest.js: the participant border is darken(mainBkg, 20), the fragment tab's
     // a dark green
     softBorder: '#a6cf47',

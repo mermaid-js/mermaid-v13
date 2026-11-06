@@ -3,7 +3,7 @@
  * are what makes every diagram type in redux look like one family (R-THEME-11).
  */
 import type { ThemeRuleTable, ThemeSpec } from '../spec.ts';
-import { BASE_SECONDARY, LABEL_SCALE, paletteSlots, REDUX_RULES, series } from './palettes.ts';
+import { BASE_SECONDARY, LABEL_SCALE, paletteSlots, series } from './palettes.ts';
 import { NEO_ARROWHEADS, REDUX_PADDING } from './geometry.ts';
 
 /** `theme-redux.js`: `mainBkg` darkened by `step` in every slot, and its inverse. */
@@ -90,7 +90,7 @@ const redux: ThemeSpec = {
     ...REDUX_PADDING,
     useGradient: false,
   },
-  rules: { ...REDUX_RULES, ...REDUX_GIT_LABELS },
+  rules: REDUX_GIT_LABELS,
   values: {
     // v12's hard drop shadow (insertLookDefs: dx/dy 4, no blur, 6% black) as a CSS filter.
     dropShadow: 'drop-shadow(4px 4px 0 rgb(0 0 0 / 0.06))',
@@ -98,9 +98,6 @@ const redux: ThemeSpec = {
     mainBkg: '#ffffff',
     clusterBkg: '#f9f9fb',
     clusterBorder: '#bdbccc',
-    // v12 pins both composite-state backgrounds (#192).
-    compositeTitleBackground: '#f9f9fb',
-    altBackground: '#f9f9fb',
     noteBkgColor: '#fff5ad',
     noteTextColor: '#28253d',
     noteBorderColor: '#facc15',

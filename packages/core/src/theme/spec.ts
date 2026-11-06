@@ -64,15 +64,7 @@ export const LIGHT_RULES: ThemeRuleTable = {
   noteBorderColor: 'mix(noteBkgColor, black, 30%)',
   errorBkgColor: '#552222',
   errorTextColor: 'contrast(background, #552222, #ffdddd)',
-  // ER rows, exactly v12 theme-base's khroma lighten (HSL lightness) of mainBkg (D117).
-  rowOdd: 'lightenHsl(mainBkg, 75%)',
-  rowEven: 'lightenHsl(mainBkg, 5%)',
-  erEdgeLabelBackground: 'edgeLabelBackground',
-  erMarkerFill: '#ffffff',
-  // v12 theme-base.js; the other classic themes pin altBackground (#192, D126).
-  compositeBackground: 'background',
-  compositeTitleBackground: 'mainBkg',
-  altBackground: 'tertiaryColor',
+
   // The neo gradient's stops, as v12 theme-base derives them (D182).
   gradientStart: 'primaryBorderColor',
   gradientStop: 'secondaryBorderColor',
@@ -104,6 +96,14 @@ export const LIGHT_RULES: ThemeRuleTable = {
   calloutBkg: 'primaryColor',
   calloutTextColor: 'primaryTextColor',
   calloutBorder: 'primaryBorderColor',
+  // Shared inputs (D332): a table's alternating row fills, exactly v12 theme-base's khroma
+  // lighten (HSL lightness) of mainBkg (D117); the fill behind a label on a link where a diagram
+  // draws it on a plain surface, the edge label fill unless a theme sets it; and the body of a
+  // region nested in another of its kind, v12 theme-base's tertiaryColor.
+  rowBkg: 'lightenHsl(mainBkg, 75%)',
+  rowAltBkg: 'lightenHsl(mainBkg, 5%)',
+  linkLabelBkg: 'edgeLabelBackground',
+  nestedBkg: 'tertiaryColor',
 };
 
 /** Shared derivation for dark themes. */
@@ -118,6 +118,6 @@ export const DARK_RULES: ThemeRuleTable = {
   errorBkgColor: '#a44141',
   errorTextColor: 'contrast(background, #dddddd, #552222)',
   // v12 theme-dark: khroma lighten(mainBkg, 5) and darken(mainBkg, 10), exactly (D117).
-  rowOdd: 'lightenHsl(mainBkg, 5%)',
-  rowEven: 'darkenHsl(mainBkg, 10%)',
+  rowBkg: 'lightenHsl(mainBkg, 5%)',
+  rowAltBkg: 'darkenHsl(mainBkg, 10%)',
 };
