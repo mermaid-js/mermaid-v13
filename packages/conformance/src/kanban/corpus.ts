@@ -42,6 +42,29 @@ export const multiLineData = (src: string): string =>
     )
   );
 
+/** A directive v12 removes, wherever in a line it is. */
+const DIRECTIVE = '%%{init: {}}%%';
+
+/**
+ * A directive through the middle of every item line after the `kanban` header line (pitfall
+ * 3): at the middle of the line's text after its indent, moved off a surrogate pair. Lines
+ * with fewer than two characters of text, `%%` lines and blank lines are left as they are.
+ */
+export const midLineDirective = (src: string): string =>
+  body(src, (b) => {
+    const lines = b.split('\n');
+    const header = lines.findIndex((l) => /^\s*kanban/i.test(l));
+    return lines
+      .map((line, k) => {
+        const text = line.trimStart();
+        if (k <= header || text.length < 2 || text.startsWith('%%')) return line;
+        let at = line.length - text.length + Math.floor(text.length / 2);
+        if (/[\udc00-\udfff]/.test(line.charAt(at))) at++;
+        return line.slice(0, at) + DIRECTIVE + line.slice(at);
+      })
+      .join('\n');
+  });
+
 /** The cases (`corpus/kanban-cases.json`): each corpus gap, quirk and rejection v12 has. */
 export function kanbanCases(): CorpusItem[] {
   return JSON.parse(
@@ -65,10 +88,11 @@ export async function kanbanCorpus(): Promise<CorpusItem[]> {
 export const VARIANTS: readonly [suffix: string, make: (src: string) => string][] = [
   ['commented', commented],
   ['CR cut', (src: string): string => crCut(src, '%% c')],
-  ['CR cut by a directive', (src: string): string => crCut(src, '%%{init: {}}%%')],
+  ['CR cut by a directive', (src: string): string => crCut(src, DIRECTIVE)],
   ['CRLF', crlf],
   ['tabs', tabs],
   ['multi-line shape data', multiLineData],
+  ['mid-line directive', midLineDirective],
 ];
 
 /**

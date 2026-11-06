@@ -20,7 +20,7 @@
  *
  * Shape data: `@{` is tried first in INITIAL and returns a `SHAPE_DATA` whose image its action
  * cleared; inside, `[^}^"]+` (line breaks included) and each `"` are `SHAPE_DATA` tokens, and
- * a quoted run's text is one more (its action turns `\n\s*` into `<br/>`: see `kanbanTokens`).
+ * a quoted run's text is one more. `Lexed.text` applies both actions' rewrites of the image.
  *
  * jison throws on a `{` or `}` outside a shape, an `@` that starts no `@{`, a `^` in shape
  * data, a lone backtick or quote in a markdown string and a U+2028 or U+2029 after `:::`; each
@@ -33,6 +33,7 @@ import {
   BACKTICK,
   CARET,
   COLON,
+  cook,
   CR,
   DASH,
   DQUOTE,
@@ -74,12 +75,36 @@ const DOT_ENDS = ['\n', '\u2028', '\u2029'] as const;
 /** ASCII lower case of `c`, for case-insensitive literals. */
 const lower = (c: number) => (c >= 65 && c <= 90 ? c + 32 : c);
 
-/**
- * Lex the kanban body `src[from…]`. `view` comes from {@link sourceView}. The stream ends in
- * `Kind.EOF`; trivia (comments, directives, a dropped `;`) is in it.
- */
-export function lex(src: string, from: number, view: SourceView): TokenStream {
-  return new KanbanLexer(src, from, view).run();
+/** A lex: the token stream, and the text of each token as v12's parser read it. */
+export interface Lexed {
+  /** Ends in `Kind.EOF`; trivia (comments, directives, a dropped `;`) is in it. */
+  readonly tokens: TokenStream;
+  /**
+   * The text of token `j`: its source range with entities, CRLF and removed spans applied
+   * ({@link cook}), and the rewrites of `kanban.jison`'s actions. `@{` reads `''`. In a quoted
+   * run of shape data each `\n\s*` reads `<br/>`; a run left open at the end of the text took
+   * the line break v12 appended, so it reads one more. Read token text only through this.
+   */
+  text(j: number): string;
+}
+
+/** Lex the kanban body `src[from…]`. `view` comes from {@link sourceView}. */
+export function lex(src: string, from: number, view: SourceView): Lexed {
+  const lexer = new KanbanLexer(src, from, view);
+  const tokens = lexer.run();
+  const open = lexer.openRun;
+  return {
+    tokens,
+    text(j) {
+      const kind = tokens.kind[j];
+      if (kind === T.ShapeDataStart) return '';
+      const start = tokens.start[j] ?? 0;
+      const text = cook(src, start, tokens.end[j] ?? 0, view);
+      if (kind !== T.ShapeDataStr) return text;
+      // `<shapeDataStr>[^\"]+`'s action.
+      return (start === open ? text + '\n' : text).replace(/\n\s*/g, '<br/>');
+    },
+  };
 }
 
 /**
@@ -109,6 +134,8 @@ class KanbanLexer {
   private p: number;
   /** The next line end a regex `.` stops at, cached for {@link dotEnd} (-2: not looked up). */
   private readonly nextEnd = [-2, -2, -2];
+  /** The source start of a quoted run of shape data that ran to the end of the text, or -1. */
+  openRun = -1;
 
   constructor(
     private readonly src: string,
@@ -461,6 +488,7 @@ class KanbanLexer {
       return;
     }
     const e = this.text.indexOf('"', this.p);
+    if (e === -1) this.openRun = this.source(this.p);
     this.emit(T.ShapeDataStr, this.p, e === -1 ? this.n : e);
   }
 

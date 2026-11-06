@@ -12,7 +12,7 @@ const stream = (src: string) => {
     pre.bodyStart,
     pre.directives.map((d) => d.range)
   );
-  const s = lex(src, pre.bodyStart, view);
+  const s = lex(src, pre.bodyStart, view).tokens;
   return Array.from({ length: s.length }, (_, j) => ({
     kind: s.kind[j] ?? Kind.EOF,
     start: s.start[j] ?? 0,
@@ -158,6 +158,49 @@ describe('kanban.jison quirks', () => {
     ]);
   });
 
+  it('makes `accTitle: x`, `accDescr: x` and `title x` item ids: kanban has no such statements', () => {
+    expect(jison('kanban\n  accTitle: x\n  accDescr: x\n  title x')).toEqual([
+      'KANBAN:kanban',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:accTitle: x',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:accDescr: x',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:title x',
+      'NL:',
+      'EOF:',
+    ]);
+  });
+
+  it('reads entity codes, which v12 encoded before lexing, as entities in the token written', () => {
+    // v12's images hold its placeholders, which read as HTML entities (`#59;` as `&#59;`);
+    // their `#` and `;` neither split nor end a token.
+    const src = 'kanban\n  a[#59; #quot;b#quot;]\n    c#amp;d@{ label: "#lt;e" }';
+    expect(jison(src)).toEqual([
+      'KANBAN:kanban',
+      'NL:\n',
+      'SPACELIST:  ',
+      'NODE_ID:a',
+      'NODE_DSTART:[',
+      'NODE_DESCR:&#59; &quot;b&quot;',
+      'NODE_DEND:]',
+      'NL:\n',
+      'SPACELIST:    ',
+      'NODE_ID:c&amp;d',
+      'SHAPE_DATA:',
+      'SHAPE_DATA: label: ',
+      'SHAPE_DATA:"',
+      'SHAPE_DATA:&lt;e',
+      'SHAPE_DATA:"',
+      'SHAPE_DATA: ',
+      'NL:',
+      'EOF:',
+    ]);
+  });
+
   it('lexes CRLF as LF', () => {
     expect(jison('kanban\r\n  a\r\n    b')).toEqual(jison('kanban\n  a\n    b'));
   });
@@ -176,6 +219,10 @@ describe('tokens across removed spans', () => {
     expect(slices(src, T.ShapeData)).toEqual([['\n      t: X\n    ', '\n%% c\n      t: X\n    ']]);
     const quoted = 'kanban\n  a\n    b@{ label: "x\n%% c\n  y" }';
     expect(slices(quoted, T.ShapeDataStr)).toEqual([['x<br/>y', 'x\n%% c\n  y']]);
+  });
+
+  it('ends a quoted run left open before a removed last comment line in <br/>', () => {
+    expect(jison('kanban\n  a\n    b@{ x: "abc\n%% c').at(-1)).toBe('SHAPE_DATA:abc<br/>');
   });
 
   it('keeps an id and an icon split by a directive one token each', () => {

@@ -9,9 +9,9 @@ import type { JisonType } from './oracle.ts';
  * v12 lexes every e2e fixture of the type to the end, and every token decodes to a terminal
  * name.
  */
-const LATER: JisonType[] = ['gantt', 'mindmap', 'timeline', 'journey', 'quadrant', 'kanban'];
+const M4_M5: JisonType[] = ['gantt', 'mindmap', 'timeline', 'journey', 'quadrant', 'kanban'];
 
-describe.each(LATER)('%s through the shared jison oracle', (type) => {
+describe.each(M4_M5)('%s through the shared jison oracle', (type) => {
   it('lexes the e2e fixtures', async () => {
     const oracle = await loadJisonLexerOracle(type);
     const problems: string[] = [];

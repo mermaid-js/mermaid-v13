@@ -6,8 +6,8 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Exploration: the nested `10-full-example` has 6 columns, not 15; the 15-column case (D374's black columns) exists only flat, so the flat `10-full-example` is one of the two kept "columns only" variants.
 - Exploration: v12 12.2.0 is commit `1fb786986` in this repo (the `mermaid@12.2.0` tag is only in the OSS clone); the kanban files equal `fa796a943`'s. The spec's Pele path does not exist locally (read at 3a2f075 via `gh api repos/obsidianmd/pele`).
 - Exploration (oracle): an item whose text starts with the word `kanban`, any case, is rejected (`Kanban board` lexes `KANBAN`). Not in the spec's quirk list; follow the oracle.
-- **Choice:** `kanbanTokens` text applies `kanban.jison`'s two action rewrites (`@{` reads `''`; `\n\s*` in a quoted run of shape data reads `<br/>`, and a run left open at the end gains one for v12's appended `\n`), so the gate has no image exclusion beyond the no-token kinds.
-- **Choice:** every edge case is in `corpus/kanban-cases.json` (repo rule), not in TS arrays as mindmap's `EDGE_CASES`; the generated variants add CRLF, tabs and multi-line `@{` to mindmap's three.
+- **Choice:** the lexer's `Lexed.text(j)` (and so `kanbanTokens`) applies `kanban.jison`'s two action rewrites (`@{` reads `''`; `\n\s*` in a quoted run of shape data reads `<br/>`, and a run left open at the end gains one for v12's appended `\n`), so the gate has no image exclusion beyond the no-token kinds.
+- **Choice:** every edge case is in `corpus/kanban-cases.json` (repo rule), not in TS arrays as mindmap's `EDGE_CASES`; the generated variants add CRLF, tabs, multi-line `@{` and a mid-line directive in every item line to mindmap's three.
 - **Choice:** fixtures beyond the spec's list: the two 12.2.0 `packages/examples` boards, `theme-dark`/`theme-forest`, `section-width`, `priority-other-values`, `ticket-links`. New fixtures go in nightly-check; the two columns-only ones in pr-check beside the originals.
 - Pele cross-check not done (not on this machine); the oracle decided every case.
 

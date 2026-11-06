@@ -1,28 +1,20 @@
 /**
  * The kanban parser's public surface (so far): the lexer gated against v12's jison lexer.
  */
-import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
+import { Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
-import { T } from './tokens.ts';
 
 export { JISON_NAMES, T as KanbanTokenKind } from './tokens.ts';
 
 export interface KanbanToken {
   /** A `KanbanTokenKind` or a shared `Kind`. */
   kind: number;
-  /**
-   * The token's text as v12's parser read it: entities, CRLF and removed spans applied, and
-   * the two rewrites of `kanban.jison`'s actions (`@{` reads as empty; in a quoted run of
-   * shape data each `\n\s*` reads as `<br/>`).
-   */
+  /** The token's text as v12's parser read it (`Lexed.text` in `./lexer.ts`). */
   text: string;
   range: Range;
 }
-
-/** `kanban.jison`'s `<shapeDataStr>[^\"]+` action. */
-const BREAK = /\n\s*/g;
 
 /**
  * The significant kanban tokens of `src` (trivia left out), for editors and for the
@@ -35,10 +27,11 @@ export function kanbanTokens(src: string): KanbanToken[] {
     pre.bodyStart,
     pre.directives.map((d) => d.range)
   );
-  const stream = lex(src, pre.bodyStart, view);
+  const lexed = lex(src, pre.bodyStart, view);
+  const { tokens } = lexed;
   const out: KanbanToken[] = [];
-  for (let j = 0; j < stream.length; j++) {
-    const kind = stream.kind[j] ?? Kind.EOF;
+  for (let j = 0; j < tokens.length; j++) {
+    const kind = tokens.kind[j] ?? Kind.EOF;
     if (
       kind === Kind.Comment ||
       kind === Kind.Directive ||
@@ -46,19 +39,8 @@ export function kanbanTokens(src: string): KanbanToken[] {
       kind === Kind.EOF
     )
       continue;
-    const start = stream.start[j] ?? 0;
-    const end = stream.end[j] ?? 0;
-    out.push({ kind, text: cook(src, start, end, view), range: { start, end } });
-  }
-  for (let j = 0; j < out.length; j++) {
-    const t = out[j];
-    if (t?.kind === T.ShapeDataStart) t.text = '';
-    else if (t?.kind === T.ShapeDataStr) {
-      // A quoted run with no closing quote after it ran to the end of the text, through the
-      // line break v12 appended, which the action turned into `<br/>` too.
-      const closed = out[j + 1]?.kind === T.ShapeDataQuote;
-      t.text = (closed ? t.text : t.text + '\n').replace(BREAK, '<br/>');
-    }
+    const range = { start: tokens.start[j] ?? 0, end: tokens.end[j] ?? 0 };
+    out.push({ kind, text: lexed.text(j), range });
   }
   return out;
 }

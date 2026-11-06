@@ -19,9 +19,12 @@ import { kanbanGateCorpus, VARIANTS } from './corpus.ts';
  *
  * Every source is also lexed in each generated variant (`VARIANTS`): with comment lines added
  * (and one through the middle of a short body), with every line break a CR followed by a
- * removed comment or directive line, with CRLF line breaks, with tab indents, and with each
- * one-line `@{…}` written over several lines. The cases file adds line-separator, CR,
- * mid-line-directive and shape-data cases.
+ * removed comment or directive line, with CRLF line breaks, with tab indents, with each
+ * one-line `@{…}` written over several lines, and with a directive through the middle of every
+ * item line (pitfall 3's mid-line cut: `commented` cuts mid-line only in bodies of two lines or
+ * fewer, which v12 does not detect). v12 lexes every mid-line variant; it accepts 110 of the
+ * 114 it accepts unchanged. The cases file adds line-separator, CR, mid-line-directive and
+ * shape-data cases.
  *
  * Exclusions (v13 kinds with no jison name, left out of the v13 stream):
  * - `:::`, `::icon(`, the `)` closing an icon, the quote (or quote and backtick) pairs around
