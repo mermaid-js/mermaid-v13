@@ -13,11 +13,22 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 - **Theme table in T4.** T0a landed before T4 started, so T4 (which creates the plugin) declares the 15-variable `DiagramThemeTable` inline on it, per the spec's "v13 entries" and CONTRACT.md; T5 keeps the oracle specs, `DIFFERENCES`, MIGRATION.md theme rows and baselines.
 
-## #461 T1 lexer
+## #461 T1 lexer (merged)
+
+- Review fixes landed (`bb4197bc6`): `NOT_DETECTED` (21 sources, reasons, exact-set assertion), raw integration-spec strings gated via `lexText`/`cynefinVerbatimTokens`, `lexCynefin(src)` stream helper for T2, harvest drift spec.
+
+- Review (standards + spec) sent back: list the 21 undetected sources in the parity spec and fail on any new drop; gate the 16 integration-spec strings raw (whole-line `%%` reaches SINGLE_LINE_COMMENT); one stream helper for T2; a harvest drift check if cheap.
+- Accepted deviations (for the maintainer): the lexer repeats pie's code for the `common.langium` terminals (sharing it is a core change); Pele's 12 oracle seeds are not harvested (not on this machine); the harvest pins `fa796a943` (identical to `mermaid@12.2.0` for these files); the line-separator cases are hand-written JSON cases, as in pie and quadrant; the changeset and `publish.spec.ts` entry for the new package are in T1 (they fix specs the skeleton turned red).
+- [ ] `tools/gen-config/src/theme-used-by.spec.ts` is red since the skeleton (every diagram package must read a theme variable). Owner: orchestrator, at the T3 merge (add `cynefin` to the package list and to the `usedBy` of the shared variables it reads). Blocks pushing until then (the pre-push hook runs `pnpm check`).
 
 ## #465 T2 parser
 
 ## #467 T3 layout
+
+- Review sent back: NaN/Infinity at huge finite config (`width: 1e200`, 1e308): `Math.hypot`, and a canvas that is not finite counts as invalid (D366 fallback + warning); `fixtures.ts` ships in dist; unused `CANVAS.quarter`; the subtitle's italic style recorded in the layout.
+- Accepted deviations (for the maintainer): one `CYNEFIN_CONFIG_INVALID` per invalid key (D366 "Each gets one"); a non-number config value (string, null, object) counts as invalid; a NaN `boundaryAmplitude` takes the default 8, ±Infinity clamps; extra lines of a title or transition label grow upward (last line at v12's anchor); config defaults in `metrics.ts` (`CYNEFIN_DEFAULTS`) until T5 generates them; `markdownString` copied from pie (a core helper would be a core change); `cynefin` added to `fontFamily`'s `usedBy`.
+- [ ] **#465:** enable `conformance/src/cynefin/layout-corpus.spec.ts` (skipped until the package exports `parseCynefin(source) → { model }`; change that one lookup if T2 names it differently).
+- [ ] **#468:** replace `src/theme/stand-in.ts` (v12's five lengths, theme ignored) with the T0a table's variables.
 
 ## #468 T4 renderer
 
