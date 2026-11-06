@@ -17,6 +17,12 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ### #377 T1 lexer
 - Traps beyond the ticket's list: the `date` rule (`\d{4}-\d\d-\d\d\b`) makes task text that starts with an ISO date a syntax error; `click ` / `call ` at the start of a task text enter their start conditions; `gantt`, `topAxis`, `inclusiveEndDates`, `weekday …`/`weekend …` are keywords with jison's implicit `\b`; task text keeps trailing spaces. The gate decides; keep them.
 - The shared oracle already has a `gantt` descriptor (`packages/conformance/src/jison/types.ts:116`).
+- **Done (#377):** every trap above is kept and gated (edge cases in `conformance/src/gantt/corpus.ts`). Gate: 100% over 914 sources; no unmet criteria.
+- **Choice:** `ganttDb.spec.ts` never calls `parse`, so `harvest gantt` finds nothing in it and the shared descriptor is unchanged. Its DB calls are written as gantt text (`DB_SPEC_CASES`, one source per spec block) in the gate's corpus instead.
+- **Choice:** `%%{` with no word after it (no directive to v12) reaches jison's first rule, which begins an undeclared state: jison throws on the next token. v13 emits `OpenDirective`, then an `Error` token to the line end, and lexes on (T2 reports it).
+- **Choice:** an unclosed `%%{word` is left out of the gate: v12's directive regex removed more text after it than v13's preprocess does (the decided divergence `quadrant-cases/unclosed-directive`).
+- **Choice:** jison's last rule `.` (`INVALID`) is unreachable in gantt (`[^:\n]+`, `:` and `[\n]+` take every character), so there is no `Invalid` kind.
+- **Choice:** jison's `\b` is tested with ASCII word characters (JS `\b`), not parser-kit's Unicode `isWord`: `ganttä` lexes as `gantt` + `ä…` in v12. (Timeline's lexer uses `isWord` there; not changed here.)
 
 ### #379 T3 schedule and layout
 - v12's exclude-range walk never pushes a range still open at the end of the domain, so trailing excluded days get no rect. Follow v12 (P2) unless it breaks an invariant.
