@@ -28,6 +28,8 @@ export interface DrawHooks {
 
 // The root's viewBox is `0 0 W H` (DESIGN §7.2).
 const VIEW_BOX = /^<svg\b[^>]*?\sviewBox="(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+)"/;
+/** `VIEW_BOX` on the value alone, as the stream writer reports it (#276). */
+const VIEW_BOX_VALUE = /^(-?[\d.]+) (-?[\d.]+) ([\d.]+) ([\d.]+)$/;
 
 /** Layout, then the `postLayout` hooks with the profile's units (D86). */
 function laidOut<M, L>(
@@ -50,6 +52,8 @@ export function drawDiagram<M, L>(
   hooks?: DrawHooks
 ): Drawn {
   let svg: string;
+  // The root's viewBox as the stream writer wrote it ('' for none); unknown after postRender hooks.
+  let viewBox: string | undefined;
   try {
     const run = hooks?.run;
     // The AST is data for hooks only; the renderer draws the model (DESIGN §12.2).
@@ -72,6 +76,7 @@ export function drawDiagram<M, L>(
       const w = streamWriter(options);
       plugin.render(model, layout, ctx, w);
       svg = w.finish();
+      viewBox = w.rootViewBox ?? '';
     }
     // What extensions wrote is checked again, values as well as names (R-SEC-2).
     if (run?.editsTree || outline?.wrote) {
@@ -93,7 +98,7 @@ export function drawDiagram<M, L>(
     throw asLimitError(error) ?? error;
   }
   checkOutput(svg, ctx.limits);
-  const box = VIEW_BOX.exec(svg);
+  const box = viewBox === undefined ? VIEW_BOX.exec(svg) : VIEW_BOX_VALUE.exec(viewBox);
   return { svg, width: box ? Number(box[3]) : 0, height: box ? Number(box[4]) : 0 };
 }
 

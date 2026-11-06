@@ -126,4 +126,75 @@ describe('the parse cache', () => {
     await m.prepare('counted\n  a');
     expect(parses).toBe(1);
   });
+
+  // Strings of 16,384 characters and more all hash by their length in V8 (#276).
+  it('tells long sources of one length apart, and keeps each', async () => {
+    const sources: string[] = [];
+    const counted: DiagramPlugin = {
+      id: 'counted',
+      layoutKind: 'custom',
+      detector: (text) => /^\s*counted/.test(text),
+      parse: (text) => {
+        sources.push(text);
+        return { model: {}, diagnostics: [] } as never;
+      },
+      render: () => undefined as never,
+    };
+    const m = createMermaid();
+    m.initialize({ maxTextSize: 1_000_000 });
+    await m.registerExternalDiagrams([counted]);
+    const body = 'counted\n' + '%% padding\n'.repeat(2000);
+    const texts = ['%% run 1\n', '%% run 2\n', '%% run 3\n'].map((run) => body + run);
+    expect(texts[0]!.length).toBeGreaterThan(16_384);
+    for (const text of [...texts, ...texts]) await m.prepare(text);
+    expect(sources).toHaveLength(3);
+    expect(sources.map((s) => s.slice(-9))).toEqual(texts.map((t) => t.slice(-9)));
+  });
+
+  it('tells apart long sources of one length that differ anywhere', async () => {
+    const parsed: string[] = [];
+    const counted: DiagramPlugin = {
+      id: 'counted',
+      layoutKind: 'custom',
+      detector: (text) => /^\s*counted/.test(text),
+      parse: (text) => {
+        parsed.push(text);
+        return { model: { text }, diagnostics: [] } as never;
+      },
+      render: () => undefined as never,
+    };
+    const m = createMermaid();
+    m.initialize({ maxTextSize: 1_000_000 });
+    await m.registerExternalDiagrams([counted]);
+    const base = 'counted\n' + 'x'.repeat(20_000);
+    for (let i = 1000; i < 1300; i++) {
+      await m.prepare(base);
+      const other = base.slice(0, i) + 'y' + base.slice(i + 1);
+      const prepared = await m.prepare(other);
+      expect((prepared.parse.model as { text: string }).text === other, `at ${i}`).toBe(true);
+    }
+    // Two that share a key replace each other in the cache: a parse more, never a wrong answer.
+    expect(parsed.length).toBeGreaterThan(300);
+  });
+
+  it('parses a render once, drawing the analysis prepare() made', async () => {
+    let parses = 0;
+    const m = createMermaid();
+    const flow = await m.prepare(FLOW);
+    expect(flow.diagramType).toBe('flowchart-v2');
+    const counted: DiagramPlugin = {
+      id: 'counted',
+      layoutKind: 'custom',
+      detector: (text) => /^\s*counted/.test(text),
+      parse: () => {
+        parses++;
+        return { model: {}, diagnostics: [] } as never;
+      },
+      render: (_m, _l, _c, w) => w.leaf('svg', { viewBox: [0, 0, 3, 4] }),
+    };
+    await m.registerExternalDiagrams([counted]);
+    const out = await m.render('x', 'counted\n  a');
+    expect(parses).toBe(1);
+    expect([out.width, out.height]).toEqual([3, 4]);
+  });
 });

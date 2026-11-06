@@ -59,6 +59,35 @@ describe('createTheme: CSS variables (R-THEME-2, -4)', () => {
     ]);
   });
 
+  it('reports the dropped variables again on a second render with the same overrides (#276)', () => {
+    const themeVariables = { primaryColor: 'url(x)', lineColor: '#123456', cScale1: 'nope' };
+    const render = () => {
+      const warnings: ThemeWarning[] = [];
+      const t = createTheme(base, {
+        themeVariables: { ...themeVariables },
+        warn: (w) => warnings.push(w),
+      });
+      return {
+        warnings: warnings.map((w) => w.message),
+        line: t.color('lineColor'),
+        style: t.rootStyle(),
+      };
+    };
+    const first = render();
+    expect(first.warnings.length).toBeGreaterThan(0);
+    expect(render()).toEqual(first);
+  });
+
+  it('never reuses a theme built from other overrides (#276)', () => {
+    const color = (themeVariables: Record<string, unknown>) =>
+      createTheme(base, { themeVariables, cssVariables: false }).color('mainBkg');
+    expect(color({ primaryColor: '#111111' })).toBe('#111111');
+    expect(color({ primaryColor: '#222222' })).toBe('#222222');
+    expect(color({ primaryColor: '#111111', darkMode: true })).toBe('#111111');
+    expect(color({ primaryColor: ['#333333'] })).toBe('#fff4dd');
+    expect(color({ primaryColor: '#111111' })).toBe('#111111');
+  });
+
   it('accepts the colour functions on the allow-list, leaving them to CSS', () => {
     const t = createTheme(base, { themeVariables: { primaryColor: 'oklch(70% 0.1 200)' } });
     t.color('mainBkg');

@@ -158,3 +158,26 @@ describe('SvgWriter label', () => {
     expect(w.finish()).toBe('<text class="label" x="32" y="23" text-anchor="start">ab</text>');
   });
 });
+
+describe('SvgWriter: the root viewBox (#276)', () => {
+  it('reports the root <svg>’s viewBox as written, for the size of the drawing', () => {
+    const w = streamWriter();
+    w.open('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: [-4, 0.5, 120.256, 80] });
+    w.leaf('rect', { width: 1, height: 1 });
+    w.open('svg', { viewBox: [0, 0, 1, 1] });
+    w.close();
+    w.close();
+    expect(w.finish()).toContain(' viewBox="-4 0.5 120.26 80"');
+    expect(w.rootViewBox).toBe('-4 0.5 120.26 80');
+  });
+
+  it('reports none when the root is not an <svg> or has no viewBox', () => {
+    const g = streamWriter();
+    g.open('g', { viewBox: [0, 0, 1, 1] } as never);
+    g.close();
+    expect(g.rootViewBox).toBeUndefined();
+    const bare = streamWriter();
+    bare.leaf('svg', { xmlns: 'http://www.w3.org/2000/svg' });
+    expect(bare.rootViewBox).toBeUndefined();
+  });
+});

@@ -103,6 +103,14 @@ describe('render (R-API-1, R-COMPAT-5)', () => {
     const e = await rejection(render('x', '--- x\nflowchart TD\n  A'));
     expect(e.code).toBe('SYNTAX');
     expect(e.message).toContain('Diagrams beginning with --- are not valid');
+    expect((await rejection(render('x', '  \n  ---\nflowchart TD\n  A'))).code).toBe('SYNTAX');
+  });
+
+  it('reads "error" in any case, with white space around it, as the error diagram', () => {
+    for (const text of ['error', '  ERROR \n', '\tError'])
+      expect(detectType(text), text).toBe('error');
+    for (const text of ['errors', 'err or', 'error x'])
+      expect(() => detectType(text), text).toThrow(/No diagram type detected/);
   });
 
   it('maps the edge limit to LIMIT, and reads maxEdges from the integrator config only', async () => {

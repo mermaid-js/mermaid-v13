@@ -200,6 +200,11 @@ function checkSheetParent(top: string | undefined, depth: number): void {
 export interface StreamSvgWriter extends SvgWriter {
   /** The markup written so far. Throws if an element is still open. */
   finish(): string;
+  /**
+   * The `viewBox` value of the root element as written, when the root is an `<svg>` with one:
+   * the size of the drawing without reading it back out of the markup (#276).
+   */
+  readonly rootViewBox: string | undefined;
 }
 
 export interface TreeSvgWriter extends SvgWriter {
@@ -367,6 +372,7 @@ class Stream implements StreamSvgWriter {
   private pending = false;
   private readonly ref: string | undefined;
   private referred = false;
+  rootViewBox: string | undefined;
 
   constructor(
     private readonly gradient: SvgGradient | undefined,
@@ -377,6 +383,7 @@ class Stream implements StreamSvgWriter {
 
   private attrs(tag: string, attrs: Attrs | undefined): string {
     if (!attrs) return '';
+    const root = tag === 'svg' && this.out === '';
     let s = '';
     const blank = tag === 'a' && attrs.target === '_blank';
     let rel = false;
@@ -392,7 +399,9 @@ class Stream implements StreamSvgWriter {
       }
       // Numbers and number lists format to digits, signs, points, commas and spaces only.
       const plain = typeof raw === 'number' || Array.isArray(raw);
-      s += ' ' + name + '="' + (plain ? value : escAttr(value)) + '"';
+      const written = plain ? value : escAttr(value);
+      if (root && name === 'viewBox') this.rootViewBox = written;
+      s += ' ' + name + '="' + written + '"';
     }
     if (blank && !rel) s += ' rel="' + BLANK_REL + '"';
     return s;

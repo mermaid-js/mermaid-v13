@@ -48,6 +48,7 @@ import {
   type Rgba,
 } from './color.ts';
 import { parseRule, type Expr } from './dsl.ts';
+import { keepParts, keptParts, overridesKey } from './overridden.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
@@ -689,11 +690,23 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
     const hit = PLAIN.get(spec)?.get(options.dark);
     if (hit) return hit;
   }
+  // With overrides and no extra rules, parts built before from equal overrides are kept (#276).
+  const key = !plain && !options.rules && tv ? overridesKey(tv) : undefined;
+  const kept =
+    key === undefined
+      ? undefined
+      : (keptParts(spec, options.dark, key, options.warn) as ThemeParts | undefined);
+  if (kept) return kept;
+  const warnings: ThemeWarning[] = [];
+  const warn = (w: ThemeWarning): void => {
+    warnings.push(w);
+    options.warn?.(w);
+  };
   const defs: Record<string, ThemeVarEntry> = { ...THEME_VARIABLE_TABLE };
   if (options.rules)
     for (const name of Object.keys(options.rules))
       if (!own(defs, name)) defs[name] = { alias: name, kind: 'color' };
-  const overrides = checkOverrides(tv, defs, options.warn);
+  const overrides = checkOverrides(tv, defs, warn);
   const authorDark = tv?.darkMode === true || tv?.darkMode === 'true';
   const darkMode = spec.dark || authorDark;
   const rulesFor = (s: ThemeSpec, dark: boolean): ThemeRuleTable => ({
@@ -708,7 +721,7 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
       rulesFor(spec, darkMode),
       overrides,
       defs,
-      paletteSource(spec, tv, options.warn, authorDark)
+      paletteSource(spec, tv, warn, authorDark)
     ),
     night: options.dark
       ? new Resolver(options.dark, rulesFor(options.dark, true), overrides, defs)
@@ -722,6 +735,8 @@ function themeParts(spec: ThemeSpec, options: ThemeOptions): ThemeParts {
     let byDark = PLAIN.get(spec);
     if (!byDark) PLAIN.set(spec, (byDark = new Map<ThemeSpec | undefined, ThemeParts>()));
     byDark.set(options.dark, parts);
+  } else if (key !== undefined) {
+    keepParts(spec, options.dark, key, { parts, warnings });
   }
   return parts;
 }
