@@ -55,6 +55,33 @@ describe('renderDiagram (the page adapter)', () => {
     ).toHaveLength(glyphs);
   });
 
+  // The corpus's mindmap `::icon()` references (#328, D297) and the icon baselines, with the
+  // pages' static packs: every icon a glyph, none shown as written, no warning.
+  it.each([
+    ['nightly-check/all-shapes-with-mdi-fire-icon.mmd', 8],
+    ['nightly-check/branches-with-shapes-and-labels.mmd', 2],
+    ['nightly-check/bang-and-cloud-shape.mmd', 3],
+    ['nightly-check/a-root-with-an-icon.mmd', 1],
+    ['pr-check/3-tidy-tree-should-render-a-mindmap-with-different-shapes.mmd', 1],
+    ['baseline/icons/default.mmd', 8],
+    ['baseline/icons/redux.mmd', 8],
+    ['baseline/icons/neo.mmd', 8],
+    ['baseline/icons/neo-dark.mmd', 8],
+  ])('draws the glyphs of mindmap/%s with the icons extension', async (path, glyphs) => {
+    const source = readFileSync(
+      new URL(`../../../e2e/diagrams/mindmap/${path}`, import.meta.url),
+      'utf8'
+    );
+    const { svg, warnings } = await renderDiagram(source);
+    expect(warnings).toEqual([]);
+    expect(svg).not.toMatch(/<text class="mindmap-icon"/);
+    expect(
+      svg.match(
+        /<g class="mindmap-icon" transform="translate\([^)]*\)"><g transform="[^"]*" color="[^"]*">/g
+      )
+    ).toHaveLength(glyphs);
+  });
+
   it('sketches `look: handDrawn` with @mermaid-js/plugin-hand-drawn, as an installed plugin would (D300)', async () => {
     const text = 'flowchart LR\n  A --> B';
     const sketched = await renderDiagram(`---\nconfig:\n  look: handDrawn\n---\n${text}`);

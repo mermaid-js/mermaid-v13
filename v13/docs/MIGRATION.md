@@ -876,9 +876,11 @@ mermaid.registerIconPacks([
   keeps its frame (see [Flowchart syntax](#flowchart-syntax)).
 - **Mindmap** `::icon(fa fa-book)` and `::icon(mdi:fire)` get the slot v12's older mindmap
   renderer reserved (D297): beside the label, or above it in a circle. 12.2.0 parsed `::icon()`
-  but drew nothing, so any mindmap icon is new. In this alpha the reference is shown as written
-  in that slot, sized to fit it, with one `ICON_NOT_RENDERED` per render (D286, D291), with or
-  without an icons extension; drawing the glyph from the registered packs follows (#328).
+  but drew nothing, so any mindmap icon is new. With the plugin the glyph is drawn there, 40 px,
+  in the label's section colour (`cScaleLabel<n>`): `fa fa-book` is `fa:book`, `mdi mdi-fire`
+  is `mdi:fire`, looked up in the registered packs. An icon that does not resolve, or any icon
+  without the plugin, is shown as written in the slot, sized to fit it, with one
+  `ICON_NOT_RENDERED` per render (D286, D291); while its pack loads, the slot is empty.
 - **Text output** shows label icons as written, with one `ASCII_DROPPED` warning
   (`feature: 'icon'`); an icon shape is a box with its label (`feature: 'image'`) (D299).
 - **Size.** Core does not change with the plugin installed (R-PLUG-8); the plugin is about
@@ -1406,7 +1408,7 @@ class names are kept where the element still exists: `mindmap-node`, `section-<n
 | A plain node: `defaultMindmapNode` (four rounded corners, flat bottom under `look: neo`) with a `line.node-line-` rule, except `rounded` when the theme name had `redux` | The `mindmapRoundedNodes` and `mindmapOutlinedNodes` theme flags ([Theme geometry](#theme-geometry)); the rule is `line.node-line-<n>` in `cScaleInv<n>`, not drawn under the gradient | D288, D152 |
 | Neo nodes in `[data-look="neo"]` rules by theme name (`redux`, `redux-dark`, `neutral`, `neo-dark`, `includes('redux')`); `filter: url(#<id>-drop-shadow)` on the node's group | The flags and `borderColorArray` decide (`redux` and `redux-dark` carry none); the shadow is the `dropShadow` CSS filter on the shape, so labels are not shadowed. `neutral` is a classic theme, so v12's neo-only `neutral` label rule has nothing to apply to | D152, D153, D227 |
 | Under `useGradient` a second `<linearGradient id="<id>-gradient">`, a duplicate id | One scoped gradient (D182) | Unique ids |
-| `::icon()` parsed and not drawn (the shapes never read `node.icon`) | The slot v12's older renderer reserved (D297); without an icons extension the reference as written, smaller to fit 40 px, in the label's slot colour, with one `ICON_NOT_RENDERED` | D286, D291 |
+| `::icon()` parsed and not drawn (the shapes never read `node.icon`) | The slot v12's older renderer reserved (D297); with the icons plugin the glyph, 40 px, in the label's slot colour (`g.mindmap-icon`); otherwise the reference as written, smaller to fit 40 px (`text.mindmap-icon`), with one `ICON_NOT_RENDERED` | D286, D291, D297 |
 | No hand-drawn sketch of the plain node | Every outline and edge goes through the outline hook, the plain node too | D302, D308, D309 |
 
 ## Timeline SVG structure
