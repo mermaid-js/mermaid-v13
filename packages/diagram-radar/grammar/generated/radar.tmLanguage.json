@@ -1,0 +1,286 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "mermaid-radar",
+  "scopeName": "source.mermaid-radar",
+  "fileTypes": [
+    "mmd",
+    "mermaid"
+  ],
+  "patterns": [
+    {
+      "include": "#front-matter-start"
+    },
+    {
+      "include": "#mode-INITIAL"
+    }
+  ],
+  "repository": {
+    "trivia-0": {
+      "match": "^[^\\S\\n]*%%(?!\\{)[^\\n]+",
+      "name": "comment.line.mermaid-radar"
+    },
+    "trivia-1": {
+      "begin": "[^\\S\\n]*%%\\{",
+      "end": "\\}%%",
+      "name": "meta.embedded.mermaid-radar"
+    },
+    "rule-0": {
+      "match": "radar-beta:",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-1": {
+      "match": "radar-beta(?:(?=%%)|(?!\\S))",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-2": {
+      "match": "showLegend(?!-*\\w)",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-3": {
+      "match": "graticule(?!-*\\w)",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-4": {
+      "match": "curve(?!-*\\w)",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-5": {
+      "match": "ticks(?!-*\\w)",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-6": {
+      "match": "axis(?!-*\\w)",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-7": {
+      "match": "max(?!-*\\w)",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-8": {
+      "match": "min(?!-*\\w)",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-9": {
+      "match": ":",
+      "name": "punctuation.definition.mermaid-radar"
+    },
+    "rule-10": {
+      "match": ",",
+      "name": "punctuation.definition.mermaid-radar"
+    },
+    "rule-11": {
+      "match": "\\[",
+      "name": "punctuation.definition.mermaid-radar"
+    },
+    "rule-12": {
+      "match": "\\]",
+      "name": "punctuation.definition.mermaid-radar"
+    },
+    "rule-13": {
+      "match": "\\{",
+      "name": "punctuation.definition.mermaid-radar"
+    },
+    "rule-14": {
+      "match": "\\}",
+      "name": "punctuation.definition.mermaid-radar"
+    },
+    "rule-15": {
+      "match": "circle|polygon",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-16": {
+      "match": "true|false",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-17": {
+      "match": "[\\t ]*accDescr[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-18": {
+      "begin": "[\\t ]*accDescr\\s*\\{",
+      "end": "\\}",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-19": {
+      "match": "[\\t ]*accTitle[\\t ]*:(?:[^\\n\\r]*?(?=%%)|[^\\n\\r]*)",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-20": {
+      "match": "[\\t ]*title(?:[\\t ][^\\n\\r]*?(?=%%)|[\\t ][^\\n\\r]*|)",
+      "name": "keyword.control.mermaid-radar"
+    },
+    "rule-21": {
+      "match": "[0-9]+\\.[0-9]+(?!\\.)|0|[1-9][0-9]*(?!\\.)",
+      "name": "constant.numeric.mermaid-radar"
+    },
+    "rule-22": {
+      "match": "\"(?:[^\"\\\\]|\\\\.)*\"|'(?:[^'\\\\]|\\\\.)*'",
+      "name": "string.quoted.mermaid-radar"
+    },
+    "rule-23": {
+      "match": "\\w(?:[-\\w]*\\w)?",
+      "name": "variable.other.mermaid-radar"
+    },
+    "rule-24": {
+      "match": "\\r?\\n"
+    },
+    "rule-25": {
+      "match": "[\\t ]+"
+    },
+    "rule-26": {
+      "match": "---[\\t ]*\\r?\\n(?:[\\S\\s]*?\\r?\\n)?---(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-radar"
+    },
+    "rule-27": {
+      "match": "[\\t ]*%%\\{[\\S\\s]*?\\}%%(?:\\r?\\n|(?!\\S))",
+      "name": "meta.embedded.mermaid-radar"
+    },
+    "rule-28": {
+      "match": "[\\t ]*%%[^\\n\\r]*",
+      "name": "comment.line.mermaid-radar"
+    },
+    "mode-INITIAL": {
+      "patterns": [
+        {
+          "include": "#trivia-0"
+        },
+        {
+          "include": "#trivia-1"
+        },
+        {
+          "include": "#rule-0"
+        },
+        {
+          "include": "#rule-1"
+        },
+        {
+          "include": "#rule-2"
+        },
+        {
+          "include": "#rule-3"
+        },
+        {
+          "include": "#rule-4"
+        },
+        {
+          "include": "#rule-5"
+        },
+        {
+          "include": "#rule-6"
+        },
+        {
+          "include": "#rule-7"
+        },
+        {
+          "include": "#rule-8"
+        },
+        {
+          "include": "#rule-9"
+        },
+        {
+          "include": "#rule-10"
+        },
+        {
+          "include": "#rule-11"
+        },
+        {
+          "include": "#rule-12"
+        },
+        {
+          "include": "#rule-13"
+        },
+        {
+          "include": "#rule-14"
+        },
+        {
+          "include": "#rule-15"
+        },
+        {
+          "include": "#rule-16"
+        },
+        {
+          "include": "#rule-17"
+        },
+        {
+          "include": "#rule-18"
+        },
+        {
+          "include": "#rule-19"
+        },
+        {
+          "include": "#rule-20"
+        },
+        {
+          "include": "#rule-21"
+        },
+        {
+          "include": "#rule-22"
+        },
+        {
+          "include": "#rule-23"
+        },
+        {
+          "include": "#rule-24"
+        },
+        {
+          "include": "#rule-25"
+        },
+        {
+          "include": "#rule-26"
+        },
+        {
+          "include": "#rule-27"
+        },
+        {
+          "include": "#rule-28"
+        }
+      ]
+    },
+    "front-matter-start": {
+      "begin": "\\A(?=[^\\S\\n]*(?:---[^\\S\\n]*)?$)",
+      "end": "(?=\\S)",
+      "applyEndPatternLast": 1,
+      "patterns": [
+        {
+          "include": "#front-matter"
+        }
+      ]
+    },
+    "front-matter": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-radar"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#front-matter-body"
+        },
+        {
+          "match": "#.*",
+          "name": "comment.line.mermaid-radar"
+        },
+        {
+          "match": "^[^\\S\\n]*(?:- )?[^\\s#:'\"-][^:#\\n]*(?=:(?:\\s|$))",
+          "name": "variable.other.mermaid-radar"
+        }
+      ]
+    },
+    "front-matter-body": {
+      "begin": "^[^\\S\\n]*---[^\\S\\n]*$",
+      "beginCaptures": {
+        "0": {
+          "name": "meta.embedded.mermaid-radar"
+        }
+      },
+      "end": "(?!)",
+      "patterns": [
+        {
+          "include": "#mode-INITIAL"
+        }
+      ]
+    }
+  }
+}

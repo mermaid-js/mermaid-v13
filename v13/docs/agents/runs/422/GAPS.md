@@ -22,10 +22,17 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 
 ## T3 (#447)
 
-- [ ] **Invariants on parser-produced fixtures.** #446 had not landed; the invariants run on hand-built `RadarModel` fixtures (`layout/fixtures.ts`). #446's merge adds the corpus spec through `@mermaid-js/diagram-radar/testing`'s `radarLayoutViolations`.
+- [x] **Invariants on parser-produced fixtures.** Closed by #446: `packages/conformance/src/radar/layout-corpus.spec.ts` runs `radarLayoutViolations` (from `./testing`) over the gate corpus parsed by `parseRadar`, both graticules × 4 configs, 0 violations.
 - Review fixes (orchestrator): Infinity entries never give NaN; >4-param helpers take a `Frame`; names. Accepted deviations: no title element when there is no title (no empty element); multi-line legend labels push later rows down (as pie's final review); out-of-range config values fall back to v12's default silently until #449.
 - **`RadarModel` unchanged** by T3.
 - **Stand-ins** in `packages/diagram-radar/src/stand-ins.ts` (theme variables and `radar` config defaults); #448 replaces the theme half with the radar `DiagramThemeTable`, #449 the config half.
+
+## T2 (#446)
+
+- **`RadarModel` unchanged** by T2. Additive export: `layoutRadar` and the `RadarLayout` types from the runtime entry (for the layout corpus spec, as pie's #305).
+- Parity over the gate corpus: 0 divergences; exclusions as T1's (unclosed directives, the indented-front-matter dev diagram), each asserted to differ only in core. Nothing added to `divergences.json`.
+- Choices: a curve with a semantic error (`Missing entry …`, `Axes must be populated …`) stays in the model with the entries it has; `UNCLOSED_ACC_DESCR` is reported for a name `accDescr` followed by `{` (radar's lexer yields no error token there); one `RADAR_UNKNOWN_AXIS` per parse with the others `related` (D356).
+- Skipped ported specs: `closedRoundCurve` path strings and `draw` (#448 ports them, edit `SKIP` in `scripts/port-v12-specs.ts`); v12's "unknown location at the end of input" (v13 locates it).
 
 ## Theme T0a merged (2026-11-06)
 

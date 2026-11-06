@@ -1,10 +1,23 @@
-/** The radar parser's public surface so far: the lexer gated against v12's Langium lexer (#445). */
+/**
+ * The radar parser's public surface: the parser (#446), detection, and the lexer gated against
+ * v12's Langium lexer (#445).
+ */
 import { cook, Kind, sourceView } from '@mermaid-js/core/parser-kit';
 import type { Range } from '@mermaid-js/core/parser-kit';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { lex } from './lexer.ts';
 
 export { LANGIUM_NAMES, RADAR_TRIVIA, T as RadarTokenKind } from './tokens.ts';
+export {
+  parseRadar,
+  RADAR_MISSING_ENTRY,
+  RADAR_NO_AXES,
+  RADAR_TICKS_CLAMPED,
+  RADAR_UNKNOWN_AXIS,
+} from './parser.ts';
+export type { RadarParseOptions, RadarParseResult } from './parser.ts';
+export { detectRadar } from './detect.ts';
+export type * from './ast.ts';
 
 export interface RadarToken {
   /** A `RadarTokenKind` or a shared `Kind`. */

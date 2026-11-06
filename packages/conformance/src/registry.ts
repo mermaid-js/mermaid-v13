@@ -6,6 +6,7 @@ import { journeyAdapter } from './journey/v13.ts';
 import { pieAdapter } from './pie/v13.ts';
 import { quadrantParityCorpus } from './quadrant/corpus.ts';
 import { quadrantAdapter } from './quadrant/v13.ts';
+import { radarAdapter } from './radar/v13.ts';
 import { sequenceAdapter } from './sequence/v13.ts';
 import { stateAdapter } from './state/v13.ts';
 import { timelineAdapter } from './timeline/v13.ts';
@@ -69,6 +70,11 @@ export const PARITY_SUITES: ParitySuite[] = [
       'packages/conformance/corpus/quadrant-cases.json',
     ],
     corpus: quadrantParityCorpus,
+  },
+  {
+    adapter: radarAdapter,
+    corpusDirs: ['e2e/diagrams/radar'],
+    corpusFiles: ['packages/conformance/corpus/radar-v12-specs.json'],
   },
 ];
 

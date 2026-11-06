@@ -430,5 +430,189 @@
   {
     "id": "radar-cases/line-separators-entries",
     "source": "radar-beta\naxis A\ncurve c{\u20281\u2029}"
+  },
+  {
+    "id": "radar-cases/parser-missing-entry",
+    "source": "radar-beta\naxis A, B\ncurve c{A: 1}"
+  },
+  {
+    "id": "radar-cases/parser-missing-entry-label",
+    "source": "radar-beta\naxis A[\"Alpha\"], B[\"Beta\"]\ncurve c{A 1}"
+  },
+  {
+    "id": "radar-cases/parser-missing-entry-later-axis",
+    "source": "radar-beta\naxis A\ncurve c{A: 1}\naxis B"
+  },
+  {
+    "id": "radar-cases/parser-no-axes-detailed",
+    "source": "radar-beta\ncurve c{A: 1}"
+  },
+  {
+    "id": "radar-cases/parser-no-axes-positional",
+    "source": "radar-beta\ncurve c{1, 2}"
+  },
+  {
+    "id": "radar-cases/parser-skipped-curve",
+    "source": "radar-beta\naxis A, B\ncurve c{1}\ncurve d{1, 2, 3}\ncurve e{1, 2}"
+  },
+  {
+    "id": "radar-cases/parser-duplicate-axis-entries",
+    "source": "radar-beta\naxis A, A\ncurve c{A: 1, A: 2}"
+  },
+  {
+    "id": "radar-cases/parser-unknown-among-known",
+    "source": "radar-beta\naxis A, B\ncurve c{B 2, X 5, A 1}\ncurve d{Y 1, A 2, B 3}"
+  },
+  {
+    "id": "radar-cases/parser-detailed-and-positional-curves",
+    "source": "radar-beta\naxis A, B\ncurve c{A: 1, B: 2}, d{3, 4}"
+  },
+  {
+    "id": "radar-cases/parser-ticks-at-limit",
+    "source": "radar-beta\nticks 32"
+  },
+  {
+    "id": "radar-cases/parser-ticks-over-limit",
+    "source": "radar-beta\naxis A\ncurve c{1}\nticks 33"
+  },
+  {
+    "id": "radar-cases/parser-ticks-fraction-over-limit",
+    "source": "radar-beta\nticks 100.5"
+  },
+  {
+    "id": "radar-cases/parser-ticks-zero",
+    "source": "radar-beta\nticks 0"
+  },
+  {
+    "id": "radar-cases/parser-empty-range",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2}\nmax 3\nmin 3"
+  },
+  {
+    "id": "radar-cases/parser-max-zero",
+    "source": "radar-beta\nmax 0"
+  },
+  {
+    "id": "radar-cases/parser-options-list",
+    "source": "radar-beta\nticks 3, showLegend true, graticule circle, min 1, max 9"
+  },
+  {
+    "id": "radar-cases/parser-options-last-wins",
+    "source": "radar-beta\nshowLegend true, showLegend false\ngraticule polygon\ngraticule circle"
+  },
+  {
+    "id": "radar-cases/parser-options-break-after-comma",
+    "source": "radar-beta\nticks 3,\nmax 4"
+  },
+  {
+    "id": "radar-cases/parser-option-without-value",
+    "source": "radar-beta\nticks\nmax 4"
+  },
+  {
+    "id": "radar-cases/parser-title-after-axis",
+    "source": "radar-beta\naxis A title x\ncurve c{1}"
+  },
+  {
+    "id": "radar-cases/parser-axis-after-title",
+    "source": "radar-beta\ntitle x axis A\naxis B"
+  },
+  {
+    "id": "radar-cases/parser-acc-between",
+    "source": "radar-beta\naxis A\naccTitle: t\ncurve c{1}\naccDescr: d"
+  },
+  {
+    "id": "radar-cases/parser-curve-labels",
+    "source": "radar-beta\naxis A\ncurve c[\"Label\"]{1}, d ['L'] {2}"
+  },
+  {
+    "id": "radar-cases/parser-curve-brace-next-line",
+    "source": "radar-beta\naxis A\ncurve c\n{1}"
+  },
+  {
+    "id": "radar-cases/parser-curve-label-next-line",
+    "source": "radar-beta\naxis A\ncurve c\n[\"L\"]{1}"
+  },
+  {
+    "id": "radar-cases/parser-axis-two-labels",
+    "source": "radar-beta\naxis A[\"x\"][\"y\"]"
+  },
+  {
+    "id": "radar-cases/parser-axis-label-unquoted",
+    "source": "radar-beta\naxis A[x]"
+  },
+  {
+    "id": "radar-cases/parser-axis-label-unclosed-bracket",
+    "source": "radar-beta\naxis A[\"x\"\naxis B"
+  },
+  {
+    "id": "radar-cases/parser-curve-unclosed-brace",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2\naxis C\ncurve d{1, 2, 3}"
+  },
+  {
+    "id": "radar-cases/parser-curve-unclosed-end",
+    "source": "radar-beta\naxis A\ncurve c{1,"
+  },
+  {
+    "id": "radar-cases/parser-curve-trailing-comma",
+    "source": "radar-beta\naxis A, B\ncurve c{1, 2,}"
+  },
+  {
+    "id": "radar-cases/parser-curve-entry-label",
+    "source": "radar-beta\naxis A\ncurve c{A[\"x\"] 1}"
+  },
+  {
+    "id": "radar-cases/parser-many-curves",
+    "source": "radar-beta\naxis A, B\ncurve c0{0, 1}\ncurve c1{1, 2}\ncurve c2{2, 3}\ncurve c3{3, 4}\ncurve c4{4, 5}\ncurve c5{5, 6}\ncurve c6{6, 7}\ncurve c7{7, 8}\ncurve c8{8, 9}\ncurve c9{9, 10}\ncurve c10{10, 11}\ncurve c11{11, 12}\ncurve c12{12, 13}\ncurve c13{13, 14}"
+  },
+  {
+    "id": "radar-cases/parser-huge-number",
+    "source": "radar-beta\naxis A\ncurve c{99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999}\nmax 99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"
+  },
+  {
+    "id": "radar-cases/parser-several-errors",
+    "source": "radar-beta\naxis A,\naxis B C\ncurve c{1 2}\ncurve d{A}\nticks x\naxis D"
+  },
+  {
+    "id": "radar-cases/parser-statement-glued-brace",
+    "source": "radar-beta\naxis A curve c{1}curve d{2}ticks 2"
+  },
+  {
+    "id": "radar-cases/parser-comma-start",
+    "source": "radar-beta\n, axis A"
+  },
+  {
+    "id": "radar-cases/parser-number-statement",
+    "source": "radar-beta\n42\naxis A"
+  },
+  {
+    "id": "radar-cases/parser-colon-after-header-line",
+    "source": "radar-beta\n:\naxis A"
+  },
+  {
+    "id": "radar-cases/parser-header-after-statement",
+    "source": "radar-beta\naxis A\nradar-beta"
+  },
+  {
+    "id": "radar-cases/parser-missing-header",
+    "source": "axis A\ncurve c{1}"
+  },
+  {
+    "id": "radar-cases/parser-leading-blank-lines",
+    "source": "\n\n  \nradar-beta\naxis A"
+  },
+  {
+    "id": "radar-cases/parser-detailed-colon-spaced",
+    "source": "radar-beta\naxis A, B\ncurve c{ A : 1 , B:2 }"
+  },
+  {
+    "id": "radar-cases/parser-entry-number-name",
+    "source": "radar-beta\naxis A\ncurve c{1 A}"
+  },
+  {
+    "id": "radar-cases/parser-keyword-entry-name",
+    "source": "radar-beta\naxis A\ncurve c{circle 1}"
+  },
+  {
+    "id": "radar-cases/parser-keyword-option-glued",
+    "source": "radar-beta\nshowLegend trueish\ngraticule circles"
   }
 ]
