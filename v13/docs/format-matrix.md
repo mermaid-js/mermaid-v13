@@ -29,7 +29,7 @@ does not support throws `UnsupportedFormatError`. See [ASCII output](ascii.md) f
 | `journey` | `@mermaid-js/diagram-journey` | yes | no |
 | `quadrantChart` | `@mermaid-js/diagram-quadrant` | yes | no |
 | `sankey` | not ported | no | no |
-| `packet` | not ported | no | no |
+| `packet` | `@mermaid-js/diagram-packet` | yes | no |
 | `xychart` | not ported | no | no |
 | `block` | not ported | no | no |
 | `eventmodeling` | not ported | no | no |

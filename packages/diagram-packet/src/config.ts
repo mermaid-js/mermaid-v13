@@ -10,6 +10,7 @@
  * `bitOrder === 'descending'`), with no warning.
  */
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
+import { packetConfigDefaults } from './generated/config-defaults.ts';
 
 export interface PacketConfig {
   readonly rowHeight: number;
@@ -21,18 +22,21 @@ export interface PacketConfig {
   readonly paddingY: number;
 }
 
+/** Every key of the generated defaults is set: the schema gives each one a `default`. */
+const GIVEN = packetConfigDefaults as Required<typeof packetConfigDefaults>;
+
 /**
- * `PacketDiagramConfig`'s defaults (`core/schema/config.schema.yaml`). Hand-kept until T5 (#462)
- * gives the package a manifest and `gen:config` writes `generated/config-defaults.ts`.
+ * `PacketDiagramConfig`'s defaults (`pnpm gen:config` from `core/schema/config.schema.yaml`, the
+ * plugin's `configDefaults`), less `useMaxWidth`, which only the renderer reads.
  */
 export const PACKET_CONFIG_DEFAULTS: PacketConfig = Object.freeze({
-  rowHeight: 32,
-  bitWidth: 32,
-  bitsPerRow: 32,
-  showBits: true,
-  bitOrder: 'ascending',
-  paddingX: 5,
-  paddingY: 5,
+  rowHeight: GIVEN.rowHeight,
+  bitWidth: GIVEN.bitWidth,
+  bitsPerRow: GIVEN.bitsPerRow,
+  showBits: GIVEN.showBits,
+  bitOrder: GIVEN.bitOrder,
+  paddingX: GIVEN.paddingX,
+  paddingY: GIVEN.paddingY,
 });
 
 /** One key that fell back to its default. */

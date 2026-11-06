@@ -40,6 +40,7 @@ export const SECTION_OWNERS: Readonly<Record<string, string>> = {
   state: 'packages/diagram-state',
   journey: 'packages/diagram-journey',
   pie: 'packages/diagram-pie',
+  packet: 'packages/diagram-packet',
   quadrantChart: 'packages/diagram-quadrant',
 };
 

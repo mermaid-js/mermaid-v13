@@ -7,6 +7,7 @@ import type { PacketModel } from './model.ts';
 import { detectPacket, parsePacket, type PacketParseResult } from './parser/index.ts';
 import { renderPacket } from './render/index.ts';
 import { packetLabels } from './labels.ts';
+import { packetConfigDefaults } from './generated/config-defaults.ts';
 
 // Packet's theme table (D331, D335, D540, spec #421 "v13 entries"), declared inline until
 // T0b's per-package file convention lands: v12's ten `packet.*` style options
@@ -79,13 +80,14 @@ const theme: DiagramThemeTable = {
  * The packet diagram plugin (DESIGN §12.1, spec #421): `layoutKind: 'custom'` with its own
  * `PacketLayout`. `parse` takes the whole source and the `packet` config (rows depend on
  * `bitsPerRow`); `layout` measures and places everything on v12's canvas; `render` writes the
- * whole `<svg>` document. SVG only. Until #462 adds the manifest, register it with
- * `registerExternalDiagrams([packet], { replace: true })`.
+ * whole `<svg>` document. SVG only. The registry loads it from the package's `mermaid` manifest
+ * (#462); `configDefaults` are the `packet` section's generated defaults.
  */
 export const packet = {
   id: 'packet',
   formats: ['svg'] as const,
   layoutKind: 'custom' as const,
+  configDefaults: packetConfigDefaults as Readonly<Record<string, unknown>>,
   theme,
   detector: (text: string): boolean => detectPacket(text),
   parse: (text: string, ctx: DiagramParseContext): PacketParseResult =>
