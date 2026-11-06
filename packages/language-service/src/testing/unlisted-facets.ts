@@ -10,4 +10,13 @@
  */
 import type { FacetEntry } from '../facets.ts';
 
-export const UNLISTED_FACETS: readonly FacetEntry[] = [];
+export const UNLISTED_FACETS: readonly FacetEntry[] = [
+  // Spec #423: the manifest comes with T5 (#469).
+  {
+    type: 'cynefin',
+    id: 'cynefin',
+    section: 'cynefin',
+    detector: (text) => /^\s*cynefin-beta(?:[\s:]|$)/.test(text),
+    load: () => import('@mermaid-js/diagram-cynefin/language').then((m) => m.language),
+  },
+];

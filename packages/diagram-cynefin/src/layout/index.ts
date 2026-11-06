@@ -7,6 +7,7 @@ export { hashString, resolveSeed, seededRandom } from './random.ts';
 export { arrowheadData, curveData, ellipseData, transitionData } from './path.ts';
 export type * from './types.ts';
 export { layoutCynefin, type CynefinLayoutContext } from './layout.ts';
-export { DOMAIN_META, domainTitle, type CynefinDomainMeta } from './meta.ts';
+export { DOMAIN_META, type CynefinDomainMeta } from '../domains.ts';
+export { domainTitle } from './meta.ts';
 export { CYNEFIN_DEFAULTS } from './metrics.ts';
 export { cynefinLayoutViolations } from './invariants.ts';

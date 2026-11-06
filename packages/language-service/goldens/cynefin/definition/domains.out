@@ -1,0 +1,8 @@
+@ 4:6  com|plex "Experiment"
+  -> 2:3-2:10 "complex"
+@ 5:18  complex --> cle|ar : "Pattern found"
+  -> 3:3-3:8 "clear"
+@ 6:3  |chaotic --> complex
+  -> none
+@ 7:14  complex "Pr|obe"
+  -> none

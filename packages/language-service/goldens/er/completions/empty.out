@@ -14,3 +14,4 @@
   stateDiagram keyword 1:1-1:1 "" -> "stateDiagram"
   journey keyword 1:1-1:1 "" -> "journey"
   quadrantChart keyword 1:1-1:1 "" -> "quadrantChart"
+  cynefin-beta keyword 1:1-1:1 "" -> "cynefin-beta"
