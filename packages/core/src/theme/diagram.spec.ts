@@ -313,7 +313,33 @@ describe('rule DSL: palette reads and literal() (D332)', () => {
     ).toThrow(/inline needs a variable/);
   });
 
-  it('writes inline(v, b) as v when the author or the theme wrote v, else as b', () => {
+  it("reads inline(v) as the theme wrote v, not the author's override of v", () => {
+    const of = (themeVariables: Record<string, string>) => {
+      const t = createTheme(spec.base, {
+        diagram: table({ a: 'inline(mainBkg)' }),
+        themeVariables,
+      });
+      t.color('a');
+      return t.rootStyle()['--_x0'];
+    };
+    // The author's mainBkg does not reach a; the rule's own references follow their overrides.
+    expect(of({ mainBkg: '#123456' })).toBe('var(--mermaid-a,var(--_p))');
+    const t = createTheme(spec.base, {
+      cssVariables: false,
+      diagram: table({ a: 'inline(mainBkg)' }),
+      themeVariables: { mainBkg: '#123456', primaryColor: '#abcdef' },
+    });
+    expect(t.value('a')).toBe('#abcdef');
+    // An override of the diagram's own variable still wins.
+    const own = createTheme(spec.base, {
+      cssVariables: false,
+      diagram: table({ a: 'inline(mainBkg)' }),
+      themeVariables: { mainBkg: '#123456', a: '#654321' },
+    });
+    expect(own.value('a')).toBe('#654321');
+  });
+
+  it('writes inline(v, b) as v when the theme wrote v, else as b', () => {
     const rule = { a: 'inline(edgeLabelBackground, lineColor)' };
     const decl = (s: ThemeSpec, options: ThemeOptions = {}) => {
       const t = createTheme(s, { ...options, diagram: table(rule) });
@@ -326,8 +352,9 @@ describe('rule DSL: palette reads and literal() (D332)', () => {
     expect(decl(values)).toBe('var(--mermaid-a,#eeeeee)');
     const rules: ThemeSpec = { ...spec.base, rules: { edgeLabelBackground: 'tertiaryColor' } };
     expect(decl(rules)).toBe('var(--mermaid-a,var(--_t))');
+    // The author's override of v is not the theme writing it.
     const user = decl(spec.base, { themeVariables: { edgeLabelBackground: '#123456' } });
-    expect(user).toBe('var(--mermaid-a,#123456)');
+    expect(user).toBe('var(--mermaid-a,var(--_l))');
     // A family entry of the diagram's own table counts too (base is classic).
     const own: DiagramThemeTable = {
       vars: { a: { alias: 'x0', kind: 'color' }, b: { alias: 'x1', kind: 'color' } },

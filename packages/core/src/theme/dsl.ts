@@ -21,11 +21,13 @@
  *                       `var(--mermaid-v, b)`
  *   literal(a)          a's computed colour as a literal, so a hue turn or a palette read writes
  *                       the value a theme would pin (D332)
- *   inline(v)           the variable v as the theme wrote it, CSS included, with no alias of its
- *                       own: a diagram reads a shared input in each theme's own shape (D332)
- *   inline(v, b)        the same when v is set (the author's override, the theme spec's base,
- *                       tokens, values or rules, or a diagram table's family entry), else b; a
- *                       shared or diagram light/dark rule for v does not count as set
+ *   inline(v)           the variable v as the theme wrote it (its value or rule), CSS included,
+ *                       with no alias of its own: a diagram reads a shared input in each theme's
+ *                       own shape (D332). The author's override of v is not read; references in
+ *                       v's rule stay `var(--_x)`, so they follow their own overrides
+ *   inline(v, b)        the same when the theme wrote v (the theme spec's base, tokens, values or
+ *                       rules, or a diagram table's family entry), else b; a shared or diagram
+ *                       light/dark rule for v, or the author's override of v, does not count
  *
  * `cScale3`, `bkgColorArray2` and any other palette name with a slot number read that entry of
  * the palette (D258, D332), as a literal colour, except `seriesColorArray<n>`, which reads as

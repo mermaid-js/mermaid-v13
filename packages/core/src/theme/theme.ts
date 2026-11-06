@@ -289,13 +289,11 @@ class Resolver {
   }
 
   /**
-   * Whether the author or the theme wrote `name`: an override, the spec's base, tokens, values
-   * or rules, or a family entry. A shared or diagram light/dark rule does not count.
+   * Whether the theme wrote `name`: the spec's base, tokens, values or rules, or a family entry.
+   * A shared or diagram light/dark rule does not count, nor does the author's override.
    */
   private isSet(name: string): boolean {
-    return (
-      this.overrides.has(name) || this.source(name) !== undefined || this.writes.rules.has(name)
-    );
+    return this.source(name) !== undefined || this.writes.rules.has(name);
   }
 
   /** The spec's own value or rule, ignoring overrides. */
@@ -310,14 +308,31 @@ class Resolver {
   }
 
   get(name: string): Resolved {
-    const hit = this.memo.get(name);
+    return this.once(name, name, () => this.compute(name));
+  }
+
+  /**
+   * `name` as the theme wrote it, for `inline()`: its value or rule, never the author's override
+   * of it. The rule's own references still follow their overrides.
+   */
+  private written(name: string): Resolved {
+    return this.once(' ' + name, name, () => this.fromSpec(name) ?? this.unset(name));
+  }
+
+  private once(key: string, name: string, f: () => Resolved): Resolved {
+    const hit = this.memo.get(key);
     if (hit) return hit;
-    if (this.active.has(name)) throw new Error(`Theme rule cycle through ${name}`);
-    this.active.add(name);
-    const r = this.compute(name);
-    this.active.delete(name);
-    this.memo.set(name, r);
+    if (this.active.has(key)) throw new Error(`Theme rule cycle through ${name}`);
+    this.active.add(key);
+    const r = f();
+    this.active.delete(key);
+    this.memo.set(key, r);
     return r;
+  }
+
+  private unset(name: string): Resolved {
+    const fallback = this.defs[name]?.kind === 'filter' ? 'none' : 'currentColor';
+    return { css: fallback, lit: fallback, rgba: undefined, deps: [] };
   }
 
   private literal(name: string, text: string): Resolved {
@@ -345,8 +360,7 @@ class Resolver {
       if (r.rgba !== undefined || this.defs[name]?.kind !== 'color') return r;
       return { ...r, rgba: this.fromSpec(name)?.rgba };
     }
-    const fallback = this.defs[name]?.kind === 'filter' ? 'none' : 'currentColor';
-    return this.fromSpec(name) ?? { css: fallback, lit: fallback, rgba: undefined, deps: [] };
+    return this.fromSpec(name) ?? this.unset(name);
   }
 
   private fromSpec(name: string): Resolved | undefined {
@@ -394,13 +408,15 @@ class Resolver {
         const [x] = e.args as [Expr];
         if (e.fn === 'inline') {
           // A shared input as the theme wrote it (D332): its value or rule, CSS included, with
-          // no alias of its own, so a diagram reads each theme's own shape byte-identically.
+          // no alias of its own, so a diagram reads each theme's own shape byte-identically. The
+          // author's override of the input is not read: it reaches only what reads the input
+          // itself, as in v12 (an author's scaleLabelColor recolours cScaleLabel, not sequence).
           if (x.k !== 'ref' || !own(this.defs, x.name))
             throw new SyntaxError('inline needs a variable');
-          // `inline(v, b)`: b where neither the author nor the theme wrote v.
+          // `inline(v, b)`: b where the theme did not write v.
           const b = e.args[1];
           if (b !== undefined && !this.isSet(x.name)) return this.evaluate(b);
-          return this.get(x.name);
+          return this.written(x.name);
         }
         if (e.fn !== 'literal') return this.call(e as Call);
         // The computed colour, written as a literal (D332): a hue turn stays byte-identical

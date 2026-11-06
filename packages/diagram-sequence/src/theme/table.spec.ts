@@ -58,6 +58,7 @@ describe('the sequence theme table (#414 T2)', () => {
     expect(t.value('actorBkg')).toBe('#123456');
     expect(t.value('labelBoxBkgColor')).toBe('#123456');
     expect(t.value('actorLineColor')).toBe(t.value('actorBorder'));
+    expect(t.value('actorTextColor')).toBe('#654321');
     expect([t.value('labelTextColor'), t.value('loopTextColor')]).toEqual(['#654321', '#654321']);
   });
 

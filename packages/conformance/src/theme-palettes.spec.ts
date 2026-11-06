@@ -114,6 +114,22 @@ describe('cScale, cScaleInv and cScaleLabel against v12 12.2.0 (#338, D258)', ()
       );
   });
 
+  // v12 derives sequence's actor text from labelTextColor, never from scaleLabelColor.
+  it("a scaleLabelColor override leaves sequence's text as the theme draws it", async () => {
+    const names = ['actorTextColor', 'labelTextColor', 'loopTextColor'];
+    for (const theme of THEME_NAMES) {
+      const at = async (themeVariables?: Record<string, unknown>) => {
+        const t = createTheme(await loadTheme(theme), {
+          diagram: DIAGRAM_TABLES.sequence,
+          cssVariables: false,
+          themeVariables,
+        });
+        return names.map((n) => t.value(n));
+      };
+      expect(await at({ scaleLabelColor: '#3366cc' }), theme).toEqual(await at());
+    }
+  });
+
   it.each(THEME_NAMES)('%s: a numbered override replaces its slot verbatim', async (theme) => {
     const vars = { cScale4: '#123456', cScaleInv5: '#654321', cScaleLabel6: '#abcdef' };
     const now = await v13Palettes(theme, vars);
