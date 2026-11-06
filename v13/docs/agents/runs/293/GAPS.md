@@ -14,6 +14,15 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ### #376 D1 dates
 - Pele's source files carry no licence header; the notice comes from Pele's root `LICENSE` (MIT, "Copyright (c) 2026 kepano"). Each ported file gets a header naming Pele, the commit 3a2f075, the path and that notice.
 - Pele's `tests/gantt/dates.test.ts` imports `parseDuration` from Pele's `db.ts` (which needs `PeleError`, `safeUrl`). D1 does not port `db.ts`: drop or repoint those cases (T3 owns `parseDuration`).
+- **Done (#376):** headers as above; `THIRD_PARTY_NOTICES` lists `src/dates/{axis,dates}.ts`. No unmet criteria.
+- **Choice:** `parseDuration` (Pele `db.ts`, v12 `ganttDb.js` L399–407) lives in `src/dates/dates.ts`, so Pele's spec runs unchanged. T3 imports it instead of writing its own.
+- **Choice:** `readStartDate`/`readEndDate` (the written-date branches of v12's `getStartDate`/`getEndDate`) are in `src/dates`, so each quirk has a case at the dates seam. `after`/`until`, inclusive ends, the duration fallback and the errors stay in T3.
+- **Choice:** Pele's one-entry cache of the compiled parse format is dropped (module state, R-ARCH-4), and its long `switch`es are lookup tables (lint: complexity, nested ternaries; no new suppressions). A 20,000-case random comparison per zone shows 0 differences from Pele's code.
+- **Choice:** the TZ mechanism is three vitest projects in the root config (`workspace` without gantt, `gantt-utc`, `gantt-la`). Gantt specs run only pinned, never in the host zone. Specs read the zone through `Intl` (the package has no Node types).
+- Oracle: the only difference from v12's dayjs is that dayjs fills fields a format omits (`HH:mm` gets today's date) from the real clock, while this port uses `now` (D270).
+
+### #379 T3 (from #376)
+- `intervalTicks(…, limit)` uses Pele's tick estimate, not v12's `getEstimatedTickCount` (dayjs duration, 30-day month). For v12's warning and auto-tick fallback, T3 runs v12's estimate itself.
 
 ### #377 T1 lexer
 - Traps beyond the ticket's list: the `date` rule (`\d{4}-\d\d-\d\d\b`) makes task text that starts with an ISO date a syntax error; `click ` / `call ` at the start of a task text enter their start conditions; `gantt`, `topAxis`, `inclusiveEndDates`, `weekday …`/`weekend …` are keywords with jison's implicit `\b`; task text keeps trailing spaces. The gate decides; keep them.
