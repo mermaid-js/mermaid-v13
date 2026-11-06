@@ -241,7 +241,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   primaryColor: def('p', 'color', ['core']),
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core']),
-  background: def('bg', 'color', ['core']),
+  background: def('bg', 'color', ['core', 'kanban']),
   primaryTextColor: def('pt', 'color', ['core']),
   lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
   // Pie draws in the font family but sizes its text by its own variables.
@@ -261,9 +261,18 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'er',
     'journey',
     'timeline',
+    'kanban',
   ]),
   mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
-  nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
+  nodeBorder: def('nb', 'color', [
+    'flowchart',
+    'sequence',
+    'class',
+    'state',
+    'er',
+    'timeline',
+    'kanban',
+  ]),
   // Shared: three diagram types and core's `Theme.ink()` read it (D334).
   nodeTextColor: def('nt', 'color', ['core', 'flowchart', 'state', 'er']),
   clusterBkg: def('cb', 'color', ['flowchart', 'class', 'er']),

@@ -657,7 +657,8 @@ npm install @mermaid-js/plugin-hand-drawn
 - **What is sketched (D301):** flowchart (node shapes, their inner lines, subgraphs, the
   collapsed card, edges), class (class boxes, dividers, notes, namespaces, relations), state
   (states, composites, notes, start and end, choice, fork and join, region dividers,
-  transitions) and ER (entities, attribute rows, dividers, subgraphs, relationship lines).
+  transitions), ER (entities, attribute rows, dividers, subgraphs, relationship lines) and kanban
+  (columns and cards; the priority bar is kept, D379).
   Mindmap will be sketched once it is ported. Arrowheads, edge-label backgrounds and text are never
   sketched, as in v12. Roughness is v12's: 0.7 for nodes, groups and marks, 0.3 for edges.
   State composites are drawn at 0.7, where v12 used roughjs's default of 1. An outline with no
@@ -665,7 +666,7 @@ npm install @mermaid-js/plugin-hand-drawn
   plain element.
 - **Not sketched:** sequence draws exactly as without the plugin, with no warning, as in v12
   (D305). Gantt, pie, timeline, journey, quadrant and gitGraph will do the same once they are
-  ported. Types v12 sketched that v13 has not ported yet (requirement, block, kanban, swimlanes,
+  ported. Types v12 sketched that v13 has not ported yet (requirement, block, swimlanes,
   venn, ishikawa, treemap, usecase, agentflow) are sketched once their ports adopt it.
 - **Text output** (`format: 'ascii'`) is never sketched: it draws as before, with one
   `ASCII_DROPPED` warning (`feature: 'handDrawn'`) for every type with `handDrawn` on, sequence
@@ -1445,3 +1446,25 @@ where v12 and v13 differ; the other themes keep v12's colour.
 | `neutral` | `#d4d4d4` | `#cacaca` |
 | `base` | `#eeddbb` | `#d9cfbc` |
 | `redux`, `redux-color` | `#171717` | `#28253d` |
+
+## Kanban SVG structure
+
+What changed in the kanban's SVG compared with v12 (spec #424, D372–D379). v12's groups and
+classes are kept so selectors that use them keep working: `g.sections` holds one
+`g.cluster.section-<k>` per column (k from 1), then `g.items` one `g.node` per card, in board
+order. Every column and card carries `data-id` and `data-ast`, its item's AST id (`n:<id>`,
+`n:<id>@2` for a repeated id, an id-less item's text as its id).
+
+| v12 | v13 | Why |
+| --- | --- | --- |
+| Root `id="<render id>"`, a `<style>` scoped by the id, a `viewBox` with `mindmap.padding` (10) around the board, `mindmap.useMaxWidth` | No root `id`; `class="mermaid mermaid-kanban"`, `role="img"`, `aria-roledescription="kanban"`, `data-mermaid-version`; the `viewBox` is what is drawn plus `kanban.padding` (8) on each side, so 2 px tighter by default, and may start at a negative `x` or `y`; `width="100%"` and `max-width`, or `width` and `height` with `kanban.useMaxWidth: false` | Inert output (R-SEC-2), D224, D378 |
+| Each column and card had `id="<render id>-<item id>"`, which a repeated id duplicated | No element id at all: kanban has no title or description statement, so not even `<render id>-title`/`-desc` | No colliding ids (R-A11Y-1) |
+| Column: `<g class="cluster <classes> section-<k>" id data-look>` with a `<rect>` (a rough `<path>` under `look: handDrawn`) and a `g.cluster-label` around a `<foreignObject>`; an unclassed column wrote the class `undefined` | `<g class="cluster section-<k>[ <classes>]" data-id data-ast>` with the `<rect>` and `<g class="cluster-label">` holding a `<text>` centred on the column; no `undefined` class, no `data-look` | One element per item maps it to its source (R-PARSE-8) |
+| Card: `<g class="node undefined" id>` (or `node <classes>`) with `<rect class="basic label-container __APA__">`, an unclassed priority `<line>` and three labels in `<foreignObject>`s, the ticket's inside `<a class="kanban-ticket-link">` | `<g class="node[ <classes>]" data-id data-ast>` with `<rect class="basic label-container">`, `<line class="kanban-priority">` when there is a bar, then `<g class="label">` for the title, the ticket (inside the link, when there is one) and the assignee, each holding a left-aligned `<text>`; no `undefined`, no `__APA__` | Same |
+| Labels: markdown HTML in `<foreignObject>`, wrapped by the browser; a raw line break in a quoted label folded to a space | `<text>`/`<tspan>` from core's label layout with markdown on, for all four kinds: `**bold**`, `<br>`, entities, math and `fa:` icons work; titles wrap at the column width `W` (columns) and `W − 25` (cards, tickets and assignees); a raw line break in a quoted label breaks the line | R-TEXT-1, D372 |
+| Ticket link: `xlink:href` set to `ticketBaseUrl.replace('#TICKET#', ticket)` (so `$&` in a ticket expanded to the match), `target="_blank"`, no check (only DOMPurify removed a `javascript:` URL); underlined by `.kanban-ticket-link` in the `<style>` | `<a class="kanban-ticket-link" href target="_blank" rel="noopener noreferrer" text-decoration="underline">`. The first `#TICKET#` is replaced with the ticket taken literally (`$&` stays `$&`), not percent-encoded, and the URL passes the link check (`securityLevel`, `linkSchemes`). A refused URL draws the ticket as plain text with one `URL_REFUSED` warning. No link without a ticket or a `ticketBaseUrl` | R-SEC-4, R-SEC-6, R-SVG-4, D377 |
+| Priority: a 4 px line in `red`, `orange`, `blue` or `lightblue` for `Very High`, `High`, `Low`, `Very Low` (exact case); `Medium`, any other value and a non-string drew the line with no stroke (invisible) | The same four colours, in every theme; anything else draws no line. One `KANBAN_PRIORITY` warning per render names each card value that is none of the four nor `Medium` (a non-string is never one of them), with the cards' AST ids. A column's priority is not drawn or checked | D375, D376 |
+| Colours from the `<style>`: `.section-<k> rect { fill, stroke: lighten(cScale<k+1>, 10) }` (`darken` under `darkMode`), no rule past column 10, so those columns drew black; `.node rect { fill: background; stroke: nodeBorder; stroke-width: 1px }`; HTML labels in `textColor` | Presentation attributes reading `var(--_x)` aliases on the root `style`. Column k fills and strokes `kanbanColumn<(k + 1) mod 12>`, kanban's own theme variable: `cScale<n>` lightened by 10, darkened under a dark theme or `darkMode` (the `dark` trait, so `neo-dark`, which v12 left light, darkens). Columns cycle through the twelve slots and are never black; `cScale<n>` overrides recolour them, and `--mermaid-kanbanColumn<n>` sets one directly. Card rects take `background` and `nodeBorder`, 1 px, `rx`/`ry` 5; column titles and every card label `textColor` | D152, D331, D374 |
+| `look: neo` put the global `[data-look="neo"].cluster rect` gradient stroke and shadow on column rects | `look` is ignored; kanban differs between the four families by colour only, with no gradient and no shadow | D153, D227 |
+| `look: handDrawn` sketched columns only (cards never got the look), and the card code that would have sketched them dropped the priority bar | With `@mermaid-js/plugin-hand-drawn`, columns (`group`) and cards (`node`) are sketched through `w.outline`; the priority bar, the link and the text are not, and the bar is kept | D379 |
+| The mindmap rules v12's kanban style sheet carried (`.edge`, `.section-edge-*`, `.edge-depth-*`, `.node-icon-*`, `.section-root`, `.disabled`, `.kanban-label`, `.icon-container`, `.section-<k> line`, `.section-<k> text`) | Not ported: they matched nothing in a kanban board | — |
