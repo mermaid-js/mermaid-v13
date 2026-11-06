@@ -89,7 +89,7 @@ const SPLIT: readonly FieldSpec[] = [
 export const FIXTURES: Readonly<Record<string, Fixture>> = {
   // e2e should-render-a-complex-packet-diagram.mmd
   tcp: { model: model(TCP) },
-  // …-with-showbits-false.mmd: a front-matter title, no bit numbers.
+  // the e2e TCP header with `showBits: false`: a front-matter title, no bit numbers.
   tcpNoBits: { model: model(TCP, { title: 'Packet Diagram' }), config: { showBits: false } },
   // …-with-descending-bit-order.mmd
   register: {
