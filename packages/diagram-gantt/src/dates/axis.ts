@@ -1,7 +1,8 @@
 // Ported from Pele (https://github.com/obsidianmd/pele), src/diagrams/gantt/axis.ts at 3a2f075.
 // Copyright (c) 2026 kepano. MIT License: see THIRD_PARTY_NOTICES in @mermaid-js/diagram-gantt.
-// Changes from Pele: index reads carry `!` for noUncheckedIndexedAccess. The axis code is
-// otherwise unchanged.
+// Changes from Pele: index reads carry `!` for noUncheckedIndexedAccess; `intervalTicks`'
+// estimate takes a month as 365 / 12 days, as v12's `dayjs.duration` did (#379; d3's automatic
+// ticks keep their 30-day month). The axis code is otherwise unchanged.
 // cspell:ignore kepano
 //
 import { MONTHS, WEEKDAYS } from './dates.ts';
@@ -15,6 +16,8 @@ const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 const WEEK = 7 * DAY;
 const MONTH = 30 * DAY;
+// v12's tick estimate (`dayjs.duration({ month: 1 })`): 365 / 12 days.
+const MONTH_ESTIMATE = (365 / 12) * DAY;
 const YEAR = 365 * DAY;
 
 export type TickUnit =
@@ -97,7 +100,7 @@ const CALENDARS: Record<Exclude<TickUnit, 'week'>, Calendar> = {
     offset: (d, step) => d.setMonth(d.getMonth() + step),
     field: (d) => d.getMonth(),
     cycle: 12,
-    ms: MONTH,
+    ms: MONTH_ESTIMATE,
   },
   year: {
     floor(d) {

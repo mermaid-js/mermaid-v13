@@ -1,8 +1,9 @@
 /**
  * Generated gantt charts for the schedule parity (spec #293 T3): random date formats, excludes
- * and includes, weekends, inclusive ends, tags, sections, and starts and ends of every kind
- * (dates, durations, `after`/`until` with known, unknown and forward ids). Deterministic: a
- * linear congruential generator from a fixed seed.
+ * and includes (weekday names and dates, in ISO and in the chart's own format), weekends,
+ * `weekday` statements, inclusive ends, tags, sections, and starts and ends of every kind
+ * (dates, durations, `after`/`until` with one or several ids, known, unknown and forward).
+ * Deterministic: a linear congruential generator from a fixed seed.
  */
 import type { CorpusItem } from '../types.ts';
 
@@ -52,23 +53,35 @@ export function scheduleFuzz(count: number, seed = 7): CorpusItem[] {
     };
     const lines = ['gantt'];
     if (fmt) lines.push('dateFormat ' + fmt);
-    if (rnd(2)) lines.push('excludes ' + pick(EXCLUDES));
-    if (rnd(4) === 0) lines.push('includes ' + pick(['2019-02-09', 'saturday']));
+    // Excludes and includes also in the chart's own format (v12 compares them formatted).
+    if (rnd(2)) lines.push('excludes ' + pick([...EXCLUDES, date(), `weekends ${date()}`]));
+    if (rnd(4) === 0) lines.push('includes ' + pick(['2019-02-09', 'saturday', date()]));
     if (rnd(4) === 0) lines.push('inclusiveEndDates');
     if (rnd(4) === 0) lines.push('weekend ' + pick(['friday', 'saturday']));
+    if (rnd(4) === 0) lines.push('weekday ' + pick(['monday', 'friday', 'sunday']));
     const n = 1 + rnd(8);
+    const ids = (): string => `t${rnd(n + 2)}`;
     for (let i = 0; i < n; i++) {
       if (rnd(4) === 0) lines.push('section S' + rnd(3));
       const tags = pick(TAGS);
       const id = `t${rnd(n + 2)}`;
-      const start = pick([date(), date(), `after t${rnd(n + 2)}`, `after t${rnd(n)} t${rnd(n)}`]);
+      // Several ids, some unknown (`zz`, or past the last task).
+      const start = pick([
+        date(),
+        date(),
+        `after ${ids()}`,
+        `after ${ids()} ${ids()}`,
+        `after ${ids()} zz ${ids()}`,
+      ]);
       const end = pick([
         `${rnd(10)}d`,
         `${rnd(30)}h`,
         `${rnd(3)}w`,
         '0d',
         date(),
-        `until t${rnd(n + 2)}`,
+        `until ${ids()}`,
+        `until ${ids()} ${ids()}`,
+        `until zz ${ids()}`,
         '1.5d',
         'xx',
         `${1 + rnd(2)}M`,

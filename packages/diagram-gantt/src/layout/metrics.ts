@@ -61,7 +61,7 @@ export interface GanttMetrics {
   readonly tickLabelEm: number;
   /** d3's default tick count (`axis.ticks()` with no argument). */
   readonly tickCount: number;
-  /** v12 `getEstimatedTickCount`'s `dayjs.duration` units, in ms (a month is 30 days). */
+  /** v12 `getEstimatedTickCount`'s `dayjs.duration` units, in ms (a month is 365 / 12 days). */
   readonly tickUnitMs: Readonly<Record<string, number>>;
   /** v12 `MAX_TICK_COUNT`: more interval ticks than this fall back to automatic ones. */
   readonly maxTicks: number;
@@ -126,7 +126,7 @@ export const GANTT_METRICS: GanttMetrics = {
     hour: 3.6e6,
     day: 8.64e7,
     week: 6.048e8,
-    month: 2.592e9,
+    month: 2.628e9,
   },
   maxTicks: 10000,
   excludeSpanMonths: 72,

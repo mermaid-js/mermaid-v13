@@ -37,6 +37,10 @@ class Chart {
     this.head.push(`excludes ${e}`);
     return this;
   }
+  addSection(name: string): this {
+    this.tasks.push(`section ${name}`);
+    return this;
+  }
   setTickInterval(t: string): this {
     this.head.push(`tickInterval ${t}`);
     return this;
@@ -95,6 +99,14 @@ const SHAPES: [string, (n: number) => Chart][] = [
       const f = fixture();
       for (let i = n - 1; i >= 1; i--) f.addTask(`t${i}`, `t${i},after t${i - 1},1d`);
       return f.addTask('t0', 't0,2020-01-01,1d');
+    },
+  ],
+  [
+    'many sections (one lookup each, no scan)',
+    (n) => {
+      const f = fixture();
+      for (let i = 0; i < n * 2; i++) f.addSection(`s${i}`).addTask(`t${i}`, `t${i},2020-01-01,1d`);
+      return f;
     },
   ],
   [

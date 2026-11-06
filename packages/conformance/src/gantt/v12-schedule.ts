@@ -1,8 +1,7 @@
 /**
  * v12's schedule, for the schedule parity (spec #293 T3): the v12 oracle parses the source, and
- * its gantt wrapper (`oracle-env.ts`) runs `db.getTasks()` with the clock at
- * {@link GANTT_PARITY_NOW} (dayjs and v12's today fallback read it); a throw there rejects the
- * source, as v12's render did.
+ * its gantt wrapper (`oracle-env.ts`) runs `db.getTasks()` with the clock at `now` (dayjs and
+ * v12's today fallback read it); a throw there rejects the source, as v12's render did.
  *
  * v12's `taskDb` is module state that `clear()` never resets, so an id the text never declares
  * can resolve to a task of an earlier diagram. The spec compares such a reference with the
@@ -12,9 +11,9 @@
  * Calls must be sequential (the oracle is one shared v12 instance).
  */
 import { loadOracle } from '../oracle.ts';
-import { ganttOracleTasks } from './oracle-env.ts';
+import { atOracleNow, GANTT_PARITY_NOW, ganttOracleTasks } from './oracle-env.ts';
 
-export { GANTT_PARITY_NOW } from './oracle-env.ts';
+export { GANTT_PARITY_NOW };
 
 export interface V12Task {
   readonly id: string;
@@ -91,13 +90,15 @@ function taskOf(t: V12RawTask): V12Task {
   };
 }
 
-/** v12's scheduled tasks for `source` at `GANTT_PARITY_NOW`, or why v12 rejected it. */
-export async function v12Schedule(source: string): Promise<V12Schedule> {
-  const oracle = await loadOracle();
-  await oracle.parse(flushSource(source));
-  const parsed = await oracle.parse(source);
-  if (!parsed.accepted) return { ok: false, error: parsed.error };
-  if (parsed.diagramType !== 'gantt')
-    return { ok: false, error: `not gantt: ${parsed.diagramType}` };
-  return { ok: true, tasks: (ganttOracleTasks() as V12RawTask[]).map(taskOf) };
+/** v12's scheduled tasks for `source` at `now` (default `GANTT_PARITY_NOW`), or why v12 rejected it. */
+export function v12Schedule(source: string, now = GANTT_PARITY_NOW): Promise<V12Schedule> {
+  return atOracleNow(now, async (): Promise<V12Schedule> => {
+    const oracle = await loadOracle();
+    await oracle.parse(flushSource(source));
+    const parsed = await oracle.parse(source);
+    if (!parsed.accepted) return { ok: false, error: parsed.error };
+    if (parsed.diagramType !== 'gantt')
+      return { ok: false, error: `not gantt: ${parsed.diagramType}` };
+    return { ok: true, tasks: (ganttOracleTasks() as V12RawTask[]).map(taskOf) };
+  });
 }

@@ -2,13 +2,13 @@
  * Hand-built gantt models for the specs, written with v12's DB calls (`ganttDb.js`
  * `addSection`, `addTask(text, data)`, `setExcludes` …), so a case reads like v12's own
  * `ganttDb.spec.ts`. `addTask` splits the data as v12's `parseData` did and T2's parser does
- * (`GanttTask.fields`); ranges are 0 (the layout specs that need a position parse text).
+ * (`GanttTask.fields`). Each statement's range is one offset past the one before, so source
+ * order holds (the layout specs that need real positions parse text).
  */
 import type { GanttSection, GanttTag, GanttTask, GanttWeekend } from '../model.ts';
 import type { ScheduleInput } from './types.ts';
 
 const RE_TAG = /^\s*(active|done|crit|milestone|vert)\s*$/;
-const NOWHERE = { start: 0, end: 0 };
 
 const merge = (existing: readonly string[], txt: string): string[] => [
   ...new Set([
@@ -30,6 +30,13 @@ export class FixtureDb {
   sections: GanttSection[] = [];
   tasks: GanttTask[] = [];
   private count = 0;
+  private offset = 0;
+
+  /** The next statement's range. */
+  protected nextRange(): { start: number; end: number } {
+    const start = this.offset++;
+    return { start, end: start + 1 };
+  }
   private readonly asts = new Map<string, number>();
 
   setDateFormat(txt: string): this {
@@ -85,8 +92,8 @@ export class FixtureDb {
       ...(fields.length >= 2 ? { start: fields[fields.length >= 3 ? 1 : 0]! } : {}),
       end: fields[Math.min(fields.length, 3) - 1]!,
       ...(prevId !== undefined ? { prevId } : {}),
-      range: NOWHERE,
-      dataRange: NOWHERE,
+      range: this.nextRange(),
+      dataRange: { start: this.offset - 1, end: this.offset },
     });
     return this;
   }
