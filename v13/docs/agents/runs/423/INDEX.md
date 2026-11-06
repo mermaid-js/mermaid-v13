@@ -8,7 +8,7 @@ Integration PR: #479 (draft). Integration branch `feature/423_cynefin`, checked 
 | T2 grammar, parser, model, AST, ported specs | #465 | #461 | merged |
 | T3 custom layout (`CynefinLayout`), seeded boundaries | #467 | #465 (soft) | merged |
 | T4 SVG renderer | #468 | #465, #467 | merged |
-| T5 integration (manifest, config, theme table, baselines) | #469 | #468, #414 T0a | open |
+| T5 integration (manifest, config, theme table, baselines) | #469 | #468, #414 T0a | merged |
 | T6 language facet | #470 | #465 | merged |
 
 - `01-v12-cynefin.md`: pointer notes on v12 grammar, DB, renderer, boundaries, specs, corpus and the v13 seams.
