@@ -46,7 +46,12 @@ import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { packetConfig } from '../config.ts';
 import type { PacketField, PacketModel } from '../model.ts';
 import { MAX_PACKET_ROWS, RowSplitter } from '../normalise.ts';
-import type { PacketDocument, PacketStatementNode, PacketTextNode } from './ast.ts';
+import type {
+  PacketDocument,
+  PacketFieldDrop,
+  PacketStatementNode,
+  PacketTextNode,
+} from './ast.ts';
 import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
 import { PACKET_TRIVIA, T } from './tokens.ts';
@@ -173,11 +178,11 @@ interface WrittenBits {
   range: Range;
 }
 
-/** A field's range after v12's checks; `ok` is false when one failed (D341). */
+/** A field's range after v12's checks, and the check that failed, if one did (D341). */
 interface Resolved {
   start: number;
   end: number;
-  ok: boolean;
+  error?: PacketFieldDrop;
 }
 
 /** Parse a packet diagram. Never throws: problems are error diagnostics. */
@@ -505,13 +510,16 @@ class PacketParser {
    * syntax error in the field still moves the count on; `restart` as in {@link document}.
    */
   private field(written: WrittenBits, restart: boolean): void {
-    const { start, end, ok } = this.resolve(written, restart);
+    const { start, end, error } = this.resolve(written, restart);
     this.expect(T.Colon, FIELD_FORM);
     const s = this.expect(T.String);
     const labelRange = this.range(s);
     const label = labelValue(this.raw(s));
     const range = { start: written.range.start, end: labelRange.end };
     const astId = this.id(`field:${start}-${end}`);
+    let dropped = error;
+    if (!dropped && !this.place({ start, end, bits: end - start + 1, label, astId }, range))
+      dropped = { reason: 'rowCap' };
     this.children.push({
       id: astId,
       type: 'Field',
@@ -521,11 +529,11 @@ class PacketParser {
       label,
       labelRange,
       bitsRange: written.range,
+      ...(dropped ? { dropped } : {}),
     });
     this.st.statement('field', range);
     // D346: each label is a `field` symbol of its own; repeated labels are separate fields.
     this.st.symbol(label, 'field', labelRange, 'def');
-    if (ok) this.place({ start, end, bits: end - start + 1, label, astId }, range);
     this.eol();
   }
 
@@ -535,49 +543,56 @@ class PacketParser {
    * nowhere for `+0`.
    */
   private resolve(written: WrittenBits, restart: boolean): Resolved {
-    const { diagnostics } = this.st;
     const where = written.range;
     const { start: s, end: e } = written;
+    /** Report the failed check at the bits as written, and give it to the field's node. */
+    const failed = (code: string, message: string): PacketFieldDrop => {
+      this.st.diagnostics.error(code, message, where);
+      return { reason: 'error', code, message };
+    };
     if (s !== undefined && e !== undefined && e < s) {
-      diagnostics.error(
+      const error = failed(
         'PACKET_END_BEFORE_START',
-        `Packet block ${s} - ${e} is invalid. End must be greater than start.`,
-        where
+        `Packet block ${s} - ${e} is invalid. End must be greater than start.`
       );
       this.lastBit = s;
-      return { start: s, end: e, ok: false };
+      return { start: s, end: e, error };
     }
     // After a field whose bits could not be read, counting restarts here.
     const next = restart && s !== undefined ? s : this.lastBit + 1;
     const start = s ?? next;
     const end = e ?? start + (written.bits ?? 1) - 1;
     if (written.bits === 0) {
-      diagnostics.error(
+      const error = failed(
         'PACKET_ZERO_BITS',
-        `Packet block ${start} is invalid. Cannot have a zero bit field.`,
-        where
+        `Packet block ${start} is invalid. Cannot have a zero bit field.`
       );
-      return { start, end, ok: false };
+      return { start, end, error };
     }
     this.lastBit = end;
-    if (start === next) return { start, end, ok: true };
-    diagnostics.error(
+    if (start === next) return { start, end };
+    const error = failed(
       'PACKET_NOT_CONTIGUOUS',
-      `Packet block ${start} - ${e ?? start} is not contiguous. It should start from ${next}.`,
-      where
+      `Packet block ${start} - ${e ?? start} is not contiguous. It should start from ${next}.`
     );
-    return { start, end, ok: false };
+    return { start, end, error };
   }
 
-  /** Split `field` into rows (`normalise.ts`); the first field the cap cuts warns (D342). */
-  private place(field: PacketField, range: Range): void {
+  /**
+   * Split `field` into rows (`normalise.ts`); the first field the cap cuts warns (D342).
+   * Returns whether any of it is drawn: false when it lies wholly past the cap.
+   */
+  private place(field: PacketField, range: Range): boolean {
+    const before = this.rows.fields.length;
     const dropped = this.rows.add(field);
-    if (dropped === undefined) return;
-    this.st.diagnostics.warning(
-      'PACKET_TRUNCATED',
-      `The packet has more than ${MAX_PACKET_ROWS} rows: bit ${dropped} and the bits after it are not drawn.`,
-      range
-    );
+    if (dropped !== undefined) {
+      this.st.diagnostics.warning(
+        'PACKET_TRUNCATED',
+        `The packet has more than ${MAX_PACKET_ROWS} rows: bit ${dropped} and the bits after it are not drawn.`,
+        range
+      );
+    }
+    return this.rows.fields.length > before;
   }
 
   /** `(ACC_DESCR | ACC_TITLE | TITLE) EOL` */

@@ -10,6 +10,8 @@
  * name another field already has.
  */
 import type { LanguageFacet } from '@mermaid-js/core/parser-kit';
+import { preprocess } from '@mermaid-js/core/preprocess';
+import { packetSectionOf } from './config.ts';
 import { packetCompletions } from './facet/completions.ts';
 import { packetHover } from './facet/hover.ts';
 import { packetCategories } from './generated/categories.ts';
@@ -24,7 +26,13 @@ export type * from './parser/index.ts';
 /** The packet facet. */
 export const packetLanguage: LanguageFacet<PacketDocument> = {
   id: 'packet',
-  parse: (text, options) => parsePacket(text, options),
+  // The service passes no config, but rows (and so which fields the row cap drops) depend on
+  // `bitsPerRow`: read the source's own front matter and directives, as the renderer does.
+  // The preprocess diagnostics are the service's to add (`LanguageFacet.parse`).
+  parse: (text, options) => {
+    const preprocessed = preprocess(text);
+    return parsePacket(text, { ...options, preprocessed, config: packetSectionOf(preprocessed) });
+  },
   categories: packetCategories,
   namespaces: [['field']],
   standalone: ['field'],

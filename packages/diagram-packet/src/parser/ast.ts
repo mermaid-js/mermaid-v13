@@ -36,7 +36,17 @@ export interface PacketFieldNode extends AstNode<'Field'> {
   labelRange: Range;
   /** `0-15`, `16` or `+8`: the bits as written, before the `:`. */
   bitsRange: Range;
+  /** Why the field is not drawn, when it is not; absent for a field in `PacketModel.fields`. */
+  dropped?: PacketFieldDrop;
 }
+
+/**
+ * Why a field is left out of the model: one of v12's checks failed on its bits (D341; the
+ * error diagnostic's code and message), or it lies wholly past the 10,000-row cap (D342).
+ */
+export type PacketFieldDrop =
+  | { readonly reason: 'error'; readonly code: string; readonly message: string }
+  | { readonly reason: 'rowCap' };
 
 /** `title …`, `accTitle: …` and `accDescr …`; `text` is the converted value. */
 export interface PacketTextNode extends AstNode<'Title' | 'AccTitle' | 'AccDescr'> {

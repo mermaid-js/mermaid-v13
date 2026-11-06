@@ -9,6 +9,7 @@
  * `showBits` and `bitOrder` are read as v12's renderer read them (`showBits` truthy,
  * `bitOrder === 'descending'`), with no warning.
  */
+import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 
 export interface PacketConfig {
   readonly rowHeight: number;
@@ -87,4 +88,22 @@ export function packetConfig(section: Readonly<Record<string, unknown>> | undefi
     out.bitOrder = given.bitOrder === 'descending' ? 'descending' : 'ascending';
   }
   return { config: Object.freeze(out) as unknown as PacketConfig, problems };
+}
+
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/**
+ * The `packet` config a source sets itself: its front matter's `config.packet`, then each
+ * `%%{init}%%`'s `packet`, merged key by key, as the renderer's resolved config takes them.
+ * For callers that parse without a resolved config: the language facet (the service passes
+ * none) and conformance (the oracle applies neither). `undefined` when the source sets none.
+ */
+export function packetSectionOf(pre: PreprocessResult): Record<string, unknown> | undefined {
+  const parts: unknown[] = [pre.frontMatter?.config?.packet];
+  for (const dir of pre.directives) {
+    if (dir.kind === 'init' && isRecord(dir.args)) parts.push(dir.args.packet);
+  }
+  const section = Object.assign({}, ...parts.filter(isRecord)) as Record<string, unknown>;
+  return Object.keys(section).length > 0 ? section : undefined;
 }

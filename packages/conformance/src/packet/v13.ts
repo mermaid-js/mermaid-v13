@@ -2,7 +2,12 @@
  * The v13 side of packet parity: the packet parser and the normaliser from its `PacketModel` to
  * the {@link PacketSnapshot} that `v12.ts` takes from mermaid\@12's packet DB.
  */
-import { detectPacket, isWholeField, parsePacket } from '@mermaid-js/diagram-packet';
+import {
+  detectPacket,
+  isWholeField,
+  packetSectionOf,
+  parsePacket,
+} from '@mermaid-js/diagram-packet';
 import type { PacketModel } from '@mermaid-js/diagram-packet';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { DiagramAdapter } from '../types.ts';
@@ -25,23 +30,13 @@ export function packetV13Snapshot(model: PacketModel): PacketSnapshot {
   };
 }
 
-const isRecord = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null && !Array.isArray(v);
-
 /**
- * The `packet` config a source sets: its front matter's `config.packet`, then each
- * `%%{init}%%`'s `packet`, merged key by key. The oracle applies neither (it reads the text
- * without v12's config preprocessing), so parity passes it to both sides.
+ * The `packet` config a source sets (`packetSectionOf`: front matter, then each `%%{init}%%`).
+ * The oracle applies neither (it reads the text without v12's config preprocessing), so parity
+ * passes it to both sides.
  */
-export function packetSection(text: string): Record<string, unknown> | undefined {
-  const pre = preprocess(text);
-  const parts: unknown[] = [pre.frontMatter?.config?.packet];
-  for (const dir of pre.directives) {
-    if (dir.kind === 'init' && isRecord(dir.args)) parts.push(dir.args.packet);
-  }
-  const section = Object.assign({}, ...parts.filter(isRecord)) as Record<string, unknown>;
-  return Object.keys(section).length > 0 ? section : undefined;
-}
+export const packetSection = (text: string): Record<string, unknown> | undefined =>
+  packetSectionOf(preprocess(text));
 
 /**
  * v13 parse for parity: the model, or a throw carrying the first error diagnostic. The

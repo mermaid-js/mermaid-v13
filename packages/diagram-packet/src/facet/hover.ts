@@ -1,20 +1,13 @@
 /**
  * Packet hover (DESIGN §4.5, D93): a field's bits, `:` or label show its label and its resolved
- * range and width (what `+8` stands for), or why it is not drawn; a keyword the one-line doc of
+ * range and width (what `+8` stands for), or why it is not drawn (the parser's `dropped`: a
+ * D341 error or the row cap, D342); a keyword the one-line doc of
  * the grammar file (`generated/docs.ts`). Never a preview.
  */
-import type {
-  DocumentView,
-  Hover,
-  HoverTarget,
-  ParseResult,
-  Range,
-} from '@mermaid-js/core/parser-kit';
+import type { DocumentView, Hover, HoverTarget, Range } from '@mermaid-js/core/parser-kit';
 import { packetDocs } from '../generated/docs.ts';
-import type { PacketModel } from '../model.ts';
 import { MAX_PACKET_ROWS } from '../normalise.ts';
 import type { PacketDocument, PacketFieldNode } from '../parser/ast.ts';
-import { PACKET_SEMANTIC_ERRORS } from '../parser/parser.ts';
 import { T } from '../parser/tokens.ts';
 import { code, span } from './tables.ts';
 
@@ -27,24 +20,20 @@ const VALUE_WORDS: Readonly<Partial<Record<number, string>>> = {
 
 const inside = (offset: number, r: Range) => r.start <= offset && offset <= r.end;
 
-function fieldHover(node: PacketFieldNode, result: ParseResult<unknown, PacketDocument>): string {
+function fieldHover(node: PacketFieldNode): string {
   const head = `**field** ${code(node.label)}`;
-  const model = result.model as PacketModel;
-  if (model.fields.some((f) => f.astId === node.id)) {
-    const bits = node.end - node.start + 1;
-    const where =
-      bits === 1 ? `Bit ${node.start} · 1 bit` : `Bits ${node.start}-${node.end} · ${bits} bits`;
-    return `${head}\n\n${where}`;
+  const { dropped } = node;
+  if (dropped) {
+    const why =
+      dropped.reason === 'error'
+        ? dropped.message
+        : `it lies past the ${MAX_PACKET_ROWS}-row limit of a packet.`;
+    return `${head}\n\nNot drawn: ${why}`;
   }
-  // D341: a misplaced field reports its error on its bits; else the row cap dropped it (D342).
-  const error = result.diagnostics.find(
-    (d) =>
-      PACKET_SEMANTIC_ERRORS.includes(d.code) &&
-      d.range.start === node.bitsRange.start &&
-      d.range.end === node.bitsRange.end
-  );
-  const why = error?.message ?? `the packet has more than ${MAX_PACKET_ROWS} rows.`;
-  return `${head}\n\nNot drawn: ${why}`;
+  const bits = node.end - node.start + 1;
+  const where =
+    bits === 1 ? `Bit ${node.start} · 1 bit` : `Bits ${node.start}-${node.end} · ${bits} bits`;
+  return `${head}\n\n${where}`;
 }
 
 export function packetHover(at: HoverTarget, doc: DocumentView<PacketDocument>): Hover | undefined {
@@ -54,7 +43,7 @@ export function packetHover(at: HoverTarget, doc: DocumentView<PacketDocument>):
     let range = node.range;
     if (inside(at.offset, node.bitsRange)) range = node.bitsRange;
     else if (inside(at.offset, node.labelRange)) range = at.symbol?.range ?? node.labelRange;
-    return { range, contents: fieldHover(node, result) };
+    return { range, contents: fieldHover(node) };
   }
   const t = at.token;
   if (!t) return undefined;

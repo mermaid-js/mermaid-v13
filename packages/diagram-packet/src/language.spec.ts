@@ -97,6 +97,10 @@ describe('packet completions (D95)', () => {
     // A field whose bits were read moves the count on, though its label is broken.
     expect(complete('packet\n  0-7: "a"\n  8-15 "no colon"\n  ¦')).toContain('16');
     expect(complete('packet\n  0-7: "a"\n  +8: unquoted\n  ¦')).toContain('16');
+    expect(complete('packet\n  +0: "z"\n  ¦')).toContain('0');
+    expect(complete('packet\n  0-7: "a" %% c\n  title T\n  ¦')).toContain('8');
+    // `8 "b"` is out of place (13 was next) but its bits are read: the count goes on from 8.
+    expect(complete('packet\n  0-7: "a" x\n  12-10: "r"\n  8 "b"\n  ¦')).toContain('9');
   });
 
   it('offers `:` after a range and `"` after the `:`', () => {
@@ -148,6 +152,14 @@ describe('packet hover (D93)', () => {
       '**field** `Source Port`\n\nBits 0-15 · 16 bits'
     );
     expect(hover('packet\n  0¦: "flag"')).toBe('**field** `flag`\n\nBit 0 · 1 bit');
+  });
+
+  it("applies the row cap at the source's own `bitsPerRow`: front matter or directive", () => {
+    const body = 'packet\n  0-9999: "a"\n  10000: "b¦"';
+    const capped = '**field** `b`\n\nNot drawn: it lies past the 10000-row limit of a packet.';
+    expect(hover(body)).toBe('**field** `b`\n\nBit 10000 · 1 bit');
+    expect(hover(`---\nconfig:\n  packet:\n    bitsPerRow: 1\n---\n${body}`)).toBe(capped);
+    expect(hover(`%%{init: {"packet": {"bitsPerRow": 1}}}%%\n${body}`)).toBe(capped);
   });
 
   it('says a field with a semantic error is not drawn, with the reason', () => {

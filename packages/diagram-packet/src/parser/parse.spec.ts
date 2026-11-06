@@ -166,6 +166,41 @@ describe('parsePacket', () => {
   });
 });
 
+describe('parsePacket field nodes (T6)', () => {
+  const dropped = (src: string, config?: Record<string, unknown>) =>
+    parsePacket(src, { config }).ast.children.flatMap((n) =>
+      n.type === 'Field' ? [n.dropped] : []
+    );
+
+  it('say why a field is not drawn: the D341 check that failed, with its message', () => {
+    expect(dropped('packet\n0-7: "a"\n9-12: "b"\n+0: "z"\n15-14: "r"\n16: "c"')).toEqual([
+      undefined,
+      {
+        reason: 'error',
+        code: 'PACKET_NOT_CONTIGUOUS',
+        message: 'Packet block 9 - 12 is not contiguous. It should start from 8.',
+      },
+      {
+        reason: 'error',
+        code: 'PACKET_ZERO_BITS',
+        message: 'Packet block 13 is invalid. Cannot have a zero bit field.',
+      },
+      {
+        reason: 'error',
+        code: 'PACKET_END_BEFORE_START',
+        message: 'Packet block 15 - 14 is invalid. End must be greater than start.',
+      },
+      undefined,
+    ]);
+  });
+
+  it('say a field wholly past the row cap is not drawn, and a field it cuts is (D342)', () => {
+    const src = 'packet\n0-9998: "a"\n9999-10001: "cut"\n10002: "past"';
+    expect(dropped(src, { bitsPerRow: 1 })).toEqual([undefined, undefined, { reason: 'rowCap' }]);
+    expect(dropped(src)).toEqual([undefined, undefined, undefined]);
+  });
+});
+
 describe('parsePacket probe (T6, R-LANG-7)', () => {
   const probe = (marked: string) => {
     const at = marked.indexOf('¦');

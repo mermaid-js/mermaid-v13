@@ -16,6 +16,7 @@ export {
 } from './parser/index.ts';
 export type {
   PacketDocument,
+  PacketFieldDrop,
   PacketFieldNode,
   PacketHeaderNode,
   PacketParseOptions,
@@ -24,7 +25,7 @@ export type {
   PacketTextNode,
 } from './parser/index.ts';
 export type { PacketField, PacketModel, PacketPiece } from './model.ts';
-export { PACKET_CONFIG_DEFAULTS, packetConfig } from './config.ts';
+export { PACKET_CONFIG_DEFAULTS, packetConfig, packetSectionOf } from './config.ts';
 export type { PacketConfig, PacketConfigProblem } from './config.ts';
 export { layoutPacket } from './layout/index.ts';
 export type {

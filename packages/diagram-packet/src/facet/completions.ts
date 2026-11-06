@@ -14,7 +14,7 @@ import type {
   TokenStream,
 } from '@mermaid-js/core/parser-kit';
 import { packetDocs } from '../generated/docs.ts';
-import type { PacketDocument } from '../parser/ast.ts';
+import type { PacketDocument, PacketFieldNode } from '../parser/ast.ts';
 import { parsePacket } from '../parser/parser.ts';
 import { T } from '../parser/tokens.ts';
 import { HEADER_LINE, ITEMS, span, tokenBefore } from './tables.ts';
@@ -41,11 +41,31 @@ function onHeaderLine(text: string, at: number): boolean {
 
 /**
  * The bit a field written at `at`, a statement start, starts at: v12's `lastBit + 1` after the
- * text above. The parser decides it, broken fields above included (their bits still move the
- * count on, D341): a `+1` field put there resolves to that bit.
+ * text above. The parser decides it, broken fields above included (a field whose bits were read
+ * moves the count on though its label failed, and it has no AST node): a `+1` field put at `at`
+ * resolves to that bit. Only the text after the last field node above is parsed again, behind a
+ * field `0-<lastBit>` that stands for everything before it, so the cost is that of the lines
+ * since the last whole field, not of the document. `lastBit` after a node is its end, or its
+ * start for a reversed range (v12's `populate`, D341); `+0` has `end = start - 1`, which is it.
  */
-function nextBit(text: string, at: number): number {
-  const { children } = parsePacket(`${text.slice(0, at)}+1: ""`).ast;
+function nextBit(ast: PacketDocument, text: string, at: number): number {
+  let field: PacketFieldNode | undefined;
+  for (const node of ast.children) {
+    if (node.range.end > at) break;
+    if (node.type === 'Field') field = node;
+  }
+  let src = `${text.slice(0, at)}+1: ""`;
+  let config: Record<string, unknown> | undefined;
+  if (field) {
+    const dropped = field.dropped;
+    const reversed = dropped?.reason === 'error' && dropped.code === 'PACKET_END_BEFORE_START';
+    const last = reversed ? field.start : field.end;
+    const before = last < 0 ? '' : `\n0-${last}: ""`;
+    src = `packet${before}${text.slice(field.range.end, at)}+1: ""`;
+    // One row for the stand-in field: rows do not move start bits, and it stays one piece.
+    config = { bitsPerRow: Math.max(1, last + 1) };
+  }
+  const { children } = parsePacket(src, { config }).ast;
   const last = children[children.length - 1];
   return last?.type === 'Field' ? last.start : 0;
 }
@@ -78,7 +98,7 @@ export function packetCompletions(
   }
   // A field may start here (not only its end bit after `-`): the next free bit.
   if (!header && expected.has(T.Int) && expected.has(T.Plus)) {
-    const label = String(nextBit(text, range.start));
+    const label = String(nextBit(result.ast, text, range.start));
     offer({ label, kind: 'value', insertText: label, range, detail: 'the next free bit' });
   }
   return out;
