@@ -586,6 +586,10 @@ export function createMermaid(
   ): { ctx: RenderContext; warnings: Warning[] } {
     const { prepared, plugin } = analysis;
     const { config } = prepared;
+    // A usage error, as a bad `limits` option is: `+now` of a bad Date or a string is NaN.
+    const now = +(options?.now ?? Date.now());
+    if (!Number.isFinite(now))
+      throw new TypeError(`RenderOptions.now is no instant: ${String(options?.now)}`);
     const textOutput = units.id === 'cell';
     const warnings: Warning[] = [...skipped, ...prepared.warnings];
     const warn = (w: Warning): void => void warnings.push(toWarning(w, registry.fragments()));
@@ -665,7 +669,7 @@ export function createMermaid(
       version: VERSION,
       linkSchemes: s.options.linkSchemes,
       limits: s.limits,
-      now: +(options?.now ?? Date.now()),
+      now,
       availableWidth: width,
       iconPacks: packs,
       layout: (graph) => {

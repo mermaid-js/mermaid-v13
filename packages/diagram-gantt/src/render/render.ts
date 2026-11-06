@@ -355,11 +355,11 @@ function drawSections(scene: Scene): void {
   w.close();
 }
 
-/** v12 `drawToday`: `todayMarker` split on `,` (and `;`, as v12's `style` read it), checked. */
+/** v12 `drawToday`: `todayMarker` split on `,` (its lexer rule stops at `;`), checked. */
 function drawToday({ w, layout, ctx, paint }: Scene): void {
   const t = layout.today;
   if (!t) return;
-  const style = t.style === undefined ? undefined : checkStyle(t.style.split(/[,;]/), ctx.warn);
+  const style = t.style === undefined ? undefined : checkStyle(t.style.split(','), ctx.warn);
   w.open('g', { class: 'today' });
   w.leaf('line', {
     class: 'today',

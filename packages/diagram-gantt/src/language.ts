@@ -14,7 +14,7 @@ import { ganttHover } from './facet/hover.ts';
 import { ganttCategories } from './generated/categories.ts';
 import { parseGantt } from './parser/index.ts';
 import type { GanttDocument } from './parser/index.ts';
-import { NEVER_STORED } from './parser/task-ids.ts';
+import { NEVER_STORED } from './ids.ts';
 
 export { ganttCategories } from './generated/categories.ts';
 export { ganttDocs } from './generated/docs.ts';

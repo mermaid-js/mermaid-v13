@@ -3,6 +3,7 @@ import type { Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
+import { LimitError, MAX_STEPS } from '@mermaid-js/core/limits';
 import {
   layoutGantt,
   parseGantt,
@@ -16,9 +17,9 @@ import {
  * days an exclude walk draws. Shape copied from `conformance/src/gantt/stress.spec.ts`: n and
  * 8n units; linear is ~8x, quadratic ~64x, and the bar is 24x, on this thread's CPU time.
  *
- * Inside v12's caps the work is still unbounded: a task may span thousands of years (only its
- * start year is capped), and each excluded day of its span is visited once per pass. That is
- * escalated to the maintainer rather than capped here (spec #293 "Further Notes").
+ * Inside v12's caps the day walk is unbounded: a task may span thousands of years (only its
+ * start year is capped), and each excluded day of its span is visited once per pass. Core's
+ * `maxLayoutWork` limit bounds it (D542).
  */
 let spec: ThemeSpec;
 beforeAll(async () => {
@@ -156,14 +157,35 @@ describe('stress: the gantt schedule and layout are linear', () => {
     60_000
   );
 
-  // Unbounded inside v12's caps; enable once the maintainer decides (GAPS.md #379 "For the maintainer").
-  it.skip('a source-cap chart of 9000-year tasks over a sparse exclude', () => {
+  // D542: inside v12's caps the day walk is unbounded, so `maxLayoutWork` (core's MAX_STEPS)
+  // stops it: a source-cap chart of 9000-year tasks over a sparse exclude is refused after
+  // MAX_STEPS steps, at about the cost of a chart that takes half of them.
+  it('refuses a source-cap chart of 9000-year tasks over a sparse exclude at MAX_STEPS', () => {
     const f = fixture().setExcludes('1999-01-01');
     for (let i = 0; f.tasks.length * 26 < 50_000; i++) f.addTask('t', `t${i},2000-01-01,9000y`);
-    const t = cost(() => lay(f));
-    const base = cost(() => lay(fixture().addTask('t', 't,2000-01-01,9000y')));
-    expect(t / Math.max(base, 2)).toBeLessThan(24);
-  });
+    const model = f.model();
+    let error: unknown;
+    const t = cost(() => {
+      try {
+        lay(model);
+      } catch (e) {
+        error = e;
+      }
+    });
+    expect(error).toBeInstanceOf(LimitError);
+    const e = error as LimitError;
+    expect([e.limit, e.max]).toEqual(['maxLayoutWork', MAX_STEPS]);
+    // It stops at the limit: no step past the one that crossed it.
+    expect(e.found).toBe(MAX_STEPS + 1);
+    expect(e.message).toMatch(/gantt chart's schedule needs more than/);
+    // Half the steps: one task of (MAX_STEPS / 2) days.
+    const half = fixture()
+      .setExcludes('1999-01-01')
+      .addTask('t', `t,2000-01-01,${MAX_STEPS / 2}d`)
+      .model();
+    const base = cost(() => lay(half));
+    expect(t / Math.max(base, 2)).toBeLessThan(6);
+  }, 60_000);
 
   it('tickInterval 1millisecond over a year falls back to automatic ticks at once', () => {
     const t = cost(() => {

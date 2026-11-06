@@ -1,0 +1,9 @@
+---
+description: >-
+  From v12's ganttDb.spec.ts: "after m1" names no task, so task2 starts
+  today (the e2e clock is fixed for this fixture) and v12 warns.
+---
+gantt
+  dateFormat YYYY-MM-DD
+  task1 :id1,2013-01-01,2d
+  task2 :id2,after m1,1d

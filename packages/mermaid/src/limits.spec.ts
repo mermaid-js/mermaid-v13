@@ -136,3 +136,24 @@ describe('render limits (R-SEC-5)', () => {
     });
   });
 });
+
+describe('the layout work limit (R-SEC-5, D542)', () => {
+  // Every day of a 100-year task is walked once for its excluded days: 36,525 steps.
+  const gantt = 'gantt\ndateFormat YYYY-MM-DD\nexcludes 1999-01-01\na :a, 2000-01-01, 100y\n';
+
+  it('refuses gantt scheduling past maxLayoutWork, naming the steps', async () => {
+    const e = await limit(gantt, { limits: { maxLayoutWork: 10_000 } });
+    expect(e.limit).toBe('maxLayoutWork');
+    expect(e.message).toMatch(/gantt chart's schedule.*more than 10000 steps/);
+  });
+
+  it('draws the chart under the default, or a raised limit', async () => {
+    expect(await outcome(gantt)).toContain('<svg');
+    expect(await outcome(gantt, { limits: { maxLayoutWork: 1e12 } })).toContain('<svg');
+  });
+
+  it('cannot be raised from front matter', async () => {
+    const text = `---\nconfig:\n  limits:\n    maxLayoutWork: 1e12\n---\n${gantt}`;
+    expect((await limit(text, { limits: { maxLayoutWork: 10_000 } })).limit).toBe('maxLayoutWork');
+  });
+});

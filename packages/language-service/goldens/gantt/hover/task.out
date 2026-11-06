@@ -17,6 +17,6 @@
   5:12-5:14 "zz"
   | **task** `zz`
   |
-  | No task has this id.
+  | No task with this id is written before this click, so the click does nothing.
 @ 6:5  De|sign again :2d
   none

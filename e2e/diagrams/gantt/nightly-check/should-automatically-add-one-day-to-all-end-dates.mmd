@@ -1,0 +1,11 @@
+---
+description: >-
+  From v12's ganttDb.spec.ts: with inclusiveEndDates, a 1d task and a
+  task with a fixed end date both end a day later than they would
+  without it.
+---
+gantt
+  dateFormat YYYY-MM-DD
+  inclusiveEndDates
+  test1 :id1,2019-02-01,1d
+  test2 :id2,2019-02-01,2019-02-03

@@ -44,8 +44,7 @@ import { ganttGateCorpus } from './corpus.ts';
 const SKIPPED = [
   // `gantt\n` and `gantt`: the comment line goes through the header.
   'gantt-cases/empty (commented)',
-  'edge case 56 (commented)',
-  'edge case 57 (commented)',
+  'gantt-cases/empty-without-line-break (commented)',
 ];
 
 /** The suffix of a generated variant's id. */
@@ -99,7 +98,7 @@ describe('gantt lexer parity with mermaid@12 (jison)', () => {
     }
     process.stdout.write(`lexer parity: ${compared} of ${items.length} sources lexed by v12\n`);
     // Every e2e fixture and every harvested spec and syntax-page string reaches the lexer.
-    expect(e2e).toBe(80);
+    expect(e2e).toBe(93);
     expect(specs).toBe(41);
     const show = (t: JisonToken[]) => t.map(([n, i]) => `${n}:${JSON.stringify(i)}`).join(' ');
     expect(

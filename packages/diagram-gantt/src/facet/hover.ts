@@ -1,30 +1,61 @@
 /**
  * Gantt hover (DESIGN §4.5, D93): a task id shows the task it names (the last one written with
- * it, as v12 looks ids up) and its section; a keyword the one-line doc of the grammar file
+ * it, as `after`/`until` look ids up; in a `click`, the latest one written before the click, as
+ * v12 bound it) and its section; a keyword the one-line doc of the grammar file
  * (`generated/docs.ts`), the keyword alone where its token holds a value (`title Plan`,
  * `dateFormat YYYY-MM-DD`); in task data, a tag, `after` or `until` what it means. Never a
  * preview.
  */
 import type { DocumentView, Hover, HoverTarget } from '@mermaid-js/core/parser-kit';
 import { ganttDocs } from '../generated/docs.ts';
-import type { GanttModel } from '../model.ts';
+import type { GanttModel, GanttTask } from '../model.ts';
 import type { GanttDocument } from '../parser/ast.ts';
 import { T } from '../parser/tokens.ts';
-import { code, isTag, REFERENCE_WORDS, span, TAGS, tasksById, TEXT_WORDS } from './tables.ts';
+import {
+  clickTask,
+  code,
+  isTag,
+  REFERENCE_WORDS,
+  span,
+  TAGS,
+  tasksById,
+  TEXT_WORDS,
+} from './tables.ts';
 
 const DATA_WORDS = new Map<string, string>([
   ...TAGS.map(([tag, doc]) => [tag, `A tag: the task is ${doc}.`] as const),
   ...REFERENCE_WORDS,
 ]);
 
-function taskHover(name: string, model: GanttModel | undefined): string {
-  const task = tasksById(model).get(name);
-  if (!task) return `**task** ${code(name)}\n\nNo task has this id.`;
+const NO_TASK = 'No task has this id.';
+/** A click binds the task as v12 read its line (`ids.ts`). */
+const NO_EARLIER_TASK =
+  'No task with this id is written before this click, so the click does nothing.';
+
+function taskHover(
+  name: string,
+  task: GanttTask | undefined,
+  model: GanttModel | undefined,
+  missing: string
+): string {
+  if (!task) return `**task** ${code(name)}\n\n${missing}`;
   const section = task.section === undefined ? undefined : model?.sections[task.section];
   const facts = [`Task: ${code(task.text.trim())}`];
   if (section) facts.push(`Section: ${code(section.text.trim())}`);
   if (task.tags.length > 0) facts.push(`Tags: ${task.tags.map(code).join(', ')}`);
   return `**task** ${code(name)}\n\n${facts.join(' · ')}`;
+}
+
+/** A click's id at `offset` (in the ids token `[start, end)`): the task it names, if any. */
+function clickHover(text: string, start: number, end: number, offset: number, model?: GanttModel) {
+  let a = offset;
+  let b = offset;
+  while (a > start && text.charAt(a - 1) !== ',') a--;
+  while (b < end && text.charAt(b) !== ',') b++;
+  if (a === b) return undefined;
+  const name = text.slice(a, b);
+  const contents = taskHover(name, clickTask(model, offset, name), model, NO_EARLIER_TASK);
+  return { range: span(a, b), contents };
 }
 
 /** A tag, `after` or `until` in task data `[start, end)` at `offset`. */
@@ -78,11 +109,14 @@ function readAt(data: string, at: number, word: string): boolean {
 
 export function ganttHover(at: HoverTarget, doc: DocumentView<GanttDocument>): Hover | undefined {
   const { text } = doc;
+  const model = doc.result.model as GanttModel | undefined;
+  const t = at.token;
+  if (t?.kind === T.ClickId) return clickHover(text, t.range.start, t.range.end, at.offset, model);
   if (at.symbol?.kind === 'task') {
     const s = at.symbol;
-    return { range: s.range, contents: taskHover(s.name, doc.result.model as GanttModel) };
+    const task = tasksById(model).get(s.name);
+    return { range: s.range, contents: taskHover(s.name, task, model, NO_TASK) };
   }
-  const t = at.token;
   if (!t) return undefined;
   const { start } = t.range;
   if (t.kind === T.TaskData) return dataWord(text, start, t.range.end, at.offset);
