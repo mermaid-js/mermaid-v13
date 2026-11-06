@@ -211,6 +211,7 @@ const TEXT_USERS = [
   'journey',
   'timeline',
   'quadrant',
+  'gantt',
 ];
 
 const JOURNEY = ['journey'];

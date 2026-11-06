@@ -36,7 +36,9 @@ function readsOf(type: string): Set<string> {
     .map((f) => readFileSync(f, 'utf8'))
     .join('\n');
   const names = [...text.matchAll(/(?:\b\w+\(|\w:)\s*'(\w+)'/g)].map((m) => m[1]!);
-  return new Set([...names, ...(DYNAMIC_READS[type] ?? [])].filter((n) => n in THEME_VARIABLES));
+  return new Set(
+    [...names, ...(DYNAMIC_READS[type] ?? [])].filter((n) => Object.hasOwn(THEME_VARIABLES, n))
+  );
 }
 
 const TYPES = readdirSync(PACKAGES)
@@ -45,9 +47,9 @@ const TYPES = readdirSync(PACKAGES)
   .sort();
 /**
  * Packages whose port has not reached layout yet, so they read no theme variable. Each entry
- * must read none (so it is removed as soon as it reads one): gantt until #379 (spec #293).
+ * must read none (so it is removed as soon as it reads one). Empty since gantt's layout (#379).
  */
-const NOT_DRAWN_YET = new Set(['gantt']);
+const NOT_DRAWN_YET = new Set<string>([]);
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
 
 describe('theme vocabulary usedBy (#207)', () => {
