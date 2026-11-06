@@ -22,15 +22,13 @@ Where v12 gates on a name for something that is not a palette or geometry (for e
 
 ## Shared vocabulary
 
-The flowchart introduced these variables. Reuse them before adding any. Values per family are in `v13/docs/MIGRATION.md` "Theme geometry"; definitions are in `packages/core/src/theme/vocabulary.ts`, the padding values in `packages/core/src/theme/specs/geometry.ts`.
+The flowchart introduced these variables. Reuse them before adding any. Values per family are in `v13/docs/MIGRATION.md` "Theme geometry"; definitions are in `packages/core/src/theme/vocabulary.ts`, the padding values in `packages/core/src/theme/specs/geometry.ts`. The circle and cross arrowheads and the padding of flowchart's other shapes (stadium, double circle, circle minimum, subroutine, cylinder, lean, odd) are flowchart's own (`packages/diagram-flowchart/src/theme/`, spec #414 T4): a second type that needs one moves its row back to core.
 
 | Group | Variables | Read with |
 | --- | --- | --- |
 | Palette | `borderColorArray`, `bkgColorArray` | `theme.palette()` |
 | Point arrowhead | `arrowheadGap`, `arrowheadLength`, `arrowheadWidth` | `theme.number()` |
-| Circle arrowhead | `circleArrowheadSize`, `circleArrowheadGap` | `theme.number()` |
-| Cross arrowhead | `crossArrowheadSize`, `crossArrowheadGap`, `crossArrowheadStrokeWidth` | `theme.number()` |
-| Padding | `nodePaddingX`, `nodePaddingY`, `stadiumPaddingX`, `stadiumPaddingY`, `hexagonPaddingX`, `hexagonPaddingY`, `hexagonSlant`, `doubleCircleGap`, `doubleCirclePadding`, `circlePadding`, `circleMinDiameter`, `subroutinePaddingX`, `subroutinePaddingY`, `cylinderPaddingX`, `cylinderPaddingY`, `leanPaddingX`, `leanPaddingY`, `oddPaddingX`, `oddPaddingY` | `theme.padding()` for the `padding` kind, `theme.number()` for the rest |
+| Padding | `nodePaddingX`, `nodePaddingY`, `hexagonPaddingX`, `hexagonPaddingY`, `hexagonSlant`, `circlePadding` | `theme.padding()` for the `padding` kind, `theme.number()` for the rest |
 | Shadow | `dropShadow` | `theme.filter()` |
 | Gradient | `useGradient` (a `flag` token), `gradientStart`, `gradientStop` (`usedBy: ['core']`) | `theme.outline(name)` for the paint, `theme.gradient()` to know whether it is on |
 

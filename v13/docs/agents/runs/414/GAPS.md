@@ -73,3 +73,11 @@ Choices the spec and D-ids did not settle, made the way most consistent with the
   - `nestedBkg` (`altBackground`): the body of a region nested in another of its kind; shared rule `tertiaryColor` (v12 theme-base). default and forest `#f0f0f0`, neutral `#f4f4f4`, dark `#555555`, base derives. The redux and neo families take family values for `altBackground` instead, so their `nestedBkg` is the shared rule: a future diagram that reads `nestedBkg` there gets `tertiaryColor` (white in redux and neo), not state's `#f9f9fb`/`#f0f0f0`. Writing `nestedBkg` in the redux and neo specs would close that, at a few bytes in core.
 - **`REDUX_RULES` is gone**: its three rows were ER's, now the `redux` family's rules. `ARROWHEAD_VARIABLES` (and the classic and neo arrowhead constants) drop `erZeroOrMoreCircleOffset`.
 - **The composite-state tests** moved from core's `theme.spec.ts` to `diagram-state/src/theme/table.spec.ts`, unchanged but for the added base `tertiaryColor` case.
+
+## T4 (#443)
+
+- **18 rows, not the spec's 24.** Mindmap (wave 2, #406) reads `nodePaddingX`, `nodePaddingY`, `hexagonPaddingX`, `hexagonPaddingY`, `hexagonSlant` and `circlePadding`, so by the spec's two-readers rule they stay in core with the shared arrowhead rows. Moved: the five circle and cross arrowhead rows and the thirteen paddings of flowchart's other shapes (stadium, double circle, circle minimum, subroutine, cylinder, lean, odd).
+- **No flowchart-only colours.** Every colour flowchart reads lists another type in `usedBy`, so none moved.
+- **No D332 input.** Every moved value is a pure family split (v12 classic in `classic`, v12 neo in `redux`; `neo` falls back to `redux`, D181), so the table holds two family token sets and an empty light rule set (`rules` is required).
+- **Core's tests split.** `arrowheads.spec.ts` and `themes.spec.ts` "node padding" keep the shared rows; the moved rows' cases (per-theme pins, `flowchart.padding` scaling, overrides, no CSS alias) are in `diagram-flowchart/src/theme/table.spec.ts`.
+- **The port recipe** (`agents/port-diagram/theming.md` "Shared vocabulary") no longer lists the moved rows as shared; a second type that needs one moves it back to core.
