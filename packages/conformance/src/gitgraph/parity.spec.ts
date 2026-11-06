@@ -41,6 +41,10 @@ describe('gitGraph oracle parity with mermaid@12', () => {
     );
     expect(agree.length).toBeGreaterThan(1000);
     expect(rejected).toBeGreaterThan(150);
+    // `corpus/gitGraph-cases.json` holds only sources v12 rejects; those it renders are e2e files.
+    const cases = report.results.filter((r) => r.id.startsWith('gitGraph-cases/'));
+    expect(cases.length).toBe(3 * 28);
+    expect(cases.filter((r) => r.oracleAccepted).map((r) => r.id)).toEqual([]);
     expect({ unlisted: report.unlisted, disappeared: report.disappeared }).toEqual({
       unlisted: [],
       disappeared: [],

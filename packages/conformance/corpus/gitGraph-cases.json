@@ -1,0 +1,114 @@
+[
+  {
+    "id": "gitGraph-cases/branch-main-exists",
+    "source": "gitGraph\ncommit\nbranch main"
+  },
+  {
+    "id": "gitGraph-cases/branch-twice",
+    "source": "gitGraph\ncommit\nbranch a\nbranch a"
+  },
+  {
+    "id": "gitGraph-cases/checkout-unknown-branch",
+    "source": "gitGraph\ncommit\ncheckout nope"
+  },
+  {
+    "id": "gitGraph-cases/merge-current-branch",
+    "source": "gitGraph\ncommit\nbranch a\nmerge a"
+  },
+  {
+    "id": "gitGraph-cases/merge-main-into-main",
+    "source": "gitGraph\ncommit\nbranch a\ncommit\ncheckout main\nmerge main"
+  },
+  {
+    "id": "gitGraph-cases/merge-into-branch-without-commits",
+    "source": "gitGraph\nbranch a\ncommit\ncheckout main\nmerge a"
+  },
+  {
+    "id": "gitGraph-cases/merge-unknown-branch",
+    "source": "gitGraph\ncommit\nmerge nope"
+  },
+  {
+    "id": "gitGraph-cases/merge-branch-without-commits",
+    "source": "gitGraph\nbranch a\ncheckout main\ncommit\nmerge a"
+  },
+  {
+    "id": "gitGraph-cases/merge-same-head",
+    "source": "gitGraph\ncommit\nbranch a\ncheckout main\nmerge a"
+  },
+  {
+    "id": "gitGraph-cases/merge-id-taken",
+    "source": "gitGraph\ncommit id:\"A\"\nbranch a\ncommit\ncheckout main\nmerge a id:\"A\""
+  },
+  {
+    "id": "gitGraph-cases/cherry-pick-without-id",
+    "source": "gitGraph\ncommit\ncherry-pick"
+  },
+  {
+    "id": "gitGraph-cases/cherry-pick-unknown-id",
+    "source": "gitGraph\ncommit\ncherry-pick id:\"nope\""
+  },
+  {
+    "id": "gitGraph-cases/cherry-pick-merge-wrong-parent",
+    "source": "gitGraph\ncommit id:\"A\"\nbranch a\ncommit id:\"B\"\ncheckout main\ncommit id:\"C\"\nmerge a id:\"M\"\nbranch b\ncommit\ncherry-pick id:\"M\" parent:\"B2\""
+  },
+  {
+    "id": "gitGraph-cases/cherry-pick-merge-without-parent",
+    "source": "gitGraph\ncommit id:\"A\"\nbranch a\ncommit id:\"B\"\ncheckout main\ncommit id:\"C\"\nmerge a id:\"M\"\nbranch b\ncommit\ncherry-pick id:\"M\""
+  },
+  {
+    "id": "gitGraph-cases/cherry-pick-from-current-branch",
+    "source": "gitGraph\ncommit id:\"A\"\ncherry-pick id:\"A\""
+  },
+  {
+    "id": "gitGraph-cases/cherry-pick-onto-branch-without-commits",
+    "source": "gitGraph\nbranch b\ncheckout main\ncommit id:\"A\"\ncheckout b\ncherry-pick id:\"A\""
+  },
+  {
+    "id": "gitGraph-cases/cherry-pick-parent-of-ordinary-commit",
+    "source": "gitGraph\ncommit id:\"A\"\nbranch a\ncommit\ncherry-pick id:\"A\" parent:\"Z\""
+  },
+  {
+    "id": "gitGraph-cases/merge-quoted-into-main-without-commits",
+    "source": "gitGraph\nbranch \"quoted name\"\ncommit\ncheckout \"main\"\nmerge \"quoted name\""
+  },
+  {
+    "id": "gitGraph-cases/branch-named-title",
+    "source": "gitGraph\ncommit\nbranch title"
+  },
+  {
+    "id": "gitGraph-cases/branch-named-commit",
+    "source": "gitGraph\ncommit\nbranch commit"
+  },
+  {
+    "id": "gitGraph-cases/branch-named-keywords",
+    "source": "gitGraph\ncommit\nbranch LR\nbranch NORMAL"
+  },
+  {
+    "id": "gitGraph-cases/branch-without-name",
+    "source": "gitGraph\ncommit\nbranch\ncommit"
+  },
+  {
+    "id": "gitGraph-cases/merge-without-name",
+    "source": "gitGraph\ncommit\nmerge"
+  },
+  {
+    "id": "gitGraph-cases/unknown-commit-option",
+    "source": "gitGraph\ncommit id:\"a\" oops:\"x\"\ncommit"
+  },
+  {
+    "id": "gitGraph-cases/two-commits-on-one-line",
+    "source": "gitGraph\ncommit id:\"1\" commit id:\"2\""
+  },
+  {
+    "id": "gitGraph-cases/several-errors",
+    "source": "gitGraph\ncommit\ncheckout x\nbranch a order:x\nmerge y\ncommit"
+  },
+  {
+    "id": "gitGraph-cases/options-without-colon",
+    "source": "gitGraph\ncommit id \"a\"\ncommit tag \"b\"\ncommit"
+  },
+  {
+    "id": "gitGraph-cases/unknown-commit-type",
+    "source": "gitGraph\ncommit type:OTHER\ncommit\ncherry-pick id:\"x\" msg:\"y\""
+  }
+]

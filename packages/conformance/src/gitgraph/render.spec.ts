@@ -161,7 +161,7 @@ function points(tree: SvgView, node: SvgElement): [number, number][] {
 
 describe('gitGraph render properties over the gate corpus', () => {
   it('renders the corpus in every theme', () => {
-    expect(corpus.filter((i) => /^e2e\/[^(]*$/.test(i.id)).length).toBe(166);
+    expect(corpus.filter((i) => /^e2e\/[^(]*$/.test(i.id)).length).toBe(197);
     const perTheme = cases.length / THEMES.length;
     expect(perTheme).toBeGreaterThan(900);
     // Only sources v12 rejects stay out (#370's accept/reject parity).
@@ -179,7 +179,7 @@ describe('gitGraph render properties over the gate corpus', () => {
       expect(c.svg, c.id).not.toMatch(/NaN|Infinity|undefined|foreignObject|<marker/);
       if (!c.auto) expect(c.svg, c.id).not.toContain('<style');
     }
-  });
+  }, 600_000);
 
   it('is deterministic: a fresh API object renders the same bytes (D260, R-ARCH-6)', async () => {
     const fresh = new Map<string, Mermaid>();

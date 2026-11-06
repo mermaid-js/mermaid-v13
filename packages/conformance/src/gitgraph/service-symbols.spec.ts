@@ -31,7 +31,7 @@ import { sanitizeLikeV12 } from './v13.ts';
  */
 
 /** v12 names written otherwise than their name in the corpus (skipped above). */
-const ESCAPED = 5;
+const ESCAPED = 4;
 
 const service = createLanguageService();
 await service.preload({ types: ['gitGraph'] });

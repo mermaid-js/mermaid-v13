@@ -74,7 +74,10 @@ export const PARITY_SUITES: ParitySuite[] = [
   {
     adapter: gitGraphAdapter,
     corpusDirs: ['e2e/diagrams/git'],
-    corpusFiles: ['packages/conformance/corpus/gitGraph-v12-specs.json'],
+    corpusFiles: [
+      'packages/conformance/corpus/gitGraph-v12-specs.json',
+      'packages/conformance/corpus/gitGraph-cases.json',
+    ],
   },
   {
     adapter: quadrantAdapter,
