@@ -95,3 +95,10 @@ Choices the spec and D-ids did not settle, made the way most consistent with the
 - **No D332 input.** Every moved value is a pure family split (v12 classic in `classic`, v12 neo in `redux`; `neo` falls back to `redux`, D181), so the table holds two family token sets and an empty light rule set (`rules` is required).
 - **Core's tests split.** `arrowheads.spec.ts` and `themes.spec.ts` "node padding" keep the shared rows; the moved rows' cases (per-theme pins, `flowchart.padding` scaling, overrides, no CSS alias) are in `diagram-flowchart/src/theme/table.spec.ts`.
 - **The port recipe** (`agents/port-diagram/theming.md` "Shared vocabulary") no longer lists the moved rows as shared; a second type that needs one moves it back to core.
+
+## T5 (#444)
+
+- **The closure scan matches names, not aliases.** `cdn-build.spec.ts` reads every package's `src/theme/vocabulary.ts` and fails when one of its names is a whole word (no identifier character on either side) in a file of the ESM entry's static closure. Aliases (`pi1`, `pkb`) are two to four characters and collide with minified identifiers, so they are not scanned; an alias only reaches core with its row, whose name the scan finds. It checks the built output; the direction check's rule 1 checks core's sources.
+- **The planted case is a shared row**, `arrowheadGap` (flowchart and state read it), added to the scanned names: the scan must report it, and only it. A fixture package would need a build of its own.
+- **DESIGN points at the port recipe for DSL examples**, not at `CONTRACT.md`: run notes are not permanent. `theming.md` gains the forms a table uses most, and its "To add one" steps now write the package's vocabulary and table.
+- **REQUIREMENTS**: R-THEME-2 and R-THEME-5 keep their text; their acceptance cells gain a pointer to DESIGN §8.1 (diagram-owned and nested variables; the traits and the twelfth theme).

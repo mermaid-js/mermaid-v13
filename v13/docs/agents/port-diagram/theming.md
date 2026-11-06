@@ -40,12 +40,22 @@ A `padding` kind takes a px number or a multiple of the diagram's own `padding` 
 
 Add a new variable only when the redux and classic values differ (D152). If v12 neo and v12 classic draw the same value, it is a constant in the renderer or an existing variable. If the difference is the same quantity a shared variable already names (an arrowhead, node padding, the shadow), reuse that variable; a diagram does not get its own copy.
 
-To add one:
+To add one (the contract is DESIGN §8.1 and §12.1, D331):
 
-1. Define it in `packages/core/src/theme/vocabulary.ts` with the right kind (`length`, `padding`, `color`, `filter`).
-2. Give it a redux value (v12 neo) and a classic value (v12 classic) in every theme spec under `packages/core/src/theme/specs/`. Group shared geometry in `geometry.ts` as the padding does.
-3. Add it to `themeVariables` in `packages/core/schema/config.schema.yaml` with both values in the description, then run `pnpm gen:config` and `pnpm gen:theme`.
-4. Add its row to the MIGRATION.md "Theme geometry" table.
+1. **Pick its owner.** A variable only this type reads is the package's own: list it in `packages/diagram-<type>/src/theme/vocabulary.ts` with its alias, kind (`length`, `padding`, `color`, `filter`, …) and `usedBy: ['<type>']`, plus `nested` when v12 reads it under `themeVariables.<section>` (D335, D540). Core and the theme specs never name it. A variable that core or a second type reads is a row in `packages/core/src/theme/vocabulary.ts`; the second type moves an existing package row there.
+2. **Give it values in the package's table** (`src/theme/table.ts`, the plugin's `theme`, `vars: THEME_VARIABLE_TABLE`): `rules.light` (and `rules.dark`) over core's shared vocabulary, and family entries, `classic` for v12 classic and `redux` for v12 neo, with `neo` usually `fallback: 'redux'` (D181). Key by family and dark, never by theme name. Never add a diagram variable to a theme spec under `packages/core/src/theme/specs/`.
+3. **Where themes of one family write it differently**, read a shared input with `inline()` (DESIGN §8.3 "Shared inputs" lists them). Adding an input is a decision for the port's spec (D541); otherwise use a family-rule approximation listed in the oracle's `DIFFERENCES`.
+4. **Generate.** A new package needs the stub `src/theme/generated/variables.ts` (`export const THEME_VARIABLE_TABLE = {};`) before the first `pnpm gen:theme`, which writes it and `v13/docs/theme-variables.md`. Document the variable under `themeVariables` in `packages/core/schema/config.schema.yaml` with both values, then run `pnpm gen:config`.
+5. Add its row to the MIGRATION.md "Theme geometry" table, for geometry.
+
+The direction check (`tools/gen-config/src/theme-direction.spec.ts`) and the closure scan in `packages/mermaid/src/cdn-build.spec.ts` fail when a name runs the wrong way or reaches core's bundle. Test with `createTheme(spec, { diagram: plugin.theme })` (`packages/diagram-flowchart/src/theme/table.spec.ts` is an example).
+
+The DSL forms a table uses most (D332):
+
+- `bkgColorArray<n>`, `borderColorArray<n>`, `cScale<n>`: a palette slot as a literal colour.
+- `seriesColorArray<n>`: the series palette's slot as the theme wrote it, CSS included.
+- `literal(adjustHue(primaryColor, 64))`: a computed colour as a literal, for a v12 hue turn.
+- `inline(mutedBkg)`: a shared input as the theme wrote it; `inline(frameBorder, actorBorder)` falls back to the second where the theme wrote no first.
 
 Any value that departs from v12 (as circle padding and the hexagon axes do in D151) is a decision: escalate it and record a D-id.
 

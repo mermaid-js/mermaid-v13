@@ -1,9 +1,11 @@
 /**
- * The theme variable inventory (DESIGN §8.3, O-1): every v12 theme variable that core and
- * the ported diagrams read, with its private alias, its kind and who reads it. Names are
- * v12's, so the public CSS variable is `--mermaid-<name>` (R-THEME-2). Diagram plugins add
- * their own variables through `ThemeRuleTable`s (DESIGN §12.1); a variable no ported
- * diagram reads is accepted and ignored (R-CONF-5).
+ * Core's theme variable inventory (DESIGN §8.3, O-1): the shared vocabulary, with each
+ * variable's private alias, its kind and who reads it. A row is here when core reads it, two or
+ * more diagram types read it, or it is a shared input (D332) or a v12 compatibility row (D337).
+ * Names are v12's where v12 has one, so the public CSS variable is `--mermaid-<name>`
+ * (R-THEME-2). A variable one diagram type reads is that package's own, in its
+ * `src/theme/vocabulary.ts` and its plugin's `theme` table (D331, DESIGN §12.1), and core never
+ * names it. A variable no ported diagram reads is accepted and ignored (R-CONF-5).
  */
 
 /**
@@ -326,6 +328,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   calloutBkg: def('clk', 'color', ['gitgraph']),
   calloutTextColor: def('clt', 'color', ['gitgraph']),
   calloutBorder: def('clb', 'color', ['gitgraph']),
+  // Shared inputs that name no diagram (D332), which themes of one family write differently and
   // a diagram reads with `inline()`: the fills of a table's odd and even rows, the fill behind a
   // label on a link drawn on a plain surface rather than the edge label chip, and the body of a
   // region nested in another of its kind. v13 names; v12 has none.
