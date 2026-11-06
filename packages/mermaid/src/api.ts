@@ -45,7 +45,7 @@ import {
   loadTheme,
   resolveThemeName,
   type ThemeName,
-  type ThemeRuleTable,
+  type ThemeOptions,
 } from '@mermaid-js/core/theme';
 import { stageEnd, stageStart } from '@mermaid-js/core/timing';
 import type * as TextModule from './ascii.ts';
@@ -330,16 +330,15 @@ function themeFor(
   config: ResolvedConfig,
   s: Snapshot,
   warn: (w: Warning) => void,
-  rules: ThemeRuleTable | undefined,
+  tables: Pick<ThemeOptions, 'rules' | 'diagram'>,
   idPrefix: () => string
 ) {
   const choice = resolveThemeName(config.theme, warn);
   const spec = loadedTheme(choice.name) ?? loadedTheme(DEFAULT_THEME)!;
-  const dark = choice.dark ? loadedTheme(choice.dark) : undefined;
   return createTheme(spec, {
     themeVariables: config.themeVariables as Record<string, unknown> | undefined,
-    dark,
-    ...(rules ? { rules } : {}),
+    dark: choice.dark ? loadedTheme(choice.dark) : undefined,
+    ...tables,
     cssVariables: s.options.output?.cssVariables,
     warn,
     idPrefix,
@@ -660,7 +659,8 @@ export function createMermaid(
       engine = found.engine;
     }
     // The theme reads the id prefix only for the gradient (D182), after ctx exists.
-    const theme = themeFor(config, s, warn, registry.themeRules(), () => ctx.idPrefix);
+    const tables = { rules: registry.themeRules(), diagram: plugin.theme };
+    const theme = themeFor(config, s, warn, tables, () => ctx.idPrefix);
     let idPrefix: string | undefined;
     // Inline boxes (D177) are SVG only: text output shows every span as written, and warns
     // ASCII_DROPPED once per feature (D179). Glyphs (D293) are SVG only too, absent without an
