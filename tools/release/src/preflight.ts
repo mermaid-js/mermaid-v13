@@ -56,3 +56,36 @@ export function nextStep(pending: number, unpublished: number): NextStep {
   if (unpublished > 0) return pending > 0 ? 'version-then-publish' : 'publish';
   return pending > 0 ? 'version' : 'nothing';
 }
+
+/** The dependency fields through which a bump makes `changeset version` re-release a package. */
+interface DependentManifest {
+  name: string;
+  dependencies?: Record<string, string>;
+  optionalDependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+  /** Not followed: a devDependency is updated but never re-releases the package. */
+  devDependencies?: Record<string, string>;
+}
+
+/**
+ * `name` and every package that uses it, directly or transitively, through `dependencies`,
+ * `optionalDependencies` or `peerDependencies`: what a changeset on `name` alone releases, since
+ * the exact pins (RELEASING.md §2) re-release each dependent. Sorted by name.
+ */
+export function withDependents(manifests: readonly DependentManifest[], name: string): string[] {
+  const out = new Set([name]);
+  for (let grew = true; grew; ) {
+    grew = false;
+    for (const m of manifests) {
+      if (out.has(m.name)) continue;
+      const uses = [m.dependencies, m.optionalDependencies, m.peerDependencies].some((f) =>
+        Object.keys(f ?? {}).some((dep) => out.has(dep))
+      );
+      if (uses) {
+        out.add(m.name);
+        grew = true;
+      }
+    }
+  }
+  return [...out].sort((a, b) => a.localeCompare(b));
+}

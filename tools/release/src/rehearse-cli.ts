@@ -30,7 +30,8 @@ import { build } from 'esbuild';
 import { parseArgs } from '../../../packages/bench/src/cli/args.ts';
 import { ADAPTER_FIXTURES, ADAPTERS, adapterChecks, FACET_PEERS } from './adapters-check.ts';
 import { pendingChangesets } from './changesets.ts';
-import { packAll, publishAll } from './publish.ts';
+import { withDependents } from './preflight.ts';
+import { packAll, publishAll, publishedPackages } from './publish.ts';
 
 const ROOT = join(import.meta.dirname, '..', '..', '..');
 const FIXTURES = join(import.meta.dirname, '..', 'fixtures', 'rehearsal');
@@ -433,14 +434,22 @@ async function main(): Promise<void> {
   });
   check('publishes only the bumped packages', () => {
     const names = (specs: string[]) => specs.map((s) => s.slice(0, s.lastIndexOf('@'))).sort();
-    const want = ['@mermaid-js/diagram-flowchart', 'mermaid'];
+    // flowchart and everything pinned to it (RELEASING.md §2): mermaid, the language service and
+    // its adapters, the bundler plugin. Every other package keeps its version.
+    const want = withDependents(
+      publishedPackages(repo).map((p) => p.manifest),
+      '@mermaid-js/diagram-flowchart'
+    );
+    const kept = tarballs
+      .map((t) => t.name)
+      .filter((n) => !want.includes(n))
+      .sort();
     assert(
       JSON.stringify(names(result.published)) === JSON.stringify(want),
       `published ${result.published.join(', ')}`
     );
     assert(
-      JSON.stringify(names(result.skipped)) ===
-        JSON.stringify(['@mermaid-js/core', '@mermaid-js/plugin-interactions']),
+      JSON.stringify(names(result.skipped)) === JSON.stringify(kept),
       `skipped ${result.skipped.join(', ')}`
     );
     return `published ${result.published.join(', ')}; skipped ${result.skipped.join(', ')}`;

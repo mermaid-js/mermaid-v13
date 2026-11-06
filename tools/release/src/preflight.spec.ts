@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { nextStep, releasePlan, statusOutputArg } from './preflight.ts';
+import { nextStep, releasePlan, statusOutputArg, withDependents } from './preflight.ts';
 
 describe('release plan', () => {
   it('keeps the published packages changeset version bumps, dependents included', () => {
@@ -69,5 +69,22 @@ describe('release plan', () => {
       expect(arg.startsWith('/')).toBe(false);
       expect(join(root, arg)).toBe(file);
     }
+  });
+
+  it('a bump re-releases every package that depends on it, through dependencies and peers', () => {
+    const set = withDependents(
+      [
+        { name: 'core' },
+        { name: 'flowchart', peerDependencies: { core: 'workspace:*' } },
+        {
+          name: 'mermaid',
+          dependencies: { core: 'workspace:*', flowchart: 'workspace:*' },
+        },
+        { name: 'bundler', peerDependencies: { mermaid: 'workspace:*' } },
+        { name: 'tool', devDependencies: { flowchart: 'workspace:*' } },
+      ],
+      'flowchart'
+    );
+    expect(set).toEqual(['bundler', 'flowchart', 'mermaid']);
   });
 });
