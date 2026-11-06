@@ -519,11 +519,6 @@
       "count": 1
     }
   },
-  "packages/mermaid/src/measurer.ts": {
-    "@typescript-eslint/no-unsafe-argument": {
-      "count": 1
-    }
-  },
   "packages/mermaid/src/registry.ts": {
     "@typescript-eslint/unbound-method": {
       "count": 2

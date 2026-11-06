@@ -8,6 +8,11 @@ class FakeBrowser {
   loaded = false;
   size = 1;
   measured = 0;
+  /** Reads of document.fonts.size, calls of document.fonts.check, assignments to ctx.font. */
+  sizeReads = 0;
+  checks = 0;
+  fontSets = 0;
+  contexts = 0;
 
   install(): void {
     // eslint-disable-next-line @typescript-eslint/no-this-alias -- the stubbed globals' callbacks need the fake browser
@@ -16,8 +21,16 @@ class FakeBrowser {
       'OffscreenCanvas',
       class {
         getContext() {
+          browser.contexts++;
+          let font = '';
           return {
-            font: '',
+            get font() {
+              return font;
+            },
+            set font(f: string) {
+              browser.fontSets++;
+              font = f;
+            },
             measureText(this: { font: string }, text: string) {
               browser.measured++;
               const px = Number(/([\d.]+)px/.exec(this.font)?.[1]);
@@ -37,9 +50,13 @@ class FakeBrowser {
     vi.stubGlobal('document', {
       fonts: {
         get size() {
+          browser.sizeReads++;
           return browser.size;
         },
-        check: (font: string) => !font.includes('Brand') || browser.loaded,
+        check: (font: string) => {
+          browser.checks++;
+          return !font.includes('Brand') || browser.loaded;
+        },
       },
     });
   }
@@ -102,6 +119,24 @@ describe('selectMeasurer', () => {
       metrics: () => ({ ascent: 1, descent: 0, lineHeight: 1 }),
     };
     expect(selectMeasurer({ measurer: custom })).toBe(custom);
+  });
+
+  it('never touches the canvas measurer for an integrator measurer or deterministic: true', async () => {
+    browser.install();
+    const { selectMeasurer } = await freshModule();
+    const custom: Measurer = {
+      id: 'custom',
+      width: (text) => text.length,
+      metrics: () => ({ ascent: 1, descent: 0, lineHeight: 1 }),
+    };
+    selectMeasurer({ measurer: custom }).width('abcd', brand, 0);
+    selectMeasurer({ deterministic: true }).width('abcd', brand, 0);
+    expect(browser).toMatchObject({ contexts: 0, sizeReads: 0, checks: 0, measured: 0 });
+    selectMeasurer().width('abcd', brand, 0); // the shared canvas measurer, made now
+    const { sizeReads } = browser;
+    selectMeasurer({ measurer: custom });
+    selectMeasurer({ deterministic: true });
+    expect(browser.sizeReads).toBe(sizeReads); // and its per-render sync does not run for them
   });
 
   it('ignores an integrator measurer under deterministic: true (R-TEXT-7)', async () => {
@@ -186,13 +221,52 @@ describe('canvasMeasurer', () => {
     expect(m.width('abcd', brand, 0)).toBe(40);
   });
 
-  it('drops cached widths when document.fonts changes size', async () => {
+  it('drops every cache when document.fonts changes size between two renders', async () => {
     browser.install();
     const arial: FontKey = { ...brand, family: 'Arial' };
-    const m = (await freshModule()).canvasMeasurer() as Measurer;
+    const { selectMeasurer } = await freshModule();
+    let m = selectMeasurer(); // render 1
     m.width('abcd', arial, 0);
+    m.width('a', arial, 0);
+    m.metrics(arial);
+    expect(browser.measured).toBe(3);
     browser.size++;
+    m.width('abcd', arial, 0); // still render 1: the font set cannot change inside one (D201)
+    expect(browser.measured).toBe(3);
+    m = selectMeasurer(); // render 2
     m.width('abcd', arial, 0);
-    expect(browser.measured).toBe(2);
+    m.width('a', arial, 0);
+    m.metrics(arial);
+    expect(browser.measured).toBe(6);
+  });
+
+  it('answers a hit, a single-character hit and a metrics hit without touching document.fonts', async () => {
+    browser.install();
+    browser.finishLoading();
+    const { selectMeasurer } = await freshModule();
+    const m = selectMeasurer();
+    m.width('abcd', brand, 0);
+    m.width('a', brand, Style.Bold);
+    m.metrics(brand);
+    const { measured, sizeReads, checks, fontSets } = browser;
+    expect(m.width('abcd', brand, 0)).toBe(40);
+    expect(m.width('a', brand, Style.Bold)).toBeCloseTo(11, 9);
+    expect(m.metrics(brand)).toEqual({ ascent: 12, descent: 4, lineHeight: 16 });
+    expect(m.width('abcd', { ...brand }, 0)).toBe(40); // an equal font in a new object
+    expect(browser).toMatchObject({ measured, sizeReads, checks, fontSets });
+  });
+
+  it('does not cache a width the font check rejects, and sets the font again next time', async () => {
+    browser.install();
+    const m = (await freshModule()).canvasMeasurer() as Measurer;
+    expect(m.width('a', brand, 0)).toBe(8); // fallback face while "Brand" loads
+    expect(m.width('abcd', brand, 0)).toBe(32);
+    const sets = browser.fontSets;
+    browser.loaded = true; // loaded, but document.fonts.size has not changed
+    expect(m.width('a', brand, 0)).toBe(10);
+    expect(m.width('abcd', brand, 0)).toBe(40);
+    expect(browser.fontSets).toBe(sets + 1);
+    expect(m.width('abcd', brand, 0)).toBe(40);
+    expect(browser.measured).toBe(4);
   });
 });
