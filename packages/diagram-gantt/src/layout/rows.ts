@@ -33,13 +33,17 @@ export function objectKeyOrder(keys: Iterable<string>): string[] {
 
 const resolved = (t: ScheduledTask): boolean => t.start !== undefined && t.end !== undefined;
 
-export function rowsOf(tasks: readonly ScheduledTask[], compact: boolean): Rows {
+export function rowsOf(
+  tasks: readonly ScheduledTask[],
+  names: readonly string[],
+  compact: boolean
+): Rows {
   const plain = tasks.filter((t) => !t.task.tags.includes('vert'));
   const of = new Map<number, number>();
   if (!compact) {
     for (const t of plain) of.set(t.index, t.order);
     const counts = new Map<string, number>();
-    for (const t of plain) counts.set(t.task.section, (counts.get(t.task.section) ?? 0) + 1);
+    for (const t of plain) counts.set(names[t.index]!, (counts.get(names[t.index]!) ?? 0) + 1);
     return {
       count: plain.length,
       of,
@@ -49,9 +53,9 @@ export function rowsOf(tasks: readonly ScheduledTask[], compact: boolean): Rows 
   const groups = new Map<string, ScheduledTask[]>();
   for (const t of plain) {
     if (!resolved(t)) continue;
-    const list = groups.get(t.task.section) ?? [];
+    const list = groups.get(names[t.index]!) ?? [];
     list.push(t);
-    groups.set(t.task.section, list);
+    groups.set(names[t.index]!, list);
   }
   const sections: [string, number][] = [];
   let offset = 0;

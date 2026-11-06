@@ -237,10 +237,21 @@ export const MID_LINE_DIRECTIVES: CorpusItem[] = items('mid-line directive', [
   G + 'a :a1, 1d\nclick a1 href "u%%{init: {}}%%v"',
 ]);
 
-/** The e2e fixtures, the v12 spec strings, the cases above, and each of them commented and CR-cut. */
+/** The parser cases of `corpus/gantt-cases.json` (parity, #378). */
+export function ganttCases(): CorpusItem[] {
+  return JSON.parse(
+    readFileSync(join(REPO_ROOT, 'packages/conformance/corpus/gantt-cases.json'), 'utf8')
+  ) as CorpusItem[];
+}
+
+/**
+ * The e2e fixtures, the v12 spec strings, the parser cases, the cases above, and each of them
+ * commented and CR-cut.
+ */
 export async function ganttGateCorpus(): Promise<CorpusItem[]> {
   const all = [
     ...(await ganttCorpus()),
+    ...ganttCases(),
     ...DB_SPEC_CASES,
     ...CLICK_CASES,
     ...LINE_SEPARATORS,

@@ -15,7 +15,8 @@ import { barsOf } from './bars.ts';
 import { chartOf } from './chart.ts';
 import { envOf, type GanttLayoutContext } from './env.ts';
 import { axesOf, bandsOf, excludesOf, sectionsOf, titleOf, todayOf } from './parts.ts';
-import type { GanttLayout, GanttLayoutModel } from './types.ts';
+import type { GanttModel } from '../model.ts';
+import type { GanttLayout } from './types.ts';
 
 export const GANTT_UNKNOWN_TASK = 'GANTT_UNKNOWN_TASK';
 export const GANTT_BAD_DURATION = 'GANTT_BAD_DURATION';
@@ -29,7 +30,7 @@ export const GANTT_ERROR_CODES: Readonly<Record<ScheduleErrorKind, string>> = {
 };
 
 /** Lays out a gantt chart at `ctx.now`. */
-export function layoutGantt(model: GanttLayoutModel, ctx: GanttLayoutContext): GanttLayout {
+export function layoutGantt(model: GanttModel, ctx: GanttLayoutContext): GanttLayout {
   const now = ctx.now;
   // `RenderOptions.now` is `+(now ?? Date.now())`: an invalid `Date` arrives as NaN (#375).
   if (now === undefined || !Number.isFinite(now)) {
@@ -68,13 +69,13 @@ export function layoutGantt(model: GanttLayoutModel, ctx: GanttLayoutContext): G
 }
 
 /** The schedule, or the render's `SEMANTIC` error at the task that failed (D274). */
-function scheduled(model: GanttLayoutModel, now: number): Schedule {
+function scheduled(model: GanttModel, now: number): Schedule {
   try {
     return schedule(model, { now });
   } catch (e) {
     if (!(e instanceof ScheduleError)) throw e;
-    const range = model.tasks[e.index]?.range;
-    if (!range || model.source === undefined) throw new MermaidError('SEMANTIC', e.message);
+    const range = model.tasks[e.index]?.dataRange;
+    if (!range) throw new MermaidError('SEMANTIC', e.message);
     const code = GANTT_ERROR_CODES[e.kind];
     const diagnostic: Diagnostic = { severity: 'error', code, message: e.message, range };
     throw new MermaidError('SEMANTIC', formatDiagnostic(model.source, diagnostic), {
@@ -90,7 +91,7 @@ function scheduled(model: GanttLayoutModel, now: number): Schedule {
 const quoted = (list: Iterable<string>): string => [...list].map((s) => `"${s}"`).join(', ');
 
 /** D276: one warning each for unknown ids (`after`, `until`, `click`) and bad durations. */
-function warnings(model: GanttLayoutModel, plan: Schedule, ctx: GanttLayoutContext): void {
+function warnings(model: GanttModel, plan: Schedule, ctx: GanttLayoutContext): void {
   const known = new Set(model.tasks.map((t) => t.id));
   // v12 kept ids on a plain object, where `__proto__` is never stored.
   known.delete('__proto__');

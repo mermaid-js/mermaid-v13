@@ -70,5 +70,13 @@
     "reason": "The front-matter `title` baseline (D218): v12's timeline DB has no `setDiagramTitle`, so v12 dropped it; v13 draws it where an in-text `title` goes, as in timeline-cases/front-matter-title.",
     "owner": "#315",
     "since": "2026-11-05"
+  },
+  {
+    "id": "gantt-cases/top-axis",
+    "inputHash": "sha256:8d66e8836dc2a321",
+    "kind": "accept",
+    "reason": "v12's grammar calls `yy.TopAxis()`, which its DB does not define, so any text with the `topAxis` statement fails; v13 accepts it and draws the top axis (D273).",
+    "owner": "#378",
+    "since": "2026-11-06"
   }
 ]

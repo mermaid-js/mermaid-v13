@@ -5,12 +5,20 @@
  */
 import type { DiagramPlugin } from '@mermaid-js/core';
 import type { GanttLayout } from './layout/index.ts';
+import type { GanttModel } from './model.ts';
 
-/** The plugin's contract. T2 replaces `unknown` with `GanttModel`. */
-export type GanttPlugin = DiagramPlugin<unknown, GanttLayout>;
+/** The plugin's contract. */
+export type GanttPlugin = DiagramPlugin<GanttModel, GanttLayout>;
 
-export { ganttTokens, GanttTokenKind, JISON_NAMES } from './parser/index.ts';
-export type { GanttToken } from './parser/index.ts';
+export {
+  detectGantt,
+  ganttTokens,
+  GanttTokenKind,
+  JISON_NAMES,
+  parseGantt,
+} from './parser/index.ts';
+export type * from './parser/index.ts';
+export type * from './model.ts';
 export {
   GANTT_BAD_DURATION,
   GANTT_CONFIG_IGNORED,
@@ -25,12 +33,10 @@ export {
 export type * from './layout/index.ts';
 export { schedule, ScheduleError } from './schedule/index.ts';
 export type {
-  GanttTag,
-  RawGanttTask,
   Schedule,
   ScheduledTask,
   ScheduleErrorKind,
   ScheduleInput,
   ScheduleOptions,
-  ScheduleSettings,
+  ScheduleTask,
 } from './schedule/index.ts';

@@ -1,15 +1,16 @@
 /**
- * Hand-built schedule inputs for the specs, written with v12's DB calls (`ganttDb.js`
+ * Hand-built gantt models for the specs, written with v12's DB calls (`ganttDb.js`
  * `addSection`, `addTask(text, data)`, `setExcludes` …), so a case reads like v12's own
- * `ganttDb.spec.ts`. `addTask` splits the data as v12's `parseData` did. Parser-produced models
- * replace these once T2 (#378) lands.
+ * `ganttDb.spec.ts`. `addTask` splits the data as v12's `parseData` did and T2's parser does
+ * (`GanttTask.fields`); ranges are 0 (the layout specs that need a position parse text).
  */
-import type { GanttTag, RawGanttTask, ScheduleInput } from './types.ts';
+import type { GanttSection, GanttTag, GanttTask, GanttWeekend } from '../model.ts';
+import type { ScheduleInput } from './types.ts';
 
-const TAGS: readonly GanttTag[] = ['active', 'done', 'crit', 'milestone', 'vert'];
 const RE_TAG = /^\s*(active|done|crit|milestone|vert)\s*$/;
+const NOWHERE = { start: 0, end: 0 };
 
-const merge = (existing: string[], txt: string): string[] => [
+const merge = (existing: readonly string[], txt: string): string[] => [
   ...new Set([
     ...existing,
     ...txt
@@ -19,16 +20,17 @@ const merge = (existing: string[], txt: string): string[] => [
   ]),
 ];
 
-/** v12's DB setters over a {@link ScheduleInput}. */
+/** v12's DB setters over a model's schedule fields. */
 export class FixtureDb {
   dateFormat = '';
   includes: string[] = [];
   excludes: string[] = [];
   inclusiveEndDates = false;
-  weekend: 'friday' | 'saturday' = 'saturday';
-  tasks: RawGanttTask[] = [];
-  private section = '';
+  weekend: GanttWeekend = 'saturday';
+  sections: GanttSection[] = [];
+  tasks: GanttTask[] = [];
   private count = 0;
+  private readonly asts = new Map<string, number>();
 
   setDateFormat(txt: string): this {
     this.dateFormat = txt;
@@ -46,34 +48,46 @@ export class FixtureDb {
     this.inclusiveEndDates = true;
     return this;
   }
-  setWeekend(day: 'friday' | 'saturday'): this {
+  setWeekend(day: GanttWeekend): this {
     this.weekend = day;
     return this;
   }
   addSection(txt: string): this {
-    this.section = txt;
+    this.sections.push({ ast: this.ast(`s:${txt.trim()}`), text: txt });
     return this;
+  }
+
+  private ast(base: string): string {
+    const n = (this.asts.get(base) ?? 0) + 1;
+    this.asts.set(base, n);
+    return n === 1 ? base : `${base}@${n}`;
   }
 
   /** v12 `addTask` + `parseData`; throws where v12 threw at parse time (only tags). */
   addTask(text: string, data: string): this {
-    const fields = (data.startsWith(':') ? data.slice(1) : data).split(',');
+    const parts = (data.startsWith(':') ? data.slice(1) : data).split(',');
     const tags: GanttTag[] = [];
-    for (let m = RE_TAG.exec(fields[0] ?? ''); m; m = RE_TAG.exec(fields[0] ?? '')) {
-      tags.push(m[1] as GanttTag);
-      fields.shift();
-      if (fields.length === 0) throw new TypeError('A task needs data after its tags');
+    for (let m = RE_TAG.exec(parts[0] ?? ''); m; m = RE_TAG.exec(parts[0] ?? '')) {
+      if (!tags.includes(m[1] as GanttTag)) tags.push(m[1] as GanttTag);
+      parts.shift();
+      if (parts.length === 0) throw new TypeError('A task needs data after its tags');
     }
-    const f = fields.map((x) => x.trim());
-    const nextId = (): string => `task${++this.count}`;
-    let task: RawGanttTask;
-    if (f.length === 1) task = { text, section: this.section, tags, id: nextId(), end: f[0]! };
-    else if (f.length === 2)
-      task = { text, section: this.section, tags, id: nextId(), start: f[0]!, end: f[1]! };
-    else if (f.length === 3)
-      task = { text, section: this.section, tags, id: f[0]!, start: f[1]!, end: f[2]! };
-    else task = { text, section: this.section, tags, id: '' };
-    this.tasks.push(task);
+    const fields = parts.map((x) => x.trim());
+    const id = fields.length >= 3 ? fields[0]! : `task${++this.count}`;
+    const prevId = this.tasks.at(-1)?.id;
+    this.tasks.push({
+      ast: this.ast(`t:${id}`),
+      id,
+      text,
+      ...(this.sections.length > 0 ? { section: this.sections.length - 1 } : {}),
+      tags,
+      fields,
+      ...(fields.length >= 2 ? { start: fields[fields.length >= 3 ? 1 : 0]! } : {}),
+      end: fields[Math.min(fields.length, 3) - 1]!,
+      ...(prevId !== undefined ? { prevId } : {}),
+      range: NOWHERE,
+      dataRange: NOWHERE,
+    });
     return this;
   }
 
@@ -88,5 +102,3 @@ export class FixtureDb {
     };
   }
 }
-
-export { TAGS };

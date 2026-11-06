@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { ganttTokens } from '@mermaid-js/diagram-gantt';
+import { ganttTokens, parseGantt } from '@mermaid-js/diagram-gantt';
 
 /**
- * R-PARSE-7, pitfall 5: the gantt lexer is linear in input size, in every free-text state.
+ * R-PARSE-7, pitfall 5: the gantt lexer is linear in input size, in every free-text state, and
+ * so is the parser, over the same shapes and the parser's own (repeated ids and sections, merged
+ * `excludes` lines, clicks, a line of errors after errors).
  * Shape copied from `../timeline/stress.spec.ts`: n and 8n units; linear is ~8x, quadratic
  * ~64x, and the bar is 24x. Times are this thread's CPU time, and small and large lexes
  * alternate.
@@ -53,6 +55,22 @@ const SHAPES: [string, (n: number) => string][] = [
   ],
 ];
 
+/** Shapes for the parser (the lexer's are parsed too). */
+const PARSER_SHAPES: [string, (n: number) => string][] = [
+  ['tasks with one repeated id', (n) => G + 'a :x, 2024-01-01, 1d\n'.repeat(n / 20)],
+  ['one-field tasks', (n) => G + 'a :x, 2024-01-01, 1d\n' + 'b :1d\n'.repeat(n / 6)],
+  ['repeated sections', (n) => G + 'section s\na :1d\n'.repeat(n / 16)],
+  ['excludes lines', (n) => G + 'excludes a b c\n'.repeat(n / 15)],
+  [
+    'excludes lines of new tokens',
+    (n) => G + Array.from({ length: n / 12 }, (_, i) => `excludes d${i}\n`).join(''),
+  ],
+  ['clicks', (n) => G + 'click a,b call f(x) href "u"\n'.repeat(n / 28)],
+  ['tasks without data', (n) => G + 'a\n'.repeat(n / 2)],
+  ['errors on one line', (n) => G + '2020-01-01 ' + 'a:b#'.repeat(n / 4)],
+  ['tag-only data', (n) => G + 'a :done\n'.repeat(n / 8)],
+];
+
 /** CPU ms of this thread (the process on Node versions without threadCpuUsage). */
 const cpuMs = (): number => {
   const u =
@@ -83,6 +101,32 @@ describe('stress: the gantt lexer is linear in input size', () => {
         tLarge = Math.min(
           tLarge,
           cost(() => ganttTokens(large))
+        );
+      }
+      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+    },
+    30_000
+  );
+});
+
+describe('stress: the gantt parser is linear in input size', () => {
+  it.each([...SHAPES, ...PARSER_SHAPES])(
+    '%s',
+    (_name, build) => {
+      const small = build(4_000);
+      const large = build(32_000);
+      parseGantt(small); // warm up
+      parseGantt(large);
+      let tSmall = Infinity;
+      let tLarge = Infinity;
+      for (let round = 0; round < 5; round++) {
+        tSmall = Math.min(
+          tSmall,
+          cost(() => parseGantt(small))
+        );
+        tLarge = Math.min(
+          tLarge,
+          cost(() => parseGantt(large))
         );
       }
       expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);

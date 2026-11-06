@@ -1,46 +1,10 @@
 /**
- * The gantt layout's input and result (spec #293 T3). `GanttLayoutModel` is what the layout
- * reads of T2's `GanttModel` (#378); `GanttLayout` is plain data for the renderer (T4). Lengths
- * are px; rectangles have their top-left corner at `x`, `y`; times are ms since the epoch.
+ * The gantt layout's result (spec #293 T3): plain data for the renderer (T4), from T2's
+ * `GanttModel` (#378). Lengths are px; rectangles have their top-left corner at `x`, `y`; times
+ * are ms since the epoch.
  */
 import type { AstId } from '@mermaid-js/core/parser-kit';
 import type { MeasuredLabel } from '@mermaid-js/core/text';
-import type { RawGanttTask, ScheduleInput } from '../schedule/index.ts';
-
-/** A raw task and its AST id (`t:<id>`). */
-export interface GanttModelTask extends RawGanttTask {
-  readonly ast?: AstId;
-}
-
-export interface GanttModelSection {
-  /** As written (v12 `substr(8)`). */
-  readonly text: string;
-  readonly ast?: AstId;
-}
-
-/** A `click` statement: the ids it names (v12 splits them on `,`). */
-export interface GanttModelClick {
-  readonly ids: readonly string[];
-}
-
-export interface GanttLayoutModel extends ScheduleInput {
-  /** The original source, for positioned schedule errors (D274). */
-  readonly source?: string;
-  readonly tasks: readonly GanttModelTask[];
-  readonly sections: readonly GanttModelSection[];
-  readonly clicks: readonly GanttModelClick[];
-  /** The `title` statement, or the front-matter title (v12 `getDiagramTitle`). */
-  readonly title?: string;
-  /** Statement values as written; `''` / undefined when absent. */
-  readonly axisFormat: string;
-  readonly tickInterval?: string;
-  readonly todayMarker: string;
-  /** The `topAxis` statement (D273). */
-  readonly topAxis: boolean;
-  /** The `weekday` statement's day (D279: it wins over `gantt.weekday`). */
-  readonly weekday?: string;
-}
-
 export interface Rect {
   readonly x: number;
   readonly y: number;

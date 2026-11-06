@@ -1,16 +1,20 @@
 /**
- * v12's schedule, for the schedule parity (spec #293 T3): the v12 oracle parses the source and
- * runs `db.getTasks()` with the clock set to `now` (dayjs and v12's today fallback read it).
+ * v12's schedule, for the schedule parity (spec #293 T3): the v12 oracle parses the source, and
+ * its gantt wrapper (`oracle-env.ts`) runs `db.getTasks()` with the clock at
+ * {@link GANTT_PARITY_NOW} (dayjs and v12's today fallback read it); a throw there rejects the
+ * source, as v12's render did.
  *
  * v12's `taskDb` is module state that `clear()` never resets, so an id the text never declares
  * can resolve to a task of an earlier diagram. The spec compares such a reference with the
  * today fallback, so before each source a flush diagram points every id it references (after,
  * until, click, and `undefined`) past the end of any task list the source can make.
  *
- * Calls must be sequential (the oracle is one shared v12 instance) and run in a vitest worker.
+ * Calls must be sequential (the oracle is one shared v12 instance).
  */
-import { vi } from 'vitest';
 import { loadOracle } from '../oracle.ts';
+import { ganttOracleTasks } from './oracle-env.ts';
+
+export { GANTT_PARITY_NOW } from './oracle-env.ts';
 
 export interface V12Task {
   readonly id: string;
@@ -27,7 +31,7 @@ export interface V12Task {
 
 export type V12Schedule =
   | { readonly ok: true; readonly tasks: readonly V12Task[] }
-  | { readonly ok: false; readonly stage: 'parse' | 'schedule'; readonly error: string };
+  | { readonly ok: false; readonly error: string };
 
 interface V12RawTask {
   id?: string;
@@ -43,10 +47,6 @@ interface V12RawTask {
   crit?: boolean;
   milestone?: boolean;
   vert?: boolean;
-}
-
-interface V12GanttDb {
-  getTasks(): V12RawTask[];
 }
 
 const TAGS = ['active', 'done', 'crit', 'milestone', 'vert'] as const;
@@ -91,24 +91,13 @@ function taskOf(t: V12RawTask): V12Task {
   };
 }
 
-/** v12's scheduled tasks for `source` at `now`, or where v12 failed. */
-export async function v12Schedule(source: string, now: number): Promise<V12Schedule> {
+/** v12's scheduled tasks for `source` at `GANTT_PARITY_NOW`, or why v12 rejected it. */
+export async function v12Schedule(source: string): Promise<V12Schedule> {
   const oracle = await loadOracle();
-  vi.useFakeTimers({ toFake: ['Date'] });
-  vi.setSystemTime(now);
-  try {
-    await oracle.parse(flushSource(source));
-    const parsed = await oracle.parse(source);
-    if (!parsed.accepted) return { ok: false, stage: 'parse', error: parsed.error };
-    if (parsed.diagramType !== 'gantt') {
-      return { ok: false, stage: 'parse', error: `not gantt: ${parsed.diagramType}` };
-    }
-    try {
-      return { ok: true, tasks: (parsed.db as V12GanttDb).getTasks().map(taskOf) };
-    } catch (e) {
-      return { ok: false, stage: 'schedule', error: e instanceof Error ? e.message : String(e) };
-    }
-  } finally {
-    vi.useRealTimers();
-  }
+  await oracle.parse(flushSource(source));
+  const parsed = await oracle.parse(source);
+  if (!parsed.accepted) return { ok: false, error: parsed.error };
+  if (parsed.diagramType !== 'gantt')
+    return { ok: false, error: `not gantt: ${parsed.diagramType}` };
+  return { ok: true, tasks: (ganttOracleTasks() as V12RawTask[]).map(taskOf) };
 }

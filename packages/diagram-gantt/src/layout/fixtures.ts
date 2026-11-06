@@ -1,25 +1,20 @@
 /**
- * Hand-built `GanttLayoutModel`s for the layout specs, written with v12's DB calls on top of
- * the schedule fixtures. AST ids follow spec #293 (`t:<id>`, `s:<title>`). Parser-produced
- * models replace these once T2 (#378) lands.
+ * Hand-built `GanttModel`s for the layout specs, written with v12's DB calls on top of the
+ * schedule fixtures. AST ids follow spec #293 (`t:<id>`, `s:<title>`). Parser-produced models
+ * are checked over the corpus in `packages/conformance/src/gantt/layout-corpus.spec.ts`.
  */
+import type { GanttClick, GanttModel, GanttWeekday } from '../model.ts';
 import { FixtureDb } from '../schedule/fixtures.ts';
-import type { GanttLayoutModel, GanttModelClick, GanttModelSection } from './types.ts';
 
 export class LayoutFixture extends FixtureDb {
   axisFormat = '';
   tickInterval: string | undefined;
   todayMarker = '';
   topAxis = false;
-  weekday: string | undefined;
+  weekday: GanttWeekday | undefined;
   title: string | undefined;
-  sections: GanttModelSection[] = [];
-  clicks: GanttModelClick[] = [];
+  clicks: GanttClick[] = [];
 
-  override addSection(txt: string): this {
-    this.sections.push({ text: txt, ast: `s:${txt}` });
-    return super.addSection(txt);
-  }
   setAxisFormat(txt: string): this {
     this.axisFormat = txt;
     return this;
@@ -36,7 +31,7 @@ export class LayoutFixture extends FixtureDb {
     this.topAxis = true;
     return this;
   }
-  setWeekday(txt: string): this {
+  setWeekday(txt: GanttWeekday): this {
     this.weekday = txt;
     return this;
   }
@@ -45,36 +40,26 @@ export class LayoutFixture extends FixtureDb {
     return this;
   }
   click(...ids: string[]): this {
-    this.clicks.push({ ids });
+    this.clicks.push({ ast: `click:${this.clicks.length + 1}`, ids, range: { start: 0, end: 0 } });
     return this;
   }
 
-  /** The model; `source` and task ranges when given (one task per source line after `gantt`). */
-  model(source?: string): GanttLayoutModel {
-    const lines = source?.split('\n') ?? [];
-    let offset = 0;
-    const ranges = lines.map((line) => {
-      const r = { start: offset, end: offset + line.length };
-      offset += line.length + 1;
-      return r;
-    });
-    const taskLines = ranges.filter((_, i) => lines[i]!.includes(':'));
+  model(): GanttModel {
     return {
       ...this.input(),
-      ...(source !== undefined ? { source } : {}),
-      tasks: this.tasks.map((t, i) => ({
-        ...t,
-        ast: `t:${t.id}`,
-        ...(taskLines[i] ? { range: taskLines[i] } : {}),
-      })),
-      sections: this.sections,
-      clicks: this.clicks,
+      source: '',
       ...(this.title !== undefined ? { title: this.title } : {}),
+      accTitle: '',
+      accDescr: '',
       axisFormat: this.axisFormat,
       ...(this.tickInterval !== undefined ? { tickInterval: this.tickInterval } : {}),
       todayMarker: this.todayMarker,
       topAxis: this.topAxis,
       ...(this.weekday !== undefined ? { weekday: this.weekday } : {}),
+      sections: this.sections,
+      tasks: this.tasks,
+      clicks: this.clicks,
+      warnings: [],
     };
   }
 }

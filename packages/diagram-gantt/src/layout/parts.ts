@@ -36,7 +36,7 @@ export function bandsOf(c: Chart): GanttBand[] {
       y: row * c.gap + env.topPadding - env.m.bandOffset,
       width: c.w - env.rightPadding * env.m.bandRightTrim,
       height: c.gap,
-      slot: c.slot(t.task.section),
+      slot: c.slot(c.names[t.index]!),
     };
     c.bounds.rect(band);
     out.push(band);

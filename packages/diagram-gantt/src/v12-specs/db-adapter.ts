@@ -85,12 +85,14 @@ export class GanttDbAdapter {
   getTasks(): V12Task[] {
     const s = schedule(this.db.input(), { now: this.now });
     this.last = s;
-    return s.tasks.map(({ task, start, end, renderEnd, manualEnd, order }) => {
+    return s.tasks.map(({ index, task, start, end, renderEnd, manualEnd, order }) => {
+      const at = this.db.tasks[index]!.section;
+      const section = at === undefined ? '' : this.db.sections[at]!.text;
       const out: V12Task = {
         id: task.id,
         task: task.text,
-        section: task.section,
-        type: task.section,
+        section,
+        type: section,
         renderEndTime: date(renderEnd) ?? null,
         manualEndTime: manualEnd,
         order,

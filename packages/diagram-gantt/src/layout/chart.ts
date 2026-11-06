@@ -6,7 +6,7 @@ import type { Schedule, ScheduledTask } from '../schedule/index.ts';
 import { Bounds } from './bounds.ts';
 import type { Env } from './env.ts';
 import { rowsOf, type Rows } from './rows.ts';
-import type { GanttLayoutModel } from './types.ts';
+import type { GanttModel } from '../model.ts';
 
 export const isVert = (t: ScheduledTask): boolean => t.task.tags.includes('vert');
 export const resolved = (t: ScheduledTask): boolean => t.start !== undefined && t.end !== undefined;
@@ -18,7 +18,9 @@ export interface Domain {
 
 export interface Chart {
   readonly env: Env;
-  readonly model: GanttLayoutModel;
+  readonly model: GanttModel;
+  /** Each task's section name (v12 `type`), `''` before the first section. */
+  readonly names: readonly string[];
   readonly plan: Schedule;
   /** v12 `w` and `h`. */
   readonly w: number;
@@ -60,19 +62,23 @@ function scaleOf(domain: Domain | undefined, width: number): (t: number) => numb
   return (t) => Math.round(width * ((t - domain.start) / span));
 }
 
-export function chartOf(env: Env, model: GanttLayoutModel, plan: Schedule): Chart {
-  const rows = rowsOf(plan.tasks, env.compact);
+export function chartOf(env: Env, model: GanttModel, plan: Schedule): Chart {
+  const names = model.tasks.map((t) =>
+    t.section === undefined ? '' : (model.sections[t.section]?.text ?? '')
+  );
+  const rows = rowsOf(plan.tasks, names, env.compact);
   const gap = env.barHeight + env.barGap;
   const w = env.width;
   const h = 2 * env.topPadding + rows.count * gap;
   const plotWidth = w - env.leftPadding - env.rightPadding;
   const plain = plan.tasks.filter((t) => !isVert(t));
   // Unique sections of the tasks with rows, in order (v12 `categories`).
-  const categories = [...new Set(plain.map((t) => t.task.section))];
+  const categories = [...new Set(plain.map((t) => names[t.index]!))];
   const domain = domainOf(plan.tasks);
   return {
     env,
     model,
+    names,
     plan,
     w,
     h,

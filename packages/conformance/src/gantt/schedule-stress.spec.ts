@@ -5,9 +5,9 @@ import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import {
   layoutGantt,
+  parseGantt,
   type GanttLayout,
-  type GanttLayoutModel,
-  type RawGanttTask,
+  type GanttModel,
 } from '@mermaid-js/diagram-gantt';
 
 /**
@@ -25,53 +25,37 @@ beforeAll(async () => {
   spec = await loadTheme('default');
 });
 
-/** A chart built as v12's DB held it (until T2's parser builds them from text). */
+/** A chart written as gantt text, parsed by the v13 parser. */
 class Chart {
-  dateFormat = 'YYYY-MM-DD';
-  excludes: string[] = [];
-  tickInterval: string | undefined;
-  tasks: RawGanttTask[] = [];
+  private head = ['gantt', 'dateFormat YYYY-MM-DD'];
+  readonly tasks: string[] = [];
   setDateFormat(f: string): this {
-    this.dateFormat = f;
+    this.head[1] = `dateFormat ${f}`;
     return this;
   }
   setExcludes(e: string): this {
-    this.excludes.push(...e.split(/[\s,]+/));
+    this.head.push(`excludes ${e}`);
     return this;
   }
   setTickInterval(t: string): this {
-    this.tickInterval = t;
+    this.head.push(`tickInterval ${t}`);
     return this;
   }
-  /** `id, start, end`. */
+  /** `text :data`. */
   addTask(text: string, data: string): this {
-    const [id, start, end] = data.split(',').map((s) => s.trim());
-    this.tasks.push({ text, section: '', tags: [], id: id!, start: start!, end: end! });
+    this.tasks.push(`${text} :${data}`);
     return this;
   }
-  model(): GanttLayoutModel {
-    return {
-      dateFormat: this.dateFormat,
-      includes: [],
-      excludes: this.excludes,
-      inclusiveEndDates: false,
-      weekend: 'saturday',
-      tasks: this.tasks,
-      sections: [],
-      clicks: [],
-      axisFormat: '',
-      ...(this.tickInterval ? { tickInterval: this.tickInterval } : {}),
-      todayMarker: '',
-      topAxis: false,
-    };
+  model(): GanttModel {
+    return parseGantt([...this.head, ...this.tasks].join('\n')).model;
   }
 }
 const fixture = (): Chart => new Chart();
 
 const NOW = new Date(2031, 4, 6).getTime();
-function lay(f: Chart): { layout: GanttLayout; warnings: Warning[] } {
+function lay(f: Chart | GanttModel): { layout: GanttLayout; warnings: Warning[] } {
   const warnings: Warning[] = [];
-  const layout = layoutGantt(f.model(), {
+  const layout = layoutGantt(f instanceof Chart ? f.model() : f, {
     config: { gantt: {} } as ResolvedConfig,
     measurer: tableMeasurer,
     theme: createTheme(spec),
@@ -139,8 +123,8 @@ describe('stress: the gantt schedule and layout are linear', () => {
   it.each(SHAPES)(
     '%s',
     (_name, build) => {
-      const small = build(500);
-      const large = build(4_000);
+      const small = build(500).model();
+      const large = build(4_000).model();
       lay(small);
       lay(large);
       let tSmall = Infinity;

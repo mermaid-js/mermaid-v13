@@ -143,7 +143,7 @@ export function barsOf(c: Chart): GanttBar[] {
       done: tags.includes('done'),
       crit: tags.includes('crit'),
       clickable: span.clickable,
-      slot: c.slot(t.task.section),
+      slot: c.slot(c.names[t.index]!),
       radius: c.env.m.barRadius,
       ...(kind === 'milestone' ? { scale: c.env.m.milestoneScale } : {}),
       label,

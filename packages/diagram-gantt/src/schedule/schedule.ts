@@ -22,10 +22,10 @@ import {
 } from '../dates/index.ts';
 import {
   ScheduleError,
-  type RawGanttTask,
   type Schedule,
   type ScheduledTask,
   type ScheduleInput,
+  type ScheduleTask,
 } from './types.ts';
 
 /** v12 `getTasks`: one pass, then up to ten more while a task is unresolved. */
@@ -58,7 +58,7 @@ export function schedule(input: ScheduleInput, options: ScheduleOptions): Schedu
 }
 
 class Scheduler {
-  private readonly tasks: readonly RawGanttTask[];
+  private readonly tasks: readonly ScheduleTask[];
   private readonly state: State[];
   /** v12 `taskDb`: id → index of its last definition. */
   private readonly byId = new Map<string, number>();
@@ -119,7 +119,7 @@ class Scheduler {
   private compile(i: number): boolean {
     const task = this.tasks[i]!;
     const s = this.state[i]!;
-    if (task.end === undefined) {
+    if (task.fields.length > 3) {
       throw new ScheduleError(
         'tooManyFields',
         i,
@@ -127,8 +127,7 @@ class Scheduler {
       );
     }
     if (task.start === undefined) {
-      const prevId = i > 0 ? this.tasks[i - 1]!.id : undefined;
-      const prev = prevId === undefined ? undefined : this.byId.get(prevId);
+      const prev = task.prevId === undefined ? undefined : this.byId.get(task.prevId);
       if (prev === undefined) {
         throw new ScheduleError(
           'noStart',

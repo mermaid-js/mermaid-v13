@@ -105,6 +105,12 @@ export const GRAMMARS: GrammarTarget[] = [
     kinds: { module: 'parser/tokens.ts', object: 'T' },
   },
   {
+    type: 'gantt',
+    title: 'Gantt chart syntax',
+    // The openers and closers of jison's start conditions are named in the grammar file.
+    kinds: { module: 'parser/tokens.ts', object: 'T' },
+  },
+  {
     type: 'pie',
     title: 'Pie chart syntax',
     kinds: {

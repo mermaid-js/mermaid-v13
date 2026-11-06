@@ -3,6 +3,8 @@ import { MermaidError, type Warning } from '@mermaid-js/core';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
+import type { GanttModel } from '../model.ts';
+import { parseGantt } from '../parser/index.ts';
 import { fixture, type LayoutFixture } from './fixtures.ts';
 import { ganttLayoutViolations, layoutGantt, type GanttLayout } from './index.ts';
 
@@ -24,12 +26,13 @@ interface Run {
 }
 
 function lay(
-  f: LayoutFixture,
+  f: LayoutFixture | GanttModel,
   gantt: Record<string, unknown> = {},
-  extra: { now?: number; availableWidth?: number; source?: string } = {}
+  extra: { now?: number; availableWidth?: number } = {}
 ): Run {
   const warnings: Warning[] = [];
-  const layout = layoutGantt(f.model(extra.source), {
+  const model = 'model' in f ? f.model() : f;
+  const layout = layoutGantt(model, {
     config: { gantt } as ResolvedConfig,
     measurer: tableMeasurer,
     theme: createTheme(spec),
@@ -362,31 +365,27 @@ describe('warnings and errors (D274, D276)', () => {
     expect(warnings[1]!.message).toContain('"soon", "later"');
   });
 
-  it('rejects a schedule error as SEMANTIC at the task', () => {
+  it('rejects a schedule error as SEMANTIC at the task data', () => {
     const source = 'gantt\n  dateFormat YYYY-MM-DD\n  a :a, 2014-01-01, 1d\n  b :b, someday, 1d';
-    const f = fixture().addTask('a', 'a, 2014-01-01, 1d').addTask('b', 'b, someday, 1d');
     let error: unknown;
     try {
-      lay(f, {}, { source });
+      lay(parseGantt(source).model);
     } catch (e) {
       error = e;
     }
     expect(error).toBeInstanceOf(MermaidError);
     const e = error as MermaidError;
-    expect([e.code, e.line, e.column]).toEqual(['SEMANTIC', 4, 1]);
+    // At the `:` of `b`'s data, line 4 column 5.
+    expect([e.code, e.line, e.column]).toEqual(['SEMANTIC', 4, 5]);
     expect(e.diagnostics[0]!.code).toBe('GANTT_INVALID_DATE');
     expect(e.message).toContain('Invalid date:someday');
   });
 
   it.each([
-    ['a first task with no start', (f: LayoutFixture) => f.addTask('a', '1d'), 'GANTT_NO_START'],
-    [
-      'too many fields',
-      (f: LayoutFixture) => f.addTask('a', 'a,b,2014-01-01,1d'),
-      'GANTT_TOO_MANY_FIELDS',
-    ],
-  ])('rejects %s', (_name, build, code) => {
-    expect(() => lay(build(fixture()), {}, { source: 'gantt\na :x' })).toThrow(
+    ['a first task with no start', 'a :1d', 'GANTT_NO_START'],
+    ['too many fields', 'a :a,b,2014-01-01,1d', 'GANTT_TOO_MANY_FIELDS'],
+  ])('rejects %s', (_name, task, code) => {
+    expect(() => lay(parseGantt(`gantt\ndateFormat YYYY-MM-DD\n${task}`).model)).toThrow(
       expect.objectContaining({
         code: 'SEMANTIC',
         diagnostics: [expect.objectContaining({ code })],

@@ -40,6 +40,14 @@ import { ganttGateCorpus } from './corpus.ts';
  * `divergences.json` `quadrant-cases/unclosed-directive`), so the two lexers see different
  * text there.
  */
+/** The sources v12 does not lex as a gantt (see the end of the gate). */
+const SKIPPED = [
+  // `gantt\n` and `gantt`: the comment line goes through the header.
+  'gantt-cases/empty (commented)',
+  'edge case 56 (commented)',
+  'edge case 57 (commented)',
+];
+
 /** The suffix of a generated variant's id. */
 const VARIANT = / \((?:commented|CR cut|CR cut by a directive)\)$/;
 
@@ -99,15 +107,6 @@ describe('gantt lexer parity with mermaid@12 (jison)', () => {
     ).toEqual([]);
     // The only sources v12 does not lex: commented copies of a body of two lines or fewer,
     // where `%% cut` goes through the middle of the `gantt` header (v12 detects no gantt there).
-    const byId = new Map(items.map((item) => [item.id, item.source]));
-    expect(
-      skipped.filter((id) => {
-        const original = byId.get(id.replace(VARIANT, '')) ?? '';
-        const cut = byId.get(id) ?? '';
-        const header = id.endsWith(' (commented)') && original.split('\n').length <= 2;
-        return !(header && !/^\s*gantt/.test(cut));
-      })
-    ).toEqual([]);
-    expect(skipped.length).toBeLessThan(4);
+    expect(skipped).toEqual(SKIPPED);
   }, 300_000);
 });
