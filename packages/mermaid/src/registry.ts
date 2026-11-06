@@ -14,7 +14,6 @@ import {
 import { checkFragment, type ConfigFragment } from '@mermaid-js/core/config';
 import { layered, type LayoutEngine } from '@mermaid-js/core/layout';
 import { diagramStart, type PreprocessResult } from '@mermaid-js/core/preprocess';
-import { v12DetectText } from './v12-detect-text.ts';
 import { THEME_VARIABLE_TABLE, type ThemeRuleTable } from '@mermaid-js/core/theme';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the registry holds plugins of every model and layout type
@@ -131,9 +130,9 @@ interface Entry {
   /**
    * `body` is the text from the diagram's start (front matter, leading directives and comments
    * skipped). `clean` is the text third-party detectors are given: directives removed by their
-   * preprocess ranges and each `%%` comment cut from its line. `v12` is the text v12's
-   * `detectType` tested (`v12-detect-text.ts`), which first-party rows fall back to. Both are
-   * built on first use.
+   * preprocess ranges and each `%%` comment cut from its line. `v12` is the same text with a
+   * `%%` on the last line kept, as v12's `detectType` kept one with no line break after it
+   * (`detectText`), which first-party rows fall back to. Both are built on first use.
    */
   readonly detect: (
     body: string,
@@ -268,11 +267,13 @@ function checkDiagram(def: AnyPlugin | LazyDiagram, eager: boolean): void {
       throw new TypeError(`Diagram "${p.id}": ${m} must be a function`);
 }
 
-// The text third-party detectors are given: the body with directives removed (their ranges
-// come from preprocess) and each `%%` comment cut from its line. Close to v12 detectType's text,
-// not the same (v12 cut a comment only with its line break, and its directive regex differs);
-// the first-party rows fall back to the exact one, `v12DetectText`.
-function detectText(src: string, start: number, pre: PreprocessResult): string {
+// The body with directives removed (their ranges come from preprocess) and each `%%` comment
+// cut from its line: the text third-party detectors are given. With `v12`, a `%%` on the last
+// line, which has no line break after it, stays, as v12's `stripAnyComments` left it: the text
+// first-party rows fall back to, so `cynefin-beta%% c` plus a line break is detected and alone it
+// is not, as in v12 (#469). It is not v12's text: v12's own directive regex is not reproduced
+// (size, R-PERF-8), and blank space before a comment stays (no pattern depends on it).
+function detectText(src: string, start: number, pre: PreprocessResult, v12 = false): string {
   let text = '';
   let at = start;
   for (const { range } of pre.directives) {
@@ -282,11 +283,11 @@ function detectText(src: string, start: number, pre: PreprocessResult): string {
   }
   text += src.slice(at);
   if (!text.includes('%%')) return text;
-  return text
-    .split('\n')
-    .map((line) => {
+  const lines = text.split('\n');
+  return lines
+    .map((line, i) => {
       const c = line.indexOf('%%');
-      return c < 0 ? line : line.slice(0, c).trimEnd();
+      return c < 0 || (v12 && i === lines.length - 1) ? line : line.slice(0, c).trimEnd();
     })
     .join('\n');
 }
@@ -410,8 +411,8 @@ export class Registry {
         type: e.type,
         id: e.id,
         formats: e.formats ?? [],
-        // The raw body first; when it holds a `%%`, also the text v12's detectType tested, so
-        // `cynefin-beta%% c` plus a line break matches as in v12 (#469).
+        // The raw body first; when it holds a `%%`, also the body with comments cut as v12's
+        // detectType cut them, so `cynefin-beta%% c` plus a line break matches as in v12 (#469).
         detect: (body, _clean, _config, v12) =>
           e.pattern.test(body) || (body.includes('%%') && e.pattern.test(v12())),
         load: e.load,
@@ -491,7 +492,7 @@ export class Registry {
     let clean: string | undefined;
     const cleaned = () => (clean ??= detectText(src, start, pre));
     let old: string | undefined;
-    const v12 = () => (old ??= v12DetectText(src, pre.bodyStart));
+    const v12 = () => (old ??= detectText(src, start, pre, true));
     for (const e of this.detectionOrder()) {
       if (e.detect(body, cleaned, config, v12)) return { type: e.type, id: e.id };
     }

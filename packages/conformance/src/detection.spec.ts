@@ -1,18 +1,22 @@
 /**
  * #469: first-party detection against v12 12.2.0's `detectType`, for every row of the detector
  * table (`tools/gen-config/src/registry.ts`, `V12_DETECTORS`). v12 ran its detectors on the text
- * after front matter with directives removed and each `%%` comment cut together with its line
- * break; v13 tests each row's pattern on the raw body first, then on that same v12 text
- * (`packages/mermaid/src/v12-detect-text.ts`). For each type's header `H`, the cases are a
- * comment right after it with and without a line break, a directive after it, a directive inside
- * the keyword, and the detector order when one row matches only the v12 text and a later one
- * the raw text; then seeded mixes of every header with comment and directive pieces. v13 must
- * give v12's type, or reject where v12 rejects, except the listed divergences and, in the
- * mixes, two kinds that come from core's preprocess, shared by every type (the parity gates
- * exclude the same): an unclosed `%%{` is an UNCLOSED_DIRECTIVE error, where v12's regex took
- * the rest of the line; and a type matched on the raw body, which starts after leading
- * directives read to their `}%%` (v12's regex stopped at a lone CR, U+2028, U+2029, or after a
- * one-line directive's first value word) and is tried before v12's text.
+ * after front matter with directives removed by its `directiveRegex` and each `%%` comment cut
+ * together with its line break (`stripAnyComments`, which leaves a `%%` with no line break after
+ * it). v13 tests each row's pattern on the raw body first, then on the body with directives
+ * removed as core's preprocess reads them and each comment cut, a `%%` on the last line kept
+ * (`detectText` in `packages/mermaid/src/registry.ts`). For each type's header `H`, the cases are
+ * a comment right after it with and without a line break, a directive after it, a directive
+ * inside the keyword, and the detector order when one row matches only the cleaned text and a
+ * later one the raw text; then seeded mixes of every header with comment and directive pieces.
+ * v13 must give v12's type, or reject where v12 rejects, except the listed divergences and, in
+ * the mixes, three kinds:
+ * - an unclosed `%%{` is an UNCLOSED_DIRECTIVE error in core's preprocess, every type (the
+ *   parity gates exclude it), where v12's regex took the rest of the line;
+ * - a type matched on the raw body, which starts after leading directives read to their `}%%`,
+ *   tried first as the registry always did;
+ * - {@link DIRECTIVE_CUT}: v12's directive regex removed another span than core's preprocess (it
+ *   stopped at a lone CR, U+2028, U+2029, or after a one-line directive's first value word).
  */
 import { readFileSync } from 'node:fs';
 import { diagramStart, preprocess } from '@mermaid-js/core/preprocess';
@@ -105,10 +109,27 @@ const ORDER: [name: string, text: string][] = [
   ['C4 name in a comment line after a flowchart header', 'flowchart LR\n  %% C4Container\n  a\n'],
 ];
 
-/** Case name → why v13 detects otherwise than v12 (raw body first, as the registry keeps it). */
+const DIRECTIVE_CUT =
+  'v12’s directive cut before detection is not reproduced in core (size, R-PERF-8): core removes the directive to its `}%%`';
+
+/**
+ * A keyword split by a directive whose span v12's regex read otherwise: v12 left part of it in
+ * the text, so the keyword was broken; core removes all of it and the keyword matches.
+ */
+const DIRECTIVE_SPLITS: [name: string, text: string][] = [
+  [
+    'keyword split by a one-line directive with two value words',
+    'cyne%%{init: x y}%%fin-beta\n  a\n',
+  ],
+  ['keyword split by a directive holding a lone CR', 'cyne%%{init: {\r}}%%fin-beta\n  a\n'],
+  ['keyword split by a directive holding U+2028', 'pi%%{init: {\u2028}}%%e\n  a\n'],
+];
+
+/** Case name → why v13 detects otherwise than v12. */
 const DIVERGENCES: Readonly<Record<string, string>> = {
   'order: C4 name in a comment line after a flowchart header':
     'raw body first: the earlier c4 row (`C4Container` anywhere) matches the comment, which v12 had cut',
+  ...Object.fromEntries(DIRECTIVE_SPLITS.map(([n]) => [`directive: ${n}`, DIRECTIVE_CUT])),
 };
 
 /** Pieces the seeded mixes put inside or after a header, one or two at a time. */
@@ -155,6 +176,63 @@ function fromRawBody(type: string, text: string): boolean {
   return PATTERNS[type]?.test(body) ?? false;
 }
 
+/**
+ * v12's `directiveRegex` removal, test-only, as a linear scanner (the regex's nested quantifier
+ * backtracks): `%%{`, blanks, a word (and a `:` after it, blanks allowed), blanks, then either a
+ * word or everything up to `}%%` or a character `.` does not match (a lone CR, U+2028, U+2029),
+ * then blanks and the `}%%` if it is there; `%%{` with no word after it is no match.
+ */
+function v12StripDirectives(text: string): string {
+  const run = (from: number, set: RegExp): number => {
+    let i = from;
+    while (i < text.length && set.test(text[i]!)) i++;
+    return i;
+  };
+  const blanks = (from: number): number => run(from, /\s/);
+  const word = (from: number): number => run(from, /\w/);
+  const close = (at: number): number => (text.startsWith('}%%', at) ? at + 3 : at);
+  let out = '';
+  let kept = 0;
+  let from = 0;
+  for (let p = text.indexOf('%%{', from); p !== -1; p = text.indexOf('%%{', from)) {
+    const name = blanks(p + 3);
+    let at = word(name);
+    if (at === name) {
+      from = p + 1;
+      continue;
+    }
+    const colon = blanks(at);
+    if (text[colon] === ':') at = colon + 1;
+    at = blanks(at);
+    const value = word(at);
+    if (value > at) at = close(blanks(value));
+    else {
+      while (at < text.length && !text.startsWith('}%%', at)) {
+        const c = text[at];
+        if (c === '\r' && text[at + 1] === '\n') at += 2;
+        else if (c === '\r' || c === '\u2028' || c === '\u2029') break;
+        else at++;
+      }
+      at = close(blanks(at));
+    }
+    out += text.slice(kept, p);
+    kept = at;
+    from = at;
+  }
+  return out + text.slice(kept);
+}
+
+/** Whether v12's directive regex removed another span of `text` than core's preprocess. */
+function directiveCutDiffers(text: string): boolean {
+  let core = '';
+  let at = 0;
+  for (const { range } of preprocess(text).directives) {
+    core += text.slice(at, Math.max(at, range.start));
+    at = Math.max(at, range.end);
+  }
+  return core + text.slice(at) !== v12StripDirectives(text);
+}
+
 const outcome = (detect: (t: string) => string, text: string): string => {
   try {
     return detect(text);
@@ -177,6 +255,7 @@ describe('first-party detection against v12 detectType (#469)', () => {
         cases(HEADERS[type]!).map(([n, t]) => [`${type}: ${n}`, t] as const)
       ),
       ...ORDER.map(([n, t]) => [`order: ${n}`, t] as const),
+      ...DIRECTIVE_SPLITS.map(([n, t]) => [`directive: ${n}`, t] as const),
     ];
     const found: Record<string, string> = {};
     for (const [name, text] of all) {
@@ -188,6 +267,8 @@ describe('first-party detection against v12 detectType (#469)', () => {
     expect(found['order: C4 name in a comment line after a flowchart header']).toBe(
       'v12 flowchart-v2, v13 c4'
     );
+    for (const [n] of DIRECTIVE_SPLITS)
+      expect(found[`directive: ${n}`], n).toMatch(/^v12 rejected, v13 /);
   });
 
   it('agrees over seeded mixes of headers, comments and directives', () => {
@@ -201,6 +282,7 @@ describe('first-party detection against v12 detectType (#469)', () => {
     let rejected = 0;
     let unclosed = 0;
     let raw = 0;
+    let cutOtherwise = 0;
     for (let i = 0; i < 3000; i++) {
       const h = headers[next(headers.length)]!;
       const cut = next(h.length + 1);
@@ -213,11 +295,13 @@ describe('first-party detection against v12 detectType (#469)', () => {
       // `%%{` is an UNCLOSED_DIRECTIVE error, where v12's regex took the rest of the line.
       if (now === 'unclosed directive') unclosed++;
       else if (old !== now && fromRawBody(now, text)) raw++;
+      else if (old !== now && directiveCutDiffers(text)) cutOtherwise++;
       else if (old !== now) found.push(`${JSON.stringify(text)}: v12 ${old}, v13 ${now}`);
     }
     expect(rejected).toBeGreaterThan(100);
     expect(unclosed).toBeLessThan(300);
     expect(raw).toBeLessThan(300);
+    expect(cutOtherwise).toBeLessThan(400);
     expect(found).toEqual([]);
   });
 
