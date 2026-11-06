@@ -219,15 +219,18 @@ const JOURNEY = ['journey'];
  * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
  * in core's size budget (R-PERF-8).
  */
-const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = Object.fromEntries(
-  Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, def(`pi${i + 1}`, 'color', ['pie'])])
-);
+const PIE_SLOTS: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() =>
+  Object.fromEntries(
+    Array.from({ length: 12 }, (_, i) => [`pie${i + 1}`, def(`pi${i + 1}`, 'color', ['pie'])])
+  ))();
 
 /**
  * The core inventory. Order is the order of the generated table. Tools and specs read it (with
  * `usedBy`); the theme reads `THEME_VARIABLE_TABLE`, which `pnpm gen:theme` writes from it.
+ * Built in a pure call: its spreads (`PIE_SLOTS`, the journey rows) made the object literal
+ * look side-effecting, so the CDN core kept the whole table with its `usedBy` lists (R-PERF-8).
  */
-export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
+export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE__ */ (() => ({
   // base
   primaryColor: def('p', 'color', ['core']),
   secondaryColor: def('s', 'color', ['core']),
@@ -406,4 +409,4 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = {
   useGradient: def('ug', 'flag', ['core']),
   gradientStart: def('gs', 'color', ['core']),
   gradientStop: def('ge', 'color', ['core']),
-};
+}))();
