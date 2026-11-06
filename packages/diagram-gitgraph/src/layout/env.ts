@@ -4,7 +4,13 @@
  */
 import type { RenderContext } from '@mermaid-js/core';
 import type { FontKey } from '@mermaid-js/core/text';
-import { GIT_GEOMETRY, GIT_METRICS, type GitGeometry, type GitMetrics } from './metrics.ts';
+import {
+  GIT_GEOMETRY,
+  GIT_METRICS,
+  type GeometryVariable,
+  type GitGeometry,
+  type GitMetrics,
+} from './metrics.ts';
 import type { GitText, Point, Rect, Transform } from './types.ts';
 
 /** What the layout reads from the render context. */
@@ -39,24 +45,20 @@ function lengthOf(
   return fallback;
 }
 
-/**
- * The geometry variables (D152). A theme that does not know one yet gives the classic value:
- * a stub until T5 (#374) adds them to core's vocabulary. A value that is not a finite number
- * also falls back.
- */
+/** The geometry variables (D152), as the layout uses them. */
 export function geometryOf(theme: GitLayoutContext['theme']): GitGeometry {
-  const out: Record<string, number> = {};
-  for (const [key, v] of Object.entries(GIT_GEOMETRY)) {
-    let n = v.classic;
-    try {
-      const got = theme.number(v.name);
-      if (Number.isFinite(got)) n = got;
-    } catch {
-      // Not in core's vocabulary yet.
-    }
-    out[key] = n;
-  }
-  return out as unknown as GitGeometry;
+  const n = (v: GeometryVariable): number => theme.number(v.name);
+  const g = GIT_GEOMETRY;
+  return {
+    commitRadius: n(g.commitRadius),
+    laneOffset: n(g.laneShift) - GIT_METRICS.axis.laneLift,
+    branchLabelPaddingX: n(g.branchLabelPaddingX),
+    branchLabelPaddingY: n(g.branchLabelPaddingY),
+    branchLabelRadius: n(g.branchLabelRadius),
+    branchLabelOffsetX: -n(g.branchLabelShiftX),
+    branchLabelOffsetY: n(g.branchLabelOffsetY),
+    arrowWidth: n(g.arrowWidth),
+  };
 }
 
 export interface Env {

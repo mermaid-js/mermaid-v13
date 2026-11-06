@@ -105,6 +105,8 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `tagLabelBorder` | `--mermaid-tagLabelBorder` | derived | color | `ifSet(tagBorder, primaryBorderColor)` | `ifSet(tagBorder, primaryBorderColor)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | gitgraph |
 | `tagBorder` | `--mermaid-tagBorder` | derived | color | | | |  |
 | `tagLabelFontSize` | `--mermaid-tagLabelFontSize` | token | length | | | all | gitgraph |
+| `commitLineColor` | `--mermaid-commitLineColor` | derived | color | | | redux-color, redux, redux-dark, redux-dark-color, dark | gitgraph |
+| `gitCherryPickInk` | `--mermaid-gitCherryPickInk` | derived | color | | | redux-color, redux, redux-dark, redux-dark-color, dark, neo-dark | gitgraph |
 | `strokeWidth` | `--mermaid-strokeWidth` | token | length | | | all | core, flowchart, sequence, class, state, er, timeline, gitgraph |
 | `clusterStrokeWidth` | `--mermaid-clusterStrokeWidth` | token | length | | | all | flowchart, class, er |
 | `radius` | `--mermaid-radius` | token | length | | | all | core, flowchart, state |
@@ -156,6 +158,20 @@ diagram types that are not ported yet are accepted and ignored (R-CONF-5).
 | `timelineLabelOffset` | `--mermaid-timelineLabelOffset` | token | padding | | | all | timeline |
 | `timelineEventLabelShift` | `--mermaid-timelineEventLabelShift` | token | length | | | all | timeline |
 | `timelineScaleColors` | `--mermaid-timelineScaleColors` | token | flag | | | all | timeline |
+| `gitCommitRadius` | `--mermaid-gitCommitRadius` | token | length | | | all | gitgraph |
+| `gitLaneShift` | `--mermaid-gitLaneShift` | token | length | | | all | gitgraph |
+| `gitBranchLabelPaddingX` | `--mermaid-gitBranchLabelPaddingX` | token | length | | | all | gitgraph |
+| `gitBranchLabelPaddingY` | `--mermaid-gitBranchLabelPaddingY` | token | length | | | all | gitgraph |
+| `gitBranchLabelRadius` | `--mermaid-gitBranchLabelRadius` | token | length | | | all | gitgraph |
+| `gitBranchLabelShiftX` | `--mermaid-gitBranchLabelShiftX` | token | length | | | all | gitgraph |
+| `gitBranchLabelOffsetY` | `--mermaid-gitBranchLabelOffsetY` | token | length | | | all | gitgraph |
+| `gitArrowWidth` | `--mermaid-gitArrowWidth` | token | length | | | all | gitgraph |
+| `gitHighlightInnerSize` | `--mermaid-gitHighlightInnerSize` | token | length | | | all | gitgraph |
+| `gitMergeRadius` | `--mermaid-gitMergeRadius` | token | length | | | all | gitgraph |
+| `gitReverseCrossSize` | `--mermaid-gitReverseCrossSize` | token | length | | | all | gitgraph |
+| `gitCherryPickDotRadius` | `--mermaid-gitCherryPickDotRadius` | token | length | | | all | gitgraph |
+| `gitNodeColors` | `--mermaid-gitNodeColors` | token | flag | | | all | gitgraph |
+| `gitPaletteColors` | `--mermaid-gitPaletteColors` | token | flag | | | all | gitgraph |
 | `rowOdd` | `--mermaid-rowOdd` | derived | color | `lightenHsl(mainBkg, 75%)` | `lightenHsl(mainBkg, 5%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, neutral, neo, neo-dark | er |
 | `rowEven` | `--mermaid-rowEven` | derived | color | `lightenHsl(mainBkg, 5%)` | `darkenHsl(mainBkg, 10%)` | redux-color, redux, redux-dark, redux-dark-color, default, dark, forest, neutral, neo, neo-dark | er |
 | `erEdgeLabelBackground` | `--mermaid-erEdgeLabelBackground` | derived | color | `edgeLabelBackground` | `edgeLabelBackground` | redux-color, redux-dark-color | er |

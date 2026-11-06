@@ -3,7 +3,7 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type Theme, type ThemeSpec } from '@mermaid-js/core/theme';
 import { layoutGitGraph, parseGitGraph, type GitDirection } from '@mermaid-js/diagram-gitgraph';
-import { gitLayoutViolations, reduxGeometry } from '@mermaid-js/diagram-gitgraph/testing';
+import { gitLayoutViolations } from '@mermaid-js/diagram-gitgraph/testing';
 import type { CorpusItem } from '../types.ts';
 import { gitGraphGateCorpus } from './corpus.ts';
 
@@ -13,8 +13,7 @@ import { gitGraphGateCorpus } from './corpus.ts';
  * each also CRLF and commented), rejected sources included (the model of what parsed), laid
  * out LR, TB and BT, with `parallelCommits` off and on, classic and redux geometry, with the
  * default config and with `showBranches`, `rotateCommitLabel` and `showCommitLabel` turned off,
- * gives no `gitLayoutViolations`. Redux geometry comes from `reduxGeometry` over the `redux`
- * theme until T5 adds the geometry variables to core.
+ * gives no `gitLayoutViolations`. Redux geometry is the `redux` theme's (#374).
  */
 const DIRECTIONS: readonly GitDirection[] = ['LR', 'TB', 'BT'];
 const CONFIGS = [
@@ -29,7 +28,7 @@ beforeAll(async () => {
   const redux: ThemeSpec = await loadTheme('redux');
   themes.push(
     { name: 'classic', theme: () => createTheme(classic) },
-    { name: 'redux', theme: () => reduxGeometry(createTheme(redux)) }
+    { name: 'redux', theme: () => createTheme(redux) }
   );
   corpus = await gitGraphGateCorpus();
 });
@@ -60,7 +59,7 @@ describe('gitGraph layout invariants on parser-produced fixtures', () => {
             }
       }
     }
-    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(135);
+    expect(corpus.filter((i) => i.id.startsWith('e2e/') && !i.id.endsWith(')')).length).toBe(166);
     expect(commits).toBeGreaterThan(4000);
     expect(failures.slice(0, 10)).toEqual([]);
   }, 300_000);

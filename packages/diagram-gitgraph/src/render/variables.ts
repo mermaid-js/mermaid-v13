@@ -4,11 +4,10 @@
  * `GIT_GEOMETRY`). No theme name is read (D153): each difference is a variable with one value
  * per family: classic (v12's five classic themes), neo (v12's two neo themes, which keep
  * classic geometry but take the redux label colours, D266, v12 `NEO_COLOR_GEN_THEMES`) and
- * redux (the four redux themes).
+ * redux (the four redux themes). The cherry-pick ink is keyed by the dark trait instead.
  *
- * Core does not know these names yet: T5 (#374) adds them to the vocabulary and the theme specs
- * (or the theme T0 to gitGraph's own table, keyed by family, D331). Until then a theme gives
- * the classic value, and the specs hand the renderer `gitThemeStandIn` instead.
+ * Core's vocabulary and theme specs carry them (#374, D330); the theme T0 moves them into
+ * gitGraph's own table, keyed by family and the dark trait (D331).
  */
 
 /** A flag: on or off, read literally at render time. */
@@ -38,7 +37,19 @@ export interface GitColorVariable {
   readonly redux: string;
 }
 
-export type GitPaintVariable = GitFlagVariable | GitLengthVariable | GitColorVariable;
+/** A colour keyed by the dark trait: one literal on light themes, one on dark ones. */
+export interface GitInkVariable {
+  readonly name: string;
+  readonly kind: 'color';
+  readonly light: string;
+  readonly dark: string;
+}
+
+export type GitPaintVariable =
+  | GitFlagVariable
+  | GitLengthVariable
+  | GitColorVariable
+  | GitInkVariable;
 
 export interface GitPaintVariables {
   /**
@@ -63,8 +74,17 @@ export interface GitPaintVariables {
   readonly reverseCross: GitLengthVariable;
   /** The two dots of a cherry-pick bullet, their radius: 2.75 classic, 2.5 redux. */
   readonly cherryPickDot: GitLengthVariable;
-  /** v12's own variable for the branch lines: `lineColor` unless set; redux `#BDBCCC`. */
+  /**
+   * v12's own variable for the branch lines: redux `#BDBCCC`; where a theme sets none, the lines
+   * take `lineColor` (v12 `commitLineColor ?? lineColor`).
+   */
   readonly commitLineColor: GitColorVariable;
+  /**
+   * The cherry-pick mark (its dots and stems): black in the four dark themes of v12's
+   * `DARK_THEMES`, which set it, and white where a theme sets none. A colour variable, so
+   * `theme: 'auto'` switches it.
+   */
+  readonly cherryPickInk: GitInkVariable;
 }
 
 export const GIT_PAINT: GitPaintVariables = {
@@ -99,4 +119,5 @@ export const GIT_PAINT: GitPaintVariables = {
     neo: 'lineColor',
     redux: '#BDBCCC',
   },
+  cherryPickInk: { name: 'gitCherryPickInk', kind: 'color', light: '#ffffff', dark: '#000000' },
 };

@@ -17,6 +17,7 @@ import {
   CLASSIC_PADDING,
   CLASSIC_SEQUENCE,
   CLASSIC_TIMELINE,
+  CLASSIC_GITGRAPH,
   TEXT_SIZES,
 } from './geometry.ts';
 
@@ -69,6 +70,7 @@ const theme: ThemeSpec = {
     ...CLASSIC_PADDING,
     ...CLASSIC_SEQUENCE,
     ...CLASSIC_TIMELINE,
+    ...CLASSIC_GITGRAPH,
     useGradient: false,
   },
   // v12 theme-forest: khroma lighten(mainBkg, 20), exactly (D117).

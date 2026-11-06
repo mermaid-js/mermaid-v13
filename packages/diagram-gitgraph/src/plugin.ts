@@ -20,7 +20,7 @@ function option<T extends 'string' | 'number'>(
  * `GitLayout`, LR, TB and BT. `parse` takes the whole source and seeds the main branch from
  * `mainBranchName` and `mainBranchOrder`; `layout` measures and places everything; `render`
  * writes the whole `<svg>` document. SVG only (D216). Labels are plain text (D268), so there is
- * no `labels` hook: no extension sees them. The manifest and the registry row are T5's (#374).
+ * no `labels` hook: no extension sees them. The manifest registers it as `gitGraph` (#374).
  */
 export const gitGraph = {
   id: 'gitGraph',

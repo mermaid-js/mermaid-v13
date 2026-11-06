@@ -39,6 +39,7 @@ const DOCS = {
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   pie: 'pie\n  "Dogs" : 386\n',
   quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
+  gitGraph: 'gitGraph\n  commit id: "A"\n  branch dev\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -47,6 +48,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'class',
       'er',
       'flowchart',
+      'gitGraph',
       'journey',
       'pie',
       'quadrantChart',

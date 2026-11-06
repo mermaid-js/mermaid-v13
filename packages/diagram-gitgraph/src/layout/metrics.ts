@@ -6,8 +6,8 @@
  *
  * Lengths that differ between the theme families are geometry theme variables (D152): v12's
  * redux geometry in the redux themes, v12 classic in the classic themes and in the two neo
- * themes (D266). They are listed in {@link GIT_GEOMETRY}. Until T5 (#374) adds them to core,
- * a theme that does not know one gives its classic value.
+ * themes (D266). They are listed in {@link GIT_GEOMETRY}, and core's theme specs carry their
+ * values (#374).
  */
 
 /** v12's spacing along the commit axis and across the lanes. */
@@ -22,6 +22,11 @@ export interface AxisMetrics {
   readonly lanePitch: number;
   /** Added to the lane pitch with `rotateCommitLabel` (`40`). */
   readonly rotatedLanePitch: number;
+  /**
+   * LR: v12 classic draws a branch's line and commits this far above its lane position (`-2`);
+   * `gitLaneShift` moves them down from there.
+   */
+  readonly laneLift: number;
 }
 
 /** `drawCommitLabel`: the commit id under (LR) or left of (TB, BT) its bullet. */
@@ -134,7 +139,7 @@ export interface GitMetrics {
 }
 
 export const GIT_METRICS: GitMetrics = {
-  axis: { step: 40, offset: 10, start: 30, lanePitch: 50, rotatedLanePitch: 40 },
+  axis: { step: 40, offset: 10, start: 30, lanePitch: 50, rotatedLanePitch: 40, laneLift: 2 },
   commitLabel: {
     baseline: 25,
     boxTop: 13.5,
@@ -185,13 +190,13 @@ export const GIT_METRICS: GitMetrics = {
   },
 };
 
-/** The lengths that differ between the theme families (D152). */
+/** The lengths that differ between the theme families (D152), as the layout uses them. */
 export interface GitGeometry {
   /** The bullet's radius, and half a highlight square's side: 10 classic, 7 redux. */
   readonly commitRadius: number;
   /**
    * LR: how far below its lane position a branch's line and commits sit: −2 classic, 7 redux
-   * (`REDUX_BRANCH_LABEL_PADDING_Y / 2 + 1`). Signed.
+   * (`REDUX_BRANCH_LABEL_PADDING_Y / 2 + 1`). Signed: `gitLaneShift` less `axis.laneLift`.
    */
   readonly laneOffset: number;
   /** Room the branch label's box adds across and down: 0 classic, 16 and 12 redux. */
@@ -200,8 +205,9 @@ export interface GitGeometry {
   /** The branch label box's corner radius: 4 classic, 0 redux. */
   readonly branchLabelRadius: number;
   /**
-   * TB/BT: the branch label box's shift across (−11 redux, `-labelPaddingX / 2 - 3`) and away
-   * from the commits (22 redux, `labelPaddingY + 10`); 0 classic. Signed.
+   * TB/BT: the branch label box's shift across (−11 redux, `-labelPaddingX / 2 - 3`;
+   * `gitBranchLabelShiftX` to the left) and away from the commits (22 redux,
+   * `labelPaddingY + 10`); 0 classic.
    */
   readonly branchLabelOffsetX: number;
   readonly branchLabelOffsetY: number;
@@ -219,17 +225,30 @@ export interface GeometryVariable {
 }
 
 /**
- * The geometry theme variable behind each {@link GitGeometry} length, with its v12 classic and
- * redux values: what T5 adds to core's vocabulary and theme specs. The redux values are used
- * here only by the layout specs, which stand in for a redux theme until then.
+ * The geometry variables, each unsigned (core's lengths are), with its v12 classic and redux
+ * values as core's theme specs carry them (`specs/geometry.ts`). `laneShift` and
+ * `branchLabelShiftX` give `GitGeometry`'s signed `laneOffset` and `branchLabelOffsetX`.
  */
-export const GIT_GEOMETRY: Readonly<Record<keyof GitGeometry, GeometryVariable>> = {
+export interface GitGeometryVariables {
+  readonly commitRadius: GeometryVariable;
+  /** LR: the lanes' shift down from v12 classic's spot: 0 classic, 9 redux. */
+  readonly laneShift: GeometryVariable;
+  readonly branchLabelPaddingX: GeometryVariable;
+  readonly branchLabelPaddingY: GeometryVariable;
+  readonly branchLabelRadius: GeometryVariable;
+  /** TB/BT: the branch label box's shift to the left: 0 classic, 11 redux. */
+  readonly branchLabelShiftX: GeometryVariable;
+  readonly branchLabelOffsetY: GeometryVariable;
+  readonly arrowWidth: GeometryVariable;
+}
+
+export const GIT_GEOMETRY: GitGeometryVariables = {
   commitRadius: { name: 'gitCommitRadius', classic: 10, redux: 7 },
-  laneOffset: { name: 'gitLaneOffset', classic: -2, redux: 7 },
+  laneShift: { name: 'gitLaneShift', classic: 0, redux: 9 },
   branchLabelPaddingX: { name: 'gitBranchLabelPaddingX', classic: 0, redux: 16 },
   branchLabelPaddingY: { name: 'gitBranchLabelPaddingY', classic: 0, redux: 12 },
   branchLabelRadius: { name: 'gitBranchLabelRadius', classic: 4, redux: 0 },
-  branchLabelOffsetX: { name: 'gitBranchLabelOffsetX', classic: 0, redux: -11 },
+  branchLabelShiftX: { name: 'gitBranchLabelShiftX', classic: 0, redux: 11 },
   branchLabelOffsetY: { name: 'gitBranchLabelOffsetY', classic: 0, redux: 22 },
   arrowWidth: { name: 'gitArrowWidth', classic: 8, redux: 2 },
 };

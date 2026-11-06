@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ResolvedConfig } from '@mermaid-js/core/config';
-import { createTheme, loadTheme, type Theme, type ThemeSpec } from '@mermaid-js/core/theme';
+import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { GitModel } from '../model.ts';
 import * as fx from './fixtures.ts';
 import { gitLayoutViolations, layoutGitGraph, type GitLayout } from './index.ts';
@@ -16,11 +16,11 @@ interface Options {
 }
 
 function lay(model: GitModel, gitGraph: Record<string, unknown> = {}, o: Options = {}): GitLayout {
-  const base: Theme = createTheme(classic, { themeVariables: o.themeVariables ?? {} });
+  const themeVariables = { ...(o.redux ? fx.REDUX_GEOMETRY : {}), ...o.themeVariables };
   return layoutGitGraph(model, {
     config: { gitGraph } as ResolvedConfig,
     measurer: fx.halfEm,
-    theme: o.redux ? fx.reduxGeometry(base) : base,
+    theme: createTheme(classic, { themeVariables }),
   });
 }
 

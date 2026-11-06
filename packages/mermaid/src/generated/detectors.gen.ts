@@ -19,7 +19,7 @@ export const DETECTORS: readonly FirstPartyEntry[] = [
   { type: 'swimlane', pattern: /^\s*swimlane-beta\b/ },
   { type: 'flowchart-v2', pattern: /^\s*(graph|flowchart)/, id: 'flowchart', formats: ['svg', 'ascii'] },
   { type: 'timeline', pattern: /^\s*timeline/, id: 'timeline', formats: ['svg'] },
-  { type: 'gitGraph', pattern: /^\s*gitGraph/ },
+  { type: 'gitGraph', pattern: /^\s*gitGraph/, id: 'gitGraph', formats: ['svg'] },
   { type: 'stateDiagram', pattern: /^\s*stateDiagram/, id: 'state', formats: ['svg'] },
   { type: 'journey', pattern: /^\s*journey/, id: 'journey', formats: ['svg'] },
   { type: 'quadrantChart', pattern: /^\s*quadrantChart/, id: 'quadrantChart', formats: ['svg'] },

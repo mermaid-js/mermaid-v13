@@ -164,6 +164,24 @@ export const TOKEN_VARIABLES = /* @__PURE__ */ joined(
     'timelineLabelOffset',
     'timelineEventLabelShift',
     'timelineScaleColors',
+    // gitGraph (spec #292, D266): the bullet radius, how far the LR lanes sit below v12
+    // classic's spot, the branch label box (padding, corner, the TB/BT shift left and away from
+    // the commits), the arrow width, the bullet insides, and whether the node colours and the
+    // git palettes paint the branches. Unsigned: a shift has its direction in its name.
+    'gitCommitRadius',
+    'gitLaneShift',
+    'gitBranchLabelPaddingX',
+    'gitBranchLabelPaddingY',
+    'gitBranchLabelRadius',
+    'gitBranchLabelShiftX',
+    'gitBranchLabelOffsetY',
+    'gitArrowWidth',
+    'gitHighlightInnerSize',
+    'gitMergeRadius',
+    'gitReverseCrossSize',
+    'gitCherryPickDotRadius',
+    'gitNodeColors',
+    'gitPaletteColors',
     // The neo gradient (D182): outlines that `Theme.outline()` paints take the gradient.
     'useGradient',
   ] as const
@@ -245,6 +263,7 @@ const TEXT_USERS = [
 ];
 
 const JOURNEY = ['journey'];
+const GIT = ['gitgraph'];
 
 /**
  * The pie slot colours `pie1`–`pie12`, aliases `pi1`–`pi12`, built in a loop: the vocabulary is
@@ -383,6 +402,10 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   tagLabelBorder: def('gto', 'color', ['gitgraph']),
   tagBorder: def('gtg', 'color', []),
   tagLabelFontSize: def('gts', 'length', ['gitgraph']),
+  // v12's branch line colour (`lineColor` unless a redux theme sets it), and the cherry-pick
+  // mark (#374): white on light themes, black on dark ones.
+  commitLineColor: def('gcl', 'color', ['gitgraph']),
+  gitCherryPickInk: def('gci', 'color', ['gitgraph']),
   // tokens
   strokeWidth: def('sw', 'length', [
     'core',
@@ -447,6 +470,20 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   timelineLabelOffset: def('tlo', 'padding', ['timeline']),
   timelineEventLabelShift: def('tle', 'length', ['timeline']),
   timelineScaleColors: def('tls', 'flag', ['timeline']),
+  gitCommitRadius: def('gcr', 'length', GIT),
+  gitLaneShift: def('gls', 'length', GIT),
+  gitBranchLabelPaddingX: def('gpx', 'length', GIT),
+  gitBranchLabelPaddingY: def('gpy', 'length', GIT),
+  gitBranchLabelRadius: def('gbr', 'length', GIT),
+  gitBranchLabelShiftX: def('gbx', 'length', GIT),
+  gitBranchLabelOffsetY: def('gby', 'length', GIT),
+  gitArrowWidth: def('gaw', 'length', GIT),
+  gitHighlightInnerSize: def('ghi', 'length', GIT),
+  gitMergeRadius: def('gmr', 'length', GIT),
+  gitReverseCrossSize: def('grc', 'length', GIT),
+  gitCherryPickDotRadius: def('gcd', 'length', GIT),
+  gitNodeColors: def('gnc', 'flag', GIT),
+  gitPaletteColors: def('gpc', 'flag', GIT),
   // ER tables and ends (#133): v12's row fills, its colour-theme edge label background and
   // the zero circle's fill (white in v12 classic, the node fill in v12 neo).
   rowOdd: def('ro', 'color', ['er']),
