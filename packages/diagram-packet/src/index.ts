@@ -5,7 +5,13 @@
  */
 export { PACKET_TRIVIA, PacketTokenKind } from './parser/index.ts';
 export type { PacketToken } from './parser/index.ts';
-export { detectPacket, MAX_PACKET_ROWS, parsePacket } from './parser/index.ts';
+export {
+  detectPacket,
+  isWholeField,
+  MAX_PACKET_ROWS,
+  PACKET_SEMANTIC_ERRORS,
+  parsePacket,
+} from './parser/index.ts';
 export type {
   PacketDocument,
   PacketFieldNode,

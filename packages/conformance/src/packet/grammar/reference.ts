@@ -12,7 +12,7 @@ import {
   sourceRange,
 } from '@mermaid-js/gen-grammar';
 import type { AstShape, LexToken, ReferenceParser, SentenceModel } from '@mermaid-js/gen-grammar';
-import { parsePacket } from '@mermaid-js/diagram-packet';
+import { PACKET_SEMANTIC_ERRORS, parsePacket } from '@mermaid-js/diagram-packet';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import { grammarTokens, parserTokens, packetGrammar } from './packet-grammar.ts';
 
@@ -63,15 +63,13 @@ export function referenceVerdict(source: string): Verdict {
   return { accepted: true, ast: astOf(tree).map(toShape) };
 }
 
-/** Errors that come from checks beyond the syntax. */
-const SEMANTIC = new Set(['PACKET_END_BEFORE_START', 'PACKET_NOT_CONTIGUOUS', 'PACKET_ZERO_BITS']);
-
 /** Accept/reject and AST shape by the hand-written parser. */
 export function handWrittenVerdict(source: string): Verdict {
   const pre = preprocess(source);
   const result = parsePacket(source, { preprocessed: pre });
   const errors = [...pre.diagnostics, ...result.diagnostics].filter((d) => d.severity === 'error');
-  if (errors.some((d) => !SEMANTIC.has(d.code))) return { accepted: false, ast: undefined };
+  if (errors.some((d) => !PACKET_SEMANTIC_ERRORS.includes(d.code)))
+    return { accepted: false, ast: undefined };
   return {
     accepted: true,
     semanticError: errors.length > 0,

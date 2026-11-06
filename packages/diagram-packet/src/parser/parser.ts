@@ -44,7 +44,8 @@ import type {
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { PreprocessResult } from '@mermaid-js/core/preprocess';
 import { packetConfig } from '../config.ts';
-import type { PacketField, PacketModel, PacketPiece } from '../model.ts';
+import type { PacketField, PacketModel } from '../model.ts';
+import { MAX_PACKET_ROWS, RowSplitter } from '../normalise.ts';
 import type { PacketDocument, PacketStatementNode, PacketTextNode } from './ast.ts';
 import { accDescrValue, accTitleValue, labelValue, titleValue } from './convert.ts';
 import { lex } from './lexer.ts';
@@ -62,8 +63,12 @@ export interface PacketParseOptions extends ParseOptions {
 
 export type PacketParseResult = ParseResult<PacketModel, PacketDocument>;
 
-/** v12's `maxPacketSize`: rows past it are dropped (D342). */
-export const MAX_PACKET_ROWS = 10_000;
+/** The codes of the checks v12's `populate` threw on (D341): semantic, not syntax, errors. */
+export const PACKET_SEMANTIC_ERRORS: readonly string[] = [
+  'PACKET_END_BEFORE_START',
+  'PACKET_NOT_CONTIGUOUS',
+  'PACKET_ZERO_BITS',
+];
 
 const HEADERS = [T.Packet, T.PacketBeta];
 const TEXT = [T.Title, T.AccTitle, T.AccDescr];
@@ -198,18 +203,7 @@ class PacketParser {
   private readonly bitsPerRow: number;
   /** v12's `lastBit`: the last bit of the fields so far. */
   private lastBit = -1;
-  private readonly fields: PacketField[] = [];
-  private readonly rows: (readonly PacketPiece[])[] = [];
-  /** The row being filled (v12's `word`) and its 1-based number (v12's `row`). */
-  private word: PacketPiece[] = [];
-  private row = 1;
-  private truncated = false;
-  /**
-   * Whether the last field's bits could not be read (a syntax error before its `:`, or a line
-   * of stray text): the next field is then not checked against `lastBit` and counting
-   * restarts from it, so one broken field gives one error (R-PARSE-4, pitfall 8).
-   */
-  private lost = false;
+  private readonly rows: RowSplitter;
   /** The last in-text value of each (v12's Langium assignments: the last one wins). */
   private title = '';
   private accTitle = '';
@@ -230,6 +224,7 @@ class PacketParser {
     this.t = significantTokens(this.full, PACKET_TRIVIA);
     const { config, problems } = packetConfig(options.config);
     this.bitsPerRow = config.bitsPerRow;
+    this.rows = new RowSplitter(config.bitsPerRow);
     // D342: the config applies to the whole diagram; the warning points at its start.
     const at = { start: pre.bodyStart, end: pre.bodyStart };
     for (const p of problems) this.st.diagnostics.warning('PACKET_CONFIG_INVALID', p.message, at);
@@ -246,13 +241,12 @@ class PacketParser {
     const { st, src } = this;
     this.statement(() => this.header());
     this.document();
-    if (this.word.length > 0) this.rows.push(Object.freeze(this.word));
     const warnings = st.diagnostics.list.filter((d) => d.severity === 'warning');
     // D218: the in-text title if non-empty, else the front-matter one.
     const title = this.title || this.pre.frontMatter?.title;
     const model: PacketModel = Object.freeze({
-      fields: Object.freeze(this.fields),
-      rows: Object.freeze(this.rows),
+      fields: Object.freeze(this.rows.fields),
+      rows: Object.freeze(this.rows.rows()),
       bitsPerRow: this.bitsPerRow,
       ...(title ? { title } : {}),
       accTitle: this.accTitle,
@@ -426,8 +420,14 @@ class PacketParser {
     this.children.push({ id: 'packet', type: 'Header', range, beta: k === T.PacketBeta });
   }
 
-  /** `(TitleAndAccessibilities | PacketBlock | NEWLINE)* EOF` */
+  /**
+   * `(TitleAndAccessibilities | PacketBlock | NEWLINE)* EOF`. `restart` is whether the count
+   * restarts at the next field: after a field whose bits could not be read, so one broken field
+   * gives one error (R-PARSE-4, pitfall 8). A text statement or a stray line leaves it as it is,
+   * so a gap after stray text is still reported.
+   */
   private document(): void {
+    let restart = false;
     for (;;) {
       this.tested(DOC);
       const k = this.kind();
@@ -436,15 +436,38 @@ class PacketParser {
         this.i++;
         continue;
       }
+      if (FIELD.includes(k) || this.startsLikeBits()) {
+        restart = this.fieldStatement(restart);
+        continue;
+      }
       this.statement(() => {
-        if (FIELD.includes(k)) this.field();
-        else if (TEXT.includes(k)) this.text(k);
-        else {
-          this.lost = true;
-          this.fail(DOC, undefined, EXPECTED_LINE);
-        }
+        if (TEXT.includes(k)) this.text(k);
+        else this.fail(DOC, undefined, EXPECTED_LINE);
       });
     }
+  }
+
+  /** Text no rule took that starts with a digit (`8.5: "a"`): a field whose bits are broken. */
+  private startsLikeBits(): boolean {
+    return this.kind() === Kind.Error && /^[0-9]/.test(this.raw());
+  }
+
+  /**
+   * One field, recovering on failure. Returns whether the count restarts at the next field:
+   * true when this field's bits could not be read.
+   */
+  private fieldStatement(restart: boolean): boolean {
+    let read = false;
+    try {
+      if (this.kind() === Kind.Error) this.fail(FIELD);
+      const bits = this.bits();
+      read = true;
+      this.field(bits, restart);
+    } catch (error) {
+      if (error !== STOP) throw error;
+      this.recover();
+    }
+    return !read;
   }
 
   /** `EOL: NEWLINE+ | EOF` (the loop takes the line breaks after the first). */
@@ -477,18 +500,11 @@ class PacketParser {
   }
 
   /**
-   * `PacketBlock: bits ":" STRING EOL`. The bits are checked as soon as they are read, so a
-   * later syntax error in the field still moves the count on.
+   * `PacketBlock: bits ":" STRING EOL`, after its bits. They are checked first, so a later
+   * syntax error in the field still moves the count on; `restart` as in {@link document}.
    */
-  private field(): void {
-    let written: WrittenBits;
-    try {
-      written = this.bits();
-    } catch (error) {
-      if (error === STOP) this.lost = true;
-      throw error;
-    }
-    const { start, end, ok } = this.resolve(written);
+  private field(written: WrittenBits, restart: boolean): void {
+    const { start, end, ok } = this.resolve(written, restart);
     this.expect(T.Colon, FIELD_FORM);
     const s = this.expect(T.String);
     const labelRange = this.range(s);
@@ -517,10 +533,8 @@ class PacketParser {
    * resolved range, and moves `lastBit` on: to the field's end, a reversed field's start, or
    * nowhere for `+0`.
    */
-  private resolve(written: WrittenBits): Resolved {
+  private resolve(written: WrittenBits, restart: boolean): Resolved {
     const { diagnostics } = this.st;
-    const lost = this.lost;
-    this.lost = false;
     const where = written.range;
     const { start: s, end: e } = written;
     if (s !== undefined && e !== undefined && e < s) {
@@ -532,8 +546,8 @@ class PacketParser {
       this.lastBit = s;
       return { start: s, end: e, ok: false };
     }
-    // After a field whose bits were lost, counting restarts here.
-    const next = lost && s !== undefined ? s : this.lastBit + 1;
+    // After a field whose bits could not be read, counting restarts here.
+    const next = restart && s !== undefined ? s : this.lastBit + 1;
     const start = s ?? next;
     const end = e ?? start + (written.bits ?? 1) - 1;
     if (written.bits === 0) {
@@ -554,41 +568,15 @@ class PacketParser {
     return { start, end, ok: false };
   }
 
-  /**
-   * v12's split loop: the field's pieces, each ending at the field's end or its row's end, until
-   * the row cap; the first piece dropped gives the one `PACKET_TRUNCATED` warning (D342). A field
-   * none of whose pieces fit is left out of the model.
-   */
+  /** Split `field` into rows (`normalise.ts`); the first field the cap cuts warns (D342). */
   private place(field: PacketField, range: Range): void {
-    const index = this.fields.length;
-    const bpr = this.bitsPerRow;
-    let start = field.start;
-    let placed = false;
-    for (;;) {
-      if (this.rows.length >= MAX_PACKET_ROWS) {
-        if (!this.truncated) {
-          this.truncated = true;
-          this.st.diagnostics.warning(
-            'PACKET_TRUNCATED',
-            `The packet has more than ${MAX_PACKET_ROWS} rows: bit ${start} and the bits after it are not drawn.`,
-            range
-          );
-        }
-        break;
-      }
-      const rowEnd = this.row * bpr - 1;
-      const end = Math.min(field.end, rowEnd);
-      this.word.push(Object.freeze({ field: index, start, end }));
-      placed = true;
-      if (end === rowEnd) {
-        this.rows.push(Object.freeze(this.word));
-        this.word = [];
-        this.row++;
-      }
-      if (end === field.end) break;
-      start = end + 1;
-    }
-    if (placed) this.fields.push(Object.freeze(field));
+    const dropped = this.rows.add(field);
+    if (dropped === undefined) return;
+    this.st.diagnostics.warning(
+      'PACKET_TRUNCATED',
+      `The packet has more than ${MAX_PACKET_ROWS} rows: bit ${dropped} and the bits after it are not drawn.`,
+      range
+    );
   }
 
   /** `(ACC_DESCR | ACC_TITLE | TITLE) EOL` */

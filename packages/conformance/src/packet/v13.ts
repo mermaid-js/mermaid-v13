@@ -2,7 +2,7 @@
  * The v13 side of packet parity: the packet parser and the normaliser from its `PacketModel` to
  * the {@link PacketSnapshot} that `v12.ts` takes from mermaid\@12's packet DB.
  */
-import { detectPacket, parsePacket } from '@mermaid-js/diagram-packet';
+import { detectPacket, isWholeField, parsePacket } from '@mermaid-js/diagram-packet';
 import type { PacketModel } from '@mermaid-js/diagram-packet';
 import { preprocess } from '@mermaid-js/core/preprocess';
 import type { DiagramAdapter } from '../types.ts';
@@ -15,7 +15,7 @@ export function packetV13Snapshot(model: PacketModel): PacketSnapshot {
       row.map((p): PacketPieceSnapshot => {
         const f = model.fields[p.field];
         const label = f?.label ?? '';
-        const whole = f !== undefined && p.start === f.start && p.end === f.end;
+        const whole = f !== undefined && isWholeField(f, p);
         return whole ? [p.start, p.end, label, f.bits] : [p.start, p.end, label];
       })
     ),

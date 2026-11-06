@@ -669,5 +669,42 @@
   {
     "id": "packet-cases/parser-header-beta-plus",
     "source": "packet-beta\n+16: \"a\"\n+16: \"b\""
+  },
+  {
+    "id": "packet-cases/recovery-stray-line-keeps-count",
+    "source": "packet\n0-7: \"a\"\n@\n20: \"b\"",
+    "errors": [
+      ["UNEXPECTED_CHARACTER", 3],
+      ["PACKET_NOT_CONTIGUOUS", 4]
+    ],
+    "keeps": ["a"]
+  },
+  {
+    "id": "packet-cases/string-control-escapes",
+    "source": "packet\n0: \"a\\nb\"\n1: \"c\\td\"\n2: \"e\\rf\\bg\"\n3: \"h\\vi\\fj\\0k\"\n4: \"l\\xm\\qn\\\\o\"\n5: 'p\\nq\\tr'"
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-zero",
+    "source": "---\nconfig:\n  packet:\n    bitsPerRow: 0\n---\npacket\n0-15: \"a\"\n+20: \"b\""
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-negative",
+    "source": "---\nconfig:\n  packet:\n    bitsPerRow: -4\n---\npacket\n0-15: \"a\"\n+20: \"b\""
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-fraction",
+    "source": "---\nconfig:\n  packet:\n    bitsPerRow: 10.5\n---\npacket\n0-15: \"a\"\n+20: \"b\""
+  },
+  {
+    "id": "packet-cases/config-bits-per-row-string",
+    "source": "---\nconfig:\n  packet:\n    bitsPerRow: \"8\"\n---\npacket\n0-15: \"a\"\n+20: \"b\""
+  },
+  {
+    "id": "packet-cases/config-row-height-zero",
+    "source": "---\nconfig:\n  packet:\n    rowHeight: 0\n---\npacket\n0-15: \"a\"\n+20: \"b\""
+  },
+  {
+    "id": "packet-cases/config-padding-negative",
+    "source": "---\nconfig:\n  packet:\n    paddingX: -1\n    paddingY: -2\n---\npacket\n0-15: \"a\"\n+20: \"b\""
   }
 ]

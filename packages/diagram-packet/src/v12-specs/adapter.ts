@@ -12,7 +12,7 @@
  *   built it (every block, the last of each text statement), and the errors are the syntax
  *   errors (a misplaced field is the DB's error, not Langium's).
  */
-import { parsePacket } from '../parser/index.ts';
+import { isWholeField, PACKET_SEMANTIC_ERRORS, parsePacket } from '../parser/index.ts';
 import type { PacketModel } from '../model.ts';
 
 interface Block {
@@ -35,7 +35,7 @@ export class PacketDB {
     return model.rows.map((row) =>
       row.map((p) => {
         const f = model.fields[p.field];
-        const whole = f !== undefined && f.start === p.start && f.end === p.end;
+        const whole = f !== undefined && isWholeField(f, p);
         return {
           start: p.start,
           end: p.end,
@@ -83,8 +83,6 @@ interface LangiumPacket {
   accDescr?: string;
 }
 
-const SEMANTIC = new Set(['PACKET_END_BEFORE_START', 'PACKET_NOT_CONTIGUOUS', 'PACKET_ZERO_BITS']);
-
 export function packetParse(text: string): {
   value: LangiumPacket;
   lexerErrors: string[];
@@ -104,7 +102,9 @@ export function packetParse(text: string): {
     else if (node.type === 'AccTitle') value.accTitle = node.text;
     else if (node.type === 'AccDescr') value.accDescr = node.text;
   }
-  const errors = diagnostics.filter((d) => d.severity === 'error' && !SEMANTIC.has(d.code));
+  const errors = diagnostics.filter(
+    (d) => d.severity === 'error' && !PACKET_SEMANTIC_ERRORS.includes(d.code)
+  );
   return { value, lexerErrors: [], parserErrors: errors.map((d) => d.message) };
 }
 
