@@ -202,6 +202,7 @@ const TYPE_DOCS: Record<string, string> = {
   quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   pie: 'pie\n  "Dogs" : 386\n',
+  radar: 'radar-beta\n  axis A, B\n',
 };
 
 /** `defaultHighlightStyle`'s keyword colour (#708), which no semantic-token class sets. */

@@ -105,6 +105,7 @@ export const firstPartyFacets: readonly FacetEntry[] = [
     section: 'radar',
     pattern: /^\s*radar-beta/,
     detector: (text) => /^\s*radar-beta/.test(text),
+    load: () => import('@mermaid-js/diagram-radar/language').then((m) => m.language),
   },
   { type: 'ishikawa', id: 'ishikawa', pattern: /^\s*ishikawa(-beta)?\b/i, detector: (text) => /^\s*ishikawa(-beta)?\b/i.test(text) },
   { type: 'treemap', id: 'treemap', pattern: /^\s*treemap/, detector: (text) => /^\s*treemap/.test(text) },
@@ -122,4 +123,4 @@ export const firstPartyFacets: readonly FacetEntry[] = [
  * The ids of the first-party types with a language facet, in detector order. Each editor
  * adapter's highlighter map has one row per id (D134), so a new facet fails to compile there.
  */
-export type FirstPartyFacetId = 'flowchart' | 'class' | 'er' | 'pie' | 'sequence' | 'timeline' | 'state' | 'journey' | 'quadrantChart';
+export type FirstPartyFacetId = 'flowchart' | 'class' | 'er' | 'pie' | 'sequence' | 'timeline' | 'state' | 'journey' | 'quadrantChart' | 'radar';

@@ -38,6 +38,7 @@ describe('the per-type first-paint highlighters (D134)', () => {
       'journey',
       'pie',
       'quadrantChart',
+      'radar',
       'sequence',
       'state',
       'timeline',
@@ -107,6 +108,14 @@ describe('the per-type first-paint highlighters (D134)', () => {
       expect(out[0]).toBe('quadrantChart:keyword');
       expect(out).toContain('x-axis:keyword');
       expect(out).toContain('-->:operator');
+    });
+
+    it('highlights a radar chart with the radar grammar', () => {
+      const out = spans('radar-beta\n  axis a["Speed"], b\n  curve c{1, 2}\n  max 5\n');
+      expect(out[0]).toBe('radar-beta:keyword');
+      expect(out).toContain('axis:keyword');
+      expect(out).toContain('curve:keyword');
+      expect(out).toContain('"Speed":string');
     });
 
     it('finds the type after front matter, directives and comments', () => {

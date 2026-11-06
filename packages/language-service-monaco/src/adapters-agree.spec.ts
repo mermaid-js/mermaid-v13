@@ -155,6 +155,23 @@ const DOCS: Readonly<Record<string, string>> = {
     "  'Cats' : 85.5",
     '',
   ].join('\n'),
+  radar: [
+    'radar-beta:',
+    '  title Skills',
+    '  accTitle: Skills',
+    '  accDescr {',
+    '    two lines',
+    '  }',
+    '  %% the axes',
+    '  axis a["Speed"], b["Power"], c',
+    '  curve x["Ann"]{1, 2.5, 3}, y{ a: 3, b: 2, c: 1 }',
+    '  graticule polygon',
+    '  showLegend true',
+    '  ticks 4',
+    '  max 5',
+    '  min 0',
+    '',
+  ].join('\n'),
 };
 
 /** Monarch token type (without its postfix) → the Lezer node name for the same category. */

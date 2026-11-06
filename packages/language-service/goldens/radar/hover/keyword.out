@@ -1,0 +1,69 @@
+@ 1:4  rad|ar-beta
+  1:1-1:11 "radar-beta"
+  | **`radar-beta`**
+  |
+  | `radar-beta`: starts a radar chart. `radar-beta:` and `radar-beta :` do too.
+@ 2:5  ti|tle Skills
+  2:3-2:8 "title"
+  | **`title`**
+  |
+  | `title Skills`: the title drawn at the top (the last one wins).
+@ 2:11  title Sk|ills
+  none
+@ 3:6  acc|Title: x
+  3:3-3:11 "accTitle"
+  | **`accTitle`**
+  |
+  | `accTitle: …`: the accessible title.
+@ 4:6  acc|Descr {
+  4:3-4:11 "accDescr"
+  | **`accDescr`**
+  |
+  | `accDescr: …` or `accDescr { … }`: the accessible description.
+@ 7:5  ax|is A
+  7:3-7:7 "axis"
+  | **`axis`**
+  |
+  | `axis A["Label"], B`: the axes, in clockwise order from the top.
+@ 8:6  cur|ve c{1}
+  8:3-8:8 "curve"
+  | **`curve`**
+  |
+  | `curve c["Label"]{1, 2, 3}`: a curve, its values in axis order or as `axis: value` pairs.
+@ 9:9  showLe|gend false
+  9:3-9:13 "showLegend"
+  | **`showLegend`**
+  |
+  | `showLegend true|false`: whether the legend lists the curves (default `true`; the last one wins, as for every option).
+@ 9:16  showLegend fa|lse
+  9:14-9:19 "false"
+  | **`false`**
+  |
+  | `true` or `false`, the value of `showLegend`.
+@ 10:8  grati|cule polygon
+  10:3-10:12 "graticule"
+  | **`graticule`**
+  |
+  | `graticule circle|polygon`: the shape of the rings and of the curves (default `circle`).
+@ 10:16  graticule pol|ygon
+  10:13-10:20 "polygon"
+  | **`polygon`**
+  |
+  | `circle` or `polygon`, the value of `graticule`.
+@ 11:5  ti|cks 3
+  11:3-11:8 "ticks"
+  | **`ticks`**
+  |
+  | `ticks 5`: the number of rings (default 5, at most 32).
+@ 12:4  m|ax 5
+  12:3-12:6 "max"
+  | **`max`**
+  |
+  | `max 10`: the value at the outer ring (default: the largest value).
+@ 13:5  mi|n 0
+  13:3-13:6 "min"
+  | **`min`**
+  |
+  | `min 0`: the value at the centre (default 0).
+@ 14:11  curve d{|1}
+  none

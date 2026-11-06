@@ -167,7 +167,7 @@ describe('radar parser on the fixtures', () => {
     expect(model.curves[0]?.label).toBe('x');
   });
 
-  it('records axis symbols (definition, repeats and entries as references) and curves (D358)', () => {
+  it('records axis symbols (definition, repeats and entries as references, none for an entry naming no axis) and curves (D358)', () => {
     const { symbols } = parse(fixture('parser-symbols'));
     expect(symbols.map((s) => [s.kind, s.name, s.role])).toEqual([
       ['axis', 'A', 'def'],
@@ -175,7 +175,6 @@ describe('radar parser on the fixtures', () => {
       ['axis', 'A', 'ref'],
       ['axis', 'A', 'ref'],
       ['axis', 'B', 'ref'],
-      ['axis', 'X', 'ref'],
       ['curve', 'c', 'def'],
       ['curve', 'd', 'def'],
     ]);

@@ -1,0 +1,22 @@
+@ 4:13  curve one{|}
+  A node (axis "Speed") 4:13-4:13 "" -> "A"
+  B node (axis) 4:13-4:13 "" -> "B"
+  C node (axis "Power") 4:13-4:13 "" -> "C"
+@ 5:19  curve two{A: 1, |}
+  A node (axis "Speed") 5:19-5:19 "" -> "A"
+  B node (axis) 5:19-5:19 "" -> "B"
+  C node (axis "Power") 5:19-5:19 "" -> "C"
+@ 6:22  curve three{A: 1, B|: 2}
+  B node (axis) 6:21-6:22 "B" -> "B"
+@ 9:5  |
+  A node (axis "Speed") 9:5-9:5 "" -> "A"
+  B node (axis) 9:5-9:5 "" -> "B"
+  C node (axis "Power") 9:5-9:5 "" -> "C"
+@ 11:17  curve five{1, |}
+  none
+@ 12:16  curve six{A: |}
+  none
+@ 13:8  axis |
+  none
+@ 14:9  curve |
+  none

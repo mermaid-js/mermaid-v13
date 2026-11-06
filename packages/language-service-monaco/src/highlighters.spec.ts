@@ -39,6 +39,7 @@ const DOCS = {
   timeline: 'timeline\n  section Early\n  2002 : LinkedIn\n',
   pie: 'pie\n  "Dogs" : 386\n',
   quadrantChart: 'quadrantChart\n  x-axis Low --> High\n',
+  radar: 'radar-beta\n  axis A, B\n',
 };
 
 describe('the per-type Monarch highlighters (D134)', () => {
@@ -50,6 +51,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'journey',
       'pie',
       'quadrantChart',
+      'radar',
       'sequence',
       'state',
       'timeline',
@@ -170,6 +172,7 @@ describe('the per-type Monarch highlighters (D134)', () => {
       'erDiagram',
       'gitGraph',
       'pie',
+      'radar-beta',
       'swimlane-beta',
       'requirementDiagram',
       'info',

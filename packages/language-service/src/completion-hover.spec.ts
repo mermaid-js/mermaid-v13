@@ -51,8 +51,10 @@ describe('completion', () => {
       'stateDiagram',
       'journey',
       'quadrantChart',
+      'radar-beta',
     ]);
     expect(labels('qua|')).toEqual(['quadrantChart']);
+    expect(labels('rad|')).toEqual(['radar-beta']);
     expect(labels('cla|')).toEqual(['classDiagram']);
     expect(labels('jour|')).toEqual(['journey']);
     expect(labels('sta|')).toEqual(['stateDiagram-v2', 'stateDiagram']);

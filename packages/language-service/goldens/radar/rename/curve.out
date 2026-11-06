@@ -1,0 +1,8 @@
+@ 4:10  curve o|ne{A: 1, B: 2}
+  prepare: 4:9-4:12 "one"; rename to "first":
+  %% rename-to: first
+  radar-beta
+    axis A, B
+    curve first{A: 1, B: 2}
+    curve first{1, 2}
+    curve two{1, 2}
