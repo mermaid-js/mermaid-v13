@@ -4,7 +4,7 @@ Integration branch `feature/292_gitgraph` (from `mermaid-v13` 38d663b44). Draft 
 
 | Ticket | Issue | Blocked by | State |
 | --- | --- | --- | --- |
-| T1 lexer parity gate | #368 | — | open |
+| T1 lexer parity gate | #368 | — | merged (ff 189662975) |
 | T4a `git`, `gitInv`, `gitBranchLabel` palettes | #369 | — | open |
 | T2 grammar, parser, model, AST | #370 | #368 | open |
 | T3 custom layout (`GitLayout`) | #371 | #370 (hand-built fixtures meanwhile) | open |
