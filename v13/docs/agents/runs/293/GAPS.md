@@ -38,3 +38,11 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 
 ## Setup (skeleton)
 - `tools/gen-config/src/theme-used-by.spec.ts` requires every `packages/diagram-*` to read a theme variable. The skeleton reads none, so the spec lists gantt in `NOT_DRAWN_YET`, where a package must read **none**. **#379 (T3) removes the entry** when gantt reads its first variable (the spec then fails until it does). `.changeset/diagram-gantt-first-release.md` added for the release spec.
+
+### #377 review findings, owned by #378 (T2)
+- [ ] The probe records `after + 1` for non-INITIAL steps, so a value at the end of the text reports an end past `src.length` (`lexer.ts` `run`). Clamp it.
+- [ ] `%%{` at a line end gives a zero-width `Error` token; give it a visible range before T2 turns it into a diagnostic.
+- [ ] `valueKeyword()` tries all eight keywords at every token start; dispatch on the first letter as `keywords()` does.
+- [ ] `ganttTokens` copies `timelineTokens`; use `significantTokens()` for the trivia filter.
+- [ ] The gate's `skipped.length < 4` repeats the filter check; assert the exact skipped ids.
+- Follow-up (coordinator, not gantt): T1 says timeline's lexer tests jison's `\b` with parser-kit's Unicode `isWord`, though JS `\b` is ASCII-only, so it may be a latent parity bug there.
