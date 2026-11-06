@@ -9,7 +9,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## Exploration findings (2026-11-06), see `01-v12-gitgraph.md` "Surprises"
 
 ## #368 T1 lexer
-- `INT` beats `REFERENCE`: `branch 123` is rejected in v12 (not in the spec). The oracle decides; T1 reproduces it, T2 rejects it.
+- `INT` beats `REFERENCE`: `branch 123` is rejected in v12 (not in the spec). The oracle decides; T1 reproduces it, T2 rejects it. Done in T1: reproduced and gated (quirks `branch 123`, `10abc`, `10.5`, `007`).
 
 ## #369 T4a palettes
 - D267 says v12 ignores a user's `tagLabelBorder`; probing shows every v12 theme re-applies user overrides after deriving, so a user's `tagLabelBorder`, `git<n>` and `gitBranchLabel<n>` win in every theme. D267's outcome (honour it, `tagBorder` an alias) still matches v12; the spec's reasoning is what is off. MIGRATION.md should not claim a change there.

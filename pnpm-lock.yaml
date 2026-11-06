@@ -189,6 +189,9 @@ importers:
       '@mermaid-js/diagram-flowchart':
         specifier: workspace:^
         version: link:../diagram-flowchart
+      '@mermaid-js/diagram-gitgraph':
+        specifier: workspace:^
+        version: link:../diagram-gitgraph
       '@mermaid-js/diagram-journey':
         specifier: workspace:^
         version: link:../diagram-journey
@@ -328,6 +331,12 @@ importers:
         version: link:../core
 
   packages/diagram-flowchart:
+    devDependencies:
+      '@mermaid-js/core':
+        specifier: workspace:^
+        version: link:../core
+
+  packages/diagram-gitgraph:
     devDependencies:
       '@mermaid-js/core':
         specifier: workspace:^
