@@ -15,6 +15,11 @@
  * lazy import the build cannot name fails the build, so nothing loads relative to a URL the
  * integrator did not choose.
  *
+ * Core's shared modules are one chunk, whichever diagrams exist and whatever core subpaths each
+ * imports (D313; `packages/bench/src/stable-chunks.ts`, which the bench's size measurement uses
+ * too). A first pass finds them; the build then anchors every lazy import target to all of them,
+ * and every `language` entry to those of them that some `language` entry already uses.
+ *
  * Source maps sit beside each file with their sources embedded; source paths read
  * `node_modules/<package>/<path>` so tools (and the platform e2e) can tell the packages apart.
  *
@@ -25,6 +30,11 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import { build, type BuildOptions, type Metafile, type Plugin } from 'esbuild';
+import {
+  stableCorePlan,
+  stableCorePlugin,
+  type StableCorePlan,
+} from '../../bench/src/stable-chunks.ts';
 
 const PACKAGE_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PACKAGES_DIR = resolve(PACKAGE_DIR, '..');
@@ -134,8 +144,15 @@ async function lazyTargets(outdir: string): Promise<{ targets: string[]; importe
   return { targets: [...targets], importers };
 }
 
-/** Rewrites each lazy import in `importers` to load `chunks/<name>.mjs` from `cdnBase`. */
-function cdnImports(importers: ReadonlySet<string>, names: ReadonlyMap<string, string>): Plugin {
+/**
+ * Rewrites each lazy import in `importers` to load `chunks/<name>.mjs` from `cdnBase`. An
+ * importer that `plan` anchors (D313) gets its anchoring imports here too.
+ */
+function cdnImports(
+  importers: ReadonlySet<string>,
+  names: ReadonlyMap<string, string>,
+  plan?: StableCorePlan
+): Plugin {
   return {
     name: 'mermaid-cdn-imports',
     setup(b) {
@@ -157,7 +174,11 @@ function cdnImports(importers: ReadonlySet<string>, names: ReadonlyMap<string, s
             DYNAMIC_IMPORT,
             (_m, _q, spec: string) => `import(${CDN_URL}(${JSON.stringify(urls.get(spec))}))`
           ) + `\nimport { cdnUrl as ${CDN_URL} } from ${JSON.stringify(CDN_BASE_MODULE)};\n`;
-        return { contents, loader: file.endsWith('.ts') ? 'ts' : 'js', resolveDir: dirname(file) };
+        return {
+          contents: plan ? plan.anchor(file, contents) : contents,
+          loader: file.endsWith('.ts') ? 'ts' : 'js',
+          resolveDir: dirname(file),
+        };
       });
     },
   };
@@ -205,11 +226,13 @@ export function closureGzip(files: readonly CdnFile[], root: string): number {
 export async function buildCdn(outdir: string = join(PACKAGE_DIR, 'dist')): Promise<CdnBuild> {
   const { targets, importers } = await lazyTargets(outdir);
   const names = new Map(targets.map((t) => [t, chunkName(t)]));
-  for (const lang of languageEntries()) names.set(lang, chunkName(lang));
-  const esm = await build({
+  const languages = languageEntries();
+  for (const lang of languages) names.set(lang, chunkName(lang));
+  const entry = join(PACKAGE_DIR, 'src/cdn.ts');
+  const esmOptions = (plan?: StableCorePlan): BuildOptions => ({
     ...COMMON,
     entryPoints: [
-      { in: join(PACKAGE_DIR, 'src/cdn.ts'), out: ESM_FILE.replace(/\.mjs$/, '') },
+      { in: entry, out: ESM_FILE.replace(/\.mjs$/, '') },
       ...[...names].map(([file, out]) => ({ in: file, out })),
     ],
     outdir,
@@ -219,8 +242,16 @@ export async function buildCdn(outdir: string = join(PACKAGE_DIR, 'dist')): Prom
     sourcesContent: true,
     outExtension: { '.js': '.mjs' },
     chunkNames: 'chunks/[name]-[hash]',
-    plugins: [cdnImports(importers, names)],
+    plugins: [cdnImports(importers, names, plan), ...(plan ? [stableCorePlugin(plan)] : [])],
   });
+  // D313: the same build once more, with every lazy import target anchored to core's shared modules.
+  const plan = stableCorePlan(
+    (await build({ ...esmOptions(), sourcemap: false })).metafile!,
+    PACKAGES_DIR,
+    entry,
+    [targets, languages]
+  );
+  const esm = await build(esmOptions(plan));
   const loader = await build({
     ...COMMON,
     entryPoints: [join(PACKAGE_DIR, 'src/cdn-loader.ts')],
