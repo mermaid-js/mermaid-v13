@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mindmapTokens } from '@mermaid-js/diagram-mindmap';
+import { mindmapTokens, parseMindmap } from '@mermaid-js/diagram-mindmap';
 
 /**
  * R-PARSE-7, pitfall 5: the mindmap lexer is linear in input size, in every free-text state.
@@ -76,4 +76,60 @@ describe('stress: the mindmap lexer is linear in input size', () => {
     },
     30_000
   );
+});
+
+/** Lines until the text is about `n` characters long. */
+const lines = (n: number, line: (k: number) => string): string => {
+  let out = 'mindmap\nroot\n';
+  for (let k = 0; out.length < n; k++) out += line(k) + '\n';
+  return out;
+};
+
+/**
+ * R-PARSE-7, pitfall 19: the parser (tree building, AST ids, statement spans, recovery) is linear
+ * in input size, with the same n and 8n ratio test as the lexer.
+ */
+const PARSE_SHAPES: [string, (n: number) => string][] = [
+  ['a wide fan', (n) => lines(n, (k) => `  n${k}`)],
+  ['a deep indent chain', (n) => lines(n, (k) => `${' '.repeat(k + 1)}n`)],
+  ['deep then shallow, repeatedly', (n) => lines(n, (k) => `${' '.repeat((k % 40) + 1)}n${k}`)],
+  ['repeated ids', (n) => lines(n, () => '  a[x]')],
+  ['decorations on every node', (n) => lines(n, (k) => `  n${k}\n  :::a b\n  ::icon(fa fa-x)`)],
+  ['second roots', (n) => lines(n, (k) => `r${k}`)],
+  ['syntax errors on every line', (n) => lines(n, (k) => `  a[b] c${k}`)],
+];
+
+describe('stress: the mindmap parser is linear in input size', () => {
+  it.each(PARSE_SHAPES)(
+    '%s',
+    (_name, build) => {
+      const small = build(4_000);
+      const large = build(32_000);
+      parseMindmap(small); // warm up
+      parseMindmap(large);
+      let tSmall = Infinity;
+      let tLarge = Infinity;
+      for (let round = 0; round < 5; round++) {
+        tSmall = Math.min(
+          tSmall,
+          cost(() => parseMindmap(small))
+        );
+        tLarge = Math.min(
+          tLarge,
+          cost(() => parseMindmap(large))
+        );
+      }
+      expect(tLarge / Math.max(tSmall, 2)).toBeLessThan(24);
+    },
+    30_000
+  );
+
+  it('parses a 10k-node mindmap', () => {
+    const src =
+      lines(0, () => '').replace(/\n$/, '') +
+      Array.from({ length: 10_000 }, (_, k) => `\n${' '.repeat((k % 8) + 1)}n${k}`).join('');
+    const r = parseMindmap(src);
+    expect(r.diagnostics).toEqual([]);
+    expect(r.model.nodes).toHaveLength(10_001);
+  });
 });
