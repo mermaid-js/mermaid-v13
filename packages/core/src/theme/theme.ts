@@ -50,6 +50,7 @@ import {
 import type { DiagramThemeFamily, DiagramThemeTable, ThemeFamily } from './diagram.ts';
 import { parseRule, type Expr, type Fn } from './dsl.ts';
 import { DARK_RULES, LIGHT_RULES, type ThemeRuleTable, type ThemeSpec } from './spec.ts';
+import { BASE_SERIES } from './specs/palettes.ts';
 import { THEME_VARIABLE_TABLE } from './generated/variables.ts';
 import {
   GIT_PALETTE_LIMIT,
@@ -262,14 +263,18 @@ class Resolver {
 
   /**
    * Entry `i` of a palette: the author's numbered override, else the author's list, else the
-   * theme's colour or rule. Undefined past the end of every list.
+   * theme's colour or rule, else for the series v12 theme-base's derivation (`BASE_SERIES`).
+   * Undefined past the end of every list.
    */
   slot(p: PaletteVariable, i: number): Resolved | undefined {
     const key = `${p}${i}`;
     // Only theme specs write palette rules, so no author input can make a cycle here.
     if (this.slots.has(key)) return this.slots.get(key);
     const user = this.palettes.slots.get(key) ?? this.palettes.user[p]?.[i];
-    const entry = user === undefined ? this.palettes.spec[p]?.[i] : undefined;
+    const entry =
+      user === undefined
+        ? (this.palettes.spec[p]?.[i] ?? (p === 'seriesColorArray' ? BASE_SERIES[i] : undefined))
+        : undefined;
     let r: Resolved | undefined;
     if (user !== undefined) r = this.literal('', user);
     else if (entry !== undefined) r = this.evaluate(rule(entry));

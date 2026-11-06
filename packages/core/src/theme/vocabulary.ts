@@ -120,7 +120,8 @@ export const PALETTE_VARIABLES = [
   'cScaleLabel',
   // Shared inputs that name no diagram (D332, D381): a theme's series colours and tints,
   // which charts and slotted diagrams read by slot (`seriesColorArray3`; the layout is
-  // `series` in specs/palettes.ts), and a ten-colour chart palette (v12's xychart
+  // `series` in specs/palettes.ts; an entry a theme leaves out is `BASE_SERIES`, derived from
+  // the base colours), and a ten-colour chart palette (v12's xychart
   // `plotColorPalette`), empty until a theme supplies it.
   'seriesColorArray',
   'plotColorArray',

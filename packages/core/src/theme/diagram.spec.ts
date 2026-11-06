@@ -292,6 +292,36 @@ describe('rule DSL: palette reads and literal() (D332)', () => {
     expect(user.value('a')).toBe('#abcdef');
   });
 
+  it('derives a series slot the theme leaves out from its base colours (v12 theme-base)', () => {
+    // A theme with no series entries: v12 theme-base's pie and journey derivation, the seed
+    // pair being the primary and secondary colours.
+    const { palettes: _, ...bare } = spec.base;
+    const read = (s: ThemeSpec, slot: number, themeVariables?: Record<string, unknown>) =>
+      createTheme(s, {
+        cssVariables: false,
+        diagram: table({ a: `seriesColorArray${slot}` }),
+        themeVariables,
+      }).value('a');
+    const at = (rule: string) =>
+      createTheme(bare, { cssVariables: false, diagram: table({ a: rule }) }).value('a');
+    expect(read(bare, 0)).toBe(at('primaryColor'));
+    expect(read(bare, 1)).toBe(at('secondaryColor'));
+    expect(read(bare, 5)).toBe(at('darkenHsl(tertiaryColor, 10%)'));
+    expect(read(bare, 6)).toBe(at('darkenHsl(adjustHue(primaryColor, 60), 10%)'));
+    expect(read(bare, 11)).toBe(at('darkenHsl(adjustHue(primaryColor, 120), 10%)'));
+    expect(read(bare, 12)).toBe(at('primaryColor'));
+    expect(read(bare, 19)).toBe(at('adjustHue(secondaryColor, 128)'));
+    // It follows the base colours, and the theme's own entry wins where there is one.
+    expect(read(bare, 0, { primaryColor: '#123456' })).toBe('#123456');
+    const one: ThemeSpec = { ...bare, palettes: { seriesColorArray: ['#abcdef'] } };
+    expect([read(one, 0), read(one, 1)]).toEqual(['#abcdef', at('secondaryColor')]);
+    // Past the twenty slots: currentColor.
+    expect(read(bare, 20)).toBe('currentColor');
+    const css = createTheme(bare, { diagram: table({ a: 'seriesColorArray1' }) });
+    css.color('a');
+    expect(css.rootStyle()['--_x0']).toBe('var(--mermaid-a,var(--_s))');
+  });
+
   it("reads the dark spec's seriesColorArray under theme: 'auto'", () => {
     const night: ThemeSpec = {
       ...spec.dark,

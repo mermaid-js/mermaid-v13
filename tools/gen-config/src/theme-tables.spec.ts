@@ -15,7 +15,8 @@ import { themePackages } from './theme-packages.ts';
 
 /**
  * Every row of every diagram theme table resolves under every theme, and under a twelfth theme
- * that has only base colours and a family (spec #414 T0b, "Theme scaling"). Core can't import
+ * that has only base colours and a family (spec #414 T0b, "Theme scaling"; user story 5): every
+ * colour is a real colour there, apart from the author-only and some-themes rows listed below. Core can't import
  * the diagram packages, so this runs here, over each package's `plugin.theme`, the bench's
  * themed stub (`packages/bench/src/__fixtures__/stub-diagram/themed.ts`) and the gen-config
  * fixture package, until the ports' tables exist.
@@ -57,14 +58,14 @@ const twelfth = (family: ThemeFamily, dark: boolean): ThemeSpec => ({
 });
 
 /**
- * What each variable of `table` fails to resolve to, in `theme`. A theme with no palettes reads
- * every slot past the end, as `currentColor` (D332): that counts as resolved where `carrier`, a
- * built-in theme with the same traits (so the same entries apply) and palettes, gives a colour.
+ * What each variable of `table` fails to resolve to, in `theme`: every colour must be a real
+ * colour, `currentColor` included as a failure. A theme with no palettes reads a series slot as
+ * v12 theme-base derives it from the base colours (`BASE_SERIES`, D332), and any other palette's
+ * slot as `currentColor`, so a table that themes a new theme reads the series.
  */
 function unresolved(
   theme: Theme,
   table: DiagramThemeTable,
-  carrier?: Theme,
   authorOnly: readonly string[] = [],
   someThemes: readonly string[] = []
 ): string[] {
@@ -76,10 +77,7 @@ function unresolved(
       : someThemes.includes(name) && v === 'currentColor'
         ? true
         : kind === 'color'
-          ? parseColor(v) !== undefined ||
-            (v === 'currentColor' &&
-              carrier !== undefined &&
-              parseColor(carrier.value(name)) !== undefined)
+          ? parseColor(v) !== undefined
           : kind === 'length'
             ? Number.isFinite(theme.number(name))
             : kind === 'padding'
@@ -112,13 +110,9 @@ const SOME_THEMES: Readonly<Record<string, readonly string[]>> = {
   gitgraph: ['commitLineColor', 'gitCherryPickInk'],
 };
 
-/** The built-in theme of each family and dark trait. */
-const CARRIERS = new Map(specs.map((s) => [`${s.family} ${s.dark}`, s]));
-
 function resolve(
   spec: ThemeSpec,
   table: DiagramThemeTable,
-  synthetic = false,
   authorOnly: readonly string[] = [],
   someThemes: readonly string[] = []
 ): string[] {
@@ -129,12 +123,7 @@ function resolve(
     warn: (w: ThemeWarning) => warnings.push(w),
   };
   const theme = createTheme(spec, options);
-  const like = synthetic ? CARRIERS.get(`${spec.family} ${spec.dark}`) : undefined;
-  const carrier = like && createTheme(like, { diagram: table, cssVariables: false });
-  return [
-    ...unresolved(theme, table, carrier, authorOnly, someThemes),
-    ...warnings.map((w) => w.message),
-  ];
+  return [...unresolved(theme, table, authorOnly, someThemes), ...warnings.map((w) => w.message)];
 }
 
 describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
@@ -145,9 +134,9 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
 
   it.each(TABLES)('%s: every row resolves in all eleven themes', (type, table) => {
     const [only, some] = [AUTHOR_ONLY[type], SOME_THEMES[type]];
-    expect(
-      Object.fromEntries(specs.map((s) => [s.name, resolve(s, table, false, only, some)]))
-    ).toEqual(Object.fromEntries(specs.map((s) => [s.name, []])));
+    expect(Object.fromEntries(specs.map((s) => [s.name, resolve(s, table, only, some)]))).toEqual(
+      Object.fromEntries(specs.map((s) => [s.name, []]))
+    );
   });
 
   const synthetic = (['classic', 'redux', 'neo'] as const).flatMap((family) =>
@@ -167,7 +156,7 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
       const name = (s: ThemeSpec) => `${s.family}${s.dark ? ' dark' : ''}`;
       const [only, some] = [AUTHOR_ONLY[type], SOME_THEMES[type]];
       expect(
-        Object.fromEntries(synthetic.map((s) => [name(s), resolve(s, table, true, only, some)]))
+        Object.fromEntries(synthetic.map((s) => [name(s), resolve(s, table, only, some)]))
       ).toEqual(Object.fromEntries(synthetic.map((s) => [name(s), []])));
     }
   );
@@ -192,10 +181,36 @@ describe('diagram theme tables resolve in every theme (spec #414 T0b)', () => {
       rules: { light: {} },
       families: { redux: { tokens: { loneGap: 3 } } },
     };
-    expect(resolve(twelfth('redux', false), table, true)).toEqual(['loneFill=currentColor']);
+    expect(resolve(twelfth('redux', false), table)).toEqual(['loneFill=currentColor']);
     expect(resolve(specs[THEME_NAMES.indexOf('default')]!, table)).toEqual([
       'loneFill=currentColor',
       'loneGap=currentColor',
     ]);
+  });
+
+  it('fails on a slot read the twelfth theme has no entry for, and takes the series', () => {
+    const table: DiagramThemeTable = {
+      vars: {
+        scaleFill: { alias: 'scf', kind: 'color' },
+        bandFill: { alias: 'bdf', kind: 'color' },
+        seriesFill: { alias: 'srf', kind: 'color' },
+        tintFill: { alias: 'tnf', kind: 'color' },
+      },
+      rules: {
+        light: {
+          scaleFill: 'cScale2',
+          bandFill: 'bkgColorArray0',
+          seriesFill: 'seriesColorArray6',
+          tintFill: 'seriesColorArray19',
+        },
+      },
+    };
+    for (const s of synthetic)
+      expect(resolve(s, table), s.family).toEqual([
+        'scaleFill=currentColor',
+        'bandFill=currentColor',
+      ]);
+    // The built-in themes carry cScale, so only the band read fails there.
+    expect(resolve(specs[THEME_NAMES.indexOf('base')]!, table)).toEqual(['bandFill=currentColor']);
   });
 });

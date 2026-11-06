@@ -53,7 +53,7 @@ The direction check (`tools/gen-config/src/theme-direction.spec.ts`) and the clo
 The DSL forms a table uses most (D332):
 
 - `bkgColorArray<n>`, `borderColorArray<n>`, `cScale<n>`: a palette slot as a literal colour.
-- `seriesColorArray<n>`: the series palette's slot as the theme wrote it, CSS included.
+- `seriesColorArray<n>`: the series palette's slot as the theme wrote it, CSS included; where a theme writes none, v12 theme-base's derivation from the base colours (slots 0–19). Read the series for any per-item colour, so a new theme with only base colours draws the diagram.
 - `literal(adjustHue(primaryColor, 64))`: a computed colour as a literal, for a v12 hue turn.
 - `inline(mutedBkg)`: a shared input as the theme wrote it; `inline(frameBorder, actorBorder)` falls back to the second where the theme wrote no first.
 
