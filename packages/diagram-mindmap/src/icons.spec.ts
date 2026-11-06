@@ -8,8 +8,14 @@ describe('mindmap icons', () => {
     expect(mindmapIconName('fa fa-book')).toBe('fa:book');
     expect(mindmapIconName('mdi mdi-fire')).toBe('mdi:fire');
     expect(mindmapIconName(' fa  fa-book ')).toBe('fa:book');
+    expect(mindmapIconName('fab fa-github')).toBe('fab:github');
+    expect(mindmapIconName('fas fa-car')).toBe('fas:car');
     // Other references are kept as written: they resolve to no glyph.
     expect(mindmapIconName('bomb')).toBe('bomb');
+    expect(mindmapIconName('mdi arrow-left')).toBe('mdi arrow-left');
+    expect(mindmapIconName('mdi fa-book')).toBe('mdi fa-book');
+    expect(mindmapIconName('fa mdi-fire')).toBe('fa mdi-fire');
+    expect(mindmapIconName('mdi\nmdi-fire')).toBe('mdi\nmdi-fire');
   });
 
   it('lists the icons of the model in source order', () => {

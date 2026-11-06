@@ -103,6 +103,7 @@ const HEADER_HINT = 'a mindmap starts with `mindmap`';
 const ONE_HEADER = '`mindmap` starts the diagram and comes only once';
 const BRACE_HINT = 'a hexagon is written `{{text}}`';
 const DECORATION_HINT = 'an `::icon(…)` or `:::class` goes on a line of its own, after its node';
+const ONE_NODE_HINT = 'each node goes on a line of its own';
 const BARE_CLASS_HINT = 'a bare `:::` takes the line break after it';
 const AFTER_BLANK_HINT =
   'remove a blank or comment line above it: a line may not follow two of them in a row, or one right after `mindmap`';
@@ -237,6 +238,45 @@ class MindmapParser {
     return -1;
   }
 
+  /** The whole decoration whose text is token `j`: `::icon(` or `:::` and an icon's `)` too. */
+  private decorationRange(j: number): Range {
+    const icon = this.c.tokens.kind[j] === T.Icon;
+    const inner = this.range(j);
+    const opener = this.beside(j, -1, icon ? T.IconStart : T.ClassStart);
+    const closer = icon ? this.beside(j, 1, T.IconEnd) : -1;
+    return {
+      start: opener < 0 ? inner.start : this.range(opener).start,
+      end: closer < 0 ? inner.end : this.range(closer).end,
+    };
+  }
+
+  /** The kind of the significant token after an indent at the cursor (else the cursor's). */
+  private afterIndent(): number {
+    const { c } = this;
+    if (c.kind !== T.SpaceList) return c.kind;
+    return this.c.tokens.kind[this.nextSignificant(c.pos)] ?? Kind.EOF;
+  }
+
+  private nextSignificant(j: number): number {
+    const t = this.c.tokens;
+    let next = j + 1;
+    while (next < t.length - 1 && inKindSet(SKIPPED, t.kind[next] ?? 0)) next++;
+    return next;
+  }
+
+  /** Whether nothing but line breaks and blank lines follows from token `j` on. */
+  private onlySeparatorsFrom(j: number): boolean {
+    const t = this.c.tokens;
+    for (let i = j; i < t.length; i = this.nextSignificant(i)) {
+      const k = t.kind[i] ?? Kind.EOF;
+      if (k === Kind.EOF) return true;
+      if (k !== Kind.Newline && k !== T.Eof && !(k === T.SpaceLine && !this.raw(i).includes('%%')))
+        return false;
+      if (i === t.length - 1) return true;
+    }
+    return true;
+  }
+
   private isStop(k: number): boolean {
     return k === Kind.Newline || k === T.Eof || k === T.SpaceLine;
   }
@@ -256,15 +296,18 @@ class MindmapParser {
     const { c } = this;
     let j = c.pos;
     if (c.kind === T.SpaceList) {
-      let next = j + 1;
-      while (next < c.tokens.length - 1 && inKindSet(SKIPPED, c.tokens.kind[next] ?? 0)) next++;
+      const next = this.nextSignificant(j);
       const after = c.tokens.kind[next] ?? Kind.EOF;
       if (!this.isStop(after) && after !== Kind.EOF) j = next;
     }
     const k = c.tokens.kind[j] ?? Kind.EOF;
-    if (k === Kind.EOF || k === T.Eof) return 'the end of the text';
+    if (k === Kind.EOF || k === T.Eof || this.onlySeparatorsFrom(j)) return 'the end of the text';
     if (k === Kind.Newline) return 'a line break';
-    const t = this.raw(j).trim();
+    let t = this.raw(j).trim();
+    if (k === T.Icon || k === T.Class) {
+      const r = this.decorationRange(j);
+      t = this.src.slice(r.start, r.end).trim();
+    }
     if (k === T.SpaceLine) return t.includes('%%') ? 'a comment' : 'a blank line';
     if (t === '') return 'blanks';
     const line = /^[^\n\r\u2028\u2029]*/.exec(t)?.[0] ?? '';
@@ -336,6 +379,11 @@ class MindmapParser {
         this.header();
         continue;
       }
+      // Blank lines and the end after a missing header: it was reported, nothing else is wrong.
+      if (!this.headerSeen && this.isStop(c.kind)) {
+        this.separator();
+        continue;
+      }
       this.guarded(() => {
         this.statement();
         this.stop();
@@ -364,7 +412,9 @@ class MindmapParser {
       return;
     }
     let hint: string | undefined;
-    if (k === T.SpaceList || k === T.Icon || k === T.Class) hint = DECORATION_HINT;
+    const after = this.afterIndent();
+    if (after === T.Icon || after === T.Class) hint = DECORATION_HINT;
+    else if (this.isNodeStart(after)) hint = ONE_NODE_HINT;
     else if (k === T.Mindmap) hint = ONE_HEADER;
     else if (k === Kind.Error) hint = BRACE_HINT;
     this.fail(LINE_BREAK, hint);
@@ -452,27 +502,49 @@ class MindmapParser {
     if (c.kind === T.NodeId) {
       nodeId = this.raw(c.next());
     }
-    let label = nodeId ?? '';
-    let shape: MindmapShape = 'default';
-    let end = this.range(first).end;
+    const parts: NodeParts = {
+      nodeId,
+      label: nodeId ?? '',
+      shape: 'default',
+      indent,
+      range: this.range(first),
+    };
+    // A node that fails inside its shape is still added, with the text read so far, so that
+    // the decorations, children and roots after it see it: one error, one diagnostic.
+    let failed = false;
     if (c.kind === T.NodeDStart) {
-      const open = c.next();
-      if (c.kind !== T.NodeDescr) {
-        if (c.kind === Kind.EOF) this.endsOpen();
-        this.fail(TEXT);
+      try {
+        this.shape(parts);
+      } catch (error) {
+        if (error !== STOP) throw error;
+        failed = true;
       }
-      label = this.raw(c.next());
-      if (c.kind !== T.NodeDEnd) {
-        if (c.kind === Kind.EOF) this.endsOpen();
-        const opener = this.raw(open);
-        this.fail([`\`${CLOSERS[opener] ?? ')'}\``]);
-      }
-      const close = c.next();
-      shape = shapeOf(this.raw(open), this.raw(close));
-      end = this.range(close).end;
     }
-    const range = { start: this.range(first).start, end };
-    this.addNode({ nodeId, label, shape, indent, range });
+    this.addNode(parts);
+    if (failed) throw STOP;
+  }
+
+  /** `NODE_DSTART NODE_DESCR NODE_DEND`, into `parts` as far as it gets. */
+  private shape(parts: NodeParts): void {
+    const { c } = this;
+    const open = c.next();
+    const opener = this.raw(open);
+    parts.shape = shapeOf(opener, '');
+    parts.range = { start: parts.range.start, end: this.range(open).end };
+    if (c.kind !== T.NodeDescr) {
+      if (c.kind === Kind.EOF) this.endsOpen();
+      this.fail(TEXT);
+    }
+    const text = c.next();
+    parts.label = this.raw(text);
+    parts.range = { start: parts.range.start, end: this.range(text).end };
+    if (c.kind !== T.NodeDEnd) {
+      if (c.kind === Kind.EOF) this.endsOpen();
+      this.fail([`\`${CLOSERS[opener] ?? ')'}\``]);
+    }
+    const close = c.next();
+    parts.shape = shapeOf(opener, this.raw(close));
+    parts.range = { start: parts.range.start, end: this.range(close).end };
   }
 
   /** v12 `addNode`: the node's place in the tree, or the second-root error. */
@@ -491,8 +563,6 @@ class MindmapParser {
     if (nodeId !== undefined) node.nodeId = nodeId;
     this.children.push(node);
     this.lastAst = node;
-    const before = this.lastEnd;
-    this.lastEnd = range.end;
     const first = this.nodes.length === 0;
     if (first) this.base = indent;
     const level = first ? 0 : indent - this.base;
@@ -507,6 +577,8 @@ class MindmapParser {
       );
       return;
     }
+    const before = this.lastEnd;
+    this.lastEnd = range.end;
     // The nearest open node with a smaller level: v12's backward scan finds the same one.
     const { open } = this;
     let top = open.length;
@@ -545,12 +617,8 @@ class MindmapParser {
     const j = c.next();
     const text = this.raw(j);
     const inner = this.range(j);
-    // `::icon(` or `:::` before the text, and the `)` after an icon.
-    const opener = this.beside(j, -1, icon ? T.IconStart : T.ClassStart);
-    const closer = icon ? this.beside(j, 1, T.IconEnd) : -1;
-    const start = opener < 0 ? inner.start : this.range(opener).start;
-    const end = closer < 0 ? inner.end : this.range(closer).end;
-    const range = { start, end };
+    const range = this.decorationRange(j);
+    const { end } = range;
     const target = this.lastAst;
     if (!target) {
       this.st.diagnostics.error(
@@ -560,12 +628,13 @@ class MindmapParser {
       );
       return;
     }
-    this.st.statement(icon ? 'icon' : 'class', range);
-    this.lastEnd = end;
     const decoration: MindmapDecoration = { type: icon ? 'Icon' : 'Class', text, range };
     target.decorations.push(decoration);
     const node = this.last;
+    // On a rejected second root: its AST node only, with no span (it has none either).
     if (!node) return;
+    this.st.statement(icon ? 'icon' : 'class', range);
+    this.lastEnd = end;
     if (icon) node.icon = { text, range: inner };
     else node.classes = text.split(/[\t\n\f\r ]+/).filter((w) => w !== '');
   }

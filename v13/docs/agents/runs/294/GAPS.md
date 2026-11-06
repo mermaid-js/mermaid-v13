@@ -25,7 +25,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - Found: v12 rejects a node right after a blank line that follows `mindmap` (`mindmap\n\n  root`), and after two blank or comment runs in a row: `SPACELINE` is a statement and a separator in `mindmap.jison`. Followed (oracle); the message says to remove a blank line, and recovery still reads the node.
 - **Choice:** AST ids use the id with blanks around it dropped (`a ` and `a` are `n:a`, `n:a@2`); the model keeps v12's id as written.
 - **Choice:** a second root is in the AST but not in the model (v12 threw before adding it), and the parents of later nodes are found as if it were not there; a decoration after it lands on its AST node only.
-- **Choice:** `icons(model)` lists a reference outside D297's two forms trimmed, as written (it resolves to nothing, so the icons plugin shows it as written).
+- **Choice:** `icons(model)` strips the second word's prefix only when it is the pack (`mdi mdi-fire`) or `fa` after a Font Awesome pack (`fab fa-github`); any other reference is listed trimmed, as written (it resolves to nothing, so the icons plugin shows it as written). Review of #386.
 - **Choice:** symbols (D289) are left to T6 (#389), as timeline's T2 left them to its T6.
 
 ## #387 T3 layout
