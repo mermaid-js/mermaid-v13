@@ -64,6 +64,12 @@ Merged before its review fixes so T3 could build on it while the load rule allow
 - [x] **#460: theme lengths read directly.** `packetThemeLength` (`metrics.ts`) wraps `theme.number` in a catch-all fallback until the table declares `packetByteFontSize`, `packetLabelFontSize`, `packetTitleFontSize`, `packetBlockStrokeWidth`. Once T4 declares them, read `ctx.theme.number(...)` directly (no catch), and make sure `theme-used-by.spec.ts` sees the reads (its scanner misses a name passed as a second argument; use direct calls or `DYNAMIC_READS`). **Done in #460:** `ctx.theme.number('packet…')` directly; `theme-used-by.spec.ts`'s scanner skips a var's `nested:` key (v12's `titleColor` is not a read).
 - [x] **#460: multi-line titles.** The layout keeps v12's point for the first title line and grows the bounds down, not the canvas; the renderer must draw from the layout's title box, not recompute it. **Done in #460:** `w.label(title.text, centre of title box)`; `render.spec.ts` pins three lines growing down from the one-line point.
 
+## #460 T4 renderer (in review)
+
+- Review sent back (fixing): the 10,000-row cap fails `LIMIT` at the default `maxOutputLength`, against D342's "truncate and warn" (fix by hoisting shared paint attributes, never by loosening the limit; MIGRATION row either way); the new "every table var is read" test in `theme-used-by.spec.ts` is removed as T0b scope; `paints()` in `render/paint.ts`; `drawPiece` parts object; `neo: { fallback: 'redux' }`; vocabulary comment dropped; MIGRATION root row mentions `auto`'s `<style>`/`data-p`.
+- For #414 T0b (from the T4 review): a used-by check that every table variable is read by its package's sources is worth having, but it must fail a package that exports no plugin, and not count a rule's right-hand side as a read. Packet's T4 drafted one and removed it as T0b's scope.
+- Deviations accepted (for the maintainer): dark values come from each family's `dark` entry (the theme's dark trait, per CONTRACT.md), so `darkMode: true` on a light theme keeps v12's light colours, as v12 did; an empty label writes no `<text>` (MIGRATION row).
+
 ## Shared contracts
 
 - **`PacketModel`** (`packages/diagram-packet/src/model.ts`): landed by the orchestrator before #454 and #456 start in parallel, shaped from the spec's model list. #454 produces it; #456 and #464 read it. Change it only additively and note the change here.
