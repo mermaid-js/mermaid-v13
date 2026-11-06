@@ -19,6 +19,7 @@ import mermaid, {
   type ExtensionPlugin,
 } from './index.ts';
 import { defaultIdPrefix } from './config-snapshot.ts';
+import { VERSION } from './version.ts';
 
 const FLOW = 'flowchart LR\n  A[Start] --> B(End)\n';
 
@@ -52,7 +53,7 @@ describe('render (R-API-1, R-COMPAT-5)', () => {
     expect(result.svg).toContain(`viewBox="0 0 ${result.width} ${result.height}"`);
     expect(result.warnings).toEqual([]);
     expect(result.bindFunctions).toBeUndefined();
-    expect(result.svg).toContain('data-mermaid-version="13.0.0-alpha.0"');
+    expect(result.svg).toContain(`data-mermaid-version="${VERSION}"`);
     assertInert(result.svg);
   });
 
