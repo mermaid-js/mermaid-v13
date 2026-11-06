@@ -125,9 +125,8 @@ describe('stress: the mindmap parser is linear in input size', () => {
   );
 
   it('parses a 10k-node mindmap', () => {
-    const src =
-      lines(0, () => '').replace(/\n$/, '') +
-      Array.from({ length: 10_000 }, (_, k) => `\n${' '.repeat((k % 8) + 1)}n${k}`).join('');
+    const body = Array.from({ length: 10_000 }, (_, k) => `${' '.repeat((k % 8) + 1)}n${k}`);
+    const src = ['mindmap', 'root', ...body].join('\n');
     const r = parseMindmap(src);
     expect(r.diagnostics).toEqual([]);
     expect(r.model.nodes).toHaveLength(10_001);

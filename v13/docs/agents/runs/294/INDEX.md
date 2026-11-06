@@ -26,6 +26,7 @@ Integration branch `feature/294_mindmap` (from `mermaid-v13` at 38d663b44). Draf
 | --- | --- | --- |
 | base (38d663b44) | 93,551 B | — (657 B spare) |
 | #383 T1 | 93,551 B | 0 (no core change) |
+| #386 T2 | 93,551 B | 0 (no core change) |
 
 ## Finish rule
 

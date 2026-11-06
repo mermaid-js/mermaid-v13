@@ -223,11 +223,6 @@ class MindmapParser {
     return { start: t.start[j] ?? 0, end: t.end[j] ?? 0 };
   }
 
-  /** The kind of the token right before index `j` in the stream (trivia included). */
-  private kindBefore(j: number): number {
-    return this.c.tokens.kind[j - 1] ?? Kind.EOF;
-  }
-
   /**
    * The index of the token of `kind` next to `j` in direction `step` (±1), past comments and
    * directives; -1 when the next other token is not of `kind`.
@@ -363,7 +358,7 @@ class MindmapParser {
     const k = c.kind;
     // The line ended (inside a blank run or after a bare `:::`) where jison wanted a separator:
     // one error, and the line after it is still read.
-    const bareClass = this.kindBefore(c.pos) === T.ClassEnd;
+    const bareClass = this.beside(c.pos, -1, T.ClassEnd) >= 0;
     if (this.afterBlank || bareClass) {
       this.report(LINE_BREAK, this.afterBlank ? AFTER_BLANK_HINT : BARE_CLASS_HINT);
       return;
@@ -424,7 +419,7 @@ class MindmapParser {
       const n = c.kind;
       if (this.isNodeStart(n)) this.node(indent);
       else if (n === T.Icon || n === T.Class) this.decoration();
-      else if (n === T.SpaceList && this.kindBefore(c.pos) === T.ClassEnd) {
+      else if (n === T.SpaceList && this.beside(c.pos, -1, T.ClassEnd) >= 0) {
         // A bare `:::` took the line break: one error, and the next line is still read.
         this.report(LINE_BREAK, BARE_CLASS_HINT);
         this.lineEnded = true;
