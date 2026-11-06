@@ -21,7 +21,8 @@ import { GANTT_PARITY_NOW } from './oracle-env.ts';
  * Properties: well-formed XML, `assertInert`, deterministic, no NaN/Infinity/undefined, ids
  * only `<prefix>-title`/`-desc`, every drawn coordinate in the viewBox, every alias declared.
  * Round-trip: every `data-ast` names an AST node whose range lies in the source; each drawn task
- * is one `rect.task` and each section title one `text.sectionTitle`, with no other `data-ast`.
+ * is one `rect.task`, and each section statement one `.sectionTitle` (its `<text>`, or an empty
+ * `<g>` when v12 drew no title for it), with no other `data-ast`.
  */
 const THEMES = [...THEME_NAMES, 'auto'] as const;
 const PREFIX = 'mermaid-0';
@@ -185,12 +186,17 @@ describe('gantt AST round-trip over the parsed corpus (R-PARSE-8)', () => {
           expect(c.tree.getAttr(el, 'data-id'), `${c.id}: ${id}`).toBe(task.id);
         } else {
           expect(node!.type, `${c.id}: ${id}`).toBe('Section');
-          expect([c.tree.tag(el), cls[0]], `${c.id}: ${id}`).toEqual(['text', 'sectionTitle']);
+          // A drawn title, or (a repeated name, a section with no row) its empty marker.
+          expect(['text', 'g'], `${c.id}: ${id}`).toContain(c.tree.tag(el));
+          expect(cls[0], `${c.id}: ${id}`).toBe('sectionTitle');
         }
         const { start, end } = node!.range;
         expect(start >= 0 && end >= start && end <= c.source.length, `${c.id}: ${id}`).toBe(true);
       }
       for (const [id, n] of seen) expect(n, `${c.id}: ${id}`).toBe(1);
+      // Every section statement maps to one element (pitfall 12), drawn or not.
+      for (const n of c.ast.children)
+        if (n.type === 'Section') expect(seen.get(n.id), `${c.id}: ${n.id}`).toBe(1);
       // A label carries the bar's data-id only.
       const labels = c.tree.find(
         (n, t) => t.tag(n) === 'text' && (t.getAttr(n, 'class') ?? '').includes('taskText')

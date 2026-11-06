@@ -191,22 +191,25 @@ function drawBands({ w, layout, paint }: Scene): void {
   w.close();
 }
 
-/** The checked `href` of each task id a `click … href` names, the last click winning (v12). */
-function linksOf({ model, ctx }: Scene): Map<string, SafeUrl | undefined> {
+/**
+ * Each linked bar's checked URL, by bar index. The layout gives a bar its `href` as v12's
+ * `setLink` kept it (a task that existed when the click was read); one check, and at most one
+ * warning, per URL however many bars carry it.
+ */
+function linksOf({ layout, ctx }: Scene): Map<number, SafeUrl> {
   const urls = new Map<string, SafeUrl | undefined>();
-  const out = new Map<string, SafeUrl | undefined>();
+  const out = new Map<number, SafeUrl>();
   const options = {
     securityLevel: ctx.securityLevel ?? 'default',
     linkSchemes: ctx.linkSchemes,
     warn: ctx.warn.bind(ctx),
   } as const;
-  for (const click of model.clicks) {
-    const href = click.href;
-    if (href === undefined) continue;
-    // One check (and one warning) per URL however many tasks it names.
-    if (!urls.has(href)) urls.set(href, checkUrl(href, options));
-    for (const id of click.ids) out.set(id, urls.get(href));
-  }
+  layout.bars.forEach((b, i) => {
+    if (b.href === undefined) return;
+    if (!urls.has(b.href)) urls.set(b.href, checkUrl(b.href, options));
+    const url = urls.get(b.href);
+    if (url !== undefined) out.set(i, url);
+  });
   return out;
 }
 
@@ -216,8 +219,9 @@ const classes = (...names: (string | false)[]): string => names.filter(Boolean).
 function barClass(b: GanttBar): string {
   return classes(
     'task',
-    b.kind === 'milestone' && 'milestone',
+    // v12 prefixed `milestone`, then `vert`: `task vert milestone task0`.
     b.kind === 'vert' && 'vert',
+    b.milestone && 'milestone',
     `${stateOf(b)}${b.slot}`,
     b.clickable && 'clickable'
   );
@@ -237,15 +241,14 @@ function labelClass(b: GanttBar): string {
     b.active && (b.crit ? `activeCritText${n}` : `activeText${n}`),
     b.done && (b.crit ? `doneCritText${n}` : `doneText${n}`),
     !b.done && b.crit && `critText${n}`,
-    b.kind === 'milestone' && 'milestoneText',
+    b.milestone && 'milestoneText',
     b.kind === 'vert' && 'vertText'
   );
 }
 
 function drawBar({ w, paint }: Scene, b: GanttBar, i: number): void {
   const p = paint.bars[i]!;
-  const cx = b.x + b.width / 2;
-  const cy = b.y + b.height / 2;
+  const o = b.pivot;
   w.leaf('rect', {
     class: barClass(b),
     'data-id': b.id,
@@ -259,15 +262,15 @@ function drawBar({ w, paint }: Scene, b: GanttBar, i: number): void {
     fill: p.fill,
     stroke: p.stroke,
     'stroke-width': p.stroke === undefined ? undefined : M.barStrokeWidth,
-    // v12's CSS `rotate(45deg) scale(0.8)` about the square's centre, in the element.
+    // v12's CSS `rotate(45deg) scale(0.8)` about its `transform-origin`, in the element.
     transform:
-      b.scale === undefined
+      b.scale === undefined || o === undefined
         ? undefined
         : transforms(
-            rotate(M.milestoneRotation, cx, cy),
-            translate(cx, cy),
+            rotate(M.milestoneRotation, o.x, o.y),
+            translate(o.x, o.y),
             scale(b.scale),
-            translate(-cx, -cy)
+            translate(-o.x, -o.y)
           ),
   });
 }
@@ -290,16 +293,16 @@ function drawTasks(scene: Scene): void {
   const { w, layout } = scene;
   if (layout.bars.length === 0) return;
   const links = linksOf(scene);
-  const hrefOf = (b: GanttBar): SafeUrl | undefined => (b.clickable ? links.get(b.id) : undefined);
-  const linked: number[] = [];
   w.open('g');
-  layout.bars.forEach((b, i) => (hrefOf(b) ? linked.push(i) : drawBar(scene, b, i)));
   layout.bars.forEach((b, i) => {
-    if (!hrefOf(b)) drawLabel(scene, b, i);
+    if (!links.has(i)) drawBar(scene, b, i);
   });
-  for (const i of linked) {
+  layout.bars.forEach((b, i) => {
+    if (!links.has(i)) drawLabel(scene, b, i);
+  });
+  for (const [i, href] of links) {
     const b = layout.bars[i]!;
-    w.open('a', { href: hrefOf(b) });
+    w.open('a', { href });
     drawBar(scene, b, i);
     drawLabel(scene, b, i);
     w.close();
@@ -333,11 +336,23 @@ function drawSection({ w, layout, paint }: Scene, s: GanttSectionLabel, i: numbe
   });
 }
 
+/**
+ * The section titles, one per name as v12 drew them. A section statement with no title of its
+ * own (a repeated name, a section with no row, a blank name) gets an empty
+ * `<g class="sectionTitle">` with its `data-ast`, so every section maps to one element
+ * (R-PARSE-8).
+ */
 function drawSections(scene: Scene): void {
-  if (scene.layout.sections.length === 0) return;
-  scene.w.open('g');
-  scene.layout.sections.forEach((s, i) => drawSection(scene, s, i));
-  scene.w.close();
+  const { w, layout, model } = scene;
+  const titled = new Set<string>();
+  for (const s of layout.sections) if (s.ast && s.text.lines.length > 0) titled.add(s.ast);
+  const markers = model.sections.filter((s) => !titled.has(s.ast));
+  if (titled.size === 0 && markers.length === 0) return;
+  w.open('g');
+  layout.sections.forEach((s, i) => drawSection(scene, s, i));
+  for (const s of markers)
+    w.leaf('g', { class: 'sectionTitle', 'data-id': s.text, 'data-ast': s.ast });
+  w.close();
 }
 
 /** v12 `drawToday`: `todayMarker` split on `,` (and `;`, as v12's `style` read it), checked. */
