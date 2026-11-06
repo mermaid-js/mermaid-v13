@@ -235,8 +235,8 @@ function rule(source: string): Expr {
   return e;
 }
 
-/** A call of a colour function; `literal()` is handled by `evaluate`. */
-type Call = Expr & { k: 'call'; fn: Exclude<Fn, 'literal'> };
+/** A call of a colour function; `literal()` and `inline()` are handled by `evaluate`. */
+type Call = Expr & { k: 'call'; fn: Exclude<Fn, 'literal' | 'inline'> };
 
 /** Resolves every variable of one spec under one set of overrides. */
 class Resolver {
@@ -375,10 +375,18 @@ class Resolver {
         };
       }
       case 'call': {
+        const [x] = e.args as [Expr];
+        if (e.fn === 'inline') {
+          // A shared input as the theme wrote it (D332): its value or rule, CSS included, with
+          // no alias of its own, so a diagram reads each theme's own shape byte-identically.
+          if (x.k !== 'ref' || !own(this.defs, x.name))
+            throw new SyntaxError('inline needs a variable');
+          return this.get(x.name);
+        }
         if (e.fn !== 'literal') return this.call(e as Call);
         // The computed colour, written as a literal (D332): a hue turn stays byte-identical
         // to the value a theme pinned.
-        const a = this.evaluate(e.args[0] as Expr);
+        const a = this.evaluate(x);
         return { css: a.lit, lit: a.lit, rgba: a.rgba, hsl: a.hsl, deps: [] };
       }
     }

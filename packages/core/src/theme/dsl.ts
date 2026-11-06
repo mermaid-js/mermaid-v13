@@ -21,6 +21,8 @@
  *                       `var(--mermaid-v, b)`
  *   literal(a)          a's computed colour as a literal, so a hue turn or a palette read writes
  *                       the value a theme would pin (D332)
+ *   inline(v)           the variable v as the theme wrote it, CSS included, with no alias of its
+ *                       own: a diagram reads a shared input in each theme's own shape (D332)
  *
  * `cScale3`, `bkgColorArray2` and any other palette name with a slot number read that entry of
  * the palette (D258, D332), as a literal colour, except `seriesColorArray<n>`, which reads as
@@ -50,7 +52,8 @@ export type Fn =
   | 'adjust'
   | 'adjustHue'
   | 'ifSet'
-  | 'literal';
+  | 'literal'
+  | 'inline';
 
 const ARITY: Readonly<Record<Fn, number>> = {
   mix: 3,
@@ -65,6 +68,7 @@ const ARITY: Readonly<Record<Fn, number>> = {
   adjustHue: 2,
   ifSet: 2,
   literal: 1,
+  inline: 1,
 };
 
 const RE_TOKEN =

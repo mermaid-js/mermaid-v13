@@ -277,6 +277,24 @@ describe('rule DSL: palette reads and literal() (D332)', () => {
     expect(user.value('a')).toBe('#abcdef');
   });
 
+  it('writes inline(v) as the theme wrote v, with no alias of its own', () => {
+    const derived = createTheme(spec.base, { diagram: table({ a: 'inline(mainBkg)' }) });
+    derived.color('a');
+    expect(derived.rootStyle()).toEqual({
+      '--_x0': 'var(--mermaid-a,var(--_p))',
+      '--_p': 'var(--mermaid-primaryColor,#fff4dd)',
+    });
+    const pinned: ThemeSpec = { ...spec.base, values: { ...spec.base.values, mainBkg: '#f4f4f4' } };
+    const asPinned = createTheme(pinned, { diagram: table({ a: 'inline(mainBkg)' }) });
+    asPinned.color('a');
+    expect(asPinned.rootStyle()).toEqual({ '--_x0': 'var(--mermaid-a,#f4f4f4)' });
+    expect(() =>
+      createTheme(spec.base, { cssVariables: false, diagram: table({ a: 'inline(red)' }) }).value(
+        'a'
+      )
+    ).toThrow(/inline needs a variable/);
+  });
+
   it('writes literal(x) as the computed colour, with no dependencies', () => {
     const t = createTheme(spec.base, {
       diagram: table({

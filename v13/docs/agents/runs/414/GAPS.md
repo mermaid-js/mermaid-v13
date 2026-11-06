@@ -12,6 +12,8 @@ Choices the spec and D-ids did not settle, made the way most consistent with the
 - **Direction rule 2 and ordinary words.** `default`, `base`, `dark` and `neutral` are also ordinary words (`classDef default`, `securityLevel: 'default'`), so they count only when compared with an expression that mentions a theme. Files under `src/generated/` (config defaults, whose `theme` key is the config default) are left out.
 - **Family `dark` entries follow the spec's `dark` trait**, as spec values do, while a table's `rules.dark` follows `darkMode` like `DARK_RULES`.
 
+- **Decided for T2's eight rows (option 1 of "T2" below):** `inline(v)` joins the DSL, and themes of one family that write a value differently get a D332 generic shared input read with `inline()`. D332 itself names "a muted surface" and "a strong text ink" as examples. The oracle specs leave the D332 inputs out of the v12 comparison (one list, `D332_INPUTS` in `packages/conformance/src/diagram-themes.ts`) rather than adding `DIFFERENCES` entries: v12 has no such names, and the diagram variables that read them are still compared with v12. So `DIFFERENCES` grows only by D333's entries.
+
 ## T0b (#439)
 
 - **Names from the vocabulary, rules from the plugin.** The direction check takes a type's names from `src/theme/vocabulary.ts` and its table's `vars`, and its rules and family entries from the plugin `src/index.ts` exports (a vocabulary holds no rules). A new rule 4 fails when both exist and differ. A plugin table with no vocabulary is still allowed ("if both exist").

@@ -43,6 +43,7 @@ Read the variables as any other: `ctx.theme.color('packetStartByteColor')`, `ctx
 - `bkgColorArray<n>`, `borderColorArray<n>` and every other palette's slots read as literal colours, like `cScale<n>`. Past the end of a palette: `currentColor`.
 - `seriesColorArray<n>` reads the entry as the theme wrote it, CSS included (for the T1 pie migration).
 - `literal(x)`: x's computed colour as a literal (no CSS variable, no dependency). Use for hue turns that must equal a v12 resolved value: `literal(adjustHue(primaryColor, 64))`.
+- `inline(v)`: the variable v as the theme wrote it (its value or rule, CSS included), with no alias of its own. Use to read a D332 shared input that themes of one family write differently (default pins `#f4f4f4`, base derives `secondaryColor`), byte-identically.
 
 ## Shared inputs added (D332, D334, D381)
 
