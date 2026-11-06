@@ -12,7 +12,7 @@ Integration branch `feature/293_gantt` (from `mermaid-v13` at 38d663b44). Draft 
 | T3 schedule and layout | #379 | #375, #376, #378 | merged (ff f216d2453) |
 | T4 SVG renderer | #381 | #379 | merged (ff e05dec35a) |
 | T6 language facet | #382 | #378 | merged (ff 7d7a32db2) |
-| I1 interactions spec | #384 | #381 | open |
+| I1 interactions spec | #384 | #381 | merged (ff 13a63ae5b) |
 | T5 integration | #385 | #381, #382 | open |
 
 - `01-v12-gantt.md`: pointer notes on v12 grammar, DB, renderer, styles, config, corpus, Pele.

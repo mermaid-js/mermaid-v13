@@ -65,6 +65,14 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 - **Choice:** `src/plugin.ts` exports a `gantt` plugin object (no `labels`, no manifest) so the conformance specs render through `createMermaid()` with `registerExternalDiagrams([gantt], { replace: true })`. #385 adds the manifest, `labels` and the registry entry, then drops the `replace`.
 - Unmet: no `pnpm e2e`/baselines (T5); I1 owns `call` binding.
 
+### #384 I1 interactions
+- **Choice (plugin change, additive):** the `callback` feature bound only `g.node[data-id]`, so gantt bound nothing. An id with no such node now binds the elements with its `data-id` and v12's `clickable` class (gantt's bar `rect` and label `text`, v12's `<id>` and `<id>-text`). Flowchart and class still find their `g.node` first.
+- **Choice (plugin fix):** a lone `"` argument is `''`, as v12's `substr(1, -1)` gave in the flow, class and gantt DBs (oracle); the plugin kept `"`. Flowchart and class change with it.
+- **Choice:** a task with a repeated id: the callback binds the task the layout marks `clickable` (the latest one before the `click`, #379); v12 bound the first `[id=…]` in the DOM.
+- **Choice:** `CALLBACK_IGNORED` is added in the plugin's `parse` (`parser/callbacks.ts`), not in `parseGantt` (class and flowchart warn in the parser): `parser.ts` is at the 800-line cap. Editors calling `parseGantt` do not see it.
+- **Choice:** `plugin-interactions` devDepends on `@mermaid-js/diagram-gantt` and registers it with `replace: true` (T4's pattern); `gantt.spec.ts` runs in the UTC and LA projects. #385: drop the `replace` once the manifest lands.
+- Unmet: none.
+
 ### #385 T5 integration
 - v13's `GanttDiagramConfig` does not redeclare `useWidth`/`useMaxWidth`; they stay pending through `BaseDiagramConfig`. Needs per-diagram overrides as journey has.
 - The corpus has no `click` and no neo/neo-dark files; `topAxis` only in config; compact only through legacy front matter. 4 of 8 visual-check files write `dateFormat :YYYY-MM-DD` (every date takes the `Date` fallback; the title starts with `:`).
@@ -137,3 +145,16 @@ Checked clean: diagnostic counts unchanged on 28 error inputs except `gantt\n cl
 - [x] **`includes` completion:** offers weekday/`weekends` words that do nothing (v12 and `schedule.ts` read includes as dates only). Offer them for `excludes` only.
 - [x] Minor: statement completion re-lexes the whole document per item (`completions.ts` `tokenAt`, ~16×): 32 ms vs an 8 ms parse at 8k tasks. Lex once, or only the edited line.
 - Done (#382 fix round): one id → last-task map per completion and hover call (`tasksById`); `__proto__` has no symbol, `isValidId` refuses it and hover finds no task for it (`NEVER_STORED`, as the schedule and layout skip it); offered ids filtered per spot; hover reads tags among the leading fields only, `after` at the start field, `until` at the end field; a bare `:` is reported over the `:`; no day words for `includes`; a statement item lexes only its own line from the statement start. Specs: `conformance/src/gantt/completion-stress.spec.ts` (1k vs 8k tasks under 24x for `after`, `until`, click ids and a line start; a statement completion under one parse), `language.spec.ts`, `recovery.spec.ts`, the `settings` golden.
+
+### #381 review findings (2026-11-06)
+No high-severity defect: escaping, link safety (unsafe, mixed-case, tab, protocol-relative URLs refused), `checkStyle`, the label/bar colour cascade, milestone geometry, ids, draw order, viewBox and linear work hold.
+Theme items, routed to #385 (it sets the per-theme values now):
+- [ ] **D331:** `core/src/theme/specs/neo.ts:63-68` and `neo-dark.ts:62-65` pin gantt-only variables (`sectionBkgColor2`, `taskBkgColor`, `activeTaskBorderColor`, `vertLineColor`, `doneTaskBkgColor`), which theme specs must never name. Use derivation rules; list any per-theme literal that no shared variable can express under "For the maintainer".
+- [ ] The pins stop following what v12 derived them from: neo/neo-dark `vertLineColor` = `primaryBorderColor`; neo-dark `doneTaskBkgColor` = `secondBkg`. `theme: 'neo'` + `primaryBorderColor: '#ff0000'` gives vert stroke `#b3b3b3` (v12 `#ff0000`).
+- [ ] `taskTextClickableColor` is `#003163` in all 11 v12 themes: a renderer constant, not a row (~15 B).
+Renderer items, fix round for #381 (queued until a slot frees):
+- [ ] **`vert` + `milestone` on one task** (`layout/bars.ts` `kindOf` returns `vert` first): v12 keeps both (`task vert milestone task0`, milestone geometry and transform, `milestoneText vertText`); v13 draws a plain vert. `W :milestone, vert, w, 2014-01-03, 0d`.
+- [ ] **`href` before the task exists** (`render.ts` `linksOf`): v12's `setLink` set a link only for an existing task; v13 records it and a later `call`-only click makes it a link. `click a href "u"` / `A :a, …` / `click a call f()` → v12 clickable, no `<a>`. Also no `URL_REFUSED` for a click naming no task.
+- [ ] **Sections with no `data-ast`** (`layout/parts.ts`, `render.ts`): a repeated `section A` (`s:A@2`) and a section holding only `vert` tasks get no drawn element with their AST id (pitfall 12; the round-trip spec checks only drawn sections). Give each section AST node exactly one element.
+- [ ] **Empty `<g/>`** when the only section is unnamed (no `section` line): `render.ts` writes it though `drawSection` returns early. Don't write it.
+- [ ] MIGRATION.md: "slots past section3" outside labels took `taskTextDarkColor`, not `textColor`; `transform-origin` was on every bar and exclude rect, not only milestones; d3's per-tick `translate` and the grid group's `translate(sidePad, h-50)` are flattened. Fix the wording.
