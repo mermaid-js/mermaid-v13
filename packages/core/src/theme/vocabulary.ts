@@ -241,8 +241,8 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
   secondaryColor: def('s', 'color', ['core']),
   tertiaryColor: def('t', 'color', ['core']),
   background: def('bg', 'color', ['core']),
-  primaryTextColor: def('pt', 'color', ['core']),
-  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er']),
+  primaryTextColor: def('pt', 'color', ['core', 'cynefin']),
+  lineColor: def('l', 'color', ['flowchart', 'class', 'state', 'er', 'cynefin']),
   // Pie draws in the font family but sizes its text by its own variables.
   fontFamily: def('ff', 'font', [...TEXT_USERS, 'pie', 'cynefin']),
   fontSize: def('fs', 'length', TEXT_USERS),
@@ -260,6 +260,7 @@ export const THEME_VARIABLES: Readonly<Record<string, ThemeVarDef>> = /* @__PURE
     'er',
     'journey',
     'timeline',
+    'cynefin',
   ]),
   mainBkg: def('mb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),
   nodeBorder: def('nb', 'color', ['flowchart', 'sequence', 'class', 'state', 'er', 'timeline']),

@@ -4,6 +4,7 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { tableMeasurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { CynefinModel } from '../model.ts';
+import { cynefin as plugin } from '../plugin.ts';
 import { FIXTURES } from './cynefin.fixtures.ts';
 import { cynefinLayoutViolations, layoutCynefin, type CynefinLayout } from './index.ts';
 
@@ -16,7 +17,7 @@ function lay(m: CynefinModel, cynefin: unknown, warnings: Warning[] = []): Cynef
   return layoutCynefin(m, {
     config: { cynefin } as unknown as ResolvedConfig,
     measurer: tableMeasurer,
-    theme: createTheme(spec),
+    theme: createTheme(spec, { diagram: plugin.theme }),
     idPrefix: 'mermaid-0',
     warn: (w) => warnings.push(w),
   });

@@ -10,22 +10,29 @@
  *   (`{ domain, items: [{ label }] }`, `{ from, to, label }`): the adapter writes them out as
  *   cynefin text and parses it, so the DB cases run through the v13 parser too. Blocks add up
  *   over calls and transitions are replaced, as in v12's DB; `null` is ignored;
- * - `seededRandom`, `hashString`, `resolveSeed` and the `generate…Path` functions stand for
- *   v12's `cynefinBoundaries.ts`: the layout's (T3, #467) PRNG, seed and curves, written out as
- *   path data as the renderer writes them (two decimals).
+ * - `seededRandom`, `hashString` and `resolveSeed` stand for v12's `cynefinBoundaries.ts`: the
+ *   layout's (T3, #467) PRNG and seed;
+ * - the `generate…Path` functions stand for v12's path generators through the render seam (T4,
+ *   #468): they lay out and render a diagram of that canvas, seed and amplitude, and return the
+ *   `d` the renderer wrote on the fold, the horizon, the cliff or the ellipse. The horizon is
+ *   drawn with `seed + 100` (v12 `cynefinRenderer.ts:146`), so it renders `seed - 100`; the
+ *   ellipse's centre and radii are v12's arguments, set on the laid-out ellipse.
  */
+import type { ResolvedConfig } from '@mermaid-js/core/config';
+import { treeWriter, type SvgNode, type SvgTree } from '@mermaid-js/core/svg';
+import { tableMeasurer } from '@mermaid-js/core/text';
+import { createTheme, loadTheme } from '@mermaid-js/core/theme';
 import {
-  cliffCurve,
-  curveData,
-  ellipseData,
-  foldCurve,
   hashString,
-  horizonCurve,
+  layoutCynefin,
   resolveSeed as resolve,
   seededRandom,
+  type CynefinLayout,
 } from '../layout/index.ts';
 import type { CynefinModel } from '../model.ts';
 import { parseCynefin } from '../parser/index.ts';
+import { cynefin } from '../plugin.ts';
+import { renderCynefin } from '../render/index.ts';
 
 export { hashString, seededRandom };
 
@@ -34,22 +41,71 @@ export const resolveSeed = (seed: number | undefined, id: string): number => res
 
 /** v12's amplitude fallback when none is passed (`cynefinBoundaries.ts:59`, `:101`). */
 const FALLBACK_AMPLITUDE = 0.015;
+/** v12's renderer seeds the horizon with `seed + 100` (`cynefinRenderer.ts:146`). */
+const HORIZON_SEED_OFFSET = 100;
+
+const THEME = createTheme(await loadTheme('default'), { diagram: cynefin.theme });
+const EMPTY = parseCynefin('cynefin-beta').model;
+
+/**
+ * The `d` of the `nth` element of class `cls` in a render of an empty diagram with the `cynefin`
+ * config `options`; `patch` changes the layout before it is drawn.
+ */
+function drawnPath(
+  options: Readonly<Record<string, unknown>>,
+  cls: string,
+  nth = 0,
+  patch: (l: CynefinLayout) => CynefinLayout = (l) => l
+): string {
+  const ctx = {
+    config: { cynefin: options } as unknown as ResolvedConfig,
+    theme: THEME,
+    measurer: tableMeasurer,
+    warn: () => undefined,
+    idPrefix: 'v12-spec',
+    version: '13',
+  };
+  const w = treeWriter();
+  renderCynefin(EMPTY, patch(layoutCynefin(EMPTY, ctx)), ctx, w);
+  w.finish();
+  const { tree } = w;
+  const hits = tree.find((n: SvgNode, t: SvgTree) =>
+    (t.getAttr(n, 'class') ?? '').split(' ').includes(cls)
+  );
+  return tree.getAttr(hits[nth]!, 'd')!;
+}
 
 export const generateFoldPath = (w: number, h: number, seed: number, amplitude?: number): string =>
-  String(curveData(foldCurve(w, h, seed, amplitude ?? w * FALLBACK_AMPLITUDE)));
+  drawnPath(
+    { width: w, height: h, seed, boundaryAmplitude: amplitude ?? w * FALLBACK_AMPLITUDE },
+    'cynefinBoundary'
+  );
 
 export const generateHorizontalBoundary = (
   w: number,
   h: number,
   seed: number,
   amplitude?: number
-): string => String(curveData(horizonCurve(w, h, seed, amplitude ?? h * FALLBACK_AMPLITUDE)));
+): string =>
+  drawnPath(
+    {
+      width: w,
+      height: h,
+      seed: seed - HORIZON_SEED_OFFSET,
+      boundaryAmplitude: amplitude ?? h * FALLBACK_AMPLITUDE,
+    },
+    'cynefinBoundary',
+    1
+  );
 
 export const generateCliffPath = (w: number, h: number): string =>
-  String(curveData(cliffCurve(w, h)));
+  drawnPath({ width: w, height: h }, 'cynefinCliff');
 
 export const generateConfusionPath = (cx: number, cy: number, rx: number, ry: number): string =>
-  String(ellipseData({ center: { x: cx, y: cy }, rx, ry, strokeWidth: 0 }));
+  drawnPath({}, 'cynefinConfusion', 0, (l) => ({
+    ...l,
+    confusion: { ...l.confusion, center: { x: cx, y: cy }, rx, ry },
+  }));
 
 interface Block {
   domain: string;

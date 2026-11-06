@@ -12,7 +12,7 @@
 import type { RenderContext } from '@mermaid-js/core';
 import { layoutLabel, Style, type FontKey, type MeasuredLabel } from '@mermaid-js/core/text';
 import type { CynefinDomain, CynefinDomainName, CynefinModel } from '../model.ts';
-import { cynefinThemeLengths, type CynefinThemeLengths } from '../theme/stand-in.ts';
+import { cynefinThemeLengths, type CynefinThemeLengths } from '../theme/lengths.ts';
 import { cliffCurve, confusionEllipse, foldCurve, horizonCurve } from './boundaries.ts';
 import { cynefinOptions, type CynefinOptions } from './config.ts';
 import { Box, cubicBox, grow, pointsBox, quadBox } from './geometry.ts';

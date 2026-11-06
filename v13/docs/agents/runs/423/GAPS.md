@@ -41,7 +41,7 @@ Unmet acceptance criteria and orchestrator choices, filed under the ticket that 
 - Review sent back: NaN/Infinity at huge finite config (`width: 1e200`, 1e308): `Math.hypot`, and a canvas that is not finite counts as invalid (D366 fallback + warning); `fixtures.ts` ships in dist; unused `CANVAS.quarter`; the subtitle's italic style recorded in the layout.
 - Accepted deviations (for the maintainer): one `CYNEFIN_CONFIG_INVALID` per invalid key (D366 "Each gets one"); a non-number config value (string, null, object) counts as invalid; a NaN `boundaryAmplitude` takes the default 8, ±Infinity clamps; extra lines of a title or transition label grow upward (last line at v12's anchor); config defaults in `metrics.ts` (`CYNEFIN_DEFAULTS`) until T5 generates them; `markdownString` copied from pie (a core helper would be a core change); `cynefin` added to `fontFamily`'s `usedBy`.
 - [x] **#465:** enable `conformance/src/cynefin/layout-corpus.spec.ts` — closed by #465 (runs and passes). Was: (skipped until the package exports `parseCynefin(source) → { model }`; change that one lookup if T2 names it differently).
-- [ ] **#468:** replace `src/theme/stand-in.ts` (v12's five lengths, theme ignored) with the T0a table's variables.
+- [x] **#468:** replace `src/theme/stand-in.ts` (v12's five lengths, theme ignored) with the T0a table's variables — closed by #468 (`src/theme/lengths.ts` reads `theme.number('cynefin…')` from the plugin's table).
 
 ## #468 T4 renderer
 

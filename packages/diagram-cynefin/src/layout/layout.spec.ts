@@ -4,6 +4,7 @@ import type { ResolvedConfig } from '@mermaid-js/core/config';
 import { Style, type Measurer } from '@mermaid-js/core/text';
 import { createTheme, loadTheme, type ThemeSpec } from '@mermaid-js/core/theme';
 import type { CynefinModel } from '../model.ts';
+import { cynefin as plugin } from '../plugin.ts';
 import { FIXTURES, model } from './cynefin.fixtures.ts';
 import { curveData, layoutCynefin, type CynefinLayout, type Point } from './index.ts';
 
@@ -33,7 +34,7 @@ function lay(
   return layoutCynefin(m, {
     config: { cynefin } as unknown as ResolvedConfig,
     measurer: tenPx,
-    theme: createTheme(spec),
+    theme: createTheme(spec, { diagram: plugin.theme }),
     idPrefix,
     warn: (w) => warnings.push(w),
   });

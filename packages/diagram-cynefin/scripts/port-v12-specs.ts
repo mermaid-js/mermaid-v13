@@ -1,8 +1,8 @@
 /**
  * Ports v12's cynefin specs (R-TEST-3) into `src/v12-specs/`, run against v13's parser through
  * `src/v12-specs/adapter.ts`: v12's `parser` and cynefin DB (#465). The spec bodies are copied
- * unchanged from the last v12 commit; only imports are rewritten (the boundary cases run against
- * the layout's generator, T3 #467), and tests listed in `SKIP`
+ * unchanged from the last v12 commit; only imports are rewritten (the boundary cases run through
+ * the render seam, T4 #468: the paths the renderer writes), and tests listed in `SKIP`
  * (with a reason) are turned into `it.skip` / `describe.skip`.
  *
  * Usage: `pnpm --filter @mermaid-js/diagram-cynefin port:v12-specs` (also runs prettier).

@@ -43,7 +43,7 @@ beforeAll(async () => {
 
 describe.skipIf(parseCynefin === undefined)('cynefin layout invariants on parsed fixtures', () => {
   it('hold over the corpus and every option set', () => {
-    const theme = createTheme(spec);
+    const theme = createTheme(spec, { diagram: cynefin.cynefin.theme });
     const failures: string[] = [];
     let items = 0;
     for (const item of corpus) {
