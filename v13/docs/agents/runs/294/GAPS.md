@@ -65,3 +65,7 @@ Unmet acceptance criteria and open choices, filed under the ticket that owns eac
 ## #328 icons I5
 
 ## #344 hand-drawn H4
+
+## Corpus cleanup (maintainer rule, 2026-11-06: "Only real diagrams")
+- [ ] Before #406 is ready: go through `EDGE_CASES` and any other hand-written source list in `packages/conformance/src/mindmap/` (lexer `corpus.ts`, parser cases, layout corpus). A real, renderable mindmap moves to a `.mmd` fixture under `e2e/diagrams/mindmap/<tier>/`, or is dropped if the corpus already covers it. Input meant to fail, or lexer-only text, may stay, preferably in `packages/conformance/corpus/mindmap-cases.json` (the timeline/quadrant convention) instead of a TS array. Generated variants stay. Re-run the gates and `pnpm check`; record counts under "For the maintainer".
+
