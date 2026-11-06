@@ -44,7 +44,7 @@ const TYPES = readdirSync(PACKAGES)
   .map((d) => d.slice('diagram-'.length))
   .sort();
 const READS = new Map(TYPES.map((type) => [type, readsOf(type)]));
-/** Packages with no renderer yet, so no theme reads (mindmap's renderer is #388). */
+/** Packages with no renderer yet, so no theme reads (mindmap's renderer is #388, which removes it). */
 const NOT_RENDERING_YET: readonly string[] = ['mindmap'];
 
 describe('theme vocabulary usedBy (#207)', () => {
@@ -61,8 +61,10 @@ describe('theme vocabulary usedBy (#207)', () => {
       'state',
       'timeline',
     ]);
+    // A listed package reads nothing yet; once it does, it must leave the list.
     for (const type of TYPES) {
-      if (!NOT_RENDERING_YET.includes(type)) expect(READS.get(type)!.size).toBeGreaterThan(0);
+      if (NOT_RENDERING_YET.includes(type)) expect(READS.get(type)!.size).toBe(0);
+      else expect(READS.get(type)!.size).toBeGreaterThan(0);
     }
   });
 
