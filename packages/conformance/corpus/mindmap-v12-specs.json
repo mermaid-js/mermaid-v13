@@ -1,0 +1,186 @@
+[
+  {
+    "id": "v12-specs/mindmap.spec.ts#1",
+    "source": "mindmap\n    root"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#2",
+    "source": "mindmap\n    root\n      child1\n      child2\n "
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#3",
+    "source": "mindmap\n    (root)"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#4",
+    "source": "mindmap\n    root\n      child1\n        leaf1\n      child2"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#5",
+    "source": "mindmap\n    root\n    fakeRoot"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#6",
+    "source": "mindmap\n          root\n        fakeRoot\n    realRootWrongPlace"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#7",
+    "source": "mindmap\n    root[The root]\n      "
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#8",
+    "source": "mindmap\n    root\n      theId(child1)"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#9",
+    "source": "mindmap\nroot\n      theId(child1)"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#10",
+    "source": "mindmap\n root((the root))\n "
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#11",
+    "source": "mindmap\n root)the root(\n"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#12",
+    "source": "mindmap\n root))the root((\n"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#13",
+    "source": "mindmap\n root{{the root}}\n"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#14",
+    "source": "mindmap\n    root[The root]\n    ::icon(bomb)\n    "
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#15",
+    "source": "mindmap\n    root[The root]\n    :::m-4 p-8\n    "
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#16",
+    "source": "mindmap\n    root[The root]\n    :::m-4 p-8\n    ::icon(bomb)\n    "
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#17",
+    "source": "mindmap\n    root[The root]\n    ::icon(bomb)\n    :::m-4 p-8\n    "
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#18",
+    "source": "mindmap\n    root[\"String containing []\"]\n"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#19",
+    "source": "mindmap\n    root[\"String containing []\"]\n      child1[\"String containing ()\"]\n"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#20",
+    "source": "mindmap\n  root(Root)\n    Child(Child)\n    :::hot\n      a(a)\n      b[New Stuff]"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#21",
+    "source": "mindmap\n  root(Root)\n    Child(Child)\n      a(a)\n\n      b[New Stuff]"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#22",
+    "source": "mindmap\n  root(Root)\n    Child(Child)\n      a(a)\n\n      %% This is a comment\n      b[New Stuff]"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#23",
+    "source": "mindmap\n  root(Root)\n    Child(Child)\n      a(a) %% This is a comment\n      b[New Stuff]"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#24",
+    "source": "mindmap\nroot\n A\n \n\n B"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#25",
+    "source": "\n \nmindmap\nroot\n A\n \n\n B"
+  },
+  {
+    "id": "v12-specs/mindmap.spec.ts#26",
+    "source": "\n\n\nmindmap\nroot\n A\n \n\n B"
+  },
+  {
+    "id": "v12-specs/mindmapColors.spec.ts#1",
+    "source": "mindmap\n    root((Root))\n          ownerA{{Owner A}}\n            repoA[Repo A]\n                leafA[Leaf A]\n              leafB[Leaf B]\n          ownerB{{Owner B}}\n              repoB[Repo B]\n                leafC[Leaf C]\n"
+  },
+  {
+    "id": "v12-specs/mindmapColors.spec.ts#5",
+    "source": "mindmap\n    root((Root))\n          added[Added]\n          ownerA{{Owner A}}\n            repoA[Repo A]\n                leafA[Leaf A]\n              leafB[Leaf B]\n          ownerB{{Owner B}}\n              repoB[Repo B]\n                leafC[Leaf C]\n"
+  },
+  {
+    "id": "v12-specs/mindmapColors.spec.ts#6",
+    "source": "mindmap\nRoot\n  Node 1\n    Node 2\n      Node 3\n        Node 4\n          Node 5\n            Node 6\n              Node 7\n                Node 8\n                  Node 9\n                    Node 10\n                      Node 11\n                        Node 12\n                          Node 13\n"
+  },
+  {
+    "id": "v12-specs/mindmapColors.spec.ts#7",
+    "source": "mindmap\nRoot\n  :::custom-root\n  Child[Child]\n    :::custom-child\n    ::icon(mdi:fire)\n"
+  },
+  {
+    "id": "v12-specs/mindmapColors.spec.ts#9",
+    "source": "mindmap\nRoot\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#1",
+    "source": "mindmap\n  root((mindmap))\n    Origins\n      Long history\n      ::icon(fa fa-book)\n      Popularisation\n        British popular psychology author Tony Buzan\n    Research\n      On effectiveness<br/>and features\n      On Automatic creation\n        Uses\n            Creative techniques\n            Strategic planning\n            Argument mapping\n    Tools\n      Pen and paper\n      Mermaid\n\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#2",
+    "source": "mindmap\nRoot\n    A\n      B\n      C\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#3",
+    "source": "mindmap\n    id[I am a square]\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#4",
+    "source": "mindmap\n    id(I am a rounded square)\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#5",
+    "source": "mindmap\n    id((I am a circle))\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#6",
+    "source": "mindmap\n    id))I am a bang((\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#7",
+    "source": "mindmap\n    id)I am a cloud(\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#8",
+    "source": "mindmap\n    id{{I am a hexagon}}\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#9",
+    "source": "mindmap\n    I am the default shape\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#10",
+    "source": "---\nconfig:\n  mindmap:\n    colorBy: depth\n---\nmindmap\n  root((mindmap))\n    origins{{Origins}}\n      history[Long history]\n        Popularisation\n        British popular psychology author Tony Buzan\n    research{{Research}}\n      uses[Uses]\n        Creative techniques\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#11",
+    "source": "---\nconfig:\n  theme: base\n  mindmap:\n    colorBy: depth\n  themeVariables:\n    git0: '#374151'\n    gitBranchLabel0: '#ffffff'\n    cScaleLabel0: '#ffffff'\n    cScale1: '#bfdbfe'\n    cScaleLabel1: '#172554'\n    cScale2: '#bbf7d0'\n    cScaleLabel2: '#14532d'\n    cScale3: '#fde68a'\n    cScaleLabel3: '#451a03'\n---\nmindmap\n  root((mindmap))\n    origins{{Origins}}\n      history[Long history]\n        Popularisation\n        British popular psychology author Tony Buzan\n    research{{Research}}\n      uses[Uses]\n        Creative techniques\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#12",
+    "source": "mindmap\n    Root\n        A\n        ::icon(fa fa-book)\n        B(B)\n        ::icon(mdi mdi-skull-outline)\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#13",
+    "source": "mindmap\n    Root\n        A[A]\n        :::urgent large\n        B(B)\n        C\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#14",
+    "source": "mindmap\nRoot\n    A\n        B\n      C\n"
+  },
+  {
+    "id": "v12-docs/mindmap.md#15",
+    "source": "mindmap\n    id1[\"`**Root** with\na second line\nUnicode works too: 🤓`\"]\n      id2[\"`The dog in **the** hog... a *very long text* that wraps to a new line`\"]\n      id3[Regular labels still works]\n"
+  }
+]
