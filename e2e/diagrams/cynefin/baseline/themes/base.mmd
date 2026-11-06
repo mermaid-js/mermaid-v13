@@ -1,0 +1,28 @@
+---
+config:
+  theme: base
+  cynefin:
+    seed: 42
+description: one representative cynefin diagram in the base theme, with all five domains, items, the confusion overflow badge and transitions
+---
+cynefin-beta
+  title Incident response in base
+  complex
+    "Probe the system"
+    "Run safe-to-fail experiments"
+  complicated
+    "Expert analysis"
+  chaotic
+    "Act to stabilise"
+  clear
+    "Follow the runbook"
+  confusion
+    "Unclear ownership"
+    "Conflicting reports"
+    "Missing data"
+    "Stale dashboards"
+  chaotic --> complex : "stabilise"
+  complex --> complicated : "pattern found"
+  complicated --> clear : "codify"
+  clear --> chaotic : "complacency"
+  chaotic --> complicated
